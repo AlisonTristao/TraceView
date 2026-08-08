@@ -42,10 +42,10 @@ int Ribbon::addTab(const QString& label, QWidget* page, bool enabled, const QStr
 QWidget* Ribbon::createButtonGroup(QWidget* parent, const QList<QAction*>& actions) {
     auto* frame = new QFrame(parent);
     frame->setObjectName("ribbonGroup");
-    frame->setFixedHeight(kRibbonPageHeight - 4); // matches ribbon pages' 2px top/bottom margins
+    frame->setFixedHeight(kRibbonGroupFrameHeight);
     auto* layout = new QHBoxLayout(frame);
-    layout->setContentsMargins(3, 3, 3, 3); // symmetric padding around the buttons on all 4 sides
-    layout->setSpacing(3);
+    layout->setContentsMargins(kRibbonGroupPadding, kRibbonGroupPadding, kRibbonGroupPadding, kRibbonGroupPadding);
+    layout->setSpacing(kRibbonGroupPadding);
 
     for (QAction* action : actions) {
         auto* button = new QToolButton(frame);

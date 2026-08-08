@@ -70,12 +70,17 @@ QIcon makePencilIcon(const QColor& color) {
     QPainter painter(&pixmap);
     painter.setRenderHint(QPainter::Antialiasing);
     painter.setPen(QPen(color, 2, Qt::SolidLine, Qt::RoundCap));
-    painter.drawLine(QPoint(3, kRibbonIconSize - 3), QPoint(kRibbonIconSize - 5, 5));
+
+    // Same margin convention as the other icons (2px in from each edge), so
+    // the diagonal stroke has the same visual weight/centering as its peers.
+    const int margin = 2;
+    painter.drawLine(QPoint(margin, kRibbonIconSize - margin), QPoint(kRibbonIconSize - margin - 2, margin + 2));
 
     painter.setPen(Qt::NoPen);
     painter.setBrush(color);
     QPolygon tip;
-    tip << QPoint(kRibbonIconSize - 6, 3) << QPoint(kRibbonIconSize - 3, 3) << QPoint(kRibbonIconSize - 3, 6);
+    tip << QPoint(kRibbonIconSize - margin - 3, margin) << QPoint(kRibbonIconSize - margin, margin)
+        << QPoint(kRibbonIconSize - margin, margin + 3);
     painter.drawPolygon(tip);
     return QIcon(pixmap);
 }

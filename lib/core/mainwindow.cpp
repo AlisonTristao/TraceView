@@ -114,7 +114,7 @@ Ribbon* MainWindow::buildRibbon() {
     runPage->setObjectName("ribbonPage");
     runPage->setFixedHeight(kRibbonPageHeight);
     auto* runLayout = new QHBoxLayout(runPage);
-    runLayout->setContentsMargins(6, 2, 6, 2);
+    runLayout->setContentsMargins(kRibbonPageMarginH, kRibbonPageMarginV, kRibbonPageMarginH, kRibbonPageMarginV);
     auto* runLabel = new QLabel("Serial port configuration — coming soon", runPage);
     runLabel->setEnabled(false);
     runLayout->addWidget(runLabel);
@@ -124,8 +124,8 @@ Ribbon* MainWindow::buildRibbon() {
     configurePage->setObjectName("ribbonPage");
     configurePage->setFixedHeight(kRibbonPageHeight);
     auto* configureLayout = new QHBoxLayout(configurePage);
-    configureLayout->setContentsMargins(6, 2, 6, 2);
-    configureLayout->setSpacing(6);
+    configureLayout->setContentsMargins(kRibbonPageMarginH, kRibbonPageMarginV, kRibbonPageMarginH, kRibbonPageMarginV);
+    configureLayout->setSpacing(kRibbonGroupSpacing);
 
     configureLayout->addWidget(Ribbon::createButtonGroup(
         configurePage, {m_positionAction, m_addWidgetAction, m_removeAction, m_editTypeAction}));
