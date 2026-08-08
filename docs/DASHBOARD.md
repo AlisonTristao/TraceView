@@ -74,9 +74,14 @@ lives in its own module under
   (`dummy_line`, `dummy_bar`, `dummy_gauge`) are throwaway placeholders
   meant to exercise the grid mechanics before real telemetry charts
   exist — replace/remove them once real chart types land.
-- **Serial** — `widgets/serialpanelwidget.h`/`.cpp` (`serial_panel`).
-  Front-end shell only: port/baud pickers and a connect toggle, none of
-  it wired to `QSerialPort` yet.
+- **Serial Monitor** — `widgets/serialmonitorwidget.h`/`.cpp`
+  (`serial_monitor`), built from a connection bar (port/baud pickers, a
+  connect toggle) plus `widgets/serialterminalwidget.h`/`.cpp`: a
+  miniterm/PlatformIO-Serial-Monitor-style terminal with no input line —
+  the terminal surface itself captures the keyboard and emits
+  `sendRequested(QByteArray)` per keystroke, immediately, never buffered
+  until Enter. Front-end shell only: none of it wired to `QSerialPort`
+  yet.
 - **Button Panel** — `widgets/buttonpanelwidget.h`/`.cpp`
   (`button_panel`). Front-end shell only: a grid of buttons, none of
   them wired to an action yet.

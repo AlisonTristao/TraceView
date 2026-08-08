@@ -1,5 +1,10 @@
 #include "stylesheet.h"
 
+#include <QDir>
+#include <QPainter>
+#include <QPixmap>
+#include <QPolygon>
+
 namespace traceview {
 
 namespace {
@@ -9,6 +14,31 @@ QString cssColor(const QColor& c) {
         return QString("rgba(%1, %2, %3, %4)").arg(c.red()).arg(c.green()).arg(c.blue()).arg(c.alpha());
     }
     return c.name(QColor::HexRgb);
+}
+
+// QComboBox::down-arrow is a pixmap subcontrol — border-only CSS triangle
+// tricks that work for normal widgets don't reliably render for it, so
+// draw a small filled triangle instead (same "draw it, don't fake it with
+// borders" approach as the ribbon icons in ribbonicons.cpp) and hand Qt a
+// real image. Qt's style sheet url() doesn't understand data: URIs, only
+// actual paths, so the themed triangle is written to a temp file each
+// time the stylesheet is (re)built and referenced by that path.
+QString comboArrowImagePath(const QColor& color) {
+    constexpr int kSize = 10;
+    QPixmap pixmap(kSize, kSize);
+    pixmap.fill(Qt::transparent);
+
+    QPainter painter(&pixmap);
+    painter.setRenderHint(QPainter::Antialiasing);
+    painter.setPen(Qt::NoPen);
+    painter.setBrush(color);
+    const QPolygon triangle({QPoint(1, 3), QPoint(kSize - 1, 3), QPoint(kSize / 2, kSize - 2)});
+    painter.drawPolygon(triangle);
+    painter.end();
+
+    const QString path = QDir(QDir::tempPath()).filePath("traceview_combo_arrow.png");
+    pixmap.save(path, "PNG");
+    return path;
 }
 
 } // namespace
@@ -140,8 +170,9 @@ QComboBox::drop-down {
     border-bottom-right-radius: 4px;
 }
 QComboBox::down-arrow {
-    width: 8px;
-    height: 8px;
+    image: url("@comboArrowUri@");
+    width: 10px;
+    height: 10px;
 }
 QComboBox QAbstractItemView {
     background-color: @surface@;
@@ -229,6 +260,7 @@ QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {
     qss.replace("@success@", cssColor(p.success));
     qss.replace("@warning@", cssColor(p.warning));
     qss.replace("@danger@", cssColor(p.danger));
+    qss.replace("@comboArrowUri@", comboArrowImagePath(p.textSecondary));
 
     return qss;
 }

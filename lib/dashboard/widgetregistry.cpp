@@ -3,7 +3,7 @@
 #include "dashboardwidget.h"
 #include "widgets/buttonpanelwidget.h"
 #include "widgets/chartwidgets.h"
-#include "widgets/serialpanelwidget.h"
+#include "widgets/serialmonitorwidget.h"
 
 namespace traceview {
 
@@ -19,8 +19,8 @@ WidgetRegistry::WidgetRegistry() {
                   [](QWidget* parent) -> DashboardWidget* { return new DummyBarChartWidget(parent); }});
     registerType({"dummy_gauge", "Gauge (dummy)",
                   [](QWidget* parent) -> DashboardWidget* { return new DummyGaugeWidget(parent); }});
-    registerType({"serial_panel", "Serial",
-                  [](QWidget* parent) -> DashboardWidget* { return new SerialPanelWidget(parent); }});
+    registerType({"serial_monitor", "Serial Monitor",
+                  [](QWidget* parent) -> DashboardWidget* { return new SerialMonitorWidget(parent); }});
     registerType({"button_panel", "Button Panel",
                   [](QWidget* parent) -> DashboardWidget* { return new ButtonPanelWidget(parent); }});
 }
