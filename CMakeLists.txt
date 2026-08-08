@@ -18,13 +18,22 @@ if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Debug)
 endif()
 
+if(WIN32)
+    enable_language(RC)
+endif()
+
 find_package(Qt6 REQUIRED COMPONENTS Widgets SerialPort)
 
 add_subdirectory(lib)
 
 qt_add_executable(TraceView
     src/main.cpp
+    resources/icons/app.qrc
 )
+
+if(WIN32)
+    target_sources(TraceView PRIVATE resources/app.rc)
+endif()
 
 target_include_directories(TraceView PRIVATE include)
 

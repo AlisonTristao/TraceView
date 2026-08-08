@@ -7,6 +7,12 @@ configure_file(
 add_library(traceview_core STATIC
     core/mainwindow.cpp
     core/mainwindow.h
+    theme/palettes.cpp
+    theme/palettes.h
+    theme/stylesheet.cpp
+    theme/stylesheet.h
+    theme/thememanager.cpp
+    ${CMAKE_SOURCE_DIR}/include/traceview/thememanager.h
 )
 
 target_include_directories(traceview_core PUBLIC

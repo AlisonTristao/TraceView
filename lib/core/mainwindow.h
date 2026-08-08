@@ -9,6 +9,9 @@ class MainWindow : public QMainWindow {
 
 public:
     explicit MainWindow(QWidget* parent = nullptr);
+
+private:
+    void buildMenus();
 };
 
 } // namespace traceview
