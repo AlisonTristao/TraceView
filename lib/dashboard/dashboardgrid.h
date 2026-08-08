@@ -25,21 +25,35 @@ class DashboardCell;
 // evenly), so the grid always exactly fills the visible area — it never
 // scrolls.
 class DashboardGrid : public QWidget {
+    Q_OBJECT
+
 public:
     explicit DashboardGrid(QWidget* parent = nullptr);
 
     void setEditMode(bool enabled);
     bool editMode() const { return m_editMode; }
 
+    void setRemoveMode(bool enabled);
+    void setTypeEditMode(bool enabled);
+
     // Auto-places a new item of `typeId` in the first free cell.
     void addItem(const QString& typeId);
     void removeItem(const QString& itemId);
+    // Swaps the widget at `itemId` for a new instance of `newTypeId`,
+    // keeping its position/span. No-op if the type is unknown or unchanged.
+    void changeItemType(const QString& itemId, const QString& newTypeId);
 
     QJsonObject toJson() const;
     void fromJson(const QJsonObject& object);
 
     QSize sizeHint() const override;
     QSize minimumSizeHint() const override;
+
+signals:
+    // Emitted when the user clicks a widget while in type-edit mode.
+    // MainWindow owns the type picker UI; it should call changeItemType()
+    // once the user picks a new type.
+    void widgetTypeEditRequested(const QString& itemId, const QString& currentTypeId);
 
 protected:
     void resizeEvent(QResizeEvent* event) override;
@@ -79,10 +93,13 @@ private:
     void handleResizeMoved(const QString& itemId, const QPoint& globalPos);
     void handleResizeFinished(const QString& itemId, const QPoint& globalPos);
     void handleRemoveRequested(const QString& itemId);
+    void handleTypeEditRequested(const QString& itemId);
 
     int m_columns;
     int m_rows;
     bool m_editMode = false;
+    bool m_removeMode = false;
+    bool m_typeEditMode = false;
 
     QVector<DashboardItem> m_items;
     QMap<QString, DashboardCell*> m_cells;

@@ -5,11 +5,13 @@
 #include <QHBoxLayout>
 #include <QIcon>
 #include <QInputDialog>
+#include <QLabel>
 #include <QMenu>
 #include <QMenuBar>
 #include <QMessageBox>
 #include <QPainter>
 #include <QPixmap>
+#include <QPolygon>
 #include <QStringList>
 #include <QToolButton>
 #include <QVBoxLayout>
@@ -31,27 +33,6 @@ constexpr int kRibbonIconSize = 16;
 // Flat, hand-drawn (not font-glyph) icons so they render crisply and
 // consistently at small toolbar sizes, colored from the active theme.
 
-QIcon makeGridIcon(const QColor& color) {
-    QPixmap pixmap(kRibbonIconSize, kRibbonIconSize);
-    pixmap.fill(Qt::transparent);
-
-    QPainter painter(&pixmap);
-    painter.setRenderHint(QPainter::Antialiasing);
-    painter.setPen(Qt::NoPen);
-    painter.setBrush(color);
-
-    const int gap = 2;
-    const int cellSize = (kRibbonIconSize - 3 * gap) / 2;
-    for (int row = 0; row < 2; ++row) {
-        for (int col = 0; col < 2; ++col) {
-            const int x = gap + col * (cellSize + gap);
-            const int y = gap + row * (cellSize + gap);
-            painter.drawRoundedRect(QRect(x, y, cellSize, cellSize), 1, 1);
-        }
-    }
-    return QIcon(pixmap);
-}
-
 QIcon makePlusIcon(const QColor& color) {
     QPixmap pixmap(kRibbonIconSize, kRibbonIconSize);
     pixmap.fill(Qt::transparent);
@@ -66,6 +47,39 @@ QIcon makePlusIcon(const QColor& color) {
     const int mid = kRibbonIconSize / 2;
     painter.drawLine(mid, margin, mid, kRibbonIconSize - margin);
     painter.drawLine(margin, mid, kRibbonIconSize - margin, mid);
+    return QIcon(pixmap);
+}
+
+QIcon makeMinusIcon(const QColor& color) {
+    QPixmap pixmap(kRibbonIconSize, kRibbonIconSize);
+    pixmap.fill(Qt::transparent);
+
+    QPainter painter(&pixmap);
+    painter.setRenderHint(QPainter::Antialiasing);
+    QPen pen(color, 2);
+    pen.setCapStyle(Qt::RoundCap);
+    painter.setPen(pen);
+
+    const int margin = kRibbonIconSize / 4;
+    const int mid = kRibbonIconSize / 2;
+    painter.drawLine(margin, mid, kRibbonIconSize - margin, mid);
+    return QIcon(pixmap);
+}
+
+QIcon makePencilIcon(const QColor& color) {
+    QPixmap pixmap(kRibbonIconSize, kRibbonIconSize);
+    pixmap.fill(Qt::transparent);
+
+    QPainter painter(&pixmap);
+    painter.setRenderHint(QPainter::Antialiasing);
+    painter.setPen(QPen(color, 2, Qt::SolidLine, Qt::RoundCap));
+    painter.drawLine(QPoint(3, kRibbonIconSize - 3), QPoint(kRibbonIconSize - 5, 5));
+
+    painter.setPen(Qt::NoPen);
+    painter.setBrush(color);
+    QPolygon tip;
+    tip << QPoint(kRibbonIconSize - 6, 3) << QPoint(kRibbonIconSize - 3, 3) << QPoint(kRibbonIconSize - 3, 6);
+    painter.drawPolygon(tip);
     return QIcon(pixmap);
 }
 } // namespace
@@ -120,13 +134,22 @@ void MainWindow::buildMenus() {
 }
 
 Ribbon* MainWindow::buildRibbon() {
-    m_configureAction = new QAction("Configure Layout", this);
-    m_configureAction->setCheckable(true);
-    connect(m_configureAction, &QAction::toggled, this, &MainWindow::onConfigureToggled);
-
-    m_addWidgetAction = new QAction("Add Widget", this);
+    m_addWidgetAction = new QAction("Add", this);
     m_addWidgetAction->setEnabled(false);
     connect(m_addWidgetAction, &QAction::triggered, this, &MainWindow::onAddWidget);
+
+    m_removeAction = new QAction("Remove", this);
+    m_removeAction->setCheckable(true);
+    m_removeAction->setEnabled(false);
+    connect(m_removeAction, &QAction::toggled, this, &MainWindow::onRemoveModeToggled);
+
+    m_editTypeAction = new QAction("Edit", this);
+    m_editTypeAction->setCheckable(true);
+    m_editTypeAction->setEnabled(false);
+    connect(m_editTypeAction, &QAction::toggled, this, &MainWindow::onTypeEditModeToggled);
+
+    connect(m_dashboardGrid, &DashboardGrid::widgetTypeEditRequested, this,
+            &MainWindow::onWidgetTypeEditRequested);
 
     updateRibbonIcons();
     connect(&ThemeManager::instance(), &ThemeManager::themeChanged, this,
@@ -134,7 +157,18 @@ Ribbon* MainWindow::buildRibbon() {
 
     constexpr int kRibbonPageHeight = 30;
 
+    auto* runPage = new QWidget(this);
+    runPage->setObjectName("ribbonPage");
+    runPage->setFixedHeight(kRibbonPageHeight);
+    auto* runLayout = new QHBoxLayout(runPage);
+    runLayout->setContentsMargins(6, 2, 6, 2);
+    auto* runLabel = new QLabel("Serial port configuration — coming soon", runPage);
+    runLabel->setEnabled(false);
+    runLayout->addWidget(runLabel);
+    runLayout->addStretch();
+
     auto* configurePage = new QWidget(this);
+    configurePage->setObjectName("ribbonPage");
     configurePage->setFixedHeight(kRibbonPageHeight);
     auto* configureLayout = new QHBoxLayout(configurePage);
     configureLayout->setContentsMargins(6, 2, 6, 2);
@@ -147,52 +181,95 @@ Ribbon* MainWindow::buildRibbon() {
         button->setIconSize(QSize(kRibbonIconSize, kRibbonIconSize));
         return button;
     };
-    configureLayout->addWidget(makeToolButton(m_configureAction));
     configureLayout->addWidget(makeToolButton(m_addWidgetAction));
+    configureLayout->addWidget(makeToolButton(m_removeAction));
+    configureLayout->addWidget(makeToolButton(m_editTypeAction));
     configureLayout->addStretch();
 
-    auto* runPage = new QWidget(this);
-    runPage->setFixedHeight(kRibbonPageHeight);
-
     auto* ribbon = new Ribbon(this);
-    ribbon->addTab("Configure Project", configurePage);
-    ribbon->addTab("Run", runPage, /*enabled=*/false, "Serial port configuration — coming soon");
+    ribbon->addTab("Run", runPage);
+    m_configureTabIndex = ribbon->addTab("Configure Project", configurePage);
+
+    connect(ribbon, &Ribbon::currentTabChanged, this, &MainWindow::onRibbonTabChanged);
+
     return ribbon;
 }
 
 void MainWindow::updateRibbonIcons() {
-    const QColor color = ThemeManager::instance().currentTheme().textPrimary;
-    m_configureAction->setIcon(makeGridIcon(color));
-    m_addWidgetAction->setIcon(makePlusIcon(color));
+    const ThemePalette& palette = ThemeManager::instance().currentTheme();
+    m_addWidgetAction->setIcon(makePlusIcon(palette.textPrimary));
+    m_removeAction->setIcon(makeMinusIcon(palette.danger));
+    m_editTypeAction->setIcon(makePencilIcon(palette.accent));
 }
 
-void MainWindow::onConfigureToggled(bool enabled) {
-    m_dashboardGrid->setEditMode(enabled);
-    m_addWidgetAction->setEnabled(enabled);
+void MainWindow::onRibbonTabChanged(int index) {
+    const bool editable = index == m_configureTabIndex;
+    m_dashboardGrid->setEditMode(editable);
+    m_addWidgetAction->setEnabled(editable);
+    m_removeAction->setEnabled(editable);
+    m_editTypeAction->setEnabled(editable);
+    if (!editable) {
+        m_removeAction->setChecked(false);
+        m_editTypeAction->setChecked(false);
+    }
 }
 
-void MainWindow::onAddWidget() {
+void MainWindow::onRemoveModeToggled(bool enabled) {
+    if (enabled) {
+        m_editTypeAction->setChecked(false);
+    }
+    m_dashboardGrid->setRemoveMode(enabled);
+}
+
+void MainWindow::onTypeEditModeToggled(bool enabled) {
+    if (enabled) {
+        m_removeAction->setChecked(false);
+    }
+    m_dashboardGrid->setTypeEditMode(enabled);
+}
+
+bool MainWindow::pickWidgetType(const QString& title, const QString& preselectedTypeId, QString* outTypeId) {
     QStringList displayNames;
     QStringList typeIds;
+    int preselectedIndex = 0;
     for (const WidgetTypeInfo& info : WidgetRegistry::instance().availableTypes()) {
+        if (info.typeId == preselectedTypeId) {
+            preselectedIndex = typeIds.size();
+        }
         displayNames << info.displayName;
         typeIds << info.typeId;
     }
     if (displayNames.isEmpty()) {
-        return;
+        return false;
     }
 
     bool ok = false;
-    const QString chosen = QInputDialog::getItem(this, "Add Widget", "Type:", displayNames, 0, false, &ok);
+    const QString chosen =
+        QInputDialog::getItem(this, title, "Type:", displayNames, preselectedIndex, false, &ok);
     if (!ok) {
-        return;
+        return false;
     }
 
     const int index = displayNames.indexOf(chosen);
     if (index < 0) {
-        return;
+        return false;
     }
-    m_dashboardGrid->addItem(typeIds[index]);
+    *outTypeId = typeIds[index];
+    return true;
+}
+
+void MainWindow::onAddWidget() {
+    QString typeId;
+    if (pickWidgetType("Add Widget", QString(), &typeId)) {
+        m_dashboardGrid->addItem(typeId);
+    }
+}
+
+void MainWindow::onWidgetTypeEditRequested(const QString& itemId, const QString& currentTypeId) {
+    QString typeId;
+    if (pickWidgetType("Edit Widget Type", currentTypeId, &typeId)) {
+        m_dashboardGrid->changeItemType(itemId, typeId);
+    }
 }
 
 void MainWindow::onSaveProject() {

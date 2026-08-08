@@ -29,7 +29,7 @@ QMainWindow::separator {
 }
 
 QMenuBar {
-    background-color: @background@;
+    background-color: @surfaceAlt@;
     border-bottom: 1px solid @border@;
 }
 QMenuBar::item {
@@ -147,6 +147,9 @@ QGroupBox::title {
 QTabWidget::pane {
     border: 1px solid @border@;
 }
+QTabBar {
+    background-color: @surfaceAlt@;
+}
 QTabBar::tab {
     background-color: @surface@;
     color: @textSecondary@;
@@ -154,13 +157,21 @@ QTabBar::tab {
     padding: 3px 12px;
 }
 QTabBar::tab:selected {
-    background-color: @background@;
+    background-color: @surfaceAlt@;
     color: @textPrimary@;
-    border-bottom-color: @background@;
+    border-bottom-color: @surfaceAlt@;
 }
 QTabBar::tab:disabled {
     color: @textDisabled@;
     background-color: @surface@;
+}
+
+QWidget#ribbon {
+    background-color: @surfaceAlt@;
+    border-bottom: 1px solid @border@;
+}
+QWidget#ribbonPage {
+    background-color: @surfaceAlt@;
 }
 
 QScrollBar:vertical {

@@ -7,6 +7,8 @@
 namespace traceview {
 
 Ribbon::Ribbon(QWidget* parent) : QWidget(parent) {
+    setObjectName("ribbon");
+
     m_tabBar = new QTabBar(this);
     m_stack = new QStackedWidget(this);
 
@@ -17,6 +19,7 @@ Ribbon::Ribbon(QWidget* parent) : QWidget(parent) {
     layout->addWidget(m_stack);
 
     connect(m_tabBar, &QTabBar::currentChanged, m_stack, &QStackedWidget::setCurrentIndex);
+    connect(m_tabBar, &QTabBar::currentChanged, this, &Ribbon::currentTabChanged);
 }
 
 int Ribbon::addTab(const QString& label, QWidget* page, bool enabled, const QString& toolTip) {

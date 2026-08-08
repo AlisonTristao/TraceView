@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QMainWindow>
+#include <QString>
 
 class QAction;
 
@@ -20,15 +21,24 @@ private:
     Ribbon* buildRibbon();
     void updateRibbonIcons();
 
-    void onConfigureToggled(bool enabled);
+    // Shows the "pick a widget type" dialog, preselecting `preselectedTypeId`
+    // (pass an empty string for none). Returns false if cancelled.
+    bool pickWidgetType(const QString& title, const QString& preselectedTypeId, QString* outTypeId);
+
+    void onRibbonTabChanged(int index);
+    void onRemoveModeToggled(bool enabled);
+    void onTypeEditModeToggled(bool enabled);
     void onAddWidget();
+    void onWidgetTypeEditRequested(const QString& itemId, const QString& currentTypeId);
     void onSaveProject();
     void onOpenProject();
     void onAbout();
 
     DashboardGrid* m_dashboardGrid = nullptr;
-    QAction* m_configureAction = nullptr;
     QAction* m_addWidgetAction = nullptr;
+    QAction* m_removeAction = nullptr;
+    QAction* m_editTypeAction = nullptr;
+    int m_configureTabIndex = -1;
 };
 
 } // namespace traceview

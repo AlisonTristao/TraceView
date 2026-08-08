@@ -2,7 +2,6 @@
 
 #include <QMouseEvent>
 #include <QPainter>
-#include <QPushButton>
 
 #include "dashboardwidget.h"
 #include "traceview/thememanager.h"
@@ -12,19 +11,12 @@ namespace traceview {
 namespace {
 constexpr int kHeaderHeight = 24;
 constexpr int kGripSize = 14;
-constexpr int kRemoveButtonSize = 18;
 } // namespace
 
 DashboardCell::DashboardCell(const QString& itemId, const QString& title, DashboardWidget* content,
                               QWidget* parent)
     : QWidget(parent), m_itemId(itemId), m_title(title), m_content(content) {
     m_content->setParent(this);
-
-    m_removeButton = new QPushButton(QString::fromUtf8("\xE2\x9C\x95"), this); // "✕"
-    m_removeButton->setFixedSize(kRemoveButtonSize, kRemoveButtonSize);
-    m_removeButton->setCursor(Qt::ArrowCursor);
-    m_removeButton->setVisible(false);
-    connect(m_removeButton, &QPushButton::clicked, this, [this]() { emit removeRequested(m_itemId); });
 
     setMouseTracking(true);
     layoutChildren();
@@ -35,16 +27,35 @@ void DashboardCell::setEditMode(bool enabled) {
         return;
     }
     m_editMode = enabled;
-    m_removeButton->setVisible(enabled);
     // The content widget spans the full cell below the header, which
     // includes the resize grip's corner. Without this, clicks/hover on the
     // grip land on the content widget instead of us, so drag/resize misses
     // the mouse press (and hover cursor feedback) entirely.
     m_content->setAttribute(Qt::WA_TransparentForMouseEvents, enabled);
     if (!enabled) {
-        unsetCursor();
+        m_removeMode = false;
+        m_typeEditMode = false;
     }
+    updateCursor();
     layoutChildren();
+    update();
+}
+
+void DashboardCell::setRemoveMode(bool enabled) {
+    if (m_removeMode == enabled) {
+        return;
+    }
+    m_removeMode = enabled;
+    updateCursor();
+    update();
+}
+
+void DashboardCell::setTypeEditMode(bool enabled) {
+    if (m_typeEditMode == enabled) {
+        return;
+    }
+    m_typeEditMode = enabled;
+    updateCursor();
     update();
 }
 
@@ -57,11 +68,18 @@ QRect DashboardCell::gripRect() const {
 }
 
 void DashboardCell::layoutChildren() {
-    m_removeButton->move(width() - kRemoveButtonSize - 2, 2);
     if (m_editMode) {
         m_content->setGeometry(0, kHeaderHeight, width(), height() - kHeaderHeight);
     } else {
         m_content->setGeometry(rect());
+    }
+}
+
+void DashboardCell::updateCursor() {
+    if (m_removeMode || m_typeEditMode) {
+        setCursor(Qt::PointingHandCursor);
+    } else {
+        unsetCursor();
     }
 }
 
@@ -74,7 +92,16 @@ void DashboardCell::paintEvent(QPaintEvent*) {
     QPainter painter(this);
     const ThemePalette& palette = ThemeManager::instance().currentTheme();
 
-    painter.setPen(QPen(palette.borderStrong, 1));
+    QColor borderColor = palette.borderStrong;
+    int borderWidth = 1;
+    if (m_removeMode) {
+        borderColor = palette.danger;
+        borderWidth = 2;
+    } else if (m_typeEditMode) {
+        borderColor = palette.accent;
+        borderWidth = 2;
+    }
+    painter.setPen(QPen(borderColor, borderWidth));
     painter.setBrush(Qt::NoBrush);
     painter.drawRect(rect().adjusted(0, 0, -1, -1));
 
@@ -84,8 +111,13 @@ void DashboardCell::paintEvent(QPaintEvent*) {
 
     painter.fillRect(headerRect(), palette.surfaceAlt);
     painter.setPen(palette.textPrimary);
-    painter.drawText(headerRect().adjusted(6, 0, -kRemoveButtonSize - 6, 0), Qt::AlignVCenter | Qt::AlignLeft,
-                      m_title);
+    painter.drawText(headerRect().adjusted(6, 0, -6, 0), Qt::AlignVCenter | Qt::AlignLeft, m_title);
+
+    if (m_removeMode || m_typeEditMode) {
+        // Resize doesn't apply while in a click-to-act mode; only the grip
+        // is hidden, the header stays visible for identification.
+        return;
+    }
 
     painter.setPen(QPen(palette.textSecondary, 1));
     const QRect grip = gripRect();
@@ -98,6 +130,17 @@ void DashboardCell::paintEvent(QPaintEvent*) {
 void DashboardCell::mousePressEvent(QMouseEvent* event) {
     if (!m_editMode || event->button() != Qt::LeftButton) {
         QWidget::mousePressEvent(event);
+        return;
+    }
+
+    if (m_removeMode) {
+        emit removeRequested(m_itemId);
+        event->accept();
+        return;
+    }
+    if (m_typeEditMode) {
+        emit typeEditRequested(m_itemId);
+        event->accept();
         return;
     }
 
@@ -127,7 +170,7 @@ void DashboardCell::mouseMoveEvent(QMouseEvent* event) {
         return;
     }
 
-    if (m_editMode) {
+    if (m_editMode && !m_removeMode && !m_typeEditMode) {
         const QPoint pos = event->position().toPoint();
         if (gripRect().contains(pos)) {
             setCursor(Qt::SizeFDiagCursor);
@@ -138,11 +181,6 @@ void DashboardCell::mouseMoveEvent(QMouseEvent* event) {
         }
     }
     QWidget::mouseMoveEvent(event);
-}
-
-void DashboardCell::leaveEvent(QEvent* event) {
-    unsetCursor();
-    QWidget::leaveEvent(event);
 }
 
 void DashboardCell::mouseReleaseEvent(QMouseEvent* event) {
@@ -159,6 +197,13 @@ void DashboardCell::mouseReleaseEvent(QMouseEvent* event) {
         return;
     }
     QWidget::mouseReleaseEvent(event);
+}
+
+void DashboardCell::leaveEvent(QEvent* event) {
+    if (!m_removeMode && !m_typeEditMode) {
+        unsetCursor();
+    }
+    QWidget::leaveEvent(event);
 }
 
 } // namespace traceview

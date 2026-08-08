@@ -40,6 +40,28 @@ void DashboardGrid::setEditMode(bool enabled) {
     update();
 }
 
+void DashboardGrid::setRemoveMode(bool enabled) {
+    if (m_removeMode == enabled) {
+        return;
+    }
+    m_removeMode = enabled;
+    const QList<DashboardCell*> cells = m_cells.values();
+    for (DashboardCell* cell : cells) {
+        cell->setRemoveMode(enabled);
+    }
+}
+
+void DashboardGrid::setTypeEditMode(bool enabled) {
+    if (m_typeEditMode == enabled) {
+        return;
+    }
+    m_typeEditMode = enabled;
+    const QList<DashboardCell*> cells = m_cells.values();
+    for (DashboardCell* cell : cells) {
+        cell->setTypeEditMode(enabled);
+    }
+}
+
 void DashboardGrid::addItem(const QString& typeId) {
     int row = 0;
     int column = 0;
@@ -72,6 +94,19 @@ void DashboardGrid::removeItem(const QString& itemId) {
         }
     }
     updateGeometry();
+}
+
+void DashboardGrid::changeItemType(const QString& itemId, const QString& newTypeId) {
+    DashboardItem* item = itemById(itemId);
+    if (!item || item->typeId == newTypeId || WidgetRegistry::instance().displayName(newTypeId).isEmpty()) {
+        return;
+    }
+    item->typeId = newTypeId;
+
+    if (DashboardCell* oldCell = m_cells.take(itemId)) {
+        oldCell->deleteLater();
+    }
+    createCell(*item);
 }
 
 QJsonObject DashboardGrid::toJson() const {
@@ -136,15 +171,20 @@ void DashboardGrid::paintEvent(QPaintEvent*) {
     const ThemePalette& palette = ThemeManager::instance().currentTheme();
     painter.setPen(QPen(palette.border, 1));
 
-    DashboardItem probe;
-    probe.rowSpan = 1;
-    probe.columnSpan = 1;
-    for (int r = 0; r < m_rows; ++r) {
-        for (int c = 0; c < m_columns; ++c) {
-            probe.row = r;
-            probe.column = c;
-            painter.drawRect(cellRect(probe));
-        }
+    // Continuous grid lines (not a rect per cell) so adjacent cells share
+    // one line instead of drawing overlapping/rounded-off corners.
+    const qreal colStep = columnStep();
+    const qreal rowStepPx = rowStep();
+    const int right = kMargin + qRound(m_columns * colStep) - kSpacing;
+    const int bottom = kMargin + qRound(m_rows * rowStepPx) - kSpacing;
+
+    for (int c = 0; c <= m_columns; ++c) {
+        const int x = kMargin + qRound(c * colStep);
+        painter.drawLine(x, kMargin, x, bottom);
+    }
+    for (int r = 0; r <= m_rows; ++r) {
+        const int y = kMargin + qRound(r * rowStepPx);
+        painter.drawLine(kMargin, y, right, y);
     }
 }
 
@@ -266,6 +306,8 @@ DashboardCell* DashboardGrid::createCell(const DashboardItem& item) {
     const QString title = WidgetRegistry::instance().displayName(item.typeId);
     auto* cell = new DashboardCell(item.id, title, content, this);
     cell->setEditMode(m_editMode);
+    cell->setRemoveMode(m_removeMode);
+    cell->setTypeEditMode(m_typeEditMode);
     cell->setGeometry(cellRect(item));
     cell->show();
 
@@ -276,6 +318,7 @@ DashboardCell* DashboardGrid::createCell(const DashboardItem& item) {
     connect(cell, &DashboardCell::resizeMoved, this, &DashboardGrid::handleResizeMoved);
     connect(cell, &DashboardCell::resizeFinished, this, &DashboardGrid::handleResizeFinished);
     connect(cell, &DashboardCell::removeRequested, this, &DashboardGrid::handleRemoveRequested);
+    connect(cell, &DashboardCell::typeEditRequested, this, &DashboardGrid::handleTypeEditRequested);
 
     m_cells.insert(item.id, cell);
     return cell;
@@ -371,6 +414,12 @@ void DashboardGrid::handleResizeFinished(const QString& itemId, const QPoint&) {
 
 void DashboardGrid::handleRemoveRequested(const QString& itemId) {
     removeItem(itemId);
+}
+
+void DashboardGrid::handleTypeEditRequested(const QString& itemId) {
+    if (const DashboardItem* item = itemById(itemId)) {
+        emit widgetTypeEditRequested(itemId, item->typeId);
+    }
 }
 
 } // namespace traceview
