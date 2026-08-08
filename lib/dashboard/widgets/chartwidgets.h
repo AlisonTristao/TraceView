@@ -1,6 +1,6 @@
 #pragma once
 
-#include "dashboardwidget.h"
+#include "dashboard/dashboardwidget.h"
 
 namespace traceview {
 

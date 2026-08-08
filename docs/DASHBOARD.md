@@ -62,26 +62,48 @@ widget snaps back to its last valid position — see
 `DashboardGrid::isPlacementValid` in
 [dashboardgrid.cpp](../lib/dashboard/dashboardgrid.cpp).
 
+## Element kinds
+
+Every item placed on the grid is a `DashboardItem` (id/type/name/key/
+position — identical fields regardless of kind) paired with a
+`DashboardWidget` subclass that gives it its actual behavior. Each kind
+lives in its own module under
+[lib/dashboard/widgets/](../lib/dashboard/widgets/):
+
+- **Chart** — `widgets/chartwidgets.h`/`.cpp`. The 3 registered types
+  (`dummy_line`, `dummy_bar`, `dummy_gauge`) are throwaway placeholders
+  meant to exercise the grid mechanics before real telemetry charts
+  exist — replace/remove them once real chart types land.
+- **Serial** — `widgets/serialpanelwidget.h`/`.cpp` (`serial_panel`).
+  Front-end shell only: port/baud pickers and a connect toggle, none of
+  it wired to `QSerialPort` yet.
+- **Button Panel** — `widgets/buttonpanelwidget.h`/`.cpp`
+  (`button_panel`). Front-end shell only: a grid of buttons, none of
+  them wired to an action yet.
+
+`DashboardGrid`, `DashboardItem`, and `PropertiesPanel` treat every kind
+identically; only the widget's own implementation differs.
+
 ## Adding a new widget type
 
 1. Subclass `DashboardWidget`
    ([lib/dashboard/dashboardwidget.h](../lib/dashboard/dashboardwidget.h))
-   and implement `paintEvent` (or whatever rendering the chart needs) —
-   see the 3 placeholder widgets in
-   [lib/dashboard/dummywidgets.h](../lib/dashboard/dummywidgets.h)/`.cpp`
-   for the pattern.
-2. Register it in `WidgetRegistry`'s constructor
+   in its own file(s) under
+   [lib/dashboard/widgets/](../lib/dashboard/widgets/) — one module per
+   element kind (chart, serial, button panel, ...). See the existing
+   modules listed above for the pattern; whether it paints itself
+   (`paintEvent`, like the chart placeholders) or is built from real
+   child widgets (`QComboBox`/`QPushButton`/layouts, like the serial
+   panel and button panel) is up to what that kind needs.
+2. Add the new files to `traceview_dashboard` in
+   [lib/CMakeLists.txt](../lib/CMakeLists.txt).
+3. Register it in `WidgetRegistry`'s constructor
    ([lib/dashboard/widgetregistry.cpp](../lib/dashboard/widgetregistry.cpp)):
    `registerType({"my_type", "My Type", [](QWidget* parent) { return new MyWidget(parent); }});`
 
 That's it — the **Type** dropdown in the properties panel enumerates
 `WidgetRegistry::availableTypes()`, so a new type shows up automatically.
 No grid or `MainWindow` code needs to change.
-
-The 3 widgets currently registered (`dummy_line`, `dummy_bar`,
-`dummy_gauge`) are throwaway placeholders meant to exercise the grid
-mechanics before real telemetry charts exist — replace/remove them once
-real chart types land.
 
 ## Project file
 

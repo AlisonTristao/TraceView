@@ -5,18 +5,18 @@
 #include <QHBoxLayout>
 #include <QSize>
 #include <QStackedWidget>
-#include <QTabBar>
 #include <QToolButton>
 #include <QVBoxLayout>
 
 #include "ribbonicons.h"
+#include "ribbontabbar.h"
 
 namespace traceview {
 
 Ribbon::Ribbon(QWidget* parent) : QWidget(parent) {
     setObjectName("ribbon");
 
-    m_tabBar = new QTabBar(this);
+    m_tabBar = new RibbonTabBar(this);
     m_stack = new QStackedWidget(this);
 
     auto* layout = new QVBoxLayout(this);

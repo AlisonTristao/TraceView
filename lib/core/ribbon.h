@@ -5,14 +5,22 @@
 #include <QWidget>
 
 class QAction;
-class QTabBar;
 class QStackedWidget;
 
 namespace traceview {
 
+class RibbonTabBar;
+
 // Sizing conventions shared by every ribbon page and button group, so page
 // content built by callers doesn't each pick its own numbers.
 inline constexpr int kRibbonButtonSize = 26;
+// Fixed cell size every tab is painted at (see RibbonTabBar) — wide enough
+// to fit "Configure Project" without eliding under the default font.
+inline constexpr int kRibbonTabWidth = 170;
+inline constexpr int kRibbonTabHeight = 30;
+// Horizontal inset of the trapezoid's top edge relative to its base, on
+// each side.
+inline constexpr int kRibbonTabSlant = 10;
 // Padding inside a button group frame, and gap between buttons within it.
 inline constexpr int kRibbonGroupPadding = 4;
 // Gap between adjacent button groups on a page — deliberately larger than
@@ -52,7 +60,7 @@ signals:
     void currentTabChanged(int index);
 
 private:
-    QTabBar* m_tabBar;
+    RibbonTabBar* m_tabBar;
     QStackedWidget* m_stack;
 };
 

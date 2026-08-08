@@ -1,4 +1,4 @@
-#include "dummywidgets.h"
+#include "chartwidgets.h"
 
 #include <QPainter>
 #include <QPainterPath>

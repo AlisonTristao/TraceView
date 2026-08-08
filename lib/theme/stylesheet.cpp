@@ -165,28 +165,6 @@ QGroupBox::title {
     color: @textSecondary@;
 }
 
-QTabWidget::pane {
-    border: 1px solid @border@;
-}
-QTabBar {
-    background-color: @surfaceAlt@;
-}
-QTabBar::tab {
-    background-color: @surface@;
-    color: @textSecondary@;
-    border: 1px solid @border@;
-    padding: 3px 12px;
-}
-QTabBar::tab:selected {
-    background-color: @surfaceAlt@;
-    color: @textPrimary@;
-    border-bottom-color: @surfaceAlt@;
-}
-QTabBar::tab:disabled {
-    color: @textDisabled@;
-    background-color: @surface@;
-}
-
 QWidget#ribbon {
     background-color: @surfaceAlt@;
     border-bottom: 1px solid @border@;

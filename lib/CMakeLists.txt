@@ -47,8 +47,12 @@ add_library(traceview_dashboard STATIC
     dashboard/dashboarditem.cpp
     dashboard/dashboarditem.h
     dashboard/dashboardwidget.h
-    dashboard/dummywidgets.cpp
-    dashboard/dummywidgets.h
+    dashboard/widgets/chartwidgets.cpp
+    dashboard/widgets/chartwidgets.h
+    dashboard/widgets/serialpanelwidget.cpp
+    dashboard/widgets/serialpanelwidget.h
+    dashboard/widgets/buttonpanelwidget.cpp
+    dashboard/widgets/buttonpanelwidget.h
     dashboard/widgetregistry.cpp
     dashboard/widgetregistry.h
     dashboard/dashboardcell.cpp
@@ -85,6 +89,8 @@ add_library(traceview_ui STATIC
     core/ribbon.h
     core/ribbonicons.cpp
     core/ribbonicons.h
+    core/ribbontabbar.cpp
+    core/ribbontabbar.h
 )
 
 target_include_directories(traceview_ui PUBLIC
