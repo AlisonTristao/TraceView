@@ -40,16 +40,17 @@ void MoveWidgetCommand::undo() {
     m_grid->applyMove(m_itemId, m_fromPosition);
 }
 
-ResizeWidgetCommand::ResizeWidgetCommand(DashboardGrid* grid, const QString& itemId, const QSizeF& fromSize,
-                                          const QSizeF& toSize)
-    : QUndoCommand("Resize Widget"), m_grid(grid), m_itemId(itemId), m_fromSize(fromSize), m_toSize(toSize) {}
+ResizeWidgetCommand::ResizeWidgetCommand(DashboardGrid* grid, const QString& itemId, const QRectF& fromGeometry,
+                                          const QRectF& toGeometry)
+    : QUndoCommand("Resize Widget"), m_grid(grid), m_itemId(itemId), m_fromGeometry(fromGeometry),
+      m_toGeometry(toGeometry) {}
 
 void ResizeWidgetCommand::redo() {
-    m_grid->applyResize(m_itemId, m_toSize);
+    m_grid->applyResize(m_itemId, m_toGeometry);
 }
 
 void ResizeWidgetCommand::undo() {
-    m_grid->applyResize(m_itemId, m_fromSize);
+    m_grid->applyResize(m_itemId, m_fromGeometry);
 }
 
 ChangeWidgetTypeCommand::ChangeWidgetTypeCommand(DashboardGrid* grid, const QString& itemId,

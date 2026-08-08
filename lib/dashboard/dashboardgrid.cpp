@@ -156,10 +156,12 @@ void DashboardGrid::applyMove(const QString& itemId, const QPointF& position) {
     relayoutItem(itemId);
 }
 
-void DashboardGrid::applyResize(const QString& itemId, const QSizeF& size) {
+void DashboardGrid::applyResize(const QString& itemId, const QRectF& geometry) {
     if (DashboardItem* item = itemById(itemId)) {
-        item->width = size.width();
-        item->height = size.height();
+        item->x = geometry.x();
+        item->y = geometry.y();
+        item->width = geometry.width();
+        item->height = geometry.height();
     }
     relayoutItem(itemId);
 }
@@ -437,12 +439,13 @@ void DashboardGrid::handleDragFinished(const QString& itemId, const QPoint&) {
     relayoutItem(itemId);
 }
 
-void DashboardGrid::handleResizeStarted(const QString& itemId, const QPoint& globalPos) {
+void DashboardGrid::handleResizeStarted(const QString& itemId, const QPoint& globalPos,
+                                         DashboardCell::ResizeHandle handle) {
     const DashboardItem* item = itemById(itemId);
     if (!item) {
         return;
     }
-    m_drag = DragOp{itemId, globalPos, *item, *item, true};
+    m_drag = DragOp{itemId, globalPos, *item, *item, true, handle};
     if (DashboardCell* cell = m_cells.value(itemId)) {
         cell->raise();
     }
@@ -460,11 +463,41 @@ void DashboardGrid::handleResizeMoved(const QString& itemId, const QPoint& globa
     const double deltaWidth = deltaColumnCells / double(kGridColumns);
     const double deltaHeight = deltaRowCells / double(kGridRows);
 
+    // Edges resize a single dimension while anchoring the opposite edge;
+    // corners resize both. Left/top anchor the position too, since their
+    // opposite (right/bottom) edge is the one that must stay put.
+    using Handle = DashboardCell::ResizeHandle;
+    const bool resizesRight = m_drag->handle == Handle::Right || m_drag->handle == Handle::TopRight ||
+                               m_drag->handle == Handle::BottomRight;
+    const bool resizesLeft = m_drag->handle == Handle::Left || m_drag->handle == Handle::TopLeft ||
+                              m_drag->handle == Handle::BottomLeft;
+    const bool resizesBottom = m_drag->handle == Handle::Bottom || m_drag->handle == Handle::BottomLeft ||
+                                m_drag->handle == Handle::BottomRight;
+    const bool resizesTop = m_drag->handle == Handle::Top || m_drag->handle == Handle::TopLeft ||
+                             m_drag->handle == Handle::TopRight;
+
     DashboardItem candidate = m_drag->original;
-    candidate.width = qBound(kMinItemWidth, m_drag->original.width + deltaWidth,
-                              qMax(kMinItemWidth, 1.0 - candidate.x));
-    candidate.height = qBound(kMinItemHeight, m_drag->original.height + deltaHeight,
-                               qMax(kMinItemHeight, 1.0 - candidate.y));
+
+    if (resizesRight) {
+        candidate.width = qBound(kMinItemWidth, m_drag->original.width + deltaWidth,
+                                  qMax(kMinItemWidth, 1.0 - candidate.x));
+    } else if (resizesLeft) {
+        const double rightEdge = m_drag->original.x + m_drag->original.width;
+        candidate.width =
+            qBound(kMinItemWidth, m_drag->original.width - deltaWidth, qMax(kMinItemWidth, rightEdge));
+        candidate.x = rightEdge - candidate.width;
+    }
+
+    if (resizesBottom) {
+        candidate.height = qBound(kMinItemHeight, m_drag->original.height + deltaHeight,
+                                   qMax(kMinItemHeight, 1.0 - candidate.y));
+    } else if (resizesTop) {
+        const double bottomEdge = m_drag->original.y + m_drag->original.height;
+        candidate.height =
+            qBound(kMinItemHeight, m_drag->original.height - deltaHeight, qMax(kMinItemHeight, bottomEdge));
+        candidate.y = bottomEdge - candidate.height;
+    }
+
     m_drag->candidate = candidate;
 
     if (DashboardCell* resizedCell = m_cells.value(itemId)) {
@@ -478,10 +511,15 @@ void DashboardGrid::handleResizeFinished(const QString& itemId, const QPoint&) {
     }
     if (isPlacementValid(m_drag->candidate, itemId)) {
         if (const DashboardItem* item = itemById(itemId)) {
-            if (qAbs(item->width - m_drag->candidate.width) > kEpsilon ||
-                qAbs(item->height - m_drag->candidate.height) > kEpsilon) {
-                m_undoStack->push(new ResizeWidgetCommand(this, itemId, QSizeF(item->width, item->height),
-                                                           QSizeF(m_drag->candidate.width, m_drag->candidate.height)));
+            const QRectF fromGeometry(item->x, item->y, item->width, item->height);
+            const QRectF toGeometry(m_drag->candidate.x, m_drag->candidate.y, m_drag->candidate.width,
+                                     m_drag->candidate.height);
+            const bool changed = qAbs(fromGeometry.x() - toGeometry.x()) > kEpsilon ||
+                                  qAbs(fromGeometry.y() - toGeometry.y()) > kEpsilon ||
+                                  qAbs(fromGeometry.width() - toGeometry.width()) > kEpsilon ||
+                                  qAbs(fromGeometry.height() - toGeometry.height()) > kEpsilon;
+            if (changed) {
+                m_undoStack->push(new ResizeWidgetCommand(this, itemId, fromGeometry, toGeometry));
             }
         }
     }

@@ -10,7 +10,8 @@ namespace traceview {
 
 namespace {
 constexpr int kHeaderHeight = 24;
-constexpr int kGripSize = 14;
+constexpr int kGripSize = 14;   // hit/visual size of the 4 corner handles
+constexpr int kEdgeMargin = 6;  // hit thickness of the 4 edge handles
 } // namespace
 
 DashboardCell::DashboardCell(const QString& itemId, const QString& title, DashboardWidget* content,
@@ -55,6 +56,46 @@ QRect DashboardCell::headerRect() const {
 
 QRect DashboardCell::gripRect() const {
     return QRect(width() - kGripSize, height() - kGripSize, kGripSize, kGripSize);
+}
+
+DashboardCell::ResizeHandle DashboardCell::handleAt(const QPoint& pos) const {
+    const bool nearLeft = pos.x() <= kGripSize;
+    const bool nearRight = pos.x() >= width() - kGripSize;
+    const bool nearTop = pos.y() <= kGripSize;
+    const bool nearBottom = pos.y() >= height() - kGripSize;
+
+    // Corners (bigger squares) take priority over the thinner edge bands.
+    if (nearTop && nearLeft) return ResizeHandle::TopLeft;
+    if (nearTop && nearRight) return ResizeHandle::TopRight;
+    if (nearBottom && nearLeft) return ResizeHandle::BottomLeft;
+    if (nearBottom && nearRight) return ResizeHandle::BottomRight;
+
+    if (pos.y() <= kEdgeMargin) return ResizeHandle::Top;
+    if (pos.y() >= height() - kEdgeMargin) return ResizeHandle::Bottom;
+    if (pos.x() <= kEdgeMargin) return ResizeHandle::Left;
+    if (pos.x() >= width() - kEdgeMargin) return ResizeHandle::Right;
+
+    return ResizeHandle::None;
+}
+
+Qt::CursorShape DashboardCell::cursorForHandle(ResizeHandle handle) const {
+    switch (handle) {
+        case ResizeHandle::TopLeft:
+        case ResizeHandle::BottomRight:
+            return Qt::SizeFDiagCursor;
+        case ResizeHandle::TopRight:
+        case ResizeHandle::BottomLeft:
+            return Qt::SizeBDiagCursor;
+        case ResizeHandle::Top:
+        case ResizeHandle::Bottom:
+            return Qt::SizeVerCursor;
+        case ResizeHandle::Left:
+        case ResizeHandle::Right:
+            return Qt::SizeHorCursor;
+        case ResizeHandle::None:
+            break;
+    }
+    return Qt::ArrowCursor;
 }
 
 void DashboardCell::layoutChildren() {
@@ -122,9 +163,11 @@ void DashboardCell::mousePressEvent(QMouseEvent* event) {
     }
 
     const QPoint pos = event->position().toPoint();
-    if (gripRect().contains(pos)) {
+    const ResizeHandle handle = handleAt(pos);
+    if (handle != ResizeHandle::None) {
         m_dragMode = DragMode::Resizing;
-        emit resizeStarted(m_itemId, event->globalPosition().toPoint());
+        m_resizeHandle = handle;
+        emit resizeStarted(m_itemId, event->globalPosition().toPoint(), handle);
     } else if (headerRect().contains(pos)) {
         m_dragMode = DragMode::Moving;
         emit dragStarted(m_itemId, event->globalPosition().toPoint());
@@ -149,8 +192,9 @@ void DashboardCell::mouseMoveEvent(QMouseEvent* event) {
 
     if (m_editMode && m_selected) {
         const QPoint pos = event->position().toPoint();
-        if (gripRect().contains(pos)) {
-            setCursor(Qt::SizeFDiagCursor);
+        const ResizeHandle handle = handleAt(pos);
+        if (handle != ResizeHandle::None) {
+            setCursor(cursorForHandle(handle));
         } else if (headerRect().contains(pos)) {
             setCursor(Qt::SizeAllCursor);
         } else {
@@ -170,6 +214,7 @@ void DashboardCell::mouseReleaseEvent(QMouseEvent* event) {
     if (m_dragMode == DragMode::Resizing) {
         emit resizeFinished(m_itemId, event->globalPosition().toPoint());
         m_dragMode = DragMode::None;
+        m_resizeHandle = ResizeHandle::None;
         event->accept();
         return;
     }

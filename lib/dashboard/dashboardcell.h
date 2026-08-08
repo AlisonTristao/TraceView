@@ -20,6 +20,11 @@ class DashboardCell : public QWidget {
     Q_OBJECT
 
 public:
+    // Which part of the border was grabbed. The 4 edges resize a single
+    // dimension (anchoring the opposite edge in place); the 4 corners
+    // resize both dimensions at once.
+    enum class ResizeHandle { None, Top, Bottom, Left, Right, TopLeft, TopRight, BottomLeft, BottomRight };
+
     DashboardCell(const QString& itemId, const QString& title, DashboardWidget* content,
                   QWidget* parent = nullptr);
 
@@ -33,7 +38,7 @@ signals:
     void dragStarted(const QString& itemId, const QPoint& globalPos);
     void dragMoved(const QString& itemId, const QPoint& globalPos);
     void dragFinished(const QString& itemId, const QPoint& globalPos);
-    void resizeStarted(const QString& itemId, const QPoint& globalPos);
+    void resizeStarted(const QString& itemId, const QPoint& globalPos, DashboardCell::ResizeHandle handle);
     void resizeMoved(const QString& itemId, const QPoint& globalPos);
     void resizeFinished(const QString& itemId, const QPoint& globalPos);
     void selectRequested(const QString& itemId);
@@ -51,6 +56,8 @@ private:
 
     QRect headerRect() const;
     QRect gripRect() const;
+    ResizeHandle handleAt(const QPoint& pos) const;
+    Qt::CursorShape cursorForHandle(ResizeHandle handle) const;
     void layoutChildren();
     void updateCursor();
 
@@ -60,6 +67,7 @@ private:
     bool m_editMode = false;
     bool m_selected = false;
     DragMode m_dragMode = DragMode::None;
+    ResizeHandle m_resizeHandle = ResizeHandle::None;
 };
 
 } // namespace traceview

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QPointF>
+#include <QRectF>
 #include <QSizeF>
 #include <QString>
 #include <QUndoCommand>
@@ -58,7 +59,11 @@ private:
 
 class ResizeWidgetCommand : public QUndoCommand {
 public:
-    ResizeWidgetCommand(DashboardGrid* grid, const QString& itemId, const QSizeF& fromSize, const QSizeF& toSize);
+    // Geometry is position + size (both fractions of the canvas) since
+    // resizing from a top/left edge or corner moves the anchored position
+    // along with the size, not just the size.
+    ResizeWidgetCommand(DashboardGrid* grid, const QString& itemId, const QRectF& fromGeometry,
+                         const QRectF& toGeometry);
 
     void undo() override;
     void redo() override;
@@ -66,8 +71,8 @@ public:
 private:
     DashboardGrid* m_grid;
     QString m_itemId;
-    QSizeF m_fromSize;
-    QSizeF m_toSize;
+    QRectF m_fromGeometry;
+    QRectF m_toGeometry;
 };
 
 class ChangeWidgetTypeCommand : public QUndoCommand {

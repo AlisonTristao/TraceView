@@ -14,11 +14,11 @@
 #include <QVector>
 #include <QWidget>
 
+#include "dashboardcell.h"
 #include "dashboarditem.h"
 
 namespace traceview {
 
-class DashboardCell;
 class AddWidgetCommand;
 class RemoveWidgetCommand;
 class MoveWidgetCommand;
@@ -90,6 +90,7 @@ private:
         DashboardItem original;
         DashboardItem candidate;
         bool resizing = false;
+        DashboardCell::ResizeHandle handle = DashboardCell::ResizeHandle::None;
     };
 
     QRect usableRect() const;
@@ -108,7 +109,10 @@ private:
     void applyInsertItem(const DashboardItem& item);
     void applyRemoveItemById(const QString& itemId);
     void applyMove(const QString& itemId, const QPointF& position);
-    void applyResize(const QString& itemId, const QSizeF& size);
+    // geometry.x()/y()/width()/height() are all fractions (0.0-1.0) of the
+    // canvas, matching DashboardItem — a QRectF here since edge/corner
+    // resizing can move the anchored position, not just the size.
+    void applyResize(const QString& itemId, const QRectF& geometry);
     void applyTypeChange(const QString& itemId, const QString& typeId);
 
     bool findFreeSlot(double width, double height, double* outX, double* outY) const;
@@ -121,7 +125,7 @@ private:
     void handleDragStarted(const QString& itemId, const QPoint& globalPos);
     void handleDragMoved(const QString& itemId, const QPoint& globalPos);
     void handleDragFinished(const QString& itemId, const QPoint& globalPos);
-    void handleResizeStarted(const QString& itemId, const QPoint& globalPos);
+    void handleResizeStarted(const QString& itemId, const QPoint& globalPos, DashboardCell::ResizeHandle handle);
     void handleResizeMoved(const QString& itemId, const QPoint& globalPos);
     void handleResizeFinished(const QString& itemId, const QPoint& globalPos);
     void handleSelectRequested(const QString& itemId);
