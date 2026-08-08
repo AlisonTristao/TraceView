@@ -26,6 +26,7 @@ DashboardCell::DashboardCell(const QString& itemId, const QString& title, Dashbo
     m_removeButton->setVisible(false);
     connect(m_removeButton, &QPushButton::clicked, this, [this]() { emit removeRequested(m_itemId); });
 
+    setMouseTracking(true);
     layoutChildren();
 }
 
@@ -35,6 +36,14 @@ void DashboardCell::setEditMode(bool enabled) {
     }
     m_editMode = enabled;
     m_removeButton->setVisible(enabled);
+    // The content widget spans the full cell below the header, which
+    // includes the resize grip's corner. Without this, clicks/hover on the
+    // grip land on the content widget instead of us, so drag/resize misses
+    // the mouse press (and hover cursor feedback) entirely.
+    m_content->setAttribute(Qt::WA_TransparentForMouseEvents, enabled);
+    if (!enabled) {
+        unsetCursor();
+    }
     layoutChildren();
     update();
 }
@@ -117,7 +126,23 @@ void DashboardCell::mouseMoveEvent(QMouseEvent* event) {
         event->accept();
         return;
     }
+
+    if (m_editMode) {
+        const QPoint pos = event->position().toPoint();
+        if (gripRect().contains(pos)) {
+            setCursor(Qt::SizeFDiagCursor);
+        } else if (headerRect().contains(pos)) {
+            setCursor(Qt::SizeAllCursor);
+        } else {
+            unsetCursor();
+        }
+    }
     QWidget::mouseMoveEvent(event);
+}
+
+void DashboardCell::leaveEvent(QEvent* event) {
+    unsetCursor();
+    QWidget::leaveEvent(event);
 }
 
 void DashboardCell::mouseReleaseEvent(QMouseEvent* event) {

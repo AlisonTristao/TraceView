@@ -26,6 +26,9 @@ qrc_*.cpp
 CMakeLists.txt.user
 CMakeLists.txt.user.*
 
+# Dev script virtual envs (see scripts/_bootstrap.py)
+scripts/.venv-*/
+
 # IDE
 .vs/
 .vscode/

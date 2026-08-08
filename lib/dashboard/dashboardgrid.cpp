@@ -15,14 +15,14 @@ constexpr int kDefaultColumns = 12;
 constexpr int kDefaultRows = 8;
 constexpr int kMargin = 8;
 constexpr int kSpacing = 6;
-constexpr int kRowHeight = 110;
+constexpr int kMinCellSize = 32;
 constexpr int kDefaultItemRowSpan = 2;
 constexpr int kDefaultItemColumnSpan = 3;
 } // namespace
 
 DashboardGrid::DashboardGrid(QWidget* parent)
     : QWidget(parent), m_columns(kDefaultColumns), m_rows(kDefaultRows) {
-    setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
+    setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
     connect(&ThemeManager::instance(), &ThemeManager::themeChanged, this,
             [this](const ThemePalette&) { update(); });
@@ -117,8 +117,9 @@ QSize DashboardGrid::minimumSizeHint() const {
 }
 
 QSize DashboardGrid::contentSize() const {
-    const int height = 2 * kMargin + m_rows * kRowHeight + qMax(0, m_rows - 1) * kSpacing;
-    return QSize(2 * kMargin + m_columns * 40, height);
+    const int width = 2 * kMargin + m_columns * kMinCellSize + qMax(0, m_columns - 1) * kSpacing;
+    const int height = 2 * kMargin + m_rows * kMinCellSize + qMax(0, m_rows - 1) * kSpacing;
+    return QSize(width, height);
 }
 
 void DashboardGrid::resizeEvent(QResizeEvent* event) {
@@ -152,20 +153,26 @@ qreal DashboardGrid::cellWidth() const {
     return qMax(1.0, usable / m_columns);
 }
 
+qreal DashboardGrid::cellHeight() const {
+    const qreal usable = height() - 2.0 * kMargin - qMax(0, m_rows - 1) * kSpacing;
+    return qMax(1.0, usable / m_rows);
+}
+
 qreal DashboardGrid::columnStep() const {
     return cellWidth() + kSpacing;
 }
 
-int DashboardGrid::rowStep() const {
-    return kRowHeight + kSpacing;
+qreal DashboardGrid::rowStep() const {
+    return cellHeight() + kSpacing;
 }
 
 QRect DashboardGrid::cellRect(const DashboardItem& item) const {
     const qreal cw = cellWidth();
+    const qreal ch = cellHeight();
     const int x = kMargin + qRound(item.column * columnStep());
-    const int y = kMargin + item.row * rowStep();
+    const int y = kMargin + qRound(item.row * rowStep());
     const int w = qRound(item.columnSpan * cw + qMax(0, item.columnSpan - 1) * kSpacing);
-    const int h = item.rowSpan * kRowHeight + qMax(0, item.rowSpan - 1) * kSpacing;
+    const int h = qRound(item.rowSpan * ch + qMax(0, item.rowSpan - 1) * kSpacing);
     return QRect(x, y, w, h);
 }
 

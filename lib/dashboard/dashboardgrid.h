@@ -21,8 +21,9 @@ class DashboardCell;
 // item occupying a row/column rect. Cells are positioned manually (no
 // QLayout) so they can be dragged/resized with the mouse in edit mode.
 //
-// Columns are width-driven (recomputed from the widget's current width, so
-// they respond to window resizing); rows use a fixed pixel height.
+// Both columns and rows are driven by the widget's current size (divided
+// evenly), so the grid always exactly fills the visible area — it never
+// scrolls.
 class DashboardGrid : public QWidget {
 public:
     explicit DashboardGrid(QWidget* parent = nullptr);
@@ -54,8 +55,9 @@ private:
     };
 
     qreal cellWidth() const;
+    qreal cellHeight() const;
     qreal columnStep() const;
-    int rowStep() const;
+    qreal rowStep() const;
     QRect cellRect(const DashboardItem& item) const;
     QSize contentSize() const;
 

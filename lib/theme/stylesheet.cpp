@@ -63,6 +63,30 @@ QToolBar {
     spacing: 4px;
 }
 
+QToolButton {
+    background-color: transparent;
+    color: @textPrimary@;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    padding: 3px 8px;
+}
+QToolButton:hover {
+    background-color: @surfaceAlt@;
+    border-color: @border@;
+}
+QToolButton:pressed {
+    background-color: @accentPressed@;
+    color: @background@;
+}
+QToolButton:checked {
+    background-color: @accent@;
+    color: @background@;
+    border-color: @accent@;
+}
+QToolButton:disabled {
+    color: @textDisabled@;
+}
+
 QStatusBar {
     background-color: @surface@;
     border-top: 1px solid @border@;
@@ -127,12 +151,16 @@ QTabBar::tab {
     background-color: @surface@;
     color: @textSecondary@;
     border: 1px solid @border@;
-    padding: 5px 12px;
+    padding: 3px 12px;
 }
 QTabBar::tab:selected {
     background-color: @background@;
     color: @textPrimary@;
     border-bottom-color: @background@;
+}
+QTabBar::tab:disabled {
+    color: @textDisabled@;
+    background-color: @surface@;
 }
 
 QScrollBar:vertical {

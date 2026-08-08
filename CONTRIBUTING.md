@@ -69,11 +69,15 @@ TraceView uses [Semantic Versioning](https://semver.org/) (`MAJOR.MINOR.PATCH`):
 Release flow:
 
 1. Cut `release/x.y.z` from `develop`. Bump `CMakeLists.txt` project version,
-   update the changelog, fix only release-blocking bugs on this branch.
-2. Merge `release/x.y.z` into `main`, tag `vx.y.z` on `main`.
-3. Merge `release/x.y.z` back into `develop` so the version bump and any
+   turn `CHANGELOG.md`'s `[Unreleased]` section into `[x.y.z] - YYYY-MM-DD`
+   and start a fresh empty `[Unreleased]` section, fix only
+   release-blocking bugs on this branch.
+2. Run `python scripts/check_style.py` and `python scripts/smoke_test.py`
+   (see "Project scripts" below) and fix whatever they flag.
+3. Merge `release/x.y.z` into `main`, tag `vx.y.z` on `main`.
+4. Merge `release/x.y.z` back into `develop` so the version bump and any
    last-minute fixes aren't lost.
-4. Delete `release/x.y.z`.
+5. Delete `release/x.y.z`.
 
 Hotfixes follow the same pattern starting from `main` instead of `develop`.
 
@@ -90,6 +94,27 @@ Hotfixes follow the same pattern starting from `main` instead of `develop`.
   the Bally ecosystem.
 - No new abstractions or configuration options without a concrete use case;
   avoid speculative generality.
+
+## Project scripts
+
+Two Python scripts under `scripts/` help keep `develop` releasable. Neither
+runs automatically (no git hook, no CI) — run them by hand before cutting a
+release, or any time you want a sanity check after a change. Each
+bootstraps its own virtual environment and installs whatever it needs on
+first run (see `scripts/_bootstrap.py`), so a plain `python` on `PATH` is
+enough to get started:
+
+- `python scripts/check_style.py` — checks the C++ source against the
+  "Code style" rules above: runs `clang-format` in check mode if it's on
+  `PATH`, plus heuristic checks for `PascalCase` classes, `k`-prefixed
+  constants, and `m_`-prefixed member variables. Best-effort (regex-based,
+  not a real C++ parser) — it doesn't check function/parameter naming.
+- `python scripts/smoke_test.py` — builds the project and launches
+  `TraceView.exe` to confirm it doesn't crash on startup. This is a build
+  + launch smoke test, not a UI regression suite — it doesn't click
+  anything inside the app. For now, verifying dashboard behavior (drag,
+  resize, save/load) after a change is still the manual walkthrough in
+  [docs/DASHBOARD.md](docs/DASHBOARD.md).
 
 ## Scope of "features"
 

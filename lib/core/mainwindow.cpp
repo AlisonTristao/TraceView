@@ -2,17 +2,23 @@
 
 #include <QActionGroup>
 #include <QFileDialog>
+#include <QHBoxLayout>
+#include <QIcon>
 #include <QInputDialog>
 #include <QMenu>
 #include <QMenuBar>
 #include <QMessageBox>
-#include <QScrollArea>
+#include <QPainter>
+#include <QPixmap>
 #include <QStringList>
-#include <QToolBar>
+#include <QToolButton>
+#include <QVBoxLayout>
 
+#include "aboutdialog.h"
 #include "dashboard/dashboardgrid.h"
 #include "dashboard/widgetregistry.h"
 #include "project/projectstore.h"
+#include "ribbon.h"
 #include "traceview/thememanager.h"
 #include "traceview/version.h"
 
@@ -20,6 +26,48 @@ namespace traceview {
 
 namespace {
 constexpr const char* kProjectFileFilter = "TraceView Project (*.tvproj)";
+constexpr int kRibbonIconSize = 16;
+
+// Flat, hand-drawn (not font-glyph) icons so they render crisply and
+// consistently at small toolbar sizes, colored from the active theme.
+
+QIcon makeGridIcon(const QColor& color) {
+    QPixmap pixmap(kRibbonIconSize, kRibbonIconSize);
+    pixmap.fill(Qt::transparent);
+
+    QPainter painter(&pixmap);
+    painter.setRenderHint(QPainter::Antialiasing);
+    painter.setPen(Qt::NoPen);
+    painter.setBrush(color);
+
+    const int gap = 2;
+    const int cellSize = (kRibbonIconSize - 3 * gap) / 2;
+    for (int row = 0; row < 2; ++row) {
+        for (int col = 0; col < 2; ++col) {
+            const int x = gap + col * (cellSize + gap);
+            const int y = gap + row * (cellSize + gap);
+            painter.drawRoundedRect(QRect(x, y, cellSize, cellSize), 1, 1);
+        }
+    }
+    return QIcon(pixmap);
+}
+
+QIcon makePlusIcon(const QColor& color) {
+    QPixmap pixmap(kRibbonIconSize, kRibbonIconSize);
+    pixmap.fill(Qt::transparent);
+
+    QPainter painter(&pixmap);
+    painter.setRenderHint(QPainter::Antialiasing);
+    QPen pen(color, 2);
+    pen.setCapStyle(Qt::RoundCap);
+    painter.setPen(pen);
+
+    const int margin = kRibbonIconSize / 4;
+    const int mid = kRibbonIconSize / 2;
+    painter.drawLine(mid, margin, mid, kRibbonIconSize - margin);
+    painter.drawLine(margin, mid, kRibbonIconSize - margin, mid);
+    return QIcon(pixmap);
+}
 } // namespace
 
 MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
@@ -27,17 +75,27 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     resize(1024, 640);
 
     buildMenus();
-    buildToolbar();
 
     m_dashboardGrid = new DashboardGrid(this);
 
-    auto* scrollArea = new QScrollArea(this);
-    scrollArea->setWidgetResizable(true);
-    scrollArea->setWidget(m_dashboardGrid);
-    setCentralWidget(scrollArea);
+    Ribbon* ribbon = buildRibbon();
+
+    auto* central = new QWidget(this);
+    auto* centralLayout = new QVBoxLayout(central);
+    centralLayout->setContentsMargins(0, 0, 0, 0);
+    centralLayout->setSpacing(0);
+    centralLayout->addWidget(ribbon);
+    centralLayout->addWidget(m_dashboardGrid, /*stretch=*/1);
+    setCentralWidget(central);
 }
 
 void MainWindow::buildMenus() {
+    auto* fileMenu = menuBar()->addMenu("&File");
+    auto* saveAction = fileMenu->addAction("&Save Project");
+    connect(saveAction, &QAction::triggered, this, &MainWindow::onSaveProject);
+    auto* openAction = fileMenu->addAction("&Open Project");
+    connect(openAction, &QAction::triggered, this, &MainWindow::onOpenProject);
+
     auto* viewMenu = menuBar()->addMenu("&View");
     auto* themeMenu = viewMenu->addMenu("&Theme");
 
@@ -56,27 +114,56 @@ void MainWindow::buildMenus() {
             ThemeManager::instance().setTheme(id);
         });
     }
+
+    auto* aboutAction = menuBar()->addAction("&About");
+    connect(aboutAction, &QAction::triggered, this, &MainWindow::onAbout);
 }
 
-void MainWindow::buildToolbar() {
-    auto* toolbar = addToolBar("Dashboard");
-    toolbar->setMovable(false);
+Ribbon* MainWindow::buildRibbon() {
+    m_configureAction = new QAction("Configure Layout", this);
+    m_configureAction->setCheckable(true);
+    connect(m_configureAction, &QAction::toggled, this, &MainWindow::onConfigureToggled);
 
-    auto* configureAction = toolbar->addAction("Configure Layout");
-    configureAction->setCheckable(true);
-    connect(configureAction, &QAction::toggled, this, &MainWindow::onConfigureToggled);
-
-    m_addWidgetAction = toolbar->addAction("Add Widget");
+    m_addWidgetAction = new QAction("Add Widget", this);
     m_addWidgetAction->setEnabled(false);
     connect(m_addWidgetAction, &QAction::triggered, this, &MainWindow::onAddWidget);
 
-    toolbar->addSeparator();
+    updateRibbonIcons();
+    connect(&ThemeManager::instance(), &ThemeManager::themeChanged, this,
+            [this](const ThemePalette&) { updateRibbonIcons(); });
 
-    auto* saveAction = toolbar->addAction("Save Project");
-    connect(saveAction, &QAction::triggered, this, &MainWindow::onSaveProject);
+    constexpr int kRibbonPageHeight = 30;
 
-    auto* openAction = toolbar->addAction("Open Project");
-    connect(openAction, &QAction::triggered, this, &MainWindow::onOpenProject);
+    auto* configurePage = new QWidget(this);
+    configurePage->setFixedHeight(kRibbonPageHeight);
+    auto* configureLayout = new QHBoxLayout(configurePage);
+    configureLayout->setContentsMargins(6, 2, 6, 2);
+    configureLayout->setSpacing(4);
+
+    const auto makeToolButton = [configurePage](QAction* action) {
+        auto* button = new QToolButton(configurePage);
+        button->setDefaultAction(action);
+        button->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+        button->setIconSize(QSize(kRibbonIconSize, kRibbonIconSize));
+        return button;
+    };
+    configureLayout->addWidget(makeToolButton(m_configureAction));
+    configureLayout->addWidget(makeToolButton(m_addWidgetAction));
+    configureLayout->addStretch();
+
+    auto* runPage = new QWidget(this);
+    runPage->setFixedHeight(kRibbonPageHeight);
+
+    auto* ribbon = new Ribbon(this);
+    ribbon->addTab("Configure Project", configurePage);
+    ribbon->addTab("Run", runPage, /*enabled=*/false, "Serial port configuration — coming soon");
+    return ribbon;
+}
+
+void MainWindow::updateRibbonIcons() {
+    const QColor color = ThemeManager::instance().currentTheme().textPrimary;
+    m_configureAction->setIcon(makeGridIcon(color));
+    m_addWidgetAction->setIcon(makePlusIcon(color));
 }
 
 void MainWindow::onConfigureToggled(bool enabled) {
@@ -140,6 +227,11 @@ void MainWindow::onOpenProject() {
     }
 
     m_dashboardGrid->fromJson(ProjectStore::instance().section("dashboard"));
+}
+
+void MainWindow::onAbout() {
+    AboutDialog dialog(this);
+    dialog.exec();
 }
 
 } // namespace traceview

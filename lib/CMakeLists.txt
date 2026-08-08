@@ -5,8 +5,12 @@ configure_file(
 )
 
 add_library(traceview_core STATIC
+    core/aboutdialog.cpp
+    core/aboutdialog.h
     core/mainwindow.cpp
     core/mainwindow.h
+    core/ribbon.cpp
+    core/ribbon.h
     dashboard/dashboarditem.cpp
     dashboard/dashboarditem.h
     dashboard/dashboardwidget.h
