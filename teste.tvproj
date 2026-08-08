@@ -1,0 +1,19 @@
+{
+    "dashboard": {
+        "columns": 12,
+        "items": [
+            {
+                "column": 0,
+                "columnSpan": 5,
+                "id": "fc281f75-c309-4673-bfdd-1509f0ab8d33",
+                "row": 0,
+                "rowSpan": 2,
+                "type": "dummy_bar"
+            }
+        ],
+        "rows": 8
+    },
+    "traceview": {
+        "formatVersion": 1
+    }
+}

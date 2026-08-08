@@ -7,6 +7,19 @@ configure_file(
 add_library(traceview_core STATIC
     core/mainwindow.cpp
     core/mainwindow.h
+    dashboard/dashboarditem.cpp
+    dashboard/dashboarditem.h
+    dashboard/dashboardwidget.h
+    dashboard/dummywidgets.cpp
+    dashboard/dummywidgets.h
+    dashboard/widgetregistry.cpp
+    dashboard/widgetregistry.h
+    dashboard/dashboardcell.cpp
+    dashboard/dashboardcell.h
+    dashboard/dashboardgrid.cpp
+    dashboard/dashboardgrid.h
+    project/projectstore.cpp
+    project/projectstore.h
     theme/palettes.cpp
     theme/palettes.h
     theme/stylesheet.cpp
