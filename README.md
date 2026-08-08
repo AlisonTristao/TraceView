@@ -22,6 +22,14 @@ cmake -B build -S .
 cmake --build build
 ```
 
+If Qt6 isn't auto-discovered (e.g. a Qt Online Installer setup on Windows),
+point CMake at the kit explicitly:
+
+```sh
+cmake -B build -S . -G Ninja -DCMAKE_PREFIX_PATH="C:/Qt/6.9.2/mingw_64"
+cmake --build build
+```
+
 ## License
 
 [MIT](LICENSE)
