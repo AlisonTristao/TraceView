@@ -2,6 +2,7 @@
 
 #include <QFile>
 #include <QJsonDocument>
+#include <QSaveFile>
 
 namespace traceview {
 
@@ -35,13 +36,18 @@ bool ProjectStore::saveAs(const QString& filePath) {
     meta["formatVersion"] = kFormatVersion;
     m_root["traceview"] = meta;
 
-    QFile file(filePath);
+    QSaveFile file(filePath);
     if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
         m_lastError = file.errorString();
         return false;
     }
 
     file.write(QJsonDocument(m_root).toJson(QJsonDocument::Indented));
+    if (!file.commit()) {
+        m_lastError = file.errorString();
+        return false;
+    }
+
     m_currentPath = filePath;
     return true;
 }

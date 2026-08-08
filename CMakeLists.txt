@@ -40,7 +40,8 @@ target_include_directories(TraceView PRIVATE include)
 target_link_libraries(TraceView PRIVATE
     Qt6::Widgets
     Qt6::SerialPort
-    traceview_core
+    traceview_ui
+    traceview_theme
 )
 
 set_target_properties(TraceView PROPERTIES

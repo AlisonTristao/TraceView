@@ -60,15 +60,18 @@ PRIORIDADE MÉDIA
     kRibbonButtonSize passaram a viver em ribbon.h como convenções
     compartilhadas de tamanho.
 
-[ ] 4. Trocar QFile por QSaveFile no ProjectStore::saveAs
+[x] 4. Trocar QFile por QSaveFile no ProjectStore::saveAs
     lib/project/projectstore.cpp, ProjectStore::saveAs() (~linha 38) escreve
     direto no arquivo final — se o processo cair no meio da escrita, o
     .tvproj corrompe. QSaveFile escreve em um arquivo temporário e faz commit
     atômico no final.
     formatVersion já existe e está correto (ProjectStore::saveAs, campo
     "traceview.formatVersion") — só a parte da escrita em si precisa mudar.
+    Feito: saveAs() agora usa QSaveFile — commit() faz a troca atômica do
+    arquivo temporário pelo final; falha de commit() também seta lastError().
+    load() continua com QFile (leitura não precisa de atomicidade).
 
-[ ] 5. Separar traceview_core em targets por camada no CMake
+[x] 5. Separar traceview_core em targets por camada no CMake
     lib/CMakeLists.txt hoje junta numa única lib estática (traceview_core):
     core/ (MainWindow, Ribbon, AboutDialog — camada de UI) + dashboard/ +
     project/ + theme/.
@@ -77,6 +80,17 @@ PRIORIDADE MÉDIA
     Não é urgente por si só, mas é barato fazer agora enquanto o projeto é
     pequeno (~2500 linhas) — evita que qualquer parte da aplicação possa
     depender livremente de qualquer outra.
+    Feito: traceview_core virou 4 libs estáticas em lib/CMakeLists.txt —
+    traceview_theme (sem dependências internas), traceview_project (sem
+    dependências internas), traceview_dashboard (depende PRIVATE de
+    traceview_theme, usado só nos .cpp de pintura) e traceview_ui (depende
+    PRIVATE de traceview_dashboard/traceview_project/traceview_theme).
+    Dependências internas linkadas como PRIVATE — só o alvo que de fato
+    inclui o header ganha acesso, e nada depende livremente de traceview_ui.
+    CMakeLists.txt do topo agora linka TraceView com traceview_ui +
+    traceview_theme (main.cpp usa ThemeManager diretamente). Build completo
+    validado com cmake --preset windows-mingw-qt +
+    cmake --build --preset windows-mingw-qt.
 
 ================================================================================
 OBSERVAR / SEM AÇÃO IMEDIATA (agir quando o gatilho descrito acontecer)
