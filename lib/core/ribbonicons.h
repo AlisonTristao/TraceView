@@ -14,7 +14,6 @@ inline constexpr int kRibbonIconSize = 16;
 QIcon makeSelectIcon(const QColor& color);
 QIcon makePlusIcon(const QColor& color);
 QIcon makeMinusIcon(const QColor& color);
-QIcon makePencilIcon(const QColor& color);
 QIcon makeArrowIcon(const QColor& color, bool pointingLeft);
 
 } // namespace traceview

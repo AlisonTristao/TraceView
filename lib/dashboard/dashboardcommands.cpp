@@ -53,6 +53,30 @@ void ResizeWidgetCommand::undo() {
     m_grid->applyResize(m_itemId, m_fromGeometry);
 }
 
+RenameWidgetCommand::RenameWidgetCommand(DashboardGrid* grid, const QString& itemId, const QString& fromName,
+                                          const QString& toName)
+    : QUndoCommand("Rename Widget"), m_grid(grid), m_itemId(itemId), m_fromName(fromName), m_toName(toName) {}
+
+void RenameWidgetCommand::redo() {
+    m_grid->applyRename(m_itemId, m_toName);
+}
+
+void RenameWidgetCommand::undo() {
+    m_grid->applyRename(m_itemId, m_fromName);
+}
+
+SetItemKeyCommand::SetItemKeyCommand(DashboardGrid* grid, const QString& itemId, const QString& fromKey,
+                                      const QString& toKey)
+    : QUndoCommand("Set Widget Key"), m_grid(grid), m_itemId(itemId), m_fromKey(fromKey), m_toKey(toKey) {}
+
+void SetItemKeyCommand::redo() {
+    m_grid->applySetKey(m_itemId, m_toKey);
+}
+
+void SetItemKeyCommand::undo() {
+    m_grid->applySetKey(m_itemId, m_fromKey);
+}
+
 ChangeWidgetTypeCommand::ChangeWidgetTypeCommand(DashboardGrid* grid, const QString& itemId,
                                                   const QString& fromTypeId, const QString& toTypeId)
     : QUndoCommand("Change Widget Type"), m_grid(grid), m_itemId(itemId), m_fromTypeId(fromTypeId),

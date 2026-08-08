@@ -3,18 +3,18 @@
 #include <QActionGroup>
 #include <QFileDialog>
 #include <QHBoxLayout>
-#include <QInputDialog>
 #include <QLabel>
 #include <QMenu>
 #include <QMenuBar>
 #include <QMessageBox>
-#include <QStringList>
+#include <QStatusBar>
 #include <QVBoxLayout>
 
 #include "aboutdialog.h"
 #include "dashboard/dashboardgrid.h"
 #include "dashboard/widgetregistry.h"
 #include "project/projectstore.h"
+#include "propertiespanel.h"
 #include "ribbon.h"
 #include "ribbonicons.h"
 #include "traceview/thememanager.h"
@@ -35,13 +35,25 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     m_dashboardGrid = new DashboardGrid(this);
 
     Ribbon* ribbon = buildRibbon();
+    buildPropertiesPanel();
+
+    // Canvas + properties panel side by side, both below the ribbon — so
+    // the panel is exactly as tall as the canvas instead of a QDockWidget,
+    // which spans the full window height (menu bar to status bar) and
+    // would sit alongside the ribbon too, not just the canvas.
+    auto* contentRow = new QWidget(this);
+    auto* contentLayout = new QHBoxLayout(contentRow);
+    contentLayout->setContentsMargins(0, 0, 0, 0);
+    contentLayout->setSpacing(0);
+    contentLayout->addWidget(m_dashboardGrid, /*stretch=*/1);
+    contentLayout->addWidget(m_propertiesPanel);
 
     auto* central = new QWidget(this);
     auto* centralLayout = new QVBoxLayout(central);
     centralLayout->setContentsMargins(0, 0, 0, 0);
     centralLayout->setSpacing(0);
     centralLayout->addWidget(ribbon);
-    centralLayout->addWidget(m_dashboardGrid, /*stretch=*/1);
+    centralLayout->addWidget(contentRow, /*stretch=*/1);
     setCentralWidget(central);
 }
 
@@ -94,10 +106,6 @@ Ribbon* MainWindow::buildRibbon() {
     m_removeAction->setEnabled(false);
     connect(m_removeAction, &QAction::triggered, m_dashboardGrid, &DashboardGrid::removeSelected);
 
-    m_editTypeAction = new QAction("Edit", this);
-    m_editTypeAction->setEnabled(false);
-    connect(m_editTypeAction, &QAction::triggered, this, &MainWindow::onEditSelectedType);
-
     // createUndoAction()/createRedoAction() wire up triggered/enabled state
     // (and a dynamic "Undo <command text>" label) directly from the stack —
     // no manual canUndo()/canRedo() syncing needed.
@@ -105,6 +113,7 @@ Ribbon* MainWindow::buildRibbon() {
     m_redoAction = m_dashboardGrid->undoStack()->createRedoAction(this, "Redo");
 
     connect(m_dashboardGrid, &DashboardGrid::selectionChanged, this, &MainWindow::onSelectionChanged);
+    connect(m_dashboardGrid->undoStack(), &QUndoStack::indexChanged, this, &MainWindow::refreshPropertiesPanel);
 
     updateRibbonIcons();
     connect(&ThemeManager::instance(), &ThemeManager::themeChanged, this,
@@ -127,8 +136,8 @@ Ribbon* MainWindow::buildRibbon() {
     configureLayout->setContentsMargins(kRibbonPageMarginH, kRibbonPageMarginV, kRibbonPageMarginH, kRibbonPageMarginV);
     configureLayout->setSpacing(kRibbonGroupSpacing);
 
-    configureLayout->addWidget(Ribbon::createButtonGroup(
-        configurePage, {m_positionAction, m_addWidgetAction, m_removeAction, m_editTypeAction}));
+    configureLayout->addWidget(
+        Ribbon::createButtonGroup(configurePage, {m_positionAction, m_addWidgetAction, m_removeAction}));
     configureLayout->addWidget(Ribbon::createButtonGroup(configurePage, {m_undoAction, m_redoAction}));
     configureLayout->addStretch();
 
@@ -141,6 +150,22 @@ Ribbon* MainWindow::buildRibbon() {
     return ribbon;
 }
 
+void MainWindow::buildPropertiesPanel() {
+    m_propertiesPanel = new PropertiesPanel(this);
+    m_propertiesPanel->setAvailableTypes(WidgetRegistry::instance().availableTypes());
+
+    connect(m_propertiesPanel, &PropertiesPanel::typeChangeRequested, this,
+            &MainWindow::onPanelTypeChangeRequested);
+    connect(m_propertiesPanel, &PropertiesPanel::nameChangeRequested, this,
+            &MainWindow::onPanelNameChangeRequested);
+    connect(m_propertiesPanel, &PropertiesPanel::keyChangeRequested, this, &MainWindow::onPanelKeyChangeRequested);
+
+    // Only relevant while editing the layout — matches m_addWidgetAction/
+    // m_positionAction, which also start disabled until the Configure
+    // Project tab is active (see onRibbonTabChanged).
+    m_propertiesPanel->hide();
+}
+
 void MainWindow::updateRibbonIcons() {
     const ThemePalette& palette = ThemeManager::instance().currentTheme();
     m_positionAction->setIcon(makeSelectIcon(palette.textPrimary));
@@ -149,8 +174,6 @@ void MainWindow::updateRibbonIcons() {
     m_addWidgetAction->setToolTip("Add widget");
     m_removeAction->setIcon(makeMinusIcon(palette.danger));
     m_removeAction->setToolTip("Remove selected widget");
-    m_editTypeAction->setIcon(makePencilIcon(palette.accent));
-    m_editTypeAction->setToolTip("Edit selected widget's type");
     // No explicit setToolTip(): QAction falls back to text(), which
     // QUndoStack keeps updated with the pending command's description
     // (e.g. "Undo Move Widget").
@@ -163,61 +186,53 @@ void MainWindow::onRibbonTabChanged(int index) {
     m_dashboardGrid->setEditMode(m_configureTabActive);
     m_addWidgetAction->setEnabled(m_configureTabActive);
     m_positionAction->setEnabled(m_configureTabActive);
+    m_propertiesPanel->setVisible(m_configureTabActive);
     updateSelectionActions();
 }
 
 void MainWindow::onSelectionChanged(const QString&) {
     updateSelectionActions();
+    refreshPropertiesPanel();
 }
 
 void MainWindow::updateSelectionActions() {
     const bool enabled = m_configureTabActive && !m_dashboardGrid->selectedItemId().isEmpty();
     m_removeAction->setEnabled(enabled);
-    m_editTypeAction->setEnabled(enabled);
 }
 
-bool MainWindow::pickWidgetType(const QString& title, const QString& preselectedTypeId, QString* outTypeId) {
-    QStringList displayNames;
-    QStringList typeIds;
-    int preselectedIndex = 0;
-    for (const WidgetTypeInfo& info : WidgetRegistry::instance().availableTypes()) {
-        if (info.typeId == preselectedTypeId) {
-            preselectedIndex = typeIds.size();
-        }
-        displayNames << info.displayName;
-        typeIds << info.typeId;
-    }
-    if (displayNames.isEmpty()) {
-        return false;
-    }
-
-    bool ok = false;
-    const QString chosen =
-        QInputDialog::getItem(this, title, "Type:", displayNames, preselectedIndex, false, &ok);
-    if (!ok) {
-        return false;
-    }
-
-    const int index = displayNames.indexOf(chosen);
-    if (index < 0) {
-        return false;
-    }
-    *outTypeId = typeIds[index];
-    return true;
+void MainWindow::refreshPropertiesPanel() {
+    const bool hasSelection = !m_dashboardGrid->selectedItemId().isEmpty();
+    m_propertiesPanel->setSelection(hasSelection, m_dashboardGrid->selectedItemTypeId(),
+                                     m_dashboardGrid->selectedItemDisplayName(), m_dashboardGrid->selectedItemKey());
 }
 
 void MainWindow::onAddWidget() {
-    QString typeId;
-    if (pickWidgetType("Add Widget", QString(), &typeId)) {
-        m_dashboardGrid->addItem(typeId);
+    // Drops in the first registered type; DashboardGrid::addItem() selects
+    // it immediately, so the properties panel comes up already showing it
+    // — the type (and name/key) is picked there, not in a dialog upfront.
+    const QVector<WidgetTypeInfo> types = WidgetRegistry::instance().availableTypes();
+    if (types.isEmpty()) {
+        return;
     }
+    m_dashboardGrid->addItem(types.first().typeId);
 }
 
-void MainWindow::onEditSelectedType() {
-    QString typeId;
-    if (pickWidgetType("Edit Widget Type", m_dashboardGrid->selectedItemTypeId(), &typeId)) {
-        m_dashboardGrid->changeSelectedType(typeId);
+void MainWindow::onPanelTypeChangeRequested(const QString& typeId) {
+    m_dashboardGrid->changeSelectedType(typeId);
+}
+
+void MainWindow::onPanelNameChangeRequested(const QString& name) {
+    m_dashboardGrid->renameSelected(name);
+}
+
+void MainWindow::onPanelKeyChangeRequested(const QString& key) {
+    if (!m_dashboardGrid->setSelectedKey(key)) {
+        statusBar()->showMessage(QString("Key \"%1\" is already used by another widget.").arg(key), 4000);
     }
+    // Resyncs the field either way: on success to the committed value (a
+    // no-op visually), on rejection to snap the text back to what's
+    // actually stored instead of leaving the rejected input showing.
+    refreshPropertiesPanel();
 }
 
 void MainWindow::onSaveProject() {

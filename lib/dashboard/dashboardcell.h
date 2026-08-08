@@ -30,6 +30,7 @@ public:
 
     QString itemId() const { return m_itemId; }
 
+    void setTitle(const QString& title);
     void setEditMode(bool enabled);
     void setSelected(bool selected);
     bool isSelected() const { return m_selected; }

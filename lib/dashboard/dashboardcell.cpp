@@ -23,6 +23,14 @@ DashboardCell::DashboardCell(const QString& itemId, const QString& title, Dashbo
     layoutChildren();
 }
 
+void DashboardCell::setTitle(const QString& title) {
+    if (m_title == title) {
+        return;
+    }
+    m_title = title;
+    update();
+}
+
 void DashboardCell::setEditMode(bool enabled) {
     if (m_editMode == enabled) {
         return;

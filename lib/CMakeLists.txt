@@ -79,6 +79,8 @@ add_library(traceview_ui STATIC
     core/aboutdialog.h
     core/mainwindow.cpp
     core/mainwindow.h
+    core/propertiespanel.cpp
+    core/propertiespanel.h
     core/ribbon.cpp
     core/ribbon.h
     core/ribbonicons.cpp

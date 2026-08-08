@@ -14,6 +14,13 @@ namespace traceview {
 struct DashboardItem {
     QString id;       // QUuid, stable identity across the item's lifetime
     QString typeId;   // key into WidgetRegistry
+    QString name;     // user-editable display name; empty falls back to the
+                       // type's default display name (see displayNameFor())
+    QString key;      // user-editable, must be unique when non-empty (see
+                       // DashboardGrid::isKeyAvailable); the future handle
+                       // external data updates will target, independent of
+                       // `id` (which stays internal/auto-generated) and of
+                       // `name`/`typeId` (either of which can change freely)
 
     double x = 0.0;
     double y = 0.0;

@@ -96,7 +96,7 @@ PRIORIDADE MÉDIA
 OBSERVAR / SEM AÇÃO IMEDIATA (agir quando o gatilho descrito acontecer)
 ================================================================================
 
-[ ] 6. Painel de propriedades (QDockWidget) em vez de diálogos modais
+[x] 6. Painel de propriedades (QDockWidget) em vez de diálogos modais
     Hoje a única propriedade editável (tipo do widget) usa QInputDialog
     modal: MainWindow::pickWidgetType() em lib/core/mainwindow.cpp
     (~linhas 326-354). Está OK por enquanto — só existe uma propriedade.
@@ -104,6 +104,19 @@ OBSERVAR / SEM AÇÃO IMEDIATA (agir quando o gatilho descrito acontecer)
     adicionada (título, cor, etc.), não criar um segundo diálogo modal —
     ir direto para QDockWidget + PropertiesPanel reagindo a
     DashboardGrid::selectionChanged.
+    Feito: gatilho disparado ao adicionar "name" (título editável) e "key"
+    (identificador lógico para futura vinculação de dados externos) como
+    2ª/3ª propriedades editáveis. Criado PropertiesPanel
+    (lib/core/propertiespanel.h/.cpp) — QComboBox (tipo) + 2x QLineEdit
+    (nome/chave) num QDockWidget ancorado à direita no MainWindow. Painel é
+    "burro" como Ribbon: MainWindow popula via setSelection()/
+    setAvailableTypes() e reage aos sinais *ChangeRequested chamando
+    DashboardGrid::changeSelectedType/renameSelected/setSelectedKey.
+    Sincronizado via DashboardGrid::selectionChanged + QUndoStack::
+    indexChanged (undo/redo de uma edição de propriedade também atualiza o
+    painel). pickWidgetType() (QInputDialog modal) continua existindo só
+    para o fluxo de criação em "Add Widget" — não é edição de propriedade
+    de um item já existente, fica fora do escopo deste item.
 
 [ ] 7. Testes com Qt Test
     Hoje não há nenhum teste (nenhum CMakeLists referencia Qt6::Test, nenhum

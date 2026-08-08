@@ -75,6 +75,35 @@ private:
     QRectF m_toGeometry;
 };
 
+class RenameWidgetCommand : public QUndoCommand {
+public:
+    RenameWidgetCommand(DashboardGrid* grid, const QString& itemId, const QString& fromName,
+                         const QString& toName);
+
+    void undo() override;
+    void redo() override;
+
+private:
+    DashboardGrid* m_grid;
+    QString m_itemId;
+    QString m_fromName;
+    QString m_toName;
+};
+
+class SetItemKeyCommand : public QUndoCommand {
+public:
+    SetItemKeyCommand(DashboardGrid* grid, const QString& itemId, const QString& fromKey, const QString& toKey);
+
+    void undo() override;
+    void redo() override;
+
+private:
+    DashboardGrid* m_grid;
+    QString m_itemId;
+    QString m_fromKey;
+    QString m_toKey;
+};
+
 class ChangeWidgetTypeCommand : public QUndoCommand {
 public:
     ChangeWidgetTypeCommand(DashboardGrid* grid, const QString& itemId, const QString& fromTypeId,

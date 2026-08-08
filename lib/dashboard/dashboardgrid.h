@@ -24,6 +24,8 @@ class RemoveWidgetCommand;
 class MoveWidgetCommand;
 class ResizeWidgetCommand;
 class ChangeWidgetTypeCommand;
+class RenameWidgetCommand;
+class SetItemKeyCommand;
 
 // A Bootstrap-like grid of DashboardWidgets: each item's position/size is
 // stored as fractions (0.0-1.0) of the canvas area, so layouts stay
@@ -45,6 +47,8 @@ class DashboardGrid : public QWidget {
     friend class MoveWidgetCommand;
     friend class ResizeWidgetCommand;
     friend class ChangeWidgetTypeCommand;
+    friend class RenameWidgetCommand;
+    friend class SetItemKeyCommand;
 
 public:
     explicit DashboardGrid(QWidget* parent = nullptr);
@@ -56,6 +60,12 @@ public:
     QString selectedItemId() const { return m_selectedItemId; }
     // Type of the selected item, or empty if nothing is selected.
     QString selectedItemTypeId() const;
+    // Effective display name of the selected item (its custom name, or the
+    // type's default if none was set), or empty if nothing is selected.
+    QString selectedItemDisplayName() const;
+    // The selected item's user-defined key (may be empty), or empty if
+    // nothing is selected.
+    QString selectedItemKey() const;
 
     // Auto-places a new item of `typeId` in the first free cell.
     void addItem(const QString& typeId);
@@ -65,6 +75,15 @@ public:
     // keeping its position/size. No-op if nothing is selected, the type is
     // unknown, or unchanged.
     void changeSelectedType(const QString& newTypeId);
+    // Sets the selected item's custom display name (pass an empty string to
+    // revert to the type's default name). No-op if nothing is selected or
+    // the name is unchanged.
+    void renameSelected(const QString& newName);
+    // Sets the selected item's key (pass an empty string to clear it).
+    // Returns false without applying anything if nothing is selected or
+    // `newKey` is already used by another item; returns true (including as
+    // a no-op) otherwise.
+    bool setSelectedKey(const QString& newKey);
 
     QUndoStack* undoStack() const { return m_undoStack; }
 
@@ -114,6 +133,14 @@ private:
     // resizing can move the anchored position, not just the size.
     void applyResize(const QString& itemId, const QRectF& geometry);
     void applyTypeChange(const QString& itemId, const QString& typeId);
+    void applyRename(const QString& itemId, const QString& name);
+    void applySetKey(const QString& itemId, const QString& key);
+
+    // Custom name if set, otherwise the type's registered display name.
+    QString displayNameFor(const DashboardItem& item) const;
+    // True if no item other than `excludeId` already has `key` (an empty
+    // key is always available — it just means "no key set").
+    bool isKeyAvailable(const QString& key, const QString& excludeId) const;
 
     bool findFreeSlot(double width, double height, double* outX, double* outY) const;
     bool isPlacementValid(const DashboardItem& candidate, const QString& excludeId) const;

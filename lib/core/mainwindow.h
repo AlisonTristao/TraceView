@@ -8,6 +8,7 @@ class QAction;
 namespace traceview {
 
 class DashboardGrid;
+class PropertiesPanel;
 class Ribbon;
 
 class MainWindow : public QMainWindow {
@@ -19,26 +20,29 @@ public:
 private:
     void buildMenus();
     Ribbon* buildRibbon();
+    void buildPropertiesPanel();
     void updateRibbonIcons();
-
-    // Shows the "pick a widget type" dialog, preselecting `preselectedTypeId`
-    // (pass an empty string for none). Returns false if cancelled.
-    bool pickWidgetType(const QString& title, const QString& preselectedTypeId, QString* outTypeId);
 
     void onRibbonTabChanged(int index);
     void onSelectionChanged(const QString& itemId);
     void updateSelectionActions();
+    // Pushes the current selection's type/name/key into m_propertiesPanel.
+    // Called on selectionChanged and whenever the undo stack moves, since a
+    // property edit (or its undo/redo) doesn't otherwise touch selection.
+    void refreshPropertiesPanel();
     void onAddWidget();
-    void onEditSelectedType();
+    void onPanelTypeChangeRequested(const QString& typeId);
+    void onPanelNameChangeRequested(const QString& name);
+    void onPanelKeyChangeRequested(const QString& key);
     void onSaveProject();
     void onOpenProject();
     void onAbout();
 
     DashboardGrid* m_dashboardGrid = nullptr;
+    PropertiesPanel* m_propertiesPanel = nullptr;
     QAction* m_positionAction = nullptr;
     QAction* m_addWidgetAction = nullptr;
     QAction* m_removeAction = nullptr;
-    QAction* m_editTypeAction = nullptr;
     QAction* m_undoAction = nullptr;
     QAction* m_redoAction = nullptr;
     int m_configureTabIndex = -1;

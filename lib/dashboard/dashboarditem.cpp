@@ -6,6 +6,8 @@ QJsonObject dashboardItemToJson(const DashboardItem& item) {
     QJsonObject object;
     object["id"] = item.id;
     object["type"] = item.typeId;
+    object["name"] = item.name;
+    object["key"] = item.key;
     object["x"] = item.x;
     object["y"] = item.y;
     object["width"] = item.width;
@@ -22,6 +24,10 @@ DashboardItem dashboardItemFromJson(const QJsonObject& object, bool* ok) {
 
     item.id = object["id"].toString();
     item.typeId = object["type"].toString();
+    // Absent in projects saved before renaming existed; empty just means
+    // "use the type's default display name" (see displayNameFor()).
+    item.name = object.value("name").toString();
+    item.key = object.value("key").toString();
     item.x = qBound(0.0, object["x"].toDouble(0.0), 1.0);
     item.y = qBound(0.0, object["y"].toDouble(0.0), 1.0);
     item.width = qBound(0.0, object["width"].toDouble(0.0), 1.0);

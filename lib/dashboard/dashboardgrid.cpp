@@ -77,6 +77,20 @@ QString DashboardGrid::selectedItemTypeId() const {
     return QString();
 }
 
+QString DashboardGrid::selectedItemDisplayName() const {
+    if (const DashboardItem* item = itemById(m_selectedItemId)) {
+        return displayNameFor(*item);
+    }
+    return QString();
+}
+
+QString DashboardGrid::selectedItemKey() const {
+    if (const DashboardItem* item = itemById(m_selectedItemId)) {
+        return item->key;
+    }
+    return QString();
+}
+
 void DashboardGrid::addItem(const QString& typeId) {
     const double width = kDefaultItemWidth;
     const double height = kDefaultItemHeight;
@@ -97,6 +111,9 @@ void DashboardGrid::addItem(const QString& typeId) {
     item.height = height;
 
     m_undoStack->push(new AddWidgetCommand(this, item));
+    // Selected right away so the properties panel comes up already showing
+    // it — type/name/key are picked there now, not in an upfront dialog.
+    selectItem(item.id);
 }
 
 void DashboardGrid::removeSelected() {
@@ -133,6 +150,37 @@ void DashboardGrid::changeSelectedType(const QString& newTypeId) {
     }
 
     m_undoStack->push(new ChangeWidgetTypeCommand(this, m_selectedItemId, item->typeId, newTypeId));
+}
+
+void DashboardGrid::renameSelected(const QString& newName) {
+    if (m_selectedItemId.isEmpty()) {
+        return;
+    }
+    const DashboardItem* item = itemById(m_selectedItemId);
+    if (!item || item->name == newName) {
+        return;
+    }
+
+    m_undoStack->push(new RenameWidgetCommand(this, m_selectedItemId, item->name, newName));
+}
+
+bool DashboardGrid::setSelectedKey(const QString& newKey) {
+    if (m_selectedItemId.isEmpty()) {
+        return false;
+    }
+    const DashboardItem* item = itemById(m_selectedItemId);
+    if (!item) {
+        return false;
+    }
+    if (item->key == newKey) {
+        return true;
+    }
+    if (!isKeyAvailable(newKey, m_selectedItemId)) {
+        return false;
+    }
+
+    m_undoStack->push(new SetItemKeyCommand(this, m_selectedItemId, item->key, newKey));
+    return true;
 }
 
 void DashboardGrid::applyInsertItem(const DashboardItem& item) {
@@ -180,6 +228,39 @@ void DashboardGrid::applyTypeChange(const QString& itemId, const QString& typeId
             newCell->setSelected(true);
         }
     }
+}
+
+void DashboardGrid::applyRename(const QString& itemId, const QString& name) {
+    DashboardItem* item = itemById(itemId);
+    if (!item) {
+        return;
+    }
+    item->name = name;
+    if (DashboardCell* cell = m_cells.value(itemId)) {
+        cell->setTitle(displayNameFor(*item));
+    }
+}
+
+void DashboardGrid::applySetKey(const QString& itemId, const QString& key) {
+    if (DashboardItem* item = itemById(itemId)) {
+        item->key = key;
+    }
+}
+
+QString DashboardGrid::displayNameFor(const DashboardItem& item) const {
+    return item.name.isEmpty() ? WidgetRegistry::instance().displayName(item.typeId) : item.name;
+}
+
+bool DashboardGrid::isKeyAvailable(const QString& key, const QString& excludeId) const {
+    if (key.isEmpty()) {
+        return true;
+    }
+    for (const DashboardItem& item : m_items) {
+        if (item.id != excludeId && item.key == key) {
+            return false;
+        }
+    }
+    return true;
 }
 
 QJsonObject DashboardGrid::toJson() const {
@@ -372,8 +453,7 @@ DashboardCell* DashboardGrid::createCell(const DashboardItem& item) {
         return nullptr;
     }
 
-    const QString title = WidgetRegistry::instance().displayName(item.typeId);
-    auto* cell = new DashboardCell(item.id, title, content, this);
+    auto* cell = new DashboardCell(item.id, displayNameFor(item), content, this);
     cell->setEditMode(m_editMode);
     cell->setGeometry(itemRect(item));
     cell->show();

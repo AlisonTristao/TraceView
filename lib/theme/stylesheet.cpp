@@ -131,6 +131,27 @@ QLineEdit:focus, QComboBox:focus {
     border: 1px solid @accent@;
 }
 
+QComboBox::drop-down {
+    subcontrol-origin: padding;
+    subcontrol-position: top right;
+    width: 18px;
+    border-left: 1px solid @border@;
+    border-top-right-radius: 4px;
+    border-bottom-right-radius: 4px;
+}
+QComboBox::down-arrow {
+    width: 8px;
+    height: 8px;
+}
+QComboBox QAbstractItemView {
+    background-color: @surface@;
+    color: @textPrimary@;
+    border: 1px solid @border@;
+    outline: none;
+    selection-background-color: @accent@;
+    selection-color: @background@;
+}
+
 QGroupBox {
     border: 1px solid @border@;
     border-radius: 4px;
