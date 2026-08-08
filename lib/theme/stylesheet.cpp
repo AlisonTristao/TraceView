@@ -68,7 +68,7 @@ QToolButton {
     color: @textPrimary@;
     border: 1px solid transparent;
     border-radius: 4px;
-    padding: 3px 8px;
+    padding: 2px;
 }
 QToolButton:hover {
     background-color: @surfaceAlt@;
@@ -172,6 +172,11 @@ QWidget#ribbon {
 }
 QWidget#ribbonPage {
     background-color: @surfaceAlt@;
+}
+QFrame#ribbonGroup {
+    background-color: transparent;
+    border: 1px solid @border@;
+    border-radius: 4px;
 }
 
 QScrollBar:vertical {

@@ -4,6 +4,7 @@
 #include <QString>
 
 class QAction;
+class QSpinBox;
 
 namespace traceview {
 
@@ -26,19 +27,25 @@ private:
     bool pickWidgetType(const QString& title, const QString& preselectedTypeId, QString* outTypeId);
 
     void onRibbonTabChanged(int index);
-    void onRemoveModeToggled(bool enabled);
-    void onTypeEditModeToggled(bool enabled);
+    void onSelectionChanged(const QString& itemId);
+    void onHistoryChanged();
+    void updateSelectionActions();
     void onAddWidget();
-    void onWidgetTypeEditRequested(const QString& itemId, const QString& currentTypeId);
+    void onEditSelectedType();
     void onSaveProject();
     void onOpenProject();
     void onAbout();
 
     DashboardGrid* m_dashboardGrid = nullptr;
+    QAction* m_positionAction = nullptr;
     QAction* m_addWidgetAction = nullptr;
     QAction* m_removeAction = nullptr;
     QAction* m_editTypeAction = nullptr;
+    QAction* m_undoAction = nullptr;
+    QAction* m_redoAction = nullptr;
+    QSpinBox* m_precisionSpin = nullptr;
     int m_configureTabIndex = -1;
+    bool m_configureTabActive = false;
 };
 
 } // namespace traceview

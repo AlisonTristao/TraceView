@@ -33,28 +33,18 @@ void DashboardCell::setEditMode(bool enabled) {
     // the mouse press (and hover cursor feedback) entirely.
     m_content->setAttribute(Qt::WA_TransparentForMouseEvents, enabled);
     if (!enabled) {
-        m_removeMode = false;
-        m_typeEditMode = false;
+        m_selected = false;
     }
     updateCursor();
     layoutChildren();
     update();
 }
 
-void DashboardCell::setRemoveMode(bool enabled) {
-    if (m_removeMode == enabled) {
+void DashboardCell::setSelected(bool selected) {
+    if (m_selected == selected) {
         return;
     }
-    m_removeMode = enabled;
-    updateCursor();
-    update();
-}
-
-void DashboardCell::setTypeEditMode(bool enabled) {
-    if (m_typeEditMode == enabled) {
-        return;
-    }
-    m_typeEditMode = enabled;
+    m_selected = selected;
     updateCursor();
     update();
 }
@@ -76,10 +66,10 @@ void DashboardCell::layoutChildren() {
 }
 
 void DashboardCell::updateCursor() {
-    if (m_removeMode || m_typeEditMode) {
-        setCursor(Qt::PointingHandCursor);
+    if (m_editMode && !m_selected) {
+        setCursor(Qt::PointingHandCursor); // click to select
     } else {
-        unsetCursor();
+        unsetCursor(); // selected: hover logic below drives it; not editing: default
     }
 }
 
@@ -92,15 +82,8 @@ void DashboardCell::paintEvent(QPaintEvent*) {
     QPainter painter(this);
     const ThemePalette& palette = ThemeManager::instance().currentTheme();
 
-    QColor borderColor = palette.borderStrong;
-    int borderWidth = 1;
-    if (m_removeMode) {
-        borderColor = palette.danger;
-        borderWidth = 2;
-    } else if (m_typeEditMode) {
-        borderColor = palette.accent;
-        borderWidth = 2;
-    }
+    const QColor borderColor = m_selected ? palette.accent : palette.borderStrong;
+    const int borderWidth = m_selected ? 2 : 1;
     painter.setPen(QPen(borderColor, borderWidth));
     painter.setBrush(Qt::NoBrush);
     painter.drawRect(rect().adjusted(0, 0, -1, -1));
@@ -109,13 +92,12 @@ void DashboardCell::paintEvent(QPaintEvent*) {
         return;
     }
 
-    painter.fillRect(headerRect(), palette.surfaceAlt);
-    painter.setPen(palette.textPrimary);
+    painter.fillRect(headerRect(), m_selected ? palette.accent : palette.surfaceAlt);
+    painter.setPen(m_selected ? palette.background : palette.textPrimary);
     painter.drawText(headerRect().adjusted(6, 0, -6, 0), Qt::AlignVCenter | Qt::AlignLeft, m_title);
 
-    if (m_removeMode || m_typeEditMode) {
-        // Resize doesn't apply while in a click-to-act mode; only the grip
-        // is hidden, the header stays visible for identification.
+    if (!m_selected) {
+        // Unselected cells are identifiable but not interactive — no grip.
         return;
     }
 
@@ -133,13 +115,8 @@ void DashboardCell::mousePressEvent(QMouseEvent* event) {
         return;
     }
 
-    if (m_removeMode) {
-        emit removeRequested(m_itemId);
-        event->accept();
-        return;
-    }
-    if (m_typeEditMode) {
-        emit typeEditRequested(m_itemId);
+    if (!m_selected) {
+        emit selectRequested(m_itemId);
         event->accept();
         return;
     }
@@ -170,7 +147,7 @@ void DashboardCell::mouseMoveEvent(QMouseEvent* event) {
         return;
     }
 
-    if (m_editMode && !m_removeMode && !m_typeEditMode) {
+    if (m_editMode && m_selected) {
         const QPoint pos = event->position().toPoint();
         if (gripRect().contains(pos)) {
             setCursor(Qt::SizeFDiagCursor);
@@ -200,7 +177,7 @@ void DashboardCell::mouseReleaseEvent(QMouseEvent* event) {
 }
 
 void DashboardCell::leaveEvent(QEvent* event) {
-    if (!m_removeMode && !m_typeEditMode) {
+    if (m_selected) {
         unsetCursor();
     }
     QWidget::leaveEvent(event);

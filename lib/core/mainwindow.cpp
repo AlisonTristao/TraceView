@@ -2,6 +2,7 @@
 
 #include <QActionGroup>
 #include <QFileDialog>
+#include <QFrame>
 #include <QHBoxLayout>
 #include <QIcon>
 #include <QInputDialog>
@@ -12,6 +13,8 @@
 #include <QPainter>
 #include <QPixmap>
 #include <QPolygon>
+#include <QSignalBlocker>
+#include <QSpinBox>
 #include <QStringList>
 #include <QToolButton>
 #include <QVBoxLayout>
@@ -32,6 +35,30 @@ constexpr int kRibbonIconSize = 16;
 
 // Flat, hand-drawn (not font-glyph) icons so they render crisply and
 // consistently at small toolbar sizes, colored from the active theme.
+
+QIcon makeSelectIcon(const QColor& color) {
+    QPixmap pixmap(kRibbonIconSize, kRibbonIconSize);
+    pixmap.fill(Qt::transparent);
+
+    QPainter painter(&pixmap);
+    painter.setRenderHint(QPainter::Antialiasing);
+    QPen pen(color, 2);
+    pen.setCapStyle(Qt::RoundCap);
+    painter.setPen(pen);
+
+    const int m = 2;
+    const int len = 4;
+    const int n = kRibbonIconSize;
+    painter.drawLine(m, m + len, m, m);
+    painter.drawLine(m, m, m + len, m);
+    painter.drawLine(n - m - len, m, n - m, m);
+    painter.drawLine(n - m, m, n - m, m + len);
+    painter.drawLine(m, n - m - len, m, n - m);
+    painter.drawLine(m, n - m, m + len, n - m);
+    painter.drawLine(n - m - len, n - m, n - m, n - m);
+    painter.drawLine(n - m, n - m, n - m, n - m - len);
+    return QIcon(pixmap);
+}
 
 QIcon makePlusIcon(const QColor& color) {
     QPixmap pixmap(kRibbonIconSize, kRibbonIconSize);
@@ -80,6 +107,30 @@ QIcon makePencilIcon(const QColor& color) {
     QPolygon tip;
     tip << QPoint(kRibbonIconSize - 6, 3) << QPoint(kRibbonIconSize - 3, 3) << QPoint(kRibbonIconSize - 3, 6);
     painter.drawPolygon(tip);
+    return QIcon(pixmap);
+}
+
+QIcon makeArrowIcon(const QColor& color, bool pointingLeft) {
+    QPixmap pixmap(kRibbonIconSize, kRibbonIconSize);
+    pixmap.fill(Qt::transparent);
+
+    QPainter painter(&pixmap);
+    painter.setRenderHint(QPainter::Antialiasing);
+    QPen pen(color, 2);
+    pen.setCapStyle(Qt::RoundCap);
+    pen.setJoinStyle(Qt::RoundJoin);
+    painter.setPen(pen);
+
+    const int margin = 3;
+    QPolygon arrow;
+    if (pointingLeft) {
+        arrow << QPoint(kRibbonIconSize - margin, margin) << QPoint(margin, kRibbonIconSize / 2)
+              << QPoint(kRibbonIconSize - margin, kRibbonIconSize - margin);
+    } else {
+        arrow << QPoint(margin, margin) << QPoint(kRibbonIconSize - margin, kRibbonIconSize / 2)
+              << QPoint(margin, kRibbonIconSize - margin);
+    }
+    painter.drawPolyline(arrow);
     return QIcon(pixmap);
 }
 } // namespace
@@ -134,28 +185,44 @@ void MainWindow::buildMenus() {
 }
 
 Ribbon* MainWindow::buildRibbon() {
+    m_positionAction = new QAction("Position", this);
+    m_positionAction->setCheckable(true);
+    m_positionAction->setChecked(true);
+    m_positionAction->setEnabled(false);
+    connect(m_positionAction, &QAction::toggled, this, [this](bool checked) {
+        if (!checked) {
+            m_positionAction->setChecked(true); // selection is always the active tool while editing
+        }
+    });
+
     m_addWidgetAction = new QAction("Add", this);
     m_addWidgetAction->setEnabled(false);
     connect(m_addWidgetAction, &QAction::triggered, this, &MainWindow::onAddWidget);
 
     m_removeAction = new QAction("Remove", this);
-    m_removeAction->setCheckable(true);
     m_removeAction->setEnabled(false);
-    connect(m_removeAction, &QAction::toggled, this, &MainWindow::onRemoveModeToggled);
+    connect(m_removeAction, &QAction::triggered, m_dashboardGrid, &DashboardGrid::removeSelected);
 
     m_editTypeAction = new QAction("Edit", this);
-    m_editTypeAction->setCheckable(true);
     m_editTypeAction->setEnabled(false);
-    connect(m_editTypeAction, &QAction::toggled, this, &MainWindow::onTypeEditModeToggled);
+    connect(m_editTypeAction, &QAction::triggered, this, &MainWindow::onEditSelectedType);
 
-    connect(m_dashboardGrid, &DashboardGrid::widgetTypeEditRequested, this,
-            &MainWindow::onWidgetTypeEditRequested);
+    m_undoAction = new QAction("Undo", this);
+    m_undoAction->setEnabled(false);
+    connect(m_undoAction, &QAction::triggered, m_dashboardGrid, &DashboardGrid::undo);
+
+    m_redoAction = new QAction("Redo", this);
+    m_redoAction->setEnabled(false);
+    connect(m_redoAction, &QAction::triggered, m_dashboardGrid, &DashboardGrid::redo);
+
+    connect(m_dashboardGrid, &DashboardGrid::selectionChanged, this, &MainWindow::onSelectionChanged);
+    connect(m_dashboardGrid, &DashboardGrid::historyChanged, this, &MainWindow::onHistoryChanged);
 
     updateRibbonIcons();
     connect(&ThemeManager::instance(), &ThemeManager::themeChanged, this,
             [this](const ThemePalette&) { updateRibbonIcons(); });
 
-    constexpr int kRibbonPageHeight = 30;
+    constexpr int kRibbonPageHeight = 40;
 
     auto* runPage = new QWidget(this);
     runPage->setObjectName("ribbonPage");
@@ -172,18 +239,62 @@ Ribbon* MainWindow::buildRibbon() {
     configurePage->setFixedHeight(kRibbonPageHeight);
     auto* configureLayout = new QHBoxLayout(configurePage);
     configureLayout->setContentsMargins(6, 2, 6, 2);
-    configureLayout->setSpacing(4);
+    configureLayout->setSpacing(6);
 
-    const auto makeToolButton = [configurePage](QAction* action) {
-        auto* button = new QToolButton(configurePage);
+    constexpr int kRibbonButtonSize = 24;
+    const auto makeToolButton = [](QWidget* parent, QAction* action) {
+        auto* button = new QToolButton(parent);
         button->setDefaultAction(action);
-        button->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+        button->setToolButtonStyle(Qt::ToolButtonIconOnly);
         button->setIconSize(QSize(kRibbonIconSize, kRibbonIconSize));
+        button->setFixedSize(kRibbonButtonSize, kRibbonButtonSize);
         return button;
     };
-    configureLayout->addWidget(makeToolButton(m_addWidgetAction));
-    configureLayout->addWidget(makeToolButton(m_removeAction));
-    configureLayout->addWidget(makeToolButton(m_editTypeAction));
+    const auto makeGroup = [](QWidget* parent, QHBoxLayout** outLayout) {
+        auto* frame = new QFrame(parent);
+        frame->setObjectName("ribbonGroup");
+        frame->setFixedHeight(kRibbonPageHeight - 4); // matches configureLayout's 2px top/bottom margins
+        auto* layout = new QHBoxLayout(frame);
+        layout->setContentsMargins(3, 3, 3, 3); // symmetric padding around the buttons on all 4 sides
+        layout->setSpacing(3);
+        *outLayout = layout;
+        return frame;
+    };
+
+    QHBoxLayout* toolsLayout = nullptr;
+    auto* toolsGroup = makeGroup(configurePage, &toolsLayout);
+    toolsLayout->addWidget(makeToolButton(toolsGroup, m_positionAction));
+    toolsLayout->addWidget(makeToolButton(toolsGroup, m_addWidgetAction));
+    toolsLayout->addWidget(makeToolButton(toolsGroup, m_removeAction));
+    toolsLayout->addWidget(makeToolButton(toolsGroup, m_editTypeAction));
+
+    QHBoxLayout* historyLayout = nullptr;
+    auto* historyGroup = makeGroup(configurePage, &historyLayout);
+    historyLayout->addWidget(makeToolButton(historyGroup, m_undoAction));
+    historyLayout->addWidget(makeToolButton(historyGroup, m_redoAction));
+
+    QHBoxLayout* precisionLayout = nullptr;
+    auto* precisionGroup = makeGroup(configurePage, &precisionLayout);
+
+    m_precisionSpin = new QSpinBox(precisionGroup);
+    m_precisionSpin->setRange(1, 64);
+    m_precisionSpin->setValue(m_dashboardGrid->precision());
+    m_precisionSpin->setMinimumWidth(88); // generous on purpose — was clipping "64" before
+    m_precisionSpin->setFixedHeight(kRibbonPageHeight - 12); // roomier than the icon buttons so the number isn't clipped
+    m_precisionSpin->setToolTip("Grid precision — snap granularity for positioning/resizing (cells are always square)");
+
+    precisionLayout->addWidget(new QLabel("Grid", precisionGroup));
+    precisionLayout->addWidget(m_precisionSpin);
+
+    connect(m_precisionSpin, &QSpinBox::valueChanged, m_dashboardGrid, &DashboardGrid::setPrecision);
+    connect(m_dashboardGrid, &DashboardGrid::precisionChanged, this, [this](int precision) {
+        const QSignalBlocker blockPrecision(m_precisionSpin);
+        m_precisionSpin->setValue(precision);
+    });
+
+    configureLayout->addWidget(toolsGroup);
+    configureLayout->addWidget(historyGroup);
+    configureLayout->addWidget(precisionGroup);
     configureLayout->addStretch();
 
     auto* ribbon = new Ribbon(this);
@@ -197,35 +308,42 @@ Ribbon* MainWindow::buildRibbon() {
 
 void MainWindow::updateRibbonIcons() {
     const ThemePalette& palette = ThemeManager::instance().currentTheme();
+    m_positionAction->setIcon(makeSelectIcon(palette.textPrimary));
+    m_positionAction->setToolTip("Position — select a widget to move/resize it");
     m_addWidgetAction->setIcon(makePlusIcon(palette.textPrimary));
+    m_addWidgetAction->setToolTip("Add widget");
     m_removeAction->setIcon(makeMinusIcon(palette.danger));
+    m_removeAction->setToolTip("Remove selected widget");
     m_editTypeAction->setIcon(makePencilIcon(palette.accent));
+    m_editTypeAction->setToolTip("Edit selected widget's type");
+    m_undoAction->setIcon(makeArrowIcon(palette.textPrimary, /*pointingLeft=*/true));
+    m_undoAction->setToolTip("Undo");
+    m_redoAction->setIcon(makeArrowIcon(palette.textPrimary, /*pointingLeft=*/false));
+    m_redoAction->setToolTip("Redo");
 }
 
 void MainWindow::onRibbonTabChanged(int index) {
-    const bool editable = index == m_configureTabIndex;
-    m_dashboardGrid->setEditMode(editable);
-    m_addWidgetAction->setEnabled(editable);
-    m_removeAction->setEnabled(editable);
-    m_editTypeAction->setEnabled(editable);
-    if (!editable) {
-        m_removeAction->setChecked(false);
-        m_editTypeAction->setChecked(false);
-    }
+    m_configureTabActive = index == m_configureTabIndex;
+    m_dashboardGrid->setEditMode(m_configureTabActive);
+    m_addWidgetAction->setEnabled(m_configureTabActive);
+    m_positionAction->setEnabled(m_configureTabActive);
+    m_precisionSpin->setEnabled(m_configureTabActive);
+    updateSelectionActions();
 }
 
-void MainWindow::onRemoveModeToggled(bool enabled) {
-    if (enabled) {
-        m_editTypeAction->setChecked(false);
-    }
-    m_dashboardGrid->setRemoveMode(enabled);
+void MainWindow::onSelectionChanged(const QString&) {
+    updateSelectionActions();
 }
 
-void MainWindow::onTypeEditModeToggled(bool enabled) {
-    if (enabled) {
-        m_removeAction->setChecked(false);
-    }
-    m_dashboardGrid->setTypeEditMode(enabled);
+void MainWindow::onHistoryChanged() {
+    m_undoAction->setEnabled(m_dashboardGrid->canUndo());
+    m_redoAction->setEnabled(m_dashboardGrid->canRedo());
+}
+
+void MainWindow::updateSelectionActions() {
+    const bool enabled = m_configureTabActive && !m_dashboardGrid->selectedItemId().isEmpty();
+    m_removeAction->setEnabled(enabled);
+    m_editTypeAction->setEnabled(enabled);
 }
 
 bool MainWindow::pickWidgetType(const QString& title, const QString& preselectedTypeId, QString* outTypeId) {
@@ -265,10 +383,10 @@ void MainWindow::onAddWidget() {
     }
 }
 
-void MainWindow::onWidgetTypeEditRequested(const QString& itemId, const QString& currentTypeId) {
+void MainWindow::onEditSelectedType() {
     QString typeId;
-    if (pickWidgetType("Edit Widget Type", currentTypeId, &typeId)) {
-        m_dashboardGrid->changeItemType(itemId, typeId);
+    if (pickWidgetType("Edit Widget Type", m_dashboardGrid->selectedItemTypeId(), &typeId)) {
+        m_dashboardGrid->changeSelectedType(typeId);
     }
 }
 
