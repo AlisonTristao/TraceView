@@ -11,6 +11,8 @@ add_library(traceview_core STATIC
     core/mainwindow.h
     core/ribbon.cpp
     core/ribbon.h
+    core/ribbonicons.cpp
+    core/ribbonicons.h
     dashboard/dashboarditem.cpp
     dashboard/dashboarditem.h
     dashboard/dashboardwidget.h

@@ -1,8 +1,15 @@
 #include "ribbon.h"
 
+#include <QAction>
+#include <QFrame>
+#include <QHBoxLayout>
+#include <QSize>
 #include <QStackedWidget>
 #include <QTabBar>
+#include <QToolButton>
 #include <QVBoxLayout>
+
+#include "ribbonicons.h"
 
 namespace traceview {
 
@@ -30,6 +37,26 @@ int Ribbon::addTab(const QString& label, QWidget* page, bool enabled, const QStr
         m_tabBar->setTabToolTip(index, toolTip);
     }
     return index;
+}
+
+QWidget* Ribbon::createButtonGroup(QWidget* parent, const QList<QAction*>& actions) {
+    auto* frame = new QFrame(parent);
+    frame->setObjectName("ribbonGroup");
+    frame->setFixedHeight(kRibbonPageHeight - 4); // matches ribbon pages' 2px top/bottom margins
+    auto* layout = new QHBoxLayout(frame);
+    layout->setContentsMargins(3, 3, 3, 3); // symmetric padding around the buttons on all 4 sides
+    layout->setSpacing(3);
+
+    for (QAction* action : actions) {
+        auto* button = new QToolButton(frame);
+        button->setDefaultAction(action);
+        button->setToolButtonStyle(Qt::ToolButtonIconOnly);
+        button->setIconSize(QSize(kRibbonIconSize, kRibbonIconSize));
+        button->setFixedSize(kRibbonButtonSize, kRibbonButtonSize);
+        layout->addWidget(button);
+    }
+
+    return frame;
 }
 
 } // namespace traceview

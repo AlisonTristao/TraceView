@@ -2,19 +2,13 @@
 
 #include <QActionGroup>
 #include <QFileDialog>
-#include <QFrame>
 #include <QHBoxLayout>
-#include <QIcon>
 #include <QInputDialog>
 #include <QLabel>
 #include <QMenu>
 #include <QMenuBar>
 #include <QMessageBox>
-#include <QPainter>
-#include <QPixmap>
-#include <QPolygon>
 #include <QStringList>
-#include <QToolButton>
 #include <QVBoxLayout>
 
 #include "aboutdialog.h"
@@ -22,6 +16,7 @@
 #include "dashboard/widgetregistry.h"
 #include "project/projectstore.h"
 #include "ribbon.h"
+#include "ribbonicons.h"
 #include "traceview/thememanager.h"
 #include "traceview/version.h"
 
@@ -29,108 +24,6 @@ namespace traceview {
 
 namespace {
 constexpr const char* kProjectFileFilter = "TraceView Project (*.tvproj)";
-constexpr int kRibbonIconSize = 16;
-
-// Flat, hand-drawn (not font-glyph) icons so they render crisply and
-// consistently at small toolbar sizes, colored from the active theme.
-
-QIcon makeSelectIcon(const QColor& color) {
-    QPixmap pixmap(kRibbonIconSize, kRibbonIconSize);
-    pixmap.fill(Qt::transparent);
-
-    QPainter painter(&pixmap);
-    painter.setRenderHint(QPainter::Antialiasing);
-    QPen pen(color, 2);
-    pen.setCapStyle(Qt::RoundCap);
-    painter.setPen(pen);
-
-    const int m = 2;
-    const int len = 4;
-    const int n = kRibbonIconSize;
-    painter.drawLine(m, m + len, m, m);
-    painter.drawLine(m, m, m + len, m);
-    painter.drawLine(n - m - len, m, n - m, m);
-    painter.drawLine(n - m, m, n - m, m + len);
-    painter.drawLine(m, n - m - len, m, n - m);
-    painter.drawLine(m, n - m, m + len, n - m);
-    painter.drawLine(n - m - len, n - m, n - m, n - m);
-    painter.drawLine(n - m, n - m, n - m, n - m - len);
-    return QIcon(pixmap);
-}
-
-QIcon makePlusIcon(const QColor& color) {
-    QPixmap pixmap(kRibbonIconSize, kRibbonIconSize);
-    pixmap.fill(Qt::transparent);
-
-    QPainter painter(&pixmap);
-    painter.setRenderHint(QPainter::Antialiasing);
-    QPen pen(color, 2);
-    pen.setCapStyle(Qt::RoundCap);
-    painter.setPen(pen);
-
-    const int margin = kRibbonIconSize / 4;
-    const int mid = kRibbonIconSize / 2;
-    painter.drawLine(mid, margin, mid, kRibbonIconSize - margin);
-    painter.drawLine(margin, mid, kRibbonIconSize - margin, mid);
-    return QIcon(pixmap);
-}
-
-QIcon makeMinusIcon(const QColor& color) {
-    QPixmap pixmap(kRibbonIconSize, kRibbonIconSize);
-    pixmap.fill(Qt::transparent);
-
-    QPainter painter(&pixmap);
-    painter.setRenderHint(QPainter::Antialiasing);
-    QPen pen(color, 2);
-    pen.setCapStyle(Qt::RoundCap);
-    painter.setPen(pen);
-
-    const int margin = kRibbonIconSize / 4;
-    const int mid = kRibbonIconSize / 2;
-    painter.drawLine(margin, mid, kRibbonIconSize - margin, mid);
-    return QIcon(pixmap);
-}
-
-QIcon makePencilIcon(const QColor& color) {
-    QPixmap pixmap(kRibbonIconSize, kRibbonIconSize);
-    pixmap.fill(Qt::transparent);
-
-    QPainter painter(&pixmap);
-    painter.setRenderHint(QPainter::Antialiasing);
-    painter.setPen(QPen(color, 2, Qt::SolidLine, Qt::RoundCap));
-    painter.drawLine(QPoint(3, kRibbonIconSize - 3), QPoint(kRibbonIconSize - 5, 5));
-
-    painter.setPen(Qt::NoPen);
-    painter.setBrush(color);
-    QPolygon tip;
-    tip << QPoint(kRibbonIconSize - 6, 3) << QPoint(kRibbonIconSize - 3, 3) << QPoint(kRibbonIconSize - 3, 6);
-    painter.drawPolygon(tip);
-    return QIcon(pixmap);
-}
-
-QIcon makeArrowIcon(const QColor& color, bool pointingLeft) {
-    QPixmap pixmap(kRibbonIconSize, kRibbonIconSize);
-    pixmap.fill(Qt::transparent);
-
-    QPainter painter(&pixmap);
-    painter.setRenderHint(QPainter::Antialiasing);
-    QPen pen(color, 2);
-    pen.setCapStyle(Qt::RoundCap);
-    pen.setJoinStyle(Qt::RoundJoin);
-    painter.setPen(pen);
-
-    const int margin = 3;
-    QPolygon arrow;
-    if (pointingLeft) {
-        arrow << QPoint(kRibbonIconSize - margin, margin) << QPoint(margin, kRibbonIconSize / 2)
-              << QPoint(kRibbonIconSize - margin, kRibbonIconSize - margin);
-    } else {
-        arrow << QPoint(margin, margin) << QPoint(kRibbonIconSize - margin, kRibbonIconSize / 2)
-              << QPoint(margin, kRibbonIconSize - margin);
-    }
-    painter.drawPolyline(arrow);
-    return QIcon(pixmap);
-}
 } // namespace
 
 MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
@@ -217,8 +110,6 @@ Ribbon* MainWindow::buildRibbon() {
     connect(&ThemeManager::instance(), &ThemeManager::themeChanged, this,
             [this](const ThemePalette&) { updateRibbonIcons(); });
 
-    constexpr int kRibbonPageHeight = 34;
-
     auto* runPage = new QWidget(this);
     runPage->setObjectName("ribbonPage");
     runPage->setFixedHeight(kRibbonPageHeight);
@@ -236,40 +127,9 @@ Ribbon* MainWindow::buildRibbon() {
     configureLayout->setContentsMargins(6, 2, 6, 2);
     configureLayout->setSpacing(6);
 
-    constexpr int kRibbonButtonSize = 24;
-    const auto makeToolButton = [](QWidget* parent, QAction* action) {
-        auto* button = new QToolButton(parent);
-        button->setDefaultAction(action);
-        button->setToolButtonStyle(Qt::ToolButtonIconOnly);
-        button->setIconSize(QSize(kRibbonIconSize, kRibbonIconSize));
-        button->setFixedSize(kRibbonButtonSize, kRibbonButtonSize);
-        return button;
-    };
-    const auto makeGroup = [](QWidget* parent, QHBoxLayout** outLayout) {
-        auto* frame = new QFrame(parent);
-        frame->setObjectName("ribbonGroup");
-        frame->setFixedHeight(kRibbonPageHeight - 4); // matches configureLayout's 2px top/bottom margins
-        auto* layout = new QHBoxLayout(frame);
-        layout->setContentsMargins(3, 3, 3, 3); // symmetric padding around the buttons on all 4 sides
-        layout->setSpacing(3);
-        *outLayout = layout;
-        return frame;
-    };
-
-    QHBoxLayout* toolsLayout = nullptr;
-    auto* toolsGroup = makeGroup(configurePage, &toolsLayout);
-    toolsLayout->addWidget(makeToolButton(toolsGroup, m_positionAction));
-    toolsLayout->addWidget(makeToolButton(toolsGroup, m_addWidgetAction));
-    toolsLayout->addWidget(makeToolButton(toolsGroup, m_removeAction));
-    toolsLayout->addWidget(makeToolButton(toolsGroup, m_editTypeAction));
-
-    QHBoxLayout* historyLayout = nullptr;
-    auto* historyGroup = makeGroup(configurePage, &historyLayout);
-    historyLayout->addWidget(makeToolButton(historyGroup, m_undoAction));
-    historyLayout->addWidget(makeToolButton(historyGroup, m_redoAction));
-
-    configureLayout->addWidget(toolsGroup);
-    configureLayout->addWidget(historyGroup);
+    configureLayout->addWidget(Ribbon::createButtonGroup(
+        configurePage, {m_positionAction, m_addWidgetAction, m_removeAction, m_editTypeAction}));
+    configureLayout->addWidget(Ribbon::createButtonGroup(configurePage, {m_undoAction, m_redoAction}));
     configureLayout->addStretch();
 
     auto* ribbon = new Ribbon(this);

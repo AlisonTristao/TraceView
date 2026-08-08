@@ -43,7 +43,7 @@ PRIORIDADE ALTA
 PRIORIDADE MÉDIA
 ================================================================================
 
-[ ] 3. Extrair código de ícones do MainWindow
+[x] 3. Extrair código de ícones do MainWindow
     lib/core/mainwindow.cpp, funções makeSelectIcon/makePlusIcon/
     makeMinusIcon/makePencilIcon/makeArrowIcon (~linhas 37-133) — desenho de
     ícones do ribbon, não é lógica de coordenação de app.
@@ -53,6 +53,12 @@ PRIORIDADE MÉDIA
     MainWindow::buildRibbon() (~linhas 185-285: QFrame "ribbonGroup",
     makeToolButton, makeGroup) para dentro de Ribbon, deixando MainWindow
     só compor ações e conectar sinais.
+    Feito: ícones movidos para lib/core/ribbonicons.h/.cpp (funções livres
+    em traceview, sem estado). Montagem dos grupos de botão movida para
+    Ribbon::createButtonGroup() em lib/core/ribbon.h/.cpp — MainWindow só
+    monta as ações/páginas e chama createButtonGroup(). kRibbonPageHeight/
+    kRibbonButtonSize passaram a viver em ribbon.h como convenções
+    compartilhadas de tamanho.
 
 [ ] 4. Trocar QFile por QSaveFile no ProjectStore::saveAs
     lib/project/projectstore.cpp, ProjectStore::saveAs() (~linha 38) escreve
