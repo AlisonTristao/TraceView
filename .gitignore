@@ -1,0 +1,45 @@
+# Build output
+build/
+build-*/
+out/
+cmake-build-*/
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+CMakeScripts/
+cmake_install.cmake
+install_manifest.txt
+compile_commands.json
+_deps/
+
+# Qt
+*.autosave
+*.pro.user
+*.pro.user.*
+moc_*.cpp
+ui_*.h
+qrc_*.cpp
+
+# Qt Creator
+CMakeLists.txt.user
+CMakeLists.txt.user.*
+
+# IDE
+.vs/
+.vscode/
+!.vscode/extensions.json
+.idea/
+*.suo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Compiled binaries
+*.o
+*.obj
+*.exe
+*.dll
+*.so
+*.dylib
