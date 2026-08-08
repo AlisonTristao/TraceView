@@ -6,6 +6,7 @@
 #include <QUuid>
 
 #include "dashboardcell.h"
+#include "dashboardcommands.h"
 #include "traceview/thememanager.h"
 #include "widgetregistry.h"
 
@@ -25,7 +26,7 @@ constexpr int kDefaultItemColumnSpan = 16;
 constexpr int kDefaultItemRowSpan = 12;
 } // namespace
 
-DashboardGrid::DashboardGrid(QWidget* parent) : QWidget(parent) {
+DashboardGrid::DashboardGrid(QWidget* parent) : QWidget(parent), m_undoStack(new QUndoStack(this)) {
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
     connect(&ThemeManager::instance(), &ThemeManager::themeChanged, this,
@@ -79,8 +80,6 @@ void DashboardGrid::addItem(const QString& typeId) {
         row = 0;
     }
 
-    pushUndoSnapshot();
-
     DashboardItem item;
     item.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
     item.typeId = typeId;
@@ -89,20 +88,18 @@ void DashboardGrid::addItem(const QString& typeId) {
     item.columnSpan = columnSpan;
     item.rowSpan = rowSpan;
 
-    m_items.append(item);
-    createCell(item);
-    updateGeometry();
+    m_undoStack->push(new AddWidgetCommand(this, item));
 }
 
 void DashboardGrid::removeSelected() {
     if (m_selectedItemId.isEmpty()) {
         return;
     }
-    pushUndoSnapshot();
-    const QString id = m_selectedItemId;
-    m_selectedItemId.clear();
-    removeItem(id);
-    emit selectionChanged(QString());
+    const DashboardItem* item = itemById(m_selectedItemId);
+    if (!item) {
+        return;
+    }
+    m_undoStack->push(new RemoveWidgetCommand(this, *item));
 }
 
 void DashboardGrid::removeItem(const QString& itemId) {
@@ -122,47 +119,57 @@ void DashboardGrid::changeSelectedType(const QString& newTypeId) {
     if (m_selectedItemId.isEmpty()) {
         return;
     }
-    DashboardItem* item = itemById(m_selectedItemId);
+    const DashboardItem* item = itemById(m_selectedItemId);
     if (!item || item->typeId == newTypeId || WidgetRegistry::instance().displayName(newTypeId).isEmpty()) {
         return;
     }
 
-    pushUndoSnapshot();
+    m_undoStack->push(new ChangeWidgetTypeCommand(this, m_selectedItemId, item->typeId, newTypeId));
+}
 
-    item->typeId = newTypeId;
-    const QString id = m_selectedItemId;
-    if (DashboardCell* oldCell = m_cells.take(id)) {
+void DashboardGrid::applyInsertItem(const DashboardItem& item) {
+    m_items.append(item);
+    createCell(item);
+    updateGeometry();
+}
+
+void DashboardGrid::applyRemoveItemById(const QString& itemId) {
+    if (m_selectedItemId == itemId) {
+        selectItem(QString());
+    }
+    removeItem(itemId);
+}
+
+void DashboardGrid::applyMove(const QString& itemId, const QPoint& cell) {
+    if (DashboardItem* item = itemById(itemId)) {
+        item->column = cell.x();
+        item->row = cell.y();
+    }
+    relayoutItem(itemId);
+}
+
+void DashboardGrid::applyResize(const QString& itemId, const QSize& span) {
+    if (DashboardItem* item = itemById(itemId)) {
+        item->columnSpan = span.width();
+        item->rowSpan = span.height();
+    }
+    relayoutItem(itemId);
+}
+
+void DashboardGrid::applyTypeChange(const QString& itemId, const QString& typeId) {
+    DashboardItem* item = itemById(itemId);
+    if (!item) {
+        return;
+    }
+    item->typeId = typeId;
+    if (DashboardCell* oldCell = m_cells.take(itemId)) {
         oldCell->deleteLater();
     }
     if (DashboardCell* newCell = createCell(*item)) {
-        newCell->setSelected(true);
+        if (m_selectedItemId == itemId) {
+            newCell->setSelected(true);
+        }
     }
-}
-
-void DashboardGrid::undo() {
-    if (m_undoStack.isEmpty()) {
-        return;
-    }
-    m_redoStack.append(toJson());
-    const QJsonObject previous = m_undoStack.takeLast();
-    fromJson(previous);
-    emit historyChanged();
-}
-
-void DashboardGrid::redo() {
-    if (m_redoStack.isEmpty()) {
-        return;
-    }
-    m_undoStack.append(toJson());
-    const QJsonObject next = m_redoStack.takeLast();
-    fromJson(next);
-    emit historyChanged();
-}
-
-void DashboardGrid::pushUndoSnapshot() {
-    m_undoStack.append(toJson());
-    m_redoStack.clear();
-    emit historyChanged();
 }
 
 QJsonObject DashboardGrid::toJson() const {
@@ -414,11 +421,10 @@ void DashboardGrid::handleDragFinished(const QString& itemId, const QPoint&) {
         return;
     }
     if (isPlacementValid(m_drag->candidate, itemId)) {
-        if (DashboardItem* item = itemById(itemId)) {
+        if (const DashboardItem* item = itemById(itemId)) {
             if (item->column != m_drag->candidate.column || item->row != m_drag->candidate.row) {
-                pushUndoSnapshot();
-                item->column = m_drag->candidate.column;
-                item->row = m_drag->candidate.row;
+                m_undoStack->push(new MoveWidgetCommand(this, itemId, QPoint(item->column, item->row),
+                                                         QPoint(m_drag->candidate.column, m_drag->candidate.row)));
             }
         }
     }
@@ -463,11 +469,11 @@ void DashboardGrid::handleResizeFinished(const QString& itemId, const QPoint&) {
         return;
     }
     if (isPlacementValid(m_drag->candidate, itemId)) {
-        if (DashboardItem* item = itemById(itemId)) {
+        if (const DashboardItem* item = itemById(itemId)) {
             if (item->columnSpan != m_drag->candidate.columnSpan || item->rowSpan != m_drag->candidate.rowSpan) {
-                pushUndoSnapshot();
-                item->columnSpan = m_drag->candidate.columnSpan;
-                item->rowSpan = m_drag->candidate.rowSpan;
+                m_undoStack->push(new ResizeWidgetCommand(
+                    this, itemId, QSize(item->columnSpan, item->rowSpan),
+                    QSize(m_drag->candidate.columnSpan, m_drag->candidate.rowSpan)));
             }
         }
     }

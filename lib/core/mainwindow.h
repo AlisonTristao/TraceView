@@ -27,7 +27,6 @@ private:
 
     void onRibbonTabChanged(int index);
     void onSelectionChanged(const QString& itemId);
-    void onHistoryChanged();
     void updateSelectionActions();
     void onAddWidget();
     void onEditSelectedType();

@@ -20,6 +20,8 @@ add_library(traceview_core STATIC
     dashboard/widgetregistry.h
     dashboard/dashboardcell.cpp
     dashboard/dashboardcell.h
+    dashboard/dashboardcommands.cpp
+    dashboard/dashboardcommands.h
     dashboard/dashboardgrid.cpp
     dashboard/dashboardgrid.h
     project/projectstore.cpp

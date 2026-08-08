@@ -8,6 +8,7 @@
 #include <QRect>
 #include <QSize>
 #include <QString>
+#include <QUndoStack>
 #include <QVector>
 #include <QWidget>
 
@@ -16,6 +17,11 @@
 namespace traceview {
 
 class DashboardCell;
+class AddWidgetCommand;
+class RemoveWidgetCommand;
+class MoveWidgetCommand;
+class ResizeWidgetCommand;
+class ChangeWidgetTypeCommand;
 
 // A Bootstrap-like grid of DashboardWidgets: a fixed, small square cell
 // size (in pixels) that the canvas is divided into, each item occupying an
@@ -29,6 +35,12 @@ class DashboardCell;
 // and removeSelected()/changeSelectedType() act on whichever one that is.
 class DashboardGrid : public QWidget {
     Q_OBJECT
+
+    friend class AddWidgetCommand;
+    friend class RemoveWidgetCommand;
+    friend class MoveWidgetCommand;
+    friend class ResizeWidgetCommand;
+    friend class ChangeWidgetTypeCommand;
 
 public:
     explicit DashboardGrid(QWidget* parent = nullptr);
@@ -50,10 +62,7 @@ public:
     // unknown, or unchanged.
     void changeSelectedType(const QString& newTypeId);
 
-    void undo();
-    void redo();
-    bool canUndo() const { return !m_undoStack.isEmpty(); }
-    bool canRedo() const { return !m_redoStack.isEmpty(); }
+    QUndoStack* undoStack() const { return m_undoStack; }
 
     QJsonObject toJson() const;
     void fromJson(const QJsonObject& object);
@@ -64,7 +73,6 @@ public:
 signals:
     // itemId is empty when the selection is cleared.
     void selectionChanged(const QString& itemId);
-    void historyChanged();
 
 protected:
     void resizeEvent(QResizeEvent* event) override;
@@ -90,7 +98,16 @@ private:
     void relayoutItem(const QString& itemId);
     void clearItems();
     void removeItem(const QString& itemId);
-    void pushUndoSnapshot();
+
+    // Mutators used by the QUndoCommand subclasses in dashboardcommands.h
+    // to apply/unapply one committed change. DashboardGrid stays the only
+    // place that actually touches m_items/m_cells; the commands just decide
+    // which direction (redo/undo) to call these with.
+    void applyInsertItem(const DashboardItem& item);
+    void applyRemoveItemById(const QString& itemId);
+    void applyMove(const QString& itemId, const QPoint& cell);
+    void applyResize(const QString& itemId, const QSize& span);
+    void applyTypeChange(const QString& itemId, const QString& typeId);
 
     bool findFreeSlot(int columnSpan, int rowSpan, int* outColumn, int* outRow) const;
     bool isPlacementValid(const DashboardItem& candidate, const QString& excludeId) const;
@@ -115,8 +132,7 @@ private:
 
     std::optional<DragOp> m_drag;
 
-    QVector<QJsonObject> m_undoStack;
-    QVector<QJsonObject> m_redoStack;
+    QUndoStack* m_undoStack;
 };
 
 } // namespace traceview

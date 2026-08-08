@@ -205,16 +205,13 @@ Ribbon* MainWindow::buildRibbon() {
     m_editTypeAction->setEnabled(false);
     connect(m_editTypeAction, &QAction::triggered, this, &MainWindow::onEditSelectedType);
 
-    m_undoAction = new QAction("Undo", this);
-    m_undoAction->setEnabled(false);
-    connect(m_undoAction, &QAction::triggered, m_dashboardGrid, &DashboardGrid::undo);
-
-    m_redoAction = new QAction("Redo", this);
-    m_redoAction->setEnabled(false);
-    connect(m_redoAction, &QAction::triggered, m_dashboardGrid, &DashboardGrid::redo);
+    // createUndoAction()/createRedoAction() wire up triggered/enabled state
+    // (and a dynamic "Undo <command text>" label) directly from the stack —
+    // no manual canUndo()/canRedo() syncing needed.
+    m_undoAction = m_dashboardGrid->undoStack()->createUndoAction(this, "Undo");
+    m_redoAction = m_dashboardGrid->undoStack()->createRedoAction(this, "Redo");
 
     connect(m_dashboardGrid, &DashboardGrid::selectionChanged, this, &MainWindow::onSelectionChanged);
-    connect(m_dashboardGrid, &DashboardGrid::historyChanged, this, &MainWindow::onHistoryChanged);
 
     updateRibbonIcons();
     connect(&ThemeManager::instance(), &ThemeManager::themeChanged, this,
@@ -294,10 +291,11 @@ void MainWindow::updateRibbonIcons() {
     m_removeAction->setToolTip("Remove selected widget");
     m_editTypeAction->setIcon(makePencilIcon(palette.accent));
     m_editTypeAction->setToolTip("Edit selected widget's type");
+    // No explicit setToolTip(): QAction falls back to text(), which
+    // QUndoStack keeps updated with the pending command's description
+    // (e.g. "Undo Move Widget").
     m_undoAction->setIcon(makeArrowIcon(palette.textPrimary, /*pointingLeft=*/true));
-    m_undoAction->setToolTip("Undo");
     m_redoAction->setIcon(makeArrowIcon(palette.textPrimary, /*pointingLeft=*/false));
-    m_redoAction->setToolTip("Redo");
 }
 
 void MainWindow::onRibbonTabChanged(int index) {
@@ -310,11 +308,6 @@ void MainWindow::onRibbonTabChanged(int index) {
 
 void MainWindow::onSelectionChanged(const QString&) {
     updateSelectionActions();
-}
-
-void MainWindow::onHistoryChanged() {
-    m_undoAction->setEnabled(m_dashboardGrid->canUndo());
-    m_redoAction->setEnabled(m_dashboardGrid->canRedo());
 }
 
 void MainWindow::updateSelectionActions() {
