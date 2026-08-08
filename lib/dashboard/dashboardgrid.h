@@ -17,16 +17,12 @@ namespace traceview {
 
 class DashboardCell;
 
-// A free-form canvas of DashboardWidgets, each positioned/sized as a
-// fraction of the canvas (see DashboardItem) — so it always exactly fills
-// the visible area and never scrolls, and resizing the window scales every
-// widget proportionally.
-//
-// The background grid drawn in edit mode is purely a square-celled snapping
-// aid: `precision` is how many cells the canvas width is divided into (the
-// row count follows from that to keep cells square). Changing it only
-// changes the snap granularity for future drags/resizes — it never touches
-// existing items' stored size/position.
+// A Bootstrap-like grid of DashboardWidgets: a fixed, small square cell
+// size (in pixels) that the canvas is divided into, each item occupying an
+// integer-cell rect. Cells are positioned manually (no QLayout) so they can
+// be dragged/resized with the mouse in edit mode. The cell size is not
+// user-configurable — keeping it fixed and integer-based is what keeps
+// items pixel-exact on the grid lines (no rounding math involved).
 //
 // Interaction in edit mode is selection-based: clicking a cell selects it
 // (only one at a time, grid-wide); the selected cell can be dragged/resized,
@@ -40,18 +36,12 @@ public:
     void setEditMode(bool enabled);
     bool editMode() const { return m_editMode; }
 
-    // How many cells wide the snap grid is divided into (cells are square,
-    // so row count follows from the canvas aspect ratio). Never rescales
-    // existing items — see class comment.
-    void setPrecision(int precision);
-    int precision() const { return m_precision; }
-
     void selectItem(const QString& itemId); // empty string clears selection
     QString selectedItemId() const { return m_selectedItemId; }
     // Type of the selected item, or empty if nothing is selected.
     QString selectedItemTypeId() const;
 
-    // Auto-places a new item of `typeId` in the first free slot.
+    // Auto-places a new item of `typeId` in the first free cell.
     void addItem(const QString& typeId);
     // No-op if nothing is selected.
     void removeSelected();
@@ -75,7 +65,6 @@ signals:
     // itemId is empty when the selection is cleared.
     void selectionChanged(const QString& itemId);
     void historyChanged();
-    void precisionChanged(int precision);
 
 protected:
     void resizeEvent(QResizeEvent* event) override;
@@ -92,7 +81,8 @@ private:
     };
 
     QRect usableRect() const;
-    qreal cellSizePx() const;
+    int columns() const;
+    int rows() const;
     QRect cellRect(const DashboardItem& item) const;
     QSize contentSize() const;
 
@@ -102,7 +92,7 @@ private:
     void removeItem(const QString& itemId);
     void pushUndoSnapshot();
 
-    bool findFreeSlot(qreal w, qreal h, qreal* outX, qreal* outY) const;
+    bool findFreeSlot(int columnSpan, int rowSpan, int* outColumn, int* outRow) const;
     bool isPlacementValid(const DashboardItem& candidate, const QString& excludeId) const;
     DashboardItem* itemById(const QString& itemId);
     const DashboardItem* itemById(const QString& itemId) const;
@@ -117,7 +107,6 @@ private:
     void handleResizeFinished(const QString& itemId, const QPoint& globalPos);
     void handleSelectRequested(const QString& itemId);
 
-    int m_precision;
     bool m_editMode = false;
     QString m_selectedItemId;
 

@@ -12,19 +12,20 @@
 namespace traceview {
 
 namespace {
-constexpr int kDefaultPrecision = 24;
+// Fixed and deliberately small so the grid reads as fine-grained positioning
+// resolution — not user-configurable: every item position/size is an exact
+// multiple of this in pixels, so there is no rounding math anywhere in this
+// file and items are always pixel-exact on the grid lines.
+constexpr int kCellSize = 16;
 constexpr int kMargin = 8;
-constexpr int kGap = 3;
-constexpr qreal kDefaultItemSize = 0.25;
-constexpr qreal kEpsilon = 1e-6;
-// Absolute floor for a widget's size, regardless of the current snap
-// precision — at coarse precision (few, large cells) 1 cell can be most of
-// the canvas; without this a resize would jump straight to that instead of
-// something reasonably small.
-constexpr qreal kMinItemFraction = 0.05;
+// A widget below this many cells in either dimension is too small to be
+// usable (header alone is 24px), regardless of how small kCellSize is.
+constexpr int kMinSpanCells = 5;
+constexpr int kDefaultItemColumnSpan = 16;
+constexpr int kDefaultItemRowSpan = 12;
 } // namespace
 
-DashboardGrid::DashboardGrid(QWidget* parent) : QWidget(parent), m_precision(kDefaultPrecision) {
+DashboardGrid::DashboardGrid(QWidget* parent) : QWidget(parent) {
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
     connect(&ThemeManager::instance(), &ThemeManager::themeChanged, this,
@@ -44,18 +45,6 @@ void DashboardGrid::setEditMode(bool enabled) {
         cell->setEditMode(enabled);
     }
     update();
-}
-
-void DashboardGrid::setPrecision(int precision) {
-    precision = qMax(1, precision);
-    if (precision == m_precision) {
-        return;
-    }
-    // Deliberately does NOT touch m_items: item geometry is stored as
-    // fractions of the canvas, independent of the snap grid's resolution.
-    m_precision = precision;
-    update();
-    emit precisionChanged(m_precision);
 }
 
 void DashboardGrid::selectItem(const QString& itemId) {
@@ -80,11 +69,14 @@ QString DashboardGrid::selectedItemTypeId() const {
 }
 
 void DashboardGrid::addItem(const QString& typeId) {
-    qreal x = 0;
-    qreal y = 0;
-    if (!findFreeSlot(kDefaultItemSize, kDefaultItemSize, &x, &y)) {
-        x = 0;
-        y = 0;
+    const int columnSpan = qMin(kDefaultItemColumnSpan, columns());
+    const int rowSpan = qMin(kDefaultItemRowSpan, rows());
+
+    int column = 0;
+    int row = 0;
+    if (!findFreeSlot(columnSpan, rowSpan, &column, &row)) {
+        column = 0;
+        row = 0;
     }
 
     pushUndoSnapshot();
@@ -92,10 +84,10 @@ void DashboardGrid::addItem(const QString& typeId) {
     DashboardItem item;
     item.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
     item.typeId = typeId;
-    item.x = x;
-    item.y = y;
-    item.width = kDefaultItemSize;
-    item.height = kDefaultItemSize;
+    item.column = column;
+    item.row = row;
+    item.columnSpan = columnSpan;
+    item.rowSpan = rowSpan;
 
     m_items.append(item);
     createCell(item);
@@ -175,7 +167,6 @@ void DashboardGrid::pushUndoSnapshot() {
 
 QJsonObject DashboardGrid::toJson() const {
     QJsonObject object;
-    object["precision"] = m_precision;
 
     QJsonArray items;
     for (const DashboardItem& item : m_items) {
@@ -187,8 +178,6 @@ QJsonObject DashboardGrid::toJson() const {
 
 void DashboardGrid::fromJson(const QJsonObject& object) {
     clearItems();
-
-    m_precision = qMax(1, object.value("precision").toInt(kDefaultPrecision));
 
     const QJsonArray items = object.value("items").toArray();
     for (const QJsonValue& value : items) {
@@ -203,7 +192,6 @@ void DashboardGrid::fromJson(const QJsonObject& object) {
 
     updateGeometry();
     relayout();
-    emit precisionChanged(m_precision);
 }
 
 QSize DashboardGrid::sizeHint() const {
@@ -215,9 +203,7 @@ QSize DashboardGrid::minimumSizeHint() const {
 }
 
 QSize DashboardGrid::contentSize() const {
-    // A sane floor so the grid never collapses to zero — deliberately not
-    // scaled by precision, since that's now user-configurable and can get
-    // fairly large.
+    // A sane floor so the grid never collapses to zero.
     return QSize(320, 240);
 }
 
@@ -241,18 +227,19 @@ void DashboardGrid::paintEvent(QPaintEvent*) {
         return;
     }
 
-    const qreal cell = cellSizePx();
-    // area.right()/bottom() are left+width-1 (Qt's QRect convention), but
-    // item positions below are computed from left+width directly — use the
-    // same convention here so grid lines line up exactly with item edges.
-    const int right = area.left() + area.width();
-    const int bottom = area.top() + area.height();
+    const int cols = columns();
+    const int rws = rows();
+    const int right = area.left() + cols * kCellSize;
+    const int bottom = area.top() + rws * kCellSize;
 
-    for (qreal x = area.left(); x <= right + kEpsilon; x += cell) {
-        painter.drawLine(qRound(x), area.top(), qRound(x), bottom);
+    painter.setPen(QPen(palette.borderStrong, 1));
+    for (int c = 0; c <= cols; ++c) {
+        const int x = area.left() + c * kCellSize;
+        painter.drawLine(x, area.top(), x, bottom);
     }
-    for (qreal y = area.top(); y <= bottom + kEpsilon; y += cell) {
-        painter.drawLine(area.left(), qRound(y), right, qRound(y));
+    for (int r = 0; r <= rws; ++r) {
+        const int y = area.top() + r * kCellSize;
+        painter.drawLine(area.left(), y, right, y);
     }
 }
 
@@ -269,17 +256,19 @@ QRect DashboardGrid::usableRect() const {
     return rect().adjusted(kMargin, kMargin, -kMargin, -kMargin);
 }
 
-qreal DashboardGrid::cellSizePx() const {
-    return qMax(1.0, qreal(usableRect().width()) / m_precision);
+int DashboardGrid::columns() const {
+    return qMax(1, usableRect().width() / kCellSize);
+}
+
+int DashboardGrid::rows() const {
+    return qMax(1, usableRect().height() / kCellSize);
 }
 
 QRect DashboardGrid::cellRect(const DashboardItem& item) const {
     const QRect area = usableRect();
-    const int x = area.left() + qRound(item.x * area.width());
-    const int y = area.top() + qRound(item.y * area.height());
-    const int w = qRound(item.width * area.width());
-    const int h = qRound(item.height * area.height());
-    return QRect(x, y, w, h).adjusted(kGap, kGap, -kGap, -kGap);
+    const int left = area.left() + item.column * kCellSize;
+    const int top = area.top() + item.row * kCellSize;
+    return QRect(left, top, item.columnSpan * kCellSize, item.rowSpan * kCellSize);
 }
 
 void DashboardGrid::relayout() {
@@ -306,21 +295,19 @@ void DashboardGrid::clearItems() {
     m_selectedItemId.clear();
 }
 
-bool DashboardGrid::findFreeSlot(qreal w, qreal h, qreal* outX, qreal* outY) const {
-    // Only tries slots aligned to the current snap grid, so a newly added
-    // widget always starts on-grid (the caller falls back to (0,0) — also
-    // grid-aligned — if the grid has no free spot left).
-    const qreal step = 1.0 / m_precision;
-    for (qreal y = 0; y <= 1.0 - h + kEpsilon; y += step) {
-        for (qreal x = 0; x <= 1.0 - w + kEpsilon; x += step) {
+bool DashboardGrid::findFreeSlot(int columnSpan, int rowSpan, int* outColumn, int* outRow) const {
+    const int cols = columns();
+    const int rws = rows();
+    for (int r = 0; r + rowSpan <= rws; ++r) {
+        for (int c = 0; c + columnSpan <= cols; ++c) {
             DashboardItem probe;
-            probe.x = x;
-            probe.y = y;
-            probe.width = w;
-            probe.height = h;
+            probe.column = c;
+            probe.row = r;
+            probe.columnSpan = columnSpan;
+            probe.rowSpan = rowSpan;
             if (isPlacementValid(probe, QString())) {
-                *outX = x;
-                *outY = y;
+                *outColumn = c;
+                *outRow = r;
                 return true;
             }
         }
@@ -329,10 +316,10 @@ bool DashboardGrid::findFreeSlot(qreal w, qreal h, qreal* outX, qreal* outY) con
 }
 
 bool DashboardGrid::isPlacementValid(const DashboardItem& candidate, const QString& excludeId) const {
-    if (candidate.x < -kEpsilon || candidate.y < -kEpsilon) {
+    if (candidate.column < 0 || candidate.row < 0) {
         return false;
     }
-    if (candidate.x + candidate.width > 1.0 + kEpsilon || candidate.y + candidate.height > 1.0 + kEpsilon) {
+    if (candidate.column + candidate.columnSpan > columns() || candidate.row + candidate.rowSpan > rows()) {
         return false;
     }
 
@@ -340,9 +327,10 @@ bool DashboardGrid::isPlacementValid(const DashboardItem& candidate, const QStri
         if (other.id == excludeId) {
             continue;
         }
-        const bool overlapsX = candidate.x < other.x + other.width - kEpsilon && other.x < candidate.x + candidate.width - kEpsilon;
-        const bool overlapsY = candidate.y < other.y + other.height - kEpsilon && other.y < candidate.y + candidate.height - kEpsilon;
-        if (overlapsX && overlapsY) {
+        const bool overlapsColumns =
+            candidate.column < other.column + other.columnSpan && other.column < candidate.column + candidate.columnSpan;
+        const bool overlapsRows = candidate.row < other.row + other.rowSpan && other.row < candidate.row + candidate.rowSpan;
+        if (overlapsColumns && overlapsRows) {
             return false;
         }
     }
@@ -408,21 +396,12 @@ void DashboardGrid::handleDragMoved(const QString& itemId, const QPoint& globalP
     }
 
     const QPoint deltaPx = globalPos - m_drag->startGlobalPos;
-    const qreal cell = cellSizePx();
-    const QRect area = usableRect();
-
-    // Snap the resulting ABSOLUTE position to the grid (not just the drag
-    // delta) — the item's starting position isn't guaranteed to already be
-    // grid-aligned, so snapping only the delta would preserve that original
-    // offset forever instead of pulling it onto the grid.
-    const qreal rawXPx = m_drag->original.x * area.width() + deltaPx.x();
-    const qreal rawYPx = m_drag->original.y * area.height() + deltaPx.y();
-    const qreal snappedXPx = qRound(rawXPx / cell) * cell;
-    const qreal snappedYPx = qRound(rawYPx / cell) * cell;
+    const int deltaColumn = qRound(deltaPx.x() / double(kCellSize));
+    const int deltaRow = qRound(deltaPx.y() / double(kCellSize));
 
     DashboardItem candidate = m_drag->original;
-    candidate.x = qBound(0.0, snappedXPx / qMax(1, area.width()), 1.0 - candidate.width);
-    candidate.y = qBound(0.0, snappedYPx / qMax(1, area.height()), 1.0 - candidate.height);
+    candidate.column = qBound(0, m_drag->original.column + deltaColumn, qMax(0, columns() - candidate.columnSpan));
+    candidate.row = qBound(0, m_drag->original.row + deltaRow, qMax(0, rows() - candidate.rowSpan));
     m_drag->candidate = candidate;
 
     if (DashboardCell* draggedCell = m_cells.value(itemId)) {
@@ -436,10 +415,10 @@ void DashboardGrid::handleDragFinished(const QString& itemId, const QPoint&) {
     }
     if (isPlacementValid(m_drag->candidate, itemId)) {
         if (DashboardItem* item = itemById(itemId)) {
-            if (qAbs(item->x - m_drag->candidate.x) > kEpsilon || qAbs(item->y - m_drag->candidate.y) > kEpsilon) {
+            if (item->column != m_drag->candidate.column || item->row != m_drag->candidate.row) {
                 pushUndoSnapshot();
-                item->x = m_drag->candidate.x;
-                item->y = m_drag->candidate.y;
+                item->column = m_drag->candidate.column;
+                item->row = m_drag->candidate.row;
             }
         }
     }
@@ -464,27 +443,14 @@ void DashboardGrid::handleResizeMoved(const QString& itemId, const QPoint& globa
     }
 
     const QPoint deltaPx = globalPos - m_drag->startGlobalPos;
-    const qreal cell = cellSizePx();
-    const QRect area = usableRect();
-
-    // Snap the resulting ABSOLUTE right/bottom edge to the grid (not just
-    // the resize delta) — same reasoning as the drag case: the item's
-    // starting edges aren't guaranteed to already be grid-aligned.
-    const qreal xPx = m_drag->original.x * area.width();
-    const qreal yPx = m_drag->original.y * area.height();
-    const qreal rawRightPx = xPx + m_drag->original.width * area.width() + deltaPx.x();
-    const qreal rawBottomPx = yPx + m_drag->original.height * area.height() + deltaPx.y();
-    const qreal snappedRightPx = qRound(rawRightPx / cell) * cell;
-    const qreal snappedBottomPx = qRound(rawBottomPx / cell) * cell;
-
-    // qMin against kMinItemFraction: at coarse precision, 1 cell can be most
-    // of the canvas — don't force the minimum size up that high.
-    const qreal minWidth = qMin(kMinItemFraction, cell / qMax(1, area.width()));
-    const qreal minHeight = qMin(kMinItemFraction, cell / qMax(1, area.height()));
+    const int deltaColumn = qRound(deltaPx.x() / double(kCellSize));
+    const int deltaRow = qRound(deltaPx.y() / double(kCellSize));
 
     DashboardItem candidate = m_drag->original;
-    candidate.width = qBound(minWidth, (snappedRightPx - xPx) / qMax(1, area.width()), 1.0 - candidate.x);
-    candidate.height = qBound(minHeight, (snappedBottomPx - yPx) / qMax(1, area.height()), 1.0 - candidate.y);
+    candidate.columnSpan = qBound(kMinSpanCells, m_drag->original.columnSpan + deltaColumn,
+                                   qMax(kMinSpanCells, columns() - candidate.column));
+    candidate.rowSpan =
+        qBound(kMinSpanCells, m_drag->original.rowSpan + deltaRow, qMax(kMinSpanCells, rows() - candidate.row));
     m_drag->candidate = candidate;
 
     if (DashboardCell* resizedCell = m_cells.value(itemId)) {
@@ -498,11 +464,10 @@ void DashboardGrid::handleResizeFinished(const QString& itemId, const QPoint&) {
     }
     if (isPlacementValid(m_drag->candidate, itemId)) {
         if (DashboardItem* item = itemById(itemId)) {
-            if (qAbs(item->width - m_drag->candidate.width) > kEpsilon ||
-                qAbs(item->height - m_drag->candidate.height) > kEpsilon) {
+            if (item->columnSpan != m_drag->candidate.columnSpan || item->rowSpan != m_drag->candidate.rowSpan) {
                 pushUndoSnapshot();
-                item->width = m_drag->candidate.width;
-                item->height = m_drag->candidate.height;
+                item->columnSpan = m_drag->candidate.columnSpan;
+                item->rowSpan = m_drag->candidate.rowSpan;
             }
         }
     }

@@ -13,8 +13,6 @@
 #include <QPainter>
 #include <QPixmap>
 #include <QPolygon>
-#include <QSignalBlocker>
-#include <QSpinBox>
 #include <QStringList>
 #include <QToolButton>
 #include <QVBoxLayout>
@@ -222,7 +220,7 @@ Ribbon* MainWindow::buildRibbon() {
     connect(&ThemeManager::instance(), &ThemeManager::themeChanged, this,
             [this](const ThemePalette&) { updateRibbonIcons(); });
 
-    constexpr int kRibbonPageHeight = 40;
+    constexpr int kRibbonPageHeight = 34;
 
     auto* runPage = new QWidget(this);
     runPage->setObjectName("ribbonPage");
@@ -273,28 +271,8 @@ Ribbon* MainWindow::buildRibbon() {
     historyLayout->addWidget(makeToolButton(historyGroup, m_undoAction));
     historyLayout->addWidget(makeToolButton(historyGroup, m_redoAction));
 
-    QHBoxLayout* precisionLayout = nullptr;
-    auto* precisionGroup = makeGroup(configurePage, &precisionLayout);
-
-    m_precisionSpin = new QSpinBox(precisionGroup);
-    m_precisionSpin->setRange(1, 64);
-    m_precisionSpin->setValue(m_dashboardGrid->precision());
-    m_precisionSpin->setMinimumWidth(88); // generous on purpose — was clipping "64" before
-    m_precisionSpin->setFixedHeight(kRibbonPageHeight - 12); // roomier than the icon buttons so the number isn't clipped
-    m_precisionSpin->setToolTip("Grid precision — snap granularity for positioning/resizing (cells are always square)");
-
-    precisionLayout->addWidget(new QLabel("Grid", precisionGroup));
-    precisionLayout->addWidget(m_precisionSpin);
-
-    connect(m_precisionSpin, &QSpinBox::valueChanged, m_dashboardGrid, &DashboardGrid::setPrecision);
-    connect(m_dashboardGrid, &DashboardGrid::precisionChanged, this, [this](int precision) {
-        const QSignalBlocker blockPrecision(m_precisionSpin);
-        m_precisionSpin->setValue(precision);
-    });
-
     configureLayout->addWidget(toolsGroup);
     configureLayout->addWidget(historyGroup);
-    configureLayout->addWidget(precisionGroup);
     configureLayout->addStretch();
 
     auto* ribbon = new Ribbon(this);
@@ -327,7 +305,6 @@ void MainWindow::onRibbonTabChanged(int index) {
     m_dashboardGrid->setEditMode(m_configureTabActive);
     m_addWidgetAction->setEnabled(m_configureTabActive);
     m_positionAction->setEnabled(m_configureTabActive);
-    m_precisionSpin->setEnabled(m_configureTabActive);
     updateSelectionActions();
 }
 

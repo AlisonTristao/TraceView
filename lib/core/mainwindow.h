@@ -4,7 +4,6 @@
 #include <QString>
 
 class QAction;
-class QSpinBox;
 
 namespace traceview {
 
@@ -43,7 +42,6 @@ private:
     QAction* m_editTypeAction = nullptr;
     QAction* m_undoAction = nullptr;
     QAction* m_redoAction = nullptr;
-    QSpinBox* m_precisionSpin = nullptr;
     int m_configureTabIndex = -1;
     bool m_configureTabActive = false;
 };
