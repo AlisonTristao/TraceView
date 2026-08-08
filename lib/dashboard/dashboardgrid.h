@@ -5,8 +5,10 @@
 #include <QJsonObject>
 #include <QMap>
 #include <QPoint>
+#include <QPointF>
 #include <QRect>
 #include <QSize>
+#include <QSizeF>
 #include <QString>
 #include <QUndoStack>
 #include <QVector>
@@ -23,12 +25,14 @@ class MoveWidgetCommand;
 class ResizeWidgetCommand;
 class ChangeWidgetTypeCommand;
 
-// A Bootstrap-like grid of DashboardWidgets: a fixed, small square cell
-// size (in pixels) that the canvas is divided into, each item occupying an
-// integer-cell rect. Cells are positioned manually (no QLayout) so they can
-// be dragged/resized with the mouse in edit mode. The cell size is not
-// user-configurable — keeping it fixed and integer-based is what keeps
-// items pixel-exact on the grid lines (no rounding math involved).
+// A Bootstrap-like grid of DashboardWidgets: each item's position/size is
+// stored as fractions (0.0-1.0) of the canvas area, so layouts stay
+// resolution-independent — an item keeps its relative spot/size across
+// resizes with no clamping or reflow needed. A fixed logical division count
+// (see kGridColumns/kGridRows in the .cpp) drives grid-line painting and
+// drag/resize snapping only; it is not part of the persisted model. Cells
+// are positioned manually (no QLayout) so they can be dragged/resized with
+// the mouse in edit mode.
 //
 // Interaction in edit mode is selection-based: clicking a cell selects it
 // (only one at a time, grid-wide); the selected cell can be dragged/resized,
@@ -89,9 +93,7 @@ private:
     };
 
     QRect usableRect() const;
-    int columns() const;
-    int rows() const;
-    QRect cellRect(const DashboardItem& item) const;
+    QRect itemRect(const DashboardItem& item) const;
     QSize contentSize() const;
 
     void relayout();
@@ -105,11 +107,11 @@ private:
     // which direction (redo/undo) to call these with.
     void applyInsertItem(const DashboardItem& item);
     void applyRemoveItemById(const QString& itemId);
-    void applyMove(const QString& itemId, const QPoint& cell);
-    void applyResize(const QString& itemId, const QSize& span);
+    void applyMove(const QString& itemId, const QPointF& position);
+    void applyResize(const QString& itemId, const QSizeF& size);
     void applyTypeChange(const QString& itemId, const QString& typeId);
 
-    bool findFreeSlot(int columnSpan, int rowSpan, int* outColumn, int* outRow) const;
+    bool findFreeSlot(double width, double height, double* outX, double* outY) const;
     bool isPlacementValid(const DashboardItem& candidate, const QString& excludeId) const;
     DashboardItem* itemById(const QString& itemId);
     const DashboardItem* itemById(const QString& itemId) const;

@@ -27,28 +27,29 @@ void RemoveWidgetCommand::undo() {
     m_grid->selectItem(m_item.id);
 }
 
-MoveWidgetCommand::MoveWidgetCommand(DashboardGrid* grid, const QString& itemId, const QPoint& fromCell,
-                                      const QPoint& toCell)
-    : QUndoCommand("Move Widget"), m_grid(grid), m_itemId(itemId), m_fromCell(fromCell), m_toCell(toCell) {}
+MoveWidgetCommand::MoveWidgetCommand(DashboardGrid* grid, const QString& itemId, const QPointF& fromPosition,
+                                      const QPointF& toPosition)
+    : QUndoCommand("Move Widget"), m_grid(grid), m_itemId(itemId), m_fromPosition(fromPosition),
+      m_toPosition(toPosition) {}
 
 void MoveWidgetCommand::redo() {
-    m_grid->applyMove(m_itemId, m_toCell);
+    m_grid->applyMove(m_itemId, m_toPosition);
 }
 
 void MoveWidgetCommand::undo() {
-    m_grid->applyMove(m_itemId, m_fromCell);
+    m_grid->applyMove(m_itemId, m_fromPosition);
 }
 
-ResizeWidgetCommand::ResizeWidgetCommand(DashboardGrid* grid, const QString& itemId, const QSize& fromSpan,
-                                          const QSize& toSpan)
-    : QUndoCommand("Resize Widget"), m_grid(grid), m_itemId(itemId), m_fromSpan(fromSpan), m_toSpan(toSpan) {}
+ResizeWidgetCommand::ResizeWidgetCommand(DashboardGrid* grid, const QString& itemId, const QSizeF& fromSize,
+                                          const QSizeF& toSize)
+    : QUndoCommand("Resize Widget"), m_grid(grid), m_itemId(itemId), m_fromSize(fromSize), m_toSize(toSize) {}
 
 void ResizeWidgetCommand::redo() {
-    m_grid->applyResize(m_itemId, m_toSpan);
+    m_grid->applyResize(m_itemId, m_toSize);
 }
 
 void ResizeWidgetCommand::undo() {
-    m_grid->applyResize(m_itemId, m_fromSpan);
+    m_grid->applyResize(m_itemId, m_fromSize);
 }
 
 ChangeWidgetTypeCommand::ChangeWidgetTypeCommand(DashboardGrid* grid, const QString& itemId,

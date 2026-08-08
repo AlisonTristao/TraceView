@@ -1,10 +1,15 @@
 # Dashboard grid
 
 The dashboard is a Bootstrap-like grid (`DashboardGrid`,
-[lib/dashboard/dashboardgrid.h](../lib/dashboard/dashboardgrid.h)): a fixed
-number of columns/rows, where each widget (`DashboardItem`) occupies a
-row/column rect. Columns are width-driven (they respond to window resizing,
-like Bootstrap columns); rows use a fixed pixel height.
+[lib/dashboard/dashboardgrid.h](../lib/dashboard/dashboardgrid.h)). Each
+widget (`DashboardItem`) stores its position/size as `x`/`y`/`width`/`height`
+fractions (0.0-1.0) of the canvas area, not pixels or cell indices — so a
+layout is resolution-independent and stays visually identical (relative to
+the canvas) across window resizes, with no clamping or reflow needed.
+`DashboardGrid` is the only place that converts those fractions to pixels
+(`itemRect()`); a fixed logical division count (`kGridColumns`/`kGridRows`
+in dashboardgrid.cpp) only drives grid-line painting and drag/resize snap
+granularity, it is not part of the persisted model.
 
 There is no `QLayout` involved — cells are positioned manually
 (`setGeometry`) so they can be dragged and resized with the mouse.
@@ -55,9 +60,8 @@ independent top-level sections:
 {
   "traceview": { "formatVersion": 1 },
   "dashboard": {
-    "columns": 12, "rows": 8,
     "items": [
-      { "id": "...", "type": "dummy_line", "row": 0, "column": 0, "rowSpan": 2, "columnSpan": 4 }
+      { "id": "...", "type": "dummy_line", "x": 0.0, "y": 0.0, "width": 0.3333, "height": 0.25 }
     ]
   }
 }

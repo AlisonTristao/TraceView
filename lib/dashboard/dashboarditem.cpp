@@ -6,10 +6,10 @@ QJsonObject dashboardItemToJson(const DashboardItem& item) {
     QJsonObject object;
     object["id"] = item.id;
     object["type"] = item.typeId;
-    object["column"] = item.column;
-    object["row"] = item.row;
-    object["columnSpan"] = item.columnSpan;
-    object["rowSpan"] = item.rowSpan;
+    object["x"] = item.x;
+    object["y"] = item.y;
+    object["width"] = item.width;
+    object["height"] = item.height;
     return object;
 }
 
@@ -22,12 +22,12 @@ DashboardItem dashboardItemFromJson(const QJsonObject& object, bool* ok) {
 
     item.id = object["id"].toString();
     item.typeId = object["type"].toString();
-    item.column = qMax(0, object["column"].toInt(0));
-    item.row = qMax(0, object["row"].toInt(0));
-    item.columnSpan = qMax(1, object["columnSpan"].toInt(1));
-    item.rowSpan = qMax(1, object["rowSpan"].toInt(1));
+    item.x = qBound(0.0, object["x"].toDouble(0.0), 1.0);
+    item.y = qBound(0.0, object["y"].toDouble(0.0), 1.0);
+    item.width = qBound(0.0, object["width"].toDouble(0.0), 1.0);
+    item.height = qBound(0.0, object["height"].toDouble(0.0), 1.0);
 
-    *ok = !item.id.isEmpty() && !item.typeId.isEmpty();
+    *ok = !item.id.isEmpty() && !item.typeId.isEmpty() && item.width > 0.0 && item.height > 0.0;
     return item;
 }
 

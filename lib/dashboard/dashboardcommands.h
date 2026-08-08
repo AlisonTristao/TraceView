@@ -1,7 +1,7 @@
 #pragma once
 
-#include <QPoint>
-#include <QSize>
+#include <QPointF>
+#include <QSizeF>
 #include <QString>
 #include <QUndoCommand>
 
@@ -43,7 +43,8 @@ private:
 
 class MoveWidgetCommand : public QUndoCommand {
 public:
-    MoveWidgetCommand(DashboardGrid* grid, const QString& itemId, const QPoint& fromCell, const QPoint& toCell);
+    MoveWidgetCommand(DashboardGrid* grid, const QString& itemId, const QPointF& fromPosition,
+                       const QPointF& toPosition);
 
     void undo() override;
     void redo() override;
@@ -51,13 +52,13 @@ public:
 private:
     DashboardGrid* m_grid;
     QString m_itemId;
-    QPoint m_fromCell;
-    QPoint m_toCell;
+    QPointF m_fromPosition;
+    QPointF m_toPosition;
 };
 
 class ResizeWidgetCommand : public QUndoCommand {
 public:
-    ResizeWidgetCommand(DashboardGrid* grid, const QString& itemId, const QSize& fromSpan, const QSize& toSpan);
+    ResizeWidgetCommand(DashboardGrid* grid, const QString& itemId, const QSizeF& fromSize, const QSizeF& toSize);
 
     void undo() override;
     void redo() override;
@@ -65,8 +66,8 @@ public:
 private:
     DashboardGrid* m_grid;
     QString m_itemId;
-    QSize m_fromSpan;
-    QSize m_toSpan;
+    QSizeF m_fromSize;
+    QSizeF m_toSize;
 };
 
 class ChangeWidgetTypeCommand : public QUndoCommand {

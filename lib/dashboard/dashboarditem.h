@@ -5,19 +5,20 @@
 
 namespace traceview {
 
-// Where one dashboard widget sits on the grid: its registered type and the
-// cells it occupies. The grid uses a fixed, small square cell size (see
-// DashboardGrid), so positions/spans are plain integer cell counts — no
-// rounding math involved, which is what keeps items pixel-exact on the
-// grid lines. Plain data — the grid owns the actual QWidget.
+// Where one dashboard widget sits on the grid: its registered type and its
+// position/size as fractions (0.0-1.0) of the grid's usable canvas area.
+// Proportional coordinates keep layouts resolution-independent — an item
+// stays at the same relative spot/size across resizes with no clamping or
+// reflow needed. Plain data — the grid owns the actual QWidget and is the
+// only place that converts these fractions to pixels.
 struct DashboardItem {
     QString id;       // QUuid, stable identity across the item's lifetime
     QString typeId;   // key into WidgetRegistry
 
-    int column = 0;
-    int row = 0;
-    int columnSpan = 1;
-    int rowSpan = 1;
+    double x = 0.0;
+    double y = 0.0;
+    double width = 0.0;
+    double height = 0.0;
 };
 
 QJsonObject dashboardItemToJson(const DashboardItem& item);

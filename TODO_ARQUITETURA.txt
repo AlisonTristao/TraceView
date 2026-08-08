@@ -24,7 +24,7 @@ PRIORIDADE ALTA
     o MainWindow sincroniza à mão (lib/core/mainwindow.cpp, onHistoryChanged).
     Também destrava o item 7 (testes) ficando mais barato de escrever.
 
-[ ] 2. Coordenadas proporcionais em vez de células fixas em pixels
+[x] 2. Coordenadas proporcionais em vez de células fixas em pixels
     Hoje: kCellSize = 16 (pixels fixos) em lib/dashboard/dashboardgrid.cpp;
     cada DashboardItem guarda column/row/columnSpan/rowSpan em inteiros
     (lib/dashboard/dashboarditem.h).
@@ -94,12 +94,14 @@ OBSERVAR / SEM AÇÃO IMEDIATA (agir quando o gatilho descrito acontecer)
     item 2), snap, resize, move, undo/redo (relevante após o item 1),
     criação de widgets via WidgetRegistry, save/load de projeto.
 
-[ ] 8. Corrigir docs/DASHBOARD.md desatualizado
+[x] 8. Corrigir docs/DASHBOARD.md desatualizado
     O JSON de exemplo no doc mostra "columns": 12, "rows": 8 dentro da seção
     "dashboard", mas DashboardGrid::toJson() (lib/dashboard/dashboardgrid.cpp)
     só serializa "items". Atualizar o exemplo — idealmente já revisado junto
     com o item 2 (mudança de formato de coordenadas), já que aquele item vai
     mudar o shape real do JSON de qualquer forma.
+    Feito junto com o item 2: exemplo agora mostra x/y/width/height
+    fracionários, sem os campos columns/rows que nunca foram serializados.
 
 --------------------------------------------------------------------------------
 Nota — não é um item de ação, só um registro de decisão deliberada:
