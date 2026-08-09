@@ -1,19 +1,19 @@
 #!/usr/bin/env python3
 """Regenerates TraceView's app icon assets from the theme palette.
 
-Draws a simple mark (dark navy tile, white winding line, blue accent dot)
-and exports it as a multi-resolution PNG set + a Windows .ico into
+Draws a terminal-prompt mark (dark navy tile, soft blue glow, white ">_"
+glyph) and exports it as a multi-resolution PNG set + a Windows .ico into
 resources/icons/. Re-run this after changing the design below; there is no
 separate source-of-truth image to keep in sync.
 """
 
 from pathlib import Path
 
-from PIL import Image, ImageDraw
+from PIL import Image, ImageColor, ImageDraw, ImageFilter
 
 BACKGROUND = "#0A0F1E"
-LINE = "#FFFFFF"
-ACCENT = "#3D8BFF"
+GLOW = "#3D8BFF"
+GLYPH = "#F5F7FA"
 
 SUPERSAMPLE = 1024
 SIZES = [16, 32, 48, 64, 128, 256]
@@ -21,44 +21,51 @@ SIZES = [16, 32, 48, 64, 128, 256]
 OUT_DIR = Path(__file__).resolve().parent.parent / "resources" / "icons"
 
 
-def bezier_points(p0, p1, p2, p3, steps=300):
-    points = []
+def stamp_line(draw: ImageDraw.ImageDraw, p0, p1, width: float, fill, steps: int = 200) -> None:
+    """Draws a straight segment with round caps by stamping overlapping
+    circles along it -- Pillow's ImageDraw.line() only rounds the joints
+    between segments, not the end caps of a single one."""
+    r = width / 2
     for i in range(steps + 1):
         t = i / steps
-        mt = 1 - t
-        x = (mt**3) * p0[0] + 3 * (mt**2) * t * p1[0] + 3 * mt * (t**2) * p2[0] + (t**3) * p3[0]
-        y = (mt**3) * p0[1] + 3 * (mt**2) * t * p1[1] + 3 * mt * (t**2) * p2[1] + (t**3) * p3[1]
-        points.append((x, y))
-    return points
+        x = p0[0] + (p1[0] - p0[0]) * t
+        y = p0[1] + (p1[1] - p0[1]) * t
+        draw.ellipse([x - r, y - r, x + r, y + r], fill=fill)
 
 
 def render(size: int) -> Image.Image:
-    scale = SUPERSAMPLE / size
-    img = Image.new("RGBA", (SUPERSAMPLE, SUPERSAMPLE), (0, 0, 0, 0))
-    draw = ImageDraw.Draw(img)
+    s = SUPERSAMPLE
 
-    radius = int(SUPERSAMPLE * 0.22)
-    draw.rounded_rectangle([0, 0, SUPERSAMPLE - 1, SUPERSAMPLE - 1], radius=radius, fill=BACKGROUND)
+    radius = int(s * 0.22)
+    mask = Image.new("L", (s, s), 0)
+    ImageDraw.Draw(mask).rounded_rectangle([0, 0, s - 1, s - 1], radius=radius, fill=255)
 
-    pad = SUPERSAMPLE * 0.22
-    p0 = (pad, SUPERSAMPLE - pad)
-    p1 = (pad, SUPERSAMPLE * 0.35)
-    p2 = (SUPERSAMPLE - pad, SUPERSAMPLE * 0.65)
-    p3 = (SUPERSAMPLE - pad, pad)
-    points = bezier_points(p0, p1, p2, p3)
+    tile = Image.new("RGBA", (s, s), ImageColor.getrgb(BACKGROUND) + (255,))
 
-    line_width = max(2, int(SUPERSAMPLE * 0.09))
-    r = line_width / 2
-    for x, y in points:
-        draw.ellipse([x - r, y - r, x + r, y + r], fill=LINE)
+    # Soft glow in the lower-right, echoing the depth of a terminal window
+    # without needing a true multi-stop gradient fill.
+    glow = Image.new("RGBA", (s, s), (0, 0, 0, 0))
+    glow_draw = ImageDraw.Draw(glow)
+    gr = s * 0.55
+    gc = (s * 0.80, s * 0.82)
+    glow_draw.ellipse([gc[0] - gr, gc[1] - gr, gc[0] + gr, gc[1] + gr], fill=ImageColor.getrgb(GLOW) + (150,))
+    glow = glow.filter(ImageFilter.GaussianBlur(s * 0.14))
 
-    dot_r = SUPERSAMPLE * 0.09
-    cx, cy = p3
-    ring_r = dot_r + SUPERSAMPLE * 0.018
-    draw.ellipse([cx - ring_r, cy - ring_r, cx + ring_r, cy + ring_r], fill=BACKGROUND)
-    draw.ellipse([cx - dot_r, cy - dot_r, cx + dot_r, cy + dot_r], fill=ACCENT)
+    tile = Image.alpha_composite(tile, glow)
+    tile.putalpha(mask)
 
-    return img.resize((size, size), Image.LANCZOS)
+    # The ">_" prompt glyph: a right-pointing chevron plus a trailing
+    # underscore, read together as a command-line cursor.
+    draw = ImageDraw.Draw(tile)
+    stroke = s * 0.085
+    top = (s * 0.30, s * 0.32)
+    apex = (s * 0.56, s * 0.52)
+    bottom = (s * 0.30, s * 0.72)
+    stamp_line(draw, top, apex, stroke, GLYPH)
+    stamp_line(draw, apex, bottom, stroke, GLYPH)
+    stamp_line(draw, (s * 0.62, s * 0.72), (s * 0.82, s * 0.72), stroke, GLYPH)
+
+    return tile.resize((size, size), Image.LANCZOS)
 
 
 def main() -> None:

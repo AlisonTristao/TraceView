@@ -95,6 +95,12 @@ lives in its own module under
   sample count or elapsed time = `Ts * N`; Y auto-scaled or fixed
   min/max, with an optional unit label) — settled UI even before the
   charts themselves are real; see "Per-type config editor" below.
+  `dummy_gauge` has its own, simpler editor —
+  `widgets/gaugeconfigeditor.h`/`.cpp` — since it only ever shows one
+  live value: which frame slot it reads (format + index, byte type if
+  the frame is raw bytes), a fixed min/max range, unit, and decimals.
+  No history/axis settings and no threshold-triggered actions —
+  deliberately left out, it only ever reflects the current value.
 - **Serial Monitor** — `widgets/serialmonitorwidget.h`/`.cpp`
   (`serial_monitor`), built from a connection bar (port/baud pickers, a
   connect toggle) plus `widgets/serialterminalwidget.h`/`.cpp`: a
@@ -132,15 +138,25 @@ lives in its own module under
 
   All three have a config editor — `widgets/controlconfigeditor.h`/`.cpp`
   (`PushButtonConfigEditor`/`ToggleSwitchConfigEditor`/`SliderConfigEditor`)
-  — covering label text, and per-kind settings (push: color style + the
-  command/value to send; toggle: on/off text + starting state; slider:
-  min/max/step/default/unit/whether the value is shown). Front-end shell
-  only, same as the chart types: none of the signals above are wired to a
-  live output yet, and — also same as the chart types' series settings —
-  the config isn't fed back into the on-canvas widget's own appearance
-  (e.g. a configured label doesn't yet relabel the button you see on the
-  grid); it only round-trips through the project file for whenever a real
-  data binding lands.
+  — covering label text, appearance, and the event/command shape a real
+  data-source binding will eventually consume:
+  - **Push Button**: color style; Mode (Momentary sends an On Press and an
+    On Release command; Pulse sends only On Press, once per click); Repeat
+    While Held (re-fires On Press on an interval); a Long Press command
+    that only fires once held past a threshold; Debounce (minimum time
+    between triggers); Confirm Before Sending.
+  - **Toggle Switch**: on/off text, starting state, On Command / Off
+    Command sent on each transition, Confirm Before Toggling.
+  - **Slider**: min/max/step/default/unit/whether the value is shown, a
+    Command template (`{value}` is substituted), and Send mode —
+    Continuous (throttled to a max rate while dragging) or On Release.
+
+  Front-end shell only, same as the chart types: none of the commands
+  above are wired to a live output yet, and — also same as the chart
+  types' series settings — the config isn't fed back into the on-canvas
+  widget's own appearance (e.g. a configured label doesn't yet relabel the
+  button you see on the grid); it only round-trips through the project
+  file for whenever a real data binding lands.
 
 `DashboardGrid`, `DashboardItem`, and `PropertiesPanel` treat every kind
 identically; only the widget's own implementation differs.

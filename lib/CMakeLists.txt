@@ -52,6 +52,8 @@ add_library(traceview_dashboard STATIC
     dashboard/widgets/chartconfigeditor.h
     dashboard/widgets/chartwidgets.cpp
     dashboard/widgets/chartwidgets.h
+    dashboard/widgets/gaugeconfigeditor.cpp
+    dashboard/widgets/gaugeconfigeditor.h
     dashboard/widgets/serialmonitorwidget.cpp
     dashboard/widgets/serialmonitorwidget.h
     dashboard/widgets/serialterminalwidget.cpp

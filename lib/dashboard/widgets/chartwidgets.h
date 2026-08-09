@@ -7,6 +7,11 @@ namespace traceview {
 // Placeholder chart widgets used to exercise the dashboard grid (drag,
 // resize, save/load) before real telemetry visualizations exist. Each just
 // paints a themed, vaguely chart-shaped placeholder with fake data.
+//
+// DummyGaugeWidget's settings (which frame slot it reads, fixed min/max,
+// unit, decimals) live in GaugeConfigEditor (widgets/gaugeconfigeditor.h),
+// unlike the line/bar charts above whose settings live alongside them in
+// ChartConfigEditor.
 
 class DummyLineChartWidget : public DashboardWidget {
 public:

@@ -49,8 +49,11 @@ persisted (`QSettings`, key `appearance/theme`) across restarts.
 
 ## Icon
 
-`resources/icons/app.svg` is the source-of-truth vector mark. Run
-`python scripts/gen_icon.py` after editing it (or its color constants) to
-regenerate the PNG set and `.ico` also under `resources/icons/`, which is
-what's actually embedded via `resources/icons/app.qrc` (runtime `QIcon`) and
-`resources/app.rc` (Windows executable icon).
+`scripts/gen_icon.py` draws the mark and is the source of truth; run
+`python scripts/gen_icon.py` after editing its color constants or geometry to
+regenerate the PNG set and `.ico` under `resources/icons/`, which is what's
+actually embedded via `resources/icons/app.qrc` (runtime `QIcon`) and
+`resources/app.rc` (Windows executable icon). `resources/icons/app.svg` is a
+hand-kept scalable mirror of the same design, bundled in the `.qrc` for
+reference but not loaded by `QIcon` itself — update it to match whenever the
+script's design changes.

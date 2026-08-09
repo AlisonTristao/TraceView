@@ -23,3 +23,9 @@ release flow.
   version and the Qt version used to build/run it.
 - 3 placeholder chart widgets (Line, Bar, Gauge) used to exercise the
   grid before real telemetry visualizations exist.
+- Event/command settings for the control widgets (Push Button: on
+  press/release commands, momentary vs. pulse mode, repeat-while-held,
+  long-press action, debounce, confirm-before-sending; Toggle Switch:
+  on/off commands, confirm-before-toggling; Slider: command template,
+  continuous-vs-on-release send mode with throttle) and a config editor
+  for the Gauge widget (value source, fixed min/max, unit, decimals).

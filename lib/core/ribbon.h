@@ -15,12 +15,13 @@ class RibbonTabBar;
 // content built by callers doesn't each pick its own numbers.
 inline constexpr int kRibbonButtonSize = 26;
 // Fixed cell size every tab is painted at (see RibbonTabBar) — wide enough
-// to fit "Configure Project" without eliding under the default font.
-inline constexpr int kRibbonTabWidth = 170;
-inline constexpr int kRibbonTabHeight = 30;
+// to fit the longest tab label ("Layout") without eliding under the
+// default font.
+inline constexpr int kRibbonTabWidth = 100;
+inline constexpr int kRibbonTabHeight = 26;
 // Horizontal inset of the trapezoid's top edge relative to its base, on
 // each side.
-inline constexpr int kRibbonTabSlant = 10;
+inline constexpr int kRibbonTabSlant = 8;
 // Padding inside a button group frame, and gap between buttons within it.
 inline constexpr int kRibbonGroupPadding = 4;
 // Gap between adjacent button groups on a page — deliberately larger than

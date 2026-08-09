@@ -5,6 +5,7 @@
 #include "widgets/chartwidgets.h"
 #include "widgets/controlconfigeditor.h"
 #include "widgets/controlwidgets.h"
+#include "widgets/gaugeconfigeditor.h"
 #include "widgets/serialmonitorwidget.h"
 
 namespace traceview {
@@ -22,7 +23,8 @@ WidgetRegistry::WidgetRegistry() {
                   [](QWidget* parent) -> DashboardWidget* { return new DummyBarChartWidget(parent); },
                   [](QWidget* parent) -> WidgetConfigEditor* { return new ChartConfigEditor(parent); }});
     registerType({"dummy_gauge", "Gauge (dummy)",
-                  [](QWidget* parent) -> DashboardWidget* { return new DummyGaugeWidget(parent); }});
+                  [](QWidget* parent) -> DashboardWidget* { return new DummyGaugeWidget(parent); },
+                  [](QWidget* parent) -> WidgetConfigEditor* { return new GaugeConfigEditor(parent); }});
     registerType({"serial_monitor", "Serial Monitor",
                   [](QWidget* parent) -> DashboardWidget* { return new SerialMonitorWidget(parent); }});
     registerType({"push_button", "Push Button",

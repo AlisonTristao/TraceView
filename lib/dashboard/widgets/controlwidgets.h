@@ -13,7 +13,8 @@ namespace traceview {
 // pressedRequested() has nowhere to send its value yet, same as
 // SerialMonitorWidget::sendRequested — wiring it to a live output is a
 // later, separate step. See PushButtonConfigEditor (controlconfigeditor.h)
-// for the label/style/command settings captured in the meantime.
+// for the label/style/press-release/long-press/repeat settings captured in
+// the meantime.
 class PushButtonWidget : public DashboardWidget {
     Q_OBJECT
 

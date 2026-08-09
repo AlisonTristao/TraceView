@@ -166,7 +166,7 @@ Ribbon* MainWindow::buildRibbon() {
 
     auto* ribbon = new Ribbon(this);
     ribbon->addTab("Run", runPage);
-    m_configureTabIndex = ribbon->addTab("Configure Project", configurePage);
+    m_configureTabIndex = ribbon->addTab("Layout", configurePage);
 
     connect(ribbon, &Ribbon::currentTabChanged, this, &MainWindow::onRibbonTabChanged);
 
@@ -186,8 +186,8 @@ void MainWindow::buildPropertiesPanel() {
             &MainWindow::onPanelConfigChangeRequested);
 
     // Only relevant while editing the layout — matches m_addWidgetAction/
-    // m_positionAction, which also start disabled until the Configure
-    // Project tab is active (see onRibbonTabChanged).
+    // m_positionAction, which also start disabled until the Layout tab is
+    // active (see onRibbonTabChanged).
     m_propertiesPanel->hide();
 }
 

@@ -30,6 +30,9 @@ constexpr const char* kClipboardMimeType = "application/x-traceview-dashboardite
 // go stale and clamp items against.
 constexpr int kGridColumns = 48;
 constexpr int kGridRows = 32;
+// Radius of the small dots painted at each grid node in edit mode (see
+// paintEvent()) — deliberately subtle, just a hint of the snap points.
+constexpr double kGridDotRadius = 1.2;
 // A widget below this fraction in either dimension is too small to be
 // usable (header alone is 24px). Mirrors the old 5-cell minimum.
 constexpr double kMinItemWidth = 5.0 / kGridColumns;
@@ -407,31 +410,26 @@ void DashboardGrid::resizeEvent(QResizeEvent* event) {
 }
 
 void DashboardGrid::paintEvent(QPaintEvent*) {
-    QPainter painter(this);
-    const ThemePalette& palette = ThemeManager::instance().currentTheme();
-
-    // Always-visible border delimiting the canvas — where widgets can be
-    // placed — separate from the grid lines below (edit mode only).
-    const QRect area = usableRect();
-    painter.setPen(QPen(palette.border, 1));
-    painter.setBrush(Qt::NoBrush);
-    painter.drawRect(area.adjusted(-1, -1, 0, 0));
-
     if (!m_editMode) {
         return;
     }
 
-    const int right = area.left() + area.width();
-    const int bottom = area.top() + area.height();
+    QPainter painter(this);
+    const ThemePalette& palette = ThemeManager::instance().currentTheme();
+    const QRect area = usableRect();
 
-    painter.setPen(QPen(palette.borderStrong, 1));
+    // Small gray dots at each grid node instead of full lines — enough to
+    // hint at the snap points while editing without the visual clutter of a
+    // crosshatch over widget content.
+    painter.setRenderHint(QPainter::Antialiasing);
+    painter.setPen(Qt::NoPen);
+    painter.setBrush(palette.textDisabled);
     for (int c = 0; c <= kGridColumns; ++c) {
         const int x = area.left() + qRound(c * area.width() / double(kGridColumns));
-        painter.drawLine(x, area.top(), x, bottom);
-    }
-    for (int r = 0; r <= kGridRows; ++r) {
-        const int y = area.top() + qRound(r * area.height() / double(kGridRows));
-        painter.drawLine(area.left(), y, right, y);
+        for (int r = 0; r <= kGridRows; ++r) {
+            const int y = area.top() + qRound(r * area.height() / double(kGridRows));
+            painter.drawEllipse(QPointF(x, y), kGridDotRadius, kGridDotRadius);
+        }
     }
 }
 
