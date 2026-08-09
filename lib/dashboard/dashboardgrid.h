@@ -76,6 +76,17 @@ public:
     void addItem(const QString& typeId);
     // No-op if nothing is selected.
     void removeSelected();
+    // Puts the selected item on the system clipboard (as a custom MIME
+    // type) for a later pasteItem() call. No-op if nothing is selected.
+    void copySelected() const;
+    // True if the clipboard currently holds something copySelected() put
+    // there (possibly from a previous run, or another TraceView window).
+    bool canPaste() const;
+    // Inserts a new item cloned from whatever copySelected() last put on
+    // the clipboard, near the copied item's original spot if that space is
+    // free, otherwise in the first free cell. No-op if the clipboard holds
+    // nothing pasteable.
+    void pasteItem();
     // Swaps the selected item's widget for a new instance of `newTypeId`,
     // keeping its position/size. No-op if nothing is selected, the type is
     // unknown, or unchanged.

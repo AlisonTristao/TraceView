@@ -1,8 +1,11 @@
 #include "mainwindow.h"
 
 #include <QActionGroup>
+#include <QClipboard>
 #include <QFileDialog>
+#include <QGuiApplication>
 #include <QHBoxLayout>
+#include <QKeySequence>
 #include <QLabel>
 #include <QMenu>
 #include <QMenuBar>
@@ -60,8 +63,10 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
 void MainWindow::buildMenus() {
     auto* fileMenu = menuBar()->addMenu("&File");
     auto* saveAction = fileMenu->addAction("&Save Project");
+    saveAction->setShortcut(QKeySequence::Save);
     connect(saveAction, &QAction::triggered, this, &MainWindow::onSaveProject);
     auto* openAction = fileMenu->addAction("&Open Project");
+    openAction->setShortcut(QKeySequence::Open);
     connect(openAction, &QAction::triggered, this, &MainWindow::onOpenProject);
 
     auto* viewMenu = menuBar()->addMenu("&View");
@@ -104,16 +109,33 @@ Ribbon* MainWindow::buildRibbon() {
 
     m_removeAction = new QAction("Remove", this);
     m_removeAction->setEnabled(false);
+    m_removeAction->setShortcut(QKeySequence::Delete);
     connect(m_removeAction, &QAction::triggered, m_dashboardGrid, &DashboardGrid::removeSelected);
+
+    m_copyAction = new QAction("Copy", this);
+    m_copyAction->setEnabled(false);
+    m_copyAction->setShortcut(QKeySequence::Copy);
+    connect(m_copyAction, &QAction::triggered, m_dashboardGrid, &DashboardGrid::copySelected);
+
+    m_pasteAction = new QAction("Paste", this);
+    m_pasteAction->setEnabled(false);
+    m_pasteAction->setShortcut(QKeySequence::Paste);
+    connect(m_pasteAction, &QAction::triggered, m_dashboardGrid, &DashboardGrid::pasteItem);
 
     // createUndoAction()/createRedoAction() wire up triggered/enabled state
     // (and a dynamic "Undo <command text>" label) directly from the stack —
     // no manual canUndo()/canRedo() syncing needed.
     m_undoAction = m_dashboardGrid->undoStack()->createUndoAction(this, "Undo");
+    m_undoAction->setShortcut(QKeySequence::Undo);
     m_redoAction = m_dashboardGrid->undoStack()->createRedoAction(this, "Redo");
+    m_redoAction->setShortcut(QKeySequence::Redo);
 
     connect(m_dashboardGrid, &DashboardGrid::selectionChanged, this, &MainWindow::onSelectionChanged);
     connect(m_dashboardGrid->undoStack(), &QUndoStack::indexChanged, this, &MainWindow::refreshPropertiesPanel);
+    // The clipboard can change from a copySelected() call here, or from
+    // another window/app entirely — either way, m_pasteAction's enabled
+    // state needs to stay in sync with whether it's currently pasteable.
+    connect(QGuiApplication::clipboard(), &QClipboard::dataChanged, this, &MainWindow::updateSelectionActions);
 
     updateRibbonIcons();
     connect(&ThemeManager::instance(), &ThemeManager::themeChanged, this,
@@ -138,6 +160,7 @@ Ribbon* MainWindow::buildRibbon() {
 
     configureLayout->addWidget(
         Ribbon::createButtonGroup(configurePage, {m_positionAction, m_addWidgetAction, m_removeAction}));
+    configureLayout->addWidget(Ribbon::createButtonGroup(configurePage, {m_copyAction, m_pasteAction}));
     configureLayout->addWidget(Ribbon::createButtonGroup(configurePage, {m_undoAction, m_redoAction}));
     configureLayout->addStretch();
 
@@ -175,10 +198,18 @@ void MainWindow::updateRibbonIcons() {
     m_addWidgetAction->setIcon(makePlusIcon(palette.textPrimary));
     m_addWidgetAction->setToolTip("Add widget");
     m_removeAction->setIcon(makeMinusIcon(palette.danger));
-    m_removeAction->setToolTip("Remove selected widget");
+    m_removeAction->setToolTip(QString("Remove selected widget (%1)")
+                                    .arg(m_removeAction->shortcut().toString(QKeySequence::NativeText)));
+    m_copyAction->setIcon(makeCopyIcon(palette.textPrimary));
+    m_copyAction->setToolTip(
+        QString("Copy selected widget (%1)").arg(m_copyAction->shortcut().toString(QKeySequence::NativeText)));
+    m_pasteAction->setIcon(makePasteIcon(palette.textPrimary));
+    m_pasteAction->setToolTip(
+        QString("Paste as a new widget (%1)").arg(m_pasteAction->shortcut().toString(QKeySequence::NativeText)));
     // No explicit setToolTip(): QAction falls back to text(), which
     // QUndoStack keeps updated with the pending command's description
-    // (e.g. "Undo Move Widget").
+    // (e.g. "Undo Move Widget"); the shortcut still shows up in the menu/
+    // button via QAction::shortcut(), it's just not spelled out in the text.
     m_undoAction->setIcon(makeArrowIcon(palette.textPrimary, /*pointingLeft=*/true));
     m_redoAction->setIcon(makeArrowIcon(palette.textPrimary, /*pointingLeft=*/false));
 }
@@ -198,8 +229,10 @@ void MainWindow::onSelectionChanged(const QString&) {
 }
 
 void MainWindow::updateSelectionActions() {
-    const bool enabled = m_configureTabActive && !m_dashboardGrid->selectedItemId().isEmpty();
-    m_removeAction->setEnabled(enabled);
+    const bool hasSelection = m_configureTabActive && !m_dashboardGrid->selectedItemId().isEmpty();
+    m_removeAction->setEnabled(hasSelection);
+    m_copyAction->setEnabled(hasSelection);
+    m_pasteAction->setEnabled(m_configureTabActive && m_dashboardGrid->canPaste());
 }
 
 void MainWindow::refreshPropertiesPanel() {

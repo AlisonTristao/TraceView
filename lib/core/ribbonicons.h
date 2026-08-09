@@ -15,5 +15,7 @@ QIcon makeSelectIcon(const QColor& color);
 QIcon makePlusIcon(const QColor& color);
 QIcon makeMinusIcon(const QColor& color);
 QIcon makeArrowIcon(const QColor& color, bool pointingLeft);
+QIcon makeCopyIcon(const QColor& color);
+QIcon makePasteIcon(const QColor& color);
 
 } // namespace traceview

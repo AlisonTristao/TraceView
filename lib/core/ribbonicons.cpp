@@ -87,4 +87,40 @@ QIcon makeArrowIcon(const QColor& color, bool pointingLeft) {
     return QIcon(pixmap);
 }
 
+QIcon makeCopyIcon(const QColor& color) {
+    QPixmap pixmap(kRibbonIconSize, kRibbonIconSize);
+    pixmap.fill(Qt::transparent);
+
+    QPainter painter(&pixmap);
+    painter.setRenderHint(QPainter::Antialiasing);
+    QPen pen(color, 1.5);
+    pen.setJoinStyle(Qt::RoundJoin);
+    painter.setPen(pen);
+    painter.setBrush(Qt::NoBrush);
+
+    // Two overlapping outlined squares, offset diagonally — the standard
+    // "copy" glyph, kept as plain strokes (no punched-out overlap) to match
+    // this file's flat hand-drawn style.
+    painter.drawRoundedRect(QRectF(2.5, 2.5, 8, 8), 1.5, 1.5);
+    painter.drawRoundedRect(QRectF(5.5, 5.5, 8, 8), 1.5, 1.5);
+    return QIcon(pixmap);
+}
+
+QIcon makePasteIcon(const QColor& color) {
+    QPixmap pixmap(kRibbonIconSize, kRibbonIconSize);
+    pixmap.fill(Qt::transparent);
+
+    QPainter painter(&pixmap);
+    painter.setRenderHint(QPainter::Antialiasing);
+    QPen pen(color, 1.5);
+    pen.setJoinStyle(Qt::RoundJoin);
+    painter.setPen(pen);
+    painter.setBrush(Qt::NoBrush);
+
+    // Clipboard glyph: body plus a small centered clip tab on top.
+    painter.drawRoundedRect(QRectF(3, 3.5, 10, 11), 1.5, 1.5);
+    painter.drawRoundedRect(QRectF(6, 2, 4, 3), 1, 1);
+    return QIcon(pixmap);
+}
+
 } // namespace traceview

@@ -1,6 +1,10 @@
 #include "dashboardgrid.h"
 
+#include <QClipboard>
+#include <QGuiApplication>
 #include <QJsonArray>
+#include <QJsonDocument>
+#include <QMimeData>
 #include <QMouseEvent>
 #include <QPainter>
 #include <QUuid>
@@ -14,6 +18,10 @@ namespace traceview {
 
 namespace {
 constexpr int kMargin = 8;
+// Custom clipboard format for copySelected()/pasteItem() — carries a single
+// dashboardItemToJson() object, so paste can reuse the same (de)serializer
+// as project save/load instead of a bespoke copy of DashboardItem's fields.
+constexpr const char* kClipboardMimeType = "application/x-traceview-dashboarditem+json";
 // Fixed logical division count driving grid-line painting and drag/resize
 // snap granularity. Deliberately independent of window size — items are
 // stored as fractions of the canvas (see DashboardItem), so this constant
@@ -138,6 +146,63 @@ void DashboardGrid::removeSelected() {
         return;
     }
     m_undoStack->push(new RemoveWidgetCommand(this, *item));
+}
+
+void DashboardGrid::copySelected() const {
+    const DashboardItem* item = itemById(m_selectedItemId);
+    if (!item) {
+        return;
+    }
+    const QJsonDocument doc(dashboardItemToJson(*item));
+    auto* mimeData = new QMimeData();
+    mimeData->setData(kClipboardMimeType, doc.toJson(QJsonDocument::Compact));
+    QGuiApplication::clipboard()->setMimeData(mimeData);
+}
+
+bool DashboardGrid::canPaste() const {
+    const QMimeData* mimeData = QGuiApplication::clipboard()->mimeData();
+    return mimeData && mimeData->hasFormat(kClipboardMimeType);
+}
+
+void DashboardGrid::pasteItem() {
+    const QMimeData* mimeData = QGuiApplication::clipboard()->mimeData();
+    if (!mimeData || !mimeData->hasFormat(kClipboardMimeType)) {
+        return;
+    }
+
+    QJsonParseError error;
+    const QJsonDocument doc = QJsonDocument::fromJson(mimeData->data(kClipboardMimeType), &error);
+    if (error.error != QJsonParseError::NoError || !doc.isObject()) {
+        return;
+    }
+
+    bool ok = false;
+    DashboardItem item = dashboardItemFromJson(doc.object(), &ok);
+    if (!ok || WidgetRegistry::instance().displayName(item.typeId).isEmpty()) {
+        return;
+    }
+
+    item.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
+    // Keys must stay unique — the pasted copy starts unkeyed, same as a
+    // brand-new item added via addItem().
+    item.key.clear();
+
+    // Prefer landing one cell down-right of the copied spot (reads as "a
+    // copy placed next to the original"); fall back to the first free cell
+    // like addItem() does if that spot is occupied or off-canvas.
+    DashboardItem offsetCandidate = item;
+    offsetCandidate.x = item.x + 1.0 / kGridColumns;
+    offsetCandidate.y = item.y + 1.0 / kGridRows;
+    if (isPlacementValid(offsetCandidate, QString())) {
+        item.x = offsetCandidate.x;
+        item.y = offsetCandidate.y;
+    } else if (!findFreeSlot(item.width, item.height, &item.x, &item.y)) {
+        item.x = 0.0;
+        item.y = 0.0;
+    }
+
+    m_undoStack->push(new AddWidgetCommand(this, item));
+    selectItem(item.id);
 }
 
 void DashboardGrid::removeItem(const QString& itemId) {
