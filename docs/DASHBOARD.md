@@ -223,7 +223,7 @@ independent top-level sections:
         "config": {
           "format": "csv", "count": 1,
           "xAxis": { "mode": "samples", "sampleTimeMs": 100.0 },
-          "yAxis": { "mode": "auto", "min": 0.0, "max": 100.0, "unit": "" },
+          "yAxis": { "mode": "auto", "min": 0.0, "max": 100.0, "unit": "", "grid": true },
           "series": []
         },
         "x": 0.0, "y": 0.0, "width": 0.3333, "height": 0.25

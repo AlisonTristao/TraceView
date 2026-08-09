@@ -2,6 +2,7 @@
 
 #include "dashboard/widgetconfigeditor.h"
 
+class QCheckBox;
 class QComboBox;
 class QDoubleSpinBox;
 class QFormLayout;
@@ -68,6 +69,7 @@ private:
     QDoubleSpinBox* m_yMinSpin = nullptr;
     QDoubleSpinBox* m_yMaxSpin = nullptr;
     QLineEdit* m_yUnitEdit = nullptr;
+    QCheckBox* m_gridCheck = nullptr;
     QTableWidget* m_seriesTable = nullptr;
     QPushButton* m_addSeriesButton = nullptr;
 };

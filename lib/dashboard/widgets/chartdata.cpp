@@ -154,6 +154,7 @@ ChartConfig parseChartConfig(const QJsonObject& json) {
     config.yMin = yAxis.value("min").toDouble(0.0);
     config.yMax = yAxis.value("max").toDouble(100.0);
     config.yUnit = yAxis.value("unit").toString();
+    config.showGrid = yAxis.value("grid").toBool(true);
 
     for (const QJsonValue& value : json.value("series").toArray()) {
         config.series.append(parseSeriesConfig(value.toObject()));

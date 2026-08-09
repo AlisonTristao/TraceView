@@ -14,16 +14,45 @@ namespace traceview {
 
 namespace {
 
-constexpr int kLabelMargin = 8;
-// Fixed left gutter for Y-axis value labels, to the left of plotRect. Not
-// measured against the actual label text (font metrics vary per value) --
-// a fixed width matches how kLabelMargin/kHeaderHeight etc. are already
-// plain constants elsewhere in this codebase rather than dynamically sized.
-constexpr int kAxisGutter = 40;
+// Space between the plot's outer chrome (gridlines, legend, unit/value
+// labels) and the widget's own edge -- keeps everything from reading as
+// flush/glued to the widget's border.
+constexpr int kOuterPadding = 12;
+// Tighter gap used only between adjacent pieces of axis chrome that belong
+// together (the unit strip and the value gutter, the value gutter and the
+// plot itself) -- deliberately smaller than kOuterPadding so the unit label
+// reads as attached to its axis rather than floating apart from it.
+constexpr int kAxisLabelGap = 4;
 // Caps how often onSerialPayload() triggers an actual repaint, independent
 // of how fast frames arrive (see BACKEND_TODO.txt "taxas diferentes por
 // widget") -- data still gets appended to the buffers on every frame.
 constexpr int kRepaintIntervalMs = 33; // ~30 Hz
+// Shared with paintLegend()'s swatch dot so plotTopMargin() below can
+// predict the legend row's real height instead of guessing at it.
+constexpr int kLegendSwatchSize = 8;
+
+// Thickness of the rotated unit-label strip immediately left of the
+// Y-axis value gutter (only reserved when a unit is configured). Sized to
+// the actual font height rather than a plain constant like kAxisGutter --
+// unlike the numeric labels' width, which tolerates being wider than the
+// text, this strip's *thickness* is the rotated text's cap height, so an
+// undersized fixed constant would clip descenders at larger font sizes.
+int unitStripWidth(const QPainter& painter) {
+    return QFontMetrics(painter.font()).height() + 4;
+}
+
+// Widest of the three Y-axis value labels' (min/mid/max) rendered widths.
+// Callers reserve exactly this much gutter space instead of a fixed
+// worst-case width most values never fill -- e.g. "0"/"50"/"100" only needs
+// a third of what "-100000"/"0"/"100000" would, so a flat constant either
+// wastes space for small ranges or clips large ones.
+int axisLabelWidth(const QPainter& painter, double yMin, double yMax) {
+    const QFontMetrics fm(painter.font());
+    const int maxWidth = fm.horizontalAdvance(QString::number(yMax, 'g', 4));
+    const int midWidth = fm.horizontalAdvance(QString::number((yMin + yMax) / 2.0, 'g', 4));
+    const int minWidth = fm.horizontalAdvance(QString::number(yMin, 'g', 4));
+    return qMax(maxWidth, qMax(midWidth, minWidth));
+}
 
 // Rounded to the same curve as the DashboardCell wrapped around `widget` --
 // via contentFillPath(), spanning `widget`'s true bounds, not an inset
@@ -46,31 +75,57 @@ void paintBackground(QPainter& painter, const DashboardWidget& widget, const The
 }
 
 // Three horizontal gridlines (min/mid/max) across plotRect's width, each
-// with its value labeled in the kAxisGutter-wide strip to plotRect's left.
-// Deliberately just 3 -- a busier grid would fight the throttled, frequently
-// -redrawn plot lines/bars for attention on a widget this small.
+// with its value labeled in a gutter to plotRect's left sized to the
+// widest of the three (see axisLabelWidth()). Deliberately just 3 -- a
+// busier grid would fight the throttled, frequently-redrawn plot lines/bars
+// for attention on a widget this small. The value labels (and unit) stay up
+// regardless of `showGrid` -- that toggle is about the guide lines across
+// the plot, not about losing the ability to read the axis.
 void paintYAxis(QPainter& painter, const QRect& plotRect, double yMin, double yMax, const QString& unit,
-                 const ThemePalette& palette) {
+                 bool showGrid, const ThemePalette& palette) {
     if (plotRect.height() <= 0 || plotRect.width() <= 0) {
         return;
     }
     const int midY = plotRect.center().y();
 
-    painter.setPen(QPen(palette.border, 1));
-    painter.drawLine(plotRect.left(), plotRect.top(), plotRect.right(), plotRect.top());
-    painter.drawLine(plotRect.left(), midY, plotRect.right(), midY);
-    painter.drawLine(plotRect.left(), plotRect.bottom(), plotRect.right(), plotRect.bottom());
+    if (showGrid) {
+        painter.setPen(QPen(palette.border, 1));
+        painter.drawLine(plotRect.left(), plotRect.top(), plotRect.right(), plotRect.top());
+        painter.drawLine(plotRect.left(), midY, plotRect.right(), midY);
+        painter.drawLine(plotRect.left(), plotRect.bottom(), plotRect.right(), plotRect.bottom());
+    }
 
     painter.setPen(palette.textSecondary);
     const QFontMetrics fm(painter.font());
-    const QRect gutter(0, 0, plotRect.left() - kLabelMargin, fm.height());
+    // Derived from plotRect itself (not a separate running x) so this stays
+    // correct regardless of whether the caller reserved extra left space
+    // for the rotated unit strip below.
+    const int gutterRight = plotRect.left() - kAxisLabelGap;
+    const int labelWidth = axisLabelWidth(painter, yMin, yMax);
+    const QRect gutter(gutterRight - labelWidth, 0, labelWidth, fm.height());
     auto drawValue = [&](double value, int centerY) {
         painter.drawText(QRect(gutter.x(), centerY - gutter.height() / 2, gutter.width(), gutter.height()),
-                          Qt::AlignRight | Qt::AlignVCenter, QString::number(value, 'g', 4) + unit);
+                          Qt::AlignRight | Qt::AlignVCenter, QString::number(value, 'g', 4));
     };
     drawValue(yMax, plotRect.top());
     drawValue((yMin + yMax) / 2.0, midY);
     drawValue(yMin, plotRect.bottom());
+
+    // Unit as its own vertical label in the strip left of the gutter --
+    // not glued onto any one number -- centered on the axis's midpoint,
+    // rotated to read bottom-to-top like a conventional axis title. Sits
+    // right against gutter.left(), which is already sized to the labels'
+    // actual width (see above), not a fixed box most values never fill.
+    if (!unit.isEmpty()) {
+        const int stripWidth = unitStripWidth(painter);
+        const int stripCenterX = gutter.left() - kAxisLabelGap - stripWidth / 2;
+        painter.save();
+        painter.translate(stripCenterX, midY);
+        painter.rotate(-90);
+        const int textWidth = fm.horizontalAdvance(unit);
+        painter.drawText(QRect(-textWidth / 2, -fm.height() / 2, textWidth, fm.height()), Qt::AlignCenter, unit);
+        painter.restore();
+    }
 }
 
 // Series name + color swatch, one per configured series, in a single row
@@ -82,30 +137,59 @@ void paintLegend(QPainter& painter, const QRect& area, const QVector<ChartSeries
     if (seriesConfigs.isEmpty()) {
         return;
     }
-    constexpr int kSwatchSize = 8;
     constexpr int kItemGap = 14;
     const QFontMetrics fm(painter.font());
-    const int rowHeight = qMax(kSwatchSize, fm.height());
-    const int y = area.top() + kLabelMargin;
-    const int rightBound = area.right() - kLabelMargin;
-    int x = area.left() + kLabelMargin;
+    const int rowHeight = qMax(kLegendSwatchSize, fm.height());
+    const int y = area.top() + kOuterPadding;
+    const int rightBound = area.right() - kOuterPadding;
+    int x = area.left() + kOuterPadding;
 
     for (const ChartSeriesConfig& series : seriesConfigs) {
         const QString name = series.name.isEmpty() ? QString("Series %1").arg(series.index + 1) : series.name;
         const int textWidth = fm.horizontalAdvance(name);
-        const int itemWidth = kSwatchSize + 4 + textWidth;
+        const int itemWidth = kLegendSwatchSize + 4 + textWidth;
         if (x + itemWidth > rightBound) {
             break;
         }
         painter.setPen(Qt::NoPen);
         painter.setBrush(series.color);
-        painter.drawEllipse(QRect(x, y + (rowHeight - kSwatchSize) / 2, kSwatchSize, kSwatchSize));
+        painter.drawEllipse(QRect(x, y + (rowHeight - kLegendSwatchSize) / 2, kLegendSwatchSize, kLegendSwatchSize));
 
         painter.setPen(palette.textSecondary);
-        painter.drawText(QRect(x + kSwatchSize + 4, y, textWidth, rowHeight), Qt::AlignLeft | Qt::AlignVCenter, name);
+        painter.drawText(QRect(x + kLegendSwatchSize + 4, y, textWidth, rowHeight), Qt::AlignLeft | Qt::AlignVCenter,
+                          name);
 
         x += itemWidth + kItemGap;
     }
+}
+
+// Top inset for plotRect: just kOuterPadding, matching the right/bottom
+// insets, when there's no legend to draw; otherwise enough to clear
+// paintLegend()'s actual row height (which varies with font metrics) plus
+// the same margin below it. Previously a flat kLabelMargin * 3 guess --
+// too much empty space above the plot when a chart has no series yet, and
+// not necessarily enough to clear a taller legend row, which read as the
+// plot floating unevenly inside its widget.
+int plotTopMargin(const QPainter& painter, bool hasLegend) {
+    if (!hasLegend) {
+        return kOuterPadding;
+    }
+    const QFontMetrics fm(painter.font());
+    const int rowHeight = qMax(kLegendSwatchSize, fm.height());
+    return kOuterPadding + rowHeight + kOuterPadding;
+}
+
+// Left inset for plotRect: kOuterPadding from the widget's own edge, then
+// -- when a unit is configured -- the rotated unit strip and a tight
+// kAxisLabelGap ahead of the value gutter, then the gutter itself (sized to
+// the actual min/mid/max labels for this frame's range, see
+// axisLabelWidth()) and another kAxisLabelGap before the plot starts.
+// Mirrors the strip/gutter layout paintYAxis() draws into, so plotRect
+// always reserves exactly as much space as that call will actually use --
+// no more, no less, regardless of how many digits the current range needs.
+int plotLeftMargin(const QPainter& painter, bool hasUnit, double yMin, double yMax) {
+    const int unitPart = hasUnit ? unitStripWidth(painter) + kAxisLabelGap : 0;
+    return kOuterPadding + unitPart + axisLabelWidth(painter, yMin, yMax) + kAxisLabelGap;
 }
 
 Qt::PenStyle qtPenStyleFor(ChartSeriesStyle style) {
@@ -274,11 +358,13 @@ void DummyLineChartWidget::paintEvent(QPaintEvent*) {
 
     paintBackground(painter, *this, palette);
 
-    const QRect plotRect = area.adjusted(kLabelMargin + kAxisGutter, kLabelMargin * 3, -kLabelMargin, -kLabelMargin);
-    const int capacity = chartBufferCapacity(m_config);
     const auto [yMin, yMax] = computeYRange(m_config, m_seriesBuffers);
+    const int topMargin = plotTopMargin(painter, !m_config.series.isEmpty());
+    const int leftMargin = plotLeftMargin(painter, !m_config.yUnit.isEmpty(), yMin, yMax);
+    const QRect plotRect = area.adjusted(leftMargin, topMargin, -kOuterPadding, -kOuterPadding);
+    const int capacity = chartBufferCapacity(m_config);
 
-    paintYAxis(painter, plotRect, yMin, yMax, m_config.yUnit, palette);
+    paintYAxis(painter, plotRect, yMin, yMax, m_config.yUnit, m_config.showGrid, palette);
     for (int i = 0; i < m_config.series.size() && i < m_seriesBuffers.size(); ++i) {
         paintLineSeries(painter, plotRect, capacity, m_config.series[i], m_seriesBuffers[i], yMin, yMax);
     }
@@ -300,11 +386,13 @@ void DummyBarChartWidget::paintEvent(QPaintEvent*) {
 
     paintBackground(painter, *this, palette);
 
-    const QRect plotRect = area.adjusted(kLabelMargin + kAxisGutter, kLabelMargin * 3, -kLabelMargin, -kLabelMargin);
-    const int capacity = chartBufferCapacity(m_config);
     const auto [yMin, yMax] = computeYRange(m_config, m_seriesBuffers);
+    const int topMargin = plotTopMargin(painter, !m_config.series.isEmpty());
+    const int leftMargin = plotLeftMargin(painter, !m_config.yUnit.isEmpty(), yMin, yMax);
+    const QRect plotRect = area.adjusted(leftMargin, topMargin, -kOuterPadding, -kOuterPadding);
+    const int capacity = chartBufferCapacity(m_config);
 
-    paintYAxis(painter, plotRect, yMin, yMax, m_config.yUnit, palette);
+    paintYAxis(painter, plotRect, yMin, yMax, m_config.yUnit, m_config.showGrid, palette);
     paintBarSeries(painter, plotRect, capacity, m_config.series, m_seriesBuffers, yMin, yMax);
 
     // See DummyLineChartWidget::paintEvent for why this is a legend instead
@@ -343,8 +431,8 @@ void DummyGaugeWidget::paintEvent(QPaintEvent*) {
     // already shows the configured name (TAREFA 1), same reasoning as the
     // line/bar charts in TAREFA 3. Unlike those, a gauge has no per-series
     // legend to put in its place, so the reclaimed margin just goes back to
-    // the arc instead of being pinned at kLabelMargin * 3.
-    const QRect plotRect = area.adjusted(kLabelMargin, kLabelMargin, -kLabelMargin, -kLabelMargin);
+    // the arc instead of being pinned at kOuterPadding * 3.
+    const QRect plotRect = area.adjusted(kOuterPadding, kOuterPadding, -kOuterPadding, -kOuterPadding);
     const int side = qMin(plotRect.width(), plotRect.height());
     if (side > 0) {
         const bool hasValue = !qIsNaN(m_value);

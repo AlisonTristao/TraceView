@@ -1,5 +1,6 @@
 #include "chartconfigeditor.h"
 
+#include <QCheckBox>
 #include <QColor>
 #include <QColorDialog>
 #include <QComboBox>
@@ -139,6 +140,10 @@ ChartConfigEditor::ChartConfigEditor(QWidget* parent) : WidgetConfigEditor(paren
     m_yUnitEdit->setPlaceholderText("V, °C, %...");
     m_yUnitEdit->setToolTip("Unit label shown alongside the Y axis.");
 
+    m_gridCheck = new QCheckBox(this);
+    m_gridCheck->setChecked(true);
+    m_gridCheck->setToolTip("Show the min/mid/max gridlines across the plot.");
+
     // Count/Ts and Min/Max ride along their sibling field's row instead of
     // each owning a full row of their own. Every widget is vertically
     // centered explicitly so combo/label/spin line up on one baseline
@@ -183,6 +188,7 @@ ChartConfigEditor::ChartConfigEditor(QWidget* parent) : WidgetConfigEditor(paren
     m_formLayout->addRow("Y Axis", m_yAxisModeCombo);
     m_formLayout->addRow("Range", m_yRangeRow);
     m_formLayout->addRow("Unit", m_yUnitEdit);
+    m_formLayout->addRow("Grid", m_gridCheck);
 
     auto* divider = new QFrame(this);
     divider->setObjectName("sectionDivider");
@@ -246,6 +252,7 @@ ChartConfigEditor::ChartConfigEditor(QWidget* parent) : WidgetConfigEditor(paren
     connect(m_yMinSpin, &QDoubleSpinBox::valueChanged, this, [this](double) { emitChanged(); });
     connect(m_yMaxSpin, &QDoubleSpinBox::valueChanged, this, [this](double) { emitChanged(); });
     connect(m_yUnitEdit, &QLineEdit::editingFinished, this, [this]() { emitChanged(); });
+    connect(m_gridCheck, &QCheckBox::toggled, this, [this](bool) { emitChanged(); });
     connect(m_seriesTable, &QTableWidget::itemChanged, this, [this](QTableWidgetItem*) { emitChanged(); });
 
     updateByteTypeColumnVisibility();
@@ -270,6 +277,7 @@ void ChartConfigEditor::setConfig(const QJsonObject& config) {
     m_yMinSpin->setValue(yAxis.value("min").toDouble(0.0));
     m_yMaxSpin->setValue(yAxis.value("max").toDouble(100.0));
     m_yUnitEdit->setText(yAxis.value("unit").toString());
+    m_gridCheck->setChecked(yAxis.value("grid").toBool(true));
 
     m_seriesTable->setRowCount(0);
     for (const QJsonValue& value : config.value("series").toArray()) {
@@ -297,6 +305,7 @@ QJsonObject ChartConfigEditor::config() const {
     yAxis["min"] = m_yMinSpin->value();
     yAxis["max"] = m_yMaxSpin->value();
     yAxis["unit"] = m_yUnitEdit->text();
+    yAxis["grid"] = m_gridCheck->isChecked();
     cfg["yAxis"] = yAxis;
 
     QJsonArray seriesArray;

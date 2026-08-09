@@ -47,6 +47,7 @@ struct ChartConfig {
     double yMin = 0.0;
     double yMax = 100.0;
     QString yUnit;
+    bool showGrid = true;
 
     QVector<ChartSeriesConfig> series;
 };
