@@ -40,7 +40,11 @@ ThemePalette makeLightPalette() {
     p.surface = QColor("#F4F6FA");
     p.surfaceAlt = QColor("#E7EBF3");
 
-    p.border = QColor(10, 15, 30, 32);
+    // Alpha higher than the dark theme's equivalent (40 on a near-black
+    // background) because the same low alpha reads much fainter against
+    // white — low contrast in light mode was reported directly, see
+    // docs/VISUAL_IDENTITY.md.
+    p.border = QColor(10, 15, 30, 56);
     p.borderStrong = QColor("#0A0F1E");
 
     p.textPrimary = QColor("#0A0F1E");

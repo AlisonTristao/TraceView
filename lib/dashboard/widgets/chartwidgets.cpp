@@ -1,5 +1,7 @@
 #include "chartwidgets.h"
 
+#include <QFont>
+#include <QFontMetrics>
 #include <QPainter>
 #include <QPainterPath>
 #include <QPair>
@@ -13,21 +15,98 @@ namespace traceview {
 namespace {
 
 constexpr int kLabelMargin = 8;
+// Fixed left gutter for Y-axis value labels, to the left of plotRect. Not
+// measured against the actual label text (font metrics vary per value) --
+// a fixed width matches how kLabelMargin/kHeaderHeight etc. are already
+// plain constants elsewhere in this codebase rather than dynamically sized.
+constexpr int kAxisGutter = 40;
 // Caps how often onSerialPayload() triggers an actual repaint, independent
 // of how fast frames arrive (see BACKEND_TODO.txt "taxas diferentes por
 // widget") -- data still gets appended to the buffers on every frame.
 constexpr int kRepaintIntervalMs = 33; // ~30 Hz
 
-void paintBackground(QPainter& painter, const QRect& rect, const ThemePalette& palette) {
-    painter.fillRect(rect, palette.surface);
+// Rounded to the same curve as the DashboardCell wrapped around `widget` --
+// via contentFillPath(), spanning `widget`'s true bounds, not an inset
+// rect -- so straight edges stay flush with the cell's true edge and only
+// the corner arc lines up with DashboardCell's outline stroke (see
+// contentFillPath()/kBorderCurveInset for why the arc alone needs
+// adjusting). A plain drawRect() here would run straight into the corner
+// well past that curve, leaving a few pixels of straight edge poking out
+// past the rounded outline. See "Corner radius" in docs/VISUAL_IDENTITY.md.
+void paintBackground(QPainter& painter, const DashboardWidget& widget, const ThemePalette& palette) {
+    painter.fillPath(widget.contentFillPath(), palette.surface);
+
     painter.setPen(QPen(palette.border, 1));
-    painter.drawRect(rect.adjusted(0, 0, -1, -1));
+    painter.setBrush(Qt::NoBrush);
+    // Inset by 0.5 so the 1px pen renders at full strength instead of half
+    // of it landing outside this widget's own paint device and getting
+    // clipped -- same idea as DashboardCell's own outline stroke inset,
+    // just for this widget's separate, decorative inner border.
+    const QRectF strokeRect = QRectF(widget.rect()).adjusted(0.5, 0.5, -0.5, -0.5);
+    painter.drawPath(widget.roundedPath(strokeRect, kBorderCurveInset));
 }
 
-void paintLabel(QPainter& painter, const QRect& rect, const QString& text, const ThemePalette& palette) {
+// Three horizontal gridlines (min/mid/max) across plotRect's width, each
+// with its value labeled in the kAxisGutter-wide strip to plotRect's left.
+// Deliberately just 3 -- a busier grid would fight the throttled, frequently
+// -redrawn plot lines/bars for attention on a widget this small.
+void paintYAxis(QPainter& painter, const QRect& plotRect, double yMin, double yMax, const QString& unit,
+                 const ThemePalette& palette) {
+    if (plotRect.height() <= 0 || plotRect.width() <= 0) {
+        return;
+    }
+    const int midY = plotRect.center().y();
+
+    painter.setPen(QPen(palette.border, 1));
+    painter.drawLine(plotRect.left(), plotRect.top(), plotRect.right(), plotRect.top());
+    painter.drawLine(plotRect.left(), midY, plotRect.right(), midY);
+    painter.drawLine(plotRect.left(), plotRect.bottom(), plotRect.right(), plotRect.bottom());
+
     painter.setPen(palette.textSecondary);
-    painter.drawText(rect.adjusted(kLabelMargin, kLabelMargin, -kLabelMargin, -kLabelMargin),
-                      Qt::AlignTop | Qt::AlignLeft, text);
+    const QFontMetrics fm(painter.font());
+    const QRect gutter(0, 0, plotRect.left() - kLabelMargin, fm.height());
+    auto drawValue = [&](double value, int centerY) {
+        painter.drawText(QRect(gutter.x(), centerY - gutter.height() / 2, gutter.width(), gutter.height()),
+                          Qt::AlignRight | Qt::AlignVCenter, QString::number(value, 'g', 4) + unit);
+    };
+    drawValue(yMax, plotRect.top());
+    drawValue((yMin + yMax) / 2.0, midY);
+    drawValue(yMin, plotRect.bottom());
+}
+
+// Series name + color swatch, one per configured series, in a single row
+// clipped to `area`'s width -- overflow just stops adding entries rather
+// than wrapping or eliding, which is enough for the handful of series a
+// chart this size realistically holds.
+void paintLegend(QPainter& painter, const QRect& area, const QVector<ChartSeriesConfig>& seriesConfigs,
+                  const ThemePalette& palette) {
+    if (seriesConfigs.isEmpty()) {
+        return;
+    }
+    constexpr int kSwatchSize = 8;
+    constexpr int kItemGap = 14;
+    const QFontMetrics fm(painter.font());
+    const int rowHeight = qMax(kSwatchSize, fm.height());
+    const int y = area.top() + kLabelMargin;
+    const int rightBound = area.right() - kLabelMargin;
+    int x = area.left() + kLabelMargin;
+
+    for (const ChartSeriesConfig& series : seriesConfigs) {
+        const QString name = series.name.isEmpty() ? QString("Series %1").arg(series.index + 1) : series.name;
+        const int textWidth = fm.horizontalAdvance(name);
+        const int itemWidth = kSwatchSize + 4 + textWidth;
+        if (x + itemWidth > rightBound) {
+            break;
+        }
+        painter.setPen(Qt::NoPen);
+        painter.setBrush(series.color);
+        painter.drawEllipse(QRect(x, y + (rowHeight - kSwatchSize) / 2, kSwatchSize, kSwatchSize));
+
+        painter.setPen(palette.textSecondary);
+        painter.drawText(QRect(x + kSwatchSize + 4, y, textWidth, rowHeight), Qt::AlignLeft | Qt::AlignVCenter, name);
+
+        x += itemWidth + kItemGap;
+    }
 }
 
 Qt::PenStyle qtPenStyleFor(ChartSeriesStyle style) {
@@ -194,16 +273,22 @@ void DummyLineChartWidget::paintEvent(QPaintEvent*) {
     const ThemePalette& palette = ThemeManager::instance().currentTheme();
     const QRect area = rect();
 
-    paintBackground(painter, area, palette);
+    paintBackground(painter, *this, palette);
 
-    const QRect plotRect = area.adjusted(kLabelMargin, kLabelMargin * 3, -kLabelMargin, -kLabelMargin);
+    const QRect plotRect = area.adjusted(kLabelMargin + kAxisGutter, kLabelMargin * 3, -kLabelMargin, -kLabelMargin);
     const int capacity = chartBufferCapacity(m_config);
     const auto [yMin, yMax] = computeYRange(m_config, m_seriesBuffers);
+
+    paintYAxis(painter, plotRect, yMin, yMax, m_config.yUnit, palette);
     for (int i = 0; i < m_config.series.size() && i < m_seriesBuffers.size(); ++i) {
         paintLineSeries(painter, plotRect, capacity, m_config.series[i], m_seriesBuffers[i], yMin, yMax);
     }
 
-    paintLabel(painter, area, "Line Chart", palette);
+    // No more redundant "Line Chart" corner label -- DashboardCell's header
+    // already shows the configured name (TAREFA 1); this corner now carries
+    // the per-series legend instead, which the old literal text had no room
+    // for anyway.
+    paintLegend(painter, area, m_config.series, palette);
 }
 
 DummyBarChartWidget::DummyBarChartWidget(QWidget* parent) : ChartWidgetBase(parent) {}
@@ -214,14 +299,18 @@ void DummyBarChartWidget::paintEvent(QPaintEvent*) {
     const ThemePalette& palette = ThemeManager::instance().currentTheme();
     const QRect area = rect();
 
-    paintBackground(painter, area, palette);
+    paintBackground(painter, *this, palette);
 
-    const QRect plotRect = area.adjusted(kLabelMargin, kLabelMargin * 3, -kLabelMargin, -kLabelMargin);
+    const QRect plotRect = area.adjusted(kLabelMargin + kAxisGutter, kLabelMargin * 3, -kLabelMargin, -kLabelMargin);
     const int capacity = chartBufferCapacity(m_config);
     const auto [yMin, yMax] = computeYRange(m_config, m_seriesBuffers);
+
+    paintYAxis(painter, plotRect, yMin, yMax, m_config.yUnit, palette);
     paintBarSeries(painter, plotRect, capacity, m_config.series, m_seriesBuffers, yMin, yMax);
 
-    paintLabel(painter, area, "Bar Chart", palette);
+    // See DummyLineChartWidget::paintEvent for why this is a legend instead
+    // of a "Bar Chart" corner label now.
+    paintLegend(painter, area, m_config.series, palette);
 }
 
 DummyGaugeWidget::DummyGaugeWidget(QWidget* parent) : DashboardWidget(parent) {}
@@ -249,9 +338,14 @@ void DummyGaugeWidget::paintEvent(QPaintEvent*) {
     const ThemePalette& palette = ThemeManager::instance().currentTheme();
     const QRect area = rect();
 
-    paintBackground(painter, area, palette);
+    paintBackground(painter, *this, palette);
 
-    const QRect plotRect = area.adjusted(kLabelMargin, kLabelMargin * 3, -kLabelMargin, -kLabelMargin);
+    // No more redundant "Gauge" corner label -- DashboardCell's header
+    // already shows the configured name (TAREFA 1), same reasoning as the
+    // line/bar charts in TAREFA 3. Unlike those, a gauge has no per-series
+    // legend to put in its place, so the reclaimed margin just goes back to
+    // the arc instead of being pinned at kLabelMargin * 3.
+    const QRect plotRect = area.adjusted(kLabelMargin, kLabelMargin, -kLabelMargin, -kLabelMargin);
     const int side = qMin(plotRect.width(), plotRect.height());
     if (side > 0) {
         const bool hasValue = !qIsNaN(m_value);
@@ -272,13 +366,19 @@ void DummyGaugeWidget::paintEvent(QPaintEvent*) {
             painter.drawArc(arcRect.adjusted(4, 4, -4, -4), kStartAngle, qRound(kSpanAngle * fraction));
         }
 
+        // The single most important number on this widget -- larger, bold,
+        // the one deliberate typography accent in the app (see "Typography"
+        // in docs/VISUAL_IDENTITY.md); every other label stays system
+        // default weight/size.
+        QFont valueFont = painter.font();
+        valueFont.setPointSize(valueFont.pointSize() + 6);
+        valueFont.setBold(true);
+        painter.setFont(valueFont);
         painter.setPen(palette.textPrimary);
         const QString text =
             hasValue ? QString("%1%2").arg(m_value, 0, 'f', m_config.decimals).arg(m_config.unit) : "--";
         painter.drawText(arcRect, Qt::AlignCenter, text);
     }
-
-    paintLabel(painter, area, "Gauge", palette);
 }
 
 } // namespace traceview

@@ -18,15 +18,20 @@ namespace traceview {
 // left uncovered below it — leaked DashboardCell's border and
 // DashboardGrid's edit-mode grid lines (both painted in
 // palette.borderStrong, i.e. a light, "white" line) right through. So these
-// stay on DashboardWidget's default opaque fill instead — it already paints
-// exactly palette.background, the same color as the canvas behind the cell
-// (DashboardGrid never fills its own background — see its paintEvent), so
-// covering the whole cell in it reads as "no panel" without any actual
-// transparency to get wrong. Zero margins plus an Expanding size policy on
-// the interactive control below make sure that fill has no gaps of its own
-// to leak through, on top of it.
+// stay on DashboardWidget's default opaque fill instead. Zero margins plus
+// an Expanding size policy on the interactive control below make sure that
+// fill has no gaps of its own to leak through, on top of it.
+//
+// The fill color itself is overridden away from DashboardWidget's default
+// (palette.background, same as the canvas behind the cell) to palette.surface
+// via the "dashboardControlPanel" property (see stylesheet.cpp) — with
+// DashboardCell's cell border now rounded (see docs/VISUAL_IDENTITY.md), a
+// fill that's indistinguishable from the canvas left the rounded corner
+// reading as a stray curve with nothing behind it instead of a panel,
+// especially with another widget's cell sitting nearby.
 
 PushButtonWidget::PushButtonWidget(QWidget* parent) : DashboardWidget(parent) {
+    setProperty("dashboardControlPanel", true);
     m_button = new QPushButton("Push Button", this);
     m_button->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
@@ -89,6 +94,7 @@ void PushButtonWidget::sendCommand(const QString& text) {
 }
 
 ToggleSwitchWidget::ToggleSwitchWidget(QWidget* parent) : DashboardWidget(parent) {
+    setProperty("dashboardControlPanel", true);
     m_switchButton = new QPushButton("OFF", this);
     m_switchButton->setCheckable(true);
     m_switchButton->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
@@ -122,9 +128,15 @@ void ToggleSwitchWidget::setConfig(const QJsonObject& config) {
 }
 
 SliderWidget::SliderWidget(QWidget* parent) : DashboardWidget(parent) {
+    setProperty("dashboardControlPanel", true);
     m_slider = new QSlider(Qt::Horizontal, this);
     m_slider->setRange(0, 100);
     m_slider->setValue(50);
+    // Belt-and-suspenders alongside the groove/handle margin fix in
+    // stylesheet.cpp: guarantees the widget itself is always tall enough to
+    // fit the 16px handle circle without clipping it top/bottom, regardless
+    // of whatever sizeHint the style computes for the customized groove.
+    m_slider->setMinimumHeight(20);
 
     m_valueLabel = new QLabel("50", this);
     m_valueLabel->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
@@ -139,8 +151,13 @@ SliderWidget::SliderWidget(QWidget* parent) : DashboardWidget(parent) {
     // the slider itself is left at its natural (thin) height rather than
     // stretched — a QSlider stretched tall just grows the dead space around
     // its groove, it doesn't make the groove itself any bigger.
+    // Side margins keep the handle/label off the cell border -- unlike
+    // PushButton/ToggleSwitch, this control isn't meant to fill the cell
+    // edge-to-edge, and DashboardWidget's opaque background fill (see
+    // dashboardwidget.h) already covers the newly-exposed margin strip, so
+    // nothing leaks through it.
     auto* layout = new QVBoxLayout(this);
-    layout->setContentsMargins(0, 0, 0, 0);
+    layout->setContentsMargins(12, 0, 12, 0);
     layout->addStretch(1);
     layout->addLayout(sliderRow);
     layout->addStretch(1);

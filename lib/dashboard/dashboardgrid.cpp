@@ -29,11 +29,13 @@ constexpr const char* kClipboardMimeType = "application/x-traceview-dashboardite
 // only shapes interaction feel, never item geometry directly. That's what
 // keeps relayout() resize-safe: there is no per-window column/row count to
 // go stale and clamp items against.
-constexpr int kGridColumns = 48;
-constexpr int kGridRows = 32;
+constexpr int kGridColumns = 60;
+constexpr int kGridRows = 40;
 // Radius of the small dots painted at each grid node in edit mode (see
 // paintEvent()) — deliberately subtle, just a hint of the snap points.
-constexpr double kGridDotRadius = 1.2;
+// Kept small relative to the grid density above so denser dots don't read
+// as visual clutter.
+constexpr double kGridDotRadius = 0.9;
 // A widget below this fraction in either dimension is too small to be
 // usable (header alone is 24px). Mirrors the old 5-cell minimum.
 constexpr double kMinItemWidth = 5.0 / kGridColumns;
@@ -572,7 +574,7 @@ DashboardCell* DashboardGrid::createCell(const DashboardItem& item) {
     }
     content->setConfig(item.config);
 
-    auto* cell = new DashboardCell(item.id, displayNameFor(item), content, this);
+    auto* cell = new DashboardCell(item.id, item.typeId, displayNameFor(item), content, this);
     cell->setEditMode(m_editMode);
     cell->setGeometry(itemRect(item));
     cell->show();

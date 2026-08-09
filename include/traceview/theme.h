@@ -31,7 +31,9 @@ struct ThemePalette {
     QColor warning;
     QColor danger;
 
-    // Reserved for future telemetry plots (one color per data series).
+    // One color per data series, cycled by index (series[i % series.size()]).
+    // ChartConfigEditor uses this as the default color for a newly added
+    // chart series -- the color picker stays fully free-form after that.
     QVector<QColor> series;
 };
 

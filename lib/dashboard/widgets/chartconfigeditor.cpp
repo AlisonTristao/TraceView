@@ -17,6 +17,8 @@
 #include <QTableWidget>
 #include <QVBoxLayout>
 
+#include "traceview/thememanager.h"
+
 namespace traceview {
 
 namespace {
@@ -340,7 +342,14 @@ void ChartConfigEditor::addSeriesRow(const QJsonObject& series) {
 
     auto* colorButton = new QPushButton();
     colorButton->setFixedWidth(40);
-    setSwatchColor(colorButton, QColor(series.value("color").toString("#3B82F6")));
+    // No "color" key means this is a brand-new row (Add series button, or an
+    // old save predating this field) -- default it to the theme's series
+    // palette instead of a hardcoded blue so a new series' color already
+    // fits the active theme and differs from the previous row. Existing rows
+    // with an explicit color are untouched.
+    const QVector<QColor>& seriesPalette = ThemeManager::instance().currentTheme().series;
+    const QColor fallback = seriesPalette.isEmpty() ? QColor("#3B82F6") : seriesPalette[row % seriesPalette.size()];
+    setSwatchColor(colorButton, QColor(series.value("color").toString(fallback.name())));
     connect(colorButton, &QPushButton::clicked, this, [this, colorButton]() {
         const QColor chosen = QColorDialog::getColor(swatchColor(colorButton), this, "Series Color");
         if (!chosen.isValid()) {

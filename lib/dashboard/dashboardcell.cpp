@@ -2,8 +2,12 @@
 
 #include <QMouseEvent>
 #include <QPainter>
+#include <QPainterPath>
+#include <QPolygonF>
+#include <QRegion>
 
 #include "dashboardwidget.h"
+#include "dashboard/roundedcorners.h"
 #include "traceview/thememanager.h"
 
 namespace traceview {
@@ -12,15 +16,71 @@ namespace {
 constexpr int kHeaderHeight = 24;
 constexpr int kGripSize = 14;   // hit/visual size of the 4 corner handles
 constexpr int kEdgeMargin = 6;  // hit thickness of the 4 edge handles
+constexpr int kSelectionAnimMs = 150;
+
+constexpr int kIconSize = 14;
+constexpr int kIconMargin = 6;
+
+// Small hand-drawn glyphs identifying the widget kind in the cell header —
+// same "draw it, don't fake it" approach as arrowImagePath()/checkImagePath()
+// in stylesheet.cpp, just painted live instead of cached to a QSS pixmap
+// since this is a normal paintEvent, not a style sheet subcontrol. Silently
+// draws nothing for any typeId without a glyph below (headerless control
+// kinds never reach this — see wantsCellHeader()).
+void drawTypeIcon(QPainter& painter, const QRect& r, const QString& typeId, const QColor& color) {
+    painter.save();
+    painter.setRenderHint(QPainter::Antialiasing);
+    painter.translate(r.topLeft());
+    const qreal s = r.width(); // square icon box
+
+    if (typeId == "dummy_line") {
+        QPen pen(color, 1.5);
+        pen.setJoinStyle(Qt::RoundJoin);
+        pen.setCapStyle(Qt::RoundCap);
+        painter.setPen(pen);
+        painter.drawPolyline(QPolygonF({QPointF(s * 0.05, s * 0.75), QPointF(s * 0.32, s * 0.45),
+                                         QPointF(s * 0.55, s * 0.6), QPointF(s * 0.78, s * 0.2),
+                                         QPointF(s * 0.95, s * 0.35)}));
+    } else if (typeId == "dummy_bar") {
+        painter.setPen(Qt::NoPen);
+        painter.setBrush(color);
+        painter.drawRect(QRectF(s * 0.08, s * 0.55, s * 0.22, s * 0.4));
+        painter.drawRect(QRectF(s * 0.39, s * 0.25, s * 0.22, s * 0.7));
+        painter.drawRect(QRectF(s * 0.7, s * 0.05, s * 0.22, s * 0.9));
+    } else if (typeId == "dummy_gauge") {
+        QPen pen(color, 1.5);
+        pen.setCapStyle(Qt::RoundCap);
+        painter.setPen(pen);
+        painter.setBrush(Qt::NoBrush);
+        const QRectF arcRect(s * 0.08, s * 0.08, s * 0.84, s * 0.84);
+        painter.drawArc(arcRect, 30 * 16, 300 * 16);
+        painter.drawLine(QPointF(s * 0.5, s * 0.5), QPointF(s * 0.78, s * 0.3));
+    } else if (typeId == "serial_monitor") {
+        QPen pen(color, 1.5);
+        pen.setCapStyle(Qt::RoundCap);
+        pen.setJoinStyle(Qt::RoundJoin);
+        painter.setPen(pen);
+        painter.drawPolyline(
+            QPolygonF({QPointF(s * 0.1, s * 0.25), QPointF(s * 0.4, s * 0.5), QPointF(s * 0.1, s * 0.75)}));
+        painter.drawLine(QPointF(s * 0.5, s * 0.82), QPointF(s * 0.9, s * 0.82));
+    }
+
+    painter.restore();
+}
 } // namespace
 
-DashboardCell::DashboardCell(const QString& itemId, const QString& title, DashboardWidget* content,
-                              QWidget* parent)
-    : QWidget(parent), m_itemId(itemId), m_title(title), m_content(content) {
+DashboardCell::DashboardCell(const QString& itemId, const QString& typeId, const QString& title,
+                              DashboardWidget* content, QWidget* parent)
+    : QWidget(parent), m_itemId(itemId), m_typeId(typeId), m_title(title), m_content(content) {
     m_content->setParent(this);
 
     setMouseTracking(true);
     layoutChildren();
+
+    m_selectionAnim.setDuration(kSelectionAnimMs);
+    m_selectionAnim.setStartValue(0.0);
+    m_selectionAnim.setEndValue(1.0);
+    connect(&m_selectionAnim, &QVariantAnimation::valueChanged, this, [this] { update(); });
 }
 
 void DashboardCell::setTitle(const QString& title) {
@@ -54,6 +114,8 @@ void DashboardCell::setSelected(bool selected) {
         return;
     }
     m_selected = selected;
+    m_selectionAnim.setDirection(selected ? QAbstractAnimation::Forward : QAbstractAnimation::Backward);
+    m_selectionAnim.start();
     updateCursor();
     update();
 }
@@ -117,6 +179,25 @@ void DashboardCell::layoutChildren() {
     } else {
         m_content->setGeometry(rect());
     }
+    updateContentMask();
+}
+
+void DashboardCell::updateContentMask() {
+    // Clips the content widget's own opaque background (WA_StyledBackground,
+    // see dashboardwidget.h) to the same rounded silhouette as the border/
+    // header this cell paints around it — otherwise the child's square
+    // corners show through past the rounded outline. See "Corner radius" in
+    // docs/VISUAL_IDENTITY.md. Only the corners that actually sit on the
+    // cell's outer edge get rounded; a corner tucked under the header is
+    // left square since it meets a straight internal seam, not the outline.
+    const QRect local(QPoint(0, 0), m_content->size());
+    if (local.isEmpty()) {
+        return;
+    }
+    const bool headerPresent = m_editMode && headerHeight() > 0;
+    m_content->setRoundedCorners(!headerPresent, !headerPresent, true, true);
+    const QPainterPath path = m_content->contentFillPath();
+    m_content->setMask(QRegion(path.toFillPolygon().toPolygon()));
 }
 
 void DashboardCell::updateCursor() {
@@ -134,22 +215,60 @@ void DashboardCell::resizeEvent(QResizeEvent* event) {
 
 void DashboardCell::paintEvent(QPaintEvent*) {
     QPainter painter(this);
+    painter.setRenderHint(QPainter::Antialiasing);
     const ThemePalette& palette = ThemeManager::instance().currentTheme();
 
-    const QColor borderColor = m_selected ? palette.accent : palette.borderStrong;
-    const int borderWidth = m_selected ? 2 : 1;
+    // This cell never otherwise paints its own square bounding box -- only
+    // the rounded outline/header and whatever the (rounded-masked) content
+    // widget covers. The sliver outside those rounded shapes but inside the
+    // square (the corner "notch") was relying on DashboardGrid's backdrop
+    // showing through undrawn pixels, which doesn't hold up in practice --
+    // it was showing up as a stray black patch instead of canvas color.
+    // Filling the whole square in the canvas's own background color first,
+    // before anything rounded paints on top, makes that notch correct
+    // (indistinguishable from the canvas) unconditionally instead of
+    // depending on ancestor paint order/compositing.
+    painter.fillRect(rect(), palette.background);
+
+    const qreal selectT = m_selectionAnim.currentValue().isValid() ? m_selectionAnim.currentValue().toReal() : 0.0;
+    const QColor unselectedBorder = palette.borderStrong;
+    const QColor borderColor = [&] {
+        QColor c;
+        c.setRedF(unselectedBorder.redF() + (palette.accent.redF() - unselectedBorder.redF()) * selectT);
+        c.setGreenF(unselectedBorder.greenF() + (palette.accent.greenF() - unselectedBorder.greenF()) * selectT);
+        c.setBlueF(unselectedBorder.blueF() + (palette.accent.blueF() - unselectedBorder.blueF()) * selectT);
+        return c;
+    }();
+    const qreal borderWidth = 1.0 + selectT;
+
+    const QRectF borderRect = QRectF(rect()).adjusted(borderWidth / 2.0, borderWidth / 2.0, -borderWidth / 2.0,
+                                                        -borderWidth / 2.0);
+    const QPainterPath outline = partiallyRoundedRect(borderRect, kContainerCornerRadius, true, true, true, true);
     painter.setPen(QPen(borderColor, borderWidth));
     painter.setBrush(Qt::NoBrush);
-    painter.drawRect(rect().adjusted(0, 0, -1, -1));
+    painter.drawPath(outline);
 
     if (!m_editMode) {
         return;
     }
 
     if (headerHeight() > 0) {
+        painter.save();
+        painter.setClipPath(partiallyRoundedRect(rect(), kContainerCornerRadius, true, true, true, true));
         painter.fillRect(headerRect(), m_selected ? palette.accent : palette.surfaceAlt);
-        painter.setPen(m_selected ? palette.background : palette.textPrimary);
-        painter.drawText(headerRect().adjusted(6, 0, -6, 0), Qt::AlignVCenter | Qt::AlignLeft, m_title);
+        painter.restore();
+
+        const QColor headerFg = m_selected ? palette.background : palette.textPrimary;
+        QRect textRect = headerRect().adjusted(kIconMargin, 0, -kIconMargin, 0);
+
+        const QRect iconRect(kIconMargin, (headerHeight() - kIconSize) / 2, kIconSize, kIconSize);
+        drawTypeIcon(painter, iconRect, m_typeId, headerFg);
+        if (iconRect.width() > 0) {
+            textRect.setLeft(iconRect.right() + kIconMargin);
+        }
+
+        painter.setPen(headerFg);
+        painter.drawText(textRect, Qt::AlignVCenter | Qt::AlignLeft, m_title);
     }
 
     if (!m_selected) {
@@ -157,11 +276,20 @@ void DashboardCell::paintEvent(QPaintEvent*) {
         return;
     }
 
-    painter.setPen(QPen(palette.textSecondary, 1));
+    // Grip drawn as a small staircase of dots, echoing the DashboardGrid
+    // background dots (see kGridDotRadius in dashboardgrid.cpp) instead of
+    // the plain diagonal lines this used to be.
+    painter.setPen(Qt::NoPen);
+    painter.setBrush(palette.textSecondary);
     const QRect grip = gripRect();
-    for (int i = 1; i <= 3; ++i) {
-        const int offset = i * 4;
-        painter.drawLine(grip.right() - offset, grip.bottom(), grip.right(), grip.bottom() - offset);
+    constexpr qreal kDotRadius = 1.3;
+    constexpr int kStep = 4;
+    for (int row = 0; row < 3; ++row) {
+        for (int col = 0; col <= row; ++col) {
+            const qreal x = grip.right() - row * kStep;
+            const qreal y = grip.bottom() - col * kStep;
+            painter.drawEllipse(QPointF(x, y), kDotRadius, kDotRadius);
+        }
     }
 }
 

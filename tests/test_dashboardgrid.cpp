@@ -147,32 +147,32 @@ void TestDashboardGrid::toJsonFromJsonRoundTrips() {
 void TestDashboardGrid::dragMovesAndSnapsToNearestGridCell() {
     DashboardGrid grid;
     // 496x336 total => 480x320 usable area (8px margin each side, see
-    // kMargin in dashboardgrid.cpp) => exactly 10px per grid column (48
-    // cols) and 10px per grid row (32 rows), so pixel deltas below map to
+    // kMargin in dashboardgrid.cpp) => exactly 8px per grid column (60
+    // cols) and 8px per grid row (40 rows), so pixel deltas below map to
     // whole-cell fractions without float rounding noise in the assertions.
     grid.resize(496, 336);
     grid.setEditMode(true);
     grid.show();
     QVERIFY(QTest::qWaitForWindowExposed(&grid));
 
-    grid.addItem("dummy_line"); // default size 16/48 x 12/32, auto-placed at (0,0)
+    grid.addItem("dummy_line"); // default size 16/60 x 12/40, auto-placed at (0,0)
 
     auto* cell = grid.findChild<DashboardCell*>();
     QVERIFY(cell != nullptr);
 
     const QPoint headerPoint(80, 10); // inside the cell's 24px header strip
-    // A delta that is NOT an exact multiple of the 10px cell size (33px,
-    // 17px) to prove the drag snaps to the nearest grid cell instead of
+    // A delta that is NOT an exact multiple of the 8px cell size (27px,
+    // 13px) to prove the drag snaps to the nearest grid cell instead of
     // landing at a sub-cell offset.
-    const QPoint dragged = headerPoint + QPoint(33, 17);
+    const QPoint dragged = headerPoint + QPoint(27, 13);
 
     QTest::mousePress(cell, Qt::LeftButton, Qt::NoModifier, headerPoint);
     QTest::mouseMove(cell, dragged);
     QTest::mouseRelease(cell, Qt::LeftButton, Qt::NoModifier, dragged);
 
     QJsonObject item = grid.toJson().value("items").toArray().first().toObject();
-    QCOMPARE(item.value("x").toDouble(), 3.0 / 48.0); // 33px snapped to 3 columns
-    QCOMPARE(item.value("y").toDouble(), 2.0 / 32.0);  // 17px snapped to 2 rows
+    QCOMPARE(item.value("x").toDouble(), 3.0 / 60.0); // 27px snapped to 3 columns
+    QCOMPARE(item.value("y").toDouble(), 2.0 / 40.0);  // 13px snapped to 2 rows
 
     QCOMPARE(grid.undoStack()->count(), 2); // AddWidgetCommand + MoveWidgetCommand
     grid.undoStack()->undo();
@@ -182,37 +182,37 @@ void TestDashboardGrid::dragMovesAndSnapsToNearestGridCell() {
 
     grid.undoStack()->redo();
     item = grid.toJson().value("items").toArray().first().toObject();
-    QCOMPARE(item.value("x").toDouble(), 3.0 / 48.0);
+    QCOMPARE(item.value("x").toDouble(), 3.0 / 60.0);
 }
 
 void TestDashboardGrid::resizeChangesGeometryWithUndo() {
     DashboardGrid grid;
-    grid.resize(496, 336); // same 480x320 usable / 10px-per-cell setup as the move test above
+    grid.resize(496, 336); // same 480x320 usable / 8px-per-cell setup as the move test above
     grid.setEditMode(true);
     grid.show();
     QVERIFY(QTest::qWaitForWindowExposed(&grid));
 
-    grid.addItem("dummy_line"); // default size 16/48 x 12/32 => 160x120px
+    grid.addItem("dummy_line"); // default size 16/60 x 12/40 => 128x96px
 
     auto* cell = grid.findChild<DashboardCell*>();
     QVERIFY(cell != nullptr);
 
     // Bottom-right corner grip (14px hit area -- see kGripSize in dashboardcell.cpp).
-    const QPoint gripPoint(155, 115);
-    const QPoint dragged = gripPoint + QPoint(20, 10); // +2 columns, +1 row
+    const QPoint gripPoint(123, 91);
+    const QPoint dragged = gripPoint + QPoint(16, 8); // +2 columns, +1 row
 
     QTest::mousePress(cell, Qt::LeftButton, Qt::NoModifier, gripPoint);
     QTest::mouseMove(cell, dragged);
     QTest::mouseRelease(cell, Qt::LeftButton, Qt::NoModifier, dragged);
 
     QJsonObject item = grid.toJson().value("items").toArray().first().toObject();
-    QCOMPARE(item.value("width").toDouble(), 18.0 / 48.0);
-    QCOMPARE(item.value("height").toDouble(), 13.0 / 32.0);
+    QCOMPARE(item.value("width").toDouble(), 18.0 / 60.0);
+    QCOMPARE(item.value("height").toDouble(), 13.0 / 40.0);
 
     grid.undoStack()->undo();
     item = grid.toJson().value("items").toArray().first().toObject();
-    QCOMPARE(item.value("width").toDouble(), 16.0 / 48.0);
-    QCOMPARE(item.value("height").toDouble(), 12.0 / 32.0);
+    QCOMPARE(item.value("width").toDouble(), 16.0 / 60.0);
+    QCOMPARE(item.value("height").toDouble(), 12.0 / 40.0);
 }
 
 void TestDashboardGrid::resizeClampsToMinimumSize() {
@@ -226,7 +226,7 @@ void TestDashboardGrid::resizeClampsToMinimumSize() {
     auto* cell = grid.findChild<DashboardCell*>();
     QVERIFY(cell != nullptr);
 
-    const QPoint gripPoint(155, 115);
+    const QPoint gripPoint(123, 91);
     // Drag the corner far past the item's own top-left -- width/height must
     // clamp to the minimum instead of going to zero or negative.
     const QPoint dragged(1, 1);
@@ -236,8 +236,8 @@ void TestDashboardGrid::resizeClampsToMinimumSize() {
     QTest::mouseRelease(cell, Qt::LeftButton, Qt::NoModifier, dragged);
 
     const QJsonObject item = grid.toJson().value("items").toArray().first().toObject();
-    QCOMPARE(item.value("width").toDouble(), 5.0 / 48.0);  // kMinItemWidth
-    QCOMPARE(item.value("height").toDouble(), 5.0 / 32.0); // kMinItemHeight
+    QCOMPARE(item.value("width").toDouble(), 5.0 / 60.0);  // kMinItemWidth
+    QCOMPARE(item.value("height").toDouble(), 5.0 / 40.0); // kMinItemHeight
 }
 
 } // namespace

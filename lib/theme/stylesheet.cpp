@@ -189,6 +189,17 @@ QPushButton[variant="danger"] {
     border-color: @danger@;
 }
 
+/* Headerless dashboard controls (push button/toggle/slider, see
+   controlwidgets.cpp) opt into this via a dynamic "dashboardControlPanel"
+   property instead of DashboardWidget's default background-color (which
+   matches the canvas behind it -- see dashboardcell paintEvent's rounded
+   corner). Without a fill that actually contrasts with the canvas, their
+   rounded cell border reads as a stray disconnected curve instead of a
+   panel once another widget sits nearby. */
+QWidget[dashboardControlPanel="true"] {
+    background-color: @surface@;
+}
+
 QLabel {
     background: transparent;
 }
@@ -326,6 +337,12 @@ QSlider::groove:horizontal {
     border: 1px solid @border@;
     height: 6px;
     border-radius: 3px;
+    /* Groove is inset 5px top/bottom so the style reserves the full 16px
+       (handle diameter) of vertical space for the control -- the handle's
+       matching -5px margin below then expands back out to fill exactly
+       that reserved space instead of overflowing it and getting clipped
+       by the widget's own bounds. */
+    margin: 5px 0;
 }
 QSlider::sub-page:horizontal {
     background: @accent@;
@@ -340,7 +357,7 @@ QSlider::handle:horizontal {
     border: 1px solid @accentHover@;
     width: 16px;
     height: 16px;
-    margin: -6px 0;
+    margin: -5px 0;
     border-radius: 8px;
 }
 QSlider::handle:horizontal:hover {

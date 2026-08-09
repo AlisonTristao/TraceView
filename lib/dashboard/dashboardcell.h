@@ -3,6 +3,7 @@
 #include <QPoint>
 #include <QRect>
 #include <QString>
+#include <QVariantAnimation>
 #include <QWidget>
 
 namespace traceview {
@@ -25,8 +26,11 @@ public:
     // resize both dimensions at once.
     enum class ResizeHandle { None, Top, Bottom, Left, Right, TopLeft, TopRight, BottomLeft, BottomRight };
 
-    DashboardCell(const QString& itemId, const QString& title, DashboardWidget* content,
-                  QWidget* parent = nullptr);
+    // typeId is only used to pick a small header icon (see drawTypeIcon() in
+    // the .cpp) — the cell doesn't otherwise care what kind of widget it
+    // wraps.
+    DashboardCell(const QString& itemId, const QString& typeId, const QString& title,
+                  DashboardWidget* content, QWidget* parent = nullptr);
 
     QString itemId() const { return m_itemId; }
     DashboardWidget* content() const { return m_content; }
@@ -70,15 +74,22 @@ private:
     ResizeHandle handleAt(const QPoint& pos) const;
     Qt::CursorShape cursorForHandle(ResizeHandle handle) const;
     void layoutChildren();
+    void updateContentMask();
     void updateCursor();
 
     QString m_itemId;
+    QString m_typeId;
     QString m_title;
     DashboardWidget* m_content = nullptr;
     bool m_editMode = false;
     bool m_selected = false;
     DragMode m_dragMode = DragMode::None;
     ResizeHandle m_resizeHandle = ResizeHandle::None;
+
+    // Animates the border between its unselected and selected color instead
+    // of snapping (see "Motion" in docs/VISUAL_IDENTITY.md) — value is the
+    // 0..1 blend factor toward the selected color.
+    QVariantAnimation m_selectionAnim;
 };
 
 } // namespace traceview
