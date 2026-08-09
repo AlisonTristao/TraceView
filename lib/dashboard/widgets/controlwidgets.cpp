@@ -3,7 +3,9 @@
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QPushButton>
+#include <QSignalBlocker>
 #include <QSlider>
+#include <QTimer>
 #include <QVBoxLayout>
 
 namespace traceview {
@@ -32,7 +34,58 @@ PushButtonWidget::PushButtonWidget(QWidget* parent) : DashboardWidget(parent) {
     layout->setContentsMargins(0, 0, 0, 0);
     layout->addWidget(m_button);
 
+    m_repeatTimer = new QTimer(this);
+    connect(m_repeatTimer, &QTimer::timeout, this, [this]() { sendCommand(m_config.onPress); });
+
+    m_longPressTimer = new QTimer(this);
+    m_longPressTimer->setSingleShot(true);
+    connect(m_longPressTimer, &QTimer::timeout, this, [this]() { sendCommand(m_config.longPressCommand); });
+
     connect(m_button, &QPushButton::clicked, this, &PushButtonWidget::pressedRequested);
+    connect(m_button, &QAbstractButton::pressed, this, &PushButtonWidget::onButtonPressed);
+    connect(m_button, &QAbstractButton::released, this, &PushButtonWidget::onButtonReleased);
+}
+
+void PushButtonWidget::setConfig(const QJsonObject& config) {
+    m_config = parsePushButtonCommandConfig(config);
+}
+
+void PushButtonWidget::onButtonPressed() {
+    m_pressSuppressed =
+        m_config.debounceMs > 0 && m_debounceValid && m_debounceElapsed.elapsed() < m_config.debounceMs;
+    if (m_pressSuppressed) {
+        return;
+    }
+    m_debounceElapsed.start();
+    m_debounceValid = true;
+
+    sendCommand(m_config.onPress);
+    if (m_config.repeatWhileHeld && m_config.repeatIntervalMs > 0) {
+        m_repeatTimer->start(m_config.repeatIntervalMs);
+    }
+    if (m_config.longPressEnabled) {
+        m_longPressTimer->start(m_config.longPressThresholdMs);
+    }
+}
+
+void PushButtonWidget::onButtonReleased() {
+    m_repeatTimer->stop();
+    m_longPressTimer->stop();
+
+    if (m_pressSuppressed) {
+        m_pressSuppressed = false;
+        return;
+    }
+    if (m_config.mode == PushButtonMode::Momentary) {
+        sendCommand(m_config.onRelease);
+    }
+}
+
+void PushButtonWidget::sendCommand(const QString& text) {
+    if (text.isEmpty()) {
+        return;
+    }
+    emit sendRequested(text.toUtf8());
 }
 
 ToggleSwitchWidget::ToggleSwitchWidget(QWidget* parent) : DashboardWidget(parent) {
@@ -48,7 +101,24 @@ ToggleSwitchWidget::ToggleSwitchWidget(QWidget* parent) : DashboardWidget(parent
     connect(m_switchButton, &QPushButton::toggled, this, [this](bool checked) {
         m_switchButton->setText(checked ? "ON" : "OFF");
         emit toggled(checked);
+
+        const QString& command = checked ? m_config.onCommand : m_config.offCommand;
+        if (!command.isEmpty()) {
+            emit sendRequested(command.toUtf8());
+        }
     });
+}
+
+void ToggleSwitchWidget::setConfig(const QJsonObject& config) {
+    m_config = parseToggleCommandConfig(config);
+    if (!m_configInitialized) {
+        // Blocked so restoring the configured starting state (fresh insert
+        // or project load) never itself fires onCommand/offCommand.
+        const QSignalBlocker blocker(m_switchButton);
+        m_switchButton->setChecked(m_config.defaultState);
+        m_switchButton->setText(m_config.defaultState ? "ON" : "OFF");
+        m_configInitialized = true;
+    }
 }
 
 SliderWidget::SliderWidget(QWidget* parent) : DashboardWidget(parent) {
@@ -75,10 +145,73 @@ SliderWidget::SliderWidget(QWidget* parent) : DashboardWidget(parent) {
     layout->addLayout(sliderRow);
     layout->addStretch(1);
 
-    connect(m_slider, &QSlider::valueChanged, this, [this](int value) {
-        m_valueLabel->setText(QString::number(value));
-        emit valueChanged(value);
+    connect(m_slider, &QSlider::valueChanged, this, &SliderWidget::onSliderValueChanged);
+    connect(m_slider, &QSlider::sliderReleased, this, &SliderWidget::onSliderReleased);
+}
+
+void SliderWidget::setConfig(const QJsonObject& config) {
+    m_config = parseSliderCommandConfig(config);
+
+    // Blocked so applying the range/starting value never itself fires a
+    // send -- only real user interaction (below) does.
+    const QSignalBlocker blocker(m_slider);
+    m_slider->setRange(0, sliderTickCount(m_config));
+    if (!m_configInitialized) {
+        m_slider->setValue(sliderValueToIndex(m_config, m_config.defaultValue));
+        m_configInitialized = true;
+    }
+
+    m_valueLabel->setVisible(m_config.showValue);
+    updateValueLabel(sliderIndexToValue(m_config, m_slider->value()));
+}
+
+void SliderWidget::onSliderValueChanged(int index) {
+    const double value = sliderIndexToValue(m_config, index);
+    updateValueLabel(value);
+    // Kept as the raw tick index (this control's existing external signal,
+    // not part of the serial output path) -- see sendRequested() for the
+    // properly-scaled real-world value used in outbound commands.
+    emit valueChanged(index);
+
+    if (m_config.sendMode == SliderSendMode::Continuous) {
+        scheduleContinuousSend(value);
+    }
+}
+
+void SliderWidget::onSliderReleased() {
+    if (m_config.sendMode == SliderSendMode::OnRelease) {
+        sendCommandFor(sliderIndexToValue(m_config, m_slider->value()));
+    }
+}
+
+void SliderWidget::updateValueLabel(double value) {
+    m_valueLabel->setText(QString::number(value) + m_config.unit);
+}
+
+void SliderWidget::scheduleContinuousSend(double value) {
+    m_pendingValue = value;
+    m_hasPendingSend = true;
+    if (m_throttleActive) {
+        return;
+    }
+
+    sendCommandFor(value);
+    m_hasPendingSend = false;
+    m_throttleActive = true;
+    QTimer::singleShot(qMax(1, m_config.throttleMs), this, [this]() {
+        m_throttleActive = false;
+        if (m_hasPendingSend) {
+            sendCommandFor(m_pendingValue);
+            m_hasPendingSend = false;
+        }
     });
+}
+
+void SliderWidget::sendCommandFor(double value) {
+    const QByteArray command = buildSliderCommand(m_config, value);
+    if (!command.isEmpty()) {
+        emit sendRequested(command);
+    }
 }
 
 } // namespace traceview

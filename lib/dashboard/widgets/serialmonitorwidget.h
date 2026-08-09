@@ -2,25 +2,32 @@
 
 #include "dashboard/dashboardwidget.h"
 
-class QComboBox;
-class QLabel;
-class QPushButton;
-
 namespace traceview {
 
 class SerialTerminalWidget;
 
-// Serial monitor: a connection bar (port/baud pickers, connect toggle)
-// above a miniterm-style terminal (see SerialTerminalWidget). Purely
-// visual for now — nothing here talks to QSerialPort; the Connect button
-// doesn't open a port, the port list is a placeholder, and the terminal's
-// sendRequested() has nowhere to write yet. Wiring it up to an actual
-// connection is a later, separate step.
+// Serial monitor: a thin wrapper around a miniterm-style terminal (see
+// SerialTerminalWidget). The port/baud pickers and connect toggle that used
+// to live in a header here now live once for the whole app, in the Run
+// ribbon tab (MainWindow) -- there is one QSerialPort for the entire app
+// (SerialManager), not one per widget, so every SerialMonitorWidget on the
+// dashboard is just a view onto that shared connection, not an owner of it.
+// SerialWidgetBridge (lib/core/serialwidgetbridge.h) wires sendRequested()
+// to SerialManager::write() and SerialManager::dataReceived() to
+// appendData() for every instance on the grid (BACKEND_TODO.txt Task 10) --
+// this widget stays unaware of SerialManager itself, same as the control
+// widgets in widgets/controlwidgets.h.
 class SerialMonitorWidget : public DashboardWidget {
     Q_OBJECT
 
 public:
     explicit SerialMonitorWidget(QWidget* parent = nullptr);
+
+public slots:
+    // Raw bytes off the wire, shown verbatim -- the terminal is a passive
+    // debug tap on the whole stream, not filtered by key like chart/gauge
+    // payloads are (docs/PROTOCOL.md "Malformed lines").
+    void appendData(const QByteArray& data);
 
 signals:
     // Forwarded from the terminal: one emission per keystroke, raw bytes,
@@ -28,11 +35,6 @@ signals:
     void sendRequested(const QByteArray& data);
 
 private:
-    void onConnectToggled(bool checked);
-
-    QComboBox* m_portCombo = nullptr;
-    QComboBox* m_baudCombo = nullptr;
-    QPushButton* m_connectButton = nullptr;
     SerialTerminalWidget* m_terminal = nullptr;
 };
 

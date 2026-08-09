@@ -19,6 +19,8 @@
 
 namespace traceview {
 
+class DashboardWidget;
+
 class AddWidgetCommand;
 class RemoveWidgetCommand;
 class MoveWidgetCommand;
@@ -109,12 +111,32 @@ public:
     QJsonObject toJson() const;
     void fromJson(const QJsonObject& object);
 
+    // One entry per item with a non-empty key, mapping that key to its
+    // content widget (see DashboardCell::content()). Used by
+    // SerialDataRouter (lib/core/serialdatarouter.h) to route decoded frames
+    // by <id> -- rebuild after every itemsChanged() rather than caching,
+    // since keys/widgets can change underneath.
+    QMap<QString, DashboardWidget*> keyedWidgets() const;
+
     QSize sizeHint() const override;
     QSize minimumSizeHint() const override;
 
 signals:
     // itemId is empty when the selection is cleared.
     void selectionChanged(const QString& itemId);
+    // Fires whenever the key->widget association could have changed: item
+    // added/removed, a key edited, a type change (swaps the content
+    // widget), or a full project load. Move/resize/rename/config edits don't
+    // touch this and don't emit it.
+    void itemsChanged();
+    // Fires exactly once per widget instance, right after createCell()
+    // constructs it (fresh insert, project load, or a type change swapping
+    // in a new instance -- see createCell()). Unlike itemsChanged(), this
+    // isn't about the key index; it's a one-shot construction hook for
+    // things that need to attach to a widget once and never re-scan the
+    // grid (e.g. SerialWidgetBridge wiring a control's output to
+    // SerialManager -- BACKEND_TODO.txt Task 9/10).
+    void widgetCreated(DashboardWidget* widget);
 
 protected:
     void resizeEvent(QResizeEvent* event) override;

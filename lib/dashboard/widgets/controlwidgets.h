@@ -1,20 +1,27 @@
 #pragma once
 
+#include <QElapsedTimer>
+
 #include "dashboard/dashboardwidget.h"
+#include "dashboard/widgets/controldata.h"
 
 class QLabel;
 class QPushButton;
 class QSlider;
+class QTimer;
 
 namespace traceview {
 
 // A momentary action button — clicking it fires once and doesn't hold
-// state, unlike ToggleSwitchWidget below. Purely visual for now:
-// pressedRequested() has nowhere to send its value yet, same as
-// SerialMonitorWidget::sendRequested — wiring it to a live output is a
-// later, separate step. See PushButtonConfigEditor (controlconfigeditor.h)
-// for the label/style/press-release/long-press/repeat settings captured in
-// the meantime.
+// state, unlike ToggleSwitchWidget below. setConfig() captures the
+// press/release commands, mode, repeat-while-held, long-press and debounce
+// settings from PushButtonConfigEditor (controlconfigeditor.h);
+// onButtonPressed()/onButtonReleased() (wired to QAbstractButton's
+// pressed()/released(), not clicked(), since Momentary mode and long-press
+// both need press/release as distinct events) build and emit the
+// configured command on sendRequested() -- SerialWidgetBridge
+// (lib/core/serialwidgetbridge.h) forwards that to
+// SerialManager::writeCommand() (BACKEND_TODO.txt Task 9).
 class PushButtonWidget : public DashboardWidget {
     Q_OBJECT
 
@@ -22,17 +29,34 @@ public:
     explicit PushButtonWidget(QWidget* parent = nullptr);
 
     bool wantsCellHeader() const override { return false; }
+    void setConfig(const QJsonObject& config) override;
 
 signals:
     void pressedRequested();
+    // A fully-formed outbound command, ready for SerialManager::writeCommand().
+    void sendRequested(const QByteArray& command);
 
 private:
+    void onButtonPressed();
+    void onButtonReleased();
+    void sendCommand(const QString& text);
+
     QPushButton* m_button = nullptr;
+    PushButtonCommandConfig m_config;
+    QTimer* m_repeatTimer = nullptr;
+    QTimer* m_longPressTimer = nullptr;
+    QElapsedTimer m_debounceElapsed;
+    bool m_debounceValid = false;
+    bool m_pressSuppressed = false;
 };
 
 // An on/off switch that holds its state between clicks, unlike
-// PushButtonWidget above. Purely visual for now — toggled() has nowhere to
-// send its value yet.
+// PushButtonWidget above. setConfig() captures the on/off commands from
+// ToggleSwitchConfigEditor and applies `defaultState` once, on the first
+// config (a fresh widget or a project load) -- never on a later live edit,
+// so tweaking e.g. the command text in the properties panel doesn't snap a
+// user-flipped switch back to its configured default. sendRequested() fires
+// the matching command whenever the user (not setConfig()) changes state.
 class ToggleSwitchWidget : public DashboardWidget {
     Q_OBJECT
 
@@ -40,17 +64,25 @@ public:
     explicit ToggleSwitchWidget(QWidget* parent = nullptr);
 
     bool wantsCellHeader() const override { return false; }
+    void setConfig(const QJsonObject& config) override;
 
 signals:
     void toggled(bool checked);
+    void sendRequested(const QByteArray& command);
 
 private:
     QPushButton* m_switchButton = nullptr;
+    ToggleCommandConfig m_config;
+    bool m_configInitialized = false;
 };
 
-// A bounded value control (0-100 by default; real range is a
-// SliderConfigEditor setting). Purely visual for now — valueChanged() has
-// nowhere to send its value yet.
+// A bounded value control. setConfig() maps SliderConfigEditor's double
+// min/max/step onto the underlying (integer-stepped) QSlider's tick range
+// (see controldata.h's sliderIndexToValue/sliderValueToIndex), and applies
+// `defaultValue` once, on the first config, same reasoning as
+// ToggleSwitchWidget above. sendRequested() fires `commandTemplate` (with
+// `{value}` substituted -- docs/PROTOCOL.md) either continuously while
+// dragging (throttled to `throttleMs`) or once on release, per `sendMode`.
 class SliderWidget : public DashboardWidget {
     Q_OBJECT
 
@@ -58,13 +90,26 @@ public:
     explicit SliderWidget(QWidget* parent = nullptr);
 
     bool wantsCellHeader() const override { return false; }
+    void setConfig(const QJsonObject& config) override;
 
 signals:
     void valueChanged(int value);
+    void sendRequested(const QByteArray& command);
 
 private:
+    void onSliderValueChanged(int index);
+    void onSliderReleased();
+    void updateValueLabel(double value);
+    void scheduleContinuousSend(double value);
+    void sendCommandFor(double value);
+
     QSlider* m_slider = nullptr;
     QLabel* m_valueLabel = nullptr;
+    SliderCommandConfig m_config;
+    bool m_configInitialized = false;
+    bool m_throttleActive = false;
+    bool m_hasPendingSend = false;
+    double m_pendingValue = 0.0;
 };
 
 } // namespace traceview

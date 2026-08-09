@@ -5,12 +5,16 @@
 #include <QString>
 
 class QAction;
+class QComboBox;
+class QPushButton;
+class QToolButton;
 
 namespace traceview {
 
 class DashboardGrid;
 class PropertiesPanel;
 class Ribbon;
+class SerialManager;
 
 class MainWindow : public QMainWindow {
     Q_OBJECT
@@ -25,6 +29,10 @@ private:
     void updateRibbonIcons();
 
     void onRibbonTabChanged(int index);
+    void refreshSerialPorts();
+    void onSerialConnectToggled(bool checked);
+    void onSerialConnectionStateChanged(bool connected);
+    void onSerialErrorOccurred(const QString& message);
     void onSelectionChanged(const QString& itemId);
     void updateSelectionActions();
     // Pushes the current selection's type/name/key into m_propertiesPanel.
@@ -51,6 +59,16 @@ private:
     QAction* m_redoAction = nullptr;
     int m_configureTabIndex = -1;
     bool m_configureTabActive = false;
+
+    void onLineTerminatorChanged(int index);
+
+    SerialManager* m_serialManager = nullptr;
+    int m_runTabIndex = -1;
+    QComboBox* m_portCombo = nullptr;
+    QToolButton* m_refreshPortsButton = nullptr;
+    QComboBox* m_baudCombo = nullptr;
+    QComboBox* m_lineTerminatorCombo = nullptr;
+    QPushButton* m_connectButton = nullptr;
 };
 
 } // namespace traceview

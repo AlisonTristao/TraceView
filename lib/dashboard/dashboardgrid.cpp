@@ -11,6 +11,7 @@
 
 #include "dashboardcell.h"
 #include "dashboardcommands.h"
+#include "dashboardwidget.h"
 #include "traceview/thememanager.h"
 #include "widgetregistry.h"
 
@@ -219,6 +220,7 @@ void DashboardGrid::removeItem(const QString& itemId) {
         }
     }
     updateGeometry();
+    emit itemsChanged();
 }
 
 void DashboardGrid::changeSelectedType(const QString& newTypeId) {
@@ -280,6 +282,7 @@ void DashboardGrid::applyInsertItem(const DashboardItem& item) {
     m_items.append(item);
     createCell(item);
     updateGeometry();
+    emit itemsChanged();
 }
 
 void DashboardGrid::applyRemoveItemById(const QString& itemId) {
@@ -321,6 +324,7 @@ void DashboardGrid::applyTypeChange(const QString& itemId, const QString& typeId
             newCell->setSelected(true);
         }
     }
+    emit itemsChanged();
 }
 
 void DashboardGrid::applyRename(const QString& itemId, const QString& name) {
@@ -337,12 +341,18 @@ void DashboardGrid::applyRename(const QString& itemId, const QString& name) {
 void DashboardGrid::applySetKey(const QString& itemId, const QString& key) {
     if (DashboardItem* item = itemById(itemId)) {
         item->key = key;
+        emit itemsChanged();
     }
 }
 
 void DashboardGrid::applySetConfig(const QString& itemId, const QJsonObject& config) {
     if (DashboardItem* item = itemById(itemId)) {
         item->config = config;
+        if (DashboardCell* cell = m_cells.value(itemId)) {
+            if (DashboardWidget* content = cell->content()) {
+                content->setConfig(config);
+            }
+        }
     }
 }
 
@@ -360,6 +370,19 @@ bool DashboardGrid::isKeyAvailable(const QString& key, const QString& excludeId)
         }
     }
     return true;
+}
+
+QMap<QString, DashboardWidget*> DashboardGrid::keyedWidgets() const {
+    QMap<QString, DashboardWidget*> result;
+    for (const DashboardItem& item : m_items) {
+        if (item.key.isEmpty()) {
+            continue;
+        }
+        if (DashboardCell* cell = m_cells.value(item.id)) {
+            result.insert(item.key, cell->content());
+        }
+    }
+    return result;
 }
 
 QJsonObject DashboardGrid::toJson() const {
@@ -389,6 +412,7 @@ void DashboardGrid::fromJson(const QJsonObject& object) {
 
     updateGeometry();
     relayout();
+    emit itemsChanged();
 }
 
 QSize DashboardGrid::sizeHint() const {
@@ -546,6 +570,7 @@ DashboardCell* DashboardGrid::createCell(const DashboardItem& item) {
     if (!content) {
         return nullptr;
     }
+    content->setConfig(item.config);
 
     auto* cell = new DashboardCell(item.id, displayNameFor(item), content, this);
     cell->setEditMode(m_editMode);
@@ -561,6 +586,7 @@ DashboardCell* DashboardGrid::createCell(const DashboardItem& item) {
     connect(cell, &DashboardCell::selectRequested, this, &DashboardGrid::handleSelectRequested);
 
     m_cells.insert(item.id, cell);
+    emit widgetCreated(content);
     return cell;
 }
 

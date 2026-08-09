@@ -29,6 +29,7 @@ public:
                   QWidget* parent = nullptr);
 
     QString itemId() const { return m_itemId; }
+    DashboardWidget* content() const { return m_content; }
 
     // False for a content widget that opts out of the header (see
     // DashboardWidget::wantsCellHeader()) — DashboardGrid uses this to

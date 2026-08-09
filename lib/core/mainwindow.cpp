@@ -2,15 +2,18 @@
 
 #include <QActionGroup>
 #include <QClipboard>
+#include <QComboBox>
 #include <QFileDialog>
 #include <QGuiApplication>
 #include <QHBoxLayout>
 #include <QKeySequence>
-#include <QLabel>
 #include <QMenu>
 #include <QMenuBar>
 #include <QMessageBox>
+#include <QPushButton>
+#include <QSignalBlocker>
 #include <QStatusBar>
+#include <QToolButton>
 #include <QVBoxLayout>
 
 #include "aboutdialog.h"
@@ -20,6 +23,9 @@
 #include "propertiespanel.h"
 #include "ribbon.h"
 #include "ribbonicons.h"
+#include "serialdatarouter.h"
+#include "serialmanager.h"
+#include "serialwidgetbridge.h"
 #include "traceview/thememanager.h"
 #include "traceview/version.h"
 
@@ -35,7 +41,15 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
 
     buildMenus();
 
+    m_serialManager = new SerialManager(this);
     m_dashboardGrid = new DashboardGrid(this);
+    // Routes decoded frames to widgets by key (BACKEND_TODO.txt Task 5); no
+    // further interaction needed here once wired.
+    new SerialDataRouter(m_serialManager, m_dashboardGrid, this);
+    // Wires control-widget commands and the serial monitor's raw I/O to the
+    // same connection (BACKEND_TODO.txt Tasks 9/10); no further interaction
+    // needed here once wired.
+    new SerialWidgetBridge(m_serialManager, m_dashboardGrid, this);
 
     Ribbon* ribbon = buildRibbon();
     buildPropertiesPanel();
@@ -146,10 +160,56 @@ Ribbon* MainWindow::buildRibbon() {
     runPage->setFixedHeight(kRibbonPageHeight);
     auto* runLayout = new QHBoxLayout(runPage);
     runLayout->setContentsMargins(kRibbonPageMarginH, kRibbonPageMarginV, kRibbonPageMarginH, kRibbonPageMarginV);
-    auto* runLabel = new QLabel("Serial port configuration — coming soon", runPage);
-    runLabel->setEnabled(false);
-    runLayout->addWidget(runLabel);
+    runLayout->setSpacing(kRibbonGroupSpacing);
+
+    m_portCombo = new QComboBox(runPage);
+    m_portCombo->setToolTip("Serial port");
+    m_portCombo->setMinimumWidth(110);
+
+    m_refreshPortsButton = new QToolButton(runPage);
+    m_refreshPortsButton->setText(QString::fromUtf8("\xE2\x9F\xB3")); // ⟳
+    m_refreshPortsButton->setToolTip("Refresh port list");
+    m_refreshPortsButton->setAutoRaise(true);
+    m_refreshPortsButton->setFixedSize(kRibbonButtonSize, kRibbonButtonSize);
+    connect(m_refreshPortsButton, &QToolButton::clicked, this, &MainWindow::refreshSerialPorts);
+
+    // Reuses the same baud list SerialMonitorWidget used to offer for its
+    // now-removed per-widget connect bar (Tarefa 3) -- one global connection
+    // means one place to pick the baud rate.
+    m_baudCombo = new QComboBox(runPage);
+    m_baudCombo->addItems({"9600", "19200", "38400", "57600", "115200"});
+    m_baudCombo->setCurrentText("9600");
+    m_baudCombo->setToolTip("Baud rate");
+
+    // Terminator appended to control-widget commands only (docs/PROTOCOL.md
+    // "Outbound: control commands", BACKEND_TODO.txt Task 9) -- unlike
+    // port/baud this isn't a QSerialPort property, so it stays editable
+    // while connected instead of being locked alongside them below.
+    m_lineTerminatorCombo = new QComboBox(runPage);
+    m_lineTerminatorCombo->addItem("None", int(LineTerminator::None));
+    m_lineTerminatorCombo->addItem(QString::fromUtf8("LF (\\n)"), int(LineTerminator::Lf));
+    m_lineTerminatorCombo->addItem(QString::fromUtf8("CR (\\r)"), int(LineTerminator::Cr));
+    m_lineTerminatorCombo->addItem(QString::fromUtf8("CRLF (\\r\\n)"), int(LineTerminator::CrLf));
+    m_lineTerminatorCombo->setCurrentIndex(1); // Lf, matching SerialManager's default
+    m_lineTerminatorCombo->setToolTip("Line terminator appended to control-widget commands (push button/toggle/"
+                                       "slider). Doesn't affect the serial terminal's raw keystrokes.");
+    connect(m_lineTerminatorCombo, &QComboBox::currentIndexChanged, this, &MainWindow::onLineTerminatorChanged);
+
+    m_connectButton = new QPushButton("Connect", runPage);
+    m_connectButton->setCheckable(true);
+    connect(m_connectButton, &QPushButton::toggled, this, &MainWindow::onSerialConnectToggled);
+
+    runLayout->addWidget(m_portCombo);
+    runLayout->addWidget(m_refreshPortsButton);
+    runLayout->addWidget(m_baudCombo);
+    runLayout->addWidget(m_lineTerminatorCombo);
+    runLayout->addWidget(m_connectButton);
     runLayout->addStretch();
+
+    refreshSerialPorts();
+    connect(m_serialManager, &SerialManager::connectionStateChanged, this,
+            &MainWindow::onSerialConnectionStateChanged);
+    connect(m_serialManager, &SerialManager::errorOccurred, this, &MainWindow::onSerialErrorOccurred);
 
     auto* configurePage = new QWidget(this);
     configurePage->setObjectName("ribbonPage");
@@ -165,7 +225,7 @@ Ribbon* MainWindow::buildRibbon() {
     configureLayout->addStretch();
 
     auto* ribbon = new Ribbon(this);
-    ribbon->addTab("Run", runPage);
+    m_runTabIndex = ribbon->addTab("Run", runPage);
     m_configureTabIndex = ribbon->addTab("Layout", configurePage);
 
     connect(ribbon, &Ribbon::currentTabChanged, this, &MainWindow::onRibbonTabChanged);
@@ -221,6 +281,56 @@ void MainWindow::onRibbonTabChanged(int index) {
     m_positionAction->setEnabled(m_configureTabActive);
     m_propertiesPanel->setVisible(m_configureTabActive);
     updateSelectionActions();
+
+    if (index == m_runTabIndex) {
+        refreshSerialPorts();
+    }
+}
+
+void MainWindow::refreshSerialPorts() {
+    // Preserve the current pick across a refresh when it's still present --
+    // rebuilding the list would otherwise silently reset it to whatever
+    // QSerialPortInfo happens to return first.
+    const QString current = m_portCombo->currentText();
+    m_portCombo->clear();
+    m_portCombo->addItems(m_serialManager->availablePorts());
+    const int index = m_portCombo->findText(current);
+    if (index >= 0) {
+        m_portCombo->setCurrentIndex(index);
+    }
+}
+
+void MainWindow::onSerialConnectToggled(bool checked) {
+    if (checked) {
+        if (!m_serialManager->open(m_portCombo->currentText(), m_baudCombo->currentText().toInt())) {
+            // open() already reported the failure via errorOccurred(); just
+            // snap the button back to reflect that the connection didn't
+            // happen (re-enters this slot with checked=false, which calls
+            // close() on an already-closed port -- a harmless no-op).
+            m_connectButton->setChecked(false);
+        }
+        return;
+    }
+    m_serialManager->close();
+}
+
+void MainWindow::onSerialConnectionStateChanged(bool connected) {
+    m_connectButton->setText(connected ? "Disconnect" : "Connect");
+    {
+        const QSignalBlocker blocker(m_connectButton);
+        m_connectButton->setChecked(connected);
+    }
+    m_portCombo->setEnabled(!connected);
+    m_refreshPortsButton->setEnabled(!connected);
+    m_baudCombo->setEnabled(!connected);
+}
+
+void MainWindow::onSerialErrorOccurred(const QString& message) {
+    statusBar()->showMessage(message, 5000);
+}
+
+void MainWindow::onLineTerminatorChanged(int) {
+    m_serialManager->setLineTerminator(LineTerminator(m_lineTerminatorCombo->currentData().toInt()));
 }
 
 void MainWindow::onSelectionChanged(const QString&) {

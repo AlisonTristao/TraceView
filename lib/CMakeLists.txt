@@ -50,6 +50,8 @@ add_library(traceview_dashboard STATIC
     dashboard/widgetconfigeditor.h
     dashboard/widgets/chartconfigeditor.cpp
     dashboard/widgets/chartconfigeditor.h
+    dashboard/widgets/chartdata.cpp
+    dashboard/widgets/chartdata.h
     dashboard/widgets/chartwidgets.cpp
     dashboard/widgets/chartwidgets.h
     dashboard/widgets/gaugeconfigeditor.cpp
@@ -58,6 +60,8 @@ add_library(traceview_dashboard STATIC
     dashboard/widgets/serialmonitorwidget.h
     dashboard/widgets/serialterminalwidget.cpp
     dashboard/widgets/serialterminalwidget.h
+    dashboard/widgets/controldata.cpp
+    dashboard/widgets/controldata.h
     dashboard/widgets/controlwidgets.cpp
     dashboard/widgets/controlwidgets.h
     dashboard/widgets/controlconfigeditor.cpp
@@ -100,6 +104,14 @@ add_library(traceview_ui STATIC
     core/ribbonicons.h
     core/ribbontabbar.cpp
     core/ribbontabbar.h
+    core/serialdatarouter.cpp
+    core/serialdatarouter.h
+    core/serialmanager.cpp
+    core/serialmanager.h
+    core/serialprotocol.cpp
+    core/serialprotocol.h
+    core/serialwidgetbridge.cpp
+    core/serialwidgetbridge.h
 )
 
 target_include_directories(traceview_ui PUBLIC

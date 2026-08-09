@@ -55,3 +55,22 @@ set_target_properties(TraceView PROPERTIES
     WIN32_EXECUTABLE ON
     MACOSX_BUNDLE ON
 )
+
+if(WIN32)
+    # Keeps the Qt runtime DLLs sitting next to TraceView.exe in sync with
+    # whatever Qt modules it links. Without this, adding a new Qt module
+    # (e.g. Qt6SerialPort for the serial backend) silently leaves the app
+    # unable to start (STATUS_DLL_NOT_FOUND) until someone re-deploys by
+    # hand -- there was no deployment step at all before this, and the
+    # build directory's DLL set had drifted stale for exactly that reason.
+    find_program(WINDEPLOYQT_EXECUTABLE
+        NAMES windeployqt6 windeployqt
+        HINTS "${Qt6_DIR}/../../../bin"
+    )
+    if(WINDEPLOYQT_EXECUTABLE)
+        add_custom_command(TARGET TraceView POST_BUILD
+            COMMAND "${WINDEPLOYQT_EXECUTABLE}" --no-translations "$<TARGET_FILE:TraceView>"
+            COMMENT "Deploying Qt runtime DLLs next to TraceView.exe"
+        )
+    endif()
+endif()

@@ -1,0 +1,356 @@
+TraceView — plano de implementação do backend serial
+======================================================
+Escrito em 2026-08-09. Cada seção abaixo é uma tarefa dimensionada para UMA
+conversa nova (contexto próprio, sem precisar re-explicar a arquitetura).
+Ordem = ordem de dependência; não pule.
+
+------------------------------------------------------------------------------
+LÓGICA GERAL (ler isso primeiro em qualquer chat novo, economiza re-descoberta)
+------------------------------------------------------------------------------
+
+Conexão: UMA porta serial só, para o app inteiro (não é por widget). Fica
+visível/controlável na Ribbon, aba "Run" (lib/core/mainwindow.cpp:149 já tem
+o placeholder "Serial port configuration — coming soon"). SerialMonitorWidget
+(lib/dashboard/widgets/serialmonitorwidget.*) perde a barra de porta/baud/
+connect — vira só um terminal de texto puro (entrada = teclado, saída = bytes
+recebidos), consumindo a MESMA conexão global.
+
+Roteamento por ID: DashboardItem::key (lib/dashboard/dashboarditem.h) já foi
+desenhado pra isso — comentário original: "the future handle external data
+updates will target". Cada widget no grid tem uma key opcional e única
+(unicidade já garantida por DashboardGrid::isKeyAvailable). O ID que chega no
+frame serial == a key configurada no widget. Não precisa inventar um sistema
+de IDs novo, só consumir o que já existe.
+
+Formato do frame (proposta, confirmar/ajustar na Tarefa 1):
+    [<tempo>][<id>] <payload>\n
+  - <tempo>: inteiro (ms), gerado pelo dispositivo. IMPORTANTE: os
+    ChartConfigEditor já dizem que o eixo X em modo "Time" é derivado de um
+    período fixo por amostra configurado no app (Sample Time), NUNCA do
+    timestamp de chegada — ver chartconfigeditor.h:24. Ou seja, esse campo
+    de tempo do frame é só para log/debug no terminal por enquanto, não
+    alimenta o eixo X dos gráficos. Não assumir o contrário.
+  - <id>: string sem espaços/colchetes, casa com DashboardItem::key.
+  - payload: resto da linha. Forma depende do "Format" configurado no
+    widget-alvo (ChartConfigEditor/GaugeConfigEditor já têm um combo
+    Delimited-text vs Bytes). Fechar a decisão de como "Bytes" viaja dentro
+    de um protocolo de linha ASCII (hex? base64?) faz parte da Tarefa 1.
+
+Broadcast: como só existe UMA porta, qualquer frame que chegue pode
+atualizar qualquer widget cuja key bata com o ID — isso já está coberto pelo
+design acima (não é um requisito extra, é consequência natural do roteamento
+por key).
+
+Taxas diferentes por widget: cada widget decide seu próprio ritmo de repaint
+(ex.: um throttle/timer interno), independente da taxa de chegada dos
+frames — o roteador só entrega o dado assim que decodifica; quem decide
+"quando redesenhar" é o próprio widget consumidor.
+
+Botões/controles → saída: PushButtonWidget/ToggleSwitchWidget/SliderWidget
+(lib/dashboard/widgets/controlwidgets.*) já emitem sinais (pressedRequested,
+toggled, valueChanged) que hoje não vão a lugar nenhum. Os ConfigEditors
+correspondentes (controlconfigeditor.h) JÁ têm campos de texto livre para o
+comando a enviar (onPressEdit/onReleaseEdit/onCommandEdit/offCommandEdit/
+commandTemplateEdit) — ou seja, o "o que mandar" já é configurável pelo
+usuário por widget, não precisa de um segundo formato de protocolo para
+saída. O trabalho é só: sinal disparou → pegar o texto do config → mandar
+pela porta serial aberta.
+
+------------------------------------------------------------------------------
+TAREFA 1 — Fechar o formato do protocolo (spec, sem código de produção)
+------------------------------------------------------------------------------
+Decidir e documentar (docs/PROTOCOL.md ou similar):
+  - Gramática exata do frame de entrada (separadores, encoding, fim de linha
+    \n vs \r\n, o que fazer com linhas que não casam o padrão — mostrar cru
+    no terminal e ignorar pro roteador).
+  - Como "Bytes" format (chart/gauge) é representado dentro de uma linha de
+    texto.
+  - Formato de saída dos comandos dos controles: texto literal já configurado
+    pelo usuário (ver acima) + terminador de linha configurável globalmente
+    (ligado à config da porta, não por widget).
+  - Definir/whitelist de caracteres válidos para <id> (deve bater com as
+    regras de validação de key que já existirem em PropertiesPanel, se
+    houver alguma).
+Sem essa decisão travada, nenhuma tarefa de código abaixo deveria começar.
+
+TAREFA 1 — feito em 2026-08-09. Spec fechada em docs/PROTOCOL.md.
+
+------------------------------------------------------------------------------
+TAREFA 2 — SerialManager (núcleo, sem UI)
+------------------------------------------------------------------------------
+Novo módulo (ex.: lib/core/serialmanager.h/.cpp), dono único de um
+QSerialPort (já linkado no CMakeLists.txt:27/49). Responsabilidades:
+  - Listar portas disponíveis (QSerialPortInfo).
+  - open(portName, baudRate) / close(), estado atual (connected/portName/
+    baudRate) exposto via getters + sinal connectionStateChanged.
+  - write(QByteArray) — escreve na porta se aberta; no-op (ou erro
+    reportado) se fechada.
+  - Sinal dataReceived(QByteArray) — bytes crus, emitido a partir de
+    QSerialPort::readyRead.
+  - Tratamento de erro básico (QSerialPort::errorOccurred → sinal
+    errorOccurred(QString) para status bar).
+Um único QObject, dono do MainWindow (ou singleton simples). NENHUMA lógica
+de parsing de frame aqui — isso é a Tarefa 4. Este módulo só sabe falar bytes
+crus.
+
+TAREFA 2 — feito em 2026-08-09. lib/core/serialmanager.h/.cpp, adicionado ao
+alvo traceview_ui (lib/CMakeLists.txt). Testado por tests/test_serialmanager.cpp
+(registrado em tests/CMakeLists.txt) — cobre estado inicial desconectado,
+close() sem open() prévio como no-op, write() com porta fechada retornando
+false, open() com porta inexistente falhando com um único errorOccurred (não
+dois — QSerialPort::open() já emite seu próprio errorOccurred internamente
+ao falhar, então open() não deve emitir de novo por cima), e availablePorts()
+não crashando. Ainda não ligado a nada (MainWindow não instancia
+SerialManager) — isso é a Tarefa 3.
+
+------------------------------------------------------------------------------
+TAREFA 3 — UI de conexão na Ribbon (aba "Run")
+------------------------------------------------------------------------------
+Substituir o placeholder em MainWindow::buildRibbon (mainwindow.cpp:~146-150)
+por: combo de porta (populado via SerialManager, com refresh ao abrir a
+aba/clicar), combo de baud rate (reaproveitar a lista que já existe em
+SerialMonitorWidget::SerialMonitorWidget — "9600","19200","38400","57600",
+"115200"), botão Connect/Disconnect (checkable, mesmo padrão do
+m_connectButton atual). Depois:
+  - Remover a barra de porta/baud/connect de dentro de SerialMonitorWidget
+    (lib/dashboard/widgets/serialmonitorwidget.*) — ele passa a só embrulhar
+    o SerialTerminalWidget.
+  - Refletir estado de conexão (texto do botão, enable/disable dos combos)
+    a partir dos sinais do SerialManager, não de estado local.
+
+TAREFA 3 — feito em 2026-08-09. MainWindow agora possui um SerialManager
+(m_serialManager, criado antes de buildRibbon()). Aba "Run": combo de porta
+(populado por refreshSerialPorts(), chamado ao construir a aba e sempre que
+ela é ativada via onRibbonTabChanged) + botão de refresh dedicado, combo de
+baud (mesma lista de SerialMonitorWidget) e botão Connect/Disconnect
+checkable. onSerialConnectToggled() chama open()/close(); estado do botão e
+enable/disable dos combos são atualizados só a partir de
+connectionStateChanged (onSerialConnectionStateChanged), não de estado
+local; errorOccurred() vai pra status bar. SerialMonitorWidget perdeu a
+barra port/baud/connect — agora só embrulha SerialTerminalWidget
+(sendRequested continua repassado pra fora, ainda sem consumidor — isso é a
+Tarefa 10). Build + suite de testes (ctest, 5/5) passando.
+
+------------------------------------------------------------------------------
+TAREFA 4 — Parser/encoder do protocolo (frame decoder)
+------------------------------------------------------------------------------
+Novo módulo (ex.: lib/core/serialprotocol.h/.cpp) implementando a gramática
+fechada na Tarefa 1. Puramente funções/classe sem estado de UI:
+  - Um "line assembler" que acumula bytes de dataReceived() até achar um
+    terminador de linha (a porta pode entregar frames fragmentados).
+  - decodeFrame(QByteArray line) -> struct{ qint64 time; QString id;
+    QByteArray payload; bool ok }.
+  - Linhas que não casam o padrão: repassar como "raw" para quem quiser (o
+    terminal quer ver tudo, o roteador só quer frames válidos).
+Sem testes de integração com hardware real ainda — testar com strings
+sintéticas (tests/ já tem exemplos de estilo em test_dashboarditem.cpp etc.).
+
+TAREFA 4 — feito em 2026-08-09. lib/core/serialprotocol.h/.cpp, adicionado ao
+alvo traceview_ui (lib/CMakeLists.txt). decodeFrame(QByteArray) -> SerialFrame
+{time, id, payload, ok} valida a gramática do envelope fechada em
+docs/PROTOCOL.md (colchetes/espaço na posição certa, time >=0 decimal, id em
+[A-Za-z0-9_-]{1,64}); payload continua QByteArray opaco — decodificar
+CSV/Bytes é trabalho das Tarefas 7/8, não deste módulo. SerialLineAssembler é
+uma classe simples (sem QObject) com feed(QByteArray)->QList<QByteArray> que
+acumula bytes fragmentados e quebra em \n ou \r\n (\r solto vira parte da
+linha, não é terminador) + reset(). Testado por
+tests/test_serialprotocol.cpp (registrado em tests/CMakeLists.txt), 13 casos
+cobrindo frame bem-formado, payload vazio, cada forma de malformação (sem
+colchete, sem espaço, id vazio/>64 chars/char inválido, time não-numérico ou
+negativo) e o assembler (split simples, CRLF, CR solto, linha fragmentada em
+múltiplos feed(), múltiplas linhas num chunk só, reset). Build completo +
+ctest (6/6) passando. Ainda não ligado a nada (SerialManager::dataReceived
+não alimenta isso) — isso é a Tarefa 5.
+
+------------------------------------------------------------------------------
+TAREFA 5 — Roteador ID → widget (SerialDataRouter)
+------------------------------------------------------------------------------
+Novo módulo que conecta o parser (Tarefa 4) ao DashboardGrid:
+  - Mantém um QMap<QString /*key*/, DashboardWidget*> reconstruído a partir
+    de DashboardGrid (precisa de um jeito de iterar itens+widgets vivos —
+    hoje DashboardGrid guarda DashboardItem em m_items e QWidget em
+    m_cells/DashboardCell; avaliar se precisa expor um getter novo tipo
+    widgetForKey(QString) ou um sinal itemsChanged() para o router
+    reconstruir seu índice).
+  - Ao decodeFrame() dar ok=true, procura o widget cuja key == id e entrega
+    o payload a ele (ver Tarefa 6 pela interface de entrega).
+  - Reagir a mudanças de key em tempo de edição (SetItemKeyCommand) e a
+    remoção/adição de widgets, senão o índice fica velho.
+
+TAREFA 5 — feito em 2026-08-09. lib/core/serialdatarouter.h/.cpp
+(SerialDataRouter), adicionado ao alvo traceview_ui (lib/CMakeLists.txt).
+Dono de um SerialLineAssembler; onSerialDataReceived(QByteArray) (slot
+público, ligado a SerialManager::dataReceived, também chamável direto em
+teste sem porta real) alimenta o assembler, decodeFrame() cada linha, e para
+frame.ok == true entrega frame.payload a DashboardWidget::onSerialPayload()
+do widget cuja key bate com frame.id — frame malformado é silenciosamente
+ignorado (decisão já fechada em docs/PROTOCOL.md, terminal cuida do raw).
+Reconexão (connectionStateChanged(true)) reseta o assembler pra não
+misturar uma linha parcial de antes de um replug com a sessão nova.
+
+Índice key→widget: DashboardGrid ganhou keyedWidgets() (retorna
+QMap<QString,DashboardWidget*> a partir de m_items+m_cells via
+DashboardCell::content(), getter novo) e o sinal itemsChanged(), emitido em
+applyInsertItem/removeItem/applySetKey/applyTypeChange/fromJson — ou seja,
+em qualquer mutação (incluindo undo/redo, que passa pelos mesmos apply*) que
+possa ter trocado a associação key→widget; move/resize/rename/config não
+emitem. SerialDataRouter reconstrói seu índice a cada itemsChanged().
+
+MainWindow instancia o router (new SerialDataRouter(m_serialManager,
+m_dashboardGrid, this) logo após criar os dois) — sem outra interação
+necessária depois de ligado. Testado por tests/test_serialdatarouter.cpp
+(registrado em tests/CMakeLists.txt, linka traceview_ui), com um tipo de
+widget "test_probe" registrado só no teste (WidgetRegistry) pra capturar
+payloads sem depender do parsing real das Tarefas 7/8 — cobre entrega por
+key, id sem match + linha malformada ignorados, frame fragmentado em
+múltiplos onSerialDataReceived(), reindexação após troca de key, e parada de
+entrega após limpar a key. Build completo + ctest (7/7) passando.
+
+------------------------------------------------------------------------------
+TAREFA 6 — Interface de consumo de dado nos widgets
+------------------------------------------------------------------------------
+Adicionar um método virtual em DashboardWidget (lib/dashboard/
+dashboardwidget.h), ex.: `virtual void onSerialPayload(const QByteArray&
+payload) {}` — default no-op, pra não forçar todo widget (ex. controles) a
+implementar. Este é só o contrato; a implementação real de parsing de
+payload por tipo (delimited text vs bytes, qual slot, etc, conforme os
+Config Editors) é o trabalho das Tarefas 7/8.
+
+TAREFA 6 — feito em 2026-08-09, junto com a Tarefa 5 (esta tarefa era só o
+contrato — DashboardWidget::onSerialPayload(const QByteArray&), no-op — e a
+Tarefa 5 precisava dele pra ter pra onde entregar o payload; nada mais do
+escopo desta tarefa foi antecipado). Implementação real por tipo continua
+pendente, é a Tarefa 7/8.
+
+------------------------------------------------------------------------------
+TAREFA 7 — Gráficos reais (line/bar) consumindo dado
+------------------------------------------------------------------------------
+Trocar DummyLineChartWidget/DummyBarChartWidget (lib/dashboard/widgets/
+chartwidgets.*) de paintEvent com dado fake para: buffer circular de
+amostras (tamanho = History/Limit do ChartConfigEditor), parse do payload
+conforme Format/série configurados em ChartConfigEditor, repaint no ritmo
+próprio do widget (ver "taxas diferentes" na seção geral). Provavelmente a
+maior tarefa do lote — pode valer a pena quebrar em "line" e "bar"
+separados se ficar grande demais para uma conversa só.
+
+TAREFA 7 — feito em 2026-08-09. Pré-requisito descoberto no meio do caminho:
+não existia NENHUM jeito de um DashboardWidget vivo receber seu próprio
+DashboardItem::config em runtime (WidgetRegistry::create só passava
+QWidget* parent; config ficava só no par PropertiesPanel<->WidgetConfigEditor,
+nunca chegava no widget de verdade — nem a Tarefa 6, que só previa o método,
+cobria isso). Resolvido com `DashboardWidget::setConfig(const QJsonObject&)`
+(lib/dashboard/dashboardwidget.h), default no-op igual onSerialPayload, e
+duas chamadas em DashboardGrid (lib/dashboard/dashboardgrid.cpp):
+createCell() chama content->setConfig(item.config) logo após instanciar (
+cobre insert novo, load de disco e troca de tipo, já que os três passam por
+createCell), e applySetConfig() repassa pro cell->content() vivo depois de
+gravar no item (cobre edição ao vivo pelo PropertiesPanel e o undo/redo de
+SetItemConfigCommand, que só chama applySetConfig nos dois sentidos). Esse
+hook é genérico — Tarefa 8 (Gauge) usa o mesmo mecanismo sem precisar
+reinventar nada.
+
+Módulo novo lib/dashboard/widgets/chartdata.h/.cpp (puro, sem QWidget, no
+alvo traceview_dashboard): parseChartConfig(QJsonObject) espelha o shape que
+ChartConfigEditor::config()/setConfig() já definem (mesmos defaults);
+chartBufferCapacity() resolve quantas amostras manter (Limit direto em modo
+Samples, ou Limit segundos convertido via Ts em modo Time);
+decodeChartPayload() decodifica uma linha de payload (docs/PROTOCOL.md) em
+um valor por série configurada — CSV via QString::toDouble, Bytes via hex
+little-endian manualmente remontado byte a byte (não faz cast de ponteiro,
+então independe de endianness do host) por cada byteType configurado por
+série; slot ausente ou malformado vira qQNaN() só naquela série, não
+derruba o frame inteiro. appendChartSample() decodifica e acrescenta aos
+buffers, cortando pela frente quando passa da capacidade.
+resizeChartBuffers() é chamado por setConfig() a cada edição de config —
+preserva o histórico de uma série que continua na mesma posição da tabela
+(recolorir/renomear não zera o gráfico), só descarta o que não cabe mais.
+ARMADILHA: uma variável local chamada `slots` (o nome óbvio pra "payload
+dividido por ;") quebra em silêncio — `slots` é a macro do Qt usada em
+`private slots:`, e fora de código processado pelo moc ela expande pra
+nada, transformando a declaração em erro de sintaxe difícil de ler. Variável
+renomeada pra `payloadSlots`; documentado com comentário no código pra quem
+for mexer aqui de novo não cair na mesma pegadinha.
+
+DummyLineChartWidget/DummyBarChartWidget (lib/dashboard/widgets/
+chartwidgets.h/.cpp) ganharam uma base comum ChartWidgetBase (mesmo arquivo,
+não exposta fora dele) que implementa setConfig() (re-parseia + chama
+resizeChartBuffers) e onSerialPayload() (appendChartSample + repaint
+throttlado). Throttle: primeiro payload de uma rajada agenda um
+QTimer::singleShot(33ms) que chama update() e libera o flag; payloads que
+chegam durante essa janela só alimentam o buffer (já visível no próximo
+repaint), sem agendar timer extra — dado é sempre imediato, redesenho é
+limitado a ~30Hz por widget, cada instância com seu próprio flag/timer
+(atende "taxas diferentes por widget" da seção geral).
+
+Renderização real: pontos/barras ancorados pela direita usando a
+capacidade do buffer (não o quanto já foi preenchido) como escala de
+pixel-por-amostra, então o gráfico começa a preencher da direita e rola
+suave ao virar buffer circular, em vez de re-escalar a cada amostra nova
+antes de encher. Eixo Y: Fixed usa min/max configurados; Auto varre todas
+as séries visíveis com 5% de folga (e uma folga fixa se min==max). Style da
+série: solid/dashed/dotted/dashdot viram Qt::PenStyle numa linha conectada;
+cross/asterisk viram marcador desenhado em cada ponto, sem linha
+conectando (sem essa distinção no protocolo/UI original, decisão tomada
+aqui: pareceu a leitura mais natural de "estilo de marcador" vs "estilo de
+linha" dado os nomes dos itens do combo). Bar chart usa o mesmo
+ancoramento-pela-direita, mas agrupando as séries lado a lado dentro de
+cada slot de amostra (barra por série por instante), com uma barra "de
+zero" (baseline em value=0, não no fundo do plot) pra valores negativos
+ficarem legíveis com Y Auto.
+
+Mantido fora do escopo (não pedido, não necessário pra "consumir dado
+real"): rótulos numéricos nos eixos X/Y, grid/gridlines, legenda dos nomes
+de série, e qualquer suavização/interpolação — o objetivo era sair do
+paintEvent com dado fake pra um com dado real das Tarefas 4/5, não
+redesenhar a UI do gráfico.
+
+Testado por tests/test_chartdata.cpp (registrado em tests/CMakeLists.txt,
+linka traceview_dashboard) — 11 casos cobrindo defaults de parseChartConfig
+em JSON vazio, parse de config explícita (todos os campos), capacidade em
+modo Samples e Time (incluindo arredondamento pra cima), decode CSV por
+índice (índice inexistente vira NaN), decode CSV malformado/vazio,decode
+Bytes reusando os mesmos exemplos numéricos do docs/PROTOCOL.md (uint8,
+int16 positivo/negativo, float32), Bytes com largura de hex errada ou
+caractere não-hex, append pulando NaN sem quebrar a série e cortando pela
+capacidade, e resize preservando por posição + cortando ao encolher.
+Nenhum teste toca paintEvent (é puramente visual, não vale o esforço de
+testar pixel a pixel) — a cobertura pára na camada de dado/config, que é
+onde a lógica de fato mora. Build completo + ctest (8/8) passando.
+
+------------------------------------------------------------------------------
+TAREFA 8 — Gauge real consumindo dado
+------------------------------------------------------------------------------
+Mesma ideia que a Tarefa 7 mas para DummyGaugeWidget usando GaugeConfigEditor
+(min/max/unit/decimals/format/slot). Menor escopo que gráficos (só valor
+atual, sem histórico).
+
+------------------------------------------------------------------------------
+TAREFA 9 — Controles enviando comando pela serial
+------------------------------------------------------------------------------
+Ligar PushButtonWidget::pressedRequested / ToggleSwitchWidget::toggled /
+SliderWidget::valueChanged a SerialManager::write(), usando os templates de
+comando já capturados pelos respectivos ConfigEditors (controlconfigeditor.h)
+— inclusive suporte a placeholder de valor no template do Slider (ex.:
+"{value}" → valor atual), debounce/repeat/long-press do PushButton conforme
+os campos que já existem no config.
+
+------------------------------------------------------------------------------
+TAREFA 10 — Terminal como I/O puro ligado ao SerialManager
+------------------------------------------------------------------------------
+Ligar SerialTerminalWidget::sendRequested → SerialManager::write() e
+SerialManager::dataReceived → SerialTerminalWidget::appendData(), removendo
+qualquer suposição de que o terminal é dono da conexão (isso passou a ser do
+SerialManager desde a Tarefa 2/3). Também decidir se o terminal mostra frames
+crus (bytes exatamente como chegaram) mesmo quando eles também alimentam o
+roteador — resposta esperada: sim, o terminal é só uma "torneira" de
+debug, não interfere no roteamento.
+
+------------------------------------------------------------------------------
+Notas
+------------------------------------------------------------------------------
+- QSerialPort já está linkado (CMakeLists.txt), não precisa mexer em build.
+- Todo o "shape" de configuração (formato de frame por widget, templates de
+  comando) já existe nos ConfigEditors — o trabalho daqui pra frente é 100%
+  de runtime/wiring, não de UI de configuração nova (exceto a Tarefa 3).
+- Ao concluir cada tarefa, marque aqui (ex.: "TAREFA N — feito em
+  AAAA-MM-DD") pra próxima conversa saber onde parou.
