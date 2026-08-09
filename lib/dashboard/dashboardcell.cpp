@@ -118,7 +118,7 @@ protected:
         }
 
         if (selectionVisible) {
-            QColor selectionColor = palette.accent;
+            QColor selectionColor = property("dragInvalid").toBool() ? palette.danger : palette.accent;
             selectionColor.setAlphaF(selectT);
             painter.setPen(QPen(selectionColor, kEdgeFinishWidth));
             painter.drawPath(outline);
@@ -190,6 +190,15 @@ void DashboardCell::setSelected(bool selected) {
     update();
 }
 
+void DashboardCell::setDragInvalid(bool invalid) {
+    if (m_dragInvalid == invalid) {
+        return;
+    }
+    m_dragInvalid = invalid;
+    m_borderOverlay->setProperty("dragInvalid", invalid);
+    m_borderOverlay->update();
+}
+
 int DashboardCell::headerHeight() const {
     return m_content->wantsCellHeader() ? kHeaderHeight : 0;
 }
@@ -243,14 +252,10 @@ Qt::CursorShape DashboardCell::cursorForHandle(ResizeHandle handle) const {
 }
 
 void DashboardCell::layoutChildren() {
-    if (m_editMode) {
-        const int headerH = headerHeight();
-        m_content->setGeometry(0, headerH, width(), height() - headerH);
-    } else {
-        m_content->setGeometry(rect());
-    }
+    const int headerH = headerHeight();
+    m_content->setGeometry(0, headerH, width(), height() - headerH);
     updateContentMask();
-    m_borderOverlay->setProperty("headerHeight", m_editMode ? headerHeight() : 0);
+    m_borderOverlay->setProperty("headerHeight", headerH);
     m_borderOverlay->setGeometry(rect());
     m_borderOverlay->raise();
 }
@@ -267,7 +272,7 @@ void DashboardCell::updateContentMask() {
     if (local.isEmpty()) {
         return;
     }
-    const bool headerPresent = m_editMode && headerHeight() > 0;
+    const bool headerPresent = headerHeight() > 0;
     m_content->setRoundedCorners(!headerPresent, !headerPresent, true, true);
     const QPainterPath path = m_content->contentFillPath();
     m_content->setMask(QRegion(path.toFillPolygon().toPolygon()));
@@ -297,10 +302,6 @@ void DashboardCell::paintEvent(QPaintEvent*) {
     painter.fillPath(partiallyRoundedRect(QRectF(rect()), kContainerCornerRadius, true, true, true, true),
                      palette.background);
 
-    if (!m_editMode) {
-        return;
-    }
-
     if (headerHeight() > 0) {
         painter.save();
         painter.setClipPath(partiallyRoundedRect(rect(), kContainerCornerRadius, true, true, true, true));
@@ -320,8 +321,9 @@ void DashboardCell::paintEvent(QPaintEvent*) {
         painter.drawText(textRect, Qt::AlignVCenter | Qt::AlignLeft, m_title);
     }
 
-    if (!m_selected) {
-        // Unselected cells are identifiable but not interactive — no grip.
+    if (!m_editMode || !m_selected) {
+        // The grip is edit-only: nothing to resize outside Layout, and
+        // unselected cells are identifiable but not interactive.
         return;
     }
 

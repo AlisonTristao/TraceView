@@ -10,13 +10,14 @@ namespace traceview {
 
 class DashboardWidget;
 
-// Chrome wrapped around one DashboardWidget on the grid. In edit mode,
+// Chrome wrapped around one DashboardWidget on the grid. The header strip
+// (icon + title) is always visible, in both Layout and Run. In edit mode,
 // clicking an unselected cell just selects it (only one selected at a
-// time, grid-wide — DashboardGrid enforces that); the selected cell shows
-// a header strip (drag handle) and a resize grip, unselected cells stay
-// flat. This widget does no grid math itself — it only reports raw cursor
-// positions via signals; DashboardGrid owns cell-size/collision logic and
-// decides where the cell actually ends up.
+// time, grid-wide — DashboardGrid enforces that); the selected cell's
+// header also doubles as a drag handle and gains a resize grip, unselected
+// cells stay flat. This widget does no grid math itself — it only reports
+// raw cursor positions via signals; DashboardGrid owns cell-size/collision
+// logic and decides where the cell actually ends up.
 class DashboardCell : public QWidget {
     Q_OBJECT
 
@@ -45,6 +46,11 @@ public:
     void setEditMode(bool enabled);
     void setSelected(bool selected);
     bool isSelected() const { return m_selected; }
+    // Swaps the selection border to the palette's danger color instead of
+    // accent — live feedback while a drag/resize candidate would be
+    // rejected on release (see DashboardGrid::isPlacementValid()), so the
+    // cell no longer just silently snaps back with no warning mid-drag.
+    void setDragInvalid(bool invalid);
 
 signals:
     void dragStarted(const QString& itemId, const QPoint& globalPos);
@@ -84,6 +90,7 @@ private:
     QWidget* m_borderOverlay = nullptr;
     bool m_editMode = false;
     bool m_selected = false;
+    bool m_dragInvalid = false;
     DragMode m_dragMode = DragMode::None;
     ResizeHandle m_resizeHandle = ResizeHandle::None;
 

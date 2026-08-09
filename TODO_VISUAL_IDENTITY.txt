@@ -345,7 +345,36 @@ Menor prioridade que as anteriores — é o widget mais "utilitário", com
 menos identidade visual pra ganhar; ok deixar por último.
 
 ------------------------------------------------------------------------------
-TAREFA 6 (opcional, baixa prioridade) — Acabamento do canvas
+TAREFA 6 — feito em 2026-08-09: os pontinhos de fundo (DashboardGrid::
+paintEvent) agora esmaecem em vez de cortar reto — os últimos 2 anéis antes
+da borda do usableRect (kGridEdgeFadeCells em dashboardgrid.cpp) ganham
+alpha proporcional à distância da borda, então a grade se dissolve na
+margem em vez de parar de repente.
+Feedback de drag/resize inválido implementado: DashboardCell ganhou
+setDragInvalid() (propriedade "dragInvalid" no BorderOverlay), que troca a
+cor da borda de seleção de palette.accent pra palette.danger; DashboardGrid
+liga isso em tempo real nos 4 handlers (handleDragMoved/handleResizeMoved
+chamam isPlacementValid() a cada movimento do mouse; handleDragStarted/
+handleResizeStarted/handleDragFinished/handleResizeFinished garantem que o
+estado volta a false ao começar/terminar o arraste) — cobre mover E
+redimensionar, já que os dois compartilham DragOp/isPlacementValid() e
+sofriam do mesmo "pula de volta sem aviso" quando o candidato ficava sobre
+outro widget. Um ghost/preview separado (retângulo fantasma extra) foi
+considerado e descartado: o cell já se move ao vivo e snapado durante o
+arraste (handleDragMoved já chamava setGeometry(itemRect(candidate)) antes
+desta tarefa), então o aviso de cor na própria borda resolve a lacuna real
+(nenhuma pista de que a posição seria rejeitada) sem sobrepor um segundo
+widget.
+TAREFA 5 (Serial Monitor) foi pulada a pedido do usuário nesta conversa —
+continua pendente, sem nenhuma mudança.
+Build limpo (`cmake --build --preset windows-mingw-qt`) e `ctest` 8/8
+passando.
+NÃO confirmado ao vivo nesta sessão: abrir o app, entrar em Layout e
+arrastar/redimensionar um widget sobre outro pra ver a borda vermelha, e
+olhar o fade dos pontinhos na borda do canvas, nos dois temas. Recomendado
+dar uma olhada na próxima vez que abrir o app.
+------------------------------------------------------------------------------
+TAREFA 6 (texto original, opcional/baixa prioridade) — Acabamento do canvas
 ------------------------------------------------------------------------------
 A densidade/tamanho dos pontinhos de fundo (kGridColumns/kGridRows/
 kGridDotRadius em dashboardgrid.cpp) já foi ajustada em 2026-08-09 — essa

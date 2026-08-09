@@ -36,6 +36,10 @@ constexpr int kGridRows = 40;
 // Kept small relative to the grid density above so denser dots don't read
 // as visual clutter.
 constexpr double kGridDotRadius = 0.9;
+// The outermost this-many rings of dots fade toward zero alpha instead of
+// stopping at full opacity right at usableRect's edge (see paintEvent()) —
+// makes the grid dissolve into the margin instead of a hard cutoff.
+constexpr int kGridEdgeFadeCells = 2;
 // A widget below this fraction in either dimension is too small to be
 // usable (header alone is 24px). Mirrors the old 5-cell minimum.
 constexpr double kMinItemWidth = 5.0 / kGridColumns;
@@ -446,14 +450,23 @@ void DashboardGrid::paintEvent(QPaintEvent*) {
 
     // Small gray dots at each grid node instead of full lines — enough to
     // hint at the snap points while editing without the visual clutter of a
-    // crosshatch over widget content.
+    // crosshatch over widget content. The outermost couple of rings fade
+    // toward zero alpha instead of stopping at full opacity right at
+    // usableRect's edge, so the grid dissolves into the margin instead of
+    // cutting off mid-dot.
     painter.setRenderHint(QPainter::Antialiasing);
     painter.setPen(Qt::NoPen);
-    painter.setBrush(palette.textDisabled);
     for (int c = 0; c <= kGridColumns; ++c) {
         const int x = area.left() + qRound(c * area.width() / double(kGridColumns));
+        const int edgeDistanceX = qMin(c, kGridColumns - c);
         for (int r = 0; r <= kGridRows; ++r) {
             const int y = area.top() + qRound(r * area.height() / double(kGridRows));
+            const int edgeDistance = qMin(edgeDistanceX, qMin(r, kGridRows - r));
+            QColor dotColor = palette.textDisabled;
+            if (edgeDistance < kGridEdgeFadeCells) {
+                dotColor.setAlphaF(dotColor.alphaF() * (edgeDistance + 1) / double(kGridEdgeFadeCells + 1));
+            }
+            painter.setBrush(dotColor);
             painter.drawEllipse(QPointF(x, y), kGridDotRadius, kGridDotRadius);
         }
     }
@@ -600,6 +613,7 @@ void DashboardGrid::handleDragStarted(const QString& itemId, const QPoint& globa
     m_drag = DragOp{itemId, globalPos, *item, *item, false};
     if (DashboardCell* cell = m_cells.value(itemId)) {
         cell->raise();
+        cell->setDragInvalid(false);
     }
 }
 
@@ -622,6 +636,11 @@ void DashboardGrid::handleDragMoved(const QString& itemId, const QPoint& globalP
 
     if (DashboardCell* draggedCell = m_cells.value(itemId)) {
         draggedCell->setGeometry(itemRect(candidate));
+        // Live feedback for a candidate that would be rejected on release
+        // (currently only an overlap with another item, since the bounds
+        // above already keep candidate on-canvas) — otherwise the cell
+        // silently snaps back to its original spot with no warning.
+        draggedCell->setDragInvalid(!isPlacementValid(candidate, itemId));
     }
 }
 
@@ -639,6 +658,9 @@ void DashboardGrid::handleDragFinished(const QString& itemId, const QPoint&) {
     }
     m_drag.reset();
     relayoutItem(itemId);
+    if (DashboardCell* cell = m_cells.value(itemId)) {
+        cell->setDragInvalid(false);
+    }
 }
 
 void DashboardGrid::handleResizeStarted(const QString& itemId, const QPoint& globalPos,
@@ -650,6 +672,7 @@ void DashboardGrid::handleResizeStarted(const QString& itemId, const QPoint& glo
     m_drag = DragOp{itemId, globalPos, *item, *item, true, handle};
     if (DashboardCell* cell = m_cells.value(itemId)) {
         cell->raise();
+        cell->setDragInvalid(false);
     }
 }
 
@@ -707,6 +730,8 @@ void DashboardGrid::handleResizeMoved(const QString& itemId, const QPoint& globa
 
     if (DashboardCell* resizedCell = m_cells.value(itemId)) {
         resizedCell->setGeometry(itemRect(candidate));
+        // Same live rejection feedback as handleDragMoved() above.
+        resizedCell->setDragInvalid(!isPlacementValid(candidate, itemId));
     }
 }
 
@@ -730,6 +755,9 @@ void DashboardGrid::handleResizeFinished(const QString& itemId, const QPoint&) {
     }
     m_drag.reset();
     relayoutItem(itemId);
+    if (DashboardCell* cell = m_cells.value(itemId)) {
+        cell->setDragInvalid(false);
+    }
 }
 
 void DashboardGrid::handleSelectRequested(const QString& itemId) {
