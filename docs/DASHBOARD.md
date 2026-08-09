@@ -22,6 +22,13 @@ The top toolbar's **Configure Layout** action toggles edit mode:
 - On: each widget gets a header (drag handle + remove button) and a
   resize grip in its bottom-right corner; grid lines are drawn; **Add
   Widget** becomes available.
+  - A kind can opt out of the header via `DashboardWidget::wantsCellHeader()`
+    (see [dashboard/dashboardwidget.h](../lib/dashboard/dashboardwidget.h)) —
+    the control types (push button/toggle/slider, see "Element kinds" below)
+    do, since the header would eat a disproportionate share of an
+    already-small cell. `DashboardCell` gives that space back to the content
+    instead of leaving it blank, and lets a click anywhere in the selected
+    body start a move-drag in place of the missing header.
 
 **Add Widget** drops in an instance of the first registered type — no
 picker dialog — and selects it immediately (`DashboardGrid::addItem`), so
@@ -96,9 +103,44 @@ lives in its own module under
   `sendRequested(QByteArray)` per keystroke, immediately, never buffered
   until Enter. Front-end shell only: none of it wired to `QSerialPort`
   yet.
-- **Button Panel** — `widgets/buttonpanelwidget.h`/`.cpp`
-  (`button_panel`). Front-end shell only: a grid of buttons, none of
-  them wired to an action yet.
+- **Controls** — `widgets/controlwidgets.h`/`.cpp`, one class per kind, each
+  placed and adjusted individually (not a multi-button panel — drop as many
+  as needed and size each on its own). No cell header (`wantsCellHeader()`
+  returns false — see "Editing a layout" above), and each fills its cell
+  edge-to-edge (zero layout margins, `QSizePolicy::Expanding` on the
+  interactive control) with the base `DashboardWidget`'s normal opaque
+  `palette.background` fill — the same color as the canvas behind the cell,
+  since `DashboardGrid` never fills its own background — so it reads as "no
+  panel" without ever leaving a gap for `DashboardCell`'s border or
+  `DashboardGrid`'s edit-mode grid lines to show through (both painted in
+  `palette.borderStrong`). An earlier attempt turned `WA_StyledBackground`
+  back off instead for genuine transparency; dropped because it needed
+  every pixel of the actual control to be opaque to avoid a leak, and
+  `QPushButton`'s default vertical size policy is `Fixed`, so it wasn't.
+  Also
+  resizable much smaller than other kinds (`kMinHeaderlessItemWidth`/
+  `kMinHeaderlessItemHeight` in
+  [dashboardgrid.cpp](../lib/dashboard/dashboardgrid.cpp), picked via
+  `DashboardCell::hasHeader()` — see "Editing a layout" above), since there's
+  no header height to stay legible above:
+  - **Push Button** (`push_button`) — a momentary action button.
+    `pressedRequested()` fires per click.
+  - **Toggle Switch** (`toggle_switch`) — an on/off switch that holds its
+    state. `toggled(bool)` fires on each flip.
+  - **Slider** (`slider`) — a bounded value control with a live value
+    readout beside it. `valueChanged(int)` fires while dragging.
+
+  All three have a config editor — `widgets/controlconfigeditor.h`/`.cpp`
+  (`PushButtonConfigEditor`/`ToggleSwitchConfigEditor`/`SliderConfigEditor`)
+  — covering label text, and per-kind settings (push: color style + the
+  command/value to send; toggle: on/off text + starting state; slider:
+  min/max/step/default/unit/whether the value is shown). Front-end shell
+  only, same as the chart types: none of the signals above are wired to a
+  live output yet, and — also same as the chart types' series settings —
+  the config isn't fed back into the on-canvas widget's own appearance
+  (e.g. a configured label doesn't yet relabel the button you see on the
+  grid); it only round-trips through the project file for whenever a real
+  data binding lands.
 
 `DashboardGrid`, `DashboardItem`, and `PropertiesPanel` treat every kind
 identically; only the widget's own implementation differs.

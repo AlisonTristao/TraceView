@@ -30,6 +30,12 @@ public:
 
     QString itemId() const { return m_itemId; }
 
+    // False for a content widget that opts out of the header (see
+    // DashboardWidget::wantsCellHeader()) — DashboardGrid uses this to
+    // allow a much smaller minimum size when resizing, since there's no
+    // 24px header to keep legible.
+    bool hasHeader() const { return headerHeight() > 0; }
+
     void setTitle(const QString& title);
     void setEditMode(bool enabled);
     void setSelected(bool selected);
@@ -55,6 +61,9 @@ protected:
 private:
     enum class DragMode { None, Moving, Resizing };
 
+    // 0 if m_content opts out via DashboardWidget::wantsCellHeader(),
+    // otherwise the fixed header strip height.
+    int headerHeight() const;
     QRect headerRect() const;
     QRect gripRect() const;
     ResizeHandle handleAt(const QPoint& pos) const;

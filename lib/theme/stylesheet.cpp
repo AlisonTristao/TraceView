@@ -44,6 +44,28 @@ QString arrowImagePath(const QColor& color, const QString& fileTag, bool pointin
     return path;
 }
 
+// Same rationale as arrowImagePath above: QCheckBox::indicator:checked is a
+// pixmap subcontrol, so the checkmark has to be handed to Qt as an actual
+// image rather than drawn via QSS borders.
+QString checkImagePath(const QColor& color) {
+    constexpr int kSize = 10;
+    QPixmap pixmap(kSize, kSize);
+    pixmap.fill(Qt::transparent);
+
+    QPainter painter(&pixmap);
+    painter.setRenderHint(QPainter::Antialiasing);
+    QPen pen(color, 2);
+    pen.setCapStyle(Qt::RoundCap);
+    pen.setJoinStyle(Qt::RoundJoin);
+    painter.setPen(pen);
+    painter.drawPolyline(QPolygon({QPoint(1, 5), QPoint(4, 8), QPoint(9, 2)}));
+    painter.end();
+
+    const QString path = QDir(QDir::tempPath()).filePath("traceview_check.png");
+    pixmap.save(path, "PNG");
+    return path;
+}
+
 } // namespace
 
 QString buildStyleSheet(const ThemePalette& p) {
@@ -141,9 +163,30 @@ QPushButton:pressed {
     background-color: @accentPressed@;
     color: @background@;
 }
+QPushButton:checked {
+    background-color: @accent@;
+    color: @background@;
+    border-color: @accent@;
+}
 QPushButton:disabled {
     color: @textDisabled@;
     border-color: @border@;
+}
+
+QPushButton[variant="success"] {
+    background-color: @success@;
+    color: @background@;
+    border-color: @success@;
+}
+QPushButton[variant="warning"] {
+    background-color: @warning@;
+    color: @background@;
+    border-color: @warning@;
+}
+QPushButton[variant="danger"] {
+    background-color: @danger@;
+    color: @background@;
+    border-color: @danger@;
 }
 
 QLabel {
@@ -278,6 +321,59 @@ QHeaderView::section {
     padding: 4px;
 }
 
+QSlider::groove:horizontal {
+    background: @surfaceAlt@;
+    border: 1px solid @border@;
+    height: 6px;
+    border-radius: 3px;
+}
+QSlider::sub-page:horizontal {
+    background: @accent@;
+    border-radius: 3px;
+}
+QSlider::add-page:horizontal {
+    background: @surfaceAlt@;
+    border-radius: 3px;
+}
+QSlider::handle:horizontal {
+    background: @accent@;
+    border: 1px solid @accentHover@;
+    width: 16px;
+    height: 16px;
+    margin: -6px 0;
+    border-radius: 8px;
+}
+QSlider::handle:horizontal:hover {
+    background: @accentHover@;
+}
+QSlider::handle:horizontal:pressed {
+    background: @accentPressed@;
+}
+QSlider::handle:horizontal:disabled {
+    background: @textDisabled@;
+    border-color: @border@;
+}
+
+QCheckBox {
+    background: transparent;
+    spacing: 6px;
+}
+QCheckBox::indicator {
+    width: 14px;
+    height: 14px;
+    border: 1px solid @borderStrong@;
+    border-radius: 3px;
+    background-color: @surface@;
+}
+QCheckBox::indicator:hover {
+    border-color: @accentHover@;
+}
+QCheckBox::indicator:checked {
+    background-color: @accent@;
+    border-color: @accent@;
+    image: url("@checkArrowUri@");
+}
+
 QScrollBar:vertical {
     background: @background@;
     width: 12px;
@@ -331,6 +427,7 @@ QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {
     qss.replace("@danger@", cssColor(p.danger));
     qss.replace("@comboArrowUri@", arrowImagePath(p.textSecondary, "combo", /*pointingDown=*/true));
     qss.replace("@spinUpArrowUri@", arrowImagePath(p.textSecondary, "spin_up", /*pointingDown=*/false));
+    qss.replace("@checkArrowUri@", checkImagePath(p.background));
 
     return qss;
 }

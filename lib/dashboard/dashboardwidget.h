@@ -5,9 +5,10 @@
 namespace traceview {
 
 // Base class for anything that can be placed on the dashboard grid: chart,
-// serial, button-panel, or any future element kind. Each kind lives in its
-// own module under widgets/ (see widgets/chartwidgets.h, widgets/serialmonitorwidget.h,
-// widgets/buttonpanelwidget.h) and is registered with WidgetRegistry — the
+// serial, control (push button/toggle/slider), or any future element kind.
+// Each kind lives in its own module under widgets/ (see
+// widgets/chartwidgets.h, widgets/serialmonitorwidget.h,
+// widgets/controlwidgets.h) and is registered with WidgetRegistry — the
 // grid, DashboardItem, and PropertiesPanel treat every kind identically
 // (id/name/key/position), only the widget's own behavior differs.
 class DashboardWidget : public QWidget {
@@ -17,9 +18,23 @@ public:
         // instances; subclasses (every widget kind here) stay transparent
         // without this, leaking whatever's behind the cell (e.g. the grid
         // lines DashboardGrid draws in edit mode) through any gap not
-        // covered edge-to-edge by a child widget.
+        // covered edge-to-edge by a child widget. Kinds that want a
+        // transparent cell (see widgets/controlwidgets.cpp) turn this back
+        // off themselves and take on the responsibility of covering their
+        // own area edge-to-edge so nothing leaks through instead.
         setAttribute(Qt::WA_StyledBackground, true);
     }
+
+    // Whether DashboardCell reserves its header strip (drag handle + title,
+    // see dashboard/dashboardcell.cpp) above this widget in edit mode. True
+    // for kinds where the title is useful context relative to the cell's
+    // size (chart, serial monitor). Small single-control kinds — push
+    // button, toggle switch, slider (widgets/controlwidgets.h) — override
+    // this to false: the header would eat a disproportionate share of an
+    // already-small cell. DashboardCell falls back to letting a click
+    // anywhere in the selected body start a move-drag in that case, since
+    // there's no dedicated header region left to grab.
+    virtual bool wantsCellHeader() const { return true; }
 };
 
 } // namespace traceview

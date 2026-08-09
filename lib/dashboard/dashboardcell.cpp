@@ -58,8 +58,12 @@ void DashboardCell::setSelected(bool selected) {
     update();
 }
 
+int DashboardCell::headerHeight() const {
+    return m_content->wantsCellHeader() ? kHeaderHeight : 0;
+}
+
 QRect DashboardCell::headerRect() const {
-    return QRect(0, 0, width(), kHeaderHeight);
+    return QRect(0, 0, width(), headerHeight());
 }
 
 QRect DashboardCell::gripRect() const {
@@ -108,7 +112,8 @@ Qt::CursorShape DashboardCell::cursorForHandle(ResizeHandle handle) const {
 
 void DashboardCell::layoutChildren() {
     if (m_editMode) {
-        m_content->setGeometry(0, kHeaderHeight, width(), height() - kHeaderHeight);
+        const int headerH = headerHeight();
+        m_content->setGeometry(0, headerH, width(), height() - headerH);
     } else {
         m_content->setGeometry(rect());
     }
@@ -141,9 +146,11 @@ void DashboardCell::paintEvent(QPaintEvent*) {
         return;
     }
 
-    painter.fillRect(headerRect(), m_selected ? palette.accent : palette.surfaceAlt);
-    painter.setPen(m_selected ? palette.background : palette.textPrimary);
-    painter.drawText(headerRect().adjusted(6, 0, -6, 0), Qt::AlignVCenter | Qt::AlignLeft, m_title);
+    if (headerHeight() > 0) {
+        painter.fillRect(headerRect(), m_selected ? palette.accent : palette.surfaceAlt);
+        painter.setPen(m_selected ? palette.background : palette.textPrimary);
+        painter.drawText(headerRect().adjusted(6, 0, -6, 0), Qt::AlignVCenter | Qt::AlignLeft, m_title);
+    }
 
     if (!m_selected) {
         // Unselected cells are identifiable but not interactive — no grip.
@@ -172,11 +179,15 @@ void DashboardCell::mousePressEvent(QMouseEvent* event) {
 
     const QPoint pos = event->position().toPoint();
     const ResizeHandle handle = handleAt(pos);
+    // A header-less cell (see DashboardWidget::wantsCellHeader) has no
+    // dedicated drag handle to grab, so the whole selected body doubles as
+    // one instead — clicking anywhere that isn't a resize handle starts a
+    // move, same as clicking the header does for other kinds.
     if (handle != ResizeHandle::None) {
         m_dragMode = DragMode::Resizing;
         m_resizeHandle = handle;
         emit resizeStarted(m_itemId, event->globalPosition().toPoint(), handle);
-    } else if (headerRect().contains(pos)) {
+    } else if (headerHeight() == 0 || headerRect().contains(pos)) {
         m_dragMode = DragMode::Moving;
         emit dragStarted(m_itemId, event->globalPosition().toPoint());
     } else {
@@ -203,7 +214,7 @@ void DashboardCell::mouseMoveEvent(QMouseEvent* event) {
         const ResizeHandle handle = handleAt(pos);
         if (handle != ResizeHandle::None) {
             setCursor(cursorForHandle(handle));
-        } else if (headerRect().contains(pos)) {
+        } else if (headerHeight() == 0 || headerRect().contains(pos)) {
             setCursor(Qt::SizeAllCursor);
         } else {
             unsetCursor();

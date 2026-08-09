@@ -1,9 +1,10 @@
 #include "widgetregistry.h"
 
 #include "dashboardwidget.h"
-#include "widgets/buttonpanelwidget.h"
 #include "widgets/chartconfigeditor.h"
 #include "widgets/chartwidgets.h"
+#include "widgets/controlconfigeditor.h"
+#include "widgets/controlwidgets.h"
 #include "widgets/serialmonitorwidget.h"
 
 namespace traceview {
@@ -24,8 +25,15 @@ WidgetRegistry::WidgetRegistry() {
                   [](QWidget* parent) -> DashboardWidget* { return new DummyGaugeWidget(parent); }});
     registerType({"serial_monitor", "Serial Monitor",
                   [](QWidget* parent) -> DashboardWidget* { return new SerialMonitorWidget(parent); }});
-    registerType({"button_panel", "Button Panel",
-                  [](QWidget* parent) -> DashboardWidget* { return new ButtonPanelWidget(parent); }});
+    registerType({"push_button", "Push Button",
+                  [](QWidget* parent) -> DashboardWidget* { return new PushButtonWidget(parent); },
+                  [](QWidget* parent) -> WidgetConfigEditor* { return new PushButtonConfigEditor(parent); }});
+    registerType({"toggle_switch", "Toggle Switch",
+                  [](QWidget* parent) -> DashboardWidget* { return new ToggleSwitchWidget(parent); },
+                  [](QWidget* parent) -> WidgetConfigEditor* { return new ToggleSwitchConfigEditor(parent); }});
+    registerType({"slider", "Slider",
+                  [](QWidget* parent) -> DashboardWidget* { return new SliderWidget(parent); },
+                  [](QWidget* parent) -> WidgetConfigEditor* { return new SliderConfigEditor(parent); }});
 }
 
 void WidgetRegistry::registerType(const WidgetTypeInfo& info) {

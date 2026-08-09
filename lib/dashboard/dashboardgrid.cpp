@@ -26,6 +26,12 @@ constexpr int kGridRows = 32;
 // usable (header alone is 24px). Mirrors the old 5-cell minimum.
 constexpr double kMinItemWidth = 5.0 / kGridColumns;
 constexpr double kMinItemHeight = 5.0 / kGridRows;
+// Header-less kinds (DashboardWidget::wantsCellHeader() == false — the
+// control types: push button/toggle/slider, see widgets/controlwidgets.h)
+// have no 24px header eating into the cell, so they can shrink much closer
+// to "just the control itself" than the default minimum above.
+constexpr double kMinHeaderlessItemWidth = 2.0 / kGridColumns;
+constexpr double kMinHeaderlessItemHeight = 2.0 / kGridRows;
 constexpr double kDefaultItemWidth = 16.0 / kGridColumns;
 constexpr double kDefaultItemHeight = 12.0 / kGridRows;
 // Tolerance for fraction comparisons (bounds/overlap checks), to absorb
@@ -583,23 +589,26 @@ void DashboardGrid::handleResizeMoved(const QString& itemId, const QPoint& globa
 
     DashboardItem candidate = m_drag->original;
 
+    const DashboardCell* resizingCell = m_cells.value(itemId);
+    const bool compact = resizingCell && !resizingCell->hasHeader();
+    const double minWidth = compact ? kMinHeaderlessItemWidth : kMinItemWidth;
+    const double minHeight = compact ? kMinHeaderlessItemHeight : kMinItemHeight;
+
     if (resizesRight) {
-        candidate.width = qBound(kMinItemWidth, m_drag->original.width + deltaWidth,
-                                  qMax(kMinItemWidth, 1.0 - candidate.x));
+        candidate.width =
+            qBound(minWidth, m_drag->original.width + deltaWidth, qMax(minWidth, 1.0 - candidate.x));
     } else if (resizesLeft) {
         const double rightEdge = m_drag->original.x + m_drag->original.width;
-        candidate.width =
-            qBound(kMinItemWidth, m_drag->original.width - deltaWidth, qMax(kMinItemWidth, rightEdge));
+        candidate.width = qBound(minWidth, m_drag->original.width - deltaWidth, qMax(minWidth, rightEdge));
         candidate.x = rightEdge - candidate.width;
     }
 
     if (resizesBottom) {
-        candidate.height = qBound(kMinItemHeight, m_drag->original.height + deltaHeight,
-                                   qMax(kMinItemHeight, 1.0 - candidate.y));
+        candidate.height =
+            qBound(minHeight, m_drag->original.height + deltaHeight, qMax(minHeight, 1.0 - candidate.y));
     } else if (resizesTop) {
         const double bottomEdge = m_drag->original.y + m_drag->original.height;
-        candidate.height =
-            qBound(kMinItemHeight, m_drag->original.height - deltaHeight, qMax(kMinItemHeight, bottomEdge));
+        candidate.height = qBound(minHeight, m_drag->original.height - deltaHeight, qMax(minHeight, bottomEdge));
         candidate.y = bottomEdge - candidate.height;
     }
 
