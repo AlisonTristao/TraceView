@@ -18,6 +18,8 @@ if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Debug)
 endif()
 
+option(TRACEVIEW_BUILD_TESTS "Build the Qt Test suite under tests/" ON)
+
 if(WIN32)
     enable_language(RC)
 endif()
@@ -25,6 +27,11 @@ endif()
 find_package(Qt6 REQUIRED COMPONENTS Widgets SerialPort)
 
 add_subdirectory(lib)
+
+if(TRACEVIEW_BUILD_TESTS)
+    enable_testing()
+    add_subdirectory(tests)
+endif()
 
 qt_add_executable(TraceView
     src/main.cpp
