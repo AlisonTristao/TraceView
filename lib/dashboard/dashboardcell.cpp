@@ -67,12 +67,79 @@ void drawTypeIcon(QPainter& painter, const QRect& r, const QString& typeId, cons
 
     painter.restore();
 }
+
+// A parent's paintEvent always runs before its children are composed. The
+// outline therefore cannot live in DashboardCell::paintEvent: an opaque
+// DashboardWidget would cover its straight runs, while the rounded mask left
+// a few isolated outline pixels visible at the corners. Keeping only the
+// outline in this transparent, mouse-inert child makes it the last layer in
+// the stack, so the same continuous stroke is visible on every edge.
+class BorderOverlay final : public QWidget {
+public:
+    BorderOverlay(QVariantAnimation* selectionAnimation, DashboardWidget* content, QWidget* parent)
+        : QWidget(parent), m_selectionAnimation(selectionAnimation), m_content(content) {
+        setAttribute(Qt::WA_TransparentForMouseEvents, true);
+        setAttribute(Qt::WA_NoSystemBackground, true);
+        setAttribute(Qt::WA_TranslucentBackground, true);
+        connect(&ThemeManager::instance(), &ThemeManager::themeChanged, this,
+                [this](const ThemePalette&) { update(); });
+    }
+
+protected:
+    void paintEvent(QPaintEvent*) override {
+        QPainter painter(this);
+        painter.setRenderHint(QPainter::Antialiasing);
+
+        const ThemePalette& palette = ThemeManager::instance().currentTheme();
+        const qreal selectT = m_selectionAnimation->currentValue().isValid()
+                                  ? m_selectionAnimation->currentValue().toReal()
+                                  : 0.0;
+        const bool selectionVisible = selectT > 0.0;
+        constexpr qreal kEdgeFinishWidth = 2.0;
+
+        const QRectF borderRect = QRectF(rect()).adjusted(kEdgeFinishWidth / 2.0, kEdgeFinishWidth / 2.0,
+                                                           -kEdgeFinishWidth / 2.0, -kEdgeFinishWidth / 2.0);
+        const QPainterPath outline =
+            partiallyRoundedRect(borderRect, kContainerCornerRadius, true, true, true, true);
+        painter.setPen(QPen(m_content->cellFillColor(palette), kEdgeFinishWidth));
+        painter.setBrush(Qt::NoBrush);
+        painter.drawPath(outline);
+
+        // In Layout, a headered cell has surfaceAlt at its top edge and the
+        // content fill below it. Finish that segment in its own color too;
+        // selection uses one accent outline around the entire cell instead.
+        const int headerHeight = property("headerHeight").toInt();
+        if (!selectionVisible && headerHeight > 0) {
+            painter.save();
+            painter.setClipRect(QRect(0, 0, width(), headerHeight));
+            painter.setPen(QPen(palette.surfaceAlt, kEdgeFinishWidth));
+            painter.drawPath(outline);
+            painter.restore();
+        }
+
+        if (selectionVisible) {
+            QColor selectionColor = palette.accent;
+            selectionColor.setAlphaF(selectT);
+            painter.setPen(QPen(selectionColor, kEdgeFinishWidth));
+            painter.drawPath(outline);
+        }
+    }
+
+private:
+    QVariantAnimation* m_selectionAnimation;
+    DashboardWidget* m_content;
+};
 } // namespace
 
 DashboardCell::DashboardCell(const QString& itemId, const QString& typeId, const QString& title,
                               DashboardWidget* content, QWidget* parent)
     : QWidget(parent), m_itemId(itemId), m_typeId(typeId), m_title(title), m_content(content) {
+    // Opt out of the app-wide QWidget background. This wrapper must remain
+    // transparent outside the rounded silhouette so the layout grid (dots
+    // included) shows through its four corner notches.
+    setProperty("dashboardCell", true);
     m_content->setParent(this);
+    m_borderOverlay = new BorderOverlay(&m_selectionAnim, m_content, this);
 
     setMouseTracking(true);
     layoutChildren();
@@ -80,7 +147,8 @@ DashboardCell::DashboardCell(const QString& itemId, const QString& typeId, const
     m_selectionAnim.setDuration(kSelectionAnimMs);
     m_selectionAnim.setStartValue(0.0);
     m_selectionAnim.setEndValue(1.0);
-    connect(&m_selectionAnim, &QVariantAnimation::valueChanged, this, [this] { update(); });
+    connect(&m_selectionAnim, &QVariantAnimation::valueChanged, m_borderOverlay,
+            QOverload<>::of(&QWidget::update));
 }
 
 void DashboardCell::setTitle(const QString& title) {
@@ -103,6 +171,8 @@ void DashboardCell::setEditMode(bool enabled) {
     m_content->setAttribute(Qt::WA_TransparentForMouseEvents, enabled);
     if (!enabled) {
         m_selected = false;
+        m_selectionAnim.setDirection(QAbstractAnimation::Backward);
+        m_selectionAnim.start();
     }
     updateCursor();
     layoutChildren();
@@ -180,6 +250,9 @@ void DashboardCell::layoutChildren() {
         m_content->setGeometry(rect());
     }
     updateContentMask();
+    m_borderOverlay->setProperty("headerHeight", m_editMode ? headerHeight() : 0);
+    m_borderOverlay->setGeometry(rect());
+    m_borderOverlay->raise();
 }
 
 void DashboardCell::updateContentMask() {
@@ -218,35 +291,11 @@ void DashboardCell::paintEvent(QPaintEvent*) {
     painter.setRenderHint(QPainter::Antialiasing);
     const ThemePalette& palette = ThemeManager::instance().currentTheme();
 
-    // This cell never otherwise paints its own square bounding box -- only
-    // the rounded outline/header and whatever the (rounded-masked) content
-    // widget covers. The sliver outside those rounded shapes but inside the
-    // square (the corner "notch") was relying on DashboardGrid's backdrop
-    // showing through undrawn pixels, which doesn't hold up in practice --
-    // it was showing up as a stray black patch instead of canvas color.
-    // Filling the whole square in the canvas's own background color first,
-    // before anything rounded paints on top, makes that notch correct
-    // (indistinguishable from the canvas) unconditionally instead of
-    // depending on ancestor paint order/compositing.
-    painter.fillRect(rect(), palette.background);
-
-    const qreal selectT = m_selectionAnim.currentValue().isValid() ? m_selectionAnim.currentValue().toReal() : 0.0;
-    const QColor unselectedBorder = palette.borderStrong;
-    const QColor borderColor = [&] {
-        QColor c;
-        c.setRedF(unselectedBorder.redF() + (palette.accent.redF() - unselectedBorder.redF()) * selectT);
-        c.setGreenF(unselectedBorder.greenF() + (palette.accent.greenF() - unselectedBorder.greenF()) * selectT);
-        c.setBlueF(unselectedBorder.blueF() + (palette.accent.blueF() - unselectedBorder.blueF()) * selectT);
-        return c;
-    }();
-    const qreal borderWidth = 1.0 + selectT;
-
-    const QRectF borderRect = QRectF(rect()).adjusted(borderWidth / 2.0, borderWidth / 2.0, -borderWidth / 2.0,
-                                                        -borderWidth / 2.0);
-    const QPainterPath outline = partiallyRoundedRect(borderRect, kContainerCornerRadius, true, true, true, true);
-    painter.setPen(QPen(borderColor, borderWidth));
-    painter.setBrush(Qt::NoBrush);
-    painter.drawPath(outline);
+    // Paint only the cell silhouette. Filling rect() here erases the grid
+    // backdrop in the four corner notches, which reads as a small square
+    // around an otherwise rounded widget while editing the layout.
+    painter.fillPath(partiallyRoundedRect(QRectF(rect()), kContainerCornerRadius, true, true, true, true),
+                     palette.background);
 
     if (!m_editMode) {
         return;

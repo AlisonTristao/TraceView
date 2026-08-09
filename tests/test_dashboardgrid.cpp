@@ -2,14 +2,40 @@
 
 #include <QJsonArray>
 #include <QJsonObject>
+#include <QPainter>
 
 #include "dashboard/dashboardcell.h"
 #include "dashboard/dashboardgrid.h"
+#include "dashboard/roundedcorners.h"
+#include "dashboard/dashboardwidget.h"
+#include "traceview/thememanager.h"
 
 using traceview::DashboardCell;
 using traceview::DashboardGrid;
+using traceview::DashboardWidget;
+using traceview::ThemeManager;
 
 namespace {
+
+constexpr QRgb kContentColor = qRgb(214, 44, 79);
+
+class SolidContentWidget final : public DashboardWidget {
+public:
+    using DashboardWidget::DashboardWidget;
+
+    bool wantsCellHeader() const override { return false; }
+    QColor cellFillColor(const traceview::ThemePalette&) const override { return QColor::fromRgb(kContentColor); }
+
+protected:
+    void paintEvent(QPaintEvent*) override {
+        QPainter painter(this);
+        painter.fillRect(rect(), QColor::fromRgb(kContentColor));
+    }
+};
+
+int colorDistance(const QColor& a, const QColor& b) {
+    return qAbs(a.red() - b.red()) + qAbs(a.green() - b.green()) + qAbs(a.blue() - b.blue());
+}
 
 class TestDashboardGrid : public QObject {
     Q_OBJECT
@@ -25,6 +51,8 @@ private slots:
     void dragMovesAndSnapsToNearestGridCell();
     void resizeChangesGeometryWithUndo();
     void resizeClampsToMinimumSize();
+    void cellHasNoIdleBorderAndSelectedBorderStaysAboveContent();
+    void squareCornerPatchesDoNotCreateHoles();
 };
 
 void TestDashboardGrid::addItemPushesUndoableCommand() {
@@ -238,6 +266,69 @@ void TestDashboardGrid::resizeClampsToMinimumSize() {
     const QJsonObject item = grid.toJson().value("items").toArray().first().toObject();
     QCOMPARE(item.value("width").toDouble(), 5.0 / 60.0);  // kMinItemWidth
     QCOMPARE(item.value("height").toDouble(), 5.0 / 40.0); // kMinItemHeight
+}
+
+void TestDashboardGrid::cellHasNoIdleBorderAndSelectedBorderStaysAboveContent() {
+    ThemeManager& themes = ThemeManager::instance();
+    struct RestoreTheme {
+        QString id;
+        ~RestoreTheme() { ThemeManager::instance().setTheme(id); }
+    } restoreTheme{themes.currentTheme().id};
+
+    for (const QString& themeId : {QString("dark"), QString("light")}) {
+        themes.setTheme(themeId);
+        const QColor forbiddenIdleBorder = themes.currentTheme().borderStrong;
+        const QColor canvasColor = themes.currentTheme().background;
+        const QColor selectedBorder = themes.currentTheme().accent;
+        const QColor contentColor = QColor::fromRgb(kContentColor);
+
+        auto* content = new SolidContentWidget;
+        DashboardCell cell("test", "solid", "Solid", content);
+        cell.resize(80, 60);
+        cell.show();
+        QCoreApplication::processEvents();
+
+        QImage rendered(cell.size(), QImage::Format_ARGB32_Premultiplied);
+        rendered.fill(Qt::transparent);
+        cell.render(&rendered);
+
+        // Idle cells have no outer stroke. In particular, no borderStrong
+        // fragments may survive around the rounded mask as they did before.
+        const QColor idleTopEdge = rendered.pixelColor(cell.width() / 2, 0);
+        QVERIFY2(colorDistance(idleTopEdge, contentColor) < colorDistance(idleTopEdge, forbiddenIdleBorder),
+                 qPrintable(QString("theme=%1 idle-edge=%2 forbidden-border=%3 content=%4")
+                                .arg(themeId, idleTopEdge.name(QColor::HexArgb),
+                                     forbiddenIdleBorder.name(QColor::HexArgb), contentColor.name(QColor::HexArgb))));
+        const QColor idleCornerCurve = rendered.pixelColor(4, 4);
+        QVERIFY2(colorDistance(idleCornerCurve, contentColor) < colorDistance(idleCornerCurve, canvasColor),
+                 qPrintable(QString("theme=%1 corner=%2 canvas=%3 content=%4")
+                                .arg(themeId, idleCornerCurve.name(QColor::HexArgb),
+                                     canvasColor.name(QColor::HexArgb), contentColor.name(QColor::HexArgb))));
+
+        cell.setEditMode(true);
+        cell.setSelected(true);
+        QTest::qWait(180); // selection outline animation is 150ms
+
+        rendered.fill(Qt::transparent);
+        cell.render(&rendered);
+        const QColor selectedTopEdge = rendered.pixelColor(cell.width() / 2, 0);
+        QVERIFY2(colorDistance(selectedTopEdge, selectedBorder) < colorDistance(selectedTopEdge, contentColor),
+                 qPrintable(QString("theme=%1 selected-edge=%2 accent=%3 content=%4")
+                                .arg(themeId, selectedTopEdge.name(QColor::HexArgb),
+                                     selectedBorder.name(QColor::HexArgb), contentColor.name(QColor::HexArgb))));
+
+    }
+}
+
+void TestDashboardGrid::squareCornerPatchesDoNotCreateHoles() {
+    const QPainterPath path =
+        traceview::partiallyRoundedRect(QRectF(0, 0, 80, 60), 12.0, false, true, true, true);
+
+    // Both points belong to a deliberately square top-left corner. With the
+    // default OddEvenFill, the second point sits in the overlap between the
+    // rounded base and square patch and becomes a visible radius-sized hole.
+    QVERIFY(path.contains(QPointF(1, 1)));
+    QVERIFY(path.contains(QPointF(8, 8)));
 }
 
 } // namespace

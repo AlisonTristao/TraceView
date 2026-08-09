@@ -1,34 +1,44 @@
-TraceView — bugs conhecidos e não resolvidos
+TraceView — registro de bugs conhecidos
 ====================================================
 Registrado em 2026-08-09.
 
 ------------------------------------------------------------------------------
-Cantos arredondados do DashboardCell — mismatch sub-pixel no canto (NÃO RESOLVIDO)
+Cantos arredondados do DashboardCell — pixels isolados no canto (RESOLVIDO)
 ------------------------------------------------------------------------------
-Onde: lib/dashboard/roundedcorners.h (kBorderCurveInset) + DashboardCell (borda)
-+ DashboardWidget::contentFillPath() (preenchimento filho).
+Onde: DashboardCell (borda) + DashboardWidget (conteúdo filho).
 
 Sintoma: um fragmento fino da cor da borda fica visível bem no canto
-arredondado, em vez do canto ficar limpo. A causa é geométrica: a borda do
-DashboardCell é desenhada a partir de um retângulo encolhido pela metade da
-própria espessura (1-2px, anima ao selecionar), então o arco dela começa a
-curvar ~0.5-1px mais cedo do que um arco de raio kContainerCornerRadius (12px)
-desenhado sobre os bounds "verdadeiros" sem esse desconto. O preenchimento do
-DashboardWidget filho usa esses bounds verdadeiros, então os dois arcos nunca
-alinham perfeitamente.
+arredondado, branco no tema escuro e escuro no tema claro.
 
-Tentativas: existe uma constante kBorderCurveInset em roundedcorners.h
-pensada exatamente pra compensar essa diferença, mas várias tentativas de
-valor foram testadas ao vivo (ver o comentário na constante) e nenhuma
-funcionou — ou o fragmento continuava aparecendo (subcorrigido), ou surgia
-um gap visível ao redor do widget, ou o canto passava do contorno
-(sobrecorrigido). A constante foi deixada em 0.0, que é a geometria que
-updateContentMask() sempre usou pra máscara — não é uma correção, é a opção
-menos ruim entre as testadas.
+Causa real: ordem de composição, não mismatch geométrico. Em Qt o
+paintEvent do pai roda antes da pintura dos filhos. A borda desenhada no
+DashboardCell era coberta pelo DashboardWidget nos trechos retos, mas sua
+máscara arredondada deixava sobreviver alguns pixels da borda forte nos
+cantos. Por isso a cor do artefato sempre acompanhava borderStrong do tema.
 
-Claude não conseguiu resolver isso nesta sessão (2026-08-09). Fica pendente
-para quem pegar essa tarefa depois — talvez valha revisitar com uma
-abordagem diferente (ex.: desenhar a borda com stroke centralizado no path
-em vez de path encolhido, ou aceitar visualmente o fragmento e escondê-lo
-com anti-aliasing mais agressivo) em vez de continuar ajustando o valor do
-inset por tentativa e erro.
+Correção em 2026-08-09: células normais deixaram de desenhar borda externa.
+Durante a seleção no Layout, a borda azul fica em um filho transparente
+BorderOverlay do DashboardCell, elevado acima do conteúdo e transparente para
+eventos do mouse. kBorderCurveInset e a compensação por tentativa e erro foram
+removidos. O teste cellHasNoIdleBorderAndSelectedBorderStaysAboveContent
+renderiza conteúdo opaco agressivo nos dois temas e confirma tanto a ausência
+da borda normal quanto a composição correta da borda de seleção.
+
+Ajuste posterior: remover todo o stroke revelou a serrilha binária de
+QWidget::setMask(). O BorderOverlay agora mantém um acabamento antialiasado de
+2px na mesma cor do preenchimento (e surfaceAlt no header), portanto sem
+contorno visual, e pinta accent por cima apenas durante a seleção.
+
+------------------------------------------------------------------------------
+Quadrados nos cantos do conteúdo durante o Layout (RESOLVIDO)
+------------------------------------------------------------------------------
+Sintoma: widgets com header exibiam um pequeno contorno quadrado nos dois
+cantos superiores do conteúdo, logo abaixo do header.
+
+Causa: partiallyRoundedRect() sobrepunha retângulos aos cantos que deveriam
+ficar retos, mas QPainterPath usa OddEvenFill por padrão. A interseção era
+subtraída em vez de unida, abrindo um buraco quadrado do tamanho do raio.
+
+Correção em 2026-08-09: o path agora usa Qt::WindingFill antes de adicionar
+as partes sobrepostas. O teste squareCornerPatchesDoNotCreateHoles cobre os
+pontos exclusivo e sobreposto do canto reto.

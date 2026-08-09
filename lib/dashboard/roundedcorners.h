@@ -15,22 +15,6 @@ namespace traceview {
 // corner shows through/past the rounded one.
 constexpr qreal kContainerCornerRadius = 12.0;
 
-// Extra radius DashboardWidget::contentFillPath() could add on top of
-// kContainerCornerRadius to chase an exact sub-pixel match with
-// DashboardCell's outline stroke (which is itself built from a rect inset
-// by half its own animated 1-2px width, so its arc technically starts
-// turning 0.5-1px earlier than a plain radius-kContainerCornerRadius arc
-// on the true, uninset bounds would). Left at 0 -- tuning this chased a
-// cosmetic, sub-pixel mismatch (a faint fragment of the border's own color
-// right at the corner) through several values and each one either
-// undercorrected (the fragment) or overcorrected into something worse (a
-// visible gap around the widget, or the corner overshooting past the
-// outline) -- not worth it. 0 is the exact geometry DashboardCell's
-// updateContentMask() has always used for the *mask* (see
-// docs/VISUAL_IDENTITY.md "Corner radius" for the back-and-forth this
-// constant went through before landing back here).
-constexpr qreal kBorderCurveInset = 0.0;
-
 // A rounded rect where any corner can be forced square instead. Built by
 // unioning a fully-rounded path with a square patch over each corner that
 // should stay sharp (path.simplified() merges the overlapping subpaths into
@@ -39,6 +23,11 @@ constexpr qreal kBorderCurveInset = 0.0;
 inline QPainterPath partiallyRoundedRect(const QRectF& r, qreal radius, bool roundTopLeft, bool roundTopRight,
                                           bool roundBottomLeft, bool roundBottomRight) {
     QPainterPath path;
+    // The square patches below overlap the base rounded rectangle and must
+    // form a union. QPainterPath defaults to OddEvenFill, which turns those
+    // overlaps into radius-sized holes (visible as little square outlines
+    // below DashboardCell's header). WindingFill keeps the overlap filled.
+    path.setFillRule(Qt::WindingFill);
     path.addRoundedRect(r, radius, radius);
     if (roundTopLeft && roundTopRight && roundBottomLeft && roundBottomRight) {
         // No square corners to weld on -- return the plain rounded rect as-is.

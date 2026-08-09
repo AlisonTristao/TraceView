@@ -27,10 +27,9 @@ constexpr int kRepaintIntervalMs = 33; // ~30 Hz
 
 // Rounded to the same curve as the DashboardCell wrapped around `widget` --
 // via contentFillPath(), spanning `widget`'s true bounds, not an inset
-// rect -- so straight edges stay flush with the cell's true edge and only
-// the corner arc lines up with DashboardCell's outline stroke (see
-// contentFillPath()/kBorderCurveInset for why the arc alone needs
-// adjusting). A plain drawRect() here would run straight into the corner
+// rect -- so straight edges stay flush with the cell's true edge and the
+// DashboardCell overlay can draw the outer outline above it. A plain
+// drawRect() here would run straight into the corner
 // well past that curve, leaving a few pixels of straight edge poking out
 // past the rounded outline. See "Corner radius" in docs/VISUAL_IDENTITY.md.
 void paintBackground(QPainter& painter, const DashboardWidget& widget, const ThemePalette& palette) {
@@ -43,7 +42,7 @@ void paintBackground(QPainter& painter, const DashboardWidget& widget, const The
     // clipped -- same idea as DashboardCell's own outline stroke inset,
     // just for this widget's separate, decorative inner border.
     const QRectF strokeRect = QRectF(widget.rect()).adjusted(0.5, 0.5, -0.5, -0.5);
-    painter.drawPath(widget.roundedPath(strokeRect, kBorderCurveInset));
+    painter.drawPath(widget.roundedPath(strokeRect));
 }
 
 // Three horizontal gridlines (min/mid/max) across plotRect's width, each

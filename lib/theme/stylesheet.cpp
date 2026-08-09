@@ -77,6 +77,13 @@ QWidget {
     selection-color: @background@;
 }
 
+/* DashboardCell paints only its rounded silhouette itself. Leaving the
+   global rectangular QWidget background active here creates square corner
+   patches over the dotted layout canvas. */
+QWidget[dashboardCell="true"] {
+    background: transparent;
+}
+
 QMainWindow::separator {
     background-color: @border@;
     width: 1px;

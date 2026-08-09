@@ -20,6 +20,7 @@ class ChartWidgetBase : public DashboardWidget {
 public:
     using DashboardWidget::DashboardWidget;
 
+    QColor cellFillColor(const ThemePalette& palette) const override { return palette.surface; }
     void setConfig(const QJsonObject& config) override;
     void onSerialPayload(const QByteArray& payload) override;
 
@@ -51,6 +52,7 @@ class DummyGaugeWidget : public DashboardWidget {
 public:
     explicit DummyGaugeWidget(QWidget* parent = nullptr);
 
+    QColor cellFillColor(const ThemePalette& palette) const override { return palette.surface; }
     void setConfig(const QJsonObject& config) override;
     void onSerialPayload(const QByteArray& payload) override;
 

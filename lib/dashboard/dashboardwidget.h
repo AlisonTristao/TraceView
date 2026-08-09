@@ -6,6 +6,7 @@
 #include <QWidget>
 
 #include "dashboard/roundedcorners.h"
+#include "traceview/theme.h"
 
 namespace traceview {
 
@@ -40,6 +41,13 @@ public:
     // anywhere in the selected body start a move-drag in that case, since
     // there's no dedicated header region left to grab.
     virtual bool wantsCellHeader() const { return true; }
+
+    // Color that reaches this widget's outer edge. DashboardCell uses it for
+    // an antialiased, same-color finishing stroke above the binary QWidget
+    // mask, avoiding jagged corner pixels without creating a visible border.
+    virtual QColor cellFillColor(const ThemePalette& palette) const {
+        return property("dashboardControlPanel").toBool() ? palette.surface : palette.background;
+    }
 
     // Called by SerialDataRouter (lib/core/serialdatarouter.h) when a
     // decoded serial frame's <id> matches this widget's DashboardItem::key
@@ -76,31 +84,16 @@ public:
         m_roundBottomRight = bottomRight;
     }
 
-    // `r` rounded at this widget's own per-corner state, with `radiusBoost`
-    // added on top of the shared kContainerCornerRadius -- see
-    // contentFillPath() below for why a boost is ever needed.
-    QPainterPath roundedPath(const QRectF& r, qreal radiusBoost = 0.0) const {
-        return partiallyRoundedRect(r, kContainerCornerRadius + radiusBoost, m_roundTopLeft, m_roundTopRight,
-                                     m_roundBottomLeft, m_roundBottomRight);
+    // `r` rounded at this widget's own per-corner state.
+    QPainterPath roundedPath(const QRectF& r) const {
+        return partiallyRoundedRect(r, kContainerCornerRadius, m_roundTopLeft, m_roundTopRight, m_roundBottomLeft,
+                                     m_roundBottomRight);
     }
 
-    // This widget's own rounded fill, spanning its *true, full* bounds --
-    // never inset -- so straight edges stay exactly where they've always
-    // been (flush with the cell's true edge, same as before any of this
-    // rounding existed). Only the corner *arcs* need to line up with
-    // DashboardCell's outline stroke, which is built from a rect inset by
-    // half its own animated width (see borderWidth/kSelectionAnimMs in
-    // dashboardcell.cpp) so that stroke renders at full strength right up
-    // to the true edge -- which makes its arc start turning
-    // kBorderCurveInset earlier (measured from the true corner) than a
-    // radius-kContainerCornerRadius arc on this widget's uninset bounds
-    // would. Boosting the radius by that same amount reproduces that same
-    // earlier turn-in on this fill too, without moving the straight runs
-    // at all -- unlike an inset rect, which would pull every edge in by
-    // kBorderCurveInset, not just the arcs (that was tried and reverted:
-    // it left a visible ~1px gap running the full length of every edge,
-    // not just a tidied-up corner).
-    QPainterPath contentFillPath() const { return roundedPath(QRectF(rect()), kBorderCurveInset); }
+    // This widget's rounded fill spans its true, full bounds. The cell
+    // outline is composed later by DashboardCell's BorderOverlay child, so the fill
+    // does not need to compensate for the outline pen's half-pixel inset.
+    QPainterPath contentFillPath() const { return roundedPath(QRectF(rect())); }
 
 private:
     bool m_roundTopLeft = true;

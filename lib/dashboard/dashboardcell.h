@@ -81,6 +81,7 @@ private:
     QString m_typeId;
     QString m_title;
     DashboardWidget* m_content = nullptr;
+    QWidget* m_borderOverlay = nullptr;
     bool m_editMode = false;
     bool m_selected = false;
     DragMode m_dragMode = DragMode::None;
