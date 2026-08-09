@@ -10,6 +10,14 @@
 
 namespace traceview {
 
+namespace {
+// Push button/toggle switch inset from the cell edge (see below for why).
+// Small enough to still read as "fills the cell", large enough that the
+// QPushButton's own 4px QSS corner (stylesheet.cpp) never touches the
+// DashboardWidget mask's 12px corner (kContainerCornerRadius) around it.
+constexpr int kControlInset = 8;
+} // namespace
+
 // Turning WA_StyledBackground back off (so the container itself paints
 // nothing and shows whatever's behind it) looked right in principle, but in
 // practice it's exactly what dashboard/dashboardwidget.h's comment warns
@@ -18,9 +26,21 @@ namespace traceview {
 // left uncovered below it — leaked DashboardCell's border and
 // DashboardGrid's edit-mode grid lines (both painted in
 // palette.borderStrong, i.e. a light, "white" line) right through. So these
-// stay on DashboardWidget's default opaque fill instead. Zero margins plus
-// an Expanding size policy on the interactive control below make sure that
-// fill has no gaps of its own to leak through, on top of it.
+// stay on DashboardWidget's default opaque fill instead. An Expanding size
+// policy on the interactive control below makes sure that fill has no gaps
+// of its own to leak through, on top of it. kControlInset margin around the
+// layout doesn't reopen that gap -- it's still covered, just by
+// DashboardWidget's own opaque fill (below) instead of the button.
+//
+// That inset itself: at zero margin, QPushButton used to sit flush against
+// the cell edge, i.e. exactly on the same corner DashboardWidget's mask
+// rounds at kContainerCornerRadius (12px, see roundedcorners.h). But the
+// button draws its own corner via QSS at the separate, smaller 4px control
+// radius (stylesheet.cpp) -- a tighter curve than the mask around it,
+// leaving a wedge between the two where the button's border cuts inward
+// before the panel's outer curve does. Reported live 2026-08-09 ("os cantos
+// redondos estão estranhos"). kControlInset pulls the button off that edge
+// so its own corner radius never has to coexist with the container's.
 //
 // The fill color itself is overridden away from DashboardWidget's default
 // (palette.background, same as the canvas behind the cell) to palette.surface
@@ -36,7 +56,7 @@ PushButtonWidget::PushButtonWidget(QWidget* parent) : DashboardWidget(parent) {
     m_button->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
     auto* layout = new QVBoxLayout(this);
-    layout->setContentsMargins(0, 0, 0, 0);
+    layout->setContentsMargins(kControlInset, kControlInset, kControlInset, kControlInset);
     layout->addWidget(m_button);
 
     m_repeatTimer = new QTimer(this);
@@ -99,9 +119,11 @@ ToggleSwitchWidget::ToggleSwitchWidget(QWidget* parent) : DashboardWidget(parent
     m_switchButton->setCheckable(true);
     m_switchButton->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
-    // No header/title row — just the switch itself, filling the cell.
+    // No header/title row — just the switch itself, filling the cell (inset
+    // by kControlInset off the edge -- see the big comment above
+    // PushButtonWidget's constructor for why that's needed).
     auto* layout = new QVBoxLayout(this);
-    layout->setContentsMargins(0, 0, 0, 0);
+    layout->setContentsMargins(kControlInset, kControlInset, kControlInset, kControlInset);
     layout->addWidget(m_switchButton);
 
     connect(m_switchButton, &QPushButton::toggled, this, [this](bool checked) {
