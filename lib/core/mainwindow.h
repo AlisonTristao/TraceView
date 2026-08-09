@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QJsonObject>
 #include <QMainWindow>
 #include <QString>
 
@@ -34,6 +35,7 @@ private:
     void onPanelTypeChangeRequested(const QString& typeId);
     void onPanelNameChangeRequested(const QString& name);
     void onPanelKeyChangeRequested(const QString& key);
+    void onPanelConfigChangeRequested(const QJsonObject& config);
     void onSaveProject();
     void onOpenProject();
     void onAbout();

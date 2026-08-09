@@ -10,6 +10,7 @@ class QWidget;
 namespace traceview {
 
 class DashboardWidget;
+class WidgetConfigEditor;
 
 // One selectable chart type: a stable id, a display name for the "Add
 // Widget" picker, and a factory that builds an instance.
@@ -17,6 +18,12 @@ struct WidgetTypeInfo {
     QString typeId;
     QString displayName;
     std::function<DashboardWidget*(QWidget*)> factory;
+
+    // Optional: builds the type-specific settings shown in the properties
+    // panel below Type/Name/Key (see WidgetConfigEditor). Left null (the
+    // default) for types with no config yet — the panel just shows nothing
+    // below the divider in that case.
+    std::function<WidgetConfigEditor*(QWidget*)> configEditorFactory;
 };
 
 // Owns the set of chart types the dashboard can place. Adding a new type

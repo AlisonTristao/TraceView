@@ -91,6 +91,13 @@ QString DashboardGrid::selectedItemKey() const {
     return QString();
 }
 
+QJsonObject DashboardGrid::selectedItemConfig() const {
+    if (const DashboardItem* item = itemById(m_selectedItemId)) {
+        return item->config;
+    }
+    return QJsonObject();
+}
+
 void DashboardGrid::addItem(const QString& typeId) {
     const double width = kDefaultItemWidth;
     const double height = kDefaultItemHeight;
@@ -183,6 +190,18 @@ bool DashboardGrid::setSelectedKey(const QString& newKey) {
     return true;
 }
 
+void DashboardGrid::changeSelectedConfig(const QJsonObject& newConfig) {
+    if (m_selectedItemId.isEmpty()) {
+        return;
+    }
+    const DashboardItem* item = itemById(m_selectedItemId);
+    if (!item || item->config == newConfig) {
+        return;
+    }
+
+    m_undoStack->push(new SetItemConfigCommand(this, m_selectedItemId, item->config, newConfig));
+}
+
 void DashboardGrid::applyInsertItem(const DashboardItem& item) {
     m_items.append(item);
     createCell(item);
@@ -244,6 +263,12 @@ void DashboardGrid::applyRename(const QString& itemId, const QString& name) {
 void DashboardGrid::applySetKey(const QString& itemId, const QString& key) {
     if (DashboardItem* item = itemById(itemId)) {
         item->key = key;
+    }
+}
+
+void DashboardGrid::applySetConfig(const QString& itemId, const QJsonObject& config) {
+    if (DashboardItem* item = itemById(itemId)) {
+        item->config = config;
     }
 }
 

@@ -21,6 +21,10 @@ struct DashboardItem {
                        // external data updates will target, independent of
                        // `id` (which stays internal/auto-generated) and of
                        // `name`/`typeId` (either of which can change freely)
+    QJsonObject config; // type-specific settings edited via the properties
+                        // panel's WidgetConfigEditor for `typeId`; opaque to
+                        // everything except that editor, empty for types
+                        // that don't register one
 
     double x = 0.0;
     double y = 0.0;

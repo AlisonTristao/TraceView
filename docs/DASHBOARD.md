@@ -32,11 +32,12 @@ Selecting a widget populates the properties panel
 (`PropertiesPanel`, [lib/core/propertiespanel.h](../lib/core/propertiespanel.h)),
 a fixed-width panel embedded next to the canvas (not a `QDockWidget` — that
 would span the full window height, alongside the ribbon too, instead of
-just the canvas) which edits three fields directly on the selected item —
-MainWindow wires its `*ChangeRequested` signals to the matching
-`DashboardGrid` calls and keeps it in sync via `selectionChanged` and the
-undo stack's `indexChanged` (so undo/redo of a property edit updates the
-panel too):
+just the canvas). MainWindow wires its `*ChangeRequested` signals to the
+matching `DashboardGrid` calls and keeps it in sync via `selectionChanged`
+and the undo stack's `indexChanged` (so undo/redo of a property edit
+updates the panel too).
+
+Above a divider, three fields are common to every kind:
 
 - **Type** — swaps the widget for a new instance of the chosen type,
   keeping position/size (`DashboardGrid::changeSelectedType`).
@@ -56,6 +57,13 @@ in `DashboardGrid::addItem` and never shown in the UI) that the grid uses
 internally to track cells/drag state/undo commands. `key` is the
 user-facing identifier; `id` is not meant to be read or typed by a user.
 
+Below the divider, the panel hosts whatever type-specific settings the
+selected type registers — see "Per-type config editor" below. It's edited
+and persisted (`DashboardGrid::changeSelectedConfig`/
+`selectedItemConfig`, `SetItemConfigCommand`) exactly like Type/Name/Key,
+undo/redo and all; types that don't register a config editor just leave
+that area empty.
+
 Dragging/resizing snaps to the grid on release. If the drop position would
 overlap another widget or go out of grid bounds, it's rejected and the
 widget snaps back to its last valid position — see
@@ -73,7 +81,13 @@ lives in its own module under
 - **Chart** — `widgets/chartwidgets.h`/`.cpp`. The 3 registered types
   (`dummy_line`, `dummy_bar`, `dummy_gauge`) are throwaway placeholders
   meant to exercise the grid mechanics before real telemetry charts
-  exist — replace/remove them once real chart types land.
+  exist — replace/remove them once real chart types land. `dummy_line`/
+  `dummy_bar` do have a real config editor already —
+  `widgets/chartconfigeditor.h`/`.cpp` — covering how a chart's incoming
+  data frame and series are shaped, and how the axes are displayed (X as
+  sample count or elapsed time = `Ts * N`; Y auto-scaled or fixed
+  min/max, with an optional unit label) — settled UI even before the
+  charts themselves are real; see "Per-type config editor" below.
 - **Serial Monitor** — `widgets/serialmonitorwidget.h`/`.cpp`
   (`serial_monitor`), built from a connection bar (port/baud pickers, a
   connect toggle) plus `widgets/serialterminalwidget.h`/`.cpp`: a
@@ -110,6 +124,31 @@ That's it — the **Type** dropdown in the properties panel enumerates
 `WidgetRegistry::availableTypes()`, so a new type shows up automatically.
 No grid or `MainWindow` code needs to change.
 
+## Per-type config editor
+
+A type can optionally show its own settings below the properties panel's
+divider (see "Editing a layout" above) — the chart types' data-frame/series
+settings are the first example. It's opt-in and independent of step 3
+above:
+
+1. Subclass `WidgetConfigEditor`
+   ([lib/dashboard/widgetconfigeditor.h](../lib/dashboard/widgetconfigeditor.h)):
+   implement `setConfig(QJsonObject)` (populate the UI, must not emit
+   `configChanged`) and `config()` (serialize current UI state back to
+   JSON), and call `emit configChanged()` whenever the user edits
+   something. See `widgets/chartconfigeditor.h`/`.cpp` for the pattern,
+   including a `QTableWidget` with per-row cell widgets (`setCellWidget`)
+   for the series table.
+2. Set `WidgetTypeInfo::configEditorFactory` when registering the type:
+   `registerType({"my_type", "My Type", myWidgetFactory, myConfigEditorFactory});`
+
+The panel swaps in/out the right editor as the selection or its type
+changes, and the JSON it produces round-trips through
+`DashboardItem::config` — persisted to the project file and covered by
+undo/redo — with no further wiring needed. What that JSON means (parsing
+it into an actual data binding) is up to whatever later consumes it; the
+editor's only job is capturing the settings.
+
 ## Project file
 
 `ProjectStore` ([lib/project/projectstore.h](../lib/project/projectstore.h))
@@ -121,7 +160,16 @@ independent top-level sections:
   "traceview": { "formatVersion": 1 },
   "dashboard": {
     "items": [
-      { "id": "...", "type": "dummy_line", "name": "", "key": "", "x": 0.0, "y": 0.0, "width": 0.3333, "height": 0.25 }
+      {
+        "id": "...", "type": "dummy_line", "name": "", "key": "",
+        "config": {
+          "format": "csv", "count": 1,
+          "xAxis": { "mode": "samples", "sampleTimeMs": 100.0 },
+          "yAxis": { "mode": "auto", "min": 0.0, "max": 100.0, "unit": "" },
+          "series": []
+        },
+        "x": 0.0, "y": 0.0, "width": 0.3333, "height": 0.25
+      }
     ]
   }
 }

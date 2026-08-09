@@ -159,6 +159,8 @@ void MainWindow::buildPropertiesPanel() {
     connect(m_propertiesPanel, &PropertiesPanel::nameChangeRequested, this,
             &MainWindow::onPanelNameChangeRequested);
     connect(m_propertiesPanel, &PropertiesPanel::keyChangeRequested, this, &MainWindow::onPanelKeyChangeRequested);
+    connect(m_propertiesPanel, &PropertiesPanel::configChangeRequested, this,
+            &MainWindow::onPanelConfigChangeRequested);
 
     // Only relevant while editing the layout — matches m_addWidgetAction/
     // m_positionAction, which also start disabled until the Configure
@@ -203,7 +205,8 @@ void MainWindow::updateSelectionActions() {
 void MainWindow::refreshPropertiesPanel() {
     const bool hasSelection = !m_dashboardGrid->selectedItemId().isEmpty();
     m_propertiesPanel->setSelection(hasSelection, m_dashboardGrid->selectedItemTypeId(),
-                                     m_dashboardGrid->selectedItemDisplayName(), m_dashboardGrid->selectedItemKey());
+                                     m_dashboardGrid->selectedItemDisplayName(), m_dashboardGrid->selectedItemKey(),
+                                     m_dashboardGrid->selectedItemConfig());
 }
 
 void MainWindow::onAddWidget() {
@@ -233,6 +236,10 @@ void MainWindow::onPanelKeyChangeRequested(const QString& key) {
     // no-op visually), on rejection to snap the text back to what's
     // actually stored instead of leaving the rejected input showing.
     refreshPropertiesPanel();
+}
+
+void MainWindow::onPanelConfigChangeRequested(const QJsonObject& config) {
+    m_dashboardGrid->changeSelectedConfig(config);
 }
 
 void MainWindow::onSaveProject() {

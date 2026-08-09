@@ -16,14 +16,15 @@ QString cssColor(const QColor& c) {
     return c.name(QColor::HexRgb);
 }
 
-// QComboBox::down-arrow is a pixmap subcontrol — border-only CSS triangle
-// tricks that work for normal widgets don't reliably render for it, so
-// draw a small filled triangle instead (same "draw it, don't fake it with
-// borders" approach as the ribbon icons in ribbonicons.cpp) and hand Qt a
-// real image. Qt's style sheet url() doesn't understand data: URIs, only
-// actual paths, so the themed triangle is written to a temp file each
-// time the stylesheet is (re)built and referenced by that path.
-QString comboArrowImagePath(const QColor& color) {
+// QComboBox::down-arrow (and, below, QSpinBox's up/down-arrow) are pixmap
+// subcontrols — border-only CSS triangle tricks that work for normal
+// widgets don't reliably render for them, so draw a small filled triangle
+// instead (same "draw it, don't fake it with borders" approach as the
+// ribbon icons in ribbonicons.cpp) and hand Qt a real image. Qt's style
+// sheet url() doesn't understand data: URIs, only actual paths, so the
+// themed triangle is written to a temp file each time the stylesheet is
+// (re)built and referenced by that path.
+QString arrowImagePath(const QColor& color, const QString& fileTag, bool pointingDown) {
     constexpr int kSize = 10;
     QPixmap pixmap(kSize, kSize);
     pixmap.fill(Qt::transparent);
@@ -32,11 +33,13 @@ QString comboArrowImagePath(const QColor& color) {
     painter.setRenderHint(QPainter::Antialiasing);
     painter.setPen(Qt::NoPen);
     painter.setBrush(color);
-    const QPolygon triangle({QPoint(1, 3), QPoint(kSize - 1, 3), QPoint(kSize / 2, kSize - 2)});
+    const QPolygon triangle = pointingDown
+                                   ? QPolygon({QPoint(1, 3), QPoint(kSize - 1, 3), QPoint(kSize / 2, kSize - 2)})
+                                   : QPolygon({QPoint(1, kSize - 3), QPoint(kSize - 1, kSize - 3), QPoint(kSize / 2, 2)});
     painter.drawPolygon(triangle);
     painter.end();
 
-    const QString path = QDir(QDir::tempPath()).filePath("traceview_combo_arrow.png");
+    const QString path = QDir(QDir::tempPath()).filePath(QString("traceview_%1_arrow.png").arg(fileTag));
     pixmap.save(path, "PNG");
     return path;
 }
@@ -161,6 +164,49 @@ QLineEdit:focus, QComboBox:focus {
     border: 1px solid @accent@;
 }
 
+QSpinBox, QDoubleSpinBox {
+    padding-right: 20px;
+}
+QSpinBox::up-button, QDoubleSpinBox::up-button {
+    subcontrol-origin: border;
+    subcontrol-position: top right;
+    width: 18px;
+    border-left: 1px solid @border@;
+    border-bottom: 1px solid @border@;
+    border-top-right-radius: 4px;
+    background-color: @surfaceAlt@;
+}
+QSpinBox::down-button, QDoubleSpinBox::down-button {
+    subcontrol-origin: border;
+    subcontrol-position: bottom right;
+    width: 18px;
+    border-left: 1px solid @border@;
+    border-bottom-right-radius: 4px;
+    background-color: @surfaceAlt@;
+}
+QSpinBox::up-button:hover, QDoubleSpinBox::up-button:hover,
+QSpinBox::down-button:hover, QDoubleSpinBox::down-button:hover {
+    background-color: @accent@;
+}
+QSpinBox::up-button:pressed, QDoubleSpinBox::up-button:pressed,
+QSpinBox::down-button:pressed, QDoubleSpinBox::down-button:pressed {
+    background-color: @accentPressed@;
+}
+QSpinBox::up-button:disabled, QDoubleSpinBox::up-button:disabled,
+QSpinBox::down-button:disabled, QDoubleSpinBox::down-button:disabled {
+    background-color: @surface@;
+}
+QSpinBox::up-arrow, QDoubleSpinBox::up-arrow {
+    image: url("@spinUpArrowUri@");
+    width: 8px;
+    height: 8px;
+}
+QSpinBox::down-arrow, QDoubleSpinBox::down-arrow {
+    image: url("@comboArrowUri@");
+    width: 8px;
+    height: 8px;
+}
+
 QComboBox::drop-down {
     subcontrol-origin: padding;
     subcontrol-position: top right;
@@ -207,6 +253,29 @@ QFrame#ribbonGroup {
     background-color: transparent;
     border: 1px solid @border@;
     border-radius: 4px;
+}
+
+QFrame#sectionDivider {
+    background-color: @border@;
+    border: none;
+}
+
+QTableWidget {
+    background-color: @surface@;
+    color: @textPrimary@;
+    border: 1px solid @border@;
+    gridline-color: @border@;
+}
+QTableWidget::item:selected {
+    background-color: @accent@;
+    color: @background@;
+}
+QHeaderView::section {
+    background-color: @surfaceAlt@;
+    color: @textSecondary@;
+    border: none;
+    border-bottom: 1px solid @border@;
+    padding: 4px;
 }
 
 QScrollBar:vertical {
@@ -260,7 +329,8 @@ QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {
     qss.replace("@success@", cssColor(p.success));
     qss.replace("@warning@", cssColor(p.warning));
     qss.replace("@danger@", cssColor(p.danger));
-    qss.replace("@comboArrowUri@", comboArrowImagePath(p.textSecondary));
+    qss.replace("@comboArrowUri@", arrowImagePath(p.textSecondary, "combo", /*pointingDown=*/true));
+    qss.replace("@spinUpArrowUri@", arrowImagePath(p.textSecondary, "spin_up", /*pointingDown=*/false));
 
     return qss;
 }

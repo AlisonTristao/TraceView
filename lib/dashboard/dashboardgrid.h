@@ -26,6 +26,7 @@ class ResizeWidgetCommand;
 class ChangeWidgetTypeCommand;
 class RenameWidgetCommand;
 class SetItemKeyCommand;
+class SetItemConfigCommand;
 
 // A Bootstrap-like grid of DashboardWidgets: each item's position/size is
 // stored as fractions (0.0-1.0) of the canvas area, so layouts stay
@@ -49,6 +50,7 @@ class DashboardGrid : public QWidget {
     friend class ChangeWidgetTypeCommand;
     friend class RenameWidgetCommand;
     friend class SetItemKeyCommand;
+    friend class SetItemConfigCommand;
 
 public:
     explicit DashboardGrid(QWidget* parent = nullptr);
@@ -66,6 +68,9 @@ public:
     // The selected item's user-defined key (may be empty), or empty if
     // nothing is selected.
     QString selectedItemKey() const;
+    // The selected item's type-specific config (see WidgetConfigEditor), or
+    // an empty object if nothing is selected.
+    QJsonObject selectedItemConfig() const;
 
     // Auto-places a new item of `typeId` in the first free cell.
     void addItem(const QString& typeId);
@@ -84,6 +89,9 @@ public:
     // `newKey` is already used by another item; returns true (including as
     // a no-op) otherwise.
     bool setSelectedKey(const QString& newKey);
+    // Sets the selected item's type-specific config. No-op if nothing is
+    // selected or the config is unchanged.
+    void changeSelectedConfig(const QJsonObject& newConfig);
 
     QUndoStack* undoStack() const { return m_undoStack; }
 
@@ -135,6 +143,7 @@ private:
     void applyTypeChange(const QString& itemId, const QString& typeId);
     void applyRename(const QString& itemId, const QString& name);
     void applySetKey(const QString& itemId, const QString& key);
+    void applySetConfig(const QString& itemId, const QJsonObject& config);
 
     // Custom name if set, otherwise the type's registered display name.
     QString displayNameFor(const DashboardItem& item) const;

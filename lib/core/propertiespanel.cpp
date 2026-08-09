@@ -2,8 +2,11 @@
 
 #include <QComboBox>
 #include <QFormLayout>
+#include <QFrame>
 #include <QLineEdit>
+#include <QScrollArea>
 #include <QSignalBlocker>
+#include <QVBoxLayout>
 
 #include "dashboard/widgetregistry.h"
 
@@ -18,12 +21,35 @@ PropertiesPanel::PropertiesPanel(QWidget* parent) : QWidget(parent) {
     m_keyEdit->setPlaceholderText("(none)");
     m_keyEdit->setToolTip("Optional, must be unique — the handle future data updates will target this widget by.");
 
-    auto* layout = new QFormLayout(this);
-    layout->addRow("Type", m_typeCombo);
-    layout->addRow("Name", m_nameEdit);
-    layout->addRow("Key", m_keyEdit);
+    auto* formLayout = new QFormLayout();
+    formLayout->addRow("Type", m_typeCombo);
+    formLayout->addRow("Name", m_nameEdit);
+    formLayout->addRow("Key", m_keyEdit);
 
-    setSelection(false, QString(), QString(), QString());
+    m_divider = new QFrame(this);
+    m_divider->setObjectName("sectionDivider");
+    m_divider->setFrameShape(QFrame::HLine);
+    m_divider->setFixedHeight(1);
+
+    // The config editor swapped in by ensureConfigEditor() is the sole
+    // (removable) child of this layout, kept top-anchored by the trailing
+    // stretch so a short editor (or none) doesn't stretch to fill the panel.
+    m_configContainer = new QWidget();
+    m_configLayout = new QVBoxLayout(m_configContainer);
+    m_configLayout->setContentsMargins(0, 0, 0, 0);
+    m_configLayout->addStretch(1);
+
+    m_configScrollArea = new QScrollArea(this);
+    m_configScrollArea->setWidgetResizable(true);
+    m_configScrollArea->setFrameShape(QFrame::NoFrame);
+    m_configScrollArea->setWidget(m_configContainer);
+
+    auto* mainLayout = new QVBoxLayout(this);
+    mainLayout->addLayout(formLayout);
+    mainLayout->addWidget(m_divider);
+    mainLayout->addWidget(m_configScrollArea, 1);
+
+    setSelection(false, QString(), QString(), QString(), QJsonObject());
 
     connect(m_typeCombo, &QComboBox::activated, this, &PropertiesPanel::onTypeActivated);
     connect(m_nameEdit, &QLineEdit::editingFinished, this, &PropertiesPanel::onNameEditingFinished);
@@ -41,10 +67,11 @@ void PropertiesPanel::setAvailableTypes(const QVector<WidgetTypeInfo>& types) {
 }
 
 void PropertiesPanel::setSelection(bool hasSelection, const QString& typeId, const QString& name,
-                                    const QString& key) {
+                                    const QString& key, const QJsonObject& config) {
     m_currentTypeId = typeId;
     m_currentName = name;
     m_currentKey = key;
+    m_currentConfig = config;
 
     setEnabled(hasSelection);
 
@@ -66,6 +93,12 @@ void PropertiesPanel::setSelection(bool hasSelection, const QString& typeId, con
     {
         const QSignalBlocker blocker(m_keyEdit);
         m_keyEdit->setText(key);
+    }
+
+    ensureConfigEditor(hasSelection ? typeId : QString());
+    if (m_configEditor) {
+        const QSignalBlocker blocker(m_configEditor);
+        m_configEditor->setConfig(config);
     }
 }
 
@@ -94,6 +127,45 @@ void PropertiesPanel::onKeyEditingFinished() {
         return;
     }
     emit keyChangeRequested(key);
+}
+
+void PropertiesPanel::onConfigEditorChanged() {
+    if (!m_configEditor) {
+        return;
+    }
+    const QJsonObject config = m_configEditor->config();
+    if (config == m_currentConfig) {
+        return;
+    }
+    emit configChangeRequested(config);
+}
+
+void PropertiesPanel::ensureConfigEditor(const QString& typeId) {
+    if (typeId == m_configEditorTypeId) {
+        return;
+    }
+    m_configEditorTypeId = typeId;
+
+    if (m_configEditor) {
+        m_configLayout->removeWidget(m_configEditor);
+        m_configEditor->deleteLater();
+        m_configEditor = nullptr;
+    }
+
+    std::function<WidgetConfigEditor*(QWidget*)> factory;
+    for (const WidgetTypeInfo& info : m_types) {
+        if (info.typeId == typeId) {
+            factory = info.configEditorFactory;
+            break;
+        }
+    }
+    if (!factory) {
+        return;
+    }
+
+    m_configEditor = factory(nullptr);
+    m_configLayout->insertWidget(0, m_configEditor);
+    connect(m_configEditor, &WidgetConfigEditor::configChanged, this, &PropertiesPanel::onConfigEditorChanged);
 }
 
 } // namespace traceview

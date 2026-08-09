@@ -2,6 +2,7 @@
 
 #include "dashboardwidget.h"
 #include "widgets/buttonpanelwidget.h"
+#include "widgets/chartconfigeditor.h"
 #include "widgets/chartwidgets.h"
 #include "widgets/serialmonitorwidget.h"
 
@@ -14,9 +15,11 @@ WidgetRegistry& WidgetRegistry::instance() {
 
 WidgetRegistry::WidgetRegistry() {
     registerType({"dummy_line", "Line Chart (dummy)",
-                  [](QWidget* parent) -> DashboardWidget* { return new DummyLineChartWidget(parent); }});
+                  [](QWidget* parent) -> DashboardWidget* { return new DummyLineChartWidget(parent); },
+                  [](QWidget* parent) -> WidgetConfigEditor* { return new ChartConfigEditor(parent); }});
     registerType({"dummy_bar", "Bar Chart (dummy)",
-                  [](QWidget* parent) -> DashboardWidget* { return new DummyBarChartWidget(parent); }});
+                  [](QWidget* parent) -> DashboardWidget* { return new DummyBarChartWidget(parent); },
+                  [](QWidget* parent) -> WidgetConfigEditor* { return new ChartConfigEditor(parent); }});
     registerType({"dummy_gauge", "Gauge (dummy)",
                   [](QWidget* parent) -> DashboardWidget* { return new DummyGaugeWidget(parent); }});
     registerType({"serial_monitor", "Serial Monitor",

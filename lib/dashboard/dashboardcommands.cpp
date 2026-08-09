@@ -77,6 +77,19 @@ void SetItemKeyCommand::undo() {
     m_grid->applySetKey(m_itemId, m_fromKey);
 }
 
+SetItemConfigCommand::SetItemConfigCommand(DashboardGrid* grid, const QString& itemId, const QJsonObject& fromConfig,
+                                            const QJsonObject& toConfig)
+    : QUndoCommand("Set Widget Config"), m_grid(grid), m_itemId(itemId), m_fromConfig(fromConfig),
+      m_toConfig(toConfig) {}
+
+void SetItemConfigCommand::redo() {
+    m_grid->applySetConfig(m_itemId, m_toConfig);
+}
+
+void SetItemConfigCommand::undo() {
+    m_grid->applySetConfig(m_itemId, m_fromConfig);
+}
+
 ChangeWidgetTypeCommand::ChangeWidgetTypeCommand(DashboardGrid* grid, const QString& itemId,
                                                   const QString& fromTypeId, const QString& toTypeId)
     : QUndoCommand("Change Widget Type"), m_grid(grid), m_itemId(itemId), m_fromTypeId(fromTypeId),

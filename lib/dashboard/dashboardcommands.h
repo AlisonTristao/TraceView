@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QJsonObject>
 #include <QPointF>
 #include <QRectF>
 #include <QSizeF>
@@ -102,6 +103,21 @@ private:
     QString m_itemId;
     QString m_fromKey;
     QString m_toKey;
+};
+
+class SetItemConfigCommand : public QUndoCommand {
+public:
+    SetItemConfigCommand(DashboardGrid* grid, const QString& itemId, const QJsonObject& fromConfig,
+                          const QJsonObject& toConfig);
+
+    void undo() override;
+    void redo() override;
+
+private:
+    DashboardGrid* m_grid;
+    QString m_itemId;
+    QJsonObject m_fromConfig;
+    QJsonObject m_toConfig;
 };
 
 class ChangeWidgetTypeCommand : public QUndoCommand {
