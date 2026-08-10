@@ -2,6 +2,7 @@
 
 #include <QJsonObject>
 #include <QMainWindow>
+#include <QRect>
 #include <QString>
 
 class QAction;
@@ -47,9 +48,11 @@ private:
     void onSaveProject();
     void onOpenProject();
     void onAbout();
+    void onFullscreenToggled(bool checked);
 
     DashboardGrid* m_dashboardGrid = nullptr;
     PropertiesPanel* m_propertiesPanel = nullptr;
+    Ribbon* m_ribbon = nullptr;
     QAction* m_positionAction = nullptr;
     QAction* m_addWidgetAction = nullptr;
     QAction* m_removeAction = nullptr;
@@ -69,6 +72,9 @@ private:
     QComboBox* m_baudCombo = nullptr;
     QComboBox* m_lineTerminatorCombo = nullptr;
     QPushButton* m_connectButton = nullptr;
+    QToolButton* m_fullscreenButton = nullptr;
+    bool m_wasMaximized = false;
+    QRect m_preFullscreenGeometry;
 };
 
 } // namespace traceview

@@ -123,4 +123,38 @@ QIcon makePasteIcon(const QColor& color) {
     return QIcon(pixmap);
 }
 
+QIcon makeFullscreenIcon(const QColor& color, bool active) {
+    QPixmap pixmap(kRibbonIconSize, kRibbonIconSize);
+    pixmap.fill(Qt::transparent);
+
+    QPainter painter(&pixmap);
+    painter.setRenderHint(QPainter::Antialiasing);
+    QPen pen(color, 2);
+    pen.setCapStyle(Qt::RoundCap);
+    pen.setJoinStyle(Qt::RoundJoin);
+    painter.setPen(pen);
+
+    const int n = kRibbonIconSize;
+    const int outer = 1;
+    const int len = 4;
+    const int inner = outer + len;
+    // Inactive: elbow sits right at each corner, arms folding inward toward
+    // the middle. Active: elbow pulled to `inner`, arms reaching back out
+    // toward `outer` — the same four brackets, mirrored.
+    const int elbow = active ? inner : outer;
+    const int tip = active ? outer : inner;
+
+    auto corner = [&](int cx, int cy, int hTipX, int vTipY) {
+        painter.drawLine(cx, cy, cx, vTipY);
+        painter.drawLine(cx, cy, hTipX, cy);
+    };
+
+    corner(elbow, elbow, tip, tip);
+    corner(n - elbow, elbow, n - tip, tip);
+    corner(elbow, n - elbow, tip, n - tip);
+    corner(n - elbow, n - elbow, n - tip, n - tip);
+
+    return QIcon(pixmap);
+}
+
 } // namespace traceview

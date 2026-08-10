@@ -57,6 +57,11 @@ public:
     // passed to addTab(); sized to fit a page built at kRibbonPageHeight.
     static QWidget* createButtonGroup(QWidget* parent, const QList<QAction*>& actions);
 
+    // Hides the tab strip while leaving the currently active page visible —
+    // used for fullscreen mode, where switching away from the Run page
+    // isn't wanted.
+    void setTabBarVisible(bool visible);
+
 signals:
     void currentTabChanged(int index);
 

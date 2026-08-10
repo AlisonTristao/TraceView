@@ -17,5 +17,10 @@ QIcon makeMinusIcon(const QColor& color);
 QIcon makeArrowIcon(const QColor& color, bool pointingLeft);
 QIcon makeCopyIcon(const QColor& color);
 QIcon makePasteIcon(const QColor& color);
+// active=false draws the classic "enter fullscreen" glyph (corner elbows
+// right at the icon's corners, arms folding inward); active=true draws its
+// mirror, the "exit fullscreen" glyph (elbows pulled to the center, arms
+// reaching back out toward the corners).
+QIcon makeFullscreenIcon(const QColor& color, bool active);
 
 } // namespace traceview

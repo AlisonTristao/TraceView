@@ -29,6 +29,10 @@
 #include "traceview/thememanager.h"
 #include "traceview/version.h"
 
+#ifdef Q_OS_WIN
+#include <windows.h>
+#endif
+
 namespace traceview {
 
 namespace {
@@ -151,10 +155,6 @@ Ribbon* MainWindow::buildRibbon() {
     // state needs to stay in sync with whether it's currently pasteable.
     connect(QGuiApplication::clipboard(), &QClipboard::dataChanged, this, &MainWindow::updateSelectionActions);
 
-    updateRibbonIcons();
-    connect(&ThemeManager::instance(), &ThemeManager::themeChanged, this,
-            [this](const ThemePalette&) { updateRibbonIcons(); });
-
     auto* runPage = new QWidget(this);
     runPage->setObjectName("ribbonPage");
     runPage->setFixedHeight(kRibbonPageHeight);
@@ -199,12 +199,25 @@ Ribbon* MainWindow::buildRibbon() {
     m_connectButton->setCheckable(true);
     connect(m_connectButton, &QPushButton::toggled, this, &MainWindow::onSerialConnectToggled);
 
+    m_fullscreenButton = new QToolButton(runPage);
+    m_fullscreenButton->setCheckable(true);
+    m_fullscreenButton->setAutoRaise(true);
+    m_fullscreenButton->setFixedSize(kRibbonButtonSize, kRibbonButtonSize);
+    m_fullscreenButton->setIconSize(QSize(kRibbonIconSize, kRibbonIconSize));
+    m_fullscreenButton->setToolTip("Fullscreen dashboard");
+    connect(m_fullscreenButton, &QToolButton::toggled, this, &MainWindow::onFullscreenToggled);
+
+    updateRibbonIcons();
+    connect(&ThemeManager::instance(), &ThemeManager::themeChanged, this,
+            [this](const ThemePalette&) { updateRibbonIcons(); });
+
     runLayout->addWidget(m_portCombo);
     runLayout->addWidget(m_refreshPortsButton);
     runLayout->addWidget(m_baudCombo);
     runLayout->addWidget(m_lineTerminatorCombo);
     runLayout->addWidget(m_connectButton);
     runLayout->addStretch();
+    runLayout->addWidget(m_fullscreenButton);
 
     refreshSerialPorts();
     connect(m_serialManager, &SerialManager::connectionStateChanged, this,
@@ -230,6 +243,7 @@ Ribbon* MainWindow::buildRibbon() {
 
     connect(ribbon, &Ribbon::currentTabChanged, this, &MainWindow::onRibbonTabChanged);
 
+    m_ribbon = ribbon;
     return ribbon;
 }
 
@@ -272,6 +286,7 @@ void MainWindow::updateRibbonIcons() {
     // button via QAction::shortcut(), it's just not spelled out in the text.
     m_undoAction->setIcon(makeArrowIcon(palette.textPrimary, /*pointingLeft=*/true));
     m_redoAction->setIcon(makeArrowIcon(palette.textPrimary, /*pointingLeft=*/false));
+    m_fullscreenButton->setIcon(makeFullscreenIcon(palette.textPrimary, m_fullscreenButton->isChecked()));
 }
 
 void MainWindow::onRibbonTabChanged(int index) {
@@ -422,6 +437,108 @@ void MainWindow::onOpenProject() {
 void MainWindow::onAbout() {
     AboutDialog dialog(this);
     dialog.exec();
+}
+
+void MainWindow::onFullscreenToggled(bool checked) {
+    if (checked) {
+#ifdef Q_OS_WIN
+        // GetWindowPlacement(), not isMaximized()/GetWindowRect(): it hands
+        // back Windows' own canonical "restore to" rectangle
+        // (rcNormalPosition) together with the current show command in one
+        // atomic snapshot. Recomputing that rectangle ourselves (e.g. from
+        // GetWindowRect while maximized) doesn't work - it's the maximized
+        // rect, not the rect the window should return to - and deriving our
+        // own "was maximized" via a separate call/Qt's cached isMaximized()
+        // can race or drift from what SetWindowPlacement() will restore.
+        // Capturing the whole placement and replaying it verbatim on exit
+        // keeps Windows' own restore bookkeeping intact, so a later manual
+        // un-maximize (double-click title bar, Win+Down) still lands on the
+        // right size instead of on a placement we half-guessed.
+        WINDOWPLACEMENT placement{};
+        placement.length = sizeof(WINDOWPLACEMENT);
+        GetWindowPlacement(reinterpret_cast<HWND>(winId()), &placement);
+        m_wasMaximized = placement.showCmd == SW_SHOWMAXIMIZED;
+        const RECT& normalRect = placement.rcNormalPosition;
+        m_preFullscreenGeometry = QRect(normalRect.left, normalRect.top, normalRect.right - normalRect.left,
+                                         normalRect.bottom - normalRect.top);
+#else
+        m_wasMaximized = isMaximized();
+        m_preFullscreenGeometry = frameGeometry();
+#endif
+        m_fullscreenButton->setToolTip("Exit fullscreen");
+        menuBar()->hide();
+        m_ribbon->setTabBarVisible(false);
+        showFullScreen();
+        updateRibbonIcons();
+        return;
+    }
+
+    m_fullscreenButton->setToolTip("Fullscreen dashboard");
+    menuBar()->show();
+    m_ribbon->setTabBarVisible(true);
+
+#ifdef Q_OS_WIN
+    // showNormal()/showMaximized() coming out of Qt::WindowFullScreen still
+    // resolve to two separate native steps under the hood - Windows first
+    // restores the window's frame style (it was stripped to go fullscreen),
+    // then repositions/resizes it to the target placement - regardless of
+    // whether we make one Qt call or two. That shows up either as a visible
+    // shrink-then-grow, or (with the system min/max animation off) as a
+    // blank flash while the window sits in the intermediate state.
+    //
+    // Restoring the frame style ourselves, then applying the saved
+    // WINDOWPLACEMENT in one call, avoids both: SetWindowLongW()+a
+    // no-op-sized SetWindowPos() forces the frame back with a single
+    // repaint, and SetWindowPlacement() with the placement captured on
+    // entry restores position, size and maximized/normal state atomically -
+    // using Windows' own rcNormalPosition rather than a rect we compute
+    // ourselves, so its restore bookkeeping (e.g. what a later manual
+    // un-maximize snaps back to) stays correct too.
+    HWND hwnd = reinterpret_cast<HWND>(winId());
+    LONG style = GetWindowLongW(hwnd, GWL_STYLE);
+    style |= WS_OVERLAPPEDWINDOW;
+    SetWindowLongW(hwnd, GWL_STYLE, style);
+    SetWindowPos(hwnd, nullptr, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
+
+    WINDOWPLACEMENT placement{};
+    placement.length = sizeof(WINDOWPLACEMENT);
+    placement.showCmd = m_wasMaximized ? SW_SHOWMAXIMIZED : SW_SHOWNORMAL;
+    placement.rcNormalPosition = RECT{m_preFullscreenGeometry.left(), m_preFullscreenGeometry.top(),
+                                       m_preFullscreenGeometry.left() + m_preFullscreenGeometry.width(),
+                                       m_preFullscreenGeometry.top() + m_preFullscreenGeometry.height()};
+
+    // Unlike SetWindowPos, SetWindowPlacement's showCmd goes through the
+    // same code path as ShowWindow(), which re-invokes Windows' min/max
+    // animation - visible here as the same shrink-then-grow morph, since
+    // the window is animating from the fullscreen rect to the target rect.
+    // We need SetWindowPlacement specifically (for correct rcNormalPosition
+    // bookkeeping), so instead suspend just that animation for this one
+    // atomic call and restore the user's setting right after - there's no
+    // multi-step sequence left for it to mask a gap in, unlike the earlier
+    // attempt where two separate native calls were involved.
+    ANIMATIONINFO animationInfo{};
+    animationInfo.cbSize = sizeof(animationInfo);
+    SystemParametersInfoW(SPI_GETANIMATION, sizeof(animationInfo), &animationInfo, 0);
+    const int previousMinAnimate = animationInfo.iMinAnimate;
+    animationInfo.iMinAnimate = 0;
+    SystemParametersInfoW(SPI_SETANIMATION, sizeof(animationInfo), &animationInfo, 0);
+
+    SetWindowPlacement(hwnd, &placement);
+
+    animationInfo.iMinAnimate = previousMinAnimate;
+    SystemParametersInfoW(SPI_SETANIMATION, sizeof(animationInfo), &animationInfo, 0);
+#else
+    if (m_wasMaximized) {
+        showMaximized();
+    } else {
+        showNormal();
+        // m_preFullscreenGeometry is captured via frameGeometry() above, so
+        // restore it the same way (frame included), not via setGeometry()
+        // which would place just the client area at that rect.
+        setFrameGeometry(m_preFullscreenGeometry);
+    }
+#endif
+    updateRibbonIcons();
 }
 
 } // namespace traceview
