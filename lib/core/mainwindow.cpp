@@ -440,6 +440,24 @@ void MainWindow::onAbout() {
 }
 
 void MainWindow::onFullscreenToggled(bool checked) {
+    // On Windows this deliberately never touches Qt::WindowFullScreen /
+    // showFullScreen() at all - confirmed via an A/B test (temporarily
+    // routing through vanilla Qt showFullScreen()/showNormal()/
+    // showMaximized() with none of the WinAPI code below) that the flicker
+    // this function exists to avoid reproduces identically with plain Qt,
+    // with zero custom code involved. That matches a long-standing,
+    // still-open category of Qt-on-Windows bug (QTBUG-51093, QTBUG-47247,
+    // years of forum reports, still reproducing on Qt6/Windows 11) in the
+    // QPA windows backend's fullscreen transition - not something fixable
+    // by reordering native calls layered on top of it, only by avoiding
+    // that codepath entirely.
+    //
+    // Instead, "fullscreen" here just means: a borderless window resized to
+    // exactly cover the monitor. That's the same "borderless windowed
+    // fullscreen" idiom games and other native Windows apps use for the
+    // same reason - to Windows it's an ordinary SetWindowPos, no different
+    // from a user dragging the window's edge, so none of Qt's dedicated (and
+    // apparently fragile) fullscreen state machine is ever engaged.
     if (checked) {
 #ifdef Q_OS_WIN
         // GetWindowPlacement(), not isMaximized()/GetWindowRect(): it hands
@@ -454,79 +472,107 @@ void MainWindow::onFullscreenToggled(bool checked) {
         // keeps Windows' own restore bookkeeping intact, so a later manual
         // un-maximize (double-click title bar, Win+Down) still lands on the
         // right size instead of on a placement we half-guessed.
+        HWND hwnd = reinterpret_cast<HWND>(winId());
         WINDOWPLACEMENT placement{};
         placement.length = sizeof(WINDOWPLACEMENT);
-        GetWindowPlacement(reinterpret_cast<HWND>(winId()), &placement);
+        GetWindowPlacement(hwnd, &placement);
         m_wasMaximized = placement.showCmd == SW_SHOWMAXIMIZED;
         const RECT& normalRect = placement.rcNormalPosition;
         m_preFullscreenGeometry = QRect(normalRect.left, normalRect.top, normalRect.right - normalRect.left,
                                          normalRect.bottom - normalRect.top);
+
+        // Strip the frame and cover whichever monitor the window is
+        // currently on, in one atomic SetWindowPos. MonitorFromWindow()/
+        // GetMonitorInfoW() report physical pixel bounds - the same
+        // coordinate space winId()'s HWND already operates in as a
+        // per-monitor-DPI-aware window - so this lines up exactly with no
+        // manual DPI math, unlike going through QScreen::geometry() (Qt's
+        // logical/scaled coordinate space) would require. Plain
+        // SetWindowPos never invokes Windows' min/max show animation (that
+        // only triggers via ShowWindow's SW_MAXIMIZE/MINIMIZE/RESTORE
+        // codes) so there's nothing to suppress here either - it's a single
+        // ordinary resize.
+        LONG style = GetWindowLongW(hwnd, GWL_STYLE);
+        style &= ~WS_OVERLAPPEDWINDOW;
+        SetWindowLongW(hwnd, GWL_STYLE, style);
+
+        MONITORINFO monitorInfo{};
+        monitorInfo.cbSize = sizeof(MONITORINFO);
+        GetMonitorInfoW(MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST), &monitorInfo);
+        const RECT& mr = monitorInfo.rcMonitor;
+        SetWindowPos(hwnd, nullptr, mr.left, mr.top, mr.right - mr.left, mr.bottom - mr.top,
+                     SWP_NOZORDER | SWP_FRAMECHANGED);
 #else
         m_wasMaximized = isMaximized();
         m_preFullscreenGeometry = frameGeometry();
+        showFullScreen();
 #endif
         m_fullscreenButton->setToolTip("Exit fullscreen");
+        // Resize to fullscreen first, then hide the chrome - not the other
+        // way around. Hiding the menu bar/tab bar first shrinks them out of
+        // a window that's still normal-sized, so the dashboard reflows into
+        // that freed space one frame before the window itself grows to
+        // cover the screen: two visible steps instead of one. Doing the
+        // resize first means the chrome disappears inside a window that's
+        // already at its final size, which is a single small relayout
+        // instead of a second visible jump.
         menuBar()->hide();
         m_ribbon->setTabBarVisible(false);
-        showFullScreen();
         updateRibbonIcons();
         return;
     }
 
     m_fullscreenButton->setToolTip("Fullscreen dashboard");
-    menuBar()->show();
-    m_ribbon->setTabBarVisible(true);
 
 #ifdef Q_OS_WIN
-    // showNormal()/showMaximized() coming out of Qt::WindowFullScreen still
-    // resolve to two separate native steps under the hood - Windows first
-    // restores the window's frame style (it was stripped to go fullscreen),
-    // then repositions/resizes it to the target placement - regardless of
-    // whether we make one Qt call or two. That shows up either as a visible
-    // shrink-then-grow, or (with the system min/max animation off) as a
-    // blank flash while the window sits in the intermediate state.
-    //
-    // Restoring the frame style ourselves, then applying the saved
-    // WINDOWPLACEMENT in one call, avoids both: SetWindowLongW()+a
-    // no-op-sized SetWindowPos() forces the frame back with a single
-    // repaint, and SetWindowPlacement() with the placement captured on
-    // entry restores position, size and maximized/normal state atomically -
-    // using Windows' own rcNormalPosition rather than a rect we compute
-    // ourselves, so its restore bookkeeping (e.g. what a later manual
-    // un-maximize snaps back to) stays correct too.
     HWND hwnd = reinterpret_cast<HWND>(winId());
     LONG style = GetWindowLongW(hwnd, GWL_STYLE);
     style |= WS_OVERLAPPEDWINDOW;
     SetWindowLongW(hwnd, GWL_STYLE, style);
-    SetWindowPos(hwnd, nullptr, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
 
-    WINDOWPLACEMENT placement{};
-    placement.length = sizeof(WINDOWPLACEMENT);
-    placement.showCmd = m_wasMaximized ? SW_SHOWMAXIMIZED : SW_SHOWNORMAL;
-    placement.rcNormalPosition = RECT{m_preFullscreenGeometry.left(), m_preFullscreenGeometry.top(),
-                                       m_preFullscreenGeometry.left() + m_preFullscreenGeometry.width(),
-                                       m_preFullscreenGeometry.top() + m_preFullscreenGeometry.height()};
+    if (m_wasMaximized) {
+        // Genuine maximize is a distinct OS-tracked state (affects Aero
+        // Snap, what double-click-titlebar toggles back to, etc.), not just
+        // "resized to look like the maximized rect" - the only way into it
+        // is Windows' own show-state machinery (SetWindowPlacement /
+        // ShowWindow), which is also the one piece of this function that
+        // can't avoid the min/max show animation. Suspend it for just this
+        // call and restore the user's setting right after - there's no
+        // multi-step sequence left for it to mask a gap in, since the frame
+        // style above and this placement are the only two changes involved
+        // and the first one paints nothing on its own (see the comment on
+        // the entry path's SetWindowLongW for why).
+        WINDOWPLACEMENT placement{};
+        placement.length = sizeof(WINDOWPLACEMENT);
+        placement.showCmd = SW_SHOWMAXIMIZED;
+        placement.rcNormalPosition = RECT{m_preFullscreenGeometry.left(), m_preFullscreenGeometry.top(),
+                                           m_preFullscreenGeometry.left() + m_preFullscreenGeometry.width(),
+                                           m_preFullscreenGeometry.top() + m_preFullscreenGeometry.height()};
 
-    // Unlike SetWindowPos, SetWindowPlacement's showCmd goes through the
-    // same code path as ShowWindow(), which re-invokes Windows' min/max
-    // animation - visible here as the same shrink-then-grow morph, since
-    // the window is animating from the fullscreen rect to the target rect.
-    // We need SetWindowPlacement specifically (for correct rcNormalPosition
-    // bookkeeping), so instead suspend just that animation for this one
-    // atomic call and restore the user's setting right after - there's no
-    // multi-step sequence left for it to mask a gap in, unlike the earlier
-    // attempt where two separate native calls were involved.
-    ANIMATIONINFO animationInfo{};
-    animationInfo.cbSize = sizeof(animationInfo);
-    SystemParametersInfoW(SPI_GETANIMATION, sizeof(animationInfo), &animationInfo, 0);
-    const int previousMinAnimate = animationInfo.iMinAnimate;
-    animationInfo.iMinAnimate = 0;
-    SystemParametersInfoW(SPI_SETANIMATION, sizeof(animationInfo), &animationInfo, 0);
+        ANIMATIONINFO animationInfo{};
+        animationInfo.cbSize = sizeof(animationInfo);
+        SystemParametersInfoW(SPI_GETANIMATION, sizeof(animationInfo), &animationInfo, 0);
+        const int previousMinAnimate = animationInfo.iMinAnimate;
+        animationInfo.iMinAnimate = 0;
+        SystemParametersInfoW(SPI_SETANIMATION, sizeof(animationInfo), &animationInfo, 0);
 
-    SetWindowPlacement(hwnd, &placement);
+        SetWindowPlacement(hwnd, &placement);
 
-    animationInfo.iMinAnimate = previousMinAnimate;
-    SystemParametersInfoW(SPI_SETANIMATION, sizeof(animationInfo), &animationInfo, 0);
+        animationInfo.iMinAnimate = previousMinAnimate;
+        SystemParametersInfoW(SPI_SETANIMATION, sizeof(animationInfo), &animationInfo, 0);
+    } else {
+        // Going back to a plain (non-maximized) rect doesn't need any of
+        // that machinery: a plain SetWindowPos to the saved rect is one
+        // ordinary, unanimated resize - and because the window isn't
+        // minimized or maximized during this call, Windows updates its own
+        // "last normal rect" bookkeeping (what a later double-click-titlebar
+        // maximize/restore cycle returns to) from the resize itself, same
+        // as it would from a user dragging the window - no extra step
+        // needed to keep that correct.
+        SetWindowPos(hwnd, nullptr, m_preFullscreenGeometry.left(), m_preFullscreenGeometry.top(),
+                     m_preFullscreenGeometry.width(), m_preFullscreenGeometry.height(),
+                     SWP_NOZORDER | SWP_FRAMECHANGED);
+    }
 #else
     if (m_wasMaximized) {
         showMaximized();
@@ -538,6 +584,14 @@ void MainWindow::onFullscreenToggled(bool checked) {
         setFrameGeometry(m_preFullscreenGeometry);
     }
 #endif
+    // Chrome comes back only after the window is already at its restored
+    // size/frame - see the matching comment on the entry path above. Doing
+    // it earlier (before the block above) reflows the dashboard into a
+    // window that's still fullscreen-sized, then the frame/geometry change
+    // above lands on that same oversized window - two visible steps
+    // stacked into what should read as one smooth transition.
+    menuBar()->show();
+    m_ribbon->setTabBarVisible(true);
     updateRibbonIcons();
 }
 

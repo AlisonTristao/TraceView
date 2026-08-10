@@ -3,303 +3,264 @@
         "items": [
             {
                 "config": {
+                    "count": 1,
+                    "format": "csv",
+                    "series": [
+                        {
+                            "byteType": "float32",
+                            "color": "#3d8bff",
+                            "index": 0,
+                            "name": "x_axis",
+                            "style": "solid"
+                        },
+                        {
+                            "byteType": "float32",
+                            "color": "#ffffff",
+                            "index": 1,
+                            "name": "y_axis",
+                            "style": "solid"
+                        },
+                        {
+                            "byteType": "float32",
+                            "color": "#e8b339",
+                            "index": 2,
+                            "name": "x_axis",
+                            "style": "solid"
+                        }
+                    ],
+                    "xAxis": {
+                        "limit": 500,
+                        "mode": "samples",
+                        "sampleTimeMs": 100
+                    },
+                    "yAxis": {
+                        "grid": true,
+                        "max": 100,
+                        "min": 0,
+                        "mode": "auto",
+                        "unit": "[m/s²]"
+                    }
                 },
-                "height": 0.375,
-                "id": "bf250ac8-710a-4867-b67d-97bfb7645d97",
+                "height": 0.32499999999999996,
+                "id": "8ea41465-edbe-45a0-9f52-1ce1d02bb598",
+                "key": "",
+                "name": "Accelaration",
+                "type": "dummy_line",
+                "width": 0.36666666666666664,
+                "x": 0,
+                "y": 0
+            },
+            {
+                "config": {
+                    "count": 1,
+                    "format": "csv",
+                    "series": [
+                        {
+                            "byteType": "float32",
+                            "color": "#3d8bff",
+                            "index": 0,
+                            "name": "x_axis",
+                            "style": "solid"
+                        },
+                        {
+                            "byteType": "float32",
+                            "color": "#ffffff",
+                            "index": 1,
+                            "name": "y_axis",
+                            "style": "solid"
+                        },
+                        {
+                            "byteType": "float32",
+                            "color": "#e8b339",
+                            "index": 2,
+                            "name": "x_axis",
+                            "style": "solid"
+                        }
+                    ],
+                    "xAxis": {
+                        "limit": 500,
+                        "mode": "samples",
+                        "sampleTimeMs": 100
+                    },
+                    "yAxis": {
+                        "grid": true,
+                        "max": 100,
+                        "min": 0,
+                        "mode": "auto",
+                        "unit": "[m/s]"
+                    }
+                },
+                "height": 0.3,
+                "id": "f861e22a-4d7f-4c91-866d-3aa7cce773b4",
+                "key": "",
+                "name": "Speed",
+                "type": "dummy_line",
+                "width": 0.36666666666666664,
+                "x": 0,
+                "y": 0.35000000000000003
+            },
+            {
+                "config": {
+                },
+                "height": 0.32499999999999996,
+                "id": "bdbc8b57-c48c-43c2-b29f-873a0ef4486d",
                 "key": "",
                 "name": "",
                 "type": "serial_monitor",
-                "width": 0.7708333333333334,
+                "width": 0.8666666666666667,
                 "x": 0,
-                "y": 0.625
+                "y": 0.675
             },
             {
                 "config": {
+                    "count": 1,
+                    "format": "csv",
+                    "series": [
+                        {
+                            "byteType": "float32",
+                            "color": "#00007f",
+                            "index": 0,
+                            "name": "Temperature",
+                            "style": "solid"
+                        },
+                        {
+                            "byteType": "float32",
+                            "color": "#ffffff",
+                            "index": 1,
+                            "name": "Pressure",
+                            "style": "solid"
+                        },
+                        {
+                            "byteType": "float32",
+                            "color": "#e8b339",
+                            "index": 2,
+                            "name": "Humity",
+                            "style": "solid"
+                        }
+                    ],
+                    "xAxis": {
+                        "limit": 500,
+                        "mode": "samples",
+                        "sampleTimeMs": 100
+                    },
+                    "yAxis": {
+                        "grid": true,
+                        "max": 100,
+                        "min": -100,
+                        "mode": "fixed",
+                        "unit": "[V]"
+                    }
                 },
-                "height": 0.3125,
-                "id": "59d5dc58-533d-459f-8471-e8a9a7bdf307",
+                "height": 0.3249999999999999,
+                "id": "d5b2cbc5-bc8b-47b4-9be0-d0d7bf1f9b79",
                 "key": "",
-                "name": "",
+                "name": "Station",
                 "type": "dummy_line",
-                "width": 0.375,
-                "x": 0,
+                "width": 0.6166666666666666,
+                "x": 0.3833333333333334,
                 "y": 0
             },
             {
                 "config": {
+                    "confirmBeforeSend": false,
+                    "debounceMs": 150,
+                    "label": "STOP",
+                    "longPress": {
+                        "command": "",
+                        "enabled": false,
+                        "thresholdMs": 600
+                    },
+                    "mode": "momentary",
+                    "onPress": "",
+                    "onRelease": "",
+                    "repeatIntervalMs": 200,
+                    "repeatWhileHeld": false,
+                    "variant": "default"
                 },
-                "height": 0.3125,
-                "id": "e33636d9-b0a5-447e-beaf-8621e7aeab83",
+                "height": 0.07499999999999998,
+                "id": "087a0b29-03c9-4ab0-ae14-07eccaaf44d4",
                 "key": "",
-                "name": "",
-                "type": "dummy_line",
-                "width": 0.375,
-                "x": 0,
-                "y": 0.3125
-            },
-            {
-                "config": {
-                },
-                "height": 0.0625,
-                "id": "13455e9a-2e67-40b3-805a-4853e44c7ece",
-                "key": "",
-                "name": "",
-                "type": "slider",
-                "width": 0.18749999999999997,
-                "x": 0.3958333333333333,
-                "y": 0
-            },
-            {
-                "config": {
-                },
-                "height": 0.0625,
-                "id": "07cfb6aa-24f5-46d8-90ef-9c355380ddde",
-                "key": "",
-                "name": "",
-                "type": "slider",
-                "width": 0.18749999999999997,
-                "x": 0.39583333333333337,
-                "y": 0.0625
-            },
-            {
-                "config": {
-                },
-                "height": 0.0625,
-                "id": "f790acaa-4ea5-4c3c-8bc0-afb2f2b36a1e",
-                "key": "",
-                "name": "",
-                "type": "slider",
-                "width": 0.18749999999999997,
-                "x": 0.39583333333333337,
-                "y": 0.125
-            },
-            {
-                "config": {
-                },
-                "height": 0.0625,
-                "id": "c58fdfef-e977-48b2-a86f-5d4a6e7cf9b5",
-                "key": "",
-                "name": "",
-                "type": "slider",
-                "width": 0.18749999999999997,
-                "x": 0.39583333333333337,
-                "y": 0.1875
-            },
-            {
-                "config": {
-                },
-                "height": 0.0625,
-                "id": "ba103369-bfbb-424e-83ee-156a8c7bd6b0",
-                "key": "",
-                "name": "",
-                "type": "slider",
-                "width": 0.18749999999999997,
-                "x": 0.39583333333333337,
-                "y": 0.25
-            },
-            {
-                "config": {
-                },
-                "height": 0.0625,
-                "id": "801deab9-77d4-44d4-b4d2-16287ed0eca7",
-                "key": "",
-                "name": "",
+                "name": "STOP",
                 "type": "push_button",
-                "width": 0.08333333333333331,
-                "x": 0.7916666666666666,
-                "y": 0.625
+                "width": 0.11666666666666667,
+                "x": 0.8833333333333333,
+                "y": 0.7000000000000001
             },
             {
                 "config": {
+                    "confirmBeforeSend": false,
+                    "debounceMs": 150,
+                    "label": "STOP",
+                    "longPress": {
+                        "command": "",
+                        "enabled": false,
+                        "thresholdMs": 600
+                    },
+                    "mode": "momentary",
+                    "onPress": "",
+                    "onRelease": "",
+                    "repeatIntervalMs": 200,
+                    "repeatWhileHeld": false,
+                    "variant": "default"
                 },
-                "height": 0.0625,
-                "id": "8fddcd78-ba0e-4968-995d-93fddc8b075b",
+                "height": 0.07499999999999998,
+                "id": "bdca0405-10b8-4f66-9dfd-77526b7c7a6d",
                 "key": "",
-                "name": "",
+                "name": "STOP",
                 "type": "push_button",
-                "width": 0.08333333333333331,
-                "x": 0.8958333333333333,
-                "y": 0.71875
+                "width": 0.11666666666666667,
+                "x": 0.8833333333333333,
+                "y": 0.8
             },
             {
                 "config": {
+                    "confirmBeforeSend": false,
+                    "debounceMs": 150,
+                    "label": "STOP",
+                    "longPress": {
+                        "command": "",
+                        "enabled": false,
+                        "thresholdMs": 600
+                    },
+                    "mode": "momentary",
+                    "onPress": "",
+                    "onRelease": "",
+                    "repeatIntervalMs": 200,
+                    "repeatWhileHeld": false,
+                    "variant": "default"
                 },
-                "height": 0.0625,
-                "id": "50774814-e005-4ae2-84be-8993a0c7a7cb",
+                "height": 0.07499999999999998,
+                "id": "4fe5980d-5143-4175-9367-369246e4b204",
                 "key": "",
-                "name": "",
+                "name": "STOP",
                 "type": "push_button",
-                "width": 0.08333333333333331,
-                "x": 0.7916666666666666,
-                "y": 0.71875
+                "width": 0.11666666666666667,
+                "x": 0.8833333333333333,
+                "y": 0.9
             },
             {
                 "config": {
                 },
-                "height": 0.0625,
-                "id": "0b3582f3-1d47-45af-b178-9533d3166e68",
+                "height": 0.3,
+                "id": "1d1a92cc-fde0-498c-ba75-d606867da28e",
                 "key": "",
-                "name": "",
-                "type": "push_button",
-                "width": 0.08333333333333331,
-                "x": 0.8958333333333335,
-                "y": 0.625
-            },
-            {
-                "config": {
-                },
-                "height": 0.0625,
-                "id": "d001f62d-45bb-4318-8d31-57c1d8420cb2",
-                "key": "",
-                "name": "",
-                "type": "push_button",
-                "width": 0.08333333333333331,
-                "x": 0.7916666666666666,
-                "y": 0.8125
-            },
-            {
-                "config": {
-                },
-                "height": 0.0625,
-                "id": "a158469d-7a91-496c-b22a-896bf909c544",
-                "key": "",
-                "name": "",
-                "type": "push_button",
-                "width": 0.08333333333333331,
-                "x": 0.7916666666666666,
-                "y": 0.90625
-            },
-            {
-                "config": {
-                },
-                "height": 0.0625,
-                "id": "5aea1cfa-0dfe-4570-9ced-4f72391f66fa",
-                "key": "",
-                "name": "",
-                "type": "push_button",
-                "width": 0.08333333333333331,
-                "x": 0.8958333333333334,
-                "y": 0.8125
-            },
-            {
-                "config": {
-                },
-                "height": 0.0625,
-                "id": "cb5d9ba0-4cf3-48d5-8843-88bd61940276",
-                "key": "",
-                "name": "",
-                "type": "push_button",
-                "width": 0.08333333333333331,
-                "x": 0.8958333333333334,
-                "y": 0.90625
-            },
-            {
-                "config": {
-                },
-                "height": 0.28125,
-                "id": "b99b3b58-ccb4-40cb-8c24-a3b6ceebf3bd",
-                "key": "",
-                "name": "",
+                "name": "Left Motor",
                 "type": "dummy_gauge",
-                "width": 0.20833333333333331,
-                "x": 0.7916666666666667,
-                "y": 0
+                "width": 0.3,
+                "x": 0.3833333333333333,
+                "y": 0.35000000000000003
             },
             {
                 "config": {
                 },
-                "height": 0.28125,
-                "id": "5e471063-da15-4a4b-bcb7-ff95037aba8e",
+                "height": 0.3,
+                "id": "ad3e1c9a-ecf1-4c6f-9aea-3aa280673894",
                 "key": "",
-                "name": "",
+                "name": "Ritght Motor",
                 "type": "dummy_gauge",
-                "width": 0.20833333333333331,
-                "x": 0.5833333333333334,
-                "y": 0
-            },
-            {
-                "config": {
-                },
-                "height": 0.28125,
-                "id": "49b13674-870c-4fca-b379-e452901ed5ac",
-                "key": "",
-                "name": "",
-                "type": "dummy_bar",
-                "width": 0.20833333333333331,
-                "x": 0.7916666666666667,
-                "y": 0.28125
-            },
-            {
-                "config": {
-                },
-                "height": 0.28125,
-                "id": "91f34515-5253-4706-b491-75fa08a76ee8",
-                "key": "",
-                "name": "",
-                "type": "dummy_bar",
-                "width": 0.20833333333333331,
-                "x": 0.5833333333333334,
-                "y": 0.28125
-            },
-            {
-                "config": {
-                },
-                "height": 0.0625,
-                "id": "e50876fc-4885-427d-9931-1b8e7917c2fd",
-                "key": "",
-                "name": "",
-                "type": "slider",
-                "width": 0.18749999999999997,
-                "x": 0.3958333333333333,
-                "y": 0.3125
-            },
-            {
-                "config": {
-                },
-                "height": 0.0625,
-                "id": "9576cbdc-ec7d-4ad7-b881-69a3ddea3ed8",
-                "key": "",
-                "name": "",
-                "type": "slider",
-                "width": 0.18749999999999997,
-                "x": 0.3958333333333333,
-                "y": 0.375
-            },
-            {
-                "config": {
-                },
-                "height": 0.0625,
-                "id": "ab0bcfc9-d82f-4190-aa3b-b55e6dbb0403",
-                "key": "",
-                "name": "",
-                "type": "slider",
-                "width": 0.18749999999999997,
-                "x": 0.3958333333333333,
-                "y": 0.4375
-            },
-            {
-                "config": {
-                },
-                "height": 0.0625,
-                "id": "c969cd73-33f4-4a7f-a7a3-7982485afe00",
-                "key": "",
-                "name": "",
-                "type": "slider",
-                "width": 0.18749999999999997,
-                "x": 0.3958333333333333,
-                "y": 0.5
-            },
-            {
-                "config": {
-                },
-                "height": 0.0625,
-                "id": "6b2a54f7-8fc0-447d-b636-0729944bec84",
-                "key": "",
-                "name": "",
-                "type": "slider",
-                "width": 0.18749999999999997,
-                "x": 0.3958333333333333,
-                "y": 0.5625
+                "width": 0.3,
+                "x": 0.7,
+                "y": 0.35000000000000003
             }
         ]
     },
