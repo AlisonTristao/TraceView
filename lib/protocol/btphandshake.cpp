@@ -133,7 +133,18 @@ void BtpHandshake::onControlFrameReceived(const traceview::BtpFrame& frame) {
     m_helloTimer.stop();
     if (status == kHelloResultSuccess) {
         m_state = State::Established;
-        emit sessionEstablished();
+        // config_revision sits at offset 48 (COMMANDS_AND_ACTIONS.md section
+        // 5); a HELLO_RESULT this short predates the field (or came from a
+        // peer that has no catalog yet), so treat it as 0 -- "peer nao
+        // publica manifesto" is the documented meaning of 0 anyway.
+        quint32 peerConfigRevision = 0;
+        if (frame.payload.size() >= 52) {
+            peerConfigRevision = (quint32(quint8(frame.payload.at(48))) << 0) |
+                                 (quint32(quint8(frame.payload.at(49))) << 8) |
+                                 (quint32(quint8(frame.payload.at(50))) << 16) |
+                                 (quint32(quint8(frame.payload.at(51))) << 24);
+        }
+        emit sessionEstablished(peerConfigRevision);
     } else {
         fail(QStringLiteral("HELLO rejected, status=%1").arg(status));
     }

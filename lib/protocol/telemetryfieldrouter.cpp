@@ -12,8 +12,11 @@ void TelemetryFieldRouter::onTelemetrySample(const TelemetrySample& sample) {
         m_catalog ? m_catalog->lookup(sample.sourceId, sample.topicId, sample.schemaVersion) : nullptr;
     if (schema == nullptr) {
         // TELEMETRY.md section 6.4: unknown/unannounced schema -- reject the
-        // sample, don't guess at another version or encoding.
+        // sample, don't guess at another version or encoding. topico 16
+        // PASSO 9: tell ManifestClient so it can request an update instead
+        // of this happening silently forever.
         ++m_diagnostics.schemaUnknown;
+        emit unknownSchema(sample.sourceId, sample.topicId, sample.schemaVersion);
         emit diagnosticsChanged();
         return;
     }

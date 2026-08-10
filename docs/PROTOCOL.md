@@ -55,12 +55,20 @@ TelemetryFieldRouter       -- lib/protocol/telemetryfieldrouter.h
 ```
 
 `TelemetryCatalog` (lib/protocol/telemetrycatalog.h) is the source/topic/
-schema registry -- independent of any widget type. It has no automatic
-population yet: there is no `MANIFEST_REQUEST`/`MANIFEST_DATA` exchange on
-the client side until topico 16 ("Manifesto e descoberta"), so
-`registerBallySoftwareCatalog()` exists only as a convenience for tests and
-tools that already know `bally_software`'s two documented schemas
-(`protocol.test`, `robot.state` — see `TELEMETRY.md` section 9.4).
+schema registry -- independent of any widget type. As of topico 16
+("Manifesto e descoberta") it is populated dynamically: `ManifestClient`
+(lib/protocol/manifestclient.h) requests the whole catalog
+(`MANIFEST_REQUEST` with `target_source_id=0`) once per session -- skipped on
+a reconnect if the dongle's own `HELLO_RESULT.config_revision` hasn't changed
+since the last one this process saw -- parses each `MANIFEST_DATA` response
+(one message per source) and registers a `TelemetryTopicSchema` per topic
+record, reusing the wire's own types/units/scale/offset rather than any
+hardcoded table. `TelemetryFieldRouter::unknownSchema` triggers a targeted,
+rate-limited re-request when a sample's `schema_version` isn't in the
+catalog. `registerBallySoftwareCatalog()` still exists, but only as a
+convenience for tests and tools that want bally_software's two documented
+schemas (`protocol.test`, `robot.state` — see `TELEMETRY.md` section 9.4)
+without a live dongle connection; `MainWindow` no longer calls it.
 
 Wiring a chart/gauge widget's own `sourceId`/`topicId`/`fieldId` config
 (`ChartConfigEditor`/`GaugeConfigEditor`, `lib/dashboard/widgets/

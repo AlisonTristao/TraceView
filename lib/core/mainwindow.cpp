@@ -24,9 +24,9 @@
 #include "dashboard/widgetregistry.h"
 #include "dashboard/widgets/chartwidgets.h"
 #include "project/projectstore.h"
-#include "protocol/btpframe.h"
 #include "protocol/btphandshake.h"
 #include "protocol/btpsession.h"
+#include "protocol/manifestclient.h"
 #include "protocol/protocolrouter.h"
 #include "protocol/telemetrycatalog.h"
 #include "protocol/telemetryfieldrouter.h"
@@ -62,16 +62,17 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     // BTP v1 client stack (topico 14): raw bytes -> BtpSession (COBS decode
     // + envelope/CRC validation + reassembly) -> ProtocolRouter (dispatch by
     // MessageType) -> TelemetryFieldRouter (schema decode, fan out by
-    // field). m_telemetryCatalog is intentionally empty here -- there is no
-    // manifest/discovery exchange yet (topico 16), so nothing assumes which
-    // source_id is on the other end of the wire; wiring a chart/gauge
-    // widget's own fieldSample subscription onto m_telemetryFieldRouter is
-    // topico 15's job.
+    // field). m_telemetryCatalog starts empty and is populated dynamically
+    // by m_manifestClient's MANIFEST_REQUEST/MANIFEST_DATA exchange (topico
+    // 16) -- nothing here assumes which source_id/schema is on the other
+    // end in advance; wiring a chart/gauge widget's own fieldSample
+    // subscription onto m_telemetryFieldRouter is topico 15's job.
     m_btpSession = new BtpSession(this);
     m_protocolRouter = new ProtocolRouter(this);
     m_telemetryCatalog = new TelemetryCatalog();
     m_telemetryFieldRouter = new TelemetryFieldRouter(m_telemetryCatalog, this);
     m_btpHandshake = new BtpHandshake(m_btpSession, m_protocolRouter, this);
+    m_manifestClient = new ManifestClient(m_btpSession, m_protocolRouter, m_telemetryCatalog, this);
     connect(m_serialManager, &SerialManager::dataReceived, m_btpSession, &BtpSession::feedBytes);
     connect(m_btpSession, &BtpSession::bytesToWrite, m_serialManager, &SerialManager::write);
     // BtpHandshake needs the same raw bytes BtpSession sees (it only looks
@@ -85,27 +86,21 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
             m_btpHandshake->start();
         }
     });
-    connect(m_btpHandshake, &BtpHandshake::sessionEstablished, this, [this]() {
+    connect(m_btpHandshake, &BtpHandshake::sessionEstablished, this, [this](quint32 peerConfigRevision) {
         statusBar()->showMessage("BTP session established (HELLO_RESULT=SUCCESS)", 5000);
+        m_manifestClient->onSessionEstablished(peerConfigRevision);
     });
     connect(m_btpHandshake, &BtpHandshake::sessionFailed, this, [this](const QString& reason) {
         statusBar()->showMessage("BTP handshake failed: " + reason, 8000);
     });
-    // Lazily registers the known bally_software schemas (protocol.test,
-    // robot.state) for any source_id we see TELEMETRY from -- a pragmatic
-    // bridge until topico 16's MANIFEST_DATA exchange populates
-    // m_telemetryCatalog for real. Connected before the frameReceived ->
-    // ProtocolRouter wiring below so the catalog is populated in time for
-    // ProtocolRouter/TelemetryFieldRouter to decode that same first frame.
-    connect(m_btpSession, &BtpSession::frameReceived, this, [this](const BtpFrame& frame) {
-        if (frame.type == btp::MessageType::Telemetry && !m_knownTelemetrySources.contains(frame.sourceId)) {
-            m_knownTelemetrySources.insert(frame.sourceId);
-            registerBallySoftwareCatalog(*m_telemetryCatalog, frame.sourceId);
-        }
-    });
     connect(m_btpSession, &BtpSession::frameReceived, m_protocolRouter, &ProtocolRouter::onFrameReceived);
     connect(m_protocolRouter, &ProtocolRouter::telemetrySampleReceived, m_telemetryFieldRouter,
             &TelemetryFieldRouter::onTelemetrySample);
+    // topico 16 PASSO 9: a sample whose schema isn't in the catalog yet (or
+    // no longer matches, after a schema change) triggers a targeted
+    // manifest re-request instead of silently dropping forever.
+    connect(m_telemetryFieldRouter, &TelemetryFieldRouter::unknownSchema, m_manifestClient,
+            &ManifestClient::onUnknownSchema);
 
     // Wires control-widget commands and the serial monitor/terminal to the
     // same connection (BACKEND_TODO.txt Tasks 9/10; terminal rewired onto

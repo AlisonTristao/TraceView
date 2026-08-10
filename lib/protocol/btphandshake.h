@@ -49,7 +49,12 @@ signals:
     // line; the HELLO frame itself goes out through BtpSession::sendFrame(),
     // whose own bytesToWrite() is already wired to the transport.
     void bytesToWrite(const QByteArray& data);
-    void sessionEstablished();
+    // peerConfigRevision is HELLO_RESULT's own config_revision field
+    // (COMMANDS_AND_ACTIONS.md section 5, offset 48) -- the dongle's
+    // manifest-catalog revision, topico 16 PASSO 5/6. ManifestClient uses it
+    // to skip a redundant full target=0 re-enumeration when reconnecting to
+    // the same dongle catalog it already has cached.
+    void sessionEstablished(quint32 peerConfigRevision);
     void sessionFailed(const QString& reason);
 
 private slots:

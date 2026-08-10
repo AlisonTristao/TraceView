@@ -82,9 +82,11 @@ struct TelemetryTopicSchema {
 // Source/topic/schema registry, deliberately independent of DashboardWidget
 // or any other UI type (topico 14 PASSO 9) -- a chart widget asks this "what
 // does field 3 of topic 0x0101 from source 0x11223344 mean," it never
-// hardcodes byte offsets or types itself. Populated today by manual/static
-// registration (see registerBallySoftwareCatalog() below); wiring this up to
-// the wire MANIFEST_DATA exchange is topico 16 ("Manifesto e descoberta").
+// hardcodes byte offsets or types itself. In the running app, entries are
+// populated dynamically from the wire (ManifestClient, topico 16) --
+// registerBallySoftwareCatalog() below is kept only as a test/tool fixture
+// (see tests/test_telemetrycatalog.cpp, tests/test_telemetryfieldrouter.cpp,
+// tools/chart_preview), not called by MainWindow anymore.
 class TelemetryCatalog {
 public:
     // Replaces any existing schema with the same (sourceId, topicId,
@@ -106,9 +108,10 @@ private:
 
 // Registers the two schemas bally_software already produces (TELEMETRY.md
 // section 9.4: protocol.test and robot.state, both schema_version 1,
-// PACKED_LE) under `sourceId` -- the concrete, already-implemented-on-the-
-// firmware-side use case for a non-empty catalog before the manifest
-// protocol (topico 16) exists to populate one automatically over the wire.
+// PACKED_LE) under `sourceId` -- a test/tool fixture only (topico 16 built
+// the real, dynamic equivalent: bally_software's ManifestResponder announces
+// these same two schemas over the wire, and TraceView's ManifestClient
+// builds the matching catalog entries from that MANIFEST_DATA response).
 void registerBallySoftwareCatalog(TelemetryCatalog& catalog, quint32 sourceId);
 
 }  // namespace traceview

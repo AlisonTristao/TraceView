@@ -56,6 +56,13 @@ public slots:
 signals:
     void fieldSample(const traceview::TelemetryFieldBinding& binding, quint64 timestampUs, double value);
     void diagnosticsChanged();
+    // A TELEMETRY sample arrived for (sourceId, topicId, schemaVersion) with
+    // no matching catalog entry -- topico 16 PASSO 9: "rejeitar amostra com
+    // schema_version desconhecida e solicitar atualizacao" instead of
+    // guessing. ManifestClient listens for this to (rate-limited) re-request
+    // that source's manifest rather than silently dropping every sample
+    // forever.
+    void unknownSchema(quint32 sourceId, quint16 topicId, quint16 schemaVersion);
 
 private:
     TelemetryCatalog* m_catalog;

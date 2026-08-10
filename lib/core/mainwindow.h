@@ -3,7 +3,6 @@
 #include <QJsonObject>
 #include <QMainWindow>
 #include <QRect>
-#include <QSet>
 #include <QString>
 
 class QAction;
@@ -18,6 +17,7 @@ class BtpHandshake;
 class BtpSession;
 class DashboardGrid;
 class DashboardWidget;
+class ManifestClient;
 class ProtocolRouter;
 class PropertiesPanel;
 class Ribbon;
@@ -90,10 +90,9 @@ private:
     // SerialManager hands it into validated frames, ProtocolRouter
     // dispatches those by MessageType, and TelemetryFieldRouter decodes
     // TELEMETRY samples against m_telemetryCatalog into per-field values.
-    // m_telemetryCatalog starts empty -- there is no manifest/discovery
-    // exchange yet (that's topico 16), so nothing here assumes which
-    // source_id is on the other end of the wire; populating it for a real
-    // connection is left to a later topico.
+    // m_telemetryCatalog starts empty and is populated dynamically over the
+    // wire by m_manifestClient (topico 16) -- nothing here assumes which
+    // source_id/schema is on the other end in advance.
     BtpSession* m_btpSession = nullptr;
     ProtocolRouter* m_protocolRouter = nullptr;
     TelemetryCatalog* m_telemetryCatalog = nullptr;
@@ -102,10 +101,10 @@ private:
     // (topico 15) on top of the framing BtpSession already does; see
     // protocol/btphandshake.h.
     BtpHandshake* m_btpHandshake = nullptr;
-    // sourceIds we've already registered a schema for via
-    // registerBallySoftwareCatalog() -- a pragmatic bridge until topico 16's
-    // real MANIFEST exchange populates m_telemetryCatalog over the wire.
-    QSet<quint32> m_knownTelemetrySources;
+    // Requests MANIFEST_DATA over the wire and builds m_telemetryCatalog
+    // entries from it (topico 16) -- replaces topico 15's temporary
+    // registerBallySoftwareCatalog()/m_knownTelemetrySources bridge.
+    ManifestClient* m_manifestClient = nullptr;
     void wireChartWidgetToTelemetry(DashboardWidget* widget);
     int m_runTabIndex = -1;
     QComboBox* m_portCombo = nullptr;
