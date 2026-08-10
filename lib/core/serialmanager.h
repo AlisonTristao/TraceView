@@ -7,17 +7,29 @@
 
 #include <QSerialPort>
 
-#include "serialprotocol.h"
-
 namespace traceview {
+
+// Terminator appended to outbound control-widget commands (docs/PROTOCOL.md
+// "Outbound: control commands") -- a single global setting tied to the port
+// connection (Run ribbon tab), not per-widget. Does not apply to
+// SerialTerminalWidget's raw per-keystroke passthrough, which stays
+// unterminated. Unrelated to the BTP framing added in topico 14 (see
+// protocol/btpsession.h): this is purely a transport-level convenience for
+// the still-raw-text control-widget outbound path (COMMAND-channel
+// migration is future work, see docs/PROTOCOL.md).
+enum class LineTerminator { None, Lf, Cr, CrLf };
+
+// Byte sequence for `terminator` -- empty for None.
+QByteArray lineTerminatorBytes(LineTerminator terminator);
 
 // Owns the single QSerialPort the whole app shares (see BACKEND_TODO.txt --
 // there is one connection for the entire app, not one per widget). Purely a
-// bytes-in/bytes-out transport: no frame parsing (SerialProtocol, a later
-// module) and no routing to widgets happens here. Meant to be created once
-// (MainWindow-owned) and handed to whatever needs to read/write the port --
-// the Run ribbon tab for connect/disconnect UI, SerialTerminalWidget for raw
-// passthrough, the future frame router for decoded data.
+// bytes-in/bytes-out transport: no frame parsing and no routing to widgets
+// happens here -- see protocol/btpsession.h (BtpSession) for BTP framing and
+// core/serialwidgetbridge.h for the raw control/terminal wiring. Meant to be
+// created once (MainWindow-owned) and handed to whatever needs to read/write
+// the port -- the Run ribbon tab for connect/disconnect UI,
+// SerialTerminalWidget for raw passthrough, BtpSession for decoded data.
 class SerialManager : public QObject {
     Q_OBJECT
 

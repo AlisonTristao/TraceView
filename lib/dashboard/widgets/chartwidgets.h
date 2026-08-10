@@ -9,12 +9,20 @@ namespace traceview {
 
 // DummyLineChartWidget/DummyBarChartWidget/DummyGaugeWidget render live
 // telemetry per their ConfigEditor config (widgets/chartconfigeditor.h,
-// widgets/gaugeconfigeditor.h): setConfig() stores the parsed config,
-// onSerialPayload() decodes each arriving frame's payload, and paintEvent()
-// draws whatever's currently held. Retain the "Dummy" class/type-id names
-// (see widgetregistry.cpp) even though rendering is now real -- renaming is
-// a save-format/UI-label concern independent of this task (BACKEND_TODO.txt
-// Tasks 7/8).
+// widgets/gaugeconfigeditor.h): setConfig() stores the parsed config, and
+// appendFieldSample()/setValue() below feed each decoded (timestamp, value)
+// pair in as it arrives, coalescing repaints independently of ingestion rate
+// (topico 14 PASSO 12) so a fast telemetry stream doesn't force a full
+// repaint per sample. Retain the "Dummy" class/type-id names (see
+// widgetregistry.cpp) even though rendering is now real -- renaming is a
+// save-format/UI-label concern independent of this.
+//
+// Wiring these to a live TelemetryFieldRouter::fieldSample() signal (i.e.
+// which widget receives which field, filtered by this widget's own
+// sourceId/topicId/fieldId config) is topico 15's job ("fatia vertical de
+// telemetria binaria"); this class only owns the data model and paint logic
+// and stays paintable/testable with directly-injected synthetic samples
+// either way (see tools/chart_preview).
 
 class ChartWidgetBase : public DashboardWidget {
 public:
@@ -22,13 +30,18 @@ public:
 
     QColor cellFillColor(const ThemePalette& palette) const override { return palette.surface; }
     void setConfig(const QJsonObject& config) override;
-    void onSerialPayload(const QByteArray& payload) override;
+
+    // Appends one decoded (timestampUs, value) pair to every series bound to
+    // `fieldId` (ChartSeriesConfig::fieldId) and schedules a repaint.
+    void appendFieldSample(quint16 fieldId, quint64 timestampUs, double value);
 
 protected:
     ChartConfig m_config;
-    QVector<QVector<double>> m_seriesBuffers; // one per m_config.series, same order
+    QVector<TelemetrySeriesBuffer> m_seriesBuffers;  // one per m_config.series, same order
 
 private:
+    void scheduleRepaint();
+
     bool m_repaintPending = false;
 };
 
@@ -54,15 +67,20 @@ public:
 
     QColor cellFillColor(const ThemePalette& palette) const override { return palette.surface; }
     void setConfig(const QJsonObject& config) override;
-    void onSerialPayload(const QByteArray& payload) override;
+
+    // Sets the current value if `fieldId` matches this gauge's configured
+    // GaugeConfig::fieldId (a no-op otherwise) and schedules a repaint.
+    void appendFieldSample(quint16 fieldId, quint64 timestampUs, double value);
 
 protected:
     void paintEvent(QPaintEvent* event) override;
 
 private:
+    void scheduleRepaint();
+
     GaugeConfig m_config;
     double m_value = qQNaN();
     bool m_repaintPending = false;
 };
 
-} // namespace traceview
+}  // namespace traceview

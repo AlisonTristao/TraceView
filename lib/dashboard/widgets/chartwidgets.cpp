@@ -23,9 +23,10 @@ constexpr int kOuterPadding = 12;
 // plot itself) -- deliberately smaller than kOuterPadding so the unit label
 // reads as attached to its axis rather than floating apart from it.
 constexpr int kAxisLabelGap = 4;
-// Caps how often onSerialPayload() triggers an actual repaint, independent
-// of how fast frames arrive (see BACKEND_TODO.txt "taxas diferentes por
-// widget") -- data still gets appended to the buffers on every frame.
+// Caps how often appendFieldSample() triggers an actual repaint, independent
+// of how fast samples arrive (topico 14 PASSO 12: ingestion rate stays
+// separate from repaint rate) -- data still gets appended to the buffers on
+// every sample.
 constexpr int kRepaintIntervalMs = 33; // ~30 Hz
 // Shared with paintSeriesLegends()'s swatch dot so plotTopMargin()/
 // plotBottomMargin() below can predict the legend rows' real height instead
@@ -168,7 +169,7 @@ int legendRowHeight(const QPainter& painter) {
 }
 
 QString seriesDisplayName(const ChartSeriesConfig& series) {
-    return series.name.isEmpty() ? QString("Series %1").arg(series.index + 1) : series.name;
+    return series.name.isEmpty() ? QString("Field %1").arg(series.fieldId) : series.name;
 }
 
 // A series buffer's latest sample, formatted like a Y-axis value label (see
@@ -453,8 +454,12 @@ void ChartWidgetBase::setConfig(const QJsonObject& config) {
     update();
 }
 
-void ChartWidgetBase::onSerialPayload(const QByteArray& payload) {
-    appendChartSample(m_seriesBuffers, m_config, payload);
+void ChartWidgetBase::appendFieldSample(quint16 fieldId, quint64 timestampUs, double value) {
+    traceview::appendFieldSample(m_seriesBuffers, m_config, fieldId, timestampUs, value);
+    scheduleRepaint();
+}
+
+void ChartWidgetBase::scheduleRepaint() {
     if (m_repaintPending) {
         return;
     }
@@ -475,7 +480,13 @@ void DummyLineChartWidget::paintEvent(QPaintEvent*) {
 
     paintBackground(painter, *this, palette);
 
-    const auto [yMin, yMax] = computeYRange(m_config, m_seriesBuffers);
+    QVector<QVector<double>> seriesValues;
+    seriesValues.reserve(m_seriesBuffers.size());
+    for (const TelemetrySeriesBuffer& buffer : m_seriesBuffers) {
+        seriesValues.append(buffer.values());
+    }
+
+    const auto [yMin, yMax] = computeYRange(m_config, seriesValues);
     const int topMargin = plotTopMargin(painter, !m_config.series.isEmpty());
     const int leftMargin = plotLeftMargin(painter, !m_config.yUnit.isEmpty(), yMin, yMax);
     const int bottomMargin = plotBottomMargin(painter);
@@ -484,15 +495,15 @@ void DummyLineChartWidget::paintEvent(QPaintEvent*) {
 
     paintYAxis(painter, plotRect, yMin, yMax, m_config.yUnit, m_config.showGrid, palette);
     paintXAxis(painter, plotRect, m_config.showGrid, palette);
-    for (int i = 0; i < m_config.series.size() && i < m_seriesBuffers.size(); ++i) {
-        paintLineSeries(painter, plotRect, capacity, m_config.series[i], m_seriesBuffers[i], yMin, yMax);
+    for (int i = 0; i < m_config.series.size() && i < seriesValues.size(); ++i) {
+        paintLineSeries(painter, plotRect, capacity, m_config.series[i], seriesValues[i], yMin, yMax);
     }
 
     // No more redundant "Line Chart" corner label -- DashboardCell's header
     // already shows the configured name (TAREFA 1); this corner now carries
     // the per-series legend instead, which the old literal text had no room
     // for anyway.
-    paintSeriesLegends(painter, area, m_config.series, m_seriesBuffers, m_config.xAxisMode, palette);
+    paintSeriesLegends(painter, area, m_config.series, seriesValues, m_config.xAxisMode, palette);
 }
 
 DummyBarChartWidget::DummyBarChartWidget(QWidget* parent) : ChartWidgetBase(parent) {}
@@ -505,7 +516,13 @@ void DummyBarChartWidget::paintEvent(QPaintEvent*) {
 
     paintBackground(painter, *this, palette);
 
-    const auto [yMin, yMax] = computeYRange(m_config, m_seriesBuffers);
+    QVector<QVector<double>> seriesValues;
+    seriesValues.reserve(m_seriesBuffers.size());
+    for (const TelemetrySeriesBuffer& buffer : m_seriesBuffers) {
+        seriesValues.append(buffer.values());
+    }
+
+    const auto [yMin, yMax] = computeYRange(m_config, seriesValues);
     const int topMargin = plotTopMargin(painter, !m_config.series.isEmpty());
     const int leftMargin = plotLeftMargin(painter, !m_config.yUnit.isEmpty(), yMin, yMax);
     const int bottomMargin = plotBottomMargin(painter);
@@ -514,11 +531,11 @@ void DummyBarChartWidget::paintEvent(QPaintEvent*) {
 
     paintYAxis(painter, plotRect, yMin, yMax, m_config.yUnit, m_config.showGrid, palette);
     paintXAxis(painter, plotRect, m_config.showGrid, palette);
-    paintBarSeries(painter, plotRect, capacity, m_config.series, m_seriesBuffers, yMin, yMax);
+    paintBarSeries(painter, plotRect, capacity, m_config.series, seriesValues, yMin, yMax);
 
     // See DummyLineChartWidget::paintEvent for why this is a legend instead
     // of a "Bar Chart" corner label now.
-    paintSeriesLegends(painter, area, m_config.series, m_seriesBuffers, m_config.xAxisMode, palette);
+    paintSeriesLegends(painter, area, m_config.series, seriesValues, m_config.xAxisMode, palette);
 }
 
 DummyGaugeWidget::DummyGaugeWidget(QWidget* parent) : DashboardWidget(parent) {}
@@ -528,8 +545,16 @@ void DummyGaugeWidget::setConfig(const QJsonObject& config) {
     update();
 }
 
-void DummyGaugeWidget::onSerialPayload(const QByteArray& payload) {
-    m_value = decodeGaugeValue(payload, m_config);
+void DummyGaugeWidget::appendFieldSample(quint16 fieldId, quint64 timestampUs, double value) {
+    Q_UNUSED(timestampUs);  // a gauge only ever shows the current value
+    if (fieldId != m_config.fieldId) {
+        return;
+    }
+    m_value = value;
+    scheduleRepaint();
+}
+
+void DummyGaugeWidget::scheduleRepaint() {
     if (m_repaintPending) {
         return;
     }

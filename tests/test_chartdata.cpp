@@ -2,50 +2,35 @@
 
 #include <QJsonArray>
 #include <QJsonObject>
-#include <QPair>
 
 #include "dashboard/widgets/chartdata.h"
 
-using traceview::appendChartSample;
-using traceview::ChartByteType;
+using traceview::appendFieldSample;
 using traceview::chartBufferCapacity;
 using traceview::ChartConfig;
-using traceview::ChartPayloadFormat;
 using traceview::ChartSeriesStyle;
 using traceview::ChartXAxisMode;
 using traceview::ChartYAxisMode;
-using traceview::decodeChartPayload;
+using traceview::GaugeConfig;
 using traceview::parseChartConfig;
+using traceview::parseGaugeConfig;
 using traceview::resizeChartBuffers;
+using traceview::TelemetrySeriesBuffer;
 
 namespace {
 
-QJsonObject seriesJson(int index, const QString& byteType = "float32") {
+QJsonObject seriesJson(int fieldId, const QString& style = "solid") {
     QJsonObject series;
-    series["index"] = index;
-    series["byteType"] = byteType;
+    series["fieldId"] = fieldId;
+    series["style"] = style;
     return series;
 }
 
-ChartConfig csvConfig(const QVector<int>& indices) {
+ChartConfig configWithFields(const QVector<int>& fieldIds) {
     QJsonObject json;
-    json["format"] = "csv";
     QJsonArray series;
-    for (int index : indices) {
-        series.append(seriesJson(index));
-    }
-    json["series"] = series;
-    return parseChartConfig(json);
-}
-
-// Not named "slots": that identifier collides with Qt's `slots` macro (see
-// the comment in chartdata.cpp's decodeChartPayload).
-ChartConfig bytesConfig(const QVector<QPair<int, QString>>& byteSlots) {
-    QJsonObject json;
-    json["format"] = "bytes";
-    QJsonArray series;
-    for (const auto& slot : byteSlots) {
-        series.append(seriesJson(slot.first, slot.second));
+    for (int fieldId : fieldIds) {
+        series.append(seriesJson(fieldId));
     }
     json["series"] = series;
     return parseChartConfig(json);
@@ -57,26 +42,25 @@ class TestChartData : public QObject {
 private slots:
     void parsesDefaultsFromEmptyConfig();
     void parsesExplicitConfig();
+    void parsesSourceAndTopicIdsFromHexOrDecimalStrings();
 
     void bufferCapacityInSamplesMode();
     void bufferCapacityInTimeMode();
 
-    void decodesCsvSlotsByIndex();
-    void csvMissingOrMalformedSlotYieldsNaN();
-
-    void decodesBytesSlotsLittleEndianPerType();
-    void bytesWrongWidthOrNonHexYieldsNaN();
-
-    void appendSkipsNaNAndTrimsToCapacity();
+    void appendFieldSampleRoutesByFieldIdAndTrimsToCapacity();
+    void appendFieldSampleIgnoresUnboundFieldId();
+    void appendFieldSampleFeedsMultipleSeriesWithSameFieldId();
 
     void resizeCarriesOverByPositionAndTrims();
+
+    void gaugeConfigParsesFieldBinding();
 };
 
 void TestChartData::parsesDefaultsFromEmptyConfig() {
     const ChartConfig config = parseChartConfig(QJsonObject());
 
-    QCOMPARE(config.format, ChartPayloadFormat::Csv);
-    QCOMPARE(config.count, 1);
+    QCOMPARE(config.sourceId, quint32(0));
+    QCOMPARE(config.topicId, quint16(0));
     QCOMPARE(config.xAxisMode, ChartXAxisMode::Samples);
     QCOMPARE(config.sampleTimeMs, 100.0);
     QCOMPARE(config.xLimit, 500);
@@ -89,8 +73,8 @@ void TestChartData::parsesDefaultsFromEmptyConfig() {
 
 void TestChartData::parsesExplicitConfig() {
     QJsonObject json;
-    json["format"] = "bytes";
-    json["count"] = 3;
+    json["sourceId"] = "0x11223344";
+    json["topicId"] = "0x0101";
 
     QJsonObject xAxis;
     xAxis["mode"] = "time";
@@ -108,17 +92,16 @@ void TestChartData::parsesExplicitConfig() {
 
     QJsonObject one;
     one["name"] = "Accel X";
-    one["index"] = 2;
+    one["fieldId"] = 3;
     one["color"] = "#ff0000";
     one["style"] = "dashed";
-    one["byteType"] = "int16";
     QJsonArray series;
     series.append(one);
     json["series"] = series;
 
     const ChartConfig config = parseChartConfig(json);
-    QCOMPARE(config.format, ChartPayloadFormat::Bytes);
-    QCOMPARE(config.count, 3);
+    QCOMPARE(config.sourceId, quint32(0x11223344));
+    QCOMPARE(config.topicId, quint16(0x0101));
     QCOMPARE(config.xAxisMode, ChartXAxisMode::Time);
     QCOMPARE(config.sampleTimeMs, 50.0);
     QCOMPARE(config.xLimit, 10);
@@ -129,10 +112,18 @@ void TestChartData::parsesExplicitConfig() {
     QCOMPARE(config.showGrid, false);
     QCOMPARE(config.series.size(), 1);
     QCOMPARE(config.series[0].name, QStringLiteral("Accel X"));
-    QCOMPARE(config.series[0].index, 2);
+    QCOMPARE(config.series[0].fieldId, quint16(3));
     QCOMPARE(config.series[0].color, QColor("#ff0000"));
     QCOMPARE(config.series[0].style, ChartSeriesStyle::Dashed);
-    QCOMPARE(config.series[0].byteType, ChartByteType::Int16);
+}
+
+void TestChartData::parsesSourceAndTopicIdsFromHexOrDecimalStrings() {
+    QJsonObject json;
+    json["sourceId"] = "287454020";  // decimal for 0x11223344
+    json["topicId"] = "257";         // decimal for 0x0101
+    const ChartConfig config = parseChartConfig(json);
+    QCOMPARE(config.sourceId, quint32(0x11223344));
+    QCOMPARE(config.topicId, quint16(0x0101));
 }
 
 void TestChartData::bufferCapacityInSamplesMode() {
@@ -154,77 +145,86 @@ void TestChartData::bufferCapacityInTimeMode() {
     QCOMPARE(chartBufferCapacity(config), 334); // ceil(1000/3)
 }
 
-void TestChartData::decodesCsvSlotsByIndex() {
-    const ChartConfig config = csvConfig({0, 2, 5});
-    const QVector<double> values = decodeChartPayload("1;2.5;-3", config);
-
-    QCOMPARE(values.size(), 3);
-    QCOMPARE(values[0], 1.0);
-    QCOMPARE(values[1], -3.0);
-    QVERIFY(qIsNaN(values[2])); // index 5 doesn't exist in this payload
-}
-
-void TestChartData::csvMissingOrMalformedSlotYieldsNaN() {
-    const ChartConfig config = csvConfig({0});
-    QVERIFY(qIsNaN(decodeChartPayload("abc", config)[0]));
-    QVERIFY(qIsNaN(decodeChartPayload("", config)[0]));
-}
-
-void TestChartData::decodesBytesSlotsLittleEndianPerType() {
-    // Same examples as docs/PROTOCOL.md "Inbound: payload encoding".
-    {
-        const ChartConfig config = bytesConfig({{0, "int16"}, {1, "int16"}});
-        const QVector<double> values = decodeChartPayload("4a3f;00c8", config);
-        QCOMPARE(values[0], 16202.0);
-        QCOMPARE(values[1], -14336.0);
-    }
-    {
-        const ChartConfig config = bytesConfig({{0, "uint8"}});
-        QCOMPARE(decodeChartPayload("ff", config)[0], 255.0);
-    }
-    {
-        const ChartConfig config = bytesConfig({{0, "float32"}});
-        const QVector<double> values = decodeChartPayload("0000c03f", config);
-        QVERIFY(qFuzzyCompare(values[0], 1.5));
-    }
-}
-
-void TestChartData::bytesWrongWidthOrNonHexYieldsNaN() {
-    const ChartConfig config = bytesConfig({{0, "int16"}});
-    QVERIFY(qIsNaN(decodeChartPayload("4a", config)[0]));   // too short for int16 (needs 4 hex chars)
-    QVERIFY(qIsNaN(decodeChartPayload("zzzz", config)[0])); // not hex
-}
-
-void TestChartData::appendSkipsNaNAndTrimsToCapacity() {
-    ChartConfig config = csvConfig({0, 1});
+void TestChartData::appendFieldSampleRoutesByFieldIdAndTrimsToCapacity() {
+    ChartConfig config = configWithFields({1, 2});
     config.xAxisMode = ChartXAxisMode::Samples;
     config.xLimit = 2;
 
-    QVector<QVector<double>> buffers(2);
-    appendChartSample(buffers, config, "1;10");
-    appendChartSample(buffers, config, "abc;20"); // slot 0 malformed -> skipped for series 0 only
-    appendChartSample(buffers, config, "3;30");
-    appendChartSample(buffers, config, "4;40"); // pushes both buffers past capacity 2
+    QVector<TelemetrySeriesBuffer> buffers(2);
+    for (TelemetrySeriesBuffer& buffer : buffers) buffer.setCapacity(chartBufferCapacity(config));
 
-    QCOMPARE(buffers[0], (QVector<double>{3.0, 4.0}));
-    QCOMPARE(buffers[1], (QVector<double>{30.0, 40.0}));
+    appendFieldSample(buffers, config, 1, 100, 1.0);
+    appendFieldSample(buffers, config, 2, 100, 10.0);
+    appendFieldSample(buffers, config, 1, 200, 3.0);
+    appendFieldSample(buffers, config, 1, 300, 4.0);  // pushes series 0 past capacity 2
+
+    QCOMPARE(buffers[0].values(), (QVector<double>{3.0, 4.0}));
+    QCOMPARE(buffers[1].values(), (QVector<double>{10.0}));
+    QCOMPARE(buffers[0].samples().first().timestampUs, quint64(200));
+}
+
+void TestChartData::appendFieldSampleIgnoresUnboundFieldId() {
+    ChartConfig config = configWithFields({1});
+    QVector<TelemetrySeriesBuffer> buffers(1);
+
+    appendFieldSample(buffers, config, 99, 100, 42.0);  // no series bound to field 99
+
+    QVERIFY(buffers[0].values().isEmpty());
+}
+
+void TestChartData::appendFieldSampleFeedsMultipleSeriesWithSameFieldId() {
+    // Nothing stops two series (e.g. differently styled) from binding the
+    // same field id -- both must receive the sample.
+    ChartConfig config = configWithFields({5, 5});
+    QVector<TelemetrySeriesBuffer> buffers(2);
+
+    appendFieldSample(buffers, config, 5, 100, 7.0);
+
+    QCOMPARE(buffers[0].values(), (QVector<double>{7.0}));
+    QCOMPARE(buffers[1].values(), (QVector<double>{7.0}));
 }
 
 void TestChartData::resizeCarriesOverByPositionAndTrims() {
-    ChartConfig config = csvConfig({0, 1, 2});
+    ChartConfig config = configWithFields({1, 2, 3});
     config.xLimit = 100;
 
-    const QVector<QVector<double>> previous = {{1.0, 2.0, 3.0}, {9.0}, {}};
-    QVector<QVector<double>> resized = resizeChartBuffers(previous, config);
+    QVector<TelemetrySeriesBuffer> previous(3);
+    previous[0].append(1, 1.0);
+    previous[0].append(2, 2.0);
+    previous[0].append(3, 3.0);
+    previous[1].append(1, 9.0);
+    // previous[2] stays empty
+
+    QVector<TelemetrySeriesBuffer> resized = resizeChartBuffers(previous, config);
     QCOMPARE(resized.size(), 3);
-    QCOMPARE(resized[0], previous[0]);
-    QCOMPARE(resized[1], previous[1]);
-    QVERIFY(resized[2].isEmpty());
+    QCOMPARE(resized[0].values(), (QVector<double>{1.0, 2.0, 3.0}));
+    QCOMPARE(resized[1].values(), (QVector<double>{9.0}));
+    QVERIFY(resized[2].values().isEmpty());
 
     // Shrinking capacity trims from the front (oldest first).
     config.xLimit = 2;
     resized = resizeChartBuffers(previous, config);
-    QCOMPARE(resized[0], (QVector<double>{2.0, 3.0}));
+    QCOMPARE(resized[0].values(), (QVector<double>{2.0, 3.0}));
+}
+
+void TestChartData::gaugeConfigParsesFieldBinding() {
+    QJsonObject json;
+    json["sourceId"] = "0x11223344";
+    json["topicId"] = "0x0001";
+    json["fieldId"] = 2;
+    json["min"] = -1.0;
+    json["max"] = 1.0;
+    json["unit"] = "g";
+    json["decimals"] = 3;
+
+    const GaugeConfig config = parseGaugeConfig(json);
+    QCOMPARE(config.sourceId, quint32(0x11223344));
+    QCOMPARE(config.topicId, quint16(0x0001));
+    QCOMPARE(config.fieldId, quint16(2));
+    QCOMPARE(config.min, -1.0);
+    QCOMPARE(config.max, 1.0);
+    QCOMPARE(config.unit, QStringLiteral("g"));
+    QCOMPARE(config.decimals, 3);
 }
 
 } // namespace

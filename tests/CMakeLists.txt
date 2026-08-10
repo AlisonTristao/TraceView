@@ -18,5 +18,14 @@ add_traceview_test(test_widgetregistry traceview_dashboard)
 add_traceview_test(test_dashboardgrid traceview_dashboard)
 add_traceview_test(test_chartdata traceview_dashboard)
 add_traceview_test(test_serialmanager traceview_ui)
-add_traceview_test(test_serialprotocol traceview_ui)
-add_traceview_test(test_serialdatarouter traceview_ui)
+
+# BTP v1 client (topico 14) -- protocol/transport layer only, no QWidget
+# dependency (traceview_protocol links just Qt6::Core and btp::codec; see
+# lib/CMakeLists.txt). Satisfies topico 14's CRITERIO DE ACEITE "parser/
+# protocolo possui testes sem QWidget".
+add_traceview_test(test_telemetryseriesbuffer traceview_protocol)
+add_traceview_test(test_telemetrycatalog traceview_protocol)
+add_traceview_test(test_packedledecoder traceview_protocol)
+add_traceview_test(test_protocolrouter traceview_protocol)
+add_traceview_test(test_btpsession traceview_protocol)
+add_traceview_test(test_telemetryfieldrouter traceview_protocol)

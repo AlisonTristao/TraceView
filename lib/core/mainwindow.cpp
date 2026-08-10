@@ -4,6 +4,7 @@
 #include <QClipboard>
 #include <QComboBox>
 #include <QFileDialog>
+#include <QFileInfo>
 #include <QGuiApplication>
 #include <QHBoxLayout>
 #include <QKeySequence>
@@ -11,6 +12,7 @@
 #include <QMenuBar>
 #include <QMessageBox>
 #include <QPushButton>
+#include <QSettings>
 #include <QSignalBlocker>
 #include <QStatusBar>
 #include <QToolButton>
@@ -20,10 +22,13 @@
 #include "dashboard/dashboardgrid.h"
 #include "dashboard/widgetregistry.h"
 #include "project/projectstore.h"
+#include "protocol/btpsession.h"
+#include "protocol/protocolrouter.h"
+#include "protocol/telemetrycatalog.h"
+#include "protocol/telemetryfieldrouter.h"
 #include "propertiespanel.h"
 #include "ribbon.h"
 #include "ribbonicons.h"
-#include "serialdatarouter.h"
 #include "serialmanager.h"
 #include "serialwidgetbridge.h"
 #include "traceview/thememanager.h"
@@ -37,6 +42,8 @@ namespace traceview {
 
 namespace {
 constexpr const char* kProjectFileFilter = "TraceView Project (*.tvproj)";
+constexpr const char* kRecentFilesSettingsKey = "recentFiles/paths";
+constexpr int kMaxRecentFiles = 10;
 } // namespace
 
 MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
@@ -47,12 +54,37 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
 
     m_serialManager = new SerialManager(this);
     m_dashboardGrid = new DashboardGrid(this);
-    // Routes decoded frames to widgets by key (BACKEND_TODO.txt Task 5); no
-    // further interaction needed here once wired.
-    new SerialDataRouter(m_serialManager, m_dashboardGrid, this);
+
+    // BTP v1 client stack (topico 14): raw bytes -> BtpSession (COBS decode
+    // + envelope/CRC validation + reassembly) -> ProtocolRouter (dispatch by
+    // MessageType) -> TelemetryFieldRouter (schema decode, fan out by
+    // field). m_telemetryCatalog is intentionally empty here -- there is no
+    // manifest/discovery exchange yet (topico 16), so nothing assumes which
+    // source_id is on the other end of the wire; wiring a chart/gauge
+    // widget's own fieldSample subscription onto m_telemetryFieldRouter is
+    // topico 15's job.
+    m_btpSession = new BtpSession(this);
+    m_protocolRouter = new ProtocolRouter(this);
+    m_telemetryCatalog = new TelemetryCatalog();
+    m_telemetryFieldRouter = new TelemetryFieldRouter(m_telemetryCatalog, this);
+    connect(m_serialManager, &SerialManager::dataReceived, m_btpSession, &BtpSession::feedBytes);
+    connect(m_btpSession, &BtpSession::bytesToWrite, m_serialManager, &SerialManager::write);
+    connect(m_serialManager, &SerialManager::connectionStateChanged, this, [this](bool connected) {
+        if (connected) {
+            m_btpSession->reset();
+        }
+    });
+    connect(m_btpSession, &BtpSession::frameReceived, m_protocolRouter, &ProtocolRouter::onFrameReceived);
+    connect(m_protocolRouter, &ProtocolRouter::telemetrySampleReceived, m_telemetryFieldRouter,
+            &TelemetryFieldRouter::onTelemetrySample);
+
     // Wires control-widget commands and the serial monitor's raw I/O to the
     // same connection (BACKEND_TODO.txt Tasks 9/10); no further interaction
-    // needed here once wired.
+    // needed here once wired. Outbound control-widget commands still go
+    // straight to SerialManager as raw literal text (docs/PROTOCOL.md
+    // "Outbound: control commands") -- migrating them onto the BTP COMMAND
+    // channel is out of scope for topico 14 (see its PASSOS) and left for a
+    // later topico.
     new SerialWidgetBridge(m_serialManager, m_dashboardGrid, this);
 
     Ribbon* ribbon = buildRibbon();
@@ -78,14 +110,33 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     setCentralWidget(central);
 }
 
+MainWindow::~MainWindow() {
+    delete m_telemetryCatalog;
+}
+
 void MainWindow::buildMenus() {
     auto* fileMenu = menuBar()->addMenu("&File");
+
+    auto* newAction = fileMenu->addAction("&New Project");
+    newAction->setShortcut(QKeySequence::New);
+    connect(newAction, &QAction::triggered, this, &MainWindow::onNewProject);
+
+    auto* openAction = fileMenu->addAction("&Open Project...");
+    openAction->setShortcut(QKeySequence::Open);
+    connect(openAction, &QAction::triggered, this, &MainWindow::onOpenProject);
+
+    m_recentFilesMenu = fileMenu->addMenu("Open &Recent");
+    updateRecentFilesMenu();
+
+    fileMenu->addSeparator();
+
     auto* saveAction = fileMenu->addAction("&Save Project");
     saveAction->setShortcut(QKeySequence::Save);
     connect(saveAction, &QAction::triggered, this, &MainWindow::onSaveProject);
-    auto* openAction = fileMenu->addAction("&Open Project");
-    openAction->setShortcut(QKeySequence::Open);
-    connect(openAction, &QAction::triggered, this, &MainWindow::onOpenProject);
+
+    auto* saveAsAction = fileMenu->addAction("Save Project &As...");
+    saveAsAction->setShortcut(QKeySequence::SaveAs);
+    connect(saveAsAction, &QAction::triggered, this, &MainWindow::onSaveProjectAs);
 
     auto* viewMenu = menuBar()->addMenu("&View");
     auto* themeMenu = viewMenu->addMenu("&Theme");
@@ -204,8 +255,26 @@ Ribbon* MainWindow::buildRibbon() {
     m_fullscreenButton->setAutoRaise(true);
     m_fullscreenButton->setFixedSize(kRibbonButtonSize, kRibbonButtonSize);
     m_fullscreenButton->setIconSize(QSize(kRibbonIconSize, kRibbonIconSize));
-    m_fullscreenButton->setToolTip("Fullscreen dashboard");
+    m_fullscreenButton->setToolTip("Fullscreen dashboard (F11)");
     connect(m_fullscreenButton, &QToolButton::toggled, this, &MainWindow::onFullscreenToggled);
+
+    // Window-level shortcuts (not menu items) so they keep working once the
+    // menu bar is hidden while fullscreen (see onFullscreenToggled). Routed
+    // through the button itself rather than duplicating onFullscreenToggled's
+    // logic here.
+    auto* fullscreenAction = new QAction(this);
+    fullscreenAction->setShortcut(QKeySequence(Qt::Key_F11));
+    addAction(fullscreenAction);
+    connect(fullscreenAction, &QAction::triggered, m_fullscreenButton, &QToolButton::toggle);
+
+    auto* exitFullscreenAction = new QAction(this);
+    exitFullscreenAction->setShortcut(QKeySequence(Qt::Key_Escape));
+    addAction(exitFullscreenAction);
+    connect(exitFullscreenAction, &QAction::triggered, this, [this]() {
+        if (m_fullscreenButton->isChecked()) {
+            m_fullscreenButton->setChecked(false);
+        }
+    });
 
     updateRibbonIcons();
     connect(&ThemeManager::instance(), &ThemeManager::themeChanged, this,
@@ -400,24 +469,49 @@ void MainWindow::onPanelConfigChangeRequested(const QJsonObject& config) {
     m_dashboardGrid->changeSelectedConfig(config);
 }
 
+void MainWindow::onNewProject() {
+    if (QMessageBox::question(this, "New Project",
+                               "Discard the current dashboard and start a new, empty project?",
+                               QMessageBox::Yes | QMessageBox::No, QMessageBox::No) != QMessageBox::Yes) {
+        return;
+    }
+
+    ProjectStore::instance().reset();
+    m_dashboardGrid->fromJson(QJsonObject());
+    m_dashboardGrid->undoStack()->clear();
+    refreshPropertiesPanel();
+    statusBar()->showMessage("Started a new project.", 3000);
+}
+
 void MainWindow::onSaveProject() {
     ProjectStore::instance().setSection("dashboard", m_dashboardGrid->toJson());
 
     QString path = ProjectStore::instance().currentPath();
     if (path.isEmpty()) {
-        path = QFileDialog::getSaveFileName(this, "Save Project", QString(), kProjectFileFilter);
-        if (path.isEmpty()) {
-            return;
-        }
-        if (!ProjectStore::instance().saveAs(path)) {
-            QMessageBox::warning(this, "Save Project", ProjectStore::instance().lastError());
-        }
+        onSaveProjectAs();
         return;
     }
 
     if (!ProjectStore::instance().save()) {
         QMessageBox::warning(this, "Save Project", ProjectStore::instance().lastError());
+        return;
     }
+    addRecentFile(path);
+}
+
+void MainWindow::onSaveProjectAs() {
+    ProjectStore::instance().setSection("dashboard", m_dashboardGrid->toJson());
+
+    const QString path = QFileDialog::getSaveFileName(this, "Save Project As", QString(), kProjectFileFilter);
+    if (path.isEmpty()) {
+        return;
+    }
+
+    if (!ProjectStore::instance().saveAs(path)) {
+        QMessageBox::warning(this, "Save Project", ProjectStore::instance().lastError());
+        return;
+    }
+    addRecentFile(path);
 }
 
 void MainWindow::onOpenProject() {
@@ -425,13 +519,59 @@ void MainWindow::onOpenProject() {
     if (path.isEmpty()) {
         return;
     }
+    openRecentFile(path);
+}
 
+void MainWindow::openRecentFile(const QString& path) {
     if (!ProjectStore::instance().load(path)) {
         QMessageBox::warning(this, "Open Project", ProjectStore::instance().lastError());
         return;
     }
 
     m_dashboardGrid->fromJson(ProjectStore::instance().section("dashboard"));
+    m_dashboardGrid->undoStack()->clear();
+    refreshPropertiesPanel();
+    addRecentFile(path);
+}
+
+void MainWindow::addRecentFile(const QString& path) {
+    QSettings settings;
+    QStringList files = settings.value(kRecentFilesSettingsKey).toStringList();
+    files.removeAll(path);
+    files.prepend(path);
+    while (files.size() > kMaxRecentFiles) {
+        files.removeLast();
+    }
+    settings.setValue(kRecentFilesSettingsKey, files);
+    updateRecentFilesMenu();
+}
+
+void MainWindow::updateRecentFilesMenu() {
+    m_recentFilesMenu->clear();
+
+    const QSettings settings;
+    const QStringList files = settings.value(kRecentFilesSettingsKey).toStringList();
+    if (files.isEmpty()) {
+        QAction* emptyAction = m_recentFilesMenu->addAction("(No Recent Projects)");
+        emptyAction->setEnabled(false);
+        return;
+    }
+
+    for (const QString& path : files) {
+        QAction* action = m_recentFilesMenu->addAction(QFileInfo(path).fileName());
+        action->setToolTip(path);
+        connect(action, &QAction::triggered, this, [this, path]() { openRecentFile(path); });
+    }
+
+    m_recentFilesMenu->addSeparator();
+    connect(m_recentFilesMenu->addAction("Clear Recent Projects"), &QAction::triggered, this,
+            &MainWindow::onClearRecentFiles);
+}
+
+void MainWindow::onClearRecentFiles() {
+    QSettings settings;
+    settings.remove(kRecentFilesSettingsKey);
+    updateRecentFilesMenu();
 }
 
 void MainWindow::onAbout() {
@@ -459,6 +599,26 @@ void MainWindow::onFullscreenToggled(bool checked) {
     // from a user dragging the window's edge, so none of Qt's dedicated (and
     // apparently fragile) fullscreen state machine is ever engaged.
     if (checked) {
+        // Brackets the native resize below AND the chrome hide() calls
+        // further down in one suspended-repaint block: the native resize
+        // alone already paints once (a borderless window at monitor size,
+        // chrome still visible), and menuBar()->hide()/setTabBarVisible()
+        // each schedule their own relayout/repaint on top of that - three
+        // independent paints landing as three visible steps unless nothing
+        // is allowed to paint until all of it is done.
+        //
+        // setUpdatesEnabled(false) alone doesn't achieve that on Windows: it
+        // only suppresses Qt's own paint-event scheduling, not the WM_PAINT
+        // that SetWindowPos(..., SWP_FRAMECHANGED) below forces synchronously
+        // as part of the frame-style change, which lands (and is visible)
+        // before menuBar()->hide()/setTabBarVisible() even run - that's the
+        // "goes fullscreen with the menu still there, then the ribbon tabs
+        // disappear a moment later" two-step. WM_SETREDRAW is the native
+        // counterpart that actually blocks painting for this HWND at the
+        // Win32 level regardless of source, so it's what suspends that
+        // in-between frame; the RedrawWindow() call once chrome is hidden
+        // forces the single final repaint everything was waiting for.
+        setUpdatesEnabled(false);
 #ifdef Q_OS_WIN
         // GetWindowPlacement(), not isMaximized()/GetWindowRect(): it hands
         // back Windows' own canonical "restore to" rectangle
@@ -473,6 +633,7 @@ void MainWindow::onFullscreenToggled(bool checked) {
         // un-maximize (double-click title bar, Win+Down) still lands on the
         // right size instead of on a placement we half-guessed.
         HWND hwnd = reinterpret_cast<HWND>(winId());
+        SendMessageW(hwnd, WM_SETREDRAW, FALSE, 0);
         WINDOWPLACEMENT placement{};
         placement.length = sizeof(WINDOWPLACEMENT);
         GetWindowPlacement(hwnd, &placement);
@@ -492,6 +653,17 @@ void MainWindow::onFullscreenToggled(bool checked) {
         // only triggers via ShowWindow's SW_MAXIMIZE/MINIMIZE/RESTORE
         // codes) so there's nothing to suppress here either - it's a single
         // ordinary resize.
+        //
+        // Deliberately NOT animated: an earlier version of this code
+        // animated the grow/shrink via ~60 real SetWindowPos calls over
+        // 200ms. That reintroduced two new problems the instant version
+        // didn't have - visible stutter/stepping (each tick forces a full
+        // relayout+repaint of the live dashboard, which doesn't reliably
+        // fit inside one frame's budget) and, more seriously, a corrupted
+        // taskbar after exiting (rapid resizes through the taskbar's screen
+        // region appear to confuse Explorer's own fullscreen-window
+        // detection). Both were absent with a single atomic resize, so this
+        // stays a snap rather than a tween.
         LONG style = GetWindowLongW(hwnd, GWL_STYLE);
         style &= ~WS_OVERLAPPEDWINDOW;
         SetWindowLongW(hwnd, GWL_STYLE, style);
@@ -507,72 +679,82 @@ void MainWindow::onFullscreenToggled(bool checked) {
         m_preFullscreenGeometry = frameGeometry();
         showFullScreen();
 #endif
-        m_fullscreenButton->setToolTip("Exit fullscreen");
-        // Resize to fullscreen first, then hide the chrome - not the other
-        // way around. Hiding the menu bar/tab bar first shrinks them out of
-        // a window that's still normal-sized, so the dashboard reflows into
-        // that freed space one frame before the window itself grows to
-        // cover the screen: two visible steps instead of one. Doing the
-        // resize first means the chrome disappears inside a window that's
-        // already at its final size, which is a single small relayout
-        // instead of a second visible jump.
+        m_fullscreenButton->setToolTip("Exit fullscreen (F11 / Esc)");
         menuBar()->hide();
         m_ribbon->setTabBarVisible(false);
+        SendMessageW(hwnd, WM_SETREDRAW, TRUE, 0);
+        RedrawWindow(hwnd, nullptr, nullptr, RDW_INVALIDATE | RDW_ALLCHILDREN | RDW_ERASE | RDW_UPDATENOW);
+        setUpdatesEnabled(true);
         updateRibbonIcons();
         return;
     }
 
-    m_fullscreenButton->setToolTip("Fullscreen dashboard");
+    m_fullscreenButton->setToolTip("Fullscreen dashboard (F11)");
+    // Same reasoning as the entry path: brackets the frame/placement
+    // restore below and the chrome show() calls further down so nothing
+    // paints until the window is at its final size AND its chrome is back,
+    // instead of those landing as separate visible steps.
+    setUpdatesEnabled(false);
 
 #ifdef Q_OS_WIN
     HWND hwnd = reinterpret_cast<HWND>(winId());
+    SendMessageW(hwnd, WM_SETREDRAW, FALSE, 0);
     LONG style = GetWindowLongW(hwnd, GWL_STYLE);
     style |= WS_OVERLAPPEDWINDOW;
     SetWindowLongW(hwnd, GWL_STYLE, style);
+    // SetWindowLongW's own docs: changing frame-related styles
+    // (WS_OVERLAPPEDWINDOW includes WS_CAPTION/WS_THICKFRAME) only takes
+    // effect once SetWindowPos is called with SWP_FRAMECHANGED. Without
+    // this, Windows keeps computing the non-client area from the stale
+    // borderless style, so the SW_SHOWMAXIMIZED placement below sizes the
+    // window against the wrong frame metrics and its bottom edge ends up
+    // extending under the taskbar. SWP_NOMOVE/SWP_NOSIZE keep this call from
+    // moving/resizing anything itself - it exists purely to make the style
+    // change above take effect before SetWindowPlacement runs.
+    SetWindowPos(hwnd, nullptr, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
 
-    if (m_wasMaximized) {
-        // Genuine maximize is a distinct OS-tracked state (affects Aero
-        // Snap, what double-click-titlebar toggles back to, etc.), not just
-        // "resized to look like the maximized rect" - the only way into it
-        // is Windows' own show-state machinery (SetWindowPlacement /
-        // ShowWindow), which is also the one piece of this function that
-        // can't avoid the min/max show animation. Suspend it for just this
-        // call and restore the user's setting right after - there's no
-        // multi-step sequence left for it to mask a gap in, since the frame
-        // style above and this placement are the only two changes involved
-        // and the first one paints nothing on its own (see the comment on
-        // the entry path's SetWindowLongW for why).
-        WINDOWPLACEMENT placement{};
-        placement.length = sizeof(WINDOWPLACEMENT);
-        placement.showCmd = SW_SHOWMAXIMIZED;
-        placement.rcNormalPosition = RECT{m_preFullscreenGeometry.left(), m_preFullscreenGeometry.top(),
-                                           m_preFullscreenGeometry.left() + m_preFullscreenGeometry.width(),
-                                           m_preFullscreenGeometry.top() + m_preFullscreenGeometry.height()};
+    // Both the maximized and plain-restore cases go through
+    // SetWindowPlacement rather than a plain SetWindowPos: rcNormalPosition
+    // (what m_preFullscreenGeometry was captured from, on entry) is
+    // documented to be in *workspace* coordinates - relative to the
+    // monitor's work area, which excludes the taskbar - not screen
+    // coordinates. GetWindowPlacement/SetWindowPlacement agree on that
+    // convention between themselves, but a plain SetWindowPos expects
+    // screen coordinates; feeding it workspace coordinates silently shifted
+    // the restored window by the taskbar's thickness, leaving its bottom
+    // edge hidden behind it. Going through SetWindowPlacement both ways
+    // keeps the coordinate space consistent regardless of where the
+    // taskbar is docked.
+    //
+    // Genuine maximize is additionally a distinct OS-tracked state (affects
+    // Aero Snap, what double-click-titlebar toggles back to, etc.), not
+    // just "resized to look like the maximized rect", so SW_SHOWMAXIMIZED
+    // here isn't only about coordinates - it's the only way into that state
+    // at all. Either showCmd goes through ShowWindow's codepath, which
+    // re-invokes Windows' min/max show animation - suspend it for just this
+    // call and restore the user's setting right after. There's no
+    // multi-step sequence left for it to mask a gap in: the frame style
+    // change above paints nothing by itself (see the entry path's
+    // SetWindowLongW comment for why), so this placement call is the only
+    // paint in the sequence.
+    WINDOWPLACEMENT placement{};
+    placement.length = sizeof(WINDOWPLACEMENT);
+    placement.showCmd = m_wasMaximized ? SW_SHOWMAXIMIZED : SW_SHOWNORMAL;
+    placement.rcNormalPosition = RECT{m_preFullscreenGeometry.left(), m_preFullscreenGeometry.top(),
+                                       m_preFullscreenGeometry.left() + m_preFullscreenGeometry.width(),
+                                       m_preFullscreenGeometry.top() + m_preFullscreenGeometry.height()};
 
-        ANIMATIONINFO animationInfo{};
-        animationInfo.cbSize = sizeof(animationInfo);
-        SystemParametersInfoW(SPI_GETANIMATION, sizeof(animationInfo), &animationInfo, 0);
-        const int previousMinAnimate = animationInfo.iMinAnimate;
-        animationInfo.iMinAnimate = 0;
-        SystemParametersInfoW(SPI_SETANIMATION, sizeof(animationInfo), &animationInfo, 0);
+    ANIMATIONINFO animationInfo{};
+    animationInfo.cbSize = sizeof(animationInfo);
+    SystemParametersInfoW(SPI_GETANIMATION, sizeof(animationInfo), &animationInfo, 0);
+    const int previousMinAnimate = animationInfo.iMinAnimate;
+    animationInfo.iMinAnimate = 0;
+    SystemParametersInfoW(SPI_SETANIMATION, sizeof(animationInfo), &animationInfo, 0);
 
-        SetWindowPlacement(hwnd, &placement);
+    SetWindowPlacement(hwnd, &placement);
 
-        animationInfo.iMinAnimate = previousMinAnimate;
-        SystemParametersInfoW(SPI_SETANIMATION, sizeof(animationInfo), &animationInfo, 0);
-    } else {
-        // Going back to a plain (non-maximized) rect doesn't need any of
-        // that machinery: a plain SetWindowPos to the saved rect is one
-        // ordinary, unanimated resize - and because the window isn't
-        // minimized or maximized during this call, Windows updates its own
-        // "last normal rect" bookkeeping (what a later double-click-titlebar
-        // maximize/restore cycle returns to) from the resize itself, same
-        // as it would from a user dragging the window - no extra step
-        // needed to keep that correct.
-        SetWindowPos(hwnd, nullptr, m_preFullscreenGeometry.left(), m_preFullscreenGeometry.top(),
-                     m_preFullscreenGeometry.width(), m_preFullscreenGeometry.height(),
-                     SWP_NOZORDER | SWP_FRAMECHANGED);
-    }
+    animationInfo.iMinAnimate = previousMinAnimate;
+    SystemParametersInfoW(SPI_SETANIMATION, sizeof(animationInfo), &animationInfo, 0);
 #else
     if (m_wasMaximized) {
         showMaximized();
@@ -584,14 +766,13 @@ void MainWindow::onFullscreenToggled(bool checked) {
         setFrameGeometry(m_preFullscreenGeometry);
     }
 #endif
-    // Chrome comes back only after the window is already at its restored
-    // size/frame - see the matching comment on the entry path above. Doing
-    // it earlier (before the block above) reflows the dashboard into a
-    // window that's still fullscreen-sized, then the frame/geometry change
-    // above lands on that same oversized window - two visible steps
-    // stacked into what should read as one smooth transition.
     menuBar()->show();
     m_ribbon->setTabBarVisible(true);
+#ifdef Q_OS_WIN
+    SendMessageW(hwnd, WM_SETREDRAW, TRUE, 0);
+    RedrawWindow(hwnd, nullptr, nullptr, RDW_INVALIDATE | RDW_ALLCHILDREN | RDW_ERASE | RDW_UPDATENOW);
+#endif
+    setUpdatesEnabled(true);
     updateRibbonIcons();
 }
 

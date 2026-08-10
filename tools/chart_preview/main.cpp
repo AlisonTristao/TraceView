@@ -1,8 +1,9 @@
 // Standalone visual harness for the chart widgets -- NOT a Qt Test. It
-// injects synthetic CSV payloads straight into onSerialPayload() on a timer
-// so the line/bar/gauge designs can be eyeballed without a serial device or
-// the SerialDataRouter/protocol plumbing (docs/PROTOCOL.md). See
-// tests/test_chartdata.cpp for the actual decode-logic unit tests.
+// injects synthetic samples straight into appendFieldSample() on a timer so
+// the line/bar/gauge designs can be eyeballed without a serial device or
+// the BtpSession/ProtocolRouter/TelemetryFieldRouter plumbing (see
+// lib/protocol). See tests/test_chartdata.cpp for the actual config/buffer
+// unit tests.
 
 #include <QApplication>
 #include <QGridLayout>
@@ -19,10 +20,16 @@ using namespace traceview;
 
 namespace {
 
-QJsonObject seriesJson(const QString& name, int index, const QString& color, const QString& style) {
+constexpr quint32 kSourceId = 0x00000001;
+constexpr quint16 kLineTopicId = 0x0001;
+constexpr quint16 kBarTopicId = 0x0002;
+constexpr quint16 kGaugeTopicId = 0x0001;
+constexpr quint16 kGaugeFieldId = 2;  // "value" of protocol.test, see TELEMETRY.md 9.4
+
+QJsonObject seriesJson(const QString& name, int fieldId, const QString& color, const QString& style) {
     QJsonObject series;
     series["name"] = name;
-    series["index"] = index;
+    series["fieldId"] = fieldId;
     series["color"] = color;
     series["style"] = style;
     return series;
@@ -30,7 +37,8 @@ QJsonObject seriesJson(const QString& name, int index, const QString& color, con
 
 QJsonObject lineChartConfig() {
     QJsonObject config;
-    config["format"] = "csv";
+    config["sourceId"] = QString::number(kSourceId);
+    config["topicId"] = QString::number(kLineTopicId);
 
     QJsonObject xAxis;
     xAxis["mode"] = "samples";
@@ -46,16 +54,17 @@ QJsonObject lineChartConfig() {
     config["yAxis"] = yAxis;
 
     QJsonArray series;
-    series.append(seriesJson("Temp", 0, "#3B82F6", "solid"));
-    series.append(seriesJson("Pressure", 1, "#F97316", "dashed"));
-    series.append(seriesJson("Humidity", 2, "#22C55E", "cross"));
+    series.append(seriesJson("Temp", 1, "#3B82F6", "solid"));
+    series.append(seriesJson("Pressure", 2, "#F97316", "dashed"));
+    series.append(seriesJson("Humidity", 3, "#22C55E", "cross"));
     config["series"] = series;
     return config;
 }
 
 QJsonObject barChartConfig() {
     QJsonObject config;
-    config["format"] = "csv";
+    config["sourceId"] = QString::number(kSourceId);
+    config["topicId"] = QString::number(kBarTopicId);
 
     QJsonObject xAxis;
     xAxis["mode"] = "samples";
@@ -71,16 +80,17 @@ QJsonObject barChartConfig() {
     config["yAxis"] = yAxis;
 
     QJsonArray series;
-    series.append(seriesJson("A", 0, "#A855F7", "solid"));
-    series.append(seriesJson("B", 1, "#EAB308", "solid"));
+    series.append(seriesJson("A", 1, "#A855F7", "solid"));
+    series.append(seriesJson("B", 2, "#EAB308", "solid"));
     config["series"] = series;
     return config;
 }
 
 QJsonObject gaugeConfig() {
     QJsonObject config;
-    config["format"] = "csv";
-    config["index"] = 0;
+    config["sourceId"] = QString::number(kSourceId);
+    config["topicId"] = QString::number(kGaugeTopicId);
+    config["fieldId"] = kGaugeFieldId;
     config["min"] = 0.0;
     config["max"] = 100.0;
     config["unit"] = "%";
@@ -114,26 +124,29 @@ int main(int argc, char** argv) {
     window.show();
 
     // Tick counter driving the synthetic waveforms below -- purely cosmetic,
-    // unrelated to any real sample-time/xAxis config.
-    auto tick = std::make_shared<int>(0);
+    // unrelated to any real sample-time/xAxis config. timestampUs is a
+    // synthetic monotonically increasing microsecond clock, standing in for
+    // a real BTP origin timestamp.
+    auto tick = std::make_shared<qint64>(0);
     auto* timer = new QTimer(&window);
     QObject::connect(timer, &QTimer::timeout, &window, [=]() {
         ++*tick;
         const double t = *tick;
+        const quint64 timestampUs = quint64(*tick) * 50000;  // matches the 50ms timer below
 
         const double v0 = 50.0 + 40.0 * qSin(t * 0.05);
         const double v1 = 50.0 + 30.0 * qSin(t * 0.05 + 1.5);
         const double v2 = 50.0 + 20.0 * qSin(t * 0.03 + 3.0);
-        const QByteArray linePayload =
-            QString("%1;%2;%3").arg(v0, 0, 'f', 3).arg(v1, 0, 'f', 3).arg(v2, 0, 'f', 3).toUtf8();
-        lineChart->onSerialPayload(linePayload);
-        gauge->onSerialPayload(linePayload);
+        lineChart->appendFieldSample(1, timestampUs, v0);
+        lineChart->appendFieldSample(2, timestampUs, v1);
+        lineChart->appendFieldSample(3, timestampUs, v2);
+        gauge->appendFieldSample(kGaugeFieldId, timestampUs, v0);
 
         if (*tick % 6 == 0) {
             const double b0 = QRandomGenerator::global()->bounded(20, 100);
             const double b1 = QRandomGenerator::global()->bounded(20, 100);
-            const QByteArray barPayload = QString("%1;%2").arg(b0, 0, 'f', 3).arg(b1, 0, 'f', 3).toUtf8();
-            barChart->onSerialPayload(barPayload);
+            barChart->appendFieldSample(1, timestampUs, b0);
+            barChart->appendFieldSample(2, timestampUs, b1);
         }
     });
     timer->start(50);

@@ -25,6 +25,41 @@ target_link_libraries(traceview_theme PUBLIC
     Qt6::Widgets
 )
 
+# traceview_protocol: the BTP v1 client -- transport-independent framing
+# (BtpSession), MessageType dispatch (ProtocolRouter), the telemetry data
+# model (TelemetrySample, TelemetryCatalog, decodePackedLe,
+# TelemetryFieldRouter, TelemetrySeriesBuffer). Only QtCore: no QWidget, no
+# QSerialPort -- see CONTRIBUTING.md's transport/protocol/presentation split
+# and tests/test_btpsession.cpp and friends (topico 14 CRITERIO DE ACEITE
+# "parser/protocolo possui testes sem QWidget").
+add_library(traceview_protocol STATIC
+    protocol/btpframe.cpp
+    protocol/btpframe.h
+    protocol/btpsession.cpp
+    protocol/btpsession.h
+    protocol/packedledecoder.cpp
+    protocol/packedledecoder.h
+    protocol/protocolrouter.cpp
+    protocol/protocolrouter.h
+    protocol/telemetrycatalog.cpp
+    protocol/telemetrycatalog.h
+    protocol/telemetryfieldrouter.cpp
+    protocol/telemetryfieldrouter.h
+    protocol/telemetryseriesbuffer.cpp
+    protocol/telemetryseriesbuffer.h
+    protocol/telemetrysample.h
+)
+
+target_include_directories(traceview_protocol PUBLIC
+    ${CMAKE_SOURCE_DIR}/include
+    ${CMAKE_SOURCE_DIR}/lib
+)
+
+target_link_libraries(traceview_protocol PUBLIC
+    Qt6::Core
+    btp::codec
+)
+
 # traceview_project: .tvproj (de)serialization. No dependency on the UI or
 # dashboard layers.
 add_library(traceview_project STATIC
@@ -84,6 +119,7 @@ target_include_directories(traceview_dashboard PUBLIC
 target_link_libraries(traceview_dashboard
     PUBLIC
         Qt6::Widgets
+        traceview_protocol
     PRIVATE
         traceview_theme
 )
@@ -104,12 +140,8 @@ add_library(traceview_ui STATIC
     core/ribbonicons.h
     core/ribbontabbar.cpp
     core/ribbontabbar.h
-    core/serialdatarouter.cpp
-    core/serialdatarouter.h
     core/serialmanager.cpp
     core/serialmanager.h
-    core/serialprotocol.cpp
-    core/serialprotocol.h
     core/serialwidgetbridge.cpp
     core/serialwidgetbridge.h
 )
@@ -127,5 +159,6 @@ target_link_libraries(traceview_ui
     PRIVATE
         traceview_dashboard
         traceview_project
+        traceview_protocol
         traceview_theme
 )

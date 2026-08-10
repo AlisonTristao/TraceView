@@ -5,39 +5,45 @@
 #include <QJsonObject>
 #include <QString>
 #include <QVector>
+#include <QtGlobal>
+
+#include "protocol/telemetryseriesbuffer.h"
 
 namespace traceview {
 
 // Everything below is pure data/logic -- no QWidget, no painting -- so it can
-// be unit tested with synthetic JSON/payloads (see tests/test_chartdata.cpp).
-// It mirrors the JSON shape ChartConfigEditor::config()/setConfig() already
-// define (lib/dashboard/widgets/chartconfigeditor.cpp) and the wire format
-// closed in docs/PROTOCOL.md.
+// be unit tested with synthetic samples (see tests/test_chartdata.cpp). It
+// mirrors the JSON shape ChartConfigEditor::config()/setConfig() define
+// (lib/dashboard/widgets/chartconfigeditor.cpp).
+//
+// Since topico 14 (BTP client and data model), a series binds to a BTP
+// field by identity -- (sourceId, topicId, fieldId), TELEMETRY.md section 8
+// -- instead of a slot index into a delimited/hex-encoded text payload. The
+// old `format`/`byteType` config (CSV vs. Bytes, per-slot primitive type)
+// duplicated encoding/type information that now belongs entirely to the
+// BTP schema (see protocol/telemetrycatalog.h); it has been removed rather
+// than kept as a second source of truth. Actually wiring a chart's series to
+// TelemetryFieldRouter::fieldSample() -- i.e., calling appendFieldSample()
+// below when a matching sample arrives -- is topico 15's job ("fatia
+// vertical de telemetria binaria"); this header only defines the config
+// shape and the buffer bookkeeping it needs.
 
-enum class ChartPayloadFormat { Csv, Bytes };
 enum class ChartXAxisMode { Samples, Time };
 enum class ChartYAxisMode { Auto, Fixed };
 enum class ChartSeriesStyle { Solid, Dashed, Dotted, DashDot, Cross, Asterisk };
 
-// Matches ChartConfigEditor's kByteTypeIds -- the primitive a "Bytes" format
-// slot is packed as (docs/PROTOCOL.md "Inbound: payload encoding").
-enum class ChartByteType { UInt8, Int8, UInt16, Int16, UInt32, Int32, Float32, Float64 };
-
-// Width in bytes of one hex-encoded slot for `type` (PROTOCOL.md: hex string
-// length is always exactly 2 * this).
-int chartByteTypeSize(ChartByteType type);
-
 struct ChartSeriesConfig {
     QString name;
-    int index = 0;
+    quint16 fieldId = 0;  // binds to a TelemetryFieldSchema::fieldId within
+                          // (sourceId, topicId) below.
     QColor color = QColor("#3B82F6");
     ChartSeriesStyle style = ChartSeriesStyle::Solid;
-    ChartByteType byteType = ChartByteType::Float32;
 };
 
 struct ChartConfig {
-    ChartPayloadFormat format = ChartPayloadFormat::Csv;
-    int count = 1;
+    quint32 sourceId = 0;  // BTP source_id this chart reads from
+    quint16 topicId = 0;   // BTP topic_id (TELEMETRY.md section 2) this
+                            // chart's series are fields of
 
     ChartXAxisMode xAxisMode = ChartXAxisMode::Samples;
     double sampleTimeMs = 100.0;
@@ -69,30 +75,25 @@ int chartBufferCapacity(const ChartConfig& config);
 // trimming every buffer to chartBufferCapacity(config). Safe to call with
 // `previous` empty (fresh widget) or a different series count (added/
 // removed/reordered rows just don't carry over past their old position).
-QVector<QVector<double>> resizeChartBuffers(const QVector<QVector<double>>& previous, const ChartConfig& config);
+QVector<TelemetrySeriesBuffer> resizeChartBuffers(const QVector<TelemetrySeriesBuffer>& previous,
+                                                   const ChartConfig& config);
 
-// Decodes one payload line (docs/PROTOCOL.md "Inbound: payload encoding")
-// into one value per config.series, in order. A series whose slot is
-// missing (payload has fewer ';'-separated slots than its `index`) or
-// malformed for its declared Format/byteType yields qQNaN() at that
-// position; callers should skip NaN entries rather than treat them as 0.
-QVector<double> decodeChartPayload(const QByteArray& payload, const ChartConfig& config);
-
-// Decodes `payload` and appends each non-NaN value to its series' buffer,
-// trimming from the front to stay within chartBufferCapacity(config). A
-// slot that decodes as NaN this frame is simply skipped for that series
-// this call (see decodeChartPayload) rather than padded with a gap value.
-void appendChartSample(QVector<QVector<double>>& buffers, const ChartConfig& config, const QByteArray& payload);
+// Appends (timestampUs, value) to every series buffer in `buffers` whose
+// config.series[i].fieldId == fieldId (usually zero or one, but nothing
+// stops two series from plotting the same field differently styled), each
+// trimmed to chartBufferCapacity(config). A no-op if no series binds to
+// `fieldId`.
+void appendFieldSample(QVector<TelemetrySeriesBuffer>& buffers, const ChartConfig& config, quint16 fieldId,
+                        quint64 timestampUs, double value);
 
 // Mirrors GaugeConfigEditor::config()/setConfig() (widgets/gaugeconfigeditor.h)
-// -- the single-series subset of ChartConfig: how to read the one slot this
-// gauge displays (Format/index/byteType), plus the fixed range/unit/decimals
-// used to scale and label it. No history/axis settings, since a gauge only
-// ever shows the current value.
+// -- the single-field subset of ChartConfig: which field this gauge
+// displays, plus the fixed range/unit/decimals used to scale and label it.
+// No history/axis settings, since a gauge only ever shows the current value.
 struct GaugeConfig {
-    ChartPayloadFormat format = ChartPayloadFormat::Csv;
-    int index = 0;
-    ChartByteType byteType = ChartByteType::Float32;
+    quint32 sourceId = 0;
+    quint16 topicId = 0;
+    quint16 fieldId = 0;
     double min = 0.0;
     double max = 100.0;
     QString unit;
@@ -103,11 +104,4 @@ struct GaugeConfig {
 // same defaults GaugeConfigEditor::setConfig() uses.
 GaugeConfig parseGaugeConfig(const QJsonObject& json);
 
-// Decodes one payload line's slot at config.index per config.format/byteType
-// (docs/PROTOCOL.md "Inbound: payload encoding"). Returns qQNaN() if the
-// slot is missing or malformed -- callers should show "no data" rather than
-// treat that as 0. Reuses decodeChartPayload's per-slot decoding with a
-// synthetic single-series ChartConfig.
-double decodeGaugeValue(const QByteArray& payload, const GaugeConfig& config);
-
-} // namespace traceview
+}  // namespace traceview

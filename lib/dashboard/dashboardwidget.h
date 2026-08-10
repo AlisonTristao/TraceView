@@ -49,14 +49,6 @@ public:
         return property("dashboardControlPanel").toBool() ? palette.surface : palette.background;
     }
 
-    // Called by SerialDataRouter (lib/core/serialdatarouter.h) when a
-    // decoded serial frame's <id> matches this widget's DashboardItem::key
-    // (see BACKEND_TODO.txt Task 5). Default no-op so kinds that don't
-    // consume serial data (most controls) aren't forced to override this --
-    // real per-type payload parsing (delimited text vs bytes, per
-    // ChartConfigEditor/GaugeConfigEditor Format) is Tasks 7/8.
-    virtual void onSerialPayload(const QByteArray& payload) { Q_UNUSED(payload); }
-
     // Called by DashboardGrid with this item's DashboardItem::config: once
     // right after construction (fresh insert, load from disk, or a type
     // change), and again every time the user edits it in the

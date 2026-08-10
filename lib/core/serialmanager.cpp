@@ -4,6 +4,20 @@
 
 namespace traceview {
 
+QByteArray lineTerminatorBytes(LineTerminator terminator) {
+    switch (terminator) {
+        case LineTerminator::None:
+            return QByteArray();
+        case LineTerminator::Lf:
+            return QByteArray("\n");
+        case LineTerminator::Cr:
+            return QByteArray("\r");
+        case LineTerminator::CrLf:
+            return QByteArray("\r\n");
+    }
+    return QByteArray();
+}
+
 SerialManager::SerialManager(QObject* parent) : QObject(parent), m_port(new QSerialPort(this)) {
     connect(m_port, &QSerialPort::readyRead, this, &SerialManager::onReadyRead);
     connect(m_port, &QSerialPort::errorOccurred, this, &SerialManager::onErrorOccurred);

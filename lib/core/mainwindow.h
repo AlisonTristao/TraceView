@@ -7,21 +7,31 @@
 
 class QAction;
 class QComboBox;
+class QMenu;
 class QPushButton;
 class QToolButton;
 
 namespace traceview {
 
+class BtpSession;
 class DashboardGrid;
+class ProtocolRouter;
 class PropertiesPanel;
 class Ribbon;
 class SerialManager;
+class TelemetryCatalog;
+class TelemetryFieldRouter;
 
 class MainWindow : public QMainWindow {
     Q_OBJECT
 
 public:
     explicit MainWindow(QWidget* parent = nullptr);
+    // Declared (rather than left implicit) because m_telemetryCatalog is a
+    // plain (non-QObject) heap object this class owns and frees itself;
+    // defined out-of-line in mainwindow.cpp, where TelemetryCatalog's full
+    // definition is visible.
+    ~MainWindow() override;
 
 private:
     void buildMenus();
@@ -45,8 +55,14 @@ private:
     void onPanelNameChangeRequested(const QString& name);
     void onPanelKeyChangeRequested(const QString& key);
     void onPanelConfigChangeRequested(const QJsonObject& config);
+    void onNewProject();
     void onSaveProject();
+    void onSaveProjectAs();
     void onOpenProject();
+    void openRecentFile(const QString& path);
+    void addRecentFile(const QString& path);
+    void updateRecentFilesMenu();
+    void onClearRecentFiles();
     void onAbout();
     void onFullscreenToggled(bool checked);
 
@@ -60,12 +76,25 @@ private:
     QAction* m_pasteAction = nullptr;
     QAction* m_undoAction = nullptr;
     QAction* m_redoAction = nullptr;
+    QMenu* m_recentFilesMenu = nullptr;
     int m_configureTabIndex = -1;
     bool m_configureTabActive = false;
 
     void onLineTerminatorChanged(int index);
 
     SerialManager* m_serialManager = nullptr;
+    // BTP v1 client stack (topico 14): BtpSession decodes the byte stream
+    // SerialManager hands it into validated frames, ProtocolRouter
+    // dispatches those by MessageType, and TelemetryFieldRouter decodes
+    // TELEMETRY samples against m_telemetryCatalog into per-field values.
+    // m_telemetryCatalog starts empty -- there is no manifest/discovery
+    // exchange yet (that's topico 16), so nothing here assumes which
+    // source_id is on the other end of the wire; populating it for a real
+    // connection is left to a later topico.
+    BtpSession* m_btpSession = nullptr;
+    ProtocolRouter* m_protocolRouter = nullptr;
+    TelemetryCatalog* m_telemetryCatalog = nullptr;
+    TelemetryFieldRouter* m_telemetryFieldRouter = nullptr;
     int m_runTabIndex = -1;
     QComboBox* m_portCombo = nullptr;
     QToolButton* m_refreshPortsButton = nullptr;

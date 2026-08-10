@@ -25,21 +25,17 @@ namespace traceview {
 namespace {
 
 constexpr int kNameColumn = 0;
-constexpr int kIndexColumn = 1;
+constexpr int kFieldIdColumn = 1;
 constexpr int kColorColumn = 2;
 constexpr int kStyleColumn = 3;
-constexpr int kTypeColumn = 4;
-constexpr int kRemoveColumn = 5;
-constexpr int kColumnCount = 6;
+constexpr int kRemoveColumn = 4;
+constexpr int kColumnCount = 5;
 
 // String ids are what's persisted in the config JSON — stable across
 // re-orderings of the combo items; the parallel label lists are just the
 // display text at the matching index.
 const QStringList kStyleIds = {"solid", "dashed", "dotted", "dashdot", "cross", "asterisk"};
 const QStringList kStyleLabels = {"Solid", "Dashed", "Dotted", "Dash-Dot", "Cross", "Asterisk"};
-
-const QStringList kByteTypeIds = {"uint8", "int8", "uint16", "int16", "uint32", "int32", "float32", "float64"};
-const QStringList kByteTypeLabels = {"UInt8", "Int8", "UInt16", "Int16", "UInt32", "Int32", "Float32", "Float64"};
 
 // A spin box's up/down buttons sit in a chrome strip on the right that the
 // stylesheet declares as `padding-right: 20px` (see stylesheet.cpp) — but
@@ -80,16 +76,13 @@ void setSwatchColor(QPushButton* button, const QColor& color) {
 } // namespace
 
 ChartConfigEditor::ChartConfigEditor(QWidget* parent) : WidgetConfigEditor(parent) {
-    m_formatCombo = new QComboBox(this);
-    m_formatCombo->addItem("CSV", "csv");
-    m_formatCombo->addItem("Bytes", "bytes");
+    m_sourceIdEdit = new QLineEdit(this);
+    m_sourceIdEdit->setPlaceholderText("0x11223344");
+    m_sourceIdEdit->setToolTip("BTP source_id this chart reads from (hex or decimal).");
 
-    m_countSpin = new QSpinBox(this);
-    m_countSpin->setRange(1, 9999);
-    m_countSpin->setValue(1);
-    m_countSpin->setFixedWidth(spinBoxWidthFor(m_countSpin->font(), "9999"));
-    m_countSpin->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
-    m_countSpin->setToolTip("How many values arrive per incoming data frame.");
+    m_topicIdEdit = new QLineEdit(this);
+    m_topicIdEdit->setPlaceholderText("0x0101");
+    m_topicIdEdit->setToolTip("BTP topic_id (TELEMETRY.md) this chart's series bind fields of.");
 
     m_xAxisModeCombo = new QComboBox(this);
     m_xAxisModeCombo->addItem("Samples", "samples");
@@ -144,19 +137,10 @@ ChartConfigEditor::ChartConfigEditor(QWidget* parent) : WidgetConfigEditor(paren
     m_gridCheck->setChecked(true);
     m_gridCheck->setToolTip("Show the min/mid/max gridlines across the plot.");
 
-    // Count/Ts and Min/Max ride along their sibling field's row instead of
-    // each owning a full row of their own. Every widget is vertically
-    // centered explicitly so combo/label/spin line up on one baseline
-    // regardless of the row's own height. The combo carries the row's
-    // stretch (it reads fine at any width); the spin box stays at its own
-    // fixed width (see spinBoxWidthFor), with a trailing stretch soaking up
-    // whatever's left so the row still uses the full column without
-    // ballooning the spin box.
-    auto* formatRow = new QHBoxLayout();
-    formatRow->addWidget(m_formatCombo, 1, Qt::AlignVCenter);
-    formatRow->addWidget(smallLabel("N", this), 0, Qt::AlignVCenter);
-    formatRow->addWidget(m_countSpin, 0, Qt::AlignVCenter);
-
+    // Ts and Min/Max ride along their sibling field's row instead of each
+    // owning a full row of their own. Every widget is vertically centered
+    // explicitly so combo/label/spin line up on one baseline regardless of
+    // the row's own height.
     auto* xAxisRow = new QHBoxLayout();
     xAxisRow->addWidget(m_xAxisModeCombo, 1, Qt::AlignVCenter);
     xAxisRow->addWidget(m_sampleTimeLabel, 0, Qt::AlignVCenter);
@@ -182,7 +166,8 @@ ChartConfigEditor::ChartConfigEditor(QWidget* parent) : WidgetConfigEditor(paren
     // so — Fusion does, some platform styles don't. Forcing it here makes
     // every field fill its column the same way regardless of platform.
     m_formLayout->setFieldGrowthPolicy(QFormLayout::AllNonFixedFieldsGrow);
-    m_formLayout->addRow("Format", formatRow);
+    m_formLayout->addRow("Source", m_sourceIdEdit);
+    m_formLayout->addRow("Topic", m_topicIdEdit);
     m_formLayout->addRow("X Axis", xAxisRow);
     m_formLayout->addRow("Limit", m_xLimitSpin);
     m_formLayout->addRow("Y Axis", m_yAxisModeCombo);
@@ -196,7 +181,7 @@ ChartConfigEditor::ChartConfigEditor(QWidget* parent) : WidgetConfigEditor(paren
     divider->setFixedHeight(1);
 
     m_seriesTable = new QTableWidget(0, kColumnCount, this);
-    m_seriesTable->setHorizontalHeaderLabels({"Name", "Index", "Color", "Style", "Type", ""});
+    m_seriesTable->setHorizontalHeaderLabels({"Name", "Field ID", "Color", "Style", ""});
     m_seriesTable->verticalHeader()->setVisible(false);
     // Every data column stays Interactive (the header's default) so the user
     // can drag any of them wider — Name included, for series with long
@@ -204,10 +189,9 @@ ChartConfigEditor::ChartConfigEditor(QWidget* parent) : WidgetConfigEditor(paren
     // button's size: it never needs to grow or shrink.
     m_seriesTable->horizontalHeader()->setSectionResizeMode(kRemoveColumn, QHeaderView::ResizeToContents);
     m_seriesTable->setColumnWidth(kNameColumn, 150);
-    m_seriesTable->setColumnWidth(kIndexColumn, spinBoxWidthFor(m_seriesTable->font(), "9999"));
+    m_seriesTable->setColumnWidth(kFieldIdColumn, spinBoxWidthFor(m_seriesTable->font(), "65535"));
     m_seriesTable->setColumnWidth(kColorColumn, 56);
     m_seriesTable->setColumnWidth(kStyleColumn, 110);
-    m_seriesTable->setColumnWidth(kTypeColumn, 110);
     m_seriesTable->setSelectionMode(QAbstractItemView::NoSelection);
     // Default row height leaves the combo/spin/swatch cell widgets cramped
     // (they're stretched to fill the row, so a taller row is a taller —
@@ -218,7 +202,7 @@ ChartConfigEditor::ChartConfigEditor(QWidget* parent) : WidgetConfigEditor(paren
     m_addSeriesButton = new QPushButton("+ Add series", this);
     connect(m_addSeriesButton, &QPushButton::clicked, this, [this]() {
         QJsonObject series;
-        series["index"] = m_seriesTable->rowCount();
+        series["fieldId"] = m_seriesTable->rowCount() + 1;
         addSeriesRow(series);
         emitChanged();
     });
@@ -234,11 +218,8 @@ ChartConfigEditor::ChartConfigEditor(QWidget* parent) : WidgetConfigEditor(paren
     mainLayout->addWidget(m_seriesTable);
     mainLayout->addLayout(buttonRow);
 
-    connect(m_formatCombo, &QComboBox::currentIndexChanged, this, [this](int) {
-        updateByteTypeColumnVisibility();
-        emitChanged();
-    });
-    connect(m_countSpin, &QSpinBox::valueChanged, this, [this](int) { emitChanged(); });
+    connect(m_sourceIdEdit, &QLineEdit::editingFinished, this, [this]() { emitChanged(); });
+    connect(m_topicIdEdit, &QLineEdit::editingFinished, this, [this]() { emitChanged(); });
     connect(m_xAxisModeCombo, &QComboBox::currentIndexChanged, this, [this](int) {
         updateAxisRowsVisibility();
         emitChanged();
@@ -255,17 +236,14 @@ ChartConfigEditor::ChartConfigEditor(QWidget* parent) : WidgetConfigEditor(paren
     connect(m_gridCheck, &QCheckBox::toggled, this, [this](bool) { emitChanged(); });
     connect(m_seriesTable, &QTableWidget::itemChanged, this, [this](QTableWidgetItem*) { emitChanged(); });
 
-    updateByteTypeColumnVisibility();
     updateAxisRowsVisibility();
 }
 
 void ChartConfigEditor::setConfig(const QJsonObject& config) {
     m_updating = true;
 
-    const QString format = config.value("format").toString("csv");
-    m_formatCombo->setCurrentIndex(format == "bytes" ? 1 : 0);
-
-    m_countSpin->setValue(config.value("count").toInt(1));
+    m_sourceIdEdit->setText(config.value("sourceId").toString("0"));
+    m_topicIdEdit->setText(config.value("topicId").toString("0"));
 
     const QJsonObject xAxis = config.value("xAxis").toObject();
     m_xAxisModeCombo->setCurrentIndex(xAxis.value("mode").toString("samples") == "time" ? 1 : 0);
@@ -284,15 +262,14 @@ void ChartConfigEditor::setConfig(const QJsonObject& config) {
         addSeriesRow(value.toObject());
     }
 
-    updateByteTypeColumnVisibility();
     updateAxisRowsVisibility();
     m_updating = false;
 }
 
 QJsonObject ChartConfigEditor::config() const {
     QJsonObject cfg;
-    cfg["format"] = m_formatCombo->currentData().toString();
-    cfg["count"] = m_countSpin->value();
+    cfg["sourceId"] = m_sourceIdEdit->text().trimmed().isEmpty() ? QStringLiteral("0") : m_sourceIdEdit->text();
+    cfg["topicId"] = m_topicIdEdit->text().trimmed().isEmpty() ? QStringLiteral("0") : m_topicIdEdit->text();
 
     QJsonObject xAxis;
     xAxis["mode"] = m_xAxisModeCombo->currentData().toString();
@@ -314,17 +291,14 @@ QJsonObject ChartConfigEditor::config() const {
         const QTableWidgetItem* nameItem = m_seriesTable->item(row, kNameColumn);
         series["name"] = nameItem ? nameItem->text() : QString();
 
-        if (auto* indexSpin = qobject_cast<QSpinBox*>(m_seriesTable->cellWidget(row, kIndexColumn))) {
-            series["index"] = indexSpin->value();
+        if (auto* fieldIdSpin = qobject_cast<QSpinBox*>(m_seriesTable->cellWidget(row, kFieldIdColumn))) {
+            series["fieldId"] = fieldIdSpin->value();
         }
         if (auto* colorButton = qobject_cast<QPushButton*>(m_seriesTable->cellWidget(row, kColorColumn))) {
             series["color"] = swatchColor(colorButton).name();
         }
         if (auto* styleCombo = qobject_cast<QComboBox*>(m_seriesTable->cellWidget(row, kStyleColumn))) {
             series["style"] = kStyleIds.value(styleCombo->currentIndex(), kStyleIds.first());
-        }
-        if (auto* typeCombo = qobject_cast<QComboBox*>(m_seriesTable->cellWidget(row, kTypeColumn))) {
-            series["byteType"] = kByteTypeIds.value(typeCombo->currentIndex(), kByteTypeIds.first());
         }
         seriesArray.append(series);
     }
@@ -342,12 +316,12 @@ void ChartConfigEditor::addSeriesRow(const QJsonObject& series) {
     auto* nameItem = new QTableWidgetItem(series.value("name").toString(QString("Series %1").arg(row + 1)));
     m_seriesTable->setItem(row, kNameColumn, nameItem);
 
-    auto* indexSpin = new QSpinBox();
-    indexSpin->setRange(0, 9999);
-    indexSpin->setValue(series.value("index").toInt(row));
-    indexSpin->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
-    connect(indexSpin, &QSpinBox::valueChanged, this, [this](int) { emitChanged(); });
-    m_seriesTable->setCellWidget(row, kIndexColumn, indexSpin);
+    auto* fieldIdSpin = new QSpinBox();
+    fieldIdSpin->setRange(0, 65535);
+    fieldIdSpin->setValue(series.value("fieldId").toInt(row + 1));
+    fieldIdSpin->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
+    connect(fieldIdSpin, &QSpinBox::valueChanged, this, [this](int) { emitChanged(); });
+    m_seriesTable->setCellWidget(row, kFieldIdColumn, fieldIdSpin);
 
     auto* colorButton = new QPushButton();
     colorButton->setFixedWidth(40);
@@ -375,12 +349,6 @@ void ChartConfigEditor::addSeriesRow(const QJsonObject& series) {
     connect(styleCombo, &QComboBox::currentIndexChanged, this, [this](int) { emitChanged(); });
     m_seriesTable->setCellWidget(row, kStyleColumn, styleCombo);
 
-    auto* typeCombo = new QComboBox();
-    typeCombo->addItems(kByteTypeLabels);
-    typeCombo->setCurrentIndex(qMax(0, kByteTypeIds.indexOf(series.value("byteType").toString("float32"))));
-    connect(typeCombo, &QComboBox::currentIndexChanged, this, [this](int) { emitChanged(); });
-    m_seriesTable->setCellWidget(row, kTypeColumn, typeCombo);
-
     auto* removeButton = new QPushButton("✕");
     removeButton->setFixedWidth(28);
     removeButton->setToolTip("Remove series");
@@ -396,10 +364,6 @@ void ChartConfigEditor::addSeriesRow(const QJsonObject& series) {
     m_seriesTable->setCellWidget(row, kRemoveColumn, removeButton);
 
     m_updating = wasUpdating;
-}
-
-void ChartConfigEditor::updateByteTypeColumnVisibility() {
-    m_seriesTable->setColumnHidden(kTypeColumn, m_formatCombo->currentData().toString() != "bytes");
 }
 
 void ChartConfigEditor::updateAxisRowsVisibility() {
