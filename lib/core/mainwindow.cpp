@@ -78,14 +78,14 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     connect(m_protocolRouter, &ProtocolRouter::telemetrySampleReceived, m_telemetryFieldRouter,
             &TelemetryFieldRouter::onTelemetrySample);
 
-    // Wires control-widget commands and the serial monitor's raw I/O to the
-    // same connection (BACKEND_TODO.txt Tasks 9/10); no further interaction
-    // needed here once wired. Outbound control-widget commands still go
-    // straight to SerialManager as raw literal text (docs/PROTOCOL.md
-    // "Outbound: control commands") -- migrating them onto the BTP COMMAND
-    // channel is out of scope for topico 14 (see its PASSOS) and left for a
-    // later topico.
-    new SerialWidgetBridge(m_serialManager, m_dashboardGrid, this);
+    // Wires control-widget commands and the serial monitor/terminal to the
+    // same connection (BACKEND_TODO.txt Tasks 9/10; terminal rewired onto
+    // BTP TERMINAL_IN/OUT in topico 19); no further interaction needed here
+    // once wired. Outbound control-widget commands still go straight to
+    // SerialManager as raw literal text (docs/PROTOCOL.md "Outbound: control
+    // commands") -- migrating them onto the BTP COMMAND channel is out of
+    // scope for topicos 14/19 and left for a later one.
+    new SerialWidgetBridge(m_serialManager, m_btpSession, m_protocolRouter, m_dashboardGrid, this);
 
     Ribbon* ribbon = buildRibbon();
     buildPropertiesPanel();

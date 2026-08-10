@@ -17,6 +17,12 @@ add_traceview_test(test_dashboarditem traceview_dashboard)
 add_traceview_test(test_widgetregistry traceview_dashboard)
 add_traceview_test(test_dashboardgrid traceview_dashboard)
 add_traceview_test(test_chartdata traceview_dashboard)
+# topico 19: the dumb-terminal line model (\r/\b/\n handling) and keystroke
+# forwarding are exercised directly with QTest -- CONTRIBUTING.md's "nothing
+# UI-chrome-level" gap did not previously include any single-widget test,
+# but the existing precedent (test_dashboardgrid uses QTest::mousePress on
+# real QWidgets) already covers widget-level QTest usage in this repo.
+add_traceview_test(test_serialterminalwidget traceview_dashboard)
 add_traceview_test(test_serialmanager traceview_ui)
 
 # BTP v1 client (topico 14) -- protocol/transport layer only, no QWidget

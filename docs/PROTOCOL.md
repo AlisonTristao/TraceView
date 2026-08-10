@@ -102,14 +102,51 @@ setting (Run ribbon tab):
   connection (Run ribbon tab), not per-widget. Options: None, `\n` (LF),
   `\r` (CR), `\r\n` (CRLF). Default: `\n`.
 - This terminator setting only applies to control-widget-triggered
-  commands. It does **not** change `SerialTerminalWidget`'s existing
-  keystroke behavior (raw passthrough-per-keystroke).
+  commands. It does **not** apply to `SerialTerminalWidget`, which as of
+  topico 19 no longer sends raw bytes at all (see "Terminal" below).
 
-**Known gap, deliberately out of scope for topico 14:** this raw-text path
-is not itself a BTP `COMMAND` frame. On real hardware running a dongle in
-protocoled mode (topico 13's `SerialMux`, which owns the port exclusively
+**Known gap, deliberately out of scope for topico 14/19:** this raw-text
+path is not itself a BTP `COMMAND` frame. On real hardware running a dongle
+in protocoled mode (topico 13's `SerialMux`, which owns the port exclusively
 once negotiated), writing arbitrary raw bytes alongside `BtpSession`'s COBS
 frames would corrupt the stream. Migrating control-widget output onto BTP's
 `COMMAND`/`COMMAND_REQUEST` → `COMMAND_RESULT` exchange (see
 `COMMANDS_AND_ACTIONS.md` section 4) is tracked as its own future topico
 ("Acoes persistidas e comandos virtuais"), not folded into this one.
+
+## Terminal (topico 19)
+
+`SerialTerminalWidget` (`lib/dashboard/widgets/serialterminalwidget.h`) no
+longer talks to `SerialManager` directly. `SerialWidgetBridge`
+(`lib/core/serialwidgetbridge.h`) wires it onto the BTP `TERMINAL_IN`/
+`TERMINAL_OUT` channel instead:
+
+```
+SerialTerminalWidget::sendRequested(QByteArray)   -- raw keystroke(s)/escape bytes
+      v
+SerialWidgetBridge::sendTerminalIn()               -- wraps as a MessageType::Terminal
+                                                       frame, object_id TERMINAL_IN
+                                                       (0x0001), and calls
+      v
+BtpSession::sendFrame()
+
+ProtocolRouter::terminalFrameReceived(BtpFrame)    -- object_id TERMINAL_OUT (0x0002) only
+      v
+SerialTerminalWidget::appendData(QByteArray)
+```
+
+Line editing (echo, backspace, arrow-key history/cursor movement, Tab
+completion, Ctrl+R reverse search) is **not** implemented in TraceView --
+it stays entirely on the dongle's `ShellSerial` (see
+`bally_protocol/topicos/19_terminal_protocolado.txt` RESULTADO for the
+PASSO 1/2 design decision and why). `SerialTerminalWidget` only forwards
+keystrokes and renders whatever `TERMINAL_OUT` sends back, using a minimal
+line model equivalent to a VT100 subset (`\r` returns to column 0 without
+erasing, `\b` moves the cursor left one column, `\n` commits the line,
+anything else overwrites/extends at the current column) -- no ANSI CSI
+sequences are needed because `ShellSerial` never emits any.
+
+Each `SerialWidgetBridge` instance owns a private, random, non-zero
+`source_id`/`boot_id` pair for `TERMINAL_IN` frames only -- there is still
+no `HELLO` negotiation on the TraceView side (topicos 15-17), so nothing
+here assumes or is assigned a real client identity yet.
