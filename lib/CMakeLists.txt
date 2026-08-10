@@ -35,6 +35,8 @@ target_link_libraries(traceview_theme PUBLIC
 add_library(traceview_protocol STATIC
     protocol/btpframe.cpp
     protocol/btpframe.h
+    protocol/btphandshake.cpp
+    protocol/btphandshake.h
     protocol/btpsession.cpp
     protocol/btpsession.h
     protocol/packedledecoder.cpp

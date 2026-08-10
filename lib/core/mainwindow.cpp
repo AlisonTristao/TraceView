@@ -7,6 +7,7 @@
 #include <QFileInfo>
 #include <QGuiApplication>
 #include <QHBoxLayout>
+#include <QIntValidator>
 #include <QKeySequence>
 #include <QMenu>
 #include <QMenuBar>
@@ -21,7 +22,10 @@
 #include "aboutdialog.h"
 #include "dashboard/dashboardgrid.h"
 #include "dashboard/widgetregistry.h"
+#include "dashboard/widgets/chartwidgets.h"
 #include "project/projectstore.h"
+#include "protocol/btpframe.h"
+#include "protocol/btphandshake.h"
 #include "protocol/btpsession.h"
 #include "protocol/protocolrouter.h"
 #include "protocol/telemetrycatalog.h"
@@ -67,11 +71,36 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     m_protocolRouter = new ProtocolRouter(this);
     m_telemetryCatalog = new TelemetryCatalog();
     m_telemetryFieldRouter = new TelemetryFieldRouter(m_telemetryCatalog, this);
+    m_btpHandshake = new BtpHandshake(m_btpSession, m_protocolRouter, this);
     connect(m_serialManager, &SerialManager::dataReceived, m_btpSession, &BtpSession::feedBytes);
     connect(m_btpSession, &BtpSession::bytesToWrite, m_serialManager, &SerialManager::write);
+    // BtpHandshake needs the same raw bytes BtpSession sees (it only looks
+    // for the plain-text READY line, see protocol/btphandshake.h), and its
+    // own outbound text (the ENTER line) goes straight to the transport too.
+    connect(m_serialManager, &SerialManager::dataReceived, m_btpHandshake, &BtpHandshake::feedRawBytes);
+    connect(m_btpHandshake, &BtpHandshake::bytesToWrite, m_serialManager, &SerialManager::write);
     connect(m_serialManager, &SerialManager::connectionStateChanged, this, [this](bool connected) {
         if (connected) {
             m_btpSession->reset();
+            m_btpHandshake->start();
+        }
+    });
+    connect(m_btpHandshake, &BtpHandshake::sessionEstablished, this, [this]() {
+        statusBar()->showMessage("BTP session established (HELLO_RESULT=SUCCESS)", 5000);
+    });
+    connect(m_btpHandshake, &BtpHandshake::sessionFailed, this, [this](const QString& reason) {
+        statusBar()->showMessage("BTP handshake failed: " + reason, 8000);
+    });
+    // Lazily registers the known bally_software schemas (protocol.test,
+    // robot.state) for any source_id we see TELEMETRY from -- a pragmatic
+    // bridge until topico 16's MANIFEST_DATA exchange populates
+    // m_telemetryCatalog for real. Connected before the frameReceived ->
+    // ProtocolRouter wiring below so the catalog is populated in time for
+    // ProtocolRouter/TelemetryFieldRouter to decode that same first frame.
+    connect(m_btpSession, &BtpSession::frameReceived, this, [this](const BtpFrame& frame) {
+        if (frame.type == btp::MessageType::Telemetry && !m_knownTelemetrySources.contains(frame.sourceId)) {
+            m_knownTelemetrySources.insert(frame.sourceId);
+            registerBallySoftwareCatalog(*m_telemetryCatalog, frame.sourceId);
         }
     });
     connect(m_btpSession, &BtpSession::frameReceived, m_protocolRouter, &ProtocolRouter::onFrameReceived);
@@ -112,6 +141,14 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
 
 MainWindow::~MainWindow() {
     delete m_telemetryCatalog;
+}
+
+void MainWindow::wireChartWidgetToTelemetry(DashboardWidget* widget) {
+    if (auto* chart = dynamic_cast<ChartWidgetBase*>(widget)) {
+        connect(m_telemetryFieldRouter, &TelemetryFieldRouter::fieldSample, chart, &ChartWidgetBase::onFieldSample);
+    } else if (auto* gauge = dynamic_cast<DummyGaugeWidget*>(widget)) {
+        connect(m_telemetryFieldRouter, &TelemetryFieldRouter::fieldSample, gauge, &DummyGaugeWidget::onFieldSample);
+    }
 }
 
 void MainWindow::buildMenus() {
@@ -201,6 +238,11 @@ Ribbon* MainWindow::buildRibbon() {
 
     connect(m_dashboardGrid, &DashboardGrid::selectionChanged, this, &MainWindow::onSelectionChanged);
     connect(m_dashboardGrid->undoStack(), &QUndoStack::indexChanged, this, &MainWindow::refreshPropertiesPanel);
+    // Chart/gauge widgets subscribe to live telemetry the moment they're
+    // created -- topico 15's "varios assinantes por campo" wiring, covering
+    // both a fresh Add Widget and a project load (DashboardGrid::createCell
+    // is the single factory path for both, see dashboardgrid.cpp).
+    connect(m_dashboardGrid, &DashboardGrid::widgetCreated, this, &MainWindow::wireChartWidgetToTelemetry);
     // The clipboard can change from a copySelected() call here, or from
     // another window/app entirely — either way, m_pasteAction's enabled
     // state needs to stay in sync with whether it's currently pasteable.
@@ -226,11 +268,18 @@ Ribbon* MainWindow::buildRibbon() {
 
     // Reuses the same baud list SerialMonitorWidget used to offer for its
     // now-removed per-widget connect bar (Tarefa 3) -- one global connection
-    // means one place to pick the baud rate.
+    // means one place to pick the baud rate. Extended with the higher rates
+    // a BTP v1 dongle actually uses (TRANSPORT_SERIAL.md section 8;
+    // t_dongle_develop's own monitor_speed/BAUDRATE) and made editable so
+    // any board-specific value can be typed directly, since USB CDC line
+    // coding is informative only (same section) and real UART boards vary.
     m_baudCombo = new QComboBox(runPage);
-    m_baudCombo->addItems({"9600", "19200", "38400", "57600", "115200"});
-    m_baudCombo->setCurrentText("9600");
-    m_baudCombo->setToolTip("Baud rate");
+    m_baudCombo->setEditable(true);
+    m_baudCombo->addItems({"9600", "19200", "38400", "57600", "115200", "230400", "460800", "921600",
+                            "1000000", "2000000", "3000000", "5000000"});
+    m_baudCombo->setCurrentText("921600");
+    m_baudCombo->setToolTip("Baud rate (type a custom value if yours isn't listed)");
+    m_baudCombo->setValidator(new QIntValidator(1, 10000000, m_baudCombo));
 
     // Terminator appended to control-widget commands only (docs/PROTOCOL.md
     // "Outbound: control commands", BACKEND_TODO.txt Task 9) -- unlike

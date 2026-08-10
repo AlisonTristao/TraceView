@@ -459,6 +459,14 @@ void ChartWidgetBase::appendFieldSample(quint16 fieldId, quint64 timestampUs, do
     scheduleRepaint();
 }
 
+void ChartWidgetBase::onFieldSample(const traceview::TelemetryFieldBinding& binding, quint64 timestampUs,
+                                     double value) {
+    if (binding.sourceId != m_config.sourceId || binding.topicId != m_config.topicId) {
+        return;
+    }
+    appendFieldSample(binding.fieldId, timestampUs, value);
+}
+
 void ChartWidgetBase::scheduleRepaint() {
     if (m_repaintPending) {
         return;
@@ -552,6 +560,14 @@ void DummyGaugeWidget::appendFieldSample(quint16 fieldId, quint64 timestampUs, d
     }
     m_value = value;
     scheduleRepaint();
+}
+
+void DummyGaugeWidget::onFieldSample(const traceview::TelemetryFieldBinding& binding, quint64 timestampUs,
+                                      double value) {
+    if (binding.sourceId != m_config.sourceId || binding.topicId != m_config.topicId) {
+        return;
+    }
+    appendFieldSample(binding.fieldId, timestampUs, value);
 }
 
 void DummyGaugeWidget::scheduleRepaint() {

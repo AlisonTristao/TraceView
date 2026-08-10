@@ -3,6 +3,7 @@
 #include <QJsonObject>
 #include <QMainWindow>
 #include <QRect>
+#include <QSet>
 #include <QString>
 
 class QAction;
@@ -13,8 +14,10 @@ class QToolButton;
 
 namespace traceview {
 
+class BtpHandshake;
 class BtpSession;
 class DashboardGrid;
+class DashboardWidget;
 class ProtocolRouter;
 class PropertiesPanel;
 class Ribbon;
@@ -95,6 +98,15 @@ private:
     ProtocolRouter* m_protocolRouter = nullptr;
     TelemetryCatalog* m_telemetryCatalog = nullptr;
     TelemetryFieldRouter* m_telemetryFieldRouter = nullptr;
+    // Drives the ENTER/READY + HELLO/HELLO_RESULT session negotiation
+    // (topico 15) on top of the framing BtpSession already does; see
+    // protocol/btphandshake.h.
+    BtpHandshake* m_btpHandshake = nullptr;
+    // sourceIds we've already registered a schema for via
+    // registerBallySoftwareCatalog() -- a pragmatic bridge until topico 16's
+    // real MANIFEST exchange populates m_telemetryCatalog over the wire.
+    QSet<quint32> m_knownTelemetrySources;
+    void wireChartWidgetToTelemetry(DashboardWidget* widget);
     int m_runTabIndex = -1;
     QComboBox* m_portCombo = nullptr;
     QToolButton* m_refreshPortsButton = nullptr;
