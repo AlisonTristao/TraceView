@@ -19,6 +19,7 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 option(TRACEVIEW_BUILD_TESTS "Build the Qt Test suite under tests/" ON)
+option(TRACEVIEW_BUILD_TOOLS "Build dev-only visual harnesses under tools/" ON)
 
 if(WIN32)
     enable_language(RC)
@@ -31,6 +32,10 @@ add_subdirectory(lib)
 if(TRACEVIEW_BUILD_TESTS)
     enable_testing()
     add_subdirectory(tests)
+endif()
+
+if(TRACEVIEW_BUILD_TOOLS)
+    add_subdirectory(tools)
 endif()
 
 qt_add_executable(TraceView

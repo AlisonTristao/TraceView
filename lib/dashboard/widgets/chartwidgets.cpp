@@ -27,9 +27,12 @@ constexpr int kAxisLabelGap = 4;
 // of how fast frames arrive (see BACKEND_TODO.txt "taxas diferentes por
 // widget") -- data still gets appended to the buffers on every frame.
 constexpr int kRepaintIntervalMs = 33; // ~30 Hz
-// Shared with paintLegend()'s swatch dot so plotTopMargin() below can
-// predict the legend row's real height instead of guessing at it.
+// Shared with paintSeriesLegends()'s swatch dot so plotTopMargin()/
+// plotBottomMargin() below can predict the legend rows' real height instead
+// of guessing at it.
 constexpr int kLegendSwatchSize = 8;
+// Horizontal gap between adjacent legend columns (see legendColumns()).
+constexpr int kLegendItemGap = 14;
 
 // Thickness of the rotated unit-label strip immediately left of the
 // Y-axis value gutter (only reserved when a unit is configured). Sized to
@@ -128,55 +131,161 @@ void paintYAxis(QPainter& painter, const QRect& plotRect, double yMin, double yM
     }
 }
 
-// Series name + color swatch, one per configured series, in a single row
-// clipped to `area`'s width -- overflow just stops adding entries rather
-// than wrapping or eliding, which is enough for the handful of series a
-// chart this size realistically holds.
-void paintLegend(QPainter& painter, const QRect& area, const QVector<ChartSeriesConfig>& seriesConfigs,
-                  const ThemePalette& palette) {
-    if (seriesConfigs.isEmpty()) {
+// Vertical gridlines across plotRect's height, spaced by a target pixel
+// width rather than pinned to the sample count -- one line per tick would
+// pack far too many for a full buffer (or, early on with few samples
+// buffered, leave the plot with almost none), so a target spacing keeps the
+// grid reading as evenly dense regardless of how much history is currently
+// held. Deliberately denser than paintYAxis's fixed 3 lines -- scanning
+// how far left in time/samples a feature sits benefits from finer-grained
+// lines than the min/mid/max a vertical scan needs.
+constexpr int kXGridTargetSpacingPx = 60;
+constexpr int kXGridMinLines = 4;
+constexpr int kXGridMaxLines = 10;
+
+// Vertical gridlines only -- the "t"/"k" independent-variable label used to
+// get its own strip here, but now rides on the bottom value-legend row
+// instead (see paintSeriesLegends()).
+void paintXAxis(QPainter& painter, const QRect& plotRect, bool showGrid, const ThemePalette& palette) {
+    if (!showGrid || plotRect.width() <= 0 || plotRect.height() <= 0) {
         return;
     }
-    constexpr int kItemGap = 14;
-    const QFontMetrics fm(painter.font());
-    const int rowHeight = qMax(kLegendSwatchSize, fm.height());
-    const int y = area.top() + kOuterPadding;
-    const int rightBound = area.right() - kOuterPadding;
-    int x = area.left() + kOuterPadding;
-
-    for (const ChartSeriesConfig& series : seriesConfigs) {
-        const QString name = series.name.isEmpty() ? QString("Series %1").arg(series.index + 1) : series.name;
-        const int textWidth = fm.horizontalAdvance(name);
-        const int itemWidth = kLegendSwatchSize + 4 + textWidth;
-        if (x + itemWidth > rightBound) {
-            break;
-        }
-        painter.setPen(Qt::NoPen);
-        painter.setBrush(series.color);
-        painter.drawEllipse(QRect(x, y + (rowHeight - kLegendSwatchSize) / 2, kLegendSwatchSize, kLegendSwatchSize));
-
-        painter.setPen(palette.textSecondary);
-        painter.drawText(QRect(x + kLegendSwatchSize + 4, y, textWidth, rowHeight), Qt::AlignLeft | Qt::AlignVCenter,
-                          name);
-
-        x += itemWidth + kItemGap;
+    const int lineCount = qBound(kXGridMinLines, plotRect.width() / kXGridTargetSpacingPx, kXGridMaxLines);
+    painter.setPen(QPen(palette.border, 1));
+    for (int i = 1; i < lineCount; ++i) {
+        const int x = plotRect.left() + plotRect.width() * i / lineCount;
+        painter.drawLine(x, plotRect.top(), x, plotRect.bottom());
     }
 }
 
-// Top inset for plotRect: just kOuterPadding, matching the right/bottom
-// insets, when there's no legend to draw; otherwise enough to clear
-// paintLegend()'s actual row height (which varies with font metrics) plus
-// the same margin below it. Previously a flat kLabelMargin * 3 guess --
-// too much empty space above the plot when a chart has no series yet, and
-// not necessarily enough to clear a taller legend row, which read as the
-// plot floating unevenly inside its widget.
+// One legend row's height: the taller of the color swatch and the current
+// font's line height. Shared by plotTopMargin()/plotBottomMargin() (to
+// reserve exactly this much space) and paintSeriesLegends() (to actually
+// draw into it), so the reserved margin and the drawn row can never drift
+// apart.
+int legendRowHeight(const QPainter& painter) {
+    return qMax(kLegendSwatchSize, QFontMetrics(painter.font()).height());
+}
+
+QString seriesDisplayName(const ChartSeriesConfig& series) {
+    return series.name.isEmpty() ? QString("Series %1").arg(series.index + 1) : series.name;
+}
+
+// A series buffer's latest sample, formatted like a Y-axis value label (see
+// paintYAxis's drawValue) so the two read consistently. "--" for a series
+// with no data yet rather than 0 -- an absent reading and an actual zero
+// reading need to look different.
+QString formatLatestValue(const QVector<double>& buffer) {
+    if (buffer.isEmpty()) {
+        return QStringLiteral("--");
+    }
+    return QString::number(buffer.last(), 'g', 4);
+}
+
+struct LegendColumn {
+    int x = 0;
+    int width = 0; // shared width -- see legendColumns()
+};
+
+// Column x-positions shared by both rows paintSeriesLegends() draws (series
+// names above the plot, latest values below) so their color swatches always
+// line up vertically. Every column gets the *same* width -- the widest
+// name/value text across all series, not just its own -- so the gap between
+// swatches reads as one consistent grid instead of each column snugly
+// hugging its own (differently sized) text. Stops adding columns once one
+// would cross `rightBound`, same "just stop, don't wrap/elide" overflow
+// policy the legend has always used.
+QVector<LegendColumn> legendColumns(const QFontMetrics& fm, int left, int rightBound,
+                                     const QVector<ChartSeriesConfig>& seriesConfigs, const QStringList& values) {
+    int columnWidth = 0;
+    for (int i = 0; i < seriesConfigs.size(); ++i) {
+        const int nameWidth = fm.horizontalAdvance(seriesDisplayName(seriesConfigs[i]));
+        const int valueWidth = i < values.size() ? fm.horizontalAdvance(values[i]) : 0;
+        columnWidth = qMax(columnWidth, kLegendSwatchSize + 4 + qMax(nameWidth, valueWidth));
+    }
+
+    QVector<LegendColumn> columns;
+    int x = left;
+    for (int i = 0; i < seriesConfigs.size(); ++i) {
+        if (x + columnWidth > rightBound) {
+            break;
+        }
+        columns.append({x, columnWidth});
+        x += columnWidth + kLegendItemGap;
+    }
+    return columns;
+}
+
+void paintLegendRow(QPainter& painter, int y, int rowHeight, const QVector<LegendColumn>& columns,
+                     const QVector<ChartSeriesConfig>& seriesConfigs, const QStringList& texts,
+                     const ThemePalette& palette) {
+    for (int i = 0; i < columns.size(); ++i) {
+        const int x = columns[i].x;
+        painter.setPen(Qt::NoPen);
+        painter.setBrush(seriesConfigs[i].color);
+        painter.drawEllipse(QRect(x, y + (rowHeight - kLegendSwatchSize) / 2, kLegendSwatchSize, kLegendSwatchSize));
+
+        painter.setPen(palette.textSecondary);
+        const int textX = x + kLegendSwatchSize + 4;
+        painter.drawText(QRect(textX, y, columns[i].width - (kLegendSwatchSize + 4), rowHeight),
+                          Qt::AlignLeft | Qt::AlignVCenter, texts[i]);
+    }
+}
+
+// Two legend rows bracketing the plot: series names above, each series'
+// latest value directly below it at the bottom -- same color swatch and
+// same column position in both (see legendColumns()), so following a swatch
+// straight down reads as "this name -> this value" without having to match
+// colors by eye. The "t"/"k" independent-variable label rides on the bottom
+// row's right edge, past the last value column.
+void paintSeriesLegends(QPainter& painter, const QRect& area, const QVector<ChartSeriesConfig>& seriesConfigs,
+                         const QVector<QVector<double>>& seriesBuffers, ChartXAxisMode xAxisMode,
+                         const ThemePalette& palette) {
+    const QFontMetrics fm(painter.font());
+    const int rowHeight = legendRowHeight(painter);
+    const QString xLabel = xAxisMode == ChartXAxisMode::Time ? QStringLiteral("t") : QStringLiteral("k");
+    const int xLabelWidth = fm.horizontalAdvance(xLabel);
+
+    // The bottom row's right edge yields to the "t"/"k" tag; the top row has
+    // no competing element there, but shares the same rightBound anyway so
+    // both rows always show the identical set of series -- otherwise a
+    // series that fits in the (slightly wider) name row but not the value
+    // row would show a name with no value underneath it.
+    const int rightBound = area.right() - kOuterPadding - xLabelWidth - kAxisLabelGap;
+    const int left = area.left() + kOuterPadding;
+
+    QStringList names;
+    QStringList values;
+    for (int i = 0; i < seriesConfigs.size(); ++i) {
+        names << seriesDisplayName(seriesConfigs[i]);
+        values << formatLatestValue(i < seriesBuffers.size() ? seriesBuffers[i] : QVector<double>());
+    }
+
+    const QVector<LegendColumn> columns = legendColumns(fm, left, rightBound, seriesConfigs, values);
+
+    const int topY = area.top() + kOuterPadding;
+    paintLegendRow(painter, topY, rowHeight, columns, seriesConfigs, names, palette);
+
+    const int bottomY = area.bottom() - kOuterPadding - rowHeight + 1;
+    paintLegendRow(painter, bottomY, rowHeight, columns, seriesConfigs, values, palette);
+
+    painter.setPen(palette.textSecondary);
+    const QRect xLabelRect(area.right() - kOuterPadding - xLabelWidth, bottomY, xLabelWidth, rowHeight);
+    painter.drawText(xLabelRect, Qt::AlignLeft | Qt::AlignVCenter, xLabel);
+}
+
+// Top inset for plotRect: just kOuterPadding, matching the right inset, when
+// there's no legend to draw; otherwise enough to clear paintSeriesLegends()'s
+// actual row height (which varies with font metrics) plus the same margin
+// below it. Previously a flat kLabelMargin * 3 guess -- too much empty space
+// above the plot when a chart has no series yet, and not necessarily enough
+// to clear a taller legend row, which read as the plot floating unevenly
+// inside its widget.
 int plotTopMargin(const QPainter& painter, bool hasLegend) {
     if (!hasLegend) {
         return kOuterPadding;
     }
-    const QFontMetrics fm(painter.font());
-    const int rowHeight = qMax(kLegendSwatchSize, fm.height());
-    return kOuterPadding + rowHeight + kOuterPadding;
+    return kOuterPadding + legendRowHeight(painter) + kOuterPadding;
 }
 
 // Left inset for plotRect: kOuterPadding from the widget's own edge, then
@@ -190,6 +299,14 @@ int plotTopMargin(const QPainter& painter, bool hasLegend) {
 int plotLeftMargin(const QPainter& painter, bool hasUnit, double yMin, double yMax) {
     const int unitPart = hasUnit ? unitStripWidth(painter) + kAxisLabelGap : 0;
     return kOuterPadding + unitPart + axisLabelWidth(painter, yMin, yMax) + kAxisLabelGap;
+}
+
+// Bottom inset for plotRect: mirrors plotTopMargin()'s legend-row math, but
+// always reserved (no hasLegend gate) -- paintSeriesLegends()'s "t"/"k" tag
+// rides on this row and stays up even with zero series configured, same as
+// paintYAxis's value labels staying up regardless of `showGrid`.
+int plotBottomMargin(const QPainter& painter) {
+    return kOuterPadding + legendRowHeight(painter) + kOuterPadding;
 }
 
 Qt::PenStyle qtPenStyleFor(ChartSeriesStyle style) {
@@ -361,10 +478,12 @@ void DummyLineChartWidget::paintEvent(QPaintEvent*) {
     const auto [yMin, yMax] = computeYRange(m_config, m_seriesBuffers);
     const int topMargin = plotTopMargin(painter, !m_config.series.isEmpty());
     const int leftMargin = plotLeftMargin(painter, !m_config.yUnit.isEmpty(), yMin, yMax);
-    const QRect plotRect = area.adjusted(leftMargin, topMargin, -kOuterPadding, -kOuterPadding);
+    const int bottomMargin = plotBottomMargin(painter);
+    const QRect plotRect = area.adjusted(leftMargin, topMargin, -kOuterPadding, -bottomMargin);
     const int capacity = chartBufferCapacity(m_config);
 
     paintYAxis(painter, plotRect, yMin, yMax, m_config.yUnit, m_config.showGrid, palette);
+    paintXAxis(painter, plotRect, m_config.showGrid, palette);
     for (int i = 0; i < m_config.series.size() && i < m_seriesBuffers.size(); ++i) {
         paintLineSeries(painter, plotRect, capacity, m_config.series[i], m_seriesBuffers[i], yMin, yMax);
     }
@@ -373,7 +492,7 @@ void DummyLineChartWidget::paintEvent(QPaintEvent*) {
     // already shows the configured name (TAREFA 1); this corner now carries
     // the per-series legend instead, which the old literal text had no room
     // for anyway.
-    paintLegend(painter, area, m_config.series, palette);
+    paintSeriesLegends(painter, area, m_config.series, m_seriesBuffers, m_config.xAxisMode, palette);
 }
 
 DummyBarChartWidget::DummyBarChartWidget(QWidget* parent) : ChartWidgetBase(parent) {}
@@ -389,15 +508,17 @@ void DummyBarChartWidget::paintEvent(QPaintEvent*) {
     const auto [yMin, yMax] = computeYRange(m_config, m_seriesBuffers);
     const int topMargin = plotTopMargin(painter, !m_config.series.isEmpty());
     const int leftMargin = plotLeftMargin(painter, !m_config.yUnit.isEmpty(), yMin, yMax);
-    const QRect plotRect = area.adjusted(leftMargin, topMargin, -kOuterPadding, -kOuterPadding);
+    const int bottomMargin = plotBottomMargin(painter);
+    const QRect plotRect = area.adjusted(leftMargin, topMargin, -kOuterPadding, -bottomMargin);
     const int capacity = chartBufferCapacity(m_config);
 
     paintYAxis(painter, plotRect, yMin, yMax, m_config.yUnit, m_config.showGrid, palette);
+    paintXAxis(painter, plotRect, m_config.showGrid, palette);
     paintBarSeries(painter, plotRect, capacity, m_config.series, m_seriesBuffers, yMin, yMax);
 
     // See DummyLineChartWidget::paintEvent for why this is a legend instead
     // of a "Bar Chart" corner label now.
-    paintLegend(painter, area, m_config.series, palette);
+    paintSeriesLegends(painter, area, m_config.series, m_seriesBuffers, m_config.xAxisMode, palette);
 }
 
 DummyGaugeWidget::DummyGaugeWidget(QWidget* parent) : DashboardWidget(parent) {}
