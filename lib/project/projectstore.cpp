@@ -71,4 +71,10 @@ bool ProjectStore::load(const QString& filePath) {
     return true;
 }
 
+void ProjectStore::reset() {
+    m_root = QJsonObject();
+    m_currentPath.clear();
+    m_lastError.clear();
+}
+
 } // namespace traceview

@@ -18,7 +18,7 @@
 namespace traceview {
 
 namespace {
-constexpr int kMargin = 8;
+constexpr int kMargin = 16;
 // Custom clipboard format for copySelected()/pasteItem() — carries a single
 // dashboardItemToJson() object, so paste can reuse the same (de)serializer
 // as project save/load instead of a bespoke copy of DashboardItem's fields.
@@ -29,8 +29,8 @@ constexpr const char* kClipboardMimeType = "application/x-traceview-dashboardite
 // only shapes interaction feel, never item geometry directly. That's what
 // keeps relayout() resize-safe: there is no per-window column/row count to
 // go stale and clamp items against.
-constexpr int kGridColumns = 60;
-constexpr int kGridRows = 40;
+constexpr int kGridColumns = 120;
+constexpr int kGridRows = 80;
 // Radius of the small dots painted at each grid node in edit mode (see
 // paintEvent()) — deliberately subtle, just a hint of the snap points.
 // Kept small relative to the grid density above so denser dots don't read

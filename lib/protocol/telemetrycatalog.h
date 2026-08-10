@@ -98,12 +98,28 @@ public:
 
     const TelemetryTopicSchema* lookup(quint32 sourceId, quint16 topicId, quint16 schemaVersion) const;
 
+    // Topico 17: SubscriptionManager needs the source's boot_id to address a
+    // SUBSCRIBE/UNSUBSCRIBE's target_boot_id (COMMANDS_AND_ACTIONS.md section
+    // 7 marks it non-zero, unlike MANIFEST_REQUEST's target_boot_id which
+    // accepts zero). Kept as a source-level fact independent of any one
+    // schema_version/topic_id (registerSchema()'s key includes
+    // schema_version, which a subscribing widget does not know) --
+    // ManifestClient populates this from MANIFEST_DATA's described_boot_id
+    // every time it applies a response for that source, so this always
+    // reflects the boot the catalog's currently-registered schemas actually
+    // came from.
+    void registerSourceBootId(quint32 sourceId, quint32 bootId);
+    // Returns 0 if this source's boot_id is not known yet (no MANIFEST_DATA
+    // applied for it in this process).
+    quint32 sourceBootId(quint32 sourceId) const;
+
     void clear();
 
 private:
     static quint64 makeKey(quint32 sourceId, quint16 topicId, quint16 schemaVersion);
 
     QHash<quint64, TelemetryTopicSchema> m_schemas;
+    QHash<quint32, quint32> m_sourceBootIds;
 };
 
 // Registers the two schemas bally_software already produces (TELEMETRY.md

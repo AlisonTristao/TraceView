@@ -46,7 +46,7 @@
                 "key": "",
                 "name": "Accelaration",
                 "type": "dummy_line",
-                "width": 0.36666666666666664,
+                "width": 0.375,
                 "x": 0,
                 "y": 0
             },
@@ -90,26 +90,26 @@
                         "unit": "[m/s]"
                     }
                 },
-                "height": 0.3,
+                "height": 0.3125,
                 "id": "f861e22a-4d7f-4c91-866d-3aa7cce773b4",
                 "key": "",
                 "name": "Speed",
                 "type": "dummy_line",
-                "width": 0.36666666666666664,
+                "width": 0.375,
                 "x": 0,
-                "y": 0.35000000000000003
+                "y": 0.3375
             },
             {
                 "config": {
                 },
-                "height": 0.32499999999999996,
+                "height": 0.33749999999999997,
                 "id": "bdbc8b57-c48c-43c2-b29f-873a0ef4486d",
                 "key": "",
                 "name": "",
                 "type": "serial_monitor",
                 "width": 0.8666666666666667,
                 "x": 0,
-                "y": 0.675
+                "y": 0.6625000000000001
             },
             {
                 "config": {
@@ -241,26 +241,26 @@
             {
                 "config": {
                 },
-                "height": 0.3,
+                "height": 0.3125,
                 "id": "1d1a92cc-fde0-498c-ba75-d606867da28e",
                 "key": "",
                 "name": "Left Motor",
                 "type": "dummy_gauge",
                 "width": 0.3,
                 "x": 0.3833333333333333,
-                "y": 0.35000000000000003
+                "y": 0.3375
             },
             {
                 "config": {
                 },
-                "height": 0.3,
+                "height": 0.3125,
                 "id": "ad3e1c9a-ecf1-4c6f-9aea-3aa280673894",
                 "key": "",
                 "name": "Ritght Motor",
                 "type": "dummy_gauge",
-                "width": 0.3,
-                "x": 0.7,
-                "y": 0.35000000000000003
+                "width": 0.30833333333333335,
+                "x": 0.6916666666666667,
+                "y": 0.3375
             }
         ]
     },
