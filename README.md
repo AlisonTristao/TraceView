@@ -1,16 +1,17 @@
 # TraceView
 
-Telemetry dashboard for line-following robots, built in C++ with Qt.
+Real-time telemetry dashboard for ESP32/ESP-NOW robots, built in C++ with Qt.
 
-> **Status:** early development. Core architecture and telemetry protocol are being defined — see [CONTRIBUTING.md](CONTRIBUTING.md) for the branching/feature workflow and [docs/ECOSYSTEM.md](docs/ECOSYSTEM.md) for how this project fits with the rest of the Bally ecosystem.
+> **Status:** early development. Core architecture and telemetry protocol are being defined — see [CONTRIBUTING.md](CONTRIBUTING.md) for the branching/feature workflow and [docs/ECOSYSTEM.md](docs/ECOSYSTEM.md) for how this project fits with the rest of the ecosystem.
 
-## Part of the Bally ecosystem
+## Ecosystem
 
-TraceView is the desktop telemetry client for the [Bally](https://github.com/AlisonTristao/bally_robot) line-follower platform:
+TraceView is the desktop client for [BTP](https://github.com/AlisonTristao/BTP), a binary protocol for real-time communication and data plotting over ESP32/ESP-NOW:
 
 - [bally_robot](https://github.com/AlisonTristao/bally_robot) — robot hardware
-- [bally_OS](https://github.com/AlisonTristao/bally_OS) — robot firmware (ESP32-S3)
-- [t_dongle_develop](https://github.com/AlisonTristao/t_dongle_develop) — receiver dongle firmware (LilyGO T-Dongle-S3)
+- [Bally_OS](https://github.com/AlisonTristao/Bally_OS) — robot firmware (ESP32-S3)
+- [Bally_dongle](https://github.com/AlisonTristao/Bally_dongle) — receiver dongle firmware (LilyGO T-Dongle-S3)
+- [BTP](https://github.com/AlisonTristao/BTP) — the shared wire protocol and codec
 - **TraceView** — telemetry visualization (this repository)
 
 ## Build

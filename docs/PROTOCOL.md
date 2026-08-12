@@ -1,25 +1,24 @@
 # Serial protocol
 
-TraceView's inbound wire format is the **Bally Telemetry Protocol (BTP) v1**,
+TraceView's inbound wire format is the **Binary Telemetry Protocol (BTP) v1**,
 whose canonical, cross-repo specification lives in
-[`bally_protocol/docs`](../../bally_protocol/docs) (a sibling checkout —
-see [`ECOSYSTEM.md`](ECOSYSTEM.md)):
+[`BTP/docs`](../../BTP/docs) (see [`ECOSYSTEM.md`](ECOSYSTEM.md)):
 
-- [`BTP_V1.md`](../../bally_protocol/docs/BTP_V1.md) — frame envelope, CRC,
+- [`BTP_V1.md`](../../BTP/docs/BTP_V1.md) — frame envelope, CRC,
   identity/sequence/timestamp rules, fragmentation.
-- [`TELEMETRY.md`](../../bally_protocol/docs/TELEMETRY.md) — the `TELEMETRY`
+- [`TELEMETRY.md`](../../BTP/docs/TELEMETRY.md) — the `TELEMETRY`
   payload: `schema_version` + encoded body, schema/field model, `PACKED_LE`
   encoding, client field binding.
-- [`STREAM_AND_REASSEMBLY.md`](../../bally_protocol/docs/STREAM_AND_REASSEMBLY.md)
-  and [`TRANSPORT_SERIAL.md`](../../bally_protocol/docs/TRANSPORT_SERIAL.md) —
+- [`STREAM_AND_REASSEMBLY.md`](../../BTP/docs/STREAM_AND_REASSEMBLY.md)
+  and [`TRANSPORT_SERIAL.md`](../../BTP/docs/TRANSPORT_SERIAL.md) —
   COBS framing over the serial stream, the incremental decoder, and the
   console/protocoled-mode handshake.
-- [`COMMANDS_AND_ACTIONS.md`](../../bally_protocol/docs/COMMANDS_AND_ACTIONS.md)
+- [`COMMANDS_AND_ACTIONS.md`](../../BTP/docs/COMMANDS_AND_ACTIONS.md)
   — `COMMAND`/`CONTROL`/`TERMINAL` payloads, `HELLO` negotiation, manifest.
 
 TraceView does not keep its own copy of that spec or a second codec — it
-vendors `bally_protocol` as a CMake subdirectory and links `btp::codec` (see
-the root `CMakeLists.txt`). This file only documents how TraceView's own
+fetches `BTP` via CMake `FetchContent`, pinned to a released tag, and links
+`btp::codec` (see the root `CMakeLists.txt`). This file only documents how TraceView's own
 modules implement the client side of that contract; it is not itself a wire
 format definition anymore (that role belonged to the pre-BTP `[<time>][<id>]
 <payload>` line envelope this project used before topico 14 of the BTP
@@ -66,7 +65,7 @@ record, reusing the wire's own types/units/scale/offset rather than any
 hardcoded table. `TelemetryFieldRouter::unknownSchema` triggers a targeted,
 rate-limited re-request when a sample's `schema_version` isn't in the
 catalog. `registerBallySoftwareCatalog()` still exists, but only as a
-convenience for tests and tools that want bally_software's two documented
+convenience for tests and tools that want Bally_OS's two documented
 schemas (`protocol.test`, `robot.state` — see `TELEMETRY.md` section 9.4)
 without a live dongle connection; `MainWindow` no longer calls it.
 
@@ -188,7 +187,7 @@ SerialTerminalWidget::appendData(QByteArray)
 Line editing (echo, backspace, arrow-key history/cursor movement, Tab
 completion, Ctrl+R reverse search) is **not** implemented in TraceView --
 it stays entirely on the dongle's `ShellSerial` (see
-`bally_protocol/topicos/19_terminal_protocolado.txt` RESULTADO for the
+`BTP/topicos/19_terminal_protocolado.txt` RESULTADO for the
 PASSO 1/2 design decision and why). `SerialTerminalWidget` only forwards
 keystrokes and renders whatever `TERMINAL_OUT` sends back, using a minimal
 line model equivalent to a VT100 subset (`\r` returns to column 0 without
