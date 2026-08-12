@@ -163,6 +163,10 @@ struct ParsedManifestData {
     quint8 flags = 0;
     quint32 configRevision = 0;
     quint32 describedSourceId = 0;
+    // topico 17: SUBSCRIBE's target_boot_id MUST be non-zero
+    // (COMMANDS_AND_ACTIONS.md section 7), and this is the only place the
+    // client ever learns which boot a source is currently on.
+    quint32 describedBootId = 0;
     QVector<TelemetryTopicSchema> topics;
 };
 
@@ -200,6 +204,7 @@ bool parseManifestData(const QByteArray& payload, ParsedManifestData* out) {
     result.flags = flags;
     result.configRevision = configRevision;
     result.describedSourceId = describedSourceId;
+    result.describedBootId = describedBootId;
 
     if (status == kStatusSuccess && (flags & kFlagNotModified) == 0) {
         for (quint16 i = 0; i < topicCount; ++i) {
@@ -309,9 +314,15 @@ void ManifestClient::onControlFrameReceived(const BtpFrame& frame) {
         return;
     }
 
+    // The boot this source is currently on, whether or not its catalog
+    // changed -- topico 17's SUBSCRIBE addresses a (source, boot) pair, and
+    // this response is the only carrier of that fact.
+    m_catalog->registerSourceBootId(parsed.describedSourceId, parsed.describedBootId);
+
     if ((parsed.flags & kFlagNotModified) != 0) {
         m_sourceRevisions.insert(parsed.describedSourceId, parsed.configRevision);
-        return;  // topics unchanged; nothing to re-register
+        emit catalogUpdated();  // the boot_id above may be new even when the schemas are not
+        return;
     }
 
     for (const TelemetryTopicSchema& topic : parsed.topics) {

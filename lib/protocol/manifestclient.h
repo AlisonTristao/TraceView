@@ -59,9 +59,12 @@ public slots:
     void onUnknownSchema(quint32 sourceId, quint16 topicId, quint16 schemaVersion);
 
 signals:
-    // Emitted after at least one topic schema was added/replaced in the
-    // catalog from a MANIFEST_DATA response. Informational only (e.g. for a
-    // future status display); nothing in this topico needs to consume it.
+    // Emitted after a successful MANIFEST_DATA response was applied to the
+    // catalog: topic schemas added/replaced, and/or that source's current
+    // boot_id recorded (which happens on NOT_MODIFIED too, since the boot can
+    // change without the catalog changing). topico 17's SubscriptionManager
+    // listens for this to send any SUBSCRIBE it had to hold back for lack of
+    // a target_boot_id.
     void catalogUpdated();
 
 private slots:

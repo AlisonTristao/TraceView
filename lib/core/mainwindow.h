@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QHash>
 #include <QJsonObject>
 #include <QMainWindow>
 #include <QRect>
@@ -7,6 +8,7 @@
 
 class QAction;
 class QComboBox;
+class QLabel;
 class QMenu;
 class QPushButton;
 class QToolButton;
@@ -22,6 +24,7 @@ class ProtocolRouter;
 class PropertiesPanel;
 class Ribbon;
 class SerialManager;
+class SubscriptionManager;
 class TelemetryCatalog;
 class TelemetryFieldRouter;
 
@@ -105,7 +108,22 @@ private:
     // entries from it (topico 16) -- replaces topico 15's temporary
     // registerBallySoftwareCatalog()/m_knownTelemetrySources bridge.
     ManifestClient* m_manifestClient = nullptr;
+    // Turns the open chart/gauge widgets into wire-level SUBSCRIBEs, one per
+    // (source_id, topic_id) no matter how many widgets read it (topico 17).
+    SubscriptionManager* m_subscriptionManager = nullptr;
     void wireChartWidgetToTelemetry(DashboardWidget* widget);
+    // Re-derives every open widget's subscription from its current config --
+    // called whenever a config edit (or its undo/redo) could have changed a
+    // widget's source/topic/sample time.
+    void refreshWidgetSubscriptions();
+    // Recomputes the status-bar telemetry summary (requested vs. effective
+    // rate, plus bytes/drops from a status_version=2 STATUS).
+    void updateTelemetryStatusLabel();
+    // One entry per live chart/gauge widget: its SubscriptionManager handle
+    // (0 when the widget has no source/topic configured yet). Cleaned up from
+    // each widget's own destroyed() signal.
+    QHash<DashboardWidget*, quint64> m_widgetSubscriptions;
+    QLabel* m_telemetryStatusLabel = nullptr;
     int m_runTabIndex = -1;
     QComboBox* m_portCombo = nullptr;
     QToolButton* m_refreshPortsButton = nullptr;

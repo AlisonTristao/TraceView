@@ -83,6 +83,48 @@ counters), `ProtocolRouter::diagnostics()` (routed/dropped per channel), and
 are all available for a future diagnostics panel; none is wired into the UI
 yet (no concrete need for one until topico 15/16 land).
 
+## Subscriptions and rate control (topico 17)
+
+Nothing above puts a topic *on* the wire; that is `SubscriptionManager`
+(`lib/protocol/subscriptionmanager.h`). Its model is a reference count per
+`(source_id, topic_id)`, not one subscription per widget — several charts and
+gauges routinely plot different fields of the same topic, and the wire only
+ever carries whole topics:
+
+- the first consumer of a topic triggers one `SUBSCRIBE` carrying the highest
+  rate any live consumer asked for (a chart derives that from its configured
+  sample time `Ts`; a gauge asks for a fixed 5 Hz);
+- another consumer of the same topic adds no traffic unless it wants a
+  *higher* rate, in which case one new `SUBSCRIBE` (new `sequence`) replaces
+  the previous one atomically;
+- closing one of several consumers sends nothing, except a rate-*lowering*
+  `SUBSCRIBE` when the one that left was the one asking for the top rate;
+- only the last consumer leaving a topic sends `UNSUBSCRIBE`.
+
+`MainWindow` is the only place that knows about widgets: `widgetCreated` and
+each widget's own `destroyed()` add/remove one opaque consumer handle, and the
+undo stack's `indexChanged` re-derives every handle after a config edit (or
+its undo/redo) repoints a widget at another source/topic or changes `Ts`.
+
+`SUBSCRIBE` needs a non-zero `target_boot_id`, which only `MANIFEST_DATA`
+supplies, so `TelemetryCatalog` now also records a `sourceBootId()` per source
+(written by `ManifestClient`); a subscription requested before that manifest
+arrived is held back and released on `ManifestClient::catalogUpdated`.
+Subscriptions are scoped to the BTP session that granted them: a disconnect
+forgets the grants but not the consumers, and a new `sessionEstablished()`
+re-subscribes everything still open. Leases are renewed at half the granted
+lease while a consumer exists.
+
+The granted rate is never assumed equal to the requested one: the
+`effective_rate_millihz` of `SUBSCRIBE_RESULT` is what the status bar shows
+(flagged as "limited" with the rate that was asked for when it came back
+lower), and a rejection surfaces its status/error code. `CONTROL/STATUS` with
+`status_version=2` (`COMMANDS_AND_ACTIONS.md` section 8.1) adds per-topic
+subscriber count, effective rate, bytes and drops as measured *at the source*,
+shown in the status bar's tooltip; a `status_version=1` emitter still parses
+correctly — the reader stops at 92 octets and simply has no per-topic data.
+`lib/protocol/statusreport.h` is the standalone parser for both versions.
+
 ## Outbound: control commands
 
 This part of the contract is **unchanged** by topico 14.

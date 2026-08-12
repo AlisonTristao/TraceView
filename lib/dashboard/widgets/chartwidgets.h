@@ -43,6 +43,12 @@ public:
     // still connectable via the functor-based QObject::connect overload.
     void onFieldSample(const traceview::TelemetryFieldBinding& binding, quint64 timestampUs, double value);
 
+    // The parsed config this widget is currently rendering. Read by
+    // MainWindow to derive the wire-level SUBSCRIBE this widget implies
+    // (topico 17): which (sourceId, topicId) it consumes and how fast it
+    // wants samples.
+    const ChartConfig& config() const { return m_config; }
+
 protected:
     ChartConfig m_config;
     QVector<TelemetrySeriesBuffer> m_seriesBuffers;  // one per m_config.series, same order
@@ -83,6 +89,9 @@ public:
     // See ChartWidgetBase::onFieldSample() above -- same role, filtered by
     // GaugeConfig's sourceId/topicId instead of ChartConfig's.
     void onFieldSample(const traceview::TelemetryFieldBinding& binding, quint64 timestampUs, double value);
+
+    // See ChartWidgetBase::config() -- same role for a gauge's own config.
+    const GaugeConfig& config() const { return m_config; }
 
 protected:
     void paintEvent(QPaintEvent* event) override;

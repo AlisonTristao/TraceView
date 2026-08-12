@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.21)
 
 project(TraceView
-    VERSION 0.1.0
+    VERSION 1.0.0
     DESCRIPTION "Telemetry dashboard for line-following robots"
     LANGUAGES CXX
 )
@@ -28,25 +28,24 @@ endif()
 find_package(Qt6 REQUIRED COMPONENTS Widgets SerialPort)
 
 # bally_protocol is the canonical, shared source of the BTP v1 wire format
-# and codec (see C:\git\bally_protocol\PLANO_GERAL.txt) -- TraceView does not
-# keep its own copy of the spec or the codec, it vendors the repository as a
-# CMake subdirectory sibling checkout and links btp::codec.
-set(BALLY_PROTOCOL_DIR "${CMAKE_SOURCE_DIR}/../bally_protocol" CACHE PATH
-    "Path to the bally_protocol repository (BTP v1 codec)")
-if(NOT EXISTS "${BALLY_PROTOCOL_DIR}/CMakeLists.txt")
-    message(FATAL_ERROR
-        "bally_protocol not found at ${BALLY_PROTOCOL_DIR} -- clone it as a "
-        "sibling of TraceView (see the Bally ecosystem workspace layout), or "
-        "set -DBALLY_PROTOCOL_DIR=<path> to its checkout.")
-endif()
+# and codec (see bally_protocol/PLANO_GERAL.txt) -- TraceView does not keep
+# its own copy of the spec or the codec, it fetches the repository from git
+# and links btp::codec, the same way the ESP32 firmwares pull it in via
+# PlatformIO's lib_deps instead of a sibling checkout.
 # bally_protocol's own test suite (codec/transport/conformance vectors) is
 # that repository's job to run, not TraceView's -- it also pulls in a
 # Python3 interpreter requirement for its vector-description check that
 # TraceView otherwise has no reason to depend on. TraceView's tests/
 # directory covers the BTP integration from this repo's side instead (see
 # tests/test_btpsession.cpp and friends).
+include(FetchContent)
 set(BTP_BUILD_TESTS OFF CACHE BOOL "" FORCE)
-add_subdirectory(${BALLY_PROTOCOL_DIR} ${CMAKE_BINARY_DIR}/bally_protocol)
+FetchContent_Declare(
+    bally_protocol
+    GIT_REPOSITORY https://github.com/AlisonTristao/bally_protocol.git
+    GIT_TAG v1.0.0-beta
+)
+FetchContent_MakeAvailable(bally_protocol)
 
 add_subdirectory(lib)
 

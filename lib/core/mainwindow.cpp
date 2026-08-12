@@ -9,6 +9,7 @@
 #include <QHBoxLayout>
 #include <QIntValidator>
 #include <QKeySequence>
+#include <QLabel>
 #include <QMenu>
 #include <QMenuBar>
 #include <QMessageBox>
@@ -16,6 +17,7 @@
 #include <QSettings>
 #include <QSignalBlocker>
 #include <QStatusBar>
+#include <QStringList>
 #include <QToolButton>
 #include <QVBoxLayout>
 
@@ -28,6 +30,7 @@
 #include "protocol/btpsession.h"
 #include "protocol/manifestclient.h"
 #include "protocol/protocolrouter.h"
+#include "protocol/subscriptionmanager.h"
 #include "protocol/telemetrycatalog.h"
 #include "protocol/telemetryfieldrouter.h"
 #include "propertiespanel.h"
@@ -48,6 +51,61 @@ namespace {
 constexpr const char* kProjectFileFilter = "TraceView Project (*.tvproj)";
 constexpr const char* kRecentFilesSettingsKey = "recentFiles/paths";
 constexpr int kMaxRecentFiles = 10;
+
+// What a gauge asks for: it has no sample-time setting of its own (a gauge
+// only ever shows the newest value), so it requests a modest fixed rate
+// instead of inventing a config field for it.
+constexpr quint32 kGaugeRequestedRateMillihz = 5000;  // 5 Hz
+// Fallback for a chart whose configured sample time is unusable (<= 0).
+constexpr quint32 kDefaultRequestedRateMillihz = 10000;  // 10 Hz
+
+// Converts a chart's configured sample period into the rate its SUBSCRIBE
+// asks for. This is only a *request*: the source clamps it to its schema's
+// min/max and reports the effective rate in SUBSCRIBE_RESULT, which is what
+// the status bar then shows (topico 17).
+quint32 requestedRateMillihzFor(double sampleTimeMs) {
+    if (!(sampleTimeMs > 0.0)) {
+        return kDefaultRequestedRateMillihz;
+    }
+    const double millihz = 1'000'000.0 / sampleTimeMs;  // 1000 Hz-per-ms * 1000 milli
+    if (millihz < 1.0) {
+        return 1;
+    }
+    if (millihz > 4'000'000'000.0) {
+        return 4'000'000'000u;
+    }
+    return quint32(millihz);
+}
+
+QString formatRateMillihz(quint32 millihz) {
+    return QString::number(millihz / 1000.0, 'g', 4) + " Hz";
+}
+
+// The (source_id, topic_id, requested rate) one dashboard widget implies.
+// All-zero for a widget that is not a telemetry consumer, or one whose
+// source/topic has not been configured yet -- SubscriptionManager treats that
+// as "no consumer" and puts nothing on the wire.
+struct WidgetTopicRequest {
+    quint32 sourceId = 0;
+    quint16 topicId = 0;
+    quint32 rateMillihz = 0;
+};
+
+WidgetTopicRequest widgetTopicRequest(DashboardWidget* widget) {
+    if (auto* chart = dynamic_cast<ChartWidgetBase*>(widget)) {
+        const ChartConfig& config = chart->config();
+        return {config.sourceId, config.topicId, requestedRateMillihzFor(config.sampleTimeMs)};
+    }
+    if (auto* gauge = dynamic_cast<DummyGaugeWidget*>(widget)) {
+        const GaugeConfig& config = gauge->config();
+        return {config.sourceId, config.topicId, kGaugeRequestedRateMillihz};
+    }
+    return {};
+}
+
+quint64 topicStatusKey(quint32 sourceId, quint16 topicId) {
+    return (quint64(sourceId) << 16) | quint64(topicId);
+}
 } // namespace
 
 MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
@@ -73,6 +131,11 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     m_telemetryFieldRouter = new TelemetryFieldRouter(m_telemetryCatalog, this);
     m_btpHandshake = new BtpHandshake(m_btpSession, m_protocolRouter, this);
     m_manifestClient = new ManifestClient(m_btpSession, m_protocolRouter, m_telemetryCatalog, this);
+    // topico 17: every open chart/gauge is a *consumer* of a topic; this is
+    // what turns all of them into a single SUBSCRIBE per (source, topic) at
+    // the highest rate any of them asked for, and into an UNSUBSCRIBE only
+    // when the last one closes.
+    m_subscriptionManager = new SubscriptionManager(m_btpSession, m_protocolRouter, m_telemetryCatalog, this);
     connect(m_serialManager, &SerialManager::dataReceived, m_btpSession, &BtpSession::feedBytes);
     connect(m_btpSession, &BtpSession::bytesToWrite, m_serialManager, &SerialManager::write);
     // BtpHandshake needs the same raw bytes BtpSession sees (it only looks
@@ -84,11 +147,17 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
         if (connected) {
             m_btpSession->reset();
             m_btpHandshake->start();
+        } else {
+            // Subscriptions are scoped to the session that granted them
+            // (topico 17 PASSO 6): forget the grants, keep the widgets that
+            // wanted them, so reconnecting re-subscribes everything.
+            m_subscriptionManager->onSessionLost();
         }
     });
     connect(m_btpHandshake, &BtpHandshake::sessionEstablished, this, [this](quint32 peerConfigRevision) {
         statusBar()->showMessage("BTP session established (HELLO_RESULT=SUCCESS)", 5000);
         m_manifestClient->onSessionEstablished(peerConfigRevision);
+        m_subscriptionManager->onSessionEstablished();
     });
     connect(m_btpHandshake, &BtpHandshake::sessionFailed, this, [this](const QString& reason) {
         statusBar()->showMessage("BTP handshake failed: " + reason, 8000);
@@ -101,6 +170,36 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     // manifest re-request instead of silently dropping forever.
     connect(m_telemetryFieldRouter, &TelemetryFieldRouter::unknownSchema, m_manifestClient,
             &ManifestClient::onUnknownSchema);
+    // A SUBSCRIBE needs its target's boot_id, which only MANIFEST_DATA
+    // supplies -- a subscription requested before the manifest arrived is
+    // held back and released here.
+    connect(m_manifestClient, &ManifestClient::catalogUpdated, m_subscriptionManager,
+            &SubscriptionManager::onCatalogUpdated);
+    // CRITERIO DE ACEITE "pedido acima do maximo e limitado e informado ao
+    // cliente": the granted rate is surfaced, never silently assumed equal to
+    // what was asked for.
+    connect(m_subscriptionManager, &SubscriptionManager::subscriptionRateLimited, this,
+            [this](quint32 sourceId, quint16 topicId, quint32 requested, quint32 effective) {
+                statusBar()->showMessage(QString("Topic 0x%1 of source 0x%2 limited to %3 (requested %4)")
+                                             .arg(topicId, 4, 16, QChar('0'))
+                                             .arg(sourceId, 8, 16, QChar('0'))
+                                             .arg(formatRateMillihz(effective), formatRateMillihz(requested)),
+                                         8000);
+            });
+    connect(m_subscriptionManager, &SubscriptionManager::subscriptionRejected, this,
+            [this](quint32 sourceId, quint16 topicId, quint8 status, quint16 errorCode) {
+                statusBar()->showMessage(QString("SUBSCRIBE rejected for topic 0x%1 of source 0x%2 "
+                                                 "(status 0x%3, error 0x%4)")
+                                             .arg(topicId, 4, 16, QChar('0'))
+                                             .arg(sourceId, 8, 16, QChar('0'))
+                                             .arg(status, 2, 16, QChar('0'))
+                                             .arg(errorCode, 4, 16, QChar('0')),
+                                         8000);
+            });
+    connect(m_subscriptionManager, &SubscriptionManager::subscriptionsChanged, this,
+            &MainWindow::updateTelemetryStatusLabel);
+    connect(m_subscriptionManager, &SubscriptionManager::statusReceived, this,
+            &MainWindow::updateTelemetryStatusLabel);
 
     // Wires control-widget commands and the serial monitor/terminal to the
     // same connection (BACKEND_TODO.txt Tasks 9/10; terminal rewired onto
@@ -132,18 +231,115 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     centralLayout->addWidget(ribbon);
     centralLayout->addWidget(contentRow, /*stretch=*/1);
     setCentralWidget(central);
+
+    // Permanent readout of what telemetry is actually flowing: the effective
+    // rate each subscribed topic was granted (never the rate that was asked
+    // for), plus per-topic bytes/drops when the peer publishes
+    // status_version=2 (COMMANDS_AND_ACTIONS.md section 8.1). The transient
+    // showMessage() calls above stay for one-off events; this is the standing
+    // state.
+    m_telemetryStatusLabel = new QLabel(this);
+    statusBar()->addPermanentWidget(m_telemetryStatusLabel);
 }
 
 MainWindow::~MainWindow() {
+    // The dashboard's widgets are deleted later, as QObject children, i.e.
+    // after this class's own members are gone -- so their destroyed()
+    // handlers (which drop a subscription reference, see
+    // wireChartWidgetToTelemetry) must be taken down here, while
+    // m_widgetSubscriptions still exists. Only signals *from* each widget are
+    // disconnected; the fieldSample connections into them are unaffected.
+    for (auto it = m_widgetSubscriptions.constBegin(); it != m_widgetSubscriptions.constEnd(); ++it) {
+        disconnect(it.key(), nullptr, this, nullptr);
+    }
+    m_widgetSubscriptions.clear();
     delete m_telemetryCatalog;
 }
 
 void MainWindow::wireChartWidgetToTelemetry(DashboardWidget* widget) {
+    bool consumesTelemetry = false;
     if (auto* chart = dynamic_cast<ChartWidgetBase*>(widget)) {
         connect(m_telemetryFieldRouter, &TelemetryFieldRouter::fieldSample, chart, &ChartWidgetBase::onFieldSample);
+        consumesTelemetry = true;
     } else if (auto* gauge = dynamic_cast<DummyGaugeWidget*>(widget)) {
         connect(m_telemetryFieldRouter, &TelemetryFieldRouter::fieldSample, gauge, &DummyGaugeWidget::onFieldSample);
+        consumesTelemetry = true;
     }
+    if (!consumesTelemetry) {
+        return;
+    }
+
+    // topico 17 PASSO 2: this widget is one *reference* to its topic, not a
+    // subscription of its own -- SubscriptionManager collapses however many
+    // widgets read (source, topic) into a single SUBSCRIBE.
+    const WidgetTopicRequest request = widgetTopicRequest(widget);
+    m_widgetSubscriptions.insert(
+        widget, m_subscriptionManager->addSubscriber(request.sourceId, request.topicId, request.rateMillihz));
+
+    // PASSO 5: closing a widget only drops its reference; UNSUBSCRIBE is sent
+    // only when it was the last consumer of that topic.
+    connect(widget, &QObject::destroyed, this, [this, widget] {
+        m_subscriptionManager->removeSubscriber(m_widgetSubscriptions.take(widget));
+    });
+}
+
+void MainWindow::refreshWidgetSubscriptions() {
+    for (auto it = m_widgetSubscriptions.begin(); it != m_widgetSubscriptions.end(); ++it) {
+        const WidgetTopicRequest request = widgetTopicRequest(it.key());
+        it.value() = m_subscriptionManager->updateSubscriber(it.value(), request.sourceId, request.topicId,
+                                                             request.rateMillihz);
+    }
+}
+
+void MainWindow::updateTelemetryStatusLabel() {
+    if (!m_telemetryStatusLabel) {
+        return;
+    }
+    const QVector<TopicSubscriptionState> states = m_subscriptionManager->subscriptions();
+    if (states.isEmpty()) {
+        m_telemetryStatusLabel->clear();
+        m_telemetryStatusLabel->setToolTip(QString());
+        return;
+    }
+
+    QHash<quint64, StatusTopicRecord> statusByTopic;
+    for (const StatusTopicRecord& record : m_subscriptionManager->topicStatuses()) {
+        statusByTopic.insert(topicStatusKey(record.sourceId, record.topicId), record);
+    }
+
+    QStringList summary;
+    QStringList detail;
+    for (const TopicSubscriptionState& state : states) {
+        const QString topicLabel = QString("0x%1/0x%2")
+                                       .arg(state.sourceId, 8, 16, QChar('0'))
+                                       .arg(state.topicId, 4, 16, QChar('0'));
+        QString rate;
+        if (state.effectiveRateMillihz != 0) {
+            rate = formatRateMillihz(state.effectiveRateMillihz);
+        } else if (state.awaitingResult) {
+            rate = QStringLiteral("pending");
+        } else {
+            rate = QStringLiteral("not granted");
+        }
+        QString entry = topicLabel + ' ' + rate;
+        if (state.rateLimited()) {
+            entry += QString(" (limited, asked %1)").arg(formatRateMillihz(state.requestedRateMillihz));
+        }
+        summary.append(entry);
+
+        QString line = entry + QString(" | %1 widget(s) here").arg(state.subscriberCount);
+        const auto record = statusByTopic.constFind(topicStatusKey(state.sourceId, state.topicId));
+        if (record != statusByTopic.constEnd()) {
+            // status_version=2 per-topic metrics (section 8.1).
+            line += QString(" | %1 subscriber(s) at source | %2 B | %3 drops")
+                        .arg(record->subscriberCount)
+                        .arg(record->bytesTotal)
+                        .arg(record->samplesDroppedTotal);
+        }
+        detail.append(line);
+    }
+    m_telemetryStatusLabel->setText(summary.join(QStringLiteral("   ")));
+    m_telemetryStatusLabel->setToolTip(detail.join(QStringLiteral("\n")));
 }
 
 void MainWindow::buildMenus() {
@@ -233,6 +429,12 @@ Ribbon* MainWindow::buildRibbon() {
 
     connect(m_dashboardGrid, &DashboardGrid::selectionChanged, this, &MainWindow::onSelectionChanged);
     connect(m_dashboardGrid->undoStack(), &QUndoStack::indexChanged, this, &MainWindow::refreshPropertiesPanel);
+    // A config edit (or its undo/redo) can repoint a widget at another
+    // source/topic or change its sample time, which changes what this client
+    // must have subscribed -- every path that edits a config goes through the
+    // undo stack, so this one hook covers them all (topico 17 PASSO 2/5).
+    connect(m_dashboardGrid->undoStack(), &QUndoStack::indexChanged, this,
+            &MainWindow::refreshWidgetSubscriptions);
     // Chart/gauge widgets subscribe to live telemetry the moment they're
     // created -- topico 15's "varios assinantes por campo" wiring, covering
     // both a fresh Add Widget and a project load (DashboardGrid::createCell

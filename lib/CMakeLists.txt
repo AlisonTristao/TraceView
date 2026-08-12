@@ -45,6 +45,10 @@ add_library(traceview_protocol STATIC
     protocol/packedledecoder.h
     protocol/protocolrouter.cpp
     protocol/protocolrouter.h
+    protocol/statusreport.cpp
+    protocol/statusreport.h
+    protocol/subscriptionmanager.cpp
+    protocol/subscriptionmanager.h
     protocol/telemetrycatalog.cpp
     protocol/telemetrycatalog.h
     protocol/telemetryfieldrouter.cpp

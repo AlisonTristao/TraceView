@@ -48,8 +48,20 @@ const TelemetryTopicSchema* TelemetryCatalog::lookup(quint32 sourceId, quint16 t
     return it == m_schemas.constEnd() ? nullptr : &it.value();
 }
 
+void TelemetryCatalog::registerSourceBootId(quint32 sourceId, quint32 bootId) {
+    if (sourceId == 0) {
+        return;
+    }
+    m_sourceBootIds.insert(sourceId, bootId);
+}
+
+quint32 TelemetryCatalog::sourceBootId(quint32 sourceId) const {
+    return m_sourceBootIds.value(sourceId, 0);
+}
+
 void TelemetryCatalog::clear() {
     m_schemas.clear();
+    m_sourceBootIds.clear();
 }
 
 void registerBallySoftwareCatalog(TelemetryCatalog& catalog, quint32 sourceId) {
