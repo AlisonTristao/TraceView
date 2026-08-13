@@ -153,6 +153,10 @@ private:
         DashboardCell::ResizeHandle handle = DashboardCell::ResizeHandle::None;
     };
 
+    // Outer margin (canvas edge <-> widgets) and gutter (widget <-> widget)
+    // both resolve to this same pixel value, computed from the canvas's own
+    // size — see kGutterFraction in dashboardgrid.cpp for why.
+    int gutter() const;
     QRect usableRect() const;
     QRect itemRect(const DashboardItem& item) const;
     QSize contentSize() const;

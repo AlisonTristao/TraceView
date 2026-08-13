@@ -34,6 +34,7 @@ add_traceview_test(test_telemetrycatalog traceview_protocol)
 add_traceview_test(test_packedledecoder traceview_protocol)
 add_traceview_test(test_protocolrouter traceview_protocol)
 add_traceview_test(test_btpsession traceview_protocol)
+add_traceview_test(test_btphandshake traceview_protocol)
 add_traceview_test(test_telemetryfieldrouter traceview_protocol)
 # topico 17 (assinaturas e controle de taxa): the STATUS v1/v2 payload parser
 # and the reference-counted SUBSCRIBE/UNSUBSCRIBE aggregation, both pure

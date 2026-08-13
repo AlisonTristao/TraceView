@@ -18,7 +18,17 @@
 namespace traceview {
 
 namespace {
-constexpr int kMargin = 16;
+// Both the canvas-edge margin and the gap between two adjacent widgets
+// resolve to the same pixel value, computed as a fraction of the canvas's
+// *shorter* side (not width/height independently) — that's what keeps the
+// on-screen distance identical horizontally and vertically on a non-square
+// canvas, and lets it scale with the window instead of sitting at a fixed
+// pixel count. usableRect() insets by half of it and itemRect() insets each
+// item by the other half, so two touching items end up exactly kGutterPx
+// apart, same as an item sitting against the canvas edge.
+constexpr double kGutterFraction = 0.01;
+constexpr int kMinGutter = 8;
+constexpr int kMaxGutter = 32;
 // Custom clipboard format for copySelected()/pasteItem() — carries a single
 // dashboardItemToJson() object, so paste can reuse the same (de)serializer
 // as project save/load instead of a bespoke copy of DashboardItem's fields.
@@ -77,6 +87,10 @@ void DashboardGrid::setEditMode(bool enabled) {
     for (DashboardCell* cell : cells) {
         cell->setEditMode(enabled);
     }
+    // gutter() is 0 while editing (see its comment) so items sit flush for
+    // precise alignment; relayout() re-derives every cell's geometry from
+    // that new gutter the moment the mode flips either way.
+    relayout();
     update();
 }
 
@@ -481,8 +495,19 @@ void DashboardGrid::mousePressEvent(QMouseEvent* event) {
     QWidget::mousePressEvent(event);
 }
 
+int DashboardGrid::gutter() const {
+    // Zero while editing the layout (Layout tab): widgets need to butt up
+    // flush against each other and the canvas edge for precise alignment
+    // there. The gutter only appears once back on the Run tab.
+    if (m_editMode) {
+        return 0;
+    }
+    return qBound(kMinGutter, qRound(qMin(width(), height()) * kGutterFraction), kMaxGutter);
+}
+
 QRect DashboardGrid::usableRect() const {
-    const QRect area = rect().adjusted(kMargin, kMargin, -kMargin, -kMargin);
+    const int half = gutter() / 2;
+    const QRect area = rect().adjusted(half, half, -half, -half);
     return QRect(area.left(), area.top(), qMax(1, area.width()), qMax(1, area.height()));
 }
 
@@ -492,7 +517,8 @@ QRect DashboardGrid::itemRect(const DashboardItem& item) const {
     const int top = area.top() + qRound(item.y * area.height());
     const int width = qRound(item.width * area.width());
     const int height = qRound(item.height * area.height());
-    return QRect(left, top, width, height);
+    const int half = gutter() / 2;
+    return QRect(left, top, width, height).adjusted(half, half, -half, -half);
 }
 
 void DashboardGrid::relayout() {

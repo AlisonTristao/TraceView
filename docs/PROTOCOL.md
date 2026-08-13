@@ -82,6 +82,28 @@ counters), `ProtocolRouter::diagnostics()` (routed/dropped per channel), and
 are all available for a future diagnostics panel; none is wired into the UI
 yet (no concrete need for one until topico 15/16 land).
 
+## Handshake and version negotiation (topico 15)
+
+`BtpHandshake` (`lib/protocol/btphandshake.h`) drives the plain-text
+`BTP/1 ENTER`/`BTP/1 READY` exchange (`TRANSPORT_SERIAL.md` section 5)
+followed by `HELLO`/`HELLO_RESULT` (`COMMANDS_AND_ACTIONS.md` section 5) on
+top of an already-open serial connection, before anything else (manifest,
+subscriptions, terminal) is allowed on the wire.
+
+`HELLO`'s `versions` field is **not** hardcoded to `[1]`: it lists every
+value from `btp::kMinimumProtocolVersion` to `btp::kMaximumProtocolVersion`
+(`build/_deps/btp-src/include/btp/codec.hpp`) ascending, i.e. the *entire*
+range of BTP versions this build's linked codec can speak. The dongle is the
+one that picks — `HELLO_RESULT.selected_version` is "a maior versao comum"
+between what we advertised and what it supports — so TraceView's job is only
+to make its whole compatibility range visible, never to pre-guess which
+version will be chosen. `BtpHandshake` in turn rejects a `HELLO_RESULT`
+whose `selected_version` falls outside the range it just advertised
+(`sessionFailed`, not a silent accept) — a peer answering with a version we
+never offered isn't a compatible peer. Both bounds equal `1` today, so in
+practice this is currently a one-entry list; it widens on its own the day
+`btp::codec` gains a newer version, with no change needed here.
+
 ## Subscriptions and rate control (topico 17)
 
 Nothing above puts a topic *on* the wire; that is `SubscriptionManager`

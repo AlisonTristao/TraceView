@@ -33,12 +33,20 @@ void appendLe(QByteArray& out, quint32 value, int width) {
 QByteArray buildHelloPayload(quint16 maxLogicalPayload, quint16 sessionTimeoutMs) {
     QByteArray payload;
     payload.append(static_cast<char>(kRoleDesktop));
-    payload.append(static_cast<char>(1));  // version_count
-    appendLe(payload, 0, 2);               // flags
+    // versions enumerates every envelope version this build's btp::codec can
+    // speak (COMMANDS_AND_ACTIONS.md section 5: "crescentes", no gaps
+    // required) so the dongle -- which picks the highest version common to
+    // both sides -- always sees our real ceiling, not a version we happened
+    // to hardcode. Today kMinimumProtocolVersion == kMaximumProtocolVersion
+    // == 1, so this is a single-entry list; it grows on its own once the
+    // library supports more.
+    const quint8 versionCount = btp::kMaximumProtocolVersion - btp::kMinimumProtocolVersion + 1;
+    payload.append(static_cast<char>(versionCount));  // version_count
+    appendLe(payload, 0, 2);                          // flags
     appendLe(payload, maxLogicalPayload, 4);
-    appendLe(payload, 2, 2);   // max_inflight_reassemblies
-    appendLe(payload, 8, 2);   // max_subscriptions
-    appendLe(payload, 16, 4);  // max_dedup_entries
+    appendLe(payload, 2, 2);                 // max_inflight_reassemblies
+    appendLe(payload, 8, 2);                 // max_subscriptions
+    appendLe(payload, 16, 4);                // max_dedup_entries
     appendLe(payload, sessionTimeoutMs, 4);  // session_timeout_ms
     for (int i = 0; i < 16; ++i) {
         // peer_uuid: opaque, stable-for-this-run, non-zero identity. A
@@ -47,8 +55,11 @@ QByteArray buildHelloPayload(quint16 maxLogicalPayload, quint16 sessionTimeoutMs
         // actually needs to recognize this desktop across restarts.
         payload.append(static_cast<char>(QRandomGenerator::global()->bounded(1, 256)));
     }
-    appendLe(payload, 0, 4);              // config_revision (no manifest yet)
-    payload.append(static_cast<char>(1));  // versions = [1]
+    appendLe(payload, 0, 4);  // config_revision (no manifest yet)
+    for (quint8 version = btp::kMinimumProtocolVersion; version <= btp::kMaximumProtocolVersion;
+         ++version) {
+        payload.append(static_cast<char>(version));
+    }
     return payload;
 }
 
@@ -125,13 +136,26 @@ void BtpHandshake::onControlFrameReceived(const traceview::BtpFrame& frame) {
     if (frame.objectId != kControlHelloResult) {
         return;  // some other CONTROL frame (e.g. STATUS); not for us
     }
-    if (frame.payload.size() < 13) {
+    if (frame.payload.size() < 14) {
         fail(QStringLiteral("HELLO_RESULT payload too short"));
         return;
     }
     const quint8 status = static_cast<quint8>(frame.payload.at(12));
     m_helloTimer.stop();
     if (status == kHelloResultSuccess) {
+        // selected_version (offset 13) is the highest version the dongle
+        // found in common with what our own HELLO just advertised
+        // (COMMANDS_AND_ACTIONS.md section 5: "o respondente escolhe a maior
+        // versao comum"). It can only be one of the versions we offered --
+        // anything else is a peer that isn't honoring the negotiation, not a
+        // version this client can silently go along with.
+        const quint8 selectedVersion = static_cast<quint8>(frame.payload.at(13));
+        if (selectedVersion < btp::kMinimumProtocolVersion ||
+            selectedVersion > btp::kMaximumProtocolVersion) {
+            fail(QStringLiteral("HELLO_RESULT selected an unadvertised version %1")
+                     .arg(selectedVersion));
+            return;
+        }
         m_state = State::Established;
         // config_revision sits at offset 48 (COMMANDS_AND_ACTIONS.md section
         // 5); a HELLO_RESULT this short predates the field (or came from a
