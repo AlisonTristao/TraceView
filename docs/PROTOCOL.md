@@ -196,6 +196,8 @@ anything else overwrites/extends at the current column) -- no ANSI CSI
 sequences are needed because `ShellSerial` never emits any.
 
 Each `SerialWidgetBridge` instance owns a private, random, non-zero
-`source_id`/`boot_id` pair for `TERMINAL_IN` frames only -- there is still
-no `HELLO` negotiation on the TraceView side (topicos 15-17), so nothing
-here assumes or is assigned a real client identity yet.
+`source_id`/`boot_id` pair for `TERMINAL_IN` frames only, independent of
+`BtpHandshake`'s own negotiated identity (topico 15, `lib/protocol/
+btphandshake.h`) -- `BtpHandshake` does not expose the peer/session identity
+it negotiated for reuse elsewhere, so nothing here is assigned that real,
+negotiated client identity yet.

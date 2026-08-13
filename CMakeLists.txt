@@ -43,7 +43,7 @@ set(BTP_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 FetchContent_Declare(
     btp
     GIT_REPOSITORY https://github.com/AlisonTristao/BTP.git
-    GIT_TAG v1.0.1-beta
+    GIT_TAG main
 )
 FetchContent_MakeAvailable(btp)
 
