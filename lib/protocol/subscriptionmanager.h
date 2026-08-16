@@ -7,6 +7,7 @@
 #include <QtGlobal>
 
 #include "protocol/statusreport.h"
+#include "telemetry/subscriptionstate.h"
 
 namespace traceview {
 
@@ -14,32 +15,6 @@ class BtpSession;
 class ProtocolRouter;
 class TelemetryCatalog;
 struct BtpFrame;
-
-// What this client currently believes about one subscribed topic. Exposed so
-// the UI can show the *effective* rate the source granted instead of the rate
-// a widget asked for (topico 17 PASSO 10 / CRITERIO DE ACEITE "pedido acima do
-// maximo e limitado e informado ao cliente").
-struct TopicSubscriptionState {
-    quint32 sourceId = 0;
-    quint16 topicId = 0;
-    int subscriberCount = 0;             // live widgets consuming this topic
-    quint32 requestedRateMillihz = 0;    // the highest rate among those widgets
-    quint32 effectiveRateMillihz = 0;    // from SUBSCRIBE_RESULT; 0 = not granted (yet)
-    quint32 grantedLeaseMs = 0;
-    quint32 subscriptionId = 0;          // 0 while no grant is held
-    quint8 lastStatus = 0;               // last SUBSCRIBE_RESULT status code (section 2)
-    quint16 lastErrorCode = 0;
-    bool awaitingResult = false;
-
-    // True once a grant came back below what was asked for -- the source
-    // clamped the request to its schema's max (COMMANDS_AND_ACTIONS.md
-    // section 7: "a taxa efetiva MUST NOT exceder a solicitada nem a maxima
-    // do manifesto").
-    bool rateLimited() const {
-        return effectiveRateMillihz != 0 && requestedRateMillihz != 0 &&
-               effectiveRateMillihz < requestedRateMillihz;
-    }
-};
 
 // Aggregates every widget's interest in a telemetry topic into a single
 // wire-level SUBSCRIBE per (source_id, topic_id) -- topico 17 PASSOS 2/5/6/10,

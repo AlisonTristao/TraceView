@@ -25,14 +25,63 @@ target_link_libraries(traceview_theme PUBLIC
     Qt6::Widgets
 )
 
+# traceview_telemetry: generic telemetry value types and data structures
+# with no BTP dependency -- TelemetryFieldBinding, TopicSubscriptionState,
+# StatusTopicRecord, TelemetrySeriesBuffer. These describe what a Backend
+# exposes to the UI (see lib/backend/backend.h), not how BTP encodes
+# anything on the wire, so they live below traceview_protocol instead of
+# inside it -- a from-scratch Backend implementation (or the dashboard
+# widgets themselves) can use them without pulling in btp::codec. Only
+# QtCore.
+add_library(traceview_telemetry STATIC
+    telemetry/telemetrybinding.h
+    telemetry/subscriptionstate.h
+    telemetry/statustopicrecord.h
+    telemetry/telemetryseriesbuffer.cpp
+    telemetry/telemetryseriesbuffer.h
+)
+
+target_include_directories(traceview_telemetry PUBLIC
+    ${CMAKE_SOURCE_DIR}/include
+    ${CMAKE_SOURCE_DIR}/lib
+)
+
+target_link_libraries(traceview_telemetry PUBLIC
+    Qt6::Core
+)
+
+# traceview_backend: the Backend interface itself (lib/backend/backend.h) --
+# what MainWindow/SerialWidgetBridge depend on instead of any one protocol's
+# concrete classes. Depends only on traceview_telemetry, not btp::codec: a
+# third party implementing a different protocol depends on this target and
+# traceview_telemetry, never on traceview_protocol/BTP.
+add_library(traceview_backend STATIC
+    backend/backend.h
+)
+
+set_target_properties(traceview_backend PROPERTIES LINKER_LANGUAGE CXX)
+
+target_include_directories(traceview_backend PUBLIC
+    ${CMAKE_SOURCE_DIR}/include
+    ${CMAKE_SOURCE_DIR}/lib
+)
+
+target_link_libraries(traceview_backend PUBLIC
+    Qt6::Core
+    traceview_telemetry
+)
+
 # traceview_protocol: the BTP v1 client -- transport-independent framing
 # (BtpSession), MessageType dispatch (ProtocolRouter), the telemetry data
 # model (TelemetrySample, TelemetryCatalog, decodePackedLe,
-# TelemetryFieldRouter, TelemetrySeriesBuffer). Only QtCore: no QWidget, no
-# QSerialPort -- see CONTRIBUTING.md's transport/protocol/presentation split
-# and tests/test_btpsession.cpp and friends (topico 14 CRITERIO DE ACEITE
-# "parser/protocolo possui testes sem QWidget").
+# TelemetryFieldRouter) and BtpBackend, the Backend implementation backed by
+# this stack. Only QtCore: no QWidget, no QSerialPort -- see CONTRIBUTING.md's
+# transport/protocol/presentation split and tests/test_btpsession.cpp and
+# friends (topico 14 CRITERIO DE ACEITE "parser/protocolo possui testes sem
+# QWidget").
 add_library(traceview_protocol STATIC
+    protocol/btpbackend.cpp
+    protocol/btpbackend.h
     protocol/btpframe.cpp
     protocol/btpframe.h
     protocol/btphandshake.cpp
@@ -53,8 +102,6 @@ add_library(traceview_protocol STATIC
     protocol/telemetrycatalog.h
     protocol/telemetryfieldrouter.cpp
     protocol/telemetryfieldrouter.h
-    protocol/telemetryseriesbuffer.cpp
-    protocol/telemetryseriesbuffer.h
     protocol/telemetrysample.h
 )
 
@@ -66,6 +113,8 @@ target_include_directories(traceview_protocol PUBLIC
 target_link_libraries(traceview_protocol PUBLIC
     Qt6::Core
     btp::codec
+    traceview_backend
+    traceview_telemetry
 )
 
 # traceview_project: .tvproj (de)serialization. No dependency on the UI or

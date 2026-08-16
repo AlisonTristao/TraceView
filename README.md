@@ -2,17 +2,44 @@
 
 Real-time telemetry dashboard for ESP32/ESP-NOW robots, built in C++ with Qt.
 
-> **Status:** early development. Core architecture and telemetry protocol are being defined — see [CONTRIBUTING.md](CONTRIBUTING.md) for the branching/feature workflow and [docs/ECOSYSTEM.md](docs/ECOSYSTEM.md) for how this project fits with the rest of the ecosystem.
+> **Status:** early development. Core architecture and telemetry protocol are being defined — see [CONTRIBUTING.md](CONTRIBUTING.md) for the branching/feature workflow and [docs/ECOSYSTEM.md](docs/ECOSYSTEM.md) for how this project fits with the rest of the Bally ecosystem.
 
-## Ecosystem
+## Architecture: the UI doesn't know about BTP
 
-TraceView is the desktop client for [BTP](https://github.com/AlisonTristao/BTP), a binary protocol for real-time communication and data plotting over ESP32/ESP-NOW:
+TraceView ships wired to [BTP](https://github.com/AlisonTristao/BTP) by
+default, but the dashboard/UI layer (`traceview_dashboard`, `traceview_ui`)
+never talks to BTP directly. Everything that gives meaning to the bytes
+coming off the wire — decoding telemetry samples, tracking topic
+subscriptions, framing terminal input/output — sits behind one abstract
+interface:
 
-- [bally_robot](https://github.com/AlisonTristao/bally_robot) — robot hardware
-- [Bally_OS](https://github.com/AlisonTristao/Bally_OS) — robot firmware (ESP32-S3)
-- [Bally_dongle](https://github.com/AlisonTristao/Bally_dongle) — receiver dongle firmware (LilyGO T-Dongle-S3)
-- [BTP](https://github.com/AlisonTristao/BTP) — the shared wire protocol and codec
-- **TraceView** — telemetry visualization (this repository)
+```
+lib/backend/backend.h   -> class Backend (the interface)
+lib/protocol/btpbackend.h/.cpp -> class BtpBackend : public Backend (the BTP implementation)
+lib/telemetry/          -> generic value types Backend's API is expressed in
+                            (TelemetryFieldBinding, TopicSubscriptionState,
+                            StatusTopicRecord, TelemetrySeriesBuffer) — no
+                            BTP dependency
+```
+
+`core/serialmanager.h` (`SerialManager`) stays a concrete, shared piece: it
+only moves raw bytes in and out of the open serial port, nothing more.
+`Backend` is the layer above it — `MainWindow` feeds it raw bytes
+(`feedBytes()`) and connection state (`onTransportConnectionChanged()`), and
+listens to its signals (`fieldSample`, `subscriptionsChanged`,
+`terminalDataReceived`, ...) to drive the dashboard. See
+`lib/backend/backend.h` for the full contract.
+
+This means a different protocol can be plugged in by implementing `Backend`
+and constructing it in place of `BtpBackend` in `MainWindow`'s constructor —
+nothing else in the UI/dashboard layer needs to change. A from-scratch
+`Backend` implementation depends only on `traceview_backend` and
+`traceview_telemetry` (both plain `Qt6::Core`, no BTP dependency), never on
+`traceview_protocol`.
+
+This boundary is still young — the interface will keep moving as more of
+the protocol gets built out, and only BTP has a real implementation behind
+it today.
 
 ## Build
 

@@ -1,6 +1,6 @@
 #include <QtTest>
 
-#include "protocol/telemetryseriesbuffer.h"
+#include "telemetry/telemetryseriesbuffer.h"
 
 using traceview::TelemetrySeriesBuffer;
 

@@ -15,28 +15,22 @@ class QToolButton;
 
 namespace traceview {
 
-class BtpHandshake;
-class BtpSession;
+class Backend;
 class DashboardGrid;
 class DashboardWidget;
-class ManifestClient;
-class ProtocolRouter;
 class PropertiesPanel;
 class Ribbon;
 class SerialManager;
-class SubscriptionManager;
-class TelemetryCatalog;
-class TelemetryFieldRouter;
 
 class MainWindow : public QMainWindow {
     Q_OBJECT
 
 public:
     explicit MainWindow(QWidget* parent = nullptr);
-    // Declared (rather than left implicit) because m_telemetryCatalog is a
-    // plain (non-QObject) heap object this class owns and frees itself;
-    // defined out-of-line in mainwindow.cpp, where TelemetryCatalog's full
-    // definition is visible.
+    // Declared (rather than left implicit): the destructor needs to
+    // disconnect each dashboard widget's destroyed() handler (see
+    // wireChartWidgetToTelemetry) while m_widgetSubscriptions still exists,
+    // before Qt's own child-QObject teardown runs.
     ~MainWindow() override;
 
 private:
@@ -89,28 +83,12 @@ private:
     void onLineTerminatorChanged(int index);
 
     SerialManager* m_serialManager = nullptr;
-    // BTP v1 client stack (topico 14): BtpSession decodes the byte stream
-    // SerialManager hands it into validated frames, ProtocolRouter
-    // dispatches those by MessageType, and TelemetryFieldRouter decodes
-    // TELEMETRY samples against m_telemetryCatalog into per-field values.
-    // m_telemetryCatalog starts empty and is populated dynamically over the
-    // wire by m_manifestClient (topico 16) -- nothing here assumes which
-    // source_id/schema is on the other end in advance.
-    BtpSession* m_btpSession = nullptr;
-    ProtocolRouter* m_protocolRouter = nullptr;
-    TelemetryCatalog* m_telemetryCatalog = nullptr;
-    TelemetryFieldRouter* m_telemetryFieldRouter = nullptr;
-    // Drives the ENTER/READY + HELLO/HELLO_RESULT session negotiation
-    // (topico 15) on top of the framing BtpSession already does; see
-    // protocol/btphandshake.h.
-    BtpHandshake* m_btpHandshake = nullptr;
-    // Requests MANIFEST_DATA over the wire and builds m_telemetryCatalog
-    // entries from it (topico 16) -- replaces topico 15's temporary
-    // registerBallySoftwareCatalog()/m_knownTelemetrySources bridge.
-    ManifestClient* m_manifestClient = nullptr;
-    // Turns the open chart/gauge widgets into wire-level SUBSCRIBEs, one per
-    // (source_id, topic_id) no matter how many widgets read it (topico 17).
-    SubscriptionManager* m_subscriptionManager = nullptr;
+    // Everything on the other end of the wire, behind the Backend interface
+    // (backend/backend.h) -- decoded telemetry, topic subscriptions, and
+    // terminal framing. Concretely a BtpBackend today; MainWindow only ever
+    // talks to it through the abstract interface. SerialManager above stays
+    // concrete: it just moves raw bytes in and out of the open port.
+    Backend* m_backend = nullptr;
     void wireChartWidgetToTelemetry(DashboardWidget* widget);
     // Re-derives every open widget's subscription from its current config --
     // called whenever a config edit (or its undo/redo) could have changed a

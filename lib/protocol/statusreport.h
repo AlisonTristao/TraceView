@@ -4,23 +4,9 @@
 #include <QVector>
 #include <QtGlobal>
 
-namespace traceview {
+#include "telemetry/statustopicrecord.h"
 
-// One `topic_status` record of a STATUS payload with `status_version=2`
-// (COMMANDS_AND_ACTIONS.md section 8.1) -- 28 fixed octets, no `record_size`
-// of its own (the list is delimited by `topic_status_count`).
-//
-// A topic is identified by the (sourceId, topicId) *pair*: topic_id alone is
-// not globally unique, and a gateway (the dongle) reports topics belonging to
-// several robots in the same message.
-struct StatusTopicRecord {
-    quint32 sourceId = 0;
-    quint16 topicId = 0;
-    quint16 subscriberCount = 0;
-    quint32 effectiveRateMillihz = 0;  // zero: not being published right now
-    quint64 bytesTotal = 0;            // logical TELEMETRY payload octets, monotonic since the emitter's boot
-    quint64 samplesDroppedTotal = 0;   // monotonic since the emitter's boot
-};
+namespace traceview {
 
 // A decoded STATUS payload (COMMANDS_AND_ACTIONS.md section 8, plus 8.1's
 // per-topic extension). The 92-octet v1 block has the same layout at the same

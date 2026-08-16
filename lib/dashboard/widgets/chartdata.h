@@ -7,7 +7,7 @@
 #include <QVector>
 #include <QtGlobal>
 
-#include "protocol/telemetryseriesbuffer.h"
+#include "telemetry/telemetryseriesbuffer.h"
 
 namespace traceview {
 

@@ -22,17 +22,12 @@
 #include <QVBoxLayout>
 
 #include "aboutdialog.h"
+#include "backend/backend.h"
 #include "dashboard/dashboardgrid.h"
 #include "dashboard/widgetregistry.h"
 #include "dashboard/widgets/chartwidgets.h"
 #include "project/projectstore.h"
-#include "protocol/btphandshake.h"
-#include "protocol/btpsession.h"
-#include "protocol/manifestclient.h"
-#include "protocol/protocolrouter.h"
-#include "protocol/subscriptionmanager.h"
-#include "protocol/telemetrycatalog.h"
-#include "protocol/telemetryfieldrouter.h"
+#include "protocol/btpbackend.h"
 #include "propertiespanel.h"
 #include "ribbon.h"
 #include "ribbonicons.h"
@@ -117,98 +112,32 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     m_serialManager = new SerialManager(this);
     m_dashboardGrid = new DashboardGrid(this);
 
-    // BTP v1 client stack (topico 14): raw bytes -> BtpSession (COBS decode
-    // + envelope/CRC validation + reassembly) -> ProtocolRouter (dispatch by
-    // MessageType) -> TelemetryFieldRouter (schema decode, fan out by
-    // field). m_telemetryCatalog starts empty and is populated dynamically
-    // by m_manifestClient's MANIFEST_REQUEST/MANIFEST_DATA exchange (topico
-    // 16) -- nothing here assumes which source_id/schema is on the other
-    // end in advance; wiring a chart/gauge widget's own fieldSample
-    // subscription onto m_telemetryFieldRouter is topico 15's job.
-    m_btpSession = new BtpSession(this);
-    m_protocolRouter = new ProtocolRouter(this);
-    m_telemetryCatalog = new TelemetryCatalog();
-    m_telemetryFieldRouter = new TelemetryFieldRouter(m_telemetryCatalog, this);
-    m_btpHandshake = new BtpHandshake(m_btpSession, m_protocolRouter, this);
-    m_manifestClient = new ManifestClient(m_btpSession, m_protocolRouter, m_telemetryCatalog, this);
-    // topico 17: every open chart/gauge is a *consumer* of a topic; this is
-    // what turns all of them into a single SUBSCRIBE per (source, topic) at
-    // the highest rate any of them asked for, and into an UNSUBSCRIBE only
-    // when the last one closes.
-    m_subscriptionManager = new SubscriptionManager(m_btpSession, m_protocolRouter, m_telemetryCatalog, this);
-    connect(m_serialManager, &SerialManager::dataReceived, m_btpSession, &BtpSession::feedBytes);
-    connect(m_btpSession, &BtpSession::bytesToWrite, m_serialManager, &SerialManager::write);
-    // BtpHandshake needs the same raw bytes BtpSession sees (it only looks
-    // for the plain-text READY line, see protocol/btphandshake.h), and its
-    // own outbound text (the ENTER line) goes straight to the transport too.
-    connect(m_serialManager, &SerialManager::dataReceived, m_btpHandshake, &BtpHandshake::feedRawBytes);
-    connect(m_btpHandshake, &BtpHandshake::bytesToWrite, m_serialManager, &SerialManager::write);
-    connect(m_serialManager, &SerialManager::connectionStateChanged, this, [this](bool connected) {
-        if (connected) {
-            m_btpSession->reset();
-            m_btpHandshake->start();
-        } else {
-            // Subscriptions are scoped to the session that granted them
-            // (topico 17 PASSO 6): forget the grants, keep the widgets that
-            // wanted them, so reconnecting re-subscribes everything.
-            m_subscriptionManager->onSessionLost();
-        }
-    });
-    connect(m_btpHandshake, &BtpHandshake::sessionEstablished, this, [this](quint32 peerConfigRevision) {
-        statusBar()->showMessage("BTP session established (HELLO_RESULT=SUCCESS)", 5000);
-        m_manifestClient->onSessionEstablished(peerConfigRevision);
-        m_subscriptionManager->onSessionEstablished();
-    });
-    connect(m_btpHandshake, &BtpHandshake::sessionFailed, this, [this](const QString& reason) {
-        statusBar()->showMessage("BTP handshake failed: " + reason, 8000);
-    });
-    connect(m_btpSession, &BtpSession::frameReceived, m_protocolRouter, &ProtocolRouter::onFrameReceived);
-    connect(m_protocolRouter, &ProtocolRouter::telemetrySampleReceived, m_telemetryFieldRouter,
-            &TelemetryFieldRouter::onTelemetrySample);
-    // topico 16 PASSO 9: a sample whose schema isn't in the catalog yet (or
-    // no longer matches, after a schema change) triggers a targeted
-    // manifest re-request instead of silently dropping forever.
-    connect(m_telemetryFieldRouter, &TelemetryFieldRouter::unknownSchema, m_manifestClient,
-            &ManifestClient::onUnknownSchema);
-    // A SUBSCRIBE needs its target's boot_id, which only MANIFEST_DATA
-    // supplies -- a subscription requested before the manifest arrived is
-    // held back and released here.
-    connect(m_manifestClient, &ManifestClient::catalogUpdated, m_subscriptionManager,
-            &SubscriptionManager::onCatalogUpdated);
-    // CRITERIO DE ACEITE "pedido acima do maximo e limitado e informado ao
-    // cliente": the granted rate is surfaced, never silently assumed equal to
-    // what was asked for.
-    connect(m_subscriptionManager, &SubscriptionManager::subscriptionRateLimited, this,
-            [this](quint32 sourceId, quint16 topicId, quint32 requested, quint32 effective) {
-                statusBar()->showMessage(QString("Topic 0x%1 of source 0x%2 limited to %3 (requested %4)")
-                                             .arg(topicId, 4, 16, QChar('0'))
-                                             .arg(sourceId, 8, 16, QChar('0'))
-                                             .arg(formatRateMillihz(effective), formatRateMillihz(requested)),
-                                         8000);
-            });
-    connect(m_subscriptionManager, &SubscriptionManager::subscriptionRejected, this,
-            [this](quint32 sourceId, quint16 topicId, quint8 status, quint16 errorCode) {
-                statusBar()->showMessage(QString("SUBSCRIBE rejected for topic 0x%1 of source 0x%2 "
-                                                 "(status 0x%3, error 0x%4)")
-                                             .arg(topicId, 4, 16, QChar('0'))
-                                             .arg(sourceId, 8, 16, QChar('0'))
-                                             .arg(status, 2, 16, QChar('0'))
-                                             .arg(errorCode, 4, 16, QChar('0')),
-                                         8000);
-            });
-    connect(m_subscriptionManager, &SubscriptionManager::subscriptionsChanged, this,
-            &MainWindow::updateTelemetryStatusLabel);
-    connect(m_subscriptionManager, &SubscriptionManager::statusReceived, this,
-            &MainWindow::updateTelemetryStatusLabel);
+    // Everything that gives the transport's raw bytes meaning lives behind
+    // the Backend interface (backend/backend.h) -- concretely a BtpBackend
+    // today, wiring BtpSession/ProtocolRouter/TelemetryFieldRouter/
+    // BtpHandshake/ManifestClient/SubscriptionManager internally (see
+    // protocol/btpbackend.cpp). MainWindow only ever talks to it through the
+    // abstract interface, so plugging in a different protocol means
+    // constructing a different Backend here -- nothing else in this file
+    // changes.
+    m_backend = new BtpBackend(this);
+    connect(m_serialManager, &SerialManager::dataReceived, m_backend, &Backend::feedBytes);
+    connect(m_backend, &Backend::bytesToWrite, m_serialManager, &SerialManager::write);
+    connect(m_serialManager, &SerialManager::connectionStateChanged, m_backend,
+            &Backend::onTransportConnectionChanged);
+    connect(m_backend, &Backend::statusMessage, this,
+            [this](const QString& text, int timeoutMs) { statusBar()->showMessage(text, timeoutMs); });
+    connect(m_backend, &Backend::subscriptionsChanged, this, &MainWindow::updateTelemetryStatusLabel);
+    connect(m_backend, &Backend::statusReceived, this, &MainWindow::updateTelemetryStatusLabel);
 
     // Wires control-widget commands and the serial monitor/terminal to the
     // same connection (BACKEND_TODO.txt Tasks 9/10; terminal rewired onto
     // BTP TERMINAL_IN/OUT in topico 19); no further interaction needed here
     // once wired. Outbound control-widget commands still go straight to
     // SerialManager as raw literal text (docs/PROTOCOL.md "Outbound: control
-    // commands") -- migrating them onto the BTP COMMAND channel is out of
-    // scope for topicos 14/19 and left for a later one.
-    new SerialWidgetBridge(m_serialManager, m_btpSession, m_protocolRouter, m_dashboardGrid, this);
+    // commands") -- that path bypasses Backend entirely, see
+    // core/serialwidgetbridge.cpp.
+    new SerialWidgetBridge(m_serialManager, m_backend, m_dashboardGrid, this);
 
     Ribbon* ribbon = buildRibbon();
     buildPropertiesPanel();
@@ -253,16 +182,15 @@ MainWindow::~MainWindow() {
         disconnect(it.key(), nullptr, this, nullptr);
     }
     m_widgetSubscriptions.clear();
-    delete m_telemetryCatalog;
 }
 
 void MainWindow::wireChartWidgetToTelemetry(DashboardWidget* widget) {
     bool consumesTelemetry = false;
     if (auto* chart = dynamic_cast<ChartWidgetBase*>(widget)) {
-        connect(m_telemetryFieldRouter, &TelemetryFieldRouter::fieldSample, chart, &ChartWidgetBase::onFieldSample);
+        connect(m_backend, &Backend::fieldSample, chart, &ChartWidgetBase::onFieldSample);
         consumesTelemetry = true;
     } else if (auto* gauge = dynamic_cast<DummyGaugeWidget*>(widget)) {
-        connect(m_telemetryFieldRouter, &TelemetryFieldRouter::fieldSample, gauge, &DummyGaugeWidget::onFieldSample);
+        connect(m_backend, &Backend::fieldSample, gauge, &DummyGaugeWidget::onFieldSample);
         consumesTelemetry = true;
     }
     if (!consumesTelemetry) {
@@ -270,24 +198,24 @@ void MainWindow::wireChartWidgetToTelemetry(DashboardWidget* widget) {
     }
 
     // topico 17 PASSO 2: this widget is one *reference* to its topic, not a
-    // subscription of its own -- SubscriptionManager collapses however many
-    // widgets read (source, topic) into a single SUBSCRIBE.
+    // subscription of its own -- Backend collapses however many widgets
+    // read (source, topic) into a single subscription.
     const WidgetTopicRequest request = widgetTopicRequest(widget);
     m_widgetSubscriptions.insert(
-        widget, m_subscriptionManager->addSubscriber(request.sourceId, request.topicId, request.rateMillihz));
+        widget, m_backend->addSubscriber(request.sourceId, request.topicId, request.rateMillihz));
 
-    // PASSO 5: closing a widget only drops its reference; UNSUBSCRIBE is sent
-    // only when it was the last consumer of that topic.
+    // PASSO 5: closing a widget only drops its reference; an unsubscribe is
+    // sent only when it was the last consumer of that topic.
     connect(widget, &QObject::destroyed, this, [this, widget] {
-        m_subscriptionManager->removeSubscriber(m_widgetSubscriptions.take(widget));
+        m_backend->removeSubscriber(m_widgetSubscriptions.take(widget));
     });
 }
 
 void MainWindow::refreshWidgetSubscriptions() {
     for (auto it = m_widgetSubscriptions.begin(); it != m_widgetSubscriptions.end(); ++it) {
         const WidgetTopicRequest request = widgetTopicRequest(it.key());
-        it.value() = m_subscriptionManager->updateSubscriber(it.value(), request.sourceId, request.topicId,
-                                                             request.rateMillihz);
+        it.value() =
+            m_backend->updateSubscriber(it.value(), request.sourceId, request.topicId, request.rateMillihz);
     }
 }
 
@@ -295,7 +223,7 @@ void MainWindow::updateTelemetryStatusLabel() {
     if (!m_telemetryStatusLabel) {
         return;
     }
-    const QVector<TopicSubscriptionState> states = m_subscriptionManager->subscriptions();
+    const QVector<TopicSubscriptionState> states = m_backend->subscriptions();
     if (states.isEmpty()) {
         m_telemetryStatusLabel->clear();
         m_telemetryStatusLabel->setToolTip(QString());
@@ -303,7 +231,7 @@ void MainWindow::updateTelemetryStatusLabel() {
     }
 
     QHash<quint64, StatusTopicRecord> statusByTopic;
-    for (const StatusTopicRecord& record : m_subscriptionManager->topicStatuses()) {
+    for (const StatusTopicRecord& record : m_backend->topicStatuses()) {
         statusByTopic.insert(topicStatusKey(record.sourceId, record.topicId), record);
     }
 

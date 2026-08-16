@@ -1,27 +1,13 @@
 #pragma once
 
-#include <QMetaType>
 #include <QObject>
 #include <QtGlobal>
 
 #include "protocol/telemetrycatalog.h"
 #include "protocol/telemetrysample.h"
+#include "telemetry/telemetrybinding.h"
 
 namespace traceview {
-
-// Identifies one plottable value: TELEMETRY.md section 8's binding
-// (source_id, topic_id, field_id[, element_index]).
-struct TelemetryFieldBinding {
-    quint32 sourceId = 0;
-    quint16 topicId = 0;
-    quint16 fieldId = 0;
-    quint16 elementIndex = 0;  // 0 for a scalar field or an array's first element
-
-    bool operator==(const TelemetryFieldBinding& other) const {
-        return sourceId == other.sourceId && topicId == other.topicId && fieldId == other.fieldId &&
-               elementIndex == other.elementIndex;
-    }
-};
 
 // Decodes each TelemetrySample against a TelemetryCatalog schema and
 // broadcasts one fieldSample() per (field, present element). Two widgets/
@@ -70,5 +56,3 @@ private:
 };
 
 }  // namespace traceview
-
-Q_DECLARE_METATYPE(traceview::TelemetryFieldBinding)

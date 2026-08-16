@@ -4,7 +4,7 @@
 
 #include "dashboard/dashboardwidget.h"
 #include "dashboard/widgets/chartdata.h"
-#include "protocol/telemetryfieldrouter.h"
+#include "telemetry/telemetrybinding.h"
 
 namespace traceview {
 
