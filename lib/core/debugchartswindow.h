@@ -2,6 +2,8 @@
 
 #include <QDialog>
 
+class QTimer;
+
 namespace traceview {
 
 class DummyLineChartWidget;
@@ -30,8 +32,19 @@ public:
 
 private:
     void tick();
+    void updateFpsTitle();
+    // Wired to the stress-mode toggle button (see constructor) -- swaps the
+    // synthetic-data tick timer between its normal 50ms pace and firing as
+    // fast as the event loop allows, so the throttle already built into
+    // ChartWidgetBase::scheduleRepaint() (chartwidgets.cpp, ~30Hz/widget)
+    // becomes the only thing still limiting the repaint rate. Purely visual
+    // -- lets you eyeball the charts genuinely maxed out, even though the
+    // update rate itself is too fast to follow by eye once enabled.
+    void setStressMode(bool enabled);
 
     qint64 m_tick = 0;
+    quint64 m_lastFrameCount = 0;
+    QTimer* m_tickTimer = nullptr;
     DummyLineChartWidget* m_lineChart = nullptr;
     DummyBarChartWidget* m_barChart = nullptr;
     DummyGaugeWidget* m_gauge = nullptr;
