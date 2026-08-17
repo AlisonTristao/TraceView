@@ -68,6 +68,13 @@ void FontManager::applyCurrentFont() {
             f.setFamily(font.family);
         }
         app->setFont(f);
+
+        // QApplication::setFont() alone doesn't repolish widgets that were
+        // already styled by the app-wide QSS (see ThemeManager) -- their
+        // font only catches up on the next style recalculation, which is
+        // why menus otherwise stayed on the old font until restart.
+        // Re-setting the same style sheet forces that recalculation now.
+        app->setStyleSheet(app->styleSheet());
     }
     emit fontChanged(currentFont());
 }

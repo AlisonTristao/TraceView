@@ -26,7 +26,10 @@ void RibbonTabBar::paintEvent(QPaintEvent*) {
     painter.setRenderHint(QPainter::Antialiasing);
 
     const ThemePalette& palette = ThemeManager::instance().currentTheme();
-    painter.fillRect(rect(), palette.surfaceAlt);
+    // Use the window-background token (not surface/surfaceAlt) so the strip
+    // behind the trapezoids reads as a third, contrasting tone against both
+    // the selected and unselected tab fills below.
+    painter.fillRect(rect(), palette.background);
 
     for (int i = 0; i < count(); ++i) {
         // Shrink 2px off the right edge so adjacent trapezoids read as

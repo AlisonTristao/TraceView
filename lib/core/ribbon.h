@@ -37,6 +37,10 @@ inline constexpr int kRibbonGroupFrameHeight =
 inline constexpr int kRibbonPageMarginH = 8;
 inline constexpr int kRibbonPageMarginV = 3;
 inline constexpr int kRibbonPageHeight = kRibbonGroupFrameHeight + 2 * kRibbonPageMarginV;
+// Gap above the tab strip, between it and the menu bar — both currently
+// resolve to the same @surfaceAlt@ tone, so without a gap they read as one
+// fused block.
+inline constexpr int kRibbonTopMargin = 4;
 
 // A small Word/Excel-style ribbon: a row of tabs, each swapping in its own
 // page (typically a strip of icon buttons) below. Deliberately dumb about

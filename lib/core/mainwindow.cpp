@@ -176,7 +176,7 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
 
     auto* central = new QWidget(this);
     auto* centralLayout = new QVBoxLayout(central);
-    centralLayout->setContentsMargins(0, 0, 0, 0);
+    centralLayout->setContentsMargins(0, kRibbonTopMargin, 0, 0);
     centralLayout->setSpacing(0);
     centralLayout->addWidget(ribbon);
     centralLayout->addWidget(contentRow, /*stretch=*/1);
