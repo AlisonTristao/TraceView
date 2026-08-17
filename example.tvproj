@@ -1,0 +1,228 @@
+{
+    "traceview": {
+        "formatVersion": 1
+    },
+    "workspaces": {
+        "activeId": "acd551e3-b8e3-46b8-a0be-b4ea1ea228ae",
+        "list": [
+            {
+                "dashboard": {
+                    "items": [
+                        {
+                            "config": {
+                            },
+                            "groupId": "",
+                            "height": 0.25,
+                            "id": "18ef7496-ac5f-4299-a1cb-237e172a00b5",
+                            "key": "",
+                            "name": "",
+                            "type": "dummy_line",
+                            "width": 0.26666666666666666,
+                            "x": 0,
+                            "y": 0
+                        },
+                        {
+                            "config": {
+                                "decimals": 5,
+                                "max": 100,
+                                "min": -4,
+                                "series": [
+                                    {
+                                        "color": "#d9d9d9",
+                                        "fieldId": 1,
+                                        "name": "Ring 1"
+                                    },
+                                    {
+                                        "color": "#ffffff",
+                                        "fieldId": 2,
+                                        "name": "Ring 2"
+                                    },
+                                    {
+                                        "color": "#ffb300",
+                                        "fieldId": 3,
+                                        "name": "Ring 3"
+                                    }
+                                ],
+                                "sourceId": "0",
+                                "topicId": "0",
+                                "unit": ""
+                            },
+                            "groupId": "",
+                            "height": 0.5,
+                            "id": "85e62806-b7dc-464d-a62f-d48a68750134",
+                            "key": "",
+                            "name": "",
+                            "type": "dummy_gauge",
+                            "width": 0.3666666666666667,
+                            "x": 0.6333333333333333,
+                            "y": 0
+                        },
+                        {
+                            "config": {
+                                "decimals": 5,
+                                "max": 100,
+                                "min": -4,
+                                "series": [
+                                    {
+                                        "color": "#d9d9d9",
+                                        "fieldId": 1,
+                                        "name": "Ring 1"
+                                    },
+                                    {
+                                        "color": "#ffffff",
+                                        "fieldId": 2,
+                                        "name": "Ring 2"
+                                    },
+                                    {
+                                        "color": "#ffb300",
+                                        "fieldId": 3,
+                                        "name": "Ring 3"
+                                    }
+                                ],
+                                "sourceId": "0",
+                                "topicId": "0",
+                                "unit": ""
+                            },
+                            "groupId": "",
+                            "height": 0.5,
+                            "id": "24f0c6d3-607f-4b1e-af1d-e0af44e78acb",
+                            "key": "",
+                            "name": "",
+                            "type": "dummy_gauge",
+                            "width": 0.3666666666666667,
+                            "x": 0.26666666666666666,
+                            "y": 0
+                        },
+                        {
+                            "config": {
+                            },
+                            "groupId": "",
+                            "height": 0.25,
+                            "id": "b4b6c2c0-f666-4977-8eb3-b9487071b8db",
+                            "key": "",
+                            "name": "",
+                            "type": "dummy_line",
+                            "width": 0.26666666666666666,
+                            "x": 0,
+                            "y": 0.25
+                        },
+                        {
+                            "config": {
+                            },
+                            "groupId": "",
+                            "height": 0.5,
+                            "id": "8a9fa6ef-cedf-4f41-ac41-bf1bcac64a80",
+                            "key": "",
+                            "name": "",
+                            "type": "serial_monitor",
+                            "width": 0.8333333333333333,
+                            "x": 0,
+                            "y": 0.5
+                        },
+                        {
+                            "config": {
+                            },
+                            "groupId": "",
+                            "height": 0.12499999999999997,
+                            "id": "f57984e7-d848-47ae-91bf-1b86e41ec276",
+                            "key": "",
+                            "name": "",
+                            "type": "toggle_switch",
+                            "width": 0.08333333333333331,
+                            "x": 0.8333333333333333,
+                            "y": 0.5
+                        },
+                        {
+                            "config": {
+                            },
+                            "groupId": "",
+                            "height": 0.12499999999999997,
+                            "id": "b7659272-2505-4327-8a5c-1ead3faa254b",
+                            "key": "",
+                            "name": "",
+                            "type": "toggle_switch",
+                            "width": 0.08333333333333331,
+                            "x": 0.9166666666666667,
+                            "y": 0.5
+                        },
+                        {
+                            "config": {
+                            },
+                            "groupId": "",
+                            "height": 0.12499999999999997,
+                            "id": "5155cb45-672a-44d8-b99f-ff1f4fccb05c",
+                            "key": "",
+                            "name": "",
+                            "type": "toggle_switch",
+                            "width": 0.08333333333333331,
+                            "x": 0.8333333333333334,
+                            "y": 0.625
+                        },
+                        {
+                            "config": {
+                            },
+                            "groupId": "",
+                            "height": 0.12499999999999997,
+                            "id": "d4ecc171-5742-4749-8ebc-737545936b93",
+                            "key": "",
+                            "name": "",
+                            "type": "toggle_switch",
+                            "width": 0.08333333333333331,
+                            "x": 0.9166666666666666,
+                            "y": 0.625
+                        },
+                        {
+                            "config": {
+                            },
+                            "groupId": "",
+                            "height": 0.125,
+                            "id": "61fa2fb4-aeb7-45fe-870f-848c00dec8c9",
+                            "key": "",
+                            "name": "",
+                            "type": "push_button",
+                            "width": 0.16666666666666669,
+                            "x": 0.8333333333333333,
+                            "y": 0.75
+                        },
+                        {
+                            "config": {
+                            },
+                            "groupId": "",
+                            "height": 0.125,
+                            "id": "a59def95-6152-4b4e-9bf4-76fee5c0638d",
+                            "key": "",
+                            "name": "",
+                            "type": "push_button",
+                            "width": 0.16666666666666669,
+                            "x": 0.8333333333333334,
+                            "y": 0.875
+                        }
+                    ]
+                },
+                "id": "acd551e3-b8e3-46b8-a0be-b4ea1ea228ae",
+                "name": "Default"
+            },
+            {
+                "dashboard": {
+                    "items": [
+                        {
+                            "config": {
+                            },
+                            "groupId": "",
+                            "height": 1,
+                            "id": "9a99a6aa-e900-4385-8499-f4983b915e7c",
+                            "key": "",
+                            "name": "",
+                            "type": "serial_monitor",
+                            "width": 1,
+                            "x": 0,
+                            "y": 0
+                        }
+                    ]
+                },
+                "id": "8d1b7188-00b8-4b70-bcae-e83a187cb047",
+                "name": "Workspace"
+            }
+        ]
+    }
+}

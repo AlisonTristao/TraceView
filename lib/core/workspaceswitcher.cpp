@@ -122,13 +122,31 @@ void WorkspaceSwitcher::rebuildMenu() {
         const QString id = entry.id;
         auto* row = new WorkspaceRow(entry.name, id == m_activeId, deletable, m_menu);
         row->trashButton()->setIcon(makeTrashIcon(m_iconColor, kTrashIconSize));
+        // Deferred to the next event-loop turn (rather than emitted straight
+        // from here): both handlers below end up back in rebuildMenu() via
+        // MainWindow -> refreshWorkspaceSwitcher(), whose m_menu->clear()
+        // deletes every WorkspaceRow -- including whichever one is still
+        // sitting on the call stack inside its own mousePressEvent (row
+        // click) or the trash QToolButton's click handling (delete click).
+        // Running that synchronously used to delete `this` out from under
+        // the very call that triggered it, e.g. WorkspaceRow::
+        // mousePressEvent() touching `this` again (via QWidget::
+        // mousePressEvent(event)) right after onSelected() returned --
+        // an intermittent use-after-free crash reproduced by clicking
+        // through the switcher a few times.
         row->onSelected = [this, id]() {
-            m_menu->close();
-            emit workspaceSelected(id);
+            QMetaObject::invokeMethod(
+                this, [this, id]() {
+                    m_menu->close();
+                    emit workspaceSelected(id);
+                }, Qt::QueuedConnection);
         };
         connect(row->trashButton(), &QToolButton::clicked, this, [this, id]() {
-            m_menu->close();
-            emit workspaceDeleteRequested(id);
+            QMetaObject::invokeMethod(
+                this, [this, id]() {
+                    m_menu->close();
+                    emit workspaceDeleteRequested(id);
+                }, Qt::QueuedConnection);
         });
 
         auto* action = new QWidgetAction(m_menu);
