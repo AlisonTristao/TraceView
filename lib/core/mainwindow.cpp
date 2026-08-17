@@ -24,6 +24,7 @@
 #include <QVBoxLayout>
 
 #include "aboutdialog.h"
+#include "donatedialog.h"
 #include "backend/backend.h"
 #include "dashboard/dashboardgrid.h"
 #include "dashboard/widgetregistry.h"
@@ -373,6 +374,9 @@ void MainWindow::buildMenus() {
 
     auto* aboutAction = menuBar()->addAction(tr("&About"));
     connect(aboutAction, &QAction::triggered, this, &MainWindow::onAbout);
+
+    auto* donateAction = menuBar()->addAction(tr("Dona&te"));
+    connect(donateAction, &QAction::triggered, this, &MainWindow::onDonate);
 }
 
 Ribbon* MainWindow::buildRibbon() {
@@ -870,6 +874,11 @@ void MainWindow::onClearRecentFiles() {
 
 void MainWindow::onAbout() {
     AboutDialog dialog(this);
+    dialog.exec();
+}
+
+void MainWindow::onDonate() {
+    DonateDialog dialog(this);
     dialog.exec();
 }
 

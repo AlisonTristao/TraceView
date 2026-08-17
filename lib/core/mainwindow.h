@@ -78,6 +78,7 @@ private:
     void updateRecentFilesMenu();
     void onClearRecentFiles();
     void onAbout();
+    void onDonate();
     void onDebug();
     void onFullscreenToggled(bool checked);
 

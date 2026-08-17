@@ -207,6 +207,8 @@ target_link_libraries(traceview_dashboard
 add_library(traceview_ui STATIC
     core/aboutdialog.cpp
     core/aboutdialog.h
+    core/donatedialog.cpp
+    core/donatedialog.h
     core/debugchartswindow.cpp
     core/debugchartswindow.h
     core/layerspanel.cpp
@@ -225,6 +227,8 @@ add_library(traceview_ui STATIC
     core/serialmanager.h
     core/serialwidgetbridge.cpp
     core/serialwidgetbridge.h
+    vendor/qrcodegen/qrcodegen.cpp
+    vendor/qrcodegen/qrcodegen.hpp
 )
 
 target_include_directories(traceview_ui PUBLIC
