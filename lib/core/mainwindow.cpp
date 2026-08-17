@@ -38,6 +38,7 @@
 #include "ribbonicons.h"
 #include "serialmanager.h"
 #include "serialwidgetbridge.h"
+#include "traceview/fontmanager.h"
 #include "traceview/languagemanager.h"
 #include "traceview/thememanager.h"
 #include "traceview/version.h"
@@ -330,6 +331,24 @@ void MainWindow::buildMenus() {
 
         connect(action, &QAction::triggered, this, [id = palette.id]() {
             ThemeManager::instance().setTheme(id);
+        });
+    }
+
+    auto* fontMenu = viewMenu->addMenu(tr("&Font"));
+
+    auto* fontGroup = new QActionGroup(this);
+    fontGroup->setExclusive(true);
+
+    const QString currentFontId = FontManager::instance().currentFont().id;
+    for (const FontOption& font : FontManager::instance().availableFonts()) {
+        auto* action = fontMenu->addAction(font.displayName);
+        action->setCheckable(true);
+        action->setChecked(font.id == currentFontId);
+        action->setData(font.id);
+        fontGroup->addAction(action);
+
+        connect(action, &QAction::triggered, this, [id = font.id]() {
+            FontManager::instance().setFont(id);
         });
     }
 

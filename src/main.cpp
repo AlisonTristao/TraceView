@@ -2,6 +2,7 @@
 #include <QIcon>
 
 #include "core/mainwindow.h"
+#include "traceview/fontmanager.h"
 #include "traceview/languagemanager.h"
 #include "traceview/thememanager.h"
 
@@ -24,6 +25,7 @@ int main(int argc, char* argv[]) {
     QApplication::setWindowIcon(loadAppIcon());
 
     traceview::ThemeManager::instance().applyCurrentTheme();
+    traceview::FontManager::instance().applyCurrentFont();
     traceview::LanguageManager::instance().applyCurrentLanguage();
 
     traceview::MainWindow window;

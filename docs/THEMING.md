@@ -61,6 +61,26 @@ yet (in which case, add that rule as a token-driven line in
 Switch templates from the running app via **View → Theme**; the choice is
 persisted (`QSettings`, key `appearance/theme`) across restarts.
 
+## Fonts
+
+Font family is a separate, orthogonal choice from the color theme above --
+`FontManager` ([include/traceview/fontmanager.h](../include/traceview/fontmanager.h),
+[lib/theme/fontmanager.cpp](../lib/theme/fontmanager.cpp)) applies a `QFont`
+to `QApplication` directly instead of going through `ThemePalette`/the QSS, so
+any font pairs with any theme rather than being bundled per-template. Only
+the family changes; size/weight stay whatever Qt picked as the platform
+default (same "default typography everywhere" decision as the rest of the
+app -- see `TODO_VISUAL_IDENTITY.txt` TAREFA 0).
+
+Current options: **System Default** (leaves the platform's own font alone),
+**Consolas**, **Georgia**, **Verdana**. Adding another one is
+`registerFont(...)` in `FontManager`'s constructor -- no other code changes,
+same shape as adding a theme above. If the named family isn't installed, Qt
+silently substitutes its closest match rather than failing.
+
+Switch fonts from the running app via **View → Font**; the choice is
+persisted (`QSettings`, key `appearance/font`) across restarts.
+
 ## Icon
 
 `scripts/gen_icon.py` draws the mark and is the source of truth; run
