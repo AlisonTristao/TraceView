@@ -32,10 +32,12 @@ constexpr int kRemoveColumn = 4;
 constexpr int kColumnCount = 5;
 
 // String ids are what's persisted in the config JSON — stable across
-// re-orderings of the combo items; the parallel label lists are just the
-// display text at the matching index.
+// re-orderings of the combo items; the matching display labels are built
+// locally in addSeriesRow() (via tr()) instead of a parallel static list,
+// since translated text can't be produced at static-init time (no
+// QCoreApplication/translators exist yet when namespace-scope objects like
+// this one are constructed).
 const QStringList kStyleIds = {"solid", "dashed", "dotted", "dashdot", "cross", "asterisk"};
-const QStringList kStyleLabels = {"Solid", "Dashed", "Dotted", "Dash-Dot", "Cross", "Asterisk"};
 
 // A spin box's up/down buttons sit in a chrome strip on the right that the
 // stylesheet declares as `padding-right: 20px` (see stylesheet.cpp) — but
@@ -77,27 +79,27 @@ void setSwatchColor(QPushButton* button, const QColor& color) {
 
 ChartConfigEditor::ChartConfigEditor(QWidget* parent) : WidgetConfigEditor(parent) {
     m_sourceIdEdit = new QLineEdit(this);
-    m_sourceIdEdit->setPlaceholderText("0x11223344");
-    m_sourceIdEdit->setToolTip("BTP source_id this chart reads from (hex or decimal).");
+    m_sourceIdEdit->setPlaceholderText(tr("0x11223344"));
+    m_sourceIdEdit->setToolTip(tr("BTP source_id this chart reads from (hex or decimal)."));
 
     m_topicIdEdit = new QLineEdit(this);
-    m_topicIdEdit->setPlaceholderText("0x0101");
-    m_topicIdEdit->setToolTip("BTP topic_id (TELEMETRY.md) this chart's series bind fields of.");
+    m_topicIdEdit->setPlaceholderText(tr("0x0101"));
+    m_topicIdEdit->setToolTip(tr("BTP topic_id (TELEMETRY.md) this chart's series bind fields of."));
 
     m_xAxisModeCombo = new QComboBox(this);
-    m_xAxisModeCombo->addItem("Samples", "samples");
-    m_xAxisModeCombo->addItem("Time", "time");
+    m_xAxisModeCombo->addItem(tr("Samples"), "samples");
+    m_xAxisModeCombo->addItem(tr("Time"), "time");
 
-    m_sampleTimeLabel = smallLabel("Ts", this);
+    m_sampleTimeLabel = smallLabel(tr("Ts"), this);
     m_sampleTimeSpin = new QDoubleSpinBox(this);
     m_sampleTimeSpin->setRange(0.001, 100'000.0);
     m_sampleTimeSpin->setDecimals(2);
     m_sampleTimeSpin->setValue(100.0);
-    m_sampleTimeSpin->setSuffix(" ms");
+    m_sampleTimeSpin->setSuffix(tr(" ms"));
     m_sampleTimeSpin->setFixedWidth(spinBoxWidthFor(m_sampleTimeSpin->font(), "100000.00 ms"));
     m_sampleTimeSpin->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
     m_sampleTimeSpin->setToolTip(
-        "Time between samples (Ts), not the time a frame arrives — elapsed time for N samples is Ts * N.");
+        tr("Time between samples (Ts), not the time a frame arrives — elapsed time for N samples is Ts * N."));
 
     m_xLimitSpin = new QSpinBox(this);
     m_xLimitSpin->setRange(1, 1'000'000);
@@ -105,15 +107,15 @@ ChartConfigEditor::ChartConfigEditor(QWidget* parent) : WidgetConfigEditor(paren
     // Real suffix is set by updateAxisRowsVisibility() based on X Axis
     // mode; "pts" here is just the longer of the two candidates, so the
     // fixed width below is sized for whichever one ends up showing.
-    m_xLimitSpin->setSuffix(" pts");
+    m_xLimitSpin->setSuffix(tr(" pts"));
     m_xLimitSpin->setFixedWidth(spinBoxWidthFor(m_xLimitSpin->font(), "1000000 pts"));
     m_xLimitSpin->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
     m_xLimitSpin->setToolTip(
-        "How much history the chart keeps before older data scrolls off — in samples or seconds, matching X Axis.");
+        tr("How much history the chart keeps before older data scrolls off — in samples or seconds, matching X Axis."));
 
     m_yAxisModeCombo = new QComboBox(this);
-    m_yAxisModeCombo->addItem("Auto", "auto");
-    m_yAxisModeCombo->addItem("Fixed", "fixed");
+    m_yAxisModeCombo->addItem(tr("Auto"), "auto");
+    m_yAxisModeCombo->addItem(tr("Fixed"), "fixed");
 
     m_yMinSpin = new QDoubleSpinBox(this);
     m_yMinSpin->setRange(-100'000.0, 100'000.0);
@@ -130,12 +132,12 @@ ChartConfigEditor::ChartConfigEditor(QWidget* parent) : WidgetConfigEditor(paren
     m_yMaxSpin->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
 
     m_yUnitEdit = new QLineEdit(this);
-    m_yUnitEdit->setPlaceholderText("V, °C, %...");
-    m_yUnitEdit->setToolTip("Unit label shown alongside the Y axis.");
+    m_yUnitEdit->setPlaceholderText(tr("V, °C, %..."));
+    m_yUnitEdit->setToolTip(tr("Unit label shown alongside the Y axis."));
 
     m_gridCheck = new QCheckBox(this);
     m_gridCheck->setChecked(true);
-    m_gridCheck->setToolTip("Show the min/mid/max gridlines across the plot.");
+    m_gridCheck->setToolTip(tr("Show the min/mid/max gridlines across the plot."));
 
     // Ts and Min/Max ride along their sibling field's row instead of each
     // owning a full row of their own. Every widget is vertically centered
@@ -150,10 +152,10 @@ ChartConfigEditor::ChartConfigEditor(QWidget* parent) : WidgetConfigEditor(paren
     // and a stretch after each pair spreads Min/Max evenly across the row
     // instead of leaving one dead gap at the end.
     m_yRangeRow = new QHBoxLayout();
-    m_yRangeRow->addWidget(smallLabel("Min", this), 0, Qt::AlignVCenter);
+    m_yRangeRow->addWidget(smallLabel(tr("Min"), this), 0, Qt::AlignVCenter);
     m_yRangeRow->addWidget(m_yMinSpin, 0, Qt::AlignVCenter);
     m_yRangeRow->addStretch(1);
-    m_yRangeRow->addWidget(smallLabel("Max", this), 0, Qt::AlignVCenter);
+    m_yRangeRow->addWidget(smallLabel(tr("Max"), this), 0, Qt::AlignVCenter);
     m_yRangeRow->addWidget(m_yMaxSpin, 0, Qt::AlignVCenter);
     m_yRangeRow->addStretch(1);
 
@@ -166,14 +168,14 @@ ChartConfigEditor::ChartConfigEditor(QWidget* parent) : WidgetConfigEditor(paren
     // so — Fusion does, some platform styles don't. Forcing it here makes
     // every field fill its column the same way regardless of platform.
     m_formLayout->setFieldGrowthPolicy(QFormLayout::AllNonFixedFieldsGrow);
-    m_formLayout->addRow("Source", m_sourceIdEdit);
-    m_formLayout->addRow("Topic", m_topicIdEdit);
-    m_formLayout->addRow("X Axis", xAxisRow);
-    m_formLayout->addRow("Limit", m_xLimitSpin);
-    m_formLayout->addRow("Y Axis", m_yAxisModeCombo);
-    m_formLayout->addRow("Range", m_yRangeRow);
-    m_formLayout->addRow("Unit", m_yUnitEdit);
-    m_formLayout->addRow("Grid", m_gridCheck);
+    m_formLayout->addRow(tr("Source"), m_sourceIdEdit);
+    m_formLayout->addRow(tr("Topic"), m_topicIdEdit);
+    m_formLayout->addRow(tr("X Axis"), xAxisRow);
+    m_formLayout->addRow(tr("Limit"), m_xLimitSpin);
+    m_formLayout->addRow(tr("Y Axis"), m_yAxisModeCombo);
+    m_formLayout->addRow(tr("Range"), m_yRangeRow);
+    m_formLayout->addRow(tr("Unit"), m_yUnitEdit);
+    m_formLayout->addRow(tr("Grid"), m_gridCheck);
 
     auto* divider = new QFrame(this);
     divider->setObjectName("sectionDivider");
@@ -181,7 +183,7 @@ ChartConfigEditor::ChartConfigEditor(QWidget* parent) : WidgetConfigEditor(paren
     divider->setFixedHeight(1);
 
     m_seriesTable = new QTableWidget(0, kColumnCount, this);
-    m_seriesTable->setHorizontalHeaderLabels({"Name", "Field ID", "Color", "Style", ""});
+    m_seriesTable->setHorizontalHeaderLabels({tr("Name"), tr("Field ID"), tr("Color"), tr("Style"), ""});
     m_seriesTable->verticalHeader()->setVisible(false);
     // Every data column stays Interactive (the header's default) so the user
     // can drag any of them wider — Name included, for series with long
@@ -199,7 +201,7 @@ ChartConfigEditor::ChartConfigEditor(QWidget* parent) : WidgetConfigEditor(paren
     m_seriesTable->verticalHeader()->setDefaultSectionSize(36);
     m_seriesTable->setMinimumHeight(160);
 
-    m_addSeriesButton = new QPushButton("+ Add series", this);
+    m_addSeriesButton = new QPushButton(tr("+ Add series"), this);
     connect(m_addSeriesButton, &QPushButton::clicked, this, [this]() {
         QJsonObject series;
         series["fieldId"] = m_seriesTable->rowCount() + 1;
@@ -313,7 +315,7 @@ void ChartConfigEditor::addSeriesRow(const QJsonObject& series) {
     const int row = m_seriesTable->rowCount();
     m_seriesTable->insertRow(row);
 
-    auto* nameItem = new QTableWidgetItem(series.value("name").toString(QString("Series %1").arg(row + 1)));
+    auto* nameItem = new QTableWidgetItem(series.value("name").toString(tr("Series %1").arg(row + 1)));
     m_seriesTable->setItem(row, kNameColumn, nameItem);
 
     auto* fieldIdSpin = new QSpinBox();
@@ -334,7 +336,7 @@ void ChartConfigEditor::addSeriesRow(const QJsonObject& series) {
     const QColor fallback = seriesPalette.isEmpty() ? QColor("#3B82F6") : seriesPalette[row % seriesPalette.size()];
     setSwatchColor(colorButton, QColor(series.value("color").toString(fallback.name())));
     connect(colorButton, &QPushButton::clicked, this, [this, colorButton]() {
-        const QColor chosen = QColorDialog::getColor(swatchColor(colorButton), this, "Series Color");
+        const QColor chosen = QColorDialog::getColor(swatchColor(colorButton), this, tr("Series Color"));
         if (!chosen.isValid()) {
             return;
         }
@@ -344,14 +346,18 @@ void ChartConfigEditor::addSeriesRow(const QJsonObject& series) {
     m_seriesTable->setCellWidget(row, kColorColumn, colorButton);
 
     auto* styleCombo = new QComboBox();
-    styleCombo->addItems(kStyleLabels);
+    // Built locally (rather than a static list) so tr() can produce a real
+    // translation — see the kStyleIds comment above for why.
+    const QStringList styleLabels = {tr("Solid"),    tr("Dashed"), tr("Dotted"),
+                                      tr("Dash-Dot"), tr("Cross"),  tr("Asterisk")};
+    styleCombo->addItems(styleLabels);
     styleCombo->setCurrentIndex(qMax(0, kStyleIds.indexOf(series.value("style").toString("solid"))));
     connect(styleCombo, &QComboBox::currentIndexChanged, this, [this](int) { emitChanged(); });
     m_seriesTable->setCellWidget(row, kStyleColumn, styleCombo);
 
     auto* removeButton = new QPushButton("✕");
     removeButton->setFixedWidth(28);
-    removeButton->setToolTip("Remove series");
+    removeButton->setToolTip(tr("Remove series"));
     connect(removeButton, &QPushButton::clicked, this, [this, removeButton]() {
         for (int r = 0; r < m_seriesTable->rowCount(); ++r) {
             if (m_seriesTable->cellWidget(r, kRemoveColumn) == removeButton) {
@@ -377,7 +383,7 @@ void ChartConfigEditor::updateAxisRowsVisibility() {
     // Limit stays visible either way — only the unit it's counting changes.
     // Its fixed width (see construction) is sized for " pts", the longer of
     // the two, so switching to " s" never needs a relayout.
-    m_xLimitSpin->setSuffix(timeMode ? " s" : " pts");
+    m_xLimitSpin->setSuffix(timeMode ? tr(" s") : tr(" pts"));
 
     m_formLayout->setRowVisible(m_yRangeRow, m_yAxisModeCombo->currentData().toString() == "fixed");
 }

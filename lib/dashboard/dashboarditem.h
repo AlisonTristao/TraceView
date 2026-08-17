@@ -25,6 +25,9 @@ struct DashboardItem {
                         // panel's WidgetConfigEditor for `typeId`; opaque to
                         // everything except that editor, empty for types
                         // that don't register one
+    QString groupId;   // empty = ungrouped; items sharing a non-empty value
+                        // always select/drag together as one rigid unit (see
+                        // DashboardGrid::groupSelected()/ungroupSelected())
 
     double x = 0.0;
     double y = 0.0;

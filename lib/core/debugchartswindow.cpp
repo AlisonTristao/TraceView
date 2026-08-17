@@ -8,6 +8,8 @@
 
 #include "dashboard/dashboardcell.h"
 #include "dashboard/widgets/chartwidgets.h"
+#include "dashboard/widgets/controlwidgets.h"
+#include "dashboard/widgets/serialmonitorwidget.h"
 
 namespace traceview {
 
@@ -116,6 +118,61 @@ QJsonObject gaugeConfig() {
     return config;
 }
 
+// Configs below mirror the JSON shape controldata.cpp's parse*CommandConfig()
+// functions read -- same reasoning as lineChartConfig()/barChartConfig()/
+// gaugeConfig() above: a private, hand-built stand-in for what
+// PushButtonConfigEditor/ToggleSwitchConfigEditor/SliderConfigEditor would
+// normally produce, since there's no properties panel in this debug window.
+QJsonObject pushButtonConfig() {
+    QJsonObject config;
+    config["label"] = "Ping";
+    config["mode"] = "momentary";
+    config["onPress"] = "PING\r\n";
+    return config;
+}
+
+QJsonObject toggleSwitchConfig() {
+    QJsonObject config;
+    config["label"] = "Relay";
+    config["onCommand"] = "RELAY:ON\r\n";
+    config["offCommand"] = "RELAY:OFF\r\n";
+    config["defaultState"] = false;
+    return config;
+}
+
+QJsonObject sliderConfig() {
+    QJsonObject config;
+    config["label"] = "Speed";
+    config["min"] = 0.0;
+    config["max"] = 100.0;
+    config["step"] = 1.0;
+    config["defaultValue"] = 50.0;
+    config["unit"] = "%";
+    config["showValue"] = true;
+    config["sendMode"] = "onRelease";
+    config["commandTemplate"] = "SPEED:{value}\r\n";
+    return config;
+}
+
+// Cycled into the serial monitor on a timer (see DebugChartsWindow::tick())
+// so its terminal font -- fixed at construction (SerialTerminalWidget's own
+// setFont() call, not driven by FontManager the way the rest of the app is)
+// -- has a constant stream of upper/lowercase, digits, punctuation and
+// accented pt-BR text to render, without needing to touch a control widget
+// first to see anything at all.
+const QStringList& debugTerminalLines() {
+    static const QStringList lines = {
+        QStringLiteral("user@dongle:~$ status"),
+        QStringLiteral("OK  boot=12.3s  temp=42.1C  batt=87%"),
+        QStringLiteral("[INFO] Configuracao carregada: baud=115200"),
+        QStringLiteral("ERRO: sensor nao respondeu (timeout 250ms)"),
+        QStringLiteral("> ping 192.168.0.42 -c 3"),
+        QStringLiteral("64 bytes de 192.168.0.42: tempo=3.2ms"),
+        QStringLiteral("ABCDEFGHIJ abcdefghij 0123456789 !@#$%^&*()"),
+    };
+    return lines;
+}
+
 // Wraps `content` in a DashboardCell with the exact chrome/interaction a
 // real dashboard grid cell has -- header, pause/clear/gear, and (in edit mode
 // off) live mouse events reaching `content` for things like the line chart's
@@ -132,23 +189,64 @@ DashboardCell* wrapInCell(const QString& itemId, const QString& typeId, const QS
 } // namespace
 
 DebugChartsWindow::DebugChartsWindow(QWidget* parent) : QDialog(parent) {
-    setWindowTitle("Debug -- synthetic chart data");
+    setWindowTitle(tr("Debug -- synthetic chart data"));
     setAttribute(Qt::WA_DeleteOnClose);
-    resize(960, 720);
+    resize(980, 640);
 
     auto* layout = new QGridLayout(this);
 
     m_lineChart = new DummyLineChartWidget();
     m_lineChart->setConfig(lineChartConfig());
-    layout->addWidget(wrapInCell("debug-line", "dummy_line", "Line Chart", m_lineChart, this), 0, 0, 1, 2);
+    layout->addWidget(wrapInCell("debug-line", "dummy_line", tr("Line Chart"), m_lineChart, this), 0, 0, 1, 3);
 
     m_barChart = new DummyBarChartWidget();
     m_barChart->setConfig(barChartConfig());
-    layout->addWidget(wrapInCell("debug-bar", "dummy_bar", "Bar Chart", m_barChart, this), 1, 0);
+    layout->addWidget(wrapInCell("debug-bar", "dummy_bar", tr("Bar Chart"), m_barChart, this), 1, 0);
 
     m_gauge = new DummyGaugeWidget();
     m_gauge->setConfig(gaugeConfig());
-    layout->addWidget(wrapInCell("debug-gauge", "dummy_gauge", "Gauge", m_gauge, this), 1, 1);
+    layout->addWidget(wrapInCell("debug-gauge", "dummy_gauge", tr("Gauge"), m_gauge, this), 1, 1);
+
+    m_serialMonitor = new SerialMonitorWidget();
+    layout->addWidget(wrapInCell("debug-serial", "serial_monitor", tr("Serial Monitor"), m_serialMonitor, this), 1, 2);
+
+    // One of each control widget too (widgets/controlwidgets.h) -- their
+    // sendRequested() is looped straight back into the serial monitor above
+    // instead of going nowhere, so exercising a control also produces
+    // terminal output, same as it would once SerialWidgetBridge wires this
+    // up to a real SerialManager (BACKEND_TODO.txt Task 9/10).
+    auto* pushButton = new PushButtonWidget();
+    pushButton->setConfig(pushButtonConfig());
+    connect(pushButton, &PushButtonWidget::sendRequested, m_serialMonitor, &SerialMonitorWidget::appendData);
+    layout->addWidget(wrapInCell("debug-button", "push_button", tr("Push Button"), pushButton, this), 2, 0);
+
+    auto* toggleSwitch = new ToggleSwitchWidget();
+    toggleSwitch->setConfig(toggleSwitchConfig());
+    connect(toggleSwitch, &ToggleSwitchWidget::sendRequested, m_serialMonitor, &SerialMonitorWidget::appendData);
+    layout->addWidget(wrapInCell("debug-toggle", "toggle_switch", tr("Toggle Switch"), toggleSwitch, this), 2, 1);
+
+    auto* slider = new SliderWidget();
+    slider->setConfig(sliderConfig());
+    connect(slider, &SliderWidget::sendRequested, m_serialMonitor, &SerialMonitorWidget::appendData);
+    layout->addWidget(wrapInCell("debug-slider", "slider", tr("Slider"), slider, this), 2, 2);
+
+    // Rows would otherwise split available height evenly -- way more than a
+    // single small control (push button/toggle/slider) needs, and much more
+    // than they'd ever get on a real dashboard grid. 7:7:1 keeps the chart
+    // rows' relative 1:1 split intact while shrinking the control row to 1/5
+    // of the equal-split height it had before this (row2 = 1/15 of total vs.
+    // the previous 1/3). Reported live 2026-08-17 ("botao, toggle e slider
+    // ta muito grande verticalmente").
+    layout->setRowStretch(0, 7);
+    layout->setRowStretch(1, 7);
+    layout->setRowStretch(2, 1);
+    // 1/15 of this window's own height alone isn't enough room for
+    // ToggleSwitchWidget/SliderWidget's title label + control + margins --
+    // without a floor they got clipped at the bottom instead of just
+    // shrinking (reported live 2026-08-17, "o botao do relay ta ... ficando
+    // meio escondido a parte de baixo"). This floor only kicks in below that
+    // point; the 7:7:1 stretch above still governs anything beyond it.
+    layout->setRowMinimumHeight(2, 90);
 
     auto* timer = new QTimer(this);
     connect(timer, &QTimer::timeout, this, &DebugChartsWindow::tick);
@@ -185,6 +283,17 @@ void DebugChartsWindow::tick() {
     m_barChart->appendFieldSample(kBarCFieldId, timestampUs, b2);
     m_barChart->appendFieldSample(kBarDFieldId, timestampUs, b3);
     m_barChart->appendFieldSample(kBarEFieldId, timestampUs, b4);
+
+    // One synthetic line every ~1s (kTerminalLinePeriodTicks * 50ms), cycled
+    // through debugTerminalLines() -- keeps the serial monitor's terminal
+    // font visibly rendering text on its own, without needing to click the
+    // controls above first.
+    constexpr int kTerminalLinePeriodTicks = 20;
+    if (m_tick % kTerminalLinePeriodTicks == 0) {
+        const QStringList& lines = debugTerminalLines();
+        const QString& line = lines.at((m_tick / kTerminalLinePeriodTicks) % lines.size());
+        m_serialMonitor->appendData((line + QStringLiteral("\r\n")).toUtf8());
+    }
 }
 
 } // namespace traceview

@@ -13,10 +13,12 @@ function(add_traceview_test name)
 endfunction()
 
 add_traceview_test(test_projectstore traceview_project)
+add_traceview_test(test_workspacemanager traceview_project)
 add_traceview_test(test_dashboarditem traceview_dashboard)
 add_traceview_test(test_widgetregistry traceview_dashboard)
 add_traceview_test(test_dashboardgrid traceview_dashboard)
 add_traceview_test(test_chartdata traceview_dashboard)
+add_traceview_test(test_controldata traceview_dashboard)
 # topico 19: the dumb-terminal line model (\r/\b/\n handling) and keystroke
 # forwarding are exercised directly with QTest -- CONTRIBUTING.md's "nothing
 # UI-chrome-level" gap did not previously include any single-widget test,

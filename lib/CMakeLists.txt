@@ -4,9 +4,12 @@ configure_file(
     @ONLY
 )
 
-# traceview_theme: palette/stylesheet definitions and the ThemeManager
-# singleton (public header lives in include/traceview so the app can reach
-# it without depending on any other layer).
+# traceview_theme: palette/stylesheet definitions and the ThemeManager/
+# FontManager singletons (public headers live in include/traceview so the
+# app can reach them without depending on any other layer). FontManager is
+# independent of ThemeManager (see include/traceview/fontmanager.h) but
+# ships in the same "appearance" library since it's the same kind of
+# QSettings-backed, menu-driven picker.
 add_library(traceview_theme STATIC
     theme/palettes.cpp
     theme/palettes.h
@@ -14,6 +17,9 @@ add_library(traceview_theme STATIC
     theme/stylesheet.h
     theme/thememanager.cpp
     ${CMAKE_SOURCE_DIR}/include/traceview/thememanager.h
+    theme/fontmanager.cpp
+    ${CMAKE_SOURCE_DIR}/include/traceview/fontmanager.h
+    ${CMAKE_SOURCE_DIR}/include/traceview/font.h
 )
 
 target_include_directories(traceview_theme PUBLIC
@@ -23,6 +29,26 @@ target_include_directories(traceview_theme PUBLIC
 
 target_link_libraries(traceview_theme PUBLIC
     Qt6::Widgets
+)
+
+# traceview_locale: language/translation definitions and the LanguageManager
+# singleton (public header lives in include/traceview so the app can reach
+# it without depending on any other layer, same split as traceview_theme).
+# Only QtCore -- LanguageManager just uses QObject/QTranslator/QSettings/
+# QCoreApplication/QLibraryInfo, no widgets.
+add_library(traceview_locale STATIC
+    locale/languagemanager.cpp
+    ${CMAKE_SOURCE_DIR}/include/traceview/languagemanager.h
+    ${CMAKE_SOURCE_DIR}/include/traceview/locale.h
+)
+
+target_include_directories(traceview_locale PUBLIC
+    ${CMAKE_SOURCE_DIR}/include
+    ${CMAKE_SOURCE_DIR}/lib
+)
+
+target_link_libraries(traceview_locale PUBLIC
+    Qt6::Core
 )
 
 # traceview_telemetry: generic telemetry value types and data structures
@@ -122,6 +148,8 @@ target_link_libraries(traceview_protocol PUBLIC
 add_library(traceview_project STATIC
     project/projectstore.cpp
     project/projectstore.h
+    project/workspacemanager.cpp
+    project/workspacemanager.h
 )
 
 target_include_directories(traceview_project PUBLIC
@@ -187,12 +215,24 @@ target_link_libraries(traceview_dashboard
 add_library(traceview_ui STATIC
     core/aboutdialog.cpp
     core/aboutdialog.h
+    core/donatedialog.cpp
+    core/donatedialog.h
     core/debugchartswindow.cpp
     core/debugchartswindow.h
+    core/dockablepanel.cpp
+    core/dockablepanel.h
+    core/dockablepanelheader.cpp
+    core/dockablepanelheader.h
+    core/dockdropindicator.cpp
+    core/dockdropindicator.h
+    core/dockresizegrip.cpp
+    core/dockresizegrip.h
     core/layerspanel.cpp
     core/layerspanel.h
     core/mainwindow.cpp
     core/mainwindow.h
+    core/paneldockcontroller.cpp
+    core/paneldockcontroller.h
     core/propertiespanel.cpp
     core/propertiespanel.h
     core/ribbon.cpp
@@ -205,6 +245,10 @@ add_library(traceview_ui STATIC
     core/serialmanager.h
     core/serialwidgetbridge.cpp
     core/serialwidgetbridge.h
+    core/workspaceswitcher.cpp
+    core/workspaceswitcher.h
+    vendor/qrcodegen/qrcodegen.cpp
+    vendor/qrcodegen/qrcodegen.hpp
 )
 
 target_include_directories(traceview_ui PUBLIC
@@ -222,4 +266,5 @@ target_link_libraries(traceview_ui
         traceview_project
         traceview_protocol
         traceview_theme
+        traceview_locale
 )

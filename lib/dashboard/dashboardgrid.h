@@ -7,6 +7,7 @@
 #include <QPoint>
 #include <QPointF>
 #include <QRect>
+#include <QSet>
 #include <QSize>
 #include <QSizeF>
 #include <QString>
@@ -17,19 +18,24 @@
 #include "dashboardcell.h"
 #include "dashboarditem.h"
 
+class QRubberBand;
+
 namespace traceview {
 
 class DashboardWidget;
 
 class AddWidgetCommand;
 class RemoveWidgetCommand;
-class MoveWidgetCommand;
+class RemoveWidgetsCommand;
+class MoveWidgetsCommand;
 class ResizeWidgetCommand;
 class ChangeWidgetTypeCommand;
 class RenameWidgetCommand;
 class SetItemKeyCommand;
 class SetItemConfigCommand;
 class ChangeZOrderCommand;
+class GroupItemsCommand;
+class UngroupItemsCommand;
 
 // One entry in a front-to-back or back-to-front listing of dashboard items
 // (see DashboardGrid::layerEntries()) -- just enough to populate a layers/
@@ -49,20 +55,29 @@ struct DashboardLayerEntry {
 // the mouse in edit mode.
 //
 // Interaction in edit mode is selection-based: clicking a cell selects it
-// (only one at a time, grid-wide); the selected cell can be dragged/resized,
-// and removeSelected()/changeSelectedType() act on whichever one that is.
+// (replacing the current selection); Ctrl-click toggles it in/out of a
+// multi-selection instead, and dragging a rubber-band rectangle over empty
+// canvas selects everything it touches (see toggleItemSelection()/
+// selectItems()). Items sharing a non-empty DashboardItem::groupId (see
+// groupSelected()/ungroupSelected()) always select and drag together as one
+// rigid unit, no matter which member was clicked/dragged. removeSelected()/
+// changeSelectedType() and friends act on "the" selected item and are only
+// meaningful when exactly one item is selected (see selectedItemId()).
 class DashboardGrid : public QWidget {
     Q_OBJECT
 
     friend class AddWidgetCommand;
     friend class RemoveWidgetCommand;
-    friend class MoveWidgetCommand;
+    friend class RemoveWidgetsCommand;
+    friend class MoveWidgetsCommand;
     friend class ResizeWidgetCommand;
     friend class ChangeWidgetTypeCommand;
     friend class RenameWidgetCommand;
     friend class SetItemKeyCommand;
     friend class SetItemConfigCommand;
     friend class ChangeZOrderCommand;
+    friend class GroupItemsCommand;
+    friend class UngroupItemsCommand;
 
 public:
     explicit DashboardGrid(QWidget* parent = nullptr);
@@ -76,8 +91,28 @@ public:
     // and to any cell created afterward (see createCell()).
     void setDeviceConnected(bool connected);
 
+    // Replaces the current selection with just `itemId` (or clears it, for
+    // an empty string) -- expanded to the item's whole group if it belongs
+    // to one (see expandGroups()). Kept as a single-item Replace call with
+    // this exact signature since it's connected via &DashboardGrid::selectItem
+    // pointer syntax elsewhere; see toggleItemSelection()/selectItems() for
+    // the multi-select entry points.
     void selectItem(const QString& itemId); // empty string clears selection
-    QString selectedItemId() const { return m_selectedItemId; }
+    // Ctrl-click entry point: adds/removes itemId (or its whole group, if
+    // grouped) to/from the current selection as one unit.
+    void toggleItemSelection(const QString& itemId);
+    // Rubber-band entry point: replaces (or, if add=true, adds to) the
+    // current selection with `ids`, each expanded to its full group.
+    void selectItems(const QSet<QString>& ids, bool add);
+    // The sole selected item's id, or empty if zero or 2+ items are
+    // selected -- every single-item operation below (rename, type/key/config
+    // edit, copy, z-order) only acts when this is non-empty.
+    QString selectedItemId() const;
+    int selectedCount() const { return m_selectedItemIds.size(); }
+    QSet<QString> selectedItemIds() const { return m_selectedItemIds; }
+    // True if any selected item belongs to a group -- drives the Ungroup
+    // ribbon action's enabled state.
+    bool selectionHasGroup() const;
     // Type of the selected item, or empty if nothing is selected.
     QString selectedItemTypeId() const;
     // Effective display name of the selected item (its custom name, or the
@@ -92,7 +127,8 @@ public:
 
     // Auto-places a new item of `typeId` in the first free cell.
     void addItem(const QString& typeId);
-    // No-op if nothing is selected.
+    // No-op if nothing is selected; removes every selected item as one undo
+    // step when more than one is selected.
     void removeSelected();
     // Puts the selected item on the system clipboard (as a custom MIME
     // type) for a later pasteItem() call. No-op if nothing is selected.
@@ -130,6 +166,13 @@ public:
     void sendSelectedBackward();
     void sendSelectedToBack();
 
+    // Locks the selected items' positions together as a group: from then on,
+    // selecting or dragging any member acts on the whole group at once (see
+    // expandGroups()). No-op if fewer than 2 items are selected.
+    void groupSelected();
+    // Clears the group membership of every selected item that has one.
+    void ungroupSelected();
+
     QUndoStack* undoStack() const { return m_undoStack; }
 
     QJsonObject toJson() const;
@@ -152,7 +195,8 @@ public:
     QSize minimumSizeHint() const override;
 
 signals:
-    // itemId is empty when the selection is cleared.
+    // itemId is empty when the selection is cleared; also empty (not the
+    // clicked item) while 2+ items are selected -- see selectedItemId().
     void selectionChanged(const QString& itemId);
     // Fires whenever the key->widget association could have changed: item
     // added/removed, a key edited, a type change (swaps the content
@@ -172,13 +216,19 @@ protected:
     void resizeEvent(QResizeEvent* event) override;
     void paintEvent(QPaintEvent* event) override;
     void mousePressEvent(QMouseEvent* event) override;
+    void mouseMoveEvent(QMouseEvent* event) override;
+    void mouseReleaseEvent(QMouseEvent* event) override;
 
 private:
     struct DragOp {
-        QString itemId;
+        QString primaryItemId; // the cell the mouse is actually tracking;
+                                // used to compute the drag delta
         QPoint startGlobalPos;
-        DashboardItem original;
-        DashboardItem candidate;
+        // Keyed by itemId -- more than one entry only while dragging a
+        // multi-selection or group; always exactly one entry while resizing
+        // (resize stays single-item, see DashboardCell::setResizable()).
+        QMap<QString, DashboardItem> originals;
+        QMap<QString, DashboardItem> candidates;
         bool resizing = false;
         DashboardCell::ResizeHandle handle = DashboardCell::ResizeHandle::None;
     };
@@ -219,12 +269,13 @@ private:
     // index is clamped to the current item count; a no-op if itemId is
     // unknown or already at that index.
     void applyZOrder(const QString& itemId, int index);
+    void applySetGroup(const QString& itemId, const QString& groupId);
 
     // Replays m_items' order onto the live cells' Qt stacking order
     // (cell->raise() in back-to-front sequence) -- the single place that
     // keeps what's on screen matching the persisted layer order, used both
     // after a z-order mutation and to restore it once a temporary
-    // selection-driven raise (see selectItem()) ends.
+    // selection-driven raise (see applySelection()) ends.
     void restackCells();
 
     // Custom name if set, otherwise the type's registered display name.
@@ -249,22 +300,49 @@ private:
 
     DashboardCell* createCell(const DashboardItem& item);
 
+    // If any id in `ids` belongs to a (non-empty) group, expands the result
+    // to include every item sharing that group -- the single place the
+    // "a group always acts as one rigid unit" rule is enforced, used by
+    // every selection entry point (selectItem/toggleItemSelection/
+    // selectItems).
+    QSet<QString> expandGroups(const QSet<QString>& ids) const;
+    // Core selection mutator: diffs `target` against m_selectedItemIds,
+    // updates each affected cell's selected/resizable state, restacks/raises
+    // the selection, and emits selectionChanged() -- every public selection
+    // entry point funnels through this.
+    void applySelection(const QSet<QString>& target);
+    // Resize is single-item-only: disables DashboardCell's resize grip on
+    // every selected cell whenever more than one item is selected, re-enables
+    // it once the selection drops back to <= 1 (see DashboardCell::setResizable()).
+    void updateResizableFlags();
+
     void handleDragStarted(const QString& itemId, const QPoint& globalPos);
     void handleDragMoved(const QString& itemId, const QPoint& globalPos);
     void handleDragFinished(const QString& itemId, const QPoint& globalPos);
     void handleResizeStarted(const QString& itemId, const QPoint& globalPos, DashboardCell::ResizeHandle handle);
     void handleResizeMoved(const QString& itemId, const QPoint& globalPos);
     void handleResizeFinished(const QString& itemId, const QPoint& globalPos);
-    void handleSelectRequested(const QString& itemId);
+    void handleSelectRequested(const QString& itemId, Qt::KeyboardModifiers modifiers);
 
     bool m_editMode = false;
     bool m_deviceConnected = false;
-    QString m_selectedItemId;
+    QSet<QString> m_selectedItemIds;
 
     QVector<DashboardItem> m_items;
     QMap<QString, DashboardCell*> m_cells;
 
     std::optional<DragOp> m_drag;
+
+    // Rubber-band select-by-dragging-over-empty-canvas gesture (see
+    // mousePressEvent()/mouseMoveEvent()/mouseReleaseEvent()). m_rubberBand
+    // is only actually created once the drag exceeds
+    // QApplication::startDragDistance() -- a press that never moves that far
+    // is treated as a plain click (clears the selection), same as before
+    // this feature existed.
+    QRubberBand* m_rubberBand = nullptr;
+    QPoint m_rubberBandOrigin;
+    bool m_rubberBandAdditive = false;
+    bool m_rubberBandPending = false;
 
     QUndoStack* m_undoStack;
 };

@@ -43,6 +43,7 @@ private slots:
 void TestControlData::pushButtonParsesDefaultsFromEmptyConfig() {
     const PushButtonCommandConfig config = parsePushButtonCommandConfig(QJsonObject());
 
+    QVERIFY(config.label.isEmpty());
     QCOMPARE(config.mode, PushButtonMode::Momentary);
     QVERIFY(config.onPress.isEmpty());
     QVERIFY(config.onRelease.isEmpty());
@@ -56,6 +57,7 @@ void TestControlData::pushButtonParsesDefaultsFromEmptyConfig() {
 
 void TestControlData::pushButtonParsesExplicitConfig() {
     QJsonObject json;
+    json["label"] = "Fire";
     json["mode"] = "pulse";
     json["onPress"] = "PRESS";
     json["onRelease"] = "RELEASE";
@@ -69,6 +71,7 @@ void TestControlData::pushButtonParsesExplicitConfig() {
     json["debounceMs"] = 20;
 
     const PushButtonCommandConfig config = parsePushButtonCommandConfig(json);
+    QCOMPARE(config.label, QStringLiteral("Fire"));
     QCOMPARE(config.mode, PushButtonMode::Pulse);
     QCOMPARE(config.onPress, QStringLiteral("PRESS"));
     QCOMPARE(config.onRelease, QStringLiteral("RELEASE"));
@@ -82,6 +85,7 @@ void TestControlData::pushButtonParsesExplicitConfig() {
 
 void TestControlData::toggleParsesDefaultsFromEmptyConfig() {
     const ToggleCommandConfig config = parseToggleCommandConfig(QJsonObject());
+    QVERIFY(config.label.isEmpty());
     QVERIFY(config.onCommand.isEmpty());
     QVERIFY(config.offCommand.isEmpty());
     QVERIFY(!config.defaultState);
@@ -89,11 +93,13 @@ void TestControlData::toggleParsesDefaultsFromEmptyConfig() {
 
 void TestControlData::toggleParsesExplicitConfig() {
     QJsonObject json;
+    json["label"] = "Pump";
     json["onCommand"] = "ON";
     json["offCommand"] = "OFF";
     json["defaultState"] = true;
 
     const ToggleCommandConfig config = parseToggleCommandConfig(json);
+    QCOMPARE(config.label, QStringLiteral("Pump"));
     QCOMPARE(config.onCommand, QStringLiteral("ON"));
     QCOMPARE(config.offCommand, QStringLiteral("OFF"));
     QVERIFY(config.defaultState);
@@ -101,6 +107,7 @@ void TestControlData::toggleParsesExplicitConfig() {
 
 void TestControlData::sliderParsesDefaultsFromEmptyConfig() {
     const SliderCommandConfig config = parseSliderCommandConfig(QJsonObject());
+    QVERIFY(config.label.isEmpty());
     QCOMPARE(config.min, 0.0);
     QCOMPARE(config.max, 100.0);
     QCOMPARE(config.step, 1.0);
@@ -114,6 +121,7 @@ void TestControlData::sliderParsesDefaultsFromEmptyConfig() {
 
 void TestControlData::sliderParsesExplicitConfig() {
     QJsonObject json;
+    json["label"] = "Speed";
     json["min"] = -10.0;
     json["max"] = 10.0;
     json["step"] = 0.5;
@@ -125,6 +133,7 @@ void TestControlData::sliderParsesExplicitConfig() {
     json["commandTemplate"] = "SET {value}";
 
     const SliderCommandConfig config = parseSliderCommandConfig(json);
+    QCOMPARE(config.label, QStringLiteral("Speed"));
     QCOMPARE(config.min, -10.0);
     QCOMPARE(config.max, 10.0);
     QCOMPARE(config.step, 0.5);

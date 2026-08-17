@@ -1,5 +1,6 @@
 #include "chartwidgets.h"
 
+#include <QCoreApplication>
 #include <QFont>
 #include <QFontMetrics>
 #include <QMouseEvent>
@@ -199,8 +200,15 @@ int legendRowHeight(const QPainter& painter) {
     return qMax(kLegendSwatchSize, QFontMetrics(painter.font()).height());
 }
 
+// Free function (file-scope, not a member of any QObject-derived class) --
+// tr() isn't callable here, so this and gaugeSeriesDisplayName() below use
+// QCoreApplication::translate() with an explicit context instead, same idiom
+// as the earlier ThemePalette/WidgetRegistry/ProjectStore fixes. Every other
+// user-facing string in this file lives in an actual class member function
+// (ChartWidgetBase/DummyGaugeWidget/etc.) and uses plain tr() as usual.
 QString seriesDisplayName(const ChartSeriesConfig& series) {
-    return series.name.isEmpty() ? QString("Field %1").arg(series.fieldId) : series.name;
+    return series.name.isEmpty() ? QCoreApplication::translate("ChartWidgets", "Field %1").arg(series.fieldId)
+                                  : series.name;
 }
 
 // A series buffer's latest sample, formatted like a Y-axis value label (see
@@ -209,7 +217,9 @@ QString seriesDisplayName(const ChartSeriesConfig& series) {
 // reading need to look different.
 QString formatLatestValue(const QVector<double>& buffer) {
     if (buffer.isEmpty()) {
-        return QStringLiteral("--");
+        // Free function -- see seriesDisplayName() above for why this uses
+        // QCoreApplication::translate() instead of tr().
+        return QCoreApplication::translate("ChartWidgets", "--");
     }
     return QString::number(buffer.last(), 'g', 4);
 }
@@ -248,13 +258,21 @@ QVector<LegendColumn> legendColumns(const QFontMetrics& fm, int left, int rightB
     return columns;
 }
 
+// `hiddenSeries[i]` (ChartWidgetBase::m_seriesHidden, toggled by clicking the
+// legend -- see mousePressEvent() and legend hit-rects below) dims that
+// series' swatch+text and flattens the swatch to a neutral gray instead of
+// its own color, so a hidden series still shows its name (the click target
+// to bring it back) but reads as "off" at a glance.
 void paintLegendRow(QPainter& painter, int y, int rowHeight, const QVector<LegendColumn>& columns,
                      const QVector<ChartSeriesConfig>& seriesConfigs, const QStringList& texts,
-                     const ThemePalette& palette) {
+                     const QVector<bool>& hiddenSeries, const ThemePalette& palette) {
     for (int i = 0; i < columns.size(); ++i) {
         const int x = columns[i].x;
+        const bool hidden = i < hiddenSeries.size() && hiddenSeries[i];
+        painter.setOpacity(hidden ? 0.4 : 1.0);
+
         painter.setPen(Qt::NoPen);
-        painter.setBrush(seriesConfigs[i].color);
+        painter.setBrush(hidden ? palette.textSecondary : seriesConfigs[i].color);
         painter.drawEllipse(QRect(x, y + (rowHeight - kLegendSwatchSize) / 2, kLegendSwatchSize, kLegendSwatchSize));
 
         painter.setPen(palette.textSecondary);
@@ -262,6 +280,7 @@ void paintLegendRow(QPainter& painter, int y, int rowHeight, const QVector<Legen
         painter.drawText(QRect(textX, y, columns[i].width - (kLegendSwatchSize + 4), rowHeight),
                           Qt::AlignLeft | Qt::AlignVCenter, texts[i]);
     }
+    painter.setOpacity(1.0);
 }
 
 // Two legend rows bracketing the plot: series names above, each series'
@@ -275,12 +294,24 @@ void paintLegendRow(QPainter& painter, int y, int rowHeight, const QVector<Legen
 // -- the top name legend and the "t"/"k" axis tag stay up regardless, and
 // plotBottomMargin() keeps reserving the same space either way, so toggling
 // this never moves/resizes the plot.
+// `hiddenSeries` grays out a toggled-off series in both rows (see
+// paintLegendRow()) rather than dropping it from the legend entirely -- its
+// name/swatch needs to stay clickable so the same click can bring it back.
+// `outHitRects`, when non-null, is filled with one clickable rect per series
+// (empty QRect() for any series that didn't fit within rightBound) spanning
+// from the top row down through whichever rows are actually drawn --
+// ChartWidgetBase::mousePressEvent() hit-tests against exactly this so the
+// click target can never drift from what got painted.
 void paintSeriesLegends(QPainter& painter, const QRect& area, const QVector<ChartSeriesConfig>& seriesConfigs,
                          const QVector<QVector<double>>& seriesBuffers, ChartXAxisMode xAxisMode,
-                         bool showLastValueRow, bool showXAxisTag, const ThemePalette& palette) {
+                         bool showLastValueRow, bool showXAxisTag, const QVector<bool>& hiddenSeries,
+                         const ThemePalette& palette, QVector<QRect>* outHitRects = nullptr) {
     const QFontMetrics fm(painter.font());
     const int rowHeight = legendRowHeight(painter);
-    const QString xLabel = xAxisMode == ChartXAxisMode::Time ? QStringLiteral("t") : QStringLiteral("k");
+    // Free function -- see seriesDisplayName() above for why this uses
+    // QCoreApplication::translate() instead of tr().
+    const QString xLabel = xAxisMode == ChartXAxisMode::Time ? QCoreApplication::translate("ChartWidgets", "t")
+                                                              : QCoreApplication::translate("ChartWidgets", "k");
     // Only reserved/drawn for the line chart (showXAxisTag) -- the bar
     // chart's X axis is now one value label per bar (paintBarSnapshot()),
     // not a scrolling sample/time count, so the "t"/"k" tag has nothing left
@@ -305,11 +336,22 @@ void paintSeriesLegends(QPainter& painter, const QRect& area, const QVector<Char
     const QVector<LegendColumn> columns = legendColumns(fm, left, rightBound, seriesConfigs, values);
 
     const int topY = area.top() + kOuterPadding;
-    paintLegendRow(painter, topY, rowHeight, columns, seriesConfigs, names, palette);
-
     const int bottomY = area.bottom() - kOuterPadding - rowHeight + 1;
+
+    if (outHitRects) {
+        outHitRects->clear();
+        outHitRects->reserve(seriesConfigs.size());
+        const int hitBottom = (showLastValueRow ? bottomY : topY) + rowHeight;
+        for (int i = 0; i < seriesConfigs.size(); ++i) {
+            outHitRects->append(i < columns.size() ? QRect(columns[i].x, topY, columns[i].width, hitBottom - topY)
+                                                     : QRect());
+        }
+    }
+
+    paintLegendRow(painter, topY, rowHeight, columns, seriesConfigs, names, hiddenSeries, palette);
+
     if (showLastValueRow) {
-        paintLegendRow(painter, bottomY, rowHeight, columns, seriesConfigs, values, palette);
+        paintLegendRow(painter, bottomY, rowHeight, columns, seriesConfigs, values, hiddenSeries, palette);
     }
 
     if (showXAxisTag) {
@@ -437,8 +479,11 @@ void paintGaugePointer(QPainter& painter, const QPointF& center, double ringRadi
     paintGaugeRadialTick(painter, center, fraction, inner, outer);
 }
 
+// Free function -- see seriesDisplayName() above for why this uses
+// QCoreApplication::translate() instead of tr().
 QString gaugeSeriesDisplayName(const GaugeSeriesConfig& series) {
-    return series.name.isEmpty() ? QString("Field %1").arg(series.fieldId) : series.name;
+    return series.name.isEmpty() ? QCoreApplication::translate("ChartWidgets", "Field %1").arg(series.fieldId)
+                                  : series.name;
 }
 
 // Column x-positions for paintGaugeLegend()'s single row -- same "widest
@@ -485,9 +530,17 @@ void paintGaugeLegend(QPainter& painter, const QRect& area, const GaugeConfig& c
     QStringList texts;
     for (int i = 0; i < config.series.size(); ++i) {
         const double value = i < values.size() ? values[i] : qQNaN();
-        const QString valueText =
-            qIsNaN(value) ? QStringLiteral("--") : QString("%1%2").arg(value, 0, 'f', config.decimals).arg(config.unit);
-        texts << QString("%1  %2").arg(gaugeSeriesDisplayName(config.series[i]), valueText);
+        // Free function -- see seriesDisplayName() above for why this uses
+        // QCoreApplication::translate() instead of tr().
+        const QString valueText = qIsNaN(value) ? QCoreApplication::translate("ChartWidgets", "--")
+                                                  : QCoreApplication::translate("ChartWidgets", "%1%2")
+                                                        .arg(value, 0, 'f', config.decimals)
+                                                        .arg(config.unit);
+        // "%1  %2" fixes name-before-value order -- a translator wanting to
+        // swap that order for a given language would need to reorder these
+        // placeholders; not attempted for this pass.
+        texts << QCoreApplication::translate("ChartWidgets", "%1  %2")
+                     .arg(gaugeSeriesDisplayName(config.series[i]), valueText);
     }
 
     const QVector<LegendColumn> columns = gaugeLegendColumns(fm, area.left(), area.right(), texts);
@@ -789,7 +842,7 @@ bool valueAtX(ChartLineInterpolation interpolation, bool markerStyle, const QRec
 void paintGridPointMarkers(QPainter& painter, const QRect& plotRect, int capacity, const QVector<int>& xLines,
                             const QVector<ChartSeriesConfig>& seriesConfigs, const QVector<QVector<double>>& buffers,
                             double yMin, double yMax, ChartLineInterpolation interpolation,
-                            const ThemePalette& palette) {
+                            const QVector<bool>& hiddenSeries, const ThemePalette& palette) {
     if (xLines.isEmpty()) {
         return;
     }
@@ -801,6 +854,9 @@ void paintGridPointMarkers(QPainter& painter, const QRect& plotRect, int capacit
     const int textHeight = fm.height();
 
     for (int series = 0; series < seriesConfigs.size() && series < buffers.size(); ++series) {
+        if (series < hiddenSeries.size() && hiddenSeries[series]) {
+            continue;
+        }
         const QVector<double>& values = buffers[series];
         const bool marker = isMarkerStyle(seriesConfigs[series].style);
         for (int gridX : xLines) {
@@ -860,7 +916,7 @@ void paintGridPointMarkers(QPainter& painter, const QRect& plotRect, int capacit
 void paintHoverCrosshair(QPainter& painter, const QRect& plotRect, int capacity, const QPoint& mousePos,
                           const QVector<ChartSeriesConfig>& seriesConfigs, const QVector<QVector<double>>& buffers,
                           double yMin, double yMax, ChartLineInterpolation interpolation,
-                          const ThemePalette& palette) {
+                          const QVector<bool>& hiddenSeries, const ThemePalette& palette) {
     if (!plotRect.contains(mousePos)) {
         return;
     }
@@ -875,6 +931,9 @@ void paintHoverCrosshair(QPainter& painter, const QRect& plotRect, int capacity,
     QVector<HoverRow> rows;
     rows.reserve(seriesConfigs.size());
     for (int i = 0; i < seriesConfigs.size() && i < buffers.size(); ++i) {
+        if (i < hiddenSeries.size() && hiddenSeries[i]) {
+            continue;
+        }
         qreal x = 0.0;
         qreal y = 0.0;
         double value = 0.0;
@@ -909,8 +968,13 @@ void paintHoverCrosshair(QPainter& painter, const QRect& plotRect, int capacity,
     QStringList lines;
     int textWidth = 0;
     for (const HoverRow& row : rows) {
-        const QString text =
-            QString("%1: %2").arg(seriesDisplayName(*row.series), QString::number(row.value, 'g', 4));
+        // Free function -- see seriesDisplayName() above for why this uses
+        // QCoreApplication::translate() instead of tr(). "%1: %2" fixes
+        // name-before-value order -- a translator wanting to swap that order
+        // for a given language would need to reorder these placeholders; not
+        // attempted for this pass.
+        const QString text = QCoreApplication::translate("ChartWidgets", "%1: %2")
+                                  .arg(seriesDisplayName(*row.series), QString::number(row.value, 'g', 4));
         lines << text;
         textWidth = qMax(textWidth, fm.horizontalAdvance(text));
     }
@@ -965,14 +1029,27 @@ void paintHoverCrosshair(QPainter& painter, const QRect& plotRect, int capacity,
 // plotRect -- the same band plotBottomMargin() reserves for the line
 // chart's legend row, just filled differently here (see the call site's
 // showLastValueRow=false/showXAxisTag=false).
+//
+// `hiddenSeries[i]` (toggled by clicking that series' legend entry) drops it
+// from the slot layout entirely rather than just skipping its draw -- `slot`
+// below is sized against the *visible* count, so the remaining bars widen
+// and re-center into the space a hidden one would have left behind instead
+// of leaving a blank gap where it used to sit.
 void paintBarSnapshot(QPainter& painter, const QRect& plotRect, const QRect& area,
                        const QVector<ChartSeriesConfig>& seriesConfigs, const QVector<QVector<double>>& buffers,
-                       double yMin, double yMax, const ThemePalette& palette) {
-    if (seriesConfigs.isEmpty() || plotRect.width() <= 0 || plotRect.height() <= 0) {
+                       double yMin, double yMax, const QVector<bool>& hiddenSeries, const ThemePalette& palette) {
+    QVector<int> visible;
+    visible.reserve(seriesConfigs.size());
+    for (int i = 0; i < seriesConfigs.size(); ++i) {
+        if (i >= hiddenSeries.size() || !hiddenSeries[i]) {
+            visible.append(i);
+        }
+    }
+    if (visible.isEmpty() || plotRect.width() <= 0 || plotRect.height() <= 0) {
         return;
     }
     const double yRange = (yMax - yMin) != 0.0 ? (yMax - yMin) : 1.0;
-    const int barCount = seriesConfigs.size();
+    const int barCount = visible.size();
     const qreal slot = qreal(plotRect.width()) / qreal(barCount);
     constexpr qreal kBarGapFraction = 0.3;
     const qreal barWidth = qMax(1.0, slot * (1.0 - kBarGapFraction));
@@ -981,8 +1058,9 @@ void paintBarSnapshot(QPainter& painter, const QRect& plotRect, const QRect& are
     const int rowHeight = legendRowHeight(painter);
     const int labelY = area.bottom() - kOuterPadding - rowHeight + 1;
 
-    for (int series = 0; series < barCount; ++series) {
-        const qreal slotLeft = plotRect.left() + slot * series;
+    for (int slotIndex = 0; slotIndex < barCount; ++slotIndex) {
+        const int series = visible[slotIndex];
+        const qreal slotLeft = plotRect.left() + slot * slotIndex;
         const qreal x = slotLeft + (slot - barWidth) / 2.0;
 
         const QVector<double>& values = series < buffers.size() ? buffers[series] : QVector<double>();
@@ -998,7 +1076,10 @@ void paintBarSnapshot(QPainter& painter, const QRect& plotRect, const QRect& are
         }
 
         painter.setPen(palette.textSecondary);
-        const QString text = hasValue ? QString::number(values.last(), 'g', 4) : QStringLiteral("--");
+        // Free function -- see seriesDisplayName() above for why this uses
+        // QCoreApplication::translate() instead of tr().
+        const QString text = hasValue ? QString::number(values.last(), 'g', 4)
+                                       : QCoreApplication::translate("ChartWidgets", "--");
         const QRect labelRect(qRound(slotLeft), labelY, qRound(slot), rowHeight);
         painter.drawText(labelRect, Qt::AlignCenter, text);
     }
@@ -1009,6 +1090,14 @@ void paintBarSnapshot(QPainter& painter, const QRect& plotRect, const QRect& are
 void ChartWidgetBase::setConfig(const QJsonObject& config) {
     const ChartConfig newConfig = parseChartConfig(config);
     m_seriesBuffers = resizeChartBuffers(m_seriesBuffers, newConfig);
+    // Carried over by row position, same as resizeChartBuffers() above -- a
+    // series still at the same row keeps whatever hidden/shown state the user
+    // last clicked to; rows past the old series count start visible.
+    QVector<bool> hidden(newConfig.series.size(), false);
+    for (int i = 0; i < hidden.size() && i < m_seriesHidden.size(); ++i) {
+        hidden[i] = m_seriesHidden[i];
+    }
+    m_seriesHidden = hidden;
     m_config = newConfig;
     update();
 }
@@ -1064,6 +1153,24 @@ void ChartWidgetBase::mouseMoveEvent(QMouseEvent* event) {
         update();
     }
     DashboardWidget::mouseMoveEvent(event);
+}
+
+void ChartWidgetBase::mousePressEvent(QMouseEvent* event) {
+    if (event->button() == Qt::LeftButton) {
+        const QPoint pos = event->position().toPoint();
+        for (int i = 0; i < m_legendHitRects.size(); ++i) {
+            if (m_legendHitRects[i].contains(pos)) {
+                if (i >= m_seriesHidden.size()) {
+                    m_seriesHidden.resize(i + 1);
+                }
+                m_seriesHidden[i] = !m_seriesHidden[i];
+                update();
+                event->accept();
+                return;
+            }
+        }
+    }
+    DashboardWidget::mousePressEvent(event);
 }
 
 void ChartWidgetBase::leaveEvent(QEvent* event) {
@@ -1128,6 +1235,12 @@ void DummyLineChartWidget::paintEvent(QPaintEvent*) {
     paintYAxis(painter, plotRect, yMin, yMax, m_config.yUnit, m_config.showGrid, kLineYGridDivisions, palette);
     paintXAxis(painter, plotRect, xLines, m_config.showGrid, palette);
     for (int i = 0; i < m_config.series.size() && i < seriesValues.size(); ++i) {
+        // A series hidden via its legend entry (see mousePressEvent()) is
+        // dropped from the plot entirely, not just faded -- only the legend
+        // itself keeps showing it, grayed, so the same click can restore it.
+        if (i < m_seriesHidden.size() && m_seriesHidden[i]) {
+            continue;
+        }
         paintLineSeries(painter, plotRect, capacity, m_config.series[i], seriesValues[i], yMin, yMax,
                          m_lineInterpolation);
     }
@@ -1136,11 +1249,11 @@ void DummyLineChartWidget::paintEvent(QPaintEvent*) {
     // themselves are hidden.
     if (m_showGridPointMarkers && m_config.showGrid) {
         paintGridPointMarkers(painter, plotRect, capacity, xLines, m_config.series, seriesValues, yMin, yMax,
-                               m_lineInterpolation, palette);
+                               m_lineInterpolation, m_seriesHidden, palette);
     }
     if (m_showHoverCrosshair && m_hasHoverPos) {
         paintHoverCrosshair(painter, plotRect, capacity, m_hoverPos, m_config.series, seriesValues, yMin, yMax,
-                             m_lineInterpolation, palette);
+                             m_lineInterpolation, m_seriesHidden, palette);
     }
 
     // No more redundant "Line Chart" corner label -- DashboardCell's header
@@ -1148,7 +1261,7 @@ void DummyLineChartWidget::paintEvent(QPaintEvent*) {
     // the per-series legend instead, which the old literal text had no room
     // for anyway.
     paintSeriesLegends(painter, area, m_config.series, seriesValues, m_config.xAxisMode, m_showLastValueRow,
-                       /*showXAxisTag=*/true, palette);
+                       /*showXAxisTag=*/true, m_seriesHidden, palette, &m_legendHitRects);
 }
 
 DummyBarChartWidget::DummyBarChartWidget(QWidget* parent) : ChartWidgetBase(parent) {}
@@ -1178,14 +1291,14 @@ void DummyBarChartWidget::paintEvent(QPaintEvent*) {
     // series, each labeled with its own current value directly below it
     // (paintBarSnapshot() below) rather than scrolling through history.
     paintYAxis(painter, plotRect, yMin, yMax, m_config.yUnit, m_config.showGrid, kBarYGridDivisions, palette);
-    paintBarSnapshot(painter, plotRect, area, m_config.series, seriesValues, yMin, yMax, palette);
+    paintBarSnapshot(painter, plotRect, area, m_config.series, seriesValues, yMin, yMax, m_seriesHidden, palette);
 
     // Top name row only -- no bottom "last value" row or "t"/"k" tag, since
     // each bar already carries its own current value (see above). See
     // DummyLineChartWidget::paintEvent for why this is a legend instead of a
     // "Bar Chart" corner label.
     paintSeriesLegends(painter, area, m_config.series, seriesValues, m_config.xAxisMode, /*showLastValueRow=*/false,
-                       /*showXAxisTag=*/false, palette);
+                       /*showXAxisTag=*/false, m_seriesHidden, palette, &m_legendHitRects);
 }
 
 DummyGaugeWidget::DummyGaugeWidget(QWidget* parent) : DashboardWidget(parent) {}
@@ -1340,8 +1453,11 @@ void DummyGaugeWidget::paintEvent(QPaintEvent*) {
             valueFont.setBold(true);
             painter.setFont(valueFont);
             painter.setPen(palette.textPrimary);
-            const QString text =
-                hasValue ? QString("%1%2").arg(value, 0, 'f', m_config.decimals).arg(m_config.unit) : "--";
+            // Class member function -- plain tr() works here (unlike the
+            // free-function helpers above it in the anonymous namespace).
+            const QString text = hasValue
+                                      ? tr("%1%2").arg(value, 0, 'f', m_config.decimals).arg(m_config.unit)
+                                      : tr("--");
             painter.drawText(arcRect, Qt::AlignCenter, text);
         }
     }

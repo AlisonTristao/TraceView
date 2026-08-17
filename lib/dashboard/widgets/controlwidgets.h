@@ -1,6 +1,8 @@
 #pragma once
 
+#include <QAbstractButton>
 #include <QElapsedTimer>
+#include <QVariantAnimation>
 
 #include "dashboard/dashboardwidget.h"
 #include "dashboard/widgets/controldata.h"
@@ -30,6 +32,7 @@ public:
 
     bool wantsCellHeader() const override { return false; }
     void setConfig(const QJsonObject& config) override;
+    void setEditModeHint(bool editMode) override;
 
 signals:
     void pressedRequested();
@@ -50,6 +53,36 @@ private:
     bool m_pressSuppressed = false;
 };
 
+// A small, fixed-size iOS/Android-style slide switch: a pill-shaped track
+// with a circular thumb that slides to the accent-filled side when checked
+// and back when unchecked. QAbstractButton, not QPushButton -- this paints
+// itself entirely in paintEvent() rather than through QSS (no stylesheet.cpp
+// rule targets it), the same "draw it, don't fake it" approach used for the
+// hand-drawn glyphs in stylesheet.cpp/ribbonicons.cpp/dashboardcell.cpp.
+// ToggleSwitchWidget below is the only place this is used.
+class ToggleSwitch : public QAbstractButton {
+    Q_OBJECT
+
+public:
+    explicit ToggleSwitch(QWidget* parent = nullptr);
+
+    QSize sizeHint() const override;
+
+protected:
+    void paintEvent(QPaintEvent* event) override;
+
+private:
+    void onToggled(bool checked);
+
+    // 0 (off/left) .. 1 (on/right) slide progress. Only driven while
+    // m_slideAnim is actually running (real user clicks -- see onToggled());
+    // paintEvent() falls back to isChecked()'s 0/1 value the rest of the
+    // time, so setChecked() during setConfig()'s initial, signal-blocked
+    // load (see ToggleSwitchWidget::setConfig()) lands the thumb instantly
+    // in the right place with no animation.
+    QVariantAnimation m_slideAnim;
+};
+
 // An on/off switch that holds its state between clicks, unlike
 // PushButtonWidget above. setConfig() captures the on/off commands from
 // ToggleSwitchConfigEditor and applies `defaultState` once, on the first
@@ -65,13 +98,15 @@ public:
 
     bool wantsCellHeader() const override { return false; }
     void setConfig(const QJsonObject& config) override;
+    void setEditModeHint(bool editMode) override;
 
 signals:
     void toggled(bool checked);
     void sendRequested(const QByteArray& command);
 
 private:
-    QPushButton* m_switchButton = nullptr;
+    QLabel* m_titleLabel = nullptr;
+    ToggleSwitch* m_switch = nullptr;
     ToggleCommandConfig m_config;
     bool m_configInitialized = false;
 };
@@ -91,6 +126,7 @@ public:
 
     bool wantsCellHeader() const override { return false; }
     void setConfig(const QJsonObject& config) override;
+    void setEditModeHint(bool editMode) override;
 
 signals:
     void valueChanged(int value);
@@ -103,6 +139,7 @@ private:
     void scheduleContinuousSend(double value);
     void sendCommandFor(double value);
 
+    QLabel* m_titleLabel = nullptr;
     QSlider* m_slider = nullptr;
     QLabel* m_valueLabel = nullptr;
     SliderCommandConfig m_config;

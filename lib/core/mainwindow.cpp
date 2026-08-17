@@ -3,16 +3,21 @@
 #include <QActionGroup>
 #include <QClipboard>
 #include <QComboBox>
+#include <QCoreApplication>
+#include <QEvent>
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QGuiApplication>
 #include <QHBoxLayout>
+#include <QInputDialog>
 #include <QIntValidator>
 #include <QKeySequence>
 #include <QLabel>
+#include <QLineEdit>
 #include <QMenu>
 #include <QMenuBar>
 #include <QMessageBox>
+#include <QProcess>
 #include <QPushButton>
 #include <QSettings>
 #include <QSignalBlocker>
@@ -22,19 +27,25 @@
 #include <QVBoxLayout>
 
 #include "aboutdialog.h"
+#include "donatedialog.h"
 #include "backend/backend.h"
 #include "dashboard/dashboardgrid.h"
 #include "dashboard/widgetregistry.h"
 #include "dashboard/widgets/chartwidgets.h"
 #include "debugchartswindow.h"
 #include "layerspanel.h"
+#include "paneldockcontroller.h"
 #include "project/projectstore.h"
+#include "project/workspacemanager.h"
 #include "protocol/btpbackend.h"
 #include "propertiespanel.h"
 #include "ribbon.h"
 #include "ribbonicons.h"
 #include "serialmanager.h"
 #include "serialwidgetbridge.h"
+#include "workspaceswitcher.h"
+#include "traceview/fontmanager.h"
+#include "traceview/languagemanager.h"
 #include "traceview/thememanager.h"
 #include "traceview/version.h"
 
@@ -45,7 +56,10 @@
 namespace traceview {
 
 namespace {
-constexpr const char* kProjectFileFilter = "TraceView Project (*.tvproj)";
+// Namespace-scope, outside MainWindow -- plain tr() isn't available here, so
+// this uses QCoreApplication::translate() directly, same as the non-QObject
+// fixes elsewhere in the codebase.
+const QString kProjectFileFilter = QCoreApplication::translate("MainWindow", "TraceView Project (*.tvproj)");
 constexpr const char* kRecentFilesSettingsKey = "recentFiles/paths";
 constexpr int kMaxRecentFiles = 10;
 
@@ -106,7 +120,7 @@ quint64 topicStatusKey(quint32 sourceId, quint16 topicId) {
 } // namespace
 
 MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
-    setWindowTitle(QString("TraceView v%1").arg(kVersion));
+    setWindowTitle(tr("TraceView v%1").arg(kVersion));
     resize(1024, 640);
 
     buildMenus();
@@ -152,26 +166,45 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     buildLayersPanel();
     buildPropertiesPanel();
 
-    // Layers panel + canvas + properties panel side by side, all below the
-    // ribbon — so the side panels are exactly as tall as the canvas instead
-    // of a QDockWidget, which spans the full window height (menu bar to
-    // status bar) and would sit alongside the ribbon too, not just the
-    // canvas. The layers panel is 1/3 the width of the properties panel,
-    // since it only needs to fit short layer names.
-    auto* contentRow = new QWidget(this);
-    auto* contentLayout = new QHBoxLayout(contentRow);
+    // Canvas fills the whole row below the ribbon; the layers/properties
+    // panels float on top of it instead of sharing the row via layout, so
+    // docking one never shrinks the canvas -- and, since DashboardGrid
+    // stores every item's position/size as a fraction of the canvas area
+    // (see dashboardgrid.h), a shrink would otherwise reflow/resize every
+    // widget on the dashboard along with it. Positioned directly by
+    // m_dockController (see paneldockcontroller.h) rather than a
+    // QDockWidget, which always reserves real layout space for a docked
+    // widget and spans the full window height (menu bar to status bar),
+    // not just the canvas.
+    m_contentRow = new QWidget(this);
+    auto* contentLayout = new QHBoxLayout(m_contentRow);
     contentLayout->setContentsMargins(0, 0, 0, 0);
     contentLayout->setSpacing(0);
-    contentLayout->addWidget(m_layersPanel);
-    contentLayout->addWidget(m_dashboardGrid, /*stretch=*/1);
-    contentLayout->addWidget(m_propertiesPanel);
+    contentLayout->addWidget(m_dashboardGrid);
+
+    // Reparented rather than added to contentLayout: their geometry is set
+    // directly by m_dockController (wired below via an event filter on
+    // m_contentRow) so they overlay the canvas instead of squeezing it, and
+    // can be dragged by their header to any edge or off into a floating
+    // window. The layers panel is 1/3 the width of the properties panel by
+    // default, since it only needs to fit short layer names -- see each
+    // panel's preferredThickness().
+    m_layersPanel->setParent(m_contentRow);
+    m_propertiesPanel->setParent(m_contentRow);
+    m_contentRow->installEventFilter(this);
+
+    m_dockController = new PanelDockController(m_contentRow, this, this);
+    m_dockController->registerPanel(m_layersPanel, "layers", DockEdge::Left);
+    m_dockController->registerPanel(m_propertiesPanel, "properties", DockEdge::Right);
+    m_dockController->restoreState();
+    connect(m_dockController, &PanelDockController::dragFinished, this, &MainWindow::updatePanelVisibility);
 
     auto* central = new QWidget(this);
     auto* centralLayout = new QVBoxLayout(central);
-    centralLayout->setContentsMargins(0, 0, 0, 0);
+    centralLayout->setContentsMargins(0, kRibbonTopMargin, 0, 0);
     centralLayout->setSpacing(0);
     centralLayout->addWidget(ribbon);
-    centralLayout->addWidget(contentRow, /*stretch=*/1);
+    centralLayout->addWidget(m_contentRow, /*stretch=*/1);
     setCentralWidget(central);
 
     // Permanent readout of what telemetry is actually flowing: the effective
@@ -182,6 +215,10 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     // state.
     m_telemetryStatusLabel = new QLabel(this);
     statusBar()->addPermanentWidget(m_telemetryStatusLabel);
+
+    // Added last so it lands to the right of m_telemetryStatusLabel above --
+    // each addPermanentWidget() call appends further right.
+    buildWorkspaceSwitcher();
 }
 
 MainWindow::~MainWindow() {
@@ -284,31 +321,31 @@ void MainWindow::updateTelemetryStatusLabel() {
 }
 
 void MainWindow::buildMenus() {
-    auto* fileMenu = menuBar()->addMenu("&File");
+    auto* fileMenu = menuBar()->addMenu(tr("&File"));
 
-    auto* newAction = fileMenu->addAction("&New Project");
+    auto* newAction = fileMenu->addAction(tr("&New Project"));
     newAction->setShortcut(QKeySequence::New);
     connect(newAction, &QAction::triggered, this, &MainWindow::onNewProject);
 
-    auto* openAction = fileMenu->addAction("&Open Project...");
+    auto* openAction = fileMenu->addAction(tr("&Open Project..."));
     openAction->setShortcut(QKeySequence::Open);
     connect(openAction, &QAction::triggered, this, &MainWindow::onOpenProject);
 
-    m_recentFilesMenu = fileMenu->addMenu("Open &Recent");
+    m_recentFilesMenu = fileMenu->addMenu(tr("Open &Recent"));
     updateRecentFilesMenu();
 
     fileMenu->addSeparator();
 
-    auto* saveAction = fileMenu->addAction("&Save Project");
+    auto* saveAction = fileMenu->addAction(tr("&Save Project"));
     saveAction->setShortcut(QKeySequence::Save);
     connect(saveAction, &QAction::triggered, this, &MainWindow::onSaveProject);
 
-    auto* saveAsAction = fileMenu->addAction("Save Project &As...");
+    auto* saveAsAction = fileMenu->addAction(tr("Save Project &As..."));
     saveAsAction->setShortcut(QKeySequence::SaveAs);
     connect(saveAsAction, &QAction::triggered, this, &MainWindow::onSaveProjectAs);
 
-    auto* viewMenu = menuBar()->addMenu("&View");
-    auto* themeMenu = viewMenu->addMenu("&Theme");
+    auto* viewMenu = menuBar()->addMenu(tr("&View"));
+    auto* themeMenu = viewMenu->addMenu(tr("&Theme"));
 
     auto* group = new QActionGroup(this);
     group->setExclusive(true);
@@ -326,65 +363,120 @@ void MainWindow::buildMenus() {
         });
     }
 
-    auto* debugAction = menuBar()->addAction("&Debug");
+    auto* fontMenu = viewMenu->addMenu(tr("&Font"));
+
+    auto* fontGroup = new QActionGroup(this);
+    fontGroup->setExclusive(true);
+
+    const QString currentFontId = FontManager::instance().currentFont().id;
+    for (const FontOption& font : FontManager::instance().availableFonts()) {
+        auto* action = fontMenu->addAction(font.displayName);
+        action->setCheckable(true);
+        action->setChecked(font.id == currentFontId);
+        action->setData(font.id);
+        fontGroup->addAction(action);
+
+        connect(action, &QAction::triggered, this, [id = font.id]() {
+            FontManager::instance().setFont(id);
+        });
+    }
+
+    // Restart-to-apply: switching languages does not attempt to live-
+    // retranslate every open widget (that spans the whole UI/dashboard
+    // layer), so the choice is persisted and the app offers to relaunch.
+    auto* languageMenu = viewMenu->addMenu(tr("&Language"));
+
+    auto* languageGroup = new QActionGroup(this);
+    languageGroup->setExclusive(true);
+
+    const QString currentLanguageId = LanguageManager::instance().currentLanguage().id;
+    for (const LanguageInfo& language : LanguageManager::instance().availableLanguages()) {
+        auto* action = languageMenu->addAction(language.displayName);
+        action->setCheckable(true);
+        action->setChecked(language.id == currentLanguageId);
+        action->setData(language.id);
+        languageGroup->addAction(action);
+
+        connect(action, &QAction::triggered, this, [this, id = language.id]() {
+            if (id == LanguageManager::instance().currentLanguage().id) {
+                return;
+            }
+            LanguageManager::instance().setLanguage(id);
+
+            QMessageBox restartBox(this);
+            restartBox.setWindowTitle(tr("Restart Required"));
+            restartBox.setText(tr("The application needs to restart to apply the new language. Restart now?"));
+            auto* restartNowButton = restartBox.addButton(tr("Restart Now"), QMessageBox::AcceptRole);
+            restartBox.addButton(tr("Later"), QMessageBox::RejectRole);
+            restartBox.exec();
+
+            if (restartBox.clickedButton() == restartNowButton) {
+                QProcess::startDetached(QCoreApplication::applicationFilePath(), QCoreApplication::arguments().mid(1));
+                QCoreApplication::quit();
+            }
+        });
+    }
+
+    auto* debugAction = menuBar()->addAction(tr("&Debug"));
     connect(debugAction, &QAction::triggered, this, &MainWindow::onDebug);
 
-    auto* aboutAction = menuBar()->addAction("&About");
+    auto* aboutAction = menuBar()->addAction(tr("&About"));
     connect(aboutAction, &QAction::triggered, this, &MainWindow::onAbout);
+
+    auto* donateAction = menuBar()->addAction(tr("Dona&te"));
+    connect(donateAction, &QAction::triggered, this, &MainWindow::onDonate);
 }
 
 Ribbon* MainWindow::buildRibbon() {
-    m_positionAction = new QAction("Position", this);
-    m_positionAction->setCheckable(true);
-    m_positionAction->setChecked(true);
-    m_positionAction->setEnabled(false);
-    connect(m_positionAction, &QAction::toggled, this, [this](bool checked) {
-        if (!checked) {
-            m_positionAction->setChecked(true); // selection is always the active tool while editing
-        }
-    });
-
-    m_addWidgetAction = new QAction("Add", this);
+    m_addWidgetAction = new QAction(tr("Add"), this);
     m_addWidgetAction->setEnabled(false);
     connect(m_addWidgetAction, &QAction::triggered, this, &MainWindow::onAddWidget);
 
-    m_removeAction = new QAction("Remove", this);
+    m_removeAction = new QAction(tr("Remove"), this);
     m_removeAction->setEnabled(false);
     m_removeAction->setShortcut(QKeySequence::Delete);
     connect(m_removeAction, &QAction::triggered, m_dashboardGrid, &DashboardGrid::removeSelected);
 
-    m_copyAction = new QAction("Copy", this);
+    m_copyAction = new QAction(tr("Copy"), this);
     m_copyAction->setEnabled(false);
     m_copyAction->setShortcut(QKeySequence::Copy);
     connect(m_copyAction, &QAction::triggered, m_dashboardGrid, &DashboardGrid::copySelected);
 
-    m_pasteAction = new QAction("Paste", this);
+    m_pasteAction = new QAction(tr("Paste"), this);
     m_pasteAction->setEnabled(false);
     m_pasteAction->setShortcut(QKeySequence::Paste);
     connect(m_pasteAction, &QAction::triggered, m_dashboardGrid, &DashboardGrid::pasteItem);
 
-    m_bringToFrontAction = new QAction("To Front", this);
+    m_bringToFrontAction = new QAction(tr("To Front"), this);
     m_bringToFrontAction->setEnabled(false);
     connect(m_bringToFrontAction, &QAction::triggered, m_dashboardGrid, &DashboardGrid::bringSelectedToFront);
 
-    m_bringForwardAction = new QAction("Forward", this);
+    m_bringForwardAction = new QAction(tr("Forward"), this);
     m_bringForwardAction->setEnabled(false);
     connect(m_bringForwardAction, &QAction::triggered, m_dashboardGrid, &DashboardGrid::bringSelectedForward);
 
-    m_sendBackwardAction = new QAction("Backward", this);
+    m_sendBackwardAction = new QAction(tr("Backward"), this);
     m_sendBackwardAction->setEnabled(false);
     connect(m_sendBackwardAction, &QAction::triggered, m_dashboardGrid, &DashboardGrid::sendSelectedBackward);
 
-    m_sendToBackAction = new QAction("To Back", this);
+    m_sendToBackAction = new QAction(tr("To Back"), this);
     m_sendToBackAction->setEnabled(false);
     connect(m_sendToBackAction, &QAction::triggered, m_dashboardGrid, &DashboardGrid::sendSelectedToBack);
+
+    m_groupAction = new QAction(tr("Group"), this);
+    m_groupAction->setEnabled(false);
+    connect(m_groupAction, &QAction::triggered, m_dashboardGrid, &DashboardGrid::groupSelected);
+
+    m_ungroupAction = new QAction(tr("Ungroup"), this);
+    m_ungroupAction->setEnabled(false);
+    connect(m_ungroupAction, &QAction::triggered, m_dashboardGrid, &DashboardGrid::ungroupSelected);
 
     // createUndoAction()/createRedoAction() wire up triggered/enabled state
     // (and a dynamic "Undo <command text>" label) directly from the stack —
     // no manual canUndo()/canRedo() syncing needed.
-    m_undoAction = m_dashboardGrid->undoStack()->createUndoAction(this, "Undo");
+    m_undoAction = m_dashboardGrid->undoStack()->createUndoAction(this, tr("Undo"));
     m_undoAction->setShortcut(QKeySequence::Undo);
-    m_redoAction = m_dashboardGrid->undoStack()->createRedoAction(this, "Redo");
+    m_redoAction = m_dashboardGrid->undoStack()->createRedoAction(this, tr("Redo"));
     m_redoAction->setShortcut(QKeySequence::Redo);
 
     connect(m_dashboardGrid, &DashboardGrid::selectionChanged, this, &MainWindow::onSelectionChanged);
@@ -420,12 +512,12 @@ Ribbon* MainWindow::buildRibbon() {
     runLayout->setSpacing(kRibbonGroupSpacing);
 
     m_portCombo = new QComboBox(runPage);
-    m_portCombo->setToolTip("Serial port");
+    m_portCombo->setToolTip(tr("Serial port"));
     m_portCombo->setMinimumWidth(110);
 
     m_refreshPortsButton = new QToolButton(runPage);
     m_refreshPortsButton->setText(QString::fromUtf8("\xE2\x9F\xB3")); // ⟳
-    m_refreshPortsButton->setToolTip("Refresh port list");
+    m_refreshPortsButton->setToolTip(tr("Refresh port list"));
     m_refreshPortsButton->setAutoRaise(true);
     m_refreshPortsButton->setFixedSize(kRibbonButtonSize, kRibbonButtonSize);
     connect(m_refreshPortsButton, &QToolButton::clicked, this, &MainWindow::refreshSerialPorts);
@@ -442,7 +534,7 @@ Ribbon* MainWindow::buildRibbon() {
     m_baudCombo->addItems({"9600", "19200", "38400", "57600", "115200", "230400", "460800", "921600",
                             "1000000", "2000000", "3000000", "5000000"});
     m_baudCombo->setCurrentText("921600");
-    m_baudCombo->setToolTip("Baud rate (type a custom value if yours isn't listed)");
+    m_baudCombo->setToolTip(tr("Baud rate (type a custom value if yours isn't listed)"));
     m_baudCombo->setValidator(new QIntValidator(1, 10000000, m_baudCombo));
 
     // Terminator appended to control-widget commands only (docs/PROTOCOL.md
@@ -450,26 +542,35 @@ Ribbon* MainWindow::buildRibbon() {
     // port/baud this isn't a QSerialPort property, so it stays editable
     // while connected instead of being locked alongside them below.
     m_lineTerminatorCombo = new QComboBox(runPage);
-    m_lineTerminatorCombo->addItem("None", int(LineTerminator::None));
-    m_lineTerminatorCombo->addItem(QString::fromUtf8("LF (\\n)"), int(LineTerminator::Lf));
-    m_lineTerminatorCombo->addItem(QString::fromUtf8("CR (\\r)"), int(LineTerminator::Cr));
-    m_lineTerminatorCombo->addItem(QString::fromUtf8("CRLF (\\r\\n)"), int(LineTerminator::CrLf));
+    m_lineTerminatorCombo->addItem(tr("None"), int(LineTerminator::None));
+    m_lineTerminatorCombo->addItem(tr("LF (\\n)"), int(LineTerminator::Lf));
+    m_lineTerminatorCombo->addItem(tr("CR (\\r)"), int(LineTerminator::Cr));
+    m_lineTerminatorCombo->addItem(tr("CRLF (\\r\\n)"), int(LineTerminator::CrLf));
     m_lineTerminatorCombo->setCurrentIndex(1); // Lf, matching SerialManager's default
-    m_lineTerminatorCombo->setToolTip("Line terminator appended to control-widget commands (push button/toggle/"
-                                       "slider). Doesn't affect the serial terminal's raw keystrokes.");
+    m_lineTerminatorCombo->setToolTip(tr("Line terminator appended to control-widget commands (push button/toggle/"
+                                          "slider). Doesn't affect the serial terminal's raw keystrokes."));
     connect(m_lineTerminatorCombo, &QComboBox::currentIndexChanged, this, &MainWindow::onLineTerminatorChanged);
 
-    m_connectButton = new QPushButton("Connect", runPage);
+    m_connectButton = new QPushButton(tr("Connect"), runPage);
     m_connectButton->setCheckable(true);
     connect(m_connectButton, &QPushButton::toggled, this, &MainWindow::onSerialConnectToggled);
 
-    m_fullscreenButton = new QToolButton(runPage);
+    // Lives in the status bar (bottom-left, see below) rather than on this
+    // page: the ribbon's tab strip hides during fullscreen
+    // (onFullscreenToggled -- m_ribbon->setTabBarVisible(false)), which
+    // used to be harmless for this button since the Run page itself stayed
+    // visible, but placing the workspace switcher in the ribbon's tab row
+    // (topico's earlier design) broke under that same hide. The status bar
+    // is never touched by fullscreen, so anything anchored there survives
+    // it for free.
+    m_fullscreenButton = new QToolButton(this);
     m_fullscreenButton->setCheckable(true);
     m_fullscreenButton->setAutoRaise(true);
     m_fullscreenButton->setFixedSize(kRibbonButtonSize, kRibbonButtonSize);
     m_fullscreenButton->setIconSize(QSize(kRibbonIconSize, kRibbonIconSize));
-    m_fullscreenButton->setToolTip("Fullscreen dashboard (F11)");
+    m_fullscreenButton->setToolTip(tr("Fullscreen dashboard (F11)"));
     connect(m_fullscreenButton, &QToolButton::toggled, this, &MainWindow::onFullscreenToggled);
+    statusBar()->addWidget(m_fullscreenButton);
 
     // Window-level shortcuts (not menu items) so they keep working once the
     // menu bar is hidden while fullscreen (see onFullscreenToggled). Routed
@@ -499,7 +600,6 @@ Ribbon* MainWindow::buildRibbon() {
     runLayout->addWidget(m_lineTerminatorCombo);
     runLayout->addWidget(m_connectButton);
     runLayout->addStretch();
-    runLayout->addWidget(m_fullscreenButton);
 
     refreshSerialPorts();
     connect(m_serialManager, &SerialManager::connectionStateChanged, this,
@@ -513,22 +613,109 @@ Ribbon* MainWindow::buildRibbon() {
     configureLayout->setContentsMargins(kRibbonPageMarginH, kRibbonPageMarginV, kRibbonPageMarginH, kRibbonPageMarginV);
     configureLayout->setSpacing(kRibbonGroupSpacing);
 
-    configureLayout->addWidget(
-        Ribbon::createButtonGroup(configurePage, {m_positionAction, m_addWidgetAction, m_removeAction}));
+    configureLayout->addWidget(Ribbon::createButtonGroup(configurePage, {m_addWidgetAction, m_removeAction}));
     configureLayout->addWidget(Ribbon::createButtonGroup(
         configurePage, {m_bringToFrontAction, m_bringForwardAction, m_sendBackwardAction, m_sendToBackAction}));
     configureLayout->addWidget(Ribbon::createButtonGroup(configurePage, {m_copyAction, m_pasteAction}));
+    configureLayout->addWidget(Ribbon::createButtonGroup(configurePage, {m_groupAction, m_ungroupAction}));
     configureLayout->addWidget(Ribbon::createButtonGroup(configurePage, {m_undoAction, m_redoAction}));
     configureLayout->addStretch();
 
     auto* ribbon = new Ribbon(this);
-    m_runTabIndex = ribbon->addTab("Run", runPage);
-    m_configureTabIndex = ribbon->addTab("Layout", configurePage);
+    m_runTabIndex = ribbon->addTab(tr("Run"), runPage);
+    m_configureTabIndex = ribbon->addTab(tr("Layout"), configurePage);
 
     connect(ribbon, &Ribbon::currentTabChanged, this, &MainWindow::onRibbonTabChanged);
 
     m_ribbon = ribbon;
     return ribbon;
+}
+
+void MainWindow::buildWorkspaceSwitcher() {
+    // Status bar (bottom-right), not the ribbon: see the comment above
+    // m_fullscreenButton's construction in buildRibbon() for why -- the
+    // ribbon's tab row is hidden while fullscreen, which this widget used
+    // to live inside via Ribbon::setCornerWidget().
+    m_workspaceSwitcher = new WorkspaceSwitcher(this);
+    connect(m_workspaceSwitcher, &WorkspaceSwitcher::workspaceSelected, this, &MainWindow::onWorkspaceSelected);
+    connect(m_workspaceSwitcher, &WorkspaceSwitcher::workspaceDeleteRequested, this,
+            &MainWindow::onWorkspaceDeleteRequested);
+    connect(m_workspaceSwitcher, &WorkspaceSwitcher::newWorkspaceRequested, this,
+            &MainWindow::onNewWorkspaceRequested);
+    m_workspaceSwitcher->updateIcons(ThemeManager::instance().currentTheme().textPrimary);
+    refreshWorkspaceSwitcher();
+    statusBar()->addPermanentWidget(m_workspaceSwitcher);
+}
+
+void MainWindow::refreshWorkspaceSwitcher() {
+    QVector<WorkspaceSwitcher::Entry> entries;
+    for (const Workspace& workspace : WorkspaceManager::instance().workspaces()) {
+        entries.append({workspace.id, workspace.name});
+    }
+    m_workspaceSwitcher->setWorkspaces(entries, WorkspaceManager::instance().activeId());
+}
+
+void MainWindow::switchToWorkspace(const QString& id) {
+    WorkspaceManager& workspaces = WorkspaceManager::instance();
+    if (id == workspaces.activeId()) {
+        return;
+    }
+
+    workspaces.setDashboardFor(workspaces.activeId(), m_dashboardGrid->toJson());
+    workspaces.setActiveId(id);
+    m_dashboardGrid->fromJson(workspaces.dashboardFor(id));
+    m_dashboardGrid->undoStack()->clear();
+    refreshPropertiesPanel();
+    refreshLayersPanel();
+    refreshWorkspaceSwitcher();
+}
+
+void MainWindow::onWorkspaceSelected(const QString& id) {
+    switchToWorkspace(id);
+}
+
+void MainWindow::onNewWorkspaceRequested() {
+    bool ok = false;
+    const QString name = QInputDialog::getText(this, tr("New Workspace"), tr("Name:"), QLineEdit::Normal,
+                                                 tr("Workspace"), &ok);
+    if (!ok || name.trimmed().isEmpty()) {
+        return;
+    }
+
+    WorkspaceManager& workspaces = WorkspaceManager::instance();
+    workspaces.setDashboardFor(workspaces.activeId(), m_dashboardGrid->toJson());
+    workspaces.createWorkspace(name.trimmed());
+    m_dashboardGrid->fromJson(QJsonObject());
+    m_dashboardGrid->undoStack()->clear();
+    refreshPropertiesPanel();
+    refreshLayersPanel();
+    refreshWorkspaceSwitcher();
+    statusBar()->showMessage(tr("Created workspace \"%1\".").arg(name.trimmed()), 3000);
+}
+
+void MainWindow::onWorkspaceDeleteRequested(const QString& id) {
+    WorkspaceManager& workspaces = WorkspaceManager::instance();
+    if (workspaces.workspaces().size() <= 1) {
+        return;
+    }
+
+    const QString name = workspaces.nameFor(id);
+    if (QMessageBox::question(this, tr("Delete Workspace"),
+                               tr("Delete workspace \"%1\"? This cannot be undone.").arg(name),
+                               QMessageBox::Yes | QMessageBox::No, QMessageBox::No) != QMessageBox::Yes) {
+        return;
+    }
+
+    const bool wasActive = id == workspaces.activeId();
+    workspaces.removeWorkspace(id);
+    if (wasActive) {
+        m_dashboardGrid->fromJson(workspaces.dashboardFor(workspaces.activeId()));
+        m_dashboardGrid->undoStack()->clear();
+        refreshPropertiesPanel();
+        refreshLayersPanel();
+    }
+    refreshWorkspaceSwitcher();
+    statusBar()->showMessage(tr("Deleted workspace \"%1\".").arg(name), 3000);
 }
 
 void MainWindow::buildLayersPanel() {
@@ -554,35 +741,37 @@ void MainWindow::buildPropertiesPanel() {
             &MainWindow::onPanelConfigChangeRequested);
     connect(m_propertiesPanel, &PropertiesPanel::pinnedChanged, this, &MainWindow::updatePanelVisibility);
 
-    // Only relevant while editing the layout — matches m_addWidgetAction/
-    // m_positionAction, which also start disabled until the Layout tab is
-    // active (see onRibbonTabChanged).
+    // Only relevant while editing the layout — matches m_addWidgetAction,
+    // which also starts disabled until the Layout tab is active (see
+    // onRibbonTabChanged).
     m_propertiesPanel->hide();
 }
 
 void MainWindow::updateRibbonIcons() {
     const ThemePalette& palette = ThemeManager::instance().currentTheme();
-    m_positionAction->setIcon(makeSelectIcon(palette.textPrimary));
-    m_positionAction->setToolTip("Position — select a widget to move/resize it");
     m_addWidgetAction->setIcon(makePlusIcon(palette.textPrimary));
-    m_addWidgetAction->setToolTip("Add widget");
+    m_addWidgetAction->setToolTip(tr("Add widget"));
     m_removeAction->setIcon(makeMinusIcon(palette.danger));
-    m_removeAction->setToolTip(QString("Remove selected widget (%1)")
+    m_removeAction->setToolTip(tr("Remove selected widget (%1)")
                                     .arg(m_removeAction->shortcut().toString(QKeySequence::NativeText)));
     m_copyAction->setIcon(makeCopyIcon(palette.textPrimary));
     m_copyAction->setToolTip(
-        QString("Copy selected widget (%1)").arg(m_copyAction->shortcut().toString(QKeySequence::NativeText)));
+        tr("Copy selected widget (%1)").arg(m_copyAction->shortcut().toString(QKeySequence::NativeText)));
     m_pasteAction->setIcon(makePasteIcon(palette.textPrimary));
     m_pasteAction->setToolTip(
-        QString("Paste as a new widget (%1)").arg(m_pasteAction->shortcut().toString(QKeySequence::NativeText)));
+        tr("Paste as a new widget (%1)").arg(m_pasteAction->shortcut().toString(QKeySequence::NativeText)));
     m_bringToFrontAction->setIcon(makeBringToFrontIcon(palette.textPrimary));
-    m_bringToFrontAction->setToolTip("Bring to front");
+    m_bringToFrontAction->setToolTip(tr("Bring to front"));
     m_bringForwardAction->setIcon(makeBringForwardIcon(palette.textPrimary));
-    m_bringForwardAction->setToolTip("Bring forward");
+    m_bringForwardAction->setToolTip(tr("Bring forward"));
     m_sendBackwardAction->setIcon(makeSendBackwardIcon(palette.textPrimary));
-    m_sendBackwardAction->setToolTip("Send backward");
+    m_sendBackwardAction->setToolTip(tr("Send backward"));
     m_sendToBackAction->setIcon(makeSendToBackIcon(palette.textPrimary));
-    m_sendToBackAction->setToolTip("Send to back");
+    m_sendToBackAction->setToolTip(tr("Send to back"));
+    m_groupAction->setIcon(makeGroupIcon(palette.textPrimary));
+    m_groupAction->setToolTip(tr("Group — lock the selected widgets' positions together"));
+    m_ungroupAction->setIcon(makeUngroupIcon(palette.textPrimary));
+    m_ungroupAction->setToolTip(tr("Ungroup — let the selected widgets move independently again"));
     // No explicit setToolTip(): QAction falls back to text(), which
     // QUndoStack keeps updated with the pending command's description
     // (e.g. "Undo Move Widget"); the shortcut still shows up in the menu/
@@ -590,13 +779,15 @@ void MainWindow::updateRibbonIcons() {
     m_undoAction->setIcon(makeArrowIcon(palette.textPrimary, /*pointingLeft=*/true));
     m_redoAction->setIcon(makeArrowIcon(palette.textPrimary, /*pointingLeft=*/false));
     m_fullscreenButton->setIcon(makeFullscreenIcon(palette.textPrimary, m_fullscreenButton->isChecked()));
+    if (m_workspaceSwitcher) {
+        m_workspaceSwitcher->updateIcons(palette.textPrimary);
+    }
 }
 
 void MainWindow::onRibbonTabChanged(int index) {
     m_configureTabActive = index == m_configureTabIndex;
     m_dashboardGrid->setEditMode(m_configureTabActive);
     m_addWidgetAction->setEnabled(m_configureTabActive);
-    m_positionAction->setEnabled(m_configureTabActive);
     updatePanelVisibility();
     updateSelectionActions();
 
@@ -633,7 +824,7 @@ void MainWindow::onSerialConnectToggled(bool checked) {
 }
 
 void MainWindow::onSerialConnectionStateChanged(bool connected) {
-    m_connectButton->setText(connected ? "Disconnect" : "Connect");
+    m_connectButton->setText(connected ? tr("Disconnect") : tr("Connect"));
     {
         const QSignalBlocker blocker(m_connectButton);
         m_connectButton->setChecked(connected);
@@ -659,20 +850,53 @@ void MainWindow::onSelectionChanged(const QString&) {
 }
 
 void MainWindow::updatePanelVisibility() {
-    const bool hasSelection = !m_dashboardGrid->selectedItemId().isEmpty();
-    m_propertiesPanel->setVisible(m_configureTabActive && (hasSelection || m_propertiesPanel->isPinned()));
-    m_layersPanel->setVisible(m_configureTabActive && (hasSelection || m_layersPanel->isPinned()));
+    // Hiding a panel mid-drag would yank it out from under the cursor --
+    // m_dockController re-triggers this itself (via dragFinished()) once the
+    // gesture ends, so any visibility change that landed during it isn't
+    // lost, just deferred.
+    if (m_dockController->isDragging()) {
+        return;
+    }
+    const bool hasSelection = m_dashboardGrid->selectedCount() > 0;
+    const bool showProperties = m_configureTabActive && (hasSelection || m_propertiesPanel->isPinned());
+    const bool showLayers = m_configureTabActive && (hasSelection || m_layersPanel->isPinned());
+    m_propertiesPanel->setVisible(showProperties);
+    m_layersPanel->setVisible(showLayers);
+    // Both panels are floated over m_dashboardGrid rather than laid out
+    // beside it (see positionOverlayPanels()), so re-showing one has to
+    // explicitly reclaim the top of the stack -- a plain setVisible(true)
+    // doesn't change sibling stacking order.
+    if (showProperties) {
+        m_propertiesPanel->raise();
+    }
+    if (showLayers) {
+        m_layersPanel->raise();
+    }
+}
+
+bool MainWindow::eventFilter(QObject* watched, QEvent* event) {
+    if (watched == m_contentRow && event->type() == QEvent::Resize) {
+        positionOverlayPanels();
+    }
+    return QMainWindow::eventFilter(watched, event);
+}
+
+void MainWindow::positionOverlayPanels() {
+    m_dockController->relayout();
 }
 
 void MainWindow::updateSelectionActions() {
-    const bool hasSelection = m_configureTabActive && !m_dashboardGrid->selectedItemId().isEmpty();
-    m_removeAction->setEnabled(hasSelection);
-    m_copyAction->setEnabled(hasSelection);
+    const bool hasAnySelection = m_configureTabActive && m_dashboardGrid->selectedCount() > 0;
+    const bool hasSingleSelection = m_configureTabActive && !m_dashboardGrid->selectedItemId().isEmpty();
+    m_removeAction->setEnabled(hasAnySelection);
+    m_copyAction->setEnabled(hasSingleSelection);
     m_pasteAction->setEnabled(m_configureTabActive && m_dashboardGrid->canPaste());
-    m_bringToFrontAction->setEnabled(hasSelection);
-    m_bringForwardAction->setEnabled(hasSelection);
-    m_sendBackwardAction->setEnabled(hasSelection);
-    m_sendToBackAction->setEnabled(hasSelection);
+    m_bringToFrontAction->setEnabled(hasSingleSelection);
+    m_bringForwardAction->setEnabled(hasSingleSelection);
+    m_sendBackwardAction->setEnabled(hasSingleSelection);
+    m_sendToBackAction->setEnabled(hasSingleSelection);
+    m_groupAction->setEnabled(m_configureTabActive && m_dashboardGrid->selectedCount() >= 2);
+    m_ungroupAction->setEnabled(m_configureTabActive && m_dashboardGrid->selectionHasGroup());
 }
 
 void MainWindow::refreshPropertiesPanel() {
@@ -707,7 +931,7 @@ void MainWindow::onPanelNameChangeRequested(const QString& name) {
 
 void MainWindow::onPanelKeyChangeRequested(const QString& key) {
     if (!m_dashboardGrid->setSelectedKey(key)) {
-        statusBar()->showMessage(QString("Key \"%1\" is already used by another widget.").arg(key), 4000);
+        statusBar()->showMessage(tr("Key \"%1\" is already used by another widget.").arg(key), 4000);
     }
     // Resyncs the field either way: on success to the committed value (a
     // no-op visually), on rejection to snap the text back to what's
@@ -720,22 +944,25 @@ void MainWindow::onPanelConfigChangeRequested(const QJsonObject& config) {
 }
 
 void MainWindow::onNewProject() {
-    if (QMessageBox::question(this, "New Project",
-                               "Discard the current dashboard and start a new, empty project?",
+    if (QMessageBox::question(this, tr("New Project"),
+                               tr("Discard the current dashboard and start a new, empty project?"),
                                QMessageBox::Yes | QMessageBox::No, QMessageBox::No) != QMessageBox::Yes) {
         return;
     }
 
     ProjectStore::instance().reset();
+    WorkspaceManager::instance().reset();
     m_dashboardGrid->fromJson(QJsonObject());
     m_dashboardGrid->undoStack()->clear();
     refreshPropertiesPanel();
     refreshLayersPanel();
-    statusBar()->showMessage("Started a new project.", 3000);
+    refreshWorkspaceSwitcher();
+    statusBar()->showMessage(tr("Started a new project."), 3000);
 }
 
 void MainWindow::onSaveProject() {
-    ProjectStore::instance().setSection("dashboard", m_dashboardGrid->toJson());
+    WorkspaceManager::instance().setDashboardFor(WorkspaceManager::instance().activeId(), m_dashboardGrid->toJson());
+    ProjectStore::instance().setSection("workspaces", WorkspaceManager::instance().toJson());
 
     QString path = ProjectStore::instance().currentPath();
     if (path.isEmpty()) {
@@ -744,29 +971,30 @@ void MainWindow::onSaveProject() {
     }
 
     if (!ProjectStore::instance().save()) {
-        QMessageBox::warning(this, "Save Project", ProjectStore::instance().lastError());
+        QMessageBox::warning(this, tr("Save Project"), ProjectStore::instance().lastError());
         return;
     }
     addRecentFile(path);
 }
 
 void MainWindow::onSaveProjectAs() {
-    ProjectStore::instance().setSection("dashboard", m_dashboardGrid->toJson());
+    WorkspaceManager::instance().setDashboardFor(WorkspaceManager::instance().activeId(), m_dashboardGrid->toJson());
+    ProjectStore::instance().setSection("workspaces", WorkspaceManager::instance().toJson());
 
-    const QString path = QFileDialog::getSaveFileName(this, "Save Project As", QString(), kProjectFileFilter);
+    const QString path = QFileDialog::getSaveFileName(this, tr("Save Project As"), QString(), kProjectFileFilter);
     if (path.isEmpty()) {
         return;
     }
 
     if (!ProjectStore::instance().saveAs(path)) {
-        QMessageBox::warning(this, "Save Project", ProjectStore::instance().lastError());
+        QMessageBox::warning(this, tr("Save Project"), ProjectStore::instance().lastError());
         return;
     }
     addRecentFile(path);
 }
 
 void MainWindow::onOpenProject() {
-    const QString path = QFileDialog::getOpenFileName(this, "Open Project", QString(), kProjectFileFilter);
+    const QString path = QFileDialog::getOpenFileName(this, tr("Open Project"), QString(), kProjectFileFilter);
     if (path.isEmpty()) {
         return;
     }
@@ -775,14 +1003,26 @@ void MainWindow::onOpenProject() {
 
 void MainWindow::openRecentFile(const QString& path) {
     if (!ProjectStore::instance().load(path)) {
-        QMessageBox::warning(this, "Open Project", ProjectStore::instance().lastError());
+        QMessageBox::warning(this, tr("Open Project"), ProjectStore::instance().lastError());
         return;
     }
 
-    m_dashboardGrid->fromJson(ProjectStore::instance().section("dashboard"));
+    const QJsonObject workspacesSection = ProjectStore::instance().section("workspaces");
+    if (workspacesSection.isEmpty()) {
+        // Older project file, predating workspaces -- migrate its single
+        // "dashboard" section into a lone Default workspace.
+        WorkspaceManager::instance().reset();
+        WorkspaceManager::instance().setDashboardFor(WorkspaceManager::instance().activeId(),
+                                                       ProjectStore::instance().section("dashboard"));
+    } else {
+        WorkspaceManager::instance().fromJson(workspacesSection);
+    }
+
+    m_dashboardGrid->fromJson(WorkspaceManager::instance().dashboardFor(WorkspaceManager::instance().activeId()));
     m_dashboardGrid->undoStack()->clear();
     refreshPropertiesPanel();
     refreshLayersPanel();
+    refreshWorkspaceSwitcher();
     addRecentFile(path);
 }
 
@@ -804,7 +1044,7 @@ void MainWindow::updateRecentFilesMenu() {
     const QSettings settings;
     const QStringList files = settings.value(kRecentFilesSettingsKey).toStringList();
     if (files.isEmpty()) {
-        QAction* emptyAction = m_recentFilesMenu->addAction("(No Recent Projects)");
+        QAction* emptyAction = m_recentFilesMenu->addAction(tr("(No Recent Projects)"));
         emptyAction->setEnabled(false);
         return;
     }
@@ -816,7 +1056,7 @@ void MainWindow::updateRecentFilesMenu() {
     }
 
     m_recentFilesMenu->addSeparator();
-    connect(m_recentFilesMenu->addAction("Clear Recent Projects"), &QAction::triggered, this,
+    connect(m_recentFilesMenu->addAction(tr("Clear Recent Projects")), &QAction::triggered, this,
             &MainWindow::onClearRecentFiles);
 }
 
@@ -828,6 +1068,11 @@ void MainWindow::onClearRecentFiles() {
 
 void MainWindow::onAbout() {
     AboutDialog dialog(this);
+    dialog.exec();
+}
+
+void MainWindow::onDonate() {
+    DonateDialog dialog(this);
     dialog.exec();
 }
 
@@ -944,7 +1189,7 @@ void MainWindow::onFullscreenToggled(bool checked) {
         m_preFullscreenGeometry = frameGeometry();
         showFullScreen();
 #endif
-        m_fullscreenButton->setToolTip("Exit fullscreen (F11 / Esc)");
+        m_fullscreenButton->setToolTip(tr("Exit fullscreen (F11 / Esc)"));
         menuBar()->hide();
         m_ribbon->setTabBarVisible(false);
         SendMessageW(hwnd, WM_SETREDRAW, TRUE, 0);
@@ -954,7 +1199,7 @@ void MainWindow::onFullscreenToggled(bool checked) {
         return;
     }
 
-    m_fullscreenButton->setToolTip("Fullscreen dashboard (F11)");
+    m_fullscreenButton->setToolTip(tr("Fullscreen dashboard (F11)"));
     // Same reasoning as the entry path: brackets the frame/placement
     // restore below and the chrome show() calls further down so nothing
     // paints until the window is at its final size AND its chrome is back,

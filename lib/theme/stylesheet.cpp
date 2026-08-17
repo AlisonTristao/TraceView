@@ -84,6 +84,46 @@ QWidget[dashboardCell="true"] {
     background: transparent;
 }
 
+/* LayersPanel/PropertiesPanel float over the dashboard canvas (see
+   MainWindow's positionOverlayPanels()) rather than sharing its row via
+   layout. Both would otherwise inherit the same @background@ as the canvas
+   from the generic QWidget rule above, so any part of the panel not
+   covered by its own child widgets (e.g. the empty stretch next to the pin
+   button in its top bar) reads as the canvas showing through rather than
+   as part of the panel -- @surface@ (already used for the ribbon/status
+   bar's chrome, elsewhere in this file) plus a border on the canvas-facing
+   edge give the whole panel a fill and outline that's visibly its own. */
+QWidget#layersPanel {
+    background-color: @surface@;
+    border-right: 1px solid @border@;
+}
+QWidget#propertiesPanel {
+    background-color: @surface@;
+    border-left: 1px solid @border@;
+}
+
+/* DockablePanelHeader is the strip a panel gets dragged/docked by (see
+   dockablepanelheader.h) -- a plain bottom border on its own wouldn't read
+   against the panel's own @surface@ fill, so it gets the same @surfaceAlt@
+   tone already used for the ribbon/menu bar's chrome (see kRibbonTopMargin's
+   comment) to read as a distinct, grabbable bar rather than blending into
+   the rest of the panel. */
+QWidget#dockablePanelHeader {
+    background-color: @surfaceAlt@;
+    border-bottom: 1px solid @border@;
+}
+
+/* PanelDockController's resize grips (edge strip while docked, corner
+   square while floating, see dockresizegrip.h) are invisible until hovered
+   -- a permanent visible handle would be one more line competing with the
+   canvas/panel content for so little actual width. */
+QWidget#dockResizeGrip {
+    background-color: transparent;
+}
+QWidget#dockResizeGrip:hover {
+    background-color: @accent@;
+}
+
 QMainWindow::separator {
     background-color: @border@;
     width: 1px;
@@ -153,9 +193,15 @@ QToolButton:disabled {
    state through the icon itself (hollow vs. filled pushpin) -- the generic
    solid-accent checked background above would double up on that and just
    look like a stray blue box, so keep this one flat and let hover be the
-   only surface feedback. */
+   only surface feedback. Opaque @surface@ (matching the panels' own fill,
+   see "QWidget#layersPanel"/"QWidget#propertiesPanel" above) rather than
+   the generic QToolButton's transparent, though, so the button doesn't
+   stand out as a different-colored patch against its panel. */
+QToolButton#pinButton {
+    background-color: @surface@;
+}
 QToolButton#pinButton:checked {
-    background-color: transparent;
+    background-color: @surface@;
     color: @textPrimary@;
     border-color: transparent;
 }
@@ -217,7 +263,9 @@ QPushButton[variant="danger"] {
    matches the canvas behind it -- see dashboardcell paintEvent's rounded
    corner). Without a fill that actually contrasts with the canvas, their
    rounded cell border reads as a stray disconnected curve instead of a
-   panel once another widget sits nearby. */
+   panel once another widget sits nearby. DashboardWidget::setEditModeHint()
+   only turns this property on while arranging (Layout) -- in Run it's off,
+   so the control blends into the canvas with no background box behind it. */
 QWidget[dashboardControlPanel="true"] {
     background-color: @surface@;
 }

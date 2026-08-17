@@ -9,6 +9,7 @@
 
 class QAction;
 class QComboBox;
+class QEvent;
 class QLabel;
 class QMenu;
 class QPushButton;
@@ -21,9 +22,11 @@ class DashboardGrid;
 class DashboardWidget;
 class DebugChartsWindow;
 class LayersPanel;
+class PanelDockController;
 class PropertiesPanel;
 class Ribbon;
 class SerialManager;
+class WorkspaceSwitcher;
 
 class MainWindow : public QMainWindow {
     Q_OBJECT
@@ -36,11 +39,34 @@ public:
     // before Qt's own child-QObject teardown runs.
     ~MainWindow() override;
 
+protected:
+    // Watches m_contentRow for QEvent::Resize so m_layersPanel/
+    // m_propertiesPanel (floated over the canvas, not laid out beside it --
+    // see positionOverlayPanels()) get repositioned whenever it changes size.
+    bool eventFilter(QObject* watched, QEvent* event) override;
+
 private:
     void buildMenus();
     Ribbon* buildRibbon();
     void buildPropertiesPanel();
     void buildLayersPanel();
+    void buildWorkspaceSwitcher();
+    // Pushes WorkspaceManager's current workspace list/active id into
+    // m_workspaceSwitcher. Called after any mutation (switch/create/delete)
+    // and on project load/new/save.
+    void refreshWorkspaceSwitcher();
+    // Snapshots the outgoing workspace's dashboard, makes `id` active, and
+    // reloads DashboardGrid from it -- the same fromJson()/undo-clear/
+    // refresh sequence onNewProject()/openRecentFile() use. No-op if `id`
+    // is already active.
+    void switchToWorkspace(const QString& id);
+    void onWorkspaceSelected(const QString& id);
+    void onWorkspaceDeleteRequested(const QString& id);
+    void onNewWorkspaceRequested();
+    // Re-applies m_dockController's geometry to every docked panel. Called
+    // whenever m_contentRow resizes (see eventFilter) since the panels are
+    // positioned directly rather than managed by a layout.
+    void positionOverlayPanels();
     void updateRibbonIcons();
 
     void onRibbonTabChanged(int index);
@@ -78,14 +104,22 @@ private:
     void updateRecentFilesMenu();
     void onClearRecentFiles();
     void onAbout();
+    void onDonate();
     void onDebug();
     void onFullscreenToggled(bool checked);
 
     DashboardGrid* m_dashboardGrid = nullptr;
     PropertiesPanel* m_propertiesPanel = nullptr;
     LayersPanel* m_layersPanel = nullptr;
+    // Row below the ribbon that hosts the canvas; m_layersPanel/
+    // m_propertiesPanel are children of this (not of a layout) so they can
+    // float above m_dashboardGrid instead of sharing its row -- see
+    // positionOverlayPanels().
+    QWidget* m_contentRow = nullptr;
+    // Owns the panels' drag-to-dock/float behavior -- see paneldockcontroller.h.
+    PanelDockController* m_dockController = nullptr;
     Ribbon* m_ribbon = nullptr;
-    QAction* m_positionAction = nullptr;
+    WorkspaceSwitcher* m_workspaceSwitcher = nullptr;
     QAction* m_addWidgetAction = nullptr;
     QAction* m_removeAction = nullptr;
     QAction* m_copyAction = nullptr;
@@ -94,6 +128,8 @@ private:
     QAction* m_bringForwardAction = nullptr;
     QAction* m_sendBackwardAction = nullptr;
     QAction* m_sendToBackAction = nullptr;
+    QAction* m_groupAction = nullptr;
+    QAction* m_ungroupAction = nullptr;
     QAction* m_undoAction = nullptr;
     QAction* m_redoAction = nullptr;
     QMenu* m_recentFilesMenu = nullptr;

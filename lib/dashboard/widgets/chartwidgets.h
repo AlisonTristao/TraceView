@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QRect>
 #include <QtMath>
 
 #include "dashboard/dashboardwidget.h"
@@ -74,10 +75,24 @@ public:
 
 protected:
     void mouseMoveEvent(QMouseEvent* event) override;
+    void mousePressEvent(QMouseEvent* event) override;
     void leaveEvent(QEvent* event) override;
 
     ChartConfig m_config;
     QVector<TelemetrySeriesBuffer> m_seriesBuffers;  // one per m_config.series, same order
+    // Per-series "hidden via legend click" flag, same index as m_config.series
+    // -- toggled by mousePressEvent() below when a click lands inside
+    // m_legendHitRects, kept sized/aligned to m_config.series by setConfig()
+    // (new series default to visible). Read by DummyLineChartWidget::
+    // paintEvent()/DummyBarChartWidget::paintEvent() to skip a hidden series'
+    // line/bar and to gray out its legend row.
+    QVector<bool> m_seriesHidden;
+    // Clickable rect per series from the legend actually painted last frame
+    // (paintSeriesLegends()'s outHitRects param, same index as m_seriesHidden)
+    // -- mousePressEvent() hit-tests against these instead of recomputing the
+    // legend layout itself, so the click target can never drift from what's
+    // actually drawn.
+    QVector<QRect> m_legendHitRects;
     // Read directly by DummyLineChartWidget::paintEvent()/DummyBarChartWidget::
     // paintEvent() to pass through to paintSeriesLegends().
     bool m_showLastValueRow = true;

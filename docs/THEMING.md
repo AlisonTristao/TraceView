@@ -43,9 +43,43 @@ yet (in which case, add that rule as a token-driven line in
 - **Dark** (default) — near-black navy background (`#0A0F1E`), white text and
   borders, blue accent (`#3D8BFF`).
 - **Light** — white background, dark navy text/borders, matching blue accent.
+- **Wood** — dark walnut background (`#2B1D14`), cream text, amber/copper
+  accent (`#C97A3D`).
+- **Black** — pure-black background (`#000000`), white text, neutral
+  grayscale accent (no blue undertone, unlike Dark).
+- **Matrix** — black background, phosphor-green text and accent (`#00FF41`);
+  warning/danger break from green so alerts still stand out.
+- **Synthwave** — deep purple background, neon pink accent (`#FF2E9A`) with
+  cyan as the series companion color.
+- **Amber** — black background, monochrome amber phosphor (`#FFB000`), the
+  other classic CRT color alongside Matrix's green.
+- **Arctic** — cool blue-gray background (Nord-inspired), frost-cyan accent
+  (`#88C0D0`).
+- **Sakura** — soft pink background, deep maroon text, pink accent
+  (`#E85D8A`).
 
 Switch templates from the running app via **View → Theme**; the choice is
 persisted (`QSettings`, key `appearance/theme`) across restarts.
+
+## Fonts
+
+Font family is a separate, orthogonal choice from the color theme above --
+`FontManager` ([include/traceview/fontmanager.h](../include/traceview/fontmanager.h),
+[lib/theme/fontmanager.cpp](../lib/theme/fontmanager.cpp)) applies a `QFont`
+to `QApplication` directly instead of going through `ThemePalette`/the QSS, so
+any font pairs with any theme rather than being bundled per-template. Only
+the family changes; size/weight stay whatever Qt picked as the platform
+default (same "default typography everywhere" decision as the rest of the
+app -- see `TODO_VISUAL_IDENTITY.txt` TAREFA 0).
+
+Current options: **System Default** (leaves the platform's own font alone),
+**Consolas**, **Georgia**, **Verdana**. Adding another one is
+`registerFont(...)` in `FontManager`'s constructor -- no other code changes,
+same shape as adding a theme above. If the named family isn't installed, Qt
+silently substitutes its closest match rather than failing.
+
+Switch fonts from the running app via **View → Font**; the choice is
+persisted (`QSettings`, key `appearance/font`) across restarts.
 
 ## Icon
 

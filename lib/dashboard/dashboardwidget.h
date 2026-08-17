@@ -50,6 +50,16 @@ public:
         return property("dashboardControlPanel").toBool() ? palette.surface : palette.background;
     }
 
+    // Called by DashboardCell::setEditMode() on every edit/run transition, so
+    // widgets whose look depends on which mode is active can react. Default
+    // no-op -- only the headerless controls (widgets/controlwidgets.cpp)
+    // override this today: they show a contrasting surface panel while
+    // arranging (Layout), so the rounded cell corner reads as a panel and
+    // not a stray disconnected curve, but drop that fill in Run so only the
+    // control itself (button/switch/slider) is visible, with no background
+    // box behind it.
+    virtual void setEditModeHint(bool editMode) { Q_UNUSED(editMode); }
+
     // Called by DashboardGrid with this item's DashboardItem::config: once
     // right after construction (fresh insert, load from disk, or a type
     // change), and again every time the user edits it in the

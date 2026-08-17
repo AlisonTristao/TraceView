@@ -1,11 +1,13 @@
 #pragma once
 
 #include <QJsonObject>
+#include <QMap>
 #include <QPointF>
 #include <QRectF>
 #include <QSizeF>
 #include <QString>
 #include <QUndoCommand>
+#include <QVector>
 
 #include "dashboarditem.h"
 
@@ -43,19 +45,40 @@ private:
     DashboardItem m_item;
 };
 
-class MoveWidgetCommand : public QUndoCommand {
+// Removes several items (a multi-selection) as one undo step. Deliberately
+// not built out of N RemoveWidgetCommand pushes wrapped in a QUndoStack
+// macro: RemoveWidgetCommand::undo() unconditionally re-selects just the one
+// item it restores, so undoing a macro of several would leave only the
+// last-undone (first-pushed) item selected instead of the whole original
+// multi-selection. This command instead reinserts every item in one redo/
+// undo call and selects the whole restored set exactly once.
+class RemoveWidgetsCommand : public QUndoCommand {
 public:
-    MoveWidgetCommand(DashboardGrid* grid, const QString& itemId, const QPointF& fromPosition,
-                       const QPointF& toPosition);
+    RemoveWidgetsCommand(DashboardGrid* grid, const QVector<DashboardItem>& items);
 
     void undo() override;
     void redo() override;
 
 private:
     DashboardGrid* m_grid;
-    QString m_itemId;
-    QPointF m_fromPosition;
-    QPointF m_toPosition;
+    QVector<DashboardItem> m_items;
+};
+
+// Moves one or more items together as one undo step -- a normal single-item
+// drag just produces a 1-entry map, so this also replaces what used to be a
+// dedicated single-item MoveWidgetCommand.
+class MoveWidgetsCommand : public QUndoCommand {
+public:
+    MoveWidgetsCommand(DashboardGrid* grid, const QMap<QString, QPointF>& fromPositions,
+                        const QMap<QString, QPointF>& toPositions);
+
+    void undo() override;
+    void redo() override;
+
+private:
+    DashboardGrid* m_grid;
+    QMap<QString, QPointF> m_fromPositions;
+    QMap<QString, QPointF> m_toPositions;
 };
 
 class ResizeWidgetCommand : public QUndoCommand {
@@ -151,6 +174,38 @@ private:
     QString m_itemId;
     int m_fromIndex;
     int m_toIndex;
+};
+
+// Welds the given items' relative positions together (see
+// DashboardGrid::groupSelected()). previousGroupIds stores each item's prior
+// groupId individually (not just "ungrouped") so undo correctly restores
+// items that were re-grouped out of different existing groups.
+class GroupItemsCommand : public QUndoCommand {
+public:
+    GroupItemsCommand(DashboardGrid* grid, const QMap<QString, QString>& previousGroupIds,
+                       const QString& newGroupId);
+
+    void undo() override;
+    void redo() override;
+
+private:
+    DashboardGrid* m_grid;
+    QMap<QString, QString> m_previousGroupIds;
+    QString m_newGroupId;
+};
+
+// Clears the given items' group membership (see
+// DashboardGrid::ungroupSelected()); previousGroupIds restores each on undo.
+class UngroupItemsCommand : public QUndoCommand {
+public:
+    UngroupItemsCommand(DashboardGrid* grid, const QMap<QString, QString>& previousGroupIds);
+
+    void undo() override;
+    void redo() override;
+
+private:
+    DashboardGrid* m_grid;
+    QMap<QString, QString> m_previousGroupIds;
 };
 
 } // namespace traceview

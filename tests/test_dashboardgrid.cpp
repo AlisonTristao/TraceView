@@ -58,6 +58,10 @@ private slots:
     void squareCornerPatchesDoNotCreateHoles();
     void zOrderActionsReorderStackAndAreUndoable();
     void selectionDoesNotChangePersistedZOrder();
+    void ctrlClickTogglesSelectionAndWholeGroupAsUnit();
+    void rubberBandSelectsAndDragsMultipleItemsRigidly();
+    void groupAndUngroupAreUndoable();
+    void removeSelectedRemovesWholeMultiSelectionWithUndo();
 };
 
 void TestDashboardGrid::addItemPushesUndoableCommand() {
@@ -207,7 +211,7 @@ void TestDashboardGrid::dragMovesAndSnapsToNearestGridCell() {
     QCOMPARE(item.value("x").toDouble(), 3.0 / 60.0); // 27px snapped to 3 columns
     QCOMPARE(item.value("y").toDouble(), 2.0 / 40.0);  // 13px snapped to 2 rows
 
-    QCOMPARE(grid.undoStack()->count(), 2); // AddWidgetCommand + MoveWidgetCommand
+    QCOMPARE(grid.undoStack()->count(), 2); // AddWidgetCommand + MoveWidgetsCommand
     grid.undoStack()->undo();
     item = grid.toJson().value("items").toArray().first().toObject();
     QCOMPARE(item.value("x").toDouble(), 0.0);
@@ -441,6 +445,201 @@ void TestDashboardGrid::selectionDoesNotChangePersistedZOrder() {
 
     grid.selectItem(idB);
     QCOMPARE(layerIds(grid), before);
+}
+
+void TestDashboardGrid::ctrlClickTogglesSelectionAndWholeGroupAsUnit() {
+    DashboardGrid grid;
+    grid.resize(496, 336);
+    grid.setEditMode(true);
+    grid.show();
+    QVERIFY(QTest::qWaitForWindowExposed(&grid));
+
+    grid.addItem("dummy_line");
+    const QString idA = grid.selectedItemId();
+    grid.addItem("dummy_bar"); // auto-selected after addItem()
+    const QString idB = grid.selectedItemId();
+
+    DashboardCell* cellA = nullptr;
+    DashboardCell* cellB = nullptr;
+    for (DashboardCell* cell : grid.findChildren<DashboardCell*>()) {
+        if (cell->itemId() == idA) cellA = cell;
+        if (cell->itemId() == idB) cellB = cell;
+    }
+    QVERIFY(cellA && cellB);
+    const QPoint headerPoint(10, 10);
+
+    // idB is selected; Ctrl-clicking unselected idA adds it to the selection.
+    QTest::mouseClick(cellA, Qt::LeftButton, Qt::ControlModifier, headerPoint);
+    QCOMPARE(grid.selectedCount(), 2);
+    QVERIFY(grid.selectedItemIds().contains(idA));
+    QVERIFY(grid.selectedItemIds().contains(idB));
+
+    // Ctrl-clicking the now-selected idA again removes just it.
+    QTest::mouseClick(cellA, Qt::LeftButton, Qt::ControlModifier, headerPoint);
+    QCOMPARE(grid.selectedCount(), 1);
+    QVERIFY(grid.selectedItemIds().contains(idB));
+
+    // Reselect both, group them, then confirm a group always acts as one unit.
+    QTest::mouseClick(cellA, Qt::LeftButton, Qt::ControlModifier, headerPoint);
+    QCOMPARE(grid.selectedCount(), 2);
+    grid.groupSelected();
+
+    grid.selectItem(QString());
+    QCOMPARE(grid.selectedCount(), 0);
+    grid.selectItem(idA); // clicking one grouped member selects the whole group
+    QCOMPARE(grid.selectedCount(), 2);
+
+    // Ctrl-clicking idB (already selected, as part of the group) must toggle
+    // the WHOLE group off, not just idB.
+    QTest::mouseClick(cellB, Qt::LeftButton, Qt::ControlModifier, headerPoint);
+    QCOMPARE(grid.selectedCount(), 0);
+}
+
+void TestDashboardGrid::rubberBandSelectsAndDragsMultipleItemsRigidly() {
+    DashboardGrid grid;
+    // Same 8px-per-cell setup as dragMovesAndSnapsToNearestGridCell above.
+    grid.resize(496, 336);
+    grid.setEditMode(true);
+    grid.show();
+    QVERIFY(QTest::qWaitForWindowExposed(&grid));
+
+    grid.addItem("dummy_line"); // auto-placed at (0,0)
+    const QString idA = grid.selectedItemId();
+    grid.addItem("dummy_bar"); // auto-placed next to idA, at (16/60, 0)
+    const QString idB = grid.selectedItemId();
+    grid.selectItem(QString());
+    QCOMPARE(grid.selectedCount(), 0);
+
+    // A rubber-band drag over empty canvas that encloses both items' slots.
+    // Coordinates are delivered straight to the grid widget (bypassing real
+    // child hit-testing, same as every other QTest::mousePress in this file
+    // that targets a widget directly), so they don't need to dodge the cells.
+    QTest::mousePress(&grid, Qt::LeftButton, Qt::NoModifier, QPoint(0, 130));
+    QTest::mouseMove(&grid, QPoint(300, 0));
+    QTest::mouseRelease(&grid, Qt::LeftButton, Qt::NoModifier, QPoint(300, 0));
+
+    QCOMPARE(grid.selectedCount(), 2);
+    QVERIFY(grid.selectedItemIds().contains(idA));
+    QVERIFY(grid.selectedItemIds().contains(idB));
+
+    DashboardCell* cellA = nullptr;
+    for (DashboardCell* cell : grid.findChildren<DashboardCell*>()) {
+        if (cell->itemId() == idA) {
+            cellA = cell;
+            break;
+        }
+    }
+    QVERIFY(cellA);
+
+    QJsonObject beforeA, beforeB;
+    for (const QJsonValue& v : grid.toJson().value("items").toArray()) {
+        const QJsonObject o = v.toObject();
+        if (o.value("id").toString() == idA) beforeA = o;
+        if (o.value("id").toString() == idB) beforeB = o;
+    }
+
+    const int commandCountBeforeDrag = grid.undoStack()->count();
+
+    // Drag the already-selected pair together via cellA's header.
+    const QPoint headerPoint(10, 10);
+    const QPoint dragged = headerPoint + QPoint(0, 40);
+    QTest::mousePress(cellA, Qt::LeftButton, Qt::NoModifier, headerPoint);
+    QTest::mouseMove(cellA, dragged);
+    QTest::mouseRelease(cellA, Qt::LeftButton, Qt::NoModifier, dragged);
+
+    // One MoveWidgetsCommand covers the whole drag, not one per item.
+    QCOMPARE(grid.undoStack()->count(), commandCountBeforeDrag + 1);
+
+    QJsonObject afterA, afterB;
+    for (const QJsonValue& v : grid.toJson().value("items").toArray()) {
+        const QJsonObject o = v.toObject();
+        if (o.value("id").toString() == idA) afterA = o;
+        if (o.value("id").toString() == idB) afterB = o;
+    }
+
+    QVERIFY(afterA.value("y").toDouble() > beforeA.value("y").toDouble());
+    // Rigid: both items moved by exactly the same offset.
+    QCOMPARE(afterA.value("y").toDouble() - beforeA.value("y").toDouble(),
+             afterB.value("y").toDouble() - beforeB.value("y").toDouble());
+    QCOMPARE(afterA.value("x").toDouble(), beforeA.value("x").toDouble());
+    QCOMPARE(afterB.value("x").toDouble(), beforeB.value("x").toDouble());
+
+    grid.undoStack()->undo();
+    for (const QJsonValue& v : grid.toJson().value("items").toArray()) {
+        const QJsonObject o = v.toObject();
+        if (o.value("id").toString() == idA) QCOMPARE(o, beforeA);
+        if (o.value("id").toString() == idB) QCOMPARE(o, beforeB);
+    }
+}
+
+void TestDashboardGrid::groupAndUngroupAreUndoable() {
+    DashboardGrid grid;
+    grid.addItem("dummy_line");
+    const QString idA = grid.selectedItemId();
+    grid.addItem("dummy_bar");
+    const QString idB = grid.selectedItemId();
+    grid.selectItems({idA, idB}, /*add=*/false);
+    QCOMPARE(grid.selectedCount(), 2);
+    grid.undoStack()->clear(); // isolate group/ungroup from the 2 AddWidgetCommands above
+
+    QVERIFY(!grid.selectionHasGroup());
+    grid.groupSelected();
+    QVERIFY(grid.selectionHasGroup());
+    QCOMPARE(grid.undoStack()->count(), 1);
+
+    // Selecting just one member now selects the whole group.
+    grid.selectItem(QString());
+    grid.selectItem(idA);
+    QCOMPARE(grid.selectedCount(), 2);
+    QVERIFY(grid.selectedItemIds().contains(idB));
+
+    grid.undoStack()->undo();
+    grid.selectItem(idA);
+    QCOMPARE(grid.selectedCount(), 1); // no longer grouped
+
+    grid.undoStack()->redo();
+    grid.selectItem(idA);
+    QCOMPARE(grid.selectedCount(), 2);
+
+    grid.ungroupSelected();
+    QVERIFY(!grid.selectionHasGroup());
+    QCOMPARE(grid.undoStack()->count(), 2);
+    grid.selectItem(QString());
+    grid.selectItem(idA);
+    QCOMPARE(grid.selectedCount(), 1);
+
+    grid.undoStack()->undo(); // undoes the ungroup -- group restored
+    grid.selectItem(idA);
+    QCOMPARE(grid.selectedCount(), 2);
+    QVERIFY(grid.selectionHasGroup());
+}
+
+void TestDashboardGrid::removeSelectedRemovesWholeMultiSelectionWithUndo() {
+    DashboardGrid grid;
+    grid.addItem("dummy_line");
+    const QString idA = grid.selectedItemId();
+    grid.addItem("dummy_bar");
+    const QString idB = grid.selectedItemId();
+    grid.addItem("dummy_gauge");
+    const QString idC = grid.selectedItemId();
+    grid.selectItems({idA, idB}, /*add=*/false);
+    QCOMPARE(grid.selectedCount(), 2);
+    grid.undoStack()->clear(); // isolate the remove from the 3 AddWidgetCommands above
+
+    grid.removeSelected();
+    QCOMPARE(grid.undoStack()->count(), 1); // one RemoveWidgetsCommand for both, not two
+    QCOMPARE(grid.toJson().value("items").toArray().size(), 1); // only idC remains
+    QCOMPARE(grid.toJson().value("items").toArray().first().toObject().value("id").toString(), idC);
+
+    grid.undoStack()->undo();
+    QCOMPARE(grid.toJson().value("items").toArray().size(), 3);
+    // Undo restores the whole removed multi-selection, not just one of them.
+    QCOMPARE(grid.selectedCount(), 2);
+    QVERIFY(grid.selectedItemIds().contains(idA));
+    QVERIFY(grid.selectedItemIds().contains(idB));
+
+    grid.undoStack()->redo();
+    QCOMPARE(grid.toJson().value("items").toArray().size(), 1);
 }
 
 } // namespace

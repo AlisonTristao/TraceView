@@ -252,6 +252,7 @@ void DashboardCell::setEditMode(bool enabled) {
     // grip land on the content widget instead of us, so drag/resize misses
     // the mouse press (and hover cursor feedback) entirely.
     m_content->setAttribute(Qt::WA_TransparentForMouseEvents, enabled);
+    m_content->setEditModeHint(enabled);
     if (!enabled) {
         m_selected = false;
         m_selectionAnim.setDirection(QAbstractAnimation::Backward);
@@ -288,6 +289,14 @@ void DashboardCell::setDragInvalid(bool invalid) {
     m_dragInvalid = invalid;
     m_borderOverlay->setProperty("dragInvalid", invalid);
     m_borderOverlay->update();
+}
+
+void DashboardCell::setResizable(bool resizable) {
+    if (m_resizable == resizable) {
+        return;
+    }
+    m_resizable = resizable;
+    update();
 }
 
 int DashboardCell::headerHeight() const {
@@ -374,6 +383,9 @@ void DashboardCell::showSettingsMenu() {
 }
 
 DashboardCell::ResizeHandle DashboardCell::handleAt(const QPoint& pos) const {
+    if (!m_resizable) {
+        return ResizeHandle::None;
+    }
     const bool nearLeft = pos.x() <= kGripSize;
     const bool nearRight = pos.x() >= width() - kGripSize;
     const bool nearTop = pos.y() <= kGripSize;
@@ -504,9 +516,10 @@ void DashboardCell::paintEvent(QPaintEvent*) {
         painter.drawText(textRect, Qt::AlignVCenter | Qt::AlignLeft, elidedTitle);
     }
 
-    if (!m_editMode || !m_selected) {
-        // The grip is edit-only: nothing to resize outside Layout, and
-        // unselected cells are identifiable but not interactive.
+    if (!m_editMode || !m_selected || !m_resizable) {
+        // The grip is edit-only: nothing to resize outside Layout, unselected
+        // cells are identifiable but not interactive, and a multi-selection/
+        // group can be moved but not resized (see setResizable()).
         return;
     }
 
@@ -557,8 +570,18 @@ void DashboardCell::mousePressEvent(QMouseEvent* event) {
         return;
     }
 
+    // Ctrl-click always just toggles this cell's selection membership (or
+    // its whole group's, see DashboardGrid::toggleItemSelection()) --
+    // whether or not it's already selected -- and never starts a drag/
+    // resize, unlike a plain click below.
+    if (event->modifiers().testFlag(Qt::ControlModifier)) {
+        emit selectRequested(m_itemId, event->modifiers());
+        event->accept();
+        return;
+    }
+
     if (!m_selected) {
-        emit selectRequested(m_itemId);
+        emit selectRequested(m_itemId, event->modifiers());
         event->accept();
         return;
     }

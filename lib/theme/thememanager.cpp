@@ -21,6 +21,13 @@ ThemeManager& ThemeManager::instance() {
 ThemeManager::ThemeManager() {
     registerTheme(makeDarkPalette());
     registerTheme(makeLightPalette());
+    registerTheme(makeWoodPalette());
+    registerTheme(makeBlackPalette());
+    registerTheme(makeMatrixPalette());
+    registerTheme(makeSynthwavePalette());
+    registerTheme(makeAmberPalette());
+    registerTheme(makeArcticPalette());
+    registerTheme(makeSakuraPalette());
 
     const QSettings settings;
     const QString savedId = settings.value(kSettingsKey, kDefaultThemeId).toString();
