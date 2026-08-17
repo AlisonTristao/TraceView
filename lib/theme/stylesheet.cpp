@@ -217,7 +217,9 @@ QPushButton[variant="danger"] {
    matches the canvas behind it -- see dashboardcell paintEvent's rounded
    corner). Without a fill that actually contrasts with the canvas, their
    rounded cell border reads as a stray disconnected curve instead of a
-   panel once another widget sits nearby. */
+   panel once another widget sits nearby. DashboardWidget::setEditModeHint()
+   only turns this property on while arranging (Layout) -- in Run it's off,
+   so the control blends into the canvas with no background box behind it. */
 QWidget[dashboardControlPanel="true"] {
     background-color: @surface@;
 }

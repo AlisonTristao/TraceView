@@ -62,6 +62,14 @@ constexpr double kMinHeaderlessItemWidth = 2.0 / kGridColumns;
 constexpr double kMinHeaderlessItemHeight = 2.0 / kGridRows;
 constexpr double kDefaultItemWidth = 16.0 / kGridColumns;
 constexpr double kDefaultItemHeight = 12.0 / kGridRows;
+// Smaller starting footprint for the same header-less control kinds
+// referenced above (push button/toggle/slider) -- the default sized for a
+// chart/gauge/serial monitor above reads as oversized for a single small
+// control. Roughly double kMinHeaderlessItemWidth/Height, half of
+// kDefaultItemWidth/Height -- big enough to comfortably show the control,
+// small enough not to dominate the canvas the way the chart default does.
+constexpr double kDefaultHeaderlessItemWidth = 8.0 / kGridColumns;
+constexpr double kDefaultHeaderlessItemHeight = 6.0 / kGridRows;
 // Tolerance for fraction comparisons (bounds/overlap checks), to absorb
 // floating-point rounding from snapping math without treating touching
 // edges as overlapping.
@@ -152,8 +160,19 @@ QJsonObject DashboardGrid::selectedItemConfig() const {
 }
 
 void DashboardGrid::addItem(const QString& typeId) {
-    const double width = kDefaultItemWidth;
-    const double height = kDefaultItemHeight;
+    // wantsCellHeader() is only known once an instance exists, so a
+    // throwaway probe (same WidgetRegistry::create() createCell() below
+    // will use for real) decides which default footprint applies -- keeps
+    // "which kinds are compact" defined in exactly one place (DashboardWidget::
+    // wantsCellHeader()) instead of a second typeId list here that could
+    // drift out of sync with widgets/controlwidgets.h.
+    bool headerless = false;
+    if (DashboardWidget* probe = WidgetRegistry::instance().create(typeId, nullptr)) {
+        headerless = !probe->wantsCellHeader();
+        delete probe;
+    }
+    const double width = headerless ? kDefaultHeaderlessItemWidth : kDefaultItemWidth;
+    const double height = headerless ? kDefaultHeaderlessItemHeight : kDefaultItemHeight;
 
     double x = 0.0;
     double y = 0.0;

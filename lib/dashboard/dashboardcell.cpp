@@ -252,6 +252,7 @@ void DashboardCell::setEditMode(bool enabled) {
     // grip land on the content widget instead of us, so drag/resize misses
     // the mouse press (and hover cursor feedback) entirely.
     m_content->setAttribute(Qt::WA_TransparentForMouseEvents, enabled);
+    m_content->setEditModeHint(enabled);
     if (!enabled) {
         m_selected = false;
         m_selectionAnim.setDirection(QAbstractAnimation::Backward);

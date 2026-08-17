@@ -16,6 +16,10 @@ namespace traceview {
 enum class PushButtonMode { Momentary, Pulse };
 
 struct PushButtonCommandConfig {
+    // Shown as the button's own text (there's no room for a separate title
+    // on a control this small) -- PushButtonWidget falls back to a generic
+    // default when this is empty, same as before this field was wired up.
+    QString label;
     PushButtonMode mode = PushButtonMode::Momentary;
     QString onPress;
     QString onRelease;
@@ -32,6 +36,12 @@ struct PushButtonCommandConfig {
 PushButtonCommandConfig parsePushButtonCommandConfig(const QJsonObject& json);
 
 struct ToggleCommandConfig {
+    // Shown above the switch, centered (the switch itself has no room for
+    // text) -- hidden entirely when empty rather than reserving blank
+    // space. Unlike PushButtonWidget's label, there's no generic fallback
+    // here -- an unlabeled switch is a normal, common state, not a
+    // misconfiguration.
+    QString label;
     QString onCommand;
     QString offCommand;
     bool defaultState = false;
@@ -44,6 +54,9 @@ ToggleCommandConfig parseToggleCommandConfig(const QJsonObject& json);
 enum class SliderSendMode { Continuous, OnRelease };
 
 struct SliderCommandConfig {
+    // Shown above the slider, centered -- same "hidden when empty, no
+    // generic fallback" reasoning as ToggleCommandConfig::label above.
+    QString label;
     double min = 0.0;
     double max = 100.0;
     double step = 1.0;

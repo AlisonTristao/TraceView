@@ -6,6 +6,7 @@ namespace traceview {
 
 PushButtonCommandConfig parsePushButtonCommandConfig(const QJsonObject& json) {
     PushButtonCommandConfig config;
+    config.label = json.value("label").toString();
     config.mode = json.value("mode").toString("momentary") == "pulse" ? PushButtonMode::Pulse
                                                                         : PushButtonMode::Momentary;
     config.onPress = json.value("onPress").toString();
@@ -24,6 +25,7 @@ PushButtonCommandConfig parsePushButtonCommandConfig(const QJsonObject& json) {
 
 ToggleCommandConfig parseToggleCommandConfig(const QJsonObject& json) {
     ToggleCommandConfig config;
+    config.label = json.value("label").toString();
     config.onCommand = json.value("onCommand").toString();
     config.offCommand = json.value("offCommand").toString();
     config.defaultState = json.value("defaultState").toBool(false);
@@ -32,6 +34,7 @@ ToggleCommandConfig parseToggleCommandConfig(const QJsonObject& json) {
 
 SliderCommandConfig parseSliderCommandConfig(const QJsonObject& json) {
     SliderCommandConfig config;
+    config.label = json.value("label").toString();
     config.min = json.value("min").toDouble(0.0);
     config.max = json.value("max").toDouble(100.0);
     config.step = json.value("step").toDouble(1.0);
