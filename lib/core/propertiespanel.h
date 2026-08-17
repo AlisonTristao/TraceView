@@ -12,6 +12,7 @@ class QComboBox;
 class QFrame;
 class QLineEdit;
 class QScrollArea;
+class QToolButton;
 class QVBoxLayout;
 
 namespace traceview {
@@ -37,7 +38,11 @@ inline constexpr int kPropertiesPanelWidth = 380;
 // Dumb like Ribbon — MainWindow feeds it state via
 // setAvailableTypes()/setSelection() and reacts to the *ChangeRequested
 // signals by calling into DashboardGrid; this widget never touches
-// DashboardGrid directly.
+// DashboardGrid directly. The one exception is the pin toggle in the top-right
+// corner: that's a pure UI preference (whether this panel should stay open
+// with nothing selected), so the panel owns it directly and just tells
+// MainWindow when it changes via pinnedChanged(), for MainWindow to fold into
+// its visibility decision alongside selection state.
 class PropertiesPanel : public QWidget {
     Q_OBJECT
 
@@ -53,17 +58,24 @@ public:
     void setSelection(bool hasSelection, const QString& typeId, const QString& name, const QString& key,
                        const QJsonObject& config);
 
+    // Whether the pin toggle is engaged -- MainWindow keeps the panel visible
+    // even with no selection while this is true.
+    bool isPinned() const { return m_pinned; }
+
 signals:
     void typeChangeRequested(const QString& typeId);
     void nameChangeRequested(const QString& name);
     void keyChangeRequested(const QString& key);
     void configChangeRequested(const QJsonObject& config);
+    void pinnedChanged(bool pinned);
 
 private:
     void onTypeActivated(int index);
     void onNameEditingFinished();
     void onKeyEditingFinished();
     void onConfigEditorChanged();
+    void onPinToggled(bool checked);
+    void updatePinIcon();
 
     // Swaps m_configEditor for whatever `typeId` registers (or none), if it
     // isn't already showing that type's editor. Called with an empty
@@ -77,6 +89,13 @@ private:
     QString m_currentName;
     QString m_currentKey;
     QJsonObject m_currentConfig;
+
+    bool m_pinned = false;
+    QToolButton* m_pinButton = nullptr;
+    // Everything setSelection() enables/disables based on hasSelection --
+    // kept separate from `this` so the pin button above it (see the top bar
+    // built in the constructor) stays clickable even with no selection.
+    QWidget* m_content = nullptr;
 
     QComboBox* m_typeCombo = nullptr;
     QLineEdit* m_nameEdit = nullptr;

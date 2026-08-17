@@ -32,6 +32,36 @@ enum class ChartXAxisMode { Samples, Time };
 enum class ChartYAxisMode { Auto, Fixed };
 enum class ChartSeriesStyle { Solid, Dashed, Dotted, DashDot, Cross, Asterisk };
 
+// How a line chart reconstructs a continuous shape between buffered samples
+// -- a chart-wide setting (unlike ChartSeriesStyle's per-series color/dash),
+// picked from the header gear menu's interpolation select box rather than
+// stored in ChartConfig, so it lives as plain ChartWidgetBase state
+// (chartwidgets.h) rather than a field here. Declared here anyway, alongside
+// the chart enums it's a sibling of, with its own id-string mapping below
+// (chartLineInterpolationId()/FromId()) for the same reason ChartSeriesStyle
+// round-trips through "solid"/"dashed"/etc: DashboardWidget's generic gear-menu
+// interface (dashboardwidget.h) exposes the current mode as a QString id
+// rather than this enum type, so that base class stays free of any one
+// widget kind's types.
+//   Linear         -- straight line between consecutive samples (the
+//                      original, still-default behavior).
+//   ZeroOrderHold   -- step/staircase: holds each sample's value flat until
+//                      the next one arrives, then jumps -- how a DAC would
+//                      actually replay a sampled signal.
+//   Stem            -- a vertical "lollipop" from the zero baseline up to
+//                      each sample, no connecting line between samples.
+//   None            -- a small dot per sample, no connecting line and no
+//                      baseline stem either.
+enum class ChartLineInterpolation { Linear, ZeroOrderHold, Stem, None };
+
+// Round-trips ChartLineInterpolation through the "linear"/"zoh"/"stem"/"none"
+// id strings DashboardWidget::lineInterpolation()/setLineInterpolation() (and
+// the gear menu's combo box, dashboardcell.cpp) traffic in. FromId() falls
+// back to Linear for any unrecognized id, same as seriesStyleFromId() falling
+// back to Solid.
+QString chartLineInterpolationId(ChartLineInterpolation mode);
+ChartLineInterpolation chartLineInterpolationFromId(const QString& id);
+
 struct ChartSeriesConfig {
     QString name;
     quint16 fieldId = 0;  // binds to a TelemetryFieldSchema::fieldId within
@@ -86,22 +116,38 @@ QVector<TelemetrySeriesBuffer> resizeChartBuffers(const QVector<TelemetrySeriesB
 void appendFieldSample(QVector<TelemetrySeriesBuffer>& buffers, const ChartConfig& config, quint16 fieldId,
                         quint64 timestampUs, double value);
 
+// One ring of a (possibly multi-ring) gauge: which field it tracks and the
+// color its track/pointer are painted in. Mirrors ChartSeriesConfig's shape
+// minus `style` -- an arc has nothing analogous to a line dash pattern.
+struct GaugeSeriesConfig {
+    QString name;
+    quint16 fieldId = 0;  // binds to a TelemetryFieldSchema::fieldId within
+                          // (sourceId, topicId) below.
+    QColor color = QColor("#3B82F6");
+};
+
 // Mirrors GaugeConfigEditor::config()/setConfig() (widgets/gaugeconfigeditor.h)
-// -- the single-field subset of ChartConfig: which field this gauge
-// displays, plus the fixed range/unit/decimals used to scale and label it.
-// No history/axis settings, since a gauge only ever shows the current value.
+// -- the single-topic subset of ChartConfig: which BTP source/topic this
+// gauge reads from, plus the fixed range/unit/decimals shared by every ring
+// (so concentric rings stay on one comparable scale) and, per ring, which
+// field it displays and what color it's painted in. No history/axis
+// settings, since a gauge only ever shows each field's current value.
 struct GaugeConfig {
     quint32 sourceId = 0;
     quint16 topicId = 0;
-    quint16 fieldId = 0;
     double min = 0.0;
     double max = 100.0;
     QString unit;
     int decimals = 0;
+    QVector<GaugeSeriesConfig> series;
 };
 
 // Parses a GaugeConfigEditor JSON config; missing fields fall back to the
-// same defaults GaugeConfigEditor::setConfig() uses.
+// same defaults GaugeConfigEditor::setConfig() uses. A JSON object with no
+// "series" array but a legacy top-level "fieldId" (saved before gauges
+// supported more than one ring) is migrated in-memory to a single series --
+// old saved dashboards keep loading as a one-ring gauge without a save-file
+// upgrade step.
 GaugeConfig parseGaugeConfig(const QJsonObject& json);
 
 }  // namespace traceview

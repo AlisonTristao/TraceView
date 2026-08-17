@@ -9,7 +9,6 @@
 #include <QGridLayout>
 #include <QJsonArray>
 #include <QJsonObject>
-#include <QRandomGenerator>
 #include <QTimer>
 #include <QWidget>
 #include <QtMath>
@@ -25,6 +24,8 @@ constexpr quint16 kLineTopicId = 0x0001;
 constexpr quint16 kBarTopicId = 0x0002;
 constexpr quint16 kGaugeTopicId = 0x0001;
 constexpr quint16 kGaugeFieldId = 2;  // "value" of protocol.test, see TELEMETRY.md 9.4
+constexpr quint16 kGaugeFieldId2 = 3;
+constexpr quint16 kGaugeFieldId3 = 4;
 
 QJsonObject seriesJson(const QString& name, int fieldId, const QString& color, const QString& style) {
     QJsonObject series;
@@ -82,19 +83,30 @@ QJsonObject barChartConfig() {
     QJsonArray series;
     series.append(seriesJson("A", 1, "#A855F7", "solid"));
     series.append(seriesJson("B", 2, "#EAB308", "solid"));
+    series.append(seriesJson("C", 3, "#EC4899", "solid"));
+    series.append(seriesJson("D", 4, "#06B6D4", "solid"));
+    series.append(seriesJson("E", 5, "#10B981", "solid"));
     config["series"] = series;
     return config;
 }
 
+// Three concentric rings -- exercises DummyGaugeWidget's multi-series
+// rendering (nested arcs, per-ring ruler ticks/pointer, legend) instead of
+// just the single-ring case.
 QJsonObject gaugeConfig() {
     QJsonObject config;
     config["sourceId"] = QString::number(kSourceId);
     config["topicId"] = QString::number(kGaugeTopicId);
-    config["fieldId"] = kGaugeFieldId;
     config["min"] = 0.0;
     config["max"] = 100.0;
     config["unit"] = "%";
     config["decimals"] = 1;
+
+    QJsonArray series;
+    series.append(seriesJson("Speed", kGaugeFieldId, "#3B82F6", "solid"));
+    series.append(seriesJson("Load", kGaugeFieldId2, "#F97316", "solid"));
+    series.append(seriesJson("Temp", kGaugeFieldId3, "#22C55E", "solid"));
+    config["series"] = series;
     return config;
 }
 
@@ -141,13 +153,22 @@ int main(int argc, char** argv) {
         lineChart->appendFieldSample(2, timestampUs, v1);
         lineChart->appendFieldSample(3, timestampUs, v2);
         gauge->appendFieldSample(kGaugeFieldId, timestampUs, v0);
+        gauge->appendFieldSample(kGaugeFieldId2, timestampUs, v1);
+        gauge->appendFieldSample(kGaugeFieldId3, timestampUs, v2);
 
-        if (*tick % 6 == 0) {
-            const double b0 = QRandomGenerator::global()->bounded(20, 100);
-            const double b1 = QRandomGenerator::global()->bounded(20, 100);
-            barChart->appendFieldSample(1, timestampUs, b0);
-            barChart->appendFieldSample(2, timestampUs, b1);
-        }
+        // Five sines at increasing frequencies, fed every tick -- see
+        // debugchartswindow.cpp's tick() (this tool's configs are kept in
+        // sync with that one, per the comment above).
+        const double b0 = 50.0 + 45.0 * qSin(t * 0.01);
+        const double b1 = 50.0 + 45.0 * qSin(t * 0.02);
+        const double b2 = 50.0 + 45.0 * qSin(t * 0.05);
+        const double b3 = 50.0 + 45.0 * qSin(t * 0.1);
+        const double b4 = 50.0 + 45.0 * qSin(t * 0.2);
+        barChart->appendFieldSample(1, timestampUs, b0);
+        barChart->appendFieldSample(2, timestampUs, b1);
+        barChart->appendFieldSample(3, timestampUs, b2);
+        barChart->appendFieldSample(4, timestampUs, b3);
+        barChart->appendFieldSample(5, timestampUs, b4);
     });
     timer->start(50);
 

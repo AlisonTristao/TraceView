@@ -157,4 +157,97 @@ QIcon makeFullscreenIcon(const QColor& color, bool active) {
     return QIcon(pixmap);
 }
 
+namespace {
+
+// The on-canvas stack: back square top-left, front square bottom-right
+// (same offset-diagonal layout as makeCopyIcon's two squares), with
+// whichever one the action targets filled solid instead of just outlined.
+void drawLayerSquares(QPainter& painter, const QColor& color, bool fillBack, bool fillFront) {
+    QPen pen(color, 1.5);
+    pen.setJoinStyle(Qt::RoundJoin);
+    painter.setPen(pen);
+
+    painter.setBrush(fillBack ? QBrush(color) : Qt::NoBrush);
+    painter.drawRoundedRect(QRectF(2, 6, 6, 6), 1.2, 1.2);
+    painter.setBrush(fillFront ? QBrush(color) : Qt::NoBrush);
+    painter.drawRoundedRect(QRectF(6.5, 9.5, 6, 6), 1.2, 1.2);
+}
+
+// One (or two, stacked) small chevrons centered above the squares, pointing
+// up (bring forward/to front) or down (send backward/to back). `doubled`
+// marks a "jump to the extreme" action; a single chevron marks a one-step
+// reorder.
+void drawReorderChevron(QPainter& painter, const QColor& color, bool pointingUp, bool doubled) {
+    QPen pen(color, 1.5);
+    pen.setCapStyle(Qt::RoundCap);
+    pen.setJoinStyle(Qt::RoundJoin);
+    painter.setPen(pen);
+
+    const double cx = 8.0;
+    const double armHeight = pointingUp ? -1.4 : 1.4;
+    auto oneChevron = [&](double y) {
+        QPolygonF chevron;
+        chevron << QPointF(cx - 3.0, y - armHeight) << QPointF(cx, y + armHeight)
+                << QPointF(cx + 3.0, y - armHeight);
+        painter.drawPolyline(chevron);
+    };
+
+    oneChevron(pointingUp ? 3.6 : 2.0);
+    if (doubled) {
+        oneChevron(pointingUp ? 1.2 : 4.4);
+    }
+}
+
+QIcon makeReorderIcon(const QColor& color, bool pointingUp, bool doubled) {
+    QPixmap pixmap(kRibbonIconSize, kRibbonIconSize);
+    pixmap.fill(Qt::transparent);
+
+    QPainter painter(&pixmap);
+    painter.setRenderHint(QPainter::Antialiasing);
+    drawLayerSquares(painter, color, /*fillBack=*/!pointingUp, /*fillFront=*/pointingUp);
+    drawReorderChevron(painter, color, pointingUp, doubled);
+    return QIcon(pixmap);
+}
+
+} // namespace
+
+QIcon makeBringToFrontIcon(const QColor& color) {
+    return makeReorderIcon(color, /*pointingUp=*/true, /*doubled=*/true);
+}
+
+QIcon makeBringForwardIcon(const QColor& color) {
+    return makeReorderIcon(color, /*pointingUp=*/true, /*doubled=*/false);
+}
+
+QIcon makeSendBackwardIcon(const QColor& color) {
+    return makeReorderIcon(color, /*pointingUp=*/false, /*doubled=*/false);
+}
+
+QIcon makeSendToBackIcon(const QColor& color) {
+    return makeReorderIcon(color, /*pointingUp=*/false, /*doubled=*/true);
+}
+
+QIcon makePinIcon(const QColor& color, bool active) {
+    QPixmap pixmap(kRibbonIconSize, kRibbonIconSize);
+    pixmap.fill(Qt::transparent);
+
+    QPainter painter(&pixmap);
+    painter.setRenderHint(QPainter::Antialiasing);
+    QPen pen(color, 1.6);
+    pen.setCapStyle(Qt::RoundCap);
+    painter.setPen(pen);
+    painter.setBrush(active ? QBrush(color) : Qt::NoBrush);
+
+    // A pushpin reduced to its two readable strokes: a round head (the
+    // handle) and a straight needle below it -- filled head when pinned,
+    // hollow when not.
+    const double cx = kRibbonIconSize / 2.0;
+    const double headCy = 4.6;
+    const double r = 2.6;
+    painter.drawEllipse(QPointF(cx, headCy), r, r);
+    painter.drawLine(QPointF(cx, headCy + r), QPointF(cx, kRibbonIconSize - 2.0));
+
+    return QIcon(pixmap);
+}
+
 } // namespace traceview

@@ -103,4 +103,16 @@ void ChangeWidgetTypeCommand::undo() {
     m_grid->applyTypeChange(m_itemId, m_fromTypeId);
 }
 
+ChangeZOrderCommand::ChangeZOrderCommand(DashboardGrid* grid, const QString& itemId, int fromIndex, int toIndex,
+                                          const QString& label)
+    : QUndoCommand(label), m_grid(grid), m_itemId(itemId), m_fromIndex(fromIndex), m_toIndex(toIndex) {}
+
+void ChangeZOrderCommand::redo() {
+    m_grid->applyZOrder(m_itemId, m_toIndex);
+}
+
+void ChangeZOrderCommand::undo() {
+    m_grid->applyZOrder(m_itemId, m_fromIndex);
+}
+
 } // namespace traceview

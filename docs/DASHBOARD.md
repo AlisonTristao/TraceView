@@ -71,11 +71,39 @@ and persisted (`DashboardGrid::changeSelectedConfig`/
 undo/redo and all; types that don't register a config editor just leave
 that area empty.
 
-Dragging/resizing snaps to the grid on release. If the drop position would
-overlap another widget or go out of grid bounds, it's rejected and the
-widget snaps back to its last valid position — see
-`DashboardGrid::isPlacementValid` in
-[dashboardgrid.cpp](../lib/dashboard/dashboardgrid.cpp).
+Dragging/resizing snaps to the grid on release. Overlapping another widget is
+allowed — only going out of grid bounds is rejected, snapping the widget back
+to its last valid position (`DashboardGrid::isPlacementValid` in
+[dashboardgrid.cpp](../lib/dashboard/dashboardgrid.cpp)). A brand-new widget
+(**Add Widget**) or a pasted one still prefers a genuinely empty spot when
+one exists (`DashboardGrid::isPlacementFree`, used only for that automatic
+placement), falling back to a spot that may overlap when the canvas is full.
+
+## Layering
+
+Since widgets can now overlap, stacking order matters: whichever one is
+"in front" is the one on top and the one a click lands on. Order is simply
+each item's position in the project's item list (`DashboardItem` order,
+persisted as-is in the `.tvproj` file, see "Project file" below) — the last
+item is frontmost, no separate z-index field.
+
+Four ribbon actions (Layout tab, next to Position/Add/Remove) reorder the
+selected widget's stacking position, each undoable like every other grid
+edit: **To Front** / **Forward** / **Backward** / **To Back**
+(`DashboardGrid::bringSelectedToFront`/`bringSelectedForward`/
+`sendSelectedBackward`/`sendSelectedToBack` in
+[dashboardgrid.cpp](../lib/dashboard/dashboardgrid.cpp), via a new
+`ChangeZOrderCommand`).
+
+A **Layers** panel (`LayersPanel`,
+[lib/core/layerspanel.h](../lib/core/layerspanel.h)) sits to the left of the
+canvas — mirroring the Properties panel's width on the right — listing every
+item currently on the grid, front-most first, so one hidden behind another
+is never forgotten. Selecting a row selects that item on the canvas exactly
+like clicking it directly would: `DashboardGrid::selectItem()` temporarily
+raises the selected widget to the very front (purely visual — it does not
+touch the persisted stacking order) so it's fully reachable to drag out from
+under whatever was covering it; deselecting restores it to its own layer.
 
 ## Element kinds
 

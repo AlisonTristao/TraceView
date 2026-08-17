@@ -3,21 +3,39 @@
 #include <QComboBox>
 #include <QFormLayout>
 #include <QFrame>
+#include <QHBoxLayout>
 #include <QLineEdit>
 #include <QScrollArea>
 #include <QSignalBlocker>
+#include <QToolButton>
 #include <QVBoxLayout>
 
 #include "dashboard/widgetregistry.h"
+#include "ribbon.h"
+#include "ribbonicons.h"
+#include "traceview/thememanager.h"
 
 namespace traceview {
 
 PropertiesPanel::PropertiesPanel(QWidget* parent) : QWidget(parent) {
     setFixedWidth(kPropertiesPanelWidth);
 
-    m_typeCombo = new QComboBox(this);
-    m_nameEdit = new QLineEdit(this);
-    m_keyEdit = new QLineEdit(this);
+    m_pinButton = new QToolButton(this);
+    m_pinButton->setObjectName("pinButton");
+    m_pinButton->setCheckable(true);
+    m_pinButton->setAutoRaise(true);
+    m_pinButton->setFixedSize(kRibbonButtonSize, kRibbonButtonSize);
+    m_pinButton->setIconSize(QSize(kRibbonIconSize, kRibbonIconSize));
+    connect(m_pinButton, &QToolButton::toggled, this, &PropertiesPanel::onPinToggled);
+
+    auto* topBar = new QHBoxLayout();
+    topBar->setContentsMargins(0, 0, 0, 0);
+    topBar->addStretch(1);
+    topBar->addWidget(m_pinButton);
+
+    m_typeCombo = new QComboBox();
+    m_nameEdit = new QLineEdit();
+    m_keyEdit = new QLineEdit();
     m_keyEdit->setPlaceholderText("(none)");
     m_keyEdit->setToolTip("Optional, must be unique — the handle future data updates will target this widget by.");
 
@@ -26,7 +44,7 @@ PropertiesPanel::PropertiesPanel(QWidget* parent) : QWidget(parent) {
     formLayout->addRow("Name", m_nameEdit);
     formLayout->addRow("Key", m_keyEdit);
 
-    m_divider = new QFrame(this);
+    m_divider = new QFrame();
     m_divider->setObjectName("sectionDivider");
     m_divider->setFrameShape(QFrame::HLine);
     m_divider->setFixedHeight(1);
@@ -39,21 +57,30 @@ PropertiesPanel::PropertiesPanel(QWidget* parent) : QWidget(parent) {
     m_configLayout->setContentsMargins(0, 0, 0, 0);
     m_configLayout->addStretch(1);
 
-    m_configScrollArea = new QScrollArea(this);
+    m_configScrollArea = new QScrollArea();
     m_configScrollArea->setWidgetResizable(true);
     m_configScrollArea->setFrameShape(QFrame::NoFrame);
     m_configScrollArea->setWidget(m_configContainer);
 
+    m_content = new QWidget(this);
+    auto* contentLayout = new QVBoxLayout(m_content);
+    contentLayout->setContentsMargins(0, 0, 0, 0);
+    contentLayout->addLayout(formLayout);
+    contentLayout->addWidget(m_divider);
+    contentLayout->addWidget(m_configScrollArea, 1);
+
     auto* mainLayout = new QVBoxLayout(this);
-    mainLayout->addLayout(formLayout);
-    mainLayout->addWidget(m_divider);
-    mainLayout->addWidget(m_configScrollArea, 1);
+    mainLayout->addLayout(topBar);
+    mainLayout->addWidget(m_content, 1);
 
     setSelection(false, QString(), QString(), QString(), QJsonObject());
+    updatePinIcon();
 
     connect(m_typeCombo, &QComboBox::activated, this, &PropertiesPanel::onTypeActivated);
     connect(m_nameEdit, &QLineEdit::editingFinished, this, &PropertiesPanel::onNameEditingFinished);
     connect(m_keyEdit, &QLineEdit::editingFinished, this, &PropertiesPanel::onKeyEditingFinished);
+    connect(&ThemeManager::instance(), &ThemeManager::themeChanged, this,
+            [this](const ThemePalette&) { updatePinIcon(); });
 }
 
 void PropertiesPanel::setAvailableTypes(const QVector<WidgetTypeInfo>& types) {
@@ -73,7 +100,7 @@ void PropertiesPanel::setSelection(bool hasSelection, const QString& typeId, con
     m_currentKey = key;
     m_currentConfig = config;
 
-    setEnabled(hasSelection);
+    m_content->setEnabled(hasSelection);
 
     {
         const QSignalBlocker blocker(m_typeCombo);
@@ -138,6 +165,19 @@ void PropertiesPanel::onConfigEditorChanged() {
         return;
     }
     emit configChangeRequested(config);
+}
+
+void PropertiesPanel::onPinToggled(bool checked) {
+    m_pinned = checked;
+    updatePinIcon();
+    emit pinnedChanged(checked);
+}
+
+void PropertiesPanel::updatePinIcon() {
+    const ThemePalette& palette = ThemeManager::instance().currentTheme();
+    m_pinButton->setIcon(makePinIcon(m_pinned ? palette.accent : palette.textPrimary, m_pinned));
+    m_pinButton->setToolTip(m_pinned ? "Unpin — panel will hide when nothing is selected"
+                                      : "Pin — keep panel open with nothing selected");
 }
 
 void PropertiesPanel::ensureConfigEditor(const QString& typeId) {

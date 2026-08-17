@@ -3,6 +3,7 @@
 #include <QHash>
 #include <QJsonObject>
 #include <QMainWindow>
+#include <QPointer>
 #include <QRect>
 #include <QString>
 
@@ -18,6 +19,8 @@ namespace traceview {
 class Backend;
 class DashboardGrid;
 class DashboardWidget;
+class DebugChartsWindow;
+class LayersPanel;
 class PropertiesPanel;
 class Ribbon;
 class SerialManager;
@@ -37,6 +40,7 @@ private:
     void buildMenus();
     Ribbon* buildRibbon();
     void buildPropertiesPanel();
+    void buildLayersPanel();
     void updateRibbonIcons();
 
     void onRibbonTabChanged(int index);
@@ -46,10 +50,20 @@ private:
     void onSerialErrorOccurred(const QString& message);
     void onSelectionChanged(const QString& itemId);
     void updateSelectionActions();
+    // Shows m_propertiesPanel/m_layersPanel only on the Layout tab, and then
+    // only while something is selected or the panel's own pin toggle is
+    // engaged (see PropertiesPanel/LayersPanel::isPinned()). Called on tab
+    // change, selection change, and either panel's pinnedChanged().
+    void updatePanelVisibility();
     // Pushes the current selection's type/name/key into m_propertiesPanel.
     // Called on selectionChanged and whenever the undo stack moves, since a
     // property edit (or its undo/redo) doesn't otherwise touch selection.
     void refreshPropertiesPanel();
+    // Rebuilds m_layersPanel's rows from DashboardGrid::layerEntries() and
+    // re-highlights the current selection. Called whenever the item list or
+    // its order could have changed (itemsChanged(), undo/redo) or the
+    // selection did (selectionChanged()).
+    void refreshLayersPanel();
     void onAddWidget();
     void onPanelTypeChangeRequested(const QString& typeId);
     void onPanelNameChangeRequested(const QString& name);
@@ -64,19 +78,29 @@ private:
     void updateRecentFilesMenu();
     void onClearRecentFiles();
     void onAbout();
+    void onDebug();
     void onFullscreenToggled(bool checked);
 
     DashboardGrid* m_dashboardGrid = nullptr;
     PropertiesPanel* m_propertiesPanel = nullptr;
+    LayersPanel* m_layersPanel = nullptr;
     Ribbon* m_ribbon = nullptr;
     QAction* m_positionAction = nullptr;
     QAction* m_addWidgetAction = nullptr;
     QAction* m_removeAction = nullptr;
     QAction* m_copyAction = nullptr;
     QAction* m_pasteAction = nullptr;
+    QAction* m_bringToFrontAction = nullptr;
+    QAction* m_bringForwardAction = nullptr;
+    QAction* m_sendBackwardAction = nullptr;
+    QAction* m_sendToBackAction = nullptr;
     QAction* m_undoAction = nullptr;
     QAction* m_redoAction = nullptr;
     QMenu* m_recentFilesMenu = nullptr;
+    // WA_DeleteOnClose'd (see debugchartswindow.cpp) -- QPointer so this
+    // resets to null on its own once the user closes it, instead of leaving
+    // a dangling raw pointer behind for the next "Debug" click to dereference.
+    QPointer<DebugChartsWindow> m_debugChartsWindow;
     int m_configureTabIndex = -1;
     bool m_configureTabActive = false;
 

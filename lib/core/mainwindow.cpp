@@ -26,6 +26,8 @@
 #include "dashboard/dashboardgrid.h"
 #include "dashboard/widgetregistry.h"
 #include "dashboard/widgets/chartwidgets.h"
+#include "debugchartswindow.h"
+#include "layerspanel.h"
 #include "project/projectstore.h"
 #include "protocol/btpbackend.h"
 #include "propertiespanel.h"
@@ -111,6 +113,13 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
 
     m_serialManager = new SerialManager(this);
     m_dashboardGrid = new DashboardGrid(this);
+    // Drives every chart cell's header status dot (DashboardCell::
+    // setConnected()) off the app's one physical serial connection -- set
+    // the initial (disconnected) state up front so a fresh layout doesn't
+    // start with a stale/default dot before the first signal fires.
+    connect(m_serialManager, &SerialManager::connectionStateChanged, m_dashboardGrid,
+            &DashboardGrid::setDeviceConnected);
+    m_dashboardGrid->setDeviceConnected(m_serialManager->isConnected());
 
     // Everything that gives the transport's raw bytes meaning lives behind
     // the Backend interface (backend/backend.h) -- concretely a BtpBackend
@@ -140,16 +149,20 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     new SerialWidgetBridge(m_serialManager, m_backend, m_dashboardGrid, this);
 
     Ribbon* ribbon = buildRibbon();
+    buildLayersPanel();
     buildPropertiesPanel();
 
-    // Canvas + properties panel side by side, both below the ribbon — so
-    // the panel is exactly as tall as the canvas instead of a QDockWidget,
-    // which spans the full window height (menu bar to status bar) and
-    // would sit alongside the ribbon too, not just the canvas.
+    // Layers panel + canvas + properties panel side by side, all below the
+    // ribbon — so the side panels are exactly as tall as the canvas instead
+    // of a QDockWidget, which spans the full window height (menu bar to
+    // status bar) and would sit alongside the ribbon too, not just the
+    // canvas. The layers panel is 1/3 the width of the properties panel,
+    // since it only needs to fit short layer names.
     auto* contentRow = new QWidget(this);
     auto* contentLayout = new QHBoxLayout(contentRow);
     contentLayout->setContentsMargins(0, 0, 0, 0);
     contentLayout->setSpacing(0);
+    contentLayout->addWidget(m_layersPanel);
     contentLayout->addWidget(m_dashboardGrid, /*stretch=*/1);
     contentLayout->addWidget(m_propertiesPanel);
 
@@ -313,6 +326,9 @@ void MainWindow::buildMenus() {
         });
     }
 
+    auto* debugAction = menuBar()->addAction("&Debug");
+    connect(debugAction, &QAction::triggered, this, &MainWindow::onDebug);
+
     auto* aboutAction = menuBar()->addAction("&About");
     connect(aboutAction, &QAction::triggered, this, &MainWindow::onAbout);
 }
@@ -347,6 +363,22 @@ Ribbon* MainWindow::buildRibbon() {
     m_pasteAction->setShortcut(QKeySequence::Paste);
     connect(m_pasteAction, &QAction::triggered, m_dashboardGrid, &DashboardGrid::pasteItem);
 
+    m_bringToFrontAction = new QAction("To Front", this);
+    m_bringToFrontAction->setEnabled(false);
+    connect(m_bringToFrontAction, &QAction::triggered, m_dashboardGrid, &DashboardGrid::bringSelectedToFront);
+
+    m_bringForwardAction = new QAction("Forward", this);
+    m_bringForwardAction->setEnabled(false);
+    connect(m_bringForwardAction, &QAction::triggered, m_dashboardGrid, &DashboardGrid::bringSelectedForward);
+
+    m_sendBackwardAction = new QAction("Backward", this);
+    m_sendBackwardAction->setEnabled(false);
+    connect(m_sendBackwardAction, &QAction::triggered, m_dashboardGrid, &DashboardGrid::sendSelectedBackward);
+
+    m_sendToBackAction = new QAction("To Back", this);
+    m_sendToBackAction->setEnabled(false);
+    connect(m_sendToBackAction, &QAction::triggered, m_dashboardGrid, &DashboardGrid::sendSelectedToBack);
+
     // createUndoAction()/createRedoAction() wire up triggered/enabled state
     // (and a dynamic "Undo <command text>" label) directly from the stack —
     // no manual canUndo()/canRedo() syncing needed.
@@ -357,6 +389,13 @@ Ribbon* MainWindow::buildRibbon() {
 
     connect(m_dashboardGrid, &DashboardGrid::selectionChanged, this, &MainWindow::onSelectionChanged);
     connect(m_dashboardGrid->undoStack(), &QUndoStack::indexChanged, this, &MainWindow::refreshPropertiesPanel);
+    // The layers panel's row list needs to resync on anything that could add/
+    // remove/rename/reorder an item -- itemsChanged() covers add/remove/type-
+    // change/load, indexChanged() covers everything else that goes through
+    // the undo stack (rename, z-order, and their own undo/redo), same
+    // reasoning as the refreshPropertiesPanel hook right above.
+    connect(m_dashboardGrid, &DashboardGrid::itemsChanged, this, &MainWindow::refreshLayersPanel);
+    connect(m_dashboardGrid->undoStack(), &QUndoStack::indexChanged, this, &MainWindow::refreshLayersPanel);
     // A config edit (or its undo/redo) can repoint a widget at another
     // source/topic or change its sample time, which changes what this client
     // must have subscribed -- every path that edits a config goes through the
@@ -476,6 +515,8 @@ Ribbon* MainWindow::buildRibbon() {
 
     configureLayout->addWidget(
         Ribbon::createButtonGroup(configurePage, {m_positionAction, m_addWidgetAction, m_removeAction}));
+    configureLayout->addWidget(Ribbon::createButtonGroup(
+        configurePage, {m_bringToFrontAction, m_bringForwardAction, m_sendBackwardAction, m_sendToBackAction}));
     configureLayout->addWidget(Ribbon::createButtonGroup(configurePage, {m_copyAction, m_pasteAction}));
     configureLayout->addWidget(Ribbon::createButtonGroup(configurePage, {m_undoAction, m_redoAction}));
     configureLayout->addStretch();
@@ -490,6 +531,16 @@ Ribbon* MainWindow::buildRibbon() {
     return ribbon;
 }
 
+void MainWindow::buildLayersPanel() {
+    m_layersPanel = new LayersPanel(this);
+    connect(m_layersPanel, &LayersPanel::itemSelected, m_dashboardGrid, &DashboardGrid::selectItem);
+    connect(m_layersPanel, &LayersPanel::pinnedChanged, this, &MainWindow::updatePanelVisibility);
+
+    // Only relevant while editing the layout -- matches m_propertiesPanel
+    // (see buildPropertiesPanel() below).
+    m_layersPanel->hide();
+}
+
 void MainWindow::buildPropertiesPanel() {
     m_propertiesPanel = new PropertiesPanel(this);
     m_propertiesPanel->setAvailableTypes(WidgetRegistry::instance().availableTypes());
@@ -501,6 +552,7 @@ void MainWindow::buildPropertiesPanel() {
     connect(m_propertiesPanel, &PropertiesPanel::keyChangeRequested, this, &MainWindow::onPanelKeyChangeRequested);
     connect(m_propertiesPanel, &PropertiesPanel::configChangeRequested, this,
             &MainWindow::onPanelConfigChangeRequested);
+    connect(m_propertiesPanel, &PropertiesPanel::pinnedChanged, this, &MainWindow::updatePanelVisibility);
 
     // Only relevant while editing the layout — matches m_addWidgetAction/
     // m_positionAction, which also start disabled until the Layout tab is
@@ -523,6 +575,14 @@ void MainWindow::updateRibbonIcons() {
     m_pasteAction->setIcon(makePasteIcon(palette.textPrimary));
     m_pasteAction->setToolTip(
         QString("Paste as a new widget (%1)").arg(m_pasteAction->shortcut().toString(QKeySequence::NativeText)));
+    m_bringToFrontAction->setIcon(makeBringToFrontIcon(palette.textPrimary));
+    m_bringToFrontAction->setToolTip("Bring to front");
+    m_bringForwardAction->setIcon(makeBringForwardIcon(palette.textPrimary));
+    m_bringForwardAction->setToolTip("Bring forward");
+    m_sendBackwardAction->setIcon(makeSendBackwardIcon(palette.textPrimary));
+    m_sendBackwardAction->setToolTip("Send backward");
+    m_sendToBackAction->setIcon(makeSendToBackIcon(palette.textPrimary));
+    m_sendToBackAction->setToolTip("Send to back");
     // No explicit setToolTip(): QAction falls back to text(), which
     // QUndoStack keeps updated with the pending command's description
     // (e.g. "Undo Move Widget"); the shortcut still shows up in the menu/
@@ -537,7 +597,7 @@ void MainWindow::onRibbonTabChanged(int index) {
     m_dashboardGrid->setEditMode(m_configureTabActive);
     m_addWidgetAction->setEnabled(m_configureTabActive);
     m_positionAction->setEnabled(m_configureTabActive);
-    m_propertiesPanel->setVisible(m_configureTabActive);
+    updatePanelVisibility();
     updateSelectionActions();
 
     if (index == m_runTabIndex) {
@@ -594,6 +654,14 @@ void MainWindow::onLineTerminatorChanged(int) {
 void MainWindow::onSelectionChanged(const QString&) {
     updateSelectionActions();
     refreshPropertiesPanel();
+    refreshLayersPanel();
+    updatePanelVisibility();
+}
+
+void MainWindow::updatePanelVisibility() {
+    const bool hasSelection = !m_dashboardGrid->selectedItemId().isEmpty();
+    m_propertiesPanel->setVisible(m_configureTabActive && (hasSelection || m_propertiesPanel->isPinned()));
+    m_layersPanel->setVisible(m_configureTabActive && (hasSelection || m_layersPanel->isPinned()));
 }
 
 void MainWindow::updateSelectionActions() {
@@ -601,6 +669,10 @@ void MainWindow::updateSelectionActions() {
     m_removeAction->setEnabled(hasSelection);
     m_copyAction->setEnabled(hasSelection);
     m_pasteAction->setEnabled(m_configureTabActive && m_dashboardGrid->canPaste());
+    m_bringToFrontAction->setEnabled(hasSelection);
+    m_bringForwardAction->setEnabled(hasSelection);
+    m_sendBackwardAction->setEnabled(hasSelection);
+    m_sendToBackAction->setEnabled(hasSelection);
 }
 
 void MainWindow::refreshPropertiesPanel() {
@@ -608,6 +680,10 @@ void MainWindow::refreshPropertiesPanel() {
     m_propertiesPanel->setSelection(hasSelection, m_dashboardGrid->selectedItemTypeId(),
                                      m_dashboardGrid->selectedItemDisplayName(), m_dashboardGrid->selectedItemKey(),
                                      m_dashboardGrid->selectedItemConfig());
+}
+
+void MainWindow::refreshLayersPanel() {
+    m_layersPanel->setItems(m_dashboardGrid->layerEntries(), m_dashboardGrid->selectedItemId());
 }
 
 void MainWindow::onAddWidget() {
@@ -654,6 +730,7 @@ void MainWindow::onNewProject() {
     m_dashboardGrid->fromJson(QJsonObject());
     m_dashboardGrid->undoStack()->clear();
     refreshPropertiesPanel();
+    refreshLayersPanel();
     statusBar()->showMessage("Started a new project.", 3000);
 }
 
@@ -705,6 +782,7 @@ void MainWindow::openRecentFile(const QString& path) {
     m_dashboardGrid->fromJson(ProjectStore::instance().section("dashboard"));
     m_dashboardGrid->undoStack()->clear();
     refreshPropertiesPanel();
+    refreshLayersPanel();
     addRecentFile(path);
 }
 
@@ -751,6 +829,19 @@ void MainWindow::onClearRecentFiles() {
 void MainWindow::onAbout() {
     AboutDialog dialog(this);
     dialog.exec();
+}
+
+void MainWindow::onDebug() {
+    // Reuses the existing window (raised to the front) instead of stacking
+    // up a new synthetic-data feed/timer every click -- m_debugChartsWindow
+    // resets to null on its own once the user closes it (WA_DeleteOnClose +
+    // QPointer, see mainwindow.h).
+    if (!m_debugChartsWindow) {
+        m_debugChartsWindow = new DebugChartsWindow(this);
+    }
+    m_debugChartsWindow->show();
+    m_debugChartsWindow->raise();
+    m_debugChartsWindow->activateWindow();
 }
 
 void MainWindow::onFullscreenToggled(bool checked) {

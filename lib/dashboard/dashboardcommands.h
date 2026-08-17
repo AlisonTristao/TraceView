@@ -135,4 +135,22 @@ private:
     QString m_toTypeId;
 };
 
+class ChangeZOrderCommand : public QUndoCommand {
+public:
+    // fromIndex/toIndex are positions in DashboardGrid's back-to-front item
+    // order (see DashboardGrid::layerEntries()). label becomes the command's
+    // text (e.g. "Bring to Front"), shown in the Undo/Redo action.
+    ChangeZOrderCommand(DashboardGrid* grid, const QString& itemId, int fromIndex, int toIndex,
+                         const QString& label);
+
+    void undo() override;
+    void redo() override;
+
+private:
+    DashboardGrid* m_grid;
+    QString m_itemId;
+    int m_fromIndex;
+    int m_toIndex;
+};
+
 } // namespace traceview

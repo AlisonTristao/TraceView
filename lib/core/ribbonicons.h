@@ -22,5 +22,16 @@ QIcon makePasteIcon(const QColor& color);
 // mirror, the "exit fullscreen" glyph (elbows pulled to the center, arms
 // reaching back out toward the corners).
 QIcon makeFullscreenIcon(const QColor& color, bool active);
+// Two overlapping squares (the on-canvas stack) plus a chevron indicating
+// the reorder direction: a single chevron for "one step" (forward/backward),
+// a doubled chevron for "all the way" (to front/to back) -- the front (or
+// back) square is filled solid to mark which one the action targets.
+QIcon makeBringToFrontIcon(const QColor& color);
+QIcon makeBringForwardIcon(const QColor& color);
+QIcon makeSendBackwardIcon(const QColor& color);
+QIcon makeSendToBackIcon(const QColor& color);
+// Thumbtack, tilted 45°: filled when active=true (pinned open), outlined
+// otherwise -- used by the panel pin toggle (see PropertiesPanel/LayersPanel).
+QIcon makePinIcon(const QColor& color, bool active);
 
 } // namespace traceview

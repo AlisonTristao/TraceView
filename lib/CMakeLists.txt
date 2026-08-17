@@ -187,6 +187,10 @@ target_link_libraries(traceview_dashboard
 add_library(traceview_ui STATIC
     core/aboutdialog.cpp
     core/aboutdialog.h
+    core/debugchartswindow.cpp
+    core/debugchartswindow.h
+    core/layerspanel.cpp
+    core/layerspanel.h
     core/mainwindow.cpp
     core/mainwindow.h
     core/propertiespanel.cpp

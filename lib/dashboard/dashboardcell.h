@@ -46,6 +46,11 @@ public:
     void setEditMode(bool enabled);
     void setSelected(bool selected);
     bool isSelected() const { return m_selected; }
+    // Drives the header's connection-status dot (only drawn when m_content
+    // wants header controls, see DashboardWidget::wantsHeaderControls()) --
+    // set from the app's single global SerialManager connection, propagated
+    // through DashboardGrid::setDeviceConnected().
+    void setConnected(bool connected);
     // Swaps the selection border to the palette's danger color instead of
     // accent — live feedback while a drag/resize candidate would be
     // rejected on release (see DashboardGrid::isPlacementValid()), so the
@@ -77,6 +82,14 @@ private:
     int headerHeight() const;
     QRect headerRect() const;
     QRect gripRect() const;
+    // Right-aligned header button rects (pause/resume, clear, settings gear
+    // -- gear rightmost), only meaningful when m_content->wantsHeaderControls().
+    QRect pauseButtonRect() const;
+    QRect clearButtonRect() const;
+    QRect gearButtonRect() const;
+    // Opens the header gear's popup menu (currently just the "Show last
+    // value" toggle) anchored below the gear button.
+    void showSettingsMenu();
     ResizeHandle handleAt(const QPoint& pos) const;
     Qt::CursorShape cursorForHandle(ResizeHandle handle) const;
     void layoutChildren();
@@ -91,6 +104,7 @@ private:
     bool m_editMode = false;
     bool m_selected = false;
     bool m_dragInvalid = false;
+    bool m_connected = false;
     DragMode m_dragMode = DragMode::None;
     ResizeHandle m_resizeHandle = ResizeHandle::None;
 

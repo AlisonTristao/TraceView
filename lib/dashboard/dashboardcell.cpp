@@ -1,10 +1,17 @@
 #include "dashboardcell.h"
 
+#include <QAction>
+#include <QComboBox>
+#include <QFontMetrics>
+#include <QHBoxLayout>
+#include <QLabel>
+#include <QMenu>
 #include <QMouseEvent>
 #include <QPainter>
 #include <QPainterPath>
 #include <QPolygonF>
 #include <QRegion>
+#include <QWidgetAction>
 
 #include "dashboardwidget.h"
 #include "dashboard/roundedcorners.h"
@@ -20,6 +27,13 @@ constexpr int kSelectionAnimMs = 150;
 
 constexpr int kIconSize = 14;
 constexpr int kIconMargin = 6;
+// Header-controls cluster (see DashboardWidget::wantsHeaderControls()): the
+// connection dot before the title, and the pause/resume + clear + gear
+// buttons at the header's right edge -- all sized/spaced off the same
+// kIconSize/kIconMargin as the type glyph above, per the "respect the
+// widgets' header bar size" ask, not the ribbon's separate 16px/26px scale
+// (see core/ribbonicons.h).
+constexpr int kStatusDotSize = 8;
 
 // Small hand-drawn glyphs identifying the widget kind in the cell header —
 // same "draw it, don't fake it" approach as arrowImagePath()/checkImagePath()
@@ -65,6 +79,75 @@ void drawTypeIcon(QPainter& painter, const QRect& r, const QString& typeId, cons
         painter.drawLine(QPointF(s * 0.5, s * 0.82), QPointF(s * 0.9, s * 0.82));
     }
 
+    painter.restore();
+}
+
+// Header-controls glyphs (see kStatusDotSize above) -- same "draw it, don't
+// fake it" live-QPainter approach as drawTypeIcon(), deliberately not routed
+// through the ribbon's QIcon/QPixmap factories (core/ribbonicons.cpp): those
+// are fixed to the ribbon's own 16px/26px bordered-button scale, whereas
+// these sit borderless inside the 24px cell header at kIconSize (14px).
+
+// Play glyph (triangle) while paused -- click resumes; pause glyph (two
+// bars) while running -- click pauses.
+void drawPlayPauseIcon(QPainter& painter, const QRect& r, bool paused, const QColor& color) {
+    painter.save();
+    painter.setRenderHint(QPainter::Antialiasing);
+    painter.translate(r.topLeft());
+    const qreal s = r.width();
+    painter.setPen(Qt::NoPen);
+    painter.setBrush(color);
+
+    if (paused) {
+        painter.drawPolygon(
+            QPolygonF({QPointF(s * 0.22, s * 0.15), QPointF(s * 0.22, s * 0.85), QPointF(s * 0.85, s * 0.5)}));
+    } else {
+        const qreal barWidth = s * 0.22;
+        painter.drawRect(QRectF(s * 0.2, s * 0.15, barWidth, s * 0.7));
+        painter.drawRect(QRectF(s * 0.58, s * 0.15, barWidth, s * 0.7));
+    }
+    painter.restore();
+}
+
+// Stop/clear glyph -- the classic plain filled square.
+void drawClearIcon(QPainter& painter, const QRect& r, const QColor& color) {
+    painter.save();
+    painter.setRenderHint(QPainter::Antialiasing);
+    painter.translate(r.topLeft());
+    const qreal s = r.width();
+    painter.setPen(Qt::NoPen);
+    painter.setBrush(color);
+    painter.drawRect(QRectF(s * 0.18, s * 0.18, s * 0.64, s * 0.64));
+    painter.restore();
+}
+
+// Settings gear glyph -- a ringed hub with radial ticks standing in for
+// teeth, legible at 14px without trying to render a literal gear silhouette.
+void drawGearIcon(QPainter& painter, const QRect& r, const QColor& color) {
+    painter.save();
+    painter.setRenderHint(QPainter::Antialiasing);
+    painter.translate(r.center());
+    const qreal s = r.width();
+    const qreal bodyRadius = s * 0.28;
+    const qreal toothOuterRadius = s * 0.44;
+
+    QPen toothPen(color, s * 0.12);
+    toothPen.setCapStyle(Qt::FlatCap);
+    painter.setPen(toothPen);
+    constexpr int kTeeth = 6;
+    for (int i = 0; i < kTeeth; ++i) {
+        painter.save();
+        painter.rotate(360.0 / kTeeth * i);
+        painter.drawLine(QPointF(0, -bodyRadius), QPointF(0, -toothOuterRadius));
+        painter.restore();
+    }
+
+    painter.setPen(QPen(color, 1.3));
+    painter.setBrush(Qt::NoBrush);
+    painter.drawEllipse(QPointF(0, 0), bodyRadius, bodyRadius);
+    painter.setPen(Qt::NoPen);
+    painter.setBrush(color);
+    painter.drawEllipse(QPointF(0, 0), bodyRadius * 0.32, bodyRadius * 0.32);
     painter.restore();
 }
 
@@ -190,6 +273,14 @@ void DashboardCell::setSelected(bool selected) {
     update();
 }
 
+void DashboardCell::setConnected(bool connected) {
+    if (m_connected == connected) {
+        return;
+    }
+    m_connected = connected;
+    update();
+}
+
 void DashboardCell::setDragInvalid(bool invalid) {
     if (m_dragInvalid == invalid) {
         return;
@@ -209,6 +300,77 @@ QRect DashboardCell::headerRect() const {
 
 QRect DashboardCell::gripRect() const {
     return QRect(width() - kGripSize, height() - kGripSize, kGripSize, kGripSize);
+}
+
+QRect DashboardCell::gearButtonRect() const {
+    const QRect header = headerRect();
+    const int y = (header.height() - kIconSize) / 2;
+    return QRect(header.right() - kIconMargin - kIconSize + 1, y, kIconSize, kIconSize);
+}
+
+QRect DashboardCell::clearButtonRect() const {
+    const QRect gear = gearButtonRect();
+    return QRect(gear.left() - kIconMargin - kIconSize, gear.top(), kIconSize, kIconSize);
+}
+
+QRect DashboardCell::pauseButtonRect() const {
+    const QRect clear = clearButtonRect();
+    return QRect(clear.left() - kIconMargin - kIconSize, clear.top(), kIconSize, kIconSize);
+}
+
+void DashboardCell::showSettingsMenu() {
+    // Kinds with nothing to configure yet (DummyBarChartWidget, see
+    // DashboardWidget::hasChartOptionsMenu()) skip the menu entirely rather
+    // than popping up an empty one.
+    if (!m_content->hasChartOptionsMenu()) {
+        return;
+    }
+
+    QMenu menu(this);
+    QAction* lastValueAction = menu.addAction(tr("Show last value"));
+    lastValueAction->setCheckable(true);
+    lastValueAction->setChecked(m_content->showsLastValueRow());
+    connect(lastValueAction, &QAction::toggled, this, [this](bool on) { m_content->setShowsLastValueRow(on); });
+
+    QAction* gridPointsAction = menu.addAction(tr("Show grid point values"));
+    gridPointsAction->setCheckable(true);
+    gridPointsAction->setChecked(m_content->showsGridPointMarkers());
+    connect(gridPointsAction, &QAction::toggled, this, [this](bool on) { m_content->setShowsGridPointMarkers(on); });
+
+    QAction* hoverCrosshairAction = menu.addAction(tr("Show hover crosshair"));
+    hoverCrosshairAction->setCheckable(true);
+    hoverCrosshairAction->setChecked(m_content->showsHoverCrosshair());
+    connect(hoverCrosshairAction, &QAction::toggled, this, [this](bool on) { m_content->setShowsHoverCrosshair(on); });
+
+    menu.addSeparator();
+
+    // Select box for the line-shape a line chart reconstructs between
+    // buffered samples with (DashboardWidget::lineInterpolation(), see
+    // ChartLineInterpolation in widgets/chartdata.h) -- a QComboBox via
+    // QWidgetAction rather than a submenu of checkable actions, since the
+    // user asked for a dropdown specifically. Covered by the
+    // hasChartOptionsMenu() guard above like everything else in this menu, so
+    // it only ever shows for DummyLineChartWidget in practice.
+    auto* interpolationRow = new QWidget(&menu);
+    auto* interpolationLayout = new QHBoxLayout(interpolationRow);
+    interpolationLayout->setContentsMargins(12, 4, 12, 4);
+    interpolationLayout->addWidget(new QLabel(tr("Interpolation:"), interpolationRow));
+    auto* interpolationCombo = new QComboBox(interpolationRow);
+    interpolationCombo->addItem(tr("Linear"), "linear");
+    interpolationCombo->addItem(tr("ZOH (step)"), "zoh");
+    interpolationCombo->addItem(tr("Stem"), "stem");
+    interpolationCombo->addItem(tr("None (points)"), "none");
+    interpolationCombo->setCurrentIndex(qMax(0, interpolationCombo->findData(m_content->lineInterpolation())));
+    interpolationLayout->addWidget(interpolationCombo);
+    connect(interpolationCombo, &QComboBox::currentIndexChanged, this, [this, interpolationCombo](int index) {
+        m_content->setLineInterpolation(interpolationCombo->itemData(index).toString());
+    });
+
+    auto* interpolationAction = new QWidgetAction(&menu);
+    interpolationAction->setDefaultWidget(interpolationRow);
+    menu.addAction(interpolationAction);
+
+    menu.exec(mapToGlobal(gearButtonRect().bottomLeft()));
 }
 
 DashboardCell::ResizeHandle DashboardCell::handleAt(const QPoint& pos) const {
@@ -317,8 +479,29 @@ void DashboardCell::paintEvent(QPaintEvent*) {
             textRect.setLeft(iconRect.right() + kIconMargin);
         }
 
+        if (m_content->wantsHeaderControls()) {
+            // Connection dot -- red/green, driven by setConnected() -- right
+            // after the type glyph, ahead of the title.
+            const QRect dotRect(textRect.left(), (headerHeight() - kStatusDotSize) / 2, kStatusDotSize,
+                                 kStatusDotSize);
+            painter.setPen(Qt::NoPen);
+            painter.setBrush(m_connected ? palette.success : palette.danger);
+            painter.drawEllipse(dotRect);
+            textRect.setLeft(dotRect.right() + kIconMargin);
+
+            // Right-aligned pause/resume + clear + gear -- textRect stops
+            // short of them so a long title elides instead of running
+            // underneath.
+            textRect.setRight(pauseButtonRect().left() - kIconMargin);
+            drawPlayPauseIcon(painter, pauseButtonRect(), m_content->isPaused(), headerFg);
+            drawClearIcon(painter, clearButtonRect(), headerFg);
+            drawGearIcon(painter, gearButtonRect(), headerFg);
+        }
+
         painter.setPen(headerFg);
-        painter.drawText(textRect, Qt::AlignVCenter | Qt::AlignLeft, m_title);
+        const QFontMetrics fm(painter.font());
+        const QString elidedTitle = fm.elidedText(m_title, Qt::ElideRight, textRect.width());
+        painter.drawText(textRect, Qt::AlignVCenter | Qt::AlignLeft, elidedTitle);
     }
 
     if (!m_editMode || !m_selected) {
@@ -345,6 +528,30 @@ void DashboardCell::paintEvent(QPaintEvent*) {
 }
 
 void DashboardCell::mousePressEvent(QMouseEvent* event) {
+    // Header controls (pause/resume, clear, gear) are Run-mode-only -- in
+    // Layout/edit mode the header stays a pure drag handle, unchanged from
+    // before this feature.
+    if (!m_editMode && event->button() == Qt::LeftButton && m_content->wantsHeaderControls() &&
+        headerHeight() > 0 && headerRect().contains(event->position().toPoint())) {
+        const QPoint pos = event->position().toPoint();
+        if (pauseButtonRect().contains(pos)) {
+            m_content->setPaused(!m_content->isPaused());
+            update();
+            event->accept();
+            return;
+        }
+        if (clearButtonRect().contains(pos)) {
+            m_content->clearChartData();
+            event->accept();
+            return;
+        }
+        if (gearButtonRect().contains(pos)) {
+            showSettingsMenu();
+            event->accept();
+            return;
+        }
+    }
+
     if (!m_editMode || event->button() != Qt::LeftButton) {
         QWidget::mousePressEvent(event);
         return;

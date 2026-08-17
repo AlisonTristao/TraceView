@@ -6,6 +6,8 @@
 #include "dashboard/widgets/chartdata.h"
 #include "telemetry/telemetrybinding.h"
 
+class QMouseEvent;
+
 namespace traceview {
 
 // DummyLineChartWidget/DummyBarChartWidget/DummyGaugeWidget render live
@@ -27,13 +29,34 @@ namespace traceview {
 
 class ChartWidgetBase : public DashboardWidget {
 public:
-    using DashboardWidget::DashboardWidget;
+    explicit ChartWidgetBase(QWidget* parent = nullptr) : DashboardWidget(parent) {
+        // Needed for mouseMoveEvent() to fire on plain cursor movement (no
+        // button held) -- that's how the hover crosshair below tracks the
+        // mouse across the plot.
+        setMouseTracking(true);
+    }
 
     QColor cellFillColor(const ThemePalette& palette) const override { return palette.surface; }
     void setConfig(const QJsonObject& config) override;
 
+    bool wantsHeaderControls() const override { return true; }
+    bool isPaused() const override { return m_paused; }
+    void setPaused(bool paused) override;
+    void clearChartData() override;
+    bool showsLastValueRow() const override { return m_showLastValueRow; }
+    void setShowsLastValueRow(bool show) override;
+    bool showsGridPointMarkers() const override { return m_showGridPointMarkers; }
+    void setShowsGridPointMarkers(bool show) override;
+    bool showsHoverCrosshair() const override { return m_showHoverCrosshair; }
+    void setShowsHoverCrosshair(bool show) override;
+    QString lineInterpolation() const override { return chartLineInterpolationId(m_lineInterpolation); }
+    void setLineInterpolation(const QString& id) override;
+
     // Appends one decoded (timestampUs, value) pair to every series bound to
-    // `fieldId` (ChartSeriesConfig::fieldId) and schedules a repaint.
+    // `fieldId` (ChartSeriesConfig::fieldId) and schedules a repaint. A
+    // no-op while isPaused() -- the header's pause button drops incoming
+    // samples instead of buffering them, so the plot visibly freezes until
+    // resumed.
     void appendFieldSample(quint16 fieldId, quint64 timestampUs, double value);
 
     // Connects directly to TelemetryFieldRouter::fieldSample() (topico 15):
@@ -50,23 +73,59 @@ public:
     const ChartConfig& config() const { return m_config; }
 
 protected:
+    void mouseMoveEvent(QMouseEvent* event) override;
+    void leaveEvent(QEvent* event) override;
+
     ChartConfig m_config;
     QVector<TelemetrySeriesBuffer> m_seriesBuffers;  // one per m_config.series, same order
+    // Read directly by DummyLineChartWidget::paintEvent()/DummyBarChartWidget::
+    // paintEvent() to pass through to paintSeriesLegends().
+    bool m_showLastValueRow = true;
+    // Read directly by DummyLineChartWidget::paintEvent() to gate
+    // paintGridPointMarkers() -- bar charts have no line to mark a crossing
+    // on, so DummyBarChartWidget never reads this.
+    bool m_showGridPointMarkers = false;
+    // Read directly by DummyLineChartWidget::paintEvent() to gate
+    // paintHoverCrosshair() -- same bar-chart exclusion as m_showGridPointMarkers.
+    bool m_showHoverCrosshair = false;
+    // Read directly by DummyLineChartWidget::paintEvent() and passed through
+    // to paintLineSeries()/paintGridPointMarkers()/paintHoverCrosshair() --
+    // same bar-chart exclusion as m_showGridPointMarkers (bar chart inherits
+    // the gear-menu select box but its own paintEvent never reads this).
+    ChartLineInterpolation m_lineInterpolation = ChartLineInterpolation::Linear;
+    // Current mouse position in this widget's own coordinates, updated by
+    // mouseMoveEvent()/leaveEvent() below and read by DummyLineChartWidget::
+    // paintEvent() to place the hover crosshair. m_hasHoverPos is false
+    // whenever the mouse isn't over this widget at all (leaveEvent(), or
+    // simply never having entered it yet) -- distinct from m_hoverPos sitting
+    // outside plotRect, which paintHoverCrosshair() itself handles.
+    QPoint m_hoverPos;
+    bool m_hasHoverPos = false;
 
 private:
     void scheduleRepaint();
 
     bool m_repaintPending = false;
+    bool m_paused = false;
 };
 
 class DummyLineChartWidget : public ChartWidgetBase {
 public:
     explicit DummyLineChartWidget(QWidget* parent = nullptr);
 
+    bool hasChartOptionsMenu() const override { return true; }
+
 protected:
     void paintEvent(QPaintEvent* event) override;
 };
 
+// Fixed-bar snapshot chart: one bar per configured series (not per sample --
+// see paintBarSnapshot() in chartwidgets.cpp), always redrawn at the same X
+// position and showing only that series' latest buffered value, with the
+// value itself printed on the X axis directly under its bar. Unlike
+// DummyLineChartWidget, there is no history to scroll through and no
+// gear-menu options (hasChartOptionsMenu() stays at DashboardWidget's
+// default false) -- pause/clear from the header still apply.
 class DummyBarChartWidget : public ChartWidgetBase {
 public:
     explicit DummyBarChartWidget(QWidget* parent = nullptr);
@@ -82,8 +141,24 @@ public:
     QColor cellFillColor(const ThemePalette& palette) const override { return palette.surface; }
     void setConfig(const QJsonObject& config) override;
 
-    // Sets the current value if `fieldId` matches this gauge's configured
-    // GaugeConfig::fieldId (a no-op otherwise) and schedules a repaint.
+    // Same header cluster as the line/bar charts (ChartWidgetBase) -- a
+    // connection-state dot, pause/resume, clear, and a settings gear. The
+    // gear stays inert (hasChartOptionsMenu() defaults to false, same as
+    // DummyBarChartWidget): a gauge has no per-series line/grid/hover
+    // options for it to open.
+    bool wantsHeaderControls() const override { return true; }
+    bool isPaused() const override { return m_paused; }
+    void setPaused(bool paused) override { m_paused = paused; }
+    // Resets every ring to "no value yet" ("--") -- a gauge has no history
+    // to clear, so this is what the header's clear button does here instead.
+    void clearChartData() override;
+
+    // Updates the current value of every ring bound to `fieldId`
+    // (GaugeSeriesConfig::fieldId -- usually zero or one ring, but nothing
+    // stops two rings from tracking the same field) and schedules a repaint.
+    // A no-op while paused (samples are dropped, not buffered -- a gauge
+    // keeps no history to catch up on once resumed) or if no ring binds to
+    // `fieldId`.
     void appendFieldSample(quint16 fieldId, quint64 timestampUs, double value);
 
     // See ChartWidgetBase::onFieldSample() above -- same role, filtered by
@@ -100,8 +175,11 @@ private:
     void scheduleRepaint();
 
     GaugeConfig m_config;
-    double m_value = qQNaN();
+    QVector<double> m_values;  // one per m_config.series, same order -- kept
+                               // in sync as m_config.series changes by
+                               // setConfig() in the .cpp.
     bool m_repaintPending = false;
+    bool m_paused = false;
 };
 
 }  // namespace traceview

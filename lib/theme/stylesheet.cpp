@@ -149,6 +149,21 @@ QToolButton:disabled {
     color: @textDisabled@;
 }
 
+/* Panel pin toggles (PropertiesPanel/LayersPanel) already show their pinned
+   state through the icon itself (hollow vs. filled pushpin) -- the generic
+   solid-accent checked background above would double up on that and just
+   look like a stray blue box, so keep this one flat and let hover be the
+   only surface feedback. */
+QToolButton#pinButton:checked {
+    background-color: transparent;
+    color: @textPrimary@;
+    border-color: transparent;
+}
+QToolButton#pinButton:checked:hover {
+    background-color: @surfaceAlt@;
+    border-color: @border@;
+}
+
 QStatusBar {
     background-color: @surface@;
     border-top: 1px solid @border@;
@@ -328,6 +343,19 @@ QTableWidget {
     gridline-color: @border@;
 }
 QTableWidget::item:selected {
+    background-color: @accent@;
+    color: @background@;
+}
+
+QListWidget {
+    background-color: @surface@;
+    color: @textPrimary@;
+    border: 1px solid @border@;
+}
+QListWidget::item {
+    padding: 4px;
+}
+QListWidget::item:selected {
     background-color: @accent@;
     color: @background@;
 }

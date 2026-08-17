@@ -53,7 +53,10 @@ private slots:
 
     void resizeCarriesOverByPositionAndTrims();
 
-    void gaugeConfigParsesFieldBinding();
+    void gaugeConfigParsesSeries();
+    void gaugeConfigMigratesLegacyFieldId();
+    void gaugeConfigDefaultsToOneSeriesWhenUnconfigured();
+    void gaugeConfigEmptySeriesArrayStaysEmpty();
 };
 
 void TestChartData::parsesDefaultsFromEmptyConfig() {
@@ -207,24 +210,66 @@ void TestChartData::resizeCarriesOverByPositionAndTrims() {
     QCOMPARE(resized[0].values(), (QVector<double>{2.0, 3.0}));
 }
 
-void TestChartData::gaugeConfigParsesFieldBinding() {
+void TestChartData::gaugeConfigParsesSeries() {
     QJsonObject json;
     json["sourceId"] = "0x11223344";
     json["topicId"] = "0x0001";
-    json["fieldId"] = 2;
     json["min"] = -1.0;
     json["max"] = 1.0;
     json["unit"] = "g";
     json["decimals"] = 3;
 
+    QJsonArray series;
+    series.append(seriesJson(2));
+    QJsonObject ring2;
+    ring2["name"] = "Y";
+    ring2["fieldId"] = 3;
+    ring2["color"] = "#22C55E";
+    series.append(ring2);
+    json["series"] = series;
+
     const GaugeConfig config = parseGaugeConfig(json);
     QCOMPARE(config.sourceId, quint32(0x11223344));
     QCOMPARE(config.topicId, quint16(0x0001));
-    QCOMPARE(config.fieldId, quint16(2));
     QCOMPARE(config.min, -1.0);
     QCOMPARE(config.max, 1.0);
     QCOMPARE(config.unit, QStringLiteral("g"));
     QCOMPARE(config.decimals, 3);
+    QCOMPARE(config.series.size(), 2);
+    QCOMPARE(config.series[0].fieldId, quint16(2));
+    QCOMPARE(config.series[1].fieldId, quint16(3));
+    QCOMPARE(config.series[1].name, QStringLiteral("Y"));
+    QCOMPARE(config.series[1].color, QColor("#22C55E"));
+}
+
+void TestChartData::gaugeConfigMigratesLegacyFieldId() {
+    // Pre-multi-ring save: a bare top-level fieldId instead of a series
+    // array. Must still load as a single ring so old saved dashboards don't
+    // go blank.
+    QJsonObject json;
+    json["fieldId"] = 5;
+
+    const GaugeConfig config = parseGaugeConfig(json);
+    QCOMPARE(config.series.size(), 1);
+    QCOMPARE(config.series[0].fieldId, quint16(5));
+}
+
+void TestChartData::gaugeConfigDefaultsToOneSeriesWhenUnconfigured() {
+    // A freshly-added gauge (config still the default empty object) gets one
+    // placeholder ring instead of rendering blank.
+    const GaugeConfig config = parseGaugeConfig(QJsonObject());
+    QCOMPARE(config.series.size(), 1);
+}
+
+void TestChartData::gaugeConfigEmptySeriesArrayStaysEmpty() {
+    // Distinct from the "never configured" case above: an explicit empty
+    // array (e.g. the user removed every ring in the editor) must stay
+    // empty, not silently regain a placeholder ring.
+    QJsonObject json;
+    json["series"] = QJsonArray();
+
+    const GaugeConfig config = parseGaugeConfig(json);
+    QVERIFY(config.series.isEmpty());
 }
 
 } // namespace

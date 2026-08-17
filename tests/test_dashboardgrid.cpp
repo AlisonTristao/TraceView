@@ -3,6 +3,7 @@
 #include <QJsonArray>
 #include <QJsonObject>
 #include <QPainter>
+#include <QStringList>
 
 #include "dashboard/dashboardcell.h"
 #include "dashboard/dashboardgrid.h"
@@ -12,6 +13,7 @@
 
 using traceview::DashboardCell;
 using traceview::DashboardGrid;
+using traceview::DashboardLayerEntry;
 using traceview::DashboardWidget;
 using traceview::ThemeManager;
 
@@ -49,10 +51,13 @@ private slots:
     void changeSelectedTypeIsUndoable();
     void toJsonFromJsonRoundTrips();
     void dragMovesAndSnapsToNearestGridCell();
+    void dragOntoAnotherItemIsNowAllowed();
     void resizeChangesGeometryWithUndo();
     void resizeClampsToMinimumSize();
     void cellHasNoIdleBorderAndSelectedBorderStaysAboveContent();
     void squareCornerPatchesDoNotCreateHoles();
+    void zOrderActionsReorderStackAndAreUndoable();
+    void selectionDoesNotChangePersistedZOrder();
 };
 
 void TestDashboardGrid::addItemPushesUndoableCommand() {
@@ -213,6 +218,49 @@ void TestDashboardGrid::dragMovesAndSnapsToNearestGridCell() {
     QCOMPARE(item.value("x").toDouble(), 3.0 / 60.0);
 }
 
+void TestDashboardGrid::dragOntoAnotherItemIsNowAllowed() {
+    DashboardGrid grid;
+    // 1200x800, edit mode gutter is 0 (see gutter()) -- both dimensions are
+    // exact multiples of kGridColumns/kGridRows (60/40), i.e. exactly 20px
+    // per grid cell in both dimensions, so the pixel delta below maps to a
+    // whole-cell fraction with zero rounding ambiguity.
+    grid.resize(1200, 800);
+    grid.setEditMode(true);
+    grid.show();
+    QVERIFY(QTest::qWaitForWindowExposed(&grid));
+
+    grid.addItem("dummy_line"); // default size 16/60 x 12/40, auto-placed at (0,0)
+    grid.addItem("dummy_bar"); // auto-placed in the first free slot -- next to the first item, at (16/60, 0)
+    const QString secondId = grid.selectedItemId();
+
+    QJsonObject secondBefore = grid.toJson().value("items").toArray().at(1).toObject();
+    QCOMPARE(secondBefore.value("x").toDouble(), 16.0 / 60.0);
+
+    DashboardCell* secondCell = nullptr;
+    for (DashboardCell* cell : grid.findChildren<DashboardCell*>()) {
+        if (cell->itemId() == secondId) {
+            secondCell = cell;
+            break;
+        }
+    }
+    QVERIFY(secondCell != nullptr);
+
+    const QPoint headerPoint(50, 10); // inside the second item's header strip
+    // -320px = -16 grid columns at 20px/column -- lands the second item
+    // exactly on top of the first. Before overlap was allowed, this would
+    // have been rejected on release and snapped back to (16/60, 0).
+    const QPoint dragged = headerPoint + QPoint(-320, 0);
+
+    QTest::mousePress(secondCell, Qt::LeftButton, Qt::NoModifier, headerPoint);
+    QTest::mouseMove(secondCell, dragged);
+    QTest::mouseRelease(secondCell, Qt::LeftButton, Qt::NoModifier, dragged);
+
+    const QJsonObject firstItem = grid.toJson().value("items").toArray().at(0).toObject();
+    const QJsonObject secondAfter = grid.toJson().value("items").toArray().at(1).toObject();
+    QCOMPARE(secondAfter.value("x").toDouble(), firstItem.value("x").toDouble());
+    QCOMPARE(secondAfter.value("y").toDouble(), firstItem.value("y").toDouble());
+}
+
 void TestDashboardGrid::resizeChangesGeometryWithUndo() {
     DashboardGrid grid;
     grid.resize(496, 336); // same 480x320 usable / 8px-per-cell setup as the move test above
@@ -329,6 +377,70 @@ void TestDashboardGrid::squareCornerPatchesDoNotCreateHoles() {
     // rounded base and square patch and becomes a visible radius-sized hole.
     QVERIFY(path.contains(QPointF(1, 1)));
     QVERIFY(path.contains(QPointF(8, 8)));
+}
+
+namespace {
+QStringList layerIds(const DashboardGrid& grid) {
+    QStringList ids;
+    for (const DashboardLayerEntry& entry : grid.layerEntries()) {
+        ids << entry.id;
+    }
+    return ids;
+}
+} // namespace
+
+void TestDashboardGrid::zOrderActionsReorderStackAndAreUndoable() {
+    DashboardGrid grid;
+    grid.addItem("dummy_line");
+    const QString idA = grid.selectedItemId();
+    grid.addItem("dummy_bar");
+    const QString idB = grid.selectedItemId();
+    grid.addItem("dummy_gauge");
+    const QString idC = grid.selectedItemId();
+    grid.undoStack()->clear(); // isolate the z-order commands below from the 3 AddWidgetCommands above
+
+    QCOMPARE(layerIds(grid), QStringList({idA, idB, idC})); // back-to-front, creation order
+
+    grid.selectItem(idA);
+    grid.sendSelectedToBack(); // no-op: idA is already at the back
+    QCOMPARE(grid.undoStack()->count(), 0);
+
+    grid.selectItem(idB);
+    grid.sendSelectedBackward(); // swaps with idA, one step
+    QCOMPARE(layerIds(grid), QStringList({idB, idA, idC}));
+    QCOMPARE(grid.undoStack()->count(), 1);
+
+    grid.undoStack()->undo();
+    QCOMPARE(layerIds(grid), QStringList({idA, idB, idC}));
+    grid.undoStack()->redo();
+    QCOMPARE(layerIds(grid), QStringList({idB, idA, idC}));
+
+    grid.selectItem(idB);
+    grid.bringSelectedToFront();
+    QCOMPARE(layerIds(grid), QStringList({idA, idC, idB}));
+
+    grid.selectItem(idA);
+    grid.bringSelectedForward();
+    QCOMPARE(layerIds(grid), QStringList({idC, idA, idB}));
+}
+
+void TestDashboardGrid::selectionDoesNotChangePersistedZOrder() {
+    DashboardGrid grid;
+    grid.addItem("dummy_line");
+    const QString idA = grid.selectedItemId();
+    grid.addItem("dummy_bar");
+    const QString idB = grid.selectedItemId();
+
+    const QStringList before = layerIds(grid);
+
+    grid.selectItem(idA); // temporarily raises idA on screen -- the model order must not change
+    QCOMPARE(layerIds(grid), before);
+
+    grid.selectItem(QString()); // deselect -- idA returns to its own layer
+    QCOMPARE(layerIds(grid), before);
+
+    grid.selectItem(idB);
+    QCOMPARE(layerIds(grid), before);
 }
 
 } // namespace
