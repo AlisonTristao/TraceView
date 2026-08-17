@@ -7,6 +7,17 @@ release flow.
 
 ## [Unreleased]
 
+## [1.0.3] - 2026-08-17
+
+### Added
+
+- Language switching (**View → Language**): a `LanguageManager` registers
+  selectable UI languages, persists the choice via `QSettings`, and installs
+  the matching translator (plus Qt's own base translation, so native dialog
+  chrome follows along) on restart.
+- Portuguese (Brazil) translation (`translations/traceview_pt_BR.ts`),
+  covering the UI/dashboard/protocol layers.
+
 ## [1.0.2] - 2026-08-16
 
 ### Added
