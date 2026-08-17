@@ -148,6 +148,8 @@ target_link_libraries(traceview_protocol PUBLIC
 add_library(traceview_project STATIC
     project/projectstore.cpp
     project/projectstore.h
+    project/workspacemanager.cpp
+    project/workspacemanager.h
 )
 
 target_include_directories(traceview_project PUBLIC
@@ -243,6 +245,8 @@ add_library(traceview_ui STATIC
     core/serialmanager.h
     core/serialwidgetbridge.cpp
     core/serialwidgetbridge.h
+    core/workspaceswitcher.cpp
+    core/workspaceswitcher.h
     vendor/qrcodegen/qrcodegen.cpp
     vendor/qrcodegen/qrcodegen.hpp
 )

@@ -33,5 +33,14 @@ QIcon makeSendToBackIcon(const QColor& color);
 // Thumbtack, tilted 45°: filled when active=true (pinned open), outlined
 // otherwise -- used by the panel pin toggle (see PropertiesPanel/LayersPanel).
 QIcon makePinIcon(const QColor& color, bool active);
+// A 2x2 grid of small squares -- the workspace switcher's button icon,
+// evoking a dashboard layout.
+QIcon makeWorkspaceIcon(const QColor& color);
+// A trash bin: lid plus a tapered body -- the workspace switcher's per-row
+// delete affordance. `size` defaults to kRibbonIconSize but can be drawn
+// larger (the workspace switcher's rows want it a bit bigger than the
+// ribbon's own buttons) -- the geometry scales with it rather than just
+// being stretched, so it stays crisp instead of blurring.
+QIcon makeTrashIcon(const QColor& color, int size = kRibbonIconSize);
 
 } // namespace traceview

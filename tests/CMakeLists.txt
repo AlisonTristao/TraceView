@@ -13,6 +13,7 @@ function(add_traceview_test name)
 endfunction()
 
 add_traceview_test(test_projectstore traceview_project)
+add_traceview_test(test_workspacemanager traceview_project)
 add_traceview_test(test_dashboarditem traceview_dashboard)
 add_traceview_test(test_widgetregistry traceview_dashboard)
 add_traceview_test(test_dashboardgrid traceview_dashboard)

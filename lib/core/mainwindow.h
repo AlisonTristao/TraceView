@@ -26,6 +26,7 @@ class PanelDockController;
 class PropertiesPanel;
 class Ribbon;
 class SerialManager;
+class WorkspaceSwitcher;
 
 class MainWindow : public QMainWindow {
     Q_OBJECT
@@ -49,6 +50,19 @@ private:
     Ribbon* buildRibbon();
     void buildPropertiesPanel();
     void buildLayersPanel();
+    void buildWorkspaceSwitcher();
+    // Pushes WorkspaceManager's current workspace list/active id into
+    // m_workspaceSwitcher. Called after any mutation (switch/create/delete)
+    // and on project load/new/save.
+    void refreshWorkspaceSwitcher();
+    // Snapshots the outgoing workspace's dashboard, makes `id` active, and
+    // reloads DashboardGrid from it -- the same fromJson()/undo-clear/
+    // refresh sequence onNewProject()/openRecentFile() use. No-op if `id`
+    // is already active.
+    void switchToWorkspace(const QString& id);
+    void onWorkspaceSelected(const QString& id);
+    void onWorkspaceDeleteRequested(const QString& id);
+    void onNewWorkspaceRequested();
     // Re-applies m_dockController's geometry to every docked panel. Called
     // whenever m_contentRow resizes (see eventFilter) since the panels are
     // positioned directly rather than managed by a layout.
@@ -105,6 +119,7 @@ private:
     // Owns the panels' drag-to-dock/float behavior -- see paneldockcontroller.h.
     PanelDockController* m_dockController = nullptr;
     Ribbon* m_ribbon = nullptr;
+    WorkspaceSwitcher* m_workspaceSwitcher = nullptr;
     QAction* m_positionAction = nullptr;
     QAction* m_addWidgetAction = nullptr;
     QAction* m_removeAction = nullptr;

@@ -9,9 +9,11 @@
 #include <QFileInfo>
 #include <QGuiApplication>
 #include <QHBoxLayout>
+#include <QInputDialog>
 #include <QIntValidator>
 #include <QKeySequence>
 #include <QLabel>
+#include <QLineEdit>
 #include <QMenu>
 #include <QMenuBar>
 #include <QMessageBox>
@@ -34,12 +36,14 @@
 #include "layerspanel.h"
 #include "paneldockcontroller.h"
 #include "project/projectstore.h"
+#include "project/workspacemanager.h"
 #include "protocol/btpbackend.h"
 #include "propertiespanel.h"
 #include "ribbon.h"
 #include "ribbonicons.h"
 #include "serialmanager.h"
 #include "serialwidgetbridge.h"
+#include "workspaceswitcher.h"
 #include "traceview/fontmanager.h"
 #include "traceview/languagemanager.h"
 #include "traceview/thememanager.h"
@@ -211,6 +215,10 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     // state.
     m_telemetryStatusLabel = new QLabel(this);
     statusBar()->addPermanentWidget(m_telemetryStatusLabel);
+
+    // Added last so it lands to the right of m_telemetryStatusLabel above --
+    // each addPermanentWidget() call appends further right.
+    buildWorkspaceSwitcher();
 }
 
 MainWindow::~MainWindow() {
@@ -549,13 +557,22 @@ Ribbon* MainWindow::buildRibbon() {
     m_connectButton->setCheckable(true);
     connect(m_connectButton, &QPushButton::toggled, this, &MainWindow::onSerialConnectToggled);
 
-    m_fullscreenButton = new QToolButton(runPage);
+    // Lives in the status bar (bottom-left, see below) rather than on this
+    // page: the ribbon's tab strip hides during fullscreen
+    // (onFullscreenToggled -- m_ribbon->setTabBarVisible(false)), which
+    // used to be harmless for this button since the Run page itself stayed
+    // visible, but placing the workspace switcher in the ribbon's tab row
+    // (topico's earlier design) broke under that same hide. The status bar
+    // is never touched by fullscreen, so anything anchored there survives
+    // it for free.
+    m_fullscreenButton = new QToolButton(this);
     m_fullscreenButton->setCheckable(true);
     m_fullscreenButton->setAutoRaise(true);
     m_fullscreenButton->setFixedSize(kRibbonButtonSize, kRibbonButtonSize);
     m_fullscreenButton->setIconSize(QSize(kRibbonIconSize, kRibbonIconSize));
     m_fullscreenButton->setToolTip(tr("Fullscreen dashboard (F11)"));
     connect(m_fullscreenButton, &QToolButton::toggled, this, &MainWindow::onFullscreenToggled);
+    statusBar()->addWidget(m_fullscreenButton);
 
     // Window-level shortcuts (not menu items) so they keep working once the
     // menu bar is hidden while fullscreen (see onFullscreenToggled). Routed
@@ -585,7 +602,6 @@ Ribbon* MainWindow::buildRibbon() {
     runLayout->addWidget(m_lineTerminatorCombo);
     runLayout->addWidget(m_connectButton);
     runLayout->addStretch();
-    runLayout->addWidget(m_fullscreenButton);
 
     refreshSerialPorts();
     connect(m_serialManager, &SerialManager::connectionStateChanged, this,
@@ -615,6 +631,93 @@ Ribbon* MainWindow::buildRibbon() {
 
     m_ribbon = ribbon;
     return ribbon;
+}
+
+void MainWindow::buildWorkspaceSwitcher() {
+    // Status bar (bottom-right), not the ribbon: see the comment above
+    // m_fullscreenButton's construction in buildRibbon() for why -- the
+    // ribbon's tab row is hidden while fullscreen, which this widget used
+    // to live inside via Ribbon::setCornerWidget().
+    m_workspaceSwitcher = new WorkspaceSwitcher(this);
+    connect(m_workspaceSwitcher, &WorkspaceSwitcher::workspaceSelected, this, &MainWindow::onWorkspaceSelected);
+    connect(m_workspaceSwitcher, &WorkspaceSwitcher::workspaceDeleteRequested, this,
+            &MainWindow::onWorkspaceDeleteRequested);
+    connect(m_workspaceSwitcher, &WorkspaceSwitcher::newWorkspaceRequested, this,
+            &MainWindow::onNewWorkspaceRequested);
+    m_workspaceSwitcher->updateIcons(ThemeManager::instance().currentTheme().textPrimary);
+    refreshWorkspaceSwitcher();
+    statusBar()->addPermanentWidget(m_workspaceSwitcher);
+}
+
+void MainWindow::refreshWorkspaceSwitcher() {
+    QVector<WorkspaceSwitcher::Entry> entries;
+    for (const Workspace& workspace : WorkspaceManager::instance().workspaces()) {
+        entries.append({workspace.id, workspace.name});
+    }
+    m_workspaceSwitcher->setWorkspaces(entries, WorkspaceManager::instance().activeId());
+}
+
+void MainWindow::switchToWorkspace(const QString& id) {
+    WorkspaceManager& workspaces = WorkspaceManager::instance();
+    if (id == workspaces.activeId()) {
+        return;
+    }
+
+    workspaces.setDashboardFor(workspaces.activeId(), m_dashboardGrid->toJson());
+    workspaces.setActiveId(id);
+    m_dashboardGrid->fromJson(workspaces.dashboardFor(id));
+    m_dashboardGrid->undoStack()->clear();
+    refreshPropertiesPanel();
+    refreshLayersPanel();
+    refreshWorkspaceSwitcher();
+}
+
+void MainWindow::onWorkspaceSelected(const QString& id) {
+    switchToWorkspace(id);
+}
+
+void MainWindow::onNewWorkspaceRequested() {
+    bool ok = false;
+    const QString name = QInputDialog::getText(this, tr("New Workspace"), tr("Name:"), QLineEdit::Normal,
+                                                 tr("Workspace"), &ok);
+    if (!ok || name.trimmed().isEmpty()) {
+        return;
+    }
+
+    WorkspaceManager& workspaces = WorkspaceManager::instance();
+    workspaces.setDashboardFor(workspaces.activeId(), m_dashboardGrid->toJson());
+    workspaces.createWorkspace(name.trimmed());
+    m_dashboardGrid->fromJson(QJsonObject());
+    m_dashboardGrid->undoStack()->clear();
+    refreshPropertiesPanel();
+    refreshLayersPanel();
+    refreshWorkspaceSwitcher();
+    statusBar()->showMessage(tr("Created workspace \"%1\".").arg(name.trimmed()), 3000);
+}
+
+void MainWindow::onWorkspaceDeleteRequested(const QString& id) {
+    WorkspaceManager& workspaces = WorkspaceManager::instance();
+    if (workspaces.workspaces().size() <= 1) {
+        return;
+    }
+
+    const QString name = workspaces.nameFor(id);
+    if (QMessageBox::question(this, tr("Delete Workspace"),
+                               tr("Delete workspace \"%1\"? This cannot be undone.").arg(name),
+                               QMessageBox::Yes | QMessageBox::No, QMessageBox::No) != QMessageBox::Yes) {
+        return;
+    }
+
+    const bool wasActive = id == workspaces.activeId();
+    workspaces.removeWorkspace(id);
+    if (wasActive) {
+        m_dashboardGrid->fromJson(workspaces.dashboardFor(workspaces.activeId()));
+        m_dashboardGrid->undoStack()->clear();
+        refreshPropertiesPanel();
+        refreshLayersPanel();
+    }
+    refreshWorkspaceSwitcher();
+    statusBar()->showMessage(tr("Deleted workspace \"%1\".").arg(name), 3000);
 }
 
 void MainWindow::buildLayersPanel() {
@@ -676,6 +779,9 @@ void MainWindow::updateRibbonIcons() {
     m_undoAction->setIcon(makeArrowIcon(palette.textPrimary, /*pointingLeft=*/true));
     m_redoAction->setIcon(makeArrowIcon(palette.textPrimary, /*pointingLeft=*/false));
     m_fullscreenButton->setIcon(makeFullscreenIcon(palette.textPrimary, m_fullscreenButton->isChecked()));
+    if (m_workspaceSwitcher) {
+        m_workspaceSwitcher->updateIcons(palette.textPrimary);
+    }
 }
 
 void MainWindow::onRibbonTabChanged(int index) {
@@ -843,15 +949,18 @@ void MainWindow::onNewProject() {
     }
 
     ProjectStore::instance().reset();
+    WorkspaceManager::instance().reset();
     m_dashboardGrid->fromJson(QJsonObject());
     m_dashboardGrid->undoStack()->clear();
     refreshPropertiesPanel();
     refreshLayersPanel();
+    refreshWorkspaceSwitcher();
     statusBar()->showMessage(tr("Started a new project."), 3000);
 }
 
 void MainWindow::onSaveProject() {
-    ProjectStore::instance().setSection("dashboard", m_dashboardGrid->toJson());
+    WorkspaceManager::instance().setDashboardFor(WorkspaceManager::instance().activeId(), m_dashboardGrid->toJson());
+    ProjectStore::instance().setSection("workspaces", WorkspaceManager::instance().toJson());
 
     QString path = ProjectStore::instance().currentPath();
     if (path.isEmpty()) {
@@ -867,7 +976,8 @@ void MainWindow::onSaveProject() {
 }
 
 void MainWindow::onSaveProjectAs() {
-    ProjectStore::instance().setSection("dashboard", m_dashboardGrid->toJson());
+    WorkspaceManager::instance().setDashboardFor(WorkspaceManager::instance().activeId(), m_dashboardGrid->toJson());
+    ProjectStore::instance().setSection("workspaces", WorkspaceManager::instance().toJson());
 
     const QString path = QFileDialog::getSaveFileName(this, tr("Save Project As"), QString(), kProjectFileFilter);
     if (path.isEmpty()) {
@@ -895,10 +1005,22 @@ void MainWindow::openRecentFile(const QString& path) {
         return;
     }
 
-    m_dashboardGrid->fromJson(ProjectStore::instance().section("dashboard"));
+    const QJsonObject workspacesSection = ProjectStore::instance().section("workspaces");
+    if (workspacesSection.isEmpty()) {
+        // Older project file, predating workspaces -- migrate its single
+        // "dashboard" section into a lone Default workspace.
+        WorkspaceManager::instance().reset();
+        WorkspaceManager::instance().setDashboardFor(WorkspaceManager::instance().activeId(),
+                                                       ProjectStore::instance().section("dashboard"));
+    } else {
+        WorkspaceManager::instance().fromJson(workspacesSection);
+    }
+
+    m_dashboardGrid->fromJson(WorkspaceManager::instance().dashboardFor(WorkspaceManager::instance().activeId()));
     m_dashboardGrid->undoStack()->clear();
     refreshPropertiesPanel();
     refreshLayersPanel();
+    refreshWorkspaceSwitcher();
     addRecentFile(path);
 }
 

@@ -1,6 +1,7 @@
 #include "ribbonicons.h"
 
 #include <QPainter>
+#include <QPainterPath>
 #include <QPixmap>
 #include <QPolygon>
 
@@ -246,6 +247,65 @@ QIcon makePinIcon(const QColor& color, bool active) {
     const double r = 2.6;
     painter.drawEllipse(QPointF(cx, headCy), r, r);
     painter.drawLine(QPointF(cx, headCy + r), QPointF(cx, kRibbonIconSize - 2.0));
+
+    return QIcon(pixmap);
+}
+
+QIcon makeWorkspaceIcon(const QColor& color) {
+    QPixmap pixmap(kRibbonIconSize, kRibbonIconSize);
+    pixmap.fill(Qt::transparent);
+
+    QPainter painter(&pixmap);
+    painter.setRenderHint(QPainter::Antialiasing);
+    QPen pen(color, 1.5);
+    pen.setJoinStyle(Qt::RoundJoin);
+    painter.setPen(pen);
+    painter.setBrush(Qt::NoBrush);
+
+    // Four small squares in a 2x2 grid, evoking a dashboard layout.
+    const double cell = 6.0;
+    const double gap = 2.0;
+    const double origin = (kRibbonIconSize - (2 * cell + gap)) / 2.0;
+    painter.drawRoundedRect(QRectF(origin, origin, cell, cell), 1.0, 1.0);
+    painter.drawRoundedRect(QRectF(origin + cell + gap, origin, cell, cell), 1.0, 1.0);
+    painter.drawRoundedRect(QRectF(origin, origin + cell + gap, cell, cell), 1.0, 1.0);
+    painter.drawRoundedRect(QRectF(origin + cell + gap, origin + cell + gap, cell, cell), 1.0, 1.0);
+    return QIcon(pixmap);
+}
+
+QIcon makeTrashIcon(const QColor& color, int size) {
+    QPixmap pixmap(size, size);
+    pixmap.fill(Qt::transparent);
+
+    QPainter painter(&pixmap);
+    painter.setRenderHint(QPainter::Antialiasing);
+    // Every coordinate below is drawn in the original 16px design space;
+    // scaling the painter (instead of the finished pixmap) keeps the strokes
+    // crisp at a larger `size` rather than blurring an upscaled bitmap.
+    const qreal factor = qreal(size) / kRibbonIconSize;
+    painter.scale(factor, factor);
+    QPen pen(color, 1.4);
+    pen.setCapStyle(Qt::RoundCap);
+    pen.setJoinStyle(Qt::RoundJoin);
+    painter.setPen(pen);
+    painter.setBrush(Qt::NoBrush);
+
+    // Lid (a horizontal bar with a small handle) plus a tapered body below
+    // it with two vertical ribs -- the standard "delete" glyph.
+    painter.drawLine(QPointF(3.0, 4.5), QPointF(13.0, 4.5));
+    painter.drawLine(QPointF(6.5, 4.5), QPointF(6.5, 2.8));
+    painter.drawLine(QPointF(9.5, 4.5), QPointF(9.5, 2.8));
+    painter.drawLine(QPointF(6.5, 2.8), QPointF(9.5, 2.8));
+
+    QPainterPath body;
+    body.moveTo(4.0, 4.5);
+    body.lineTo(4.8, 13.0);
+    body.lineTo(11.2, 13.0);
+    body.lineTo(12.0, 4.5);
+    painter.drawPath(body);
+
+    painter.drawLine(QPointF(6.6, 6.5), QPointF(6.9, 11.5));
+    painter.drawLine(QPointF(9.4, 6.5), QPointF(9.1, 11.5));
 
     return QIcon(pixmap);
 }

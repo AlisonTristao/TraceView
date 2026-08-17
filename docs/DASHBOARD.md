@@ -244,28 +244,49 @@ independent top-level sections:
 ```json
 {
   "traceview": { "formatVersion": 1 },
-  "dashboard": {
-    "items": [
+  "workspaces": {
+    "activeId": "5d8f...",
+    "list": [
       {
-        "id": "...", "type": "dummy_line", "name": "", "key": "",
-        "config": {
-          "format": "csv", "count": 1,
-          "xAxis": { "mode": "samples", "sampleTimeMs": 100.0 },
-          "yAxis": { "mode": "auto", "min": 0.0, "max": 100.0, "unit": "", "grid": true },
-          "series": []
-        },
-        "x": 0.0, "y": 0.0, "width": 0.3333, "height": 0.25
+        "id": "5d8f...", "name": "Default",
+        "dashboard": {
+          "items": [
+            {
+              "id": "...", "type": "dummy_line", "name": "", "key": "",
+              "config": {
+                "format": "csv", "count": 1,
+                "xAxis": { "mode": "samples", "sampleTimeMs": 100.0 },
+                "yAxis": { "mode": "auto", "min": 0.0, "max": 100.0, "unit": "", "grid": true },
+                "series": []
+              },
+              "x": 0.0, "y": 0.0, "width": 0.3333, "height": 0.25
+            }
+          ]
+        }
       }
     ]
   }
 }
 ```
 
-Only the `dashboard` section exists today. To persist a new kind of
-config later (e.g. a serial connection profile), call
-`ProjectStore::instance().setSection("connection", {...})` with a new
-top-level key when saving, and read it back via `section("connection")`
-after a load — `ProjectStore` itself doesn't need to change for this.
+A project holds N named workspaces (`WorkspaceManager`,
+[lib/project/workspacemanager.h](../lib/project/workspacemanager.h)), each
+wrapping its own independent `DashboardGrid::toJson()`/`fromJson()` payload
+under `dashboard` — switching the active one (the workspace switcher button
+in the status bar, bottom-right, `WorkspaceSwitcher`,
+[lib/core/workspaceswitcher.h](../lib/core/workspaceswitcher.h)) swaps every
+widget on the canvas for that workspace's own set. `MainWindow` keeps the
+active workspace's `dashboard` field in sync with the live grid before every
+save or switch (`WorkspaceManager::setDashboardFor`). Opening a `.tvproj`
+saved before workspaces existed (no `workspaces` section, only a bare
+top-level `dashboard`) migrates that single layout into one `"Default"`
+workspace.
+
+To persist another new kind of config later (e.g. a serial connection
+profile), call `ProjectStore::instance().setSection("connection", {...})`
+with a new top-level key when saving, and read it back via
+`section("connection")` after a load — `ProjectStore` itself doesn't need
+to change for this.
 
 **Save Project** / **Open Project** in the toolbar drive this: Save reuses
 the last path once one is chosen (prompting via a file dialog only the
