@@ -15,8 +15,9 @@ release flow.
   selectable UI languages, persists the choice via `QSettings`, and installs
   the matching translator (plus Qt's own base translation, so native dialog
   chrome follows along) on restart.
-- Portuguese (Brazil) translation (`translations/traceview_pt_BR.ts`),
-  covering the UI/dashboard/protocol layers.
+- Translations covering the UI/dashboard/protocol layers for Portuguese
+  (Brazil), Spanish, French, German, Italian, Russian, Chinese (Simplified),
+  and Japanese (`translations/traceview_*.ts`).
 
 ## [1.0.2] - 2026-08-16
 

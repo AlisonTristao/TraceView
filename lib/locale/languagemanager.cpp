@@ -20,6 +20,13 @@ LanguageManager& LanguageManager::instance() {
 LanguageManager::LanguageManager() {
     registerLanguage({"en", "English", ""});
     registerLanguage({"pt_BR", "Português (Brasil)", ":/translations/traceview_pt_BR.qm"});
+    registerLanguage({"es", "Español", ":/translations/traceview_es.qm"});
+    registerLanguage({"fr", "Français", ":/translations/traceview_fr.qm"});
+    registerLanguage({"de", "Deutsch", ":/translations/traceview_de.qm"});
+    registerLanguage({"it", "Italiano", ":/translations/traceview_it.qm"});
+    registerLanguage({"ru", "Русский", ":/translations/traceview_ru.qm"});
+    registerLanguage({"zh_CN", "中文(简体)", ":/translations/traceview_zh_CN.qm"});
+    registerLanguage({"ja", "日本語", ":/translations/traceview_ja.qm"});
 
     const QSettings settings;
     int idx = indexOf(settings.value(kSettingsKey).toString());

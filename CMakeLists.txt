@@ -64,7 +64,15 @@ qt_add_executable(TraceView
 )
 
 qt_add_translations(TraceView
-    TS_FILES translations/traceview_pt_BR.ts
+    TS_FILES
+        translations/traceview_pt_BR.ts
+        translations/traceview_es.ts
+        translations/traceview_fr.ts
+        translations/traceview_de.ts
+        translations/traceview_it.ts
+        translations/traceview_ru.ts
+        translations/traceview_zh_CN.ts
+        translations/traceview_ja.ts
     RESOURCE_PREFIX "/translations"
 )
 
