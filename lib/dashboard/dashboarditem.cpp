@@ -9,6 +9,7 @@ QJsonObject dashboardItemToJson(const DashboardItem& item) {
     object["name"] = item.name;
     object["key"] = item.key;
     object["config"] = item.config;
+    object["groupId"] = item.groupId;
     object["x"] = item.x;
     object["y"] = item.y;
     object["width"] = item.width;
@@ -31,6 +32,8 @@ DashboardItem dashboardItemFromJson(const QJsonObject& object, bool* ok) {
     item.key = object.value("key").toString();
     // Absent in projects saved before per-type config existed.
     item.config = object.value("config").toObject();
+    // Absent in projects saved before grouping existed.
+    item.groupId = object.value("groupId").toString();
     item.x = qBound(0.0, object["x"].toDouble(0.0), 1.0);
     item.y = qBound(0.0, object["y"].toDouble(0.0), 1.0);
     item.width = qBound(0.0, object["width"].toDouble(0.0), 1.0);

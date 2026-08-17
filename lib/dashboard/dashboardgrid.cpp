@@ -1,5 +1,8 @@
 #include "dashboardgrid.h"
 
+#include <limits>
+
+#include <QApplication>
 #include <QClipboard>
 #include <QGuiApplication>
 #include <QJsonArray>
@@ -7,6 +10,7 @@
 #include <QMimeData>
 #include <QMouseEvent>
 #include <QPainter>
+#include <QRubberBand>
 #include <QUuid>
 
 #include "dashboardcell.h"
@@ -112,48 +116,137 @@ void DashboardGrid::setDeviceConnected(bool connected) {
     }
 }
 
-void DashboardGrid::selectItem(const QString& itemId) {
-    if (m_selectedItemId == itemId) {
+QSet<QString> DashboardGrid::expandGroups(const QSet<QString>& ids) const {
+    QSet<QString> groupIds;
+    for (const QString& id : ids) {
+        if (const DashboardItem* item = itemById(id)) {
+            if (!item->groupId.isEmpty()) {
+                groupIds.insert(item->groupId);
+            }
+        }
+    }
+    if (groupIds.isEmpty()) {
+        return ids;
+    }
+
+    QSet<QString> result = ids;
+    for (const DashboardItem& item : m_items) {
+        if (!item.groupId.isEmpty() && groupIds.contains(item.groupId)) {
+            result.insert(item.id);
+        }
+    }
+    return result;
+}
+
+void DashboardGrid::applySelection(const QSet<QString>& target) {
+    if (target == m_selectedItemIds) {
         return;
     }
-    if (DashboardCell* previous = m_cells.value(m_selectedItemId)) {
-        previous->setSelected(false);
+    for (const QString& id : m_selectedItemIds) {
+        if (!target.contains(id)) {
+            if (DashboardCell* cell = m_cells.value(id)) {
+                cell->setSelected(false);
+            }
+        }
     }
-    m_selectedItemId = itemId;
+    m_selectedItemIds = target;
+    for (const QString& id : m_selectedItemIds) {
+        if (DashboardCell* cell = m_cells.value(id)) {
+            cell->setSelected(true);
+        }
+    }
+    updateResizableFlags();
     // Undoes any temporary raise the previous selection got below, restoring
     // the persisted layer order, before (maybe) temporarily raising the new
     // selection -- purely visual, m_items' order is untouched either way.
     restackCells();
-    if (DashboardCell* next = m_cells.value(m_selectedItemId)) {
-        next->setSelected(true);
-        next->raise();
+    for (const DashboardItem& item : m_items) {
+        if (m_selectedItemIds.contains(item.id)) {
+            if (DashboardCell* cell = m_cells.value(item.id)) {
+                cell->raise();
+            }
+        }
     }
-    emit selectionChanged(m_selectedItemId);
+    emit selectionChanged(selectedItemId());
+}
+
+void DashboardGrid::updateResizableFlags() {
+    // Multi-selected/grouped cells can be dragged as a unit but not resized
+    // from that state -- resizing N items at once has no obvious single
+    // meaning, so it's simply disabled until the selection is back to one.
+    const bool resizable = m_selectedItemIds.size() <= 1;
+    for (const QString& id : m_selectedItemIds) {
+        if (DashboardCell* cell = m_cells.value(id)) {
+            cell->setResizable(resizable);
+        }
+    }
+}
+
+void DashboardGrid::selectItem(const QString& itemId) {
+    QSet<QString> target;
+    if (!itemId.isEmpty()) {
+        target = expandGroups({itemId});
+    }
+    applySelection(target);
+}
+
+void DashboardGrid::toggleItemSelection(const QString& itemId) {
+    if (itemId.isEmpty()) {
+        return;
+    }
+    const QSet<QString> unit = expandGroups({itemId});
+    QSet<QString> target = m_selectedItemIds;
+    if (target.contains(itemId)) {
+        target.subtract(unit);
+    } else {
+        target.unite(unit);
+    }
+    applySelection(target);
+}
+
+void DashboardGrid::selectItems(const QSet<QString>& ids, bool add) {
+    const QSet<QString> expanded = expandGroups(ids);
+    applySelection(add ? (m_selectedItemIds + expanded) : expanded);
+}
+
+QString DashboardGrid::selectedItemId() const {
+    return m_selectedItemIds.size() == 1 ? *m_selectedItemIds.constBegin() : QString();
+}
+
+bool DashboardGrid::selectionHasGroup() const {
+    for (const QString& id : m_selectedItemIds) {
+        if (const DashboardItem* item = itemById(id)) {
+            if (!item->groupId.isEmpty()) {
+                return true;
+            }
+        }
+    }
+    return false;
 }
 
 QString DashboardGrid::selectedItemTypeId() const {
-    if (const DashboardItem* item = itemById(m_selectedItemId)) {
+    if (const DashboardItem* item = itemById(selectedItemId())) {
         return item->typeId;
     }
     return QString();
 }
 
 QString DashboardGrid::selectedItemDisplayName() const {
-    if (const DashboardItem* item = itemById(m_selectedItemId)) {
+    if (const DashboardItem* item = itemById(selectedItemId())) {
         return displayNameFor(*item);
     }
     return QString();
 }
 
 QString DashboardGrid::selectedItemKey() const {
-    if (const DashboardItem* item = itemById(m_selectedItemId)) {
+    if (const DashboardItem* item = itemById(selectedItemId())) {
         return item->key;
     }
     return QString();
 }
 
 QJsonObject DashboardGrid::selectedItemConfig() const {
-    if (const DashboardItem* item = itemById(m_selectedItemId)) {
+    if (const DashboardItem* item = itemById(selectedItemId())) {
         return item->config;
     }
     return QJsonObject();
@@ -196,18 +289,32 @@ void DashboardGrid::addItem(const QString& typeId) {
 }
 
 void DashboardGrid::removeSelected() {
-    if (m_selectedItemId.isEmpty()) {
+    if (m_selectedItemIds.isEmpty()) {
         return;
     }
-    const DashboardItem* item = itemById(m_selectedItemId);
-    if (!item) {
+    if (m_selectedItemIds.size() == 1) {
+        if (const DashboardItem* item = itemById(*m_selectedItemIds.constBegin())) {
+            m_undoStack->push(new RemoveWidgetCommand(this, *item));
+        }
         return;
     }
-    m_undoStack->push(new RemoveWidgetCommand(this, *item));
+
+    // Collected in model order (not selection-set order) so undo reinserts
+    // them in a stable, predictable sequence -- same reasoning as why a
+    // single removed item is simply appended back on undo.
+    QVector<DashboardItem> items;
+    for (const DashboardItem& item : m_items) {
+        if (m_selectedItemIds.contains(item.id)) {
+            items.append(item);
+        }
+    }
+    if (!items.isEmpty()) {
+        m_undoStack->push(new RemoveWidgetsCommand(this, items));
+    }
 }
 
 void DashboardGrid::copySelected() const {
-    const DashboardItem* item = itemById(m_selectedItemId);
+    const DashboardItem* item = itemById(selectedItemId());
     if (!item) {
         return;
     }
@@ -242,8 +349,11 @@ void DashboardGrid::pasteItem() {
 
     item.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
     // Keys must stay unique — the pasted copy starts unkeyed, same as a
-    // brand-new item added via addItem().
+    // brand-new item added via addItem(). Group membership doesn't carry
+    // over either -- otherwise a pasted copy would silently weld itself
+    // into the original's group instead of standing alone.
     item.key.clear();
+    item.groupId.clear();
 
     // Prefer landing one cell down-right of the copied spot (reads as "a
     // copy placed next to the original"); fall back to the first free cell
@@ -279,77 +389,83 @@ void DashboardGrid::removeItem(const QString& itemId) {
 }
 
 void DashboardGrid::changeSelectedType(const QString& newTypeId) {
-    if (m_selectedItemId.isEmpty()) {
+    const QString id = selectedItemId();
+    if (id.isEmpty()) {
         return;
     }
-    const DashboardItem* item = itemById(m_selectedItemId);
+    const DashboardItem* item = itemById(id);
     if (!item || item->typeId == newTypeId || WidgetRegistry::instance().displayName(newTypeId).isEmpty()) {
         return;
     }
 
-    m_undoStack->push(new ChangeWidgetTypeCommand(this, m_selectedItemId, item->typeId, newTypeId));
+    m_undoStack->push(new ChangeWidgetTypeCommand(this, id, item->typeId, newTypeId));
 }
 
 void DashboardGrid::renameSelected(const QString& newName) {
-    if (m_selectedItemId.isEmpty()) {
+    const QString id = selectedItemId();
+    if (id.isEmpty()) {
         return;
     }
-    const DashboardItem* item = itemById(m_selectedItemId);
+    const DashboardItem* item = itemById(id);
     if (!item || item->name == newName) {
         return;
     }
 
-    m_undoStack->push(new RenameWidgetCommand(this, m_selectedItemId, item->name, newName));
+    m_undoStack->push(new RenameWidgetCommand(this, id, item->name, newName));
 }
 
 bool DashboardGrid::setSelectedKey(const QString& newKey) {
-    if (m_selectedItemId.isEmpty()) {
+    const QString id = selectedItemId();
+    if (id.isEmpty()) {
         return false;
     }
-    const DashboardItem* item = itemById(m_selectedItemId);
+    const DashboardItem* item = itemById(id);
     if (!item) {
         return false;
     }
     if (item->key == newKey) {
         return true;
     }
-    if (!isKeyAvailable(newKey, m_selectedItemId)) {
+    if (!isKeyAvailable(newKey, id)) {
         return false;
     }
 
-    m_undoStack->push(new SetItemKeyCommand(this, m_selectedItemId, item->key, newKey));
+    m_undoStack->push(new SetItemKeyCommand(this, id, item->key, newKey));
     return true;
 }
 
 void DashboardGrid::changeSelectedConfig(const QJsonObject& newConfig) {
-    if (m_selectedItemId.isEmpty()) {
+    const QString id = selectedItemId();
+    if (id.isEmpty()) {
         return;
     }
-    const DashboardItem* item = itemById(m_selectedItemId);
+    const DashboardItem* item = itemById(id);
     if (!item || item->config == newConfig) {
         return;
     }
 
-    m_undoStack->push(new SetItemConfigCommand(this, m_selectedItemId, item->config, newConfig));
+    m_undoStack->push(new SetItemConfigCommand(this, id, item->config, newConfig));
 }
 
 void DashboardGrid::bringSelectedToFront() {
-    if (m_selectedItemId.isEmpty()) {
+    const QString id = selectedItemId();
+    if (id.isEmpty()) {
         return;
     }
-    const int from = indexOfItem(m_selectedItemId);
+    const int from = indexOfItem(id);
     const int to = m_items.size() - 1;
     if (from < 0 || from == to) {
         return;
     }
-    m_undoStack->push(new ChangeZOrderCommand(this, m_selectedItemId, from, to, tr("Bring to Front")));
+    m_undoStack->push(new ChangeZOrderCommand(this, id, from, to, tr("Bring to Front")));
 }
 
 void DashboardGrid::bringSelectedForward() {
-    if (m_selectedItemId.isEmpty()) {
+    const QString id = selectedItemId();
+    if (id.isEmpty()) {
         return;
     }
-    const int from = indexOfItem(m_selectedItemId);
+    const int from = indexOfItem(id);
     if (from < 0) {
         return;
     }
@@ -357,14 +473,15 @@ void DashboardGrid::bringSelectedForward() {
     if (from == to) {
         return;
     }
-    m_undoStack->push(new ChangeZOrderCommand(this, m_selectedItemId, from, to, tr("Bring Forward")));
+    m_undoStack->push(new ChangeZOrderCommand(this, id, from, to, tr("Bring Forward")));
 }
 
 void DashboardGrid::sendSelectedBackward() {
-    if (m_selectedItemId.isEmpty()) {
+    const QString id = selectedItemId();
+    if (id.isEmpty()) {
         return;
     }
-    const int from = indexOfItem(m_selectedItemId);
+    const int from = indexOfItem(id);
     if (from < 0) {
         return;
     }
@@ -372,18 +489,48 @@ void DashboardGrid::sendSelectedBackward() {
     if (from == to) {
         return;
     }
-    m_undoStack->push(new ChangeZOrderCommand(this, m_selectedItemId, from, to, tr("Send Backward")));
+    m_undoStack->push(new ChangeZOrderCommand(this, id, from, to, tr("Send Backward")));
 }
 
 void DashboardGrid::sendSelectedToBack() {
-    if (m_selectedItemId.isEmpty()) {
+    const QString id = selectedItemId();
+    if (id.isEmpty()) {
         return;
     }
-    const int from = indexOfItem(m_selectedItemId);
+    const int from = indexOfItem(id);
     if (from <= 0) {
         return;
     }
-    m_undoStack->push(new ChangeZOrderCommand(this, m_selectedItemId, from, 0, tr("Send to Back")));
+    m_undoStack->push(new ChangeZOrderCommand(this, id, from, 0, tr("Send to Back")));
+}
+
+void DashboardGrid::groupSelected() {
+    if (m_selectedItemIds.size() < 2) {
+        return;
+    }
+    QMap<QString, QString> previousGroupIds;
+    for (const QString& id : m_selectedItemIds) {
+        if (const DashboardItem* item = itemById(id)) {
+            previousGroupIds.insert(id, item->groupId);
+        }
+    }
+    const QString newGroupId = QUuid::createUuid().toString(QUuid::WithoutBraces);
+    m_undoStack->push(new GroupItemsCommand(this, previousGroupIds, newGroupId));
+}
+
+void DashboardGrid::ungroupSelected() {
+    QMap<QString, QString> previousGroupIds;
+    for (const QString& id : m_selectedItemIds) {
+        if (const DashboardItem* item = itemById(id)) {
+            if (!item->groupId.isEmpty()) {
+                previousGroupIds.insert(id, item->groupId);
+            }
+        }
+    }
+    if (previousGroupIds.isEmpty()) {
+        return;
+    }
+    m_undoStack->push(new UngroupItemsCommand(this, previousGroupIds));
 }
 
 void DashboardGrid::applyInsertItem(const DashboardItem& item) {
@@ -395,7 +542,13 @@ void DashboardGrid::applyInsertItem(const DashboardItem& item) {
 }
 
 void DashboardGrid::applyRemoveItemById(const QString& itemId) {
-    if (m_selectedItemId == itemId) {
+    // Whenever this fires for a currently-selected id, it's either the sole
+    // selected item (single-item remove) or one of several being removed
+    // together in the same RemoveWidgetsCommand (which iterates the whole
+    // selected set) -- either way, clearing the whole selection here is
+    // correct, not just premature, since every other selected id is about
+    // to be removed too.
+    if (m_selectedItemIds.contains(itemId)) {
         selectItem(QString());
     }
     removeItem(itemId);
@@ -429,7 +582,7 @@ void DashboardGrid::applyTypeChange(const QString& itemId, const QString& typeId
         oldCell->deleteLater();
     }
     if (DashboardCell* newCell = createCell(*item)) {
-        if (m_selectedItemId == itemId) {
+        if (m_selectedItemIds.contains(itemId)) {
             newCell->setSelected(true);
         }
     }
@@ -476,6 +629,12 @@ void DashboardGrid::applyZOrder(const QString& itemId, int index) {
     }
     m_items.move(from, index);
     restackCells();
+}
+
+void DashboardGrid::applySetGroup(const QString& itemId, const QString& groupId) {
+    if (DashboardItem* item = itemById(itemId)) {
+        item->groupId = groupId;
+    }
 }
 
 void DashboardGrid::restackCells() {
@@ -593,8 +752,11 @@ void DashboardGrid::paintEvent(QPaintEvent*) {
         // resized, same as the cell itself (see handleDragMoved()/
         // handleResizeMoved()) -- otherwise the guide lags behind at the
         // item's pre-drag position instead of following the cell around.
-        const bool isDragCandidate = m_drag && m_drag->itemId == item.id;
-        painter.drawRect(slotRect(isDragCandidate ? m_drag->candidate : item));
+        // Every dragged/resized item has its own candidates entry (not just
+        // the primary one the mouse is tracking), so a multi/group drag's
+        // guide outlines all follow their cells instead of only the primary.
+        const bool isDragCandidate = m_drag && m_drag->candidates.contains(item.id);
+        painter.drawRect(slotRect(isDragCandidate ? m_drag->candidates.value(item.id) : item));
     }
 
     // Small gray dots at each grid node instead of full lines — enough to
@@ -624,10 +786,61 @@ void DashboardGrid::paintEvent(QPaintEvent*) {
 void DashboardGrid::mousePressEvent(QMouseEvent* event) {
     // Reaches us only for clicks that missed every cell (Qt delivers to the
     // topmost child widget directly otherwise) — i.e. empty grid space.
+    // Deferred: we don't yet know if this is a plain click (clears the
+    // selection, same as always) or the start of a rubber-band drag -- that
+    // decision happens in mouseMoveEvent()/mouseReleaseEvent() once we know
+    // whether the press actually moved.
     if (m_editMode && event->button() == Qt::LeftButton) {
-        selectItem(QString());
+        m_rubberBandOrigin = event->position().toPoint();
+        m_rubberBandAdditive = event->modifiers().testFlag(Qt::ControlModifier);
+        m_rubberBandPending = true;
+        event->accept();
+        return;
     }
     QWidget::mousePressEvent(event);
+}
+
+void DashboardGrid::mouseMoveEvent(QMouseEvent* event) {
+    if (m_rubberBandPending) {
+        const QPoint pos = event->position().toPoint();
+        if (!m_rubberBand && (pos - m_rubberBandOrigin).manhattanLength() >= QApplication::startDragDistance()) {
+            m_rubberBand = new QRubberBand(QRubberBand::Rectangle, this);
+        }
+        if (m_rubberBand) {
+            m_rubberBand->setGeometry(QRect(m_rubberBandOrigin, pos).normalized());
+            m_rubberBand->show();
+        }
+        event->accept();
+        return;
+    }
+    QWidget::mouseMoveEvent(event);
+}
+
+void DashboardGrid::mouseReleaseEvent(QMouseEvent* event) {
+    if (m_rubberBandPending) {
+        m_rubberBandPending = false;
+        if (m_rubberBand) {
+            const QRect bandRect = m_rubberBand->geometry();
+            m_rubberBand->hide();
+            m_rubberBand->deleteLater();
+            m_rubberBand = nullptr;
+
+            QSet<QString> hits;
+            for (const DashboardItem& item : m_items) {
+                if (itemRect(item).intersects(bandRect)) {
+                    hits.insert(item.id);
+                }
+            }
+            selectItems(hits, m_rubberBandAdditive);
+        } else {
+            // Never exceeded the drag threshold -- a plain click on empty
+            // space, same as before this feature existed: clear selection.
+            selectItem(QString());
+        }
+        event->accept();
+        return;
+    }
+    QWidget::mouseReleaseEvent(event);
 }
 
 int DashboardGrid::gutter() const {
@@ -682,7 +895,12 @@ void DashboardGrid::clearItems() {
     m_cells.clear();
     m_items.clear();
     m_drag.reset();
-    m_selectedItemId.clear();
+    m_selectedItemIds.clear();
+    if (m_rubberBand) {
+        m_rubberBand->deleteLater();
+        m_rubberBand = nullptr;
+    }
+    m_rubberBandPending = false;
 }
 
 bool DashboardGrid::findFreeSlot(double width, double height, double* outX, double* outY) const {
@@ -789,19 +1007,37 @@ DashboardCell* DashboardGrid::createCell(const DashboardItem& item) {
 }
 
 void DashboardGrid::handleDragStarted(const QString& itemId, const QPoint& globalPos) {
-    const DashboardItem* item = itemById(itemId);
-    if (!item) {
+    if (!itemById(itemId)) {
         return;
     }
-    m_drag = DragOp{itemId, globalPos, *item, *item, false};
-    if (DashboardCell* cell = m_cells.value(itemId)) {
-        cell->raise();
-        cell->setDragInvalid(false);
+    // Dragging a member of the current multi-selection/group moves every
+    // member together; dragging anything else (shouldn't normally happen,
+    // since a cell only starts a drag once it's already selected -- see
+    // DashboardCell::mousePressEvent) falls back to just that one item.
+    const QSet<QString> members = m_selectedItemIds.contains(itemId) ? m_selectedItemIds : QSet<QString>{itemId};
+
+    DragOp op;
+    op.primaryItemId = itemId;
+    op.startGlobalPos = globalPos;
+    op.resizing = false;
+    for (const QString& id : members) {
+        if (const DashboardItem* member = itemById(id)) {
+            op.originals.insert(id, *member);
+            op.candidates.insert(id, *member);
+        }
+    }
+    m_drag = std::move(op);
+
+    for (auto it = m_drag->originals.constBegin(); it != m_drag->originals.constEnd(); ++it) {
+        if (DashboardCell* cell = m_cells.value(it.key())) {
+            cell->raise();
+            cell->setDragInvalid(false);
+        }
     }
 }
 
 void DashboardGrid::handleDragMoved(const QString& itemId, const QPoint& globalPos) {
-    if (!m_drag || m_drag->itemId != itemId || m_drag->resizing) {
+    if (!m_drag || m_drag->primaryItemId != itemId || m_drag->resizing) {
         return;
     }
 
@@ -809,41 +1045,92 @@ void DashboardGrid::handleDragMoved(const QString& itemId, const QPoint& globalP
     const QPoint deltaPx = globalPos - m_drag->startGlobalPos;
     const int deltaColumnCells = qRound(deltaPx.x() / double(area.width()) * kGridColumns);
     const int deltaRowCells = qRound(deltaPx.y() / double(area.height()) * kGridRows);
-    const double deltaX = deltaColumnCells / double(kGridColumns);
-    const double deltaY = deltaRowCells / double(kGridRows);
+    double deltaX = deltaColumnCells / double(kGridColumns);
+    double deltaY = deltaRowCells / double(kGridRows);
 
-    DashboardItem candidate = m_drag->original;
-    candidate.x = qBound(0.0, m_drag->original.x + deltaX, qMax(0.0, 1.0 - candidate.width));
-    candidate.y = qBound(0.0, m_drag->original.y + deltaY, qMax(0.0, 1.0 - candidate.height));
-    m_drag->candidate = candidate;
+    // Clamp the delta itself (not each member's candidate independently) so
+    // a multi/group drag stays rigid: every member keeps its exact pre-drag
+    // offset from the others, even if one of them would hit the canvas edge
+    // before the rest do.
+    double loDeltaX = -std::numeric_limits<double>::infinity();
+    double hiDeltaX = std::numeric_limits<double>::infinity();
+    double loDeltaY = -std::numeric_limits<double>::infinity();
+    double hiDeltaY = std::numeric_limits<double>::infinity();
+    for (auto it = m_drag->originals.constBegin(); it != m_drag->originals.constEnd(); ++it) {
+        const DashboardItem& original = it.value();
+        loDeltaX = qMax(loDeltaX, -original.x);
+        hiDeltaX = qMin(hiDeltaX, qMax(0.0, 1.0 - original.width) - original.x);
+        loDeltaY = qMax(loDeltaY, -original.y);
+        hiDeltaY = qMin(hiDeltaY, qMax(0.0, 1.0 - original.height) - original.y);
+    }
+    // Defensive only -- shouldn't trigger for a selection that was already
+    // entirely on-canvas before the drag started.
+    if (loDeltaX <= hiDeltaX) {
+        deltaX = qBound(loDeltaX, deltaX, hiDeltaX);
+    }
+    if (loDeltaY <= hiDeltaY) {
+        deltaY = qBound(loDeltaY, deltaY, hiDeltaY);
+    }
 
-    if (DashboardCell* draggedCell = m_cells.value(itemId)) {
-        draggedCell->setGeometry(itemRect(candidate));
-        // Live feedback for a candidate that would be rejected on release
-        // (currently only an overlap with another item, since the bounds
-        // above already keep candidate on-canvas) — otherwise the cell
-        // silently snaps back to its original spot with no warning.
-        draggedCell->setDragInvalid(!isPlacementValid(candidate, itemId));
+    for (auto it = m_drag->originals.constBegin(); it != m_drag->originals.constEnd(); ++it) {
+        const QString& id = it.key();
+        DashboardItem candidate = it.value();
+        candidate.x = it.value().x + deltaX;
+        candidate.y = it.value().y + deltaY;
+        m_drag->candidates[id] = candidate;
+
+        if (DashboardCell* cell = m_cells.value(id)) {
+            cell->setGeometry(itemRect(candidate));
+            // Live feedback for a candidate that would be rejected on
+            // release -- otherwise the cell(s) would silently snap back to
+            // their original spot with no warning.
+            cell->setDragInvalid(!isPlacementValid(candidate, id));
+        }
     }
     update();
 }
 
 void DashboardGrid::handleDragFinished(const QString& itemId, const QPoint&) {
-    if (!m_drag || m_drag->itemId != itemId) {
+    if (!m_drag || m_drag->primaryItemId != itemId) {
         return;
     }
-    if (isPlacementValid(m_drag->candidate, itemId)) {
-        if (const DashboardItem* item = itemById(itemId)) {
-            if (qAbs(item->x - m_drag->candidate.x) > kEpsilon || qAbs(item->y - m_drag->candidate.y) > kEpsilon) {
-                m_undoStack->push(new MoveWidgetCommand(this, itemId, QPointF(item->x, item->y),
-                                                         QPointF(m_drag->candidate.x, m_drag->candidate.y)));
-            }
+
+    // All-or-nothing, same as a single-item drag: if any member's candidate
+    // would be rejected, commit nothing and let every dragged cell snap back
+    // to its unchanged model position below, instead of partially applying
+    // the move and desyncing the group.
+    bool allValid = true;
+    for (auto it = m_drag->candidates.constBegin(); it != m_drag->candidates.constEnd(); ++it) {
+        if (!isPlacementValid(it.value(), it.key())) {
+            allValid = false;
+            break;
         }
     }
+
+    if (allValid) {
+        QMap<QString, QPointF> fromPositions;
+        QMap<QString, QPointF> toPositions;
+        for (auto it = m_drag->originals.constBegin(); it != m_drag->originals.constEnd(); ++it) {
+            const QString& id = it.key();
+            const DashboardItem& original = it.value();
+            const DashboardItem& candidate = m_drag->candidates.value(id);
+            if (qAbs(original.x - candidate.x) > kEpsilon || qAbs(original.y - candidate.y) > kEpsilon) {
+                fromPositions.insert(id, QPointF(original.x, original.y));
+                toPositions.insert(id, QPointF(candidate.x, candidate.y));
+            }
+        }
+        if (!fromPositions.isEmpty()) {
+            m_undoStack->push(new MoveWidgetsCommand(this, fromPositions, toPositions));
+        }
+    }
+
+    const QStringList draggedIds = m_drag->originals.keys();
     m_drag.reset();
-    relayoutItem(itemId);
-    if (DashboardCell* cell = m_cells.value(itemId)) {
-        cell->setDragInvalid(false);
+    for (const QString& id : draggedIds) {
+        relayoutItem(id);
+        if (DashboardCell* cell = m_cells.value(id)) {
+            cell->setDragInvalid(false);
+        }
     }
 }
 
@@ -853,7 +1140,15 @@ void DashboardGrid::handleResizeStarted(const QString& itemId, const QPoint& glo
     if (!item) {
         return;
     }
-    m_drag = DragOp{itemId, globalPos, *item, *item, true, handle};
+    DragOp op;
+    op.primaryItemId = itemId;
+    op.startGlobalPos = globalPos;
+    op.originals.insert(itemId, *item);
+    op.candidates.insert(itemId, *item);
+    op.resizing = true;
+    op.handle = handle;
+    m_drag = std::move(op);
+
     if (DashboardCell* cell = m_cells.value(itemId)) {
         cell->raise();
         cell->setDragInvalid(false);
@@ -861,7 +1156,7 @@ void DashboardGrid::handleResizeStarted(const QString& itemId, const QPoint& glo
 }
 
 void DashboardGrid::handleResizeMoved(const QString& itemId, const QPoint& globalPos) {
-    if (!m_drag || m_drag->itemId != itemId || !m_drag->resizing) {
+    if (!m_drag || m_drag->primaryItemId != itemId || !m_drag->resizing) {
         return;
     }
 
@@ -885,7 +1180,8 @@ void DashboardGrid::handleResizeMoved(const QString& itemId, const QPoint& globa
     const bool resizesTop = m_drag->handle == Handle::Top || m_drag->handle == Handle::TopLeft ||
                              m_drag->handle == Handle::TopRight;
 
-    DashboardItem candidate = m_drag->original;
+    const DashboardItem original = m_drag->originals.value(itemId);
+    DashboardItem candidate = original;
 
     const DashboardCell* resizingCell = m_cells.value(itemId);
     const bool compact = resizingCell && !resizingCell->hasHeader();
@@ -893,24 +1189,22 @@ void DashboardGrid::handleResizeMoved(const QString& itemId, const QPoint& globa
     const double minHeight = compact ? kMinHeaderlessItemHeight : kMinItemHeight;
 
     if (resizesRight) {
-        candidate.width =
-            qBound(minWidth, m_drag->original.width + deltaWidth, qMax(minWidth, 1.0 - candidate.x));
+        candidate.width = qBound(minWidth, original.width + deltaWidth, qMax(minWidth, 1.0 - candidate.x));
     } else if (resizesLeft) {
-        const double rightEdge = m_drag->original.x + m_drag->original.width;
-        candidate.width = qBound(minWidth, m_drag->original.width - deltaWidth, qMax(minWidth, rightEdge));
+        const double rightEdge = original.x + original.width;
+        candidate.width = qBound(minWidth, original.width - deltaWidth, qMax(minWidth, rightEdge));
         candidate.x = rightEdge - candidate.width;
     }
 
     if (resizesBottom) {
-        candidate.height =
-            qBound(minHeight, m_drag->original.height + deltaHeight, qMax(minHeight, 1.0 - candidate.y));
+        candidate.height = qBound(minHeight, original.height + deltaHeight, qMax(minHeight, 1.0 - candidate.y));
     } else if (resizesTop) {
-        const double bottomEdge = m_drag->original.y + m_drag->original.height;
-        candidate.height = qBound(minHeight, m_drag->original.height - deltaHeight, qMax(minHeight, bottomEdge));
+        const double bottomEdge = original.y + original.height;
+        candidate.height = qBound(minHeight, original.height - deltaHeight, qMax(minHeight, bottomEdge));
         candidate.y = bottomEdge - candidate.height;
     }
 
-    m_drag->candidate = candidate;
+    m_drag->candidates[itemId] = candidate;
 
     if (DashboardCell* resizedCell = m_cells.value(itemId)) {
         resizedCell->setGeometry(itemRect(candidate));
@@ -921,14 +1215,14 @@ void DashboardGrid::handleResizeMoved(const QString& itemId, const QPoint& globa
 }
 
 void DashboardGrid::handleResizeFinished(const QString& itemId, const QPoint&) {
-    if (!m_drag || m_drag->itemId != itemId) {
+    if (!m_drag || m_drag->primaryItemId != itemId) {
         return;
     }
-    if (isPlacementValid(m_drag->candidate, itemId)) {
+    const DashboardItem candidate = m_drag->candidates.value(itemId);
+    if (isPlacementValid(candidate, itemId)) {
         if (const DashboardItem* item = itemById(itemId)) {
             const QRectF fromGeometry(item->x, item->y, item->width, item->height);
-            const QRectF toGeometry(m_drag->candidate.x, m_drag->candidate.y, m_drag->candidate.width,
-                                     m_drag->candidate.height);
+            const QRectF toGeometry(candidate.x, candidate.y, candidate.width, candidate.height);
             const bool changed = qAbs(fromGeometry.x() - toGeometry.x()) > kEpsilon ||
                                   qAbs(fromGeometry.y() - toGeometry.y()) > kEpsilon ||
                                   qAbs(fromGeometry.width() - toGeometry.width()) > kEpsilon ||
@@ -945,8 +1239,12 @@ void DashboardGrid::handleResizeFinished(const QString& itemId, const QPoint&) {
     }
 }
 
-void DashboardGrid::handleSelectRequested(const QString& itemId) {
-    selectItem(itemId);
+void DashboardGrid::handleSelectRequested(const QString& itemId, Qt::KeyboardModifiers modifiers) {
+    if (modifiers.testFlag(Qt::ControlModifier)) {
+        toggleItemSelection(itemId);
+    } else {
+        selectItem(itemId);
+    }
 }
 
 } // namespace traceview

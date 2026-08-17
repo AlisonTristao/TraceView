@@ -46,6 +46,12 @@ public:
     void setEditMode(bool enabled);
     void setSelected(bool selected);
     bool isSelected() const { return m_selected; }
+    // False while part of a multi-selection/group (see
+    // DashboardGrid::updateResizableFlags()) -- hides the resize grip and
+    // disables handleAt() so a multi/group drag can only move, not resize.
+    // Default true (a lone selected cell is always resizable).
+    void setResizable(bool resizable);
+    bool isResizable() const { return m_resizable; }
     // Drives the header's connection-status dot (only drawn when m_content
     // wants header controls, see DashboardWidget::wantsHeaderControls()) --
     // set from the app's single global SerialManager connection, propagated
@@ -64,7 +70,9 @@ signals:
     void resizeStarted(const QString& itemId, const QPoint& globalPos, DashboardCell::ResizeHandle handle);
     void resizeMoved(const QString& itemId, const QPoint& globalPos);
     void resizeFinished(const QString& itemId, const QPoint& globalPos);
-    void selectRequested(const QString& itemId);
+    // modifiers is checked for Qt::ControlModifier by DashboardGrid to
+    // decide between a plain Replace-selection and a Ctrl-click toggle.
+    void selectRequested(const QString& itemId, Qt::KeyboardModifiers modifiers);
 
 protected:
     void paintEvent(QPaintEvent* event) override;
@@ -103,6 +111,7 @@ private:
     QWidget* m_borderOverlay = nullptr;
     bool m_editMode = false;
     bool m_selected = false;
+    bool m_resizable = true;
     bool m_dragInvalid = false;
     bool m_connected = false;
     DragMode m_dragMode = DragMode::None;

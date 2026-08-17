@@ -120,7 +120,6 @@ private:
     PanelDockController* m_dockController = nullptr;
     Ribbon* m_ribbon = nullptr;
     WorkspaceSwitcher* m_workspaceSwitcher = nullptr;
-    QAction* m_positionAction = nullptr;
     QAction* m_addWidgetAction = nullptr;
     QAction* m_removeAction = nullptr;
     QAction* m_copyAction = nullptr;
@@ -129,6 +128,8 @@ private:
     QAction* m_bringForwardAction = nullptr;
     QAction* m_sendBackwardAction = nullptr;
     QAction* m_sendToBackAction = nullptr;
+    QAction* m_groupAction = nullptr;
+    QAction* m_ungroupAction = nullptr;
     QAction* m_undoAction = nullptr;
     QAction* m_redoAction = nullptr;
     QMenu* m_recentFilesMenu = nullptr;

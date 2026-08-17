@@ -87,7 +87,7 @@ each item's position in the project's item list (`DashboardItem` order,
 persisted as-is in the `.tvproj` file, see "Project file" below) — the last
 item is frontmost, no separate z-index field.
 
-Four ribbon actions (Layout tab, next to Position/Add/Remove) reorder the
+Four ribbon actions (Layout tab, next to Add/Remove) reorder the
 selected widget's stacking position, each undoable like every other grid
 edit: **To Front** / **Forward** / **Backward** / **To Back**
 (`DashboardGrid::bringSelectedToFront`/`bringSelectedForward`/

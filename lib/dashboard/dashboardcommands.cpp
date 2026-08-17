@@ -1,6 +1,7 @@
 #include "dashboardcommands.h"
 
 #include <QCoreApplication>
+#include <QSet>
 
 #include "dashboardgrid.h"
 
@@ -32,17 +33,40 @@ void RemoveWidgetCommand::undo() {
     m_grid->selectItem(m_item.id);
 }
 
-MoveWidgetCommand::MoveWidgetCommand(DashboardGrid* grid, const QString& itemId, const QPointF& fromPosition,
-                                      const QPointF& toPosition)
-    : QUndoCommand(QCoreApplication::translate("DashboardCommands", "Move Widget")), m_grid(grid), m_itemId(itemId),
-      m_fromPosition(fromPosition), m_toPosition(toPosition) {}
+RemoveWidgetsCommand::RemoveWidgetsCommand(DashboardGrid* grid, const QVector<DashboardItem>& items)
+    : QUndoCommand(QCoreApplication::translate("DashboardCommands", "Remove Widgets")), m_grid(grid),
+      m_items(items) {}
 
-void MoveWidgetCommand::redo() {
-    m_grid->applyMove(m_itemId, m_toPosition);
+void RemoveWidgetsCommand::redo() {
+    for (const DashboardItem& item : m_items) {
+        m_grid->applyRemoveItemById(item.id);
+    }
 }
 
-void MoveWidgetCommand::undo() {
-    m_grid->applyMove(m_itemId, m_fromPosition);
+void RemoveWidgetsCommand::undo() {
+    QSet<QString> ids;
+    for (const DashboardItem& item : m_items) {
+        m_grid->applyInsertItem(item);
+        ids.insert(item.id);
+    }
+    m_grid->selectItems(ids, /*add=*/false);
+}
+
+MoveWidgetsCommand::MoveWidgetsCommand(DashboardGrid* grid, const QMap<QString, QPointF>& fromPositions,
+                                        const QMap<QString, QPointF>& toPositions)
+    : QUndoCommand(QCoreApplication::translate("DashboardCommands", "Move Widget")), m_grid(grid),
+      m_fromPositions(fromPositions), m_toPositions(toPositions) {}
+
+void MoveWidgetsCommand::redo() {
+    for (auto it = m_toPositions.constBegin(); it != m_toPositions.constEnd(); ++it) {
+        m_grid->applyMove(it.key(), it.value());
+    }
+}
+
+void MoveWidgetsCommand::undo() {
+    for (auto it = m_fromPositions.constBegin(); it != m_fromPositions.constEnd(); ++it) {
+        m_grid->applyMove(it.key(), it.value());
+    }
 }
 
 ResizeWidgetCommand::ResizeWidgetCommand(DashboardGrid* grid, const QString& itemId, const QRectF& fromGeometry,
@@ -120,6 +144,39 @@ void ChangeZOrderCommand::redo() {
 
 void ChangeZOrderCommand::undo() {
     m_grid->applyZOrder(m_itemId, m_fromIndex);
+}
+
+GroupItemsCommand::GroupItemsCommand(DashboardGrid* grid, const QMap<QString, QString>& previousGroupIds,
+                                      const QString& newGroupId)
+    : QUndoCommand(QCoreApplication::translate("DashboardCommands", "Group Widgets")), m_grid(grid),
+      m_previousGroupIds(previousGroupIds), m_newGroupId(newGroupId) {}
+
+void GroupItemsCommand::redo() {
+    for (auto it = m_previousGroupIds.constBegin(); it != m_previousGroupIds.constEnd(); ++it) {
+        m_grid->applySetGroup(it.key(), m_newGroupId);
+    }
+}
+
+void GroupItemsCommand::undo() {
+    for (auto it = m_previousGroupIds.constBegin(); it != m_previousGroupIds.constEnd(); ++it) {
+        m_grid->applySetGroup(it.key(), it.value());
+    }
+}
+
+UngroupItemsCommand::UngroupItemsCommand(DashboardGrid* grid, const QMap<QString, QString>& previousGroupIds)
+    : QUndoCommand(QCoreApplication::translate("DashboardCommands", "Ungroup Widgets")), m_grid(grid),
+      m_previousGroupIds(previousGroupIds) {}
+
+void UngroupItemsCommand::redo() {
+    for (auto it = m_previousGroupIds.constBegin(); it != m_previousGroupIds.constEnd(); ++it) {
+        m_grid->applySetGroup(it.key(), QString());
+    }
+}
+
+void UngroupItemsCommand::undo() {
+    for (auto it = m_previousGroupIds.constBegin(); it != m_previousGroupIds.constEnd(); ++it) {
+        m_grid->applySetGroup(it.key(), it.value());
+    }
 }
 
 } // namespace traceview

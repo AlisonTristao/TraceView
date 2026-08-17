@@ -428,16 +428,6 @@ void MainWindow::buildMenus() {
 }
 
 Ribbon* MainWindow::buildRibbon() {
-    m_positionAction = new QAction(tr("Position"), this);
-    m_positionAction->setCheckable(true);
-    m_positionAction->setChecked(true);
-    m_positionAction->setEnabled(false);
-    connect(m_positionAction, &QAction::toggled, this, [this](bool checked) {
-        if (!checked) {
-            m_positionAction->setChecked(true); // selection is always the active tool while editing
-        }
-    });
-
     m_addWidgetAction = new QAction(tr("Add"), this);
     m_addWidgetAction->setEnabled(false);
     connect(m_addWidgetAction, &QAction::triggered, this, &MainWindow::onAddWidget);
@@ -472,6 +462,14 @@ Ribbon* MainWindow::buildRibbon() {
     m_sendToBackAction = new QAction(tr("To Back"), this);
     m_sendToBackAction->setEnabled(false);
     connect(m_sendToBackAction, &QAction::triggered, m_dashboardGrid, &DashboardGrid::sendSelectedToBack);
+
+    m_groupAction = new QAction(tr("Group"), this);
+    m_groupAction->setEnabled(false);
+    connect(m_groupAction, &QAction::triggered, m_dashboardGrid, &DashboardGrid::groupSelected);
+
+    m_ungroupAction = new QAction(tr("Ungroup"), this);
+    m_ungroupAction->setEnabled(false);
+    connect(m_ungroupAction, &QAction::triggered, m_dashboardGrid, &DashboardGrid::ungroupSelected);
 
     // createUndoAction()/createRedoAction() wire up triggered/enabled state
     // (and a dynamic "Undo <command text>" label) directly from the stack —
@@ -615,11 +613,11 @@ Ribbon* MainWindow::buildRibbon() {
     configureLayout->setContentsMargins(kRibbonPageMarginH, kRibbonPageMarginV, kRibbonPageMarginH, kRibbonPageMarginV);
     configureLayout->setSpacing(kRibbonGroupSpacing);
 
-    configureLayout->addWidget(
-        Ribbon::createButtonGroup(configurePage, {m_positionAction, m_addWidgetAction, m_removeAction}));
+    configureLayout->addWidget(Ribbon::createButtonGroup(configurePage, {m_addWidgetAction, m_removeAction}));
     configureLayout->addWidget(Ribbon::createButtonGroup(
         configurePage, {m_bringToFrontAction, m_bringForwardAction, m_sendBackwardAction, m_sendToBackAction}));
     configureLayout->addWidget(Ribbon::createButtonGroup(configurePage, {m_copyAction, m_pasteAction}));
+    configureLayout->addWidget(Ribbon::createButtonGroup(configurePage, {m_groupAction, m_ungroupAction}));
     configureLayout->addWidget(Ribbon::createButtonGroup(configurePage, {m_undoAction, m_redoAction}));
     configureLayout->addStretch();
 
@@ -743,16 +741,14 @@ void MainWindow::buildPropertiesPanel() {
             &MainWindow::onPanelConfigChangeRequested);
     connect(m_propertiesPanel, &PropertiesPanel::pinnedChanged, this, &MainWindow::updatePanelVisibility);
 
-    // Only relevant while editing the layout — matches m_addWidgetAction/
-    // m_positionAction, which also start disabled until the Layout tab is
-    // active (see onRibbonTabChanged).
+    // Only relevant while editing the layout — matches m_addWidgetAction,
+    // which also starts disabled until the Layout tab is active (see
+    // onRibbonTabChanged).
     m_propertiesPanel->hide();
 }
 
 void MainWindow::updateRibbonIcons() {
     const ThemePalette& palette = ThemeManager::instance().currentTheme();
-    m_positionAction->setIcon(makeSelectIcon(palette.textPrimary));
-    m_positionAction->setToolTip(tr("Position — select a widget to move/resize it"));
     m_addWidgetAction->setIcon(makePlusIcon(palette.textPrimary));
     m_addWidgetAction->setToolTip(tr("Add widget"));
     m_removeAction->setIcon(makeMinusIcon(palette.danger));
@@ -772,6 +768,10 @@ void MainWindow::updateRibbonIcons() {
     m_sendBackwardAction->setToolTip(tr("Send backward"));
     m_sendToBackAction->setIcon(makeSendToBackIcon(palette.textPrimary));
     m_sendToBackAction->setToolTip(tr("Send to back"));
+    m_groupAction->setIcon(makeGroupIcon(palette.textPrimary));
+    m_groupAction->setToolTip(tr("Group — lock the selected widgets' positions together"));
+    m_ungroupAction->setIcon(makeUngroupIcon(palette.textPrimary));
+    m_ungroupAction->setToolTip(tr("Ungroup — let the selected widgets move independently again"));
     // No explicit setToolTip(): QAction falls back to text(), which
     // QUndoStack keeps updated with the pending command's description
     // (e.g. "Undo Move Widget"); the shortcut still shows up in the menu/
@@ -788,7 +788,6 @@ void MainWindow::onRibbonTabChanged(int index) {
     m_configureTabActive = index == m_configureTabIndex;
     m_dashboardGrid->setEditMode(m_configureTabActive);
     m_addWidgetAction->setEnabled(m_configureTabActive);
-    m_positionAction->setEnabled(m_configureTabActive);
     updatePanelVisibility();
     updateSelectionActions();
 
@@ -858,7 +857,7 @@ void MainWindow::updatePanelVisibility() {
     if (m_dockController->isDragging()) {
         return;
     }
-    const bool hasSelection = !m_dashboardGrid->selectedItemId().isEmpty();
+    const bool hasSelection = m_dashboardGrid->selectedCount() > 0;
     const bool showProperties = m_configureTabActive && (hasSelection || m_propertiesPanel->isPinned());
     const bool showLayers = m_configureTabActive && (hasSelection || m_layersPanel->isPinned());
     m_propertiesPanel->setVisible(showProperties);
@@ -887,14 +886,17 @@ void MainWindow::positionOverlayPanels() {
 }
 
 void MainWindow::updateSelectionActions() {
-    const bool hasSelection = m_configureTabActive && !m_dashboardGrid->selectedItemId().isEmpty();
-    m_removeAction->setEnabled(hasSelection);
-    m_copyAction->setEnabled(hasSelection);
+    const bool hasAnySelection = m_configureTabActive && m_dashboardGrid->selectedCount() > 0;
+    const bool hasSingleSelection = m_configureTabActive && !m_dashboardGrid->selectedItemId().isEmpty();
+    m_removeAction->setEnabled(hasAnySelection);
+    m_copyAction->setEnabled(hasSingleSelection);
     m_pasteAction->setEnabled(m_configureTabActive && m_dashboardGrid->canPaste());
-    m_bringToFrontAction->setEnabled(hasSelection);
-    m_bringForwardAction->setEnabled(hasSelection);
-    m_sendBackwardAction->setEnabled(hasSelection);
-    m_sendToBackAction->setEnabled(hasSelection);
+    m_bringToFrontAction->setEnabled(hasSingleSelection);
+    m_bringForwardAction->setEnabled(hasSingleSelection);
+    m_sendBackwardAction->setEnabled(hasSingleSelection);
+    m_sendToBackAction->setEnabled(hasSingleSelection);
+    m_groupAction->setEnabled(m_configureTabActive && m_dashboardGrid->selectedCount() >= 2);
+    m_ungroupAction->setEnabled(m_configureTabActive && m_dashboardGrid->selectionHasGroup());
 }
 
 void MainWindow::refreshPropertiesPanel() {
