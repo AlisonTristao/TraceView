@@ -6,5 +6,6 @@ constexpr const char* kVersion = "@PROJECT_VERSION@";
 constexpr int kVersionMajor = @PROJECT_VERSION_MAJOR@;
 constexpr int kVersionMinor = @PROJECT_VERSION_MINOR@;
 constexpr int kVersionPatch = @PROJECT_VERSION_PATCH@;
+constexpr const char* kDescription = "@PROJECT_DESCRIPTION@";
 
 } // namespace traceview

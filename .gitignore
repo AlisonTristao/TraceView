@@ -12,6 +12,7 @@ cmake_install.cmake
 install_manifest.txt
 compile_commands.json
 _deps/
+CMakeUserPresets.json
 
 # Qt
 *.autosave
@@ -24,6 +25,9 @@ qrc_*.cpp
 # Qt Creator
 CMakeLists.txt.user
 CMakeLists.txt.user.*
+
+# Dev script virtual envs (see scripts/_bootstrap.py)
+scripts/.venv-*/
 
 # IDE
 .vs/
