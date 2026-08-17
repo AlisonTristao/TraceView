@@ -7,6 +7,47 @@ release flow.
 
 ## [Unreleased]
 
+## [2.0.0] - 2026-08-17
+
+### Added
+
+- Multiple workspaces per project (`WorkspaceManager`, `WorkspaceSwitcher`):
+  a project now holds N independently named dashboard layouts, switchable
+  from a button in the status bar. Each workspace wraps its own
+  `DashboardGrid` JSON payload under the new `workspaces` section of the
+  `.tvproj` format; opening a project saved before workspaces existed
+  migrates its single layout into one `"Default"` workspace.
+- Multi-select and grouping on the dashboard grid: Ctrl-click or a
+  rubber-band drag over empty space selects several widgets at once, and
+  **Group**/**Ungroup** (`DashboardGrid::groupSelected`/`ungroupSelected`)
+  locks a selection's positions together so grouped widgets always select,
+  move, and resize as one rigid unit — undoable like any other grid edit.
+  The **Layers** panel reflects multi-selection and group membership.
+- Dockable **Layers**/**Properties** panels (`PanelDockController`,
+  `DockablePanel`, `DockDropIndicator`, `DockResizeGrip`): both panels can
+  now be dragged to any edge of the canvas or pulled off into a floating
+  window, and resized once there. Each panel's position/size persists via
+  `QSettings` across restarts. This intentionally avoids
+  `QMainWindow`/`QDockWidget` so the canvas never resizes to make room for a
+  docked panel.
+- 7 new color themes alongside Dark/Light: **Wood**, **Black**, **Matrix**,
+  **Synthwave**, **Amber**, **Arctic**, **Sakura** (see
+  `docs/THEMING.md`).
+- Font selection (**View → Font**), independent of the color theme
+  (`FontManager`): System Default, Consolas, Georgia, Verdana — applied
+  directly to `QApplication` so any font pairs with any theme.
+- Redesigned **Toggle Switch** control widget: an animated,
+  iOS/Android-style slide switch (`ToggleSwitch`) replacing the previous
+  plain push-button look.
+- **Donate** dialog (menu bar): a Pix QR code (bundled `qrcodegen` vendor
+  library) plus an international donation note.
+
+### Changed
+
+- Ribbon icons reworked for visual consistency across the new themes.
+- Push Button, Toggle Switch, and Slider control widgets now dim/adjust
+  their appearance in dashboard edit mode (`setEditModeHint`).
+
 ## [1.0.3] - 2026-08-17
 
 ### Added

@@ -2,7 +2,7 @@
 
 Real-time telemetry dashboard for ESP32/ESP-NOW robots, built in C++ with Qt.
 
-> **Status:** early development. Core architecture and telemetry protocol are being defined — see [CONTRIBUTING.md](CONTRIBUTING.md) for the branching/feature workflow and [docs/ECOSYSTEM.md](docs/ECOSYSTEM.md) for how this project fits with the rest of the Bally ecosystem.
+> **Status:** v2.0.0 — the dashboard/UI layer (workspaces, theming, docking, widgets) has closed out its first round of visual-identity work; the BTP telemetry integration behind it is still evolving. See [CONTRIBUTING.md](CONTRIBUTING.md) for the branching/feature workflow and [docs/ECOSYSTEM.md](docs/ECOSYSTEM.md) for how this project fits with the rest of the Bally ecosystem.
 
 ## Architecture: the UI doesn't know about BTP
 
