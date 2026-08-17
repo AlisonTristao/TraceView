@@ -84,6 +84,24 @@ QWidget[dashboardCell="true"] {
     background: transparent;
 }
 
+/* LayersPanel/PropertiesPanel float over the dashboard canvas (see
+   MainWindow's positionOverlayPanels()) rather than sharing its row via
+   layout. Both would otherwise inherit the same @background@ as the canvas
+   from the generic QWidget rule above, so any part of the panel not
+   covered by its own child widgets (e.g. the empty stretch next to the pin
+   button in its top bar) reads as the canvas showing through rather than
+   as part of the panel -- @surface@ (already used for the ribbon/status
+   bar's chrome, elsewhere in this file) plus a border on the canvas-facing
+   edge give the whole panel a fill and outline that's visibly its own. */
+QWidget#layersPanel {
+    background-color: @surface@;
+    border-right: 1px solid @border@;
+}
+QWidget#propertiesPanel {
+    background-color: @surface@;
+    border-left: 1px solid @border@;
+}
+
 QMainWindow::separator {
     background-color: @border@;
     width: 1px;
@@ -153,9 +171,15 @@ QToolButton:disabled {
    state through the icon itself (hollow vs. filled pushpin) -- the generic
    solid-accent checked background above would double up on that and just
    look like a stray blue box, so keep this one flat and let hover be the
-   only surface feedback. */
+   only surface feedback. Opaque @surface@ (matching the panels' own fill,
+   see "QWidget#layersPanel"/"QWidget#propertiesPanel" above) rather than
+   the generic QToolButton's transparent, though, so the button doesn't
+   stand out as a different-colored patch against its panel. */
+QToolButton#pinButton {
+    background-color: @surface@;
+}
 QToolButton#pinButton:checked {
-    background-color: transparent;
+    background-color: @surface@;
     color: @textPrimary@;
     border-color: transparent;
 }

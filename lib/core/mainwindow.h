@@ -9,6 +9,7 @@
 
 class QAction;
 class QComboBox;
+class QEvent;
 class QLabel;
 class QMenu;
 class QPushButton;
@@ -36,11 +37,22 @@ public:
     // before Qt's own child-QObject teardown runs.
     ~MainWindow() override;
 
+protected:
+    // Watches m_contentRow for QEvent::Resize so m_layersPanel/
+    // m_propertiesPanel (floated over the canvas, not laid out beside it --
+    // see positionOverlayPanels()) get repositioned whenever it changes size.
+    bool eventFilter(QObject* watched, QEvent* event) override;
+
 private:
     void buildMenus();
     Ribbon* buildRibbon();
     void buildPropertiesPanel();
     void buildLayersPanel();
+    // Re-anchors m_layersPanel to the left edge and m_propertiesPanel to the
+    // right edge of m_contentRow, each spanning its full height. Called
+    // whenever m_contentRow resizes (see eventFilter) since the panels are
+    // positioned directly rather than managed by a layout.
+    void positionOverlayPanels();
     void updateRibbonIcons();
 
     void onRibbonTabChanged(int index);
@@ -85,6 +97,11 @@ private:
     DashboardGrid* m_dashboardGrid = nullptr;
     PropertiesPanel* m_propertiesPanel = nullptr;
     LayersPanel* m_layersPanel = nullptr;
+    // Row below the ribbon that hosts the canvas; m_layersPanel/
+    // m_propertiesPanel are children of this (not of a layout) so they can
+    // float above m_dashboardGrid instead of sharing its row -- see
+    // positionOverlayPanels().
+    QWidget* m_contentRow = nullptr;
     Ribbon* m_ribbon = nullptr;
     QAction* m_positionAction = nullptr;
     QAction* m_addWidgetAction = nullptr;

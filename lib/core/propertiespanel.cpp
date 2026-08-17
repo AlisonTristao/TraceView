@@ -19,6 +19,19 @@ namespace traceview {
 
 PropertiesPanel::PropertiesPanel(QWidget* parent) : QWidget(parent) {
     setFixedWidth(kPropertiesPanelWidth);
+    setObjectName("propertiesPanel");
+    // Qt only auto-paints a QSS `background-color` for plain QWidget
+    // instances, not subclasses (see DashboardWidget's constructor for the
+    // same fix/rationale) -- without this, any part of this panel not
+    // covered edge-to-edge by a child widget (e.g. the empty stretch next
+    // to the pin button in the top bar below) painted nothing at all,
+    // leaking whatever's underneath through. That was invisible before
+    // (this panel shared the canvas's row via layout, nothing sat behind
+    // it); it stopped being invisible once it started floating over the
+    // canvas instead -- see MainWindow's positionOverlayPanels(). The
+    // "QWidget#propertiesPanel" rule in stylesheet.cpp supplies the actual
+    // (distinct-from-canvas) fill this now allows to render.
+    setAttribute(Qt::WA_StyledBackground, true);
 
     m_pinButton = new QToolButton(this);
     m_pinButton->setObjectName("pinButton");

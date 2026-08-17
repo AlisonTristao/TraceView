@@ -4,6 +4,7 @@
 #include <QClipboard>
 #include <QComboBox>
 #include <QCoreApplication>
+#include <QEvent>
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QGuiApplication>
@@ -160,26 +161,36 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     buildLayersPanel();
     buildPropertiesPanel();
 
-    // Layers panel + canvas + properties panel side by side, all below the
-    // ribbon — so the side panels are exactly as tall as the canvas instead
-    // of a QDockWidget, which spans the full window height (menu bar to
-    // status bar) and would sit alongside the ribbon too, not just the
-    // canvas. The layers panel is 1/3 the width of the properties panel,
-    // since it only needs to fit short layer names.
-    auto* contentRow = new QWidget(this);
-    auto* contentLayout = new QHBoxLayout(contentRow);
+    // Canvas fills the whole row below the ribbon; the layers/properties
+    // panels float on top of it instead of sharing the row via layout, so
+    // opening one doesn't shrink the canvas -- and, since DashboardGrid
+    // stores every item's position/size as a fraction of the canvas area
+    // (see dashboardgrid.h), a shrink previously reflowed/resized every
+    // widget on the dashboard along with it. Positioned directly by
+    // positionOverlayPanels() rather than a QDockWidget, which spans the
+    // full window height (menu bar to status bar) and would sit alongside
+    // the ribbon too, not just the canvas.
+    m_contentRow = new QWidget(this);
+    auto* contentLayout = new QHBoxLayout(m_contentRow);
     contentLayout->setContentsMargins(0, 0, 0, 0);
     contentLayout->setSpacing(0);
-    contentLayout->addWidget(m_layersPanel);
-    contentLayout->addWidget(m_dashboardGrid, /*stretch=*/1);
-    contentLayout->addWidget(m_propertiesPanel);
+    contentLayout->addWidget(m_dashboardGrid);
+
+    // Reparented rather than added to contentLayout: their geometry is set
+    // directly (see positionOverlayPanels(), wired below via an event filter
+    // on m_contentRow) so they overlay the canvas edge-to-edge instead of
+    // squeezing it. The layers panel is 1/3 the width of the properties
+    // panel, since it only needs to fit short layer names.
+    m_layersPanel->setParent(m_contentRow);
+    m_propertiesPanel->setParent(m_contentRow);
+    m_contentRow->installEventFilter(this);
 
     auto* central = new QWidget(this);
     auto* centralLayout = new QVBoxLayout(central);
     centralLayout->setContentsMargins(0, kRibbonTopMargin, 0, 0);
     centralLayout->setSpacing(0);
     centralLayout->addWidget(ribbon);
-    centralLayout->addWidget(contentRow, /*stretch=*/1);
+    centralLayout->addWidget(m_contentRow, /*stretch=*/1);
     setCentralWidget(central);
 
     // Permanent readout of what telemetry is actually flowing: the effective
@@ -725,8 +736,34 @@ void MainWindow::onSelectionChanged(const QString&) {
 
 void MainWindow::updatePanelVisibility() {
     const bool hasSelection = !m_dashboardGrid->selectedItemId().isEmpty();
-    m_propertiesPanel->setVisible(m_configureTabActive && (hasSelection || m_propertiesPanel->isPinned()));
-    m_layersPanel->setVisible(m_configureTabActive && (hasSelection || m_layersPanel->isPinned()));
+    const bool showProperties = m_configureTabActive && (hasSelection || m_propertiesPanel->isPinned());
+    const bool showLayers = m_configureTabActive && (hasSelection || m_layersPanel->isPinned());
+    m_propertiesPanel->setVisible(showProperties);
+    m_layersPanel->setVisible(showLayers);
+    // Both panels are floated over m_dashboardGrid rather than laid out
+    // beside it (see positionOverlayPanels()), so re-showing one has to
+    // explicitly reclaim the top of the stack -- a plain setVisible(true)
+    // doesn't change sibling stacking order.
+    if (showProperties) {
+        m_propertiesPanel->raise();
+    }
+    if (showLayers) {
+        m_layersPanel->raise();
+    }
+}
+
+bool MainWindow::eventFilter(QObject* watched, QEvent* event) {
+    if (watched == m_contentRow && event->type() == QEvent::Resize) {
+        positionOverlayPanels();
+    }
+    return QMainWindow::eventFilter(watched, event);
+}
+
+void MainWindow::positionOverlayPanels() {
+    const int height = m_contentRow->height();
+    m_layersPanel->setGeometry(0, 0, m_layersPanel->width(), height);
+    m_propertiesPanel->setGeometry(m_contentRow->width() - m_propertiesPanel->width(), 0,
+                                    m_propertiesPanel->width(), height);
 }
 
 void MainWindow::updateSelectionActions() {

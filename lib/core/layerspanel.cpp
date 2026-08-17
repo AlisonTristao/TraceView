@@ -15,6 +15,11 @@ namespace traceview {
 
 LayersPanel::LayersPanel(QWidget* parent) : QWidget(parent) {
     setFixedWidth(kPropertiesPanelWidth / 3);
+    setObjectName("layersPanel");
+    // See PropertiesPanel's constructor for why this is needed (Qt doesn't
+    // auto-paint a QSS background-color for QWidget subclasses) and the
+    // "QWidget#layersPanel" stylesheet rule it enables.
+    setAttribute(Qt::WA_StyledBackground, true);
 
     m_pinButton = new QToolButton(this);
     m_pinButton->setObjectName("pinButton");
