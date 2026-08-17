@@ -3,25 +3,24 @@
 #include <QJsonObject>
 #include <QString>
 #include <QVector>
-#include <QWidget>
 
 #include "dashboard/widgetconfigeditor.h"
 #include "dashboard/widgetregistry.h"
+#include "dockablepanel.h"
 
 class QComboBox;
 class QFrame;
 class QLineEdit;
 class QScrollArea;
-class QToolButton;
 class QVBoxLayout;
 
 namespace traceview {
 
-// Fixed width the panel is shown at, embedded to the right of the
-// dashboard canvas (see MainWindow) — wide enough for the combo/line-edit
-// fields and their labels, and for a WidgetConfigEditor's table-shaped
-// content (see the divider/scroll area below) without eating too much into
-// the canvas.
+// Fixed width the panel is docked at by default, left/right (see
+// LayersPanel/PropertiesPanel::preferredThickness()) -- wide enough for the
+// combo/line-edit fields and their labels, and for a WidgetConfigEditor's
+// table-shaped content (see the divider/scroll area below) without eating
+// too much into the canvas.
 inline constexpr int kPropertiesPanelWidth = 380;
 
 // Editable properties of the currently selected dashboard widget. Two
@@ -38,12 +37,9 @@ inline constexpr int kPropertiesPanelWidth = 380;
 // Dumb like Ribbon — MainWindow feeds it state via
 // setAvailableTypes()/setSelection() and reacts to the *ChangeRequested
 // signals by calling into DashboardGrid; this widget never touches
-// DashboardGrid directly. The one exception is the pin toggle in the top-right
-// corner: that's a pure UI preference (whether this panel should stay open
-// with nothing selected), so the panel owns it directly and just tells
-// MainWindow when it changes via pinnedChanged(), for MainWindow to fold into
-// its visibility decision alongside selection state.
-class PropertiesPanel : public QWidget {
+// DashboardGrid directly. Header/pin toggle/drag-to-dock behavior lives in
+// DockablePanel, this class only owns the fields below it.
+class PropertiesPanel : public DockablePanel {
     Q_OBJECT
 
 public:
@@ -58,24 +54,19 @@ public:
     void setSelection(bool hasSelection, const QString& typeId, const QString& name, const QString& key,
                        const QJsonObject& config);
 
-    // Whether the pin toggle is engaged -- MainWindow keeps the panel visible
-    // even with no selection while this is true.
-    bool isPinned() const { return m_pinned; }
+    int preferredThickness() const override { return kPropertiesPanelWidth; }
 
 signals:
     void typeChangeRequested(const QString& typeId);
     void nameChangeRequested(const QString& name);
     void keyChangeRequested(const QString& key);
     void configChangeRequested(const QJsonObject& config);
-    void pinnedChanged(bool pinned);
 
 private:
     void onTypeActivated(int index);
     void onNameEditingFinished();
     void onKeyEditingFinished();
     void onConfigEditorChanged();
-    void onPinToggled(bool checked);
-    void updatePinIcon();
 
     // Swaps m_configEditor for whatever `typeId` registers (or none), if it
     // isn't already showing that type's editor. Called with an empty
@@ -90,11 +81,9 @@ private:
     QString m_currentKey;
     QJsonObject m_currentConfig;
 
-    bool m_pinned = false;
-    QToolButton* m_pinButton = nullptr;
     // Everything setSelection() enables/disables based on hasSelection --
-    // kept separate from `this` so the pin button above it (see the top bar
-    // built in the constructor) stays clickable even with no selection.
+    // kept separate from `this` so the pin button in the header stays
+    // clickable even with no selection.
     QWidget* m_content = nullptr;
 
     QComboBox* m_typeCombo = nullptr;

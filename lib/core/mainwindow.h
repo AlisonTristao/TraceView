@@ -22,6 +22,7 @@ class DashboardGrid;
 class DashboardWidget;
 class DebugChartsWindow;
 class LayersPanel;
+class PanelDockController;
 class PropertiesPanel;
 class Ribbon;
 class SerialManager;
@@ -48,8 +49,7 @@ private:
     Ribbon* buildRibbon();
     void buildPropertiesPanel();
     void buildLayersPanel();
-    // Re-anchors m_layersPanel to the left edge and m_propertiesPanel to the
-    // right edge of m_contentRow, each spanning its full height. Called
+    // Re-applies m_dockController's geometry to every docked panel. Called
     // whenever m_contentRow resizes (see eventFilter) since the panels are
     // positioned directly rather than managed by a layout.
     void positionOverlayPanels();
@@ -102,6 +102,8 @@ private:
     // float above m_dashboardGrid instead of sharing its row -- see
     // positionOverlayPanels().
     QWidget* m_contentRow = nullptr;
+    // Owns the panels' drag-to-dock/float behavior -- see paneldockcontroller.h.
+    PanelDockController* m_dockController = nullptr;
     Ribbon* m_ribbon = nullptr;
     QAction* m_positionAction = nullptr;
     QAction* m_addWidgetAction = nullptr;

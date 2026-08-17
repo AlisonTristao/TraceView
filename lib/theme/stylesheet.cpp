@@ -102,6 +102,28 @@ QWidget#propertiesPanel {
     border-left: 1px solid @border@;
 }
 
+/* DockablePanelHeader is the strip a panel gets dragged/docked by (see
+   dockablepanelheader.h) -- a plain bottom border on its own wouldn't read
+   against the panel's own @surface@ fill, so it gets the same @surfaceAlt@
+   tone already used for the ribbon/menu bar's chrome (see kRibbonTopMargin's
+   comment) to read as a distinct, grabbable bar rather than blending into
+   the rest of the panel. */
+QWidget#dockablePanelHeader {
+    background-color: @surfaceAlt@;
+    border-bottom: 1px solid @border@;
+}
+
+/* PanelDockController's resize grips (edge strip while docked, corner
+   square while floating, see dockresizegrip.h) are invisible until hovered
+   -- a permanent visible handle would be one more line competing with the
+   canvas/panel content for so little actual width. */
+QWidget#dockResizeGrip {
+    background-color: transparent;
+}
+QWidget#dockResizeGrip:hover {
+    background-color: @accent@;
+}
+
 QMainWindow::separator {
     background-color: @border@;
     width: 1px;

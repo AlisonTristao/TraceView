@@ -3,48 +3,17 @@
 #include <QComboBox>
 #include <QFormLayout>
 #include <QFrame>
-#include <QHBoxLayout>
 #include <QLineEdit>
 #include <QScrollArea>
 #include <QSignalBlocker>
-#include <QToolButton>
 #include <QVBoxLayout>
 
 #include "dashboard/widgetregistry.h"
-#include "ribbon.h"
-#include "ribbonicons.h"
-#include "traceview/thememanager.h"
 
 namespace traceview {
 
-PropertiesPanel::PropertiesPanel(QWidget* parent) : QWidget(parent) {
-    setFixedWidth(kPropertiesPanelWidth);
+PropertiesPanel::PropertiesPanel(QWidget* parent) : DockablePanel(parent) {
     setObjectName("propertiesPanel");
-    // Qt only auto-paints a QSS `background-color` for plain QWidget
-    // instances, not subclasses (see DashboardWidget's constructor for the
-    // same fix/rationale) -- without this, any part of this panel not
-    // covered edge-to-edge by a child widget (e.g. the empty stretch next
-    // to the pin button in the top bar below) painted nothing at all,
-    // leaking whatever's underneath through. That was invisible before
-    // (this panel shared the canvas's row via layout, nothing sat behind
-    // it); it stopped being invisible once it started floating over the
-    // canvas instead -- see MainWindow's positionOverlayPanels(). The
-    // "QWidget#propertiesPanel" rule in stylesheet.cpp supplies the actual
-    // (distinct-from-canvas) fill this now allows to render.
-    setAttribute(Qt::WA_StyledBackground, true);
-
-    m_pinButton = new QToolButton(this);
-    m_pinButton->setObjectName("pinButton");
-    m_pinButton->setCheckable(true);
-    m_pinButton->setAutoRaise(true);
-    m_pinButton->setFixedSize(kRibbonButtonSize, kRibbonButtonSize);
-    m_pinButton->setIconSize(QSize(kRibbonIconSize, kRibbonIconSize));
-    connect(m_pinButton, &QToolButton::toggled, this, &PropertiesPanel::onPinToggled);
-
-    auto* topBar = new QHBoxLayout();
-    topBar->setContentsMargins(0, 0, 0, 0);
-    topBar->addStretch(1);
-    topBar->addWidget(m_pinButton);
 
     m_typeCombo = new QComboBox();
     m_nameEdit = new QLineEdit();
@@ -82,18 +51,13 @@ PropertiesPanel::PropertiesPanel(QWidget* parent) : QWidget(parent) {
     contentLayout->addWidget(m_divider);
     contentLayout->addWidget(m_configScrollArea, 1);
 
-    auto* mainLayout = new QVBoxLayout(this);
-    mainLayout->addLayout(topBar);
-    mainLayout->addWidget(m_content, 1);
+    bodyLayout()->addWidget(m_content);
 
     setSelection(false, QString(), QString(), QString(), QJsonObject());
-    updatePinIcon();
 
     connect(m_typeCombo, &QComboBox::activated, this, &PropertiesPanel::onTypeActivated);
     connect(m_nameEdit, &QLineEdit::editingFinished, this, &PropertiesPanel::onNameEditingFinished);
     connect(m_keyEdit, &QLineEdit::editingFinished, this, &PropertiesPanel::onKeyEditingFinished);
-    connect(&ThemeManager::instance(), &ThemeManager::themeChanged, this,
-            [this](const ThemePalette&) { updatePinIcon(); });
 }
 
 void PropertiesPanel::setAvailableTypes(const QVector<WidgetTypeInfo>& types) {
@@ -178,19 +142,6 @@ void PropertiesPanel::onConfigEditorChanged() {
         return;
     }
     emit configChangeRequested(config);
-}
-
-void PropertiesPanel::onPinToggled(bool checked) {
-    m_pinned = checked;
-    updatePinIcon();
-    emit pinnedChanged(checked);
-}
-
-void PropertiesPanel::updatePinIcon() {
-    const ThemePalette& palette = ThemeManager::instance().currentTheme();
-    m_pinButton->setIcon(makePinIcon(m_pinned ? palette.accent : palette.textPrimary, m_pinned));
-    m_pinButton->setToolTip(m_pinned ? tr("Unpin — panel will hide when nothing is selected")
-                                      : tr("Pin — keep panel open with nothing selected"));
 }
 
 void PropertiesPanel::ensureConfigEditor(const QString& typeId) {

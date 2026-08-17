@@ -32,6 +32,7 @@
 #include "dashboard/widgets/chartwidgets.h"
 #include "debugchartswindow.h"
 #include "layerspanel.h"
+#include "paneldockcontroller.h"
 #include "project/projectstore.h"
 #include "protocol/btpbackend.h"
 #include "propertiespanel.h"
@@ -163,13 +164,14 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
 
     // Canvas fills the whole row below the ribbon; the layers/properties
     // panels float on top of it instead of sharing the row via layout, so
-    // opening one doesn't shrink the canvas -- and, since DashboardGrid
+    // docking one never shrinks the canvas -- and, since DashboardGrid
     // stores every item's position/size as a fraction of the canvas area
-    // (see dashboardgrid.h), a shrink previously reflowed/resized every
+    // (see dashboardgrid.h), a shrink would otherwise reflow/resize every
     // widget on the dashboard along with it. Positioned directly by
-    // positionOverlayPanels() rather than a QDockWidget, which spans the
-    // full window height (menu bar to status bar) and would sit alongside
-    // the ribbon too, not just the canvas.
+    // m_dockController (see paneldockcontroller.h) rather than a
+    // QDockWidget, which always reserves real layout space for a docked
+    // widget and spans the full window height (menu bar to status bar),
+    // not just the canvas.
     m_contentRow = new QWidget(this);
     auto* contentLayout = new QHBoxLayout(m_contentRow);
     contentLayout->setContentsMargins(0, 0, 0, 0);
@@ -177,13 +179,21 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     contentLayout->addWidget(m_dashboardGrid);
 
     // Reparented rather than added to contentLayout: their geometry is set
-    // directly (see positionOverlayPanels(), wired below via an event filter
-    // on m_contentRow) so they overlay the canvas edge-to-edge instead of
-    // squeezing it. The layers panel is 1/3 the width of the properties
-    // panel, since it only needs to fit short layer names.
+    // directly by m_dockController (wired below via an event filter on
+    // m_contentRow) so they overlay the canvas instead of squeezing it, and
+    // can be dragged by their header to any edge or off into a floating
+    // window. The layers panel is 1/3 the width of the properties panel by
+    // default, since it only needs to fit short layer names -- see each
+    // panel's preferredThickness().
     m_layersPanel->setParent(m_contentRow);
     m_propertiesPanel->setParent(m_contentRow);
     m_contentRow->installEventFilter(this);
+
+    m_dockController = new PanelDockController(m_contentRow, this, this);
+    m_dockController->registerPanel(m_layersPanel, "layers", DockEdge::Left);
+    m_dockController->registerPanel(m_propertiesPanel, "properties", DockEdge::Right);
+    m_dockController->restoreState();
+    connect(m_dockController, &PanelDockController::dragFinished, this, &MainWindow::updatePanelVisibility);
 
     auto* central = new QWidget(this);
     auto* centralLayout = new QVBoxLayout(central);
@@ -735,6 +745,13 @@ void MainWindow::onSelectionChanged(const QString&) {
 }
 
 void MainWindow::updatePanelVisibility() {
+    // Hiding a panel mid-drag would yank it out from under the cursor --
+    // m_dockController re-triggers this itself (via dragFinished()) once the
+    // gesture ends, so any visibility change that landed during it isn't
+    // lost, just deferred.
+    if (m_dockController->isDragging()) {
+        return;
+    }
     const bool hasSelection = !m_dashboardGrid->selectedItemId().isEmpty();
     const bool showProperties = m_configureTabActive && (hasSelection || m_propertiesPanel->isPinned());
     const bool showLayers = m_configureTabActive && (hasSelection || m_layersPanel->isPinned());
@@ -760,10 +777,7 @@ bool MainWindow::eventFilter(QObject* watched, QEvent* event) {
 }
 
 void MainWindow::positionOverlayPanels() {
-    const int height = m_contentRow->height();
-    m_layersPanel->setGeometry(0, 0, m_layersPanel->width(), height);
-    m_propertiesPanel->setGeometry(m_contentRow->width() - m_propertiesPanel->width(), 0,
-                                    m_propertiesPanel->width(), height);
+    m_dockController->relayout();
 }
 
 void MainWindow::updateSelectionActions() {

@@ -217,10 +217,20 @@ add_library(traceview_ui STATIC
     core/donatedialog.h
     core/debugchartswindow.cpp
     core/debugchartswindow.h
+    core/dockablepanel.cpp
+    core/dockablepanel.h
+    core/dockablepanelheader.cpp
+    core/dockablepanelheader.h
+    core/dockdropindicator.cpp
+    core/dockdropindicator.h
+    core/dockresizegrip.cpp
+    core/dockresizegrip.h
     core/layerspanel.cpp
     core/layerspanel.h
     core/mainwindow.cpp
     core/mainwindow.h
+    core/paneldockcontroller.cpp
+    core/paneldockcontroller.h
     core/propertiespanel.cpp
     core/propertiespanel.h
     core/ribbon.cpp

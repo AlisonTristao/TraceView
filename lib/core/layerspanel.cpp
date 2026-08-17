@@ -1,52 +1,22 @@
 #include "layerspanel.h"
 
-#include <QHBoxLayout>
 #include <QListWidget>
-#include <QToolButton>
 #include <QVBoxLayout>
 
 #include "dashboard/dashboardgrid.h"
 #include "propertiespanel.h"
-#include "ribbon.h"
-#include "ribbonicons.h"
-#include "traceview/thememanager.h"
 
 namespace traceview {
 
-LayersPanel::LayersPanel(QWidget* parent) : QWidget(parent) {
-    setFixedWidth(kPropertiesPanelWidth / 3);
+LayersPanel::LayersPanel(QWidget* parent) : DockablePanel(parent) {
     setObjectName("layersPanel");
-    // See PropertiesPanel's constructor for why this is needed (Qt doesn't
-    // auto-paint a QSS background-color for QWidget subclasses) and the
-    // "QWidget#layersPanel" stylesheet rule it enables.
-    setAttribute(Qt::WA_StyledBackground, true);
-
-    m_pinButton = new QToolButton(this);
-    m_pinButton->setObjectName("pinButton");
-    m_pinButton->setCheckable(true);
-    m_pinButton->setAutoRaise(true);
-    m_pinButton->setFixedSize(kRibbonButtonSize, kRibbonButtonSize);
-    m_pinButton->setIconSize(QSize(kRibbonIconSize, kRibbonIconSize));
-    connect(m_pinButton, &QToolButton::toggled, this, &LayersPanel::onPinToggled);
-
-    auto* topBar = new QHBoxLayout();
-    topBar->setContentsMargins(0, 0, 0, 0);
-    topBar->addStretch(1);
-    topBar->addWidget(m_pinButton);
+    mainLayout()->setContentsMargins(0, 0, 0, 0);
 
     m_list = new QListWidget(this);
-
-    auto* mainLayout = new QVBoxLayout(this);
-    mainLayout->setContentsMargins(0, 0, 0, 0);
-    mainLayout->addLayout(topBar);
-    mainLayout->addWidget(m_list, 1);
-
-    updatePinIcon();
+    bodyLayout()->addWidget(m_list);
 
     connect(m_list, &QListWidget::currentItemChanged, this,
             [this](QListWidgetItem* current, QListWidgetItem*) { onCurrentItemChanged(current); });
-    connect(&ThemeManager::instance(), &ThemeManager::themeChanged, this,
-            [this](const ThemePalette&) { updatePinIcon(); });
 }
 
 void LayersPanel::setItems(const QVector<DashboardLayerEntry>& entries, const QString& selectedId) {
@@ -69,24 +39,15 @@ void LayersPanel::setItems(const QVector<DashboardLayerEntry>& entries, const QS
     m_syncing = false;
 }
 
+int LayersPanel::preferredThickness() const {
+    return kPropertiesPanelWidth / 3;
+}
+
 void LayersPanel::onCurrentItemChanged(QListWidgetItem* current) {
     if (m_syncing) {
         return;
     }
     emit itemSelected(current ? current->data(Qt::UserRole).toString() : QString());
-}
-
-void LayersPanel::onPinToggled(bool checked) {
-    m_pinned = checked;
-    updatePinIcon();
-    emit pinnedChanged(checked);
-}
-
-void LayersPanel::updatePinIcon() {
-    const ThemePalette& palette = ThemeManager::instance().currentTheme();
-    m_pinButton->setIcon(makePinIcon(m_pinned ? palette.accent : palette.textPrimary, m_pinned));
-    m_pinButton->setToolTip(m_pinned ? tr("Unpin — panel will hide when nothing is selected")
-                                      : tr("Pin — keep panel open with nothing selected"));
 }
 
 } // namespace traceview
