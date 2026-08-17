@@ -98,7 +98,7 @@ DonateDialog::DonateDialog(QWidget* parent) : QDialog(parent) {
         qrcodegen::QrCode::encodeText(buildPixPayload().toLatin1().constData(), qrcodegen::QrCode::Ecc::MEDIUM);
 
     auto* phraseLabel =
-        new QLabel(tr("Se o TraceView te ajudou, um cafézinho via Pix é sempre bem-vindo."), this);
+        new QLabel(tr("If TraceView has helped you, a little coffee via Pix is always welcome."), this);
     phraseLabel->setWordWrap(true);
     phraseLabel->setAlignment(Qt::AlignHCenter);
 

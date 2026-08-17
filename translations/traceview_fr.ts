@@ -131,7 +131,7 @@
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="54"/>
+        <location filename="../lib/core/mainwindow.cpp" line="55"/>
         <source>TraceView Project (*.tvproj)</source>
         <translation>Projet TraceView (*.tvproj)</translation>
     </message>
@@ -583,6 +583,29 @@
     </message>
 </context>
 <context>
+    <name>traceview::DonateDialog</name>
+    <message>
+        <location filename="../lib/core/donatedialog.cpp" line="94"/>
+        <source>Support TraceView</source>
+        <translation>Soutenez TraceView</translation>
+    </message>
+    <message>
+        <location filename="../lib/core/donatedialog.cpp" line="101"/>
+        <source>If TraceView has helped you, a little coffee via Pix is always welcome.</source>
+        <translation>Si TraceView vous a été utile, un petit café via Pix est toujours le bienvenu.</translation>
+    </message>
+    <message>
+        <location filename="../lib/core/donatedialog.cpp" line="110"/>
+        <source>Pix key (phone): %1</source>
+        <translation>Clé Pix (téléphone) : %1</translation>
+    </message>
+    <message>
+        <location filename="../lib/core/donatedialog.cpp" line="119"/>
+        <source>Outside Brazil? An international donation option isn&apos;t set up yet, but it&apos;s on the way. Thanks for considering supporting the project either way!</source>
+        <translation>En dehors du Brésil ? Une option de don international n&apos;est pas encore disponible, mais elle arrive bientôt. Merci quand même d&apos;envisager de soutenir le projet !</translation>
+    </message>
+</context>
+<context>
     <name>traceview::DummyGaugeWidget</name>
     <message>
         <location filename="../lib/dashboard/widgets/chartwidgets.cpp" line="1459"/>
@@ -719,301 +742,306 @@
 <context>
     <name>traceview::MainWindow</name>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="115"/>
+        <location filename="../lib/core/mainwindow.cpp" line="116"/>
         <source>TraceView v%1</source>
         <translation>TraceView v%1</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="293"/>
+        <location filename="../lib/core/mainwindow.cpp" line="294"/>
         <source>&amp;File</source>
         <translation>&amp;Fichier</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="295"/>
+        <location filename="../lib/core/mainwindow.cpp" line="296"/>
         <source>&amp;New Project</source>
         <translation>&amp;Nouveau projet</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="299"/>
+        <location filename="../lib/core/mainwindow.cpp" line="300"/>
         <source>&amp;Open Project...</source>
         <translation>&amp;Ouvrir un projet...</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="303"/>
+        <location filename="../lib/core/mainwindow.cpp" line="304"/>
         <source>Open &amp;Recent</source>
         <translation>Ouvrir &amp;récent</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="308"/>
+        <location filename="../lib/core/mainwindow.cpp" line="309"/>
         <source>&amp;Save Project</source>
         <translation>&amp;Enregistrer le projet</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="312"/>
+        <location filename="../lib/core/mainwindow.cpp" line="313"/>
         <source>Save Project &amp;As...</source>
         <translation>Enregistrer le projet &amp;sous...</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="316"/>
+        <location filename="../lib/core/mainwindow.cpp" line="317"/>
         <source>&amp;View</source>
         <translation>&amp;Affichage</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="317"/>
+        <location filename="../lib/core/mainwindow.cpp" line="318"/>
         <source>&amp;Theme</source>
         <translation>&amp;Thème</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="338"/>
+        <location filename="../lib/core/mainwindow.cpp" line="339"/>
         <source>&amp;Language</source>
         <translation>&amp;Langue</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="358"/>
+        <location filename="../lib/core/mainwindow.cpp" line="359"/>
         <source>Restart Required</source>
         <translation>Redémarrage requis</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="359"/>
+        <location filename="../lib/core/mainwindow.cpp" line="360"/>
         <source>The application needs to restart to apply the new language. Restart now?</source>
         <translation>L&apos;application doit redémarrer pour appliquer la nouvelle langue. Redémarrer maintenant ?</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="360"/>
+        <location filename="../lib/core/mainwindow.cpp" line="361"/>
         <source>Restart Now</source>
         <translation>Redémarrer maintenant</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="361"/>
+        <location filename="../lib/core/mainwindow.cpp" line="362"/>
         <source>Later</source>
         <translation>Plus tard</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="371"/>
+        <location filename="../lib/core/mainwindow.cpp" line="372"/>
         <source>&amp;Debug</source>
         <translation>&amp;Débogage</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="374"/>
+        <location filename="../lib/core/mainwindow.cpp" line="375"/>
         <source>&amp;About</source>
         <translation>À &amp;propos</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="379"/>
+        <location filename="../lib/core/mainwindow.cpp" line="378"/>
+        <source>Dona&amp;te</source>
+        <translation>D&amp;onner</translation>
+    </message>
+    <message>
+        <location filename="../lib/core/mainwindow.cpp" line="383"/>
         <source>Position</source>
         <translation>Position</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="389"/>
+        <location filename="../lib/core/mainwindow.cpp" line="393"/>
         <source>Add</source>
         <translation>Ajouter</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="393"/>
+        <location filename="../lib/core/mainwindow.cpp" line="397"/>
         <source>Remove</source>
         <translation>Supprimer</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="398"/>
+        <location filename="../lib/core/mainwindow.cpp" line="402"/>
         <source>Copy</source>
         <translation>Copier</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="403"/>
+        <location filename="../lib/core/mainwindow.cpp" line="407"/>
         <source>Paste</source>
         <translation>Coller</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="408"/>
+        <location filename="../lib/core/mainwindow.cpp" line="412"/>
         <source>To Front</source>
         <translation>Premier plan</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="412"/>
+        <location filename="../lib/core/mainwindow.cpp" line="416"/>
         <source>Forward</source>
         <translation>Avancer</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="416"/>
+        <location filename="../lib/core/mainwindow.cpp" line="420"/>
         <source>Backward</source>
         <translation>Reculer</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="420"/>
+        <location filename="../lib/core/mainwindow.cpp" line="424"/>
         <source>To Back</source>
         <translation>Arrière-plan</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="427"/>
+        <location filename="../lib/core/mainwindow.cpp" line="431"/>
         <source>Undo</source>
         <translation>Annuler</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="429"/>
+        <location filename="../lib/core/mainwindow.cpp" line="433"/>
         <source>Redo</source>
         <translation>Rétablir</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="465"/>
+        <location filename="../lib/core/mainwindow.cpp" line="469"/>
         <source>Serial port</source>
         <translation>Port série</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="470"/>
+        <location filename="../lib/core/mainwindow.cpp" line="474"/>
         <source>Refresh port list</source>
         <translation>Actualiser la liste des ports</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="487"/>
+        <location filename="../lib/core/mainwindow.cpp" line="491"/>
         <source>Baud rate (type a custom value if yours isn&apos;t listed)</source>
         <translation>Débit en bauds (saisissez une valeur personnalisée si la vôtre n&apos;est pas listée)</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="495"/>
+        <location filename="../lib/core/mainwindow.cpp" line="499"/>
         <source>None</source>
         <translation>Aucun</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="496"/>
+        <location filename="../lib/core/mainwindow.cpp" line="500"/>
         <source>LF (\n)</source>
         <translation>LF (\n)</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="497"/>
+        <location filename="../lib/core/mainwindow.cpp" line="501"/>
         <source>CR (\r)</source>
         <translation>CR (\r)</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="498"/>
+        <location filename="../lib/core/mainwindow.cpp" line="502"/>
         <source>CRLF (\r\n)</source>
         <translation>CRLF (\r\n)</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="500"/>
+        <location filename="../lib/core/mainwindow.cpp" line="504"/>
         <source>Line terminator appended to control-widget commands (push button/toggle/slider). Doesn&apos;t affect the serial terminal&apos;s raw keystrokes.</source>
         <translation>Terminateur de ligne ajouté aux commandes des widgets de contrôle (bouton/interrupteur/curseur). N&apos;affecte pas les frappes brutes du terminal série.</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="504"/>
-        <location filename="../lib/core/mainwindow.cpp" line="678"/>
+        <location filename="../lib/core/mainwindow.cpp" line="508"/>
+        <location filename="../lib/core/mainwindow.cpp" line="682"/>
         <source>Connect</source>
         <translation>Connecter</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="513"/>
-        <location filename="../lib/core/mainwindow.cpp" line="999"/>
+        <location filename="../lib/core/mainwindow.cpp" line="517"/>
+        <location filename="../lib/core/mainwindow.cpp" line="1008"/>
         <source>Fullscreen dashboard (F11)</source>
         <translation>Tableau de bord en plein écran (F11)</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="567"/>
+        <location filename="../lib/core/mainwindow.cpp" line="571"/>
         <source>Run</source>
         <translation>Exécuter</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="568"/>
+        <location filename="../lib/core/mainwindow.cpp" line="572"/>
         <source>Layout</source>
         <translation>Disposition</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="608"/>
+        <location filename="../lib/core/mainwindow.cpp" line="612"/>
         <source>Position — select a widget to move/resize it</source>
         <translation>Position — sélectionnez un widget pour le déplacer/le redimensionner</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="610"/>
+        <location filename="../lib/core/mainwindow.cpp" line="614"/>
         <source>Add widget</source>
         <translation>Ajouter un widget</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="612"/>
+        <location filename="../lib/core/mainwindow.cpp" line="616"/>
         <source>Remove selected widget (%1)</source>
         <translation>Supprimer le widget sélectionné (%1)</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="616"/>
+        <location filename="../lib/core/mainwindow.cpp" line="620"/>
         <source>Copy selected widget (%1)</source>
         <translation>Copier le widget sélectionné (%1)</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="619"/>
+        <location filename="../lib/core/mainwindow.cpp" line="623"/>
         <source>Paste as a new widget (%1)</source>
         <translation>Coller comme nouveau widget (%1)</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="621"/>
+        <location filename="../lib/core/mainwindow.cpp" line="625"/>
         <source>Bring to front</source>
         <translation>Mettre au premier plan</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="623"/>
+        <location filename="../lib/core/mainwindow.cpp" line="627"/>
         <source>Bring forward</source>
         <translation>Avancer</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="625"/>
+        <location filename="../lib/core/mainwindow.cpp" line="629"/>
         <source>Send backward</source>
         <translation>Reculer</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="627"/>
+        <location filename="../lib/core/mainwindow.cpp" line="631"/>
         <source>Send to back</source>
         <translation>Mettre à l&apos;arrière-plan</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="678"/>
+        <location filename="../lib/core/mainwindow.cpp" line="682"/>
         <source>Disconnect</source>
         <translation>Déconnecter</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="752"/>
+        <location filename="../lib/core/mainwindow.cpp" line="756"/>
         <source>Key &quot;%1&quot; is already used by another widget.</source>
         <translation>La clé « %1 » est déjà utilisée par un autre widget.</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="765"/>
+        <location filename="../lib/core/mainwindow.cpp" line="769"/>
         <source>New Project</source>
         <translation>Nouveau projet</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="766"/>
+        <location filename="../lib/core/mainwindow.cpp" line="770"/>
         <source>Discard the current dashboard and start a new, empty project?</source>
         <translation>Abandonner le tableau de bord actuel et démarrer un nouveau projet vide ?</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="776"/>
+        <location filename="../lib/core/mainwindow.cpp" line="780"/>
         <source>Started a new project.</source>
         <translation>Nouveau projet démarré.</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="789"/>
-        <location filename="../lib/core/mainwindow.cpp" line="804"/>
+        <location filename="../lib/core/mainwindow.cpp" line="793"/>
+        <location filename="../lib/core/mainwindow.cpp" line="808"/>
         <source>Save Project</source>
         <translation>Enregistrer le projet</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="798"/>
+        <location filename="../lib/core/mainwindow.cpp" line="802"/>
         <source>Save Project As</source>
         <translation>Enregistrer le projet sous</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="811"/>
-        <location filename="../lib/core/mainwindow.cpp" line="820"/>
+        <location filename="../lib/core/mainwindow.cpp" line="815"/>
+        <location filename="../lib/core/mainwindow.cpp" line="824"/>
         <source>Open Project</source>
         <translation>Ouvrir un projet</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="849"/>
+        <location filename="../lib/core/mainwindow.cpp" line="853"/>
         <source>(No Recent Projects)</source>
         <translation>(Aucun projet récent)</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="861"/>
+        <location filename="../lib/core/mainwindow.cpp" line="865"/>
         <source>Clear Recent Projects</source>
         <translation>Effacer les projets récents</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="989"/>
+        <location filename="../lib/core/mainwindow.cpp" line="998"/>
         <source>Exit fullscreen (F11 / Esc)</source>
         <translation>Quitter le plein écran (F11 / Échap)</translation>
     </message>

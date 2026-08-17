@@ -131,7 +131,7 @@
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="54"/>
+        <location filename="../lib/core/mainwindow.cpp" line="55"/>
         <source>TraceView Project (*.tvproj)</source>
         <translation>TraceView プロジェクト (*.tvproj)</translation>
     </message>
@@ -583,6 +583,29 @@
     </message>
 </context>
 <context>
+    <name>traceview::DonateDialog</name>
+    <message>
+        <location filename="../lib/core/donatedialog.cpp" line="94"/>
+        <source>Support TraceView</source>
+        <translation>TraceView をサポート</translation>
+    </message>
+    <message>
+        <location filename="../lib/core/donatedialog.cpp" line="101"/>
+        <source>If TraceView has helped you, a little coffee via Pix is always welcome.</source>
+        <translation>TraceView が役に立ったら、Pixでコーヒー代を差し入れてもらえると嬉しいです。</translation>
+    </message>
+    <message>
+        <location filename="../lib/core/donatedialog.cpp" line="110"/>
+        <source>Pix key (phone): %1</source>
+        <translation>Pixキー（電話番号）: %1</translation>
+    </message>
+    <message>
+        <location filename="../lib/core/donatedialog.cpp" line="119"/>
+        <source>Outside Brazil? An international donation option isn&apos;t set up yet, but it&apos;s on the way. Thanks for considering supporting the project either way!</source>
+        <translation>ブラジル国外の方へ。国際的な寄付方法はまだ用意できていませんが、近日中に対応予定です。それでもプロジェクトを応援していただけると嬉しいです！</translation>
+    </message>
+</context>
+<context>
     <name>traceview::DummyGaugeWidget</name>
     <message>
         <location filename="../lib/dashboard/widgets/chartwidgets.cpp" line="1459"/>
@@ -719,301 +742,306 @@
 <context>
     <name>traceview::MainWindow</name>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="115"/>
+        <location filename="../lib/core/mainwindow.cpp" line="116"/>
         <source>TraceView v%1</source>
         <translation>TraceView v%1</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="293"/>
+        <location filename="../lib/core/mainwindow.cpp" line="294"/>
         <source>&amp;File</source>
         <translation>ファイル(&amp;F)</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="295"/>
+        <location filename="../lib/core/mainwindow.cpp" line="296"/>
         <source>&amp;New Project</source>
         <translation>新規プロジェクト(&amp;N)</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="299"/>
+        <location filename="../lib/core/mainwindow.cpp" line="300"/>
         <source>&amp;Open Project...</source>
         <translation>プロジェクトを開く(&amp;O)...</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="303"/>
+        <location filename="../lib/core/mainwindow.cpp" line="304"/>
         <source>Open &amp;Recent</source>
         <translation>最近使用したプロジェクト(&amp;R)</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="308"/>
+        <location filename="../lib/core/mainwindow.cpp" line="309"/>
         <source>&amp;Save Project</source>
         <translation>プロジェクトを保存(&amp;S)</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="312"/>
+        <location filename="../lib/core/mainwindow.cpp" line="313"/>
         <source>Save Project &amp;As...</source>
         <translation>名前を付けて保存(&amp;A)...</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="316"/>
+        <location filename="../lib/core/mainwindow.cpp" line="317"/>
         <source>&amp;View</source>
         <translation>表示(&amp;V)</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="317"/>
+        <location filename="../lib/core/mainwindow.cpp" line="318"/>
         <source>&amp;Theme</source>
         <translation>テーマ(&amp;T)</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="338"/>
+        <location filename="../lib/core/mainwindow.cpp" line="339"/>
         <source>&amp;Language</source>
         <translation>言語(&amp;L)</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="358"/>
+        <location filename="../lib/core/mainwindow.cpp" line="359"/>
         <source>Restart Required</source>
         <translation>再起動が必要です</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="359"/>
+        <location filename="../lib/core/mainwindow.cpp" line="360"/>
         <source>The application needs to restart to apply the new language. Restart now?</source>
         <translation>新しい言語を適用するにはアプリケーションの再起動が必要です。今すぐ再起動しますか?</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="360"/>
+        <location filename="../lib/core/mainwindow.cpp" line="361"/>
         <source>Restart Now</source>
         <translation>今すぐ再起動</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="361"/>
+        <location filename="../lib/core/mainwindow.cpp" line="362"/>
         <source>Later</source>
         <translation>後で</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="371"/>
+        <location filename="../lib/core/mainwindow.cpp" line="372"/>
         <source>&amp;Debug</source>
         <translation>デバッグ(&amp;D)</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="374"/>
+        <location filename="../lib/core/mainwindow.cpp" line="375"/>
         <source>&amp;About</source>
         <translation>情報(&amp;A)</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="379"/>
+        <location filename="../lib/core/mainwindow.cpp" line="378"/>
+        <source>Dona&amp;te</source>
+        <translation>寄付(&amp;K)</translation>
+    </message>
+    <message>
+        <location filename="../lib/core/mainwindow.cpp" line="383"/>
         <source>Position</source>
         <translation>位置</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="389"/>
+        <location filename="../lib/core/mainwindow.cpp" line="393"/>
         <source>Add</source>
         <translation>追加</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="393"/>
+        <location filename="../lib/core/mainwindow.cpp" line="397"/>
         <source>Remove</source>
         <translation>削除</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="398"/>
+        <location filename="../lib/core/mainwindow.cpp" line="402"/>
         <source>Copy</source>
         <translation>コピー</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="403"/>
+        <location filename="../lib/core/mainwindow.cpp" line="407"/>
         <source>Paste</source>
         <translation>貼り付け</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="408"/>
+        <location filename="../lib/core/mainwindow.cpp" line="412"/>
         <source>To Front</source>
         <translation>最前面</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="412"/>
+        <location filename="../lib/core/mainwindow.cpp" line="416"/>
         <source>Forward</source>
         <translation>前へ</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="416"/>
+        <location filename="../lib/core/mainwindow.cpp" line="420"/>
         <source>Backward</source>
         <translation>後ろへ</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="420"/>
+        <location filename="../lib/core/mainwindow.cpp" line="424"/>
         <source>To Back</source>
         <translation>最背面</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="427"/>
+        <location filename="../lib/core/mainwindow.cpp" line="431"/>
         <source>Undo</source>
         <translation>元に戻す</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="429"/>
+        <location filename="../lib/core/mainwindow.cpp" line="433"/>
         <source>Redo</source>
         <translation>やり直し</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="465"/>
+        <location filename="../lib/core/mainwindow.cpp" line="469"/>
         <source>Serial port</source>
         <translation>シリアルポート</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="470"/>
+        <location filename="../lib/core/mainwindow.cpp" line="474"/>
         <source>Refresh port list</source>
         <translation>ポート一覧を更新</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="487"/>
+        <location filename="../lib/core/mainwindow.cpp" line="491"/>
         <source>Baud rate (type a custom value if yours isn&apos;t listed)</source>
         <translation>ボーレート(リストにない場合はカスタム値を入力)</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="495"/>
+        <location filename="../lib/core/mainwindow.cpp" line="499"/>
         <source>None</source>
         <translation>なし</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="496"/>
+        <location filename="../lib/core/mainwindow.cpp" line="500"/>
         <source>LF (\n)</source>
         <translation>LF (\n)</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="497"/>
+        <location filename="../lib/core/mainwindow.cpp" line="501"/>
         <source>CR (\r)</source>
         <translation>CR (\r)</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="498"/>
+        <location filename="../lib/core/mainwindow.cpp" line="502"/>
         <source>CRLF (\r\n)</source>
         <translation>CRLF (\r\n)</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="500"/>
+        <location filename="../lib/core/mainwindow.cpp" line="504"/>
         <source>Line terminator appended to control-widget commands (push button/toggle/slider). Doesn&apos;t affect the serial terminal&apos;s raw keystrokes.</source>
         <translation>コントロールウィジェット(ボタン/スイッチ/スライダー)のコマンドに付加する行終端文字です。シリアルターミナルの生のキー入力には影響しません。</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="504"/>
-        <location filename="../lib/core/mainwindow.cpp" line="678"/>
+        <location filename="../lib/core/mainwindow.cpp" line="508"/>
+        <location filename="../lib/core/mainwindow.cpp" line="682"/>
         <source>Connect</source>
         <translation>接続</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="513"/>
-        <location filename="../lib/core/mainwindow.cpp" line="999"/>
+        <location filename="../lib/core/mainwindow.cpp" line="517"/>
+        <location filename="../lib/core/mainwindow.cpp" line="1008"/>
         <source>Fullscreen dashboard (F11)</source>
         <translation>ダッシュボードを全画面表示(F11)</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="567"/>
+        <location filename="../lib/core/mainwindow.cpp" line="571"/>
         <source>Run</source>
         <translation>実行</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="568"/>
+        <location filename="../lib/core/mainwindow.cpp" line="572"/>
         <source>Layout</source>
         <translation>レイアウト</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="608"/>
+        <location filename="../lib/core/mainwindow.cpp" line="612"/>
         <source>Position — select a widget to move/resize it</source>
         <translation>位置 — ウィジェットを選択して移動/サイズ変更します</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="610"/>
+        <location filename="../lib/core/mainwindow.cpp" line="614"/>
         <source>Add widget</source>
         <translation>ウィジェットを追加</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="612"/>
+        <location filename="../lib/core/mainwindow.cpp" line="616"/>
         <source>Remove selected widget (%1)</source>
         <translation>選択したウィジェットを削除(%1)</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="616"/>
+        <location filename="../lib/core/mainwindow.cpp" line="620"/>
         <source>Copy selected widget (%1)</source>
         <translation>選択したウィジェットをコピー(%1)</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="619"/>
+        <location filename="../lib/core/mainwindow.cpp" line="623"/>
         <source>Paste as a new widget (%1)</source>
         <translation>新しいウィジェットとして貼り付け(%1)</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="621"/>
+        <location filename="../lib/core/mainwindow.cpp" line="625"/>
         <source>Bring to front</source>
         <translation>最前面へ移動</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="623"/>
+        <location filename="../lib/core/mainwindow.cpp" line="627"/>
         <source>Bring forward</source>
         <translation>前面へ移動</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="625"/>
+        <location filename="../lib/core/mainwindow.cpp" line="629"/>
         <source>Send backward</source>
         <translation>背面へ移動</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="627"/>
+        <location filename="../lib/core/mainwindow.cpp" line="631"/>
         <source>Send to back</source>
         <translation>最背面へ移動</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="678"/>
+        <location filename="../lib/core/mainwindow.cpp" line="682"/>
         <source>Disconnect</source>
         <translation>切断</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="752"/>
+        <location filename="../lib/core/mainwindow.cpp" line="756"/>
         <source>Key &quot;%1&quot; is already used by another widget.</source>
         <translation>キー「%1」は既に別のウィジェットで使用されています。</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="765"/>
+        <location filename="../lib/core/mainwindow.cpp" line="769"/>
         <source>New Project</source>
         <translation>新規プロジェクト</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="766"/>
+        <location filename="../lib/core/mainwindow.cpp" line="770"/>
         <source>Discard the current dashboard and start a new, empty project?</source>
         <translation>現在のダッシュボードを破棄して、新しい空のプロジェクトを開始しますか?</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="776"/>
+        <location filename="../lib/core/mainwindow.cpp" line="780"/>
         <source>Started a new project.</source>
         <translation>新しいプロジェクトを開始しました。</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="789"/>
-        <location filename="../lib/core/mainwindow.cpp" line="804"/>
+        <location filename="../lib/core/mainwindow.cpp" line="793"/>
+        <location filename="../lib/core/mainwindow.cpp" line="808"/>
         <source>Save Project</source>
         <translation>プロジェクトを保存</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="798"/>
+        <location filename="../lib/core/mainwindow.cpp" line="802"/>
         <source>Save Project As</source>
         <translation>名前を付けてプロジェクトを保存</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="811"/>
-        <location filename="../lib/core/mainwindow.cpp" line="820"/>
+        <location filename="../lib/core/mainwindow.cpp" line="815"/>
+        <location filename="../lib/core/mainwindow.cpp" line="824"/>
         <source>Open Project</source>
         <translation>プロジェクトを開く</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="849"/>
+        <location filename="../lib/core/mainwindow.cpp" line="853"/>
         <source>(No Recent Projects)</source>
         <translation>(最近使用したプロジェクトはありません)</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="861"/>
+        <location filename="../lib/core/mainwindow.cpp" line="865"/>
         <source>Clear Recent Projects</source>
         <translation>最近使用したプロジェクトをクリア</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="989"/>
+        <location filename="../lib/core/mainwindow.cpp" line="998"/>
         <source>Exit fullscreen (F11 / Esc)</source>
         <translation>全画面表示を終了(F11 / Esc)</translation>
     </message>
