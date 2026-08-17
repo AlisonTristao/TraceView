@@ -9,5 +9,12 @@ namespace traceview {
 // docs/THEMING.md.
 ThemePalette makeDarkPalette();
 ThemePalette makeLightPalette();
+ThemePalette makeWoodPalette();
+ThemePalette makeBlackPalette();
+ThemePalette makeMatrixPalette();
+ThemePalette makeSynthwavePalette();
+ThemePalette makeAmberPalette();
+ThemePalette makeArcticPalette();
+ThemePalette makeSakuraPalette();
 
 } // namespace traceview

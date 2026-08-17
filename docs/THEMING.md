@@ -43,6 +43,20 @@ yet (in which case, add that rule as a token-driven line in
 - **Dark** (default) — near-black navy background (`#0A0F1E`), white text and
   borders, blue accent (`#3D8BFF`).
 - **Light** — white background, dark navy text/borders, matching blue accent.
+- **Wood** — dark walnut background (`#2B1D14`), cream text, amber/copper
+  accent (`#C97A3D`).
+- **Black** — pure-black background (`#000000`), white text, neutral
+  grayscale accent (no blue undertone, unlike Dark).
+- **Matrix** — black background, phosphor-green text and accent (`#00FF41`);
+  warning/danger break from green so alerts still stand out.
+- **Synthwave** — deep purple background, neon pink accent (`#FF2E9A`) with
+  cyan as the series companion color.
+- **Amber** — black background, monochrome amber phosphor (`#FFB000`), the
+  other classic CRT color alongside Matrix's green.
+- **Arctic** — cool blue-gray background (Nord-inspired), frost-cyan accent
+  (`#88C0D0`).
+- **Sakura** — soft pink background, deep maroon text, pink accent
+  (`#E85D8A`).
 
 Switch templates from the running app via **View → Theme**; the choice is
 persisted (`QSettings`, key `appearance/theme`) across restarts.
