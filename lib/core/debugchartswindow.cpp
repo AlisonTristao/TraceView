@@ -132,7 +132,7 @@ DashboardCell* wrapInCell(const QString& itemId, const QString& typeId, const QS
 } // namespace
 
 DebugChartsWindow::DebugChartsWindow(QWidget* parent) : QDialog(parent) {
-    setWindowTitle("Debug -- synthetic chart data");
+    setWindowTitle(tr("Debug -- synthetic chart data"));
     setAttribute(Qt::WA_DeleteOnClose);
     resize(960, 720);
 
@@ -140,15 +140,15 @@ DebugChartsWindow::DebugChartsWindow(QWidget* parent) : QDialog(parent) {
 
     m_lineChart = new DummyLineChartWidget();
     m_lineChart->setConfig(lineChartConfig());
-    layout->addWidget(wrapInCell("debug-line", "dummy_line", "Line Chart", m_lineChart, this), 0, 0, 1, 2);
+    layout->addWidget(wrapInCell("debug-line", "dummy_line", tr("Line Chart"), m_lineChart, this), 0, 0, 1, 2);
 
     m_barChart = new DummyBarChartWidget();
     m_barChart->setConfig(barChartConfig());
-    layout->addWidget(wrapInCell("debug-bar", "dummy_bar", "Bar Chart", m_barChart, this), 1, 0);
+    layout->addWidget(wrapInCell("debug-bar", "dummy_bar", tr("Bar Chart"), m_barChart, this), 1, 0);
 
     m_gauge = new DummyGaugeWidget();
     m_gauge->setConfig(gaugeConfig());
-    layout->addWidget(wrapInCell("debug-gauge", "dummy_gauge", "Gauge", m_gauge, this), 1, 1);
+    layout->addWidget(wrapInCell("debug-gauge", "dummy_gauge", tr("Gauge"), m_gauge, this), 1, 1);
 
     auto* timer = new QTimer(this);
     connect(timer, &QTimer::timeout, this, &DebugChartsWindow::tick);

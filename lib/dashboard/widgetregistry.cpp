@@ -1,5 +1,7 @@
 #include "widgetregistry.h"
 
+#include <QCoreApplication>
+
 #include "dashboardwidget.h"
 #include "widgets/chartconfigeditor.h"
 #include "widgets/chartwidgets.h"
@@ -16,24 +18,27 @@ WidgetRegistry& WidgetRegistry::instance() {
 }
 
 WidgetRegistry::WidgetRegistry() {
-    registerType({"dummy_line", "Line Chart (dummy)",
+    // WidgetTypeInfo/WidgetRegistry aren't QObjects, so tr() isn't available
+    // here; use QCoreApplication::translate() with the owning class as
+    // context instead (same idiom as ThemePalette in palettes.cpp).
+    registerType({"dummy_line", QCoreApplication::translate("WidgetRegistry", "Line Chart (dummy)"),
                   [](QWidget* parent) -> DashboardWidget* { return new DummyLineChartWidget(parent); },
                   [](QWidget* parent) -> WidgetConfigEditor* { return new ChartConfigEditor(parent); }});
-    registerType({"dummy_bar", "Bar Chart (dummy)",
+    registerType({"dummy_bar", QCoreApplication::translate("WidgetRegistry", "Bar Chart (dummy)"),
                   [](QWidget* parent) -> DashboardWidget* { return new DummyBarChartWidget(parent); },
                   [](QWidget* parent) -> WidgetConfigEditor* { return new ChartConfigEditor(parent); }});
-    registerType({"dummy_gauge", "Gauge (dummy)",
+    registerType({"dummy_gauge", QCoreApplication::translate("WidgetRegistry", "Gauge (dummy)"),
                   [](QWidget* parent) -> DashboardWidget* { return new DummyGaugeWidget(parent); },
                   [](QWidget* parent) -> WidgetConfigEditor* { return new GaugeConfigEditor(parent); }});
-    registerType({"serial_monitor", "Serial Monitor",
+    registerType({"serial_monitor", QCoreApplication::translate("WidgetRegistry", "Serial Monitor"),
                   [](QWidget* parent) -> DashboardWidget* { return new SerialMonitorWidget(parent); }});
-    registerType({"push_button", "Push Button",
+    registerType({"push_button", QCoreApplication::translate("WidgetRegistry", "Push Button"),
                   [](QWidget* parent) -> DashboardWidget* { return new PushButtonWidget(parent); },
                   [](QWidget* parent) -> WidgetConfigEditor* { return new PushButtonConfigEditor(parent); }});
-    registerType({"toggle_switch", "Toggle Switch",
+    registerType({"toggle_switch", QCoreApplication::translate("WidgetRegistry", "Toggle Switch"),
                   [](QWidget* parent) -> DashboardWidget* { return new ToggleSwitchWidget(parent); },
                   [](QWidget* parent) -> WidgetConfigEditor* { return new ToggleSwitchConfigEditor(parent); }});
-    registerType({"slider", "Slider",
+    registerType({"slider", QCoreApplication::translate("WidgetRegistry", "Slider"),
                   [](QWidget* parent) -> DashboardWidget* { return new SliderWidget(parent); },
                   [](QWidget* parent) -> WidgetConfigEditor* { return new SliderConfigEditor(parent); }});
 }

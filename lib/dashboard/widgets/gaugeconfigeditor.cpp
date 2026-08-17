@@ -37,42 +37,42 @@ void setSwatchColor(QPushButton* button, const QColor& color) {
 
 GaugeConfigEditor::GaugeConfigEditor(QWidget* parent) : WidgetConfigEditor(parent) {
     m_sourceIdEdit = new QLineEdit(this);
-    m_sourceIdEdit->setPlaceholderText("0x11223344");
-    m_sourceIdEdit->setToolTip("BTP source_id this gauge reads from (hex or decimal).");
+    m_sourceIdEdit->setPlaceholderText(tr("0x11223344"));
+    m_sourceIdEdit->setToolTip(tr("BTP source_id this gauge reads from (hex or decimal)."));
 
     m_topicIdEdit = new QLineEdit(this);
-    m_topicIdEdit->setPlaceholderText("0x0101");
-    m_topicIdEdit->setToolTip("BTP topic_id (TELEMETRY.md) this gauge's rings bind fields of.");
+    m_topicIdEdit->setPlaceholderText(tr("0x0101"));
+    m_topicIdEdit->setToolTip(tr("BTP topic_id (TELEMETRY.md) this gauge's rings bind fields of."));
 
     m_minSpin = new QDoubleSpinBox(this);
     m_minSpin->setRange(-100'000.0, 100'000.0);
     m_minSpin->setDecimals(2);
     m_minSpin->setValue(0.0);
-    m_minSpin->setToolTip("Shared scale floor -- every ring maps its own field onto this same range.");
+    m_minSpin->setToolTip(tr("Shared scale floor -- every ring maps its own field onto this same range."));
 
     m_maxSpin = new QDoubleSpinBox(this);
     m_maxSpin->setRange(-100'000.0, 100'000.0);
     m_maxSpin->setDecimals(2);
     m_maxSpin->setValue(100.0);
-    m_maxSpin->setToolTip("Shared scale ceiling -- every ring maps its own field onto this same range.");
+    m_maxSpin->setToolTip(tr("Shared scale ceiling -- every ring maps its own field onto this same range."));
 
     m_unitEdit = new QLineEdit(this);
-    m_unitEdit->setPlaceholderText("V, °C, %...");
+    m_unitEdit->setPlaceholderText(tr("V, °C, %..."));
 
     m_decimalsSpin = new QSpinBox(this);
     m_decimalsSpin->setRange(0, 6);
     m_decimalsSpin->setValue(0);
-    m_decimalsSpin->setToolTip("Decimal places shown for each ring's current value.");
+    m_decimalsSpin->setToolTip(tr("Decimal places shown for each ring's current value."));
 
     m_formLayout = new QFormLayout();
     m_formLayout->setContentsMargins(0, 0, 0, 0);
     m_formLayout->setFieldGrowthPolicy(QFormLayout::AllNonFixedFieldsGrow);
-    m_formLayout->addRow("Source", m_sourceIdEdit);
-    m_formLayout->addRow("Topic", m_topicIdEdit);
-    m_formLayout->addRow("Min", m_minSpin);
-    m_formLayout->addRow("Max", m_maxSpin);
-    m_formLayout->addRow("Unit", m_unitEdit);
-    m_formLayout->addRow("Decimals", m_decimalsSpin);
+    m_formLayout->addRow(tr("Source"), m_sourceIdEdit);
+    m_formLayout->addRow(tr("Topic"), m_topicIdEdit);
+    m_formLayout->addRow(tr("Min"), m_minSpin);
+    m_formLayout->addRow(tr("Max"), m_maxSpin);
+    m_formLayout->addRow(tr("Unit"), m_unitEdit);
+    m_formLayout->addRow(tr("Decimals"), m_decimalsSpin);
 
     auto* divider = new QFrame(this);
     divider->setObjectName("sectionDivider");
@@ -82,7 +82,7 @@ GaugeConfigEditor::GaugeConfigEditor(QWidget* parent) : WidgetConfigEditor(paren
     // One row per concentric ring the gauge draws, outermost first (row 0 =
     // outermost ring) -- see DummyGaugeWidget::paintEvent().
     m_seriesTable = new QTableWidget(0, kColumnCount, this);
-    m_seriesTable->setHorizontalHeaderLabels({"Name", "Field ID", "Color", ""});
+    m_seriesTable->setHorizontalHeaderLabels({tr("Name"), tr("Field ID"), tr("Color"), ""});
     m_seriesTable->verticalHeader()->setVisible(false);
     m_seriesTable->horizontalHeader()->setSectionResizeMode(kRemoveColumn, QHeaderView::ResizeToContents);
     m_seriesTable->setColumnWidth(kNameColumn, 150);
@@ -92,7 +92,7 @@ GaugeConfigEditor::GaugeConfigEditor(QWidget* parent) : WidgetConfigEditor(paren
     m_seriesTable->verticalHeader()->setDefaultSectionSize(36);
     m_seriesTable->setMinimumHeight(120);
 
-    m_addSeriesButton = new QPushButton("+ Add ring", this);
+    m_addSeriesButton = new QPushButton(tr("+ Add ring"), this);
     connect(m_addSeriesButton, &QPushButton::clicked, this, [this]() {
         QJsonObject series;
         series["fieldId"] = m_seriesTable->rowCount() + 1;
@@ -185,7 +185,7 @@ void GaugeConfigEditor::addSeriesRow(const QJsonObject& series) {
     const int row = m_seriesTable->rowCount();
     m_seriesTable->insertRow(row);
 
-    auto* nameItem = new QTableWidgetItem(series.value("name").toString(QString("Ring %1").arg(row + 1)));
+    auto* nameItem = new QTableWidgetItem(series.value("name").toString(tr("Ring %1").arg(row + 1)));
     m_seriesTable->setItem(row, kNameColumn, nameItem);
 
     auto* fieldIdSpin = new QSpinBox();
@@ -206,7 +206,7 @@ void GaugeConfigEditor::addSeriesRow(const QJsonObject& series) {
     const QColor fallback = seriesPalette.isEmpty() ? QColor("#3B82F6") : seriesPalette[row % seriesPalette.size()];
     setSwatchColor(colorButton, QColor(series.value("color").toString(fallback.name())));
     connect(colorButton, &QPushButton::clicked, this, [this, colorButton]() {
-        const QColor chosen = QColorDialog::getColor(swatchColor(colorButton), this, "Ring Color");
+        const QColor chosen = QColorDialog::getColor(swatchColor(colorButton), this, tr("Ring Color"));
         if (!chosen.isValid()) {
             return;
         }
@@ -217,7 +217,7 @@ void GaugeConfigEditor::addSeriesRow(const QJsonObject& series) {
 
     auto* removeButton = new QPushButton("✕");
     removeButton->setFixedWidth(28);
-    removeButton->setToolTip("Remove ring");
+    removeButton->setToolTip(tr("Remove ring"));
     connect(removeButton, &QPushButton::clicked, this, [this, removeButton]() {
         for (int r = 0; r < m_seriesTable->rowCount(); ++r) {
             if (m_seriesTable->cellWidget(r, kRemoveColumn) == removeButton) {

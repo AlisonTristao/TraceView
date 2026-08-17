@@ -25,6 +25,26 @@ target_link_libraries(traceview_theme PUBLIC
     Qt6::Widgets
 )
 
+# traceview_locale: language/translation definitions and the LanguageManager
+# singleton (public header lives in include/traceview so the app can reach
+# it without depending on any other layer, same split as traceview_theme).
+# Only QtCore -- LanguageManager just uses QObject/QTranslator/QSettings/
+# QCoreApplication/QLibraryInfo, no widgets.
+add_library(traceview_locale STATIC
+    locale/languagemanager.cpp
+    ${CMAKE_SOURCE_DIR}/include/traceview/languagemanager.h
+    ${CMAKE_SOURCE_DIR}/include/traceview/locale.h
+)
+
+target_include_directories(traceview_locale PUBLIC
+    ${CMAKE_SOURCE_DIR}/include
+    ${CMAKE_SOURCE_DIR}/lib
+)
+
+target_link_libraries(traceview_locale PUBLIC
+    Qt6::Core
+)
+
 # traceview_telemetry: generic telemetry value types and data structures
 # with no BTP dependency -- TelemetryFieldBinding, TopicSubscriptionState,
 # StatusTopicRecord, TelemetrySeriesBuffer. These describe what a Backend
@@ -222,4 +242,5 @@ target_link_libraries(traceview_ui
         traceview_project
         traceview_protocol
         traceview_theme
+        traceview_locale
 )

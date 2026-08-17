@@ -125,7 +125,7 @@ void BtpHandshake::sendHello() {
     frame.payload.size = static_cast<std::size_t>(payload.size());
 
     if (!m_session->sendFrame(frame)) {
-        fail(QStringLiteral("failed to encode HELLO frame"));
+        fail(tr("failed to encode HELLO frame"));
     }
 }
 
@@ -137,7 +137,7 @@ void BtpHandshake::onControlFrameReceived(const traceview::BtpFrame& frame) {
         return;  // some other CONTROL frame (e.g. STATUS); not for us
     }
     if (frame.payload.size() < 14) {
-        fail(QStringLiteral("HELLO_RESULT payload too short"));
+        fail(tr("HELLO_RESULT payload too short"));
         return;
     }
     const quint8 status = static_cast<quint8>(frame.payload.at(12));
@@ -152,7 +152,7 @@ void BtpHandshake::onControlFrameReceived(const traceview::BtpFrame& frame) {
         const quint8 selectedVersion = static_cast<quint8>(frame.payload.at(13));
         if (selectedVersion < btp::kMinimumProtocolVersion ||
             selectedVersion > btp::kMaximumProtocolVersion) {
-            fail(QStringLiteral("HELLO_RESULT selected an unadvertised version %1")
+            fail(tr("HELLO_RESULT selected an unadvertised version %1")
                      .arg(selectedVersion));
             return;
         }
@@ -170,19 +170,19 @@ void BtpHandshake::onControlFrameReceived(const traceview::BtpFrame& frame) {
         }
         emit sessionEstablished(peerConfigRevision);
     } else {
-        fail(QStringLiteral("HELLO rejected, status=%1").arg(status));
+        fail(tr("HELLO rejected, status=%1").arg(status));
     }
 }
 
 void BtpHandshake::onEnterTimeout() {
     if (m_state == State::AwaitingReady) {
-        fail(QStringLiteral("no BTP/1 READY within %1 ms").arg(kEnterTimeoutMs));
+        fail(tr("no BTP/1 READY within %1 ms").arg(kEnterTimeoutMs));
     }
 }
 
 void BtpHandshake::onHelloTimeout() {
     if (m_state == State::AwaitingHelloResult) {
-        fail(QStringLiteral("no HELLO_RESULT within %1 ms").arg(kHelloTimeoutMs));
+        fail(tr("no HELLO_RESULT within %1 ms").arg(kHelloTimeoutMs));
     }
 }
 

@@ -52,7 +52,7 @@ constexpr int kControlInset = 8;
 
 PushButtonWidget::PushButtonWidget(QWidget* parent) : DashboardWidget(parent) {
     setProperty("dashboardControlPanel", true);
-    m_button = new QPushButton("Push Button", this);
+    m_button = new QPushButton(tr("Push Button"), this);
     m_button->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
     auto* layout = new QVBoxLayout(this);
@@ -115,7 +115,7 @@ void PushButtonWidget::sendCommand(const QString& text) {
 
 ToggleSwitchWidget::ToggleSwitchWidget(QWidget* parent) : DashboardWidget(parent) {
     setProperty("dashboardControlPanel", true);
-    m_switchButton = new QPushButton("OFF", this);
+    m_switchButton = new QPushButton(tr("OFF"), this);
     m_switchButton->setCheckable(true);
     m_switchButton->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
@@ -127,7 +127,7 @@ ToggleSwitchWidget::ToggleSwitchWidget(QWidget* parent) : DashboardWidget(parent
     layout->addWidget(m_switchButton);
 
     connect(m_switchButton, &QPushButton::toggled, this, [this](bool checked) {
-        m_switchButton->setText(checked ? "ON" : "OFF");
+        m_switchButton->setText(checked ? tr("ON") : tr("OFF"));
         emit toggled(checked);
 
         const QString& command = checked ? m_config.onCommand : m_config.offCommand;
@@ -144,7 +144,7 @@ void ToggleSwitchWidget::setConfig(const QJsonObject& config) {
         // or project load) never itself fires onCommand/offCommand.
         const QSignalBlocker blocker(m_switchButton);
         m_switchButton->setChecked(m_config.defaultState);
-        m_switchButton->setText(m_config.defaultState ? "ON" : "OFF");
+        m_switchButton->setText(m_config.defaultState ? tr("ON") : tr("OFF"));
         m_configInitialized = true;
     }
 }

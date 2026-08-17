@@ -1,5 +1,6 @@
 #include "chartwidgets.h"
 
+#include <QCoreApplication>
 #include <QFont>
 #include <QFontMetrics>
 #include <QMouseEvent>
@@ -199,8 +200,15 @@ int legendRowHeight(const QPainter& painter) {
     return qMax(kLegendSwatchSize, QFontMetrics(painter.font()).height());
 }
 
+// Free function (file-scope, not a member of any QObject-derived class) --
+// tr() isn't callable here, so this and gaugeSeriesDisplayName() below use
+// QCoreApplication::translate() with an explicit context instead, same idiom
+// as the earlier ThemePalette/WidgetRegistry/ProjectStore fixes. Every other
+// user-facing string in this file lives in an actual class member function
+// (ChartWidgetBase/DummyGaugeWidget/etc.) and uses plain tr() as usual.
 QString seriesDisplayName(const ChartSeriesConfig& series) {
-    return series.name.isEmpty() ? QString("Field %1").arg(series.fieldId) : series.name;
+    return series.name.isEmpty() ? QCoreApplication::translate("ChartWidgets", "Field %1").arg(series.fieldId)
+                                  : series.name;
 }
 
 // A series buffer's latest sample, formatted like a Y-axis value label (see
@@ -209,7 +217,9 @@ QString seriesDisplayName(const ChartSeriesConfig& series) {
 // reading need to look different.
 QString formatLatestValue(const QVector<double>& buffer) {
     if (buffer.isEmpty()) {
-        return QStringLiteral("--");
+        // Free function -- see seriesDisplayName() above for why this uses
+        // QCoreApplication::translate() instead of tr().
+        return QCoreApplication::translate("ChartWidgets", "--");
     }
     return QString::number(buffer.last(), 'g', 4);
 }
@@ -298,7 +308,10 @@ void paintSeriesLegends(QPainter& painter, const QRect& area, const QVector<Char
                          const ThemePalette& palette, QVector<QRect>* outHitRects = nullptr) {
     const QFontMetrics fm(painter.font());
     const int rowHeight = legendRowHeight(painter);
-    const QString xLabel = xAxisMode == ChartXAxisMode::Time ? QStringLiteral("t") : QStringLiteral("k");
+    // Free function -- see seriesDisplayName() above for why this uses
+    // QCoreApplication::translate() instead of tr().
+    const QString xLabel = xAxisMode == ChartXAxisMode::Time ? QCoreApplication::translate("ChartWidgets", "t")
+                                                              : QCoreApplication::translate("ChartWidgets", "k");
     // Only reserved/drawn for the line chart (showXAxisTag) -- the bar
     // chart's X axis is now one value label per bar (paintBarSnapshot()),
     // not a scrolling sample/time count, so the "t"/"k" tag has nothing left
@@ -466,8 +479,11 @@ void paintGaugePointer(QPainter& painter, const QPointF& center, double ringRadi
     paintGaugeRadialTick(painter, center, fraction, inner, outer);
 }
 
+// Free function -- see seriesDisplayName() above for why this uses
+// QCoreApplication::translate() instead of tr().
 QString gaugeSeriesDisplayName(const GaugeSeriesConfig& series) {
-    return series.name.isEmpty() ? QString("Field %1").arg(series.fieldId) : series.name;
+    return series.name.isEmpty() ? QCoreApplication::translate("ChartWidgets", "Field %1").arg(series.fieldId)
+                                  : series.name;
 }
 
 // Column x-positions for paintGaugeLegend()'s single row -- same "widest
@@ -514,9 +530,17 @@ void paintGaugeLegend(QPainter& painter, const QRect& area, const GaugeConfig& c
     QStringList texts;
     for (int i = 0; i < config.series.size(); ++i) {
         const double value = i < values.size() ? values[i] : qQNaN();
-        const QString valueText =
-            qIsNaN(value) ? QStringLiteral("--") : QString("%1%2").arg(value, 0, 'f', config.decimals).arg(config.unit);
-        texts << QString("%1  %2").arg(gaugeSeriesDisplayName(config.series[i]), valueText);
+        // Free function -- see seriesDisplayName() above for why this uses
+        // QCoreApplication::translate() instead of tr().
+        const QString valueText = qIsNaN(value) ? QCoreApplication::translate("ChartWidgets", "--")
+                                                  : QCoreApplication::translate("ChartWidgets", "%1%2")
+                                                        .arg(value, 0, 'f', config.decimals)
+                                                        .arg(config.unit);
+        // "%1  %2" fixes name-before-value order -- a translator wanting to
+        // swap that order for a given language would need to reorder these
+        // placeholders; not attempted for this pass.
+        texts << QCoreApplication::translate("ChartWidgets", "%1  %2")
+                     .arg(gaugeSeriesDisplayName(config.series[i]), valueText);
     }
 
     const QVector<LegendColumn> columns = gaugeLegendColumns(fm, area.left(), area.right(), texts);
@@ -944,8 +968,13 @@ void paintHoverCrosshair(QPainter& painter, const QRect& plotRect, int capacity,
     QStringList lines;
     int textWidth = 0;
     for (const HoverRow& row : rows) {
-        const QString text =
-            QString("%1: %2").arg(seriesDisplayName(*row.series), QString::number(row.value, 'g', 4));
+        // Free function -- see seriesDisplayName() above for why this uses
+        // QCoreApplication::translate() instead of tr(). "%1: %2" fixes
+        // name-before-value order -- a translator wanting to swap that order
+        // for a given language would need to reorder these placeholders; not
+        // attempted for this pass.
+        const QString text = QCoreApplication::translate("ChartWidgets", "%1: %2")
+                                  .arg(seriesDisplayName(*row.series), QString::number(row.value, 'g', 4));
         lines << text;
         textWidth = qMax(textWidth, fm.horizontalAdvance(text));
     }
@@ -1047,7 +1076,10 @@ void paintBarSnapshot(QPainter& painter, const QRect& plotRect, const QRect& are
         }
 
         painter.setPen(palette.textSecondary);
-        const QString text = hasValue ? QString::number(values.last(), 'g', 4) : QStringLiteral("--");
+        // Free function -- see seriesDisplayName() above for why this uses
+        // QCoreApplication::translate() instead of tr().
+        const QString text = hasValue ? QString::number(values.last(), 'g', 4)
+                                       : QCoreApplication::translate("ChartWidgets", "--");
         const QRect labelRect(qRound(slotLeft), labelY, qRound(slot), rowHeight);
         painter.drawText(labelRect, Qt::AlignCenter, text);
     }
@@ -1421,8 +1453,11 @@ void DummyGaugeWidget::paintEvent(QPaintEvent*) {
             valueFont.setBold(true);
             painter.setFont(valueFont);
             painter.setPen(palette.textPrimary);
-            const QString text =
-                hasValue ? QString("%1%2").arg(value, 0, 'f', m_config.decimals).arg(m_config.unit) : "--";
+            // Class member function -- plain tr() works here (unlike the
+            // free-function helpers above it in the anonymous namespace).
+            const QString text = hasValue
+                                      ? tr("%1%2").arg(value, 0, 'f', m_config.decimals).arg(m_config.unit)
+                                      : tr("--");
             painter.drawText(arcRect, Qt::AlignCenter, text);
         }
     }

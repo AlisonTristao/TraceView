@@ -80,8 +80,8 @@ void LayersPanel::onPinToggled(bool checked) {
 void LayersPanel::updatePinIcon() {
     const ThemePalette& palette = ThemeManager::instance().currentTheme();
     m_pinButton->setIcon(makePinIcon(m_pinned ? palette.accent : palette.textPrimary, m_pinned));
-    m_pinButton->setToolTip(m_pinned ? "Unpin — panel will hide when nothing is selected"
-                                      : "Pin — keep panel open with nothing selected");
+    m_pinButton->setToolTip(m_pinned ? tr("Unpin — panel will hide when nothing is selected")
+                                      : tr("Pin — keep panel open with nothing selected"));
 }
 
 } // namespace traceview

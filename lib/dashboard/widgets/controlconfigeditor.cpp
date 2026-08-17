@@ -2,6 +2,7 @@
 
 #include <QCheckBox>
 #include <QComboBox>
+#include <QCoreApplication>
 #include <QDoubleSpinBox>
 #include <QFormLayout>
 #include <QLineEdit>
@@ -14,19 +15,34 @@ namespace {
 // re-orderings of the combo items; kVariantLabels is just the display text
 // at the matching index (see ChartConfigEditor's kStyleIds for the same
 // convention).
+//
+// These lists are file-scope statics, not members of a QObject, so tr()
+// isn't available here; use QCoreApplication::translate() with a shared
+// context instead (same idiom as ThemePalette in palettes.cpp).
 const QStringList kVariantIds = {"default", "success", "warning", "danger"};
-const QStringList kVariantLabels = {"Default", "Success", "Warning", "Danger"};
+const QStringList kVariantLabels = {
+    QCoreApplication::translate("ControlConfigEditor", "Default"),
+    QCoreApplication::translate("ControlConfigEditor", "Success"),
+    QCoreApplication::translate("ControlConfigEditor", "Warning"),
+    QCoreApplication::translate("ControlConfigEditor", "Danger"),
+};
 
 const QStringList kButtonModeIds = {"momentary", "pulse"};
-const QStringList kButtonModeLabels = {"Momentary (press + release)", "Pulse (single command)"};
+const QStringList kButtonModeLabels = {
+    QCoreApplication::translate("ControlConfigEditor", "Momentary (press + release)"),
+    QCoreApplication::translate("ControlConfigEditor", "Pulse (single command)"),
+};
 
 const QStringList kSendModeIds = {"continuous", "onRelease"};
-const QStringList kSendModeLabels = {"Continuous (while dragging)", "On release"};
+const QStringList kSendModeLabels = {
+    QCoreApplication::translate("ControlConfigEditor", "Continuous (while dragging)"),
+    QCoreApplication::translate("ControlConfigEditor", "On release"),
+};
 } // namespace
 
 PushButtonConfigEditor::PushButtonConfigEditor(QWidget* parent) : WidgetConfigEditor(parent) {
     m_labelEdit = new QLineEdit(this);
-    m_labelEdit->setPlaceholderText("Button");
+    m_labelEdit->setPlaceholderText(tr("Button"));
 
     m_variantCombo = new QComboBox(this);
     m_variantCombo->addItems(kVariantLabels);
@@ -34,54 +50,54 @@ PushButtonConfigEditor::PushButtonConfigEditor(QWidget* parent) : WidgetConfigEd
     m_modeCombo = new QComboBox(this);
     m_modeCombo->addItems(kButtonModeLabels);
     m_modeCombo->setToolTip(
-        "Momentary sends the press command on press and the release command on release. "
-        "Pulse sends only the press command, once per click.");
+        tr("Momentary sends the press command on press and the release command on release. "
+           "Pulse sends only the press command, once per click."));
 
     m_onPressEdit = new QLineEdit(this);
-    m_onPressEdit->setPlaceholderText("Command sent on press");
+    m_onPressEdit->setPlaceholderText(tr("Command sent on press"));
 
     m_onReleaseEdit = new QLineEdit(this);
-    m_onReleaseEdit->setPlaceholderText("Command sent on release");
+    m_onReleaseEdit->setPlaceholderText(tr("Command sent on release"));
 
-    m_repeatCheck = new QCheckBox("Repeat while held", this);
+    m_repeatCheck = new QCheckBox(tr("Repeat while held"), this);
 
     m_repeatIntervalSpin = new QSpinBox(this);
     m_repeatIntervalSpin->setRange(10, 60'000);
-    m_repeatIntervalSpin->setSuffix(" ms");
+    m_repeatIntervalSpin->setSuffix(tr(" ms"));
     m_repeatIntervalSpin->setValue(200);
 
-    m_longPressCheck = new QCheckBox("Long-press action", this);
+    m_longPressCheck = new QCheckBox(tr("Long-press action"), this);
 
     m_longPressThresholdSpin = new QSpinBox(this);
     m_longPressThresholdSpin->setRange(100, 60'000);
-    m_longPressThresholdSpin->setSuffix(" ms");
+    m_longPressThresholdSpin->setSuffix(tr(" ms"));
     m_longPressThresholdSpin->setValue(600);
 
     m_longPressCommandEdit = new QLineEdit(this);
-    m_longPressCommandEdit->setPlaceholderText("Command sent once held past the threshold");
+    m_longPressCommandEdit->setPlaceholderText(tr("Command sent once held past the threshold"));
 
     m_debounceSpin = new QSpinBox(this);
     m_debounceSpin->setRange(0, 10'000);
-    m_debounceSpin->setSuffix(" ms");
+    m_debounceSpin->setSuffix(tr(" ms"));
     m_debounceSpin->setValue(150);
-    m_debounceSpin->setToolTip("Minimum time between triggers — extra presses inside this window are ignored.");
+    m_debounceSpin->setToolTip(tr("Minimum time between triggers — extra presses inside this window are ignored."));
 
-    m_confirmCheck = new QCheckBox("Confirm before sending", this);
+    m_confirmCheck = new QCheckBox(tr("Confirm before sending"), this);
 
     m_formLayout = new QFormLayout(this);
     m_formLayout->setContentsMargins(0, 8, 0, 0);
     m_formLayout->setFieldGrowthPolicy(QFormLayout::AllNonFixedFieldsGrow);
-    m_formLayout->addRow("Label", m_labelEdit);
-    m_formLayout->addRow("Style", m_variantCombo);
-    m_formLayout->addRow("Mode", m_modeCombo);
-    m_formLayout->addRow("On press", m_onPressEdit);
-    m_formLayout->addRow("On release", m_onReleaseEdit);
+    m_formLayout->addRow(tr("Label"), m_labelEdit);
+    m_formLayout->addRow(tr("Style"), m_variantCombo);
+    m_formLayout->addRow(tr("Mode"), m_modeCombo);
+    m_formLayout->addRow(tr("On press"), m_onPressEdit);
+    m_formLayout->addRow(tr("On release"), m_onReleaseEdit);
     m_formLayout->addRow(QString(), m_repeatCheck);
-    m_formLayout->addRow("Repeat interval", m_repeatIntervalSpin);
+    m_formLayout->addRow(tr("Repeat interval"), m_repeatIntervalSpin);
     m_formLayout->addRow(QString(), m_longPressCheck);
-    m_formLayout->addRow("Long-press time", m_longPressThresholdSpin);
-    m_formLayout->addRow("Long-press command", m_longPressCommandEdit);
-    m_formLayout->addRow("Debounce", m_debounceSpin);
+    m_formLayout->addRow(tr("Long-press time"), m_longPressThresholdSpin);
+    m_formLayout->addRow(tr("Long-press command"), m_longPressCommandEdit);
+    m_formLayout->addRow(tr("Debounce"), m_debounceSpin);
     m_formLayout->addRow(QString(), m_confirmCheck);
 
     connect(m_labelEdit, &QLineEdit::editingFinished, this, [this]() { emitChanged(); });
@@ -169,33 +185,33 @@ void PushButtonConfigEditor::emitChanged() {
 
 ToggleSwitchConfigEditor::ToggleSwitchConfigEditor(QWidget* parent) : WidgetConfigEditor(parent) {
     m_labelEdit = new QLineEdit(this);
-    m_labelEdit->setPlaceholderText("Toggle");
+    m_labelEdit->setPlaceholderText(tr("Toggle"));
 
     m_onLabelEdit = new QLineEdit(this);
-    m_onLabelEdit->setPlaceholderText("ON");
+    m_onLabelEdit->setPlaceholderText(tr("ON"));
 
     m_offLabelEdit = new QLineEdit(this);
-    m_offLabelEdit->setPlaceholderText("OFF");
+    m_offLabelEdit->setPlaceholderText(tr("OFF"));
 
-    m_defaultOnCheck = new QCheckBox("Starts ON", this);
+    m_defaultOnCheck = new QCheckBox(tr("Starts ON"), this);
 
     m_onCommandEdit = new QLineEdit(this);
-    m_onCommandEdit->setPlaceholderText("Command sent when turned ON");
+    m_onCommandEdit->setPlaceholderText(tr("Command sent when turned ON"));
 
     m_offCommandEdit = new QLineEdit(this);
-    m_offCommandEdit->setPlaceholderText("Command sent when turned OFF");
+    m_offCommandEdit->setPlaceholderText(tr("Command sent when turned OFF"));
 
-    m_confirmCheck = new QCheckBox("Confirm before toggling", this);
+    m_confirmCheck = new QCheckBox(tr("Confirm before toggling"), this);
 
     auto* layout = new QFormLayout(this);
     layout->setContentsMargins(0, 8, 0, 0);
     layout->setFieldGrowthPolicy(QFormLayout::AllNonFixedFieldsGrow);
-    layout->addRow("Label", m_labelEdit);
-    layout->addRow("On text", m_onLabelEdit);
-    layout->addRow("Off text", m_offLabelEdit);
+    layout->addRow(tr("Label"), m_labelEdit);
+    layout->addRow(tr("On text"), m_onLabelEdit);
+    layout->addRow(tr("Off text"), m_offLabelEdit);
     layout->addRow(QString(), m_defaultOnCheck);
-    layout->addRow("On command", m_onCommandEdit);
-    layout->addRow("Off command", m_offCommandEdit);
+    layout->addRow(tr("On command"), m_onCommandEdit);
+    layout->addRow(tr("Off command"), m_offCommandEdit);
     layout->addRow(QString(), m_confirmCheck);
 
     connect(m_labelEdit, &QLineEdit::editingFinished, this, [this]() { emitChanged(); });
@@ -240,7 +256,7 @@ void ToggleSwitchConfigEditor::emitChanged() {
 
 SliderConfigEditor::SliderConfigEditor(QWidget* parent) : WidgetConfigEditor(parent) {
     m_labelEdit = new QLineEdit(this);
-    m_labelEdit->setPlaceholderText("Slider");
+    m_labelEdit->setPlaceholderText(tr("Slider"));
 
     m_minSpin = new QDoubleSpinBox(this);
     m_minSpin->setRange(-100'000.0, 100'000.0);
@@ -263,40 +279,41 @@ SliderConfigEditor::SliderConfigEditor(QWidget* parent) : WidgetConfigEditor(par
     m_defaultSpin->setValue(50.0);
 
     m_unitEdit = new QLineEdit(this);
-    m_unitEdit->setPlaceholderText("V, %, ...");
+    m_unitEdit->setPlaceholderText(tr("V, %, ..."));
 
-    m_showValueCheck = new QCheckBox("Show current value", this);
+    m_showValueCheck = new QCheckBox(tr("Show current value"), this);
     m_showValueCheck->setChecked(true);
 
     m_sendModeCombo = new QComboBox(this);
     m_sendModeCombo->addItems(kSendModeLabels);
     m_sendModeCombo->setToolTip(
-        "Continuous sends the command on every step while dragging, throttled below. "
-        "On release sends it once, when the handle is let go.");
+        tr("Continuous sends the command on every step while dragging, throttled below. "
+           "On release sends it once, when the handle is let go."));
 
     m_throttleSpin = new QSpinBox(this);
     m_throttleSpin->setRange(10, 10'000);
-    m_throttleSpin->setSuffix(" ms");
+    m_throttleSpin->setSuffix(tr(" ms"));
     m_throttleSpin->setValue(100);
-    m_throttleSpin->setToolTip("Minimum time between sends while dragging, so every pixel of motion isn't its own message.");
+    m_throttleSpin->setToolTip(
+        tr("Minimum time between sends while dragging, so every pixel of motion isn't its own message."));
 
     m_commandTemplateEdit = new QLineEdit(this);
-    m_commandTemplateEdit->setPlaceholderText("SET {value}");
-    m_commandTemplateEdit->setToolTip("Command sent on change — {value} is replaced with the current slider value.");
+    m_commandTemplateEdit->setPlaceholderText(tr("SET {value}"));
+    m_commandTemplateEdit->setToolTip(tr("Command sent on change — {value} is replaced with the current slider value."));
 
     m_formLayout = new QFormLayout(this);
     m_formLayout->setContentsMargins(0, 8, 0, 0);
     m_formLayout->setFieldGrowthPolicy(QFormLayout::AllNonFixedFieldsGrow);
-    m_formLayout->addRow("Label", m_labelEdit);
-    m_formLayout->addRow("Min", m_minSpin);
-    m_formLayout->addRow("Max", m_maxSpin);
-    m_formLayout->addRow("Step", m_stepSpin);
-    m_formLayout->addRow("Default", m_defaultSpin);
-    m_formLayout->addRow("Unit", m_unitEdit);
+    m_formLayout->addRow(tr("Label"), m_labelEdit);
+    m_formLayout->addRow(tr("Min"), m_minSpin);
+    m_formLayout->addRow(tr("Max"), m_maxSpin);
+    m_formLayout->addRow(tr("Step"), m_stepSpin);
+    m_formLayout->addRow(tr("Default"), m_defaultSpin);
+    m_formLayout->addRow(tr("Unit"), m_unitEdit);
     m_formLayout->addRow(QString(), m_showValueCheck);
-    m_formLayout->addRow("Send", m_sendModeCombo);
-    m_formLayout->addRow("Throttle", m_throttleSpin);
-    m_formLayout->addRow("Command", m_commandTemplateEdit);
+    m_formLayout->addRow(tr("Send"), m_sendModeCombo);
+    m_formLayout->addRow(tr("Throttle"), m_throttleSpin);
+    m_formLayout->addRow(tr("Command"), m_commandTemplateEdit);
 
     connect(m_labelEdit, &QLineEdit::editingFinished, this, [this]() { emitChanged(); });
     connect(m_minSpin, &QDoubleSpinBox::valueChanged, this, [this](double) { emitChanged(); });

@@ -36,13 +36,13 @@ PropertiesPanel::PropertiesPanel(QWidget* parent) : QWidget(parent) {
     m_typeCombo = new QComboBox();
     m_nameEdit = new QLineEdit();
     m_keyEdit = new QLineEdit();
-    m_keyEdit->setPlaceholderText("(none)");
-    m_keyEdit->setToolTip("Optional, must be unique — the handle future data updates will target this widget by.");
+    m_keyEdit->setPlaceholderText(tr("(none)"));
+    m_keyEdit->setToolTip(tr("Optional, must be unique — the handle future data updates will target this widget by."));
 
     auto* formLayout = new QFormLayout();
-    formLayout->addRow("Type", m_typeCombo);
-    formLayout->addRow("Name", m_nameEdit);
-    formLayout->addRow("Key", m_keyEdit);
+    formLayout->addRow(tr("Type"), m_typeCombo);
+    formLayout->addRow(tr("Name"), m_nameEdit);
+    formLayout->addRow(tr("Key"), m_keyEdit);
 
     m_divider = new QFrame();
     m_divider->setObjectName("sectionDivider");
@@ -176,8 +176,8 @@ void PropertiesPanel::onPinToggled(bool checked) {
 void PropertiesPanel::updatePinIcon() {
     const ThemePalette& palette = ThemeManager::instance().currentTheme();
     m_pinButton->setIcon(makePinIcon(m_pinned ? palette.accent : palette.textPrimary, m_pinned));
-    m_pinButton->setToolTip(m_pinned ? "Unpin — panel will hide when nothing is selected"
-                                      : "Pin — keep panel open with nothing selected");
+    m_pinButton->setToolTip(m_pinned ? tr("Unpin — panel will hide when nothing is selected")
+                                      : tr("Pin — keep panel open with nothing selected"));
 }
 
 void PropertiesPanel::ensureConfigEditor(const QString& typeId) {

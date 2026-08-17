@@ -68,12 +68,12 @@ BtpBackend::BtpBackend(QObject* parent)
     connect(m_btpHandshake, &BtpHandshake::bytesToWrite, this, &Backend::bytesToWrite);
 
     connect(m_btpHandshake, &BtpHandshake::sessionEstablished, this, [this](quint32 peerConfigRevision) {
-        emit statusMessage("BTP session established (HELLO_RESULT=SUCCESS)", 5000);
+        emit statusMessage(tr("BTP session established (HELLO_RESULT=SUCCESS)"), 5000);
         m_manifestClient->onSessionEstablished(peerConfigRevision);
         m_subscriptionManager->onSessionEstablished();
     });
     connect(m_btpHandshake, &BtpHandshake::sessionFailed, this, [this](const QString& reason) {
-        emit statusMessage("BTP handshake failed: " + reason, 8000);
+        emit statusMessage(tr("BTP handshake failed: %1").arg(reason), 8000);
     });
     connect(m_btpSession, &BtpSession::frameReceived, m_protocolRouter, &ProtocolRouter::onFrameReceived);
     connect(m_protocolRouter, &ProtocolRouter::telemetrySampleReceived, m_telemetryFieldRouter,
@@ -94,7 +94,7 @@ BtpBackend::BtpBackend(QObject* parent)
     // what was asked for.
     connect(m_subscriptionManager, &SubscriptionManager::subscriptionRateLimited, this,
             [this](quint32 sourceId, quint16 topicId, quint32 requested, quint32 effective) {
-                emit statusMessage(QString("Topic 0x%1 of source 0x%2 limited to %3 (requested %4)")
+                emit statusMessage(tr("Topic 0x%1 of source 0x%2 limited to %3 (requested %4)")
                                        .arg(topicId, 4, 16, QChar('0'))
                                        .arg(sourceId, 8, 16, QChar('0'))
                                        .arg(formatRateMillihz(effective), formatRateMillihz(requested)),
@@ -102,8 +102,8 @@ BtpBackend::BtpBackend(QObject* parent)
             });
     connect(m_subscriptionManager, &SubscriptionManager::subscriptionRejected, this,
             [this](quint32 sourceId, quint16 topicId, quint8 status, quint16 errorCode) {
-                emit statusMessage(QString("SUBSCRIBE rejected for topic 0x%1 of source 0x%2 "
-                                           "(status 0x%3, error 0x%4)")
+                emit statusMessage(tr("SUBSCRIBE rejected for topic 0x%1 of source 0x%2 "
+                                      "(status 0x%3, error 0x%4)")
                                        .arg(topicId, 4, 16, QChar('0'))
                                        .arg(sourceId, 8, 16, QChar('0'))
                                        .arg(status, 2, 16, QChar('0'))

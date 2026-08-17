@@ -1,5 +1,6 @@
 #include "projectstore.h"
 
+#include <QCoreApplication>
 #include <QFile>
 #include <QJsonDocument>
 #include <QSaveFile>
@@ -25,7 +26,10 @@ void ProjectStore::setSection(const QString& key, const QJsonObject& value) {
 
 bool ProjectStore::save() {
     if (m_currentPath.isEmpty()) {
-        m_lastError = "No project path set yet — use Save Project to choose a file first.";
+        // ProjectStore is not a QObject, so tr() isn't available here; use
+        // QCoreApplication::translate() with an explicit context instead.
+        m_lastError = QCoreApplication::translate(
+            "ProjectStore", "No project path set yet — use Save Project to choose a file first.");
         return false;
     }
     return saveAs(m_currentPath);

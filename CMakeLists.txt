@@ -25,7 +25,7 @@ if(WIN32)
     enable_language(RC)
 endif()
 
-find_package(Qt6 REQUIRED COMPONENTS Widgets SerialPort)
+find_package(Qt6 REQUIRED COMPONENTS Widgets SerialPort LinguistTools)
 
 # BTP is the canonical, shared source of the BTP v1 wire format and codec
 # (see BTP/PLANO_GERAL.txt) -- TraceView does not keep its own copy of the
@@ -63,6 +63,11 @@ qt_add_executable(TraceView
     resources/icons/app.qrc
 )
 
+qt_add_translations(TraceView
+    TS_FILES translations/traceview_pt_BR.ts
+    RESOURCE_PREFIX "/translations"
+)
+
 if(WIN32)
     target_sources(TraceView PRIVATE resources/app.rc)
 endif()
@@ -74,6 +79,7 @@ target_link_libraries(TraceView PRIVATE
     Qt6::SerialPort
     traceview_ui
     traceview_theme
+    traceview_locale
 )
 
 set_target_properties(TraceView PROPERTIES
@@ -93,8 +99,12 @@ if(WIN32)
         HINTS "${Qt6_DIR}/../../../bin"
     )
     if(WINDEPLOYQT_EXECUTABLE)
+        # --no-translations removed: the app now ships real translations
+        # (see LanguageManager), and it also installs Qt's own qtbase_*.qm
+        # so native dialog chrome follows the app's language -- that file
+        # has to be deployed next to the exe for QTranslator to find it.
         add_custom_command(TARGET TraceView POST_BUILD
-            COMMAND "${WINDEPLOYQT_EXECUTABLE}" --no-translations "$<TARGET_FILE:TraceView>"
+            COMMAND "${WINDEPLOYQT_EXECUTABLE}" "$<TARGET_FILE:TraceView>"
             COMMENT "Deploying Qt runtime DLLs next to TraceView.exe"
         )
     endif()

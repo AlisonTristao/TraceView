@@ -323,7 +323,7 @@ void DashboardGrid::bringSelectedToFront() {
     if (from < 0 || from == to) {
         return;
     }
-    m_undoStack->push(new ChangeZOrderCommand(this, m_selectedItemId, from, to, "Bring to Front"));
+    m_undoStack->push(new ChangeZOrderCommand(this, m_selectedItemId, from, to, tr("Bring to Front")));
 }
 
 void DashboardGrid::bringSelectedForward() {
@@ -338,7 +338,7 @@ void DashboardGrid::bringSelectedForward() {
     if (from == to) {
         return;
     }
-    m_undoStack->push(new ChangeZOrderCommand(this, m_selectedItemId, from, to, "Bring Forward"));
+    m_undoStack->push(new ChangeZOrderCommand(this, m_selectedItemId, from, to, tr("Bring Forward")));
 }
 
 void DashboardGrid::sendSelectedBackward() {
@@ -353,7 +353,7 @@ void DashboardGrid::sendSelectedBackward() {
     if (from == to) {
         return;
     }
-    m_undoStack->push(new ChangeZOrderCommand(this, m_selectedItemId, from, to, "Send Backward"));
+    m_undoStack->push(new ChangeZOrderCommand(this, m_selectedItemId, from, to, tr("Send Backward")));
 }
 
 void DashboardGrid::sendSelectedToBack() {
@@ -364,7 +364,7 @@ void DashboardGrid::sendSelectedToBack() {
     if (from <= 0) {
         return;
     }
-    m_undoStack->push(new ChangeZOrderCommand(this, m_selectedItemId, from, 0, "Send to Back"));
+    m_undoStack->push(new ChangeZOrderCommand(this, m_selectedItemId, from, 0, tr("Send to Back")));
 }
 
 void DashboardGrid::applyInsertItem(const DashboardItem& item) {

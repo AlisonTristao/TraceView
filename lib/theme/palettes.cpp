@@ -1,11 +1,15 @@
 #include "palettes.h"
 
+#include <QCoreApplication>
+
 namespace traceview {
 
 ThemePalette makeDarkPalette() {
     ThemePalette p;
     p.id = "dark";
-    p.displayName = "Dark";
+    // ThemePalette isn't a QObject, so tr() isn't available here; use
+    // QCoreApplication::translate() with the owning class as context instead.
+    p.displayName = QCoreApplication::translate("ThemeManager", "Dark");
 
     p.background = QColor("#0A0F1E");
     p.surface = QColor("#101A30");
@@ -34,7 +38,7 @@ ThemePalette makeDarkPalette() {
 ThemePalette makeLightPalette() {
     ThemePalette p;
     p.id = "light";
-    p.displayName = "Light";
+    p.displayName = QCoreApplication::translate("ThemeManager", "Light");
 
     p.background = QColor("#FFFFFF");
     p.surface = QColor("#F4F6FA");
