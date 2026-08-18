@@ -21,6 +21,7 @@
 #include <QPushButton>
 #include <QSettings>
 #include <QSignalBlocker>
+#include <QStackedWidget>
 #include <QStatusBar>
 #include <QStringList>
 #include <QToolButton>
@@ -33,6 +34,7 @@
 #include "dashboard/widgetregistry.h"
 #include "dashboard/widgets/chartwidgets.h"
 #include "debugchartswindow.h"
+#include "devices/devicesgrid.h"
 #include "layerspanel.h"
 #include "paneldockcontroller.h"
 #include "project/projectstore.h"
@@ -180,7 +182,19 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     auto* contentLayout = new QHBoxLayout(m_contentRow);
     contentLayout->setContentsMargins(0, 0, 0, 0);
     contentLayout->setSpacing(0);
-    contentLayout->addWidget(m_dashboardGrid);
+
+    // The Devices tab swaps this whole area for m_devicesGrid instead of
+    // sharing the row with the canvas -- unlike the layers/properties
+    // panels above, DevicesGrid isn't subject to DashboardGrid's
+    // fraction-of-canvas geometry, so a plain QStackedWidget (real layout
+    // space, not a float) is fine here.
+    m_devicesGrid = new DevicesGrid(this);
+    connect(m_removeDeviceAction, &QAction::triggered, m_devicesGrid, &DevicesGrid::removeSelected);
+    connect(m_devicesGrid, &DevicesGrid::selectionChanged, this, &MainWindow::updateDeviceSelectionActions);
+    m_contentStack = new QStackedWidget(m_contentRow);
+    m_contentStack->addWidget(m_dashboardGrid);
+    m_contentStack->addWidget(m_devicesGrid);
+    contentLayout->addWidget(m_contentStack);
 
     // Reparented rather than added to contentLayout: their geometry is set
     // directly by m_dockController (wired below via an event filter on
@@ -504,6 +518,18 @@ Ribbon* MainWindow::buildRibbon() {
     // state needs to stay in sync with whether it's currently pasteable.
     connect(QGuiApplication::clipboard(), &QClipboard::dataChanged, this, &MainWindow::updateSelectionActions);
 
+    m_addDeviceAction = new QAction(tr("Add Device"), this);
+    connect(m_addDeviceAction, &QAction::triggered, this, &MainWindow::onAddDevice);
+
+    // Wired to m_devicesGrid once it exists (right after its own
+    // construction in MainWindow::MainWindow()) -- it isn't built yet at
+    // this point, since buildRibbon() runs before it, same reason
+    // m_removeAction above is wired straight to m_dashboardGrid but this one
+    // can't be wired to m_devicesGrid here.
+    m_removeDeviceAction = new QAction(tr("Remove Device"), this);
+    m_removeDeviceAction->setEnabled(false);
+    m_removeDeviceAction->setShortcut(QKeySequence::Delete);
+
     auto* runPage = new QWidget(this);
     runPage->setObjectName("ribbonPage");
     runPage->setFixedHeight(kRibbonPageHeight);
@@ -621,9 +647,20 @@ Ribbon* MainWindow::buildRibbon() {
     configureLayout->addWidget(Ribbon::createButtonGroup(configurePage, {m_undoAction, m_redoAction}));
     configureLayout->addStretch();
 
+    auto* devicesPage = new QWidget(this);
+    devicesPage->setObjectName("ribbonPage");
+    devicesPage->setFixedHeight(kRibbonPageHeight);
+    auto* devicesLayout = new QHBoxLayout(devicesPage);
+    devicesLayout->setContentsMargins(kRibbonPageMarginH, kRibbonPageMarginV, kRibbonPageMarginH, kRibbonPageMarginV);
+    devicesLayout->setSpacing(kRibbonGroupSpacing);
+
+    devicesLayout->addWidget(Ribbon::createButtonGroup(devicesPage, {m_addDeviceAction, m_removeDeviceAction}));
+    devicesLayout->addStretch();
+
     auto* ribbon = new Ribbon(this);
     m_runTabIndex = ribbon->addTab(tr("Run"), runPage);
     m_configureTabIndex = ribbon->addTab(tr("Layout"), configurePage);
+    m_devicesTabIndex = ribbon->addTab(tr("Devices"), devicesPage);
 
     connect(ribbon, &Ribbon::currentTabChanged, this, &MainWindow::onRibbonTabChanged);
 
@@ -754,6 +791,11 @@ void MainWindow::updateRibbonIcons() {
     m_removeAction->setIcon(makeMinusIcon(palette.danger));
     m_removeAction->setToolTip(tr("Remove selected widget (%1)")
                                     .arg(m_removeAction->shortcut().toString(QKeySequence::NativeText)));
+    m_addDeviceAction->setIcon(makePlusIcon(palette.textPrimary));
+    m_addDeviceAction->setToolTip(tr("Add device"));
+    m_removeDeviceAction->setIcon(makeMinusIcon(palette.danger));
+    m_removeDeviceAction->setToolTip(tr("Remove selected device (%1)")
+                                          .arg(m_removeDeviceAction->shortcut().toString(QKeySequence::NativeText)));
     m_copyAction->setIcon(makeCopyIcon(palette.textPrimary));
     m_copyAction->setToolTip(
         tr("Copy selected widget (%1)").arg(m_copyAction->shortcut().toString(QKeySequence::NativeText)));
@@ -786,14 +828,23 @@ void MainWindow::updateRibbonIcons() {
 
 void MainWindow::onRibbonTabChanged(int index) {
     m_configureTabActive = index == m_configureTabIndex;
+    m_devicesTabActive = index == m_devicesTabIndex;
     m_dashboardGrid->setEditMode(m_configureTabActive);
     m_addWidgetAction->setEnabled(m_configureTabActive);
     updatePanelVisibility();
     updateSelectionActions();
+    updateDeviceSelectionActions();
 
     if (index == m_runTabIndex) {
         refreshSerialPorts();
     }
+
+    // Swaps the whole content area between the canvas and the Devices grid;
+    // Run/Layout both keep showing the canvas, only Devices swaps away from
+    // it (m_configureTabActive above already goes false here on its own,
+    // so edit mode/panels don't need any extra handling for this tab).
+    m_contentStack->setCurrentWidget(index == m_devicesTabIndex ? static_cast<QWidget*>(m_devicesGrid)
+                                                                 : static_cast<QWidget*>(m_dashboardGrid));
 }
 
 void MainWindow::refreshSerialPorts() {
@@ -919,6 +970,20 @@ void MainWindow::onAddWidget() {
         return;
     }
     m_dashboardGrid->addItem(types.first().typeId);
+}
+
+void MainWindow::onAddDevice() {
+    // Drops in a placeholder mock device -- no picker dialog, same shape as
+    // onAddWidget() above. DevicesGrid owns opening DeviceConfigDialog
+    // itself (gear click on the new card), so renaming just happens there;
+    // this slot doesn't reach into that flow.
+    Device device;
+    device.name = tr("New Device");
+    m_devicesGrid->addDevice(device);
+}
+
+void MainWindow::updateDeviceSelectionActions() {
+    m_removeDeviceAction->setEnabled(m_devicesTabActive && m_devicesGrid->selectedCount() > 0);
 }
 
 void MainWindow::onPanelTypeChangeRequested(const QString& typeId) {

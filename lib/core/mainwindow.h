@@ -13,6 +13,7 @@ class QEvent;
 class QLabel;
 class QMenu;
 class QPushButton;
+class QStackedWidget;
 class QToolButton;
 
 namespace traceview {
@@ -21,6 +22,7 @@ class Backend;
 class DashboardGrid;
 class DashboardWidget;
 class DebugChartsWindow;
+class DevicesGrid;
 class LayersPanel;
 class PanelDockController;
 class PropertiesPanel;
@@ -91,6 +93,20 @@ private:
     // selection did (selectionChanged()).
     void refreshLayersPanel();
     void onAddWidget();
+    // Appends a placeholder mock Device (Devices tab's ribbon button) --
+    // mirrors onAddWidget()'s "drop in a default, let the user edit it
+    // afterward" shape, but there's no upfront picker here either way
+    // since Device has only one CommType today. The user renames it via
+    // the card's own gear -> DeviceConfigDialog (DevicesGrid owns that
+    // flow internally); this slot doesn't open it automatically.
+    void onAddDevice();
+    // Mirrors updateSelectionActions() for m_devicesGrid's own (single-item)
+    // selection -- called on DevicesGrid::selectionChanged and on every tab
+    // switch, so m_removeDeviceAction stays gated to "Devices tab active AND
+    // a device is selected" (same shape as m_removeAction's own
+    // m_configureTabActive-gated condition, kept mutually exclusive so both
+    // never share an enabled Delete shortcut at once).
+    void updateDeviceSelectionActions();
     void onPanelTypeChangeRequested(const QString& typeId);
     void onPanelNameChangeRequested(const QString& name);
     void onPanelKeyChangeRequested(const QString& key);
@@ -109,6 +125,16 @@ private:
     void onFullscreenToggled(bool checked);
 
     DashboardGrid* m_dashboardGrid = nullptr;
+    // Devices tab's content -- swapped in for m_dashboardGrid via
+    // m_contentStack, never shown at the same time (see onRibbonTabChanged).
+    DevicesGrid* m_devicesGrid = nullptr;
+    // Holds m_dashboardGrid and m_devicesGrid; whichever one is current is
+    // what fills m_contentRow. Unlike the layers/properties panels below,
+    // this genuinely shares layout space (contentLayout->addWidget()) rather
+    // than floating -- DevicesGrid isn't subject to DashboardGrid's
+    // fraction-of-canvas geometry constraint, so swapping/resizing it here
+    // doesn't reflow anything the way shrinking the canvas would.
+    QStackedWidget* m_contentStack = nullptr;
     PropertiesPanel* m_propertiesPanel = nullptr;
     LayersPanel* m_layersPanel = nullptr;
     // Row below the ribbon that hosts the canvas; m_layersPanel/
@@ -121,6 +147,8 @@ private:
     Ribbon* m_ribbon = nullptr;
     WorkspaceSwitcher* m_workspaceSwitcher = nullptr;
     QAction* m_addWidgetAction = nullptr;
+    QAction* m_addDeviceAction = nullptr;
+    QAction* m_removeDeviceAction = nullptr;
     QAction* m_removeAction = nullptr;
     QAction* m_copyAction = nullptr;
     QAction* m_pasteAction = nullptr;
@@ -138,7 +166,11 @@ private:
     // a dangling raw pointer behind for the next "Debug" click to dereference.
     QPointer<DebugChartsWindow> m_debugChartsWindow;
     int m_configureTabIndex = -1;
+    int m_devicesTabIndex = -1;
     bool m_configureTabActive = false;
+    // Gates m_removeDeviceAction the same way m_configureTabActive gates
+    // m_removeAction -- see updateDeviceSelectionActions().
+    bool m_devicesTabActive = false;
 
     void onLineTerminatorChanged(int index);
 

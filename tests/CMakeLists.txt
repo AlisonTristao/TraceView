@@ -17,6 +17,9 @@ add_traceview_test(test_workspacemanager traceview_project)
 add_traceview_test(test_dashboarditem traceview_dashboard)
 add_traceview_test(test_widgetregistry traceview_dashboard)
 add_traceview_test(test_dashboardgrid traceview_dashboard)
+# Devices panel data model/card/grid (UI-only for now, mock/local data --
+# see lib/devices). Only traceview_devices; no dashboard/protocol dependency.
+add_traceview_test(test_devicesgrid traceview_devices)
 add_traceview_test(test_chartdata traceview_dashboard)
 add_traceview_test(test_controldata traceview_dashboard)
 # topico 19: the dumb-terminal line model (\r/\b/\n handling) and keystroke

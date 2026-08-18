@@ -209,6 +209,33 @@ target_link_libraries(traceview_dashboard
         traceview_theme
 )
 
+# traceview_devices: the Devices panel's data model, card chrome, and fixed
+# auto-flow grid. UI-only for now (mock/local data, no real transport
+# wiring) -- a later phase wires real BTP device discovery into the same
+# Device struct. Depends only on traceview_theme so that data-source swap
+# won't require touching this layer's visual code.
+add_library(traceview_devices STATIC
+    devices/device.h
+    devices/devicecard.cpp
+    devices/devicecard.h
+    devices/devicesgrid.cpp
+    devices/devicesgrid.h
+    devices/deviceconfigdialog.cpp
+    devices/deviceconfigdialog.h
+)
+
+target_include_directories(traceview_devices PUBLIC
+    ${CMAKE_SOURCE_DIR}/include
+    ${CMAKE_SOURCE_DIR}/lib
+)
+
+target_link_libraries(traceview_devices
+    PUBLIC
+        Qt6::Widgets
+    PRIVATE
+        traceview_theme
+)
+
 # traceview_ui: MainWindow/Ribbon/AboutDialog — application chrome and
 # coordination. Depends on the dashboard/project/theme layers to wire them
 # together; nothing else is allowed to depend on traceview_ui.
@@ -263,6 +290,7 @@ target_link_libraries(traceview_ui
         Qt6::SerialPort
     PRIVATE
         traceview_dashboard
+        traceview_devices
         traceview_project
         traceview_protocol
         traceview_theme

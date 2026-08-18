@@ -4,25 +4,25 @@
 <context>
     <name>ChartWidgets</name>
     <message>
-        <location filename="../lib/dashboard/widgets/chartwidgets.cpp" line="210"/>
+        <location filename="../lib/dashboard/widgets/chartwidgets.cpp" line="208"/>
         <location filename="../lib/dashboard/widgets/chartwidgets.cpp" line="485"/>
         <source>Field %1</source>
         <translation>Champ %1</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/chartwidgets.cpp" line="222"/>
+        <location filename="../lib/dashboard/widgets/chartwidgets.cpp" line="220"/>
         <location filename="../lib/dashboard/widgets/chartwidgets.cpp" line="535"/>
-        <location filename="../lib/dashboard/widgets/chartwidgets.cpp" line="1082"/>
+        <location filename="../lib/dashboard/widgets/chartwidgets.cpp" line="1093"/>
         <source>--</source>
         <translation>--</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/chartwidgets.cpp" line="313"/>
+        <location filename="../lib/dashboard/widgets/chartwidgets.cpp" line="311"/>
         <source>t</source>
         <translation>t</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/chartwidgets.cpp" line="314"/>
+        <location filename="../lib/dashboard/widgets/chartwidgets.cpp" line="312"/>
         <source>k</source>
         <translation>k</translation>
     </message>
@@ -37,7 +37,7 @@
         <translation>%1  %2</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/chartwidgets.cpp" line="976"/>
+        <location filename="../lib/dashboard/widgets/chartwidgets.cpp" line="987"/>
         <source>%1: %2</source>
         <translation>%1: %2</translation>
     </message>
@@ -88,50 +88,81 @@
 <context>
     <name>DashboardCommands</name>
     <message>
-        <location filename="../lib/dashboard/dashboardcommands.cpp" line="13"/>
+        <location filename="../lib/dashboard/dashboardcommands.cpp" line="14"/>
         <source>Add Widget</source>
         <translation>Ajouter un widget</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/dashboardcommands.cpp" line="24"/>
+        <location filename="../lib/dashboard/dashboardcommands.cpp" line="25"/>
         <source>Remove Widget</source>
         <translation>Supprimer le widget</translation>
     </message>
     <message>
         <location filename="../lib/dashboard/dashboardcommands.cpp" line="37"/>
+        <source>Remove Widgets</source>
+        <translation>Supprimer les widgets</translation>
+    </message>
+    <message>
+        <location filename="../lib/dashboard/dashboardcommands.cpp" line="57"/>
         <source>Move Widget</source>
         <translation>Déplacer le widget</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/dashboardcommands.cpp" line="50"/>
+        <location filename="../lib/dashboard/dashboardcommands.cpp" line="74"/>
         <source>Resize Widget</source>
         <translation>Redimensionner le widget</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/dashboardcommands.cpp" line="63"/>
+        <location filename="../lib/dashboard/dashboardcommands.cpp" line="87"/>
         <source>Rename Widget</source>
         <translation>Renommer le widget</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/dashboardcommands.cpp" line="76"/>
+        <location filename="../lib/dashboard/dashboardcommands.cpp" line="100"/>
         <source>Set Widget Key</source>
         <translation>Définir la clé du widget</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/dashboardcommands.cpp" line="89"/>
+        <location filename="../lib/dashboard/dashboardcommands.cpp" line="113"/>
         <source>Set Widget Config</source>
         <translation>Définir la configuration du widget</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/dashboardcommands.cpp" line="102"/>
+        <location filename="../lib/dashboard/dashboardcommands.cpp" line="126"/>
         <source>Change Widget Type</source>
         <translation>Changer le type de widget</translation>
+    </message>
+    <message>
+        <location filename="../lib/dashboard/dashboardcommands.cpp" line="151"/>
+        <source>Group Widgets</source>
+        <translation>Grouper les widgets</translation>
+    </message>
+    <message>
+        <location filename="../lib/dashboard/dashboardcommands.cpp" line="167"/>
+        <source>Ungroup Widgets</source>
+        <translation>Dégrouper les widgets</translation>
+    </message>
+</context>
+<context>
+    <name>Device</name>
+    <message>
+        <location filename="../lib/devices/device.h" line="23"/>
+        <source>BTP</source>
+        <translation>BTP</translation>
+    </message>
+</context>
+<context>
+    <name>FontManager</name>
+    <message>
+        <location filename="../lib/theme/fontmanager.cpp" line="24"/>
+        <source>System Default</source>
+        <translation>Par défaut du système</translation>
     </message>
 </context>
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="55"/>
+        <location filename="../lib/core/mainwindow.cpp" line="64"/>
         <source>TraceView Project (*.tvproj)</source>
         <translation>Projet TraceView (*.tvproj)</translation>
     </message>
@@ -145,6 +176,19 @@
     </message>
 </context>
 <context>
+    <name>QObject</name>
+    <message>
+        <location filename="../lib/core/debugchartswindow.cpp" line="25"/>
+        <source>Debug -- synthetic chart data</source>
+        <translation>Débogage -- données de graphique synthétiques</translation>
+    </message>
+    <message>
+        <location filename="../lib/core/workspaceswitcher.cpp" line="49"/>
+        <source>Delete workspace</source>
+        <translation>Supprimer l'espace de travail</translation>
+    </message>
+</context>
+<context>
     <name>ThemeManager</name>
     <message>
         <location filename="../lib/theme/palettes.cpp" line="12"/>
@@ -155,6 +199,41 @@
         <location filename="../lib/theme/palettes.cpp" line="41"/>
         <source>Light</source>
         <translation>Clair</translation>
+    </message>
+    <message>
+        <location filename="../lib/theme/palettes.cpp" line="74"/>
+        <source>Wood</source>
+        <translation>Bois</translation>
+    </message>
+    <message>
+        <location filename="../lib/theme/palettes.cpp" line="103"/>
+        <source>Black</source>
+        <translation>Noir</translation>
+    </message>
+    <message>
+        <location filename="../lib/theme/palettes.cpp" line="134"/>
+        <source>Matrix</source>
+        <translation>Matrix</translation>
+    </message>
+    <message>
+        <location filename="../lib/theme/palettes.cpp" line="165"/>
+        <source>Synthwave</source>
+        <translation>Synthwave</translation>
+    </message>
+    <message>
+        <location filename="../lib/theme/palettes.cpp" line="197"/>
+        <source>Amber</source>
+        <translation>Ambre</translation>
+    </message>
+    <message>
+        <location filename="../lib/theme/palettes.cpp" line="228"/>
+        <source>Arctic</source>
+        <translation>Arctique</translation>
+    </message>
+    <message>
+        <location filename="../lib/theme/palettes.cpp" line="257"/>
+        <source>Sakura</source>
+        <translation>Sakura</translation>
     </message>
 </context>
 <context>
@@ -193,6 +272,14 @@
         <location filename="../lib/dashboard/widgetregistry.cpp" line="41"/>
         <source>Slider</source>
         <translation>Curseur</translation>
+    </message>
+</context>
+<context>
+    <name>WorkspaceManager</name>
+    <message>
+        <location filename="../lib/project/workspacemanager.cpp" line="154"/>
+        <source>Default</source>
+        <translation>Par défaut</translation>
     </message>
 </context>
 <context>
@@ -496,42 +583,42 @@
 <context>
     <name>traceview::DashboardCell</name>
     <message>
-        <location filename="../lib/dashboard/dashboardcell.cpp" line="330"/>
+        <location filename="../lib/dashboard/dashboardcell.cpp" line="339"/>
         <source>Show last value</source>
         <translation>Afficher la dernière valeur</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/dashboardcell.cpp" line="335"/>
+        <location filename="../lib/dashboard/dashboardcell.cpp" line="344"/>
         <source>Show grid point values</source>
         <translation>Afficher les valeurs des points de la grille</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/dashboardcell.cpp" line="340"/>
+        <location filename="../lib/dashboard/dashboardcell.cpp" line="349"/>
         <source>Show hover crosshair</source>
         <translation>Afficher le réticule au survol</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/dashboardcell.cpp" line="357"/>
+        <location filename="../lib/dashboard/dashboardcell.cpp" line="366"/>
         <source>Interpolation:</source>
         <translation>Interpolation :</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/dashboardcell.cpp" line="359"/>
+        <location filename="../lib/dashboard/dashboardcell.cpp" line="368"/>
         <source>Linear</source>
         <translation>Linéaire</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/dashboardcell.cpp" line="360"/>
+        <location filename="../lib/dashboard/dashboardcell.cpp" line="369"/>
         <source>ZOH (step)</source>
         <translation>ZOH (échelon)</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/dashboardcell.cpp" line="361"/>
+        <location filename="../lib/dashboard/dashboardcell.cpp" line="370"/>
         <source>Stem</source>
         <translation>Tige</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/dashboardcell.cpp" line="362"/>
+        <location filename="../lib/dashboard/dashboardcell.cpp" line="371"/>
         <source>None (points)</source>
         <translation>Aucune (points)</translation>
     </message>
@@ -539,22 +626,22 @@
 <context>
     <name>traceview::DashboardGrid</name>
     <message>
-        <location filename="../lib/dashboard/dashboardgrid.cpp" line="326"/>
+        <location filename="../lib/dashboard/dashboardgrid.cpp" line="460"/>
         <source>Bring to Front</source>
         <translation>Mettre au premier plan</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/dashboardgrid.cpp" line="341"/>
+        <location filename="../lib/dashboard/dashboardgrid.cpp" line="476"/>
         <source>Bring Forward</source>
         <translation>Avancer</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/dashboardgrid.cpp" line="356"/>
+        <location filename="../lib/dashboard/dashboardgrid.cpp" line="492"/>
         <source>Send Backward</source>
         <translation>Reculer</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/dashboardgrid.cpp" line="367"/>
+        <location filename="../lib/dashboard/dashboardgrid.cpp" line="504"/>
         <source>Send to Back</source>
         <translation>Mettre à l&apos;arrière-plan</translation>
     </message>
@@ -562,24 +649,115 @@
 <context>
     <name>traceview::DebugChartsWindow</name>
     <message>
-        <location filename="../lib/core/debugchartswindow.cpp" line="135"/>
         <source>Debug -- synthetic chart data</source>
-        <translation>Débogage -- données de graphique synthétiques</translation>
+        <translation type="vanished">Débogage -- données de graphique synthétiques</translation>
     </message>
     <message>
-        <location filename="../lib/core/debugchartswindow.cpp" line="143"/>
+        <location filename="../lib/core/debugchartswindow.cpp" line="221"/>
+        <location filename="../lib/core/debugchartswindow.cpp" line="225"/>
+        <source>Modo estresse: desligado (50ms/tick)</source>
+        <translation>Mode stress : désactivé (50ms/tick)</translation>
+    </message>
+    <message>
+        <location filename="../lib/core/debugchartswindow.cpp" line="224"/>
+        <source>Modo estresse: ligado (atualizacao maxima)</source>
+        <translation>Mode stress : activé (mise à jour maximale)</translation>
+    </message>
+    <message>
+        <location filename="../lib/core/debugchartswindow.cpp" line="237"/>
         <source>Line Chart</source>
         <translation>Graphique en ligne</translation>
     </message>
     <message>
-        <location filename="../lib/core/debugchartswindow.cpp" line="147"/>
+        <location filename="../lib/core/debugchartswindow.cpp" line="241"/>
         <source>Bar Chart</source>
         <translation>Graphique à barres</translation>
     </message>
     <message>
-        <location filename="../lib/core/debugchartswindow.cpp" line="151"/>
+        <location filename="../lib/core/debugchartswindow.cpp" line="245"/>
         <source>Gauge</source>
         <translation>Jauge</translation>
+    </message>
+    <message>
+        <location filename="../lib/core/debugchartswindow.cpp" line="248"/>
+        <source>Serial Monitor</source>
+        <translation>Moniteur série</translation>
+    </message>
+    <message>
+        <location filename="../lib/core/debugchartswindow.cpp" line="258"/>
+        <source>Push Button</source>
+        <translation>Bouton-poussoir</translation>
+    </message>
+    <message>
+        <location filename="../lib/core/debugchartswindow.cpp" line="263"/>
+        <source>Toggle Switch</source>
+        <translation>Interrupteur</translation>
+    </message>
+    <message>
+        <location filename="../lib/core/debugchartswindow.cpp" line="268"/>
+        <source>Slider</source>
+        <translation>Curseur</translation>
+    </message>
+    <message>
+        <location filename="../lib/core/debugchartswindow.cpp" line="320"/>
+        <source> -- %1 fps</source>
+        <translation> -- %1 fps</translation>
+    </message>
+</context>
+<context>
+    <name>traceview::DeviceConfigDialog</name>
+    <message>
+        <location filename="../lib/devices/deviceconfigdialog.cpp" line="15"/>
+        <source>Device Settings</source>
+        <translation>Paramètres de l'appareil</translation>
+    </message>
+    <message>
+        <location filename="../lib/devices/deviceconfigdialog.cpp" line="23"/>
+        <source>Name:</source>
+        <translation>Nom :</translation>
+    </message>
+    <message>
+        <location filename="../lib/devices/deviceconfigdialog.cpp" line="24"/>
+        <source>Description:</source>
+        <translation>Description :</translation>
+    </message>
+    <message>
+        <location filename="../lib/devices/deviceconfigdialog.cpp" line="26"/>
+        <source>Connected</source>
+        <translation>Connecté</translation>
+    </message>
+    <message>
+        <location filename="../lib/devices/deviceconfigdialog.cpp" line="31"/>
+        <source>Reported by device</source>
+        <translation>Signalé par l'appareil</translation>
+    </message>
+    <message>
+        <location filename="../lib/devices/deviceconfigdialog.cpp" line="36"/>
+        <source>BTP version:</source>
+        <translation>Version BTP :</translation>
+    </message>
+    <message>
+        <location filename="../lib/devices/deviceconfigdialog.cpp" line="37"/>
+        <source>Chip type:</source>
+        <translation>Type de puce :</translation>
+    </message>
+    <message>
+        <location filename="../lib/devices/deviceconfigdialog.cpp" line="38"/>
+        <source>BTP ID:</source>
+        <translation>ID BTP :</translation>
+    </message>
+</context>
+<context>
+    <name>traceview::DockablePanel</name>
+    <message>
+        <location filename="../lib/core/dockablepanel.cpp" line="45"/>
+        <source>Unpin — panel will hide when nothing is selected</source>
+        <translation>Désépingler — le panneau se masquera si rien n&apos;est sélectionné</translation>
+    </message>
+    <message>
+        <location filename="../lib/core/dockablepanel.cpp" line="46"/>
+        <source>Pin — keep panel open with nothing selected</source>
+        <translation>Épingler — garder le panneau ouvert sans rien de sélectionné</translation>
     </message>
 </context>
 <context>
@@ -608,12 +786,12 @@
 <context>
     <name>traceview::DummyGaugeWidget</name>
     <message>
-        <location filename="../lib/dashboard/widgets/chartwidgets.cpp" line="1459"/>
+        <location filename="../lib/dashboard/widgets/chartwidgets.cpp" line="1483"/>
         <source>%1%2</source>
         <translation>%1%2</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/chartwidgets.cpp" line="1460"/>
+        <location filename="../lib/dashboard/widgets/chartwidgets.cpp" line="1484"/>
         <source>--</source>
         <translation>--</translation>
     </message>
@@ -729,319 +907,405 @@
 <context>
     <name>traceview::LayersPanel</name>
     <message>
-        <location filename="../lib/core/layerspanel.cpp" line="83"/>
         <source>Unpin — panel will hide when nothing is selected</source>
-        <translation>Désépingler — le panneau se masquera si rien n&apos;est sélectionné</translation>
+        <translation type="vanished">Désépingler — le panneau se masquera si rien n&apos;est sélectionné</translation>
     </message>
     <message>
-        <location filename="../lib/core/layerspanel.cpp" line="84"/>
         <source>Pin — keep panel open with nothing selected</source>
-        <translation>Épingler — garder le panneau ouvert sans rien de sélectionné</translation>
+        <translation type="vanished">Épingler — garder le panneau ouvert sans rien de sélectionné</translation>
     </message>
 </context>
 <context>
     <name>traceview::MainWindow</name>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="116"/>
+        <location filename="../lib/core/mainwindow.cpp" line="125"/>
         <source>TraceView v%1</source>
         <translation>TraceView v%1</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="294"/>
+        <location filename="../lib/core/mainwindow.cpp" line="338"/>
         <source>&amp;File</source>
         <translation>&amp;Fichier</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="296"/>
+        <location filename="../lib/core/mainwindow.cpp" line="340"/>
         <source>&amp;New Project</source>
         <translation>&amp;Nouveau projet</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="300"/>
+        <location filename="../lib/core/mainwindow.cpp" line="344"/>
         <source>&amp;Open Project...</source>
         <translation>&amp;Ouvrir un projet...</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="304"/>
+        <location filename="../lib/core/mainwindow.cpp" line="348"/>
         <source>Open &amp;Recent</source>
         <translation>Ouvrir &amp;récent</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="309"/>
+        <location filename="../lib/core/mainwindow.cpp" line="353"/>
         <source>&amp;Save Project</source>
         <translation>&amp;Enregistrer le projet</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="313"/>
+        <location filename="../lib/core/mainwindow.cpp" line="357"/>
         <source>Save Project &amp;As...</source>
         <translation>Enregistrer le projet &amp;sous...</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="317"/>
+        <location filename="../lib/core/mainwindow.cpp" line="361"/>
         <source>&amp;View</source>
         <translation>&amp;Affichage</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="318"/>
+        <location filename="../lib/core/mainwindow.cpp" line="362"/>
         <source>&amp;Theme</source>
         <translation>&amp;Thème</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="339"/>
+        <location filename="../lib/core/mainwindow.cpp" line="380"/>
+        <source>&amp;Font</source>
+        <translation>&amp;Police</translation>
+    </message>
+    <message>
+        <location filename="../lib/core/mainwindow.cpp" line="401"/>
         <source>&amp;Language</source>
         <translation>&amp;Langue</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="359"/>
+        <location filename="../lib/core/mainwindow.cpp" line="421"/>
         <source>Restart Required</source>
         <translation>Redémarrage requis</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="360"/>
+        <location filename="../lib/core/mainwindow.cpp" line="422"/>
         <source>The application needs to restart to apply the new language. Restart now?</source>
         <translation>L&apos;application doit redémarrer pour appliquer la nouvelle langue. Redémarrer maintenant ?</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="361"/>
+        <location filename="../lib/core/mainwindow.cpp" line="423"/>
         <source>Restart Now</source>
         <translation>Redémarrer maintenant</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="362"/>
+        <location filename="../lib/core/mainwindow.cpp" line="424"/>
         <source>Later</source>
         <translation>Plus tard</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="372"/>
+        <location filename="../lib/core/mainwindow.cpp" line="434"/>
         <source>&amp;Debug</source>
         <translation>&amp;Débogage</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="375"/>
+        <location filename="../lib/core/mainwindow.cpp" line="437"/>
         <source>&amp;About</source>
         <translation>À &amp;propos</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="378"/>
+        <location filename="../lib/core/mainwindow.cpp" line="440"/>
         <source>Dona&amp;te</source>
         <translation>D&amp;onner</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="383"/>
         <source>Position</source>
-        <translation>Position</translation>
+        <translation type="vanished">Position</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="393"/>
+        <location filename="../lib/core/mainwindow.cpp" line="445"/>
         <source>Add</source>
         <translation>Ajouter</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="397"/>
+        <location filename="../lib/core/mainwindow.cpp" line="449"/>
         <source>Remove</source>
         <translation>Supprimer</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="402"/>
+        <location filename="../lib/core/mainwindow.cpp" line="454"/>
         <source>Copy</source>
         <translation>Copier</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="407"/>
+        <location filename="../lib/core/mainwindow.cpp" line="459"/>
         <source>Paste</source>
         <translation>Coller</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="412"/>
+        <location filename="../lib/core/mainwindow.cpp" line="464"/>
         <source>To Front</source>
         <translation>Premier plan</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="416"/>
+        <location filename="../lib/core/mainwindow.cpp" line="468"/>
         <source>Forward</source>
         <translation>Avancer</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="420"/>
+        <location filename="../lib/core/mainwindow.cpp" line="472"/>
         <source>Backward</source>
         <translation>Reculer</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="424"/>
+        <location filename="../lib/core/mainwindow.cpp" line="476"/>
         <source>To Back</source>
         <translation>Arrière-plan</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="431"/>
+        <location filename="../lib/core/mainwindow.cpp" line="480"/>
+        <source>Group</source>
+        <translation>Grouper</translation>
+    </message>
+    <message>
+        <location filename="../lib/core/mainwindow.cpp" line="484"/>
+        <source>Ungroup</source>
+        <translation>Dégrouper</translation>
+    </message>
+    <message>
+        <location filename="../lib/core/mainwindow.cpp" line="491"/>
         <source>Undo</source>
         <translation>Annuler</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="433"/>
+        <location filename="../lib/core/mainwindow.cpp" line="493"/>
         <source>Redo</source>
         <translation>Rétablir</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="469"/>
+        <location filename="../lib/core/mainwindow.cpp" line="521"/>
+        <source>Add Device</source>
+        <translation>Ajouter un appareil</translation>
+    </message>
+    <message>
+        <location filename="../lib/core/mainwindow.cpp" line="529"/>
+        <source>Remove Device</source>
+        <translation>Supprimer l'appareil</translation>
+    </message>
+    <message>
+        <location filename="../lib/core/mainwindow.cpp" line="541"/>
         <source>Serial port</source>
         <translation>Port série</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="474"/>
+        <location filename="../lib/core/mainwindow.cpp" line="546"/>
         <source>Refresh port list</source>
         <translation>Actualiser la liste des ports</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="491"/>
+        <location filename="../lib/core/mainwindow.cpp" line="563"/>
         <source>Baud rate (type a custom value if yours isn&apos;t listed)</source>
         <translation>Débit en bauds (saisissez une valeur personnalisée si la vôtre n&apos;est pas listée)</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="499"/>
+        <location filename="../lib/core/mainwindow.cpp" line="571"/>
         <source>None</source>
         <translation>Aucun</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="500"/>
+        <location filename="../lib/core/mainwindow.cpp" line="572"/>
         <source>LF (\n)</source>
         <translation>LF (\n)</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="501"/>
+        <location filename="../lib/core/mainwindow.cpp" line="573"/>
         <source>CR (\r)</source>
         <translation>CR (\r)</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="502"/>
+        <location filename="../lib/core/mainwindow.cpp" line="574"/>
         <source>CRLF (\r\n)</source>
         <translation>CRLF (\r\n)</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="504"/>
+        <location filename="../lib/core/mainwindow.cpp" line="576"/>
         <source>Line terminator appended to control-widget commands (push button/toggle/slider). Doesn&apos;t affect the serial terminal&apos;s raw keystrokes.</source>
         <translation>Terminateur de ligne ajouté aux commandes des widgets de contrôle (bouton/interrupteur/curseur). N&apos;affecte pas les frappes brutes du terminal série.</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="508"/>
-        <location filename="../lib/core/mainwindow.cpp" line="682"/>
+        <location filename="../lib/core/mainwindow.cpp" line="580"/>
+        <location filename="../lib/core/mainwindow.cpp" line="878"/>
         <source>Connect</source>
         <translation>Connecter</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="517"/>
-        <location filename="../lib/core/mainwindow.cpp" line="1008"/>
+        <location filename="../lib/core/mainwindow.cpp" line="597"/>
+        <location filename="../lib/core/mainwindow.cpp" line="1267"/>
         <source>Fullscreen dashboard (F11)</source>
         <translation>Tableau de bord en plein écran (F11)</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="571"/>
+        <location filename="../lib/core/mainwindow.cpp" line="661"/>
         <source>Run</source>
         <translation>Exécuter</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="572"/>
+        <location filename="../lib/core/mainwindow.cpp" line="662"/>
         <source>Layout</source>
         <translation>Disposition</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="612"/>
-        <source>Position — select a widget to move/resize it</source>
-        <translation>Position — sélectionnez un widget pour le déplacer/le redimensionner</translation>
+        <location filename="../lib/core/mainwindow.cpp" line="663"/>
+        <source>Devices</source>
+        <translation>Appareils</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="614"/>
+        <location filename="../lib/core/mainwindow.cpp" line="716"/>
+        <source>New Workspace</source>
+        <translation>Nouvel espace de travail</translation>
+    </message>
+    <message>
+        <location filename="../lib/core/mainwindow.cpp" line="716"/>
+        <source>Name:</source>
+        <translation>Nom :</translation>
+    </message>
+    <message>
+        <location filename="../lib/core/mainwindow.cpp" line="717"/>
+        <source>Workspace</source>
+        <translation>Espace de travail</translation>
+    </message>
+    <message>
+        <location filename="../lib/core/mainwindow.cpp" line="730"/>
+        <source>Created workspace &quot;%1&quot;.</source>
+        <translation>Espace de travail « %1 » créé.</translation>
+    </message>
+    <message>
+        <location filename="../lib/core/mainwindow.cpp" line="740"/>
+        <source>Delete Workspace</source>
+        <translation>Supprimer l'espace de travail</translation>
+    </message>
+    <message>
+        <location filename="../lib/core/mainwindow.cpp" line="741"/>
+        <source>Delete workspace &quot;%1&quot;? This cannot be undone.</source>
+        <translation>Supprimer l'espace de travail « %1 » ? Cette action est irréversible.</translation>
+    </message>
+    <message>
+        <location filename="../lib/core/mainwindow.cpp" line="755"/>
+        <source>Deleted workspace &quot;%1&quot;.</source>
+        <translation>Espace de travail « %1 » supprimé.</translation>
+    </message>
+    <message>
+        <source>Position — select a widget to move/resize it</source>
+        <translation type="vanished">Position — sélectionnez un widget pour le déplacer/le redimensionner</translation>
+    </message>
+    <message>
+        <location filename="../lib/core/mainwindow.cpp" line="790"/>
         <source>Add widget</source>
         <translation>Ajouter un widget</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="616"/>
+        <location filename="../lib/core/mainwindow.cpp" line="792"/>
         <source>Remove selected widget (%1)</source>
         <translation>Supprimer le widget sélectionné (%1)</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="620"/>
+        <location filename="../lib/core/mainwindow.cpp" line="795"/>
+        <source>Add device</source>
+        <translation>Ajouter un appareil</translation>
+    </message>
+    <message>
+        <location filename="../lib/core/mainwindow.cpp" line="797"/>
+        <source>Remove selected device (%1)</source>
+        <translation>Supprimer l'appareil sélectionné (%1)</translation>
+    </message>
+    <message>
+        <location filename="../lib/core/mainwindow.cpp" line="801"/>
         <source>Copy selected widget (%1)</source>
         <translation>Copier le widget sélectionné (%1)</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="623"/>
+        <location filename="../lib/core/mainwindow.cpp" line="804"/>
         <source>Paste as a new widget (%1)</source>
         <translation>Coller comme nouveau widget (%1)</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="625"/>
+        <location filename="../lib/core/mainwindow.cpp" line="806"/>
         <source>Bring to front</source>
         <translation>Mettre au premier plan</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="627"/>
+        <location filename="../lib/core/mainwindow.cpp" line="808"/>
         <source>Bring forward</source>
         <translation>Avancer</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="629"/>
+        <location filename="../lib/core/mainwindow.cpp" line="810"/>
         <source>Send backward</source>
         <translation>Reculer</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="631"/>
+        <location filename="../lib/core/mainwindow.cpp" line="812"/>
         <source>Send to back</source>
         <translation>Mettre à l&apos;arrière-plan</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="682"/>
+        <location filename="../lib/core/mainwindow.cpp" line="814"/>
+        <source>Group — lock the selected widgets&apos; positions together</source>
+        <translation>Grouper — verrouille les positions des widgets sélectionnés entre eux</translation>
+    </message>
+    <message>
+        <location filename="../lib/core/mainwindow.cpp" line="816"/>
+        <source>Ungroup — let the selected widgets move independently again</source>
+        <translation>Dégrouper — permet aux widgets sélectionnés de se déplacer à nouveau indépendamment</translation>
+    </message>
+    <message>
+        <location filename="../lib/core/mainwindow.cpp" line="878"/>
         <source>Disconnect</source>
         <translation>Déconnecter</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="756"/>
+        <location filename="../lib/core/mainwindow.cpp" line="981"/>
+        <source>New Device</source>
+        <translation>Nouvel appareil</translation>
+    </message>
+    <message>
+        <location filename="../lib/core/mainwindow.cpp" line="999"/>
         <source>Key &quot;%1&quot; is already used by another widget.</source>
         <translation>La clé « %1 » est déjà utilisée par un autre widget.</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="769"/>
+        <location filename="../lib/core/mainwindow.cpp" line="1012"/>
         <source>New Project</source>
         <translation>Nouveau projet</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="770"/>
+        <location filename="../lib/core/mainwindow.cpp" line="1013"/>
         <source>Discard the current dashboard and start a new, empty project?</source>
         <translation>Abandonner le tableau de bord actuel et démarrer un nouveau projet vide ?</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="780"/>
+        <location filename="../lib/core/mainwindow.cpp" line="1025"/>
         <source>Started a new project.</source>
         <translation>Nouveau projet démarré.</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="793"/>
-        <location filename="../lib/core/mainwindow.cpp" line="808"/>
+        <location filename="../lib/core/mainwindow.cpp" line="1039"/>
+        <location filename="../lib/core/mainwindow.cpp" line="1055"/>
         <source>Save Project</source>
         <translation>Enregistrer le projet</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="802"/>
+        <location filename="../lib/core/mainwindow.cpp" line="1049"/>
         <source>Save Project As</source>
         <translation>Enregistrer le projet sous</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="815"/>
-        <location filename="../lib/core/mainwindow.cpp" line="824"/>
+        <location filename="../lib/core/mainwindow.cpp" line="1062"/>
+        <location filename="../lib/core/mainwindow.cpp" line="1071"/>
         <source>Open Project</source>
         <translation>Ouvrir un projet</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="853"/>
+        <location filename="../lib/core/mainwindow.cpp" line="1112"/>
         <source>(No Recent Projects)</source>
         <translation>(Aucun projet récent)</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="865"/>
+        <location filename="../lib/core/mainwindow.cpp" line="1124"/>
         <source>Clear Recent Projects</source>
         <translation>Effacer les projets récents</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="998"/>
+        <location filename="../lib/core/mainwindow.cpp" line="1257"/>
         <source>Exit fullscreen (F11 / Esc)</source>
         <translation>Quitter le plein écran (F11 / Échap)</translation>
     </message>
@@ -1049,39 +1313,37 @@
 <context>
     <name>traceview::PropertiesPanel</name>
     <message>
-        <location filename="../lib/core/propertiespanel.cpp" line="39"/>
+        <location filename="../lib/core/propertiespanel.cpp" line="21"/>
         <source>(none)</source>
         <translation>(aucun)</translation>
     </message>
     <message>
-        <location filename="../lib/core/propertiespanel.cpp" line="40"/>
+        <location filename="../lib/core/propertiespanel.cpp" line="22"/>
         <source>Optional, must be unique — the handle future data updates will target this widget by.</source>
         <translation>Facultatif, doit être unique — c&apos;est l&apos;identifiant que les futures mises à jour de données utiliseront pour cibler ce widget.</translation>
     </message>
     <message>
-        <location filename="../lib/core/propertiespanel.cpp" line="43"/>
+        <location filename="../lib/core/propertiespanel.cpp" line="25"/>
         <source>Type</source>
         <translation>Type</translation>
     </message>
     <message>
-        <location filename="../lib/core/propertiespanel.cpp" line="44"/>
+        <location filename="../lib/core/propertiespanel.cpp" line="26"/>
         <source>Name</source>
         <translation>Nom</translation>
     </message>
     <message>
-        <location filename="../lib/core/propertiespanel.cpp" line="45"/>
+        <location filename="../lib/core/propertiespanel.cpp" line="27"/>
         <source>Key</source>
         <translation>Clé</translation>
     </message>
     <message>
-        <location filename="../lib/core/propertiespanel.cpp" line="179"/>
         <source>Unpin — panel will hide when nothing is selected</source>
-        <translation>Désépingler — le panneau se masquera si rien n&apos;est sélectionné</translation>
+        <translation type="vanished">Désépingler — le panneau se masquera si rien n&apos;est sélectionné</translation>
     </message>
     <message>
-        <location filename="../lib/core/propertiespanel.cpp" line="180"/>
         <source>Pin — keep panel open with nothing selected</source>
-        <translation>Épingler — garder le panneau ouvert sans rien de sélectionné</translation>
+        <translation type="vanished">Épingler — garder le panneau ouvert sans rien de sélectionné</translation>
     </message>
 </context>
 <context>
@@ -1187,7 +1449,8 @@
 <context>
     <name>traceview::PushButtonWidget</name>
     <message>
-        <location filename="../lib/dashboard/widgets/controlwidgets.cpp" line="55"/>
+        <location filename="../lib/dashboard/widgets/controlwidgets.cpp" line="91"/>
+        <location filename="../lib/dashboard/widgets/controlwidgets.cpp" line="112"/>
         <source>Push Button</source>
         <translation>Bouton-poussoir</translation>
     </message>
@@ -1346,17 +1609,20 @@
 <context>
     <name>traceview::ToggleSwitchWidget</name>
     <message>
-        <location filename="../lib/dashboard/widgets/controlwidgets.cpp" line="118"/>
-        <location filename="../lib/dashboard/widgets/controlwidgets.cpp" line="130"/>
-        <location filename="../lib/dashboard/widgets/controlwidgets.cpp" line="147"/>
         <source>OFF</source>
-        <translation>ARRÊT</translation>
+        <translation type="vanished">ARRÊT</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/controlwidgets.cpp" line="130"/>
-        <location filename="../lib/dashboard/widgets/controlwidgets.cpp" line="147"/>
         <source>ON</source>
-        <translation>MARCHE</translation>
+        <translation type="vanished">MARCHE</translation>
+    </message>
+</context>
+<context>
+    <name>traceview::WorkspaceSwitcher</name>
+    <message>
+        <location filename="../lib/core/workspaceswitcher.cpp" line="158"/>
+        <source>New Workspace…</source>
+        <translation>Nouvel espace de travail…</translation>
     </message>
 </context>
 </TS>
