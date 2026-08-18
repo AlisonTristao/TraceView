@@ -15,9 +15,9 @@ class RibbonTabBar;
 // content built by callers doesn't each pick its own numbers.
 inline constexpr int kRibbonButtonSize = 26;
 // Fixed cell size every tab is painted at (see RibbonTabBar) — wide enough
-// to fit the longest tab label ("Layout") without eliding under the
+// to fit the longest tab label ("Devices") without eliding under the
 // default font.
-inline constexpr int kRibbonTabWidth = 100;
+inline constexpr int kRibbonTabWidth = 108;
 inline constexpr int kRibbonTabHeight = 26;
 // Horizontal inset of the trapezoid's top edge relative to its base, on
 // each side.

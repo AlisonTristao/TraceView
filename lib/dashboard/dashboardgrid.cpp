@@ -105,15 +105,32 @@ void DashboardGrid::setEditMode(bool enabled) {
     update();
 }
 
-void DashboardGrid::setDeviceConnected(bool connected) {
-    if (m_deviceConnected == connected) {
+void DashboardGrid::setDeviceConnected(const QString& deviceId, bool connected) {
+    if (deviceId.isEmpty()) {
         return;
     }
-    m_deviceConnected = connected;
-    const QList<DashboardCell*> cells = m_cells.values();
-    for (DashboardCell* cell : cells) {
-        cell->setConnected(connected);
+    if (m_deviceConnectionStates.contains(deviceId) && m_deviceConnectionStates.value(deviceId) == connected) {
+        return;
     }
+    m_deviceConnectionStates[deviceId] = connected;
+
+    for (auto it = m_cells.constBegin(); it != m_cells.constEnd(); ++it) {
+        const DashboardItem* item = itemById(it.key());
+        if (item && item->config.value("deviceId").toString() == deviceId) {
+            it.value()->setConnected(connected);
+        }
+    }
+}
+
+QJsonObject DashboardGrid::configForWidget(DashboardWidget* widget) const {
+    for (auto it = m_cells.constBegin(); it != m_cells.constEnd(); ++it) {
+        if (it.value()->content() == widget) {
+            if (const DashboardItem* item = itemById(it.key())) {
+                return item->config;
+            }
+        }
+    }
+    return QJsonObject();
 }
 
 QSet<QString> DashboardGrid::expandGroups(const QSet<QString>& ids) const {
@@ -614,6 +631,11 @@ void DashboardGrid::applySetConfig(const QString& itemId, const QJsonObject& con
             if (DashboardWidget* content = cell->content()) {
                 content->setConfig(config);
             }
+            // The edit may have changed which device this widget targets --
+            // re-derive the dot from that device's last-known state rather
+            // than leaving it showing the previous device's.
+            const QString deviceId = config.value("deviceId").toString();
+            cell->setConnected(!deviceId.isEmpty() && m_deviceConnectionStates.value(deviceId, false));
         }
     }
 }
@@ -989,7 +1011,8 @@ DashboardCell* DashboardGrid::createCell(const DashboardItem& item) {
 
     auto* cell = new DashboardCell(item.id, item.typeId, displayNameFor(item), content, this);
     cell->setEditMode(m_editMode);
-    cell->setConnected(m_deviceConnected);
+    const QString deviceId = item.config.value("deviceId").toString();
+    cell->setConnected(!deviceId.isEmpty() && m_deviceConnectionStates.value(deviceId, false));
     cell->setGeometry(itemRect(item));
     cell->show();
 

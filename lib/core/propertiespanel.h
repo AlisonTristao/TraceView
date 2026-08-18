@@ -46,6 +46,10 @@ public:
     explicit PropertiesPanel(QWidget* parent = nullptr);
 
     void setAvailableTypes(const QVector<WidgetTypeInfo>& types);
+    // Pushed to whichever WidgetConfigEditor is currently hosted (if any),
+    // and remembered for the next one ensureConfigEditor() builds -- see
+    // WidgetConfigEditor::setAvailableDevices().
+    void setAvailableDevices(const QVector<DeviceOption>& devices);
 
     // Populates the fields (and swaps in the right config editor, if any)
     // from the current selection; hasSelection=false clears and disables
@@ -74,6 +78,7 @@ private:
     void ensureConfigEditor(const QString& typeId);
 
     QVector<WidgetTypeInfo> m_types;
+    QVector<DeviceOption> m_availableDevices;
     // Last values pushed by setSelection(), used to tell an actual edit
     // apart from editingFinished()/configChanged() firing on plain sync.
     QString m_currentTypeId;

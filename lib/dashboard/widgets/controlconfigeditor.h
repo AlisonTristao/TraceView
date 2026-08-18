@@ -29,6 +29,7 @@ public:
 
     void setConfig(const QJsonObject& config) override;
     QJsonObject config() const override;
+    void setAvailableDevices(const QVector<DeviceOption>& devices) override;
 
 private:
     // Momentary's "On release" row and Repeat/Long Press's dependent rows
@@ -40,6 +41,7 @@ private:
 
     QFormLayout* m_formLayout = nullptr;
 
+    QComboBox* m_deviceCombo = nullptr;
     QLineEdit* m_labelEdit = nullptr;
     QComboBox* m_variantCombo = nullptr;
     QComboBox* m_modeCombo = nullptr;
@@ -65,12 +67,14 @@ public:
 
     void setConfig(const QJsonObject& config) override;
     QJsonObject config() const override;
+    void setAvailableDevices(const QVector<DeviceOption>& devices) override;
 
 private:
     void emitChanged();
 
     bool m_updating = false;
 
+    QComboBox* m_deviceCombo = nullptr;
     QLineEdit* m_labelEdit = nullptr;
     QLineEdit* m_onLabelEdit = nullptr;
     QLineEdit* m_offLabelEdit = nullptr;
@@ -92,6 +96,7 @@ public:
 
     void setConfig(const QJsonObject& config) override;
     QJsonObject config() const override;
+    void setAvailableDevices(const QVector<DeviceOption>& devices) override;
 
 private:
     // Throttle only makes sense in "Continuous" send mode.
@@ -102,6 +107,7 @@ private:
 
     QFormLayout* m_formLayout = nullptr;
 
+    QComboBox* m_deviceCombo = nullptr;
     QLineEdit* m_labelEdit = nullptr;
     QDoubleSpinBox* m_minSpin = nullptr;
     QDoubleSpinBox* m_maxSpin = nullptr;

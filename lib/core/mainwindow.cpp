@@ -2,7 +2,7 @@
 
 #include <QActionGroup>
 #include <QClipboard>
-#include <QComboBox>
+#include <QColor>
 #include <QCoreApplication>
 #include <QEvent>
 #include <QFileDialog>
@@ -10,7 +10,6 @@
 #include <QGuiApplication>
 #include <QHBoxLayout>
 #include <QInputDialog>
-#include <QIntValidator>
 #include <QKeySequence>
 #include <QLabel>
 #include <QLineEdit>
@@ -19,29 +18,32 @@
 #include <QMessageBox>
 #include <QProcess>
 #include <QPushButton>
+#include <QSerialPortInfo>
 #include <QSettings>
-#include <QSignalBlocker>
+#include <QStackedWidget>
 #include <QStatusBar>
 #include <QStringList>
 #include <QToolButton>
+#include <QUndoGroup>
 #include <QVBoxLayout>
 
 #include "aboutdialog.h"
 #include "donatedialog.h"
 #include "backend/backend.h"
 #include "dashboard/dashboardgrid.h"
+#include "dashboard/widgetconfigeditor.h"
 #include "dashboard/widgetregistry.h"
 #include "dashboard/widgets/chartwidgets.h"
 #include "debugchartswindow.h"
+#include "deviceconnection.h"
+#include "devices/devicesgrid.h"
 #include "layerspanel.h"
 #include "paneldockcontroller.h"
 #include "project/projectstore.h"
 #include "project/workspacemanager.h"
-#include "protocol/btpbackend.h"
 #include "propertiespanel.h"
 #include "ribbon.h"
 #include "ribbonicons.h"
-#include "serialmanager.h"
 #include "serialwidgetbridge.h"
 #include "workspaceswitcher.h"
 #include "traceview/fontmanager.h"
@@ -92,24 +94,28 @@ QString formatRateMillihz(quint32 millihz) {
     return QString::number(millihz / 1000.0, 'g', 4) + " Hz";
 }
 
-// The (source_id, topic_id, requested rate) one dashboard widget implies.
-// All-zero for a widget that is not a telemetry consumer, or one whose
-// source/topic has not been configured yet -- SubscriptionManager treats that
-// as "no consumer" and puts nothing on the wire.
+// The (device, source_id, topic_id, requested rate) one dashboard widget
+// implies. deviceId empty and the rest zero for a widget that is not a
+// telemetry consumer, one whose source/topic has not been configured yet, or
+// one with no device picked in its config editor's Device combo (see
+// dashboard/widgetconfigeditor.h's DeviceOption) -- MainWindow treats that as
+// "no consumer" and puts nothing on any wire.
 struct WidgetTopicRequest {
+    QString deviceId;
     quint32 sourceId = 0;
     quint16 topicId = 0;
     quint32 rateMillihz = 0;
 };
 
-WidgetTopicRequest widgetTopicRequest(DashboardWidget* widget) {
+WidgetTopicRequest widgetTopicRequest(DashboardWidget* widget, DashboardGrid* grid) {
+    const QString deviceId = grid->configForWidget(widget).value("deviceId").toString();
     if (auto* chart = dynamic_cast<ChartWidgetBase*>(widget)) {
         const ChartConfig& config = chart->config();
-        return {config.sourceId, config.topicId, requestedRateMillihzFor(config.sampleTimeMs)};
+        return {deviceId, config.sourceId, config.topicId, requestedRateMillihzFor(config.sampleTimeMs)};
     }
     if (auto* gauge = dynamic_cast<DummyGaugeWidget*>(widget)) {
         const GaugeConfig& config = gauge->config();
-        return {config.sourceId, config.topicId, kGaugeRequestedRateMillihz};
+        return {deviceId, config.sourceId, config.topicId, kGaugeRequestedRateMillihz};
     }
     return {};
 }
@@ -125,42 +131,16 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
 
     buildMenus();
 
-    m_serialManager = new SerialManager(this);
     m_dashboardGrid = new DashboardGrid(this);
-    // Drives every chart cell's header status dot (DashboardCell::
-    // setConnected()) off the app's one physical serial connection -- set
-    // the initial (disconnected) state up front so a fresh layout doesn't
-    // start with a stale/default dot before the first signal fires.
-    connect(m_serialManager, &SerialManager::connectionStateChanged, m_dashboardGrid,
-            &DashboardGrid::setDeviceConnected);
-    m_dashboardGrid->setDeviceConnected(m_serialManager->isConnected());
 
-    // Everything that gives the transport's raw bytes meaning lives behind
-    // the Backend interface (backend/backend.h) -- concretely a BtpBackend
-    // today, wiring BtpSession/ProtocolRouter/TelemetryFieldRouter/
-    // BtpHandshake/ManifestClient/SubscriptionManager internally (see
-    // protocol/btpbackend.cpp). MainWindow only ever talks to it through the
-    // abstract interface, so plugging in a different protocol means
-    // constructing a different Backend here -- nothing else in this file
-    // changes.
-    m_backend = new BtpBackend(this);
-    connect(m_serialManager, &SerialManager::dataReceived, m_backend, &Backend::feedBytes);
-    connect(m_backend, &Backend::bytesToWrite, m_serialManager, &SerialManager::write);
-    connect(m_serialManager, &SerialManager::connectionStateChanged, m_backend,
-            &Backend::onTransportConnectionChanged);
-    connect(m_backend, &Backend::statusMessage, this,
-            [this](const QString& text, int timeoutMs) { statusBar()->showMessage(text, timeoutMs); });
-    connect(m_backend, &Backend::subscriptionsChanged, this, &MainWindow::updateTelemetryStatusLabel);
-    connect(m_backend, &Backend::statusReceived, this, &MainWindow::updateTelemetryStatusLabel);
-
-    // Wires control-widget commands and the serial monitor/terminal to the
-    // same connection (BACKEND_TODO.txt Tasks 9/10; terminal rewired onto
-    // BTP TERMINAL_IN/OUT in topico 19); no further interaction needed here
-    // once wired. Outbound control-widget commands still go straight to
-    // SerialManager as raw literal text (docs/PROTOCOL.md "Outbound: control
-    // commands") -- that path bypasses Backend entirely, see
-    // core/serialwidgetbridge.cpp.
-    new SerialWidgetBridge(m_serialManager, m_backend, m_dashboardGrid, this);
+    // Wires control-widget commands and the serial monitor/terminal to
+    // whichever device each widget's own config currently targets -- see
+    // core/serialwidgetbridge.h. Resolved lazily via m_deviceConnections
+    // (empty right now; devices are added later via the Devices tab), so
+    // construction order relative to onDeviceAdded() doesn't matter.
+    m_serialWidgetBridge =
+        new SerialWidgetBridge(m_dashboardGrid, [this](const QString& id) { return m_deviceConnections.value(id); },
+                                this);
 
     Ribbon* ribbon = buildRibbon();
     buildLayersPanel();
@@ -180,7 +160,42 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     auto* contentLayout = new QHBoxLayout(m_contentRow);
     contentLayout->setContentsMargins(0, 0, 0, 0);
     contentLayout->setSpacing(0);
-    contentLayout->addWidget(m_dashboardGrid);
+
+    // The Devices tab swaps this whole area for m_devicesGrid instead of
+    // sharing the row with the canvas -- unlike the layers/properties
+    // panels above, DevicesGrid isn't subject to DashboardGrid's
+    // fraction-of-canvas geometry, so a plain QStackedWidget (real layout
+    // space, not a float) is fine here.
+    m_devicesGrid = new DevicesGrid(this);
+    m_undoGroup->addStack(m_devicesGrid->undoStack());
+    connect(m_removeDeviceAction, &QAction::triggered, m_devicesGrid, &DevicesGrid::removeSelected);
+    connect(m_devicesGrid, &DevicesGrid::selectionChanged, this, &MainWindow::updateDeviceSelectionActions);
+    // Keeps m_deviceConnections (one DeviceConnection per Device -- see
+    // core/deviceconnection.h) in lockstep with m_devicesGrid's own list.
+    connect(m_devicesGrid, &DevicesGrid::deviceAdded, this, &MainWindow::onDeviceAdded);
+    connect(m_devicesGrid, &DevicesGrid::deviceRemoved, this, &MainWindow::onDeviceRemoved);
+    connect(m_devicesGrid, &DevicesGrid::deviceUpdated, this, &MainWindow::onDeviceUpdated);
+    connect(m_devicesGrid, &DevicesGrid::connectToggleRequested, this,
+            &MainWindow::onDeviceConnectToggleRequested);
+    // DevicesGrid can't enumerate ports itself (traceview_devices doesn't
+    // depend on QSerialPort, see lib/CMakeLists.txt) -- MainWindow supplies
+    // the live list DeviceConfigDialog's port combo offers.
+    m_devicesGrid->setPortListProvider([]() -> QStringList {
+        QStringList names;
+        const QList<QSerialPortInfo> infos = QSerialPortInfo::availablePorts();
+        names.reserve(infos.size());
+        for (const QSerialPortInfo& info : infos) {
+            names.append(info.portName());
+        }
+        return names;
+    });
+    refreshDeviceStatusLabel(); // starts empty ("No devices configured...")
+    refreshPropertiesPanelDevices();
+
+    m_contentStack = new QStackedWidget(m_contentRow);
+    m_contentStack->addWidget(m_dashboardGrid);
+    m_contentStack->addWidget(m_devicesGrid);
+    contentLayout->addWidget(m_contentStack);
 
     // Reparented rather than added to contentLayout: their geometry is set
     // directly by m_dockController (wired below via an event filter on
@@ -235,37 +250,75 @@ MainWindow::~MainWindow() {
 }
 
 void MainWindow::wireChartWidgetToTelemetry(DashboardWidget* widget) {
-    bool consumesTelemetry = false;
-    if (auto* chart = dynamic_cast<ChartWidgetBase*>(widget)) {
-        connect(m_backend, &Backend::fieldSample, chart, &ChartWidgetBase::onFieldSample);
-        consumesTelemetry = true;
-    } else if (auto* gauge = dynamic_cast<DummyGaugeWidget*>(widget)) {
-        connect(m_backend, &Backend::fieldSample, gauge, &DummyGaugeWidget::onFieldSample);
-        consumesTelemetry = true;
-    }
-    if (!consumesTelemetry) {
+    if (!dynamic_cast<ChartWidgetBase*>(widget) && !dynamic_cast<DummyGaugeWidget*>(widget)) {
         return;
+    }
+
+    // PASSO 5 (topico 17): closing a widget only drops its reference; an
+    // unsubscribe is sent only when it was the last consumer of that topic
+    // -- against whichever device's Backend it was actually registered
+    // with, which is why WidgetSubscription remembers deviceId alongside
+    // the handle now.
+    connect(widget, &QObject::destroyed, this, [this, widget] {
+        const WidgetSubscription sub = m_widgetSubscriptions.take(widget);
+        if (DeviceConnection* connection = m_deviceConnections.value(sub.deviceId)) {
+            connection->backend()->removeSubscriber(sub.handle);
+        }
+    });
+
+    refreshWidgetSubscription(widget);
+}
+
+void MainWindow::refreshWidgetSubscription(DashboardWidget* widget) {
+    const WidgetTopicRequest request = widgetTopicRequest(widget, m_dashboardGrid);
+    WidgetSubscription& sub = m_widgetSubscriptions[widget];
+
+    DeviceConnection* oldConnection = m_deviceConnections.value(sub.deviceId);
+    DeviceConnection* newConnection = m_deviceConnections.value(request.deviceId);
+
+    // A device change (or the old one going away) invalidates both the old
+    // subscription handle (it belongs to a different Backend/
+    // SubscriptionManager instance) and the fieldSample connection feeding
+    // this widget.
+    if (oldConnection && oldConnection != newConnection && sub.handle != 0) {
+        oldConnection->backend()->removeSubscriber(sub.handle);
+        disconnect(oldConnection->backend(), &Backend::fieldSample, widget, nullptr);
+    }
+
+    if (!newConnection) {
+        sub.deviceId = request.deviceId;
+        sub.handle = 0;
+        return;
+    }
+
+    if (oldConnection != newConnection) {
+        if (auto* chart = dynamic_cast<ChartWidgetBase*>(widget)) {
+            connect(newConnection->backend(), &Backend::fieldSample, chart, &ChartWidgetBase::onFieldSample);
+        } else if (auto* gauge = dynamic_cast<DummyGaugeWidget*>(widget)) {
+            connect(newConnection->backend(), &Backend::fieldSample, gauge, &DummyGaugeWidget::onFieldSample);
+        }
     }
 
     // topico 17 PASSO 2: this widget is one *reference* to its topic, not a
     // subscription of its own -- Backend collapses however many widgets
-    // read (source, topic) into a single subscription.
-    const WidgetTopicRequest request = widgetTopicRequest(widget);
-    m_widgetSubscriptions.insert(
-        widget, m_backend->addSubscriber(request.sourceId, request.topicId, request.rateMillihz));
-
-    // PASSO 5: closing a widget only drops its reference; an unsubscribe is
-    // sent only when it was the last consumer of that topic.
-    connect(widget, &QObject::destroyed, this, [this, widget] {
-        m_backend->removeSubscriber(m_widgetSubscriptions.take(widget));
-    });
+    // read (source, topic) into a single subscription. Reusing the existing
+    // handle only makes sense while staying on the same Backend instance.
+    const quint64 handleToReuse = oldConnection == newConnection ? sub.handle : 0;
+    sub.handle = newConnection->backend()->updateSubscriber(handleToReuse, request.sourceId, request.topicId,
+                                                              request.rateMillihz);
+    sub.deviceId = request.deviceId;
 }
 
 void MainWindow::refreshWidgetSubscriptions() {
-    for (auto it = m_widgetSubscriptions.begin(); it != m_widgetSubscriptions.end(); ++it) {
-        const WidgetTopicRequest request = widgetTopicRequest(it.key());
-        it.value() =
-            m_backend->updateSubscriber(it.value(), request.sourceId, request.topicId, request.rateMillihz);
+    const QList<DashboardWidget*> widgets = m_widgetSubscriptions.keys();
+    for (DashboardWidget* widget : widgets) {
+        refreshWidgetSubscription(widget);
+    }
+    // A config edit can just as well have re-pointed a terminal widget at a
+    // different device -- its inbound wiring needs the same kind of refresh
+    // subscriptions just got, see SerialWidgetBridge::refreshTerminalWiring().
+    if (m_serialWidgetBridge) {
+        m_serialWidgetBridge->refreshTerminalWiring();
     }
 }
 
@@ -273,16 +326,27 @@ void MainWindow::updateTelemetryStatusLabel() {
     if (!m_telemetryStatusLabel) {
         return;
     }
-    const QVector<TopicSubscriptionState> states = m_backend->subscriptions();
+
+    // Aggregated across every connected device's Backend -- (sourceId,
+    // topicId) is only unique *within* one device's session, so two
+    // different devices reporting the same pair would collide in
+    // statusByTopic; harmless here since this is a human-readable summary,
+    // not anything routing decisions depend on.
+    QVector<TopicSubscriptionState> states;
+    QHash<quint64, StatusTopicRecord> statusByTopic;
+    const QList<DeviceConnection*> connections = m_deviceConnections.values();
+    for (DeviceConnection* connection : connections) {
+        Backend* backend = connection->backend();
+        states += backend->subscriptions();
+        for (const StatusTopicRecord& record : backend->topicStatuses()) {
+            statusByTopic.insert(topicStatusKey(record.sourceId, record.topicId), record);
+        }
+    }
+
     if (states.isEmpty()) {
         m_telemetryStatusLabel->clear();
         m_telemetryStatusLabel->setToolTip(QString());
         return;
-    }
-
-    QHash<quint64, StatusTopicRecord> statusByTopic;
-    for (const StatusTopicRecord& record : m_backend->topicStatuses()) {
-        statusByTopic.insert(topicStatusKey(record.sourceId, record.topicId), record);
     }
 
     QStringList summary;
@@ -471,12 +535,22 @@ Ribbon* MainWindow::buildRibbon() {
     m_ungroupAction->setEnabled(false);
     connect(m_ungroupAction, &QAction::triggered, m_dashboardGrid, &DashboardGrid::ungroupSelected);
 
-    // createUndoAction()/createRedoAction() wire up triggered/enabled state
-    // (and a dynamic "Undo <command text>" label) directly from the stack —
-    // no manual canUndo()/canRedo() syncing needed.
-    m_undoAction = m_dashboardGrid->undoStack()->createUndoAction(this, tr("Undo"));
+    // Two independent QUndoStacks (dashboard widgets, devices) share one
+    // Undo/Redo pair via QUndoGroup: m_undoGroup tracks which stack is
+    // "active" (flipped in onRibbonTabChanged() to match the visible tab),
+    // and createUndoAction()/createRedoAction() on the *group* wire up
+    // triggered/enabled state (and a dynamic "Undo <command text>" label)
+    // from whichever stack that is -- no manual canUndo()/canRedo() syncing,
+    // and Ctrl+Z always acts on what's actually on screen instead of always
+    // hitting the dashboard regardless of tab. m_devicesGrid doesn't exist
+    // yet at this point (built after buildRibbon() returns, see the
+    // constructor) -- its stack joins the group there, same reasoning as
+    // m_removeDeviceAction's own connect() right after that construction.
+    m_undoGroup = new QUndoGroup(this);
+    m_undoGroup->addStack(m_dashboardGrid->undoStack());
+    m_undoAction = m_undoGroup->createUndoAction(this, tr("Undo"));
     m_undoAction->setShortcut(QKeySequence::Undo);
-    m_redoAction = m_dashboardGrid->undoStack()->createRedoAction(this, tr("Redo"));
+    m_redoAction = m_undoGroup->createRedoAction(this, tr("Redo"));
     m_redoAction->setShortcut(QKeySequence::Redo);
 
     connect(m_dashboardGrid, &DashboardGrid::selectionChanged, this, &MainWindow::onSelectionChanged);
@@ -504,6 +578,18 @@ Ribbon* MainWindow::buildRibbon() {
     // state needs to stay in sync with whether it's currently pasteable.
     connect(QGuiApplication::clipboard(), &QClipboard::dataChanged, this, &MainWindow::updateSelectionActions);
 
+    m_addDeviceAction = new QAction(tr("Add Device"), this);
+    connect(m_addDeviceAction, &QAction::triggered, this, &MainWindow::onAddDevice);
+
+    // Wired to m_devicesGrid once it exists (right after its own
+    // construction in MainWindow::MainWindow()) -- it isn't built yet at
+    // this point, since buildRibbon() runs before it, same reason
+    // m_removeAction above is wired straight to m_dashboardGrid but this one
+    // can't be wired to m_devicesGrid here.
+    m_removeDeviceAction = new QAction(tr("Remove Device"), this);
+    m_removeDeviceAction->setEnabled(false);
+    m_removeDeviceAction->setShortcut(QKeySequence::Delete);
+
     auto* runPage = new QWidget(this);
     runPage->setObjectName("ribbonPage");
     runPage->setFixedHeight(kRibbonPageHeight);
@@ -511,49 +597,14 @@ Ribbon* MainWindow::buildRibbon() {
     runLayout->setContentsMargins(kRibbonPageMarginH, kRibbonPageMarginV, kRibbonPageMarginH, kRibbonPageMarginV);
     runLayout->setSpacing(kRibbonGroupSpacing);
 
-    m_portCombo = new QComboBox(runPage);
-    m_portCombo->setToolTip(tr("Serial port"));
-    m_portCombo->setMinimumWidth(110);
-
-    m_refreshPortsButton = new QToolButton(runPage);
-    m_refreshPortsButton->setText(QString::fromUtf8("\xE2\x9F\xB3")); // ⟳
-    m_refreshPortsButton->setToolTip(tr("Refresh port list"));
-    m_refreshPortsButton->setAutoRaise(true);
-    m_refreshPortsButton->setFixedSize(kRibbonButtonSize, kRibbonButtonSize);
-    connect(m_refreshPortsButton, &QToolButton::clicked, this, &MainWindow::refreshSerialPorts);
-
-    // Reuses the same baud list SerialMonitorWidget used to offer for its
-    // now-removed per-widget connect bar (Tarefa 3) -- one global connection
-    // means one place to pick the baud rate. Extended with the higher rates
-    // a BTP v1 dongle actually uses (TRANSPORT_SERIAL.md section 8;
-    // t_dongle_develop's own monitor_speed/BAUDRATE) and made editable so
-    // any board-specific value can be typed directly, since USB CDC line
-    // coding is informative only (same section) and real UART boards vary.
-    m_baudCombo = new QComboBox(runPage);
-    m_baudCombo->setEditable(true);
-    m_baudCombo->addItems({"9600", "19200", "38400", "57600", "115200", "230400", "460800", "921600",
-                            "1000000", "2000000", "3000000", "5000000"});
-    m_baudCombo->setCurrentText("921600");
-    m_baudCombo->setToolTip(tr("Baud rate (type a custom value if yours isn't listed)"));
-    m_baudCombo->setValidator(new QIntValidator(1, 10000000, m_baudCombo));
-
-    // Terminator appended to control-widget commands only (docs/PROTOCOL.md
-    // "Outbound: control commands", BACKEND_TODO.txt Task 9) -- unlike
-    // port/baud this isn't a QSerialPort property, so it stays editable
-    // while connected instead of being locked alongside them below.
-    m_lineTerminatorCombo = new QComboBox(runPage);
-    m_lineTerminatorCombo->addItem(tr("None"), int(LineTerminator::None));
-    m_lineTerminatorCombo->addItem(tr("LF (\\n)"), int(LineTerminator::Lf));
-    m_lineTerminatorCombo->addItem(tr("CR (\\r)"), int(LineTerminator::Cr));
-    m_lineTerminatorCombo->addItem(tr("CRLF (\\r\\n)"), int(LineTerminator::CrLf));
-    m_lineTerminatorCombo->setCurrentIndex(1); // Lf, matching SerialManager's default
-    m_lineTerminatorCombo->setToolTip(tr("Line terminator appended to control-widget commands (push button/toggle/"
-                                          "slider). Doesn't affect the serial terminal's raw keystrokes."));
-    connect(m_lineTerminatorCombo, &QComboBox::currentIndexChanged, this, &MainWindow::onLineTerminatorChanged);
-
-    m_connectButton = new QPushButton(tr("Connect"), runPage);
-    m_connectButton->setCheckable(true);
-    connect(m_connectButton, &QPushButton::toggled, this, &MainWindow::onSerialConnectToggled);
+    // Port/baud/connect used to live here as one global bar (see git history
+    // pre-multi-device-refactor) -- each device now owns its own connection
+    // config, set in the Devices tab (DeviceConfigDialog). This read-only
+    // strip is what's left for Run: an at-a-glance glance at every
+    // configured device's live connection state, for when you're looking at
+    // the dashboard and not at any cell bound to a disconnected device.
+    m_deviceStatusLabel = new QLabel(runPage);
+    m_deviceStatusLabel->setTextFormat(Qt::RichText);
 
     // Lives in the status bar (bottom-left, see below) rather than on this
     // page: the ribbon's tab strip hides during fullscreen
@@ -590,21 +641,33 @@ Ribbon* MainWindow::buildRibbon() {
         }
     });
 
+    // Window-level, same reasoning as fullscreen/exitFullscreen above --
+    // browser/editor-style tab cycling (Ctrl+Tab forward, Ctrl+Shift+Tab
+    // back) through WorkspaceManager's own list order. m_workspaceSwitcher
+    // doesn't exist yet at this point (built last in the constructor) but
+    // these only fire on a later keypress, well after construction finishes.
+    auto* nextWorkspaceAction = new QAction(this);
+    nextWorkspaceAction->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_Tab));
+    addAction(nextWorkspaceAction);
+    connect(nextWorkspaceAction, &QAction::triggered, this, [this]() { cycleWorkspace(1); });
+
+    auto* previousWorkspaceAction = new QAction(this);
+    previousWorkspaceAction->setShortcut(QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_Tab));
+    addAction(previousWorkspaceAction);
+    connect(previousWorkspaceAction, &QAction::triggered, this, [this]() { cycleWorkspace(-1); });
+
     updateRibbonIcons();
     connect(&ThemeManager::instance(), &ThemeManager::themeChanged, this,
             [this](const ThemePalette&) { updateRibbonIcons(); });
 
-    runLayout->addWidget(m_portCombo);
-    runLayout->addWidget(m_refreshPortsButton);
-    runLayout->addWidget(m_baudCombo);
-    runLayout->addWidget(m_lineTerminatorCombo);
-    runLayout->addWidget(m_connectButton);
+    runLayout->addWidget(m_deviceStatusLabel);
     runLayout->addStretch();
 
-    refreshSerialPorts();
-    connect(m_serialManager, &SerialManager::connectionStateChanged, this,
-            &MainWindow::onSerialConnectionStateChanged);
-    connect(m_serialManager, &SerialManager::errorOccurred, this, &MainWindow::onSerialErrorOccurred);
+    // Initial refreshDeviceStatusLabel() call happens once m_devicesGrid
+    // exists (buildRibbon() runs before it -- see the constructor); this
+    // just keeps it live across a later theme change (dot colors).
+    connect(&ThemeManager::instance(), &ThemeManager::themeChanged, this,
+            [this](const ThemePalette&) { refreshDeviceStatusLabel(); });
 
     auto* configurePage = new QWidget(this);
     configurePage->setObjectName("ribbonPage");
@@ -621,9 +684,20 @@ Ribbon* MainWindow::buildRibbon() {
     configureLayout->addWidget(Ribbon::createButtonGroup(configurePage, {m_undoAction, m_redoAction}));
     configureLayout->addStretch();
 
+    auto* devicesPage = new QWidget(this);
+    devicesPage->setObjectName("ribbonPage");
+    devicesPage->setFixedHeight(kRibbonPageHeight);
+    auto* devicesLayout = new QHBoxLayout(devicesPage);
+    devicesLayout->setContentsMargins(kRibbonPageMarginH, kRibbonPageMarginV, kRibbonPageMarginH, kRibbonPageMarginV);
+    devicesLayout->setSpacing(kRibbonGroupSpacing);
+
+    devicesLayout->addWidget(Ribbon::createButtonGroup(devicesPage, {m_addDeviceAction, m_removeDeviceAction}));
+    devicesLayout->addStretch();
+
     auto* ribbon = new Ribbon(this);
     m_runTabIndex = ribbon->addTab(tr("Run"), runPage);
     m_configureTabIndex = ribbon->addTab(tr("Layout"), configurePage);
+    m_devicesTabIndex = ribbon->addTab(tr("Devices"), devicesPage);
 
     connect(ribbon, &Ribbon::currentTabChanged, this, &MainWindow::onRibbonTabChanged);
 
@@ -668,6 +742,25 @@ void MainWindow::switchToWorkspace(const QString& id) {
     refreshPropertiesPanel();
     refreshLayersPanel();
     refreshWorkspaceSwitcher();
+}
+
+void MainWindow::cycleWorkspace(int direction) {
+    const QVector<Workspace>& workspaces = WorkspaceManager::instance().workspaces();
+    if (workspaces.size() < 2) {
+        return;
+    }
+
+    const QString activeId = WorkspaceManager::instance().activeId();
+    int index = 0;
+    for (int i = 0; i < workspaces.size(); ++i) {
+        if (workspaces[i].id == activeId) {
+            index = i;
+            break;
+        }
+    }
+
+    const int nextIndex = (index + direction + workspaces.size()) % workspaces.size();
+    switchToWorkspace(workspaces[nextIndex].id);
 }
 
 void MainWindow::onWorkspaceSelected(const QString& id) {
@@ -754,6 +847,11 @@ void MainWindow::updateRibbonIcons() {
     m_removeAction->setIcon(makeMinusIcon(palette.danger));
     m_removeAction->setToolTip(tr("Remove selected widget (%1)")
                                     .arg(m_removeAction->shortcut().toString(QKeySequence::NativeText)));
+    m_addDeviceAction->setIcon(makePlusIcon(palette.textPrimary));
+    m_addDeviceAction->setToolTip(tr("Add device"));
+    m_removeDeviceAction->setIcon(makeMinusIcon(palette.danger));
+    m_removeDeviceAction->setToolTip(tr("Remove selected device (%1)")
+                                          .arg(m_removeDeviceAction->shortcut().toString(QKeySequence::NativeText)));
     m_copyAction->setIcon(makeCopyIcon(palette.textPrimary));
     m_copyAction->setToolTip(
         tr("Copy selected widget (%1)").arg(m_copyAction->shortcut().toString(QKeySequence::NativeText)));
@@ -786,60 +884,28 @@ void MainWindow::updateRibbonIcons() {
 
 void MainWindow::onRibbonTabChanged(int index) {
     m_configureTabActive = index == m_configureTabIndex;
+    m_devicesTabActive = index == m_devicesTabIndex;
     m_dashboardGrid->setEditMode(m_configureTabActive);
     m_addWidgetAction->setEnabled(m_configureTabActive);
+    // Ctrl+Z/Ctrl+Y (m_undoAction/m_redoAction) are created from m_undoGroup,
+    // not either stack directly -- flip which one is "active" here so they
+    // always undo/redo whatever the visible tab actually shows. Run and
+    // Layout both display the dashboard, so both fall through to its stack.
+    m_undoGroup->setActiveStack(m_devicesTabActive ? m_devicesGrid->undoStack() : m_dashboardGrid->undoStack());
     updatePanelVisibility();
     updateSelectionActions();
+    updateDeviceSelectionActions();
 
     if (index == m_runTabIndex) {
-        refreshSerialPorts();
+        refreshDeviceStatusLabel();
     }
-}
 
-void MainWindow::refreshSerialPorts() {
-    // Preserve the current pick across a refresh when it's still present --
-    // rebuilding the list would otherwise silently reset it to whatever
-    // QSerialPortInfo happens to return first.
-    const QString current = m_portCombo->currentText();
-    m_portCombo->clear();
-    m_portCombo->addItems(m_serialManager->availablePorts());
-    const int index = m_portCombo->findText(current);
-    if (index >= 0) {
-        m_portCombo->setCurrentIndex(index);
-    }
-}
-
-void MainWindow::onSerialConnectToggled(bool checked) {
-    if (checked) {
-        if (!m_serialManager->open(m_portCombo->currentText(), m_baudCombo->currentText().toInt())) {
-            // open() already reported the failure via errorOccurred(); just
-            // snap the button back to reflect that the connection didn't
-            // happen (re-enters this slot with checked=false, which calls
-            // close() on an already-closed port -- a harmless no-op).
-            m_connectButton->setChecked(false);
-        }
-        return;
-    }
-    m_serialManager->close();
-}
-
-void MainWindow::onSerialConnectionStateChanged(bool connected) {
-    m_connectButton->setText(connected ? tr("Disconnect") : tr("Connect"));
-    {
-        const QSignalBlocker blocker(m_connectButton);
-        m_connectButton->setChecked(connected);
-    }
-    m_portCombo->setEnabled(!connected);
-    m_refreshPortsButton->setEnabled(!connected);
-    m_baudCombo->setEnabled(!connected);
-}
-
-void MainWindow::onSerialErrorOccurred(const QString& message) {
-    statusBar()->showMessage(message, 5000);
-}
-
-void MainWindow::onLineTerminatorChanged(int) {
-    m_serialManager->setLineTerminator(LineTerminator(m_lineTerminatorCombo->currentData().toInt()));
+    // Swaps the whole content area between the canvas and the Devices grid;
+    // Run/Layout both keep showing the canvas, only Devices swaps away from
+    // it (m_configureTabActive above already goes false here on its own,
+    // so edit mode/panels don't need any extra handling for this tab).
+    m_contentStack->setCurrentWidget(index == m_devicesTabIndex ? static_cast<QWidget*>(m_devicesGrid)
+                                                                 : static_cast<QWidget*>(m_dashboardGrid));
 }
 
 void MainWindow::onSelectionChanged(const QString&) {
@@ -921,6 +987,135 @@ void MainWindow::onAddWidget() {
     m_dashboardGrid->addItem(types.first().typeId);
 }
 
+void MainWindow::onAddDevice() {
+    // Drops in a placeholder mock device -- no picker dialog, same shape as
+    // onAddWidget() above. DevicesGrid owns opening DeviceConfigDialog
+    // itself (gear click on the new card), so renaming just happens there;
+    // this slot doesn't reach into that flow.
+    Device device;
+    device.name = tr("New Device");
+    m_devicesGrid->addDevice(device);
+}
+
+void MainWindow::updateDeviceSelectionActions() {
+    m_removeDeviceAction->setEnabled(m_devicesTabActive && m_devicesGrid->selectedCount() > 0);
+}
+
+void MainWindow::refreshPropertiesPanelDevices() {
+    const QVector<Device> devices = m_devicesGrid->devices();
+    QVector<DeviceOption> options;
+    options.reserve(devices.size());
+    for (const Device& device : devices) {
+        options.append({device.id, device.name});
+    }
+    m_propertiesPanel->setAvailableDevices(options);
+}
+
+void MainWindow::refreshDeviceStatusLabel() {
+    if (!m_deviceStatusLabel) {
+        return;
+    }
+    const QVector<Device> devices = m_devicesGrid->devices();
+    if (devices.isEmpty()) {
+        m_deviceStatusLabel->setText(tr("No devices configured — add one in the Devices tab."));
+        return;
+    }
+
+    const ThemePalette& palette = ThemeManager::instance().currentTheme();
+    QStringList parts;
+    for (const Device& device : devices) {
+        const QColor dotColor = device.connected ? palette.success : palette.danger;
+        const QString name = device.name.isEmpty() ? tr("(unnamed)") : device.name;
+        parts.append(
+            QString("<span style='color:%1;'>&#9679;</span> %2").arg(dotColor.name(), name.toHtmlEscaped()));
+    }
+    m_deviceStatusLabel->setText(parts.join("&nbsp;&nbsp;&nbsp;&nbsp;"));
+}
+
+void MainWindow::onDeviceAdded(const Device& device) {
+    auto* connection = new DeviceConnection(device.commType, this);
+    connect(connection, &DeviceConnection::connectionStateChanged, this,
+            [this, id = device.id](bool connected) { onDeviceConnectionStateChanged(id, connected); });
+
+    // Everything that gives this device's transport bytes meaning lives
+    // behind the Backend interface (backend/backend.h) -- concretely a
+    // BtpBackend today, owned internally by DeviceConnection. Hooked here,
+    // once per device, the same way MainWindow used to hook the app's one
+    // Backend before the multi-device refactor.
+    Backend* backend = connection->backend();
+    connect(backend, &Backend::statusMessage, this,
+            [this](const QString& text, int timeoutMs) { statusBar()->showMessage(text, timeoutMs); });
+    connect(backend, &Backend::subscriptionsChanged, this, &MainWindow::updateTelemetryStatusLabel);
+    connect(backend, &Backend::statusReceived, this, &MainWindow::updateTelemetryStatusLabel);
+
+    m_deviceConnections.insert(device.id, connection);
+    connection->setLineTerminator(device.lineTerminator);
+    // A no-op if `device` has no portName yet (a freshly added placeholder,
+    // see onAddDevice()) -- otherwise opens now, or starts the ambient retry
+    // loop, e.g. right after loading a saved project whose devices already
+    // have one configured.
+    connection->connectTo(device.portName, device.baudRate);
+    refreshDeviceStatusLabel();
+    refreshPropertiesPanelDevices();
+}
+
+void MainWindow::onDeviceRemoved(const QString& id) {
+    DeviceConnection* connection = m_deviceConnections.take(id);
+    if (!connection) {
+        return;
+    }
+    connection->disconnectFrom();
+    connection->deleteLater();
+    refreshDeviceStatusLabel();
+    refreshPropertiesPanelDevices();
+}
+
+void MainWindow::onDeviceUpdated(const Device& device) {
+    DeviceConnection* connection = m_deviceConnections.value(device.id);
+    if (!connection) {
+        return;
+    }
+    connection->setLineTerminator(device.lineTerminator);
+    connection->connectTo(device.portName, device.baudRate);
+    refreshDeviceStatusLabel();
+    // Renaming/reconfiguring a device changes what every widget's own
+    // Device combo should show as its selected entry's label.
+    refreshPropertiesPanelDevices();
+}
+
+void MainWindow::onDeviceConnectToggleRequested(const QString& deviceId) {
+    DeviceConnection* connection = m_deviceConnections.value(deviceId);
+    if (!connection) {
+        return;
+    }
+    if (connection->wantsConnection()) {
+        connection->disconnectFrom();
+        return;
+    }
+    const QVector<Device> devices = m_devicesGrid->devices();
+    for (const Device& device : devices) {
+        if (device.id == deviceId) {
+            connection->connectTo(device.portName, device.baudRate);
+            break;
+        }
+    }
+}
+
+void MainWindow::onDeviceConnectionStateChanged(const QString& deviceId, bool connected) {
+    // Every chart/gauge/control/terminal cell currently configured for this
+    // device (config()["deviceId"]) -- not just the Devices tab's own card.
+    m_dashboardGrid->setDeviceConnected(deviceId, connected);
+    refreshDeviceStatusLabel();
+
+    // setDeviceConnected(), not updateDevice() -- this fires from live
+    // connection state (including DeviceConnection's own ambient retry
+    // loop), not a user edit, so it must not land on m_devicesGrid's undo
+    // stack (a connection blinking would otherwise show up as an undoable
+    // "Edit Device" step, and Ctrl+Z on the Devices tab would undo a status
+    // dot instead of an actual edit).
+    m_devicesGrid->setDeviceConnected(deviceId, connected);
+}
+
 void MainWindow::onPanelTypeChangeRequested(const QString& typeId) {
     m_dashboardGrid->changeSelectedType(typeId);
 }
@@ -954,6 +1149,8 @@ void MainWindow::onNewProject() {
     WorkspaceManager::instance().reset();
     m_dashboardGrid->fromJson(QJsonObject());
     m_dashboardGrid->undoStack()->clear();
+    m_devicesGrid->fromJson(QJsonObject());
+    m_devicesGrid->undoStack()->clear();
     refreshPropertiesPanel();
     refreshLayersPanel();
     refreshWorkspaceSwitcher();
@@ -963,6 +1160,7 @@ void MainWindow::onNewProject() {
 void MainWindow::onSaveProject() {
     WorkspaceManager::instance().setDashboardFor(WorkspaceManager::instance().activeId(), m_dashboardGrid->toJson());
     ProjectStore::instance().setSection("workspaces", WorkspaceManager::instance().toJson());
+    ProjectStore::instance().setSection("devices", m_devicesGrid->toJson());
 
     QString path = ProjectStore::instance().currentPath();
     if (path.isEmpty()) {
@@ -980,6 +1178,7 @@ void MainWindow::onSaveProject() {
 void MainWindow::onSaveProjectAs() {
     WorkspaceManager::instance().setDashboardFor(WorkspaceManager::instance().activeId(), m_dashboardGrid->toJson());
     ProjectStore::instance().setSection("workspaces", WorkspaceManager::instance().toJson());
+    ProjectStore::instance().setSection("devices", m_devicesGrid->toJson());
 
     const QString path = QFileDialog::getSaveFileName(this, tr("Save Project As"), QString(), kProjectFileFilter);
     if (path.isEmpty()) {
@@ -1020,6 +1219,10 @@ void MainWindow::openRecentFile(const QString& path) {
 
     m_dashboardGrid->fromJson(WorkspaceManager::instance().dashboardFor(WorkspaceManager::instance().activeId()));
     m_dashboardGrid->undoStack()->clear();
+    // Absent in projects saved before device persistence existed --
+    // fromJson(QJsonObject()) on an empty section just clears the list.
+    m_devicesGrid->fromJson(ProjectStore::instance().section("devices"));
+    m_devicesGrid->undoStack()->clear();
     refreshPropertiesPanel();
     refreshLayersPanel();
     refreshWorkspaceSwitcher();

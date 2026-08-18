@@ -1,52 +1,74 @@
 #pragma once
 
+#include <QHash>
 #include <QObject>
-#include <QtGlobal>
+#include <QString>
+
+#include <functional>
 
 namespace traceview {
 
-class Backend;
 class DashboardGrid;
 class DashboardWidget;
-class SerialManager;
+class DeviceConnection;
+class SerialMonitorWidget;
 
-// Wires each control/serial-monitor widget's output to the shared
-// connection as soon as it's created (BACKEND_TODO.txt Tasks 9/10):
+// Wires each control/serial-monitor widget's send/receive to whichever
+// device its own config currently targets (config()["deviceId"], see
+// dashboard/widgetconfigeditor.h's DeviceOption) -- resolved fresh via
+// `deviceConnectionFor` on every outbound send rather than a fixed
+// SerialManager/Backend pair (the pre-multi-device-refactor shape, see git
+// history), since a widget's target device can be changed at any time in
+// the properties panel.
+//
 // PushButtonWidget/ToggleSwitchWidget/SliderWidget's sendRequested() (a
-// fully-formed command) goes through SerialManager::writeCommand() directly
-// (appends the configured line terminator, docs/PROTOCOL.md "Outbound:
-// control commands") -- this is raw text with no protocol envelope, so it
-// bypasses Backend entirely.
+// fully-formed outbound command) goes through that device's
+// SerialManager::writeCommand() directly (appends the configured line
+// terminator, docs/PROTOCOL.md "Outbound: control commands") -- this is raw
+// text with no protocol envelope, so it bypasses Backend entirely. A widget
+// with no device configured (or whose configured device doesn't exist,
+// e.g. it was since removed) just goes nowhere -- same "went nowhere, not
+// an error" contract SerialManager::write() already has for a closed port.
 //
-// SerialMonitorWidget (the terminal) is different: as of topico 19
-// ("terminal protocolado"), its sendRequested() (raw keystrokes/escape
-// sequences) is handed to Backend::sendTerminalIn() instead of
-// SerialManager::write() -- it no longer touches the wire directly, and no
-// longer receives SerialManager::dataReceived() at all (that stream is
-// protocol-framed binary, not text; a terminal fed those raw bytes would
-// render telemetry as garbage characters, exactly the CRITERIO DE ACEITE
-// topico 19 forbids). Instead each terminal widget is fed only
-// Backend::terminalDataReceived() payloads -- whatever framing/filtering
-// (e.g. BTP's TERMINAL_IN/TERMINAL_OUT distinction) that requires is the
-// Backend implementation's job, not this bridge's.
-//
-// Hooks DashboardGrid::widgetCreated() rather than rebuilding an index off
-// itemsChanged() the way SerialDataRouter does: outbound wiring has no key
-// to go stale, so a one-shot per-instance connect at construction time is
-// enough, and avoids double-connecting a widget that persists across an
-// unrelated itemsChanged() (e.g. some other item's key edit).
+// SerialMonitorWidget is different in both directions: its sendRequested()
+// (raw keystrokes/escape sequences) is handed to that device's
+// Backend::sendTerminalIn() instead of SerialManager::write() directly, and
+// -- unlike the outbound-only widgets above -- it also needs a standing
+// inbound connection (Backend::terminalDataReceived -> appendData()) that
+// must be re-pointed if the widget's target device changes later, since
+// that can't be resolved fresh per call the way an outbound send can.
+// refreshTerminalWiring() is what re-derives those connections; call it
+// whenever a config edit could have changed a terminal widget's deviceId
+// (MainWindow: the same indexChanged hook that drives
+// refreshWidgetSubscriptions()).
 class SerialWidgetBridge : public QObject {
     Q_OBJECT
 
 public:
-    SerialWidgetBridge(SerialManager* serialManager, Backend* backend, DashboardGrid* grid,
-                       QObject* parent = nullptr);
+    SerialWidgetBridge(DashboardGrid* grid, std::function<DeviceConnection*(const QString&)> deviceConnectionFor,
+                        QObject* parent = nullptr);
+
+    // Re-derives every wired terminal widget's inbound connection from its
+    // current config. Outbound wiring (control widgets, and the terminal's
+    // own sendRequested()) needs no equivalent call -- it's resolved fresh
+    // on every send, see the class comment.
+    void refreshTerminalWiring();
 
 private:
     void wireWidget(DashboardWidget* widget);
+    DeviceConnection* deviceConnectionForWidget(DashboardWidget* widget) const;
+    // (Re)connects `monitor`'s inbound Backend::terminalDataReceived to
+    // whichever device its config currently names, disconnecting the
+    // previous one first if it changed. No-op if the device is unchanged.
+    void rewireTerminalInbound(SerialMonitorWidget* monitor);
 
-    SerialManager* m_serialManager;
-    Backend* m_backend;
+    DashboardGrid* m_grid;
+    std::function<DeviceConnection*(const QString&)> m_deviceConnectionFor;
+    // Every terminal widget wired so far, and which device's Backend its
+    // inbound connection currently points at (empty = none) -- lets
+    // rewireTerminalInbound() know what to disconnect before connecting the
+    // new one, and lets refreshTerminalWiring() enumerate them all.
+    QHash<SerialMonitorWidget*, QString> m_terminalDeviceIds;
 };
 
 } // namespace traceview

@@ -3,8 +3,15 @@
 # design with synthetic data instead of a real serial device.
 
 add_executable(chart_preview chart_preview/main.cpp)
+add_executable(chart_benchmark chart_benchmark/main.cpp)
 
 target_link_libraries(chart_preview PRIVATE
+    Qt6::Widgets
+    traceview_dashboard
+    traceview_theme
+)
+
+target_link_libraries(chart_benchmark PRIVATE
     Qt6::Widgets
     traceview_dashboard
     traceview_theme
@@ -24,6 +31,10 @@ if(WIN32)
         add_custom_command(TARGET chart_preview POST_BUILD
             COMMAND "${WINDEPLOYQT_EXECUTABLE}" --no-translations "$<TARGET_FILE:chart_preview>"
             COMMENT "Deploying Qt runtime DLLs next to chart_preview.exe"
+        )
+        add_custom_command(TARGET chart_benchmark POST_BUILD
+            COMMAND "${WINDEPLOYQT_EXECUTABLE}" --no-translations "$<TARGET_FILE:chart_benchmark>"
+            COMMENT "Deploying Qt runtime DLLs next to chart_benchmark.exe"
         )
     endif()
 endif()

@@ -167,6 +167,7 @@ add_library(traceview_dashboard STATIC
     dashboard/dashboarditem.cpp
     dashboard/dashboarditem.h
     dashboard/dashboardwidget.h
+    dashboard/widgetconfigeditor.cpp
     dashboard/widgetconfigeditor.h
     dashboard/widgets/chartconfigeditor.cpp
     dashboard/widgets/chartconfigeditor.h
@@ -176,6 +177,8 @@ add_library(traceview_dashboard STATIC
     dashboard/widgets/chartwidgets.h
     dashboard/widgets/gaugeconfigeditor.cpp
     dashboard/widgets/gaugeconfigeditor.h
+    dashboard/widgets/serialmonitorconfigeditor.cpp
+    dashboard/widgets/serialmonitorconfigeditor.h
     dashboard/widgets/serialmonitorwidget.cpp
     dashboard/widgets/serialmonitorwidget.h
     dashboard/widgets/serialterminalwidget.cpp
@@ -205,6 +208,36 @@ target_link_libraries(traceview_dashboard
     PUBLIC
         Qt6::Widgets
         traceview_protocol
+    PRIVATE
+        traceview_theme
+)
+
+# traceview_devices: the Devices panel's data model, card chrome, and fixed
+# auto-flow grid. UI-only for now (mock/local data, no real transport
+# wiring) -- a later phase wires real BTP device discovery into the same
+# Device struct. Depends only on traceview_theme so that data-source swap
+# won't require touching this layer's visual code.
+add_library(traceview_devices STATIC
+    devices/device.cpp
+    devices/device.h
+    devices/devicecard.cpp
+    devices/devicecard.h
+    devices/devicecommands.cpp
+    devices/devicecommands.h
+    devices/devicesgrid.cpp
+    devices/devicesgrid.h
+    devices/deviceconfigdialog.cpp
+    devices/deviceconfigdialog.h
+)
+
+target_include_directories(traceview_devices PUBLIC
+    ${CMAKE_SOURCE_DIR}/include
+    ${CMAKE_SOURCE_DIR}/lib
+)
+
+target_link_libraries(traceview_devices
+    PUBLIC
+        Qt6::Widgets
     PRIVATE
         traceview_theme
 )
@@ -241,6 +274,8 @@ add_library(traceview_ui STATIC
     core/ribbonicons.h
     core/ribbontabbar.cpp
     core/ribbontabbar.h
+    core/deviceconnection.cpp
+    core/deviceconnection.h
     core/serialmanager.cpp
     core/serialmanager.h
     core/serialwidgetbridge.cpp
@@ -263,6 +298,7 @@ target_link_libraries(traceview_ui
         Qt6::SerialPort
     PRIVATE
         traceview_dashboard
+        traceview_devices
         traceview_project
         traceview_protocol
         traceview_theme

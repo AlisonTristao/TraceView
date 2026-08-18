@@ -2,7 +2,29 @@
 
 Real-time telemetry dashboard for ESP32/ESP-NOW robots, built in C++ with Qt.
 
-> **Status:** v2.0.0 — the dashboard/UI layer (workspaces, theming, docking, widgets) has closed out its first round of visual-identity work; the BTP telemetry integration behind it is still evolving. See [CONTRIBUTING.md](CONTRIBUTING.md) for the branching/feature workflow and [docs/ECOSYSTEM.md](docs/ECOSYSTEM.md) for how this project fits with the rest of the Bally ecosystem.
+> **Status:** v2.1.0 — the dashboard now manages multiple independently-connected devices side by side, on top of the workspaces/theming/docking round from 2.0.0. The BTP telemetry integration behind it is still evolving. See [CONTRIBUTING.md](CONTRIBUTING.md) for the branching/feature workflow and [docs/ECOSYSTEM.md](docs/ECOSYSTEM.md) for how this project fits with the rest of the Bally ecosystem.
+
+## Screenshots
+
+| Dashboard | Devices |
+|---|---|
+| ![Dashboard](docs/images/dashboard.png) | ![Devices](docs/images/devices.png) |
+
+## What's new in 2.1.0
+
+- **Devices tab** — devices are their own managed list now (name, connection
+  config, live status dot), instead of one port/baud pair for the whole
+  project. See [docs/DEVICES.md](docs/DEVICES.md).
+- **Multiple simultaneous connections** — each device opens its own
+  independent BTP session and reconnects on its own in the background, so
+  several robots/boards can be live at once.
+- **Per-widget device targeting** — every chart, gauge, control, and the
+  serial monitor picks which device it listens to; there's no single
+  "active device" for a project anymore.
+- Devices tab undo/redo, and **Ctrl+Tab**/**Ctrl+Shift+Tab** to cycle
+  workspaces from anywhere.
+
+See [CHANGELOG.md](CHANGELOG.md) for the full list, including every prior release.
 
 ## Architecture: the UI doesn't know about BTP
 
@@ -22,13 +44,17 @@ lib/telemetry/          -> generic value types Backend's API is expressed in
                             BTP dependency
 ```
 
-`core/serialmanager.h` (`SerialManager`) stays a concrete, shared piece: it
-only moves raw bytes in and out of the open serial port, nothing more.
-`Backend` is the layer above it — `MainWindow` feeds it raw bytes
-(`feedBytes()`) and connection state (`onTransportConnectionChanged()`), and
-listens to its signals (`fieldSample`, `subscriptionsChanged`,
-`terminalDataReceived`, ...) to drive the dashboard. See
-`lib/backend/backend.h` for the full contract.
+`core/serialmanager.h` (`SerialManager`) stays a concrete piece with a
+narrow job: it only moves raw bytes in and out of one open serial port,
+nothing more. `Backend` is the layer above it, fed raw bytes (`feedBytes()`)
+and connection state (`onTransportConnectionChanged()`), driving the
+dashboard through its signals (`fieldSample`, `subscriptionsChanged`,
+`terminalDataReceived`, ...) — see `lib/backend/backend.h` for the full
+contract. `core/deviceconnection.h` (`DeviceConnection`) pairs one
+`SerialManager` with one `Backend` per configured device
+(see [docs/DEVICES.md](docs/DEVICES.md)), so `MainWindow` can hold several
+devices open and decoding independently at once instead of one shared
+connection for the whole project.
 
 This means a different protocol can be plugged in by implementing `Backend`
 and constructing it in place of `BtpBackend` in `MainWindow`'s constructor —

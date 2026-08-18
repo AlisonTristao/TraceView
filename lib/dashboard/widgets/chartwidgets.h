@@ -73,6 +73,17 @@ public:
     // wants samples.
     const ChartConfig& config() const { return m_config; }
 
+    // Caps how often appendFieldSample() triggers an actual repaint via
+    // scheduleRepaint() (chartwidgets.cpp), independent of how fast samples
+    // arrive (topico 14 PASSO 12: ingestion rate stays separate from repaint
+    // rate) -- data still gets appended to the buffers on every sample
+    // regardless. 33ms (~30Hz) by default; 0 removes the cap entirely
+    // (repaint on every appendFieldSample() call). Exposed only for
+    // DebugChartsWindow's stress-mode toggle (mainwindow.cpp's Debug menu)
+    // to exercise the paint code at its real, unthrottled ceiling -- nothing
+    // in production code calls this.
+    void setRepaintIntervalMs(int ms) { m_repaintIntervalMs = ms; }
+
 protected:
     void mouseMoveEvent(QMouseEvent* event) override;
     void mousePressEvent(QMouseEvent* event) override;
@@ -122,6 +133,7 @@ private:
 
     bool m_repaintPending = false;
     bool m_paused = false;
+    int m_repaintIntervalMs = 33;  // see setRepaintIntervalMs() above
 };
 
 class DummyLineChartWidget : public ChartWidgetBase {
@@ -183,6 +195,11 @@ public:
     // See ChartWidgetBase::config() -- same role for a gauge's own config.
     const GaugeConfig& config() const { return m_config; }
 
+    // See ChartWidgetBase::setRepaintIntervalMs() above -- same role, this
+    // class keeps its own throttle state instead of sharing ChartWidgetBase's
+    // since it doesn't derive from it.
+    void setRepaintIntervalMs(int ms) { m_repaintIntervalMs = ms; }
+
 protected:
     void paintEvent(QPaintEvent* event) override;
 
@@ -195,6 +212,7 @@ private:
                                // setConfig() in the .cpp.
     bool m_repaintPending = false;
     bool m_paused = false;
+    int m_repaintIntervalMs = 33;  // see setRepaintIntervalMs() above
 };
 
 }  // namespace traceview

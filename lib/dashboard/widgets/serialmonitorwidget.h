@@ -7,16 +7,15 @@ namespace traceview {
 class SerialTerminalWidget;
 
 // Serial monitor: a thin wrapper around a miniterm-style terminal (see
-// SerialTerminalWidget). The port/baud pickers and connect toggle that used
-// to live in a header here now live once for the whole app, in the Run
-// ribbon tab (MainWindow) -- there is one QSerialPort for the entire app
-// (SerialManager), not one per widget, so every SerialMonitorWidget on the
-// dashboard is just a view onto that shared connection, not an owner of it.
-// SerialWidgetBridge (lib/core/serialwidgetbridge.h) wires sendRequested()
-// to SerialManager::write() and SerialManager::dataReceived() to
-// appendData() for every instance on the grid (BACKEND_TODO.txt Task 10) --
-// this widget stays unaware of SerialManager itself, same as the control
-// widgets in widgets/controlwidgets.h.
+// SerialTerminalWidget). Port/baud/connect config lives per-device in the
+// Devices tab (DeviceConfigDialog); which device *this* instance talks to is
+// its own config (SerialMonitorConfigEditor, "deviceId") -- this widget
+// stays unaware of SerialManager/DeviceConnection itself, same as the
+// control widgets in widgets/controlwidgets.h. SerialWidgetBridge
+// (lib/core/serialwidgetbridge.h) resolves that device and wires
+// sendRequested() to its Backend::sendTerminalIn() and its
+// Backend::terminalDataReceived() to appendData(), re-pointing both if the
+// widget's configured device changes.
 class SerialMonitorWidget : public DashboardWidget {
     Q_OBJECT
 

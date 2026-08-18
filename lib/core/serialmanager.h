@@ -22,14 +22,15 @@ enum class LineTerminator { None, Lf, Cr, CrLf };
 // Byte sequence for `terminator` -- empty for None.
 QByteArray lineTerminatorBytes(LineTerminator terminator);
 
-// Owns the single QSerialPort the whole app shares (see BACKEND_TODO.txt --
-// there is one connection for the entire app, not one per widget). Purely a
-// bytes-in/bytes-out transport: no frame parsing and no routing to widgets
-// happens here -- see protocol/btpsession.h (BtpSession) for BTP framing and
-// core/serialwidgetbridge.h for the raw control/terminal wiring. Meant to be
-// created once (MainWindow-owned) and handed to whatever needs to read/write
-// the port -- the Run ribbon tab for connect/disconnect UI,
-// SerialTerminalWidget for raw passthrough, BtpSession for decoded data.
+// Owns one QSerialPort. Purely a bytes-in/bytes-out transport: no frame
+// parsing and no routing to widgets happens here -- see protocol/
+// btpsession.h (BtpSession) for BTP framing and core/serialwidgetbridge.h
+// for the raw control/terminal wiring. As of the multi-device connection
+// refactor, one instance is owned per Device by core/deviceconnection.h
+// (DeviceConnection) rather than a single MainWindow-owned instance shared
+// by the whole app -- each device's port/baud/line-terminator is configured
+// independently (Devices tab, DeviceConfigDialog), not from a single global
+// Run ribbon bar.
 class SerialManager : public QObject {
     Q_OBJECT
 

@@ -4,25 +4,25 @@
 <context>
     <name>ChartWidgets</name>
     <message>
-        <location filename="../lib/dashboard/widgets/chartwidgets.cpp" line="210"/>
+        <location filename="../lib/dashboard/widgets/chartwidgets.cpp" line="208"/>
         <location filename="../lib/dashboard/widgets/chartwidgets.cpp" line="485"/>
         <source>Field %1</source>
         <translation>字段 %1</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/chartwidgets.cpp" line="222"/>
+        <location filename="../lib/dashboard/widgets/chartwidgets.cpp" line="220"/>
         <location filename="../lib/dashboard/widgets/chartwidgets.cpp" line="535"/>
-        <location filename="../lib/dashboard/widgets/chartwidgets.cpp" line="1082"/>
+        <location filename="../lib/dashboard/widgets/chartwidgets.cpp" line="1093"/>
         <source>--</source>
         <translation>--</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/chartwidgets.cpp" line="313"/>
+        <location filename="../lib/dashboard/widgets/chartwidgets.cpp" line="311"/>
         <source>t</source>
         <translation>t</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/chartwidgets.cpp" line="314"/>
+        <location filename="../lib/dashboard/widgets/chartwidgets.cpp" line="312"/>
         <source>k</source>
         <translation>k</translation>
     </message>
@@ -37,7 +37,7 @@
         <translation>%1  %2</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/chartwidgets.cpp" line="976"/>
+        <location filename="../lib/dashboard/widgets/chartwidgets.cpp" line="987"/>
         <source>%1: %2</source>
         <translation>%1: %2</translation>
     </message>
@@ -88,50 +88,81 @@
 <context>
     <name>DashboardCommands</name>
     <message>
-        <location filename="../lib/dashboard/dashboardcommands.cpp" line="13"/>
+        <location filename="../lib/dashboard/dashboardcommands.cpp" line="14"/>
         <source>Add Widget</source>
         <translation>添加控件</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/dashboardcommands.cpp" line="24"/>
+        <location filename="../lib/dashboard/dashboardcommands.cpp" line="25"/>
         <source>Remove Widget</source>
         <translation>删除控件</translation>
     </message>
     <message>
         <location filename="../lib/dashboard/dashboardcommands.cpp" line="37"/>
+        <source>Remove Widgets</source>
+        <translation>删除控件</translation>
+    </message>
+    <message>
+        <location filename="../lib/dashboard/dashboardcommands.cpp" line="57"/>
         <source>Move Widget</source>
         <translation>移动控件</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/dashboardcommands.cpp" line="50"/>
+        <location filename="../lib/dashboard/dashboardcommands.cpp" line="74"/>
         <source>Resize Widget</source>
         <translation>调整控件大小</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/dashboardcommands.cpp" line="63"/>
+        <location filename="../lib/dashboard/dashboardcommands.cpp" line="87"/>
         <source>Rename Widget</source>
         <translation>重命名控件</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/dashboardcommands.cpp" line="76"/>
+        <location filename="../lib/dashboard/dashboardcommands.cpp" line="100"/>
         <source>Set Widget Key</source>
         <translation>设置控件键</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/dashboardcommands.cpp" line="89"/>
+        <location filename="../lib/dashboard/dashboardcommands.cpp" line="113"/>
         <source>Set Widget Config</source>
         <translation>设置控件配置</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/dashboardcommands.cpp" line="102"/>
+        <location filename="../lib/dashboard/dashboardcommands.cpp" line="126"/>
         <source>Change Widget Type</source>
         <translation>更改控件类型</translation>
+    </message>
+    <message>
+        <location filename="../lib/dashboard/dashboardcommands.cpp" line="151"/>
+        <source>Group Widgets</source>
+        <translation>编组控件</translation>
+    </message>
+    <message>
+        <location filename="../lib/dashboard/dashboardcommands.cpp" line="167"/>
+        <source>Ungroup Widgets</source>
+        <translation>取消编组控件</translation>
+    </message>
+</context>
+<context>
+    <name>Device</name>
+    <message>
+        <location filename="../lib/devices/device.h" line="23"/>
+        <source>BTP</source>
+        <translation>BTP</translation>
+    </message>
+</context>
+<context>
+    <name>FontManager</name>
+    <message>
+        <location filename="../lib/theme/fontmanager.cpp" line="24"/>
+        <source>System Default</source>
+        <translation>系统默认</translation>
     </message>
 </context>
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="55"/>
+        <location filename="../lib/core/mainwindow.cpp" line="64"/>
         <source>TraceView Project (*.tvproj)</source>
         <translation>TraceView 项目 (*.tvproj)</translation>
     </message>
@@ -145,6 +176,19 @@
     </message>
 </context>
 <context>
+    <name>QObject</name>
+    <message>
+        <location filename="../lib/core/debugchartswindow.cpp" line="25"/>
+        <source>Debug -- synthetic chart data</source>
+        <translation>调试 -- 合成图表数据</translation>
+    </message>
+    <message>
+        <location filename="../lib/core/workspaceswitcher.cpp" line="49"/>
+        <source>Delete workspace</source>
+        <translation>删除工作区</translation>
+    </message>
+</context>
+<context>
     <name>ThemeManager</name>
     <message>
         <location filename="../lib/theme/palettes.cpp" line="12"/>
@@ -155,6 +199,41 @@
         <location filename="../lib/theme/palettes.cpp" line="41"/>
         <source>Light</source>
         <translation>浅色</translation>
+    </message>
+    <message>
+        <location filename="../lib/theme/palettes.cpp" line="74"/>
+        <source>Wood</source>
+        <translation>木质</translation>
+    </message>
+    <message>
+        <location filename="../lib/theme/palettes.cpp" line="103"/>
+        <source>Black</source>
+        <translation>黑色</translation>
+    </message>
+    <message>
+        <location filename="../lib/theme/palettes.cpp" line="134"/>
+        <source>Matrix</source>
+        <translation>Matrix</translation>
+    </message>
+    <message>
+        <location filename="../lib/theme/palettes.cpp" line="165"/>
+        <source>Synthwave</source>
+        <translation>Synthwave</translation>
+    </message>
+    <message>
+        <location filename="../lib/theme/palettes.cpp" line="197"/>
+        <source>Amber</source>
+        <translation>琥珀</translation>
+    </message>
+    <message>
+        <location filename="../lib/theme/palettes.cpp" line="228"/>
+        <source>Arctic</source>
+        <translation>极地</translation>
+    </message>
+    <message>
+        <location filename="../lib/theme/palettes.cpp" line="257"/>
+        <source>Sakura</source>
+        <translation>樱花</translation>
     </message>
 </context>
 <context>
@@ -193,6 +272,14 @@
         <location filename="../lib/dashboard/widgetregistry.cpp" line="41"/>
         <source>Slider</source>
         <translation>滑块</translation>
+    </message>
+</context>
+<context>
+    <name>WorkspaceManager</name>
+    <message>
+        <location filename="../lib/project/workspacemanager.cpp" line="154"/>
+        <source>Default</source>
+        <translation>默认</translation>
     </message>
 </context>
 <context>
@@ -496,42 +583,42 @@
 <context>
     <name>traceview::DashboardCell</name>
     <message>
-        <location filename="../lib/dashboard/dashboardcell.cpp" line="330"/>
+        <location filename="../lib/dashboard/dashboardcell.cpp" line="339"/>
         <source>Show last value</source>
         <translation>显示最新值</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/dashboardcell.cpp" line="335"/>
+        <location filename="../lib/dashboard/dashboardcell.cpp" line="344"/>
         <source>Show grid point values</source>
         <translation>显示网格点数值</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/dashboardcell.cpp" line="340"/>
+        <location filename="../lib/dashboard/dashboardcell.cpp" line="349"/>
         <source>Show hover crosshair</source>
         <translation>显示悬停十字线</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/dashboardcell.cpp" line="357"/>
+        <location filename="../lib/dashboard/dashboardcell.cpp" line="366"/>
         <source>Interpolation:</source>
         <translation>插值:</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/dashboardcell.cpp" line="359"/>
+        <location filename="../lib/dashboard/dashboardcell.cpp" line="368"/>
         <source>Linear</source>
         <translation>线性</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/dashboardcell.cpp" line="360"/>
+        <location filename="../lib/dashboard/dashboardcell.cpp" line="369"/>
         <source>ZOH (step)</source>
         <translation>ZOH(阶梯)</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/dashboardcell.cpp" line="361"/>
+        <location filename="../lib/dashboard/dashboardcell.cpp" line="370"/>
         <source>Stem</source>
         <translation>杆状图</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/dashboardcell.cpp" line="362"/>
+        <location filename="../lib/dashboard/dashboardcell.cpp" line="371"/>
         <source>None (points)</source>
         <translation>无(仅点)</translation>
     </message>
@@ -539,22 +626,22 @@
 <context>
     <name>traceview::DashboardGrid</name>
     <message>
-        <location filename="../lib/dashboard/dashboardgrid.cpp" line="326"/>
+        <location filename="../lib/dashboard/dashboardgrid.cpp" line="460"/>
         <source>Bring to Front</source>
         <translation>置于顶层</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/dashboardgrid.cpp" line="341"/>
+        <location filename="../lib/dashboard/dashboardgrid.cpp" line="476"/>
         <source>Bring Forward</source>
         <translation>上移一层</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/dashboardgrid.cpp" line="356"/>
+        <location filename="../lib/dashboard/dashboardgrid.cpp" line="492"/>
         <source>Send Backward</source>
         <translation>下移一层</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/dashboardgrid.cpp" line="367"/>
+        <location filename="../lib/dashboard/dashboardgrid.cpp" line="504"/>
         <source>Send to Back</source>
         <translation>置于底层</translation>
     </message>
@@ -562,24 +649,115 @@
 <context>
     <name>traceview::DebugChartsWindow</name>
     <message>
-        <location filename="../lib/core/debugchartswindow.cpp" line="135"/>
         <source>Debug -- synthetic chart data</source>
-        <translation>调试 -- 合成图表数据</translation>
+        <translation type="vanished">调试 -- 合成图表数据</translation>
     </message>
     <message>
-        <location filename="../lib/core/debugchartswindow.cpp" line="143"/>
+        <location filename="../lib/core/debugchartswindow.cpp" line="221"/>
+        <location filename="../lib/core/debugchartswindow.cpp" line="225"/>
+        <source>Modo estresse: desligado (50ms/tick)</source>
+        <translation>压力模式：关闭 (50ms/tick)</translation>
+    </message>
+    <message>
+        <location filename="../lib/core/debugchartswindow.cpp" line="224"/>
+        <source>Modo estresse: ligado (atualizacao maxima)</source>
+        <translation>压力模式：开启 (最大更新频率)</translation>
+    </message>
+    <message>
+        <location filename="../lib/core/debugchartswindow.cpp" line="237"/>
         <source>Line Chart</source>
         <translation>折线图</translation>
     </message>
     <message>
-        <location filename="../lib/core/debugchartswindow.cpp" line="147"/>
+        <location filename="../lib/core/debugchartswindow.cpp" line="241"/>
         <source>Bar Chart</source>
         <translation>柱状图</translation>
     </message>
     <message>
-        <location filename="../lib/core/debugchartswindow.cpp" line="151"/>
+        <location filename="../lib/core/debugchartswindow.cpp" line="245"/>
         <source>Gauge</source>
         <translation>仪表盘</translation>
+    </message>
+    <message>
+        <location filename="../lib/core/debugchartswindow.cpp" line="248"/>
+        <source>Serial Monitor</source>
+        <translation>串口监视器</translation>
+    </message>
+    <message>
+        <location filename="../lib/core/debugchartswindow.cpp" line="258"/>
+        <source>Push Button</source>
+        <translation>按钮</translation>
+    </message>
+    <message>
+        <location filename="../lib/core/debugchartswindow.cpp" line="263"/>
+        <source>Toggle Switch</source>
+        <translation>开关</translation>
+    </message>
+    <message>
+        <location filename="../lib/core/debugchartswindow.cpp" line="268"/>
+        <source>Slider</source>
+        <translation>滑块</translation>
+    </message>
+    <message>
+        <location filename="../lib/core/debugchartswindow.cpp" line="320"/>
+        <source> -- %1 fps</source>
+        <translation> -- %1 fps</translation>
+    </message>
+</context>
+<context>
+    <name>traceview::DeviceConfigDialog</name>
+    <message>
+        <location filename="../lib/devices/deviceconfigdialog.cpp" line="15"/>
+        <source>Device Settings</source>
+        <translation>设备设置</translation>
+    </message>
+    <message>
+        <location filename="../lib/devices/deviceconfigdialog.cpp" line="23"/>
+        <source>Name:</source>
+        <translation>名称:</translation>
+    </message>
+    <message>
+        <location filename="../lib/devices/deviceconfigdialog.cpp" line="24"/>
+        <source>Description:</source>
+        <translation>描述:</translation>
+    </message>
+    <message>
+        <location filename="../lib/devices/deviceconfigdialog.cpp" line="26"/>
+        <source>Connected</source>
+        <translation>已连接</translation>
+    </message>
+    <message>
+        <location filename="../lib/devices/deviceconfigdialog.cpp" line="31"/>
+        <source>Reported by device</source>
+        <translation>设备报告</translation>
+    </message>
+    <message>
+        <location filename="../lib/devices/deviceconfigdialog.cpp" line="36"/>
+        <source>BTP version:</source>
+        <translation>BTP 版本:</translation>
+    </message>
+    <message>
+        <location filename="../lib/devices/deviceconfigdialog.cpp" line="37"/>
+        <source>Chip type:</source>
+        <translation>芯片类型:</translation>
+    </message>
+    <message>
+        <location filename="../lib/devices/deviceconfigdialog.cpp" line="38"/>
+        <source>BTP ID:</source>
+        <translation>BTP ID:</translation>
+    </message>
+</context>
+<context>
+    <name>traceview::DockablePanel</name>
+    <message>
+        <location filename="../lib/core/dockablepanel.cpp" line="45"/>
+        <source>Unpin — panel will hide when nothing is selected</source>
+        <translation>取消固定 — 未选中任何内容时面板将隐藏</translation>
+    </message>
+    <message>
+        <location filename="../lib/core/dockablepanel.cpp" line="46"/>
+        <source>Pin — keep panel open with nothing selected</source>
+        <translation>固定 — 即使未选中任何内容也保持面板打开</translation>
     </message>
 </context>
 <context>
@@ -608,12 +786,12 @@
 <context>
     <name>traceview::DummyGaugeWidget</name>
     <message>
-        <location filename="../lib/dashboard/widgets/chartwidgets.cpp" line="1459"/>
+        <location filename="../lib/dashboard/widgets/chartwidgets.cpp" line="1483"/>
         <source>%1%2</source>
         <translation>%1%2</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/chartwidgets.cpp" line="1460"/>
+        <location filename="../lib/dashboard/widgets/chartwidgets.cpp" line="1484"/>
         <source>--</source>
         <translation>--</translation>
     </message>
@@ -729,319 +907,405 @@
 <context>
     <name>traceview::LayersPanel</name>
     <message>
-        <location filename="../lib/core/layerspanel.cpp" line="83"/>
         <source>Unpin — panel will hide when nothing is selected</source>
-        <translation>取消固定 — 未选中任何内容时面板将隐藏</translation>
+        <translation type="vanished">取消固定 — 未选中任何内容时面板将隐藏</translation>
     </message>
     <message>
-        <location filename="../lib/core/layerspanel.cpp" line="84"/>
         <source>Pin — keep panel open with nothing selected</source>
-        <translation>固定 — 即使未选中任何内容也保持面板打开</translation>
+        <translation type="vanished">固定 — 即使未选中任何内容也保持面板打开</translation>
     </message>
 </context>
 <context>
     <name>traceview::MainWindow</name>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="116"/>
+        <location filename="../lib/core/mainwindow.cpp" line="125"/>
         <source>TraceView v%1</source>
         <translation>TraceView v%1</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="294"/>
+        <location filename="../lib/core/mainwindow.cpp" line="338"/>
         <source>&amp;File</source>
         <translation>文件(&amp;F)</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="296"/>
+        <location filename="../lib/core/mainwindow.cpp" line="340"/>
         <source>&amp;New Project</source>
         <translation>新建项目(&amp;N)</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="300"/>
+        <location filename="../lib/core/mainwindow.cpp" line="344"/>
         <source>&amp;Open Project...</source>
         <translation>打开项目(&amp;O)...</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="304"/>
+        <location filename="../lib/core/mainwindow.cpp" line="348"/>
         <source>Open &amp;Recent</source>
         <translation>最近项目(&amp;R)</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="309"/>
+        <location filename="../lib/core/mainwindow.cpp" line="353"/>
         <source>&amp;Save Project</source>
         <translation>保存项目(&amp;S)</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="313"/>
+        <location filename="../lib/core/mainwindow.cpp" line="357"/>
         <source>Save Project &amp;As...</source>
         <translation>项目另存为(&amp;A)...</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="317"/>
+        <location filename="../lib/core/mainwindow.cpp" line="361"/>
         <source>&amp;View</source>
         <translation>视图(&amp;V)</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="318"/>
+        <location filename="../lib/core/mainwindow.cpp" line="362"/>
         <source>&amp;Theme</source>
         <translation>主题(&amp;T)</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="339"/>
+        <location filename="../lib/core/mainwindow.cpp" line="380"/>
+        <source>&amp;Font</source>
+        <translation>字体(&amp;F)</translation>
+    </message>
+    <message>
+        <location filename="../lib/core/mainwindow.cpp" line="401"/>
         <source>&amp;Language</source>
         <translation>语言(&amp;L)</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="359"/>
+        <location filename="../lib/core/mainwindow.cpp" line="421"/>
         <source>Restart Required</source>
         <translation>需要重启</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="360"/>
+        <location filename="../lib/core/mainwindow.cpp" line="422"/>
         <source>The application needs to restart to apply the new language. Restart now?</source>
         <translation>应用需要重启才能应用新语言。是否立即重启?</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="361"/>
+        <location filename="../lib/core/mainwindow.cpp" line="423"/>
         <source>Restart Now</source>
         <translation>立即重启</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="362"/>
+        <location filename="../lib/core/mainwindow.cpp" line="424"/>
         <source>Later</source>
         <translation>稍后</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="372"/>
+        <location filename="../lib/core/mainwindow.cpp" line="434"/>
         <source>&amp;Debug</source>
         <translation>调试(&amp;D)</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="375"/>
+        <location filename="../lib/core/mainwindow.cpp" line="437"/>
         <source>&amp;About</source>
         <translation>关于(&amp;A)</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="378"/>
+        <location filename="../lib/core/mainwindow.cpp" line="440"/>
         <source>Dona&amp;te</source>
         <translation>捐赠(&amp;T)</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="383"/>
         <source>Position</source>
-        <translation>位置</translation>
+        <translation type="vanished">位置</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="393"/>
+        <location filename="../lib/core/mainwindow.cpp" line="445"/>
         <source>Add</source>
         <translation>添加</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="397"/>
+        <location filename="../lib/core/mainwindow.cpp" line="449"/>
         <source>Remove</source>
         <translation>删除</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="402"/>
+        <location filename="../lib/core/mainwindow.cpp" line="454"/>
         <source>Copy</source>
         <translation>复制</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="407"/>
+        <location filename="../lib/core/mainwindow.cpp" line="459"/>
         <source>Paste</source>
         <translation>粘贴</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="412"/>
+        <location filename="../lib/core/mainwindow.cpp" line="464"/>
         <source>To Front</source>
         <translation>置顶</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="416"/>
+        <location filename="../lib/core/mainwindow.cpp" line="468"/>
         <source>Forward</source>
         <translation>上移</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="420"/>
+        <location filename="../lib/core/mainwindow.cpp" line="472"/>
         <source>Backward</source>
         <translation>下移</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="424"/>
+        <location filename="../lib/core/mainwindow.cpp" line="476"/>
         <source>To Back</source>
         <translation>置底</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="431"/>
+        <location filename="../lib/core/mainwindow.cpp" line="480"/>
+        <source>Group</source>
+        <translation>编组</translation>
+    </message>
+    <message>
+        <location filename="../lib/core/mainwindow.cpp" line="484"/>
+        <source>Ungroup</source>
+        <translation>取消编组</translation>
+    </message>
+    <message>
+        <location filename="../lib/core/mainwindow.cpp" line="491"/>
         <source>Undo</source>
         <translation>撤销</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="433"/>
+        <location filename="../lib/core/mainwindow.cpp" line="493"/>
         <source>Redo</source>
         <translation>重做</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="469"/>
+        <location filename="../lib/core/mainwindow.cpp" line="521"/>
+        <source>Add Device</source>
+        <translation>添加设备</translation>
+    </message>
+    <message>
+        <location filename="../lib/core/mainwindow.cpp" line="529"/>
+        <source>Remove Device</source>
+        <translation>移除设备</translation>
+    </message>
+    <message>
+        <location filename="../lib/core/mainwindow.cpp" line="541"/>
         <source>Serial port</source>
         <translation>串口</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="474"/>
+        <location filename="../lib/core/mainwindow.cpp" line="546"/>
         <source>Refresh port list</source>
         <translation>刷新端口列表</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="491"/>
+        <location filename="../lib/core/mainwindow.cpp" line="563"/>
         <source>Baud rate (type a custom value if yours isn&apos;t listed)</source>
         <translation>波特率(如列表中没有,请输入自定义值)</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="499"/>
+        <location filename="../lib/core/mainwindow.cpp" line="571"/>
         <source>None</source>
         <translation>无</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="500"/>
+        <location filename="../lib/core/mainwindow.cpp" line="572"/>
         <source>LF (\n)</source>
         <translation>LF (\n)</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="501"/>
+        <location filename="../lib/core/mainwindow.cpp" line="573"/>
         <source>CR (\r)</source>
         <translation>CR (\r)</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="502"/>
+        <location filename="../lib/core/mainwindow.cpp" line="574"/>
         <source>CRLF (\r\n)</source>
         <translation>CRLF (\r\n)</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="504"/>
+        <location filename="../lib/core/mainwindow.cpp" line="576"/>
         <source>Line terminator appended to control-widget commands (push button/toggle/slider). Doesn&apos;t affect the serial terminal&apos;s raw keystrokes.</source>
         <translation>附加到控制类控件命令(按钮/开关/滑块)末尾的行终止符。不影响串口终端的原始按键。</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="508"/>
-        <location filename="../lib/core/mainwindow.cpp" line="682"/>
+        <location filename="../lib/core/mainwindow.cpp" line="580"/>
+        <location filename="../lib/core/mainwindow.cpp" line="878"/>
         <source>Connect</source>
         <translation>连接</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="517"/>
-        <location filename="../lib/core/mainwindow.cpp" line="1008"/>
+        <location filename="../lib/core/mainwindow.cpp" line="597"/>
+        <location filename="../lib/core/mainwindow.cpp" line="1267"/>
         <source>Fullscreen dashboard (F11)</source>
         <translation>全屏仪表盘(F11)</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="571"/>
+        <location filename="../lib/core/mainwindow.cpp" line="661"/>
         <source>Run</source>
         <translation>运行</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="572"/>
+        <location filename="../lib/core/mainwindow.cpp" line="662"/>
         <source>Layout</source>
         <translation>布局</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="612"/>
-        <source>Position — select a widget to move/resize it</source>
-        <translation>位置 — 选择一个控件以移动/调整其大小</translation>
+        <location filename="../lib/core/mainwindow.cpp" line="663"/>
+        <source>Devices</source>
+        <translation>设备</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="614"/>
+        <location filename="../lib/core/mainwindow.cpp" line="716"/>
+        <source>New Workspace</source>
+        <translation>新建工作区</translation>
+    </message>
+    <message>
+        <location filename="../lib/core/mainwindow.cpp" line="716"/>
+        <source>Name:</source>
+        <translation>名称:</translation>
+    </message>
+    <message>
+        <location filename="../lib/core/mainwindow.cpp" line="717"/>
+        <source>Workspace</source>
+        <translation>工作区</translation>
+    </message>
+    <message>
+        <location filename="../lib/core/mainwindow.cpp" line="730"/>
+        <source>Created workspace &quot;%1&quot;.</source>
+        <translation>已创建工作区“%1”。</translation>
+    </message>
+    <message>
+        <location filename="../lib/core/mainwindow.cpp" line="740"/>
+        <source>Delete Workspace</source>
+        <translation>删除工作区</translation>
+    </message>
+    <message>
+        <location filename="../lib/core/mainwindow.cpp" line="741"/>
+        <source>Delete workspace &quot;%1&quot;? This cannot be undone.</source>
+        <translation>删除工作区“%1”？此操作无法撤销。</translation>
+    </message>
+    <message>
+        <location filename="../lib/core/mainwindow.cpp" line="755"/>
+        <source>Deleted workspace &quot;%1&quot;.</source>
+        <translation>已删除工作区“%1”。</translation>
+    </message>
+    <message>
+        <source>Position — select a widget to move/resize it</source>
+        <translation type="vanished">位置 — 选择一个控件以移动/调整其大小</translation>
+    </message>
+    <message>
+        <location filename="../lib/core/mainwindow.cpp" line="790"/>
         <source>Add widget</source>
         <translation>添加控件</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="616"/>
+        <location filename="../lib/core/mainwindow.cpp" line="792"/>
         <source>Remove selected widget (%1)</source>
         <translation>删除所选控件(%1)</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="620"/>
+        <location filename="../lib/core/mainwindow.cpp" line="795"/>
+        <source>Add device</source>
+        <translation>添加设备</translation>
+    </message>
+    <message>
+        <location filename="../lib/core/mainwindow.cpp" line="797"/>
+        <source>Remove selected device (%1)</source>
+        <translation>删除所选设备(%1)</translation>
+    </message>
+    <message>
+        <location filename="../lib/core/mainwindow.cpp" line="801"/>
         <source>Copy selected widget (%1)</source>
         <translation>复制所选控件(%1)</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="623"/>
+        <location filename="../lib/core/mainwindow.cpp" line="804"/>
         <source>Paste as a new widget (%1)</source>
         <translation>粘贴为新控件(%1)</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="625"/>
+        <location filename="../lib/core/mainwindow.cpp" line="806"/>
         <source>Bring to front</source>
         <translation>置于顶层</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="627"/>
+        <location filename="../lib/core/mainwindow.cpp" line="808"/>
         <source>Bring forward</source>
         <translation>上移一层</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="629"/>
+        <location filename="../lib/core/mainwindow.cpp" line="810"/>
         <source>Send backward</source>
         <translation>下移一层</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="631"/>
+        <location filename="../lib/core/mainwindow.cpp" line="812"/>
         <source>Send to back</source>
         <translation>置于底层</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="682"/>
+        <location filename="../lib/core/mainwindow.cpp" line="814"/>
+        <source>Group — lock the selected widgets&apos; positions together</source>
+        <translation>编组 — 将所选控件的位置彼此锁定</translation>
+    </message>
+    <message>
+        <location filename="../lib/core/mainwindow.cpp" line="816"/>
+        <source>Ungroup — let the selected widgets move independently again</source>
+        <translation>取消编组 — 让所选控件恢复独立移动</translation>
+    </message>
+    <message>
+        <location filename="../lib/core/mainwindow.cpp" line="878"/>
         <source>Disconnect</source>
         <translation>断开连接</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="756"/>
+        <location filename="../lib/core/mainwindow.cpp" line="981"/>
+        <source>New Device</source>
+        <translation>新设备</translation>
+    </message>
+    <message>
+        <location filename="../lib/core/mainwindow.cpp" line="999"/>
         <source>Key &quot;%1&quot; is already used by another widget.</source>
         <translation>键“%1”已被其他控件使用。</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="769"/>
+        <location filename="../lib/core/mainwindow.cpp" line="1012"/>
         <source>New Project</source>
         <translation>新建项目</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="770"/>
+        <location filename="../lib/core/mainwindow.cpp" line="1013"/>
         <source>Discard the current dashboard and start a new, empty project?</source>
         <translation>放弃当前仪表盘并新建一个空项目?</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="780"/>
+        <location filename="../lib/core/mainwindow.cpp" line="1025"/>
         <source>Started a new project.</source>
         <translation>已新建项目。</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="793"/>
-        <location filename="../lib/core/mainwindow.cpp" line="808"/>
+        <location filename="../lib/core/mainwindow.cpp" line="1039"/>
+        <location filename="../lib/core/mainwindow.cpp" line="1055"/>
         <source>Save Project</source>
         <translation>保存项目</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="802"/>
+        <location filename="../lib/core/mainwindow.cpp" line="1049"/>
         <source>Save Project As</source>
         <translation>项目另存为</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="815"/>
-        <location filename="../lib/core/mainwindow.cpp" line="824"/>
+        <location filename="../lib/core/mainwindow.cpp" line="1062"/>
+        <location filename="../lib/core/mainwindow.cpp" line="1071"/>
         <source>Open Project</source>
         <translation>打开项目</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="853"/>
+        <location filename="../lib/core/mainwindow.cpp" line="1112"/>
         <source>(No Recent Projects)</source>
         <translation>(无最近项目)</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="865"/>
+        <location filename="../lib/core/mainwindow.cpp" line="1124"/>
         <source>Clear Recent Projects</source>
         <translation>清除最近项目</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="998"/>
+        <location filename="../lib/core/mainwindow.cpp" line="1257"/>
         <source>Exit fullscreen (F11 / Esc)</source>
         <translation>退出全屏(F11 / Esc)</translation>
     </message>
@@ -1049,39 +1313,37 @@
 <context>
     <name>traceview::PropertiesPanel</name>
     <message>
-        <location filename="../lib/core/propertiespanel.cpp" line="39"/>
+        <location filename="../lib/core/propertiespanel.cpp" line="21"/>
         <source>(none)</source>
         <translation>(无)</translation>
     </message>
     <message>
-        <location filename="../lib/core/propertiespanel.cpp" line="40"/>
+        <location filename="../lib/core/propertiespanel.cpp" line="22"/>
         <source>Optional, must be unique — the handle future data updates will target this widget by.</source>
         <translation>可选,但必须唯一 — 未来的数据更新将通过此句柄定位到该控件。</translation>
     </message>
     <message>
-        <location filename="../lib/core/propertiespanel.cpp" line="43"/>
+        <location filename="../lib/core/propertiespanel.cpp" line="25"/>
         <source>Type</source>
         <translation>类型</translation>
     </message>
     <message>
-        <location filename="../lib/core/propertiespanel.cpp" line="44"/>
+        <location filename="../lib/core/propertiespanel.cpp" line="26"/>
         <source>Name</source>
         <translation>名称</translation>
     </message>
     <message>
-        <location filename="../lib/core/propertiespanel.cpp" line="45"/>
+        <location filename="../lib/core/propertiespanel.cpp" line="27"/>
         <source>Key</source>
         <translation>键</translation>
     </message>
     <message>
-        <location filename="../lib/core/propertiespanel.cpp" line="179"/>
         <source>Unpin — panel will hide when nothing is selected</source>
-        <translation>取消固定 — 未选中任何内容时面板将隐藏</translation>
+        <translation type="vanished">取消固定 — 未选中任何内容时面板将隐藏</translation>
     </message>
     <message>
-        <location filename="../lib/core/propertiespanel.cpp" line="180"/>
         <source>Pin — keep panel open with nothing selected</source>
-        <translation>固定 — 即使未选中任何内容也保持面板打开</translation>
+        <translation type="vanished">固定 — 即使未选中任何内容也保持面板打开</translation>
     </message>
 </context>
 <context>
@@ -1187,7 +1449,8 @@
 <context>
     <name>traceview::PushButtonWidget</name>
     <message>
-        <location filename="../lib/dashboard/widgets/controlwidgets.cpp" line="55"/>
+        <location filename="../lib/dashboard/widgets/controlwidgets.cpp" line="91"/>
+        <location filename="../lib/dashboard/widgets/controlwidgets.cpp" line="112"/>
         <source>Push Button</source>
         <translation>按钮</translation>
     </message>
@@ -1346,17 +1609,20 @@
 <context>
     <name>traceview::ToggleSwitchWidget</name>
     <message>
-        <location filename="../lib/dashboard/widgets/controlwidgets.cpp" line="118"/>
-        <location filename="../lib/dashboard/widgets/controlwidgets.cpp" line="130"/>
-        <location filename="../lib/dashboard/widgets/controlwidgets.cpp" line="147"/>
         <source>OFF</source>
-        <translation>关</translation>
+        <translation type="vanished">关</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/controlwidgets.cpp" line="130"/>
-        <location filename="../lib/dashboard/widgets/controlwidgets.cpp" line="147"/>
         <source>ON</source>
-        <translation>开</translation>
+        <translation type="vanished">开</translation>
+    </message>
+</context>
+<context>
+    <name>traceview::WorkspaceSwitcher</name>
+    <message>
+        <location filename="../lib/core/workspaceswitcher.cpp" line="158"/>
+        <source>New Workspace…</source>
+        <translation>新建工作区…</translation>
     </message>
 </context>
 </TS>

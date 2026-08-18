@@ -7,6 +7,48 @@ release flow.
 
 ## [Unreleased]
 
+## [2.1.0] - 2026-08-18
+
+### Added
+
+- **Devices tab** (`DevicesGrid`, alongside **Run** and **Layout**): devices
+  are now managed as their own first-class list instead of a single
+  port/baud pair on the Run tab. Each `DeviceCard` shows a name, live
+  connection dot, and a gear button opening `DeviceConfigDialog` to edit
+  its connection (port + refresh, baud, line terminator), description, and
+  BTP manifest fields. **Add Device**/**Remove Device** mirror the Layout
+  tab's own Add/Remove pair; devices persist into `.tvproj` under a new
+  `devices` section (see `docs/DEVICES.md`).
+- **Multiple simultaneous device connections**: each device now owns an
+  independent `DeviceConnection` (its own `SerialManager` + `Backend`), so
+  several BTP sessions can run side by side instead of one shared
+  connection for the whole project. Connecting is ambient — a configured
+  device retries its port every few seconds in the background until it
+  comes online, and silently recovers from an unplug/replug with no user
+  action needed.
+- **Per-widget device targeting**: every dashboard widget that talks to a
+  device (chart, gauge, push button/toggle/slider, serial monitor) now has
+  its own "Device" picker in its config editor — there's no single active
+  device for the whole project anymore, and each cell's header status dot
+  reflects its own device's connection state.
+- Undo/redo now tracks the Devices tab too: adding, removing, and editing
+  a device is its own undoable step, on a separate stack from the
+  dashboard's so Ctrl+Z/Ctrl+Y always act on whichever tab is visible
+  (`QUndoGroup`).
+- **Ctrl+Tab** / **Ctrl+Shift+Tab** cycles forward/backward through a
+  project's workspaces from anywhere in the window, no need to open the
+  workspace switcher first.
+
+### Changed
+
+- The Run tab no longer hosts a port/baud/connect bar — that configuration
+  moved to the Devices tab. Run now shows a read-only strip of every
+  configured device's name and connection dot instead.
+- Line chart rendering switched from `QPainterPath` to a plain
+  `QPolygonF`/`drawPolyline()`, plus removed a few redundant per-frame
+  recomputations — noticeably cheaper to repaint for series with 100+
+  points (see `tools/chart_benchmark`).
+
 ## [2.0.0] - 2026-08-17
 
 ### Added

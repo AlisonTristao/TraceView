@@ -5,11 +5,11 @@
 #include <QFontMetrics>
 #include <QMouseEvent>
 #include <QPainter>
-#include <QPainterPath>
 #include <QPair>
 #include <QTimer>
 #include <QtMath>
 
+#include "dashboard/paintframecounter.h"
 #include "traceview/thememanager.h"
 
 namespace traceview {
@@ -25,11 +25,6 @@ constexpr int kOuterPadding = 12;
 // plot itself) -- deliberately smaller than kOuterPadding so the unit label
 // reads as attached to its axis rather than floating apart from it.
 constexpr int kAxisLabelGap = 4;
-// Caps how often appendFieldSample() triggers an actual repaint, independent
-// of how fast samples arrive (topico 14 PASSO 12: ingestion rate stays
-// separate from repaint rate) -- data still gets appended to the buffers on
-// every sample.
-constexpr int kRepaintIntervalMs = 33; // ~30 Hz
 // Shared with paintSeriesLegends()'s swatch dot so plotTopMargin()/
 // plotBottomMargin() below can predict the legend rows' real height instead
 // of guessing at it.
@@ -100,7 +95,7 @@ constexpr int kBarYGridDivisions = 10;
 // unit) stay up regardless of `showGrid` -- that toggle is about the guide
 // lines across the plot, not about losing the ability to read the axis.
 void paintYAxis(QPainter& painter, const QRect& plotRect, double yMin, double yMax, const QString& unit,
-                 bool showGrid, int gridDivisions, const ThemePalette& palette) {
+                 bool showGrid, int gridDivisions, int labelWidth, const ThemePalette& palette) {
     if (plotRect.height() <= 0 || plotRect.width() <= 0) {
         return;
     }
@@ -118,9 +113,12 @@ void paintYAxis(QPainter& painter, const QRect& plotRect, double yMin, double yM
     const QFontMetrics fm(painter.font());
     // Derived from plotRect itself (not a separate running x) so this stays
     // correct regardless of whether the caller reserved extra left space
-    // for the rotated unit strip below.
+    // for the rotated unit strip below. `labelWidth` comes from the caller
+    // (axisLabelWidth(), same yMin/yMax) instead of being recomputed here --
+    // plotLeftMargin() already needs that exact value to size the gutter
+    // this paints into, so computing it twice per frame was pure duplicate
+    // work for an identical result.
     const int gutterRight = plotRect.left() - kAxisLabelGap;
-    const int labelWidth = axisLabelWidth(painter, yMin, yMax);
     const QRect gutter(gutterRight - labelWidth, 0, labelWidth, fm.height());
     auto drawValue = [&](double value, int centerY) {
         painter.drawText(QRect(gutter.x(), centerY - gutter.height() / 2, gutter.width(), gutter.height()),
@@ -375,14 +373,16 @@ int plotTopMargin(const QPainter& painter) {
 // Left inset for plotRect: kOuterPadding from the widget's own edge, then
 // -- when a unit is configured -- the rotated unit strip and a tight
 // kAxisLabelGap ahead of the value gutter, then the gutter itself (sized to
-// the actual min/mid/max labels for this frame's range, see
-// axisLabelWidth()) and another kAxisLabelGap before the plot starts.
-// Mirrors the strip/gutter layout paintYAxis() draws into, so plotRect
-// always reserves exactly as much space as that call will actually use --
-// no more, no less, regardless of how many digits the current range needs.
-int plotLeftMargin(const QPainter& painter, bool hasUnit, double yMin, double yMax) {
+// `labelWidth`, the caller's own axisLabelWidth() for this frame's range)
+// and another kAxisLabelGap before the plot starts. Mirrors the strip/gutter
+// layout paintYAxis() draws into, so plotRect always reserves exactly as
+// much space as that call will actually use -- no more, no less, regardless
+// of how many digits the current range needs. Takes `labelWidth` instead of
+// yMin/yMax directly so the caller can compute it once and hand the same
+// value to both this and paintYAxis() rather than each deriving its own.
+int plotLeftMargin(const QPainter& painter, bool hasUnit, int labelWidth) {
     const int unitPart = hasUnit ? unitStripWidth(painter) + kAxisLabelGap : 0;
-    return kOuterPadding + unitPart + axisLabelWidth(painter, yMin, yMax) + kAxisLabelGap;
+    return kOuterPadding + unitPart + labelWidth + kAxisLabelGap;
 }
 
 // Bottom inset for plotRect: mirrors plotTopMargin()'s legend-row math, but
@@ -669,11 +669,14 @@ void paintLineSeries(QPainter& painter, const QRect& plotRect, int capacity, con
     if (interpolation == ChartLineInterpolation::Stem) {
         const qreal baselineY = zeroBaselineY(plotRect, yMin, yMax);
         painter.setPen(QPen(seriesConfig.color, 2, qtPenStyleFor(seriesConfig.style)));
+        // Invariant across every sample -- was being re-set on every loop
+        // iteration for no reason (same QColor each time), just extra
+        // QBrush construction + painter state churn on a per-sample hot path.
+        painter.setBrush(seriesConfig.color);
         constexpr qreal kDotRadius = 2.5;
         for (int i = 0; i < values.size(); ++i) {
             const QPointF p = pointAt(i);
             painter.drawLine(QPointF(p.x(), baselineY), p);
-            painter.setBrush(seriesConfig.color);
             painter.drawEllipse(p, kDotRadius, kDotRadius);
         }
         return;
@@ -689,20 +692,28 @@ void paintLineSeries(QPainter& painter, const QRect& plotRect, int capacity, con
         return;
     }
 
-    QPainterPath path;
+    // A plain connect-the-dots polyline (Linear) or a polyline with an extra
+    // held point ahead of each sample (ZeroOrderHold's staircase) -- both are
+    // straight segments only, so this used to go through QPainterPath purely
+    // for its moveTo()/lineTo() convenience. QPainterPath carries a heavier,
+    // curve-capable element list (grown one lineTo() at a time, repeatedly
+    // reallocating) for generality this shape never uses; a reserved
+    // QPolygonF fed straight to drawPolyline() is the more direct API for a
+    // segment chain and measurably cheaper for a 100+ point series repainted
+    // every frame (see tools/chart_benchmark -- this was the single biggest
+    // gap between the line chart's per-frame cost and the bar/gauge widgets',
+    // which don't build a path at all).
+    QPolygonF points;
+    points.reserve(interpolation == ChartLineInterpolation::ZeroOrderHold ? values.size() * 2 - 1 : values.size());
     for (int i = 0; i < values.size(); ++i) {
         const QPointF p = pointAt(i);
-        if (i == 0) {
-            path.moveTo(p);
-        } else {
-            if (interpolation == ChartLineInterpolation::ZeroOrderHold) {
-                path.lineTo(QPointF(p.x(), path.currentPosition().y()));
-            }
-            path.lineTo(p);
+        if (i > 0 && interpolation == ChartLineInterpolation::ZeroOrderHold) {
+            points.append(QPointF(p.x(), points.last().y()));
         }
+        points.append(p);
     }
     painter.setPen(QPen(seriesConfig.color, 2, qtPenStyleFor(seriesConfig.style)));
-    painter.drawPath(path);
+    painter.drawPolyline(points);
 }
 
 // Interpolates a line series' value (and its plot-space Y) at pixel column
@@ -1202,7 +1213,7 @@ void ChartWidgetBase::scheduleRepaint() {
         return;
     }
     m_repaintPending = true;
-    QTimer::singleShot(kRepaintIntervalMs, this, [this]() {
+    QTimer::singleShot(m_repaintIntervalMs, this, [this]() {
         m_repaintPending = false;
         update();
     });
@@ -1211,6 +1222,7 @@ void ChartWidgetBase::scheduleRepaint() {
 DummyLineChartWidget::DummyLineChartWidget(QWidget* parent) : ChartWidgetBase(parent) {}
 
 void DummyLineChartWidget::paintEvent(QPaintEvent*) {
+    notePaintFrame();
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing);
     const ThemePalette& palette = ThemeManager::instance().currentTheme();
@@ -1225,14 +1237,20 @@ void DummyLineChartWidget::paintEvent(QPaintEvent*) {
     }
 
     const auto [yMin, yMax] = computeYRange(m_config, seriesValues);
+    // Computed once and handed to both plotLeftMargin() (to size the reserved
+    // gutter) and paintYAxis() (to actually draw into it) -- both used to call
+    // axisLabelWidth() separately with the same yMin/yMax, redoing the same
+    // font-metrics work twice a frame for an identical result.
+    const int labelWidth = axisLabelWidth(painter, yMin, yMax);
     const int topMargin = plotTopMargin(painter);
-    const int leftMargin = plotLeftMargin(painter, !m_config.yUnit.isEmpty(), yMin, yMax);
+    const int leftMargin = plotLeftMargin(painter, !m_config.yUnit.isEmpty(), labelWidth);
     const int bottomMargin = plotBottomMargin(painter);
     const QRect plotRect = area.adjusted(leftMargin, topMargin, -kOuterPadding, -bottomMargin);
     const int capacity = chartBufferCapacity(m_config);
     const QVector<int> xLines = xGridLines(plotRect);
 
-    paintYAxis(painter, plotRect, yMin, yMax, m_config.yUnit, m_config.showGrid, kLineYGridDivisions, palette);
+    paintYAxis(painter, plotRect, yMin, yMax, m_config.yUnit, m_config.showGrid, kLineYGridDivisions, labelWidth,
+               palette);
     paintXAxis(painter, plotRect, xLines, m_config.showGrid, palette);
     for (int i = 0; i < m_config.series.size() && i < seriesValues.size(); ++i) {
         // A series hidden via its legend entry (see mousePressEvent()) is
@@ -1267,6 +1285,7 @@ void DummyLineChartWidget::paintEvent(QPaintEvent*) {
 DummyBarChartWidget::DummyBarChartWidget(QWidget* parent) : ChartWidgetBase(parent) {}
 
 void DummyBarChartWidget::paintEvent(QPaintEvent*) {
+    notePaintFrame();
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing);
     const ThemePalette& palette = ThemeManager::instance().currentTheme();
@@ -1281,8 +1300,11 @@ void DummyBarChartWidget::paintEvent(QPaintEvent*) {
     }
 
     const auto [yMin, yMax] = computeYRange(m_config, seriesValues);
+    // See DummyLineChartWidget::paintEvent() -- shared once instead of each
+    // of plotLeftMargin()/paintYAxis() recomputing it.
+    const int labelWidth = axisLabelWidth(painter, yMin, yMax);
     const int topMargin = plotTopMargin(painter);
-    const int leftMargin = plotLeftMargin(painter, !m_config.yUnit.isEmpty(), yMin, yMax);
+    const int leftMargin = plotLeftMargin(painter, !m_config.yUnit.isEmpty(), labelWidth);
     const int bottomMargin = plotBottomMargin(painter);
     const QRect plotRect = area.adjusted(leftMargin, topMargin, -kOuterPadding, -bottomMargin);
 
@@ -1290,7 +1312,8 @@ void DummyBarChartWidget::paintEvent(QPaintEvent*) {
     // and this chart no longer has a time/sample axis: it's a fixed bar per
     // series, each labeled with its own current value directly below it
     // (paintBarSnapshot() below) rather than scrolling through history.
-    paintYAxis(painter, plotRect, yMin, yMax, m_config.yUnit, m_config.showGrid, kBarYGridDivisions, palette);
+    paintYAxis(painter, plotRect, yMin, yMax, m_config.yUnit, m_config.showGrid, kBarYGridDivisions, labelWidth,
+               palette);
     paintBarSnapshot(painter, plotRect, area, m_config.series, seriesValues, yMin, yMax, m_seriesHidden, palette);
 
     // Top name row only -- no bottom "last value" row or "t"/"k" tag, since
@@ -1354,13 +1377,14 @@ void DummyGaugeWidget::scheduleRepaint() {
         return;
     }
     m_repaintPending = true;
-    QTimer::singleShot(kRepaintIntervalMs, this, [this]() {
+    QTimer::singleShot(m_repaintIntervalMs, this, [this]() {
         m_repaintPending = false;
         update();
     });
 }
 
 void DummyGaugeWidget::paintEvent(QPaintEvent*) {
+    notePaintFrame();
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing);
     const ThemePalette& palette = ThemeManager::instance().currentTheme();

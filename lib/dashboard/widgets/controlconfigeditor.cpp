@@ -41,6 +41,10 @@ const QStringList kSendModeLabels = {
 } // namespace
 
 PushButtonConfigEditor::PushButtonConfigEditor(QWidget* parent) : WidgetConfigEditor(parent) {
+    m_deviceCombo = new QComboBox(this);
+    populateDeviceCombo(m_deviceCombo, {});
+    m_deviceCombo->setToolTip(tr("Which device this button's commands are sent to."));
+
     m_labelEdit = new QLineEdit(this);
     m_labelEdit->setPlaceholderText(tr("Button"));
 
@@ -87,6 +91,7 @@ PushButtonConfigEditor::PushButtonConfigEditor(QWidget* parent) : WidgetConfigEd
     m_formLayout = new QFormLayout(this);
     m_formLayout->setContentsMargins(0, 8, 0, 0);
     m_formLayout->setFieldGrowthPolicy(QFormLayout::AllNonFixedFieldsGrow);
+    m_formLayout->addRow(tr("Device"), m_deviceCombo);
     m_formLayout->addRow(tr("Label"), m_labelEdit);
     m_formLayout->addRow(tr("Style"), m_variantCombo);
     m_formLayout->addRow(tr("Mode"), m_modeCombo);
@@ -100,6 +105,7 @@ PushButtonConfigEditor::PushButtonConfigEditor(QWidget* parent) : WidgetConfigEd
     m_formLayout->addRow(tr("Debounce"), m_debounceSpin);
     m_formLayout->addRow(QString(), m_confirmCheck);
 
+    connect(m_deviceCombo, &QComboBox::currentIndexChanged, this, [this](int) { emitChanged(); });
     connect(m_labelEdit, &QLineEdit::editingFinished, this, [this]() { emitChanged(); });
     connect(m_variantCombo, &QComboBox::currentIndexChanged, this, [this](int) { emitChanged(); });
     connect(m_modeCombo, &QComboBox::currentIndexChanged, this, [this](int) {
@@ -127,6 +133,8 @@ PushButtonConfigEditor::PushButtonConfigEditor(QWidget* parent) : WidgetConfigEd
 
 void PushButtonConfigEditor::setConfig(const QJsonObject& config) {
     m_updating = true;
+    const int deviceIdx = m_deviceCombo->findData(config.value("deviceId").toString());
+    m_deviceCombo->setCurrentIndex(deviceIdx >= 0 ? deviceIdx : 0);
     m_labelEdit->setText(config.value("label").toString());
     m_variantCombo->setCurrentIndex(qMax(0, kVariantIds.indexOf(config.value("variant").toString("default"))));
     m_modeCombo->setCurrentIndex(qMax(0, kButtonModeIds.indexOf(config.value("mode").toString("momentary"))));
@@ -149,6 +157,7 @@ void PushButtonConfigEditor::setConfig(const QJsonObject& config) {
 
 QJsonObject PushButtonConfigEditor::config() const {
     QJsonObject cfg;
+    cfg["deviceId"] = m_deviceCombo->currentData().toString();
     cfg["label"] = m_labelEdit->text();
     cfg["variant"] = kVariantIds.value(m_variantCombo->currentIndex(), kVariantIds.first());
     cfg["mode"] = kButtonModeIds.value(m_modeCombo->currentIndex(), kButtonModeIds.first());
@@ -176,6 +185,13 @@ void PushButtonConfigEditor::updateRowsVisibility() {
     m_formLayout->setRowVisible(m_longPressCommandEdit, m_longPressCheck->isChecked());
 }
 
+void PushButtonConfigEditor::setAvailableDevices(const QVector<DeviceOption>& devices) {
+    const bool wasUpdating = m_updating;
+    m_updating = true;
+    populateDeviceCombo(m_deviceCombo, devices);
+    m_updating = wasUpdating;
+}
+
 void PushButtonConfigEditor::emitChanged() {
     if (m_updating) {
         return;
@@ -184,6 +200,10 @@ void PushButtonConfigEditor::emitChanged() {
 }
 
 ToggleSwitchConfigEditor::ToggleSwitchConfigEditor(QWidget* parent) : WidgetConfigEditor(parent) {
+    m_deviceCombo = new QComboBox(this);
+    populateDeviceCombo(m_deviceCombo, {});
+    m_deviceCombo->setToolTip(tr("Which device this toggle's commands are sent to."));
+
     m_labelEdit = new QLineEdit(this);
     m_labelEdit->setPlaceholderText(tr("Toggle"));
 
@@ -206,6 +226,7 @@ ToggleSwitchConfigEditor::ToggleSwitchConfigEditor(QWidget* parent) : WidgetConf
     auto* layout = new QFormLayout(this);
     layout->setContentsMargins(0, 8, 0, 0);
     layout->setFieldGrowthPolicy(QFormLayout::AllNonFixedFieldsGrow);
+    layout->addRow(tr("Device"), m_deviceCombo);
     layout->addRow(tr("Label"), m_labelEdit);
     layout->addRow(tr("On text"), m_onLabelEdit);
     layout->addRow(tr("Off text"), m_offLabelEdit);
@@ -214,6 +235,7 @@ ToggleSwitchConfigEditor::ToggleSwitchConfigEditor(QWidget* parent) : WidgetConf
     layout->addRow(tr("Off command"), m_offCommandEdit);
     layout->addRow(QString(), m_confirmCheck);
 
+    connect(m_deviceCombo, &QComboBox::currentIndexChanged, this, [this](int) { emitChanged(); });
     connect(m_labelEdit, &QLineEdit::editingFinished, this, [this]() { emitChanged(); });
     connect(m_onLabelEdit, &QLineEdit::editingFinished, this, [this]() { emitChanged(); });
     connect(m_offLabelEdit, &QLineEdit::editingFinished, this, [this]() { emitChanged(); });
@@ -225,6 +247,8 @@ ToggleSwitchConfigEditor::ToggleSwitchConfigEditor(QWidget* parent) : WidgetConf
 
 void ToggleSwitchConfigEditor::setConfig(const QJsonObject& config) {
     m_updating = true;
+    const int deviceIdx = m_deviceCombo->findData(config.value("deviceId").toString());
+    m_deviceCombo->setCurrentIndex(deviceIdx >= 0 ? deviceIdx : 0);
     m_labelEdit->setText(config.value("label").toString());
     m_onLabelEdit->setText(config.value("onLabel").toString());
     m_offLabelEdit->setText(config.value("offLabel").toString());
@@ -237,6 +261,7 @@ void ToggleSwitchConfigEditor::setConfig(const QJsonObject& config) {
 
 QJsonObject ToggleSwitchConfigEditor::config() const {
     QJsonObject cfg;
+    cfg["deviceId"] = m_deviceCombo->currentData().toString();
     cfg["label"] = m_labelEdit->text();
     cfg["onLabel"] = m_onLabelEdit->text();
     cfg["offLabel"] = m_offLabelEdit->text();
@@ -247,6 +272,13 @@ QJsonObject ToggleSwitchConfigEditor::config() const {
     return cfg;
 }
 
+void ToggleSwitchConfigEditor::setAvailableDevices(const QVector<DeviceOption>& devices) {
+    const bool wasUpdating = m_updating;
+    m_updating = true;
+    populateDeviceCombo(m_deviceCombo, devices);
+    m_updating = wasUpdating;
+}
+
 void ToggleSwitchConfigEditor::emitChanged() {
     if (m_updating) {
         return;
@@ -255,6 +287,10 @@ void ToggleSwitchConfigEditor::emitChanged() {
 }
 
 SliderConfigEditor::SliderConfigEditor(QWidget* parent) : WidgetConfigEditor(parent) {
+    m_deviceCombo = new QComboBox(this);
+    populateDeviceCombo(m_deviceCombo, {});
+    m_deviceCombo->setToolTip(tr("Which device this slider's commands are sent to."));
+
     m_labelEdit = new QLineEdit(this);
     m_labelEdit->setPlaceholderText(tr("Slider"));
 
@@ -304,6 +340,7 @@ SliderConfigEditor::SliderConfigEditor(QWidget* parent) : WidgetConfigEditor(par
     m_formLayout = new QFormLayout(this);
     m_formLayout->setContentsMargins(0, 8, 0, 0);
     m_formLayout->setFieldGrowthPolicy(QFormLayout::AllNonFixedFieldsGrow);
+    m_formLayout->addRow(tr("Device"), m_deviceCombo);
     m_formLayout->addRow(tr("Label"), m_labelEdit);
     m_formLayout->addRow(tr("Min"), m_minSpin);
     m_formLayout->addRow(tr("Max"), m_maxSpin);
@@ -315,6 +352,7 @@ SliderConfigEditor::SliderConfigEditor(QWidget* parent) : WidgetConfigEditor(par
     m_formLayout->addRow(tr("Throttle"), m_throttleSpin);
     m_formLayout->addRow(tr("Command"), m_commandTemplateEdit);
 
+    connect(m_deviceCombo, &QComboBox::currentIndexChanged, this, [this](int) { emitChanged(); });
     connect(m_labelEdit, &QLineEdit::editingFinished, this, [this]() { emitChanged(); });
     connect(m_minSpin, &QDoubleSpinBox::valueChanged, this, [this](double) { emitChanged(); });
     connect(m_maxSpin, &QDoubleSpinBox::valueChanged, this, [this](double) { emitChanged(); });
@@ -334,6 +372,8 @@ SliderConfigEditor::SliderConfigEditor(QWidget* parent) : WidgetConfigEditor(par
 
 void SliderConfigEditor::setConfig(const QJsonObject& config) {
     m_updating = true;
+    const int deviceIdx = m_deviceCombo->findData(config.value("deviceId").toString());
+    m_deviceCombo->setCurrentIndex(deviceIdx >= 0 ? deviceIdx : 0);
     m_labelEdit->setText(config.value("label").toString());
     m_minSpin->setValue(config.value("min").toDouble(0.0));
     m_maxSpin->setValue(config.value("max").toDouble(100.0));
@@ -350,6 +390,7 @@ void SliderConfigEditor::setConfig(const QJsonObject& config) {
 
 QJsonObject SliderConfigEditor::config() const {
     QJsonObject cfg;
+    cfg["deviceId"] = m_deviceCombo->currentData().toString();
     cfg["label"] = m_labelEdit->text();
     cfg["min"] = m_minSpin->value();
     cfg["max"] = m_maxSpin->value();
@@ -365,6 +406,13 @@ QJsonObject SliderConfigEditor::config() const {
 
 void SliderConfigEditor::updateRowsVisibility() {
     m_formLayout->setRowVisible(m_throttleSpin, kSendModeIds.value(m_sendModeCombo->currentIndex()) == "continuous");
+}
+
+void SliderConfigEditor::setAvailableDevices(const QVector<DeviceOption>& devices) {
+    const bool wasUpdating = m_updating;
+    m_updating = true;
+    populateDeviceCombo(m_deviceCombo, devices);
+    m_updating = wasUpdating;
 }
 
 void SliderConfigEditor::emitChanged() {

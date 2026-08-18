@@ -1,12 +1,16 @@
 #include "debugchartswindow.h"
 
 #include <QGridLayout>
+#include <QHBoxLayout>
 #include <QJsonArray>
 #include <QJsonObject>
+#include <QPushButton>
 #include <QTimer>
+#include <QVBoxLayout>
 #include <QtMath>
 
 #include "dashboard/dashboardcell.h"
+#include "dashboard/paintframecounter.h"
 #include "dashboard/widgets/chartwidgets.h"
 #include "dashboard/widgets/controlwidgets.h"
 #include "dashboard/widgets/serialmonitorwidget.h"
@@ -14,6 +18,11 @@
 namespace traceview {
 
 namespace {
+
+// Base window title the FPS readout (updateFpsTitle()) appends onto once per
+// second -- kept separate so the FPS suffix can be added/refreshed without
+// rebuilding the rest of the title string each tick.
+const QString kBaseWindowTitle = QObject::tr("Debug -- synthetic chart data");
 
 constexpr quint16 kTempFieldId = 1;
 constexpr quint16 kPressureFieldId = 2;
@@ -30,6 +39,12 @@ constexpr quint16 kGaugeFieldId3 = 3;
 // timestamps read as a real elapsed-time clock instead of jumping in lockstep
 // with the tick counter.
 constexpr int kTickIntervalMs = 50;
+// Stress mode's tick interval -- 0 means "fire again as soon as the event
+// loop is free" (QTimer's documented behavior for interval 0), i.e. as fast
+// as this process can go. What actually caps the resulting repaint rate at
+// that point is ChartWidgetBase::scheduleRepaint()'s own ~30Hz throttle
+// (chartwidgets.cpp), not this timer.
+constexpr int kStressTickIntervalMs = 0;
 
 QJsonObject seriesJson(const QString& name, int fieldId, const QString& color, const QString& style) {
     QJsonObject series;
@@ -189,11 +204,33 @@ DashboardCell* wrapInCell(const QString& itemId, const QString& typeId, const QS
 } // namespace
 
 DebugChartsWindow::DebugChartsWindow(QWidget* parent) : QDialog(parent) {
-    setWindowTitle(tr("Debug -- synthetic chart data"));
+    setWindowTitle(kBaseWindowTitle);
     setAttribute(Qt::WA_DeleteOnClose);
     resize(980, 640);
 
-    auto* layout = new QGridLayout(this);
+    auto* rootLayout = new QVBoxLayout(this);
+
+    // Stress-mode toggle -- see setStressMode()/kStressTickIntervalMs. Just a
+    // visual "floor it" button: with it on, the synthetic tick timer feeds
+    // samples as fast as the event loop allows instead of every 50ms, so the
+    // chart widgets repaint at whatever ChartWidgetBase::scheduleRepaint()'s
+    // own throttle allows (chartwidgets.cpp, ~30Hz/widget) rather than at the
+    // tick rate -- too fast to actually follow by eye, but the title bar's
+    // fps readout (updateFpsTitle()) still shows the resulting number.
+    auto* toolbar = new QHBoxLayout();
+    auto* stressButton = new QPushButton(tr("Modo estresse: desligado (50ms/tick)"), this);
+    stressButton->setCheckable(true);
+    connect(stressButton, &QPushButton::toggled, this, [this, stressButton](bool checked) {
+        stressButton->setText(checked ? tr("Modo estresse: ligado (atualizacao maxima)")
+                                       : tr("Modo estresse: desligado (50ms/tick)"));
+        setStressMode(checked);
+    });
+    toolbar->addWidget(stressButton);
+    toolbar->addStretch();
+    rootLayout->addLayout(toolbar);
+
+    auto* layout = new QGridLayout();
+    rootLayout->addLayout(layout);
 
     m_lineChart = new DummyLineChartWidget();
     m_lineChart->setConfig(lineChartConfig());
@@ -248,9 +285,39 @@ DebugChartsWindow::DebugChartsWindow(QWidget* parent) : QDialog(parent) {
     // point; the 7:7:1 stretch above still governs anything beyond it.
     layout->setRowMinimumHeight(2, 90);
 
-    auto* timer = new QTimer(this);
-    connect(timer, &QTimer::timeout, this, &DebugChartsWindow::tick);
-    timer->start(kTickIntervalMs);
+    m_tickTimer = new QTimer(this);
+    connect(m_tickTimer, &QTimer::timeout, this, &DebugChartsWindow::tick);
+    m_tickTimer->start(kTickIntervalMs);
+
+    // Samples the shared repaint counter (paintframecounter.h) once a second
+    // and diffs it against the previous sample -- that delta is the chart
+    // widgets' actual repaint rate (paintFrameCounter() only ever counts up,
+    // it doesn't compute a rate itself).
+    m_lastFrameCount = paintFrameCounter().loadRelaxed();
+    auto* fpsTimer = new QTimer(this);
+    connect(fpsTimer, &QTimer::timeout, this, &DebugChartsWindow::updateFpsTitle);
+    fpsTimer->start(1000);
+}
+
+void DebugChartsWindow::setStressMode(bool enabled) {
+    m_tickTimer->start(enabled ? kStressTickIntervalMs : kTickIntervalMs);
+    // Also drops each widget's own ~30Hz repaint throttle (ChartWidgetBase::
+    // scheduleRepaint()/DummyGaugeWidget::scheduleRepaint(), chartwidgets.cpp)
+    // to 0 -- without this the tick timer alone still caps out at that
+    // throttle (measured ~90fps combined: 3 widgets x ~30Hz), which is what
+    // "modo estresse" is supposed to blow past to reach the widgets' real
+    // unthrottled paint ceiling (see tools/chart_benchmark, ~230fps combined).
+    const int repaintIntervalMs = enabled ? 0 : 33;
+    m_lineChart->setRepaintIntervalMs(repaintIntervalMs);
+    m_barChart->setRepaintIntervalMs(repaintIntervalMs);
+    m_gauge->setRepaintIntervalMs(repaintIntervalMs);
+}
+
+void DebugChartsWindow::updateFpsTitle() {
+    const quint64 frameCount = paintFrameCounter().loadRelaxed();
+    const quint64 fps = frameCount - m_lastFrameCount;
+    m_lastFrameCount = frameCount;
+    setWindowTitle(kBaseWindowTitle + tr(" -- %1 fps").arg(fps));
 }
 
 void DebugChartsWindow::tick() {

@@ -1,9 +1,34 @@
 #pragma once
 
 #include <QJsonObject>
+#include <QString>
+#include <QVector>
 #include <QWidget>
 
+class QComboBox;
+
 namespace traceview {
+
+// One device a widget's config editor can offer in a Device picker -- id is
+// what's actually stored in the widget's JSON config (the "deviceId" key),
+// name is display-only. A tiny local value type rather than reusing
+// devices::Device: traceview_dashboard and traceview_devices are sibling
+// libraries with no dependency between them (see lib/CMakeLists.txt) --
+// MainWindow, which depends on both, converts DevicesGrid::devices() into
+// these before handing them to PropertiesPanel::setAvailableDevices().
+struct DeviceOption {
+    QString id;
+    QString name;
+};
+
+// Repopulates `combo` from `devices`: a leading "(No device)" entry (empty
+// id, meaning "unbound" -- same interpretation as ChartConfigEditor's
+// existing sourceId==0/topicId==0 "not subscribed") followed by one entry
+// per device, id stored as itemData. Preserves the current selection by id
+// if it's still present in the new list, otherwise falls back to "(No
+// device)". Shared by every editor with a Device field (chart/gauge/
+// control/terminal) instead of duplicating this per editor.
+void populateDeviceCombo(QComboBox* combo, const QVector<DeviceOption>& devices);
 
 // Base class for a widget type's type-specific settings, shown in the
 // PropertiesPanel below the common Type/Name/Key fields (see
@@ -25,6 +50,13 @@ public:
     virtual void setConfig(const QJsonObject& config) = 0;
 
     virtual QJsonObject config() const = 0;
+
+    // Pushes the current device list for editors with a Device picker to
+    // repopulate their combo from -- called by PropertiesPanel right after
+    // building a fresh editor, and again whenever the device list changes
+    // while one is showing. Default no-op for editors with no such field.
+    // One-way sync like setConfig() — must never emit configChanged().
+    virtual void setAvailableDevices(const QVector<DeviceOption>& devices) { Q_UNUSED(devices); }
 
 signals:
     // Emitted whenever the user edits something; the new value is fetched
