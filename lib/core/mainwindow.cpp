@@ -483,6 +483,7 @@ void MainWindow::buildMenus() {
 
     auto* debugAction = menuBar()->addAction(tr("&Debug"));
     connect(debugAction, &QAction::triggered, this, &MainWindow::onDebug);
+    debugAction->setVisible(false);
 
     auto* aboutAction = menuBar()->addAction(tr("&About"));
     connect(aboutAction, &QAction::triggered, this, &MainWindow::onAbout);

@@ -7,6 +7,23 @@ release flow.
 
 ## [Unreleased]
 
+## [2.1.1] - 2026-08-18
+
+### Changed
+
+- `DashboardCell`'s idle `palette.border` outline is now skipped for
+  headerless controls (push button/toggle switch/slider,
+  `widgets/controlwidgets.cpp`) — they already read as bare controls rather
+  than cards, and the outline fought that. Headered kinds (chart, gauge,
+  serial monitor) keep the outline; both still pick up the accent selection
+  outline. See `docs/VISUAL_IDENTITY.md`.
+
+### Removed
+
+- Hid the **Debug** menu (chart-performance debug window) from the menu
+  bar — not meant for end users. The window and its code are untouched
+  (`DebugChartsWindow`, `onDebug()`), just not reachable from the UI for now.
+
 ## [2.1.0] - 2026-08-18
 
 ### Added

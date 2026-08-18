@@ -1,4 +1,8 @@
 {
+    "devices": {
+        "devices": [
+        ]
+    },
     "traceview": {
         "formatVersion": 1
     },
@@ -10,51 +14,50 @@
                     "items": [
                         {
                             "config": {
-                            },
-                            "groupId": "",
-                            "height": 0.25,
-                            "id": "18ef7496-ac5f-4299-a1cb-237e172a00b5",
-                            "key": "",
-                            "name": "",
-                            "type": "dummy_line",
-                            "width": 0.26666666666666666,
-                            "x": 0,
-                            "y": 0
-                        },
-                        {
-                            "config": {
-                                "decimals": 5,
-                                "max": 100,
-                                "min": -4,
+                                "deviceId": "",
                                 "series": [
                                     {
-                                        "color": "#d9d9d9",
+                                        "color": "#2e6fe0",
                                         "fieldId": 1,
-                                        "name": "Ring 1"
+                                        "name": "Series 1",
+                                        "style": "solid"
                                     },
                                     {
-                                        "color": "#ffffff",
+                                        "color": "#0a0f1e",
                                         "fieldId": 2,
-                                        "name": "Ring 2"
+                                        "name": "Series 2",
+                                        "style": "solid"
                                     },
                                     {
-                                        "color": "#ffb300",
+                                        "color": "#b9821f",
                                         "fieldId": 3,
-                                        "name": "Ring 3"
+                                        "name": "Series 3",
+                                        "style": "solid"
                                     }
                                 ],
                                 "sourceId": "0",
                                 "topicId": "0",
-                                "unit": ""
+                                "xAxis": {
+                                    "limit": 500,
+                                    "mode": "samples",
+                                    "sampleTimeMs": 100
+                                },
+                                "yAxis": {
+                                    "grid": true,
+                                    "max": 100,
+                                    "min": 0,
+                                    "mode": "fixed",
+                                    "unit": ""
+                                }
                             },
                             "groupId": "",
                             "height": 0.5,
-                            "id": "85e62806-b7dc-464d-a62f-d48a68750134",
+                            "id": "18ef7496-ac5f-4299-a1cb-237e172a00b5",
                             "key": "",
                             "name": "",
-                            "type": "dummy_gauge",
-                            "width": 0.3666666666666667,
-                            "x": 0.6333333333333333,
+                            "type": "dummy_line",
+                            "width": 0.19999999999999996,
+                            "x": 0,
                             "y": 0
                         },
                         {
@@ -89,22 +92,9 @@
                             "key": "",
                             "name": "",
                             "type": "dummy_gauge",
-                            "width": 0.3666666666666667,
-                            "x": 0.26666666666666666,
+                            "width": 0.20000000000000004,
+                            "x": 0.5999999999999999,
                             "y": 0
-                        },
-                        {
-                            "config": {
-                            },
-                            "groupId": "",
-                            "height": 0.25,
-                            "id": "b4b6c2c0-f666-4977-8eb3-b9487071b8db",
-                            "key": "",
-                            "name": "",
-                            "type": "dummy_line",
-                            "width": 0.26666666666666666,
-                            "x": 0,
-                            "y": 0.25
                         },
                         {
                             "config": {
@@ -115,12 +105,20 @@
                             "key": "",
                             "name": "",
                             "type": "serial_monitor",
-                            "width": 0.8333333333333333,
+                            "width": 0.85,
                             "x": 0,
                             "y": 0.5
                         },
                         {
                             "config": {
+                                "confirmBeforeToggle": false,
+                                "defaultState": false,
+                                "deviceId": "",
+                                "label": "load",
+                                "offCommand": "",
+                                "offLabel": "",
+                                "onCommand": "",
+                                "onLabel": ""
                             },
                             "groupId": "",
                             "height": 0.12499999999999997,
@@ -128,12 +126,20 @@
                             "key": "",
                             "name": "",
                             "type": "toggle_switch",
-                            "width": 0.08333333333333331,
-                            "x": 0.8333333333333333,
+                            "width": 0.04999999999999998,
+                            "x": 0.8499999999999999,
                             "y": 0.5
                         },
                         {
                             "config": {
+                                "confirmBeforeToggle": false,
+                                "defaultState": false,
+                                "deviceId": "",
+                                "label": "power",
+                                "offCommand": "",
+                                "offLabel": "",
+                                "onCommand": "",
+                                "onLabel": ""
                             },
                             "groupId": "",
                             "height": 0.12499999999999997,
@@ -141,35 +147,9 @@
                             "key": "",
                             "name": "",
                             "type": "toggle_switch",
-                            "width": 0.08333333333333331,
-                            "x": 0.9166666666666667,
+                            "width": 0.04999999999999998,
+                            "x": 0.9,
                             "y": 0.5
-                        },
-                        {
-                            "config": {
-                            },
-                            "groupId": "",
-                            "height": 0.12499999999999997,
-                            "id": "5155cb45-672a-44d8-b99f-ff1f4fccb05c",
-                            "key": "",
-                            "name": "",
-                            "type": "toggle_switch",
-                            "width": 0.08333333333333331,
-                            "x": 0.8333333333333334,
-                            "y": 0.625
-                        },
-                        {
-                            "config": {
-                            },
-                            "groupId": "",
-                            "height": 0.12499999999999997,
-                            "id": "d4ecc171-5742-4749-8ebc-737545936b93",
-                            "key": "",
-                            "name": "",
-                            "type": "toggle_switch",
-                            "width": 0.08333333333333331,
-                            "x": 0.9166666666666666,
-                            "y": 0.625
                         },
                         {
                             "config": {
@@ -180,8 +160,8 @@
                             "key": "",
                             "name": "",
                             "type": "push_button",
-                            "width": 0.16666666666666669,
-                            "x": 0.8333333333333333,
+                            "width": 0.15000000000000002,
+                            "x": 0.8499999999999999,
                             "y": 0.75
                         },
                         {
@@ -193,9 +173,273 @@
                             "key": "",
                             "name": "",
                             "type": "push_button",
-                            "width": 0.16666666666666669,
-                            "x": 0.8333333333333334,
+                            "width": 0.15000000000000002,
+                            "x": 0.85,
                             "y": 0.875
+                        },
+                        {
+                            "config": {
+                                "confirmBeforeToggle": false,
+                                "defaultState": false,
+                                "deviceId": "",
+                                "label": "speed",
+                                "offCommand": "",
+                                "offLabel": "",
+                                "onCommand": "",
+                                "onLabel": ""
+                            },
+                            "groupId": "",
+                            "height": 0.12499999999999997,
+                            "id": "3a43d433-ab4f-4891-8013-e65104e15faa",
+                            "key": "",
+                            "name": "",
+                            "type": "toggle_switch",
+                            "width": 0.04999999999999998,
+                            "x": 0.95,
+                            "y": 0.5
+                        },
+                        {
+                            "config": {
+                                "confirmBeforeToggle": false,
+                                "defaultState": false,
+                                "deviceId": "",
+                                "label": "shift",
+                                "offCommand": "",
+                                "offLabel": "",
+                                "onCommand": "",
+                                "onLabel": ""
+                            },
+                            "groupId": "",
+                            "height": 0.12499999999999997,
+                            "id": "adc113b9-6986-4343-930a-ff46112e1559",
+                            "key": "",
+                            "name": "",
+                            "type": "toggle_switch",
+                            "width": 0.04999999999999998,
+                            "x": 0.85,
+                            "y": 0.625
+                        },
+                        {
+                            "config": {
+                                "confirmBeforeToggle": false,
+                                "defaultState": false,
+                                "deviceId": "",
+                                "label": "start",
+                                "offCommand": "",
+                                "offLabel": "",
+                                "onCommand": "",
+                                "onLabel": ""
+                            },
+                            "groupId": "",
+                            "height": 0.12499999999999997,
+                            "id": "b51b9d39-8546-4b7b-92e8-ff995b247330",
+                            "key": "",
+                            "name": "",
+                            "type": "toggle_switch",
+                            "width": 0.04999999999999998,
+                            "x": 0.8999999999999999,
+                            "y": 0.625
+                        },
+                        {
+                            "config": {
+                                "confirmBeforeToggle": false,
+                                "defaultState": false,
+                                "deviceId": "",
+                                "label": "left",
+                                "offCommand": "",
+                                "offLabel": "",
+                                "onCommand": "",
+                                "onLabel": ""
+                            },
+                            "groupId": "",
+                            "height": 0.12499999999999997,
+                            "id": "c3979cf6-d2ec-42c2-9c8a-137fcd9f4b69",
+                            "key": "",
+                            "name": "",
+                            "type": "toggle_switch",
+                            "width": 0.04999999999999998,
+                            "x": 0.95,
+                            "y": 0.625
+                        },
+                        {
+                            "config": {
+                                "decimals": 5,
+                                "max": 100,
+                                "min": -4,
+                                "series": [
+                                    {
+                                        "color": "#d9d9d9",
+                                        "fieldId": 1,
+                                        "name": "Ring 1"
+                                    },
+                                    {
+                                        "color": "#ffffff",
+                                        "fieldId": 2,
+                                        "name": "Ring 2"
+                                    },
+                                    {
+                                        "color": "#ffb300",
+                                        "fieldId": 3,
+                                        "name": "Ring 3"
+                                    }
+                                ],
+                                "sourceId": "0",
+                                "topicId": "0",
+                                "unit": ""
+                            },
+                            "groupId": "",
+                            "height": 0.5,
+                            "id": "eb9cac34-f8d0-4a60-8daa-349be3a55326",
+                            "key": "",
+                            "name": "",
+                            "type": "dummy_gauge",
+                            "width": 0.20000000000000004,
+                            "x": 0.7999999999999999,
+                            "y": 0
+                        },
+                        {
+                            "config": {
+                                "deviceId": "",
+                                "series": [
+                                    {
+                                        "color": "#2e6fe0",
+                                        "fieldId": 1,
+                                        "name": "Series 1",
+                                        "style": "solid"
+                                    },
+                                    {
+                                        "color": "#0a0f1e",
+                                        "fieldId": 2,
+                                        "name": "Series 2",
+                                        "style": "solid"
+                                    },
+                                    {
+                                        "color": "#b9821f",
+                                        "fieldId": 3,
+                                        "name": "Series 3",
+                                        "style": "solid"
+                                    }
+                                ],
+                                "sourceId": "0",
+                                "topicId": "0",
+                                "xAxis": {
+                                    "limit": 500,
+                                    "mode": "samples",
+                                    "sampleTimeMs": 100
+                                },
+                                "yAxis": {
+                                    "grid": true,
+                                    "max": 100,
+                                    "min": 0,
+                                    "mode": "fixed",
+                                    "unit": ""
+                                }
+                            },
+                            "groupId": "",
+                            "height": 0.25,
+                            "id": "77d1d96e-fefb-4d0e-991d-5514c5f7196a",
+                            "key": "",
+                            "name": "",
+                            "type": "dummy_line",
+                            "width": 0.19999999999999996,
+                            "x": 0.19999999999999996,
+                            "y": 0
+                        },
+                        {
+                            "config": {
+                                "deviceId": "",
+                                "series": [
+                                    {
+                                        "color": "#2e6fe0",
+                                        "fieldId": 1,
+                                        "name": "Series 1",
+                                        "style": "solid"
+                                    },
+                                    {
+                                        "color": "#0a0f1e",
+                                        "fieldId": 2,
+                                        "name": "Series 2",
+                                        "style": "solid"
+                                    },
+                                    {
+                                        "color": "#b9821f",
+                                        "fieldId": 3,
+                                        "name": "Series 3",
+                                        "style": "solid"
+                                    }
+                                ],
+                                "sourceId": "0",
+                                "topicId": "0",
+                                "xAxis": {
+                                    "limit": 500,
+                                    "mode": "samples",
+                                    "sampleTimeMs": 100
+                                },
+                                "yAxis": {
+                                    "grid": true,
+                                    "max": 100,
+                                    "min": 0,
+                                    "mode": "fixed",
+                                    "unit": ""
+                                }
+                            },
+                            "groupId": "",
+                            "height": 0.25,
+                            "id": "283b8312-a8a5-4fdf-9732-8e91137bd744",
+                            "key": "",
+                            "name": "",
+                            "type": "dummy_line",
+                            "width": 0.19999999999999996,
+                            "x": 0.19999999999999996,
+                            "y": 0.25
+                        },
+                        {
+                            "config": {
+                                "deviceId": "",
+                                "series": [
+                                    {
+                                        "color": "#2e6fe0",
+                                        "fieldId": 1,
+                                        "name": "Series 1",
+                                        "style": "solid"
+                                    },
+                                    {
+                                        "color": "#0a0f1e",
+                                        "fieldId": 2,
+                                        "name": "Series 2",
+                                        "style": "solid"
+                                    },
+                                    {
+                                        "color": "#b9821f",
+                                        "fieldId": 3,
+                                        "name": "Series 3",
+                                        "style": "solid"
+                                    }
+                                ],
+                                "sourceId": "0",
+                                "topicId": "0",
+                                "xAxis": {
+                                    "limit": 500,
+                                    "mode": "time",
+                                    "sampleTimeMs": 100
+                                },
+                                "yAxis": {
+                                    "grid": true,
+                                    "max": 100,
+                                    "min": 0,
+                                    "mode": "auto",
+                                    "unit": ""
+                                }
+                            },
+                            "groupId": "",
+                            "height": 0.5,
+                            "id": "5f11a1ee-1c3b-4460-b90b-599f35b9a828",
+                            "key": "",
+                            "name": "",
+                            "type": "dummy_bar",
+                            "width": 0.2,
+                            "x": 0.4,
+                            "y": 0
                         }
                     ]
                 },

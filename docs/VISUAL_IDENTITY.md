@@ -22,13 +22,18 @@ needs to deviate, update this file in the same change.
   `DASHBOARD.md`) have to clip to the *same* rounded path, in both edit and
   locked mode, or a straight-cornered fill will show through the rounded
   outline. Verify in both themes (View > Theme) before calling a widget done.
-- `DashboardCell`s always show a 2px `palette.border` outline (same
-  convention as `DeviceCard`'s outline, `devicecard.cpp`) — changed
-  2026-08-18 from the earlier "idle cells have no outer stroke" rule, so a
-  cell's extent reads clearly even when nothing is selected. Selection layers
-  a distinct `palette.accent` (or `palette.danger` while an invalid drag is in
-  progress) outline on top of that same stroke instead of the stroke
-  appearing/disappearing. Both passes are painted by a transparent
+- `DashboardCell`s show a 2px `palette.border` idle outline (same convention
+  as `DeviceCard`'s outline, `devicecard.cpp`) — changed 2026-08-18 from the
+  earlier "idle cells have no outer stroke" rule, so a cell's extent reads
+  clearly even when nothing is selected. Exception: headerless controls
+  (push button/toggle switch/slider, `widgets/controlwidgets.cpp`, see
+  `wantsCellHeader() == false`) skip the idle outline — added 2026-08-18 same
+  day, reported live right after the general change looked cluttered on
+  these — they already read as bare controls rather than cards (see
+  "Control panel fill" below) and a stroke around them fought that. All
+  kinds still layer a distinct `palette.accent` (or `palette.danger` while an
+  invalid drag is in progress) outline on top when selected, instead of a
+  stroke appearing/disappearing. Both passes are painted by a transparent
   `BorderOverlay` child above the content widget. A parent paints before its
   children in Qt; painting the outline directly in `DashboardCell::paintEvent()`
   would let the content cover its straight runs while a few high-contrast

@@ -159,8 +159,8 @@ void drawGearIcon(QPainter& painter, const QRect& r, const QColor& color) {
 // the stack, so the same continuous stroke is visible on every edge.
 class BorderOverlay final : public QWidget {
 public:
-    BorderOverlay(QVariantAnimation* selectionAnimation, QWidget* parent)
-        : QWidget(parent), m_selectionAnimation(selectionAnimation) {
+    BorderOverlay(QVariantAnimation* selectionAnimation, DashboardWidget* content, QWidget* parent)
+        : QWidget(parent), m_selectionAnimation(selectionAnimation), m_content(content) {
         setAttribute(Qt::WA_TransparentForMouseEvents, true);
         setAttribute(Qt::WA_NoSystemBackground, true);
         setAttribute(Qt::WA_TranslucentBackground, true);
@@ -189,9 +189,15 @@ protected:
         // devicecard.cpp): always visible, so a cell's extent reads clearly
         // whether or not it's selected. Selection layers a distinct accent
         // outline on top instead of this stroke appearing/disappearing.
-        painter.setPen(QPen(palette.border, kBorderWidth));
-        painter.setBrush(Qt::NoBrush);
-        painter.drawPath(outline);
+        // Skipped for headerless controls (push button/toggle/slider,
+        // widgets/controlwidgets.cpp) -- those already read as bare controls
+        // rather than cards (see "Control panel fill" in
+        // docs/VISUAL_IDENTITY.md), and an idle outline would fight that.
+        if (m_content->wantsCellHeader()) {
+            painter.setPen(QPen(palette.border, kBorderWidth));
+            painter.setBrush(Qt::NoBrush);
+            painter.drawPath(outline);
+        }
 
         if (selectionVisible) {
             QColor selectionColor = property("dragInvalid").toBool() ? palette.danger : palette.accent;
@@ -203,6 +209,7 @@ protected:
 
 private:
     QVariantAnimation* m_selectionAnimation;
+    DashboardWidget* m_content;
 };
 } // namespace
 
@@ -214,7 +221,7 @@ DashboardCell::DashboardCell(const QString& itemId, const QString& typeId, const
     // included) shows through its four corner notches.
     setProperty("dashboardCell", true);
     m_content->setParent(this);
-    m_borderOverlay = new BorderOverlay(&m_selectionAnim, this);
+    m_borderOverlay = new BorderOverlay(&m_selectionAnim, m_content, this);
 
     setMouseTracking(true);
     layoutChildren();
