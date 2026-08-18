@@ -165,3 +165,8 @@ dependency on `lib/protocol/` or `SerialManager` -- that stays true by
 design (see the layering note above); the real transport wiring lives in
 `traceview_ui` (`DeviceConnection`/`MainWindow`), not inside the devices
 module itself.
+
+Testing any of this without real hardware: see
+[docs/SYNTHETIC_DEVICE.md](SYNTHETIC_DEVICE.md) for `tools/synthetic_device`,
+a standalone tool that speaks a real device's side of BTP v1 over an actual
+serial port.

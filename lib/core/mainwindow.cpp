@@ -1218,12 +1218,17 @@ void MainWindow::openRecentFile(const QString& path) {
         WorkspaceManager::instance().fromJson(workspacesSection);
     }
 
-    m_dashboardGrid->fromJson(WorkspaceManager::instance().dashboardFor(WorkspaceManager::instance().activeId()));
-    m_dashboardGrid->undoStack()->clear();
+    // Devices load first: each chart/gauge widget resolves its "Device"
+    // config against m_deviceConnections the moment it's created below, and
+    // that resolution never gets retried once a device connects later (see
+    // MainWindow::refreshWidgetSubscription) -- so a widget created before
+    // its device exists is permanently stuck with no subscription.
     // Absent in projects saved before device persistence existed --
     // fromJson(QJsonObject()) on an empty section just clears the list.
     m_devicesGrid->fromJson(ProjectStore::instance().section("devices"));
     m_devicesGrid->undoStack()->clear();
+    m_dashboardGrid->fromJson(WorkspaceManager::instance().dashboardFor(WorkspaceManager::instance().activeId()));
+    m_dashboardGrid->undoStack()->clear();
     refreshPropertiesPanel();
     refreshLayersPanel();
     refreshWorkspaceSwitcher();
