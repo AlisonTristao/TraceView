@@ -4,12 +4,6 @@ Real-time telemetry dashboard for ESP32/ESP-NOW robots, built in C++ with Qt.
 
 > **Status:** v2.1.0 — the dashboard now manages multiple independently-connected devices side by side, on top of the workspaces/theming/docking round from 2.0.0. The BTP telemetry integration behind it is still evolving. See [CONTRIBUTING.md](CONTRIBUTING.md) for the branching/feature workflow and [docs/ECOSYSTEM.md](docs/ECOSYSTEM.md) for how this project fits with the rest of the Bally ecosystem.
 
-## Screenshots
-
-| Dashboard | Devices |
-|---|---|
-| ![Dashboard](docs/images/dashboard.png) | ![Devices](docs/images/devices.png) |
-
 ## What's new in 2.1.0
 
 - **Devices tab** — devices are their own managed list now (name, connection
