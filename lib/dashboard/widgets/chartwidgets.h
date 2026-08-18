@@ -37,7 +37,6 @@ public:
         setMouseTracking(true);
     }
 
-    QColor cellFillColor(const ThemePalette& palette) const override { return palette.surface; }
     void setConfig(const QJsonObject& config) override;
 
     bool wantsHeaderControls() const override { return true; }
@@ -165,7 +164,6 @@ class DummyGaugeWidget : public DashboardWidget {
 public:
     explicit DummyGaugeWidget(QWidget* parent = nullptr);
 
-    QColor cellFillColor(const ThemePalette& palette) const override { return palette.surface; }
     void setConfig(const QJsonObject& config) override;
 
     // Same header cluster as the line/bar charts (ChartWidgetBase) -- a

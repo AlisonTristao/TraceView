@@ -178,32 +178,31 @@ protected:
                                   ? m_selectionAnimation->currentValue().toReal()
                                   : 0.0;
         const bool selectionVisible = selectT > 0.0;
-        constexpr qreal kEdgeFinishWidth = 2.0;
+        constexpr qreal kBorderWidth = 2.0;
 
-        const QRectF borderRect = QRectF(rect()).adjusted(kEdgeFinishWidth / 2.0, kEdgeFinishWidth / 2.0,
-                                                           -kEdgeFinishWidth / 2.0, -kEdgeFinishWidth / 2.0);
+        const QRectF borderRect = QRectF(rect()).adjusted(kBorderWidth / 2.0, kBorderWidth / 2.0,
+                                                           -kBorderWidth / 2.0, -kBorderWidth / 2.0);
         const QPainterPath outline =
             partiallyRoundedRect(borderRect, kContainerCornerRadius, true, true, true, true);
-        painter.setPen(QPen(m_content->cellFillColor(palette), kEdgeFinishWidth));
-        painter.setBrush(Qt::NoBrush);
-        painter.drawPath(outline);
 
-        // In Layout, a headered cell has surfaceAlt at its top edge and the
-        // content fill below it. Finish that segment in its own color too;
-        // selection uses one accent outline around the entire cell instead.
-        const int headerHeight = property("headerHeight").toInt();
-        if (!selectionVisible && headerHeight > 0) {
-            painter.save();
-            painter.setClipRect(QRect(0, 0, width(), headerHeight));
-            painter.setPen(QPen(palette.surfaceAlt, kEdgeFinishWidth));
+        // Same palette.border convention as DeviceCard's outline (see
+        // devicecard.cpp): always visible, so a cell's extent reads clearly
+        // whether or not it's selected. Selection layers a distinct accent
+        // outline on top instead of this stroke appearing/disappearing.
+        // Skipped for headerless controls (push button/toggle/slider,
+        // widgets/controlwidgets.cpp) -- those already read as bare controls
+        // rather than cards (see "Control panel fill" in
+        // docs/VISUAL_IDENTITY.md), and an idle outline would fight that.
+        if (m_content->wantsCellHeader()) {
+            painter.setPen(QPen(palette.border, kBorderWidth));
+            painter.setBrush(Qt::NoBrush);
             painter.drawPath(outline);
-            painter.restore();
         }
 
         if (selectionVisible) {
             QColor selectionColor = property("dragInvalid").toBool() ? palette.danger : palette.accent;
             selectionColor.setAlphaF(selectT);
-            painter.setPen(QPen(selectionColor, kEdgeFinishWidth));
+            painter.setPen(QPen(selectionColor, kBorderWidth));
             painter.drawPath(outline);
         }
     }
@@ -429,7 +428,6 @@ void DashboardCell::layoutChildren() {
     const int headerH = headerHeight();
     m_content->setGeometry(0, headerH, width(), height() - headerH);
     updateContentMask();
-    m_borderOverlay->setProperty("headerHeight", headerH);
     m_borderOverlay->setGeometry(rect());
     m_borderOverlay->raise();
 }
