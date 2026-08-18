@@ -23,15 +23,19 @@ constexpr QRgb kContentColor = qRgb(214, 44, 79);
 
 class SolidContentWidget final : public DashboardWidget {
 public:
-    using DashboardWidget::DashboardWidget;
+    explicit SolidContentWidget(bool wantsHeader, QWidget* parent = nullptr)
+        : DashboardWidget(parent), m_wantsHeader(wantsHeader) {}
 
-    bool wantsCellHeader() const override { return false; }
+    bool wantsCellHeader() const override { return m_wantsHeader; }
 
 protected:
     void paintEvent(QPaintEvent*) override {
         QPainter painter(this);
         painter.fillRect(rect(), QColor::fromRgb(kContentColor));
     }
+
+private:
+    bool m_wantsHeader;
 };
 
 int colorDistance(const QColor& a, const QColor& b) {
@@ -342,41 +346,57 @@ void TestDashboardGrid::cellHasIdleBorderAndSelectedBorderOverlaysIt() {
         const QColor selectedBorder = themes.currentTheme().accent;
         const QColor contentColor = QColor::fromRgb(kContentColor);
 
-        auto* content = new SolidContentWidget;
-        DashboardCell cell("test", "solid", "Solid", content);
-        cell.resize(80, 60);
-        cell.show();
-        QCoreApplication::processEvents();
+        // Headered kinds (chart/gauge/serial monitor) always show the idle
+        // outline; headerless controls (push button/toggle/slider,
+        // widgets/controlwidgets.cpp) skip it so they keep reading as bare
+        // controls rather than cards (see BorderOverlay::paintEvent in
+        // dashboard/dashboardcell.cpp). Both still pick up the accent
+        // selection outline.
+        for (const bool wantsHeader : {true, false}) {
+            auto* content = new SolidContentWidget(wantsHeader);
+            DashboardCell cell("test", "solid", "Solid", content);
+            cell.resize(80, 60);
+            cell.show();
+            QCoreApplication::processEvents();
 
-        QImage rendered(cell.size(), QImage::Format_ARGB32_Premultiplied);
-        rendered.fill(Qt::transparent);
-        cell.render(&rendered);
+            QImage rendered(cell.size(), QImage::Format_ARGB32_Premultiplied);
+            rendered.fill(Qt::transparent);
+            cell.render(&rendered);
 
-        // Idle cells now always show the palette.border outline (2026-08-18
-        // change, see "Corner radius" in docs/VISUAL_IDENTITY.md) instead of
-        // blending it into the content color. The token itself is
-        // translucent, so the rendered pixel is a composite over the
-        // content, not the raw token color.
-        const QColor idleTopEdge = rendered.pixelColor(cell.width() / 2, 0);
-        const QColor expectedIdleEdge = blendOver(idleBorder, contentColor);
-        QVERIFY2(colorDistance(idleTopEdge, expectedIdleEdge) < 8 && colorDistance(idleTopEdge, contentColor) > 8,
-                 qPrintable(QString("theme=%1 idle-edge=%2 expected=%3 content=%4")
-                                .arg(themeId, idleTopEdge.name(QColor::HexArgb),
-                                     expectedIdleEdge.name(QColor::HexArgb), contentColor.name(QColor::HexArgb))));
+            // Sampled on the left edge at mid-height so it lands in the body
+            // regardless of whether a header strip is reserved above it.
+            const QColor idleEdge = rendered.pixelColor(0, cell.height() / 2);
+            if (wantsHeader) {
+                // The token itself is translucent (see "Border contrast" in
+                // docs/VISUAL_IDENTITY.md), so the rendered pixel is a
+                // composite over the content, not the raw token color.
+                const QColor expectedIdleEdge = blendOver(idleBorder, contentColor);
+                QVERIFY2(colorDistance(idleEdge, expectedIdleEdge) < 8 && colorDistance(idleEdge, contentColor) > 8,
+                         qPrintable(QString("theme=%1 idle-edge=%2 expected=%3 content=%4")
+                                        .arg(themeId, idleEdge.name(QColor::HexArgb),
+                                             expectedIdleEdge.name(QColor::HexArgb),
+                                             contentColor.name(QColor::HexArgb))));
+            } else {
+                QVERIFY2(colorDistance(idleEdge, contentColor) < 8,
+                         qPrintable(QString("theme=%1 headerless-idle-edge=%2 content=%3")
+                                        .arg(themeId, idleEdge.name(QColor::HexArgb),
+                                             contentColor.name(QColor::HexArgb))));
+            }
 
-        cell.setEditMode(true);
-        cell.setSelected(true);
-        QTest::qWait(180); // selection outline animation is 150ms
+            cell.setEditMode(true);
+            cell.setSelected(true);
+            QTest::qWait(180); // selection outline animation is 150ms
 
-        rendered.fill(Qt::transparent);
-        cell.render(&rendered);
-        // Selection overlays a distinct accent outline on top of the idle
-        // border rather than replacing an otherwise invisible stroke.
-        const QColor selectedTopEdge = rendered.pixelColor(cell.width() / 2, 0);
-        QVERIFY2(colorDistance(selectedTopEdge, selectedBorder) < colorDistance(selectedTopEdge, idleBorder),
-                 qPrintable(QString("theme=%1 selected-edge=%2 accent=%3 idle-border=%4")
-                                .arg(themeId, selectedTopEdge.name(QColor::HexArgb),
-                                     selectedBorder.name(QColor::HexArgb), idleBorder.name(QColor::HexArgb))));
+            rendered.fill(Qt::transparent);
+            cell.render(&rendered);
+            // Selection overlays a distinct accent outline on top of
+            // whatever idle state (border or none) came before.
+            const QColor selectedEdge = rendered.pixelColor(0, cell.height() / 2);
+            QVERIFY2(colorDistance(selectedEdge, selectedBorder) < colorDistance(selectedEdge, contentColor),
+                     qPrintable(QString("theme=%1 wantsHeader=%2 selected-edge=%3 accent=%4 content=%5")
+                                    .arg(themeId, wantsHeader ? "true" : "false", selectedEdge.name(QColor::HexArgb),
+                                         selectedBorder.name(QColor::HexArgb), contentColor.name(QColor::HexArgb))));
+        }
     }
 }
 
