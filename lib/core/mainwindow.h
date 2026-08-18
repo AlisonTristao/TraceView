@@ -8,11 +8,9 @@
 #include <QString>
 
 class QAction;
-class QComboBox;
 class QEvent;
 class QLabel;
 class QMenu;
-class QPushButton;
 class QStackedWidget;
 class QToolButton;
 
@@ -22,12 +20,14 @@ class Backend;
 class DashboardGrid;
 class DashboardWidget;
 class DebugChartsWindow;
+class DeviceConnection;
 class DevicesGrid;
+struct Device;
 class LayersPanel;
 class PanelDockController;
 class PropertiesPanel;
 class Ribbon;
-class SerialManager;
+class SerialWidgetBridge;
 class WorkspaceSwitcher;
 
 class MainWindow : public QMainWindow {
@@ -72,10 +72,6 @@ private:
     void updateRibbonIcons();
 
     void onRibbonTabChanged(int index);
-    void refreshSerialPorts();
-    void onSerialConnectToggled(bool checked);
-    void onSerialConnectionStateChanged(bool connected);
-    void onSerialErrorOccurred(const QString& message);
     void onSelectionChanged(const QString& itemId);
     void updateSelectionActions();
     // Shows m_propertiesPanel/m_layersPanel only on the Layout tab, and then
@@ -107,6 +103,25 @@ private:
     // m_configureTabActive-gated condition, kept mutually exclusive so both
     // never share an enabled Delete shortcut at once).
     void updateDeviceSelectionActions();
+    // Keep m_deviceConnections (one DeviceConnection per Device::id) in sync
+    // with m_devicesGrid's own list -- wired to DevicesGrid::deviceAdded/
+    // deviceRemoved/deviceUpdated. onDeviceUpdated also re-points the
+    // connection at a possibly-changed port/baud/line-terminator.
+    void onDeviceAdded(const Device& device);
+    void onDeviceRemoved(const QString& id);
+    void onDeviceUpdated(const Device& device);
+    // Mirrors a DeviceConnection's real state back into DevicesGrid's own
+    // Device::connected (DeviceCard's status dot reads that field).
+    void onDeviceConnectionStateChanged(const QString& deviceId, bool connected);
+    // DeviceCard's status-dot click (DevicesGrid::connectToggleRequested) --
+    // flips the matching DeviceConnection's intent (DeviceConnection::
+    // wantsConnection()), not just its current connectedness, so this also
+    // works to silence a device that's stuck retrying.
+    void onDeviceConnectToggleRequested(const QString& deviceId);
+    // Converts m_devicesGrid->devices() into DeviceOptions and pushes them
+    // into m_propertiesPanel -- called whenever the device list changes, so
+    // every widget config editor's Device combo stays current.
+    void refreshPropertiesPanelDevices();
     void onPanelTypeChangeRequested(const QString& typeId);
     void onPanelNameChangeRequested(const QString& name);
     void onPanelKeyChangeRequested(const QString& key);
@@ -128,6 +143,10 @@ private:
     // Devices tab's content -- swapped in for m_dashboardGrid via
     // m_contentStack, never shown at the same time (see onRibbonTabChanged).
     DevicesGrid* m_devicesGrid = nullptr;
+    // One real, independent serial connection per Device::id -- see
+    // core/deviceconnection.h. Created/destroyed/updated in lockstep with
+    // m_devicesGrid's own list (onDeviceAdded/onDeviceRemoved/onDeviceUpdated).
+    QHash<QString, DeviceConnection*> m_deviceConnections;
     // Holds m_dashboardGrid and m_devicesGrid; whichever one is current is
     // what fills m_contentRow. Unlike the layers/properties panels below,
     // this genuinely shares layout space (contentLayout->addWidget()) rather
@@ -172,34 +191,48 @@ private:
     // m_removeAction -- see updateDeviceSelectionActions().
     bool m_devicesTabActive = false;
 
-    void onLineTerminatorChanged(int index);
-
-    SerialManager* m_serialManager = nullptr;
-    // Everything on the other end of the wire, behind the Backend interface
-    // (backend/backend.h) -- decoded telemetry, topic subscriptions, and
-    // terminal framing. Concretely a BtpBackend today; MainWindow only ever
-    // talks to it through the abstract interface. SerialManager above stays
-    // concrete: it just moves raw bytes in and out of the open port.
-    Backend* m_backend = nullptr;
+    // Wires every control/serial-monitor widget's send/receive to whichever
+    // device its own config currently targets -- see core/serialwidgetbridge.h.
+    // Kept as a member (rather than fire-and-forget like before the
+    // multi-device refactor) so refreshTerminalWiring() can be called
+    // whenever a config edit could have re-pointed a terminal widget.
+    SerialWidgetBridge* m_serialWidgetBridge = nullptr;
     void wireChartWidgetToTelemetry(DashboardWidget* widget);
-    // Re-derives every open widget's subscription from its current config --
-    // called whenever a config edit (or its undo/redo) could have changed a
-    // widget's source/topic/sample time.
+    // Re-derives one widget's subscription from its current config: moves it
+    // to a new device's Backend (dropping the old subscription/fieldSample
+    // connection) if its deviceId changed, otherwise just updates the
+    // source/topic/rate on whichever Backend it's already registered with.
+    void refreshWidgetSubscription(DashboardWidget* widget);
+    // Calls refreshWidgetSubscription() for every open chart/gauge widget,
+    // plus SerialWidgetBridge::refreshTerminalWiring() -- called whenever a
+    // config edit (or its undo/redo) could have changed a widget's device/
+    // source/topic/sample time.
     void refreshWidgetSubscriptions();
     // Recomputes the status-bar telemetry summary (requested vs. effective
-    // rate, plus bytes/drops from a status_version=2 STATUS).
+    // rate, plus bytes/drops from a status_version=2 STATUS), aggregated
+    // across every connected device's Backend.
     void updateTelemetryStatusLabel();
-    // One entry per live chart/gauge widget: its SubscriptionManager handle
-    // (0 when the widget has no source/topic configured yet). Cleaned up from
-    // each widget's own destroyed() signal.
-    QHash<DashboardWidget*, quint64> m_widgetSubscriptions;
+    // Rebuilds the Run tab's device status strip from m_devicesGrid's
+    // current list/connection state. Called on every device add/remove/
+    // update/connection-state change, and on theme change (dot colors).
+    void refreshDeviceStatusLabel();
+
+    // One subscription reference for a live chart/gauge widget: which
+    // device's Backend it's registered with (empty if none/unconfigured) and
+    // the SubscriptionManager handle within that Backend (0 if none). Needed
+    // as a pair now -- unlike the single-Backend era, the handle alone isn't
+    // enough to know which Backend::removeSubscriber() to call it against.
+    struct WidgetSubscription {
+        QString deviceId;
+        quint64 handle = 0;
+    };
+    QHash<DashboardWidget*, WidgetSubscription> m_widgetSubscriptions;
     QLabel* m_telemetryStatusLabel = nullptr;
     int m_runTabIndex = -1;
-    QComboBox* m_portCombo = nullptr;
-    QToolButton* m_refreshPortsButton = nullptr;
-    QComboBox* m_baudCombo = nullptr;
-    QComboBox* m_lineTerminatorCombo = nullptr;
-    QPushButton* m_connectButton = nullptr;
+    // Read-only "device: dot" strip replacing the old single-connection port/
+    // baud/connect bar -- per-device connection config now lives in the
+    // Devices tab (DeviceConfigDialog) instead.
+    QLabel* m_deviceStatusLabel = nullptr;
     QToolButton* m_fullscreenButton = nullptr;
     bool m_wasMaximized = false;
     QRect m_preFullscreenGeometry;

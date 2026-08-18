@@ -54,8 +54,9 @@ public:
     bool isResizable() const { return m_resizable; }
     // Drives the header's connection-status dot (only drawn when m_content
     // wants header controls, see DashboardWidget::wantsHeaderControls()) --
-    // set from the app's single global SerialManager connection, propagated
-    // through DashboardGrid::setDeviceConnected().
+    // set from whichever device this cell's own widget is currently
+    // configured for (config()["deviceId"]), propagated through
+    // DashboardGrid::setDeviceConnected(deviceId, connected).
     void setConnected(bool connected);
     // Swaps the selection border to the palette's danger color instead of
     // accent — live feedback while a drag/resize candidate would be

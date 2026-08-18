@@ -70,6 +70,13 @@ void PropertiesPanel::setAvailableTypes(const QVector<WidgetTypeInfo>& types) {
     }
 }
 
+void PropertiesPanel::setAvailableDevices(const QVector<DeviceOption>& devices) {
+    m_availableDevices = devices;
+    if (m_configEditor) {
+        m_configEditor->setAvailableDevices(m_availableDevices);
+    }
+}
+
 void PropertiesPanel::setSelection(bool hasSelection, const QString& typeId, const QString& name,
                                     const QString& key, const QJsonObject& config) {
     m_currentTypeId = typeId;
@@ -168,6 +175,7 @@ void PropertiesPanel::ensureConfigEditor(const QString& typeId) {
     }
 
     m_configEditor = factory(nullptr);
+    m_configEditor->setAvailableDevices(m_availableDevices);
     m_configLayout->insertWidget(0, m_configEditor);
     connect(m_configEditor, &WidgetConfigEditor::configChanged, this, &PropertiesPanel::onConfigEditorChanged);
 }

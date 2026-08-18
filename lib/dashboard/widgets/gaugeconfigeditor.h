@@ -2,6 +2,7 @@
 
 #include "dashboard/widgetconfigeditor.h"
 
+class QComboBox;
 class QDoubleSpinBox;
 class QFormLayout;
 class QLineEdit;
@@ -27,6 +28,7 @@ public:
 
     void setConfig(const QJsonObject& config) override;
     QJsonObject config() const override;
+    void setAvailableDevices(const QVector<DeviceOption>& devices) override;
 
 private:
     // Appends one ring row built from `series` (missing fields fall back to
@@ -41,6 +43,7 @@ private:
     bool m_updating = false;
 
     QFormLayout* m_formLayout = nullptr;
+    QComboBox* m_deviceCombo = nullptr;
     QLineEdit* m_sourceIdEdit = nullptr;
     QLineEdit* m_topicIdEdit = nullptr;
     QDoubleSpinBox* m_minSpin = nullptr;

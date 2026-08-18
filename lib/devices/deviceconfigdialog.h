@@ -1,20 +1,27 @@
 #pragma once
 
 #include <QDialog>
+#include <QStringList>
 
 #include "devices/device.h"
 
-class QCheckBox;
+class QComboBox;
+class QLabel;
 class QLineEdit;
 class QPlainTextEdit;
+class QToolButton;
 
 namespace traceview {
 
-// Edits one Device: name/description directly, plus a "Reported by device"
-// section (btpVersion/chipType/btpId) and a Connected checkbox. Constructed
-// with the Device to edit, read back via result() after exec() returns
-// Accepted -- follows AboutDialog/DonateDialog's construction convention
-// (see core/aboutdialog.h) -- Q_OBJECT so tr() resolves this class as its own
+// Edits one Device: name/description directly, a "Connection" section
+// (port/baud/line terminator -- the config DeviceConnection, core/
+// deviceconnection.h, actually opens with, moved here now that each device
+// owns its own connection instead of sharing the old single Run tab bar)
+// plus a read-only status line, and a "Reported by device" section
+// (btpVersion/chipType/btpId). Constructed with the Device to edit, read
+// back via result() after exec() returns Accepted -- follows
+// AboutDialog/DonateDialog's construction convention (see
+// core/aboutdialog.h) -- Q_OBJECT so tr() resolves this class as its own
 // translation context.
 class DeviceConfigDialog : public QDialog {
     Q_OBJECT
@@ -27,13 +34,35 @@ public:
     // are carried over unchanged -- this dialog never reassigns either.
     Device result() const;
 
+    // Repopulates the Port combo from a fresh OS enumeration, preserving
+    // whatever text is currently shown (typed manually, or the device's
+    // already-configured port) even if it isn't in the new list -- e.g. a
+    // device that's temporarily unplugged shouldn't lose its remembered
+    // port name. Called once up front by whoever opens this dialog
+    // (DevicesGrid, supplied by MainWindow) and again each time
+    // refreshPortsRequested() fires.
+    void setAvailablePorts(const QStringList& ports);
+
+signals:
+    // Emitted when the user clicks the port list's refresh button.
+    // DeviceConfigDialog can't query the OS port list itself --
+    // traceview_devices doesn't depend on QSerialPort (see
+    // lib/CMakeLists.txt) -- so the owner is expected to call
+    // setAvailablePorts() again in response.
+    void refreshPortsRequested();
+
 private:
     Device m_device;
 
     QLineEdit* m_nameEdit = nullptr;
     QPlainTextEdit* m_descriptionEdit = nullptr;
-    // Stand-in for real connection state until the transport layer exists.
-    QCheckBox* m_connectedCheck = nullptr;
+
+    QComboBox* m_portCombo = nullptr;
+    QToolButton* m_refreshPortsButton = nullptr;
+    QComboBox* m_baudCombo = nullptr;
+    QComboBox* m_lineTerminatorCombo = nullptr;
+    QLabel* m_statusLabel = nullptr;
+
     // These three become read-only once wired to a real BTP device manifest.
     QLineEdit* m_btpVersionEdit = nullptr;
     QLineEdit* m_chipTypeEdit = nullptr;

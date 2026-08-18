@@ -1,5 +1,6 @@
 #include "devicesgrid.h"
 
+#include <QJsonArray>
 #include <QResizeEvent>
 #include <QUuid>
 
@@ -30,10 +31,12 @@ QString DevicesGrid::addDevice(const Device& device) {
     card->setDevice(toAdd);
     connect(card, &DeviceCard::configRequested, this, &DevicesGrid::handleConfigRequested);
     connect(card, &DeviceCard::selectRequested, this, &DevicesGrid::handleCardSelectRequested);
+    connect(card, &DeviceCard::connectToggleRequested, this, &DevicesGrid::connectToggleRequested);
     card->show();
     m_cards.append(card);
 
     relayout();
+    emit deviceAdded(toAdd);
     return toAdd.id;
 }
 
@@ -53,6 +56,7 @@ void DevicesGrid::removeDevice(const QString& id) {
     }
 
     relayout(); // re-flows every following card into the gap left behind
+    emit deviceRemoved(id);
 }
 
 void DevicesGrid::updateDevice(const Device& device) {
@@ -62,6 +66,7 @@ void DevicesGrid::updateDevice(const Device& device) {
     }
     m_devices[idx] = device;
     m_cards[idx]->setDevice(device);
+    emit deviceUpdated(device);
 }
 
 void DevicesGrid::resizeEvent(QResizeEvent* event) {
@@ -114,6 +119,11 @@ void DevicesGrid::handleConfigRequested(const QString& deviceId) {
         return;
     }
     DeviceConfigDialog dialog(m_devices[idx], this);
+    if (m_portListProvider) {
+        dialog.setAvailablePorts(m_portListProvider());
+        connect(&dialog, &DeviceConfigDialog::refreshPortsRequested, &dialog,
+                [this, &dialog]() { dialog.setAvailablePorts(m_portListProvider()); });
+    }
     if (dialog.exec() == QDialog::Accepted) {
         updateDevice(dialog.result());
     }
@@ -140,6 +150,32 @@ void DevicesGrid::removeSelected() {
         return;
     }
     removeDevice(m_selectedId);
+}
+
+QJsonObject DevicesGrid::toJson() const {
+    QJsonObject object;
+    QJsonArray devices;
+    for (const Device& device : m_devices) {
+        devices.append(deviceToJson(device));
+    }
+    object["devices"] = devices;
+    return object;
+}
+
+void DevicesGrid::fromJson(const QJsonObject& object) {
+    while (!m_devices.isEmpty()) {
+        removeDevice(m_devices.first().id);
+    }
+
+    const QJsonArray devices = object.value("devices").toArray();
+    for (const QJsonValue& value : devices) {
+        bool ok = false;
+        Device device = deviceFromJson(value.toObject(), &ok);
+        if (!ok) {
+            continue;
+        }
+        addDevice(device);
+    }
 }
 
 } // namespace traceview

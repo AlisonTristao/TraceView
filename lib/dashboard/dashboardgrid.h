@@ -2,6 +2,7 @@
 
 #include <optional>
 
+#include <QHash>
 #include <QJsonObject>
 #include <QMap>
 #include <QPoint>
@@ -85,11 +86,16 @@ public:
     void setEditMode(bool enabled);
     bool editMode() const { return m_editMode; }
 
-    // Broadcasts the app's single global serial connection state (see
-    // core/serialmanager.h) to every cell's header status dot (see
-    // DashboardCell::setConnected()) -- applied to existing cells immediately
-    // and to any cell created afterward (see createCell()).
-    void setDeviceConnected(bool connected);
+    // Live connection state for one device (see core/deviceconnection.h),
+    // pushed by MainWindow whenever a DeviceConnection's own
+    // connectionStateChanged() fires. Drives the header status dot (see
+    // DashboardCell::setConnected()) of every cell whose widget is currently
+    // configured for that device (config()["deviceId"]) -- not a single
+    // global flag anymore now that more than one device can be connected at
+    // once. Applied to existing matching cells immediately, remembered for
+    // any cell created or reconfigured afterward (see createCell()/
+    // applySetConfig()).
+    void setDeviceConnected(const QString& deviceId, bool connected);
 
     // Replaces the current selection with just `itemId` (or clears it, for
     // an empty string) -- expanded to the item's whole group if it belongs
@@ -184,6 +190,15 @@ public:
     // by <id> -- rebuild after every itemsChanged() rather than caching,
     // since keys/widgets can change underneath.
     QMap<QString, DashboardWidget*> keyedWidgets() const;
+
+    // The live config of whichever item currently wraps `widget` (a chart/
+    // gauge/control/terminal instance), or an empty object if `widget` isn't
+    // a content widget on this grid right now. Looked up live (scans m_cells)
+    // rather than cached, since a config edit doesn't otherwise notify
+    // per-widget listeners -- used by MainWindow/SerialWidgetBridge to
+    // resolve which device a widget currently targets at send/subscribe
+    // time, without either needing their own id bookkeeping.
+    QJsonObject configForWidget(DashboardWidget* widget) const;
 
     // Every item's id/display name, back-to-front (index 0 is the bottom of
     // the stack) -- the model-order counterpart to keyedWidgets() above, for
@@ -325,7 +340,9 @@ private:
     void handleSelectRequested(const QString& itemId, Qt::KeyboardModifiers modifiers);
 
     bool m_editMode = false;
-    bool m_deviceConnected = false;
+    // deviceId -> last-known connected state, pushed by setDeviceConnected().
+    // A device with no entry (never reported) counts as disconnected.
+    QHash<QString, bool> m_deviceConnectionStates;
     QSet<QString> m_selectedItemIds;
 
     QVector<DashboardItem> m_items;

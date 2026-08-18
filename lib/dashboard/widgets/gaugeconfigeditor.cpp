@@ -2,6 +2,7 @@
 
 #include <QColor>
 #include <QColorDialog>
+#include <QComboBox>
 #include <QDoubleSpinBox>
 #include <QFormLayout>
 #include <QFrame>
@@ -36,6 +37,10 @@ void setSwatchColor(QPushButton* button, const QColor& color) {
 }  // namespace
 
 GaugeConfigEditor::GaugeConfigEditor(QWidget* parent) : WidgetConfigEditor(parent) {
+    m_deviceCombo = new QComboBox(this);
+    populateDeviceCombo(m_deviceCombo, {});
+    m_deviceCombo->setToolTip(tr("Which device this gauge reads from -- must match the sourceId below."));
+
     m_sourceIdEdit = new QLineEdit(this);
     m_sourceIdEdit->setPlaceholderText(tr("0x11223344"));
     m_sourceIdEdit->setToolTip(tr("BTP source_id this gauge reads from (hex or decimal)."));
@@ -67,6 +72,7 @@ GaugeConfigEditor::GaugeConfigEditor(QWidget* parent) : WidgetConfigEditor(paren
     m_formLayout = new QFormLayout();
     m_formLayout->setContentsMargins(0, 0, 0, 0);
     m_formLayout->setFieldGrowthPolicy(QFormLayout::AllNonFixedFieldsGrow);
+    m_formLayout->addRow(tr("Device"), m_deviceCombo);
     m_formLayout->addRow(tr("Source"), m_sourceIdEdit);
     m_formLayout->addRow(tr("Topic"), m_topicIdEdit);
     m_formLayout->addRow(tr("Min"), m_minSpin);
@@ -111,6 +117,7 @@ GaugeConfigEditor::GaugeConfigEditor(QWidget* parent) : WidgetConfigEditor(paren
     mainLayout->addWidget(m_seriesTable);
     mainLayout->addLayout(buttonRow);
 
+    connect(m_deviceCombo, &QComboBox::currentIndexChanged, this, [this](int) { emitChanged(); });
     connect(m_sourceIdEdit, &QLineEdit::editingFinished, this, [this]() { emitChanged(); });
     connect(m_topicIdEdit, &QLineEdit::editingFinished, this, [this]() { emitChanged(); });
     connect(m_minSpin, &QDoubleSpinBox::valueChanged, this, [this](double) { emitChanged(); });
@@ -122,6 +129,8 @@ GaugeConfigEditor::GaugeConfigEditor(QWidget* parent) : WidgetConfigEditor(paren
 
 void GaugeConfigEditor::setConfig(const QJsonObject& config) {
     m_updating = true;
+    const int deviceIdx = m_deviceCombo->findData(config.value("deviceId").toString());
+    m_deviceCombo->setCurrentIndex(deviceIdx >= 0 ? deviceIdx : 0);
     m_sourceIdEdit->setText(config.value("sourceId").toString("0"));
     m_topicIdEdit->setText(config.value("topicId").toString("0"));
     m_minSpin->setValue(config.value("min").toDouble(0.0));
@@ -153,6 +162,7 @@ void GaugeConfigEditor::setConfig(const QJsonObject& config) {
 
 QJsonObject GaugeConfigEditor::config() const {
     QJsonObject cfg;
+    cfg["deviceId"] = m_deviceCombo->currentData().toString();
     cfg["sourceId"] = m_sourceIdEdit->text().trimmed().isEmpty() ? QStringLiteral("0") : m_sourceIdEdit->text();
     cfg["topicId"] = m_topicIdEdit->text().trimmed().isEmpty() ? QStringLiteral("0") : m_topicIdEdit->text();
     cfg["min"] = m_minSpin->value();
@@ -229,6 +239,13 @@ void GaugeConfigEditor::addSeriesRow(const QJsonObject& series) {
     });
     m_seriesTable->setCellWidget(row, kRemoveColumn, removeButton);
 
+    m_updating = wasUpdating;
+}
+
+void GaugeConfigEditor::setAvailableDevices(const QVector<DeviceOption>& devices) {
+    const bool wasUpdating = m_updating;
+    m_updating = true;
+    populateDeviceCombo(m_deviceCombo, devices);
     m_updating = wasUpdating;
 }
 

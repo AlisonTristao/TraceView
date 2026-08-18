@@ -78,6 +78,12 @@ void setSwatchColor(QPushButton* button, const QColor& color) {
 } // namespace
 
 ChartConfigEditor::ChartConfigEditor(QWidget* parent) : WidgetConfigEditor(parent) {
+    // Populated by setAvailableDevices(); starts with just the "(No device)"
+    // placeholder until MainWindow/PropertiesPanel push a real list.
+    m_deviceCombo = new QComboBox(this);
+    populateDeviceCombo(m_deviceCombo, {});
+    m_deviceCombo->setToolTip(tr("Which device this chart reads from -- must match the sourceId below."));
+
     m_sourceIdEdit = new QLineEdit(this);
     m_sourceIdEdit->setPlaceholderText(tr("0x11223344"));
     m_sourceIdEdit->setToolTip(tr("BTP source_id this chart reads from (hex or decimal)."));
@@ -168,6 +174,7 @@ ChartConfigEditor::ChartConfigEditor(QWidget* parent) : WidgetConfigEditor(paren
     // so — Fusion does, some platform styles don't. Forcing it here makes
     // every field fill its column the same way regardless of platform.
     m_formLayout->setFieldGrowthPolicy(QFormLayout::AllNonFixedFieldsGrow);
+    m_formLayout->addRow(tr("Device"), m_deviceCombo);
     m_formLayout->addRow(tr("Source"), m_sourceIdEdit);
     m_formLayout->addRow(tr("Topic"), m_topicIdEdit);
     m_formLayout->addRow(tr("X Axis"), xAxisRow);
@@ -220,6 +227,7 @@ ChartConfigEditor::ChartConfigEditor(QWidget* parent) : WidgetConfigEditor(paren
     mainLayout->addWidget(m_seriesTable);
     mainLayout->addLayout(buttonRow);
 
+    connect(m_deviceCombo, &QComboBox::currentIndexChanged, this, [this](int) { emitChanged(); });
     connect(m_sourceIdEdit, &QLineEdit::editingFinished, this, [this]() { emitChanged(); });
     connect(m_topicIdEdit, &QLineEdit::editingFinished, this, [this]() { emitChanged(); });
     connect(m_xAxisModeCombo, &QComboBox::currentIndexChanged, this, [this](int) {
@@ -244,6 +252,8 @@ ChartConfigEditor::ChartConfigEditor(QWidget* parent) : WidgetConfigEditor(paren
 void ChartConfigEditor::setConfig(const QJsonObject& config) {
     m_updating = true;
 
+    const int deviceIdx = m_deviceCombo->findData(config.value("deviceId").toString());
+    m_deviceCombo->setCurrentIndex(deviceIdx >= 0 ? deviceIdx : 0);
     m_sourceIdEdit->setText(config.value("sourceId").toString("0"));
     m_topicIdEdit->setText(config.value("topicId").toString("0"));
 
@@ -270,6 +280,7 @@ void ChartConfigEditor::setConfig(const QJsonObject& config) {
 
 QJsonObject ChartConfigEditor::config() const {
     QJsonObject cfg;
+    cfg["deviceId"] = m_deviceCombo->currentData().toString();
     cfg["sourceId"] = m_sourceIdEdit->text().trimmed().isEmpty() ? QStringLiteral("0") : m_sourceIdEdit->text();
     cfg["topicId"] = m_topicIdEdit->text().trimmed().isEmpty() ? QStringLiteral("0") : m_topicIdEdit->text();
 
@@ -386,6 +397,13 @@ void ChartConfigEditor::updateAxisRowsVisibility() {
     m_xLimitSpin->setSuffix(timeMode ? tr(" s") : tr(" pts"));
 
     m_formLayout->setRowVisible(m_yRangeRow, m_yAxisModeCombo->currentData().toString() == "fixed");
+}
+
+void ChartConfigEditor::setAvailableDevices(const QVector<DeviceOption>& devices) {
+    const bool wasUpdating = m_updating;
+    m_updating = true;
+    populateDeviceCombo(m_deviceCombo, devices);
+    m_updating = wasUpdating;
 }
 
 void ChartConfigEditor::emitChanged() {

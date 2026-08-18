@@ -17,8 +17,9 @@ add_traceview_test(test_workspacemanager traceview_project)
 add_traceview_test(test_dashboarditem traceview_dashboard)
 add_traceview_test(test_widgetregistry traceview_dashboard)
 add_traceview_test(test_dashboardgrid traceview_dashboard)
-# Devices panel data model/card/grid (UI-only for now, mock/local data --
-# see lib/devices). Only traceview_devices; no dashboard/protocol dependency.
+# Devices panel data model/card/grid, plus its own JSON persistence (see
+# lib/devices). Only traceview_devices; no dashboard/protocol dependency.
+add_traceview_test(test_device traceview_devices)
 add_traceview_test(test_devicesgrid traceview_devices)
 add_traceview_test(test_chartdata traceview_dashboard)
 add_traceview_test(test_controldata traceview_dashboard)
@@ -29,6 +30,10 @@ add_traceview_test(test_controldata traceview_dashboard)
 # real QWidgets) already covers widget-level QTest usage in this repo.
 add_traceview_test(test_serialterminalwidget traceview_dashboard)
 add_traceview_test(test_serialmanager traceview_ui)
+# One device's real connection (SerialManager + Backend pair, ambient
+# reconnect intent) -- see lib/core/deviceconnection.h. traceview_ui so it
+# can construct a BtpBackend the same way DeviceConnection itself does.
+add_traceview_test(test_deviceconnection traceview_ui)
 
 # Generic telemetry value types (lib/telemetry) -- no BTP dependency at all
 # (traceview_telemetry links just Qt6::Core; see lib/CMakeLists.txt).

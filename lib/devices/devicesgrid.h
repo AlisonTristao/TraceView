@@ -1,8 +1,12 @@
 #pragma once
 
+#include <QJsonObject>
 #include <QString>
+#include <QStringList>
 #include <QVector>
 #include <QWidget>
+
+#include <functional>
 
 #include "devices/device.h"
 
@@ -50,8 +54,36 @@ public:
     // No-op if nothing is selected.
     void removeSelected();
 
+    // Mirrors DashboardGrid::toJson()/fromJson()'s shape/convention: a
+    // single "devices" array of deviceToJson() objects (see device.h). Used
+    // by MainWindow to persist the device list into ProjectStore's own
+    // "devices" section. fromJson() clears the current list first (same
+    // "replace, don't merge" contract as DashboardGrid::fromJson()) and
+    // re-adds each entry via addDevice(), so deviceAdded() still fires for
+    // every loaded device -- MainWindow's DeviceConnection bookkeeping needs
+    // no separate load path.
+    QJsonObject toJson() const;
+    void fromJson(const QJsonObject& object);
+
+    // Supplies the live OS port list DeviceConfigDialog offers (initially,
+    // and again each time its refresh button is clicked). DevicesGrid can't
+    // query that itself -- traceview_devices doesn't depend on QSerialPort
+    // (see lib/CMakeLists.txt) -- so MainWindow injects it here once. Safe
+    // to leave unset: the dialog's port combo then just starts empty and
+    // Refresh is a no-op, same as before this existed.
+    void setPortListProvider(std::function<QStringList()> provider) { m_portListProvider = std::move(provider); }
+
 signals:
     void selectionChanged();
+    // Fired from addDevice()/removeDevice()/updateDevice() so a connection
+    // owner (MainWindow) can create/destroy/re-point the matching
+    // DeviceConnection without polling devices() itself.
+    void deviceAdded(const Device& device);
+    void deviceRemoved(const QString& id);
+    void deviceUpdated(const Device& device);
+    // Bubbled straight from the selected card's DeviceCard::connectToggleRequested
+    // -- DevicesGrid has no DeviceConnection of its own to flip, MainWindow does.
+    void connectToggleRequested(const QString& deviceId);
 
 protected:
     void resizeEvent(QResizeEvent* event) override;
@@ -70,6 +102,7 @@ private:
     QVector<Device> m_devices;    // insertion order = display order
     QVector<DeviceCard*> m_cards; // parallel to m_devices, same order/index
     QString m_selectedId;         // empty when nothing is selected
+    std::function<QStringList()> m_portListProvider;
 };
 
 } // namespace traceview

@@ -53,6 +53,15 @@ TelemetryFieldRouter       -- lib/protocol/telemetryfieldrouter.h
                              can connect to the same field independently
 ```
 
+As of the multi-device connection refactor, this whole stack (`SerialManager`
+through `BtpBackend`'s internal `TelemetryFieldRouter`) is instantiated once
+**per device** by `DeviceConnection` (`lib/core/deviceconnection.h`), not
+once for the whole app -- see [docs/DEVICES.md](DEVICES.md#connections). A
+dashboard widget's own `deviceId` config picks which device's pipeline (and
+therefore which `TelemetryCatalog`/`fieldSample` stream) it subscribes to;
+`source_id`/`topic_id` below are still only unique *within* one device's
+session.
+
 `TelemetryCatalog` (lib/protocol/telemetrycatalog.h) is the source/topic/
 schema registry -- independent of any widget type. As of topico 16
 ("Manifesto e descoberta") it is populated dynamically: `ManifestClient`
@@ -151,8 +160,10 @@ correctly — the reader stops at 92 octets and simply has no per-topic data.
 This part of the contract is **unchanged** by topico 14.
 `PushButtonWidget`/`ToggleSwitchWidget`/`SliderWidget` still send their
 configured literal command text straight through `SerialManager::
-writeCommand()` as raw bytes, terminated by the global line-terminator
-setting (Run ribbon tab):
+writeCommand()` as raw bytes, terminated by the target device's own
+line-terminator setting -- `SerialWidgetBridge` (`lib/core/serialwidgetbridge.h`)
+resolves which device's `SerialManager` that is from the widget's own config
+(`deviceId`), see [docs/DEVICES.md](DEVICES.md):
 
 ```
 <literal command text><line terminator>
@@ -167,11 +178,13 @@ setting (Run ribbon tab):
   value converted via `QString::number` at send time. No other config field
   (`onPress`/`onRelease`/`onCommand`/`offCommand`/long-press command)
   supports a placeholder — they are opaque literal strings, sent as-is.
-- **Line terminator is a single global setting** (`LineTerminator`, now
-  declared directly in `lib/core/serialmanager.h` since the old
-  `serialprotocol.h` it used to live in was removed), tied to the port
-  connection (Run ribbon tab), not per-widget. Options: None, `\n` (LF),
-  `\r` (CR), `\r\n` (CRLF). Default: `\n`.
+- **Line terminator is a per-device setting** (`LineTerminator`, declared in
+  `lib/core/serialmanager.h`), tied to that device's connection
+  (`DeviceConfigDialog`, see [docs/DEVICES.md](DEVICES.md)) rather than a
+  single global setting or a per-widget one -- every control-widget command
+  sent to a given device uses that device's configured terminator,
+  regardless of which widget sent it. Options: None, `\n` (LF), `\r` (CR),
+  `\r\n` (CRLF). Default: `\n`.
 - This terminator setting only applies to control-widget-triggered
   commands. It does **not** apply to `SerialTerminalWidget`, which as of
   topico 19 no longer sends raw bytes at all (see "Terminal" below).

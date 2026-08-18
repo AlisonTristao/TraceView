@@ -1,5 +1,7 @@
 #include <QtTest>
 
+#include <QJsonArray>
+#include <QJsonObject>
 #include <QSignalSpy>
 
 #include "devices/device.h"
@@ -9,6 +11,7 @@
 using traceview::CommType;
 using traceview::Device;
 using traceview::DeviceCard;
+using traceview::deviceToJson;
 using traceview::DevicesGrid;
 
 namespace {
@@ -41,6 +44,8 @@ private slots:
     void clickSelectsCardAndReplacesPreviousSelection();
     void removeSelectedRemovesTheSelectedDevice();
     void removeDeviceClearsSelectionIfRemovedDeviceWasSelected();
+    void toJsonFromJsonRoundTripsTheWholeList();
+    void fromJsonReplacesRatherThanMerges();
 };
 
 void TestDevicesGrid::addDeviceReturnsUsableIdAndOrdersLeftToRightThenWraps() {
@@ -199,6 +204,42 @@ void TestDevicesGrid::removeDeviceClearsSelectionIfRemovedDeviceWasSelected() {
     grid.removeDevice(idA); // removed directly, not via removeSelected()
     QCOMPARE(grid.selectedCount(), 0);
     QCOMPARE(selectionSpy.count(), 1);
+}
+
+void TestDevicesGrid::toJsonFromJsonRoundTripsTheWholeList() {
+    DevicesGrid grid;
+    Device alpha = makeDevice("Alpha");
+    alpha.portName = "COM3";
+    alpha.baudRate = 115200;
+    const QString idA = grid.addDevice(alpha);
+    const QString idB = grid.addDevice(makeDevice("Bravo"));
+
+    const QJsonObject saved = grid.toJson();
+
+    DevicesGrid restored;
+    restored.fromJson(saved);
+
+    QCOMPARE(restored.devices().size(), 2);
+    QCOMPARE(restored.devices().at(0).id, idA);
+    QCOMPARE(restored.devices().at(0).name, QString("Alpha"));
+    QCOMPARE(restored.devices().at(0).portName, QString("COM3"));
+    QCOMPARE(restored.devices().at(0).baudRate, 115200);
+    QCOMPARE(restored.devices().at(1).id, idB);
+}
+
+void TestDevicesGrid::fromJsonReplacesRatherThanMerges() {
+    DevicesGrid grid;
+    grid.addDevice(makeDevice("Stale"));
+
+    Device fresh = makeDevice("Fresh");
+    fresh.id = "fixed-id-for-this-test";
+    QJsonObject saved;
+    saved["devices"] = QJsonArray{deviceToJson(fresh)};
+
+    grid.fromJson(saved);
+
+    QCOMPARE(grid.devices().size(), 1);
+    QCOMPARE(grid.devices().first().name, QString("Fresh"));
 }
 
 QTEST_MAIN(TestDevicesGrid)

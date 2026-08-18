@@ -38,6 +38,7 @@ public:
 
     void setConfig(const QJsonObject& config) override;
     QJsonObject config() const override;
+    void setAvailableDevices(const QVector<DeviceOption>& devices) override;
 
 private:
     // Appends one series row built from `series` (missing fields fall back
@@ -57,6 +58,7 @@ private:
     bool m_updating = false;
 
     QFormLayout* m_formLayout = nullptr;
+    QComboBox* m_deviceCombo = nullptr;
     QLineEdit* m_sourceIdEdit = nullptr;
     QLineEdit* m_topicIdEdit = nullptr;
     QSpinBox* m_countSpin = nullptr;

@@ -46,6 +46,12 @@ signals:
     // Emitted on a plain click anywhere on the card except the gear button.
     // DevicesGrid owns turning this into an actual selection change.
     void selectRequested(const QString& deviceId);
+    // Emitted on a click on the status dot -- lets a device be connected/
+    // disconnected without opening DeviceConfigDialog. Purely a report, same
+    // as configRequested/selectRequested: this card never flips its own dot
+    // color from this, the real connection state driving it comes back
+    // through setDevice().
+    void connectToggleRequested(const QString& deviceId);
 
 protected:
     void paintEvent(QPaintEvent* event) override;
@@ -55,6 +61,9 @@ private:
     QRect headerRect() const;
     // Same right-aligned corner placement math as DashboardCell::gearButtonRect().
     QRect gearButtonRect() const;
+    // Fixed geometry (doesn't depend on paint-time text layout) so both
+    // paintEvent() and mousePressEvent() share one source of truth.
+    QRect statusDotRect() const;
 
     Device m_device;
     bool m_selected = false;

@@ -116,6 +116,14 @@ QRect DeviceCard::gearButtonRect() const {
     return QRect(header.right() - kIconMargin - kIconSize + 1, y, kIconSize, kIconSize);
 }
 
+QRect DeviceCard::statusDotRect() const {
+    // Same placement math paintEvent() uses to lay out the header row: comm-
+    // type icon first, then the dot immediately after it.
+    const QRect iconRect(kIconMargin, (kHeaderHeight - kIconSize) / 2, kIconSize, kIconSize);
+    const int left = iconRect.right() + kIconMargin;
+    return QRect(left, (kHeaderHeight - kStatusDotSize) / 2, kStatusDotSize, kStatusDotSize);
+}
+
 void DeviceCard::paintEvent(QPaintEvent*) {
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing);
@@ -142,8 +150,9 @@ void DeviceCard::paintEvent(QPaintEvent*) {
     textRect.setLeft(iconRect.right() + kIconMargin);
 
     // Connection dot -- green/red, same palette.success/palette.danger
-    // convention as DashboardCell's header dot.
-    const QRect dotRect(textRect.left(), (kHeaderHeight - kStatusDotSize) / 2, kStatusDotSize, kStatusDotSize);
+    // convention as DashboardCell's header dot. Also the click target for
+    // connectToggleRequested() (see mousePressEvent()).
+    const QRect dotRect = statusDotRect();
     painter.setPen(Qt::NoPen);
     painter.setBrush(m_device.connected ? palette.success : palette.danger);
     painter.drawEllipse(dotRect);
@@ -198,6 +207,13 @@ void DeviceCard::mousePressEvent(QMouseEvent* event) {
     }
     if (gearButtonRect().contains(event->position().toPoint())) {
         emit configRequested(m_device.id);
+        event->accept();
+        return;
+    }
+    // Inflated a few px past the dot's tiny 8x8 paint size -- an 8px target
+    // is otherwise unreasonably fussy to hit deliberately.
+    if (statusDotRect().adjusted(-4, -4, 4, 4).contains(event->position().toPoint())) {
+        emit connectToggleRequested(m_device.id);
         event->accept();
         return;
     }

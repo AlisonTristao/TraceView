@@ -8,6 +8,7 @@
 #include "widgets/controlconfigeditor.h"
 #include "widgets/controlwidgets.h"
 #include "widgets/gaugeconfigeditor.h"
+#include "widgets/serialmonitorconfigeditor.h"
 #include "widgets/serialmonitorwidget.h"
 
 namespace traceview {
@@ -31,7 +32,8 @@ WidgetRegistry::WidgetRegistry() {
                   [](QWidget* parent) -> DashboardWidget* { return new DummyGaugeWidget(parent); },
                   [](QWidget* parent) -> WidgetConfigEditor* { return new GaugeConfigEditor(parent); }});
     registerType({"serial_monitor", QCoreApplication::translate("WidgetRegistry", "Serial Monitor"),
-                  [](QWidget* parent) -> DashboardWidget* { return new SerialMonitorWidget(parent); }});
+                  [](QWidget* parent) -> DashboardWidget* { return new SerialMonitorWidget(parent); },
+                  [](QWidget* parent) -> WidgetConfigEditor* { return new SerialMonitorConfigEditor(parent); }});
     registerType({"push_button", QCoreApplication::translate("WidgetRegistry", "Push Button"),
                   [](QWidget* parent) -> DashboardWidget* { return new PushButtonWidget(parent); },
                   [](QWidget* parent) -> WidgetConfigEditor* { return new PushButtonConfigEditor(parent); }});
