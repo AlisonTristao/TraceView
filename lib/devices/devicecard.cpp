@@ -129,11 +129,16 @@ void DeviceCard::paintEvent(QPaintEvent*) {
     painter.setRenderHint(QPainter::Antialiasing);
     const ThemePalette& palette = ThemeManager::instance().currentTheme();
 
-    const QPainterPath outline =
-        partiallyRoundedRect(QRectF(rect()).adjusted(0.5, 0.5, -0.5, -0.5), kContainerCornerRadius, true, true,
-                              true, true);
+    // 2px border width, matching DashboardCell's BorderOverlay (see
+    // dashboard/dashboardcell.cpp) -- the idle and selected outlines below
+    // share one width so selection reads as a color change, not also a
+    // thickness jump.
+    constexpr qreal kBorderWidth = 2.0;
+    const QPainterPath outline = partiallyRoundedRect(
+        QRectF(rect()).adjusted(kBorderWidth / 2.0, kBorderWidth / 2.0, -kBorderWidth / 2.0, -kBorderWidth / 2.0),
+        kContainerCornerRadius, true, true, true, true);
     painter.fillPath(outline, palette.surface);
-    painter.setPen(QPen(palette.border, 1.0));
+    painter.setPen(QPen(palette.border, kBorderWidth));
     painter.setBrush(Qt::NoBrush);
     painter.drawPath(outline);
 
@@ -194,7 +199,7 @@ void DeviceCard::paintEvent(QPaintEvent*) {
     // showing up as a notch where the border looked thinner across the
     // header than below it.
     if (m_selected) {
-        painter.setPen(QPen(palette.accent, 2.0));
+        painter.setPen(QPen(palette.accent, kBorderWidth));
         painter.setBrush(Qt::NoBrush);
         painter.drawPath(outline);
     }

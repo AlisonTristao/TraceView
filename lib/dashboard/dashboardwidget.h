@@ -7,7 +7,6 @@
 #include <QWidget>
 
 #include "dashboard/roundedcorners.h"
-#include "traceview/theme.h"
 
 namespace traceview {
 
@@ -42,13 +41,6 @@ public:
     // anywhere in the selected body start a move-drag in that case, since
     // there's no dedicated header region left to grab.
     virtual bool wantsCellHeader() const { return true; }
-
-    // Color that reaches this widget's outer edge. DashboardCell uses it for
-    // an antialiased, same-color finishing stroke above the binary QWidget
-    // mask, avoiding jagged corner pixels without creating a visible border.
-    virtual QColor cellFillColor(const ThemePalette& palette) const {
-        return property("dashboardControlPanel").toBool() ? palette.surface : palette.background;
-    }
 
     // Called by DashboardCell::setEditMode() on every edit/run transition, so
     // widgets whose look depends on which mode is active can react. Default

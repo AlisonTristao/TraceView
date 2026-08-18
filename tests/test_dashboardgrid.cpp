@@ -26,7 +26,6 @@ public:
     using DashboardWidget::DashboardWidget;
 
     bool wantsCellHeader() const override { return false; }
-    QColor cellFillColor(const traceview::ThemePalette&) const override { return QColor::fromRgb(kContentColor); }
 
 protected:
     void paintEvent(QPaintEvent*) override {
@@ -37,6 +36,16 @@ protected:
 
 int colorDistance(const QColor& a, const QColor& b) {
     return qAbs(a.red() - b.red()) + qAbs(a.green() - b.green()) + qAbs(a.blue() - b.blue());
+}
+
+// palette.border is a deliberately translucent "subtle divider" token (see
+// "Border contrast" in docs/VISUAL_IDENTITY.md) -- it never covers what's
+// beneath it fully opaquely, so a pixel rendered under it must be compared
+// against this composite, not against the raw token color.
+QColor blendOver(const QColor& fg, const QColor& bg) {
+    const qreal a = fg.alphaF();
+    return QColor::fromRgbF(fg.redF() * a + bg.redF() * (1.0 - a), fg.greenF() * a + bg.greenF() * (1.0 - a),
+                             fg.blueF() * a + bg.blueF() * (1.0 - a));
 }
 
 class TestDashboardGrid : public QObject {
@@ -54,7 +63,7 @@ private slots:
     void dragOntoAnotherItemIsNowAllowed();
     void resizeChangesGeometryWithUndo();
     void resizeClampsToMinimumSize();
-    void cellHasNoIdleBorderAndSelectedBorderStaysAboveContent();
+    void cellHasIdleBorderAndSelectedBorderOverlaysIt();
     void squareCornerPatchesDoNotCreateHoles();
     void zOrderActionsReorderStackAndAreUndoable();
     void selectionDoesNotChangePersistedZOrder();
@@ -320,7 +329,7 @@ void TestDashboardGrid::resizeClampsToMinimumSize() {
     QCOMPARE(item.value("height").toDouble(), 5.0 / 40.0); // kMinItemHeight
 }
 
-void TestDashboardGrid::cellHasNoIdleBorderAndSelectedBorderStaysAboveContent() {
+void TestDashboardGrid::cellHasIdleBorderAndSelectedBorderOverlaysIt() {
     ThemeManager& themes = ThemeManager::instance();
     struct RestoreTheme {
         QString id;
@@ -329,8 +338,7 @@ void TestDashboardGrid::cellHasNoIdleBorderAndSelectedBorderStaysAboveContent() 
 
     for (const QString& themeId : {QString("dark"), QString("light")}) {
         themes.setTheme(themeId);
-        const QColor forbiddenIdleBorder = themes.currentTheme().borderStrong;
-        const QColor canvasColor = themes.currentTheme().background;
+        const QColor idleBorder = themes.currentTheme().border;
         const QColor selectedBorder = themes.currentTheme().accent;
         const QColor contentColor = QColor::fromRgb(kContentColor);
 
@@ -344,18 +352,17 @@ void TestDashboardGrid::cellHasNoIdleBorderAndSelectedBorderStaysAboveContent() 
         rendered.fill(Qt::transparent);
         cell.render(&rendered);
 
-        // Idle cells have no outer stroke. In particular, no borderStrong
-        // fragments may survive around the rounded mask as they did before.
+        // Idle cells now always show the palette.border outline (2026-08-18
+        // change, see "Corner radius" in docs/VISUAL_IDENTITY.md) instead of
+        // blending it into the content color. The token itself is
+        // translucent, so the rendered pixel is a composite over the
+        // content, not the raw token color.
         const QColor idleTopEdge = rendered.pixelColor(cell.width() / 2, 0);
-        QVERIFY2(colorDistance(idleTopEdge, contentColor) < colorDistance(idleTopEdge, forbiddenIdleBorder),
-                 qPrintable(QString("theme=%1 idle-edge=%2 forbidden-border=%3 content=%4")
+        const QColor expectedIdleEdge = blendOver(idleBorder, contentColor);
+        QVERIFY2(colorDistance(idleTopEdge, expectedIdleEdge) < 8 && colorDistance(idleTopEdge, contentColor) > 8,
+                 qPrintable(QString("theme=%1 idle-edge=%2 expected=%3 content=%4")
                                 .arg(themeId, idleTopEdge.name(QColor::HexArgb),
-                                     forbiddenIdleBorder.name(QColor::HexArgb), contentColor.name(QColor::HexArgb))));
-        const QColor idleCornerCurve = rendered.pixelColor(4, 4);
-        QVERIFY2(colorDistance(idleCornerCurve, contentColor) < colorDistance(idleCornerCurve, canvasColor),
-                 qPrintable(QString("theme=%1 corner=%2 canvas=%3 content=%4")
-                                .arg(themeId, idleCornerCurve.name(QColor::HexArgb),
-                                     canvasColor.name(QColor::HexArgb), contentColor.name(QColor::HexArgb))));
+                                     expectedIdleEdge.name(QColor::HexArgb), contentColor.name(QColor::HexArgb))));
 
         cell.setEditMode(true);
         cell.setSelected(true);
@@ -363,12 +370,13 @@ void TestDashboardGrid::cellHasNoIdleBorderAndSelectedBorderStaysAboveContent() 
 
         rendered.fill(Qt::transparent);
         cell.render(&rendered);
+        // Selection overlays a distinct accent outline on top of the idle
+        // border rather than replacing an otherwise invisible stroke.
         const QColor selectedTopEdge = rendered.pixelColor(cell.width() / 2, 0);
-        QVERIFY2(colorDistance(selectedTopEdge, selectedBorder) < colorDistance(selectedTopEdge, contentColor),
-                 qPrintable(QString("theme=%1 selected-edge=%2 accent=%3 content=%4")
+        QVERIFY2(colorDistance(selectedTopEdge, selectedBorder) < colorDistance(selectedTopEdge, idleBorder),
+                 qPrintable(QString("theme=%1 selected-edge=%2 accent=%3 idle-border=%4")
                                 .arg(themeId, selectedTopEdge.name(QColor::HexArgb),
-                                     selectedBorder.name(QColor::HexArgb), contentColor.name(QColor::HexArgb))));
-
+                                     selectedBorder.name(QColor::HexArgb), idleBorder.name(QColor::HexArgb))));
     }
 }
 

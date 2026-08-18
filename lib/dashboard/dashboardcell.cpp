@@ -159,8 +159,8 @@ void drawGearIcon(QPainter& painter, const QRect& r, const QColor& color) {
 // the stack, so the same continuous stroke is visible on every edge.
 class BorderOverlay final : public QWidget {
 public:
-    BorderOverlay(QVariantAnimation* selectionAnimation, DashboardWidget* content, QWidget* parent)
-        : QWidget(parent), m_selectionAnimation(selectionAnimation), m_content(content) {
+    BorderOverlay(QVariantAnimation* selectionAnimation, QWidget* parent)
+        : QWidget(parent), m_selectionAnimation(selectionAnimation) {
         setAttribute(Qt::WA_TransparentForMouseEvents, true);
         setAttribute(Qt::WA_NoSystemBackground, true);
         setAttribute(Qt::WA_TranslucentBackground, true);
@@ -178,39 +178,31 @@ protected:
                                   ? m_selectionAnimation->currentValue().toReal()
                                   : 0.0;
         const bool selectionVisible = selectT > 0.0;
-        constexpr qreal kEdgeFinishWidth = 2.0;
+        constexpr qreal kBorderWidth = 2.0;
 
-        const QRectF borderRect = QRectF(rect()).adjusted(kEdgeFinishWidth / 2.0, kEdgeFinishWidth / 2.0,
-                                                           -kEdgeFinishWidth / 2.0, -kEdgeFinishWidth / 2.0);
+        const QRectF borderRect = QRectF(rect()).adjusted(kBorderWidth / 2.0, kBorderWidth / 2.0,
+                                                           -kBorderWidth / 2.0, -kBorderWidth / 2.0);
         const QPainterPath outline =
             partiallyRoundedRect(borderRect, kContainerCornerRadius, true, true, true, true);
-        painter.setPen(QPen(m_content->cellFillColor(palette), kEdgeFinishWidth));
+
+        // Same palette.border convention as DeviceCard's outline (see
+        // devicecard.cpp): always visible, so a cell's extent reads clearly
+        // whether or not it's selected. Selection layers a distinct accent
+        // outline on top instead of this stroke appearing/disappearing.
+        painter.setPen(QPen(palette.border, kBorderWidth));
         painter.setBrush(Qt::NoBrush);
         painter.drawPath(outline);
-
-        // In Layout, a headered cell has surfaceAlt at its top edge and the
-        // content fill below it. Finish that segment in its own color too;
-        // selection uses one accent outline around the entire cell instead.
-        const int headerHeight = property("headerHeight").toInt();
-        if (!selectionVisible && headerHeight > 0) {
-            painter.save();
-            painter.setClipRect(QRect(0, 0, width(), headerHeight));
-            painter.setPen(QPen(palette.surfaceAlt, kEdgeFinishWidth));
-            painter.drawPath(outline);
-            painter.restore();
-        }
 
         if (selectionVisible) {
             QColor selectionColor = property("dragInvalid").toBool() ? palette.danger : palette.accent;
             selectionColor.setAlphaF(selectT);
-            painter.setPen(QPen(selectionColor, kEdgeFinishWidth));
+            painter.setPen(QPen(selectionColor, kBorderWidth));
             painter.drawPath(outline);
         }
     }
 
 private:
     QVariantAnimation* m_selectionAnimation;
-    DashboardWidget* m_content;
 };
 } // namespace
 
@@ -222,7 +214,7 @@ DashboardCell::DashboardCell(const QString& itemId, const QString& typeId, const
     // included) shows through its four corner notches.
     setProperty("dashboardCell", true);
     m_content->setParent(this);
-    m_borderOverlay = new BorderOverlay(&m_selectionAnim, m_content, this);
+    m_borderOverlay = new BorderOverlay(&m_selectionAnim, this);
 
     setMouseTracking(true);
     layoutChildren();
@@ -429,7 +421,6 @@ void DashboardCell::layoutChildren() {
     const int headerH = headerHeight();
     m_content->setGeometry(0, headerH, width(), height() - headerH);
     updateContentMask();
-    m_borderOverlay->setProperty("headerHeight", headerH);
     m_borderOverlay->setGeometry(rect());
     m_borderOverlay->raise();
 }

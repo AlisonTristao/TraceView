@@ -22,16 +22,18 @@ needs to deviate, update this file in the same change.
   `DASHBOARD.md`) have to clip to the *same* rounded path, in both edit and
   locked mode, or a straight-cornered fill will show through the rounded
   outline. Verify in both themes (View > Theme) before calling a widget done.
-- Normal `DashboardCell`s have no outer stroke. The accent outline shown only
-  for selection is painted by a transparent `BorderOverlay` child above the
-  content widget. A parent paints before its children in Qt; painting that
-  outline directly in `DashboardCell::paintEvent()` lets the content cover its
-  straight runs while a few high-contrast pixels survive around the rounded
-  corners. Do not move the selection outline back under the content.
-- "No outer stroke" is visual: `BorderOverlay` still paints a 2px finishing
-  stroke in the exact fill color (`surface`, `background`, or `surfaceAlt` for
-  the header). This same-color pass hides the binary `QWidget::setMask()` edge
-  without reading as a border; removing it brings the corner pixels back.
+- `DashboardCell`s always show a 2px `palette.border` outline (same
+  convention as `DeviceCard`'s outline, `devicecard.cpp`) — changed
+  2026-08-18 from the earlier "idle cells have no outer stroke" rule, so a
+  cell's extent reads clearly even when nothing is selected. Selection layers
+  a distinct `palette.accent` (or `palette.danger` while an invalid drag is in
+  progress) outline on top of that same stroke instead of the stroke
+  appearing/disappearing. Both passes are painted by a transparent
+  `BorderOverlay` child above the content widget. A parent paints before its
+  children in Qt; painting the outline directly in `DashboardCell::paintEvent()`
+  would let the content cover its straight runs while a few high-contrast
+  pixels survive around the rounded corners. Do not move the outline back
+  under the content.
 - `partiallyRoundedRect()` uses `Qt::WindingFill` when it welds square
   corner patches onto the rounded base. The default odd/even rule subtracts
   their overlap and leaves a visible radius-sized square hole under headers.
