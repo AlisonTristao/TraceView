@@ -5,6 +5,7 @@
 #include <QUuid>
 
 #include "devicecard.h"
+#include "devicecommands.h"
 #include "deviceconfigdialog.h"
 
 namespace traceview {
@@ -18,29 +19,60 @@ constexpr int kMinGutter = 8;
 constexpr int kMaxGutter = 32;
 } // namespace
 
-DevicesGrid::DevicesGrid(QWidget* parent) : QWidget(parent) {}
+DevicesGrid::DevicesGrid(QWidget* parent) : QWidget(parent), m_undoStack(new QUndoStack(this)) {}
 
 QString DevicesGrid::addDevice(const Device& device) {
     Device toAdd = device;
     if (toAdd.id.isEmpty()) {
         toAdd.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
     }
-    m_devices.append(toAdd);
-
-    auto* card = new DeviceCard(this);
-    card->setDevice(toAdd);
-    connect(card, &DeviceCard::configRequested, this, &DevicesGrid::handleConfigRequested);
-    connect(card, &DeviceCard::selectRequested, this, &DevicesGrid::handleCardSelectRequested);
-    connect(card, &DeviceCard::connectToggleRequested, this, &DevicesGrid::connectToggleRequested);
-    card->show();
-    m_cards.append(card);
-
-    relayout();
-    emit deviceAdded(toAdd);
+    m_undoStack->push(new AddDeviceCommand(this, toAdd, m_devices.size()));
     return toAdd.id;
 }
 
 void DevicesGrid::removeDevice(const QString& id) {
+    const int idx = indexOfDevice(id);
+    if (idx < 0) {
+        return;
+    }
+    m_undoStack->push(new RemoveDeviceCommand(this, m_devices.at(idx), idx));
+}
+
+void DevicesGrid::updateDevice(const Device& device) {
+    const int idx = indexOfDevice(device.id);
+    if (idx < 0) {
+        return;
+    }
+    m_undoStack->push(new UpdateDeviceCommand(this, m_devices.at(idx), device));
+}
+
+void DevicesGrid::setDeviceConnected(const QString& id, bool connected) {
+    const int idx = indexOfDevice(id);
+    if (idx < 0 || m_devices[idx].connected == connected) {
+        return;
+    }
+    m_devices[idx].connected = connected;
+    m_cards[idx]->setDevice(m_devices[idx]);
+    emit deviceUpdated(m_devices[idx]);
+}
+
+void DevicesGrid::applyInsertDevice(const Device& device, int index) {
+    const int clampedIndex = qBound(0, index, m_devices.size());
+    m_devices.insert(clampedIndex, device);
+
+    auto* card = new DeviceCard(this);
+    card->setDevice(device);
+    connect(card, &DeviceCard::configRequested, this, &DevicesGrid::handleConfigRequested);
+    connect(card, &DeviceCard::selectRequested, this, &DevicesGrid::handleCardSelectRequested);
+    connect(card, &DeviceCard::connectToggleRequested, this, &DevicesGrid::connectToggleRequested);
+    card->show();
+    m_cards.insert(clampedIndex, card);
+
+    relayout();
+    emit deviceAdded(device);
+}
+
+void DevicesGrid::applyRemoveDeviceById(const QString& id) {
     const int idx = indexOfDevice(id);
     if (idx < 0) {
         return;
@@ -59,7 +91,7 @@ void DevicesGrid::removeDevice(const QString& id) {
     emit deviceRemoved(id);
 }
 
-void DevicesGrid::updateDevice(const Device& device) {
+void DevicesGrid::applyUpdateDevice(const Device& device) {
     const int idx = indexOfDevice(device.id);
     if (idx < 0) {
         return;
@@ -163,8 +195,12 @@ QJsonObject DevicesGrid::toJson() const {
 }
 
 void DevicesGrid::fromJson(const QJsonObject& object) {
+    // Bulk load, not a user edit -- goes straight through the apply*()
+    // mutators (same reasoning as DashboardGrid::fromJson()) so loading a
+    // project doesn't fill undoStack() with N add/remove steps that would
+    // then need clearing right after.
     while (!m_devices.isEmpty()) {
-        removeDevice(m_devices.first().id);
+        applyRemoveDeviceById(m_devices.first().id);
     }
 
     const QJsonArray devices = object.value("devices").toArray();
@@ -174,7 +210,7 @@ void DevicesGrid::fromJson(const QJsonObject& object) {
         if (!ok) {
             continue;
         }
-        addDevice(device);
+        applyInsertDevice(device, m_devices.size());
     }
 }
 

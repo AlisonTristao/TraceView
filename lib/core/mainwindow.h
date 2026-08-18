@@ -13,6 +13,7 @@ class QLabel;
 class QMenu;
 class QStackedWidget;
 class QToolButton;
+class QUndoGroup;
 
 namespace traceview {
 
@@ -62,6 +63,10 @@ private:
     // refresh sequence onNewProject()/openRecentFile() use. No-op if `id`
     // is already active.
     void switchToWorkspace(const QString& id);
+    // Ctrl+Tab/Ctrl+Shift+Tab (direction +1/-1): moves to the next/previous
+    // workspace in WorkspaceManager's own list order, wrapping around at
+    // either end. No-op with fewer than 2 workspaces.
+    void cycleWorkspace(int direction);
     void onWorkspaceSelected(const QString& id);
     void onWorkspaceDeleteRequested(const QString& id);
     void onNewWorkspaceRequested();
@@ -179,6 +184,11 @@ private:
     QAction* m_ungroupAction = nullptr;
     QAction* m_undoAction = nullptr;
     QAction* m_redoAction = nullptr;
+    // Tracks which of m_dashboardGrid's/m_devicesGrid's own QUndoStack is
+    // "active" -- m_undoAction/m_redoAction are created from this group
+    // (not from either stack directly) so Ctrl+Z/Ctrl+Y always act on
+    // whichever tab is actually showing, switched in onRibbonTabChanged().
+    QUndoGroup* m_undoGroup = nullptr;
     QMenu* m_recentFilesMenu = nullptr;
     // WA_DeleteOnClose'd (see debugchartswindow.cpp) -- QPointer so this
     // resets to null on its own once the user closes it, instead of leaving

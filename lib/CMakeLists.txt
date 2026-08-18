@@ -222,6 +222,8 @@ add_library(traceview_devices STATIC
     devices/device.h
     devices/devicecard.cpp
     devices/devicecard.h
+    devices/devicecommands.cpp
+    devices/devicecommands.h
     devices/devicesgrid.cpp
     devices/devicesgrid.h
     devices/deviceconfigdialog.cpp

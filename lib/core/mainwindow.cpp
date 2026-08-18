@@ -24,6 +24,7 @@
 #include <QStatusBar>
 #include <QStringList>
 #include <QToolButton>
+#include <QUndoGroup>
 #include <QVBoxLayout>
 
 #include "aboutdialog.h"
@@ -166,6 +167,7 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     // fraction-of-canvas geometry, so a plain QStackedWidget (real layout
     // space, not a float) is fine here.
     m_devicesGrid = new DevicesGrid(this);
+    m_undoGroup->addStack(m_devicesGrid->undoStack());
     connect(m_removeDeviceAction, &QAction::triggered, m_devicesGrid, &DevicesGrid::removeSelected);
     connect(m_devicesGrid, &DevicesGrid::selectionChanged, this, &MainWindow::updateDeviceSelectionActions);
     // Keeps m_deviceConnections (one DeviceConnection per Device -- see
@@ -533,12 +535,22 @@ Ribbon* MainWindow::buildRibbon() {
     m_ungroupAction->setEnabled(false);
     connect(m_ungroupAction, &QAction::triggered, m_dashboardGrid, &DashboardGrid::ungroupSelected);
 
-    // createUndoAction()/createRedoAction() wire up triggered/enabled state
-    // (and a dynamic "Undo <command text>" label) directly from the stack —
-    // no manual canUndo()/canRedo() syncing needed.
-    m_undoAction = m_dashboardGrid->undoStack()->createUndoAction(this, tr("Undo"));
+    // Two independent QUndoStacks (dashboard widgets, devices) share one
+    // Undo/Redo pair via QUndoGroup: m_undoGroup tracks which stack is
+    // "active" (flipped in onRibbonTabChanged() to match the visible tab),
+    // and createUndoAction()/createRedoAction() on the *group* wire up
+    // triggered/enabled state (and a dynamic "Undo <command text>" label)
+    // from whichever stack that is -- no manual canUndo()/canRedo() syncing,
+    // and Ctrl+Z always acts on what's actually on screen instead of always
+    // hitting the dashboard regardless of tab. m_devicesGrid doesn't exist
+    // yet at this point (built after buildRibbon() returns, see the
+    // constructor) -- its stack joins the group there, same reasoning as
+    // m_removeDeviceAction's own connect() right after that construction.
+    m_undoGroup = new QUndoGroup(this);
+    m_undoGroup->addStack(m_dashboardGrid->undoStack());
+    m_undoAction = m_undoGroup->createUndoAction(this, tr("Undo"));
     m_undoAction->setShortcut(QKeySequence::Undo);
-    m_redoAction = m_dashboardGrid->undoStack()->createRedoAction(this, tr("Redo"));
+    m_redoAction = m_undoGroup->createRedoAction(this, tr("Redo"));
     m_redoAction->setShortcut(QKeySequence::Redo);
 
     connect(m_dashboardGrid, &DashboardGrid::selectionChanged, this, &MainWindow::onSelectionChanged);
@@ -629,6 +641,21 @@ Ribbon* MainWindow::buildRibbon() {
         }
     });
 
+    // Window-level, same reasoning as fullscreen/exitFullscreen above --
+    // browser/editor-style tab cycling (Ctrl+Tab forward, Ctrl+Shift+Tab
+    // back) through WorkspaceManager's own list order. m_workspaceSwitcher
+    // doesn't exist yet at this point (built last in the constructor) but
+    // these only fire on a later keypress, well after construction finishes.
+    auto* nextWorkspaceAction = new QAction(this);
+    nextWorkspaceAction->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_Tab));
+    addAction(nextWorkspaceAction);
+    connect(nextWorkspaceAction, &QAction::triggered, this, [this]() { cycleWorkspace(1); });
+
+    auto* previousWorkspaceAction = new QAction(this);
+    previousWorkspaceAction->setShortcut(QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_Tab));
+    addAction(previousWorkspaceAction);
+    connect(previousWorkspaceAction, &QAction::triggered, this, [this]() { cycleWorkspace(-1); });
+
     updateRibbonIcons();
     connect(&ThemeManager::instance(), &ThemeManager::themeChanged, this,
             [this](const ThemePalette&) { updateRibbonIcons(); });
@@ -715,6 +742,25 @@ void MainWindow::switchToWorkspace(const QString& id) {
     refreshPropertiesPanel();
     refreshLayersPanel();
     refreshWorkspaceSwitcher();
+}
+
+void MainWindow::cycleWorkspace(int direction) {
+    const QVector<Workspace>& workspaces = WorkspaceManager::instance().workspaces();
+    if (workspaces.size() < 2) {
+        return;
+    }
+
+    const QString activeId = WorkspaceManager::instance().activeId();
+    int index = 0;
+    for (int i = 0; i < workspaces.size(); ++i) {
+        if (workspaces[i].id == activeId) {
+            index = i;
+            break;
+        }
+    }
+
+    const int nextIndex = (index + direction + workspaces.size()) % workspaces.size();
+    switchToWorkspace(workspaces[nextIndex].id);
 }
 
 void MainWindow::onWorkspaceSelected(const QString& id) {
@@ -841,6 +887,11 @@ void MainWindow::onRibbonTabChanged(int index) {
     m_devicesTabActive = index == m_devicesTabIndex;
     m_dashboardGrid->setEditMode(m_configureTabActive);
     m_addWidgetAction->setEnabled(m_configureTabActive);
+    // Ctrl+Z/Ctrl+Y (m_undoAction/m_redoAction) are created from m_undoGroup,
+    // not either stack directly -- flip which one is "active" here so they
+    // always undo/redo whatever the visible tab actually shows. Run and
+    // Layout both display the dashboard, so both fall through to its stack.
+    m_undoGroup->setActiveStack(m_devicesTabActive ? m_devicesGrid->undoStack() : m_dashboardGrid->undoStack());
     updatePanelVisibility();
     updateSelectionActions();
     updateDeviceSelectionActions();
@@ -1056,16 +1107,13 @@ void MainWindow::onDeviceConnectionStateChanged(const QString& deviceId, bool co
     m_dashboardGrid->setDeviceConnected(deviceId, connected);
     refreshDeviceStatusLabel();
 
-    const QVector<Device> devices = m_devicesGrid->devices();
-    for (const Device& device : devices) {
-        if (device.id != deviceId || device.connected == connected) {
-            continue;
-        }
-        Device updated = device;
-        updated.connected = connected;
-        m_devicesGrid->updateDevice(updated);
-        break;
-    }
+    // setDeviceConnected(), not updateDevice() -- this fires from live
+    // connection state (including DeviceConnection's own ambient retry
+    // loop), not a user edit, so it must not land on m_devicesGrid's undo
+    // stack (a connection blinking would otherwise show up as an undoable
+    // "Edit Device" step, and Ctrl+Z on the Devices tab would undo a status
+    // dot instead of an actual edit).
+    m_devicesGrid->setDeviceConnected(deviceId, connected);
 }
 
 void MainWindow::onPanelTypeChangeRequested(const QString& typeId) {
@@ -1102,6 +1150,7 @@ void MainWindow::onNewProject() {
     m_dashboardGrid->fromJson(QJsonObject());
     m_dashboardGrid->undoStack()->clear();
     m_devicesGrid->fromJson(QJsonObject());
+    m_devicesGrid->undoStack()->clear();
     refreshPropertiesPanel();
     refreshLayersPanel();
     refreshWorkspaceSwitcher();
@@ -1173,6 +1222,7 @@ void MainWindow::openRecentFile(const QString& path) {
     // Absent in projects saved before device persistence existed --
     // fromJson(QJsonObject()) on an empty section just clears the list.
     m_devicesGrid->fromJson(ProjectStore::instance().section("devices"));
+    m_devicesGrid->undoStack()->clear();
     refreshPropertiesPanel();
     refreshLayersPanel();
     refreshWorkspaceSwitcher();
