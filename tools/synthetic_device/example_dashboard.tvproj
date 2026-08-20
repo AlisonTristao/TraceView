@@ -6,10 +6,7 @@
                 "name": "Solar Panel (synthetic)",
                 "commType": 0,
                 "description": "tools/synthetic_device --profile solar_panel (run_example.bat)",
-                "btpVersion": "",
-                "chipType": "",
-                "btpId": "",
-                "portName": "COM11",
+                "portName": "COM9",
                 "baudRate": 921600,
                 "lineTerminator": 1
             },
@@ -18,9 +15,6 @@
                 "name": "Weather Station (synthetic)",
                 "commType": 0,
                 "description": "tools/synthetic_device --profile weather_station (run_example.bat)",
-                "btpVersion": "",
-                "chipType": "",
-                "btpId": "",
                 "portName": "COM13",
                 "baudRate": 921600,
                 "lineTerminator": 1

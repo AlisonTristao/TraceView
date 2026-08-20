@@ -11,6 +11,7 @@ class TelemetryFieldRouter;
 class BtpHandshake;
 class ManifestClient;
 class SubscriptionManager;
+class ClockSync;
 struct BtpFrame;
 
 // Backend implementation backed by the BTP v1 client stack: BtpSession
@@ -53,6 +54,7 @@ private:
     BtpHandshake* m_btpHandshake;
     ManifestClient* m_manifestClient;
     SubscriptionManager* m_subscriptionManager;
+    ClockSync* m_clockSync;
 
     // Minimal, self-contained BTP identity for TERMINAL_IN frames only --
     // there is no HELLO/MANIFEST exchange for it to learn one from (moved

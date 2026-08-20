@@ -8,6 +8,7 @@
 #include "protocol/btpframe.h"
 #include "protocol/btphandshake.h"
 #include "protocol/btpsession.h"
+#include "protocol/clocksync.h"
 #include "protocol/manifestclient.h"
 #include "protocol/protocolrouter.h"
 #include "protocol/subscriptionmanager.h"
@@ -55,6 +56,11 @@ BtpBackend::BtpBackend(QObject* parent)
     m_telemetryFieldRouter = new TelemetryFieldRouter(m_telemetryCatalog, this);
     m_btpHandshake = new BtpHandshake(m_btpSession, m_protocolRouter, this);
     m_manifestClient = new ManifestClient(m_btpSession, m_protocolRouter, m_telemetryCatalog, this);
+    // No more boot-time "informe data/hora" prompt to wait on (StartupConfig,
+    // removed): once a session is up, this asks the dongle's own clock and
+    // corrects it over the same COMMAND_REQUEST channel a human's "dongle
+    // set_clock" shell command already used.
+    m_clockSync = new ClockSync(m_btpSession, m_protocolRouter, this);
     // topico 17: every open chart/gauge is a *consumer* of a topic; this is
     // what turns all of them into a single SUBSCRIBE per (source, topic) at
     // the highest rate any of them asked for, and into an UNSUBSCRIBE only
@@ -67,14 +73,22 @@ BtpBackend::BtpBackend(QObject* parent)
     // whose bytesToWrite() is already connected above.
     connect(m_btpHandshake, &BtpHandshake::bytesToWrite, this, &Backend::bytesToWrite);
 
-    connect(m_btpHandshake, &BtpHandshake::sessionEstablished, this, [this](quint32 peerConfigRevision) {
-        emit statusMessage(tr("BTP session established (HELLO_RESULT=SUCCESS)"), 5000);
-        m_manifestClient->onSessionEstablished(peerConfigRevision);
-        m_subscriptionManager->onSessionEstablished();
-    });
+    connect(m_btpHandshake, &BtpHandshake::sessionEstablished, this,
+            [this](quint32 peerSourceId, quint32 peerBootId, quint32 peerConfigRevision, quint8 selectedVersion) {
+                emit statusMessage(tr("BTP session established (HELLO_RESULT=SUCCESS)"), 5000);
+                m_manifestClient->onSessionEstablished(peerConfigRevision);
+                m_subscriptionManager->onSessionEstablished();
+                m_clockSync->onSessionEstablished(peerSourceId, peerBootId);
+                // Devices tab display only -- peerSourceId is the dongle's own
+                // BTP identity (its HELLO_RESULT envelope's source_id), the
+                // closest thing to a "device ID" this protocol reports today.
+                emit deviceIdentified(tr("BTP/%1").arg(selectedVersion),
+                                      QString("0x%1").arg(peerSourceId, 8, 16, QChar('0')).toUpper());
+            });
     connect(m_btpHandshake, &BtpHandshake::sessionFailed, this, [this](const QString& reason) {
         emit statusMessage(tr("BTP handshake failed: %1").arg(reason), 8000);
     });
+    connect(m_clockSync, &ClockSync::statusMessage, this, &Backend::statusMessage);
     connect(m_btpSession, &BtpSession::frameReceived, m_protocolRouter, &ProtocolRouter::onFrameReceived);
     connect(m_protocolRouter, &ProtocolRouter::telemetrySampleReceived, m_telemetryFieldRouter,
             &TelemetryFieldRouter::onTelemetrySample);

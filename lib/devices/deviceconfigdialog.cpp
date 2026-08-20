@@ -82,15 +82,19 @@ DeviceConfigDialog::DeviceConfigDialog(const Device& initial, QWidget* parent)
     connectionLayout->addRow(tr("Line terminator:"), m_lineTerminatorCombo);
     connectionLayout->addRow(tr("Status:"), m_statusLabel);
 
-    // Visually separated so it's an obvious drop-in point once real BTP
-    // manifest data exists -- see the read-only note on the member fields.
+    // Read-only: this is the last HELLO_RESULT the device sent, not
+    // something a user should be able to type over (see Device::btpVersion/
+    // btpId's own comments in devices/device.h). Empty until a session has
+    // actually been established at least once.
     auto* reportedGroup = new QGroupBox(tr("Reported by device"), this);
     m_btpVersionEdit = new QLineEdit(m_device.btpVersion, reportedGroup);
-    m_chipTypeEdit = new QLineEdit(m_device.chipType, reportedGroup);
+    m_btpVersionEdit->setReadOnly(true);
+    m_btpVersionEdit->setPlaceholderText(tr("(not connected yet)"));
     m_btpIdEdit = new QLineEdit(m_device.btpId, reportedGroup);
+    m_btpIdEdit->setReadOnly(true);
+    m_btpIdEdit->setPlaceholderText(tr("(not connected yet)"));
     auto* reportedLayout = new QFormLayout(reportedGroup);
     reportedLayout->addRow(tr("BTP version:"), m_btpVersionEdit);
-    reportedLayout->addRow(tr("Chip type:"), m_chipTypeEdit);
     reportedLayout->addRow(tr("BTP ID:"), m_btpIdEdit);
 
     auto* buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, this);
@@ -112,9 +116,8 @@ Device DeviceConfigDialog::result() const {
     device.portName = m_portCombo->currentText();
     device.baudRate = m_baudCombo->currentText().toInt();
     device.lineTerminator = m_lineTerminatorCombo->currentData().toInt();
-    device.btpVersion = m_btpVersionEdit->text();
-    device.chipType = m_chipTypeEdit->text();
-    device.btpId = m_btpIdEdit->text();
+    // btpVersion/btpId deliberately left as whatever m_device already held --
+    // "Reported by device" is read-only (see the fields' own declarations).
     return device;
 }
 

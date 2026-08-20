@@ -65,6 +65,13 @@ public:
     // loop), which is not a user edit. No-op if id is unknown or the flag is
     // already what's stored.
     void setDeviceConnected(const QString& id, bool connected);
+    // Mirrors a live DeviceConnection's Backend::deviceIdentified into
+    // device.btpVersion/btpId, same non-undoable treatment as
+    // setDeviceConnected() above and for the same reason: this is the
+    // handshake reporting what the device actually is, not a user edit.
+    // Called with empty strings when the connection drops, so a stale
+    // identity from a previous session never lingers in the UI.
+    void setDeviceIdentity(const QString& id, const QString& btpVersion, const QString& btpId);
 
     QVector<Device> devices() const { return m_devices; }
 

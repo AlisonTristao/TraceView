@@ -10,7 +10,13 @@ REM synthetic_device occupies one end of each pair (SOLAR_PORT/WEATHER_PORT
 REM below); point TraceView's Devices tab at the OTHER end of each pair
 REM (COM11 for the solar panel, COM13 for the weather station by default).
 REM
-REM Edit the two SET lines below if your com0com ports differ.
+REM Edit the two SET lines below if your com0com ports differ -- and if you
+REM do, also update the matching "portName" values in example_dashboard.tvproj
+REM (the OTHER end of each pair), or TraceView will silently open some
+REM unrelated port: the connection dot still turns green (the port itself
+REM opened fine) but nothing ever completes, since bytes never reach either
+REM synthetic_device process. There is no error for this mismatch -- check
+REM both files agree before assuming something else is broken.
 
 setlocal
 set SOLAR_PORT=COM10

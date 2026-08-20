@@ -49,12 +49,25 @@ signals:
     // line; the HELLO frame itself goes out through BtpSession::sendFrame(),
     // whose own bytesToWrite() is already wired to the transport.
     void bytesToWrite(const QByteArray& data);
+    // peerSourceId/peerBootId are the connected dongle's own identity, taken
+    // straight from the HELLO_RESULT frame's own header (every frame the
+    // dongle originates is tagged with its own BtpTransport source_id/
+    // boot_id, HELLO_RESULT included) -- ClockSync needs this as
+    // COMMAND_REQUEST's target_source_id/target_boot_id, the same pair
+    // SerialMux::handleCommandRequest on the firmware side checks a request
+    // against.
     // peerConfigRevision is HELLO_RESULT's own config_revision field
     // (COMMANDS_AND_ACTIONS.md section 5, offset 48) -- the dongle's
     // manifest-catalog revision, topico 16 PASSO 5/6. ManifestClient uses it
     // to skip a redundant full target=0 re-enumeration when reconnecting to
     // the same dongle catalog it already has cached.
-    void sessionEstablished(quint32 peerConfigRevision);
+    // selectedVersion is HELLO_RESULT's own field (offset 13) -- the BTP
+    // envelope version this session actually negotiated (COMMANDS_AND_ACTIONS.md
+    // section 5: "a maior versao comum"). BtpBackend surfaces it as the
+    // Device's reported btpVersion (devices/deviceconfigdialog.h) instead of
+    // that field staying user-editable.
+    void sessionEstablished(quint32 peerSourceId, quint32 peerBootId, quint32 peerConfigRevision,
+                             quint8 selectedVersion);
     void sessionFailed(const QString& reason);
 
 private slots:

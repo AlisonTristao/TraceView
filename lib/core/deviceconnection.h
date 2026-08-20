@@ -63,6 +63,9 @@ signals:
     // Mirrors SerialManager::connectionStateChanged so callers don't have to
     // reach through serialManager() themselves.
     void connectionStateChanged(bool connected);
+    // Mirrors Backend::deviceIdentified so callers don't have to reach
+    // through backend() themselves.
+    void deviceIdentified(const QString& btpVersion, const QString& btpId);
 
 private:
     void attemptReconnect();

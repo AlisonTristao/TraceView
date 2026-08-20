@@ -84,6 +84,11 @@ signals:
     void subscriptionsChanged();
     // Per-topic metrics were updated (topicStatuses() has fresh data).
     void statusReceived();
+    // The connected device just identified itself (session established).
+    // btpVersion/btpId are what the Devices tab's "Reported by device"
+    // section shows -- live-mirrored the same way `Device::connected` is, not
+    // user-editable and not persisted (see devices/deviceconfigdialog.h).
+    void deviceIdentified(const QString& btpVersion, const QString& btpId);
 };
 
 }  // namespace traceview

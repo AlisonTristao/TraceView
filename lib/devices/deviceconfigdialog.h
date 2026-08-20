@@ -17,8 +17,10 @@ namespace traceview {
 // (port/baud/line terminator -- the config DeviceConnection, core/
 // deviceconnection.h, actually opens with, moved here now that each device
 // owns its own connection instead of sharing the old single Run tab bar)
-// plus a read-only status line, and a "Reported by device" section
-// (btpVersion/chipType/btpId). Constructed with the Device to edit, read
+// plus a read-only status line, and a read-only "Reported by device" section
+// (btpVersion/btpId, straight from the last HELLO_RESULT -- see
+// protocol/btphandshake.h's sessionEstablished() and Device::btpVersion/
+// btpId's own comments). Constructed with the Device to edit, read
 // back via result() after exec() returns Accepted -- follows
 // AboutDialog/DonateDialog's construction convention (see
 // core/aboutdialog.h) -- Q_OBJECT so tr() resolves this class as its own
@@ -31,7 +33,10 @@ public:
 
     // Valid once exec() == QDialog::Accepted: the initial Device with every
     // editable field replaced by the dialog's current contents. id/commType
-    // are carried over unchanged -- this dialog never reassigns either.
+    // are carried over unchanged -- this dialog never reassigns either --
+    // and so are btpVersion/btpId: "Reported by device" is read-only here,
+    // so whatever the initial Device already held (last HELLO_RESULT, or
+    // empty) passes straight through.
     Device result() const;
 
     // Repopulates the Port combo from a fresh OS enumeration, preserving
@@ -63,9 +68,9 @@ private:
     QComboBox* m_lineTerminatorCombo = nullptr;
     QLabel* m_statusLabel = nullptr;
 
-    // These three become read-only once wired to a real BTP device manifest.
+    // Read-only: populated from m_device.btpVersion/btpId (the last
+    // HELLO_RESULT), never written back to the device in result().
     QLineEdit* m_btpVersionEdit = nullptr;
-    QLineEdit* m_chipTypeEdit = nullptr;
     QLineEdit* m_btpIdEdit = nullptr;
 };
 

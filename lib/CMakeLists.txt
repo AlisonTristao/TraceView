@@ -114,6 +114,8 @@ add_library(traceview_protocol STATIC
     protocol/btphandshake.h
     protocol/btpsession.cpp
     protocol/btpsession.h
+    protocol/clocksync.cpp
+    protocol/clocksync.h
     protocol/manifestclient.cpp
     protocol/manifestclient.h
     protocol/packedledecoder.cpp

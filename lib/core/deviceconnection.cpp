@@ -31,6 +31,7 @@ DeviceConnection::DeviceConnection(CommType commType, QObject* parent)
             &Backend::onTransportConnectionChanged);
     connect(m_serialManager, &SerialManager::connectionStateChanged, this,
             &DeviceConnection::connectionStateChanged);
+    connect(m_backend, &Backend::deviceIdentified, this, &DeviceConnection::deviceIdentified);
 
     m_retryTimer = new QTimer(this);
     m_retryTimer->setInterval(kRetryIntervalMs);

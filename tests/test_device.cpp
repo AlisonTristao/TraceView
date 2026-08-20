@@ -13,21 +13,20 @@ class TestDevice : public QObject {
     Q_OBJECT
 
 private slots:
-    void roundTripsAllFieldsExceptConnected();
+    void roundTripsAllFieldsExceptLiveState();
     void fromJsonRejectsMissingId();
     void fromJsonDefaultsMissingOptionalFields();
 };
 
-void TestDevice::roundTripsAllFieldsExceptConnected() {
+void TestDevice::roundTripsAllFieldsExceptLiveState() {
     Device device;
     device.id = "abc-123";
     device.name = "Bench dongle";
     device.connected = true; // deliberately not expected to round-trip
     device.commType = CommType::Btp;
     device.description = "Left side of the desk";
-    device.btpVersion = "1";
-    device.chipType = "esp32";
-    device.btpId = "deadbeef";
+    device.btpVersion = "BTP/1"; // deliberately not expected to round-trip
+    device.btpId = "0xDEADBEEF"; // deliberately not expected to round-trip
     device.portName = "COM7";
     device.baudRate = 460800;
     device.lineTerminator = 3;
@@ -43,9 +42,11 @@ void TestDevice::roundTripsAllFieldsExceptConnected() {
     QVERIFY(!roundTripped.connected);
     QCOMPARE(roundTripped.commType, device.commType);
     QCOMPARE(roundTripped.description, device.description);
-    QCOMPARE(roundTripped.btpVersion, device.btpVersion);
-    QCOMPARE(roundTripped.chipType, device.chipType);
-    QCOMPARE(roundTripped.btpId, device.btpId);
+    // btpVersion/btpId are live session state too (what the last
+    // HELLO_RESULT reported) -- a freshly loaded device hasn't handshaked
+    // yet, so both stay empty until DeviceConnection re-identifies it.
+    QVERIFY(roundTripped.btpVersion.isEmpty());
+    QVERIFY(roundTripped.btpId.isEmpty());
     QCOMPARE(roundTripped.portName, device.portName);
     QCOMPARE(roundTripped.baudRate, device.baudRate);
     QCOMPARE(roundTripped.lineTerminator, device.lineTerminator);

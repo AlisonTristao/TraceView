@@ -1,8 +1,10 @@
 #include "syntheticdevicesession.h"
 
+#include <QDateTime>
 #include <QRandomGenerator>
 #include <QRegularExpression>
 #include <QRegularExpressionMatch>
+#include <QTimeZone>
 #include <QtMath>
 
 #include <btp/codec.hpp>
@@ -37,6 +39,17 @@ constexpr quint16 kControlUnsubscribeResult = 0x0008;
 constexpr quint16 kControlSessionClose = 0x000A;
 constexpr quint16 kControlSessionCloseResult = 0x000B;
 
+// COMMANDS_AND_ACTIONS.md section 4 -- object_id values within
+// MessageType::Command, and the one action_id/action_version every real
+// firmware executor defines for "run this one shell line and capture its
+// output" (mirrors bally_dongle's BtpTransport::btp_command; each side of the
+// wire defines its own copy of these normatively-fixed constants).
+constexpr quint16 kCommandRequestObjectId = 0x0001;
+constexpr quint16 kCommandResultObjectId = 0x0002;
+constexpr quint16 kShellActionId = 0x0001;
+constexpr quint16 kShellActionVersion = 0x0001;
+constexpr int kCommandRequestPrefixSize = 20;
+
 // Common result/error codes actually used below (COMMANDS_AND_ACTIONS.md
 // section 2) -- only the subset this device ever emits.
 constexpr quint8 kStatusSuccess = 0x00;
@@ -45,6 +58,7 @@ constexpr quint8 kStatusUnsupported = 0x05;
 constexpr quint16 kErrorNone = 0x0000;
 constexpr quint16 kErrorMalformedPayload = 0x0001;
 constexpr quint16 kErrorUnknownObject = 0x0002;
+constexpr quint16 kErrorInvalidArgument = 0x0003;
 constexpr quint16 kErrorUnsupportedVersion = 0x0008;
 constexpr quint16 kErrorStaleTargetBoot = 0x0009;
 constexpr quint16 kErrorNotFound = 0x000B;
@@ -170,6 +184,7 @@ SyntheticDeviceSession::SyntheticDeviceSession(quint32 sourceId, QString sourceN
     connect(m_session, &BtpSession::frameReceived, m_router, &ProtocolRouter::onFrameReceived);
     connect(m_session, &BtpSession::bytesToWrite, this, &SyntheticDeviceSession::bytesToWrite);
     connect(m_router, &ProtocolRouter::controlFrameReceived, this, &SyntheticDeviceSession::onControlFrameReceived);
+    connect(m_router, &ProtocolRouter::commandFrameReceived, this, &SyntheticDeviceSession::onCommandFrameReceived);
 
     m_helloTimer.setSingleShot(true);
     connect(&m_helloTimer, &QTimer::timeout, this, &SyntheticDeviceSession::onHelloTimeout);
@@ -290,6 +305,117 @@ void SyntheticDeviceSession::onControlFrameReceived(const BtpFrame& frame) {
         default:
             break;  // HELLO resent, STATUS, or anything else: nothing to do
     }
+}
+
+void SyntheticDeviceSession::onCommandFrameReceived(const BtpFrame& frame) {
+    if (m_phase != Phase::Established || frame.objectId != kCommandRequestObjectId) {
+        return;
+    }
+    restartWatchdog();
+    handleCommandRequest(frame);
+}
+
+// Answers only the "dongle clock"/"dongle set_clock ..." shell one-liners
+// ClockSync depends on -- see this class's header comment. Envelope
+// validation (target/flags/reserved/parameter-size checks) mirrors
+// bally_dongle's BtpTransport::btp_command::parse_request exactly, so a
+// malformed or misaddressed request is rejected/ignored the same way real
+// firmware would reject/ignore it.
+void SyntheticDeviceSession::handleCommandRequest(const BtpFrame& frame) {
+    if (frame.payload.size() < kCommandRequestPrefixSize) {
+        return;  // malformed; silently dropped like any other malformed payload
+    }
+
+    const quint32 targetSourceId = readLe32(frame.payload, 0);
+    const quint32 targetBootId = readLe32(frame.payload, 4);
+    const quint16 actionId = readLe16(frame.payload, 8);
+    const quint16 actionVersion = readLe16(frame.payload, 10);
+    const quint16 flags = readLe16(frame.payload, 12);
+    const quint16 reserved = readLe16(frame.payload, 14);
+    const quint32 parameterSize = readLe32(frame.payload, 16);
+
+    if (targetSourceId != m_sourceId || targetBootId != m_bootId) {
+        return;  // not addressed to this device's current boot; silently ignored per spec
+    }
+    if (flags != 0 || reserved != 0 || parameterSize != quint32(frame.payload.size() - kCommandRequestPrefixSize)) {
+        return;  // malformed envelope
+    }
+
+    const QString commandLine =
+        QString::fromUtf8(frame.payload.constData() + kCommandRequestPrefixSize, int(parameterSize)).trimmed();
+
+    if (actionId != kShellActionId || actionVersion != kShellActionVersion) {
+        sendCommandResult(frame, actionId, actionVersion, kStatusRejected, kErrorUnsupportedVersion,
+                          QStringLiteral("unsupported action"));
+        emit logMessage(QStringLiteral("command: unsupported action_id=0x%1 action_version=0x%2")
+                             .arg(actionId, 4, 16, QChar('0'))
+                             .arg(actionVersion, 4, 16, QChar('0')));
+        return;
+    }
+
+    if (commandLine == QLatin1String("dongle clock")) {
+        const qint64 epoch = QDateTime::currentSecsSinceEpoch() + m_clockOffsetSecs;
+        const QString dateTime =
+            QDateTime::fromSecsSinceEpoch(epoch, QTimeZone::UTC).toString(QStringLiteral("yyyy-MM-dd HH:mm:ss"));
+        sendCommandResult(frame, actionId, actionVersion, kStatusSuccess, kErrorNone,
+                          QStringLiteral("clock=%1 epoch=%2").arg(dateTime).arg(epoch));
+        emit logMessage(QStringLiteral("command: \"dongle clock\" -> epoch=%1").arg(epoch));
+        return;
+    }
+
+    static const QRegularExpression setClockPattern(
+        QStringLiteral("^dongle set_clock\\s+\"?([0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2})\"?$"));
+    const QRegularExpressionMatch setClockMatch = setClockPattern.match(commandLine);
+    if (setClockMatch.hasMatch()) {
+        const QString text = setClockMatch.captured(1);
+        const QDateTime local = QDateTime::fromString(text, QStringLiteral("yyyy-MM-dd HH:mm:ss"));
+        if (!local.isValid()) {
+            sendCommandResult(frame, actionId, actionVersion, kStatusRejected, kErrorInvalidArgument,
+                              QStringLiteral("formato invalido. Use: YYYY-MM-DD HH:MM:SS"));
+            return;
+        }
+        const QDateTime asUtc(local.date(), local.time(), QTimeZone::UTC);
+        m_clockOffsetSecs = asUtc.toSecsSinceEpoch() - QDateTime::currentSecsSinceEpoch();
+        sendCommandResult(frame, actionId, actionVersion, kStatusSuccess, kErrorNone,
+                          QStringLiteral("clock ajustado para %1").arg(text));
+        emit logMessage(QStringLiteral("command: \"dongle set_clock\" -> offset=%1s").arg(m_clockOffsetSecs));
+        return;
+    }
+
+    sendCommandResult(frame, actionId, actionVersion, kStatusUnsupported, kErrorUnknownObject,
+                      QStringLiteral("comando nao simulado por este dispositivo sintetico"));
+}
+
+void SyntheticDeviceSession::sendCommandResult(const BtpFrame& requestFrame, quint16 actionId, quint16 actionVersion,
+                                               quint8 status, quint16 errorCode, const QString& message) {
+    QByteArray reply;
+    appendLe(reply, requestFrame.sourceId, 4);
+    appendLe(reply, requestFrame.bootId, 4);
+    appendLe(reply, requestFrame.sequence, 4);
+    appendLe(reply, actionId, 2);
+    appendLe(reply, actionVersion, 2);
+    reply.append(static_cast<char>(status));
+    reply.append(static_cast<char>(0));  // reserved
+    appendLe(reply, errorCode, 2);
+    appendUtf8U16(reply, message);
+    appendLe(reply, 0, 4);  // result_size: this simulator never returns binary result bytes
+
+    btp::Header header{};
+    header.type = btp::MessageType::Command;
+    header.flags = 0;
+    header.source_id = m_sourceId;
+    header.boot_id = m_bootId;
+    header.sequence = m_sequence++;
+    header.timestamp_us = nowUs();
+    header.object_id = kCommandResultObjectId;
+    header.fragment_index = 0;
+    header.fragment_count = 1;
+
+    btp::Frame frame{};
+    frame.header = header;
+    frame.payload.data = reinterpret_cast<const std::uint8_t*>(reply.constData());
+    frame.payload.size = static_cast<std::size_t>(reply.size());
+    m_session->sendFrame(frame);
 }
 
 void SyntheticDeviceSession::handleHello(const BtpFrame& frame) {

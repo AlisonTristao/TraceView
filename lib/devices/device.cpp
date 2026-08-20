@@ -8,9 +8,6 @@ QJsonObject deviceToJson(const Device& device) {
     object["name"] = device.name;
     object["commType"] = int(device.commType);
     object["description"] = device.description;
-    object["btpVersion"] = device.btpVersion;
-    object["chipType"] = device.chipType;
-    object["btpId"] = device.btpId;
     object["portName"] = device.portName;
     object["baudRate"] = device.baudRate;
     object["lineTerminator"] = device.lineTerminator;
@@ -31,9 +28,6 @@ Device deviceFromJson(const QJsonObject& object, bool* ok) {
     // than producing an unrepresentable Device.
     device.commType = CommType::Btp;
     device.description = object.value("description").toString();
-    device.btpVersion = object.value("btpVersion").toString();
-    device.chipType = object.value("chipType").toString();
-    device.btpId = object.value("btpId").toString();
     device.portName = object.value("portName").toString();
     device.baudRate = object.value("baudRate").toInt(921600);
     device.lineTerminator = object.value("lineTerminator").toInt(1);

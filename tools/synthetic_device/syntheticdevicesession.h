@@ -38,8 +38,14 @@ struct BtpFrame;
 // only has to happen once.
 //
 // Deliberately out of scope for every profile: STATUS, TERMINAL_IN/OUT,
-// COMMAND/COMMAND_REQUEST, ESP-NOW -- none of them blocks testing the serial
-// telemetry path this tool exists for.
+// ESP-NOW -- none of them blocks testing the serial telemetry path this tool
+// exists for. COMMAND/COMMAND_REQUEST is a partial exception: it answers just
+// the "dongle clock"/"dongle set_clock ..." shell one-liners (the generic
+// shell action every real firmware executor also answers, BtpTransport::
+// btp_command::kShellActionId in bally_dongle) so traceview::ClockSync's
+// post-connect clock check/correction has something to talk to when pointed
+// at a synthetic device instead of real hardware. No other shell command is
+// simulated.
 class SyntheticDeviceSession : public QObject {
     Q_OBJECT
 
@@ -117,6 +123,7 @@ protected:
 
 private slots:
     void onControlFrameReceived(const traceview::BtpFrame& frame);
+    void onCommandFrameReceived(const traceview::BtpFrame& frame);
     void onHelloTimeout();
     void onWatchdogTimeout();
 
@@ -140,8 +147,11 @@ private:
     void handleSubscribe(const traceview::BtpFrame& frame);
     void handleUnsubscribe(const traceview::BtpFrame& frame);
     void handleSessionClose(const traceview::BtpFrame& frame);
+    void handleCommandRequest(const traceview::BtpFrame& frame);
 
     void sendControl(quint16 objectId, const QByteArray& payload);
+    void sendCommandResult(const traceview::BtpFrame& requestFrame, quint16 actionId, quint16 actionVersion,
+                           quint8 status, quint16 errorCode, const QString& message);
     void sendSample(quint16 topicId);
     void expireLease(quint16 topicId);
     quint64 nowUs() const;
@@ -171,4 +181,10 @@ private:
 
     QVector<TopicSpec> m_topics;
     QHash<quint16, TopicRuntime> m_runtime;  // keyed by topicId, one entry per m_topics element
+
+    // Simulates "dongle set_clock" actually moving this device's clock:
+    // "dongle clock" reports QDateTime::currentSecsSinceEpoch() + this
+    // offset, and "dongle set_clock <text>" recomputes it from the requested
+    // epoch. Zero (real time) until the first set_clock.
+    qint64 m_clockOffsetSecs = 0;
 };

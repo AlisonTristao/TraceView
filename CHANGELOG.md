@@ -7,6 +7,17 @@ release flow.
 
 ## [Unreleased]
 
+### Changed
+
+- Devices tab: `DeviceConfigDialog`'s "Reported by device" fields
+  (`btpVersion`/`btpId`) are now read-only, populated from the actual BTP
+  handshake (`HELLO_RESULT`'s `selected_version`/`source_id`,
+  `BtpBackend`/`Backend::deviceIdentified`) instead of being freely-typed
+  text — and, like `connected`, no longer persisted into `.tvproj` since
+  they're live session state, not configuration. Dropped the `chipType`
+  field: nothing in the BTP protocol as implemented reports a chip/model,
+  so there was no real data to back it. See `docs/DEVICES.md`.
+
 ## [2.1.1] - 2026-08-18
 
 ### Changed

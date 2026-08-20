@@ -1048,6 +1048,14 @@ void MainWindow::onDeviceAdded(const Device& device) {
             [this](const QString& text, int timeoutMs) { statusBar()->showMessage(text, timeoutMs); });
     connect(backend, &Backend::subscriptionsChanged, this, &MainWindow::updateTelemetryStatusLabel);
     connect(backend, &Backend::statusReceived, this, &MainWindow::updateTelemetryStatusLabel);
+    // setDeviceIdentity(), not updateDevice() -- same reasoning as
+    // onDeviceConnectionStateChanged()'s setDeviceConnected() call below: this
+    // is the handshake reporting live state, not a user edit, so it must not
+    // land on m_devicesGrid's undo stack.
+    connect(connection, &DeviceConnection::deviceIdentified, this,
+            [this, id = device.id](const QString& btpVersion, const QString& btpId) {
+                m_devicesGrid->setDeviceIdentity(id, btpVersion, btpId);
+            });
 
     m_deviceConnections.insert(device.id, connection);
     connection->setLineTerminator(device.lineTerminator);
@@ -1115,6 +1123,13 @@ void MainWindow::onDeviceConnectionStateChanged(const QString& deviceId, bool co
     // "Edit Device" step, and Ctrl+Z on the Devices tab would undo a status
     // dot instead of an actual edit).
     m_devicesGrid->setDeviceConnected(deviceId, connected);
+    if (!connected) {
+        // A dropped connection invalidates whatever the last session's
+        // HELLO_RESULT reported -- a fresh reconnect re-identifies via
+        // deviceIdentified() (see onDeviceAdded()) once its own handshake
+        // completes, but nothing should show a stale version/id meanwhile.
+        m_devicesGrid->setDeviceIdentity(deviceId, QString(), QString());
+    }
 }
 
 void MainWindow::onPanelTypeChangeRequested(const QString& typeId) {
