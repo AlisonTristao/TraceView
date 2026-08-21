@@ -106,6 +106,14 @@ public:
     // Refresh is a no-op, same as before this existed.
     void setPortListProvider(std::function<QStringList()> provider) { m_portListProvider = std::move(provider); }
 
+    // Same reasoning as setPortListProvider() above, for the USB device
+    // picker -- traceview_devices doesn't depend on hidapi either (see
+    // lib/CMakeLists.txt). Safe to leave unset: the dialog's USB combo then
+    // just starts empty and its refresh is a no-op.
+    void setUsbDeviceListProvider(std::function<QVector<UsbDeviceOption>()> provider) {
+        m_usbDeviceListProvider = std::move(provider);
+    }
+
     // Supplies the topic catalog (TelemetryCatalog, via MANIFEST_DATA) the
     // gear icon's "Reported by device" section lists for a given device id.
     // DevicesGrid can't reach a Backend itself (traceview_devices doesn't
@@ -159,6 +167,7 @@ private:
     QVector<DeviceCard*> m_cards; // parallel to m_devices, same order/index
     QString m_selectedId;         // empty when nothing is selected
     std::function<QStringList()> m_portListProvider;
+    std::function<QVector<UsbDeviceOption>()> m_usbDeviceListProvider;
     std::function<QVector<CatalogTopicInfo>(const QString&)> m_topicCatalogProvider;
     QUndoStack* m_undoStack;
 };

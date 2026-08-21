@@ -179,7 +179,11 @@ SyntheticDeviceSession::SyntheticDeviceSession(quint32 sourceId, QString sourceN
     }
     m_clock.start();
 
-    m_session = new BtpSession(this);
+    // The synthetic device simulates the Serial/COBS side of the wire (see
+    // docs/SYNTHETIC_DEVICE.md) -- BtpSession now takes its transport
+    // profile explicitly (btpsession.h), defaulting to Serial, but naming it
+    // here keeps this call site meaningful if that default ever changes.
+    m_session = new BtpSession(btp::TransportProfile::Serial, this);
     m_router = new ProtocolRouter(this);
     connect(m_session, &BtpSession::frameReceived, m_router, &ProtocolRouter::onFrameReceived);
     connect(m_session, &BtpSession::bytesToWrite, this, &SyntheticDeviceSession::bytesToWrite);

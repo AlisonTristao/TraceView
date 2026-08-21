@@ -7,6 +7,8 @@
 
 #include <QSerialPort>
 
+#include "transport.h"
+
 namespace traceview {
 
 // Terminator appended to outbound control-widget commands (docs/PROTOCOL.md
@@ -31,7 +33,7 @@ QByteArray lineTerminatorBytes(LineTerminator terminator);
 // by the whole app -- each device's port/baud/line-terminator is configured
 // independently (Devices tab, DeviceConfigDialog), not from a single global
 // Run ribbon bar.
-class SerialManager : public QObject {
+class SerialManager : public Transport {
     Q_OBJECT
 
 public:
@@ -48,9 +50,9 @@ public:
     // success.
     bool open(const QString& portName, qint32 baudRate);
     // No-op if not currently open. Emits connectionStateChanged(false).
-    void close();
+    void close() override;
 
-    bool isConnected() const;
+    bool isConnected() const override;
     QString portName() const;
     qint32 baudRate() const;
 
@@ -58,7 +60,7 @@ public:
     // port isn't open -- callers that can't guarantee an open connection
     // (control widgets, the terminal) should treat a false return as "went
     // nowhere," not an error to surface.
-    bool write(const QByteArray& data);
+    bool write(const QByteArray& data) override;
 
     // The terminator writeCommand() appends -- a global, port-level setting
     // (Run ribbon tab), not per-widget (docs/PROTOCOL.md "Outbound: control
@@ -71,16 +73,6 @@ public:
     // Task 9) -- SerialTerminalWidget's raw keystroke passthrough (Task 10)
     // uses write() directly and is untouched by this setting.
     bool writeCommand(const QByteArray& command);
-
-signals:
-    void connectionStateChanged(bool connected);
-    // Raw bytes as they arrive off the wire -- no line assembly, no frame
-    // decoding.
-    void dataReceived(const QByteArray& data);
-    // Transport-level errors only (port open failure, device unplugged
-    // mid-session, etc.) -- never for malformed protocol data, which isn't
-    // this module's concern.
-    void errorOccurred(const QString& message);
 
 private:
     void onReadyRead();

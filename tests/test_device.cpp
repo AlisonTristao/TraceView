@@ -6,6 +6,7 @@ using traceview::CommType;
 using traceview::Device;
 using traceview::deviceFromJson;
 using traceview::deviceToJson;
+using traceview::TransportType;
 
 namespace {
 
@@ -14,6 +15,7 @@ class TestDevice : public QObject {
 
 private slots:
     void roundTripsAllFieldsExceptLiveState();
+    void roundTripsUsbHidTransport();
     void fromJsonRejectsMissingId();
     void fromJsonDefaultsMissingOptionalFields();
 };
@@ -27,6 +29,7 @@ void TestDevice::roundTripsAllFieldsExceptLiveState() {
     device.description = "Left side of the desk";
     device.btpVersion = "BTP/1"; // deliberately not expected to round-trip
     device.btpId = "0xDEADBEEF"; // deliberately not expected to round-trip
+    device.transportType = TransportType::Serial;
     device.portName = "COM7";
     device.baudRate = 460800;
     device.lineTerminator = 3;
@@ -47,9 +50,24 @@ void TestDevice::roundTripsAllFieldsExceptLiveState() {
     // yet, so both stay empty until DeviceConnection re-identifies it.
     QVERIFY(roundTripped.btpVersion.isEmpty());
     QVERIFY(roundTripped.btpId.isEmpty());
+    QCOMPARE(roundTripped.transportType, device.transportType);
     QCOMPARE(roundTripped.portName, device.portName);
     QCOMPARE(roundTripped.baudRate, device.baudRate);
     QCOMPARE(roundTripped.lineTerminator, device.lineTerminator);
+}
+
+void TestDevice::roundTripsUsbHidTransport() {
+    Device device;
+    device.id = "usb-1";
+    device.transportType = TransportType::UsbHid;
+    device.usbPath = R"(\\?\hid#vid_303a&pid_1001#7&1a2b3c4d&0&0000#{4d1e55b2-f16f-11cf-88cb-001111000030})";
+
+    bool ok = false;
+    const Device roundTripped = deviceFromJson(deviceToJson(device), &ok);
+
+    QVERIFY(ok);
+    QCOMPARE(roundTripped.transportType, TransportType::UsbHid);
+    QCOMPARE(roundTripped.usbPath, device.usbPath);
 }
 
 void TestDevice::fromJsonRejectsMissingId() {
@@ -64,9 +82,14 @@ void TestDevice::fromJsonDefaultsMissingOptionalFields() {
 
     QVERIFY(ok);
     QVERIFY(device.name.isEmpty());
+    // A save from before TransportType existed has no "transportType" key
+    // at all -- must default to Serial, the only transport that existed
+    // then, so an older project loads exactly as it did before.
+    QCOMPARE(device.transportType, TransportType::Serial);
     QVERIFY(device.portName.isEmpty());
     QCOMPARE(device.baudRate, 921600);
     QCOMPARE(device.lineTerminator, 1);
+    QVERIFY(device.usbPath.isEmpty());
     QVERIFY(!device.connected);
 }
 

@@ -6,8 +6,9 @@
 
 namespace traceview {
 
-BtpSession::BtpSession(QObject* parent)
+BtpSession::BtpSession(btp::TransportProfile transport, QObject* parent)
     : QObject(parent),
+      m_transport(transport),
       m_encodedBuffer(btp::kSerialMaxCobsBlockSize),
       m_decodedBuffer(btp::kSerialMaxFrameSize),
       m_decoder(m_encodedBuffer.data(), m_encodedBuffer.size(), m_decodedBuffer.data(), m_decodedBuffer.size()),
@@ -20,6 +21,19 @@ BtpSession::BtpSession(QObject* parent)
       m_reassembler(m_reassemblySlots, m_reassemblyStorage, kReassemblySlotCount, kReassemblyTimeoutMs) {}
 
 bool BtpSession::sendFrame(const btp::Frame& frame) {
+    if (m_transport == btp::TransportProfile::UsbHid) {
+        std::vector<std::uint8_t> encoded(btp::kUsbHidMaxFrameSize);
+        std::size_t frameBytes = 0;
+        if (btp::encode(frame, btp::TransportProfile::UsbHid, encoded.data(), encoded.size(), &frameBytes) !=
+            btp::Error::Ok) {
+            return false;
+        }
+        // No COBS, no delimiters -- UsbHidManager adds its own report
+        // framing (Report ID + length prefix) below this layer.
+        emit bytesToWrite(QByteArray(reinterpret_cast<const char*>(encoded.data()), int(frameBytes)));
+        return true;
+    }
+
     std::vector<std::uint8_t> encoded(btp::kSerialMaxFrameSize);
     std::size_t frameBytes = 0;
     if (btp::encode(frame, btp::TransportProfile::Serial, encoded.data(), encoded.size(), &frameBytes) !=
@@ -88,6 +102,33 @@ void BtpSession::feedBytes(const QByteArray& data) {
     m_reassembler.expire(static_cast<std::uint64_t>(QDateTime::currentMSecsSinceEpoch()));
 
     bool diagnosticsDirty = false;
+
+    if (m_transport == btp::TransportProfile::UsbHid) {
+        // No COBS to decode -- UsbHidManager already handed us exactly one
+        // de-padded HID report's worth of bytes, which is either a complete
+        // BTP frame or nothing at all (see the class comment).
+        btp::DecodedFrame decoded;
+        const btp::Error error = btp::decode(reinterpret_cast<const std::uint8_t*>(data.constData()),
+                                             static_cast<std::size_t>(data.size()), btp::TransportProfile::UsbHid,
+                                             &decoded);
+        if (error == btp::Error::Ok) {
+            diagnosticsDirty = true;
+            handleReassembly(decoded);
+        } else {
+            if (error == btp::Error::CrcMismatch) {
+                ++m_diagnostics.crcErrors;
+            } else {
+                ++m_diagnostics.frameErrors;
+            }
+            diagnosticsDirty = true;
+            emit frameRejected(QString::fromLatin1(btp::error_string(error)));
+        }
+        if (diagnosticsDirty) {
+            emit diagnosticsChanged();
+        }
+        return;
+    }
+
     for (unsigned char byte : data) {
         btp::DecodedFrame decoded;
         const btp::SerialDecodeResult result = m_decoder.push(byte, &decoded);

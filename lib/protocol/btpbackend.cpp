@@ -120,16 +120,17 @@ CatalogTopicInfo toCatalogTopicInfo(const TelemetryTopicSchema& schema) {
 
 }  // namespace
 
-BtpBackend::BtpBackend(QObject* parent)
+BtpBackend::BtpBackend(btp::TransportProfile transport, QObject* parent)
     : Backend(parent), m_terminalSourceId(randomNonZero()), m_terminalBootId(randomNonZero()) {
-    // BTP v1 client stack (topico 14): raw bytes -> BtpSession (COBS decode
-    // + envelope/CRC validation + reassembly) -> ProtocolRouter (dispatch by
-    // MessageType) -> TelemetryFieldRouter (schema decode, fan out by
-    // field). m_telemetryCatalog starts empty and is populated dynamically
-    // by m_manifestClient's MANIFEST_REQUEST/MANIFEST_DATA exchange (topico
-    // 16) -- nothing here assumes which source_id/schema is on the other
-    // end in advance.
-    m_btpSession = new BtpSession(this);
+    // BTP v1 client stack (topico 14): raw bytes -> BtpSession (COBS decode,
+    // or direct btp::decode() in UsbHid mode -- see btpsession.h -- plus
+    // envelope/CRC validation and reassembly either way) -> ProtocolRouter
+    // (dispatch by MessageType) -> TelemetryFieldRouter (schema decode, fan
+    // out by field). m_telemetryCatalog starts empty and is populated
+    // dynamically by m_manifestClient's MANIFEST_REQUEST/MANIFEST_DATA
+    // exchange (topico 16) -- nothing here assumes which source_id/schema is
+    // on the other end in advance.
+    m_btpSession = new BtpSession(transport, this);
     m_protocolRouter = new ProtocolRouter(this);
     m_telemetryCatalog = new TelemetryCatalog();
     m_telemetryFieldRouter = new TelemetryFieldRouter(m_telemetryCatalog, this);

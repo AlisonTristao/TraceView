@@ -1,5 +1,7 @@
 #pragma once
 
+#include <btp/codec.hpp>
+
 #include "backend/backend.h"
 
 namespace traceview {
@@ -27,7 +29,13 @@ class BtpBackend : public Backend {
     Q_OBJECT
 
 public:
-    explicit BtpBackend(QObject* parent = nullptr);
+    // `transport` picks which BTP transport profile the underlying
+    // BtpSession speaks (Serial/COBS or UsbHid, see btpsession.h) --
+    // DeviceConnection supplies it from the Device's own TransportType
+    // (devices/device.h), converted to this BTP-library type since
+    // traceview_devices can't depend on btp::codec directly. Defaults to
+    // Serial, preserving every existing call site's behavior.
+    explicit BtpBackend(btp::TransportProfile transport = btp::TransportProfile::Serial, QObject* parent = nullptr);
     // Declared (rather than left implicit) because m_telemetryCatalog is a
     // plain (non-QObject) heap object this class owns and frees itself.
     ~BtpBackend() override;

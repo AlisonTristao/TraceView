@@ -7,6 +7,7 @@
 #include "telemetry/catalogtopicinfo.h"
 
 class QComboBox;
+class QFormLayout;
 class QLabel;
 class QLineEdit;
 class QListWidget;
@@ -50,6 +51,15 @@ public:
     // refreshPortsRequested() fires.
     void setAvailablePorts(const QStringList& ports);
 
+    // Repopulates the USB device combo from a fresh OS enumeration, same
+    // "preserve the current selection even if it's not in the new list"
+    // treatment as setAvailablePorts() above -- a device's own usbPath (its
+    // hidapi device path, not the display label) is what's preserved,
+    // synthesizing a placeholder entry if it isn't currently plugged in.
+    // Called once up front and again each time refreshUsbDevicesRequested()
+    // fires.
+    void setAvailableUsbDevices(const QVector<UsbDeviceOption>& devices);
+
     // Populates the read-only "Reported catalog" list below "Reported by
     // device" from this device's Backend::catalogTopics() (TelemetryCatalog,
     // via MANIFEST_DATA) -- one entry per (source, topic, schema_version)
@@ -66,17 +76,31 @@ signals:
     // lib/CMakeLists.txt) -- so the owner is expected to call
     // setAvailablePorts() again in response.
     void refreshPortsRequested();
+    // Same reasoning as refreshPortsRequested() above, for the USB device
+    // combo -- traceview_devices doesn't depend on hidapi either.
+    void refreshUsbDevicesRequested();
 
 private:
+    void updateTransportFieldsVisibility();
+
     Device m_device;
 
     QLineEdit* m_nameEdit = nullptr;
     QPlainTextEdit* m_descriptionEdit = nullptr;
 
+    QFormLayout* m_connectionLayout = nullptr;
+    QComboBox* m_transportTypeCombo = nullptr;
+    int m_portRowIndex = -1;
+    int m_baudRowIndex = -1;
+    int m_lineTerminatorRowIndex = -1;
+    int m_usbDeviceRowIndex = -1;
+
     QComboBox* m_portCombo = nullptr;
     QToolButton* m_refreshPortsButton = nullptr;
     QComboBox* m_baudCombo = nullptr;
     QComboBox* m_lineTerminatorCombo = nullptr;
+    QComboBox* m_usbDeviceCombo = nullptr;
+    QToolButton* m_refreshUsbDevicesButton = nullptr;
     QLabel* m_statusLabel = nullptr;
 
     // Read-only: populated from m_device.btpVersion/btpId (the last

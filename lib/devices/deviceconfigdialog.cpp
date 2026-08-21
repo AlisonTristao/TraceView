@@ -62,10 +62,22 @@ DeviceConfigDialog::DeviceConfigDialog(const Device& initial, QWidget* parent)
     formLayout->addRow(tr("Name:"), m_nameEdit);
     formLayout->addRow(tr("Description:"), m_descriptionEdit);
 
-    // Connection group -- port/baud/line-terminator, the config a
-    // DeviceConnection (core/deviceconnection.h) actually opens with. Lives
-    // here now, one per device, instead of the old single global Run tab bar.
+    // Connection group -- transport type plus whichever of
+    // port/baud/line-terminator (Serial) or USB device (UsbHid) it needs,
+    // the config a DeviceConnection (core/deviceconnection.h) actually opens
+    // with. Lives here now, one per device, instead of the old single
+    // global Run tab bar.
     auto* connectionGroup = new QGroupBox(tr("Connection"), this);
+    m_connectionLayout = new QFormLayout(connectionGroup);
+
+    m_transportTypeCombo = new QComboBox(connectionGroup);
+    m_transportTypeCombo->addItem(transportTypeLabel(TransportType::Serial), int(TransportType::Serial));
+    m_transportTypeCombo->addItem(transportTypeLabel(TransportType::UsbHid), int(TransportType::UsbHid));
+    const int transportTypeIndex = m_transportTypeCombo->findData(int(m_device.transportType));
+    m_transportTypeCombo->setCurrentIndex(transportTypeIndex >= 0 ? transportTypeIndex : 0);
+    connect(m_transportTypeCombo, &QComboBox::currentIndexChanged, this,
+            &DeviceConfigDialog::updateTransportFieldsVisibility);
+    m_connectionLayout->addRow(tr("Transport:"), m_transportTypeCombo);
 
     m_portCombo = new QComboBox(connectionGroup);
     m_portCombo->setEditable(true);
@@ -85,6 +97,9 @@ DeviceConfigDialog::DeviceConfigDialog(const Device& initial, QWidget* parent)
     portRow->addWidget(m_portCombo, /*stretch=*/1);
     portRow->addWidget(m_refreshPortsButton);
 
+    m_portRowIndex = m_connectionLayout->rowCount();
+    m_connectionLayout->addRow(tr("Port:"), portRow);
+
     // Same list/default the old Run tab offered (extended for BTP v1 dongle
     // rates, see docs/PROTOCOL.md), now per-device rather than global.
     m_baudCombo = new QComboBox(connectionGroup);
@@ -94,6 +109,8 @@ DeviceConfigDialog::DeviceConfigDialog(const Device& initial, QWidget* parent)
     m_baudCombo->setCurrentText(QString::number(m_device.baudRate));
     m_baudCombo->setToolTip(tr("Baud rate (type a custom value if yours isn't listed)"));
     m_baudCombo->setValidator(new QIntValidator(1, 10000000, m_baudCombo));
+    m_baudRowIndex = m_connectionLayout->rowCount();
+    m_connectionLayout->addRow(tr("Baud rate:"), m_baudCombo);
 
     // Values match traceview::LineTerminator's ordinals (core/serialmanager.h)
     // -- Device::lineTerminator stores that same ordinal as a plain int since
@@ -107,15 +124,38 @@ DeviceConfigDialog::DeviceConfigDialog(const Device& initial, QWidget* parent)
     m_lineTerminatorCombo->setCurrentIndex(terminatorIndex >= 0 ? terminatorIndex : 1);
     m_lineTerminatorCombo->setToolTip(tr("Line terminator appended to control-widget commands sent to this device. "
                                           "Doesn't affect its serial terminal's raw keystrokes."));
+    m_lineTerminatorRowIndex = m_connectionLayout->rowCount();
+    m_connectionLayout->addRow(tr("Line terminator:"), m_lineTerminatorCombo);
+
+    // USB device picker -- shown instead of the three rows above when
+    // Transport is set to USB (see updateTransportFieldsVisibility()).
+    // hidapi device paths aren't something a user would ever type by hand
+    // (unlike a COM port name), so unlike m_portCombo this one isn't
+    // editable: setAvailableUsbDevices() synthesizes a placeholder entry for
+    // an already-configured-but-not-currently-plugged-in device instead.
+    m_usbDeviceCombo = new QComboBox(connectionGroup);
+    m_usbDeviceCombo->setToolTip(tr("USB HID device"));
+    if (!m_device.usbPath.isEmpty()) {
+        m_usbDeviceCombo->addItem(m_device.usbPath, m_device.usbPath);
+    }
+
+    m_refreshUsbDevicesButton = new QToolButton(connectionGroup);
+    m_refreshUsbDevicesButton->setText(QString::fromUtf8("\xE2\x9F\xB3")); // ⟳
+    m_refreshUsbDevicesButton->setToolTip(tr("Refresh USB device list"));
+    m_refreshUsbDevicesButton->setAutoRaise(true);
+    connect(m_refreshUsbDevicesButton, &QToolButton::clicked, this, &DeviceConfigDialog::refreshUsbDevicesRequested);
+
+    auto* usbDeviceRow = new QHBoxLayout;
+    usbDeviceRow->addWidget(m_usbDeviceCombo, /*stretch=*/1);
+    usbDeviceRow->addWidget(m_refreshUsbDevicesButton);
+    m_usbDeviceRowIndex = m_connectionLayout->rowCount();
+    m_connectionLayout->addRow(tr("USB device:"), usbDeviceRow);
 
     m_statusLabel = new QLabel(
         m_device.connected ? tr("Connected") : tr("Disconnected"), connectionGroup);
+    m_connectionLayout->addRow(tr("Status:"), m_statusLabel);
 
-    auto* connectionLayout = new QFormLayout(connectionGroup);
-    connectionLayout->addRow(tr("Port:"), portRow);
-    connectionLayout->addRow(tr("Baud rate:"), m_baudCombo);
-    connectionLayout->addRow(tr("Line terminator:"), m_lineTerminatorCombo);
-    connectionLayout->addRow(tr("Status:"), m_statusLabel);
+    updateTransportFieldsVisibility();
 
     // Read-only: this is the last HELLO_RESULT the device sent, not
     // something a user should be able to type over (see Device::btpVersion/
@@ -164,12 +204,22 @@ Device DeviceConfigDialog::result() const {
     Device device = m_device;
     device.name = m_nameEdit->text();
     device.description = m_descriptionEdit->toPlainText();
+    device.transportType = TransportType(m_transportTypeCombo->currentData().toInt());
     device.portName = m_portCombo->currentText();
     device.baudRate = m_baudCombo->currentText().toInt();
     device.lineTerminator = m_lineTerminatorCombo->currentData().toInt();
+    device.usbPath = m_usbDeviceCombo->currentData().toString();
     // btpVersion/btpId deliberately left as whatever m_device already held --
     // "Reported by device" is read-only (see the fields' own declarations).
     return device;
+}
+
+void DeviceConfigDialog::updateTransportFieldsVisibility() {
+    const bool isSerial = TransportType(m_transportTypeCombo->currentData().toInt()) == TransportType::Serial;
+    m_connectionLayout->setRowVisible(m_portRowIndex, isSerial);
+    m_connectionLayout->setRowVisible(m_baudRowIndex, isSerial);
+    m_connectionLayout->setRowVisible(m_lineTerminatorRowIndex, isSerial);
+    m_connectionLayout->setRowVisible(m_usbDeviceRowIndex, !isSerial);
 }
 
 void DeviceConfigDialog::setCatalogTopics(const QVector<CatalogTopicInfo>& topics) {
@@ -193,6 +243,24 @@ void DeviceConfigDialog::setAvailablePorts(const QStringList& ports) {
         m_portCombo->insertItem(0, current);
     }
     m_portCombo->setCurrentText(current);
+}
+
+void DeviceConfigDialog::setAvailableUsbDevices(const QVector<UsbDeviceOption>& devices) {
+    const QString currentPath = m_usbDeviceCombo->currentData().toString();
+    m_usbDeviceCombo->clear();
+    for (const UsbDeviceOption& device : devices) {
+        m_usbDeviceCombo->addItem(device.label, device.path);
+    }
+    const int index = m_usbDeviceCombo->findData(currentPath);
+    if (index >= 0) {
+        m_usbDeviceCombo->setCurrentIndex(index);
+    } else if (!currentPath.isEmpty()) {
+        // Configured but not currently plugged in -- same "don't lose the
+        // remembered target" treatment setAvailablePorts() gives a COM port
+        // that's temporarily absent.
+        m_usbDeviceCombo->insertItem(0, currentPath, currentPath);
+        m_usbDeviceCombo->setCurrentIndex(0);
+    }
 }
 
 } // namespace traceview

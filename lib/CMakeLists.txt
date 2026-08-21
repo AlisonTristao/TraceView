@@ -311,6 +311,9 @@ add_library(traceview_ui STATIC
     core/serialmanager.h
     core/serialwidgetbridge.cpp
     core/serialwidgetbridge.h
+    core/transport.h
+    core/usbhidmanager.cpp
+    core/usbhidmanager.h
     core/workspaceswitcher.cpp
     core/workspaceswitcher.h
     vendor/qrcodegen/qrcodegen.cpp
@@ -335,4 +338,8 @@ target_link_libraries(traceview_ui
         traceview_protocol
         traceview_theme
         traceview_locale
+        # UsbHidManager (core/usbhidmanager.h) is the only consumer -- a
+        # transport-layer implementation detail, so PRIVATE (nothing above
+        # traceview_ui needs to see hidapi's own headers).
+        hidapi::hidapi
 )

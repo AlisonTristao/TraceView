@@ -26,6 +26,37 @@ inline QString commTypeLabel(CommType type) {
     return QString();
 }
 
+// Which physical link a device's connection uses -- independent of CommType
+// above (the protocol): BTP can run over either (see BTP's ADR 0011, the
+// "usb_hid" transport profile, and lib/core/deviceconnection.h, which is
+// the actual switch point). traceview_devices still doesn't depend on
+// QSerialPort/hidapi (see lib/CMakeLists.txt) -- this is just a plain enum
+// selecting which of Device::portName/usbPath below DeviceConnection should
+// use.
+enum class TransportType { Serial, UsbHid };
+
+inline QString transportTypeLabel(TransportType type) {
+    switch (type) {
+        case TransportType::Serial:
+            return QCoreApplication::translate("Device", "Serial");
+        case TransportType::UsbHid:
+            return QCoreApplication::translate("Device", "USB");
+    }
+    return QString();
+}
+
+// One USB HID device DeviceConfigDialog's picker can offer -- `path` is
+// hidapi's own device path (what UsbHidManager::open() expects, not meant
+// to be typed by a human), `label` is what the combo box shows instead.
+// Lives here (not core/usbhidmanager.h) so DeviceConfigDialog can accept it
+// without traceview_devices depending on hidapi -- MainWindow converts
+// UsbHidManager::DeviceInfo to this the same way it already converts
+// QSerialPortInfo to a bare QStringList for the port picker.
+struct UsbDeviceOption {
+    QString path;
+    QString label;
+};
+
 // One connected/known device, shown as a single card in the Devices panel
 // (see devicesgrid.h), and (as of the multi-device connection refactor) the
 // config for one real, independent serial connection -- see
@@ -56,6 +87,13 @@ struct Device {
     QString btpVersion;
     QString btpId;
 
+    // Which physical link this device connects over -- see TransportType
+    // above. Selects which of the fields below DeviceConnection actually
+    // uses; the other stays around unused (harmless, same "keep whatever
+    // was there" treatment portName/baudRate/lineTerminator already get
+    // when a device isn't configured at all).
+    TransportType transportType = TransportType::Serial;
+
     // Real transport config for this device's connection. Empty portName
     // means "not configured" -- DeviceConnection then never attempts to
     // open a port. traceview_devices can't depend on traceview_ui's
@@ -66,8 +104,18 @@ struct Device {
     // Ordinal mirroring traceview::LineTerminator (core/serialmanager.h:
     // None=0, Lf=1, Cr=2, CrLf=3) -- kept as a plain int for the same reason
     // portName/baudRate are plain types, rather than depending on that enum
-    // directly.
+    // directly. Only meaningful for TransportType::Serial (control-widget
+    // commands are a raw-text-over-the-console-byte-stream concept that has
+    // no equivalent over TransportType::UsbHid, which has no console at
+    // all -- see BTP's TRANSPORT_USB_HID.md section 7).
     int lineTerminator = 1;  // Lf, matching SerialManager's own default
+
+    // Target for TransportType::UsbHid connections: the hidapi device path
+    // (see UsbDeviceOption::path above), analogous to portName for
+    // TransportType::Serial. Empty means "not configured," same convention
+    // as an empty portName -- DeviceConnection then never attempts to open
+    // it.
+    QString usbPath;
 };
 
 // Mirrors dashboardItemToJson()'s shape/convention (dashboard/dashboarditem.h)

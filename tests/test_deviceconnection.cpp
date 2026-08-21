@@ -3,12 +3,14 @@
 #include "backend/backend.h"
 #include "core/deviceconnection.h"
 #include "core/serialmanager.h"
+#include "core/usbhidmanager.h"
 #include "devices/device.h"
 
 using traceview::Backend;
 using traceview::CommType;
 using traceview::DeviceConnection;
 using traceview::LineTerminator;
+using traceview::TransportType;
 
 namespace {
 
@@ -21,12 +23,16 @@ private slots:
     void connectToWithInvalidPortNameFailsWithoutCrashing();
     void disconnectFromStopsRetryingAfterAFailedAttempt();
     void setLineTerminatorForwardsToSerialManager();
+    void usbHidTransportBuildsUsbHidManagerNotSerialManager();
+    void setLineTerminatorIsNoopForUsbHidTransport();
 };
 
 void TestDeviceConnection::startsDisconnectedWithABackend() {
     DeviceConnection connection(CommType::Btp);
     QVERIFY(!connection.isConnected());
+    QCOMPARE(connection.transportType(), TransportType::Serial);
     QVERIFY(connection.serialManager() != nullptr);
+    QVERIFY(connection.usbHidManager() == nullptr);
     // Only CommType::Btp exists today -- the ctor must always build a
     // concrete Backend for it (see the switch in deviceconnection.cpp).
     QVERIFY(connection.backend() != nullptr);
@@ -70,6 +76,24 @@ void TestDeviceConnection::setLineTerminatorForwardsToSerialManager() {
     DeviceConnection connection(CommType::Btp);
     connection.setLineTerminator(int(LineTerminator::CrLf));
     QCOMPARE(connection.serialManager()->lineTerminator(), LineTerminator::CrLf);
+}
+
+void TestDeviceConnection::usbHidTransportBuildsUsbHidManagerNotSerialManager() {
+    DeviceConnection connection(CommType::Btp, TransportType::UsbHid);
+    QCOMPARE(connection.transportType(), TransportType::UsbHid);
+    QVERIFY(connection.serialManager() == nullptr);
+    QVERIFY(connection.usbHidManager() != nullptr);
+    QVERIFY(connection.backend() != nullptr);
+    QVERIFY(!connection.isConnected());
+}
+
+void TestDeviceConnection::setLineTerminatorIsNoopForUsbHidTransport() {
+    // No SerialManager to forward to (raw-text control commands don't exist
+    // over USB HID, see device.h's Device::lineTerminator comment) -- must
+    // not crash.
+    DeviceConnection connection(CommType::Btp, TransportType::UsbHid);
+    connection.setLineTerminator(int(LineTerminator::CrLf));
+    QVERIFY(connection.serialManager() == nullptr);
 }
 
 } // namespace

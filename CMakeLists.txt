@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.21)
 
 project(TraceView
-    VERSION 2.1.1
+    VERSION 2.2.0
     DESCRIPTION "Real-time telemetry dashboard for ESP32/ESP-NOW robots"
     LANGUAGES CXX
 )
@@ -46,6 +46,24 @@ FetchContent_Declare(
     GIT_TAG main
 )
 FetchContent_MakeAvailable(btp)
+
+# hidapi is the USB HID transport's backend (core/usbhidmanager.h, BTP's
+# "usb_hid" profile / ADR 0011) -- the same FetchContent pattern as BTP
+# above, but pinned to a release tag rather than a rolling branch: hidapi
+# has had behavior regressions between versions in the past (its own issue
+# tracker), so tracking `main` here would be riskier than for BTP, which
+# this repo controls. BUILD_SHARED_LIBS is forced off before fetching so
+# hidapi builds as a static lib like every other internal/vendored piece
+# here (see lib/CMakeLists.txt) instead of leaving a DLL for windeployqt to
+# chase; hidapi's own default is ON (inherited from the global CMake
+# variable) if this isn't set first.
+set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
+FetchContent_Declare(
+    hidapi
+    GIT_REPOSITORY https://github.com/libusb/hidapi.git
+    GIT_TAG hidapi-0.15.0
+)
+FetchContent_MakeAvailable(hidapi)
 
 add_subdirectory(lib)
 

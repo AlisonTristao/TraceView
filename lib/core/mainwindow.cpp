@@ -37,6 +37,7 @@
 #include "debugchartswindow.h"
 #include "deviceconnection.h"
 #include "devices/devicesgrid.h"
+#include "usbhidmanager.h"
 #include "layerspanel.h"
 #include "logs/logviewer.h"
 #include "paneldockcontroller.h"
@@ -189,6 +190,18 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
             names.append(info.portName());
         }
         return names;
+    });
+    // Same reasoning as setPortListProvider() above, for the USB device
+    // combo -- DevicesGrid can't enumerate HID devices itself
+    // (traceview_devices doesn't depend on hidapi, see lib/CMakeLists.txt).
+    m_devicesGrid->setUsbDeviceListProvider([]() -> QVector<UsbDeviceOption> {
+        QVector<UsbDeviceOption> options;
+        const QVector<UsbHidManager::DeviceInfo> devices = UsbHidManager::availableDevices();
+        options.reserve(devices.size());
+        for (const UsbHidManager::DeviceInfo& device : devices) {
+            options.append({device.path, device.label});
+        }
+        return options;
     });
     // Same reasoning as setPortListProvider() above: DevicesGrid can't reach
     // a Backend itself (traceview_devices doesn't depend on
@@ -1087,8 +1100,8 @@ void MainWindow::refreshDeviceStatusLabel() {
     m_deviceStatusLabel->setText(parts.join("&nbsp;&nbsp;&nbsp;&nbsp;"));
 }
 
-void MainWindow::onDeviceAdded(const Device& device) {
-    auto* connection = new DeviceConnection(device.commType, this);
+DeviceConnection* MainWindow::createDeviceConnection(const Device& device) {
+    auto* connection = new DeviceConnection(device.commType, device.transportType, this);
     connect(connection, &DeviceConnection::connectionStateChanged, this,
             [this, id = device.id](bool connected) { onDeviceConnectionStateChanged(id, connected); });
 
@@ -1115,14 +1128,20 @@ void MainWindow::onDeviceAdded(const Device& device) {
             [this, id = device.id](const QString& btpVersion, const QString& btpId) {
                 m_devicesGrid->setDeviceIdentity(id, btpVersion, btpId);
             });
+    return connection;
+}
 
+void MainWindow::onDeviceAdded(const Device& device) {
+    DeviceConnection* connection = createDeviceConnection(device);
     m_deviceConnections.insert(device.id, connection);
     connection->setLineTerminator(device.lineTerminator);
-    // A no-op if `device` has no portName yet (a freshly added placeholder,
+    // A no-op if `device` has no target yet (a freshly added placeholder,
     // see onAddDevice()) -- otherwise opens now, or starts the ambient retry
     // loop, e.g. right after loading a saved project whose devices already
-    // have one configured.
-    connection->connectTo(device.portName, device.baudRate);
+    // have one configured. Target is portName for Serial, usbPath for
+    // UsbHid (baudRate is ignored by DeviceConnection in that case).
+    const QString target = device.transportType == TransportType::UsbHid ? device.usbPath : device.portName;
+    connection->connectTo(target, device.baudRate);
     refreshDeviceStatusLabel();
     refreshPropertiesPanelDevices();
 }
@@ -1143,8 +1162,23 @@ void MainWindow::onDeviceUpdated(const Device& device) {
     if (!connection) {
         return;
     }
+    if (connection->transportType() != device.transportType) {
+        // DeviceConnection's Transport/Backend pair is fixed at construction
+        // (deviceconnection.h) -- can't repoint a live SerialManager-backed
+        // connection at a HID path or vice versa. Rebuild it in place, same
+        // teardown/build steps onDeviceRemoved()/onDeviceAdded() use, so
+        // every signal connection keyed by this device's id (properties
+        // panel, control widgets, ...) keeps resolving through
+        // m_deviceConnections without a remove/re-add round trip through
+        // the undo stack.
+        connection->disconnectFrom();
+        connection->deleteLater();
+        connection = createDeviceConnection(device);
+        m_deviceConnections.insert(device.id, connection);
+    }
     connection->setLineTerminator(device.lineTerminator);
-    connection->connectTo(device.portName, device.baudRate);
+    const QString target = device.transportType == TransportType::UsbHid ? device.usbPath : device.portName;
+    connection->connectTo(target, device.baudRate);
     refreshDeviceStatusLabel();
     // Renaming/reconfiguring a device changes what every widget's own
     // Device combo should show as its selected entry's label.
