@@ -2,7 +2,22 @@
 
 Real-time telemetry dashboard for ESP32/ESP-NOW robots, built in C++ with Qt.
 
-> **Status:** v2.1.0 — the dashboard now manages multiple independently-connected devices side by side, on top of the workspaces/theming/docking round from 2.0.0. The BTP telemetry integration behind it is still evolving. See [CONTRIBUTING.md](CONTRIBUTING.md) for the branching/feature workflow and [docs/ECOSYSTEM.md](docs/ECOSYSTEM.md) for how this project fits with the rest of the Bally ecosystem.
+> **Status:** v2.2.0 — devices can now connect over USB HID as well as serial, and a Logs tab for opening a robot's `.blog` SD-card log file sits alongside Run/Layout/Devices, on top of the multi-device dashboard from 2.1.0 and the workspaces/theming/docking round from 2.0.0. The BTP telemetry integration behind it is still evolving. See [CONTRIBUTING.md](CONTRIBUTING.md) for the branching/feature workflow and [docs/ECOSYSTEM.md](docs/ECOSYSTEM.md) for how this project fits with the rest of the Bally ecosystem.
+
+## What's new in 2.2.0
+
+- **USB HID transport** — connect to a device over USB HID instead of a
+  serial port, picked from a new Transport combo when adding/editing it.
+  Speaks BTP v1.1.0's `usb_hid` profile to a dongle exposing a composite
+  CDC+HID USB device. USB HID devices have no raw-text console channel, so
+  control-widget text commands go nowhere for them — everything else
+  (telemetry, the serial monitor) works the same as over serial. See
+  [docs/DEVICES.md](docs/DEVICES.md).
+- **Logs tab** — open a bally_OS `.blog` file (the robot's SD-card event
+  log) and read every entry in a table: timestamp, severity, source/boot
+  id, sequence and message text. Multi-fragment messages are reassembled
+  automatically; a corrupted or truncated frame is skipped instead of
+  failing the whole file.
 
 ## What's new in 2.1.0
 
