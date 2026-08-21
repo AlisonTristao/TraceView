@@ -37,7 +37,9 @@
 #include "debugchartswindow.h"
 #include "deviceconnection.h"
 #include "devices/devicesgrid.h"
+#include "usbhidmanager.h"
 #include "layerspanel.h"
+#include "logs/logviewer.h"
 #include "paneldockcontroller.h"
 #include "project/projectstore.h"
 #include "project/workspacemanager.h"
@@ -189,12 +191,37 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
         }
         return names;
     });
+    // Same reasoning as setPortListProvider() above, for the USB device
+    // combo -- DevicesGrid can't enumerate HID devices itself
+    // (traceview_devices doesn't depend on hidapi, see lib/CMakeLists.txt).
+    m_devicesGrid->setUsbDeviceListProvider([]() -> QVector<UsbDeviceOption> {
+        QVector<UsbDeviceOption> options;
+        const QVector<UsbHidManager::DeviceInfo> devices = UsbHidManager::availableDevices();
+        options.reserve(devices.size());
+        for (const UsbHidManager::DeviceInfo& device : devices) {
+            options.append({device.path, device.label});
+        }
+        return options;
+    });
+    // Same reasoning as setPortListProvider() above: DevicesGrid can't reach
+    // a Backend itself (traceview_devices doesn't depend on
+    // traceview_protocol), so MainWindow supplies the gear icon's "Reported
+    // catalog" list from whichever DeviceConnection is live for that id.
+    m_devicesGrid->setTopicCatalogProvider([this](const QString& deviceId) -> QVector<CatalogTopicInfo> {
+        DeviceConnection* connection = m_deviceConnections.value(deviceId);
+        return connection ? connection->backend()->catalogTopics() : QVector<CatalogTopicInfo>();
+    });
     refreshDeviceStatusLabel(); // starts empty ("No devices configured...")
     refreshPropertiesPanelDevices();
+
+    // Logs tab's content -- opened on demand via m_openLogFileAction, no
+    // state to wire up front (contrast m_devicesGrid above).
+    m_logViewer = new LogViewer(this);
 
     m_contentStack = new QStackedWidget(m_contentRow);
     m_contentStack->addWidget(m_dashboardGrid);
     m_contentStack->addWidget(m_devicesGrid);
+    m_contentStack->addWidget(m_logViewer);
     contentLayout->addWidget(m_contentStack);
 
     // Reparented rather than added to contentLayout: their geometry is set
@@ -334,12 +361,20 @@ void MainWindow::updateTelemetryStatusLabel() {
     // not anything routing decisions depend on.
     QVector<TopicSubscriptionState> states;
     QHash<quint64, StatusTopicRecord> statusByTopic;
+    // Resolved from each device's catalog (MANIFEST_DATA) so the summary
+    // below can show "motor_state" instead of a bare "0x11223344/0x0101" --
+    // falls back to the hex pair for a topic whose schema hasn't arrived
+    // (or isn't known) yet.
+    QHash<quint64, QString> topicNames;
     const QList<DeviceConnection*> connections = m_deviceConnections.values();
     for (DeviceConnection* connection : connections) {
         Backend* backend = connection->backend();
         states += backend->subscriptions();
         for (const StatusTopicRecord& record : backend->topicStatuses()) {
             statusByTopic.insert(topicStatusKey(record.sourceId, record.topicId), record);
+        }
+        for (const CatalogTopicInfo& topic : backend->catalogTopics()) {
+            topicNames.insert(topicStatusKey(topic.sourceId, topic.topicId), topic.name);
         }
     }
 
@@ -352,9 +387,11 @@ void MainWindow::updateTelemetryStatusLabel() {
     QStringList summary;
     QStringList detail;
     for (const TopicSubscriptionState& state : states) {
-        const QString topicLabel = QString("0x%1/0x%2")
-                                       .arg(state.sourceId, 8, 16, QChar('0'))
-                                       .arg(state.topicId, 4, 16, QChar('0'));
+        const QString rawLabel = QString("0x%1/0x%2")
+                                      .arg(state.sourceId, 8, 16, QChar('0'))
+                                      .arg(state.topicId, 4, 16, QChar('0'));
+        const QString resolvedName = topicNames.value(topicStatusKey(state.sourceId, state.topicId));
+        const QString topicLabel = resolvedName.isEmpty() ? rawLabel : resolvedName;
         QString rate;
         if (state.effectiveRateMillihz != 0) {
             rate = formatRateMillihz(state.effectiveRateMillihz);
@@ -369,7 +406,11 @@ void MainWindow::updateTelemetryStatusLabel() {
         }
         summary.append(entry);
 
-        QString line = entry + QString(" | %1 widget(s) here").arg(state.subscriberCount);
+        QString line = entry;
+        if (!resolvedName.isEmpty()) {
+            line += QString(" (%1)").arg(rawLabel);
+        }
+        line += QString(" | %1 widget(s) here").arg(state.subscriberCount);
         const auto record = statusByTopic.constFind(topicStatusKey(state.sourceId, state.topicId));
         if (record != statusByTopic.constEnd()) {
             // status_version=2 per-topic metrics (section 8.1).
@@ -591,6 +632,9 @@ Ribbon* MainWindow::buildRibbon() {
     m_removeDeviceAction->setEnabled(false);
     m_removeDeviceAction->setShortcut(QKeySequence::Delete);
 
+    m_openLogFileAction = new QAction(tr("Open Log File..."), this);
+    connect(m_openLogFileAction, &QAction::triggered, this, &MainWindow::onOpenLogFile);
+
     auto* runPage = new QWidget(this);
     runPage->setObjectName("ribbonPage");
     runPage->setFixedHeight(kRibbonPageHeight);
@@ -695,10 +739,21 @@ Ribbon* MainWindow::buildRibbon() {
     devicesLayout->addWidget(Ribbon::createButtonGroup(devicesPage, {m_addDeviceAction, m_removeDeviceAction}));
     devicesLayout->addStretch();
 
+    auto* logsPage = new QWidget(this);
+    logsPage->setObjectName("ribbonPage");
+    logsPage->setFixedHeight(kRibbonPageHeight);
+    auto* logsLayout = new QHBoxLayout(logsPage);
+    logsLayout->setContentsMargins(kRibbonPageMarginH, kRibbonPageMarginV, kRibbonPageMarginH, kRibbonPageMarginV);
+    logsLayout->setSpacing(kRibbonGroupSpacing);
+
+    logsLayout->addWidget(Ribbon::createButtonGroup(logsPage, {m_openLogFileAction}));
+    logsLayout->addStretch();
+
     auto* ribbon = new Ribbon(this);
     m_runTabIndex = ribbon->addTab(tr("Run"), runPage);
     m_configureTabIndex = ribbon->addTab(tr("Layout"), configurePage);
     m_devicesTabIndex = ribbon->addTab(tr("Devices"), devicesPage);
+    m_logsTabIndex = ribbon->addTab(tr("Logs"), logsPage);
 
     connect(ribbon, &Ribbon::currentTabChanged, this, &MainWindow::onRibbonTabChanged);
 
@@ -853,6 +908,8 @@ void MainWindow::updateRibbonIcons() {
     m_removeDeviceAction->setIcon(makeMinusIcon(palette.danger));
     m_removeDeviceAction->setToolTip(tr("Remove selected device (%1)")
                                           .arg(m_removeDeviceAction->shortcut().toString(QKeySequence::NativeText)));
+    m_openLogFileAction->setIcon(makeFolderIcon(palette.textPrimary));
+    m_openLogFileAction->setToolTip(tr("Open a .blog log file"));
     m_copyAction->setIcon(makeCopyIcon(palette.textPrimary));
     m_copyAction->setToolTip(
         tr("Copy selected widget (%1)").arg(m_copyAction->shortcut().toString(QKeySequence::NativeText)));
@@ -901,12 +958,18 @@ void MainWindow::onRibbonTabChanged(int index) {
         refreshDeviceStatusLabel();
     }
 
-    // Swaps the whole content area between the canvas and the Devices grid;
-    // Run/Layout both keep showing the canvas, only Devices swaps away from
-    // it (m_configureTabActive above already goes false here on its own,
-    // so edit mode/panels don't need any extra handling for this tab).
-    m_contentStack->setCurrentWidget(index == m_devicesTabIndex ? static_cast<QWidget*>(m_devicesGrid)
-                                                                 : static_cast<QWidget*>(m_dashboardGrid));
+    // Swaps the whole content area between the canvas, the Devices grid and
+    // the Logs viewer; Run/Layout both keep showing the canvas, only
+    // Devices/Logs swap away from it (m_configureTabActive above already
+    // goes false here on its own, so edit mode/panels don't need any extra
+    // handling for either tab).
+    QWidget* activeContent = m_dashboardGrid;
+    if (index == m_devicesTabIndex) {
+        activeContent = m_devicesGrid;
+    } else if (index == m_logsTabIndex) {
+        activeContent = m_logViewer;
+    }
+    m_contentStack->setCurrentWidget(activeContent);
 }
 
 void MainWindow::onSelectionChanged(const QString&) {
@@ -1007,7 +1070,11 @@ void MainWindow::refreshPropertiesPanelDevices() {
     QVector<DeviceOption> options;
     options.reserve(devices.size());
     for (const Device& device : devices) {
-        options.append({device.id, device.name});
+        DeviceOption option{device.id, device.name, {}};
+        if (DeviceConnection* connection = m_deviceConnections.value(device.id)) {
+            option.catalogTopics = connection->backend()->catalogTopics();
+        }
+        options.append(option);
     }
     m_propertiesPanel->setAvailableDevices(options);
 }
@@ -1033,8 +1100,8 @@ void MainWindow::refreshDeviceStatusLabel() {
     m_deviceStatusLabel->setText(parts.join("&nbsp;&nbsp;&nbsp;&nbsp;"));
 }
 
-void MainWindow::onDeviceAdded(const Device& device) {
-    auto* connection = new DeviceConnection(device.commType, this);
+DeviceConnection* MainWindow::createDeviceConnection(const Device& device) {
+    auto* connection = new DeviceConnection(device.commType, device.transportType, this);
     connect(connection, &DeviceConnection::connectionStateChanged, this,
             [this, id = device.id](bool connected) { onDeviceConnectionStateChanged(id, connected); });
 
@@ -1048,14 +1115,33 @@ void MainWindow::onDeviceAdded(const Device& device) {
             [this](const QString& text, int timeoutMs) { statusBar()->showMessage(text, timeoutMs); });
     connect(backend, &Backend::subscriptionsChanged, this, &MainWindow::updateTelemetryStatusLabel);
     connect(backend, &Backend::statusReceived, this, &MainWindow::updateTelemetryStatusLabel);
+    // A manifest exchange completing/updating is when catalogTopics() first
+    // has (or changes) the readable names chart/gauge config editors resolve
+    // sourceId/topicId against -- refresh their cached DeviceOption list
+    // rather than only doing so on device add/remove/rename.
+    connect(backend, &Backend::catalogChanged, this, &MainWindow::refreshPropertiesPanelDevices);
+    // setDeviceIdentity(), not updateDevice() -- same reasoning as
+    // onDeviceConnectionStateChanged()'s setDeviceConnected() call below: this
+    // is the handshake reporting live state, not a user edit, so it must not
+    // land on m_devicesGrid's undo stack.
+    connect(connection, &DeviceConnection::deviceIdentified, this,
+            [this, id = device.id](const QString& btpVersion, const QString& btpId) {
+                m_devicesGrid->setDeviceIdentity(id, btpVersion, btpId);
+            });
+    return connection;
+}
 
+void MainWindow::onDeviceAdded(const Device& device) {
+    DeviceConnection* connection = createDeviceConnection(device);
     m_deviceConnections.insert(device.id, connection);
     connection->setLineTerminator(device.lineTerminator);
-    // A no-op if `device` has no portName yet (a freshly added placeholder,
+    // A no-op if `device` has no target yet (a freshly added placeholder,
     // see onAddDevice()) -- otherwise opens now, or starts the ambient retry
     // loop, e.g. right after loading a saved project whose devices already
-    // have one configured.
-    connection->connectTo(device.portName, device.baudRate);
+    // have one configured. Target is portName for Serial, usbPath for
+    // UsbHid (baudRate is ignored by DeviceConnection in that case).
+    const QString target = device.transportType == TransportType::UsbHid ? device.usbPath : device.portName;
+    connection->connectTo(target, device.baudRate);
     refreshDeviceStatusLabel();
     refreshPropertiesPanelDevices();
 }
@@ -1076,8 +1162,23 @@ void MainWindow::onDeviceUpdated(const Device& device) {
     if (!connection) {
         return;
     }
+    if (connection->transportType() != device.transportType) {
+        // DeviceConnection's Transport/Backend pair is fixed at construction
+        // (deviceconnection.h) -- can't repoint a live SerialManager-backed
+        // connection at a HID path or vice versa. Rebuild it in place, same
+        // teardown/build steps onDeviceRemoved()/onDeviceAdded() use, so
+        // every signal connection keyed by this device's id (properties
+        // panel, control widgets, ...) keeps resolving through
+        // m_deviceConnections without a remove/re-add round trip through
+        // the undo stack.
+        connection->disconnectFrom();
+        connection->deleteLater();
+        connection = createDeviceConnection(device);
+        m_deviceConnections.insert(device.id, connection);
+    }
     connection->setLineTerminator(device.lineTerminator);
-    connection->connectTo(device.portName, device.baudRate);
+    const QString target = device.transportType == TransportType::UsbHid ? device.usbPath : device.portName;
+    connection->connectTo(target, device.baudRate);
     refreshDeviceStatusLabel();
     // Renaming/reconfiguring a device changes what every widget's own
     // Device combo should show as its selected entry's label.
@@ -1115,6 +1216,13 @@ void MainWindow::onDeviceConnectionStateChanged(const QString& deviceId, bool co
     // "Edit Device" step, and Ctrl+Z on the Devices tab would undo a status
     // dot instead of an actual edit).
     m_devicesGrid->setDeviceConnected(deviceId, connected);
+    if (!connected) {
+        // A dropped connection invalidates whatever the last session's
+        // HELLO_RESULT reported -- a fresh reconnect re-identifies via
+        // deviceIdentified() (see onDeviceAdded()) once its own handshake
+        // completes, but nothing should show a stale version/id meanwhile.
+        m_devicesGrid->setDeviceIdentity(deviceId, QString(), QString());
+    }
 }
 
 void MainWindow::onPanelTypeChangeRequested(const QString& typeId) {
@@ -1201,6 +1309,15 @@ void MainWindow::onOpenProject() {
     openRecentFile(path);
 }
 
+void MainWindow::onOpenLogFile() {
+    const QString path =
+        QFileDialog::getOpenFileName(this, tr("Open Log File"), QString(), tr("BTP Log (*.blog)"));
+    if (path.isEmpty()) {
+        return;
+    }
+    m_logViewer->openFile(path);
+}
+
 void MainWindow::openRecentFile(const QString& path) {
     if (!ProjectStore::instance().load(path)) {
         QMessageBox::warning(this, tr("Open Project"), ProjectStore::instance().lastError());
@@ -1218,12 +1335,17 @@ void MainWindow::openRecentFile(const QString& path) {
         WorkspaceManager::instance().fromJson(workspacesSection);
     }
 
-    m_dashboardGrid->fromJson(WorkspaceManager::instance().dashboardFor(WorkspaceManager::instance().activeId()));
-    m_dashboardGrid->undoStack()->clear();
+    // Devices load first: each chart/gauge widget resolves its "Device"
+    // config against m_deviceConnections the moment it's created below, and
+    // that resolution never gets retried once a device connects later (see
+    // MainWindow::refreshWidgetSubscription) -- so a widget created before
+    // its device exists is permanently stuck with no subscription.
     // Absent in projects saved before device persistence existed --
     // fromJson(QJsonObject()) on an empty section just clears the list.
     m_devicesGrid->fromJson(ProjectStore::instance().section("devices"));
     m_devicesGrid->undoStack()->clear();
+    m_dashboardGrid->fromJson(WorkspaceManager::instance().dashboardFor(WorkspaceManager::instance().activeId()));
+    m_dashboardGrid->undoStack()->clear();
     refreshPropertiesPanel();
     refreshLayersPanel();
     refreshWorkspaceSwitcher();

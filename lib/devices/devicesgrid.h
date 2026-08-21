@@ -10,6 +10,7 @@
 #include <functional>
 
 #include "devices/device.h"
+#include "telemetry/catalogtopicinfo.h"
 
 namespace traceview {
 
@@ -65,6 +66,13 @@ public:
     // loop), which is not a user edit. No-op if id is unknown or the flag is
     // already what's stored.
     void setDeviceConnected(const QString& id, bool connected);
+    // Mirrors a live DeviceConnection's Backend::deviceIdentified into
+    // device.btpVersion/btpId, same non-undoable treatment as
+    // setDeviceConnected() above and for the same reason: this is the
+    // handshake reporting what the device actually is, not a user edit.
+    // Called with empty strings when the connection drops, so a stale
+    // identity from a previous session never lingers in the UI.
+    void setDeviceIdentity(const QString& id, const QString& btpVersion, const QString& btpId);
 
     QVector<Device> devices() const { return m_devices; }
 
@@ -97,6 +105,24 @@ public:
     // to leave unset: the dialog's port combo then just starts empty and
     // Refresh is a no-op, same as before this existed.
     void setPortListProvider(std::function<QStringList()> provider) { m_portListProvider = std::move(provider); }
+
+    // Same reasoning as setPortListProvider() above, for the USB device
+    // picker -- traceview_devices doesn't depend on hidapi either (see
+    // lib/CMakeLists.txt). Safe to leave unset: the dialog's USB combo then
+    // just starts empty and its refresh is a no-op.
+    void setUsbDeviceListProvider(std::function<QVector<UsbDeviceOption>()> provider) {
+        m_usbDeviceListProvider = std::move(provider);
+    }
+
+    // Supplies the topic catalog (TelemetryCatalog, via MANIFEST_DATA) the
+    // gear icon's "Reported by device" section lists for a given device id.
+    // DevicesGrid can't reach a Backend itself (traceview_devices doesn't
+    // depend on traceview_protocol, same reasoning as setPortListProvider()
+    // above) -- MainWindow injects this once. Safe to leave unset: the
+    // dialog's catalog list then just starts empty.
+    void setTopicCatalogProvider(std::function<QVector<CatalogTopicInfo>(const QString&)> provider) {
+        m_topicCatalogProvider = std::move(provider);
+    }
 
 signals:
     void selectionChanged();
@@ -141,6 +167,8 @@ private:
     QVector<DeviceCard*> m_cards; // parallel to m_devices, same order/index
     QString m_selectedId;         // empty when nothing is selected
     std::function<QStringList()> m_portListProvider;
+    std::function<QVector<UsbDeviceOption>()> m_usbDeviceListProvider;
+    std::function<QVector<CatalogTopicInfo>(const QString&)> m_topicCatalogProvider;
     QUndoStack* m_undoStack;
 };
 

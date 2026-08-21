@@ -168,7 +168,7 @@ void BtpHandshake::onControlFrameReceived(const traceview::BtpFrame& frame) {
                                  (quint32(quint8(frame.payload.at(50))) << 16) |
                                  (quint32(quint8(frame.payload.at(51))) << 24);
         }
-        emit sessionEstablished(peerConfigRevision);
+        emit sessionEstablished(frame.sourceId, frame.bootId, peerConfigRevision, selectedVersion);
     } else {
         fail(tr("HELLO rejected, status=%1").arg(status));
     }

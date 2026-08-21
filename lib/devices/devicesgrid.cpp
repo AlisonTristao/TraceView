@@ -56,6 +56,17 @@ void DevicesGrid::setDeviceConnected(const QString& id, bool connected) {
     emit deviceUpdated(m_devices[idx]);
 }
 
+void DevicesGrid::setDeviceIdentity(const QString& id, const QString& btpVersion, const QString& btpId) {
+    const int idx = indexOfDevice(id);
+    if (idx < 0 || (m_devices[idx].btpVersion == btpVersion && m_devices[idx].btpId == btpId)) {
+        return;
+    }
+    m_devices[idx].btpVersion = btpVersion;
+    m_devices[idx].btpId = btpId;
+    m_cards[idx]->setDevice(m_devices[idx]);
+    emit deviceUpdated(m_devices[idx]);
+}
+
 void DevicesGrid::applyInsertDevice(const Device& device, int index) {
     const int clampedIndex = qBound(0, index, m_devices.size());
     m_devices.insert(clampedIndex, device);
@@ -155,6 +166,14 @@ void DevicesGrid::handleConfigRequested(const QString& deviceId) {
         dialog.setAvailablePorts(m_portListProvider());
         connect(&dialog, &DeviceConfigDialog::refreshPortsRequested, &dialog,
                 [this, &dialog]() { dialog.setAvailablePorts(m_portListProvider()); });
+    }
+    if (m_usbDeviceListProvider) {
+        dialog.setAvailableUsbDevices(m_usbDeviceListProvider());
+        connect(&dialog, &DeviceConfigDialog::refreshUsbDevicesRequested, &dialog,
+                [this, &dialog]() { dialog.setAvailableUsbDevices(m_usbDeviceListProvider()); });
+    }
+    if (m_topicCatalogProvider) {
+        dialog.setCatalogTopics(m_topicCatalogProvider(m_devices[idx].id));
     }
     if (dialog.exec() == QDialog::Accepted) {
         updateDevice(dialog.result());

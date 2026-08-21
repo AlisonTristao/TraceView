@@ -5,6 +5,8 @@
 #include <QVector>
 #include <QWidget>
 
+#include "telemetry/catalogtopicinfo.h"
+
 class QComboBox;
 
 namespace traceview {
@@ -19,7 +21,22 @@ namespace traceview {
 struct DeviceOption {
     QString id;
     QString name;
+    // This device's Backend::catalogTopics() as of the last refresh -- lets
+    // a config editor resolve the sourceId/topicId hex the user typed into
+    // the human-readable name TELEMETRY.md section 3 requires every topic to
+    // declare. Empty until that device has completed a manifest exchange at
+    // least once (or if it isn't a telemetry-capable device at all).
+    QVector<CatalogTopicInfo> catalogTopics;
 };
+
+// Resolves `sourceIdText`/`topicIdText` (as typed into a Source/Topic field
+// -- hex ("0x...") or decimal, same convention chartdata.cpp's
+// parseSourceId()/parseTopicId() use for the persisted JSON) against
+// `deviceId`'s catalogTopics entry within `devices`. Returns an empty string
+// if the device is unknown, its catalog hasn't arrived yet, or nothing in it
+// matches -- callers fall back to showing the raw hex in that case.
+QString resolveCatalogTopicName(const QVector<DeviceOption>& devices, const QString& deviceId,
+                                 const QString& sourceIdText, const QString& topicIdText);
 
 // Repopulates `combo` from `devices`: a leading "(No device)" entry (empty
 // id, meaning "unbound" -- same interpretation as ChartConfigEditor's

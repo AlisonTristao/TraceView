@@ -92,6 +92,13 @@ ChartConfigEditor::ChartConfigEditor(QWidget* parent) : WidgetConfigEditor(paren
     m_topicIdEdit->setPlaceholderText(tr("0x0101"));
     m_topicIdEdit->setToolTip(tr("BTP topic_id (TELEMETRY.md) this chart's series bind fields of."));
 
+    // Resolved from the selected device's reported catalog (see
+    // resolveCatalogTopicName()) -- blank when the device hasn't announced a
+    // topic with this exact source/topic yet.
+    m_topicNameLabel = new QLabel(this);
+    m_topicNameLabel->setEnabled(false);
+    m_topicNameLabel->setToolTip(tr("Topic name reported by the device's manifest, if known."));
+
     m_xAxisModeCombo = new QComboBox(this);
     m_xAxisModeCombo->addItem(tr("Samples"), "samples");
     m_xAxisModeCombo->addItem(tr("Time"), "time");
@@ -177,6 +184,7 @@ ChartConfigEditor::ChartConfigEditor(QWidget* parent) : WidgetConfigEditor(paren
     m_formLayout->addRow(tr("Device"), m_deviceCombo);
     m_formLayout->addRow(tr("Source"), m_sourceIdEdit);
     m_formLayout->addRow(tr("Topic"), m_topicIdEdit);
+    m_formLayout->addRow(tr("Topic name"), m_topicNameLabel);
     m_formLayout->addRow(tr("X Axis"), xAxisRow);
     m_formLayout->addRow(tr("Limit"), m_xLimitSpin);
     m_formLayout->addRow(tr("Y Axis"), m_yAxisModeCombo);
@@ -227,9 +235,18 @@ ChartConfigEditor::ChartConfigEditor(QWidget* parent) : WidgetConfigEditor(paren
     mainLayout->addWidget(m_seriesTable);
     mainLayout->addLayout(buttonRow);
 
-    connect(m_deviceCombo, &QComboBox::currentIndexChanged, this, [this](int) { emitChanged(); });
-    connect(m_sourceIdEdit, &QLineEdit::editingFinished, this, [this]() { emitChanged(); });
-    connect(m_topicIdEdit, &QLineEdit::editingFinished, this, [this]() { emitChanged(); });
+    connect(m_deviceCombo, &QComboBox::currentIndexChanged, this, [this](int) {
+        updateTopicNameLabel();
+        emitChanged();
+    });
+    connect(m_sourceIdEdit, &QLineEdit::editingFinished, this, [this]() {
+        updateTopicNameLabel();
+        emitChanged();
+    });
+    connect(m_topicIdEdit, &QLineEdit::editingFinished, this, [this]() {
+        updateTopicNameLabel();
+        emitChanged();
+    });
     connect(m_xAxisModeCombo, &QComboBox::currentIndexChanged, this, [this](int) {
         updateAxisRowsVisibility();
         emitChanged();
@@ -275,6 +292,7 @@ void ChartConfigEditor::setConfig(const QJsonObject& config) {
     }
 
     updateAxisRowsVisibility();
+    updateTopicNameLabel();
     m_updating = false;
 }
 
@@ -402,7 +420,9 @@ void ChartConfigEditor::updateAxisRowsVisibility() {
 void ChartConfigEditor::setAvailableDevices(const QVector<DeviceOption>& devices) {
     const bool wasUpdating = m_updating;
     m_updating = true;
+    m_devices = devices;
     populateDeviceCombo(m_deviceCombo, devices);
+    updateTopicNameLabel();
     m_updating = wasUpdating;
 }
 
@@ -411,6 +431,12 @@ void ChartConfigEditor::emitChanged() {
         return;
     }
     emit configChanged();
+}
+
+void ChartConfigEditor::updateTopicNameLabel() {
+    const QString name = resolveCatalogTopicName(m_devices, m_deviceCombo->currentData().toString(),
+                                                  m_sourceIdEdit->text(), m_topicIdEdit->text());
+    m_topicNameLabel->setText(name.isEmpty() ? tr("(unknown)") : name);
 }
 
 } // namespace traceview

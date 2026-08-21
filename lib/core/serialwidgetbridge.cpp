@@ -28,19 +28,32 @@ void SerialWidgetBridge::wireWidget(DashboardWidget* widget) {
     if (auto* button = qobject_cast<PushButtonWidget*>(widget)) {
         connect(button, &PushButtonWidget::sendRequested, this, [this, button](const QByteArray& command) {
             if (DeviceConnection* connection = deviceConnectionForWidget(button)) {
-                connection->serialManager()->writeCommand(command);
+                // Raw-text control commands only exist over Serial's console
+                // byte stream (docs/PROTOCOL.md "Outbound: control
+                // commands") -- a device connected over USB HID has no
+                // SerialManager at all (TRANSPORT_USB_HID.md section 7: no
+                // console, always BTP-protocolled), so this just goes
+                // nowhere, same "went nowhere, not an error" contract a
+                // closed port already had.
+                if (SerialManager* serial = connection->serialManager()) {
+                    serial->writeCommand(command);
+                }
             }
         });
     } else if (auto* toggle = qobject_cast<ToggleSwitchWidget*>(widget)) {
         connect(toggle, &ToggleSwitchWidget::sendRequested, this, [this, toggle](const QByteArray& command) {
             if (DeviceConnection* connection = deviceConnectionForWidget(toggle)) {
-                connection->serialManager()->writeCommand(command);
+                if (SerialManager* serial = connection->serialManager()) {
+                    serial->writeCommand(command);
+                }
             }
         });
     } else if (auto* slider = qobject_cast<SliderWidget*>(widget)) {
         connect(slider, &SliderWidget::sendRequested, this, [this, slider](const QByteArray& command) {
             if (DeviceConnection* connection = deviceConnectionForWidget(slider)) {
-                connection->serialManager()->writeCommand(command);
+                if (SerialManager* serial = connection->serialManager()) {
+                    serial->writeCommand(command);
+                }
             }
         });
     } else if (auto* monitor = qobject_cast<SerialMonitorWidget*>(widget)) {

@@ -7,6 +7,53 @@ release flow.
 
 ## [Unreleased]
 
+## [2.2.0] - 2026-08-21
+
+### Added
+
+- **Logs tab** — opens a bally_OS `.blog` file (the robot's SD-card event
+  log: a headerless, back-to-back sequence of BTP v1 `Log` frames) and
+  lists every decoded entry in a table, one row per message, showing its
+  raw `timestamp_us`, severity, source/boot id, sequence and text.
+  `LogFileReader` (`lib/protocol/logfilereader.h`) decodes each frame
+  against the EspNow transport profile and reassembles multi-fragment
+  messages the same way the firmware wrote them (sequential, in order); a
+  corrupted or truncated frame is skipped rather than failing the whole
+  file. `LogViewer` (`lib/logs/logviewer.h`) is the read-only table itself,
+  wired into a new Ribbon tab alongside Run/Layout/Devices — no undo stack,
+  nothing persisted into `.tvproj`, since opening a file is the only state.
+- **USB HID transport** — a device can now connect over USB HID instead of
+  a serial port: a new "Transport" combo in Add/Edit Device (`Device
+  Config Dialog`) toggles between the port/baud/line-terminator fields
+  (Serial) and a USB device picker (UsbHid), speaking BTP v1.1.0's
+  `usb_hid` profile (BTP ADR 0011) to a dongle that exposes a composite
+  CDC+HID USB device. `UsbHidManager` (`lib/core/usbhidmanager.h`) is the
+  `hidapi`-backed transport — reports are `[report_id][valid_length]
+  [payload...padding]`, since a fixed-size HID report always sends its
+  full byte count zero-padded, so the explicit length prefix is what lets
+  the receiver tell real data from padding; reading runs on its own
+  polling thread, `hidapi` having no `readyRead` equivalent. `BtpSession`
+  now takes a `btp::TransportProfile` and branches its decode path on it —
+  Serial mode keeps incremental COBS decoding, UsbHid mode decodes each
+  already-bounded HID report directly, no COBS — both still share the same
+  fragment reassembler. USB HID devices have no console/raw-byte channel
+  at all, so raw-text control-widget commands go nowhere for them, same
+  "went nowhere" contract a closed serial port already had; the serial
+  monitor widget is unaffected since its inbound/outbound path already
+  runs over a real BTP `TERMINAL` frame under both transports. See
+  `docs/DEVICES.md` and `docs/PROTOCOL.md`.
+
+### Changed
+
+- Devices tab: `DeviceConfigDialog`'s "Reported by device" fields
+  (`btpVersion`/`btpId`) are now read-only, populated from the actual BTP
+  handshake (`HELLO_RESULT`'s `selected_version`/`source_id`,
+  `BtpBackend`/`Backend::deviceIdentified`) instead of being freely-typed
+  text — and, like `connected`, no longer persisted into `.tvproj` since
+  they're live session state, not configuration. Dropped the `chipType`
+  field: nothing in the BTP protocol as implemented reports a chip/model,
+  so there was no real data to back it. See `docs/DEVICES.md`.
+
 ## [2.1.1] - 2026-08-18
 
 ### Changed

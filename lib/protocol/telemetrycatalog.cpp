@@ -48,6 +48,10 @@ const TelemetryTopicSchema* TelemetryCatalog::lookup(quint32 sourceId, quint16 t
     return it == m_schemas.constEnd() ? nullptr : &it.value();
 }
 
+QVector<TelemetryTopicSchema> TelemetryCatalog::allSchemas() const {
+    return m_schemas.values();
+}
+
 void TelemetryCatalog::registerSourceBootId(quint32 sourceId, quint32 bootId) {
     if (sourceId == 0) {
         return;

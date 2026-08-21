@@ -30,9 +30,14 @@ add_traceview_test(test_controldata traceview_dashboard)
 # real QWidgets) already covers widget-level QTest usage in this repo.
 add_traceview_test(test_serialterminalwidget traceview_dashboard)
 add_traceview_test(test_serialmanager traceview_ui)
-# One device's real connection (SerialManager + Backend pair, ambient
-# reconnect intent) -- see lib/core/deviceconnection.h. traceview_ui so it
-# can construct a BtpBackend the same way DeviceConnection itself does.
+# USB HID transport (BTP's "usb_hid" profile, ADR 0011) -- mirrors
+# test_serialmanager's shape/coverage (mostly the "can't reach real
+# hardware in CI" paths: starts disconnected, closes/writes cleanly with
+# nothing open, invalid target fails without crashing).
+add_traceview_test(test_usbhidmanager traceview_ui)
+# One device's real connection (Transport + Backend pair, ambient reconnect
+# intent) -- see lib/core/deviceconnection.h. traceview_ui so it can
+# construct a BtpBackend the same way DeviceConnection itself does.
 add_traceview_test(test_deviceconnection traceview_ui)
 
 # Generic telemetry value types (lib/telemetry) -- no BTP dependency at all
@@ -55,3 +60,6 @@ add_traceview_test(test_telemetryfieldrouter traceview_protocol)
 # handles.
 add_traceview_test(test_statusreport traceview_protocol)
 add_traceview_test(test_subscriptionmanager traceview_protocol)
+# Reads a .blog file (headerless, concatenated BTP Log frames -- see
+# lib/protocol/logfilereader.h) -- protocol-layer only, no QWidget.
+add_traceview_test(test_logfilereader traceview_protocol)

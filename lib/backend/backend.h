@@ -6,6 +6,7 @@
 #include <QVector>
 #include <QtGlobal>
 
+#include "telemetry/catalogtopicinfo.h"
 #include "telemetry/statustopicrecord.h"
 #include "telemetry/subscriptionstate.h"
 #include "telemetry/telemetrybinding.h"
@@ -53,6 +54,14 @@ public:
     // Last per-topic metrics this backend has received, keyed by (sourceId,
     // topicId). Empty when the backend has none to report.
     virtual QVector<StatusTopicRecord> topicStatuses() const = 0;
+    // Every (source, topic) schema this backend's catalog currently holds,
+    // as announced by the device's own manifest exchange (MANIFEST_DATA for
+    // BtpBackend) -- each entry's `name` is the human-readable topic name
+    // TELEMETRY.md section 3 requires alongside the numeric topic_id.
+    // Display-only: addSubscriber()/updateSubscriber() still take raw
+    // sourceId/topicId, never one of these. Empty until that exchange has
+    // completed at least once.
+    virtual QVector<CatalogTopicInfo> catalogTopics() const = 0;
 
 public slots:
     // Raw bytes arriving off the transport (SerialManager::dataReceived).
@@ -84,6 +93,16 @@ signals:
     void subscriptionsChanged();
     // Per-topic metrics were updated (topicStatuses() has fresh data).
     void statusReceived();
+    // catalogTopics() has fresh data (a manifest exchange completed or was
+    // updated) -- lets a UI cache built from it (e.g. MainWindow's
+    // DeviceOption list for the properties panel) know to re-fetch instead
+    // of only refreshing on device add/remove/rename.
+    void catalogChanged();
+    // The connected device just identified itself (session established).
+    // btpVersion/btpId are what the Devices tab's "Reported by device"
+    // section shows -- live-mirrored the same way `Device::connected` is, not
+    // user-editable and not persisted (see devices/deviceconfigdialog.h).
+    void deviceIdentified(const QString& btpVersion, const QString& btpId);
 };
 
 }  // namespace traceview

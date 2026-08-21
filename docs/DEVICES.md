@@ -17,12 +17,17 @@ the Layout tab (`updatePanelVisibility()` gates them on
   `DevicesGrid::addDevice()` if left empty), `name`, `connected` (live-
   mirrored from its `DeviceConnection`, not user-editable), `commType` (a
   `CommType` enum — only `CommType::Btp` exists today), `description`,
-  `portName`/`baudRate`/`lineTerminator` (the real transport config a
-  `DeviceConnection` opens with), plus `btpVersion`/`chipType`/`btpId`
-  standing in for whatever a real device manifest will eventually report.
-  Plain public fields, same low-ceremony value-type style as
-  `DashboardItem`. `deviceToJson()`/`deviceFromJson()` (same file) persist
-  everything except `connected` -- see "Persistence" below.
+  `transportType` (a `TransportType` enum — `Serial` or `UsbHid`, see
+  "Transports" below) plus whichever of `portName`/`baudRate`/
+  `lineTerminator` (Serial) or `usbPath` (UsbHid) it selects — the real
+  transport config a `DeviceConnection` opens with — plus `btpVersion`/
+  `btpId` — the BTP envelope version and the dongle's own `source_id`, both
+  taken straight from the last `HELLO_RESULT` (`protocol/btphandshake.h`'s
+  `sessionEstablished()`, forwarded through `Backend::deviceIdentified()`),
+  never user-editable. Plain public fields, same low-ceremony value-type
+  style as `DashboardItem`. `deviceToJson()`/`deviceFromJson()` (same file)
+  persist everything except `connected`/`btpVersion`/`btpId` -- see
+  "Persistence" below.
 - **`DeviceCard`** ([lib/devices/devicecard.h](../lib/devices/devicecard.h))
   — one device's card, fixed size (`kDeviceCardSize`, 260x140), painted in
   the same procedural-`QPainter` chrome style as `DashboardCell`'s header
@@ -43,36 +48,61 @@ the Layout tab (`updatePanelVisibility()` gates them on
   never touch a card's selection state directly either.
 - **`DeviceConfigDialog`**
   ([lib/devices/deviceconfigdialog.h](../lib/devices/deviceconfigdialog.h))
-  — edits one `Device`: name/description, a "Connection" section (port
-  combo + refresh, baud, line terminator -- the config a `DeviceConnection`
-  actually opens with) plus a read-only status line, and a read-back
-  "reported by device" section (`btpVersion`/`chipType`/`btpId`). Opened
-  and applied entirely inside `DevicesGrid`; accepting it calls
-  `updateDevice()` on the grid's own copy. `DevicesGrid` can't enumerate
-  serial ports itself (`traceview_devices` doesn't depend on `QSerialPort`,
-  see `lib/CMakeLists.txt`), so it takes a port-list provider callback
-  (`DevicesGrid::setPortListProvider()`, supplied by `MainWindow`) and
-  forwards it into the dialog's `setAvailablePorts()`/`refreshPortsRequested()`.
+  — edits one `Device`: name/description, a "Connection" section starting
+  with a Transport combo (Serial/USB) that toggles between the
+  port-combo-plus-refresh/baud/line-terminator row group (Serial) and a USB
+  device combo plus its own refresh button (UsbHid) via
+  `QFormLayout::setRowVisible()`, plus a read-only status line, and a
+  read-only "reported by device" section (`btpVersion`/`btpId`). Opened and
+  applied entirely inside `DevicesGrid`; accepting it calls `updateDevice()`
+  on the grid's own copy. `DevicesGrid` can't enumerate serial ports or USB
+  HID devices itself (`traceview_devices` doesn't depend on `QSerialPort` or
+  `hidapi`, see `lib/CMakeLists.txt`), so it takes two provider callbacks
+  (`DevicesGrid::setPortListProvider()`/`setUsbDeviceListProvider()`,
+  supplied by `MainWindow`) and forwards them into the dialog's
+  `setAvailablePorts()`/`refreshPortsRequested()` and
+  `setAvailableUsbDevices()`/`refreshUsbDevicesRequested()` pairs.
+
+## Transports
+
+`TransportType` (`lib/devices/device.h`) is independent of `CommType`: BTP
+(the only protocol today) can run over either. `TransportType::Serial` is
+the original COM-port transport; `TransportType::UsbHid` is BTP v1.1.0's
+`usb_hid` profile (see the `BTP` repository's ADR 0011 and
+`docs/TRANSPORT_USB_HID.md`) -- a dongle exposing a composite CDC+HID USB
+device, with the HID interface picked by `Device::usbPath` (a `hidapi`
+device path, analogous to `portName`) instead of a COM port. `usb_hid`'s
+tight per-report payload ceiling (22 octets) and lack of a console mode mean
+`Device::lineTerminator`/raw control-widget text commands don't apply to it
+-- `SerialWidgetBridge` treats a USB HID device's missing `SerialManager`
+the same as a closed port: the command just goes nowhere.
 
 ## Connections
 
 Real per-device transport now lives in **`DeviceConnection`**
 ([lib/core/deviceconnection.h](../lib/core/deviceconnection.h)) --
 `traceview_ui`, not `traceview_devices` (see the layering note above): each
-`Device` gets its own `SerialManager` (raw bytes) plus `Backend` (protocol
-decode/encode, concretely a `BtpBackend`), so several devices can be open at
-once, each running its own independent BTP session. `MainWindow` owns a
-`QHash<QString, DeviceConnection*>` keyed by `Device::id`, built and torn
-down in lockstep with `DevicesGrid`'s own list
-(`DevicesGrid::deviceAdded`/`deviceRemoved`/`deviceUpdated`).
+`Device` gets its own `Transport` (`lib/core/transport.h` -- concretely a
+`SerialManager` or a `UsbHidManager`, chosen once at construction by
+`transportType` and never swapped afterward) plus `Backend` (protocol
+decode/encode, concretely a `BtpBackend`, itself told which `btp::
+TransportProfile` to speak), so several devices can be open at once, each
+over its own transport, each running its own independent BTP session.
+`MainWindow` owns a `QHash<QString, DeviceConnection*>` keyed by
+`Device::id`, built and torn down in lockstep with `DevicesGrid`'s own list
+(`DevicesGrid::deviceAdded`/`deviceRemoved`/`deviceUpdated`) -- and rebuilt
+in place if an existing device's `transportType` itself changes, since a
+live `DeviceConnection`'s transport/backend pair can't be swapped
+(`MainWindow::onDeviceUpdated`).
 
 Connecting is **ambient**, not a one-shot action: `DeviceConnection::connectTo()`
-records intent ("this device should be online at this port/baud") separately
-from whatever `SerialManager::isConnected()` currently reports, and a timer
+records intent ("this device should be online at this target") separately
+from whatever the transport's `isConnected()` currently reports, and a timer
 retries `open()` every few seconds while the two disagree -- covers both a
 freshly configured device's first connection attempt and silently recovering
 from an unplug/replug, with no user action needed either time. A device with
-an empty `portName` is simply "not configured" and never attempts to open.
+an empty target (`portName` for Serial, `usbPath` for UsbHid) is simply "not
+configured" and never attempts to open.
 `disconnectFrom()` (or the status dot's connect-toggle click, see below) is
 the only thing that turns the intent back off.
 
@@ -107,16 +137,29 @@ configured device's name and connection dot, for an at-a-glance summary that
 doesn't require switching tabs or having any dashboard widget bound to that
 device.
 
+**Device identity**: once a `DeviceConnection`'s `BtpBackend` completes the
+BTP handshake, `Backend::deviceIdentified(btpVersion, btpId)` fires --
+`btpVersion` is the negotiated envelope version from `HELLO_RESULT.
+selected_version`, `btpId` is the dongle's own `source_id` (hex), both taken
+straight from `BtpHandshake::sessionEstablished()`. `MainWindow` forwards
+this into `DevicesGrid::setDeviceIdentity(deviceId, ...)`, the same
+non-undoable mirroring `setDeviceConnected()` uses for `connected`, so
+`DeviceConfigDialog`'s "Reported by device" fields always show what the
+device last actually said, never a stale or hand-typed value. A dropped
+connection clears both back to empty (`MainWindow::
+onDeviceConnectionStateChanged()`) until the next successful handshake.
+
 ## Persistence
 
 Devices are saved into `.tvproj` under a top-level `"devices"` section
 (`ProjectStore::setSection("devices", ...)`), written by
 `DevicesGrid::toJson()` and restored by `DevicesGrid::fromJson()` (which
 replaces the current list rather than merging, same contract as
-`DashboardGrid::fromJson()`). `connected` is deliberately not persisted --
-it's live transport state, not configuration; a freshly loaded device starts
-disconnected and `DeviceConnection`'s ambient retry takes it from there if a
-`portName` is set.
+`DashboardGrid::fromJson()`). `connected`, `btpVersion` and `btpId` are
+deliberately not persisted -- they're live transport/session state, not
+configuration; a freshly loaded device starts disconnected and unidentified,
+and `DeviceConnection`'s ambient retry (plus a fresh handshake once it opens)
+takes it from there if a `portName` is set.
 
 ## Layout
 
@@ -156,12 +199,24 @@ clicking a different card replaces the selection rather than adding to it.
 
 Devices are added by hand via **Add Device** (there's no discovery/scan
 picker) and each one is a real, independent BTP connection once given a
-port -- see "Connections" above. `btpVersion`/`chipType`/`btpId` are still
-plain editable text in `DeviceConfigDialog`, not populated from a live
-device: wiring those up to a real BTP manifest exchange (`ManifestClient`,
-see [docs/PROTOCOL.md](PROTOCOL.md)) is later work.
+port -- see "Connections" above. `btpVersion`/`btpId` are read-only in
+`DeviceConfigDialog`, populated from the handshake (see "Device identity"
+above) -- there's no `chipType` field since nothing in the BTP protocol as
+implemented reports one (no chip/model field exists in `HELLO_RESULT` or
+`MANIFEST_DATA`); one could be added later if a real manifest exchange ever
+grows a field for it.
 `DevicesGrid`/`DeviceCard`/`DeviceConfigDialog` themselves still have no
-dependency on `lib/protocol/` or `SerialManager` -- that stays true by
-design (see the layering note above); the real transport wiring lives in
-`traceview_ui` (`DeviceConnection`/`MainWindow`), not inside the devices
-module itself.
+dependency on `lib/protocol/`, `SerialManager` or `UsbHidManager` -- that
+stays true by design (see the layering note above); the real transport
+wiring lives in `traceview_ui` (`DeviceConnection`/`MainWindow`), not inside
+the devices module itself.
+
+Testing any of this without real hardware: see
+[docs/SYNTHETIC_DEVICE.md](SYNTHETIC_DEVICE.md) for `tools/synthetic_device`,
+a standalone tool that speaks a real device's side of BTP v1 over an actual
+serial port. It has no USB HID equivalent yet -- exercising the `UsbHid`
+transport end to end still needs a real dongle running the `usb_hid`
+profile (bally_dongle's `UsbHidMux`); `UsbHidManager`'s own unit tests
+(`tests/test_usbhidmanager.cpp`) cover the no-hardware-available paths only
+(starts disconnected, invalid target fails without crashing), same limits
+`test_serialmanager.cpp` already had for COM ports.

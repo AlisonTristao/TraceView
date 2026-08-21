@@ -9,6 +9,7 @@
 #include <QHBoxLayout>
 #include <QHeaderView>
 #include <QJsonArray>
+#include <QLabel>
 #include <QLineEdit>
 #include <QPushButton>
 #include <QSpinBox>
@@ -49,6 +50,13 @@ GaugeConfigEditor::GaugeConfigEditor(QWidget* parent) : WidgetConfigEditor(paren
     m_topicIdEdit->setPlaceholderText(tr("0x0101"));
     m_topicIdEdit->setToolTip(tr("BTP topic_id (TELEMETRY.md) this gauge's rings bind fields of."));
 
+    // Resolved from the selected device's reported catalog (see
+    // resolveCatalogTopicName()) -- blank when the device hasn't announced a
+    // topic with this exact source/topic yet.
+    m_topicNameLabel = new QLabel(this);
+    m_topicNameLabel->setEnabled(false);
+    m_topicNameLabel->setToolTip(tr("Topic name reported by the device's manifest, if known."));
+
     m_minSpin = new QDoubleSpinBox(this);
     m_minSpin->setRange(-100'000.0, 100'000.0);
     m_minSpin->setDecimals(2);
@@ -75,6 +83,7 @@ GaugeConfigEditor::GaugeConfigEditor(QWidget* parent) : WidgetConfigEditor(paren
     m_formLayout->addRow(tr("Device"), m_deviceCombo);
     m_formLayout->addRow(tr("Source"), m_sourceIdEdit);
     m_formLayout->addRow(tr("Topic"), m_topicIdEdit);
+    m_formLayout->addRow(tr("Topic name"), m_topicNameLabel);
     m_formLayout->addRow(tr("Min"), m_minSpin);
     m_formLayout->addRow(tr("Max"), m_maxSpin);
     m_formLayout->addRow(tr("Unit"), m_unitEdit);
@@ -117,9 +126,18 @@ GaugeConfigEditor::GaugeConfigEditor(QWidget* parent) : WidgetConfigEditor(paren
     mainLayout->addWidget(m_seriesTable);
     mainLayout->addLayout(buttonRow);
 
-    connect(m_deviceCombo, &QComboBox::currentIndexChanged, this, [this](int) { emitChanged(); });
-    connect(m_sourceIdEdit, &QLineEdit::editingFinished, this, [this]() { emitChanged(); });
-    connect(m_topicIdEdit, &QLineEdit::editingFinished, this, [this]() { emitChanged(); });
+    connect(m_deviceCombo, &QComboBox::currentIndexChanged, this, [this](int) {
+        updateTopicNameLabel();
+        emitChanged();
+    });
+    connect(m_sourceIdEdit, &QLineEdit::editingFinished, this, [this]() {
+        updateTopicNameLabel();
+        emitChanged();
+    });
+    connect(m_topicIdEdit, &QLineEdit::editingFinished, this, [this]() {
+        updateTopicNameLabel();
+        emitChanged();
+    });
     connect(m_minSpin, &QDoubleSpinBox::valueChanged, this, [this](double) { emitChanged(); });
     connect(m_maxSpin, &QDoubleSpinBox::valueChanged, this, [this](double) { emitChanged(); });
     connect(m_unitEdit, &QLineEdit::editingFinished, this, [this]() { emitChanged(); });
@@ -157,6 +175,7 @@ void GaugeConfigEditor::setConfig(const QJsonObject& config) {
         addSeriesRow(QJsonObject());
     }
 
+    updateTopicNameLabel();
     m_updating = false;
 }
 
@@ -245,7 +264,9 @@ void GaugeConfigEditor::addSeriesRow(const QJsonObject& series) {
 void GaugeConfigEditor::setAvailableDevices(const QVector<DeviceOption>& devices) {
     const bool wasUpdating = m_updating;
     m_updating = true;
+    m_devices = devices;
     populateDeviceCombo(m_deviceCombo, devices);
+    updateTopicNameLabel();
     m_updating = wasUpdating;
 }
 
@@ -254,6 +275,12 @@ void GaugeConfigEditor::emitChanged() {
         return;
     }
     emit configChanged();
+}
+
+void GaugeConfigEditor::updateTopicNameLabel() {
+    const QString name = resolveCatalogTopicName(m_devices, m_deviceCombo->currentData().toString(),
+                                                  m_sourceIdEdit->text(), m_topicIdEdit->text());
+    m_topicNameLabel->setText(name.isEmpty() ? tr("(unknown)") : name);
 }
 
 }  // namespace traceview

@@ -27,13 +27,20 @@ migration — see git history if you need that old grammar for archaeology).
 ## Client-side layering (topico 14)
 
 ```
-SerialManager           -- raw QSerialPort bytes in/out, no framing knowledge
+SerialManager/UsbHidManager -- raw bytes in/out, no framing knowledge
+                             (Transport, lib/core/transport.h -- either
+                             concrete class, chosen once per device by
+                             Device::transportType)
       |  dataReceived(QByteArray)
       v
 BtpSession               -- lib/protocol/btpsession.h
-                             incremental COBS decode (btp::SerialDecoder),
-                             envelope/CRC validation, fragment reassembly
-                             (btp::Reassembler); emits BtpFrame
+                             built with the matching btp::TransportProfile:
+                             Serial mode does incremental COBS decode
+                             (btp::SerialDecoder); UsbHid mode decodes each
+                             already-bounded HID report directly
+                             (btp::decode(), no COBS -- TRANSPORT_USB_HID.md).
+                             Both do envelope/CRC validation and fragment
+                             reassembly (btp::Reassembler); emits BtpFrame
       |  frameReceived(BtpFrame)
       v
 ProtocolRouter            -- lib/protocol/protocolrouter.h
@@ -197,6 +204,18 @@ frames would corrupt the stream. Migrating control-widget output onto BTP's
 `COMMAND`/`COMMAND_REQUEST` → `COMMAND_RESULT` exchange (see
 `COMMANDS_AND_ACTIONS.md` section 4) is tracked as its own future topico
 ("Acoes persistidas e comandos virtuais"), not folded into this one.
+
+**USB HID devices have no equivalent path at all**, not even the corruption
+risk above: `TRANSPORT_USB_HID.md` section 7 defines the `usb_hid` profile
+as always BTP-protocolled, with no console/raw-byte mode to send arbitrary
+text into in the first place. A `Device` with `transportType ==
+TransportType::UsbHid` has no `SerialManager` (`DeviceConnection::
+serialManager()` returns `nullptr`), so `SerialWidgetBridge` just doesn't
+send anything for that device's control widgets -- same "went nowhere, not
+an error" contract a closed port already had. `SerialMonitorWidget` is
+unaffected either way: its inbound/outbound path already goes through
+`Backend::sendTerminalIn()`/`terminalDataReceived` (a real BTP `TERMINAL`
+frame), which both transports support identically.
 
 ## Terminal (topico 19)
 

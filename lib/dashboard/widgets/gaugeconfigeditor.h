@@ -5,6 +5,7 @@
 class QComboBox;
 class QDoubleSpinBox;
 class QFormLayout;
+class QLabel;
 class QLineEdit;
 class QPushButton;
 class QSpinBox;
@@ -39,13 +40,24 @@ private:
     // is programmatically repopulating the UI (m_updating), otherwise
     // re-derives config() and emits configChanged().
     void emitChanged();
+    // Re-resolves m_topicNameLabel from m_devices against the current
+    // Device/Source/Topic fields -- called on every change to any of the
+    // three, and from setAvailableDevices() since a catalog can arrive after
+    // the fields were already set.
+    void updateTopicNameLabel();
 
     bool m_updating = false;
+
+    QVector<DeviceOption> m_devices;
 
     QFormLayout* m_formLayout = nullptr;
     QComboBox* m_deviceCombo = nullptr;
     QLineEdit* m_sourceIdEdit = nullptr;
     QLineEdit* m_topicIdEdit = nullptr;
+    // Read-only: the catalog name resolved for the current Device/Source/
+    // Topic combination (TELEMETRY.md section 3's readable topic name),
+    // blank when unresolved -- see resolveCatalogTopicName() (widgetconfigeditor.h).
+    QLabel* m_topicNameLabel = nullptr;
     QDoubleSpinBox* m_minSpin = nullptr;
     QDoubleSpinBox* m_maxSpin = nullptr;
     QLineEdit* m_unitEdit = nullptr;

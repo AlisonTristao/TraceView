@@ -1,0 +1,184 @@
+{
+    "devices": {
+        "devices": [
+            {
+                "id": "2c50f9ad-9e6a-4522-bc18-b522868095ec",
+                "name": "Solar Panel (synthetic)",
+                "commType": 0,
+                "description": "tools/synthetic_device --profile solar_panel (run_example.bat)",
+                "portName": "COM9",
+                "baudRate": 921600,
+                "lineTerminator": 1
+            },
+            {
+                "id": "8502e090-6c3f-4ef0-b6a1-005986377c70",
+                "name": "Weather Station (synthetic)",
+                "commType": 0,
+                "description": "tools/synthetic_device --profile weather_station (run_example.bat)",
+                "portName": "COM13",
+                "baudRate": 921600,
+                "lineTerminator": 1
+            }
+        ]
+    },
+    "traceview": {
+        "formatVersion": 1
+    },
+    "workspaces": {
+        "activeId": "fc2cdb35-daec-4cf2-8746-d7aca940f0f2",
+        "list": [
+            {
+                "id": "fc2cdb35-daec-4cf2-8746-d7aca940f0f2",
+                "name": "Synthetic Demo",
+                "dashboard": {
+                    "items": [
+                        {
+                            "id": "b0dfe1b0-96a9-4b33-afba-9dbc8acd1f8d",
+                            "type": "dummy_line",
+                            "name": "Solar Irradiance",
+                            "key": "",
+                            "groupId": "",
+                            "config": {
+                                "deviceId": "2c50f9ad-9e6a-4522-bc18-b522868095ec",
+                                "sourceId": "0x53594E31",
+                                "topicId": "0x0001",
+                                "series": [
+                                    {
+                                        "fieldId": 2,
+                                        "name": "Irradiance",
+                                        "color": "#f0a020",
+                                        "style": "solid"
+                                    }
+                                ],
+                                "xAxis": {
+                                    "mode": "samples",
+                                    "sampleTimeMs": 100,
+                                    "limit": 300
+                                },
+                                "yAxis": {
+                                    "mode": "auto",
+                                    "min": 0,
+                                    "max": 1200,
+                                    "unit": "W/m2",
+                                    "grid": true
+                                }
+                            },
+                            "x": 0.0,
+                            "y": 0.0,
+                            "width": 0.5,
+                            "height": 0.5
+                        },
+                        {
+                            "id": "1209a4e3-8e77-4641-b251-a36f7948d2f7",
+                            "type": "dummy_line",
+                            "name": "Solar Battery Charge",
+                            "key": "",
+                            "groupId": "",
+                            "config": {
+                                "deviceId": "2c50f9ad-9e6a-4522-bc18-b522868095ec",
+                                "sourceId": "0x53594E31",
+                                "topicId": "0x0002",
+                                "series": [
+                                    {
+                                        "fieldId": 4,
+                                        "name": "Battery Charge",
+                                        "color": "#2e9e5b",
+                                        "style": "solid"
+                                    }
+                                ],
+                                "xAxis": {
+                                    "mode": "samples",
+                                    "sampleTimeMs": 100,
+                                    "limit": 300
+                                },
+                                "yAxis": {
+                                    "mode": "fixed",
+                                    "min": 0,
+                                    "max": 100,
+                                    "unit": "%",
+                                    "grid": true
+                                }
+                            },
+                            "x": 0.5,
+                            "y": 0.0,
+                            "width": 0.5,
+                            "height": 0.5
+                        },
+                        {
+                            "id": "7fea1b48-482b-4408-94dc-26f0f870baaa",
+                            "type": "dummy_line",
+                            "name": "Weather Irradiance",
+                            "key": "",
+                            "groupId": "",
+                            "config": {
+                                "deviceId": "8502e090-6c3f-4ef0-b6a1-005986377c70",
+                                "sourceId": "0x57454131",
+                                "topicId": "0x0001",
+                                "series": [
+                                    {
+                                        "fieldId": 1,
+                                        "name": "Irradiance",
+                                        "color": "#f0a020",
+                                        "style": "solid"
+                                    }
+                                ],
+                                "xAxis": {
+                                    "mode": "samples",
+                                    "sampleTimeMs": 100,
+                                    "limit": 300
+                                },
+                                "yAxis": {
+                                    "mode": "auto",
+                                    "min": 0,
+                                    "max": 1200,
+                                    "unit": "W/m2",
+                                    "grid": true
+                                }
+                            },
+                            "x": 0.0,
+                            "y": 0.5,
+                            "width": 0.5,
+                            "height": 0.5
+                        },
+                        {
+                            "id": "4d02e36e-f895-4dc4-abc8-e5d59b7bb89d",
+                            "type": "dummy_line",
+                            "name": "Weather Air Temperature",
+                            "key": "",
+                            "groupId": "",
+                            "config": {
+                                "deviceId": "8502e090-6c3f-4ef0-b6a1-005986377c70",
+                                "sourceId": "0x57454131",
+                                "topicId": "0x0001",
+                                "series": [
+                                    {
+                                        "fieldId": 2,
+                                        "name": "Air Temperature",
+                                        "color": "#d64545",
+                                        "style": "solid"
+                                    }
+                                ],
+                                "xAxis": {
+                                    "mode": "samples",
+                                    "sampleTimeMs": 100,
+                                    "limit": 300
+                                },
+                                "yAxis": {
+                                    "mode": "auto",
+                                    "min": -10,
+                                    "max": 50,
+                                    "unit": "Cel",
+                                    "grid": true
+                                }
+                            },
+                            "x": 0.5,
+                            "y": 0.5,
+                            "width": 0.5,
+                            "height": 0.5
+                        }
+                    ]
+                }
+            }
+        ]
+    }
+}

@@ -98,6 +98,12 @@ public:
 
     const TelemetryTopicSchema* lookup(quint32 sourceId, quint16 topicId, quint16 schemaVersion) const;
 
+    // Every schema currently registered, in no particular order -- for
+    // display (e.g. BtpBackend::catalogTopics()), never for decode lookups
+    // (lookup() above needs the exact (sourceId, topicId, schemaVersion)
+    // triple, which this doesn't preserve any grouping of).
+    QVector<TelemetryTopicSchema> allSchemas() const;
+
     // Topico 17: SubscriptionManager needs the source's boot_id to address a
     // SUBSCRIBE/UNSUBSCRIBE's target_boot_id (COMMANDS_AND_ACTIONS.md section
     // 7 marks it non-zero, unlike MANIFEST_REQUEST's target_boot_id which

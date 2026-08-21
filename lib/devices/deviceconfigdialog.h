@@ -4,10 +4,13 @@
 #include <QStringList>
 
 #include "devices/device.h"
+#include "telemetry/catalogtopicinfo.h"
 
 class QComboBox;
+class QFormLayout;
 class QLabel;
 class QLineEdit;
+class QListWidget;
 class QPlainTextEdit;
 class QToolButton;
 
@@ -17,8 +20,10 @@ namespace traceview {
 // (port/baud/line terminator -- the config DeviceConnection, core/
 // deviceconnection.h, actually opens with, moved here now that each device
 // owns its own connection instead of sharing the old single Run tab bar)
-// plus a read-only status line, and a "Reported by device" section
-// (btpVersion/chipType/btpId). Constructed with the Device to edit, read
+// plus a read-only status line, and a read-only "Reported by device" section
+// (btpVersion/btpId, straight from the last HELLO_RESULT -- see
+// protocol/btphandshake.h's sessionEstablished() and Device::btpVersion/
+// btpId's own comments). Constructed with the Device to edit, read
 // back via result() after exec() returns Accepted -- follows
 // AboutDialog/DonateDialog's construction convention (see
 // core/aboutdialog.h) -- Q_OBJECT so tr() resolves this class as its own
@@ -31,7 +36,10 @@ public:
 
     // Valid once exec() == QDialog::Accepted: the initial Device with every
     // editable field replaced by the dialog's current contents. id/commType
-    // are carried over unchanged -- this dialog never reassigns either.
+    // are carried over unchanged -- this dialog never reassigns either --
+    // and so are btpVersion/btpId: "Reported by device" is read-only here,
+    // so whatever the initial Device already held (last HELLO_RESULT, or
+    // empty) passes straight through.
     Device result() const;
 
     // Repopulates the Port combo from a fresh OS enumeration, preserving
@@ -43,6 +51,24 @@ public:
     // refreshPortsRequested() fires.
     void setAvailablePorts(const QStringList& ports);
 
+    // Repopulates the USB device combo from a fresh OS enumeration, same
+    // "preserve the current selection even if it's not in the new list"
+    // treatment as setAvailablePorts() above -- a device's own usbPath (its
+    // hidapi device path, not the display label) is what's preserved,
+    // synthesizing a placeholder entry if it isn't currently plugged in.
+    // Called once up front and again each time refreshUsbDevicesRequested()
+    // fires.
+    void setAvailableUsbDevices(const QVector<UsbDeviceOption>& devices);
+
+    // Populates the read-only "Reported catalog" list below "Reported by
+    // device" from this device's Backend::catalogTopics() (TelemetryCatalog,
+    // via MANIFEST_DATA) -- one entry per (source, topic, schema_version)
+    // the device has announced, each's field list in its tooltip. Unlike
+    // setAvailablePorts(), there's no refresh button: whoever opens this
+    // dialog (DevicesGrid) fetches the catalog once, up front, the same
+    // moment it reads btpVersion/btpId off the Device it's editing.
+    void setCatalogTopics(const QVector<CatalogTopicInfo>& topics);
+
 signals:
     // Emitted when the user clicks the port list's refresh button.
     // DeviceConfigDialog can't query the OS port list itself --
@@ -50,23 +76,41 @@ signals:
     // lib/CMakeLists.txt) -- so the owner is expected to call
     // setAvailablePorts() again in response.
     void refreshPortsRequested();
+    // Same reasoning as refreshPortsRequested() above, for the USB device
+    // combo -- traceview_devices doesn't depend on hidapi either.
+    void refreshUsbDevicesRequested();
 
 private:
+    void updateTransportFieldsVisibility();
+
     Device m_device;
 
     QLineEdit* m_nameEdit = nullptr;
     QPlainTextEdit* m_descriptionEdit = nullptr;
 
+    QFormLayout* m_connectionLayout = nullptr;
+    QComboBox* m_transportTypeCombo = nullptr;
+    int m_portRowIndex = -1;
+    int m_baudRowIndex = -1;
+    int m_lineTerminatorRowIndex = -1;
+    int m_usbDeviceRowIndex = -1;
+
     QComboBox* m_portCombo = nullptr;
     QToolButton* m_refreshPortsButton = nullptr;
     QComboBox* m_baudCombo = nullptr;
     QComboBox* m_lineTerminatorCombo = nullptr;
+    QComboBox* m_usbDeviceCombo = nullptr;
+    QToolButton* m_refreshUsbDevicesButton = nullptr;
     QLabel* m_statusLabel = nullptr;
 
-    // These three become read-only once wired to a real BTP device manifest.
+    // Read-only: populated from m_device.btpVersion/btpId (the last
+    // HELLO_RESULT), never written back to the device in result().
     QLineEdit* m_btpVersionEdit = nullptr;
-    QLineEdit* m_chipTypeEdit = nullptr;
     QLineEdit* m_btpIdEdit = nullptr;
+
+    // Read-only, populated by setCatalogTopics() -- see that method's own
+    // comment.
+    QListWidget* m_catalogList = nullptr;
 };
 
 } // namespace traceview
