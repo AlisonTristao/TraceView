@@ -8,11 +8,46 @@
 #include <QIntValidator>
 #include <QLabel>
 #include <QLineEdit>
+#include <QListWidget>
 #include <QPlainTextEdit>
 #include <QToolButton>
 #include <QVBoxLayout>
 
 namespace traceview {
+
+namespace {
+
+// One line for m_catalogList -- e.g. "motor_state — source 0x11223344,
+// topic 0x0101 (v1, PACKED_LE)". The field list (name/type/unit) goes in the
+// item's tooltip instead of the line itself, so the list stays scannable
+// even for a topic with many fields.
+QString catalogTopicLine(const CatalogTopicInfo& topic) {
+    const QString label = topic.name.isEmpty() ? QObject::tr("(unnamed topic)") : topic.name;
+    return QString("%1 \xE2\x80\x94 source 0x%2, topic 0x%3 (v%4, %5)")
+        .arg(label)
+        .arg(topic.sourceId, 8, 16, QChar('0'))
+        .arg(topic.topicId, 4, 16, QChar('0'))
+        .arg(topic.schemaVersion)
+        .arg(topic.encoding);
+}
+
+QString catalogTopicTooltip(const CatalogTopicInfo& topic) {
+    if (topic.fields.isEmpty()) {
+        return QObject::tr("No fields declared.");
+    }
+    QStringList lines;
+    lines.reserve(topic.fields.size());
+    for (const CatalogTopicField& field : topic.fields) {
+        QString line = QString("%1: %2").arg(field.name.isEmpty() ? QObject::tr("(unnamed)") : field.name, field.type);
+        if (!field.unit.isEmpty() && field.unit != QStringLiteral("1")) {
+            line += QString(" (%1)").arg(field.unit);
+        }
+        lines.append(line);
+    }
+    return lines.join('\n');
+}
+
+}  // namespace
 
 DeviceConfigDialog::DeviceConfigDialog(const Device& initial, QWidget* parent)
     : QDialog(parent), m_device(initial) {
@@ -97,6 +132,21 @@ DeviceConfigDialog::DeviceConfigDialog(const Device& initial, QWidget* parent)
     reportedLayout->addRow(tr("BTP version:"), m_btpVersionEdit);
     reportedLayout->addRow(tr("BTP ID:"), m_btpIdEdit);
 
+    // What the device's own manifest (MANIFEST_DATA) announced -- every
+    // (source, topic, schema_version) its Backend's TelemetryCatalog
+    // currently holds, each with the human-readable name TELEMETRY.md
+    // section 3 requires alongside the numeric topic_id. Read-only, same as
+    // "Reported by device" above; a fixed max height keeps this from growing
+    // the dialog unboundedly for a device with many topics -- QListWidget
+    // scrolls internally past that instead.
+    auto* catalogGroup = new QGroupBox(tr("Reported catalog"), this);
+    m_catalogList = new QListWidget(catalogGroup);
+    m_catalogList->setToolTip(tr("Hover an entry to see its fields."));
+    m_catalogList->setMaximumHeight(140);
+    auto* catalogLayout = new QVBoxLayout(catalogGroup);
+    catalogLayout->addWidget(m_catalogList);
+    setCatalogTopics({});
+
     auto* buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, this);
     connect(buttons, &QDialogButtonBox::accepted, this, &QDialog::accept);
     connect(buttons, &QDialogButtonBox::rejected, this, &QDialog::reject);
@@ -105,6 +155,7 @@ DeviceConfigDialog::DeviceConfigDialog(const Device& initial, QWidget* parent)
     layout->addLayout(formLayout);
     layout->addWidget(connectionGroup);
     layout->addWidget(reportedGroup);
+    layout->addWidget(catalogGroup);
     layout->addSpacing(8);
     layout->addWidget(buttons);
 }
@@ -119,6 +170,19 @@ Device DeviceConfigDialog::result() const {
     // btpVersion/btpId deliberately left as whatever m_device already held --
     // "Reported by device" is read-only (see the fields' own declarations).
     return device;
+}
+
+void DeviceConfigDialog::setCatalogTopics(const QVector<CatalogTopicInfo>& topics) {
+    m_catalogList->clear();
+    if (topics.isEmpty()) {
+        auto* placeholder = new QListWidgetItem(tr("(no topics reported yet)"), m_catalogList);
+        placeholder->setFlags(placeholder->flags() & ~Qt::ItemIsSelectable & ~Qt::ItemIsEnabled);
+        return;
+    }
+    for (const CatalogTopicInfo& topic : topics) {
+        auto* item = new QListWidgetItem(catalogTopicLine(topic), m_catalogList);
+        item->setToolTip(catalogTopicTooltip(topic));
+    }
 }
 
 void DeviceConfigDialog::setAvailablePorts(const QStringList& ports) {

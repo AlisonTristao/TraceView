@@ -38,6 +38,7 @@ public:
     void removeSubscriber(quint64 handle) override;
     QVector<TopicSubscriptionState> subscriptions() const override;
     QVector<StatusTopicRecord> topicStatuses() const override;
+    QVector<CatalogTopicInfo> catalogTopics() const override;
 
 public slots:
     void feedBytes(const QByteArray& data) override;

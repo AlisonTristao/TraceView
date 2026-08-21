@@ -4,10 +4,12 @@
 #include <QStringList>
 
 #include "devices/device.h"
+#include "telemetry/catalogtopicinfo.h"
 
 class QComboBox;
 class QLabel;
 class QLineEdit;
+class QListWidget;
 class QPlainTextEdit;
 class QToolButton;
 
@@ -48,6 +50,15 @@ public:
     // refreshPortsRequested() fires.
     void setAvailablePorts(const QStringList& ports);
 
+    // Populates the read-only "Reported catalog" list below "Reported by
+    // device" from this device's Backend::catalogTopics() (TelemetryCatalog,
+    // via MANIFEST_DATA) -- one entry per (source, topic, schema_version)
+    // the device has announced, each's field list in its tooltip. Unlike
+    // setAvailablePorts(), there's no refresh button: whoever opens this
+    // dialog (DevicesGrid) fetches the catalog once, up front, the same
+    // moment it reads btpVersion/btpId off the Device it's editing.
+    void setCatalogTopics(const QVector<CatalogTopicInfo>& topics);
+
 signals:
     // Emitted when the user clicks the port list's refresh button.
     // DeviceConfigDialog can't query the OS port list itself --
@@ -72,6 +83,10 @@ private:
     // HELLO_RESULT), never written back to the device in result().
     QLineEdit* m_btpVersionEdit = nullptr;
     QLineEdit* m_btpIdEdit = nullptr;
+
+    // Read-only, populated by setCatalogTopics() -- see that method's own
+    // comment.
+    QListWidget* m_catalogList = nullptr;
 };
 
 } // namespace traceview

@@ -25,6 +25,7 @@ class DeviceConnection;
 class DevicesGrid;
 struct Device;
 class LayersPanel;
+class LogViewer;
 class PanelDockController;
 class PropertiesPanel;
 class Ribbon;
@@ -135,6 +136,7 @@ private:
     void onSaveProject();
     void onSaveProjectAs();
     void onOpenProject();
+    void onOpenLogFile();
     void openRecentFile(const QString& path);
     void addRecentFile(const QString& path);
     void updateRecentFilesMenu();
@@ -148,6 +150,10 @@ private:
     // Devices tab's content -- swapped in for m_dashboardGrid via
     // m_contentStack, never shown at the same time (see onRibbonTabChanged).
     DevicesGrid* m_devicesGrid = nullptr;
+    // Logs tab's content -- same swap-via-m_contentStack treatment as
+    // m_devicesGrid, opened on demand via m_openLogFileAction rather than
+    // holding any state of its own.
+    LogViewer* m_logViewer = nullptr;
     // One real, independent serial connection per Device::id -- see
     // core/deviceconnection.h. Created/destroyed/updated in lockstep with
     // m_devicesGrid's own list (onDeviceAdded/onDeviceRemoved/onDeviceUpdated).
@@ -173,6 +179,7 @@ private:
     QAction* m_addWidgetAction = nullptr;
     QAction* m_addDeviceAction = nullptr;
     QAction* m_removeDeviceAction = nullptr;
+    QAction* m_openLogFileAction = nullptr;
     QAction* m_removeAction = nullptr;
     QAction* m_copyAction = nullptr;
     QAction* m_pasteAction = nullptr;
@@ -196,6 +203,7 @@ private:
     QPointer<DebugChartsWindow> m_debugChartsWindow;
     int m_configureTabIndex = -1;
     int m_devicesTabIndex = -1;
+    int m_logsTabIndex = -1;
     bool m_configureTabActive = false;
     // Gates m_removeDeviceAction the same way m_configureTabActive gates
     // m_removeAction -- see updateDeviceSelectionActions().

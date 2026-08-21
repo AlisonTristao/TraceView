@@ -63,6 +63,7 @@ add_library(traceview_telemetry STATIC
     telemetry/telemetrybinding.h
     telemetry/subscriptionstate.h
     telemetry/statustopicrecord.h
+    telemetry/catalogtopicinfo.h
     telemetry/telemetryseriesbuffer.cpp
     telemetry/telemetryseriesbuffer.h
 )
@@ -116,6 +117,10 @@ add_library(traceview_protocol STATIC
     protocol/btpsession.h
     protocol/clocksync.cpp
     protocol/clocksync.h
+    protocol/logentry.h
+    protocol/logfilereader.cpp
+    protocol/logfilereader.h
+    protocol/logseverity.h
     protocol/manifestclient.cpp
     protocol/manifestclient.h
     protocol/packedledecoder.cpp
@@ -217,8 +222,12 @@ target_link_libraries(traceview_dashboard
 # traceview_devices: the Devices panel's data model, card chrome, and fixed
 # auto-flow grid. UI-only for now (mock/local data, no real transport
 # wiring) -- a later phase wires real BTP device discovery into the same
-# Device struct. Depends only on traceview_theme so that data-source swap
-# won't require touching this layer's visual code.
+# Device struct. Depends on traceview_theme so that data-source swap won't
+# require touching this layer's visual code, and on traceview_telemetry
+# (QtCore-only generic value types, see lib/telemetry/catalogtopicinfo.h) so
+# DeviceConfigDialog can display a device's reported topic catalog without
+# pulling in traceview_protocol/BTP -- same reasoning as the port list
+# provider callback (traceview_devices doesn't depend on QSerialPort either).
 add_library(traceview_devices STATIC
     devices/device.cpp
     devices/device.h
@@ -240,8 +249,28 @@ target_include_directories(traceview_devices PUBLIC
 target_link_libraries(traceview_devices
     PUBLIC
         Qt6::Widgets
+        traceview_telemetry
     PRIVATE
         traceview_theme
+)
+
+# traceview_logs: the Logs tab's content -- LogViewer, a read-only table of
+# LogEntry rows produced by LogFileReader. No undo stack, no .tvproj
+# persistence -- opening a file is the only state it holds.
+add_library(traceview_logs STATIC
+    logs/logviewer.cpp
+    logs/logviewer.h
+)
+
+target_include_directories(traceview_logs PUBLIC
+    ${CMAKE_SOURCE_DIR}/include
+    ${CMAKE_SOURCE_DIR}/lib
+)
+
+target_link_libraries(traceview_logs
+    PUBLIC
+        Qt6::Widgets
+        traceview_protocol
 )
 
 # traceview_ui: MainWindow/Ribbon/AboutDialog — application chrome and
@@ -301,6 +330,7 @@ target_link_libraries(traceview_ui
     PRIVATE
         traceview_dashboard
         traceview_devices
+        traceview_logs
         traceview_project
         traceview_protocol
         traceview_theme

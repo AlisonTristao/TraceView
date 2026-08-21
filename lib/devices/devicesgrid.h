@@ -10,6 +10,7 @@
 #include <functional>
 
 #include "devices/device.h"
+#include "telemetry/catalogtopicinfo.h"
 
 namespace traceview {
 
@@ -105,6 +106,16 @@ public:
     // Refresh is a no-op, same as before this existed.
     void setPortListProvider(std::function<QStringList()> provider) { m_portListProvider = std::move(provider); }
 
+    // Supplies the topic catalog (TelemetryCatalog, via MANIFEST_DATA) the
+    // gear icon's "Reported by device" section lists for a given device id.
+    // DevicesGrid can't reach a Backend itself (traceview_devices doesn't
+    // depend on traceview_protocol, same reasoning as setPortListProvider()
+    // above) -- MainWindow injects this once. Safe to leave unset: the
+    // dialog's catalog list then just starts empty.
+    void setTopicCatalogProvider(std::function<QVector<CatalogTopicInfo>(const QString&)> provider) {
+        m_topicCatalogProvider = std::move(provider);
+    }
+
 signals:
     void selectionChanged();
     // Fired from applyInsertDevice()/applyRemoveDeviceById()/
@@ -148,6 +159,7 @@ private:
     QVector<DeviceCard*> m_cards; // parallel to m_devices, same order/index
     QString m_selectedId;         // empty when nothing is selected
     std::function<QStringList()> m_portListProvider;
+    std::function<QVector<CatalogTopicInfo>(const QString&)> m_topicCatalogProvider;
     QUndoStack* m_undoStack;
 };
 

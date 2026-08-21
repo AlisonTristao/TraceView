@@ -39,6 +39,85 @@ QString formatRateMillihz(quint32 millihz) {
     return QString::number(millihz / 1000.0, 'g', 4) + " Hz";
 }
 
+// Human-readable mirrors of TELEMETRY.md's wire enums, for
+// BtpBackend::catalogTopics() (CatalogTopicInfo::encoding/CatalogTopicField::
+// type are display strings, not the wire codes -- see telemetry/
+// catalogtopicinfo.h).
+QString encodingLabel(TelemetryEncoding encoding) {
+    switch (encoding) {
+        case TelemetryEncoding::Invalid:
+            return QStringLiteral("invalid");
+        case TelemetryEncoding::OpaqueBytes:
+            return QStringLiteral("OPAQUE_BYTES");
+        case TelemetryEncoding::Utf8:
+            return QStringLiteral("UTF8");
+        case TelemetryEncoding::JsonUtf8:
+            return QStringLiteral("JSON_UTF8");
+        case TelemetryEncoding::CsvUtf8:
+            return QStringLiteral("CSV_UTF8");
+        case TelemetryEncoding::PackedLe:
+            return QStringLiteral("PACKED_LE");
+        case TelemetryEncoding::TlvLe:
+            return QStringLiteral("TLV_LE");
+    }
+    return QStringLiteral("unknown");
+}
+
+QString fieldTypeLabel(TelemetryFieldType type) {
+    switch (type) {
+        case TelemetryFieldType::UInt8:
+            return QStringLiteral("uint8");
+        case TelemetryFieldType::UInt16:
+            return QStringLiteral("uint16");
+        case TelemetryFieldType::UInt32:
+            return QStringLiteral("uint32");
+        case TelemetryFieldType::UInt64:
+            return QStringLiteral("uint64");
+        case TelemetryFieldType::Int8:
+            return QStringLiteral("int8");
+        case TelemetryFieldType::Int16:
+            return QStringLiteral("int16");
+        case TelemetryFieldType::Int32:
+            return QStringLiteral("int32");
+        case TelemetryFieldType::Int64:
+            return QStringLiteral("int64");
+        case TelemetryFieldType::Float32:
+            return QStringLiteral("float32");
+        case TelemetryFieldType::Float64:
+            return QStringLiteral("float64");
+        case TelemetryFieldType::Bool:
+            return QStringLiteral("bool");
+        case TelemetryFieldType::Enum8:
+            return QStringLiteral("enum8");
+        case TelemetryFieldType::Enum16:
+            return QStringLiteral("enum16");
+    }
+    return QStringLiteral("unknown");
+}
+
+CatalogTopicInfo toCatalogTopicInfo(const TelemetryTopicSchema& schema) {
+    CatalogTopicInfo info;
+    info.sourceId = schema.sourceId;
+    info.topicId = schema.topicId;
+    info.schemaVersion = schema.schemaVersion;
+    info.name = schema.name;
+    info.encoding = encodingLabel(schema.encoding);
+    info.fields.reserve(schema.fields.size());
+    for (const TelemetryFieldSchema& field : schema.fields) {
+        CatalogTopicField out;
+        out.fieldId = field.fieldId;
+        out.name = field.name;
+        out.type = fieldTypeLabel(field.type);
+        if (field.elementCount != 1) {
+            out.type += field.isVariableLength() ? QStringLiteral("[..%1]").arg(field.maxElementCount)
+                                                  : QStringLiteral("[%1]").arg(field.elementCount);
+        }
+        out.unit = field.unit;
+        info.fields.append(out);
+    }
+    return info;
+}
+
 }  // namespace
 
 BtpBackend::BtpBackend(QObject* parent)
@@ -103,6 +182,7 @@ BtpBackend::BtpBackend(QObject* parent)
     // held back and released here.
     connect(m_manifestClient, &ManifestClient::catalogUpdated, m_subscriptionManager,
             &SubscriptionManager::onCatalogUpdated);
+    connect(m_manifestClient, &ManifestClient::catalogUpdated, this, &Backend::catalogChanged);
     // CRITERIO DE ACEITE "pedido acima do maximo e limitado e informado ao
     // cliente": the granted rate is surfaced, never silently assumed equal to
     // what was asked for.
@@ -208,6 +288,16 @@ QVector<TopicSubscriptionState> BtpBackend::subscriptions() const {
 
 QVector<StatusTopicRecord> BtpBackend::topicStatuses() const {
     return m_subscriptionManager->topicStatuses();
+}
+
+QVector<CatalogTopicInfo> BtpBackend::catalogTopics() const {
+    QVector<CatalogTopicInfo> result;
+    const QVector<TelemetryTopicSchema> schemas = m_telemetryCatalog->allSchemas();
+    result.reserve(schemas.size());
+    for (const TelemetryTopicSchema& schema : schemas) {
+        result.append(toCatalogTopicInfo(schema));
+    }
+    return result;
 }
 
 }  // namespace traceview

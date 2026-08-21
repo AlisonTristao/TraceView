@@ -55,3 +55,6 @@ add_traceview_test(test_telemetryfieldrouter traceview_protocol)
 # handles.
 add_traceview_test(test_statusreport traceview_protocol)
 add_traceview_test(test_subscriptionmanager traceview_protocol)
+# Reads a .blog file (headerless, concatenated BTP Log frames -- see
+# lib/protocol/logfilereader.h) -- protocol-layer only, no QWidget.
+add_traceview_test(test_logfilereader traceview_protocol)

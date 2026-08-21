@@ -46,5 +46,8 @@ QIcon makeWorkspaceIcon(const QColor& color);
 // ribbon's own buttons) -- the geometry scales with it rather than just
 // being stretched, so it stays crisp instead of blurring.
 QIcon makeTrashIcon(const QColor& color, int size = kRibbonIconSize);
+// A closed folder: body plus the small tab notch on its top-left corner --
+// the Logs tab's "Open Log File..." affordance.
+QIcon makeFolderIcon(const QColor& color);
 
 } // namespace traceview

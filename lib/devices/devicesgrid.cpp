@@ -167,6 +167,9 @@ void DevicesGrid::handleConfigRequested(const QString& deviceId) {
         connect(&dialog, &DeviceConfigDialog::refreshPortsRequested, &dialog,
                 [this, &dialog]() { dialog.setAvailablePorts(m_portListProvider()); });
     }
+    if (m_topicCatalogProvider) {
+        dialog.setCatalogTopics(m_topicCatalogProvider(m_devices[idx].id));
+    }
     if (dialog.exec() == QDialog::Accepted) {
         updateDevice(dialog.result());
     }

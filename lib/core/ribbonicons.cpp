@@ -344,4 +344,32 @@ QIcon makeTrashIcon(const QColor& color, int size) {
     return QIcon(pixmap);
 }
 
+QIcon makeFolderIcon(const QColor& color) {
+    QPixmap pixmap(kRibbonIconSize, kRibbonIconSize);
+    pixmap.fill(Qt::transparent);
+
+    QPainter painter(&pixmap);
+    painter.setRenderHint(QPainter::Antialiasing);
+    QPen pen(color, 1.4);
+    pen.setJoinStyle(Qt::RoundJoin);
+    painter.setPen(pen);
+    painter.setBrush(Qt::NoBrush);
+
+    // Body plus a small tab notch on the top-left corner -- the standard
+    // "closed folder" silhouette, drawn as one outlined path rather than two
+    // overlapping rects so the tab reads as part of the same object.
+    QPainterPath folder;
+    folder.moveTo(2.0, 5.0);
+    folder.lineTo(2.0, 13.0);
+    folder.lineTo(14.0, 13.0);
+    folder.lineTo(14.0, 6.0);
+    folder.lineTo(7.5, 6.0);
+    folder.lineTo(6.5, 4.5);
+    folder.lineTo(2.5, 4.5);
+    folder.closeSubpath();
+    painter.drawPath(folder);
+
+    return QIcon(pixmap);
+}
+
 } // namespace traceview
