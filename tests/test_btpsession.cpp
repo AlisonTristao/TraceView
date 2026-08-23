@@ -13,8 +13,8 @@ namespace {
 
 // Encodes `frame` as BTP v1 for the serial transport profile and wraps it as
 // 0x00 || COBS(frame) || 0x00 -- the exact stream format BtpSession consumes
-// (TRANSPORT_SERIAL.md section 2), built directly from the vendored
-// bally_protocol codec so this test exercises the real, canonical encoder
+// (fragmentation-and-transports.md section 3.2), built directly from the
+// vendored BTP codec so this test exercises the real, canonical encoder
 // rather than a hand-rolled one.
 QByteArray buildSerialPacket(const btp::Frame& frame) {
     std::vector<std::uint8_t> encoded(btp::kSerialMaxFrameSize);

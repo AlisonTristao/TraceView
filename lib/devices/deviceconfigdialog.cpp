@@ -1,5 +1,6 @@
 #include "deviceconfigdialog.h"
 
+#include <QCheckBox>
 #include <QComboBox>
 #include <QDialogButtonBox>
 #include <QFormLayout>
@@ -73,6 +74,7 @@ DeviceConfigDialog::DeviceConfigDialog(const Device& initial, QWidget* parent)
     m_transportTypeCombo = new QComboBox(connectionGroup);
     m_transportTypeCombo->addItem(transportTypeLabel(TransportType::Serial), int(TransportType::Serial));
     m_transportTypeCombo->addItem(transportTypeLabel(TransportType::UsbHid), int(TransportType::UsbHid));
+    m_transportTypeCombo->addItem(transportTypeLabel(TransportType::HubChannel), int(TransportType::HubChannel));
     const int transportTypeIndex = m_transportTypeCombo->findData(int(m_device.transportType));
     m_transportTypeCombo->setCurrentIndex(transportTypeIndex >= 0 ? transportTypeIndex : 0);
     connect(m_transportTypeCombo, &QComboBox::currentIndexChanged, this,
@@ -151,6 +153,53 @@ DeviceConfigDialog::DeviceConfigDialog(const Device& initial, QWidget* parent)
     m_usbDeviceRowIndex = m_connectionLayout->rowCount();
     m_connectionLayout->addRow(tr("USB device:"), usbDeviceRow);
 
+    // Hub-channel rows -- shown instead of every row above when Transport is
+    // set to Hub. A hub channel has no port and no baud rate: its "wire" is
+    // another device's connection.
+    m_parentCombo = new QComboBox(connectionGroup);
+    m_parentCombo->setToolTip(tr("The device whose connection carries this one."));
+    if (!m_device.parentDeviceId.isEmpty()) {
+        m_parentCombo->addItem(m_device.parentDeviceId, m_device.parentDeviceId);
+    }
+    m_parentRowIndex = m_connectionLayout->rowCount();
+    m_connectionLayout->addRow(tr("Through device:"), m_parentCombo);
+
+    // Typed and shown as hex because that is how a source_id appears
+    // everywhere else it is user-visible (the device card, the hub's own
+    // console). Free text rather than a picker: the peer list comes from the
+    // hub's hub.peers topic, which needs the hub connected, and a device has
+    // to stay configurable while nothing is plugged in.
+    m_peerSourceIdEdit = new QLineEdit(connectionGroup);
+    m_peerSourceIdEdit->setPlaceholderText(tr("e.g. 0x0A0A0A0A"));
+    m_peerSourceIdEdit->setToolTip(
+        tr("The robot's BTP source_id -- its permanent address, not the channel number the hub "
+           "shows. That number is assigned in the order peers are first heard, so it changes "
+           "when the hub reboots."));
+    if (m_device.peerSourceId != 0) {
+        m_peerSourceIdEdit->setText(
+            QStringLiteral("0x%1").arg(m_device.peerSourceId, 8, 16, QLatin1Char('0')).toUpper());
+    }
+    m_peerSourceIdRowIndex = m_connectionLayout->rowCount();
+    m_connectionLayout->addRow(tr("Robot source_id:"), m_peerSourceIdEdit);
+
+    m_peerPasswordEdit = new QLineEdit(m_device.peerPassword, connectionGroup);
+    m_peerPasswordEdit->setEchoMode(QLineEdit::Password);
+    m_peerPasswordEdit->setToolTip(tr("Password for this robot's endpoint key."));
+    m_peerPasswordRowIndex = m_connectionLayout->rowCount();
+    m_connectionLayout->addRow(tr("Robot password:"), m_peerPasswordEdit);
+
+    // Off by default, and that default is the point: a project file is
+    // something people mail to each other and commit, so it must not become a
+    // secrets file by accident. Opting in is per device, for the case where
+    // the project lives on one machine and retyping every password on every
+    // open buys nothing.
+    m_cachePasswordCheck = new QCheckBox(tr("Save this password in the project file"), connectionGroup);
+    m_cachePasswordCheck->setChecked(m_device.cachePeerPassword);
+    m_cachePasswordCheck->setToolTip(
+        tr("Anyone who opens the project file can read a saved password."));
+    m_cachePasswordRowIndex = m_connectionLayout->rowCount();
+    m_connectionLayout->addRow(QString(), m_cachePasswordCheck);
+
     m_statusLabel = new QLabel(
         m_device.connected ? tr("Connected") : tr("Disconnected"), connectionGroup);
     m_connectionLayout->addRow(tr("Status:"), m_statusLabel);
@@ -209,17 +258,64 @@ Device DeviceConfigDialog::result() const {
     device.baudRate = m_baudCombo->currentText().toInt();
     device.lineTerminator = m_lineTerminatorCombo->currentData().toInt();
     device.usbPath = m_usbDeviceCombo->currentData().toString();
+    device.parentDeviceId = m_parentCombo->currentData().toString();
+    // Accepts 0x-prefixed hex or plain decimal; anything unparseable becomes
+    // 0, which means "not configured" and never connects. Falling back to a
+    // guess would be worse than refusing -- a child pointed at the wrong
+    // robot plots real data from the wrong machine and raises no error.
+    {
+        const QString typed = m_peerSourceIdEdit->text().trimmed();
+        bool parsed = false;
+        const quint32 value = typed.startsWith(QLatin1String("0x"), Qt::CaseInsensitive)
+                                  ? typed.mid(2).toUInt(&parsed, 16)
+                                  : typed.toUInt(&parsed, 10);
+        device.peerSourceId = parsed ? value : 0;
+    }
+    device.cachePeerPassword = m_cachePasswordCheck->isChecked();
+    device.peerPassword = m_peerPasswordEdit->text();
     // btpVersion/btpId deliberately left as whatever m_device already held --
     // "Reported by device" is read-only (see the fields' own declarations).
     return device;
 }
 
 void DeviceConfigDialog::updateTransportFieldsVisibility() {
-    const bool isSerial = TransportType(m_transportTypeCombo->currentData().toInt()) == TransportType::Serial;
+    // Switched on the transport rather than on one boolean. With two
+    // transports "serial or not" happened to be right; with three it is not --
+    // treating Hub as "not serial" would offer it a USB device picker.
+    const TransportType transport = TransportType(m_transportTypeCombo->currentData().toInt());
+    const bool isSerial = transport == TransportType::Serial;
+    const bool isUsbHid = transport == TransportType::UsbHid;
+    const bool isHub = transport == TransportType::HubChannel;
+
     m_connectionLayout->setRowVisible(m_portRowIndex, isSerial);
     m_connectionLayout->setRowVisible(m_baudRowIndex, isSerial);
     m_connectionLayout->setRowVisible(m_lineTerminatorRowIndex, isSerial);
-    m_connectionLayout->setRowVisible(m_usbDeviceRowIndex, !isSerial);
+    m_connectionLayout->setRowVisible(m_usbDeviceRowIndex, isUsbHid);
+    m_connectionLayout->setRowVisible(m_parentRowIndex, isHub);
+    m_connectionLayout->setRowVisible(m_peerSourceIdRowIndex, isHub);
+    m_connectionLayout->setRowVisible(m_peerPasswordRowIndex, isHub);
+    m_connectionLayout->setRowVisible(m_cachePasswordRowIndex, isHub);
+}
+
+void DeviceConfigDialog::setAvailableParentDevices(const QVector<QPair<QString, QString>>& parents) {
+    const QString current = m_parentCombo->currentData().toString();
+    m_parentCombo->clear();
+    // An unconfigured child is a valid state, so there has to be a way to say
+    // "none", and it has to be where a fresh device lands.
+    m_parentCombo->addItem(tr("(none)"), QString());
+    for (const QPair<QString, QString>& parent : parents) {
+        m_parentCombo->addItem(parent.second.isEmpty() ? parent.first : parent.second, parent.first);
+    }
+    const QString wanted = current.isEmpty() ? m_device.parentDeviceId : current;
+    int index = m_parentCombo->findData(wanted);
+    if (index < 0 && !wanted.isEmpty()) {
+        // Configured but missing from the offered list (deleted, or no longer
+        // a valid parent). Kept rather than silently repointed at "none" just
+        // because someone opened the dialog.
+        m_parentCombo->addItem(tr("%1 (unavailable)").arg(wanted), wanted);
+        index = m_parentCombo->count() - 1;
+    }
+    m_parentCombo->setCurrentIndex(index >= 0 ? index : 0);
 }
 
 void DeviceConfigDialog::setCatalogTopics(const QVector<CatalogTopicInfo>& topics) {

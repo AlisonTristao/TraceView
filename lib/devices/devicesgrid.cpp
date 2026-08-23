@@ -1,5 +1,7 @@
 #include "devicesgrid.h"
 
+#include <QStringList>
+
 #include <QJsonArray>
 #include <QResizeEvent>
 #include <QUuid>
@@ -30,11 +32,47 @@ QString DevicesGrid::addDevice(const Device& device) {
     return toAdd.id;
 }
 
+QStringList DevicesGrid::childDeviceIds(const QString& id) const {
+    QStringList children;
+    if (id.isEmpty()) {
+        return children;
+    }
+    for (const Device& device : m_devices) {
+        if (device.transportType == TransportType::HubChannel && device.parentDeviceId == id) {
+            children.append(device.id);
+        }
+    }
+    return children;
+}
+
 void DevicesGrid::removeDevice(const QString& id) {
     const int idx = indexOfDevice(id);
     if (idx < 0) {
         return;
     }
+
+    // Deleting a hub that other devices ride is refused, and deliberately not
+    // turned into a cascade. A cascade would be one undo step that silently
+    // destroys several devices along with their charts' bindings -- and the
+    // person clicking delete on the dongle is usually not asking to lose the
+    // robots configured behind it. Refusing says what depends on it and lets
+    // them decide; deleting the children first is one extra click and is
+    // unambiguous.
+    const QStringList children = childDeviceIds(id);
+    if (!children.isEmpty()) {
+        QStringList names;
+        for (const QString& childId : children) {
+            const int childIdx = indexOfDevice(childId);
+            if (childIdx < 0) {
+                continue;
+            }
+            const Device& child = m_devices.at(childIdx);
+            names.append(child.name.isEmpty() ? childId : child.name);
+        }
+        emit removeBlockedByChildren(id, names);
+        return;
+    }
+
     m_undoStack->push(new RemoveDeviceCommand(this, m_devices.at(idx), idx));
 }
 
@@ -171,6 +209,25 @@ void DevicesGrid::handleConfigRequested(const QString& deviceId) {
         dialog.setAvailableUsbDevices(m_usbDeviceListProvider());
         connect(&dialog, &DeviceConfigDialog::refreshUsbDevicesRequested, &dialog,
                 [this, &dialog]() { dialog.setAvailableUsbDevices(m_usbDeviceListProvider()); });
+    }
+    // Which devices this one could ride. Computed here rather than injected
+    // like the port and USB lists, because unlike those two it is not a
+    // question about the machine -- it is entirely answerable from the device
+    // list this grid already owns.
+    //
+    // A hub channel is excluded from being a parent: a robot reached through
+    // a dongle is an endpoint, not a hub, and nothing in this design nests
+    // one channel inside another. Excluding them also makes a cycle
+    // unrepresentable rather than something to detect afterwards.
+    {
+        QVector<QPair<QString, QString>> parents;
+        for (const Device& candidate : m_devices) {
+            if (candidate.id == m_devices[idx].id || candidate.transportType == TransportType::HubChannel) {
+                continue;
+            }
+            parents.append({candidate.id, candidate.name});
+        }
+        dialog.setAvailableParentDevices(parents);
     }
     if (m_topicCatalogProvider) {
         dialog.setCatalogTopics(m_topicCatalogProvider(m_devices[idx].id));

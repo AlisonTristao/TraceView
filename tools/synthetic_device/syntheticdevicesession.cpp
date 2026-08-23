@@ -27,7 +27,7 @@ using wireutil::readLe32;
 
 namespace {
 
-// COMMANDS_AND_ACTIONS.md section 3.2.
+// commands.md section 1's `object_id` namespaces.
 constexpr quint16 kControlHello = 0x0001;
 constexpr quint16 kControlHelloResult = 0x0002;
 constexpr quint16 kControlManifestRequest = 0x0003;
@@ -39,7 +39,7 @@ constexpr quint16 kControlUnsubscribeResult = 0x0008;
 constexpr quint16 kControlSessionClose = 0x000A;
 constexpr quint16 kControlSessionCloseResult = 0x000B;
 
-// COMMANDS_AND_ACTIONS.md section 4 -- object_id values within
+// commands.md sections 1 and 2 -- object_id values within
 // MessageType::Command, and the one action_id/action_version every real
 // firmware executor defines for "run this one shell line and capture its
 // output" (mirrors bally_dongle's BtpTransport::btp_command; each side of the
@@ -50,8 +50,8 @@ constexpr quint16 kShellActionId = 0x0001;
 constexpr quint16 kShellActionVersion = 0x0001;
 constexpr int kCommandRequestPrefixSize = 20;
 
-// Common result/error codes actually used below (COMMANDS_AND_ACTIONS.md
-// section 2) -- only the subset this device ever emits.
+// Common result/error codes actually used below (commands.md section 1's
+// "Result and error codes") -- only the subset this device ever emits.
 constexpr quint8 kStatusSuccess = 0x00;
 constexpr quint8 kStatusRejected = 0x01;
 constexpr quint8 kStatusUnsupported = 0x05;
@@ -71,11 +71,11 @@ constexpr quint8 kEncodingPackedLe = 0x05;
 constexpr quint8 kTopicFlagSubscribable = 0x01;
 
 constexpr int kMaxLineBufferBytes = 512;
-constexpr int kHelloTimeoutMs = 2000;  // TRANSPORT_SERIAL.md section 5
+constexpr int kHelloTimeoutMs = 2000;  // session-and-terminal.md section 3
 constexpr int kHeartbeatIntervalMs = 1000;
 
 // The 12-byte request-reference every *_RESULT/MANIFEST_DATA starts with
-// (COMMANDS_AND_ACTIONS.md section 2): copied from the *triggering frame's
+// (commands.md section 1): copied from the *triggering frame's
 // BTP envelope*, never from inside that frame's payload.
 void appendRequestRef(QByteArray& out, const BtpFrame& requestFrame) {
     appendLe(out, requestFrame.sourceId, 4);
@@ -92,7 +92,7 @@ struct ParsedHello {
     quint32 sessionTimeoutMs = 0;
 };
 
-// HELLO payload layout (COMMANDS_AND_ACTIONS.md section 5): role(1) +
+// HELLO payload layout (session-and-terminal.md section 1): role(1) +
 // version_count(1) + flags(2) + max_logical_payload(4) +
 // max_inflight_reassemblies(2) + max_subscriptions(2) + max_dedup_entries(4)
 // + session_timeout_ms(4) + peer_uuid(16) + config_revision(4) +
@@ -118,7 +118,7 @@ bool parseHello(const QByteArray& payload, ParsedHello* out) {
     return true;
 }
 
-// One field record (COMMANDS_AND_ACTIONS.md section 6.2): self-prefixed with
+// One field record (commands.md section 3.3): self-prefixed with
 // record_size (bytes following the size field itself), so building it as a
 // standalone buffer first and prepending the length keeps this a direct
 // mirror of ManifestClient::parseFieldRecord()'s read order.
@@ -264,7 +264,8 @@ void SyntheticDeviceSession::enterAwaitingHello(const QByteArray& nonceLower) {
     m_lineBuffer.clear();
     emit logMessage(QStringLiteral("console: ENTER nonce=%1 -> READY sent, entering protocolled mode")
                          .arg(QString::fromLatin1(nonceLower)));
-    // TRANSPORT_SERIAL.md section 5: the device clears its COBS decoder state
+    // session-and-terminal.md section 3: the device clears its COBS decoder
+    // state
     // right before protocolled mode starts. This MUST happen, and m_phase
     // MUST already read AwaitingHello, before bytesToWrite() below: a
     // direct-connected loopback (or just a very fast real client) can have
@@ -431,7 +432,7 @@ void SyntheticDeviceSession::handleHello(const BtpFrame& frame) {
     quint16 errorCode = ok ? kErrorUnsupportedVersion : kErrorMalformedPayload;
     if (ok) {
         // The respondent picks the highest version common to both sides
-        // (COMMANDS_AND_ACTIONS.md section 5) -- search our own supported
+        // (session-and-terminal.md section 2) -- search our own supported
         // range from the top down against the client's advertised list.
         for (quint8 version = btp::kMaximumProtocolVersion; version >= btp::kMinimumProtocolVersion; --version) {
             if (parsed.versions.contains(version)) {
@@ -503,8 +504,8 @@ void SyntheticDeviceSession::handleHello(const BtpFrame& frame) {
     } else {
         emit logMessage(QStringLiteral("control: HELLO -> HELLO_RESULT %1, closing session")
                              .arg(ok ? QStringLiteral("UNSUPPORTED") : QStringLiteral("UNSUPPORTED (malformed payload)")));
-        // COMMANDS_AND_ACTIONS.md section 5: "sem intersecao... fecha a
-        // sessao depois de transmitir a resposta."
+        // session-and-terminal.md section 2: with no version in common, the
+        // responder "closes the session after transmitting the response".
         teardown(QStringLiteral("HELLO negotiation failed"));
     }
 }
@@ -567,8 +568,8 @@ void SyntheticDeviceSession::handleManifestRequest(const BtpFrame& frame) {
 
     // NOT_MODIFIED only applies to a *targeted* request (target_source_id !=
     // 0) -- a catalog-wide request (target=0) always gets the full body
-    // regardless of known_config_revision (COMMANDS_AND_ACTIONS.md section
-    // 6.1). TraceView's ManifestClient always requests target=0 first, so
+    // regardless of known_config_revision (commands.md section 3.1).
+    // TraceView's ManifestClient always requests target=0 first, so
     // this path realistically always takes the full-catalog branch below.
     const bool targeted = targetSourceId != 0;
     const bool notModified = targeted && knownRevision != 0 && knownRevision == m_configRevision;

@@ -13,10 +13,11 @@ class BtpSession;
 class ProtocolRouter;
 struct BtpFrame;
 
-// Drives the console -> protocolled handshake TRANSPORT_SERIAL.md section 5
-// describes (the plain-ASCII "BTP/1 ENTER <nonce>" / "BTP/1 READY <nonce>"
-// exchange) and the HELLO/HELLO_RESULT negotiation COMMANDS_AND_ACTIONS.md
-// section 5 describes, on top of an already-open serial connection.
+// Drives the console -> protocolled handshake session-and-terminal.md
+// section 3 describes (the plain-ASCII "BTP/1 ENTER <nonce>" / "BTP/1 READY
+// <nonce>" exchange) and the HELLO/HELLO_RESULT negotiation
+// session-and-terminal.md sections 1-2 describe, on top of an already-open
+// serial connection.
 // Deliberately left out of topico 14's BtpSession (framing only, no session
 // concept) and topico 19's terminal work; topico 15 ("fatia vertical de
 // telemetria binaria") is the first topico that needs a live session against
@@ -25,7 +26,8 @@ struct BtpFrame;
 // feedRawBytes() must see every byte off the wire, in parallel with
 // BtpSession::feedBytes() -- this class only cares about the plain-text
 // READY line that precedes any BTP framing; bytes that are actually COBS
-// framing are harmless noise here (TRANSPORT_SERIAL.md: nothing before the
+// framing are harmless noise here (fragmentation-and-transports.md 3.2:
+// nothing before the
 // first 0x00 delimiter is BTP, so BtpSession's own decoder already discards
 // the ENTER/READY text on its side).
 class BtpHandshake : public QObject {
@@ -57,13 +59,14 @@ signals:
     // SerialMux::handleCommandRequest on the firmware side checks a request
     // against.
     // peerConfigRevision is HELLO_RESULT's own config_revision field
-    // (COMMANDS_AND_ACTIONS.md section 5, offset 48) -- the dongle's
+    // (session-and-terminal.md section 2, offset 48) -- the dongle's
     // manifest-catalog revision, topico 16 PASSO 5/6. ManifestClient uses it
     // to skip a redundant full target=0 re-enumeration when reconnecting to
     // the same dongle catalog it already has cached.
     // selectedVersion is HELLO_RESULT's own field (offset 13) -- the BTP
-    // envelope version this session actually negotiated (COMMANDS_AND_ACTIONS.md
-    // section 5: "a maior versao comum"). BtpBackend surfaces it as the
+    // envelope version this session actually negotiated (see
+    // session-and-terminal.md section 2: "the responder picks the highest
+    // version it can use"). BtpBackend surfaces it as the
     // Device's reported btpVersion (devices/deviceconfigdialog.h) instead of
     // that field staying user-editable.
     void sessionEstablished(quint32 peerSourceId, quint32 peerBootId, quint32 peerConfigRevision,

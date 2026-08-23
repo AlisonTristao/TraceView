@@ -56,7 +56,7 @@ public:
     explicit Harness(bool bootIdKnown = true) {
         if (bootIdKnown) {
             // What ManifestClient records from MANIFEST_DATA; SUBSCRIBE needs
-            // it for target_boot_id (COMMANDS_AND_ACTIONS.md section 7).
+            // it for target_boot_id (commands.md section 4).
             catalog.registerSourceBootId(kSourceId, kBootId);
         }
         QObject::connect(&outbound, &BtpSession::bytesToWrite, &loopback, &BtpSession::feedBytes);
@@ -165,7 +165,7 @@ void TestSubscriptionManager::aHigherRateConsumerReplacesTheSubscription() {
     QCOMPARE(h.sent.size(), 1);
 
     // A faster consumer joins: one new SUBSCRIBE (a new sequence replaces the
-    // subscription atomically, section 7), never a second parallel one.
+    // subscription atomically, section 4), never a second parallel one.
     h.manager.addSubscriber(kSourceId, kTopicId, 50000);
     QCOMPARE(h.sent.size(), 2);
     QCOMPARE(h.lastSent().objectId, kControlSubscribe);
@@ -278,7 +278,7 @@ void TestSubscriptionManager::subscribeWaitsForTheSourceBootIdFromTheManifest() 
     Harness h(/*bootIdKnown=*/false);
 
     // No MANIFEST_DATA seen for this source yet, so target_boot_id (which
-    // section 7 marks non-zero) is unknown -- the request is held, never sent
+    // section 4 marks non-zero) is unknown -- the request is held, never sent
     // with a guessed boot.
     h.manager.addSubscriber(kSourceId, kTopicId, 10000);
     QCOMPARE(h.sent.size(), 0);

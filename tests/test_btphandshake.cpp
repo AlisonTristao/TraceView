@@ -26,7 +26,8 @@ void appendLe(QByteArray& out, quint32 value, int width) {
 
 // Drives a real BtpHandshake over a real BtpSession pair: the HELLO frame it
 // sends is genuinely COBS-encoded and decoded back, and the plain-text
-// ENTER/READY exchange (TRANSPORT_SERIAL.md section 5) is driven exactly as
+// ENTER/READY exchange (session-and-terminal.md section 3) is driven exactly
+// as
 // SerialManager's raw bytes would, not mocked.
 class Harness {
 public:

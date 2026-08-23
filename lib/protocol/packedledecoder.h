@@ -10,8 +10,8 @@
 namespace traceview {
 
 // One field's decoded value(s) from a single PACKED_LE sample body
-// (TELEMETRY.md section 4.5). `elements` already has scale/offset applied
-// per TELEMETRY.md section 3 (`engineering_value = raw * scale + offset`)
+// (telemetry.md section 4.1). `elements` already has scale/offset applied
+// per telemetry.md section 3 (`engineering_value = raw * scale + offset`)
 // for numeric types; bool and enum8/enum16 store the raw integer value
 // un-scaled (section 3: scale/offset MUST NOT be applied to bool and are
 // optional for enum -- they never change label selection, which always uses
@@ -23,12 +23,12 @@ struct TelemetryFieldValue {
 
 // Decodes `body` (the encoded_body after schema_version has already been
 // stripped -- see TelemetrySample/ProtocolRouter) against `schema` per
-// TELEMETRY.md section 4.5, filling `outValues` with one entry per field of
+// telemetry.md section 4.1, filling `outValues` with one entry per field of
 // `schema.fields` (keyed by fieldId). Returns false, leaving `outValues`
 // untouched, on any structural violation: wrong bitmap size, truncated or
 // over-length field, over-length variable array, non-finite float (section
-// 6.1), or leftover bytes after the last field (section 6.3) --
-// TELEMETRY.md requires the whole sample be rejected in that case, never a
+// 6), or leftover bytes after the last field (section 6) --
+// telemetry.md requires the whole sample be rejected in that case, never a
 // partial decode.
 //
 // Only `TelemetryEncoding::PackedLe` is supported; callers should check

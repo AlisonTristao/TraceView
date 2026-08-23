@@ -121,6 +121,19 @@ private:
     // rebuilds the connection entirely if transportType itself changed
     // (DeviceConnection's Transport/Backend pair is fixed at construction,
     // see deviceconnection.h -- it can't be swapped on a live instance).
+    // Points one connection at whatever its Device says its target is,
+    // dispatching on transport: a port name, a HID path, or -- for a hub
+    // channel -- the parent connection plus the robot's source_id. The one
+    // place that knows all three, so the three call sites below do not each
+    // have to.
+    void applyDeviceTarget(DeviceConnection* connection, const Device& device);
+    // Re-points every hub-channel child at its parent. Needed because a
+    // child can exist before its parent does: loading a project walks the
+    // saved device list in order, and nothing guarantees a hub comes before
+    // the devices that ride it. Cheap enough to just re-run after any device
+    // add/remove/update rather than tracking which children a change could
+    // possibly have affected.
+    void reattachHubChildren();
     void onDeviceAdded(const Device& device);
     void onDeviceRemoved(const QString& id);
     void onDeviceUpdated(const Device& device);

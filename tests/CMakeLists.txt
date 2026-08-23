@@ -29,8 +29,26 @@ add_traceview_test(test_controldata traceview_dashboard)
 # but the existing precedent (test_dashboardgrid uses QTest::mousePress on
 # real QWidgets) already covers widget-level QTest usage in this repo.
 add_traceview_test(test_serialterminalwidget traceview_dashboard)
+# topico 26: a Device that connects THROUGH another Device. traceview_ui so
+# it can build a real DeviceConnection/BtpBackend pair, which is what the
+# multiplexing test drives -- no port and no hardware are involved.
+add_traceview_test(test_hubtransport traceview_ui traceview_protocol btp::codec)
+# The three-implementations-one-contract check: this derives the same key
+# octets as bally_OS's provisioner and the hub's console command, against a
+# vector that provisioner actually produced.
+add_traceview_test(test_keyderivation traceview_protocol)
+# topico 28, desktop side: a child device as an ENDPOINT -- it originates its
+# own traffic and every piece of it has to be addressed to its own robot.
+add_traceview_test(test_hubendpoint traceview_ui traceview_protocol btp::codec)
+# bally_channels.h is one of three byte-identical copies (see the test's own
+# header comment). The absolute path is passed in rather than resolved at run
+# time so the check cannot pass by silently finding nothing, and so it works
+# from whatever directory ctest happens to run in.
+add_traceview_test(test_ballychannels traceview_protocol btp::codec)
+target_compile_definitions(test_ballychannels PRIVATE
+    BALLY_CHANNELS_HEADER_PATH="${CMAKE_SOURCE_DIR}/include/bally_channels.h")
 add_traceview_test(test_serialmanager traceview_ui)
-# USB HID transport (BTP's "usb_hid" profile, ADR 0011) -- mirrors
+# USB HID transport (BTP's "usb_hid" profile) -- mirrors
 # test_serialmanager's shape/coverage (mostly the "can't reach real
 # hardware in CI" paths: starts disconnected, closes/writes cleanly with
 # nothing open, invalid target fails without crashing).
@@ -52,6 +70,13 @@ add_traceview_test(test_telemetrycatalog traceview_protocol)
 add_traceview_test(test_packedledecoder traceview_protocol)
 add_traceview_test(test_protocolrouter traceview_protocol)
 add_traceview_test(test_btpsession traceview_protocol)
+# topico 25: BtpSession's framing axis vs. its encode-profile axis, now that
+# they are separate fields -- the EspNow-under-pre-framed combination, the
+# never-re-encode contract of sendRawFrame(), and frameBytesReceived()'s
+# per-fragment whole-frame octets. Kept in its own file so test_btpsession
+# (the pre-existing behavior of the two real transports) stays untouched by
+# that refactor.
+add_traceview_test(test_btpsessionframing traceview_protocol)
 add_traceview_test(test_btphandshake traceview_protocol)
 add_traceview_test(test_telemetryfieldrouter traceview_protocol)
 # topico 17 (assinaturas e controle de taxa): the STATUS v1/v2 payload parser

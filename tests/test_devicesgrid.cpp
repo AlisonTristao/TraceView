@@ -13,6 +13,7 @@ using traceview::Device;
 using traceview::DeviceCard;
 using traceview::deviceToJson;
 using traceview::DevicesGrid;
+using traceview::TransportType;
 
 namespace {
 
@@ -46,6 +47,7 @@ private slots:
     void removeDeviceClearsSelectionIfRemovedDeviceWasSelected();
     void toJsonFromJsonRoundTripsTheWholeList();
     void fromJsonReplacesRatherThanMerges();
+    void removingAHubWithChildrenIsRefusedAndExplained();
 };
 
 void TestDevicesGrid::addDeviceReturnsUsableIdAndOrdersLeftToRightThenWraps() {
@@ -240,6 +242,51 @@ void TestDevicesGrid::fromJsonReplacesRatherThanMerges() {
 
     QCOMPARE(grid.devices().size(), 1);
     QCOMPARE(grid.devices().first().name, QString("Fresh"));
+}
+
+
+// Deleting a hub that other devices ride is refused, not cascaded.
+//
+// A cascade would be one undo step that quietly destroys several devices
+// along with every chart binding pointing at them, and the person clicking
+// delete on the dongle is usually not asking to lose the robots configured
+// behind it. Refusing names what depends on it and lets them decide -- and
+// the naming matters: "it has children" would leave them hunting.
+void TestDevicesGrid::removingAHubWithChildrenIsRefusedAndExplained() {
+    DevicesGrid grid;
+
+    Device hub;
+    hub.id = "dongle-0";
+    hub.name = "Bench dongle";
+    const QString hubId = grid.addDevice(hub);
+
+    Device child;
+    child.id = "robot-a";
+    child.name = "Robot A";
+    child.transportType = TransportType::HubChannel;
+    child.parentDeviceId = hubId;
+    child.peerSourceId = 0x0A0A0A0Au;
+    grid.addDevice(child);
+
+    QCOMPARE(grid.childDeviceIds(hubId), QStringList{QStringLiteral("robot-a")});
+
+    QSignalSpy blocked(&grid, &DevicesGrid::removeBlockedByChildren);
+    QSignalSpy removed(&grid, &DevicesGrid::deviceRemoved);
+
+    grid.removeDevice(hubId);
+
+    QCOMPARE(blocked.count(), 1);
+    QCOMPARE(removed.count(), 0);
+    QCOMPARE(grid.devices().size(), 2);  // nothing was destroyed
+    // The explanation carries the child's NAME, not its id.
+    QCOMPARE(blocked.at(0).at(1).toStringList(), QStringList{QStringLiteral("Robot A")});
+
+    // Remove the child first and the hub becomes removable, with no special
+    // action needed to "unblock" it.
+    grid.removeDevice("robot-a");
+    QCOMPARE(grid.devices().size(), 1);
+    grid.removeDevice(hubId);
+    QCOMPARE(grid.devices().size(), 0);
 }
 
 QTEST_MAIN(TestDevicesGrid)

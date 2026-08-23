@@ -4,17 +4,19 @@ TraceView's inbound wire format is the **Binary Telemetry Protocol (BTP) v1**,
 whose canonical, cross-repo specification lives in
 [`BTP/docs`](../../BTP/docs) (see [`ECOSYSTEM.md`](ECOSYSTEM.md)):
 
-- [`BTP_V1.md`](../../BTP/docs/BTP_V1.md) — frame envelope, CRC,
-  identity/sequence/timestamp rules, fragmentation.
-- [`TELEMETRY.md`](../../BTP/docs/TELEMETRY.md) — the `TELEMETRY`
+- [`frame.md`](../../BTP/docs/frame.md) and
+  [`model.md`](../../BTP/docs/model.md) — frame envelope, CRC,
+  identity/sequence/timestamp rules.
+- [`telemetry.md`](../../BTP/docs/telemetry.md) — the `TELEMETRY`
   payload: `schema_version` + encoded body, schema/field model, `PACKED_LE`
   encoding, client field binding.
-- [`STREAM_AND_REASSEMBLY.md`](../../BTP/docs/STREAM_AND_REASSEMBLY.md)
-  and [`TRANSPORT_SERIAL.md`](../../BTP/docs/TRANSPORT_SERIAL.md) —
-  COBS framing over the serial stream, the incremental decoder, and the
-  console/protocoled-mode handshake.
-- [`COMMANDS_AND_ACTIONS.md`](../../BTP/docs/COMMANDS_AND_ACTIONS.md)
-  — `COMMAND`/`CONTROL`/`TERMINAL` payloads, `HELLO` negotiation, manifest.
+- [`fragmentation-and-transports.md`](../../BTP/docs/fragmentation-and-transports.md)
+  — fragmentation and reassembly, COBS framing over the serial stream, the
+  incremental decoder, and the three transport profiles.
+- [`commands.md`](../../BTP/docs/commands.md)
+  — `COMMAND`/`CONTROL` payloads and the manifest.
+- [`session-and-terminal.md`](../../BTP/docs/session-and-terminal.md) —
+  `HELLO` negotiation, the console/protocoled-mode handshake, and `TERMINAL`.
 
 TraceView does not keep its own copy of that spec or a second codec — it
 fetches `BTP` via CMake `FetchContent`, pinned to a released tag, and links
@@ -38,7 +40,8 @@ BtpSession               -- lib/protocol/btpsession.h
                              Serial mode does incremental COBS decode
                              (btp::SerialDecoder); UsbHid mode decodes each
                              already-bounded HID report directly
-                             (btp::decode(), no COBS -- TRANSPORT_USB_HID.md).
+                             (btp::decode(), no COBS --
+                             fragmentation-and-transports.md 3.3).
                              Both do envelope/CRC validation and fragment
                              reassembly (btp::Reassembler); emits BtpFrame
       |  frameReceived(BtpFrame)
@@ -81,9 +84,13 @@ record, reusing the wire's own types/units/scale/offset rather than any
 hardcoded table. `TelemetryFieldRouter::unknownSchema` triggers a targeted,
 rate-limited re-request when a sample's `schema_version` isn't in the
 catalog. `registerBallySoftwareCatalog()` still exists, but only as a
-convenience for tests and tools that want Bally_OS's two documented
-schemas (`protocol.test`, `robot.state` — see `TELEMETRY.md` section 9.4)
-without a live dongle connection; `MainWindow` no longer calls it.
+convenience for tests and tools that want Bally_OS's two static schemas
+(`protocol.test`, `robot.state`) without a live dongle connection;
+`MainWindow` no longer calls it. Those two topic names are this product's
+own convention, defined by bally_OS's `TelemetryPublisher` — they are not
+part of the BTP specification, whose `telemetry.md` uses an unrelated worked
+example; BTP only keeps a canonical `protocol.test` frame under
+`test-vectors/v1/valid/`.
 
 Wiring a chart/gauge widget's own `sourceId`/`topicId`/`fieldId` config
 (`ChartConfigEditor`/`GaugeConfigEditor`, `lib/dashboard/widgets/
@@ -101,8 +108,8 @@ yet (no concrete need for one until topico 15/16 land).
 ## Handshake and version negotiation (topico 15)
 
 `BtpHandshake` (`lib/protocol/btphandshake.h`) drives the plain-text
-`BTP/1 ENTER`/`BTP/1 READY` exchange (`TRANSPORT_SERIAL.md` section 5)
-followed by `HELLO`/`HELLO_RESULT` (`COMMANDS_AND_ACTIONS.md` section 5) on
+`BTP/1 ENTER`/`BTP/1 READY` exchange (`session-and-terminal.md` section 3)
+followed by `HELLO`/`HELLO_RESULT` (`session-and-terminal.md` sections 1-2) on
 top of an already-open serial connection, before anything else (manifest,
 subscriptions, terminal) is allowed on the wire.
 
@@ -156,7 +163,7 @@ The granted rate is never assumed equal to the requested one: the
 `effective_rate_millihz` of `SUBSCRIBE_RESULT` is what the status bar shows
 (flagged as "limited" with the rate that was asked for when it came back
 lower), and a rejection surfaces its status/error code. `CONTROL/STATUS` with
-`status_version=2` (`COMMANDS_AND_ACTIONS.md` section 8.1) adds per-topic
+`status_version=2` (`commands.md` section 5.1) adds per-topic
 subscriber count, effective rate, bytes and drops as measured *at the source*,
 shown in the status bar's tooltip; a `status_version=1` emitter still parses
 correctly — the reader stops at 92 octets and simply has no per-topic data.
@@ -202,11 +209,12 @@ in protocoled mode (topico 13's `SerialMux`, which owns the port exclusively
 once negotiated), writing arbitrary raw bytes alongside `BtpSession`'s COBS
 frames would corrupt the stream. Migrating control-widget output onto BTP's
 `COMMAND`/`COMMAND_REQUEST` → `COMMAND_RESULT` exchange (see
-`COMMANDS_AND_ACTIONS.md` section 4) is tracked as its own future topico
+`commands.md` section 2) is tracked as its own future topico
 ("Acoes persistidas e comandos virtuais"), not folded into this one.
 
 **USB HID devices have no equivalent path at all**, not even the corruption
-risk above: `TRANSPORT_USB_HID.md` section 7 defines the `usb_hid` profile
+risk above: `fragmentation-and-transports.md` section 3.3 defines the
+`usb_hid` profile
 as always BTP-protocolled, with no console/raw-byte mode to send arbitrary
 text into in the first place. A `Device` with `transportType ==
 TransportType::UsbHid` has no `SerialManager` (`DeviceConnection::

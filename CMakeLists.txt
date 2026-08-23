@@ -25,7 +25,14 @@ if(WIN32)
     enable_language(RC)
 endif()
 
-find_package(Qt6 REQUIRED COMPONENTS Widgets SerialPort LinguistTools)
+# Network is here for exactly one thing and it is not networking:
+# QPasswordDigestor::deriveKeyPbkdf2 (lib/protocol/keyderivation.cpp),
+# which Qt places in QtNetwork rather than QtCore. Deriving the channel
+# keys with the vetted implementation is worth the module, because the
+# failure a hand-written PBKDF2 risks -- an almost-correct key -- surfaces
+# two repositories away as a tag that will not verify, and looks like a
+# wrong password or a radio fault rather than a bug here.
+find_package(Qt6 REQUIRED COMPONENTS Widgets SerialPort Network LinguistTools)
 
 # BTP is the canonical, shared source of the BTP v1 wire format and codec
 # (see BTP/PLANO_GERAL.txt) -- TraceView does not keep its own copy of the
@@ -43,16 +50,17 @@ set(BTP_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 FetchContent_Declare(
     btp
     GIT_REPOSITORY https://github.com/AlisonTristao/BTP.git
-    GIT_TAG main
+    GIT_TAG v2.0.0
 )
 FetchContent_MakeAvailable(btp)
 
 # hidapi is the USB HID transport's backend (core/usbhidmanager.h, BTP's
-# "usb_hid" profile / ADR 0011) -- the same FetchContent pattern as BTP
-# above, but pinned to a release tag rather than a rolling branch: hidapi
-# has had behavior regressions between versions in the past (its own issue
-# tracker), so tracking `main` here would be riskier than for BTP, which
-# this repo controls. BUILD_SHARED_LIBS is forced off before fetching so
+# "usb_hid" profile) -- the same FetchContent pattern as BTP above, and
+# pinned the same way: both dependencies are fetched at a fixed release tag
+# rather than a rolling branch, so a build is reproducible. For hidapi that
+# pin carries extra weight, because it has had behavior regressions between
+# versions in the past (its own issue tracker), and a rolling `main` would
+# land those silently. BUILD_SHARED_LIBS is forced off before fetching so
 # hidapi builds as a static lib like every other internal/vendored piece
 # here (see lib/CMakeLists.txt) instead of leaving a DLL for windeployqt to
 # chase; hidapi's own default is ON (inherited from the global CMake

@@ -16,8 +16,8 @@ class ProtocolRouter;
 struct BtpFrame;
 }  // namespace traceview
 
-// Generic device-role engine for BTP v1 (bally_protocol/docs/
-// TRANSPORT_SERIAL.md, COMMANDS_AND_ACTIONS.md) over whatever bytes
+// Generic device-role engine for BTP v1 (BTP/docs/session-and-terminal.md,
+// BTP/docs/commands.md) over whatever bytes
 // feedBytes()/bytesToWrite() are wired to -- deliberately transport-agnostic,
 // the same contract traceview::BtpSession itself uses, so main.cpp is the
 // only place that knows about QSerialPort. Reuses traceview::BtpSession/
@@ -50,8 +50,8 @@ class SyntheticDeviceSession : public QObject {
     Q_OBJECT
 
 public:
-    // One enum label (COMMANDS_AND_ACTIONS.md section 6.2's field record
-    // enum_entries) -- only non-empty for an enum8/enum16 field.
+    // One enum label (commands.md section 3.3's field record enum entries)
+    // -- only non-empty for an enum8/enum16 field.
     struct EnumEntry {
         quint16 value;
         QString label;
@@ -79,7 +79,8 @@ public:
     };
 
     // sourceId/sourceName/topics describe one simulated device. source_role
-    // (COMMANDS_AND_ACTIONS.md section 5/6.2) is always ROBOT (0x01) --
+    // (session-and-terminal.md section 1's Roles, commands.md section 3.2)
+    // is always ROBOT (0x01) --
     // there's no better fit for "a standalone sensor-bearing thing" in BTP's
     // fixed 4-value role table, and every profile here is exactly that.
     SyntheticDeviceSession(quint32 sourceId, QString sourceName, QVector<TopicSpec> topics,

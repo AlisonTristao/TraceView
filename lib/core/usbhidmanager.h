@@ -15,7 +15,8 @@ typedef struct hid_device_ hid_device;
 namespace traceview {
 
 // Owns one HID connection to the dongle's "usb_hid" BTP v1.1.0 transport
-// profile (BTP/docs/TRANSPORT_USB_HID.md, ADR 0011) via hidapi. Mirrors
+// profile (BTP/docs/fragmentation-and-transports.md section 3.3) via
+// hidapi. Mirrors
 // SerialManager's shape (see transport.h) so DeviceConnection can treat
 // either transport the same way once open -- open() itself differs (a HID
 // device path, not a COM port + baud rate) since the two have no common
@@ -28,7 +29,7 @@ namespace traceview {
 // whichever thread owns this object. write() is a one-shot call and safe to
 // make directly from the caller's thread.
 //
-// Report framing (TRANSPORT_USB_HID.md section 2): every report is
+// Report framing (fragmentation-and-transports.md section 3.3): every report is
 // [report_id][valid_length][up to 62 bytes of BTP frame, zero-padded]. A
 // fixed-size HID report always transmits its full 63 data octets --
 // USBHIDVendor pads a short write with zeros -- so without an explicit

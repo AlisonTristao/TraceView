@@ -6,6 +6,7 @@
 #include "devices/device.h"
 #include "telemetry/catalogtopicinfo.h"
 
+class QCheckBox;
 class QComboBox;
 class QFormLayout;
 class QLabel;
@@ -60,6 +61,14 @@ public:
     // fires.
     void setAvailableUsbDevices(const QVector<UsbDeviceOption>& devices);
 
+    // The devices this one could ride as a hub channel, as (id, display
+    // name) pairs. The caller is responsible for leaving out this device
+    // itself and anything that would form a cycle -- the dialog shows what
+    // it is given. Same treatment as setAvailablePorts(): an
+    // already-configured parent that is not in the list gets a placeholder
+    // entry so opening the dialog cannot silently repoint the device.
+    void setAvailableParentDevices(const QVector<QPair<QString, QString>>& parents);
+
     // Populates the read-only "Reported catalog" list below "Reported by
     // device" from this device's Backend::catalogTopics() (TelemetryCatalog,
     // via MANIFEST_DATA) -- one entry per (source, topic, schema_version)
@@ -94,6 +103,10 @@ private:
     int m_baudRowIndex = -1;
     int m_lineTerminatorRowIndex = -1;
     int m_usbDeviceRowIndex = -1;
+    int m_parentRowIndex = -1;
+    int m_peerSourceIdRowIndex = -1;
+    int m_peerPasswordRowIndex = -1;
+    int m_cachePasswordRowIndex = -1;
 
     QComboBox* m_portCombo = nullptr;
     QToolButton* m_refreshPortsButton = nullptr;
@@ -101,6 +114,14 @@ private:
     QComboBox* m_lineTerminatorCombo = nullptr;
     QComboBox* m_usbDeviceCombo = nullptr;
     QToolButton* m_refreshUsbDevicesButton = nullptr;
+
+    // Hub-channel rows: the device this one rides, the robot behind it, and
+    // the endpoint-key password for that robot.
+    QComboBox* m_parentCombo = nullptr;
+    QLineEdit* m_peerSourceIdEdit = nullptr;
+    QLineEdit* m_peerPasswordEdit = nullptr;
+    QCheckBox* m_cachePasswordCheck = nullptr;
+
     QLabel* m_statusLabel = nullptr;
 
     // Read-only: populated from m_device.btpVersion/btpId (the last

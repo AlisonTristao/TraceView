@@ -18,6 +18,9 @@ private slots:
     void roundTripsUsbHidTransport();
     void fromJsonRejectsMissingId();
     void fromJsonDefaultsMissingOptionalFields();
+    void roundTripsHubChannelByPeerSourceIdNotChannelIndex();
+    void hubChannelPasswordIsOmittedUnlessCachingWasOptedInto();
+    void projectWithoutHubFieldsLoadsAsUnconfiguredRatherThanGuessing();
 };
 
 void TestDevice::roundTripsAllFieldsExceptLiveState() {
@@ -91,6 +94,104 @@ void TestDevice::fromJsonDefaultsMissingOptionalFields() {
     QCOMPARE(device.lineTerminator, 1);
     QVERIFY(device.usbPath.isEmpty());
     QVERIFY(!device.connected);
+}
+
+// The persistence half of the hub topico, and the one that decides whether a
+// saved project still means what it meant when it was saved.
+//
+// The dongle publishes a "channel" number per peer, and it is the short,
+// friendly thing the UI shows -- so it is exactly what someone would reach
+// for when persisting a selection. It must not be. That number is a display
+// index assigned in the order the dongle first heard each peer, and it is not
+// stable across a dongle reboot: bring the robots up in a different order and
+// channel 1 now names a different one. A project saved with the index reopens
+// pointing at the wrong robot, plotting real data from the wrong machine,
+// raising no error anywhere.
+//
+// So this asserts two things at once: that peerSourceId survives, and that
+// nothing resembling a channel index is written at all.
+void TestDevice::roundTripsHubChannelByPeerSourceIdNotChannelIndex() {
+    Device device;
+    device.id = "child-1";
+    device.name = "Robot A";
+    device.transportType = TransportType::HubChannel;
+    device.parentDeviceId = "dongle-0";
+    // Deliberately in the top half of the uint32 range: a source_id that a
+    // signed round trip would wrap into a negative number.
+    device.peerSourceId = 0xC0FFEE01u;
+
+    const QJsonObject json = deviceToJson(device);
+    QCOMPARE(json.value("transportType").toInt(), int(TransportType::HubChannel));
+    QCOMPARE(json.value("parentDeviceId").toString(), QStringLiteral("dongle-0"));
+    QVERIFY(!json.contains("channel"));
+    QVERIFY(!json.contains("peerChannel"));
+    QVERIFY(!json.contains("channelIndex"));
+
+    bool ok = false;
+    const Device loaded = deviceFromJson(json, &ok);
+    QVERIFY(ok);
+    QCOMPARE(loaded.transportType, TransportType::HubChannel);
+    QCOMPARE(loaded.parentDeviceId, QStringLiteral("dongle-0"));
+    // The whole point: the address survives intact, including its top bit.
+    QCOMPARE(loaded.peerSourceId, 0xC0FFEE01u);
+}
+
+// A .tvproj is a file people mail to each other and commit, so it must not
+// become a secrets file by accident. Caching a password is per device and
+// explicit; without it the key is absent from the JSON entirely -- not
+// present and empty, which would still say something about the device.
+void TestDevice::hubChannelPasswordIsOmittedUnlessCachingWasOptedInto() {
+    Device device;
+    device.id = "child-1";
+    device.transportType = TransportType::HubChannel;
+    device.peerSourceId = 0x0A0A0A0Au;
+    device.peerPassword = "correct horse battery staple";
+    device.cachePeerPassword = false;
+
+    QJsonObject json = deviceToJson(device);
+    QVERIFY(!json.contains("peerPassword"));
+
+    bool ok = false;
+    Device loaded = deviceFromJson(json, &ok);
+    QVERIFY(ok);
+    QVERIFY(loaded.peerPassword.isEmpty());
+    QVERIFY(!loaded.cachePeerPassword);
+
+    // Opted in: it is written, and it comes back.
+    device.cachePeerPassword = true;
+    json = deviceToJson(device);
+    QCOMPARE(json.value("peerPassword").toString(),
+             QStringLiteral("correct horse battery staple"));
+    loaded = deviceFromJson(json, &ok);
+    QVERIFY(ok);
+    QVERIFY(loaded.cachePeerPassword);
+    QCOMPARE(loaded.peerPassword, QStringLiteral("correct horse battery staple"));
+
+    // And a stray password in a project that did NOT opt in is ignored rather
+    // than honored -- the flag is what decides, not the key's presence.
+    json["cachePeerPassword"] = false;
+    loaded = deviceFromJson(json, &ok);
+    QVERIFY(ok);
+    QVERIFY(loaded.peerPassword.isEmpty());
+}
+
+// A project written before hub channels existed has none of these fields. The
+// safe direction for every one of them is "not configured", because the
+// alternative -- a child that attaches to whatever robot happens to answer --
+// is the exact failure that storing a real address exists to prevent.
+void TestDevice::projectWithoutHubFieldsLoadsAsUnconfiguredRatherThanGuessing() {
+    QJsonObject json;
+    json["id"] = "old-device";
+    json["name"] = "From an older save";
+
+    bool ok = false;
+    const Device loaded = deviceFromJson(json, &ok);
+    QVERIFY(ok);
+    QCOMPARE(loaded.transportType, TransportType::Serial);
+    QVERIFY(loaded.parentDeviceId.isEmpty());
+    QCOMPARE(loaded.peerSourceId, 0u);
+    QVERIFY(!loaded.cachePeerPassword);
+    QVERIFY(loaded.peerPassword.isEmpty());
 }
 
 } // namespace

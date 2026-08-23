@@ -27,13 +27,20 @@ inline QString commTypeLabel(CommType type) {
 }
 
 // Which physical link a device's connection uses -- independent of CommType
-// above (the protocol): BTP can run over either (see BTP's ADR 0011, the
-// "usb_hid" transport profile, and lib/core/deviceconnection.h, which is
+// above (the protocol): BTP can run over either (see BTP's "usb_hid"
+// transport profile in docs/fragmentation-and-transports.md section 3.3,
+// and lib/core/deviceconnection.h, which is
 // the actual switch point). traceview_devices still doesn't depend on
 // QSerialPort/hidapi (see lib/CMakeLists.txt) -- this is just a plain enum
 // selecting which of Device::portName/usbPath below DeviceConnection should
 // use.
-enum class TransportType { Serial, UsbHid };
+// HubChannel is the odd one out and deliberately so: it is not a physical
+// link at all, but a channel multiplexed over ANOTHER device's connection --
+// a robot reached through the dongle it sits behind (see core/hubtransport.h).
+// It lives in the same enum because everything above this layer asks the same
+// question of it as of the other two ("which transport does this device
+// use"), and DeviceConnection remains the single switch point for all three.
+enum class TransportType { Serial, UsbHid, HubChannel };
 
 inline QString transportTypeLabel(TransportType type) {
     switch (type) {
@@ -41,6 +48,8 @@ inline QString transportTypeLabel(TransportType type) {
             return QCoreApplication::translate("Device", "Serial");
         case TransportType::UsbHid:
             return QCoreApplication::translate("Device", "USB");
+        case TransportType::HubChannel:
+            return QCoreApplication::translate("Device", "Hub");
     }
     return QString();
 }
@@ -107,7 +116,7 @@ struct Device {
     // directly. Only meaningful for TransportType::Serial (control-widget
     // commands are a raw-text-over-the-console-byte-stream concept that has
     // no equivalent over TransportType::UsbHid, which has no console at
-    // all -- see BTP's TRANSPORT_USB_HID.md section 7).
+    // all -- see BTP's docs/fragmentation-and-transports.md section 3.3).
     int lineTerminator = 1;  // Lf, matching SerialManager's own default
 
     // Target for TransportType::UsbHid connections: the hidapi device path
@@ -116,7 +125,77 @@ struct Device {
     // as an empty portName -- DeviceConnection then never attempts to open
     // it.
     QString usbPath;
+
+    // --- TransportType::HubChannel only -----------------------------------
+    // A device reached THROUGH another device: a robot behind the dongle it
+    // talks to. Ignored entirely by the other two transports, same "keep
+    // whatever was there" treatment portName/usbPath already get.
+
+    // Device::id of the hub this one rides. Empty means "not configured".
+    QString parentDeviceId;
+
+    // The robot's BTP source_id, and the ONLY thing that may be persisted as
+    // its address.
+    //
+    // ============================ READ THIS ==============================
+    // The dongle also publishes a "channel" number per peer (hub.peers), and
+    // it is tempting to store that instead because it is short and it is what
+    // the UI shows. Do not. That number is a display index assigned in the
+    // order the dongle first heard each peer, and it is not stable across a
+    // dongle reboot: bring the robots up in a different order and channel 1
+    // now names a different one. A project saved with the index would reopen
+    // pointing at the wrong robot -- plotting real data, from the wrong
+    // machine, raising no error anywhere. A source_id is the robot's own
+    // identity and does not move.
+    // =====================================================================
+    //
+    // Zero means "not configured", the safe default a project file missing
+    // the field falls back to, and it never connects.
+    quint32 peerSourceId = 0;
+
+    // Password for this robot's endpoint key (channel B). Live session input,
+    // not configuration -- see cachePeerPassword for whether it is persisted.
+    QString peerPassword;
+
+    // Whether peerPassword goes into the saved project.
+    //
+    // Default false, and that is the important half: a .tvproj is a file
+    // people mail to each other and commit, so it must not become a secrets
+    // file by accident. Opting in is per device and explicit, for the case
+    // where a project lives on one machine and retyping every password on
+    // every open is friction with no security bought.
+    bool cachePeerPassword = false;
 };
+
+// The BTP source_id a hub-channel device speaks as -- its own identity on the
+// wire, not the robot's (that is Device::peerSourceId).
+//
+// Derived from the device's own id rather than generated, because the hub
+// needs it to be STABLE. The hub cannot infer where a downstream frame should
+// go: a BTP header has no destination field, and TERMINAL_IN carries no target
+// in its payload either, so an operator binds child to robot by hand ("hub
+// -bind <child> <peer>") and the hub keys that table on the child's source_id.
+// A per-run random identity -- which is what this application uses for the
+// console channel -- would silently invalidate every bind on every launch.
+//
+// FNV-1a over the id, forced non-zero because BTP reserves 0. A collision
+// between two children would make the hub send one robot's traffic to the
+// wrong device, so it is worth knowing the odds: with a 32-bit space and a
+// handful of devices they are negligible, and two children of one hub with the
+// same source_id would in any case be visible immediately as one of them never
+// receiving anything.
+inline quint32 hubChannelSourceId(const QString& deviceId) {
+    if (deviceId.isEmpty()) {
+        return 0;  // "not configured", same convention as an empty portName
+    }
+    quint32 hash = 2166136261u;
+    const QByteArray utf8 = deviceId.toUtf8();
+    for (char byte : utf8) {
+        hash ^= quint8(byte);
+        hash *= 16777619u;
+    }
+    return hash == 0 ? 1u : hash;
+}
 
 // Mirrors dashboardItemToJson()'s shape/convention (dashboard/dashboarditem.h)
 // -- one JSON object per Device, used by DevicesGrid::toJson()/fromJson() to

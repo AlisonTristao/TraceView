@@ -176,6 +176,18 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     // core/deviceconnection.h) in lockstep with m_devicesGrid's own list.
     connect(m_devicesGrid, &DevicesGrid::deviceAdded, this, &MainWindow::onDeviceAdded);
     connect(m_devicesGrid, &DevicesGrid::deviceRemoved, this, &MainWindow::onDeviceRemoved);
+    // Deleting a hub that other devices ride is refused rather than cascaded
+    // (see DevicesGrid::removeDevice). Say which devices depend on it: "it
+    // has children" leaves the person hunting for them, and the whole reason
+    // not to cascade is that they should choose what happens to each.
+    connect(m_devicesGrid, &DevicesGrid::removeBlockedByChildren, this,
+            [this](const QString&, const QStringList& childNames) {
+                statusBar()->showMessage(
+                    tr("This device carries %n other device(s) (%1). Remove or repoint them first.",
+                       nullptr, int(childNames.size()))
+                        .arg(childNames.join(tr(", "))),
+                    8000);
+            });
     connect(m_devicesGrid, &DevicesGrid::deviceUpdated, this, &MainWindow::onDeviceUpdated);
     connect(m_devicesGrid, &DevicesGrid::connectToggleRequested, this,
             &MainWindow::onDeviceConnectToggleRequested);
@@ -252,7 +264,7 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     // Permanent readout of what telemetry is actually flowing: the effective
     // rate each subscribed topic was granted (never the rate that was asked
     // for), plus per-topic bytes/drops when the peer publishes
-    // status_version=2 (COMMANDS_AND_ACTIONS.md section 8.1). The transient
+    // status_version=2 (commands.md section 5.1). The transient
     // showMessage() calls above stay for one-off events; this is the standing
     // state.
     m_telemetryStatusLabel = new QLabel(this);
@@ -413,7 +425,7 @@ void MainWindow::updateTelemetryStatusLabel() {
         line += QString(" | %1 widget(s) here").arg(state.subscriberCount);
         const auto record = statusByTopic.constFind(topicStatusKey(state.sourceId, state.topicId));
         if (record != statusByTopic.constEnd()) {
-            // status_version=2 per-topic metrics (section 8.1).
+            // status_version=2 per-topic metrics (section 5.1).
             line += QString(" | %1 subscriber(s) at source | %2 B | %3 drops")
                         .arg(record->subscriberCount)
                         .arg(record->bytesTotal)
@@ -1100,6 +1112,38 @@ void MainWindow::refreshDeviceStatusLabel() {
     m_deviceStatusLabel->setText(parts.join("&nbsp;&nbsp;&nbsp;&nbsp;"));
 }
 
+void MainWindow::applyDeviceTarget(DeviceConnection* connection, const Device& device) {
+    if (connection == nullptr) {
+        return;
+    }
+    if (device.transportType == TransportType::HubChannel) {
+        // A child addresses its robot by source_id, never by the channel
+        // index the dongle publishes -- that index is a display label in
+        // arrival order and is not stable across a dongle reboot (see
+        // Device::peerSourceId). A parent that does not exist yet resolves to
+        // nullptr here, which connectVia() reads as "not configured";
+        // reattachHubChildren() runs again once it does exist.
+        connection->connectVia(m_deviceConnections.value(device.parentDeviceId),
+                               hubChannelSourceId(device.id), device.peerSourceId);
+        return;
+    }
+    const QString target = device.transportType == TransportType::UsbHid ? device.usbPath : device.portName;
+    connection->connectTo(target, device.baudRate);
+}
+
+void MainWindow::reattachHubChildren() {
+    const QVector<Device> devices = m_devicesGrid->devices();
+    for (const Device& device : devices) {
+        if (device.transportType != TransportType::HubChannel) {
+            continue;
+        }
+        DeviceConnection* connection = m_deviceConnections.value(device.id);
+        if (connection != nullptr) {
+            applyDeviceTarget(connection, device);
+        }
+    }
+}
+
 DeviceConnection* MainWindow::createDeviceConnection(const Device& device) {
     auto* connection = new DeviceConnection(device.commType, device.transportType, this);
     connect(connection, &DeviceConnection::connectionStateChanged, this,
@@ -1140,8 +1184,11 @@ void MainWindow::onDeviceAdded(const Device& device) {
     // loop, e.g. right after loading a saved project whose devices already
     // have one configured. Target is portName for Serial, usbPath for
     // UsbHid (baudRate is ignored by DeviceConnection in that case).
-    const QString target = device.transportType == TransportType::UsbHid ? device.usbPath : device.portName;
-    connection->connectTo(target, device.baudRate);
+    applyDeviceTarget(connection, device);
+    // A hub arriving may be the parent some already-loaded child was waiting
+    // for, and a child arriving needs its own parent resolved -- one call
+    // covers both directions.
+    reattachHubChildren();
     refreshDeviceStatusLabel();
     refreshPropertiesPanelDevices();
 }
@@ -1153,6 +1200,12 @@ void MainWindow::onDeviceRemoved(const QString& id) {
     }
     connection->disconnectFrom();
     connection->deleteLater();
+    // DevicesGrid refuses to remove a device that still has children, so a
+    // removal reaching here cannot orphan one. This still re-runs because a
+    // removed CHILD leaves the hash one entry smaller and the remaining
+    // children should be re-resolved against the current map rather than a
+    // stale one.
+    reattachHubChildren();
     refreshDeviceStatusLabel();
     refreshPropertiesPanelDevices();
 }
@@ -1177,8 +1230,8 @@ void MainWindow::onDeviceUpdated(const Device& device) {
         m_deviceConnections.insert(device.id, connection);
     }
     connection->setLineTerminator(device.lineTerminator);
-    const QString target = device.transportType == TransportType::UsbHid ? device.usbPath : device.portName;
-    connection->connectTo(target, device.baudRate);
+    applyDeviceTarget(connection, device);
+    reattachHubChildren();
     refreshDeviceStatusLabel();
     // Renaming/reconfiguring a device changes what every widget's own
     // Device combo should show as its selected entry's label.
@@ -1197,7 +1250,7 @@ void MainWindow::onDeviceConnectToggleRequested(const QString& deviceId) {
     const QVector<Device> devices = m_devicesGrid->devices();
     for (const Device& device : devices) {
         if (device.id == deviceId) {
-            connection->connectTo(device.portName, device.baudRate);
+            applyDeviceTarget(connection, device);
             break;
         }
     }

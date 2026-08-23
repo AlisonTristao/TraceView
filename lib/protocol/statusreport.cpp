@@ -4,9 +4,9 @@ namespace traceview {
 
 namespace {
 
-constexpr int kStatusV1Size = 92;      // section 8: exact logical size of a v1 payload
-constexpr int kTopicCountOffset = 92;  // section 8.1: right after the v1 block
-// section 8.1's per-record offset table: source_id@0, topic_id@4,
+constexpr int kStatusV1Size = 92;      // section 5: exact logical size of a v1 payload
+constexpr int kTopicCountOffset = 92;  // section 5.1: right after the v1 block
+// section 5.1's per-record offset table: source_id@0, topic_id@4,
 // subscriber_count@6, effective_rate_millihz@8, bytes_total@12,
 // samples_dropped_total@20 -- 4+2+2+4+8+8 = 28. (An earlier revision of that
 // section said 24, an arithmetic slip the offsets table now corrects; the
@@ -45,7 +45,7 @@ bool parseStatusPayload(const QByteArray& payload, StatusReport* out) {
     StatusReport report;
     report.statusVersion = readLe16(payload, 0);
     if (report.statusVersion != 1 && report.statusVersion != 2) {
-        return false;  // unknown version: never guessed at, section 8/8.1 only define 1 and 2
+        return false;  // unknown version: never guessed at, section 5/5.1 only define 1 and 2
     }
     report.flags = readLe16(payload, 2);
     report.uptimeUs = readLe64(payload, 4);
@@ -83,7 +83,7 @@ bool parseStatusPayload(const QByteArray& payload, StatusReport* out) {
         }
     }
     // status_version == 1: stop at 92 octets. Trailing bytes (if any) are
-    // deliberately not read -- section 8.1 requires exactly that of a reader
+    // deliberately not read -- section 5.1 requires exactly that of a reader
     // that also understands v2.
 
     *out = report;

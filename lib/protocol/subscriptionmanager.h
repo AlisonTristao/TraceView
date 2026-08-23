@@ -18,7 +18,7 @@ struct BtpFrame;
 
 // Aggregates every widget's interest in a telemetry topic into a single
 // wire-level SUBSCRIBE per (source_id, topic_id) -- topico 17 PASSOS 2/5/6/10,
-// COMMANDS_AND_ACTIONS.md section 7.
+// commands.md section 4.
 //
 // The model is a reference count, not one subscription per widget: several
 // charts/gauges routinely plot different fields of the same topic (decision 10
@@ -28,8 +28,8 @@ struct BtpFrame;
 //     highest rate any live consumer asked for;
 //   - a second consumer of the same topic adds no traffic at all unless it
 //     wants a *higher* rate, in which case one new SUBSCRIBE replaces the old
-//     one atomically (section 7: "uma nova sequencia cria ou substitui ... a
-//     assinatura da mesma sessao e do mesmo topico");
+//     one atomically (section 4: "a new sequence atomically creates or
+//     replaces the subscription for that session and topic");
 //   - closing one of several consumers sends nothing, except a rate-lowering
 //     SUBSCRIBE when the one that left was the one asking for the top rate;
 //   - only the last consumer leaving sends UNSUBSCRIBE.
@@ -44,10 +44,10 @@ struct BtpFrame;
 // created it, so onSessionEstablished() drops every remembered
 // subscription_id and re-sends SUBSCRIBE for whatever consumers are still
 // alive; onSessionLost() only forgets the grants, never the consumers. Leases
-// are renewed while a consumer exists (section 7: "a assinatura expira apos o
-// lease se nao for renovada por novo SUBSCRIBE").
+// are renewed while a consumer exists (section 4: "a subscription expires
+// after its lease unless renewed by another SUBSCRIBE").
 //
-// This class also consumes CONTROL/STATUS (section 8/8.1) so the per-topic
+// This class also consumes CONTROL/STATUS (section 5/5.1) so the per-topic
 // effective rate/bytes/drops a `status_version=2` emitter publishes can be
 // shown next to what this client asked for; a `status_version=1` emitter is
 // read exactly as before (see statusreport.h).
@@ -111,7 +111,7 @@ public slots:
     void onSessionLost();
 
     // Wired to ManifestClient::catalogUpdated: SUBSCRIBE needs a non-zero
-    // target_boot_id (section 7), which only MANIFEST_DATA supplies, so a
+    // target_boot_id (section 4), which only MANIFEST_DATA supplies, so a
     // subscription requested before its source's manifest arrived is held
     // back and sent from here.
     void onCatalogUpdated();
@@ -124,7 +124,7 @@ signals:
     // "pedido acima do maximo e limitado e informado ao cliente".
     void subscriptionRateLimited(quint32 sourceId, quint16 topicId, quint32 requestedMillihz,
                                  quint32 effectiveMillihz);
-    // SUBSCRIBE_RESULT came back with a non-SUCCESS status (section 2 codes).
+    // SUBSCRIBE_RESULT came back with a non-SUCCESS status (section 1 codes).
     void subscriptionRejected(quint32 sourceId, quint16 topicId, quint8 status, quint16 errorCode);
     // A STATUS message was decoded (either version).
     void statusReceived();

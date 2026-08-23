@@ -14,7 +14,7 @@ void appendLe(QByteArray& out, quint64 value, int width) {
     }
 }
 
-// The fixed 92-octet block of COMMANDS_AND_ACTIONS.md section 8, identical in
+// The fixed 92-octet block of commands.md section 5, identical in
 // v1 and v2 (same fields, same offsets) -- only `status_version` differs.
 QByteArray buildStatusV1Block(quint16 statusVersion) {
     QByteArray payload;
@@ -73,7 +73,7 @@ void TestStatusReport::parsesVersion1AndStopsAt92Octets() {
 
 void TestStatusReport::ignoresTrailingBytesOnVersion1() {
     // Bytes that would decode as a perfectly well-formed topic_status list if
-    // this were a v2 message. Section 8.1: a v1 reader MUST stop at 92
+    // this were a v2 message. Section 5.1: a v1 reader MUST stop at 92
     // octets, so none of this may be interpreted -- and, just as importantly,
     // the v1 counters must still parse.
     QByteArray payload = buildStatusV1Block(1);
@@ -92,9 +92,9 @@ void TestStatusReport::parsesVersion2TopicRecords() {
     appendLe(payload, 2, 2);  // topic_status_count
     payload.append(buildTopicRecord(0x9F442484, 0x0001, 2, 48300, 0x0102030405060708ULL, 12));
     // Same topic_id from a different source: the pair (source_id, topic_id)
-    // is what identifies a topic, never topic_id alone (section 8.1).
+    // is what identifies a topic, never topic_id alone (section 5.1).
     payload.append(buildTopicRecord(0xAABBCCDD, 0x0001, 0, 0, 0, 0));
-    QCOMPARE(payload.size(), 92 + 2 + 2 * 28);  // section 8.1's 28-octet stride
+    QCOMPARE(payload.size(), 92 + 2 + 2 * 28);  // section 5.1's 28-octet stride
 
     StatusReport report;
     QVERIFY(parseStatusPayload(payload, &report));

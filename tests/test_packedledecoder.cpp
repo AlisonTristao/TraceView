@@ -44,7 +44,7 @@ class TestPackedLeDecoder : public QObject {
     Q_OBJECT
 
 private slots:
-    // TELEMETRY.md section 9.1
+    // telemetry.md section 9
     void decodesMotorExampleFromSpec();
     // TELEMETRY.md section 9.2 -- nullable field, present and absent
     void decodesImuWithNullableTemperaturePresent();
@@ -73,7 +73,7 @@ void TestPackedLeDecoder::decodesMotorExampleFromSpec() {
         field(4, 3, "right_current", TelemetryFieldType::Int16, 0.01),
     };
 
-    // TELEMETRY.md section 9.1: left_speed=1.5f, right_speed=-2.25f,
+    // telemetry.md section 9: left_speed=1.5f, right_speed=-2.25f,
     // left_current raw 300 (0x012c), right_current raw -40 (0xffd8) -- the
     // body is the payload's 12 octets after its 2-octet schema_version.
     const QByteArray spec = QByteArray::fromHex("0000c03f" "000010c0" "2c01" "d8ff");

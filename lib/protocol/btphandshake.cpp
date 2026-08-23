@@ -34,7 +34,7 @@ QByteArray buildHelloPayload(quint16 maxLogicalPayload, quint16 sessionTimeoutMs
     QByteArray payload;
     payload.append(static_cast<char>(kRoleDesktop));
     // versions enumerates every envelope version this build's btp::codec can
-    // speak (COMMANDS_AND_ACTIONS.md section 5: "crescentes", no gaps
+    // speak (session-and-terminal.md section 1: "increasing", no gaps
     // required) so the dongle -- which picks the highest version common to
     // both sides -- always sees our real ceiling, not a version we happened
     // to hardcode. Today kMinimumProtocolVersion == kMaximumProtocolVersion
@@ -145,8 +145,9 @@ void BtpHandshake::onControlFrameReceived(const traceview::BtpFrame& frame) {
     if (status == kHelloResultSuccess) {
         // selected_version (offset 13) is the highest version the dongle
         // found in common with what our own HELLO just advertised
-        // (COMMANDS_AND_ACTIONS.md section 5: "o respondente escolhe a maior
-        // versao comum"). It can only be one of the versions we offered --
+        // (session-and-terminal.md section 2: "the responder picks the
+        // highest version it can use"). It can only be one of the versions we
+        // offered --
         // anything else is a peer that isn't honoring the negotiation, not a
         // version this client can silently go along with.
         const quint8 selectedVersion = static_cast<quint8>(frame.payload.at(13));
@@ -157,10 +158,10 @@ void BtpHandshake::onControlFrameReceived(const traceview::BtpFrame& frame) {
             return;
         }
         m_state = State::Established;
-        // config_revision sits at offset 48 (COMMANDS_AND_ACTIONS.md section
-        // 5); a HELLO_RESULT this short predates the field (or came from a
-        // peer that has no catalog yet), so treat it as 0 -- "peer nao
-        // publica manifesto" is the documented meaning of 0 anyway.
+        // config_revision sits at offset 48 (session-and-terminal.md
+        // section 2); a HELLO_RESULT this short predates the field (or came
+        // from a peer that has no catalog yet), so treat it as 0 -- "the peer
+        // publishes no manifest" is the documented meaning of 0 anyway.
         quint32 peerConfigRevision = 0;
         if (frame.payload.size() >= 52) {
             peerConfigRevision = (quint32(quint8(frame.payload.at(48))) << 0) |

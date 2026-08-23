@@ -7,14 +7,14 @@
 
 namespace traceview {
 
-// Dispatches validated BtpFrame instances by MessageType (BTP_V1.md section
-// 4) to one signal per logical channel, so nothing downstream has to
+// Dispatches validated BtpFrame instances by MessageType (model.md section
+// 2) to one signal per logical channel, so nothing downstream has to
 // re-check `type`/`objectId` itself -- the desktop-client counterpart of the
 // dongle-side ProtocolRouter described in topico 12's RESULTADO, minus the
 // FreeRTOS queues (this is single-threaded Qt event-loop code).
 //
 // TELEMETRY frames get one extra step: the first two bytes of the payload
-// are schema_version (TELEMETRY.md section 2), split out into
+// are schema_version (telemetry.md section 2), split out into
 // TelemetrySample::schemaVersion so nothing downstream re-parses it, and the
 // remaining bytes are handed on as-is -- still opaque, never converted to
 // UTF-8 or otherwise interpreted here (PLANO_GERAL.txt decision 6/8).

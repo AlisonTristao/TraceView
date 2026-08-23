@@ -6,9 +6,28 @@
 
 namespace traceview {
 
-BtpSession::BtpSession(btp::TransportProfile transport, QObject* parent)
+BtpSession::Framing BtpSession::framingFor(btp::TransportProfile transport) {
+    switch (transport) {
+        case btp::TransportProfile::Serial:
+            return Framing::CobsStream;
+        case btp::TransportProfile::UsbHid:
+        case btp::TransportProfile::EspNow:
+            // A HID report carries its own length octet and an ESP-NOW
+            // datagram is the frame -- either way the layer below already
+            // delivers one bounded frame per chunk (fragmentation-and-
+            // transports.md sections 3.1 and 3.3).
+            return Framing::PreFramed;
+    }
+    return Framing::CobsStream;
+}
+
+BtpSession::BtpSession(Framing framing, btp::TransportProfile encodeProfile, QObject* parent)
     : QObject(parent),
-      m_transport(transport),
+      m_framing(framing),
+      m_encodeProfile(encodeProfile),
+      // Serial-sized on purpose, independently of encodeProfile -- see the
+      // member declaration in the header: btp::SerialDecoder::valid()
+      // requires these exact capacities.
       m_encodedBuffer(btp::kSerialMaxCobsBlockSize),
       m_decodedBuffer(btp::kSerialMaxFrameSize),
       m_decoder(m_encodedBuffer.data(), m_encodedBuffer.size(), m_decodedBuffer.data(), m_decodedBuffer.size()),
@@ -20,31 +39,30 @@ BtpSession::BtpSession(btp::TransportProfile transport, QObject* parent)
       },
       m_reassembler(m_reassemblySlots, m_reassemblyStorage, kReassemblySlotCount, kReassemblyTimeoutMs) {}
 
-bool BtpSession::sendFrame(const btp::Frame& frame) {
-    if (m_transport == btp::TransportProfile::UsbHid) {
-        std::vector<std::uint8_t> encoded(btp::kUsbHidMaxFrameSize);
-        std::size_t frameBytes = 0;
-        if (btp::encode(frame, btp::TransportProfile::UsbHid, encoded.data(), encoded.size(), &frameBytes) !=
-            btp::Error::Ok) {
-            return false;
-        }
-        // No COBS, no delimiters -- UsbHidManager adds its own report
-        // framing (Report ID + length prefix) below this layer.
-        emit bytesToWrite(QByteArray(reinterpret_cast<const char*>(encoded.data()), int(frameBytes)));
+BtpSession::BtpSession(btp::TransportProfile transport, QObject* parent)
+    : BtpSession(framingFor(transport), transport, parent) {}
+
+bool BtpSession::emitFramed(const std::uint8_t* frame, std::size_t frameSize) {
+    if (m_framing == Framing::PreFramed) {
+        // No COBS, no delimiters -- the transport below adds whatever
+        // bounding its link needs (UsbHidManager prepends Report ID +
+        // length; an ESP-NOW datagram needs nothing at all).
+        emit bytesToWrite(QByteArray(reinterpret_cast<const char*>(frame), int(frameSize)));
         return true;
     }
 
-    std::vector<std::uint8_t> encoded(btp::kSerialMaxFrameSize);
-    std::size_t frameBytes = 0;
-    if (btp::encode(frame, btp::TransportProfile::Serial, encoded.data(), encoded.size(), &frameBytes) !=
-        btp::Error::Ok) {
+    // Sized from the frame actually in hand rather than from a per-profile
+    // constant: any profile's frame ceiling is at most kSerialMaxFrameSize,
+    // so the resulting block always fits what a peer's SerialDecoder
+    // accepts, and a 250-octet EspNow frame does not pay for a 4113-octet
+    // buffer.
+    std::size_t cobsCapacity = 0;
+    if (btp::cobs_max_encoded_size(frameSize, &cobsCapacity) != btp::CobsError::Ok) {
         return false;
     }
-
-    std::vector<std::uint8_t> cobsBlock(btp::kSerialMaxCobsBlockSize);
+    std::vector<std::uint8_t> cobsBlock(cobsCapacity);
     std::size_t cobsBytes = 0;
-    if (btp::cobs_encode(encoded.data(), frameBytes, cobsBlock.data(), cobsBlock.size(), &cobsBytes) !=
-        btp::CobsError::Ok) {
+    if (btp::cobs_encode(frame, frameSize, cobsBlock.data(), cobsBlock.size(), &cobsBytes) != btp::CobsError::Ok) {
         return false;
     }
 
@@ -55,6 +73,32 @@ bool BtpSession::sendFrame(const btp::Frame& frame) {
     packet.append('\0');
     emit bytesToWrite(packet);
     return true;
+}
+
+bool BtpSession::sendFrame(const btp::Frame& frame) {
+    // Axis (b): the encode profile decides the ceiling, so it also decides
+    // how big the encode buffer has to be. btp::encode() enforces that
+    // ceiling itself and writes nothing when the payload exceeds it.
+    std::vector<std::uint8_t> encoded(btp::max_frame_size(m_encodeProfile));
+    std::size_t frameBytes = 0;
+    if (btp::encode(frame, m_encodeProfile, encoded.data(), encoded.size(), &frameBytes) != btp::Error::Ok) {
+        return false;
+    }
+    // Axis (a) is applied entirely separately, and knows nothing about which
+    // profile produced these octets.
+    return emitFramed(encoded.data(), frameBytes);
+}
+
+bool BtpSession::sendRawFrame(const QByteArray& alreadyEncoded) {
+    const std::size_t frameSize = static_cast<std::size_t>(alreadyEncoded.size());
+    // The only two things checked, both about size and neither about
+    // content: no re-encode, no CRC recomputation, no header parse (see the
+    // header's contract -- these octets carry someone else's AEAD nonce and
+    // CRC).
+    if (frameSize < btp::kV1MinimumFrameSize || frameSize > btp::max_frame_size(m_encodeProfile)) {
+        return false;
+    }
+    return emitFramed(reinterpret_cast<const std::uint8_t*>(alreadyEncoded.constData()), frameSize);
 }
 
 void BtpSession::handleReassembly(const btp::DecodedFrame& fragment) {
@@ -103,16 +147,21 @@ void BtpSession::feedBytes(const QByteArray& data) {
 
     bool diagnosticsDirty = false;
 
-    if (m_transport == btp::TransportProfile::UsbHid) {
-        // No COBS to decode -- UsbHidManager already handed us exactly one
-        // de-padded HID report's worth of bytes, which is either a complete
-        // BTP frame or nothing at all (see the class comment).
+    if (m_framing == Framing::PreFramed) {
+        // No COBS to decode -- the transport below already handed us exactly
+        // one bounded chunk, which is either a complete BTP frame or nothing
+        // at all (see the class comment). The profile handed to btp::decode()
+        // is the encode profile: it is the ceiling the *sender* used, which
+        // is what "is this frame too large" has to be measured against.
         btp::DecodedFrame decoded;
         const btp::Error error = btp::decode(reinterpret_cast<const std::uint8_t*>(data.constData()),
-                                             static_cast<std::size_t>(data.size()), btp::TransportProfile::UsbHid,
-                                             &decoded);
+                                             static_cast<std::size_t>(data.size()), m_encodeProfile, &decoded);
         if (error == btp::Error::Ok) {
             diagnosticsDirty = true;
+            // btp::decode() only accepts an input whose size is exactly
+            // 40 + payload_size, so `data` IS the frame octets, with nothing
+            // to trim -- forward it as is, without a copy or a re-encode.
+            emit frameBytesReceived(decoded.header.source_id, data);
             handleReassembly(decoded);
         } else {
             if (error == btp::Error::CrcMismatch) {
@@ -137,6 +186,25 @@ void BtpSession::feedBytes(const QByteArray& data) {
                 break;
             case btp::SerialDecodeEvent::Frame:
                 diagnosticsDirty = true;
+                // btp::SerialDecoder hands back a DecodedFrame (header +
+                // payload view + crc32), never the whole frame as one span.
+                // The frame octets do exist though, contiguously: decode()
+                // sets payload.data = input + kV1HeaderSize on the buffer it
+                // was given, so the frame starts kV1HeaderSize octets before
+                // the payload view and runs 40 + payload_size octets. That
+                // is arithmetic over the codec's documented layout, NOT a
+                // re-encode -- reconstructing these octets by encoding the
+                // decoded header again would change the CRC's provenance and
+                // is exactly what the AEAD relay path forbids.
+                //
+                // The copy into a QByteArray is required: the view points
+                // into m_decodedBuffer, which the next completed candidate
+                // overwrites (btp::SerialDecoder::push()'s validity
+                // guarantee).
+                emit frameBytesReceived(
+                    decoded.header.source_id,
+                    QByteArray(reinterpret_cast<const char*>(decoded.payload.data - btp::kV1HeaderSize),
+                               int(btp::kV1MinimumFrameSize + decoded.payload.size)));
                 handleReassembly(decoded);
                 break;
             case btp::SerialDecodeEvent::CobsError:

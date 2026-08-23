@@ -14,8 +14,8 @@ namespace traceview {
 
 namespace {
 
-// bally_protocol/docs/COMMANDS_AND_ACTIONS.md section 4 -- object_id values
-// within MessageType::Command, and the one action_id/action_version every
+// BTP/docs/commands.md sections 1 and 2 -- object_id values within
+// MessageType::Command, and the one action_id/action_version every
 // executor in the ecosystem defines for "run this one shell line and capture
 // its output" (bally_dongle's BtpTransport::btp_command mirrors this exact
 // layout; each side of the wire defines its own copy of these

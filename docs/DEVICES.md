@@ -68,8 +68,9 @@ the Layout tab (`updatePanelVisibility()` gates them on
 `TransportType` (`lib/devices/device.h`) is independent of `CommType`: BTP
 (the only protocol today) can run over either. `TransportType::Serial` is
 the original COM-port transport; `TransportType::UsbHid` is BTP v1.1.0's
-`usb_hid` profile (see the `BTP` repository's ADR 0011 and
-`docs/TRANSPORT_USB_HID.md`) -- a dongle exposing a composite CDC+HID USB
+`usb_hid` profile (see the `BTP` repository's
+`docs/fragmentation-and-transports.md` section 3.3) -- a dongle exposing a
+composite CDC+HID USB
 device, with the HID interface picked by `Device::usbPath` (a `hidapi`
 device path, analogous to `portName`) instead of a COM port. `usb_hid`'s
 tight per-report payload ceiling (22 octets) and lack of a console mode mean

@@ -117,6 +117,8 @@ add_library(traceview_protocol STATIC
     protocol/btpsession.h
     protocol/clocksync.cpp
     protocol/clocksync.h
+    protocol/keyderivation.cpp
+    protocol/keyderivation.h
     protocol/logentry.h
     protocol/logfilereader.cpp
     protocol/logfilereader.h
@@ -145,6 +147,9 @@ target_include_directories(traceview_protocol PUBLIC
 
 target_link_libraries(traceview_protocol PUBLIC
     Qt6::Core
+    # See the top-level CMakeLists.txt: QtNetwork is here for
+    # QPasswordDigestor only, not for any network access.
+    Qt6::Network
     btp::codec
     traceview_backend
     traceview_telemetry
@@ -307,6 +312,8 @@ add_library(traceview_ui STATIC
     core/ribbontabbar.h
     core/deviceconnection.cpp
     core/deviceconnection.h
+    core/hubtransport.cpp
+    core/hubtransport.h
     core/serialmanager.cpp
     core/serialmanager.h
     core/serialwidgetbridge.cpp

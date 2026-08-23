@@ -31,9 +31,9 @@ void SerialWidgetBridge::wireWidget(DashboardWidget* widget) {
                 // Raw-text control commands only exist over Serial's console
                 // byte stream (docs/PROTOCOL.md "Outbound: control
                 // commands") -- a device connected over USB HID has no
-                // SerialManager at all (TRANSPORT_USB_HID.md section 7: no
-                // console, always BTP-protocolled), so this just goes
-                // nowhere, same "went nowhere, not an error" contract a
+                // SerialManager at all (fragmentation-and-transports.md
+                // section 3.3: no console, always BTP-protocolled), so this
+                // goes nowhere, same "went nowhere, not an error" contract a
                 // closed port already had.
                 if (SerialManager* serial = connection->serialManager()) {
                     serial->writeCommand(command);

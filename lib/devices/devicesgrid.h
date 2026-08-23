@@ -53,6 +53,10 @@ public:
     // the selection first if the removed device was the selected one.
     // Undoable -- pushed onto undoStack() as a RemoveDeviceCommand.
     void removeDevice(const QString& id);
+    // Ids of the hub-channel devices that ride `id` as their parent. Empty
+    // for a device nothing rides, which is every device until someone
+    // configures a hub channel.
+    QStringList childDeviceIds(const QString& id) const;
     // Matched by id; no-op if unknown. Refreshes the corresponding card's
     // displayed data in place -- does not change display order. Undoable --
     // pushed onto undoStack() as an UpdateDeviceCommand. Only meant for a
@@ -138,6 +142,12 @@ signals:
     // Bubbled straight from the selected card's DeviceCard::connectToggleRequested
     // -- DevicesGrid has no DeviceConnection of its own to flip, MainWindow does.
     void connectToggleRequested(const QString& deviceId);
+    // A removeDevice() that was refused because other devices ride this one
+    // (see removeDevice()). Carries the blocked device and the names of what
+    // depends on it, so the explanation can say which ones rather than just
+    // that there are some. DevicesGrid raises no dialogs of its own; the
+    // window that owns it decides how to say this.
+    void removeBlockedByChildren(const QString& deviceId, const QStringList& childNames);
 
 protected:
     void resizeEvent(QResizeEvent* event) override;

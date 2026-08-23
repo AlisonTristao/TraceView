@@ -30,7 +30,7 @@ void appendLe32(QByteArray& out, quint32 value) {
 }
 
 // Bounds-checked little-endian cursor over one MANIFEST_DATA payload
-// (COMMANDS_AND_ACTIONS.md section 6.2). Every read advances `pos` only on
+// (commands.md section 3.2). Every read advances `pos` only on
 // success, so a caller can bail out on the first `false` without unwinding
 // anything by hand.
 struct Cursor {
@@ -78,8 +78,8 @@ struct Cursor {
     }
 };
 
-// Parses one field record (COMMANDS_AND_ACTIONS.md section 6.2's field
-// table) starting at `cursor.pos`, which must be the record's own
+// Parses one field record (commands.md section 3.3's field record)
+// starting at `cursor.pos`, which must be the record's own
 // `record_size` prefix. Enum entries are not modeled by TelemetryFieldSchema
 // yet (topico 16 does not need them to decode PACKED_LE samples), so this
 // jumps straight to the record's end afterward rather than parsing them --
@@ -164,7 +164,7 @@ struct ParsedManifestData {
     quint32 configRevision = 0;
     quint32 describedSourceId = 0;
     // topico 17: SUBSCRIBE's target_boot_id MUST be non-zero
-    // (COMMANDS_AND_ACTIONS.md section 7), and this is the only place the
+    // (commands.md section 4), and this is the only place the
     // client ever learns which boot a source is currently on.
     quint32 describedBootId = 0;
     QVector<TelemetryTopicSchema> topics;
@@ -270,6 +270,17 @@ void ManifestClient::onUnknownSchema(quint32 sourceId, quint16 /*topicId*/, quin
 }
 
 void ManifestClient::requestFullCatalog() { sendRequest(/*targetSourceId=*/0, /*targetBootId=*/0, /*knownRevision=*/0); }
+
+void ManifestClient::requestCatalogFor(quint32 sourceId) {
+    if (sourceId == 0) {
+        // Zero is the enumeration wildcard on the wire, so accepting it here
+        // would silently turn "ask this robot" into "ask about everything" --
+        // which a robot cannot answer, leaving a child with no catalog and no
+        // error to explain why.
+        return;
+    }
+    sendRequest(sourceId, /*targetBootId=*/0, /*knownRevision=*/0);
+}
 
 void ManifestClient::sendRequest(quint32 targetSourceId, quint32 targetBootId, quint32 knownRevision) {
     QByteArray payload;

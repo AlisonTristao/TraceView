@@ -10,7 +10,8 @@ namespace traceview {
 
 namespace {
 
-// "usb_hid" transport profile (BTP/docs/TRANSPORT_USB_HID.md section 2):
+// "usb_hid" transport profile (BTP/docs/fragmentation-and-transports.md
+// section 3.3):
 // one physical HID report is 64 octets total -- 1 Report ID octet plus 63
 // data octets declared by the firmware's USBHIDVendor descriptor. Report ID
 // matches arduino-esp32's fixed HID_REPORT_ID_VENDOR (USBHID.h enum), the

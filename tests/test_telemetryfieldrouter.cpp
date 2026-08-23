@@ -12,7 +12,8 @@ namespace {
 
 constexpr quint32 kSourceId = 0x11223344;
 
-// protocol.test payload from TELEMETRY.md section 9.4: counter=0x01020304,
+// protocol.test payload, matching BTP's canonical
+// test-vectors/v1/valid/protocol_test.json: counter=0x01020304,
 // value=float32 bits 0x3F0D0A00 -- deliberately contains 0x00, LF (0x0A) and
 // CR (0x0D) inside the body, demonstrating those bytes carry no delimiter
 // meaning here (PLANO_GERAL.txt decision 6, Marco 2's stated requirement).
@@ -72,7 +73,7 @@ void TestTelemetryFieldRouter::timestampTravelsUnmodified() {
 
     // CRITERIO DE ACEITE: "o timestamp nao e descartado no roteador" -- the
     // origin timestamp_us on the sample must reach the subscriber exactly,
-    // never substituted by e.g. local arrival time (BTP_V1.md section 6.3 /
+    // never substituted by e.g. local arrival time (model.md section 4 /
     // PLANO_GERAL.txt decision 11).
     quint64 observedTimestamp = 0;
     connect(&router, &TelemetryFieldRouter::fieldSample, &router,

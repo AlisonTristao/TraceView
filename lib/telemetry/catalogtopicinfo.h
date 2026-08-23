@@ -21,7 +21,7 @@ struct CatalogTopicField {
 
 // One (source_id, topic_id, schema_version) schema a Backend's catalog
 // currently holds, as announced by the device's own manifest exchange
-// (BTP's MANIFEST_DATA for BtpBackend). TELEMETRY.md section 3 requires
+// (BTP's MANIFEST_DATA for BtpBackend). telemetry.md section 3 requires
 // every topic to declare a stable, human-readable `name` alongside its
 // numeric topic_id -- this is that name, surfaced generically so the Devices
 // panel's gear icon (DeviceConfigDialog) and chart/gauge config editors can
