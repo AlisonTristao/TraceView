@@ -53,7 +53,10 @@ private:
     QFormLayout* m_formLayout = nullptr;
     QComboBox* m_deviceCombo = nullptr;
     QLineEdit* m_sourceIdEdit = nullptr;
-    QLineEdit* m_topicIdEdit = nullptr;
+    // Editable: offers the selected device's reported catalog topics as
+    // pickable entries (see populateTopicCombo()), but still accepts a
+    // hand-typed hex/decimal topicId for one the device hasn't reported yet.
+    QComboBox* m_topicIdEdit = nullptr;
     // Read-only: the catalog name resolved for the current Device/Source/
     // Topic combination (TELEMETRY.md section 3's readable topic name),
     // blank when unresolved -- see resolveCatalogTopicName() (widgetconfigeditor.h).

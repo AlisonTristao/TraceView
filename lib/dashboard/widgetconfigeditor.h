@@ -47,6 +47,22 @@ QString resolveCatalogTopicName(const QVector<DeviceOption>& devices, const QStr
 // control/terminal) instead of duplicating this per editor.
 void populateDeviceCombo(QComboBox* combo, const QVector<DeviceOption>& devices);
 
+// Repopulates `combo` (an editable QComboBox) with one entry per catalog
+// topic `deviceId` has reported within `devices` -- label combines the
+// topic's readable name with its source_id/topic_id hex (same format as
+// deviceconfigdialog.cpp's catalogTopicLine()), itemData packs both ids as
+// "0xSOURCE|0xTOPIC" for decodeTopicComboData() to split back out once the
+// user picks one. Unlike populateDeviceCombo() this preserves the combo's
+// current edit text verbatim rather than re-selecting by id: the field's
+// whole point is to also accept a source/topic pair the catalog doesn't
+// know about yet, and a manifest refresh must never clobber that.
+void populateTopicCombo(QComboBox* combo, const QVector<DeviceOption>& devices, const QString& deviceId);
+
+// Splits a "0xSOURCE|0xTOPIC" itemData value (see populateTopicCombo) back
+// into its two hex strings. Returns false, leaving both outputs untouched,
+// if `itemData` isn't in that shape -- notably for index -1 (no selection).
+bool decodeTopicComboData(const QVariant& itemData, QString* sourceIdHexOut, QString* topicIdHexOut);
+
 // Base class for a widget type's type-specific settings, shown in the
 // PropertiesPanel below the common Type/Name/Key fields (see
 // PropertiesPanel, lib/core/propertiespanel.h). A type opts in by setting

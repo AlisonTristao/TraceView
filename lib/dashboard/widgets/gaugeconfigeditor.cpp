@@ -46,9 +46,12 @@ GaugeConfigEditor::GaugeConfigEditor(QWidget* parent) : WidgetConfigEditor(paren
     m_sourceIdEdit->setPlaceholderText(tr("0x11223344"));
     m_sourceIdEdit->setToolTip(tr("BTP source_id this gauge reads from (hex or decimal)."));
 
-    m_topicIdEdit = new QLineEdit(this);
-    m_topicIdEdit->setPlaceholderText(tr("0x0101"));
-    m_topicIdEdit->setToolTip(tr("BTP topic_id (TELEMETRY.md) this gauge's rings bind fields of."));
+    m_topicIdEdit = new QComboBox(this);
+    m_topicIdEdit->setEditable(true);
+    populateTopicCombo(m_topicIdEdit, {}, QString());
+    m_topicIdEdit->lineEdit()->setPlaceholderText(tr("0x0101"));
+    m_topicIdEdit->setToolTip(tr("BTP topic_id (TELEMETRY.md) this gauge's rings bind fields of -- pick one the "
+                                  "device has already reported, or type a hex/decimal id by hand."));
 
     // Resolved from the selected device's reported catalog (see
     // resolveCatalogTopicName()) -- blank when the device hasn't announced a
@@ -127,6 +130,7 @@ GaugeConfigEditor::GaugeConfigEditor(QWidget* parent) : WidgetConfigEditor(paren
     mainLayout->addLayout(buttonRow);
 
     connect(m_deviceCombo, &QComboBox::currentIndexChanged, this, [this](int) {
+        populateTopicCombo(m_topicIdEdit, m_devices, m_deviceCombo->currentData().toString());
         updateTopicNameLabel();
         emitChanged();
     });
@@ -134,7 +138,21 @@ GaugeConfigEditor::GaugeConfigEditor(QWidget* parent) : WidgetConfigEditor(paren
         updateTopicNameLabel();
         emitChanged();
     });
-    connect(m_topicIdEdit, &QLineEdit::editingFinished, this, [this]() {
+    connect(m_topicIdEdit->lineEdit(), &QLineEdit::editingFinished, this, [this]() {
+        updateTopicNameLabel();
+        emitChanged();
+    });
+    // Picking an item from the dropdown normally leaves the topic's display
+    // label (name + hex) sitting in the edit text; overwrite it with just
+    // the topicId hex right after so config()/persistence stays on the same
+    // hex-string convention as manual entry, and fill Source to match --
+    // that's the whole point of offering the catalog here.
+    connect(m_topicIdEdit, &QComboBox::activated, this, [this](int index) {
+        QString sourceHex, topicHex;
+        if (decodeTopicComboData(m_topicIdEdit->itemData(index), &sourceHex, &topicHex)) {
+            m_sourceIdEdit->setText(sourceHex);
+            m_topicIdEdit->setCurrentText(topicHex);
+        }
         updateTopicNameLabel();
         emitChanged();
     });
@@ -150,7 +168,7 @@ void GaugeConfigEditor::setConfig(const QJsonObject& config) {
     const int deviceIdx = m_deviceCombo->findData(config.value("deviceId").toString());
     m_deviceCombo->setCurrentIndex(deviceIdx >= 0 ? deviceIdx : 0);
     m_sourceIdEdit->setText(config.value("sourceId").toString("0"));
-    m_topicIdEdit->setText(config.value("topicId").toString("0"));
+    m_topicIdEdit->setCurrentText(config.value("topicId").toString("0"));
     m_minSpin->setValue(config.value("min").toDouble(0.0));
     m_maxSpin->setValue(config.value("max").toDouble(100.0));
     m_unitEdit->setText(config.value("unit").toString());
@@ -183,7 +201,8 @@ QJsonObject GaugeConfigEditor::config() const {
     QJsonObject cfg;
     cfg["deviceId"] = m_deviceCombo->currentData().toString();
     cfg["sourceId"] = m_sourceIdEdit->text().trimmed().isEmpty() ? QStringLiteral("0") : m_sourceIdEdit->text();
-    cfg["topicId"] = m_topicIdEdit->text().trimmed().isEmpty() ? QStringLiteral("0") : m_topicIdEdit->text();
+    cfg["topicId"] =
+        m_topicIdEdit->currentText().trimmed().isEmpty() ? QStringLiteral("0") : m_topicIdEdit->currentText();
     cfg["min"] = m_minSpin->value();
     cfg["max"] = m_maxSpin->value();
     cfg["unit"] = m_unitEdit->text();
@@ -266,6 +285,7 @@ void GaugeConfigEditor::setAvailableDevices(const QVector<DeviceOption>& devices
     m_updating = true;
     m_devices = devices;
     populateDeviceCombo(m_deviceCombo, devices);
+    populateTopicCombo(m_topicIdEdit, devices, m_deviceCombo->currentData().toString());
     updateTopicNameLabel();
     m_updating = wasUpdating;
 }
@@ -279,7 +299,7 @@ void GaugeConfigEditor::emitChanged() {
 
 void GaugeConfigEditor::updateTopicNameLabel() {
     const QString name = resolveCatalogTopicName(m_devices, m_deviceCombo->currentData().toString(),
-                                                  m_sourceIdEdit->text(), m_topicIdEdit->text());
+                                                  m_sourceIdEdit->text(), m_topicIdEdit->currentText());
     m_topicNameLabel->setText(name.isEmpty() ? tr("(unknown)") : name);
 }
 
