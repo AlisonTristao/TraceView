@@ -226,14 +226,11 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     refreshDeviceStatusLabel(); // starts empty ("No devices configured...")
     refreshPropertiesPanelDevices();
 
-    // Logs tab's content -- opened on demand via m_openLogFileAction, no
-    // state to wire up front (contrast m_devicesGrid above).
-    m_logViewer = new LogViewer(this);
-
     m_contentStack = new QStackedWidget(m_contentRow);
     m_contentStack->addWidget(m_dashboardGrid);
     m_contentStack->addWidget(m_devicesGrid);
-    m_contentStack->addWidget(m_logViewer);
+    // Each log opened via onOpenLogFile() (File > Open Log Offline) gets its
+    // own LogViewer, added here on demand -- see m_openLogTabs.
     contentLayout->addWidget(m_contentStack);
 
     // Reparented rather than added to contentLayout: their geometry is set
@@ -461,6 +458,12 @@ void MainWindow::buildMenus() {
     saveAsAction->setShortcut(QKeySequence::SaveAs);
     connect(saveAsAction, &QAction::triggered, this, &MainWindow::onSaveProjectAs);
 
+    fileMenu->addSeparator();
+
+    m_openLogFileAction = new QAction(tr("Open &Log Offline..."), this);
+    connect(m_openLogFileAction, &QAction::triggered, this, &MainWindow::onOpenLogFile);
+    fileMenu->addAction(m_openLogFileAction);
+
     auto* viewMenu = menuBar()->addMenu(tr("&View"));
     auto* themeMenu = viewMenu->addMenu(tr("&Theme"));
 
@@ -644,9 +647,6 @@ Ribbon* MainWindow::buildRibbon() {
     m_removeDeviceAction->setEnabled(false);
     m_removeDeviceAction->setShortcut(QKeySequence::Delete);
 
-    m_openLogFileAction = new QAction(tr("Open Log File..."), this);
-    connect(m_openLogFileAction, &QAction::triggered, this, &MainWindow::onOpenLogFile);
-
     auto* runPage = new QWidget(this);
     runPage->setObjectName("ribbonPage");
     runPage->setFixedHeight(kRibbonPageHeight);
@@ -751,23 +751,13 @@ Ribbon* MainWindow::buildRibbon() {
     devicesLayout->addWidget(Ribbon::createButtonGroup(devicesPage, {m_addDeviceAction, m_removeDeviceAction}));
     devicesLayout->addStretch();
 
-    auto* logsPage = new QWidget(this);
-    logsPage->setObjectName("ribbonPage");
-    logsPage->setFixedHeight(kRibbonPageHeight);
-    auto* logsLayout = new QHBoxLayout(logsPage);
-    logsLayout->setContentsMargins(kRibbonPageMarginH, kRibbonPageMarginV, kRibbonPageMarginH, kRibbonPageMarginV);
-    logsLayout->setSpacing(kRibbonGroupSpacing);
-
-    logsLayout->addWidget(Ribbon::createButtonGroup(logsPage, {m_openLogFileAction}));
-    logsLayout->addStretch();
-
     auto* ribbon = new Ribbon(this);
     m_runTabIndex = ribbon->addTab(tr("Run"), runPage);
     m_configureTabIndex = ribbon->addTab(tr("Layout"), configurePage);
     m_devicesTabIndex = ribbon->addTab(tr("Devices"), devicesPage);
-    m_logsTabIndex = ribbon->addTab(tr("Logs"), logsPage);
 
     connect(ribbon, &Ribbon::currentTabChanged, this, &MainWindow::onRibbonTabChanged);
+    connect(ribbon, &Ribbon::tabCloseRequested, this, &MainWindow::onLogTabCloseRequested);
 
     m_ribbon = ribbon;
     return ribbon;
@@ -971,15 +961,21 @@ void MainWindow::onRibbonTabChanged(int index) {
     }
 
     // Swaps the whole content area between the canvas, the Devices grid and
-    // the Logs viewer; Run/Layout both keep showing the canvas, only
-    // Devices/Logs swap away from it (m_configureTabActive above already
-    // goes false here on its own, so edit mode/panels don't need any extra
-    // handling for either tab).
+    // whichever log tab is now current; Run/Layout both keep showing the
+    // canvas, only Devices/a log tab swap away from it (m_configureTabActive
+    // above already goes false here on its own, so edit mode/panels don't
+    // need any extra handling for those). Log tabs are matched by their
+    // ribbon page pointer rather than by index -- see m_openLogTabs.
     QWidget* activeContent = m_dashboardGrid;
     if (index == m_devicesTabIndex) {
         activeContent = m_devicesGrid;
-    } else if (index == m_logsTabIndex) {
-        activeContent = m_logViewer;
+    } else if (QWidget* page = m_ribbon->pageAt(index)) {
+        for (const OpenLogTab& tab : m_openLogTabs) {
+            if (tab.ribbonPage == page) {
+                activeContent = tab.viewer;
+                break;
+            }
+        }
     }
     m_contentStack->setCurrentWidget(activeContent);
 }
@@ -1368,7 +1364,45 @@ void MainWindow::onOpenLogFile() {
     if (path.isEmpty()) {
         return;
     }
-    m_logViewer->openFile(path);
+
+    auto* viewer = new LogViewer(this);
+    viewer->openFile(path);
+    m_contentStack->addWidget(viewer);
+
+    // Empty -- a log tab carries no ribbon buttons of its own, this page
+    // just exists to give the tab a slot in Ribbon's own internal stack (and
+    // a stable pointer m_openLogTabs can be looked back up by, see its
+    // declaration in mainwindow.h).
+    auto* page = new QWidget(this);
+    page->setObjectName("ribbonPage");
+    page->setFixedHeight(kRibbonPageHeight);
+
+    const int index = m_ribbon->addTab(QFileInfo(path).fileName(), page, /*enabled=*/true, path, /*closable=*/true);
+    m_openLogTabs.append({page, viewer});
+    // Triggers Ribbon::currentTabChanged -> onRibbonTabChanged, which is
+    // what actually swaps m_contentStack over to `viewer` (via the lookup
+    // above) and resets edit mode/panels/undo group the same way switching
+    // to any other non-Layout/Devices tab does.
+    m_ribbon->setCurrentIndex(index);
+}
+
+void MainWindow::onLogTabCloseRequested(int index) {
+    QWidget* page = m_ribbon->pageAt(index);
+    for (int i = 0; i < m_openLogTabs.size(); ++i) {
+        if (m_openLogTabs[i].ribbonPage != page) {
+            continue;
+        }
+        LogViewer* viewer = m_openLogTabs[i].viewer;
+        // Removed before Ribbon::removeTab() below, which -- if this tab is
+        // the current one -- synchronously re-enters onRibbonTabChanged()
+        // for whichever tab becomes current next; that lookup must not find
+        // this entry anymore.
+        m_openLogTabs.removeAt(i);
+        m_ribbon->removeTab(index);
+        m_contentStack->removeWidget(viewer);
+        viewer->deleteLater();
+        break;
+    }
 }
 
 void MainWindow::openRecentFile(const QString& path) {

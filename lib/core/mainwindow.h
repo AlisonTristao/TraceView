@@ -6,6 +6,7 @@
 #include <QPointer>
 #include <QRect>
 #include <QString>
+#include <QVector>
 
 class QAction;
 class QEvent;
@@ -158,6 +159,9 @@ private:
     void onSaveProjectAs();
     void onOpenProject();
     void onOpenLogFile();
+    // RibbonTabBar's "x" click (forwarded through Ribbon::tabCloseRequested)
+    // on one of m_openLogTabs -- removes that tab and deletes its LogViewer.
+    void onLogTabCloseRequested(int index);
     void openRecentFile(const QString& path);
     void addRecentFile(const QString& path);
     void updateRecentFilesMenu();
@@ -171,10 +175,19 @@ private:
     // Devices tab's content -- swapped in for m_dashboardGrid via
     // m_contentStack, never shown at the same time (see onRibbonTabChanged).
     DevicesGrid* m_devicesGrid = nullptr;
-    // Logs tab's content -- same swap-via-m_contentStack treatment as
-    // m_devicesGrid, opened on demand via m_openLogFileAction rather than
-    // holding any state of its own.
-    LogViewer* m_logViewer = nullptr;
+    // One closable ribbon tab per log opened via onOpenLogFile() (File >
+    // Open Log Offline), each swapped into m_contentStack while its tab is
+    // active -- unlike m_devicesGrid, these tabs are created/destroyed at
+    // runtime rather than being fixed. `ribbonPage` is the (empty) page
+    // Ribbon::addTab() was given for that tab; since it's never touched
+    // again after creation, it doubles as a stable key to find this entry
+    // back from a tab index via Ribbon::pageAt() (indices themselves shift
+    // whenever another log tab closes).
+    struct OpenLogTab {
+        QWidget* ribbonPage = nullptr;
+        LogViewer* viewer = nullptr;
+    };
+    QVector<OpenLogTab> m_openLogTabs;
     // One real, independent serial connection per Device::id -- see
     // core/deviceconnection.h. Created/destroyed/updated in lockstep with
     // m_devicesGrid's own list (onDeviceAdded/onDeviceRemoved/onDeviceUpdated).
@@ -224,7 +237,6 @@ private:
     QPointer<DebugChartsWindow> m_debugChartsWindow;
     int m_configureTabIndex = -1;
     int m_devicesTabIndex = -1;
-    int m_logsTabIndex = -1;
     bool m_configureTabActive = false;
     // Gates m_removeDeviceAction the same way m_configureTabActive gates
     // m_removeAction -- see updateDeviceSelectionActions().
