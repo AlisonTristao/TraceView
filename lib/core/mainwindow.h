@@ -27,6 +27,7 @@ class DevicesGrid;
 struct Device;
 class LayersPanel;
 class LogViewer;
+class OtaTab;
 class PanelDockController;
 class PropertiesPanel;
 class Ribbon;
@@ -146,10 +147,18 @@ private:
     // wantsConnection()), not just its current connectedness, so this also
     // works to silence a device that's stuck retrying.
     void onDeviceConnectToggleRequested(const QString& deviceId);
+    // m_removeDeviceAction's triggered handler -- both the Devices tab and
+    // the OTA tab share this one action (see buildRibbon()/onOpenOtaTab()),
+    // so this dispatches to whichever tab's own selection is current rather
+    // than always going through DevicesGrid::removeSelected() directly.
+    void onRemoveDeviceRequested();
     // Converts m_devicesGrid->devices() into DeviceOptions and pushes them
     // into m_propertiesPanel -- called whenever the device list changes, so
     // every widget config editor's Device combo stays current.
     void refreshPropertiesPanelDevices();
+    // Same fan-out as refreshPropertiesPanelDevices() above, for the OTA
+    // tab's device list -- a no-op if m_otaTab hasn't been opened yet.
+    void refreshOtaTabDevices();
     void onPanelTypeChangeRequested(const QString& typeId);
     void onPanelNameChangeRequested(const QString& name);
     void onPanelKeyChangeRequested(const QString& key);
@@ -162,6 +171,20 @@ private:
     // RibbonTabBar's "x" click (forwarded through Ribbon::tabCloseRequested)
     // on one of m_openLogTabs -- removes that tab and deletes its LogViewer.
     void onLogTabCloseRequested(int index);
+    // File > "Upload Firmware (OTA)..." -- opens the singleton OTA tab
+    // (creating it on first use) or just switches to it if it's already
+    // open. Unlike onOpenLogFile(), there is never more than one of these.
+    void onOpenOtaTab();
+    // Dispatched to from onLogTabCloseRequested() (a plain call, not a
+    // second connection on the same signal -- Ribbon::removeTab() shifts
+    // every later tab's index, so a second slot recomputing pageAt(index)
+    // after the first slot has already mutated the ribbon would be looking
+    // at the wrong tab). Only ever called before either handler has touched
+    // the ribbon for this close event.
+    void onOtaTabCloseRequested(int index);
+    // Forwards OtaTab::passwordCacheChanged into an actual Device mutation --
+    // OtaTab has no undo stack of its own to push this onto.
+    void onOtaPasswordCacheChanged(const QString& deviceId, const QString& password, bool cache);
     void openRecentFile(const QString& path);
     void addRecentFile(const QString& path);
     void updateRecentFilesMenu();
@@ -188,6 +211,14 @@ private:
         LogViewer* viewer = nullptr;
     };
     QVector<OpenLogTab> m_openLogTabs;
+    // The OTA Update tab -- singleton, unlike m_openLogTabs above: there's
+    // only one, opened on demand by onOpenOtaTab() and reused (never
+    // recreated) if the File menu action fires again while it's already
+    // open. m_otaTabPage is the same "empty ribbon page as a stable lookup
+    // key" trick m_openLogTabs uses; nullptr on both means the tab has never
+    // been opened yet (or was closed).
+    QWidget* m_otaTabPage = nullptr;
+    OtaTab* m_otaTab = nullptr;
     // One real, independent serial connection per Device::id -- see
     // core/deviceconnection.h. Created/destroyed/updated in lockstep with
     // m_devicesGrid's own list (onDeviceAdded/onDeviceRemoved/onDeviceUpdated).
@@ -214,6 +245,7 @@ private:
     QAction* m_addDeviceAction = nullptr;
     QAction* m_removeDeviceAction = nullptr;
     QAction* m_openLogFileAction = nullptr;
+    QAction* m_openOtaTabAction = nullptr;
     QAction* m_removeAction = nullptr;
     QAction* m_copyAction = nullptr;
     QAction* m_pasteAction = nullptr;
@@ -241,6 +273,10 @@ private:
     // Gates m_removeDeviceAction the same way m_configureTabActive gates
     // m_removeAction -- see updateDeviceSelectionActions().
     bool m_devicesTabActive = false;
+    // Same gating for m_removeDeviceAction while the OTA tab is the visible
+    // one instead -- set in onRibbonTabChanged() by page pointer, not tab
+    // index, since the OTA tab is closable and can shift (see m_otaTabPage).
+    bool m_otaTabActive = false;
 
     // Wires every control/serial-monitor widget's send/receive to whichever
     // device its own config currently targets -- see core/serialwidgetbridge.h.

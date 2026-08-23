@@ -88,3 +88,7 @@ add_traceview_test(test_subscriptionmanager traceview_protocol)
 # Reads a .blog file (headerless, concatenated BTP Log frames -- see
 # lib/protocol/logfilereader.h) -- protocol-layer only, no QWidget.
 add_traceview_test(test_logfilereader traceview_protocol)
+# mDNS (RFC 6762) query/response wire format (lib/ota/mdnsresolver.*) --
+# pure byte-level encode/decode, no socket I/O involved (that part can only
+# really be checked against a real mDNS responder on the network).
+add_traceview_test(test_mdnsresolver traceview_ota)

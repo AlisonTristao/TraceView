@@ -124,6 +124,13 @@ private:
 
     QLabel* m_statusLabel = nullptr;
 
+    // OTA group -- always visible regardless of transport type, since OTA is
+    // a separate Wi-Fi/HTTP channel (see devices/device.h's otaAddress
+    // comment) orthogonal to Serial/USB/Hub above. The OTA tab (lib/ota)
+    // only displays this field; it's edited here, same convention as every
+    // other static per-device setting.
+    QLineEdit* m_otaAddressEdit = nullptr;
+
     // Read-only: populated from m_device.btpVersion/btpId (the last
     // HELLO_RESULT), never written back to the device in result().
     QLineEdit* m_btpVersionEdit = nullptr;

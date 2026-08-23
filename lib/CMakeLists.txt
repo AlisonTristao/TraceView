@@ -148,7 +148,8 @@ target_include_directories(traceview_protocol PUBLIC
 target_link_libraries(traceview_protocol PUBLIC
     Qt6::Core
     # See the top-level CMakeLists.txt: QtNetwork is here for
-    # QPasswordDigestor only, not for any network access.
+    # QPasswordDigestor, not for any network access -- traceview_ota (below)
+    # links it separately for that.
     Qt6::Network
     btp::codec
     traceview_backend
@@ -278,6 +279,34 @@ target_link_libraries(traceview_logs
         traceview_protocol
 )
 
+# traceview_ota: the OTA Update tab's content -- OtaClient (a
+# QNetworkAccessManager wrapper talking to bally_OS's OTAUpdater HTTP side
+# channel: GET /status, POST /update) and OtaTab, the table of devices it
+# drives. Depends on traceview_devices for Device (otaAddress/otaPassword/
+# cacheOtaPassword) and directly on Qt6::Network -- the first library in
+# this app that actually uses it for network access rather than just
+# QPasswordDigestor (see traceview_protocol's own link comment above).
+add_library(traceview_ota STATIC
+    ota/mdnsresolver.cpp
+    ota/mdnsresolver.h
+    ota/otaclient.cpp
+    ota/otaclient.h
+    ota/otatab.cpp
+    ota/otatab.h
+)
+
+target_include_directories(traceview_ota PUBLIC
+    ${CMAKE_SOURCE_DIR}/include
+    ${CMAKE_SOURCE_DIR}/lib
+)
+
+target_link_libraries(traceview_ota
+    PUBLIC
+        Qt6::Widgets
+        Qt6::Network
+        traceview_devices
+)
+
 # traceview_ui: MainWindow/Ribbon/AboutDialog — application chrome and
 # coordination. Depends on the dashboard/project/theme layers to wire them
 # together; nothing else is allowed to depend on traceview_ui.
@@ -341,6 +370,7 @@ target_link_libraries(traceview_ui
         traceview_dashboard
         traceview_devices
         traceview_logs
+        traceview_ota
         traceview_project
         traceview_protocol
         traceview_theme

@@ -70,6 +70,11 @@ public:
     // since it stays stable across other tabs being added or removed.
     QWidget* pageAt(int index) const;
 
+    // Number of tabs currently present -- lets a caller holding only a page
+    // pointer (see pageAt()'s own comment) re-derive that tab's current
+    // index after other tabs have been added/removed and shifted it.
+    int count() const;
+
     void setCurrentIndex(int index);
 
     // Builds one outlined "ribbonGroup" frame holding one QToolButton per

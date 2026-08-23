@@ -206,6 +206,18 @@ DeviceConfigDialog::DeviceConfigDialog(const Device& initial, QWidget* parent)
 
     updateTransportFieldsVisibility();
 
+    // OTA group -- a separate Wi-Fi/HTTP channel (see device.h's
+    // otaAddress comment), so unlike the Connection group above it doesn't
+    // depend on transportType and is never hidden.
+    auto* otaGroup = new QGroupBox(tr("OTA"), this);
+    auto* otaLayout = new QFormLayout(otaGroup);
+    m_otaAddressEdit = new QLineEdit(m_device.otaAddress, otaGroup);
+    m_otaAddressEdit->setPlaceholderText(tr("e.g. robot1.local"));
+    m_otaAddressEdit->setToolTip(
+        tr("Hostname or IP the OTA tab uses for this device's firmware upload. "
+           "Left blank, the device is listed there but nothing can be polled or uploaded."));
+    otaLayout->addRow(tr("OTA address:"), m_otaAddressEdit);
+
     // Read-only: this is the last HELLO_RESULT the device sent, not
     // something a user should be able to type over (see Device::btpVersion/
     // btpId's own comments in devices/device.h). Empty until a session has
@@ -243,6 +255,7 @@ DeviceConfigDialog::DeviceConfigDialog(const Device& initial, QWidget* parent)
     auto* layout = new QVBoxLayout(this);
     layout->addLayout(formLayout);
     layout->addWidget(connectionGroup);
+    layout->addWidget(otaGroup);
     layout->addWidget(reportedGroup);
     layout->addWidget(catalogGroup);
     layout->addSpacing(8);
@@ -273,6 +286,10 @@ Device DeviceConfigDialog::result() const {
     }
     device.cachePeerPassword = m_cachePasswordCheck->isChecked();
     device.peerPassword = m_peerPasswordEdit->text();
+    device.otaAddress = m_otaAddressEdit->text().trimmed();
+    // otaPassword/cacheOtaPassword deliberately left as whatever m_device
+    // already held -- this dialog doesn't edit them, the OTA tab does (see
+    // OtaTab::passwordCacheChanged).
     // btpVersion/btpId deliberately left as whatever m_device already held --
     // "Reported by device" is read-only (see the fields' own declarations).
     return device;

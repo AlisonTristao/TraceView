@@ -70,6 +70,10 @@ QWidget* Ribbon::pageAt(int index) const {
     return m_stack->widget(index);
 }
 
+int Ribbon::count() const {
+    return m_stack->count();
+}
+
 void Ribbon::setCurrentIndex(int index) {
     m_tabBar->setCurrentIndex(index);
 }

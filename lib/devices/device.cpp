@@ -27,6 +27,12 @@ QJsonObject deviceToJson(const Device& device) {
     if (device.cachePeerPassword && !device.peerPassword.isEmpty()) {
         object["peerPassword"] = device.peerPassword;
     }
+    // Not a secret, so unlike peerPassword this is always written.
+    object["otaAddress"] = device.otaAddress;
+    object["cacheOtaPassword"] = device.cacheOtaPassword;
+    if (device.cacheOtaPassword && !device.otaPassword.isEmpty()) {
+        object["otaPassword"] = device.otaPassword;
+    }
     return object;
 }
 
@@ -76,6 +82,11 @@ Device deviceFromJson(const QJsonObject& object, bool* ok) {
     // key in a project that did not opt in is ignored rather than honored.
     device.peerPassword =
         device.cachePeerPassword ? object.value("peerPassword").toString() : QString();
+
+    device.otaAddress = object.value("otaAddress").toString();
+    device.cacheOtaPassword = object.value("cacheOtaPassword").toBool(false);
+    device.otaPassword =
+        device.cacheOtaPassword ? object.value("otaPassword").toString() : QString();
 
     *ok = !device.id.isEmpty();
     return device;

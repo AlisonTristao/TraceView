@@ -40,6 +40,7 @@
 #include "usbhidmanager.h"
 #include "layerspanel.h"
 #include "logs/logviewer.h"
+#include "ota/otatab.h"
 #include "paneldockcontroller.h"
 #include "project/projectstore.h"
 #include "project/workspacemanager.h"
@@ -170,7 +171,7 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     // space, not a float) is fine here.
     m_devicesGrid = new DevicesGrid(this);
     m_undoGroup->addStack(m_devicesGrid->undoStack());
-    connect(m_removeDeviceAction, &QAction::triggered, m_devicesGrid, &DevicesGrid::removeSelected);
+    connect(m_removeDeviceAction, &QAction::triggered, this, &MainWindow::onRemoveDeviceRequested);
     connect(m_devicesGrid, &DevicesGrid::selectionChanged, this, &MainWindow::updateDeviceSelectionActions);
     // Keeps m_deviceConnections (one DeviceConnection per Device -- see
     // core/deviceconnection.h) in lockstep with m_devicesGrid's own list.
@@ -463,6 +464,10 @@ void MainWindow::buildMenus() {
     m_openLogFileAction = new QAction(tr("Open &Log Offline..."), this);
     connect(m_openLogFileAction, &QAction::triggered, this, &MainWindow::onOpenLogFile);
     fileMenu->addAction(m_openLogFileAction);
+
+    m_openOtaTabAction = new QAction(tr("Upload &Firmware (OTA)..."), this);
+    connect(m_openOtaTabAction, &QAction::triggered, this, &MainWindow::onOpenOtaTab);
+    fileMenu->addAction(m_openOtaTabAction);
 
     auto* viewMenu = menuBar()->addMenu(tr("&View"));
     auto* themeMenu = viewMenu->addMenu(tr("&Theme"));
@@ -945,6 +950,13 @@ void MainWindow::updateRibbonIcons() {
 void MainWindow::onRibbonTabChanged(int index) {
     m_configureTabActive = index == m_configureTabIndex;
     m_devicesTabActive = index == m_devicesTabIndex;
+    // Matched by ribbon page pointer rather than by index, same reasoning as
+    // m_openLogTabs: the OTA tab is closable, so its index shifts whenever
+    // another closable tab is added/removed. Computed here (not just below,
+    // where activeContent needs it too) so it's already correct by the time
+    // updateDeviceSelectionActions() runs a few lines down.
+    QWidget* currentPage = m_ribbon->pageAt(index);
+    m_otaTabActive = currentPage != nullptr && currentPage == m_otaTabPage;
     m_dashboardGrid->setEditMode(m_configureTabActive);
     m_addWidgetAction->setEnabled(m_configureTabActive);
     // Ctrl+Z/Ctrl+Y (m_undoAction/m_redoAction) are created from m_undoGroup,
@@ -969,15 +981,23 @@ void MainWindow::onRibbonTabChanged(int index) {
     QWidget* activeContent = m_dashboardGrid;
     if (index == m_devicesTabIndex) {
         activeContent = m_devicesGrid;
-    } else if (QWidget* page = m_ribbon->pageAt(index)) {
+    } else if (m_otaTabActive) {
+        activeContent = m_otaTab;
+    } else if (currentPage != nullptr) {
         for (const OpenLogTab& tab : m_openLogTabs) {
-            if (tab.ribbonPage == page) {
+            if (tab.ribbonPage == currentPage) {
                 activeContent = tab.viewer;
                 break;
             }
         }
     }
     m_contentStack->setCurrentWidget(activeContent);
+
+    // Only generate OTA status-poll HTTP traffic while its tab is actually
+    // the visible one.
+    if (m_otaTab != nullptr) {
+        m_otaTab->setActive(m_otaTabActive);
+    }
 }
 
 void MainWindow::onSelectionChanged(const QString&) {
@@ -1070,7 +1090,26 @@ void MainWindow::onAddDevice() {
 }
 
 void MainWindow::updateDeviceSelectionActions() {
-    m_removeDeviceAction->setEnabled(m_devicesTabActive && m_devicesGrid->selectedCount() > 0);
+    const bool devicesTabHasSelection = m_devicesTabActive && m_devicesGrid->selectedCount() > 0;
+    const bool otaTabHasSelection =
+        m_otaTabActive && m_otaTab != nullptr && !m_otaTab->selectedDeviceId().isEmpty();
+    m_removeDeviceAction->setEnabled(devicesTabHasSelection || otaTabHasSelection);
+}
+
+void MainWindow::onRemoveDeviceRequested() {
+    // Both tabs share these actions (see buildRibbon()/onOpenOtaTab()), but
+    // each owns its own selection state -- DevicesGrid's card selection and
+    // OtaTab's row selection are entirely separate, so "remove" has to ask
+    // whichever tab is actually visible rather than always going through
+    // DevicesGrid::removeSelected().
+    if (m_devicesTabActive) {
+        m_devicesGrid->removeSelected();
+    } else if (m_otaTabActive && m_otaTab != nullptr) {
+        const QString id = m_otaTab->selectedDeviceId();
+        if (!id.isEmpty()) {
+            m_devicesGrid->removeDevice(id);
+        }
+    }
 }
 
 void MainWindow::refreshPropertiesPanelDevices() {
@@ -1187,6 +1226,7 @@ void MainWindow::onDeviceAdded(const Device& device) {
     reattachHubChildren();
     refreshDeviceStatusLabel();
     refreshPropertiesPanelDevices();
+    refreshOtaTabDevices();
 }
 
 void MainWindow::onDeviceRemoved(const QString& id) {
@@ -1204,6 +1244,7 @@ void MainWindow::onDeviceRemoved(const QString& id) {
     reattachHubChildren();
     refreshDeviceStatusLabel();
     refreshPropertiesPanelDevices();
+    refreshOtaTabDevices();
 }
 
 void MainWindow::onDeviceUpdated(const Device& device) {
@@ -1232,6 +1273,7 @@ void MainWindow::onDeviceUpdated(const Device& device) {
     // Renaming/reconfiguring a device changes what every widget's own
     // Device combo should show as its selected entry's label.
     refreshPropertiesPanelDevices();
+    refreshOtaTabDevices();
 }
 
 void MainWindow::onDeviceConnectToggleRequested(const QString& deviceId) {
@@ -1388,6 +1430,13 @@ void MainWindow::onOpenLogFile() {
 
 void MainWindow::onLogTabCloseRequested(int index) {
     QWidget* page = m_ribbon->pageAt(index);
+    // Checked first, before either this function or onOtaTabCloseRequested()
+    // mutates the ribbon -- see that slot's own comment in mainwindow.h for
+    // why this can't just be a second connection on the same signal.
+    if (page != nullptr && page == m_otaTabPage) {
+        onOtaTabCloseRequested(index);
+        return;
+    }
     for (int i = 0; i < m_openLogTabs.size(); ++i) {
         if (m_openLogTabs[i].ribbonPage != page) {
             continue;
@@ -1402,6 +1451,74 @@ void MainWindow::onLogTabCloseRequested(int index) {
         m_contentStack->removeWidget(viewer);
         viewer->deleteLater();
         break;
+    }
+}
+
+void MainWindow::onOpenOtaTab() {
+    if (m_otaTab != nullptr) {
+        for (int i = 0; i < m_ribbon->count(); ++i) {
+            if (m_ribbon->pageAt(i) == m_otaTabPage) {
+                m_ribbon->setCurrentIndex(i);
+                break;
+            }
+        }
+        return;
+    }
+
+    m_otaTab = new OtaTab(this);
+    m_otaTab->setDevices(m_devicesGrid->devices());
+    connect(m_otaTab, &OtaTab::passwordCacheChanged, this, &MainWindow::onOtaPasswordCacheChanged);
+    // Same actions the Devices tab's page uses (buildRibbon()) -- adding a
+    // device works identically regardless of which tab is visible, and
+    // "remove" is dispatched by onRemoveDeviceRequested() to whichever tab's
+    // own selection is current.
+    connect(m_otaTab, &OtaTab::selectionChanged, this, &MainWindow::updateDeviceSelectionActions);
+    m_contentStack->addWidget(m_otaTab);
+
+    // Same shape as devicesPage in buildRibbon() -- one button group with
+    // the shared Add/Remove Device actions, left-aligned.
+    auto* page = new QWidget(this);
+    page->setObjectName("ribbonPage");
+    page->setFixedHeight(kRibbonPageHeight);
+    auto* pageLayout = new QHBoxLayout(page);
+    pageLayout->setContentsMargins(kRibbonPageMarginH, kRibbonPageMarginV, kRibbonPageMarginH, kRibbonPageMarginV);
+    pageLayout->setSpacing(kRibbonGroupSpacing);
+    pageLayout->addWidget(Ribbon::createButtonGroup(page, {m_addDeviceAction, m_removeDeviceAction}));
+    pageLayout->addStretch();
+
+    const int index = m_ribbon->addTab(tr("OTA Update"), page, /*enabled=*/true, QString(), /*closable=*/true);
+    m_otaTabPage = page;
+    m_ribbon->setCurrentIndex(index);
+}
+
+void MainWindow::onOtaTabCloseRequested(int index) {
+    if (m_otaTab == nullptr || m_ribbon->pageAt(index) != m_otaTabPage) {
+        return;
+    }
+    m_ribbon->removeTab(index);
+    m_contentStack->removeWidget(m_otaTab);
+    m_otaTab->deleteLater();
+    m_otaTab = nullptr;
+    m_otaTabPage = nullptr;
+}
+
+void MainWindow::onOtaPasswordCacheChanged(const QString& deviceId, const QString& password, bool cache) {
+    const QVector<Device> devices = m_devicesGrid->devices();
+    for (const Device& existing : devices) {
+        if (existing.id != deviceId) {
+            continue;
+        }
+        Device updated = existing;
+        updated.otaPassword = password;
+        updated.cacheOtaPassword = cache;
+        m_devicesGrid->updateDevice(updated);
+        break;
+    }
+}
+
+void MainWindow::refreshOtaTabDevices() {
+    if (m_otaTab != nullptr) {
+        m_otaTab->setDevices(m_devicesGrid->devices());
     }
 }
 

@@ -25,13 +25,17 @@ if(WIN32)
     enable_language(RC)
 endif()
 
-# Network is here for exactly one thing and it is not networking:
+# Network started out here for exactly one thing that was not networking:
 # QPasswordDigestor::deriveKeyPbkdf2 (lib/protocol/keyderivation.cpp),
 # which Qt places in QtNetwork rather than QtCore. Deriving the channel
 # keys with the vetted implementation is worth the module, because the
 # failure a hand-written PBKDF2 risks -- an almost-correct key -- surfaces
 # two repositories away as a tag that will not verify, and looks like a
 # wrong password or a radio fault rather than a bug here.
+# traceview_ota (lib/ota/otaclient.cpp) is the first real use of the module
+# for actual network traffic: QNetworkAccessManager against bally_OS's OTA
+# HTTP side channel (GET /status, POST /update), a separate Wi-Fi link from
+# the BTP/Serial/USB-HID/hub transport the rest of this app talks over.
 find_package(Qt6 REQUIRED COMPONENTS Widgets SerialPort Network LinguistTools)
 
 # BTP is the canonical, shared source of the BTP v1 wire format and codec
