@@ -1117,7 +1117,15 @@ void MainWindow::refreshPropertiesPanelDevices() {
     QVector<DeviceOption> options;
     options.reserve(devices.size());
     for (const Device& device : devices) {
-        DeviceOption option{device.id, device.name, {}};
+        DeviceOption option{device.id, device.name, {}, 0};
+        // See DeviceOption::selfSourceId: a hub-channel device's identity is
+        // its persisted target (known even while disconnected), everything
+        // else's is only known live, from its own HELLO_RESULT.
+        if (device.transportType == TransportType::HubChannel) {
+            option.selfSourceId = device.peerSourceId;
+        } else if (!device.btpId.isEmpty()) {
+            option.selfSourceId = quint32(device.btpId.toULongLong(nullptr, 0));
+        }
         if (DeviceConnection* connection = m_deviceConnections.value(device.id)) {
             option.catalogTopics = connection->backend()->catalogTopics();
         }

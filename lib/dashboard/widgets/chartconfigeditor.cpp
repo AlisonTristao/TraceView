@@ -85,22 +85,19 @@ ChartConfigEditor::ChartConfigEditor(QWidget* parent) : WidgetConfigEditor(paren
     m_deviceCombo->setToolTip(tr("Which device this chart reads from -- must match the sourceId below."));
 
     m_sourceIdEdit = new QLineEdit(this);
-    m_sourceIdEdit->setPlaceholderText(tr("0x11223344"));
-    m_sourceIdEdit->setToolTip(tr("BTP source_id this chart reads from (hex or decimal)."));
+    m_sourceIdEdit->setReadOnly(true);
+    m_sourceIdEdit->setPlaceholderText(tr("(auto)"));
+    m_sourceIdEdit->setToolTip(
+        tr("BTP source_id this chart reads from -- derived from the Topic field below, shown by device name "
+           "when known."));
 
     m_topicIdEdit = new QComboBox(this);
     m_topicIdEdit->setEditable(true);
     populateTopicCombo(m_topicIdEdit, {}, QString());
     m_topicIdEdit->lineEdit()->setPlaceholderText(tr("0x0101"));
     m_topicIdEdit->setToolTip(tr("BTP topic_id (TELEMETRY.md) this chart's series bind fields of -- pick one the "
-                                  "device has already reported, or type a hex/decimal id by hand."));
-
-    // Resolved from the selected device's reported catalog (see
-    // resolveCatalogTopicName()) -- blank when the device hasn't announced a
-    // topic with this exact source/topic yet.
-    m_topicNameLabel = new QLabel(this);
-    m_topicNameLabel->setEnabled(false);
-    m_topicNameLabel->setToolTip(tr("Topic name reported by the device's manifest, if known."));
+                                  "device has already reported (shown by name), or type a hex/decimal id by hand "
+                                  "for one it hasn't reported yet."));
 
     m_xAxisModeCombo = new QComboBox(this);
     m_xAxisModeCombo->addItem(tr("Samples"), "samples");
@@ -187,7 +184,6 @@ ChartConfigEditor::ChartConfigEditor(QWidget* parent) : WidgetConfigEditor(paren
     m_formLayout->addRow(tr("Device"), m_deviceCombo);
     m_formLayout->addRow(tr("Source"), m_sourceIdEdit);
     m_formLayout->addRow(tr("Topic"), m_topicIdEdit);
-    m_formLayout->addRow(tr("Topic name"), m_topicNameLabel);
     m_formLayout->addRow(tr("X Axis"), xAxisRow);
     m_formLayout->addRow(tr("Limit"), m_xLimitSpin);
     m_formLayout->addRow(tr("Y Axis"), m_yAxisModeCombo);
@@ -240,29 +236,43 @@ ChartConfigEditor::ChartConfigEditor(QWidget* parent) : WidgetConfigEditor(paren
 
     connect(m_deviceCombo, &QComboBox::currentIndexChanged, this, [this](int) {
         populateTopicCombo(m_topicIdEdit, m_devices, m_deviceCombo->currentData().toString());
-        updateTopicNameLabel();
+        updateIdentityDisplay();
         emitChanged();
     });
-    connect(m_sourceIdEdit, &QLineEdit::editingFinished, this, [this]() {
-        updateTopicNameLabel();
-        emitChanged();
-    });
+    // Manual entry: only a plain hex/decimal id is accepted (the field also
+    // shows resolved names, which aren't meant to be typed back in). A
+    // hand-typed topic id is assumed to belong to the selected device's own
+    // identity -- see DeviceOption::selfSourceId -- since each robot is its
+    // own Device now and Source has no separate manual-entry path any more.
+    // Unparseable text (most commonly the resolved name still sitting there,
+    // untouched) is ignored and the display simply reverts to the last valid
+    // binding.
     connect(m_topicIdEdit->lineEdit(), &QLineEdit::editingFinished, this, [this]() {
-        updateTopicNameLabel();
+        bool ok = false;
+        const qulonglong typed = m_topicIdEdit->currentText().trimmed().toULongLong(&ok, 0);
+        if (ok) {
+            m_topicId = quint16(qBound<qulonglong>(0, typed, 65535));
+            m_sourceId = 0;
+            if (m_topicId != 0) {
+                const QString deviceId = m_deviceCombo->currentData().toString();
+                for (const DeviceOption& device : m_devices) {
+                    if (device.id == deviceId) {
+                        m_sourceId = device.selfSourceId;
+                        break;
+                    }
+                }
+            }
+        }
+        updateIdentityDisplay();
         emitChanged();
     });
-    // Picking an item from the dropdown normally leaves the topic's display
-    // label (name + hex) sitting in the edit text; overwrite it with just
-    // the topicId hex right after so config()/persistence stays on the same
-    // hex-string convention as manual entry, and fill Source to match --
-    // that's the whole point of offering the catalog here.
     connect(m_topicIdEdit, &QComboBox::activated, this, [this](int index) {
         QString sourceHex, topicHex;
         if (decodeTopicComboData(m_topicIdEdit->itemData(index), &sourceHex, &topicHex)) {
-            m_sourceIdEdit->setText(sourceHex);
-            m_topicIdEdit->setCurrentText(topicHex);
+            m_sourceId = quint32(sourceHex.toULongLong(nullptr, 0));
+            m_topicId = quint16(topicHex.toUInt(nullptr, 0));
         }
-        updateTopicNameLabel();
+        updateIdentityDisplay();
         emitChanged();
     });
     connect(m_xAxisModeCombo, &QComboBox::currentIndexChanged, this, [this](int) {
@@ -289,8 +299,8 @@ void ChartConfigEditor::setConfig(const QJsonObject& config) {
 
     const int deviceIdx = m_deviceCombo->findData(config.value("deviceId").toString());
     m_deviceCombo->setCurrentIndex(deviceIdx >= 0 ? deviceIdx : 0);
-    m_sourceIdEdit->setText(config.value("sourceId").toString("0"));
-    m_topicIdEdit->setCurrentText(config.value("topicId").toString("0"));
+    m_sourceId = quint32(config.value("sourceId").toString("0").toULongLong(nullptr, 0));
+    m_topicId = quint16(qBound(0, config.value("topicId").toString("0").toInt(nullptr, 0), 65535));
 
     const QJsonObject xAxis = config.value("xAxis").toObject();
     m_xAxisModeCombo->setCurrentIndex(xAxis.value("mode").toString("samples") == "time" ? 1 : 0);
@@ -310,16 +320,15 @@ void ChartConfigEditor::setConfig(const QJsonObject& config) {
     }
 
     updateAxisRowsVisibility();
-    updateTopicNameLabel();
+    updateIdentityDisplay();
     m_updating = false;
 }
 
 QJsonObject ChartConfigEditor::config() const {
     QJsonObject cfg;
     cfg["deviceId"] = m_deviceCombo->currentData().toString();
-    cfg["sourceId"] = m_sourceIdEdit->text().trimmed().isEmpty() ? QStringLiteral("0") : m_sourceIdEdit->text();
-    cfg["topicId"] =
-        m_topicIdEdit->currentText().trimmed().isEmpty() ? QStringLiteral("0") : m_topicIdEdit->currentText();
+    cfg["sourceId"] = formatHexId(m_sourceId, 8);
+    cfg["topicId"] = formatHexId(m_topicId, 4);
 
     QJsonObject xAxis;
     xAxis["mode"] = m_xAxisModeCombo->currentData().toString();
@@ -442,7 +451,7 @@ void ChartConfigEditor::setAvailableDevices(const QVector<DeviceOption>& devices
     m_devices = devices;
     populateDeviceCombo(m_deviceCombo, devices);
     populateTopicCombo(m_topicIdEdit, devices, m_deviceCombo->currentData().toString());
-    updateTopicNameLabel();
+    updateIdentityDisplay();
     m_updating = wasUpdating;
 }
 
@@ -453,10 +462,18 @@ void ChartConfigEditor::emitChanged() {
     emit configChanged();
 }
 
-void ChartConfigEditor::updateTopicNameLabel() {
-    const QString name = resolveCatalogTopicName(m_devices, m_deviceCombo->currentData().toString(),
-                                                  m_sourceIdEdit->text(), m_topicIdEdit->currentText());
-    m_topicNameLabel->setText(name.isEmpty() ? tr("(unknown)") : name);
+void ChartConfigEditor::updateIdentityDisplay() {
+    const QString deviceId = m_deviceCombo->currentData().toString();
+    const QString topicName =
+        resolveCatalogTopicName(m_devices, deviceId, formatHexId(m_sourceId, 8), formatHexId(m_topicId, 4));
+    m_topicIdEdit->setCurrentText(topicName.isEmpty() ? formatHexId(m_topicId, 4) : topicName);
+
+    if (m_sourceId == 0) {
+        m_sourceIdEdit->clear();
+    } else {
+        const QString sourceName = resolveSourceLabel(m_devices, m_sourceId);
+        m_sourceIdEdit->setText(sourceName.isEmpty() ? formatHexId(m_sourceId, 8) : sourceName);
+    }
 }
 
 } // namespace traceview

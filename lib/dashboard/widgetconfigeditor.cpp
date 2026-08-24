@@ -84,4 +84,20 @@ QString resolveCatalogTopicName(const QVector<DeviceOption>& devices, const QStr
     return QString();
 }
 
+QString resolveSourceLabel(const QVector<DeviceOption>& devices, quint32 sourceId) {
+    if (sourceId == 0) {
+        return QString();
+    }
+    for (const DeviceOption& device : devices) {
+        if (device.selfSourceId == sourceId) {
+            return device.name;
+        }
+    }
+    return QString();
+}
+
+QString formatHexId(quint32 value, int digits) {
+    return QString("0x%1").arg(value, digits, 16, QChar('0')).toUpper();
+}
+
 } // namespace traceview

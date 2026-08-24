@@ -54,27 +54,43 @@ private:
     // is programmatically repopulating the UI (m_updating), otherwise
     // re-derives config() and emits configChanged().
     void emitChanged();
-    // Re-resolves m_topicNameLabel from m_devices against the current
-    // Device/Source/Topic fields -- called on every change to any of the
-    // three, and from setAvailableDevices() since a catalog can arrive after
-    // the fields were already set.
-    void updateTopicNameLabel();
+    // Re-derives what the Source/Topic fields should display from
+    // m_sourceId/m_topicId (the actual bound identity) against m_devices --
+    // a resolved catalog name/owning device name where one is known, the raw
+    // hex otherwise. Called on every change to Device/Source/Topic and from
+    // setAvailableDevices(), since a catalog can arrive after the binding was
+    // already set. Display-only: never touches m_sourceId/m_topicId
+    // themselves.
+    void updateIdentityDisplay();
 
     bool m_updating = false;
 
     QVector<DeviceOption> m_devices;
 
+    // The actual bound identity -- what config()/persistence read, and the
+    // only thing updateIdentityDisplay() treats as ground truth. Set from
+    // picking a catalog entry (m_topicIdEdit's activated handler) or typing a
+    // numeric id by hand (its lineEdit's editingFinished); everything the
+    // fields below *show* is derived from these, never the other way around.
+    quint32 m_sourceId = 0;
+    quint16 m_topicId = 0;
+
     QFormLayout* m_formLayout = nullptr;
     QComboBox* m_deviceCombo = nullptr;
+    // Read-only: shows the name of the device that owns m_sourceId (see
+    // resolveSourceLabel(), widgetconfigeditor.h), or its raw hex if no
+    // configured device claims that identity. Never user-typed -- Source is
+    // now always derived from the Topic field/Device picker, not entered
+    // directly (see docs/DEVICES.md's Hub section: each robot is its own
+    // Device now, so Source rarely needs to differ from "whichever device
+    // owns the bound topic").
     QLineEdit* m_sourceIdEdit = nullptr;
     // Editable: offers the selected device's reported catalog topics as
-    // pickable entries (see populateTopicCombo()), but still accepts a
-    // hand-typed hex/decimal topicId for one the device hasn't reported yet.
+    // pickable entries (see populateTopicCombo()), showing each one's
+    // readable name once picked (or once the catalog resolves an id typed by
+    // hand) instead of raw hex -- but still accepts a hand-typed hex/decimal
+    // topicId for one the device hasn't reported yet.
     QComboBox* m_topicIdEdit = nullptr;
-    // Read-only: the catalog name resolved for the current Device/Source/
-    // Topic combination (TELEMETRY.md section 3's readable topic name),
-    // blank when unresolved -- see resolveCatalogTopicName() (widgetconfigeditor.h).
-    QLabel* m_topicNameLabel = nullptr;
     QSpinBox* m_countSpin = nullptr;
     QComboBox* m_xAxisModeCombo = nullptr;
     QLabel* m_sampleTimeLabel = nullptr;

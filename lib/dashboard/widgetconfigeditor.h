@@ -27,6 +27,15 @@ struct DeviceOption {
     // declare. Empty until that device has completed a manifest exchange at
     // least once (or if it isn't a telemetry-capable device at all).
     QVector<CatalogTopicInfo> catalogTopics;
+    // The BTP source_id this device's own connection speaks as -- for a
+    // TransportType::HubChannel device, that's the robot's persisted
+    // Device::peerSourceId (known even before it ever connects); for
+    // Serial/UsbHid, it's the peer's reported identity from the last
+    // HELLO_RESULT (Device::btpId, live session state, empty/0 until
+    // connected at least once). Zero means unknown. Lets a config editor's
+    // Source field show a device NAME instead of a bare hex id -- see
+    // resolveSourceLabel() below.
+    quint32 selfSourceId = 0;
 };
 
 // Resolves `sourceIdText`/`topicIdText` (as typed into a Source/Topic field
@@ -37,6 +46,24 @@ struct DeviceOption {
 // matches -- callers fall back to showing the raw hex in that case.
 QString resolveCatalogTopicName(const QVector<DeviceOption>& devices, const QString& deviceId,
                                  const QString& sourceIdText, const QString& topicIdText);
+
+// The name of the device whose own identity (DeviceOption::selfSourceId) is
+// `sourceId`, searched across every device in `devices` regardless of which
+// one is currently selected in a Source/Topic field -- a chart's Device
+// picker and the source_id its data actually comes from are two different
+// questions once a hub is involved (see docs/DEVICES.md's Hub section), so
+// this deliberately isn't scoped to one device the way
+// resolveCatalogTopicName() is. Returns an empty string if `sourceId` is
+// zero or doesn't match any configured device -- callers fall back to
+// showing the raw hex in that case.
+QString resolveSourceLabel(const QVector<DeviceOption>& devices, quint32 sourceId);
+
+// Formats a BTP id the way every "reported identity" field in this codebase
+// already does (Device::peerSourceId, BtpBackend's own btpId) -- "0x" plus
+// `digits` uppercase hex digits, zero-padded. Shared so a config editor's
+// fallback-to-hex display matches that convention instead of inventing its
+// own.
+QString formatHexId(quint32 value, int digits);
 
 // Repopulates `combo` from `devices`: a leading "(No device)" entry (empty
 // id, meaning "unbound" -- same interpretation as ChartConfigEditor's
