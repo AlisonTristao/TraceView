@@ -9,6 +9,7 @@
 #include <QVector>
 
 #include "devices/device.h"
+#include "devices/hubpeeraccumulator.h"
 #include "telemetry/telemetrybinding.h"
 
 class QAction;
@@ -168,13 +169,17 @@ private:
     // tab's device list -- a no-op if m_otaTab hasn't been opened yet.
     void refreshOtaTabDevices();
     // Lazily starts watching `parentDeviceId`'s hub.peers topic (resolved by
-    // name from its own catalog, never a hardcoded topic/field id -- see the
-    // .cpp) the first time it is asked for, then returns whatever HubPeer
-    // snapshot has been decoded from it so far (empty until the device is
-    // connected, its manifest exchange has completed, and the first full
-    // sample has arrived). Safe to call on every poll -- wired to
+    // name from its own catalog, never a hardcoded topic/field id -- see
+    // m_hubPeerWatches) the first time it is asked for, then returns
+    // whatever HubPeer snapshot has been decoded from it so far (empty until
+    // the device is connected, its manifest exchange has completed, and the
+    // first full sample has arrived). Safe to call on every poll -- wired to
     // DevicesGrid::setHubPeerListProvider() in the constructor.
     QVector<HubPeer> hubPeersFor(const QString& parentDeviceId);
+    // Drops `deviceId`'s hub.peers watch and unsubscribes it. Called when the
+    // device is removed or rebuilt; hubPeersFor() re-establishes the watch
+    // from scratch the next time somebody asks.
+    void releaseHubPeerWatch(const QString& deviceId);
     // Backend::fieldSample handler shared by every DeviceConnection (hooked
     // in createDeviceConnection()), filtered down to whichever ones are
     // currently a watched hub.peers subscription. Decodes the six PACKED_LE
@@ -338,6 +343,33 @@ private:
         quint64 handle = 0;
     };
     QHash<DashboardWidget*, WidgetSubscription> m_widgetSubscriptions;
+
+    // One hub's live hub.peers state, from the moment something first asks
+    // for it (hubPeersFor()) until its device goes away. Keyed by the HUB's
+    // Device::id, not by any child's.
+    //
+    // `sourceId`/`topicId`/`fieldSlot` are resolved once from that device's
+    // own catalog, by NAME ("hub.peers", then "channel"/"source_id"/... ),
+    // never from a hardcoded number: telemetry.md section 1 makes topic and
+    // field ids local to a source's namespace, so the dongle is free to
+    // renumber them and only the names are a contract. Resolution is
+    // therefore deferred until the manifest has actually arrived -- until
+    // then there is nothing to resolve against and hubPeersFor() reports an
+    // empty list.
+    //
+    // The reassembly itself is HubPeerAccumulator's job (devices/
+    // hubpeeraccumulator.h) -- decoding six parallel arrays out of one
+    // (field, element, value) emission at a time is protocol shape, not UI,
+    // and keeping it there is what makes it testable without a QWidget.
+    // What stays here is the half that genuinely needs a Backend: which
+    // (source, topic) to watch and the subscription handle for it.
+    struct HubPeersWatch {
+        quint32 sourceId = 0;
+        quint16 topicId = 0;
+        quint64 handle = 0;  // SubscriptionManager handle, 0 = not subscribed
+        HubPeerAccumulator accumulator;
+    };
+    QHash<QString, HubPeersWatch> m_hubPeerWatches;
     QLabel* m_telemetryStatusLabel = nullptr;
     int m_runTabIndex = -1;
     // Read-only "device: dot" strip replacing the old single-connection port/

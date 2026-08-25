@@ -126,6 +126,16 @@ WidgetTopicRequest widgetTopicRequest(DashboardWidget* widget, DashboardGrid* gr
 quint64 topicStatusKey(quint32 sourceId, quint16 topicId) {
     return (quint64(sourceId) << 16) | quint64(topicId);
 }
+
+// The dongle's peer-list topic. Matched by NAME; the field names inside it
+// are HubPeerAccumulator's business (devices/hubpeeraccumulator.h).
+constexpr char kHubPeersTopicName[] = "hub.peers";
+
+// The dongle caps hub.peers at 2 Hz (DonglePublisher.cpp's
+// kPeersMaxRateMillihz) and DevicesGrid re-polls the open dialog at 1 Hz, so
+// asking for more would only be clamped away. As with every SUBSCRIBE this
+// is a request: the source answers with the effective rate.
+constexpr quint32 kHubPeersRequestedRateMillihz = 2000;  // 2 Hz
 } // namespace
 
 MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
@@ -224,6 +234,13 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
         DeviceConnection* connection = m_deviceConnections.value(deviceId);
         return connection ? connection->backend()->catalogTopics() : QVector<CatalogTopicInfo>();
     });
+    // The gear icon's "Robot source_id" combo. Unlike the three providers
+    // above this one is polled for as long as the dialog stays open (see
+    // DevicesGrid::handleConfigRequested) -- peers appear, go offline and
+    // age continuously over the hub's own telemetry, so a one-shot fetch
+    // would show a snapshot that is stale by the time it is read.
+    m_devicesGrid->setHubPeerListProvider(
+        [this](const QString& parentDeviceId) { return hubPeersFor(parentDeviceId); });
     refreshDeviceStatusLabel(); // starts empty ("No devices configured...")
     refreshPropertiesPanelDevices();
 
@@ -1112,26 +1129,131 @@ void MainWindow::onRemoveDeviceRequested() {
     }
 }
 
+quint32 MainWindow::deviceSelfSourceId(const Device& device) const {
+    // A hub-channel device's identity is its persisted target -- known even
+    // while disconnected, since it is what the child was configured to talk
+    // to. Everything else only becomes known live, from its own HELLO_RESULT
+    // (Device::btpId, formatted "0x...." by BtpBackend).
+    if (device.transportType == TransportType::HubChannel) {
+        return device.peerSourceId;
+    }
+    if (device.btpId.isEmpty()) {
+        return 0;
+    }
+    return quint32(device.btpId.toULongLong(nullptr, 0));
+}
+
 void MainWindow::refreshPropertiesPanelDevices() {
     const QVector<Device> devices = m_devicesGrid->devices();
     QVector<DeviceOption> options;
     options.reserve(devices.size());
     for (const Device& device : devices) {
-        DeviceOption option{device.id, device.name, {}, 0};
-        // See DeviceOption::selfSourceId: a hub-channel device's identity is
-        // its persisted target (known even while disconnected), everything
-        // else's is only known live, from its own HELLO_RESULT.
-        if (device.transportType == TransportType::HubChannel) {
-            option.selfSourceId = device.peerSourceId;
-        } else if (!device.btpId.isEmpty()) {
-            option.selfSourceId = quint32(device.btpId.toULongLong(nullptr, 0));
-        }
+        // See DeviceOption::selfSourceId -- deviceSelfSourceId() is shared
+        // with hubPeersFor() so the two definitions of "this device's own
+        // source_id" cannot drift apart.
+        DeviceOption option{device.id, device.name, {}, deviceSelfSourceId(device)};
         if (DeviceConnection* connection = m_deviceConnections.value(device.id)) {
             option.catalogTopics = connection->backend()->catalogTopics();
         }
         options.append(option);
     }
     m_propertiesPanel->setAvailableDevices(options);
+}
+
+void MainWindow::releaseHubPeerWatch(const QString& deviceId) {
+    const auto it = m_hubPeerWatches.constFind(deviceId);
+    if (it == m_hubPeerWatches.constEnd()) {
+        return;
+    }
+    // Drop the SUBSCRIBE only if the connection is still around: on the
+    // device-removed path it has already been taken out of the hash, and the
+    // subscription died with its session anyway.
+    if (it->handle != 0) {
+        if (DeviceConnection* connection = m_deviceConnections.value(deviceId)) {
+            connection->backend()->removeSubscriber(it->handle);
+        }
+    }
+    m_hubPeerWatches.remove(deviceId);
+}
+
+QVector<HubPeer> MainWindow::hubPeersFor(const QString& parentDeviceId) {
+    if (parentDeviceId.isEmpty()) {
+        return {};  // "Via:" not chosen yet -- nothing to ask
+    }
+    DeviceConnection* connection = m_deviceConnections.value(parentDeviceId);
+    if (connection == nullptr) {
+        return {};
+    }
+
+    HubPeersWatch& watch = m_hubPeerWatches[parentDeviceId];
+
+    // Resolution is retried on every call until it succeeds, because the
+    // catalog it needs only exists once the manifest exchange has completed
+    // -- normally *after* the dialog this feeds has already been opened.
+    if (watch.handle == 0) {
+        // Scanned rather than looked up: DevicesGrid exposes no by-id
+        // accessor and the list is a handful of entries, same as
+        // onDeviceConnectToggleRequested() already does.
+        quint32 selfSourceId = 0;
+        const QVector<Device> devices = m_devicesGrid->devices();
+        for (const Device& device : devices) {
+            if (device.id == parentDeviceId) {
+                selfSourceId = deviceSelfSourceId(device);
+                break;
+            }
+        }
+        const QVector<CatalogTopicInfo> topics = connection->backend()->catalogTopics();
+        for (const CatalogTopicInfo& topic : topics) {
+            // Filtered by the hub's own source_id: a hub's session carries
+            // its children's frames too, so its catalog is not guaranteed to
+            // describe only itself. A robot behind the hub that happened to
+            // publish a topic also called "hub.peers" must not be mistaken
+            // for the dongle's.
+            if (topic.name != QLatin1String(kHubPeersTopicName) ||
+                (selfSourceId != 0 && topic.sourceId != selfSourceId)) {
+                continue;
+            }
+
+            QHash<quint16, QString> fieldIdToName;
+            for (const CatalogTopicField& field : topic.fields) {
+                fieldIdToName.insert(field.fieldId, field.name);
+            }
+            if (!watch.accumulator.resolve(fieldIdToName)) {
+                // A topic named hub.peers whose schema is missing one of the
+                // six arrays is not one this can decode. Left unsubscribed
+                // rather than half-read: a peer row with no source_id is
+                // exactly what must never reach Device::peerSourceId.
+                continue;
+            }
+
+            watch.sourceId = topic.sourceId;
+            watch.topicId = topic.topicId;
+            watch.handle = connection->backend()->updateSubscriber(0, topic.sourceId, topic.topicId,
+                                                                    kHubPeersRequestedRateMillihz);
+            break;
+        }
+    }
+
+    if (watch.handle == 0) {
+        return {};  // manifest hasn't arrived, or carries no usable hub.peers
+    }
+    return watch.accumulator.peers();
+}
+
+void MainWindow::onHubPeerFieldSample(const QString& deviceId, const TelemetryFieldBinding& binding,
+                                       quint64 /*timestampUs*/, double value) {
+    // Every device's Backend feeds this, so the first job is to drop the
+    // overwhelming majority of samples: anything from a device with no
+    // hub.peers watch, and anything from another topic on a device that has
+    // one. That is a hash lookup per sample on devices that never become a
+    // hub, which is why hooking this unconditionally in
+    // createDeviceConnection() is affordable.
+    const auto watchIt = m_hubPeerWatches.find(deviceId);
+    if (watchIt == m_hubPeerWatches.end() || watchIt->handle == 0 || binding.sourceId != watchIt->sourceId ||
+        binding.topicId != watchIt->topicId) {
+        return;
+    }
+    watchIt->accumulator.append(binding.fieldId, binding.elementIndex, value);
 }
 
 void MainWindow::refreshDeviceStatusLabel() {
@@ -1221,6 +1343,19 @@ DeviceConnection* MainWindow::createDeviceConnection(const Device& device) {
             [this, id = device.id](const QString& btpVersion, const QString& btpId) {
                 m_devicesGrid->setDeviceIdentity(id, btpVersion, btpId);
             });
+    // Hooked for every device, not just the ones that turn out to be hubs:
+    // whether this device publishes hub.peers is only knowable once its
+    // manifest arrives, which is long after this runs. The slot's first act
+    // is to drop everything it isn't watching (see onHubPeerFieldSample) --
+    // a hash lookup per sample on devices that never become a hub.
+    //
+    // Backend::fieldSample carries no device id (its binding's source_id is
+    // the *robot's*, which for a hub child is not this device's id), so the
+    // lambda supplies it.
+    connect(backend, &Backend::fieldSample, this,
+            [this, id = device.id](const TelemetryFieldBinding& binding, quint64 timestampUs, double value) {
+                onHubPeerFieldSample(id, binding, timestampUs, value);
+            });
     return connection;
 }
 
@@ -1244,6 +1379,9 @@ void MainWindow::onDeviceAdded(const Device& device) {
 }
 
 void MainWindow::onDeviceRemoved(const QString& id) {
+    // Before take(): releaseHubPeerWatch() unsubscribes through the
+    // connection, so it has to still be reachable in the hash.
+    releaseHubPeerWatch(id);
     DeviceConnection* connection = m_deviceConnections.take(id);
     if (!connection) {
         return;
@@ -1275,6 +1413,11 @@ void MainWindow::onDeviceUpdated(const Device& device) {
         // panel, control widgets, ...) keeps resolving through
         // m_deviceConnections without a remove/re-add round trip through
         // the undo stack.
+        // The watch holds a handle into the SubscriptionManager of the
+        // backend about to be destroyed, so it cannot outlive it. Dropped
+        // here rather than repointed: hubPeersFor() re-resolves against the
+        // new backend's catalog on its next poll anyway.
+        releaseHubPeerWatch(device.id);
         connection->disconnectFrom();
         connection->deleteLater();
         connection = createDeviceConnection(device);

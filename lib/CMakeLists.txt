@@ -243,6 +243,8 @@ add_library(traceview_devices STATIC
     devices/devicecommands.h
     devices/devicesgrid.cpp
     devices/devicesgrid.h
+    devices/hubpeeraccumulator.cpp
+    devices/hubpeeraccumulator.h
     devices/deviceconfigdialog.cpp
     devices/deviceconfigdialog.h
 )
