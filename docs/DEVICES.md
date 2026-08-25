@@ -212,12 +212,9 @@ stays true by design (see the layering note above); the real transport
 wiring lives in `traceview_ui` (`DeviceConnection`/`MainWindow`), not inside
 the devices module itself.
 
-Testing any of this without real hardware: see
-[docs/SYNTHETIC_DEVICE.md](SYNTHETIC_DEVICE.md) for `tools/synthetic_device`,
-a standalone tool that speaks a real device's side of BTP v1 over an actual
-serial port. It has no USB HID equivalent yet -- exercising the `UsbHid`
-transport end to end still needs a real dongle running the `usb_hid`
-profile (bally_dongle's `UsbHidMux`); `UsbHidManager`'s own unit tests
-(`tests/test_usbhidmanager.cpp`) cover the no-hardware-available paths only
-(starts disconnected, invalid target fails without crashing), same limits
-`test_serialmanager.cpp` already had for COM ports.
+Testing any of this without real hardware currently needs a real dongle
+(bally_dongle's `UsbHidMux` for the `UsbHid` transport, or real firmware over
+Serial); `UsbHidManager`'s own unit tests (`tests/test_usbhidmanager.cpp`)
+cover the no-hardware-available paths only (starts disconnected, invalid
+target fails without crashing), same limits `test_serialmanager.cpp` already
+had for COM ports.

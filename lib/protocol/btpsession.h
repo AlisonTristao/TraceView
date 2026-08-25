@@ -120,11 +120,11 @@ public:
     // the axes were split, where the profile alone determined both (see
     // framingFor()). Kept -- rather than updating the call sites -- because
     // the whole point of the split is that it changes no behavior: every
-    // existing caller (BtpBackend, tools/synthetic_device, and
-    // tests/test_btpsession.cpp, which constructs a bare `BtpSession
-    // session;`) keeps compiling and keeps meaning exactly what it meant, so
-    // the diff stays confined to the code that actually needed the third
-    // combination. A call site whose framing and profile do NOT coincide --
+    // existing caller (BtpBackend and tests/test_btpsession.cpp, which
+    // constructs a bare `BtpSession session;`) keeps compiling and keeps
+    // meaning exactly what it meant, so the diff stays confined to the code
+    // that actually needed the third combination. A call site whose framing
+    // and profile do NOT coincide --
     // i.e. the HubChannel of topico 26 -- must use the two-axis constructor
     // above; no single profile maps to it.
     explicit BtpSession(btp::TransportProfile transport = btp::TransportProfile::Serial, QObject* parent = nullptr);
