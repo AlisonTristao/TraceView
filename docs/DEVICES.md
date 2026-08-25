@@ -17,10 +17,13 @@ the Layout tab (`updatePanelVisibility()` gates them on
   `DevicesGrid::addDevice()` if left empty), `name`, `connected` (live-
   mirrored from its `DeviceConnection`, not user-editable), `commType` (a
   `CommType` enum — only `CommType::Btp` exists today), `description`,
-  `transportType` (a `TransportType` enum — `Serial` or `UsbHid`, see
-  "Transports" below) plus whichever of `portName`/`baudRate`/
-  `lineTerminator` (Serial) or `usbPath` (UsbHid) it selects — the real
-  transport config a `DeviceConnection` opens with — plus `btpVersion`/
+  `transportType` (a `TransportType` enum — `Serial`, `UsbHid` or
+  `HubChannel`, see "Transports" below) plus whichever of `portName`/
+  `baudRate`/`lineTerminator` (Serial), `usbPath` (UsbHid) or
+  `parentDeviceId`/`peerSourceId` (HubChannel) it selects — the real
+  transport config a `DeviceConnection` opens with — plus `otaAddress`/
+  `otaPassword`/`cacheOtaPassword` (the OTA side channel, see
+  [OTA.md](OTA.md)) — plus `btpVersion`/
   `btpId` — the BTP envelope version and the dongle's own `source_id`, both
   taken straight from the last `HELLO_RESULT` (`protocol/btphandshake.h`'s
   `sessionEstablished()`, forwarded through `Backend::deviceIdentified()`),
@@ -48,20 +51,30 @@ the Layout tab (`updatePanelVisibility()` gates them on
   never touch a card's selection state directly either.
 - **`DeviceConfigDialog`**
   ([lib/devices/deviceconfigdialog.h](../lib/devices/deviceconfigdialog.h))
-  — edits one `Device`: name/description, a "Connection" section starting
-  with a Transport combo (Serial/USB) that toggles between the
-  port-combo-plus-refresh/baud/line-terminator row group (Serial) and a USB
-  device combo plus its own refresh button (UsbHid) via
-  `QFormLayout::setRowVisible()`, plus a read-only status line, and a
-  read-only "reported by device" section (`btpVersion`/`btpId`). Opened and
-  applied entirely inside `DevicesGrid`; accepting it calls `updateDevice()`
-  on the grid's own copy. `DevicesGrid` can't enumerate serial ports or USB
-  HID devices itself (`traceview_devices` doesn't depend on `QSerialPort` or
-  `hidapi`, see `lib/CMakeLists.txt`), so it takes two provider callbacks
-  (`DevicesGrid::setPortListProvider()`/`setUsbDeviceListProvider()`,
-  supplied by `MainWindow`) and forwards them into the dialog's
-  `setAvailablePorts()`/`refreshPortsRequested()` and
-  `setAvailableUsbDevices()`/`refreshUsbDevicesRequested()` pairs.
+  — edits one `Device`: a "General" group (name/description), a
+  "Connection" group starting with a Transport combo (Serial/USB/Hub) that
+  swaps between the port-combo-plus-refresh/baud/line-terminator rows
+  (Serial), a USB device combo plus its own refresh button (UsbHid), and a
+  parent-device combo plus a "Robot source_id" combo (HubChannel) via
+  `QFormLayout::setRowVisible()`; an "OTA" group; a read-only status line;
+  and a read-only "Reported by device" section (`btpVersion`/`btpId`) with
+  the device's announced topic catalog below it. Opened and applied
+  entirely inside `DevicesGrid`; accepting it calls `updateDevice()` on the
+  grid's own copy.
+
+  `DevicesGrid` can't reach serial ports, USB HID devices or a `Backend`
+  itself (`traceview_devices` depends on none of `QSerialPort`, `hidapi` or
+  `traceview_protocol` — see `lib/CMakeLists.txt`), so it takes four
+  provider callbacks, all supplied by `MainWindow`, and forwards them into
+  the dialog: `setPortListProvider()`, `setUsbDeviceListProvider()`,
+  `setTopicCatalogProvider()` and `setHubPeerListProvider()`. The first two
+  are one-shot OS queries refreshed on a button click; the catalog is
+  re-pulled when `Backend::catalogChanged` fires (via
+  `DevicesGrid::notifyCatalogChanged()`), since a manifest normally lands
+  *after* the dialog was opened; the peer list is re-polled on a 1 Hz timer
+  for as long as the dialog stays open, because peers appear, go offline
+  and age continuously over telemetry. All four are safe to leave unset —
+  the matching combo then just starts empty.
 
 ## Transports
 
@@ -78,14 +91,67 @@ tight per-report payload ceiling (22 octets) and lack of a console mode mean
 -- `SerialWidgetBridge` treats a USB HID device's missing `SerialManager`
 the same as a closed port: the command just goes nowhere.
 
+### Hub channels
+
+`TransportType::HubChannel` is the third, and the only one with no wire of
+its own: it multiplexes over **another** `Device`'s connection. This is what
+turns the dongle from a cable into a hub. The desktop opens one connection
+to the dongle and talks to it as an ordinary BTP device; every robot behind
+the dongle's radio is then its own `Device`, with its own manifest, charts
+and terminal, riding that same single cable.
+
+`HubTransport` ([lib/core/hubtransport.h](../lib/core/hubtransport.h)) is a
+third `Transport` implementation, so nothing above it had to learn a new
+shape. Inbound, the parent's `BtpSession` offers every decoded frame's raw
+octets tagged with its header's `source_id`
+(`BtpBackend::hubFrameBytesReceived`), and each child claims the ones
+matching its own robot's. That single comparison is the entire demux --
+there is no routing table and no per-message-type case, because identity is
+what a channel is defined by. Outbound, the child encodes under the ESP-NOW
+profile (the frame is going onto a radio datagram) and hands the finished
+octets to the parent, which adds only the cable's framing. Nothing in either
+direction re-encodes, re-fragments or recomputes a CRC, which is what lets
+an end-to-end seal verify at the far end -- the parent holds no key for the
+traffic it carries.
+
+Two fields configure one: `parentDeviceId` (which device carries it) and
+`peerSourceId` (**the robot's BTP `source_id`** — its permanent address).
+`peerSourceId` is deliberately *not* the "channel" index the dongle
+publishes in `hub.peers`: that index is assigned in the order peers were
+first heard and is not stable across a dongle reboot, so persisting it would
+silently re-point a saved project at a different robot. Either field left
+unset means "not configured" and the child never connects, exactly as an
+empty `portName` does for Serial.
+
+A child can be loaded before its parent exists — nothing orders a saved
+device list — so `MainWindow::reattachHubChildren()` simply re-resolves
+every child after any device add/remove/update rather than tracking which
+ones a change could have affected.
+
+**Discovering peers.** The "Robot source_id" combo is editable, not a plain
+picker: a device has to stay configurable while nothing is plugged in yet,
+or for a robot the hub hasn't heard. When the hub *is* connected, the combo
+lists what it actually reports, decoded from its own `hub.peers` telemetry
+topic — channel, `source_id`, online/offline with an age, and the MAC in the
+item's tooltip. `MainWindow::hubPeersFor()` resolves that topic out of the
+hub's catalog **by name**, never by a hardcoded topic/field id: telemetry.md
+section 1 makes both local to a source's namespace, so they are the dongle's
+to renumber and only the names (`hub.peers`, then `channel`/`source_id`/
+`boot_id`/`mac`/`last_seen_ms`/`online`) are a contract between the
+repositories. The reassembly itself is `HubPeerAccumulator`
+([lib/devices/hubpeeraccumulator.h](../lib/devices/hubpeeraccumulator.h)) —
+the topic is six parallel variable-length arrays and reaches a client one
+element at a time, so a `HubPeer` row has to be accumulated across many
+`fieldSample()` emissions.
+
 ## Connections
 
 Real per-device transport now lives in **`DeviceConnection`**
 ([lib/core/deviceconnection.h](../lib/core/deviceconnection.h)) --
 `traceview_ui`, not `traceview_devices` (see the layering note above): each
 `Device` gets its own `Transport` (`lib/core/transport.h` -- concretely a
-`SerialManager` or a `UsbHidManager`, chosen once at construction by
-`transportType` and never swapped afterward) plus `Backend` (protocol
+`SerialManager`, a `UsbHidManager` or a `HubTransport`, chosen once at
+construction by `transportType` and never swapped afterward) plus `Backend` (protocol
 decode/encode, concretely a `BtpBackend`, itself told which `btp::
 TransportProfile` to speak), so several devices can be open at once, each
 over its own transport, each running its own independent BTP session.
@@ -102,8 +168,9 @@ from whatever the transport's `isConnected()` currently reports, and a timer
 retries `open()` every few seconds while the two disagree -- covers both a
 freshly configured device's first connection attempt and silently recovering
 from an unplug/replug, with no user action needed either time. A device with
-an empty target (`portName` for Serial, `usbPath` for UsbHid) is simply "not
-configured" and never attempts to open.
+an empty target (`portName` for Serial, `usbPath` for UsbHid,
+`parentDeviceId`/`peerSourceId` for HubChannel) is simply "not configured"
+and never attempts to open.
 `disconnectFrom()` (or the status dot's connect-toggle click, see below) is
 the only thing that turns the intent back off.
 
