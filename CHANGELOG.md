@@ -7,6 +7,17 @@ release flow.
 
 ## [Unreleased]
 
+### Internal
+
+- `test_manifestclient` covers the last piece of pure protocol logic that
+  had none: when a MANIFEST_REQUEST is worth sending (the config-revision
+  gate that makes a reconnect cheap, the wildcard guard that keeps "ask
+  this robot" from becoming "enumerate everything", the per-source
+  cooldown that stops an unknown-schema sample stream flooding the link),
+  and a bounds-checked walk over the response — every truncation point,
+  an inconsistent `record_size`, an unsupported `manifest_format_version`,
+  and NOT_MODIFIED carrying topic records that must not be applied.
+
 ## [2.3.0] - 2026-08-25
 
 ### Added

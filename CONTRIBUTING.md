@@ -143,7 +143,7 @@ suite's output. Like the app itself, the test binaries need Qt's DLLs on
 `PATH` to run — the same `environment` block in `CMakeUserPresets.json` used
 to launch the built app works here too.
 
-Current coverage — 32 suites, grouped by what they exercise. Enumerated by
+Current coverage — 33 suites, grouped by what they exercise. Enumerated by
 area rather than one line per file, so this section stays accurate as
 suites are added; `tests/CMakeLists.txt` is the authoritative list and
 carries a comment on each non-obvious one.
@@ -153,7 +153,8 @@ carries a comment on each non-obvious one.
   `test_btphandshake`, `test_protocolrouter`, `test_packedledecoder`,
   `test_telemetrycatalog`, `test_telemetryfieldrouter`,
   `test_subscriptionmanager`, `test_statusreport`, `test_logfilereader`,
-  `test_clocksync`, `test_keyderivation`, `test_ballychannels`.
+  `test_clocksync`, `test_manifestclient`, `test_keyderivation`,
+  `test_ballychannels`.
 - **Transports** — `test_serialmanager`, `test_usbhidmanager`,
   `test_deviceconnection`, `test_hubtransport`, `test_hubendpoint`,
   `test_mdnsresolver`, `test_otaclient`. None of these touch real hardware
@@ -181,11 +182,9 @@ caught:
   widget test — `HubPeerAccumulator` (`lib/devices/hubpeeraccumulator.h`)
   is the pattern: `MainWindow` kept only the part that genuinely needs a
   `Backend`.
-- **`ManifestClient`** (`lib/protocol/manifestclient.cpp`) — pure protocol
-  logic with no coverage, the last one of its kind. It is the obvious next
-  suite to write.
 - **`BtpBackend`** (`lib/protocol/btpbackend.cpp`) is exercised indirectly
-  by the transport suites above, but has no suite of its own.
+  by the transport suites above, but has no suite of its own. It is the
+  obvious next suite to write.
 
 ## Scope of "features"
 
