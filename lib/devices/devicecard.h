@@ -11,10 +11,11 @@ namespace traceview {
 
 // Fixed footprint every DeviceCard is placed at (DevicesGrid setGeometry()s
 // each card to exactly this) -- comfortably fits the header's icon/status
-// dot/title/gear plus a two-line body (comm-type label + one-line elided
-// description) without crowding. `inline` (C++17 inline variable) so this
-// single definition is shared across every TU that includes this header,
-// same as devicesgrid.cpp's layout math needing the same constant.
+// dot/title/gear plus a body of comm-type label, a word-wrapped
+// description, and a reported BTP version/ID line, without crowding.
+// `inline` (C++17 inline variable) so this single definition is shared
+// across every TU that includes this header, same as devicesgrid.cpp's
+// layout math needing the same constant.
 inline const QSize kDeviceCardSize(260, 140);
 
 // One device's card, painted in the same procedural-QPainter style as

@@ -62,6 +62,11 @@ private:
     // already set. Display-only: never touches m_sourceId/m_topicId
     // themselves.
     void updateIdentityDisplay();
+    // Repopulates every series row's Field ID combo from the currently bound
+    // topic's catalog fields (see resolveCatalogTopicFields()) -- called
+    // whenever that topic could have changed: from updateIdentityDisplay()
+    // and from addSeriesRow() for a freshly inserted row.
+    void refreshSeriesFieldOptions();
 
     bool m_updating = false;
 

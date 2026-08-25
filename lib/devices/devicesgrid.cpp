@@ -4,6 +4,7 @@
 
 #include <QJsonArray>
 #include <QResizeEvent>
+#include <QTimer>
 #include <QUuid>
 
 #include "devicecard.h"
@@ -232,6 +233,44 @@ void DevicesGrid::handleConfigRequested(const QString& deviceId) {
     if (m_topicCatalogProvider) {
         dialog.setCatalogTopics(m_topicCatalogProvider(m_devices[idx].id));
     }
+    // Live "Robot source_id" picker: an initial pull right away, then
+    // re-polled on a timer for as long as the dialog stays open. Unlike the
+    // port/USB lists above (a one-shot OS query, refreshed only on a button
+    // click) new peers or a status flip (online, last_seen) arrive
+    // continuously over telemetry -- and "Through device" can itself change
+    // while the dialog is open, so polling also picks that up within a
+    // second rather than needing a dedicated change signal. Parented to
+    // `dialog` so it's torn down with it automatically.
+    if (m_hubPeerListProvider) {
+        dialog.setAvailableHubPeers(m_hubPeerListProvider(dialog.currentParentDeviceId()));
+        auto* hubPeerTimer = new QTimer(&dialog);
+        hubPeerTimer->setInterval(1000);
+        connect(hubPeerTimer, &QTimer::timeout, &dialog,
+                [this, &dialog]() { dialog.setAvailableHubPeers(m_hubPeerListProvider(dialog.currentParentDeviceId())); });
+        hubPeerTimer->start();
+    }
+    // Connect button: applies the dialog's current fields (same as OK) but
+    // leaves the dialog open. The actual (re)connect happens asynchronously
+    // over in MainWindow (listening to deviceUpdated), so its result is
+    // pushed back into the still-open dialog by the deviceUpdated listener
+    // right below, rather than read back here.
+    connect(&dialog, &DeviceConfigDialog::applyRequested, &dialog,
+            [this, &dialog]() { updateDevice(dialog.result()); });
+    // Mirrors this device's live state into the still-open dialog as it
+    // changes -- connection status and (once a handshake completes) its
+    // reported BTP version/ID and catalog -- so clicking Connect above
+    // shows its result in place instead of requiring OK-then-reopen to see
+    // it.
+    connect(this, &DevicesGrid::deviceUpdated, &dialog, [this, &dialog, deviceId](const Device& device) {
+        if (device.id != deviceId) {
+            return;
+        }
+        dialog.setConnectionStatus(device.connected);
+        dialog.setReportedIdentity(device.btpVersion, device.btpId);
+        if (m_topicCatalogProvider) {
+            dialog.setCatalogTopics(m_topicCatalogProvider(deviceId));
+        }
+    });
     if (dialog.exec() == QDialog::Accepted) {
         updateDevice(dialog.result());
     }

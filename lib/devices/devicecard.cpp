@@ -174,7 +174,12 @@ void DeviceCard::paintEvent(QPaintEvent*) {
     painter.drawText(textRect, Qt::AlignVCenter | Qt::AlignLeft,
                       titleMetrics.elidedText(m_device.name, Qt::ElideRight, textRect.width()));
 
-    // Body: comm-type label, then a one-line elided description below it.
+    // Body: comm-type label, then a word-wrapped description, then (if the
+    // device has ever completed a handshake) the BTP version/ID it last
+    // reported -- see Device::btpVersion/btpId. Previously that pair only
+    // showed up behind the gear, in DeviceConfigDialog's "Reported by
+    // device" section; surfaced here too so it's visible without opening
+    // that dialog.
     const QRect body = rect().adjusted(kBodyMargin, kHeaderHeight + kBodyMargin, -kBodyMargin, -kBodyMargin);
     QFont bodyFont = painter.font();
     bodyFont.setBold(false);
@@ -185,10 +190,23 @@ void DeviceCard::paintEvent(QPaintEvent*) {
     const QRect commTypeRect(body.left(), body.top(), body.width(), kBodyLineHeight);
     painter.drawText(commTypeRect, Qt::AlignVCenter | Qt::AlignLeft, commTypeLabel(m_device.commType));
 
+    const QString reportedLine = m_device.btpVersion.isEmpty()
+        ? (m_device.btpId.isEmpty() ? QString() : tr("ID %1").arg(m_device.btpId))
+        : (m_device.btpId.isEmpty() ? tr("BTP %1").arg(m_device.btpVersion)
+                                     : tr("BTP %1 \xC2\xB7 %2").arg(m_device.btpVersion, m_device.btpId));
+    const int reportedHeight = reportedLine.isEmpty() ? 0 : kBodyLineHeight + 4;
+
     painter.setPen(palette.textPrimary);
-    const QRect descRect(body.left(), commTypeRect.bottom() + 4, body.width(), body.height() - kBodyLineHeight - 4);
-    painter.drawText(descRect, Qt::AlignTop | Qt::AlignLeft,
-                      bodyMetrics.elidedText(m_device.description, Qt::ElideRight, descRect.width()));
+    const QRect descRect(body.left(), commTypeRect.bottom() + 4, body.width(),
+                          body.height() - kBodyLineHeight - 4 - reportedHeight);
+    painter.drawText(descRect, Qt::AlignTop | Qt::AlignLeft | Qt::TextWordWrap, m_device.description);
+
+    if (!reportedLine.isEmpty()) {
+        painter.setPen(palette.textSecondary);
+        const QRect reportedRect(body.left(), body.bottom() - kBodyLineHeight, body.width(), kBodyLineHeight);
+        painter.drawText(reportedRect, Qt::AlignVCenter | Qt::AlignLeft,
+                          bodyMetrics.elidedText(reportedLine, Qt::ElideRight, reportedRect.width()));
+    }
 
     // Selection border -- same palette.accent convention as DashboardCell's
     // selected state, minus the color-blend animation (this card's selection

@@ -90,6 +90,25 @@ void populateTopicCombo(QComboBox* combo, const QVector<DeviceOption>& devices, 
 // if `itemData` isn't in that shape -- notably for index -1 (no selection).
 bool decodeTopicComboData(const QVariant& itemData, QString* sourceIdHexOut, QString* topicIdHexOut);
 
+// Same lookup as resolveCatalogTopicName() above, but returning the matched
+// topic's field list instead of its name -- what a chart/gauge series row's
+// Field ID combo populates from (see populateFieldCombo()). Empty for the
+// same reasons resolveCatalogTopicName() returns an empty string: unknown
+// device, catalog not arrived yet, or no match.
+QVector<CatalogTopicField> resolveCatalogTopicFields(const QVector<DeviceOption>& devices, const QString& deviceId,
+                                                       const QString& sourceIdText, const QString& topicIdText);
+
+// Repopulates `combo` (an editable QComboBox) with one entry per field of
+// `fields` -- label combines the field's readable name with its numeric
+// fieldId, itemData is the plain fieldId. Unlike populateDeviceCombo() this
+// preserves the combo's current edit text verbatim rather than re-selecting
+// by id (same reasoning as populateTopicCombo()): a series can bind a
+// fieldId the device hasn't reported yet, and a catalog refresh must never
+// clobber that. The combo's actual bound value lives in its "fieldId"
+// property (see chartconfigeditor.cpp/gaugeconfigeditor.cpp's
+// addSeriesRow()), never parsed back out of the displayed text.
+void populateFieldCombo(QComboBox* combo, const QVector<CatalogTopicField>& fields);
+
 // Base class for a widget type's type-specific settings, shown in the
 // PropertiesPanel below the common Type/Name/Key fields (see
 // PropertiesPanel, lib/core/propertiespanel.h). A type opts in by setting

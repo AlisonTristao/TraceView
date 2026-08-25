@@ -16,9 +16,15 @@ constexpr quint16 kControlHello = 0x0001;
 constexpr quint16 kControlHelloResult = 0x0002;
 constexpr quint8 kRoleDesktop = 0x03;
 constexpr quint8 kHelloResultSuccess = 0x00;
-constexpr int kEnterTimeoutMs = 8000;   // generous: the dongle may still be
-                                        // mid boot-animation/date prompt
-                                        // (StartupConfig) when we connect.
+// The dongle's AppRuntime::begin() (bally_dongle) only starts reading the
+// serial port -- and therefore only gets a chance to see "BTP/1 ENTER" at
+// all -- after it finishes mounting the SD card, initializing ESP-NOW,
+// opening/migrating the SQLite database and registering every shell module.
+// All of that runs once, synchronously, before its tick() loop (where the
+// ENTER line is actually recognized) ever executes -- so this has to cover a
+// full cold boot, not just a quick text exchange. 20s is generous against a
+// slow SD card; bump it further if a real device still needs more.
+constexpr int kEnterTimeoutMs = 20000;
 constexpr int kHelloTimeoutMs = 3000;   // spec requires HELLO_RESULT within
                                         // 2000ms of HELLO; a little slack.
 constexpr int kMaxLineBufferBytes = 512;

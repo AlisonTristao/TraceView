@@ -66,6 +66,24 @@ struct UsbDeviceOption {
     QString label;
 };
 
+// One hub.peers entry, decoded from the dongle's own live telemetry -- see
+// MainWindow::hubPeersFor()/onHubPeerFieldSample() (core/mainwindow.cpp).
+// traceview_devices never decodes BTP itself; this arrives as an
+// already-reduced value type, same reasoning as UsbDeviceOption above.
+//
+// `channel` is a DISPLAY INDEX ONLY. The dongle assigns it in the order it
+// first hears each peer, and it is not stable across a dongle reboot (see
+// bally_dongle's DonglePublisher.h, PeerRecord). DeviceConfigDialog shows it
+// as a convenience label; only `sourceId` may ever be written into
+// Device::peerSourceId.
+struct HubPeer {
+    quint32 sourceId = 0;
+    quint8 channel = 0;
+    QString mac;  // "AA:BB:CC:DD:EE:FF", display only
+    quint32 lastSeenAgeMs = 0;
+    bool online = false;
+};
+
 // One connected/known device, shown as a single card in the Devices panel
 // (see devicesgrid.h), and (as of the multi-device connection refactor) the
 // config for one real, independent serial connection -- see

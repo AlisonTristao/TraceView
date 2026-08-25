@@ -100,4 +100,42 @@ QString formatHexId(quint32 value, int digits) {
     return QString("0x%1").arg(value, digits, 16, QChar('0')).toUpper();
 }
 
+QVector<CatalogTopicField> resolveCatalogTopicFields(const QVector<DeviceOption>& devices, const QString& deviceId,
+                                                       const QString& sourceIdText, const QString& topicIdText) {
+    if (deviceId.isEmpty()) {
+        return {};
+    }
+    const quint32 sourceId = quint32(sourceIdText.toULongLong(nullptr, 0));
+    const quint16 topicId = quint16(qBound(0, topicIdText.toInt(nullptr, 0), 65535));
+    if (sourceId == 0 || topicId == 0) {
+        return {};
+    }
+    for (const DeviceOption& device : devices) {
+        if (device.id != deviceId) {
+            continue;
+        }
+        for (const CatalogTopicInfo& topic : device.catalogTopics) {
+            if (topic.sourceId == sourceId && topic.topicId == topicId) {
+                return topic.fields;
+            }
+        }
+        break;
+    }
+    return {};
+}
+
+void populateFieldCombo(QComboBox* combo, const QVector<CatalogTopicField>& fields) {
+    const QString previousText = combo->currentText();
+
+    combo->clear();
+    for (const CatalogTopicField& field : fields) {
+        const QString label = field.name.isEmpty()
+                                   ? QCoreApplication::translate("WidgetConfigEditor", "Field %1").arg(field.fieldId)
+                                   : QString("%1 (%2)").arg(field.name).arg(field.fieldId);
+        combo->addItem(label, field.fieldId);
+    }
+
+    combo->setCurrentText(previousText);
+}
+
 } // namespace traceview

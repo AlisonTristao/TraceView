@@ -128,6 +128,19 @@ public:
         m_topicCatalogProvider = std::move(provider);
     }
 
+    // Supplies the live hub.peers snapshot the gear icon's "Robot source_id"
+    // combo offers for a given hub Device::id -- same reasoning as
+    // setTopicCatalogProvider() above (traceview_devices doesn't depend on
+    // traceview_protocol), except polled on a timer rather than fetched once
+    // up front: unlike a manifest exchange, new peers/status arrive
+    // continuously over telemetry for as long as the dialog stays open (see
+    // handleConfigRequested()). Safe to leave unset: the combo then just
+    // starts (and stays) empty, same manual-entry-only fallback the old
+    // plain text field offered.
+    void setHubPeerListProvider(std::function<QVector<HubPeer>(const QString&)> provider) {
+        m_hubPeerListProvider = std::move(provider);
+    }
+
 signals:
     void selectionChanged();
     // Fired from applyInsertDevice()/applyRemoveDeviceById()/
@@ -179,6 +192,7 @@ private:
     std::function<QStringList()> m_portListProvider;
     std::function<QVector<UsbDeviceOption>()> m_usbDeviceListProvider;
     std::function<QVector<CatalogTopicInfo>(const QString&)> m_topicCatalogProvider;
+    std::function<QVector<HubPeer>(const QString&)> m_hubPeerListProvider;
     QUndoStack* m_undoStack;
 };
 

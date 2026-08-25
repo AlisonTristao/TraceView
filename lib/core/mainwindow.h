@@ -8,6 +8,9 @@
 #include <QString>
 #include <QVector>
 
+#include "devices/device.h"
+#include "telemetry/telemetrybinding.h"
+
 class QAction;
 class QEvent;
 class QLabel;
@@ -24,7 +27,6 @@ class DashboardWidget;
 class DebugChartsWindow;
 class DeviceConnection;
 class DevicesGrid;
-struct Device;
 class LayersPanel;
 class LogViewer;
 class OtaTab;
@@ -116,6 +118,12 @@ private:
     // factored out so onDeviceUpdated() can rebuild one in place too, when a
     // device's transportType itself changes (see its own comment).
     DeviceConnection* createDeviceConnection(const Device& device);
+    // Resolves a Device's own BTP identity the same way for both a
+    // hub-channel device (its persisted target, known even before it ever
+    // connects) and anything else (its live-reported btpId) -- shared by
+    // refreshPropertiesPanelDevices() and hubPeersFor() so the two
+    // definitions of "this device's own source_id" can't drift apart.
+    quint32 deviceSelfSourceId(const Device& device) const;
     // Keep m_deviceConnections (one DeviceConnection per Device::id) in sync
     // with m_devicesGrid's own list -- wired to DevicesGrid::deviceAdded/
     // deviceRemoved/deviceUpdated. onDeviceUpdated also re-points the
@@ -159,6 +167,22 @@ private:
     // Same fan-out as refreshPropertiesPanelDevices() above, for the OTA
     // tab's device list -- a no-op if m_otaTab hasn't been opened yet.
     void refreshOtaTabDevices();
+    // Lazily starts watching `parentDeviceId`'s hub.peers topic (resolved by
+    // name from its own catalog, never a hardcoded topic/field id -- see the
+    // .cpp) the first time it is asked for, then returns whatever HubPeer
+    // snapshot has been decoded from it so far (empty until the device is
+    // connected, its manifest exchange has completed, and the first full
+    // sample has arrived). Safe to call on every poll -- wired to
+    // DevicesGrid::setHubPeerListProvider() in the constructor.
+    QVector<HubPeer> hubPeersFor(const QString& parentDeviceId);
+    // Backend::fieldSample handler shared by every DeviceConnection (hooked
+    // in createDeviceConnection()), filtered down to whichever ones are
+    // currently a watched hub.peers subscription. Decodes the six PACKED_LE
+    // variable arrays telemetry.md 4.1 / bally_dongle's DonglePublisher.h
+    // kPeersFields describe back into m_hubPeersAccum -- see the .cpp for
+    // the exact field-name to struct-member mapping.
+    void onHubPeerFieldSample(const QString& deviceId, const TelemetryFieldBinding& binding, quint64 timestampUs,
+                               double value);
     void onPanelTypeChangeRequested(const QString& typeId);
     void onPanelNameChangeRequested(const QString& name);
     void onPanelKeyChangeRequested(const QString& key);

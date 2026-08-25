@@ -350,8 +350,8 @@ QJsonObject ChartConfigEditor::config() const {
         const QTableWidgetItem* nameItem = m_seriesTable->item(row, kNameColumn);
         series["name"] = nameItem ? nameItem->text() : QString();
 
-        if (auto* fieldIdSpin = qobject_cast<QSpinBox*>(m_seriesTable->cellWidget(row, kFieldIdColumn))) {
-            series["fieldId"] = fieldIdSpin->value();
+        if (auto* fieldIdCombo = qobject_cast<QComboBox*>(m_seriesTable->cellWidget(row, kFieldIdColumn))) {
+            series["fieldId"] = fieldIdCombo->property("fieldId").toInt();
         }
         if (auto* colorButton = qobject_cast<QPushButton*>(m_seriesTable->cellWidget(row, kColorColumn))) {
             series["color"] = swatchColor(colorButton).name();
@@ -375,12 +375,29 @@ void ChartConfigEditor::addSeriesRow(const QJsonObject& series) {
     auto* nameItem = new QTableWidgetItem(series.value("name").toString(tr("Series %1").arg(row + 1)));
     m_seriesTable->setItem(row, kNameColumn, nameItem);
 
-    auto* fieldIdSpin = new QSpinBox();
-    fieldIdSpin->setRange(0, 65535);
-    fieldIdSpin->setValue(series.value("fieldId").toInt(row + 1));
-    fieldIdSpin->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
-    connect(fieldIdSpin, &QSpinBox::valueChanged, this, [this](int) { emitChanged(); });
-    m_seriesTable->setCellWidget(row, kFieldIdColumn, fieldIdSpin);
+    auto* fieldIdCombo = new QComboBox();
+    fieldIdCombo->setEditable(true);
+    const int fieldId = series.value("fieldId").toInt(row + 1);
+    populateFieldCombo(fieldIdCombo, resolveCatalogTopicFields(m_devices, m_deviceCombo->currentData().toString(),
+                                                                formatHexId(m_sourceId, 8), formatHexId(m_topicId, 4)));
+    fieldIdCombo->setProperty("fieldId", fieldId);
+    fieldIdCombo->setCurrentText(QString::number(fieldId));
+    fieldIdCombo->setToolTip(tr("Which field of the bound topic this series plots -- pick one the device has "
+                                 "already reported (shown by name), or type a numeric id by hand for one it "
+                                 "hasn't reported yet."));
+    connect(fieldIdCombo, &QComboBox::activated, this, [this, fieldIdCombo](int index) {
+        fieldIdCombo->setProperty("fieldId", fieldIdCombo->itemData(index));
+        emitChanged();
+    });
+    connect(fieldIdCombo->lineEdit(), &QLineEdit::editingFinished, this, [this, fieldIdCombo]() {
+        bool ok = false;
+        const int typed = fieldIdCombo->currentText().trimmed().toInt(&ok);
+        if (ok) {
+            fieldIdCombo->setProperty("fieldId", typed);
+        }
+        emitChanged();
+    });
+    m_seriesTable->setCellWidget(row, kFieldIdColumn, fieldIdCombo);
 
     auto* colorButton = new QPushButton();
     colorButton->setFixedWidth(40);
@@ -445,6 +462,16 @@ void ChartConfigEditor::updateAxisRowsVisibility() {
     m_formLayout->setRowVisible(m_yRangeRow, m_yAxisModeCombo->currentData().toString() == "fixed");
 }
 
+void ChartConfigEditor::refreshSeriesFieldOptions() {
+    const QVector<CatalogTopicField> fields = resolveCatalogTopicFields(
+        m_devices, m_deviceCombo->currentData().toString(), formatHexId(m_sourceId, 8), formatHexId(m_topicId, 4));
+    for (int row = 0; row < m_seriesTable->rowCount(); ++row) {
+        if (auto* fieldIdCombo = qobject_cast<QComboBox*>(m_seriesTable->cellWidget(row, kFieldIdColumn))) {
+            populateFieldCombo(fieldIdCombo, fields);
+        }
+    }
+}
+
 void ChartConfigEditor::setAvailableDevices(const QVector<DeviceOption>& devices) {
     const bool wasUpdating = m_updating;
     m_updating = true;
@@ -474,6 +501,7 @@ void ChartConfigEditor::updateIdentityDisplay() {
         const QString sourceName = resolveSourceLabel(m_devices, m_sourceId);
         m_sourceIdEdit->setText(sourceName.isEmpty() ? formatHexId(m_sourceId, 8) : sourceName);
     }
+    refreshSeriesFieldOptions();
 }
 
 } // namespace traceview
