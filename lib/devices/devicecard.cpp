@@ -174,31 +174,33 @@ void DeviceCard::paintEvent(QPaintEvent*) {
     painter.drawText(textRect, Qt::AlignVCenter | Qt::AlignLeft,
                       titleMetrics.elidedText(m_device.name, Qt::ElideRight, textRect.width()));
 
-    // Body: comm-type label, then a word-wrapped description, then (if the
-    // device has ever completed a handshake) the BTP version/ID it last
-    // reported -- see Device::btpVersion/btpId. Previously that pair only
-    // showed up behind the gear, in DeviceConfigDialog's "Reported by
-    // device" section; surfaced here too so it's visible without opening
-    // that dialog.
+    // Body: a word-wrapped description, then (if the device has ever
+    // completed a handshake) the BTP version/ID it last reported -- see
+    // Device::btpVersion/btpId. Previously that pair only showed up behind
+    // the gear, in DeviceConfigDialog's "Reported by device" section;
+    // surfaced here too so it's visible without opening that dialog.
+    //
+    // This used to also start with a comm-type label line above the
+    // description -- but with only CommType::Btp existing, that line and the
+    // reported line below both just printed the bare word "BTP" with nothing
+    // distinguishing the two. Dropped the label line entirely (and with it
+    // device.h's commTypeLabel() helper, which had no other caller) and
+    // reworded the reported line to lead with "v"/"ID" instead of repeating
+    // "BTP".
     const QRect body = rect().adjusted(kBodyMargin, kHeaderHeight + kBodyMargin, -kBodyMargin, -kBodyMargin);
     QFont bodyFont = painter.font();
     bodyFont.setBold(false);
     painter.setFont(bodyFont);
     const QFontMetrics bodyMetrics(bodyFont);
 
-    painter.setPen(palette.textSecondary);
-    const QRect commTypeRect(body.left(), body.top(), body.width(), kBodyLineHeight);
-    painter.drawText(commTypeRect, Qt::AlignVCenter | Qt::AlignLeft, commTypeLabel(m_device.commType));
-
     const QString reportedLine = m_device.btpVersion.isEmpty()
         ? (m_device.btpId.isEmpty() ? QString() : tr("ID %1").arg(m_device.btpId))
-        : (m_device.btpId.isEmpty() ? tr("BTP %1").arg(m_device.btpVersion)
-                                     : tr("BTP %1 \xC2\xB7 %2").arg(m_device.btpVersion, m_device.btpId));
+        : (m_device.btpId.isEmpty() ? tr("v%1").arg(m_device.btpVersion)
+                                     : tr("v%1 \xC2\xB7 ID %2").arg(m_device.btpVersion, m_device.btpId));
     const int reportedHeight = reportedLine.isEmpty() ? 0 : kBodyLineHeight + 4;
 
     painter.setPen(palette.textPrimary);
-    const QRect descRect(body.left(), commTypeRect.bottom() + 4, body.width(),
-                          body.height() - kBodyLineHeight - 4 - reportedHeight);
+    const QRect descRect(body.left(), body.top(), body.width(), body.height() - reportedHeight);
     painter.drawText(descRect, Qt::AlignTop | Qt::AlignLeft | Qt::TextWordWrap, m_device.description);
 
     if (!reportedLine.isEmpty()) {

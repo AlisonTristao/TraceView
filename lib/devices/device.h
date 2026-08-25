@@ -8,23 +8,18 @@ namespace traceview {
 
 // Which communication/transport protocol a device speaks. Only BTP exists
 // today (see lib/protocol), but this stays an enum class (rather than a bare
-// string) plus a free display-label function below so a second protocol can
-// be added later -- one new enumerator, one new commTypeLabel() case -- with
-// no API break for anything that already stores/compares a CommType value.
+// string) so a second protocol can be added later -- one new enumerator --
+// with no API break for anything that already stores/compares a CommType
+// value.
+//
+// There is deliberately no commTypeLabel() display-string helper: with a
+// single enumerator, every place that tried to print one (the card body, the
+// config dialog) just showed the bare word "BTP" next to something else
+// already saying it. drawCommTypeIcon() (devicecard.cpp) is the one thing
+// that still switches on this, and it draws a glyph rather than text. Add a
+// label helper back when there is a second protocol to tell apart, not
+// before.
 enum class CommType { Btp };
-
-// Human-readable label for a CommType (e.g. the card's comm-type line, see
-// devicecard.h). Header-only free function like WidgetRegistry's typeId ->
-// displayName mapping (lib/dashboard/widgetregistry.cpp) is at class scope --
-// this one isn't a QObject either, so it uses QCoreApplication::translate()
-// instead of tr(), same idiom.
-inline QString commTypeLabel(CommType type) {
-    switch (type) {
-        case CommType::Btp:
-            return QCoreApplication::translate("Device", "BTP");
-    }
-    return QString();
-}
 
 // Which physical link a device's connection uses -- independent of CommType
 // above (the protocol): BTP can run over either (see BTP's "usb_hid"

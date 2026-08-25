@@ -1205,8 +1205,14 @@ DeviceConnection* MainWindow::createDeviceConnection(const Device& device) {
     // A manifest exchange completing/updating is when catalogTopics() first
     // has (or changes) the readable names chart/gauge config editors resolve
     // sourceId/topicId against -- refresh their cached DeviceOption list
-    // rather than only doing so on device add/remove/rename.
-    connect(backend, &Backend::catalogChanged, this, &MainWindow::refreshPropertiesPanelDevices);
+    // rather than only doing so on device add/remove/rename. Also tells
+    // DevicesGrid so this device's config dialog, if it's open (e.g. right
+    // after clicking Connect), picks up the catalog once it actually arrives
+    // instead of only on next open -- see DevicesGrid::notifyCatalogChanged().
+    connect(backend, &Backend::catalogChanged, this, [this, id = device.id]() {
+        refreshPropertiesPanelDevices();
+        m_devicesGrid->notifyCatalogChanged(id);
+    });
     // setDeviceIdentity(), not updateDevice() -- same reasoning as
     // onDeviceConnectionStateChanged()'s setDeviceConnected() call below: this
     // is the handshake reporting live state, not a user edit, so it must not
