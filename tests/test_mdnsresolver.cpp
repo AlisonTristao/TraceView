@@ -54,6 +54,7 @@ private slots:
     void buildQueryEncodesHeaderAndQName();
     void isMdnsHostnameOnlyMatchesDotLocal();
     void parseAAnswersFindsPlainEncodedRecord();
+    void parseAAnswersWidensEveryOctetBeforeShifting();
     void parseAAnswersFollowsCompressionPointer();
     void parseAAnswersIgnoresNonARecords();
     void parseAAnswersReturnsEmptyForTruncatedMessage();
@@ -100,6 +101,26 @@ void TestMdnsResolver::parseAAnswersFindsPlainEncodedRecord() {
     QCOMPARE(answers.size(), 1);
     QVERIFY(answers.contains(QStringLiteral("robot1.local")));
     QCOMPARE(answers.value(QStringLiteral("robot1.local")), QHostAddress(QStringLiteral("192.168.1.5")));
+}
+
+void TestMdnsResolver::parseAAnswersWidensEveryOctetBeforeShifting() {
+    // A DNS octet promotes to int, so shifting one >= 128 left by 24
+    // overflows a signed int unless it is widened to quint32 first. That is
+    // every address in 128.0.0.0/1 -- including the 192.168.x.x range a
+    // robot on a home network actually gets. Pinned at the extreme
+    // (255.255.255.255, every octet at its maximum) so the widening cannot
+    // silently regress into whatever the current compiler happens to do
+    // with the overflow.
+    const QHash<QString, QHostAddress> answers =
+        parseAAnswers(buildAnswerMessage(QStringLiteral("robot1.local"), 0xFFFFFFFFu));
+
+    QCOMPARE(answers.value(QStringLiteral("robot1.local")), QHostAddress(QStringLiteral("255.255.255.255")));
+
+    // The high-bit-set boundary itself, one past the last address that fits
+    // without overflowing.
+    const QHash<QString, QHostAddress> boundary =
+        parseAAnswers(buildAnswerMessage(QStringLiteral("robot1.local"), 0x80000001u));
+    QCOMPARE(boundary.value(QStringLiteral("robot1.local")), QHostAddress(QStringLiteral("128.0.0.1")));
 }
 
 void TestMdnsResolver::parseAAnswersFollowsCompressionPointer() {

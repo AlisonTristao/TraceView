@@ -105,8 +105,15 @@ QHash<QString, QHostAddress> parseAAnswers(const QByteArray& message) {
         if (offset + rdlength > message.size()) break;
 
         if (type == 1 && rdlength == 4) {  // A record
-            const quint32 ip = (quint8(message.at(offset)) << 24) | (quint8(message.at(offset + 1)) << 16) |
-                                (quint8(message.at(offset + 2)) << 8) | quint8(message.at(offset + 3));
+            // quint32(quint8(...)), not a bare quint8: an octet promotes to
+            // int, and shifting a value >= 128 left by 24 overflows a signed
+            // int -- which is every address in 128.0.0.0/1, so every ordinary
+            // 192.168.x.x lease. Same idiom the rest of this codebase already
+            // uses to widen before shifting (btphandshake.cpp, clocksync.cpp).
+            const quint32 ip = (quint32(quint8(message.at(offset))) << 24) |
+                                (quint32(quint8(message.at(offset + 1))) << 16) |
+                                (quint32(quint8(message.at(offset + 2))) << 8) |
+                                quint32(quint8(message.at(offset + 3)));
             answers.insert(name, QHostAddress(ip));
         }
         offset += rdlength;
