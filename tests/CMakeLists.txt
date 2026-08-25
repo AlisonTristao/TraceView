@@ -96,4 +96,10 @@ add_traceview_test(test_logfilereader traceview_protocol)
 # mDNS (RFC 6762) query/response wire format (lib/ota/mdnsresolver.*) --
 # pure byte-level encode/decode, no socket I/O involved (that part can only
 # really be checked against a real mDNS responder on the network).
+# OTA status polling against bally_OS's HTTP side channel. No server is
+# involved: the requests go to TEST-NET-1 (RFC 5737), which is guaranteed
+# unroutable, so what is exercised is this client's own bookkeeping --
+# in-flight tracking and the per-device coalescing that keeps a 1 Hz poll
+# from cancelling a request allowed 4 seconds to answer.
+add_traceview_test(test_otaclient traceview_ota)
 add_traceview_test(test_mdnsresolver traceview_ota)

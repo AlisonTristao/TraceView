@@ -23,14 +23,20 @@ namespace {
 constexpr int kNameColumn = 0;
 constexpr int kAddressColumn = 1;
 constexpr int kStatusColumn = 2;
-constexpr int kPasswordColumn = 3;
-constexpr int kUploadColumn = 4;
-constexpr int kColumnCount = 5;
+constexpr int kFirmwareColumn = 3;
+constexpr int kPasswordColumn = 4;
+constexpr int kUploadColumn = 5;
+constexpr int kColumnCount = 6;
 
 // 1 Hz -- there's no manual refresh affordance, so this is the only thing
 // that keeps the OTA Online column current; OtaTab::setActive(true)
 // additionally fires one poll immediately so switching to the tab doesn't
 // sit on stale "Checking..." text for a full second first.
+//
+// Deliberately shorter than OtaClient's own kStatusTimeoutMs (4s): a tick
+// that lands while a row's request is still running is skipped by
+// OtaClient::statusRequestInFlight() rather than restarting it, so the fast
+// interval only costs anything for rows that answer quickly.
 constexpr int kPollIntervalMs = 1000;
 
 // Fixed footprint for the Upload cell's button/progress bar -- both live in
@@ -57,7 +63,7 @@ OtaTab::OtaTab(QWidget* parent) : QWidget(parent) {
     m_table = new QTableWidget(this);
     m_table->setColumnCount(kColumnCount);
     m_table->setHorizontalHeaderLabels(
-        {tr("Name"), tr("OTA Address"), tr("OTA Online"), tr("Password"), tr("Upload")});
+        {tr("Name"), tr("OTA Address"), tr("OTA Online"), tr("Firmware"), tr("Password"), tr("Upload")});
     // Name (the most variable-length field) absorbs whatever space the
     // fixed-width Upload column doesn't need, instead of Upload itself
     // stretching to fill leftover space -- setStretchLastSection(true)
@@ -131,6 +137,13 @@ void OtaTab::setDevices(const QVector<Device>& devices) {
 
         auto* statusItem = new QTableWidgetItem(device.otaAddress.isEmpty() ? tr("\xE2\x80\x94") : tr("Checking\xE2\x80\xA6"));
         m_table->setItem(row, kStatusColumn, statusItem);
+
+        // The firmware string the robot reports from GET /status
+        // (OTAUpdater.cpp's handle_status_get). Worth its own column
+        // because it is the one field that says *what* is on the device
+        // right now -- without it, deciding whether a .bin is worth
+        // uploading means flashing it and seeing.
+        m_table->setItem(row, kFirmwareColumn, new QTableWidgetItem(tr("\xE2\x80\x94")));
 
         RowWidgets widgets;
 
@@ -223,14 +236,28 @@ void OtaTab::refreshNow() {
         if (device.otaAddress.isEmpty() || m_uploading.value(device.id, false)) {
             continue;
         }
+        // A row whose previous request hasn't answered yet is left alone.
+        // OtaClient coalesces this anyway; checking here as well keeps the
+        // "one poll, one request" reading of this loop honest.
+        if (m_client->statusRequestInFlight(device.id)) {
+            continue;
+        }
         m_client->checkStatus(device.id, device.otaAddress);
     }
 }
 
-void OtaTab::onStatusChecked(const QString& deviceId, bool reachable, bool otaReady, const QString&,
-                              const QString& errorMessage) {
+void OtaTab::onStatusChecked(const QString& deviceId, bool reachable, bool otaReady,
+                              const QString& firmwareVersion, const QString& errorMessage) {
     const int row = m_rowByDeviceId.value(deviceId, -1);
     if (row < 0) return;  // device removed since the request was sent
+
+    if (QTableWidgetItem* firmwareItem = m_table->item(row, kFirmwareColumn)) {
+        // Blanked back to the em dash when unreachable rather than left
+        // showing the last version seen: this column answers "what is on
+        // the device", and a device nothing can reach right now has no
+        // answer to that.
+        firmwareItem->setText(reachable && !firmwareVersion.isEmpty() ? firmwareVersion : tr("\xE2\x80\x94"));
+    }
 
     QTableWidgetItem* item = m_table->item(row, kStatusColumn);
     if (item == nullptr) return;
