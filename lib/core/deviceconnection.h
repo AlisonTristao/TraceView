@@ -52,9 +52,6 @@ public:
     // Non-null only when transportType == TransportType::UsbHid; nullptr
     // otherwise.
     UsbHidManager* usbHidManager() const { return m_usbHidManager; }
-    // Non-null only when transportType == TransportType::HubChannel; nullptr
-    // otherwise.
-    HubTransport* hubTransport() const { return m_hubTransport; }
     Backend* backend() const { return m_backend; }
 
     TransportType transportType() const { return m_transportType; }
