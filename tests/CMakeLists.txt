@@ -42,6 +42,11 @@ add_traceview_test(test_hubtransport traceview_ui traceview_protocol btp::codec)
 # octets as bally_OS's provisioner and the hub's console command, against a
 # vector that provisioner actually produced.
 add_traceview_test(test_keyderivation traceview_protocol)
+# The dongle clock round trip: which COMMAND_RESULT counts as this client's
+# reply, and when a drift is worth correcting. Real BtpSession/ProtocolRouter,
+# no transport -- what the session would have written is decoded straight out
+# of bytesToWrite(), the same way test_hubendpoint does it.
+add_traceview_test(test_clocksync traceview_protocol btp::codec)
 # topico 28, desktop side: a child device as an ENDPOINT -- it originates its
 # own traffic and every piece of it has to be addressed to its own robot.
 add_traceview_test(test_hubendpoint traceview_ui traceview_protocol btp::codec)
