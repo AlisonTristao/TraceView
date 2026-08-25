@@ -31,14 +31,16 @@ public:
         quint64 commandRouted = 0;
         quint64 terminalRouted = 0;
         quint64 controlRouted = 0;
-        quint64 telemetryDropped = 0;  // payload shorter than the 2-byte
-                                        // schema_version prefix
+        quint64 telemetryDropped = 0;    // payload shorter than the 2-byte
+                                         // schema_version prefix
         quint64 unknownTypeDropped = 0;  // Invalid or a reserved MessageType
     };
 
     explicit ProtocolRouter(QObject* parent = nullptr);
 
-    const Diagnostics& diagnostics() const { return m_diagnostics; }
+    const Diagnostics& diagnostics() const {
+        return m_diagnostics;
+    }
 
 public slots:
     // Connect to BtpSession::frameReceived in production; also safe to call

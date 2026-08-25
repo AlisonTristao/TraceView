@@ -1,14 +1,13 @@
-#include <QtTest>
-
 #include <QJsonArray>
 #include <QJsonObject>
 #include <QPainter>
 #include <QStringList>
+#include <QtTest>
 
 #include "dashboard/dashboardcell.h"
 #include "dashboard/dashboardgrid.h"
-#include "dashboard/roundedcorners.h"
 #include "dashboard/dashboardwidget.h"
+#include "dashboard/roundedcorners.h"
 #include "traceview/thememanager.h"
 
 using traceview::DashboardCell;
@@ -26,7 +25,9 @@ public:
     explicit SolidContentWidget(bool wantsHeader, QWidget* parent = nullptr)
         : DashboardWidget(parent), m_wantsHeader(wantsHeader) {}
 
-    bool wantsCellHeader() const override { return m_wantsHeader; }
+    bool wantsCellHeader() const override {
+        return m_wantsHeader;
+    }
 
 protected:
     void paintEvent(QPaintEvent*) override {
@@ -48,8 +49,9 @@ int colorDistance(const QColor& a, const QColor& b) {
 // against this composite, not against the raw token color.
 QColor blendOver(const QColor& fg, const QColor& bg) {
     const qreal a = fg.alphaF();
-    return QColor::fromRgbF(fg.redF() * a + bg.redF() * (1.0 - a), fg.greenF() * a + bg.greenF() * (1.0 - a),
-                             fg.blueF() * a + bg.blueF() * (1.0 - a));
+    return QColor::fromRgbF(fg.redF() * a + bg.redF() * (1.0 - a),
+                            fg.greenF() * a + bg.greenF() * (1.0 - a),
+                            fg.blueF() * a + bg.blueF() * (1.0 - a));
 }
 
 class TestDashboardGrid : public QObject {
@@ -98,7 +100,7 @@ void TestDashboardGrid::removeSelectedPushesUndoableCommand() {
     DashboardGrid grid;
     grid.addItem("dummy_line");
     const QString itemId = grid.selectedItemId();
-    grid.undoStack()->clear(); // isolate the Remove command from the Add above
+    grid.undoStack()->clear();  // isolate the Remove command from the Add above
 
     grid.removeSelected();
     QCOMPARE(grid.undoStack()->count(), 1);
@@ -106,7 +108,8 @@ void TestDashboardGrid::removeSelectedPushesUndoableCommand() {
 
     grid.undoStack()->undo();
     QCOMPARE(grid.toJson().value("items").toArray().size(), 1);
-    QCOMPARE(grid.selectedItemId(), itemId); // RemoveWidgetCommand::undo() reselects the restored item
+    QCOMPARE(grid.selectedItemId(),
+             itemId);  // RemoveWidgetCommand::undo() reselects the restored item
 
     grid.undoStack()->redo();
     QVERIFY(grid.toJson().value("items").toArray().isEmpty());
@@ -116,7 +119,7 @@ void TestDashboardGrid::renameSelectedUpdatesDisplayName() {
     DashboardGrid grid;
     grid.addItem("dummy_line");
     const QString defaultName = grid.selectedItemDisplayName();
-    QVERIFY(!defaultName.isEmpty()); // falls back to WidgetRegistry's display name
+    QVERIFY(!defaultName.isEmpty());  // falls back to WidgetRegistry's display name
 
     grid.renameSelected("Custom Name");
     QCOMPARE(grid.selectedItemDisplayName(), QString("Custom Name"));
@@ -137,11 +140,11 @@ void TestDashboardGrid::setSelectedKeyRejectsDuplicateKeys() {
 
     grid.addItem("dummy_bar");
     QVERIFY(grid.selectedItemId() != firstId);
-    QVERIFY(!grid.setSelectedKey("shared")); // already used by the first item
+    QVERIFY(!grid.setSelectedKey("shared"));  // already used by the first item
     QVERIFY(grid.selectedItemKey().isEmpty());
 
     QVERIFY(grid.setSelectedKey("unique"));
-    grid.undoStack()->undo(); // undoes the successful SetItemKeyCommand above
+    grid.undoStack()->undo();  // undoes the successful SetItemKeyCommand above
     QVERIFY(grid.selectedItemKey().isEmpty());
 }
 
@@ -205,12 +208,12 @@ void TestDashboardGrid::dragMovesAndSnapsToNearestGridCell() {
     grid.show();
     QVERIFY(QTest::qWaitForWindowExposed(&grid));
 
-    grid.addItem("dummy_line"); // default size 16/60 x 12/40, auto-placed at (0,0)
+    grid.addItem("dummy_line");  // default size 16/60 x 12/40, auto-placed at (0,0)
 
     auto* cell = grid.findChild<DashboardCell*>();
     QVERIFY(cell != nullptr);
 
-    const QPoint headerPoint(80, 10); // inside the cell's 24px header strip
+    const QPoint headerPoint(80, 10);  // inside the cell's 24px header strip
     // A delta that is NOT an exact multiple of the 8px cell size (27px,
     // 13px) to prove the drag snaps to the nearest grid cell instead of
     // landing at a sub-cell offset.
@@ -221,10 +224,10 @@ void TestDashboardGrid::dragMovesAndSnapsToNearestGridCell() {
     QTest::mouseRelease(cell, Qt::LeftButton, Qt::NoModifier, dragged);
 
     QJsonObject item = grid.toJson().value("items").toArray().first().toObject();
-    QCOMPARE(item.value("x").toDouble(), 3.0 / 60.0); // 27px snapped to 3 columns
+    QCOMPARE(item.value("x").toDouble(), 3.0 / 60.0);  // 27px snapped to 3 columns
     QCOMPARE(item.value("y").toDouble(), 2.0 / 40.0);  // 13px snapped to 2 rows
 
-    QCOMPARE(grid.undoStack()->count(), 2); // AddWidgetCommand + MoveWidgetsCommand
+    QCOMPARE(grid.undoStack()->count(), 2);  // AddWidgetCommand + MoveWidgetsCommand
     grid.undoStack()->undo();
     item = grid.toJson().value("items").toArray().first().toObject();
     QCOMPARE(item.value("x").toDouble(), 0.0);
@@ -246,8 +249,9 @@ void TestDashboardGrid::dragOntoAnotherItemIsNowAllowed() {
     grid.show();
     QVERIFY(QTest::qWaitForWindowExposed(&grid));
 
-    grid.addItem("dummy_line"); // default size 16/60 x 12/40, auto-placed at (0,0)
-    grid.addItem("dummy_bar"); // auto-placed in the first free slot -- next to the first item, at (16/60, 0)
+    grid.addItem("dummy_line");  // default size 16/60 x 12/40, auto-placed at (0,0)
+    grid.addItem("dummy_bar");   // auto-placed in the first free slot -- next to the first item, at
+                                 // (16/60, 0)
     const QString secondId = grid.selectedItemId();
 
     QJsonObject secondBefore = grid.toJson().value("items").toArray().at(1).toObject();
@@ -262,7 +266,7 @@ void TestDashboardGrid::dragOntoAnotherItemIsNowAllowed() {
     }
     QVERIFY(secondCell != nullptr);
 
-    const QPoint headerPoint(50, 10); // inside the second item's header strip
+    const QPoint headerPoint(50, 10);  // inside the second item's header strip
     // -320px = -16 grid columns at 20px/column -- lands the second item
     // exactly on top of the first. Before overlap was allowed, this would
     // have been rejected on release and snapped back to (16/60, 0).
@@ -280,19 +284,19 @@ void TestDashboardGrid::dragOntoAnotherItemIsNowAllowed() {
 
 void TestDashboardGrid::resizeChangesGeometryWithUndo() {
     DashboardGrid grid;
-    grid.resize(496, 336); // same 480x320 usable / 8px-per-cell setup as the move test above
+    grid.resize(496, 336);  // same 480x320 usable / 8px-per-cell setup as the move test above
     grid.setEditMode(true);
     grid.show();
     QVERIFY(QTest::qWaitForWindowExposed(&grid));
 
-    grid.addItem("dummy_line"); // default size 16/60 x 12/40 => 128x96px
+    grid.addItem("dummy_line");  // default size 16/60 x 12/40 => 128x96px
 
     auto* cell = grid.findChild<DashboardCell*>();
     QVERIFY(cell != nullptr);
 
     // Bottom-right corner grip (14px hit area -- see kGripSize in dashboardcell.cpp).
     const QPoint gripPoint(123, 91);
-    const QPoint dragged = gripPoint + QPoint(16, 8); // +2 columns, +1 row
+    const QPoint dragged = gripPoint + QPoint(16, 8);  // +2 columns, +1 row
 
     QTest::mousePress(cell, Qt::LeftButton, Qt::NoModifier, gripPoint);
     QTest::mouseMove(cell, dragged);
@@ -329,15 +333,17 @@ void TestDashboardGrid::resizeClampsToMinimumSize() {
     QTest::mouseRelease(cell, Qt::LeftButton, Qt::NoModifier, dragged);
 
     const QJsonObject item = grid.toJson().value("items").toArray().first().toObject();
-    QCOMPARE(item.value("width").toDouble(), 5.0 / 60.0);  // kMinItemWidth
-    QCOMPARE(item.value("height").toDouble(), 5.0 / 40.0); // kMinItemHeight
+    QCOMPARE(item.value("width").toDouble(), 5.0 / 60.0);   // kMinItemWidth
+    QCOMPARE(item.value("height").toDouble(), 5.0 / 40.0);  // kMinItemHeight
 }
 
 void TestDashboardGrid::cellHasIdleBorderAndSelectedBorderOverlaysIt() {
     ThemeManager& themes = ThemeManager::instance();
     struct RestoreTheme {
         QString id;
-        ~RestoreTheme() { ThemeManager::instance().setTheme(id); }
+        ~RestoreTheme() {
+            ThemeManager::instance().setTheme(id);
+        }
     } restoreTheme{themes.currentTheme().id};
 
     for (const QString& themeId : {QString("dark"), QString("light")}) {
@@ -371,7 +377,8 @@ void TestDashboardGrid::cellHasIdleBorderAndSelectedBorderOverlaysIt() {
                 // docs/VISUAL_IDENTITY.md), so the rendered pixel is a
                 // composite over the content, not the raw token color.
                 const QColor expectedIdleEdge = blendOver(idleBorder, contentColor);
-                QVERIFY2(colorDistance(idleEdge, expectedIdleEdge) < 8 && colorDistance(idleEdge, contentColor) > 8,
+                QVERIFY2(colorDistance(idleEdge, expectedIdleEdge) < 8 &&
+                             colorDistance(idleEdge, contentColor) > 8,
                          qPrintable(QString("theme=%1 idle-edge=%2 expected=%3 content=%4")
                                         .arg(themeId, idleEdge.name(QColor::HexArgb),
                                              expectedIdleEdge.name(QColor::HexArgb),
@@ -385,17 +392,21 @@ void TestDashboardGrid::cellHasIdleBorderAndSelectedBorderOverlaysIt() {
 
             cell.setEditMode(true);
             cell.setSelected(true);
-            QTest::qWait(180); // selection outline animation is 150ms
+            QTest::qWait(180);  // selection outline animation is 150ms
 
             rendered.fill(Qt::transparent);
             cell.render(&rendered);
             // Selection overlays a distinct accent outline on top of
             // whatever idle state (border or none) came before.
             const QColor selectedEdge = rendered.pixelColor(0, cell.height() / 2);
-            QVERIFY2(colorDistance(selectedEdge, selectedBorder) < colorDistance(selectedEdge, contentColor),
-                     qPrintable(QString("theme=%1 wantsHeader=%2 selected-edge=%3 accent=%4 content=%5")
-                                    .arg(themeId, wantsHeader ? "true" : "false", selectedEdge.name(QColor::HexArgb),
-                                         selectedBorder.name(QColor::HexArgb), contentColor.name(QColor::HexArgb))));
+            QVERIFY2(
+                colorDistance(selectedEdge, selectedBorder) <
+                    colorDistance(selectedEdge, contentColor),
+                qPrintable(QString("theme=%1 wantsHeader=%2 selected-edge=%3 accent=%4 content=%5")
+                               .arg(themeId, wantsHeader ? "true" : "false",
+                                    selectedEdge.name(QColor::HexArgb),
+                                    selectedBorder.name(QColor::HexArgb),
+                                    contentColor.name(QColor::HexArgb))));
         }
     }
 }
@@ -419,7 +430,7 @@ QStringList layerIds(const DashboardGrid& grid) {
     }
     return ids;
 }
-} // namespace
+}  // namespace
 
 void TestDashboardGrid::zOrderActionsReorderStackAndAreUndoable() {
     DashboardGrid grid;
@@ -429,16 +440,17 @@ void TestDashboardGrid::zOrderActionsReorderStackAndAreUndoable() {
     const QString idB = grid.selectedItemId();
     grid.addItem("dummy_gauge");
     const QString idC = grid.selectedItemId();
-    grid.undoStack()->clear(); // isolate the z-order commands below from the 3 AddWidgetCommands above
+    grid.undoStack()
+        ->clear();  // isolate the z-order commands below from the 3 AddWidgetCommands above
 
-    QCOMPARE(layerIds(grid), QStringList({idA, idB, idC})); // back-to-front, creation order
+    QCOMPARE(layerIds(grid), QStringList({idA, idB, idC}));  // back-to-front, creation order
 
     grid.selectItem(idA);
-    grid.sendSelectedToBack(); // no-op: idA is already at the back
+    grid.sendSelectedToBack();  // no-op: idA is already at the back
     QCOMPARE(grid.undoStack()->count(), 0);
 
     grid.selectItem(idB);
-    grid.sendSelectedBackward(); // swaps with idA, one step
+    grid.sendSelectedBackward();  // swaps with idA, one step
     QCOMPARE(layerIds(grid), QStringList({idB, idA, idC}));
     QCOMPARE(grid.undoStack()->count(), 1);
 
@@ -465,10 +477,10 @@ void TestDashboardGrid::selectionDoesNotChangePersistedZOrder() {
 
     const QStringList before = layerIds(grid);
 
-    grid.selectItem(idA); // temporarily raises idA on screen -- the model order must not change
+    grid.selectItem(idA);  // temporarily raises idA on screen -- the model order must not change
     QCOMPARE(layerIds(grid), before);
 
-    grid.selectItem(QString()); // deselect -- idA returns to its own layer
+    grid.selectItem(QString());  // deselect -- idA returns to its own layer
     QCOMPARE(layerIds(grid), before);
 
     grid.selectItem(idB);
@@ -484,14 +496,16 @@ void TestDashboardGrid::ctrlClickTogglesSelectionAndWholeGroupAsUnit() {
 
     grid.addItem("dummy_line");
     const QString idA = grid.selectedItemId();
-    grid.addItem("dummy_bar"); // auto-selected after addItem()
+    grid.addItem("dummy_bar");  // auto-selected after addItem()
     const QString idB = grid.selectedItemId();
 
     DashboardCell* cellA = nullptr;
     DashboardCell* cellB = nullptr;
     for (DashboardCell* cell : grid.findChildren<DashboardCell*>()) {
-        if (cell->itemId() == idA) cellA = cell;
-        if (cell->itemId() == idB) cellB = cell;
+        if (cell->itemId() == idA)
+            cellA = cell;
+        if (cell->itemId() == idB)
+            cellB = cell;
     }
     QVERIFY(cellA && cellB);
     const QPoint headerPoint(10, 10);
@@ -514,7 +528,7 @@ void TestDashboardGrid::ctrlClickTogglesSelectionAndWholeGroupAsUnit() {
 
     grid.selectItem(QString());
     QCOMPARE(grid.selectedCount(), 0);
-    grid.selectItem(idA); // clicking one grouped member selects the whole group
+    grid.selectItem(idA);  // clicking one grouped member selects the whole group
     QCOMPARE(grid.selectedCount(), 2);
 
     // Ctrl-clicking idB (already selected, as part of the group) must toggle
@@ -531,9 +545,9 @@ void TestDashboardGrid::rubberBandSelectsAndDragsMultipleItemsRigidly() {
     grid.show();
     QVERIFY(QTest::qWaitForWindowExposed(&grid));
 
-    grid.addItem("dummy_line"); // auto-placed at (0,0)
+    grid.addItem("dummy_line");  // auto-placed at (0,0)
     const QString idA = grid.selectedItemId();
-    grid.addItem("dummy_bar"); // auto-placed next to idA, at (16/60, 0)
+    grid.addItem("dummy_bar");  // auto-placed next to idA, at (16/60, 0)
     const QString idB = grid.selectedItemId();
     grid.selectItem(QString());
     QCOMPARE(grid.selectedCount(), 0);
@@ -562,8 +576,10 @@ void TestDashboardGrid::rubberBandSelectsAndDragsMultipleItemsRigidly() {
     QJsonObject beforeA, beforeB;
     for (const QJsonValue& v : grid.toJson().value("items").toArray()) {
         const QJsonObject o = v.toObject();
-        if (o.value("id").toString() == idA) beforeA = o;
-        if (o.value("id").toString() == idB) beforeB = o;
+        if (o.value("id").toString() == idA)
+            beforeA = o;
+        if (o.value("id").toString() == idB)
+            beforeB = o;
     }
 
     const int commandCountBeforeDrag = grid.undoStack()->count();
@@ -581,8 +597,10 @@ void TestDashboardGrid::rubberBandSelectsAndDragsMultipleItemsRigidly() {
     QJsonObject afterA, afterB;
     for (const QJsonValue& v : grid.toJson().value("items").toArray()) {
         const QJsonObject o = v.toObject();
-        if (o.value("id").toString() == idA) afterA = o;
-        if (o.value("id").toString() == idB) afterB = o;
+        if (o.value("id").toString() == idA)
+            afterA = o;
+        if (o.value("id").toString() == idB)
+            afterB = o;
     }
 
     QVERIFY(afterA.value("y").toDouble() > beforeA.value("y").toDouble());
@@ -595,8 +613,10 @@ void TestDashboardGrid::rubberBandSelectsAndDragsMultipleItemsRigidly() {
     grid.undoStack()->undo();
     for (const QJsonValue& v : grid.toJson().value("items").toArray()) {
         const QJsonObject o = v.toObject();
-        if (o.value("id").toString() == idA) QCOMPARE(o, beforeA);
-        if (o.value("id").toString() == idB) QCOMPARE(o, beforeB);
+        if (o.value("id").toString() == idA)
+            QCOMPARE(o, beforeA);
+        if (o.value("id").toString() == idB)
+            QCOMPARE(o, beforeB);
     }
 }
 
@@ -608,7 +628,7 @@ void TestDashboardGrid::groupAndUngroupAreUndoable() {
     const QString idB = grid.selectedItemId();
     grid.selectItems({idA, idB}, /*add=*/false);
     QCOMPARE(grid.selectedCount(), 2);
-    grid.undoStack()->clear(); // isolate group/ungroup from the 2 AddWidgetCommands above
+    grid.undoStack()->clear();  // isolate group/ungroup from the 2 AddWidgetCommands above
 
     QVERIFY(!grid.selectionHasGroup());
     grid.groupSelected();
@@ -623,7 +643,7 @@ void TestDashboardGrid::groupAndUngroupAreUndoable() {
 
     grid.undoStack()->undo();
     grid.selectItem(idA);
-    QCOMPARE(grid.selectedCount(), 1); // no longer grouped
+    QCOMPARE(grid.selectedCount(), 1);  // no longer grouped
 
     grid.undoStack()->redo();
     grid.selectItem(idA);
@@ -636,7 +656,7 @@ void TestDashboardGrid::groupAndUngroupAreUndoable() {
     grid.selectItem(idA);
     QCOMPARE(grid.selectedCount(), 1);
 
-    grid.undoStack()->undo(); // undoes the ungroup -- group restored
+    grid.undoStack()->undo();  // undoes the ungroup -- group restored
     grid.selectItem(idA);
     QCOMPARE(grid.selectedCount(), 2);
     QVERIFY(grid.selectionHasGroup());
@@ -652,11 +672,11 @@ void TestDashboardGrid::removeSelectedRemovesWholeMultiSelectionWithUndo() {
     const QString idC = grid.selectedItemId();
     grid.selectItems({idA, idB}, /*add=*/false);
     QCOMPARE(grid.selectedCount(), 2);
-    grid.undoStack()->clear(); // isolate the remove from the 3 AddWidgetCommands above
+    grid.undoStack()->clear();  // isolate the remove from the 3 AddWidgetCommands above
 
     grid.removeSelected();
-    QCOMPARE(grid.undoStack()->count(), 1); // one RemoveWidgetsCommand for both, not two
-    QCOMPARE(grid.toJson().value("items").toArray().size(), 1); // only idC remains
+    QCOMPARE(grid.undoStack()->count(), 1);  // one RemoveWidgetsCommand for both, not two
+    QCOMPARE(grid.toJson().value("items").toArray().size(), 1);  // only idC remains
     QCOMPARE(grid.toJson().value("items").toArray().first().toObject().value("id").toString(), idC);
 
     grid.undoStack()->undo();
@@ -670,7 +690,7 @@ void TestDashboardGrid::removeSelectedRemovesWholeMultiSelectionWithUndo() {
     QCOMPARE(grid.toJson().value("items").toArray().size(), 1);
 }
 
-} // namespace
+}  // namespace
 
 QTEST_MAIN(TestDashboardGrid)
 #include "test_dashboardgrid.moc"

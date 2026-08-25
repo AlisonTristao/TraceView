@@ -12,9 +12,9 @@ struct ThemePalette {
     QString id;           // stable key, e.g. "dark"
     QString displayName;  // shown in the theme picker, e.g. "Dark"
 
-    QColor background;   // window background
-    QColor surface;      // panels, cards
-    QColor surfaceAlt;   // hovered/alternate rows, input fields
+    QColor background;  // window background
+    QColor surface;     // panels, cards
+    QColor surfaceAlt;  // hovered/alternate rows, input fields
 
     QColor border;        // subtle dividers
     QColor borderStrong;  // emphasis borders, focus outlines
@@ -37,4 +37,4 @@ struct ThemePalette {
     QVector<QColor> series;
 };
 
-} // namespace traceview
+}  // namespace traceview

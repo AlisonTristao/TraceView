@@ -58,10 +58,12 @@ struct TelemetryFieldSchema {
     double offset = 0.0;
     quint16 elementCount = 1;     // 1 = scalar; >1 = fixed-size array
     quint16 maxElementCount = 0;  // set (with elementCount == 0) for a
-                                   // variable-count array
+                                  // variable-count array
     bool nullable = false;
 
-    bool isVariableLength() const { return elementCount == 0 && maxElementCount > 0; }
+    bool isVariableLength() const {
+        return elementCount == 0 && maxElementCount > 0;
+    }
 };
 
 // One (source_id, topic_id, schema_version) schema -- the full identity
@@ -73,8 +75,8 @@ struct TelemetryTopicSchema {
     QString name;
     TelemetryEncoding encoding = TelemetryEncoding::PackedLe;
     QVector<TelemetryFieldSchema> fields;  // need not be pre-sorted by
-                                            // `order`; decodePackedLe sorts
-                                            // its own working copy.
+                                           // `order`; decodePackedLe sorts
+                                           // its own working copy.
 
     const TelemetryFieldSchema* fieldById(quint16 fieldId) const;
 };
@@ -96,7 +98,8 @@ public:
     // asserting.
     void registerSchema(const TelemetryTopicSchema& schema);
 
-    const TelemetryTopicSchema* lookup(quint32 sourceId, quint16 topicId, quint16 schemaVersion) const;
+    const TelemetryTopicSchema* lookup(quint32 sourceId, quint16 topicId,
+                                       quint16 schemaVersion) const;
 
     // Every schema currently registered, in no particular order -- for
     // display (e.g. BtpBackend::catalogTopics()), never for decode lookups

@@ -9,7 +9,7 @@ namespace traceview {
 
 namespace {
 constexpr int kFormatVersion = 1;
-} // namespace
+}  // namespace
 
 ProjectStore& ProjectStore::instance() {
     static ProjectStore store;
@@ -81,4 +81,4 @@ void ProjectStore::reset() {
     m_lastError.clear();
 }
 
-} // namespace traceview
+}  // namespace traceview

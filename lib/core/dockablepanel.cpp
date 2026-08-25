@@ -41,9 +41,11 @@ void DockablePanel::onPinToggled(bool checked) {
 
 void DockablePanel::updatePinIcon() {
     const ThemePalette& palette = ThemeManager::instance().currentTheme();
-    m_header->pinButton()->setIcon(makePinIcon(m_pinned ? palette.accent : palette.textPrimary, m_pinned));
-    m_header->pinButton()->setToolTip(m_pinned ? tr("Unpin — panel will hide when nothing is selected")
-                                                : tr("Pin — keep panel open with nothing selected"));
+    m_header->pinButton()->setIcon(
+        makePinIcon(m_pinned ? palette.accent : palette.textPrimary, m_pinned));
+    m_header->pinButton()->setToolTip(m_pinned
+                                          ? tr("Unpin — panel will hide when nothing is selected")
+                                          : tr("Pin — keep panel open with nothing selected"));
 }
 
-} // namespace traceview
+}  // namespace traceview

@@ -3,7 +3,6 @@
 #include <QJsonArray>
 #include <QMap>
 #include <QtMath>
-
 #include <cmath>
 
 namespace traceview {
@@ -69,13 +68,13 @@ ChartConfig parseChartConfig(const QJsonObject& json) {
 
     const QJsonObject xAxis = json.value("xAxis").toObject();
     config.xAxisMode = xAxis.value("mode").toString("samples") == "time" ? ChartXAxisMode::Time
-                                                                          : ChartXAxisMode::Samples;
+                                                                         : ChartXAxisMode::Samples;
     config.sampleTimeMs = xAxis.value("sampleTimeMs").toDouble(100.0);
     config.xLimit = xAxis.value("limit").toInt(500);
 
     const QJsonObject yAxis = json.value("yAxis").toObject();
     config.yAxisMode = yAxis.value("mode").toString("auto") == "fixed" ? ChartYAxisMode::Fixed
-                                                                        : ChartYAxisMode::Auto;
+                                                                       : ChartYAxisMode::Auto;
     config.yMin = yAxis.value("min").toDouble(0.0);
     config.yMax = yAxis.value("max").toDouble(100.0);
     config.yUnit = yAxis.value("unit").toString();
@@ -97,7 +96,7 @@ int chartBufferCapacity(const ChartConfig& config) {
 }
 
 QVector<TelemetrySeriesBuffer> resizeChartBuffers(const QVector<TelemetrySeriesBuffer>& previous,
-                                                   const ChartConfig& config) {
+                                                  const ChartConfig& config) {
     QVector<TelemetrySeriesBuffer> result(config.series.size());
     for (int i = 0; i < result.size() && i < previous.size(); ++i) {
         result[i] = previous[i];
@@ -110,8 +109,8 @@ QVector<TelemetrySeriesBuffer> resizeChartBuffers(const QVector<TelemetrySeriesB
     return result;
 }
 
-void appendFieldSample(QVector<TelemetrySeriesBuffer>& buffers, const ChartConfig& config, quint16 fieldId,
-                        quint64 timestampUs, double value) {
+void appendFieldSample(QVector<TelemetrySeriesBuffer>& buffers, const ChartConfig& config,
+                       quint16 fieldId, quint64 timestampUs, double value) {
     for (int i = 0; i < config.series.size() && i < buffers.size(); ++i) {
         if (config.series[i].fieldId == fieldId) {
             buffers[i].append(timestampUs, value);

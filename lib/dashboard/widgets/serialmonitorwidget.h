@@ -37,4 +37,4 @@ private:
     SerialTerminalWidget* m_terminal = nullptr;
 };
 
-} // namespace traceview
+}  // namespace traceview

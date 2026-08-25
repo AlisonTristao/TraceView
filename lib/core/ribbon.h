@@ -57,8 +57,8 @@ public:
     // draws the small "x" in the tab's top right corner (see RibbonTabBar)
     // and lets it be removed later via removeTab(); the fixed Run/Layout/
     // Devices tabs leave it at the default false.
-    int addTab(const QString& label, QWidget* page, bool enabled = true, const QString& toolTip = QString(),
-               bool closable = false);
+    int addTab(const QString& label, QWidget* page, bool enabled = true,
+               const QString& toolTip = QString(), bool closable = false);
 
     // Removes the tab at `index` and deletes its page widget. Only meant for
     // tabs added with closable=true.
@@ -96,4 +96,4 @@ private:
     QStackedWidget* m_stack;
 };
 
-} // namespace traceview
+}  // namespace traceview

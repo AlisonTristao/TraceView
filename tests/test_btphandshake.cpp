@@ -1,5 +1,4 @@
 #include <QtTest>
-
 #include <btp/codec.hpp>
 
 #include "protocol/btpframe.h"
@@ -34,9 +33,9 @@ public:
     Harness() {
         QObject::connect(&outbound, &BtpSession::bytesToWrite, &loopback, &BtpSession::feedBytes);
         QObject::connect(&loopback, &BtpSession::frameReceived, &loopback,
-                          [this](const BtpFrame& frame) { sent.append(frame); });
+                         [this](const BtpFrame& frame) { sent.append(frame); });
         QObject::connect(&handshake, &BtpHandshake::bytesToWrite, &handshake,
-                          [this](const QByteArray& data) { enterLine = data; });
+                         [this](const QByteArray& data) { enterLine = data; });
     }
 
     // Runs the ENTER/READY handshake far enough that sendHello() fires, and

@@ -14,12 +14,12 @@ namespace traceview {
 struct TopicSubscriptionState {
     quint32 sourceId = 0;
     quint16 topicId = 0;
-    int subscriberCount = 0;             // live widgets consuming this topic
-    quint32 requestedRateMillihz = 0;    // the highest rate among those widgets
-    quint32 effectiveRateMillihz = 0;    // 0 = not granted (yet)
+    int subscriberCount = 0;           // live widgets consuming this topic
+    quint32 requestedRateMillihz = 0;  // the highest rate among those widgets
+    quint32 effectiveRateMillihz = 0;  // 0 = not granted (yet)
     quint32 grantedLeaseMs = 0;
-    quint32 subscriptionId = 0;          // 0 while no grant is held
-    quint8 lastStatus = 0;               // last subscribe-result status code, Backend-defined
+    quint32 subscriptionId = 0;  // 0 while no grant is held
+    quint8 lastStatus = 0;       // last subscribe-result status code, Backend-defined
     quint16 lastErrorCode = 0;
     bool awaitingResult = false;
 

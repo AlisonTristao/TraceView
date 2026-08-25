@@ -1,8 +1,6 @@
 #include <QSignalSpy>
 #include <QtTest/QtTest>
-
 #include <btp/codec.hpp>
-
 #include <cstdint>
 #include <vector>
 
@@ -57,7 +55,7 @@ QByteArray espNowFrame(quint32 sourceId, quint32 sequence, const QByteArray& pay
     return QByteArray(reinterpret_cast<const char*>(encoded.data()), int(written));
 }
 
-} // namespace
+}  // namespace
 
 class TestHubTransport : public QObject {
     Q_OBJECT
@@ -167,9 +165,10 @@ void TestHubTransport::writeReachesTheParentWithoutTouchingTheOctets() {
     const QByteArray block = packet.mid(1, packet.size() - 2);
     std::vector<std::uint8_t> decoded(btp::kSerialMaxFrameSize);
     std::size_t decodedBytes = 0;
-    QCOMPARE(btp::cobs_decode(reinterpret_cast<const std::uint8_t*>(block.constData()),
-                              std::size_t(block.size()), decoded.data(), decoded.size(), &decodedBytes),
-             btp::CobsError::Ok);
+    QCOMPARE(
+        btp::cobs_decode(reinterpret_cast<const std::uint8_t*>(block.constData()),
+                         std::size_t(block.size()), decoded.data(), decoded.size(), &decodedBytes),
+        btp::CobsError::Ok);
     QCOMPARE(QByteArray(reinterpret_cast<const char*>(decoded.data()), int(decodedBytes)), frame);
 }
 
@@ -188,7 +187,8 @@ void TestHubTransport::unconfiguredPeerNeverConnectsAndNeverClaims() {
 
     QVERIFY(!child.isConnected());
     emit backend->hubFrameBytesReceived(0, espNowFrame(0x0A0A0A0AU, 1, QByteArray(4, '\x01')));
-    emit backend->hubFrameBytesReceived(0x0A0A0A0AU, espNowFrame(0x0A0A0A0AU, 2, QByteArray(4, '\x02')));
+    emit backend->hubFrameBytesReceived(0x0A0A0A0AU,
+                                        espNowFrame(0x0A0A0A0AU, 2, QByteArray(4, '\x02')));
     QCOMPARE(spy.count(), 0);
     QVERIFY(!child.write(espNowFrame(0x0A0A0A0AU, 3, QByteArray(4, '\x03'))));
 }
@@ -216,8 +216,8 @@ void TestHubTransport::closingOneChildLeavesTheParentAndItsSiblingAlone() {
     emit backend->hubFrameBytesReceived(robotA, espNowFrame(robotA, 1, QByteArray(4, '\xA1')));
     emit backend->hubFrameBytesReceived(robotB, espNowFrame(robotB, 2, QByteArray(4, '\xB2')));
 
-    QCOMPARE(spyA.count(), 0);  // closed: claims nothing
-    QCOMPARE(spyB.count(), 1);  // sibling entirely unaffected
+    QCOMPARE(spyA.count(), 0);             // closed: claims nothing
+    QCOMPARE(spyB.count(), 1);             // sibling entirely unaffected
     QVERIFY(parent.backend() != nullptr);  // and the parent still exists
 }
 

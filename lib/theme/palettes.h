@@ -17,4 +17,4 @@ ThemePalette makeAmberPalette();
 ThemePalette makeArcticPalette();
 ThemePalette makeSakuraPalette();
 
-} // namespace traceview
+}  // namespace traceview

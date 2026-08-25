@@ -1,9 +1,8 @@
 #pragma once
 
-#include <functional>
-
 #include <QString>
 #include <QVector>
+#include <functional>
 
 class QWidget;
 
@@ -50,4 +49,4 @@ private:
     QVector<WidgetTypeInfo> m_types;
 };
 
-} // namespace traceview
+}  // namespace traceview

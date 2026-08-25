@@ -1,6 +1,5 @@
-#include <QtTest>
 #include <QTemporaryFile>
-
+#include <QtTest>
 #include <btp/codec.hpp>
 #include <btp/fragmentation.hpp>
 
@@ -16,8 +15,8 @@ namespace {
 // the EspNow profile exactly like Logger::flush_logs_to does in bally_OS --
 // and appends the raw bytes to `out`. Mirrors what ends up on a real .blog
 // file for one logical log record.
-void appendLogMessage(QByteArray& out, quint32 sourceId, quint32 bootId, quint32 sequence, quint64 timestampUs,
-                       quint8 severity, const QByteArray& payload) {
+void appendLogMessage(QByteArray& out, quint32 sourceId, quint32 bootId, quint32 sequence,
+                      quint64 timestampUs, quint8 severity, const QByteArray& payload) {
     btp::Header logicalHeader{};
     logicalHeader.type = btp::MessageType::Log;
     logicalHeader.flags = 0;
@@ -28,18 +27,22 @@ void appendLogMessage(QByteArray& out, quint32 sourceId, quint32 bootId, quint32
     logicalHeader.object_id = severity;
 
     std::uint8_t count = 0;
-    QCOMPARE(btp::fragment_count(std::size_t(payload.size()), btp::TransportProfile::EspNow, &count),
-             btp::Error::Ok);
+    QCOMPARE(
+        btp::fragment_count(std::size_t(payload.size()), btp::TransportProfile::EspNow, &count),
+        btp::Error::Ok);
 
-    const btp::ByteView view{reinterpret_cast<const std::uint8_t*>(payload.constData()), std::size_t(payload.size())};
+    const btp::ByteView view{reinterpret_cast<const std::uint8_t*>(payload.constData()),
+                             std::size_t(payload.size())};
     for (std::uint8_t index = 0; index < count; ++index) {
         btp::Frame fragment;
-        QCOMPARE(btp::make_fragment(logicalHeader, view, btp::TransportProfile::EspNow, index, &fragment),
+        QCOMPARE(btp::make_fragment(logicalHeader, view, btp::TransportProfile::EspNow, index,
+                                    &fragment),
                  btp::Error::Ok);
 
         std::uint8_t buffer[btp::kEspNowMaxFrameSize];
         std::size_t bytesWritten = 0;
-        QCOMPARE(btp::encode(fragment, btp::TransportProfile::EspNow, buffer, sizeof(buffer), &bytesWritten),
+        QCOMPARE(btp::encode(fragment, btp::TransportProfile::EspNow, buffer, sizeof(buffer),
+                             &bytesWritten),
                  btp::Error::Ok);
         out.append(reinterpret_cast<const char*>(buffer), int(bytesWritten));
     }
@@ -58,7 +61,8 @@ private slots:
 
 void TestLogFileReader::singleFrameMessageParsesOneEntry() {
     QByteArray fileBytes;
-    appendLogMessage(fileBytes, 0x11223344, 0xA1B2C3D4, 7, 123456789, quint8(LogSeverity::Info), "hello world");
+    appendLogMessage(fileBytes, 0x11223344, 0xA1B2C3D4, 7, 123456789, quint8(LogSeverity::Info),
+                     "hello world");
 
     QTemporaryFile file;
     QVERIFY(file.open());
@@ -87,7 +91,8 @@ void TestLogFileReader::fragmentedMessageReassemblesInOrder() {
     QCOMPARE(longPayload.size(), 300);  // > kEspNowMaxPayloadSize (210) -- forces 2 fragments
 
     QByteArray fileBytes;
-    appendLogMessage(fileBytes, 0x11223344, 0xA1B2C3D4, 42, 999, quint8(LogSeverity::Warn), longPayload);
+    appendLogMessage(fileBytes, 0x11223344, 0xA1B2C3D4, 42, 999, quint8(LogSeverity::Warn),
+                     longPayload);
 
     QTemporaryFile file;
     QVERIFY(file.open());

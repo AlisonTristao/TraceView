@@ -1,7 +1,5 @@
 #include "workspaceswitcher.h"
 
-#include <functional>
-
 #include <QFont>
 #include <QHBoxLayout>
 #include <QLabel>
@@ -9,6 +7,7 @@
 #include <QMouseEvent>
 #include <QToolButton>
 #include <QWidgetAction>
+#include <functional>
 
 #include "ribbon.h"
 #include "ribbonicons.h"
@@ -28,7 +27,8 @@ constexpr int kTrashIconSize = 20;
 // QObject already, so its own clicked() still connects normally).
 class WorkspaceRow : public QWidget {
 public:
-    WorkspaceRow(const QString& name, bool active, bool deletable, QWidget* parent) : QWidget(parent) {
+    WorkspaceRow(const QString& name, bool active, bool deletable, QWidget* parent)
+        : QWidget(parent) {
         setCursor(Qt::PointingHandCursor);
 
         auto* layout = new QHBoxLayout(this);
@@ -50,7 +50,9 @@ public:
         layout->addWidget(m_trashButton);
     }
 
-    QToolButton* trashButton() const { return m_trashButton; }
+    QToolButton* trashButton() const {
+        return m_trashButton;
+    }
 
     // Called when the row (but not the trash button) is clicked.
     std::function<void()> onSelected;
@@ -67,7 +69,7 @@ private:
     QToolButton* m_trashButton = nullptr;
 };
 
-} // namespace
+}  // namespace
 
 WorkspaceSwitcher::WorkspaceSwitcher(QWidget* parent) : QWidget(parent) {
     auto* layout = new QHBoxLayout(this);
@@ -136,17 +138,21 @@ void WorkspaceSwitcher::rebuildMenu() {
         // through the switcher a few times.
         row->onSelected = [this, id]() {
             QMetaObject::invokeMethod(
-                this, [this, id]() {
+                this,
+                [this, id]() {
                     m_menu->close();
                     emit workspaceSelected(id);
-                }, Qt::QueuedConnection);
+                },
+                Qt::QueuedConnection);
         };
         connect(row->trashButton(), &QToolButton::clicked, this, [this, id]() {
             QMetaObject::invokeMethod(
-                this, [this, id]() {
+                this,
+                [this, id]() {
                     m_menu->close();
                     emit workspaceDeleteRequested(id);
-                }, Qt::QueuedConnection);
+                },
+                Qt::QueuedConnection);
         });
 
         auto* action = new QWidgetAction(m_menu);
@@ -156,7 +162,8 @@ void WorkspaceSwitcher::rebuildMenu() {
 
     m_menu->addSeparator();
     QAction* newWorkspaceAction = m_menu->addAction(tr("New Workspace…"));
-    connect(newWorkspaceAction, &QAction::triggered, this, &WorkspaceSwitcher::newWorkspaceRequested);
+    connect(newWorkspaceAction, &QAction::triggered, this,
+            &WorkspaceSwitcher::newWorkspaceRequested);
 }
 
 void WorkspaceSwitcher::updateIcons(const QColor& color) {
@@ -165,4 +172,4 @@ void WorkspaceSwitcher::updateIcons(const QColor& color) {
     rebuildMenu();
 }
 
-} // namespace traceview
+}  // namespace traceview

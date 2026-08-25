@@ -186,8 +186,8 @@ private:
     // variable arrays telemetry.md 4.1 / bally_dongle's DonglePublisher.h
     // kPeersFields describe back into m_hubPeersAccum -- see the .cpp for
     // the exact field-name to struct-member mapping.
-    void onHubPeerFieldSample(const QString& deviceId, const TelemetryFieldBinding& binding, quint64 timestampUs,
-                               double value);
+    void onHubPeerFieldSample(const QString& deviceId, const TelemetryFieldBinding& binding,
+                              quint64 timestampUs, double value);
     void onPanelTypeChangeRequested(const QString& typeId);
     void onPanelNameChangeRequested(const QString& name);
     void onPanelKeyChangeRequested(const QString& key);
@@ -381,4 +381,4 @@ private:
     QRect m_preFullscreenGeometry;
 };
 
-} // namespace traceview
+}  // namespace traceview

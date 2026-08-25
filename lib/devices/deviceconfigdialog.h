@@ -197,4 +197,4 @@ private:
     QPlainTextEdit* m_catalogList = nullptr;
 };
 
-} // namespace traceview
+}  // namespace traceview

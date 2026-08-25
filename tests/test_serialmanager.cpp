@@ -59,7 +59,7 @@ void TestSerialManager::availablePortsDoesNotCrash() {
     QVERIFY(true);
 }
 
-} // namespace
+}  // namespace
 
 QTEST_MAIN(TestSerialManager)
 #include "test_serialmanager.moc"

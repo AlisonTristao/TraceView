@@ -1,9 +1,8 @@
-#include <QtTest>
-
 #include <QFile>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QTemporaryDir>
+#include <QtTest>
 
 #include "project/projectstore.h"
 
@@ -60,12 +59,13 @@ void TestProjectStore::saveDelegatesToCurrentPath() {
     QJsonObject section;
     section["value"] = "updated";
     store.setSection("test_delegate", section);
-    QVERIFY(store.save()); // no path argument -- must reuse `path` from saveAs()
+    QVERIFY(store.save());  // no path argument -- must reuse `path` from saveAs()
 
     QFile file(path);
     QVERIFY(file.open(QIODevice::ReadOnly));
     const QJsonDocument doc = QJsonDocument::fromJson(file.readAll());
-    QCOMPARE(doc.object().value("test_delegate").toObject().value("value").toString(), QString("updated"));
+    QCOMPARE(doc.object().value("test_delegate").toObject().value("value").toString(),
+             QString("updated"));
 }
 
 void TestProjectStore::loadRoundTripsSections() {
@@ -114,7 +114,7 @@ void TestProjectStore::loadInvalidJsonFailsWithoutCorruptingState() {
     QCOMPARE(store.section("test_invalid_json"), section);
 }
 
-} // namespace
+}  // namespace
 
 QTEST_MAIN(TestProjectStore)
 #include "test_projectstore.moc"

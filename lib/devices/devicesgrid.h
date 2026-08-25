@@ -6,7 +6,6 @@
 #include <QUndoStack>
 #include <QVector>
 #include <QWidget>
-
 #include <functional>
 
 #include "devices/device.h"
@@ -92,17 +91,23 @@ public:
     // triggering. No-op if no dialog is open for this device.
     void notifyCatalogChanged(const QString& id);
 
-    QVector<Device> devices() const { return m_devices; }
+    QVector<Device> devices() const {
+        return m_devices;
+    }
 
     // 0 or 1 -- single-selection only (a click on a card replaces whatever
     // was selected before, same "Replace selection" default as
     // DashboardGrid's plain click, minus the Ctrl-click multi-select this
     // grid has no use for).
-    int selectedCount() const { return m_selectedId.isEmpty() ? 0 : 1; }
+    int selectedCount() const {
+        return m_selectedId.isEmpty() ? 0 : 1;
+    }
     // No-op if nothing is selected. Undoable (see removeDevice() above).
     void removeSelected();
 
-    QUndoStack* undoStack() const { return m_undoStack; }
+    QUndoStack* undoStack() const {
+        return m_undoStack;
+    }
 
     // Mirrors DashboardGrid::toJson()/fromJson()'s shape/convention: a
     // single "devices" array of deviceToJson() objects (see device.h). Used
@@ -122,7 +127,9 @@ public:
     // (see lib/CMakeLists.txt) -- so MainWindow injects it here once. Safe
     // to leave unset: the dialog's port combo then just starts empty and
     // Refresh is a no-op, same as before this existed.
-    void setPortListProvider(std::function<QStringList()> provider) { m_portListProvider = std::move(provider); }
+    void setPortListProvider(std::function<QStringList()> provider) {
+        m_portListProvider = std::move(provider);
+    }
 
     // Same reasoning as setPortListProvider() above, for the USB device
     // picker -- traceview_devices doesn't depend on hidapi either (see
@@ -138,7 +145,8 @@ public:
     // depend on traceview_protocol, same reasoning as setPortListProvider()
     // above) -- MainWindow injects this once. Safe to leave unset: the
     // dialog's catalog list then just starts empty.
-    void setTopicCatalogProvider(std::function<QVector<CatalogTopicInfo>(const QString&)> provider) {
+    void setTopicCatalogProvider(
+        std::function<QVector<CatalogTopicInfo>(const QString&)> provider) {
         m_topicCatalogProvider = std::move(provider);
     }
 
@@ -205,9 +213,9 @@ private:
     void applyRemoveDeviceById(const QString& id);
     void applyUpdateDevice(const Device& device);
 
-    QVector<Device> m_devices;    // insertion order = display order
-    QVector<DeviceCard*> m_cards; // parallel to m_devices, same order/index
-    QString m_selectedId;         // empty when nothing is selected
+    QVector<Device> m_devices;     // insertion order = display order
+    QVector<DeviceCard*> m_cards;  // parallel to m_devices, same order/index
+    QString m_selectedId;          // empty when nothing is selected
     std::function<QStringList()> m_portListProvider;
     std::function<QVector<UsbDeviceOption>()> m_usbDeviceListProvider;
     std::function<QVector<CatalogTopicInfo>(const QString&)> m_topicCatalogProvider;
@@ -215,4 +223,4 @@ private:
     QUndoStack* m_undoStack;
 };
 
-} // namespace traceview
+}  // namespace traceview

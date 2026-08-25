@@ -19,7 +19,8 @@ PropertiesPanel::PropertiesPanel(QWidget* parent) : DockablePanel(parent) {
     m_nameEdit = new QLineEdit();
     m_keyEdit = new QLineEdit();
     m_keyEdit->setPlaceholderText(tr("(none)"));
-    m_keyEdit->setToolTip(tr("Optional, must be unique — the handle future data updates will target this widget by."));
+    m_keyEdit->setToolTip(tr(
+        "Optional, must be unique — the handle future data updates will target this widget by."));
 
     auto* formLayout = new QFormLayout();
     formLayout->addRow(tr("Type"), m_typeCombo);
@@ -78,7 +79,7 @@ void PropertiesPanel::setAvailableDevices(const QVector<DeviceOption>& devices) 
 }
 
 void PropertiesPanel::setSelection(bool hasSelection, const QString& typeId, const QString& name,
-                                    const QString& key, const QJsonObject& config) {
+                                   const QString& key, const QJsonObject& config) {
     m_currentTypeId = typeId;
     m_currentName = name;
     m_currentKey = key;
@@ -177,7 +178,8 @@ void PropertiesPanel::ensureConfigEditor(const QString& typeId) {
     m_configEditor = factory(nullptr);
     m_configEditor->setAvailableDevices(m_availableDevices);
     m_configLayout->insertWidget(0, m_configEditor);
-    connect(m_configEditor, &WidgetConfigEditor::configChanged, this, &PropertiesPanel::onConfigEditorChanged);
+    connect(m_configEditor, &WidgetConfigEditor::configChanged, this,
+            &PropertiesPanel::onConfigEditorChanged);
 }
 
-} // namespace traceview
+}  // namespace traceview

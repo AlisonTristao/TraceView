@@ -2,7 +2,6 @@
 
 #include <QDateTime>
 #include <QRandomGenerator>
-
 #include <btp/codec.hpp>
 
 #include "protocol/btpframe.h"
@@ -25,8 +24,8 @@ constexpr quint8 kHelloResultSuccess = 0x00;
 // full cold boot, not just a quick text exchange. 20s is generous against a
 // slow SD card; bump it further if a real device still needs more.
 constexpr int kEnterTimeoutMs = 20000;
-constexpr int kHelloTimeoutMs = 3000;   // spec requires HELLO_RESULT within
-                                        // 2000ms of HELLO; a little slack.
+constexpr int kHelloTimeoutMs = 3000;  // spec requires HELLO_RESULT within
+                                       // 2000ms of HELLO; a little slack.
 constexpr int kMaxLineBufferBytes = 512;
 
 // Appends `value` as `width` little-endian bytes.
@@ -73,7 +72,8 @@ QByteArray buildHelloPayload(quint16 maxLogicalPayload, quint16 sessionTimeoutMs
 
 BtpHandshake::BtpHandshake(BtpSession* session, ProtocolRouter* router, QObject* parent)
     : QObject(parent), m_session(session) {
-    connect(router, &ProtocolRouter::controlFrameReceived, this, &BtpHandshake::onControlFrameReceived);
+    connect(router, &ProtocolRouter::controlFrameReceived, this,
+            &BtpHandshake::onControlFrameReceived);
 
     m_enterTimer.setSingleShot(true);
     connect(&m_enterTimer, &QTimer::timeout, this, &BtpHandshake::onEnterTimeout);
@@ -112,7 +112,8 @@ void BtpHandshake::feedRawBytes(const QByteArray& data) {
 }
 
 void BtpHandshake::sendHello() {
-    const QByteArray payload = buildHelloPayload(/*maxLogicalPayload=*/4096, /*sessionTimeoutMs=*/15000);
+    const QByteArray payload =
+        buildHelloPayload(/*maxLogicalPayload=*/4096, /*sessionTimeoutMs=*/15000);
 
     btp::Header header{};
     header.type = btp::MessageType::Control;
@@ -159,8 +160,7 @@ void BtpHandshake::onControlFrameReceived(const traceview::BtpFrame& frame) {
         const quint8 selectedVersion = static_cast<quint8>(frame.payload.at(13));
         if (selectedVersion < btp::kMinimumProtocolVersion ||
             selectedVersion > btp::kMaximumProtocolVersion) {
-            fail(tr("HELLO_RESULT selected an unadvertised version %1")
-                     .arg(selectedVersion));
+            fail(tr("HELLO_RESULT selected an unadvertised version %1").arg(selectedVersion));
             return;
         }
         m_state = State::Established;

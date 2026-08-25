@@ -28,7 +28,6 @@
 #include <QVBoxLayout>
 
 #include "aboutdialog.h"
-#include "donatedialog.h"
 #include "backend/backend.h"
 #include "dashboard/dashboardgrid.h"
 #include "dashboard/widgetconfigeditor.h"
@@ -37,7 +36,7 @@
 #include "debugchartswindow.h"
 #include "deviceconnection.h"
 #include "devices/devicesgrid.h"
-#include "usbhidmanager.h"
+#include "donatedialog.h"
 #include "layerspanel.h"
 #include "logs/logviewer.h"
 #include "ota/otatab.h"
@@ -48,11 +47,12 @@
 #include "ribbon.h"
 #include "ribbonicons.h"
 #include "serialwidgetbridge.h"
-#include "workspaceswitcher.h"
 #include "traceview/fontmanager.h"
 #include "traceview/languagemanager.h"
 #include "traceview/thememanager.h"
 #include "traceview/version.h"
+#include "usbhidmanager.h"
+#include "workspaceswitcher.h"
 
 #ifdef Q_OS_WIN
 #include <windows.h>
@@ -64,7 +64,8 @@ namespace {
 // Namespace-scope, outside MainWindow -- plain tr() isn't available here, so
 // this uses QCoreApplication::translate() directly, same as the non-QObject
 // fixes elsewhere in the codebase.
-const QString kProjectFileFilter = QCoreApplication::translate("MainWindow", "TraceView Project (*.tvproj)");
+const QString kProjectFileFilter =
+    QCoreApplication::translate("MainWindow", "TraceView Project (*.tvproj)");
 constexpr const char* kRecentFilesSettingsKey = "recentFiles/paths";
 constexpr int kMaxRecentFiles = 10;
 
@@ -114,7 +115,8 @@ WidgetTopicRequest widgetTopicRequest(DashboardWidget* widget, DashboardGrid* gr
     const QString deviceId = grid->configForWidget(widget).value("deviceId").toString();
     if (auto* chart = dynamic_cast<ChartWidgetBase*>(widget)) {
         const ChartConfig& config = chart->config();
-        return {deviceId, config.sourceId, config.topicId, requestedRateMillihzFor(config.sampleTimeMs)};
+        return {deviceId, config.sourceId, config.topicId,
+                requestedRateMillihzFor(config.sampleTimeMs)};
     }
     if (auto* gauge = dynamic_cast<DummyGaugeWidget*>(widget)) {
         const GaugeConfig& config = gauge->config();
@@ -136,7 +138,7 @@ constexpr char kHubPeersTopicName[] = "hub.peers";
 // asking for more would only be clamped away. As with every SUBSCRIBE this
 // is a request: the source answers with the effective rate.
 constexpr quint32 kHubPeersRequestedRateMillihz = 2000;  // 2 Hz
-} // namespace
+}  // namespace
 
 MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     setWindowTitle(tr("TraceView v%1").arg(kVersion));
@@ -151,9 +153,8 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     // core/serialwidgetbridge.h. Resolved lazily via m_deviceConnections
     // (empty right now; devices are added later via the Devices tab), so
     // construction order relative to onDeviceAdded() doesn't matter.
-    m_serialWidgetBridge =
-        new SerialWidgetBridge(m_dashboardGrid, [this](const QString& id) { return m_deviceConnections.value(id); },
-                                this);
+    m_serialWidgetBridge = new SerialWidgetBridge(
+        m_dashboardGrid, [this](const QString& id) { return m_deviceConnections.value(id); }, this);
 
     Ribbon* ribbon = buildRibbon();
     buildLayersPanel();
@@ -182,7 +183,8 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     m_devicesGrid = new DevicesGrid(this);
     m_undoGroup->addStack(m_devicesGrid->undoStack());
     connect(m_removeDeviceAction, &QAction::triggered, this, &MainWindow::onRemoveDeviceRequested);
-    connect(m_devicesGrid, &DevicesGrid::selectionChanged, this, &MainWindow::updateDeviceSelectionActions);
+    connect(m_devicesGrid, &DevicesGrid::selectionChanged, this,
+            &MainWindow::updateDeviceSelectionActions);
     // Keeps m_deviceConnections (one DeviceConnection per Device -- see
     // core/deviceconnection.h) in lockstep with m_devicesGrid's own list.
     connect(m_devicesGrid, &DevicesGrid::deviceAdded, this, &MainWindow::onDeviceAdded);
@@ -230,10 +232,12 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     // a Backend itself (traceview_devices doesn't depend on
     // traceview_protocol), so MainWindow supplies the gear icon's "Reported
     // catalog" list from whichever DeviceConnection is live for that id.
-    m_devicesGrid->setTopicCatalogProvider([this](const QString& deviceId) -> QVector<CatalogTopicInfo> {
-        DeviceConnection* connection = m_deviceConnections.value(deviceId);
-        return connection ? connection->backend()->catalogTopics() : QVector<CatalogTopicInfo>();
-    });
+    m_devicesGrid->setTopicCatalogProvider(
+        [this](const QString& deviceId) -> QVector<CatalogTopicInfo> {
+            DeviceConnection* connection = m_deviceConnections.value(deviceId);
+            return connection ? connection->backend()->catalogTopics()
+                              : QVector<CatalogTopicInfo>();
+        });
     // The gear icon's "Robot source_id" combo. Unlike the three providers
     // above this one is polled for as long as the dialog stays open (see
     // DevicesGrid::handleConfigRequested) -- peers appear, go offline and
@@ -241,7 +245,7 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     // would show a snapshot that is stale by the time it is read.
     m_devicesGrid->setHubPeerListProvider(
         [this](const QString& parentDeviceId) { return hubPeersFor(parentDeviceId); });
-    refreshDeviceStatusLabel(); // starts empty ("No devices configured...")
+    refreshDeviceStatusLabel();  // starts empty ("No devices configured...")
     refreshPropertiesPanelDevices();
 
     m_contentStack = new QStackedWidget(m_contentRow);
@@ -266,7 +270,8 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     m_dockController->registerPanel(m_layersPanel, "layers", DockEdge::Left);
     m_dockController->registerPanel(m_propertiesPanel, "properties", DockEdge::Right);
     m_dockController->restoreState();
-    connect(m_dockController, &PanelDockController::dragFinished, this, &MainWindow::updatePanelVisibility);
+    connect(m_dockController, &PanelDockController::dragFinished, this,
+            &MainWindow::updatePanelVisibility);
 
     auto* central = new QWidget(this);
     auto* centralLayout = new QVBoxLayout(central);
@@ -297,7 +302,8 @@ MainWindow::~MainWindow() {
     // wireChartWidgetToTelemetry) must be taken down here, while
     // m_widgetSubscriptions still exists. Only signals *from* each widget are
     // disconnected; the fieldSample connections into them are unaffected.
-    for (auto it = m_widgetSubscriptions.constBegin(); it != m_widgetSubscriptions.constEnd(); ++it) {
+    for (auto it = m_widgetSubscriptions.constBegin(); it != m_widgetSubscriptions.constEnd();
+         ++it) {
         disconnect(it.key(), nullptr, this, nullptr);
     }
     m_widgetSubscriptions.clear();
@@ -347,9 +353,11 @@ void MainWindow::refreshWidgetSubscription(DashboardWidget* widget) {
 
     if (oldConnection != newConnection) {
         if (auto* chart = dynamic_cast<ChartWidgetBase*>(widget)) {
-            connect(newConnection->backend(), &Backend::fieldSample, chart, &ChartWidgetBase::onFieldSample);
+            connect(newConnection->backend(), &Backend::fieldSample, chart,
+                    &ChartWidgetBase::onFieldSample);
         } else if (auto* gauge = dynamic_cast<DummyGaugeWidget*>(widget)) {
-            connect(newConnection->backend(), &Backend::fieldSample, gauge, &DummyGaugeWidget::onFieldSample);
+            connect(newConnection->backend(), &Backend::fieldSample, gauge,
+                    &DummyGaugeWidget::onFieldSample);
         }
     }
 
@@ -358,8 +366,8 @@ void MainWindow::refreshWidgetSubscription(DashboardWidget* widget) {
     // read (source, topic) into a single subscription. Reusing the existing
     // handle only makes sense while staying on the same Backend instance.
     const quint64 handleToReuse = oldConnection == newConnection ? sub.handle : 0;
-    sub.handle = newConnection->backend()->updateSubscriber(handleToReuse, request.sourceId, request.topicId,
-                                                              request.rateMillihz);
+    sub.handle = newConnection->backend()->updateSubscriber(handleToReuse, request.sourceId,
+                                                            request.topicId, request.rateMillihz);
     sub.deviceId = request.deviceId;
 }
 
@@ -415,9 +423,10 @@ void MainWindow::updateTelemetryStatusLabel() {
     QStringList detail;
     for (const TopicSubscriptionState& state : states) {
         const QString rawLabel = QString("0x%1/0x%2")
-                                      .arg(state.sourceId, 8, 16, QChar('0'))
-                                      .arg(state.topicId, 4, 16, QChar('0'));
-        const QString resolvedName = topicNames.value(topicStatusKey(state.sourceId, state.topicId));
+                                     .arg(state.sourceId, 8, 16, QChar('0'))
+                                     .arg(state.topicId, 4, 16, QChar('0'));
+        const QString resolvedName =
+            topicNames.value(topicStatusKey(state.sourceId, state.topicId));
         const QString topicLabel = resolvedName.isEmpty() ? rawLabel : resolvedName;
         QString rate;
         if (state.effectiveRateMillihz != 0) {
@@ -429,7 +438,8 @@ void MainWindow::updateTelemetryStatusLabel() {
         }
         QString entry = topicLabel + ' ' + rate;
         if (state.rateLimited()) {
-            entry += QString(" (limited, asked %1)").arg(formatRateMillihz(state.requestedRateMillihz));
+            entry +=
+                QString(" (limited, asked %1)").arg(formatRateMillihz(state.requestedRateMillihz));
         }
         summary.append(entry);
 
@@ -500,9 +510,8 @@ void MainWindow::buildMenus() {
         action->setData(palette.id);
         group->addAction(action);
 
-        connect(action, &QAction::triggered, this, [id = palette.id]() {
-            ThemeManager::instance().setTheme(id);
-        });
+        connect(action, &QAction::triggered, this,
+                [id = palette.id]() { ThemeManager::instance().setTheme(id); });
     }
 
     auto* fontMenu = viewMenu->addMenu(tr("&Font"));
@@ -518,9 +527,8 @@ void MainWindow::buildMenus() {
         action->setData(font.id);
         fontGroup->addAction(action);
 
-        connect(action, &QAction::triggered, this, [id = font.id]() {
-            FontManager::instance().setFont(id);
-        });
+        connect(action, &QAction::triggered, this,
+                [id = font.id]() { FontManager::instance().setFont(id); });
     }
 
     // Restart-to-apply: switching languages does not attempt to live-
@@ -547,13 +555,16 @@ void MainWindow::buildMenus() {
 
             QMessageBox restartBox(this);
             restartBox.setWindowTitle(tr("Restart Required"));
-            restartBox.setText(tr("The application needs to restart to apply the new language. Restart now?"));
-            auto* restartNowButton = restartBox.addButton(tr("Restart Now"), QMessageBox::AcceptRole);
+            restartBox.setText(
+                tr("The application needs to restart to apply the new language. Restart now?"));
+            auto* restartNowButton =
+                restartBox.addButton(tr("Restart Now"), QMessageBox::AcceptRole);
             restartBox.addButton(tr("Later"), QMessageBox::RejectRole);
             restartBox.exec();
 
             if (restartBox.clickedButton() == restartNowButton) {
-                QProcess::startDetached(QCoreApplication::applicationFilePath(), QCoreApplication::arguments().mid(1));
+                QProcess::startDetached(QCoreApplication::applicationFilePath(),
+                                        QCoreApplication::arguments().mid(1));
                 QCoreApplication::quit();
             }
         });
@@ -592,19 +603,23 @@ Ribbon* MainWindow::buildRibbon() {
 
     m_bringToFrontAction = new QAction(tr("To Front"), this);
     m_bringToFrontAction->setEnabled(false);
-    connect(m_bringToFrontAction, &QAction::triggered, m_dashboardGrid, &DashboardGrid::bringSelectedToFront);
+    connect(m_bringToFrontAction, &QAction::triggered, m_dashboardGrid,
+            &DashboardGrid::bringSelectedToFront);
 
     m_bringForwardAction = new QAction(tr("Forward"), this);
     m_bringForwardAction->setEnabled(false);
-    connect(m_bringForwardAction, &QAction::triggered, m_dashboardGrid, &DashboardGrid::bringSelectedForward);
+    connect(m_bringForwardAction, &QAction::triggered, m_dashboardGrid,
+            &DashboardGrid::bringSelectedForward);
 
     m_sendBackwardAction = new QAction(tr("Backward"), this);
     m_sendBackwardAction->setEnabled(false);
-    connect(m_sendBackwardAction, &QAction::triggered, m_dashboardGrid, &DashboardGrid::sendSelectedBackward);
+    connect(m_sendBackwardAction, &QAction::triggered, m_dashboardGrid,
+            &DashboardGrid::sendSelectedBackward);
 
     m_sendToBackAction = new QAction(tr("To Back"), this);
     m_sendToBackAction->setEnabled(false);
-    connect(m_sendToBackAction, &QAction::triggered, m_dashboardGrid, &DashboardGrid::sendSelectedToBack);
+    connect(m_sendToBackAction, &QAction::triggered, m_dashboardGrid,
+            &DashboardGrid::sendSelectedToBack);
 
     m_groupAction = new QAction(tr("Group"), this);
     m_groupAction->setEnabled(false);
@@ -632,15 +647,18 @@ Ribbon* MainWindow::buildRibbon() {
     m_redoAction = m_undoGroup->createRedoAction(this, tr("Redo"));
     m_redoAction->setShortcut(QKeySequence::Redo);
 
-    connect(m_dashboardGrid, &DashboardGrid::selectionChanged, this, &MainWindow::onSelectionChanged);
-    connect(m_dashboardGrid->undoStack(), &QUndoStack::indexChanged, this, &MainWindow::refreshPropertiesPanel);
+    connect(m_dashboardGrid, &DashboardGrid::selectionChanged, this,
+            &MainWindow::onSelectionChanged);
+    connect(m_dashboardGrid->undoStack(), &QUndoStack::indexChanged, this,
+            &MainWindow::refreshPropertiesPanel);
     // The layers panel's row list needs to resync on anything that could add/
     // remove/rename/reorder an item -- itemsChanged() covers add/remove/type-
     // change/load, indexChanged() covers everything else that goes through
     // the undo stack (rename, z-order, and their own undo/redo), same
     // reasoning as the refreshPropertiesPanel hook right above.
     connect(m_dashboardGrid, &DashboardGrid::itemsChanged, this, &MainWindow::refreshLayersPanel);
-    connect(m_dashboardGrid->undoStack(), &QUndoStack::indexChanged, this, &MainWindow::refreshLayersPanel);
+    connect(m_dashboardGrid->undoStack(), &QUndoStack::indexChanged, this,
+            &MainWindow::refreshLayersPanel);
     // A config edit (or its undo/redo) can repoint a widget at another
     // source/topic or change its sample time, which changes what this client
     // must have subscribed -- every path that edits a config goes through the
@@ -651,11 +669,13 @@ Ribbon* MainWindow::buildRibbon() {
     // created -- topico 15's "varios assinantes por campo" wiring, covering
     // both a fresh Add Widget and a project load (DashboardGrid::createCell
     // is the single factory path for both, see dashboardgrid.cpp).
-    connect(m_dashboardGrid, &DashboardGrid::widgetCreated, this, &MainWindow::wireChartWidgetToTelemetry);
+    connect(m_dashboardGrid, &DashboardGrid::widgetCreated, this,
+            &MainWindow::wireChartWidgetToTelemetry);
     // The clipboard can change from a copySelected() call here, or from
     // another window/app entirely — either way, m_pasteAction's enabled
     // state needs to stay in sync with whether it's currently pasteable.
-    connect(QGuiApplication::clipboard(), &QClipboard::dataChanged, this, &MainWindow::updateSelectionActions);
+    connect(QGuiApplication::clipboard(), &QClipboard::dataChanged, this,
+            &MainWindow::updateSelectionActions);
 
     m_addDeviceAction = new QAction(tr("Add Device"), this);
     connect(m_addDeviceAction, &QAction::triggered, this, &MainWindow::onAddDevice);
@@ -673,7 +693,8 @@ Ribbon* MainWindow::buildRibbon() {
     runPage->setObjectName("ribbonPage");
     runPage->setFixedHeight(kRibbonPageHeight);
     auto* runLayout = new QHBoxLayout(runPage);
-    runLayout->setContentsMargins(kRibbonPageMarginH, kRibbonPageMarginV, kRibbonPageMarginH, kRibbonPageMarginV);
+    runLayout->setContentsMargins(kRibbonPageMarginH, kRibbonPageMarginV, kRibbonPageMarginH,
+                                  kRibbonPageMarginV);
     runLayout->setSpacing(kRibbonGroupSpacing);
 
     // Port/baud/connect used to live here as one global bar (see git history
@@ -752,25 +773,33 @@ Ribbon* MainWindow::buildRibbon() {
     configurePage->setObjectName("ribbonPage");
     configurePage->setFixedHeight(kRibbonPageHeight);
     auto* configureLayout = new QHBoxLayout(configurePage);
-    configureLayout->setContentsMargins(kRibbonPageMarginH, kRibbonPageMarginV, kRibbonPageMarginH, kRibbonPageMarginV);
+    configureLayout->setContentsMargins(kRibbonPageMarginH, kRibbonPageMarginV, kRibbonPageMarginH,
+                                        kRibbonPageMarginV);
     configureLayout->setSpacing(kRibbonGroupSpacing);
 
-    configureLayout->addWidget(Ribbon::createButtonGroup(configurePage, {m_addWidgetAction, m_removeAction}));
+    configureLayout->addWidget(
+        Ribbon::createButtonGroup(configurePage, {m_addWidgetAction, m_removeAction}));
     configureLayout->addWidget(Ribbon::createButtonGroup(
-        configurePage, {m_bringToFrontAction, m_bringForwardAction, m_sendBackwardAction, m_sendToBackAction}));
-    configureLayout->addWidget(Ribbon::createButtonGroup(configurePage, {m_copyAction, m_pasteAction}));
-    configureLayout->addWidget(Ribbon::createButtonGroup(configurePage, {m_groupAction, m_ungroupAction}));
-    configureLayout->addWidget(Ribbon::createButtonGroup(configurePage, {m_undoAction, m_redoAction}));
+        configurePage,
+        {m_bringToFrontAction, m_bringForwardAction, m_sendBackwardAction, m_sendToBackAction}));
+    configureLayout->addWidget(
+        Ribbon::createButtonGroup(configurePage, {m_copyAction, m_pasteAction}));
+    configureLayout->addWidget(
+        Ribbon::createButtonGroup(configurePage, {m_groupAction, m_ungroupAction}));
+    configureLayout->addWidget(
+        Ribbon::createButtonGroup(configurePage, {m_undoAction, m_redoAction}));
     configureLayout->addStretch();
 
     auto* devicesPage = new QWidget(this);
     devicesPage->setObjectName("ribbonPage");
     devicesPage->setFixedHeight(kRibbonPageHeight);
     auto* devicesLayout = new QHBoxLayout(devicesPage);
-    devicesLayout->setContentsMargins(kRibbonPageMarginH, kRibbonPageMarginV, kRibbonPageMarginH, kRibbonPageMarginV);
+    devicesLayout->setContentsMargins(kRibbonPageMarginH, kRibbonPageMarginV, kRibbonPageMarginH,
+                                      kRibbonPageMarginV);
     devicesLayout->setSpacing(kRibbonGroupSpacing);
 
-    devicesLayout->addWidget(Ribbon::createButtonGroup(devicesPage, {m_addDeviceAction, m_removeDeviceAction}));
+    devicesLayout->addWidget(
+        Ribbon::createButtonGroup(devicesPage, {m_addDeviceAction, m_removeDeviceAction}));
     devicesLayout->addStretch();
 
     auto* ribbon = new Ribbon(this);
@@ -791,7 +820,8 @@ void MainWindow::buildWorkspaceSwitcher() {
     // ribbon's tab row is hidden while fullscreen, which this widget used
     // to live inside via Ribbon::setCornerWidget().
     m_workspaceSwitcher = new WorkspaceSwitcher(this);
-    connect(m_workspaceSwitcher, &WorkspaceSwitcher::workspaceSelected, this, &MainWindow::onWorkspaceSelected);
+    connect(m_workspaceSwitcher, &WorkspaceSwitcher::workspaceSelected, this,
+            &MainWindow::onWorkspaceSelected);
     connect(m_workspaceSwitcher, &WorkspaceSwitcher::workspaceDeleteRequested, this,
             &MainWindow::onWorkspaceDeleteRequested);
     connect(m_workspaceSwitcher, &WorkspaceSwitcher::newWorkspaceRequested, this,
@@ -849,8 +879,8 @@ void MainWindow::onWorkspaceSelected(const QString& id) {
 
 void MainWindow::onNewWorkspaceRequested() {
     bool ok = false;
-    const QString name = QInputDialog::getText(this, tr("New Workspace"), tr("Name:"), QLineEdit::Normal,
-                                                 tr("Workspace"), &ok);
+    const QString name = QInputDialog::getText(this, tr("New Workspace"), tr("Name:"),
+                                               QLineEdit::Normal, tr("Workspace"), &ok);
     if (!ok || name.trimmed().isEmpty()) {
         return;
     }
@@ -874,8 +904,9 @@ void MainWindow::onWorkspaceDeleteRequested(const QString& id) {
 
     const QString name = workspaces.nameFor(id);
     if (QMessageBox::question(this, tr("Delete Workspace"),
-                               tr("Delete workspace \"%1\"? This cannot be undone.").arg(name),
-                               QMessageBox::Yes | QMessageBox::No, QMessageBox::No) != QMessageBox::Yes) {
+                              tr("Delete workspace \"%1\"? This cannot be undone.").arg(name),
+                              QMessageBox::Yes | QMessageBox::No,
+                              QMessageBox::No) != QMessageBox::Yes) {
         return;
     }
 
@@ -909,10 +940,12 @@ void MainWindow::buildPropertiesPanel() {
             &MainWindow::onPanelTypeChangeRequested);
     connect(m_propertiesPanel, &PropertiesPanel::nameChangeRequested, this,
             &MainWindow::onPanelNameChangeRequested);
-    connect(m_propertiesPanel, &PropertiesPanel::keyChangeRequested, this, &MainWindow::onPanelKeyChangeRequested);
+    connect(m_propertiesPanel, &PropertiesPanel::keyChangeRequested, this,
+            &MainWindow::onPanelKeyChangeRequested);
     connect(m_propertiesPanel, &PropertiesPanel::configChangeRequested, this,
             &MainWindow::onPanelConfigChangeRequested);
-    connect(m_propertiesPanel, &PropertiesPanel::pinnedChanged, this, &MainWindow::updatePanelVisibility);
+    connect(m_propertiesPanel, &PropertiesPanel::pinnedChanged, this,
+            &MainWindow::updatePanelVisibility);
 
     // Only relevant while editing the layout — matches m_addWidgetAction,
     // which also starts disabled until the Layout tab is active (see
@@ -925,21 +958,24 @@ void MainWindow::updateRibbonIcons() {
     m_addWidgetAction->setIcon(makePlusIcon(palette.textPrimary));
     m_addWidgetAction->setToolTip(tr("Add widget"));
     m_removeAction->setIcon(makeMinusIcon(palette.danger));
-    m_removeAction->setToolTip(tr("Remove selected widget (%1)")
-                                    .arg(m_removeAction->shortcut().toString(QKeySequence::NativeText)));
+    m_removeAction->setToolTip(
+        tr("Remove selected widget (%1)")
+            .arg(m_removeAction->shortcut().toString(QKeySequence::NativeText)));
     m_addDeviceAction->setIcon(makePlusIcon(palette.textPrimary));
     m_addDeviceAction->setToolTip(tr("Add device"));
     m_removeDeviceAction->setIcon(makeMinusIcon(palette.danger));
-    m_removeDeviceAction->setToolTip(tr("Remove selected device (%1)")
-                                          .arg(m_removeDeviceAction->shortcut().toString(QKeySequence::NativeText)));
+    m_removeDeviceAction->setToolTip(
+        tr("Remove selected device (%1)")
+            .arg(m_removeDeviceAction->shortcut().toString(QKeySequence::NativeText)));
     m_openLogFileAction->setIcon(makeFolderIcon(palette.textPrimary));
     m_openLogFileAction->setToolTip(tr("Open a .blog log file"));
     m_copyAction->setIcon(makeCopyIcon(palette.textPrimary));
-    m_copyAction->setToolTip(
-        tr("Copy selected widget (%1)").arg(m_copyAction->shortcut().toString(QKeySequence::NativeText)));
+    m_copyAction->setToolTip(tr("Copy selected widget (%1)")
+                                 .arg(m_copyAction->shortcut().toString(QKeySequence::NativeText)));
     m_pasteAction->setIcon(makePasteIcon(palette.textPrimary));
     m_pasteAction->setToolTip(
-        tr("Paste as a new widget (%1)").arg(m_pasteAction->shortcut().toString(QKeySequence::NativeText)));
+        tr("Paste as a new widget (%1)")
+            .arg(m_pasteAction->shortcut().toString(QKeySequence::NativeText)));
     m_bringToFrontAction->setIcon(makeBringToFrontIcon(palette.textPrimary));
     m_bringToFrontAction->setToolTip(tr("Bring to front"));
     m_bringForwardAction->setIcon(makeBringForwardIcon(palette.textPrimary));
@@ -958,7 +994,8 @@ void MainWindow::updateRibbonIcons() {
     // button via QAction::shortcut(), it's just not spelled out in the text.
     m_undoAction->setIcon(makeArrowIcon(palette.textPrimary, /*pointingLeft=*/true));
     m_redoAction->setIcon(makeArrowIcon(palette.textPrimary, /*pointingLeft=*/false));
-    m_fullscreenButton->setIcon(makeFullscreenIcon(palette.textPrimary, m_fullscreenButton->isChecked()));
+    m_fullscreenButton->setIcon(
+        makeFullscreenIcon(palette.textPrimary, m_fullscreenButton->isChecked()));
     if (m_workspaceSwitcher) {
         m_workspaceSwitcher->updateIcons(palette.textPrimary);
     }
@@ -980,7 +1017,8 @@ void MainWindow::onRibbonTabChanged(int index) {
     // not either stack directly -- flip which one is "active" here so they
     // always undo/redo whatever the visible tab actually shows. Run and
     // Layout both display the dashboard, so both fall through to its stack.
-    m_undoGroup->setActiveStack(m_devicesTabActive ? m_devicesGrid->undoStack() : m_dashboardGrid->undoStack());
+    m_undoGroup->setActiveStack(m_devicesTabActive ? m_devicesGrid->undoStack()
+                                                   : m_dashboardGrid->undoStack());
     updatePanelVisibility();
     updateSelectionActions();
     updateDeviceSelectionActions();
@@ -1033,7 +1071,8 @@ void MainWindow::updatePanelVisibility() {
         return;
     }
     const bool hasSelection = m_dashboardGrid->selectedCount() > 0;
-    const bool showProperties = m_configureTabActive && (hasSelection || m_propertiesPanel->isPinned());
+    const bool showProperties =
+        m_configureTabActive && (hasSelection || m_propertiesPanel->isPinned());
     const bool showLayers = m_configureTabActive && (hasSelection || m_layersPanel->isPinned());
     m_propertiesPanel->setVisible(showProperties);
     m_layersPanel->setVisible(showLayers);
@@ -1062,7 +1101,8 @@ void MainWindow::positionOverlayPanels() {
 
 void MainWindow::updateSelectionActions() {
     const bool hasAnySelection = m_configureTabActive && m_dashboardGrid->selectedCount() > 0;
-    const bool hasSingleSelection = m_configureTabActive && !m_dashboardGrid->selectedItemId().isEmpty();
+    const bool hasSingleSelection =
+        m_configureTabActive && !m_dashboardGrid->selectedItemId().isEmpty();
     m_removeAction->setEnabled(hasAnySelection);
     m_copyAction->setEnabled(hasSingleSelection);
     m_pasteAction->setEnabled(m_configureTabActive && m_dashboardGrid->canPaste());
@@ -1077,8 +1117,9 @@ void MainWindow::updateSelectionActions() {
 void MainWindow::refreshPropertiesPanel() {
     const bool hasSelection = !m_dashboardGrid->selectedItemId().isEmpty();
     m_propertiesPanel->setSelection(hasSelection, m_dashboardGrid->selectedItemTypeId(),
-                                     m_dashboardGrid->selectedItemDisplayName(), m_dashboardGrid->selectedItemKey(),
-                                     m_dashboardGrid->selectedItemConfig());
+                                    m_dashboardGrid->selectedItemDisplayName(),
+                                    m_dashboardGrid->selectedItemKey(),
+                                    m_dashboardGrid->selectedItemConfig());
 }
 
 void MainWindow::refreshLayersPanel() {
@@ -1229,7 +1270,7 @@ QVector<HubPeer> MainWindow::hubPeersFor(const QString& parentDeviceId) {
             watch.sourceId = topic.sourceId;
             watch.topicId = topic.topicId;
             watch.handle = connection->backend()->updateSubscriber(0, topic.sourceId, topic.topicId,
-                                                                    kHubPeersRequestedRateMillihz);
+                                                                   kHubPeersRequestedRateMillihz);
             break;
         }
     }
@@ -1241,7 +1282,7 @@ QVector<HubPeer> MainWindow::hubPeersFor(const QString& parentDeviceId) {
 }
 
 void MainWindow::onHubPeerFieldSample(const QString& deviceId, const TelemetryFieldBinding& binding,
-                                       quint64 /*timestampUs*/, double value) {
+                                      quint64 /*timestampUs*/, double value) {
     // Every device's Backend feeds this, so the first job is to drop the
     // overwhelming majority of samples: anything from a device with no
     // hub.peers watch, and anything from another topic on a device that has
@@ -1249,8 +1290,8 @@ void MainWindow::onHubPeerFieldSample(const QString& deviceId, const TelemetryFi
     // hub, which is why hooking this unconditionally in
     // createDeviceConnection() is affordable.
     const auto watchIt = m_hubPeerWatches.find(deviceId);
-    if (watchIt == m_hubPeerWatches.end() || watchIt->handle == 0 || binding.sourceId != watchIt->sourceId ||
-        binding.topicId != watchIt->topicId) {
+    if (watchIt == m_hubPeerWatches.end() || watchIt->handle == 0 ||
+        binding.sourceId != watchIt->sourceId || binding.topicId != watchIt->topicId) {
         return;
     }
     watchIt->accumulator.append(binding.fieldId, binding.elementIndex, value);
@@ -1271,8 +1312,8 @@ void MainWindow::refreshDeviceStatusLabel() {
     for (const Device& device : devices) {
         const QColor dotColor = device.connected ? palette.success : palette.danger;
         const QString name = device.name.isEmpty() ? tr("(unnamed)") : device.name;
-        parts.append(
-            QString("<span style='color:%1;'>&#9679;</span> %2").arg(dotColor.name(), name.toHtmlEscaped()));
+        parts.append(QString("<span style='color:%1;'>&#9679;</span> %2")
+                         .arg(dotColor.name(), name.toHtmlEscaped()));
     }
     m_deviceStatusLabel->setText(parts.join("&nbsp;&nbsp;&nbsp;&nbsp;"));
 }
@@ -1292,7 +1333,8 @@ void MainWindow::applyDeviceTarget(DeviceConnection* connection, const Device& d
                                hubChannelSourceId(device.id), device.peerSourceId);
         return;
     }
-    const QString target = device.transportType == TransportType::UsbHid ? device.usbPath : device.portName;
+    const QString target =
+        device.transportType == TransportType::UsbHid ? device.usbPath : device.portName;
     connection->connectTo(target, device.baudRate);
 }
 
@@ -1311,8 +1353,9 @@ void MainWindow::reattachHubChildren() {
 
 DeviceConnection* MainWindow::createDeviceConnection(const Device& device) {
     auto* connection = new DeviceConnection(device.commType, device.transportType, this);
-    connect(connection, &DeviceConnection::connectionStateChanged, this,
-            [this, id = device.id](bool connected) { onDeviceConnectionStateChanged(id, connected); });
+    connect(
+        connection, &DeviceConnection::connectionStateChanged, this,
+        [this, id = device.id](bool connected) { onDeviceConnectionStateChanged(id, connected); });
 
     // Everything that gives this device's transport bytes meaning lives
     // behind the Backend interface (backend/backend.h) -- concretely a
@@ -1320,8 +1363,9 @@ DeviceConnection* MainWindow::createDeviceConnection(const Device& device) {
     // once per device, the same way MainWindow used to hook the app's one
     // Backend before the multi-device refactor.
     Backend* backend = connection->backend();
-    connect(backend, &Backend::statusMessage, this,
-            [this](const QString& text, int timeoutMs) { statusBar()->showMessage(text, timeoutMs); });
+    connect(backend, &Backend::statusMessage, this, [this](const QString& text, int timeoutMs) {
+        statusBar()->showMessage(text, timeoutMs);
+    });
     connect(backend, &Backend::subscriptionsChanged, this, &MainWindow::updateTelemetryStatusLabel);
     connect(backend, &Backend::statusReceived, this, &MainWindow::updateTelemetryStatusLabel);
     // A manifest exchange completing/updating is when catalogTopics() first
@@ -1353,7 +1397,8 @@ DeviceConnection* MainWindow::createDeviceConnection(const Device& device) {
     // the *robot's*, which for a hub child is not this device's id), so the
     // lambda supplies it.
     connect(backend, &Backend::fieldSample, this,
-            [this, id = device.id](const TelemetryFieldBinding& binding, quint64 timestampUs, double value) {
+            [this, id = device.id](const TelemetryFieldBinding& binding, quint64 timestampUs,
+                                   double value) {
                 onHubPeerFieldSample(id, binding, timestampUs, value);
             });
     return connection;
@@ -1483,7 +1528,8 @@ void MainWindow::onPanelNameChangeRequested(const QString& name) {
 
 void MainWindow::onPanelKeyChangeRequested(const QString& key) {
     if (!m_dashboardGrid->setSelectedKey(key)) {
-        statusBar()->showMessage(tr("Key \"%1\" is already used by another widget.").arg(key), 4000);
+        statusBar()->showMessage(tr("Key \"%1\" is already used by another widget.").arg(key),
+                                 4000);
     }
     // Resyncs the field either way: on success to the committed value (a
     // no-op visually), on rejection to snap the text back to what's
@@ -1497,8 +1543,9 @@ void MainWindow::onPanelConfigChangeRequested(const QJsonObject& config) {
 
 void MainWindow::onNewProject() {
     if (QMessageBox::question(this, tr("New Project"),
-                               tr("Discard the current dashboard and start a new, empty project?"),
-                               QMessageBox::Yes | QMessageBox::No, QMessageBox::No) != QMessageBox::Yes) {
+                              tr("Discard the current dashboard and start a new, empty project?"),
+                              QMessageBox::Yes | QMessageBox::No,
+                              QMessageBox::No) != QMessageBox::Yes) {
         return;
     }
 
@@ -1515,7 +1562,8 @@ void MainWindow::onNewProject() {
 }
 
 void MainWindow::onSaveProject() {
-    WorkspaceManager::instance().setDashboardFor(WorkspaceManager::instance().activeId(), m_dashboardGrid->toJson());
+    WorkspaceManager::instance().setDashboardFor(WorkspaceManager::instance().activeId(),
+                                                 m_dashboardGrid->toJson());
     ProjectStore::instance().setSection("workspaces", WorkspaceManager::instance().toJson());
     ProjectStore::instance().setSection("devices", m_devicesGrid->toJson());
 
@@ -1533,11 +1581,13 @@ void MainWindow::onSaveProject() {
 }
 
 void MainWindow::onSaveProjectAs() {
-    WorkspaceManager::instance().setDashboardFor(WorkspaceManager::instance().activeId(), m_dashboardGrid->toJson());
+    WorkspaceManager::instance().setDashboardFor(WorkspaceManager::instance().activeId(),
+                                                 m_dashboardGrid->toJson());
     ProjectStore::instance().setSection("workspaces", WorkspaceManager::instance().toJson());
     ProjectStore::instance().setSection("devices", m_devicesGrid->toJson());
 
-    const QString path = QFileDialog::getSaveFileName(this, tr("Save Project As"), QString(), kProjectFileFilter);
+    const QString path =
+        QFileDialog::getSaveFileName(this, tr("Save Project As"), QString(), kProjectFileFilter);
     if (path.isEmpty()) {
         return;
     }
@@ -1550,7 +1600,8 @@ void MainWindow::onSaveProjectAs() {
 }
 
 void MainWindow::onOpenProject() {
-    const QString path = QFileDialog::getOpenFileName(this, tr("Open Project"), QString(), kProjectFileFilter);
+    const QString path =
+        QFileDialog::getOpenFileName(this, tr("Open Project"), QString(), kProjectFileFilter);
     if (path.isEmpty()) {
         return;
     }
@@ -1576,7 +1627,8 @@ void MainWindow::onOpenLogFile() {
     page->setObjectName("ribbonPage");
     page->setFixedHeight(kRibbonPageHeight);
 
-    const int index = m_ribbon->addTab(QFileInfo(path).fileName(), page, /*enabled=*/true, path, /*closable=*/true);
+    const int index = m_ribbon->addTab(QFileInfo(path).fileName(), page, /*enabled=*/true, path,
+                                       /*closable=*/true);
     m_openLogTabs.append({page, viewer});
     // Triggers Ribbon::currentTabChanged -> onRibbonTabChanged, which is
     // what actually swaps m_contentStack over to `viewer` (via the lookup
@@ -1638,12 +1690,15 @@ void MainWindow::onOpenOtaTab() {
     page->setObjectName("ribbonPage");
     page->setFixedHeight(kRibbonPageHeight);
     auto* pageLayout = new QHBoxLayout(page);
-    pageLayout->setContentsMargins(kRibbonPageMarginH, kRibbonPageMarginV, kRibbonPageMarginH, kRibbonPageMarginV);
+    pageLayout->setContentsMargins(kRibbonPageMarginH, kRibbonPageMarginV, kRibbonPageMarginH,
+                                   kRibbonPageMarginV);
     pageLayout->setSpacing(kRibbonGroupSpacing);
-    pageLayout->addWidget(Ribbon::createButtonGroup(page, {m_addDeviceAction, m_removeDeviceAction}));
+    pageLayout->addWidget(
+        Ribbon::createButtonGroup(page, {m_addDeviceAction, m_removeDeviceAction}));
     pageLayout->addStretch();
 
-    const int index = m_ribbon->addTab(tr("OTA Update"), page, /*enabled=*/true, QString(), /*closable=*/true);
+    const int index =
+        m_ribbon->addTab(tr("OTA Update"), page, /*enabled=*/true, QString(), /*closable=*/true);
     m_otaTabPage = page;
     m_ribbon->setCurrentIndex(index);
 }
@@ -1659,7 +1714,8 @@ void MainWindow::onOtaTabCloseRequested(int index) {
     m_otaTabPage = nullptr;
 }
 
-void MainWindow::onOtaPasswordCacheChanged(const QString& deviceId, const QString& password, bool cache) {
+void MainWindow::onOtaPasswordCacheChanged(const QString& deviceId, const QString& password,
+                                           bool cache) {
     const QVector<Device> devices = m_devicesGrid->devices();
     for (const Device& existing : devices) {
         if (existing.id != deviceId) {
@@ -1691,7 +1747,7 @@ void MainWindow::openRecentFile(const QString& path) {
         // "dashboard" section into a lone Default workspace.
         WorkspaceManager::instance().reset();
         WorkspaceManager::instance().setDashboardFor(WorkspaceManager::instance().activeId(),
-                                                       ProjectStore::instance().section("dashboard"));
+                                                     ProjectStore::instance().section("dashboard"));
     } else {
         WorkspaceManager::instance().fromJson(workspacesSection);
     }
@@ -1705,7 +1761,8 @@ void MainWindow::openRecentFile(const QString& path) {
     // fromJson(QJsonObject()) on an empty section just clears the list.
     m_devicesGrid->fromJson(ProjectStore::instance().section("devices"));
     m_devicesGrid->undoStack()->clear();
-    m_dashboardGrid->fromJson(WorkspaceManager::instance().dashboardFor(WorkspaceManager::instance().activeId()));
+    m_dashboardGrid->fromJson(
+        WorkspaceManager::instance().dashboardFor(WorkspaceManager::instance().activeId()));
     m_dashboardGrid->undoStack()->clear();
     refreshPropertiesPanel();
     refreshLayersPanel();
@@ -1836,8 +1893,9 @@ void MainWindow::onFullscreenToggled(bool checked) {
         GetWindowPlacement(hwnd, &placement);
         m_wasMaximized = placement.showCmd == SW_SHOWMAXIMIZED;
         const RECT& normalRect = placement.rcNormalPosition;
-        m_preFullscreenGeometry = QRect(normalRect.left, normalRect.top, normalRect.right - normalRect.left,
-                                         normalRect.bottom - normalRect.top);
+        m_preFullscreenGeometry =
+            QRect(normalRect.left, normalRect.top, normalRect.right - normalRect.left,
+                  normalRect.bottom - normalRect.top);
 
         // Strip the frame and cover whichever monitor the window is
         // currently on, in one atomic SetWindowPos. MonitorFromWindow()/
@@ -1880,7 +1938,8 @@ void MainWindow::onFullscreenToggled(bool checked) {
         menuBar()->hide();
         m_ribbon->setTabBarVisible(false);
         SendMessageW(hwnd, WM_SETREDRAW, TRUE, 0);
-        RedrawWindow(hwnd, nullptr, nullptr, RDW_INVALIDATE | RDW_ALLCHILDREN | RDW_ERASE | RDW_UPDATENOW);
+        RedrawWindow(hwnd, nullptr, nullptr,
+                     RDW_INVALIDATE | RDW_ALLCHILDREN | RDW_ERASE | RDW_UPDATENOW);
         setUpdatesEnabled(true);
         updateRibbonIcons();
         return;
@@ -1908,7 +1967,8 @@ void MainWindow::onFullscreenToggled(bool checked) {
     // extending under the taskbar. SWP_NOMOVE/SWP_NOSIZE keep this call from
     // moving/resizing anything itself - it exists purely to make the style
     // change above take effect before SetWindowPlacement runs.
-    SetWindowPos(hwnd, nullptr, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
+    SetWindowPos(hwnd, nullptr, 0, 0, 0, 0,
+                 SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
 
     // Both the maximized and plain-restore cases go through
     // SetWindowPlacement rather than a plain SetWindowPos: rcNormalPosition
@@ -1937,9 +1997,10 @@ void MainWindow::onFullscreenToggled(bool checked) {
     WINDOWPLACEMENT placement{};
     placement.length = sizeof(WINDOWPLACEMENT);
     placement.showCmd = m_wasMaximized ? SW_SHOWMAXIMIZED : SW_SHOWNORMAL;
-    placement.rcNormalPosition = RECT{m_preFullscreenGeometry.left(), m_preFullscreenGeometry.top(),
-                                       m_preFullscreenGeometry.left() + m_preFullscreenGeometry.width(),
-                                       m_preFullscreenGeometry.top() + m_preFullscreenGeometry.height()};
+    placement.rcNormalPosition =
+        RECT{m_preFullscreenGeometry.left(), m_preFullscreenGeometry.top(),
+             m_preFullscreenGeometry.left() + m_preFullscreenGeometry.width(),
+             m_preFullscreenGeometry.top() + m_preFullscreenGeometry.height()};
 
     ANIMATIONINFO animationInfo{};
     animationInfo.cbSize = sizeof(animationInfo);
@@ -1967,10 +2028,11 @@ void MainWindow::onFullscreenToggled(bool checked) {
     m_ribbon->setTabBarVisible(true);
 #ifdef Q_OS_WIN
     SendMessageW(hwnd, WM_SETREDRAW, TRUE, 0);
-    RedrawWindow(hwnd, nullptr, nullptr, RDW_INVALIDATE | RDW_ALLCHILDREN | RDW_ERASE | RDW_UPDATENOW);
+    RedrawWindow(hwnd, nullptr, nullptr,
+                 RDW_INVALIDATE | RDW_ALLCHILDREN | RDW_ERASE | RDW_UPDATENOW);
 #endif
     setUpdatesEnabled(true);
     updateRibbonIcons();
 }
 
-} // namespace traceview
+}  // namespace traceview

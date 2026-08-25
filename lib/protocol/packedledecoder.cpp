@@ -66,8 +66,8 @@ bool isSignedType(TelemetryFieldType type) {
 // for bool/enum, section 6's non-finite check for floats). Returns false
 // on truncation or a non-finite float; `offset` is only advanced when this
 // returns true.
-bool decodeElements(const TelemetryFieldSchema& field, const QByteArray& body, int* offset, int count,
-                     QVector<double>* outElements) {
+bool decodeElements(const TelemetryFieldSchema& field, const QByteArray& body, int* offset,
+                    int count, QVector<double>* outElements) {
     const int width = telemetryFieldTypeWidth(field.type);
     if (width <= 0) {
         return false;
@@ -118,7 +118,8 @@ bool decodeElements(const TelemetryFieldSchema& field, const QByteArray& body, i
             }
             default:
                 if (isIntegerType(field.type)) {
-                    const double rawValue = isSignedType(field.type) ? double(signExtend(raw, width)) : double(raw);
+                    const double rawValue =
+                        isSignedType(field.type) ? double(signExtend(raw, width)) : double(raw);
                     value = rawValue * field.scale + field.offset;
                 } else {
                     return false;  // unreachable for a well-formed schema
@@ -134,7 +135,7 @@ bool decodeElements(const TelemetryFieldSchema& field, const QByteArray& body, i
 }  // namespace
 
 bool decodePackedLe(const TelemetryTopicSchema& schema, const QByteArray& body,
-                     QHash<quint16, TelemetryFieldValue>* outValues) {
+                    QHash<quint16, TelemetryFieldValue>* outValues) {
     if (outValues == nullptr) {
         return false;
     }
@@ -145,7 +146,9 @@ bool decodePackedLe(const TelemetryTopicSchema& schema, const QByteArray& body,
         orderedFields.append(&field);
     }
     std::stable_sort(orderedFields.begin(), orderedFields.end(),
-                      [](const TelemetryFieldSchema* a, const TelemetryFieldSchema* b) { return a->order < b->order; });
+                     [](const TelemetryFieldSchema* a, const TelemetryFieldSchema* b) {
+                         return a->order < b->order;
+                     });
 
     int nullableCount = 0;
     for (const TelemetryFieldSchema* field : orderedFields) {

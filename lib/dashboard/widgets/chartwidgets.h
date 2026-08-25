@@ -39,17 +39,29 @@ public:
 
     void setConfig(const QJsonObject& config) override;
 
-    bool wantsHeaderControls() const override { return true; }
-    bool isPaused() const override { return m_paused; }
+    bool wantsHeaderControls() const override {
+        return true;
+    }
+    bool isPaused() const override {
+        return m_paused;
+    }
     void setPaused(bool paused) override;
     void clearChartData() override;
-    bool showsLastValueRow() const override { return m_showLastValueRow; }
+    bool showsLastValueRow() const override {
+        return m_showLastValueRow;
+    }
     void setShowsLastValueRow(bool show) override;
-    bool showsGridPointMarkers() const override { return m_showGridPointMarkers; }
+    bool showsGridPointMarkers() const override {
+        return m_showGridPointMarkers;
+    }
     void setShowsGridPointMarkers(bool show) override;
-    bool showsHoverCrosshair() const override { return m_showHoverCrosshair; }
+    bool showsHoverCrosshair() const override {
+        return m_showHoverCrosshair;
+    }
     void setShowsHoverCrosshair(bool show) override;
-    QString lineInterpolation() const override { return chartLineInterpolationId(m_lineInterpolation); }
+    QString lineInterpolation() const override {
+        return chartLineInterpolationId(m_lineInterpolation);
+    }
     void setLineInterpolation(const QString& id) override;
 
     // Appends one decoded (timestampUs, value) pair to every series bound to
@@ -64,13 +76,16 @@ public:
     // sourceId/topicId, in which case it forwards to appendFieldSample()
     // above. Not a Q_SLOT (ChartWidgetBase has no Q_OBJECT of its own) but
     // still connectable via the functor-based QObject::connect overload.
-    void onFieldSample(const traceview::TelemetryFieldBinding& binding, quint64 timestampUs, double value);
+    void onFieldSample(const traceview::TelemetryFieldBinding& binding, quint64 timestampUs,
+                       double value);
 
     // The parsed config this widget is currently rendering. Read by
     // MainWindow to derive the wire-level SUBSCRIBE this widget implies
     // (topico 17): which (sourceId, topicId) it consumes and how fast it
     // wants samples.
-    const ChartConfig& config() const { return m_config; }
+    const ChartConfig& config() const {
+        return m_config;
+    }
 
     // Caps how often appendFieldSample() triggers an actual repaint via
     // scheduleRepaint() (chartwidgets.cpp), independent of how fast samples
@@ -81,7 +96,9 @@ public:
     // DebugChartsWindow's stress-mode toggle (mainwindow.cpp's Debug menu)
     // to exercise the paint code at its real, unthrottled ceiling -- nothing
     // in production code calls this.
-    void setRepaintIntervalMs(int ms) { m_repaintIntervalMs = ms; }
+    void setRepaintIntervalMs(int ms) {
+        m_repaintIntervalMs = ms;
+    }
 
 protected:
     void mouseMoveEvent(QMouseEvent* event) override;
@@ -139,7 +156,9 @@ class DummyLineChartWidget : public ChartWidgetBase {
 public:
     explicit DummyLineChartWidget(QWidget* parent = nullptr);
 
-    bool hasChartOptionsMenu() const override { return true; }
+    bool hasChartOptionsMenu() const override {
+        return true;
+    }
 
 protected:
     void paintEvent(QPaintEvent* event) override;
@@ -171,9 +190,15 @@ public:
     // gear stays inert (hasChartOptionsMenu() defaults to false, same as
     // DummyBarChartWidget): a gauge has no per-series line/grid/hover
     // options for it to open.
-    bool wantsHeaderControls() const override { return true; }
-    bool isPaused() const override { return m_paused; }
-    void setPaused(bool paused) override { m_paused = paused; }
+    bool wantsHeaderControls() const override {
+        return true;
+    }
+    bool isPaused() const override {
+        return m_paused;
+    }
+    void setPaused(bool paused) override {
+        m_paused = paused;
+    }
     // Resets every ring to "no value yet" ("--") -- a gauge has no history
     // to clear, so this is what the header's clear button does here instead.
     void clearChartData() override;
@@ -188,15 +213,20 @@ public:
 
     // See ChartWidgetBase::onFieldSample() above -- same role, filtered by
     // GaugeConfig's sourceId/topicId instead of ChartConfig's.
-    void onFieldSample(const traceview::TelemetryFieldBinding& binding, quint64 timestampUs, double value);
+    void onFieldSample(const traceview::TelemetryFieldBinding& binding, quint64 timestampUs,
+                       double value);
 
     // See ChartWidgetBase::config() -- same role for a gauge's own config.
-    const GaugeConfig& config() const { return m_config; }
+    const GaugeConfig& config() const {
+        return m_config;
+    }
 
     // See ChartWidgetBase::setRepaintIntervalMs() above -- same role, this
     // class keeps its own throttle state instead of sharing ChartWidgetBase's
     // since it doesn't derive from it.
-    void setRepaintIntervalMs(int ms) { m_repaintIntervalMs = ms; }
+    void setRepaintIntervalMs(int ms) {
+        m_repaintIntervalMs = ms;
+    }
 
 protected:
     void paintEvent(QPaintEvent* event) override;

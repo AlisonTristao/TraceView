@@ -44,7 +44,9 @@ public:
     // array is not one this can decode, and a peer row with no source_id is
     // exactly what must never reach Device::peerSourceId.
     bool resolve(const QHash<quint16, QString>& fieldIdToName);
-    bool isResolved() const { return !m_columnByFieldId.isEmpty(); }
+    bool isResolved() const {
+        return !m_columnByFieldId.isEmpty();
+    }
 
     // One TelemetryFieldRouter emission. Ignores a field id that isn't part
     // of this topic's schema.
@@ -59,8 +61,8 @@ public:
     void clearSamples();
 
 private:
-    QHash<quint16, int> m_columnByFieldId;   // wire field id -> index into m_columns
-    QVector<QVector<double>> m_columns;      // one per fieldNames() entry
+    QHash<quint16, int> m_columnByFieldId;  // wire field id -> index into m_columns
+    QVector<QVector<double>> m_columns;     // one per fieldNames() entry
 };
 
 }  // namespace traceview

@@ -1,7 +1,5 @@
 #include <QtTest>
-
 #include <btp/fragmentation.hpp>
-
 #include <vector>
 
 #include "protocol/btpsession.h"
@@ -19,8 +17,8 @@ namespace {
 QByteArray buildSerialPacket(const btp::Frame& frame) {
     std::vector<std::uint8_t> encoded(btp::kSerialMaxFrameSize);
     std::size_t frameBytes = 0;
-    const btp::Error encodeError =
-        btp::encode(frame, btp::TransportProfile::Serial, encoded.data(), encoded.size(), &frameBytes);
+    const btp::Error encodeError = btp::encode(frame, btp::TransportProfile::Serial, encoded.data(),
+                                               encoded.size(), &frameBytes);
     Q_ASSERT(encodeError == btp::Error::Ok);
     Q_UNUSED(encodeError);
 
@@ -77,8 +75,9 @@ void TestBtpSession::decodesSingleFrameWithEmbeddedZeroPayload() {
     // BTP_V1.md section 10.2 example payload, containing 0x00, LF and CR.
     const QByteArray payload("\x00\x0A\x0D\xFF", 4);
     btp::Header header = basicHeader();
-    const btp::Frame frame{header, {reinterpret_cast<const std::uint8_t*>(payload.constData()),
-                                     std::size_t(payload.size())}};
+    const btp::Frame frame{
+        header,
+        {reinterpret_cast<const std::uint8_t*>(payload.constData()), std::size_t(payload.size())}};
 
     session.feedBytes(buildSerialPacket(frame));
 
@@ -97,8 +96,9 @@ void TestBtpSession::decodesAcrossMultipleFeedCalls() {
 
     const QByteArray payload("hello");
     btp::Header header = basicHeader();
-    const btp::Frame frame{header, {reinterpret_cast<const std::uint8_t*>(payload.constData()),
-                                     std::size_t(payload.size())}};
+    const btp::Frame frame{
+        header,
+        {reinterpret_cast<const std::uint8_t*>(payload.constData()), std::size_t(payload.size())}};
     const QByteArray packet = buildSerialPacket(frame);
 
     // Split arbitrarily, mirroring SerialManager::dataReceived's contract
@@ -121,13 +121,14 @@ void TestBtpSession::corruptedCrcIsRejectedAndCounted() {
 
     const QByteArray payload("abcdef");
     btp::Header header = basicHeader();
-    const btp::Frame frame{header, {reinterpret_cast<const std::uint8_t*>(payload.constData()),
-                                     std::size_t(payload.size())}};
+    const btp::Frame frame{
+        header,
+        {reinterpret_cast<const std::uint8_t*>(payload.constData()), std::size_t(payload.size())}};
 
     std::vector<std::uint8_t> encoded(btp::kSerialMaxFrameSize);
     std::size_t frameBytes = 0;
-    QVERIFY(btp::encode(frame, btp::TransportProfile::Serial, encoded.data(), encoded.size(), &frameBytes) ==
-            btp::Error::Ok);
+    QVERIFY(btp::encode(frame, btp::TransportProfile::Serial, encoded.data(), encoded.size(),
+                        &frameBytes) == btp::Error::Ok);
     // Flip a bit inside the payload (offset 36, right after the 36-byte
     // header) without touching the trailing CRC -- the frame is now
     // internally inconsistent, exactly what CRC exists to catch
@@ -176,8 +177,9 @@ void TestBtpSession::recoversAfterNoiseAndInvalidCandidate() {
     // REASSEMBLY.md).
     const QByteArray payload("recovered");
     btp::Header header = basicHeader();
-    const btp::Frame frame{header, {reinterpret_cast<const std::uint8_t*>(payload.constData()),
-                                     std::size_t(payload.size())}};
+    const btp::Frame frame{
+        header,
+        {reinterpret_cast<const std::uint8_t*>(payload.constData()), std::size_t(payload.size())}};
     session.feedBytes(buildSerialPacket(frame));
 
     QCOMPARE(frameCount, 1);
@@ -200,17 +202,19 @@ void TestBtpSession::reassemblesFragmentedMessageAndFiresOnce() {
     logicalPayload[11] = char(0x0D);
 
     btp::Header header = basicHeader();
-    const btp::ByteView logicalView{reinterpret_cast<const std::uint8_t*>(logicalPayload.constData()),
-                                     std::size_t(logicalPayload.size())};
+    const btp::ByteView logicalView{
+        reinterpret_cast<const std::uint8_t*>(logicalPayload.constData()),
+        std::size_t(logicalPayload.size())};
 
     std::uint8_t fragmentCount = 0;
-    QVERIFY(btp::fragment_count(logicalView.size, btp::TransportProfile::Serial, &fragmentCount) == btp::Error::Ok);
+    QVERIFY(btp::fragment_count(logicalView.size, btp::TransportProfile::Serial, &fragmentCount) ==
+            btp::Error::Ok);
     QCOMPARE(int(fragmentCount), 2);
 
     for (std::uint8_t i = 0; i < fragmentCount; ++i) {
         btp::Frame fragment{};
-        QVERIFY(btp::make_fragment(header, logicalView, btp::TransportProfile::Serial, i, &fragment) ==
-                btp::Error::Ok);
+        QVERIFY(btp::make_fragment(header, logicalView, btp::TransportProfile::Serial, i,
+                                   &fragment) == btp::Error::Ok);
         session.feedBytes(buildSerialPacket(fragment));
     }
 
@@ -218,7 +222,7 @@ void TestBtpSession::reassemblesFragmentedMessageAndFiresOnce() {
     QCOMPARE(received.payload.size(), logicalPayload.size());
     QCOMPARE(received.payload, logicalPayload);
     QCOMPARE(session.diagnostics().framesDecoded, quint64(1));  // not 2 -- per
-                                                                 // physical fragment
+                                                                // physical fragment
 }
 
 void TestBtpSession::resetDiscardsPartialCandidate() {
@@ -228,8 +232,9 @@ void TestBtpSession::resetDiscardsPartialCandidate() {
 
     const QByteArray payload("data");
     btp::Header header = basicHeader();
-    const btp::Frame frame{header, {reinterpret_cast<const std::uint8_t*>(payload.constData()),
-                                     std::size_t(payload.size())}};
+    const btp::Frame frame{
+        header,
+        {reinterpret_cast<const std::uint8_t*>(payload.constData()), std::size_t(payload.size())}};
     const QByteArray packet = buildSerialPacket(frame);
 
     session.feedBytes(packet.left(packet.size() / 2));
@@ -245,7 +250,7 @@ void TestBtpSession::resetDiscardsPartialCandidate() {
     QCOMPARE(frameCount, 1);
 }
 
-} // namespace
+}  // namespace
 
 QTEST_MAIN(TestBtpSession)
 #include "test_btpsession.moc"

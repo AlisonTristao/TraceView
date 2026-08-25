@@ -3,7 +3,6 @@
 #include <QByteArray>
 #include <QString>
 #include <QVector>
-
 #include <atomic>
 
 #include "transport.h"
@@ -98,4 +97,4 @@ private:
     std::atomic<bool> m_connected{false};
 };
 
-} // namespace traceview
+}  // namespace traceview

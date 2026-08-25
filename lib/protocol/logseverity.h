@@ -20,12 +20,18 @@ enum class LogSeverity : quint8 {
 
 inline const char* logSeverityToString(LogSeverity severity) {
     switch (severity) {
-        case LogSeverity::Info: return "INFO";
-        case LogSeverity::Warn: return "WARN";
-        case LogSeverity::Error: return "ERRO";
-        case LogSeverity::Debug: return "DEBG";
-        case LogSeverity::Command: return "CMDO";
-        case LogSeverity::None: return "NONE";
+        case LogSeverity::Info:
+            return "INFO";
+        case LogSeverity::Warn:
+            return "WARN";
+        case LogSeverity::Error:
+            return "ERRO";
+        case LogSeverity::Debug:
+            return "DEBG";
+        case LogSeverity::Command:
+            return "CMDO";
+        case LogSeverity::None:
+            return "NONE";
     }
     return "UNKN";
 }

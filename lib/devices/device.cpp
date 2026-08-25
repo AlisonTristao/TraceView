@@ -92,4 +92,4 @@ Device deviceFromJson(const QJsonObject& object, bool* ok) {
     return device;
 }
 
-} // namespace traceview
+}  // namespace traceview

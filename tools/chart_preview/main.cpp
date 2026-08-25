@@ -27,7 +27,8 @@ constexpr quint16 kGaugeFieldId = 2;  // "value" of protocol.test, see TELEMETRY
 constexpr quint16 kGaugeFieldId2 = 3;
 constexpr quint16 kGaugeFieldId3 = 4;
 
-QJsonObject seriesJson(const QString& name, int fieldId, const QString& color, const QString& style) {
+QJsonObject seriesJson(const QString& name, int fieldId, const QString& color,
+                       const QString& style) {
     QJsonObject series;
     series["name"] = name;
     series["fieldId"] = fieldId;
@@ -110,7 +111,7 @@ QJsonObject gaugeConfig() {
     return config;
 }
 
-} // namespace
+}  // namespace
 
 int main(int argc, char** argv) {
     QApplication app(argc, argv);

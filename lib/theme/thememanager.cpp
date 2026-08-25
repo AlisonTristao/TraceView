@@ -11,7 +11,7 @@ namespace traceview {
 namespace {
 constexpr const char* kSettingsKey = "appearance/theme";
 constexpr const char* kDefaultThemeId = "dark";
-} // namespace
+}  // namespace
 
 ThemeManager& ThemeManager::instance() {
     static ThemeManager manager;
@@ -79,4 +79,4 @@ int ThemeManager::indexOf(const QString& id) const {
     return -1;
 }
 
-} // namespace traceview
+}  // namespace traceview

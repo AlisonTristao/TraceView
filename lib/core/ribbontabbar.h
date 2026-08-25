@@ -43,4 +43,4 @@ private:
     int m_hoverCloseIndex = -1;
 };
 
-} // namespace traceview
+}  // namespace traceview

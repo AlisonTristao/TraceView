@@ -12,22 +12,22 @@ namespace traceview {
 // reflow needed. Plain data — the grid owns the actual QWidget and is the
 // only place that converts these fractions to pixels.
 struct DashboardItem {
-    QString id;       // QUuid, stable identity across the item's lifetime
-    QString typeId;   // key into WidgetRegistry
-    QString name;     // user-editable display name; empty falls back to the
-                       // type's default display name (see displayNameFor())
-    QString key;      // user-editable, must be unique when non-empty (see
-                       // DashboardGrid::isKeyAvailable); the future handle
-                       // external data updates will target, independent of
-                       // `id` (which stays internal/auto-generated) and of
-                       // `name`/`typeId` (either of which can change freely)
-    QJsonObject config; // type-specific settings edited via the properties
-                        // panel's WidgetConfigEditor for `typeId`; opaque to
-                        // everything except that editor, empty for types
-                        // that don't register one
-    QString groupId;   // empty = ungrouped; items sharing a non-empty value
-                        // always select/drag together as one rigid unit (see
-                        // DashboardGrid::groupSelected()/ungroupSelected())
+    QString id;          // QUuid, stable identity across the item's lifetime
+    QString typeId;      // key into WidgetRegistry
+    QString name;        // user-editable display name; empty falls back to the
+                         // type's default display name (see displayNameFor())
+    QString key;         // user-editable, must be unique when non-empty (see
+                         // DashboardGrid::isKeyAvailable); the future handle
+                         // external data updates will target, independent of
+                         // `id` (which stays internal/auto-generated) and of
+                         // `name`/`typeId` (either of which can change freely)
+    QJsonObject config;  // type-specific settings edited via the properties
+                         // panel's WidgetConfigEditor for `typeId`; opaque to
+                         // everything except that editor, empty for types
+                         // that don't register one
+    QString groupId;     // empty = ungrouped; items sharing a non-empty value
+                         // always select/drag together as one rigid unit (see
+                         // DashboardGrid::groupSelected()/ungroupSelected())
 
     double x = 0.0;
     double y = 0.0;
@@ -41,4 +41,4 @@ QJsonObject dashboardItemToJson(const DashboardItem& item);
 // `object` is missing required fields.
 DashboardItem dashboardItemFromJson(const QJsonObject& object, bool* ok);
 
-} // namespace traceview
+}  // namespace traceview

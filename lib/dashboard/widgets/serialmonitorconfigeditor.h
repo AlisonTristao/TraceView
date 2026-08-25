@@ -29,4 +29,4 @@ private:
     QComboBox* m_deviceCombo = nullptr;
 };
 
-} // namespace traceview
+}  // namespace traceview

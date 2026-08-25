@@ -120,4 +120,4 @@ private:
     QLineEdit* m_commandTemplateEdit = nullptr;
 };
 
-} // namespace traceview
+}  // namespace traceview

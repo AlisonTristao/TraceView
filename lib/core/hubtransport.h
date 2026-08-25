@@ -74,7 +74,9 @@ public:
     // that lives on DeviceConnection.
     void attachTo(DeviceConnection* parent);
 
-    quint32 peerSourceId() const { return m_peerSourceId; }
+    quint32 peerSourceId() const {
+        return m_peerSourceId;
+    }
 
     // Repoints this child at a different robot. Separate from the constructor
     // because a Device can be reconfigured while it exists, exactly as a
@@ -116,4 +118,4 @@ private:
     bool m_open = false;
 };
 
-} // namespace traceview
+}  // namespace traceview

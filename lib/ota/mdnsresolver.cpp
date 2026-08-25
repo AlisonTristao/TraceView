@@ -12,7 +12,9 @@ constexpr quint16 kMdnsPort = 5353;
 constexpr int kTimeoutMs = 3000;
 constexpr int kTimeoutTickMs = 250;
 
-QHostAddress mdnsGroup() { return QHostAddress(QStringLiteral("224.0.0.251")); }
+QHostAddress mdnsGroup() {
+    return QHostAddress(QStringLiteral("224.0.0.251"));
+}
 }  // namespace
 
 namespace mdns_detail {
@@ -36,17 +38,21 @@ QString readName(const QByteArray& message, int& offset) {
     while (cursor >= 0 && cursor < message.size() && guard++ < 128) {
         const quint8 length = quint8(message.at(cursor));
         if (length == 0) {
-            if (endOfNameInPlace < 0) endOfNameInPlace = cursor + 1;
+            if (endOfNameInPlace < 0)
+                endOfNameInPlace = cursor + 1;
             break;
         }
         if ((length & 0xC0) == 0xC0) {
-            if (cursor + 1 >= message.size()) break;
+            if (cursor + 1 >= message.size())
+                break;
             const int pointer = ((length & 0x3F) << 8) | quint8(message.at(cursor + 1));
-            if (endOfNameInPlace < 0) endOfNameInPlace = cursor + 2;
+            if (endOfNameInPlace < 0)
+                endOfNameInPlace = cursor + 2;
             cursor = pointer;
             continue;
         }
-        if (cursor + 1 + length > message.size()) break;
+        if (cursor + 1 + length > message.size())
+            break;
         labels << QString::fromLatin1(message.constData() + cursor + 1, length);
         cursor += 1 + length;
     }
@@ -80,11 +86,13 @@ QByteArray buildQuery(const QString& hostname) {
 
 QHash<QString, QHostAddress> parseAAnswers(const QByteArray& message) {
     QHash<QString, QHostAddress> answers;
-    if (message.size() < 12) return answers;
+    if (message.size() < 12)
+        return answers;
 
     const int qdcount = (quint8(message.at(4)) << 8) | quint8(message.at(5));
     const int ancount = (quint8(message.at(6)) << 8) | quint8(message.at(7));
-    if (ancount <= 0) return answers;
+    if (ancount <= 0)
+        return answers;
 
     int offset = 12;
     // Skip the question section -- present when this is a direct reply to
@@ -97,12 +105,14 @@ QHash<QString, QHostAddress> parseAAnswers(const QByteArray& message) {
 
     for (int i = 0; i < ancount && offset < message.size(); ++i) {
         const QString name = readName(message, offset);
-        if (offset + 10 > message.size()) break;  // TYPE(2)+CLASS(2)+TTL(4)+RDLENGTH(2)
+        if (offset + 10 > message.size())
+            break;  // TYPE(2)+CLASS(2)+TTL(4)+RDLENGTH(2)
         const quint16 type = (quint8(message.at(offset)) << 8) | quint8(message.at(offset + 1));
         offset += 8;  // TYPE(2) + CLASS(2) + TTL(4)
         const quint16 rdlength = (quint8(message.at(offset)) << 8) | quint8(message.at(offset + 1));
         offset += 2;
-        if (offset + rdlength > message.size()) break;
+        if (offset + rdlength > message.size())
+            break;
 
         if (type == 1 && rdlength == 4) {  // A record
             // quint32(quint8(...)), not a bare quint8: an octet promotes to
@@ -111,9 +121,9 @@ QHash<QString, QHostAddress> parseAAnswers(const QByteArray& message) {
             // 192.168.x.x lease. Same idiom the rest of this codebase already
             // uses to widen before shifting (btphandshake.cpp, clocksync.cpp).
             const quint32 ip = (quint32(quint8(message.at(offset))) << 24) |
-                                (quint32(quint8(message.at(offset + 1))) << 16) |
-                                (quint32(quint8(message.at(offset + 2))) << 8) |
-                                quint32(quint8(message.at(offset + 3)));
+                               (quint32(quint8(message.at(offset + 1))) << 16) |
+                               (quint32(quint8(message.at(offset + 2))) << 8) |
+                               quint32(quint8(message.at(offset + 3)));
             answers.insert(name, QHostAddress(ip));
         }
         offset += rdlength;
@@ -135,14 +145,16 @@ bool MdnsResolver::isMdnsHostname(const QString& hostname) {
 }
 
 void MdnsResolver::ensureSocket() {
-    if (m_socket != nullptr) return;
+    if (m_socket != nullptr)
+        return;
 
     m_socket = new QUdpSocket(this);
     // ShareAddress+ReuseAddressHint: a real OS mDNS responder (Bonjour, or
     // another instance of this app) may already be bound to 5353 -- this is
     // meant to coexist with one, not fight it for the port, same as every
     // other mDNS query tool.
-    m_socket->bind(QHostAddress::AnyIPv4, kMdnsPort, QUdpSocket::ShareAddress | QUdpSocket::ReuseAddressHint);
+    m_socket->bind(QHostAddress::AnyIPv4, kMdnsPort,
+                   QUdpSocket::ShareAddress | QUdpSocket::ReuseAddressHint);
     m_socket->joinMulticastGroup(mdnsGroup());
     connect(m_socket, &QUdpSocket::readyRead, this, &MdnsResolver::onReadyRead);
 }
@@ -163,8 +175,10 @@ void MdnsResolver::resolve(const QString& requestId, const QString& hostname) {
 
 void MdnsResolver::onReadyRead() {
     while (m_socket->hasPendingDatagrams()) {
-        const QHash<QString, QHostAddress> answers = mdns_detail::parseAAnswers(m_socket->receiveDatagram().data());
-        if (answers.isEmpty()) continue;
+        const QHash<QString, QHostAddress> answers =
+            mdns_detail::parseAAnswers(m_socket->receiveDatagram().data());
+        if (answers.isEmpty())
+            continue;
 
         for (auto it = m_pending.begin(); it != m_pending.end();) {
             const auto answer = answers.constFind(it->hostnameLower);

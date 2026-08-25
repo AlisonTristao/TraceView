@@ -1,5 +1,4 @@
 #include <QtTest>
-
 #include <btp/codec.hpp>
 
 #include "protocol/btpframe.h"
@@ -79,8 +78,9 @@ public:
 
     // Answers `request` (a SUBSCRIBE captured from the wire) the way the
     // source would, echoing the request's own identity triple back.
-    void grantSubscribe(const BtpFrame& request, quint32 subscriptionId, quint32 effectiveRateMillihz,
-                        quint32 grantedLeaseMs = 15000, quint8 status = 0x00, quint16 errorCode = 0x0000) {
+    void grantSubscribe(const BtpFrame& request, quint32 subscriptionId,
+                        quint32 effectiveRateMillihz, quint32 grantedLeaseMs = 15000,
+                        quint8 status = 0x00, quint16 errorCode = 0x0000) {
         QByteArray payload;
         appendLe(payload, request.sourceId, 4);
         appendLe(payload, request.bootId, 4);
@@ -94,7 +94,9 @@ public:
         deliverControl(kControlSubscribeResult, payload);
     }
 
-    const BtpFrame& lastSent() const { return sent.last(); }
+    const BtpFrame& lastSent() const {
+        return sent.last();
+    }
 
     BtpSession outbound;
     BtpSession loopback;
@@ -143,7 +145,7 @@ void TestSubscriptionManager::twoConsumersOfOneTopicSendASingleSubscribe() {
     QCOMPARE(readLe32(subscribe.payload, 0), kSourceId);
     QCOMPARE(readLe32(subscribe.payload, 4), kBootId);
     QCOMPARE(readLe16(subscribe.payload, 8), kTopicId);
-    QCOMPARE(readLe16(subscribe.payload, 10), quint16(0));  // flags: zero in v1
+    QCOMPARE(readLe16(subscribe.payload, 10), quint16(0));      // flags: zero in v1
     QCOMPARE(readLe32(subscribe.payload, 12), quint32(10000));  // the highest rate asked for
     QCOMPARE(readLe32(subscribe.payload, 16), SubscriptionManager::kRequestedLeaseMs);
 
@@ -260,7 +262,8 @@ void TestSubscriptionManager::rejectedSubscribeIsReportedAndLeavesNoGrant() {
     QSignalSpy rejectedSpy(&h.manager, &SubscriptionManager::subscriptionRejected);
 
     h.manager.addSubscriber(kSourceId, kTopicId, 50000);
-    h.grantSubscribe(h.lastSent(), /*subscriptionId=*/0, /*effectiveRateMillihz=*/0, /*grantedLeaseMs=*/0,
+    h.grantSubscribe(h.lastSent(), /*subscriptionId=*/0, /*effectiveRateMillihz=*/0,
+                     /*grantedLeaseMs=*/0,
                      /*status=*/0x06 /*BUSY*/, /*errorCode=*/0x0005 /*CAPACITY_EXHAUSTED*/);
 
     QCOMPARE(rejectedSpy.size(), 1);
@@ -336,8 +339,8 @@ void TestSubscriptionManager::statusVersion2FeedsPerTopicMetrics() {
     QSignalSpy statusSpy(&h.manager, &SubscriptionManager::statusReceived);
 
     QByteArray v1;
-    appendLe(v1, 1, 2);   // status_version
-    appendLe(v1, 0, 2);   // flags
+    appendLe(v1, 1, 2);  // status_version
+    appendLe(v1, 0, 2);  // flags
     for (int i = 0; i < 11; ++i) {
         appendLe(v1, 100 + i, 8);
     }

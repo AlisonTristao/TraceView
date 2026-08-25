@@ -1,8 +1,6 @@
 #include <QSignalSpy>
 #include <QtTest/QtTest>
-
 #include <btp/codec.hpp>
-
 #include <cstdint>
 #include <vector>
 
@@ -37,8 +35,8 @@ bool decodeWritten(const QByteArray& written, bool cobsWrapped, btp::DecodedFram
         storage->assign(btp::kSerialMaxFrameSize, 0);
         std::size_t decoded = 0;
         if (btp::cobs_decode(reinterpret_cast<const std::uint8_t*>(block.constData()),
-                            std::size_t(block.size()), storage->data(), storage->size(),
-                            &decoded) != btp::CobsError::Ok) {
+                             std::size_t(block.size()), storage->data(), storage->size(),
+                             &decoded) != btp::CobsError::Ok) {
             return false;
         }
         frameBytes = QByteArray(reinterpret_cast<const char*>(storage->data()), int(decoded));
@@ -55,7 +53,7 @@ quint32 readLe32(const std::uint8_t* p) {
 
 const quint32 kRobot = 0x0A0A0A0Au;
 
-} // namespace
+}  // namespace
 
 class TestHubEndpoint : public QObject {
     Q_OBJECT
@@ -103,7 +101,8 @@ void TestHubEndpoint::childAsksItsOwnRobotForAManifestNotAnEnumeration() {
 
     btp::DecodedFrame decoded{};
     std::vector<std::uint8_t> storage;
-    QVERIFY(decodeWritten(written.at(0).at(0).toByteArray(), /*cobsWrapped=*/false, &decoded, &storage));
+    QVERIFY(decodeWritten(written.at(0).at(0).toByteArray(), /*cobsWrapped=*/false, &decoded,
+                          &storage));
 
     // CONTROL / MANIFEST_REQUEST, and the target in its payload is the robot.
     QCOMPARE(int(decoded.header.type), int(btp::MessageType::Control));
@@ -129,7 +128,8 @@ void TestHubEndpoint::childTerminalInputCarriesTheChildsOwnStableIdentity() {
 
     btp::DecodedFrame decoded{};
     std::vector<std::uint8_t> storage;
-    QVERIFY(decodeWritten(written.at(0).at(0).toByteArray(), /*cobsWrapped=*/false, &decoded, &storage));
+    QVERIFY(decodeWritten(written.at(0).at(0).toByteArray(), /*cobsWrapped=*/false, &decoded,
+                          &storage));
 
     QCOMPARE(int(decoded.header.type), int(btp::MessageType::Terminal));
     QCOMPARE(decoded.header.object_id, quint16(0x0001));
@@ -169,7 +169,8 @@ void TestHubEndpoint::anUnconfiguredChildAsksNobodyAnything() {
     for (int i = 0; i < written.count(); ++i) {
         btp::DecodedFrame decoded{};
         std::vector<std::uint8_t> storage;
-        if (!decodeWritten(written.at(i).at(0).toByteArray(), /*cobsWrapped=*/false, &decoded, &storage)) {
+        if (!decodeWritten(written.at(i).at(0).toByteArray(), /*cobsWrapped=*/false, &decoded,
+                           &storage)) {
             continue;  // the ENTER line is text, not a frame
         }
         QVERIFY2(decoded.header.object_id != 0x0003,

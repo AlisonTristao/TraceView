@@ -1,9 +1,8 @@
 #include "devicesgrid.h"
 
-#include <QStringList>
-
 #include <QJsonArray>
 #include <QResizeEvent>
+#include <QStringList>
 #include <QTimer>
 #include <QUuid>
 
@@ -20,7 +19,7 @@ namespace {
 constexpr double kGutterFraction = 0.01;
 constexpr int kMinGutter = 8;
 constexpr int kMaxGutter = 32;
-} // namespace
+}  // namespace
 
 DevicesGrid::DevicesGrid(QWidget* parent) : QWidget(parent), m_undoStack(new QUndoStack(this)) {}
 
@@ -95,7 +94,8 @@ void DevicesGrid::setDeviceConnected(const QString& id, bool connected) {
     emit deviceUpdated(m_devices[idx]);
 }
 
-void DevicesGrid::setDeviceIdentity(const QString& id, const QString& btpVersion, const QString& btpId) {
+void DevicesGrid::setDeviceIdentity(const QString& id, const QString& btpVersion,
+                                    const QString& btpId) {
     const int idx = indexOfDevice(id);
     if (idx < 0 || (m_devices[idx].btpVersion == btpVersion && m_devices[idx].btpId == btpId)) {
         return;
@@ -141,7 +141,7 @@ void DevicesGrid::applyRemoveDeviceById(const QString& id) {
         emit selectionChanged();
     }
 
-    relayout(); // re-flows every following card into the gap left behind
+    relayout();  // re-flows every following card into the gap left behind
     emit deviceRemoved(id);
 }
 
@@ -227,7 +227,8 @@ void DevicesGrid::handleConfigRequested(const QString& deviceId) {
     {
         QVector<QPair<QString, QString>> parents;
         for (const Device& candidate : m_devices) {
-            if (candidate.id == m_devices[idx].id || candidate.transportType == TransportType::HubChannel) {
+            if (candidate.id == m_devices[idx].id ||
+                candidate.transportType == TransportType::HubChannel) {
                 continue;
             }
             parents.append({candidate.id, candidate.name});
@@ -249,8 +250,9 @@ void DevicesGrid::handleConfigRequested(const QString& deviceId) {
         dialog.setAvailableHubPeers(m_hubPeerListProvider(dialog.currentParentDeviceId()));
         auto* hubPeerTimer = new QTimer(&dialog);
         hubPeerTimer->setInterval(1000);
-        connect(hubPeerTimer, &QTimer::timeout, &dialog,
-                [this, &dialog]() { dialog.setAvailableHubPeers(m_hubPeerListProvider(dialog.currentParentDeviceId())); });
+        connect(hubPeerTimer, &QTimer::timeout, &dialog, [this, &dialog]() {
+            dialog.setAvailableHubPeers(m_hubPeerListProvider(dialog.currentParentDeviceId()));
+        });
         hubPeerTimer->start();
     }
     // Connect button: applies the dialog's current fields (same as OK) but
@@ -265,27 +267,29 @@ void DevicesGrid::handleConfigRequested(const QString& deviceId) {
     // reported BTP version/ID and catalog -- so clicking Connect above
     // shows its result in place instead of requiring OK-then-reopen to see
     // it.
-    connect(this, &DevicesGrid::deviceUpdated, &dialog, [this, &dialog, deviceId](const Device& device) {
-        if (device.id != deviceId) {
-            return;
-        }
-        dialog.setConnectionStatus(device.connected);
-        dialog.setReportedIdentity(device.btpVersion, device.btpId);
-        if (m_topicCatalogProvider) {
-            dialog.setCatalogTopics(m_topicCatalogProvider(deviceId));
-        }
-    });
+    connect(this, &DevicesGrid::deviceUpdated, &dialog,
+            [this, &dialog, deviceId](const Device& device) {
+                if (device.id != deviceId) {
+                    return;
+                }
+                dialog.setConnectionStatus(device.connected);
+                dialog.setReportedIdentity(device.btpVersion, device.btpId);
+                if (m_topicCatalogProvider) {
+                    dialog.setCatalogTopics(m_topicCatalogProvider(deviceId));
+                }
+            });
     // MANIFEST_DATA arrives after the handshake that fires deviceUpdated
     // above, so that listener alone typically catches the catalog still
     // empty (see notifyCatalogChanged()'s doc comment). This is the actual
     // "catalog just arrived" signal, wired separately so it doesn't also
     // re-trigger MainWindow::onDeviceUpdated the way deviceUpdated does.
-    connect(this, &DevicesGrid::deviceCatalogChanged, &dialog, [this, &dialog, deviceId](const QString& id) {
-        if (id != deviceId || !m_topicCatalogProvider) {
-            return;
-        }
-        dialog.setCatalogTopics(m_topicCatalogProvider(deviceId));
-    });
+    connect(this, &DevicesGrid::deviceCatalogChanged, &dialog,
+            [this, &dialog, deviceId](const QString& id) {
+                if (id != deviceId || !m_topicCatalogProvider) {
+                    return;
+                }
+                dialog.setCatalogTopics(m_topicCatalogProvider(deviceId));
+            });
     if (dialog.exec() == QDialog::Accepted) {
         updateDevice(dialog.result());
     }
@@ -344,4 +348,4 @@ void DevicesGrid::fromJson(const QJsonObject& object) {
     }
 }
 
-} // namespace traceview
+}  // namespace traceview

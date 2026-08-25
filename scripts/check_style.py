@@ -4,6 +4,14 @@ rules: .clang-format formatting (delegated to clang-format itself) plus
 heuristic naming checks (PascalCase classes, k-prefixed constants,
 m_-prefixed member variables) that clang-format doesn't enforce.
 
+Covers src/, lib/, include/, tests/ and tools/ -- everything in this
+repository written here. Two things are excluded because their bytes
+belong to someone else: vendored third-party code (lib/vendor), where
+reformatting would turn the next update from upstream into a merge
+conflict, and include/bally_channels.h, which is one of three
+byte-identical copies across the Bally repositories and is hash-checked
+in all three (see EXCLUDED_FILES).
+
 Best-effort: the naming checks are regex/line-based, not a real C++
 parser, so they can both miss things and occasionally misfire on unusual
 formatting. Function/parameter naming isn't checked at all -- too
@@ -26,8 +34,25 @@ from _bootstrap import ensure_dependencies  # noqa: E402
 ensure_dependencies([], Path(__file__).resolve().parent / ".venv-check-style")
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-SOURCE_DIRS = ["src", "lib", "include"]
+SOURCE_DIRS = ["src", "lib", "include", "tests", "tools"]
 SOURCE_SUFFIXES = {".cpp", ".h"}
+
+# Third-party code copied in as-is. It is not ours to reformat or to hold to
+# our naming rules, and reformatting it would make the next update from
+# upstream a merge conflict instead of a copy. Matched against each file's
+# path parts, so this covers anything under a directory of that name.
+EXCLUDED_DIRS = {"vendor"}
+
+# Files that exist here as an exact copy of something owned elsewhere, and
+# whose bytes are the contract.
+#
+# bally_channels.h is one of THREE byte-identical copies -- bally_OS,
+# bally_dongle and this repository -- each guarded by a SHA-256 committed
+# beside it (tests/test_ballychannels.cpp). Reformatting it to this repo's
+# .clang-format would break that hash in all three, and the failure a drift
+# actually causes is silent: a device added to the fleet afterwards simply
+# stops working. Whoever owns the file owns its formatting; we copy it.
+EXCLUDED_FILES = {"bally_channels.h"}
 
 CLASS_RE = re.compile(r"^\s*(?:class|struct)\s+([A-Za-z_]\w*)\s*(?:[:{]|$)")
 CONST_RE = re.compile(r"\b(?:static\s+)?constexpr\s+[\w:<>*&]+\s+([A-Za-z_]\w*)\s*=")
@@ -41,8 +66,13 @@ def iter_source_files():
         if not base.exists():
             continue
         for path in sorted(base.rglob("*")):
-            if path.suffix in SOURCE_SUFFIXES:
-                yield path
+            if path.suffix not in SOURCE_SUFFIXES:
+                continue
+            if EXCLUDED_DIRS.intersection(path.relative_to(REPO_ROOT).parts):
+                continue
+            if path.name in EXCLUDED_FILES:
+                continue
+            yield path
 
 
 def check_clang_format(files) -> list[str]:

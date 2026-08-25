@@ -27,8 +27,12 @@ class WorkspaceManager {
 public:
     static WorkspaceManager& instance();
 
-    const QVector<Workspace>& workspaces() const { return m_workspaces; }
-    QString activeId() const { return m_activeId; }
+    const QVector<Workspace>& workspaces() const {
+        return m_workspaces;
+    }
+    QString activeId() const {
+        return m_activeId;
+    }
 
     // Empty QJsonObject if `id` is unknown.
     QJsonObject dashboardFor(const QString& id) const;
@@ -74,4 +78,4 @@ private:
     QString m_activeId;
 };
 
-} // namespace traceview
+}  // namespace traceview

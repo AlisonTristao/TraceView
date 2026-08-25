@@ -10,7 +10,7 @@ struct FontOption {
     QString id;           // stable key, e.g. "consolas"
     QString displayName;  // shown in the font picker, e.g. "Consolas"
     QString family;       // QFont family passed to QApplication::setFont();
-                           // empty means "leave the platform default alone"
+                          // empty means "leave the platform default alone"
 };
 
-} // namespace traceview
+}  // namespace traceview

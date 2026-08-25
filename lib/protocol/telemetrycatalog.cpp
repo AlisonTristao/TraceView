@@ -43,7 +43,7 @@ void TelemetryCatalog::registerSchema(const TelemetryTopicSchema& schema) {
 }
 
 const TelemetryTopicSchema* TelemetryCatalog::lookup(quint32 sourceId, quint16 topicId,
-                                                       quint16 schemaVersion) const {
+                                                     quint16 schemaVersion) const {
     const auto it = m_schemas.constFind(makeKey(sourceId, topicId, schemaVersion));
     return it == m_schemas.constEnd() ? nullptr : &it.value();
 }

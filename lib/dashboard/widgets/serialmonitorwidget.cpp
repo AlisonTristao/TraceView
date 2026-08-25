@@ -29,4 +29,4 @@ void SerialMonitorWidget::appendData(const QByteArray& data) {
     m_terminal->appendData(data);
 }
 
-} // namespace traceview
+}  // namespace traceview

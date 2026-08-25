@@ -41,20 +41,29 @@ class DeviceConnection : public QObject {
     Q_OBJECT
 
 public:
-    explicit DeviceConnection(CommType commType, TransportType transportType = TransportType::Serial,
+    explicit DeviceConnection(CommType commType,
+                              TransportType transportType = TransportType::Serial,
                               QObject* parent = nullptr);
 
     // Non-null only when transportType == TransportType::Serial; nullptr
     // otherwise. Callers that need serial-only extras (writeCommand(),
     // lineTerminator()) must check for null first -- see
     // SerialWidgetBridge::wireWidget() for the pattern.
-    SerialManager* serialManager() const { return m_serialManager; }
+    SerialManager* serialManager() const {
+        return m_serialManager;
+    }
     // Non-null only when transportType == TransportType::UsbHid; nullptr
     // otherwise.
-    UsbHidManager* usbHidManager() const { return m_usbHidManager; }
-    Backend* backend() const { return m_backend; }
+    UsbHidManager* usbHidManager() const {
+        return m_usbHidManager;
+    }
+    Backend* backend() const {
+        return m_backend;
+    }
 
-    TransportType transportType() const { return m_transportType; }
+    TransportType transportType() const {
+        return m_transportType;
+    }
 
     bool isConnected() const;
     // Current intent: true from connectTo() (with a non-empty target) until
@@ -62,7 +71,9 @@ public:
     // across a transport drop/retry, unlike isConnected(). What the
     // status-dot click toggle (DeviceCard::connectToggleRequested) reads to
     // decide whether to connect or disconnect.
-    bool wantsConnection() const { return m_shouldBeConnected; }
+    bool wantsConnection() const {
+        return m_shouldBeConnected;
+    }
 
     // Updates the connection target and marks intent "online" (unless
     // `target` is empty, which instead means "not configured" -- clears
@@ -119,4 +130,4 @@ private:
     bool m_shouldBeConnected = false;
 };
 
-} // namespace traceview
+}  // namespace traceview

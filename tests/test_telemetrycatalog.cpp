@@ -108,7 +108,7 @@ void TestTelemetryCatalog::fieldByIdFindsAndMisses() {
     QVERIFY(schema->fieldById(999) == nullptr);
 }
 
-} // namespace
+}  // namespace
 
 QTEST_MAIN(TestTelemetryCatalog)
 #include "test_telemetrycatalog.moc"

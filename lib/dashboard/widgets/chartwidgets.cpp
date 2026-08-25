@@ -62,7 +62,8 @@ int axisLabelWidth(const QPainter& painter, double yMin, double yMax) {
 // drawRect() here would run straight into the corner
 // well past that curve, leaving a few pixels of straight edge poking out
 // past the rounded outline. See "Corner radius" in docs/VISUAL_IDENTITY.md.
-void paintBackground(QPainter& painter, const DashboardWidget& widget, const ThemePalette& palette) {
+void paintBackground(QPainter& painter, const DashboardWidget& widget,
+                     const ThemePalette& palette) {
     painter.fillPath(widget.contentFillPath(), palette.surface);
 
     painter.setPen(QPen(palette.border, 1));
@@ -94,8 +95,9 @@ constexpr int kBarYGridDivisions = 10;
 // doesn't turn into a wall of overlapping numbers. The value labels (and
 // unit) stay up regardless of `showGrid` -- that toggle is about the guide
 // lines across the plot, not about losing the ability to read the axis.
-void paintYAxis(QPainter& painter, const QRect& plotRect, double yMin, double yMax, const QString& unit,
-                 bool showGrid, int gridDivisions, int labelWidth, const ThemePalette& palette) {
+void paintYAxis(QPainter& painter, const QRect& plotRect, double yMin, double yMax,
+                const QString& unit, bool showGrid, int gridDivisions, int labelWidth,
+                const ThemePalette& palette) {
     if (plotRect.height() <= 0 || plotRect.width() <= 0) {
         return;
     }
@@ -121,8 +123,9 @@ void paintYAxis(QPainter& painter, const QRect& plotRect, double yMin, double yM
     const int gutterRight = plotRect.left() - kAxisLabelGap;
     const QRect gutter(gutterRight - labelWidth, 0, labelWidth, fm.height());
     auto drawValue = [&](double value, int centerY) {
-        painter.drawText(QRect(gutter.x(), centerY - gutter.height() / 2, gutter.width(), gutter.height()),
-                          Qt::AlignRight | Qt::AlignVCenter, QString::number(value, 'g', 4));
+        painter.drawText(
+            QRect(gutter.x(), centerY - gutter.height() / 2, gutter.width(), gutter.height()),
+            Qt::AlignRight | Qt::AlignVCenter, QString::number(value, 'g', 4));
     };
     drawValue(yMax, plotRect.top());
     drawValue((yMin + yMax) / 2.0, midY);
@@ -140,7 +143,8 @@ void paintYAxis(QPainter& painter, const QRect& plotRect, double yMin, double yM
         painter.translate(stripCenterX, midY);
         painter.rotate(-90);
         const int textWidth = fm.horizontalAdvance(unit);
-        painter.drawText(QRect(-textWidth / 2, -fm.height() / 2, textWidth, fm.height()), Qt::AlignCenter, unit);
+        painter.drawText(QRect(-textWidth / 2, -fm.height() / 2, textWidth, fm.height()),
+                         Qt::AlignCenter, unit);
         painter.restore();
     }
 }
@@ -167,7 +171,8 @@ QVector<int> xGridLines(const QRect& plotRect) {
     if (plotRect.width() <= 0 || plotRect.height() <= 0) {
         return lines;
     }
-    const int lineCount = qBound(kXGridMinLines, plotRect.width() / kXGridTargetSpacingPx, kXGridMaxLines);
+    const int lineCount =
+        qBound(kXGridMinLines, plotRect.width() / kXGridTargetSpacingPx, kXGridMaxLines);
     lines.reserve(lineCount - 1);
     for (int i = 1; i < lineCount; ++i) {
         lines.append(plotRect.left() + plotRect.width() * i / lineCount);
@@ -179,7 +184,7 @@ QVector<int> xGridLines(const QRect& plotRect) {
 // get its own strip here, but now rides on the bottom value-legend row
 // instead (see paintSeriesLegends()).
 void paintXAxis(QPainter& painter, const QRect& plotRect, const QVector<int>& xLines, bool showGrid,
-                 const ThemePalette& palette) {
+                const ThemePalette& palette) {
     if (!showGrid) {
         return;
     }
@@ -205,8 +210,9 @@ int legendRowHeight(const QPainter& painter) {
 // user-facing string in this file lives in an actual class member function
 // (ChartWidgetBase/DummyGaugeWidget/etc.) and uses plain tr() as usual.
 QString seriesDisplayName(const ChartSeriesConfig& series) {
-    return series.name.isEmpty() ? QCoreApplication::translate("ChartWidgets", "Field %1").arg(series.fieldId)
-                                  : series.name;
+    return series.name.isEmpty()
+               ? QCoreApplication::translate("ChartWidgets", "Field %1").arg(series.fieldId)
+               : series.name;
 }
 
 // A series buffer's latest sample, formatted like a Y-axis value label (see
@@ -224,7 +230,7 @@ QString formatLatestValue(const QVector<double>& buffer) {
 
 struct LegendColumn {
     int x = 0;
-    int width = 0; // shared width -- see legendColumns()
+    int width = 0;  // shared width -- see legendColumns()
 };
 
 // Column x-positions shared by both rows paintSeriesLegends() draws (series
@@ -236,7 +242,8 @@ struct LegendColumn {
 // would cross `rightBound`, same "just stop, don't wrap/elide" overflow
 // policy the legend has always used.
 QVector<LegendColumn> legendColumns(const QFontMetrics& fm, int left, int rightBound,
-                                     const QVector<ChartSeriesConfig>& seriesConfigs, const QStringList& values) {
+                                    const QVector<ChartSeriesConfig>& seriesConfigs,
+                                    const QStringList& values) {
     int columnWidth = 0;
     for (int i = 0; i < seriesConfigs.size(); ++i) {
         const int nameWidth = fm.horizontalAdvance(seriesDisplayName(seriesConfigs[i]));
@@ -262,8 +269,8 @@ QVector<LegendColumn> legendColumns(const QFontMetrics& fm, int left, int rightB
 // its own color, so a hidden series still shows its name (the click target
 // to bring it back) but reads as "off" at a glance.
 void paintLegendRow(QPainter& painter, int y, int rowHeight, const QVector<LegendColumn>& columns,
-                     const QVector<ChartSeriesConfig>& seriesConfigs, const QStringList& texts,
-                     const QVector<bool>& hiddenSeries, const ThemePalette& palette) {
+                    const QVector<ChartSeriesConfig>& seriesConfigs, const QStringList& texts,
+                    const QVector<bool>& hiddenSeries, const ThemePalette& palette) {
     for (int i = 0; i < columns.size(); ++i) {
         const int x = columns[i].x;
         const bool hidden = i < hiddenSeries.size() && hiddenSeries[i];
@@ -271,12 +278,13 @@ void paintLegendRow(QPainter& painter, int y, int rowHeight, const QVector<Legen
 
         painter.setPen(Qt::NoPen);
         painter.setBrush(hidden ? palette.textSecondary : seriesConfigs[i].color);
-        painter.drawEllipse(QRect(x, y + (rowHeight - kLegendSwatchSize) / 2, kLegendSwatchSize, kLegendSwatchSize));
+        painter.drawEllipse(QRect(x, y + (rowHeight - kLegendSwatchSize) / 2, kLegendSwatchSize,
+                                  kLegendSwatchSize));
 
         painter.setPen(palette.textSecondary);
         const int textX = x + kLegendSwatchSize + 4;
         painter.drawText(QRect(textX, y, columns[i].width - (kLegendSwatchSize + 4), rowHeight),
-                          Qt::AlignLeft | Qt::AlignVCenter, texts[i]);
+                         Qt::AlignLeft | Qt::AlignVCenter, texts[i]);
     }
     painter.setOpacity(1.0);
 }
@@ -300,16 +308,18 @@ void paintLegendRow(QPainter& painter, int y, int rowHeight, const QVector<Legen
 // from the top row down through whichever rows are actually drawn --
 // ChartWidgetBase::mousePressEvent() hit-tests against exactly this so the
 // click target can never drift from what got painted.
-void paintSeriesLegends(QPainter& painter, const QRect& area, const QVector<ChartSeriesConfig>& seriesConfigs,
-                         const QVector<QVector<double>>& seriesBuffers, ChartXAxisMode xAxisMode,
-                         bool showLastValueRow, bool showXAxisTag, const QVector<bool>& hiddenSeries,
-                         const ThemePalette& palette, QVector<QRect>* outHitRects = nullptr) {
+void paintSeriesLegends(QPainter& painter, const QRect& area,
+                        const QVector<ChartSeriesConfig>& seriesConfigs,
+                        const QVector<QVector<double>>& seriesBuffers, ChartXAxisMode xAxisMode,
+                        bool showLastValueRow, bool showXAxisTag, const QVector<bool>& hiddenSeries,
+                        const ThemePalette& palette, QVector<QRect>* outHitRects = nullptr) {
     const QFontMetrics fm(painter.font());
     const int rowHeight = legendRowHeight(painter);
     // Free function -- see seriesDisplayName() above for why this uses
     // QCoreApplication::translate() instead of tr().
-    const QString xLabel = xAxisMode == ChartXAxisMode::Time ? QCoreApplication::translate("ChartWidgets", "t")
-                                                              : QCoreApplication::translate("ChartWidgets", "k");
+    const QString xLabel = xAxisMode == ChartXAxisMode::Time
+                               ? QCoreApplication::translate("ChartWidgets", "t")
+                               : QCoreApplication::translate("ChartWidgets", "k");
     // Only reserved/drawn for the line chart (showXAxisTag) -- the bar
     // chart's X axis is now one value label per bar (paintBarSnapshot()),
     // not a scrolling sample/time count, so the "t"/"k" tag has nothing left
@@ -328,10 +338,12 @@ void paintSeriesLegends(QPainter& painter, const QRect& area, const QVector<Char
     QStringList values;
     for (int i = 0; i < seriesConfigs.size(); ++i) {
         names << seriesDisplayName(seriesConfigs[i]);
-        values << formatLatestValue(i < seriesBuffers.size() ? seriesBuffers[i] : QVector<double>());
+        values << formatLatestValue(i < seriesBuffers.size() ? seriesBuffers[i]
+                                                             : QVector<double>());
     }
 
-    const QVector<LegendColumn> columns = legendColumns(fm, left, rightBound, seriesConfigs, values);
+    const QVector<LegendColumn> columns =
+        legendColumns(fm, left, rightBound, seriesConfigs, values);
 
     const int topY = area.top() + kOuterPadding;
     const int bottomY = area.bottom() - kOuterPadding - rowHeight + 1;
@@ -341,20 +353,23 @@ void paintSeriesLegends(QPainter& painter, const QRect& area, const QVector<Char
         outHitRects->reserve(seriesConfigs.size());
         const int hitBottom = (showLastValueRow ? bottomY : topY) + rowHeight;
         for (int i = 0; i < seriesConfigs.size(); ++i) {
-            outHitRects->append(i < columns.size() ? QRect(columns[i].x, topY, columns[i].width, hitBottom - topY)
-                                                     : QRect());
+            outHitRects->append(i < columns.size()
+                                    ? QRect(columns[i].x, topY, columns[i].width, hitBottom - topY)
+                                    : QRect());
         }
     }
 
     paintLegendRow(painter, topY, rowHeight, columns, seriesConfigs, names, hiddenSeries, palette);
 
     if (showLastValueRow) {
-        paintLegendRow(painter, bottomY, rowHeight, columns, seriesConfigs, values, hiddenSeries, palette);
+        paintLegendRow(painter, bottomY, rowHeight, columns, seriesConfigs, values, hiddenSeries,
+                       palette);
     }
 
     if (showXAxisTag) {
         painter.setPen(palette.textSecondary);
-        const QRect xLabelRect(area.right() - kOuterPadding - xLabelWidth, bottomY, xLabelWidth, rowHeight);
+        const QRect xLabelRect(area.right() - kOuterPadding - xLabelWidth, bottomY, xLabelWidth,
+                               rowHeight);
         painter.drawText(xLabelRect, Qt::AlignLeft | Qt::AlignVCenter, xLabel);
     }
 }
@@ -442,9 +457,10 @@ QPointF pointOnGaugeArc(const QPointF& center, double radius, double fraction) {
     return QPointF(center.x() + radius * qCos(angleRad), center.y() - radius * qSin(angleRad));
 }
 
-void paintGaugeRadialTick(QPainter& painter, const QPointF& center, double fraction, double innerRadius,
-                           double outerRadius) {
-    painter.drawLine(pointOnGaugeArc(center, innerRadius, fraction), pointOnGaugeArc(center, outerRadius, fraction));
+void paintGaugeRadialTick(QPainter& painter, const QPointF& center, double fraction,
+                          double innerRadius, double outerRadius) {
+    painter.drawLine(pointOnGaugeArc(center, innerRadius, fraction),
+                     pointOnGaugeArc(center, outerRadius, fraction));
 }
 
 // One graduation mark every 10% of the configured range, just outside the
@@ -454,11 +470,12 @@ constexpr int kGaugeTickDivisions = 10;
 constexpr double kGaugeTickLength = 4.0;
 
 void paintGaugeTicks(QPainter& painter, const QPointF& center, double ringRadius, double penWidth,
-                      const QColor& color) {
+                     const QColor& color) {
     painter.setPen(QPen(color, 1));
     const double outer = ringRadius + penWidth / 2.0;
     for (int i = 0; i <= kGaugeTickDivisions; ++i) {
-        paintGaugeRadialTick(painter, center, double(i) / kGaugeTickDivisions, outer, outer + kGaugeTickLength);
+        paintGaugeRadialTick(painter, center, double(i) / kGaugeTickDivisions, outer,
+                             outer + kGaugeTickLength);
     }
 }
 
@@ -472,7 +489,7 @@ constexpr double kGaugePointerOvershoot = 4.0;
 // shows magnitude via its sweep length, hard to judge precisely by eye) and
 // from the ruler ticks above (which mark the scale, not the reading).
 void paintGaugePointer(QPainter& painter, const QPointF& center, double ringRadius, double penWidth,
-                        double fraction, const QColor& color) {
+                       double fraction, const QColor& color) {
     painter.setPen(QPen(color, 2, Qt::SolidLine, Qt::RoundCap));
     const double inner = ringRadius - penWidth / 2.0 - kGaugePointerOvershoot;
     const double outer = ringRadius + penWidth / 2.0 + kGaugePointerOvershoot;
@@ -482,8 +499,9 @@ void paintGaugePointer(QPainter& painter, const QPointF& center, double ringRadi
 // Free function -- see seriesDisplayName() above for why this uses
 // QCoreApplication::translate() instead of tr().
 QString gaugeSeriesDisplayName(const GaugeSeriesConfig& series) {
-    return series.name.isEmpty() ? QCoreApplication::translate("ChartWidgets", "Field %1").arg(series.fieldId)
-                                  : series.name;
+    return series.name.isEmpty()
+               ? QCoreApplication::translate("ChartWidgets", "Field %1").arg(series.fieldId)
+               : series.name;
 }
 
 // Column x-positions for paintGaugeLegend()'s single row -- same "widest
@@ -491,7 +509,8 @@ QString gaugeSeriesDisplayName(const GaugeSeriesConfig& series) {
 // policy as legendColumns() (line/bar charts), just against one
 // pre-formatted "name  value" string per ring instead of separate name/value
 // rows, since a gauge ring has no second row to keep aligned with.
-QVector<LegendColumn> gaugeLegendColumns(const QFontMetrics& fm, int left, int rightBound, const QStringList& texts) {
+QVector<LegendColumn> gaugeLegendColumns(const QFontMetrics& fm, int left, int rightBound,
+                                         const QStringList& texts) {
     int columnWidth = 0;
     for (const QString& text : texts) {
         columnWidth = qMax(columnWidth, kLegendSwatchSize + 6 + fm.horizontalAdvance(text));
@@ -522,8 +541,8 @@ int gaugeLegendHeight(const QPainter& painter) {
 // single big centered label handled for a one-ring gauge, since there's no
 // room left in the center for more than one such label once rings start
 // nesting.
-void paintGaugeLegend(QPainter& painter, const QRect& area, const GaugeConfig& config, const QVector<double>& values,
-                       const ThemePalette& palette) {
+void paintGaugeLegend(QPainter& painter, const QRect& area, const GaugeConfig& config,
+                      const QVector<double>& values, const ThemePalette& palette) {
     const QFontMetrics fm(painter.font());
     const int rowHeight = legendRowHeight(painter);
 
@@ -532,10 +551,11 @@ void paintGaugeLegend(QPainter& painter, const QRect& area, const GaugeConfig& c
         const double value = i < values.size() ? values[i] : qQNaN();
         // Free function -- see seriesDisplayName() above for why this uses
         // QCoreApplication::translate() instead of tr().
-        const QString valueText = qIsNaN(value) ? QCoreApplication::translate("ChartWidgets", "--")
-                                                  : QCoreApplication::translate("ChartWidgets", "%1%2")
-                                                        .arg(value, 0, 'f', config.decimals)
-                                                        .arg(config.unit);
+        const QString valueText = qIsNaN(value)
+                                      ? QCoreApplication::translate("ChartWidgets", "--")
+                                      : QCoreApplication::translate("ChartWidgets", "%1%2")
+                                            .arg(value, 0, 'f', config.decimals)
+                                            .arg(config.unit);
         // "%1  %2" fixes name-before-value order -- a translator wanting to
         // swap that order for a given language would need to reorder these
         // placeholders; not attempted for this pass.
@@ -548,13 +568,14 @@ void paintGaugeLegend(QPainter& painter, const QRect& area, const GaugeConfig& c
         const int x = columns[i].x;
         painter.setPen(Qt::NoPen);
         painter.setBrush(config.series[i].color);
-        painter.drawEllipse(QRect(x, area.top() + (rowHeight - kLegendSwatchSize) / 2, kLegendSwatchSize,
-                                   kLegendSwatchSize));
+        painter.drawEllipse(QRect(x, area.top() + (rowHeight - kLegendSwatchSize) / 2,
+                                  kLegendSwatchSize, kLegendSwatchSize));
 
         painter.setPen(palette.textSecondary);
         const int textX = x + kLegendSwatchSize + 6;
-        painter.drawText(QRect(textX, area.top(), columns[i].width - (kLegendSwatchSize + 6), rowHeight),
-                          Qt::AlignLeft | Qt::AlignVCenter, texts[i]);
+        painter.drawText(
+            QRect(textX, area.top(), columns[i].width - (kLegendSwatchSize + 6), rowHeight),
+            Qt::AlignLeft | Qt::AlignVCenter, texts[i]);
     }
 }
 
@@ -578,7 +599,8 @@ bool isMarkerStyle(ChartSeriesStyle style) {
 // Y range to map buffered values into plotRect's height: the configured
 // fixed range, or an auto range spanning whatever's currently buffered
 // (with a little headroom so extreme points don't touch the plot edges).
-QPair<double, double> computeYRange(const ChartConfig& config, const QVector<QVector<double>>& buffers) {
+QPair<double, double> computeYRange(const ChartConfig& config,
+                                    const QVector<QVector<double>>& buffers) {
     if (config.yAxisMode == ChartYAxisMode::Fixed) {
         return {config.yMin, qMax(config.yMax, config.yMin + 1e-6)};
     }
@@ -634,9 +656,9 @@ qreal zeroBaselineY(const QRect& plotRect, double yMin, double yMax) {
 // Linear's original straight-segment path, ZeroOrderHold's step/staircase
 // path, Stem's per-sample lollipop up from zeroBaselineY(), or None's bare
 // per-sample dot with no connecting line/baseline at all.
-void paintLineSeries(QPainter& painter, const QRect& plotRect, int capacity, const ChartSeriesConfig& seriesConfig,
-                      const QVector<double>& values, double yMin, double yMax,
-                      ChartLineInterpolation interpolation) {
+void paintLineSeries(QPainter& painter, const QRect& plotRect, int capacity,
+                     const ChartSeriesConfig& seriesConfig, const QVector<double>& values,
+                     double yMin, double yMax, ChartLineInterpolation interpolation) {
     if (values.isEmpty() || plotRect.width() <= 0 || plotRect.height() <= 0) {
         return;
     }
@@ -655,8 +677,10 @@ void paintLineSeries(QPainter& painter, const QRect& plotRect, int capacity, con
         constexpr qreal kMarkerSize = 4.0;
         for (int i = 0; i < values.size(); ++i) {
             const QPointF p = pointAt(i);
-            painter.drawLine(QPointF(p.x() - kMarkerSize, p.y()), QPointF(p.x() + kMarkerSize, p.y()));
-            painter.drawLine(QPointF(p.x(), p.y() - kMarkerSize), QPointF(p.x(), p.y() + kMarkerSize));
+            painter.drawLine(QPointF(p.x() - kMarkerSize, p.y()),
+                             QPointF(p.x() + kMarkerSize, p.y()));
+            painter.drawLine(QPointF(p.x(), p.y() - kMarkerSize),
+                             QPointF(p.x(), p.y() + kMarkerSize));
             if (seriesConfig.style == ChartSeriesStyle::Asterisk) {
                 const qreal d = kMarkerSize * 0.7;
                 painter.drawLine(QPointF(p.x() - d, p.y() - d), QPointF(p.x() + d, p.y() + d));
@@ -704,7 +728,8 @@ void paintLineSeries(QPainter& painter, const QRect& plotRect, int capacity, con
     // gap between the line chart's per-frame cost and the bar/gauge widgets',
     // which don't build a path at all).
     QPolygonF points;
-    points.reserve(interpolation == ChartLineInterpolation::ZeroOrderHold ? values.size() * 2 - 1 : values.size());
+    points.reserve(interpolation == ChartLineInterpolation::ZeroOrderHold ? values.size() * 2 - 1
+                                                                          : values.size());
     for (int i = 0; i < values.size(); ++i) {
         const QPointF p = pointAt(i);
         if (i > 0 && interpolation == ChartLineInterpolation::ZeroOrderHold) {
@@ -723,8 +748,8 @@ void paintLineSeries(QPainter& painter, const QRect& plotRect, int capacity, con
 // false (leaving *outY/*outValue untouched) where the line doesn't reach yet
 // -- short of the oldest buffered sample's x position -- same as
 // paintLineSeries() simply not drawing anything out that far.
-bool lineValueAtX(const QRect& plotRect, int capacity, const QVector<double>& values, double yMin, double yMax,
-                   qreal x, qreal* outY, double* outValue) {
+bool lineValueAtX(const QRect& plotRect, int capacity, const QVector<double>& values, double yMin,
+                  double yMax, qreal x, qreal* outY, double* outValue) {
     if (values.size() < 2) {
         return false;
     }
@@ -760,8 +785,9 @@ bool lineValueAtX(const QRect& plotRect, int capacity, const QVector<double>& va
 // `x`) rather than assuming it lands exactly under the cursor like a line
 // series would. Same out-of-range behavior as lineValueAtX() -- false short
 // of the oldest buffered sample or past the newest.
-bool nearestValueAtX(const QRect& plotRect, int capacity, const QVector<double>& values, double yMin, double yMax,
-                      qreal x, qreal* outX, qreal* outY, double* outValue) {
+bool nearestValueAtX(const QRect& plotRect, int capacity, const QVector<double>& values,
+                     double yMin, double yMax, qreal x, qreal* outX, qreal* outY,
+                     double* outValue) {
     if (values.isEmpty()) {
         return false;
     }
@@ -791,8 +817,8 @@ bool nearestValueAtX(const QRect& plotRect, int capacity, const QVector<double>&
 // own ZeroOrderHold path), so this returns *outX == x unchanged, like
 // lineValueAtX(), rather than snapping to a sample position like
 // nearestValueAtX(). Same out-of-range behavior as both of those.
-bool heldValueAtX(const QRect& plotRect, int capacity, const QVector<double>& values, double yMin, double yMax,
-                   qreal x, qreal* outY, double* outValue) {
+bool heldValueAtX(const QRect& plotRect, int capacity, const QVector<double>& values, double yMin,
+                  double yMax, qreal x, qreal* outY, double* outValue) {
     if (values.isEmpty()) {
         return false;
     }
@@ -826,10 +852,11 @@ bool heldValueAtX(const QRect& plotRect, int capacity, const QVector<double>& va
 // value exists at that exact column) and at the snapped sample's own position
 // otherwise -- callers should always use *outX, not their original `x`, to
 // place whatever they draw.
-bool valueAtX(ChartLineInterpolation interpolation, bool markerStyle, const QRect& plotRect, int capacity,
-              const QVector<double>& values, double yMin, double yMax, qreal x, qreal* outX, qreal* outY,
-              double* outValue) {
-    if (markerStyle || interpolation == ChartLineInterpolation::Stem || interpolation == ChartLineInterpolation::None) {
+bool valueAtX(ChartLineInterpolation interpolation, bool markerStyle, const QRect& plotRect,
+              int capacity, const QVector<double>& values, double yMin, double yMax, qreal x,
+              qreal* outX, qreal* outY, double* outValue) {
+    if (markerStyle || interpolation == ChartLineInterpolation::Stem ||
+        interpolation == ChartLineInterpolation::None) {
         return nearestValueAtX(plotRect, capacity, values, yMin, yMax, x, outX, outY, outValue);
     }
     *outX = x;
@@ -850,10 +877,12 @@ bool valueAtX(ChartLineInterpolation interpolation, bool markerStyle, const QRec
 // series and each `interpolation` mode affect where a "crossing" comes from
 // (which may land a little off the gridline's exact X for anything that
 // falls back to a nearest-sample snap).
-void paintGridPointMarkers(QPainter& painter, const QRect& plotRect, int capacity, const QVector<int>& xLines,
-                            const QVector<ChartSeriesConfig>& seriesConfigs, const QVector<QVector<double>>& buffers,
-                            double yMin, double yMax, ChartLineInterpolation interpolation,
-                            const QVector<bool>& hiddenSeries, const ThemePalette& palette) {
+void paintGridPointMarkers(QPainter& painter, const QRect& plotRect, int capacity,
+                           const QVector<int>& xLines,
+                           const QVector<ChartSeriesConfig>& seriesConfigs,
+                           const QVector<QVector<double>>& buffers, double yMin, double yMax,
+                           ChartLineInterpolation interpolation, const QVector<bool>& hiddenSeries,
+                           const ThemePalette& palette) {
     if (xLines.isEmpty()) {
         return;
     }
@@ -874,7 +903,8 @@ void paintGridPointMarkers(QPainter& painter, const QRect& plotRect, int capacit
             qreal x = 0.0;
             qreal y = 0.0;
             double value = 0.0;
-            if (!valueAtX(interpolation, marker, plotRect, capacity, values, yMin, yMax, gridX, &x, &y, &value)) {
+            if (!valueAtX(interpolation, marker, plotRect, capacity, values, yMin, yMax, gridX, &x,
+                          &y, &value)) {
                 continue;
             }
 
@@ -885,9 +915,9 @@ void paintGridPointMarkers(QPainter& painter, const QRect& plotRect, int capacit
             // of clipping past the plot's own top edge.
             const bool above = y - kDotRadius - kLabelGap - textHeight >= plotRect.top();
             const int labelTop = above ? qRound(y - kDotRadius - kLabelGap - textHeight)
-                                        : qRound(y + kDotRadius + kLabelGap);
-            QRect labelRect(qRound(x) - textWidth / 2 - kLabelPadding, labelTop, textWidth + kLabelPadding * 2,
-                             textHeight);
+                                       : qRound(y + kDotRadius + kLabelGap);
+            QRect labelRect(qRound(x) - textWidth / 2 - kLabelPadding, labelTop,
+                            textWidth + kLabelPadding * 2, textHeight);
             if (labelRect.left() < plotRect.left()) {
                 labelRect.moveLeft(plotRect.left());
             }
@@ -924,10 +954,11 @@ void paintGridPointMarkers(QPainter& painter, const QRect& plotRect, int capacit
 // unless `mousePos` actually sits inside plotRect (ChartWidgetBase::
 // m_hasHoverPos also gates this at the call site, for "mouse isn't over the
 // widget at all").
-void paintHoverCrosshair(QPainter& painter, const QRect& plotRect, int capacity, const QPoint& mousePos,
-                          const QVector<ChartSeriesConfig>& seriesConfigs, const QVector<QVector<double>>& buffers,
-                          double yMin, double yMax, ChartLineInterpolation interpolation,
-                          const QVector<bool>& hiddenSeries, const ThemePalette& palette) {
+void paintHoverCrosshair(QPainter& painter, const QRect& plotRect, int capacity,
+                         const QPoint& mousePos, const QVector<ChartSeriesConfig>& seriesConfigs,
+                         const QVector<QVector<double>>& buffers, double yMin, double yMax,
+                         ChartLineInterpolation interpolation, const QVector<bool>& hiddenSeries,
+                         const ThemePalette& palette) {
     if (!plotRect.contains(mousePos)) {
         return;
     }
@@ -948,8 +979,8 @@ void paintHoverCrosshair(QPainter& painter, const QRect& plotRect, int capacity,
         qreal x = 0.0;
         qreal y = 0.0;
         double value = 0.0;
-        const bool found = valueAtX(interpolation, isMarkerStyle(seriesConfigs[i].style), plotRect, capacity,
-                                     buffers[i], yMin, yMax, hoverX, &x, &y, &value);
+        const bool found = valueAtX(interpolation, isMarkerStyle(seriesConfigs[i].style), plotRect,
+                                    capacity, buffers[i], yMin, yMax, hoverX, &x, &y, &value);
         if (found) {
             rows.append({&seriesConfigs[i], value, x, y});
         }
@@ -984,8 +1015,9 @@ void paintHoverCrosshair(QPainter& painter, const QRect& plotRect, int capacity,
         // name-before-value order -- a translator wanting to swap that order
         // for a given language would need to reorder these placeholders; not
         // attempted for this pass.
-        const QString text = QCoreApplication::translate("ChartWidgets", "%1: %2")
-                                  .arg(seriesDisplayName(*row.series), QString::number(row.value, 'g', 4));
+        const QString text =
+            QCoreApplication::translate("ChartWidgets", "%1: %2")
+                .arg(seriesDisplayName(*row.series), QString::number(row.value, 'g', 4));
         lines << text;
         textWidth = qMax(textWidth, fm.horizontalAdvance(text));
     }
@@ -993,7 +1025,8 @@ void paintHoverCrosshair(QPainter& painter, const QRect& plotRect, int capacity,
     const int balloonWidth = kBalloonPadding * 2 + kLegendSwatchSize + kSwatchTextGap + textWidth;
     const int balloonHeight = kBalloonPadding * 2 + rowHeight * rows.size();
 
-    QRect balloonRect(mousePos.x() + kBalloonGap, mousePos.y() - balloonHeight / 2, balloonWidth, balloonHeight);
+    QRect balloonRect(mousePos.x() + kBalloonGap, mousePos.y() - balloonHeight / 2, balloonWidth,
+                      balloonHeight);
     if (balloonRect.right() > plotRect.right()) {
         // No room to the cursor's right -- flip to its left instead.
         balloonRect.moveLeft(mousePos.x() - kBalloonGap - balloonWidth);
@@ -1021,12 +1054,14 @@ void paintHoverCrosshair(QPainter& painter, const QRect& plotRect, int capacity,
         const int y = balloonRect.top() + kBalloonPadding + i * rowHeight;
         painter.setPen(Qt::NoPen);
         painter.setBrush(rows[i].series->color);
-        painter.drawEllipse(QRect(balloonRect.left() + kBalloonPadding, y + (rowHeight - kLegendSwatchSize) / 2,
-                                   kLegendSwatchSize, kLegendSwatchSize));
+        painter.drawEllipse(QRect(balloonRect.left() + kBalloonPadding,
+                                  y + (rowHeight - kLegendSwatchSize) / 2, kLegendSwatchSize,
+                                  kLegendSwatchSize));
 
         painter.setPen(palette.textPrimary);
-        const QRect textRect(balloonRect.left() + kBalloonPadding + kLegendSwatchSize + kSwatchTextGap, y, textWidth,
-                              rowHeight);
+        const QRect textRect(
+            balloonRect.left() + kBalloonPadding + kLegendSwatchSize + kSwatchTextGap, y, textWidth,
+            rowHeight);
         painter.drawText(textRect, Qt::AlignLeft | Qt::AlignVCenter, lines[i]);
     }
 }
@@ -1047,8 +1082,9 @@ void paintHoverCrosshair(QPainter& painter, const QRect& plotRect, int capacity,
 // and re-center into the space a hidden one would have left behind instead
 // of leaving a blank gap where it used to sit.
 void paintBarSnapshot(QPainter& painter, const QRect& plotRect, const QRect& area,
-                       const QVector<ChartSeriesConfig>& seriesConfigs, const QVector<QVector<double>>& buffers,
-                       double yMin, double yMax, const QVector<bool>& hiddenSeries, const ThemePalette& palette) {
+                      const QVector<ChartSeriesConfig>& seriesConfigs,
+                      const QVector<QVector<double>>& buffers, double yMin, double yMax,
+                      const QVector<bool>& hiddenSeries, const ThemePalette& palette) {
     QVector<int> visible;
     visible.reserve(seriesConfigs.size());
     for (int i = 0; i < seriesConfigs.size(); ++i) {
@@ -1074,7 +1110,8 @@ void paintBarSnapshot(QPainter& painter, const QRect& plotRect, const QRect& are
         const qreal slotLeft = plotRect.left() + slot * slotIndex;
         const qreal x = slotLeft + (slot - barWidth) / 2.0;
 
-        const QVector<double>& values = series < buffers.size() ? buffers[series] : QVector<double>();
+        const QVector<double>& values =
+            series < buffers.size() ? buffers[series] : QVector<double>();
         const bool hasValue = !values.isEmpty();
         if (hasValue) {
             const double value = values.last();
@@ -1090,13 +1127,13 @@ void paintBarSnapshot(QPainter& painter, const QRect& plotRect, const QRect& are
         // Free function -- see seriesDisplayName() above for why this uses
         // QCoreApplication::translate() instead of tr().
         const QString text = hasValue ? QString::number(values.last(), 'g', 4)
-                                       : QCoreApplication::translate("ChartWidgets", "--");
+                                      : QCoreApplication::translate("ChartWidgets", "--");
         const QRect labelRect(qRound(slotLeft), labelY, qRound(slot), rowHeight);
         painter.drawText(labelRect, Qt::AlignCenter, text);
     }
 }
 
-} // namespace
+}  // namespace
 
 void ChartWidgetBase::setConfig(const QJsonObject& config) {
     const ChartConfig newConfig = parseChartConfig(config);
@@ -1200,8 +1237,8 @@ void ChartWidgetBase::appendFieldSample(quint16 fieldId, quint64 timestampUs, do
     scheduleRepaint();
 }
 
-void ChartWidgetBase::onFieldSample(const traceview::TelemetryFieldBinding& binding, quint64 timestampUs,
-                                     double value) {
+void ChartWidgetBase::onFieldSample(const traceview::TelemetryFieldBinding& binding,
+                                    quint64 timestampUs, double value) {
     if (binding.sourceId != m_config.sourceId || binding.topicId != m_config.topicId) {
         return;
     }
@@ -1249,8 +1286,8 @@ void DummyLineChartWidget::paintEvent(QPaintEvent*) {
     const int capacity = chartBufferCapacity(m_config);
     const QVector<int> xLines = xGridLines(plotRect);
 
-    paintYAxis(painter, plotRect, yMin, yMax, m_config.yUnit, m_config.showGrid, kLineYGridDivisions, labelWidth,
-               palette);
+    paintYAxis(painter, plotRect, yMin, yMax, m_config.yUnit, m_config.showGrid,
+               kLineYGridDivisions, labelWidth, palette);
     paintXAxis(painter, plotRect, xLines, m_config.showGrid, palette);
     for (int i = 0; i < m_config.series.size() && i < seriesValues.size(); ++i) {
         // A series hidden via its legend entry (see mousePressEvent()) is
@@ -1259,26 +1296,27 @@ void DummyLineChartWidget::paintEvent(QPaintEvent*) {
         if (i < m_seriesHidden.size() && m_seriesHidden[i]) {
             continue;
         }
-        paintLineSeries(painter, plotRect, capacity, m_config.series[i], seriesValues[i], yMin, yMax,
-                         m_lineInterpolation);
+        paintLineSeries(painter, plotRect, capacity, m_config.series[i], seriesValues[i], yMin,
+                        yMax, m_lineInterpolation);
     }
     // Gated on showGrid too -- the markers are dots at the gridline
     // crossings, so they lose their reference entirely once the gridlines
     // themselves are hidden.
     if (m_showGridPointMarkers && m_config.showGrid) {
-        paintGridPointMarkers(painter, plotRect, capacity, xLines, m_config.series, seriesValues, yMin, yMax,
-                               m_lineInterpolation, m_seriesHidden, palette);
+        paintGridPointMarkers(painter, plotRect, capacity, xLines, m_config.series, seriesValues,
+                              yMin, yMax, m_lineInterpolation, m_seriesHidden, palette);
     }
     if (m_showHoverCrosshair && m_hasHoverPos) {
-        paintHoverCrosshair(painter, plotRect, capacity, m_hoverPos, m_config.series, seriesValues, yMin, yMax,
-                             m_lineInterpolation, m_seriesHidden, palette);
+        paintHoverCrosshair(painter, plotRect, capacity, m_hoverPos, m_config.series, seriesValues,
+                            yMin, yMax, m_lineInterpolation, m_seriesHidden, palette);
     }
 
     // No more redundant "Line Chart" corner label -- DashboardCell's header
     // already shows the configured name (TAREFA 1); this corner now carries
     // the per-series legend instead, which the old literal text had no room
     // for anyway.
-    paintSeriesLegends(painter, area, m_config.series, seriesValues, m_config.xAxisMode, m_showLastValueRow,
+    paintSeriesLegends(painter, area, m_config.series, seriesValues, m_config.xAxisMode,
+                       m_showLastValueRow,
                        /*showXAxisTag=*/true, m_seriesHidden, palette, &m_legendHitRects);
 }
 
@@ -1312,15 +1350,17 @@ void DummyBarChartWidget::paintEvent(QPaintEvent*) {
     // and this chart no longer has a time/sample axis: it's a fixed bar per
     // series, each labeled with its own current value directly below it
     // (paintBarSnapshot() below) rather than scrolling through history.
-    paintYAxis(painter, plotRect, yMin, yMax, m_config.yUnit, m_config.showGrid, kBarYGridDivisions, labelWidth,
-               palette);
-    paintBarSnapshot(painter, plotRect, area, m_config.series, seriesValues, yMin, yMax, m_seriesHidden, palette);
+    paintYAxis(painter, plotRect, yMin, yMax, m_config.yUnit, m_config.showGrid, kBarYGridDivisions,
+               labelWidth, palette);
+    paintBarSnapshot(painter, plotRect, area, m_config.series, seriesValues, yMin, yMax,
+                     m_seriesHidden, palette);
 
     // Top name row only -- no bottom "last value" row or "t"/"k" tag, since
     // each bar already carries its own current value (see above). See
     // DummyLineChartWidget::paintEvent for why this is a legend instead of a
     // "Bar Chart" corner label.
-    paintSeriesLegends(painter, area, m_config.series, seriesValues, m_config.xAxisMode, /*showLastValueRow=*/false,
+    paintSeriesLegends(painter, area, m_config.series, seriesValues, m_config.xAxisMode,
+                       /*showLastValueRow=*/false,
                        /*showXAxisTag=*/false, m_seriesHidden, palette, &m_legendHitRects);
 }
 
@@ -1364,8 +1404,8 @@ void DummyGaugeWidget::appendFieldSample(quint16 fieldId, quint64 timestampUs, d
     }
 }
 
-void DummyGaugeWidget::onFieldSample(const traceview::TelemetryFieldBinding& binding, quint64 timestampUs,
-                                      double value) {
+void DummyGaugeWidget::onFieldSample(const traceview::TelemetryFieldBinding& binding,
+                                     quint64 timestampUs, double value) {
     if (binding.sourceId != m_config.sourceId || binding.topicId != m_config.topicId) {
         return;
     }
@@ -1431,8 +1471,8 @@ void DummyGaugeWidget::paintEvent(QPaintEvent*) {
                 break;  // out of room -- further rings would invert/overlap
             }
             const double penWidth = qBound(3.0, pitch - kGaugeRingGap, kGaugeMaxRingPenWidth);
-            const QRectF ringRect(center.x() - ringRadius, center.y() - ringRadius, ringRadius * 2.0,
-                                   ringRadius * 2.0);
+            const QRectF ringRect(center.x() - ringRadius, center.y() - ringRadius,
+                                  ringRadius * 2.0, ringRadius * 2.0);
 
             const double value = i < m_values.size() ? m_values[i] : qQNaN();
             const bool hasValue = !qIsNaN(value);
@@ -1461,7 +1501,8 @@ void DummyGaugeWidget::paintEvent(QPaintEvent*) {
                 // The pointer: a sharp mark crossing the ring exactly at the
                 // value's angle, like a needle tip -- legible on its own even
                 // when the filled arc's length is hard to judge by eye.
-                paintGaugePointer(painter, center, ringRadius, penWidth, fraction, palette.textPrimary);
+                paintGaugePointer(painter, center, ringRadius, penWidth, fraction,
+                                  palette.textPrimary);
             }
         }
 
@@ -1479,9 +1520,9 @@ void DummyGaugeWidget::paintEvent(QPaintEvent*) {
             painter.setPen(palette.textPrimary);
             // Class member function -- plain tr() works here (unlike the
             // free-function helpers above it in the anonymous namespace).
-            const QString text = hasValue
-                                      ? tr("%1%2").arg(value, 0, 'f', m_config.decimals).arg(m_config.unit)
-                                      : tr("--");
+            const QString text =
+                hasValue ? tr("%1%2").arg(value, 0, 'f', m_config.decimals).arg(m_config.unit)
+                         : tr("--");
             painter.drawText(arcRect, Qt::AlignCenter, text);
         }
     }
@@ -1491,4 +1532,4 @@ void DummyGaugeWidget::paintEvent(QPaintEvent*) {
     }
 }
 
-} // namespace traceview
+}  // namespace traceview

@@ -75,7 +75,11 @@ Release flow:
 2. Run `python scripts/check_style.py` and `python scripts/smoke_test.py`
    (see "Project scripts" below), plus `ctest` in the build directory (see
    "Tests" below), and fix whatever they flag.
-3. Merge `release/x.y.z` into `main`, tag `vx.y.z` on `main`.
+3. Merge `release/x.y.z` into `main`, tag `vx.y.z` on `main`. If the
+   release included a repo-wide reformat, add that commit's SHA to
+   `.git-blame-ignore-revs` so `git blame` steps over it — only ever for
+   genuinely mechanical commits, so blame still lands on whoever last made
+   a real decision about a line.
 4. Merge `release/x.y.z` back into `develop` so the version bump and any
    last-minute fixes aren't lost.
 5. Delete `release/x.y.z`.
@@ -110,6 +114,15 @@ enough to get started:
   `PATH`, plus heuristic checks for `PascalCase` classes, `k`-prefixed
   constants, and `m_`-prefixed member variables. Best-effort (regex-based,
   not a real C++ parser) — it doesn't check function/parameter naming.
+  Covers `src/`, `lib/`, `include/`, `tests/` and `tools/`, and excludes
+  two things whose bytes belong to someone else: `lib/vendor`
+  (reformatting vendored code turns the next upstream update into a merge
+  conflict) and `include/bally_channels.h` (one of three byte-identical
+  copies across the Bally repositories, hash-checked in each — see
+  `tests/test_ballychannels.cpp`). Note that `clang-format` is not on
+  `PATH` by default on a Qt install; it ships at
+  `Tools/llvm-mingw*/bin/clang-format.exe`, and the check silently skips
+  the formatting half if it can't find it.
 - `python scripts/smoke_test.py` — builds the project and launches
   `TraceView.exe` to confirm it doesn't crash on startup. This is a build
   + launch smoke test, not a UI regression suite — it doesn't click
@@ -130,23 +143,49 @@ suite's output. Like the app itself, the test binaries need Qt's DLLs on
 `PATH` to run — the same `environment` block in `CMakeUserPresets.json` used
 to launch the built app works here too.
 
-Current coverage, one file per area:
+Current coverage — 32 suites, grouped by what they exercise. Enumerated by
+area rather than one line per file, so this section stays accurate as
+suites are added; `tests/CMakeLists.txt` is the authoritative list and
+carries a comment on each non-obvious one.
 
-- `test_projectstore` — `.tvproj` save/load round-trip, on-disk format,
-  failure paths (no path set, invalid JSON).
-- `test_dashboarditem` — `DashboardItem` JSON (de)serialization, including
-  field clamping and missing/optional fields.
-- `test_widgetregistry` — built-in widget types are registered and
-  constructible; unknown-type and duplicate-registration handling.
-- `test_dashboardgrid` — `DashboardGrid`/`DashboardCommands`: add/remove/
-  rename/re-key/reconfigure/retype are all undoable, dashboard JSON
-  round-trips, and mouse-driven drag/resize (including grid-snapping and
-  minimum-size clamping) via `QTest::mousePress`/`mouseMove`/`mouseRelease`.
+- **Protocol / wire format** (no QWidget, per topico 14's acceptance
+  criterion) — `test_btpsession`, `test_btpsessionframing`,
+  `test_btphandshake`, `test_protocolrouter`, `test_packedledecoder`,
+  `test_telemetrycatalog`, `test_telemetryfieldrouter`,
+  `test_subscriptionmanager`, `test_statusreport`, `test_logfilereader`,
+  `test_clocksync`, `test_keyderivation`, `test_ballychannels`.
+- **Transports** — `test_serialmanager`, `test_usbhidmanager`,
+  `test_deviceconnection`, `test_hubtransport`, `test_hubendpoint`,
+  `test_mdnsresolver`, `test_otaclient`. None of these touch real hardware
+  or a real network: the OTA suite aims at TEST-NET-1 (RFC 5737), and the
+  hub suites drive a real `DeviceConnection`/`BtpBackend` pair with no port
+  behind it.
+- **Devices** — `test_device`, `test_devicesgrid`,
+  `test_hubpeeraccumulator`.
+- **Dashboard / project** — `test_projectstore`, `test_workspacemanager`,
+  `test_dashboarditem`, `test_widgetregistry`, `test_dashboardgrid`
+  (including mouse-driven drag/resize via
+  `QTest::mousePress`/`mouseMove`/`mouseRelease`), `test_chartdata`,
+  `test_controldata`, `test_telemetryseriesbuffer`,
+  `test_serialterminalwidget`.
 
-Not covered yet: nothing UI-chrome-level (`MainWindow`, `Ribbon`,
-`PropertiesPanel`) — `smoke_test.py` above is still the only check that the
-app boots, and manual verification per `docs/DASHBOARD.md` is still how
-dashboard editing gets exercised end-to-end.
+Not covered yet, and worth knowing before you rely on a change being
+caught:
+
+- **UI chrome** — `MainWindow`, `Ribbon`, `PropertiesPanel`, `OtaTab`,
+  `LogViewer`, `DeviceConfigDialog`. `smoke_test.py` is still the only
+  check that the app boots at all, and manual verification per
+  [docs/DASHBOARD.md](docs/DASHBOARD.md) is still how dashboard editing
+  gets exercised end-to-end. Where logic worth testing has ended up behind
+  UI, the fix has been to move it below the UI layer rather than to write a
+  widget test — `HubPeerAccumulator` (`lib/devices/hubpeeraccumulator.h`)
+  is the pattern: `MainWindow` kept only the part that genuinely needs a
+  `Backend`.
+- **`ManifestClient`** (`lib/protocol/manifestclient.cpp`) — pure protocol
+  logic with no coverage, the last one of its kind. It is the obvious next
+  suite to write.
+- **`BtpBackend`** (`lib/protocol/btpbackend.cpp`) is exercised indirectly
+  by the transport suites above, but has no suite of its own.
 
 ## Scope of "features"
 

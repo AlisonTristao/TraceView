@@ -11,7 +11,11 @@ namespace {
 
 QString cssColor(const QColor& c) {
     if (c.alpha() < 255) {
-        return QString("rgba(%1, %2, %3, %4)").arg(c.red()).arg(c.green()).arg(c.blue()).arg(c.alpha());
+        return QString("rgba(%1, %2, %3, %4)")
+            .arg(c.red())
+            .arg(c.green())
+            .arg(c.blue())
+            .arg(c.alpha());
     }
     return c.name(QColor::HexRgb);
 }
@@ -33,13 +37,15 @@ QString arrowImagePath(const QColor& color, const QString& fileTag, bool pointin
     painter.setRenderHint(QPainter::Antialiasing);
     painter.setPen(Qt::NoPen);
     painter.setBrush(color);
-    const QPolygon triangle = pointingDown
-                                   ? QPolygon({QPoint(1, 3), QPoint(kSize - 1, 3), QPoint(kSize / 2, kSize - 2)})
-                                   : QPolygon({QPoint(1, kSize - 3), QPoint(kSize - 1, kSize - 3), QPoint(kSize / 2, 2)});
+    const QPolygon triangle =
+        pointingDown
+            ? QPolygon({QPoint(1, 3), QPoint(kSize - 1, 3), QPoint(kSize / 2, kSize - 2)})
+            : QPolygon({QPoint(1, kSize - 3), QPoint(kSize - 1, kSize - 3), QPoint(kSize / 2, 2)});
     painter.drawPolygon(triangle);
     painter.end();
 
-    const QString path = QDir(QDir::tempPath()).filePath(QString("traceview_%1_arrow.png").arg(fileTag));
+    const QString path =
+        QDir(QDir::tempPath()).filePath(QString("traceview_%1_arrow.png").arg(fileTag));
     pixmap.save(path, "PNG");
     return path;
 }
@@ -66,7 +72,7 @@ QString checkImagePath(const QColor& color) {
     return path;
 }
 
-} // namespace
+}  // namespace
 
 QString buildStyleSheet(const ThemePalette& p) {
     QString qss = R"(
@@ -526,10 +532,11 @@ QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {
     qss.replace("@warning@", cssColor(p.warning));
     qss.replace("@danger@", cssColor(p.danger));
     qss.replace("@comboArrowUri@", arrowImagePath(p.textSecondary, "combo", /*pointingDown=*/true));
-    qss.replace("@spinUpArrowUri@", arrowImagePath(p.textSecondary, "spin_up", /*pointingDown=*/false));
+    qss.replace("@spinUpArrowUri@",
+                arrowImagePath(p.textSecondary, "spin_up", /*pointingDown=*/false));
     qss.replace("@checkArrowUri@", checkImagePath(p.background));
 
     return qss;
 }
 
-} // namespace traceview
+}  // namespace traceview

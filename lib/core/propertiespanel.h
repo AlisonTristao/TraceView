@@ -55,10 +55,12 @@ public:
     // from the current selection; hasSelection=false clears and disables
     // them. Never emits the request signals below — this is a one-way sync
     // from DashboardGrid state into the UI.
-    void setSelection(bool hasSelection, const QString& typeId, const QString& name, const QString& key,
-                       const QJsonObject& config);
+    void setSelection(bool hasSelection, const QString& typeId, const QString& name,
+                      const QString& key, const QJsonObject& config);
 
-    int preferredThickness() const override { return kPropertiesPanelWidth; }
+    int preferredThickness() const override {
+        return kPropertiesPanelWidth;
+    }
 
 signals:
     void typeChangeRequested(const QString& typeId);
@@ -106,4 +108,4 @@ private:
     WidgetConfigEditor* m_configEditor = nullptr;
 };
 
-} // namespace traceview
+}  // namespace traceview

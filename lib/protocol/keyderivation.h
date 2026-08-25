@@ -60,4 +60,4 @@ QByteArray deriveChannelKey(const QString& password);
 QByteArray endpointKeyVerifyTag(const QByteArray& key);
 QByteArray linkKeyVerifyTag(const QByteArray& key);
 
-} // namespace traceview
+}  // namespace traceview

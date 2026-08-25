@@ -40,12 +40,13 @@ public:
     // `requestedRateMillihz`, returning an opaque handle to pass back to
     // removeSubscriber()/updateSubscriber(). Returns 0 (no consumer
     // registered) when any argument is zero.
-    virtual quint64 addSubscriber(quint32 sourceId, quint16 topicId, quint32 requestedRateMillihz) = 0;
+    virtual quint64 addSubscriber(quint32 sourceId, quint16 topicId,
+                                  quint32 requestedRateMillihz) = 0;
     // Moves an existing consumer to another topic and/or rate, returning the
     // handle to keep using. Passing 0 as `handle` is the same as
     // addSubscriber().
     virtual quint64 updateSubscriber(quint64 handle, quint32 sourceId, quint16 topicId,
-                                      quint32 requestedRateMillihz) = 0;
+                                     quint32 requestedRateMillihz) = 0;
     // Drops one consumer. A handle of 0 or an unknown handle is ignored.
     virtual void removeSubscriber(quint64 handle) = 0;
     // Current per-topic view, for display. Only topics with at least one
@@ -84,7 +85,8 @@ signals:
     // bar. `timeoutMs` is how long it should stay visible.
     void statusMessage(const QString& text, int timeoutMs);
     // One decoded telemetry value for `binding`, with its origin timestamp.
-    void fieldSample(const traceview::TelemetryFieldBinding& binding, quint64 timestampUs, double value);
+    void fieldSample(const traceview::TelemetryFieldBinding& binding, quint64 timestampUs,
+                     double value);
     // Bytes received back for a terminal/serial-monitor widget (the reply
     // side of sendTerminalIn()).
     void terminalDataReceived(const QByteArray& data);

@@ -46,7 +46,8 @@ constexpr int kTickIntervalMs = 50;
 // (chartwidgets.cpp), not this timer.
 constexpr int kStressTickIntervalMs = 0;
 
-QJsonObject seriesJson(const QString& name, int fieldId, const QString& color, const QString& style) {
+QJsonObject seriesJson(const QString& name, int fieldId, const QString& color,
+                       const QString& style) {
     QJsonObject series;
     series["name"] = name;
     series["fieldId"] = fieldId;
@@ -194,14 +195,14 @@ const QStringList& debugTerminalLines() {
 // hover crosshair. See DashboardCell::setEditMode()'s WA_TransparentForMouseEvents
 // toggle -- Run mode (false) is what makes the gear menu and hover both work.
 DashboardCell* wrapInCell(const QString& itemId, const QString& typeId, const QString& title,
-                           DashboardWidget* content, QWidget* parent) {
+                          DashboardWidget* content, QWidget* parent) {
     auto* cell = new DashboardCell(itemId, typeId, title, content, parent);
     cell->setEditMode(false);
     cell->setConnected(true);
     return cell;
 }
 
-} // namespace
+}  // namespace
 
 DebugChartsWindow::DebugChartsWindow(QWidget* parent) : QDialog(parent) {
     setWindowTitle(kBaseWindowTitle);
@@ -222,7 +223,7 @@ DebugChartsWindow::DebugChartsWindow(QWidget* parent) : QDialog(parent) {
     stressButton->setCheckable(true);
     connect(stressButton, &QPushButton::toggled, this, [this, stressButton](bool checked) {
         stressButton->setText(checked ? tr("Modo estresse: ligado (atualizacao maxima)")
-                                       : tr("Modo estresse: desligado (50ms/tick)"));
+                                      : tr("Modo estresse: desligado (50ms/tick)"));
         setStressMode(checked);
     });
     toolbar->addWidget(stressButton);
@@ -234,18 +235,22 @@ DebugChartsWindow::DebugChartsWindow(QWidget* parent) : QDialog(parent) {
 
     m_lineChart = new DummyLineChartWidget();
     m_lineChart->setConfig(lineChartConfig());
-    layout->addWidget(wrapInCell("debug-line", "dummy_line", tr("Line Chart"), m_lineChart, this), 0, 0, 1, 3);
+    layout->addWidget(wrapInCell("debug-line", "dummy_line", tr("Line Chart"), m_lineChart, this),
+                      0, 0, 1, 3);
 
     m_barChart = new DummyBarChartWidget();
     m_barChart->setConfig(barChartConfig());
-    layout->addWidget(wrapInCell("debug-bar", "dummy_bar", tr("Bar Chart"), m_barChart, this), 1, 0);
+    layout->addWidget(wrapInCell("debug-bar", "dummy_bar", tr("Bar Chart"), m_barChart, this), 1,
+                      0);
 
     m_gauge = new DummyGaugeWidget();
     m_gauge->setConfig(gaugeConfig());
     layout->addWidget(wrapInCell("debug-gauge", "dummy_gauge", tr("Gauge"), m_gauge, this), 1, 1);
 
     m_serialMonitor = new SerialMonitorWidget();
-    layout->addWidget(wrapInCell("debug-serial", "serial_monitor", tr("Serial Monitor"), m_serialMonitor, this), 1, 2);
+    layout->addWidget(
+        wrapInCell("debug-serial", "serial_monitor", tr("Serial Monitor"), m_serialMonitor, this),
+        1, 2);
 
     // One of each control widget too (widgets/controlwidgets.h) -- their
     // sendRequested() is looped straight back into the serial monitor above
@@ -254,17 +259,22 @@ DebugChartsWindow::DebugChartsWindow(QWidget* parent) : QDialog(parent) {
     // up to a real SerialManager (BACKEND_TODO.txt Task 9/10).
     auto* pushButton = new PushButtonWidget();
     pushButton->setConfig(pushButtonConfig());
-    connect(pushButton, &PushButtonWidget::sendRequested, m_serialMonitor, &SerialMonitorWidget::appendData);
-    layout->addWidget(wrapInCell("debug-button", "push_button", tr("Push Button"), pushButton, this), 2, 0);
+    connect(pushButton, &PushButtonWidget::sendRequested, m_serialMonitor,
+            &SerialMonitorWidget::appendData);
+    layout->addWidget(
+        wrapInCell("debug-button", "push_button", tr("Push Button"), pushButton, this), 2, 0);
 
     auto* toggleSwitch = new ToggleSwitchWidget();
     toggleSwitch->setConfig(toggleSwitchConfig());
-    connect(toggleSwitch, &ToggleSwitchWidget::sendRequested, m_serialMonitor, &SerialMonitorWidget::appendData);
-    layout->addWidget(wrapInCell("debug-toggle", "toggle_switch", tr("Toggle Switch"), toggleSwitch, this), 2, 1);
+    connect(toggleSwitch, &ToggleSwitchWidget::sendRequested, m_serialMonitor,
+            &SerialMonitorWidget::appendData);
+    layout->addWidget(
+        wrapInCell("debug-toggle", "toggle_switch", tr("Toggle Switch"), toggleSwitch, this), 2, 1);
 
     auto* slider = new SliderWidget();
     slider->setConfig(sliderConfig());
-    connect(slider, &SliderWidget::sendRequested, m_serialMonitor, &SerialMonitorWidget::appendData);
+    connect(slider, &SliderWidget::sendRequested, m_serialMonitor,
+            &SerialMonitorWidget::appendData);
     layout->addWidget(wrapInCell("debug-slider", "slider", tr("Slider"), slider, this), 2, 2);
 
     // Rows would otherwise split available height evenly -- way more than a
@@ -363,4 +373,4 @@ void DebugChartsWindow::tick() {
     }
 }
 
-} // namespace traceview
+}  // namespace traceview

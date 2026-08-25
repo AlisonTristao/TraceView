@@ -11,7 +11,7 @@ namespace {
 // stays readable through it -- this is a preview, not an occlusion.
 constexpr int kFillAlpha = 70;
 constexpr int kBorderAlpha = 160;
-} // namespace
+}  // namespace
 
 DockDropIndicator::DockDropIndicator(QWidget* parent) : QWidget(parent) {
     setAttribute(Qt::WA_TransparentForMouseEvents, true);
@@ -33,4 +33,4 @@ void DockDropIndicator::paintEvent(QPaintEvent*) {
     painter.drawRect(rect().adjusted(1, 1, -1, -1));
 }
 
-} // namespace traceview
+}  // namespace traceview

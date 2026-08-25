@@ -53,4 +53,4 @@ private:
     QStringDecoder m_utf8Decoder{QStringConverter::Utf8};
 };
 
-} // namespace traceview
+}  // namespace traceview

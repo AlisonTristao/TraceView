@@ -37,18 +37,20 @@ public:
     // coincide). DeviceConnection supplies both from the Device's own
     // TransportType (devices/device.h), converted there since
     // traceview_devices can't depend on btp::codec directly.
-    BtpBackend(BtpSession::Framing framing, btp::TransportProfile encodeProfile, QObject* parent = nullptr);
+    BtpBackend(BtpSession::Framing framing, btp::TransportProfile encodeProfile,
+               QObject* parent = nullptr);
     // Convenience overload for the profiles whose framing is implied
     // (Serial/COBS, UsbHid/pre-framed) -- same reasoning as BtpSession's own
     // convenience constructor: existing call sites keep working unchanged.
-    explicit BtpBackend(btp::TransportProfile transport = btp::TransportProfile::Serial, QObject* parent = nullptr);
+    explicit BtpBackend(btp::TransportProfile transport = btp::TransportProfile::Serial,
+                        QObject* parent = nullptr);
     // Declared (rather than left implicit) because m_telemetryCatalog is a
     // plain (non-QObject) heap object this class owns and frees itself.
     ~BtpBackend() override;
 
     quint64 addSubscriber(quint32 sourceId, quint16 topicId, quint32 requestedRateMillihz) override;
     quint64 updateSubscriber(quint64 handle, quint32 sourceId, quint16 topicId,
-                              quint32 requestedRateMillihz) override;
+                             quint32 requestedRateMillihz) override;
     void removeSubscriber(quint64 handle) override;
     QVector<TopicSubscriptionState> subscriptions() const override;
     QVector<StatusTopicRecord> topicStatuses() const override;
@@ -99,7 +101,9 @@ public:
     void setHubEndpoint(quint32 selfSourceId, quint32 peerSourceId);
 
     // Zero unless setHubEndpoint() made this a child.
-    quint32 peerSourceId() const { return m_peerSourceId; }
+    quint32 peerSourceId() const {
+        return m_peerSourceId;
+    }
 
 signals:
     // Hands over one received frame's octets, exactly as they came off the

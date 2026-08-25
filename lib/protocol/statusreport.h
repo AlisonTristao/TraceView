@@ -28,7 +28,9 @@ struct StatusReport {
     quint64 telemetryDropped = 0;
     QVector<StatusTopicRecord> topics;  // always empty when statusVersion == 1
 
-    bool degraded() const { return (flags & 0x0001) != 0; }
+    bool degraded() const {
+        return (flags & 0x0001) != 0;
+    }
 };
 
 // Decodes a CONTROL/STATUS payload. Returns false (leaving `*out` untouched)

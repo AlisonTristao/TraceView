@@ -1,7 +1,6 @@
 #include "protocol/btpsession.h"
 
 #include <QDateTime>
-
 #include <btp/codec.hpp>
 
 namespace traceview {
@@ -30,14 +29,16 @@ BtpSession::BtpSession(Framing framing, btp::TransportProfile encodeProfile, QOb
       // requires these exact capacities.
       m_encodedBuffer(btp::kSerialMaxCobsBlockSize),
       m_decodedBuffer(btp::kSerialMaxFrameSize),
-      m_decoder(m_encodedBuffer.data(), m_encodedBuffer.size(), m_decodedBuffer.data(), m_decodedBuffer.size()),
+      m_decoder(m_encodedBuffer.data(), m_encodedBuffer.size(), m_decodedBuffer.data(),
+                m_decodedBuffer.size()),
       m_reassemblyStorageA(kReassemblyStorageBytes),
       m_reassemblyStorageB(kReassemblyStorageBytes),
       m_reassemblyStorage{
           {m_reassemblyStorageA.data(), m_reassemblyStorageA.size()},
           {m_reassemblyStorageB.data(), m_reassemblyStorageB.size()},
       },
-      m_reassembler(m_reassemblySlots, m_reassemblyStorage, kReassemblySlotCount, kReassemblyTimeoutMs) {}
+      m_reassembler(m_reassemblySlots, m_reassemblyStorage, kReassemblySlotCount,
+                    kReassemblyTimeoutMs) {}
 
 BtpSession::BtpSession(btp::TransportProfile transport, QObject* parent)
     : BtpSession(framingFor(transport), transport, parent) {}
@@ -62,7 +63,8 @@ bool BtpSession::emitFramed(const std::uint8_t* frame, std::size_t frameSize) {
     }
     std::vector<std::uint8_t> cobsBlock(cobsCapacity);
     std::size_t cobsBytes = 0;
-    if (btp::cobs_encode(frame, frameSize, cobsBlock.data(), cobsBlock.size(), &cobsBytes) != btp::CobsError::Ok) {
+    if (btp::cobs_encode(frame, frameSize, cobsBlock.data(), cobsBlock.size(), &cobsBytes) !=
+        btp::CobsError::Ok) {
         return false;
     }
 
@@ -81,7 +83,8 @@ bool BtpSession::sendFrame(const btp::Frame& frame) {
     // ceiling itself and writes nothing when the payload exceeds it.
     std::vector<std::uint8_t> encoded(btp::max_frame_size(m_encodeProfile));
     std::size_t frameBytes = 0;
-    if (btp::encode(frame, m_encodeProfile, encoded.data(), encoded.size(), &frameBytes) != btp::Error::Ok) {
+    if (btp::encode(frame, m_encodeProfile, encoded.data(), encoded.size(), &frameBytes) !=
+        btp::Error::Ok) {
         return false;
     }
     // Axis (a) is applied entirely separately, and knows nothing about which
@@ -154,8 +157,9 @@ void BtpSession::feedBytes(const QByteArray& data) {
         // is the encode profile: it is the ceiling the *sender* used, which
         // is what "is this frame too large" has to be measured against.
         btp::DecodedFrame decoded;
-        const btp::Error error = btp::decode(reinterpret_cast<const std::uint8_t*>(data.constData()),
-                                             static_cast<std::size_t>(data.size()), m_encodeProfile, &decoded);
+        const btp::Error error =
+            btp::decode(reinterpret_cast<const std::uint8_t*>(data.constData()),
+                        static_cast<std::size_t>(data.size()), m_encodeProfile, &decoded);
         if (error == btp::Error::Ok) {
             diagnosticsDirty = true;
             // btp::decode() only accepts an input whose size is exactly
@@ -203,8 +207,9 @@ void BtpSession::feedBytes(const QByteArray& data) {
                 // guarantee).
                 emit frameBytesReceived(
                     decoded.header.source_id,
-                    QByteArray(reinterpret_cast<const char*>(decoded.payload.data - btp::kV1HeaderSize),
-                               int(btp::kV1MinimumFrameSize + decoded.payload.size)));
+                    QByteArray(
+                        reinterpret_cast<const char*>(decoded.payload.data - btp::kV1HeaderSize),
+                        int(btp::kV1MinimumFrameSize + decoded.payload.size)));
                 handleReassembly(decoded);
                 break;
             case btp::SerialDecodeEvent::CobsError:
@@ -224,7 +229,8 @@ void BtpSession::feedBytes(const QByteArray& data) {
             case btp::SerialDecodeEvent::Overflow:
                 ++m_diagnostics.overflowDrops;
                 diagnosticsDirty = true;
-                emit frameRejected(QStringLiteral("serial candidate exceeded the COBS block limit"));
+                emit frameRejected(
+                    QStringLiteral("serial candidate exceeded the COBS block limit"));
                 break;
             case btp::SerialDecodeEvent::InvalidConfiguration:
                 // Construction-time contract violation (buffers too small);

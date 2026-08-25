@@ -40,4 +40,4 @@ private:
     int m_currentIndex = 0;
 };
 
-} // namespace traceview
+}  // namespace traceview

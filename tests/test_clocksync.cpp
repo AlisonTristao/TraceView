@@ -1,8 +1,6 @@
 #include <QSignalSpy>
 #include <QtTest/QtTest>
-
 #include <btp/codec.hpp>
-
 #include <cstdint>
 #include <vector>
 
@@ -53,47 +51,53 @@ void appendLe32(QByteArray& out, quint32 value) {
 
 quint32 readLe32(const QByteArray& data, int offset) {
     return quint32(quint8(data.at(offset))) | (quint32(quint8(data.at(offset + 1))) << 8) |
-           (quint32(quint8(data.at(offset + 2))) << 16) | (quint32(quint8(data.at(offset + 3))) << 24);
+           (quint32(quint8(data.at(offset + 2))) << 16) |
+           (quint32(quint8(data.at(offset + 3))) << 24);
 }
 
 // Decodes one COBS-wrapped serial-profile frame out of what the session
 // asked its transport to write -- same shape as test_hubendpoint's own
 // helper.
-bool decodeWritten(const QByteArray& written, btp::DecodedFrame* out, std::vector<std::uint8_t>* storage) {
-    if (written.size() < 3 || written.at(0) != char(0) || written.at(written.size() - 1) != char(0)) {
+bool decodeWritten(const QByteArray& written, btp::DecodedFrame* out,
+                   std::vector<std::uint8_t>* storage) {
+    if (written.size() < 3 || written.at(0) != char(0) ||
+        written.at(written.size() - 1) != char(0)) {
         return false;
     }
     const QByteArray block = written.mid(1, written.size() - 2);
     storage->assign(btp::kSerialMaxFrameSize, 0);
     std::size_t decoded = 0;
-    if (btp::cobs_decode(reinterpret_cast<const std::uint8_t*>(block.constData()), std::size_t(block.size()),
-                          storage->data(), storage->size(), &decoded) != btp::CobsError::Ok) {
+    if (btp::cobs_decode(reinterpret_cast<const std::uint8_t*>(block.constData()),
+                         std::size_t(block.size()), storage->data(), storage->size(),
+                         &decoded) != btp::CobsError::Ok) {
         return false;
     }
     storage->resize(decoded);
-    return btp::decode(storage->data(), storage->size(), btp::TransportProfile::Serial, out) == btp::Error::Ok;
+    return btp::decode(storage->data(), storage->size(), btp::TransportProfile::Serial, out) ==
+           btp::Error::Ok;
 }
 
 // The shell command line carried by a COMMAND_REQUEST payload
 // (commands.md section 2: a 20-byte prefix, then command_size bytes).
 QString commandLineOf(const btp::DecodedFrame& frame) {
     constexpr std::size_t kRequestPrefixSize = 20;
-    if (frame.payload.size < kRequestPrefixSize) return QString();
+    if (frame.payload.size < kRequestPrefixSize)
+        return QString();
     return QString::fromUtf8(reinterpret_cast<const char*>(frame.payload.data) + kRequestPrefixSize,
-                              int(frame.payload.size - kRequestPrefixSize));
+                             int(frame.payload.size - kRequestPrefixSize));
 }
 
 // A COMMAND_RESULT echoing back the request's (source_id, boot_id,
 // sequence), which is the whole of this protocol's correlation.
-BtpFrame makeResult(quint32 requestSourceId, quint32 requestBootId, quint32 replyToSequence, quint8 status,
-                     const QByteArray& message) {
+BtpFrame makeResult(quint32 requestSourceId, quint32 requestBootId, quint32 replyToSequence,
+                    quint8 status, const QByteArray& message) {
     QByteArray payload;
     appendLe32(payload, requestSourceId);
     appendLe32(payload, requestBootId);
     appendLe32(payload, replyToSequence);
-    payload.append(4, char(0));      // bytes 12..15, unused here
-    payload.append(char(status));    // byte 16
-    payload.append(3, char(0));      // bytes 17..19
+    payload.append(4, char(0));                    // bytes 12..15, unused here
+    payload.append(char(status));                  // byte 16
+    payload.append(3, char(0));                    // bytes 17..19
     appendLe16(payload, quint16(message.size()));  // message_size at 20..21
     payload.append(message);
 
@@ -113,7 +117,8 @@ struct Fixture {
 
     // Decodes the Nth frame the session was asked to write.
     bool writtenFrame(int index, btp::DecodedFrame* out, std::vector<std::uint8_t>* storage) const {
-        if (index >= written.count()) return false;
+        if (index >= written.count())
+            return false;
         return decodeWritten(written.at(index).at(0).toByteArray(), out, storage);
     }
 
@@ -123,7 +128,8 @@ struct Fixture {
     bool requestIdentity(int index, quint32* sourceId, quint32* bootId, quint32* sequence) const {
         btp::DecodedFrame frame{};
         std::vector<std::uint8_t> storage;
-        if (!writtenFrame(index, &frame, &storage)) return false;
+        if (!writtenFrame(index, &frame, &storage))
+            return false;
         *sourceId = frame.header.source_id;
         *bootId = frame.header.boot_id;
         *sequence = frame.header.sequence;
@@ -136,7 +142,8 @@ bool replyTo(Fixture& fixture, int requestIndex, quint8 status, const QByteArray
     quint32 sourceId = 0;
     quint32 bootId = 0;
     quint32 sequence = 0;
-    if (!fixture.requestIdentity(requestIndex, &sourceId, &bootId, &sequence)) return false;
+    if (!fixture.requestIdentity(requestIndex, &sourceId, &bootId, &sequence))
+        return false;
     fixture.router.onFrameReceived(makeResult(sourceId, bootId, sequence, status, message));
     return true;
 }
@@ -178,7 +185,8 @@ void TestClockSync::sessionEstablishedAsksTheDongleForItsClock() {
     // The request has to be addressed to the dongle that just handshaked:
     // SerialMux::handleCommandRequest on the firmware side refuses one whose
     // target doesn't match its own (source_id, boot_id).
-    const QByteArray payload(reinterpret_cast<const char*>(frame.payload.data), int(frame.payload.size));
+    const QByteArray payload(reinterpret_cast<const char*>(frame.payload.data),
+                             int(frame.payload.size));
     QCOMPARE(readLe32(payload, 0), kDongleSourceId);
     QCOMPARE(readLe32(payload, 4), kDongleBootId);
 }
@@ -192,7 +200,7 @@ void TestClockSync::aClockWithinToleranceIsLeftAlone() {
     // the clock on every connect over a couple of seconds of noise would be
     // worse than leaving it.
     QVERIFY(replyTo(fixture, 0, kStatusSuccess,
-                     epochReply(QDateTime::currentSecsSinceEpoch() - (kToleranceSecs - 1))));
+                    epochReply(QDateTime::currentSecsSinceEpoch() - (kToleranceSecs - 1))));
 
     QCOMPARE(fixture.written.count(), 1);  // no set_clock followed
 }
@@ -202,7 +210,7 @@ void TestClockSync::aDongleRunningBehindIsCorrected() {
     fixture.sync.onSessionEstablished(kDongleSourceId, kDongleBootId);
 
     QVERIFY(replyTo(fixture, 0, kStatusSuccess,
-                     epochReply(QDateTime::currentSecsSinceEpoch() - (kToleranceSecs + 3600))));
+                    epochReply(QDateTime::currentSecsSinceEpoch() - (kToleranceSecs + 3600))));
 
     QCOMPARE(fixture.written.count(), 2);
     btp::DecodedFrame frame{};
@@ -225,7 +233,7 @@ void TestClockSync::aDongleRunningAheadIsCorrectedToo() {
     fixture.sync.onSessionEstablished(kDongleSourceId, kDongleBootId);
 
     QVERIFY(replyTo(fixture, 0, kStatusSuccess,
-                     epochReply(QDateTime::currentSecsSinceEpoch() + (kToleranceSecs + 3600))));
+                    epochReply(QDateTime::currentSecsSinceEpoch() + (kToleranceSecs + 3600))));
 
     QCOMPARE(fixture.written.count(), 2);
     btp::DecodedFrame frame{};
@@ -247,17 +255,20 @@ void TestClockSync::aReplyFromAnotherClientIsIgnored() {
     quint32 sequence = 0;
     QVERIFY(fixture.requestIdentity(0, &sourceId, &bootId, &sequence));
 
-    fixture.router.onFrameReceived(makeResult(sourceId ^ 0xFFFFu, bootId, sequence, kStatusSuccess,
-                                               epochReply(QDateTime::currentSecsSinceEpoch() - 7200)));
+    fixture.router.onFrameReceived(
+        makeResult(sourceId ^ 0xFFFFu, bootId, sequence, kStatusSuccess,
+                   epochReply(QDateTime::currentSecsSinceEpoch() - 7200)));
     QCOMPARE(fixture.written.count(), 1);
 
-    fixture.router.onFrameReceived(makeResult(sourceId, bootId ^ 0xFFFFu, sequence, kStatusSuccess,
-                                               epochReply(QDateTime::currentSecsSinceEpoch() - 7200)));
+    fixture.router.onFrameReceived(
+        makeResult(sourceId, bootId ^ 0xFFFFu, sequence, kStatusSuccess,
+                   epochReply(QDateTime::currentSecsSinceEpoch() - 7200)));
     QCOMPARE(fixture.written.count(), 1);
 
     // The genuine reply still lands afterwards -- the rejections above must
     // not have consumed the outstanding request.
-    QVERIFY(replyTo(fixture, 0, kStatusSuccess, epochReply(QDateTime::currentSecsSinceEpoch() - 7200)));
+    QVERIFY(
+        replyTo(fixture, 0, kStatusSuccess, epochReply(QDateTime::currentSecsSinceEpoch() - 7200)));
     QCOMPARE(fixture.written.count(), 2);
 }
 
@@ -273,8 +284,9 @@ void TestClockSync::aReplyToAnEarlierSequenceIsIgnored() {
     quint32 sequence = 0;
     QVERIFY(fixture.requestIdentity(0, &sourceId, &bootId, &sequence));
 
-    fixture.router.onFrameReceived(makeResult(sourceId, bootId, sequence - 1, kStatusSuccess,
-                                               epochReply(QDateTime::currentSecsSinceEpoch() - 7200)));
+    fixture.router.onFrameReceived(
+        makeResult(sourceId, bootId, sequence - 1, kStatusSuccess,
+                   epochReply(QDateTime::currentSecsSinceEpoch() - 7200)));
     QCOMPARE(fixture.written.count(), 1);
 }
 

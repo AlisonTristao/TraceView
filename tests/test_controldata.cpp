@@ -1,6 +1,5 @@
-#include <QtTest>
-
 #include <QJsonObject>
+#include <QtTest>
 
 #include "dashboard/widgets/controldata.h"
 
@@ -194,7 +193,7 @@ void TestControlData::buildSliderCommandEmptyTemplateYieldsEmptyBytes() {
     QVERIFY(buildSliderCommand(config, 1.0).isEmpty());
 }
 
-} // namespace
+}  // namespace
 
 QTEST_MAIN(TestControlData)
 #include "test_controldata.moc"

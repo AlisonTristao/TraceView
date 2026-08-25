@@ -25,7 +25,9 @@ TelemetrySample protocolTestSample(quint64 timestampUs) {
     sample.timestampUs = timestampUs;
     sample.topicId = 0x0001;
     sample.schemaVersion = 1;
-    sample.payload = QByteArray::fromHex("04030201" "000a0d3f");
+    sample.payload = QByteArray::fromHex(
+        "04030201"
+        "000a0d3f");
     return sample;
 }
 
@@ -51,11 +53,13 @@ void TestTelemetryFieldRouter::twoSubscribersBothReceiveTheSameField() {
     QVector<double> subscriberB;
     connect(&router, &TelemetryFieldRouter::fieldSample, &router,
             [&](const TelemetryFieldBinding& binding, quint64, double value) {
-                if (binding.fieldId == 1) subscriberA.append(value);
+                if (binding.fieldId == 1)
+                    subscriberA.append(value);
             });
     connect(&router, &TelemetryFieldRouter::fieldSample, &router,
             [&](const TelemetryFieldBinding& binding, quint64, double value) {
-                if (binding.fieldId == 1) subscriberB.append(value);
+                if (binding.fieldId == 1)
+                    subscriberB.append(value);
             });
 
     router.onTelemetrySample(protocolTestSample(1000));
@@ -78,7 +82,8 @@ void TestTelemetryFieldRouter::timestampTravelsUnmodified() {
     quint64 observedTimestamp = 0;
     connect(&router, &TelemetryFieldRouter::fieldSample, &router,
             [&](const TelemetryFieldBinding& binding, quint64 timestampUs, double) {
-                if (binding.fieldId == 1) observedTimestamp = timestampUs;
+                if (binding.fieldId == 1)
+                    observedTimestamp = timestampUs;
             });
 
     router.onTelemetrySample(protocolTestSample(0x0102030405060708ULL));
@@ -118,7 +123,7 @@ void TestTelemetryFieldRouter::malformedPayloadIsCountedAndNotDelivered() {
     QCOMPARE(router.diagnostics().decodeErrors, quint64(1));
 }
 
-} // namespace
+}  // namespace
 
 QTEST_MAIN(TestTelemetryFieldRouter)
 #include "test_telemetryfieldrouter.moc"

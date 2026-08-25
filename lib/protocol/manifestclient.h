@@ -90,8 +90,9 @@ private:
     bool m_haveDongleConfigRevision = false;
     quint32 m_lastDongleConfigRevision = 0;
 
-    QHash<quint32, quint32> m_sourceRevisions;        // sourceId -> last known config_revision
-    QHash<quint32, qint64> m_lastRequestMsBySource;   // sourceId -> epoch ms of last targeted request
+    QHash<quint32, quint32> m_sourceRevisions;  // sourceId -> last known config_revision
+    QHash<quint32, qint64>
+        m_lastRequestMsBySource;  // sourceId -> epoch ms of last targeted request
 };
 
 }  // namespace traceview

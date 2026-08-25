@@ -2,7 +2,32 @@
 
 Real-time telemetry dashboard for ESP32/ESP-NOW robots, built in C++ with Qt.
 
-> **Status:** v2.2.0 — devices can now connect over USB HID as well as serial, and a Logs tab for opening a robot's `.blog` SD-card log file sits alongside Run/Layout/Devices, on top of the multi-device dashboard from 2.1.0 and the workspaces/theming/docking round from 2.0.0. The BTP telemetry integration behind it is still evolving. See [CONTRIBUTING.md](CONTRIBUTING.md) for the branching/feature workflow and [docs/ECOSYSTEM.md](docs/ECOSYSTEM.md) for how this project fits with the rest of the Bally ecosystem.
+> **Status:** v2.3.0 — the dongle is now a hub: one cable carries several robots, each its own device with its own charts, terminal and end-to-end seal. Firmware also uploads over Wi-Fi from a new OTA tab. On top of the USB HID transport and Logs tab from 2.2.0, the multi-device dashboard from 2.1.0, and the workspaces/theming/docking round from 2.0.0. The BTP telemetry integration behind it is still evolving. See [CONTRIBUTING.md](CONTRIBUTING.md) for the branching/feature workflow and [docs/ECOSYSTEM.md](docs/ECOSYSTEM.md) for how this project fits with the rest of the Bally ecosystem.
+
+## What's new in 2.3.0
+
+- **Hub channels** — a device can connect *through* another device instead
+  of over a wire of its own. The desktop opens one connection to the dongle
+  and talks to it as an ordinary BTP device; every robot behind its radio
+  becomes its own device, with its own manifest, charts and terminal,
+  riding that same single cable. Nothing re-encodes or re-fragments in
+  either direction, so an end-to-end seal still verifies at the far end —
+  the dongle holds no key for the traffic it carries. See
+  [docs/DEVICES.md](docs/DEVICES.md).
+- **Live robot picker** — pick a robot behind the hub from a list of the
+  ones it has actually heard (channel, address, online/offline with an age,
+  MAC on hover), decoded from the dongle's own `hub.peers` telemetry, and
+  refreshed while the dialog is open. Typing an address by hand still works
+  for a robot the hub hasn't heard yet.
+- **OTA Update tab** — push a firmware `.bin` to a robot over Wi-Fi from
+  File → Upload Firmware (OTA)…, with live reachability, the version each
+  robot reports it is running, and a progress bar per upload. Resolves
+  `*.local` addresses with its own mDNS query, so it works on Windows
+  without Bonjour installed. See [docs/OTA.md](docs/OTA.md).
+- **Sealed channels** — per-channel key derivation shared byte-for-byte
+  with bally_OS and the dongle, so which key opens which message is one
+  table agreed by all three (`include/bally_channels.h`, hash-checked in
+  each repository).
 
 ## What's new in 2.2.0
 
