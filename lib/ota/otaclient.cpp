@@ -58,14 +58,24 @@ void OtaClient::cacheMdnsAddress(const QString& hostnameLower, const QHostAddres
     m_mdnsCache.insert(hostnameLower, {address, QDateTime::currentMSecsSinceEpoch() + kMdnsCacheTtlMs});
 }
 
+bool OtaClient::statusRequestInFlight(const QString& deviceId) const {
+    return m_statusReplies.contains(deviceId) ||
+           m_pendingResolutions.contains(QStringLiteral("status:%1").arg(deviceId));
+}
+
 void OtaClient::checkStatus(const QString& deviceId, const QString& address) {
-    if (QNetworkReply* previous = m_statusReplies.take(deviceId)) {
-        previous->abort();
+    // Coalesce rather than abort: see the class comment in the header. The
+    // request already running will emit statusChecked() for this device, so
+    // returning here still honours "one emission per poll that actually
+    // started one".
+    if (statusRequestInFlight(deviceId)) {
+        return;
     }
 
     const QString host = address.trimmed();
     if (host.isEmpty()) {
-        emit statusChecked(deviceId, /*reachable=*/false, /*otaReady=*/false, QString(), QString());
+        emit statusChecked(deviceId, /*reachable=*/false, /*otaReady=*/false, QString(),
+                            tr("No OTA address configured for this device."));
         return;
     }
 
@@ -93,9 +103,10 @@ void OtaClient::sendStatusRequest(const QString& deviceId, const QString& host) 
     m_statusReplies.insert(deviceId, reply);
 
     connect(reply, &QNetworkReply::finished, this, [this, deviceId, reply]() {
-        // abort()'d by a newer checkStatus() for the same device -- that
-        // call already owns m_statusReplies[deviceId] (or removed it), so
-        // this stale reply must not report anything back.
+        // Defensive: checkStatus() coalesces instead of replacing, so a
+        // second live reply for one device should not arise. It still can
+        // if the device is removed and re-added under the same id mid-flight,
+        // and a stale reply must not report anything back.
         if (m_statusReplies.value(deviceId) != reply) {
             reply->deleteLater();
             return;

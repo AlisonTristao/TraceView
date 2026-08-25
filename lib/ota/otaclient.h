@@ -22,8 +22,17 @@ class MdnsResolver;
 //
 // Requests are keyed by Device::id rather than by address, since OtaTab
 // drives one of each in flight per row: a second checkStatus() for a device
-// that already has one outstanding aborts the old QNetworkReply rather than
-// letting two answers race each other back to the same row.
+// that already has one outstanding is COALESCED into it -- it returns
+// without starting a second request, and the one already running reports
+// for both.
+//
+// Coalescing rather than aborting-and-restarting, because OtaTab polls
+// every second while a status request is allowed four (kStatusTimeoutMs):
+// aborting meant any device answering slower than the poll interval had
+// every attempt cancelled by the next tick and never resolved once, leaving
+// its row on "Checking..." forever. That is precisely the case worth
+// reporting -- a host that is up but slow, or a filtered connect that only
+// fails after several seconds.
 //
 // A *.local address is resolved through MdnsResolver (our own multicast
 // query, see its own header comment for why) before either request type
@@ -38,11 +47,18 @@ public:
     explicit OtaClient(QObject* parent = nullptr);
 
     // GET http://<address>/status. `address` may be a bare IP, a regular
-    // hostname, or a *.local mDNS name. Always resolves to exactly one
+    // hostname, or a *.local mDNS name. Resolves to exactly one
     // statusChecked() for this deviceId, including on a resolution/network
     // error or timeout (reachable=false) -- OtaTab's poll timer never needs
-    // to guess whether a request went missing.
+    // to guess whether a request went missing. A call made while this
+    // device already has a status request in flight is coalesced into it
+    // (see the class comment) and adds no second emission of its own.
     void checkStatus(const QString& deviceId, const QString& address);
+
+    // True while `deviceId` has a status request (or the mDNS resolution
+    // that precedes one) outstanding. OtaTab reads it to leave a slow row
+    // alone instead of re-asking every tick.
+    bool statusRequestInFlight(const QString& deviceId) const;
 
     // POST http://<address>/update with the file at `filePath` as the raw
     // body (matching OTAUpdater::handle_update_post -- no multipart) and
