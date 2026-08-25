@@ -47,6 +47,11 @@ add_traceview_test(test_keyderivation traceview_protocol)
 # no transport -- what the session would have written is decoded straight out
 # of bytesToWrite(), the same way test_hubendpoint does it.
 add_traceview_test(test_clocksync traceview_protocol btp::codec)
+# MANIFEST_REQUEST/MANIFEST_DATA: when a request is worth sending, and a
+# bounds-checked walk over the response. Same no-transport fixture as
+# test_clocksync -- requests are decoded out of bytesToWrite(), responses
+# are fed in as hand-built payloads.
+add_traceview_test(test_manifestclient traceview_protocol btp::codec)
 # topico 28, desktop side: a child device as an ENDPOINT -- it originates its
 # own traffic and every piece of it has to be addressed to its own robot.
 add_traceview_test(test_hubendpoint traceview_ui traceview_protocol btp::codec)
