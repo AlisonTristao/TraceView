@@ -16,4 +16,4 @@ public:
     explicit AboutDialog(QWidget* parent = nullptr);
 };
 
-} // namespace traceview
+}  // namespace traceview

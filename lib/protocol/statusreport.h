@@ -8,7 +8,7 @@
 
 namespace traceview {
 
-// A decoded STATUS payload (COMMANDS_AND_ACTIONS.md section 8, plus 8.1's
+// A decoded STATUS payload (commands.md section 5, plus 5.1's
 // per-topic extension). The 92-octet v1 block has the same layout at the same
 // offsets in both versions, so a v1 reader and a v2 reader agree on every
 // counter below; only `topics` is version-2-only.
@@ -28,7 +28,9 @@ struct StatusReport {
     quint64 telemetryDropped = 0;
     QVector<StatusTopicRecord> topics;  // always empty when statusVersion == 1
 
-    bool degraded() const { return (flags & 0x0001) != 0; }
+    bool degraded() const {
+        return (flags & 0x0001) != 0;
+    }
 };
 
 // Decodes a CONTROL/STATUS payload. Returns false (leaving `*out` untouched)
@@ -36,7 +38,7 @@ struct StatusReport {
 // `status_version` other than 1 or 2, or a v2 message whose
 // `topic_status_count` does not fit the bytes that follow.
 //
-// With `status_version=1` the decoder MUST stop at 92 octets (section 8.1):
+// With `status_version=1` the decoder MUST stop at 92 octets (section 5.1):
 // trailing bytes are never reinterpreted as topic_status records, they are
 // simply not read. That is what keeps a v1 emitter and this v2-aware reader
 // compatible in both directions.

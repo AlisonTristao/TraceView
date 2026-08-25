@@ -11,4 +11,4 @@ namespace traceview {
 // rules — palettes themselves stay plain data.
 QString buildStyleSheet(const ThemePalette& palette);
 
-} // namespace traceview
+}  // namespace traceview

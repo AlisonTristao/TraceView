@@ -1,26 +1,26 @@
 #include "usbhidmanager.h"
 
-#include <QThread>
-
 #include <hidapi.h>
 
+#include <QThread>
 #include <cstring>
 
 namespace traceview {
 
 namespace {
 
-// "usb_hid" transport profile (BTP/docs/TRANSPORT_USB_HID.md section 2):
+// "usb_hid" transport profile (BTP/docs/fragmentation-and-transports.md
+// section 3.3):
 // one physical HID report is 64 octets total -- 1 Report ID octet plus 63
 // data octets declared by the firmware's USBHIDVendor descriptor. Report ID
 // matches arduino-esp32's fixed HID_REPORT_ID_VENDOR (USBHID.h enum), the
 // vendor interface's only report id.
 constexpr unsigned char kReportId = 6;
-constexpr int kReportDataSize = 63;              // matches USBHIDVendor(63, ...)
+constexpr int kReportDataSize = 63;                     // matches USBHIDVendor(63, ...)
 constexpr int kReportBufferSize = 1 + kReportDataSize;  // report id + data
-constexpr int kReadTimeoutMs = 100;              // short poll, see class comment
+constexpr int kReadTimeoutMs = 100;                     // short poll, see class comment
 
-} // namespace
+}  // namespace
 
 QVector<UsbHidManager::DeviceInfo> UsbHidManager::availableDevices() {
     QVector<DeviceInfo> devices;
@@ -32,12 +32,14 @@ QVector<UsbHidManager::DeviceInfo> UsbHidManager::availableDevices() {
         DeviceInfo device;
         device.path = QString::fromLocal8Bit(info->path);
 
-        const QString manufacturer =
-            info->manufacturer_string ? QString::fromWCharArray(info->manufacturer_string) : QString();
-        const QString product = info->product_string ? QString::fromWCharArray(info->product_string) : QString();
+        const QString manufacturer = info->manufacturer_string
+                                         ? QString::fromWCharArray(info->manufacturer_string)
+                                         : QString();
+        const QString product =
+            info->product_string ? QString::fromWCharArray(info->product_string) : QString();
         QString label = QString("%1:%2")
-                             .arg(QString::number(info->vendor_id, 16).rightJustified(4, '0'))
-                             .arg(QString::number(info->product_id, 16).rightJustified(4, '0'));
+                            .arg(QString::number(info->vendor_id, 16).rightJustified(4, '0'))
+                            .arg(QString::number(info->product_id, 16).rightJustified(4, '0'));
         const QString name = QString("%1 %2").arg(manufacturer, product).trimmed();
         if (!name.isEmpty()) {
             label += QString::fromUtf8(" \xE2\x80\x94 ") + name;  // " — "
@@ -163,4 +165,4 @@ void UsbHidManager::readLoop() {
     emit connectionStateChanged(false);
 }
 
-} // namespace traceview
+}  // namespace traceview

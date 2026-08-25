@@ -25,14 +25,16 @@ class TelemetryFieldRouter : public QObject {
 public:
     struct Diagnostics {
         quint64 samplesDecoded = 0;
-        quint64 schemaUnknown = 0;   // no (source, topic, schema_version) match
-        quint64 decodeErrors = 0;    // schema known, payload structurally invalid
-                                      // or an encoding this topico can't decode
+        quint64 schemaUnknown = 0;  // no (source, topic, schema_version) match
+        quint64 decodeErrors = 0;   // schema known, payload structurally invalid
+                                    // or an encoding this topico can't decode
     };
 
     explicit TelemetryFieldRouter(TelemetryCatalog* catalog, QObject* parent = nullptr);
 
-    const Diagnostics& diagnostics() const { return m_diagnostics; }
+    const Diagnostics& diagnostics() const {
+        return m_diagnostics;
+    }
 
 public slots:
     // Connect to ProtocolRouter::telemetrySampleReceived in production; also
@@ -40,7 +42,8 @@ public slots:
     void onTelemetrySample(const traceview::TelemetrySample& sample);
 
 signals:
-    void fieldSample(const traceview::TelemetryFieldBinding& binding, quint64 timestampUs, double value);
+    void fieldSample(const traceview::TelemetryFieldBinding& binding, quint64 timestampUs,
+                     double value);
     void diagnosticsChanged();
     // A TELEMETRY sample arrived for (sourceId, topicId, schemaVersion) with
     // no matching catalog entry -- topico 16 PASSO 9: "rejeitar amostra com

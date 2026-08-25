@@ -1,5 +1,4 @@
 #include <QtTest>
-
 #include <cstring>
 #include <limits>
 
@@ -14,7 +13,9 @@ using traceview::TelemetryTopicSchema;
 
 namespace {
 
-void appendU8(QByteArray& body, quint8 v) { body.append(char(v)); }
+void appendU8(QByteArray& body, quint8 v) {
+    body.append(char(v));
+}
 void appendU16(QByteArray& body, quint16 v) {
     body.append(char(v & 0xFF));
     body.append(char((v >> 8) & 0xFF));
@@ -28,7 +29,7 @@ void appendF32(QByteArray& body, float v) {
 }
 
 TelemetryFieldSchema field(quint16 id, quint16 order, const QString& name, TelemetryFieldType type,
-                            double scale = 1.0, double offset = 0.0, bool nullable = false) {
+                           double scale = 1.0, double offset = 0.0, bool nullable = false) {
     TelemetryFieldSchema f;
     f.fieldId = id;
     f.order = order;
@@ -44,7 +45,7 @@ class TestPackedLeDecoder : public QObject {
     Q_OBJECT
 
 private slots:
-    // TELEMETRY.md section 9.1
+    // telemetry.md section 9
     void decodesMotorExampleFromSpec();
     // TELEMETRY.md section 9.2 -- nullable field, present and absent
     void decodesImuWithNullableTemperaturePresent();
@@ -73,10 +74,14 @@ void TestPackedLeDecoder::decodesMotorExampleFromSpec() {
         field(4, 3, "right_current", TelemetryFieldType::Int16, 0.01),
     };
 
-    // TELEMETRY.md section 9.1: left_speed=1.5f, right_speed=-2.25f,
+    // telemetry.md section 9: left_speed=1.5f, right_speed=-2.25f,
     // left_current raw 300 (0x012c), right_current raw -40 (0xffd8) -- the
     // body is the payload's 12 octets after its 2-octet schema_version.
-    const QByteArray spec = QByteArray::fromHex("0000c03f" "000010c0" "2c01" "d8ff");
+    const QByteArray spec = QByteArray::fromHex(
+        "0000c03f"
+        "000010c0"
+        "2c01"
+        "d8ff");
 
     QHash<quint16, TelemetryFieldValue> values;
     QVERIFY(decodePackedLe(schema, spec, &values));
@@ -137,18 +142,19 @@ void TestPackedLeDecoder::decodesLineSensorVariableArrayAndEnum() {
     TelemetryFieldSchema reflectance = field(1, 0, "reflectance", TelemetryFieldType::UInt16, 0.01);
     reflectance.elementCount = 0;
     reflectance.maxElementCount = 32;
-    TelemetryFieldSchema centroid = field(2, 1, "centroid", TelemetryFieldType::Int16, 0.001, 0.0, true);
+    TelemetryFieldSchema centroid =
+        field(2, 1, "centroid", TelemetryFieldType::Int16, 0.001, 0.0, true);
     TelemetryFieldSchema quality = field(3, 2, "quality", TelemetryFieldType::Enum8);
     schema.fields = {reflectance, centroid, quality};
 
     QByteArray body;
-    appendU8(body, 0x01);   // centroid present
-    appendU16(body, 3);     // reflectance element_count = 3
-    appendU16(body, 100);   // reflectance[0] raw
-    appendU16(body, 200);   // reflectance[1] raw
-    appendU16(body, 300);   // reflectance[2] raw
+    appendU8(body, 0x01);                    // centroid present
+    appendU16(body, 3);                      // reflectance element_count = 3
+    appendU16(body, 100);                    // reflectance[0] raw
+    appendU16(body, 200);                    // reflectance[1] raw
+    appendU16(body, 300);                    // reflectance[2] raw
     appendU16(body, quint16(qint16(-500)));  // centroid raw
-    appendU8(body, 2);      // quality = good
+    appendU8(body, 2);                       // quality = good
 
     QHash<quint16, TelemetryFieldValue> values;
     QVERIFY(decodePackedLe(schema, body, &values));
@@ -205,7 +211,7 @@ void TestPackedLeDecoder::rejectsNonZeroUnusedBitmapBits() {
 
     QByteArray body;
     appendU8(body, 0xFE);  // bit0 (the only assigned bit) clear -> field null;
-                            // bits 1-7 MUST be zero but aren't here.
+                           // bits 1-7 MUST be zero but aren't here.
     QHash<quint16, TelemetryFieldValue> values;
     QVERIFY(!decodePackedLe(schema, body, &values));
 }
@@ -219,7 +225,7 @@ void TestPackedLeDecoder::boolMustBeZeroOrOne() {
     QCOMPARE(values[1].elements[0], 1.0);
 }
 
-} // namespace
+}  // namespace
 
 QTEST_MAIN(TestPackedLeDecoder)
 #include "test_packedledecoder.moc"

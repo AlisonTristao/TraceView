@@ -1,12 +1,11 @@
 #include "paneldockcontroller.h"
 
-#include <algorithm>
-
 #include <QEvent>
 #include <QGuiApplication>
 #include <QScreen>
 #include <QSettings>
 #include <QWidget>
+#include <algorithm>
 
 #include "dockablepanel.h"
 #include "dockablepanelheader.h"
@@ -30,16 +29,16 @@ constexpr int kMinCanvasVisible = 100;
 
 QString edgeToString(DockEdge edge) {
     switch (edge) {
-    case DockEdge::Left:
-        return QStringLiteral("left");
-    case DockEdge::Right:
-        return QStringLiteral("right");
-    case DockEdge::Top:
-        return QStringLiteral("top");
-    case DockEdge::Bottom:
-        return QStringLiteral("bottom");
-    case DockEdge::Floating:
-        return QStringLiteral("floating");
+        case DockEdge::Left:
+            return QStringLiteral("left");
+        case DockEdge::Right:
+            return QStringLiteral("right");
+        case DockEdge::Top:
+            return QStringLiteral("top");
+        case DockEdge::Bottom:
+            return QStringLiteral("bottom");
+        case DockEdge::Floating:
+            return QStringLiteral("floating");
     }
     return QStringLiteral("left");
 }
@@ -71,14 +70,15 @@ bool isGeometryOnScreen(const QRect& geometry) {
     }
     return false;
 }
-} // namespace
+}  // namespace
 
 PanelDockController::PanelDockController(QWidget* contentRow, QWidget* window, QObject* parent)
     : QObject(parent), m_contentRow(contentRow), m_window(window) {
     m_indicator = new DockDropIndicator(m_contentRow);
 }
 
-void PanelDockController::registerPanel(DockablePanel* panel, const QString& settingsId, DockEdge defaultEdge) {
+void PanelDockController::registerPanel(DockablePanel* panel, const QString& settingsId,
+                                        DockEdge defaultEdge) {
     PanelState state;
     state.edge = defaultEdge;
     state.settingsId = settingsId;
@@ -130,10 +130,11 @@ void PanelDockController::restoreState() {
         PanelState& state = m_states[panel];
         const QString prefix = QString(kSettingsPrefix) + state.settingsId + "/";
         if (!settings.contains(prefix + "edge")) {
-            continue; // keep the default passed to registerPanel()
+            continue;  // keep the default passed to registerPanel()
         }
         if (settings.contains(prefix + "thickness")) {
-            state.thickness = std::max(kMinPanelThickness, settings.value(prefix + "thickness").toInt());
+            state.thickness =
+                std::max(kMinPanelThickness, settings.value(prefix + "thickness").toInt());
         }
 
         const DockEdge edge = edgeFromString(settings.value(prefix + "edge").toString());
@@ -159,8 +160,11 @@ void PanelDockController::onDragStarted(DockablePanel* panel, QPoint globalPos) 
     PanelState& state = m_states[panel];
     if (state.edge != DockEdge::Floating) {
         const QRect saved =
-            QSettings().value(QString(kSettingsPrefix) + state.settingsId + "/floatingGeometry").toRect();
-        const QSize size = saved.isValid() ? saved.size() : QSize(state.thickness, kDefaultFloatingHeight);
+            QSettings()
+                .value(QString(kSettingsPrefix) + state.settingsId + "/floatingGeometry")
+                .toRect();
+        const QSize size =
+            saved.isValid() ? saved.size() : QSize(state.thickness, kDefaultFloatingHeight);
         state.edge = DockEdge::Floating;
         panel->setParent(m_window, Qt::Tool | Qt::FramelessWindowHint);
         panel->resize(size);
@@ -230,20 +234,20 @@ void PanelDockController::onEdgeResizeMoved(DockablePanel* panel, QPoint globalP
     PanelState& state = m_states[panel];
     int deltaThickness = 0;
     switch (state.edge) {
-    case DockEdge::Left:
-        deltaThickness = delta.x();
-        break;
-    case DockEdge::Right:
-        deltaThickness = -delta.x();
-        break;
-    case DockEdge::Top:
-        deltaThickness = delta.y();
-        break;
-    case DockEdge::Bottom:
-        deltaThickness = -delta.y();
-        break;
-    case DockEdge::Floating:
-        return;
+        case DockEdge::Left:
+            deltaThickness = delta.x();
+            break;
+        case DockEdge::Right:
+            deltaThickness = -delta.x();
+            break;
+        case DockEdge::Top:
+            deltaThickness = delta.y();
+            break;
+        case DockEdge::Bottom:
+            deltaThickness = -delta.y();
+            break;
+        case DockEdge::Floating:
+            return;
     }
     state.thickness = clampThickness(state.edge, panel, state.thickness + deltaThickness);
     relayout();
@@ -272,7 +276,7 @@ void PanelDockController::onCornerResizeMoved(DockablePanel* panel, QPoint globa
     m_lastResizePos = globalPos;
 
     const QSize newSize(std::max(kMinPanelThickness, panel->width() + delta.x()),
-                         std::max(kMinPanelThickness, panel->height() + delta.y()));
+                        std::max(kMinPanelThickness, panel->height() + delta.y()));
     panel->resize(newSize);
     updateCornerGripGeometry(panel);
 }
@@ -343,16 +347,16 @@ QRect PanelDockController::geometryForEdge(DockEdge edge, DockablePanel* panel) 
     }
 
     switch (edge) {
-    case DockEdge::Left:
-        return QRect(offset, 0, thickness, height);
-    case DockEdge::Right:
-        return QRect(width - offset - thickness, 0, thickness, height);
-    case DockEdge::Top:
-        return QRect(0, offset, width, thickness);
-    case DockEdge::Bottom:
-        return QRect(0, height - offset - thickness, width, thickness);
-    case DockEdge::Floating:
-        break;
+        case DockEdge::Left:
+            return QRect(offset, 0, thickness, height);
+        case DockEdge::Right:
+            return QRect(width - offset - thickness, 0, thickness, height);
+        case DockEdge::Top:
+            return QRect(0, offset, width, thickness);
+        case DockEdge::Bottom:
+            return QRect(0, height - offset - thickness, width, thickness);
+        case DockEdge::Floating:
+            break;
     }
     return QRect();
 }
@@ -378,7 +382,8 @@ int PanelDockController::clampThickness(DockEdge edge, DockablePanel* panel, int
         }
     }
 
-    const int maxThickness = std::max(kMinPanelThickness, totalDim - othersThickness - kMinCanvasVisible);
+    const int maxThickness =
+        std::max(kMinPanelThickness, totalDim - othersThickness - kMinCanvasVisible);
     return std::clamp(desired, kMinPanelThickness, maxThickness);
 }
 
@@ -428,33 +433,36 @@ void PanelDockController::updateEdgeGripGeometry(DockablePanel* panel) {
     const PanelState state = m_states.value(panel);
     const bool horizontal = (state.edge == DockEdge::Left || state.edge == DockEdge::Right);
     state.edgeGrip->setOrientation(horizontal ? DockResizeGrip::Orientation::Horizontal
-                                               : DockResizeGrip::Orientation::Vertical);
+                                              : DockResizeGrip::Orientation::Vertical);
 
-    const QRect r = panel->geometry(); // contentRow-local
+    const QRect r = panel->geometry();  // contentRow-local
     QRect gripRect;
     switch (state.edge) {
-    case DockEdge::Left:
-        gripRect = QRect(r.right() + 1, r.top(), kDockResizeGripThickness, r.height());
-        break;
-    case DockEdge::Right:
-        gripRect = QRect(r.left() - kDockResizeGripThickness, r.top(), kDockResizeGripThickness, r.height());
-        break;
-    case DockEdge::Top:
-        gripRect = QRect(r.left(), r.bottom() + 1, r.width(), kDockResizeGripThickness);
-        break;
-    case DockEdge::Bottom:
-        gripRect = QRect(r.left(), r.top() - kDockResizeGripThickness, r.width(), kDockResizeGripThickness);
-        break;
-    case DockEdge::Floating:
-        return;
+        case DockEdge::Left:
+            gripRect = QRect(r.right() + 1, r.top(), kDockResizeGripThickness, r.height());
+            break;
+        case DockEdge::Right:
+            gripRect = QRect(r.left() - kDockResizeGripThickness, r.top(), kDockResizeGripThickness,
+                             r.height());
+            break;
+        case DockEdge::Top:
+            gripRect = QRect(r.left(), r.bottom() + 1, r.width(), kDockResizeGripThickness);
+            break;
+        case DockEdge::Bottom:
+            gripRect = QRect(r.left(), r.top() - kDockResizeGripThickness, r.width(),
+                             kDockResizeGripThickness);
+            break;
+        case DockEdge::Floating:
+            return;
     }
     state.edgeGrip->setGeometry(gripRect);
 }
 
 void PanelDockController::updateCornerGripGeometry(DockablePanel* panel) {
     DockResizeGrip* grip = m_states.value(panel).cornerGrip;
-    grip->setGeometry(panel->width() - kDockResizeCornerGripSize, panel->height() - kDockResizeCornerGripSize,
-                       kDockResizeCornerGripSize, kDockResizeCornerGripSize);
+    grip->setGeometry(panel->width() - kDockResizeCornerGripSize,
+                      panel->height() - kDockResizeCornerGripSize, kDockResizeCornerGripSize,
+                      kDockResizeCornerGripSize);
 }
 
-} // namespace traceview
+}  // namespace traceview

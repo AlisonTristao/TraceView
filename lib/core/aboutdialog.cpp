@@ -41,4 +41,4 @@ AboutDialog::AboutDialog(QWidget* parent) : QDialog(parent) {
     layout->addWidget(buttons);
 }
 
-} // namespace traceview
+}  // namespace traceview

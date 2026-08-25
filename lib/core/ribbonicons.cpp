@@ -186,7 +186,7 @@ QIcon makeReorderIcon(const QColor& color, bool pointingUp, bool doubled) {
     return QIcon(pixmap);
 }
 
-} // namespace
+}  // namespace
 
 QIcon makeBringToFrontIcon(const QColor& color) {
     return makeReorderIcon(color, /*pointingUp=*/true, /*doubled=*/true);
@@ -372,4 +372,4 @@ QIcon makeFolderIcon(const QColor& color) {
     return QIcon(pixmap);
 }
 
-} // namespace traceview
+}  // namespace traceview

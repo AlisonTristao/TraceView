@@ -13,6 +13,7 @@ namespace traceview {
 class Backend;
 class SerialManager;
 class UsbHidManager;
+class HubTransport;
 class Transport;
 
 // Owns one device's real, independent connection: a Transport (raw bytes --
@@ -40,20 +41,29 @@ class DeviceConnection : public QObject {
     Q_OBJECT
 
 public:
-    explicit DeviceConnection(CommType commType, TransportType transportType = TransportType::Serial,
+    explicit DeviceConnection(CommType commType,
+                              TransportType transportType = TransportType::Serial,
                               QObject* parent = nullptr);
 
     // Non-null only when transportType == TransportType::Serial; nullptr
     // otherwise. Callers that need serial-only extras (writeCommand(),
     // lineTerminator()) must check for null first -- see
     // SerialWidgetBridge::wireWidget() for the pattern.
-    SerialManager* serialManager() const { return m_serialManager; }
+    SerialManager* serialManager() const {
+        return m_serialManager;
+    }
     // Non-null only when transportType == TransportType::UsbHid; nullptr
     // otherwise.
-    UsbHidManager* usbHidManager() const { return m_usbHidManager; }
-    Backend* backend() const { return m_backend; }
+    UsbHidManager* usbHidManager() const {
+        return m_usbHidManager;
+    }
+    Backend* backend() const {
+        return m_backend;
+    }
 
-    TransportType transportType() const { return m_transportType; }
+    TransportType transportType() const {
+        return m_transportType;
+    }
 
     bool isConnected() const;
     // Current intent: true from connectTo() (with a non-empty target) until
@@ -61,7 +71,9 @@ public:
     // across a transport drop/retry, unlike isConnected(). What the
     // status-dot click toggle (DeviceCard::connectToggleRequested) reads to
     // decide whether to connect or disconnect.
-    bool wantsConnection() const { return m_shouldBeConnected; }
+    bool wantsConnection() const {
+        return m_shouldBeConnected;
+    }
 
     // Updates the connection target and marks intent "online" (unless
     // `target` is empty, which instead means "not configured" -- clears
@@ -74,6 +86,18 @@ public:
     // current connection (if any) and retries against the new target
     // immediately.
     void connectTo(const QString& target, qint32 baudRate);
+    // The HubChannel counterpart of connectTo(): this device's target is the
+    // parent device that carries it plus the source_id of the robot behind
+    // that parent, which has no honest spelling as a (target, baudRate) pair.
+    // No-op on any other transport. A null parent or a zero peer means "not
+    // configured" and clears the intent, exactly as an empty target does for
+    // connectTo().
+    // `selfSourceId` is this child's own stable identity on the wire (see
+    // hubChannelSourceId() in devices/device.h); `peerSourceId` is the robot
+    // it addresses. Both are needed because a child is an endpoint, not just a
+    // reader: it originates commands, terminal input and manifest requests,
+    // and the hub routes the downstream direction by the child's own id.
+    void connectVia(DeviceConnection* parentConnection, quint32 selfSourceId, quint32 peerSourceId);
     // Marks intent "offline" and closes. Stops the retry timer -- unlike a
     // transport drop, this does not come back on its own.
     void disconnectFrom();
@@ -98,6 +122,7 @@ private:
     Transport* m_transport = nullptr;
     SerialManager* m_serialManager = nullptr;
     UsbHidManager* m_usbHidManager = nullptr;
+    HubTransport* m_hubTransport = nullptr;
     Backend* m_backend = nullptr;
     QTimer* m_retryTimer;
     QString m_target;
@@ -105,4 +130,4 @@ private:
     bool m_shouldBeConnected = false;
 };
 
-} // namespace traceview
+}  // namespace traceview

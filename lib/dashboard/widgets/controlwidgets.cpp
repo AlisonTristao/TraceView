@@ -44,10 +44,11 @@ constexpr int kSwitchThumbMargin = 3;
 constexpr int kSwitchAnimMs = 150;
 
 QColor blendColor(const QColor& a, const QColor& b, qreal t) {
-    return QColor::fromRgbF(a.redF() + (b.redF() - a.redF()) * t, a.greenF() + (b.greenF() - a.greenF()) * t,
-                             a.blueF() + (b.blueF() - a.blueF()) * t);
+    return QColor::fromRgbF(a.redF() + (b.redF() - a.redF()) * t,
+                            a.greenF() + (b.greenF() - a.greenF()) * t,
+                            a.blueF() + (b.blueF() - a.blueF()) * t);
 }
-} // namespace
+}  // namespace
 
 // Turning WA_StyledBackground back off (so the container itself paints
 // nothing and shows whatever's behind it) looked right in principle, but in
@@ -100,7 +101,8 @@ PushButtonWidget::PushButtonWidget(QWidget* parent) : DashboardWidget(parent) {
 
     m_longPressTimer = new QTimer(this);
     m_longPressTimer->setSingleShot(true);
-    connect(m_longPressTimer, &QTimer::timeout, this, [this]() { sendCommand(m_config.longPressCommand); });
+    connect(m_longPressTimer, &QTimer::timeout, this,
+            [this]() { sendCommand(m_config.longPressCommand); });
 
     connect(m_button, &QPushButton::clicked, this, &PushButtonWidget::pressedRequested);
     connect(m_button, &QAbstractButton::pressed, this, &PushButtonWidget::onButtonPressed);
@@ -117,8 +119,8 @@ void PushButtonWidget::setEditModeHint(bool editMode) {
 }
 
 void PushButtonWidget::onButtonPressed() {
-    m_pressSuppressed =
-        m_config.debounceMs > 0 && m_debounceValid && m_debounceElapsed.elapsed() < m_config.debounceMs;
+    m_pressSuppressed = m_config.debounceMs > 0 && m_debounceValid &&
+                        m_debounceElapsed.elapsed() < m_config.debounceMs;
     if (m_pressSuppressed) {
         return;
     }
@@ -159,7 +161,8 @@ ToggleSwitch::ToggleSwitch(QWidget* parent) : QAbstractButton(parent) {
     setCursor(Qt::PointingHandCursor);
     m_slideAnim.setDuration(kSwitchAnimMs);
     m_slideAnim.setEasingCurve(QEasingCurve::InOutCubic);
-    connect(&m_slideAnim, &QVariantAnimation::valueChanged, this, QOverload<>::of(&QWidget::update));
+    connect(&m_slideAnim, &QVariantAnimation::valueChanged, this,
+            QOverload<>::of(&QWidget::update));
     connect(this, &QAbstractButton::toggled, this, &ToggleSwitch::onToggled);
 }
 
@@ -172,8 +175,9 @@ void ToggleSwitch::onToggled(bool checked) {
     // was showing the opposite value right up until this toggled(), so that
     // (not currentValue(), which is stale/invalid once idle) is the correct
     // slide start point.
-    const qreal from = m_slideAnim.state() == QAbstractAnimation::Running ? m_slideAnim.currentValue().toReal()
-                                                                           : (checked ? 0.0 : 1.0);
+    const qreal from = m_slideAnim.state() == QAbstractAnimation::Running
+                           ? m_slideAnim.currentValue().toReal()
+                           : (checked ? 0.0 : 1.0);
     m_slideAnim.stop();
     m_slideAnim.setStartValue(from);
     m_slideAnim.setEndValue(checked ? 1.0 : 0.0);
@@ -182,8 +186,9 @@ void ToggleSwitch::onToggled(bool checked) {
 
 void ToggleSwitch::paintEvent(QPaintEvent*) {
     const ThemePalette& palette = ThemeManager::instance().currentTheme();
-    const qreal t =
-        m_slideAnim.state() == QAbstractAnimation::Running ? m_slideAnim.currentValue().toReal() : (isChecked() ? 1.0 : 0.0);
+    const qreal t = m_slideAnim.state() == QAbstractAnimation::Running
+                        ? m_slideAnim.currentValue().toReal()
+                        : (isChecked() ? 1.0 : 0.0);
 
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing);
@@ -380,4 +385,4 @@ void SliderWidget::sendCommandFor(double value) {
     }
 }
 
-} // namespace traceview
+}  // namespace traceview

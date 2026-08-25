@@ -51,4 +51,4 @@ private:
     QFont m_baseFont;
 };
 
-} // namespace traceview
+}  // namespace traceview

@@ -9,7 +9,7 @@ namespace traceview {
 namespace {
 constexpr const char* kSettingsKey = "appearance/font";
 constexpr const char* kDefaultFontId = "system";
-} // namespace
+}  // namespace
 
 FontManager& FontManager::instance() {
     static FontManager manager;
@@ -88,4 +88,4 @@ int FontManager::indexOf(const QString& id) const {
     return -1;
 }
 
-} // namespace traceview
+}  // namespace traceview

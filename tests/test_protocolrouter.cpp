@@ -37,13 +37,15 @@ void TestProtocolRouter::telemetrySplitsSchemaVersionFromPayload() {
     ProtocolRouter router;
     TelemetrySample received;
     bool got = false;
-    connect(&router, &ProtocolRouter::telemetrySampleReceived, &router, [&](const TelemetrySample& sample) {
-        received = sample;
-        got = true;
-    });
+    connect(&router, &ProtocolRouter::telemetrySampleReceived, &router,
+            [&](const TelemetrySample& sample) {
+                received = sample;
+                got = true;
+            });
 
     // schema_version = 1 (little-endian 01 00), body = "AB" (0x41 0x42).
-    const BtpFrame frame = makeFrame(btp::MessageType::Telemetry, QByteArray::fromHex("0100") + "AB");
+    const BtpFrame frame =
+        makeFrame(btp::MessageType::Telemetry, QByteArray::fromHex("0100") + "AB");
     router.onFrameReceived(frame);
 
     QVERIFY(got);
@@ -81,7 +83,8 @@ void TestProtocolRouter::telemetryTooShortForSchemaVersionIsDropped() {
     connect(&router, &ProtocolRouter::telemetrySampleReceived, &router,
             [&](const TelemetrySample&) { got = true; });
 
-    router.onFrameReceived(makeFrame(btp::MessageType::Telemetry, QByteArray::fromHex("01")));  // 1 byte only
+    router.onFrameReceived(
+        makeFrame(btp::MessageType::Telemetry, QByteArray::fromHex("01")));  // 1 byte only
 
     QVERIFY(!got);
     QCOMPARE(router.diagnostics().telemetryDropped, quint64(1));
@@ -90,10 +93,14 @@ void TestProtocolRouter::telemetryTooShortForSchemaVersionIsDropped() {
 void TestProtocolRouter::logCommandTerminalControlForwardUnchanged() {
     ProtocolRouter router;
     int logCount = 0, commandCount = 0, terminalCount = 0, controlCount = 0;
-    connect(&router, &ProtocolRouter::logFrameReceived, &router, [&](const BtpFrame&) { ++logCount; });
-    connect(&router, &ProtocolRouter::commandFrameReceived, &router, [&](const BtpFrame&) { ++commandCount; });
-    connect(&router, &ProtocolRouter::terminalFrameReceived, &router, [&](const BtpFrame&) { ++terminalCount; });
-    connect(&router, &ProtocolRouter::controlFrameReceived, &router, [&](const BtpFrame&) { ++controlCount; });
+    connect(&router, &ProtocolRouter::logFrameReceived, &router,
+            [&](const BtpFrame&) { ++logCount; });
+    connect(&router, &ProtocolRouter::commandFrameReceived, &router,
+            [&](const BtpFrame&) { ++commandCount; });
+    connect(&router, &ProtocolRouter::terminalFrameReceived, &router,
+            [&](const BtpFrame&) { ++terminalCount; });
+    connect(&router, &ProtocolRouter::controlFrameReceived, &router,
+            [&](const BtpFrame&) { ++controlCount; });
 
     router.onFrameReceived(makeFrame(btp::MessageType::Log, "hello"));
     router.onFrameReceived(makeFrame(btp::MessageType::Command, "cmd"));
@@ -112,7 +119,7 @@ void TestProtocolRouter::invalidTypeIsCountedAndNotForwarded() {
     QCOMPARE(router.diagnostics().unknownTypeDropped, quint64(1));
 }
 
-} // namespace
+}  // namespace
 
 QTEST_MAIN(TestProtocolRouter)
 #include "test_protocolrouter.moc"

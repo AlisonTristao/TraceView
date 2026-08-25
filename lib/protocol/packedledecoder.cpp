@@ -62,12 +62,12 @@ bool isSignedType(TelemetryFieldType type) {
 }
 
 // Decodes one field's `count` consecutive elements starting at `offset` into
-// `outElements`, applying scale/offset per TELEMETRY.md section 3 (skipped
-// for bool/enum, section 6.1's non-finite check for floats). Returns false
+// `outElements`, applying scale/offset per telemetry.md section 3 (skipped
+// for bool/enum, section 6's non-finite check for floats). Returns false
 // on truncation or a non-finite float; `offset` is only advanced when this
 // returns true.
-bool decodeElements(const TelemetryFieldSchema& field, const QByteArray& body, int* offset, int count,
-                     QVector<double>* outElements) {
+bool decodeElements(const TelemetryFieldSchema& field, const QByteArray& body, int* offset,
+                    int count, QVector<double>* outElements) {
     const int width = telemetryFieldTypeWidth(field.type);
     if (width <= 0) {
         return false;
@@ -85,14 +85,14 @@ bool decodeElements(const TelemetryFieldSchema& field, const QByteArray& body, i
         switch (field.type) {
             case TelemetryFieldType::Bool:
                 if (raw != 0 && raw != 1) {
-                    return false;  // TELEMETRY.md section 5: only 0x00/0x01 valid
+                    return false;  // telemetry.md section 5: only 0x00/0x01 valid
                 }
                 value = double(raw);
                 break;
             case TelemetryFieldType::Enum8:
             case TelemetryFieldType::Enum16:
                 // Raw integer always, regardless of any declared scale/offset
-                // (TELEMETRY.md section 3/6.2: label selection -- and by
+                // (telemetry.md section 3/6: label selection -- and by
                 // extension the value this decoder exposes -- always uses
                 // the raw integer).
                 value = double(raw);
@@ -102,7 +102,7 @@ bool decodeElements(const TelemetryFieldSchema& field, const QByteArray& body, i
                 float f = 0.0f;
                 std::memcpy(&f, &bits32, sizeof(f));
                 if (!std::isfinite(double(f))) {
-                    return false;  // TELEMETRY.md section 6.1
+                    return false;  // telemetry.md section 6
                 }
                 value = double(f) * field.scale + field.offset;
                 break;
@@ -111,14 +111,15 @@ bool decodeElements(const TelemetryFieldSchema& field, const QByteArray& body, i
                 double d = 0.0;
                 std::memcpy(&d, &raw, sizeof(d));
                 if (!std::isfinite(d)) {
-                    return false;  // TELEMETRY.md section 6.1
+                    return false;  // telemetry.md section 6
                 }
                 value = d * field.scale + field.offset;
                 break;
             }
             default:
                 if (isIntegerType(field.type)) {
-                    const double rawValue = isSignedType(field.type) ? double(signExtend(raw, width)) : double(raw);
+                    const double rawValue =
+                        isSignedType(field.type) ? double(signExtend(raw, width)) : double(raw);
                     value = rawValue * field.scale + field.offset;
                 } else {
                     return false;  // unreachable for a well-formed schema
@@ -134,7 +135,7 @@ bool decodeElements(const TelemetryFieldSchema& field, const QByteArray& body, i
 }  // namespace
 
 bool decodePackedLe(const TelemetryTopicSchema& schema, const QByteArray& body,
-                     QHash<quint16, TelemetryFieldValue>* outValues) {
+                    QHash<quint16, TelemetryFieldValue>* outValues) {
     if (outValues == nullptr) {
         return false;
     }
@@ -145,7 +146,9 @@ bool decodePackedLe(const TelemetryTopicSchema& schema, const QByteArray& body,
         orderedFields.append(&field);
     }
     std::stable_sort(orderedFields.begin(), orderedFields.end(),
-                      [](const TelemetryFieldSchema* a, const TelemetryFieldSchema* b) { return a->order < b->order; });
+                     [](const TelemetryFieldSchema* a, const TelemetryFieldSchema* b) {
+                         return a->order < b->order;
+                     });
 
     int nullableCount = 0;
     for (const TelemetryFieldSchema* field : orderedFields) {
@@ -155,11 +158,11 @@ bool decodePackedLe(const TelemetryTopicSchema& schema, const QByteArray& body,
     }
     const int bitmapBytes = (nullableCount + 7) / 8;
     if (body.size() < bitmapBytes) {
-        return false;  // TELEMETRY.md section 6.3: too short to even hold the bitmap
+        return false;  // telemetry.md section 6: too short to even hold the bitmap
     }
 
     // Bits not assigned to a nullable field in the last bitmap octet MUST be
-    // zero (TELEMETRY.md section 4.5).
+    // zero (telemetry.md section 4.1).
     if (nullableCount > 0 && nullableCount % 8 != 0) {
         const quint8 lastByte = quint8(body[bitmapBytes - 1]);
         const int usedBits = nullableCount % 8;
@@ -201,7 +204,7 @@ bool decodePackedLe(const TelemetryTopicSchema& schema, const QByteArray& body,
             count = int(quint16(quint8(body[offset])) | (quint16(quint8(body[offset + 1])) << 8));
             offset += 2;
             if (count > field.maxElementCount) {
-                return false;  // TELEMETRY.md section 4.5
+                return false;  // telemetry.md section 4.1
             }
         } else if (count < 1) {
             return false;  // malformed schema: fixed field with no width
@@ -219,7 +222,7 @@ bool decodePackedLe(const TelemetryTopicSchema& schema, const QByteArray& body,
     }
 
     if (offset != body.size()) {
-        return false;  // TELEMETRY.md section 6.3: bytes left over
+        return false;  // telemetry.md section 6: bytes left over
     }
 
     *outValues = std::move(values);

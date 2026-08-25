@@ -10,7 +10,7 @@ namespace traceview {
 namespace {
 constexpr const char* kSettingsKey = "appearance/language";
 constexpr const char* kDefaultLanguageId = "en";
-} // namespace
+}  // namespace
 
 LanguageManager& LanguageManager::instance() {
     static LanguageManager manager;
@@ -109,4 +109,4 @@ int LanguageManager::indexOf(const QString& id) const {
     return -1;
 }
 
-} // namespace traceview
+}  // namespace traceview

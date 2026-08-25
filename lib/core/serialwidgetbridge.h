@@ -3,7 +3,6 @@
 #include <QHash>
 #include <QObject>
 #include <QString>
-
 #include <functional>
 
 namespace traceview {
@@ -45,8 +44,9 @@ class SerialWidgetBridge : public QObject {
     Q_OBJECT
 
 public:
-    SerialWidgetBridge(DashboardGrid* grid, std::function<DeviceConnection*(const QString&)> deviceConnectionFor,
-                        QObject* parent = nullptr);
+    SerialWidgetBridge(DashboardGrid* grid,
+                       std::function<DeviceConnection*(const QString&)> deviceConnectionFor,
+                       QObject* parent = nullptr);
 
     // Re-derives every wired terminal widget's inbound connection from its
     // current config. Outbound wiring (control widgets, and the terminal's
@@ -71,4 +71,4 @@ private:
     QHash<SerialMonitorWidget*, QString> m_terminalDeviceIds;
 };
 
-} // namespace traceview
+}  // namespace traceview

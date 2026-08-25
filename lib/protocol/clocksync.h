@@ -16,7 +16,7 @@ struct BtpFrame;
 // no longer blocks its own boot waiting on a human) with a BTP
 // COMMAND_REQUEST/COMMAND_RESULT round trip over the dongle's existing
 // generic shell action (BtpTransport::btp_command::kShellActionId,
-// bally_protocol/docs/COMMANDS_AND_ACTIONS.md section 4): once a session is
+// BTP/docs/commands.md section 2): once a session is
 // established this runs "dongle clock" on the connected dongle and, if its
 // answer has drifted past kDriftToleranceSecs from this desktop's own clock,
 // corrects it with "dongle set_clock ...". No human interaction, no boot-time

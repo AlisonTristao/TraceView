@@ -6,7 +6,6 @@
 #include <QUndoStack>
 #include <QVector>
 #include <QWidget>
-
 #include <functional>
 
 #include "devices/device.h"
@@ -53,6 +52,10 @@ public:
     // the selection first if the removed device was the selected one.
     // Undoable -- pushed onto undoStack() as a RemoveDeviceCommand.
     void removeDevice(const QString& id);
+    // Ids of the hub-channel devices that ride `id` as their parent. Empty
+    // for a device nothing rides, which is every device until someone
+    // configures a hub channel.
+    QStringList childDeviceIds(const QString& id) const;
     // Matched by id; no-op if unknown. Refreshes the corresponding card's
     // displayed data in place -- does not change display order. Undoable --
     // pushed onto undoStack() as an UpdateDeviceCommand. Only meant for a
@@ -73,18 +76,38 @@ public:
     // Called with empty strings when the connection drops, so a stale
     // identity from a previous session never lingers in the UI.
     void setDeviceIdentity(const QString& id, const QString& btpVersion, const QString& btpId);
+    // Tells this device's config dialog, if it's currently open, to re-pull
+    // its catalog list from m_topicCatalogProvider. MANIFEST_DATA lands
+    // asynchronously after the handshake that fires deviceIdentified() (see
+    // BtpBackend::sessionEstablished's connect() -- deviceIdentified is
+    // emitted immediately, the manifest reply comes later over the wire), so
+    // catalogTopics() is typically still empty at the moment the dialog's
+    // deviceUpdated-triggered refresh runs. MainWindow calls this once
+    // Backend::catalogChanged actually fires so the still-open dialog picks
+    // up the real list instead of only showing it on next open. Deliberately
+    // its own signal rather than routed through deviceUpdated: that signal
+    // reaches MainWindow::onDeviceUpdated too, which re-applies the device's
+    // connection target -- something a catalog arriving has no business
+    // triggering. No-op if no dialog is open for this device.
+    void notifyCatalogChanged(const QString& id);
 
-    QVector<Device> devices() const { return m_devices; }
+    QVector<Device> devices() const {
+        return m_devices;
+    }
 
     // 0 or 1 -- single-selection only (a click on a card replaces whatever
     // was selected before, same "Replace selection" default as
     // DashboardGrid's plain click, minus the Ctrl-click multi-select this
     // grid has no use for).
-    int selectedCount() const { return m_selectedId.isEmpty() ? 0 : 1; }
+    int selectedCount() const {
+        return m_selectedId.isEmpty() ? 0 : 1;
+    }
     // No-op if nothing is selected. Undoable (see removeDevice() above).
     void removeSelected();
 
-    QUndoStack* undoStack() const { return m_undoStack; }
+    QUndoStack* undoStack() const {
+        return m_undoStack;
+    }
 
     // Mirrors DashboardGrid::toJson()/fromJson()'s shape/convention: a
     // single "devices" array of deviceToJson() objects (see device.h). Used
@@ -104,7 +127,9 @@ public:
     // (see lib/CMakeLists.txt) -- so MainWindow injects it here once. Safe
     // to leave unset: the dialog's port combo then just starts empty and
     // Refresh is a no-op, same as before this existed.
-    void setPortListProvider(std::function<QStringList()> provider) { m_portListProvider = std::move(provider); }
+    void setPortListProvider(std::function<QStringList()> provider) {
+        m_portListProvider = std::move(provider);
+    }
 
     // Same reasoning as setPortListProvider() above, for the USB device
     // picker -- traceview_devices doesn't depend on hidapi either (see
@@ -120,8 +145,22 @@ public:
     // depend on traceview_protocol, same reasoning as setPortListProvider()
     // above) -- MainWindow injects this once. Safe to leave unset: the
     // dialog's catalog list then just starts empty.
-    void setTopicCatalogProvider(std::function<QVector<CatalogTopicInfo>(const QString&)> provider) {
+    void setTopicCatalogProvider(
+        std::function<QVector<CatalogTopicInfo>(const QString&)> provider) {
         m_topicCatalogProvider = std::move(provider);
+    }
+
+    // Supplies the live hub.peers snapshot the gear icon's "Robot source_id"
+    // combo offers for a given hub Device::id -- same reasoning as
+    // setTopicCatalogProvider() above (traceview_devices doesn't depend on
+    // traceview_protocol), except polled on a timer rather than fetched once
+    // up front: unlike a manifest exchange, new peers/status arrive
+    // continuously over telemetry for as long as the dialog stays open (see
+    // handleConfigRequested()). Safe to leave unset: the combo then just
+    // starts (and stays) empty, same manual-entry-only fallback the old
+    // plain text field offered.
+    void setHubPeerListProvider(std::function<QVector<HubPeer>(const QString&)> provider) {
+        m_hubPeerListProvider = std::move(provider);
     }
 
 signals:
@@ -135,9 +174,20 @@ signals:
     void deviceAdded(const Device& device);
     void deviceRemoved(const QString& id);
     void deviceUpdated(const Device& device);
+    // Bridges notifyCatalogChanged() (above) to whichever config dialog is
+    // currently open for `id` -- see handleConfigRequested(). Internal to
+    // this class's own dialog-refresh wiring; nothing outside DevicesGrid
+    // needs to listen to it.
+    void deviceCatalogChanged(const QString& id);
     // Bubbled straight from the selected card's DeviceCard::connectToggleRequested
     // -- DevicesGrid has no DeviceConnection of its own to flip, MainWindow does.
     void connectToggleRequested(const QString& deviceId);
+    // A removeDevice() that was refused because other devices ride this one
+    // (see removeDevice()). Carries the blocked device and the names of what
+    // depends on it, so the explanation can say which ones rather than just
+    // that there are some. DevicesGrid raises no dialogs of its own; the
+    // window that owns it decides how to say this.
+    void removeBlockedByChildren(const QString& deviceId, const QStringList& childNames);
 
 protected:
     void resizeEvent(QResizeEvent* event) override;
@@ -163,13 +213,14 @@ private:
     void applyRemoveDeviceById(const QString& id);
     void applyUpdateDevice(const Device& device);
 
-    QVector<Device> m_devices;    // insertion order = display order
-    QVector<DeviceCard*> m_cards; // parallel to m_devices, same order/index
-    QString m_selectedId;         // empty when nothing is selected
+    QVector<Device> m_devices;     // insertion order = display order
+    QVector<DeviceCard*> m_cards;  // parallel to m_devices, same order/index
+    QString m_selectedId;          // empty when nothing is selected
     std::function<QStringList()> m_portListProvider;
     std::function<QVector<UsbDeviceOption>()> m_usbDeviceListProvider;
     std::function<QVector<CatalogTopicInfo>(const QString&)> m_topicCatalogProvider;
+    std::function<QVector<HubPeer>(const QString&)> m_hubPeerListProvider;
     QUndoStack* m_undoStack;
 };
 
-} // namespace traceview
+}  // namespace traceview

@@ -16,15 +16,15 @@ DockResizeGrip::DockResizeGrip(Orientation orientation, QWidget* parent) : QWidg
 
 void DockResizeGrip::setOrientation(Orientation orientation) {
     switch (orientation) {
-    case Orientation::Horizontal:
-        setCursor(Qt::SizeHorCursor);
-        break;
-    case Orientation::Vertical:
-        setCursor(Qt::SizeVerCursor);
-        break;
-    case Orientation::Corner:
-        setCursor(Qt::SizeFDiagCursor);
-        break;
+        case Orientation::Horizontal:
+            setCursor(Qt::SizeHorCursor);
+            break;
+        case Orientation::Vertical:
+            setCursor(Qt::SizeVerCursor);
+            break;
+        case Orientation::Corner:
+            setCursor(Qt::SizeFDiagCursor);
+            break;
     }
 }
 
@@ -58,4 +58,4 @@ void DockResizeGrip::mouseReleaseEvent(QMouseEvent* event) {
     emit dragFinished(event->globalPosition().toPoint());
 }
 
-} // namespace traceview
+}  // namespace traceview

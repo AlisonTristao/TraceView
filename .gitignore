@@ -28,6 +28,11 @@ CMakeLists.txt.user.*
 
 # Dev script virtual envs (see scripts/_bootstrap.py)
 scripts/.venv-*/
+__pycache__/
+*.pyc
+
+# CTest output
+Testing/
 
 # IDE
 .vs/

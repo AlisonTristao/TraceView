@@ -6,6 +6,11 @@
 #include <QPointer>
 #include <QRect>
 #include <QString>
+#include <QVector>
+
+#include "devices/device.h"
+#include "devices/hubpeeraccumulator.h"
+#include "telemetry/telemetrybinding.h"
 
 class QAction;
 class QEvent;
@@ -23,9 +28,9 @@ class DashboardWidget;
 class DebugChartsWindow;
 class DeviceConnection;
 class DevicesGrid;
-struct Device;
 class LayersPanel;
 class LogViewer;
+class OtaTab;
 class PanelDockController;
 class PropertiesPanel;
 class Ribbon;
@@ -114,6 +119,12 @@ private:
     // factored out so onDeviceUpdated() can rebuild one in place too, when a
     // device's transportType itself changes (see its own comment).
     DeviceConnection* createDeviceConnection(const Device& device);
+    // Resolves a Device's own BTP identity the same way for both a
+    // hub-channel device (its persisted target, known even before it ever
+    // connects) and anything else (its live-reported btpId) -- shared by
+    // refreshPropertiesPanelDevices() and hubPeersFor() so the two
+    // definitions of "this device's own source_id" can't drift apart.
+    quint32 deviceSelfSourceId(const Device& device) const;
     // Keep m_deviceConnections (one DeviceConnection per Device::id) in sync
     // with m_devicesGrid's own list -- wired to DevicesGrid::deviceAdded/
     // deviceRemoved/deviceUpdated. onDeviceUpdated also re-points the
@@ -121,6 +132,19 @@ private:
     // rebuilds the connection entirely if transportType itself changed
     // (DeviceConnection's Transport/Backend pair is fixed at construction,
     // see deviceconnection.h -- it can't be swapped on a live instance).
+    // Points one connection at whatever its Device says its target is,
+    // dispatching on transport: a port name, a HID path, or -- for a hub
+    // channel -- the parent connection plus the robot's source_id. The one
+    // place that knows all three, so the three call sites below do not each
+    // have to.
+    void applyDeviceTarget(DeviceConnection* connection, const Device& device);
+    // Re-points every hub-channel child at its parent. Needed because a
+    // child can exist before its parent does: loading a project walks the
+    // saved device list in order, and nothing guarantees a hub comes before
+    // the devices that ride it. Cheap enough to just re-run after any device
+    // add/remove/update rather than tracking which children a change could
+    // possibly have affected.
+    void reattachHubChildren();
     void onDeviceAdded(const Device& device);
     void onDeviceRemoved(const QString& id);
     void onDeviceUpdated(const Device& device);
@@ -132,10 +156,38 @@ private:
     // wantsConnection()), not just its current connectedness, so this also
     // works to silence a device that's stuck retrying.
     void onDeviceConnectToggleRequested(const QString& deviceId);
+    // m_removeDeviceAction's triggered handler -- both the Devices tab and
+    // the OTA tab share this one action (see buildRibbon()/onOpenOtaTab()),
+    // so this dispatches to whichever tab's own selection is current rather
+    // than always going through DevicesGrid::removeSelected() directly.
+    void onRemoveDeviceRequested();
     // Converts m_devicesGrid->devices() into DeviceOptions and pushes them
     // into m_propertiesPanel -- called whenever the device list changes, so
     // every widget config editor's Device combo stays current.
     void refreshPropertiesPanelDevices();
+    // Same fan-out as refreshPropertiesPanelDevices() above, for the OTA
+    // tab's device list -- a no-op if m_otaTab hasn't been opened yet.
+    void refreshOtaTabDevices();
+    // Lazily starts watching `parentDeviceId`'s hub.peers topic (resolved by
+    // name from its own catalog, never a hardcoded topic/field id -- see
+    // m_hubPeerWatches) the first time it is asked for, then returns
+    // whatever HubPeer snapshot has been decoded from it so far (empty until
+    // the device is connected, its manifest exchange has completed, and the
+    // first full sample has arrived). Safe to call on every poll -- wired to
+    // DevicesGrid::setHubPeerListProvider() in the constructor.
+    QVector<HubPeer> hubPeersFor(const QString& parentDeviceId);
+    // Drops `deviceId`'s hub.peers watch and unsubscribes it. Called when the
+    // device is removed or rebuilt; hubPeersFor() re-establishes the watch
+    // from scratch the next time somebody asks.
+    void releaseHubPeerWatch(const QString& deviceId);
+    // Backend::fieldSample handler shared by every DeviceConnection (hooked
+    // in createDeviceConnection()), filtered down to whichever ones are
+    // currently a watched hub.peers subscription. Decodes the six PACKED_LE
+    // variable arrays telemetry.md 4.1 / bally_dongle's DonglePublisher.h
+    // kPeersFields describe back into m_hubPeersAccum -- see the .cpp for
+    // the exact field-name to struct-member mapping.
+    void onHubPeerFieldSample(const QString& deviceId, const TelemetryFieldBinding& binding,
+                              quint64 timestampUs, double value);
     void onPanelTypeChangeRequested(const QString& typeId);
     void onPanelNameChangeRequested(const QString& name);
     void onPanelKeyChangeRequested(const QString& key);
@@ -145,6 +197,23 @@ private:
     void onSaveProjectAs();
     void onOpenProject();
     void onOpenLogFile();
+    // RibbonTabBar's "x" click (forwarded through Ribbon::tabCloseRequested)
+    // on one of m_openLogTabs -- removes that tab and deletes its LogViewer.
+    void onLogTabCloseRequested(int index);
+    // File > "Upload Firmware (OTA)..." -- opens the singleton OTA tab
+    // (creating it on first use) or just switches to it if it's already
+    // open. Unlike onOpenLogFile(), there is never more than one of these.
+    void onOpenOtaTab();
+    // Dispatched to from onLogTabCloseRequested() (a plain call, not a
+    // second connection on the same signal -- Ribbon::removeTab() shifts
+    // every later tab's index, so a second slot recomputing pageAt(index)
+    // after the first slot has already mutated the ribbon would be looking
+    // at the wrong tab). Only ever called before either handler has touched
+    // the ribbon for this close event.
+    void onOtaTabCloseRequested(int index);
+    // Forwards OtaTab::passwordCacheChanged into an actual Device mutation --
+    // OtaTab has no undo stack of its own to push this onto.
+    void onOtaPasswordCacheChanged(const QString& deviceId, const QString& password, bool cache);
     void openRecentFile(const QString& path);
     void addRecentFile(const QString& path);
     void updateRecentFilesMenu();
@@ -158,10 +227,27 @@ private:
     // Devices tab's content -- swapped in for m_dashboardGrid via
     // m_contentStack, never shown at the same time (see onRibbonTabChanged).
     DevicesGrid* m_devicesGrid = nullptr;
-    // Logs tab's content -- same swap-via-m_contentStack treatment as
-    // m_devicesGrid, opened on demand via m_openLogFileAction rather than
-    // holding any state of its own.
-    LogViewer* m_logViewer = nullptr;
+    // One closable ribbon tab per log opened via onOpenLogFile() (File >
+    // Open Log Offline), each swapped into m_contentStack while its tab is
+    // active -- unlike m_devicesGrid, these tabs are created/destroyed at
+    // runtime rather than being fixed. `ribbonPage` is the (empty) page
+    // Ribbon::addTab() was given for that tab; since it's never touched
+    // again after creation, it doubles as a stable key to find this entry
+    // back from a tab index via Ribbon::pageAt() (indices themselves shift
+    // whenever another log tab closes).
+    struct OpenLogTab {
+        QWidget* ribbonPage = nullptr;
+        LogViewer* viewer = nullptr;
+    };
+    QVector<OpenLogTab> m_openLogTabs;
+    // The OTA Update tab -- singleton, unlike m_openLogTabs above: there's
+    // only one, opened on demand by onOpenOtaTab() and reused (never
+    // recreated) if the File menu action fires again while it's already
+    // open. m_otaTabPage is the same "empty ribbon page as a stable lookup
+    // key" trick m_openLogTabs uses; nullptr on both means the tab has never
+    // been opened yet (or was closed).
+    QWidget* m_otaTabPage = nullptr;
+    OtaTab* m_otaTab = nullptr;
     // One real, independent serial connection per Device::id -- see
     // core/deviceconnection.h. Created/destroyed/updated in lockstep with
     // m_devicesGrid's own list (onDeviceAdded/onDeviceRemoved/onDeviceUpdated).
@@ -188,6 +274,7 @@ private:
     QAction* m_addDeviceAction = nullptr;
     QAction* m_removeDeviceAction = nullptr;
     QAction* m_openLogFileAction = nullptr;
+    QAction* m_openOtaTabAction = nullptr;
     QAction* m_removeAction = nullptr;
     QAction* m_copyAction = nullptr;
     QAction* m_pasteAction = nullptr;
@@ -211,11 +298,14 @@ private:
     QPointer<DebugChartsWindow> m_debugChartsWindow;
     int m_configureTabIndex = -1;
     int m_devicesTabIndex = -1;
-    int m_logsTabIndex = -1;
     bool m_configureTabActive = false;
     // Gates m_removeDeviceAction the same way m_configureTabActive gates
     // m_removeAction -- see updateDeviceSelectionActions().
     bool m_devicesTabActive = false;
+    // Same gating for m_removeDeviceAction while the OTA tab is the visible
+    // one instead -- set in onRibbonTabChanged() by page pointer, not tab
+    // index, since the OTA tab is closable and can shift (see m_otaTabPage).
+    bool m_otaTabActive = false;
 
     // Wires every control/serial-monitor widget's send/receive to whichever
     // device its own config currently targets -- see core/serialwidgetbridge.h.
@@ -253,6 +343,33 @@ private:
         quint64 handle = 0;
     };
     QHash<DashboardWidget*, WidgetSubscription> m_widgetSubscriptions;
+
+    // One hub's live hub.peers state, from the moment something first asks
+    // for it (hubPeersFor()) until its device goes away. Keyed by the HUB's
+    // Device::id, not by any child's.
+    //
+    // `sourceId`/`topicId`/`fieldSlot` are resolved once from that device's
+    // own catalog, by NAME ("hub.peers", then "channel"/"source_id"/... ),
+    // never from a hardcoded number: telemetry.md section 1 makes topic and
+    // field ids local to a source's namespace, so the dongle is free to
+    // renumber them and only the names are a contract. Resolution is
+    // therefore deferred until the manifest has actually arrived -- until
+    // then there is nothing to resolve against and hubPeersFor() reports an
+    // empty list.
+    //
+    // The reassembly itself is HubPeerAccumulator's job (devices/
+    // hubpeeraccumulator.h) -- decoding six parallel arrays out of one
+    // (field, element, value) emission at a time is protocol shape, not UI,
+    // and keeping it there is what makes it testable without a QWidget.
+    // What stays here is the half that genuinely needs a Backend: which
+    // (source, topic) to watch and the subscription handle for it.
+    struct HubPeersWatch {
+        quint32 sourceId = 0;
+        quint16 topicId = 0;
+        quint64 handle = 0;  // SubscriptionManager handle, 0 = not subscribed
+        HubPeerAccumulator accumulator;
+    };
+    QHash<QString, HubPeersWatch> m_hubPeerWatches;
     QLabel* m_telemetryStatusLabel = nullptr;
     int m_runTabIndex = -1;
     // Read-only "device: dot" strip replacing the old single-connection port/
@@ -264,4 +381,4 @@ private:
     QRect m_preFullscreenGeometry;
 };
 
-} // namespace traceview
+}  // namespace traceview

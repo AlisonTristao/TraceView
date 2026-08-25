@@ -2,7 +2,6 @@
 
 #include <QDateTime>
 #include <QRandomGenerator>
-
 #include <btp/codec.hpp>
 
 #include "protocol/btpframe.h"
@@ -19,7 +18,7 @@ namespace traceview {
 
 namespace {
 
-// bally_protocol/docs/COMMANDS_AND_ACTIONS.md section 3.3 -- object_id
+// BTP/docs/commands.md section 1's `object_id` namespaces -- object_id
 // values within MessageType::Terminal. Mirrors t_dongle_develop's
 // SerialSession::kTerminalInObjectId/kTerminalOutObjectId (lib/SerialSession/
 // SerialSession.h); each side of the wire defines its own copy of these
@@ -109,8 +108,9 @@ CatalogTopicInfo toCatalogTopicInfo(const TelemetryTopicSchema& schema) {
         out.name = field.name;
         out.type = fieldTypeLabel(field.type);
         if (field.elementCount != 1) {
-            out.type += field.isVariableLength() ? QStringLiteral("[..%1]").arg(field.maxElementCount)
-                                                  : QStringLiteral("[%1]").arg(field.elementCount);
+            out.type += field.isVariableLength()
+                            ? QStringLiteral("[..%1]").arg(field.maxElementCount)
+                            : QStringLiteral("[%1]").arg(field.elementCount);
         }
         out.unit = field.unit;
         info.fields.append(out);
@@ -121,16 +121,21 @@ CatalogTopicInfo toCatalogTopicInfo(const TelemetryTopicSchema& schema) {
 }  // namespace
 
 BtpBackend::BtpBackend(btp::TransportProfile transport, QObject* parent)
+    : BtpBackend(BtpSession::framingFor(transport), transport, parent) {}
+
+BtpBackend::BtpBackend(BtpSession::Framing framing, btp::TransportProfile encodeProfile,
+                       QObject* parent)
     : Backend(parent), m_terminalSourceId(randomNonZero()), m_terminalBootId(randomNonZero()) {
     // BTP v1 client stack (topico 14): raw bytes -> BtpSession (COBS decode,
-    // or direct btp::decode() in UsbHid mode -- see btpsession.h -- plus
-    // envelope/CRC validation and reassembly either way) -> ProtocolRouter
-    // (dispatch by MessageType) -> TelemetryFieldRouter (schema decode, fan
-    // out by field). m_telemetryCatalog starts empty and is populated
-    // dynamically by m_manifestClient's MANIFEST_REQUEST/MANIFEST_DATA
-    // exchange (topico 16) -- nothing here assumes which source_id/schema is
-    // on the other end in advance.
-    m_btpSession = new BtpSession(transport, this);
+    // or direct btp::decode() when the link is already pre-framed -- see
+    // btpsession.h -- plus envelope/CRC validation and reassembly either
+    // way) -> ProtocolRouter (dispatch by MessageType) ->
+    // TelemetryFieldRouter (schema decode, fan out by field).
+    // m_telemetryCatalog starts empty and is populated dynamically by
+    // m_manifestClient's MANIFEST_REQUEST/MANIFEST_DATA exchange (topico 16)
+    // -- nothing here assumes which source_id/schema is on the other end in
+    // advance.
+    m_btpSession = new BtpSession(framing, encodeProfile, this);
     m_protocolRouter = new ProtocolRouter(this);
     m_telemetryCatalog = new TelemetryCatalog();
     m_telemetryFieldRouter = new TelemetryFieldRouter(m_telemetryCatalog, this);
@@ -145,16 +150,26 @@ BtpBackend::BtpBackend(btp::TransportProfile transport, QObject* parent)
     // what turns all of them into a single SUBSCRIBE per (source, topic) at
     // the highest rate any of them asked for, and into an UNSUBSCRIBE only
     // when the last one closes.
-    m_subscriptionManager = new SubscriptionManager(m_btpSession, m_protocolRouter, m_telemetryCatalog, this);
+    m_subscriptionManager =
+        new SubscriptionManager(m_btpSession, m_protocolRouter, m_telemetryCatalog, this);
 
     connect(m_btpSession, &BtpSession::bytesToWrite, this, &Backend::bytesToWrite);
+    // Hub role (topico 26): every frame this session decodes is also offered,
+    // as raw octets, to whatever child devices are attached. Forwarded
+    // unconditionally and with no filtering here -- which frames belong to
+    // which child is decided by source_id, by each HubTransport, so this
+    // backend needs to know nothing about how many children exist or whether
+    // any does. With no child attached the signal simply has no receiver.
+    connect(m_btpSession, &BtpSession::frameBytesReceived, this,
+            &BtpBackend::hubFrameBytesReceived);
     // BtpHandshake's own outbound text (the ENTER line) goes out the same
     // way; the HELLO frame itself goes through BtpSession::sendFrame(),
     // whose bytesToWrite() is already connected above.
     connect(m_btpHandshake, &BtpHandshake::bytesToWrite, this, &Backend::bytesToWrite);
 
     connect(m_btpHandshake, &BtpHandshake::sessionEstablished, this,
-            [this](quint32 peerSourceId, quint32 peerBootId, quint32 peerConfigRevision, quint8 selectedVersion) {
+            [this](quint32 peerSourceId, quint32 peerBootId, quint32 peerConfigRevision,
+                   quint8 selectedVersion) {
                 emit statusMessage(tr("BTP session established (HELLO_RESULT=SUCCESS)"), 5000);
                 m_manifestClient->onSessionEstablished(peerConfigRevision);
                 m_subscriptionManager->onSessionEstablished();
@@ -162,17 +177,20 @@ BtpBackend::BtpBackend(btp::TransportProfile transport, QObject* parent)
                 // Devices tab display only -- peerSourceId is the dongle's own
                 // BTP identity (its HELLO_RESULT envelope's source_id), the
                 // closest thing to a "device ID" this protocol reports today.
-                emit deviceIdentified(tr("BTP/%1").arg(selectedVersion),
-                                      QString("0x%1").arg(peerSourceId, 8, 16, QChar('0')).toUpper());
+                emit deviceIdentified(
+                    tr("BTP/%1").arg(selectedVersion),
+                    QString("0x%1").arg(peerSourceId, 8, 16, QChar('0')).toUpper());
             });
     connect(m_btpHandshake, &BtpHandshake::sessionFailed, this, [this](const QString& reason) {
         emit statusMessage(tr("BTP handshake failed: %1").arg(reason), 8000);
     });
     connect(m_clockSync, &ClockSync::statusMessage, this, &Backend::statusMessage);
-    connect(m_btpSession, &BtpSession::frameReceived, m_protocolRouter, &ProtocolRouter::onFrameReceived);
+    connect(m_btpSession, &BtpSession::frameReceived, m_protocolRouter,
+            &ProtocolRouter::onFrameReceived);
     connect(m_protocolRouter, &ProtocolRouter::telemetrySampleReceived, m_telemetryFieldRouter,
             &TelemetryFieldRouter::onTelemetrySample);
-    connect(m_telemetryFieldRouter, &TelemetryFieldRouter::fieldSample, this, &Backend::fieldSample);
+    connect(m_telemetryFieldRouter, &TelemetryFieldRouter::fieldSample, this,
+            &Backend::fieldSample);
     // topico 16 PASSO 9: a sample whose schema isn't in the catalog yet (or
     // no longer matches, after a schema change) triggers a targeted
     // manifest re-request instead of silently dropping forever.
@@ -189,11 +207,12 @@ BtpBackend::BtpBackend(btp::TransportProfile transport, QObject* parent)
     // what was asked for.
     connect(m_subscriptionManager, &SubscriptionManager::subscriptionRateLimited, this,
             [this](quint32 sourceId, quint16 topicId, quint32 requested, quint32 effective) {
-                emit statusMessage(tr("Topic 0x%1 of source 0x%2 limited to %3 (requested %4)")
-                                       .arg(topicId, 4, 16, QChar('0'))
-                                       .arg(sourceId, 8, 16, QChar('0'))
-                                       .arg(formatRateMillihz(effective), formatRateMillihz(requested)),
-                                   8000);
+                emit statusMessage(
+                    tr("Topic 0x%1 of source 0x%2 limited to %3 (requested %4)")
+                        .arg(topicId, 4, 16, QChar('0'))
+                        .arg(sourceId, 8, 16, QChar('0'))
+                        .arg(formatRateMillihz(effective), formatRateMillihz(requested)),
+                    8000);
             });
     connect(m_subscriptionManager, &SubscriptionManager::subscriptionRejected, this,
             [this](quint32 sourceId, quint16 topicId, quint8 status, quint16 errorCode) {
@@ -205,14 +224,17 @@ BtpBackend::BtpBackend(btp::TransportProfile transport, QObject* parent)
                                        .arg(errorCode, 4, 16, QChar('0')),
                                    8000);
             });
-    connect(m_subscriptionManager, &SubscriptionManager::subscriptionsChanged, this, &Backend::subscriptionsChanged);
-    connect(m_subscriptionManager, &SubscriptionManager::statusReceived, this, &Backend::statusReceived);
+    connect(m_subscriptionManager, &SubscriptionManager::subscriptionsChanged, this,
+            &Backend::subscriptionsChanged);
+    connect(m_subscriptionManager, &SubscriptionManager::statusReceived, this,
+            &Backend::statusReceived);
 
     // TERMINAL_IN/OUT wiring moved here from the old SerialWidgetBridge
     // (topico 19): sendTerminalIn() below builds the outbound frame,
     // onTerminalFrameReceived() below filters the inbound stream down to
     // just TERMINAL_OUT.
-    connect(m_protocolRouter, &ProtocolRouter::terminalFrameReceived, this, &BtpBackend::onTerminalFrameReceived);
+    connect(m_protocolRouter, &ProtocolRouter::terminalFrameReceived, this,
+            &BtpBackend::onTerminalFrameReceived);
 }
 
 BtpBackend::~BtpBackend() {
@@ -227,9 +249,39 @@ void BtpBackend::feedBytes(const QByteArray& data) {
     m_btpHandshake->feedRawBytes(data);
 }
 
+void BtpBackend::setHubEndpoint(quint32 selfSourceId, quint32 peerSourceId) {
+    m_selfSourceId = selfSourceId;
+    m_peerSourceId = peerSourceId;
+    // The child speaks as itself, with an identity that survives a restart.
+    // Overwrites the random one the console channel uses, and must: the hub
+    // keys its bind table on this number, so a per-run value would invalidate
+    // the operator's binding on every launch (see hubChannelSourceId()).
+    if (selfSourceId != 0) {
+        m_terminalSourceId = selfSourceId;
+    }
+}
+
 void BtpBackend::onTransportConnectionChanged(bool connected) {
     if (connected) {
         m_btpSession->reset();
+        if (m_peerSourceId != 0) {
+            // A child does NOT hand shake. HELLO and ENTER negotiate a console
+            // session, and a robot offers none -- it accepts exactly three
+            // CONTROL object_ids over the radio and HELLO is not one of them,
+            // so a handshake here would get silence and the device would never
+            // come up.
+            //
+            // So what the handshake used to trigger is triggered by the link
+            // itself. There is no session to establish, hence nothing to wait
+            // for: ask the robot for its own catalog (not an enumeration --
+            // only a hub can answer that), and let subscriptions re-assert.
+            // ClockSync is deliberately absent: it is a "dongle set_clock"
+            // shell command addressed to a hub, and a robot has no reason to
+            // accept it.
+            m_manifestClient->requestCatalogFor(m_peerSourceId);
+            m_subscriptionManager->onSessionEstablished();
+            return;
+        }
         m_btpHandshake->start();
     } else {
         // Subscriptions are scoped to the session that granted them
@@ -237,6 +289,14 @@ void BtpBackend::onTransportConnectionChanged(bool connected) {
         // wanted them, so reconnecting re-subscribes everything.
         m_subscriptionManager->onSessionLost();
     }
+}
+
+bool BtpBackend::sendChildFrame(const QByteArray& alreadyEncoded) {
+    // A pure forward, on purpose. Everything this backend originates itself
+    // goes through sendFrame() and is encoded here; a child's frame is the one
+    // thing that must arrive on the wire exactly as the child built it, so it
+    // deliberately bypasses every encoding path this class owns.
+    return m_btpSession->sendRawFrame(alreadyEncoded);
 }
 
 void BtpBackend::sendTerminalIn(const QByteArray& bytes) {
@@ -275,7 +335,7 @@ quint64 BtpBackend::addSubscriber(quint32 sourceId, quint16 topicId, quint32 req
 }
 
 quint64 BtpBackend::updateSubscriber(quint64 handle, quint32 sourceId, quint16 topicId,
-                                      quint32 requestedRateMillihz) {
+                                     quint32 requestedRateMillihz) {
     return m_subscriptionManager->updateSubscriber(handle, sourceId, topicId, requestedRateMillihz);
 }
 

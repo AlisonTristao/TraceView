@@ -2,10 +2,9 @@
 
 #include <QByteArray>
 #include <QObject>
+#include <QSerialPort>
 #include <QString>
 #include <QStringList>
-
-#include <QSerialPort>
 
 #include "transport.h"
 
@@ -65,8 +64,12 @@ public:
     // The terminator writeCommand() appends -- a global, port-level setting
     // (Run ribbon tab), not per-widget (docs/PROTOCOL.md "Outbound: control
     // commands"). Defaults to Lf, matching the inbound frame terminator.
-    LineTerminator lineTerminator() const { return m_lineTerminator; }
-    void setLineTerminator(LineTerminator terminator) { m_lineTerminator = terminator; }
+    LineTerminator lineTerminator() const {
+        return m_lineTerminator;
+    }
+    void setLineTerminator(LineTerminator terminator) {
+        m_lineTerminator = terminator;
+    }
 
     // Writes `command` followed by lineTerminator()'s bytes. For
     // control-widget-triggered commands (PushButton/ToggleSwitch/Slider,
@@ -82,4 +85,4 @@ private:
     LineTerminator m_lineTerminator = LineTerminator::Lf;
 };
 
-} // namespace traceview
+}  // namespace traceview

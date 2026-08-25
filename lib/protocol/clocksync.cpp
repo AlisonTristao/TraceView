@@ -3,7 +3,6 @@
 #include <QDateTime>
 #include <QRandomGenerator>
 #include <QRegularExpression>
-
 #include <btp/codec.hpp>
 
 #include "protocol/btpframe.h"
@@ -14,8 +13,8 @@ namespace traceview {
 
 namespace {
 
-// bally_protocol/docs/COMMANDS_AND_ACTIONS.md section 4 -- object_id values
-// within MessageType::Command, and the one action_id/action_version every
+// BTP/docs/commands.md sections 1 and 2 -- object_id values within
+// MessageType::Command, and the one action_id/action_version every
 // executor in the ecosystem defines for "run this one shell line and capture
 // its output" (bally_dongle's BtpTransport::btp_command mirrors this exact
 // layout; each side of the wire defines its own copy of these
@@ -49,7 +48,8 @@ void appendLe16(QByteArray& out, quint16 value) {
 
 quint32 readLe32(const QByteArray& data, int offset) {
     return quint32(quint8(data.at(offset))) | (quint32(quint8(data.at(offset + 1))) << 8) |
-           (quint32(quint8(data.at(offset + 2))) << 16) | (quint32(quint8(data.at(offset + 3))) << 24);
+           (quint32(quint8(data.at(offset + 2))) << 16) |
+           (quint32(quint8(data.at(offset + 3))) << 24);
 }
 
 quint16 readLe16(const QByteArray& data, int offset) {
@@ -60,7 +60,8 @@ quint16 readLe16(const QByteArray& data, int offset) {
 
 ClockSync::ClockSync(BtpSession* session, ProtocolRouter* router, QObject* parent)
     : QObject(parent), m_session(session) {
-    connect(router, &ProtocolRouter::commandFrameReceived, this, &ClockSync::onCommandFrameReceived);
+    connect(router, &ProtocolRouter::commandFrameReceived, this,
+            &ClockSync::onCommandFrameReceived);
     // Private per-process identity, same construction ManifestClient/
     // SerialWidgetBridge use for their own request channels -- see this
     // class's header comment for why it need not match BtpHandshake's HELLO
@@ -155,7 +156,8 @@ void ClockSync::onCommandFrameReceived(const BtpFrame& frame) {
     if (static_cast<std::size_t>(frame.payload.size()) < kResultPrefixSize + messageSize) {
         return;  // truncated; nothing usable
     }
-    const QString message = QString::fromUtf8(frame.payload.constData() + int(kResultPrefixSize), messageSize);
+    const QString message =
+        QString::fromUtf8(frame.payload.constData() + int(kResultPrefixSize), messageSize);
 
     if (status != kResultStatusSuccess) {
         emit statusMessage(tr("dongle clock sync failed: %1").arg(message), 8000);
@@ -175,8 +177,10 @@ void ClockSync::onCommandFrameReceived(const BtpFrame& frame) {
             return;  // close enough
         }
 
-        const QString hostTime = QDateTime::currentDateTimeUtc().toString(QStringLiteral("yyyy-MM-dd HH:mm:ss"));
-        sendShellCommand(QStringLiteral("dongle set_clock \"%1\"").arg(hostTime), Pending::SetClock);
+        const QString hostTime =
+            QDateTime::currentDateTimeUtc().toString(QStringLiteral("yyyy-MM-dd HH:mm:ss"));
+        sendShellCommand(QStringLiteral("dongle set_clock \"%1\"").arg(hostTime),
+                         Pending::SetClock);
     } else {
         emit statusMessage(tr("dongle clock corrected (%1)").arg(message), 5000);
     }

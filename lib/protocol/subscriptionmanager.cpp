@@ -2,7 +2,6 @@
 
 #include <QDateTime>
 #include <QRandomGenerator>
-
 #include <btp/codec.hpp>
 
 #include "protocol/btpframe.h"
@@ -26,7 +25,7 @@ constexpr int kUnsubscribeResultSize = 16;  // 12 ref + 1 + 1 + 2
 
 // How early a lease is renewed. Half the granted lease leaves a full lease
 // period of margin for one lost SUBSCRIBE/SUBSCRIBE_RESULT round trip before
-// the source would drop the subscription (COMMANDS_AND_ACTIONS.md section 7).
+// the source would drop the subscription (commands.md section 4).
 constexpr quint32 kMinRenewIntervalMs = 500;
 constexpr int kLeaseTimerIntervalMs = 1000;
 
@@ -54,15 +53,16 @@ qint64 renewIntervalFor(quint32 grantedLeaseMs) {
 
 }  // namespace
 
-SubscriptionManager::SubscriptionManager(BtpSession* session, ProtocolRouter* router, TelemetryCatalog* catalog,
-                                         QObject* parent)
+SubscriptionManager::SubscriptionManager(BtpSession* session, ProtocolRouter* router,
+                                         TelemetryCatalog* catalog, QObject* parent)
     : QObject(parent), m_session(session), m_catalog(catalog) {
-    connect(router, &ProtocolRouter::controlFrameReceived, this, &SubscriptionManager::onControlFrameReceived);
+    connect(router, &ProtocolRouter::controlFrameReceived, this,
+            &SubscriptionManager::onControlFrameReceived);
 
     // Private per-process wire identity, the same construction ManifestClient
     // and SerialWidgetBridge already use: SUBSCRIBE_RESULT correlates only by
     // the (source_id, boot_id, sequence) triple echoed back from the request
-    // envelope (COMMANDS_AND_ACTIONS.md section 2), so this does not have to
+    // envelope (commands.md section 1), so this does not have to
     // be the identity BtpHandshake used for HELLO.
     m_clientSourceId = QRandomGenerator::global()->generate() | 1u;
     m_clientBootId = QRandomGenerator::global()->generate() | 1u;
@@ -97,7 +97,8 @@ int SubscriptionManager::subscriberCountFor(quint64 key) const {
     return count;
 }
 
-quint64 SubscriptionManager::addSubscriber(quint32 sourceId, quint16 topicId, quint32 requestedRateMillihz) {
+quint64 SubscriptionManager::addSubscriber(quint32 sourceId, quint16 topicId,
+                                           quint32 requestedRateMillihz) {
     if (sourceId == 0 || topicId == 0 || requestedRateMillihz == 0) {
         return 0;  // an unconfigured widget must not put anything on the wire
     }
@@ -173,7 +174,7 @@ void SubscriptionManager::syncTopic(quint64 key) {
 }
 
 void SubscriptionManager::sendSubscribe(TopicState& topic, quint32 rateMillihz) {
-    // section 7 marks target_boot_id non-zero, and only MANIFEST_DATA tells
+    // section 4 marks target_boot_id non-zero, and only MANIFEST_DATA tells
     // this client which boot a source is on (TelemetryCatalog::sourceBootId,
     // populated by ManifestClient). Until then the request is held back
     // rather than sent with a zero/guessed boot -- onCatalogUpdated() retries.
@@ -214,7 +215,8 @@ void SubscriptionManager::sendUnsubscribe(const TopicState& topic) {
     m_pendingUnsubscribes.insert(sequence, makeKey(topic.sourceId, topic.topicId));
 }
 
-void SubscriptionManager::sendControl(quint16 objectId, const QByteArray& payload, quint32 sequence) {
+void SubscriptionManager::sendControl(quint16 objectId, const QByteArray& payload,
+                                      quint32 sequence) {
     btp::Header header{};
     header.type = btp::MessageType::Control;
     header.flags = 0;
@@ -255,8 +257,9 @@ void SubscriptionManager::handleSubscribeResult(const BtpFrame& frame) {
     }
     // Correlation is the full (request_source_id, request_boot_id,
     // reply_to_sequence) triple -- reply_to_sequence alone is not unique
-    // (COMMANDS_AND_ACTIONS.md section 2).
-    if (readLe32(frame.payload, 0) != m_clientSourceId || readLe32(frame.payload, 4) != m_clientBootId) {
+    // (commands.md section 1).
+    if (readLe32(frame.payload, 0) != m_clientSourceId ||
+        readLe32(frame.payload, 4) != m_clientBootId) {
         return;
     }
     const quint32 replyToSequence = readLe32(frame.payload, 8);
@@ -333,7 +336,8 @@ void SubscriptionManager::handleUnsubscribeResult(const BtpFrame& frame) {
     if (frame.payload.size() < kUnsubscribeResultSize) {
         return;
     }
-    if (readLe32(frame.payload, 0) != m_clientSourceId || readLe32(frame.payload, 4) != m_clientBootId) {
+    if (readLe32(frame.payload, 0) != m_clientSourceId ||
+        readLe32(frame.payload, 4) != m_clientBootId) {
         return;
     }
     const quint32 replyToSequence = readLe32(frame.payload, 8);
@@ -430,7 +434,7 @@ void SubscriptionManager::renewDueSubscriptions(qint64 nowMs) {
             continue;  // no consumer left; syncTopic() already unsubscribed
         }
         // A new sequence with the same bytes renews (re-creates atomically)
-        // the same session's subscription for this topic -- section 7.
+        // the same session's subscription for this topic -- section 4.
         sendSubscribe(topic, desired);
     }
 }

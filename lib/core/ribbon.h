@@ -53,8 +53,29 @@ class Ribbon : public QWidget {
 public:
     explicit Ribbon(QWidget* parent = nullptr);
 
-    // Takes ownership of `page`. Returns the new tab's index.
-    int addTab(const QString& label, QWidget* page, bool enabled = true, const QString& toolTip = QString());
+    // Takes ownership of `page`. Returns the new tab's index. `closable`
+    // draws the small "x" in the tab's top right corner (see RibbonTabBar)
+    // and lets it be removed later via removeTab(); the fixed Run/Layout/
+    // Devices tabs leave it at the default false.
+    int addTab(const QString& label, QWidget* page, bool enabled = true,
+               const QString& toolTip = QString(), bool closable = false);
+
+    // Removes the tab at `index` and deletes its page widget. Only meant for
+    // tabs added with closable=true.
+    void removeTab(int index);
+
+    // The page widget passed to addTab() for the tab at `index` -- callers
+    // that need to associate their own state with a dynamically added tab
+    // (see MainWindow's open log tabs) can tag/look up by this pointer,
+    // since it stays stable across other tabs being added or removed.
+    QWidget* pageAt(int index) const;
+
+    // Number of tabs currently present -- lets a caller holding only a page
+    // pointer (see pageAt()'s own comment) re-derive that tab's current
+    // index after other tabs have been added/removed and shifted it.
+    int count() const;
+
+    void setCurrentIndex(int index);
 
     // Builds one outlined "ribbonGroup" frame holding one QToolButton per
     // action (via QToolButton::setDefaultAction). For use inside a page
@@ -68,10 +89,11 @@ public:
 
 signals:
     void currentTabChanged(int index);
+    void tabCloseRequested(int index);
 
 private:
     RibbonTabBar* m_tabBar;
     QStackedWidget* m_stack;
 };
 
-} // namespace traceview
+}  // namespace traceview

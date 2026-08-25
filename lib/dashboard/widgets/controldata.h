@@ -85,4 +85,4 @@ int sliderValueToIndex(const SliderCommandConfig& config, double value);
 // `commandTemplate` is empty (nothing to send).
 QByteArray buildSliderCommand(const SliderCommandConfig& config, double value);
 
-} // namespace traceview
+}  // namespace traceview

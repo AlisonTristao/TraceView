@@ -1,13 +1,12 @@
 #pragma once
 
-#include <optional>
-
 #include <QHash>
 #include <QObject>
 #include <QPoint>
 #include <QRect>
 #include <QString>
 #include <QVector>
+#include <optional>
 
 class QEvent;
 class QWidget;
@@ -72,7 +71,9 @@ public:
     // True while a header-initiated move or a grip-initiated resize is in
     // progress -- MainWindow uses this to avoid hiding a panel (via
     // updatePanelVisibility()) out from under an in-progress gesture.
-    bool isDragging() const { return m_draggingPanel != nullptr || m_resizingPanel != nullptr; }
+    bool isDragging() const {
+        return m_draggingPanel != nullptr || m_resizingPanel != nullptr;
+    }
 
 protected:
     bool eventFilter(QObject* watched, QEvent* event) override;
@@ -154,4 +155,4 @@ private:
     QPoint m_lastResizePos;
 };
 
-} // namespace traceview
+}  // namespace traceview

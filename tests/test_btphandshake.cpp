@@ -1,5 +1,4 @@
 #include <QtTest>
-
 #include <btp/codec.hpp>
 
 #include "protocol/btpframe.h"
@@ -26,16 +25,17 @@ void appendLe(QByteArray& out, quint32 value, int width) {
 
 // Drives a real BtpHandshake over a real BtpSession pair: the HELLO frame it
 // sends is genuinely COBS-encoded and decoded back, and the plain-text
-// ENTER/READY exchange (TRANSPORT_SERIAL.md section 5) is driven exactly as
+// ENTER/READY exchange (session-and-terminal.md section 3) is driven exactly
+// as
 // SerialManager's raw bytes would, not mocked.
 class Harness {
 public:
     Harness() {
         QObject::connect(&outbound, &BtpSession::bytesToWrite, &loopback, &BtpSession::feedBytes);
         QObject::connect(&loopback, &BtpSession::frameReceived, &loopback,
-                          [this](const BtpFrame& frame) { sent.append(frame); });
+                         [this](const BtpFrame& frame) { sent.append(frame); });
         QObject::connect(&handshake, &BtpHandshake::bytesToWrite, &handshake,
-                          [this](const QByteArray& data) { enterLine = data; });
+                         [this](const QByteArray& data) { enterLine = data; });
     }
 
     // Runs the ENTER/READY handshake far enough that sendHello() fires, and

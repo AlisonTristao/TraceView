@@ -12,7 +12,8 @@ namespace {
 
 constexpr quint32 kSourceId = 0x11223344;
 
-// protocol.test payload from TELEMETRY.md section 9.4: counter=0x01020304,
+// protocol.test payload, matching BTP's canonical
+// test-vectors/v1/valid/protocol_test.json: counter=0x01020304,
 // value=float32 bits 0x3F0D0A00 -- deliberately contains 0x00, LF (0x0A) and
 // CR (0x0D) inside the body, demonstrating those bytes carry no delimiter
 // meaning here (PLANO_GERAL.txt decision 6, Marco 2's stated requirement).
@@ -24,7 +25,9 @@ TelemetrySample protocolTestSample(quint64 timestampUs) {
     sample.timestampUs = timestampUs;
     sample.topicId = 0x0001;
     sample.schemaVersion = 1;
-    sample.payload = QByteArray::fromHex("04030201" "000a0d3f");
+    sample.payload = QByteArray::fromHex(
+        "04030201"
+        "000a0d3f");
     return sample;
 }
 
@@ -50,11 +53,13 @@ void TestTelemetryFieldRouter::twoSubscribersBothReceiveTheSameField() {
     QVector<double> subscriberB;
     connect(&router, &TelemetryFieldRouter::fieldSample, &router,
             [&](const TelemetryFieldBinding& binding, quint64, double value) {
-                if (binding.fieldId == 1) subscriberA.append(value);
+                if (binding.fieldId == 1)
+                    subscriberA.append(value);
             });
     connect(&router, &TelemetryFieldRouter::fieldSample, &router,
             [&](const TelemetryFieldBinding& binding, quint64, double value) {
-                if (binding.fieldId == 1) subscriberB.append(value);
+                if (binding.fieldId == 1)
+                    subscriberB.append(value);
             });
 
     router.onTelemetrySample(protocolTestSample(1000));
@@ -72,12 +77,13 @@ void TestTelemetryFieldRouter::timestampTravelsUnmodified() {
 
     // CRITERIO DE ACEITE: "o timestamp nao e descartado no roteador" -- the
     // origin timestamp_us on the sample must reach the subscriber exactly,
-    // never substituted by e.g. local arrival time (BTP_V1.md section 6.3 /
+    // never substituted by e.g. local arrival time (model.md section 4 /
     // PLANO_GERAL.txt decision 11).
     quint64 observedTimestamp = 0;
     connect(&router, &TelemetryFieldRouter::fieldSample, &router,
             [&](const TelemetryFieldBinding& binding, quint64 timestampUs, double) {
-                if (binding.fieldId == 1) observedTimestamp = timestampUs;
+                if (binding.fieldId == 1)
+                    observedTimestamp = timestampUs;
             });
 
     router.onTelemetrySample(protocolTestSample(0x0102030405060708ULL));
@@ -117,7 +123,7 @@ void TestTelemetryFieldRouter::malformedPayloadIsCountedAndNotDelivered() {
     QCOMPARE(router.diagnostics().decodeErrors, quint64(1));
 }
 
-} // namespace
+}  // namespace
 
 QTEST_MAIN(TestTelemetryFieldRouter)
 #include "test_telemetryfieldrouter.moc"

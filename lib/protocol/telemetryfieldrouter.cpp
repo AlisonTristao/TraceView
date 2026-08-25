@@ -9,9 +9,10 @@ TelemetryFieldRouter::TelemetryFieldRouter(TelemetryCatalog* catalog, QObject* p
 
 void TelemetryFieldRouter::onTelemetrySample(const TelemetrySample& sample) {
     const TelemetryTopicSchema* schema =
-        m_catalog ? m_catalog->lookup(sample.sourceId, sample.topicId, sample.schemaVersion) : nullptr;
+        m_catalog ? m_catalog->lookup(sample.sourceId, sample.topicId, sample.schemaVersion)
+                  : nullptr;
     if (schema == nullptr) {
-        // TELEMETRY.md section 6.4: unknown/unannounced schema -- reject the
+        // telemetry.md section 6: unknown/unannounced schema -- reject the
         // sample, don't guess at another version or encoding. topico 16
         // PASSO 9: tell ManifestClient so it can request an update instead
         // of this happening silently forever.
@@ -40,7 +41,7 @@ void TelemetryFieldRouter::onTelemetrySample(const TelemetrySample& sample) {
     for (auto it = values.constBegin(); it != values.constEnd(); ++it) {
         const TelemetryFieldValue& value = it.value();
         if (value.isNull) {
-            // TELEMETRY.md section 8: no value this sample -- don't
+            // telemetry.md section 8: no value this sample -- don't
             // fabricate zero or reuse a previous element.
             continue;
         }

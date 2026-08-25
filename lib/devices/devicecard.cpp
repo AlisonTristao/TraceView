@@ -47,7 +47,8 @@ void drawCommTypeIcon(QPainter& painter, const QRect& r, CommType type, const QC
             }
             painter.setPen(QPen(color, 1.3));
             painter.setBrush(Qt::NoBrush);
-            painter.drawRoundedRect(QRectF(s * 0.14, s * 0.1, s * 0.72, s * 0.8), s * 0.12, s * 0.12);
+            painter.drawRoundedRect(QRectF(s * 0.14, s * 0.1, s * 0.72, s * 0.8), s * 0.12,
+                                    s * 0.12);
             break;
         }
     }
@@ -85,7 +86,7 @@ void drawGearIcon(QPainter& painter, const QRect& r, const QColor& color) {
     painter.drawEllipse(QPointF(0, 0), bodyRadius * 0.32, bodyRadius * 0.32);
     painter.restore();
 }
-} // namespace
+}  // namespace
 
 DeviceCard::DeviceCard(QWidget* parent) : QWidget(parent) {
     setFixedSize(kDeviceCardSize);
@@ -134,9 +135,10 @@ void DeviceCard::paintEvent(QPaintEvent*) {
     // share one width so selection reads as a color change, not also a
     // thickness jump.
     constexpr qreal kBorderWidth = 2.0;
-    const QPainterPath outline = partiallyRoundedRect(
-        QRectF(rect()).adjusted(kBorderWidth / 2.0, kBorderWidth / 2.0, -kBorderWidth / 2.0, -kBorderWidth / 2.0),
-        kContainerCornerRadius, true, true, true, true);
+    const QPainterPath outline =
+        partiallyRoundedRect(QRectF(rect()).adjusted(kBorderWidth / 2.0, kBorderWidth / 2.0,
+                                                     -kBorderWidth / 2.0, -kBorderWidth / 2.0),
+                             kContainerCornerRadius, true, true, true, true);
     painter.fillPath(outline, palette.surface);
     painter.setPen(QPen(palette.border, kBorderWidth));
     painter.setBrush(Qt::NoBrush);
@@ -172,23 +174,49 @@ void DeviceCard::paintEvent(QPaintEvent*) {
     painter.setFont(titleFont);
     const QFontMetrics titleMetrics(titleFont);
     painter.drawText(textRect, Qt::AlignVCenter | Qt::AlignLeft,
-                      titleMetrics.elidedText(m_device.name, Qt::ElideRight, textRect.width()));
+                     titleMetrics.elidedText(m_device.name, Qt::ElideRight, textRect.width()));
 
-    // Body: comm-type label, then a one-line elided description below it.
-    const QRect body = rect().adjusted(kBodyMargin, kHeaderHeight + kBodyMargin, -kBodyMargin, -kBodyMargin);
+    // Body: a word-wrapped description, then (if the device has ever
+    // completed a handshake) the BTP version/ID it last reported -- see
+    // Device::btpVersion/btpId. Previously that pair only showed up behind
+    // the gear, in DeviceConfigDialog's "Reported by device" section;
+    // surfaced here too so it's visible without opening that dialog.
+    //
+    // This used to also start with a comm-type label line above the
+    // description -- but with only CommType::Btp existing, that line and the
+    // reported line below both just printed the bare word "BTP" with nothing
+    // distinguishing the two. Dropped the label line entirely (and with it
+    // device.h's commTypeLabel() helper, which had no other caller) and
+    // reworded the reported line to lead with "v"/"ID" instead of repeating
+    // "BTP".
+    const QRect body =
+        rect().adjusted(kBodyMargin, kHeaderHeight + kBodyMargin, -kBodyMargin, -kBodyMargin);
     QFont bodyFont = painter.font();
     bodyFont.setBold(false);
     painter.setFont(bodyFont);
     const QFontMetrics bodyMetrics(bodyFont);
 
-    painter.setPen(palette.textSecondary);
-    const QRect commTypeRect(body.left(), body.top(), body.width(), kBodyLineHeight);
-    painter.drawText(commTypeRect, Qt::AlignVCenter | Qt::AlignLeft, commTypeLabel(m_device.commType));
+    const QString reportedLine =
+        m_device.btpVersion.isEmpty()
+            ? (m_device.btpId.isEmpty() ? QString() : tr("ID %1").arg(m_device.btpId))
+            : (m_device.btpId.isEmpty()
+                   ? tr("v%1").arg(m_device.btpVersion)
+                   : tr("v%1 \xC2\xB7 ID %2").arg(m_device.btpVersion, m_device.btpId));
+    const int reportedHeight = reportedLine.isEmpty() ? 0 : kBodyLineHeight + 4;
 
     painter.setPen(palette.textPrimary);
-    const QRect descRect(body.left(), commTypeRect.bottom() + 4, body.width(), body.height() - kBodyLineHeight - 4);
-    painter.drawText(descRect, Qt::AlignTop | Qt::AlignLeft,
-                      bodyMetrics.elidedText(m_device.description, Qt::ElideRight, descRect.width()));
+    const QRect descRect(body.left(), body.top(), body.width(), body.height() - reportedHeight);
+    painter.drawText(descRect, Qt::AlignTop | Qt::AlignLeft | Qt::TextWordWrap,
+                     m_device.description);
+
+    if (!reportedLine.isEmpty()) {
+        painter.setPen(palette.textSecondary);
+        const QRect reportedRect(body.left(), body.bottom() - kBodyLineHeight, body.width(),
+                                 kBodyLineHeight);
+        painter.drawText(
+            reportedRect, Qt::AlignVCenter | Qt::AlignLeft,
+            bodyMetrics.elidedText(reportedLine, Qt::ElideRight, reportedRect.width()));
+    }
 
     // Selection border -- same palette.accent convention as DashboardCell's
     // selected state, minus the color-blend animation (this card's selection
@@ -226,4 +254,4 @@ void DeviceCard::mousePressEvent(QMouseEvent* event) {
     event->accept();
 }
 
-} // namespace traceview
+}  // namespace traceview

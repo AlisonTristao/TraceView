@@ -104,4 +104,4 @@ void SerialManager::onErrorOccurred(QSerialPort::SerialPortError error) {
     emit errorOccurred(message);
 }
 
-} // namespace traceview
+}  // namespace traceview

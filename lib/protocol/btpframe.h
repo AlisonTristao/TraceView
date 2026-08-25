@@ -3,13 +3,12 @@
 #include <QByteArray>
 #include <QMetaType>
 #include <QtGlobal>
-
 #include <btp/codec.hpp>
 
 namespace traceview {
 
 // Qt-friendly, self-contained copy of a decoded BTP frame. btp::DecodedFrame
-// (bally_protocol/include/btp/codec.hpp) holds a ByteView pointing into a
+// (BTP/include/btp/codec.hpp) holds a ByteView pointing into a
 // caller-owned buffer that btp::SerialDecoder reuses for the next candidate
 // frame (or that a Reassembler slot reuses once released), so it is only
 // valid for the instant it's produced. BtpSession copies it into this struct

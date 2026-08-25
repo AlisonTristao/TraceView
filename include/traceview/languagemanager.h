@@ -45,4 +45,4 @@ private:
     QTranslator m_qtTranslator;
 };
 
-} // namespace traceview
+}  // namespace traceview

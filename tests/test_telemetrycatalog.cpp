@@ -42,7 +42,7 @@ void TestTelemetryCatalog::registerThenLookupRoundTrips() {
     QCOMPARE(found->name, QStringLiteral("motor_state"));
 
     // Wrong source_id, topic_id, or schema_version must all miss -- the
-    // catalog key is the full triple (TELEMETRY.md section 2).
+    // catalog key is the full triple (telemetry.md section 1).
     QVERIFY(catalog.lookup(0x99999999, 0x0101, 1) == nullptr);
     QVERIFY(catalog.lookup(0x11223344, 0x9999, 1) == nullptr);
     QVERIFY(catalog.lookup(0x11223344, 0x0101, 2) == nullptr);
@@ -108,7 +108,7 @@ void TestTelemetryCatalog::fieldByIdFindsAndMisses() {
     QVERIFY(schema->fieldById(999) == nullptr);
 }
 
-} // namespace
+}  // namespace
 
 QTEST_MAIN(TestTelemetryCatalog)
 #include "test_telemetrycatalog.moc"

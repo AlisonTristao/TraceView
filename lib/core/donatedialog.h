@@ -15,4 +15,4 @@ public:
     explicit DonateDialog(QWidget* parent = nullptr);
 };
 
-} // namespace traceview
+}  // namespace traceview

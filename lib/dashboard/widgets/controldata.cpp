@@ -8,7 +8,7 @@ PushButtonCommandConfig parsePushButtonCommandConfig(const QJsonObject& json) {
     PushButtonCommandConfig config;
     config.label = json.value("label").toString();
     config.mode = json.value("mode").toString("momentary") == "pulse" ? PushButtonMode::Pulse
-                                                                        : PushButtonMode::Momentary;
+                                                                      : PushButtonMode::Momentary;
     config.onPress = json.value("onPress").toString();
     config.onRelease = json.value("onRelease").toString();
     config.repeatWhileHeld = json.value("repeatWhileHeld").toBool(false);
@@ -41,8 +41,9 @@ SliderCommandConfig parseSliderCommandConfig(const QJsonObject& json) {
     config.defaultValue = json.value("defaultValue").toDouble(50.0);
     config.unit = json.value("unit").toString();
     config.showValue = json.value("showValue").toBool(true);
-    config.sendMode =
-        json.value("sendMode").toString("continuous") == "onRelease" ? SliderSendMode::OnRelease : SliderSendMode::Continuous;
+    config.sendMode = json.value("sendMode").toString("continuous") == "onRelease"
+                          ? SliderSendMode::OnRelease
+                          : SliderSendMode::Continuous;
     config.throttleMs = json.value("throttleMs").toInt(100);
     config.commandTemplate = json.value("commandTemplate").toString();
     return config;
@@ -73,4 +74,4 @@ QByteArray buildSliderCommand(const SliderCommandConfig& config, double value) {
     return command.toUtf8();
 }
 
-} // namespace traceview
+}  // namespace traceview

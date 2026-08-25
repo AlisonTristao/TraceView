@@ -9,7 +9,6 @@
 #include <QHBoxLayout>
 #include <QHeaderView>
 #include <QJsonArray>
-#include <QLabel>
 #include <QLineEdit>
 #include <QPushButton>
 #include <QSpinBox>
@@ -28,7 +27,9 @@ constexpr int kColorColumn = 2;
 constexpr int kRemoveColumn = 3;
 constexpr int kColumnCount = 4;
 
-QColor swatchColor(QPushButton* button) { return button->property("swatchColor").value<QColor>(); }
+QColor swatchColor(QPushButton* button) {
+    return button->property("swatchColor").value<QColor>();
+}
 
 void setSwatchColor(QPushButton* button, const QColor& color) {
     button->setProperty("swatchColor", color);
@@ -40,34 +41,39 @@ void setSwatchColor(QPushButton* button, const QColor& color) {
 GaugeConfigEditor::GaugeConfigEditor(QWidget* parent) : WidgetConfigEditor(parent) {
     m_deviceCombo = new QComboBox(this);
     populateDeviceCombo(m_deviceCombo, {});
-    m_deviceCombo->setToolTip(tr("Which device this gauge reads from -- must match the sourceId below."));
+    m_deviceCombo->setToolTip(
+        tr("Which device this gauge reads from -- must match the sourceId below."));
 
     m_sourceIdEdit = new QLineEdit(this);
-    m_sourceIdEdit->setPlaceholderText(tr("0x11223344"));
-    m_sourceIdEdit->setToolTip(tr("BTP source_id this gauge reads from (hex or decimal)."));
+    m_sourceIdEdit->setReadOnly(true);
+    m_sourceIdEdit->setPlaceholderText(tr("(auto)"));
+    m_sourceIdEdit->setToolTip(
+        tr("BTP source_id this gauge reads from -- derived from the Topic field below, shown by "
+           "device name "
+           "when known."));
 
-    m_topicIdEdit = new QLineEdit(this);
-    m_topicIdEdit->setPlaceholderText(tr("0x0101"));
-    m_topicIdEdit->setToolTip(tr("BTP topic_id (TELEMETRY.md) this gauge's rings bind fields of."));
-
-    // Resolved from the selected device's reported catalog (see
-    // resolveCatalogTopicName()) -- blank when the device hasn't announced a
-    // topic with this exact source/topic yet.
-    m_topicNameLabel = new QLabel(this);
-    m_topicNameLabel->setEnabled(false);
-    m_topicNameLabel->setToolTip(tr("Topic name reported by the device's manifest, if known."));
+    m_topicIdEdit = new QComboBox(this);
+    m_topicIdEdit->setEditable(true);
+    populateTopicCombo(m_topicIdEdit, {}, QString());
+    m_topicIdEdit->lineEdit()->setPlaceholderText(tr("0x0101"));
+    m_topicIdEdit->setToolTip(
+        tr("BTP topic_id (TELEMETRY.md) this gauge's rings bind fields of -- pick one the "
+           "device has already reported (shown by name), or type a hex/decimal id by hand "
+           "for one it hasn't reported yet."));
 
     m_minSpin = new QDoubleSpinBox(this);
     m_minSpin->setRange(-100'000.0, 100'000.0);
     m_minSpin->setDecimals(2);
     m_minSpin->setValue(0.0);
-    m_minSpin->setToolTip(tr("Shared scale floor -- every ring maps its own field onto this same range."));
+    m_minSpin->setToolTip(
+        tr("Shared scale floor -- every ring maps its own field onto this same range."));
 
     m_maxSpin = new QDoubleSpinBox(this);
     m_maxSpin->setRange(-100'000.0, 100'000.0);
     m_maxSpin->setDecimals(2);
     m_maxSpin->setValue(100.0);
-    m_maxSpin->setToolTip(tr("Shared scale ceiling -- every ring maps its own field onto this same range."));
+    m_maxSpin->setToolTip(
+        tr("Shared scale ceiling -- every ring maps its own field onto this same range."));
 
     m_unitEdit = new QLineEdit(this);
     m_unitEdit->setPlaceholderText(tr("V, °C, %..."));
@@ -83,7 +89,6 @@ GaugeConfigEditor::GaugeConfigEditor(QWidget* parent) : WidgetConfigEditor(paren
     m_formLayout->addRow(tr("Device"), m_deviceCombo);
     m_formLayout->addRow(tr("Source"), m_sourceIdEdit);
     m_formLayout->addRow(tr("Topic"), m_topicIdEdit);
-    m_formLayout->addRow(tr("Topic name"), m_topicNameLabel);
     m_formLayout->addRow(tr("Min"), m_minSpin);
     m_formLayout->addRow(tr("Max"), m_maxSpin);
     m_formLayout->addRow(tr("Unit"), m_unitEdit);
@@ -99,7 +104,8 @@ GaugeConfigEditor::GaugeConfigEditor(QWidget* parent) : WidgetConfigEditor(paren
     m_seriesTable = new QTableWidget(0, kColumnCount, this);
     m_seriesTable->setHorizontalHeaderLabels({tr("Name"), tr("Field ID"), tr("Color"), ""});
     m_seriesTable->verticalHeader()->setVisible(false);
-    m_seriesTable->horizontalHeader()->setSectionResizeMode(kRemoveColumn, QHeaderView::ResizeToContents);
+    m_seriesTable->horizontalHeader()->setSectionResizeMode(kRemoveColumn,
+                                                            QHeaderView::ResizeToContents);
     m_seriesTable->setColumnWidth(kNameColumn, 150);
     m_seriesTable->setColumnWidth(kFieldIdColumn, 90);
     m_seriesTable->setColumnWidth(kColorColumn, 56);
@@ -127,30 +133,60 @@ GaugeConfigEditor::GaugeConfigEditor(QWidget* parent) : WidgetConfigEditor(paren
     mainLayout->addLayout(buttonRow);
 
     connect(m_deviceCombo, &QComboBox::currentIndexChanged, this, [this](int) {
-        updateTopicNameLabel();
+        populateTopicCombo(m_topicIdEdit, m_devices, m_deviceCombo->currentData().toString());
+        updateIdentityDisplay();
         emitChanged();
     });
-    connect(m_sourceIdEdit, &QLineEdit::editingFinished, this, [this]() {
-        updateTopicNameLabel();
+    // Manual entry: only a plain hex/decimal id is accepted (the field also
+    // shows resolved names, which aren't meant to be typed back in). A
+    // hand-typed topic id is assumed to belong to the selected device's own
+    // identity -- see DeviceOption::selfSourceId -- since each robot is its
+    // own Device now and Source has no separate manual-entry path any more.
+    // Unparseable text (most commonly the resolved name still sitting there,
+    // untouched) is ignored and the display simply reverts to the last valid
+    // binding.
+    connect(m_topicIdEdit->lineEdit(), &QLineEdit::editingFinished, this, [this]() {
+        bool ok = false;
+        const qulonglong typed = m_topicIdEdit->currentText().trimmed().toULongLong(&ok, 0);
+        if (ok) {
+            m_topicId = quint16(qBound<qulonglong>(0, typed, 65535));
+            m_sourceId = 0;
+            if (m_topicId != 0) {
+                const QString deviceId = m_deviceCombo->currentData().toString();
+                for (const DeviceOption& device : m_devices) {
+                    if (device.id == deviceId) {
+                        m_sourceId = device.selfSourceId;
+                        break;
+                    }
+                }
+            }
+        }
+        updateIdentityDisplay();
         emitChanged();
     });
-    connect(m_topicIdEdit, &QLineEdit::editingFinished, this, [this]() {
-        updateTopicNameLabel();
+    connect(m_topicIdEdit, &QComboBox::activated, this, [this](int index) {
+        QString sourceHex, topicHex;
+        if (decodeTopicComboData(m_topicIdEdit->itemData(index), &sourceHex, &topicHex)) {
+            m_sourceId = quint32(sourceHex.toULongLong(nullptr, 0));
+            m_topicId = quint16(topicHex.toUInt(nullptr, 0));
+        }
+        updateIdentityDisplay();
         emitChanged();
     });
     connect(m_minSpin, &QDoubleSpinBox::valueChanged, this, [this](double) { emitChanged(); });
     connect(m_maxSpin, &QDoubleSpinBox::valueChanged, this, [this](double) { emitChanged(); });
     connect(m_unitEdit, &QLineEdit::editingFinished, this, [this]() { emitChanged(); });
     connect(m_decimalsSpin, &QSpinBox::valueChanged, this, [this](int) { emitChanged(); });
-    connect(m_seriesTable, &QTableWidget::itemChanged, this, [this](QTableWidgetItem*) { emitChanged(); });
+    connect(m_seriesTable, &QTableWidget::itemChanged, this,
+            [this](QTableWidgetItem*) { emitChanged(); });
 }
 
 void GaugeConfigEditor::setConfig(const QJsonObject& config) {
     m_updating = true;
     const int deviceIdx = m_deviceCombo->findData(config.value("deviceId").toString());
     m_deviceCombo->setCurrentIndex(deviceIdx >= 0 ? deviceIdx : 0);
-    m_sourceIdEdit->setText(config.value("sourceId").toString("0"));
-    m_topicIdEdit->setText(config.value("topicId").toString("0"));
+    m_sourceId = quint32(config.value("sourceId").toString("0").toULongLong(nullptr, 0));
+    m_topicId = quint16(qBound(0, config.value("topicId").toString("0").toInt(nullptr, 0), 65535));
     m_minSpin->setValue(config.value("min").toDouble(0.0));
     m_maxSpin->setValue(config.value("max").toDouble(100.0));
     m_unitEdit->setText(config.value("unit").toString());
@@ -175,15 +211,15 @@ void GaugeConfigEditor::setConfig(const QJsonObject& config) {
         addSeriesRow(QJsonObject());
     }
 
-    updateTopicNameLabel();
+    updateIdentityDisplay();
     m_updating = false;
 }
 
 QJsonObject GaugeConfigEditor::config() const {
     QJsonObject cfg;
     cfg["deviceId"] = m_deviceCombo->currentData().toString();
-    cfg["sourceId"] = m_sourceIdEdit->text().trimmed().isEmpty() ? QStringLiteral("0") : m_sourceIdEdit->text();
-    cfg["topicId"] = m_topicIdEdit->text().trimmed().isEmpty() ? QStringLiteral("0") : m_topicIdEdit->text();
+    cfg["sourceId"] = formatHexId(m_sourceId, 8);
+    cfg["topicId"] = formatHexId(m_topicId, 4);
     cfg["min"] = m_minSpin->value();
     cfg["max"] = m_maxSpin->value();
     cfg["unit"] = m_unitEdit->text();
@@ -195,10 +231,12 @@ QJsonObject GaugeConfigEditor::config() const {
         const QTableWidgetItem* nameItem = m_seriesTable->item(row, kNameColumn);
         series["name"] = nameItem ? nameItem->text() : QString();
 
-        if (auto* fieldIdSpin = qobject_cast<QSpinBox*>(m_seriesTable->cellWidget(row, kFieldIdColumn))) {
-            series["fieldId"] = fieldIdSpin->value();
+        if (auto* fieldIdCombo =
+                qobject_cast<QComboBox*>(m_seriesTable->cellWidget(row, kFieldIdColumn))) {
+            series["fieldId"] = fieldIdCombo->property("fieldId").toInt();
         }
-        if (auto* colorButton = qobject_cast<QPushButton*>(m_seriesTable->cellWidget(row, kColorColumn))) {
+        if (auto* colorButton =
+                qobject_cast<QPushButton*>(m_seriesTable->cellWidget(row, kColorColumn))) {
             series["color"] = swatchColor(colorButton).name();
         }
         seriesArray.append(series);
@@ -214,15 +252,35 @@ void GaugeConfigEditor::addSeriesRow(const QJsonObject& series) {
     const int row = m_seriesTable->rowCount();
     m_seriesTable->insertRow(row);
 
-    auto* nameItem = new QTableWidgetItem(series.value("name").toString(tr("Ring %1").arg(row + 1)));
+    auto* nameItem =
+        new QTableWidgetItem(series.value("name").toString(tr("Ring %1").arg(row + 1)));
     m_seriesTable->setItem(row, kNameColumn, nameItem);
 
-    auto* fieldIdSpin = new QSpinBox();
-    fieldIdSpin->setRange(0, 65535);
-    fieldIdSpin->setValue(series.value("fieldId").toInt(row + 1));
-    fieldIdSpin->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
-    connect(fieldIdSpin, &QSpinBox::valueChanged, this, [this](int) { emitChanged(); });
-    m_seriesTable->setCellWidget(row, kFieldIdColumn, fieldIdSpin);
+    auto* fieldIdCombo = new QComboBox();
+    fieldIdCombo->setEditable(true);
+    const int fieldId = series.value("fieldId").toInt(row + 1);
+    populateFieldCombo(fieldIdCombo, resolveCatalogTopicFields(
+                                         m_devices, m_deviceCombo->currentData().toString(),
+                                         formatHexId(m_sourceId, 8), formatHexId(m_topicId, 4)));
+    fieldIdCombo->setProperty("fieldId", fieldId);
+    fieldIdCombo->setCurrentText(QString::number(fieldId));
+    fieldIdCombo->setToolTip(
+        tr("Which field of the bound topic this ring plots -- pick one the device has "
+           "already reported (shown by name), or type a numeric id by hand for one it "
+           "hasn't reported yet."));
+    connect(fieldIdCombo, &QComboBox::activated, this, [this, fieldIdCombo](int index) {
+        fieldIdCombo->setProperty("fieldId", fieldIdCombo->itemData(index));
+        emitChanged();
+    });
+    connect(fieldIdCombo->lineEdit(), &QLineEdit::editingFinished, this, [this, fieldIdCombo]() {
+        bool ok = false;
+        const int typed = fieldIdCombo->currentText().trimmed().toInt(&ok);
+        if (ok) {
+            fieldIdCombo->setProperty("fieldId", typed);
+        }
+        emitChanged();
+    });
+    m_seriesTable->setCellWidget(row, kFieldIdColumn, fieldIdCombo);
 
     auto* colorButton = new QPushButton();
     colorButton->setFixedWidth(40);
@@ -232,10 +290,12 @@ void GaugeConfigEditor::addSeriesRow(const QJsonObject& series) {
     // fits the active theme and differs from the previous row. Existing rows
     // with an explicit color are untouched.
     const QVector<QColor>& seriesPalette = ThemeManager::instance().currentTheme().series;
-    const QColor fallback = seriesPalette.isEmpty() ? QColor("#3B82F6") : seriesPalette[row % seriesPalette.size()];
+    const QColor fallback =
+        seriesPalette.isEmpty() ? QColor("#3B82F6") : seriesPalette[row % seriesPalette.size()];
     setSwatchColor(colorButton, QColor(series.value("color").toString(fallback.name())));
     connect(colorButton, &QPushButton::clicked, this, [this, colorButton]() {
-        const QColor chosen = QColorDialog::getColor(swatchColor(colorButton), this, tr("Ring Color"));
+        const QColor chosen =
+            QColorDialog::getColor(swatchColor(colorButton), this, tr("Ring Color"));
         if (!chosen.isValid()) {
             return;
         }
@@ -261,12 +321,25 @@ void GaugeConfigEditor::addSeriesRow(const QJsonObject& series) {
     m_updating = wasUpdating;
 }
 
+void GaugeConfigEditor::refreshSeriesFieldOptions() {
+    const QVector<CatalogTopicField> fields =
+        resolveCatalogTopicFields(m_devices, m_deviceCombo->currentData().toString(),
+                                  formatHexId(m_sourceId, 8), formatHexId(m_topicId, 4));
+    for (int row = 0; row < m_seriesTable->rowCount(); ++row) {
+        if (auto* fieldIdCombo =
+                qobject_cast<QComboBox*>(m_seriesTable->cellWidget(row, kFieldIdColumn))) {
+            populateFieldCombo(fieldIdCombo, fields);
+        }
+    }
+}
+
 void GaugeConfigEditor::setAvailableDevices(const QVector<DeviceOption>& devices) {
     const bool wasUpdating = m_updating;
     m_updating = true;
     m_devices = devices;
     populateDeviceCombo(m_deviceCombo, devices);
-    updateTopicNameLabel();
+    populateTopicCombo(m_topicIdEdit, devices, m_deviceCombo->currentData().toString());
+    updateIdentityDisplay();
     m_updating = wasUpdating;
 }
 
@@ -277,10 +350,19 @@ void GaugeConfigEditor::emitChanged() {
     emit configChanged();
 }
 
-void GaugeConfigEditor::updateTopicNameLabel() {
-    const QString name = resolveCatalogTopicName(m_devices, m_deviceCombo->currentData().toString(),
-                                                  m_sourceIdEdit->text(), m_topicIdEdit->text());
-    m_topicNameLabel->setText(name.isEmpty() ? tr("(unknown)") : name);
+void GaugeConfigEditor::updateIdentityDisplay() {
+    const QString deviceId = m_deviceCombo->currentData().toString();
+    const QString topicName = resolveCatalogTopicName(
+        m_devices, deviceId, formatHexId(m_sourceId, 8), formatHexId(m_topicId, 4));
+    m_topicIdEdit->setCurrentText(topicName.isEmpty() ? formatHexId(m_topicId, 4) : topicName);
+
+    if (m_sourceId == 0) {
+        m_sourceIdEdit->clear();
+    } else {
+        const QString sourceName = resolveSourceLabel(m_devices, m_sourceId);
+        m_sourceIdEdit->setText(sourceName.isEmpty() ? formatHexId(m_sourceId, 8) : sourceName);
+    }
+    refreshSeriesFieldOptions();
 }
 
 }  // namespace traceview

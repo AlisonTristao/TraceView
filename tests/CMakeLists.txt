@@ -21,6 +21,11 @@ add_traceview_test(test_dashboardgrid traceview_dashboard)
 # lib/devices). Only traceview_devices; no dashboard/protocol dependency.
 add_traceview_test(test_device traceview_devices)
 add_traceview_test(test_devicesgrid traceview_devices)
+# hub.peers reassembly -- six parallel variable-length arrays arriving one
+# (field, element) at a time. Only traceview_devices: the accumulator lives
+# below the protocol layer on purpose (see lib/devices/hubpeeraccumulator.h),
+# so this exercises the decode with no BTP and no QWidget involved.
+add_traceview_test(test_hubpeeraccumulator traceview_devices)
 add_traceview_test(test_chartdata traceview_dashboard)
 add_traceview_test(test_controldata traceview_dashboard)
 # topico 19: the dumb-terminal line model (\r/\b/\n handling) and keystroke
@@ -29,8 +34,31 @@ add_traceview_test(test_controldata traceview_dashboard)
 # but the existing precedent (test_dashboardgrid uses QTest::mousePress on
 # real QWidgets) already covers widget-level QTest usage in this repo.
 add_traceview_test(test_serialterminalwidget traceview_dashboard)
+# topico 26: a Device that connects THROUGH another Device. traceview_ui so
+# it can build a real DeviceConnection/BtpBackend pair, which is what the
+# multiplexing test drives -- no port and no hardware are involved.
+add_traceview_test(test_hubtransport traceview_ui traceview_protocol btp::codec)
+# The three-implementations-one-contract check: this derives the same key
+# octets as bally_OS's provisioner and the hub's console command, against a
+# vector that provisioner actually produced.
+add_traceview_test(test_keyderivation traceview_protocol)
+# The dongle clock round trip: which COMMAND_RESULT counts as this client's
+# reply, and when a drift is worth correcting. Real BtpSession/ProtocolRouter,
+# no transport -- what the session would have written is decoded straight out
+# of bytesToWrite(), the same way test_hubendpoint does it.
+add_traceview_test(test_clocksync traceview_protocol btp::codec)
+# topico 28, desktop side: a child device as an ENDPOINT -- it originates its
+# own traffic and every piece of it has to be addressed to its own robot.
+add_traceview_test(test_hubendpoint traceview_ui traceview_protocol btp::codec)
+# bally_channels.h is one of three byte-identical copies (see the test's own
+# header comment). The absolute path is passed in rather than resolved at run
+# time so the check cannot pass by silently finding nothing, and so it works
+# from whatever directory ctest happens to run in.
+add_traceview_test(test_ballychannels traceview_protocol btp::codec)
+target_compile_definitions(test_ballychannels PRIVATE
+    BALLY_CHANNELS_HEADER_PATH="${CMAKE_SOURCE_DIR}/include/bally_channels.h")
 add_traceview_test(test_serialmanager traceview_ui)
-# USB HID transport (BTP's "usb_hid" profile, ADR 0011) -- mirrors
+# USB HID transport (BTP's "usb_hid" profile) -- mirrors
 # test_serialmanager's shape/coverage (mostly the "can't reach real
 # hardware in CI" paths: starts disconnected, closes/writes cleanly with
 # nothing open, invalid target fails without crashing).
@@ -52,6 +80,13 @@ add_traceview_test(test_telemetrycatalog traceview_protocol)
 add_traceview_test(test_packedledecoder traceview_protocol)
 add_traceview_test(test_protocolrouter traceview_protocol)
 add_traceview_test(test_btpsession traceview_protocol)
+# topico 25: BtpSession's framing axis vs. its encode-profile axis, now that
+# they are separate fields -- the EspNow-under-pre-framed combination, the
+# never-re-encode contract of sendRawFrame(), and frameBytesReceived()'s
+# per-fragment whole-frame octets. Kept in its own file so test_btpsession
+# (the pre-existing behavior of the two real transports) stays untouched by
+# that refactor.
+add_traceview_test(test_btpsessionframing traceview_protocol)
 add_traceview_test(test_btphandshake traceview_protocol)
 add_traceview_test(test_telemetryfieldrouter traceview_protocol)
 # topico 17 (assinaturas e controle de taxa): the STATUS v1/v2 payload parser
@@ -63,3 +98,13 @@ add_traceview_test(test_subscriptionmanager traceview_protocol)
 # Reads a .blog file (headerless, concatenated BTP Log frames -- see
 # lib/protocol/logfilereader.h) -- protocol-layer only, no QWidget.
 add_traceview_test(test_logfilereader traceview_protocol)
+# mDNS (RFC 6762) query/response wire format (lib/ota/mdnsresolver.*) --
+# pure byte-level encode/decode, no socket I/O involved (that part can only
+# really be checked against a real mDNS responder on the network).
+# OTA status polling against bally_OS's HTTP side channel. No server is
+# involved: the requests go to TEST-NET-1 (RFC 5737), which is guaranteed
+# unroutable, so what is exercised is this client's own bookkeeping --
+# in-flight tracking and the per-device coalescing that keeps a 1 Hz poll
+# from cancelling a request allowed 4 seconds to answer.
+add_traceview_test(test_otaclient traceview_ota)
+add_traceview_test(test_mdnsresolver traceview_ota)

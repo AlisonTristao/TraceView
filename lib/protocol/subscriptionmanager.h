@@ -18,7 +18,7 @@ struct BtpFrame;
 
 // Aggregates every widget's interest in a telemetry topic into a single
 // wire-level SUBSCRIBE per (source_id, topic_id) -- topico 17 PASSOS 2/5/6/10,
-// COMMANDS_AND_ACTIONS.md section 7.
+// commands.md section 4.
 //
 // The model is a reference count, not one subscription per widget: several
 // charts/gauges routinely plot different fields of the same topic (decision 10
@@ -28,8 +28,8 @@ struct BtpFrame;
 //     highest rate any live consumer asked for;
 //   - a second consumer of the same topic adds no traffic at all unless it
 //     wants a *higher* rate, in which case one new SUBSCRIBE replaces the old
-//     one atomically (section 7: "uma nova sequencia cria ou substitui ... a
-//     assinatura da mesma sessao e do mesmo topico");
+//     one atomically (section 4: "a new sequence atomically creates or
+//     replaces the subscription for that session and topic");
 //   - closing one of several consumers sends nothing, except a rate-lowering
 //     SUBSCRIBE when the one that left was the one asking for the top rate;
 //   - only the last consumer leaving sends UNSUBSCRIBE.
@@ -44,10 +44,10 @@ struct BtpFrame;
 // created it, so onSessionEstablished() drops every remembered
 // subscription_id and re-sends SUBSCRIBE for whatever consumers are still
 // alive; onSessionLost() only forgets the grants, never the consumers. Leases
-// are renewed while a consumer exists (section 7: "a assinatura expira apos o
-// lease se nao for renovada por novo SUBSCRIBE").
+// are renewed while a consumer exists (section 4: "a subscription expires
+// after its lease unless renewed by another SUBSCRIBE").
 //
-// This class also consumes CONTROL/STATUS (section 8/8.1) so the per-topic
+// This class also consumes CONTROL/STATUS (section 5/5.1) so the per-topic
 // effective rate/bytes/drops a `status_version=2` emitter publishes can be
 // shown next to what this client asked for; a `status_version=1` emitter is
 // read exactly as before (see statusreport.h).
@@ -61,8 +61,8 @@ public:
     // itself would be considered dead.
     static constexpr quint32 kRequestedLeaseMs = 15000;
 
-    explicit SubscriptionManager(BtpSession* session, ProtocolRouter* router, TelemetryCatalog* catalog,
-                                 QObject* parent = nullptr);
+    explicit SubscriptionManager(BtpSession* session, ProtocolRouter* router,
+                                 TelemetryCatalog* catalog, QObject* parent = nullptr);
 
     // Registers one consumer of (sourceId, topicId) wanting at least
     // `requestedRateMillihz`, and returns an opaque, never-reused handle to
@@ -75,7 +75,8 @@ public:
     // config was edited), returning the handle to keep using -- `handle` when
     // the binding is unchanged, a fresh one otherwise, 0 when the new binding
     // is empty. Passing 0 as `handle` is the same as addSubscriber().
-    quint64 updateSubscriber(quint64 handle, quint32 sourceId, quint16 topicId, quint32 requestedRateMillihz);
+    quint64 updateSubscriber(quint64 handle, quint32 sourceId, quint16 topicId,
+                             quint32 requestedRateMillihz);
 
     // Drops one consumer. Sends UNSUBSCRIBE only if it was the last one for
     // its topic; lowers the rate with a new SUBSCRIBE if the remaining
@@ -93,7 +94,9 @@ public:
     QVector<StatusTopicRecord> topicStatuses() const;
 
     // Whole last STATUS payload, v1 or v2 (all zeroes before the first one).
-    const StatusReport& lastStatus() const { return m_lastStatus; }
+    const StatusReport& lastStatus() const {
+        return m_lastStatus;
+    }
 
     // Renews any grant at or past its renewal deadline by re-sending
     // SUBSCRIBE with a new sequence. Driven internally by a 1 s timer; taking
@@ -111,7 +114,7 @@ public slots:
     void onSessionLost();
 
     // Wired to ManifestClient::catalogUpdated: SUBSCRIBE needs a non-zero
-    // target_boot_id (section 7), which only MANIFEST_DATA supplies, so a
+    // target_boot_id (section 4), which only MANIFEST_DATA supplies, so a
     // subscription requested before its source's manifest arrived is held
     // back and sent from here.
     void onCatalogUpdated();
@@ -124,7 +127,7 @@ signals:
     // "pedido acima do maximo e limitado e informado ao cliente".
     void subscriptionRateLimited(quint32 sourceId, quint16 topicId, quint32 requestedMillihz,
                                  quint32 effectiveMillihz);
-    // SUBSCRIBE_RESULT came back with a non-SUCCESS status (section 2 codes).
+    // SUBSCRIBE_RESULT came back with a non-SUCCESS status (section 1 codes).
     void subscriptionRejected(quint32 sourceId, quint16 topicId, quint8 status, quint16 errorCode);
     // A STATUS message was decoded (either version).
     void statusReceived();
@@ -141,9 +144,9 @@ private:
     struct TopicState {
         quint32 sourceId = 0;
         quint16 topicId = 0;
-        quint32 targetBootId = 0;        // boot this subscription was addressed to
-        quint32 sentRateMillihz = 0;     // rate carried by the newest SUBSCRIBE sent
-        quint32 inFlightSequence = 0;    // 0 = no SUBSCRIBE awaiting its result
+        quint32 targetBootId = 0;      // boot this subscription was addressed to
+        quint32 sentRateMillihz = 0;   // rate carried by the newest SUBSCRIBE sent
+        quint32 inFlightSequence = 0;  // 0 = no SUBSCRIBE awaiting its result
         quint32 subscriptionId = 0;
         quint32 effectiveRateMillihz = 0;
         quint32 grantedLeaseMs = 0;
@@ -177,8 +180,8 @@ private:
     quint32 m_nextSequence = 1;
     quint64 m_nextHandle = 1;
 
-    QHash<quint64, Subscriber> m_subscribers;   // handle -> consumer
-    QHash<quint64, TopicState> m_topics;        // (source, topic) key -> wire state
+    QHash<quint64, Subscriber> m_subscribers;       // handle -> consumer
+    QHash<quint64, TopicState> m_topics;            // (source, topic) key -> wire state
     QHash<quint32, quint64> m_pendingSubscribes;    // request sequence -> topic key
     QHash<quint32, quint64> m_pendingUnsubscribes;  // request sequence -> topic key
 

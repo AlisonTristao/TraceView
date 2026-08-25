@@ -2,7 +2,6 @@
 
 #include <QDateTime>
 #include <QRandomGenerator>
-
 #include <btp/codec.hpp>
 
 #include "protocol/btpframe.h"
@@ -16,11 +15,17 @@ constexpr quint16 kControlHello = 0x0001;
 constexpr quint16 kControlHelloResult = 0x0002;
 constexpr quint8 kRoleDesktop = 0x03;
 constexpr quint8 kHelloResultSuccess = 0x00;
-constexpr int kEnterTimeoutMs = 8000;   // generous: the dongle may still be
-                                        // mid boot-animation/date prompt
-                                        // (StartupConfig) when we connect.
-constexpr int kHelloTimeoutMs = 3000;   // spec requires HELLO_RESULT within
-                                        // 2000ms of HELLO; a little slack.
+// The dongle's AppRuntime::begin() (bally_dongle) only starts reading the
+// serial port -- and therefore only gets a chance to see "BTP/1 ENTER" at
+// all -- after it finishes mounting the SD card, initializing ESP-NOW,
+// opening/migrating the SQLite database and registering every shell module.
+// All of that runs once, synchronously, before its tick() loop (where the
+// ENTER line is actually recognized) ever executes -- so this has to cover a
+// full cold boot, not just a quick text exchange. 20s is generous against a
+// slow SD card; bump it further if a real device still needs more.
+constexpr int kEnterTimeoutMs = 20000;
+constexpr int kHelloTimeoutMs = 3000;  // spec requires HELLO_RESULT within
+                                       // 2000ms of HELLO; a little slack.
 constexpr int kMaxLineBufferBytes = 512;
 
 // Appends `value` as `width` little-endian bytes.
@@ -34,7 +39,7 @@ QByteArray buildHelloPayload(quint16 maxLogicalPayload, quint16 sessionTimeoutMs
     QByteArray payload;
     payload.append(static_cast<char>(kRoleDesktop));
     // versions enumerates every envelope version this build's btp::codec can
-    // speak (COMMANDS_AND_ACTIONS.md section 5: "crescentes", no gaps
+    // speak (session-and-terminal.md section 1: "increasing", no gaps
     // required) so the dongle -- which picks the highest version common to
     // both sides -- always sees our real ceiling, not a version we happened
     // to hardcode. Today kMinimumProtocolVersion == kMaximumProtocolVersion
@@ -67,7 +72,8 @@ QByteArray buildHelloPayload(quint16 maxLogicalPayload, quint16 sessionTimeoutMs
 
 BtpHandshake::BtpHandshake(BtpSession* session, ProtocolRouter* router, QObject* parent)
     : QObject(parent), m_session(session) {
-    connect(router, &ProtocolRouter::controlFrameReceived, this, &BtpHandshake::onControlFrameReceived);
+    connect(router, &ProtocolRouter::controlFrameReceived, this,
+            &BtpHandshake::onControlFrameReceived);
 
     m_enterTimer.setSingleShot(true);
     connect(&m_enterTimer, &QTimer::timeout, this, &BtpHandshake::onEnterTimeout);
@@ -106,7 +112,8 @@ void BtpHandshake::feedRawBytes(const QByteArray& data) {
 }
 
 void BtpHandshake::sendHello() {
-    const QByteArray payload = buildHelloPayload(/*maxLogicalPayload=*/4096, /*sessionTimeoutMs=*/15000);
+    const QByteArray payload =
+        buildHelloPayload(/*maxLogicalPayload=*/4096, /*sessionTimeoutMs=*/15000);
 
     btp::Header header{};
     header.type = btp::MessageType::Control;
@@ -145,22 +152,22 @@ void BtpHandshake::onControlFrameReceived(const traceview::BtpFrame& frame) {
     if (status == kHelloResultSuccess) {
         // selected_version (offset 13) is the highest version the dongle
         // found in common with what our own HELLO just advertised
-        // (COMMANDS_AND_ACTIONS.md section 5: "o respondente escolhe a maior
-        // versao comum"). It can only be one of the versions we offered --
+        // (session-and-terminal.md section 2: "the responder picks the
+        // highest version it can use"). It can only be one of the versions we
+        // offered --
         // anything else is a peer that isn't honoring the negotiation, not a
         // version this client can silently go along with.
         const quint8 selectedVersion = static_cast<quint8>(frame.payload.at(13));
         if (selectedVersion < btp::kMinimumProtocolVersion ||
             selectedVersion > btp::kMaximumProtocolVersion) {
-            fail(tr("HELLO_RESULT selected an unadvertised version %1")
-                     .arg(selectedVersion));
+            fail(tr("HELLO_RESULT selected an unadvertised version %1").arg(selectedVersion));
             return;
         }
         m_state = State::Established;
-        // config_revision sits at offset 48 (COMMANDS_AND_ACTIONS.md section
-        // 5); a HELLO_RESULT this short predates the field (or came from a
-        // peer that has no catalog yet), so treat it as 0 -- "peer nao
-        // publica manifesto" is the documented meaning of 0 anyway.
+        // config_revision sits at offset 48 (session-and-terminal.md
+        // section 2); a HELLO_RESULT this short predates the field (or came
+        // from a peer that has no catalog yet), so treat it as 0 -- "the peer
+        // publishes no manifest" is the documented meaning of 0 anyway.
         quint32 peerConfigRevision = 0;
         if (frame.payload.size() >= 52) {
             peerConfigRevision = (quint32(quint8(frame.payload.at(48))) << 0) |

@@ -1,7 +1,5 @@
 #include "dashboardgrid.h"
 
-#include <limits>
-
 #include <QApplication>
 #include <QClipboard>
 #include <QGuiApplication>
@@ -12,6 +10,7 @@
 #include <QPainter>
 #include <QRubberBand>
 #include <QUuid>
+#include <limits>
 
 #include "dashboardcell.h"
 #include "dashboardcommands.h"
@@ -78,7 +77,7 @@ constexpr double kDefaultHeaderlessItemHeight = 6.0 / kGridRows;
 // floating-point rounding from snapping math without treating touching
 // edges as overlapping.
 constexpr double kEpsilon = 1e-6;
-} // namespace
+}  // namespace
 
 DashboardGrid::DashboardGrid(QWidget* parent) : QWidget(parent), m_undoStack(new QUndoStack(this)) {
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
@@ -109,7 +108,8 @@ void DashboardGrid::setDeviceConnected(const QString& deviceId, bool connected) 
     if (deviceId.isEmpty()) {
         return;
     }
-    if (m_deviceConnectionStates.contains(deviceId) && m_deviceConnectionStates.value(deviceId) == connected) {
+    if (m_deviceConnectionStates.contains(deviceId) &&
+        m_deviceConnectionStates.value(deviceId) == connected) {
         return;
     }
     m_deviceConnectionStates[deviceId] = connected;
@@ -411,7 +411,8 @@ void DashboardGrid::changeSelectedType(const QString& newTypeId) {
         return;
     }
     const DashboardItem* item = itemById(id);
-    if (!item || item->typeId == newTypeId || WidgetRegistry::instance().displayName(newTypeId).isEmpty()) {
+    if (!item || item->typeId == newTypeId ||
+        WidgetRegistry::instance().displayName(newTypeId).isEmpty()) {
         return;
     }
 
@@ -635,7 +636,8 @@ void DashboardGrid::applySetConfig(const QString& itemId, const QJsonObject& con
             // re-derive the dot from that device's last-known state rather
             // than leaving it showing the previous device's.
             const QString deviceId = config.value("deviceId").toString();
-            cell->setConnected(!deviceId.isEmpty() && m_deviceConnectionStates.value(deviceId, false));
+            cell->setConnected(!deviceId.isEmpty() &&
+                               m_deviceConnectionStates.value(deviceId, false));
         }
     }
 }
@@ -797,7 +799,8 @@ void DashboardGrid::paintEvent(QPaintEvent*) {
             const int edgeDistance = qMin(edgeDistanceX, qMin(r, kGridRows - r));
             QColor dotColor = palette.textDisabled;
             if (edgeDistance < kGridEdgeFadeCells) {
-                dotColor.setAlphaF(dotColor.alphaF() * (edgeDistance + 1) / double(kGridEdgeFadeCells + 1));
+                dotColor.setAlphaF(dotColor.alphaF() * (edgeDistance + 1) /
+                                   double(kGridEdgeFadeCells + 1));
             }
             painter.setBrush(dotColor);
             painter.drawEllipse(QPointF(x, y), kGridDotRadius, kGridDotRadius);
@@ -825,7 +828,8 @@ void DashboardGrid::mousePressEvent(QMouseEvent* event) {
 void DashboardGrid::mouseMoveEvent(QMouseEvent* event) {
     if (m_rubberBandPending) {
         const QPoint pos = event->position().toPoint();
-        if (!m_rubberBand && (pos - m_rubberBandOrigin).manhattanLength() >= QApplication::startDragDistance()) {
+        if (!m_rubberBand &&
+            (pos - m_rubberBandOrigin).manhattanLength() >= QApplication::startDragDistance()) {
             m_rubberBand = new QRubberBand(QRubberBand::Rectangle, this);
         }
         if (m_rubberBand) {
@@ -949,13 +953,15 @@ bool DashboardGrid::isPlacementValid(const DashboardItem& candidate, const QStri
     if (candidate.x < -kEpsilon || candidate.y < -kEpsilon) {
         return false;
     }
-    if (candidate.x + candidate.width > 1.0 + kEpsilon || candidate.y + candidate.height > 1.0 + kEpsilon) {
+    if (candidate.x + candidate.width > 1.0 + kEpsilon ||
+        candidate.y + candidate.height > 1.0 + kEpsilon) {
         return false;
     }
     return true;
 }
 
-bool DashboardGrid::isPlacementFree(const DashboardItem& candidate, const QString& excludeId) const {
+bool DashboardGrid::isPlacementFree(const DashboardItem& candidate,
+                                    const QString& excludeId) const {
     if (!isPlacementValid(candidate, excludeId)) {
         return false;
     }
@@ -964,10 +970,10 @@ bool DashboardGrid::isPlacementFree(const DashboardItem& candidate, const QStrin
         if (other.id == excludeId) {
             continue;
         }
-        const bool overlapsX =
-            candidate.x < other.x + other.width - kEpsilon && other.x < candidate.x + candidate.width - kEpsilon;
-        const bool overlapsY =
-            candidate.y < other.y + other.height - kEpsilon && other.y < candidate.y + candidate.height - kEpsilon;
+        const bool overlapsX = candidate.x < other.x + other.width - kEpsilon &&
+                               other.x < candidate.x + candidate.width - kEpsilon;
+        const bool overlapsY = candidate.y < other.y + other.height - kEpsilon &&
+                               other.y < candidate.y + candidate.height - kEpsilon;
         if (overlapsX && overlapsY) {
             return false;
         }
@@ -1037,7 +1043,8 @@ void DashboardGrid::handleDragStarted(const QString& itemId, const QPoint& globa
     // member together; dragging anything else (shouldn't normally happen,
     // since a cell only starts a drag once it's already selected -- see
     // DashboardCell::mousePressEvent) falls back to just that one item.
-    const QSet<QString> members = m_selectedItemIds.contains(itemId) ? m_selectedItemIds : QSet<QString>{itemId};
+    const QSet<QString> members =
+        m_selectedItemIds.contains(itemId) ? m_selectedItemIds : QSet<QString>{itemId};
 
     DragOp op;
     op.primaryItemId = itemId;
@@ -1137,7 +1144,8 @@ void DashboardGrid::handleDragFinished(const QString& itemId, const QPoint&) {
             const QString& id = it.key();
             const DashboardItem& original = it.value();
             const DashboardItem& candidate = m_drag->candidates.value(id);
-            if (qAbs(original.x - candidate.x) > kEpsilon || qAbs(original.y - candidate.y) > kEpsilon) {
+            if (qAbs(original.x - candidate.x) > kEpsilon ||
+                qAbs(original.y - candidate.y) > kEpsilon) {
                 fromPositions.insert(id, QPointF(original.x, original.y));
                 toPositions.insert(id, QPointF(candidate.x, candidate.y));
             }
@@ -1158,7 +1166,7 @@ void DashboardGrid::handleDragFinished(const QString& itemId, const QPoint&) {
 }
 
 void DashboardGrid::handleResizeStarted(const QString& itemId, const QPoint& globalPos,
-                                         DashboardCell::ResizeHandle handle) {
+                                        DashboardCell::ResizeHandle handle) {
     const DashboardItem* item = itemById(itemId);
     if (!item) {
         return;
@@ -1194,14 +1202,16 @@ void DashboardGrid::handleResizeMoved(const QString& itemId, const QPoint& globa
     // corners resize both. Left/top anchor the position too, since their
     // opposite (right/bottom) edge is the one that must stay put.
     using Handle = DashboardCell::ResizeHandle;
-    const bool resizesRight = m_drag->handle == Handle::Right || m_drag->handle == Handle::TopRight ||
-                               m_drag->handle == Handle::BottomRight;
+    const bool resizesRight = m_drag->handle == Handle::Right ||
+                              m_drag->handle == Handle::TopRight ||
+                              m_drag->handle == Handle::BottomRight;
     const bool resizesLeft = m_drag->handle == Handle::Left || m_drag->handle == Handle::TopLeft ||
-                              m_drag->handle == Handle::BottomLeft;
-    const bool resizesBottom = m_drag->handle == Handle::Bottom || m_drag->handle == Handle::BottomLeft ||
-                                m_drag->handle == Handle::BottomRight;
+                             m_drag->handle == Handle::BottomLeft;
+    const bool resizesBottom = m_drag->handle == Handle::Bottom ||
+                               m_drag->handle == Handle::BottomLeft ||
+                               m_drag->handle == Handle::BottomRight;
     const bool resizesTop = m_drag->handle == Handle::Top || m_drag->handle == Handle::TopLeft ||
-                             m_drag->handle == Handle::TopRight;
+                            m_drag->handle == Handle::TopRight;
 
     const DashboardItem original = m_drag->originals.value(itemId);
     DashboardItem candidate = original;
@@ -1212,7 +1222,8 @@ void DashboardGrid::handleResizeMoved(const QString& itemId, const QPoint& globa
     const double minHeight = compact ? kMinHeaderlessItemHeight : kMinItemHeight;
 
     if (resizesRight) {
-        candidate.width = qBound(minWidth, original.width + deltaWidth, qMax(minWidth, 1.0 - candidate.x));
+        candidate.width =
+            qBound(minWidth, original.width + deltaWidth, qMax(minWidth, 1.0 - candidate.x));
     } else if (resizesLeft) {
         const double rightEdge = original.x + original.width;
         candidate.width = qBound(minWidth, original.width - deltaWidth, qMax(minWidth, rightEdge));
@@ -1220,10 +1231,12 @@ void DashboardGrid::handleResizeMoved(const QString& itemId, const QPoint& globa
     }
 
     if (resizesBottom) {
-        candidate.height = qBound(minHeight, original.height + deltaHeight, qMax(minHeight, 1.0 - candidate.y));
+        candidate.height =
+            qBound(minHeight, original.height + deltaHeight, qMax(minHeight, 1.0 - candidate.y));
     } else if (resizesTop) {
         const double bottomEdge = original.y + original.height;
-        candidate.height = qBound(minHeight, original.height - deltaHeight, qMax(minHeight, bottomEdge));
+        candidate.height =
+            qBound(minHeight, original.height - deltaHeight, qMax(minHeight, bottomEdge));
         candidate.y = bottomEdge - candidate.height;
     }
 
@@ -1247,9 +1260,9 @@ void DashboardGrid::handleResizeFinished(const QString& itemId, const QPoint&) {
             const QRectF fromGeometry(item->x, item->y, item->width, item->height);
             const QRectF toGeometry(candidate.x, candidate.y, candidate.width, candidate.height);
             const bool changed = qAbs(fromGeometry.x() - toGeometry.x()) > kEpsilon ||
-                                  qAbs(fromGeometry.y() - toGeometry.y()) > kEpsilon ||
-                                  qAbs(fromGeometry.width() - toGeometry.width()) > kEpsilon ||
-                                  qAbs(fromGeometry.height() - toGeometry.height()) > kEpsilon;
+                                 qAbs(fromGeometry.y() - toGeometry.y()) > kEpsilon ||
+                                 qAbs(fromGeometry.width() - toGeometry.width()) > kEpsilon ||
+                                 qAbs(fromGeometry.height() - toGeometry.height()) > kEpsilon;
             if (changed) {
                 m_undoStack->push(new ResizeWidgetCommand(this, itemId, fromGeometry, toGeometry));
             }
@@ -1270,4 +1283,4 @@ void DashboardGrid::handleSelectRequested(const QString& itemId, Qt::KeyboardMod
     }
 }
 
-} // namespace traceview
+}  // namespace traceview

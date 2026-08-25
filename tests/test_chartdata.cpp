@@ -1,7 +1,6 @@
-#include <QtTest>
-
 #include <QJsonArray>
 #include <QJsonObject>
+#include <QtTest>
 
 #include "dashboard/widgets/chartdata.h"
 
@@ -139,13 +138,13 @@ void TestChartData::bufferCapacityInSamplesMode() {
 void TestChartData::bufferCapacityInTimeMode() {
     ChartConfig config;
     config.xAxisMode = ChartXAxisMode::Time;
-    config.xLimit = 2; // seconds
+    config.xLimit = 2;  // seconds
     config.sampleTimeMs = 100.0;
-    QCOMPARE(chartBufferCapacity(config), 20); // 2000ms / 100ms
+    QCOMPARE(chartBufferCapacity(config), 20);  // 2000ms / 100ms
 
     config.xLimit = 1;
     config.sampleTimeMs = 3.0;
-    QCOMPARE(chartBufferCapacity(config), 334); // ceil(1000/3)
+    QCOMPARE(chartBufferCapacity(config), 334);  // ceil(1000/3)
 }
 
 void TestChartData::appendFieldSampleRoutesByFieldIdAndTrimsToCapacity() {
@@ -272,7 +271,7 @@ void TestChartData::gaugeConfigEmptySeriesArrayStaysEmpty() {
     QVERIFY(config.series.isEmpty());
 }
 
-} // namespace
+}  // namespace
 
 QTEST_MAIN(TestChartData)
 #include "test_chartdata.moc"

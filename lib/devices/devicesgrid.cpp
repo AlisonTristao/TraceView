@@ -2,6 +2,8 @@
 
 #include <QJsonArray>
 #include <QResizeEvent>
+#include <QStringList>
+#include <QTimer>
 #include <QUuid>
 
 #include "devicecard.h"
@@ -17,7 +19,7 @@ namespace {
 constexpr double kGutterFraction = 0.01;
 constexpr int kMinGutter = 8;
 constexpr int kMaxGutter = 32;
-} // namespace
+}  // namespace
 
 DevicesGrid::DevicesGrid(QWidget* parent) : QWidget(parent), m_undoStack(new QUndoStack(this)) {}
 
@@ -30,11 +32,47 @@ QString DevicesGrid::addDevice(const Device& device) {
     return toAdd.id;
 }
 
+QStringList DevicesGrid::childDeviceIds(const QString& id) const {
+    QStringList children;
+    if (id.isEmpty()) {
+        return children;
+    }
+    for (const Device& device : m_devices) {
+        if (device.transportType == TransportType::HubChannel && device.parentDeviceId == id) {
+            children.append(device.id);
+        }
+    }
+    return children;
+}
+
 void DevicesGrid::removeDevice(const QString& id) {
     const int idx = indexOfDevice(id);
     if (idx < 0) {
         return;
     }
+
+    // Deleting a hub that other devices ride is refused, and deliberately not
+    // turned into a cascade. A cascade would be one undo step that silently
+    // destroys several devices along with their charts' bindings -- and the
+    // person clicking delete on the dongle is usually not asking to lose the
+    // robots configured behind it. Refusing says what depends on it and lets
+    // them decide; deleting the children first is one extra click and is
+    // unambiguous.
+    const QStringList children = childDeviceIds(id);
+    if (!children.isEmpty()) {
+        QStringList names;
+        for (const QString& childId : children) {
+            const int childIdx = indexOfDevice(childId);
+            if (childIdx < 0) {
+                continue;
+            }
+            const Device& child = m_devices.at(childIdx);
+            names.append(child.name.isEmpty() ? childId : child.name);
+        }
+        emit removeBlockedByChildren(id, names);
+        return;
+    }
+
     m_undoStack->push(new RemoveDeviceCommand(this, m_devices.at(idx), idx));
 }
 
@@ -56,7 +94,8 @@ void DevicesGrid::setDeviceConnected(const QString& id, bool connected) {
     emit deviceUpdated(m_devices[idx]);
 }
 
-void DevicesGrid::setDeviceIdentity(const QString& id, const QString& btpVersion, const QString& btpId) {
+void DevicesGrid::setDeviceIdentity(const QString& id, const QString& btpVersion,
+                                    const QString& btpId) {
     const int idx = indexOfDevice(id);
     if (idx < 0 || (m_devices[idx].btpVersion == btpVersion && m_devices[idx].btpId == btpId)) {
         return;
@@ -65,6 +104,10 @@ void DevicesGrid::setDeviceIdentity(const QString& id, const QString& btpVersion
     m_devices[idx].btpId = btpId;
     m_cards[idx]->setDevice(m_devices[idx]);
     emit deviceUpdated(m_devices[idx]);
+}
+
+void DevicesGrid::notifyCatalogChanged(const QString& id) {
+    emit deviceCatalogChanged(id);
 }
 
 void DevicesGrid::applyInsertDevice(const Device& device, int index) {
@@ -98,7 +141,7 @@ void DevicesGrid::applyRemoveDeviceById(const QString& id) {
         emit selectionChanged();
     }
 
-    relayout(); // re-flows every following card into the gap left behind
+    relayout();  // re-flows every following card into the gap left behind
     emit deviceRemoved(id);
 }
 
@@ -172,9 +215,81 @@ void DevicesGrid::handleConfigRequested(const QString& deviceId) {
         connect(&dialog, &DeviceConfigDialog::refreshUsbDevicesRequested, &dialog,
                 [this, &dialog]() { dialog.setAvailableUsbDevices(m_usbDeviceListProvider()); });
     }
+    // Which devices this one could ride. Computed here rather than injected
+    // like the port and USB lists, because unlike those two it is not a
+    // question about the machine -- it is entirely answerable from the device
+    // list this grid already owns.
+    //
+    // A hub channel is excluded from being a parent: a robot reached through
+    // a dongle is an endpoint, not a hub, and nothing in this design nests
+    // one channel inside another. Excluding them also makes a cycle
+    // unrepresentable rather than something to detect afterwards.
+    {
+        QVector<QPair<QString, QString>> parents;
+        for (const Device& candidate : m_devices) {
+            if (candidate.id == m_devices[idx].id ||
+                candidate.transportType == TransportType::HubChannel) {
+                continue;
+            }
+            parents.append({candidate.id, candidate.name});
+        }
+        dialog.setAvailableParentDevices(parents);
+    }
     if (m_topicCatalogProvider) {
         dialog.setCatalogTopics(m_topicCatalogProvider(m_devices[idx].id));
     }
+    // Live "Robot source_id" picker: an initial pull right away, then
+    // re-polled on a timer for as long as the dialog stays open. Unlike the
+    // port/USB lists above (a one-shot OS query, refreshed only on a button
+    // click) new peers or a status flip (online, last_seen) arrive
+    // continuously over telemetry -- and "Through device" can itself change
+    // while the dialog is open, so polling also picks that up within a
+    // second rather than needing a dedicated change signal. Parented to
+    // `dialog` so it's torn down with it automatically.
+    if (m_hubPeerListProvider) {
+        dialog.setAvailableHubPeers(m_hubPeerListProvider(dialog.currentParentDeviceId()));
+        auto* hubPeerTimer = new QTimer(&dialog);
+        hubPeerTimer->setInterval(1000);
+        connect(hubPeerTimer, &QTimer::timeout, &dialog, [this, &dialog]() {
+            dialog.setAvailableHubPeers(m_hubPeerListProvider(dialog.currentParentDeviceId()));
+        });
+        hubPeerTimer->start();
+    }
+    // Connect button: applies the dialog's current fields (same as OK) but
+    // leaves the dialog open. The actual (re)connect happens asynchronously
+    // over in MainWindow (listening to deviceUpdated), so its result is
+    // pushed back into the still-open dialog by the deviceUpdated listener
+    // right below, rather than read back here.
+    connect(&dialog, &DeviceConfigDialog::applyRequested, &dialog,
+            [this, &dialog]() { updateDevice(dialog.result()); });
+    // Mirrors this device's live state into the still-open dialog as it
+    // changes -- connection status and (once a handshake completes) its
+    // reported BTP version/ID and catalog -- so clicking Connect above
+    // shows its result in place instead of requiring OK-then-reopen to see
+    // it.
+    connect(this, &DevicesGrid::deviceUpdated, &dialog,
+            [this, &dialog, deviceId](const Device& device) {
+                if (device.id != deviceId) {
+                    return;
+                }
+                dialog.setConnectionStatus(device.connected);
+                dialog.setReportedIdentity(device.btpVersion, device.btpId);
+                if (m_topicCatalogProvider) {
+                    dialog.setCatalogTopics(m_topicCatalogProvider(deviceId));
+                }
+            });
+    // MANIFEST_DATA arrives after the handshake that fires deviceUpdated
+    // above, so that listener alone typically catches the catalog still
+    // empty (see notifyCatalogChanged()'s doc comment). This is the actual
+    // "catalog just arrived" signal, wired separately so it doesn't also
+    // re-trigger MainWindow::onDeviceUpdated the way deviceUpdated does.
+    connect(this, &DevicesGrid::deviceCatalogChanged, &dialog,
+            [this, &dialog, deviceId](const QString& id) {
+                if (id != deviceId || !m_topicCatalogProvider) {
+                    return;
+                }
+                dialog.setCatalogTopics(m_topicCatalogProvider(deviceId));
+            });
     if (dialog.exec() == QDialog::Accepted) {
         updateDevice(dialog.result());
     }
@@ -233,4 +348,4 @@ void DevicesGrid::fromJson(const QJsonObject& object) {
     }
 }
 
-} // namespace traceview
+}  // namespace traceview

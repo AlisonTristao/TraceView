@@ -7,6 +7,141 @@ release flow.
 
 ## [Unreleased]
 
+## [2.3.0] - 2026-08-25
+
+### Added
+
+- **Hub channels** — a third `TransportType` (`HubChannel`) for a device
+  that has no wire of its own and instead multiplexes over *another*
+  device's connection. This is what turns the dongle from a cable into a
+  hub: the desktop opens one connection to it and talks to it as an
+  ordinary BTP device, and every robot behind its radio becomes its own
+  `Device`, with its own manifest, charts and terminal, riding that same
+  single cable.
+
+  `HubTransport` (`lib/core/hubtransport.h`) is a third `Transport`
+  implementation, so nothing above it had to learn a new shape. Inbound,
+  the parent's `BtpSession` offers every decoded frame's raw octets tagged
+  with its header's `source_id` and each child claims the ones matching its
+  own robot's — that single comparison is the whole demux, with no routing
+  table and no per-message-type case. Outbound, the child encodes under the
+  ESP-NOW profile and the parent adds only the cable's framing. Nothing in
+  either direction re-encodes, re-fragments or recomputes a CRC, which is
+  what lets an end-to-end seal verify at the far end: the parent holds no
+  key for the traffic it carries. Configured by `parentDeviceId` plus
+  `peerSourceId` — the robot's permanent BTP address, deliberately *not*
+  the dongle's `hub.peers` channel index, which is assigned in the order
+  peers were first heard and would silently re-point a saved project at a
+  different robot after a dongle reboot. See `docs/DEVICES.md`.
+- **Live robot picker** — the "Robot source_id" field in Device Settings
+  lists the peers the hub has actually heard (channel, address,
+  online/offline with an age, MAC in the item's tooltip), decoded from the
+  dongle's own `hub.peers` telemetry topic and re-polled at 1 Hz for as
+  long as the dialog stays open. The topic and its six fields are resolved
+  out of the hub's catalog **by name**, never by a hardcoded id:
+  telemetry.md section 1 makes both local to a source's namespace, so they
+  are the dongle's to renumber and only the names are a contract between
+  the repositories. Reassembly lives in `HubPeerAccumulator`
+  (`lib/devices/hubpeeraccumulator.h`), below the UI layer and tested
+  without a QWidget. The combo stays editable, so a robot the hub hasn't
+  heard yet can still be addressed by hand.
+- **OTA Update tab** — push a firmware `.bin` to a robot over Wi-Fi
+  (File → Upload Firmware (OTA)…), talking to bally_OS's `lib/OTAUpdater`
+  HTTP side channel: `GET /status` for live reachability and the version
+  each robot reports it is running, `POST /update` with the raw body for
+  the upload, with a progress bar per row. Passwords are typed per device
+  and only persisted into `.tvproj` if "Remember" is ticked. `*.local`
+  addresses are resolved by our own multicast query (`MdnsResolver`)
+  before Qt would hand them to the OS resolver — the path that simply
+  fails on Windows without Bonjour installed — falling back to the OS
+  resolver if that gets no answer. Polls only while the tab is visible.
+  See `docs/OTA.md`.
+- **Sealed channels** — `include/bally_channels.h`, the table answering
+  "whose message is this, and which key opens it", now exists here as the
+  third of three byte-identical copies (bally_OS, bally_dongle,
+  TraceView), each guarded by a SHA-256 committed beside it. BTP has no
+  key-id field on the wire, so that agreement is product convention rather
+  than protocol — and three unenforced copies would drift silently, the
+  first device added after a divergence simply not working.
+- Per-widget device pickers in the chart/gauge config editors now resolve
+  `sourceId`/`topicId` against each device's announced catalog, showing
+  readable topic and field names instead of bare hex.
+
+### Changed
+
+- **Device Settings** — Name/Description moved into a "General" group, so
+  they are no longer the only fields in the dialog without one; both gained
+  tooltips. The reported-catalog block now prints each field's numeric id
+  alongside its name: the manifest's human-readable name is a convenience
+  TELEMETRY.md asks for, not a guarantee, so the id a field is actually
+  addressed by on the wire stays visible for cross-checking. The catalog
+  also refreshes when `MANIFEST_DATA` actually arrives rather than only on
+  next open — it lands after the handshake, so an open dialog used to show
+  an empty list.
+- `DeviceCard` dropped its comm-type label line. With only `CommType::Btp`
+  existing, it and the reported line below it both printed the bare word
+  "BTP"; the reported line now leads with "v"/"ID" instead of repeating it.
+- The whole repository is now `clang-format` clean, in one mechanical
+  commit listed in `.git-blame-ignore-revs`. `CONTRIBUTING.md` had asked
+  for this since it was written, but nothing enforced it and two
+  conventions had grown side by side. `scripts/check_style.py` also covers
+  `tests/` and `tools/` now, and excludes `lib/vendor` and
+  `include/bally_channels.h` — code whose bytes belong to someone else.
+
+### Fixed
+
+- **OTA status polling cancelled itself.** A repeat `checkStatus()` aborted
+  the request already running, and the tab polls every second while a
+  request is allowed four — so any device answering slower than the poll
+  interval had every attempt cancelled by the next tick and never resolved
+  once, leaving its row on "Checking…" indefinitely with no error tooltip
+  to explain it. Repeat polls now coalesce into the request in flight. That
+  failure hit hardest exactly where it mattered most: a host that is up but
+  slow to answer.
+- **The robot's reported firmware version was parsed and thrown away.** It
+  now has its own column, cleared when the device is unreachable.
+- **mDNS A-records were parsed through signed overflow.** The first octet
+  was shifted left by 24 as an `int`, which is undefined for any value
+  ≥ 128 — that is every address in 128.0.0.0/1, including the 192.168.x.x
+  range a robot on a home network actually gets. Widened to `quint32`
+  first, matching the idiom used everywhere else in this codebase.
+- `checkStatus()` with an empty address reported unreachable with an empty
+  tooltip, making an unconfigured device indistinguishable from an
+  unreachable one — the exact thing that tooltip exists to prevent.
+
+### Performance
+
+- `TelemetrySeriesBuffer::values()` is cached instead of rebuilt. A chart
+  calls it once per series on every paint frame, and it was allocating and
+  copying the whole series each time: 2000 reads of a 5000-sample buffer
+  measured 199ms, against 13ms for the 400k appends that filled it — the
+  read path costing an order of magnitude more than the write path it
+  exists to serve. Cached, the same 2000 reads are unmeasurable.
+- Opening a `.blog` no longer relayouts per cell or measures the whole file
+  to size its columns. A robot's SD-card log runs to tens of thousands of
+  entries, and both costs scaled with it.
+
+### Removed
+
+- The **synthetic device** tool (`tools/synthetic_device`) and its
+  `docs/SYNTHETIC_DEVICE.md`. Real hardware and the hub made it redundant.
+- `commTypeLabel()`, `DeviceConnection::hubTransport()` and
+  `DashboardCell::isResizable()` — no callers. The first also left a stale
+  comment describing `backend()` as HubChannel-only, which it is not.
+
+### Internal
+
+- `MainWindow` had declared `hubPeersFor()`, `onHubPeerFieldSample()` and
+  `deviceSelfSourceId()` in its header, with doc comments describing all
+  three, and defined none of them — it compiled because they are private
+  members nobody called, so moc never referenced them. All three now exist,
+  and `refreshPropertiesPanelDevices()` calls `deviceSelfSourceId()`
+  instead of repeating its branch inline, as its comment already claimed.
+- New test suites: `test_hubpeeraccumulator`, `test_otaclient`,
+  `test_clocksync`. `ClockSync` was one of two protocol modules with no
+  coverage at all despite being pure logic; its reply correlation and its
+  drift decision (in both directions) are now pinned. 32 suites total.
+
 ## [2.2.0] - 2026-08-21
 
 ### Added

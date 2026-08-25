@@ -30,7 +30,9 @@ class PushButtonWidget : public DashboardWidget {
 public:
     explicit PushButtonWidget(QWidget* parent = nullptr);
 
-    bool wantsCellHeader() const override { return false; }
+    bool wantsCellHeader() const override {
+        return false;
+    }
     void setConfig(const QJsonObject& config) override;
     void setEditModeHint(bool editMode) override;
 
@@ -96,7 +98,9 @@ class ToggleSwitchWidget : public DashboardWidget {
 public:
     explicit ToggleSwitchWidget(QWidget* parent = nullptr);
 
-    bool wantsCellHeader() const override { return false; }
+    bool wantsCellHeader() const override {
+        return false;
+    }
     void setConfig(const QJsonObject& config) override;
     void setEditModeHint(bool editMode) override;
 
@@ -124,7 +128,9 @@ class SliderWidget : public DashboardWidget {
 public:
     explicit SliderWidget(QWidget* parent = nullptr);
 
-    bool wantsCellHeader() const override { return false; }
+    bool wantsCellHeader() const override {
+        return false;
+    }
     void setConfig(const QJsonObject& config) override;
     void setEditModeHint(bool editMode) override;
 
@@ -149,4 +155,4 @@ private:
     double m_pendingValue = 0.0;
 };
 
-} // namespace traceview
+}  // namespace traceview

@@ -1,10 +1,10 @@
 #include "deviceconnection.h"
 
 #include <QTimer>
-
 #include <btp/codec.hpp>
 
 #include "backend/backend.h"
+#include "hubtransport.h"
 #include "protocol/btpbackend.h"
 #include "serialmanager.h"
 #include "usbhidmanager.h"
@@ -17,20 +17,43 @@ namespace {
 // recovering from an unplug/replug without any user action.
 constexpr int kRetryIntervalMs = 3000;
 
-// BtpBackend/BtpSession speak btp::TransportProfile (the BTP library's own
-// type, see btpsession.h); Device speaks TransportType (devices/device.h,
-// dependency-free of btp::codec). This is the one place that needs to know
-// both -- traceview_devices still doesn't depend on btp::codec.
-btp::TransportProfile toBtpTransportProfile(TransportType type) {
+// BtpBackend/BtpSession speak two independent axes -- link framing and
+// encode profile (btp::TransportProfile, the BTP library's own type; see
+// btpsession.h for why they are separate); Device speaks TransportType
+// (devices/device.h, dependency-free of btp::codec). This is the one place
+// that needs to know both -- traceview_devices still doesn't depend on
+// btp::codec.
+struct BtpSessionAxes {
+    BtpSession::Framing framing;
+    btp::TransportProfile encodeProfile;
+};
+
+// One entry per TransportType, and the pair is written out per transport
+// rather than derived from the profile precisely because HubChannel breaks
+// the correspondence that held while there were only two transports.
+//
+// HubChannel encodes under the ESP-NOW profile even though its own link is a
+// serial cable, and that is the point: a child device's frames are going to
+// end up on a radio, so they are built to fit a radio datagram from the very
+// start. The hub then relays them without re-fragmenting -- it never has to,
+// because they already fit. Encoding under the Serial profile instead would
+// let a 4056-octet payload through, which the hub would have to cut into
+// twenty ESP-NOW fragments with no retransmission behind them.
+//
+// PreFramed for the same reason UsbHid is: the layer below hands over exactly
+// one frame's octets at a time, already unwrapped from the cable's COBS.
+BtpSessionAxes toBtpSessionAxes(TransportType type) {
     switch (type) {
         case TransportType::Serial:
-            return btp::TransportProfile::Serial;
+            return {BtpSession::Framing::CobsStream, btp::TransportProfile::Serial};
         case TransportType::UsbHid:
-            return btp::TransportProfile::UsbHid;
+            return {BtpSession::Framing::PreFramed, btp::TransportProfile::UsbHid};
+        case TransportType::HubChannel:
+            return {BtpSession::Framing::PreFramed, btp::TransportProfile::EspNow};
     }
-    return btp::TransportProfile::Serial;
+    return {BtpSession::Framing::CobsStream, btp::TransportProfile::Serial};
 }
-} // namespace
+}  // namespace
 
 DeviceConnection::DeviceConnection(CommType commType, TransportType transportType, QObject* parent)
     : QObject(parent), m_transportType(transportType) {
@@ -43,12 +66,21 @@ DeviceConnection::DeviceConnection(CommType commType, TransportType transportTyp
             m_usbHidManager = new UsbHidManager(this);
             m_transport = m_usbHidManager;
             break;
+        case TransportType::HubChannel:
+            // Built unconfigured (peer 0) and pointed at a robot later by
+            // connectVia(), the same way the other two are built before
+            // anyone knows which port or path they will open.
+            m_hubTransport = new HubTransport(0, this);
+            m_transport = m_hubTransport;
+            break;
     }
 
     switch (commType) {
-        case CommType::Btp:
-            m_backend = new BtpBackend(toBtpTransportProfile(transportType), this);
+        case CommType::Btp: {
+            const BtpSessionAxes axes = toBtpSessionAxes(transportType);
+            m_backend = new BtpBackend(axes.framing, axes.encodeProfile, this);
             break;
+        }
     }
 
     // Same wiring MainWindow::MainWindow() used to do once for the whole
@@ -58,8 +90,10 @@ DeviceConnection::DeviceConnection(CommType commType, TransportType transportTyp
     // `transportType` picked above.
     connect(m_transport, &Transport::dataReceived, m_backend, &Backend::feedBytes);
     connect(m_backend, &Backend::bytesToWrite, m_transport, &Transport::write);
-    connect(m_transport, &Transport::connectionStateChanged, m_backend, &Backend::onTransportConnectionChanged);
-    connect(m_transport, &Transport::connectionStateChanged, this, &DeviceConnection::connectionStateChanged);
+    connect(m_transport, &Transport::connectionStateChanged, m_backend,
+            &Backend::onTransportConnectionChanged);
+    connect(m_transport, &Transport::connectionStateChanged, this,
+            &DeviceConnection::connectionStateChanged);
     connect(m_backend, &Backend::deviceIdentified, this, &DeviceConnection::deviceIdentified);
 
     m_retryTimer = new QTimer(this);
@@ -90,6 +124,44 @@ void DeviceConnection::connectTo(const QString& target, qint32 baudRate) {
     m_retryTimer->start();
 }
 
+void DeviceConnection::connectVia(DeviceConnection* parentConnection, quint32 selfSourceId,
+                                  quint32 peerSourceId) {
+    // The HubChannel counterpart of connectTo(), and separate from it for the
+    // reason transport.h gives for keeping open() off the Transport
+    // interface: a hub channel's target is a parent device plus a source_id,
+    // which has no honest spelling as the (port name, baud rate) pair the
+    // other two share. Squeezing it into that shape would be a stringly-typed
+    // muddle, so this is the specific call for the transport this connection
+    // knows it built.
+    if (m_hubTransport == nullptr) {
+        return;
+    }
+
+    m_hubTransport->setPeerSourceId(peerSourceId);
+    m_hubTransport->attachTo(parentConnection);
+
+    // Told before the link can come up, because coming up is what makes the
+    // child ask its robot for a catalog -- and it has to know which robot by
+    // then.
+    if (auto* btpBackend = qobject_cast<BtpBackend*>(m_backend)) {
+        btpBackend->setHubEndpoint(selfSourceId, peerSourceId);
+    }
+
+    // Same ambient-intent model as connectTo(): "not configured" means no
+    // parent or no peer, and anything else means this child should be online
+    // whenever its parent is. A parent that drops does NOT clear the intent,
+    // so the child comes back on its own when the cable does -- which is the
+    // behavior a hub needs, since the parent going away is the common case
+    // (unplugging the dongle) and not an instruction from the user.
+    m_shouldBeConnected = parentConnection != nullptr && peerSourceId != 0;
+    if (!m_shouldBeConnected) {
+        m_retryTimer->stop();
+        m_transport->close();
+        return;
+    }
+    m_retryTimer->start();
+}
+
 void DeviceConnection::disconnectFrom() {
     m_shouldBeConnected = false;
     m_retryTimer->stop();
@@ -111,6 +183,12 @@ void DeviceConnection::attemptReconnect() {
     } else if (m_usbHidManager) {
         m_usbHidManager->open(m_target);
     }
+    // HubChannel has nothing to retry: it has no port to reopen, and its
+    // connected state is a function of its parent's, which it is already
+    // watching. The retry timer still runs so that a parent attached before
+    // it was connected is re-evaluated, which HubTransport does on its own
+    // signal -- so this branch is deliberately empty rather than absent, to
+    // say that the omission is a decision and not a missing case.
 }
 
-} // namespace traceview
+}  // namespace traceview
