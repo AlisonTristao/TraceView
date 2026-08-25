@@ -1,0 +1,12 @@
+# Revisions that changed formatting only, never behaviour. `git blame` skips
+# them with:
+#
+#     git config blame.ignoreRevsFile .git-blame-ignore-revs
+#
+# (GitHub and GitLab pick the file up on their own.) Only add a commit here
+# if it is genuinely mechanical -- a reformat, a rename applied by a tool --
+# so that blame still lands on whoever last made a real decision about a
+# line.
+
+# style: apply clang-format across the repository
+7f971c87e4283c850f161f9a1ece695d4bd35bb6
