@@ -51,7 +51,6 @@ public:
     // disables handleAt() so a multi/group drag can only move, not resize.
     // Default true (a lone selected cell is always resizable).
     void setResizable(bool resizable);
-    bool isResizable() const { return m_resizable; }
     // Drives the header's connection-status dot (only drawn when m_content
     // wants header controls, see DashboardWidget::wantsHeaderControls()) --
     // set from whichever device this cell's own widget is currently

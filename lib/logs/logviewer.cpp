@@ -23,6 +23,16 @@ constexpr int kColumnCount = 6;
 // Matches the "0x%1" 8-digit uppercase hex convention already used for
 // source/boot ids elsewhere (see btpbackend.cpp, deviceconfigdialog.cpp).
 QString hex32(quint32 value) { return QStringLiteral("0x%1").arg(value, 8, 16, QChar('0')).toUpper(); }
+
+// How many rows resizeColumnsToContents() is allowed to measure.
+//
+// Without a bound it measures every cell in the table, which on a real
+// robot .blog (an SD-card event log runs to tens of thousands of entries)
+// is a full-table font-metrics pass before the first row is visible. The
+// first screenful is enough to size a column sensibly: the five fixed-shape
+// columns render identically on every row, and Message is the stretched
+// last section, so its width does not come from measurement anyway.
+constexpr int kColumnSizingRows = 200;
 }  // namespace
 
 LogViewer::LogViewer(QWidget* parent) : QWidget(parent) {
@@ -49,6 +59,14 @@ void LogViewer::openFile(const QString& filePath) {
     }
 
     const QVector<LogEntry> entries = reader.entries();
+
+    // Filling the table emits a model signal per setItem(), each of which
+    // the view acts on -- for a file with tens of thousands of entries that
+    // is six times as many relayouts as there are rows, all of them
+    // discarded by the next one. Suppressed for the duration of the fill
+    // and re-enabled once, which is the standard QTableWidget bulk-load
+    // shape.
+    m_table->setUpdatesEnabled(false);
     m_table->setRowCount(entries.size());
     for (int row = 0; row < entries.size(); ++row) {
         const LogEntry& entry = entries.at(row);
@@ -60,6 +78,10 @@ void LogViewer::openFile(const QString& filePath) {
         m_table->setItem(row, kSequenceColumn, new QTableWidgetItem(QString::number(entry.sequence)));
         m_table->setItem(row, kMessageColumn, new QTableWidgetItem(entry.message));
     }
+    m_table->setUpdatesEnabled(true);
+
+    // Bounded (see kColumnSizingRows) rather than measuring the whole file.
+    m_table->horizontalHeader()->setResizeContentsPrecision(kColumnSizingRows);
     m_table->resizeColumnsToContents();
 }
 
