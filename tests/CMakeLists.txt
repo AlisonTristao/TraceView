@@ -21,6 +21,11 @@ add_traceview_test(test_dashboardgrid traceview_dashboard)
 # lib/devices). Only traceview_devices; no dashboard/protocol dependency.
 add_traceview_test(test_device traceview_devices)
 add_traceview_test(test_devicesgrid traceview_devices)
+# hub.peers reassembly -- six parallel variable-length arrays arriving one
+# (field, element) at a time. Only traceview_devices: the accumulator lives
+# below the protocol layer on purpose (see lib/devices/hubpeeraccumulator.h),
+# so this exercises the decode with no BTP and no QWidget involved.
+add_traceview_test(test_hubpeeraccumulator traceview_devices)
 add_traceview_test(test_chartdata traceview_dashboard)
 add_traceview_test(test_controldata traceview_dashboard)
 # topico 19: the dumb-terminal line model (\r/\b/\n handling) and keystroke
