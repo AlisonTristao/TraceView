@@ -77,6 +77,20 @@ public:
     // Called with empty strings when the connection drops, so a stale
     // identity from a previous session never lingers in the UI.
     void setDeviceIdentity(const QString& id, const QString& btpVersion, const QString& btpId);
+    // Tells this device's config dialog, if it's currently open, to re-pull
+    // its catalog list from m_topicCatalogProvider. MANIFEST_DATA lands
+    // asynchronously after the handshake that fires deviceIdentified() (see
+    // BtpBackend::sessionEstablished's connect() -- deviceIdentified is
+    // emitted immediately, the manifest reply comes later over the wire), so
+    // catalogTopics() is typically still empty at the moment the dialog's
+    // deviceUpdated-triggered refresh runs. MainWindow calls this once
+    // Backend::catalogChanged actually fires so the still-open dialog picks
+    // up the real list instead of only showing it on next open. Deliberately
+    // its own signal rather than routed through deviceUpdated: that signal
+    // reaches MainWindow::onDeviceUpdated too, which re-applies the device's
+    // connection target -- something a catalog arriving has no business
+    // triggering. No-op if no dialog is open for this device.
+    void notifyCatalogChanged(const QString& id);
 
     QVector<Device> devices() const { return m_devices; }
 
@@ -152,6 +166,11 @@ signals:
     void deviceAdded(const Device& device);
     void deviceRemoved(const QString& id);
     void deviceUpdated(const Device& device);
+    // Bridges notifyCatalogChanged() (above) to whichever config dialog is
+    // currently open for `id` -- see handleConfigRequested(). Internal to
+    // this class's own dialog-refresh wiring; nothing outside DevicesGrid
+    // needs to listen to it.
+    void deviceCatalogChanged(const QString& id);
     // Bubbled straight from the selected card's DeviceCard::connectToggleRequested
     // -- DevicesGrid has no DeviceConnection of its own to flip, MainWindow does.
     void connectToggleRequested(const QString& deviceId);

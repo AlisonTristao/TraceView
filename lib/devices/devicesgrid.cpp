@@ -106,6 +106,10 @@ void DevicesGrid::setDeviceIdentity(const QString& id, const QString& btpVersion
     emit deviceUpdated(m_devices[idx]);
 }
 
+void DevicesGrid::notifyCatalogChanged(const QString& id) {
+    emit deviceCatalogChanged(id);
+}
+
 void DevicesGrid::applyInsertDevice(const Device& device, int index) {
     const int clampedIndex = qBound(0, index, m_devices.size());
     m_devices.insert(clampedIndex, device);
@@ -270,6 +274,17 @@ void DevicesGrid::handleConfigRequested(const QString& deviceId) {
         if (m_topicCatalogProvider) {
             dialog.setCatalogTopics(m_topicCatalogProvider(deviceId));
         }
+    });
+    // MANIFEST_DATA arrives after the handshake that fires deviceUpdated
+    // above, so that listener alone typically catches the catalog still
+    // empty (see notifyCatalogChanged()'s doc comment). This is the actual
+    // "catalog just arrived" signal, wired separately so it doesn't also
+    // re-trigger MainWindow::onDeviceUpdated the way deviceUpdated does.
+    connect(this, &DevicesGrid::deviceCatalogChanged, &dialog, [this, &dialog, deviceId](const QString& id) {
+        if (id != deviceId || !m_topicCatalogProvider) {
+            return;
+        }
+        dialog.setCatalogTopics(m_topicCatalogProvider(deviceId));
     });
     if (dialog.exec() == QDialog::Accepted) {
         updateDevice(dialog.result());

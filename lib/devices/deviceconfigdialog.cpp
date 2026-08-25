@@ -27,8 +27,8 @@ namespace {
 //     schema_version: 1
 //     encoding: PACKED_LE
 //     fields:
-//       velocity: float32 (m/s)
-//       position: float32
+//       velocity [id=0x0003]: float32 (m/s)
+//       position [id=0x0004]: float32
 //
 // Deliberately not actual JSON (no braces/quotes/commas): this is a
 // read-only display meant to be scanned, not copy-pasted and parsed, so
@@ -46,8 +46,16 @@ QString catalogTopicBlock(const CatalogTopicInfo& topic) {
     } else {
         lines << QStringLiteral("  fields:");
         for (const CatalogTopicField& field : topic.fields) {
-            QString line = QString("    %1: %2")
-                                .arg(field.name.isEmpty() ? QObject::tr("(unnamed)") : field.name, field.type);
+            // fieldId shown alongside the name always, not only when the
+            // name is missing: the manifest's human-readable name is a
+            // convenience TELEMETRY.md asks devices to provide, not a
+            // guarantee it's stable or unambiguous, so the numeric id this
+            // field is actually addressed by on the wire stays visible for
+            // cross-checking either way.
+            QString line = QString("    %1 [id=0x%2]: %3")
+                                .arg(field.name.isEmpty() ? QObject::tr("(unnamed)") : field.name)
+                                .arg(field.fieldId, 4, 16, QChar('0'))
+                                .arg(field.type);
             if (!field.unit.isEmpty() && field.unit != QStringLiteral("1")) {
                 line += QString(" (%1)").arg(field.unit);
             }
@@ -68,10 +76,23 @@ DeviceConfigDialog::DeviceConfigDialog(const Device& initial, QWidget* parent)
     setMinimumWidth(680);
 
     m_nameEdit = new QLineEdit(m_device.name, this);
+    m_nameEdit->setToolTip(tr("Shown as this device's title -- on its card in the Devices panel, and "
+                               "anywhere else it's picked from a list."));
     m_descriptionEdit = new QPlainTextEdit(m_device.description, this);
+    // QPlainTextEdit is a QAbstractScrollArea: the mouse (and so the
+    // ToolTip event) is actually over its viewport child widget, not this
+    // frame, so setToolTip() here alone never shows -- has to go on the
+    // viewport too.
+    const QString descriptionTip = tr("Free-form notes about this device, shown on its card below the name.");
+    m_descriptionEdit->setToolTip(descriptionTip);
+    m_descriptionEdit->viewport()->setToolTip(descriptionTip);
     m_descriptionEdit->setFixedHeight(64);
 
-    auto* formLayout = new QFormLayout;
+    // Grouped like Connection/OTA/etc. below rather than left as a bare
+    // QFormLayout -- otherwise Name/Description were the only fields in the
+    // dialog without a group box around them.
+    auto* generalGroup = new QGroupBox(tr("General"), this);
+    auto* formLayout = new QFormLayout(generalGroup);
     formLayout->addRow(tr("Name:"), m_nameEdit);
     formLayout->addRow(tr("Description:"), m_descriptionEdit);
 
@@ -390,7 +411,7 @@ DeviceConfigDialog::DeviceConfigDialog(const Device& initial, QWidget* parent)
     // both shortens the left column and keeps the two columns closer in
     // height.
     auto* leftColumn = new QVBoxLayout;
-    leftColumn->addLayout(formLayout);
+    leftColumn->addWidget(generalGroup);
     leftColumn->addWidget(connectionGroup);
     leftColumn->addWidget(otaGroup);
     leftColumn->addStretch();
@@ -398,6 +419,20 @@ DeviceConfigDialog::DeviceConfigDialog(const Device& initial, QWidget* parent)
     auto* rightColumn = new QVBoxLayout;
     rightColumn->addWidget(reportedGroup);
     rightColumn->addWidget(catalogGroup, /*stretch=*/1);
+
+    // Right column's own sizeHint (just reportedGroup's few short rows plus
+    // whatever the catalog box asks for) is naturally narrower than the left
+    // one's, which is widened by its labeled rows and width-bound combos
+    // (m_peerSourceIdCombo/m_parentCombo). The equal stretch factors below
+    // only redistribute space *beyond* each column's own sizeHint when the
+    // dialog is grown past it -- they don't equalize the two up front. Pin
+    // both right-column group boxes to the left column's natural width
+    // (left stays exactly as it already sizes itself) so "Reported catalog"
+    // starts out the same width as the settings column instead of visibly
+    // narrower.
+    const int leftColumnWidth = leftColumn->sizeHint().width();
+    reportedGroup->setMinimumWidth(leftColumnWidth);
+    catalogGroup->setMinimumWidth(leftColumnWidth);
 
     auto* columns = new QHBoxLayout;
     columns->addLayout(leftColumn, /*stretch=*/1);
