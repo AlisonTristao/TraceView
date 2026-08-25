@@ -9,7 +9,8 @@ TelemetryFieldRouter::TelemetryFieldRouter(TelemetryCatalog* catalog, QObject* p
 
 void TelemetryFieldRouter::onTelemetrySample(const TelemetrySample& sample) {
     const TelemetryTopicSchema* schema =
-        m_catalog ? m_catalog->lookup(sample.sourceId, sample.topicId, sample.schemaVersion) : nullptr;
+        m_catalog ? m_catalog->lookup(sample.sourceId, sample.topicId, sample.schemaVersion)
+                  : nullptr;
     if (schema == nullptr) {
         // telemetry.md section 6: unknown/unannounced schema -- reject the
         // sample, don't guess at another version or encoding. topico 16

@@ -1,7 +1,5 @@
 #pragma once
 
-#include <optional>
-
 #include <QHash>
 #include <QJsonObject>
 #include <QMap>
@@ -15,6 +13,7 @@
 #include <QUndoStack>
 #include <QVector>
 #include <QWidget>
+#include <optional>
 
 #include "dashboardcell.h"
 #include "dashboarditem.h"
@@ -84,7 +83,9 @@ public:
     explicit DashboardGrid(QWidget* parent = nullptr);
 
     void setEditMode(bool enabled);
-    bool editMode() const { return m_editMode; }
+    bool editMode() const {
+        return m_editMode;
+    }
 
     // Live connection state for one device (see core/deviceconnection.h),
     // pushed by MainWindow whenever a DeviceConnection's own
@@ -103,7 +104,7 @@ public:
     // this exact signature since it's connected via &DashboardGrid::selectItem
     // pointer syntax elsewhere; see toggleItemSelection()/selectItems() for
     // the multi-select entry points.
-    void selectItem(const QString& itemId); // empty string clears selection
+    void selectItem(const QString& itemId);  // empty string clears selection
     // Ctrl-click entry point: adds/removes itemId (or its whole group, if
     // grouped) to/from the current selection as one unit.
     void toggleItemSelection(const QString& itemId);
@@ -114,8 +115,12 @@ public:
     // selected -- every single-item operation below (rename, type/key/config
     // edit, copy, z-order) only acts when this is non-empty.
     QString selectedItemId() const;
-    int selectedCount() const { return m_selectedItemIds.size(); }
-    QSet<QString> selectedItemIds() const { return m_selectedItemIds; }
+    int selectedCount() const {
+        return m_selectedItemIds.size();
+    }
+    QSet<QString> selectedItemIds() const {
+        return m_selectedItemIds;
+    }
     // True if any selected item belongs to a group -- drives the Ungroup
     // ribbon action's enabled state.
     bool selectionHasGroup() const;
@@ -179,7 +184,9 @@ public:
     // Clears the group membership of every selected item that has one.
     void ungroupSelected();
 
-    QUndoStack* undoStack() const { return m_undoStack; }
+    QUndoStack* undoStack() const {
+        return m_undoStack;
+    }
 
     QJsonObject toJson() const;
     void fromJson(const QJsonObject& object);
@@ -236,7 +243,7 @@ protected:
 
 private:
     struct DragOp {
-        QString primaryItemId; // the cell the mouse is actually tracking;
+        QString primaryItemId;  // the cell the mouse is actually tracking;
                                 // used to compute the drag delta
         QPoint startGlobalPos;
         // Keyed by itemId -- more than one entry only while dragging a
@@ -334,7 +341,8 @@ private:
     void handleDragStarted(const QString& itemId, const QPoint& globalPos);
     void handleDragMoved(const QString& itemId, const QPoint& globalPos);
     void handleDragFinished(const QString& itemId, const QPoint& globalPos);
-    void handleResizeStarted(const QString& itemId, const QPoint& globalPos, DashboardCell::ResizeHandle handle);
+    void handleResizeStarted(const QString& itemId, const QPoint& globalPos,
+                             DashboardCell::ResizeHandle handle);
     void handleResizeMoved(const QString& itemId, const QPoint& globalPos);
     void handleResizeFinished(const QString& itemId, const QPoint& globalPos);
     void handleSelectRequested(const QString& itemId, Qt::KeyboardModifiers modifiers);
@@ -364,4 +372,4 @@ private:
     QUndoStack* m_undoStack;
 };
 
-} // namespace traceview
+}  // namespace traceview

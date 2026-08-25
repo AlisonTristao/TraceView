@@ -59,4 +59,4 @@ private:
     QColor m_iconColor;
 };
 
-} // namespace traceview
+}  // namespace traceview

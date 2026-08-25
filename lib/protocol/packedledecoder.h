@@ -35,6 +35,6 @@ struct TelemetryFieldValue {
 // `schema.encoding` themselves (TelemetryFieldRouter does) before calling
 // this.
 bool decodePackedLe(const TelemetryTopicSchema& schema, const QByteArray& body,
-                     QHash<quint16, TelemetryFieldValue>* outValues);
+                    QHash<quint16, TelemetryFieldValue>* outValues);
 
 }  // namespace traceview

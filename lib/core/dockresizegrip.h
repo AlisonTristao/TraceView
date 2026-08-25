@@ -43,4 +43,4 @@ private:
     bool m_dragging = false;
 };
 
-} // namespace traceview
+}  // namespace traceview

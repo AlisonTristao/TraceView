@@ -12,9 +12,10 @@ namespace traceview {
 
 RibbonTabBar::RibbonTabBar(QWidget* parent) : QTabBar(parent) {
     setMouseTracking(true);
-    setExpanding(false); // keep every tab at tabSizeHint()'s fixed size, even
+    setExpanding(false);  // keep every tab at tabSizeHint()'s fixed size, even
                           // when the bar has room to stretch them
-    connect(&ThemeManager::instance(), &ThemeManager::themeChanged, this, [this](const ThemePalette&) { update(); });
+    connect(&ThemeManager::instance(), &ThemeManager::themeChanged, this,
+            [this](const ThemePalette&) { update(); });
 }
 
 QSize RibbonTabBar::tabSizeHint(int /*index*/) const {
@@ -26,7 +27,7 @@ namespace {
 // (see closeButtonRect()) without touching the slanted sides.
 constexpr int kCloseButtonSize = 12;
 constexpr int kCloseButtonMargin = 5;
-} // namespace
+}  // namespace
 
 void RibbonTabBar::setTabClosable(int index, bool closable) {
     setTabData(index, closable);
@@ -37,8 +38,8 @@ QRect RibbonTabBar::closeButtonRect(int index) const {
         return QRect();
     }
     const QRect r = tabRect(index).adjusted(0, 0, -2, 0);
-    return QRect(r.right() - kRibbonTabSlant - kCloseButtonMargin - kCloseButtonSize, r.top() + kCloseButtonMargin,
-                 kCloseButtonSize, kCloseButtonSize);
+    return QRect(r.right() - kRibbonTabSlant - kCloseButtonMargin - kCloseButtonSize,
+                 r.top() + kCloseButtonMargin, kCloseButtonSize, kCloseButtonSize);
 }
 
 void RibbonTabBar::paintEvent(QPaintEvent*) {
@@ -83,7 +84,8 @@ void RibbonTabBar::paintEvent(QPaintEvent*) {
 
         const QRect closeRect = closeButtonRect(i);
 
-        painter.setPen(enabled ? (selected ? palette.textPrimary : palette.textSecondary) : palette.textDisabled);
+        painter.setPen(enabled ? (selected ? palette.textPrimary : palette.textSecondary)
+                               : palette.textDisabled);
         const int textMargin = kRibbonTabSlant + 4;
         // Closable tabs give up their right edge to the close button --
         // centering the title on the full trapezoid width (like a plain
@@ -93,8 +95,9 @@ void RibbonTabBar::paintEvent(QPaintEvent*) {
         if (!closeRect.isEmpty()) {
             textRect.setRight(closeRect.left() - 3);
         }
-        const QString text = fontMetrics().elidedText(tabText(i), Qt::ElideRight,
-                                                        qMax(0, static_cast<int>(textRect.width()) - 2 * textMargin));
+        const QString text =
+            fontMetrics().elidedText(tabText(i), Qt::ElideRight,
+                                     qMax(0, static_cast<int>(textRect.width()) - 2 * textMargin));
         painter.drawText(textRect, Qt::AlignCenter, text);
 
         if (!closeRect.isEmpty()) {
@@ -104,7 +107,8 @@ void RibbonTabBar::paintEvent(QPaintEvent*) {
                 painter.setBrush(palette.danger.lighter(160));
                 painter.drawRoundedRect(closeRect.adjusted(-2, -2, 2, 2), 3, 3);
             }
-            QPen xPen(hoverClose ? palette.danger : (enabled ? palette.textSecondary : palette.textDisabled));
+            QPen xPen(hoverClose ? palette.danger
+                                 : (enabled ? palette.textSecondary : palette.textDisabled));
             xPen.setWidthF(1.4);
             painter.setPen(xPen);
             const QRectF xr = QRectF(closeRect).adjusted(2, 2, -2, -2);
@@ -136,7 +140,7 @@ void RibbonTabBar::mousePressEvent(QMouseEvent* event) {
         for (int i = 0; i < count(); ++i) {
             if (closeButtonRect(i).contains(event->pos())) {
                 emit tabCloseRequested(i);
-                return; // swallowed -- doesn't fall through to tab selection
+                return;  // swallowed -- doesn't fall through to tab selection
             }
         }
     }
@@ -150,4 +154,4 @@ void RibbonTabBar::leaveEvent(QEvent* event) {
     QTabBar::leaveEvent(event);
 }
 
-} // namespace traceview
+}  // namespace traceview

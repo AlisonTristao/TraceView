@@ -4,7 +4,6 @@
 #include <QObject>
 #include <QString>
 #include <QTimer>
-
 #include <cstdint>
 
 namespace traceview {
@@ -70,7 +69,7 @@ signals:
     // Device's reported btpVersion (devices/deviceconfigdialog.h) instead of
     // that field staying user-editable.
     void sessionEstablished(quint32 peerSourceId, quint32 peerBootId, quint32 peerConfigRevision,
-                             quint8 selectedVersion);
+                            quint8 selectedVersion);
     void sessionFailed(const QString& reason);
 
 private slots:
@@ -86,7 +85,7 @@ private:
 
     BtpSession* m_session;
     State m_state = State::Idle;
-    QByteArray m_lineBuffer;   // bounded scratch buffer while awaiting READY
+    QByteArray m_lineBuffer;  // bounded scratch buffer while awaiting READY
     QByteArray m_expectedReady;
     QTimer m_enterTimer;
     QTimer m_helloTimer;

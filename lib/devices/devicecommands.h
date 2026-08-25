@@ -58,4 +58,4 @@ private:
     Device m_toDevice;
 };
 
-} // namespace traceview
+}  // namespace traceview

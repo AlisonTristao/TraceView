@@ -282,4 +282,4 @@ ThemePalette makeSakuraPalette() {
     return p;
 }
 
-} // namespace traceview
+}  // namespace traceview

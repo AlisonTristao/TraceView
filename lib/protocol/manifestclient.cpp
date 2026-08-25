@@ -2,9 +2,7 @@
 
 #include <QDateTime>
 #include <QRandomGenerator>
-
 #include <btp/codec.hpp>
-
 #include <cstring>
 
 #include "protocol/btpframe.h"
@@ -38,24 +36,28 @@ struct Cursor {
     int pos = 0;
 
     bool skip(int n) {
-        if (n < 0 || pos + n > data.size()) return false;
+        if (n < 0 || pos + n > data.size())
+            return false;
         pos += n;
         return true;
     }
     bool u8(quint8* out) {
-        if (pos + 1 > data.size()) return false;
+        if (pos + 1 > data.size())
+            return false;
         *out = quint8(data.at(pos));
         pos += 1;
         return true;
     }
     bool u16(quint16* out) {
-        if (pos + 2 > data.size()) return false;
+        if (pos + 2 > data.size())
+            return false;
         *out = quint16(quint8(data.at(pos))) | (quint16(quint8(data.at(pos + 1))) << 8);
         pos += 2;
         return true;
     }
     bool u32(quint32* out) {
-        if (pos + 4 > data.size()) return false;
+        if (pos + 4 > data.size())
+            return false;
         quint32 value = 0;
         for (int i = 0; i < 4; ++i) value |= quint32(quint8(data.at(pos + i))) << (8 * i);
         *out = value;
@@ -63,15 +65,18 @@ struct Cursor {
         return true;
     }
     bool f64(double* out) {
-        if (pos + 8 > data.size()) return false;
+        if (pos + 8 > data.size())
+            return false;
         std::memcpy(out, data.constData() + pos, sizeof(double));  // host is little-endian
         pos += 8;
         return true;
     }
     bool utf8(QString* out) {
         quint16 len = 0;
-        if (!u16(&len)) return false;
-        if (pos + len > data.size()) return false;
+        if (!u16(&len))
+            return false;
+        if (pos + len > data.size())
+            return false;
         *out = QString::fromUtf8(data.constData() + pos, len);
         pos += len;
         return true;
@@ -87,9 +92,11 @@ struct Cursor {
 // any future field appended after `description`.
 bool parseFieldRecord(Cursor& cursor, TelemetryFieldSchema* outField) {
     quint32 recordSize = 0;
-    if (!cursor.u32(&recordSize)) return false;
+    if (!cursor.u32(&recordSize))
+        return false;
     const int recordEnd = cursor.pos + int(recordSize);
-    if (recordSize > 0x7FFFFFFFU || recordEnd > cursor.data.size()) return false;
+    if (recordSize > 0x7FFFFFFFU || recordEnd > cursor.data.size())
+        return false;
 
     quint16 fieldId = 0, order = 0, elementCount = 0, maxElementCount = 0, enumCount = 0;
     quint8 type = 0, flags = 0;
@@ -97,17 +104,19 @@ bool parseFieldRecord(Cursor& cursor, TelemetryFieldSchema* outField) {
     QString name, unit, description;
     if (!cursor.u16(&fieldId) || !cursor.u16(&order) || !cursor.u8(&type) || !cursor.u8(&flags) ||
         !cursor.u16(&elementCount) || !cursor.u16(&maxElementCount) || !cursor.f64(&scale) ||
-        !cursor.f64(&offset) || !cursor.u16(&enumCount) || !cursor.utf8(&name) || !cursor.utf8(&unit) ||
-        !cursor.utf8(&description)) {
+        !cursor.f64(&offset) || !cursor.u16(&enumCount) || !cursor.utf8(&name) ||
+        !cursor.utf8(&unit) || !cursor.utf8(&description)) {
         return false;
     }
-    if (cursor.pos > recordEnd) return false;
+    if (cursor.pos > recordEnd)
+        return false;
     cursor.pos = recordEnd;  // skip enum entries / any unknown trailing bytes
 
     // TELEMETRY.md section 5 type codes; TelemetryFieldType's own values are
     // defined identically (see telemetrycatalog.h), so this is a direct,
     // bounds-checked cast rather than a lookup table.
-    if (type < 0x01 || type > 0x0D) return false;
+    if (type < 0x01 || type > 0x0D)
+        return false;
 
     outField->fieldId = fieldId;
     outField->order = order;
@@ -124,20 +133,23 @@ bool parseFieldRecord(Cursor& cursor, TelemetryFieldSchema* outField) {
 
 bool parseTopicRecord(Cursor& cursor, quint32 sourceId, TelemetryTopicSchema* outTopic) {
     quint32 recordSize = 0;
-    if (!cursor.u32(&recordSize)) return false;
+    if (!cursor.u32(&recordSize))
+        return false;
     const int recordEnd = cursor.pos + int(recordSize);
-    if (recordSize > 0x7FFFFFFFU || recordEnd > cursor.data.size()) return false;
+    if (recordSize > 0x7FFFFFFFU || recordEnd > cursor.data.size())
+        return false;
 
     quint16 topicId = 0, schemaVersion = 0, fieldCount = 0;
     quint8 encoding = 0, flags = 0;
     quint32 maxRateMillihz = 0;
     QString name, description;
-    if (!cursor.u16(&topicId) || !cursor.u16(&schemaVersion) || !cursor.u8(&encoding) || !cursor.u8(&flags) ||
-        !cursor.u16(&fieldCount) || !cursor.u32(&maxRateMillihz) || !cursor.utf8(&name) ||
-        !cursor.utf8(&description)) {
+    if (!cursor.u16(&topicId) || !cursor.u16(&schemaVersion) || !cursor.u8(&encoding) ||
+        !cursor.u8(&flags) || !cursor.u16(&fieldCount) || !cursor.u32(&maxRateMillihz) ||
+        !cursor.utf8(&name) || !cursor.utf8(&description)) {
         return false;
     }
-    if (topicId == 0 || schemaVersion == 0) return false;
+    if (topicId == 0 || schemaVersion == 0)
+        return false;
 
     TelemetryTopicSchema topic;
     topic.sourceId = sourceId;
@@ -148,10 +160,12 @@ bool parseTopicRecord(Cursor& cursor, quint32 sourceId, TelemetryTopicSchema* ou
     topic.fields.reserve(fieldCount);
     for (quint16 i = 0; i < fieldCount; ++i) {
         TelemetryFieldSchema field;
-        if (!parseFieldRecord(cursor, &field)) return false;
+        if (!parseFieldRecord(cursor, &field))
+            return false;
         topic.fields.append(field);
     }
-    if (cursor.pos > recordEnd) return false;
+    if (cursor.pos > recordEnd)
+        return false;
     cursor.pos = recordEnd;
 
     *outTopic = topic;
@@ -171,33 +185,39 @@ struct ParsedManifestData {
 };
 
 bool parseManifestData(const QByteArray& payload, ParsedManifestData* out) {
-    if (payload.size() < 60) return false;
+    if (payload.size() < 60)
+        return false;
 
     Cursor cursor{payload, 0};
-    if (!cursor.skip(12)) return false;  // request-reference: correlation not needed, see class comment
+    if (!cursor.skip(12))
+        return false;  // request-reference: correlation not needed, see class comment
 
     quint8 status = 0, flags = 0;
     quint16 errorCode = 0, formatVersion = 0, reserved = 0;
     quint32 configRevision = 0;
-    if (!cursor.u8(&status) || !cursor.u8(&flags) || !cursor.u16(&errorCode) || !cursor.u16(&formatVersion) ||
-        !cursor.u16(&reserved) || !cursor.u32(&configRevision)) {
+    if (!cursor.u8(&status) || !cursor.u8(&flags) || !cursor.u16(&errorCode) ||
+        !cursor.u16(&formatVersion) || !cursor.u16(&reserved) || !cursor.u32(&configRevision)) {
         return false;
     }
-    if (formatVersion != 1) return false;  // only manifest_format_version 1 is defined
-    if (!cursor.skip(16)) return false;    // source_uuid: not modeled by TelemetryCatalog
+    if (formatVersion != 1)
+        return false;  // only manifest_format_version 1 is defined
+    if (!cursor.skip(16))
+        return false;  // source_uuid: not modeled by TelemetryCatalog
 
     quint32 describedSourceId = 0, describedBootId = 0;
-    if (!cursor.u32(&describedSourceId) || !cursor.u32(&describedBootId)) return false;
+    if (!cursor.u32(&describedSourceId) || !cursor.u32(&describedBootId))
+        return false;
 
     quint8 role = 0, sourceFlags = 0;
     quint16 catalogIndex = 0, catalogCount = 0, topicCount = 0, actionCount = 0;
-    if (!cursor.u8(&role) || !cursor.u8(&sourceFlags) || !cursor.u16(&catalogIndex) || !cursor.u16(&catalogCount) ||
-        !cursor.u16(&topicCount) || !cursor.u16(&actionCount)) {
+    if (!cursor.u8(&role) || !cursor.u8(&sourceFlags) || !cursor.u16(&catalogIndex) ||
+        !cursor.u16(&catalogCount) || !cursor.u16(&topicCount) || !cursor.u16(&actionCount)) {
         return false;
     }
 
     QString name;
-    if (!cursor.utf8(&name)) return false;
+    if (!cursor.utf8(&name))
+        return false;
 
     ParsedManifestData result;
     result.status = status;
@@ -209,7 +229,8 @@ bool parseManifestData(const QByteArray& payload, ParsedManifestData* out) {
     if (status == kStatusSuccess && (flags & kFlagNotModified) == 0) {
         for (quint16 i = 0; i < topicCount; ++i) {
             TelemetryTopicSchema topic;
-            if (!parseTopicRecord(cursor, describedSourceId, &topic)) return false;
+            if (!parseTopicRecord(cursor, describedSourceId, &topic))
+                return false;
             result.topics.append(topic);
         }
         // Action records: skip via the same record_size framing. Not
@@ -217,7 +238,8 @@ bool parseManifestData(const QByteArray& payload, ParsedManifestData* out) {
         // only concerns telemetry topics/fields.
         for (quint16 i = 0; i < actionCount; ++i) {
             quint32 recordSize = 0;
-            if (!cursor.u32(&recordSize) || recordSize > 0x7FFFFFFFU || !cursor.skip(int(recordSize))) {
+            if (!cursor.u32(&recordSize) || recordSize > 0x7FFFFFFFU ||
+                !cursor.skip(int(recordSize))) {
                 return false;
             }
         }
@@ -229,10 +251,11 @@ bool parseManifestData(const QByteArray& payload, ParsedManifestData* out) {
 
 }  // namespace
 
-ManifestClient::ManifestClient(BtpSession* session, ProtocolRouter* router, TelemetryCatalog* catalog,
-                               QObject* parent)
+ManifestClient::ManifestClient(BtpSession* session, ProtocolRouter* router,
+                               TelemetryCatalog* catalog, QObject* parent)
     : QObject(parent), m_session(session), m_catalog(catalog) {
-    connect(router, &ProtocolRouter::controlFrameReceived, this, &ManifestClient::onControlFrameReceived);
+    connect(router, &ProtocolRouter::controlFrameReceived, this,
+            &ManifestClient::onControlFrameReceived);
     // Private per-process identity, same construction SerialWidgetBridge
     // uses for TERMINAL_IN (topico 19) -- see class comment for why this
     // does not need to match BtpHandshake's own HELLO identity.
@@ -253,7 +276,8 @@ void ManifestClient::onSessionEstablished(quint32 peerConfigRevision) {
     requestFullCatalog();
 }
 
-void ManifestClient::onUnknownSchema(quint32 sourceId, quint16 /*topicId*/, quint16 /*schemaVersion*/) {
+void ManifestClient::onUnknownSchema(quint32 sourceId, quint16 /*topicId*/,
+                                     quint16 /*schemaVersion*/) {
     const qint64 now = QDateTime::currentMSecsSinceEpoch();
     const qint64 last = m_lastRequestMsBySource.value(sourceId, 0);
     if (now - last < kUnknownSchemaRequestCooldownMs) {
@@ -269,7 +293,9 @@ void ManifestClient::onUnknownSchema(quint32 sourceId, quint16 /*topicId*/, quin
     sendRequest(sourceId, /*targetBootId=*/0, knownRevision);
 }
 
-void ManifestClient::requestFullCatalog() { sendRequest(/*targetSourceId=*/0, /*targetBootId=*/0, /*knownRevision=*/0); }
+void ManifestClient::requestFullCatalog() {
+    sendRequest(/*targetSourceId=*/0, /*targetBootId=*/0, /*knownRevision=*/0);
+}
 
 void ManifestClient::requestCatalogFor(quint32 sourceId) {
     if (sourceId == 0) {
@@ -282,7 +308,8 @@ void ManifestClient::requestCatalogFor(quint32 sourceId) {
     sendRequest(sourceId, /*targetBootId=*/0, /*knownRevision=*/0);
 }
 
-void ManifestClient::sendRequest(quint32 targetSourceId, quint32 targetBootId, quint32 knownRevision) {
+void ManifestClient::sendRequest(quint32 targetSourceId, quint32 targetBootId,
+                                 quint32 knownRevision) {
     QByteArray payload;
     payload.reserve(12);
     appendLe32(payload, targetSourceId);

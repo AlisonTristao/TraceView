@@ -13,8 +13,8 @@
 #include <QRegion>
 #include <QWidgetAction>
 
-#include "dashboardwidget.h"
 #include "dashboard/roundedcorners.h"
+#include "dashboardwidget.h"
 #include "traceview/thememanager.h"
 
 namespace traceview {
@@ -45,7 +45,7 @@ void drawTypeIcon(QPainter& painter, const QRect& r, const QString& typeId, cons
     painter.save();
     painter.setRenderHint(QPainter::Antialiasing);
     painter.translate(r.topLeft());
-    const qreal s = r.width(); // square icon box
+    const qreal s = r.width();  // square icon box
 
     if (typeId == "dummy_line") {
         QPen pen(color, 1.5);
@@ -53,8 +53,8 @@ void drawTypeIcon(QPainter& painter, const QRect& r, const QString& typeId, cons
         pen.setCapStyle(Qt::RoundCap);
         painter.setPen(pen);
         painter.drawPolyline(QPolygonF({QPointF(s * 0.05, s * 0.75), QPointF(s * 0.32, s * 0.45),
-                                         QPointF(s * 0.55, s * 0.6), QPointF(s * 0.78, s * 0.2),
-                                         QPointF(s * 0.95, s * 0.35)}));
+                                        QPointF(s * 0.55, s * 0.6), QPointF(s * 0.78, s * 0.2),
+                                        QPointF(s * 0.95, s * 0.35)}));
     } else if (typeId == "dummy_bar") {
         painter.setPen(Qt::NoPen);
         painter.setBrush(color);
@@ -74,8 +74,8 @@ void drawTypeIcon(QPainter& painter, const QRect& r, const QString& typeId, cons
         pen.setCapStyle(Qt::RoundCap);
         pen.setJoinStyle(Qt::RoundJoin);
         painter.setPen(pen);
-        painter.drawPolyline(
-            QPolygonF({QPointF(s * 0.1, s * 0.25), QPointF(s * 0.4, s * 0.5), QPointF(s * 0.1, s * 0.75)}));
+        painter.drawPolyline(QPolygonF(
+            {QPointF(s * 0.1, s * 0.25), QPointF(s * 0.4, s * 0.5), QPointF(s * 0.1, s * 0.75)}));
         painter.drawLine(QPointF(s * 0.5, s * 0.82), QPointF(s * 0.9, s * 0.82));
     }
 
@@ -99,8 +99,8 @@ void drawPlayPauseIcon(QPainter& painter, const QRect& r, bool paused, const QCo
     painter.setBrush(color);
 
     if (paused) {
-        painter.drawPolygon(
-            QPolygonF({QPointF(s * 0.22, s * 0.15), QPointF(s * 0.22, s * 0.85), QPointF(s * 0.85, s * 0.5)}));
+        painter.drawPolygon(QPolygonF({QPointF(s * 0.22, s * 0.15), QPointF(s * 0.22, s * 0.85),
+                                       QPointF(s * 0.85, s * 0.5)}));
     } else {
         const qreal barWidth = s * 0.22;
         painter.drawRect(QRectF(s * 0.2, s * 0.15, barWidth, s * 0.7));
@@ -181,7 +181,7 @@ protected:
         constexpr qreal kBorderWidth = 2.0;
 
         const QRectF borderRect = QRectF(rect()).adjusted(kBorderWidth / 2.0, kBorderWidth / 2.0,
-                                                           -kBorderWidth / 2.0, -kBorderWidth / 2.0);
+                                                          -kBorderWidth / 2.0, -kBorderWidth / 2.0);
         const QPainterPath outline =
             partiallyRoundedRect(borderRect, kContainerCornerRadius, true, true, true, true);
 
@@ -200,7 +200,8 @@ protected:
         }
 
         if (selectionVisible) {
-            QColor selectionColor = property("dragInvalid").toBool() ? palette.danger : palette.accent;
+            QColor selectionColor =
+                property("dragInvalid").toBool() ? palette.danger : palette.accent;
             selectionColor.setAlphaF(selectT);
             painter.setPen(QPen(selectionColor, kBorderWidth));
             painter.drawPath(outline);
@@ -211,10 +212,10 @@ private:
     QVariantAnimation* m_selectionAnimation;
     DashboardWidget* m_content;
 };
-} // namespace
+}  // namespace
 
 DashboardCell::DashboardCell(const QString& itemId, const QString& typeId, const QString& title,
-                              DashboardWidget* content, QWidget* parent)
+                             DashboardWidget* content, QWidget* parent)
     : QWidget(parent), m_itemId(itemId), m_typeId(typeId), m_title(title), m_content(content) {
     // Opt out of the app-wide QWidget background. This wrapper must remain
     // transparent outside the rounded silhouette so the layout grid (dots
@@ -267,7 +268,8 @@ void DashboardCell::setSelected(bool selected) {
         return;
     }
     m_selected = selected;
-    m_selectionAnim.setDirection(selected ? QAbstractAnimation::Forward : QAbstractAnimation::Backward);
+    m_selectionAnim.setDirection(selected ? QAbstractAnimation::Forward
+                                          : QAbstractAnimation::Backward);
     m_selectionAnim.start();
     updateCursor();
     update();
@@ -338,17 +340,20 @@ void DashboardCell::showSettingsMenu() {
     QAction* lastValueAction = menu.addAction(tr("Show last value"));
     lastValueAction->setCheckable(true);
     lastValueAction->setChecked(m_content->showsLastValueRow());
-    connect(lastValueAction, &QAction::toggled, this, [this](bool on) { m_content->setShowsLastValueRow(on); });
+    connect(lastValueAction, &QAction::toggled, this,
+            [this](bool on) { m_content->setShowsLastValueRow(on); });
 
     QAction* gridPointsAction = menu.addAction(tr("Show grid point values"));
     gridPointsAction->setCheckable(true);
     gridPointsAction->setChecked(m_content->showsGridPointMarkers());
-    connect(gridPointsAction, &QAction::toggled, this, [this](bool on) { m_content->setShowsGridPointMarkers(on); });
+    connect(gridPointsAction, &QAction::toggled, this,
+            [this](bool on) { m_content->setShowsGridPointMarkers(on); });
 
     QAction* hoverCrosshairAction = menu.addAction(tr("Show hover crosshair"));
     hoverCrosshairAction->setCheckable(true);
     hoverCrosshairAction->setChecked(m_content->showsHoverCrosshair());
-    connect(hoverCrosshairAction, &QAction::toggled, this, [this](bool on) { m_content->setShowsHoverCrosshair(on); });
+    connect(hoverCrosshairAction, &QAction::toggled, this,
+            [this](bool on) { m_content->setShowsHoverCrosshair(on); });
 
     menu.addSeparator();
 
@@ -368,11 +373,13 @@ void DashboardCell::showSettingsMenu() {
     interpolationCombo->addItem(tr("ZOH (step)"), "zoh");
     interpolationCombo->addItem(tr("Stem"), "stem");
     interpolationCombo->addItem(tr("None (points)"), "none");
-    interpolationCombo->setCurrentIndex(qMax(0, interpolationCombo->findData(m_content->lineInterpolation())));
+    interpolationCombo->setCurrentIndex(
+        qMax(0, interpolationCombo->findData(m_content->lineInterpolation())));
     interpolationLayout->addWidget(interpolationCombo);
-    connect(interpolationCombo, &QComboBox::currentIndexChanged, this, [this, interpolationCombo](int index) {
-        m_content->setLineInterpolation(interpolationCombo->itemData(index).toString());
-    });
+    connect(interpolationCombo, &QComboBox::currentIndexChanged, this,
+            [this, interpolationCombo](int index) {
+                m_content->setLineInterpolation(interpolationCombo->itemData(index).toString());
+            });
 
     auto* interpolationAction = new QWidgetAction(&menu);
     interpolationAction->setDefaultWidget(interpolationRow);
@@ -391,15 +398,23 @@ DashboardCell::ResizeHandle DashboardCell::handleAt(const QPoint& pos) const {
     const bool nearBottom = pos.y() >= height() - kGripSize;
 
     // Corners (bigger squares) take priority over the thinner edge bands.
-    if (nearTop && nearLeft) return ResizeHandle::TopLeft;
-    if (nearTop && nearRight) return ResizeHandle::TopRight;
-    if (nearBottom && nearLeft) return ResizeHandle::BottomLeft;
-    if (nearBottom && nearRight) return ResizeHandle::BottomRight;
+    if (nearTop && nearLeft)
+        return ResizeHandle::TopLeft;
+    if (nearTop && nearRight)
+        return ResizeHandle::TopRight;
+    if (nearBottom && nearLeft)
+        return ResizeHandle::BottomLeft;
+    if (nearBottom && nearRight)
+        return ResizeHandle::BottomRight;
 
-    if (pos.y() <= kEdgeMargin) return ResizeHandle::Top;
-    if (pos.y() >= height() - kEdgeMargin) return ResizeHandle::Bottom;
-    if (pos.x() <= kEdgeMargin) return ResizeHandle::Left;
-    if (pos.x() >= width() - kEdgeMargin) return ResizeHandle::Right;
+    if (pos.y() <= kEdgeMargin)
+        return ResizeHandle::Top;
+    if (pos.y() >= height() - kEdgeMargin)
+        return ResizeHandle::Bottom;
+    if (pos.x() <= kEdgeMargin)
+        return ResizeHandle::Left;
+    if (pos.x() >= width() - kEdgeMargin)
+        return ResizeHandle::Right;
 
     return ResizeHandle::None;
 }
@@ -452,9 +467,9 @@ void DashboardCell::updateContentMask() {
 
 void DashboardCell::updateCursor() {
     if (m_editMode && !m_selected) {
-        setCursor(Qt::PointingHandCursor); // click to select
+        setCursor(Qt::PointingHandCursor);  // click to select
     } else {
-        unsetCursor(); // selected: hover logic below drives it; not editing: default
+        unsetCursor();  // selected: hover logic below drives it; not editing: default
     }
 }
 
@@ -471,12 +486,14 @@ void DashboardCell::paintEvent(QPaintEvent*) {
     // Paint only the cell silhouette. Filling rect() here erases the grid
     // backdrop in the four corner notches, which reads as a small square
     // around an otherwise rounded widget while editing the layout.
-    painter.fillPath(partiallyRoundedRect(QRectF(rect()), kContainerCornerRadius, true, true, true, true),
-                     palette.background);
+    painter.fillPath(
+        partiallyRoundedRect(QRectF(rect()), kContainerCornerRadius, true, true, true, true),
+        palette.background);
 
     if (headerHeight() > 0) {
         painter.save();
-        painter.setClipPath(partiallyRoundedRect(rect(), kContainerCornerRadius, true, true, true, true));
+        painter.setClipPath(
+            partiallyRoundedRect(rect(), kContainerCornerRadius, true, true, true, true));
         painter.fillRect(headerRect(), m_selected ? palette.accent : palette.surfaceAlt);
         painter.restore();
 
@@ -492,8 +509,8 @@ void DashboardCell::paintEvent(QPaintEvent*) {
         if (m_content->wantsHeaderControls()) {
             // Connection dot -- red/green, driven by setConnected() -- right
             // after the type glyph, ahead of the title.
-            const QRect dotRect(textRect.left(), (headerHeight() - kStatusDotSize) / 2, kStatusDotSize,
-                                 kStatusDotSize);
+            const QRect dotRect(textRect.left(), (headerHeight() - kStatusDotSize) / 2,
+                                kStatusDotSize, kStatusDotSize);
             painter.setPen(Qt::NoPen);
             painter.setBrush(m_connected ? palette.success : palette.danger);
             painter.drawEllipse(dotRect);
@@ -654,4 +671,4 @@ void DashboardCell::leaveEvent(QEvent* event) {
     QWidget::leaveEvent(event);
 }
 
-} // namespace traceview
+}  // namespace traceview

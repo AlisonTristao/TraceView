@@ -3,11 +3,9 @@
 #include <QByteArray>
 #include <QObject>
 #include <QString>
-
 #include <btp/codec.hpp>
 #include <btp/fragmentation.hpp>
 #include <btp/stream.hpp>
-
 #include <cstddef>
 #include <cstdint>
 #include <vector>
@@ -95,10 +93,7 @@ class BtpSession : public QObject {
 public:
     // Axis (a): how a frame is delimited on the physical link. See the class
     // comment for what each mode implies about feedBytes()/sendFrame().
-    enum class Framing {
-        CobsStream,
-        PreFramed
-    };
+    enum class Framing { CobsStream, PreFramed };
 
     struct Diagnostics {
         quint64 framesDecoded = 0;    // single-frame or reassembled-complete
@@ -107,7 +102,7 @@ public:
         quint64 cobsErrors = 0;       // SerialDecodeEvent::CobsError (CobsStream only)
         quint64 overflowDrops = 0;    // SerialDecodeEvent::Overflow (CobsStream only)
         quint64 reassemblyDrops = 0;  // Reassembler: InvalidFragment,
-                                       // Conflict, MessageTooLarge, NoSlot
+                                      // Conflict, MessageTooLarge, NoSlot
     };
 
     // The two axes, stated independently: `framing` is how frames are
@@ -127,7 +122,8 @@ public:
     // and profile do NOT coincide --
     // i.e. the HubChannel of topico 26 -- must use the two-axis constructor
     // above; no single profile maps to it.
-    explicit BtpSession(btp::TransportProfile transport = btp::TransportProfile::Serial, QObject* parent = nullptr);
+    explicit BtpSession(btp::TransportProfile transport = btp::TransportProfile::Serial,
+                        QObject* parent = nullptr);
 
     // The framing each of the two pre-existing transports implies. Not a
     // general "profile -> framing" truth (EspNow is PreFramed as a radio
@@ -136,10 +132,16 @@ public:
     // constructor above needs.
     static Framing framingFor(btp::TransportProfile transport);
 
-    Framing framing() const { return m_framing; }
-    btp::TransportProfile encodeProfile() const { return m_encodeProfile; }
+    Framing framing() const {
+        return m_framing;
+    }
+    btp::TransportProfile encodeProfile() const {
+        return m_encodeProfile;
+    }
 
-    const Diagnostics& diagnostics() const { return m_diagnostics; }
+    const Diagnostics& diagnostics() const {
+        return m_diagnostics;
+    }
 
     // Encodes `frame` under this session's encode profile and, on success,
     // emits bytesToWrite() and returns true. In CobsStream framing that's
@@ -231,13 +233,15 @@ signals:
 
 private:
     static constexpr std::size_t kReassemblySlotCount = 2;
-    static constexpr std::size_t kReassemblyStorageBytes = 65536;  // covers
-        // the largest logical payloads defined so far (manifest 49152,
-        // command params/result 32768 -- commands.md section 6) with
-        // headroom; desktop memory is not a tight constraint here.
-    static constexpr std::uint64_t kReassemblyTimeoutMs = 4000;  // matches
-        // the dongle-side timeout used for the same purpose (topico 12's
-        // RESULTADO, ProtocolRouter's Reassembler).
+    static constexpr std::size_t kReassemblyStorageBytes =
+        65536;  // covers
+                // the largest logical payloads defined so far (manifest 49152,
+                // command params/result 32768 -- commands.md section 6) with
+                // headroom; desktop memory is not a tight constraint here.
+    static constexpr std::uint64_t kReassemblyTimeoutMs =
+        4000;  // matches
+               // the dongle-side timeout used for the same purpose (topico 12's
+               // RESULTADO, ProtocolRouter's Reassembler).
 
     void handleReassembly(const btp::DecodedFrame& fragment);
     // Applies axis (a) only -- COBS envelope in CobsStream framing, nothing

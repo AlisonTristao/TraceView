@@ -16,7 +16,7 @@ QIcon loadAppIcon() {
     return icon;
 }
 
-} // namespace
+}  // namespace
 
 int main(int argc, char* argv[]) {
     QApplication app(argc, argv);

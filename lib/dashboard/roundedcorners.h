@@ -20,8 +20,9 @@ constexpr qreal kContainerCornerRadius = 12.0;
 // should stay sharp (path.simplified() merges the overlapping subpaths into
 // one clean outline/region) rather than hand-rolling QPainterPath::arcTo
 // signs per corner.
-inline QPainterPath partiallyRoundedRect(const QRectF& r, qreal radius, bool roundTopLeft, bool roundTopRight,
-                                          bool roundBottomLeft, bool roundBottomRight) {
+inline QPainterPath partiallyRoundedRect(const QRectF& r, qreal radius, bool roundTopLeft,
+                                         bool roundTopRight, bool roundBottomLeft,
+                                         bool roundBottomRight) {
     QPainterPath path;
     // The square patches below overlap the base rounded rectangle and must
     // form a union. QPainterPath defaults to OddEvenFill, which turns those
@@ -51,4 +52,4 @@ inline QPainterPath partiallyRoundedRect(const QRectF& r, qreal radius, bool rou
     return path.simplified();
 }
 
-} // namespace traceview
+}  // namespace traceview

@@ -1,6 +1,5 @@
-#include <QtTest>
-
 #include <QSignalSpy>
+#include <QtTest>
 
 #include "dashboard/widgets/serialterminalwidget.h"
 
@@ -61,9 +60,11 @@ void TestSerialTerminalWidget::ctrlLetterSendsAsciiControlCode() {
     QTest::keyClick(&widget, Qt::Key_R, Qt::ControlModifier);
 
     QCOMPARE(spy.count(), 3);
-    QCOMPARE(spy.at(0).at(0).toByteArray(), QByteArray(1, static_cast<char>(0x03))); // SIGINT-style
+    QCOMPARE(spy.at(0).at(0).toByteArray(),
+             QByteArray(1, static_cast<char>(0x03)));  // SIGINT-style
     QCOMPARE(spy.at(1).at(0).toByteArray(), QByteArray(1, static_cast<char>(0x04)));
-    QCOMPARE(spy.at(2).at(0).toByteArray(), QByteArray(1, static_cast<char>(0x12))); // ShellSerial Ctrl+R search
+    QCOMPARE(spy.at(2).at(0).toByteArray(),
+             QByteArray(1, static_cast<char>(0x12)));  // ShellSerial Ctrl+R search
 }
 
 void TestSerialTerminalWidget::arrowKeysSendAnsiEscapeSequences() {
@@ -156,7 +157,7 @@ void TestSerialTerminalWidget::appendDataNewlineCommitsLineAndStartsFresh() {
 
 void TestSerialTerminalWidget::appendDataSplitsMultibyteUtf8AcrossCallsWithoutMojibake() {
     SerialTerminalWidget widget;
-    const QByteArray message = QStringLiteral("sessão ativa").toUtf8(); // "sessão ativa"
+    const QByteArray message = QStringLiteral("sessão ativa").toUtf8();  // "sessão ativa"
 
     // Split exactly inside the 2-byte UTF-8 encoding of 'ã' (0xC3 0xA3) to
     // simulate a TERMINAL_OUT chunk boundary landing mid-character.
@@ -181,7 +182,7 @@ void TestSerialTerminalWidget::clearTerminalResetsDocumentAndLineState() {
     QCOMPARE(widget.toPlainText(), QStringLiteral("dongle> "));
 }
 
-} // namespace
+}  // namespace
 
 QTEST_MAIN(TestSerialTerminalWidget)
 #include "test_serialterminalwidget.moc"

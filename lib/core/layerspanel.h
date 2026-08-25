@@ -55,4 +55,4 @@ private:
     QListWidget* m_list = nullptr;
 };
 
-} // namespace traceview
+}  // namespace traceview

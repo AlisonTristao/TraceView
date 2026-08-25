@@ -38,7 +38,7 @@ const QStringList kSendModeLabels = {
     QCoreApplication::translate("ControlConfigEditor", "Continuous (while dragging)"),
     QCoreApplication::translate("ControlConfigEditor", "On release"),
 };
-} // namespace
+}  // namespace
 
 PushButtonConfigEditor::PushButtonConfigEditor(QWidget* parent) : WidgetConfigEditor(parent) {
     m_deviceCombo = new QComboBox(this);
@@ -84,7 +84,8 @@ PushButtonConfigEditor::PushButtonConfigEditor(QWidget* parent) : WidgetConfigEd
     m_debounceSpin->setRange(0, 10'000);
     m_debounceSpin->setSuffix(tr(" ms"));
     m_debounceSpin->setValue(150);
-    m_debounceSpin->setToolTip(tr("Minimum time between triggers — extra presses inside this window are ignored."));
+    m_debounceSpin->setToolTip(
+        tr("Minimum time between triggers — extra presses inside this window are ignored."));
 
     m_confirmCheck = new QCheckBox(tr("Confirm before sending"), this);
 
@@ -123,7 +124,8 @@ PushButtonConfigEditor::PushButtonConfigEditor(QWidget* parent) : WidgetConfigEd
         updateRowsVisibility();
         emitChanged();
     });
-    connect(m_longPressThresholdSpin, &QSpinBox::valueChanged, this, [this](int) { emitChanged(); });
+    connect(m_longPressThresholdSpin, &QSpinBox::valueChanged, this,
+            [this](int) { emitChanged(); });
     connect(m_longPressCommandEdit, &QLineEdit::editingFinished, this, [this]() { emitChanged(); });
     connect(m_debounceSpin, &QSpinBox::valueChanged, this, [this](int) { emitChanged(); });
     connect(m_confirmCheck, &QCheckBox::toggled, this, [this](bool) { emitChanged(); });
@@ -136,8 +138,10 @@ void PushButtonConfigEditor::setConfig(const QJsonObject& config) {
     const int deviceIdx = m_deviceCombo->findData(config.value("deviceId").toString());
     m_deviceCombo->setCurrentIndex(deviceIdx >= 0 ? deviceIdx : 0);
     m_labelEdit->setText(config.value("label").toString());
-    m_variantCombo->setCurrentIndex(qMax(0, kVariantIds.indexOf(config.value("variant").toString("default"))));
-    m_modeCombo->setCurrentIndex(qMax(0, kButtonModeIds.indexOf(config.value("mode").toString("momentary"))));
+    m_variantCombo->setCurrentIndex(
+        qMax(0, kVariantIds.indexOf(config.value("variant").toString("default"))));
+    m_modeCombo->setCurrentIndex(
+        qMax(0, kButtonModeIds.indexOf(config.value("mode").toString("momentary"))));
     m_onPressEdit->setText(config.value("onPress").toString());
     m_onReleaseEdit->setText(config.value("onRelease").toString());
     m_repeatCheck->setChecked(config.value("repeatWhileHeld").toBool(false));
@@ -331,11 +335,13 @@ SliderConfigEditor::SliderConfigEditor(QWidget* parent) : WidgetConfigEditor(par
     m_throttleSpin->setSuffix(tr(" ms"));
     m_throttleSpin->setValue(100);
     m_throttleSpin->setToolTip(
-        tr("Minimum time between sends while dragging, so every pixel of motion isn't its own message."));
+        tr("Minimum time between sends while dragging, so every pixel of motion isn't its own "
+           "message."));
 
     m_commandTemplateEdit = new QLineEdit(this);
     m_commandTemplateEdit->setPlaceholderText(tr("SET {value}"));
-    m_commandTemplateEdit->setToolTip(tr("Command sent on change — {value} is replaced with the current slider value."));
+    m_commandTemplateEdit->setToolTip(
+        tr("Command sent on change — {value} is replaced with the current slider value."));
 
     m_formLayout = new QFormLayout(this);
     m_formLayout->setContentsMargins(0, 8, 0, 0);
@@ -381,7 +387,8 @@ void SliderConfigEditor::setConfig(const QJsonObject& config) {
     m_defaultSpin->setValue(config.value("defaultValue").toDouble(50.0));
     m_unitEdit->setText(config.value("unit").toString());
     m_showValueCheck->setChecked(config.value("showValue").toBool(true));
-    m_sendModeCombo->setCurrentIndex(qMax(0, kSendModeIds.indexOf(config.value("sendMode").toString("continuous"))));
+    m_sendModeCombo->setCurrentIndex(
+        qMax(0, kSendModeIds.indexOf(config.value("sendMode").toString("continuous"))));
     m_throttleSpin->setValue(config.value("throttleMs").toInt(100));
     m_commandTemplateEdit->setText(config.value("commandTemplate").toString());
     updateRowsVisibility();
@@ -405,7 +412,8 @@ QJsonObject SliderConfigEditor::config() const {
 }
 
 void SliderConfigEditor::updateRowsVisibility() {
-    m_formLayout->setRowVisible(m_throttleSpin, kSendModeIds.value(m_sendModeCombo->currentIndex()) == "continuous");
+    m_formLayout->setRowVisible(
+        m_throttleSpin, kSendModeIds.value(m_sendModeCombo->currentIndex()) == "continuous");
 }
 
 void SliderConfigEditor::setAvailableDevices(const QVector<DeviceOption>& devices) {
@@ -422,4 +430,4 @@ void SliderConfigEditor::emitChanged() {
     emit configChanged();
 }
 
-} // namespace traceview
+}  // namespace traceview

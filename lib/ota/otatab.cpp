@@ -62,8 +62,8 @@ OtaTab::OtaTab(QWidget* parent) : QWidget(parent) {
 
     m_table = new QTableWidget(this);
     m_table->setColumnCount(kColumnCount);
-    m_table->setHorizontalHeaderLabels(
-        {tr("Name"), tr("OTA Address"), tr("OTA Online"), tr("Firmware"), tr("Password"), tr("Upload")});
+    m_table->setHorizontalHeaderLabels({tr("Name"), tr("OTA Address"), tr("OTA Online"),
+                                        tr("Firmware"), tr("Password"), tr("Upload")});
     // Name (the most variable-length field) absorbs whatever space the
     // fixed-width Upload column doesn't need, instead of Upload itself
     // stretching to fill leftover space -- setStretchLastSection(true)
@@ -93,9 +93,11 @@ OtaTab::OtaTab(QWidget* parent) : QWidget(parent) {
 
 QString OtaTab::selectedDeviceId() const {
     const QList<QTableWidgetItem*> selected = m_table->selectedItems();
-    if (selected.isEmpty()) return QString();
+    if (selected.isEmpty())
+        return QString();
     const int row = selected.first()->row();
-    if (row < 0 || row >= m_devices.size()) return QString();
+    if (row < 0 || row >= m_devices.size())
+        return QString();
     return m_devices.at(row).id;
 }
 
@@ -132,10 +134,11 @@ void OtaTab::setDevices(const QVector<Device>& devices) {
 
         m_table->setItem(row, kNameColumn, new QTableWidgetItem(device.name));
         m_table->setItem(row, kAddressColumn,
-                          new QTableWidgetItem(device.otaAddress.isEmpty() ? tr("(not configured)")
-                                                                            : device.otaAddress));
+                         new QTableWidgetItem(device.otaAddress.isEmpty() ? tr("(not configured)")
+                                                                          : device.otaAddress));
 
-        auto* statusItem = new QTableWidgetItem(device.otaAddress.isEmpty() ? tr("\xE2\x80\x94") : tr("Checking\xE2\x80\xA6"));
+        auto* statusItem = new QTableWidgetItem(
+            device.otaAddress.isEmpty() ? tr("\xE2\x80\x94") : tr("Checking\xE2\x80\xA6"));
         m_table->setItem(row, kStatusColumn, statusItem);
 
         // The firmware string the robot reports from GET /status
@@ -164,11 +167,13 @@ void OtaTab::setDevices(const QVector<Device>& devices) {
         m_table->setCellWidget(row, kPasswordColumn, passwordContainer);
 
         const QString deviceId = device.id;
-        connect(widgets.passwordEdit, &QLineEdit::textEdited, this,
-                [this, deviceId](const QString& text) { m_sessionPasswords.insert(deviceId, text); });
+        connect(
+            widgets.passwordEdit, &QLineEdit::textEdited, this,
+            [this, deviceId](const QString& text) { m_sessionPasswords.insert(deviceId, text); });
         connect(widgets.rememberCheck, &QCheckBox::toggled, this, [this, deviceId](bool checked) {
             const RowWidgets& rowWidgets = m_rowWidgets.value(deviceId);
-            if (rowWidgets.passwordEdit == nullptr) return;
+            if (rowWidgets.passwordEdit == nullptr)
+                return;
             emit passwordCacheChanged(deviceId, rowWidgets.passwordEdit->text(), checked);
         });
 
@@ -184,7 +189,8 @@ void OtaTab::setDevices(const QVector<Device>& devices) {
         widgets.uploadButton = new QPushButton(tr("Upload\xE2\x80\xA6"), widgets.uploadStack);
         widgets.uploadButton->setEnabled(!device.otaAddress.isEmpty());
         if (device.otaAddress.isEmpty()) {
-            widgets.uploadButton->setToolTip(tr("Set this device's OTA address in Device Settings first."));
+            widgets.uploadButton->setToolTip(
+                tr("Set this device's OTA address in Device Settings first."));
         }
         widgets.progressBar = new QProgressBar(widgets.uploadStack);
         widgets.progressBar->setRange(0, 100);
@@ -196,7 +202,8 @@ void OtaTab::setDevices(const QVector<Device>& devices) {
         uploadLayout->addWidget(widgets.uploadStack);
         m_table->setCellWidget(row, kUploadColumn, uploadContainer);
 
-        connect(widgets.uploadButton, &QPushButton::clicked, this, [this, deviceId]() { startUpload(deviceId); });
+        connect(widgets.uploadButton, &QPushButton::clicked, this,
+                [this, deviceId]() { startUpload(deviceId); });
 
         m_rowWidgets.insert(device.id, widgets);
 
@@ -247,20 +254,23 @@ void OtaTab::refreshNow() {
 }
 
 void OtaTab::onStatusChecked(const QString& deviceId, bool reachable, bool otaReady,
-                              const QString& firmwareVersion, const QString& errorMessage) {
+                             const QString& firmwareVersion, const QString& errorMessage) {
     const int row = m_rowByDeviceId.value(deviceId, -1);
-    if (row < 0) return;  // device removed since the request was sent
+    if (row < 0)
+        return;  // device removed since the request was sent
 
     if (QTableWidgetItem* firmwareItem = m_table->item(row, kFirmwareColumn)) {
         // Blanked back to the em dash when unreachable rather than left
         // showing the last version seen: this column answers "what is on
         // the device", and a device nothing can reach right now has no
         // answer to that.
-        firmwareItem->setText(reachable && !firmwareVersion.isEmpty() ? firmwareVersion : tr("\xE2\x80\x94"));
+        firmwareItem->setText(reachable && !firmwareVersion.isEmpty() ? firmwareVersion
+                                                                      : tr("\xE2\x80\x94"));
     }
 
     QTableWidgetItem* item = m_table->item(row, kStatusColumn);
-    if (item == nullptr) return;
+    if (item == nullptr)
+        return;
 
     if (!reachable) {
         item->setText(tr("Offline"));
@@ -284,7 +294,8 @@ void OtaTab::onStatusChecked(const QString& deviceId, bool reachable, bool otaRe
 
 void OtaTab::onUploadProgress(const QString& deviceId, qint64 sent, qint64 total) {
     const RowWidgets& widgets = m_rowWidgets.value(deviceId);
-    if (widgets.progressBar == nullptr) return;
+    if (widgets.progressBar == nullptr)
+        return;
 
     if (total > 0) {
         widgets.progressBar->setRange(0, 100);
@@ -298,7 +309,8 @@ void OtaTab::onUploadFinished(const QString& deviceId, bool success, const QStri
     m_uploading.remove(deviceId);
 
     const RowWidgets& widgets = m_rowWidgets.value(deviceId);
-    if (widgets.uploadButton == nullptr) return;
+    if (widgets.uploadButton == nullptr)
+        return;
 
     widgets.uploadButton->setEnabled(true);
     widgets.passwordEdit->setEnabled(true);
@@ -316,18 +328,20 @@ void OtaTab::onUploadFinished(const QString& deviceId, bool success, const QStri
 
 void OtaTab::startUpload(const QString& deviceId) {
     const int row = m_rowByDeviceId.value(deviceId, -1);
-    if (row < 0) return;
+    if (row < 0)
+        return;
     const Device& device = m_devices.at(row);
 
     if (device.otaAddress.isEmpty()) {
         QMessageBox::warning(this, tr("Firmware Upload"),
-                              tr("Set this device's OTA address in Device Settings first."));
+                             tr("Set this device's OTA address in Device Settings first."));
         return;
     }
 
-    const QString filePath =
-        QFileDialog::getOpenFileName(this, tr("Select Firmware"), QString(), tr("Firmware Binary (*.bin);;All Files (*)"));
-    if (filePath.isEmpty()) return;
+    const QString filePath = QFileDialog::getOpenFileName(
+        this, tr("Select Firmware"), QString(), tr("Firmware Binary (*.bin);;All Files (*)"));
+    if (filePath.isEmpty())
+        return;
 
     RowWidgets& widgets = m_rowWidgets[deviceId];
     widgets.uploadButton->setEnabled(false);

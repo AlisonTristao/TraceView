@@ -84,8 +84,8 @@ private:
         QProgressBar* progressBar = nullptr;
     };
 
-    void onStatusChecked(const QString& deviceId, bool reachable, bool otaReady, const QString& firmwareVersion,
-                          const QString& errorMessage);
+    void onStatusChecked(const QString& deviceId, bool reachable, bool otaReady,
+                         const QString& firmwareVersion, const QString& errorMessage);
     void onUploadProgress(const QString& deviceId, qint64 sent, qint64 total);
     void onUploadFinished(const QString& deviceId, bool success, const QString& message);
     void startUpload(const QString& deviceId);
@@ -94,11 +94,12 @@ private:
     OtaClient* m_client;
     QTimer* m_pollTimer;
 
-    QVector<Device> m_devices;                  // parallel to m_table's rows
-    QHash<QString, int> m_rowByDeviceId;         // Device::id -> row index
-    QHash<QString, RowWidgets> m_rowWidgets;     // Device::id -> that row's cell widgets
-    QHash<QString, QString> m_sessionPasswords;  // typed-but-not-cached passwords, survives setDevices()
-    QHash<QString, bool> m_uploading;            // Device::id -> upload currently in flight
+    QVector<Device> m_devices;                // parallel to m_table's rows
+    QHash<QString, int> m_rowByDeviceId;      // Device::id -> row index
+    QHash<QString, RowWidgets> m_rowWidgets;  // Device::id -> that row's cell widgets
+    QHash<QString, QString>
+        m_sessionPasswords;            // typed-but-not-cached passwords, survives setDevices()
+    QHash<QString, bool> m_uploading;  // Device::id -> upload currently in flight
 };
 
 }  // namespace traceview

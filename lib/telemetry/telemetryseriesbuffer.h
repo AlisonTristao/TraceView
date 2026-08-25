@@ -32,7 +32,9 @@ public:
     // 0 means unbounded -- not recommended for a live feed, but a safe
     // default before a widget's config has set a real capacity.
     void setCapacity(int capacity);
-    int capacity() const { return m_capacity; }
+    int capacity() const {
+        return m_capacity;
+    }
 
     // Appends one sample, trimming from the front (oldest first) to stay
     // within capacity() -- mirrors the old appendChartSample()'s trimming
@@ -40,7 +42,9 @@ public:
     void append(quint64 timestampUs, double value);
     void clear();
 
-    const QVector<Sample>& samples() const { return m_samples; }
+    const QVector<Sample>& samples() const {
+        return m_samples;
+    }
 
     // The values alone, in order. Returned by reference into a cache that
     // is rebuilt only when the samples have actually changed.

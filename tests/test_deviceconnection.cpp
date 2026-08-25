@@ -96,7 +96,7 @@ void TestDeviceConnection::setLineTerminatorIsNoopForUsbHidTransport() {
     QVERIFY(connection.serialManager() == nullptr);
 }
 
-} // namespace
+}  // namespace
 
 QTEST_MAIN(TestDeviceConnection)
 #include "test_deviceconnection.moc"

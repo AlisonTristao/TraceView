@@ -50,4 +50,4 @@ void LayersPanel::onCurrentItemChanged(QListWidgetItem* current) {
     emit itemSelected(current ? current->data(Qt::UserRole).toString() : QString());
 }
 
-} // namespace traceview
+}  // namespace traceview

@@ -1,10 +1,9 @@
 #include "workspacemanager.h"
 
-#include <algorithm>
-
 #include <QCoreApplication>
 #include <QJsonArray>
 #include <QUuid>
+#include <algorithm>
 
 namespace traceview {
 
@@ -59,8 +58,9 @@ QString WorkspaceManager::disambiguate(const QString& name) const {
     QString candidate;
     do {
         candidate = QStringLiteral("%1 %2").arg(name).arg(suffix++);
-    } while (std::any_of(m_workspaces.cbegin(), m_workspaces.cend(),
-                          [&candidate](const Workspace& workspace) { return workspace.name == candidate; }));
+    } while (std::any_of(
+        m_workspaces.cbegin(), m_workspaces.cend(),
+        [&candidate](const Workspace& workspace) { return workspace.name == candidate; }));
     return candidate;
 }
 
@@ -151,7 +151,8 @@ void WorkspaceManager::reset() {
     // WorkspaceManager is not a QObject, so tr() isn't available here; use
     // QCoreApplication::translate() with an explicit context instead, same
     // as ProjectStore's error strings.
-    m_activeId = addWorkspace(QCoreApplication::translate("WorkspaceManager", "Default"), QJsonObject());
+    m_activeId =
+        addWorkspace(QCoreApplication::translate("WorkspaceManager", "Default"), QJsonObject());
 }
 
-} // namespace traceview
+}  // namespace traceview

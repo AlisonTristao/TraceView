@@ -51,4 +51,4 @@ private:
     SerialMonitorWidget* m_serialMonitor = nullptr;
 };
 
-} // namespace traceview
+}  // namespace traceview

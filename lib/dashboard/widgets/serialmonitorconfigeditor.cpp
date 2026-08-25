@@ -8,7 +8,8 @@ namespace traceview {
 SerialMonitorConfigEditor::SerialMonitorConfigEditor(QWidget* parent) : WidgetConfigEditor(parent) {
     m_deviceCombo = new QComboBox(this);
     populateDeviceCombo(m_deviceCombo, {});
-    m_deviceCombo->setToolTip(tr("Which device this terminal's TERMINAL_IN/TERMINAL_OUT traffic is routed to."));
+    m_deviceCombo->setToolTip(
+        tr("Which device this terminal's TERMINAL_IN/TERMINAL_OUT traffic is routed to."));
 
     auto* formLayout = new QFormLayout(this);
     formLayout->setContentsMargins(0, 8, 0, 0);
@@ -43,4 +44,4 @@ void SerialMonitorConfigEditor::setAvailableDevices(const QVector<DeviceOption>&
     m_updating = wasUpdating;
 }
 
-} // namespace traceview
+}  // namespace traceview

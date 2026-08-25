@@ -1,8 +1,8 @@
+#include <bally_channels.h>
+
 #include <QCryptographicHash>
 #include <QFile>
 #include <QtTest/QtTest>
-
-#include <bally_channels.h>
 
 // bally_channels.h is the single table that answers "whose message is this,
 // and which key opens it". It exists in THREE byte-identical copies -- one in
@@ -32,7 +32,7 @@ namespace {
 // would teach people to ignore the check, which is worse than not having it.
 const char kExpectedSha256[] = "ccc633aba16ebb38e02b7eafd631637fddc58346b536f8c9c12bebfc2a39dcc5";
 
-} // namespace
+}  // namespace
 
 using namespace bally;
 
@@ -94,15 +94,16 @@ void TestBallyChannels::thisCopyMatchesTheCommittedHash() {
     QByteArray contents = file.readAll();
     contents.replace("\r\n", "\n");
 
-    const QByteArray actual = QCryptographicHash::hash(contents, QCryptographicHash::Sha256).toHex();
+    const QByteArray actual =
+        QCryptographicHash::hash(contents, QCryptographicHash::Sha256).toHex();
     QVERIFY2(actual == QByteArray(kExpectedSha256),
-             qPrintable(QStringLiteral(
-                            "bally_channels.h does not match the committed hash.\n"
-                            "  expected %1\n  actual   %2\n"
-                            "If you changed it on purpose, copy it verbatim into bally_OS and "
-                            "bally_dongle and update the expected hash in all three tests. "
-                            "There is no correct partial edit of this file.")
-                            .arg(QString::fromLatin1(kExpectedSha256), QString::fromLatin1(actual))));
+             qPrintable(
+                 QStringLiteral("bally_channels.h does not match the committed hash.\n"
+                                "  expected %1\n  actual   %2\n"
+                                "If you changed it on purpose, copy it verbatim into bally_OS and "
+                                "bally_dongle and update the expected hash in all three tests. "
+                                "There is no correct partial edit of this file.")
+                     .arg(QString::fromLatin1(kExpectedSha256), QString::fromLatin1(actual))));
 }
 
 // The property that makes the ingress rule safe to extend: a message type or

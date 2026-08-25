@@ -57,9 +57,13 @@ void TestDashboardItem::fromJsonRejectsMissingIdOrType() {
 
 void TestDashboardItem::fromJsonClampsFractionsToUnitRange() {
     bool ok = false;
-    const DashboardItem item = dashboardItemFromJson(
-        QJsonObject{{"id", "abc"}, {"type", "dummy_line"}, {"x", -0.5}, {"y", 1.5}, {"width", 0.5}, {"height", 0.5}},
-        &ok);
+    const DashboardItem item = dashboardItemFromJson(QJsonObject{{"id", "abc"},
+                                                                 {"type", "dummy_line"},
+                                                                 {"x", -0.5},
+                                                                 {"y", 1.5},
+                                                                 {"width", 0.5},
+                                                                 {"height", 0.5}},
+                                                     &ok);
 
     QVERIFY(ok);
     QCOMPARE(item.x, 0.0);
@@ -77,7 +81,7 @@ void TestDashboardItem::fromJsonDefaultsMissingOptionalFields() {
     QVERIFY(item.config.isEmpty());
 }
 
-} // namespace
+}  // namespace
 
 QTEST_MAIN(TestDashboardItem)
 #include "test_dashboarditem.moc"

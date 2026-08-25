@@ -43,4 +43,4 @@ DashboardItem dashboardItemFromJson(const QJsonObject& object, bool* ok) {
     return item;
 }
 
-} // namespace traceview
+}  // namespace traceview

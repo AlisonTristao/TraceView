@@ -3,7 +3,6 @@
 #include <QByteArray>
 #include <QMetaType>
 #include <QtGlobal>
-
 #include <btp/codec.hpp>
 
 namespace traceview {

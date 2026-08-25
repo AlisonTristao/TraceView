@@ -109,4 +109,4 @@ void HubTransport::onParentConnectionChanged(bool) {
     emit connectionStateChanged(m_open);
 }
 
-} // namespace traceview
+}  // namespace traceview

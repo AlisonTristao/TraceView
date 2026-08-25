@@ -1,7 +1,6 @@
-#include <QtTest>
-
 #include <QJsonArray>
 #include <QJsonObject>
+#include <QtTest>
 
 #include "project/workspacemanager.h"
 
@@ -117,7 +116,7 @@ void TestWorkspaceManager::toJsonFromJsonRoundTrips() {
 
     const QJsonObject serialized = manager.toJson();
 
-    manager.reset(); // scramble state before reloading, like ProjectStore::load() would
+    manager.reset();  // scramble state before reloading, like ProjectStore::load() would
     manager.fromJson(serialized);
 
     QCOMPARE(manager.workspaces().size(), 2);
@@ -148,7 +147,7 @@ void TestWorkspaceManager::fromJsonOnMalformedInputResets() {
     QCOMPARE(manager.workspaces().size(), 1);
 }
 
-} // namespace
+}  // namespace
 
 QTEST_MAIN(TestWorkspaceManager)
 #include "test_workspacemanager.moc"

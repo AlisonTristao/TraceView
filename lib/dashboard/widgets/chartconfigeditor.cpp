@@ -53,8 +53,8 @@ int spinBoxWidthFor(const QFont& font, const QString& widestText) {
     constexpr int kButtonChrome = 20;      // stylesheet.cpp: "padding-right: 20px"
     constexpr int kBorder = 2;             // stylesheet.cpp: "border: 1px solid" (both sides)
     constexpr int kExtraChromeSlack = 34;  // measured Qt/QSS shortfall — see comment above
-    return QFontMetrics(font).horizontalAdvance(widestText) + kLeftPadding + kButtonChrome + kBorder
-           + kExtraChromeSlack;
+    return QFontMetrics(font).horizontalAdvance(widestText) + kLeftPadding + kButtonChrome +
+           kBorder + kExtraChromeSlack;
 }
 
 // A small inline sub-label (e.g. "Ts", "Min") riding a shared row — kept to
@@ -75,29 +75,32 @@ void setSwatchColor(QPushButton* button, const QColor& color) {
     button->setStyleSheet(QString("background-color: %1;").arg(color.name()));
 }
 
-} // namespace
+}  // namespace
 
 ChartConfigEditor::ChartConfigEditor(QWidget* parent) : WidgetConfigEditor(parent) {
     // Populated by setAvailableDevices(); starts with just the "(No device)"
     // placeholder until MainWindow/PropertiesPanel push a real list.
     m_deviceCombo = new QComboBox(this);
     populateDeviceCombo(m_deviceCombo, {});
-    m_deviceCombo->setToolTip(tr("Which device this chart reads from -- must match the sourceId below."));
+    m_deviceCombo->setToolTip(
+        tr("Which device this chart reads from -- must match the sourceId below."));
 
     m_sourceIdEdit = new QLineEdit(this);
     m_sourceIdEdit->setReadOnly(true);
     m_sourceIdEdit->setPlaceholderText(tr("(auto)"));
     m_sourceIdEdit->setToolTip(
-        tr("BTP source_id this chart reads from -- derived from the Topic field below, shown by device name "
+        tr("BTP source_id this chart reads from -- derived from the Topic field below, shown by "
+           "device name "
            "when known."));
 
     m_topicIdEdit = new QComboBox(this);
     m_topicIdEdit->setEditable(true);
     populateTopicCombo(m_topicIdEdit, {}, QString());
     m_topicIdEdit->lineEdit()->setPlaceholderText(tr("0x0101"));
-    m_topicIdEdit->setToolTip(tr("BTP topic_id (TELEMETRY.md) this chart's series bind fields of -- pick one the "
-                                  "device has already reported (shown by name), or type a hex/decimal id by hand "
-                                  "for one it hasn't reported yet."));
+    m_topicIdEdit->setToolTip(
+        tr("BTP topic_id (TELEMETRY.md) this chart's series bind fields of -- pick one the "
+           "device has already reported (shown by name), or type a hex/decimal id by hand "
+           "for one it hasn't reported yet."));
 
     m_xAxisModeCombo = new QComboBox(this);
     m_xAxisModeCombo->addItem(tr("Samples"), "samples");
@@ -112,7 +115,8 @@ ChartConfigEditor::ChartConfigEditor(QWidget* parent) : WidgetConfigEditor(paren
     m_sampleTimeSpin->setFixedWidth(spinBoxWidthFor(m_sampleTimeSpin->font(), "100000.00 ms"));
     m_sampleTimeSpin->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
     m_sampleTimeSpin->setToolTip(
-        tr("Time between samples (Ts), not the time a frame arrives — elapsed time for N samples is Ts * N."));
+        tr("Time between samples (Ts), not the time a frame arrives — elapsed time for N samples "
+           "is Ts * N."));
 
     m_xLimitSpin = new QSpinBox(this);
     m_xLimitSpin->setRange(1, 1'000'000);
@@ -124,7 +128,8 @@ ChartConfigEditor::ChartConfigEditor(QWidget* parent) : WidgetConfigEditor(paren
     m_xLimitSpin->setFixedWidth(spinBoxWidthFor(m_xLimitSpin->font(), "1000000 pts"));
     m_xLimitSpin->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
     m_xLimitSpin->setToolTip(
-        tr("How much history the chart keeps before older data scrolls off — in samples or seconds, matching X Axis."));
+        tr("How much history the chart keeps before older data scrolls off — in samples or "
+           "seconds, matching X Axis."));
 
     m_yAxisModeCombo = new QComboBox(this);
     m_yAxisModeCombo->addItem(tr("Auto"), "auto");
@@ -197,13 +202,15 @@ ChartConfigEditor::ChartConfigEditor(QWidget* parent) : WidgetConfigEditor(paren
     divider->setFixedHeight(1);
 
     m_seriesTable = new QTableWidget(0, kColumnCount, this);
-    m_seriesTable->setHorizontalHeaderLabels({tr("Name"), tr("Field ID"), tr("Color"), tr("Style"), ""});
+    m_seriesTable->setHorizontalHeaderLabels(
+        {tr("Name"), tr("Field ID"), tr("Color"), tr("Style"), ""});
     m_seriesTable->verticalHeader()->setVisible(false);
     // Every data column stays Interactive (the header's default) so the user
     // can drag any of them wider — Name included, for series with long
     // names — at the expense of the others. Only Remove is pinned to its
     // button's size: it never needs to grow or shrink.
-    m_seriesTable->horizontalHeader()->setSectionResizeMode(kRemoveColumn, QHeaderView::ResizeToContents);
+    m_seriesTable->horizontalHeader()->setSectionResizeMode(kRemoveColumn,
+                                                            QHeaderView::ResizeToContents);
     m_seriesTable->setColumnWidth(kNameColumn, 150);
     m_seriesTable->setColumnWidth(kFieldIdColumn, spinBoxWidthFor(m_seriesTable->font(), "65535"));
     m_seriesTable->setColumnWidth(kColorColumn, 56);
@@ -279,7 +286,8 @@ ChartConfigEditor::ChartConfigEditor(QWidget* parent) : WidgetConfigEditor(paren
         updateAxisRowsVisibility();
         emitChanged();
     });
-    connect(m_sampleTimeSpin, &QDoubleSpinBox::valueChanged, this, [this](double) { emitChanged(); });
+    connect(m_sampleTimeSpin, &QDoubleSpinBox::valueChanged, this,
+            [this](double) { emitChanged(); });
     connect(m_xLimitSpin, &QSpinBox::valueChanged, this, [this](int) { emitChanged(); });
     connect(m_yAxisModeCombo, &QComboBox::currentIndexChanged, this, [this](int) {
         updateAxisRowsVisibility();
@@ -289,7 +297,8 @@ ChartConfigEditor::ChartConfigEditor(QWidget* parent) : WidgetConfigEditor(paren
     connect(m_yMaxSpin, &QDoubleSpinBox::valueChanged, this, [this](double) { emitChanged(); });
     connect(m_yUnitEdit, &QLineEdit::editingFinished, this, [this]() { emitChanged(); });
     connect(m_gridCheck, &QCheckBox::toggled, this, [this](bool) { emitChanged(); });
-    connect(m_seriesTable, &QTableWidget::itemChanged, this, [this](QTableWidgetItem*) { emitChanged(); });
+    connect(m_seriesTable, &QTableWidget::itemChanged, this,
+            [this](QTableWidgetItem*) { emitChanged(); });
 
     updateAxisRowsVisibility();
 }
@@ -350,13 +359,16 @@ QJsonObject ChartConfigEditor::config() const {
         const QTableWidgetItem* nameItem = m_seriesTable->item(row, kNameColumn);
         series["name"] = nameItem ? nameItem->text() : QString();
 
-        if (auto* fieldIdCombo = qobject_cast<QComboBox*>(m_seriesTable->cellWidget(row, kFieldIdColumn))) {
+        if (auto* fieldIdCombo =
+                qobject_cast<QComboBox*>(m_seriesTable->cellWidget(row, kFieldIdColumn))) {
             series["fieldId"] = fieldIdCombo->property("fieldId").toInt();
         }
-        if (auto* colorButton = qobject_cast<QPushButton*>(m_seriesTable->cellWidget(row, kColorColumn))) {
+        if (auto* colorButton =
+                qobject_cast<QPushButton*>(m_seriesTable->cellWidget(row, kColorColumn))) {
             series["color"] = swatchColor(colorButton).name();
         }
-        if (auto* styleCombo = qobject_cast<QComboBox*>(m_seriesTable->cellWidget(row, kStyleColumn))) {
+        if (auto* styleCombo =
+                qobject_cast<QComboBox*>(m_seriesTable->cellWidget(row, kStyleColumn))) {
             series["style"] = kStyleIds.value(styleCombo->currentIndex(), kStyleIds.first());
         }
         seriesArray.append(series);
@@ -372,19 +384,22 @@ void ChartConfigEditor::addSeriesRow(const QJsonObject& series) {
     const int row = m_seriesTable->rowCount();
     m_seriesTable->insertRow(row);
 
-    auto* nameItem = new QTableWidgetItem(series.value("name").toString(tr("Series %1").arg(row + 1)));
+    auto* nameItem =
+        new QTableWidgetItem(series.value("name").toString(tr("Series %1").arg(row + 1)));
     m_seriesTable->setItem(row, kNameColumn, nameItem);
 
     auto* fieldIdCombo = new QComboBox();
     fieldIdCombo->setEditable(true);
     const int fieldId = series.value("fieldId").toInt(row + 1);
-    populateFieldCombo(fieldIdCombo, resolveCatalogTopicFields(m_devices, m_deviceCombo->currentData().toString(),
-                                                                formatHexId(m_sourceId, 8), formatHexId(m_topicId, 4)));
+    populateFieldCombo(fieldIdCombo, resolveCatalogTopicFields(
+                                         m_devices, m_deviceCombo->currentData().toString(),
+                                         formatHexId(m_sourceId, 8), formatHexId(m_topicId, 4)));
     fieldIdCombo->setProperty("fieldId", fieldId);
     fieldIdCombo->setCurrentText(QString::number(fieldId));
-    fieldIdCombo->setToolTip(tr("Which field of the bound topic this series plots -- pick one the device has "
-                                 "already reported (shown by name), or type a numeric id by hand for one it "
-                                 "hasn't reported yet."));
+    fieldIdCombo->setToolTip(
+        tr("Which field of the bound topic this series plots -- pick one the device has "
+           "already reported (shown by name), or type a numeric id by hand for one it "
+           "hasn't reported yet."));
     connect(fieldIdCombo, &QComboBox::activated, this, [this, fieldIdCombo](int index) {
         fieldIdCombo->setProperty("fieldId", fieldIdCombo->itemData(index));
         emitChanged();
@@ -407,10 +422,12 @@ void ChartConfigEditor::addSeriesRow(const QJsonObject& series) {
     // fits the active theme and differs from the previous row. Existing rows
     // with an explicit color are untouched.
     const QVector<QColor>& seriesPalette = ThemeManager::instance().currentTheme().series;
-    const QColor fallback = seriesPalette.isEmpty() ? QColor("#3B82F6") : seriesPalette[row % seriesPalette.size()];
+    const QColor fallback =
+        seriesPalette.isEmpty() ? QColor("#3B82F6") : seriesPalette[row % seriesPalette.size()];
     setSwatchColor(colorButton, QColor(series.value("color").toString(fallback.name())));
     connect(colorButton, &QPushButton::clicked, this, [this, colorButton]() {
-        const QColor chosen = QColorDialog::getColor(swatchColor(colorButton), this, tr("Series Color"));
+        const QColor chosen =
+            QColorDialog::getColor(swatchColor(colorButton), this, tr("Series Color"));
         if (!chosen.isValid()) {
             return;
         }
@@ -423,9 +440,10 @@ void ChartConfigEditor::addSeriesRow(const QJsonObject& series) {
     // Built locally (rather than a static list) so tr() can produce a real
     // translation — see the kStyleIds comment above for why.
     const QStringList styleLabels = {tr("Solid"),    tr("Dashed"), tr("Dotted"),
-                                      tr("Dash-Dot"), tr("Cross"),  tr("Asterisk")};
+                                     tr("Dash-Dot"), tr("Cross"),  tr("Asterisk")};
     styleCombo->addItems(styleLabels);
-    styleCombo->setCurrentIndex(qMax(0, kStyleIds.indexOf(series.value("style").toString("solid"))));
+    styleCombo->setCurrentIndex(
+        qMax(0, kStyleIds.indexOf(series.value("style").toString("solid"))));
     connect(styleCombo, &QComboBox::currentIndexChanged, this, [this](int) { emitChanged(); });
     m_seriesTable->setCellWidget(row, kStyleColumn, styleCombo);
 
@@ -463,10 +481,12 @@ void ChartConfigEditor::updateAxisRowsVisibility() {
 }
 
 void ChartConfigEditor::refreshSeriesFieldOptions() {
-    const QVector<CatalogTopicField> fields = resolveCatalogTopicFields(
-        m_devices, m_deviceCombo->currentData().toString(), formatHexId(m_sourceId, 8), formatHexId(m_topicId, 4));
+    const QVector<CatalogTopicField> fields =
+        resolveCatalogTopicFields(m_devices, m_deviceCombo->currentData().toString(),
+                                  formatHexId(m_sourceId, 8), formatHexId(m_topicId, 4));
     for (int row = 0; row < m_seriesTable->rowCount(); ++row) {
-        if (auto* fieldIdCombo = qobject_cast<QComboBox*>(m_seriesTable->cellWidget(row, kFieldIdColumn))) {
+        if (auto* fieldIdCombo =
+                qobject_cast<QComboBox*>(m_seriesTable->cellWidget(row, kFieldIdColumn))) {
             populateFieldCombo(fieldIdCombo, fields);
         }
     }
@@ -491,8 +511,8 @@ void ChartConfigEditor::emitChanged() {
 
 void ChartConfigEditor::updateIdentityDisplay() {
     const QString deviceId = m_deviceCombo->currentData().toString();
-    const QString topicName =
-        resolveCatalogTopicName(m_devices, deviceId, formatHexId(m_sourceId, 8), formatHexId(m_topicId, 4));
+    const QString topicName = resolveCatalogTopicName(
+        m_devices, deviceId, formatHexId(m_sourceId, 8), formatHexId(m_topicId, 4));
     m_topicIdEdit->setCurrentText(topicName.isEmpty() ? formatHexId(m_topicId, 4) : topicName);
 
     if (m_sourceId == 0) {
@@ -504,4 +524,4 @@ void ChartConfigEditor::updateIdentityDisplay() {
     refreshSeriesFieldOptions();
 }
 
-} // namespace traceview
+}  // namespace traceview

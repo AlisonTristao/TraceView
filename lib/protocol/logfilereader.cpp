@@ -2,14 +2,15 @@
 
 #include <QFile>
 #include <QIODevice>
-
 #include <btp/codec.hpp>
 
 namespace traceview {
 
 namespace {
 
-quint16 readU16LE(const std::uint8_t* bytes) { return quint16(bytes[0]) | (quint16(bytes[1]) << 8); }
+quint16 readU16LE(const std::uint8_t* bytes) {
+    return quint16(bytes[0]) | (quint16(bytes[1]) << 8);
+}
 
 LogEntry toEntry(const btp::Header& header, const QByteArray& payload) {
     LogEntry entry;
@@ -66,12 +67,14 @@ bool LogFileReader::load(const QString& filePath) {
             // Truncated trailing frame -- e.g. the robot lost power
             // mid-flush. Whatever parsed before this point is still kept;
             // note it rather than silently dropping it.
-            m_lastError = QStringLiteral("Truncated frame at end of file (%1 bytes ignored)").arg(total - offset);
+            m_lastError = QStringLiteral("Truncated frame at end of file (%1 bytes ignored)")
+                              .arg(total - offset);
             break;
         }
 
         btp::DecodedFrame decoded;
-        const btp::Error error = btp::decode(data + offset, frameSize, btp::TransportProfile::EspNow, &decoded);
+        const btp::Error error =
+            btp::decode(data + offset, frameSize, btp::TransportProfile::EspNow, &decoded);
         offset += frameSize;
 
         if (error != btp::Error::Ok) {
@@ -85,7 +88,8 @@ bool LogFileReader::load(const QString& filePath) {
             continue;
         }
 
-        const QByteArray payload(reinterpret_cast<const char*>(decoded.payload.data), int(decoded.payload.size));
+        const QByteArray payload(reinterpret_cast<const char*>(decoded.payload.data),
+                                 int(decoded.payload.size));
 
         if (decoded.header.fragment_count <= 1) {
             dropPending();
@@ -93,10 +97,11 @@ bool LogFileReader::load(const QString& filePath) {
             continue;
         }
 
-        const bool extendsPending = hasPending && pendingHeader.source_id == decoded.header.source_id &&
-                                     pendingHeader.boot_id == decoded.header.boot_id &&
-                                     pendingHeader.sequence == decoded.header.sequence &&
-                                     decoded.header.fragment_index == pendingNextIndex;
+        const bool extendsPending = hasPending &&
+                                    pendingHeader.source_id == decoded.header.source_id &&
+                                    pendingHeader.boot_id == decoded.header.boot_id &&
+                                    pendingHeader.sequence == decoded.header.sequence &&
+                                    decoded.header.fragment_index == pendingNextIndex;
 
         if (decoded.header.fragment_index == 0) {
             dropPending();

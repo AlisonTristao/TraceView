@@ -1,7 +1,6 @@
-#include <QtTest>
-
 #include <QHash>
 #include <QString>
+#include <QtTest>
 
 #include "devices/hubpeeraccumulator.h"
 
@@ -23,8 +22,8 @@ constexpr quint16 kLastSeenId = 5;
 constexpr quint16 kOnlineId = 6;
 
 QHash<quint16, QString> dongleSchema() {
-    return {{kChannelId, "channel"}, {kSourceIdId, "source_id"}, {kBootIdId, "boot_id"},
-            {kMacId, "mac"},          {kLastSeenId, "last_seen_ms"}, {kOnlineId, "online"}};
+    return {{kChannelId, "channel"}, {kSourceIdId, "source_id"},    {kBootIdId, "boot_id"},
+            {kMacId, "mac"},         {kLastSeenId, "last_seen_ms"}, {kOnlineId, "online"}};
 }
 
 // Feeds one whole column, the way TelemetryFieldRouter does: ascending
@@ -40,7 +39,8 @@ void feedTwoPeerSample(HubPeerAccumulator& accumulator) {
     feedColumn(accumulator, kChannelId, {0, 1});
     feedColumn(accumulator, kSourceIdId, {double(0x0A0A0A0Au), double(0x0B0B0B0Bu)});
     feedColumn(accumulator, kBootIdId, {7, 9});
-    feedColumn(accumulator, kMacId, {0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06});
+    feedColumn(accumulator, kMacId,
+               {0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06});
     feedColumn(accumulator, kLastSeenId, {0, 12000});
     feedColumn(accumulator, kOnlineId, {1, 0});
 }
@@ -90,11 +90,11 @@ void TestHubPeerAccumulator::resolveIgnoresFieldIdNumbersAndUsesNamesOnly() {
     // unaffected.
     HubPeerAccumulator accumulator;
     QVERIFY(accumulator.resolve({{70, "channel"},
-                                  {71, "source_id"},
-                                  {72, "boot_id"},
-                                  {73, "mac"},
-                                  {74, "last_seen_ms"},
-                                  {75, "online"}}));
+                                 {71, "source_id"},
+                                 {72, "boot_id"},
+                                 {73, "mac"},
+                                 {74, "last_seen_ms"},
+                                 {75, "online"}}));
 
     feedColumn(accumulator, 70, {4});
     feedColumn(accumulator, 71, {double(0x12345678u)});

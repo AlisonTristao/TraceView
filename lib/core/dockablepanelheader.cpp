@@ -77,4 +77,4 @@ void DockablePanelHeader::mouseReleaseEvent(QMouseEvent* event) {
     QWidget::mouseReleaseEvent(event);
 }
 
-} // namespace traceview
+}  // namespace traceview

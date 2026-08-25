@@ -36,7 +36,7 @@ QByteArray buildAnswerMessage(const QString& name, quint32 address) {
     message.append(char(0));
     message.append(char(1));  // TYPE = A
     message.append(char(0));
-    message.append(char(1));  // CLASS = IN
+    message.append(char(1));                 // CLASS = IN
     message.append(QByteArray(4, char(0)));  // TTL, value irrelevant to parseAAnswers
     message.append(char(0));
     message.append(char(4));  // RDLENGTH = 4
@@ -64,7 +64,8 @@ void TestMdnsResolver::buildQueryEncodesHeaderAndQName() {
     const QByteArray packet = buildQuery(QStringLiteral("robot1.local"));
 
     // Header: ID=0, flags=0, QDCOUNT=1, ANCOUNT=NSCOUNT=ARCOUNT=0.
-    QCOMPARE(packet.size(), 12 + (1 + 6) + (1 + 5) + 1 + 4);  // "robot1" + "local" + root + QTYPE/QCLASS
+    QCOMPARE(packet.size(),
+             12 + (1 + 6) + (1 + 5) + 1 + 4);  // "robot1" + "local" + root + QTYPE/QCLASS
     QCOMPARE(quint8(packet.at(4)), quint8(0));
     QCOMPARE(quint8(packet.at(5)), quint8(1));
     for (int i : {0, 1, 2, 3, 6, 7, 8, 9, 10, 11}) {
@@ -100,7 +101,8 @@ void TestMdnsResolver::parseAAnswersFindsPlainEncodedRecord() {
 
     QCOMPARE(answers.size(), 1);
     QVERIFY(answers.contains(QStringLiteral("robot1.local")));
-    QCOMPARE(answers.value(QStringLiteral("robot1.local")), QHostAddress(QStringLiteral("192.168.1.5")));
+    QCOMPARE(answers.value(QStringLiteral("robot1.local")),
+             QHostAddress(QStringLiteral("192.168.1.5")));
 }
 
 void TestMdnsResolver::parseAAnswersWidensEveryOctetBeforeShifting() {
@@ -114,13 +116,15 @@ void TestMdnsResolver::parseAAnswersWidensEveryOctetBeforeShifting() {
     const QHash<QString, QHostAddress> answers =
         parseAAnswers(buildAnswerMessage(QStringLiteral("robot1.local"), 0xFFFFFFFFu));
 
-    QCOMPARE(answers.value(QStringLiteral("robot1.local")), QHostAddress(QStringLiteral("255.255.255.255")));
+    QCOMPARE(answers.value(QStringLiteral("robot1.local")),
+             QHostAddress(QStringLiteral("255.255.255.255")));
 
     // The high-bit-set boundary itself, one past the last address that fits
     // without overflowing.
     const QHash<QString, QHostAddress> boundary =
         parseAAnswers(buildAnswerMessage(QStringLiteral("robot1.local"), 0x80000001u));
-    QCOMPARE(boundary.value(QStringLiteral("robot1.local")), QHostAddress(QStringLiteral("128.0.0.1")));
+    QCOMPARE(boundary.value(QStringLiteral("robot1.local")),
+             QHostAddress(QStringLiteral("128.0.0.1")));
 }
 
 void TestMdnsResolver::parseAAnswersFollowsCompressionPointer() {
@@ -156,7 +160,8 @@ void TestMdnsResolver::parseAAnswersFollowsCompressionPointer() {
 
     const QHash<QString, QHostAddress> answers = parseAAnswers(message);
     QCOMPARE(answers.size(), 1);
-    QCOMPARE(answers.value(QStringLiteral("robot1.local")), QHostAddress(QStringLiteral("10.0.0.42")));
+    QCOMPARE(answers.value(QStringLiteral("robot1.local")),
+             QHostAddress(QStringLiteral("10.0.0.42")));
 }
 
 void TestMdnsResolver::parseAAnswersIgnoresNonARecords() {

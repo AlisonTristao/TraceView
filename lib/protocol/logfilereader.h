@@ -34,12 +34,18 @@ public:
     // already durable on disk.
     bool load(const QString& filePath);
 
-    QVector<LogEntry> entries() const { return m_entries; }
-    QString lastError() const { return m_lastError; }
+    QVector<LogEntry> entries() const {
+        return m_entries;
+    }
+    QString lastError() const {
+        return m_lastError;
+    }
     // Frames that failed to decode (bad magic/version/CRC/etc.) or a
     // fragment that didn't extend the record being accumulated -- surfaced
     // as a count rather than failing load() outright.
-    int skippedFrameCount() const { return m_skippedFrameCount; }
+    int skippedFrameCount() const {
+        return m_skippedFrameCount;
+    }
 
 private:
     QVector<LogEntry> m_entries;

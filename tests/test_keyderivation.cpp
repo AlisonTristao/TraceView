@@ -38,7 +38,7 @@ QString hex(const QByteArray& bytes) {
     return QString::fromLatin1(bytes.toHex());
 }
 
-} // namespace
+}  // namespace
 
 class TestKeyDerivation : public QObject {
     Q_OBJECT

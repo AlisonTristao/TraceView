@@ -25,7 +25,17 @@ public:
     // Which part of the border was grabbed. The 4 edges resize a single
     // dimension (anchoring the opposite edge in place); the 4 corners
     // resize both dimensions at once.
-    enum class ResizeHandle { None, Top, Bottom, Left, Right, TopLeft, TopRight, BottomLeft, BottomRight };
+    enum class ResizeHandle {
+        None,
+        Top,
+        Bottom,
+        Left,
+        Right,
+        TopLeft,
+        TopRight,
+        BottomLeft,
+        BottomRight
+    };
 
     // typeId is only used to pick a small header icon (see drawTypeIcon() in
     // the .cpp) — the cell doesn't otherwise care what kind of widget it
@@ -33,19 +43,27 @@ public:
     DashboardCell(const QString& itemId, const QString& typeId, const QString& title,
                   DashboardWidget* content, QWidget* parent = nullptr);
 
-    QString itemId() const { return m_itemId; }
-    DashboardWidget* content() const { return m_content; }
+    QString itemId() const {
+        return m_itemId;
+    }
+    DashboardWidget* content() const {
+        return m_content;
+    }
 
     // False for a content widget that opts out of the header (see
     // DashboardWidget::wantsCellHeader()) — DashboardGrid uses this to
     // allow a much smaller minimum size when resizing, since there's no
     // 24px header to keep legible.
-    bool hasHeader() const { return headerHeight() > 0; }
+    bool hasHeader() const {
+        return headerHeight() > 0;
+    }
 
     void setTitle(const QString& title);
     void setEditMode(bool enabled);
     void setSelected(bool selected);
-    bool isSelected() const { return m_selected; }
+    bool isSelected() const {
+        return m_selected;
+    }
     // False while part of a multi-selection/group (see
     // DashboardGrid::updateResizableFlags()) -- hides the resize grip and
     // disables handleAt() so a multi/group drag can only move, not resize.
@@ -67,7 +85,8 @@ signals:
     void dragStarted(const QString& itemId, const QPoint& globalPos);
     void dragMoved(const QString& itemId, const QPoint& globalPos);
     void dragFinished(const QString& itemId, const QPoint& globalPos);
-    void resizeStarted(const QString& itemId, const QPoint& globalPos, DashboardCell::ResizeHandle handle);
+    void resizeStarted(const QString& itemId, const QPoint& globalPos,
+                       DashboardCell::ResizeHandle handle);
     void resizeMoved(const QString& itemId, const QPoint& globalPos);
     void resizeFinished(const QString& itemId, const QPoint& globalPos);
     // modifiers is checked for Qt::ControlModifier by DashboardGrid to
@@ -123,4 +142,4 @@ private:
     QVariantAnimation m_selectionAnim;
 };
 
-} // namespace traceview
+}  // namespace traceview

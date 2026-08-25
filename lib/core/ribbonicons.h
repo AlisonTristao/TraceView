@@ -50,4 +50,4 @@ QIcon makeTrashIcon(const QColor& color, int size = kRibbonIconSize);
 // the Logs tab's "Open Log File..." affordance.
 QIcon makeFolderIcon(const QColor& color);
 
-} // namespace traceview
+}  // namespace traceview

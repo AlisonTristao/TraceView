@@ -23,7 +23,9 @@ public:
 
     // Whether the pin toggle is engaged -- MainWindow keeps the panel visible
     // even with no selection while this is true.
-    bool isPinned() const { return m_pinned; }
+    bool isPinned() const {
+        return m_pinned;
+    }
 
     // The panel's fixed size along its docked axis: width when docked
     // left/right, height when docked top/bottom. Also used as the starting
@@ -34,7 +36,9 @@ public:
     // of edges.
     virtual int preferredThickness() const = 0;
 
-    DockablePanelHeader* header() const { return m_header; }
+    DockablePanelHeader* header() const {
+        return m_header;
+    }
 
 signals:
     void pinnedChanged(bool pinned);
@@ -42,11 +46,15 @@ signals:
 protected:
     // Subclasses add their real content here instead of building their own
     // outer QVBoxLayout.
-    QVBoxLayout* bodyLayout() const { return m_bodyLayout; }
+    QVBoxLayout* bodyLayout() const {
+        return m_bodyLayout;
+    }
     // The outer layout (header + bodyLayout()) -- exposed only so a subclass
     // that wants its content flush against the edges (LayersPanel) can zero
     // out its margins, matching each panel's pre-refactor look.
-    QVBoxLayout* mainLayout() const { return m_mainLayout; }
+    QVBoxLayout* mainLayout() const {
+        return m_mainLayout;
+    }
 
 private:
     void onPinToggled(bool checked);
@@ -58,4 +66,4 @@ private:
     bool m_pinned = false;
 };
 
-} // namespace traceview
+}  // namespace traceview

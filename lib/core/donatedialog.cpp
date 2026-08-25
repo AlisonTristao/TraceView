@@ -37,7 +37,8 @@ quint16 crc16Ccitt(const QByteArray& data) {
     for (unsigned char byte : data) {
         crc ^= static_cast<quint16>(byte) << 8;
         for (int bit = 0; bit < 8; ++bit) {
-            crc = (crc & 0x8000) ? static_cast<quint16>((crc << 1) ^ 0x1021) : static_cast<quint16>(crc << 1);
+            crc = (crc & 0x8000) ? static_cast<quint16>((crc << 1) ^ 0x1021)
+                                 : static_cast<quint16>(crc << 1);
         }
     }
     return crc;
@@ -50,20 +51,20 @@ quint16 crc16Ccitt(const QByteArray& data) {
 QString buildPixPayload() {
     const QString merchantAccount =
         emvField("00", "BR.GOV.BCB.PIX") + emvField("01", QString::fromLatin1(kPixKeyPayload));
-    const QString additionalData = emvField("05", "***"); // no fixed reference/txid
+    const QString additionalData = emvField("05", "***");  // no fixed reference/txid
 
     QString payload;
-    payload += emvField("00", "01");   // Payload Format Indicator
-    payload += emvField("01", "11");   // Point of Initiation Method: static/reusable
+    payload += emvField("00", "01");  // Payload Format Indicator
+    payload += emvField("01", "11");  // Point of Initiation Method: static/reusable
     payload += emvField("26", merchantAccount);
-    payload += emvField("52", "0000"); // Merchant Category Code (unclassified)
-    payload += emvField("53", "986");  // Transaction Currency: BRL
+    payload += emvField("52", "0000");  // Merchant Category Code (unclassified)
+    payload += emvField("53", "986");   // Transaction Currency: BRL
     payload += emvField("58", "BR");
     payload += emvField("59", QString::fromLatin1(kMerchantName));
     payload += emvField("60", QString::fromLatin1(kMerchantCity));
     payload += emvField("62", additionalData);
 
-    payload += "6304"; // CRC id + length; value appended once known
+    payload += "6304";  // CRC id + length; value appended once known
     const quint16 crc = crc16Ccitt(payload.toLatin1());
     payload += QString("%1").arg(crc, 4, 16, QLatin1Char('0')).toUpper();
     return payload;
@@ -88,17 +89,17 @@ QPixmap renderQrCode(const qrcodegen::QrCode& qr, int scale = 8, int border = 4)
     return QPixmap::fromImage(image);
 }
 
-} // namespace
+}  // namespace
 
 DonateDialog::DonateDialog(QWidget* parent) : QDialog(parent) {
     setWindowTitle(tr("Support TraceView"));
     setMinimumWidth(360);
 
-    const qrcodegen::QrCode qr =
-        qrcodegen::QrCode::encodeText(buildPixPayload().toLatin1().constData(), qrcodegen::QrCode::Ecc::MEDIUM);
+    const qrcodegen::QrCode qr = qrcodegen::QrCode::encodeText(
+        buildPixPayload().toLatin1().constData(), qrcodegen::QrCode::Ecc::MEDIUM);
 
-    auto* phraseLabel =
-        new QLabel(tr("If TraceView has helped you, a little coffee via Pix is always welcome."), this);
+    auto* phraseLabel = new QLabel(
+        tr("If TraceView has helped you, a little coffee via Pix is always welcome."), this);
     phraseLabel->setWordWrap(true);
     phraseLabel->setAlignment(Qt::AlignHCenter);
 
@@ -137,4 +138,4 @@ DonateDialog::DonateDialog(QWidget* parent) : QDialog(parent) {
     layout->addWidget(buttons);
 }
 
-} // namespace traceview
+}  // namespace traceview

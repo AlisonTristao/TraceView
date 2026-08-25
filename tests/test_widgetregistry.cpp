@@ -1,5 +1,4 @@
 #include <QtTest>
-
 #include <memory>
 
 #include "dashboard/dashboardwidget.h"
@@ -22,8 +21,8 @@ private slots:
 
 void TestWidgetRegistry::knownBuiltinTypesAreRegistered() {
     WidgetRegistry& registry = WidgetRegistry::instance();
-    const QStringList knownIds = {"dummy_line",  "dummy_bar",    "dummy_gauge", "serial_monitor",
-                                   "push_button", "toggle_switch", "slider"};
+    const QStringList knownIds = {"dummy_line",  "dummy_bar",     "dummy_gauge", "serial_monitor",
+                                  "push_button", "toggle_switch", "slider"};
     for (const QString& typeId : knownIds) {
         QVERIFY2(!registry.displayName(typeId).isEmpty(), qPrintable(typeId));
         std::unique_ptr<DashboardWidget> widget(registry.create(typeId, nullptr));
@@ -44,13 +43,14 @@ void TestWidgetRegistry::registerTypeIsNoOpForDuplicateId() {
     const int before = registry.availableTypes().size();
     const QString originalName = registry.displayName("dummy_line");
 
-    registry.registerType({"dummy_line", "Should Be Ignored", [](QWidget*) -> DashboardWidget* { return nullptr; }});
+    registry.registerType(
+        {"dummy_line", "Should Be Ignored", [](QWidget*) -> DashboardWidget* { return nullptr; }});
 
     QCOMPARE(registry.availableTypes().size(), before);
     QCOMPARE(registry.displayName("dummy_line"), originalName);
 }
 
-} // namespace
+}  // namespace
 
 QTEST_MAIN(TestWidgetRegistry)
 #include "test_widgetregistry.moc"

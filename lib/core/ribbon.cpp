@@ -42,7 +42,8 @@ Ribbon::Ribbon(QWidget* parent) : QWidget(parent) {
     connect(m_tabBar, &RibbonTabBar::tabCloseRequested, this, &Ribbon::tabCloseRequested);
 }
 
-int Ribbon::addTab(const QString& label, QWidget* page, bool enabled, const QString& toolTip, bool closable) {
+int Ribbon::addTab(const QString& label, QWidget* page, bool enabled, const QString& toolTip,
+                   bool closable) {
     m_stack->addWidget(page);
     const int index = m_tabBar->addTab(label);
     m_tabBar->setTabEnabled(index, enabled);
@@ -87,7 +88,8 @@ QWidget* Ribbon::createButtonGroup(QWidget* parent, const QList<QAction*>& actio
     frame->setObjectName("ribbonGroup");
     frame->setFixedHeight(kRibbonGroupFrameHeight);
     auto* layout = new QHBoxLayout(frame);
-    layout->setContentsMargins(kRibbonGroupPadding, kRibbonGroupPadding, kRibbonGroupPadding, kRibbonGroupPadding);
+    layout->setContentsMargins(kRibbonGroupPadding, kRibbonGroupPadding, kRibbonGroupPadding,
+                               kRibbonGroupPadding);
     layout->setSpacing(kRibbonGroupPadding);
 
     for (QAction* action : actions) {
@@ -102,4 +104,4 @@ QWidget* Ribbon::createButtonGroup(QWidget* parent, const QList<QAction*>& actio
     return frame;
 }
 
-} // namespace traceview
+}  // namespace traceview

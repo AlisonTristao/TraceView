@@ -67,7 +67,7 @@ void TestUsbHidManager::availableDevicesDoesNotCrash() {
     QVERIFY(true);
 }
 
-} // namespace
+}  // namespace
 
 QTEST_MAIN(TestUsbHidManager)
 #include "test_usbhidmanager.moc"

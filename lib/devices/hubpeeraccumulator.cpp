@@ -22,7 +22,9 @@ QString formatMac(const QVector<double>& macColumn, int peerIndex) {
         if (i > 0) {
             mac += QLatin1Char(':');
         }
-        mac += QStringLiteral("%1").arg(quint8(macColumn.at(base + i)), 2, 16, QLatin1Char('0')).toUpper();
+        mac += QStringLiteral("%1")
+                   .arg(quint8(macColumn.at(base + i)), 2, 16, QLatin1Char('0'))
+                   .toUpper();
     }
     return mac;
 }
@@ -30,8 +32,8 @@ QString formatMac(const QVector<double>& macColumn, int peerIndex) {
 }  // namespace
 
 QVector<QString> HubPeerAccumulator::fieldNames() {
-    return {QStringLiteral("channel"),      QStringLiteral("source_id"), QStringLiteral("boot_id"),
-            QStringLiteral("mac"),          QStringLiteral("last_seen_ms"), QStringLiteral("online")};
+    return {QStringLiteral("channel"), QStringLiteral("source_id"),    QStringLiteral("boot_id"),
+            QStringLiteral("mac"),     QStringLiteral("last_seen_ms"), QStringLiteral("online")};
 }
 
 bool HubPeerAccumulator::resolve(const QHash<quint16, QString>& fieldIdToName) {

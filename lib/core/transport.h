@@ -49,4 +49,4 @@ signals:
     void errorOccurred(const QString& message);
 };
 
-} // namespace traceview
+}  // namespace traceview

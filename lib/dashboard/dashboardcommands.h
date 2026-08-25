@@ -70,7 +70,7 @@ private:
 class MoveWidgetsCommand : public QUndoCommand {
 public:
     MoveWidgetsCommand(DashboardGrid* grid, const QMap<QString, QPointF>& fromPositions,
-                        const QMap<QString, QPointF>& toPositions);
+                       const QMap<QString, QPointF>& toPositions);
 
     void undo() override;
     void redo() override;
@@ -87,7 +87,7 @@ public:
     // resizing from a top/left edge or corner moves the anchored position
     // along with the size, not just the size.
     ResizeWidgetCommand(DashboardGrid* grid, const QString& itemId, const QRectF& fromGeometry,
-                         const QRectF& toGeometry);
+                        const QRectF& toGeometry);
 
     void undo() override;
     void redo() override;
@@ -102,7 +102,7 @@ private:
 class RenameWidgetCommand : public QUndoCommand {
 public:
     RenameWidgetCommand(DashboardGrid* grid, const QString& itemId, const QString& fromName,
-                         const QString& toName);
+                        const QString& toName);
 
     void undo() override;
     void redo() override;
@@ -116,7 +116,8 @@ private:
 
 class SetItemKeyCommand : public QUndoCommand {
 public:
-    SetItemKeyCommand(DashboardGrid* grid, const QString& itemId, const QString& fromKey, const QString& toKey);
+    SetItemKeyCommand(DashboardGrid* grid, const QString& itemId, const QString& fromKey,
+                      const QString& toKey);
 
     void undo() override;
     void redo() override;
@@ -131,7 +132,7 @@ private:
 class SetItemConfigCommand : public QUndoCommand {
 public:
     SetItemConfigCommand(DashboardGrid* grid, const QString& itemId, const QJsonObject& fromConfig,
-                          const QJsonObject& toConfig);
+                         const QJsonObject& toConfig);
 
     void undo() override;
     void redo() override;
@@ -146,7 +147,7 @@ private:
 class ChangeWidgetTypeCommand : public QUndoCommand {
 public:
     ChangeWidgetTypeCommand(DashboardGrid* grid, const QString& itemId, const QString& fromTypeId,
-                             const QString& toTypeId);
+                            const QString& toTypeId);
 
     void undo() override;
     void redo() override;
@@ -164,7 +165,7 @@ public:
     // order (see DashboardGrid::layerEntries()). label becomes the command's
     // text (e.g. "Bring to Front"), shown in the Undo/Redo action.
     ChangeZOrderCommand(DashboardGrid* grid, const QString& itemId, int fromIndex, int toIndex,
-                         const QString& label);
+                        const QString& label);
 
     void undo() override;
     void redo() override;
@@ -183,7 +184,7 @@ private:
 class GroupItemsCommand : public QUndoCommand {
 public:
     GroupItemsCommand(DashboardGrid* grid, const QMap<QString, QString>& previousGroupIds,
-                       const QString& newGroupId);
+                      const QString& newGroupId);
 
     void undo() override;
     void redo() override;
@@ -208,4 +209,4 @@ private:
     QMap<QString, QString> m_previousGroupIds;
 };
 
-} // namespace traceview
+}  // namespace traceview

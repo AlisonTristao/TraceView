@@ -73,7 +73,7 @@ struct ChartSeriesConfig {
 struct ChartConfig {
     quint32 sourceId = 0;  // BTP source_id this chart reads from
     quint16 topicId = 0;   // BTP topic_id (TELEMETRY.md section 2) this
-                            // chart's series are fields of
+                           // chart's series are fields of
 
     ChartXAxisMode xAxisMode = ChartXAxisMode::Samples;
     double sampleTimeMs = 100.0;
@@ -106,15 +106,15 @@ int chartBufferCapacity(const ChartConfig& config);
 // `previous` empty (fresh widget) or a different series count (added/
 // removed/reordered rows just don't carry over past their old position).
 QVector<TelemetrySeriesBuffer> resizeChartBuffers(const QVector<TelemetrySeriesBuffer>& previous,
-                                                   const ChartConfig& config);
+                                                  const ChartConfig& config);
 
 // Appends (timestampUs, value) to every series buffer in `buffers` whose
 // config.series[i].fieldId == fieldId (usually zero or one, but nothing
 // stops two series from plotting the same field differently styled), each
 // trimmed to chartBufferCapacity(config). A no-op if no series binds to
 // `fieldId`.
-void appendFieldSample(QVector<TelemetrySeriesBuffer>& buffers, const ChartConfig& config, quint16 fieldId,
-                        quint64 timestampUs, double value);
+void appendFieldSample(QVector<TelemetrySeriesBuffer>& buffers, const ChartConfig& config,
+                       quint16 fieldId, quint64 timestampUs, double value);
 
 // One ring of a (possibly multi-ring) gauge: which field it tracks and the
 // color its track/pointer are painted in. Mirrors ChartSeriesConfig's shape

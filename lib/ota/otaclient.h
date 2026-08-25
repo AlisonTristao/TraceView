@@ -66,7 +66,7 @@ public:
     // only checks the header if it has one configured). Emits uploadProgress
     // as the transfer proceeds and exactly one uploadFinished() at the end.
     void uploadFirmware(const QString& deviceId, const QString& address, const QString& password,
-                         const QString& filePath);
+                        const QString& filePath);
 
 signals:
     // otaReady/firmwareVersion are only meaningful when reachable is true;
@@ -79,8 +79,8 @@ signals:
     // i.e. the robot hasn't entered OTA mode) versus a timeout. OtaTab
     // surfaces this as the status cell's tooltip since "Offline" alone
     // doesn't say which of those it is.
-    void statusChecked(const QString& deviceId, bool reachable, bool otaReady, const QString& firmwareVersion,
-                        const QString& errorMessage);
+    void statusChecked(const QString& deviceId, bool reachable, bool otaReady,
+                       const QString& firmwareVersion, const QString& errorMessage);
 
     void uploadProgress(const QString& deviceId, qint64 sent, qint64 total);
 
@@ -95,7 +95,8 @@ private:
     struct PendingResolution {
         PendingKind kind;
         QString deviceId;
-        QString hostname;  // the original *.local name, for caching and for the OS-resolver fallback
+        QString
+            hostname;  // the original *.local name, for caching and for the OS-resolver fallback
         QString password;  // upload only
         QString filePath;  // upload only
     };
@@ -106,7 +107,7 @@ private:
     // onMdnsResolveFailed() check this before acting.
     void sendStatusRequest(const QString& deviceId, const QString& host);
     void sendUploadRequest(const QString& deviceId, const QString& host, const QString& password,
-                            const QString& filePath);
+                           const QString& filePath);
     QHostAddress cachedMdnsAddress(const QString& hostnameLower) const;
     void cacheMdnsAddress(const QString& hostnameLower, const QHostAddress& address);
     void onMdnsResolved(const QString& requestId, const QHostAddress& address);
@@ -116,8 +117,10 @@ private:
     MdnsResolver* m_mdnsResolver;
     QHash<QString, QNetworkReply*> m_statusReplies;  // keyed by deviceId
     QHash<QString, QNetworkReply*> m_uploadReplies;  // keyed by deviceId
-    QHash<QString, PendingResolution> m_pendingResolutions;       // keyed by "status:"/"upload:" + deviceId
-    QHash<QString, QPair<QHostAddress, qint64>> m_mdnsCache;      // hostname (lower) -> (address, expiry epoch ms)
+    QHash<QString, PendingResolution>
+        m_pendingResolutions;  // keyed by "status:"/"upload:" + deviceId
+    QHash<QString, QPair<QHostAddress, qint64>>
+        m_mdnsCache;  // hostname (lower) -> (address, expiry epoch ms)
 };
 
 }  // namespace traceview

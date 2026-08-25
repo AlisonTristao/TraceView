@@ -30,7 +30,7 @@ QByteArray verifyTag(const QByteArray& key, const char* label) {
     return mac.result().left(kVerifyTagLength);
 }
 
-} // namespace
+}  // namespace
 
 QByteArray deriveChannelKey(const QString& password) {
     if (password.isEmpty()) {
@@ -57,4 +57,4 @@ QByteArray linkKeyVerifyTag(const QByteArray& key) {
     return verifyTag(key, kLinkLabel);
 }
 
-} // namespace traceview
+}  // namespace traceview

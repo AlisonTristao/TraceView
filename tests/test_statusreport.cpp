@@ -19,23 +19,24 @@ void appendLe(QByteArray& out, quint64 value, int width) {
 QByteArray buildStatusV1Block(quint16 statusVersion) {
     QByteArray payload;
     appendLe(payload, statusVersion, 2);
-    appendLe(payload, 0x0001, 2);  // flags: DEGRADED
+    appendLe(payload, 0x0001, 2);                 // flags: DEGRADED
     appendLe(payload, 0x1122334455667788ULL, 8);  // uptime_us
-    appendLe(payload, 1001, 8);  // frames_rx
-    appendLe(payload, 1002, 8);  // frames_tx
-    appendLe(payload, 1003, 8);  // frames_dropped
-    appendLe(payload, 1004, 8);  // crc_errors
-    appendLe(payload, 1005, 8);  // decode_errors
-    appendLe(payload, 1006, 8);  // reassembly_completed
-    appendLe(payload, 1007, 8);  // reassembly_timeouts
-    appendLe(payload, 1008, 8);  // reassembly_rejected
-    appendLe(payload, 1009, 8);  // command_duplicates
-    appendLe(payload, 1010, 8);  // telemetry_dropped
+    appendLe(payload, 1001, 8);                   // frames_rx
+    appendLe(payload, 1002, 8);                   // frames_tx
+    appendLe(payload, 1003, 8);                   // frames_dropped
+    appendLe(payload, 1004, 8);                   // crc_errors
+    appendLe(payload, 1005, 8);                   // decode_errors
+    appendLe(payload, 1006, 8);                   // reassembly_completed
+    appendLe(payload, 1007, 8);                   // reassembly_timeouts
+    appendLe(payload, 1008, 8);                   // reassembly_rejected
+    appendLe(payload, 1009, 8);                   // command_duplicates
+    appendLe(payload, 1010, 8);                   // telemetry_dropped
     return payload;
 }
 
-QByteArray buildTopicRecord(quint32 sourceId, quint16 topicId, quint16 subscriberCount, quint32 effectiveRateMillihz,
-                            quint64 bytesTotal, quint64 samplesDropped) {
+QByteArray buildTopicRecord(quint32 sourceId, quint16 topicId, quint16 subscriberCount,
+                            quint32 effectiveRateMillihz, quint64 bytesTotal,
+                            quint64 samplesDropped) {
     QByteArray record;
     appendLe(record, sourceId, 4);
     appendLe(record, topicId, 2);
@@ -120,7 +121,8 @@ void TestStatusReport::parsesVersion2TopicRecords() {
 void TestStatusReport::rejectsTruncatedVersion2List() {
     QByteArray payload = buildStatusV1Block(2);
     appendLe(payload, 2, 2);  // claims two records...
-    payload.append(buildTopicRecord(0x9F442484, 0x0001, 1, 50000, 10, 0));  // ...but only one follows
+    payload.append(
+        buildTopicRecord(0x9F442484, 0x0001, 1, 50000, 10, 0));  // ...but only one follows
 
     StatusReport report;
     QVERIFY(!parseStatusPayload(payload, &report));

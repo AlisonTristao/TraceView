@@ -1,8 +1,7 @@
-#include <QtTest>
-
 #include <QJsonArray>
 #include <QJsonObject>
 #include <QSignalSpy>
+#include <QtTest>
 
 #include "devices/device.h"
 #include "devices/devicecard.h"
@@ -11,8 +10,8 @@
 using traceview::CommType;
 using traceview::Device;
 using traceview::DeviceCard;
-using traceview::deviceToJson;
 using traceview::DevicesGrid;
+using traceview::deviceToJson;
 using traceview::TransportType;
 
 namespace {
@@ -33,7 +32,7 @@ DeviceCard* cardFor(const DevicesGrid& grid, const QString& id) {
     return nullptr;
 }
 
-} // namespace
+}  // namespace
 
 class TestDevicesGrid : public QObject {
     Q_OBJECT
@@ -77,12 +76,12 @@ void TestDevicesGrid::addDeviceReturnsUsableIdAndOrdersLeftToRightThenWraps() {
 
     QCOMPARE(cardA->geometry(), QRect(8, 8, 260, 140));
     QCOMPARE(cardB->geometry(), QRect(276, 8, 260, 140));
-    QCOMPARE(cardC->geometry(), QRect(8, 156, 260, 140)); // wraps to row 2
+    QCOMPARE(cardC->geometry(), QRect(8, 156, 260, 140));  // wraps to row 2
 }
 
 void TestDevicesGrid::removeDeviceCompactsRemainingLayout() {
     DevicesGrid grid;
-    grid.resize(600, 600); // same layout math as the test above
+    grid.resize(600, 600);  // same layout math as the test above
     grid.show();
     QVERIFY(QTest::qWaitForWindowExposed(&grid));
 
@@ -90,7 +89,7 @@ void TestDevicesGrid::removeDeviceCompactsRemainingLayout() {
     const QString idB = grid.addDevice(makeDevice("Bravo"));
     const QString idC = grid.addDevice(makeDevice("Charlie"));
 
-    grid.removeDevice(idB); // middle entry -- proves compaction, not just erase
+    grid.removeDevice(idB);  // middle entry -- proves compaction, not just erase
 
     QCOMPARE(grid.devices().size(), 2);
     for (const Device& device : grid.devices()) {
@@ -134,7 +133,7 @@ void TestDevicesGrid::updateDeviceRefreshesCardData() {
 
 void TestDevicesGrid::clickSelectsCardAndReplacesPreviousSelection() {
     DevicesGrid grid;
-    grid.resize(600, 600); // same layout math as the tests above
+    grid.resize(600, 600);  // same layout math as the tests above
     grid.show();
     QVERIFY(QTest::qWaitForWindowExposed(&grid));
 
@@ -203,7 +202,7 @@ void TestDevicesGrid::removeDeviceClearsSelectionIfRemovedDeviceWasSelected() {
     QCOMPARE(grid.selectedCount(), 1);
 
     QSignalSpy selectionSpy(&grid, &DevicesGrid::selectionChanged);
-    grid.removeDevice(idA); // removed directly, not via removeSelected()
+    grid.removeDevice(idA);  // removed directly, not via removeSelected()
     QCOMPARE(grid.selectedCount(), 0);
     QCOMPARE(selectionSpy.count(), 1);
 }
@@ -243,7 +242,6 @@ void TestDevicesGrid::fromJsonReplacesRatherThanMerges() {
     QCOMPARE(grid.devices().size(), 1);
     QCOMPARE(grid.devices().first().name, QString("Fresh"));
 }
-
 
 // Deleting a hub that other devices ride is refused, not cascaded.
 //

@@ -81,36 +81,36 @@ void SerialTerminalWidget::keyPressEvent(QKeyEvent* event) {
     // shift-selecting the read-only scrollback still works (PASSO 7).
     if (event->modifiers() == Qt::NoModifier) {
         switch (event->key()) {
-        case Qt::Key_Up:
-            emit sendRequested(QByteArrayLiteral("\x1b[A"));
-            return;
-        case Qt::Key_Down:
-            emit sendRequested(QByteArrayLiteral("\x1b[B"));
-            return;
-        case Qt::Key_Right:
-            emit sendRequested(QByteArrayLiteral("\x1b[C"));
-            return;
-        case Qt::Key_Left:
-            emit sendRequested(QByteArrayLiteral("\x1b[D"));
-            return;
-        default:
-            break;
+            case Qt::Key_Up:
+                emit sendRequested(QByteArrayLiteral("\x1b[A"));
+                return;
+            case Qt::Key_Down:
+                emit sendRequested(QByteArrayLiteral("\x1b[B"));
+                return;
+            case Qt::Key_Right:
+                emit sendRequested(QByteArrayLiteral("\x1b[C"));
+                return;
+            case Qt::Key_Left:
+                emit sendRequested(QByteArrayLiteral("\x1b[D"));
+                return;
+            default:
+                break;
         }
     }
 
     switch (event->key()) {
-    case Qt::Key_Return:
-    case Qt::Key_Enter:
-        emit sendRequested(QByteArray(1, '\r'));
-        return;
-    case Qt::Key_Backspace:
-        emit sendRequested(QByteArray(1, static_cast<char>(0x7f)));
-        return;
-    case Qt::Key_Tab:
-        emit sendRequested(QByteArray(1, '\t'));
-        return;
-    default:
-        break;
+        case Qt::Key_Return:
+        case Qt::Key_Enter:
+            emit sendRequested(QByteArray(1, '\r'));
+            return;
+        case Qt::Key_Backspace:
+            emit sendRequested(QByteArray(1, static_cast<char>(0x7f)));
+            return;
+        case Qt::Key_Tab:
+            emit sendRequested(QByteArray(1, '\t'));
+            return;
+        default:
+            break;
     }
 
     const QString text = event->text();
@@ -168,4 +168,4 @@ void SerialTerminalWidget::renderCurrentLineAndCursor() {
     setTextCursor(caret);
 }
 
-} // namespace traceview
+}  // namespace traceview

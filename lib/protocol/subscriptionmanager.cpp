@@ -2,7 +2,6 @@
 
 #include <QDateTime>
 #include <QRandomGenerator>
-
 #include <btp/codec.hpp>
 
 #include "protocol/btpframe.h"
@@ -54,10 +53,11 @@ qint64 renewIntervalFor(quint32 grantedLeaseMs) {
 
 }  // namespace
 
-SubscriptionManager::SubscriptionManager(BtpSession* session, ProtocolRouter* router, TelemetryCatalog* catalog,
-                                         QObject* parent)
+SubscriptionManager::SubscriptionManager(BtpSession* session, ProtocolRouter* router,
+                                         TelemetryCatalog* catalog, QObject* parent)
     : QObject(parent), m_session(session), m_catalog(catalog) {
-    connect(router, &ProtocolRouter::controlFrameReceived, this, &SubscriptionManager::onControlFrameReceived);
+    connect(router, &ProtocolRouter::controlFrameReceived, this,
+            &SubscriptionManager::onControlFrameReceived);
 
     // Private per-process wire identity, the same construction ManifestClient
     // and SerialWidgetBridge already use: SUBSCRIBE_RESULT correlates only by
@@ -97,7 +97,8 @@ int SubscriptionManager::subscriberCountFor(quint64 key) const {
     return count;
 }
 
-quint64 SubscriptionManager::addSubscriber(quint32 sourceId, quint16 topicId, quint32 requestedRateMillihz) {
+quint64 SubscriptionManager::addSubscriber(quint32 sourceId, quint16 topicId,
+                                           quint32 requestedRateMillihz) {
     if (sourceId == 0 || topicId == 0 || requestedRateMillihz == 0) {
         return 0;  // an unconfigured widget must not put anything on the wire
     }
@@ -214,7 +215,8 @@ void SubscriptionManager::sendUnsubscribe(const TopicState& topic) {
     m_pendingUnsubscribes.insert(sequence, makeKey(topic.sourceId, topic.topicId));
 }
 
-void SubscriptionManager::sendControl(quint16 objectId, const QByteArray& payload, quint32 sequence) {
+void SubscriptionManager::sendControl(quint16 objectId, const QByteArray& payload,
+                                      quint32 sequence) {
     btp::Header header{};
     header.type = btp::MessageType::Control;
     header.flags = 0;
@@ -256,7 +258,8 @@ void SubscriptionManager::handleSubscribeResult(const BtpFrame& frame) {
     // Correlation is the full (request_source_id, request_boot_id,
     // reply_to_sequence) triple -- reply_to_sequence alone is not unique
     // (commands.md section 1).
-    if (readLe32(frame.payload, 0) != m_clientSourceId || readLe32(frame.payload, 4) != m_clientBootId) {
+    if (readLe32(frame.payload, 0) != m_clientSourceId ||
+        readLe32(frame.payload, 4) != m_clientBootId) {
         return;
     }
     const quint32 replyToSequence = readLe32(frame.payload, 8);
@@ -333,7 +336,8 @@ void SubscriptionManager::handleUnsubscribeResult(const BtpFrame& frame) {
     if (frame.payload.size() < kUnsubscribeResultSize) {
         return;
     }
-    if (readLe32(frame.payload, 0) != m_clientSourceId || readLe32(frame.payload, 4) != m_clientBootId) {
+    if (readLe32(frame.payload, 0) != m_clientSourceId ||
+        readLe32(frame.payload, 4) != m_clientBootId) {
         return;
     }
     const quint32 replyToSequence = readLe32(frame.payload, 8);

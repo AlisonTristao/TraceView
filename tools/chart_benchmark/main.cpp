@@ -27,7 +27,8 @@ namespace {
 // Matches DebugChartsWindow's own dummy configs (debugchartswindow.cpp) so
 // this measures the same shape of chart (series count, axis mode) users
 // actually see there.
-QJsonObject seriesJson(const QString& name, int fieldId, const QString& color, const QString& style) {
+QJsonObject seriesJson(const QString& name, int fieldId, const QString& color,
+                       const QString& style) {
     QJsonObject series;
     series["name"] = name;
     series["fieldId"] = fieldId;
@@ -119,7 +120,8 @@ double benchmarkPaint(QWidget* widget, int iterations) {
 
 void report(const QString& label, double msPerFrame) {
     const double fps = 1000.0 / msPerFrame;
-    printf("%-28s %8.4f ms/frame   %10.1f fps (single-widget ceiling)\n", qPrintable(label), msPerFrame, fps);
+    printf("%-28s %8.4f ms/frame   %10.1f fps (single-widget ceiling)\n", qPrintable(label),
+           msPerFrame, fps);
 }
 
 }  // namespace
@@ -158,7 +160,8 @@ int main(int argc, char** argv) {
     gauge->appendFieldSample(2, 0, 41.0);
     gauge->appendFieldSample(3, 0, 78.0);
 
-    printf("Chart widget paint throughput (offscreen, no throttle, %d iterations each)\n", kIterations);
+    printf("Chart widget paint throughput (offscreen, no throttle, %d iterations each)\n",
+           kIterations);
     printf("-----------------------------------------------------------------------------\n");
 
     const double lineMs = benchmarkPaint(lineChart, kIterations);

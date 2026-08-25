@@ -11,16 +11,18 @@ void populateDeviceCombo(QComboBox* combo, const QVector<DeviceOption>& devices)
     combo->clear();
     combo->addItem(QCoreApplication::translate("WidgetConfigEditor", "(No device)"), QString());
     for (const DeviceOption& device : devices) {
-        combo->addItem(device.name.isEmpty() ? QCoreApplication::translate("WidgetConfigEditor", "(Unnamed device)")
-                                              : device.name,
-                        device.id);
+        combo->addItem(device.name.isEmpty()
+                           ? QCoreApplication::translate("WidgetConfigEditor", "(Unnamed device)")
+                           : device.name,
+                       device.id);
     }
 
     const int idx = combo->findData(previousId);
     combo->setCurrentIndex(idx >= 0 ? idx : 0);
 }
 
-void populateTopicCombo(QComboBox* combo, const QVector<DeviceOption>& devices, const QString& deviceId) {
+void populateTopicCombo(QComboBox* combo, const QVector<DeviceOption>& devices,
+                        const QString& deviceId) {
     const QString previousText = combo->currentText();
 
     combo->clear();
@@ -30,9 +32,10 @@ void populateTopicCombo(QComboBox* combo, const QVector<DeviceOption>& devices, 
                 continue;
             }
             for (const CatalogTopicInfo& topic : device.catalogTopics) {
-                const QString label = topic.name.isEmpty()
-                                           ? QCoreApplication::translate("WidgetConfigEditor", "(unnamed topic)")
-                                           : topic.name;
+                const QString label =
+                    topic.name.isEmpty()
+                        ? QCoreApplication::translate("WidgetConfigEditor", "(unnamed topic)")
+                        : topic.name;
                 const QString sourceHex = QString("0x%1").arg(topic.sourceId, 8, 16, QChar('0'));
                 const QString topicHex = QString("0x%1").arg(topic.topicId, 4, 16, QChar('0'));
                 combo->addItem(QString("%1 (%2 / %3)").arg(label, sourceHex, topicHex),
@@ -45,7 +48,8 @@ void populateTopicCombo(QComboBox* combo, const QVector<DeviceOption>& devices, 
     combo->setCurrentText(previousText);
 }
 
-bool decodeTopicComboData(const QVariant& itemData, QString* sourceIdHexOut, QString* topicIdHexOut) {
+bool decodeTopicComboData(const QVariant& itemData, QString* sourceIdHexOut,
+                          QString* topicIdHexOut) {
     const QString text = itemData.toString();
     const int sep = text.indexOf('|');
     if (sep < 0) {
@@ -61,7 +65,7 @@ bool decodeTopicComboData(const QVariant& itemData, QString* sourceIdHexOut, QSt
 }
 
 QString resolveCatalogTopicName(const QVector<DeviceOption>& devices, const QString& deviceId,
-                                 const QString& sourceIdText, const QString& topicIdText) {
+                                const QString& sourceIdText, const QString& topicIdText) {
     if (deviceId.isEmpty()) {
         return QString();
     }
@@ -100,8 +104,10 @@ QString formatHexId(quint32 value, int digits) {
     return QString("0x%1").arg(value, digits, 16, QChar('0')).toUpper();
 }
 
-QVector<CatalogTopicField> resolveCatalogTopicFields(const QVector<DeviceOption>& devices, const QString& deviceId,
-                                                       const QString& sourceIdText, const QString& topicIdText) {
+QVector<CatalogTopicField> resolveCatalogTopicFields(const QVector<DeviceOption>& devices,
+                                                     const QString& deviceId,
+                                                     const QString& sourceIdText,
+                                                     const QString& topicIdText) {
     if (deviceId.isEmpty()) {
         return {};
     }
@@ -129,13 +135,14 @@ void populateFieldCombo(QComboBox* combo, const QVector<CatalogTopicField>& fiel
 
     combo->clear();
     for (const CatalogTopicField& field : fields) {
-        const QString label = field.name.isEmpty()
-                                   ? QCoreApplication::translate("WidgetConfigEditor", "Field %1").arg(field.fieldId)
-                                   : QString("%1 (%2)").arg(field.name).arg(field.fieldId);
+        const QString label =
+            field.name.isEmpty()
+                ? QCoreApplication::translate("WidgetConfigEditor", "Field %1").arg(field.fieldId)
+                : QString("%1 (%2)").arg(field.name).arg(field.fieldId);
         combo->addItem(label, field.fieldId);
     }
 
     combo->setCurrentText(previousText);
 }
 
-} // namespace traceview
+}  // namespace traceview

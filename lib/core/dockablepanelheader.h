@@ -22,7 +22,9 @@ class DockablePanelHeader : public QWidget {
 public:
     explicit DockablePanelHeader(QWidget* parent = nullptr);
 
-    QToolButton* pinButton() const { return m_pinButton; }
+    QToolButton* pinButton() const {
+        return m_pinButton;
+    }
 
 signals:
     // Fired once, the first time a press-then-move crosses the drag
@@ -46,4 +48,4 @@ private:
     bool m_dragging = false;
 };
 
-} // namespace traceview
+}  // namespace traceview

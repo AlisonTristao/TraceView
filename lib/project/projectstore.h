@@ -26,8 +26,12 @@ public:
     // started — used by New Project to start from a blank slate.
     void reset();
 
-    QString currentPath() const { return m_currentPath; }
-    QString lastError() const { return m_lastError; }
+    QString currentPath() const {
+        return m_currentPath;
+    }
+    QString lastError() const {
+        return m_lastError;
+    }
 
 private:
     ProjectStore() = default;
@@ -37,4 +41,4 @@ private:
     QString m_lastError;
 };
 
-} // namespace traceview
+}  // namespace traceview

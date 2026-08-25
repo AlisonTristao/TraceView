@@ -53,9 +53,9 @@ QString catalogTopicBlock(const CatalogTopicInfo& topic) {
             // field is actually addressed by on the wire stays visible for
             // cross-checking either way.
             QString line = QString("    %1 [id=0x%2]: %3")
-                                .arg(field.name.isEmpty() ? QObject::tr("(unnamed)") : field.name)
-                                .arg(field.fieldId, 4, 16, QChar('0'))
-                                .arg(field.type);
+                               .arg(field.name.isEmpty() ? QObject::tr("(unnamed)") : field.name)
+                               .arg(field.fieldId, 4, 16, QChar('0'))
+                               .arg(field.type);
             if (!field.unit.isEmpty() && field.unit != QStringLiteral("1")) {
                 line += QString(" (%1)").arg(field.unit);
             }
@@ -76,14 +76,16 @@ DeviceConfigDialog::DeviceConfigDialog(const Device& initial, QWidget* parent)
     setMinimumWidth(680);
 
     m_nameEdit = new QLineEdit(m_device.name, this);
-    m_nameEdit->setToolTip(tr("Shown as this device's title -- on its card in the Devices panel, and "
-                               "anywhere else it's picked from a list."));
+    m_nameEdit->setToolTip(
+        tr("Shown as this device's title -- on its card in the Devices panel, and "
+           "anywhere else it's picked from a list."));
     m_descriptionEdit = new QPlainTextEdit(m_device.description, this);
     // QPlainTextEdit is a QAbstractScrollArea: the mouse (and so the
     // ToolTip event) is actually over its viewport child widget, not this
     // frame, so setToolTip() here alone never shows -- has to go on the
     // viewport too.
-    const QString descriptionTip = tr("Free-form notes about this device, shown on its card below the name.");
+    const QString descriptionTip =
+        tr("Free-form notes about this device, shown on its card below the name.");
     m_descriptionEdit->setToolTip(descriptionTip);
     m_descriptionEdit->viewport()->setToolTip(descriptionTip);
     m_descriptionEdit->setFixedHeight(64);
@@ -111,9 +113,12 @@ DeviceConfigDialog::DeviceConfigDialog(const Device& initial, QWidget* parent)
     m_connectionLayout->setRowWrapPolicy(QFormLayout::WrapAllRows);
 
     m_transportTypeCombo = new QComboBox(connectionGroup);
-    m_transportTypeCombo->addItem(transportTypeLabel(TransportType::Serial), int(TransportType::Serial));
-    m_transportTypeCombo->addItem(transportTypeLabel(TransportType::UsbHid), int(TransportType::UsbHid));
-    m_transportTypeCombo->addItem(transportTypeLabel(TransportType::HubChannel), int(TransportType::HubChannel));
+    m_transportTypeCombo->addItem(transportTypeLabel(TransportType::Serial),
+                                  int(TransportType::Serial));
+    m_transportTypeCombo->addItem(transportTypeLabel(TransportType::UsbHid),
+                                  int(TransportType::UsbHid));
+    m_transportTypeCombo->addItem(transportTypeLabel(TransportType::HubChannel),
+                                  int(TransportType::HubChannel));
     const int transportTypeIndex = m_transportTypeCombo->findData(int(m_device.transportType));
     m_transportTypeCombo->setCurrentIndex(transportTypeIndex >= 0 ? transportTypeIndex : 0);
     connect(m_transportTypeCombo, &QComboBox::currentIndexChanged, this,
@@ -129,10 +134,11 @@ DeviceConfigDialog::DeviceConfigDialog(const Device& initial, QWidget* parent)
     m_portCombo->setCurrentText(m_device.portName);
 
     m_refreshPortsButton = new QToolButton(connectionGroup);
-    m_refreshPortsButton->setText(QString::fromUtf8("\xE2\x9F\xB3")); // ⟳
+    m_refreshPortsButton->setText(QString::fromUtf8("\xE2\x9F\xB3"));  // ⟳
     m_refreshPortsButton->setToolTip(tr("Refresh port list"));
     m_refreshPortsButton->setAutoRaise(true);
-    connect(m_refreshPortsButton, &QToolButton::clicked, this, &DeviceConfigDialog::refreshPortsRequested);
+    connect(m_refreshPortsButton, &QToolButton::clicked, this,
+            &DeviceConfigDialog::refreshPortsRequested);
 
     auto* portRow = new QHBoxLayout;
     portRow->addWidget(m_portCombo, /*stretch=*/1);
@@ -145,8 +151,8 @@ DeviceConfigDialog::DeviceConfigDialog(const Device& initial, QWidget* parent)
     // rates, see docs/PROTOCOL.md), now per-device rather than global.
     m_baudCombo = new QComboBox(connectionGroup);
     m_baudCombo->setEditable(true);
-    m_baudCombo->addItems({"9600", "19200", "38400", "57600", "115200", "230400", "460800", "921600", "1000000",
-                            "2000000", "3000000", "5000000"});
+    m_baudCombo->addItems({"9600", "19200", "38400", "57600", "115200", "230400", "460800",
+                           "921600", "1000000", "2000000", "3000000", "5000000"});
     m_baudCombo->setCurrentText(QString::number(m_device.baudRate));
     m_baudCombo->setToolTip(tr("Baud rate (type a custom value if yours isn't listed)"));
     m_baudCombo->setValidator(new QIntValidator(1, 10000000, m_baudCombo));
@@ -163,8 +169,9 @@ DeviceConfigDialog::DeviceConfigDialog(const Device& initial, QWidget* parent)
     m_lineTerminatorCombo->addItem(tr("CRLF (\\r\\n)"), 3);
     const int terminatorIndex = m_lineTerminatorCombo->findData(m_device.lineTerminator);
     m_lineTerminatorCombo->setCurrentIndex(terminatorIndex >= 0 ? terminatorIndex : 1);
-    m_lineTerminatorCombo->setToolTip(tr("Line terminator appended to control-widget commands sent to this device. "
-                                          "Doesn't affect its serial terminal's raw keystrokes."));
+    m_lineTerminatorCombo->setToolTip(
+        tr("Line terminator appended to control-widget commands sent to this device. "
+           "Doesn't affect its serial terminal's raw keystrokes."));
     // Fixed rather than left to the form layout's AllNonFixedFieldsGrow
     // policy -- its longest item ("CRLF (\r\n)") is short, so growing it to
     // the full row width (matching Port/Baud/USB's more legitimately wide
@@ -190,10 +197,11 @@ DeviceConfigDialog::DeviceConfigDialog(const Device& initial, QWidget* parent)
     }
 
     m_refreshUsbDevicesButton = new QToolButton(connectionGroup);
-    m_refreshUsbDevicesButton->setText(QString::fromUtf8("\xE2\x9F\xB3")); // ⟳
+    m_refreshUsbDevicesButton->setText(QString::fromUtf8("\xE2\x9F\xB3"));  // ⟳
     m_refreshUsbDevicesButton->setToolTip(tr("Refresh USB device list"));
     m_refreshUsbDevicesButton->setAutoRaise(true);
-    connect(m_refreshUsbDevicesButton, &QToolButton::clicked, this, &DeviceConfigDialog::refreshUsbDevicesRequested);
+    connect(m_refreshUsbDevicesButton, &QToolButton::clicked, this,
+            &DeviceConfigDialog::refreshUsbDevicesRequested);
 
     auto* usbDeviceRow = new QHBoxLayout;
     usbDeviceRow->addWidget(m_usbDeviceCombo, /*stretch=*/1);
@@ -246,9 +254,8 @@ DeviceConfigDialog::DeviceConfigDialog(const Device& initial, QWidget* parent)
         m_peerSourceIdCombo->setCurrentText(
             QStringLiteral("0x%1").arg(m_peerSourceId, 8, 16, QLatin1Char('0')).toUpper());
     }
-    connect(m_peerSourceIdCombo, &QComboBox::activated, this, [this](int index) {
-        m_peerSourceId = m_peerSourceIdCombo->itemData(index).toUInt();
-    });
+    connect(m_peerSourceIdCombo, &QComboBox::activated, this,
+            [this](int index) { m_peerSourceId = m_peerSourceIdCombo->itemData(index).toUInt(); });
     connect(m_peerSourceIdCombo->lineEdit(), &QLineEdit::editingFinished, this, [this]() {
         const QString typed = m_peerSourceIdCombo->currentText().trimmed();
         if (typed.isEmpty()) {
@@ -285,7 +292,8 @@ DeviceConfigDialog::DeviceConfigDialog(const Device& initial, QWidget* parent)
     // secrets file by accident. Opting in is per device, for the case where
     // the project lives on one machine and retyping every password on every
     // open buys nothing.
-    m_cachePasswordCheck = new QCheckBox(tr("Save this password in the project file"), connectionGroup);
+    m_cachePasswordCheck =
+        new QCheckBox(tr("Save this password in the project file"), connectionGroup);
     m_cachePasswordCheck->setChecked(m_device.cachePeerPassword);
     m_cachePasswordCheck->setToolTip(
         tr("Anyone who opens the project file can read a saved password."));
@@ -310,7 +318,8 @@ DeviceConfigDialog::DeviceConfigDialog(const Device& initial, QWidget* parent)
     // just that transport's.
     {
         int maxConnectionHeight = 0;
-        for (TransportType type : {TransportType::Serial, TransportType::UsbHid, TransportType::HubChannel}) {
+        for (TransportType type :
+             {TransportType::Serial, TransportType::UsbHid, TransportType::HubChannel}) {
             const int index = m_transportTypeCombo->findData(int(type));
             m_transportTypeCombo->setCurrentIndex(index);
             updateTransportFieldsVisibility();
@@ -345,7 +354,8 @@ DeviceConfigDialog::DeviceConfigDialog(const Device& initial, QWidget* parent)
     // a project file is something people mail to each other and commit.
     m_cacheOtaPasswordCheck = new QCheckBox(tr("Save this password in the project file"), otaGroup);
     m_cacheOtaPasswordCheck->setChecked(m_device.cacheOtaPassword);
-    m_cacheOtaPasswordCheck->setToolTip(tr("Anyone who opens the project file can read a saved password."));
+    m_cacheOtaPasswordCheck->setToolTip(
+        tr("Anyone who opens the project file can read a saved password."));
     otaLayout->addRow(QString(), m_cacheOtaPasswordCheck);
 
     // Read-only: this is the last HELLO_RESULT the device sent, not
@@ -361,8 +371,8 @@ DeviceConfigDialog::DeviceConfigDialog(const Device& initial, QWidget* parent)
     // still the device talking rather than a setting to edit -- grouped here
     // instead of its own row in Connection above, which only made that group
     // taller for one word of text.
-    m_statusLabel = new QLabel(
-        m_device.connected ? tr("Connected") : tr("Disconnected"), reportedGroup);
+    m_statusLabel =
+        new QLabel(m_device.connected ? tr("Connected") : tr("Disconnected"), reportedGroup);
     m_btpVersionEdit = new QLineEdit(m_device.btpVersion, reportedGroup);
     m_btpVersionEdit->setReadOnly(true);
     m_btpVersionEdit->setPlaceholderText(tr("(not connected yet)"));
@@ -500,14 +510,16 @@ void DeviceConfigDialog::updateTransportFieldsVisibility() {
     m_connectionLayout->setRowVisible(m_cachePasswordRowIndex, isHub);
 }
 
-void DeviceConfigDialog::setAvailableParentDevices(const QVector<QPair<QString, QString>>& parents) {
+void DeviceConfigDialog::setAvailableParentDevices(
+    const QVector<QPair<QString, QString>>& parents) {
     const QString current = m_parentCombo->currentData().toString();
     m_parentCombo->clear();
     // An unconfigured child is a valid state, so there has to be a way to say
     // "none", and it has to be where a fresh device lands.
     m_parentCombo->addItem(tr("(none)"), QString());
     for (const QPair<QString, QString>& parent : parents) {
-        m_parentCombo->addItem(parent.second.isEmpty() ? parent.first : parent.second, parent.first);
+        m_parentCombo->addItem(parent.second.isEmpty() ? parent.first : parent.second,
+                               parent.first);
     }
     const QString wanted = current.isEmpty() ? m_device.parentDeviceId : current;
     int index = m_parentCombo->findData(wanted);
@@ -560,21 +572,26 @@ void DeviceConfigDialog::setAvailableHubPeers(const QVector<HubPeer>& peers) {
     const QString currentText = m_peerSourceIdCombo->currentText();
     m_peerSourceIdCombo->clear();
     for (const HubPeer& peer : peers) {
-        const QString hex = QStringLiteral("0x%1").arg(peer.sourceId, 8, 16, QLatin1Char('0')).toUpper();
+        const QString hex =
+            QStringLiteral("0x%1").arg(peer.sourceId, 8, 16, QLatin1Char('0')).toUpper();
         // Kept short -- see m_peerSourceIdCombo's own comment on why a long
         // item label isn't wanted here. The MAC (when reported) goes in the
         // item's tooltip instead of getting appended to the label.
-        const QString status = peer.online ? tr("online") : tr("offline %1s").arg(peer.lastSeenAgeMs / 1000);
+        const QString status =
+            peer.online ? tr("online") : tr("offline %1s").arg(peer.lastSeenAgeMs / 1000);
         const QString label = tr("Ch %1 -- %2, %3").arg(peer.channel).arg(hex, status);
         m_peerSourceIdCombo->addItem(label, peer.sourceId);
         if (!peer.mac.isEmpty()) {
-            m_peerSourceIdCombo->setItemData(m_peerSourceIdCombo->count() - 1, peer.mac, Qt::ToolTipRole);
+            m_peerSourceIdCombo->setItemData(m_peerSourceIdCombo->count() - 1, peer.mac,
+                                             Qt::ToolTipRole);
         }
     }
     m_peerSourceIdCombo->setCurrentText(currentText);
 }
 
-QString DeviceConfigDialog::currentParentDeviceId() const { return m_parentCombo->currentData().toString(); }
+QString DeviceConfigDialog::currentParentDeviceId() const {
+    return m_parentCombo->currentData().toString();
+}
 
 void DeviceConfigDialog::setAvailableUsbDevices(const QVector<UsbDeviceOption>& devices) {
     const QString currentPath = m_usbDeviceCombo->currentData().toString();
@@ -594,4 +611,4 @@ void DeviceConfigDialog::setAvailableUsbDevices(const QVector<UsbDeviceOption>& 
     }
 }
 
-} // namespace traceview
+}  // namespace traceview

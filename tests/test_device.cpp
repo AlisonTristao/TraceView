@@ -27,11 +27,11 @@ void TestDevice::roundTripsAllFieldsExceptLiveState() {
     Device device;
     device.id = "abc-123";
     device.name = "Bench dongle";
-    device.connected = true; // deliberately not expected to round-trip
+    device.connected = true;  // deliberately not expected to round-trip
     device.commType = CommType::Btp;
     device.description = "Left side of the desk";
-    device.btpVersion = "BTP/1"; // deliberately not expected to round-trip
-    device.btpId = "0xDEADBEEF"; // deliberately not expected to round-trip
+    device.btpVersion = "BTP/1";  // deliberately not expected to round-trip
+    device.btpId = "0xDEADBEEF";  // deliberately not expected to round-trip
     device.transportType = TransportType::Serial;
     device.portName = "COM7";
     device.baudRate = 460800;
@@ -63,7 +63,8 @@ void TestDevice::roundTripsUsbHidTransport() {
     Device device;
     device.id = "usb-1";
     device.transportType = TransportType::UsbHid;
-    device.usbPath = R"(\\?\hid#vid_303a&pid_1001#7&1a2b3c4d&0&0000#{4d1e55b2-f16f-11cf-88cb-001111000030})";
+    device.usbPath =
+        R"(\\?\hid#vid_303a&pid_1001#7&1a2b3c4d&0&0000#{4d1e55b2-f16f-11cf-88cb-001111000030})";
 
     bool ok = false;
     const Device roundTripped = deviceFromJson(deviceToJson(device), &ok);
@@ -160,8 +161,7 @@ void TestDevice::hubChannelPasswordIsOmittedUnlessCachingWasOptedInto() {
     // Opted in: it is written, and it comes back.
     device.cachePeerPassword = true;
     json = deviceToJson(device);
-    QCOMPARE(json.value("peerPassword").toString(),
-             QStringLiteral("correct horse battery staple"));
+    QCOMPARE(json.value("peerPassword").toString(), QStringLiteral("correct horse battery staple"));
     loaded = deviceFromJson(json, &ok);
     QVERIFY(ok);
     QVERIFY(loaded.cachePeerPassword);
@@ -194,7 +194,7 @@ void TestDevice::projectWithoutHubFieldsLoadsAsUnconfiguredRatherThanGuessing() 
     QVERIFY(loaded.peerPassword.isEmpty());
 }
 
-} // namespace
+}  // namespace
 
 QTEST_MAIN(TestDevice)
 #include "test_device.moc"

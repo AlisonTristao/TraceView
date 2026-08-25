@@ -61,8 +61,8 @@ public:
     // itself would be considered dead.
     static constexpr quint32 kRequestedLeaseMs = 15000;
 
-    explicit SubscriptionManager(BtpSession* session, ProtocolRouter* router, TelemetryCatalog* catalog,
-                                 QObject* parent = nullptr);
+    explicit SubscriptionManager(BtpSession* session, ProtocolRouter* router,
+                                 TelemetryCatalog* catalog, QObject* parent = nullptr);
 
     // Registers one consumer of (sourceId, topicId) wanting at least
     // `requestedRateMillihz`, and returns an opaque, never-reused handle to
@@ -75,7 +75,8 @@ public:
     // config was edited), returning the handle to keep using -- `handle` when
     // the binding is unchanged, a fresh one otherwise, 0 when the new binding
     // is empty. Passing 0 as `handle` is the same as addSubscriber().
-    quint64 updateSubscriber(quint64 handle, quint32 sourceId, quint16 topicId, quint32 requestedRateMillihz);
+    quint64 updateSubscriber(quint64 handle, quint32 sourceId, quint16 topicId,
+                             quint32 requestedRateMillihz);
 
     // Drops one consumer. Sends UNSUBSCRIBE only if it was the last one for
     // its topic; lowers the rate with a new SUBSCRIBE if the remaining
@@ -93,7 +94,9 @@ public:
     QVector<StatusTopicRecord> topicStatuses() const;
 
     // Whole last STATUS payload, v1 or v2 (all zeroes before the first one).
-    const StatusReport& lastStatus() const { return m_lastStatus; }
+    const StatusReport& lastStatus() const {
+        return m_lastStatus;
+    }
 
     // Renews any grant at or past its renewal deadline by re-sending
     // SUBSCRIBE with a new sequence. Driven internally by a 1 s timer; taking
@@ -141,9 +144,9 @@ private:
     struct TopicState {
         quint32 sourceId = 0;
         quint16 topicId = 0;
-        quint32 targetBootId = 0;        // boot this subscription was addressed to
-        quint32 sentRateMillihz = 0;     // rate carried by the newest SUBSCRIBE sent
-        quint32 inFlightSequence = 0;    // 0 = no SUBSCRIBE awaiting its result
+        quint32 targetBootId = 0;      // boot this subscription was addressed to
+        quint32 sentRateMillihz = 0;   // rate carried by the newest SUBSCRIBE sent
+        quint32 inFlightSequence = 0;  // 0 = no SUBSCRIBE awaiting its result
         quint32 subscriptionId = 0;
         quint32 effectiveRateMillihz = 0;
         quint32 grantedLeaseMs = 0;
@@ -177,8 +180,8 @@ private:
     quint32 m_nextSequence = 1;
     quint64 m_nextHandle = 1;
 
-    QHash<quint64, Subscriber> m_subscribers;   // handle -> consumer
-    QHash<quint64, TopicState> m_topics;        // (source, topic) key -> wire state
+    QHash<quint64, Subscriber> m_subscribers;       // handle -> consumer
+    QHash<quint64, TopicState> m_topics;            // (source, topic) key -> wire state
     QHash<quint32, quint64> m_pendingSubscribes;    // request sequence -> topic key
     QHash<quint32, quint64> m_pendingUnsubscribes;  // request sequence -> topic key
 

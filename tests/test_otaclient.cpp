@@ -1,7 +1,6 @@
-#include <QtTest>
-
 #include <QSignalSpy>
 #include <QString>
+#include <QtTest>
 
 #include "ota/otaclient.h"
 

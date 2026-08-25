@@ -18,4 +18,4 @@ protected:
     void paintEvent(QPaintEvent* event) override;
 };
 
-} // namespace traceview
+}  // namespace traceview

@@ -1,12 +1,11 @@
 #include "deviceconnection.h"
 
 #include <QTimer>
-
 #include <btp/codec.hpp>
 
 #include "backend/backend.h"
-#include "protocol/btpbackend.h"
 #include "hubtransport.h"
+#include "protocol/btpbackend.h"
 #include "serialmanager.h"
 #include "usbhidmanager.h"
 
@@ -54,7 +53,7 @@ BtpSessionAxes toBtpSessionAxes(TransportType type) {
     }
     return {BtpSession::Framing::CobsStream, btp::TransportProfile::Serial};
 }
-} // namespace
+}  // namespace
 
 DeviceConnection::DeviceConnection(CommType commType, TransportType transportType, QObject* parent)
     : QObject(parent), m_transportType(transportType) {
@@ -91,8 +90,10 @@ DeviceConnection::DeviceConnection(CommType commType, TransportType transportTyp
     // `transportType` picked above.
     connect(m_transport, &Transport::dataReceived, m_backend, &Backend::feedBytes);
     connect(m_backend, &Backend::bytesToWrite, m_transport, &Transport::write);
-    connect(m_transport, &Transport::connectionStateChanged, m_backend, &Backend::onTransportConnectionChanged);
-    connect(m_transport, &Transport::connectionStateChanged, this, &DeviceConnection::connectionStateChanged);
+    connect(m_transport, &Transport::connectionStateChanged, m_backend,
+            &Backend::onTransportConnectionChanged);
+    connect(m_transport, &Transport::connectionStateChanged, this,
+            &DeviceConnection::connectionStateChanged);
     connect(m_backend, &Backend::deviceIdentified, this, &DeviceConnection::deviceIdentified);
 
     m_retryTimer = new QTimer(this);
@@ -190,4 +191,4 @@ void DeviceConnection::attemptReconnect() {
     // say that the omission is a decision and not a missing case.
 }
 
-} // namespace traceview
+}  // namespace traceview

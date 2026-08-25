@@ -55,7 +55,8 @@ QHostAddress OtaClient::cachedMdnsAddress(const QString& hostnameLower) const {
 }
 
 void OtaClient::cacheMdnsAddress(const QString& hostnameLower, const QHostAddress& address) {
-    m_mdnsCache.insert(hostnameLower, {address, QDateTime::currentMSecsSinceEpoch() + kMdnsCacheTtlMs});
+    m_mdnsCache.insert(hostnameLower,
+                       {address, QDateTime::currentMSecsSinceEpoch() + kMdnsCacheTtlMs});
 }
 
 bool OtaClient::statusRequestInFlight(const QString& deviceId) const {
@@ -75,7 +76,7 @@ void OtaClient::checkStatus(const QString& deviceId, const QString& address) {
     const QString host = address.trimmed();
     if (host.isEmpty()) {
         emit statusChecked(deviceId, /*reachable=*/false, /*otaReady=*/false, QString(),
-                            tr("No OTA address configured for this device."));
+                           tr("No OTA address configured for this device."));
         return;
     }
 
@@ -91,7 +92,8 @@ void OtaClient::checkStatus(const QString& deviceId, const QString& address) {
     }
 
     const QString requestId = QStringLiteral("status:%1").arg(deviceId);
-    m_pendingResolutions.insert(requestId, {PendingKind::Status, deviceId, host, QString(), QString()});
+    m_pendingResolutions.insert(requestId,
+                                {PendingKind::Status, deviceId, host, QString(), QString()});
     m_mdnsResolver->resolve(requestId, host);
 }
 
@@ -114,27 +116,29 @@ void OtaClient::sendStatusRequest(const QString& deviceId, const QString& host) 
         m_statusReplies.remove(deviceId);
 
         if (reply->error() != QNetworkReply::NoError) {
-            emit statusChecked(deviceId, /*reachable=*/false, /*otaReady=*/false, QString(), reply->errorString());
+            emit statusChecked(deviceId, /*reachable=*/false, /*otaReady=*/false, QString(),
+                               reply->errorString());
             reply->deleteLater();
             return;
         }
 
         const QJsonObject body = QJsonDocument::fromJson(reply->readAll()).object();
         emit statusChecked(deviceId, /*reachable=*/true, body.value("ota_ready").toBool(true),
-                            body.value("firmware").toString(), QString());
+                           body.value("firmware").toString(), QString());
         reply->deleteLater();
     });
 }
 
-void OtaClient::uploadFirmware(const QString& deviceId, const QString& address, const QString& password,
-                                const QString& filePath) {
+void OtaClient::uploadFirmware(const QString& deviceId, const QString& address,
+                               const QString& password, const QString& filePath) {
     if (QNetworkReply* previous = m_uploadReplies.take(deviceId)) {
         previous->abort();
     }
 
     const QString host = address.trimmed();
     if (host.isEmpty()) {
-        emit uploadFinished(deviceId, /*success=*/false, tr("No OTA address configured for this device."));
+        emit uploadFinished(deviceId, /*success=*/false,
+                            tr("No OTA address configured for this device."));
         return;
     }
 
@@ -150,30 +154,34 @@ void OtaClient::uploadFirmware(const QString& deviceId, const QString& address, 
     }
 
     const QString requestId = QStringLiteral("upload:%1").arg(deviceId);
-    m_pendingResolutions.insert(requestId, {PendingKind::Upload, deviceId, host, password, filePath});
+    m_pendingResolutions.insert(requestId,
+                                {PendingKind::Upload, deviceId, host, password, filePath});
     m_mdnsResolver->resolve(requestId, host);
 }
 
-void OtaClient::sendUploadRequest(const QString& deviceId, const QString& host, const QString& password,
-                                   const QString& filePath) {
+void OtaClient::sendUploadRequest(const QString& deviceId, const QString& host,
+                                  const QString& password, const QString& filePath) {
     auto* file = new QFile(filePath);
     if (!file->open(QIODevice::ReadOnly)) {
-        emit uploadFinished(deviceId, /*success=*/false, tr("Couldn't open %1").arg(QFileInfo(filePath).fileName()));
+        emit uploadFinished(deviceId, /*success=*/false,
+                            tr("Couldn't open %1").arg(QFileInfo(filePath).fileName()));
         delete file;
         return;
     }
 
     QNetworkRequest request(buildUrl(host, QStringLiteral("/update")));
-    request.setHeader(QNetworkRequest::ContentTypeHeader, QStringLiteral("application/octet-stream"));
+    request.setHeader(QNetworkRequest::ContentTypeHeader,
+                      QStringLiteral("application/octet-stream"));
     request.setRawHeader("X-OTA-Password", password.toUtf8());
 
     QNetworkReply* reply = m_manager->post(request, file);
     file->setParent(reply);  // outlives the request, cleaned up with the reply
     m_uploadReplies.insert(deviceId, reply);
 
-    connect(reply, &QNetworkReply::uploadProgress, this, [this, deviceId](qint64 sent, qint64 total) {
-        emit uploadProgress(deviceId, sent, total);
-    });
+    connect(reply, &QNetworkReply::uploadProgress, this,
+            [this, deviceId](qint64 sent, qint64 total) {
+                emit uploadProgress(deviceId, sent, total);
+            });
 
     connect(reply, &QNetworkReply::finished, this, [this, deviceId, reply]() {
         if (m_uploadReplies.value(deviceId) != reply) {
@@ -198,7 +206,8 @@ void OtaClient::sendUploadRequest(const QString& deviceId, const QString& host, 
 
 void OtaClient::onMdnsResolved(const QString& requestId, const QHostAddress& address) {
     const PendingResolution pending = m_pendingResolutions.take(requestId);
-    if (pending.deviceId.isEmpty()) return;  // stale -- superseded or already handled
+    if (pending.deviceId.isEmpty())
+        return;  // stale -- superseded or already handled
 
     cacheMdnsAddress(pending.hostname.toLower(), address);
 
@@ -211,7 +220,8 @@ void OtaClient::onMdnsResolved(const QString& requestId, const QHostAddress& add
 
 void OtaClient::onMdnsResolveFailed(const QString& requestId) {
     const PendingResolution pending = m_pendingResolutions.take(requestId);
-    if (pending.deviceId.isEmpty()) return;
+    if (pending.deviceId.isEmpty())
+        return;
 
     // Our own multicast query got no answer in time -- fall back to
     // whatever the OS resolver makes of the same hostname. Covers the case

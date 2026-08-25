@@ -145,7 +145,7 @@ void TestTelemetrySeriesBuffer::valuesIsStableBetweenAppends() {
     QCOMPARE(buffer.values(), (QVector<double>{2.0, 3.0}));
 }
 
-} // namespace
+}  // namespace
 
 QTEST_MAIN(TestTelemetrySeriesBuffer)
 #include "test_telemetryseriesbuffer.moc"
