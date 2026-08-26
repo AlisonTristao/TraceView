@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QByteArray>
 #include <btp/codec.hpp>
 
 #include "backend/backend.h"
@@ -16,6 +17,8 @@ class BtpHandshake;
 class ManifestClient;
 class SubscriptionManager;
 class ClockSync;
+class CommandClient;
+class HubBinder;
 struct BtpFrame;
 
 // Backend implementation backed by the BTP v1 client stack: BtpSession
@@ -98,7 +101,23 @@ public:
     //  - No clock sync. That exchange is a "dongle set_clock" shell command
     //    addressed to a hub; sending it to a robot would be a command the
     //    robot has no reason to accept.
-    void setHubEndpoint(quint32 selfSourceId, quint32 peerSourceId);
+    //
+    // `endpointKey` is the derived channel-B key (keyderivation.h's
+    // deriveChannelKey(Device::peerPassword)) -- empty means "hub, but no
+    // key configured yet": every sealed send (SUBSCRIBE/UNSUBSCRIBE via
+    // SubscriptionManager, COMMAND_REQUEST via CommandClient) then refuses
+    // rather than transmit in the clear, and every received frame with
+    // ENCRYPTED set is dropped rather than forwarded unauthenticated (see
+    // onSessionFrameReceived()).
+    void setHubEndpoint(quint32 selfSourceId, quint32 peerSourceId, const QByteArray& endpointKey);
+
+    // Declares, to the DONGLE this backend is connected to, that a child
+    // device with `childSourceId` speaks to the robot `peerSourceId`. Called
+    // on the PARENT's backend, never on the child's -- see HubBinder for why
+    // the hub has to be told at all, and why re-declaring is the normal path
+    // rather than an error path.
+    void bindHubChild(quint32 childSourceId, quint32 peerSourceId);
+    void unbindHubChild(quint32 childSourceId);
 
     // Zero unless setHubEndpoint() made this a child.
     quint32 peerSourceId() const {
@@ -124,9 +143,21 @@ public slots:
     void feedBytes(const QByteArray& data) override;
     void onTransportConnectionChanged(bool connected) override;
     void sendTerminalIn(const QByteArray& bytes) override;
+    void sendCommand(const QByteArray& text) override;
 
 private:
     void onTerminalFrameReceived(const traceview::BtpFrame& frame);
+    // Replaces the direct BtpSession::frameReceived -> ProtocolRouter::
+    // onFrameReceived connection: opens a sealed (ENCRYPTED) frame under
+    // m_endpointKey before forwarding, drops it if opening fails or no key
+    // is configured, and forwards anything unsealed unchanged -- telemetry,
+    // LOG and MANIFEST_DATA are not sealed by any producer today, so this
+    // has to stay a per-frame decision, not a per-backend one.
+    void onSessionFrameReceived(const traceview::BtpFrame& frame);
+    // The one sequence counter every sealed message this backend originates
+    // shares -- see CommandClient::configure()'s comment on why two
+    // different sealed messages must never draw the same value.
+    quint32 nextEndpointSequence();
 
     BtpSession* m_btpSession;
     ProtocolRouter* m_protocolRouter;
@@ -136,20 +167,32 @@ private:
     ManifestClient* m_manifestClient;
     SubscriptionManager* m_subscriptionManager;
     ClockSync* m_clockSync;
+    CommandClient* m_commandClient;
+    // Parent-side only: a child backend never binds anything, it IS the
+    // thing being bound. Held here rather than in MainWindow because the
+    // bindings have to be re-issued on every new session, and this is
+    // where sessionEstablished already lands.
+    HubBinder* m_hubBinder;
 
     // Minimal, self-contained BTP identity for TERMINAL_IN frames only --
     // there is no HELLO/MANIFEST exchange for it to learn one from (moved
     // here from the old SerialWidgetBridge::sendTerminalIn(), topico 19).
-    // Random, non-zero, generated once per BtpBackend lifetime.
+    // Random, non-zero, generated once per BtpBackend lifetime. Overwritten
+    // by setHubEndpoint() with the STABLE hub identity, at which point it
+    // also becomes the identity every other sealed send
+    // (SubscriptionManager, CommandClient) uses -- see setHubEndpoint()'s
+    // comment.
     quint32 m_terminalSourceId;
     quint32 m_terminalBootId;
     quint32 m_terminalSequence = 0;
+    quint32 m_endpointSequence = 0;
 
     // Both zero for the console-facing backend; both set for a child. Zero is
     // the "not a child" test rather than a separate flag, because BTP reserves
     // source_id 0 and so neither can legitimately be zero for a real endpoint.
     quint32 m_selfSourceId = 0;
     quint32 m_peerSourceId = 0;
+    QByteArray m_endpointKey;
 };
 
 }  // namespace traceview

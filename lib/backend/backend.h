@@ -75,6 +75,14 @@ public slots:
     // Raw bytes typed into a serial monitor/terminal widget, to be framed
     // and sent as this backend sees fit.
     virtual void sendTerminalIn(const QByteArray& bytes) = 0;
+    // A control widget's command line (push button/toggle/slider), to be
+    // sent as this backend sees fit -- for BtpBackend this means a real
+    // COMMAND_REQUEST when the device is a hub channel (a robot has no
+    // TERMINAL handler; only COMMAND is accepted end to end through the
+    // hub), and is a silent no-op otherwise, mirroring the "no console
+    // channel" contract control-widget commands already have for a USB HID
+    // device (see core/serialwidgetbridge.cpp).
+    virtual void sendCommand(const QByteArray& text) = 0;
 
 signals:
     // Bytes this backend needs written to the transport (connect to
@@ -105,6 +113,18 @@ signals:
     // section shows -- live-mirrored the same way `Device::connected` is, not
     // user-editable and not persisted (see devices/deviceconfigdialog.h).
     void deviceIdentified(const QString& btpVersion, const QString& btpId);
+    // The transport is fine but the protocol session on top of it is dead and
+    // will not recover on its own -- the owner should recycle the connection
+    // (close it, and let its retry timer reopen it).
+    //
+    // This exists because "transport open" and "session established" are two
+    // states, and only the first one had a recovery path. A handshake that
+    // failed left the port open, so DeviceConnection's retry timer -- which
+    // only ever fires for a transport that is DOWN -- never had anything to
+    // do, and the device sat there reading "connected" while speaking to
+    // nobody, with no way back except unplugging it. A backend with no
+    // session concept simply never emits this.
+    void sessionRecoveryNeeded();
 };
 
 }  // namespace traceview

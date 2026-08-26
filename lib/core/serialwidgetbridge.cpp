@@ -24,39 +24,37 @@ DeviceConnection* SerialWidgetBridge::deviceConnectionForWidget(DashboardWidget*
     return m_deviceConnectionFor(deviceId);
 }
 
+void SerialWidgetBridge::sendControlCommand(DeviceConnection* connection,
+                                            const QByteArray& command) {
+    if (SerialManager* serial = connection->serialManager()) {
+        serial->writeCommand(command);
+        return;
+    }
+    if (Backend* backend = connection->backend()) {
+        backend->sendCommand(command);
+    }
+}
+
 void SerialWidgetBridge::wireWidget(DashboardWidget* widget) {
     if (auto* button = qobject_cast<PushButtonWidget*>(widget)) {
         connect(button, &PushButtonWidget::sendRequested, this,
                 [this, button](const QByteArray& command) {
                     if (DeviceConnection* connection = deviceConnectionForWidget(button)) {
-                        // Raw-text control commands only exist over Serial's console
-                        // byte stream (docs/PROTOCOL.md "Outbound: control
-                        // commands") -- a device connected over USB HID has no
-                        // SerialManager at all (fragmentation-and-transports.md
-                        // section 3.3: no console, always BTP-protocolled), so this
-                        // goes nowhere, same "went nowhere, not an error" contract a
-                        // closed port already had.
-                        if (SerialManager* serial = connection->serialManager()) {
-                            serial->writeCommand(command);
-                        }
+                        sendControlCommand(connection, command);
                     }
                 });
     } else if (auto* toggle = qobject_cast<ToggleSwitchWidget*>(widget)) {
         connect(toggle, &ToggleSwitchWidget::sendRequested, this,
                 [this, toggle](const QByteArray& command) {
                     if (DeviceConnection* connection = deviceConnectionForWidget(toggle)) {
-                        if (SerialManager* serial = connection->serialManager()) {
-                            serial->writeCommand(command);
-                        }
+                        sendControlCommand(connection, command);
                     }
                 });
     } else if (auto* slider = qobject_cast<SliderWidget*>(widget)) {
         connect(slider, &SliderWidget::sendRequested, this,
                 [this, slider](const QByteArray& command) {
                     if (DeviceConnection* connection = deviceConnectionForWidget(slider)) {
-                        if (SerialManager* serial = connection->serialManager()) {
-                            serial->writeCommand(command);
-                        }
+                        sendControlCommand(connection, command);
                     }
                 });
     } else if (auto* monitor = qobject_cast<SerialMonitorWidget*>(widget)) {

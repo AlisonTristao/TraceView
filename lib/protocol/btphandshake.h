@@ -33,7 +33,14 @@ class BtpHandshake : public QObject {
     Q_OBJECT
 
 public:
-    explicit BtpHandshake(BtpSession* session, ProtocolRouter* router, QObject* parent = nullptr);
+    // The two retry knobs default to the production policy (see the
+    // constants at the top of the .cpp for why that budget is what it is).
+    // They are parameters rather than hardcoded so a test can exercise the
+    // whole retry path in milliseconds instead of the 20 real seconds the
+    // shipped policy takes -- a test that slow would either be skipped or
+    // would quietly stop covering the case.
+    explicit BtpHandshake(BtpSession* session, ProtocolRouter* router, QObject* parent = nullptr,
+                          int enterTimeoutMs = -1, int maxEnterAttempts = -1);
 
 public slots:
     // Starts a fresh handshake: generates a new ENTER nonce and client
@@ -81,12 +88,31 @@ private:
     enum class State { Idle, AwaitingReady, AwaitingHelloResult, Established };
 
     void sendHello();
+    // Writes the ENTER line and arms m_enterTimer. Called by start() and again
+    // by onEnterTimeout() for each retry -- deliberately reusing m_enterNonce
+    // rather than drawing a new one, see its declaration below.
+    void sendEnter();
     void fail(const QString& reason);
 
     BtpSession* m_session;
     State m_state = State::Idle;
     QByteArray m_lineBuffer;  // bounded scratch buffer while awaiting READY
+    // The nonce of the CURRENT connection attempt, drawn once in start() and
+    // held across every retry. Reused rather than redrawn on purpose: a READY
+    // answering an earlier ENTER can arrive after that ENTER's timeout has
+    // already fired (a cold-booting dongle is slow, not silent), and with a
+    // fresh nonce per retry that reply would no longer match anything. The
+    // handshake would then wait for a READY the dongle has no reason to send
+    // again -- it has already left console mode -- and stall until the retry
+    // budget ran out. One nonce per connection keeps every reply in play.
+    QByteArray m_enterNonce;
     QByteArray m_expectedReady;
+    // Retries burned so far on this connection; reset by start().
+    int m_enterAttempts = 0;
+    // Retry policy, from the constructor. Held per-instance rather than read
+    // from the file-scope constants so a test can shrink the budget.
+    int m_enterTimeoutMs;
+    int m_maxEnterAttempts;
     QTimer m_enterTimer;
     QTimer m_helloTimer;
 };

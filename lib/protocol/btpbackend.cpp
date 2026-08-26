@@ -7,7 +7,10 @@
 #include "protocol/btpframe.h"
 #include "protocol/btphandshake.h"
 #include "protocol/btpsession.h"
+#include "protocol/channelseal.h"
 #include "protocol/clocksync.h"
+#include "protocol/commandclient.h"
+#include "protocol/hubbinder.h"
 #include "protocol/manifestclient.h"
 #include "protocol/protocolrouter.h"
 #include "protocol/subscriptionmanager.h"
@@ -152,6 +155,15 @@ BtpBackend::BtpBackend(BtpSession::Framing framing, btp::TransportProfile encode
     // when the last one closes.
     m_subscriptionManager =
         new SubscriptionManager(m_btpSession, m_protocolRouter, m_telemetryCatalog, this);
+    // Hub-channel control widgets (topico 28's missing half): a real
+    // COMMAND_REQUEST/COMMAND_RESULT client, inert until setHubEndpoint()
+    // configures a target -- see CommandClient's own header comment.
+    m_commandClient = new CommandClient(m_btpSession, m_protocolRouter, this);
+    connect(m_commandClient, &CommandClient::statusMessage, this, &Backend::statusMessage);
+    // The parent half of the hub: tells the dongle which robot each child
+    // device is for. Inert on a child backend, which never calls into it.
+    m_hubBinder = new HubBinder(m_btpSession, m_protocolRouter, this);
+    connect(m_hubBinder, &HubBinder::statusMessage, this, &Backend::statusMessage);
 
     connect(m_btpSession, &BtpSession::bytesToWrite, this, &Backend::bytesToWrite);
     // Hub role (topico 26): every frame this session decodes is also offered,
@@ -174,6 +186,10 @@ BtpBackend::BtpBackend(BtpSession::Framing framing, btp::TransportProfile encode
                 m_manifestClient->onSessionEstablished(peerConfigRevision);
                 m_subscriptionManager->onSessionEstablished();
                 m_clockSync->onSessionEstablished(peerSourceId, peerBootId);
+                // Re-issued on EVERY session: HubRegistry's table is RAM-only
+                // on the dongle, so a dongle reboot silently empties it while
+                // this desktop still believes its children are routed.
+                m_hubBinder->onSessionEstablished(peerSourceId, peerBootId);
                 // Devices tab display only -- peerSourceId is the dongle's own
                 // BTP identity (its HELLO_RESULT envelope's source_id), the
                 // closest thing to a "device ID" this protocol reports today.
@@ -183,10 +199,20 @@ BtpBackend::BtpBackend(BtpSession::Framing framing, btp::TransportProfile encode
             });
     connect(m_btpHandshake, &BtpHandshake::sessionFailed, this, [this](const QString& reason) {
         emit statusMessage(tr("BTP handshake failed: %1").arg(reason), 8000);
+        // BtpHandshake has already exhausted its own retries by the time it
+        // says this, so the ENTER line is not what is missing any more --
+        // recycling the port is the only escalation left. Without this the
+        // status message above was the entire outcome: an 8-second toast,
+        // then a device that stays "connected" and silent forever.
+        emit sessionRecoveryNeeded();
     });
     connect(m_clockSync, &ClockSync::statusMessage, this, &Backend::statusMessage);
-    connect(m_btpSession, &BtpSession::frameReceived, m_protocolRouter,
-            &ProtocolRouter::onFrameReceived);
+    // Not a direct connection to ProtocolRouter::onFrameReceived any more:
+    // a sealed (ENCRYPTED) frame has to be opened first, and only this class
+    // knows the endpoint key setHubEndpoint() configured -- see
+    // onSessionFrameReceived()'s own comment.
+    connect(m_btpSession, &BtpSession::frameReceived, this,
+            &BtpBackend::onSessionFrameReceived);
     connect(m_protocolRouter, &ProtocolRouter::telemetrySampleReceived, m_telemetryFieldRouter,
             &TelemetryFieldRouter::onTelemetrySample);
     connect(m_telemetryFieldRouter, &TelemetryFieldRouter::fieldSample, this,
@@ -249,9 +275,11 @@ void BtpBackend::feedBytes(const QByteArray& data) {
     m_btpHandshake->feedRawBytes(data);
 }
 
-void BtpBackend::setHubEndpoint(quint32 selfSourceId, quint32 peerSourceId) {
+void BtpBackend::setHubEndpoint(quint32 selfSourceId, quint32 peerSourceId,
+                                const QByteArray& endpointKey) {
     m_selfSourceId = selfSourceId;
     m_peerSourceId = peerSourceId;
+    m_endpointKey = endpointKey;
     // The child speaks as itself, with an identity that survives a restart.
     // Overwrites the random one the console channel uses, and must: the hub
     // keys its bind table on this number, so a per-run value would invalidate
@@ -259,6 +287,68 @@ void BtpBackend::setHubEndpoint(quint32 selfSourceId, quint32 peerSourceId) {
     if (selfSourceId != 0) {
         m_terminalSourceId = selfSourceId;
     }
+    // Every sealed message this backend originates -- SUBSCRIBE/UNSUBSCRIBE
+    // and COMMAND_REQUEST -- speaks as this same (source_id, boot_id) and
+    // draws from this same sequence counter (nextEndpointSequence()), never
+    // each their own: two different messages reusing one AEAD nonce is
+    // exactly what encryption.md section 5.1 forbids.
+    m_subscriptionManager->setEndpointIdentity(
+        m_terminalSourceId, m_terminalBootId, endpointKey,
+        [this] { return nextEndpointSequence(); });
+    m_commandClient->configure(
+        m_terminalSourceId, m_terminalBootId, peerSourceId, m_telemetryCatalog, endpointKey,
+        [this] { return nextEndpointSequence(); });
+}
+
+quint32 BtpBackend::nextEndpointSequence() {
+    return ++m_endpointSequence;
+}
+
+void BtpBackend::bindHubChild(quint32 childSourceId, quint32 peerSourceId) {
+    m_hubBinder->bindChild(childSourceId, peerSourceId);
+}
+
+void BtpBackend::unbindHubChild(quint32 childSourceId) {
+    m_hubBinder->unbindChild(childSourceId);
+}
+
+void BtpBackend::sendCommand(const QByteArray& text) {
+    if (m_peerSourceId == 0) {
+        return;  // not a hub-channel device: no robot to address a COMMAND_REQUEST to
+    }
+    m_commandClient->send(QString::fromUtf8(text));
+}
+
+void BtpBackend::onSessionFrameReceived(const BtpFrame& frame) {
+    if ((frame.flags & btp::kFlagEncrypted) == 0U) {
+        m_protocolRouter->onFrameReceived(frame);
+        return;
+    }
+    if (m_endpointKey.isEmpty()) {
+        return;  // sealed frame, no key configured -- fail closed, never forward ciphertext
+    }
+
+    btp::Header header{};
+    header.type = frame.type;
+    header.flags = frame.flags;
+    header.source_id = frame.sourceId;
+    header.boot_id = frame.bootId;
+    header.sequence = frame.sequence;
+    header.timestamp_us = frame.timestampUs;
+    header.object_id = frame.objectId;
+    header.fragment_index = frame.fragmentIndex;
+    header.fragment_count = frame.fragmentCount;
+
+    const std::optional<QByteArray> plaintext =
+        ChannelSeal::open(m_endpointKey, header, frame.payload);
+    if (!plaintext.has_value()) {
+        return;  // tag mismatch / wrong cipher / wrong key -- never deliver unauthenticated bytes
+    }
+
+    BtpFrame opened = frame;
+    opened.flags &= ~static_cast<quint16>(btp::kFlagEncrypted);
+    opened.payload = *plaintext;
+    m_protocolRouter->onFrameReceived(opened);
 }
 
 void BtpBackend::onTransportConnectionChanged(bool connected) {
@@ -288,6 +378,9 @@ void BtpBackend::onTransportConnectionChanged(bool connected) {
         // (topico 17 PASSO 6): forget the grants, keep the widgets that
         // wanted them, so reconnecting re-subscribes everything.
         m_subscriptionManager->onSessionLost();
+        // The bindings themselves are kept -- only the dongle's copy of them
+        // died with the session, and resendAll() restores it on the next one.
+        m_hubBinder->onSessionLost();
     }
 }
 

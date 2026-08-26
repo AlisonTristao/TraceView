@@ -37,6 +37,8 @@
 #include "deviceconnection.h"
 #include "devices/devicesgrid.h"
 #include "donatedialog.h"
+#include "protocol/btpbackend.h"
+#include "protocol/keyderivation.h"
 #include "layerspanel.h"
 #include "logs/logviewer.h"
 #include "ota/otatab.h"
@@ -1329,8 +1331,29 @@ void MainWindow::applyDeviceTarget(DeviceConnection* connection, const Device& d
         // Device::peerSourceId). A parent that does not exist yet resolves to
         // nullptr here, which connectVia() reads as "not configured";
         // reattachHubChildren() runs again once it does exist.
-        connection->connectVia(m_deviceConnections.value(device.parentDeviceId),
-                               hubChannelSourceId(device.id), device.peerSourceId);
+        DeviceConnection* parent = m_deviceConnections.value(device.parentDeviceId);
+        connection->connectVia(parent, hubChannelSourceId(device.id), device.peerSourceId,
+                               deriveChannelKey(device.peerPassword));
+
+        // Tell the hub where this child's downstream traffic goes. Nothing on
+        // the wire can carry that: a BTP header has no destination field, and
+        // TELEMETRY/TERMINAL carry none in their payload either, so the dongle
+        // has to be told out of band (bally_dongle's HubRegistry). Until this
+        // call existed it was a human typing "hub -bind" into the dongle's
+        // console, and forgetting it did not produce an error -- a child's
+        // COMMAND_REQUEST was executed ON THE DONGLE and its keystrokes typed
+        // into the dongle's own shell, so a freshly added robot looked
+        // connected while commanding the wrong machine.
+        //
+        // Issued on every applyDeviceTarget(), which is also every
+        // reattachHubChildren() -- and HubBinder re-issues its whole table on
+        // each new session on top of that, because the dongle's copy is
+        // RAM-only.
+        if (parent != nullptr) {
+            if (auto* parentBackend = qobject_cast<BtpBackend*>(parent->backend())) {
+                parentBackend->bindHubChild(hubChannelSourceId(device.id), device.peerSourceId);
+            }
+        }
         return;
     }
     const QString target =

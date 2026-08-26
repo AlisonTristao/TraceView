@@ -20,10 +20,23 @@ constexpr quint8 kHelloResultSuccess = 0x00;
 // all -- after it finishes mounting the SD card, initializing ESP-NOW,
 // opening/migrating the SQLite database and registering every shell module.
 // All of that runs once, synchronously, before its tick() loop (where the
-// ENTER line is actually recognized) ever executes -- so this has to cover a
-// full cold boot, not just a quick text exchange. 20s is generous against a
-// slow SD card; bump it further if a real device still needs more.
-constexpr int kEnterTimeoutMs = 20000;
+// ENTER line is actually recognized) ever executes -- so the handshake has to
+// cover a full cold boot, not just a quick text exchange.
+//
+// It covers it by RETRYING, not by waiting once for a long time, and the
+// difference matters: a single 20s wait assumed the ENTER line itself always
+// arrives, and the one thing a cold boot does is eat it. Opening the port
+// asserts DTR, which can reset the ESP32-S3, so the very first ENTER is
+// written into a device that is about to reboot and is simply lost. There is
+// then nothing left to answer, and the old code waited out its 20 seconds,
+// gave up for good, and left a device that reads "connected" in the UI and
+// never speaks -- with no path back except unplugging it by hand.
+//
+// kMaxEnterAttempts * kEnterTimeoutMs keeps the total budget at the same 20s
+// as before, so nothing regressed for a genuinely slow SD card; what changed
+// is that a lost line now costs one retry instead of the whole connection.
+constexpr int kEnterTimeoutMs = 4000;
+constexpr int kMaxEnterAttempts = 5;
 constexpr int kHelloTimeoutMs = 3000;  // spec requires HELLO_RESULT within
                                        // 2000ms of HELLO; a little slack.
 constexpr int kMaxLineBufferBytes = 512;
@@ -70,8 +83,12 @@ QByteArray buildHelloPayload(quint16 maxLogicalPayload, quint16 sessionTimeoutMs
 
 }  // namespace
 
-BtpHandshake::BtpHandshake(BtpSession* session, ProtocolRouter* router, QObject* parent)
-    : QObject(parent), m_session(session) {
+BtpHandshake::BtpHandshake(BtpSession* session, ProtocolRouter* router, QObject* parent,
+                           int enterTimeoutMs, int maxEnterAttempts)
+    : QObject(parent),
+      m_session(session),
+      m_enterTimeoutMs(enterTimeoutMs > 0 ? enterTimeoutMs : kEnterTimeoutMs),
+      m_maxEnterAttempts(maxEnterAttempts > 0 ? maxEnterAttempts : kMaxEnterAttempts) {
     connect(router, &ProtocolRouter::controlFrameReceived, this,
             &BtpHandshake::onControlFrameReceived);
 
@@ -84,15 +101,21 @@ BtpHandshake::BtpHandshake(BtpSession* session, ProtocolRouter* router, QObject*
 void BtpHandshake::start() {
     m_lineBuffer.clear();
     m_state = State::AwaitingReady;
+    m_enterAttempts = 0;
 
-    QByteArray nonce;
+    m_enterNonce.clear();
     for (int i = 0; i < 16; ++i) {
-        nonce.append("0123456789abcdef"[QRandomGenerator::global()->bounded(16)]);
+        m_enterNonce.append("0123456789abcdef"[QRandomGenerator::global()->bounded(16)]);
     }
-    m_expectedReady = "BTP/1 READY " + nonce + "\r\n";
+    m_expectedReady = "BTP/1 READY " + m_enterNonce + "\r\n";
 
-    emit bytesToWrite("BTP/1 ENTER " + nonce + "\r\n");
-    m_enterTimer.start(kEnterTimeoutMs);
+    sendEnter();
+}
+
+void BtpHandshake::sendEnter() {
+    ++m_enterAttempts;
+    emit bytesToWrite("BTP/1 ENTER " + m_enterNonce + "\r\n");
+    m_enterTimer.start(m_enterTimeoutMs);
 }
 
 void BtpHandshake::feedRawBytes(const QByteArray& data) {
@@ -182,9 +205,21 @@ void BtpHandshake::onControlFrameReceived(const traceview::BtpFrame& frame) {
 }
 
 void BtpHandshake::onEnterTimeout() {
-    if (m_state == State::AwaitingReady) {
-        fail(tr("no BTP/1 READY within %1 ms").arg(kEnterTimeoutMs));
+    if (m_state != State::AwaitingReady) {
+        return;
     }
+    // Retry rather than give up: the common reason for silence here is that
+    // the ENTER line was lost to a DTR-triggered reset or arrived while the
+    // dongle was still in AppRuntime::begin(), and in both cases writing it
+    // again is all that is needed. Only a peer that stays silent through the
+    // whole budget is a real failure.
+    if (m_enterAttempts < m_maxEnterAttempts) {
+        sendEnter();
+        return;
+    }
+    fail(tr("no BTP/1 READY after %1 attempts over %2 ms")
+             .arg(m_maxEnterAttempts)
+             .arg(m_maxEnterAttempts * m_enterTimeoutMs));
 }
 
 void BtpHandshake::onHelloTimeout() {

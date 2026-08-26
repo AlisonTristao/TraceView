@@ -140,6 +140,7 @@ private:
     int m_usbDeviceRowIndex = -1;
     int m_parentRowIndex = -1;
     int m_peerSourceIdRowIndex = -1;
+    int m_childSourceIdRowIndex = -1;
     int m_peerPasswordRowIndex = -1;
     int m_cachePasswordRowIndex = -1;
 
@@ -166,6 +167,11 @@ private:
     // (m_peerSourceIdCombo's activated handler) or typing a numeric id by
     // hand (its lineEdit's editingFinished). What result() actually reads.
     quint32 m_peerSourceId = 0;
+    // Read-only: this device's own source_id on the wire (hubChannelSourceId()
+    // in devices/device.h), the value an operator must pass as the first
+    // argument to the dongle's `hub -bind` -- shown here because nothing else
+    // in the UI ever surfaces it (see docs/DEVICES.md "Hub channels").
+    QLabel* m_childSourceIdLabel = nullptr;
     QLineEdit* m_peerPasswordEdit = nullptr;
     QCheckBox* m_cachePasswordCheck = nullptr;
 

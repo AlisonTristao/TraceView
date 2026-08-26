@@ -51,6 +51,12 @@ find_package(Qt6 REQUIRED COMPONENTS Widgets SerialPort Network LinguistTools)
 # tests/test_btpsession.cpp and friends).
 include(FetchContent)
 set(BTP_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+# btp::aead (AES-128-GCM/ChaCha20-Poly1305 over mbedtls) is what
+# lib/protocol/channelseal.cpp uses to seal/open channel B (key E) traffic
+# for a hub-channel device -- ON is BTP's own default, forced explicitly here
+# so a build never silently loses it to some other scope setting the cache
+# variable first.
+set(BTP_ENABLE_AEAD ON CACHE BOOL "" FORCE)
 FetchContent_Declare(
     btp
     GIT_REPOSITORY https://github.com/AlisonTristao/BTP.git

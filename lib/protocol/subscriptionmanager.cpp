@@ -6,6 +6,7 @@
 
 #include "protocol/btpframe.h"
 #include "protocol/btpsession.h"
+#include "protocol/channelseal.h"
 #include "protocol/protocolrouter.h"
 #include "protocol/telemetrycatalog.h"
 
@@ -52,6 +53,10 @@ qint64 renewIntervalFor(quint32 grantedLeaseMs) {
 }
 
 }  // namespace
+
+quint32 SubscriptionManager::nextSequence() {
+    return m_nextEndpointSequence ? m_nextEndpointSequence() : m_nextSequence++;
+}
 
 SubscriptionManager::SubscriptionManager(BtpSession* session, ProtocolRouter* router,
                                          TelemetryCatalog* catalog, QObject* parent)
@@ -193,7 +198,7 @@ void SubscriptionManager::sendSubscribe(TopicState& topic, quint32 rateMillihz) 
     appendLe(payload, rateMillihz, 4);
     appendLe(payload, kRequestedLeaseMs, 4);
 
-    const quint32 sequence = m_nextSequence++;
+    const quint32 sequence = nextSequence();
     sendControl(kControlSubscribe, payload, sequence);
 
     topic.targetBootId = bootId;
@@ -210,29 +215,54 @@ void SubscriptionManager::sendUnsubscribe(const TopicState& topic) {
     appendLe(payload, topic.targetBootId, 4);
     appendLe(payload, topic.subscriptionId, 4);
 
-    const quint32 sequence = m_nextSequence++;
+    const quint32 sequence = nextSequence();
     sendControl(kControlUnsubscribe, payload, sequence);
     m_pendingUnsubscribes.insert(sequence, makeKey(topic.sourceId, topic.topicId));
 }
 
 void SubscriptionManager::sendControl(quint16 objectId, const QByteArray& payload,
                                       quint32 sequence) {
+    const bool isEndpoint = m_endpointSourceId != 0;
+
     btp::Header header{};
     header.type = btp::MessageType::Control;
     header.flags = 0;
-    header.source_id = m_clientSourceId;
-    header.boot_id = m_clientBootId;
+    header.source_id = isEndpoint ? m_endpointSourceId : m_clientSourceId;
+    header.boot_id = isEndpoint ? m_endpointBootId : m_clientBootId;
     header.sequence = sequence;
     header.timestamp_us = static_cast<quint64>(QDateTime::currentMSecsSinceEpoch()) * 1000ULL;
     header.object_id = objectId;
     header.fragment_index = 0;
     header.fragment_count = 1;
 
+    QByteArray outPayload = payload;
+    if (isEndpoint) {
+        // Channel B: a robot behind the hub, not the dongle itself -- refuse
+        // rather than send a SUBSCRIBE/UNSUBSCRIBE in the clear when no key
+        // is configured (same fail-closed contract as RadioSeal::seal_e).
+        if (m_endpointKey.isEmpty()) {
+            return;
+        }
+        outPayload = ChannelSeal::seal(m_endpointKey, header, payload);
+        if (outPayload.isEmpty()) {
+            return;
+        }
+    }
+
     btp::Frame frame{};
     frame.header = header;
-    frame.payload.data = reinterpret_cast<const std::uint8_t*>(payload.constData());
-    frame.payload.size = static_cast<std::size_t>(payload.size());
+    frame.payload.data = reinterpret_cast<const std::uint8_t*>(outPayload.constData());
+    frame.payload.size = static_cast<std::size_t>(outPayload.size());
     m_session->sendFrame(frame);
+}
+
+void SubscriptionManager::setEndpointIdentity(quint32 selfSourceId, quint32 selfBootId,
+                                              const QByteArray& endpointKey,
+                                              std::function<quint32()> nextSequenceFn) {
+    m_endpointSourceId = selfSourceId;
+    m_endpointBootId = selfBootId;
+    m_endpointKey = endpointKey;
+    m_nextEndpointSequence = std::move(nextSequenceFn);
 }
 
 void SubscriptionManager::onControlFrameReceived(const BtpFrame& frame) {
@@ -257,9 +287,12 @@ void SubscriptionManager::handleSubscribeResult(const BtpFrame& frame) {
     }
     // Correlation is the full (request_source_id, request_boot_id,
     // reply_to_sequence) triple -- reply_to_sequence alone is not unique
-    // (commands.md section 1).
-    if (readLe32(frame.payload, 0) != m_clientSourceId ||
-        readLe32(frame.payload, 4) != m_clientBootId) {
+    // (commands.md section 1). Matches whichever identity sendControl() sent
+    // under: the private one, or the hub-channel endpoint one.
+    const quint32 expectedSourceId = m_endpointSourceId != 0 ? m_endpointSourceId : m_clientSourceId;
+    const quint32 expectedBootId = m_endpointSourceId != 0 ? m_endpointBootId : m_clientBootId;
+    if (readLe32(frame.payload, 0) != expectedSourceId ||
+        readLe32(frame.payload, 4) != expectedBootId) {
         return;
     }
     const quint32 replyToSequence = readLe32(frame.payload, 8);
@@ -336,8 +369,10 @@ void SubscriptionManager::handleUnsubscribeResult(const BtpFrame& frame) {
     if (frame.payload.size() < kUnsubscribeResultSize) {
         return;
     }
-    if (readLe32(frame.payload, 0) != m_clientSourceId ||
-        readLe32(frame.payload, 4) != m_clientBootId) {
+    const quint32 expectedSourceId = m_endpointSourceId != 0 ? m_endpointSourceId : m_clientSourceId;
+    const quint32 expectedBootId = m_endpointSourceId != 0 ? m_endpointBootId : m_clientBootId;
+    if (readLe32(frame.payload, 0) != expectedSourceId ||
+        readLe32(frame.payload, 4) != expectedBootId) {
         return;
     }
     const quint32 replyToSequence = readLe32(frame.payload, 8);

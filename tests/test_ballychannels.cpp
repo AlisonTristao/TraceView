@@ -30,7 +30,7 @@ namespace {
 // repositories store LF, so hashing the bytes as they sit on disk would make
 // this pass or fail depending on which machine ran it -- a false alarm that
 // would teach people to ignore the check, which is worse than not having it.
-const char kExpectedSha256[] = "ccc633aba16ebb38e02b7eafd631637fddc58346b536f8c9c12bebfc2a39dcc5";
+const char kExpectedSha256[] = "c141fbb0e14f1f0c6573d0406b736d4419d3c1879a17044f86ce83fc6a804560";
 
 }  // namespace
 
@@ -62,7 +62,16 @@ static_assert(dongle_channel_of(Side::Cable, false) == Channel::A_Console, "");
 static_assert(dongle_channel_of(Side::Radio, true) == Channel::C_Link, "");
 static_assert(dongle_channel_of(Side::Radio, false) == Channel::B_Endpoint, "");
 
-// The ingress rule: everything is relayed except a short, explicit list.
+// The header only chooses which frames need reassembly plus an L-key open.
+// The final ownership checks below are valid only on authenticated plaintext.
+static_assert(dongle_may_consume(btp::MessageType::Control, 0x0009u), "");
+static_assert(dongle_may_consume(btp::MessageType::Command, 0x0001u), "");
+static_assert(dongle_may_consume(btp::MessageType::Command, 0x0002u), "");
+static_assert(dongle_may_consume(btp::MessageType::Control, 0x0004u), "");
+static_assert(!dongle_may_consume(btp::MessageType::Telemetry, 0x0001u), "");
+static_assert(!dongle_may_consume(btp::MessageType::Control, 0x0006u), "");
+
+// The ingress ownership rule after authentication.
 static_assert(dongle_consumes(btp::MessageType::Control, 0x0009u, 0u, 0xD0u),
               "the heartbeat is link administration and stops at the hub");
 static_assert(dongle_consumes(btp::MessageType::Command, 0x0002u, 0xD0u, 0xD0u),
@@ -78,7 +87,12 @@ static_assert(!dongle_consumes(btp::MessageType::Log, 0x0001u, 0u, 0xD0u), "");
 static_assert(!dongle_consumes(btp::MessageType::Terminal, 0x0002u, 0u, 0xD0u),
               "terminal output must reach the console -- it used to be dropped in silence");
 static_assert(!dongle_consumes(btp::MessageType::Control, 0x0004u, 0u, 0xD0u),
-              "a robot's manifest is for the console, not for the hub");
+              "a manifest pushed with no correlation to a hub request is relayed");
+static_assert(dongle_consumes(btp::MessageType::Control, 0x0004u, 0xD0u, 0xD0u),
+              "a manifest answering a request the hub itself issued is the hub's business, "
+              "same idea as COMMAND_RESULT");
+static_assert(!dongle_consumes(btp::MessageType::Control, 0x0004u, 0xA1u, 0xD0u),
+              "a robot's manifest correlated to somebody else's request is still relayed");
 
 class TestBallyChannels : public QObject {
     Q_OBJECT

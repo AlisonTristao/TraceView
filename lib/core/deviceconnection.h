@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QByteArray>
 #include <QObject>
 #include <QString>
 #include <QtGlobal>
@@ -97,7 +98,13 @@ public:
     // it addresses. Both are needed because a child is an endpoint, not just a
     // reader: it originates commands, terminal input and manifest requests,
     // and the hub routes the downstream direction by the child's own id.
-    void connectVia(DeviceConnection* parentConnection, quint32 selfSourceId, quint32 peerSourceId);
+    // `endpointKey` is the derived channel-B key (deriveChannelKey() applied
+    // to Device::peerPassword by whoever calls this, since traceview_devices
+    // can't depend on traceview_protocol) -- empty means "hub, but no key
+    // configured yet", which every sealed send/receive on this connection
+    // then refuses rather than treat as channel A's "in the clear".
+    void connectVia(DeviceConnection* parentConnection, quint32 selfSourceId, quint32 peerSourceId,
+                    const QByteArray& endpointKey);
     // Marks intent "offline" and closes. Stops the retry timer -- unlike a
     // transport drop, this does not come back on its own.
     void disconnectFrom();

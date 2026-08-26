@@ -91,7 +91,7 @@ void TestHubEndpoint::childIdentityIsStableAcrossRuns() {
 // cannot answer, and the child would sit with no catalog and no error.
 void TestHubEndpoint::childAsksItsOwnRobotForAManifestNotAnEnumeration() {
     BtpBackend backend(BtpSession::Framing::PreFramed, btp::TransportProfile::EspNow);
-    backend.setHubEndpoint(hubChannelSourceId(QStringLiteral("child-1")), kRobot);
+    backend.setHubEndpoint(hubChannelSourceId(QStringLiteral("child-1")), kRobot, QByteArray());
     QCOMPARE(backend.peerSourceId(), kRobot);
 
     QSignalSpy written(&backend, &Backend::bytesToWrite);
@@ -120,7 +120,7 @@ void TestHubEndpoint::childAsksItsOwnRobotForAManifestNotAnEnumeration() {
 void TestHubEndpoint::childTerminalInputCarriesTheChildsOwnStableIdentity() {
     const quint32 childId = hubChannelSourceId(QStringLiteral("child-2"));
     BtpBackend backend(BtpSession::Framing::PreFramed, btp::TransportProfile::EspNow);
-    backend.setHubEndpoint(childId, kRobot);
+    backend.setHubEndpoint(childId, kRobot, QByteArray());
 
     QSignalSpy written(&backend, &Backend::bytesToWrite);
     backend.sendTerminalIn(QByteArrayLiteral("status\n"));
@@ -158,7 +158,7 @@ void TestHubEndpoint::anOrdinarySerialBackendStillHandshakes() {
 // and a child that guessed a target would talk to whichever robot answered.
 void TestHubEndpoint::anUnconfiguredChildAsksNobodyAnything() {
     BtpBackend backend(BtpSession::Framing::PreFramed, btp::TransportProfile::EspNow);
-    backend.setHubEndpoint(hubChannelSourceId(QStringLiteral("child-3")), 0);
+    backend.setHubEndpoint(hubChannelSourceId(QStringLiteral("child-3")), 0, QByteArray());
     QCOMPARE(backend.peerSourceId(), 0u);
 
     // With no peer this is not a child at all, so it takes the console path --

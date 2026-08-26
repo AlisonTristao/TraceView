@@ -180,7 +180,7 @@ void TestClockSync::sessionEstablishedAsksTheDongleForItsClock() {
     QVERIFY(fixture.writtenFrame(0, &frame, &storage));
     QCOMPARE(int(frame.header.type), int(btp::MessageType::Command));
     QCOMPARE(frame.header.object_id, kCommandRequestObjectId);
-    QCOMPARE(commandLineOf(frame), QStringLiteral("dongle clock"));
+    QCOMPARE(commandLineOf(frame), QStringLiteral("dongle -clock"));
 
     // The request has to be addressed to the dongle that just handshaked:
     // SerialMux::handleCommandRequest on the firmware side refuses one whose
@@ -216,7 +216,7 @@ void TestClockSync::aDongleRunningBehindIsCorrected() {
     btp::DecodedFrame frame{};
     std::vector<std::uint8_t> storage;
     QVERIFY(fixture.writtenFrame(1, &frame, &storage));
-    QVERIFY(commandLineOf(frame).startsWith(QStringLiteral("dongle set_clock ")));
+    QVERIFY(commandLineOf(frame).startsWith(QStringLiteral("dongle -set_clock ")));
 
     // Reported to the user once the dongle confirms, not optimistically at
     // send time.
@@ -239,7 +239,7 @@ void TestClockSync::aDongleRunningAheadIsCorrectedToo() {
     btp::DecodedFrame frame{};
     std::vector<std::uint8_t> storage;
     QVERIFY(fixture.writtenFrame(1, &frame, &storage));
-    QVERIFY(commandLineOf(frame).startsWith(QStringLiteral("dongle set_clock ")));
+    QVERIFY(commandLineOf(frame).startsWith(QStringLiteral("dongle -set_clock ")));
 }
 
 void TestClockSync::aReplyFromAnotherClientIsIgnored() {

@@ -115,8 +115,14 @@ add_library(traceview_protocol STATIC
     protocol/btphandshake.h
     protocol/btpsession.cpp
     protocol/btpsession.h
+    protocol/channelseal.cpp
+    protocol/channelseal.h
     protocol/clocksync.cpp
     protocol/clocksync.h
+    protocol/hubbinder.cpp
+    protocol/hubbinder.h
+    protocol/commandclient.cpp
+    protocol/commandclient.h
     protocol/keyderivation.cpp
     protocol/keyderivation.h
     protocol/logentry.h
@@ -152,6 +158,11 @@ target_link_libraries(traceview_protocol PUBLIC
     # links it separately for that.
     Qt6::Network
     btp::codec
+    # channelseal.cpp is the only place in this app that calls into btp::aead
+    # (mirrors bally_OS's RadioSeal/bally_dongle's DongleKeyStore convention:
+    # one file per repo owns the crypto call, everything else goes through
+    # it) -- channel B (key E, TraceView <-> robot through a hub) needs it.
+    btp::aead
     traceview_backend
     traceview_telemetry
 )

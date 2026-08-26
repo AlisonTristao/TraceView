@@ -281,6 +281,21 @@ DeviceConfigDialog::DeviceConfigDialog(const Device& initial, QWidget* parent)
     m_peerSourceIdRowIndex = m_connectionLayout->rowCount();
     m_connectionLayout->addRow(tr("Source ID:"), m_peerSourceIdCombo);
 
+    // This device's OWN identity on the wire, not the robot's -- the value
+    // `hub -bind <this>, <robot source_id>` needs on the dongle's shell.
+    // Read-only and derived, never typed: the hub keys its bind table on it,
+    // so it has to be stable across relaunches (hubChannelSourceId()'s own
+    // comment, devices/device.h).
+    m_childSourceIdLabel = new QLabel(connectionGroup);
+    m_childSourceIdLabel->setText(
+        QStringLiteral("0x%1").arg(hubChannelSourceId(m_device.id), 8, 16, QLatin1Char('0')).toUpper());
+    m_childSourceIdLabel->setToolTip(
+        tr("This device's own source_id. Pass it as the first argument to the dongle's "
+           "\"hub -bind\" command, with the robot's Source ID above as the second, so the "
+           "hub knows which robot this device's SUBSCRIBE/COMMAND traffic is for."));
+    m_childSourceIdRowIndex = m_connectionLayout->rowCount();
+    m_connectionLayout->addRow(tr("This device's ID:"), m_childSourceIdLabel);
+
     m_peerPasswordEdit = new QLineEdit(m_device.peerPassword, connectionGroup);
     m_peerPasswordEdit->setEchoMode(QLineEdit::Password);
     m_peerPasswordEdit->setToolTip(tr("Password for this robot's endpoint key."));
@@ -301,8 +316,9 @@ DeviceConfigDialog::DeviceConfigDialog(const Device& initial, QWidget* parent)
     m_connectionLayout->addRow(QString(), m_cachePasswordCheck);
 
     // Lock the Connection group to the tallest of the three transports' row
-    // sets (Hub has the most: through-device/source_id/password/cache
-    // checkbox) instead of leaving it to shrink-wrap whichever one happens
+    // sets (Hub has the most: through-device/source_id/this-device's-id/
+    // password/cache checkbox) instead of leaving it to shrink-wrap whichever
+    // one happens
     // to be selected. Without this, switching the Transport combo hides/
     // shows rows via setRowVisible() and the whole dialog resizes itself
     // around it every time -- jarring, and it undoes the height the user set
@@ -506,6 +522,7 @@ void DeviceConfigDialog::updateTransportFieldsVisibility() {
     m_connectionLayout->setRowVisible(m_usbDeviceRowIndex, isUsbHid);
     m_connectionLayout->setRowVisible(m_parentRowIndex, isHub);
     m_connectionLayout->setRowVisible(m_peerSourceIdRowIndex, isHub);
+    m_connectionLayout->setRowVisible(m_childSourceIdRowIndex, isHub);
     m_connectionLayout->setRowVisible(m_peerPasswordRowIndex, isHub);
     m_connectionLayout->setRowVisible(m_cachePasswordRowIndex, isHub);
 }

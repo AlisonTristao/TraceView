@@ -79,8 +79,16 @@ void ClockSync::onSessionEstablished(quint32 peerSourceId, quint32 peerBootId) {
     requestClock();
 }
 
+// The leading dash on the COMMAND is required, not decoration: TinyShell's
+// parse_command() locates the command name with command.find('-') and, when
+// there is no dash at all, leaves command_name empty -- which then fails
+// check_function_name() and comes back as FUNCTION_NOT_FOUND. The module name
+// takes no dash; the command always does. "dongle clock" (no dash) was
+// therefore never executed by any dongle: it round-tripped as an error whose
+// only trace was a status-bar line nobody was watching, so the clock silently
+// never got corrected.
 void ClockSync::requestClock() {
-    sendShellCommand(QStringLiteral("dongle clock"), Pending::Clock);
+    sendShellCommand(QStringLiteral("dongle -clock"), Pending::Clock);
 }
 
 void ClockSync::sendShellCommand(const QString& commandLine, Pending expecting) {
@@ -179,7 +187,7 @@ void ClockSync::onCommandFrameReceived(const BtpFrame& frame) {
 
         const QString hostTime =
             QDateTime::currentDateTimeUtc().toString(QStringLiteral("yyyy-MM-dd HH:mm:ss"));
-        sendShellCommand(QStringLiteral("dongle set_clock \"%1\"").arg(hostTime),
+        sendShellCommand(QStringLiteral("dongle -set_clock \"%1\"").arg(hostTime),
                          Pending::SetClock);
     } else {
         emit statusMessage(tr("dongle clock corrected (%1)").arg(message), 5000);

@@ -95,6 +95,16 @@ DeviceConnection::DeviceConnection(CommType commType, TransportType transportTyp
     connect(m_transport, &Transport::connectionStateChanged, this,
             &DeviceConnection::connectionStateChanged);
     connect(m_backend, &Backend::deviceIdentified, this, &DeviceConnection::deviceIdentified);
+    // A dead session on a live transport: close it and let the retry timer
+    // below reopen it, which restarts the handshake through
+    // onTransportConnectionChanged(). Closing is what makes attemptReconnect()
+    // eligible at all -- it returns early while the transport is still
+    // connected, which is exactly the state a failed handshake leaves behind.
+    connect(m_backend, &Backend::sessionRecoveryNeeded, this, [this] {
+        if (m_shouldBeConnected) {
+            m_transport->close();
+        }
+    });
 
     m_retryTimer = new QTimer(this);
     m_retryTimer->setInterval(kRetryIntervalMs);
@@ -125,7 +135,7 @@ void DeviceConnection::connectTo(const QString& target, qint32 baudRate) {
 }
 
 void DeviceConnection::connectVia(DeviceConnection* parentConnection, quint32 selfSourceId,
-                                  quint32 peerSourceId) {
+                                  quint32 peerSourceId, const QByteArray& endpointKey) {
     // The HubChannel counterpart of connectTo(), and separate from it for the
     // reason transport.h gives for keeping open() off the Transport
     // interface: a hub channel's target is a parent device plus a source_id,
@@ -144,7 +154,7 @@ void DeviceConnection::connectVia(DeviceConnection* parentConnection, quint32 se
     // child ask its robot for a catalog -- and it has to know which robot by
     // then.
     if (auto* btpBackend = qobject_cast<BtpBackend*>(m_backend)) {
-        btpBackend->setHubEndpoint(selfSourceId, peerSourceId);
+        btpBackend->setHubEndpoint(selfSourceId, peerSourceId, endpointKey);
     }
 
     // Same ambient-intent model as connectTo(): "not configured" means no

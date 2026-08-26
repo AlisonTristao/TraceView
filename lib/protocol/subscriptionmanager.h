@@ -1,10 +1,12 @@
 #pragma once
 
+#include <QByteArray>
 #include <QHash>
 #include <QObject>
 #include <QTimer>
 #include <QVector>
 #include <QtGlobal>
+#include <functional>
 
 #include "protocol/statusreport.h"
 #include "telemetry/subscriptionstate.h"
@@ -104,6 +106,21 @@ public:
     // wall-clock time.
     void renewDueSubscriptions(qint64 nowMs);
 
+    // Makes this manager speak as a hub-channel device's own identity instead
+    // of its private per-process (m_clientSourceId/m_clientBootId) one, and
+    // seal every SUBSCRIBE/UNSUBSCRIBE it sends under `endpointKey` (channel
+    // B, key E) -- see BtpBackend::setHubEndpoint(). `endpointKey` empty
+    // means "hub, but no key configured yet": sendControl() then refuses to
+    // send rather than transmit in the clear to a robot. `nextSequence` MUST
+    // be the same shared counter every other sealed message this backend
+    // originates draws from -- see CommandClient::configure()'s comment on
+    // why. Passing `selfSourceId == 0` (the default) restores the private
+    // per-process identity, unsealed -- the console/dongle-facing behavior
+    // this class always had.
+    void setEndpointIdentity(quint32 selfSourceId, quint32 selfBootId,
+                             const QByteArray& endpointKey,
+                             std::function<quint32()> nextSequence);
+
 public slots:
     // A fresh BTP session came up: every subscription_id from the previous
     // one is void, so re-subscribe everything that still has a consumer.
@@ -160,6 +177,10 @@ private:
 
     quint32 desiredRateFor(quint64 key) const;
     int subscriberCountFor(quint64 key) const;
+    // m_nextEndpointSequence() when set (hub-channel identity, shared with
+    // every other sealed message this backend sends), else the private
+    // per-process m_nextSequence++ this class always used.
+    quint32 nextSequence();
     // Brings the wire state of `key` in line with its consumers: subscribes,
     // re-subscribes at a new rate, unsubscribes, or does nothing.
     void syncTopic(quint64 key);
@@ -179,6 +200,14 @@ private:
     quint32 m_clientBootId;
     quint32 m_nextSequence = 1;
     quint64 m_nextHandle = 1;
+
+    // Set by setEndpointIdentity() for a hub-channel device; m_endpointSourceId
+    // == 0 (the default) means "not a hub, use the private identity above,
+    // unsealed" -- see that method's comment.
+    quint32 m_endpointSourceId = 0;
+    quint32 m_endpointBootId = 0;
+    QByteArray m_endpointKey;
+    std::function<quint32()> m_nextEndpointSequence;
 
     QHash<quint64, Subscriber> m_subscribers;       // handle -> consumer
     QHash<quint64, TopicState> m_topics;            // (source, topic) key -> wire state

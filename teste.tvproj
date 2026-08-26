@@ -1,0 +1,54 @@
+{
+    "devices": {
+        "devices": [
+            {
+                "baudRate": 5000000,
+                "cacheOtaPassword": false,
+                "cachePeerPassword": false,
+                "commType": 0,
+                "description": "",
+                "id": "7343d9f3-c204-44a7-9f14-6e183cc70af4",
+                "lineTerminator": 1,
+                "name": "Dongle",
+                "otaAddress": "",
+                "parentDeviceId": "",
+                "peerSourceId": 0,
+                "portName": "COM8",
+                "transportType": 0,
+                "usbPath": "\\\\?\\HID#INTC816#3&27ef53f1&0&0000#{4d1e55b2-f16f-11cf-88cb-001111000030}"
+            },
+            {
+                "baudRate": 921600,
+                "cacheOtaPassword": false,
+                "cachePeerPassword": false,
+                "commType": 0,
+                "description": "",
+                "id": "1dd358eb-1e20-42f7-8a27-8d28c9bf2466",
+                "lineTerminator": 1,
+                "name": "New Device",
+                "otaAddress": "",
+                "parentDeviceId": "7343d9f3-c204-44a7-9f14-6e183cc70af4",
+                "peerSourceId": 0,
+                "portName": "",
+                "transportType": 2,
+                "usbPath": "\\\\?\\HID#INTC816#3&27ef53f1&0&0000#{4d1e55b2-f16f-11cf-88cb-001111000030}"
+            }
+        ]
+    },
+    "traceview": {
+        "formatVersion": 1
+    },
+    "workspaces": {
+        "activeId": "d2bb648c-6cba-4d7b-90bc-f511295b4b4c",
+        "list": [
+            {
+                "dashboard": {
+                    "items": [
+                    ]
+                },
+                "id": "d2bb648c-6cba-4d7b-90bc-f511295b4b4c",
+                "name": "Default"
+            }
+        ]
+    }
+}

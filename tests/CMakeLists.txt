@@ -47,6 +47,12 @@ add_traceview_test(test_keyderivation traceview_protocol)
 # no transport -- what the session would have written is decoded straight out
 # of bytesToWrite(), the same way test_hubendpoint does it.
 add_traceview_test(test_clocksync traceview_protocol btp::codec)
+# The hub binding: what the desktop tells the dongle about which robot each
+# child device speaks to. Same no-transport fixture as test_clocksync. Worth
+# its own suite because every property here fails SILENTLY when it regresses
+# -- an unbound child does not error, it gets its commands executed on the
+# dongle instead of on its robot.
+add_traceview_test(test_hubbinder traceview_protocol btp::codec)
 # MANIFEST_REQUEST/MANIFEST_DATA: when a request is worth sending, and a
 # bounds-checked walk over the response. Same no-transport fixture as
 # test_clocksync -- requests are decoded out of bytesToWrite(), responses

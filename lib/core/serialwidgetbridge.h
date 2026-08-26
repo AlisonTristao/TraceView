@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QByteArray>
 #include <QHash>
 #include <QObject>
 #include <QString>
@@ -22,12 +23,17 @@ class SerialMonitorWidget;
 //
 // PushButtonWidget/ToggleSwitchWidget/SliderWidget's sendRequested() (a
 // fully-formed outbound command) goes through that device's
-// SerialManager::writeCommand() directly (appends the configured line
-// terminator, docs/PROTOCOL.md "Outbound: control commands") -- this is raw
-// text with no protocol envelope, so it bypasses Backend entirely. A widget
-// with no device configured (or whose configured device doesn't exist,
-// e.g. it was since removed) just goes nowhere -- same "went nowhere, not
-// an error" contract SerialManager::write() already has for a closed port.
+// SerialManager::writeCommand() when one exists (appends the configured line
+// terminator, docs/PROTOCOL.md "Outbound: control commands") -- raw text with
+// no protocol envelope, bypassing Backend entirely. A device with no
+// SerialManager (USB HID, or a hub channel) instead goes through
+// Backend::sendCommand() -- a real COMMAND_REQUEST for a hub-channel device
+// (see protocol/commandclient.h), a silent no-op for USB HID (no console
+// channel to send raw text on at all, fragmentation-and-transports.md
+// section 3.3). A widget with no device configured (or whose configured
+// device doesn't exist, e.g. it was since removed) just goes nowhere -- same
+// "went nowhere, not an error" contract SerialManager::write() already has
+// for a closed port.
 //
 // SerialMonitorWidget is different in both directions: its sendRequested()
 // (raw keystrokes/escape sequences) is handed to that device's
@@ -57,6 +63,9 @@ public:
 private:
     void wireWidget(DashboardWidget* widget);
     DeviceConnection* deviceConnectionForWidget(DashboardWidget* widget) const;
+    // Picks SerialManager::writeCommand() when `connection` has one, else
+    // Backend::sendCommand() -- see the class comment above.
+    static void sendControlCommand(DeviceConnection* connection, const QByteArray& command);
     // (Re)connects `monitor`'s inbound Backend::terminalDataReceived to
     // whichever device its config currently names, disconnecting the
     // previous one first if it changed. No-op if the device is unchanged.
