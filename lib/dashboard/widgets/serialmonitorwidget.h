@@ -22,6 +22,8 @@ class SerialMonitorWidget : public DashboardWidget {
 public:
     explicit SerialMonitorWidget(QWidget* parent = nullptr);
 
+    void setEditModeHint(bool editMode) override;
+
 public slots:
     // Raw bytes off the wire, shown verbatim -- the terminal is a passive
     // debug tap on the whole stream, not filtered by key like chart/gauge

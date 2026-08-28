@@ -44,6 +44,20 @@
             {
                 "dashboard": {
                     "items": [
+                        {
+                            "config": {
+                                "deviceId": "7343d9f3-c204-44a7-9f14-6e183cc70af4"
+                            },
+                            "groupId": "",
+                            "height": 1,
+                            "id": "d2ea39ce-39e3-41bd-9e32-fac0f7b0fbf1",
+                            "key": "",
+                            "name": "",
+                            "type": "serial_monitor",
+                            "width": 1,
+                            "x": 0,
+                            "y": 0
+                        }
                     ]
                 },
                 "id": "d2bb648c-6cba-4d7b-90bc-f511295b4b4c",

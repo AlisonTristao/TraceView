@@ -29,4 +29,8 @@ void SerialMonitorWidget::appendData(const QByteArray& data) {
     m_terminal->appendData(data);
 }
 
+void SerialMonitorWidget::setEditModeHint(bool editMode) {
+    m_terminal->setCursorBlinkEnabled(!editMode);
+}
+
 }  // namespace traceview

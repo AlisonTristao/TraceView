@@ -33,6 +33,10 @@ public slots:
     // Wipes the log and the in-progress line state.
     void clearTerminal();
 
+    // Layout mode owns the mouse for arranging cells, so it can hide this
+    // operational cursor until the dashboard returns to Run mode.
+    void setCursorBlinkEnabled(bool enabled);
+
 signals:
     // Raw bytes to send as TERMINAL_IN, emitted per keystroke (never
     // buffered/batched here) -- backspace is 0x7f, Enter is '\r', Tab is
@@ -45,13 +49,16 @@ protected:
     void keyPressEvent(QKeyEvent* event) override;
     void focusInEvent(QFocusEvent* event) override;
     void focusOutEvent(QFocusEvent* event) override;
-    void paintEvent(QPaintEvent* event) override;
+    void resizeEvent(QResizeEvent* event) override;
 
 private:
+    static constexpr int kCursorBlinkIntervalMs = 600;
+
     void putChar(QChar c);
     void commitLine();
     void renderCurrentLineAndCursor();
     QRect terminalCursorRect() const;
+    void updateCursorOverlay();
     void resetCursorBlink();
     void toggleCursorBlink();
 
@@ -59,6 +66,8 @@ private:
     int m_cursorCol = 0;
     QStringDecoder m_utf8Decoder{QStringConverter::Utf8};
     QTimer m_cursorBlinkTimer;
+    QWidget* m_cursorOverlay = nullptr;
+    bool m_cursorBlinkEnabled = true;
     bool m_cursorVisible = false;
 };
 

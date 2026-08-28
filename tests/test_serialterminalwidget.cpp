@@ -1,3 +1,4 @@
+#include <QImage>
 #include <QSignalSpy>
 #include <QtTest>
 
@@ -22,7 +23,7 @@ private slots:
     void appendDataNewlineCommitsLineAndStartsFresh();
     void appendDataSplitsMultibyteUtf8AcrossCallsWithoutMojibake();
     void clearTerminalResetsDocumentAndLineState();
-    void remoteCursorUsesCustomOverlayInsteadOfNativeCaret();
+    void remoteCursorUsesCustomOverlayAndBlinks();
 };
 
 void TestSerialTerminalWidget::printableKeySendsUtf8BytesAndDoesNotEchoLocally() {
@@ -183,13 +184,51 @@ void TestSerialTerminalWidget::clearTerminalResetsDocumentAndLineState() {
     QCOMPARE(widget.toPlainText(), QStringLiteral("dongle> "));
 }
 
-void TestSerialTerminalWidget::remoteCursorUsesCustomOverlayInsteadOfNativeCaret() {
+void TestSerialTerminalWidget::remoteCursorUsesCustomOverlayAndBlinks() {
     SerialTerminalWidget widget;
+    QPalette terminalPalette = widget.palette();
+    terminalPalette.setColor(QPalette::Base, Qt::black);
+    terminalPalette.setColor(QPalette::Text, Qt::magenta);
+    widget.setPalette(terminalPalette);
+    widget.resize(240, 80);
+    widget.show();
+    QVERIFY(QTest::qWaitForWindowExposed(&widget));
+    widget.activateWindow();
+    widget.setFocus();
+    QTRY_VERIFY(widget.hasFocus());
 
     // The terminal's cursor belongs to the remote ShellSerial state, not to
     // QPlainTextEdit's local selection cursor. A custom overlay draws it so
     // clicking/selecting scrollback cannot leave a second, misplaced caret.
     QCOMPARE(widget.cursorWidth(), 0);
+
+    auto* cursorOverlay =
+        widget.viewport()->findChild<QWidget*>(QStringLiteral("terminalCursorOverlay"));
+    QVERIFY(cursorOverlay != nullptr);
+
+    widget.appendData(QByteArrayLiteral("x"));
+    QVERIFY(cursorOverlay->isVisible());
+    const QImage cursorImage = cursorOverlay->grab().toImage();
+    QCOMPARE(cursorImage.pixelColor(0, cursorImage.height() / 2),
+             widget.palette().color(QPalette::Text));
+    QTest::qWait(800);
+    QVERIFY(!cursorOverlay->isVisible());
+
+    // A busy dongle must not restart the cycle for every TERMINAL_OUT frame.
+    widget.appendData(QByteArrayLiteral("y"));
+    QVERIFY(!cursorOverlay->isVisible());
+
+    // DashboardCell can take keyboard focus away from the terminal. Its
+    // remote cursor must continue blinking nevertheless.
+    widget.clearFocus();
+    QVERIFY(!widget.hasFocus());
+    QTest::qWait(650);
+    QVERIFY(cursorOverlay->isVisible());
+
+    widget.setCursorBlinkEnabled(false);
+    QVERIFY(!cursorOverlay->isVisible());
+    QTest::qWait(650);
+    QVERIFY(!cursorOverlay->isVisible());
 }
 
 }  // namespace

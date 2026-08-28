@@ -9,6 +9,25 @@
 
 namespace traceview {
 
+namespace {
+
+class TerminalCursorOverlay final : public QWidget {
+public:
+    explicit TerminalCursorOverlay(QWidget* parent) : QWidget(parent) {
+        setAttribute(Qt::WA_TransparentForMouseEvents);
+        setAttribute(Qt::WA_OpaquePaintEvent);
+    }
+
+protected:
+    void paintEvent(QPaintEvent* event) override {
+        Q_UNUSED(event);
+        QPainter painter(this);
+        painter.fillRect(rect(), palette().color(QPalette::Window));
+    }
+};
+
+}  // namespace
+
 SerialTerminalWidget::SerialTerminalWidget(QWidget* parent) : QPlainTextEdit(parent) {
     // Read-only stops QPlainTextEdit's own keyPressEvent from editing the
     // document; every keystroke is handled below instead (forwarded, never
@@ -27,10 +46,23 @@ SerialTerminalWidget::SerialTerminalWidget(QWidget* parent) : QPlainTextEdit(par
     // scrollback could make the visible caret disagree with the terminal.
     setCursorWidth(0);
 
-    m_cursorBlinkTimer.setInterval(500);
+    m_cursorOverlay = new TerminalCursorOverlay(viewport());
+    m_cursorOverlay->setObjectName(QStringLiteral("terminalCursorOverlay"));
+    m_cursorOverlay->hide();
+
+    m_cursorBlinkTimer.setInterval(kCursorBlinkIntervalMs);
     connect(&m_cursorBlinkTimer, &QTimer::timeout, this, &SerialTerminalWidget::toggleCursorBlink);
     connect(this, &SerialTerminalWidget::sendRequested, this,
             &SerialTerminalWidget::resetCursorBlink);
+    connect(verticalScrollBar(), &QScrollBar::valueChanged, this,
+            &SerialTerminalWidget::updateCursorOverlay);
+
+    // A dashboard cell, rather than this child widget, can own keyboard
+    // focus. The terminal's remote cursor remains useful in that state, so
+    // its visibility must not depend on QWidget::hasFocus().
+    m_cursorVisible = true;
+    m_cursorBlinkTimer.start();
+    updateCursorOverlay();
 }
 
 void SerialTerminalWidget::appendData(const QByteArray& data) {
@@ -62,9 +94,12 @@ void SerialTerminalWidget::appendData(const QByteArray& data) {
     }
 
     renderCurrentLineAndCursor();
-    resetCursorBlink();
     QScrollBar* scrollBar = verticalScrollBar();
     scrollBar->setValue(scrollBar->maximum());
+    // Terminal output may arrive continuously (for example, while the
+    // dongle forwards logs). It must not continually restart the blink
+    // cycle, or the cursor would remain visibly on forever.
+    updateCursorOverlay();
 }
 
 void SerialTerminalWidget::clearTerminal() {
@@ -72,6 +107,22 @@ void SerialTerminalWidget::clearTerminal() {
     m_currentLine.clear();
     m_cursorCol = 0;
     resetCursorBlink();
+}
+
+void SerialTerminalWidget::setCursorBlinkEnabled(bool enabled) {
+    if (m_cursorBlinkEnabled == enabled) {
+        return;
+    }
+
+    m_cursorBlinkEnabled = enabled;
+    if (enabled) {
+        resetCursorBlink();
+        return;
+    }
+
+    m_cursorBlinkTimer.stop();
+    m_cursorVisible = false;
+    updateCursorOverlay();
 }
 
 void SerialTerminalWidget::keyPressEvent(QKeyEvent* event) {
@@ -146,21 +197,11 @@ void SerialTerminalWidget::focusInEvent(QFocusEvent* event) {
 
 void SerialTerminalWidget::focusOutEvent(QFocusEvent* event) {
     QPlainTextEdit::focusOutEvent(event);
-    m_cursorBlinkTimer.stop();
-    m_cursorVisible = false;
-    viewport()->update();
 }
 
-void SerialTerminalWidget::paintEvent(QPaintEvent* event) {
-    QPlainTextEdit::paintEvent(event);
-
-    if (!hasFocus() || !m_cursorVisible) {
-        return;
-    }
-
-    const QRect cursor = terminalCursorRect();
-    QPainter painter(viewport());
-    painter.fillRect(cursor.x(), cursor.y(), 2, cursor.height(), palette().color(QPalette::Text));
+void SerialTerminalWidget::resizeEvent(QResizeEvent* event) {
+    QPlainTextEdit::resizeEvent(event);
+    updateCursorOverlay();
 }
 
 void SerialTerminalWidget::putChar(QChar c) {
@@ -214,25 +255,33 @@ QRect SerialTerminalWidget::terminalCursorRect() const {
     return cursorRect(caret);
 }
 
-void SerialTerminalWidget::resetCursorBlink() {
-    m_cursorVisible = hasFocus();
-    if (m_cursorVisible) {
-        m_cursorBlinkTimer.start();
-    } else {
-        m_cursorBlinkTimer.stop();
-    }
-    viewport()->update();
+void SerialTerminalWidget::updateCursorOverlay() {
+    const QRect cursor = terminalCursorRect();
+    m_cursorOverlay->setGeometry(cursor.x(), cursor.y(), 2, cursor.height());
+
+    QPalette overlayPalette = m_cursorOverlay->palette();
+    overlayPalette.setColor(QPalette::Window, palette().color(QPalette::Text));
+    m_cursorOverlay->setPalette(overlayPalette);
+    m_cursorOverlay->setVisible(m_cursorBlinkEnabled && m_cursorVisible);
+    m_cursorOverlay->raise();
+    m_cursorOverlay->update();
 }
 
-void SerialTerminalWidget::toggleCursorBlink() {
-    if (!hasFocus()) {
-        m_cursorBlinkTimer.stop();
+void SerialTerminalWidget::resetCursorBlink() {
+    if (!m_cursorBlinkEnabled) {
         m_cursorVisible = false;
+        updateCursorOverlay();
         return;
     }
 
+    m_cursorVisible = true;
+    m_cursorBlinkTimer.start();
+    updateCursorOverlay();
+}
+
+void SerialTerminalWidget::toggleCursorBlink() {
     m_cursorVisible = !m_cursorVisible;
-    viewport()->update(terminalCursorRect());
+    updateCursorOverlay();
 }
 
 }  // namespace traceview
