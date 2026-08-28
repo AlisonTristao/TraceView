@@ -61,6 +61,12 @@ public:
     // nowhere," not an error to surface.
     bool write(const QByteArray& data) override;
 
+    // Pushes every byte currently queued by QSerialPort toward the OS/USB
+    // driver, waiting up to timeoutMs for the write buffer to drain. Used
+    // before dropping DTR so a final BTP SESSION_CLOSE is not discarded with
+    // the port. Returns false when disconnected or when the deadline expires.
+    bool drainWrites(int timeoutMs);
+
     // The terminator writeCommand() appends -- a global, port-level setting
     // (Run ribbon tab), not per-widget (docs/PROTOCOL.md "Outbound: control
     // commands"). Defaults to Lf, matching the inbound frame terminator.
@@ -83,6 +89,7 @@ private:
 
     QSerialPort* m_port = nullptr;
     LineTerminator m_lineTerminator = LineTerminator::Lf;
+    bool m_closing = false;
 };
 
 }  // namespace traceview

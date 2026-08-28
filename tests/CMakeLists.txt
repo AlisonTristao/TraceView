@@ -99,6 +99,10 @@ add_traceview_test(test_btpsession traceview_protocol)
 # that refactor.
 add_traceview_test(test_btpsessionframing traceview_protocol)
 add_traceview_test(test_btphandshake traceview_protocol)
+# Graceful teardown of an established console session: exact
+# CONTROL/SESSION_CLOSE wire payload, one-shot behavior, and producer
+# sequence continuity with TERMINAL_IN.
+add_traceview_test(test_sessionclose traceview_protocol btp::codec)
 add_traceview_test(test_telemetryfieldrouter traceview_protocol)
 # topico 17 (assinaturas e controle de taxa): the STATUS v1/v2 payload parser
 # and the reference-counted SUBSCRIBE/UNSUBSCRIBE aggregation, both pure

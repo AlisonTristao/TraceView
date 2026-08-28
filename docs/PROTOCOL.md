@@ -143,6 +143,15 @@ stream for `BTP/1 CONSOLE\r\n` while `Established` (the dongle prints exactly
 that on any drop — watchdog, `SESSION_CLOSE`, a bench human) and folds it into
 the same `sessionFailed` → recovery path an exhausted handshake uses.
 
+An intentional disconnect now takes the symmetric path: `DeviceConnection`
+asks `BtpBackend` to emit `CONTROL/SESSION_CLOSE` with reason
+`CLIENT_SHUTDOWN`, waits briefly for `QSerialPort`'s pending bytes to drain,
+then lowers RTS/DTR and closes the port. If the process or cable disappears
+before that frame reaches the dongle, the firmware treats CDC DTR-low as a
+transport loss and immediately releases the session, its pending queues and
+that client's subscriptions. The 30 s inactivity watchdog remains the final
+fallback, not the normal way a reopened project recovers.
+
 `HELLO`'s `versions` field is **not** hardcoded to `[1]`: it lists every
 value from `btp::kMinimumProtocolVersion` to `btp::kMaximumProtocolVersion`
 (`build/_deps/btp-src/include/btp/codec.hpp`) ascending, i.e. the *entire*

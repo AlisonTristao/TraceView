@@ -1,5 +1,6 @@
 #include "serialmanager.h"
 
+#include <QElapsedTimer>
 #include <QSerialPortInfo>
 
 namespace traceview {
@@ -83,9 +84,10 @@ bool SerialManager::open(const QString& portName, qint32 baudRate) {
 }
 
 void SerialManager::close() {
-    if (!m_port->isOpen()) {
+    if (!m_port->isOpen() || m_closing) {
         return;
     }
+    m_closing = true;
     // Drop both control lines before closing so the dongle's CDC registers a
     // clean disconnect now (its write() gates on DTR) instead of inferring one
     // later from silence, and so the next open() starts from a known
@@ -100,6 +102,7 @@ void SerialManager::close() {
     m_port->setRequestToSend(false);
     m_port->setDataTerminalReady(false);
     m_port->close();
+    m_closing = false;
     emit connectionStateChanged(false);
 }
 
@@ -122,6 +125,22 @@ bool SerialManager::write(const QByteArray& data) {
     return m_port->write(data) != -1;
 }
 
+bool SerialManager::drainWrites(int timeoutMs) {
+    if (!m_port->isOpen() || timeoutMs < 0 || !m_port->flush()) {
+        return false;
+    }
+
+    QElapsedTimer deadline;
+    deadline.start();
+    while (m_port->bytesToWrite() > 0) {
+        const int remainingMs = timeoutMs - int(deadline.elapsed());
+        if (remainingMs <= 0 || !m_port->waitForBytesWritten(remainingMs)) {
+            return m_port->isOpen() && m_port->bytesToWrite() == 0;
+        }
+    }
+    return true;
+}
+
 bool SerialManager::writeCommand(const QByteArray& command) {
     return write(command + lineTerminatorBytes(m_lineTerminator));
 }
@@ -138,9 +157,11 @@ void SerialManager::onErrorOccurred(QSerialPort::SerialPortError error) {
     // A device yanked mid-session (unplugged, driver reset) surfaces as
     // ResourceError without QSerialPort closing itself -- do that here so
     // isConnected()/connectionStateChanged() stay truthful.
-    if (error == QSerialPort::ResourceError && m_port->isOpen()) {
-        m_port->close();
-        emit connectionStateChanged(false);
+    if (error == QSerialPort::ResourceError && m_port->isOpen() && !m_closing) {
+        // Use the normal close path so RTS/DTR are lowered in the safe order;
+        // bypassing it could leave the native CDC line-state machine halfway
+        // through its reset sequence and poison the next open().
+        close();
     }
     emit errorOccurred(message);
 }

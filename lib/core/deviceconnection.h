@@ -45,6 +45,7 @@ public:
     explicit DeviceConnection(CommType commType,
                               TransportType transportType = TransportType::Serial,
                               QObject* parent = nullptr);
+    ~DeviceConnection() override;
 
     // Non-null only when transportType == TransportType::Serial; nullptr
     // otherwise. Callers that need serial-only extras (writeCommand(),
@@ -124,6 +125,10 @@ signals:
 
 private:
     void attemptReconnect();
+    // Intentional close path. Unlike session-recovery recycling, this first
+    // asks an established serial BTP session to close and drains that final
+    // frame before lowering DTR/RTS.
+    void closeTransportGracefully();
 
     TransportType m_transportType;
     Transport* m_transport = nullptr;

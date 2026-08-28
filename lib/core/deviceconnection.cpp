@@ -16,6 +16,7 @@ namespace {
 // open() -- covers both a freshly configured device's first attempt and
 // recovering from an unplug/replug without any user action.
 constexpr int kRetryIntervalMs = 3000;
+constexpr int kCloseWriteDrainTimeoutMs = 250;
 
 // BtpBackend/BtpSession speak two independent axes -- link framing and
 // encode profile (btp::TransportProfile, the BTP library's own type; see
@@ -111,6 +112,14 @@ DeviceConnection::DeviceConnection(CommType commType, TransportType transportTyp
     connect(m_retryTimer, &QTimer::timeout, this, &DeviceConnection::attemptReconnect);
 }
 
+DeviceConnection::~DeviceConnection() {
+    m_shouldBeConnected = false;
+    if (m_retryTimer) {
+        m_retryTimer->stop();
+    }
+    closeTransportGracefully();
+}
+
 bool DeviceConnection::isConnected() const {
     return m_transport->isConnected();
 }
@@ -123,12 +132,12 @@ void DeviceConnection::connectTo(const QString& target, qint32 baudRate) {
 
     if (!m_shouldBeConnected) {
         m_retryTimer->stop();
-        m_transport->close();
+        closeTransportGracefully();
         return;
     }
 
     if (targetChanged && m_transport->isConnected()) {
-        m_transport->close();
+        closeTransportGracefully();
     }
     attemptReconnect();
     m_retryTimer->start();
@@ -166,7 +175,7 @@ void DeviceConnection::connectVia(DeviceConnection* parentConnection, quint32 se
     m_shouldBeConnected = parentConnection != nullptr && peerSourceId != 0;
     if (!m_shouldBeConnected) {
         m_retryTimer->stop();
-        m_transport->close();
+        closeTransportGracefully();
         return;
     }
     m_retryTimer->start();
@@ -175,6 +184,24 @@ void DeviceConnection::connectVia(DeviceConnection* parentConnection, quint32 se
 void DeviceConnection::disconnectFrom() {
     m_shouldBeConnected = false;
     m_retryTimer->stop();
+    closeTransportGracefully();
+}
+
+void DeviceConnection::closeTransportGracefully() {
+    if (m_transport == nullptr || !m_transport->isConnected()) {
+        return;
+    }
+
+    if (m_serialManager != nullptr) {
+        if (auto* btpBackend = qobject_cast<BtpBackend*>(m_backend)) {
+            if (btpBackend->requestSessionClose()) {
+                // bytesToWrite -> SerialManager::write is a direct connection
+                // in this thread, so the frame is already queued here. Drain
+                // it before close() lowers DTR and tears the native CDC down.
+                m_serialManager->drainWrites(kCloseWriteDrainTimeoutMs);
+            }
+        }
+    }
     m_transport->close();
 }
 

@@ -12,6 +12,7 @@ class TestSerialManager : public QObject {
 private slots:
     void startsDisconnected();
     void closeWithoutOpenIsNoop();
+    void drainWritesWithoutOpenFails();
     void writeWhileDisconnectedReturnsFalse();
     void openWithInvalidPortNameFailsAndEmitsError();
     void openAt1200BaudIsFoldedUpWithAWarning();
@@ -32,6 +33,11 @@ void TestSerialManager::closeWithoutOpenIsNoop() {
 
     QVERIFY(!manager.isConnected());
     QCOMPARE(stateSpy.count(), 0);
+}
+
+void TestSerialManager::drainWritesWithoutOpenFails() {
+    SerialManager manager;
+    QVERIFY(!manager.drainWrites(10));
 }
 
 void TestSerialManager::writeWhileDisconnectedReturnsFalse() {

@@ -121,6 +121,13 @@ public:
     void bindHubChild(quint32 childSourceId, quint32 peerSourceId);
     void unbindHubChild(quint32 childSourceId);
 
+    // Best-effort graceful teardown for the console-facing serial session.
+    // Emits CONTROL/SESSION_CLOSE (CLIENT_SHUTDOWN) exactly once while a
+    // session is established; the owner must drain the transport's pending
+    // writes before physically closing it. Returns true only when a frame was
+    // emitted. Hub-channel children have no console session and return false.
+    bool requestSessionClose();
+
     // Zero unless setHubEndpoint() made this a child.
     quint32 peerSourceId() const {
         return m_peerSourceId;
@@ -192,14 +199,18 @@ private:
     // comment.
     quint32 m_terminalSourceId;
     quint32 m_terminalBootId;
-    quint32 m_terminalSequence = 0;
     quint32 m_endpointSequence = 0;
 
     // Session keepalive (topico 35 B.1). Console-facing backend only: a child
     // backend never establishes a console session so the timer never starts.
     QTimer* m_keepaliveTimer = nullptr;
     bool m_sessionEstablished = false;
-    quint32 m_keepaliveSequence = 0;
+    // TERMINAL_IN, keepalive and SESSION_CLOSE all use m_terminalSourceId /
+    // m_terminalBootId, so they must also share one sequence space. Reusing a
+    // sequence with the same producer identity would violate BTP's logical
+    // message identity even when the payloads have different object_ids.
+    quint32 m_sessionSequence = 0;
+    bool m_sessionClosing = false;
 
     // Both zero for the console-facing backend; both set for a child. Zero is
     // the "not a child" test rather than a separate flag, because BTP reserves

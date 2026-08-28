@@ -33,6 +33,13 @@ constexpr quint16 kTerminalOutObjectId = 0x0002;
 // object_id for CONTROL/MANIFEST_REQUEST -- same local-copy convention as the
 // terminal ids above (mirrors ManifestClient's own kControlManifestRequest).
 constexpr quint16 kControlManifestRequest = 0x0003;
+constexpr quint16 kControlSessionClose = 0x000A;
+
+// session-and-terminal.md section 4.1. The dongle handles this request in
+// its protocol loop immediately; 500 ms is the allowance for returning
+// SESSION_CLOSE_RESULT and cleaning its queues before console ownership.
+constexpr quint8 kCloseReasonClientShutdown = 0x02;
+constexpr quint32 kCloseDrainTimeoutMs = 500;
 
 // How long the session may sit with no PC->dongle frame before the keepalive
 // steps in. Comfortably under the negotiated 30s watchdog (and still 3x under
@@ -214,6 +221,7 @@ BtpBackend::BtpBackend(BtpSession::Framing framing, btp::TransportProfile encode
             [this](quint32 peerSourceId, quint32 peerBootId, quint32 peerConfigRevision,
                    quint8 selectedVersion) {
                 emit statusMessage(tr("BTP session established (HELLO_RESULT=SUCCESS)"), 5000);
+                m_sessionClosing = false;
                 m_sessionEstablished = true;
                 m_keepaliveTimer->start();
                 m_manifestClient->onSessionEstablished(peerConfigRevision);
@@ -233,6 +241,14 @@ BtpBackend::BtpBackend(BtpSession::Framing framing, btp::TransportProfile encode
     connect(m_btpHandshake, &BtpHandshake::sessionFailed, this, [this](const QString& reason) {
         m_keepaliveTimer->stop();
         m_sessionEstablished = false;
+        if (m_sessionClosing) {
+            // A successful SESSION_CLOSE ends with the dongle's plain-text
+            // BTP/1 CONSOLE line. BtpHandshake deliberately reports that as
+            // sessionFailed for unexpected drops; during an intentional
+            // close it is confirmation, not a reason to recycle the port.
+            m_sessionClosing = false;
+            return;
+        }
         emit statusMessage(tr("BTP handshake failed: %1").arg(reason), 8000);
         // BtpHandshake has already exhausted its own retries by the time it
         // says this, so the ENTER line is not what is missing any more --
@@ -363,7 +379,7 @@ void BtpBackend::sendSessionKeepalive() {
     header.flags = 0;
     header.source_id = m_terminalSourceId;  // this backend's own stable-per-run id
     header.boot_id = m_terminalBootId;
-    header.sequence = ++m_keepaliveSequence;
+    header.sequence = ++m_sessionSequence;
     header.timestamp_us = static_cast<quint64>(QDateTime::currentMSecsSinceEpoch()) * 1000ULL;
     header.object_id = kControlManifestRequest;
     header.fragment_index = 0;
@@ -375,6 +391,43 @@ void BtpBackend::sendSessionKeepalive() {
     // Goes out through BtpSession like any other frame -- which also trips the
     // bytesToWrite hook and restarts m_keepaliveTimer for the next interval.
     m_btpSession->sendFrame(frame);
+}
+
+bool BtpBackend::requestSessionClose() {
+    if (!m_sessionEstablished || m_sessionClosing || m_peerSourceId != 0) {
+        return false;
+    }
+
+    QByteArray payload;
+    payload.reserve(8);
+    payload.append(static_cast<char>(kCloseReasonClientShutdown));
+    payload.append(3, char(0));  // reserved
+    for (int shift = 0; shift < 32; shift += 8) {
+        payload.append(static_cast<char>((kCloseDrainTimeoutMs >> shift) & 0xFF));
+    }
+
+    btp::Header header{};
+    header.type = btp::MessageType::Control;
+    header.flags = 0;
+    header.source_id = m_terminalSourceId;
+    header.boot_id = m_terminalBootId;
+    header.sequence = ++m_sessionSequence;
+    header.timestamp_us = static_cast<quint64>(QDateTime::currentMSecsSinceEpoch()) * 1000ULL;
+    header.object_id = kControlSessionClose;
+    header.fragment_index = 0;
+    header.fragment_count = 1;
+
+    const btp::Frame frame{header,
+                           {reinterpret_cast<const std::uint8_t*>(payload.constData()),
+                            static_cast<std::size_t>(payload.size())}};
+    if (!m_btpSession->sendFrame(frame)) {
+        return false;
+    }
+
+    m_keepaliveTimer->stop();
+    m_sessionClosing = true;
+    m_sessionEstablished = false;
+    return true;
 }
 
 void BtpBackend::bindHubChild(quint32 childSourceId, quint32 peerSourceId) {
@@ -426,6 +479,7 @@ void BtpBackend::onSessionFrameReceived(const BtpFrame& frame) {
 
 void BtpBackend::onTransportConnectionChanged(bool connected) {
     if (connected) {
+        m_sessionClosing = false;
         m_btpSession->reset();
         if (m_peerSourceId != 0) {
             // A child does NOT hand shake. HELLO and ENTER negotiate a console
@@ -453,6 +507,7 @@ void BtpBackend::onTransportConnectionChanged(bool connected) {
             m_keepaliveTimer->stop();
         }
         m_sessionEstablished = false;
+        m_sessionClosing = false;
         // Subscriptions are scoped to the session that granted them
         // (topico 17 PASSO 6): forget the grants, keep the widgets that
         // wanted them, so reconnecting re-subscribes everything.
@@ -491,7 +546,7 @@ void BtpBackend::sendTerminalIn(const QByteArray& bytes) {
         header.flags = 0;
         header.source_id = m_terminalSourceId;
         header.boot_id = m_terminalBootId;
-        header.sequence = ++m_terminalSequence;
+        header.sequence = ++m_sessionSequence;
         header.timestamp_us = static_cast<quint64>(QDateTime::currentMSecsSinceEpoch()) * 1000ULL;
         header.object_id = kTerminalInObjectId;
         header.fragment_index = 0;
