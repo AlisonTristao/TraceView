@@ -22,6 +22,7 @@ private slots:
     void appendDataNewlineCommitsLineAndStartsFresh();
     void appendDataSplitsMultibyteUtf8AcrossCallsWithoutMojibake();
     void clearTerminalResetsDocumentAndLineState();
+    void remoteCursorUsesCustomOverlayInsteadOfNativeCaret();
 };
 
 void TestSerialTerminalWidget::printableKeySendsUtf8BytesAndDoesNotEchoLocally() {
@@ -180,6 +181,15 @@ void TestSerialTerminalWidget::clearTerminalResetsDocumentAndLineState() {
     // otherwise the next appendData() would overwrite starting mid-line.
     widget.appendData(QByteArrayLiteral("dongle> "));
     QCOMPARE(widget.toPlainText(), QStringLiteral("dongle> "));
+}
+
+void TestSerialTerminalWidget::remoteCursorUsesCustomOverlayInsteadOfNativeCaret() {
+    SerialTerminalWidget widget;
+
+    // The terminal's cursor belongs to the remote ShellSerial state, not to
+    // QPlainTextEdit's local selection cursor. A custom overlay draws it so
+    // clicking/selecting scrollback cannot leave a second, misplaced caret.
+    QCOMPARE(widget.cursorWidth(), 0);
 }
 
 }  // namespace

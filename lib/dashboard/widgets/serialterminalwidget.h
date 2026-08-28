@@ -2,6 +2,7 @@
 
 #include <QPlainTextEdit>
 #include <QStringDecoder>
+#include <QTimer>
 
 namespace traceview {
 
@@ -42,15 +43,23 @@ signals:
 
 protected:
     void keyPressEvent(QKeyEvent* event) override;
+    void focusInEvent(QFocusEvent* event) override;
+    void focusOutEvent(QFocusEvent* event) override;
+    void paintEvent(QPaintEvent* event) override;
 
 private:
     void putChar(QChar c);
     void commitLine();
     void renderCurrentLineAndCursor();
+    QRect terminalCursorRect() const;
+    void resetCursorBlink();
+    void toggleCursorBlink();
 
     QString m_currentLine;
     int m_cursorCol = 0;
     QStringDecoder m_utf8Decoder{QStringConverter::Utf8};
+    QTimer m_cursorBlinkTimer;
+    bool m_cursorVisible = false;
 };
 
 }  // namespace traceview

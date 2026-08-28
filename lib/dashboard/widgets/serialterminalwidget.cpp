@@ -2,6 +2,7 @@
 
 #include <QFontDatabase>
 #include <QKeyEvent>
+#include <QPainter>
 #include <QScrollBar>
 #include <QTextBlock>
 #include <QTextCursor>
@@ -19,6 +20,17 @@ SerialTerminalWidget::SerialTerminalWidget(QWidget* parent) : QPlainTextEdit(par
     setUndoRedoEnabled(false);
     setLineWrapMode(QPlainTextEdit::WidgetWidth);
     setFont(QFontDatabase::systemFont(QFontDatabase::FixedFont));
+
+    // The local QTextCursor is only an implementation detail used to render
+    // the line. Hide Qt's editable-text caret and paint a cursor at the
+    // dongle-reported terminal position below, otherwise clicking/selecting
+    // scrollback could make the visible caret disagree with the terminal.
+    setCursorWidth(0);
+
+    m_cursorBlinkTimer.setInterval(500);
+    connect(&m_cursorBlinkTimer, &QTimer::timeout, this, &SerialTerminalWidget::toggleCursorBlink);
+    connect(this, &SerialTerminalWidget::sendRequested, this,
+            &SerialTerminalWidget::resetCursorBlink);
 }
 
 void SerialTerminalWidget::appendData(const QByteArray& data) {
@@ -50,6 +62,7 @@ void SerialTerminalWidget::appendData(const QByteArray& data) {
     }
 
     renderCurrentLineAndCursor();
+    resetCursorBlink();
     QScrollBar* scrollBar = verticalScrollBar();
     scrollBar->setValue(scrollBar->maximum());
 }
@@ -58,6 +71,7 @@ void SerialTerminalWidget::clearTerminal() {
     clear();
     m_currentLine.clear();
     m_cursorCol = 0;
+    resetCursorBlink();
 }
 
 void SerialTerminalWidget::keyPressEvent(QKeyEvent* event) {
@@ -125,6 +139,30 @@ void SerialTerminalWidget::keyPressEvent(QKeyEvent* event) {
     QPlainTextEdit::keyPressEvent(event);
 }
 
+void SerialTerminalWidget::focusInEvent(QFocusEvent* event) {
+    QPlainTextEdit::focusInEvent(event);
+    resetCursorBlink();
+}
+
+void SerialTerminalWidget::focusOutEvent(QFocusEvent* event) {
+    QPlainTextEdit::focusOutEvent(event);
+    m_cursorBlinkTimer.stop();
+    m_cursorVisible = false;
+    viewport()->update();
+}
+
+void SerialTerminalWidget::paintEvent(QPaintEvent* event) {
+    QPlainTextEdit::paintEvent(event);
+
+    if (!hasFocus() || !m_cursorVisible) {
+        return;
+    }
+
+    const QRect cursor = terminalCursorRect();
+    QPainter painter(viewport());
+    painter.fillRect(cursor.x(), cursor.y(), 2, cursor.height(), palette().color(QPalette::Text));
+}
+
 void SerialTerminalWidget::putChar(QChar c) {
     if (m_cursorCol < m_currentLine.size()) {
         m_currentLine[m_cursorCol] = c;
@@ -166,6 +204,35 @@ void SerialTerminalWidget::renderCurrentLineAndCursor() {
     const int column = qBound(0, m_cursorCol, m_currentLine.size());
     caret.movePosition(QTextCursor::Right, QTextCursor::MoveAnchor, column);
     setTextCursor(caret);
+}
+
+QRect SerialTerminalWidget::terminalCursorRect() const {
+    QTextCursor caret(document()->lastBlock());
+    caret.movePosition(QTextCursor::StartOfBlock);
+    const int column = qBound(0, m_cursorCol, m_currentLine.size());
+    caret.movePosition(QTextCursor::Right, QTextCursor::MoveAnchor, column);
+    return cursorRect(caret);
+}
+
+void SerialTerminalWidget::resetCursorBlink() {
+    m_cursorVisible = hasFocus();
+    if (m_cursorVisible) {
+        m_cursorBlinkTimer.start();
+    } else {
+        m_cursorBlinkTimer.stop();
+    }
+    viewport()->update();
+}
+
+void SerialTerminalWidget::toggleCursorBlink() {
+    if (!hasFocus()) {
+        m_cursorBlinkTimer.stop();
+        m_cursorVisible = false;
+        return;
+    }
+
+    m_cursorVisible = !m_cursorVisible;
+    viewport()->update(terminalCursorRect());
 }
 
 }  // namespace traceview
