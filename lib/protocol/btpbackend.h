@@ -159,9 +159,14 @@ private:
     // Replaces the direct BtpSession::frameReceived -> ProtocolRouter::
     // onFrameReceived connection: opens a sealed (ENCRYPTED) frame under
     // m_endpointKey before forwarding, drops it if opening fails or no key
-    // is configured, and forwards anything unsealed unchanged -- telemetry,
-    // LOG and MANIFEST_DATA are not sealed by any producer today, so this
-    // has to stay a per-frame decision, not a per-backend one.
+    // is configured. On a hub child with a key configured (m_peerSourceId !=
+    // 0 && key set) an UNSEALED frame is also dropped: the robot now seals
+    // everything it originates on channel B -- TELEMETRY and LOG included --
+    // and STATUS, the one thing it leaves unsealed, rides channel C and is
+    // consumed by the dongle, never relayed here. An unsealed frame on this
+    // path is therefore a downgrade or a spoof. The console backend
+    // (m_peerSourceId == 0, no key) still forwards the dongle's cleartext
+    // channel-A traffic unchanged.
     void onSessionFrameReceived(const traceview::BtpFrame& frame);
     // The one sequence counter every sealed message this backend originates
     // shares -- see CommandClient::configure()'s comment on why two
@@ -218,6 +223,12 @@ private:
     quint32 m_selfSourceId = 0;
     quint32 m_peerSourceId = 0;
     QByteArray m_endpointKey;
+
+    // One-shot latch so the "unsealed frame on a sealed hub channel" warning
+    // fires once, not once per dropped telemetry sample. Cleared whenever the
+    // link comes back up (onTransportConnectionChanged) so a genuinely new
+    // problem is reported again.
+    bool m_unsealedDowngradeReported = false;
 };
 
 }  // namespace traceview

@@ -447,6 +447,20 @@ void BtpBackend::sendCommand(const QByteArray& text) {
 
 void BtpBackend::onSessionFrameReceived(const BtpFrame& frame) {
     if ((frame.flags & btp::kFlagEncrypted) == 0U) {
+        if (m_peerSourceId != 0 && !m_endpointKey.isEmpty()) {
+            // Keyed hub channel: the robot seals everything it sends here.
+            // An unsealed frame is a downgrade or a spoof -- drop it, and
+            // say so once per session so a silently missing plot has an
+            // explanation.
+            if (!m_unsealedDowngradeReported) {
+                m_unsealedDowngradeReported = true;
+                emit statusMessage(
+                    tr("Dropped an unsealed frame on a sealed hub channel "
+                       "(check the robot's channel-B password)"),
+                    6000);
+            }
+            return;
+        }
         m_protocolRouter->onFrameReceived(frame);
         return;
     }
@@ -480,6 +494,7 @@ void BtpBackend::onSessionFrameReceived(const BtpFrame& frame) {
 void BtpBackend::onTransportConnectionChanged(bool connected) {
     if (connected) {
         m_sessionClosing = false;
+        m_unsealedDowngradeReported = false;
         m_btpSession->reset();
         if (m_peerSourceId != 0) {
             // A child does NOT hand shake. HELLO and ENTER negotiate a console
