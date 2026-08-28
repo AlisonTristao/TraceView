@@ -4,6 +4,7 @@
 #include <QString>
 #include <QTimer>
 #include <QtGlobal>
+#include <functional>
 
 namespace traceview {
 
@@ -25,7 +26,10 @@ class ClockSync : public QObject {
     Q_OBJECT
 
 public:
-    explicit ClockSync(BtpSession* session, ProtocolRouter* router, QObject* parent = nullptr);
+    using EpochProvider = std::function<qint64()>;
+
+    explicit ClockSync(BtpSession* session, ProtocolRouter* router, QObject* parent = nullptr,
+                       EpochProvider epochProvider = {});
 
 public slots:
     // Wired to BtpHandshake::sessionEstablished(peerSourceId, peerBootId,
@@ -52,6 +56,7 @@ private:
     void requestClock();
 
     BtpSession* m_session;
+    EpochProvider m_epochProvider;
 
     // Private per-process identity, same construction ManifestClient/
     // SerialWidgetBridge use for their own request channels (topico 16/19) --

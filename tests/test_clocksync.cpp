@@ -2,6 +2,7 @@
 #include <QtTest/QtTest>
 #include <btp/codec.hpp>
 #include <cstdint>
+#include <utility>
 #include <vector>
 
 #include "protocol/btpframe.h"
@@ -112,8 +113,12 @@ BtpFrame makeResult(quint32 requestSourceId, quint32 requestBootId, quint32 repl
 struct Fixture {
     BtpSession session{btp::TransportProfile::Serial};
     ProtocolRouter router;
-    ClockSync sync{&session, &router};
-    QSignalSpy written{&session, &BtpSession::bytesToWrite};
+    ClockSync sync;
+    QSignalSpy written;
+
+    explicit Fixture(ClockSync::EpochProvider epochProvider = {})
+        : sync(&session, &router, nullptr, std::move(epochProvider)),
+          written(&session, &BtpSession::bytesToWrite) {}
 
     // Decodes the Nth frame the session was asked to write.
     bool writtenFrame(int index, btp::DecodedFrame* out, std::vector<std::uint8_t>* storage) const {
@@ -162,6 +167,7 @@ private slots:
     void aClockWithinToleranceIsLeftAlone();
     void aDongleRunningBehindIsCorrected();
     void aDongleRunningAheadIsCorrectedToo();
+    void correctionSendsAnAbsoluteUnixEpoch();
     void aReplyFromAnotherClientIsIgnored();
     void aReplyToAnEarlierSequenceIsIgnored();
     void aFailedCommandIsReportedAndNotActedOn();
@@ -240,6 +246,24 @@ void TestClockSync::aDongleRunningAheadIsCorrectedToo() {
     std::vector<std::uint8_t> storage;
     QVERIFY(fixture.writtenFrame(1, &frame, &storage));
     QVERIFY(commandLineOf(frame).startsWith(QStringLiteral("dongle -set_clock ")));
+}
+
+void TestClockSync::correctionSendsAnAbsoluteUnixEpoch() {
+    // 2026-08-27 23:02:41 in Sao Paulo is already 2026-08-28 in UTC. A
+    // calendar string could therefore carry the wrong visible DATE before
+    // anyone even interpreted its timezone. Unix seconds have neither
+    // ambiguity.
+    constexpr qint64 kHostEpoch = 1787882561;
+    Fixture fixture([] { return kHostEpoch; });
+    fixture.sync.onSessionEstablished(kDongleSourceId, kDongleBootId);
+
+    QVERIFY(replyTo(fixture, 0, kStatusSuccess, epochReply(kHostEpoch - 3600)));
+    QCOMPARE(fixture.written.count(), 2);
+
+    btp::DecodedFrame frame{};
+    std::vector<std::uint8_t> storage;
+    QVERIFY(fixture.writtenFrame(1, &frame, &storage));
+    QCOMPARE(commandLineOf(frame), QStringLiteral("dongle -set_clock \"@1787882561\""));
 }
 
 void TestClockSync::aReplyFromAnotherClientIsIgnored() {

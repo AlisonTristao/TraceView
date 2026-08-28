@@ -4,6 +4,7 @@
 #include <QRandomGenerator>
 #include <QRegularExpression>
 #include <btp/codec.hpp>
+#include <utility>
 
 #include "protocol/btpframe.h"
 #include "protocol/btpsession.h"
@@ -58,8 +59,12 @@ quint16 readLe16(const QByteArray& data, int offset) {
 
 }  // namespace
 
-ClockSync::ClockSync(BtpSession* session, ProtocolRouter* router, QObject* parent)
-    : QObject(parent), m_session(session) {
+ClockSync::ClockSync(BtpSession* session, ProtocolRouter* router, QObject* parent,
+                     EpochProvider epochProvider)
+    : QObject(parent),
+      m_session(session),
+      m_epochProvider(epochProvider ? std::move(epochProvider)
+                                    : EpochProvider([] { return QDateTime::currentSecsSinceEpoch(); })) {
     connect(router, &ProtocolRouter::commandFrameReceived, this,
             &ClockSync::onCommandFrameReceived);
     // Private per-process identity, same construction ManifestClient/
@@ -180,14 +185,20 @@ void ClockSync::onCommandFrameReceived(const BtpFrame& frame) {
         }
 
         const qint64 dongleEpoch = match.captured(1).toLongLong();
-        const qint64 driftSecs = QDateTime::currentSecsSinceEpoch() - dongleEpoch;
+        const qint64 hostEpoch = m_epochProvider();
+        const qint64 driftSecs = hostEpoch - dongleEpoch;
         if (qAbs(driftSecs) <= kDriftToleranceSecs) {
             return;  // close enough
         }
 
-        const QString hostTime =
-            QDateTime::currentDateTimeUtc().toString(QStringLiteral("yyyy-MM-dd HH:mm:ss"));
-        sendShellCommand(QStringLiteral("dongle -set_clock \"%1\"").arg(hostTime),
+        // A timezone-free calendar string is ambiguous: the previous code
+        // formatted UTC as "YYYY-MM-DD HH:mm:ss", while the dongle parsed it
+        // with mktime() as local time. Near midnight that visibly changed the
+        // date, and under a configured TZ it also shifted the resulting
+        // epoch. Prefixing Unix seconds with '@' makes the automatic path
+        // absolute and leaves the human-friendly local format available to
+        // terminal users.
+        sendShellCommand(QStringLiteral("dongle -set_clock \"@%1\"").arg(hostEpoch),
                          Pending::SetClock);
     } else {
         emit statusMessage(tr("dongle clock corrected (%1)").arg(message), 5000);
