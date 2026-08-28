@@ -36,8 +36,22 @@ QStringList SerialManager::availablePorts() const {
 bool SerialManager::open(const QString& portName, qint32 baudRate) {
     close();
 
+    // 1200 baud is not a data rate on the dongle's native USB-CDC -- it is the
+    // shortcut esptool uses to drop the ESP32-S3 into its ROM bootloader
+    // (arduino-esp32 USBCDC::_onLineCoding reboots on bit_rate == 1200). A
+    // device configured at 1200 would bootloader-loop on every connect, so
+    // fold it up to a working rate. The rate is otherwise cosmetic on a CDC
+    // ACM link (the USB stack ignores it), which is why silently substituting
+    // one is safe here.
+    qint32 effectiveBaud = baudRate;
+    if (effectiveBaud == 1200) {
+        effectiveBaud = 115200;
+        emit errorOccurred(
+            tr("1200 baud resets the ESP32-S3 into its bootloader; using 115200"));
+    }
+
     m_port->setPortName(portName);
-    m_port->setBaudRate(baudRate);
+    m_port->setBaudRate(effectiveBaud);
     m_port->setDataBits(QSerialPort::Data8);
     m_port->setParity(QSerialPort::NoParity);
     m_port->setStopBits(QSerialPort::OneStop);
@@ -50,6 +64,20 @@ bool SerialManager::open(const QString& portName, qint32 baudRate) {
         return false;
     }
 
+    // The dongle's native USB-CDC (ARDUINO_USB_MODE=0) only transmits while the
+    // host asserts DTR: TinyUSB's tud_cdc_n_connected() tests the DTR bit
+    // alone, and arduino-esp32's USBCDC::write() returns 0 -- silently dropping
+    // every byte, "BTP/1 READY" included -- until it is set. QSerialPort's
+    // default DTR/RTS state after open() varies by platform and Qt version, so
+    // a dongle that "sometimes answers and sometimes stays mute" is this being
+    // left to chance. Assert both explicitly, once, and never toggle them
+    // afterwards. (This board has no USB-serial bridge and so no DTR/RTS-driven
+    // reset -- driving these lines here is safe; the only line-driven reset it
+    // has is the 1200-baud touch, ruled out just above.) Both-true is a no-op
+    // when the platform already asserted them.
+    m_port->setDataTerminalReady(true);
+    m_port->setRequestToSend(true);
+
     emit connectionStateChanged(true);
     return true;
 }
@@ -58,6 +86,19 @@ void SerialManager::close() {
     if (!m_port->isOpen()) {
         return;
     }
+    // Drop both control lines before closing so the dongle's CDC registers a
+    // clean disconnect now (its write() gates on DTR) instead of inferring one
+    // later from silence, and so the next open() starts from a known
+    // both-low state.
+    //
+    // Order matters: RTS first, then DTR. The CDC's line-state machine only
+    // leaves idle on the `!dtr && rts` transition -- dropping DTR while RTS is
+    // still high would step it toward the reset sequence and, if the driver
+    // then fails to drop RTS on close, strand it a step in (which shows up as
+    // a later open() that can never mark the port connected). Lowering RTS
+    // first keeps every transition here as `!rts`, which the machine ignores.
+    m_port->setRequestToSend(false);
+    m_port->setDataTerminalReady(false);
     m_port->close();
     emit connectionStateChanged(false);
 }

@@ -8,6 +8,8 @@
 // signature below (BtpSession itself is still only held by pointer).
 #include "protocol/btpsession.h"
 
+class QTimer;
+
 namespace traceview {
 
 class ProtocolRouter;
@@ -158,6 +160,12 @@ private:
     // shares -- see CommandClient::configure()'s comment on why two
     // different sealed messages must never draw the same value.
     quint32 nextEndpointSequence();
+    // Sends one benign frame to refresh the dongle's inactivity watchdog
+    // (topico 35 B.1). Fired by m_keepaliveTimer only after that whole
+    // interval passed with no other frame going out -- real traffic (chart
+    // subscriptions renewing, commands, terminal) restarts the timer, so an
+    // active session never pays for this.
+    void sendSessionKeepalive();
 
     BtpSession* m_btpSession;
     ProtocolRouter* m_protocolRouter;
@@ -186,6 +194,12 @@ private:
     quint32 m_terminalBootId;
     quint32 m_terminalSequence = 0;
     quint32 m_endpointSequence = 0;
+
+    // Session keepalive (topico 35 B.1). Console-facing backend only: a child
+    // backend never establishes a console session so the timer never starts.
+    QTimer* m_keepaliveTimer = nullptr;
+    bool m_sessionEstablished = false;
+    quint32 m_keepaliveSequence = 0;
 
     // Both zero for the console-facing backend; both set for a child. Zero is
     // the "not a child" test rather than a separate flag, because BTP reserves

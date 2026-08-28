@@ -1312,7 +1312,12 @@ void MainWindow::refreshDeviceStatusLabel() {
     const ThemePalette& palette = ThemeManager::instance().currentTheme();
     QStringList parts;
     for (const Device& device : devices) {
-        const QColor dotColor = device.connected ? palette.success : palette.danger;
+        // Same three states as the device card (topico 35 D.2): amber marks a
+        // link that opened but has no BTP session -- "connected and mute".
+        const DeviceLinkState linkState = deviceLinkState(device);
+        const QColor dotColor = (linkState == DeviceLinkState::Live)      ? palette.success
+                                : (linkState == DeviceLinkState::Offline) ? palette.danger
+                                                                         : palette.warning;
         const QString name = device.name.isEmpty() ? tr("(unnamed)") : device.name;
         parts.append(QString("<span style='color:%1;'>&#9679;</span> %2")
                          .arg(dotColor.name(), name.toHtmlEscaped()));
@@ -1409,6 +1414,10 @@ DeviceConnection* MainWindow::createDeviceConnection(const Device& device) {
     connect(connection, &DeviceConnection::deviceIdentified, this,
             [this, id = device.id](const QString& btpVersion, const QString& btpId) {
                 m_devicesGrid->setDeviceIdentity(id, btpVersion, btpId);
+                // The session coming up (or dropping, which clears the pair)
+                // is an amber<->green transition for the status-bar dots too
+                // (topico 35 D.2).
+                refreshDeviceStatusLabel();
             });
     // Hooked for every device, not just the ones that turn out to be hubs:
     // whether this device publishes hub.peers is only knowable once its

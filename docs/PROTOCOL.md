@@ -105,6 +105,20 @@ counters), `ProtocolRouter::diagnostics()` (routed/dropped per channel), and
 are all available for a future diagnostics panel; none is wired into the UI
 yet (no concrete need for one until topico 15/16 land).
 
+## Serial line state: DTR (topico 35 F1)
+
+The dongle is native USB-CDC (`ARDUINO_USB_MODE=0`). On that stack
+`tud_cdc_n_connected()` tests the **DTR bit alone**, and `USBCDC::write()`
+returns 0 — silently dropping every byte, `BTP/1 READY` included — until the
+host asserts DTR. RX is unaffected. `QSerialPort`'s default DTR/RTS state
+after `open()` varies by platform and Qt version, so `SerialManager::open()`
+(`lib/core/serialmanager.cpp`) asserts `setDataTerminalReady(true)` +
+`setRequestToSend(true)` explicitly, once, right after the port opens (and
+`setRequestToSend(false)` then `setDataTerminalReady(false)` on `close()`, in
+that order, so the CDC line-state machine never steps toward its reset
+sequence). `open()` also folds a configured 1200 baud up to 115200: 1200 is
+the CDC's bootloader-touch, never a working data rate here.
+
 ## Handshake and version negotiation (topico 15)
 
 `BtpHandshake` (`lib/protocol/btphandshake.h`) drives the plain-text
@@ -112,6 +126,22 @@ yet (no concrete need for one until topico 15/16 land).
 followed by `HELLO`/`HELLO_RESULT` (`session-and-terminal.md` sections 1-2) on
 top of an already-open serial connection, before anything else (manifest,
 subscriptions, terminal) is allowed on the wire.
+
+### Keeping the session alive (topico 35 B)
+
+The dongle drops a serial session back to console after `session_timeout_ms`
+(negotiated `min` of both ends, 30000 today) with no valid BTP frame received
+— and it has no keepalive of its own. `BtpBackend` therefore runs a 5s
+`QTimer`, restarted by every outbound frame (a `BtpSession::bytesToWrite`
+hook) so an active session with subscription renewals / commands / terminal
+traffic never pays for it; only a genuinely idle link fires
+`sendSessionKeepalive()`, which sends a `MANIFEST_REQUEST` for a sentinel
+`source_id` (`0xFFFFFFFF`) — the dongle answers a small `NOT_FOUND` that
+`ManifestClient` discards, so the exchange renews the watchdog and nothing
+else. On the other side, `BtpHandshake::feedRawBytes()` scans the raw byte
+stream for `BTP/1 CONSOLE\r\n` while `Established` (the dongle prints exactly
+that on any drop — watchdog, `SESSION_CLOSE`, a bench human) and folds it into
+the same `sessionFailed` → recovery path an exhausted handshake uses.
 
 `HELLO`'s `versions` field is **not** hardcoded to `[1]`: it lists every
 value from `btp::kMinimumProtocolVersion` to `btp::kMaximumProtocolVersion`

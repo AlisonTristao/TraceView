@@ -99,6 +99,8 @@ private slots:
     void enterIsResentWithTheSameNonceWhenNoReadyArrives();
     void aReadyArrivingAfterAnEarlierTimeoutStillEstablishesTheSession();
     void silenceThroughTheWholeBudgetFailsAndAsksForRecovery();
+    void consoleLineAfterEstablishedIsTreatedAsSessionLoss();
+    void consoleLineBeforeEstablishedIsNotAFailure();
 };
 
 void TestBtpHandshake::helloAdvertisesTheLibrarysFullSupportedVersionRange() {
@@ -149,9 +151,10 @@ void TestBtpHandshake::sessionFailsWhenSelectedVersionIsOutsideTheAdvertisedRang
     QCOMPARE(failedSpy.size(), 1);
 }
 
-// A lost ENTER is the common failure here -- opening the port asserts DTR,
-// which can reset the ESP32-S3, so the first line is written into a device
-// that is about to reboot. Resending is the whole recovery.
+// A lost ENTER is the common failure here -- the first line is written while
+// the dongle is still deep in AppRuntime::begin() (SD, SQLite, ESP-NOW) and
+// not yet reading the port, or into a device that just power-cycled.
+// Resending is the whole recovery.
 void TestBtpHandshake::enterIsResentWithTheSameNonceWhenNoReadyArrives() {
     Harness h(/*enterTimeoutMs=*/150, /*maxEnterAttempts=*/5);
     h.handshake.start();
@@ -213,6 +216,41 @@ void TestBtpHandshake::silenceThroughTheWholeBudgetFailsAndAsksForRecovery() {
     QTest::qWait(300);
     QCOMPARE(h.enterLines.size(), 3);
     QCOMPARE(failedSpy.size(), 1);
+}
+
+// The dongle prints "BTP/1 CONSOLE\r\n" whenever it drops the session back to
+// console (its inactivity watchdog, a SESSION_CLOSE, a bench human). The
+// transport stays up and BtpSession has no watchdog, so without this the
+// desktop would sit on a dead session forever. Fold it into the same
+// sessionFailed -> recovery path an exhausted handshake uses.
+void TestBtpHandshake::consoleLineAfterEstablishedIsTreatedAsSessionLoss() {
+    Harness h;
+    h.sendHelloAndCapture();
+    h.deliverHelloResult(/*status=*/0x00, btp::kMaximumProtocolVersion);
+
+    QSignalSpy failedSpy(&h.handshake, &BtpHandshake::sessionFailed);
+    // Arrives glued to the tail of a binary frame, exactly as it would on the
+    // wire -- the scan is over raw bytes, not parsed frames.
+    h.handshake.feedRawBytes(QByteArrayLiteral("\x00\x11\x22") + "BTP/1 CONSOLE\r\n");
+
+    QCOMPARE(failedSpy.size(), 1);
+}
+
+// Before a session exists there is nothing to lose: a stray CONSOLE line
+// during negotiation (a previous session's tail, a bench human) must not be
+// mistaken for a failure of the handshake in progress.
+void TestBtpHandshake::consoleLineBeforeEstablishedIsNotAFailure() {
+    Harness h;
+    h.handshake.start();  // AwaitingReady
+
+    QSignalSpy failedSpy(&h.handshake, &BtpHandshake::sessionFailed);
+    h.handshake.feedRawBytes("BTP/1 CONSOLE\r\n");
+
+    QCOMPARE(failedSpy.size(), 0);
+    // And the real READY still lands the session.
+    h.handshake.feedRawBytes("BTP/1 READY " + Harness::nonceOf(h.enterLine) + "\r\n");
+    QCOMPARE(h.sent.size(), 1);
+    QCOMPARE(h.sent.last().objectId, kControlHello);
 }
 
 }  // namespace

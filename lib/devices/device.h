@@ -231,6 +231,32 @@ inline quint32 hubChannelSourceId(const QString& deviceId) {
     return hash == 0 ? 1u : hash;
 }
 
+// How far this device's link has actually come up -- more than the single
+// connected/not bit the card used to paint (topico 35 D.2). The exact
+// ambiguity this resolves: a serial device whose port opened but whose BTP
+// handshake never completed ("connected and mute") looked identical to a
+// working one.
+enum class DeviceLinkState {
+    Offline,        // no transport (port closed / not configured / unplugged)
+    TransportOnly,  // Serial/UsbHid: link open, but no BTP session yet
+    Live,           // BTP session established (Serial/UsbHid), or a hub child
+                    // whose parent+peer are set (HubChannel has no handshake)
+};
+
+inline DeviceLinkState deviceLinkState(const Device& device) {
+    if (!device.connected) {
+        return DeviceLinkState::Offline;
+    }
+    if (device.transportType == TransportType::HubChannel) {
+        return DeviceLinkState::Live;  // no ENTER/HELLO on this transport by design
+    }
+    // btpVersion is set only by BtpHandshake::sessionEstablished and cleared
+    // on disconnect (MainWindow::onDeviceConnectionStateChanged), so it is
+    // exactly "a session is up right now".
+    return device.btpVersion.isEmpty() ? DeviceLinkState::TransportOnly
+                                       : DeviceLinkState::Live;
+}
+
 // Mirrors dashboardItemToJson()'s shape/convention (dashboard/dashboarditem.h)
 // -- one JSON object per Device, used by DevicesGrid::toJson()/fromJson() to
 // persist the whole list into ProjectStore's "devices" section. `connected`,

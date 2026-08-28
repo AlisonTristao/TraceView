@@ -14,6 +14,7 @@ private slots:
     void closeWithoutOpenIsNoop();
     void writeWhileDisconnectedReturnsFalse();
     void openWithInvalidPortNameFailsAndEmitsError();
+    void openAt1200BaudIsFoldedUpWithAWarning();
     void availablePortsDoesNotCrash();
 };
 
@@ -49,6 +50,28 @@ void TestSerialManager::openWithInvalidPortNameFailsAndEmitsError() {
     QVERIFY(!manager.isConnected());
     QCOMPARE(stateSpy.count(), 0);
     QCOMPARE(errorSpy.count(), 1);
+}
+
+void TestSerialManager::openAt1200BaudIsFoldedUpWithAWarning() {
+    // 1200 baud is the ESP32-S3 CDC's reset-to-bootloader shortcut, never a
+    // working data rate -- open() must substitute a real rate and say so
+    // rather than bootloader-loop the dongle. The port name is invalid so the
+    // open itself still fails; what matters is the extra warning carrying
+    // "1200" that fires before Qt's own open-failure error.
+    SerialManager manager;
+    QSignalSpy errorSpy(&manager, &SerialManager::errorOccurred);
+
+    const bool opened = manager.open("__traceview_no_such_port__", 1200);
+
+    QVERIFY(!opened);
+    QVERIFY(errorSpy.count() >= 1);
+    bool warnedAbout1200 = false;
+    for (const QList<QVariant>& call : errorSpy) {
+        if (call.at(0).toString().contains("1200")) {
+            warnedAbout1200 = true;
+        }
+    }
+    QVERIFY(warnedAbout1200);
 }
 
 void TestSerialManager::availablePortsDoesNotCrash() {

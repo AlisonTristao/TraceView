@@ -97,6 +97,12 @@ private:
     BtpSession* m_session;
     State m_state = State::Idle;
     QByteArray m_lineBuffer;  // bounded scratch buffer while awaiting READY
+    // Bounded scratch buffer used only once Established: the dongle prints
+    // "BTP/1 CONSOLE\r\n" in the clear whenever it drops the session back to
+    // console (its watchdog, a SESSION_CLOSE, a bench human). The transport
+    // stays up and BtpSession has no watchdog, so this raw-byte scan is the
+    // only thing on the desktop that can notice -- see feedRawBytes().
+    QByteArray m_consoleWatchBuffer;
     // The nonce of the CURRENT connection attempt, drawn once in start() and
     // held across every retry. Reused rather than redrawn on purpose: a READY
     // answering an earlier ENTER can arrive after that ENTER's timeout has

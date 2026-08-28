@@ -2,6 +2,7 @@
 
 #include <QDateTime>
 #include <QRandomGenerator>
+#include <QTimer>
 #include <btp/codec.hpp>
 
 #include "protocol/btpframe.h"
@@ -28,6 +29,22 @@ namespace {
 // normatively-fixed constants, same as topico 13 did on the dongle.
 constexpr quint16 kTerminalInObjectId = 0x0001;
 constexpr quint16 kTerminalOutObjectId = 0x0002;
+
+// object_id for CONTROL/MANIFEST_REQUEST -- same local-copy convention as the
+// terminal ids above (mirrors ManifestClient's own kControlManifestRequest).
+constexpr quint16 kControlManifestRequest = 0x0003;
+
+// How long the session may sit with no PC->dongle frame before the keepalive
+// steps in. Comfortably under the negotiated 30s watchdog (and still 3x under
+// the 15s an un-updated dongle would negotiate), so a single lost keepalive
+// is never fatal. See BtpBackend::sendSessionKeepalive().
+constexpr int kKeepaliveIntervalMs = 5000;
+
+// The keepalive is a MANIFEST_REQUEST for a source_id that cannot exist: the
+// dongle answers a small NOT_FOUND that ManifestClient already discards
+// without touching the catalog, so the exchange renews the watchdog and
+// nothing else. 0 is not usable here -- it is the enumeration wildcard.
+constexpr quint32 kKeepaliveSentinelSource = 0xFFFFFFFFu;
 
 quint32 randomNonZero() {
     quint32 value = 0;
@@ -179,10 +196,26 @@ BtpBackend::BtpBackend(BtpSession::Framing framing, btp::TransportProfile encode
     // whose bytesToWrite() is already connected above.
     connect(m_btpHandshake, &BtpHandshake::bytesToWrite, this, &Backend::bytesToWrite);
 
+    // Session keepalive: a repeating timer restarted by every outbound BTP
+    // frame (below), so it only fires when the link has actually been idle for
+    // kKeepaliveIntervalMs. Started on sessionEstablished, stopped on failure
+    // and on transport loss.
+    m_keepaliveTimer = new QTimer(this);
+    m_keepaliveTimer->setSingleShot(false);
+    m_keepaliveTimer->setInterval(kKeepaliveIntervalMs);
+    connect(m_keepaliveTimer, &QTimer::timeout, this, &BtpBackend::sendSessionKeepalive);
+    connect(m_btpSession, &BtpSession::bytesToWrite, this, [this](const QByteArray&) {
+        if (m_keepaliveTimer != nullptr && m_keepaliveTimer->isActive()) {
+            m_keepaliveTimer->start();  // real traffic just went out; reset the idle clock
+        }
+    });
+
     connect(m_btpHandshake, &BtpHandshake::sessionEstablished, this,
             [this](quint32 peerSourceId, quint32 peerBootId, quint32 peerConfigRevision,
                    quint8 selectedVersion) {
                 emit statusMessage(tr("BTP session established (HELLO_RESULT=SUCCESS)"), 5000);
+                m_sessionEstablished = true;
+                m_keepaliveTimer->start();
                 m_manifestClient->onSessionEstablished(peerConfigRevision);
                 m_subscriptionManager->onSessionEstablished();
                 m_clockSync->onSessionEstablished(peerSourceId, peerBootId);
@@ -198,6 +231,8 @@ BtpBackend::BtpBackend(BtpSession::Framing framing, btp::TransportProfile encode
                     QString("0x%1").arg(peerSourceId, 8, 16, QChar('0')).toUpper());
             });
     connect(m_btpHandshake, &BtpHandshake::sessionFailed, this, [this](const QString& reason) {
+        m_keepaliveTimer->stop();
+        m_sessionEstablished = false;
         emit statusMessage(tr("BTP handshake failed: %1").arg(reason), 8000);
         // BtpHandshake has already exhausted its own retries by the time it
         // says this, so the ENTER line is not what is missing any more --
@@ -304,6 +339,44 @@ quint32 BtpBackend::nextEndpointSequence() {
     return ++m_endpointSequence;
 }
 
+void BtpBackend::sendSessionKeepalive() {
+    if (!m_sessionEstablished) {
+        return;  // session dropped between the timer firing and here
+    }
+
+    // MANIFEST_REQUEST payload (commands.md section 3.1): target source_id,
+    // target boot_id, known_config_revision -- all uint32_le. Aimed at a
+    // source that cannot exist so the reply is a small NOT_FOUND the
+    // ManifestClient discards untouched; the point is only that the dongle
+    // sees a valid BTP frame and refreshes its watchdog.
+    QByteArray payload;
+    payload.reserve(12);
+    for (quint32 v : {kKeepaliveSentinelSource, quint32(0), quint32(0)}) {
+        payload.append(static_cast<char>(v & 0xFF));
+        payload.append(static_cast<char>((v >> 8) & 0xFF));
+        payload.append(static_cast<char>((v >> 16) & 0xFF));
+        payload.append(static_cast<char>((v >> 24) & 0xFF));
+    }
+
+    btp::Header header{};
+    header.type = btp::MessageType::Control;
+    header.flags = 0;
+    header.source_id = m_terminalSourceId;  // this backend's own stable-per-run id
+    header.boot_id = m_terminalBootId;
+    header.sequence = ++m_keepaliveSequence;
+    header.timestamp_us = static_cast<quint64>(QDateTime::currentMSecsSinceEpoch()) * 1000ULL;
+    header.object_id = kControlManifestRequest;
+    header.fragment_index = 0;
+    header.fragment_count = 1;
+
+    const btp::Frame frame{header,
+                           {reinterpret_cast<const std::uint8_t*>(payload.constData()),
+                            static_cast<std::size_t>(payload.size())}};
+    // Goes out through BtpSession like any other frame -- which also trips the
+    // bytesToWrite hook and restarts m_keepaliveTimer for the next interval.
+    m_btpSession->sendFrame(frame);
+}
+
 void BtpBackend::bindHubChild(quint32 childSourceId, quint32 peerSourceId) {
     m_hubBinder->bindChild(childSourceId, peerSourceId);
 }
@@ -374,6 +447,12 @@ void BtpBackend::onTransportConnectionChanged(bool connected) {
         }
         m_btpHandshake->start();
     } else {
+        // No session, nothing to keep alive. The next sessionEstablished
+        // re-arms it.
+        if (m_keepaliveTimer != nullptr) {
+            m_keepaliveTimer->stop();
+        }
+        m_sessionEstablished = false;
         // Subscriptions are scoped to the session that granted them
         // (topico 17 PASSO 6): forget the grants, keep the widgets that
         // wanted them, so reconnecting re-subscribes everything.
@@ -397,21 +476,32 @@ void BtpBackend::sendTerminalIn(const QByteArray& bytes) {
         return;
     }
 
-    btp::Header header{};
-    header.type = btp::MessageType::Terminal;
-    header.flags = 0;
-    header.source_id = m_terminalSourceId;
-    header.boot_id = m_terminalBootId;
-    header.sequence = ++m_terminalSequence;
-    header.timestamp_us = static_cast<quint64>(QDateTime::currentMSecsSinceEpoch()) * 1000ULL;
-    header.object_id = kTerminalInObjectId;
-    header.fragment_index = 0;
-    header.fragment_count = 1;
+    // Split into chunks the dongle accepts as one logical message (topico 35
+    // D.1). Its serial session caps a payload at what HELLO_RESULT negotiated
+    // -- 2048 today, and it does NOT reassemble serial fragments -- so a
+    // single oversized TERMINAL_IN frame (a big paste) is silently truncated
+    // into the server-side pty. 1 KB stays well under any plausible negotiated
+    // limit; keystrokes and normal pastes are one chunk.
+    constexpr int kMaxTerminalChunk = 1024;
+    for (int offset = 0; offset < bytes.size(); offset += kMaxTerminalChunk) {
+        const QByteArray chunk = bytes.mid(offset, kMaxTerminalChunk);
 
-    const btp::Frame frame{header,
-                           {reinterpret_cast<const std::uint8_t*>(bytes.constData()),
-                            static_cast<std::size_t>(bytes.size())}};
-    m_btpSession->sendFrame(frame);
+        btp::Header header{};
+        header.type = btp::MessageType::Terminal;
+        header.flags = 0;
+        header.source_id = m_terminalSourceId;
+        header.boot_id = m_terminalBootId;
+        header.sequence = ++m_terminalSequence;
+        header.timestamp_us = static_cast<quint64>(QDateTime::currentMSecsSinceEpoch()) * 1000ULL;
+        header.object_id = kTerminalInObjectId;
+        header.fragment_index = 0;
+        header.fragment_count = 1;
+
+        const btp::Frame frame{header,
+                               {reinterpret_cast<const std::uint8_t*>(chunk.constData()),
+                                static_cast<std::size_t>(chunk.size())}};
+        m_btpSession->sendFrame(frame);
+    }
 }
 
 void BtpBackend::onTerminalFrameReceived(const traceview::BtpFrame& frame) {

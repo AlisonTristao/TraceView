@@ -62,9 +62,42 @@ private slots:
     void childIdentityIsStableAcrossRuns();
     void childAsksItsOwnRobotForAManifestNotAnEnumeration();
     void childTerminalInputCarriesTheChildsOwnStableIdentity();
+    void largeTerminalPasteIsSplitIntoAcceptableFrames();
     void anOrdinarySerialBackendStillHandshakes();
     void anUnconfiguredChildAsksNobodyAnything();
 };
+
+// A paste bigger than the dongle's negotiated logical payload (2048 today)
+// would, as one frame, be silently truncated into the server-side pty -- the
+// dongle does not reassemble serial fragments (topico 35 D.1). sendTerminalIn
+// must hand it over in chunks each side accepts whole, with every byte
+// preserved and in order.
+void TestHubEndpoint::largeTerminalPasteIsSplitIntoAcceptableFrames() {
+    BtpBackend backend;  // Serial / COBS console backend
+    QSignalSpy written(&backend, &Backend::bytesToWrite);
+
+    QByteArray paste;
+    for (int i = 0; i < 3000; ++i) {
+        paste.append(char('a' + (i % 26)));
+    }
+    backend.sendTerminalIn(paste);
+
+    QVERIFY2(written.count() >= 2, "a 3000-byte paste must not go as a single frame");
+
+    QByteArray reassembled;
+    for (int i = 0; i < written.count(); ++i) {
+        btp::DecodedFrame decoded{};
+        std::vector<std::uint8_t> storage;
+        QVERIFY(decodeWritten(written.at(i).at(0).toByteArray(), /*cobsWrapped=*/true, &decoded,
+                              &storage));
+        QCOMPARE(int(decoded.header.type), int(btp::MessageType::Terminal));
+        QVERIFY2(decoded.payload.size <= 2048,
+                 "each chunk must fit the dongle's negotiated logical payload");
+        reassembled.append(reinterpret_cast<const char*>(decoded.payload.data),
+                           int(decoded.payload.size));
+    }
+    QCOMPARE(reassembled, paste);  // every byte, in order
+}
 
 // The reason a child cannot use the per-run random identity the console
 // channel uses: the hub routes the downstream direction by the child's

@@ -4,7 +4,9 @@
 
 using traceview::CommType;
 using traceview::Device;
+using traceview::DeviceLinkState;
 using traceview::deviceFromJson;
+using traceview::deviceLinkState;
 using traceview::deviceToJson;
 using traceview::TransportType;
 
@@ -21,7 +23,34 @@ private slots:
     void roundTripsHubChannelByPeerSourceIdNotChannelIndex();
     void hubChannelPasswordIsOmittedUnlessCachingWasOptedInto();
     void projectWithoutHubFieldsLoadsAsUnconfiguredRatherThanGuessing();
+    void linkStateSeparatesPortOpenFromSessionLive();
 };
+
+void TestDevice::linkStateSeparatesPortOpenFromSessionLive() {
+    Device d;
+    d.transportType = TransportType::Serial;
+
+    d.connected = false;
+    d.btpVersion.clear();
+    QCOMPARE(deviceLinkState(d), DeviceLinkState::Offline);
+
+    // Port open, handshake not done: the "connected and mute" case that used
+    // to be indistinguishable from a working device.
+    d.connected = true;
+    QCOMPARE(deviceLinkState(d), DeviceLinkState::TransportOnly);
+
+    d.btpVersion = "1";
+    QCOMPARE(deviceLinkState(d), DeviceLinkState::Live);
+
+    // A hub child never handshakes, so "connected" alone is as live as it gets.
+    Device child;
+    child.transportType = TransportType::HubChannel;
+    child.connected = true;
+    child.btpVersion.clear();
+    QCOMPARE(deviceLinkState(child), DeviceLinkState::Live);
+    child.connected = false;
+    QCOMPARE(deviceLinkState(child), DeviceLinkState::Offline);
+}
 
 void TestDevice::roundTripsAllFieldsExceptLiveState() {
     Device device;

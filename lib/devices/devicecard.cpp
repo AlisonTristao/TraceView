@@ -156,12 +156,17 @@ void DeviceCard::paintEvent(QPaintEvent*) {
     drawCommTypeIcon(painter, iconRect, m_device.commType, headerFg);
     textRect.setLeft(iconRect.right() + kIconMargin);
 
-    // Connection dot -- green/red, same palette.success/palette.danger
-    // convention as DashboardCell's header dot. Also the click target for
-    // connectToggleRequested() (see mousePressEvent()).
+    // Connection dot -- three states, not two (topico 35 D.2): red offline,
+    // amber "port open but no BTP session" (the "connected and mute" case),
+    // green live. Also the click target for connectToggleRequested() (see
+    // mousePressEvent()).
+    const DeviceLinkState linkState = deviceLinkState(m_device);
+    const QColor dotColor = (linkState == DeviceLinkState::Live)      ? palette.success
+                            : (linkState == DeviceLinkState::Offline) ? palette.danger
+                                                                     : palette.warning;
     const QRect dotRect = statusDotRect();
     painter.setPen(Qt::NoPen);
-    painter.setBrush(m_device.connected ? palette.success : palette.danger);
+    painter.setBrush(dotColor);
     painter.drawEllipse(dotRect);
     textRect.setLeft(dotRect.right() + kIconMargin);
 
@@ -196,12 +201,16 @@ void DeviceCard::paintEvent(QPaintEvent*) {
     painter.setFont(bodyFont);
     const QFontMetrics bodyMetrics(bodyFont);
 
-    const QString reportedLine =
+    QString reportedLine =
         m_device.btpVersion.isEmpty()
             ? (m_device.btpId.isEmpty() ? QString() : tr("ID %1").arg(m_device.btpId))
             : (m_device.btpId.isEmpty()
                    ? tr("v%1").arg(m_device.btpVersion)
                    : tr("v%1 \xC2\xB7 ID %2").arg(m_device.btpVersion, m_device.btpId));
+    // Name the amber state in words, not just a dot colour (topico 35 D.2).
+    if (linkState == DeviceLinkState::TransportOnly) {
+        reportedLine = tr("port open, waiting for BTP session");
+    }
     const int reportedHeight = reportedLine.isEmpty() ? 0 : kBodyLineHeight + 4;
 
     painter.setPen(palette.textPrimary);

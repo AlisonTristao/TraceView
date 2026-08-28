@@ -100,6 +100,7 @@ BtpHandshake::BtpHandshake(BtpSession* session, ProtocolRouter* router, QObject*
 
 void BtpHandshake::start() {
     m_lineBuffer.clear();
+    m_consoleWatchBuffer.clear();
     m_state = State::AwaitingReady;
     m_enterAttempts = 0;
 
@@ -119,6 +120,26 @@ void BtpHandshake::sendEnter() {
 }
 
 void BtpHandshake::feedRawBytes(const QByteArray& data) {
+    if (m_state == State::Established) {
+        // "BTP/1 CONSOLE\r\n" is what the dongle emits, in the clear and after
+        // its last frame, whenever it leaves protocol mode -- inactivity
+        // watchdog, SESSION_CLOSE, or a human typing at the bench. Nothing
+        // else here would catch it: the transport is still open and BtpSession
+        // has no watchdog. Fold it into the same failure path an exhausted
+        // handshake uses, so the session recovers (close -> retry -> re-ENTER)
+        // instead of going silently dead.
+        static const QByteArray kConsoleLine = QByteArrayLiteral("BTP/1 CONSOLE\r\n");
+        m_consoleWatchBuffer.append(data);
+        const bool seen = m_consoleWatchBuffer.contains(kConsoleLine);
+        if (m_consoleWatchBuffer.size() > kMaxLineBufferBytes) {
+            m_consoleWatchBuffer.remove(0, m_consoleWatchBuffer.size() - kMaxLineBufferBytes);
+        }
+        if (seen) {
+            m_consoleWatchBuffer.clear();
+            fail(tr("dongle returned to console (BTP/1 CONSOLE)"));
+        }
+        return;
+    }
     if (m_state != State::AwaitingReady) {
         return;
     }
@@ -135,8 +156,12 @@ void BtpHandshake::feedRawBytes(const QByteArray& data) {
 }
 
 void BtpHandshake::sendHello() {
+    // 30000, matching bally_dongle's SerialSession::LocalLimits default (the
+    // negotiated watchdog is min of the two). The desktop keepalive
+    // (BtpBackend, topico 35 B.1) refreshes it every ~5s; this window is the
+    // backstop for a desktop that vanished without a SESSION_CLOSE.
     const QByteArray payload =
-        buildHelloPayload(/*maxLogicalPayload=*/4096, /*sessionTimeoutMs=*/15000);
+        buildHelloPayload(/*maxLogicalPayload=*/4096, /*sessionTimeoutMs=*/30000);
 
     btp::Header header{};
     header.type = btp::MessageType::Control;
