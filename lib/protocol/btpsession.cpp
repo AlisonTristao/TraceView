@@ -153,13 +153,20 @@ void BtpSession::feedBytes(const QByteArray& data) {
     if (m_framing == Framing::PreFramed) {
         // No COBS to decode -- the transport below already handed us exactly
         // one bounded chunk, which is either a complete BTP frame or nothing
-        // at all (see the class comment). The profile handed to btp::decode()
-        // is the encode profile: it is the ceiling the *sender* used, which
-        // is what "is this frame too large" has to be measured against.
+        // at all (see the class comment).
+        //
+        // Decoded against the Serial (largest) ceiling, NOT m_encodeProfile:
+        // for a hub child m_encodeProfile is EspNow (the size limit of ITS
+        // frames to the robot over the radio), but the frames it RECEIVES come
+        // two ways -- a robot's telemetry relayed verbatim (EspNow-sized) and
+        // the hub's OWN cache-served MANIFEST_DATA / SUBSCRIBE_RESULT, which
+        // ride channel A and can legitimately exceed 250 octets (a robot with
+        // a couple of topics is ~316). The transport below already bounded the
+        // chunk; the decoder's job here is only "is this a valid BTP frame".
         btp::DecodedFrame decoded;
         const btp::Error error =
             btp::decode(reinterpret_cast<const std::uint8_t*>(data.constData()),
-                        static_cast<std::size_t>(data.size()), m_encodeProfile, &decoded);
+                        static_cast<std::size_t>(data.size()), btp::TransportProfile::Serial, &decoded);
         if (error == btp::Error::Ok) {
             diagnosticsDirty = true;
             // btp::decode() only accepts an input whose size is exactly

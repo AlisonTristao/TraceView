@@ -359,6 +359,7 @@ void ManifestClient::onControlFrameReceived(const BtpFrame& frame) {
 
     if ((parsed.flags & kFlagNotModified) != 0) {
         m_sourceRevisions.insert(parsed.describedSourceId, parsed.configRevision);
+        emit sourceDescribed(parsed.describedSourceId, parsed.describedBootId, parsed.configRevision);
         emit catalogUpdated();  // the boot_id above may be new even when the schemas are not
         return;
     }
@@ -367,6 +368,7 @@ void ManifestClient::onControlFrameReceived(const BtpFrame& frame) {
         m_catalog->registerSchema(topic);
     }
     m_sourceRevisions.insert(parsed.describedSourceId, parsed.configRevision);
+    emit sourceDescribed(parsed.describedSourceId, parsed.describedBootId, parsed.configRevision);
     emit catalogUpdated();
 }
 

@@ -35,6 +35,31 @@ constexpr quint16 kTerminalOutObjectId = 0x0002;
 constexpr quint16 kControlManifestRequest = 0x0003;
 constexpr quint16 kControlSessionClose = 0x000A;
 
+// CONTROL responses the HUB itself can answer in the clear, from its own
+// ManifestCache / SubscriptionRegistry -- not end to end from the robot
+// (bally_dongle SerialMux::handleManifestRequest, and handleUnsubscribeRequest
+// when a child's bind was lost across a dongle reboot). On a keyed hub channel
+// these legitimately arrive unsealed and must NOT be dropped as a downgrade --
+// see onSessionFrameReceived(). Robot DATA (telemetry, command results) is
+// never on this list: an unsealed one there really is a downgrade.
+constexpr quint16 kControlManifestData = 0x0004;
+constexpr quint16 kControlSubscribeResult = 0x0006;
+constexpr quint16 kControlUnsubscribeResult = 0x0008;
+
+bool isHubPlaintextControlResponse(const BtpFrame& frame) {
+    if (frame.type != btp::MessageType::Control) {
+        return false;
+    }
+    switch (frame.objectId) {
+        case kControlManifestData:
+        case kControlSubscribeResult:
+        case kControlUnsubscribeResult:
+            return true;
+        default:
+            return false;
+    }
+}
+
 // session-and-terminal.md section 4.1. The dongle handles this request in
 // its protocol loop immediately; 500 ms is the allowance for returning
 // SESSION_CLOSE_RESULT and cleaning its queues before console ownership.
@@ -52,6 +77,29 @@ constexpr int kKeepaliveIntervalMs = 5000;
 // without touching the catalog, so the exchange renews the watchdog and
 // nothing else. 0 is not usable here -- it is the enumeration wildcard.
 constexpr quint32 kKeepaliveSentinelSource = 0xFFFFFFFFu;
+
+// After a child's catalog has arrived, m_childCatalogRetryTimer does not stop
+// -- it slows to this and keeps re-asking. It is the hub.peers-independent
+// backstop for a robot reboot: even if the hub.peers subscription never
+// resolved, a re-request every 20s eventually returns a MANIFEST_DATA whose
+// described_boot_id is the new one, which the sourceDescribed handler turns
+// into a re-subscribe. The frame is tiny and this is one robot.
+constexpr int kChildCatalogBackstopMs = 20000;
+
+// While the robot is online (per hub.peers) but its catalog still has not
+// arrived after this many MANIFEST_REQUESTs, the status bar says so -- the
+// difference between "still coming" and "something is wrong upstream".
+constexpr int kChildCatalogAttemptsBeforeWarning = 6;
+
+// Retry cadence once the warning threshold is hit but no catalog has EVER
+// arrived. Slower than the 5s fast path (so a robot whose ManifestResponder is
+// genuinely wedged is not hammered) but far faster than kChildCatalogBackstopMs
+// -- that 20s rate is only defensible once a catalog has been seen at least
+// once and the timer is purely a reboot backstop. The common reason the first
+// catalog is late is a startup race: the child connected before the dongle had
+// primed this robot's manifest, so it just needs to keep asking at a sane rate
+// until the hub's cache fills a few seconds later.
+constexpr int kChildCatalogNeverArrivedRetryMs = 8000;
 
 quint32 randomNonZero() {
     quint32 value = 0;
@@ -211,6 +259,46 @@ BtpBackend::BtpBackend(BtpSession::Framing framing, btp::TransportProfile encode
     m_keepaliveTimer->setSingleShot(false);
     m_keepaliveTimer->setInterval(kKeepaliveIntervalMs);
     connect(m_keepaliveTimer, &QTimer::timeout, this, &BtpBackend::sendSessionKeepalive);
+
+    // Hub child: keep re-asking for the robot's catalog until it arrives (see
+    // m_childCatalogRetryTimer's own comment). Same cadence as the keepalive;
+    // the request frame is tiny.
+    m_childCatalogRetryTimer = new QTimer(this);
+    m_childCatalogRetryTimer->setSingleShot(false);
+    m_childCatalogRetryTimer->setInterval(kKeepaliveIntervalMs);
+    connect(m_childCatalogRetryTimer, &QTimer::timeout, this, [this] {
+        if (m_peerSourceId == 0) {
+            m_childCatalogRetryTimer->stop();
+            return;
+        }
+        // Keeps running even after the catalog arrived (slowed to
+        // kChildCatalogBackstopMs on sourceDescribed): the backstop for a
+        // robot reboot the hub.peers watch did not catch. Only
+        // onTransportConnectionChanged(false) stops it.
+        m_manifestClient->requestCatalogFor(m_peerSourceId);
+        if (!m_childCatalogReceived) {
+            ++m_childCatalogAttempts;
+            if (m_childCatalogAttempts == kChildCatalogAttemptsBeforeWarning) {
+                if (m_peerOnline) {
+                    emit statusMessage(
+                        tr("Robot 0x%1 is online but its catalog has not arrived — check the "
+                           "dongle (hub -manifest)")
+                            .arg(m_peerSourceId, 8, 16, QChar('0')).toUpper(),
+                        8000);
+                }
+                // Give up the fast cadence: a robot that has ignored this
+                // many requests is not answering the next one any sooner, and
+                // hammering it (and the hub serving from its cache) every few
+                // seconds forever is what stalls the link. But the full 20s
+                // backstop is only honest once a catalog has actually been
+                // seen -- before that, the usual cause is a startup race with
+                // the hub's own manifest prime, so keep a middle cadence. A
+                // real recovery still re-arms the fast path via
+                // onPeerPresence()/onTransportConnectionChanged().
+                m_childCatalogRetryTimer->setInterval(kChildCatalogNeverArrivedRetryMs);
+            }
+        }
+    });
     connect(m_btpSession, &BtpSession::bytesToWrite, this, [this](const QByteArray&) {
         if (m_keepaliveTimer != nullptr && m_keepaliveTimer->isActive()) {
             m_keepaliveTimer->start();  // real traffic just went out; reset the idle clock
@@ -279,6 +367,49 @@ BtpBackend::BtpBackend(BtpSession::Framing framing, btp::TransportProfile encode
     connect(m_manifestClient, &ManifestClient::catalogUpdated, m_subscriptionManager,
             &SubscriptionManager::onCatalogUpdated);
     connect(m_manifestClient, &ManifestClient::catalogUpdated, this, &Backend::catalogChanged);
+    // A hub child never handshakes, so its card's "reported by device" fields
+    // stay empty forever unless the manifest fills them: when the MANIFEST_DATA
+    // that just arrived describes THIS child's own robot, surface it the same
+    // way BtpHandshake::sessionEstablished does for a direct device. Only for a
+    // child (m_peerSourceId != 0) -- a console backend's identity is the
+    // dongle's, set by the handshake above, and must not be overwritten by a
+    // robot manifest that merely passed through its catalog.
+    connect(m_manifestClient, &ManifestClient::sourceDescribed, this,
+            [this](quint32 sourceId, quint32 bootId, quint32 configRevision) {
+                if (m_peerSourceId == 0 || sourceId != m_peerSourceId) {
+                    return;
+                }
+                // The single choke point for "this robot's identity changed":
+                // reached whether the reboot was noticed via hub.peers (which
+                // re-requested the catalog) or only by the backstop poll. The
+                // MANIFEST_DATA has already updated TelemetryCatalog's boot for
+                // this source (ManifestClient::onControlFrameReceived), so
+                // re-SUBSCRIBE now picks up the new boot.
+                const bool rebooted =
+                    m_childPeerBootId != 0 && bootId != 0 && bootId != m_childPeerBootId;
+                m_childPeerBootId = bootId;
+                m_childCatalogReceived = true;
+                m_childCatalogAttempts = 0;
+                m_childCatalogRetryTimer->setInterval(kChildCatalogBackstopMs);
+                if (!m_childCatalogRetryTimer->isActive()) {
+                    m_childCatalogRetryTimer->start();
+                }
+                if (rebooted) {
+                    m_subscriptionManager->onPeerRebooted(sourceId);
+                    emit statusMessage(
+                        tr("Robot 0x%1 rebooted — catalog and subscriptions refreshed")
+                            .arg(sourceId, 8, 16, QChar('0')).toUpper(),
+                        5000);
+                }
+                // A robot behind a hub negotiates no BTP version (no
+                // HELLO_RESULT), so the closest thing to a "version" it reports
+                // is its manifest's config_revision -- which is also what bumps
+                // when its schema changes, i.e. exactly what an operator wants
+                // to see move.
+                emit deviceIdentified(
+                    tr("config rev %1").arg(configRevision),
+                    QString("0x%1").arg(sourceId, 8, 16, QChar('0')).toUpper());
+            });
     // CRITERIO DE ACEITE "pedido acima do maximo e limitado e informado ao
     // cliente": the granted rate is surfaced, never silently assumed equal to
     // what was asked for.
@@ -358,6 +489,18 @@ quint32 BtpBackend::nextEndpointSequence() {
 void BtpBackend::sendSessionKeepalive() {
     if (!m_sessionEstablished) {
         return;  // session dropped between the timer firing and here
+    }
+
+    // Console/hub backend only: if the dongle's own catalog never landed
+    // (the one enumeration on sessionEstablished can be lost, and nothing
+    // else re-asks for it), the hub.peers topic MainWindow needs to resolve
+    // its presence watch and its "Source ID" dropdown simply does not exist.
+    // Spend this keepalive tick on a real re-enumeration until at least one
+    // schema is cached; after that it is the cheap sentinel below. A child
+    // backend (m_peerSourceId != 0) has m_childCatalogRetryTimer for this.
+    if (m_peerSourceId == 0 && m_telemetryCatalog->allSchemas().isEmpty()) {
+        m_manifestClient->requestFullCatalog();
+        return;
     }
 
     // MANIFEST_REQUEST payload (commands.md section 3.1): target source_id,
@@ -447,11 +590,16 @@ void BtpBackend::sendCommand(const QByteArray& text) {
 
 void BtpBackend::onSessionFrameReceived(const BtpFrame& frame) {
     if ((frame.flags & btp::kFlagEncrypted) == 0U) {
-        if (m_peerSourceId != 0 && !m_endpointKey.isEmpty()) {
-            // Keyed hub channel: the robot seals everything it sends here.
-            // An unsealed frame is a downgrade or a spoof -- drop it, and
-            // say so once per session so a silently missing plot has an
-            // explanation.
+        if (m_peerSourceId != 0 && !m_endpointKey.isEmpty() &&
+            !isHubPlaintextControlResponse(frame)) {
+            // Keyed hub channel: robot DATA (telemetry, command results) is
+            // sealed end to end, so an unsealed one is a downgrade or a spoof
+            // -- drop it, and say so once per session so a silently missing
+            // plot has an explanation. The hub's OWN control-plane answers
+            // (MANIFEST_DATA / SUBSCRIBE_RESULT / UNSUBSCRIBE_RESULT, served
+            // from its ManifestCache over channel A) are exempt above: they
+            // are legitimately in the clear and dropping them was why a hub
+            // child never got its catalog even with the right password.
             if (!m_unsealedDowngradeReported) {
                 m_unsealedDowngradeReported = true;
                 emit statusMessage(
@@ -510,7 +658,13 @@ void BtpBackend::onTransportConnectionChanged(bool connected) {
             // ClockSync is deliberately absent: it is a "dongle set_clock"
             // shell command addressed to a hub, and a robot has no reason to
             // accept it.
+            m_childCatalogReceived = false;
+            m_childCatalogAttempts = 0;
+            m_childPeerBootId = 0;
+            m_peerOnline = true;  // assume alive until hub.peers says otherwise
+            m_childCatalogRetryTimer->setInterval(kKeepaliveIntervalMs);
             m_manifestClient->requestCatalogFor(m_peerSourceId);
+            m_childCatalogRetryTimer->start();  // keep asking until it lands
             m_subscriptionManager->onSessionEstablished();
             return;
         }
@@ -521,6 +675,13 @@ void BtpBackend::onTransportConnectionChanged(bool connected) {
         if (m_keepaliveTimer != nullptr) {
             m_keepaliveTimer->stop();
         }
+        if (m_childCatalogRetryTimer != nullptr) {
+            m_childCatalogRetryTimer->stop();
+        }
+        m_childCatalogReceived = false;
+        m_childCatalogAttempts = 0;
+        m_childPeerBootId = 0;
+        m_peerOnline = true;
         m_sessionEstablished = false;
         m_sessionClosing = false;
         // Subscriptions are scoped to the session that granted them
@@ -531,6 +692,55 @@ void BtpBackend::onTransportConnectionChanged(bool connected) {
         // died with the session, and resendAll() restores it on the next one.
         m_hubBinder->onSessionLost();
     }
+}
+
+void BtpBackend::onPeerPresence(bool online, quint32 bootId) {
+    if (m_peerSourceId == 0) {
+        return;  // not a hub child
+    }
+    m_peerOnline = online;  // drives the "waiting vs failed" status text only
+
+    // Two situations need a fresh catalog request kicked off from here:
+    //
+    //  - a genuine boot change: the robot power-cycled, so its per-boot
+    //    subscription state is gone and its cached catalog is now for the
+    //    wrong boot;
+    //
+    //  - the catalog has NEVER arrived and the robot is (now) reported online.
+    //    The common case is a child that connected before the dongle had
+    //    primed this robot's manifest -- it got NOT_FOUND and let its retry
+    //    timer back off. The robot showing up in hub.peers is the signal that
+    //    the hub can answer now, so re-arm instead of waiting the timer out;
+    //    without this the operator's only recourse was power-cycling the robot.
+    //
+    // A robot that merely dropped out of range and came back on the SAME boot
+    // WITH a catalog already in hand kept it and needs nothing here -- reacting
+    // to every online blip is what turned a flaky link into a MANIFEST_REQUEST
+    // storm against the hub. The actual re-subscribe happens in the
+    // ManifestClient::sourceDescribed handler once the fresh manifest lands;
+    // here we only kick off the re-request.
+    const bool bootChanged =
+        bootId != 0 && m_childPeerBootId != 0 && bootId != m_childPeerBootId;
+    const bool catalogStillMissing = online && !m_childCatalogReceived;
+    if (!bootChanged && !catalogStillMissing) {
+        return;
+    }
+    // Guard against firing more than once while the reply is in flight: the
+    // reconcile that feeds this runs every second and bootId won't match
+    // m_childPeerBootId again until sourceDescribed updates it.
+    const qint64 now = QDateTime::currentMSecsSinceEpoch();
+    if (now - m_lastPresenceCatalogRequestMs < 3000) {
+        return;
+    }
+    m_lastPresenceCatalogRequestMs = now;
+
+    m_childCatalogReceived = false;
+    m_childCatalogAttempts = 0;
+    m_childCatalogRetryTimer->setInterval(kKeepaliveIntervalMs);
+    if (!m_childCatalogRetryTimer->isActive()) {
+        m_childCatalogRetryTimer->start();
+    }
+    m_manifestClient->requestCatalogFor(m_peerSourceId);
 }
 
 bool BtpBackend::sendChildFrame(const QByteArray& alreadyEncoded) {

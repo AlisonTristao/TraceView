@@ -77,6 +77,11 @@ struct HubPeer {
     QString mac;  // "AA:BB:CC:DD:EE:FF", display only
     quint32 lastSeenAgeMs = 0;
     bool online = false;
+    // The boot this robot is currently on, per the dongle's live view. A
+    // change here (same sourceId, new bootId) means the robot rebooted -- what
+    // MainWindow watches to make a hub child re-request its catalog and
+    // re-subscribe without the operator reconnecting it by hand.
+    quint32 bootId = 0;
 };
 
 // One connected/known device, shown as a single card in the Devices panel
@@ -166,6 +171,17 @@ struct Device {
     // the field falls back to, and it never connects.
     quint32 peerSourceId = 0;
 
+    // Live-mirrored from the dongle's hub.peers topic by MainWindow while this
+    // child is connected -- the same "session state, not configuration"
+    // treatment as `connected`/`btpVersion`: not user-editable, not persisted
+    // (deviceToJson()), and reset to the defaults below on disconnect.
+    // `peerOnline` drives the card's amber "robot offline" state
+    // (deviceLinkState() below); `peerBootId` lets MainWindow notice a robot
+    // reboot. Default true so a freshly connected child is not painted amber
+    // for the second or two before the first hub.peers sample lands.
+    bool peerOnline = true;
+    quint32 peerBootId = 0;
+
     // Password for this robot's endpoint key (channel B). Live session input,
     // not configuration -- see cachePeerPassword for whether it is persisted.
     QString peerPassword;
@@ -241,6 +257,9 @@ enum class DeviceLinkState {
     TransportOnly,  // Serial/UsbHid: link open, but no BTP session yet
     Live,           // BTP session established (Serial/UsbHid), or a hub child
                     // whose parent+peer are set (HubChannel has no handshake)
+    PeerStale,      // hub child: link to the dongle is up, but the dongle has
+                    // not heard STATUS from this robot recently (hub.peers
+                    // online=false) -- the robot is off or out of range
 };
 
 inline DeviceLinkState deviceLinkState(const Device& device) {
@@ -248,7 +267,11 @@ inline DeviceLinkState deviceLinkState(const Device& device) {
         return DeviceLinkState::Offline;
     }
     if (device.transportType == TransportType::HubChannel) {
-        return DeviceLinkState::Live;  // no ENTER/HELLO on this transport by design
+        // No ENTER/HELLO on this transport, so "connected" only means the
+        // parent session carries this child's frames. Whether the robot
+        // itself is alive comes from the dongle's hub.peers view, mirrored
+        // into peerOnline by MainWindow.
+        return device.peerOnline ? DeviceLinkState::Live : DeviceLinkState::PeerStale;
     }
     // btpVersion is set only by BtpHandshake::sessionEstablished and cleared
     // on disconnect (MainWindow::onDeviceConnectionStateChanged), so it is

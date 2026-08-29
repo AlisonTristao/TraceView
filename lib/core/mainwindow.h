@@ -17,6 +17,7 @@ class QEvent;
 class QLabel;
 class QMenu;
 class QStackedWidget;
+class QTimer;
 class QToolButton;
 class QUndoGroup;
 
@@ -176,6 +177,25 @@ private:
     // first full sample has arrived). Safe to call on every poll -- wired to
     // DevicesGrid::setHubPeerListProvider() in the constructor.
     QVector<HubPeer> hubPeersFor(const QString& parentDeviceId);
+    // Resolves + subscribes `parentDeviceId`'s hub.peers watch if it is not up
+    // yet; a no-op once it is. Returns true when the watch has a live
+    // subscription handle. Shared by hubPeersFor() (the config dialog's poll)
+    // and syncHubPeerWatches() (the always-on watch every connected child
+    // needs).
+    bool ensureHubPeerWatch(const QString& parentDeviceId);
+    // Ensures a hub.peers watch exists for the parent of every currently
+    // connected HubChannel child -- so online/offline and robot-reboot
+    // detection work without a config dialog being open. Called from the
+    // reconcile timer and on connection-state changes. Purely additive; a
+    // watch is only torn down when its parent device is removed/rebuilt
+    // (releaseHubPeerWatch()).
+    void syncHubPeerWatches();
+    // Once per second: refreshes each connected HubChannel child's
+    // Device::peerOnline/peerBootId from its parent's decoded hub.peers, and
+    // hands the change to that child's Backend::onPeerPresence() so it can
+    // re-request its catalog / re-subscribe after a robot reboot or a return
+    // from out-of-range.
+    void reconcileHubChildPresence();
     // Drops `deviceId`'s hub.peers watch and unsubscribes it. Called when the
     // device is removed or rebuilt; hubPeersFor() re-establishes the watch
     // from scratch the next time somebody asks.
@@ -370,6 +390,13 @@ private:
         HubPeerAccumulator accumulator;
     };
     QHash<QString, HubPeersWatch> m_hubPeerWatches;
+    // Drives reconcileHubChildPresence() at 1 Hz -- the dongle caps hub.peers
+    // at 2 Hz and its "online" window is 3 s, so a 1 s reconcile is plenty.
+    QTimer* m_hubPeerReconcileTimer = nullptr;
+    // Per hub child (keyed by Device::id): consecutive reconcile ticks the
+    // robot has read offline. Debounces the offline direction so a single
+    // missed STATUS does not flap the card or hand BtpBackend an on/off/on.
+    QHash<QString, int> m_hubChildOfflineTicks;
     QLabel* m_telemetryStatusLabel = nullptr;
     int m_runTabIndex = -1;
     // Read-only "device: dot" strip replacing the old single-connection port/

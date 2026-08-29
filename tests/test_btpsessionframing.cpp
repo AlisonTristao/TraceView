@@ -10,15 +10,18 @@ using traceview::BtpFrame;
 using traceview::BtpSession;
 
 // topico 25: BtpSession's two axes -- link framing (COBS stream vs.
-// pre-framed) and encode profile (which btp::TransportProfile ceiling frames
-// are encoded/decoded under) -- used to be one field, because for Serial and
+// pre-framed) and encode profile (the btp::TransportProfile ceiling OUTBOUND
+// frames are encoded under) -- used to be one field, because for Serial and
 // UsbHid they coincide. These tests pin the behavior that only exists once
 // they are separate, and the two guarantees the relay path of topico 26 will
 // depend on:
 //
 //  - a { PreFramed, EspNow } session encodes under the EspNow ceiling even
 //    though no ESP-NOW radio is anywhere near it (the encode axis really is
-//    independent of the framing axis);
+//    independent of the framing axis) -- but it DECODES inbound frames under
+//    the Serial (largest) ceiling, because a hub child's inbound path is the
+//    parent's channel A, which carries the hub's own >250-octet cache
+//    responses (plano 36);
 //  - sendRawFrame() only wraps -- the octets on the wire are byte-for-byte
 //    the octets handed in, never re-encoded, because the header's
 //    source_id/boot_id/sequence are an AEAD nonce and the CRC covers a
@@ -355,29 +358,29 @@ void TestBtpSessionFraming::frameBytesReceivedOnPreFramedPathIsTheInputItself() 
     QCOMPARE(raws.at(0).first, quint32(0x0000BEEF));
     QCOMPARE(raws.at(0).second, encoded);
 
-    // And the decode side really is bounded by THIS session's encode
-    // profile: not by a hardcoded UsbHid (which would have rejected the
-    // 250-octet frame above), and not by Serial either. The frame below is
-    // perfectly valid under the Serial profile -- 211 octets of payload, 251
-    // on the wire -- and must be rejected here for the single reason that it
-    // is over the EspNow ceiling.
+    // The RECEIVE side is bounded by Serial (the largest ceiling), NOT by this
+    // session's encode profile. A {PreFramed, EspNow} session is only ever a
+    // hub child, and a hub child never reads a frame straight off a radio: its
+    // inbound path is the parent's channel A (COBS/Serial), which also carries
+    // the hub's OWN cache-served MANIFEST_DATA / SUBSCRIBE_RESULT -- and a
+    // robot with a couple of topics is ~316 octets, well over the 250 EspNow
+    // ceiling. Bounding receive by EspNow silently dropped exactly those and
+    // left a hub child's catalog permanently empty. Encode stays EspNow-bound
+    // (espNowProfileCeilingHoldsUnderPreFramedFraming) -- that IS a radio hop.
     int rejections = 0;
     connect(&session, &BtpSession::frameRejected, &session, [&](const QString&) { ++rejections; });
-    const QByteArray serialSizedPayload(int(btp::kEspNowMaxPayloadSize) + 1, 'z');
+    const QByteArray serialSizedPayload(int(btp::kEspNowMaxPayloadSize) + 100, 'z');
     const btp::Frame serialSizedFrame{
         header,
         {reinterpret_cast<const std::uint8_t*>(serialSizedPayload.constData()),
          std::size_t(serialSizedPayload.size())}};
-    const QByteArray overCeiling = encodeFrame(serialSizedFrame, btp::TransportProfile::Serial);
-    QCOMPARE(overCeiling.size(), int(btp::kEspNowMaxFrameSize) + 1);
-    btp::DecodedFrame asSerial;
-    QCOMPARE(btp::decode(reinterpret_cast<const std::uint8_t*>(overCeiling.constData()),
-                         std::size_t(overCeiling.size()), btp::TransportProfile::Serial, &asSerial),
-             btp::Error::Ok);  // a well-formed frame, just not for this profile
+    const QByteArray overEspNow = encodeFrame(serialSizedFrame, btp::TransportProfile::Serial);
+    QVERIFY(overEspNow.size() > int(btp::kEspNowMaxFrameSize));
 
-    session.feedBytes(overCeiling);
-    QCOMPARE(raws.size(), 1);
-    QCOMPARE(rejections, 1);
+    session.feedBytes(overEspNow);
+    QCOMPARE(raws.size(), 2);                 // accepted, not dropped
+    QCOMPARE(raws.at(1).second, overEspNow);
+    QCOMPARE(rejections, 0);
 }
 
 }  // namespace

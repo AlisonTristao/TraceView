@@ -84,6 +84,19 @@ public slots:
     // device (see core/serialwidgetbridge.cpp).
     virtual void sendCommand(const QByteArray& text) = 0;
 
+    // The dongle's own hub.peers view of this backend's robot, mirrored in by
+    // MainWindow while a hub child is connected: `online` is whether the
+    // dongle has heard STATUS from that robot recently, `bootId` the boot it
+    // is on. Only a hub-child BtpBackend does anything with it -- the base is
+    // a no-op. A robot reboot (new bootId) or a return from out-of-range
+    // (offline->online) is otherwise invisible to a child, which never
+    // handshakes; BtpBackend uses this to re-request the catalog and
+    // re-assert subscriptions on its own.
+    virtual void onPeerPresence(bool online, quint32 bootId) {
+        Q_UNUSED(online);
+        Q_UNUSED(bootId);
+    }
+
 signals:
     // Bytes this backend needs written to the transport (connect to
     // SerialManager::write()).

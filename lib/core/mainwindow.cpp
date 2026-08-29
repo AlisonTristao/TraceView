@@ -23,6 +23,7 @@
 #include <QStackedWidget>
 #include <QStatusBar>
 #include <QStringList>
+#include <QTimer>
 #include <QToolButton>
 #include <QUndoGroup>
 #include <QVBoxLayout>
@@ -295,6 +296,15 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     // Added last so it lands to the right of m_telemetryStatusLabel above --
     // each addPermanentWidget() call appends further right.
     buildWorkspaceSwitcher();
+
+    // Keeps every connected hub child's online/offline (and robot-reboot
+    // detection) current off the dongle's hub.peers, independent of whether a
+    // config dialog is open -- see reconcileHubChildPresence().
+    m_hubPeerReconcileTimer = new QTimer(this);
+    m_hubPeerReconcileTimer->setInterval(1000);
+    connect(m_hubPeerReconcileTimer, &QTimer::timeout, this,
+            &MainWindow::reconcileHubChildPresence);
+    m_hubPeerReconcileTimer->start();
 }
 
 MainWindow::~MainWindow() {
@@ -1219,68 +1229,147 @@ void MainWindow::releaseHubPeerWatch(const QString& deviceId) {
     m_hubPeerWatches.remove(deviceId);
 }
 
-QVector<HubPeer> MainWindow::hubPeersFor(const QString& parentDeviceId) {
+bool MainWindow::ensureHubPeerWatch(const QString& parentDeviceId) {
     if (parentDeviceId.isEmpty()) {
-        return {};  // "Via:" not chosen yet -- nothing to ask
+        return false;
     }
     DeviceConnection* connection = m_deviceConnections.value(parentDeviceId);
     if (connection == nullptr) {
-        return {};
+        return false;
     }
 
     HubPeersWatch& watch = m_hubPeerWatches[parentDeviceId];
+    if (watch.handle != 0) {
+        return true;  // already subscribed (survives a session drop -- see
+                      // SubscriptionManager::onSessionLost)
+    }
 
     // Resolution is retried on every call until it succeeds, because the
-    // catalog it needs only exists once the manifest exchange has completed
-    // -- normally *after* the dialog this feeds has already been opened.
-    if (watch.handle == 0) {
-        // Scanned rather than looked up: DevicesGrid exposes no by-id
-        // accessor and the list is a handful of entries, same as
-        // onDeviceConnectToggleRequested() already does.
-        quint32 selfSourceId = 0;
-        const QVector<Device> devices = m_devicesGrid->devices();
-        for (const Device& device : devices) {
-            if (device.id == parentDeviceId) {
-                selfSourceId = deviceSelfSourceId(device);
-                break;
-            }
-        }
-        const QVector<CatalogTopicInfo> topics = connection->backend()->catalogTopics();
-        for (const CatalogTopicInfo& topic : topics) {
-            // Filtered by the hub's own source_id: a hub's session carries
-            // its children's frames too, so its catalog is not guaranteed to
-            // describe only itself. A robot behind the hub that happened to
-            // publish a topic also called "hub.peers" must not be mistaken
-            // for the dongle's.
-            if (topic.name != QLatin1String(kHubPeersTopicName) ||
-                (selfSourceId != 0 && topic.sourceId != selfSourceId)) {
-                continue;
-            }
-
-            QHash<quint16, QString> fieldIdToName;
-            for (const CatalogTopicField& field : topic.fields) {
-                fieldIdToName.insert(field.fieldId, field.name);
-            }
-            if (!watch.accumulator.resolve(fieldIdToName)) {
-                // A topic named hub.peers whose schema is missing one of the
-                // six arrays is not one this can decode. Left unsubscribed
-                // rather than half-read: a peer row with no source_id is
-                // exactly what must never reach Device::peerSourceId.
-                continue;
-            }
-
-            watch.sourceId = topic.sourceId;
-            watch.topicId = topic.topicId;
-            watch.handle = connection->backend()->updateSubscriber(0, topic.sourceId, topic.topicId,
-                                                                   kHubPeersRequestedRateMillihz);
+    // catalog it needs only exists once the manifest exchange has completed.
+    // Scanned rather than looked up: DevicesGrid exposes no by-id accessor and
+    // the list is a handful of entries.
+    quint32 selfSourceId = 0;
+    const QVector<Device> devices = m_devicesGrid->devices();
+    for (const Device& device : devices) {
+        if (device.id == parentDeviceId) {
+            selfSourceId = deviceSelfSourceId(device);
             break;
         }
     }
+    const QVector<CatalogTopicInfo> topics = connection->backend()->catalogTopics();
+    for (const CatalogTopicInfo& topic : topics) {
+        // Filtered by the hub's own source_id: a hub's session carries its
+        // children's frames too, so its catalog is not guaranteed to describe
+        // only itself. A robot behind the hub that happened to publish a topic
+        // also called "hub.peers" must not be mistaken for the dongle's.
+        if (topic.name != QLatin1String(kHubPeersTopicName) ||
+            (selfSourceId != 0 && topic.sourceId != selfSourceId)) {
+            continue;
+        }
 
-    if (watch.handle == 0) {
-        return {};  // manifest hasn't arrived, or carries no usable hub.peers
+        QHash<quint16, QString> fieldIdToName;
+        for (const CatalogTopicField& field : topic.fields) {
+            fieldIdToName.insert(field.fieldId, field.name);
+        }
+        if (!watch.accumulator.resolve(fieldIdToName)) {
+            // A topic named hub.peers whose schema is missing one of the six
+            // arrays is not one this can decode. Left unsubscribed rather than
+            // half-read: a peer row with no source_id is exactly what must
+            // never reach Device::peerSourceId.
+            continue;
+        }
+
+        watch.sourceId = topic.sourceId;
+        watch.topicId = topic.topicId;
+        watch.handle = connection->backend()->updateSubscriber(0, topic.sourceId, topic.topicId,
+                                                               kHubPeersRequestedRateMillihz);
+        break;
     }
-    return watch.accumulator.peers();
+    return watch.handle != 0;
+}
+
+QVector<HubPeer> MainWindow::hubPeersFor(const QString& parentDeviceId) {
+    if (!ensureHubPeerWatch(parentDeviceId)) {
+        return {};  // "Via:" not chosen, not connected, or manifest not in yet
+    }
+    return m_hubPeerWatches[parentDeviceId].accumulator.peers();
+}
+
+void MainWindow::syncHubPeerWatches() {
+    const QVector<Device> devices = m_devicesGrid->devices();
+    for (const Device& device : devices) {
+        if (device.transportType == TransportType::HubChannel && device.connected &&
+            !device.parentDeviceId.isEmpty()) {
+            ensureHubPeerWatch(device.parentDeviceId);
+        }
+    }
+}
+
+void MainWindow::reconcileHubChildPresence() {
+    // How many consecutive 1 Hz ticks a robot must read offline before the
+    // card actually goes amber. The dongle already needs ~3 s of silence to
+    // flip its own `online` flag, so with this the card only turns amber
+    // after ~8 s of a robot genuinely not being heard -- a brief radio blip
+    // or the robot stalled for a beat (a busy control loop, an I2C timeout)
+    // must not flap the card or make BtpBackend see a spurious reconnect.
+    constexpr int kOfflineTicksToConfirm = 5;
+
+    syncHubPeerWatches();
+
+    bool anyChanged = false;
+    const QVector<Device> devices = m_devicesGrid->devices();
+    for (const Device& device : devices) {
+        if (device.transportType != TransportType::HubChannel || !device.connected ||
+            device.parentDeviceId.isEmpty() || device.peerSourceId == 0) {
+            continue;
+        }
+        const auto watchIt = m_hubPeerWatches.constFind(device.parentDeviceId);
+        if (watchIt == m_hubPeerWatches.constEnd() || watchIt->handle == 0) {
+            continue;  // parent's hub.peers not resolved yet -- leave the
+                       // optimistic peerOnline=true default alone for now
+        }
+        const QVector<HubPeer> peers = watchIt->accumulator.peers();
+        if (peers.isEmpty()) {
+            continue;  // no sample decoded yet -- unknown, not "offline"
+        }
+
+        // The dongle keeps a heard robot in hub.peers forever (its row never
+        // ages out), so "not in the list" only happens for a robot it has
+        // never heard or evicted -- treated the same as online=false.
+        bool rawOnline = false;
+        quint32 bootId = device.peerBootId;
+        for (const HubPeer& peer : peers) {
+            if (peer.sourceId == device.peerSourceId) {
+                rawOnline = peer.online;
+                bootId = peer.bootId;
+                break;
+            }
+        }
+
+        // Online is believed immediately; offline only after it has held.
+        int& offTicks = m_hubChildOfflineTicks[device.id];
+        offTicks = rawOnline ? 0 : (offTicks + 1);
+        const bool online = rawOnline || offTicks < kOfflineTicksToConfirm;
+
+        if (online == device.peerOnline && bootId == device.peerBootId) {
+            continue;
+        }
+        if (online != device.peerOnline) {
+            const QString name = device.name.isEmpty() ? tr("(unnamed)") : device.name;
+            statusBar()->showMessage(online ? tr("%1: robot is responding again").arg(name)
+                                            : tr("%1: robot stopped responding (hub link still up)")
+                                                  .arg(name),
+                                     5000);
+        }
+        m_devicesGrid->setDevicePeerState(device.id, online, bootId);
+        if (DeviceConnection* c = m_deviceConnections.value(device.id)) {
+            c->backend()->onPeerPresence(online, bootId);
+        }
+        anyChanged = true;
+    }
+    if (anyChanged) {
+        refreshDeviceStatusLabel();
+    }
 }
 
 void MainWindow::onHubPeerFieldSample(const QString& deviceId, const TelemetryFieldBinding& binding,
@@ -1459,6 +1548,7 @@ void MainWindow::onDeviceRemoved(const QString& id) {
     // Before take(): releaseHubPeerWatch() unsubscribes through the
     // connection, so it has to still be reachable in the hash.
     releaseHubPeerWatch(id);
+    m_hubChildOfflineTicks.remove(id);
     DeviceConnection* connection = m_deviceConnections.take(id);
     if (!connection) {
         return;
@@ -1547,6 +1637,15 @@ void MainWindow::onDeviceConnectionStateChanged(const QString& deviceId, bool co
         // deviceIdentified() (see onDeviceAdded()) once its own handshake
         // completes, but nothing should show a stale version/id meanwhile.
         m_devicesGrid->setDeviceIdentity(deviceId, QString(), QString());
+        // Same for the hub.peers-derived presence: back to the optimistic
+        // default so a reconnect is not painted amber on stale data.
+        m_devicesGrid->setDevicePeerState(deviceId, true, 0);
+        m_hubChildOfflineTicks.remove(deviceId);
+    } else {
+        // A hub child coming up needs its parent's hub.peers watch, and the
+        // reconcile that follows, promptly -- not on the next 1 s tick.
+        syncHubPeerWatches();
+        reconcileHubChildPresence();
     }
 }
 

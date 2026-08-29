@@ -120,6 +120,7 @@ void TestHubPeerAccumulator::fullSampleDecodesEveryPeerField() {
 
     QCOMPARE(peers.at(0).channel, quint8(0));
     QCOMPARE(peers.at(0).sourceId, 0x0A0A0A0Au);
+    QCOMPARE(peers.at(0).bootId, 7u);
     QCOMPARE(peers.at(0).lastSeenAgeMs, 0u);
     QCOMPARE(peers.at(0).online, true);
     // Six octets per peer out of one flat array, uppercase and colon-joined
@@ -128,6 +129,7 @@ void TestHubPeerAccumulator::fullSampleDecodesEveryPeerField() {
 
     QCOMPARE(peers.at(1).channel, quint8(1));
     QCOMPARE(peers.at(1).sourceId, 0x0B0B0B0Bu);
+    QCOMPARE(peers.at(1).bootId, 9u);
     QCOMPARE(peers.at(1).lastSeenAgeMs, 12000u);
     QCOMPARE(peers.at(1).online, false);
     QCOMPARE(peers.at(1).mac, QStringLiteral("01:02:03:04:05:06"));

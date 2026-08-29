@@ -153,6 +153,7 @@ public slots:
     void onTransportConnectionChanged(bool connected) override;
     void sendTerminalIn(const QByteArray& bytes) override;
     void sendCommand(const QByteArray& text) override;
+    void onPeerPresence(bool online, quint32 bootId) override;
 
 private:
     void onTerminalFrameReceived(const traceview::BtpFrame& frame);
@@ -229,6 +230,31 @@ private:
     // link comes back up (onTransportConnectionChanged) so a genuinely new
     // problem is reported again.
     bool m_unsealedDowngradeReported = false;
+
+    // Hub child only. requestCatalogFor() is one-shot on connect, but the
+    // dongle answers from a cache that is empty until it has itself primed the
+    // robot's manifest -- so a child that connects first (common right after a
+    // dongle/robot reboot) gets one NOT_FOUND and would sit catalog-less
+    // forever. This re-asks on a slow tick until sourceDescribed() fires for
+    // m_peerSourceId; stopped on that, and on disconnect.
+    QTimer* m_childCatalogRetryTimer = nullptr;
+    bool m_childCatalogReceived = false;
+
+    // Hub child only, fed by onPeerPresence() from MainWindow's hub.peers
+    // reconcile. m_peerOnline starts true so a child is not painted amber for
+    // the second before the first hub.peers sample; m_childPeerBootId is the
+    // boot the last applied MANIFEST_DATA described (0 = none yet) and is what
+    // a reboot is detected against -- see the ManifestClient::sourceDescribed
+    // handler.
+    bool m_peerOnline = true;
+    quint32 m_childPeerBootId = 0;
+    // Rate-limits the boot-change-triggered catalog re-request in
+    // onPeerPresence(), which is fed by a 1 Hz reconcile.
+    qint64 m_lastPresenceCatalogRequestMs = 0;
+    // MANIFEST_REQUESTs sent since the last time the child's catalog arrived,
+    // for the "still waiting" vs "catalog is not coming" distinction the
+    // status bar draws while the robot is online.
+    int m_childCatalogAttempts = 0;
 };
 
 }  // namespace traceview

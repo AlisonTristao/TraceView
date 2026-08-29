@@ -130,6 +130,16 @@ public slots:
     // the session), consumers are not -- reconnecting re-subscribes them.
     void onSessionLost();
 
+    // One source rebooted (new boot_id) while the session/transport stayed up
+    // -- what a hub child sees when its robot power-cycles. Every grant this
+    // client held for that source is void (the robot lost its per-boot
+    // subscription state), so drop them and re-SUBSCRIBE the still-live
+    // consumers. Scoped to one source: unlike onSessionEstablished(), no other
+    // source is touched. TelemetryCatalog::sourceBootId(sourceId) must already
+    // hold the NEW boot -- ManifestClient applies the MANIFEST_DATA before
+    // BtpBackend calls this.
+    void onPeerRebooted(quint32 sourceId);
+
     // Wired to ManifestClient::catalogUpdated: SUBSCRIBE needs a non-zero
     // target_boot_id (section 4), which only MANIFEST_DATA supplies, so a
     // subscription requested before its source's manifest arrived is held

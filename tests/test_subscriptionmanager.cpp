@@ -120,6 +120,7 @@ private slots:
     void rejectedSubscribeIsReportedAndLeavesNoGrant();
     void subscribeWaitsForTheSourceBootIdFromTheManifest();
     void reconnectResubscribesEveryLiveConsumer();
+    void peerRebootResubscribesOnlyThatSourceAgainstTheNewBoot();
     void leaseIsRenewedWhileAConsumerExists();
     void statusVersion2FeedsPerTopicMetrics();
 };
@@ -314,6 +315,56 @@ void TestSubscriptionManager::reconnectResubscribesEveryLiveConsumer() {
     QCOMPARE(topics, QVector<quint16>({kTopicId, kOtherTopicId}));
     QCOMPARE(h.sent.at(2).objectId, kControlSubscribe);
     QCOMPARE(h.sent.at(3).objectId, kControlSubscribe);
+}
+
+void TestSubscriptionManager::peerRebootResubscribesOnlyThatSourceAgainstTheNewBoot() {
+    constexpr quint32 kOtherSourceId = 0x41770972;
+    constexpr quint32 kNewBootId = 0x00FEDCBA;
+
+    Harness h;
+    h.catalog.registerSourceBootId(kOtherSourceId, kBootId);
+    h.manager.addSubscriber(kSourceId, kTopicId, 10000);
+    h.manager.addSubscriber(kOtherSourceId, kTopicId, 4000);
+    h.grantSubscribe(h.sent.at(0), /*subscriptionId=*/71, /*effectiveRateMillihz=*/10000);
+    h.grantSubscribe(h.sent.at(1), /*subscriptionId=*/72, /*effectiveRateMillihz=*/4000);
+    QCOMPARE(h.sent.size(), 2);
+
+    // The robot power-cycled. ManifestClient has already recorded its new boot
+    // in the catalog before BtpBackend calls this.
+    h.catalog.registerSourceBootId(kSourceId, kNewBootId);
+    h.manager.onPeerRebooted(kSourceId);
+
+    // Exactly one new SUBSCRIBE, for the rebooted source only, carrying the
+    // new boot. The other source's grant is untouched.
+    QCOMPARE(h.sent.size(), 3);
+    const BtpFrame& resub = h.sent.at(2);
+    QCOMPARE(resub.objectId, kControlSubscribe);
+    QCOMPARE(readLe32(resub.payload, 0), kSourceId);
+    QCOMPARE(readLe32(resub.payload, 4), kNewBootId);
+    QCOMPARE(readLe16(resub.payload, 8), kTopicId);
+
+    for (const TopicSubscriptionState& s : h.manager.subscriptions()) {
+        if (s.sourceId == kOtherSourceId) {
+            QCOMPARE(s.subscriptionId, quint32(72));  // never disturbed
+        } else {
+            QCOMPARE(s.subscriptionId, quint32(0));  // void until the new grant lands
+        }
+    }
+
+    // A late SUBSCRIBE_RESULT for the pre-reboot request must not be mistaken
+    // for the reply to the re-subscribe.
+    h.grantSubscribe(h.sent.at(0), /*subscriptionId=*/71, /*effectiveRateMillihz=*/10000);
+    for (const TopicSubscriptionState& s : h.manager.subscriptions()) {
+        if (s.sourceId == kSourceId) {
+            QCOMPARE(s.subscriptionId, quint32(0));  // still waiting on the new grant
+        }
+    }
+    h.grantSubscribe(resub, /*subscriptionId=*/73, /*effectiveRateMillihz=*/10000);
+    for (const TopicSubscriptionState& s : h.manager.subscriptions()) {
+        if (s.sourceId == kSourceId) {
+            QCOMPARE(s.subscriptionId, quint32(73));
+        }
+    }
 }
 
 void TestSubscriptionManager::leaseIsRenewedWhileAConsumerExists() {

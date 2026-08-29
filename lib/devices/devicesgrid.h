@@ -76,6 +76,13 @@ public:
     // Called with empty strings when the connection drops, so a stale
     // identity from a previous session never lingers in the UI.
     void setDeviceIdentity(const QString& id, const QString& btpVersion, const QString& btpId);
+    // Mirrors the dongle's hub.peers view of a hub child's robot into
+    // device.peerOnline/peerBootId -- same non-undoable, not-persisted
+    // treatment as setDeviceConnected()/setDeviceIdentity(). Unlike those it
+    // does NOT emit deviceUpdated(): it must not trigger MainWindow's
+    // onDeviceUpdated() (which re-applies the transport target and reattaches
+    // hub children) once a second. Refreshes the card in place.
+    void setDevicePeerState(const QString& id, bool peerOnline, quint32 peerBootId);
     // Tells this device's config dialog, if it's currently open, to re-pull
     // its catalog list from m_topicCatalogProvider. MANIFEST_DATA lands
     // asynchronously after the handshake that fires deviceIdentified() (see

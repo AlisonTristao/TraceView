@@ -7,6 +7,47 @@ release flow.
 
 ## [Unreleased]
 
+### Added
+
+- **Hub children recover on their own.** A device behind a hub never
+  handshakes, so a robot rebooting used to leave its card reading
+  "connected" while its charts silently went dead until the operator
+  reconnected it by hand. Now, while at least one hub child is connected,
+  TraceView subscribes to that hub's `hub.peers` topic and reconciles it
+  against every child once a second:
+  - a robot that stays silent for ~8 s (its `hub.peers` `online` flag off,
+    debounced so a busy control loop or one missed `STATUS` doesn't flap
+    the card) paints the card amber — "robot not responding" — without
+    touching the link to the hub itself;
+  - a **boot_id change** (the robot power-cycled, so its per-boot
+    subscription state is gone) re-requests that robot's catalog, and once
+    the fresh `MANIFEST_DATA` lands, every subscription for it is re-sent
+    against the new boot. A robot that merely dropped out of range and came
+    back on the *same* boot needs nothing — its catalog is still valid and
+    its subscriptions self-heal on the next lease renewal, so this
+    deliberately does **not** re-request on every online blip (doing so
+    turned a flaky link into a `MANIFEST_REQUEST` storm that could stall
+    the hub's serial link).
+
+  `BtpBackend::onPeerPresence()` is the new hook MainWindow feeds;
+  `SubscriptionManager::onPeerRebooted()` is the per-source re-subscribe.
+  A `Device` grew live-mirrored `peerOnline`/`peerBootId` fields (not
+  persisted, same as `connected`), and `DeviceLinkState` a `PeerStale`
+  state. The child's catalog retry timer no longer stops once the catalog
+  arrives — it slows to a 20 s backstop. See the new "Talking to TraceView"
+  section in the README for the device-side contract this assumes.
+
+- **A hub child gets its catalog without a robot reset.** Two gaps closed
+  after bench testing: `onPeerPresence()` now also re-arms the fast catalog
+  retry when the robot is reported online but *no* catalog has ever
+  arrived (not only on a boot_id change — which can't be detected until a
+  first catalog sets the baseline), and while no catalog has arrived the
+  retry backs off to 8 s rather than the 20 s reboot-backstop. Separately,
+  the console/hub backend re-runs the dongle's full enumeration on its
+  keepalive tick while its own catalog is still empty — the single
+  enumeration on session-established can be lost, and without the dongle's
+  `hub.peers` schema a child's presence and "Source ID" list never resolve.
+
 ### Internal
 
 - `test_manifestclient` covers the last piece of pure protocol logic that

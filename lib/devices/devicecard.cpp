@@ -210,6 +210,8 @@ void DeviceCard::paintEvent(QPaintEvent*) {
     // Name the amber state in words, not just a dot colour (topico 35 D.2).
     if (linkState == DeviceLinkState::TransportOnly) {
         reportedLine = tr("port open, waiting for BTP session");
+    } else if (linkState == DeviceLinkState::PeerStale) {
+        reportedLine = tr("hub link up, robot not responding (no STATUS)");
     }
     const int reportedHeight = reportedLine.isEmpty() ? 0 : kBodyLineHeight + 4;
 

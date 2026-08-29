@@ -52,6 +52,76 @@ quint32 readLe32(const std::uint8_t* p) {
 }
 
 const quint32 kRobot = 0x0A0A0A0Au;
+const quint32 kRobotBoot = 0x00C0FFEEu;
+
+void le16(QByteArray& o, quint16 v) { o.append(char(v)); o.append(char(v >> 8)); }
+void le32(QByteArray& o, quint32 v) {
+    o.append(char(v)); o.append(char(v >> 8)); o.append(char(v >> 16)); o.append(char(v >> 24));
+}
+void f64(QByteArray& o, double v) { char b[8]; std::memcpy(b, &v, 8); o.append(b, 8); }
+void utf8(QByteArray& o, const QString& s) { const QByteArray b = s.toUtf8(); le16(o, quint16(b.size())); o.append(b); }
+
+QByteArray fieldRecord(quint16 id, const QString& name) {
+    QByteArray body;
+    le16(body, id); le16(body, id); body.append(char(0x09)); body.append(char(0));
+    le16(body, 1); le16(body, 0); f64(body, 1.0); f64(body, 0.0); le16(body, 0);
+    utf8(body, name); utf8(body, QStringLiteral("u")); utf8(body, QString());
+    QByteArray rec; le32(rec, quint32(body.size())); rec.append(body); return rec;
+}
+QByteArray topicRecord(quint16 id, quint16 ver, const QString& name) {
+    QByteArray body;
+    le16(body, id); le16(body, ver); body.append(char(0x05)); body.append(char(0));
+    le16(body, 1); le32(body, 1000); utf8(body, name); utf8(body, QString());
+    body.append(fieldRecord(1, QStringLiteral("value")));
+    QByteArray rec; le32(rec, quint32(body.size())); rec.append(body); return rec;
+}
+
+// A robot MANIFEST_DATA payload matching bally_OS ManifestResponder's layout.
+QByteArray robotManifestPayload(quint32 configRevision, const QVector<QByteArray>& topics) {
+    QByteArray p;
+    p.append(12, char(0));  // request-reference
+    p.append(char(0));      // status SUCCESS
+    p.append(char(0x02));   // flags CATALOG_COMPLETE
+    le16(p, 0);             // errorCode
+    le16(p, 1);             // formatVersion
+    le16(p, 0);             // reserved
+    le32(p, configRevision);
+    p.append(16, char(0));  // uuid
+    le32(p, kRobot);
+    le32(p, kRobotBoot);
+    p.append(char(1));      // role ROBOT
+    p.append(char(1));      // source flags: online
+    le16(p, 0); le16(p, 1); // catalogIndex, catalogCount
+    le16(p, quint16(topics.size()));
+    le16(p, 0);             // actionCount
+    utf8(p, QStringLiteral("bally_software"));
+    for (const QByteArray& t : topics) p.append(t);
+    return p;
+}
+
+// The pre-framed BTP frame octets carrying `payload` as an unsealed CONTROL
+// message with `objectId`, from `sourceId`.
+QByteArray controlFrame(quint16 objectId, quint32 sourceId, const QByteArray& payload) {
+    btp::Header header{};
+    header.type = btp::MessageType::Control;
+    header.flags = 0;
+    header.source_id = sourceId;
+    header.boot_id = kRobotBoot;
+    header.sequence = 1;
+    header.timestamp_us = 0;
+    header.object_id = objectId;
+    header.fragment_index = 0;
+    header.fragment_count = 1;
+    const btp::Frame frame{header,
+                           {reinterpret_cast<const std::uint8_t*>(payload.constData()),
+                            std::size_t(payload.size())}};
+    std::vector<std::uint8_t> out(btp::max_frame_size(btp::TransportProfile::Serial));
+    std::size_t n = 0;
+    if (btp::encode(frame, btp::TransportProfile::Serial, out.data(), out.size(), &n) != btp::Error::Ok) {
+        return QByteArray();
+    }
+    return QByteArray(reinterpret_cast<const char*>(out.data()), int(n));
+}
 
 }  // namespace
 
@@ -65,7 +135,44 @@ private slots:
     void largeTerminalPasteIsSplitIntoAcceptableFrames();
     void anOrdinarySerialBackendStillHandshakes();
     void anUnconfiguredChildAsksNobodyAnything();
+    void hubCacheMANIFESTDATAOverEspNowCeilingStillFillsTheChildsCatalog();
 };
+
+// plano 36: the catalog of a keyed hub child stayed empty because of three
+// bugs in series -- the dongle stamped its cache response with its own
+// source_id (never routed to the child), the child dropped it as an unsealed
+// downgrade, and the child's BtpSession decoded it under the 250-octet EspNow
+// ceiling even though a real 2-topic manifest is ~316. This exercises the
+// TraceView half: an unsealed CONTROL/MANIFEST_DATA from the robot's
+// source_id, larger than kEspNowMaxFrameSize, must reach the catalog AND
+// surface the robot's identity (a child has no HELLO_RESULT).
+void TestHubEndpoint::hubCacheMANIFESTDATAOverEspNowCeilingStillFillsTheChildsCatalog() {
+    const quint32 childId = hubChannelSourceId(QStringLiteral("child-catalog"));
+    BtpBackend backend(BtpSession::Framing::PreFramed, btp::TransportProfile::EspNow);
+    backend.setHubEndpoint(childId, kRobot, QByteArray(16, 'k'));  // keyed channel
+
+    QSignalSpy catalogChanged(&backend, &Backend::catalogChanged);
+    QSignalSpy identified(&backend, &Backend::deviceIdentified);
+    QSignalSpy status(&backend, &Backend::statusMessage);
+
+    const QByteArray payload = robotManifestPayload(
+        5, {topicRecord(0x0001, 1, QStringLiteral("protocol.test")),
+            topicRecord(0x0002, 3, QStringLiteral("robot.state"))});
+    const QByteArray frame = controlFrame(/*MANIFEST_DATA=*/0x0004, kRobot, payload);
+    QVERIFY(frame.size() > int(btp::kEspNowMaxFrameSize));  // the bug-3 condition
+
+    backend.feedBytes(frame);
+
+    QCOMPARE(catalogChanged.count(), 1);
+    QVERIFY2(!backend.catalogTopics().isEmpty(), "the child's catalog must be populated");
+    QCOMPARE(identified.count(), 1);
+    QCOMPARE(identified.at(0).at(1).toString(),
+             QStringLiteral("0x%1").arg(kRobot, 8, 16, QChar('0')).toUpper());
+    for (const QList<QVariant>& call : status) {
+        QVERIFY2(!call.at(0).toString().contains(QStringLiteral("nsealed")),
+                 "the hub's own plaintext MANIFEST_DATA must not read as a downgrade");
+    }
+}
 
 // A paste bigger than the dongle's negotiated logical payload (2048 today)
 // would, as one frame, be silently truncated into the server-side pty -- the

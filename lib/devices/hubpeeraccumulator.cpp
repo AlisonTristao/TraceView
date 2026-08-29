@@ -108,13 +108,14 @@ QVector<HubPeer> HubPeerAccumulator::peers() const {
         HubPeer peer;
         peer.channel = quint8(m_columns.at(kChannel).at(i));
         peer.sourceId = quint32(m_columns.at(kSourceId).at(i));
+        peer.bootId = quint32(m_columns.at(kBootId).at(i));
         peer.lastSeenAgeMs = quint32(m_columns.at(kLastSeenMs).at(i));
         peer.online = m_columns.at(kOnline).at(i) != 0.0;
         peer.mac = formatMac(m_columns.at(kMac), i);
-        // boot_id is decoded (the dongle publishes it, and skipping the
-        // column would misalign every slot after it) but has no HubPeer
-        // field: nothing in the picker tells two peers apart by it, and
-        // Device::peerSourceId is deliberately boot-independent.
+        // boot_id is surfaced (not just decoded to keep column alignment):
+        // MainWindow compares it against Device::peerBootId to notice a robot
+        // reboot. It is still never persisted and never an address --
+        // Device::peerSourceId stays the identity.
         peers.append(peer);
     }
     return peers;

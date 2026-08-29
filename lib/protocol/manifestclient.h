@@ -54,6 +54,14 @@ public slots:
     // catalog to give and a child device only ever wants that one.
     void requestCatalogFor(quint32 sourceId);
 
+    // A full target=0 enumeration, unconditionally (no revision-skip guard --
+    // that is onSessionEstablished()'s job). BtpBackend calls this from its
+    // keepalive tick while the dongle's catalog is still empty, because the
+    // single enumeration on sessionEstablished can be lost and nothing else
+    // re-asks -- and without the dongle's hub.peers schema, MainWindow can
+    // never resolve a hub child's presence or its peer list.
+    void requestFullCatalog();
+
     // Wired to TelemetryFieldRouter::unknownSchema -- PASSO 9: a sample
     // whose (source, topic, schema_version) is not in the catalog triggers a
     // targeted re-request for just that source (carrying whatever revision
@@ -72,12 +80,17 @@ signals:
     // a target_boot_id.
     void catalogUpdated();
 
+    // Emitted whenever a SUCCESS MANIFEST_DATA (full or NOT_MODIFIED) for a
+    // specific source was applied. A hub child has no HELLO_RESULT, so this is
+    // the only place its card's "reported by device" identity can come from --
+    // BtpBackend forwards it as deviceIdentified() when describedSourceId is
+    // its own peer.
+    void sourceDescribed(quint32 sourceId, quint32 bootId, quint32 configRevision);
+
 private slots:
     void onControlFrameReceived(const traceview::BtpFrame& frame);
 
 private:
-    void requestFullCatalog();
-
     void sendRequest(quint32 targetSourceId, quint32 targetBootId, quint32 knownRevision);
 
     BtpSession* m_session;

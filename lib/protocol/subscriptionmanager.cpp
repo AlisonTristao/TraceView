@@ -520,6 +520,52 @@ void SubscriptionManager::onSessionLost() {
     emit subscriptionsChanged();
 }
 
+void SubscriptionManager::onPeerRebooted(quint32 sourceId) {
+    if (sourceId == 0) {
+        return;
+    }
+
+    QList<quint64> affected;
+    for (auto it = m_topics.begin(); it != m_topics.end(); ++it) {
+        if (it.value().sourceId != sourceId) {
+            continue;
+        }
+        TopicState& topic = it.value();
+        topic.subscriptionId = 0;
+        topic.effectiveRateMillihz = 0;
+        topic.grantedLeaseMs = 0;
+        topic.sentRateMillihz = 0;
+        topic.inFlightSequence = 0;
+        topic.renewAtMs = 0;
+        topic.targetBootId = 0;
+        topic.deferredForBootId = false;
+        affected.append(it.key());
+    }
+    if (affected.isEmpty()) {
+        return;
+    }
+
+    // Any SUBSCRIBE/UNSUBSCRIBE still in flight for those topics carried the
+    // old boot's identity and can never be correlated now -- forget them so a
+    // late SUBSCRIBE_RESULT is ignored rather than mistaken for the reply to
+    // the request syncTopic() is about to send.
+    for (const quint32 seq : m_pendingSubscribes.keys()) {
+        if (affected.contains(m_pendingSubscribes.value(seq))) {
+            m_pendingSubscribes.remove(seq);
+        }
+    }
+    for (const quint32 seq : m_pendingUnsubscribes.keys()) {
+        if (affected.contains(m_pendingUnsubscribes.value(seq))) {
+            m_pendingUnsubscribes.remove(seq);
+        }
+    }
+
+    for (const quint64 key : affected) {
+        syncTopic(key);  // re-SUBSCRIBE against the new boot (from the catalog)
+    }
+    emit subscriptionsChanged();
+}
+
 void SubscriptionManager::onCatalogUpdated() {
     const QList<quint64> keys = m_topics.keys();
     for (quint64 key : keys) {

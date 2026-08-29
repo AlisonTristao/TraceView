@@ -42,12 +42,18 @@ void TestDevice::linkStateSeparatesPortOpenFromSessionLive() {
     d.btpVersion = "1";
     QCOMPARE(deviceLinkState(d), DeviceLinkState::Live);
 
-    // A hub child never handshakes, so "connected" alone is as live as it gets.
+    // A hub child never handshakes: "connected" + the dongle hearing STATUS
+    // from its robot (peerOnline, the default) is as live as it gets.
     Device child;
     child.transportType = TransportType::HubChannel;
     child.connected = true;
     child.btpVersion.clear();
     QCOMPARE(deviceLinkState(child), DeviceLinkState::Live);
+    // The dongle stopped hearing the robot (hub.peers online=false): link to
+    // the dongle is fine, the robot is off/out of range -- its own amber state.
+    child.peerOnline = false;
+    QCOMPARE(deviceLinkState(child), DeviceLinkState::PeerStale);
+    child.peerOnline = true;
     child.connected = false;
     QCOMPARE(deviceLinkState(child), DeviceLinkState::Offline);
 }
