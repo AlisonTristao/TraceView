@@ -3,17 +3,29 @@
     <clipPath id="tile">
       <rect width="256" height="256" rx="56.32"/>
     </clipPath>
-    <radialGradient id="glow" cx="80%" cy="82%" r="65%">
-      <stop offset="0%" stop-color="#3D8BFF" stop-opacity="0.55"/>
-      <stop offset="100%" stop-color="#3D8BFF" stop-opacity="0"/>
-    </radialGradient>
   </defs>
-  <g clip-path="url(#tile)">
-    <rect width="256" height="256" fill="#0A0F1E"/>
-    <rect width="256" height="256" fill="url(#glow)"/>
+  <rect width="256" height="256" rx="56.32" fill="#0A0F1E"/>
+  <g clip-path="url(#tile)" fill="none" stroke-width="17" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M164 124 C180 124 194 76 216 76" stroke="#3D8BFF"/>
+    <path d="M164 124 C180 124 194 172 216 172" stroke="#3D8BFF"/>
+    <path d="M32 124 H68
+             C82 124 84 111 91 86
+             C97 63 108 64 114 90
+             C121 121 132 176 140 166
+             C146 159 149 128 164 124
+             H216"
+          stroke="#F5F7FA"/>
   </g>
-  <path d="M 76.8 81.92 L 143.36 133.12 L 76.8 184.32"
-        fill="none" stroke="#F5F7FA" stroke-width="21.76" stroke-linecap="round" stroke-linejoin="round"/>
-  <line x1="158.72" y1="184.32" x2="209.92" y2="184.32"
-        stroke="#F5F7FA" stroke-width="21.76" stroke-linecap="round"/>
+  <g fill="#F5F7FA">
+    <circle cx="32" cy="124" r="15"/>
+    <circle cx="216" cy="76" r="15"/>
+    <circle cx="216" cy="124" r="15"/>
+    <circle cx="216" cy="172" r="15"/>
+  </g>
+  <g fill="#3D8BFF">
+    <circle cx="32" cy="124" r="8.5"/>
+    <circle cx="216" cy="76" r="8.5"/>
+    <circle cx="216" cy="124" r="8.5"/>
+    <circle cx="216" cy="172" r="8.5"/>
+  </g>
 </svg>
