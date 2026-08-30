@@ -131,7 +131,8 @@ class TestHubEndpoint : public QObject {
 private slots:
     void childIdentityIsStableAcrossRuns();
     void childAsksItsOwnRobotForAManifestNotAnEnumeration();
-    void childTerminalInputCarriesTheChildsOwnStableIdentity();
+    void childTerminalInputIsSealedAndCarriesTheChildsOwnStableIdentity();
+    void childTerminalInputWithoutAKeyIsNotSent();
     void largeTerminalPasteIsSplitIntoAcceptableFrames();
     void anOrdinarySerialBackendStillHandshakes();
     void anUnconfiguredChildAsksNobodyAnything();
@@ -256,11 +257,13 @@ void TestHubEndpoint::childAsksItsOwnRobotForAManifestNotAnEnumeration() {
 // TERMINAL_IN has no target field anywhere in its payload, which is precisely
 // why the hub needs a bind table: the only thing identifying where it should
 // go is the child's own source_id in the header. So that field has to be the
-// stable identity, not the random console one.
-void TestHubEndpoint::childTerminalInputCarriesTheChildsOwnStableIdentity() {
+// stable identity, not the random console one. And, since topico 19bis, a
+// child's terminal talks end to end with the robot: TERMINAL_IN is sealed with
+// the channel-B key exactly like a COMMAND_REQUEST.
+void TestHubEndpoint::childTerminalInputIsSealedAndCarriesTheChildsOwnStableIdentity() {
     const quint32 childId = hubChannelSourceId(QStringLiteral("child-2"));
     BtpBackend backend(BtpSession::Framing::PreFramed, btp::TransportProfile::EspNow);
-    backend.setHubEndpoint(childId, kRobot, QByteArray());
+    backend.setHubEndpoint(childId, kRobot, QByteArray(16, 'k'));  // keyed channel
 
     QSignalSpy written(&backend, &Backend::bytesToWrite);
     backend.sendTerminalIn(QByteArrayLiteral("status\n"));
@@ -274,6 +277,26 @@ void TestHubEndpoint::childTerminalInputCarriesTheChildsOwnStableIdentity() {
     QCOMPARE(int(decoded.header.type), int(btp::MessageType::Terminal));
     QCOMPARE(decoded.header.object_id, quint16(0x0001));
     QCOMPARE(decoded.header.source_id, childId);
+    // Sealed: ENCRYPTED flag set, AES-GCM, and the payload grew by the tag.
+    QVERIFY((decoded.header.flags & btp::kFlagEncrypted) != 0);
+    QCOMPARE(int(btp::cipher_id(decoded.header.flags)), int(btp::CipherId::AesGcm));
+    QCOMPARE(int(decoded.payload.size), int(std::strlen("status\n")) + 16);
+}
+
+// A child with no channel-B key configured yet must not put terminal
+// keystrokes on the wire in the clear -- same fail-closed rule CommandClient
+// and SubscriptionManager already follow for their sealed traffic.
+void TestHubEndpoint::childTerminalInputWithoutAKeyIsNotSent() {
+    const quint32 childId = hubChannelSourceId(QStringLiteral("child-nokey"));
+    BtpBackend backend(BtpSession::Framing::PreFramed, btp::TransportProfile::EspNow);
+    backend.setHubEndpoint(childId, kRobot, QByteArray());  // no key
+
+    QSignalSpy written(&backend, &Backend::bytesToWrite);
+    QSignalSpy status(&backend, &Backend::statusMessage);
+    backend.sendTerminalIn(QByteArrayLiteral("status\n"));
+
+    QCOMPARE(written.count(), 0);
+    QVERIFY(status.count() >= 1);
 }
 
 // The regression that matters most: an ordinary serial device is untouched. It

@@ -756,12 +756,23 @@ void BtpBackend::sendTerminalIn(const QByteArray& bytes) {
         return;
     }
 
-    // Split into chunks the dongle accepts as one logical message (topico 35
-    // D.1). Its serial session caps a payload at what HELLO_RESULT negotiated
-    // -- 2048 today, and it does NOT reassemble serial fragments -- so a
-    // single oversized TERMINAL_IN frame (a big paste) is silently truncated
-    // into the server-side pty. 1 KB stays well under any plausible negotiated
-    // limit; keystrokes and normal pastes are one chunk.
+    // On a hub child (setHubEndpoint()), the terminal talks end to end with a
+    // robot: TERMINAL_IN is sealed with the channel-B key exactly like a
+    // COMMAND_REQUEST, and the dongle relays it verbatim to the robot's
+    // TerminalResponder. On the console backend it stays unsealed -- that is
+    // the dongle's own ShellLineEditor at the other end.
+    const bool sealed = (m_peerSourceId != 0);
+    if (sealed && m_endpointKey.isEmpty()) {
+        emit statusMessage(tr("terminal input not sent: endpoint key not configured"), 5000,
+                           StatusSeverity::Warning);
+        return;
+    }
+
+    // Split into chunks that stay one logical message at the other end. The
+    // dongle's serial session caps a payload at what HELLO_RESULT negotiated
+    // (2048) and does not reassemble serial fragments; the robot path is
+    // bounded by RxRouter reassembly. 1 KB is well under both; keystrokes and
+    // normal pastes are one chunk.
     constexpr int kMaxTerminalChunk = 1024;
     for (int offset = 0; offset < bytes.size(); offset += kMaxTerminalChunk) {
         const QByteArray chunk = bytes.mid(offset, kMaxTerminalChunk);
@@ -771,15 +782,30 @@ void BtpBackend::sendTerminalIn(const QByteArray& bytes) {
         header.flags = 0;
         header.source_id = m_terminalSourceId;
         header.boot_id = m_terminalBootId;
-        header.sequence = ++m_sessionSequence;
+        // A sealed TERMINAL_IN shares the one endpoint sequence space with
+        // SUBSCRIBE/COMMAND_REQUEST (they all speak as m_terminalSourceId/
+        // m_terminalBootId once setHubEndpoint() runs) -- reusing a value
+        // across two of them would reuse an AEAD nonce (encryption.md 5.1).
+        // The unsealed console path keeps its own m_sessionSequence.
+        header.sequence = sealed ? nextEndpointSequence() : ++m_sessionSequence;
         header.timestamp_us = static_cast<quint64>(QDateTime::currentMSecsSinceEpoch()) * 1000ULL;
         header.object_id = kTerminalInObjectId;
         header.fragment_index = 0;
         header.fragment_count = 1;
 
+        QByteArray payload = chunk;
+        if (sealed) {
+            payload = ChannelSeal::seal(m_endpointKey, header, chunk);
+            if (payload.isEmpty()) {
+                emit statusMessage(tr("terminal input not sent: failed to seal"), 5000,
+                                   StatusSeverity::Error);
+                return;
+            }
+        }
+
         const btp::Frame frame{header,
-                               {reinterpret_cast<const std::uint8_t*>(chunk.constData()),
-                                static_cast<std::size_t>(chunk.size())}};
+                               {reinterpret_cast<const std::uint8_t*>(payload.constData()),
+                                static_cast<std::size_t>(payload.size())}};
         m_btpSession->sendFrame(frame);
     }
 }
