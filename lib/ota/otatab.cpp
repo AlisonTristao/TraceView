@@ -28,6 +28,12 @@ constexpr int kPasswordColumn = 4;
 constexpr int kUploadColumn = 5;
 constexpr int kColumnCount = 6;
 
+// The firmware value arrives asynchronously, after the initial
+// resizeColumnsToContents() pass has only seen an em dash in this column.
+// Reserve enough room for a typical build/version identifier while keeping
+// the section interactive so the user can still resize it.
+constexpr int kFirmwareColumnWidth = 240;
+
 // 1 Hz -- there's no manual refresh affordance, so this is the only thing
 // that keeps the OTA Online column current; OtaTab::setActive(true)
 // additionally fires one poll immediately so switching to the tab doesn't
@@ -222,6 +228,9 @@ void OtaTab::setDevices(const QVector<Device>& devices) {
     }
 
     m_table->resizeColumnsToContents();
+    // At this point Firmware still contains only an em dash; its actual
+    // version is filled by onStatusChecked() after the HTTP response arrives.
+    m_table->horizontalHeader()->resizeSection(kFirmwareColumn, kFirmwareColumnWidth);
     // resizeColumnsToContents() above can override a Fixed section's width
     // with its own content-based measurement (Qt doesn't exempt Fixed
     // sections from that call) -- reassert it so the Upload column stays
