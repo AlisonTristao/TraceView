@@ -1,5 +1,7 @@
 #include "serialwidgetbridge.h"
 
+#include <QSet>
+
 #include "backend/backend.h"
 #include "dashboard/dashboardgrid.h"
 #include "dashboard/widgets/controlwidgets.h"
@@ -14,6 +16,8 @@ SerialWidgetBridge::SerialWidgetBridge(
     QObject* parent)
     : QObject(parent), m_grid(grid), m_deviceConnectionFor(std::move(deviceConnectionFor)) {
     connect(grid, &DashboardGrid::widgetCreated, this, &SerialWidgetBridge::wireWidget);
+    connect(grid, &DashboardGrid::deviceConnectionStateChanged, this,
+            &SerialWidgetBridge::setDeviceConnected);
 }
 
 DeviceConnection* SerialWidgetBridge::deviceConnectionForWidget(DashboardWidget* widget) const {
@@ -58,43 +62,86 @@ void SerialWidgetBridge::wireWidget(DashboardWidget* widget) {
                     }
                 });
     } else if (auto* monitor = qobject_cast<SerialMonitorWidget*>(widget)) {
-        connect(monitor, &SerialMonitorWidget::sendRequested, this,
-                [this, monitor](const QByteArray& bytes) {
-                    if (DeviceConnection* connection = deviceConnectionForWidget(monitor)) {
-                        connection->backend()->sendTerminalIn(bytes);
+        connect(monitor, &SerialMonitorWidget::terminalInput, this,
+                [this](const QString& deviceId, const QByteArray& bytes) {
+                    if (deviceId.isEmpty() || !m_deviceConnectionFor) {
+                        return;
+                    }
+                    if (DeviceConnection* connection = m_deviceConnectionFor(deviceId)) {
+                        if (Backend* backend = connection->backend()) {
+                            backend->sendTerminalIn(bytes);
+                        }
                     }
                 });
-        m_terminalDeviceIds.insert(monitor, QString());
-        rewireTerminalInbound(monitor);
+        connect(monitor, &SerialMonitorWidget::tabsChanged, this,
+                [this, monitor]() { rewireMonitorInbound(monitor); });
         connect(monitor, &QObject::destroyed, this,
-                [this, monitor]() { m_terminalDeviceIds.remove(monitor); });
+                [this, monitor]() { m_monitorInbound.remove(monitor); });
+
+        m_monitorInbound.insert(monitor, {});
+        rewireMonitorInbound(monitor);
+        pushDeviceMetaTo(monitor);
     }
 }
 
-void SerialWidgetBridge::rewireTerminalInbound(SerialMonitorWidget* monitor) {
-    const QString currentDeviceId = m_terminalDeviceIds.value(monitor);
-    const QString newDeviceId = m_grid->configForWidget(monitor).value("deviceId").toString();
-    if (currentDeviceId == newDeviceId) {
+void SerialWidgetBridge::rewireMonitorInbound(SerialMonitorWidget* monitor) {
+    QList<QMetaObject::Connection>& connections = m_monitorInbound[monitor];
+    for (const QMetaObject::Connection& connection : connections) {
+        QObject::disconnect(connection);
+    }
+    connections.clear();
+
+    if (!m_deviceConnectionFor) {
         return;
     }
 
-    if (DeviceConnection* oldConnection =
-            currentDeviceId.isEmpty() ? nullptr : m_deviceConnectionFor(currentDeviceId)) {
-        disconnect(oldConnection->backend(), &Backend::terminalDataReceived, monitor,
-                   &SerialMonitorWidget::appendData);
+    QSet<QString> wired;
+    const QStringList deviceIds = monitor->tabDeviceIds();
+    for (const QString& deviceId : deviceIds) {
+        if (deviceId.isEmpty() || wired.contains(deviceId)) {
+            continue;
+        }
+        wired.insert(deviceId);
+
+        DeviceConnection* connection = m_deviceConnectionFor(deviceId);
+        if (!connection || !connection->backend()) {
+            continue;
+        }
+        connections.append(connect(connection->backend(), &Backend::terminalDataReceived, monitor,
+                                   [monitor, deviceId](const QByteArray& data) {
+                                       monitor->feedDevice(deviceId, data);
+                                   }));
     }
-    if (DeviceConnection* newConnection =
-            newDeviceId.isEmpty() ? nullptr : m_deviceConnectionFor(newDeviceId)) {
-        connect(newConnection->backend(), &Backend::terminalDataReceived, monitor,
-                &SerialMonitorWidget::appendData);
-    }
-    m_terminalDeviceIds[monitor] = newDeviceId;
+}
+
+void SerialWidgetBridge::pushDeviceMetaTo(SerialMonitorWidget* monitor) const {
+    monitor->setDeviceNames(m_deviceNames);
+    monitor->setDeviceConnectionStates(m_deviceConnected);
 }
 
 void SerialWidgetBridge::refreshTerminalWiring() {
-    const QList<SerialMonitorWidget*> monitors = m_terminalDeviceIds.keys();
+    const QList<SerialMonitorWidget*> monitors = m_monitorInbound.keys();
     for (SerialMonitorWidget* monitor : monitors) {
-        rewireTerminalInbound(monitor);
+        rewireMonitorInbound(monitor);
+    }
+}
+
+void SerialWidgetBridge::setDeviceNames(const QHash<QString, QString>& namesById) {
+    m_deviceNames = namesById;
+    const QList<SerialMonitorWidget*> monitors = m_monitorInbound.keys();
+    for (SerialMonitorWidget* monitor : monitors) {
+        monitor->setDeviceNames(m_deviceNames);
+    }
+}
+
+void SerialWidgetBridge::setDeviceConnected(const QString& deviceId, bool connected) {
+    if (deviceId.isEmpty()) {
+        return;
+    }
+    m_deviceConnected[deviceId] = connected;
+    const QList<SerialMonitorWidget*> monitors = m_monitorInbound.keys();
+    for (SerialMonitorWidget* monitor : monitors) {
+        monitor->setDeviceConnectionStates(m_deviceConnected);
     }
 }
 

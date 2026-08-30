@@ -75,12 +75,14 @@ void CommandClient::send(const QString& commandLine) {
         return;
     }
     if (m_endpointKey.isEmpty()) {
-        emit statusMessage(tr("command not sent: endpoint key not configured"), 5000);
+        emit statusMessage(tr("command not sent: endpoint key not configured"), 5000,
+                           StatusSeverity::Warning);
         return;
     }
     const quint32 targetBootId = m_catalog ? m_catalog->sourceBootId(m_targetSourceId) : 0;
     if (targetBootId == 0) {
-        emit statusMessage(tr("command not sent: robot manifest not received yet"), 5000);
+        emit statusMessage(tr("command not sent: robot manifest not received yet"), 5000,
+                           StatusSeverity::Warning);
         return;
     }
 
@@ -112,7 +114,8 @@ void CommandClient::send(const QString& commandLine) {
 
     const QByteArray sealed = ChannelSeal::seal(m_endpointKey, header, payload);
     if (sealed.isEmpty()) {
-        emit statusMessage(tr("command not sent: failed to seal request"), 5000);
+        emit statusMessage(tr("command not sent: failed to seal request"), 5000,
+                           StatusSeverity::Error);
         return;
     }
 
@@ -167,17 +170,18 @@ void CommandClient::onCommandFrameReceived(const BtpFrame& frame) {
                                .arg(status, 2, 16, QChar('0'))
                                .arg(errorCode, 4, 16, QChar('0'))
                                .arg(message),
-                           8000);
+                           8000, StatusSeverity::Error);
         return;
     }
     emit statusMessage(message.isEmpty() ? tr("command result: (empty)")
                                          : tr("command result: %1").arg(message),
-                       8000);
+                       8000, StatusSeverity::Success);
 }
 
 void CommandClient::onReplyTimeout() {
     m_pending = false;
-    emit statusMessage(tr("command timed out waiting for a result"), 5000);
+    emit statusMessage(tr("command timed out waiting for a result"), 5000,
+                       StatusSeverity::Warning);
 }
 
 }  // namespace traceview

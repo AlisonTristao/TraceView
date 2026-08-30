@@ -2,6 +2,7 @@
 
 #include <QByteArray>
 #include <QHash>
+#include <QList>
 #include <QObject>
 #include <QString>
 #include <functional>
@@ -28,24 +29,17 @@ class SerialMonitorWidget;
 // no protocol envelope, bypassing Backend entirely. A device with no
 // SerialManager (USB HID, or a hub channel) instead goes through
 // Backend::sendCommand() -- a real COMMAND_REQUEST for a hub-channel device
-// (see protocol/commandclient.h), a silent no-op for USB HID (no console
-// channel to send raw text on at all, fragmentation-and-transports.md
-// section 3.3). A widget with no device configured (or whose configured
-// device doesn't exist, e.g. it was since removed) just goes nowhere -- same
-// "went nowhere, not an error" contract SerialManager::write() already has
-// for a closed port.
+// (see protocol/commandclient.h), a silent no-op for USB HID. A widget with
+// no device configured just goes nowhere.
 //
-// SerialMonitorWidget is different in both directions: its sendRequested()
-// (raw keystrokes/escape sequences) is handed to that device's
-// Backend::sendTerminalIn() instead of SerialManager::write() directly, and
-// -- unlike the outbound-only widgets above -- it also needs a standing
-// inbound connection (Backend::terminalDataReceived -> appendData()) that
-// must be re-pointed if the widget's target device changes later, since
-// that can't be resolved fresh per call the way an outbound send can.
-// refreshTerminalWiring() is what re-derives those connections; call it
-// whenever a config edit could have changed a terminal widget's deviceId
-// (MainWindow: the same indexChanged hook that drives
-// refreshWidgetSubscriptions()).
+// SerialMonitorWidget is different: it has one terminal *tab* per device, so
+// its outbound signal is terminalInput(deviceId, bytes) -- the active tab's
+// keystrokes, routed to that device's Backend::sendTerminalIn(). Inbound is
+// one standing Backend::terminalDataReceived -> monitor->feedDevice(deviceId, ..)
+// connection per distinct bound device; rewireMonitorInbound() rebuilds that
+// set whenever the monitor's tab list changes (SerialMonitorWidget::tabsChanged,
+// and the subscription-refresh hook MainWindow already drives). MainWindow also
+// pushes device names + connection state through here for the tab labels/dots.
 class SerialWidgetBridge : public QObject {
     Q_OBJECT
 
@@ -54,11 +48,17 @@ public:
                        std::function<DeviceConnection*(const QString&)> deviceConnectionFor,
                        QObject* parent = nullptr);
 
-    // Re-derives every wired terminal widget's inbound connection from its
-    // current config. Outbound wiring (control widgets, and the terminal's
-    // own sendRequested()) needs no equivalent call -- it's resolved fresh
-    // on every send, see the class comment.
+    // Re-derives every wired serial monitor's inbound connections from its
+    // current tab list. Outbound wiring needs no equivalent -- it's resolved
+    // fresh on every send, see the class comment.
     void refreshTerminalWiring();
+
+    // deviceId -> display name, for the monitors' tab labels. Pushed by
+    // MainWindow on every device add/remove/rename.
+    void setDeviceNames(const QHash<QString, QString>& namesById);
+    // deviceId -> connected, for the per-tab connection dots. Pushed by
+    // MainWindow (via DashboardGrid::deviceConnectionStateChanged) on flips.
+    void setDeviceConnected(const QString& deviceId, bool connected);
 
 private:
     void wireWidget(DashboardWidget* widget);
@@ -66,18 +66,20 @@ private:
     // Picks SerialManager::writeCommand() when `connection` has one, else
     // Backend::sendCommand() -- see the class comment above.
     static void sendControlCommand(DeviceConnection* connection, const QByteArray& command);
-    // (Re)connects `monitor`'s inbound Backend::terminalDataReceived to
-    // whichever device its config currently names, disconnecting the
-    // previous one first if it changed. No-op if the device is unchanged.
-    void rewireTerminalInbound(SerialMonitorWidget* monitor);
+    // Tears down `monitor`'s inbound connections and rebuilds one per distinct
+    // non-empty device id in monitor->tabDeviceIds().
+    void rewireMonitorInbound(SerialMonitorWidget* monitor);
+    void pushDeviceMetaTo(SerialMonitorWidget* monitor) const;
 
     DashboardGrid* m_grid;
     std::function<DeviceConnection*(const QString&)> m_deviceConnectionFor;
-    // Every terminal widget wired so far, and which device's Backend its
-    // inbound connection currently points at (empty = none) -- lets
-    // rewireTerminalInbound() know what to disconnect before connecting the
-    // new one, and lets refreshTerminalWiring() enumerate them all.
-    QHash<SerialMonitorWidget*, QString> m_terminalDeviceIds;
+    // Every serial monitor wired so far -> its live inbound connections (one
+    // per distinct bound device). The key set also enumerates the monitors
+    // for refreshTerminalWiring()/the device-meta pushes.
+    QHash<SerialMonitorWidget*, QList<QMetaObject::Connection>> m_monitorInbound;
+
+    QHash<QString, QString> m_deviceNames;
+    QHash<QString, bool> m_deviceConnected;
 };
 
 }  // namespace traceview

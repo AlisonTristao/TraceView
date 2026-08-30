@@ -3,6 +3,9 @@
 #include <QCoreApplication>
 #include <QJsonObject>
 #include <QString>
+#include <QVector>
+
+#include "telemetry/deviceinforecord.h"
 
 namespace traceview {
 
@@ -114,6 +117,16 @@ struct Device {
     QString btpVersion;
     QString btpId;
 
+    // The device's MANIFEST_DATA source_info block (BTP's docs/commands.md
+    // section 3.12): firmware version, chip, running partition, a configured
+    // name/description -- shown read-only in DeviceConfigDialog's "Reported by
+    // device" section. Same live-session treatment as btpVersion above: filled
+    // from Backend::deviceInfoReported, reset to empty on disconnect
+    // (MainWindow::onDeviceConnectionStateChanged()), and NOT persisted
+    // (deviceToJson()) -- a value from a previous device on this port must not
+    // linger in a saved project.
+    QVector<DeviceInfoRecord> reportedInfo;
+
     // Which physical link this device connects over -- see TransportType
     // above. Selects which of the fields below DeviceConnection actually
     // uses; the other stays around unused (harmless, same "keep whatever
@@ -175,11 +188,32 @@ struct Device {
     // child is connected -- the same "session state, not configuration"
     // treatment as `connected`/`btpVersion`: not user-editable, not persisted
     // (deviceToJson()), and reset to the defaults below on disconnect.
-    // `peerOnline` drives the card's amber "robot offline" state
-    // (deviceLinkState() below); `peerBootId` lets MainWindow notice a robot
-    // reboot. Default true so a freshly connected child is not painted amber
-    // for the second or two before the first hub.peers sample lands.
-    bool peerOnline = true;
+    //
+    // These three together are what deviceLinkState() reads for a hub child,
+    // and they are pessimistic by default on purpose. The card must not paint
+    // a green "live" dot on the strength of the cable to the dongle alone: a
+    // robot can be off, out of range, or never have authenticated a channel-C
+    // frame while the hub link itself is perfectly fine. That false-online is
+    // the whole reason presence is tracked as its own thing.
+    //
+    //   peerPresenceKnown  the reconcile has an actual hub.peers verdict for
+    //                      this robot (MainWindow::reconcileHubChildPresence).
+    //                      False right after connecting and whenever the
+    //                      dongle's peer list cannot be read -- the card shows
+    //                      amber "locating", never green, until it flips true.
+    //   peerOnline         the dongle is currently hearing this robot
+    //                      (authenticated channel-C traffic; hub.peers
+    //                      online=1). Only meaningful once peerPresenceKnown.
+    //   peerLongOffline    peerOnline has held false long enough
+    //                      (kOfflineTicksToDeadLink in reconcileHubChildPresence)
+    //                      that the child's link is treated as down (red)
+    //                      rather than merely stale (amber). Cleared the
+    //                      instant the robot is heard again.
+    //
+    // `peerBootId` lets MainWindow notice a robot reboot.
+    bool peerOnline = false;
+    bool peerPresenceKnown = false;
+    bool peerLongOffline = false;
     quint32 peerBootId = 0;
 
     // Password for this robot's endpoint key (channel B). Live session input,
@@ -253,13 +287,18 @@ inline quint32 hubChannelSourceId(const QString& deviceId) {
 // handshake never completed ("connected and mute") looked identical to a
 // working one.
 enum class DeviceLinkState {
-    Offline,        // no transport (port closed / not configured / unplugged)
+    Offline,        // no usable link: the transport is down (port closed / not
+                    // configured / unplugged), OR a hub child whose robot the
+                    // dongle has not heard from for long enough
+                    // (Device::peerLongOffline) that the link is treated as
+                    // down rather than merely stale
     TransportOnly,  // Serial/UsbHid: link open, but no BTP session yet
     Live,           // BTP session established (Serial/UsbHid), or a hub child
-                    // whose parent+peer are set (HubChannel has no handshake)
-    PeerStale,      // hub child: link to the dongle is up, but the dongle has
-                    // not heard STATUS from this robot recently (hub.peers
-                    // online=false) -- the robot is off or out of range
+                    // whose robot the dongle is currently hearing
+    PeerStale,      // hub child: the cable to the dongle is up, but the robot's
+                    // presence is not confirmed live -- either not reported yet
+                    // (just connected, or hub.peers unreadable) or last reported
+                    // offline but not for long enough to call the link dead
 };
 
 inline DeviceLinkState deviceLinkState(const Device& device) {
@@ -267,11 +306,20 @@ inline DeviceLinkState deviceLinkState(const Device& device) {
         return DeviceLinkState::Offline;
     }
     if (device.transportType == TransportType::HubChannel) {
-        // No ENTER/HELLO on this transport, so "connected" only means the
-        // parent session carries this child's frames. Whether the robot
-        // itself is alive comes from the dongle's hub.peers view, mirrored
-        // into peerOnline by MainWindow.
-        return device.peerOnline ? DeviceLinkState::Live : DeviceLinkState::PeerStale;
+        // No ENTER/HELLO on this transport, so `connected` only means the
+        // parent session carries this child's frames -- it says nothing about
+        // the robot. That comes from the dongle's hub.peers view, mirrored by
+        // MainWindow::reconcileHubChildPresence into the peer* fields below.
+        // Pessimistic on purpose: unknown or briefly-offline is amber, only a
+        // robot the dongle is actually hearing is green, and a sustained
+        // silence is red (see Device::peerPresenceKnown / peerLongOffline).
+        if (device.peerLongOffline) {
+            return DeviceLinkState::Offline;
+        }
+        if (!device.peerPresenceKnown || !device.peerOnline) {
+            return DeviceLinkState::PeerStale;
+        }
+        return DeviceLinkState::Live;
     }
     // btpVersion is set only by BtpHandshake::sessionEstablished and cleared
     // on disconnect (MainWindow::onDeviceConnectionStateChanged), so it is
@@ -283,11 +331,11 @@ inline DeviceLinkState deviceLinkState(const Device& device) {
 // Mirrors dashboardItemToJson()'s shape/convention (dashboard/dashboarditem.h)
 // -- one JSON object per Device, used by DevicesGrid::toJson()/fromJson() to
 // persist the whole list into ProjectStore's "devices" section. `connected`,
-// `btpVersion` and `btpId` are deliberately not serialized: they're
-// live-mirrored transport/session state (see each field's own comment
-// above), not configuration -- a freshly loaded device always starts
-// disconnected and unidentified until DeviceConnection actually opens its
-// configured port and negotiates a fresh session.
+// `btpVersion`, `btpId` and the `peer*` presence fields are deliberately not
+// serialized: they're live-mirrored transport/session state (see each field's
+// own comment above), not configuration -- a freshly loaded device always
+// starts disconnected and unidentified until DeviceConnection actually opens
+// its configured port and negotiates a fresh session.
 QJsonObject deviceToJson(const Device& device);
 
 // Returns a default-constructed Device and sets *ok = false if `object` is

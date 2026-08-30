@@ -122,6 +122,12 @@ QByteArray topicRecord(quint16 topicId, quint16 schemaVersion, const QString& na
     return record;
 }
 
+struct InfoTriple {
+    QString key;
+    QString label;
+    QString value;
+};
+
 struct ManifestOptions {
     quint8 status = kStatusSuccess;
     quint8 flags = 0;
@@ -131,6 +137,8 @@ struct ManifestOptions {
     quint32 describedBootId = kRobotBoot;
     QVector<QByteArray> topics;
     QVector<QByteArray> actions;
+    // Written after source_name when formatVersion >= 2 (commands.md 3.12).
+    QVector<InfoTriple> sourceInfo;
 };
 
 QByteArray manifestDataPayload(const ManifestOptions& options) {
@@ -152,6 +160,14 @@ QByteArray manifestDataPayload(const ManifestOptions& options) {
     appendLe16(payload, quint16(options.topics.size()));
     appendLe16(payload, quint16(options.actions.size()));
     appendUtf8(payload, QStringLiteral("robot1"));
+    if (options.formatVersion >= 2) {
+        appendLe16(payload, quint16(options.sourceInfo.size()));  // info_count
+        for (const InfoTriple& entry : options.sourceInfo) {
+            appendUtf8(payload, entry.key);
+            appendUtf8(payload, entry.label);
+            appendUtf8(payload, entry.value);
+        }
+    }
     for (const QByteArray& topic : options.topics) {
         payload.append(topic);
     }
@@ -252,6 +268,7 @@ private slots:
     void notModifiedRecordsTheBootIdWithoutTouchingSchemas();
     void aNonSuccessStatusAppliesNothing();
     void anUnsupportedFormatVersionIsRejected();
+    void sourceInfoIsParsedAndReportedOnFullAndNotModified();
     void aTruncatedPayloadIsRejected();
     void aTopicRecordRunningPastItsSizeIsRejected();
     void trailingActionRecordsAreSkippedNotMisparsed();
@@ -485,18 +502,62 @@ void TestManifestClient::aNonSuccessStatusAppliesNothing() {
 }
 
 void TestManifestClient::anUnsupportedFormatVersionIsRejected() {
-    // Only manifest_format_version 1 is defined. A later one may reorder or
-    // resize anything below this point, so parsing on would be reading a
-    // layout nobody promised.
+    // Formats 1 and 2 are defined (commands.md 3.12). A later one may reorder
+    // or resize anything below the fixed prefix, so parsing on would be
+    // reading a layout nobody promised.
     Fixture fixture;
     QSignalSpy updated(&fixture.client, &ManifestClient::catalogUpdated);
 
     ManifestOptions future = twoTopicManifest();
-    future.formatVersion = 2;
+    future.formatVersion = 3;
     fixture.router.onFrameReceived(manifestDataFrame(future));
 
     QCOMPARE(updated.count(), 0);
     QVERIFY(fixture.catalog.allSchemas().isEmpty());
+}
+
+void TestManifestClient::sourceInfoIsParsedAndReportedOnFullAndNotModified() {
+    // A format-2 response carries the source_info block between source_name
+    // and the topic records (commands.md 3.12). sourceInfoReported fires with
+    // the key/label/value triples, in order; it rides a NOT_MODIFIED response
+    // too, since source_info is not gated by config_revision. The topic
+    // records that follow the block still parse.
+    Fixture fixture;
+    QSignalSpy info(&fixture.client, &ManifestClient::sourceInfoReported);
+
+    ManifestOptions full = twoTopicManifest();
+    full.formatVersion = 2;
+    full.sourceInfo = {
+        {QStringLiteral("fw_version"), QStringLiteral("Firmware"), QStringLiteral("1dd9fc5")},
+        {QStringLiteral("chip"), QString(), QStringLiteral("ESP32-S3")},
+    };
+    fixture.router.onFrameReceived(manifestDataFrame(full));
+
+    QCOMPARE(info.count(), 1);
+    QCOMPARE(info.at(0).at(0).toUInt(), kRobot);
+    const auto records = qvariant_cast<QVector<DeviceInfoRecord>>(info.at(0).at(1));
+    QCOMPARE(records.size(), 2);
+    QCOMPARE(records.at(0).key, QStringLiteral("fw_version"));
+    QCOMPARE(records.at(0).label, QStringLiteral("Firmware"));
+    QCOMPARE(records.at(0).value, QStringLiteral("1dd9fc5"));
+    QCOMPARE(records.at(1).key, QStringLiteral("chip"));
+    QVERIFY(records.at(1).label.isEmpty());
+    QCOMPARE(records.at(1).value, QStringLiteral("ESP32-S3"));
+    // The two topic records after the block still landed.
+    QCOMPARE(fixture.catalog.allSchemas().size(), 2);
+
+    // NOT_MODIFIED carries source_info too, with no topic records.
+    ManifestOptions unchanged;
+    unchanged.formatVersion = 2;
+    unchanged.flags = kFlagNotModified;
+    unchanged.sourceInfo = {
+        {QStringLiteral("fw_version"), QStringLiteral("Firmware"), QStringLiteral("1dd9fc5")},
+    };
+    fixture.router.onFrameReceived(manifestDataFrame(unchanged));
+    QCOMPARE(info.count(), 2);
+    const auto again = qvariant_cast<QVector<DeviceInfoRecord>>(info.at(1).at(1));
+    QCOMPARE(again.size(), 1);
+    QCOMPARE(again.at(0).value, QStringLiteral("1dd9fc5"));
 }
 
 void TestManifestClient::aTruncatedPayloadIsRejected() {

@@ -7,6 +7,12 @@
 
 namespace traceview {
 
+// Which way a captured frame was travelling, for the BTP traffic monitor
+// (lib/diagnostics/framelog.h). Lives here rather than in traceview_diagnostics
+// so BtpBackend can tag the frames it observes without the protocol layer
+// depending on the UI layer.
+enum class FrameDirection { Inbound, Outbound };
+
 // Qt-friendly, self-contained copy of a decoded BTP frame. btp::DecodedFrame
 // (BTP/include/btp/codec.hpp) holds a ByteView pointing into a
 // caller-owned buffer that btp::SerialDecoder reuses for the next candidate
@@ -35,3 +41,4 @@ struct BtpFrame {
 }  // namespace traceview
 
 Q_DECLARE_METATYPE(traceview::BtpFrame)
+Q_DECLARE_METATYPE(traceview::FrameDirection)

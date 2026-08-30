@@ -60,6 +60,7 @@ private slots:
     void recoversAfterNoiseAndInvalidCandidate();
     void reassemblesFragmentedMessageAndFiresOnce();
     void resetDiscardsPartialCandidate();
+    void sendFrameEmitsFrameSentWithHeaderAndPayload();
 };
 
 void TestBtpSession::decodesSingleFrameWithEmbeddedZeroPayload() {
@@ -248,6 +249,49 @@ void TestBtpSession::resetDiscardsPartialCandidate() {
     // A full, fresh packet after reset() must still decode normally.
     session.feedBytes(packet);
     QCOMPARE(frameCount, 1);
+}
+
+// The write-side tap the BTP traffic monitor is built on: every successful
+// sendFrame() emits one frameSent() carrying the frame's own header/payload,
+// alongside the bytesToWrite() that actually goes on the wire. An encode
+// failure emits neither.
+void TestBtpSession::sendFrameEmitsFrameSentWithHeaderAndPayload() {
+    BtpSession session;
+    BtpFrame sent;
+    int sentCount = 0;
+    int bytesToWriteCount = 0;
+    connect(&session, &BtpSession::frameSent, &session, [&](const BtpFrame& frame) {
+        sent = frame;
+        ++sentCount;
+    });
+    connect(&session, &BtpSession::bytesToWrite, &session,
+            [&](const QByteArray&) { ++bytesToWriteCount; });
+
+    const QByteArray payload("\x00\x01\x02\xFF", 4);
+    btp::Header header = basicHeader(0x0042);
+    const btp::Frame frame{
+        header,
+        {reinterpret_cast<const std::uint8_t*>(payload.constData()), std::size_t(payload.size())}};
+
+    QVERIFY(session.sendFrame(frame));
+    QCOMPARE(sentCount, 1);
+    QCOMPARE(bytesToWriteCount, 1);
+    QCOMPARE(sent.payload, payload);
+    QCOMPARE(sent.objectId, quint16(0x0042));
+    QCOMPARE(sent.sourceId, quint32(0x11223344));
+    QCOMPARE(sent.sequence, quint32(1));
+
+    // A payload past the serial ceiling fails to encode -- no frameSent, no
+    // bytesToWrite.
+    sentCount = 0;
+    bytesToWriteCount = 0;
+    const QByteArray oversized(int(btp::kSerialMaxPayloadSize) + 1, 'x');
+    const btp::Frame bigFrame{basicHeader(),
+                              {reinterpret_cast<const std::uint8_t*>(oversized.constData()),
+                               std::size_t(oversized.size())}};
+    QVERIFY(!session.sendFrame(bigFrame));
+    QCOMPARE(sentCount, 0);
+    QCOMPARE(bytesToWriteCount, 0);
 }
 
 }  // namespace

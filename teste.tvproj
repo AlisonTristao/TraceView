@@ -19,16 +19,18 @@
             },
             {
                 "baudRate": 921600,
-                "cacheOtaPassword": false,
-                "cachePeerPassword": false,
+                "cacheOtaPassword": true,
+                "cachePeerPassword": true,
                 "commType": 0,
                 "description": "",
                 "id": "1dd358eb-1e20-42f7-8a27-8d28c9bf2466",
                 "lineTerminator": 1,
-                "name": "New Device",
-                "otaAddress": "",
+                "name": "Bally",
+                "otaAddress": "ballyrobot.local",
+                "otaPassword": "657585",
                 "parentDeviceId": "7343d9f3-c204-44a7-9f14-6e183cc70af4",
-                "peerSourceId": 0,
+                "peerPassword": "alison",
+                "peerSourceId": 2672043140,
                 "portName": "",
                 "transportType": 2,
                 "usbPath": "\\\\?\\HID#INTC816#3&27ef53f1&0&0000#{4d1e55b2-f16f-11cf-88cb-001111000030}"
@@ -54,8 +56,22 @@
                             "key": "",
                             "name": "",
                             "type": "serial_monitor",
-                            "width": 1,
+                            "width": 0.49999999999999994,
                             "x": 0,
+                            "y": 0
+                        },
+                        {
+                            "config": {
+                                "deviceId": "1dd358eb-1e20-42f7-8a27-8d28c9bf2466"
+                            },
+                            "groupId": "",
+                            "height": 1,
+                            "id": "9f078262-44cb-4948-bf9b-725aa1491643",
+                            "key": "",
+                            "name": "",
+                            "type": "serial_monitor",
+                            "width": 0.49999999999999994,
+                            "x": 0.5,
                             "y": 0
                         }
                     ]

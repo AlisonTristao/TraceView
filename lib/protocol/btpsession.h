@@ -200,6 +200,17 @@ public slots:
 signals:
     void frameReceived(const traceview::BtpFrame& frame);
 
+    // The write-side mirror of frameReceived(): one BtpFrame per sendFrame()/
+    // sendRawFrame() call that produced valid octets, emitted right after they
+    // are handed to bytesToWrite(). Exists only for the BTP traffic monitor
+    // (lib/diagnostics/framelog.h) -- nothing on the protocol path consumes it,
+    // so with no monitor attached the signal has no receiver. sendRawFrame()'s
+    // octets are a relayed child's already-encoded frame; they are decoded
+    // best-effort only to fill this struct, and a decode failure still lets
+    // the frame go out (it then carries an empty header and the raw bytes as
+    // its payload).
+    void frameSent(const traceview::BtpFrame& frame);
+
     // One decoded physical frame, as the RAW octets that came off the wire:
     // header + payload + CRC, exactly the input btp::decode() accepted, with
     // the link framing (COBS block, delimiters, report length prefix)

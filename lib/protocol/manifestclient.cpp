@@ -182,6 +182,9 @@ struct ParsedManifestData {
     // client ever learns which boot a source is currently on.
     quint32 describedBootId = 0;
     QVector<TelemetryTopicSchema> topics;
+    // source_info block (commands.md 3.12), format 2 only. Present on a full
+    // response and on NOT_MODIFIED alike.
+    QVector<DeviceInfoRecord> sourceInfo;
 };
 
 bool parseManifestData(const QByteArray& payload, ParsedManifestData* out) {
@@ -199,8 +202,8 @@ bool parseManifestData(const QByteArray& payload, ParsedManifestData* out) {
         !cursor.u16(&formatVersion) || !cursor.u16(&reserved) || !cursor.u32(&configRevision)) {
         return false;
     }
-    if (formatVersion != 1)
-        return false;  // only manifest_format_version 1 is defined
+    if (formatVersion != 1 && formatVersion != 2)
+        return false;  // format 1, or 2 which adds the source_info block (commands.md 3.12)
     if (!cursor.skip(16))
         return false;  // source_uuid: not modeled by TelemetryCatalog
 
@@ -225,6 +228,25 @@ bool parseManifestData(const QByteArray& payload, ParsedManifestData* out) {
     result.configRevision = configRevision;
     result.describedSourceId = describedSourceId;
     result.describedBootId = describedBootId;
+
+    // source_info block (commands.md 3.12): sits between source_name and the
+    // records in format 2, and is present on every SUCCESS response (full or
+    // NOT_MODIFIED) plus error ones with a zero count. Parsed unconditionally
+    // -- it is not gated by NOT_MODIFIED the way the topic records below are.
+    if (formatVersion >= 2) {
+        quint16 infoCount = 0;
+        if (!cursor.u16(&infoCount))
+            return false;
+        result.sourceInfo.reserve(infoCount);
+        for (quint16 i = 0; i < infoCount; ++i) {
+            DeviceInfoRecord record;
+            if (!cursor.utf8(&record.key) || !cursor.utf8(&record.label) ||
+                !cursor.utf8(&record.value)) {
+                return false;
+            }
+            result.sourceInfo.append(record);
+        }
+    }
 
     if (status == kStatusSuccess && (flags & kFlagNotModified) == 0) {
         for (quint16 i = 0; i < topicCount; ++i) {
@@ -356,6 +378,12 @@ void ManifestClient::onControlFrameReceived(const BtpFrame& frame) {
     // changed -- topico 17's SUBSCRIBE addresses a (source, boot) pair, and
     // this response is the only carrier of that fact.
     m_catalog->registerSourceBootId(parsed.describedSourceId, parsed.describedBootId);
+
+    // source_info rides both a full response and a NOT_MODIFIED one; only
+    // surface it when the device actually published something.
+    if (!parsed.sourceInfo.isEmpty()) {
+        emit sourceInfoReported(parsed.describedSourceId, parsed.sourceInfo);
+    }
 
     if ((parsed.flags & kFlagNotModified) != 0) {
         m_sourceRevisions.insert(parsed.describedSourceId, parsed.configRevision);

@@ -395,10 +395,20 @@ DeviceConfigDialog::DeviceConfigDialog(const Device& initial, QWidget* parent)
     m_btpIdEdit = new QLineEdit(m_device.btpId, reportedGroup);
     m_btpIdEdit->setReadOnly(true);
     m_btpIdEdit->setPlaceholderText(tr("(not connected yet)"));
+    // The device's MANIFEST_DATA source_info block (BTP's docs/commands.md
+    // section 3.12): firmware version, chip, running partition, a configured
+    // name/description -- one "label: value" line each. A QLabel rather than a
+    // form row per entry because the set is dynamic and arrives after the
+    // dialog is built; selectable so an operator can copy a version string.
+    m_reportedInfoLabel = new QLabel(reportedGroup);
+    m_reportedInfoLabel->setTextInteractionFlags(Qt::TextSelectableByMouse);
+    m_reportedInfoLabel->setWordWrap(true);
     auto* reportedLayout = new QFormLayout(reportedGroup);
     reportedLayout->addRow(tr("Status:"), m_statusLabel);
     reportedLayout->addRow(tr("Version:"), m_btpVersionEdit);
     reportedLayout->addRow(tr("ID:"), m_btpIdEdit);
+    reportedLayout->addRow(tr("Info:"), m_reportedInfoLabel);
+    setReportedInfo(m_device.reportedInfo);
 
     // What the device's own manifest (MANIFEST_DATA) announced -- every
     // (source, topic, schema_version) its Backend's TelemetryCatalog
@@ -568,6 +578,23 @@ void DeviceConfigDialog::setReportedIdentity(const QString& btpVersion, const QS
     m_device.btpId = btpId;
     m_btpVersionEdit->setText(btpVersion);
     m_btpIdEdit->setText(btpId);
+}
+
+void DeviceConfigDialog::setReportedInfo(const QVector<DeviceInfoRecord>& info) {
+    m_device.reportedInfo = info;
+    if (info.isEmpty()) {
+        m_reportedInfoLabel->setText(tr("(nothing reported yet)"));
+        return;
+    }
+    QStringList lines;
+    lines.reserve(info.size());
+    for (const DeviceInfoRecord& entry : info) {
+        // label is optional on the wire (commands.md 3.12) -- fall back to the
+        // machine key so the row is never blank.
+        const QString caption = entry.label.isEmpty() ? entry.key : entry.label;
+        lines.append(QStringLiteral("%1: %2").arg(caption, entry.value));
+    }
+    m_reportedInfoLabel->setText(lines.join(QLatin1Char('\n')));
 }
 
 void DeviceConfigDialog::setConnectionStatus(bool connected) {

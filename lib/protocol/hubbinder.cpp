@@ -148,7 +148,7 @@ void HubBinder::sendShellCommand(const QString& commandLine, quint32 aboutChild)
     if (!m_session->sendFrame(frame)) {
         emit statusMessage(tr("could not send hub binding for device 0x%1")
                                .arg(aboutChild, 8, 16, QLatin1Char('0')),
-                           8000);
+                           8000, StatusSeverity::Warning);
         return;
     }
     m_inFlight.insert(sequence, aboutChild);
@@ -193,7 +193,7 @@ void HubBinder::onCommandFrameReceived(const BtpFrame& frame) {
     emit statusMessage(tr("hub rejected the binding for device 0x%1: %2")
                            .arg(aboutChild, 8, 16, QLatin1Char('0'))
                            .arg(reason),
-                       8000);
+                       8000, StatusSeverity::Error);
 }
 
 }  // namespace traceview

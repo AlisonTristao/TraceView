@@ -7,6 +7,8 @@
 #include <QTimer>
 #include <QtGlobal>
 
+#include "backend/statusseverity.h"
+
 namespace traceview {
 
 class BtpSession;
@@ -66,8 +68,10 @@ public slots:
     void onSessionLost();
 
 signals:
-    // Same contract as Backend::statusMessage; BtpBackend forwards it.
-    void statusMessage(const QString& text, int timeoutMs);
+    // Same contract as Backend::statusMessage (defaulted `severity` included);
+    // BtpBackend forwards it, so the signatures have to line up.
+    void statusMessage(const QString& text, int timeoutMs,
+                       traceview::StatusSeverity severity = traceview::StatusSeverity::Info);
 
 private slots:
     void onCommandFrameReceived(const traceview::BtpFrame& frame);

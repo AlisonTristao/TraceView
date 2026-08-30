@@ -1,6 +1,8 @@
 #include "serialterminalwidget.h"
 
+#include <QClipboard>
 #include <QFontDatabase>
+#include <QGuiApplication>
 #include <QKeyEvent>
 #include <QPainter>
 #include <QScrollBar>
@@ -126,12 +128,55 @@ void SerialTerminalWidget::setCursorBlinkEnabled(bool enabled) {
 }
 
 void SerialTerminalWidget::keyPressEvent(QKeyEvent* event) {
+    // Ctrl+Left / Ctrl+Right cycle SerialMonitorWidget's sibling per-device
+    // tabs rather than reaching the dongle -- ShellSerial only ever sees the
+    // *bare* arrow keys (handled further down as history/cursor input), and
+    // Ctrl+arrow had no terminal meaning here before.
+    if (event->modifiers() == Qt::ControlModifier) {
+        if (event->key() == Qt::Key_Left) {
+            emit previousTabRequested();
+            return;
+        }
+        if (event->key() == Qt::Key_Right) {
+            emit nextTabRequested();
+            return;
+        }
+    }
+
+    // Ctrl+Shift+C copies the selection unconditionally; Ctrl+Shift+V sends
+    // the clipboard as if it were typed. These are the terminal-emulator
+    // clipboard chords (Windows Terminal, GNOME Terminal, the VS Code
+    // terminal), kept off the bare Ctrl+C/Ctrl+V so those stay free for the
+    // control bytes below.
+    if (event->modifiers() == (Qt::ControlModifier | Qt::ShiftModifier)) {
+        if (event->key() == Qt::Key_C) {
+            copy();
+            return;
+        }
+        if (event->key() == Qt::Key_V) {
+            const QString clip = QGuiApplication::clipboard()->text();
+            if (!clip.isEmpty()) {
+                emit sendRequested(clip.toUtf8());
+            }
+            return;
+        }
+    }
+
+    // Ctrl+C with a selection copies (matching every terminal emulator);
+    // with nothing selected it falls through to the Ctrl+<letter> block
+    // below and still sends 0x03, so "interrupt the running command" stays
+    // on the bare chord.
+    if (event->modifiers() == Qt::ControlModifier && event->key() == Qt::Key_C &&
+        textCursor().hasSelection()) {
+        copy();
+        return;
+    }
+
     // Ctrl+<letter> => its ASCII control code (Ctrl+C -> 0x03, Ctrl+D ->
     // 0x04, Ctrl+R -> 0x12 for ShellSerial's reverse-search, ...), matching
-    // how a real TTY driver translates them. Keyboard copy (Ctrl+C) is
-    // intentionally not available here -- 0x03 always means "send SIGINT
-    // byte to the dongle"; use the right-click context menu to copy
-    // selected text (PASSO 7).
+    // how a real TTY driver translates them. 0x03 always means "send SIGINT
+    // byte to the dongle" here; copy selected text with Ctrl+Shift+C or the
+    // right-click context menu (PASSO 7).
     if (event->modifiers() == Qt::ControlModifier && event->key() >= Qt::Key_A &&
         event->key() <= Qt::Key_Z) {
         emit sendRequested(QByteArray(1, static_cast<char>(event->key() - Qt::Key_A + 1)));

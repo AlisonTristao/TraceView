@@ -148,6 +148,17 @@ signals:
     // own btp::Reassembler).
     void hubFrameBytesReceived(quint32 sourceId, const QByteArray& raw);
 
+    // Every BTP frame this backend's session decodes (Inbound) or emits
+    // (Outbound), plus the reason for any frame that would not decode/
+    // reassemble -- for the BTP traffic monitor (lib/diagnostics/framelog.h).
+    // Inbound frames are handed over BEFORE onSessionFrameReceived() opens the
+    // AEAD seal, so a channel-B payload is still ciphertext here: that is the
+    // point, the monitor shows the raw frame and offers to open it with a
+    // typed password. Nothing on the protocol path consumes these; with no
+    // monitor attached they have no receiver.
+    void frameObserved(traceview::FrameDirection direction, const traceview::BtpFrame& frame);
+    void frameDecodeFailed(const QString& reason);
+
 public slots:
     void feedBytes(const QByteArray& data) override;
     void onTransportConnectionChanged(bool connected) override;
@@ -224,6 +235,13 @@ private:
     quint32 m_selfSourceId = 0;
     quint32 m_peerSourceId = 0;
     QByteArray m_endpointKey;
+
+    // Whoever this backend last handshook with: the dongle, for the console
+    // backend (m_peerSourceId == 0). Set from BtpHandshake::sessionEstablished.
+    // Lets the ManifestClient::sourceInfoReported handler tell "the dongle's
+    // own source_info" apart from a robot's that merely passed through the
+    // target=0 enumeration -- the same job m_peerSourceId does for a child.
+    quint32 m_sessionPeerSourceId = 0;
 
     // One-shot latch so the "unsealed frame on a sealed hub channel" warning
     // fires once, not once per dropped telemetry sample. Cleared whenever the

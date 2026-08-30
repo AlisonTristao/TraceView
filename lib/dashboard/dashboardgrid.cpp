@@ -120,6 +120,8 @@ void DashboardGrid::setDeviceConnected(const QString& deviceId, bool connected) 
             it.value()->setConnected(connected);
         }
     }
+
+    emit deviceConnectionStateChanged(deviceId, connected);
 }
 
 QJsonObject DashboardGrid::configForWidget(DashboardWidget* widget) const {

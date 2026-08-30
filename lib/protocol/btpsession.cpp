@@ -89,7 +89,11 @@ bool BtpSession::sendFrame(const btp::Frame& frame) {
     }
     // Axis (a) is applied entirely separately, and knows nothing about which
     // profile produced these octets.
-    return emitFramed(encoded.data(), frameBytes);
+    if (!emitFramed(encoded.data(), frameBytes)) {
+        return false;
+    }
+    emit frameSent(BtpFrame::fromHeaderAndPayload(frame.header, frame.payload));
+    return true;
 }
 
 bool BtpSession::sendRawFrame(const QByteArray& alreadyEncoded) {
@@ -101,7 +105,24 @@ bool BtpSession::sendRawFrame(const QByteArray& alreadyEncoded) {
     if (frameSize < btp::kV1MinimumFrameSize || frameSize > btp::max_frame_size(m_encodeProfile)) {
         return false;
     }
-    return emitFramed(reinterpret_cast<const std::uint8_t*>(alreadyEncoded.constData()), frameSize);
+    if (!emitFramed(reinterpret_cast<const std::uint8_t*>(alreadyEncoded.constData()), frameSize)) {
+        return false;
+    }
+    // Decoded only to populate the monitor's struct -- these octets are a
+    // relayed child's frame, already encoded under its own profile, and are
+    // never re-encoded here (see this method's contract). Serial is the
+    // largest ceiling, so it accepts an EspNow-sized child frame too. A
+    // decode failure does not undo the send that already happened.
+    btp::DecodedFrame decoded;
+    if (btp::decode(reinterpret_cast<const std::uint8_t*>(alreadyEncoded.constData()), frameSize,
+                    btp::TransportProfile::Serial, &decoded) == btp::Error::Ok) {
+        emit frameSent(BtpFrame::fromDecoded(decoded));
+    } else {
+        BtpFrame raw;
+        raw.payload = alreadyEncoded;
+        emit frameSent(raw);
+    }
+    return true;
 }
 
 void BtpSession::handleReassembly(const btp::DecodedFrame& fragment) {

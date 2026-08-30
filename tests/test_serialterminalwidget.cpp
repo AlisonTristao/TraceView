@@ -1,5 +1,8 @@
+#include <QClipboard>
+#include <QGuiApplication>
 #include <QImage>
 #include <QSignalSpy>
+#include <QTextCursor>
 #include <QtTest>
 
 #include "dashboard/widgets/serialterminalwidget.h"
@@ -15,6 +18,10 @@ private slots:
     void printableKeySendsUtf8BytesAndDoesNotEchoLocally();
     void enterBackspaceTabSendExpectedBytes();
     void ctrlLetterSendsAsciiControlCode();
+    void ctrlCWithSelectionCopiesInsteadOfSendingSigint();
+    void ctrlShiftCAlwaysCopies();
+    void ctrlShiftVSendsClipboardText();
+    void ctrlLeftRightRequestTabSwitchInsteadOfSending();
     void arrowKeysSendAnsiEscapeSequences();
     void modifiedArrowKeyDoesNotSendAnythingAndAllowsLocalSelection();
     void appendDataRendersPromptAndFastPathEcho();
@@ -67,6 +74,66 @@ void TestSerialTerminalWidget::ctrlLetterSendsAsciiControlCode() {
     QCOMPARE(spy.at(1).at(0).toByteArray(), QByteArray(1, static_cast<char>(0x04)));
     QCOMPARE(spy.at(2).at(0).toByteArray(),
              QByteArray(1, static_cast<char>(0x12)));  // ShellSerial Ctrl+R search
+}
+
+void TestSerialTerminalWidget::ctrlCWithSelectionCopiesInsteadOfSendingSigint() {
+    SerialTerminalWidget widget;
+    widget.appendData(QByteArrayLiteral("hello world"));
+
+    QTextCursor cursor = widget.textCursor();
+    cursor.select(QTextCursor::Document);
+    widget.setTextCursor(cursor);
+    QVERIFY(widget.textCursor().hasSelection());
+
+    QGuiApplication::clipboard()->clear();
+    QSignalSpy spy(&widget, &SerialTerminalWidget::sendRequested);
+
+    QTest::keyClick(&widget, Qt::Key_C, Qt::ControlModifier);
+
+    // Copied, not forwarded -- 0x03 would kill the running command instead.
+    QCOMPARE(spy.count(), 0);
+    QVERIFY(QGuiApplication::clipboard()->text().contains(QStringLiteral("hello world")));
+}
+
+void TestSerialTerminalWidget::ctrlShiftCAlwaysCopies() {
+    SerialTerminalWidget widget;
+    widget.appendData(QByteArrayLiteral("copy me"));
+    QTextCursor cursor = widget.textCursor();
+    cursor.select(QTextCursor::Document);
+    widget.setTextCursor(cursor);
+
+    QGuiApplication::clipboard()->clear();
+    QSignalSpy spy(&widget, &SerialTerminalWidget::sendRequested);
+
+    QTest::keyClick(&widget, Qt::Key_C, Qt::ControlModifier | Qt::ShiftModifier);
+
+    QCOMPARE(spy.count(), 0);
+    QVERIFY(QGuiApplication::clipboard()->text().contains(QStringLiteral("copy me")));
+}
+
+void TestSerialTerminalWidget::ctrlShiftVSendsClipboardText() {
+    SerialTerminalWidget widget;
+    QGuiApplication::clipboard()->setText(QStringLiteral("pasted"));
+    QSignalSpy spy(&widget, &SerialTerminalWidget::sendRequested);
+
+    QTest::keyClick(&widget, Qt::Key_V, Qt::ControlModifier | Qt::ShiftModifier);
+
+    QCOMPARE(spy.count(), 1);
+    QCOMPARE(spy.takeFirst().at(0).toByteArray(), QByteArrayLiteral("pasted"));
+}
+
+void TestSerialTerminalWidget::ctrlLeftRightRequestTabSwitchInsteadOfSending() {
+    SerialTerminalWidget widget;
+    QSignalSpy sendSpy(&widget, &SerialTerminalWidget::sendRequested);
+    QSignalSpy prevSpy(&widget, &SerialTerminalWidget::previousTabRequested);
+    QSignalSpy nextSpy(&widget, &SerialTerminalWidget::nextTabRequested);
+
+    QTest::keyClick(&widget, Qt::Key_Left, Qt::ControlModifier);
+    QTest::keyClick(&widget, Qt::Key_Right, Qt::ControlModifier);
+
+    QCOMPARE(prevSpy.count(), 1);
+    QCOMPARE(nextSpy.count(), 1);
+    QCOMPARE(sendSpy.count(), 0);
 }
 
 void TestSerialTerminalWidget::arrowKeysSendAnsiEscapeSequences() {

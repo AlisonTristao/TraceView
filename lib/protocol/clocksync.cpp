@@ -173,7 +173,8 @@ void ClockSync::onCommandFrameReceived(const BtpFrame& frame) {
         QString::fromUtf8(frame.payload.constData() + int(kResultPrefixSize), messageSize);
 
     if (status != kResultStatusSuccess) {
-        emit statusMessage(tr("dongle clock sync failed: %1").arg(message), 8000);
+        emit statusMessage(tr("dongle clock sync failed: %1").arg(message), 8000,
+                           StatusSeverity::Warning);
         return;
     }
 
@@ -201,7 +202,8 @@ void ClockSync::onCommandFrameReceived(const BtpFrame& frame) {
         sendShellCommand(QStringLiteral("dongle -set_clock \"@%1\"").arg(hostEpoch),
                          Pending::SetClock);
     } else {
-        emit statusMessage(tr("dongle clock corrected (%1)").arg(message), 5000);
+        emit statusMessage(tr("dongle clock corrected (%1)").arg(message), 5000,
+                           StatusSeverity::Success);
     }
 }
 

@@ -105,6 +105,32 @@ counters), `ProtocolRouter::diagnostics()` (routed/dropped per channel), and
 are all available for a future diagnostics panel; none is wired into the UI
 yet (no concrete need for one until topico 15/16 land).
 
+### BTP Traffic Monitor (lib/diagnostics)
+
+`BtpSession` also emits `frameSent(BtpFrame)` — the write-side mirror of
+`frameReceived()` — once per successful `sendFrame()`/`sendRawFrame()`, right
+after the octets go to `bytesToWrite()`. `BtpBackend` re-exposes both
+directions plus `frameRejected` as `frameObserved(FrameDirection, BtpFrame)` /
+`frameDecodeFailed(QString)`. Inbound frames are forwarded **before**
+`onSessionFrameReceived()` opens any AEAD seal, so a channel-B payload is still
+ciphertext there.
+
+`MainWindow` funnels every device connection's `frameObserved`/
+`frameDecodeFailed` into an app-wide `FrameLog` (a 2000-entry ring), tagged
+with the device. The **BTP Traffic Monitor** tab (File menu, singleton
+closable tab) renders it: a live table of every frame in and out, a per-frame
+header decode + hex dump, and a Decrypt box that runs `deriveChannelKey()` +
+`ChannelSeal::open()` — the same path `BtpBackend` uses in production — against
+a typed password. TELEMETRY is captured like any other frame and hidden with a
+view toggle; Export writes the current buffer to `.jsonl`/`.csv`. Nothing is
+persisted and nothing is recorded to disk continuously.
+
+The status-bar messages `Backend::statusMessage(text, ms, severity)` carries
+(the `severity` is a presentation hint, `backend/statusseverity.h`, defaulting
+to `Info`) are likewise mirrored into an app-wide `NotificationLog` by
+`MainWindow::postStatus()` and replayed by the **Notification History** window
+(status-bar button / View menu).
+
 ## Serial line state: DTR (topico 35 F1)
 
 The dongle is native USB-CDC (`ARDUINO_USB_MODE=0`). On that stack

@@ -1,42 +1,87 @@
 #pragma once
 
+#include <QHash>
+#include <QString>
+#include <QStringList>
+#include <QVector>
+
 #include "dashboard/dashboardwidget.h"
+
+class QStackedWidget;
 
 namespace traceview {
 
 class SerialTerminalWidget;
+class TerminalTabBar;
 
-// Serial monitor: a thin wrapper around a miniterm-style terminal (see
-// SerialTerminalWidget). Port/baud/connect config lives per-device in the
-// Devices tab (DeviceConfigDialog); which device *this* instance talks to is
-// its own config (SerialMonitorConfigEditor, "deviceId") -- this widget
-// stays unaware of SerialManager/DeviceConnection itself, same as the
+// Serial monitor: a tab strip (TerminalTabBar) over one miniterm-style
+// terminal (SerialTerminalWidget) per tab, each talking to its own device.
+// Port/baud/connect config lives per-device in the Devices tab
+// (DeviceConfigDialog); which devices *this* instance's tabs talk to is its
+// own config (SerialMonitorConfigEditor, a "tabs" array of {deviceId}) -- this
+// widget stays unaware of SerialManager/DeviceConnection itself, same as the
 // control widgets in widgets/controlwidgets.h. SerialWidgetBridge
-// (lib/core/serialwidgetbridge.h) resolves that device and wires
-// sendRequested() to its Backend::sendTerminalIn() and its
-// Backend::terminalDataReceived() to appendData(), re-pointing both if the
-// widget's configured device changes.
+// (lib/core/serialwidgetbridge.h) resolves each tab's device and wires the
+// active terminal's keystrokes to its Backend::sendTerminalIn() and every
+// bound device's Backend::terminalDataReceived() back to the matching tab via
+// feedDevice(), re-deriving all of it whenever the tab list changes.
+//
+// One tab (the common case, and every pre-tabs project after migration) shows
+// no tab strip and looks exactly like the single terminal this used to be.
 class SerialMonitorWidget : public DashboardWidget {
     Q_OBJECT
 
 public:
     explicit SerialMonitorWidget(QWidget* parent = nullptr);
 
+    void setConfig(const QJsonObject& config) override;
     void setEditModeHint(bool editMode) override;
 
+    // The per-tab device ids, tab order left to right. Empty strings are kept
+    // (a tab with no device chosen yet) so indices line up with the tab bar.
+    QStringList tabDeviceIds() const {
+        return m_deviceIds;
+    }
+
+    // Tab labels: deviceId -> display name. Re-pushed by MainWindow (through
+    // SerialWidgetBridge) on every device add/remove/rename.
+    void setDeviceNames(const QHash<QString, QString>& namesById);
+
+    // Green/red dot per tab: deviceId -> connected. Same push path as
+    // setDeviceNames().
+    void setDeviceConnectionStates(const QHash<QString, bool>& connectedById);
+
 public slots:
-    // Raw bytes off the wire, shown verbatim -- the terminal is a passive
-    // debug tap on the whole stream, not filtered by key like chart/gauge
-    // payloads are (docs/PROTOCOL.md "Malformed lines").
+    // Route TERMINAL_OUT bytes to every tab bound to `deviceId` (usually one).
+    void feedDevice(const QString& deviceId, const QByteArray& data);
+
+    // Bytes for the currently visible tab, no routing -- kept for the debug
+    // window's loopback wiring (core/debugchartswindow.cpp).
     void appendData(const QByteArray& data);
 
 signals:
-    // Forwarded from the terminal: one emission per keystroke, raw bytes,
-    // ready for a future backend to write to the open QSerialPort.
-    void sendRequested(const QByteArray& data);
+    // One emission per keystroke from the active terminal, tagged with that
+    // tab's device id (empty if the tab has no device configured).
+    void terminalInput(const QString& deviceId, const QByteArray& bytes);
+
+    // The set of tab device ids changed (a config edit) -- SerialWidgetBridge
+    // re-derives the inbound wiring.
+    void tabsChanged();
 
 private:
-    SerialTerminalWidget* m_terminal = nullptr;
+    void rebuildTabs(const QStringList& deviceIds);
+    void showTab(int index, bool giveFocus);
+    QString labelFor(const QString& deviceId) const;
+    void refreshTabLabels();
+    void refreshTabConnectionDots();
+
+    TerminalTabBar* m_tabBar = nullptr;
+    QStackedWidget* m_stack = nullptr;
+    QVector<SerialTerminalWidget*> m_terminals;
+    QStringList m_deviceIds;
+    QHash<QString, QString> m_deviceNames;
+    QHash<QString, bool> m_deviceConnected;
+    bool m_editMode = false;
 };
 
 }  // namespace traceview

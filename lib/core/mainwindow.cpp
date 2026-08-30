@@ -4,6 +4,7 @@
 #include <QClipboard>
 #include <QColor>
 #include <QCoreApplication>
+#include <QDateTime>
 #include <QEvent>
 #include <QFileDialog>
 #include <QFileInfo>
@@ -37,8 +38,13 @@
 #include "debugchartswindow.h"
 #include "deviceconnection.h"
 #include "devices/devicesgrid.h"
+#include "diagnostics/btpmonitortab.h"
+#include "diagnostics/framelog.h"
+#include "diagnostics/notificationhistorywindow.h"
+#include "diagnostics/notificationlog.h"
 #include "donatedialog.h"
 #include "protocol/btpbackend.h"
+#include "protocol/btpframe.h"
 #include "protocol/keyderivation.h"
 #include "layerspanel.h"
 #include "logs/logviewer.h"
@@ -50,6 +56,7 @@
 #include "ribbon.h"
 #include "ribbonicons.h"
 #include "serialwidgetbridge.h"
+#include "shortcutsdialog.h"
 #include "traceview/fontmanager.h"
 #include "traceview/languagemanager.h"
 #include "traceview/thememanager.h"
@@ -147,6 +154,12 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     setWindowTitle(tr("TraceView v%1").arg(kVersion));
     resize(1024, 640);
 
+    // Diagnostics buffers first: buildMenus()/buildRibbon() below wire actions
+    // that open views onto these, and every DeviceConnection created later
+    // feeds them.
+    m_notificationLog = new NotificationLog(this);
+    m_frameLog = new FrameLog(this);
+
     buildMenus();
 
     m_dashboardGrid = new DashboardGrid(this);
@@ -198,11 +211,11 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     // not to cascade is that they should choose what happens to each.
     connect(m_devicesGrid, &DevicesGrid::removeBlockedByChildren, this,
             [this](const QString&, const QStringList& childNames) {
-                statusBar()->showMessage(
+                postStatus(
                     tr("This device carries %n other device(s) (%1). Remove or repoint them first.",
                        nullptr, int(childNames.size()))
                         .arg(childNames.join(tr(", "))),
-                    8000);
+                    8000, StatusSeverity::Warning);
             });
     connect(m_devicesGrid, &DevicesGrid::deviceUpdated, this, &MainWindow::onDeviceUpdated);
     connect(m_devicesGrid, &DevicesGrid::connectToggleRequested, this,
@@ -319,6 +332,12 @@ MainWindow::~MainWindow() {
         disconnect(it.key(), nullptr, this, nullptr);
     }
     m_widgetSubscriptions.clear();
+}
+
+void MainWindow::postStatus(const QString& text, int timeoutMs, StatusSeverity severity,
+                            const QString& source) {
+    statusBar()->showMessage(text, timeoutMs);
+    m_notificationLog->append({QDateTime::currentDateTime(), text, severity, source});
 }
 
 void MainWindow::wireChartWidgetToTelemetry(DashboardWidget* widget) {
@@ -501,14 +520,32 @@ void MainWindow::buildMenus() {
     fileMenu->addSeparator();
 
     m_openLogFileAction = new QAction(tr("Open &Log Offline..."), this);
+    m_openLogFileAction->setShortcut(QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_O));
     connect(m_openLogFileAction, &QAction::triggered, this, &MainWindow::onOpenLogFile);
     fileMenu->addAction(m_openLogFileAction);
 
     m_openOtaTabAction = new QAction(tr("Upload &Firmware (OTA)..."), this);
+    m_openOtaTabAction->setShortcut(QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_F));
     connect(m_openOtaTabAction, &QAction::triggered, this, &MainWindow::onOpenOtaTab);
     fileMenu->addAction(m_openOtaTabAction);
 
+    m_openBtpMonitorAction = new QAction(tr("BTP Traffic &Monitor..."), this);
+    m_openBtpMonitorAction->setShortcut(QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_B));
+    connect(m_openBtpMonitorAction, &QAction::triggered, this, &MainWindow::onOpenBtpMonitor);
+    fileMenu->addAction(m_openBtpMonitorAction);
+
     auto* viewMenu = menuBar()->addMenu(tr("&View"));
+
+    auto* notificationHistoryAction = viewMenu->addAction(tr("&Notification History..."));
+    notificationHistoryAction->setShortcut(QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_H));
+    connect(notificationHistoryAction, &QAction::triggered, this,
+            &MainWindow::onShowNotificationHistory);
+
+    auto* shortcutsAction = viewMenu->addAction(tr("&Keyboard Shortcuts..."));
+    shortcutsAction->setShortcut(QKeySequence(Qt::Key_F1));
+    connect(shortcutsAction, &QAction::triggered, this, &MainWindow::onShowKeyboardShortcuts);
+    viewMenu->addSeparator();
+
     auto* themeMenu = viewMenu->addMenu(tr("&Theme"));
 
     auto* group = new QActionGroup(this);
@@ -596,6 +633,7 @@ void MainWindow::buildMenus() {
 Ribbon* MainWindow::buildRibbon() {
     m_addWidgetAction = new QAction(tr("Add"), this);
     m_addWidgetAction->setEnabled(false);
+    m_addWidgetAction->setShortcut(QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_A));
     connect(m_addWidgetAction, &QAction::triggered, this, &MainWindow::onAddWidget);
 
     m_removeAction = new QAction(tr("Remove"), this);
@@ -613,32 +651,43 @@ Ribbon* MainWindow::buildRibbon() {
     m_pasteAction->setShortcut(QKeySequence::Paste);
     connect(m_pasteAction, &QAction::triggered, m_dashboardGrid, &DashboardGrid::pasteItem);
 
+    // Z-order shortcuts match the de-facto standard from image editors
+    // (Photoshop/Illustrator/Figma): Ctrl+] / Ctrl+[ nudge one step,
+    // Ctrl+Shift+] / Ctrl+Shift+[ jump to the extremes. Only enabled on the
+    // Layout tab with a selection (updateSelectionActions), so they never
+    // collide with the terminal in Run.
     m_bringToFrontAction = new QAction(tr("To Front"), this);
     m_bringToFrontAction->setEnabled(false);
+    m_bringToFrontAction->setShortcut(QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_BracketRight));
     connect(m_bringToFrontAction, &QAction::triggered, m_dashboardGrid,
             &DashboardGrid::bringSelectedToFront);
 
     m_bringForwardAction = new QAction(tr("Forward"), this);
     m_bringForwardAction->setEnabled(false);
+    m_bringForwardAction->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_BracketRight));
     connect(m_bringForwardAction, &QAction::triggered, m_dashboardGrid,
             &DashboardGrid::bringSelectedForward);
 
     m_sendBackwardAction = new QAction(tr("Backward"), this);
     m_sendBackwardAction->setEnabled(false);
+    m_sendBackwardAction->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_BracketLeft));
     connect(m_sendBackwardAction, &QAction::triggered, m_dashboardGrid,
             &DashboardGrid::sendSelectedBackward);
 
     m_sendToBackAction = new QAction(tr("To Back"), this);
     m_sendToBackAction->setEnabled(false);
+    m_sendToBackAction->setShortcut(QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_BracketLeft));
     connect(m_sendToBackAction, &QAction::triggered, m_dashboardGrid,
             &DashboardGrid::sendSelectedToBack);
 
     m_groupAction = new QAction(tr("Group"), this);
     m_groupAction->setEnabled(false);
+    m_groupAction->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_G));
     connect(m_groupAction, &QAction::triggered, m_dashboardGrid, &DashboardGrid::groupSelected);
 
     m_ungroupAction = new QAction(tr("Ungroup"), this);
     m_ungroupAction->setEnabled(false);
+    m_ungroupAction->setShortcut(QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_G));
     connect(m_ungroupAction, &QAction::triggered, m_dashboardGrid, &DashboardGrid::ungroupSelected);
 
     // Two independent QUndoStacks (dashboard widgets, devices) share one
@@ -657,7 +706,10 @@ Ribbon* MainWindow::buildRibbon() {
     m_undoAction = m_undoGroup->createUndoAction(this, tr("Undo"));
     m_undoAction->setShortcut(QKeySequence::Undo);
     m_redoAction = m_undoGroup->createRedoAction(this, tr("Redo"));
-    m_redoAction->setShortcut(QKeySequence::Redo);
+    // QKeySequence::Redo is Ctrl+Y on Windows; also accept the Ctrl+Shift+Z
+    // that editor users reach for.
+    m_redoAction->setShortcuts(
+        {QKeySequence::Redo, QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_Z)});
 
     connect(m_dashboardGrid, &DashboardGrid::selectionChanged, this,
             &MainWindow::onSelectionChanged);
@@ -690,6 +742,7 @@ Ribbon* MainWindow::buildRibbon() {
             &MainWindow::updateSelectionActions);
 
     m_addDeviceAction = new QAction(tr("Add Device"), this);
+    m_addDeviceAction->setShortcut(QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_D));
     connect(m_addDeviceAction, &QAction::triggered, this, &MainWindow::onAddDevice);
 
     // Wired to m_devicesGrid once it exists (right after its own
@@ -734,6 +787,17 @@ Ribbon* MainWindow::buildRibbon() {
     m_fullscreenButton->setToolTip(tr("Fullscreen dashboard (F11)"));
     connect(m_fullscreenButton, &QToolButton::toggled, this, &MainWindow::onFullscreenToggled);
     statusBar()->addWidget(m_fullscreenButton);
+
+    // Opens the history of every status-bar message posted this session -- the
+    // ones that otherwise scroll away. Anchored in the status bar (never
+    // touched by fullscreen), immediately left of the transient message area.
+    auto* historyButton = new QToolButton(this);
+    historyButton->setAutoRaise(true);
+    historyButton->setFixedSize(kRibbonButtonSize, kRibbonButtonSize);
+    historyButton->setText(QStringLiteral("≡"));
+    historyButton->setToolTip(tr("Notification history"));
+    connect(historyButton, &QToolButton::clicked, this, &MainWindow::onShowNotificationHistory);
+    statusBar()->addWidget(historyButton);
 
     // Window-level shortcuts (not menu items) so they keep working once the
     // menu bar is hidden while fullscreen (see onFullscreenToggled). Routed
@@ -823,6 +887,22 @@ Ribbon* MainWindow::buildRibbon() {
     connect(ribbon, &Ribbon::tabCloseRequested, this, &MainWindow::onLogTabCloseRequested);
 
     m_ribbon = ribbon;
+
+    // Ctrl+1/2/3 jump to the fixed Run/Layout/Devices tabs -- window-level so
+    // they keep working with the menu bar hidden (same as fullscreen above).
+    // Ctrl+Tab is already taken for workspace cycling, so digits it is.
+    const QVector<QKeyCombination> fixedTabChords = {Qt::CTRL | Qt::Key_1, Qt::CTRL | Qt::Key_2,
+                                                     Qt::CTRL | Qt::Key_3};
+    const QVector<int> fixedTabIndices = {m_runTabIndex, m_configureTabIndex, m_devicesTabIndex};
+    for (int i = 0; i < fixedTabChords.size(); ++i) {
+        auto* action = new QAction(this);
+        action->setShortcut(QKeySequence(fixedTabChords[i]));
+        addAction(action);
+        const int tabIndex = fixedTabIndices[i];
+        connect(action, &QAction::triggered, this,
+                [this, tabIndex]() { m_ribbon->setCurrentIndex(tabIndex); });
+    }
+
     return ribbon;
 }
 
@@ -905,7 +985,7 @@ void MainWindow::onNewWorkspaceRequested() {
     refreshPropertiesPanel();
     refreshLayersPanel();
     refreshWorkspaceSwitcher();
-    statusBar()->showMessage(tr("Created workspace \"%1\".").arg(name.trimmed()), 3000);
+    postStatus(tr("Created workspace \"%1\".").arg(name.trimmed()), 3000, StatusSeverity::Success);
 }
 
 void MainWindow::onWorkspaceDeleteRequested(const QString& id) {
@@ -931,7 +1011,7 @@ void MainWindow::onWorkspaceDeleteRequested(const QString& id) {
         refreshLayersPanel();
     }
     refreshWorkspaceSwitcher();
-    statusBar()->showMessage(tr("Deleted workspace \"%1\".").arg(name), 3000);
+    postStatus(tr("Deleted workspace \"%1\".").arg(name), 3000);
 }
 
 void MainWindow::buildLayersPanel() {
@@ -967,20 +1047,28 @@ void MainWindow::buildPropertiesPanel() {
 
 void MainWindow::updateRibbonIcons() {
     const ThemePalette& palette = ThemeManager::instance().currentTheme();
+    // Appends " (shortcut)" to an action's tooltip when it has one bound, so
+    // every ribbon button advertises its key the way Remove/Copy/Paste
+    // already did by hand.
+    const auto withKey = [](const QString& tip, const QAction* action) {
+        const QString keys = action->shortcut().toString(QKeySequence::NativeText);
+        return keys.isEmpty() ? tip : QStringLiteral("%1 (%2)").arg(tip, keys);
+    };
+
     m_addWidgetAction->setIcon(makePlusIcon(palette.textPrimary));
-    m_addWidgetAction->setToolTip(tr("Add widget"));
+    m_addWidgetAction->setToolTip(withKey(tr("Add widget"), m_addWidgetAction));
     m_removeAction->setIcon(makeMinusIcon(palette.danger));
     m_removeAction->setToolTip(
         tr("Remove selected widget (%1)")
             .arg(m_removeAction->shortcut().toString(QKeySequence::NativeText)));
     m_addDeviceAction->setIcon(makePlusIcon(palette.textPrimary));
-    m_addDeviceAction->setToolTip(tr("Add device"));
+    m_addDeviceAction->setToolTip(withKey(tr("Add device"), m_addDeviceAction));
     m_removeDeviceAction->setIcon(makeMinusIcon(palette.danger));
     m_removeDeviceAction->setToolTip(
         tr("Remove selected device (%1)")
             .arg(m_removeDeviceAction->shortcut().toString(QKeySequence::NativeText)));
     m_openLogFileAction->setIcon(makeFolderIcon(palette.textPrimary));
-    m_openLogFileAction->setToolTip(tr("Open a .blog log file"));
+    m_openLogFileAction->setToolTip(withKey(tr("Open a .blog log file"), m_openLogFileAction));
     m_copyAction->setIcon(makeCopyIcon(palette.textPrimary));
     m_copyAction->setToolTip(tr("Copy selected widget (%1)")
                                  .arg(m_copyAction->shortcut().toString(QKeySequence::NativeText)));
@@ -989,17 +1077,19 @@ void MainWindow::updateRibbonIcons() {
         tr("Paste as a new widget (%1)")
             .arg(m_pasteAction->shortcut().toString(QKeySequence::NativeText)));
     m_bringToFrontAction->setIcon(makeBringToFrontIcon(palette.textPrimary));
-    m_bringToFrontAction->setToolTip(tr("Bring to front"));
+    m_bringToFrontAction->setToolTip(withKey(tr("Bring to front"), m_bringToFrontAction));
     m_bringForwardAction->setIcon(makeBringForwardIcon(palette.textPrimary));
-    m_bringForwardAction->setToolTip(tr("Bring forward"));
+    m_bringForwardAction->setToolTip(withKey(tr("Bring forward"), m_bringForwardAction));
     m_sendBackwardAction->setIcon(makeSendBackwardIcon(palette.textPrimary));
-    m_sendBackwardAction->setToolTip(tr("Send backward"));
+    m_sendBackwardAction->setToolTip(withKey(tr("Send backward"), m_sendBackwardAction));
     m_sendToBackAction->setIcon(makeSendToBackIcon(palette.textPrimary));
-    m_sendToBackAction->setToolTip(tr("Send to back"));
+    m_sendToBackAction->setToolTip(withKey(tr("Send to back"), m_sendToBackAction));
     m_groupAction->setIcon(makeGroupIcon(palette.textPrimary));
-    m_groupAction->setToolTip(tr("Group — lock the selected widgets' positions together"));
+    m_groupAction->setToolTip(
+        withKey(tr("Group — lock the selected widgets' positions together"), m_groupAction));
     m_ungroupAction->setIcon(makeUngroupIcon(palette.textPrimary));
-    m_ungroupAction->setToolTip(tr("Ungroup — let the selected widgets move independently again"));
+    m_ungroupAction->setToolTip(withKey(
+        tr("Ungroup — let the selected widgets move independently again"), m_ungroupAction));
     // No explicit setToolTip(): QAction falls back to text(), which
     // QUndoStack keeps updated with the pending command's description
     // (e.g. "Undo Move Widget"); the shortcut still shows up in the menu/
@@ -1050,6 +1140,8 @@ void MainWindow::onRibbonTabChanged(int index) {
         activeContent = m_devicesGrid;
     } else if (m_otaTabActive) {
         activeContent = m_otaTab;
+    } else if (currentPage != nullptr && currentPage == m_btpMonitorTabPage) {
+        activeContent = m_btpMonitorTab;
     } else if (currentPage != nullptr) {
         for (const OpenLogTab& tab : m_openLogTabs) {
             if (tab.ribbonPage == currentPage) {
@@ -1211,6 +1303,17 @@ void MainWindow::refreshPropertiesPanelDevices() {
         options.append(option);
     }
     m_propertiesPanel->setAvailableDevices(options);
+
+    // The serial monitors' terminal tabs are labelled by device name, so they
+    // need the same list -- follows every add/remove/rename/catalog refresh
+    // that lands here.
+    QHash<QString, QString> deviceNames;
+    for (const DeviceOption& option : options) {
+        deviceNames.insert(option.id, option.name);
+    }
+    if (m_serialWidgetBridge) {
+        m_serialWidgetBridge->setDeviceNames(deviceNames);
+    }
 }
 
 void MainWindow::releaseHubPeerWatch(const QString& deviceId) {
@@ -1306,13 +1409,23 @@ void MainWindow::syncHubPeerWatches() {
 }
 
 void MainWindow::reconcileHubChildPresence() {
-    // How many consecutive 1 Hz ticks a robot must read offline before the
-    // card actually goes amber. The dongle already needs ~3 s of silence to
-    // flip its own `online` flag, so with this the card only turns amber
-    // after ~8 s of a robot genuinely not being heard -- a brief radio blip
-    // or the robot stalled for a beat (a busy control loop, an I2C timeout)
-    // must not flap the card or make BtpBackend see a spurious reconnect.
+    // Consecutive 1 Hz ticks a robot must read offline before the card leaves
+    // green. The dongle already needs ~4 s of silence to flip its own hub.peers
+    // `online` flag, so the card only actually goes amber after ~8 s of a robot
+    // genuinely not being heard -- a brief radio blip or the robot stalled for a
+    // beat (a busy control loop, an I2C timeout) must not flap it or make
+    // BtpBackend see a spurious reconnect.
     constexpr int kOfflineTicksToConfirm = 5;
+    // ...and how much longer before the link is called dead (red) rather than
+    // merely stale (amber). A robot unreachable this long is not "about to
+    // answer" -- the operator needs to see that the way they see a pulled
+    // cable, not a permanent amber they have learned to ignore.
+    constexpr int kOfflineTicksToDeadLink = 15;
+    // The dongle's hub.peers view legitimately is not readable for a few
+    // seconds after a child connects (manifest still in flight, first sample
+    // not published). Wait this long before the ABSENCE of a view itself counts
+    // as evidence -- until then the card sits amber "locating", never green.
+    constexpr int kNoPeerViewGraceTicks = 8;
 
     syncHubPeerWatches();
 
@@ -1323,45 +1436,68 @@ void MainWindow::reconcileHubChildPresence() {
             device.parentDeviceId.isEmpty() || device.peerSourceId == 0) {
             continue;
         }
-        const auto watchIt = m_hubPeerWatches.constFind(device.parentDeviceId);
-        if (watchIt == m_hubPeerWatches.constEnd() || watchIt->handle == 0) {
-            continue;  // parent's hub.peers not resolved yet -- leave the
-                       // optimistic peerOnline=true default alone for now
-        }
-        const QVector<HubPeer> peers = watchIt->accumulator.peers();
-        if (peers.isEmpty()) {
-            continue;  // no sample decoded yet -- unknown, not "offline"
-        }
 
-        // The dongle keeps a heard robot in hub.peers forever (its row never
-        // ages out), so "not in the list" only happens for a robot it has
-        // never heard or evicted -- treated the same as online=false.
+        // Can the dongle's peer list be read at all right now?
+        QVector<HubPeer> peers;
+        const auto watchIt = m_hubPeerWatches.constFind(device.parentDeviceId);
+        if (watchIt != m_hubPeerWatches.constEnd() && watchIt->handle != 0) {
+            peers = watchIt->accumulator.peers();
+        }
+        const bool havePeerView = !peers.isEmpty();
+
         bool rawOnline = false;
         quint32 bootId = device.peerBootId;
-        for (const HubPeer& peer : peers) {
-            if (peer.sourceId == device.peerSourceId) {
-                rawOnline = peer.online;
-                bootId = peer.bootId;
-                break;
+        bool presenceKnown = device.peerPresenceKnown;
+
+        if (havePeerView) {
+            // A verdict, either way. The dongle keeps a heard robot in
+            // hub.peers forever (its row never ages out), so "not in the list"
+            // means a robot it has never authenticated -- read as offline.
+            m_hubChildNoViewTicks.remove(device.id);
+            presenceKnown = true;
+            for (const HubPeer& peer : peers) {
+                if (peer.sourceId == device.peerSourceId) {
+                    rawOnline = peer.online;
+                    bootId = peer.bootId;
+                    break;
+                }
+            }
+        } else if (!presenceKnown) {
+            // No view yet and never had one -- amber "locating" until the grace
+            // runs out, then treat the continued absence as evidence (a watch
+            // that will not resolve must not leave the dot green forever).
+            if (++m_hubChildNoViewTicks[device.id] >= kNoPeerViewGraceTicks) {
+                presenceKnown = true;  // rawOnline stays false
             }
         }
+        // havePeerView false but presenceKnown already true: the watch resolved
+        // and then went unreadable (the dongle's own session blipped). Keep the
+        // last verdict and let the offline debounce below carry it.
 
-        // Online is believed immediately; offline only after it has held.
         int& offTicks = m_hubChildOfflineTicks[device.id];
-        offTicks = rawOnline ? 0 : (offTicks + 1);
-        const bool online = rawOnline || offTicks < kOfflineTicksToConfirm;
+        offTicks = rawOnline ? 0 : qMin(offTicks + 1, kOfflineTicksToDeadLink + 1);
+        // The debounce only shields an ALREADY-established "online" from a
+        // single missed sample; it never manufactures one out of nothing.
+        const bool online = rawOnline || (device.peerOnline && offTicks < kOfflineTicksToConfirm);
+        const bool longOffline = presenceKnown && !online && offTicks >= kOfflineTicksToDeadLink;
 
-        if (online == device.peerOnline && bootId == device.peerBootId) {
+        if (online == device.peerOnline && presenceKnown == device.peerPresenceKnown &&
+            longOffline == device.peerLongOffline && bootId == device.peerBootId) {
             continue;
         }
-        if (online != device.peerOnline) {
+        // Announce only a genuine transition between two KNOWN states -- not the
+        // first acquisition, and not "locating -> offline" (nothing was lost).
+        if (presenceKnown && device.peerPresenceKnown && online != device.peerOnline) {
             const QString name = device.name.isEmpty() ? tr("(unnamed)") : device.name;
-            statusBar()->showMessage(online ? tr("%1: robot is responding again").arg(name)
-                                            : tr("%1: robot stopped responding (hub link still up)")
-                                                  .arg(name),
-                                     5000);
+            postStatus(online ? tr("%1: robot is responding again").arg(name)
+                              : tr("%1: robot stopped responding (hub link still up)").arg(name),
+                       5000, online ? StatusSeverity::Success : StatusSeverity::Warning, name);
         }
-        m_devicesGrid->setDevicePeerState(device.id, online, bootId);
+        m_devicesGrid->setDevicePeerState(device.id, online, presenceKnown, longOffline, bootId);
+        // The dashboard widgets' own connection dot only knows connected/not --
+        // give a hub child's charts a live dot only while the robot really is
+        // reachable, not merely while the cable to the dongle is in.
+        m_dashboardGrid->setDeviceConnected(device.id, online && presenceKnown && !longOffline);
         if (DeviceConnection* c = m_deviceConnections.value(device.id)) {
             c->backend()->onPeerPresence(online, bootId);
         }
@@ -1480,9 +1616,26 @@ DeviceConnection* MainWindow::createDeviceConnection(const Device& device) {
     // once per device, the same way MainWindow used to hook the app's one
     // Backend before the multi-device refactor.
     Backend* backend = connection->backend();
-    connect(backend, &Backend::statusMessage, this, [this](const QString& text, int timeoutMs) {
-        statusBar()->showMessage(text, timeoutMs);
-    });
+    connect(backend, &Backend::statusMessage, this,
+            [this, name = device.name](const QString& text, int timeoutMs,
+                                       StatusSeverity severity) {
+                postStatus(text, timeoutMs, severity, name);
+            });
+    // BTP traffic monitor taps -- every frame this device's session sends or
+    // receives, and every decode failure, tagged with the device. A hub child
+    // and its parent both report the child's relayed frames (once each,
+    // labelled by device); acceptable for a raw inspector.
+    if (auto* btp = qobject_cast<BtpBackend*>(backend)) {
+        connect(btp, &BtpBackend::frameObserved, this,
+                [this, id = device.id, name = device.name](FrameDirection direction,
+                                                           const BtpFrame& frame) {
+                    m_frameLog->recordFrame(direction, id, name, frame);
+                });
+        connect(btp, &BtpBackend::frameDecodeFailed, this,
+                [this, id = device.id, name = device.name](const QString& reason) {
+                    m_frameLog->recordDecodeError(id, name, reason);
+                });
+    }
     connect(backend, &Backend::subscriptionsChanged, this, &MainWindow::updateTelemetryStatusLabel);
     connect(backend, &Backend::statusReceived, this, &MainWindow::updateTelemetryStatusLabel);
     // A manifest exchange completing/updating is when catalogTopics() first
@@ -1507,6 +1660,10 @@ DeviceConnection* MainWindow::createDeviceConnection(const Device& device) {
                 // is an amber<->green transition for the status-bar dots too
                 // (topico 35 D.2).
                 refreshDeviceStatusLabel();
+            });
+    connect(connection, &DeviceConnection::deviceInfoReported, this,
+            [this, id = device.id](const QVector<DeviceInfoRecord>& info) {
+                m_devicesGrid->setDeviceReportedInfo(id, info);
             });
     // Hooked for every device, not just the ones that turn out to be hubs:
     // whether this device publishes hub.peers is only knowable once its
@@ -1549,6 +1706,7 @@ void MainWindow::onDeviceRemoved(const QString& id) {
     // connection, so it has to still be reachable in the hash.
     releaseHubPeerWatch(id);
     m_hubChildOfflineTicks.remove(id);
+    m_hubChildNoViewTicks.remove(id);
     DeviceConnection* connection = m_deviceConnections.take(id);
     if (!connection) {
         return;
@@ -1619,9 +1777,23 @@ void MainWindow::onDeviceConnectToggleRequested(const QString& deviceId) {
 }
 
 void MainWindow::onDeviceConnectionStateChanged(const QString& deviceId, bool connected) {
+    // For a hub child, "transport connected" is only "the dongle carries this
+    // child's frames" -- it says nothing about the robot. Both dots (the
+    // dashboard cells' and the Devices-tab card's) wait for
+    // reconcileHubChildPresence(), called below on connect, to say the robot is
+    // actually there; painting them green here would flash a false "live" on
+    // every reconnect.
+    bool isHubChild = false;
+    for (const Device& d : m_devicesGrid->devices()) {
+        if (d.id == deviceId) {
+            isHubChild = d.transportType == TransportType::HubChannel;
+            break;
+        }
+    }
+
     // Every chart/gauge/control/terminal cell currently configured for this
     // device (config()["deviceId"]) -- not just the Devices tab's own card.
-    m_dashboardGrid->setDeviceConnected(deviceId, connected);
+    m_dashboardGrid->setDeviceConnected(deviceId, connected && !isHubChild);
     refreshDeviceStatusLabel();
 
     // setDeviceConnected(), not updateDevice() -- this fires from live
@@ -1637,10 +1809,16 @@ void MainWindow::onDeviceConnectionStateChanged(const QString& deviceId, bool co
         // deviceIdentified() (see onDeviceAdded()) once its own handshake
         // completes, but nothing should show a stale version/id meanwhile.
         m_devicesGrid->setDeviceIdentity(deviceId, QString(), QString());
-        // Same for the hub.peers-derived presence: back to the optimistic
-        // default so a reconnect is not painted amber on stale data.
-        m_devicesGrid->setDevicePeerState(deviceId, true, 0);
+        // Same for the device's reported source_info: a stale firmware version
+        // from a previous session (or a previous device on this port) must not
+        // linger. Refilled on the next manifest once reconnected.
+        m_devicesGrid->setDeviceReportedInfo(deviceId, {});
+        // Same for the hub.peers-derived presence: back to "unknown" (amber
+        // "locating"), NOT a fake "online" -- a reconnect must re-earn green
+        // from the dongle actually reporting the robot, not assume it.
+        m_devicesGrid->setDevicePeerState(deviceId, false, false, false, 0);
         m_hubChildOfflineTicks.remove(deviceId);
+        m_hubChildNoViewTicks.remove(deviceId);
     } else {
         // A hub child coming up needs its parent's hub.peers watch, and the
         // reconcile that follows, promptly -- not on the next 1 s tick.
@@ -1659,8 +1837,8 @@ void MainWindow::onPanelNameChangeRequested(const QString& name) {
 
 void MainWindow::onPanelKeyChangeRequested(const QString& key) {
     if (!m_dashboardGrid->setSelectedKey(key)) {
-        statusBar()->showMessage(tr("Key \"%1\" is already used by another widget.").arg(key),
-                                 4000);
+        postStatus(tr("Key \"%1\" is already used by another widget.").arg(key), 4000,
+                   StatusSeverity::Warning);
     }
     // Resyncs the field either way: on success to the committed value (a
     // no-op visually), on rejection to snap the text back to what's
@@ -1689,7 +1867,7 @@ void MainWindow::onNewProject() {
     refreshPropertiesPanel();
     refreshLayersPanel();
     refreshWorkspaceSwitcher();
-    statusBar()->showMessage(tr("Started a new project."), 3000);
+    postStatus(tr("Started a new project."), 3000);
 }
 
 void MainWindow::onSaveProject() {
@@ -1770,11 +1948,16 @@ void MainWindow::onOpenLogFile() {
 
 void MainWindow::onLogTabCloseRequested(int index) {
     QWidget* page = m_ribbon->pageAt(index);
-    // Checked first, before either this function or onOtaTabCloseRequested()
-    // mutates the ribbon -- see that slot's own comment in mainwindow.h for
-    // why this can't just be a second connection on the same signal.
+    // Checked first, before either this function or the singleton-tab close
+    // handlers mutate the ribbon -- see onOtaTabCloseRequested()'s comment in
+    // mainwindow.h for why this can't just be a second connection on the same
+    // signal.
     if (page != nullptr && page == m_otaTabPage) {
         onOtaTabCloseRequested(index);
+        return;
+    }
+    if (page != nullptr && page == m_btpMonitorTabPage) {
+        onBtpMonitorTabCloseRequested(index);
         return;
     }
     for (int i = 0; i < m_openLogTabs.size(); ++i) {
@@ -1843,6 +2026,64 @@ void MainWindow::onOtaTabCloseRequested(int index) {
     m_otaTab->deleteLater();
     m_otaTab = nullptr;
     m_otaTabPage = nullptr;
+}
+
+void MainWindow::onOpenBtpMonitor() {
+    if (m_btpMonitorTab != nullptr) {
+        for (int i = 0; i < m_ribbon->count(); ++i) {
+            if (m_ribbon->pageAt(i) == m_btpMonitorTabPage) {
+                m_ribbon->setCurrentIndex(i);
+                break;
+            }
+        }
+        return;
+    }
+
+    m_btpMonitorTab = new BtpMonitorTab(
+        m_frameLog,
+        [this](const QString& deviceId) -> QString {
+            for (const Device& device : m_devicesGrid->devices()) {
+                if (device.id == deviceId) {
+                    return device.peerPassword;
+                }
+            }
+            return QString();
+        },
+        this);
+    m_contentStack->addWidget(m_btpMonitorTab);
+
+    // An empty ribbon page: this tab carries no ribbon buttons of its own, the
+    // page just gives it a slot in Ribbon's stack and a stable lookup key
+    // (m_btpMonitorTabPage) -- same trick as m_openLogTabs/m_otaTabPage.
+    auto* page = new QWidget(this);
+    page->setObjectName("ribbonPage");
+    page->setFixedHeight(kRibbonPageHeight);
+
+    const int index = m_ribbon->addTab(tr("BTP Traffic"), page, /*enabled=*/true, QString(),
+                                       /*closable=*/true);
+    m_btpMonitorTabPage = page;
+    m_ribbon->setCurrentIndex(index);
+}
+
+void MainWindow::onBtpMonitorTabCloseRequested(int index) {
+    if (m_btpMonitorTab == nullptr || m_ribbon->pageAt(index) != m_btpMonitorTabPage) {
+        return;
+    }
+    m_ribbon->removeTab(index);
+    m_contentStack->removeWidget(m_btpMonitorTab);
+    m_btpMonitorTab->deleteLater();
+    m_btpMonitorTab = nullptr;
+    m_btpMonitorTabPage = nullptr;
+}
+
+void MainWindow::onShowNotificationHistory() {
+    if (m_notificationWindow) {
+        m_notificationWindow->raise();
+        m_notificationWindow->activateWindow();
+        return;
+    }
+    m_notificationWindow = new NotificationHistoryWindow(m_notificationLog, this);
+    m_notificationWindow->show();
 }
 
 void MainWindow::onOtaPasswordCacheChanged(const QString& deviceId, const QString& password,
@@ -1943,6 +2184,90 @@ void MainWindow::onClearRecentFiles() {
 
 void MainWindow::onAbout() {
     AboutDialog dialog(this);
+    dialog.exec();
+}
+
+void MainWindow::onShowKeyboardShortcuts() {
+    using Row = ShortcutsDialog::Row;
+    using Section = ShortcutsDialog::Section;
+
+    // An action's live binding(s), joined for the few actions that carry more
+    // than one (Redo), rendered in the platform's own notation.
+    const auto keysOf = [](const QAction* action) {
+        QStringList parts;
+        const QList<QKeySequence> sequences = action->shortcuts();
+        for (const QKeySequence& sequence : sequences) {
+            parts << sequence.toString(QKeySequence::NativeText);
+        }
+        return parts.join(QStringLiteral("  ·  "));
+    };
+    const auto stdKeys = [](QKeySequence::StandardKey key) {
+        return QKeySequence(key).toString(QKeySequence::NativeText);
+    };
+    const auto chord = [](Qt::KeyboardModifiers mods, Qt::Key key) {
+        return QKeySequence(QKeyCombination(mods, key)).toString(QKeySequence::NativeText);
+    };
+
+    QVector<Section> sections;
+
+    sections.append(Section{
+        tr("Project"),
+        {Row{tr("New project"), stdKeys(QKeySequence::New)},
+         Row{tr("Open project"), stdKeys(QKeySequence::Open)},
+         Row{tr("Save project"), stdKeys(QKeySequence::Save)},
+         Row{tr("Save project as"), stdKeys(QKeySequence::SaveAs)},
+         Row{tr("Open log offline"), keysOf(m_openLogFileAction)},
+         Row{tr("Upload firmware (OTA)"), keysOf(m_openOtaTabAction)},
+         Row{tr("BTP traffic monitor"), keysOf(m_openBtpMonitorAction)}}});
+
+    sections.append(Section{
+        tr("Layout & widgets"),
+        {Row{tr("Add widget"), keysOf(m_addWidgetAction)},
+         Row{tr("Remove selected"), keysOf(m_removeAction)},
+         Row{tr("Copy widget"), keysOf(m_copyAction)},
+         Row{tr("Paste widget"), keysOf(m_pasteAction)},
+         Row{tr("Bring forward / to front"),
+             keysOf(m_bringForwardAction) + QStringLiteral("  ·  ") + keysOf(m_bringToFrontAction)},
+         Row{tr("Send backward / to back"),
+             keysOf(m_sendBackwardAction) + QStringLiteral("  ·  ") + keysOf(m_sendToBackAction)},
+         Row{tr("Group / ungroup"),
+             keysOf(m_groupAction) + QStringLiteral("  ·  ") + keysOf(m_ungroupAction)},
+         Row{tr("Undo"), keysOf(m_undoAction)},
+         Row{tr("Redo"), keysOf(m_redoAction)}}});
+
+    sections.append(Section{tr("Devices"),
+                            {Row{tr("Add device"), keysOf(m_addDeviceAction)},
+                             Row{tr("Remove device"), keysOf(m_removeDeviceAction)}}});
+
+    sections.append(Section{
+        tr("Serial monitor terminal"),
+        {Row{tr("Switch device tab"), chord(Qt::ControlModifier, Qt::Key_Left) +
+                                          QStringLiteral("  ·  ") +
+                                          chord(Qt::ControlModifier, Qt::Key_Right)},
+         Row{tr("Copy selection"), chord(Qt::ControlModifier, Qt::Key_C) + QStringLiteral("  ·  ") +
+                                       chord(Qt::ControlModifier | Qt::ShiftModifier, Qt::Key_C)},
+         Row{tr("Send interrupt (SIGINT)"),
+             tr("%1 (nothing selected)").arg(chord(Qt::ControlModifier, Qt::Key_C))},
+         Row{tr("Paste into terminal"),
+             chord(Qt::ControlModifier | Qt::ShiftModifier, Qt::Key_V)}}});
+
+    sections.append(Section{
+        tr("Navigation & view"),
+        {Row{tr("Run / Layout / Devices tab"),
+             chord(Qt::ControlModifier, Qt::Key_1) + QStringLiteral(" · ") +
+                 chord(Qt::ControlModifier, Qt::Key_2) + QStringLiteral(" · ") +
+                 chord(Qt::ControlModifier, Qt::Key_3)},
+         Row{tr("Next / previous workspace"), chord(Qt::ControlModifier, Qt::Key_Tab) +
+                                                  QStringLiteral("  ·  ") +
+                                                  chord(Qt::ControlModifier | Qt::ShiftModifier,
+                                                        Qt::Key_Tab)},
+         Row{tr("Fullscreen dashboard"), chord(Qt::NoModifier, Qt::Key_F11)},
+         Row{tr("Exit fullscreen"), chord(Qt::NoModifier, Qt::Key_Escape)},
+         Row{tr("Notification history"),
+             chord(Qt::ControlModifier | Qt::ShiftModifier, Qt::Key_H)},
+         Row{tr("Keyboard shortcuts"), chord(Qt::NoModifier, Qt::Key_F1)}}});
+
+    ShortcutsDialog dialog(sections, this);
     dialog.exec();
 }
 

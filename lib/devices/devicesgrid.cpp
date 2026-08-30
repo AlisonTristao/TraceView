@@ -1,5 +1,7 @@
 #include "devicesgrid.h"
 
+#include <algorithm>
+
 #include <QJsonArray>
 #include <QResizeEvent>
 #include <QStringList>
@@ -106,18 +108,45 @@ void DevicesGrid::setDeviceIdentity(const QString& id, const QString& btpVersion
     emit deviceUpdated(m_devices[idx]);
 }
 
-void DevicesGrid::setDevicePeerState(const QString& id, bool peerOnline, quint32 peerBootId) {
+void DevicesGrid::setDevicePeerState(const QString& id, bool peerOnline, bool peerPresenceKnown,
+                                    bool peerLongOffline, quint32 peerBootId) {
     const int idx = indexOfDevice(id);
-    if (idx < 0 ||
-        (m_devices[idx].peerOnline == peerOnline && m_devices[idx].peerBootId == peerBootId)) {
+    if (idx < 0 || (m_devices[idx].peerOnline == peerOnline &&
+                    m_devices[idx].peerPresenceKnown == peerPresenceKnown &&
+                    m_devices[idx].peerLongOffline == peerLongOffline &&
+                    m_devices[idx].peerBootId == peerBootId)) {
         return;
     }
     m_devices[idx].peerOnline = peerOnline;
+    m_devices[idx].peerPresenceKnown = peerPresenceKnown;
+    m_devices[idx].peerLongOffline = peerLongOffline;
     m_devices[idx].peerBootId = peerBootId;
     m_cards[idx]->setDevice(m_devices[idx]);
     // Deliberately no emit deviceUpdated() -- see the header. MainWindow reads
     // devices() directly in reconcileHubChildPresence(); nothing else needs a
     // push for this.
+}
+
+void DevicesGrid::setDeviceReportedInfo(const QString& id, const QVector<DeviceInfoRecord>& info) {
+    const int idx = indexOfDevice(id);
+    if (idx < 0) {
+        return;
+    }
+    const QVector<DeviceInfoRecord>& current = m_devices[idx].reportedInfo;
+    const bool same = current.size() == info.size() &&
+                      std::equal(current.begin(), current.end(), info.begin(),
+                                 [](const DeviceInfoRecord& a, const DeviceInfoRecord& b) {
+                                     return a.key == b.key && a.label == b.label && a.value == b.value;
+                                 });
+    if (same) {
+        return;
+    }
+    m_devices[idx].reportedInfo = info;
+    m_cards[idx]->setDevice(m_devices[idx]);
+    // No emit deviceUpdated() -- see the header (same reason as
+    // setDevicePeerState). The open config dialog gets it via the dedicated
+    // signal below instead.
+    emit deviceReportedInfoChanged(id);
 }
 
 void DevicesGrid::notifyCatalogChanged(const QString& id) {
@@ -288,8 +317,23 @@ void DevicesGrid::handleConfigRequested(const QString& deviceId) {
                 }
                 dialog.setConnectionStatus(device.connected);
                 dialog.setReportedIdentity(device.btpVersion, device.btpId);
+                dialog.setReportedInfo(device.reportedInfo);
                 if (m_topicCatalogProvider) {
                     dialog.setCatalogTopics(m_topicCatalogProvider(deviceId));
+                }
+            });
+    // source_info arrives asynchronously after the handshake (its MANIFEST_DATA
+    // comes over the wire later), and setDeviceReportedInfo() deliberately does
+    // not emit deviceUpdated -- so this dedicated signal is what refreshes an
+    // open dialog in place, mirroring deviceCatalogChanged below.
+    connect(this, &DevicesGrid::deviceReportedInfoChanged, &dialog,
+            [this, &dialog, deviceId](const QString& id) {
+                if (id != deviceId) {
+                    return;
+                }
+                const int idx = indexOfDevice(deviceId);
+                if (idx >= 0) {
+                    dialog.setReportedInfo(m_devices[idx].reportedInfo);
                 }
             });
     // MANIFEST_DATA arrives after the handshake that fires deviceUpdated

@@ -2,7 +2,10 @@
 
 #include <QHash>
 #include <QObject>
+#include <QVector>
 #include <QtGlobal>
+
+#include "telemetry/deviceinforecord.h"
 
 namespace traceview {
 
@@ -86,6 +89,14 @@ signals:
     // BtpBackend forwards it as deviceIdentified() when describedSourceId is
     // its own peer.
     void sourceDescribed(quint32 sourceId, quint32 bootId, quint32 configRevision);
+
+    // The source_info block (BTP/docs/commands.md section 3.12) from a
+    // SUCCESS MANIFEST_DATA for `sourceId` -- firmware version, chip, running
+    // partition, a configured name/description. Emitted on a full response
+    // and on NOT_MODIFIED (source_info is not gated by config_revision), but
+    // only when the block actually carried entries. BtpBackend forwards it as
+    // Backend::deviceInfoReported when `sourceId` is its own device.
+    void sourceInfoReported(quint32 sourceId, const QVector<traceview::DeviceInfoRecord>& info);
 
 private slots:
     void onControlFrameReceived(const traceview::BtpFrame& frame);

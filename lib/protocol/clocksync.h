@@ -6,6 +6,8 @@
 #include <QtGlobal>
 #include <functional>
 
+#include "backend/statusseverity.h"
+
 namespace traceview {
 
 class BtpSession;
@@ -42,8 +44,10 @@ public slots:
 
 signals:
     // A one-off, human-readable status update, same contract as
-    // Backend::statusMessage -- BtpBackend just forwards it.
-    void statusMessage(const QString& text, int timeoutMs);
+    // Backend::statusMessage (including the defaulted `severity`) -- BtpBackend
+    // forwards it straight through, which is why the signatures must match.
+    void statusMessage(const QString& text, int timeoutMs,
+                       traceview::StatusSeverity severity = traceview::StatusSeverity::Info);
 
 private slots:
     void onCommandFrameReceived(const traceview::BtpFrame& frame);

@@ -7,6 +7,8 @@
 #include <QtGlobal>
 #include <functional>
 
+#include "backend/statusseverity.h"
+
 namespace traceview {
 
 class BtpSession;
@@ -56,7 +58,8 @@ public slots:
     void send(const QString& commandLine);
 
 signals:
-    void statusMessage(const QString& text, int timeoutMs);
+    void statusMessage(const QString& text, int timeoutMs,
+                       traceview::StatusSeverity severity = traceview::StatusSeverity::Info);
 
 private slots:
     void onCommandFrameReceived(const traceview::BtpFrame& frame);

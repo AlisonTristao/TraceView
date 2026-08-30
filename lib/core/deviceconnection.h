@@ -122,6 +122,9 @@ signals:
     // Mirrors Backend::deviceIdentified so callers don't have to reach
     // through backend() themselves.
     void deviceIdentified(const QString& btpVersion, const QString& btpId);
+    // Mirrors Backend::deviceInfoReported (the device's MANIFEST_DATA
+    // source_info block, BTP's docs/commands.md section 3.12).
+    void deviceInfoReported(const QVector<traceview::DeviceInfoRecord>& info);
 
 private:
     void attemptReconnect();

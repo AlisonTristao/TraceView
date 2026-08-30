@@ -130,13 +130,25 @@ lives in its own module under
   No history/axis settings and no threshold-triggered actions —
   deliberately left out, it only ever reflects the current value.
 - **Serial Monitor** — `widgets/serialmonitorwidget.h`/`.cpp`
-  (`serial_monitor`), built from a connection bar (port/baud pickers, a
-  connect toggle) plus `widgets/serialterminalwidget.h`/`.cpp`: a
-  miniterm/PlatformIO-Serial-Monitor-style terminal with no input line —
-  the terminal surface itself captures the keyboard and emits
-  `sendRequested(QByteArray)` per keystroke, immediately, never buffered
-  until Enter. Front-end shell only: none of it wired to `QSerialPort`
-  yet.
+  (`serial_monitor`): a tab strip (`widgets/terminaltabbar.h`/`.cpp`, the
+  same folder-tab look as the ribbon) over one
+  `widgets/serialterminalwidget.h`/`.cpp` per tab — a
+  miniterm/PlatformIO-Serial-Monitor-style terminal with no input line, one
+  tab per device. Each tab is labelled by its device's name; the terminal
+  surface itself captures the keyboard and emits `sendRequested(QByteArray)`
+  per keystroke (immediately, never buffered until Enter), which the widget
+  re-emits as `terminalInput(deviceId, bytes)` tagged with the active tab's
+  device. `Ctrl+←` / `Ctrl+→` cycle tabs; `Ctrl+C` copies the selection when
+  there is one and otherwise sends `0x03` (SIGINT); `Ctrl+Shift+C` always
+  copies and `Ctrl+Shift+V` pastes the clipboard as typed. The tab list is
+  the widget's config — `{ "tabs": [ { "deviceId": … }, … ] }`, edited in
+  `widgets/serialmonitorconfigeditor.h`/`.cpp` (add/remove/reorder rows).
+  A pre-tabs config (a bare `deviceId`, or none) reads as a single tab, and
+  a lone tab shows no strip — visually identical to the old single terminal.
+  `core/serialwidgetbridge.h` resolves each tab's device and wires the
+  active terminal to its `Backend::sendTerminalIn()` and every bound
+  device's `Backend::terminalDataReceived()` back to the matching tab via
+  `feedDevice()`, re-deriving all of it on `tabsChanged()`.
 - **Controls** — `widgets/controlwidgets.h`/`.cpp`, one class per kind, each
   placed and adjusted individually (not a multi-button panel — drop as many
   as needed and size each on its own). No cell header (`wantsCellHeader()`

@@ -12,7 +12,9 @@ namespace traceview {
 // the line editor (bally_protocol/topicos/19_terminal_protocolado.txt
 // RESULTADO, PASSO 1/2 -- editing stays server-side), so this widget's job
 // is only (a) forward raw keystrokes/escape sequences while it has focus
-// and (b) render whatever comes back in appendData() using the same tiny
+// (Ctrl+Shift+C / Ctrl+Shift+V, and Ctrl+C with a selection, are the
+// clipboard exceptions -- see keyPressEvent) and
+// (b) render whatever comes back in appendData() using the same tiny
 // line model ShellSerial's output already assumes: \r returns to column 0
 // (without erasing), \b moves the cursor left one column, \n commits the
 // current line to scrollback, and any other byte >=0x20 overwrites (or
@@ -42,8 +44,17 @@ signals:
     // buffered/batched here) -- backspace is 0x7f, Enter is '\r', Tab is
     // '\t', arrow keys become the same ESC [ A/B/C/D sequences a real
     // terminal emulator sends (ShellSerial parses those, see PASSO 3), and
-    // Ctrl+<letter> becomes its ASCII control code (Ctrl+C -> 0x03, etc.).
+    // Ctrl+<letter> becomes its ASCII control code (Ctrl+C -> 0x03 when
+    // nothing is selected, etc.). Ctrl+Shift+V also comes through here, as
+    // the clipboard text typed in one go.
     void sendRequested(const QByteArray& data);
+
+    // Ctrl+Left / Ctrl+Right while this terminal has focus. Emitted instead
+    // of forwarding anything to the dongle (the bare arrow keys still go out
+    // as ESC [ D / ESC [ C) -- SerialMonitorWidget connects these to cycling
+    // its sibling per-device tabs.
+    void previousTabRequested();
+    void nextTabRequested();
 
 protected:
     void keyPressEvent(QKeyEvent* event) override;

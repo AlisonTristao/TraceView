@@ -64,6 +64,7 @@ add_library(traceview_telemetry STATIC
     telemetry/subscriptionstate.h
     telemetry/statustopicrecord.h
     telemetry/catalogtopicinfo.h
+    telemetry/deviceinforecord.h
     telemetry/telemetryseriesbuffer.cpp
     telemetry/telemetryseriesbuffer.h
 )
@@ -84,6 +85,7 @@ target_link_libraries(traceview_telemetry PUBLIC
 # traceview_telemetry, never on traceview_protocol/BTP.
 add_library(traceview_backend STATIC
     backend/backend.h
+    backend/statusseverity.h
 )
 
 set_target_properties(traceview_backend PROPERTIES LINKER_LANGUAGE CXX)
@@ -207,6 +209,8 @@ add_library(traceview_dashboard STATIC
     dashboard/widgets/serialmonitorwidget.h
     dashboard/widgets/serialterminalwidget.cpp
     dashboard/widgets/serialterminalwidget.h
+    dashboard/widgets/terminaltabbar.cpp
+    dashboard/widgets/terminaltabbar.h
     dashboard/widgets/controldata.cpp
     dashboard/widgets/controldata.h
     dashboard/widgets/controlwidgets.cpp
@@ -292,6 +296,43 @@ target_link_libraries(traceview_logs
         traceview_protocol
 )
 
+# traceview_diagnostics: the two diagnostics surfaces -- the Notification
+# History window (a replayable log of the status-bar messages MainWindow shows
+# and lets scroll away) and the BTP Traffic Monitor tab (a live table of every
+# BTP frame each device connection sends/receives, with a per-frame hex view
+# and a password-driven Decrypt box for channel-B payloads). NotificationLog
+# and FrameLog are the app-wide in-memory buffers MainWindow owns and feeds;
+# the widgets render them. Depends on traceview_protocol for BtpFrame,
+# ChannelSeal and deriveChannelKey, and on traceview_theme for severity
+# colours -- same layering as traceview_logs.
+add_library(traceview_diagnostics STATIC
+    diagnostics/notificationentry.h
+    diagnostics/notificationlog.cpp
+    diagnostics/notificationlog.h
+    diagnostics/notificationhistorywindow.cpp
+    diagnostics/notificationhistorywindow.h
+    diagnostics/framelogentry.h
+    diagnostics/framelog.cpp
+    diagnostics/framelog.h
+    diagnostics/hexdump.cpp
+    diagnostics/hexdump.h
+    diagnostics/btpmonitortab.cpp
+    diagnostics/btpmonitortab.h
+)
+
+target_include_directories(traceview_diagnostics PUBLIC
+    ${CMAKE_SOURCE_DIR}/include
+    ${CMAKE_SOURCE_DIR}/lib
+)
+
+target_link_libraries(traceview_diagnostics
+    PUBLIC
+        Qt6::Widgets
+        traceview_protocol
+    PRIVATE
+        traceview_theme
+)
+
 # traceview_ota: the OTA Update tab's content -- OtaClient (a
 # QNetworkAccessManager wrapper talking to bally_OS's OTAUpdater HTTP side
 # channel: GET /status, POST /update) and OtaTab, the table of devices it
@@ -326,6 +367,8 @@ target_link_libraries(traceview_ota
 add_library(traceview_ui STATIC
     core/aboutdialog.cpp
     core/aboutdialog.h
+    core/shortcutsdialog.cpp
+    core/shortcutsdialog.h
     core/donatedialog.cpp
     core/donatedialog.h
     core/debugchartswindow.cpp
@@ -382,6 +425,7 @@ target_link_libraries(traceview_ui
     PRIVATE
         traceview_dashboard
         traceview_devices
+        traceview_diagnostics
         traceview_logs
         traceview_ota
         traceview_project

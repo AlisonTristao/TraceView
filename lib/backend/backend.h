@@ -6,7 +6,9 @@
 #include <QVector>
 #include <QtGlobal>
 
+#include "backend/statusseverity.h"
 #include "telemetry/catalogtopicinfo.h"
+#include "telemetry/deviceinforecord.h"
 #include "telemetry/statustopicrecord.h"
 #include "telemetry/subscriptionstate.h"
 #include "telemetry/telemetrybinding.h"
@@ -103,8 +105,14 @@ signals:
     void bytesToWrite(const QByteArray& data);
     // A one-off, human-readable status update (session established/failed,
     // a subscription rate-limited or rejected, ...) meant for the status
-    // bar. `timeoutMs` is how long it should stay visible.
-    void statusMessage(const QString& text, int timeoutMs);
+    // bar. `timeoutMs` is how long it should stay visible; `severity` is a
+    // presentation hint (default Info) that also decides how MainWindow's
+    // Notification History keeps the entry -- see backend/statusseverity.h.
+    // The default keeps every 2-argument `emit statusMessage(text, ms)` and
+    // every signal-to-signal forward of it (ClockSync/CommandClient/HubBinder
+    // -> BtpBackend -> here) compiling unchanged.
+    void statusMessage(const QString& text, int timeoutMs,
+                       traceview::StatusSeverity severity = traceview::StatusSeverity::Info);
     // One decoded telemetry value for `binding`, with its origin timestamp.
     void fieldSample(const traceview::TelemetryFieldBinding& binding, quint64 timestampUs,
                      double value);
@@ -126,6 +134,13 @@ signals:
     // section shows -- live-mirrored the same way `Device::connected` is, not
     // user-editable and not persisted (see devices/deviceconfigdialog.h).
     void deviceIdentified(const QString& btpVersion, const QString& btpId);
+    // The device's MANIFEST_DATA source_info block (BTP's docs/commands.md
+    // section 3.12) -- firmware version, chip, running partition, a configured
+    // name/description. Shown read-only in DeviceConfigDialog's "Reported by
+    // device" section, live-mirrored the same way `deviceIdentified` is:
+    // reset (empty vector) on disconnect, never persisted. A backend whose
+    // device never sends a source_info block simply never emits this.
+    void deviceInfoReported(const QVector<traceview::DeviceInfoRecord>& info);
     // The transport is fine but the protocol session on top of it is dead and
     // will not recover on its own -- the owner should recycle the connection
     // (close it, and let its retry timer reopen it).

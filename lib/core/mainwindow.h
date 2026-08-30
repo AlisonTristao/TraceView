@@ -8,6 +8,7 @@
 #include <QString>
 #include <QVector>
 
+#include "backend/statusseverity.h"
 #include "devices/device.h"
 #include "devices/hubpeeraccumulator.h"
 #include "telemetry/telemetrybinding.h"
@@ -24,13 +25,17 @@ class QUndoGroup;
 namespace traceview {
 
 class Backend;
+class BtpMonitorTab;
 class DashboardGrid;
 class DashboardWidget;
 class DebugChartsWindow;
 class DeviceConnection;
 class DevicesGrid;
+class FrameLog;
 class LayersPanel;
 class LogViewer;
+class NotificationHistoryWindow;
+class NotificationLog;
 class OtaTab;
 class PanelDockController;
 class PropertiesPanel;
@@ -191,10 +196,11 @@ private:
     // (releaseHubPeerWatch()).
     void syncHubPeerWatches();
     // Once per second: refreshes each connected HubChannel child's
-    // Device::peerOnline/peerBootId from its parent's decoded hub.peers, and
-    // hands the change to that child's Backend::onPeerPresence() so it can
-    // re-request its catalog / re-subscribe after a robot reboot or a return
-    // from out-of-range.
+    // Device::peerOnline/peerPresenceKnown/peerLongOffline/peerBootId from its
+    // parent's decoded hub.peers (driving the card's green/amber/red dot and
+    // the dashboard cells' dot), and hands an on/off change to that child's
+    // Backend::onPeerPresence() so it can re-request its catalog / re-subscribe
+    // after a robot reboot or a return from out-of-range.
     void reconcileHubChildPresence();
     // Drops `deviceId`'s hub.peers watch and unsubscribes it. Called when the
     // device is removed or rebuilt; hubPeersFor() re-establishes the watch
@@ -231,6 +237,24 @@ private:
     // at the wrong tab). Only ever called before either handler has touched
     // the ribbon for this close event.
     void onOtaTabCloseRequested(int index);
+    // File > "BTP Traffic Monitor..." -- opens the singleton BTP monitor tab
+    // (creating it on first use) or switches to it. Same singleton-closable-tab
+    // lifecycle as onOpenOtaTab()/onOtaTabCloseRequested().
+    void onOpenBtpMonitor();
+    void onBtpMonitorTabCloseRequested(int index);
+    // Status-bar history button / View menu -- shows (or raises) the non-modal
+    // window listing every status-bar message posted this session.
+    void onShowNotificationHistory();
+    // View menu / F1 -- the read-only reference of every keyboard shortcut,
+    // built from the QActions here plus the terminal's own fixed chords.
+    void onShowKeyboardShortcuts();
+    // The single choke point every status-bar message goes through: shows it on
+    // the status bar for `timeoutMs` AND records it in m_notificationLog with
+    // `severity`/`source` so the history window can replay it. `source` is a
+    // device name for anything a Backend emitted, empty for app-level messages.
+    void postStatus(const QString& text, int timeoutMs,
+                    traceview::StatusSeverity severity = traceview::StatusSeverity::Info,
+                    const QString& source = QString());
     // Forwards OtaTab::passwordCacheChanged into an actual Device mutation --
     // OtaTab has no undo stack of its own to push this onto.
     void onOtaPasswordCacheChanged(const QString& deviceId, const QString& password, bool cache);
@@ -268,6 +292,19 @@ private:
     // been opened yet (or was closed).
     QWidget* m_otaTabPage = nullptr;
     OtaTab* m_otaTab = nullptr;
+    // The BTP Traffic Monitor tab -- same singleton-closable-tab lifecycle and
+    // "empty ribbon page as a stable key" trick as the OTA tab above.
+    QWidget* m_btpMonitorTabPage = nullptr;
+    BtpMonitorTab* m_btpMonitorTab = nullptr;
+    // App-wide in-memory diagnostics buffers (lib/diagnostics). Owned here,
+    // created first thing in the constructor; every DeviceConnection's Backend
+    // feeds them (see createDeviceConnection) and postStatus() feeds
+    // m_notificationLog. Not persisted -- empty on every launch.
+    NotificationLog* m_notificationLog = nullptr;
+    FrameLog* m_frameLog = nullptr;
+    // WA_DeleteOnClose'd like m_debugChartsWindow -- QPointer so it nulls out
+    // on close and a second "show history" just makes a fresh one.
+    QPointer<NotificationHistoryWindow> m_notificationWindow;
     // One real, independent serial connection per Device::id -- see
     // core/deviceconnection.h. Created/destroyed/updated in lockstep with
     // m_devicesGrid's own list (onDeviceAdded/onDeviceRemoved/onDeviceUpdated).
@@ -295,6 +332,7 @@ private:
     QAction* m_removeDeviceAction = nullptr;
     QAction* m_openLogFileAction = nullptr;
     QAction* m_openOtaTabAction = nullptr;
+    QAction* m_openBtpMonitorAction = nullptr;
     QAction* m_removeAction = nullptr;
     QAction* m_copyAction = nullptr;
     QAction* m_pasteAction = nullptr;
@@ -391,12 +429,19 @@ private:
     };
     QHash<QString, HubPeersWatch> m_hubPeerWatches;
     // Drives reconcileHubChildPresence() at 1 Hz -- the dongle caps hub.peers
-    // at 2 Hz and its "online" window is 3 s, so a 1 s reconcile is plenty.
+    // at 2 Hz and its "online" window is 4 s, so a 1 s reconcile is plenty.
     QTimer* m_hubPeerReconcileTimer = nullptr;
     // Per hub child (keyed by Device::id): consecutive reconcile ticks the
-    // robot has read offline. Debounces the offline direction so a single
-    // missed STATUS does not flap the card or hand BtpBackend an on/off/on.
+    // robot has read offline. Debounces the offline direction (a single missed
+    // STATUS must not flap the card or hand BtpBackend an on/off/on) and, past
+    // a second threshold, escalates the card from amber "stale" to red "dead".
     QHash<QString, int> m_hubChildOfflineTicks;
+    // Per hub child: consecutive reconcile ticks with the dongle's hub.peers
+    // view unreadable while it has never once been readable. A short grace
+    // (a fresh child legitimately has no sample yet); once it runs out the
+    // absence itself is taken as evidence, so a watch that never resolves can
+    // no longer leave the dot stuck green.
+    QHash<QString, int> m_hubChildNoViewTicks;
     QLabel* m_telemetryStatusLabel = nullptr;
     int m_runTabIndex = -1;
     // Read-only "device: dot" strip replacing the old single-connection port/

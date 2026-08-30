@@ -34,6 +34,10 @@ add_traceview_test(test_controldata traceview_dashboard)
 # but the existing precedent (test_dashboardgrid uses QTest::mousePress on
 # real QWidgets) already covers widget-level QTest usage in this repo.
 add_traceview_test(test_serialterminalwidget traceview_dashboard)
+# The multi-tab serial monitor: config migration (bare deviceId / {} -> one
+# tab), the tab list, device-name labels, per-device inbound routing and the
+# device-tagged outbound signal -- all widget-level, no transport.
+add_traceview_test(test_serialmonitorwidget traceview_dashboard)
 # topico 26: a Device that connects THROUGH another Device. traceview_ui so
 # it can build a real DeviceConnection/BtpBackend pair, which is what the
 # multiplexing test drives -- no port and no hardware are involved.
@@ -123,3 +127,12 @@ add_traceview_test(test_logfilereader traceview_protocol)
 # from cancelling a request allowed 4 seconds to answer.
 add_traceview_test(test_otaclient traceview_ota)
 add_traceview_test(test_mdnsresolver traceview_ota)
+
+# Diagnostics (lib/diagnostics): the two in-memory buffers behind the
+# Notification History window and the BTP Traffic Monitor, the hex-dump
+# formatter they share, and the seal/open round trip the monitor's Decrypt
+# box performs (ChannelSeal, the same path BtpBackend uses in production).
+add_traceview_test(test_notificationlog traceview_diagnostics)
+add_traceview_test(test_framelog traceview_diagnostics)
+add_traceview_test(test_hexdump traceview_diagnostics)
+add_traceview_test(test_channelopen traceview_protocol btp::codec)

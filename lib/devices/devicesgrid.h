@@ -77,12 +77,22 @@ public:
     // identity from a previous session never lingers in the UI.
     void setDeviceIdentity(const QString& id, const QString& btpVersion, const QString& btpId);
     // Mirrors the dongle's hub.peers view of a hub child's robot into
-    // device.peerOnline/peerBootId -- same non-undoable, not-persisted
-    // treatment as setDeviceConnected()/setDeviceIdentity(). Unlike those it
-    // does NOT emit deviceUpdated(): it must not trigger MainWindow's
-    // onDeviceUpdated() (which re-applies the transport target and reattaches
-    // hub children) once a second. Refreshes the card in place.
-    void setDevicePeerState(const QString& id, bool peerOnline, quint32 peerBootId);
+    // device.peerOnline/peerPresenceKnown/peerLongOffline/peerBootId -- same
+    // non-undoable, not-persisted treatment as setDeviceConnected()/
+    // setDeviceIdentity(). Unlike those it does NOT emit deviceUpdated(): it
+    // must not trigger MainWindow's onDeviceUpdated() (which re-applies the
+    // transport target and reattaches hub children) once a second. Refreshes
+    // the card in place. See Device::peerOnline for what the flags mean.
+    void setDevicePeerState(const QString& id, bool peerOnline, bool peerPresenceKnown,
+                            bool peerLongOffline, quint32 peerBootId);
+    // Mirrors a live Backend::deviceInfoReported into device.reportedInfo (the
+    // device's MANIFEST_DATA source_info block, BTP's docs/commands.md section
+    // 3.12). Same not-undoable, not-persisted, no-deviceUpdated() treatment as
+    // setDevicePeerState() above -- a manifest arriving must not re-apply the
+    // connection target. Refreshes the card in place and, via
+    // deviceReportedInfoChanged() below, any open config dialog. Called with an
+    // empty vector when the connection drops.
+    void setDeviceReportedInfo(const QString& id, const QVector<DeviceInfoRecord>& info);
     // Tells this device's config dialog, if it's currently open, to re-pull
     // its catalog list from m_topicCatalogProvider. MANIFEST_DATA lands
     // asynchronously after the handshake that fires deviceIdentified() (see
@@ -186,6 +196,9 @@ signals:
     // this class's own dialog-refresh wiring; nothing outside DevicesGrid
     // needs to listen to it.
     void deviceCatalogChanged(const QString& id);
+    // Same bridge as deviceCatalogChanged() but for setDeviceReportedInfo() --
+    // pushes the source_info block into the open config dialog for `id`.
+    void deviceReportedInfoChanged(const QString& id);
     // Bubbled straight from the selected card's DeviceCard::connectToggleRequested
     // -- DevicesGrid has no DeviceConnection of its own to flip, MainWindow does.
     void connectToggleRequested(const QString& deviceId);

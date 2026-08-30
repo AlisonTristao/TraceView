@@ -86,6 +86,13 @@ public:
     // was first opened (see result()'s own comment).
     void setReportedIdentity(const QString& btpVersion, const QString& btpId);
 
+    // Refreshes the read-only "Reported by device" info list (the device's
+    // MANIFEST_DATA source_info block, BTP's docs/commands.md section 3.12) in
+    // place. Same treatment as setReportedIdentity() -- updates m_device too,
+    // arrives asynchronously after the handshake, called with an empty vector
+    // when the connection drops.
+    void setReportedInfo(const QVector<DeviceInfoRecord>& info);
+
     // Refreshes the read-only status line the same way, and for the same
     // reason -- see setReportedIdentity() above.
     void setConnectionStatus(bool connected);
@@ -195,6 +202,11 @@ private:
     // Read-only: populated from m_device.btpVersion/btpId (the last
     // HELLO_RESULT), never written back to the device in result().
     QLineEdit* m_btpVersionEdit = nullptr;
+    // Read-only multi-line "label: value" view of m_device.reportedInfo (the
+    // MANIFEST_DATA source_info block), populated by setReportedInfo(). Shows
+    // a placeholder while the device has reported nothing, same as
+    // m_btpVersionEdit.
+    QLabel* m_reportedInfoLabel = nullptr;
     QLineEdit* m_btpIdEdit = nullptr;
 
     // Read-only, populated by setCatalogTopics() -- see that method's own

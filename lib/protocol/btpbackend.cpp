@@ -284,7 +284,7 @@ BtpBackend::BtpBackend(BtpSession::Framing framing, btp::TransportProfile encode
                         tr("Robot 0x%1 is online but its catalog has not arrived — check the "
                            "dongle (hub -manifest)")
                             .arg(m_peerSourceId, 8, 16, QChar('0')).toUpper(),
-                        8000);
+                        8000, StatusSeverity::Warning);
                 }
                 // Give up the fast cadence: a robot that has ignored this
                 // many requests is not answering the next one any sooner, and
@@ -308,9 +308,11 @@ BtpBackend::BtpBackend(BtpSession::Framing framing, btp::TransportProfile encode
     connect(m_btpHandshake, &BtpHandshake::sessionEstablished, this,
             [this](quint32 peerSourceId, quint32 peerBootId, quint32 peerConfigRevision,
                    quint8 selectedVersion) {
-                emit statusMessage(tr("BTP session established (HELLO_RESULT=SUCCESS)"), 5000);
+                emit statusMessage(tr("BTP session established (HELLO_RESULT=SUCCESS)"), 5000,
+                                   StatusSeverity::Success);
                 m_sessionClosing = false;
                 m_sessionEstablished = true;
+                m_sessionPeerSourceId = peerSourceId;
                 m_keepaliveTimer->start();
                 m_manifestClient->onSessionEstablished(peerConfigRevision);
                 m_subscriptionManager->onSessionEstablished();
@@ -337,7 +339,7 @@ BtpBackend::BtpBackend(BtpSession::Framing framing, btp::TransportProfile encode
             m_sessionClosing = false;
             return;
         }
-        emit statusMessage(tr("BTP handshake failed: %1").arg(reason), 8000);
+        emit statusMessage(tr("BTP handshake failed: %1").arg(reason), 8000, StatusSeverity::Error);
         // BtpHandshake has already exhausted its own retries by the time it
         // says this, so the ENTER line is not what is missing any more --
         // recycling the port is the only escalation left. Without this the
@@ -352,6 +354,16 @@ BtpBackend::BtpBackend(BtpSession::Framing framing, btp::TransportProfile encode
     // onSessionFrameReceived()'s own comment.
     connect(m_btpSession, &BtpSession::frameReceived, this,
             &BtpBackend::onSessionFrameReceived);
+    // Traffic monitor taps. Inbound is forwarded straight off BtpSession, i.e.
+    // before onSessionFrameReceived() opens any seal -- the monitor wants the
+    // frame exactly as it arrived, ciphertext and all.
+    connect(m_btpSession, &BtpSession::frameReceived, this, [this](const BtpFrame& frame) {
+        emit frameObserved(FrameDirection::Inbound, frame);
+    });
+    connect(m_btpSession, &BtpSession::frameSent, this, [this](const BtpFrame& frame) {
+        emit frameObserved(FrameDirection::Outbound, frame);
+    });
+    connect(m_btpSession, &BtpSession::frameRejected, this, &BtpBackend::frameDecodeFailed);
     connect(m_protocolRouter, &ProtocolRouter::telemetrySampleReceived, m_telemetryFieldRouter,
             &TelemetryFieldRouter::onTelemetrySample);
     connect(m_telemetryFieldRouter, &TelemetryFieldRouter::fieldSample, this,
@@ -399,7 +411,7 @@ BtpBackend::BtpBackend(BtpSession::Framing framing, btp::TransportProfile encode
                     emit statusMessage(
                         tr("Robot 0x%1 rebooted — catalog and subscriptions refreshed")
                             .arg(sourceId, 8, 16, QChar('0')).toUpper(),
-                        5000);
+                        5000, StatusSeverity::Success);
                 }
                 // A robot behind a hub negotiates no BTP version (no
                 // HELLO_RESULT), so the closest thing to a "version" it reports
@@ -409,6 +421,18 @@ BtpBackend::BtpBackend(BtpSession::Framing framing, btp::TransportProfile encode
                 emit deviceIdentified(
                     tr("config rev %1").arg(configRevision),
                     QString("0x%1").arg(sourceId, 8, 16, QChar('0')).toUpper());
+            });
+    // source_info (commands.md 3.12) for THIS backend's device: the robot for
+    // a child, the dongle itself for the console backend (index 0 of its
+    // target=0 enumeration). A robot's block that merely passed through the
+    // console's catalog is not this device and is ignored -- same test the
+    // sourceDescribed handler above uses, widened to cover the console.
+    connect(m_manifestClient, &ManifestClient::sourceInfoReported, this,
+            [this](quint32 sourceId, const QVector<DeviceInfoRecord>& info) {
+                const quint32 mine = (m_peerSourceId != 0) ? m_peerSourceId : m_sessionPeerSourceId;
+                if (mine != 0 && sourceId == mine) {
+                    emit deviceInfoReported(info);
+                }
             });
     // CRITERIO DE ACEITE "pedido acima do maximo e limitado e informado ao
     // cliente": the granted rate is surfaced, never silently assumed equal to
@@ -420,7 +444,7 @@ BtpBackend::BtpBackend(BtpSession::Framing framing, btp::TransportProfile encode
                         .arg(topicId, 4, 16, QChar('0'))
                         .arg(sourceId, 8, 16, QChar('0'))
                         .arg(formatRateMillihz(effective), formatRateMillihz(requested)),
-                    8000);
+                    8000, StatusSeverity::Warning);
             });
     connect(m_subscriptionManager, &SubscriptionManager::subscriptionRejected, this,
             [this](quint32 sourceId, quint16 topicId, quint8 status, quint16 errorCode) {
@@ -430,7 +454,7 @@ BtpBackend::BtpBackend(BtpSession::Framing framing, btp::TransportProfile encode
                                        .arg(sourceId, 8, 16, QChar('0'))
                                        .arg(status, 2, 16, QChar('0'))
                                        .arg(errorCode, 4, 16, QChar('0')),
-                                   8000);
+                                   8000, StatusSeverity::Error);
             });
     connect(m_subscriptionManager, &SubscriptionManager::subscriptionsChanged, this,
             &Backend::subscriptionsChanged);
@@ -605,7 +629,7 @@ void BtpBackend::onSessionFrameReceived(const BtpFrame& frame) {
                 emit statusMessage(
                     tr("Dropped an unsealed frame on a sealed hub channel "
                        "(check the robot's channel-B password)"),
-                    6000);
+                    6000, StatusSeverity::Warning);
             }
             return;
         }

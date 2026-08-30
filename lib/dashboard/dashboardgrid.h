@@ -233,6 +233,11 @@ signals:
     // grid (e.g. SerialWidgetBridge wiring a control's output to
     // SerialManager -- BACKEND_TODO.txt Task 9/10).
     void widgetCreated(DashboardWidget* widget);
+    // Fires from setDeviceConnected() only when the remembered state for
+    // `deviceId` actually flips. SerialWidgetBridge forwards it to the
+    // multi-tab serial monitors so each tab's connection dot stays live --
+    // the per-cell header dot is handled inline in setDeviceConnected().
+    void deviceConnectionStateChanged(const QString& deviceId, bool connected);
 
 protected:
     void resizeEvent(QResizeEvent* event) override;

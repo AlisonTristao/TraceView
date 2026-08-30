@@ -96,6 +96,7 @@ DeviceConnection::DeviceConnection(CommType commType, TransportType transportTyp
     connect(m_transport, &Transport::connectionStateChanged, this,
             &DeviceConnection::connectionStateChanged);
     connect(m_backend, &Backend::deviceIdentified, this, &DeviceConnection::deviceIdentified);
+    connect(m_backend, &Backend::deviceInfoReported, this, &DeviceConnection::deviceInfoReported);
     // A dead session on a live transport: close it and let the retry timer
     // below reopen it, which restarts the handshake through
     // onTransportConnectionChanged(). Closing is what makes attemptReconnect()
