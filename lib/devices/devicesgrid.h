@@ -76,15 +76,15 @@ public:
     // Called with empty strings when the connection drops, so a stale
     // identity from a previous session never lingers in the UI.
     void setDeviceIdentity(const QString& id, const QString& btpVersion, const QString& btpId);
-    // Mirrors the dongle's hub.peers view of a hub child's robot into
-    // device.peerOnline/peerPresenceKnown/peerLongOffline/peerBootId -- same
-    // non-undoable, not-persisted treatment as setDeviceConnected()/
-    // setDeviceIdentity(). Unlike those it does NOT emit deviceUpdated(): it
-    // must not trigger MainWindow's onDeviceUpdated() (which re-applies the
-    // transport target and reattaches hub children) once a second. Refreshes
-    // the card in place. See Device::peerOnline for what the flags mean.
+    // Mirrors reconcileHubChildPresence's verdict for a hub child's robot into
+    // device.peerOnline/peerPresenceKnown/peerBootId -- same non-undoable,
+    // not-persisted treatment as setDeviceConnected()/setDeviceIdentity().
+    // Unlike those it does NOT emit deviceUpdated(): it must not trigger
+    // MainWindow's onDeviceUpdated() (which re-applies the transport target and
+    // reattaches hub children) once a second. Refreshes the card in place. See
+    // Device::peerOnline for what the flags mean.
     void setDevicePeerState(const QString& id, bool peerOnline, bool peerPresenceKnown,
-                            bool peerLongOffline, quint32 peerBootId);
+                            quint32 peerBootId);
     // Mirrors a live Backend::deviceInfoReported into device.reportedInfo (the
     // device's MANIFEST_DATA source_info block, BTP's docs/commands.md section
     // 3.12). Same not-undoable, not-persisted, no-deviceUpdated() treatment as

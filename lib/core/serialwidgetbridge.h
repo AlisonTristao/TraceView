@@ -39,7 +39,7 @@ class SerialMonitorWidget;
 // connection per distinct bound device; rewireMonitorInbound() rebuilds that
 // set whenever the monitor's tab list changes (SerialMonitorWidget::tabsChanged,
 // and the subscription-refresh hook MainWindow already drives). MainWindow also
-// pushes device names + connection state through here for the tab labels/dots.
+// pushes device names through here for the tab labels.
 class SerialWidgetBridge : public QObject {
     Q_OBJECT
 
@@ -56,9 +56,6 @@ public:
     // deviceId -> display name, for the monitors' tab labels. Pushed by
     // MainWindow on every device add/remove/rename.
     void setDeviceNames(const QHash<QString, QString>& namesById);
-    // deviceId -> connected, for the per-tab connection dots. Pushed by
-    // MainWindow (via DashboardGrid::deviceConnectionStateChanged) on flips.
-    void setDeviceConnected(const QString& deviceId, bool connected);
 
 private:
     void wireWidget(DashboardWidget* widget);
@@ -69,7 +66,6 @@ private:
     // Tears down `monitor`'s inbound connections and rebuilds one per distinct
     // non-empty device id in monitor->tabDeviceIds().
     void rewireMonitorInbound(SerialMonitorWidget* monitor);
-    void pushDeviceMetaTo(SerialMonitorWidget* monitor) const;
 
     DashboardGrid* m_grid;
     std::function<DeviceConnection*(const QString&)> m_deviceConnectionFor;
@@ -79,7 +75,6 @@ private:
     QHash<SerialMonitorWidget*, QList<QMetaObject::Connection>> m_monitorInbound;
 
     QHash<QString, QString> m_deviceNames;
-    QHash<QString, bool> m_deviceConnected;
 };
 
 }  // namespace traceview

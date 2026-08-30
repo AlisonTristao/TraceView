@@ -26,6 +26,10 @@ add_traceview_test(test_devicesgrid traceview_devices)
 # below the protocol layer on purpose (see lib/devices/hubpeeraccumulator.h),
 # so this exercises the decode with no BTP and no QWidget involved.
 add_traceview_test(test_hubpeeraccumulator traceview_devices)
+# The combine rule for a hub child's green/amber dot -- end-to-end robot frame
+# vs the dongle's hub.peers fallback, the offline debounce, and the sticky
+# "known" flag. Pure function (device.h), no MainWindow, no QWidget.
+add_traceview_test(test_hubchildpresence traceview_devices)
 add_traceview_test(test_chartdata traceview_dashboard)
 add_traceview_test(test_controldata traceview_dashboard)
 # topico 19: the dumb-terminal line model (\r/\b/\n handling) and keystroke

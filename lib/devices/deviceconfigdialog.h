@@ -190,6 +190,16 @@ private:
     // only displays this field; it's edited here, same convention as every
     // other static per-device setting.
     QLineEdit* m_otaAddressEdit = nullptr;
+    // "Use reported" button next to the address field. The device announces
+    // its own OTA hostname in the MANIFEST_DATA source_info block (key
+    // "ota_endpoint", BTP's docs/commands.md section 3.12) -- the device
+    // knows it better than a hand-typed guess. Shown only while a reported
+    // endpoint exists and differs from what's typed; clicking it fills the
+    // field. Never overwrites silently -- otaAddress is persisted config, the
+    // reported value is live session state.
+    QToolButton* m_useReportedOtaButton = nullptr;
+    QString m_reportedOtaEndpoint;
+    void updateReportedOtaHint();
     // The OTA tab (lib/ota/otatab.h) can also edit otaPassword/
     // cacheOtaPassword -- from its own per-row password field, committed via
     // OtaTab::passwordCacheChanged() -- but a device is configured here

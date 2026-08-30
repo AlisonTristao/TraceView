@@ -19,15 +19,14 @@
             },
             {
                 "baudRate": 921600,
-                "cacheOtaPassword": true,
+                "cacheOtaPassword": false,
                 "cachePeerPassword": true,
                 "commType": 0,
                 "description": "",
-                "id": "1dd358eb-1e20-42f7-8a27-8d28c9bf2466",
+                "id": "ec1f2d5f-546e-4aee-8c08-9b3c6e9d47bf",
                 "lineTerminator": 1,
                 "name": "Bally",
-                "otaAddress": "ballyrobot.local",
-                "otaPassword": "657585",
+                "otaAddress": "",
                 "parentDeviceId": "7343d9f3-c204-44a7-9f14-6e183cc70af4",
                 "peerPassword": "alison",
                 "peerSourceId": 2672043140,
@@ -48,7 +47,14 @@
                     "items": [
                         {
                             "config": {
-                                "deviceId": "7343d9f3-c204-44a7-9f14-6e183cc70af4"
+                                "tabs": [
+                                    {
+                                        "deviceId": "7343d9f3-c204-44a7-9f14-6e183cc70af4"
+                                    },
+                                    {
+                                        "deviceId": "ec1f2d5f-546e-4aee-8c08-9b3c6e9d47bf"
+                                    }
+                                ]
                             },
                             "groupId": "",
                             "height": 1,
@@ -56,22 +62,8 @@
                             "key": "",
                             "name": "",
                             "type": "serial_monitor",
-                            "width": 0.49999999999999994,
+                            "width": 1,
                             "x": 0,
-                            "y": 0
-                        },
-                        {
-                            "config": {
-                                "deviceId": "1dd358eb-1e20-42f7-8a27-8d28c9bf2466"
-                            },
-                            "groupId": "",
-                            "height": 1,
-                            "id": "9f078262-44cb-4948-bf9b-725aa1491643",
-                            "key": "",
-                            "name": "",
-                            "type": "serial_monitor",
-                            "width": 0.49999999999999994,
-                            "x": 0.5,
                             "y": 0
                         }
                     ]

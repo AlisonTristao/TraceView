@@ -1409,26 +1409,21 @@ void MainWindow::syncHubPeerWatches() {
 }
 
 void MainWindow::reconcileHubChildPresence() {
-    // Consecutive 1 Hz ticks a robot must read offline before the card leaves
-    // green. The dongle already needs ~4 s of silence to flip its own hub.peers
-    // `online` flag, so the card only actually goes amber after ~8 s of a robot
-    // genuinely not being heard -- a brief radio blip or the robot stalled for a
-    // beat (a busy control loop, an I2C timeout) must not flap it or make
-    // BtpBackend see a spurious reconnect.
+    // A hub child's robot is "live" when its own frames are still reaching this
+    // TraceView -- a channel-B frame that passed AEAD open, no older than this.
+    // Comfortably above any sane telemetry period and above the manifest
+    // keepalive, so a live-but-quiet link does not drop to amber; a robot that
+    // has genuinely stopped crosses it within a couple of seconds of the last
+    // sample that would have come.
+    constexpr qint64 kPeerFrameLiveMs = 12000;
+    // Debounce for the FALLBACK path only (hub.peers, used before a
+    // subscription is producing telemetry): a single missed 2 Hz sample must
+    // not flap the dot or hand BtpBackend an on/off/on.
     constexpr int kOfflineTicksToConfirm = 5;
-    // ...and how much longer before the link is called dead (red) rather than
-    // merely stale (amber). A robot unreachable this long is not "about to
-    // answer" -- the operator needs to see that the way they see a pulled
-    // cable, not a permanent amber they have learned to ignore.
-    constexpr int kOfflineTicksToDeadLink = 15;
-    // The dongle's hub.peers view legitimately is not readable for a few
-    // seconds after a child connects (manifest still in flight, first sample
-    // not published). Wait this long before the ABSENCE of a view itself counts
-    // as evidence -- until then the card sits amber "locating", never green.
-    constexpr int kNoPeerViewGraceTicks = 8;
 
     syncHubPeerWatches();
 
+    const qint64 nowMs = QDateTime::currentMSecsSinceEpoch();
     bool anyChanged = false;
     const QVector<Device> devices = m_devicesGrid->devices();
     for (const Device& device : devices) {
@@ -1437,67 +1432,71 @@ void MainWindow::reconcileHubChildPresence() {
             continue;
         }
 
-        // Can the dongle's peer list be read at all right now?
-        QVector<HubPeer> peers;
+        // (1) Ground truth: are the robot's own frames reaching us end to end?
+        // This is verified locally (AEAD open on channel B) and is exactly what
+        // the operator sees in the BTP traffic monitor. It does NOT depend on
+        // the dongle's hub.peers view, which tracks authenticated channel-C
+        // STATUS separately and can lag or disagree -- the false-red this whole
+        // rewrite is about.
+        qint64 lastPeerFrameMs = 0;
+        if (DeviceConnection* c = m_deviceConnections.value(device.id)) {
+            if (auto* btp = qobject_cast<BtpBackend*>(c->backend())) {
+                lastPeerFrameMs = btp->lastPeerDataFrameMsSinceEpoch();
+            }
+        }
+        const bool dataFlowing =
+            lastPeerFrameMs != 0 && nowMs - lastPeerFrameMs < kPeerFrameLiveMs;
+
+        // (2) Fallback: the dongle's hub.peers opinion, for the window before a
+        // subscription is producing telemetry. Also the only source of the
+        // robot's boot_id, which onPeerPresence() needs for reboot detection.
+        bool hubKnown = false;
+        bool hubOnline = false;
+        quint32 bootId = device.peerBootId;
         const auto watchIt = m_hubPeerWatches.constFind(device.parentDeviceId);
         if (watchIt != m_hubPeerWatches.constEnd() && watchIt->handle != 0) {
-            peers = watchIt->accumulator.peers();
-        }
-        const bool havePeerView = !peers.isEmpty();
-
-        bool rawOnline = false;
-        quint32 bootId = device.peerBootId;
-        bool presenceKnown = device.peerPresenceKnown;
-
-        if (havePeerView) {
-            // A verdict, either way. The dongle keeps a heard robot in
-            // hub.peers forever (its row never ages out), so "not in the list"
-            // means a robot it has never authenticated -- read as offline.
-            m_hubChildNoViewTicks.remove(device.id);
-            presenceKnown = true;
-            for (const HubPeer& peer : peers) {
-                if (peer.sourceId == device.peerSourceId) {
-                    rawOnline = peer.online;
-                    bootId = peer.bootId;
-                    break;
+            const QVector<HubPeer> peers = watchIt->accumulator.peers();
+            if (!peers.isEmpty()) {
+                hubKnown = true;
+                for (const HubPeer& peer : peers) {
+                    if (peer.sourceId == device.peerSourceId) {
+                        hubOnline = peer.online;
+                        bootId = peer.bootId;
+                        break;
+                    }
                 }
             }
-        } else if (!presenceKnown) {
-            // No view yet and never had one -- amber "locating" until the grace
-            // runs out, then treat the continued absence as evidence (a watch
-            // that will not resolve must not leave the dot green forever).
-            if (++m_hubChildNoViewTicks[device.id] >= kNoPeerViewGraceTicks) {
-                presenceKnown = true;  // rawOnline stays false
-            }
         }
-        // havePeerView false but presenceKnown already true: the watch resolved
-        // and then went unreadable (the dongle's own session blipped). Keep the
-        // last verdict and let the offline debounce below carry it.
 
-        int& offTicks = m_hubChildOfflineTicks[device.id];
-        offTicks = rawOnline ? 0 : qMin(offTicks + 1, kOfflineTicksToDeadLink + 1);
-        // The debounce only shields an ALREADY-established "online" from a
-        // single missed sample; it never manufactures one out of nothing.
-        const bool online = rawOnline || (device.peerOnline && offTicks < kOfflineTicksToConfirm);
-        const bool longOffline = presenceKnown && !online && offTicks >= kOfflineTicksToDeadLink;
+        // Combine the two positive signals (either means online), debounced on
+        // the way down, sticky on `known`. Never a hard offline here: for a hub
+        // child "connected" already means the dongle is relaying, so red is
+        // reserved for the dongle link itself dropping (!device.connected).
+        const HubChildPresence prev{device.peerOnline, device.peerPresenceKnown,
+                                    m_hubChildOfflineTicks.value(device.id, 0)};
+        const HubChildPresence v =
+            hubChildPresence(dataFlowing, hubKnown, hubOnline, prev, kOfflineTicksToConfirm);
+        m_hubChildOfflineTicks[device.id] = v.offlineTicks;
+        const bool online = v.online;
+        const bool known = v.known;
 
-        if (online == device.peerOnline && presenceKnown == device.peerPresenceKnown &&
-            longOffline == device.peerLongOffline && bootId == device.peerBootId) {
+        if (online == device.peerOnline && known == device.peerPresenceKnown &&
+            bootId == device.peerBootId) {
             continue;
         }
         // Announce only a genuine transition between two KNOWN states -- not the
         // first acquisition, and not "locating -> offline" (nothing was lost).
-        if (presenceKnown && device.peerPresenceKnown && online != device.peerOnline) {
+        if (known && device.peerPresenceKnown && online != device.peerOnline) {
             const QString name = device.name.isEmpty() ? tr("(unnamed)") : device.name;
             postStatus(online ? tr("%1: robot is responding again").arg(name)
                               : tr("%1: robot stopped responding (hub link still up)").arg(name),
                        5000, online ? StatusSeverity::Success : StatusSeverity::Warning, name);
         }
-        m_devicesGrid->setDevicePeerState(device.id, online, presenceKnown, longOffline, bootId);
-        // The dashboard widgets' own connection dot only knows connected/not --
-        // give a hub child's charts a live dot only while the robot really is
-        // reachable, not merely while the cable to the dongle is in.
-        m_dashboardGrid->setDeviceConnected(device.id, online && presenceKnown && !longOffline);
+        m_devicesGrid->setDevicePeerState(device.id, online, known, bootId);
+        // The dashboard cells' own dot only knows connected/not -- give a hub
+        // child's charts a live dot only while the robot's data is really
+        // arriving, not merely while the cable to the dongle is in.
+        m_dashboardGrid->setDeviceConnected(device.id, online);
         if (DeviceConnection* c = m_deviceConnections.value(device.id)) {
             c->backend()->onPeerPresence(online, bootId);
         }
@@ -1706,7 +1705,6 @@ void MainWindow::onDeviceRemoved(const QString& id) {
     // connection, so it has to still be reachable in the hash.
     releaseHubPeerWatch(id);
     m_hubChildOfflineTicks.remove(id);
-    m_hubChildNoViewTicks.remove(id);
     DeviceConnection* connection = m_deviceConnections.take(id);
     if (!connection) {
         return;
@@ -1813,12 +1811,11 @@ void MainWindow::onDeviceConnectionStateChanged(const QString& deviceId, bool co
         // from a previous session (or a previous device on this port) must not
         // linger. Refilled on the next manifest once reconnected.
         m_devicesGrid->setDeviceReportedInfo(deviceId, {});
-        // Same for the hub.peers-derived presence: back to "unknown" (amber
-        // "locating"), NOT a fake "online" -- a reconnect must re-earn green
-        // from the dongle actually reporting the robot, not assume it.
-        m_devicesGrid->setDevicePeerState(deviceId, false, false, false, 0);
+        // Same for the presence verdict: back to "unknown" (amber "locating"),
+        // NOT a fake "online" -- a reconnect must re-earn green from the robot's
+        // frames actually arriving again, not assume it.
+        m_devicesGrid->setDevicePeerState(deviceId, false, false, 0);
         m_hubChildOfflineTicks.remove(deviceId);
-        m_hubChildNoViewTicks.remove(deviceId);
     } else {
         // A hub child coming up needs its parent's hub.peers watch, and the
         // reconcile that follows, promptly -- not on the next 1 s tick.

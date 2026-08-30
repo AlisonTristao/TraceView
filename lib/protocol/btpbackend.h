@@ -133,6 +133,19 @@ public:
         return m_peerSourceId;
     }
 
+    // Hub child only (0 otherwise, and 0 until the first one): the wall-clock
+    // ms (QDateTime::currentMSecsSinceEpoch) at which a frame that genuinely
+    // originated at the ROBOT was last accepted here -- a channel-B frame that
+    // passed AEAD open, or, on an unkeyed child, a forwarded data frame.
+    // MainWindow::reconcileHubChildPresence polls this as the end-to-end "the
+    // robot is really talking to us" signal, the one that does not depend on
+    // the dongle's second-hand hub.peers view. The hub's own plaintext control
+    // answers (MANIFEST_DATA / SUBSCRIBE_RESULT, served from its cache) do NOT
+    // count: they prove the dongle is reachable, not the robot.
+    qint64 lastPeerDataFrameMsSinceEpoch() const {
+        return m_lastPeerDataFrameMs;
+    }
+
 signals:
     // Hands over one received frame's octets, exactly as they came off the
     // wire, tagged with the source_id already parsed out of its header.
@@ -258,14 +271,19 @@ private:
     QTimer* m_childCatalogRetryTimer = nullptr;
     bool m_childCatalogReceived = false;
 
-    // Hub child only, fed by onPeerPresence() from MainWindow's hub.peers
-    // reconcile. m_peerOnline starts true so a child is not painted amber for
-    // the second before the first hub.peers sample; m_childPeerBootId is the
-    // boot the last applied MANIFEST_DATA described (0 = none yet) and is what
-    // a reboot is detected against -- see the ManifestClient::sourceDescribed
-    // handler.
+    // Hub child only, fed by onPeerPresence() from MainWindow's reconcile.
+    // m_peerOnline drives only the "waiting vs failed" status text now (the
+    // card dot is driven end-to-end, see m_lastPeerDataFrameMs);
+    // m_childPeerBootId is the boot the last applied MANIFEST_DATA described
+    // (0 = none yet) and is what a reboot is detected against -- see the
+    // ManifestClient::sourceDescribed handler.
     bool m_peerOnline = true;
     quint32 m_childPeerBootId = 0;
+    // Hub child only: wall-clock ms of the last frame accepted here that came
+    // from the robot itself (AEAD-opened, or forwarded on an unkeyed child).
+    // 0 = none this link. Exposed via lastPeerDataFrameMsSinceEpoch(); reset
+    // in onTransportConnectionChanged().
+    qint64 m_lastPeerDataFrameMs = 0;
     // Rate-limits the boot-change-triggered catalog re-request in
     // onPeerPresence(), which is fed by a 1 Hz reconcile.
     qint64 m_lastPresenceCatalogRequestMs = 0;

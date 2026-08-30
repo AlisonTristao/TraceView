@@ -130,11 +130,14 @@ lives in its own module under
   No history/axis settings and no threshold-triggered actions —
   deliberately left out, it only ever reflects the current value.
 - **Serial Monitor** — `widgets/serialmonitorwidget.h`/`.cpp`
-  (`serial_monitor`): a tab strip (`widgets/terminaltabbar.h`/`.cpp`, the
-  same folder-tab look as the ribbon) over one
+  (`serial_monitor`): a header row (a tab strip
+  `widgets/terminaltabbar.h`/`.cpp` on the left, a right-aligned **Clear**
+  button that wipes the visible terminal's scrollback) over one
   `widgets/serialterminalwidget.h`/`.cpp` per tab — a
   miniterm/PlatformIO-Serial-Monitor-style terminal with no input line, one
-  tab per device. Each tab is labelled by its device's name; the terminal
+  tab per device. The tabs are plain butted rectangles
+  (`|terminal 1|terminal 2|`), every tab the same width (sized to the widest
+  label) and labelled by its device's name; the terminal
   surface itself captures the keyboard and emits `sendRequested(QByteArray)`
   per keystroke (immediately, never buffered until Enter), which the widget
   re-emits as `terminalInput(deviceId, bytes)` tagged with the active tab's
@@ -144,7 +147,7 @@ lives in its own module under
   the widget's config — `{ "tabs": [ { "deviceId": … }, … ] }`, edited in
   `widgets/serialmonitorconfigeditor.h`/`.cpp` (add/remove/reorder rows).
   A pre-tabs config (a bare `deviceId`, or none) reads as a single tab, and
-  a lone tab shows no strip — visually identical to the old single terminal.
+  a lone tab hides the strip (leaving just the Clear button).
   `core/serialwidgetbridge.h` resolves each tab's device and wires the
   active terminal to its `Backend::sendTerminalIn()` and every bound
   device's `Backend::terminalDataReceived()` back to the matching tab via

@@ -195,12 +195,13 @@ private:
     // watch is only torn down when its parent device is removed/rebuilt
     // (releaseHubPeerWatch()).
     void syncHubPeerWatches();
-    // Once per second: refreshes each connected HubChannel child's
-    // Device::peerOnline/peerPresenceKnown/peerLongOffline/peerBootId from its
-    // parent's decoded hub.peers (driving the card's green/amber/red dot and
-    // the dashboard cells' dot), and hands an on/off change to that child's
-    // Backend::onPeerPresence() so it can re-request its catalog / re-subscribe
-    // after a robot reboot or a return from out-of-range.
+    // Once per second: recomputes each connected HubChannel child's
+    // Device::peerOnline/peerPresenceKnown/peerBootId (driving the card dot and
+    // the dashboard cells' dot) from the robot's own end-to-end frames
+    // (BtpBackend::lastPeerDataFrameMsSinceEpoch, primary) with the dongle's
+    // decoded hub.peers as the fallback, and hands an on/off change to that
+    // child's Backend::onPeerPresence() so it can re-request its catalog /
+    // re-subscribe after a robot reboot or a return from out-of-range.
     void reconcileHubChildPresence();
     // Drops `deviceId`'s hub.peers watch and unsubscribes it. Called when the
     // device is removed or rebuilt; hubPeersFor() re-establishes the watch
@@ -432,16 +433,11 @@ private:
     // at 2 Hz and its "online" window is 4 s, so a 1 s reconcile is plenty.
     QTimer* m_hubPeerReconcileTimer = nullptr;
     // Per hub child (keyed by Device::id): consecutive reconcile ticks the
-    // robot has read offline. Debounces the offline direction (a single missed
-    // STATUS must not flap the card or hand BtpBackend an on/off/on) and, past
-    // a second threshold, escalates the card from amber "stale" to red "dead".
+    // FALLBACK hub.peers path has read the robot offline. Debounces that
+    // direction only (a single missed hub.peers sample must not flap the card
+    // or hand BtpBackend an on/off/on); cleared the moment the robot's own
+    // frames are flowing, which bypasses this path entirely.
     QHash<QString, int> m_hubChildOfflineTicks;
-    // Per hub child: consecutive reconcile ticks with the dongle's hub.peers
-    // view unreadable while it has never once been readable. A short grace
-    // (a fresh child legitimately has no sample yet); once it runs out the
-    // absence itself is taken as evidence, so a watch that never resolves can
-    // no longer leave the dot stuck green.
-    QHash<QString, int> m_hubChildNoViewTicks;
     QLabel* m_telemetryStatusLabel = nullptr;
     int m_runTabIndex = -1;
     // Read-only "device: dot" strip replacing the old single-connection port/

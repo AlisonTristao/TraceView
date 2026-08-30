@@ -109,17 +109,15 @@ void DevicesGrid::setDeviceIdentity(const QString& id, const QString& btpVersion
 }
 
 void DevicesGrid::setDevicePeerState(const QString& id, bool peerOnline, bool peerPresenceKnown,
-                                    bool peerLongOffline, quint32 peerBootId) {
+                                    quint32 peerBootId) {
     const int idx = indexOfDevice(id);
     if (idx < 0 || (m_devices[idx].peerOnline == peerOnline &&
                     m_devices[idx].peerPresenceKnown == peerPresenceKnown &&
-                    m_devices[idx].peerLongOffline == peerLongOffline &&
                     m_devices[idx].peerBootId == peerBootId)) {
         return;
     }
     m_devices[idx].peerOnline = peerOnline;
     m_devices[idx].peerPresenceKnown = peerPresenceKnown;
-    m_devices[idx].peerLongOffline = peerLongOffline;
     m_devices[idx].peerBootId = peerBootId;
     m_cards[idx]->setDevice(m_devices[idx]);
     // Deliberately no emit deviceUpdated() -- see the header. MainWindow reads

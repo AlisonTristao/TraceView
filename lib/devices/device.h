@@ -184,36 +184,31 @@ struct Device {
     // the field falls back to, and it never connects.
     quint32 peerSourceId = 0;
 
-    // Live-mirrored from the dongle's hub.peers topic by MainWindow while this
-    // child is connected -- the same "session state, not configuration"
-    // treatment as `connected`/`btpVersion`: not user-editable, not persisted
-    // (deviceToJson()), and reset to the defaults below on disconnect.
+    // Live-mirrored by MainWindow::reconcileHubChildPresence while this child is
+    // connected -- the same "session state, not configuration" treatment as
+    // `connected`/`btpVersion`: not user-editable, not persisted (deviceToJson()),
+    // and reset to the defaults below on disconnect.
     //
-    // These three together are what deviceLinkState() reads for a hub child,
-    // and they are pessimistic by default on purpose. The card must not paint
-    // a green "live" dot on the strength of the cable to the dongle alone: a
-    // robot can be off, out of range, or never have authenticated a channel-C
-    // frame while the hub link itself is perfectly fine. That false-online is
-    // the whole reason presence is tracked as its own thing.
+    // What deviceLinkState() reads for a hub child, and pessimistic by default
+    // on purpose. "Connected" for a hub child only means the dongle is relaying
+    // this child's frames -- it says nothing about the robot, which can be off,
+    // out of range, or unkeyed while the hub link is perfectly fine. Green is
+    // therefore earned, not assumed:
     //
-    //   peerPresenceKnown  the reconcile has an actual hub.peers verdict for
-    //                      this robot (MainWindow::reconcileHubChildPresence).
-    //                      False right after connecting and whenever the
-    //                      dongle's peer list cannot be read -- the card shows
-    //                      amber "locating", never green, until it flips true.
-    //   peerOnline         the dongle is currently hearing this robot
-    //                      (authenticated channel-C traffic; hub.peers
-    //                      online=1). Only meaningful once peerPresenceKnown.
-    //   peerLongOffline    peerOnline has held false long enough
-    //                      (kOfflineTicksToDeadLink in reconcileHubChildPresence)
-    //                      that the child's link is treated as down (red)
-    //                      rather than merely stale (amber). Cleared the
-    //                      instant the robot is heard again.
+    //   peerOnline         the robot's own data frames are reaching this
+    //                      TraceView end to end right now -- a channel-B frame
+    //                      that passed AEAD open (the signal the operator can
+    //                      corroborate in the BTP monitor), or, until a
+    //                      subscription is producing telemetry, the dongle's
+    //                      hub.peers online=1 as a fallback.
+    //   peerPresenceKnown  reconcile has a verdict either way. False right
+    //                      after connecting and while it has neither robot
+    //                      data nor a readable hub.peers view -- the card
+    //                      shows amber "locating", never green, until it flips.
     //
-    // `peerBootId` lets MainWindow notice a robot reboot.
+    // `peerBootId` lets MainWindow notice a robot reboot (from hub.peers).
     bool peerOnline = false;
     bool peerPresenceKnown = false;
-    bool peerLongOffline = false;
     quint32 peerBootId = 0;
 
     // Password for this robot's endpoint key (channel B). Live session input,
@@ -288,17 +283,16 @@ inline quint32 hubChannelSourceId(const QString& deviceId) {
 // working one.
 enum class DeviceLinkState {
     Offline,        // no usable link: the transport is down (port closed / not
-                    // configured / unplugged), OR a hub child whose robot the
-                    // dongle has not heard from for long enough
-                    // (Device::peerLongOffline) that the link is treated as
-                    // down rather than merely stale
+                    // configured / unplugged). For a hub child that means the
+                    // cable to the DONGLE -- a robot that is merely quiet is
+                    // PeerStale, not this, because the dongle is still relaying.
     TransportOnly,  // Serial/UsbHid: link open, but no BTP session yet
     Live,           // BTP session established (Serial/UsbHid), or a hub child
-                    // whose robot the dongle is currently hearing
+                    // whose robot's frames are actually reaching this TraceView
     PeerStale,      // hub child: the cable to the dongle is up, but the robot's
-                    // presence is not confirmed live -- either not reported yet
-                    // (just connected, or hub.peers unreadable) or last reported
-                    // offline but not for long enough to call the link dead
+                    // presence is not confirmed -- either nothing has arrived
+                    // from it yet (just connected / nothing subscribed) or its
+                    // data has stopped
 };
 
 inline DeviceLinkState deviceLinkState(const Device& device) {
@@ -307,15 +301,11 @@ inline DeviceLinkState deviceLinkState(const Device& device) {
     }
     if (device.transportType == TransportType::HubChannel) {
         // No ENTER/HELLO on this transport, so `connected` only means the
-        // parent session carries this child's frames -- it says nothing about
-        // the robot. That comes from the dongle's hub.peers view, mirrored by
-        // MainWindow::reconcileHubChildPresence into the peer* fields below.
-        // Pessimistic on purpose: unknown or briefly-offline is amber, only a
-        // robot the dongle is actually hearing is green, and a sustained
-        // silence is red (see Device::peerPresenceKnown / peerLongOffline).
-        if (device.peerLongOffline) {
-            return DeviceLinkState::Offline;
-        }
+        // dongle is relaying this child's frames -- it says nothing about the
+        // robot. Whether the robot is actually there is
+        // MainWindow::reconcileHubChildPresence's verdict, from the robot's own
+        // end-to-end frames (primary) or the dongle's hub.peers view
+        // (fallback). Green is earned; amber is the honest default.
         if (!device.peerPresenceKnown || !device.peerOnline) {
             return DeviceLinkState::PeerStale;
         }
@@ -326,6 +316,44 @@ inline DeviceLinkState deviceLinkState(const Device& device) {
     // exactly "a session is up right now".
     return device.btpVersion.isEmpty() ? DeviceLinkState::TransportOnly
                                        : DeviceLinkState::Live;
+}
+
+// The presence verdict MainWindow::reconcileHubChildPresence reaches each tick
+// for one connected hub child, factored out as a pure function so the combine
+// rule is testable without a MainWindow (tests/test_hubchildpresence.cpp).
+// MainWindow keeps the parts that genuinely need it -- reading the two signals
+// off a BtpBackend / the hub.peers accumulator, the boot-id, the toast, and
+// pushing the result into the Device -- and calls this for the decision.
+struct HubChildPresence {
+    bool online = false;  // -> Device::peerOnline
+    bool known = false;   // -> Device::peerPresenceKnown (sticky within a session)
+    int offlineTicks = 0; // carried across ticks by the caller; opaque otherwise
+};
+
+// frameFresh   : a frame from the robot passed AEAD open within the freshness
+//                window (BtpBackend::lastPeerDataFrameMsSinceEpoch) -- the
+//                end-to-end, locally-verified signal.
+// hubReadable  : the dongle's hub.peers view for this robot could be read this
+//                tick (watch resolved and a sample decoded).
+// hubOnline    : ...and that view said online. Ignored unless hubReadable.
+// prev         : last tick's verdict for this child (its offlineTicks included).
+// debounceTicks: consecutive all-signals-lost ticks tolerated before an
+//                established green is given up (the fallback path's flap guard).
+inline HubChildPresence hubChildPresence(bool frameFresh, bool hubReadable, bool hubOnline,
+                                         const HubChildPresence& prev, int debounceTicks) {
+    // Either positive signal means online; the dongle's opinion only counts
+    // when its view was actually readable.
+    const bool rawOnline = frameFresh || (hubReadable && hubOnline);
+
+    HubChildPresence out;
+    out.offlineTicks = rawOnline ? 0 : qMin(prev.offlineTicks + 1, debounceTicks);
+    // The debounce only shields an already-established online from a brief gap;
+    // it never manufactures one from nothing.
+    out.online = rawOnline || (prev.online && out.offlineTicks < debounceTicks);
+    // Sticky: once reconcile has had any verdict this session, "locating" does
+    // not come back -- a later silence is the distinct "no data from robot".
+    out.known = rawOnline || hubReadable || prev.known;
+    return out;
 }
 
 // Mirrors dashboardItemToJson()'s shape/convention (dashboard/dashboarditem.h)

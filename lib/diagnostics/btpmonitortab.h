@@ -110,11 +110,6 @@ private:
     FrameTableModel* m_model = nullptr;
     QTableView* m_table = nullptr;
     QCheckBox* m_hideTelemetry = nullptr;
-    // Off by default: hides the raw protocol numbers everywhere -- the row
-    // ordinal / object_id / sequence table columns, and the header fields +
-    // hex dump in the detail panel (which then shows only the payload's
-    // printable content). On: the full developer view.
-    QCheckBox* m_rawView = nullptr;
     QComboBox* m_deviceFilter = nullptr;
     QLineEdit* m_textFilter = nullptr;
     QPushButton* m_pauseButton = nullptr;

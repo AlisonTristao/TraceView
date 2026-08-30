@@ -2,7 +2,6 @@
 
 #include <QMouseEvent>
 #include <QPainter>
-#include <QPainterPath>
 
 #include "traceview/thememanager.h"
 
@@ -10,11 +9,8 @@ namespace traceview {
 
 namespace {
 
-constexpr int kSlant = 10;        // horizontal run of each slanted side
 constexpr int kTabHeight = 26;
-constexpr int kHPad = 12;         // gap between the slant and the content
-constexpr int kDotSize = 7;
-constexpr int kDotTextGap = 6;
+constexpr int kHPad = 12;            // padding between the tab edge and the label
 constexpr int kTextSlack = 8;       // a little breathing room so short names never clip
 constexpr int kMaxTextWidth = 160;  // long device names elide past this
 
@@ -28,73 +24,57 @@ TerminalTabBar::TerminalTabBar(QWidget* parent) : QTabBar(parent) {
             [this](const ThemePalette&) { update(); });
 }
 
-void TerminalTabBar::setTabConnected(int index, bool connected) {
-    if (index < 0 || index >= count()) {
-        return;
+int TerminalTabBar::uniformTextWidth() const {
+    int widest = 0;
+    for (int i = 0; i < count(); ++i) {
+        widest = qMax(widest, fontMetrics().horizontalAdvance(tabText(i)));
     }
-    setTabData(index, connected);
-    update();
+    return qMin(widest, kMaxTextWidth);
 }
 
 QSize TerminalTabBar::tabSizeHint(int index) const {
-    const int textW = qMin(fontMetrics().horizontalAdvance(tabText(index)), kMaxTextWidth);
-    return QSize(2 * kSlant + 2 * kHPad + kDotSize + kDotTextGap + textW + kTextSlack, kTabHeight);
+    Q_UNUSED(index);
+    return QSize(2 * kHPad + uniformTextWidth() + kTextSlack, kTabHeight);
 }
 
 QSize TerminalTabBar::minimumTabSizeHint(int index) const {
-    // Enough for the dot plus an ellipsis; the label elides above this.
-    Q_UNUSED(index);
-    return QSize(2 * kSlant + 2 * kHPad + kDotSize + kDotTextGap + 16, kTabHeight);
+    return tabSizeHint(index);
 }
 
 void TerminalTabBar::paintEvent(QPaintEvent*) {
     QPainter painter(this);
-    painter.setRenderHint(QPainter::Antialiasing);
 
     const ThemePalette& palette = ThemeManager::instance().currentTheme();
     painter.fillRect(rect(), palette.background);
 
     for (int i = 0; i < count(); ++i) {
-        // Trim 2px off the right edge so adjacent trapezoids read as separate
-        // folder tabs rather than one fused strip (same as RibbonTabBar).
-        const QRectF r = QRectF(tabRect(i)).adjusted(0, 0, -2, 0);
+        const QRect r = tabRect(i);
         const bool selected = i == currentIndex();
-
-        QPainterPath path;
-        path.moveTo(r.left() + kSlant, r.top());
-        path.lineTo(r.right() - kSlant, r.top());
-        path.lineTo(r.right(), r.bottom());
-        path.lineTo(r.left(), r.bottom());
-        path.closeSubpath();
 
         QColor fill = selected ? palette.surfaceAlt : palette.surface;
         if (!selected && i == m_hoverIndex) {
             fill = palette.surfaceAlt;
         }
+        painter.fillRect(r, fill);
 
-        painter.setPen(QPen(palette.border, 1));
-        painter.setBrush(fill);
-        painter.drawPath(path);
-
-        if (selected) {
-            // Merge the selected tab into the terminal painted directly below.
-            painter.setPen(QPen(fill, 1));
-            painter.drawLine(QPointF(r.left() + 1, r.bottom()), QPointF(r.right() - 1, r.bottom()));
+        // 1px cell borders: top + right on every tab, left on the first, and a
+        // bottom edge on the unselected ones -- the selected tab is left open
+        // so it reads as continuous with the terminal painted below.
+        painter.setPen(palette.border);
+        painter.drawLine(r.topLeft(), r.topRight());
+        painter.drawLine(r.topRight(), r.bottomRight());
+        if (i == 0) {
+            painter.drawLine(r.topLeft(), r.bottomLeft());
+        }
+        if (!selected) {
+            painter.drawLine(r.bottomLeft(), r.bottomRight());
         }
 
-        QRectF contentRect = r.adjusted(kSlant + kHPad, 0, -(kSlant + kHPad), 0);
-
-        const QRectF dotRect(contentRect.left(), contentRect.center().y() - kDotSize / 2.0, kDotSize,
-                             kDotSize);
-        painter.setPen(Qt::NoPen);
-        painter.setBrush(tabData(i).toBool() ? palette.success : palette.danger);
-        painter.drawEllipse(dotRect);
-        contentRect.setLeft(dotRect.right() + kDotTextGap);
-
+        const QRect textRect = r.adjusted(kHPad, 0, -kHPad, 0);
         painter.setPen(selected ? palette.textPrimary : palette.textSecondary);
-        const QString text = fontMetrics().elidedText(tabText(i), Qt::ElideRight,
-                                                      qMax(0, int(contentRect.width())));
-        painter.drawText(contentRect, Qt::AlignVCenter | Qt::AlignLeft, text);
+        const QString text =
+            fontMetrics().elidedText(tabText(i), Qt::ElideRight, qMax(0, textRect.width()));
+        painter.drawText(textRect, Qt::AlignCenter, text);
     }
 }
 

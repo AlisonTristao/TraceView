@@ -359,7 +359,25 @@ DeviceConfigDialog::DeviceConfigDialog(const Device& initial, QWidget* parent)
     m_otaAddressEdit->setToolTip(
         tr("Hostname or IP the OTA tab uses for this device's firmware upload. "
            "Left blank, the device is listed there but nothing can be polled or uploaded."));
-    otaLayout->addRow(tr("Address:"), m_otaAddressEdit);
+    // The device announces its own OTA hostname in the source_info block (key
+    // "ota_endpoint", commands.md 3.12). This offers it as a one-click fill --
+    // never a silent overwrite, since the field is persisted config and the
+    // user may have set a proxy/IP/mirror on purpose. Hidden until a reported
+    // endpoint exists and differs from what's typed.
+    m_useReportedOtaButton = new QToolButton(otaGroup);
+    m_useReportedOtaButton->setText(tr("Use reported"));
+    m_useReportedOtaButton->setToolTip(tr("Fill in the address the device reported for itself."));
+    m_useReportedOtaButton->hide();
+    connect(m_useReportedOtaButton, &QToolButton::clicked, this, [this]() {
+        m_otaAddressEdit->setText(m_reportedOtaEndpoint);
+    });
+    connect(m_otaAddressEdit, &QLineEdit::textChanged, this,
+            [this]() { updateReportedOtaHint(); });
+    auto* otaAddressRow = new QHBoxLayout();
+    otaAddressRow->setContentsMargins(0, 0, 0, 0);
+    otaAddressRow->addWidget(m_otaAddressEdit);
+    otaAddressRow->addWidget(m_useReportedOtaButton);
+    otaLayout->addRow(tr("Address:"), otaAddressRow);
 
     m_otaPasswordEdit = new QLineEdit(m_device.otaPassword, otaGroup);
     m_otaPasswordEdit->setEchoMode(QLineEdit::Password);
@@ -582,10 +600,8 @@ void DeviceConfigDialog::setReportedIdentity(const QString& btpVersion, const QS
 
 void DeviceConfigDialog::setReportedInfo(const QVector<DeviceInfoRecord>& info) {
     m_device.reportedInfo = info;
-    if (info.isEmpty()) {
-        m_reportedInfoLabel->setText(tr("(nothing reported yet)"));
-        return;
-    }
+
+    QString reportedOta;
     QStringList lines;
     lines.reserve(info.size());
     for (const DeviceInfoRecord& entry : info) {
@@ -593,8 +609,29 @@ void DeviceConfigDialog::setReportedInfo(const QVector<DeviceInfoRecord>& info) 
         // machine key so the row is never blank.
         const QString caption = entry.label.isEmpty() ? entry.key : entry.label;
         lines.append(QStringLiteral("%1: %2").arg(caption, entry.value));
+        if (entry.key == QLatin1String("ota_endpoint")) {
+            reportedOta = entry.value.trimmed();
+        }
     }
-    m_reportedInfoLabel->setText(lines.join(QLatin1Char('\n')));
+    m_reportedInfoLabel->setText(info.isEmpty() ? tr("(nothing reported yet)")
+                                                : lines.join(QLatin1Char('\n')));
+
+    m_reportedOtaEndpoint = reportedOta;
+    updateReportedOtaHint();
+}
+
+void DeviceConfigDialog::updateReportedOtaHint() {
+    if (m_useReportedOtaButton == nullptr) {
+        return;
+    }
+    if (m_reportedOtaEndpoint.isEmpty()) {
+        m_otaAddressEdit->setPlaceholderText(tr("e.g. robot1.local"));
+        m_useReportedOtaButton->hide();
+        return;
+    }
+    m_otaAddressEdit->setPlaceholderText(tr("device reports: %1").arg(m_reportedOtaEndpoint));
+    // Offer the fill only when it would actually change something.
+    m_useReportedOtaButton->setVisible(m_otaAddressEdit->text().trimmed() != m_reportedOtaEndpoint);
 }
 
 void DeviceConfigDialog::setConnectionStatus(bool connected) {

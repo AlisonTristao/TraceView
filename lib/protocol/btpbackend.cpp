@@ -633,6 +633,14 @@ void BtpBackend::onSessionFrameReceived(const BtpFrame& frame) {
             }
             return;
         }
+        // An unsealed frame that survives to here on a hub child is either the
+        // hub's own plaintext control answer (does NOT prove the robot is
+        // alive) or -- on an UNKEYED child -- the robot's data relayed in the
+        // clear (does). Only the latter refreshes the end-to-end liveness clock.
+        if (m_peerSourceId != 0 && m_endpointKey.isEmpty() &&
+            !isHubPlaintextControlResponse(frame)) {
+            m_lastPeerDataFrameMs = QDateTime::currentMSecsSinceEpoch();
+        }
         m_protocolRouter->onFrameReceived(frame);
         return;
     }
@@ -656,6 +664,11 @@ void BtpBackend::onSessionFrameReceived(const BtpFrame& frame) {
     if (!plaintext.has_value()) {
         return;  // tag mismatch / wrong cipher / wrong key -- never deliver unauthenticated bytes
     }
+    // A frame from the robot that just passed AEAD authentication: proof, at
+    // this end, that the robot is alive and reachable right now. This is the
+    // signal MainWindow::reconcileHubChildPresence trusts over the dongle's
+    // second-hand hub.peers view -- see lastPeerDataFrameMsSinceEpoch().
+    m_lastPeerDataFrameMs = QDateTime::currentMSecsSinceEpoch();
 
     BtpFrame opened = frame;
     opened.flags &= ~static_cast<quint16>(btp::kFlagEncrypted);
@@ -686,6 +699,7 @@ void BtpBackend::onTransportConnectionChanged(bool connected) {
             m_childCatalogAttempts = 0;
             m_childPeerBootId = 0;
             m_peerOnline = true;  // assume alive until hub.peers says otherwise
+            m_lastPeerDataFrameMs = 0;  // no robot frame seen on this link yet
             m_childCatalogRetryTimer->setInterval(kKeepaliveIntervalMs);
             m_manifestClient->requestCatalogFor(m_peerSourceId);
             m_childCatalogRetryTimer->start();  // keep asking until it lands
@@ -706,6 +720,7 @@ void BtpBackend::onTransportConnectionChanged(bool connected) {
         m_childCatalogAttempts = 0;
         m_childPeerBootId = 0;
         m_peerOnline = true;
+        m_lastPeerDataFrameMs = 0;
         m_sessionEstablished = false;
         m_sessionClosing = false;
         // Subscriptions are scoped to the session that granted them

@@ -77,37 +77,6 @@ QString hex32(quint32 v) {
     return QStringLiteral("0x%1").arg(v, 8, 16, QChar('0'));
 }
 
-// The payload's printable content -- exactly what a hex dump shows inside the
-// `|...|` column: an ASCII byte as itself, anything else as '.'. No offsets,
-// no hex, no escaping. This is the default view, in the table and in the
-// detail panel; the full hex + header numbers are behind the "Raw view" toggle.
-QString asciiView(const QByteArray& data) {
-    QString out;
-    out.reserve(data.size());
-    for (char c : data) {
-        const auto u = static_cast<unsigned char>(c);
-        out += (u >= 0x20 && u < 0x7F) ? QChar(ushort(u)) : QChar(u'.');
-    }
-    return out;
-}
-
-// What the table's Payload column shows: the ascii view, capped; a short note
-// for a sealed payload (no readable form until opened) or a decode error.
-QString payloadColumnText(const FrameLogEntry& e) {
-    if (e.decodeError) {
-        return e.errorText;
-    }
-    const BtpFrame& f = e.frame;
-    if (f.flags & btp::kFlagEncrypted) {
-        return QObject::tr("(encrypted, %1 octets)").arg(f.payload.size());
-    }
-    if (f.payload.isEmpty()) {
-        return QString();
-    }
-    const QString text = asciiView(f.payload);
-    return text.size() > 96 ? text.left(96) + QStringLiteral("…") : text;
-}
-
 QString composeSearchText(const FrameLogEntry& e) {
     if (e.decodeError) {
         return e.errorText;
@@ -117,30 +86,18 @@ QString composeSearchText(const FrameLogEntry& e) {
            hexInline(e.frame.payload, 64);
 }
 
-// Detail panel, default: just the payload's printable content.
-QString frameContentView(const FrameLogEntry& e) {
+// The selected frame's detail: every header field, then the raw payload as a
+// hex + ASCII dump. Shown in the left half of the bottom split; the Decrypt
+// panel fills the right half.
+QString headerDump(const FrameLogEntry& e) {
     if (e.decodeError) {
-        return QObject::tr("decode error: %1").arg(e.errorText);
-    }
-    const BtpFrame& f = e.frame;
-    if (f.flags & btp::kFlagEncrypted) {
-        return QObject::tr("(encrypted, %1 octets — open it with the Decrypt panel →)")
-            .arg(f.payload.size());
-    }
-    if (f.payload.isEmpty()) {
-        return QObject::tr("(no payload)");
-    }
-    return asciiView(f.payload);
-}
-
-// Detail panel, "Raw view" on: the header fields and the full hex dump.
-QString frameRawView(const FrameLogEntry& e) {
-    if (e.decodeError) {
-        return QObject::tr("decode error: %1").arg(e.errorText);
+        return QObject::tr("Decode failure: %1").arg(e.errorText);
     }
     const BtpFrame& f = e.frame;
     QString out;
-    out += QObject::tr("type          %1\n").arg(messageTypeLabel(f.type));
+    out += QObject::tr("type          %1 (0x%2)\n")
+               .arg(messageTypeLabel(f.type))
+               .arg(quint8(f.type), 2, 16, QChar('0'));
     out += QObject::tr("direction     %1\n")
                .arg(e.direction == FrameDirection::Outbound ? QStringLiteral("TX (sent)")
                                                             : QStringLiteral("RX (received)"));
@@ -251,7 +208,7 @@ QVariant FrameTableModel::data(const QModelIndex& index, int role) const {
         case LengthColumn:
             return e.decodeError ? QString() : QString::number(e.frame.payload.size());
         case PayloadColumn:
-            return payloadColumnText(e);
+            return e.decodeError ? e.errorText : hexInline(e.frame.payload, 24);
         default:
             return {};
     }
@@ -411,12 +368,6 @@ BtpMonitorTab::BtpMonitorTab(FrameLog* log, PasswordProvider passwordProvider, Q
     m_hideTelemetry = new QCheckBox(tr("Hide TELEMETRY"), this);
     toolbar->addWidget(m_hideTelemetry);
 
-    // Off by default: the plain view drops the raw protocol numbers (table
-    // columns and the detail panel's header + hex), leaving just the readable
-    // payload content.
-    m_rawView = new QCheckBox(tr("Raw view"), this);
-    toolbar->addWidget(m_rawView);
-
     toolbar->addWidget(new QLabel(tr("Device:"), this));
     m_deviceFilter = new QComboBox(this);
     m_deviceFilter->addItem(tr("All"), QString());
@@ -443,19 +394,16 @@ BtpMonitorTab::BtpMonitorTab(FrameLog* log, PasswordProvider passwordProvider, Q
     m_table->verticalHeader()->setVisible(false);
     m_table->horizontalHeader()->setStretchLastSection(true);
     m_table->setWordWrap(false);
-    // The raw-number columns start hidden -- see the "Show IDs" toggle.
-    m_table->setColumnHidden(FrameTableModel::SeqColumn, true);
-    m_table->setColumnHidden(FrameTableModel::ObjectColumn, true);
-    m_table->setColumnHidden(FrameTableModel::SequenceColumn, true);
     splitter->addWidget(m_table);
 
-    // Bottom half, split 50/50: the message read normally on the left, the
-    // Decrypt panel on the right.
+    // Bottom area, split evenly: the selected frame's raw decode (header +
+    // hex dump) on the left, the Decrypt panel on the right. A QSplitter so
+    // both start at 50% and the divider can still be dragged.
     auto* detailSplit = new QSplitter(Qt::Horizontal, splitter);
 
     m_detail = new QPlainTextEdit(detailSplit);
     m_detail->setReadOnly(true);
-    m_detail->setLineWrapMode(QPlainTextEdit::WidgetWidth);  // flipped to NoWrap in Raw view
+    m_detail->setLineWrapMode(QPlainTextEdit::NoWrap);
     m_detail->setFont(QFontDatabase::systemFont(QFontDatabase::FixedFont));
     detailSplit->addWidget(m_detail);
 
@@ -500,13 +448,6 @@ BtpMonitorTab::BtpMonitorTab(FrameLog* log, PasswordProvider passwordProvider, Q
     connect(clearButton, &QPushButton::clicked, m_log, &FrameLog::clear);
     connect(m_hideTelemetry, &QCheckBox::toggled, m_model,
             &FrameTableModel::setTelemetryHidden);
-    connect(m_rawView, &QCheckBox::toggled, this, [this](bool on) {
-        m_table->setColumnHidden(FrameTableModel::SeqColumn, !on);
-        m_table->setColumnHidden(FrameTableModel::ObjectColumn, !on);
-        m_table->setColumnHidden(FrameTableModel::SequenceColumn, !on);
-        m_detail->setLineWrapMode(on ? QPlainTextEdit::NoWrap : QPlainTextEdit::WidgetWidth);
-        onSelectionChanged();  // re-render the current frame in the new mode
-    });
     connect(m_deviceFilter, &QComboBox::currentIndexChanged, this, [this] {
         m_model->setDeviceFilter(m_deviceFilter->currentData().toString());
     });
@@ -539,8 +480,7 @@ void BtpMonitorTab::onSelectionChanged() {
         m_decryptResult->clear();
         return;
     }
-    m_detail->setPlainText(m_rawView->isChecked() ? frameRawView(*entry)
-                                                  : frameContentView(*entry));
+    m_detail->setPlainText(headerDump(*entry));
     m_decryptResult->clear();
 
     const bool sealed = !entry->decodeError && (entry->frame.flags & btp::kFlagEncrypted);

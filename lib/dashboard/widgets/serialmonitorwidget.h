@@ -8,6 +8,7 @@
 #include "dashboard/dashboardwidget.h"
 
 class QStackedWidget;
+class QToolButton;
 
 namespace traceview {
 
@@ -26,8 +27,9 @@ class TerminalTabBar;
 // bound device's Backend::terminalDataReceived() back to the matching tab via
 // feedDevice(), re-deriving all of it whenever the tab list changes.
 //
-// One tab (the common case, and every pre-tabs project after migration) shows
-// no tab strip and looks exactly like the single terminal this used to be.
+// A thin header row carries the tab strip (hidden when there's only one tab,
+// the common case and every pre-tabs project after migration) and a
+// right-aligned "Clear" button that wipes the visible terminal's scrollback.
 class SerialMonitorWidget : public DashboardWidget {
     Q_OBJECT
 
@@ -46,10 +48,6 @@ public:
     // Tab labels: deviceId -> display name. Re-pushed by MainWindow (through
     // SerialWidgetBridge) on every device add/remove/rename.
     void setDeviceNames(const QHash<QString, QString>& namesById);
-
-    // Green/red dot per tab: deviceId -> connected. Same push path as
-    // setDeviceNames().
-    void setDeviceConnectionStates(const QHash<QString, bool>& connectedById);
 
 public slots:
     // Route TERMINAL_OUT bytes to every tab bound to `deviceId` (usually one).
@@ -73,14 +71,13 @@ private:
     void showTab(int index, bool giveFocus);
     QString labelFor(const QString& deviceId) const;
     void refreshTabLabels();
-    void refreshTabConnectionDots();
 
     TerminalTabBar* m_tabBar = nullptr;
+    QToolButton* m_clearButton = nullptr;
     QStackedWidget* m_stack = nullptr;
     QVector<SerialTerminalWidget*> m_terminals;
     QStringList m_deviceIds;
     QHash<QString, QString> m_deviceNames;
-    QHash<QString, bool> m_deviceConnected;
     bool m_editMode = false;
 };
 

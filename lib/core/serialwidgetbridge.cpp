@@ -16,8 +16,6 @@ SerialWidgetBridge::SerialWidgetBridge(
     QObject* parent)
     : QObject(parent), m_grid(grid), m_deviceConnectionFor(std::move(deviceConnectionFor)) {
     connect(grid, &DashboardGrid::widgetCreated, this, &SerialWidgetBridge::wireWidget);
-    connect(grid, &DashboardGrid::deviceConnectionStateChanged, this,
-            &SerialWidgetBridge::setDeviceConnected);
 }
 
 DeviceConnection* SerialWidgetBridge::deviceConnectionForWidget(DashboardWidget* widget) const {
@@ -80,7 +78,7 @@ void SerialWidgetBridge::wireWidget(DashboardWidget* widget) {
 
         m_monitorInbound.insert(monitor, {});
         rewireMonitorInbound(monitor);
-        pushDeviceMetaTo(monitor);
+        monitor->setDeviceNames(m_deviceNames);
     }
 }
 
@@ -114,11 +112,6 @@ void SerialWidgetBridge::rewireMonitorInbound(SerialMonitorWidget* monitor) {
     }
 }
 
-void SerialWidgetBridge::pushDeviceMetaTo(SerialMonitorWidget* monitor) const {
-    monitor->setDeviceNames(m_deviceNames);
-    monitor->setDeviceConnectionStates(m_deviceConnected);
-}
-
 void SerialWidgetBridge::refreshTerminalWiring() {
     const QList<SerialMonitorWidget*> monitors = m_monitorInbound.keys();
     for (SerialMonitorWidget* monitor : monitors) {
@@ -131,17 +124,6 @@ void SerialWidgetBridge::setDeviceNames(const QHash<QString, QString>& namesById
     const QList<SerialMonitorWidget*> monitors = m_monitorInbound.keys();
     for (SerialMonitorWidget* monitor : monitors) {
         monitor->setDeviceNames(m_deviceNames);
-    }
-}
-
-void SerialWidgetBridge::setDeviceConnected(const QString& deviceId, bool connected) {
-    if (deviceId.isEmpty()) {
-        return;
-    }
-    m_deviceConnected[deviceId] = connected;
-    const QList<SerialMonitorWidget*> monitors = m_monitorInbound.keys();
-    for (SerialMonitorWidget* monitor : monitors) {
-        monitor->setDeviceConnectionStates(m_deviceConnected);
     }
 }
 

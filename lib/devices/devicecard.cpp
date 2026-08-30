@@ -207,20 +207,14 @@ void DeviceCard::paintEvent(QPaintEvent*) {
             : (m_device.btpId.isEmpty()
                    ? tr("v%1").arg(m_device.btpVersion)
                    : tr("v%1 \xC2\xB7 ID %2").arg(m_device.btpVersion, m_device.btpId));
-    // Name the amber/red state in words, not just a dot colour (topico 35 D.2).
+    // Name the amber state in words, not just a dot colour (topico 35 D.2).
     if (linkState == DeviceLinkState::TransportOnly) {
         reportedLine = tr("port open, waiting for BTP session");
-    } else if (m_device.transportType == TransportType::HubChannel && m_device.connected &&
-               (linkState == DeviceLinkState::PeerStale || linkState == DeviceLinkState::Offline)) {
-        // Three distinct hub-child states share the amber/red dot -- spell out
-        // which one this is (see Device::peerPresenceKnown / peerLongOffline).
-        if (!m_device.peerPresenceKnown) {
-            reportedLine = tr("hub link up, locating robot…");
-        } else if (linkState == DeviceLinkState::Offline) {
-            reportedLine = tr("hub link up, robot unreachable");
-        } else {
-            reportedLine = tr("hub link up, robot not responding (no STATUS)");
-        }
+    } else if (m_device.transportType == TransportType::HubChannel &&
+               linkState == DeviceLinkState::PeerStale) {
+        reportedLine = m_device.peerPresenceKnown
+                           ? tr("hub link up, no data from robot")
+                           : tr("hub link up, locating robot…");
     }
     const int reportedHeight = reportedLine.isEmpty() ? 0 : kBodyLineHeight + 4;
 

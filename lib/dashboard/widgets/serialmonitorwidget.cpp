@@ -1,9 +1,11 @@
 #include "serialmonitorwidget.h"
 
+#include <QHBoxLayout>
 #include <QJsonArray>
 #include <QJsonObject>
 #include <QSignalBlocker>
 #include <QStackedWidget>
+#include <QToolButton>
 #include <QVBoxLayout>
 
 #include "serialterminalwidget.h"
@@ -18,10 +20,32 @@ SerialMonitorWidget::SerialMonitorWidget(QWidget* parent) : DashboardWidget(pare
     m_stack = new QStackedWidget(this);
     m_stack->setMinimumHeight(120);
 
+    // Wipes the visible tab's scrollback. Right-aligned in the header row so it
+    // stays reachable whether or not the tab strip is showing; flat until
+    // hovered so it doesn't compete with the terminal for attention.
+    m_clearButton = new QToolButton(this);
+    m_clearButton->setText(tr("Clear"));
+    m_clearButton->setToolTip(tr("Clear this terminal"));
+    m_clearButton->setToolButtonStyle(Qt::ToolButtonTextOnly);
+    m_clearButton->setAutoRaise(true);
+    m_clearButton->setFocusPolicy(Qt::NoFocus);
+    connect(m_clearButton, &QToolButton::clicked, this, [this] {
+        if (auto* terminal = qobject_cast<SerialTerminalWidget*>(m_stack->currentWidget())) {
+            terminal->clearTerminal();
+        }
+    });
+
+    auto* header = new QHBoxLayout;
+    header->setContentsMargins(0, 0, 0, 0);
+    header->setSpacing(0);
+    header->addWidget(m_tabBar, 0);
+    header->addStretch(1);
+    header->addWidget(m_clearButton, 0);
+
     auto* layout = new QVBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
     layout->setSpacing(0);
-    layout->addWidget(m_tabBar, 0);
+    layout->addLayout(header, 0);
     layout->addWidget(m_stack, 1);
 
     connect(m_tabBar, &QTabBar::currentChanged, this, [this](int index) { showTab(index, true); });
@@ -69,11 +93,6 @@ void SerialMonitorWidget::setEditModeHint(bool editMode) {
 void SerialMonitorWidget::setDeviceNames(const QHash<QString, QString>& namesById) {
     m_deviceNames = namesById;
     refreshTabLabels();
-}
-
-void SerialMonitorWidget::setDeviceConnectionStates(const QHash<QString, bool>& connectedById) {
-    m_deviceConnected = connectedById;
-    refreshTabConnectionDots();
 }
 
 void SerialMonitorWidget::feedDevice(const QString& deviceId, const QByteArray& data) {
@@ -135,7 +154,6 @@ void SerialMonitorWidget::rebuildTabs(const QStringList& deviceIds) {
     }
 
     m_tabBar->setVisible(m_terminals.size() >= 2);
-    refreshTabConnectionDots();
     if (!m_terminals.isEmpty()) {
         showTab(0, false);
     }
@@ -166,12 +184,6 @@ QString SerialMonitorWidget::labelFor(const QString& deviceId) const {
 void SerialMonitorWidget::refreshTabLabels() {
     for (int i = 0; i < m_terminals.size(); ++i) {
         m_tabBar->setTabText(i, labelFor(m_deviceIds.value(i)));
-    }
-}
-
-void SerialMonitorWidget::refreshTabConnectionDots() {
-    for (int i = 0; i < m_terminals.size(); ++i) {
-        m_tabBar->setTabConnected(i, m_deviceConnected.value(m_deviceIds.value(i), false));
     }
 }
 
