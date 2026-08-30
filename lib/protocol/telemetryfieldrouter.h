@@ -44,6 +44,11 @@ public slots:
 signals:
     void fieldSample(const traceview::TelemetryFieldBinding& binding, quint64 timestampUs,
                      double value);
+    // Whole-body UTF8 telemetry (telemetry.md section 12.2). Text topics do
+    // not have field identities: the stable binding is (source, topic), and
+    // the body after schema_version is the complete replacement document.
+    void textSample(quint32 sourceId, quint16 topicId, quint64 timestampUs,
+                    const QString& text);
     void diagnosticsChanged();
     // A TELEMETRY sample arrived for (sourceId, topicId, schemaVersion) with
     // no matching catalog entry -- topico 16 PASSO 9: "rejeitar amostra com

@@ -22,7 +22,7 @@ private slots:
 void TestWidgetRegistry::knownBuiltinTypesAreRegistered() {
     WidgetRegistry& registry = WidgetRegistry::instance();
     const QStringList knownIds = {"dummy_line",  "dummy_bar",     "dummy_gauge", "serial_monitor",
-                                  "push_button", "toggle_switch", "slider"};
+                                  "text_board",  "push_button",   "toggle_switch", "slider"};
     for (const QString& typeId : knownIds) {
         QVERIFY2(!registry.displayName(typeId).isEmpty(), qPrintable(typeId));
         std::unique_ptr<DashboardWidget> widget(registry.create(typeId, nullptr));

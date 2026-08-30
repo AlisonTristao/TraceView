@@ -29,12 +29,10 @@ enum class TelemetryFieldType : quint8 {
 // Width in bytes of one element of `type`.
 int telemetryFieldTypeWidth(TelemetryFieldType type);
 
-// telemetry.md section 4 -- PACKED_LE is what production schemas use
-// (PLANO_GERAL.txt decision 7); the others are declared for completeness of
-// the catalog model, but only PACKED_LE has a decoder in this topico (see
-// packedledecoder.h). CSV_UTF8/JSON_UTF8/TLV_LE/OPAQUE_BYTES/UTF8 decoders
-// are added when a producer actually needs them, rather than speculatively
-// now.
+// telemetry.md section 4. PACKED_LE supplies numeric field samples; UTF8
+// supplies a validated whole-topic text document for TextBoardWidget. The
+// remaining encodings stay declared for catalog completeness and are
+// rejected until a producer/UI actually needs their distinct validation.
 enum class TelemetryEncoding : quint8 {
     Invalid = 0x00,
     OpaqueBytes = 0x01,

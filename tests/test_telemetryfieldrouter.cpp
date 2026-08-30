@@ -39,6 +39,8 @@ private slots:
     void timestampTravelsUnmodified();
     void unknownSchemaIsCountedAndNotDelivered();
     void malformedPayloadIsCountedAndNotDelivered();
+    void utf8TopicPublishesWholeText();
+    void invalidUtf8IsRejected();
 };
 
 void TestTelemetryFieldRouter::twoSubscribersBothReceiveTheSameField() {
@@ -121,6 +123,67 @@ void TestTelemetryFieldRouter::malformedPayloadIsCountedAndNotDelivered() {
 
     QVERIFY(!delivered);
     QCOMPARE(router.diagnostics().decodeErrors, quint64(1));
+}
+
+void TestTelemetryFieldRouter::utf8TopicPublishesWholeText() {
+    TelemetryCatalog catalog;
+    traceview::TelemetryTopicSchema schema;
+    schema.sourceId = kSourceId;
+    schema.topicId = 3;
+    schema.schemaVersion = 1;
+    schema.name = QStringLiteral("system.monitor");
+    schema.encoding = traceview::TelemetryEncoding::Utf8;
+    catalog.registerSchema(schema);
+    TelemetryFieldRouter router(&catalog);
+
+    QString delivered;
+    quint64 deliveredTimestamp = 0;
+    connect(&router, &TelemetryFieldRouter::textSample, &router,
+            [&](quint32 sourceId, quint16 topicId, quint64 timestampUs, const QString& text) {
+                QCOMPARE(sourceId, kSourceId);
+                QCOMPARE(topicId, quint16(3));
+                deliveredTimestamp = timestampUs;
+                delivered = text;
+            });
+
+    TelemetrySample sample;
+    sample.sourceId = kSourceId;
+    sample.topicId = 3;
+    sample.schemaVersion = 1;
+    sample.timestampUs = 123456;
+    sample.payload = QString::fromUtf8("CPU  PRO: 12,3%\nmemória: ótima").toUtf8();
+    router.onTelemetrySample(sample);
+
+    QCOMPARE(delivered, QString::fromUtf8("CPU  PRO: 12,3%\nmemória: ótima"));
+    QCOMPARE(deliveredTimestamp, quint64(123456));
+    QCOMPARE(router.diagnostics().samplesDecoded, quint64(1));
+    QCOMPARE(router.diagnostics().decodeErrors, quint64(0));
+}
+
+void TestTelemetryFieldRouter::invalidUtf8IsRejected() {
+    TelemetryCatalog catalog;
+    traceview::TelemetryTopicSchema schema;
+    schema.sourceId = kSourceId;
+    schema.topicId = 3;
+    schema.schemaVersion = 1;
+    schema.encoding = traceview::TelemetryEncoding::Utf8;
+    catalog.registerSchema(schema);
+    TelemetryFieldRouter router(&catalog);
+
+    bool delivered = false;
+    connect(&router, &TelemetryFieldRouter::textSample, &router,
+            [&](quint32, quint16, quint64, const QString&) { delivered = true; });
+
+    TelemetrySample sample;
+    sample.sourceId = kSourceId;
+    sample.topicId = 3;
+    sample.schemaVersion = 1;
+    sample.payload = QByteArray::fromHex("c328");  // invalid two-byte sequence
+    router.onTelemetrySample(sample);
+
+    QVERIFY(!delivered);
+    QCOMPARE(router.diagnostics().decodeErrors, quint64(1));
+    QCOMPARE(router.diagnostics().samplesDecoded, quint64(0));
 }
 
 }  // namespace

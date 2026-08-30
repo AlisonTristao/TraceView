@@ -35,6 +35,7 @@
 #include "dashboard/widgetconfigeditor.h"
 #include "dashboard/widgetregistry.h"
 #include "dashboard/widgets/chartwidgets.h"
+#include "dashboard/widgets/textboardwidget.h"
 #include "debugchartswindow.h"
 #include "deviceconnection.h"
 #include "devices/devicesgrid.h"
@@ -131,6 +132,11 @@ WidgetTopicRequest widgetTopicRequest(DashboardWidget* widget, DashboardGrid* gr
     if (auto* gauge = dynamic_cast<DummyGaugeWidget*>(widget)) {
         const GaugeConfig& config = gauge->config();
         return {deviceId, config.sourceId, config.topicId, kGaugeRequestedRateMillihz};
+    }
+    if (auto* board = dynamic_cast<TextBoardWidget*>(widget)) {
+        const TextBoardConfig& config = board->config();
+        return {deviceId, config.sourceId, config.topicId,
+                requestedRateMillihzFor(config.sampleTimeMs)};
     }
     return {};
 }
@@ -341,7 +347,8 @@ void MainWindow::postStatus(const QString& text, int timeoutMs, StatusSeverity s
 }
 
 void MainWindow::wireChartWidgetToTelemetry(DashboardWidget* widget) {
-    if (!dynamic_cast<ChartWidgetBase*>(widget) && !dynamic_cast<DummyGaugeWidget*>(widget)) {
+    if (!dynamic_cast<ChartWidgetBase*>(widget) && !dynamic_cast<DummyGaugeWidget*>(widget) &&
+        !dynamic_cast<TextBoardWidget*>(widget)) {
         return;
     }
 
@@ -389,6 +396,9 @@ void MainWindow::refreshWidgetSubscription(DashboardWidget* widget) {
         } else if (auto* gauge = dynamic_cast<DummyGaugeWidget*>(widget)) {
             connect(newConnection->backend(), &Backend::fieldSample, gauge,
                     &DummyGaugeWidget::onFieldSample);
+        } else if (auto* board = dynamic_cast<TextBoardWidget*>(widget)) {
+            connect(newConnection->backend(), &Backend::textSample, board,
+                    &TextBoardWidget::onTextSample);
         }
     }
 

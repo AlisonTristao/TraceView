@@ -1,9 +1,17 @@
 # Dev-only tools -- not part of the shipped app or the ctest suite.
-# chart_preview/chart_benchmark are throwaway GUI harnesses for eyeballing a
-# widget's design with synthetic data instead of a real serial device.
+# chart_preview/chart_benchmark/text_board_preview are throwaway GUI harnesses
+# for eyeballing a widget's design with synthetic data instead of a real
+# serial device.
 
 add_executable(chart_preview chart_preview/main.cpp)
 add_executable(chart_benchmark chart_benchmark/main.cpp)
+add_executable(text_board_preview text_board_preview/main.cpp)
+
+target_link_libraries(text_board_preview PRIVATE
+    Qt6::Widgets
+    traceview_dashboard
+    traceview_theme
+)
 
 target_link_libraries(chart_preview PRIVATE
     Qt6::Widgets
@@ -35,6 +43,10 @@ if(WIN32)
         add_custom_command(TARGET chart_benchmark POST_BUILD
             COMMAND "${WINDEPLOYQT_EXECUTABLE}" --no-translations "$<TARGET_FILE:chart_benchmark>"
             COMMENT "Deploying Qt runtime DLLs next to chart_benchmark.exe"
+        )
+        add_custom_command(TARGET text_board_preview POST_BUILD
+            COMMAND "${WINDEPLOYQT_EXECUTABLE}" --no-translations "$<TARGET_FILE:text_board_preview>"
+            COMMENT "Deploying Qt runtime DLLs next to text_board_preview.exe"
         )
     endif()
 endif()

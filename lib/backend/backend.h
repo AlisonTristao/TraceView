@@ -116,6 +116,10 @@ signals:
     // One decoded telemetry value for `binding`, with its origin timestamp.
     void fieldSample(const traceview::TelemetryFieldBinding& binding, quint64 timestampUs,
                      double value);
+    // One complete UTF8 telemetry document. Unlike fieldSample(), textual
+    // telemetry is identified by its topic as a whole (it has no field id).
+    void textSample(quint32 sourceId, quint16 topicId, quint64 timestampUs,
+                    const QString& text);
     // Bytes received back for a terminal/serial-monitor widget (the reply
     // side of sendTerminalIn()).
     void terminalDataReceived(const QByteArray& data);

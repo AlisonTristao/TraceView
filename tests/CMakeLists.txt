@@ -42,6 +42,7 @@ add_traceview_test(test_serialterminalwidget traceview_dashboard)
 # tab), the tab list, device-name labels, per-device inbound routing and the
 # device-tagged outbound signal -- all widget-level, no transport.
 add_traceview_test(test_serialmonitorwidget traceview_dashboard)
+add_traceview_test(test_textboardwidget traceview_dashboard)
 # topico 26: a Device that connects THROUGH another Device. traceview_ui so
 # it can build a real DeviceConnection/BtpBackend pair, which is what the
 # multiplexing test drives -- no port and no hardware are involved.

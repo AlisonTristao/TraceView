@@ -209,6 +209,10 @@ add_library(traceview_dashboard STATIC
     dashboard/widgets/serialmonitorwidget.h
     dashboard/widgets/serialterminalwidget.cpp
     dashboard/widgets/serialterminalwidget.h
+    dashboard/widgets/textboardconfigeditor.cpp
+    dashboard/widgets/textboardconfigeditor.h
+    dashboard/widgets/textboardwidget.cpp
+    dashboard/widgets/textboardwidget.h
     dashboard/widgets/terminaltabbar.cpp
     dashboard/widgets/terminaltabbar.h
     dashboard/widgets/controldata.cpp

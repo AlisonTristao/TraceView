@@ -9,6 +9,14 @@ release flow.
 
 ### Added
 
+- Added the **Text Board** dashboard widget (`text_board`) for low-rate,
+  formatted UTF-8 telemetry. Each sample replaces the complete board instead
+  of appending, fixed-width spacing is preserved, and the font automatically
+  shrinks or grows to keep the whole report inside the resized cell. Its
+  properties bind a device/source/topic and default to a 3000 ms request
+  period (approximately 0.33 Hz). `TelemetryFieldRouter`/`Backend` now expose
+  validated whole-topic `UTF8` samples alongside numeric `PACKED_LE` fields.
+
 - **Hub children recover on their own.** A device behind a hub never
   handshakes, so a robot rebooting used to leave its card reading
   "connected" while its charts silently went dead until the operator

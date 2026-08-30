@@ -368,6 +368,8 @@ BtpBackend::BtpBackend(BtpSession::Framing framing, btp::TransportProfile encode
             &TelemetryFieldRouter::onTelemetrySample);
     connect(m_telemetryFieldRouter, &TelemetryFieldRouter::fieldSample, this,
             &Backend::fieldSample);
+    connect(m_telemetryFieldRouter, &TelemetryFieldRouter::textSample, this,
+            &Backend::textSample);
     // topico 16 PASSO 9: a sample whose schema isn't in the catalog yet (or
     // no longer matches, after a schema change) triggers a targeted
     // manifest re-request instead of silently dropping forever.

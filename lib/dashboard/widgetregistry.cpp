@@ -10,6 +10,8 @@
 #include "widgets/gaugeconfigeditor.h"
 #include "widgets/serialmonitorconfigeditor.h"
 #include "widgets/serialmonitorwidget.h"
+#include "widgets/textboardconfigeditor.h"
+#include "widgets/textboardwidget.h"
 
 namespace traceview {
 
@@ -39,6 +41,12 @@ WidgetRegistry::WidgetRegistry() {
          [](QWidget* parent) -> DashboardWidget* { return new SerialMonitorWidget(parent); },
          [](QWidget* parent) -> WidgetConfigEditor* {
              return new SerialMonitorConfigEditor(parent);
+         }});
+    registerType(
+        {"text_board", QCoreApplication::translate("WidgetRegistry", "Text Board"),
+         [](QWidget* parent) -> DashboardWidget* { return new TextBoardWidget(parent); },
+         [](QWidget* parent) -> WidgetConfigEditor* {
+             return new TextBoardConfigEditor(parent);
          }});
     registerType({"push_button", QCoreApplication::translate("WidgetRegistry", "Push Button"),
                   [](QWidget* parent) -> DashboardWidget* { return new PushButtonWidget(parent); },

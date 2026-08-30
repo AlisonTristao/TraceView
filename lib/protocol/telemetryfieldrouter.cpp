@@ -1,5 +1,7 @@
 #include "protocol/telemetryfieldrouter.h"
 
+#include <QStringDecoder>
+
 #include "protocol/packedledecoder.h"
 
 namespace traceview {
@@ -21,10 +23,23 @@ void TelemetryFieldRouter::onTelemetrySample(const TelemetrySample& sample) {
         emit diagnosticsChanged();
         return;
     }
+    if (schema->encoding == TelemetryEncoding::Utf8) {
+        QStringDecoder decoder(QStringDecoder::Utf8);
+        const QString text = decoder.decode(sample.payload);
+        if (decoder.hasError()) {
+            ++m_diagnostics.decodeErrors;
+            emit diagnosticsChanged();
+            return;
+        }
+        ++m_diagnostics.samplesDecoded;
+        emit textSample(sample.sourceId, sample.topicId, sample.timestampUs, text);
+        emit diagnosticsChanged();
+        return;
+    }
     if (schema->encoding != TelemetryEncoding::PackedLe) {
-        // Only PACKED_LE has a decoder in this topico (see
-        // telemetrycatalog.h) -- a schema declaring another encoding is
-        // rejected rather than guessed at.
+        // UTF8 and PACKED_LE are the encodings currently consumed by the UI.
+        // A schema declaring another encoding is rejected rather than guessed
+        // at (JSON/CSV/TLV each has different validation rules).
         ++m_diagnostics.decodeErrors;
         emit diagnosticsChanged();
         return;

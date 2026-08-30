@@ -152,6 +152,19 @@ lives in its own module under
   active terminal to its `Backend::sendTerminalIn()` and every bound
   device's `Backend::terminalDataReceived()` back to the matching tab via
   `feedDevice()`, re-deriving all of it on `tabsChanged()`.
+- **Text Board** (`text_board`) — `widgets/textboardwidget.h`/`.cpp`. A
+  fixed-pitch, read-only surface for one whole `UTF8` telemetry topic. Every
+  sample replaces the previous document, so a formatted status table appears
+  to update only its changing numbers rather than scrolling. The painter
+  preserves spaces and line breaks, never wraps, and derives one font size
+  from the longest line plus the total line count whenever the cell is
+  resized. Its config editor selects Device/Source/Text topic, requests a
+  3000 ms period by default (about 0.33 Hz), and optionally stores waiting
+  text shown before the first sample. Only catalog topics whose encoding is
+  `UTF8` appear in the picker, though a numeric topic id can still be entered
+  before its manifest arrives. `MainWindow` manages its topic subscription
+  exactly like a chart/gauge; `TelemetryFieldRouter::textSample` carries the
+  validated complete document to `TextBoardWidget::onTextSample()`.
 - **Controls** — `widgets/controlwidgets.h`/`.cpp`, one class per kind, each
   placed and adjusted individually (not a multi-button panel — drop as many
   as needed and size each on its own). No cell header (`wantsCellHeader()`

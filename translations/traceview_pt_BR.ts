@@ -320,6 +320,11 @@
         <translation>Monitor Serial</translation>
     </message>
     <message>
+        <location filename="../lib/dashboard/widgetregistry.cpp" line="45" />
+        <source>Text Board</source>
+        <translation>Quadro de Texto</translation>
+    </message>
+    <message>
         <location filename="../lib/dashboard/widgetregistry.cpp" line="43" />
         <source>Push Button</source>
         <translation>Botão</translation>
@@ -2164,6 +2169,54 @@
         <location filename="../lib/core/usbhidmanager.cpp" line="139" />
         <source>HID device disconnected</source>
         <translation>Dispositivo HID desconectado</translation>
+    </message>
+</context>
+<context>
+    <name>traceview::TextBoardConfigEditor</name>
+    <message>
+        <location filename="../lib/dashboard/widgets/textboardconfigeditor.cpp" line="18" />
+        <source>(auto)</source>
+        <translation>(automático)</translation>
+    </message>
+    <message>
+        <location filename="../lib/dashboard/widgets/textboardconfigeditor.cpp" line="22" />
+        <source>UTF8 telemetry topic displayed by this board. Pick a reported text topic or type its numeric id.</source>
+        <translation>Tópico de telemetria UTF8 exibido neste quadro. Escolha um tópico de texto informado pelo dispositivo ou digite seu ID numérico.</translation>
+    </message>
+    <message>
+        <location filename="../lib/dashboard/widgets/textboardconfigeditor.cpp" line="32" />
+        <source>Requested update period. 3000 ms is approximately 0.33 Hz.</source>
+        <translation>Período de atualização solicitado. 3000 ms equivalem a aproximadamente 0,33 Hz.</translation>
+    </message>
+    <message>
+        <location filename="../lib/dashboard/widgets/textboardconfigeditor.cpp" line="36" />
+        <source>Text shown until the first sample arrives</source>
+        <translation>Texto exibido até a chegada da primeira amostra</translation>
+    </message>
+    <message>
+        <location filename="../lib/dashboard/widgets/textboardconfigeditor.cpp" line="42" />
+        <source>Device</source>
+        <translation>Dispositivo</translation>
+    </message>
+    <message>
+        <location filename="../lib/dashboard/widgets/textboardconfigeditor.cpp" line="43" />
+        <source>Source</source>
+        <translation>Origem</translation>
+    </message>
+    <message>
+        <location filename="../lib/dashboard/widgets/textboardconfigeditor.cpp" line="44" />
+        <source>Text topic</source>
+        <translation>Tópico de texto</translation>
+    </message>
+    <message>
+        <location filename="../lib/dashboard/widgets/textboardconfigeditor.cpp" line="45" />
+        <source>Sample period</source>
+        <translation>Período de amostragem</translation>
+    </message>
+    <message>
+        <location filename="../lib/dashboard/widgets/textboardconfigeditor.cpp" line="46" />
+        <source>Initial text</source>
+        <translation>Texto inicial</translation>
     </message>
 </context>
 <context>
