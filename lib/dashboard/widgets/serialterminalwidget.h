@@ -2,9 +2,13 @@
 
 #include <QPlainTextEdit>
 #include <QStringDecoder>
+#include <QTextCharFormat>
 #include <QTimer>
+#include <QVector>
 
 namespace traceview {
+
+struct ThemePalette;
 
 // Dumb terminal display over the BTP v1 TERMINAL_IN/OUT channel (topico 19).
 // There is no separate input line, no send button, no chat-style bubbles,
@@ -18,10 +22,19 @@ namespace traceview {
 // line model ShellSerial's output already assumes: \r returns to column 0
 // (without erasing), \b moves the cursor left one column, \n commits the
 // current line to scrollback, and any other byte >=0x20 overwrites (or
-// extends) the line at the current column -- no ANSI CSI sequences needed
-// because ShellSerial never emits any (see ShellSerial::redrawInput()).
+// extends) the line at the current column.
 // Nothing here talks to SerialManager/BtpSession directly; SerialWidgetBridge
 // wires sendRequested()/appendData() to the BTP terminal channel.
+//
+// ANSI SGR: since TinyShell 1.2.0 (ShellStyle) the dongle MAY wrap output
+// lines in a small, standard subset of colour escapes -- SGR (ESC [ ... m:
+// 0/1/2/3/22/23/31/32/33/36/39/90) and erase-in-line (ESC [ K). appendData()
+// parses that subset and renders it with per-run QTextCharFormat; the basic
+// ANSI colours are mapped to ThemePalette tokens (success/warning/danger/
+// accent/textDisabled/textSecondary), never literal RGB, so a theme switch
+// re-tints the scrollback. Any other CSI sequence is swallowed silently --
+// never shown as literal text. A dongle built without -DTINYSHELL_COLOR emits
+// none of this and the stream is exactly what it was before.
 class SerialTerminalWidget : public QPlainTextEdit {
     Q_OBJECT
 
@@ -65,16 +78,41 @@ protected:
 private:
     static constexpr int kCursorBlinkIntervalMs = 600;
 
+    // The active graphic rendition, carried across appendData() calls and
+    // across committed lines exactly as a real terminal carries SGR state.
+    // `role` indexes the ANSI-colour -> ThemePalette-token table in the .cpp
+    // (0 == default foreground); the flags are bold / faint / italic.
+    struct Pen {
+        quint8 role = 0;
+        bool bold = false;
+        bool faint = false;
+        bool italic = false;
+        bool operator==(const Pen& o) const {
+            return role == o.role && bold == o.bold && faint == o.faint && italic == o.italic;
+        }
+        bool operator!=(const Pen& o) const { return !(*this == o); }
+    };
+    enum class EscState { Normal, Esc, Csi };
+
     void putChar(QChar c);
     void commitLine();
     void renderCurrentLineAndCursor();
+    void insertLineRuns(QTextCursor& cursor, const QString& line, const QVector<Pen>& pens);
+    QTextCharFormat charFormatForPen(const Pen& pen) const;
+    void applySgr(const QString& params);
+    void eraseInLine(int mode);
+    void retintScrollback();
     QRect terminalCursorRect() const;
     void updateCursorOverlay();
     void resetCursorBlink();
     void toggleCursorBlink();
 
     QString m_currentLine;
+    QVector<Pen> m_linePens;  // one per QChar of m_currentLine (short entries -> default Pen)
     int m_cursorCol = 0;
+    Pen m_pen;
+    EscState m_escState = EscState::Normal;
+    QString m_csiParams;
     QStringDecoder m_utf8Decoder{QStringConverter::Utf8};
     QTimer m_cursorBlinkTimer;
     QWidget* m_cursorOverlay = nullptr;

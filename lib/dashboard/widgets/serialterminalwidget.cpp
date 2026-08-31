@@ -8,10 +8,45 @@
 #include <QScrollBar>
 #include <QTextBlock>
 #include <QTextCursor>
+#include <QTextDocument>
+
+#include "traceview/theme.h"
+#include "traceview/thememanager.h"
 
 namespace traceview {
 
 namespace {
+
+// SGR "role" values stored in SerialTerminalWidget::Pen::role and, for
+// committed scrollback, as a QTextCharFormat property so a later theme switch
+// can re-resolve the colour (retintScrollback).
+enum : quint8 {
+    RoleDefault = 0,
+    RoleSuccess,
+    RoleWarning,
+    RoleDanger,
+    RoleMuted,
+    RoleAccent,
+    RoleSecondary,
+};
+
+// Custom QTextCharFormat properties: the pen role + its faint flag, enough for
+// retintScrollback() to recompute the foreground against a new ThemePalette.
+constexpr int kPenRoleProperty = QTextFormat::UserProperty;
+constexpr int kPenFaintProperty = QTextFormat::UserProperty + 1;
+
+QColor colorForRole(quint8 role, bool faint, const ThemePalette& p) {
+    switch (role) {
+        case RoleSuccess:   return p.success;
+        case RoleWarning:   return p.warning;
+        case RoleDanger:    return p.danger;
+        case RoleMuted:     return p.textDisabled;
+        case RoleAccent:    return p.accent;
+        case RoleSecondary: return p.textSecondary;
+        case RoleDefault:
+        default:            return faint ? p.textSecondary : QColor();  // invalid -> inherit
+    }
+}
 
 class TerminalCursorOverlay final : public QWidget {
 public:
@@ -59,6 +94,15 @@ SerialTerminalWidget::SerialTerminalWidget(QWidget* parent) : QPlainTextEdit(par
     connect(verticalScrollBar(), &QScrollBar::valueChanged, this,
             &SerialTerminalWidget::updateCursorOverlay);
 
+    // ANSI colours map to palette tokens, not literal RGB, so a mid-session
+    // theme switch has to re-resolve every coloured run already in scrollback.
+    connect(&ThemeManager::instance(), &ThemeManager::themeChanged, this,
+            [this](const ThemePalette&) {
+                retintScrollback();
+                renderCurrentLineAndCursor();
+                updateCursorOverlay();
+            });
+
     // A dashboard cell, rather than this child widget, can own keyboard
     // focus. The terminal's remote cursor remains useful in that state, so
     // its visibility must not depend on QWidget::hasFocus().
@@ -77,7 +121,38 @@ void SerialTerminalWidget::appendData(const QByteArray& data) {
 
     for (const QChar ch : text) {
         const ushort code = ch.unicode();
-        if (code == u'\r') {
+
+        // ESC [ ... <final> -- the parser state carries across appendData()
+        // calls, same as m_utf8Decoder, so a CSI split across two TERMINAL_OUT
+        // frames still resolves.
+        if (m_escState == EscState::Esc) {
+            m_escState = (code == u'[') ? EscState::Csi : EscState::Normal;
+            if (m_escState == EscState::Csi) {
+                m_csiParams.clear();
+            }
+            continue;
+        }
+        if (m_escState == EscState::Csi) {
+            if (code >= 0x20 && code <= 0x3f) {  // parameter + intermediate bytes
+                if (m_csiParams.size() < 48) {
+                    m_csiParams.append(ch);
+                }
+                continue;
+            }
+            // final byte (0x40..0x7e), or a stray control char aborting the seq
+            if (code == u'm') {
+                applySgr(m_csiParams);
+            } else if (code == u'K') {
+                eraseInLine(m_csiParams.isEmpty() ? 0 : m_csiParams.toInt());
+            }
+            // every other final (cursor moves, ED, ...) is swallowed silently
+            m_escState = EscState::Normal;
+            continue;
+        }
+
+        if (code == 0x1b) {
+            m_escState = EscState::Esc;
+        } else if (code == u'\r') {
             m_cursorCol = 0;
         } else if (code == u'\n') {
             commitLine();
@@ -86,9 +161,8 @@ void SerialTerminalWidget::appendData(const QByteArray& data) {
                 --m_cursorCol;
             }
         } else if (code < 0x20) {
-            // Other control bytes: ShellSerial's own output never emits
-            // them (see ShellSerial.cpp), so there is nothing meaningful to
-            // render here; drop rather than show a mojibake glyph.
+            // Other control bytes have no meaning in this line model; drop
+            // rather than show a mojibake glyph.
             continue;
         } else {
             putChar(ch);
@@ -107,7 +181,11 @@ void SerialTerminalWidget::appendData(const QByteArray& data) {
 void SerialTerminalWidget::clearTerminal() {
     clear();
     m_currentLine.clear();
+    m_linePens.clear();
     m_cursorCol = 0;
+    m_pen = Pen{};
+    m_escState = EscState::Normal;
+    m_csiParams.clear();
     resetCursorBlink();
 }
 
@@ -252,8 +330,16 @@ void SerialTerminalWidget::resizeEvent(QResizeEvent* event) {
 void SerialTerminalWidget::putChar(QChar c) {
     if (m_cursorCol < m_currentLine.size()) {
         m_currentLine[m_cursorCol] = c;
+        if (m_cursorCol < m_linePens.size()) {
+            m_linePens[m_cursorCol] = m_pen;
+        }
     } else {
+        while (m_currentLine.size() < m_cursorCol) {
+            m_currentLine.append(u' ');
+            m_linePens.append(Pen{});
+        }
         m_currentLine.append(c);
+        m_linePens.append(m_pen);
     }
     ++m_cursorCol;
 }
@@ -267,11 +353,12 @@ void SerialTerminalWidget::commitLine() {
     QTextCursor cursor(document()->lastBlock());
     cursor.movePosition(QTextCursor::StartOfBlock);
     cursor.movePosition(QTextCursor::EndOfBlock, QTextCursor::KeepAnchor);
-    cursor.insertText(m_currentLine);
+    insertLineRuns(cursor, m_currentLine, m_linePens);
     cursor.movePosition(QTextCursor::EndOfBlock);
     cursor.insertText(QStringLiteral("\n"));
     setTextCursor(cursor);
     m_currentLine.clear();
+    m_linePens.clear();
     m_cursorCol = 0;
 }
 
@@ -283,13 +370,154 @@ void SerialTerminalWidget::renderCurrentLineAndCursor() {
     QTextCursor lineCursor(document()->lastBlock());
     lineCursor.movePosition(QTextCursor::StartOfBlock);
     lineCursor.movePosition(QTextCursor::EndOfBlock, QTextCursor::KeepAnchor);
-    lineCursor.insertText(m_currentLine);
+    insertLineRuns(lineCursor, m_currentLine, m_linePens);
 
     QTextCursor caret(document()->lastBlock());
     caret.movePosition(QTextCursor::StartOfBlock);
     const int column = qBound(0, m_cursorCol, m_currentLine.size());
     caret.movePosition(QTextCursor::Right, QTextCursor::MoveAnchor, column);
     setTextCursor(caret);
+}
+
+// One block's worth of text, split into maximal same-Pen runs. A default Pen
+// keeps the exact "plain insertText, clean cursor format" path the widget used
+// before ShellStyle existed; only a coloured run carries a QTextCharFormat.
+void SerialTerminalWidget::insertLineRuns(QTextCursor& cursor, const QString& line,
+                                          const QVector<Pen>& pens) {
+    int i = 0;
+    while (i < line.size()) {
+        const Pen pen = (i < pens.size()) ? pens.at(i) : Pen{};
+        int j = i + 1;
+        while (j < line.size() && (j < pens.size() ? pens.at(j) : Pen{}) == pen) {
+            ++j;
+        }
+        const QString run = line.mid(i, j - i);
+        if (pen == Pen{}) {
+            cursor.setCharFormat(QTextCharFormat());
+            cursor.insertText(run);
+        } else {
+            cursor.insertText(run, charFormatForPen(pen));
+        }
+        i = j;
+    }
+    cursor.setCharFormat(QTextCharFormat());  // don't leave a coloured pen on the cursor
+}
+
+QTextCharFormat SerialTerminalWidget::charFormatForPen(const Pen& pen) const {
+    QTextCharFormat fmt;
+    if (pen == Pen{}) {
+        return fmt;
+    }
+
+    const QColor color = colorForRole(pen.role, pen.faint, ThemeManager::instance().currentTheme());
+    if (color.isValid()) {
+        fmt.setForeground(color);
+    }
+    if (pen.bold) {
+        fmt.setFontWeight(QFont::Bold);
+    }
+    if (pen.italic) {
+        fmt.setFontItalic(true);
+    }
+    fmt.setProperty(kPenRoleProperty, int(pen.role));
+    fmt.setProperty(kPenFaintProperty, pen.faint);
+    return fmt;
+}
+
+// ESC [ <params> m -- only the subset ShellStyle emits; unknown codes leave
+// the pen untouched rather than guessing.
+void SerialTerminalWidget::applySgr(const QString& params) {
+    const QStringList tokens = params.isEmpty() ? QStringList{QStringLiteral("0")}
+                                                : params.split(u';');
+    for (const QString& token : tokens) {
+        const int code = token.isEmpty() ? 0 : token.toInt();
+        switch (code) {
+            case 0:  m_pen = Pen{}; break;
+            case 1:  m_pen.bold = true; break;
+            case 2:  m_pen.faint = true; break;
+            case 3:  m_pen.italic = true; break;
+            case 22: m_pen.bold = false; m_pen.faint = false; break;
+            case 23: m_pen.italic = false; break;
+            case 31: m_pen.role = RoleDanger; break;
+            case 32: m_pen.role = RoleSuccess; break;
+            case 33: m_pen.role = RoleWarning; break;
+            case 36: m_pen.role = RoleAccent; break;
+            case 39: m_pen.role = RoleDefault; break;
+            case 90: m_pen.role = RoleMuted; break;
+            default: break;  // 34/35/37, 9x, 38;5;n, background codes, ... ignored
+        }
+    }
+}
+
+// ESC [ K (mode 0: cursor->end, 1: start->cursor, 2: whole line). The dongle's
+// console path emits a bare "\r\033[K" to wipe the prompt line before printing.
+void SerialTerminalWidget::eraseInLine(int mode) {
+    if (mode == 2) {
+        m_currentLine.clear();
+        m_linePens.clear();
+        m_cursorCol = 0;
+        return;
+    }
+    if (mode == 1) {
+        const int upto = qMin(m_cursorCol, m_currentLine.size());
+        for (int i = 0; i < upto; ++i) {
+            m_currentLine[i] = u' ';
+            if (i < m_linePens.size()) {
+                m_linePens[i] = Pen{};
+            }
+        }
+        return;
+    }
+    if (m_cursorCol < m_currentLine.size()) {
+        m_currentLine.truncate(m_cursorCol);
+    }
+    if (m_cursorCol < m_linePens.size()) {
+        m_linePens.resize(m_cursorCol);
+    }
+}
+
+// A theme switch changes what each ANSI colour resolves to; walk the committed
+// scrollback and recolour every run that carries a pen-role property. Collect
+// the ranges first -- mergeCharFormat() re-flows fragments as it goes.
+void SerialTerminalWidget::retintScrollback() {
+    struct Range {
+        int position;
+        int length;
+        quint8 role;
+        bool faint;
+    };
+    QVector<Range> ranges;
+    for (QTextBlock block = document()->begin(); block.isValid(); block = block.next()) {
+        for (QTextBlock::iterator it = block.begin(); !it.atEnd(); ++it) {
+            const QTextFragment fragment = it.fragment();
+            if (!fragment.isValid()) {
+                continue;
+            }
+            const QTextCharFormat fmt = fragment.charFormat();
+            if (!fmt.hasProperty(kPenRoleProperty)) {
+                continue;
+            }
+            ranges.push_back({fragment.position(), fragment.length(),
+                              static_cast<quint8>(fmt.intProperty(kPenRoleProperty)),
+                              fmt.boolProperty(kPenFaintProperty)});
+        }
+    }
+    if (ranges.isEmpty()) {
+        return;
+    }
+
+    const ThemePalette& palette = ThemeManager::instance().currentTheme();
+    QTextCursor cursor(document());
+    cursor.beginEditBlock();
+    for (const Range& range : ranges) {
+        const QColor color = colorForRole(range.role, range.faint, palette);
+        QTextCharFormat fmt;
+        fmt.setForeground(color.isValid() ? color : this->palette().color(QPalette::Text));
+        cursor.setPosition(range.position);
+        cursor.setPosition(range.position + range.length, QTextCursor::KeepAnchor);
+        cursor.mergeCharFormat(fmt);
+    }
+    cursor.endEditBlock();
 }
 
 QRect SerialTerminalWidget::terminalCursorRect() const {

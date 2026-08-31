@@ -38,6 +38,28 @@ yet (in which case, add that rule as a token-driven line in
 | `success` / `warning` / `danger`                 | Status colors        |
 | `series`        | Reserved for future telemetry plot lines (not wired to QSS) |
 
+## ANSI colours in the Serial Monitor
+
+`SerialTerminalWidget` parses the small SGR subset the dongle emits (TinyShell
+`ShellStyle`, gated by `-DTINYSHELL_COLOR`) and maps the basic ANSI colours to
+tokens above rather than to literal RGB, so coloured shell output re-tints on a
+theme switch like everything else.
+
+| SGR code | Meaning | Token |
+|----------|---------|-------|
+| `31` | red | `danger` |
+| `32` | green | `success` |
+| `33` | yellow | `warning` |
+| `36` | cyan | `accent` |
+| `90` | bright black | `textDisabled` |
+| `2` (faint), no colour | dim | `textSecondary` |
+| `0` / `39` | default foreground | inherits (no token) |
+| `1` / `3` | bold / italic | font only, no colour |
+
+Any other CSI sequence (other colours, cursor movement, `ESC [ 2J`, …) is
+consumed and never rendered. `ESC [ K` erases to end of line. The mapping lives
+in `colorForRole()` in `lib/dashboard/widgets/serialterminalwidget.cpp`.
+
 ## Current templates
 
 - **Dark** (default) — near-black navy background (`#0A0F1E`), white text and

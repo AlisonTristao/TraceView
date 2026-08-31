@@ -2,14 +2,27 @@
 #include <QGuiApplication>
 #include <QImage>
 #include <QSignalSpy>
+#include <QTextBlock>
+#include <QTextCharFormat>
 #include <QTextCursor>
 #include <QtTest>
 
 #include "dashboard/widgets/serialterminalwidget.h"
+#include "traceview/theme.h"
+#include "traceview/thememanager.h"
 
 using traceview::SerialTerminalWidget;
+using traceview::ThemeManager;
 
 namespace {
+
+// Foreground colour of the character at document position `pos` (0-based).
+QColor fgAt(const SerialTerminalWidget& widget, int pos) {
+    QTextCursor cur(widget.document());
+    cur.setPosition(pos);
+    cur.setPosition(pos + 1, QTextCursor::KeepAnchor);
+    return cur.charFormat().foreground().color();
+}
 
 class TestSerialTerminalWidget : public QObject {
     Q_OBJECT
@@ -31,6 +44,12 @@ private slots:
     void appendDataSplitsMultibyteUtf8AcrossCallsWithoutMojibake();
     void clearTerminalResetsDocumentAndLineState();
     void remoteCursorUsesCustomOverlayAndBlinks();
+    void sgrColoursARunAndLeavesNoEscapesInText();
+    void sgrColourSurvivesLineCommitAndCarriesRoleForRetint();
+    void unknownCsiIsSwallowedNotRendered();
+    void csiSplitAcrossAppendDataStillResolves();
+    void eraseInLineClearsFromCursorToEnd();
+    void themeSwitchRetintsColouredScrollback();
 };
 
 void TestSerialTerminalWidget::printableKeySendsUtf8BytesAndDoesNotEchoLocally() {
@@ -296,6 +315,89 @@ void TestSerialTerminalWidget::remoteCursorUsesCustomOverlayAndBlinks() {
     QVERIFY(!cursorOverlay->isVisible());
     QTest::qWait(650);
     QVERIFY(!cursorOverlay->isVisible());
+}
+
+void TestSerialTerminalWidget::sgrColoursARunAndLeavesNoEscapesInText() {
+    SerialTerminalWidget widget;
+    const traceview::ThemePalette& theme = ThemeManager::instance().currentTheme();
+
+    widget.appendData(QByteArrayLiteral("ok \x1b[31mboom\x1b[0m done"));
+
+    // The escapes never reach the document.
+    QCOMPARE(widget.toPlainText(), QStringLiteral("ok boom done"));
+    // "boom" (indices 3..6) is danger; the text around it is not.
+    QCOMPARE(fgAt(widget, 3), theme.danger);
+    QCOMPARE(fgAt(widget, 6), theme.danger);
+    QVERIFY(fgAt(widget, 0) != theme.danger);   // "ok "
+    QVERIFY(fgAt(widget, 8) != theme.danger);   // " done"
+}
+
+void TestSerialTerminalWidget::sgrColourSurvivesLineCommitAndCarriesRoleForRetint() {
+    SerialTerminalWidget widget;
+    const traceview::ThemePalette& theme = ThemeManager::instance().currentTheme();
+
+    widget.appendData(QByteArrayLiteral("\x1b[32mled ligado\x1b[0m\r\n$ "));
+
+    QCOMPARE(widget.toPlainText(), QStringLiteral("led ligado\n$ "));
+    QCOMPARE(fgAt(widget, 0), theme.success);
+
+    // The committed run keeps a role property so a later theme switch can
+    // re-resolve it (UserProperty == the widget's kPenRoleProperty).
+    QTextCursor cur(widget.document());
+    cur.setPosition(0);
+    cur.setPosition(1, QTextCursor::KeepAnchor);
+    QVERIFY(cur.charFormat().hasProperty(QTextFormat::UserProperty));
+}
+
+void TestSerialTerminalWidget::unknownCsiIsSwallowedNotRendered() {
+    SerialTerminalWidget widget;
+
+    // Clear-screen, cursor-home, cursor-forward: none is part of the ShellStyle
+    // subset, all must vanish rather than print as "[2J" etc.
+    widget.appendData(QByteArrayLiteral("\x1b[2J\x1b[H a\x1b[3Cb"));
+
+    QCOMPARE(widget.toPlainText(), QStringLiteral(" ab"));
+}
+
+void TestSerialTerminalWidget::csiSplitAcrossAppendDataStillResolves() {
+    SerialTerminalWidget widget;
+    const traceview::ThemePalette& theme = ThemeManager::instance().currentTheme();
+
+    widget.appendData(QByteArrayLiteral("a\x1b"));
+    widget.appendData(QByteArrayLiteral("[31"));
+    widget.appendData(QByteArrayLiteral("mb"));
+
+    QCOMPARE(widget.toPlainText(), QStringLiteral("ab"));
+    QCOMPARE(fgAt(widget, 1), theme.danger);
+}
+
+void TestSerialTerminalWidget::eraseInLineClearsFromCursorToEnd() {
+    SerialTerminalWidget widget;
+    widget.appendData(QByteArrayLiteral("dongle> command"));
+
+    // The console path's prompt wipe: CR home, then erase-to-end-of-line.
+    widget.appendData(QByteArrayLiteral("\r\x1b[K! result"));
+
+    QCOMPARE(widget.toPlainText(), QStringLiteral("! result"));
+}
+
+void TestSerialTerminalWidget::themeSwitchRetintsColouredScrollback() {
+    SerialTerminalWidget widget;
+    auto& manager = ThemeManager::instance();
+    const QString original = manager.currentTheme().id;
+
+    const QVector<traceview::ThemePalette> themes = manager.availableThemes();
+    QVERIFY(themes.size() >= 2);
+    const traceview::ThemePalette other =
+        (themes.at(0).id == manager.currentTheme().id) ? themes.at(1) : themes.at(0);
+
+    widget.appendData(QByteArrayLiteral("\x1b[31mfail\x1b[0m\r\n"));
+    QCOMPARE(fgAt(widget, 0), manager.currentTheme().danger);
+
+    manager.setTheme(other.id);
+    QCOMPARE(fgAt(widget, 0), other.danger);
+
+    manager.setTheme(original);  // don't leak the switch into sibling tests
 }
 
 }  // namespace
