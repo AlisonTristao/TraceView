@@ -45,6 +45,7 @@ private slots:
     void clearTerminalResetsDocumentAndLineState();
     void remoteCursorUsesCustomOverlayAndBlinks();
     void sgrColoursARunAndLeavesNoEscapesInText();
+    void sgrColoursShellCommandTokens();
     void sgrColourSurvivesLineCommitAndCarriesRoleForRetint();
     void unknownCsiIsSwallowedNotRendered();
     void csiSplitAcrossAppendDataStillResolves();
@@ -330,6 +331,20 @@ void TestSerialTerminalWidget::sgrColoursARunAndLeavesNoEscapesInText() {
     QCOMPARE(fgAt(widget, 6), theme.danger);
     QVERIFY(fgAt(widget, 0) != theme.danger);   // "ok "
     QVERIFY(fgAt(widget, 8) != theme.danger);   // " done"
+}
+
+void TestSerialTerminalWidget::sgrColoursShellCommandTokens() {
+    SerialTerminalWidget widget;
+    const traceview::ThemePalette& theme = ThemeManager::instance().currentTheme();
+
+    widget.appendData(
+        QByteArrayLiteral("$ \x1b[33mdongle\x1b[30m \x1b[34m-ping\x1b[30m 7\x1b[0m"));
+
+    QCOMPARE(widget.toPlainText(), QStringLiteral("$ dongle -ping 7"));
+    QCOMPARE(fgAt(widget, 2), theme.warning);  // module: dark yellow / warning token
+    QCOMPARE(fgAt(widget, 9), theme.accent);   // function: dark blue / accent token
+    QVERIFY(fgAt(widget, 15) != theme.warning);
+    QVERIFY(fgAt(widget, 15) != theme.accent); // argument: normal dark text in light themes
 }
 
 void TestSerialTerminalWidget::sgrColourSurvivesLineCommitAndCarriesRoleForRetint() {

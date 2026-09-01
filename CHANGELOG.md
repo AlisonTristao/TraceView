@@ -9,6 +9,11 @@ release flow.
 
 ### Added
 
+- The serial terminal now renders TinyShell's live command-token colours:
+  modules use the theme warning/dark-yellow pen, functions use the accent/blue
+  pen, and arguments return to the normal foreground. ANSI 30 and 34 join the
+  existing supported SGR subset, including theme-switch retinting.
+
 - Added the **Text Board** dashboard widget (`text_board`) for low-rate,
   formatted UTF-8 telemetry. Each sample replaces the complete board instead
   of appending, fixed-width spacing is preserved, and the font automatically

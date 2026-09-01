@@ -47,9 +47,11 @@ theme switch like everything else.
 
 | SGR code | Meaning | Token |
 |----------|---------|-------|
+| `30` | black (shell argument) | default foreground (keeps contrast) |
 | `31` | red | `danger` |
 | `32` | green | `success` |
 | `33` | yellow | `warning` |
+| `34` | blue (shell function) | `accent` |
 | `36` | cyan | `accent` |
 | `90` | bright black | `textDisabled` |
 | `2` (faint), no colour | dim | `textSecondary` |

@@ -28,10 +28,10 @@ struct ThemePalette;
 //
 // ANSI SGR: since TinyShell 1.2.0 (ShellStyle) the dongle MAY wrap output
 // lines in a small, standard subset of colour escapes -- SGR (ESC [ ... m:
-// 0/1/2/3/22/23/31/32/33/36/39/90) and erase-in-line (ESC [ K). appendData()
+// 0/1/2/3/22/23/30/31/32/33/34/36/39/90) and erase-in-line (ESC [ K). appendData()
 // parses that subset and renders it with per-run QTextCharFormat; the basic
 // ANSI colours are mapped to ThemePalette tokens (success/warning/danger/
-// accent/textDisabled/textSecondary), never literal RGB, so a theme switch
+// accent/textDisabled/textSecondary/default), never literal RGB, so a theme switch
 // re-tints the scrollback. Any other CSI sequence is swallowed silently --
 // never shown as literal text. A dongle built without -DTINYSHELL_COLOR emits
 // none of this and the stream is exactly what it was before.

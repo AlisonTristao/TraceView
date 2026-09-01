@@ -438,13 +438,15 @@ void SerialTerminalWidget::applySgr(const QString& params) {
             case 3:  m_pen.italic = true; break;
             case 22: m_pen.bold = false; m_pen.faint = false; break;
             case 23: m_pen.italic = false; break;
+            case 30: m_pen.role = RoleDefault; break;
             case 31: m_pen.role = RoleDanger; break;
             case 32: m_pen.role = RoleSuccess; break;
             case 33: m_pen.role = RoleWarning; break;
+            case 34: m_pen.role = RoleAccent; break;
             case 36: m_pen.role = RoleAccent; break;
             case 39: m_pen.role = RoleDefault; break;
             case 90: m_pen.role = RoleMuted; break;
-            default: break;  // 34/35/37, 9x, 38;5;n, background codes, ... ignored
+            default: break;  // 35/37, 9x, 38;5;n, background codes, ... ignored
         }
     }
 }
