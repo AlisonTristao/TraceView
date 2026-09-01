@@ -97,7 +97,6 @@ add_traceview_test(test_telemetryseriesbuffer traceview_telemetry)
 # lib/CMakeLists.txt). Satisfies topico 14's CRITERIO DE ACEITE "parser/
 # protocolo possui testes sem QWidget".
 add_traceview_test(test_telemetrycatalog traceview_protocol)
-add_traceview_test(test_packedledecoder traceview_protocol)
 add_traceview_test(test_protocolrouter traceview_protocol)
 add_traceview_test(test_btpsession traceview_protocol)
 # topico 25: BtpSession's framing axis vs. its encode-profile axis, now that

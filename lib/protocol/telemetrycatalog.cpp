@@ -1,29 +1,8 @@
 #include "protocol/telemetrycatalog.h"
 
-namespace traceview {
+#include <algorithm>
 
-int telemetryFieldTypeWidth(TelemetryFieldType type) {
-    switch (type) {
-        case TelemetryFieldType::UInt8:
-        case TelemetryFieldType::Int8:
-        case TelemetryFieldType::Bool:
-        case TelemetryFieldType::Enum8:
-            return 1;
-        case TelemetryFieldType::UInt16:
-        case TelemetryFieldType::Int16:
-        case TelemetryFieldType::Enum16:
-            return 2;
-        case TelemetryFieldType::UInt32:
-        case TelemetryFieldType::Int32:
-        case TelemetryFieldType::Float32:
-            return 4;
-        case TelemetryFieldType::UInt64:
-        case TelemetryFieldType::Int64:
-        case TelemetryFieldType::Float64:
-            return 8;
-    }
-    return 0;
-}
+namespace traceview {
 
 const TelemetryFieldSchema* TelemetryTopicSchema::fieldById(quint16 fieldId) const {
     for (const TelemetryFieldSchema& field : fields) {
@@ -32,6 +11,44 @@ const TelemetryFieldSchema* TelemetryTopicSchema::fieldById(quint16 fieldId) con
         }
     }
     return nullptr;
+}
+
+const QVector<btp::FieldSpec>& TelemetryTopicSchema::orderedFieldSpecs() const {
+    if (m_orderedSpecsBuilt) {
+        return m_orderedSpecs;
+    }
+    m_orderedSpecsBuilt = true;
+    m_orderedSpecs.clear();
+
+    QVector<const TelemetryFieldSchema*> ordered;
+    ordered.reserve(fields.size());
+    for (const TelemetryFieldSchema& field : fields) {
+        ordered.append(&field);
+    }
+    std::stable_sort(ordered.begin(), ordered.end(),
+                     [](const TelemetryFieldSchema* a, const TelemetryFieldSchema* b) {
+                         return a->order < b->order;
+                     });
+
+    m_orderedSpecs.reserve(ordered.size());
+    for (int i = 0; i < ordered.size(); ++i) {
+        if (ordered[i]->order != quint16(i)) {
+            m_orderedSpecs.clear();  // not contiguous from zero -- leave empty
+            return m_orderedSpecs;
+        }
+        btp::FieldSpec spec{};
+        spec.field_id = ordered[i]->fieldId;
+        spec.order = ordered[i]->order;
+        spec.type = quint8(ordered[i]->type);
+        spec.flags = quint8(ordered[i]->nullable ? btp::kFieldNullable : 0) |
+                     quint8(ordered[i]->isVariableLength() ? btp::kFieldVariableCount : 0);
+        spec.element_count = ordered[i]->elementCount;
+        spec.max_element_count = ordered[i]->maxElementCount;
+        spec.scale = ordered[i]->scale;
+        spec.offset = ordered[i]->offset;
+        m_orderedSpecs.append(spec);
+    }
+    return m_orderedSpecs;
 }
 
 quint64 TelemetryCatalog::makeKey(quint32 sourceId, quint16 topicId, quint16 schemaVersion) {

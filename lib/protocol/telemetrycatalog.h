@@ -5,11 +5,13 @@
 #include <QVector>
 #include <QtGlobal>
 
+#include <btp/telemetry.hpp>
+
 namespace traceview {
 
-// Wire-identical to telemetry.md section 5's types, numbered as commands.md
-// section 3.3 assigns -- kept as its own client-side enum (rather than a raw
-// uint8) so schema code reads by name instead of by magic number.
+// telemetry.md section 13's wire types. Identical octet values to
+// btp::WireType (which pins them) -- kept as a client-side enum so schema and
+// UI code read by name; the static_assert below keeps the two in step.
 enum class TelemetryFieldType : quint8 {
     UInt8 = 0x01,
     UInt16 = 0x02,
@@ -26,8 +28,15 @@ enum class TelemetryFieldType : quint8 {
     Enum16 = 0x0D,
 };
 
-// Width in bytes of one element of `type`.
-int telemetryFieldTypeWidth(TelemetryFieldType type);
+static_assert(quint8(TelemetryFieldType::UInt8) == quint8(btp::WireType::Uint8) &&
+                  quint8(TelemetryFieldType::Float64) == quint8(btp::WireType::Float64) &&
+                  quint8(TelemetryFieldType::Enum16) == quint8(btp::WireType::Enum16),
+              "TelemetryFieldType must mirror btp::WireType");
+
+// Width in bytes of one element of `type` (0 for an undefined type).
+inline int telemetryFieldTypeWidth(TelemetryFieldType type) {
+    return int(btp::wire_type_width(quint8(type)));
+}
 
 // telemetry.md section 4. PACKED_LE supplies numeric field samples; UTF8
 // supplies a validated whole-topic text document for TextBoardWidget. The
@@ -72,11 +81,21 @@ struct TelemetryTopicSchema {
     quint16 schemaVersion = 0;
     QString name;
     TelemetryEncoding encoding = TelemetryEncoding::PackedLe;
-    QVector<TelemetryFieldSchema> fields;  // need not be pre-sorted by
-                                           // `order`; decodePackedLe sorts
-                                           // its own working copy.
+    QVector<TelemetryFieldSchema> fields;  // need not be pre-sorted by `order`;
+                                           // orderedFieldSpecs() sorts a copy.
 
     const TelemetryFieldSchema* fieldById(quint16 fieldId) const;
+
+    // `fields` as a btp::FieldSpec array sorted ascending by `order`, for
+    // btp::SampleReader / btp::SampleWriter (which need fields[i].order == i).
+    // Built lazily and cached; a copied schema rebuilds on first use. Empty
+    // when the schema's `order` values are not contiguous from zero -- a
+    // malformed schema btp::SampleReader would reject anyway.
+    const QVector<btp::FieldSpec>& orderedFieldSpecs() const;
+
+private:
+    mutable QVector<btp::FieldSpec> m_orderedSpecs;
+    mutable bool m_orderedSpecsBuilt = false;
 };
 
 // Source/topic/schema registry, deliberately independent of DashboardWidget

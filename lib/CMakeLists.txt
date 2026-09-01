@@ -133,8 +133,6 @@ add_library(traceview_protocol STATIC
     protocol/logseverity.h
     protocol/manifestclient.cpp
     protocol/manifestclient.h
-    protocol/packedledecoder.cpp
-    protocol/packedledecoder.h
     protocol/protocolrouter.cpp
     protocol/protocolrouter.h
     protocol/statusreport.cpp
@@ -166,6 +164,10 @@ target_link_libraries(traceview_protocol PUBLIC
     # btphandshake.cpp, manifestclient.cpp and friends. Links btp::codec,
     # no mbedtls.
     btp::messages
+    # btp::telemetry: a TELEMETRY sample body (PACKED_LE / TLV_LE) against a
+    # schema, replacing the hand-rolled packedledecoder.cpp.
+    # TelemetryFieldRouter feeds it the FieldSpec array TelemetryCatalog keeps.
+    btp::telemetry
     # channelseal.cpp is the only place in this app that calls into btp::aead
     # (mirrors bally_OS's RadioSeal/bally_dongle's DongleKeyStore convention:
     # one file per repo owns the crypto call, everything else goes through
