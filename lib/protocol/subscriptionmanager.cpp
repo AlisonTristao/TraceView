@@ -3,6 +3,9 @@
 #include <QDateTime>
 #include <QRandomGenerator>
 #include <btp/codec.hpp>
+#include <btp/messages.hpp>
+
+#include <cstdint>
 
 #include "protocol/btpframe.h"
 #include "protocol/btpsession.h"
@@ -30,22 +33,9 @@ constexpr int kUnsubscribeResultSize = 16;  // 12 ref + 1 + 1 + 2
 constexpr quint32 kMinRenewIntervalMs = 500;
 constexpr int kLeaseTimerIntervalMs = 1000;
 
-void appendLe(QByteArray& out, quint32 value, int width) {
-    for (int i = 0; i < width; ++i) {
-        out.append(static_cast<char>((value >> (8 * i)) & 0xFF));
-    }
-}
-
-quint16 readLe16(const QByteArray& data, int offset) {
-    return quint16(quint8(data.at(offset))) | (quint16(quint8(data.at(offset + 1))) << 8);
-}
-
-quint32 readLe32(const QByteArray& data, int offset) {
-    quint32 value = 0;
-    for (int i = 0; i < 4; ++i) {
-        value |= quint32(quint8(data.at(offset + i))) << (8 * i);
-    }
-    return value;
+// A ByteView over a QByteArray, for the btp::messages decoders.
+const std::uint8_t* asBytes(const QByteArray& data) {
+    return reinterpret_cast<const std::uint8_t*>(data.constData());
 }
 
 qint64 renewIntervalFor(quint32 grantedLeaseMs) {
@@ -189,14 +179,19 @@ void SubscriptionManager::sendSubscribe(TopicState& topic, quint32 rateMillihz) 
         return;
     }
 
-    QByteArray payload;
-    payload.reserve(20);
-    appendLe(payload, topic.sourceId, 4);
-    appendLe(payload, bootId, 4);
-    appendLe(payload, topic.topicId, 2);
-    appendLe(payload, 0, 2);  // flags: zero in v1
-    appendLe(payload, rateMillihz, 4);
-    appendLe(payload, kRequestedLeaseMs, 4);
+    btp::Subscribe request{};
+    request.target_source_id = topic.sourceId;
+    request.target_boot_id = bootId;
+    request.topic_id = topic.topicId;
+    request.requested_rate_millihz = rateMillihz;
+    request.requested_lease_ms = kRequestedLeaseMs;
+
+    std::uint8_t buffer[32];
+    std::size_t written = 0;
+    if (btp::encode_subscribe(request, buffer, sizeof(buffer), &written) != btp::MessageError::Ok) {
+        return;  // a zero field (unknown topic / zero rate): nothing to send
+    }
+    const QByteArray payload(reinterpret_cast<const char*>(buffer), static_cast<int>(written));
 
     const quint32 sequence = nextSequence();
     sendControl(kControlSubscribe, payload, sequence);
@@ -209,11 +204,17 @@ void SubscriptionManager::sendSubscribe(TopicState& topic, quint32 rateMillihz) 
 }
 
 void SubscriptionManager::sendUnsubscribe(const TopicState& topic) {
-    QByteArray payload;
-    payload.reserve(12);
-    appendLe(payload, topic.sourceId, 4);
-    appendLe(payload, topic.targetBootId, 4);
-    appendLe(payload, topic.subscriptionId, 4);
+    btp::Unsubscribe request{};
+    request.target_source_id = topic.sourceId;
+    request.target_boot_id = topic.targetBootId;
+    request.subscription_id = topic.subscriptionId;
+
+    std::uint8_t buffer[16];
+    std::size_t written = 0;
+    if (btp::encode_unsubscribe(request, buffer, sizeof(buffer), &written) != btp::MessageError::Ok) {
+        return;
+    }
+    const QByteArray payload(reinterpret_cast<const char*>(buffer), static_cast<int>(written));
 
     const quint32 sequence = nextSequence();
     sendControl(kControlUnsubscribe, payload, sequence);
@@ -282,7 +283,12 @@ void SubscriptionManager::onControlFrameReceived(const BtpFrame& frame) {
 }
 
 void SubscriptionManager::handleSubscribeResult(const BtpFrame& frame) {
-    if (frame.payload.size() < kSubscribeResultSize) {
+    // The 28-octet SUBSCRIBE_RESULT layout (commands.md section 4) is
+    // btp::decode_subscribe_result.
+    btp::SubscribeResult result{};
+    if (btp::decode_subscribe_result(asBytes(frame.payload),
+                                     static_cast<std::size_t>(frame.payload.size()),
+                                     &result) != btp::MessageError::Ok) {
         return;
     }
     // Correlation is the full (request_source_id, request_boot_id,
@@ -291,11 +297,11 @@ void SubscriptionManager::handleSubscribeResult(const BtpFrame& frame) {
     // under: the private one, or the hub-channel endpoint one.
     const quint32 expectedSourceId = m_endpointSourceId != 0 ? m_endpointSourceId : m_clientSourceId;
     const quint32 expectedBootId = m_endpointSourceId != 0 ? m_endpointBootId : m_clientBootId;
-    if (readLe32(frame.payload, 0) != expectedSourceId ||
-        readLe32(frame.payload, 4) != expectedBootId) {
+    if (result.request.request_source_id != expectedSourceId ||
+        result.request.request_boot_id != expectedBootId) {
         return;
     }
-    const quint32 replyToSequence = readLe32(frame.payload, 8);
+    const quint32 replyToSequence = result.request.reply_to_sequence;
     const auto pending = m_pendingSubscribes.find(replyToSequence);
     if (pending == m_pendingSubscribes.end()) {
         return;
@@ -313,11 +319,11 @@ void SubscriptionManager::handleSubscribeResult(const BtpFrame& frame) {
     }
     topic.inFlightSequence = 0;
 
-    const quint8 status = quint8(frame.payload.at(12));
-    const quint16 errorCode = readLe16(frame.payload, 14);
-    const quint32 subscriptionId = readLe32(frame.payload, 16);
-    const quint32 effectiveRate = readLe32(frame.payload, 20);
-    const quint32 grantedLease = readLe32(frame.payload, 24);
+    const quint8 status = result.status;
+    const quint16 errorCode = result.error_code;
+    const quint32 subscriptionId = result.subscription_id;
+    const quint32 effectiveRate = result.effective_rate_millihz;
+    const quint32 grantedLease = result.granted_lease_ms;
 
     topic.lastStatus = status;
     topic.lastErrorCode = errorCode;
@@ -366,16 +372,23 @@ void SubscriptionManager::handleSubscribeResult(const BtpFrame& frame) {
 }
 
 void SubscriptionManager::handleUnsubscribeResult(const BtpFrame& frame) {
-    if (frame.payload.size() < kUnsubscribeResultSize) {
+    // The 16-octet UNSUBSCRIBE_RESULT (request reference + status) is
+    // btp::decode_unsubscribe_result. Only the reference triple is used here --
+    // the status does not matter (removing an absent subscription is defined
+    // as SUCCESS).
+    btp::ControlResult result{};
+    if (btp::decode_unsubscribe_result(asBytes(frame.payload),
+                                       static_cast<std::size_t>(frame.payload.size()),
+                                       &result) != btp::MessageError::Ok) {
         return;
     }
     const quint32 expectedSourceId = m_endpointSourceId != 0 ? m_endpointSourceId : m_clientSourceId;
     const quint32 expectedBootId = m_endpointSourceId != 0 ? m_endpointBootId : m_clientBootId;
-    if (readLe32(frame.payload, 0) != expectedSourceId ||
-        readLe32(frame.payload, 4) != expectedBootId) {
+    if (result.request.request_source_id != expectedSourceId ||
+        result.request.request_boot_id != expectedBootId) {
         return;
     }
-    const quint32 replyToSequence = readLe32(frame.payload, 8);
+    const quint32 replyToSequence = result.request.reply_to_sequence;
     const auto pending = m_pendingUnsubscribes.find(replyToSequence);
     if (pending == m_pendingUnsubscribes.end()) {
         return;

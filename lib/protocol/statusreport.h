@@ -33,15 +33,13 @@ struct StatusReport {
     }
 };
 
-// Decodes a CONTROL/STATUS payload. Returns false (leaving `*out` untouched)
-// for anything this client must not guess at: fewer than 92 octets, a
-// `status_version` other than 1 or 2, or a v2 message whose
-// `topic_status_count` does not fit the bytes that follow.
-//
-// With `status_version=1` the decoder MUST stop at 92 octets (section 5.1):
-// trailing bytes are never reinterpreted as topic_status records, they are
-// simply not read. That is what keeps a v1 emitter and this v2-aware reader
-// compatible in both directions.
+// Decodes a CONTROL/STATUS payload via btp::messages (btp::decode_status).
+// Returns false (leaving `*out` untouched) for anything this client must not
+// guess at: fewer than 92 octets, a `status_version` other than 1 or 2, a v1
+// payload that is not exactly 92 octets, or a v2 payload that is not exactly
+// 92 + 2 + 28 * topic_status_count octets. Trailing bytes are rejected, not
+// ignored -- the wire is expected to be exact (commands.md section 5.1, and
+// the `status_v1_trailing_byte` invalid conformance vector).
 bool parseStatusPayload(const QByteArray& payload, StatusReport* out);
 
 }  // namespace traceview

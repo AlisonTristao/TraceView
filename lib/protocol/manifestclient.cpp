@@ -3,7 +3,9 @@
 #include <QDateTime>
 #include <QRandomGenerator>
 #include <btp/codec.hpp>
-#include <cstring>
+#include <btp/messages.hpp>
+
+#include <cstdint>
 
 #include "protocol/btpframe.h"
 #include "protocol/btpsession.h"
@@ -20,156 +22,10 @@ constexpr quint8 kStatusSuccess = 0x00;
 constexpr quint8 kFlagNotModified = 0x01;
 constexpr qint64 kUnknownSchemaRequestCooldownMs = 3000;
 
-void appendLe32(QByteArray& out, quint32 value) {
-    out.append(static_cast<char>(value));
-    out.append(static_cast<char>(value >> 8));
-    out.append(static_cast<char>(value >> 16));
-    out.append(static_cast<char>(value >> 24));
-}
-
-// Bounds-checked little-endian cursor over one MANIFEST_DATA payload
-// (commands.md section 3.2). Every read advances `pos` only on
-// success, so a caller can bail out on the first `false` without unwinding
-// anything by hand.
-struct Cursor {
-    const QByteArray& data;
-    int pos = 0;
-
-    bool skip(int n) {
-        if (n < 0 || pos + n > data.size())
-            return false;
-        pos += n;
-        return true;
-    }
-    bool u8(quint8* out) {
-        if (pos + 1 > data.size())
-            return false;
-        *out = quint8(data.at(pos));
-        pos += 1;
-        return true;
-    }
-    bool u16(quint16* out) {
-        if (pos + 2 > data.size())
-            return false;
-        *out = quint16(quint8(data.at(pos))) | (quint16(quint8(data.at(pos + 1))) << 8);
-        pos += 2;
-        return true;
-    }
-    bool u32(quint32* out) {
-        if (pos + 4 > data.size())
-            return false;
-        quint32 value = 0;
-        for (int i = 0; i < 4; ++i) value |= quint32(quint8(data.at(pos + i))) << (8 * i);
-        *out = value;
-        pos += 4;
-        return true;
-    }
-    bool f64(double* out) {
-        if (pos + 8 > data.size())
-            return false;
-        std::memcpy(out, data.constData() + pos, sizeof(double));  // host is little-endian
-        pos += 8;
-        return true;
-    }
-    bool utf8(QString* out) {
-        quint16 len = 0;
-        if (!u16(&len))
-            return false;
-        if (pos + len > data.size())
-            return false;
-        *out = QString::fromUtf8(data.constData() + pos, len);
-        pos += len;
-        return true;
-    }
-};
-
-// Parses one field record (commands.md section 3.3's field record)
-// starting at `cursor.pos`, which must be the record's own
-// `record_size` prefix. Enum entries are not modeled by TelemetryFieldSchema
-// yet (topico 16 does not need them to decode PACKED_LE samples), so this
-// jumps straight to the record's end afterward rather than parsing them --
-// exactly what `record_size` framing is for, and forward compatible with
-// any future field appended after `description`.
-bool parseFieldRecord(Cursor& cursor, TelemetryFieldSchema* outField) {
-    quint32 recordSize = 0;
-    if (!cursor.u32(&recordSize))
-        return false;
-    const int recordEnd = cursor.pos + int(recordSize);
-    if (recordSize > 0x7FFFFFFFU || recordEnd > cursor.data.size())
-        return false;
-
-    quint16 fieldId = 0, order = 0, elementCount = 0, maxElementCount = 0, enumCount = 0;
-    quint8 type = 0, flags = 0;
-    double scale = 1.0, offset = 0.0;
-    QString name, unit, description;
-    if (!cursor.u16(&fieldId) || !cursor.u16(&order) || !cursor.u8(&type) || !cursor.u8(&flags) ||
-        !cursor.u16(&elementCount) || !cursor.u16(&maxElementCount) || !cursor.f64(&scale) ||
-        !cursor.f64(&offset) || !cursor.u16(&enumCount) || !cursor.utf8(&name) ||
-        !cursor.utf8(&unit) || !cursor.utf8(&description)) {
-        return false;
-    }
-    if (cursor.pos > recordEnd)
-        return false;
-    cursor.pos = recordEnd;  // skip enum entries / any unknown trailing bytes
-
-    // TELEMETRY.md section 5 type codes; TelemetryFieldType's own values are
-    // defined identically (see telemetrycatalog.h), so this is a direct,
-    // bounds-checked cast rather than a lookup table.
-    if (type < 0x01 || type > 0x0D)
-        return false;
-
-    outField->fieldId = fieldId;
-    outField->order = order;
-    outField->type = static_cast<TelemetryFieldType>(type);
-    outField->name = name;
-    outField->unit = unit;
-    outField->scale = scale;
-    outField->offset = offset;
-    outField->elementCount = elementCount;
-    outField->maxElementCount = maxElementCount;
-    outField->nullable = (flags & 0x01) != 0;
-    return true;
-}
-
-bool parseTopicRecord(Cursor& cursor, quint32 sourceId, TelemetryTopicSchema* outTopic) {
-    quint32 recordSize = 0;
-    if (!cursor.u32(&recordSize))
-        return false;
-    const int recordEnd = cursor.pos + int(recordSize);
-    if (recordSize > 0x7FFFFFFFU || recordEnd > cursor.data.size())
-        return false;
-
-    quint16 topicId = 0, schemaVersion = 0, fieldCount = 0;
-    quint8 encoding = 0, flags = 0;
-    quint32 maxRateMillihz = 0;
-    QString name, description;
-    if (!cursor.u16(&topicId) || !cursor.u16(&schemaVersion) || !cursor.u8(&encoding) ||
-        !cursor.u8(&flags) || !cursor.u16(&fieldCount) || !cursor.u32(&maxRateMillihz) ||
-        !cursor.utf8(&name) || !cursor.utf8(&description)) {
-        return false;
-    }
-    if (topicId == 0 || schemaVersion == 0)
-        return false;
-
-    TelemetryTopicSchema topic;
-    topic.sourceId = sourceId;
-    topic.topicId = topicId;
-    topic.schemaVersion = schemaVersion;
-    topic.name = name;
-    topic.encoding = static_cast<TelemetryEncoding>(encoding);
-    topic.fields.reserve(fieldCount);
-    for (quint16 i = 0; i < fieldCount; ++i) {
-        TelemetryFieldSchema field;
-        if (!parseFieldRecord(cursor, &field))
-            return false;
-        topic.fields.append(field);
-    }
-    if (cursor.pos > recordEnd)
-        return false;
-    cursor.pos = recordEnd;
-
-    *outTopic = topic;
-    return true;
+// TELEMETRY.md section 5 field type codes. TelemetryFieldType's own values
+// are defined identically (see telemetrycatalog.h).
+bool valid_field_type(quint8 type) {
+    return type >= 0x01 && type <= 0x0D;
 }
 
 struct ParsedManifestData {
@@ -187,85 +43,90 @@ struct ParsedManifestData {
     QVector<DeviceInfoRecord> sourceInfo;
 };
 
+QString toQString(const btp::ByteView& view) {
+    return QString::fromUtf8(reinterpret_cast<const char*>(view.data), static_cast<int>(view.size));
+}
+
 bool parseManifestData(const QByteArray& payload, ParsedManifestData* out) {
-    if (payload.size() < 60)
-        return false;
-
-    Cursor cursor{payload, 0};
-    if (!cursor.skip(12))
-        return false;  // request-reference: correlation not needed, see class comment
-
-    quint8 status = 0, flags = 0;
-    quint16 errorCode = 0, formatVersion = 0, reserved = 0;
-    quint32 configRevision = 0;
-    if (!cursor.u8(&status) || !cursor.u8(&flags) || !cursor.u16(&errorCode) ||
-        !cursor.u16(&formatVersion) || !cursor.u16(&reserved) || !cursor.u32(&configRevision)) {
-        return false;
-    }
-    if (formatVersion != 1 && formatVersion != 2)
-        return false;  // format 1, or 2 which adds the source_info block (commands.md 3.12)
-    if (!cursor.skip(16))
-        return false;  // source_uuid: not modeled by TelemetryCatalog
-
-    quint32 describedSourceId = 0, describedBootId = 0;
-    if (!cursor.u32(&describedSourceId) || !cursor.u32(&describedBootId))
-        return false;
-
-    quint8 role = 0, sourceFlags = 0;
-    quint16 catalogIndex = 0, catalogCount = 0, topicCount = 0, actionCount = 0;
-    if (!cursor.u8(&role) || !cursor.u8(&sourceFlags) || !cursor.u16(&catalogIndex) ||
-        !cursor.u16(&catalogCount) || !cursor.u16(&topicCount) || !cursor.u16(&actionCount)) {
-        return false;
-    }
-
-    QString name;
-    if (!cursor.utf8(&name))
+    // The MANIFEST_DATA layout (commands.md section 3) is btp::ManifestReader:
+    // the fixed head + source_name, the status/role/format validation and the
+    // section-6 count limits in header(); the source_info block, the topic
+    // records and their field records walked record by record; finish()
+    // requires the payload to be consumed exactly (action records, which this
+    // client does not model yet, are skipped by it).
+    btp::ManifestReader reader(reinterpret_cast<const std::uint8_t*>(payload.constData()),
+                               static_cast<std::size_t>(payload.size()));
+    btp::ManifestHeader header{};
+    if (reader.header(&header) != btp::MessageError::Ok)
         return false;
 
     ParsedManifestData result;
-    result.status = status;
-    result.flags = flags;
-    result.configRevision = configRevision;
-    result.describedSourceId = describedSourceId;
-    result.describedBootId = describedBootId;
+    result.status = header.status;
+    result.flags = header.flags;
+    result.configRevision = header.config_revision;
+    result.describedSourceId = header.described_source_id;
+    result.describedBootId = header.described_boot_id;
 
-    // source_info block (commands.md 3.12): sits between source_name and the
-    // records in format 2, and is present on every SUCCESS response (full or
-    // NOT_MODIFIED) plus error ones with a zero count. Parsed unconditionally
-    // -- it is not gated by NOT_MODIFIED the way the topic records below are.
-    if (formatVersion >= 2) {
-        quint16 infoCount = 0;
-        if (!cursor.u16(&infoCount))
-            return false;
-        result.sourceInfo.reserve(infoCount);
-        for (quint16 i = 0; i < infoCount; ++i) {
-            DeviceInfoRecord record;
-            if (!cursor.utf8(&record.key) || !cursor.utf8(&record.label) ||
-                !cursor.utf8(&record.value)) {
-                return false;
-            }
-            result.sourceInfo.append(record);
-        }
+    // source_info block (commands.md 3.12): format 2 only, present on a full
+    // response and a NOT_MODIFIED one alike -- not gated by NOT_MODIFIED the
+    // way the topic records below are. next_source_info() returns End straight
+    // away for a format-1 payload.
+    btp::SourceInfoEntry info{};
+    for (auto step = reader.next_source_info(&info); step == btp::ManifestStep::Item;
+         step = reader.next_source_info(&info)) {
+        DeviceInfoRecord record;
+        record.key = toQString(info.key);
+        record.label = toQString(info.label);
+        record.value = toQString(info.value);
+        result.sourceInfo.append(record);
     }
+    if (reader.error() != btp::MessageError::Ok)
+        return false;
 
-    if (status == kStatusSuccess && (flags & kFlagNotModified) == 0) {
-        for (quint16 i = 0; i < topicCount; ++i) {
+    if (header.status == kStatusSuccess && (header.flags & kFlagNotModified) == 0) {
+        btp::TopicRecord topicRec{};
+        btp::ByteView fieldBytes{};
+        for (auto step = reader.next_topic(&topicRec, &fieldBytes); step == btp::ManifestStep::Item;
+             step = reader.next_topic(&topicRec, &fieldBytes)) {
             TelemetryTopicSchema topic;
-            if (!parseTopicRecord(cursor, describedSourceId, &topic))
+            topic.sourceId = header.described_source_id;
+            topic.topicId = topicRec.topic_id;
+            topic.schemaVersion = topicRec.schema_version;
+            topic.name = toQString(topicRec.name);
+            topic.encoding = static_cast<TelemetryEncoding>(topicRec.encoding);
+            topic.fields.reserve(topicRec.field_count);
+
+            btp::FieldRecordReader fields(fieldBytes, topicRec.field_count);
+            btp::FieldRecord fieldRec{};
+            btp::ByteView enumBytes{};
+            for (auto fstep = fields.next(&fieldRec, &enumBytes); fstep == btp::ManifestStep::Item;
+                 fstep = fields.next(&fieldRec, &enumBytes)) {
+                if (!valid_field_type(fieldRec.type))
+                    return false;
+                TelemetryFieldSchema field;
+                field.fieldId = fieldRec.field_id;
+                field.order = fieldRec.order;
+                field.type = static_cast<TelemetryFieldType>(fieldRec.type);
+                field.name = toQString(fieldRec.name);
+                field.unit = toQString(fieldRec.unit);
+                field.scale = fieldRec.scale;
+                field.offset = fieldRec.offset;
+                field.elementCount = fieldRec.element_count;
+                field.maxElementCount = fieldRec.max_element_count;
+                field.nullable = (fieldRec.flags & 0x01) != 0;
+                topic.fields.append(field);
+            }
+            if (fields.error() != btp::MessageError::Ok)
                 return false;
+
             result.topics.append(topic);
         }
-        // Action records: skip via the same record_size framing. Not
-        // modeled yet (topico 18's territory) -- CRITERIO DE ACEITE here
-        // only concerns telemetry topics/fields.
-        for (quint16 i = 0; i < actionCount; ++i) {
-            quint32 recordSize = 0;
-            if (!cursor.u32(&recordSize) || recordSize > 0x7FFFFFFFU ||
-                !cursor.skip(int(recordSize))) {
-                return false;
-            }
-        }
+        if (reader.error() != btp::MessageError::Ok)
+            return false;
     }
+
+    if (reader.finish() != btp::MessageError::Ok)
+        return false;
 
     *out = result;
     return true;
@@ -332,11 +193,18 @@ void ManifestClient::requestCatalogFor(quint32 sourceId) {
 
 void ManifestClient::sendRequest(quint32 targetSourceId, quint32 targetBootId,
                                  quint32 knownRevision) {
-    QByteArray payload;
-    payload.reserve(12);
-    appendLe32(payload, targetSourceId);
-    appendLe32(payload, targetBootId);
-    appendLe32(payload, knownRevision);
+    btp::ManifestRequest request{};
+    request.target_source_id = targetSourceId;
+    request.target_boot_id = targetBootId;
+    request.known_config_revision = knownRevision;
+
+    std::uint8_t buffer[12];
+    std::size_t written = 0;
+    if (btp::encode_manifest_request(request, buffer, sizeof(buffer), &written) !=
+        btp::MessageError::Ok) {
+        return;
+    }
+    const QByteArray payload(reinterpret_cast<const char*>(buffer), static_cast<int>(written));
 
     btp::Header header{};
     header.type = btp::MessageType::Control;

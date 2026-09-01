@@ -65,10 +65,21 @@ public:
     // one off the wire; the request-reference prefix (offset 0-11) is left
     // zeroed since BtpHandshake doesn't correlate on it.
     void deliverHelloResult(quint8 status, quint8 selectedVersion) {
+        // The full 52-octet HELLO_RESULT layout (session-and-terminal.md
+        // section 2), the shape btp::decode_hello_result requires and a real
+        // dongle emits: request reference, status, selected_version,
+        // error_code, effective limits, peer_uuid, config_revision.
         QByteArray payload(12, '\0');  // request reference, unchecked
         payload.append(static_cast<char>(status));
         payload.append(static_cast<char>(selectedVersion));
-        appendLe(payload, 0, 2);  // error_code
+        appendLe(payload, 0, 2);   // error_code
+        appendLe(payload, 0, 4);   // max_logical_payload
+        appendLe(payload, 0, 2);   // max_inflight_reassemblies
+        appendLe(payload, 0, 2);   // max_subscriptions
+        appendLe(payload, 0, 4);   // max_dedup_entries
+        appendLe(payload, 0, 4);   // session_timeout_ms
+        payload.append(16, '\0');  // peer_uuid
+        appendLe(payload, 0, 4);   // config_revision
 
         BtpFrame frame;
         frame.type = btp::MessageType::Control;

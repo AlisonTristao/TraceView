@@ -153,7 +153,10 @@ QByteArray manifestDataPayload(const ManifestOptions& options) {
     payload.append(16, char(0));  // source_uuid; not modelled by TelemetryCatalog
     appendLe32(payload, options.describedSourceId);
     appendLe32(payload, options.describedBootId);
-    payload.append(char(0));  // role
+    // source_role: a SUCCESS descriptor names a real role (btp::messages rejects
+    // a reserved one); a non-SUCCESS response describes no source and carries 0,
+    // exactly as bally_OS / the dongle emit it.
+    payload.append(char(options.status == kStatusSuccess ? 0x01 : 0x00));
     payload.append(char(0));  // source flags
     appendLe16(payload, 0);   // catalogIndex
     appendLe16(payload, 1);   // catalogCount

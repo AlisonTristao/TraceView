@@ -1,90 +1,60 @@
 #include "protocol/statusreport.h"
 
+#include <btp/messages.hpp>
+
+#include <cstdint>
+#include <vector>
+
 namespace traceview {
 
-namespace {
-
-constexpr int kStatusV1Size = 92;      // section 5: exact logical size of a v1 payload
-constexpr int kTopicCountOffset = 92;  // section 5.1: right after the v1 block
-// section 5.1's per-record offset table: source_id@0, topic_id@4,
-// subscriber_count@6, effective_rate_millihz@8, bytes_total@12,
-// samples_dropped_total@20 -- 4+2+2+4+8+8 = 28. (An earlier revision of that
-// section said 24, an arithmetic slip the offsets table now corrects; the
-// emitters on the other end -- t_dongle_develop's
-// SerialSession::kTopicStatusRecordSize and bally_software's StatusReporter --
-// serialize 28 as well.) Single point of definition for the stride.
-constexpr int kTopicRecordSize = 28;
-
-quint16 readLe16(const QByteArray& data, int offset) {
-    return quint16(quint8(data.at(offset))) | (quint16(quint8(data.at(offset + 1))) << 8);
-}
-
-quint32 readLe32(const QByteArray& data, int offset) {
-    quint32 value = 0;
-    for (int i = 0; i < 4; ++i) {
-        value |= quint32(quint8(data.at(offset + i))) << (8 * i);
-    }
-    return value;
-}
-
-quint64 readLe64(const QByteArray& data, int offset) {
-    quint64 value = 0;
-    for (int i = 0; i < 8; ++i) {
-        value |= quint64(quint8(data.at(offset + i))) << (8 * i);
-    }
-    return value;
-}
-
-}  // namespace
-
 bool parseStatusPayload(const QByteArray& payload, StatusReport* out) {
-    if (payload.size() < kStatusV1Size) {
+    const auto* data = reinterpret_cast<const std::uint8_t*>(payload.constData());
+    const auto size = static_cast<std::size_t>(payload.size());
+
+    // btp::messages owns the STATUS layout (commands.md section 5 / 5.1): the
+    // 92-octet counter block, the status_version {1,2} check, and -- for v2 --
+    // "the payload is exactly 92 + 2 + 28 * topic_status_count octets". A v1
+    // payload must be exactly 92: trailing bytes are rejected, not ignored
+    // (there is a `status_v1_trailing_byte` invalid conformance vector).
+    std::uint16_t declared = 0;
+    if (btp::status_topic_count(data, size, &declared) != btp::MessageError::Ok) {
+        return false;
+    }
+
+    std::vector<btp::TopicStatusRecord> records(declared);
+    btp::StatusV1 base{};
+    std::size_t written = 0;
+    if (btp::decode_status(data, size, &base, records.empty() ? nullptr : records.data(),
+                           records.size(), &written) != btp::MessageError::Ok) {
         return false;
     }
 
     StatusReport report;
-    report.statusVersion = readLe16(payload, 0);
-    if (report.statusVersion != 1 && report.statusVersion != 2) {
-        return false;  // unknown version: never guessed at, section 5/5.1 only define 1 and 2
-    }
-    report.flags = readLe16(payload, 2);
-    report.uptimeUs = readLe64(payload, 4);
-    report.framesRx = readLe64(payload, 12);
-    report.framesTx = readLe64(payload, 20);
-    report.framesDropped = readLe64(payload, 28);
-    report.crcErrors = readLe64(payload, 36);
-    report.decodeErrors = readLe64(payload, 44);
-    report.reassemblyCompleted = readLe64(payload, 52);
-    report.reassemblyTimeouts = readLe64(payload, 60);
-    report.reassemblyRejected = readLe64(payload, 68);
-    report.commandDuplicates = readLe64(payload, 76);
-    report.telemetryDropped = readLe64(payload, 84);
+    report.statusVersion = base.status_version;
+    report.flags = base.flags;
+    report.uptimeUs = base.uptime_us;
+    report.framesRx = base.frames_rx;
+    report.framesTx = base.frames_tx;
+    report.framesDropped = base.frames_dropped;
+    report.crcErrors = base.crc_errors;
+    report.decodeErrors = base.decode_errors;
+    report.reassemblyCompleted = base.reassembly_completed;
+    report.reassemblyTimeouts = base.reassembly_timeouts;
+    report.reassemblyRejected = base.reassembly_rejected;
+    report.commandDuplicates = base.command_duplicates;
+    report.telemetryDropped = base.telemetry_dropped;
 
-    if (report.statusVersion == 2) {
-        if (payload.size() < kTopicCountOffset + 2) {
-            return false;
-        }
-        const int count = int(readLe16(payload, kTopicCountOffset));
-        const int recordsStart = kTopicCountOffset + 2;
-        if (payload.size() < recordsStart + count * kTopicRecordSize) {
-            return false;  // truncated list: a partial record is never half-read
-        }
-        report.topics.reserve(count);
-        for (int i = 0; i < count; ++i) {
-            const int base = recordsStart + i * kTopicRecordSize;
-            StatusTopicRecord record;
-            record.sourceId = readLe32(payload, base);
-            record.topicId = readLe16(payload, base + 4);
-            record.subscriberCount = readLe16(payload, base + 6);
-            record.effectiveRateMillihz = readLe32(payload, base + 8);
-            record.bytesTotal = readLe64(payload, base + 12);
-            record.samplesDroppedTotal = readLe64(payload, base + 20);
-            report.topics.append(record);
-        }
+    report.topics.reserve(static_cast<int>(written));
+    for (std::size_t i = 0; i < written; ++i) {
+        StatusTopicRecord record;
+        record.sourceId = records[i].source_id;
+        record.topicId = records[i].topic_id;
+        record.subscriberCount = records[i].subscriber_count;
+        record.effectiveRateMillihz = records[i].effective_rate_millihz;
+        record.bytesTotal = records[i].bytes_total;
+        record.samplesDroppedTotal = records[i].samples_dropped_total;
+        report.topics.append(record);
     }
-    // status_version == 1: stop at 92 octets. Trailing bytes (if any) are
-    // deliberately not read -- section 5.1 requires exactly that of a reader
-    // that also understands v2.
 
     *out = report;
     return true;

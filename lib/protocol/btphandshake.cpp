@@ -3,6 +3,9 @@
 #include <QDateTime>
 #include <QRandomGenerator>
 #include <btp/codec.hpp>
+#include <btp/messages.hpp>
+
+#include <cstdint>
 
 #include "protocol/btpframe.h"
 #include "protocol/btpsession.h"
@@ -41,16 +44,9 @@ constexpr int kHelloTimeoutMs = 3000;  // spec requires HELLO_RESULT within
                                        // 2000ms of HELLO; a little slack.
 constexpr int kMaxLineBufferBytes = 512;
 
-// Appends `value` as `width` little-endian bytes.
-void appendLe(QByteArray& out, quint32 value, int width) {
-    for (int i = 0; i < width; ++i) {
-        out.append(static_cast<char>((value >> (8 * i)) & 0xFF));
-    }
-}
-
 QByteArray buildHelloPayload(quint16 maxLogicalPayload, quint16 sessionTimeoutMs) {
-    QByteArray payload;
-    payload.append(static_cast<char>(kRoleDesktop));
+    btp::Hello hello{};
+    hello.role = kRoleDesktop;
     // versions enumerates every envelope version this build's btp::codec can
     // speak (session-and-terminal.md section 1: "increasing", no gaps
     // required) so the dongle -- which picks the highest version common to
@@ -58,27 +54,30 @@ QByteArray buildHelloPayload(quint16 maxLogicalPayload, quint16 sessionTimeoutMs
     // to hardcode. Today kMinimumProtocolVersion == kMaximumProtocolVersion
     // == 1, so this is a single-entry list; it grows on its own once the
     // library supports more.
-    const quint8 versionCount = btp::kMaximumProtocolVersion - btp::kMinimumProtocolVersion + 1;
-    payload.append(static_cast<char>(versionCount));  // version_count
-    appendLe(payload, 0, 2);                          // flags
-    appendLe(payload, maxLogicalPayload, 4);
-    appendLe(payload, 2, 2);                 // max_inflight_reassemblies
-    appendLe(payload, 8, 2);                 // max_subscriptions
-    appendLe(payload, 16, 4);                // max_dedup_entries
-    appendLe(payload, sessionTimeoutMs, 4);  // session_timeout_ms
-    for (int i = 0; i < 16; ++i) {
+    hello.version_count = btp::kMaximumProtocolVersion - btp::kMinimumProtocolVersion + 1;
+    for (quint8 v = btp::kMinimumProtocolVersion; v <= btp::kMaximumProtocolVersion; ++v) {
+        hello.versions[v - btp::kMinimumProtocolVersion] = v;
+    }
+    hello.max_logical_payload = maxLogicalPayload;
+    hello.max_inflight_reassemblies = 2;
+    hello.max_subscriptions = 8;
+    hello.max_dedup_entries = 16;
+    hello.session_timeout_ms = sessionTimeoutMs;
+    for (auto& octet : hello.peer_uuid) {
         // peer_uuid: opaque, stable-for-this-run, non-zero identity. A
         // per-process random UUID is enough for topico 15's vertical slice;
         // persisting a real client identity is out of scope until a topico
         // actually needs to recognize this desktop across restarts.
-        payload.append(static_cast<char>(QRandomGenerator::global()->bounded(1, 256)));
+        octet = static_cast<std::uint8_t>(QRandomGenerator::global()->bounded(1, 256));
     }
-    appendLe(payload, 0, 4);  // config_revision (no manifest yet)
-    for (quint8 version = btp::kMinimumProtocolVersion; version <= btp::kMaximumProtocolVersion;
-         ++version) {
-        payload.append(static_cast<char>(version));
+    hello.config_revision = 0;  // no manifest yet
+
+    std::uint8_t buffer[64];
+    std::size_t written = 0;
+    if (btp::encode_hello(hello, buffer, sizeof(buffer), &written) != btp::MessageError::Ok) {
+        return {};
     }
-    return payload;
+    return QByteArray(reinterpret_cast<const char*>(buffer), static_cast<int>(written));
 }
 
 }  // namespace
@@ -162,6 +161,10 @@ void BtpHandshake::sendHello() {
     // backstop for a desktop that vanished without a SESSION_CLOSE.
     const QByteArray payload =
         buildHelloPayload(/*maxLogicalPayload=*/4096, /*sessionTimeoutMs=*/30000);
+    if (payload.isEmpty()) {
+        fail(tr("failed to encode HELLO payload"));
+        return;
+    }
 
     btp::Header header{};
     header.type = btp::MessageType::Control;
@@ -191,42 +194,38 @@ void BtpHandshake::onControlFrameReceived(const traceview::BtpFrame& frame) {
     if (frame.objectId != kControlHelloResult) {
         return;  // some other CONTROL frame (e.g. STATUS); not for us
     }
-    if (frame.payload.size() < 14) {
-        fail(tr("HELLO_RESULT payload too short"));
+
+    // The 52-octet HELLO_RESULT layout (session-and-terminal.md section 2) is
+    // btp::decode_hello_result: the request reference, the SUCCESS/UNSUPPORTED
+    // status check, the effective limits and config_revision at offset 48.
+    btp::HelloResult result{};
+    const btp::MessageError err = btp::decode_hello_result(
+        reinterpret_cast<const std::uint8_t*>(frame.payload.constData()),
+        static_cast<std::size_t>(frame.payload.size()), &result);
+    if (err != btp::MessageError::Ok) {
+        fail(tr("malformed HELLO_RESULT payload"));
         return;
     }
-    const quint8 status = static_cast<quint8>(frame.payload.at(12));
+
     m_helloTimer.stop();
-    if (status == kHelloResultSuccess) {
-        // selected_version (offset 13) is the highest version the dongle
-        // found in common with what our own HELLO just advertised
-        // (session-and-terminal.md section 2: "the responder picks the
-        // highest version it can use"). It can only be one of the versions we
-        // offered --
-        // anything else is a peer that isn't honoring the negotiation, not a
-        // version this client can silently go along with.
-        const quint8 selectedVersion = static_cast<quint8>(frame.payload.at(13));
-        if (selectedVersion < btp::kMinimumProtocolVersion ||
-            selectedVersion > btp::kMaximumProtocolVersion) {
-            fail(tr("HELLO_RESULT selected an unadvertised version %1").arg(selectedVersion));
-            return;
-        }
-        m_state = State::Established;
-        // config_revision sits at offset 48 (session-and-terminal.md
-        // section 2); a HELLO_RESULT this short predates the field (or came
-        // from a peer that has no catalog yet), so treat it as 0 -- "the peer
-        // publishes no manifest" is the documented meaning of 0 anyway.
-        quint32 peerConfigRevision = 0;
-        if (frame.payload.size() >= 52) {
-            peerConfigRevision = (quint32(quint8(frame.payload.at(48))) << 0) |
-                                 (quint32(quint8(frame.payload.at(49))) << 8) |
-                                 (quint32(quint8(frame.payload.at(50))) << 16) |
-                                 (quint32(quint8(frame.payload.at(51))) << 24);
-        }
-        emit sessionEstablished(frame.sourceId, frame.bootId, peerConfigRevision, selectedVersion);
-    } else {
-        fail(tr("HELLO rejected, status=%1").arg(status));
+    if (result.status != kHelloResultSuccess) {
+        fail(tr("HELLO rejected, status=%1").arg(result.status));
+        return;
     }
+
+    // selected_version is the highest version the dongle found in common with
+    // what our own HELLO advertised (section 2). It can only be one of the
+    // versions we offered -- anything else is a peer that isn't honoring the
+    // negotiation, not a version this client can silently go along with.
+    if (result.selected_version < btp::kMinimumProtocolVersion ||
+        result.selected_version > btp::kMaximumProtocolVersion) {
+        fail(tr("HELLO_RESULT selected an unadvertised version %1").arg(result.selected_version));
+        return;
+    }
+
+    m_state = State::Established;
+    emit sessionEstablished(frame.sourceId, frame.bootId, result.config_revision,
+                            result.selected_version);
 }
 
 void BtpHandshake::onEnterTimeout() {

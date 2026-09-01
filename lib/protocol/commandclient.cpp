@@ -2,6 +2,9 @@
 
 #include <QDateTime>
 #include <btp/codec.hpp>
+#include <btp/messages.hpp>
+
+#include <cstdint>
 
 #include "protocol/btpframe.h"
 #include "protocol/btpsession.h"
@@ -22,31 +25,7 @@ constexpr quint16 kCommandRequestObjectId = 0x0001;
 constexpr quint16 kCommandResultObjectId = 0x0002;
 constexpr quint16 kShellActionId = 0x0001;
 constexpr quint16 kShellActionVersion = 0x0001;
-constexpr std::size_t kRequestPrefixSize = 20;
-constexpr std::size_t kResultPrefixSize = 22;  // up to and including message_size
 constexpr quint8 kResultStatusSuccess = 0x00;
-
-void appendLe32(QByteArray& out, quint32 value) {
-    out.append(static_cast<char>(value));
-    out.append(static_cast<char>(value >> 8));
-    out.append(static_cast<char>(value >> 16));
-    out.append(static_cast<char>(value >> 24));
-}
-
-void appendLe16(QByteArray& out, quint16 value) {
-    out.append(static_cast<char>(value));
-    out.append(static_cast<char>(value >> 8));
-}
-
-quint32 readLe32(const QByteArray& data, int offset) {
-    return quint32(quint8(data.at(offset))) | (quint32(quint8(data.at(offset + 1))) << 8) |
-           (quint32(quint8(data.at(offset + 2))) << 16) |
-           (quint32(quint8(data.at(offset + 3))) << 24);
-}
-
-quint16 readLe16(const QByteArray& data, int offset) {
-    return quint16(quint8(data.at(offset))) | (quint16(quint8(data.at(offset + 1))) << 8);
-}
 
 }  // namespace
 
@@ -88,16 +67,27 @@ void CommandClient::send(const QString& commandLine) {
 
     const QByteArray commandBytes = commandLine.toUtf8();
 
-    QByteArray payload;
-    payload.reserve(int(kRequestPrefixSize) + commandBytes.size());
-    appendLe32(payload, m_targetSourceId);
-    appendLe32(payload, targetBootId);
-    appendLe16(payload, kShellActionId);
-    appendLe16(payload, kShellActionVersion);
-    appendLe16(payload, 0);  // flags
-    appendLe16(payload, 0);  // reserved
-    appendLe32(payload, static_cast<quint32>(commandBytes.size()));
-    payload.append(commandBytes);
+    // COMMAND_REQUEST layout (commands.md section 2.1) is btp::encode_command_request:
+    // the 20-octet prefix, zero flags/reserved, and the shell line as the
+    // bytes_u32 parameters body.
+    btp::CommandRequest request{};
+    request.target_source_id = m_targetSourceId;
+    request.target_boot_id = targetBootId;
+    request.action_id = kShellActionId;
+    request.action_version = kShellActionVersion;
+    request.parameters = {reinterpret_cast<const std::uint8_t*>(commandBytes.constData()),
+                          static_cast<std::size_t>(commandBytes.size())};
+
+    QByteArray payload(20 + commandBytes.size(), Qt::Uninitialized);
+    std::size_t written = 0;
+    if (btp::encode_command_request(request, reinterpret_cast<std::uint8_t*>(payload.data()),
+                                    static_cast<std::size_t>(payload.size()),
+                                    &written) != btp::MessageError::Ok) {
+        emit statusMessage(tr("command not sent: could not encode request"), 5000,
+                           StatusSeverity::Error);
+        return;
+    }
+    payload.truncate(static_cast<int>(written));
 
     const quint32 sequence = m_nextSequence();
 
@@ -137,7 +127,14 @@ void CommandClient::onCommandFrameReceived(const BtpFrame& frame) {
     if (!m_pending || frame.objectId != kCommandResultObjectId) {
         return;
     }
-    if (static_cast<std::size_t>(frame.payload.size()) < kResultPrefixSize) {
+
+    // COMMAND_RESULT layout (commands.md section 2.4) is btp::decode_command_result:
+    // the request reference, status, the utf8_u16 message and the bytes_u32
+    // result body (which this client does not use).
+    btp::CommandResult result{};
+    if (btp::decode_command_result(reinterpret_cast<const std::uint8_t*>(frame.payload.constData()),
+                                   static_cast<std::size_t>(frame.payload.size()),
+                                   &result) != btp::MessageError::Ok) {
         return;
     }
 
@@ -145,25 +142,20 @@ void CommandClient::onCommandFrameReceived(const BtpFrame& frame) {
     // correlation rule ClockSync/SubscriptionManager use): commands.md
     // section 1, the full (request_source_id, request_boot_id,
     // reply_to_sequence) triple, never reply_to_sequence alone.
-    const quint32 requestSourceId = readLe32(frame.payload, 0);
-    const quint32 requestBootId = readLe32(frame.payload, 4);
-    const quint32 replyToSequence = readLe32(frame.payload, 8);
-    if (requestSourceId != m_selfSourceId || requestBootId != m_selfBootId ||
-        replyToSequence != m_pendingSequence) {
+    if (result.request.request_source_id != m_selfSourceId ||
+        result.request.request_boot_id != m_selfBootId ||
+        result.request.reply_to_sequence != m_pendingSequence) {
         return;
     }
 
     m_replyTimer.stop();
     m_pending = false;
 
-    const quint8 status = quint8(frame.payload.at(16));
-    const quint16 errorCode = readLe16(frame.payload, 18);
-    const quint16 messageSize = readLe16(frame.payload, 20);
-    if (static_cast<std::size_t>(frame.payload.size()) < kResultPrefixSize + messageSize) {
-        return;  // truncated; nothing usable
-    }
+    const quint8 status = result.status;
+    const quint16 errorCode = result.error_code;
     const QString message =
-        QString::fromUtf8(frame.payload.constData() + int(kResultPrefixSize), messageSize);
+        QString::fromUtf8(reinterpret_cast<const char*>(result.message.data),
+                          static_cast<int>(result.message.size));
 
     if (status != kResultStatusSuccess) {
         emit statusMessage(tr("command failed (status 0x%1, error 0x%2): %3")

@@ -160,6 +160,12 @@ target_link_libraries(traceview_protocol PUBLIC
     # links it separately for that.
     Qt6::Network
     btp::codec
+    # btp::messages: struct <-> bytes for every COMMAND / CONTROL payload
+    # (HELLO, MANIFEST_DATA, STATUS, SUBSCRIBE, COMMAND_*). Replaces the
+    # hand-rolled offset parsing that used to live in statusreport.cpp,
+    # btphandshake.cpp, manifestclient.cpp and friends. Links btp::codec,
+    # no mbedtls.
+    btp::messages
     # channelseal.cpp is the only place in this app that calls into btp::aead
     # (mirrors bally_OS's RadioSeal/bally_dongle's DongleKeyStore convention:
     # one file per repo owns the crypto call, everything else goes through

@@ -52,7 +52,7 @@ class TestStatusReport : public QObject {
 
 private slots:
     void parsesVersion1AndStopsAt92Octets();
-    void ignoresTrailingBytesOnVersion1();
+    void rejectsTrailingBytesOnVersion1();
     void parsesVersion2TopicRecords();
     void rejectsTruncatedVersion2List();
     void rejectsShortOrUnknownVersion();
@@ -72,20 +72,18 @@ void TestStatusReport::parsesVersion1AndStopsAt92Octets() {
     QVERIFY(report.topics.isEmpty());
 }
 
-void TestStatusReport::ignoresTrailingBytesOnVersion1() {
-    // Bytes that would decode as a perfectly well-formed topic_status list if
-    // this were a v2 message. Section 5.1: a v1 reader MUST stop at 92
-    // octets, so none of this may be interpreted -- and, just as importantly,
-    // the v1 counters must still parse.
+void TestStatusReport::rejectsTrailingBytesOnVersion1() {
+    // A v1 STATUS payload is exactly 92 octets. Anything after that is a
+    // malformed message, not "a v1 body with an ignorable tail": btp::messages
+    // rejects it (the `status_v1_trailing_byte` invalid conformance vector),
+    // so this v2-aware reader does too. The bytes here would even decode as a
+    // well-formed topic_status list under a v2 header -- still rejected.
     QByteArray payload = buildStatusV1Block(1);
     appendLe(payload, 1, 2);  // would-be topic_status_count
     payload.append(buildTopicRecord(0x9F442484, 0x0001, 2, 50000, 4096, 7));
 
     StatusReport report;
-    QVERIFY(parseStatusPayload(payload, &report));
-    QCOMPARE(report.statusVersion, quint16(1));
-    QCOMPARE(report.framesTx, quint64(1002));
-    QVERIFY(report.topics.isEmpty());
+    QVERIFY(!parseStatusPayload(payload, &report));
 }
 
 void TestStatusReport::parsesVersion2TopicRecords() {
