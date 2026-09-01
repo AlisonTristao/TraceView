@@ -44,6 +44,7 @@
 #include "diagnostics/notificationhistorywindow.h"
 #include "diagnostics/notificationlog.h"
 #include "donatedialog.h"
+#include "fontmenuaction.h"
 #include "protocol/btpbackend.h"
 #include "protocol/btpframe.h"
 #include "protocol/keyderivation.h"
@@ -580,10 +581,10 @@ void MainWindow::buildMenus() {
 
     const QString currentFontId = FontManager::instance().currentFont().id;
     for (const FontOption& font : FontManager::instance().availableFonts()) {
-        auto* action = fontMenu->addAction(font.displayName);
-        action->setCheckable(true);
+        auto* action = new FontMenuAction(font, this);
         action->setChecked(font.id == currentFontId);
         action->setData(font.id);
+        fontMenu->addAction(action);
         fontGroup->addAction(action);
 
         connect(action, &QAction::triggered, this,

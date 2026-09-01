@@ -391,6 +391,8 @@ add_library(traceview_ui STATIC
     core/dockdropindicator.h
     core/dockresizegrip.cpp
     core/dockresizegrip.h
+    core/fontmenuaction.cpp
+    core/fontmenuaction.h
     core/layerspanel.cpp
     core/layerspanel.h
     core/mainwindow.cpp
