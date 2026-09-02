@@ -5,6 +5,7 @@
 #include <QString>
 #include <btp/codec.hpp>
 #include <btp/fragmentation.hpp>
+#include <btp/receiver.hpp>
 #include <btp/stream.hpp>
 #include <cstddef>
 #include <cstdint>
@@ -252,7 +253,7 @@ private:
     static constexpr std::uint64_t kReassemblyTimeoutMs =
         4000;  // matches
                // the dongle-side timeout used for the same purpose (topico 12's
-               // RESULTADO, ProtocolRouter's Reassembler).
+               // RESULTADO, ProtocolRouter, which wraps the same btp::Receiver).
 
     void handleReassembly(const btp::DecodedFrame& fragment);
     // Applies axis (a) only -- COBS envelope in CobsStream framing, nothing
@@ -288,7 +289,14 @@ private:
     std::vector<std::uint8_t> m_reassemblyStorageB;
     btp::ReassemblySlot m_reassemblySlots[kReassemblySlotCount];
     btp::ReassemblyStorage m_reassemblyStorage[kReassemblySlotCount];
-    btp::Reassembler m_reassembler;
+    // The decode + CRC + reassembly + timeout-sweep core (btp::Receiver, BTP
+    // >= 2.8.0). feedBytes() still owns the COBS / pre-framed decode and the
+    // frame-bytes-for-the-monitor emission; this handles only the reassembly
+    // half, via the submit(DecodedFrame) overload.
+    btp::Receiver m_receiver;
+    // btp::Receiver copies a completed logical payload out and releases the
+    // slot immediately; this is that copy's home, valid until the next submit.
+    std::vector<std::uint8_t> m_reassembledOut;
 
     Diagnostics m_diagnostics;
 };

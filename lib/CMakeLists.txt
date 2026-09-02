@@ -168,6 +168,10 @@ target_link_libraries(traceview_protocol PUBLIC
     # schema, replacing the hand-rolled packedledecoder.cpp.
     # TelemetryFieldRouter feeds it the FieldSpec array TelemetryCatalog keeps.
     btp::telemetry
+    # btp::receiver: btp::decode + CRC + btp::Reassembler + the timeout sweep
+    # behind one submit(), replacing the hand-rolled reassembly loop in
+    # btpsession.cpp (BtpSession::handleReassembly). Links btp::codec only.
+    btp::receiver
     # channelseal.cpp is the only place in this app that calls into btp::aead
     # (mirrors bally_OS's RadioSeal/bally_dongle's DongleKeyStore convention:
     # one file per repo owns the crypto call, everything else goes through

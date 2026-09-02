@@ -37,8 +37,12 @@ BtpSession::BtpSession(Framing framing, btp::TransportProfile encodeProfile, QOb
           {m_reassemblyStorageA.data(), m_reassemblyStorageA.size()},
           {m_reassemblyStorageB.data(), m_reassemblyStorageB.size()},
       },
-      m_reassembler(m_reassemblySlots, m_reassemblyStorage, kReassemblySlotCount,
-                    kReassemblyTimeoutMs) {}
+      // Serial regardless of m_encodeProfile: feedBytes() always decodes
+      // against the Serial (largest) ceiling before it reaches the reassembler,
+      // and the submit(DecodedFrame) overload used here does not re-decode.
+      m_receiver(m_reassemblySlots, m_reassemblyStorage, kReassemblySlotCount,
+                 kReassemblyTimeoutMs, btp::TransportProfile::Serial),
+      m_reassembledOut(kReassemblyStorageBytes) {}
 
 BtpSession::BtpSession(btp::TransportProfile transport, QObject* parent)
     : BtpSession(framingFor(transport), transport, parent) {}
@@ -126,35 +130,34 @@ bool BtpSession::sendRawFrame(const QByteArray& alreadyEncoded) {
 }
 
 void BtpSession::handleReassembly(const btp::DecodedFrame& fragment) {
-    if ((fragment.header.flags & btp::kFlagFragmented) == 0) {
-        ++m_diagnostics.framesDecoded;
-        emit frameReceived(BtpFrame::fromDecoded(fragment));
-        return;
-    }
-
     const auto nowMs = static_cast<std::uint64_t>(QDateTime::currentMSecsSinceEpoch());
-    btp::ReassembledMessage completed;
-    const btp::ReassemblyEvent event = m_reassembler.push(fragment, nowMs, &completed);
-    switch (event) {
-        case btp::ReassemblyEvent::Accepted:
-        case btp::ReassemblyEvent::Duplicate:
+    btp::ReceivedMessage message;
+    // The submit(DecodedFrame) overload: reassembly + the timeout sweep only,
+    // no CRC/decode (feedBytes() already did that). An unfragmented frame comes
+    // straight back as Complete without touching a slot; a completed message is
+    // copied into m_reassembledOut and its slot released before this returns.
+    const btp::ReceiveOutcome outcome = m_receiver.submit(
+        fragment, nowMs, m_reassembledOut.data(), m_reassembledOut.size(), &message);
+    switch (outcome) {
+        case btp::ReceiveOutcome::Complete:
+            ++m_diagnostics.framesDecoded;
+            emit frameReceived(BtpFrame::fromHeaderAndPayload(message.header, message.payload));
+            break;
+        case btp::ReceiveOutcome::FragmentAccepted:
+        case btp::ReceiveOutcome::DuplicateFragment:
             // Still waiting on more fragments (or a fragment we already
             // have, byte-for-byte) -- nothing to deliver yet.
             break;
-        case btp::ReassemblyEvent::Complete:
-            ++m_diagnostics.framesDecoded;
-            emit frameReceived(BtpFrame::fromHeaderAndPayload(completed.header, completed.payload));
-            m_reassembler.release(completed.slot_index);
-            break;
-        case btp::ReassemblyEvent::InvalidFragment:
-        case btp::ReassemblyEvent::Conflict:
-        case btp::ReassemblyEvent::MessageTooLarge:
-        case btp::ReassemblyEvent::NoSlot:
+        case btp::ReceiveOutcome::DroppedReassembly:
             ++m_diagnostics.reassemblyDrops;
-            emit frameRejected(QString::fromLatin1(btp::reassembly_event_string(event)));
+            emit frameRejected(QStringLiteral("reassembly rejected the fragment"));
             break;
-        case btp::ReassemblyEvent::InvalidArgument:
+        case btp::ReceiveOutcome::InvalidArgument:
             emit frameRejected(QStringLiteral("reassembler invalid argument"));
+            break;
+        case btp::ReceiveOutcome::DroppedCrc:
+        case btp::ReceiveOutcome::DroppedDecode:
+            // The submit(DecodedFrame) overload never returns these.
             break;
     }
 }
@@ -167,7 +170,7 @@ void BtpSession::feedBytes(const QByteArray& data) {
     // Cheap, timer-free way to bound stale in-flight reassemblies: piggyback
     // the expiry sweep on whatever cadence bytes actually arrive at, rather
     // than requiring this transport-agnostic class to own a QTimer.
-    m_reassembler.expire(static_cast<std::uint64_t>(QDateTime::currentMSecsSinceEpoch()));
+    m_receiver.expire(static_cast<std::uint64_t>(QDateTime::currentMSecsSinceEpoch()));
 
     bool diagnosticsDirty = false;
 
@@ -275,7 +278,7 @@ void BtpSession::feedBytes(const QByteArray& data) {
 
 void BtpSession::reset() {
     m_decoder.reset();
-    m_reassembler.clear();
+    m_receiver.clear();
 }
 
 }  // namespace traceview
