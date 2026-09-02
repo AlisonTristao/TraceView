@@ -24,7 +24,7 @@ public:
 
     explicit NotificationLog(QObject* parent = nullptr);
 
-    // Oldest-first, at most kCapacity entries.
+    // Oldest-first, at most the configured capacity entries.
     const QVector<NotificationEntry>& entries() const {
         return m_entries;
     }
@@ -41,6 +41,7 @@ signals:
 
 private:
     QVector<NotificationEntry> m_entries;
+    int m_capacity = kCapacity;
 };
 
 }  // namespace traceview

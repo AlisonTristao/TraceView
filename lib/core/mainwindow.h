@@ -41,6 +41,7 @@ class PanelDockController;
 class PropertiesPanel;
 class Ribbon;
 class SerialWidgetBridge;
+class SettingsPage;
 class WorkspaceSwitcher;
 
 class MainWindow : public QMainWindow {
@@ -272,6 +273,7 @@ private:
     // Devices tab's content -- swapped in for m_dashboardGrid via
     // m_contentStack, never shown at the same time (see onRibbonTabChanged).
     DevicesGrid* m_devicesGrid = nullptr;
+    SettingsPage* m_settingsPage = nullptr;
     // One closable ribbon tab per log opened via onOpenLogFile() (File >
     // Open Log Offline), each swapped into m_contentStack while its tab is
     // active -- unlike m_devicesGrid, these tabs are created/destroyed at
@@ -310,7 +312,7 @@ private:
     // core/deviceconnection.h. Created/destroyed/updated in lockstep with
     // m_devicesGrid's own list (onDeviceAdded/onDeviceRemoved/onDeviceUpdated).
     QHash<QString, DeviceConnection*> m_deviceConnections;
-    // Holds m_dashboardGrid and m_devicesGrid; whichever one is current is
+    // Holds the dashboard, Devices grid and Settings page; whichever one is current is
     // what fills m_contentRow. Unlike the layers/properties panels below,
     // this genuinely shares layout space (contentLayout->addWidget()) rather
     // than floating -- DevicesGrid isn't subject to DashboardGrid's
@@ -357,6 +359,7 @@ private:
     QPointer<DebugChartsWindow> m_debugChartsWindow;
     int m_configureTabIndex = -1;
     int m_devicesTabIndex = -1;
+    int m_settingsTabIndex = -1;
     bool m_configureTabActive = false;
     // Gates m_removeDeviceAction the same way m_configureTabActive gates
     // m_removeAction -- see updateDeviceSelectionActions().
@@ -365,6 +368,9 @@ private:
     // one instead -- set in onRibbonTabChanged() by page pointer, not tab
     // index, since the OTA tab is closable and can shift (see m_otaTabPage).
     bool m_otaTabActive = false;
+    // While a project populates DevicesGrid, preserve the user's startup
+    // preference instead of immediately opening every persisted target.
+    bool m_loadingProject = false;
 
     // Wires every control/serial-monitor widget's send/receive to whichever
     // device its own config currently targets -- see core/serialwidgetbridge.h.

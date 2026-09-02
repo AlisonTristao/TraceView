@@ -52,12 +52,14 @@
 #include "logs/logviewer.h"
 #include "ota/otatab.h"
 #include "paneldockcontroller.h"
+#include "preferences/appsettings.h"
 #include "project/projectstore.h"
 #include "project/workspacemanager.h"
 #include "propertiespanel.h"
 #include "ribbon.h"
 #include "ribbonicons.h"
 #include "serialwidgetbridge.h"
+#include "settingspage.h"
 #include "shortcutsdialog.h"
 #include "traceview/fontmanager.h"
 #include "traceview/languagemanager.h"
@@ -79,7 +81,6 @@ namespace {
 const QString kProjectFileFilter =
     QCoreApplication::translate("MainWindow", "TraceView Project (*.tvproj)");
 constexpr const char* kRecentFilesSettingsKey = "recentFiles/paths";
-constexpr int kMaxRecentFiles = 10;
 
 // What a gauge asks for: it has no sample-time setting of its own (a gauge
 // only ever shows the newest value), so it requests a modest fixed rate
@@ -170,6 +171,23 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     buildMenus();
 
     m_dashboardGrid = new DashboardGrid(this);
+    m_settingsPage = new SettingsPage(this);
+    connect(m_settingsPage, &SettingsPage::clearRecentProjectsRequested, this,
+            &MainWindow::onClearRecentFiles);
+    connect(m_settingsPage, &SettingsPage::restartRequested, this, [] {
+        QProcess::startDetached(QCoreApplication::applicationFilePath(),
+                                QCoreApplication::arguments().mid(1));
+        QCoreApplication::quit();
+    });
+    connect(&AppSettings::instance(), &AppSettings::generalPreferencesChanged, this, [this] {
+        QSettings settings;
+        QStringList files = settings.value(kRecentFilesSettingsKey).toStringList();
+        while (files.size() > AppSettings::instance().recentProjectsLimit()) {
+            files.removeLast();
+        }
+        settings.setValue(kRecentFilesSettingsKey, files);
+        updateRecentFilesMenu();
+    });
 
     // Wires control-widget commands and the serial monitor/terminal to
     // whichever device each widget's own config currently targets -- see
@@ -274,6 +292,7 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     m_contentStack = new QStackedWidget(m_contentRow);
     m_contentStack->addWidget(m_dashboardGrid);
     m_contentStack->addWidget(m_devicesGrid);
+    m_contentStack->addWidget(m_settingsPage);
     // Each log opened via onOpenLogFile() (File > Open Log Offline) gets its
     // own LogViewer, added here on demand -- see m_openLogTabs.
     contentLayout->addWidget(m_contentStack);
@@ -893,18 +912,29 @@ Ribbon* MainWindow::buildRibbon() {
     m_runTabIndex = ribbon->addTab(tr("Run"), runPage);
     m_configureTabIndex = ribbon->addTab(tr("Layout"), configurePage);
     m_devicesTabIndex = ribbon->addTab(tr("Devices"), devicesPage);
+    auto* settingsRibbonPage = new QWidget(this);
+    settingsRibbonPage->setObjectName("ribbonPage");
+    settingsRibbonPage->setFixedHeight(kRibbonPageHeight);
+    auto* settingsRibbonLayout = new QHBoxLayout(settingsRibbonPage);
+    settingsRibbonLayout->setContentsMargins(kRibbonPageMarginH, kRibbonPageMarginV,
+                                             kRibbonPageMarginH, kRibbonPageMarginV);
+    auto* settingsLabel = new QLabel(tr("Application preferences"), settingsRibbonPage);
+    settingsRibbonLayout->addWidget(settingsLabel);
+    settingsRibbonLayout->addStretch();
+    m_settingsTabIndex = ribbon->addTab(tr("Settings"), settingsRibbonPage);
 
     connect(ribbon, &Ribbon::currentTabChanged, this, &MainWindow::onRibbonTabChanged);
     connect(ribbon, &Ribbon::tabCloseRequested, this, &MainWindow::onLogTabCloseRequested);
 
     m_ribbon = ribbon;
 
-    // Ctrl+1/2/3 jump to the fixed Run/Layout/Devices tabs -- window-level so
+    // Ctrl+1/2/3/4 jump to the fixed Run/Layout/Devices/Settings tabs -- window-level so
     // they keep working with the menu bar hidden (same as fullscreen above).
     // Ctrl+Tab is already taken for workspace cycling, so digits it is.
     const QVector<QKeyCombination> fixedTabChords = {Qt::CTRL | Qt::Key_1, Qt::CTRL | Qt::Key_2,
-                                                     Qt::CTRL | Qt::Key_3};
-    const QVector<int> fixedTabIndices = {m_runTabIndex, m_configureTabIndex, m_devicesTabIndex};
+                                                     Qt::CTRL | Qt::Key_3, Qt::CTRL | Qt::Key_4};
+    const QVector<int> fixedTabIndices = {m_runTabIndex, m_configureTabIndex, m_devicesTabIndex,
+                                          m_settingsTabIndex};
     for (int i = 0; i < fixedTabChords.size(); ++i) {
         auto* action = new QAction(this);
         action->setShortcut(QKeySequence(fixedTabChords[i]));
@@ -1149,6 +1179,8 @@ void MainWindow::onRibbonTabChanged(int index) {
     QWidget* activeContent = m_dashboardGrid;
     if (index == m_devicesTabIndex) {
         activeContent = m_devicesGrid;
+    } else if (index == m_settingsTabIndex) {
+        activeContent = m_settingsPage;
     } else if (m_otaTabActive) {
         activeContent = m_otaTab;
     } else if (currentPage != nullptr && currentPage == m_btpMonitorTabPage) {
@@ -1564,6 +1596,9 @@ void MainWindow::applyDeviceTarget(DeviceConnection* connection, const Device& d
     if (connection == nullptr) {
         return;
     }
+    if (m_loadingProject && !AppSettings::instance().autoConnectOnProjectOpen()) {
+        return;
+    }
     if (device.transportType == TransportType::HubChannel) {
         // A child addresses its robot by source_id, never by the channel
         // index the dongle publishes -- that index is a display label in
@@ -1701,7 +1736,9 @@ void MainWindow::onDeviceAdded(const Device& device) {
     // loop, e.g. right after loading a saved project whose devices already
     // have one configured. Target is portName for Serial, usbPath for
     // UsbHid (baudRate is ignored by DeviceConnection in that case).
-    applyDeviceTarget(connection, device);
+    if (!m_loadingProject || AppSettings::instance().autoConnectOnProjectOpen()) {
+        applyDeviceTarget(connection, device);
+    }
     // A hub arriving may be the parent some already-loaded child was waiting
     // for, and a child arriving needs its own parent resolved -- one call
     // covers both directions.
@@ -2139,7 +2176,9 @@ void MainWindow::openRecentFile(const QString& path) {
     // its device exists is permanently stuck with no subscription.
     // Absent in projects saved before device persistence existed --
     // fromJson(QJsonObject()) on an empty section just clears the list.
+    m_loadingProject = true;
     m_devicesGrid->fromJson(ProjectStore::instance().section("devices"));
+    m_loadingProject = false;
     m_devicesGrid->undoStack()->clear();
     m_dashboardGrid->fromJson(
         WorkspaceManager::instance().dashboardFor(WorkspaceManager::instance().activeId()));
@@ -2155,7 +2194,7 @@ void MainWindow::addRecentFile(const QString& path) {
     QStringList files = settings.value(kRecentFilesSettingsKey).toStringList();
     files.removeAll(path);
     files.prepend(path);
-    while (files.size() > kMaxRecentFiles) {
+    while (files.size() > AppSettings::instance().recentProjectsLimit()) {
         files.removeLast();
     }
     settings.setValue(kRecentFilesSettingsKey, files);
@@ -2261,10 +2300,11 @@ void MainWindow::onShowKeyboardShortcuts() {
 
     sections.append(Section{
         tr("Navigation & view"),
-        {Row{tr("Run / Layout / Devices tab"),
+        {Row{tr("Run / Layout / Devices / Settings tab"),
              chord(Qt::ControlModifier, Qt::Key_1) + QStringLiteral(" · ") +
                  chord(Qt::ControlModifier, Qt::Key_2) + QStringLiteral(" · ") +
-                 chord(Qt::ControlModifier, Qt::Key_3)},
+                 chord(Qt::ControlModifier, Qt::Key_3) + QStringLiteral(" · ") +
+                 chord(Qt::ControlModifier, Qt::Key_4)},
          Row{tr("Next / previous workspace"), chord(Qt::ControlModifier, Qt::Key_Tab) +
                                                   QStringLiteral("  ·  ") +
                                                   chord(Qt::ControlModifier | Qt::ShiftModifier,

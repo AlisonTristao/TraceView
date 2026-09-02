@@ -5,6 +5,7 @@
 
 #include "dashboard/dashboardwidget.h"
 #include "dashboard/widgets/chartdata.h"
+#include "preferences/appsettings.h"
 #include "telemetry/telemetrybinding.h"
 
 class QMouseEvent;
@@ -35,6 +36,9 @@ public:
         // button held) -- that's how the hover crosshair below tracks the
         // mouse across the plot.
         setMouseTracking(true);
+        m_repaintIntervalMs = AppSettings::instance().repaintIntervalMs();
+        connect(&AppSettings::instance(), &AppSettings::dashboardPreferencesChanged, this,
+                [this] { m_repaintIntervalMs = AppSettings::instance().repaintIntervalMs(); });
     }
 
     void setConfig(const QJsonObject& config) override;
@@ -149,7 +153,7 @@ private:
 
     bool m_repaintPending = false;
     bool m_paused = false;
-    int m_repaintIntervalMs = 33;  // see setRepaintIntervalMs() above
+    int m_repaintIntervalMs = 33;  // initialized from AppSettings in the constructor
 };
 
 class DummyLineChartWidget : public ChartWidgetBase {

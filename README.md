@@ -2,10 +2,23 @@
 
 Real-time telemetry dashboard for ESP32/ESP-NOW robots, built in C++ with Qt.
 
-> **Status:** v2.3.0 — the dongle is now a hub: one cable carries several robots, each its own device with its own charts, terminal and end-to-end seal. Firmware also uploads over Wi-Fi from a new OTA tab. On top of the USB HID transport and Logs tab from 2.2.0, the multi-device dashboard from 2.1.0, and the workspaces/theming/docking round from 2.0.0. The BTP telemetry integration behind it is still evolving. See [CONTRIBUTING.md](CONTRIBUTING.md) for the branching/feature workflow and [docs/ECOSYSTEM.md](docs/ECOSYSTEM.md) for how this project fits with the rest of the Bally ecosystem.
+> **Status:** v2.4.0 — a new Settings tab centralizes rendering, terminal,
+> connection and diagnostic preferences alongside the existing appearance
+> controls. The dongle can also act as a hub: one cable carries several
+> robots, each with its own device, charts, terminal and end-to-end seal.
+> Firmware uploads over Wi-Fi from the OTA tab. See
+> [CONTRIBUTING.md](CONTRIBUTING.md) for the branching/feature workflow and
+> [docs/ECOSYSTEM.md](docs/ECOSYSTEM.md) for how this project fits with the
+> rest of the Bally ecosystem.
 
 ## What's new (unreleased)
 
+- **Settings center** — the new **Settings** ribbon tab groups General,
+  Appearance, Dashboard, Terminal, Connections and Diagnostics preferences.
+  Pick Low (15 FPS), Medium (30 FPS), High (60 FPS), or a custom redraw cap;
+  tune terminal scrollback and reconnect behavior without hunting through
+  code. Theme/font changes apply immediately, while the page offers a restart
+  when language or diagnostic history changes need a fresh session.
 - **Hub children recover on their own** — a robot behind a hub that reboots
   or drops out of range no longer needs a manual reconnect. Its card goes
   amber while it is quiet and back to green on its own, re-fetching the

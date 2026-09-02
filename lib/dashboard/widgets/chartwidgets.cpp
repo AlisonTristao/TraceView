@@ -1364,7 +1364,11 @@ void DummyBarChartWidget::paintEvent(QPaintEvent*) {
                        /*showXAxisTag=*/false, m_seriesHidden, palette, &m_legendHitRects);
 }
 
-DummyGaugeWidget::DummyGaugeWidget(QWidget* parent) : DashboardWidget(parent) {}
+DummyGaugeWidget::DummyGaugeWidget(QWidget* parent) : DashboardWidget(parent) {
+    m_repaintIntervalMs = AppSettings::instance().repaintIntervalMs();
+    connect(&AppSettings::instance(), &AppSettings::dashboardPreferencesChanged, this,
+            [this] { m_repaintIntervalMs = AppSettings::instance().repaintIntervalMs(); });
+}
 
 void DummyGaugeWidget::setConfig(const QJsonObject& config) {
     m_config = parseGaugeConfig(config);

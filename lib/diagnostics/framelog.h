@@ -31,7 +31,7 @@ public:
 
     explicit FrameLog(QObject* parent = nullptr);
 
-    // Oldest-first, at most kCapacity entries.
+    // Oldest-first, at most the configured capacity entries.
     const QVector<FrameLogEntry>& entries() const {
         return m_entries;
     }
@@ -56,6 +56,7 @@ private:
 
     QVector<FrameLogEntry> m_entries;
     quint64 m_nextSeq = 1;
+    int m_capacity = kCapacity;
 };
 
 }  // namespace traceview

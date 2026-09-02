@@ -106,6 +106,7 @@ private:
     void updateCursorOverlay();
     void resetCursorBlink();
     void toggleCursorBlink();
+    void applyPreferences();
 
     QString m_currentLine;
     QVector<Pen> m_linePens;  // one per QChar of m_currentLine (short entries -> default Pen)
@@ -118,6 +119,7 @@ private:
     QWidget* m_cursorOverlay = nullptr;
     bool m_cursorBlinkEnabled = true;
     bool m_cursorVisible = false;
+    bool m_autoScroll = true;
 };
 
 }  // namespace traceview

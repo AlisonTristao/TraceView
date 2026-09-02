@@ -7,6 +7,19 @@ release flow.
 
 ## [Unreleased]
 
+## [2.4.0] - 2026-09-02
+
+### Added
+
+- **Settings center** — the fixed Settings ribbon tab now groups application
+  preferences into General, Appearance, Dashboard, Terminal, Connections and
+  Diagnostics. Rendering has Low (15 FPS), Medium (30 FPS), High (60 FPS) and
+  Custom profiles; terminal scrollback/wrapping/follow-output/cursor, recent
+  project retention, startup auto-connect and reconnect cadence are all
+  configurable. Theme and font apply immediately. Language and diagnostic
+  history bounds clearly offer an in-app restart because their changes are
+  applied when a new application session starts.
+
 ### Added
 
 - The serial terminal now renders TinyShell's live command-token colours:

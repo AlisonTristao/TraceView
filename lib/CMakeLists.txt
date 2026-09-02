@@ -51,6 +51,23 @@ target_link_libraries(traceview_locale PUBLIC
     Qt6::Core
 )
 
+# traceview_preferences: typed, application-level options shared by multiple
+# presentation surfaces. It deliberately stays QtCore-only so dashboard and
+# diagnostics can consume it without depending on the MainWindow/UI target.
+add_library(traceview_preferences STATIC
+    preferences/appsettings.cpp
+    preferences/appsettings.h
+)
+
+target_include_directories(traceview_preferences PUBLIC
+    ${CMAKE_SOURCE_DIR}/include
+    ${CMAKE_SOURCE_DIR}/lib
+)
+
+target_link_libraries(traceview_preferences PUBLIC
+    Qt6::Core
+)
+
 # traceview_telemetry: generic telemetry value types and data structures
 # with no BTP dependency -- TelemetryFieldBinding, TopicSubscriptionState,
 # StatusTopicRecord, TelemetrySeriesBuffer. These describe what a Backend
@@ -254,6 +271,7 @@ target_link_libraries(traceview_dashboard
         traceview_protocol
     PRIVATE
         traceview_theme
+        traceview_preferences
 )
 
 # traceview_devices: the Devices panel's data model, card chrome, and fixed
@@ -347,6 +365,7 @@ target_link_libraries(traceview_diagnostics
         traceview_protocol
     PRIVATE
         traceview_theme
+        traceview_preferences
 )
 
 # traceview_ota: the OTA Update tab's content -- OtaClient (a
@@ -403,6 +422,8 @@ add_library(traceview_ui STATIC
     core/layerspanel.h
     core/mainwindow.cpp
     core/mainwindow.h
+    core/settingspage.cpp
+    core/settingspage.h
     core/paneldockcontroller.cpp
     core/paneldockcontroller.h
     core/propertiespanel.cpp
@@ -450,6 +471,7 @@ target_link_libraries(traceview_ui
         traceview_protocol
         traceview_theme
         traceview_locale
+        traceview_preferences
         # UsbHidManager (core/usbhidmanager.h) is the only consumer -- a
         # transport-layer implementation detail, so PRIVATE (nothing above
         # traceview_ui needs to see hidapi's own headers).

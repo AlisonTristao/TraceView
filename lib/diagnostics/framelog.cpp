@@ -1,8 +1,11 @@
 #include "diagnostics/framelog.h"
 
+#include "preferences/appsettings.h"
+
 namespace traceview {
 
-FrameLog::FrameLog(QObject* parent) : QObject(parent) {}
+FrameLog::FrameLog(QObject* parent)
+    : QObject(parent), m_capacity(AppSettings::instance().frameLogCapacity()) {}
 
 void FrameLog::append(FrameLogEntry entry) {
     entry.seq = m_nextSeq++;
@@ -10,7 +13,7 @@ void FrameLog::append(FrameLogEntry entry) {
     m_entries.append(entry);
 
     bool droppedOldest = false;
-    if (m_entries.size() > kCapacity) {
+    if (m_entries.size() > m_capacity) {
         m_entries.removeFirst();
         droppedOldest = true;
     }

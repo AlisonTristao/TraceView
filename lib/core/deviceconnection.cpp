@@ -5,6 +5,7 @@
 
 #include "backend/backend.h"
 #include "hubtransport.h"
+#include "preferences/appsettings.h"
 #include "protocol/btpbackend.h"
 #include "serialmanager.h"
 #include "usbhidmanager.h"
@@ -15,7 +16,6 @@ namespace {
 // How often a device with an unmet "should be online" intent retries
 // open() -- covers both a freshly configured device's first attempt and
 // recovering from an unplug/replug without any user action.
-constexpr int kRetryIntervalMs = 3000;
 constexpr int kCloseWriteDrainTimeoutMs = 250;
 
 // BtpBackend/BtpSession speak two independent axes -- link framing and
@@ -103,14 +103,22 @@ DeviceConnection::DeviceConnection(CommType commType, TransportType transportTyp
     // eligible at all -- it returns early while the transport is still
     // connected, which is exactly the state a failed handshake leaves behind.
     connect(m_backend, &Backend::sessionRecoveryNeeded, this, [this] {
-        if (m_shouldBeConnected) {
+        if (m_shouldBeConnected && AppSettings::instance().autoReconnect()) {
             m_transport->close();
         }
     });
 
     m_retryTimer = new QTimer(this);
-    m_retryTimer->setInterval(kRetryIntervalMs);
+    m_retryTimer->setInterval(AppSettings::instance().reconnectIntervalSeconds() * 1000);
     connect(m_retryTimer, &QTimer::timeout, this, &DeviceConnection::attemptReconnect);
+    connect(&AppSettings::instance(), &AppSettings::connectionPreferencesChanged, this, [this] {
+        m_retryTimer->setInterval(AppSettings::instance().reconnectIntervalSeconds() * 1000);
+        if (!AppSettings::instance().autoReconnect()) {
+            m_retryTimer->stop();
+        } else if (m_shouldBeConnected && !m_transport->isConnected()) {
+            m_retryTimer->start();
+        }
+    });
 }
 
 DeviceConnection::~DeviceConnection() {
@@ -141,7 +149,9 @@ void DeviceConnection::connectTo(const QString& target, qint32 baudRate) {
         closeTransportGracefully();
     }
     attemptReconnect();
-    m_retryTimer->start();
+    if (AppSettings::instance().autoReconnect()) {
+        m_retryTimer->start();
+    }
 }
 
 void DeviceConnection::connectVia(DeviceConnection* parentConnection, quint32 selfSourceId,
@@ -179,7 +189,9 @@ void DeviceConnection::connectVia(DeviceConnection* parentConnection, quint32 se
         closeTransportGracefully();
         return;
     }
-    m_retryTimer->start();
+    if (AppSettings::instance().autoReconnect()) {
+        m_retryTimer->start();
+    }
 }
 
 void DeviceConnection::disconnectFrom() {

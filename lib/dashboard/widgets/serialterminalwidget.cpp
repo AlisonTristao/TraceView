@@ -10,6 +10,7 @@
 #include <QTextCursor>
 #include <QTextDocument>
 
+#include "preferences/appsettings.h"
 #include "traceview/theme.h"
 #include "traceview/thememanager.h"
 
@@ -74,7 +75,6 @@ SerialTerminalWidget::SerialTerminalWidget(QWidget* parent) : QPlainTextEdit(par
     // locally-drawn prompt, no double echo).
     setReadOnly(true);
     setUndoRedoEnabled(false);
-    setLineWrapMode(QPlainTextEdit::WidgetWidth);
     setFont(QFontDatabase::systemFont(QFontDatabase::FixedFont));
 
     // The local QTextCursor is only an implementation detail used to render
@@ -102,6 +102,9 @@ SerialTerminalWidget::SerialTerminalWidget(QWidget* parent) : QPlainTextEdit(par
                 renderCurrentLineAndCursor();
                 updateCursorOverlay();
             });
+    connect(&AppSettings::instance(), &AppSettings::terminalPreferencesChanged, this,
+            &SerialTerminalWidget::applyPreferences);
+    applyPreferences();
 
     // A dashboard cell, rather than this child widget, can own keyboard
     // focus. The terminal's remote cursor remains useful in that state, so
@@ -171,7 +174,9 @@ void SerialTerminalWidget::appendData(const QByteArray& data) {
 
     renderCurrentLineAndCursor();
     QScrollBar* scrollBar = verticalScrollBar();
-    scrollBar->setValue(scrollBar->maximum());
+    if (m_autoScroll) {
+        scrollBar->setValue(scrollBar->maximum());
+    }
     // Terminal output may arrive continuously (for example, while the
     // dongle forwards logs). It must not continually restart the blink
     // cycle, or the cursor would remain visibly on forever.
@@ -203,6 +208,15 @@ void SerialTerminalWidget::setCursorBlinkEnabled(bool enabled) {
     m_cursorBlinkTimer.stop();
     m_cursorVisible = false;
     updateCursorOverlay();
+}
+
+void SerialTerminalWidget::applyPreferences() {
+    const AppSettings& settings = AppSettings::instance();
+    document()->setMaximumBlockCount(settings.terminalScrollbackLines());
+    setLineWrapMode(settings.terminalWordWrap() ? QPlainTextEdit::WidgetWidth
+                                                : QPlainTextEdit::NoWrap);
+    m_autoScroll = settings.terminalAutoScroll();
+    setCursorBlinkEnabled(settings.terminalCursorBlink());
 }
 
 void SerialTerminalWidget::keyPressEvent(QKeyEvent* event) {
