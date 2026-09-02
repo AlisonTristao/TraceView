@@ -244,6 +244,11 @@ private:
     // lifecycle as onOpenOtaTab()/onOtaTabCloseRequested().
     void onOpenBtpMonitor();
     void onBtpMonitorTabCloseRequested(int index);
+    // File > "Settings..." -- opens the singleton Settings tab (creating it on
+    // first use) or switches to it. Same singleton-closable-tab lifecycle as
+    // onOpenOtaTab()/onOtaTabCloseRequested().
+    void onOpenSettingsTab();
+    void onSettingsTabCloseRequested(int index);
     // Status-bar history button / View menu -- shows (or raises) the non-modal
     // window listing every status-bar message posted this session.
     void onShowNotificationHistory();
@@ -273,7 +278,6 @@ private:
     // Devices tab's content -- swapped in for m_dashboardGrid via
     // m_contentStack, never shown at the same time (see onRibbonTabChanged).
     DevicesGrid* m_devicesGrid = nullptr;
-    SettingsPage* m_settingsPage = nullptr;
     // One closable ribbon tab per log opened via onOpenLogFile() (File >
     // Open Log Offline), each swapped into m_contentStack while its tab is
     // active -- unlike m_devicesGrid, these tabs are created/destroyed at
@@ -299,6 +303,10 @@ private:
     // "empty ribbon page as a stable key" trick as the OTA tab above.
     QWidget* m_btpMonitorTabPage = nullptr;
     BtpMonitorTab* m_btpMonitorTab = nullptr;
+    // The Settings tab -- same singleton-closable-tab lifecycle and "empty
+    // ribbon page as a stable key" trick as the OTA / BTP monitor tabs above.
+    QWidget* m_settingsTabPage = nullptr;
+    SettingsPage* m_settingsTab = nullptr;
     // App-wide in-memory diagnostics buffers (lib/diagnostics). Owned here,
     // created first thing in the constructor; every DeviceConnection's Backend
     // feeds them (see createDeviceConnection) and postStatus() feeds
@@ -336,6 +344,7 @@ private:
     QAction* m_openLogFileAction = nullptr;
     QAction* m_openOtaTabAction = nullptr;
     QAction* m_openBtpMonitorAction = nullptr;
+    QAction* m_openSettingsTabAction = nullptr;
     QAction* m_removeAction = nullptr;
     QAction* m_copyAction = nullptr;
     QAction* m_pasteAction = nullptr;
@@ -359,7 +368,6 @@ private:
     QPointer<DebugChartsWindow> m_debugChartsWindow;
     int m_configureTabIndex = -1;
     int m_devicesTabIndex = -1;
-    int m_settingsTabIndex = -1;
     bool m_configureTabActive = false;
     // Gates m_removeDeviceAction the same way m_configureTabActive gates
     // m_removeAction -- see updateDeviceSelectionActions().

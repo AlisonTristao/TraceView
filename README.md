@@ -2,23 +2,25 @@
 
 Real-time telemetry dashboard for ESP32/ESP-NOW robots, built in C++ with Qt.
 
-> **Status:** v2.4.0 — a new Settings tab centralizes rendering, terminal,
-> connection and diagnostic preferences alongside the existing appearance
-> controls. The dongle can also act as a hub: one cable carries several
-> robots, each with its own device, charts, terminal and end-to-end seal.
-> Firmware uploads over Wi-Fi from the OTA tab. See
+> **Status:** v2.4.0 — a new Settings tab (opened from **File ▸ Settings…**)
+> centralizes rendering, terminal, connection and diagnostic preferences
+> alongside the existing appearance controls. The dongle can also act as a
+> hub: one cable carries several robots, each with its own device, charts,
+> terminal and end-to-end seal. Firmware uploads over Wi-Fi from the OTA tab.
+> See
 > [CONTRIBUTING.md](CONTRIBUTING.md) for the branching/feature workflow and
 > [docs/ECOSYSTEM.md](docs/ECOSYSTEM.md) for how this project fits with the
 > rest of the Bally ecosystem.
 
 ## What's new (unreleased)
 
-- **Settings center** — the new **Settings** ribbon tab groups General,
-  Appearance, Dashboard, Terminal, Connections and Diagnostics preferences.
-  Pick Low (15 FPS), Medium (30 FPS), High (60 FPS), or a custom redraw cap;
-  tune terminal scrollback and reconnect behavior without hunting through
-  code. Theme/font changes apply immediately, while the page offers a restart
-  when language or diagnostic history changes need a fresh session.
+- **Settings center** — the new **Settings** tab (opened on demand from
+  **File ▸ Settings…**, `Ctrl+,`) groups General, Appearance, Dashboard,
+  Terminal, Connections and Diagnostics preferences. Pick Low (15 FPS),
+  Medium (30 FPS), High (60 FPS), or a custom redraw cap; tune terminal
+  scrollback and reconnect behavior without hunting through code. Theme/font
+  changes apply immediately, while the page offers a restart when language or
+  diagnostic history changes need a fresh session.
 - **Hub children recover on their own** — a robot behind a hub that reboots
   or drops out of range no longer needs a manual reconnect. Its card goes
   amber while it is quiet and back to green on its own, re-fetching the

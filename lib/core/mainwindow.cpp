@@ -171,14 +171,9 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     buildMenus();
 
     m_dashboardGrid = new DashboardGrid(this);
-    m_settingsPage = new SettingsPage(this);
-    connect(m_settingsPage, &SettingsPage::clearRecentProjectsRequested, this,
-            &MainWindow::onClearRecentFiles);
-    connect(m_settingsPage, &SettingsPage::restartRequested, this, [] {
-        QProcess::startDetached(QCoreApplication::applicationFilePath(),
-                                QCoreApplication::arguments().mid(1));
-        QCoreApplication::quit();
-    });
+    // The Settings page itself is built on demand (onOpenSettingsTab), same as
+    // the OTA / BTP monitor tabs -- but the recent-files cap it exposes lives
+    // in QSettings and has to stay trimmed whether or not that tab is open.
     connect(&AppSettings::instance(), &AppSettings::generalPreferencesChanged, this, [this] {
         QSettings settings;
         QStringList files = settings.value(kRecentFilesSettingsKey).toStringList();
@@ -292,7 +287,6 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     m_contentStack = new QStackedWidget(m_contentRow);
     m_contentStack->addWidget(m_dashboardGrid);
     m_contentStack->addWidget(m_devicesGrid);
-    m_contentStack->addWidget(m_settingsPage);
     // Each log opened via onOpenLogFile() (File > Open Log Offline) gets its
     // own LogViewer, added here on demand -- see m_openLogTabs.
     contentLayout->addWidget(m_contentStack);
@@ -563,6 +557,11 @@ void MainWindow::buildMenus() {
     m_openBtpMonitorAction->setShortcut(QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_B));
     connect(m_openBtpMonitorAction, &QAction::triggered, this, &MainWindow::onOpenBtpMonitor);
     fileMenu->addAction(m_openBtpMonitorAction);
+
+    m_openSettingsTabAction = new QAction(tr("&Settings..."), this);
+    m_openSettingsTabAction->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_Comma));
+    connect(m_openSettingsTabAction, &QAction::triggered, this, &MainWindow::onOpenSettingsTab);
+    fileMenu->addAction(m_openSettingsTabAction);
 
     auto* viewMenu = menuBar()->addMenu(tr("&View"));
 
@@ -912,29 +911,18 @@ Ribbon* MainWindow::buildRibbon() {
     m_runTabIndex = ribbon->addTab(tr("Run"), runPage);
     m_configureTabIndex = ribbon->addTab(tr("Layout"), configurePage);
     m_devicesTabIndex = ribbon->addTab(tr("Devices"), devicesPage);
-    auto* settingsRibbonPage = new QWidget(this);
-    settingsRibbonPage->setObjectName("ribbonPage");
-    settingsRibbonPage->setFixedHeight(kRibbonPageHeight);
-    auto* settingsRibbonLayout = new QHBoxLayout(settingsRibbonPage);
-    settingsRibbonLayout->setContentsMargins(kRibbonPageMarginH, kRibbonPageMarginV,
-                                             kRibbonPageMarginH, kRibbonPageMarginV);
-    auto* settingsLabel = new QLabel(tr("Application preferences"), settingsRibbonPage);
-    settingsRibbonLayout->addWidget(settingsLabel);
-    settingsRibbonLayout->addStretch();
-    m_settingsTabIndex = ribbon->addTab(tr("Settings"), settingsRibbonPage);
 
     connect(ribbon, &Ribbon::currentTabChanged, this, &MainWindow::onRibbonTabChanged);
     connect(ribbon, &Ribbon::tabCloseRequested, this, &MainWindow::onLogTabCloseRequested);
 
     m_ribbon = ribbon;
 
-    // Ctrl+1/2/3/4 jump to the fixed Run/Layout/Devices/Settings tabs -- window-level so
+    // Ctrl+1/2/3 jump to the fixed Run/Layout/Devices tabs -- window-level so
     // they keep working with the menu bar hidden (same as fullscreen above).
     // Ctrl+Tab is already taken for workspace cycling, so digits it is.
     const QVector<QKeyCombination> fixedTabChords = {Qt::CTRL | Qt::Key_1, Qt::CTRL | Qt::Key_2,
-                                                     Qt::CTRL | Qt::Key_3, Qt::CTRL | Qt::Key_4};
-    const QVector<int> fixedTabIndices = {m_runTabIndex, m_configureTabIndex, m_devicesTabIndex,
-                                          m_settingsTabIndex};
+                                                     Qt::CTRL | Qt::Key_3};
+    const QVector<int> fixedTabIndices = {m_runTabIndex, m_configureTabIndex, m_devicesTabIndex};
     for (int i = 0; i < fixedTabChords.size(); ++i) {
         auto* action = new QAction(this);
         action->setShortcut(QKeySequence(fixedTabChords[i]));
@@ -1179,12 +1167,12 @@ void MainWindow::onRibbonTabChanged(int index) {
     QWidget* activeContent = m_dashboardGrid;
     if (index == m_devicesTabIndex) {
         activeContent = m_devicesGrid;
-    } else if (index == m_settingsTabIndex) {
-        activeContent = m_settingsPage;
     } else if (m_otaTabActive) {
         activeContent = m_otaTab;
     } else if (currentPage != nullptr && currentPage == m_btpMonitorTabPage) {
         activeContent = m_btpMonitorTab;
+    } else if (currentPage != nullptr && currentPage == m_settingsTabPage) {
+        activeContent = m_settingsTab;
     } else if (currentPage != nullptr) {
         for (const OpenLogTab& tab : m_openLogTabs) {
             if (tab.ribbonPage == currentPage) {
@@ -2005,6 +1993,10 @@ void MainWindow::onLogTabCloseRequested(int index) {
         onBtpMonitorTabCloseRequested(index);
         return;
     }
+    if (page != nullptr && page == m_settingsTabPage) {
+        onSettingsTabCloseRequested(index);
+        return;
+    }
     for (int i = 0; i < m_openLogTabs.size(); ++i) {
         if (m_openLogTabs[i].ribbonPage != page) {
             continue;
@@ -2119,6 +2111,51 @@ void MainWindow::onBtpMonitorTabCloseRequested(int index) {
     m_btpMonitorTab->deleteLater();
     m_btpMonitorTab = nullptr;
     m_btpMonitorTabPage = nullptr;
+}
+
+void MainWindow::onOpenSettingsTab() {
+    if (m_settingsTab != nullptr) {
+        for (int i = 0; i < m_ribbon->count(); ++i) {
+            if (m_ribbon->pageAt(i) == m_settingsTabPage) {
+                m_ribbon->setCurrentIndex(i);
+                break;
+            }
+        }
+        return;
+    }
+
+    m_settingsTab = new SettingsPage(this);
+    connect(m_settingsTab, &SettingsPage::clearRecentProjectsRequested, this,
+            &MainWindow::onClearRecentFiles);
+    connect(m_settingsTab, &SettingsPage::restartRequested, this, [] {
+        QProcess::startDetached(QCoreApplication::applicationFilePath(),
+                                QCoreApplication::arguments().mid(1));
+        QCoreApplication::quit();
+    });
+    m_contentStack->addWidget(m_settingsTab);
+
+    // An empty ribbon page: this tab carries no ribbon buttons of its own, the
+    // page just gives it a slot in Ribbon's stack and a stable lookup key
+    // (m_settingsTabPage) -- same trick as m_otaTabPage / m_btpMonitorTabPage.
+    auto* page = new QWidget(this);
+    page->setObjectName("ribbonPage");
+    page->setFixedHeight(kRibbonPageHeight);
+
+    const int index = m_ribbon->addTab(tr("Settings"), page, /*enabled=*/true, QString(),
+                                       /*closable=*/true);
+    m_settingsTabPage = page;
+    m_ribbon->setCurrentIndex(index);
+}
+
+void MainWindow::onSettingsTabCloseRequested(int index) {
+    if (m_settingsTab == nullptr || m_ribbon->pageAt(index) != m_settingsTabPage) {
+        return;
+    }
+    m_ribbon->removeTab(index);
+    m_contentStack->removeWidget(m_settingsTab);
+    m_settingsTab->deleteLater();
+    m_settingsTab = nullptr;
+    m_settingsTabPage = nullptr;
 }
 
 void MainWindow::onShowNotificationHistory() {
@@ -2265,7 +2302,8 @@ void MainWindow::onShowKeyboardShortcuts() {
          Row{tr("Save project as"), stdKeys(QKeySequence::SaveAs)},
          Row{tr("Open log offline"), keysOf(m_openLogFileAction)},
          Row{tr("Upload firmware (OTA)"), keysOf(m_openOtaTabAction)},
-         Row{tr("BTP traffic monitor"), keysOf(m_openBtpMonitorAction)}}});
+         Row{tr("BTP traffic monitor"), keysOf(m_openBtpMonitorAction)},
+         Row{tr("Settings"), keysOf(m_openSettingsTabAction)}}});
 
     sections.append(Section{
         tr("Layout & widgets"),
@@ -2300,11 +2338,10 @@ void MainWindow::onShowKeyboardShortcuts() {
 
     sections.append(Section{
         tr("Navigation & view"),
-        {Row{tr("Run / Layout / Devices / Settings tab"),
+        {Row{tr("Run / Layout / Devices tab"),
              chord(Qt::ControlModifier, Qt::Key_1) + QStringLiteral(" · ") +
                  chord(Qt::ControlModifier, Qt::Key_2) + QStringLiteral(" · ") +
-                 chord(Qt::ControlModifier, Qt::Key_3) + QStringLiteral(" · ") +
-                 chord(Qt::ControlModifier, Qt::Key_4)},
+                 chord(Qt::ControlModifier, Qt::Key_3)},
          Row{tr("Next / previous workspace"), chord(Qt::ControlModifier, Qt::Key_Tab) +
                                                   QStringLiteral("  ·  ") +
                                                   chord(Qt::ControlModifier | Qt::ShiftModifier,

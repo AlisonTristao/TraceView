@@ -5,12 +5,19 @@
 #include <QFormLayout>
 #include <QGroupBox>
 #include <QHBoxLayout>
+#include <QIcon>
 #include <QLabel>
 #include <QListWidget>
+#include <QListWidgetItem>
+#include <QPainter>
+#include <QPixmap>
+#include <QPolygonF>
 #include <QPushButton>
 #include <QSpinBox>
 #include <QStackedWidget>
 #include <QVBoxLayout>
+
+#include <functional>
 
 #include "preferences/appsettings.h"
 #include "traceview/fontmanager.h"
@@ -20,11 +27,106 @@
 namespace traceview {
 
 namespace {
+
+// The category glyphs down the left of the page, hand-drawn (not font glyphs)
+// in the same flat style as core/ribbonicons.cpp so they stay crisp at the
+// list's small icon size and pick up the active theme's colour. Every glyph
+// is laid out in an 18px design space.
+constexpr int kCategoryIconSize = 18;
+constexpr int kCategoryCount = 6;
+
+// Draws a transparent 18px pixmap with an antialiased round-capped pen already
+// set to `color`; `draw` fills in the glyph. Painter is torn down before the
+// pixmap is returned so it is fully flushed.
+QPixmap categoryPixmap(const QColor& color, const std::function<void(QPainter&)>& draw) {
+    QPixmap pixmap(kCategoryIconSize, kCategoryIconSize);
+    pixmap.fill(Qt::transparent);
+    {
+        QPainter painter(&pixmap);
+        painter.setRenderHint(QPainter::Antialiasing);
+        QPen pen(color, 1.6);
+        pen.setCapStyle(Qt::RoundCap);
+        pen.setJoinStyle(Qt::RoundJoin);
+        painter.setPen(pen);
+        painter.setBrush(Qt::NoBrush);
+        draw(painter);
+    }
+    return pixmap;
+}
+
+QPixmap categoryPixmapFor(int index, const QColor& color) {
+    switch (index) {
+        case 0:  // General -- three slider rails, each with a knob at a different offset.
+            return categoryPixmap(color, [&](QPainter& p) {
+                const double knobs[3] = {12.0, 6.0, 10.0};
+                for (int i = 0; i < 3; ++i) {
+                    const double y = 4.0 + i * 5.0;
+                    p.drawLine(QPointF(2.5, y), QPointF(15.5, y));
+                    p.setBrush(QBrush(color));
+                    p.drawEllipse(QPointF(knobs[i], y), 2.1, 2.1);
+                    p.setBrush(Qt::NoBrush);
+                }
+            });
+        case 1:  // Appearance -- a circle with its right half filled.
+            return categoryPixmap(color, [&](QPainter& p) {
+                const QRectF disc(2.0, 2.0, 14.0, 14.0);
+                p.setBrush(QBrush(color));
+                p.drawPie(disc, -90 * 16, 180 * 16);
+                p.setBrush(Qt::NoBrush);
+                p.drawEllipse(disc);
+            });
+        case 2:  // Dashboard -- a 2x2 grid, echoing a widget layout.
+            return categoryPixmap(color, [](QPainter& p) {
+                const double cell = 6.5;
+                const double gap = 2.0;
+                const double o = (kCategoryIconSize - (2 * cell + gap)) / 2.0;
+                p.drawRoundedRect(QRectF(o, o, cell, cell), 1.0, 1.0);
+                p.drawRoundedRect(QRectF(o + cell + gap, o, cell, cell), 1.0, 1.0);
+                p.drawRoundedRect(QRectF(o, o + cell + gap, cell, cell), 1.0, 1.0);
+                p.drawRoundedRect(QRectF(o + cell + gap, o + cell + gap, cell, cell), 1.0, 1.0);
+            });
+        case 3:  // Terminal -- a window outline with a prompt chevron and cursor underscore.
+            return categoryPixmap(color, [](QPainter& p) {
+                p.drawRoundedRect(QRectF(1.5, 3.0, 15.0, 12.0), 1.6, 1.6);
+                QPolygonF chevron;
+                chevron << QPointF(4.5, 7.5) << QPointF(6.7, 9.5) << QPointF(4.5, 11.5);
+                p.drawPolyline(chevron);
+                p.drawLine(QPointF(8.0, 11.5), QPointF(12.5, 11.5));
+            });
+        case 4:  // Connections -- two interlocking chain links.
+            return categoryPixmap(color, [](QPainter& p) {
+                p.drawRoundedRect(QRectF(1.5, 6.0, 10.0, 6.0), 3.0, 3.0);
+                p.drawRoundedRect(QRectF(6.5, 6.0, 10.0, 6.0), 3.0, 3.0);
+            });
+        default:  // Diagnostics -- a heartbeat trace.
+            return categoryPixmap(color, [](QPainter& p) {
+                QPolygonF pulse;
+                pulse << QPointF(1.5, 9.0) << QPointF(5.0, 9.0) << QPointF(7.0, 3.5)
+                      << QPointF(9.0, 14.5) << QPointF(11.0, 9.0) << QPointF(16.5, 9.0);
+                p.drawPolyline(pulse);
+            });
+    }
+}
+
+// Row order matches categoryNames / the QStackedWidget page order below. Each
+// row carries two glyphs: `normal` for an idle row, `selected` for the one the
+// accent fill sits behind (a QListWidget won't recolour a plain pixmap icon
+// the way it does the row's text).
+void applyCategoryIcons(QListWidget* list, const QColor& normal, const QColor& selected) {
+    const int rows = qMin(list->count(), kCategoryCount);
+    for (int i = 0; i < rows; ++i) {
+        QIcon icon;
+        icon.addPixmap(categoryPixmapFor(i, normal), QIcon::Normal);
+        icon.addPixmap(categoryPixmapFor(i, selected), QIcon::Selected);
+        list->item(i)->setIcon(icon);
+    }
+}
+
 QWidget* createCategoryPage(QWidget* parent, const QString& title, const QString& description) {
     auto* page = new QWidget(parent);
     auto* layout = new QVBoxLayout(page);
     layout->setContentsMargins(28, 24, 28, 24);
-    layout->setSpacing(14);
+    layout->setSpacing(20);
 
     auto* titleLabel = new QLabel(QString("<h2>%1</h2>").arg(title.toHtmlEscaped()), page);
     titleLabel->setTextFormat(Qt::RichText);
@@ -39,7 +141,9 @@ QWidget* createCategoryPage(QWidget* parent, const QString& title, const QString
 
 QGroupBox* addSection(QWidget* page, const QString& title) {
     auto* section = new QGroupBox(title, page);
-    section->setLayout(new QFormLayout(section));
+    auto* form = new QFormLayout(section);
+    form->setHorizontalSpacing(18);
+    form->setVerticalSpacing(12);
     qobject_cast<QVBoxLayout*>(page->layout())->addWidget(section);
     return section;
 }
@@ -70,9 +174,30 @@ SettingsPage::SettingsPage(QWidget* parent) : QWidget(parent) {
     auto* body = new QHBoxLayout;
     body->setSpacing(18);
     auto* categories = new QListWidget(this);
-    categories->setFixedWidth(170);
-    categories->addItems({tr("General"), tr("Appearance"), tr("Dashboard"), tr("Terminal"),
-                          tr("Connections"), tr("Diagnostics")});
+    categories->setFixedWidth(186);
+    categories->setIconSize(QSize(kCategoryIconSize, kCategoryIconSize));
+    // The app-wide QListWidget::item rule only reserves 4px around the label;
+    // with an icon in front of it that leaves the glyph hard against the
+    // frame and the text crowding it. Widen the padding (and space the rows)
+    // just for this navigation list.
+    categories->setStyleSheet(QStringLiteral("QListWidget::item { padding: 7px 10px; }"));
+    categories->setSpacing(3);
+    const QStringList categoryNames = {tr("General"), tr("Appearance"), tr("Dashboard"),
+                                       tr("Terminal"), tr("Connections"), tr("Diagnostics")};
+    for (const QString& name : categoryNames) {
+        auto* item = new QListWidgetItem(name, categories);
+        item->setSizeHint(QSize(-1, 36));
+    }
+
+    const auto refreshCategoryIcons = [categories] {
+        const ThemePalette& theme = ThemeManager::instance().currentTheme();
+        applyCategoryIcons(categories, theme.textSecondary, theme.background);
+    };
+    refreshCategoryIcons();
+    // The Appearance page's own theme combo can swap the palette while this
+    // tab is open, so keep the glyphs in step (the switcher/ribbon do the same).
+    connect(&ThemeManager::instance(), &ThemeManager::themeChanged, this,
+            [refreshCategoryIcons](const ThemePalette&) { refreshCategoryIcons(); });
     body->addWidget(categories);
 
     auto* pages = new QStackedWidget(this);
