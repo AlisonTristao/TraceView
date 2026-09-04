@@ -69,7 +69,7 @@ bool decodeWritten(const QByteArray& written, btp::DecodedFrame* out,
         return false;
     }
     storage->resize(decoded);
-    return btp::decode(storage->data(), storage->size(), btp::TransportProfile::Serial, out) ==
+    return btp::decode(storage->data(), storage->size(), btp::kSerialTransport, out) ==
            btp::Error::Ok;
 }
 
@@ -101,7 +101,7 @@ BtpFrame makeResult(quint32 requestSourceId, quint32 requestBootId, quint32 repl
 }
 
 struct Fixture {
-    BtpSession session{btp::TransportProfile::Serial};
+    BtpSession session{btp::kSerialTransport};
     ProtocolRouter router;
     HubBinder binder{&session, &router};
     QSignalSpy written{&session, &BtpSession::bytesToWrite};

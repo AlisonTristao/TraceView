@@ -10,7 +10,7 @@ using traceview::BtpFrame;
 using traceview::BtpSession;
 
 // topico 25: BtpSession's two axes -- link framing (COBS stream vs.
-// pre-framed) and encode profile (the btp::TransportProfile ceiling OUTBOUND
+// pre-framed) and encode profile (the btp::TransportLimits ceiling OUTBOUND
 // frames are encoded under) -- used to be one field, because for Serial and
 // UsbHid they coincide. These tests pin the behavior that only exists once
 // they are separate, and the two guarantees the relay path of topico 26 will
@@ -51,8 +51,8 @@ btp::Header basicHeader(quint32 sourceId = 0x11223344, quint16 objectId = 0x0101
 // The canonical encoder, as any BTP endpoint would call it -- used both to
 // build inputs and to state the expected octets, so a test failure means
 // BtpSession disagrees with the codec rather than with a hand-rolled copy.
-QByteArray encodeFrame(const btp::Frame& frame, btp::TransportProfile profile) {
-    std::vector<std::uint8_t> encoded(btp::max_frame_size(profile));
+QByteArray encodeFrame(const btp::Frame& frame, const btp::TransportLimits& profile) {
+    std::vector<std::uint8_t> encoded(profile.max_frame_size);
     std::size_t frameBytes = 0;
     const btp::Error error =
         btp::encode(frame, profile, encoded.data(), encoded.size(), &frameBytes);
@@ -63,7 +63,7 @@ QByteArray encodeFrame(const btp::Frame& frame, btp::TransportProfile profile) {
 }
 
 QByteArray serialPacket(const btp::Frame& frame) {
-    const QByteArray encoded = encodeFrame(frame, btp::TransportProfile::Serial);
+    const QByteArray encoded = encodeFrame(frame, btp::kSerialTransport);
     std::vector<std::uint8_t> cobs(btp::kSerialMaxCobsBlockSize);
     std::size_t cobsBytes = 0;
     const btp::CobsError cobsError =
@@ -99,9 +99,10 @@ private slots:
 // old code did, kUsbHidMaxFrameSize in the HID branch and kSerialMaxFrameSize
 // in the other) could not have produced a 250-octet frame at all.
 void TestBtpSessionFraming::espNowProfileCeilingHoldsUnderPreFramedFraming() {
-    BtpSession session(BtpSession::Framing::PreFramed, btp::TransportProfile::EspNow);
+    BtpSession session(BtpSession::Framing::PreFramed, btp::kEspNowTransport);
     QCOMPARE(session.framing(), BtpSession::Framing::PreFramed);
-    QCOMPARE(session.encodeProfile(), btp::TransportProfile::EspNow);
+    QCOMPARE(session.encodeProfile().max_frame_size, btp::kEspNowTransport.max_frame_size);
+    QCOMPARE(session.encodeProfile().allow_encrypted, btp::kEspNowTransport.allow_encrypted);
 
     QList<QByteArray> written;
     connect(&session, &BtpSession::bytesToWrite, &session,
@@ -118,7 +119,7 @@ void TestBtpSessionFraming::espNowProfileCeilingHoldsUnderPreFramedFraming() {
     // PreFramed: exactly the encoded frame, no delimiters, no COBS -- and
     // 40 + 210 == the EspNow max frame size, not the Serial one.
     QCOMPARE(written.at(0).size(), int(btp::kEspNowMaxFrameSize));
-    QCOMPARE(written.at(0), encodeFrame(frame, btp::TransportProfile::EspNow));
+    QCOMPARE(written.at(0), encodeFrame(frame, btp::kEspNowTransport));
 
     // One octet past the EspNow payload ceiling: refused, nothing emitted.
     // (A Serial-profile session would have accepted this happily -- the same
@@ -157,7 +158,7 @@ void TestBtpSessionFraming::sendRawFrameWrapsInCobsWithoutTouchingTheOctets() {
     const btp::Frame frame{
         header,
         {reinterpret_cast<const std::uint8_t*>(payload.constData()), std::size_t(payload.size())}};
-    const QByteArray childFrame = encodeFrame(frame, btp::TransportProfile::EspNow);
+    const QByteArray childFrame = encodeFrame(frame, btp::kEspNowTransport);
     QCOMPARE(childFrame.size(), int(btp::kEspNowMaxFrameSize));
 
     QVERIFY(parent.sendRawFrame(childFrame));
@@ -230,7 +231,7 @@ void TestBtpSessionFraming::sendRawFrameRejectsWhatCannotBeAFrame() {
 // Documented degenerate case: PreFramed framing adds nothing, so
 // sendRawFrame() emits the octets as they are. Still never re-encoded.
 void TestBtpSessionFraming::sendRawFrameOnPreFramedSessionEmitsVerbatim() {
-    BtpSession child(BtpSession::Framing::PreFramed, btp::TransportProfile::EspNow);
+    BtpSession child(BtpSession::Framing::PreFramed, btp::kEspNowTransport);
     QList<QByteArray> written;
     connect(&child, &BtpSession::bytesToWrite, &child,
             [&](const QByteArray& bytes) { written.append(bytes); });
@@ -240,7 +241,7 @@ void TestBtpSessionFraming::sendRawFrameOnPreFramedSessionEmitsVerbatim() {
     const btp::Frame frame{
         header,
         {reinterpret_cast<const std::uint8_t*>(payload.constData()), std::size_t(payload.size())}};
-    const QByteArray encoded = encodeFrame(frame, btp::TransportProfile::EspNow);
+    const QByteArray encoded = encodeFrame(frame, btp::kEspNowTransport);
 
     QVERIFY(child.sendRawFrame(encoded));
     QCOMPARE(written.size(), 1);
@@ -275,7 +276,7 @@ void TestBtpSessionFraming::frameBytesReceivedCarriesTheWholeFrame() {
 
     QCOMPARE(raws.size(), 1);
     QCOMPARE(raws.at(0).first, quint32(0xDEADBEEF));
-    const QByteArray expected = encodeFrame(frame, btp::TransportProfile::Serial);
+    const QByteArray expected = encodeFrame(frame, btp::kSerialTransport);
     QCOMPARE(expected.size(), int(btp::kV1MinimumFrameSize) + payload.size());
     QCOMPARE(raws.at(0).second.size(), expected.size());
     QCOMPARE(raws.at(0).second, expected);  // header + payload + CRC, verbatim
@@ -308,7 +309,7 @@ void TestBtpSessionFraming::frameBytesReceivedFiresOncePerFragmentNotPerMessage(
         std::size_t(logicalPayload.size())};
 
     std::uint8_t fragmentCount = 0;
-    QCOMPARE(btp::fragment_count(logicalView.size, btp::TransportProfile::Serial, &fragmentCount),
+    QCOMPARE(btp::fragment_count(logicalView.size, btp::kSerialTransport, &fragmentCount),
              btp::Error::Ok);
     QCOMPARE(int(fragmentCount), 2);
 
@@ -316,9 +317,9 @@ void TestBtpSessionFraming::frameBytesReceivedFiresOncePerFragmentNotPerMessage(
     for (std::uint8_t i = 0; i < fragmentCount; ++i) {
         btp::Frame fragment{};
         QCOMPARE(
-            btp::make_fragment(header, logicalView, btp::TransportProfile::Serial, i, &fragment),
+            btp::make_fragment(header, logicalView, btp::kSerialTransport, i, &fragment),
             btp::Error::Ok);
-        expectedFragments.append(encodeFrame(fragment, btp::TransportProfile::Serial));
+        expectedFragments.append(encodeFrame(fragment, btp::kSerialTransport));
         session.feedBytes(serialPacket(fragment));
     }
 
@@ -331,14 +332,14 @@ void TestBtpSessionFraming::frameBytesReceivedFiresOncePerFragmentNotPerMessage(
     // is what lets the far endpoint reassemble instead of the relay.
     btp::DecodedFrame decoded;
     QCOMPARE(btp::decode(reinterpret_cast<const std::uint8_t*>(raws.at(1).constData()),
-                         std::size_t(raws.at(1).size()), btp::TransportProfile::Serial, &decoded),
+                         std::size_t(raws.at(1).size()), btp::kSerialTransport, &decoded),
              btp::Error::Ok);
     QCOMPARE(int(decoded.header.fragment_index), 1);
     QVERIFY((decoded.header.flags & btp::kFlagFragmented) != 0);
 }
 
 void TestBtpSessionFraming::frameBytesReceivedOnPreFramedPathIsTheInputItself() {
-    BtpSession session(BtpSession::Framing::PreFramed, btp::TransportProfile::EspNow);
+    BtpSession session(BtpSession::Framing::PreFramed, btp::kEspNowTransport);
     QList<QPair<quint32, QByteArray>> raws;
     connect(&session, &BtpSession::frameBytesReceived, &session,
             [&](quint32 sourceId, QByteArray raw) {
@@ -350,7 +351,7 @@ void TestBtpSessionFraming::frameBytesReceivedOnPreFramedPathIsTheInputItself() 
     const btp::Frame frame{
         header,
         {reinterpret_cast<const std::uint8_t*>(payload.constData()), std::size_t(payload.size())}};
-    const QByteArray encoded = encodeFrame(frame, btp::TransportProfile::EspNow);
+    const QByteArray encoded = encodeFrame(frame, btp::kEspNowTransport);
 
     session.feedBytes(encoded);
 
@@ -374,7 +375,7 @@ void TestBtpSessionFraming::frameBytesReceivedOnPreFramedPathIsTheInputItself() 
         header,
         {reinterpret_cast<const std::uint8_t*>(serialSizedPayload.constData()),
          std::size_t(serialSizedPayload.size())}};
-    const QByteArray overEspNow = encodeFrame(serialSizedFrame, btp::TransportProfile::Serial);
+    const QByteArray overEspNow = encodeFrame(serialSizedFrame, btp::kSerialTransport);
     QVERIFY(overEspNow.size() > int(btp::kEspNowMaxFrameSize));
 
     session.feedBytes(overEspNow);

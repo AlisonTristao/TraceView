@@ -19,14 +19,14 @@ namespace {
 constexpr int kCloseWriteDrainTimeoutMs = 250;
 
 // BtpBackend/BtpSession speak two independent axes -- link framing and
-// encode profile (btp::TransportProfile, the BTP library's own type; see
+// encode profile (btp::TransportLimits, the BTP library's own type; see
 // btpsession.h for why they are separate); Device speaks TransportType
 // (devices/device.h, dependency-free of btp::codec). This is the one place
 // that needs to know both -- traceview_devices still doesn't depend on
 // btp::codec.
 struct BtpSessionAxes {
     BtpSession::Framing framing;
-    btp::TransportProfile encodeProfile;
+    btp::TransportLimits encodeProfile;
 };
 
 // One entry per TransportType, and the pair is written out per transport
@@ -46,13 +46,13 @@ struct BtpSessionAxes {
 BtpSessionAxes toBtpSessionAxes(TransportType type) {
     switch (type) {
         case TransportType::Serial:
-            return {BtpSession::Framing::CobsStream, btp::TransportProfile::Serial};
+            return {BtpSession::Framing::CobsStream, btp::kSerialTransport};
         case TransportType::UsbHid:
-            return {BtpSession::Framing::PreFramed, btp::TransportProfile::UsbHid};
+            return {BtpSession::Framing::PreFramed, btp::kUsbHidTransport};
         case TransportType::HubChannel:
-            return {BtpSession::Framing::PreFramed, btp::TransportProfile::EspNow};
+            return {BtpSession::Framing::PreFramed, btp::kEspNowTransport};
     }
-    return {BtpSession::Framing::CobsStream, btp::TransportProfile::Serial};
+    return {BtpSession::Framing::CobsStream, btp::kSerialTransport};
 }
 }  // namespace
 

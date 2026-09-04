@@ -113,7 +113,7 @@ bool UsbHidManager::write(const QByteArray& data) {
     }
     // kReportDataSize - 1: one of the 63 data octets is this session's own
     // valid-length prefix (see the class comment) -- BtpSession built with
-    // btp::TransportProfile::UsbHid never produces a frame larger than
+    // btp::kUsbHidTransport never produces a frame larger than
     // btp::kUsbHidMaxFrameSize (62) by construction, so this is a defensive
     // check, not an expected path.
     if (data.size() > kReportDataSize - 1) {

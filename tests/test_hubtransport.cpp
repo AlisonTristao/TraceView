@@ -49,7 +49,7 @@ QByteArray espNowFrame(quint32 sourceId, quint32 sequence, const QByteArray& pay
     std::vector<std::uint8_t> encoded(btp::kEspNowMaxFrameSize);
     std::size_t written = 0;
     const btp::Error error =
-        btp::encode(frame, btp::TransportProfile::EspNow, encoded.data(), encoded.size(), &written);
+        btp::encode(frame, btp::kEspNowTransport, encoded.data(), encoded.size(), &written);
     Q_ASSERT(error == btp::Error::Ok);
     Q_UNUSED(error);
     return QByteArray(reinterpret_cast<const char*>(encoded.data()), int(written));

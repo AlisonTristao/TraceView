@@ -195,10 +195,10 @@ CatalogTopicInfo toCatalogTopicInfo(const TelemetryTopicSchema& schema) {
 
 }  // namespace
 
-BtpBackend::BtpBackend(btp::TransportProfile transport, QObject* parent)
+BtpBackend::BtpBackend(const btp::TransportLimits& transport, QObject* parent)
     : BtpBackend(BtpSession::framingFor(transport), transport, parent) {}
 
-BtpBackend::BtpBackend(BtpSession::Framing framing, btp::TransportProfile encodeProfile,
+BtpBackend::BtpBackend(BtpSession::Framing framing, const btp::TransportLimits& encodeProfile,
                        QObject* parent)
     : Backend(parent), m_terminalSourceId(randomNonZero()), m_terminalBootId(randomNonZero()) {
     // BTP v1 client stack (topico 14): raw bytes -> BtpSession (COBS decode,

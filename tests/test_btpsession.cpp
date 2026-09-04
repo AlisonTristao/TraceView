@@ -17,7 +17,7 @@ namespace {
 QByteArray buildSerialPacket(const btp::Frame& frame) {
     std::vector<std::uint8_t> encoded(btp::kSerialMaxFrameSize);
     std::size_t frameBytes = 0;
-    const btp::Error encodeError = btp::encode(frame, btp::TransportProfile::Serial, encoded.data(),
+    const btp::Error encodeError = btp::encode(frame, btp::kSerialTransport, encoded.data(),
                                                encoded.size(), &frameBytes);
     Q_ASSERT(encodeError == btp::Error::Ok);
     Q_UNUSED(encodeError);
@@ -128,7 +128,7 @@ void TestBtpSession::corruptedCrcIsRejectedAndCounted() {
 
     std::vector<std::uint8_t> encoded(btp::kSerialMaxFrameSize);
     std::size_t frameBytes = 0;
-    QVERIFY(btp::encode(frame, btp::TransportProfile::Serial, encoded.data(), encoded.size(),
+    QVERIFY(btp::encode(frame, btp::kSerialTransport, encoded.data(), encoded.size(),
                         &frameBytes) == btp::Error::Ok);
     // Flip a bit inside the payload (offset 36, right after the 36-byte
     // header) without touching the trailing CRC -- the frame is now
@@ -208,13 +208,13 @@ void TestBtpSession::reassemblesFragmentedMessageAndFiresOnce() {
         std::size_t(logicalPayload.size())};
 
     std::uint8_t fragmentCount = 0;
-    QVERIFY(btp::fragment_count(logicalView.size, btp::TransportProfile::Serial, &fragmentCount) ==
+    QVERIFY(btp::fragment_count(logicalView.size, btp::kSerialTransport, &fragmentCount) ==
             btp::Error::Ok);
     QCOMPARE(int(fragmentCount), 2);
 
     for (std::uint8_t i = 0; i < fragmentCount; ++i) {
         btp::Frame fragment{};
-        QVERIFY(btp::make_fragment(header, logicalView, btp::TransportProfile::Serial, i,
+        QVERIFY(btp::make_fragment(header, logicalView, btp::kSerialTransport, i,
                                    &fragment) == btp::Error::Ok);
         session.feedBytes(buildSerialPacket(fragment));
     }

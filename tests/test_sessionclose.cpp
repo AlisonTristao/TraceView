@@ -28,7 +28,7 @@ quint32 readLe32(const std::uint8_t* data) {
 QByteArray buildSerialPacket(const btp::Frame& frame) {
     std::vector<std::uint8_t> encoded(btp::kSerialMaxFrameSize);
     std::size_t encodedSize = 0;
-    if (btp::encode(frame, btp::TransportProfile::Serial, encoded.data(), encoded.size(),
+    if (btp::encode(frame, btp::kSerialTransport, encoded.data(), encoded.size(),
                     &encodedSize) != btp::Error::Ok) {
         return {};
     }
@@ -61,7 +61,7 @@ bool decodeWritten(const QByteArray& written, btp::DecodedFrame* out,
         return false;
     }
     storage->resize(decodedSize);
-    return btp::decode(storage->data(), storage->size(), btp::TransportProfile::Serial, out) ==
+    return btp::decode(storage->data(), storage->size(), btp::kSerialTransport, out) ==
            btp::Error::Ok;
 }
 
@@ -127,7 +127,7 @@ void TestSessionClose::nothingIsSentWithoutAnEstablishedConsoleSession() {
     QVERIFY(!backend.requestSessionClose());
     QCOMPARE(written.count(), 0);
 
-    BtpBackend child(BtpSession::Framing::PreFramed, btp::TransportProfile::EspNow);
+    BtpBackend child(BtpSession::Framing::PreFramed, btp::kEspNowTransport);
     child.setHubEndpoint(0x11111111, 0x22222222, QByteArray());
     QVERIFY(!child.requestSessionClose());
 }

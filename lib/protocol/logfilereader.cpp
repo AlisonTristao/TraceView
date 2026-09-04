@@ -74,7 +74,7 @@ bool LogFileReader::load(const QString& filePath) {
 
         btp::DecodedFrame decoded;
         const btp::Error error =
-            btp::decode(data + offset, frameSize, btp::TransportProfile::EspNow, &decoded);
+            btp::decode(data + offset, frameSize, btp::kEspNowTransport, &decoded);
         offset += frameSize;
 
         if (error != btp::Error::Ok) {

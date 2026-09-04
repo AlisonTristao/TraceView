@@ -153,7 +153,7 @@ Real per-device transport now lives in **`DeviceConnection`**
 `SerialManager`, a `UsbHidManager` or a `HubTransport`, chosen once at
 construction by `transportType` and never swapped afterward) plus `Backend` (protocol
 decode/encode, concretely a `BtpBackend`, itself told which `btp::
-TransportProfile` to speak), so several devices can be open at once, each
+TransportLimits` to speak), so several devices can be open at once, each
 over its own transport, each running its own independent BTP session.
 `MainWindow` owns a `QHash<QString, DeviceConnection*>` keyed by
 `Device::id`, built and torn down in lockstep with `DevicesGrid`'s own list

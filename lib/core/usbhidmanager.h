@@ -35,8 +35,8 @@ namespace traceview {
 // length prefix the receiver couldn't tell real data from padding.
 // dataReceived()/write() both operate on the de-padded BTP frame bytes only
 // -- this class adds/strips the report id and length prefix itself, so
-// nothing above it (BtpSession, when built with
-// btp::TransportProfile::UsbHid) needs to know HID reports exist at all.
+// nothing above it (BtpSession, when built with btp::kUsbHidTransport) needs
+// to know HID reports exist at all.
 class UsbHidManager : public Transport {
     Q_OBJECT
 

@@ -26,8 +26,10 @@ namespace traceview {
 // devices/device.h's TransportType):
 //
 //   (a) Framing -- how a frame is delimited on the physical link.
-//   (b) btp::TransportProfile -- which size ceiling btp::encode/btp::decode
-//       apply to the frame itself.
+//   (b) btp::TransportLimits -- which size ceiling btp::encode/btp::decode
+//       apply to the frame itself (a frame-size ceiling + an allow_encrypted
+//       policy bit; btp::kSerialTransport/kUsbHidTransport/kEspNowTransport
+//       are the three named presets this codebase actually uses).
 //
 // These used to be a single field, because for the only two transports that
 // existed they coincided (Serial framing implied the Serial ceiling, HID
@@ -80,7 +82,7 @@ namespace traceview {
 // Both modes share the same btp::Reassembler for fragmented logical
 // messages (a consumer MUST NOT see isolated fragments, TELEMETRY.md
 // section 7 / BTP_V1.md section 5) -- fragmentation is defined per
-// TransportProfile already, at the codec level, so nothing here needs to
+// TransportLimits already, at the codec level, so nothing here needs to
 // branch on framing for that part.
 //
 // Deliberately out of scope here: the ENTER/READY console handshake
@@ -107,10 +109,11 @@ public:
     };
 
     // The two axes, stated independently: `framing` is how frames are
-    // delimited on the wire, `encodeProfile` is the profile btp::encode/
+    // delimited on the wire, `encodeProfile` is the limits btp::encode/
     // btp::decode apply their frame and payload ceilings under. See the
     // class comment for the three valid combinations.
-    BtpSession(Framing framing, btp::TransportProfile encodeProfile, QObject* parent = nullptr);
+    BtpSession(Framing framing, const btp::TransportLimits& encodeProfile,
+              QObject* parent = nullptr);
 
     // Convenience constructor for the two combinations that existed before
     // the axes were split, where the profile alone determined both (see
@@ -123,20 +126,22 @@ public:
     // and profile do NOT coincide --
     // i.e. the HubChannel of topico 26 -- must use the two-axis constructor
     // above; no single profile maps to it.
-    explicit BtpSession(btp::TransportProfile transport = btp::TransportProfile::Serial,
+    explicit BtpSession(const btp::TransportLimits& transport = btp::kSerialTransport,
                         QObject* parent = nullptr);
 
-    // The framing each of the two pre-existing transports implies. Not a
-    // general "profile -> framing" truth (EspNow is PreFramed as a radio
-    // datagram, but a HubChannel encodes EspNow frames and ships them over a
-    // CobsStream cable) -- only the legacy mapping the convenience
-    // constructor above needs.
-    static Framing framingFor(btp::TransportProfile transport);
+    // The framing the two pre-existing transports imply. Not a general
+    // "limits -> framing" truth (EspNow is PreFramed as a radio datagram, but
+    // a HubChannel encodes EspNow frames and ships them over a CobsStream
+    // cable) -- only the legacy mapping the convenience constructor above
+    // needs. Matches by max_frame_size: Serial (4096) is the only
+    // CobsStream-framed transport this codebase has; every other size is
+    // PreFramed.
+    static Framing framingFor(const btp::TransportLimits& transport);
 
     Framing framing() const {
         return m_framing;
     }
-    btp::TransportProfile encodeProfile() const {
+    const btp::TransportLimits& encodeProfile() const {
         return m_encodeProfile;
     }
 
@@ -264,7 +269,7 @@ private:
     bool emitFramed(const std::uint8_t* frame, std::size_t frameSize);
 
     Framing m_framing;
-    btp::TransportProfile m_encodeProfile;
+    btp::TransportLimits m_encodeProfile;
 
     // Only used in CobsStream framing -- constructed unconditionally (cheap,
     // fixed-size buffers) but never fed a byte in PreFramed framing, where
@@ -273,7 +278,7 @@ private:
     // Sized by the Serial profile regardless of encodeProfile, and that is
     // not an oversight: btp::SerialDecoder::valid() requires exactly
     // kSerialMaxCobsBlockSize/kSerialMaxFrameSize capacities and decodes
-    // internally under TransportProfile::Serial, so these sizes are an API
+    // internally under kSerialTransport, so these sizes are an API
     // requirement of that decoder rather than a choice this class makes. The
     // consequence is that a CobsStream session with a SMALLER encode profile
     // would not have that smaller frame ceiling enforced on its receive path

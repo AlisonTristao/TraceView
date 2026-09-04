@@ -43,7 +43,7 @@ bool decodeWritten(const QByteArray& written, bool cobsWrapped, btp::DecodedFram
     }
     storage->assign(frameBytes.constBegin(), frameBytes.constEnd());
     return btp::decode(storage->data(), storage->size(),
-                       cobsWrapped ? btp::TransportProfile::Serial : btp::TransportProfile::EspNow,
+                       cobsWrapped ? btp::kSerialTransport : btp::kEspNowTransport,
                        out) == btp::Error::Ok;
 }
 
@@ -115,9 +115,9 @@ QByteArray controlFrame(quint16 objectId, quint32 sourceId, const QByteArray& pa
     const btp::Frame frame{header,
                            {reinterpret_cast<const std::uint8_t*>(payload.constData()),
                             std::size_t(payload.size())}};
-    std::vector<std::uint8_t> out(btp::max_frame_size(btp::TransportProfile::Serial));
+    std::vector<std::uint8_t> out(btp::kSerialTransport.max_frame_size);
     std::size_t n = 0;
-    if (btp::encode(frame, btp::TransportProfile::Serial, out.data(), out.size(), &n) != btp::Error::Ok) {
+    if (btp::encode(frame, btp::kSerialTransport, out.data(), out.size(), &n) != btp::Error::Ok) {
         return QByteArray();
     }
     return QByteArray(reinterpret_cast<const char*>(out.data()), int(n));
@@ -149,7 +149,7 @@ private slots:
 // surface the robot's identity (a child has no HELLO_RESULT).
 void TestHubEndpoint::hubCacheMANIFESTDATAOverEspNowCeilingStillFillsTheChildsCatalog() {
     const quint32 childId = hubChannelSourceId(QStringLiteral("child-catalog"));
-    BtpBackend backend(BtpSession::Framing::PreFramed, btp::TransportProfile::EspNow);
+    BtpBackend backend(BtpSession::Framing::PreFramed, btp::kEspNowTransport);
     backend.setHubEndpoint(childId, kRobot, QByteArray(16, 'k'));  // keyed channel
 
     QSignalSpy catalogChanged(&backend, &Backend::catalogChanged);
@@ -231,7 +231,7 @@ void TestHubEndpoint::childIdentityIsStableAcrossRuns() {
 // only its own catalog. Asking a robot to enumerate is asking a question it
 // cannot answer, and the child would sit with no catalog and no error.
 void TestHubEndpoint::childAsksItsOwnRobotForAManifestNotAnEnumeration() {
-    BtpBackend backend(BtpSession::Framing::PreFramed, btp::TransportProfile::EspNow);
+    BtpBackend backend(BtpSession::Framing::PreFramed, btp::kEspNowTransport);
     backend.setHubEndpoint(hubChannelSourceId(QStringLiteral("child-1")), kRobot, QByteArray());
     QCOMPARE(backend.peerSourceId(), kRobot);
 
@@ -262,7 +262,7 @@ void TestHubEndpoint::childAsksItsOwnRobotForAManifestNotAnEnumeration() {
 // the channel-B key exactly like a COMMAND_REQUEST.
 void TestHubEndpoint::childTerminalInputIsSealedAndCarriesTheChildsOwnStableIdentity() {
     const quint32 childId = hubChannelSourceId(QStringLiteral("child-2"));
-    BtpBackend backend(BtpSession::Framing::PreFramed, btp::TransportProfile::EspNow);
+    BtpBackend backend(BtpSession::Framing::PreFramed, btp::kEspNowTransport);
     backend.setHubEndpoint(childId, kRobot, QByteArray(16, 'k'));  // keyed channel
 
     QSignalSpy written(&backend, &Backend::bytesToWrite);
@@ -288,7 +288,7 @@ void TestHubEndpoint::childTerminalInputIsSealedAndCarriesTheChildsOwnStableIden
 // and SubscriptionManager already follow for their sealed traffic.
 void TestHubEndpoint::childTerminalInputWithoutAKeyIsNotSent() {
     const quint32 childId = hubChannelSourceId(QStringLiteral("child-nokey"));
-    BtpBackend backend(BtpSession::Framing::PreFramed, btp::TransportProfile::EspNow);
+    BtpBackend backend(BtpSession::Framing::PreFramed, btp::kEspNowTransport);
     backend.setHubEndpoint(childId, kRobot, QByteArray());  // no key
 
     QSignalSpy written(&backend, &Backend::bytesToWrite);
@@ -320,7 +320,7 @@ void TestHubEndpoint::anOrdinarySerialBackendStillHandshakes() {
 // the "not configured" value a project file missing the field falls back to,
 // and a child that guessed a target would talk to whichever robot answered.
 void TestHubEndpoint::anUnconfiguredChildAsksNobodyAnything() {
-    BtpBackend backend(BtpSession::Framing::PreFramed, btp::TransportProfile::EspNow);
+    BtpBackend backend(BtpSession::Framing::PreFramed, btp::kEspNowTransport);
     backend.setHubEndpoint(hubChannelSourceId(QStringLiteral("child-3")), 0, QByteArray());
     QCOMPARE(backend.peerSourceId(), 0u);
 

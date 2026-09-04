@@ -36,7 +36,7 @@ SerialManager/UsbHidManager -- raw bytes in/out, no framing knowledge
       |  dataReceived(QByteArray)
       v
 BtpSession               -- lib/protocol/btpsession.h
-                             built with the matching btp::TransportProfile:
+                             built with the matching btp::TransportLimits:
                              Serial mode does incremental COBS decode
                              (btp::SerialDecoder); UsbHid mode decodes each
                              already-bounded HID report directly

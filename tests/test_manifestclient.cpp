@@ -219,12 +219,12 @@ bool decodeWritten(const QByteArray& written, btp::DecodedFrame* out,
         return false;
     }
     storage->resize(decoded);
-    return btp::decode(storage->data(), storage->size(), btp::TransportProfile::Serial, out) ==
+    return btp::decode(storage->data(), storage->size(), btp::kSerialTransport, out) ==
            btp::Error::Ok;
 }
 
 struct Fixture {
-    BtpSession session{btp::TransportProfile::Serial};
+    BtpSession session{btp::kSerialTransport};
     ProtocolRouter router;
     TelemetryCatalog catalog;
     ManifestClient client{&session, &router, &catalog};

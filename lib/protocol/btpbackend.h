@@ -42,12 +42,12 @@ public:
     // coincide). DeviceConnection supplies both from the Device's own
     // TransportType (devices/device.h), converted there since
     // traceview_devices can't depend on btp::codec directly.
-    BtpBackend(BtpSession::Framing framing, btp::TransportProfile encodeProfile,
+    BtpBackend(BtpSession::Framing framing, const btp::TransportLimits& encodeProfile,
                QObject* parent = nullptr);
     // Convenience overload for the profiles whose framing is implied
     // (Serial/COBS, UsbHid/pre-framed) -- same reasoning as BtpSession's own
     // convenience constructor: existing call sites keep working unchanged.
-    explicit BtpBackend(btp::TransportProfile transport = btp::TransportProfile::Serial,
+    explicit BtpBackend(const btp::TransportLimits& transport = btp::kSerialTransport,
                         QObject* parent = nullptr);
     // Declared (rather than left implicit) because m_telemetryCatalog is a
     // plain (non-QObject) heap object this class owns and frees itself.

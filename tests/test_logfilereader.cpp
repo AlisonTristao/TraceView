@@ -28,20 +28,20 @@ void appendLogMessage(QByteArray& out, quint32 sourceId, quint32 bootId, quint32
 
     std::uint8_t count = 0;
     QCOMPARE(
-        btp::fragment_count(std::size_t(payload.size()), btp::TransportProfile::EspNow, &count),
+        btp::fragment_count(std::size_t(payload.size()), btp::kEspNowTransport, &count),
         btp::Error::Ok);
 
     const btp::ByteView view{reinterpret_cast<const std::uint8_t*>(payload.constData()),
                              std::size_t(payload.size())};
     for (std::uint8_t index = 0; index < count; ++index) {
         btp::Frame fragment;
-        QCOMPARE(btp::make_fragment(logicalHeader, view, btp::TransportProfile::EspNow, index,
+        QCOMPARE(btp::make_fragment(logicalHeader, view, btp::kEspNowTransport, index,
                                     &fragment),
                  btp::Error::Ok);
 
         std::uint8_t buffer[btp::kEspNowMaxFrameSize];
         std::size_t bytesWritten = 0;
-        QCOMPARE(btp::encode(fragment, btp::TransportProfile::EspNow, buffer, sizeof(buffer),
+        QCOMPARE(btp::encode(fragment, btp::kEspNowTransport, buffer, sizeof(buffer),
                              &bytesWritten),
                  btp::Error::Ok);
         out.append(reinterpret_cast<const char*>(buffer), int(bytesWritten));
