@@ -8,27 +8,33 @@
 
 namespace traceview {
 
-class BtpSession;
-class ProtocolRouter;
-struct BtpFrame;
-
 // Drives the console -> protocolled handshake session-and-terminal.md
 // section 3 describes (the plain-ASCII "BTP/1 ENTER <nonce>" / "BTP/1 READY
-// <nonce>" exchange) and the HELLO/HELLO_RESULT negotiation
-// session-and-terminal.md sections 1-2 describe, on top of an already-open
-// serial connection.
-// Deliberately left out of topico 14's BtpSession (framing only, no session
-// concept) and topico 19's terminal work; topico 15 ("fatia vertical de
-// telemetria binaria") is the first topico that needs a live session against
-// real hardware to validate against, so this is where it lands.
+// <nonce>" exchange), on top of an already-open serial connection.
+//
+// The HELLO/HELLO_RESULT negotiation session-and-terminal.md sections 1-2
+// describe moved to BtpBackend, which drives it through btp::Node::connect()
+// (BTP library 2.14.0+) -- this class no longer builds or sends HELLO, and no
+// longer decodes HELLO_RESULT. What stays here is genuinely link framing, not
+// BTP: the plain-ASCII ENTER/READY dance precedes any BTP framing at all
+// (nothing before the first COBS delimiter is BTP), and its retry policy
+// (kEnterTimeoutMs * kMaxEnterAttempts, same nonce reused across retries) is
+// this ONE serial link's own workaround for a cold-booting dongle, not
+// anything btp::Node models (it has no ENTER concept and no retry budget for
+// its own connect() -- see docs/library.md 16.3).
+//
+// This class also watches for the dongle's own "BTP/1 CONSOLE\r\n" line --
+// printed in the clear whenever it drops back to console (its inactivity
+// watchdog, a SESSION_CLOSE, a bench human) -- but only once the CALLER says
+// the session is established (onSessionEstablished()): BtpHandshake itself no
+// longer knows when HELLO_RESULT succeeded, since it no longer negotiates it.
 //
 // feedRawBytes() must see every byte off the wire, in parallel with
-// BtpSession::feedBytes() -- this class only cares about the plain-text
-// READY line that precedes any BTP framing; bytes that are actually COBS
-// framing are harmless noise here (fragmentation-and-transports.md 3.2:
-// nothing before the
-// first 0x00 delimiter is BTP, so BtpSession's own decoder already discards
-// the ENTER/READY text on its side).
+// BtpSession::feedBytes() -- this class only cares about plain-text lines;
+// bytes that are actually COBS framing are harmless noise here
+// (fragmentation-and-transports.md 3.2: nothing before the first 0x00
+// delimiter is BTP, so BtpSession's own decoder already discards the
+// ENTER/READY text on its side).
 class BtpHandshake : public QObject {
     Q_OBJECT
 
@@ -39,69 +45,72 @@ public:
     // whole retry path in milliseconds instead of the 20 real seconds the
     // shipped policy takes -- a test that slow would either be skipped or
     // would quietly stop covering the case.
-    explicit BtpHandshake(BtpSession* session, ProtocolRouter* router, QObject* parent = nullptr,
-                          int enterTimeoutMs = -1, int maxEnterAttempts = -1);
+    explicit BtpHandshake(QObject* parent = nullptr, int enterTimeoutMs = -1,
+                         int maxEnterAttempts = -1);
 
 public slots:
-    // Starts a fresh handshake: generates a new ENTER nonce and client
-    // identity, emits bytesToWrite() with the ENTER line. Call once per
-    // fresh connection, after BtpSession::reset().
+    // Starts a fresh handshake: generates a new ENTER nonce, emits
+    // bytesToWrite() with the ENTER line. Call once per fresh connection.
     void start();
 
     // Feeds raw bytes exactly as they arrived off the wire (same contract as
     // BtpSession::feedBytes()).
     void feedRawBytes(const QByteArray& data);
 
+    // The caller's own HELLO/HELLO_RESULT exchange (driven by btp::Node::
+    // connect(), outside this class) succeeded -- start watching for the
+    // dongle's "BTP/1 CONSOLE" line, the only thing left this class can
+    // notice about the session ending underneath it.
+    void onSessionEstablished();
+
+    // The session ended some other way (transport closed, a fresh
+    // reconnect about to start()) -- stop watching for CONSOLE. Idempotent;
+    // safe to call even if onSessionEstablished() was never reached.
+    void onSessionLost();
+
 signals:
-    // Text to write straight to the transport -- only used for the ENTER
-    // line; the HELLO frame itself goes out through BtpSession::sendFrame(),
-    // whose own bytesToWrite() is already wired to the transport.
+    // Text to write straight to the transport -- the ENTER line, the only
+    // thing this class still originates itself.
     void bytesToWrite(const QByteArray& data);
-    // peerSourceId/peerBootId are the connected dongle's own identity, taken
-    // straight from the HELLO_RESULT frame's own header (every frame the
-    // dongle originates is tagged with its own BtpTransport source_id/
-    // boot_id, HELLO_RESULT included) -- ClockSync needs this as
-    // COMMAND_REQUEST's target_source_id/target_boot_id, the same pair
-    // SerialMux::handleCommandRequest on the firmware side checks a request
-    // against.
-    // peerConfigRevision is HELLO_RESULT's own config_revision field
-    // (session-and-terminal.md section 2, offset 48) -- the dongle's
-    // manifest-catalog revision, topico 16 PASSO 5/6. ManifestClient uses it
-    // to skip a redundant full target=0 re-enumeration when reconnecting to
-    // the same dongle catalog it already has cached.
-    // selectedVersion is HELLO_RESULT's own field (offset 13) -- the BTP
-    // envelope version this session actually negotiated (see
-    // session-and-terminal.md section 2: "the responder picks the highest
-    // version it can use"). BtpBackend surfaces it as the
-    // Device's reported btpVersion (devices/deviceconfigdialog.h) instead of
-    // that field staying user-editable.
-    void sessionEstablished(quint32 peerSourceId, quint32 peerBootId, quint32 peerConfigRevision,
-                            quint8 selectedVersion);
-    void sessionFailed(const QString& reason);
+
+    // BTP/1 READY arrived: the link-level handshake is done and the caller
+    // should now send HELLO (via btp::Node::connect()) and drive it to a
+    // result. No nonce/identity carried -- READY's own nonce match already
+    // happened here, and HELLO's identity is the caller's Node, independent
+    // of this class's own ENTER nonce.
+    void readyForHello();
+
+    // The ENTER/READY retry budget was exhausted with no READY ever seen --
+    // the link itself never came up, not a HELLO-level failure. Emitted at
+    // most once per start().
+    void enterFailed(const QString& reason);
+
+    // The dongle's own "BTP/1 CONSOLE\r\n" line arrived while
+    // onSessionEstablished() was in effect -- proof the session (HELLO
+    // included) that this class knows nothing about the details of just
+    // ended on the dongle's own initiative or in answer to our own
+    // SESSION_CLOSE; the caller (BtpBackend) already knows which of those it
+    // is (m_sessionClosing) and reacts accordingly.
+    void consoleLineDetected();
 
 private slots:
-    void onControlFrameReceived(const traceview::BtpFrame& frame);
     void onEnterTimeout();
-    void onHelloTimeout();
 
 private:
-    enum class State { Idle, AwaitingReady, AwaitingHelloResult, Established };
+    enum class State { Idle, AwaitingReady, Established };
 
-    void sendHello();
     // Writes the ENTER line and arms m_enterTimer. Called by start() and again
     // by onEnterTimeout() for each retry -- deliberately reusing m_enterNonce
     // rather than drawing a new one, see its declaration below.
     void sendEnter();
-    void fail(const QString& reason);
 
-    BtpSession* m_session;
     State m_state = State::Idle;
     QByteArray m_lineBuffer;  // bounded scratch buffer while awaiting READY
     // Bounded scratch buffer used only once Established: the dongle prints
     // "BTP/1 CONSOLE\r\n" in the clear whenever it drops the session back to
-    // console (its watchdog, a SESSION_CLOSE, a bench human). The transport
-    // stays up and BtpSession has no watchdog, so this raw-byte scan is the
-    // only thing on the desktop that can notice -- see feedRawBytes().
+    // console. The transport stays up and BtpSession has no watchdog, so
+    // this raw-byte scan is the only thing on the desktop that can notice --
+    // see feedRawBytes().
     QByteArray m_consoleWatchBuffer;
     // The nonce of the CURRENT connection attempt, drawn once in start() and
     // held across every retry. Reused rather than redrawn on purpose: a READY
@@ -120,7 +129,6 @@ private:
     int m_enterTimeoutMs;
     int m_maxEnterAttempts;
     QTimer m_enterTimer;
-    QTimer m_helloTimer;
 };
 
 }  // namespace traceview

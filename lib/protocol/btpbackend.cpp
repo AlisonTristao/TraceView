@@ -5,6 +5,8 @@
 #include <QTimer>
 #include <btp/codec.hpp>
 
+#include <cstring>
+
 #include "protocol/btpframe.h"
 #include "protocol/btphandshake.h"
 #include "protocol/btpsession.h"
@@ -94,11 +96,11 @@ constexpr int kChildCatalogAttemptsBeforeWarning = 6;
 // Retry cadence once the warning threshold is hit but no catalog has EVER
 // arrived. Slower than the 5s fast path (so a robot whose ManifestResponder is
 // genuinely wedged is not hammered) but far faster than kChildCatalogBackstopMs
-// -- that 20s rate is only defensible once a catalog has been seen at least
-// once and the timer is purely a reboot backstop. The common reason the first
-// catalog is late is a startup race: the child connected before the dongle had
-// primed this robot's manifest, so it just needs to keep asking at a sane rate
-// until the hub's cache fills a few seconds later.
+// -- that 20s rate is only defensible once a catalog has actually been seen
+// at least once and the timer is purely a reboot backstop. The common reason
+// the first catalog is late is a startup race: the child connected before the
+// dongle had primed this robot's manifest, so it just needs to keep asking at
+// a sane rate until the hub's cache fills a few seconds later.
 constexpr int kChildCatalogNeverArrivedRetryMs = 8000;
 
 quint32 randomNonZero() {
@@ -214,7 +216,10 @@ BtpBackend::BtpBackend(BtpSession::Framing framing, const btp::TransportLimits& 
     m_protocolRouter = new ProtocolRouter(this);
     m_telemetryCatalog = new TelemetryCatalog();
     m_telemetryFieldRouter = new TelemetryFieldRouter(m_telemetryCatalog, this);
-    m_btpHandshake = new BtpHandshake(m_btpSession, m_protocolRouter, this);
+    // ENTER/READY link handshake only now -- see btphandshake.h's class
+    // comment. HELLO/HELLO_RESULT is m_node->connect(), driven from
+    // onReadyForHello() below.
+    m_btpHandshake = new BtpHandshake(this);
     m_manifestClient = new ManifestClient(m_btpSession, m_protocolRouter, m_telemetryCatalog, this);
     // No more boot-time "informe data/hora" prompt to wait on (StartupConfig,
     // removed): once a session is up, this asks the dongle's own clock and
@@ -227,10 +232,25 @@ BtpBackend::BtpBackend(BtpSession::Framing framing, const btp::TransportLimits& 
     // when the last one closes.
     m_subscriptionManager =
         new SubscriptionManager(m_btpSession, m_protocolRouter, m_telemetryCatalog, this);
+
+    // m_node -- see the class comment for what it does and does not manage.
+    // transport must be set BEFORE emplace() (Node's own constructor reads
+    // cfg.transport to size its receiver); source_id/boot_id only need to be
+    // correct by begin() (deferred to the first onTransportConnectionChanged
+    // (true), by when setHubEndpoint() -- if this becomes a hub child -- has
+    // already run), so they are left at their NodeConfig default (0) here.
+    transport = encodeProfile;
+    m_node.emplace(*this, kNodeReassemblyTimeoutMs);
+    connect(m_btpSession, &BtpSession::frameBytesReceived, this, &BtpBackend::onRawFrameForNode);
+    m_nodeTickTimer = new QTimer(this);
+    m_nodeTickTimer->setInterval(kNodeTickIntervalMs);
+    connect(m_nodeTickTimer, &QTimer::timeout, this, &BtpBackend::onNodeTick);
+    m_nodeTickTimer->start();
+
     // Hub-channel control widgets (topico 28's missing half): a real
-    // COMMAND_REQUEST/COMMAND_RESULT client, inert until setHubEndpoint()
-    // configures a target -- see CommandClient's own header comment.
-    m_commandClient = new CommandClient(m_btpSession, m_protocolRouter, this);
+    // COMMAND_REQUEST/COMMAND_RESULT client, inert until configure() names a
+    // target -- see CommandClient's own header comment.
+    m_commandClient = new CommandClient(*m_node, this);
     connect(m_commandClient, &CommandClient::statusMessage, this, &Backend::statusMessage);
     // The parent half of the hub: tells the dongle which robot each child
     // device is for. Inert on a child backend, which never calls into it.
@@ -247,8 +267,9 @@ BtpBackend::BtpBackend(BtpSession::Framing framing, const btp::TransportLimits& 
     connect(m_btpSession, &BtpSession::frameBytesReceived, this,
             &BtpBackend::hubFrameBytesReceived);
     // BtpHandshake's own outbound text (the ENTER line) goes out the same
-    // way; the HELLO frame itself goes through BtpSession::sendFrame(),
-    // whose bytesToWrite() is already connected above.
+    // way; the HELLO frame itself goes through m_node->connect(), which
+    // reaches the transport through send() below (sendRawFrame()'s own
+    // bytesToWrite -- already connected).
     connect(m_btpHandshake, &BtpHandshake::bytesToWrite, this, &Backend::bytesToWrite);
 
     // Session keepalive: a repeating timer restarted by every outbound BTP
@@ -305,48 +326,16 @@ BtpBackend::BtpBackend(BtpSession::Framing framing, const btp::TransportLimits& 
         }
     });
 
-    connect(m_btpHandshake, &BtpHandshake::sessionEstablished, this,
-            [this](quint32 peerSourceId, quint32 peerBootId, quint32 peerConfigRevision,
-                   quint8 selectedVersion) {
-                emit statusMessage(tr("BTP session established (HELLO_RESULT=SUCCESS)"), 5000,
-                                   StatusSeverity::Success);
-                m_sessionClosing = false;
-                m_sessionEstablished = true;
-                m_sessionPeerSourceId = peerSourceId;
-                m_keepaliveTimer->start();
-                m_manifestClient->onSessionEstablished(peerConfigRevision);
-                m_subscriptionManager->onSessionEstablished();
-                m_clockSync->onSessionEstablished(peerSourceId, peerBootId);
-                // Re-issued on EVERY session: HubRegistry's table is RAM-only
-                // on the dongle, so a dongle reboot silently empties it while
-                // this desktop still believes its children are routed.
-                m_hubBinder->onSessionEstablished(peerSourceId, peerBootId);
-                // Devices tab display only -- peerSourceId is the dongle's own
-                // BTP identity (its HELLO_RESULT envelope's source_id), the
-                // closest thing to a "device ID" this protocol reports today.
-                emit deviceIdentified(
-                    tr("BTP/%1").arg(selectedVersion),
-                    QString("0x%1").arg(peerSourceId, 8, 16, QChar('0')).toUpper());
-            });
-    connect(m_btpHandshake, &BtpHandshake::sessionFailed, this, [this](const QString& reason) {
-        m_keepaliveTimer->stop();
-        m_sessionEstablished = false;
-        if (m_sessionClosing) {
-            // A successful SESSION_CLOSE ends with the dongle's plain-text
-            // BTP/1 CONSOLE line. BtpHandshake deliberately reports that as
-            // sessionFailed for unexpected drops; during an intentional
-            // close it is confirmation, not a reason to recycle the port.
-            m_sessionClosing = false;
-            return;
-        }
+    connect(m_btpHandshake, &BtpHandshake::readyForHello, this, &BtpBackend::onReadyForHello);
+    connect(m_btpHandshake, &BtpHandshake::enterFailed, this, [this](const QString& reason) {
         emit statusMessage(tr("BTP handshake failed: %1").arg(reason), 8000, StatusSeverity::Error);
-        // BtpHandshake has already exhausted its own retries by the time it
-        // says this, so the ENTER line is not what is missing any more --
-        // recycling the port is the only escalation left. Without this the
-        // status message above was the entire outcome: an 8-second toast,
-        // then a device that stays "connected" and silent forever.
+        // The ENTER/READY link never came up -- recycling the port is the
+        // only escalation left. Without this the status message above was the
+        // entire outcome: an 8-second toast, then a device that stays
+        // "connected" and silent forever.
         emit sessionRecoveryNeeded();
     });
+    connect(m_btpHandshake, &BtpHandshake::consoleLineDetected, this, &BtpBackend::onConsoleLineDetected);
     connect(m_clockSync, &ClockSync::statusMessage, this, &Backend::statusMessage);
     // Not a direct connection to ProtocolRouter::onFrameReceived any more:
     // a sealed (ENCRYPTED) frame has to be opened first, and only this class
@@ -384,7 +373,7 @@ BtpBackend::BtpBackend(BtpSession::Framing framing, const btp::TransportLimits& 
     // A hub child never handshakes, so its card's "reported by device" fields
     // stay empty forever unless the manifest fills them: when the MANIFEST_DATA
     // that just arrived describes THIS child's own robot, surface it the same
-    // way BtpHandshake::sessionEstablished does for a direct device. Only for a
+    // way onNodeConnected() does for a direct device. Only for a
     // child (m_peerSourceId != 0) -- a console backend's identity is the
     // dongle's, set by the handshake above, and must not be overwritten by a
     // robot manifest that merely passed through its catalog.
@@ -475,11 +464,219 @@ BtpBackend::~BtpBackend() {
     delete m_telemetryCatalog;
 }
 
+// ---------------------------------------------------------------------------
+// btp::NodeConfig -- m_node's own dependencies. See the class comment.
+// ---------------------------------------------------------------------------
+
+bool BtpBackend::send(const std::uint8_t* frame, std::size_t frame_size) {
+    // m_node hands over a frame ALREADY fully encoded (identity, seal,
+    // fragment, CRC all ran inside its own btp::Endpoint) -- sendRawFrame()
+    // applies only this session's link framing (COBS wrap, or nothing at all
+    // for a pre-framed session) and never re-encodes, the same contract every
+    // other relayed-verbatim frame on this path already relies on. It also
+    // gets the monitor's frameSent() tap for free.
+    return m_btpSession->sendRawFrame(
+        QByteArray(reinterpret_cast<const char*>(frame), int(frame_size)));
+}
+
+bool BtpBackend::has_seal() const noexcept { return !m_endpointKey.isEmpty(); }
+
+bool BtpBackend::seal(const btp::Header& header, std::uint16_t payload_size,
+                      const std::uint8_t* plaintext, std::uint8_t* out) {
+    // ChannelSeal::seal() takes its header by non-const reference (it
+    // (re-)sets ENCRYPTED itself, for its OTHER callers that have not done so
+    // yet) -- m_node has already set it before calling seal() (NodeConfig's
+    // own contract), so this copy's mutation is a same-value no-op, done on a
+    // copy rather than a const_cast of an object this override does not own.
+    btp::Header mutableHeader = header;
+    const QByteArray sealed = ChannelSeal::seal(
+        m_endpointKey, mutableHeader,
+        QByteArray(reinterpret_cast<const char*>(plaintext), int(payload_size)));
+    if (sealed.isEmpty()) {
+        return false;
+    }
+    std::memcpy(out, sealed.constData(), static_cast<std::size_t>(sealed.size()));
+    return true;
+}
+
+bool BtpBackend::has_open() const noexcept { return !m_endpointKey.isEmpty(); }
+
+bool BtpBackend::open(const btp::Header& header, std::uint16_t sealed_size,
+                      const std::uint8_t* sealed, std::uint8_t* out_plaintext) {
+    const std::optional<QByteArray> plaintext = ChannelSeal::open(
+        m_endpointKey, header, QByteArray(reinterpret_cast<const char*>(sealed), int(sealed_size)));
+    if (!plaintext.has_value()) {
+        return false;
+    }
+    std::memcpy(out_plaintext, plaintext->constData(), static_cast<std::size_t>(plaintext->size()));
+    return true;
+}
+
+// ---------------------------------------------------------------------------
+// m_node's shadow receive pipeline. See the class comment.
+// ---------------------------------------------------------------------------
+
+void BtpBackend::onRawFrameForNode(quint32 /*sourceId*/, const QByteArray& raw) {
+    // Re-decoded, not re-encoded: BtpSession already validated these exact
+    // octets once (frameBytesReceived only fires for a frame that decoded).
+    // Serial (the largest ceiling), matching frameBytesReceived's own
+    // contract regardless of this session's encodeProfile -- see
+    // BtpSession::feedBytes()'s comment on why.
+    btp::DecodedFrame decoded{};
+    if (btp::decode(reinterpret_cast<const std::uint8_t*>(raw.constData()),
+                    static_cast<std::size_t>(raw.size()), btp::kSerialTransport,
+                    &decoded) != btp::Error::Ok) {
+        return;
+    }
+
+    const auto nowMs = static_cast<std::uint64_t>(QDateTime::currentMSecsSinceEpoch());
+    btp::ReceivedMessage discard{};
+    switch (m_node->receive(decoded, nowMs, &discard)) {
+        case btp::NodeRx::InitiatorHandled:
+            switch (m_node->initiator_event()) {
+                case btp::InitiatorEvent::Connected:
+                    onNodeConnected();
+                    break;
+                case btp::InitiatorEvent::Rejected:
+                    onNodeConnectFailed(tr("HELLO rejected"));
+                    break;
+                case btp::InitiatorEvent::TimedOut:
+                    onNodeConnectFailed(tr("no HELLO_RESULT within %1 ms").arg(kHelloTimeoutMs));
+                    break;
+                case btp::InitiatorEvent::Disconnected:
+                case btp::InitiatorEvent::FrameAccepted:
+                case btp::InitiatorEvent::None:
+                    break;
+            }
+            break;
+        case btp::NodeRx::CommandHandled:
+            m_commandClient->notifyOutcome();
+            break;
+        default:
+            // Not m_node's concern -- BtpSession's own separate pipeline
+            // (frameReceived -> onSessionFrameReceived -> ProtocolRouter)
+            // already delivered this frame, if it was deliverable at all.
+            break;
+    }
+}
+
+void BtpBackend::onNodeTick() {
+    if (!m_node) {
+        return;
+    }
+    m_node->tick(static_cast<std::uint64_t>(QDateTime::currentMSecsSinceEpoch()));
+    // The one outcome tick() alone can produce with no NodeRx to carry it:
+    // a command timing out with no COMMAND_RESULT ever arriving. A no-op
+    // unless m_commandClient actually has one outstanding.
+    m_commandClient->notifyOutcome();
+}
+
+void BtpBackend::onReadyForHello() {
+    btp::Hello hello{};
+    hello.role = 0x03;  // kRoleDesktop, session-and-terminal.md section 1.5
+    // versions enumerates every envelope version this build's btp::codec can
+    // speak (session-and-terminal.md section 1: "increasing", no gaps
+    // required) so the dongle -- which picks the highest version common to
+    // both sides -- always sees our real ceiling, not a version we happened
+    // to hardcode.
+    hello.version_count = btp::kMaximumProtocolVersion - btp::kMinimumProtocolVersion + 1;
+    for (quint8 v = btp::kMinimumProtocolVersion; v <= btp::kMaximumProtocolVersion; ++v) {
+        hello.versions[v - btp::kMinimumProtocolVersion] = v;
+    }
+    hello.max_logical_payload = 4096;
+    hello.max_inflight_reassemblies = 2;
+    hello.max_subscriptions = 8;
+    hello.max_dedup_entries = 16;
+    // 30000, matching bally_dongle's SerialSession::LocalLimits default (the
+    // negotiated watchdog is min of the two). The desktop keepalive
+    // (sendSessionKeepalive) refreshes it every ~5s; this window is the
+    // backstop for a desktop that vanished without a SESSION_CLOSE.
+    hello.session_timeout_ms = 30000;
+    for (auto& octet : hello.peer_uuid) {
+        // peer_uuid: opaque, stable-for-this-run, non-zero identity. A
+        // per-process random UUID is enough for topico 15's vertical slice;
+        // persisting a real client identity is out of scope until a topico
+        // actually needs to recognize this desktop across restarts.
+        octet = static_cast<std::uint8_t>(QRandomGenerator::global()->bounded(1, 256));
+    }
+    hello.config_revision = 0;  // no manifest of our own
+
+    const auto nowMs = static_cast<std::uint64_t>(QDateTime::currentMSecsSinceEpoch());
+    if (!m_node->connect(hello, nowMs, kHelloTimeoutMs)) {
+        onNodeConnectFailed(tr("failed to encode or send HELLO"));
+    }
+}
+
+void BtpBackend::onNodeConnected() {
+    // selected_version is the highest version the dongle found in common with
+    // what our own HELLO advertised (session-and-terminal.md section 2). It
+    // can only be one of the versions we offered -- SessionInitiator does not
+    // enforce that itself (it has no notion of what "our own HELLO" offered
+    // beyond the identity triple), so this is the one check that stays this
+    // class's job. A peer claiming anything else is not honoring the
+    // negotiation, not a version this client can silently go along with.
+    const btp::EffectiveLimits& limits = m_node->effective_limits();
+    if (limits.selected_version < btp::kMinimumProtocolVersion ||
+        limits.selected_version > btp::kMaximumProtocolVersion) {
+        // Local-only teardown -- the peer sent something we are rejecting on
+        // our own terms, not a SESSION_CLOSE worth telling it about.
+        m_node->initiator().reset();
+        onNodeConnectFailed(
+            tr("HELLO_RESULT selected an unadvertised version %1").arg(limits.selected_version));
+        return;
+    }
+
+    emit statusMessage(tr("BTP session established (HELLO_RESULT=SUCCESS)"), 5000,
+                       StatusSeverity::Success);
+    m_sessionClosing = false;
+    m_sessionEstablished = true;
+    m_sessionPeerSourceId = m_node->connected_peer_source_id();
+    m_btpHandshake->onSessionEstablished();
+    m_keepaliveTimer->start();
+    m_manifestClient->onSessionEstablished(m_node->connected_peer_config_revision());
+    m_subscriptionManager->onSessionEstablished();
+    m_clockSync->onSessionEstablished(m_sessionPeerSourceId, m_node->connected_peer_boot_id());
+    // Re-issued on EVERY session: HubRegistry's table is RAM-only on the
+    // dongle, so a dongle reboot silently empties it while this desktop still
+    // believes its children are routed.
+    m_hubBinder->onSessionEstablished(m_sessionPeerSourceId, m_node->connected_peer_boot_id());
+    // Devices tab display only -- peerSourceId is the dongle's own BTP
+    // identity (its HELLO_RESULT envelope's source_id), the closest thing to
+    // a "device ID" this protocol reports today.
+    emit deviceIdentified(
+        tr("BTP/%1").arg(limits.selected_version),
+        QString("0x%1").arg(m_sessionPeerSourceId, 8, 16, QChar('0')).toUpper());
+}
+
+void BtpBackend::onNodeConnectFailed(const QString& reason) {
+    m_keepaliveTimer->stop();
+    m_sessionEstablished = false;
+    emit statusMessage(tr("BTP handshake failed: %1").arg(reason), 8000, StatusSeverity::Error);
+    emit sessionRecoveryNeeded();
+}
+
+void BtpBackend::onConsoleLineDetected() {
+    // A successful SESSION_CLOSE ends with the dongle's plain-text
+    // BTP/1 CONSOLE line -- confirmation, not a reason to recycle the port,
+    // while an unexpected one (watchdog, a bench human) is exactly that.
+    if (m_sessionClosing) {
+        m_sessionClosing = false;
+        return;
+    }
+    m_keepaliveTimer->stop();
+    m_sessionEstablished = false;
+    emit statusMessage(tr("dongle returned to console (BTP/1 CONSOLE)"), 8000,
+                       StatusSeverity::Error);
+    emit sessionRecoveryNeeded();
+}
+
+// ---------------------------------------------------------------------------
+
 void BtpBackend::feedBytes(const QByteArray& data) {
     m_btpSession->feedBytes(data);
     // BtpHandshake needs the same raw bytes BtpSession sees (it only looks
-    // for the plain-text READY line, see protocol/btphandshake.h); bytes
-    // that are actually COBS framing are harmless noise to it.
+    // for the plain-text READY / CONSOLE lines, see protocol/btphandshake.h);
+    // bytes that are actually COBS framing are harmless noise to it.
     m_btpHandshake->feedRawBytes(data);
 }
 
@@ -491,7 +688,9 @@ void BtpBackend::setHubEndpoint(quint32 selfSourceId, quint32 peerSourceId,
     // The child speaks as itself, with an identity that survives a restart.
     // Overwrites the random one the console channel uses, and must: the hub
     // keys its bind table on this number, so a per-run value would invalidate
-    // the operator's binding on every launch (see hubChannelSourceId()).
+    // the operator's binding on every launch (see hubChannelSourceId()). Must
+    // run before this backend's first connect -- see this method's own
+    // comment in the header -- since m_node->begin() only reads it once.
     if (selfSourceId != 0) {
         m_terminalSourceId = selfSourceId;
     }
@@ -503,12 +702,21 @@ void BtpBackend::setHubEndpoint(quint32 selfSourceId, quint32 peerSourceId,
     m_subscriptionManager->setEndpointIdentity(
         m_terminalSourceId, m_terminalBootId, endpointKey,
         [this] { return nextEndpointSequence(); });
-    m_commandClient->configure(
-        m_terminalSourceId, m_terminalBootId, peerSourceId, m_telemetryCatalog, endpointKey,
-        [this] { return nextEndpointSequence(); });
+    m_commandClient->configure(peerSourceId, m_telemetryCatalog,
+                               [this] { return !m_endpointKey.isEmpty(); });
 }
 
 quint32 BtpBackend::nextEndpointSequence() {
+    std::uint32_t sequence = 0;
+    // The SAME btp::Endpoint m_node->command() itself reserves from for
+    // COMMAND_REQUEST -- this is what makes the two share one sequence space
+    // (see the header comment). Falls back to a private counter only if
+    // m_node has not begun yet (should not happen in practice: nothing sends
+    // before onTransportConnectionChanged(true) runs), so a sealed send never
+    // simply fails for want of a sequence.
+    if (m_node && m_node->endpoint().reserve_sequence(&sequence)) {
+        return sequence;
+    }
     return ++m_endpointSequence;
 }
 
@@ -683,6 +891,15 @@ void BtpBackend::onTransportConnectionChanged(bool connected) {
         m_sessionClosing = false;
         m_unsealedDowngradeReported = false;
         m_btpSession->reset();
+        // Latches the wire identity into m_node's btp::Endpoint (resets its
+        // sequence counter to 1) exactly once, ever -- see m_nodeBegun's own
+        // comment for why this must not run again on a later reconnect.
+        if (!m_nodeBegun) {
+            source_id = m_terminalSourceId;
+            boot_id = m_terminalBootId;
+            m_node->begin();
+            m_nodeBegun = true;
+        }
         if (m_peerSourceId != 0) {
             // A child does NOT hand shake. HELLO and ENTER negotiate a console
             // session, and a robot offers none -- it accepts exactly three
@@ -725,6 +942,12 @@ void BtpBackend::onTransportConnectionChanged(bool connected) {
         m_lastPeerDataFrameMs = 0;
         m_sessionEstablished = false;
         m_sessionClosing = false;
+        m_btpHandshake->onSessionLost();
+        // Local-only teardown for the next connect() -- no SESSION_CLOSE to
+        // send, the transport is already gone.
+        if (m_node) {
+            m_node->initiator().reset();
+        }
         // Subscriptions are scoped to the session that granted them
         // (topico 17 PASSO 6): forget the grants, keep the widgets that
         // wanted them, so reconnecting re-subscribes everything.
@@ -739,7 +962,7 @@ void BtpBackend::onPeerPresence(bool online, quint32 bootId) {
     if (m_peerSourceId == 0) {
         return;  // not a hub child
     }
-    m_peerOnline = online;  // drives the "waiting vs failed" status text only
+    m_peerOnline = online;  // drives only the "waiting vs failed" status text
 
     // Two situations need a fresh catalog request kicked off from here:
     //

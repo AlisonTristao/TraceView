@@ -189,6 +189,14 @@ target_link_libraries(traceview_protocol PUBLIC
     # behind one submit(), replacing the hand-rolled reassembly loop in
     # btpsession.cpp (BtpSession::handleReassembly). Links btp::codec only.
     btp::receiver
+    # btp::node: BtpBackend's HELLO handshake (m_node->connect()) and its
+    # COMMAND_REQUEST/RESULT client (CommandClient), plus the one shared
+    # sequence counter every sealed send draws from (nextEndpointSequence()) --
+    # see btpbackend.h's class comment for what it does and does not manage.
+    # Links btp::endpoint/receiver/session/subscription/catalog transitively;
+    # none of the discovery/subscription-server/command-server halves are
+    # ever enabled here.
+    btp::node
     # channelseal.cpp is the only place in this app that calls into btp::aead
     # (mirrors bally_OS's RadioSeal/bally_dongle's DongleKeyStore convention:
     # one file per repo owns the crypto call, everything else goes through
