@@ -1,6 +1,38 @@
 {
     "devices": {
         "devices": [
+            {
+                "baudRate": 921600,
+                "cacheOtaPassword": false,
+                "cachePeerPassword": false,
+                "commType": 0,
+                "description": "",
+                "id": "dda1282d-8ade-45ef-86c0-45b9be54e036",
+                "lineTerminator": 1,
+                "name": "Robot",
+                "otaAddress": "",
+                "parentDeviceId": "",
+                "peerSourceId": 0,
+                "portName": "",
+                "transportType": 0,
+                "usbPath": ""
+            },
+            {
+                "baudRate": 921600,
+                "cacheOtaPassword": false,
+                "cachePeerPassword": false,
+                "commType": 0,
+                "description": "",
+                "id": "87e2c0aa-3aa2-4d0c-ad48-26effe505053",
+                "lineTerminator": 1,
+                "name": "Dongle",
+                "otaAddress": "",
+                "parentDeviceId": "",
+                "peerSourceId": 0,
+                "portName": "",
+                "transportType": 0,
+                "usbPath": ""
+            }
         ]
     },
     "traceview": {
