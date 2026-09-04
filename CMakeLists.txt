@@ -60,13 +60,16 @@ set(BTP_ENABLE_AEAD ON CACHE BOOL "" FORCE)
 FetchContent_Declare(
     btp
     GIT_REPOSITORY https://github.com/AlisonTristao/BTP.git
-    GIT_TAG v2.9.0
+    # The v2.38.0 commit is public, but its tag has not been pushed yet. Pin
+    # the immutable commit instead of following main so clean builds remain
+    # reproducible in the meantime.
+    GIT_TAG afd04075c77e5f57d7a589821f7a08c68ffa631e
 )
 FetchContent_MakeAvailable(btp)
 
 # hidapi is the USB HID transport's backend (core/usbhidmanager.h, BTP's
 # "usb_hid" profile) -- the same FetchContent pattern as BTP above, and
-# pinned the same way: both dependencies are fetched at a fixed release tag
+# pinned the same way: both dependencies are fetched at a fixed revision
 # rather than a rolling branch, so a build is reproducible. For hidapi that
 # pin carries extra weight, because it has had behavior regressions between
 # versions in the past (its own issue tracker), and a rolling `main` would

@@ -265,20 +265,97 @@ own `Device` / `DeviceConnection` / `BtpBackend` classes, and
 
 ## Build
 
-Requirements: CMake >= 3.21, Qt6 (Widgets, SerialPort), a C++17 compiler.
+TraceView builds on Windows and Linux. The first CMake configure needs Git and
+internet access: BTP, hidapi and mbedTLS are pinned and fetched automatically,
+so they do not need separate checkouts.
 
-```sh
-cmake -B build -S .
-cmake --build build
+Common requirements:
+
+- CMake 3.21 or newer and Ninja;
+- a C and C++ compiler with C++17 support;
+- Qt 6 with Widgets, Network, SerialPort, LinguistTools and, while tests are
+  enabled, Test;
+- Python 3 only for the contributor scripts under `scripts/`.
+
+### Windows with MinGW
+
+Install a Qt 6 Desktop MinGW 64-bit kit and the matching MinGW and Ninja tools.
+In PowerShell, adjust the example paths to the version installed on the machine:
+
+```powershell
+$env:QT_ROOT_DIR = "C:/Qt/6.9.2/mingw_64"
+$env:Path = "$env:QT_ROOT_DIR\bin;C:\Qt\Tools\mingw1310_64\bin;C:\Qt\Tools\Ninja;$env:Path"
+
+cmake --preset windows-mingw
+cmake --build --preset windows-mingw
+ctest --preset windows-mingw
+./build/windows-mingw/TraceView.exe
 ```
 
-If Qt6 isn't auto-discovered (e.g. a Qt Online Installer setup on Windows),
-point CMake at the kit explicitly:
+The compiler and Qt kit must use the same ABI: a MinGW Qt kit cannot be built
+with MSVC, or the other way around. `ctest` needs Qt's DLLs on `PATH` (test
+binaries aren't deployed the way `windeployqt` deploys the app below); when
+found, `windeployqt` runs after the build and copies the required Qt runtime
+beside `TraceView.exe` itself, so the last line above works even without Qt
+on `PATH`.
+
+### Windows with Visual Studio
+
+Install Visual Studio 2022 with the **Desktop development with C++** workload
+and a Qt 6 `msvc2022_64` kit:
+
+```powershell
+$env:QT_ROOT_DIR = "C:/Qt/6.9.2/msvc2022_64"
+$env:Path = "$env:QT_ROOT_DIR\bin;$env:Path"
+
+cmake --preset windows-msvc
+cmake --build --preset windows-msvc
+ctest --preset windows-msvc
+./build/windows-msvc/Debug/TraceView.exe
+```
+
+### Linux (Debian/Ubuntu)
+
+Install the compiler, Qt development modules and the native hidapi backends:
 
 ```sh
-cmake -B build -S . -G Ninja -DCMAKE_PREFIX_PATH="C:/Qt/6.9.2/mingw_64"
-cmake --build build
+sudo apt update
+sudo apt install git cmake ninja-build build-essential pkg-config python3 \
+    qt6-base-dev qt6-serialport-dev qt6-tools-dev qt6-l10n-tools \
+    libudev-dev libusb-1.0-0-dev
+
+cmake --preset linux-ninja
+cmake --build --preset linux-ninja
+ctest --preset linux-ninja
+./build/linux-ninja/TraceView
 ```
+
+Distribution package names vary. When using a Qt installation outside the
+system paths, set its root before configuring, for example:
+
+```sh
+export QT_ROOT_DIR="$HOME/Qt/6.9.2/gcc_64"
+cmake --preset linux-ninja
+```
+
+Opening serial and USB HID devices on Linux also requires OS permissions. Add
+the user to the distribution's serial-port group (commonly `dialout`) and
+install a device-specific udev rule for HID access; log out and back in after
+changing group membership.
+
+### Build options
+
+Tests and developer-only visual tools are enabled by default. They can be
+disabled for a smaller application-only build:
+
+```sh
+cmake --preset linux-ninja \
+    -DTRACEVIEW_BUILD_TESTS=OFF \
+    -DTRACEVIEW_BUILD_TOOLS=OFF
+```
+
+`CMakeUserPresets.json` is intentionally ignored by Git and can hold
+machine-specific overrides without changing the shared presets.
 
 ## License
 

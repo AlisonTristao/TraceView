@@ -103,11 +103,12 @@ Hotfixes follow the same pattern starting from `main` instead of `develop`.
 ## Project scripts
 
 Two Python scripts under `scripts/` help keep `develop` releasable. Neither
-runs automatically (no git hook, no CI) — run them by hand before cutting a
-release, or any time you want a sanity check after a change. Each
-bootstraps its own virtual environment and installs whatever it needs on
-first run (see `scripts/_bootstrap.py`), so a plain `python` on `PATH` is
-enough to get started:
+runs as a Git hook — CMake builds and the Qt Test suite run in CI on Windows
+and Linux instead (see `.github/workflows/build.yml`); run these by hand
+before cutting a release, or any time you want a sanity check after a change.
+Each script bootstraps its own virtual environment and installs whatever it
+needs on first run (see `scripts/_bootstrap.py`), so a plain `python` on
+`PATH` is enough to get started:
 
 - `python scripts/check_style.py` — checks the C++ source against the
   "Code style" rules above: runs `clang-format` in check mode if it's on
@@ -123,12 +124,13 @@ enough to get started:
   `PATH` by default on a Qt install; it ships at
   `Tools/llvm-mingw*/bin/clang-format.exe`, and the check silently skips
   the formatting half if it can't find it.
-- `python scripts/smoke_test.py` — builds the project and launches
-  `TraceView.exe` to confirm it doesn't crash on startup. This is a build
-  + launch smoke test, not a UI regression suite — it doesn't click
-  anything inside the app. For now, verifying dashboard behavior (drag,
-  resize, save/load) after a change is still the manual walkthrough in
-  [docs/DASHBOARD.md](docs/DASHBOARD.md).
+- `python scripts/smoke_test.py` — selects `windows-mingw` or `linux-ninja`
+  for the host, builds the project and launches the resulting TraceView
+  executable to confirm it doesn't crash on startup. Pass `--preset NAME` to
+  use another shared or user preset. This is a build + launch smoke test, not
+  a UI regression suite — it doesn't click anything inside the app. For now,
+  verifying dashboard behavior (drag, resize, save/load) after a change is
+  still the manual walkthrough in [docs/DASHBOARD.md](docs/DASHBOARD.md).
 
 ## Tests
 
@@ -136,12 +138,13 @@ Automated unit tests live under `tests/`, written with Qt Test (`Qt6::Test`)
 — one `QObject`-derived test class per file, built as its own executable and
 registered with CTest (see `tests/CMakeLists.txt`). They build as part of the
 normal CMake configure/build (`TRACEVIEW_BUILD_TESTS`, default `ON`; pass
-`-DTRACEVIEW_BUILD_TESTS=OFF` to skip if `Qt6::Test` isn't installed). Run
-them all with `ctest --output-on-failure` from the build directory, or a
-single binary directly (e.g. `./tests/test_projectstore`) for one test
-suite's output. Like the app itself, the test binaries need Qt's DLLs on
-`PATH` to run — the same `environment` block in `CMakeUserPresets.json` used
-to launch the built app works here too.
+`-DTRACEVIEW_BUILD_TESTS=OFF` to skip if `Qt6::Test` isn't installed). Run all
+of them with the matching preset (`ctest --preset windows-mingw`,
+`ctest --preset windows-msvc` or `ctest --preset linux-ninja`), or run CTest
+from a configured build directory. On a headless Linux host, set
+`QT_QPA_PLATFORM=offscreen`. Like the app itself, Windows test binaries need
+the matching Qt runtime on `PATH`; `CMakeUserPresets.json` can carry those
+machine-specific environment overrides.
 
 Current coverage — 33 suites, grouped by what they exercise. Enumerated by
 area rather than one line per file, so this section stays accurate as

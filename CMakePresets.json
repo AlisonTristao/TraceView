@@ -10,6 +10,123 @@
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Debug"
             }
+        },
+        {
+            "name": "windows-mingw",
+            "displayName": "Windows (MinGW + Ninja)",
+            "description": "Build with a MinGW Qt kit. Set QT_ROOT_DIR and put the matching MinGW and Ninja on PATH.",
+            "inherits": "default",
+            "binaryDir": "${sourceDir}/build/windows-mingw",
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Windows"
+            },
+            "cacheVariables": {
+                "CMAKE_PREFIX_PATH": "$env{QT_ROOT_DIR}"
+            }
+        },
+        {
+            "name": "windows-msvc",
+            "displayName": "Windows (Visual Studio 2022)",
+            "description": "Build with Visual Studio 2022 and its matching MSVC Qt kit. Set QT_ROOT_DIR first.",
+            "generator": "Visual Studio 17 2022",
+            "architecture": "x64",
+            "binaryDir": "${sourceDir}/build/windows-msvc",
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Windows"
+            },
+            "cacheVariables": {
+                "CMAKE_PREFIX_PATH": "$env{QT_ROOT_DIR}",
+                "TRACEVIEW_BUILD_TESTS": "ON",
+                "TRACEVIEW_BUILD_TOOLS": "ON"
+            }
+        },
+        {
+            "name": "linux-ninja",
+            "displayName": "Linux (Ninja)",
+            "description": "Build with the system compiler and Qt installation. QT_ROOT_DIR is optional for a non-system Qt.",
+            "inherits": "default",
+            "binaryDir": "${sourceDir}/build/linux-ninja",
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Linux"
+            },
+            "cacheVariables": {
+                "CMAKE_PREFIX_PATH": "$env{QT_ROOT_DIR}"
+            }
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "windows-mingw",
+            "configurePreset": "windows-mingw",
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Windows"
+            }
+        },
+        {
+            "name": "windows-msvc",
+            "configurePreset": "windows-msvc",
+            "configuration": "Debug",
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Windows"
+            }
+        },
+        {
+            "name": "linux-ninja",
+            "configurePreset": "linux-ninja",
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Linux"
+            }
+        }
+    ],
+    "testPresets": [
+        {
+            "name": "windows-mingw",
+            "configurePreset": "windows-mingw",
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Windows"
+            },
+            "output": {
+                "outputOnFailure": true
+            }
+        },
+        {
+            "name": "windows-msvc",
+            "configurePreset": "windows-msvc",
+            "configuration": "Debug",
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Windows"
+            },
+            "output": {
+                "outputOnFailure": true
+            }
+        },
+        {
+            "name": "linux-ninja",
+            "configurePreset": "linux-ninja",
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Linux"
+            },
+            "output": {
+                "outputOnFailure": true
+            }
         }
     ]
 }
