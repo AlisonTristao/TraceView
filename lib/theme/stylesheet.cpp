@@ -177,6 +177,10 @@ QToolButton {
     border: 1px solid transparent;
     border-radius: 4px;
     padding: 2px;
+    /* Kill the dotted focus rectangle Qt's native style draws around a
+       button's label after it's clicked -- it reads as a stray "selected
+       text" box. Buttons still show focus through hover/pressed fills. */
+    outline: none;
 }
 QToolButton:hover {
     background-color: @surfaceAlt@;
@@ -228,6 +232,7 @@ QPushButton {
     border: 1px solid @borderStrong@;
     border-radius: 4px;
     padding: 5px 14px;
+    outline: none;
 }
 QPushButton:hover {
     background-color: @surfaceAlt@;
