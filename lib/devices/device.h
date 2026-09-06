@@ -85,6 +85,14 @@ struct HubPeer {
     // MainWindow watches to make a hub child re-request its catalog and
     // re-subscribe without the operator reconnecting it by hand.
     quint32 bootId = 0;
+    // RSSI (dBm) of the last authenticated frame the dongle heard from this
+    // peer, from its own promiscuous-mode sniffer (see bally_dongle's
+    // EspNowManager). 0 before any sample has arrived.
+    qint8 rssi = 0;
+    // Round-trip time (ms) of the last completed ping probe the dongle sent
+    // this peer (bally_dongle's BtpTransport::notePingSent/notePingReply).
+    // 0 before the first one completes.
+    quint32 rttMs = 0;
 };
 
 // One connected/known device, shown as a single card in the Devices panel

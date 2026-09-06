@@ -663,7 +663,10 @@ void DeviceConfigDialog::setAvailableHubPeers(const QVector<HubPeer>& peers) {
         const QString label = tr("Ch %1 -- %2, %3").arg(peer.channel).arg(hex, status);
         m_peerSourceIdCombo->addItem(label, peer.sourceId);
         if (!peer.mac.isEmpty()) {
-            m_peerSourceIdCombo->setItemData(m_peerSourceIdCombo->count() - 1, peer.mac,
+            const QString tooltip = peer.online
+                ? tr("%1\nRSSI: %2 dBm\nRTT: %3 ms").arg(peer.mac).arg(peer.rssi).arg(peer.rttMs)
+                : peer.mac;
+            m_peerSourceIdCombo->setItemData(m_peerSourceIdCombo->count() - 1, tooltip,
                                              Qt::ToolTipRole);
         }
     }

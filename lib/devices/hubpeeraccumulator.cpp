@@ -5,7 +5,7 @@ namespace traceview {
 namespace {
 
 // Index into HubPeerAccumulator::m_columns. Order matches fieldNames().
-enum Column { kChannel = 0, kSourceId, kBootId, kMac, kLastSeenMs, kOnline, kColumnCount };
+enum Column { kChannel = 0, kSourceId, kBootId, kMac, kLastSeenMs, kOnline, kRssi, kRttMs, kColumnCount };
 
 // `mac` arrives as one flat uint8 array of six octets per peer, not as a
 // per-peer array -- PACKED_LE has no nested arrays (telemetry.md 4.1).
@@ -33,7 +33,8 @@ QString formatMac(const QVector<double>& macColumn, int peerIndex) {
 
 QVector<QString> HubPeerAccumulator::fieldNames() {
     return {QStringLiteral("channel"), QStringLiteral("source_id"),    QStringLiteral("boot_id"),
-            QStringLiteral("mac"),     QStringLiteral("last_seen_ms"), QStringLiteral("online")};
+            QStringLiteral("mac"),     QStringLiteral("last_seen_ms"), QStringLiteral("online"),
+            QStringLiteral("rssi"),    QStringLiteral("rtt_ms")};
 }
 
 bool HubPeerAccumulator::resolve(const QHash<quint16, QString>& fieldIdToName) {
@@ -98,7 +99,8 @@ QVector<HubPeer> HubPeerAccumulator::peers() const {
     // read mid-update must not run past the end of any of them, and `mac` is
     // excluded because it holds six elements per peer, not one.
     int peerCount = m_columns.at(kChannel).size();
-    for (int column : {int(kSourceId), int(kBootId), int(kLastSeenMs), int(kOnline)}) {
+    for (int column :
+        {int(kSourceId), int(kBootId), int(kLastSeenMs), int(kOnline), int(kRssi), int(kRttMs)}) {
         peerCount = qMin(peerCount, m_columns.at(column).size());
     }
 
@@ -111,6 +113,8 @@ QVector<HubPeer> HubPeerAccumulator::peers() const {
         peer.bootId = quint32(m_columns.at(kBootId).at(i));
         peer.lastSeenAgeMs = quint32(m_columns.at(kLastSeenMs).at(i));
         peer.online = m_columns.at(kOnline).at(i) != 0.0;
+        peer.rssi = qint8(m_columns.at(kRssi).at(i));
+        peer.rttMs = quint32(m_columns.at(kRttMs).at(i));
         peer.mac = formatMac(m_columns.at(kMac), i);
         // boot_id is surfaced (not just decoded to keep column alignment):
         // MainWindow compares it against Device::peerBootId to notice a robot

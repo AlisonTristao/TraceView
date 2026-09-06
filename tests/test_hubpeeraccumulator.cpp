@@ -20,10 +20,13 @@ constexpr quint16 kBootIdId = 3;
 constexpr quint16 kMacId = 4;
 constexpr quint16 kLastSeenId = 5;
 constexpr quint16 kOnlineId = 6;
+constexpr quint16 kRssiId = 7;
+constexpr quint16 kRttMsId = 8;
 
 QHash<quint16, QString> dongleSchema() {
     return {{kChannelId, "channel"}, {kSourceIdId, "source_id"},    {kBootIdId, "boot_id"},
-            {kMacId, "mac"},         {kLastSeenId, "last_seen_ms"}, {kOnlineId, "online"}};
+            {kMacId, "mac"},         {kLastSeenId, "last_seen_ms"}, {kOnlineId, "online"},
+            {kRssiId, "rssi"},       {kRttMsId, "rtt_ms"}};
 }
 
 // Feeds one whole column, the way TelemetryFieldRouter does: ascending
@@ -43,6 +46,8 @@ void feedTwoPeerSample(HubPeerAccumulator& accumulator) {
                {0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06});
     feedColumn(accumulator, kLastSeenId, {0, 12000});
     feedColumn(accumulator, kOnlineId, {1, 0});
+    feedColumn(accumulator, kRssiId, {-40, -67});
+    feedColumn(accumulator, kRttMsId, {12, 345});
 }
 
 }  // namespace
@@ -85,7 +90,7 @@ void TestHubPeerAccumulator::resolveRejectsSchemaMissingAField() {
 }
 
 void TestHubPeerAccumulator::resolveIgnoresFieldIdNumbersAndUsesNamesOnly() {
-    // Same six names, completely different numbers -- a renumbering the
+    // Same eight names, completely different numbers -- a renumbering the
     // dongle is free to do (telemetry.md section 1). Decoding must be
     // unaffected.
     HubPeerAccumulator accumulator;
@@ -94,7 +99,9 @@ void TestHubPeerAccumulator::resolveIgnoresFieldIdNumbersAndUsesNamesOnly() {
                                  {72, "boot_id"},
                                  {73, "mac"},
                                  {74, "last_seen_ms"},
-                                 {75, "online"}}));
+                                 {75, "online"},
+                                 {76, "rssi"},
+                                 {77, "rtt_ms"}}));
 
     feedColumn(accumulator, 70, {4});
     feedColumn(accumulator, 71, {double(0x12345678u)});
@@ -102,12 +109,16 @@ void TestHubPeerAccumulator::resolveIgnoresFieldIdNumbersAndUsesNamesOnly() {
     feedColumn(accumulator, 73, {0x11, 0x22, 0x33, 0x44, 0x55, 0x66});
     feedColumn(accumulator, 74, {500});
     feedColumn(accumulator, 75, {1});
+    feedColumn(accumulator, 76, {-55});
+    feedColumn(accumulator, 77, {42});
 
     const QVector<HubPeer> peers = accumulator.peers();
     QCOMPARE(peers.size(), 1);
     QCOMPARE(peers.at(0).channel, quint8(4));
     QCOMPARE(peers.at(0).sourceId, 0x12345678u);
     QCOMPARE(peers.at(0).mac, QStringLiteral("11:22:33:44:55:66"));
+    QCOMPARE(peers.at(0).rssi, qint8(-55));
+    QCOMPARE(peers.at(0).rttMs, quint32(42));
 }
 
 void TestHubPeerAccumulator::fullSampleDecodesEveryPeerField() {
@@ -123,6 +134,8 @@ void TestHubPeerAccumulator::fullSampleDecodesEveryPeerField() {
     QCOMPARE(peers.at(0).bootId, 7u);
     QCOMPARE(peers.at(0).lastSeenAgeMs, 0u);
     QCOMPARE(peers.at(0).online, true);
+    QCOMPARE(peers.at(0).rssi, qint8(-40));
+    QCOMPARE(peers.at(0).rttMs, quint32(12));
     // Six octets per peer out of one flat array, uppercase and colon-joined
     // to match how a MAC is shown everywhere else in the app.
     QCOMPARE(peers.at(0).mac, QStringLiteral("AA:BB:CC:DD:EE:FF"));
@@ -132,6 +145,8 @@ void TestHubPeerAccumulator::fullSampleDecodesEveryPeerField() {
     QCOMPARE(peers.at(1).bootId, 9u);
     QCOMPARE(peers.at(1).lastSeenAgeMs, 12000u);
     QCOMPARE(peers.at(1).online, false);
+    QCOMPARE(peers.at(1).rssi, qint8(-67));
+    QCOMPARE(peers.at(1).rttMs, quint32(345));
     QCOMPARE(peers.at(1).mac, QStringLiteral("01:02:03:04:05:06"));
 }
 
@@ -150,6 +165,8 @@ void TestHubPeerAccumulator::shorterSampleShrinksThePeerList() {
     feedColumn(accumulator, kMacId, {0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF});
     feedColumn(accumulator, kLastSeenId, {0});
     feedColumn(accumulator, kOnlineId, {1});
+    feedColumn(accumulator, kRssiId, {-40});
+    feedColumn(accumulator, kRttMsId, {12});
 
     const QVector<HubPeer> peers = accumulator.peers();
     QCOMPARE(peers.size(), 1);
@@ -169,6 +186,8 @@ void TestHubPeerAccumulator::partialSampleIsBoundedByItsShortestPerPeerColumn() 
     feedColumn(accumulator, kMacId, {0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF});
     feedColumn(accumulator, kLastSeenId, {0, 12000});
     feedColumn(accumulator, kOnlineId, {1});
+    feedColumn(accumulator, kRssiId, {-40, -67});
+    feedColumn(accumulator, kRttMsId, {12, 345});
 
     const QVector<HubPeer> peers = accumulator.peers();
     QCOMPARE(peers.size(), 1);
