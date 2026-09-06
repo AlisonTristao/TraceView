@@ -41,6 +41,7 @@ private slots:
     void appendDataFastPathBackspaceErasesLastChar();
     void appendDataFullRedrawOverwritesLineAndRepositionsCursor();
     void appendDataNewlineCommitsLineAndStartsFresh();
+    void appendDataExpandsTabsAtTerminalStops();
     void appendDataSplitsMultibyteUtf8AcrossCallsWithoutMojibake();
     void clearTerminalResetsDocumentAndLineState();
     void remoteCursorUsesCustomOverlayAndBlinks();
@@ -242,6 +243,13 @@ void TestSerialTerminalWidget::appendDataNewlineCommitsLineAndStartsFresh() {
     widget.appendData(QByteArrayLiteral("dongle> "));
 
     QCOMPARE(widget.toPlainText(), QStringLiteral("dongle> info\nchip=esp32s3\ndongle> "));
+}
+
+void TestSerialTerminalWidget::appendDataExpandsTabsAtTerminalStops() {
+    SerialTerminalWidget widget;
+    widget.appendData(QByteArrayLiteral("a\tb\r\n"));
+
+    QCOMPARE(widget.toPlainText(), QStringLiteral("a       b\n"));
 }
 
 void TestSerialTerminalWidget::appendDataSplitsMultibyteUtf8AcrossCallsWithoutMojibake() {

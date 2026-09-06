@@ -179,24 +179,40 @@ QToolButton {
     padding: 2px;
     /* Kill the dotted focus rectangle Qt's native style draws around a
        button's label after it's clicked -- it reads as a stray "selected
-       text" box. Buttons still show focus through hover/pressed fills. */
+       text" box. Buttons still show focus through hover/pressed fills.
+       Repeated on every pseudo-state below because the native style's
+       focus cue (and the QWidget-wide selection-background-color/
+       selection-color further up) can otherwise show through once a more
+       specific state selector is the one being matched. */
     outline: none;
+    selection-background-color: transparent;
+    selection-color: @textPrimary@;
 }
 QToolButton:hover {
     background-color: @surfaceAlt@;
     border-color: @border@;
+    outline: none;
+    selection-background-color: @surfaceAlt@;
+    selection-color: @textPrimary@;
 }
 QToolButton:pressed {
     background-color: @accentPressed@;
     color: @background@;
+    outline: none;
+    selection-background-color: @accentPressed@;
+    selection-color: @background@;
 }
 QToolButton:checked {
     background-color: @accent@;
     color: @background@;
     border-color: @accent@;
+    outline: none;
+    selection-background-color: @accent@;
+    selection-color: @background@;
 }
 QToolButton:disabled {
     color: @textDisabled@;
+    outline: none;
 }
 
 /* Panel pin toggles (PropertiesPanel/LayersPanel) already show their pinned
@@ -232,24 +248,41 @@ QPushButton {
     border: 1px solid @borderStrong@;
     border-radius: 4px;
     padding: 5px 14px;
+    /* See the QToolButton comment above -- outline/selection colors are
+       repeated on every pseudo-state so the native focus cue (or the
+       QWidget-wide selection-background-color/selection-color) can't show
+       through as a stray "selected text" box once a state selector below
+       is the one actually matched. */
     outline: none;
+    selection-background-color: @surface@;
+    selection-color: @textPrimary@;
 }
 QPushButton:hover {
     background-color: @surfaceAlt@;
     border-color: @accentHover@;
+    outline: none;
+    selection-background-color: @surfaceAlt@;
+    selection-color: @textPrimary@;
 }
 QPushButton:pressed {
     background-color: @accentPressed@;
     color: @background@;
+    outline: none;
+    selection-background-color: @accentPressed@;
+    selection-color: @background@;
 }
 QPushButton:checked {
     background-color: @accent@;
     color: @background@;
     border-color: @accent@;
+    outline: none;
+    selection-background-color: @accent@;
+    selection-color: @background@;
 }
 QPushButton:disabled {
     color: @textDisabled@;
     border-color: @border@;
+    outline: none;
 }
 
 QPushButton[variant="success"] {
@@ -410,13 +443,19 @@ QListWidget {
     background-color: @surface@;
     color: @textPrimary@;
     border: 1px solid @border@;
+    outline: none;
 }
 QListWidget::item {
     padding: 4px;
+    outline: none;
 }
 QListWidget::item:selected {
     background-color: @accent@;
     color: @background@;
+    outline: none;
+}
+QListWidget::item:hover {
+    outline: none;
 }
 QHeaderView::section {
     background-color: @surfaceAlt@;

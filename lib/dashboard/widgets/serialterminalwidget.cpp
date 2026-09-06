@@ -163,6 +163,13 @@ void SerialTerminalWidget::appendData(const QByteArray& data) {
             if (m_cursorCol > 0) {
                 --m_cursorCol;
             }
+        } else if (code == u'\t') {
+            // Preserve terminal tab stops even though QTextDocument does not
+            // render a tab byte as a fixed-width terminal column.
+            const int spaces = 8 - (m_cursorCol % 8);
+            for (int i = 0; i < spaces; ++i) {
+                putChar(u' ');
+            }
         } else if (code < 0x20) {
             // Other control bytes have no meaning in this line model; drop
             // rather than show a mojibake glyph.
