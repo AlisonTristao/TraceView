@@ -138,6 +138,7 @@ void ClockSync::sendShellCommand(const QString& commandLine, Pending expecting) 
 
     m_pendingSequence = sequence;
     m_pending = expecting;
+    m_pendingSentAtMs = QDateTime::currentMSecsSinceEpoch();
     m_replyTimer.start(kReplyTimeoutMs);
 }
 
@@ -163,6 +164,7 @@ void ClockSync::onCommandFrameReceived(const BtpFrame& frame) {
     m_replyTimer.stop();
     const Pending completed = m_pending;
     m_pending = Pending::None;
+    const qint64 rttMs = QDateTime::currentMSecsSinceEpoch() - m_pendingSentAtMs;
 
     const quint8 status = quint8(frame.payload.at(16));
     const quint16 messageSize = readLe16(frame.payload, 20);
@@ -173,8 +175,9 @@ void ClockSync::onCommandFrameReceived(const BtpFrame& frame) {
         QString::fromUtf8(frame.payload.constData() + int(kResultPrefixSize), messageSize);
 
     if (status != kResultStatusSuccess) {
-        emit statusMessage(tr("dongle clock sync failed: %1").arg(message), 8000,
-                           StatusSeverity::Warning);
+        emit statusMessage(
+            tr("dongle clock sync failed: %1 [RTT %2ms]").arg(message).arg(rttMs), 8000,
+            StatusSeverity::Warning);
         return;
     }
 
@@ -202,8 +205,9 @@ void ClockSync::onCommandFrameReceived(const BtpFrame& frame) {
         sendShellCommand(QStringLiteral("dongle -set_clock \"@%1\"").arg(hostEpoch),
                          Pending::SetClock);
     } else {
-        emit statusMessage(tr("dongle clock corrected (%1)").arg(message), 5000,
-                           StatusSeverity::Success);
+        emit statusMessage(
+            tr("dongle clock corrected (%1) [RTT %2ms]").arg(message).arg(rttMs), 5000,
+            StatusSeverity::Success);
     }
 }
 

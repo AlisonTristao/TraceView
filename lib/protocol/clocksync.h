@@ -79,6 +79,7 @@ private:
     // one.
     quint32 m_pendingSequence = 0;
     Pending m_pending = Pending::None;
+    qint64 m_pendingSentAtMs = 0;
 
     QTimer m_replyTimer;
 };
