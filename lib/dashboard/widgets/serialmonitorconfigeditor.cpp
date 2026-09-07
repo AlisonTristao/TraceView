@@ -53,6 +53,22 @@ void SerialMonitorConfigEditor::setConfig(const QJsonObject& config) {
         deviceIds.append(QString());
     }
 
+    // A no-op guard, same as SerialMonitorWidget::setConfig()'s own
+    // `if (deviceIds == m_deviceIds) return;`. Without it, this editor
+    // rebuilds (destroys and recreates) every row's QComboBox on every call
+    // -- including the REFLEXIVE one PropertiesPanel::setSelection() makes
+    // right after a combo's own currentIndexChanged propagates through
+    // onPickChanged() -> configChanged() -> ... -> QUndoStack::push() ->
+    // indexChanged() -> MainWindow::refreshPropertiesPanel(). That call
+    // lands here with the exact deviceIds this editor's combos already show
+    // (the user just picked them), so rebuilding is not just wasted work --
+    // it deletes the very QComboBox that is still unwinding its own
+    // hidePopup()/accessibility notification on the call stack, and Qt
+    // dereferences it right after (QAccessibleCache::idForObject() crash).
+    if (deviceIds == currentDeviceIds()) {
+        return;
+    }
+
     m_updating = true;
     rebuildRows(deviceIds);
     m_updating = false;
