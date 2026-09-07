@@ -413,6 +413,8 @@ void MainWindow::refreshWidgetSubscription(DashboardWidget* widget) {
         } else if (auto* board = dynamic_cast<TextBoardWidget*>(widget)) {
             connect(newConnection->backend(), &Backend::textSample, board,
                     &TextBoardWidget::onTextSample);
+            connect(newConnection->backend(), &Backend::binarySample, board,
+                    &TextBoardWidget::onBinarySample);
         }
     }
 

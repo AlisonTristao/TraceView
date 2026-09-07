@@ -41,6 +41,7 @@ private slots:
     void malformedPayloadIsCountedAndNotDelivered();
     void utf8TopicPublishesWholeText();
     void invalidUtf8IsRejected();
+    void opaqueBytesTopicPublishesRawBody();
 };
 
 void TestTelemetryFieldRouter::twoSubscribersBothReceiveTheSameField() {
@@ -184,6 +185,44 @@ void TestTelemetryFieldRouter::invalidUtf8IsRejected() {
     QVERIFY(!delivered);
     QCOMPARE(router.diagnostics().decodeErrors, quint64(1));
     QCOMPARE(router.diagnostics().samplesDecoded, quint64(0));
+}
+
+void TestTelemetryFieldRouter::opaqueBytesTopicPublishesRawBody() {
+    TelemetryCatalog catalog;
+    traceview::TelemetryTopicSchema schema;
+    schema.sourceId = kSourceId;
+    schema.topicId = 0x0202;
+    schema.schemaVersion = 1;
+    schema.name = QStringLiteral("camera.matrix");
+    schema.encoding = traceview::TelemetryEncoding::OpaqueBytes;
+    catalog.registerSchema(schema);
+    TelemetryFieldRouter router(&catalog);
+
+    QByteArray delivered;
+    quint64 deliveredTimestamp = 0;
+    connect(&router, &TelemetryFieldRouter::binarySample, &router,
+            [&](quint32 sourceId, quint16 topicId, quint64 timestampUs, const QByteArray& body) {
+                QCOMPARE(sourceId, kSourceId);
+                QCOMPARE(topicId, quint16(0x0202));
+                deliveredTimestamp = timestampUs;
+                delivered = body;
+            });
+
+    TelemetrySample sample;
+    sample.sourceId = kSourceId;
+    sample.topicId = 0x0202;
+    sample.schemaVersion = 1;
+    sample.timestampUs = 123456;
+    // A tiny packed-bitmap document -- this layer never interprets it, only
+    // hands over the raw bytes; TextBoardWidget::unpackBinaryMatrix() is
+    // what knows this particular {rows, cols, bitmap} shape.
+    sample.payload = QByteArray::fromHex("02028040");
+    router.onTelemetrySample(sample);
+
+    QCOMPARE(delivered, QByteArray::fromHex("02028040"));
+    QCOMPARE(deliveredTimestamp, quint64(123456));
+    QCOMPARE(router.diagnostics().samplesDecoded, quint64(1));
+    QCOMPARE(router.diagnostics().decodeErrors, quint64(0));
 }
 
 }  // namespace

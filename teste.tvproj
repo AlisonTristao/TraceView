@@ -96,14 +96,32 @@
                                 "topicId": "0X0003"
                             },
                             "groupId": "",
-                            "height": 0.7000000000000001,
+                            "height": 0.675,
                             "id": "f9d287b9-4c80-4b1e-8df7-5310de5a0723",
                             "key": "",
                             "name": "Monitor Stats",
                             "type": "text_board",
-                            "width": 0.2833333333333333,
-                            "x": 0.6666666666666669,
+                            "width": 0.21666666666666667,
+                            "x": 0.7333333333333335,
                             "y": 0.125
+                        },
+                        {
+                            "config": {
+                                "deviceId": "65674208-c9e6-4483-b9bd-cfe4d1183295",
+                                "sampleTimeMs": 10,
+                                "sourceId": "0X1B6CD374",
+                                "text": "",
+                                "topicId": "0X0202"
+                            },
+                            "groupId": "",
+                            "height": 0.6,
+                            "id": "25cf2df7-9eb0-48fb-bb1a-9909d0523a27",
+                            "key": "",
+                            "name": "Esp32-CAM",
+                            "type": "text_board",
+                            "width": 0.23333333333333334,
+                            "x": 0.48333333333333334,
+                            "y": 0.15
                         }
                     ]
                 },

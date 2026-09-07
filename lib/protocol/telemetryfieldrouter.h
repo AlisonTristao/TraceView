@@ -49,6 +49,12 @@ signals:
     // the body after schema_version is the complete replacement document.
     void textSample(quint32 sourceId, quint16 topicId, quint64 timestampUs,
                     const QString& text);
+    // Whole-body OPAQUE_BYTES telemetry -- same (source, topic) identity as
+    // textSample(), but this layer does not know the byte layout (e.g. a
+    // packed bitmap): raw bytes only, a consumer that knows the specific
+    // document format decodes them (see TextBoardWidget::onBinarySample()).
+    void binarySample(quint32 sourceId, quint16 topicId, quint64 timestampUs,
+                      const QByteArray& body);
     void diagnosticsChanged();
     // A TELEMETRY sample arrived for (sourceId, topicId, schemaVersion) with
     // no matching catalog entry -- topico 16 PASSO 9: "rejeitar amostra com

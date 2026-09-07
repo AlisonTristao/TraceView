@@ -120,6 +120,12 @@ signals:
     // telemetry is identified by its topic as a whole (it has no field id).
     void textSample(quint32 sourceId, quint16 topicId, quint64 timestampUs,
                     const QString& text);
+    // One complete OPAQUE_BYTES telemetry document -- same (source, topic)
+    // identity as textSample(), but undecoded: a consumer that knows this
+    // topic's specific byte layout (e.g. TextBoardWidget's packed-bitmap
+    // camera.matrix decode) parses it.
+    void binarySample(quint32 sourceId, quint16 topicId, quint64 timestampUs,
+                      const QByteArray& body);
     // Bytes received back for a terminal/serial-monitor widget (the reply
     // side of sendTerminalIn()).
     void terminalDataReceived(const QByteArray& data);

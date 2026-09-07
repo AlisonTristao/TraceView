@@ -39,9 +39,12 @@ inline int telemetryFieldTypeWidth(TelemetryFieldType type) {
 }
 
 // telemetry.md section 4. PACKED_LE supplies numeric field samples; UTF8
-// supplies a validated whole-topic text document for TextBoardWidget. The
-// remaining encodings stay declared for catalog completeness and are
-// rejected until a producer/UI actually needs their distinct validation.
+// supplies a validated whole-topic text document for TextBoardWidget;
+// OPAQUE_BYTES supplies the same whole-topic document as raw bytes, for a
+// consumer that knows the specific byte layout (e.g. TextBoardWidget's
+// packed-bitmap camera.matrix decode). The remaining encodings stay
+// declared for catalog completeness and are rejected until a producer/UI
+// actually needs their distinct validation.
 enum class TelemetryEncoding : quint8 {
     Invalid = 0x00,
     OpaqueBytes = 0x01,

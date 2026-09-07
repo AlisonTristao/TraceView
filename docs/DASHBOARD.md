@@ -158,7 +158,11 @@ lives in its own module under
   to update only its changing numbers rather than scrolling. The painter
   preserves spaces and line breaks, never wraps, and derives one font size
   from the longest line plus the total line count whenever the cell is
-  resized. Its config editor selects Device/Source/Text topic, requests a
+  resized. If a sample contains a rectangular block of `0`/`1` rows, the
+  board switches to raster mode and shows the block as a square grid (`1` in
+  black and `0` in white); non-binary framing lines, such as `FRAME` and a
+  dimension line, are omitted. Its config editor selects Device/Source/Text
+  topic, requests a
   3000 ms period by default (about 0.33 Hz), and optionally stores waiting
   text shown before the first sample. Only catalog topics whose encoding is
   `UTF8` appear in the picker, though a numeric topic id can still be entered

@@ -65,14 +65,34 @@ void TelemetryFieldRouter::onTelemetrySample(const TelemetrySample& sample) {
         return;
     }
 
+    if (schema->encoding == TelemetryEncoding::OpaqueBytes) {
+        // Whole-body OPAQUE_BYTES (telemetry.md section 12.2, same shape as
+        // UTF8 minus the text validation): the body is the sample payload
+        // as-is, handed to whichever consumer knows this topic's specific
+        // byte layout.
+        btp::SampleReader reader(data, size, specs.data(), specCount,
+                                 btp::kEncodingOpaqueBytes, kBodyOnly);
+        btp::ByteView body{};
+        if (reader.body(&body) != btp::MessageError::Ok) {
+            ++m_diagnostics.decodeErrors;
+            emit diagnosticsChanged();
+            return;
+        }
+        ++m_diagnostics.samplesDecoded;
+        const QByteArray bytes(reinterpret_cast<const char*>(body.data), qsizetype(body.size));
+        emit binarySample(sample.sourceId, sample.topicId, sample.timestampUs, bytes);
+        emit diagnosticsChanged();
+        return;
+    }
+
     std::uint8_t encoding = 0;
     if (schema->encoding == TelemetryEncoding::PackedLe) {
         encoding = btp::kEncodingPackedLe;
     } else if (schema->encoding == TelemetryEncoding::TlvLe) {
         encoding = btp::kEncodingTlvLe;
     } else {
-        // OPAQUE_BYTES / JSON_UTF8 / CSV_UTF8 are not consumed by the UI;
-        // reject rather than guess (each has different validation rules).
+        // JSON_UTF8 / CSV_UTF8 are not consumed by the UI; reject rather
+        // than guess (each has different validation rules).
         ++m_diagnostics.decodeErrors;
         emit diagnosticsChanged();
         return;

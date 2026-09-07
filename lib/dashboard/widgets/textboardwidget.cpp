@@ -5,6 +5,8 @@
 #include <QPainter>
 #include <QStringList>
 
+#include <utility>
+
 #include "traceview/thememanager.h"
 
 namespace traceview {
@@ -50,6 +52,162 @@ bool textFits(const QStringList& lines, const QSize& available, int pixelSize) {
     return true;
 }
 
+QString binaryBitsInLine(const QString& line) {
+    QString bits;
+    bits.reserve(line.size());
+    for (const QChar character : line) {
+        if (character == QLatin1Char('0') || character == QLatin1Char('1')) {
+            bits.append(character);
+        } else if (!character.isSpace()) {
+            return {};
+        }
+    }
+    return bits;
+}
+
+// A grid decoded from an OPAQUE_BYTES camera.matrix sample, every cell
+// already scaled to an 8-bit grayscale level (0-255) regardless of the wire
+// bits_per_pixel it arrived at.
+struct DecodedMatrix {
+    bool ok = false;
+    int rows = 0;
+    int cols = 0;
+    QVector<quint8> samples;  // row-major, rows*cols entries
+};
+
+// Reverses Camera.cpp's build_matrix (bally_dongle esp32-cam_project):
+// body[0]=rows, body[1]=cols, body[2]=bits_per_pixel, then
+// rows*ceil(cols*bits_per_pixel/8) bytes of packed samples, one row after
+// another, each row starting its own byte (never spanning a byte boundary),
+// samples packed MSB-first within a row (the first/leftmost column occupies
+// the top bits_per_pixel bits of the row's first byte). Each sample is
+// widened to 0-255 by scaling against its bits_per_pixel's own max value, so
+// bits_per_pixel==1 yields exactly 0 or 255 (pure black/white) and higher
+// depths yield intermediate grays. Returns !ok for a body that doesn't fit
+// that shape (too short, an unsupported bits_per_pixel, or a size
+// inconsistent with its own header) instead of guessing at a partial image.
+DecodedMatrix decodeMatrix(const QByteArray& body) {
+    DecodedMatrix result;
+    if (body.size() < 3) {
+        return result;
+    }
+    const int rows = static_cast<unsigned char>(body.at(0));
+    const int cols = static_cast<unsigned char>(body.at(1));
+    const int bitsPerPixel = static_cast<unsigned char>(body.at(2));
+    if (rows <= 0 || cols <= 0) {
+        return result;
+    }
+    if (bitsPerPixel != 1 && bitsPerPixel != 2 && bitsPerPixel != 4 && bitsPerPixel != 8) {
+        return result;
+    }
+
+    const int rowBytes = (cols * bitsPerPixel + 7) / 8;
+    const qsizetype expectedSize = 3 + qsizetype(rowBytes) * qsizetype(rows);
+    if (body.size() != expectedSize) {
+        return result;
+    }
+
+    const int samplesPerByte = 8 / bitsPerPixel;
+    const int maxSample = (1 << bitsPerPixel) - 1;
+    const auto* packed = reinterpret_cast<const unsigned char*>(body.constData()) + 3;
+
+    QVector<quint8> samples;
+    samples.reserve(rows * cols);
+    for (int row = 0; row < rows; ++row) {
+        const unsigned char* rowBits = packed + row * rowBytes;
+        for (int column = 0; column < cols; ++column) {
+            const int shift =
+                (samplesPerByte - 1 - (column % samplesPerByte)) * bitsPerPixel;
+            const int value = (rowBits[column / samplesPerByte] >> shift) & maxSample;
+            // bits_per_pixel==1 is a black/white "mark" (g_threshold decided
+            // which cells stand out), not a literal brightness sample -- a
+            // set bit has always meant "draw this cell black", the opposite
+            // of a linear brightness scale-up. 2/4/8 bits are genuine
+            // grayscale straight off the sensor, so those scale normally
+            // (0 -> black, max -> white).
+            const quint8 level = (bitsPerPixel == 1)
+                                      ? (value != 0 ? 0 : 255)
+                                      : static_cast<quint8>(qRound(value * 255.0 / maxSample));
+            samples.append(level);
+        }
+    }
+
+    result.ok = true;
+    result.rows = rows;
+    result.cols = cols;
+    result.samples = std::move(samples);
+    return result;
+}
+
+QRectF matrixRect(int rowCount, int columnCount, const QSize& widgetSize) {
+    const qreal availableWidth = qMax(0, widgetSize.width() - 2 * kPadding);
+    const qreal availableHeight = qMax(0, widgetSize.height() - 2 * kPadding);
+    const qreal pixelSize = qMin(availableWidth / columnCount, availableHeight / rowCount);
+    const QSizeF matrixSize(columnCount * pixelSize, rowCount * pixelSize);
+    return QRectF((widgetSize.width() - matrixSize.width()) / 2.0,
+                  (widgetSize.height() - matrixSize.height()) / 2.0,
+                  matrixSize.width(), matrixSize.height());
+}
+
+void drawBinaryMatrix(QPainter& painter, const QStringList& rows, const QSize& widgetSize) {
+    const int rowCount = rows.size();
+    const int columnCount = rows.first().size();
+    const QRectF matrix = matrixRect(rowCount, columnCount, widgetSize);
+    if (matrix.isEmpty()) {
+        return;
+    }
+
+    const qreal cellWidth = matrix.width() / columnCount;
+    const qreal cellHeight = matrix.height() / rowCount;
+
+    // Start with the zero colour in one pass. Drawing cells from accumulated
+    // boundaries below avoids gaps from rounding when the cells are fractional
+    // pixels wide.
+    painter.fillRect(matrix, Qt::white);
+    painter.setPen(Qt::NoPen);
+    painter.setBrush(Qt::black);
+    for (int row = 0; row < rowCount; ++row) {
+        for (int column = 0; column < columnCount; ++column) {
+            if (rows.at(row).at(column) != QLatin1Char('1')) {
+                continue;
+            }
+            const qreal left = matrix.left() + column * cellWidth;
+            const qreal top = matrix.top() + row * cellHeight;
+            const qreal right = matrix.left() + (column + 1) * cellWidth;
+            const qreal bottom = matrix.top() + (row + 1) * cellHeight;
+            painter.drawRect(QRectF(left, top, right - left, bottom - top));
+        }
+    }
+}
+
+// Same raster layout as drawBinaryMatrix, but each cell gets its own
+// grayscale fill instead of a shared black/white brush -- used for decoded
+// OPAQUE_BYTES samples (see decodeMatrix()), which carry a per-cell level
+// rather than a '0'/'1' character.
+void drawGrayMatrix(QPainter& painter, int rowCount, int columnCount,
+                    const QVector<quint8>& samples, const QSize& widgetSize) {
+    const QRectF matrix = matrixRect(rowCount, columnCount, widgetSize);
+    if (matrix.isEmpty()) {
+        return;
+    }
+
+    const qreal cellWidth = matrix.width() / columnCount;
+    const qreal cellHeight = matrix.height() / rowCount;
+
+    painter.setPen(Qt::NoPen);
+    for (int row = 0; row < rowCount; ++row) {
+        for (int column = 0; column < columnCount; ++column) {
+            const quint8 level = samples.at(row * columnCount + column);
+            painter.setBrush(QColor(level, level, level));
+            const qreal left = matrix.left() + column * cellWidth;
+            const qreal top = matrix.top() + row * cellHeight;
+            const qreal right = matrix.left() + (column + 1) * cellWidth;
+            const qreal bottom = matrix.top() + (row + 1) * cellHeight;
+            painter.drawRect(QRectF(left, top, right - left, bottom - top));
+        }
+    }
+}
+
 }  // namespace
 
 TextBoardConfig parseTextBoardConfig(const QJsonObject& json) {
@@ -80,15 +238,19 @@ void TextBoardWidget::setConfig(const QJsonObject& config) {
     if (!m_hasLiveText) {
         m_text = m_config.initialText;
     }
+    if (bindingChanged) {
+        m_hasGrayMatrix = false;
+    }
     update();
 }
 
 void TextBoardWidget::setText(const QString& text) {
-    if (m_text == text && m_hasLiveText) {
+    if (m_text == text && m_hasLiveText && !m_hasGrayMatrix) {
         return;
     }
     m_text = text;
     m_hasLiveText = true;
+    m_hasGrayMatrix = false;
     update();
 }
 
@@ -98,15 +260,25 @@ void TextBoardWidget::appendText(const QString& text) {
     }
     m_text += text;
     m_hasLiveText = true;
+    m_hasGrayMatrix = false;
     update();
 }
 
 void TextBoardWidget::clearText() {
-    if (m_text.isEmpty() && m_hasLiveText) {
+    if (m_text.isEmpty() && m_hasLiveText && !m_hasGrayMatrix) {
         return;
     }
     m_text.clear();
     m_hasLiveText = true;
+    m_hasGrayMatrix = false;
+    update();
+}
+
+void TextBoardWidget::setGrayMatrix(int rows, int cols, QVector<quint8> samples) {
+    m_grayRows = rows;
+    m_grayCols = cols;
+    m_graySamples = std::move(samples);
+    m_hasGrayMatrix = true;
     update();
 }
 
@@ -118,6 +290,18 @@ void TextBoardWidget::onTextSample(quint32 sourceId, quint16 topicId,
     setText(text);
 }
 
+void TextBoardWidget::onBinarySample(quint32 sourceId, quint16 topicId,
+                                     quint64 /*timestampUs*/, const QByteArray& body) {
+    if (sourceId != m_config.sourceId || topicId != m_config.topicId) {
+        return;
+    }
+    const DecodedMatrix decoded = decodeMatrix(body);
+    if (!decoded.ok) {
+        return;
+    }
+    setGrayMatrix(decoded.rows, decoded.cols, decoded.samples);
+}
+
 QStringList TextBoardWidget::layoutLines() const {
     if (m_text.isEmpty()) {
         return QStringList{QString()};
@@ -127,6 +311,43 @@ QStringList TextBoardWidget::layoutLines() const {
         body.chop(1);
     }
     return body.split(QLatin1Char('\n'));
+}
+
+QStringList TextBoardWidget::binaryMatrixRows() const {
+    QStringList best;
+    QStringList current;
+    int currentWidth = 0;
+
+    const auto finishCurrent = [&best, &current, &currentWidth] {
+        if (current.size() > best.size()) {
+            best = current;
+        }
+        current.clear();
+        currentWidth = 0;
+    };
+
+    for (const QString& line : layoutLines()) {
+        const QString bits = binaryBitsInLine(line);
+        if (bits.isEmpty()) {
+            finishCurrent();
+            continue;
+        }
+        if (!current.isEmpty() && bits.size() != currentWidth) {
+            finishCurrent();
+        }
+        if (current.isEmpty()) {
+            currentWidth = bits.size();
+        }
+        current.append(bits);
+    }
+    finishCurrent();
+
+    // One isolated 0/1 value is ordinary text, not an image. Requiring two
+    // dimensions also keeps common numeric diagnostics in text mode.
+    if (best.size() < 2 || best.first().size() < 2) {
+        return {};
+    }
+    return best;
 }
 
 int TextBoardWidget::fittedFontPixelSize() const {
@@ -168,6 +389,19 @@ void TextBoardWidget::paintEvent(QPaintEvent* event) {
     painter.setPen(QPen(palette.border, 1));
     painter.setBrush(Qt::NoBrush);
     painter.drawPath(roundedPath(QRectF(rect()).adjusted(0.5, 0.5, -0.5, -0.5)));
+
+    if (m_hasGrayMatrix) {
+        painter.setRenderHint(QPainter::Antialiasing, false);
+        drawGrayMatrix(painter, m_grayRows, m_grayCols, m_graySamples, size());
+        return;
+    }
+
+    const QStringList matrixRows = binaryMatrixRows();
+    if (!matrixRows.isEmpty()) {
+        painter.setRenderHint(QPainter::Antialiasing, false);
+        drawBinaryMatrix(painter, matrixRows, size());
+        return;
+    }
 
     if (m_text.isEmpty()) {
         return;

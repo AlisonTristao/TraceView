@@ -1,5 +1,7 @@
 #include <QFontDatabase>
 #include <QFontMetricsF>
+#include <QImage>
+#include <QPainter>
 #include <QtTest>
 
 #include "dashboard/widgets/textboardwidget.h"
@@ -66,6 +68,10 @@ private slots:
     void trailingNewlineDoesNotReserveABlankLine();
     void tinyCellStillReturnsAUsableSize();
     void blockIsCentredInTheCell();
+    void binaryMatrixIsPaintedAsBlackAndWhiteSquares();
+    void binarySampleUnpacksPackedBitmap();
+    void binarySampleDecodesGrayscaleDepths();
+    void malformedBinarySampleIsIgnored();
 };
 
 void TestTextBoardWidget::textOperationsReplaceAppendAndClear() {
@@ -157,6 +163,99 @@ void TestTextBoardWidget::blockIsCentredInTheCell() {
     // Equal margins on each axis, modulo rounding.
     QVERIFY(qAbs(block.left() - (board.width() - block.width()) / 2.0) < 1.0);
     QVERIFY(qAbs(block.top() - (board.height() - block.height()) / 2.0) < 1.0);
+}
+
+void TestTextBoardWidget::binaryMatrixIsPaintedAsBlackAndWhiteSquares() {
+    TextBoardWidget board;
+    // The image producer includes framing metadata, which must not appear as
+    // text in the raster mode. The binary rectangle alone becomes the image.
+    board.setText(QStringLiteral("FRAME\n2 * 2\n10\n01\n---\n"));
+    board.resize(200, 200);
+
+    QImage image(board.size(), QImage::Format_ARGB32);
+    image.fill(Qt::transparent);
+    QPainter painter(&image);
+    board.render(&painter);
+
+    // With 12 px padding, a 2x2 matrix fills the 176x176 centred content
+    // square. Sample the centre of each binary cell: 1 is black, 0 is white.
+    QCOMPARE(image.pixelColor(56, 56), QColor(Qt::black));
+    QCOMPARE(image.pixelColor(144, 56), QColor(Qt::white));
+    QCOMPARE(image.pixelColor(56, 144), QColor(Qt::white));
+    QCOMPARE(image.pixelColor(144, 144), QColor(Qt::black));
+}
+
+void TestTextBoardWidget::binarySampleUnpacksPackedBitmap() {
+    TextBoardWidget board;
+    QJsonObject config;
+    config["sourceId"] = QStringLiteral("0x11223344");
+    config["topicId"] = QStringLiteral("0x0202");
+    board.setConfig(config);
+    board.resize(200, 200);
+
+    // 2x2 grid at 1 bit/pixel, MSB-first, each row padded to its own byte --
+    // the layout bally_dongle's esp32-cam_project Camera.cpp::build_matrix
+    // produces: header {rows=2, cols=2, bits_per_pixel=1}, then row0=0x80
+    // (bit 7 set: "10"), row1=0x40 (bit 6 set: "01"). Same pixel pattern as
+    // binaryMatrixIsPaintedAsBlackAndWhiteSquares() above (1 bit/pixel scales
+    // to exactly black/white), so the same pixel assertions apply once
+    // decoded.
+    const QByteArray body = QByteArray::fromHex("0202018040");
+    board.onBinarySample(0x11223344, 0x0202, 1, body);
+
+    QImage image(board.size(), QImage::Format_ARGB32);
+    image.fill(Qt::transparent);
+    QPainter painter(&image);
+    board.render(&painter);
+
+    QCOMPARE(image.pixelColor(56, 56), QColor(Qt::black));
+    QCOMPARE(image.pixelColor(144, 56), QColor(Qt::white));
+    QCOMPARE(image.pixelColor(56, 144), QColor(Qt::white));
+    QCOMPARE(image.pixelColor(144, 144), QColor(Qt::black));
+}
+
+void TestTextBoardWidget::binarySampleDecodesGrayscaleDepths() {
+    TextBoardWidget board;
+    QJsonObject config;
+    config["sourceId"] = QStringLiteral("0x11223344");
+    config["topicId"] = QStringLiteral("0x0202");
+    board.setConfig(config);
+    board.resize(200, 200);
+
+    // 2x2 grid at 4 bits/pixel: header {rows=2, cols=2, bits_per_pixel=4},
+    // then row0=0xF8 (col0=15, col1=8), row1=0x40 (col0=4, col1=0). Each
+    // 4-bit sample (0-15) is scaled to an 8-bit level against its own max
+    // (15), so 15->255, 8->136, 4->68, 0->0 -- exact, no rounding, since 15
+    // divides both 8*255 and 4*255.
+    const QByteArray body = QByteArray::fromHex("020204f840");
+    board.onBinarySample(0x11223344, 0x0202, 1, body);
+
+    QImage image(board.size(), QImage::Format_ARGB32);
+    image.fill(Qt::transparent);
+    QPainter painter(&image);
+    board.render(&painter);
+
+    QCOMPARE(image.pixelColor(56, 56), QColor(255, 255, 255));
+    QCOMPARE(image.pixelColor(144, 56), QColor(136, 136, 136));
+    QCOMPARE(image.pixelColor(56, 144), QColor(68, 68, 68));
+    QCOMPARE(image.pixelColor(144, 144), QColor(0, 0, 0));
+}
+
+void TestTextBoardWidget::malformedBinarySampleIsIgnored() {
+    TextBoardWidget board;
+    QJsonObject config;
+    config["sourceId"] = QStringLiteral("0x11223344");
+    config["topicId"] = QStringLiteral("0x0202");
+    board.setConfig(config);
+    board.setText(QStringLiteral("previous"));
+
+    // Header claims a 4x4 grid at 1 bit/pixel (needing 4 row-bytes, 1 per
+    // row) but only supplies 2 -- truncated/corrupt, must not replace what
+    // the board was already showing.
+    const QByteArray body = QByteArray::fromHex("040401ff00");
+    board.onBinarySample(0x11223344, 0x0202, 1, body);
+
+    QCOMPARE(board.text(), QStringLiteral("previous"));
 }
 
 }  // namespace
