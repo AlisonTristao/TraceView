@@ -1484,6 +1484,8 @@ void MainWindow::reconcileHubChildPresence() {
         bool hubKnown = false;
         bool hubOnline = false;
         quint32 bootId = device.peerBootId;
+        qint8 rssi = device.peerRssi;
+        quint32 rttMs = device.peerRttMs;
         const auto watchIt = m_hubPeerWatches.constFind(device.parentDeviceId);
         if (watchIt != m_hubPeerWatches.constEnd() && watchIt->handle != 0) {
             const QVector<HubPeer> peers = watchIt->accumulator.peers();
@@ -1493,6 +1495,8 @@ void MainWindow::reconcileHubChildPresence() {
                     if (peer.sourceId == device.peerSourceId) {
                         hubOnline = peer.online;
                         bootId = peer.bootId;
+                        rssi = peer.rssi;
+                        rttMs = peer.rttMs;
                         break;
                     }
                 }
@@ -1512,7 +1516,7 @@ void MainWindow::reconcileHubChildPresence() {
         const bool known = v.known;
 
         if (online == device.peerOnline && known == device.peerPresenceKnown &&
-            bootId == device.peerBootId) {
+            bootId == device.peerBootId && rssi == device.peerRssi && rttMs == device.peerRttMs) {
             continue;
         }
         // Announce only a genuine transition between two KNOWN states -- not the
@@ -1523,7 +1527,7 @@ void MainWindow::reconcileHubChildPresence() {
                               : tr("%1: robot stopped responding (hub link still up)").arg(name),
                        5000, online ? StatusSeverity::Success : StatusSeverity::Warning, name);
         }
-        m_devicesGrid->setDevicePeerState(device.id, online, known, bootId);
+        m_devicesGrid->setDevicePeerState(device.id, online, known, bootId, rssi, rttMs);
         // The dashboard cells' own dot only knows connected/not -- give a hub
         // child's charts a live dot only while the robot's data is really
         // arriving, not merely while the cable to the dongle is in.
@@ -1850,7 +1854,7 @@ void MainWindow::onDeviceConnectionStateChanged(const QString& deviceId, bool co
         // Same for the presence verdict: back to "unknown" (amber "locating"),
         // NOT a fake "online" -- a reconnect must re-earn green from the robot's
         // frames actually arriving again, not assume it.
-        m_devicesGrid->setDevicePeerState(deviceId, false, false, 0);
+        m_devicesGrid->setDevicePeerState(deviceId, false, false, 0, 0, 0);
         m_hubChildOfflineTicks.remove(deviceId);
     } else {
         // A hub child coming up needs its parent's hub.peers watch, and the

@@ -219,6 +219,14 @@ struct Device {
     bool peerPresenceKnown = false;
     quint32 peerBootId = 0;
 
+    // RSSI (dBm) and RTT (ms) of the dongle<->robot ESP-NOW link, mirrored
+    // from the parent's hub.peers watch by the same
+    // MainWindow::reconcileHubChildPresence loop that sets peerOnline/
+    // peerBootId above -- same live-session, not-persisted treatment. 0
+    // (HubPeer's own "never observed" default) until the first sample.
+    qint8 peerRssi = 0;
+    quint32 peerRttMs = 0;
+
     // Password for this robot's endpoint key (channel B). Live session input,
     // not configuration -- see cachePeerPassword for whether it is persisted.
     QString peerPassword;

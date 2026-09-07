@@ -22,6 +22,43 @@ constexpr int kIconMargin = 6;
 constexpr int kStatusDotSize = 8;
 constexpr int kBodyMargin = 10;
 constexpr int kBodyLineHeight = 18;
+constexpr int kSignalBarsCount = 5;
+constexpr int kSignalIconWidth = 16;
+constexpr int kSignalIconHeight = 11;
+
+// Maps an RSSI reading to a 1-5 bar count, same rough dBm bands phone/router
+// UIs use for Wi-Fi (this is ESP-NOW, same 2.4 GHz radio characteristics).
+// Never 0 -- signalText/signalBarsForRssi are only ever shown for a peer
+// confirmed online, so there is always at least a (weak) signal to report.
+int signalBarsForRssi(qint8 rssiDbm) {
+    if (rssiDbm >= -55) return 5;
+    if (rssiDbm >= -65) return 4;
+    if (rssiDbm >= -75) return 3;
+    if (rssiDbm >= -85) return 2;
+    return 1;
+}
+
+// Classic ascending-bar Wi-Fi glyph: `level` bars lit in `litColor`, the rest
+// dimmed -- same "draw it, don't fake it" approach as drawCommTypeIcon/
+// drawGearIcon below.
+void drawSignalBars(QPainter& painter, const QRect& r, int level, const QColor& litColor,
+                    const QColor& dimColor) {
+    painter.save();
+    painter.setRenderHint(QPainter::Antialiasing);
+    painter.setPen(Qt::NoPen);
+    const qreal gap = r.width() * 0.1;
+    const qreal barWidth = (r.width() - gap * (kSignalBarsCount - 1)) / kSignalBarsCount;
+    for (int i = 0; i < kSignalBarsCount; ++i) {
+        const qreal heightFrac = 0.3 + 0.7 * (qreal(i + 1) / kSignalBarsCount);
+        const qreal barHeight = r.height() * heightFrac;
+        const qreal x = r.left() + i * (barWidth + gap);
+        const qreal y = r.bottom() - barHeight;
+        painter.setBrush(i < level ? litColor : dimColor);
+        const qreal radius = barWidth * 0.25;
+        painter.drawRoundedRect(QRectF(x, y, barWidth, barHeight), radius, radius);
+    }
+    painter.restore();
+}
 
 // Chip/plug glyph for CommType::Btp -- a rounded body with pin legs on each
 // side, same "draw it, don't fake it" live-QPainter approach as
@@ -173,6 +210,34 @@ void DeviceCard::paintEvent(QPaintEvent*) {
     textRect.setRight(gearButtonRect().left() - kIconMargin);
     drawGearIcon(painter, gearButtonRect(), headerFg);
 
+    // Signal strength: only a hub child (dongle<->robot ESP-NOW link) has
+    // one, and only once the robot is confirmed online -- an offline/unknown
+    // peer's last RSSI is stale and would read as a live number it isn't.
+    // Bars are the at-a-glance read (a raw dBm number means little without
+    // context); the dBm text stays alongside for anyone who wants the exact
+    // value. Weak signal (1-2 bars) colors both red.
+    const bool showSignal = m_device.transportType == TransportType::HubChannel &&
+                            m_device.peerPresenceKnown && m_device.peerOnline;
+    QString signalText;
+    int signalLevel = 0;
+    QColor signalColor = palette.textSecondary;
+    QRect signalTextRect;
+    QRect signalIconRect;
+    if (showSignal) {
+        signalText = tr("%1 dBm").arg(m_device.peerRssi);
+        signalLevel = signalBarsForRssi(m_device.peerRssi);
+        signalColor = (signalLevel <= 2) ? palette.danger : palette.textSecondary;
+
+        const QFontMetrics signalMetrics(painter.font());
+        const int signalWidth = signalMetrics.horizontalAdvance(signalText);
+        signalTextRect = textRect;
+        signalTextRect.setLeft(textRect.right() - signalWidth);
+        signalIconRect = QRect(signalTextRect.left() - kIconMargin - kSignalIconWidth,
+                               (kHeaderHeight - kSignalIconHeight) / 2, kSignalIconWidth,
+                               kSignalIconHeight);
+        textRect.setRight(signalIconRect.left() - kIconMargin);
+    }
+
     painter.setPen(headerFg);
     QFont titleFont = painter.font();
     titleFont.setBold(true);
@@ -180,6 +245,15 @@ void DeviceCard::paintEvent(QPaintEvent*) {
     const QFontMetrics titleMetrics(titleFont);
     painter.drawText(textRect, Qt::AlignVCenter | Qt::AlignLeft,
                      titleMetrics.elidedText(m_device.name, Qt::ElideRight, textRect.width()));
+
+    if (showSignal) {
+        drawSignalBars(painter, signalIconRect, signalLevel, signalColor, palette.border);
+        QFont signalFont = titleFont;
+        signalFont.setBold(false);
+        painter.setFont(signalFont);
+        painter.setPen(signalColor);
+        painter.drawText(signalTextRect, Qt::AlignVCenter | Qt::AlignRight, signalText);
+    }
 
     // Body: a word-wrapped description, then (if the device has ever
     // completed a handshake) the BTP version/ID it last reported -- see

@@ -109,16 +109,19 @@ void DevicesGrid::setDeviceIdentity(const QString& id, const QString& btpVersion
 }
 
 void DevicesGrid::setDevicePeerState(const QString& id, bool peerOnline, bool peerPresenceKnown,
-                                    quint32 peerBootId) {
+                                    quint32 peerBootId, qint8 peerRssi, quint32 peerRttMs) {
     const int idx = indexOfDevice(id);
     if (idx < 0 || (m_devices[idx].peerOnline == peerOnline &&
                     m_devices[idx].peerPresenceKnown == peerPresenceKnown &&
-                    m_devices[idx].peerBootId == peerBootId)) {
+                    m_devices[idx].peerBootId == peerBootId &&
+                    m_devices[idx].peerRssi == peerRssi && m_devices[idx].peerRttMs == peerRttMs)) {
         return;
     }
     m_devices[idx].peerOnline = peerOnline;
     m_devices[idx].peerPresenceKnown = peerPresenceKnown;
     m_devices[idx].peerBootId = peerBootId;
+    m_devices[idx].peerRssi = peerRssi;
+    m_devices[idx].peerRttMs = peerRttMs;
     m_cards[idx]->setDevice(m_devices[idx]);
     // Deliberately no emit deviceUpdated() -- see the header. MainWindow reads
     // devices() directly in reconcileHubChildPresence(); nothing else needs a
