@@ -125,6 +125,40 @@ bool BtpSession::sendRawFrame(const QByteArray& alreadyEncoded) {
     return true;
 }
 
+void BtpSession::tallyFragment(const btp::Header& fragment) {
+    for (FragmentTally& tally : m_fragmentTally) {
+        if (tally.active && tally.sourceId == fragment.source_id &&
+            tally.bootId == fragment.boot_id && tally.sequence == fragment.sequence) {
+            if (tally.count < 255) {
+                ++tally.count;
+            }
+            return;
+        }
+    }
+    for (FragmentTally& tally : m_fragmentTally) {
+        if (!tally.active) {
+            tally = FragmentTally{fragment.source_id, fragment.boot_id, fragment.sequence, 1, true};
+            return;
+        }
+    }
+    // Both slots already track a different in-flight message: evict the
+    // first rather than grow unbounded. See the header comment.
+    m_fragmentTally[0] =
+        FragmentTally{fragment.source_id, fragment.boot_id, fragment.sequence, 1, true};
+}
+
+quint8 BtpSession::consumeFragmentTally(const btp::Header& fragment) {
+    for (FragmentTally& tally : m_fragmentTally) {
+        if (tally.active && tally.sourceId == fragment.source_id &&
+            tally.bootId == fragment.boot_id && tally.sequence == fragment.sequence) {
+            const quint8 total = tally.count < 255 ? quint8(tally.count + 1) : tally.count;
+            tally = FragmentTally{};
+            return total;
+        }
+    }
+    return 1;  // no prior fragment tracked -- this frame WAS the whole message
+}
+
 void BtpSession::handleReassembly(const btp::DecodedFrame& fragment) {
     const auto nowMs = static_cast<std::uint64_t>(QDateTime::currentMSecsSinceEpoch());
     btp::ReceivedMessage message;
@@ -135,14 +169,26 @@ void BtpSession::handleReassembly(const btp::DecodedFrame& fragment) {
     const btp::ReceiveOutcome outcome = m_receiver.submit(
         fragment, nowMs, m_reassembledOut.data(), m_reassembledOut.size(), &message);
     switch (outcome) {
-        case btp::ReceiveOutcome::Complete:
+        case btp::ReceiveOutcome::Complete: {
             ++m_diagnostics.framesDecoded;
-            emit frameReceived(BtpFrame::fromHeaderAndPayload(message.header, message.payload));
+            // message.header is btp::Receiver's own normalized copy
+            // (fragment_count reset to 1) -- consumeFragmentTally needs the
+            // identity fields only (source/boot/sequence survive
+            // normalization unchanged), so either header works for the
+            // lookup; fragment.header is what tallyFragment() was keyed on.
+            BtpFrame frame = BtpFrame::fromHeaderAndPayload(message.header, message.payload);
+            frame.fragmentCount = consumeFragmentTally(fragment.header);
+            frame.fragmentIndex = 0;
+            emit frameReceived(frame);
             break;
+        }
         case btp::ReceiveOutcome::FragmentAccepted:
+            tallyFragment(fragment.header);
+            break;
         case btp::ReceiveOutcome::DuplicateFragment:
-            // Still waiting on more fragments (or a fragment we already
-            // have, byte-for-byte) -- nothing to deliver yet.
+            // Still waiting on more fragments (a duplicate we already have,
+            // byte-for-byte, is not a new one -- don't tally it) -- nothing
+            // to deliver yet.
             break;
         case btp::ReceiveOutcome::DroppedReassembly:
             ++m_diagnostics.reassemblyDrops;
@@ -275,6 +321,9 @@ void BtpSession::feedBytes(const QByteArray& data) {
 void BtpSession::reset() {
     m_decoder.reset();
     m_receiver.clear();
+    for (FragmentTally& tally : m_fragmentTally) {
+        tally = FragmentTally{};
+    }
 }
 
 }  // namespace traceview

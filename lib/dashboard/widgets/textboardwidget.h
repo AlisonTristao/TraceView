@@ -69,13 +69,25 @@ public slots:
     // packed grid (see decodeMatrix() in the .cpp): body[0]=rows,
     // body[1]=cols, body[2]=bits_per_pixel (1, 2, 4 or 8), then
     // rows*ceil(cols*bits_per_pixel/8) bytes of MSB-first packed samples,
-    // each row padded to its own byte. Every sample is scaled up to an 8-bit
+    // each row padded to its own byte (schema 1). Schema 2 adds encoding
+    // at byte 3: 0=the same RAW layout, 1=RLE; see decodeMatrix().
+    // Every sample is scaled up to an 8-bit
     // grayscale level before painting, so bits_per_pixel is purely a wire
     // efficiency knob (see esp32-cam_project's "cam set_depth"), not a
     // rendering mode. A body that doesn't fit that shape is ignored (the
     // board keeps showing whatever it last had) rather than guessed at.
+    //
+    // `fragmentCount` and `timestampUs` feed the info strip drawn above the
+    // matrix (see paintEvent()): the fragment count is shown as-is, and
+    // `timestampUs` (the producer's own monotonic clock, e.g. esp_timer_get_
+    // time() on an ESP32) is compared against consecutive samples' *arrival*
+    // time here to derive a jitter estimate -- NOT a capture-to-display
+    // latency. Those two clocks share no known epoch (see model.md section
+    // 6), so an absolute latency cannot be computed from them; a producer
+    // reboot (visible here as timestampUs going backwards) resets the
+    // baseline instead of producing a nonsensical jitter value.
     void onBinarySample(quint32 sourceId, quint16 topicId, quint64 timestampUs,
-                        const QByteArray& body);
+                        quint8 fragmentCount, const QByteArray& body, quint16 schemaVersion = 1);
 
 protected:
     void paintEvent(QPaintEvent* event) override;
@@ -109,6 +121,20 @@ private:
     int m_grayRows = 0;
     int m_grayCols = 0;
     QVector<quint8> m_graySamples;
+
+    // Info strip state (see onBinarySample()/paintEvent()): the fragment
+    // count of the most recent OPAQUE_BYTES sample, and a jitter estimate
+    // derived from comparing consecutive samples' producer timestamp deltas
+    // against their arrival-time deltas here. Reset (m_hasJitterBaseline =
+    // false) whenever the producer's timestamp goes backwards -- the only
+    // locally-observable sign that it rebooted and restarted its monotonic
+    // clock near zero.
+    quint8 m_lastFragmentCount = 0;
+    bool m_hasJitterBaseline = false;
+    quint64 m_lastSampleTimestampUs = 0;
+    qint64 m_lastSampleArrivalMs = 0;
+    bool m_hasJitter = false;
+    double m_lastJitterMs = 0.0;
 
     // fittedFontPixelSize() runs a binary search over font metrics; cache its
     // result so a repaint that changed neither the text nor the widget size

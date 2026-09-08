@@ -17,7 +17,7 @@ const QString kHealthReport = QStringLiteral(
     "---------------------- CPU ----------------------\n"
     "tick rate   :    1000 Hz\n"
     "core rate   :     240 MHz\n"
-    "core temp   :   41.10 °C\n"
+    "core temp   :   41.10 Â°C\n"
     "core PRO    :   91.81 %\n"
     "core APP    :   23.41 %\n"
     "-------------------- memory --------------------\n"
@@ -61,6 +61,10 @@ class TestTextBoardWidget : public QObject {
     Q_OBJECT
 
 private slots:
+    void compressedSamples_data();
+    void compressedSamples();
+    void malformedCompressedSamples_data();
+    void malformedCompressedSamples();
     void textOperationsReplaceAppendAndClear();
     void onlyConfiguredTopicUpdatesTheBoard();
     void fontShrinksWithTheAvailableArea();
@@ -201,7 +205,7 @@ void TestTextBoardWidget::binarySampleUnpacksPackedBitmap() {
     // to exactly black/white), so the same pixel assertions apply once
     // decoded.
     const QByteArray body = QByteArray::fromHex("0202018040");
-    board.onBinarySample(0x11223344, 0x0202, 1, body);
+    board.onBinarySample(0x11223344, 0x0202, 1, 1, body);
 
     QImage image(board.size(), QImage::Format_ARGB32);
     image.fill(Qt::transparent);
@@ -228,7 +232,7 @@ void TestTextBoardWidget::binarySampleDecodesGrayscaleDepths() {
     // (15), so 15->255, 8->136, 4->68, 0->0 -- exact, no rounding, since 15
     // divides both 8*255 and 4*255.
     const QByteArray body = QByteArray::fromHex("020204f840");
-    board.onBinarySample(0x11223344, 0x0202, 1, body);
+    board.onBinarySample(0x11223344, 0x0202, 1, 1, body);
 
     QImage image(board.size(), QImage::Format_ARGB32);
     image.fill(Qt::transparent);
@@ -253,8 +257,74 @@ void TestTextBoardWidget::malformedBinarySampleIsIgnored() {
     // row) but only supplies 2 -- truncated/corrupt, must not replace what
     // the board was already showing.
     const QByteArray body = QByteArray::fromHex("040401ff00");
-    board.onBinarySample(0x11223344, 0x0202, 1, body);
+    board.onBinarySample(0x11223344, 0x0202, 1, 1, body);
 
+    QCOMPARE(board.text(), QStringLiteral("previous"));
+}
+
+void TestTextBoardWidget::compressedSamples_data() {
+    QTest::addColumn<QByteArray>("body");
+    QTest::addColumn<int>("top");
+    QTest::addColumn<int>("bottom");
+    QTest::newRow("v2-raw-4") << QByteArray::fromHex("02020400ff00") << 255 << 0;
+    QTest::newRow("v2-rle-1") << QByteArray::fromHex("020201018101") << 0 << 255;
+    QTest::newRow("v2-rle-2") << QByteArray::fromHex("02020201c101") << 255 << 0;
+    QTest::newRow("v2-rle-4") << QByteArray::fromHex("02020401f101") << 255 << 0;
+    QTest::newRow("v2-rle-8") << QByteArray::fromHex("02020801ff010001") << 255 << 0;
+    QTest::newRow("v2-rle-cross-row") << QByteArray::fromHex("0202040173") << 119 << 119;
+    QTest::newRow("v2-raw-1") << QByteArray::fromHex("02020100c000") << 0 << 255;
+    QTest::newRow("v2-raw-2") << QByteArray::fromHex("02020200f000") << 255 << 0;
+    QTest::newRow("v2-raw-8") << QByteArray::fromHex("02020800ffff0000") << 255 << 0;
+}
+
+void TestTextBoardWidget::compressedSamples() {
+    QFETCH(QByteArray, body);
+    QFETCH(int, top);
+    QFETCH(int, bottom);
+    TextBoardWidget board;
+    QJsonObject config;
+    config["sourceId"] = QStringLiteral("0x11223344");
+    config["topicId"] = QStringLiteral("0x0202");
+    board.setConfig(config);
+    board.resize(200, 200);
+    board.onBinarySample(0x11223344, 0x0202, 1, 1, body, 2);
+    QImage image(board.size(), QImage::Format_ARGB32);
+    image.fill(Qt::transparent);
+    QPainter painter(&image);
+    board.render(&painter);
+    QCOMPARE(image.pixelColor(56, 56), QColor(top, top, top));
+    QCOMPARE(image.pixelColor(144, 56), QColor(top, top, top));
+    QCOMPARE(image.pixelColor(56, 144), QColor(bottom, bottom, bottom));
+    QCOMPARE(image.pixelColor(144, 144), QColor(bottom, bottom, bottom));
+}
+
+void TestTextBoardWidget::malformedCompressedSamples_data() {
+    QTest::addColumn<QByteArray>("body");
+    QTest::addColumn<int>("version");
+    QTest::newRow("header") << QByteArray::fromHex("020204") << 2;
+    QTest::newRow("encoding") << QByteArray::fromHex("0202040273") << 2;
+    QTest::newRow("overflow") << QByteArray::fromHex("0202040174") << 2;
+    QTest::newRow("underflow") << QByteArray::fromHex("0202040172") << 2;
+    QTest::newRow("empty") << QByteArray::fromHex("02020401") << 2;
+    QTest::newRow("extra-run") << QByteArray::fromHex("020204017300") << 2;
+    QTest::newRow("truncated-pair") << QByteArray::fromHex("02020801ff") << 2;
+    QTest::newRow("raw-truncated") << QByteArray::fromHex("02020400ff") << 2;
+    QTest::newRow("raw-extra") << QByteArray::fromHex("02020400ffff00") << 2;
+    QTest::newRow("unknown-version") << QByteArray::fromHex("0202040173") << 3;
+    QTest::newRow("no-version-guess") << QByteArray::fromHex("020204f840") << 2;
+    QTest::newRow("depth") << QByteArray::fromHex("0202030173") << 2;
+}
+
+void TestTextBoardWidget::malformedCompressedSamples() {
+    QFETCH(QByteArray, body);
+    QFETCH(int, version);
+    TextBoardWidget board;
+    QJsonObject config;
+    config["sourceId"] = QStringLiteral("0x11223344");
+    config["topicId"] = QStringLiteral("0x0202");
+    board.setConfig(config);
+    board.setText(QStringLiteral("previous"));
+    board.onBinarySample(0x11223344, 0x0202, 1, 1, body, version);
     QCOMPARE(board.text(), QStringLiteral("previous"));
 }
 

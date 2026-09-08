@@ -224,6 +224,11 @@ void TestBtpSession::reassemblesFragmentedMessageAndFiresOnce() {
     QCOMPARE(received.payload, logicalPayload);
     QCOMPARE(session.diagnostics().framesDecoded, quint64(1));  // not 2 -- per
                                                                 // physical fragment
+    // btp::Receiver itself normalizes fragment_count back to 1 once
+    // reassembled; BtpSession tracks the real count separately (see
+    // handleReassembly()'s fragment tally) so a consumer that DOES care --
+    // e.g. TextBoardWidget's info strip -- can still see it.
+    QCOMPARE(int(received.fragmentCount), 2);
 }
 
 void TestBtpSession::resetDiscardsPartialCandidate() {

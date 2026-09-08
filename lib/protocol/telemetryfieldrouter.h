@@ -53,8 +53,11 @@ signals:
     // textSample(), but this layer does not know the byte layout (e.g. a
     // packed bitmap): raw bytes only, a consumer that knows the specific
     // document format decodes them (see TextBoardWidget::onBinarySample()).
+    // `fragmentCount` is TelemetrySample::fragmentCount passed through
+    // unchanged -- how many wire fragments this sample was reassembled from.
+    // Forward the declared schema version; consumers must not infer it from length.
     void binarySample(quint32 sourceId, quint16 topicId, quint64 timestampUs,
-                      const QByteArray& body);
+                      quint8 fragmentCount, const QByteArray& body, quint16 schemaVersion = 1);
     void diagnosticsChanged();
     // A TELEMETRY sample arrived for (sourceId, topicId, schemaVersion) with
     // no matching catalog entry -- topico 16 PASSO 9: "rejeitar amostra com

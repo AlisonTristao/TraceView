@@ -20,6 +20,7 @@ void ProtocolRouter::onFrameReceived(const BtpFrame& frame) {
             sample.sequence = frame.sequence;
             sample.timestampUs = frame.timestampUs;
             sample.topicId = frame.objectId;
+            sample.fragmentCount = frame.fragmentCount;
             sample.schemaVersion =
                 quint16(quint8(frame.payload[0])) | (quint16(quint8(frame.payload[1])) << 8);
             sample.payload = frame.payload.mid(2);

@@ -1,5 +1,6 @@
 #include "textboardwidget.h"
 
+#include <QDateTime>
 #include <QFontDatabase>
 #include <QFontMetricsF>
 #include <QPainter>
@@ -14,6 +15,10 @@ namespace traceview {
 namespace {
 
 constexpr int kPadding = 12;
+// Reserved at the top of the cell for the fragment-count/jitter info strip,
+// drawn only above a gray matrix (onBinarySample()'s decoded camera.matrix
+// path) -- the plain text/legacy binary-matrix paths carry neither metric.
+constexpr int kInfoStripHeight = 18;
 // Low enough that even a many-line report still fits (shrinks to unreadable
 // before it clips) in a small cell -- the board's contract is "always show
 // the whole document", the operator resizes the cell to make it legible.
@@ -76,7 +81,7 @@ struct DecodedMatrix {
 };
 
 // Reverses Camera.cpp's build_matrix (bally_dongle esp32-cam_project):
-// body[0]=rows, body[1]=cols, body[2]=bits_per_pixel, then
+// v1: body[0]=rows, body[1]=cols, body[2]=bits_per_pixel, then
 // rows*ceil(cols*bits_per_pixel/8) bytes of packed samples, one row after
 // another, each row starting its own byte (never spanning a byte boundary),
 // samples packed MSB-first within a row (the first/leftmost column occupies
@@ -86,9 +91,12 @@ struct DecodedMatrix {
 // depths yield intermediate grays. Returns !ok for a body that doesn't fit
 // that shape (too short, an unsupported bits_per_pixel, or a size
 // inconsistent with its own header) instead of guessing at a partial image.
-DecodedMatrix decodeMatrix(const QByteArray& body) {
+// v2 adds body[3]=encoding (0=RAW, 1=RLE). Depth<8 uses high depth bits
+// for value and low bits for count-1; depth=8 uses {value, count-1} bytes.
+DecodedMatrix decodeMatrix(const QByteArray& body, quint16 schemaVersion) {
     DecodedMatrix result;
-    if (body.size() < 3) {
+    const int headerSize = schemaVersion == 1 ? 3 : 4;
+    if ((schemaVersion != 1 && schemaVersion != 2) || body.size() < headerSize) {
         return result;
     }
     const int rows = static_cast<unsigned char>(body.at(0));
@@ -102,34 +110,49 @@ DecodedMatrix decodeMatrix(const QByteArray& body) {
     }
 
     const int rowBytes = (cols * bitsPerPixel + 7) / 8;
-    const qsizetype expectedSize = 3 + qsizetype(rowBytes) * qsizetype(rows);
-    if (body.size() != expectedSize) {
-        return result;
-    }
+    const qsizetype expectedSize = headerSize + qsizetype(rowBytes) * qsizetype(rows);
+    const unsigned encoding = schemaVersion == 1 ? 0 : static_cast<unsigned char>(body.at(3));
+    if (encoding > 1 || (encoding == 0 && body.size() != expectedSize)) return result;
 
     const int samplesPerByte = 8 / bitsPerPixel;
     const int maxSample = (1 << bitsPerPixel) - 1;
-    const auto* packed = reinterpret_cast<const unsigned char*>(body.constData()) + 3;
+    const auto* packed = reinterpret_cast<const unsigned char*>(body.constData()) + headerSize;
 
     QVector<quint8> samples;
     samples.reserve(rows * cols);
-    for (int row = 0; row < rows; ++row) {
-        const unsigned char* rowBits = packed + row * rowBytes;
-        for (int column = 0; column < cols; ++column) {
-            const int shift =
-                (samplesPerByte - 1 - (column % samplesPerByte)) * bitsPerPixel;
-            const int value = (rowBits[column / samplesPerByte] >> shift) & maxSample;
-            // bits_per_pixel==1 is a black/white "mark" (g_threshold decided
-            // which cells stand out), not a literal brightness sample -- a
-            // set bit has always meant "draw this cell black", the opposite
-            // of a linear brightness scale-up. 2/4/8 bits are genuine
-            // grayscale straight off the sensor, so those scale normally
-            // (0 -> black, max -> white).
-            const quint8 level = (bitsPerPixel == 1)
-                                      ? (value != 0 ? 0 : 255)
-                                      : static_cast<quint8>(qRound(value * 255.0 / maxSample));
-            samples.append(level);
+    const auto levelOf = [bitsPerPixel, maxSample](int value) -> quint8 {
+        // Preserve the legacy binary display convention (set bit = black).
+        return bitsPerPixel == 1 ? (value != 0 ? 0 : 255)
+                                : static_cast<quint8>(qRound(value * 255.0 / maxSample));
+    };
+    if (encoding == 0) {
+        for (int row = 0; row < rows; ++row) {
+            const unsigned char* rowBits = packed + row * rowBytes;
+            for (int column = 0; column < cols; ++column) {
+                const int shift = (samplesPerByte - 1 - column % samplesPerByte) * bitsPerPixel;
+                samples.append(levelOf((rowBits[column / samplesPerByte] >> shift) & maxSample));
+            }
         }
+    } else {
+        const unsigned countBits = bitsPerPixel == 8 ? 8 : 8 - bitsPerPixel;
+        const unsigned countMask = (1U << countBits) - 1U;
+        const qsizetype pixelCount = qsizetype(rows) * cols;
+        for (qsizetype offset = headerSize; offset < body.size();) {
+            const unsigned record = static_cast<unsigned char>(body.at(offset++));
+            unsigned value, run;
+            if (bitsPerPixel == 8) {
+                if (offset == body.size()) return result;
+                value = record;
+                run = static_cast<unsigned char>(body.at(offset++)) + 1U;
+            } else {
+                value = record >> countBits;
+                run = (record & countMask) + 1U;
+            }
+            if (run > unsigned(pixelCount - samples.size())) return result;
+            const quint8 level = levelOf(value);
+            for (unsigned i = 0; i < run; ++i) samples.append(level);
+        }
+        if (samples.size() != pixelCount) return result;
     }
 
     result.ok = true;
@@ -139,20 +162,23 @@ DecodedMatrix decodeMatrix(const QByteArray& body) {
     return result;
 }
 
-QRectF matrixRect(int rowCount, int columnCount, const QSize& widgetSize) {
-    const qreal availableWidth = qMax(0, widgetSize.width() - 2 * kPadding);
-    const qreal availableHeight = qMax(0, widgetSize.height() - 2 * kPadding);
+// `bounds` is the area the matrix is centred within -- the whole widget for
+// the plain text/legacy binary-matrix paths, or the area left below the info
+// strip for a decoded gray matrix (see paintEvent()).
+QRectF matrixRect(int rowCount, int columnCount, const QRectF& bounds) {
+    const qreal availableWidth = qMax(0.0, bounds.width() - 2 * kPadding);
+    const qreal availableHeight = qMax(0.0, bounds.height() - 2 * kPadding);
     const qreal pixelSize = qMin(availableWidth / columnCount, availableHeight / rowCount);
     const QSizeF matrixSize(columnCount * pixelSize, rowCount * pixelSize);
-    return QRectF((widgetSize.width() - matrixSize.width()) / 2.0,
-                  (widgetSize.height() - matrixSize.height()) / 2.0,
+    return QRectF(bounds.x() + (bounds.width() - matrixSize.width()) / 2.0,
+                  bounds.y() + (bounds.height() - matrixSize.height()) / 2.0,
                   matrixSize.width(), matrixSize.height());
 }
 
-void drawBinaryMatrix(QPainter& painter, const QStringList& rows, const QSize& widgetSize) {
+void drawBinaryMatrix(QPainter& painter, const QStringList& rows, const QRectF& bounds) {
     const int rowCount = rows.size();
     const int columnCount = rows.first().size();
-    const QRectF matrix = matrixRect(rowCount, columnCount, widgetSize);
+    const QRectF matrix = matrixRect(rowCount, columnCount, bounds);
     if (matrix.isEmpty()) {
         return;
     }
@@ -185,8 +211,8 @@ void drawBinaryMatrix(QPainter& painter, const QStringList& rows, const QSize& w
 // OPAQUE_BYTES samples (see decodeMatrix()), which carry a per-cell level
 // rather than a '0'/'1' character.
 void drawGrayMatrix(QPainter& painter, int rowCount, int columnCount,
-                    const QVector<quint8>& samples, const QSize& widgetSize) {
-    const QRectF matrix = matrixRect(rowCount, columnCount, widgetSize);
+                    const QVector<quint8>& samples, const QRectF& bounds) {
+    const QRectF matrix = matrixRect(rowCount, columnCount, bounds);
     if (matrix.isEmpty()) {
         return;
     }
@@ -206,6 +232,23 @@ void drawGrayMatrix(QPainter& painter, int rowCount, int columnCount,
             painter.drawRect(QRectF(left, top, right - left, bottom - top));
         }
     }
+}
+
+// Text for the strip drawn above a decoded gray matrix (see paintEvent()).
+// Jitter is relative arrival-vs-producer-clock drift between consecutive
+// samples, NOT a capture-to-display latency (see onBinarySample()'s
+// comment for why an absolute latency can't be derived here) -- "--" until
+// a second sample gives it a baseline to compare against.
+QString formatInfoStrip(quint8 fragmentCount, bool hasJitter, double jitterMs) {
+    QString text = QObject::tr("%1 pacote(s)").arg(fragmentCount);
+    if (hasJitter) {
+        text += QObject::tr("   jitter %1%2 ms")
+                    .arg(jitterMs >= 0.0 ? QStringLiteral("+") : QString())
+                    .arg(jitterMs, 0, 'f', 1);
+    } else {
+        text += QObject::tr("   jitter --");
+    }
+    return text;
 }
 
 }  // namespace
@@ -290,15 +333,34 @@ void TextBoardWidget::onTextSample(quint32 sourceId, quint16 topicId,
     setText(text);
 }
 
-void TextBoardWidget::onBinarySample(quint32 sourceId, quint16 topicId,
-                                     quint64 /*timestampUs*/, const QByteArray& body) {
+void TextBoardWidget::onBinarySample(quint32 sourceId, quint16 topicId, quint64 timestampUs,
+                                     quint8 fragmentCount, const QByteArray& body, quint16 schemaVersion) {
     if (sourceId != m_config.sourceId || topicId != m_config.topicId) {
         return;
     }
-    const DecodedMatrix decoded = decodeMatrix(body);
+    const DecodedMatrix decoded = decodeMatrix(body, schemaVersion);
     if (!decoded.ok) {
         return;
     }
+
+    const qint64 nowMs = QDateTime::currentMSecsSinceEpoch();
+    // timestampUs going backwards is the only locally-observable sign the
+    // producer rebooted (its monotonic clock restarted near zero, see the
+    // header comment) -- treat it the same as "no baseline yet" rather than
+    // emitting a nonsensical jitter value across the discontinuity.
+    if (m_hasJitterBaseline && timestampUs > m_lastSampleTimestampUs) {
+        const double producerDeltaMs = double(timestampUs - m_lastSampleTimestampUs) / 1000.0;
+        const double arrivalDeltaMs = double(nowMs - m_lastSampleArrivalMs);
+        m_lastJitterMs = arrivalDeltaMs - producerDeltaMs;
+        m_hasJitter = true;
+    } else {
+        m_hasJitter = false;
+    }
+    m_lastSampleTimestampUs = timestampUs;
+    m_lastSampleArrivalMs = nowMs;
+    m_hasJitterBaseline = true;
+    m_lastFragmentCount = fragmentCount;
+
     setGrayMatrix(decoded.rows, decoded.cols, decoded.samples);
 }
 
@@ -391,15 +453,25 @@ void TextBoardWidget::paintEvent(QPaintEvent* event) {
     painter.drawPath(roundedPath(QRectF(rect()).adjusted(0.5, 0.5, -0.5, -0.5)));
 
     if (m_hasGrayMatrix) {
+        const QRectF stripRect(0, 0, width(), kInfoStripHeight);
+        QFont infoFont = painter.font();
+        infoFont.setPixelSize(qMin(11, kInfoStripHeight - 6));
+        painter.setFont(infoFont);
+        painter.setPen(palette.textSecondary);
+        painter.drawText(stripRect.adjusted(kPadding, 0, -kPadding, 0),
+                         Qt::AlignVCenter | Qt::AlignLeft,
+                         formatInfoStrip(m_lastFragmentCount, m_hasJitter, m_lastJitterMs));
+
         painter.setRenderHint(QPainter::Antialiasing, false);
-        drawGrayMatrix(painter, m_grayRows, m_grayCols, m_graySamples, size());
+        const QRectF matrixBounds(0, kInfoStripHeight, width(), height() - kInfoStripHeight);
+        drawGrayMatrix(painter, m_grayRows, m_grayCols, m_graySamples, matrixBounds);
         return;
     }
 
     const QStringList matrixRows = binaryMatrixRows();
     if (!matrixRows.isEmpty()) {
         painter.setRenderHint(QPainter::Antialiasing, false);
-        drawBinaryMatrix(painter, matrixRows, size());
+        drawBinaryMatrix(painter, matrixRows, QRectF(QPointF(0, 0), size()));
         return;
     }
 

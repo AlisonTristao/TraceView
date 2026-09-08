@@ -261,6 +261,34 @@ private:
                // RESULTADO, ProtocolRouter, which wraps the same btp::Receiver).
 
     void handleReassembly(const btp::DecodedFrame& fragment);
+
+    // Tracks fragments-accepted-so-far for in-flight reassemblies, purely for
+    // TelemetrySample::fragmentCount -- btp::Receiver's own ReceivedMessage
+    // normalizes fragment_count back to 1 once a message completes (a
+    // consumer "must not care" how many physical frames it took), so the real
+    // count has to be observed here, before that normalization, or not at
+    // all. Sized like m_reassemblySlots: at most kReassemblySlotCount
+    // messages can be in flight at once, so at most that many tallies are
+    // ever needed.
+    struct FragmentTally {
+        quint32 sourceId = 0;
+        quint32 bootId = 0;
+        quint32 sequence = 0;
+        quint8 count = 0;
+        bool active = false;
+    };
+    // Increments (or starts) the tally for the message `fragment` belongs to.
+    // If both slots already track a different in-flight message, the first
+    // is evicted -- a rare, cosmetic-only loss: that message's fragment count
+    // will simply undercount once it completes, the same imprecision as an
+    // untracked message reports (see consumeFragmentTally).
+    void tallyFragment(const btp::Header& fragment);
+    // Returns the total fragment count for the message that just completed
+    // (the tallied count, plus the completing fragment itself) and releases
+    // its tally slot. Returns 1 if no tally was active for it -- i.e. it
+    // arrived as a single, unfragmented frame.
+    quint8 consumeFragmentTally(const btp::Header& fragment);
+    FragmentTally m_fragmentTally[kReassemblySlotCount];
     // Applies axis (a) only -- COBS envelope in CobsStream framing, nothing
     // at all in PreFramed -- to octets that are already a complete encoded
     // frame, and emits bytesToWrite() on success. The single place the

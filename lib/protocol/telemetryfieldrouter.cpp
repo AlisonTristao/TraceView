@@ -80,7 +80,8 @@ void TelemetryFieldRouter::onTelemetrySample(const TelemetrySample& sample) {
         }
         ++m_diagnostics.samplesDecoded;
         const QByteArray bytes(reinterpret_cast<const char*>(body.data), qsizetype(body.size));
-        emit binarySample(sample.sourceId, sample.topicId, sample.timestampUs, bytes);
+        emit binarySample(sample.sourceId, sample.topicId, sample.timestampUs,
+                          sample.fragmentCount, bytes, sample.schemaVersion);
         emit diagnosticsChanged();
         return;
     }

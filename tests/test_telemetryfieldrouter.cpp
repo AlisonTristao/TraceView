@@ -152,10 +152,10 @@ void TestTelemetryFieldRouter::utf8TopicPublishesWholeText() {
     sample.topicId = 3;
     sample.schemaVersion = 1;
     sample.timestampUs = 123456;
-    sample.payload = QString::fromUtf8("CPU  PRO: 12,3%\nmemória: ótima").toUtf8();
+    sample.payload = QString::fromUtf8("CPU  PRO: 12,3%\nmemÃƒÂ³ria: ÃƒÂ³tima").toUtf8();
     router.onTelemetrySample(sample);
 
-    QCOMPARE(delivered, QString::fromUtf8("CPU  PRO: 12,3%\nmemória: ótima"));
+    QCOMPARE(delivered, QString::fromUtf8("CPU  PRO: 12,3%\nmemÃƒÂ³ria: ÃƒÂ³tima"));
     QCOMPARE(deliveredTimestamp, quint64(123456));
     QCOMPARE(router.diagnostics().samplesDecoded, quint64(1));
     QCOMPARE(router.diagnostics().decodeErrors, quint64(0));
@@ -192,7 +192,7 @@ void TestTelemetryFieldRouter::opaqueBytesTopicPublishesRawBody() {
     traceview::TelemetryTopicSchema schema;
     schema.sourceId = kSourceId;
     schema.topicId = 0x0202;
-    schema.schemaVersion = 1;
+    schema.schemaVersion = 2;
     schema.name = QStringLiteral("camera.matrix");
     schema.encoding = traceview::TelemetryEncoding::OpaqueBytes;
     catalog.registerSchema(schema);
@@ -201,9 +201,12 @@ void TestTelemetryFieldRouter::opaqueBytesTopicPublishesRawBody() {
     QByteArray delivered;
     quint64 deliveredTimestamp = 0;
     connect(&router, &TelemetryFieldRouter::binarySample, &router,
-            [&](quint32 sourceId, quint16 topicId, quint64 timestampUs, const QByteArray& body) {
+            [&](quint32 sourceId, quint16 topicId, quint64 timestampUs, quint8 fragmentCount,
+                const QByteArray& body, quint16 schemaVersion) {
                 QCOMPARE(sourceId, kSourceId);
                 QCOMPARE(topicId, quint16(0x0202));
+                QCOMPARE(fragmentCount, quint8(3));
+                QCOMPARE(schemaVersion, quint16(2));
                 deliveredTimestamp = timestampUs;
                 delivered = body;
             });
@@ -211,15 +214,16 @@ void TestTelemetryFieldRouter::opaqueBytesTopicPublishesRawBody() {
     TelemetrySample sample;
     sample.sourceId = kSourceId;
     sample.topicId = 0x0202;
-    sample.schemaVersion = 1;
+    sample.schemaVersion = 2;
+    sample.fragmentCount = 3;
     sample.timestampUs = 123456;
     // A tiny packed-bitmap document -- this layer never interprets it, only
     // hands over the raw bytes; TextBoardWidget::unpackBinaryMatrix() is
-    // what knows this particular {rows, cols, bitmap} shape.
-    sample.payload = QByteArray::fromHex("02028040");
+    // what knows the versioned matrix shape.
+    sample.payload = QByteArray::fromHex("0202040173");
     router.onTelemetrySample(sample);
 
-    QCOMPARE(delivered, QByteArray::fromHex("02028040"));
+    QCOMPARE(delivered, QByteArray::fromHex("0202040173"));
     QCOMPARE(deliveredTimestamp, quint64(123456));
     QCOMPARE(router.diagnostics().samplesDecoded, quint64(1));
     QCOMPARE(router.diagnostics().decodeErrors, quint64(0));

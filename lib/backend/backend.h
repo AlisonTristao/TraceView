@@ -123,9 +123,11 @@ signals:
     // One complete OPAQUE_BYTES telemetry document -- same (source, topic)
     // identity as textSample(), but undecoded: a consumer that knows this
     // topic's specific byte layout (e.g. TextBoardWidget's packed-bitmap
-    // camera.matrix decode) parses it.
+    // camera.matrix decode) parses it. `fragmentCount` is how many wire
+    // fragments this sample was reassembled from (1 if it arrived whole).
+    // Forward the declared schema version; consumers must not infer it from length.
     void binarySample(quint32 sourceId, quint16 topicId, quint64 timestampUs,
-                      const QByteArray& body);
+                      quint8 fragmentCount, const QByteArray& body, quint16 schemaVersion = 1);
     // Bytes received back for a terminal/serial-monitor widget (the reply
     // side of sendTerminalIn()).
     void terminalDataReceived(const QByteArray& data);

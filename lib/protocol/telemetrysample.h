@@ -25,6 +25,13 @@ struct TelemetrySample {
     quint64 timestampUs = 0;
     quint16 topicId = 0;  // envelope object_id, see telemetry.md section 1
     quint16 schemaVersion = 0;
+    // How many wire fragments this logical message was reassembled from (1
+    // for a message that arrived as a single frame). btp::Receiver itself
+    // normalizes a reassembled header back to fragment_count=1 (a consumer
+    // "must not care" how many physical frames a message took) -- this is a
+    // separate count BtpSession tracks purely for diagnostics/UI before that
+    // normalization happens, see BtpSession::handleReassembly.
+    quint8 fragmentCount = 1;
     QByteArray payload;  // encoded_body: opaque, never assumed to be UTF-8
 };
 
