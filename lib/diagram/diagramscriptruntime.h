@@ -9,20 +9,24 @@ class QJSEngine;
 
 namespace traceview {
 
-// One block's live script engine. Owns a QJSEngine holding whatever the
+// One device's live script engine. Owns a QJSEngine holding whatever the
 // script last set (top-level `function onTelemetry(sample) {...}` / `function
 // onTerminal(text) {...}` declarations become properties of its global
 // object, same as any JS global scope) and exposes itself to that script as
 // the `device` object -- log()/sendCommand()/sendTerminal() are Q_INVOKABLE
 // so QJSEngine can call them directly.
 //
-// Lives independently of DiagramBlockConfigDialog: MainWindow feeds
-// handleTelemetry()/handleTerminal() from that device's Backend for as long
-// as the Control Diagram tab is open, whether or not the config dialog is
-// currently on screen -- the dialog just gives the operator a window into
-// what's already running (pre-fills from recentLog(), then attaches to
-// logMessage()/errorOccurred() while open, so reopening shows what happened
-// while it was closed too) plus the editor that calls setScript().
+// One instance per Device, created by MainWindow::onDeviceAdded() alongside
+// its DeviceConnection and kept for that device's whole lifetime -- not tied
+// to any UI surface being open. MainWindow feeds handleTelemetry()/
+// handleTerminal() from that device's Backend regardless of whether the
+// script editor (DiagramBlockConfigDialog, opened via the script icon on
+// that device's DeviceCard) is currently on screen -- the dialog just gives
+// the operator a window into what's already running (pre-fills from
+// recentLog(), then attaches to logMessage()/errorOccurred() while open, so
+// reopening shows what happened while it was closed too) plus the editor
+// that calls setScript(). DiagramPage (diagrampage.h) also uses this class,
+// for the shelved canvas-based entry point -- see that file's own note.
 class DiagramScriptRuntime : public QObject {
     Q_OBJECT
 

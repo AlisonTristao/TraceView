@@ -48,6 +48,10 @@ public:
 
 signals:
     void configRequested(const QString& deviceId);
+    // Emitted on a click on the script icon, just left of the gear -- opens
+    // this device's DiagramScriptRuntime script editor (see MainWindow,
+    // which owns that runtime; this card knows nothing about it).
+    void scriptRequested(const QString& deviceId);
     // Emitted on a plain click anywhere on the card except the gear button.
     // DevicesGrid owns turning this into an actual selection change.
     void selectRequested(const QString& deviceId);
@@ -66,6 +70,8 @@ private:
     QRect headerRect() const;
     // Same right-aligned corner placement math as DashboardCell::gearButtonRect().
     QRect gearButtonRect() const;
+    // Immediately left of the gear, same size -- the script icon.
+    QRect scriptButtonRect() const;
     // Fixed geometry (doesn't depend on paint-time text layout) so both
     // paintEvent() and mousePressEvent() share one source of truth.
     QRect statusDotRect() const;

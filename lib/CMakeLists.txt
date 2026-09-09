@@ -529,6 +529,11 @@ target_link_libraries(traceview_ui
         traceview_devices
         traceview_diagnostics
         traceview_diagram
+        # MainWindow includes diagram/diagramscriptruntime.h directly (owns
+        # one DiagramScriptRuntime per device) -- QJSValue in that header's
+        # own private interface means anything including it needs Qt6::Qml
+        # too, not just traceview_diagram's own .cpp files.
+        Qt6::Qml
         traceview_logs
         traceview_ota
         traceview_project

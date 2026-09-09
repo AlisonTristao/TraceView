@@ -203,6 +203,11 @@ signals:
     // Bubbled straight from the selected card's DeviceCard::connectToggleRequested
     // -- DevicesGrid has no DeviceConnection of its own to flip, MainWindow does.
     void connectToggleRequested(const QString& deviceId);
+    // Bubbled straight from DeviceCard::scriptRequested -- DevicesGrid has no
+    // DiagramScriptRuntime of its own to open a script editor against
+    // (traceview_devices doesn't depend on traceview_diagram/Qt6::Qml),
+    // MainWindow does.
+    void scriptRequested(const QString& deviceId);
     // A removeDevice() that was refused because other devices ride this one
     // (see removeDevice()). Carries the blocked device and the names of what
     // depends on it, so the explanation can say which ones rather than just

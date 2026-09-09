@@ -163,6 +163,7 @@ void DevicesGrid::applyInsertDevice(const Device& device, int index) {
     connect(card, &DeviceCard::configRequested, this, &DevicesGrid::handleConfigRequested);
     connect(card, &DeviceCard::selectRequested, this, &DevicesGrid::handleCardSelectRequested);
     connect(card, &DeviceCard::connectToggleRequested, this, &DevicesGrid::connectToggleRequested);
+    connect(card, &DeviceCard::scriptRequested, this, &DevicesGrid::scriptRequested);
     card->show();
     m_cards.insert(clampedIndex, card);
 

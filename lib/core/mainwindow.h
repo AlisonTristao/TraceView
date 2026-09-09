@@ -31,7 +31,7 @@ class DashboardWidget;
 class DebugChartsWindow;
 class DeviceConnection;
 class DevicesGrid;
-class DiagramPage;
+class DiagramScriptRuntime;
 class FrameLog;
 class LayersPanel;
 class LogViewer;
@@ -176,9 +176,6 @@ private:
     // Same fan-out as refreshPropertiesPanelDevices() above, for the OTA
     // tab's device list -- a no-op if m_otaTab hasn't been opened yet.
     void refreshOtaTabDevices();
-    // Same fan-out, for the Control Diagram tab's device list -- a no-op if
-    // m_diagramTab hasn't been opened yet.
-    void refreshDiagramTabDevices();
     // Lazily starts watching `parentDeviceId`'s hub.peers topic (resolved by
     // name from its own catalog, never a hardcoded topic/field id -- see
     // m_hubPeerWatches) the first time it is asked for, then returns
@@ -253,11 +250,13 @@ private:
     // onOpenOtaTab()/onOtaTabCloseRequested().
     void onOpenSettingsTab();
     void onSettingsTabCloseRequested(int index);
-    // File > "Control Diagram..." -- opens the singleton block-diagram tab
-    // (creating it on first use) or switches to it. Same singleton-closable-
-    // tab lifecycle as onOpenOtaTab()/onOtaTabCloseRequested().
-    void onOpenDiagramTab();
-    void onDiagramTabCloseRequested(int index);
+    // Script icon on a device's card (DeviceCard::scriptRequested) -- opens
+    // that device's DiagramScriptRuntime script editor
+    // (DiagramBlockConfigDialog). The canvas/diagram tab this used to live
+    // under is shelved for now (lib/diagram/diagrampage.h and friends are
+    // unused but kept for later); the runtime and its live telemetry/
+    // terminal wiring are not -- see m_scriptRuntimes below.
+    void onDeviceScriptRequested(const QString& deviceId);
     // Status-bar history button / View menu -- shows (or raises) the non-modal
     // window listing every status-bar message posted this session.
     void onShowNotificationHistory();
@@ -316,11 +315,14 @@ private:
     // ribbon page as a stable key" trick as the OTA / BTP monitor tabs above.
     QWidget* m_settingsTabPage = nullptr;
     SettingsPage* m_settingsTab = nullptr;
-    // The Control Diagram tab -- same singleton-closable-tab lifecycle and
-    // "empty ribbon page as a stable key" trick as the OTA / BTP monitor /
-    // Settings tabs above.
-    QWidget* m_diagramTabPage = nullptr;
-    DiagramPage* m_diagramTab = nullptr;
+    // One live script engine per device (lib/diagram/diagramscriptruntime.h),
+    // created alongside its DeviceConnection in onDeviceAdded() and kept for
+    // that device's whole lifetime -- independent of whether its script
+    // editor (DiagramBlockConfigDialog, opened via the card's script icon)
+    // is currently open. Feeds telemetry/terminal in createDeviceConnection()
+    // and relays its own sendCommand/sendTerminal calls back to that same
+    // device's Backend.
+    QHash<QString, DiagramScriptRuntime*> m_scriptRuntimes;
     // App-wide in-memory diagnostics buffers (lib/diagnostics). Owned here,
     // created first thing in the constructor; every DeviceConnection's Backend
     // feeds them (see createDeviceConnection) and postStatus() feeds
@@ -359,7 +361,6 @@ private:
     QAction* m_openOtaTabAction = nullptr;
     QAction* m_openBtpMonitorAction = nullptr;
     QAction* m_openSettingsTabAction = nullptr;
-    QAction* m_openDiagramTabAction = nullptr;
     QAction* m_removeAction = nullptr;
     QAction* m_copyAction = nullptr;
     QAction* m_pasteAction = nullptr;

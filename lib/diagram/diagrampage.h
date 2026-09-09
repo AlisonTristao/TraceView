@@ -15,19 +15,29 @@ class DiagramScene;
 class DiagramScriptRuntime;
 class DiagramView;
 
-// The Control tab's content: a Simulink-style canvas (DiagramScene/
-// DiagramView) that mirrors DevicesGrid's own device list one-to-one -- every
-// device already configured in the Devices tab shows up here as a block,
-// automatically, the moment its device exists (see setDevices()). Each block
-// owns a live DiagramScriptRuntime (see that class): MainWindow calls
-// feedTelemetry()/feedTerminal() as that device's Backend produces traffic,
-// and connects commandRequested()/terminalInRequested() back to
-// Backend::sendCommand()/sendTerminalIn() -- this class never touches
-// Backend/DeviceConnection directly, keeping traceview_diagram independent
-// of traceview_protocol, same layering traceview_devices already follows.
-// The diagram's own connections (arrows between blocks) carry no runtime
-// data yet -- purely documentary for this pass. No .tvproj persistence yet:
-// scripts are kept in memory only, for the lifetime of the open tab.
+// SHELVED (not wired into MainWindow) in favor of a simpler entry point: a
+// script icon directly on each device's DeviceCard, opening
+// DiagramBlockConfigDialog against a DiagramScriptRuntime MainWindow owns
+// per device (see mainwindow.cpp's onDeviceAdded()/onDeviceScriptRequested())
+// instead of through this canvas. Kept compiling and untouched -- the
+// block-diagram idea (wiring devices together visually, not just scripting
+// one at a time) is still worth coming back to -- but nothing currently
+// constructs a DiagramPage.
+//
+// What it was/would be: the Control tab's content, a Simulink-style canvas
+// (DiagramScene/DiagramView) that mirrors DevicesGrid's own device list
+// one-to-one -- every device already configured in the Devices tab shows up
+// here as a block, automatically, the moment its device exists (see
+// setDevices()). Each block owns a live DiagramScriptRuntime (see that
+// class): MainWindow would call feedTelemetry()/feedTerminal() as that
+// device's Backend produces traffic, and connect commandRequested()/
+// terminalInRequested() back to Backend::sendCommand()/sendTerminalIn() --
+// this class never touches Backend/DeviceConnection directly, keeping
+// traceview_diagram independent of traceview_protocol, same layering
+// traceview_devices already follows. The diagram's own connections (arrows
+// between blocks) carry no runtime data -- purely documentary. toJson()/
+// fromJson() persist block positions/scripts/connections, but nothing calls
+// them while this stays unwired from ProjectStore.
 class DiagramPage : public QWidget {
     Q_OBJECT
 

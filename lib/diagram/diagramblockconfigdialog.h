@@ -9,12 +9,17 @@ namespace traceview {
 
 class DiagramScriptRuntime;
 
-// Opened on double-clicking a DiagramBlockItem (DiagramScene::blockActivated
-// -> DiagramPage). Edits that block's script (JavaScript, run by its
-// DiagramScriptRuntime -- see that class for the onTelemetry/onTerminal/
-// device.* surface) and shows a live log fed by the runtime's own
-// logMessage()/errorOccurred() signals, so activity from *before* this
-// dialog was opened isn't shown, only what happens while it's up.
+// Opened via the script icon on a device's card (DeviceCard::scriptRequested
+// -> MainWindow::onDeviceScriptRequested). Edits that device's script
+// (JavaScript, run by its DiagramScriptRuntime -- see that class for the
+// onTelemetry/onTerminal/device.* surface) and shows a log pre-filled from
+// the runtime's recentLog() and then kept live via its logMessage()/
+// errorOccurred() signals, so both what happened before this dialog opened
+// and what happens while it's up are visible.
+//
+// Also used, unmodified, by the shelved DiagramPage canvas (diagrampage.h) --
+// opened there from a block double-click instead of a card icon, everything
+// else the same.
 //
 // OK only closes the dialog once `runtime`'s script actually parses --
 // setScript() failing leaves the dialog open with the error already visible

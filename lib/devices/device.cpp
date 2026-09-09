@@ -8,6 +8,7 @@ QJsonObject deviceToJson(const Device& device) {
     object["name"] = device.name;
     object["commType"] = int(device.commType);
     object["description"] = device.description;
+    object["script"] = device.script;
     object["transportType"] = int(device.transportType);
     object["portName"] = device.portName;
     object["baudRate"] = device.baudRate;
@@ -50,6 +51,7 @@ Device deviceFromJson(const QJsonObject& object, bool* ok) {
     // than producing an unrepresentable Device.
     device.commType = CommType::Btp;
     device.description = object.value("description").toString();
+    device.script = object.value("script").toString();
     // Missing (a save from before TransportType existed) or an out-of-range
     // stored value both fall back to Serial -- the only transport that
     // existed before, so an older project always loads exactly as it did.

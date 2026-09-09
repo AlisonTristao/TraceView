@@ -114,6 +114,13 @@ struct Device {
     bool connected = false;
     CommType commType = CommType::Btp;
     QString description;
+    // JavaScript run live for this device by its own DiagramScriptRuntime
+    // (lib/diagram/diagramscriptruntime.h): onTelemetry(sample)/
+    // onTerminal(text) react to this device's real traffic, and
+    // device.sendCommand()/sendTerminal() write back to it. Edited via the
+    // script icon on this device's card (DeviceCard), not this dialog --
+    // plain persisted config, same treatment as `description`.
+    QString script;
     // What the device reported in its own HELLO_RESULT (protocol/
     // btphandshake.h's sessionEstablished()), surfaced read-only in
     // DeviceConfigDialog's "Reported by device" section -- never

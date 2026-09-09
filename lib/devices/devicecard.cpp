@@ -123,6 +123,30 @@ void drawGearIcon(QPainter& painter, const QRect& r, const QColor& color) {
     painter.drawEllipse(QPointF(0, 0), bodyRadius * 0.32, bodyRadius * 0.32);
     painter.restore();
 }
+
+// "<>" code-bracket glyph for the script icon -- same "draw it, don't fake
+// it" procedural approach as drawGearIcon() just above.
+void drawScriptIcon(QPainter& painter, const QRect& r, const QColor& color) {
+    painter.save();
+    painter.setRenderHint(QPainter::Antialiasing);
+    painter.translate(r.topLeft());
+    const qreal s = r.width();
+
+    QPen pen(color, s * 0.12);
+    pen.setCapStyle(Qt::RoundCap);
+    pen.setJoinStyle(Qt::RoundJoin);
+    painter.setPen(pen);
+
+    const qreal midY = s * 0.5;
+    const qreal apexInset = s * 0.16;
+    painter.drawLine(QPointF(s * 0.42, s * 0.16), QPointF(apexInset, midY));
+    painter.drawLine(QPointF(apexInset, midY), QPointF(s * 0.42, s * 0.84));
+
+    painter.drawLine(QPointF(s * 0.58, s * 0.16), QPointF(s - apexInset, midY));
+    painter.drawLine(QPointF(s - apexInset, midY), QPointF(s * 0.58, s * 0.84));
+
+    painter.restore();
+}
 }  // namespace
 
 DeviceCard::DeviceCard(QWidget* parent) : QWidget(parent) {
@@ -152,6 +176,11 @@ QRect DeviceCard::gearButtonRect() const {
     const QRect header = headerRect();
     const int y = (header.height() - kIconSize) / 2;
     return QRect(header.right() - kIconMargin - kIconSize + 1, y, kIconSize, kIconSize);
+}
+
+QRect DeviceCard::scriptButtonRect() const {
+    const QRect gear = gearButtonRect();
+    return QRect(gear.left() - kIconMargin - kIconSize, gear.top(), kIconSize, kIconSize);
 }
 
 QRect DeviceCard::statusDotRect() const {
@@ -207,7 +236,8 @@ void DeviceCard::paintEvent(QPaintEvent*) {
     painter.drawEllipse(dotRect);
     textRect.setLeft(dotRect.right() + kIconMargin);
 
-    textRect.setRight(gearButtonRect().left() - kIconMargin);
+    textRect.setRight(scriptButtonRect().left() - kIconMargin);
+    drawScriptIcon(painter, scriptButtonRect(), headerFg);
     drawGearIcon(painter, gearButtonRect(), headerFg);
 
     // Signal strength: only a hub child (dongle<->robot ESP-NOW link) has
@@ -328,6 +358,11 @@ void DeviceCard::mousePressEvent(QMouseEvent* event) {
     }
     if (gearButtonRect().contains(event->position().toPoint())) {
         emit configRequested(m_device.id);
+        event->accept();
+        return;
+    }
+    if (scriptButtonRect().contains(event->position().toPoint())) {
+        emit scriptRequested(m_device.id);
         event->accept();
         return;
     }
