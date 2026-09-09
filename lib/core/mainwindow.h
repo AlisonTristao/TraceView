@@ -31,6 +31,7 @@ class DashboardWidget;
 class DebugChartsWindow;
 class DeviceConnection;
 class DevicesGrid;
+class DiagramPage;
 class FrameLog;
 class LayersPanel;
 class LogViewer;
@@ -175,6 +176,9 @@ private:
     // Same fan-out as refreshPropertiesPanelDevices() above, for the OTA
     // tab's device list -- a no-op if m_otaTab hasn't been opened yet.
     void refreshOtaTabDevices();
+    // Same fan-out, for the Control Diagram tab's device list -- a no-op if
+    // m_diagramTab hasn't been opened yet.
+    void refreshDiagramTabDevices();
     // Lazily starts watching `parentDeviceId`'s hub.peers topic (resolved by
     // name from its own catalog, never a hardcoded topic/field id -- see
     // m_hubPeerWatches) the first time it is asked for, then returns
@@ -249,6 +253,11 @@ private:
     // onOpenOtaTab()/onOtaTabCloseRequested().
     void onOpenSettingsTab();
     void onSettingsTabCloseRequested(int index);
+    // File > "Control Diagram..." -- opens the singleton block-diagram tab
+    // (creating it on first use) or switches to it. Same singleton-closable-
+    // tab lifecycle as onOpenOtaTab()/onOtaTabCloseRequested().
+    void onOpenDiagramTab();
+    void onDiagramTabCloseRequested(int index);
     // Status-bar history button / View menu -- shows (or raises) the non-modal
     // window listing every status-bar message posted this session.
     void onShowNotificationHistory();
@@ -307,6 +316,11 @@ private:
     // ribbon page as a stable key" trick as the OTA / BTP monitor tabs above.
     QWidget* m_settingsTabPage = nullptr;
     SettingsPage* m_settingsTab = nullptr;
+    // The Control Diagram tab -- same singleton-closable-tab lifecycle and
+    // "empty ribbon page as a stable key" trick as the OTA / BTP monitor /
+    // Settings tabs above.
+    QWidget* m_diagramTabPage = nullptr;
+    DiagramPage* m_diagramTab = nullptr;
     // App-wide in-memory diagnostics buffers (lib/diagnostics). Owned here,
     // created first thing in the constructor; every DeviceConnection's Backend
     // feeds them (see createDeviceConnection) and postStatus() feeds
@@ -345,6 +359,7 @@ private:
     QAction* m_openOtaTabAction = nullptr;
     QAction* m_openBtpMonitorAction = nullptr;
     QAction* m_openSettingsTabAction = nullptr;
+    QAction* m_openDiagramTabAction = nullptr;
     QAction* m_removeAction = nullptr;
     QAction* m_copyAction = nullptr;
     QAction* m_pasteAction = nullptr;

@@ -411,6 +411,54 @@ target_link_libraries(traceview_ota
         traceview_devices
 )
 
+# traceview_diagram: the Control tab's content -- a Simulink-style block
+# diagram (DiagramScene/DiagramView/DiagramBlockItem) where each block mirrors
+# a Device from the Devices tab, one per device automatically, and exposes
+# its 3 BTP channels (Command/Terminal/Telemetry) as ports -- visual only,
+# connections carry no runtime data yet. Each block also owns a live
+# DiagramScriptRuntime (QJSEngine): MainWindow feeds it that device's
+# telemetry/terminal traffic and relays its sendCommand/sendTerminal calls
+# back to the real Backend, so the script genuinely reacts to and drives that
+# device -- see diagramscriptruntime.h. No .tvproj persistence yet (see
+# DiagramBlockConfigDialog's own note).
+# Depends on traceview_devices for Device/deviceLinkState (the same struct the
+# Devices tab's cards read), traceview_theme for painting (same reasoning as
+# traceview_devices's own link comment), and Qt6::Qml for QJSEngine/QJSValue
+# only -- no QML files, no scene graph.
+add_library(traceview_diagram STATIC
+    diagram/diagramport.h
+    diagram/diagramportitem.cpp
+    diagram/diagramportitem.h
+    diagram/diagramblockitem.cpp
+    diagram/diagramblockitem.h
+    diagram/diagramconnectionitem.cpp
+    diagram/diagramconnectionitem.h
+    diagram/diagramscene.cpp
+    diagram/diagramscene.h
+    diagram/diagramview.cpp
+    diagram/diagramview.h
+    diagram/diagramscriptruntime.cpp
+    diagram/diagramscriptruntime.h
+    diagram/diagramblockconfigdialog.cpp
+    diagram/diagramblockconfigdialog.h
+    diagram/diagrampage.cpp
+    diagram/diagrampage.h
+)
+
+target_include_directories(traceview_diagram PUBLIC
+    ${CMAKE_SOURCE_DIR}/include
+    ${CMAKE_SOURCE_DIR}/lib
+)
+
+target_link_libraries(traceview_diagram
+    PUBLIC
+        Qt6::Widgets
+        traceview_devices
+    PRIVATE
+        traceview_theme
+        Qt6::Qml
+)
+
 # traceview_ui: MainWindow/Ribbon/AboutDialog — application chrome and
 # coordination. Depends on the dashboard/project/theme layers to wire them
 # together; nothing else is allowed to depend on traceview_ui.
@@ -480,6 +528,7 @@ target_link_libraries(traceview_ui
         traceview_dashboard
         traceview_devices
         traceview_diagnostics
+        traceview_diagram
         traceview_logs
         traceview_ota
         traceview_project

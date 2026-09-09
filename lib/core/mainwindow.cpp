@@ -40,6 +40,7 @@
 #include "deviceconnection.h"
 #include "devices/devicesgrid.h"
 #include "diagnostics/btpmonitortab.h"
+#include "diagram/diagrampage.h"
 #include "diagnostics/framelog.h"
 #include "diagnostics/notificationhistorywindow.h"
 #include "diagnostics/notificationlog.h"
@@ -560,6 +561,11 @@ void MainWindow::buildMenus() {
     m_openSettingsTabAction->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_Comma));
     connect(m_openSettingsTabAction, &QAction::triggered, this, &MainWindow::onOpenSettingsTab);
     fileMenu->addAction(m_openSettingsTabAction);
+
+    m_openDiagramTabAction = new QAction(tr("&Control Diagram..."), this);
+    m_openDiagramTabAction->setShortcut(QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_C));
+    connect(m_openDiagramTabAction, &QAction::triggered, this, &MainWindow::onOpenDiagramTab);
+    fileMenu->addAction(m_openDiagramTabAction);
 
     auto* viewMenu = menuBar()->addMenu(tr("&View"));
 
@@ -1171,6 +1177,8 @@ void MainWindow::onRibbonTabChanged(int index) {
         activeContent = m_btpMonitorTab;
     } else if (currentPage != nullptr && currentPage == m_settingsTabPage) {
         activeContent = m_settingsTab;
+    } else if (currentPage != nullptr && currentPage == m_diagramTabPage) {
+        activeContent = m_diagramTab;
     } else if (currentPage != nullptr) {
         for (const OpenLogTab& tab : m_openLogTabs) {
             if (tab.ribbonPage == currentPage) {
@@ -1713,6 +1721,25 @@ DeviceConnection* MainWindow::createDeviceConnection(const Device& device) {
                                    double value) {
                 onHubPeerFieldSample(id, binding, timestampUs, value);
             });
+    // Control Diagram block scripts (lib/diagram/diagramscriptruntime.h):
+    // every telemetry sample and terminal byte this device's Backend
+    // produces, for as long as its block's script wants to react to them.
+    // Guarded on m_diagramTab -- a no-op until the tab has been opened once,
+    // same convention as refreshOtaTabDevices().
+    connect(backend, &Backend::fieldSample, this,
+            [this, id = device.id](const TelemetryFieldBinding& binding, quint64 timestampUs,
+                                   double value) {
+                if (m_diagramTab != nullptr) {
+                    m_diagramTab->feedTelemetry(id, binding.topicId, binding.fieldId,
+                                                binding.elementIndex, value, timestampUs);
+                }
+            });
+    connect(backend, &Backend::terminalDataReceived, this,
+            [this, id = device.id](const QByteArray& data) {
+                if (m_diagramTab != nullptr) {
+                    m_diagramTab->feedTerminal(id, QString::fromUtf8(data));
+                }
+            });
     return connection;
 }
 
@@ -1735,6 +1762,7 @@ void MainWindow::onDeviceAdded(const Device& device) {
     refreshDeviceStatusLabel();
     refreshPropertiesPanelDevices();
     refreshOtaTabDevices();
+    refreshDiagramTabDevices();
 }
 
 void MainWindow::onDeviceRemoved(const QString& id) {
@@ -1757,6 +1785,7 @@ void MainWindow::onDeviceRemoved(const QString& id) {
     refreshDeviceStatusLabel();
     refreshPropertiesPanelDevices();
     refreshOtaTabDevices();
+    refreshDiagramTabDevices();
 }
 
 void MainWindow::onDeviceUpdated(const Device& device) {
@@ -1791,6 +1820,7 @@ void MainWindow::onDeviceUpdated(const Device& device) {
     // Device combo should show as its selected entry's label.
     refreshPropertiesPanelDevices();
     refreshOtaTabDevices();
+    refreshDiagramTabDevices();
 }
 
 void MainWindow::onDeviceConnectToggleRequested(const QString& deviceId) {
@@ -1909,6 +1939,12 @@ void MainWindow::onSaveProject() {
                                                  m_dashboardGrid->toJson());
     ProjectStore::instance().setSection("workspaces", WorkspaceManager::instance().toJson());
     ProjectStore::instance().setSection("devices", m_devicesGrid->toJson());
+    // Only while the tab has actually been opened this session -- m_diagramTab
+    // is null otherwise, and writing an empty section would wipe out whatever
+    // this project already had saved from an earlier session that did open it.
+    if (m_diagramTab != nullptr) {
+        ProjectStore::instance().setSection("diagram", m_diagramTab->toJson());
+    }
 
     QString path = ProjectStore::instance().currentPath();
     if (path.isEmpty()) {
@@ -1928,6 +1964,9 @@ void MainWindow::onSaveProjectAs() {
                                                  m_dashboardGrid->toJson());
     ProjectStore::instance().setSection("workspaces", WorkspaceManager::instance().toJson());
     ProjectStore::instance().setSection("devices", m_devicesGrid->toJson());
+    if (m_diagramTab != nullptr) {
+        ProjectStore::instance().setSection("diagram", m_diagramTab->toJson());
+    }
 
     const QString path =
         QFileDialog::getSaveFileName(this, tr("Save Project As"), QString(), kProjectFileFilter);
@@ -1996,6 +2035,10 @@ void MainWindow::onLogTabCloseRequested(int index) {
     }
     if (page != nullptr && page == m_settingsTabPage) {
         onSettingsTabCloseRequested(index);
+        return;
+    }
+    if (page != nullptr && page == m_diagramTabPage) {
+        onDiagramTabCloseRequested(index);
         return;
     }
     for (int i = 0; i < m_openLogTabs.size(); ++i) {
@@ -2159,6 +2202,62 @@ void MainWindow::onSettingsTabCloseRequested(int index) {
     m_settingsTabPage = nullptr;
 }
 
+void MainWindow::onOpenDiagramTab() {
+    if (m_diagramTab != nullptr) {
+        for (int i = 0; i < m_ribbon->count(); ++i) {
+            if (m_ribbon->pageAt(i) == m_diagramTabPage) {
+                m_ribbon->setCurrentIndex(i);
+                break;
+            }
+        }
+        return;
+    }
+
+    m_diagramTab = new DiagramPage(this);
+    m_diagramTab->setDevices(m_devicesGrid->devices());
+    m_diagramTab->fromJson(ProjectStore::instance().section("diagram"));
+    // A block script's device.sendCommand()/device.sendTerminal() call --
+    // relayed to that device's real Backend, the same slots a control
+    // widget or serial monitor terminal already sends through.
+    connect(m_diagramTab, &DiagramPage::commandRequested, this,
+            [this](const QString& deviceId, const QString& text) {
+                if (DeviceConnection* connection = m_deviceConnections.value(deviceId)) {
+                    connection->backend()->sendCommand(text.toUtf8());
+                }
+            });
+    connect(m_diagramTab, &DiagramPage::terminalInRequested, this,
+            [this](const QString& deviceId, const QString& text) {
+                if (DeviceConnection* connection = m_deviceConnections.value(deviceId)) {
+                    connection->backend()->sendTerminalIn(text.toUtf8());
+                }
+            });
+    m_contentStack->addWidget(m_diagramTab);
+
+    // An empty ribbon page: this tab carries no ribbon buttons of its own
+    // (its Add Block control lives inside DiagramPage itself), the page just
+    // gives it a slot in Ribbon's stack and a stable lookup key
+    // (m_diagramTabPage) -- same trick as m_otaTabPage/m_btpMonitorTabPage.
+    auto* page = new QWidget(this);
+    page->setObjectName("ribbonPage");
+    page->setFixedHeight(kRibbonPageHeight);
+
+    const int index = m_ribbon->addTab(tr("Control Diagram"), page, /*enabled=*/true, QString(),
+                                       /*closable=*/true);
+    m_diagramTabPage = page;
+    m_ribbon->setCurrentIndex(index);
+}
+
+void MainWindow::onDiagramTabCloseRequested(int index) {
+    if (m_diagramTab == nullptr || m_ribbon->pageAt(index) != m_diagramTabPage) {
+        return;
+    }
+    m_ribbon->removeTab(index);
+    m_contentStack->removeWidget(m_diagramTab);
+    m_diagramTab->deleteLater();
+    m_diagramTab = nullptr;
+    m_diagramTabPage = nullptr;
+}
+
 void MainWindow::onShowNotificationHistory() {
     if (m_notificationWindow) {
         m_notificationWindow->raise();
@@ -2190,6 +2289,12 @@ void MainWindow::refreshOtaTabDevices() {
     }
 }
 
+void MainWindow::refreshDiagramTabDevices() {
+    if (m_diagramTab != nullptr) {
+        m_diagramTab->setDevices(m_devicesGrid->devices());
+    }
+}
+
 void MainWindow::openRecentFile(const QString& path) {
     if (!ProjectStore::instance().load(path)) {
         QMessageBox::warning(this, tr("Open Project"), ProjectStore::instance().lastError());
@@ -2218,6 +2323,12 @@ void MainWindow::openRecentFile(const QString& path) {
     m_devicesGrid->fromJson(ProjectStore::instance().section("devices"));
     m_loadingProject = false;
     m_devicesGrid->undoStack()->clear();
+    // Only if the tab has already been opened -- otherwise onOpenDiagramTab()
+    // applies this project's "diagram" section itself, right after building
+    // the default one from the device list above (see its own call).
+    if (m_diagramTab != nullptr) {
+        m_diagramTab->fromJson(ProjectStore::instance().section("diagram"));
+    }
     m_dashboardGrid->fromJson(
         WorkspaceManager::instance().dashboardFor(WorkspaceManager::instance().activeId()));
     m_dashboardGrid->undoStack()->clear();
@@ -2304,7 +2415,8 @@ void MainWindow::onShowKeyboardShortcuts() {
          Row{tr("Open log offline"), keysOf(m_openLogFileAction)},
          Row{tr("Upload firmware (OTA)"), keysOf(m_openOtaTabAction)},
          Row{tr("BTP traffic monitor"), keysOf(m_openBtpMonitorAction)},
-         Row{tr("Settings"), keysOf(m_openSettingsTabAction)}}});
+         Row{tr("Settings"), keysOf(m_openSettingsTabAction)},
+         Row{tr("Control diagram"), keysOf(m_openDiagramTabAction)}}});
 
     sections.append(Section{
         tr("Layout & widgets"),

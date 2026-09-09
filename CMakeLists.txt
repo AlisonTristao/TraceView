@@ -36,7 +36,11 @@ endif()
 # for actual network traffic: QNetworkAccessManager against bally_OS's OTA
 # HTTP side channel (GET /status, POST /update), a separate Wi-Fi link from
 # the BTP/Serial/USB-HID/hub transport the rest of this app talks over.
-find_package(Qt6 REQUIRED COMPONENTS Widgets SerialPort Network LinguistTools)
+# Qml is here only for QJSEngine/QJSValue -- traceview_diagram's per-block
+# script runtime (lib/diagram/diagramscriptruntime.h). No QML/.qml files, no
+# scene graph: this is the lightweight "just the JS engine" half of the
+# module, the same subset embedders reach for.
+find_package(Qt6 REQUIRED COMPONENTS Widgets SerialPort Network Qml LinguistTools)
 
 # BTP is the canonical, shared source of the BTP v1 wire format and codec
 # (see BTP/PLANO_GERAL.txt) -- TraceView does not keep its own copy of the
