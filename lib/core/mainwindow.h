@@ -4,7 +4,7 @@
 #include <QJsonObject>
 #include <QMainWindow>
 #include <QPointer>
-#include <QRect>
+#include <QByteArray>
 #include <QString>
 #include <QVector>
 
@@ -460,7 +460,7 @@ private:
     QLabel* m_deviceStatusLabel = nullptr;
     QToolButton* m_fullscreenButton = nullptr;
     bool m_wasMaximized = false;
-    QRect m_preFullscreenGeometry;
+    QByteArray m_preFullscreenGeometry;
 };
 
 }  // namespace traceview

@@ -68,10 +68,6 @@
 #include "usbhidmanager.h"
 #include "workspaceswitcher.h"
 
-#ifdef Q_OS_WIN
-#include <windows.h>
-#endif
-
 namespace traceview {
 
 namespace {
@@ -2380,203 +2376,27 @@ void MainWindow::onDebug() {
 }
 
 void MainWindow::onFullscreenToggled(bool checked) {
-    // On Windows this deliberately never touches Qt::WindowFullScreen /
-    // showFullScreen() at all - confirmed via an A/B test (temporarily
-    // routing through vanilla Qt showFullScreen()/showNormal()/
-    // showMaximized() with none of the WinAPI code below) that the flicker
-    // this function exists to avoid reproduces identically with plain Qt,
-    // with zero custom code involved. That matches a long-standing,
-    // still-open category of Qt-on-Windows bug (QTBUG-51093, QTBUG-47247,
-    // years of forum reports, still reproducing on Qt6/Windows 11) in the
-    // QPA windows backend's fullscreen transition - not something fixable
-    // by reordering native calls layered on top of it, only by avoiding
-    // that codepath entirely.
-    //
-    // Instead, "fullscreen" here just means: a borderless window resized to
-    // exactly cover the monitor. That's the same "borderless windowed
-    // fullscreen" idiom games and other native Windows apps use for the
-    // same reason - to Windows it's an ordinary SetWindowPos, no different
-    // from a user dragging the window's edge, so none of Qt's dedicated (and
-    // apparently fragile) fullscreen state machine is ever engaged.
+    setUpdatesEnabled(false);
     if (checked) {
-        // Brackets the native resize below AND the chrome hide() calls
-        // further down in one suspended-repaint block: the native resize
-        // alone already paints once (a borderless window at monitor size,
-        // chrome still visible), and menuBar()->hide()/setTabBarVisible()
-        // each schedule their own relayout/repaint on top of that - three
-        // independent paints landing as three visible steps unless nothing
-        // is allowed to paint until all of it is done.
-        //
-        // setUpdatesEnabled(false) alone doesn't achieve that on Windows: it
-        // only suppresses Qt's own paint-event scheduling, not the WM_PAINT
-        // that SetWindowPos(..., SWP_FRAMECHANGED) below forces synchronously
-        // as part of the frame-style change, which lands (and is visible)
-        // before menuBar()->hide()/setTabBarVisible() even run - that's the
-        // "goes fullscreen with the menu still there, then the ribbon tabs
-        // disappear a moment later" two-step. WM_SETREDRAW is the native
-        // counterpart that actually blocks painting for this HWND at the
-        // Win32 level regardless of source, so it's what suspends that
-        // in-between frame; the RedrawWindow() call once chrome is hidden
-        // forces the single final repaint everything was waiting for.
-        setUpdatesEnabled(false);
-#ifdef Q_OS_WIN
-        // GetWindowPlacement(), not isMaximized()/GetWindowRect(): it hands
-        // back Windows' own canonical "restore to" rectangle
-        // (rcNormalPosition) together with the current show command in one
-        // atomic snapshot. Recomputing that rectangle ourselves (e.g. from
-        // GetWindowRect while maximized) doesn't work - it's the maximized
-        // rect, not the rect the window should return to - and deriving our
-        // own "was maximized" via a separate call/Qt's cached isMaximized()
-        // can race or drift from what SetWindowPlacement() will restore.
-        // Capturing the whole placement and replaying it verbatim on exit
-        // keeps Windows' own restore bookkeeping intact, so a later manual
-        // un-maximize (double-click title bar, Win+Down) still lands on the
-        // right size instead of on a placement we half-guessed.
-        HWND hwnd = reinterpret_cast<HWND>(winId());
-        SendMessageW(hwnd, WM_SETREDRAW, FALSE, 0);
-        WINDOWPLACEMENT placement{};
-        placement.length = sizeof(WINDOWPLACEMENT);
-        GetWindowPlacement(hwnd, &placement);
-        m_wasMaximized = placement.showCmd == SW_SHOWMAXIMIZED;
-        const RECT& normalRect = placement.rcNormalPosition;
-        m_preFullscreenGeometry =
-            QRect(normalRect.left, normalRect.top, normalRect.right - normalRect.left,
-                  normalRect.bottom - normalRect.top);
-
-        // Strip the frame and cover whichever monitor the window is
-        // currently on, in one atomic SetWindowPos. MonitorFromWindow()/
-        // GetMonitorInfoW() report physical pixel bounds - the same
-        // coordinate space winId()'s HWND already operates in as a
-        // per-monitor-DPI-aware window - so this lines up exactly with no
-        // manual DPI math, unlike going through QScreen::geometry() (Qt's
-        // logical/scaled coordinate space) would require. Plain
-        // SetWindowPos never invokes Windows' min/max show animation (that
-        // only triggers via ShowWindow's SW_MAXIMIZE/MINIMIZE/RESTORE
-        // codes) so there's nothing to suppress here either - it's a single
-        // ordinary resize.
-        //
-        // Deliberately NOT animated: an earlier version of this code
-        // animated the grow/shrink via ~60 real SetWindowPos calls over
-        // 200ms. That reintroduced two new problems the instant version
-        // didn't have - visible stutter/stepping (each tick forces a full
-        // relayout+repaint of the live dashboard, which doesn't reliably
-        // fit inside one frame's budget) and, more seriously, a corrupted
-        // taskbar after exiting (rapid resizes through the taskbar's screen
-        // region appear to confuse Explorer's own fullscreen-window
-        // detection). Both were absent with a single atomic resize, so this
-        // stays a snap rather than a tween.
-        LONG style = GetWindowLongW(hwnd, GWL_STYLE);
-        style &= ~WS_OVERLAPPEDWINDOW;
-        SetWindowLongW(hwnd, GWL_STYLE, style);
-
-        MONITORINFO monitorInfo{};
-        monitorInfo.cbSize = sizeof(MONITORINFO);
-        GetMonitorInfoW(MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST), &monitorInfo);
-        const RECT& mr = monitorInfo.rcMonitor;
-        SetWindowPos(hwnd, nullptr, mr.left, mr.top, mr.right - mr.left, mr.bottom - mr.top,
-                     SWP_NOZORDER | SWP_FRAMECHANGED);
-#else
+        // Qt saves both the normal geometry and the maximized state.
+        // Capture before hiding chrome or entering fullscreen.
+        m_preFullscreenGeometry = saveGeometry();
         m_wasMaximized = isMaximized();
-        m_preFullscreenGeometry = frameGeometry();
-        showFullScreen();
-#endif
-        m_fullscreenButton->setToolTip(tr("Exit fullscreen (F11 / Esc)"));
         menuBar()->hide();
         m_ribbon->setTabBarVisible(false);
-        SendMessageW(hwnd, WM_SETREDRAW, TRUE, 0);
-        RedrawWindow(hwnd, nullptr, nullptr,
-                     RDW_INVALIDATE | RDW_ALLCHILDREN | RDW_ERASE | RDW_UPDATENOW);
-        setUpdatesEnabled(true);
-        updateRibbonIcons();
-        return;
-    }
-
-    m_fullscreenButton->setToolTip(tr("Fullscreen dashboard (F11)"));
-    // Same reasoning as the entry path: brackets the frame/placement
-    // restore below and the chrome show() calls further down so nothing
-    // paints until the window is at its final size AND its chrome is back,
-    // instead of those landing as separate visible steps.
-    setUpdatesEnabled(false);
-
-#ifdef Q_OS_WIN
-    HWND hwnd = reinterpret_cast<HWND>(winId());
-    SendMessageW(hwnd, WM_SETREDRAW, FALSE, 0);
-    LONG style = GetWindowLongW(hwnd, GWL_STYLE);
-    style |= WS_OVERLAPPEDWINDOW;
-    SetWindowLongW(hwnd, GWL_STYLE, style);
-    // SetWindowLongW's own docs: changing frame-related styles
-    // (WS_OVERLAPPEDWINDOW includes WS_CAPTION/WS_THICKFRAME) only takes
-    // effect once SetWindowPos is called with SWP_FRAMECHANGED. Without
-    // this, Windows keeps computing the non-client area from the stale
-    // borderless style, so the SW_SHOWMAXIMIZED placement below sizes the
-    // window against the wrong frame metrics and its bottom edge ends up
-    // extending under the taskbar. SWP_NOMOVE/SWP_NOSIZE keep this call from
-    // moving/resizing anything itself - it exists purely to make the style
-    // change above take effect before SetWindowPlacement runs.
-    SetWindowPos(hwnd, nullptr, 0, 0, 0, 0,
-                 SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
-
-    // Both the maximized and plain-restore cases go through
-    // SetWindowPlacement rather than a plain SetWindowPos: rcNormalPosition
-    // (what m_preFullscreenGeometry was captured from, on entry) is
-    // documented to be in *workspace* coordinates - relative to the
-    // monitor's work area, which excludes the taskbar - not screen
-    // coordinates. GetWindowPlacement/SetWindowPlacement agree on that
-    // convention between themselves, but a plain SetWindowPos expects
-    // screen coordinates; feeding it workspace coordinates silently shifted
-    // the restored window by the taskbar's thickness, leaving its bottom
-    // edge hidden behind it. Going through SetWindowPlacement both ways
-    // keeps the coordinate space consistent regardless of where the
-    // taskbar is docked.
-    //
-    // Genuine maximize is additionally a distinct OS-tracked state (affects
-    // Aero Snap, what double-click-titlebar toggles back to, etc.), not
-    // just "resized to look like the maximized rect", so SW_SHOWMAXIMIZED
-    // here isn't only about coordinates - it's the only way into that state
-    // at all. Either showCmd goes through ShowWindow's codepath, which
-    // re-invokes Windows' min/max show animation - suspend it for just this
-    // call and restore the user's setting right after. There's no
-    // multi-step sequence left for it to mask a gap in: the frame style
-    // change above paints nothing by itself (see the entry path's
-    // SetWindowLongW comment for why), so this placement call is the only
-    // paint in the sequence.
-    WINDOWPLACEMENT placement{};
-    placement.length = sizeof(WINDOWPLACEMENT);
-    placement.showCmd = m_wasMaximized ? SW_SHOWMAXIMIZED : SW_SHOWNORMAL;
-    placement.rcNormalPosition =
-        RECT{m_preFullscreenGeometry.left(), m_preFullscreenGeometry.top(),
-             m_preFullscreenGeometry.left() + m_preFullscreenGeometry.width(),
-             m_preFullscreenGeometry.top() + m_preFullscreenGeometry.height()};
-
-    ANIMATIONINFO animationInfo{};
-    animationInfo.cbSize = sizeof(animationInfo);
-    SystemParametersInfoW(SPI_GETANIMATION, sizeof(animationInfo), &animationInfo, 0);
-    const int previousMinAnimate = animationInfo.iMinAnimate;
-    animationInfo.iMinAnimate = 0;
-    SystemParametersInfoW(SPI_SETANIMATION, sizeof(animationInfo), &animationInfo, 0);
-
-    SetWindowPlacement(hwnd, &placement);
-
-    animationInfo.iMinAnimate = previousMinAnimate;
-    SystemParametersInfoW(SPI_SETANIMATION, sizeof(animationInfo), &animationInfo, 0);
-#else
-    if (m_wasMaximized) {
-        showMaximized();
+        showFullScreen();
+        m_fullscreenButton->setToolTip(tr("Exit fullscreen (F11 / Esc)"));
     } else {
-        showNormal();
-        // m_preFullscreenGeometry is captured via frameGeometry() above, so
-        // restore it the same way (frame included), not via setGeometry()
-        // which would place just the client area at that rect.
-        setFrameGeometry(m_preFullscreenGeometry);
+        menuBar()->show();
+        m_ribbon->setTabBarVisible(true);
+        // A single setWindowState() call transitions straight from
+        // WindowFullScreen to the target state, so the Windows backend never
+        // passes through the intermediate "normal" bounds that caused the
+        // maximize flash.
+        setWindowState(m_wasMaximized ? Qt::WindowMaximized : Qt::WindowNoState);
+        restoreGeometry(m_preFullscreenGeometry);
+        m_fullscreenButton->setToolTip(tr("Fullscreen dashboard (F11)"));
     }
-#endif
-    menuBar()->show();
-    m_ribbon->setTabBarVisible(true);
-#ifdef Q_OS_WIN
-    SendMessageW(hwnd, WM_SETREDRAW, TRUE, 0);
-    RedrawWindow(hwnd, nullptr, nullptr,
-                 RDW_INVALIDATE | RDW_ALLCHILDREN | RDW_ERASE | RDW_UPDATENOW);
-#endif
     setUpdatesEnabled(true);
     updateRibbonIcons();
 }
