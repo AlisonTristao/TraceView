@@ -579,6 +579,45 @@ void SubscriptionManager::onPeerRebooted(quint32 sourceId) {
     emit subscriptionsChanged();
 }
 
+void SubscriptionManager::onPeerReconnected(quint32 sourceId) {
+    if (sourceId == 0) {
+        return;
+    }
+
+    QList<quint64> affected;
+    for (auto it = m_topics.begin(); it != m_topics.end(); ++it) {
+        if (it.value().sourceId != sourceId || subscriberCountFor(it.key()) == 0) {
+            continue;
+        }
+        // A result for a request sent before the link went down is no longer a
+        // useful acknowledgement for the reassertion below. Forget its
+        // correlation so the new request owns the topic's in-flight state.
+        it.value().inFlightSequence = 0;
+        affected.append(it.key());
+    }
+
+    if (affected.isEmpty()) {
+        return;
+    }
+
+    for (const quint32 sequence : m_pendingSubscribes.keys()) {
+        if (affected.contains(m_pendingSubscribes.value(sequence))) {
+            m_pendingSubscribes.remove(sequence);
+        }
+    }
+    for (const quint64 key : affected) {
+        auto it = m_topics.find(key);
+        if (it == m_topics.end()) {
+            continue;
+        }
+        const quint32 desired = desiredRateFor(key);
+        if (desired != 0) {
+            sendSubscribe(it.value(), desired);
+        }
+    }
+    emit subscriptionsChanged();
+}
+
 void SubscriptionManager::onCatalogUpdated() {
     const QList<quint64> keys = m_topics.keys();
     for (quint64 key : keys) {

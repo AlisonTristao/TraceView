@@ -140,6 +140,12 @@ public slots:
     // BtpBackend calls this.
     void onPeerRebooted(quint32 sourceId);
 
+    // The hub reported this source offline and then online again without a
+    // boot-id change. Re-assert each still-wanted topic immediately instead
+    // of waiting for its ordinary lease-renewal deadline. SUBSCRIBE is
+    // idempotent at the robot, so this also recovers a lost robot-side grant.
+    void onPeerReconnected(quint32 sourceId);
+
     // Wired to ManifestClient::catalogUpdated: SUBSCRIBE needs a non-zero
     // target_boot_id (section 4), which only MANIFEST_DATA supplies, so a
     // subscription requested before its source's manifest arrived is held

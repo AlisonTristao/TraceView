@@ -1444,15 +1444,14 @@ void MainWindow::syncHubPeerWatches() {
 void MainWindow::reconcileHubChildPresence() {
     // A hub child's robot is "live" when its own frames are still reaching this
     // TraceView -- a channel-B frame that passed AEAD open, no older than this.
-    // Comfortably above any sane telemetry period and above the manifest
-    // keepalive, so a live-but-quiet link does not drop to amber; a robot that
-    // has genuinely stopped crosses it within a couple of seconds of the last
-    // sample that would have come.
-    constexpr qint64 kPeerFrameLiveMs = 12000;
-    // Debounce for the FALLBACK path only (hub.peers, used before a
-    // subscription is producing telemetry): a single missed 2 Hz sample must
-    // not flap the dot or hand BtpBackend an on/off/on.
-    constexpr int kOfflineTicksToConfirm = 5;
+    // The dongle publishes authenticated peer presence at up to 2 Hz and
+    // declares a missing robot offline after 1.5 s. Keep direct robot frames
+    // as the stronger signal, but only for a short grace period so a powered
+    // off robot is visible to the operator promptly.
+    constexpr qint64 kPeerFrameLiveMs = 2500;
+    // hub.peers is already a debounced/authenticated signal; adding another
+    // five one-second UI ticks hid a confirmed disconnection for far too long.
+    constexpr int kOfflineTicksToConfirm = 1;
 
     syncHubPeerWatches();
 

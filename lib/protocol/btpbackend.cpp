@@ -964,6 +964,7 @@ void BtpBackend::onPeerPresence(bool online, quint32 bootId) {
     if (m_peerSourceId == 0) {
         return;  // not a hub child
     }
+    const bool wasOnline = m_peerOnline;
     m_peerOnline = online;  // drives only the "waiting vs failed" status text
 
     // Two situations need a fresh catalog request kicked off from here:
@@ -989,6 +990,13 @@ void BtpBackend::onPeerPresence(bool online, quint32 bootId) {
         bootId != 0 && m_childPeerBootId != 0 && bootId != m_childPeerBootId;
     const bool catalogStillMissing = online && !m_childCatalogReceived;
     if (!bootChanged && !catalogStillMissing) {
+        // The robot came back on the same boot. Its grant should normally
+        // still exist, but SUBSCRIBE is idempotent and reasserting it now
+        // makes a transient radio loss (or a robot-side lost grant) recover
+        // immediately instead of waiting for the lease-renewal timer.
+        if (online && !wasOnline) {
+            m_subscriptionManager->onPeerReconnected(m_peerSourceId);
+        }
         return;
     }
     // Guard against firing more than once while the reply is in flight: the
