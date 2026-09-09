@@ -1,13 +1,17 @@
 #include "logs/logviewer.h"
 
+#include <memory>
+
 #include <QAbstractItemView>
 #include <QHeaderView>
 #include <QMessageBox>
 #include <QTableWidget>
+#include <QThread>
 #include <QVBoxLayout>
 
 #include "protocol/logfilereader.h"
 #include "protocol/logseverity.h"
+#include "theme/busyspinner.h"
 
 namespace traceview {
 
@@ -52,17 +56,52 @@ LogViewer::LogViewer(QWidget* parent) : QWidget(parent) {
     auto* layout = new QVBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
     layout->addWidget(m_table);
+
+    // Floats over the table (not part of the layout above) -- see
+    // BusySpinner's own class comment for how it keeps itself pinned to
+    // this widget's corner.
+    m_spinner = new BusySpinner(this);
 }
 
 void LogViewer::openFile(const QString& filePath) {
-    LogFileReader reader;
-    if (!reader.load(filePath)) {
-        QMessageBox::warning(this, tr("Open Log File"), reader.lastError());
-        return;
-    }
+    struct LoadResult {
+        bool ok = false;
+        QString error;
+        QVector<LogEntry> entries;
+    };
+    auto result = std::make_shared<LoadResult>();
 
-    const QVector<LogEntry> entries = reader.entries();
+    m_spinner->start();
 
+    // LogFileReader itself has no Qt/UI dependency (see its class comment),
+    // so the parse is safe to run off the GUI thread; only the table fill
+    // below has to stay on it. A raw QThread::create() rather than
+    // QtConcurrent -- this app links no Concurrent module, and one
+    // fire-and-forget thread per open doesn't need one.
+    QThread* thread = QThread::create([filePath, result] {
+        LogFileReader reader;
+        result->ok = reader.load(filePath);
+        result->error = reader.lastError();
+        result->entries = reader.entries();
+    });
+
+    // No `this` context -- runs (and reclaims the thread) even if this
+    // LogViewer was destroyed first, e.g. its tab got closed mid-load.
+    connect(thread, &QThread::finished, thread, &QThread::deleteLater);
+    // Guarded by `this` as context: Qt skips this one automatically if the
+    // viewer doesn't exist anymore by the time the parse finishes.
+    connect(thread, &QThread::finished, this, [this, result] {
+        m_spinner->stop();
+        if (!result->ok) {
+            QMessageBox::warning(this, tr("Open Log File"), result->error);
+            return;
+        }
+        populateTable(result->entries);
+    });
+    thread->start();
+}
+
+void LogViewer::populateTable(const QVector<LogEntry>& entries) {
     // Filling the table emits a model signal per setItem(), each of which
     // the view acts on -- for a file with tens of thousands of entries that
     // is six times as many relayouts as there are rows, all of them

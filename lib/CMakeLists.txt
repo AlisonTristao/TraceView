@@ -20,6 +20,8 @@ add_library(traceview_theme STATIC
     theme/fontmanager.cpp
     ${CMAKE_SOURCE_DIR}/include/traceview/fontmanager.h
     ${CMAKE_SOURCE_DIR}/include/traceview/font.h
+    theme/busyspinner.cpp
+    theme/busyspinner.h
 )
 
 target_include_directories(traceview_theme PUBLIC
@@ -336,6 +338,11 @@ target_link_libraries(traceview_logs
     PUBLIC
         Qt6::Widgets
         traceview_protocol
+    PRIVATE
+        # BusySpinner (theme/busyspinner.h) only -- the corner "loading"
+        # indicator shown while openFile()'s parse runs on a background
+        # thread.
+        traceview_theme
 )
 
 # traceview_diagnostics: the two diagnostics surfaces -- the Notification
