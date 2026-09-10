@@ -10,6 +10,7 @@ using namespace traceview;
 
 namespace {
 
+constexpr quint16 kControlHello = 0x0001;
 constexpr quint16 kControlHelloResult = 0x0002;
 constexpr quint16 kControlSessionClose = 0x000A;
 constexpr quint16 kTerminalIn = 0x0001;
@@ -77,12 +78,26 @@ void establishSession(BtpBackend& backend, QSignalSpy& written) {
     QVERIFY(enter.startsWith(QByteArrayLiteral("BTP/1 ENTER ")));
     QByteArray nonce = enter.mid(QByteArrayLiteral("BTP/1 ENTER ").size());
     nonce.chop(2);  // CRLF
+    const int beforeReady = written.count();
     backend.feedBytes(QByteArrayLiteral("BTP/1 READY ") + nonce + QByteArrayLiteral("\r\n"));
+    QVERIFY(written.count() > beforeReady);
+
+    // The HELLO btp::Node just sent, framed with this backend's own identity
+    // (BtpBackend::m_terminalSourceId/m_terminalBootId -- random per run) and
+    // its opening sequence number. HELLO_RESULT's RequestRef must echo these
+    // back verbatim, or SessionInitiator::on_frame() (session.hpp) silently
+    // ignores it as uncorrelated instead of completing the handshake -- see
+    // SessionInitiator::connect()'s own comment on why.
+    btp::DecodedFrame hello{};
+    std::vector<std::uint8_t> helloStorage;
+    QVERIFY(decodeWritten(written.at(beforeReady).at(0).toByteArray(), &hello, &helloStorage));
+    QCOMPARE(int(hello.header.type), int(btp::MessageType::Control));
+    QCOMPARE(hello.header.object_id, kControlHello);
 
     QByteArray resultPayload;
-    appendLe32(resultPayload, 0);  // request_source_id
-    appendLe32(resultPayload, 0);  // request_boot_id
-    appendLe32(resultPayload, 1);  // reply_to_sequence
+    appendLe32(resultPayload, hello.header.source_id);  // request_source_id
+    appendLe32(resultPayload, hello.header.boot_id);    // request_boot_id
+    appendLe32(resultPayload, hello.header.sequence);   // reply_to_sequence
     resultPayload.append(char(0)); // SUCCESS
     resultPayload.append(char(btp::kMinimumProtocolVersion));
     resultPayload.append(2, char(0));  // error_code NONE
