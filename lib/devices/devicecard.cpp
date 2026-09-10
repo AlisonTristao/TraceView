@@ -236,7 +236,10 @@ void DeviceCard::paintEvent(QPaintEvent*) {
     painter.drawEllipse(dotRect);
     textRect.setLeft(dotRect.right() + kIconMargin);
 
-    textRect.setRight(scriptButtonRect().left() - kIconMargin);
+    // Wider than kIconMargin (unlike the gap the other header elements use)
+    // -- the script icon sits close enough to a long, elided title that the
+    // default margin read as crowded.
+    textRect.setRight(scriptButtonRect().left() - kIconMargin * 2);
     drawScriptIcon(painter, scriptButtonRect(), headerFg);
     drawGearIcon(painter, gearButtonRect(), headerFg);
 
