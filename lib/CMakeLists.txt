@@ -454,6 +454,11 @@ target_link_libraries(traceview_diagram
     PUBLIC
         Qt6::Widgets
         traceview_devices
+        # DiagramScriptRuntime::handleStatus() takes a
+        # traceview::StatusSeverity (backend/statusseverity.h) in its public
+        # signature -- a real API dependency, not just an impl detail
+        # traceview_backend's own header-only nature would let slide.
+        traceview_backend
     PRIVATE
         traceview_theme
         Qt6::Qml

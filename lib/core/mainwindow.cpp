@@ -1647,6 +1647,14 @@ DeviceConnection* MainWindow::createDeviceConnection(const Device& device) {
     connect(
         connection, &DeviceConnection::connectionStateChanged, this,
         [this, id = device.id](bool connected) { onDeviceConnectionStateChanged(id, connected); });
+    // This device's script runtime's onConnectionChange(), same lookup-by-id
+    // pattern as the fieldSample/terminalDataReceived hooks below.
+    connect(connection, &DeviceConnection::connectionStateChanged, this,
+            [this, id = device.id](bool connected) {
+                if (DiagramScriptRuntime* runtime = m_scriptRuntimes.value(id)) {
+                    runtime->handleConnectionChange(connected);
+                }
+            });
 
     // Everything that gives this device's transport bytes meaning lives
     // behind the Backend interface (backend/backend.h) -- concretely a
@@ -1658,6 +1666,16 @@ DeviceConnection* MainWindow::createDeviceConnection(const Device& device) {
             [this, name = device.name](const QString& text, int timeoutMs,
                                        StatusSeverity severity) {
                 postStatus(text, timeoutMs, severity, name);
+            });
+    // This device's script runtime's onStatus() -- the same statusMessage
+    // signal the status bar uses, so a script sees session established/
+    // failed, subscription rejections, and sendCommand() results (CommandClient
+    // -> BtpBackend -> here) without a separate command-result channel.
+    connect(backend, &Backend::statusMessage, this,
+            [this, id = device.id](const QString& text, int /*timeoutMs*/, StatusSeverity severity) {
+                if (DiagramScriptRuntime* runtime = m_scriptRuntimes.value(id)) {
+                    runtime->handleStatus(text, severity);
+                }
             });
     // BTP traffic monitor taps -- every frame this device's session sends or
     // receives, and every decode failure, tagged with the device. A hub child
@@ -1702,6 +1720,13 @@ DeviceConnection* MainWindow::createDeviceConnection(const Device& device) {
     connect(connection, &DeviceConnection::deviceInfoReported, this,
             [this, id = device.id](const QVector<DeviceInfoRecord>& info) {
                 m_devicesGrid->setDeviceReportedInfo(id, info);
+            });
+    // This device's script runtime's onDeviceInfo().
+    connect(connection, &DeviceConnection::deviceInfoReported, this,
+            [this, id = device.id](const QVector<DeviceInfoRecord>& info) {
+                if (DiagramScriptRuntime* runtime = m_scriptRuntimes.value(id)) {
+                    runtime->handleDeviceInfo(info);
+                }
             });
     // Hooked for every device, not just the ones that turn out to be hubs:
     // whether this device publishes hub.peers is only knowable once its
