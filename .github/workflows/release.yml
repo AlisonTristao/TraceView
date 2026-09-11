@@ -174,3 +174,27 @@ jobs:
             --title "TraceView ${{ github.ref_name }}" \
             --generate-notes \
             --prerelease
+
+      # A tag in this same MAJOR.MINOR line (e.g. v2.5.4 superseding
+      # v2.5.0-v2.5.3) means the older ones were patch-level fixes on top of
+      # each other, not separate versions worth keeping visible -- retiring
+      # them keeps the Releases page (and anyone browsing it by hand,
+      # instead of through the self-updater, which always reads the newest
+      # one anyway) from offering a known-broken download. `gh release
+      # delete` without --cleanup-tag removes only the Release and its
+      # assets; the git tag itself is left alone, so `vX.Y.Z` still resolves
+      # to the exact commit it always did. A different MINOR or MAJOR (a
+      # real new version, not a fix cycle) is never touched.
+      - name: Retire older releases in this minor line
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          current="${{ github.ref_name }}"
+          minor="${current%.*}"
+          gh release list --repo "${{ github.repository }}" --json tagName --jq '.[].tagName' |
+          while read -r tag; do
+            if [ "$tag" != "$current" ] && [ "${tag%.*}" = "$minor" ]; then
+              echo "Deleting superseded release $tag (its tag stays in git history)"
+              gh release delete "$tag" --repo "${{ github.repository }}" --yes
+            fi
+          done
