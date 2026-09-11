@@ -78,7 +78,7 @@ jobs:
           $file = Get-ChildItem build/windows-mingw-release/TraceView-*-windows-x64.exe | Select-Object -First 1
           if (-not $file) { throw "No NSIS installer found under build/windows-mingw-release" }
           $hash = (Get-FileHash $file.FullName -Algorithm SHA256).Hash.ToLower()
-          "$hash  $($file.Name)" | Out-File -FilePath "build/windows-mingw-release/sha256-windows.txt" -Encoding ascii -NoNewline
+          "$hash  $($file.Name)" | Out-File -FilePath "build/windows-mingw-release/sha256-windows.txt" -Encoding ascii
 
       - name: Upload package artifact
         uses: actions/upload-artifact@v4
