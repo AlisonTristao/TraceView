@@ -7,6 +7,21 @@ release flow.
 
 ## [Unreleased]
 
+## [2.5.1] - 2026-09-11
+
+### Fixed
+
+- The Windows installer published by `.github/workflows/release.yml` failed
+  to start (`libbrotlidec.dll não foi encontrado`) because that build uses
+  MSYS2's Qt, whose `Qt6Network.dll` links against a separate Brotli DLL
+  that `windeployqt --compiler-runtime` doesn't know to bundle (the official
+  Qt installer's kit most contributors build with locally doesn't hit this
+  at all). A new `scripts/collect_windows_deps.sh`, run right after
+  `windeployqt` during packaging, walks `ldd` over every deployed
+  `.exe`/`.dll` and copies in whatever else it resolves outside Windows'
+  own system directories -- catching this and any similar gap generically
+  instead of hardcoding one more DLL name.
+
 ## [2.5.0] - 2026-09-11
 
 ### Added
