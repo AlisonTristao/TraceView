@@ -5,6 +5,7 @@
 #include "traceview/fontmanager.h"
 #include "traceview/languagemanager.h"
 #include "traceview/thememanager.h"
+#include "traceview/version.h"
 
 namespace {
 
@@ -22,6 +23,7 @@ int main(int argc, char* argv[]) {
     QApplication app(argc, argv);
     QApplication::setApplicationName("TraceView");
     QApplication::setOrganizationName("AlisonTristao");
+    QApplication::setApplicationVersion(traceview::kVersion);
     QApplication::setWindowIcon(loadAppIcon());
 
     traceview::ThemeManager::instance().applyCurrentTheme();

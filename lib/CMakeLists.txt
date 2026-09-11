@@ -464,6 +464,36 @@ target_link_libraries(traceview_diagram
         Qt6::Qml
 )
 
+# traceview_updater: GitHub-Releases-based self-update. UpdateChecker (GET
+# .../releases, semver compare against traceview::kVersion*), UpdateDownloader
+# (fetches the matching platform asset + SHA256SUMS.txt and verifies the hash
+# before releasing the file) and UpdateInstaller (platform split: runs the
+# downloaded NSIS installer on Windows, extracts+swaps+relaunches on Linux).
+# Needs the generated version.h (see configure_file above) for the local
+# version to compare against, same as traceview_ui below.
+add_library(traceview_updater STATIC
+    updater/semver.cpp
+    updater/semver.h
+    updater/updateinfo.h
+    updater/updatechecker.cpp
+    updater/updatechecker.h
+    updater/updatedownloader.cpp
+    updater/updatedownloader.h
+    updater/updateinstaller.cpp
+    updater/updateinstaller.h
+)
+
+target_include_directories(traceview_updater PUBLIC
+    ${CMAKE_SOURCE_DIR}/include
+    ${CMAKE_SOURCE_DIR}/lib
+    ${CMAKE_BINARY_DIR}/generated
+)
+
+target_link_libraries(traceview_updater PUBLIC
+    Qt6::Core
+    Qt6::Network
+)
+
 # traceview_ui: MainWindow/Ribbon/AboutDialog — application chrome and
 # coordination. Depends on the dashboard/project/theme layers to wire them
 # together; nothing else is allowed to depend on traceview_ui.
@@ -474,6 +504,8 @@ add_library(traceview_ui STATIC
     core/shortcutsdialog.h
     core/donatedialog.cpp
     core/donatedialog.h
+    core/updateavailabledialog.cpp
+    core/updateavailabledialog.h
     core/debugchartswindow.cpp
     core/debugchartswindow.h
     core/dockablepanel.cpp
@@ -546,6 +578,7 @@ target_link_libraries(traceview_ui
         traceview_theme
         traceview_locale
         traceview_preferences
+        traceview_updater
         # UsbHidManager (core/usbhidmanager.h) is the only consumer -- a
         # transport-layer implementation detail, so PRIVATE (nothing above
         # traceview_ui needs to see hidapi's own headers).

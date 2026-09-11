@@ -357,6 +357,57 @@ cmake --preset linux-ninja \
 `CMakeUserPresets.json` is intentionally ignored by Git and can hold
 machine-specific overrides without changing the shared presets.
 
+## Packaging
+
+Produces a Windows NSIS installer or a Linux `.tar.gz` from a Release build.
+`.github/workflows/release.yml` runs the same steps and publishes the result
+as a GitHub Release whenever a `vX.Y.Z` tag is pushed (see CONTRIBUTING.md) --
+the commands below are for building a package locally without cutting a
+release.
+
+### Windows (NSIS installer)
+
+Requires [NSIS](https://nsis.sourceforge.io/) for `makensis.exe`, installed once:
+
+```powershell
+winget install --id NSIS.NSIS -e
+```
+
+Then, with the same Qt/MinGW environment as the
+[Windows with MinGW](#windows-with-mingw) build above:
+
+```powershell
+cmake --preset windows-mingw-release
+cmake --build --preset windows-mingw-release
+cd build/windows-mingw-release
+cpack -G NSIS
+```
+
+The installer bundles the Qt and MinGW runtime DLLs (`windeployqt
+--compiler-runtime`), so it runs on a machine without Qt or this MinGW kit
+installed.
+
+### Linux (.tar.gz)
+
+```sh
+cmake --preset linux-ninja-release
+cmake --build --preset linux-ninja-release
+cd build/linux-ninja-release
+cpack -G TGZ
+```
+
+The tarball does not bundle Qt: the target machine needs a matching system
+Qt 6 install, the same packages the
+[Linux build](#linux-debianubuntu) section installs.
+
+## Auto-update
+
+TraceView checks GitHub Releases for a newer version on startup (once a day
+at most) and from **Settings ▸ Updates**. Finding one only shows a prompt --
+nothing downloads or installs without clicking "Update Now" there. See
+`lib/updater/` and `CONTRIBUTING.md`'s release flow for how a build gets
+published in the first place.
+
 ## License
 
 [MIT](LICENSE)

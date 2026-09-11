@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QObject>
+#include <QString>
 
 namespace traceview {
 
@@ -33,6 +34,10 @@ public:
     int frameLogCapacity() const;
     int notificationHistoryCapacity() const;
 
+    bool updateAutoCheckEnabled() const;
+    qint64 updateLastCheckEpochMs() const;
+    QString updateSkippedVersion() const;
+
     void setRenderProfile(RenderProfile profile);
     void setCustomRenderFps(int fps);
     void setRecentProjectsLimit(int limit);
@@ -46,11 +51,16 @@ public:
     void setFrameLogCapacity(int entries);
     void setNotificationHistoryCapacity(int entries);
 
+    void setUpdateAutoCheckEnabled(bool enabled);
+    void setUpdateLastCheckEpochMs(qint64 epochMs);
+    void setUpdateSkippedVersion(const QString& version);
+
 signals:
     void dashboardPreferencesChanged();
     void generalPreferencesChanged();
     void terminalPreferencesChanged();
     void connectionPreferencesChanged();
+    void updatePreferencesChanged();
 
 private:
     AppSettings();

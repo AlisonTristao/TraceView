@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.21)
 
 project(TraceView
-    VERSION 2.4.0
+    VERSION 2.5.0
     DESCRIPTION "Real-time telemetry dashboard for ESP32/ESP-NOW robots"
     LANGUAGES CXX
 )
@@ -154,9 +154,84 @@ if(WIN32)
         # (see LanguageManager), and it also installs Qt's own qtbase_*.qm
         # so native dialog chrome follows the app's language -- that file
         # has to be deployed next to the exe for QTranslator to find it.
+        # --compiler-runtime: the local MinGW kit is Qt's own toolchain
+        # (C:/Qt/Tools/mingw*_64), not the OS's -- a target machine has no
+        # reason to already have libstdc++-6.dll / libgcc_s_seh-1.dll /
+        # libwinpthread-1.dll on it, so the NSIS installer (see the CPack
+        # block below) needs windeployqt to bundle them too, or the
+        # packaged app fails to start with STATUS_DLL_NOT_FOUND on a clean
+        # machine.
         add_custom_command(TARGET TraceView POST_BUILD
-            COMMAND "${WINDEPLOYQT_EXECUTABLE}" "$<TARGET_FILE:TraceView>"
-            COMMENT "Deploying Qt runtime DLLs next to TraceView.exe"
+            COMMAND "${WINDEPLOYQT_EXECUTABLE}" --compiler-runtime "$<TARGET_FILE:TraceView>"
+            COMMENT "Deploying Qt + MinGW runtime next to TraceView.exe"
         )
+    else()
+        message(WARNING "windeployqt not found: TraceView.exe will not have "
+            "Qt runtime DLLs deployed next to it, and a CPack/NSIS package "
+            "built from this configure will be missing them too.")
     endif()
 endif()
+
+# -----------------------------------------------------------------------------
+# Packaging (CPack) -- also produced by .github/workflows/release.yml on a
+# vX.Y.Z tag push, which publishes the result as a GitHub Release (see
+# CONTRIBUTING.md). CPACK_PACKAGE_FILE_NAME below is what the self-updater
+# (lib/updater) matches a release asset against, so it must stay stable.
+# Windows: NSIS generator -> setup.exe with TraceView.exe + Qt/MinGW runtime
+# (windeployqt re-run against the staged install dir below, not the build
+# dir -- TraceView is a root-level target, so $<TARGET_FILE_DIR:TraceView>
+# is the build directory itself and also holds CMakeCache.txt/CMakeFiles/
+# test and tool binaries/etc., none of which belong in the package).
+# Linux: TGZ generator -> plain tarball with just the binary, assuming a
+# matching system Qt6 already exists on the target machine (the same
+# assumption CI makes when it installs Qt via pacman/apt/dnf). BTP and
+# hidapi are fetched as static libs (BUILD_SHARED_LIBS forced OFF above),
+# so there is nothing else to bundle. macOS is out of scope here even
+# though MACOSX_BUNDLE is set above.
+# -----------------------------------------------------------------------------
+if(WIN32)
+    install(TARGETS TraceView RUNTIME DESTINATION .)
+
+    if(WINDEPLOYQT_EXECUTABLE)
+        install(CODE "
+            execute_process(COMMAND \"${WINDEPLOYQT_EXECUTABLE}\" --compiler-runtime
+                \"\${CMAKE_INSTALL_PREFIX}/TraceView.exe\")
+        ")
+    endif()
+else()
+    install(TARGETS TraceView RUNTIME DESTINATION bin)
+endif()
+
+set(CPACK_PACKAGE_NAME "TraceView")
+set(CPACK_PACKAGE_VENDOR "Alison Tristao")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "${PROJECT_DESCRIPTION}")
+set(CPACK_PACKAGE_VERSION "${PROJECT_VERSION}")
+set(CPACK_PACKAGE_VERSION_MAJOR ${PROJECT_VERSION_MAJOR})
+set(CPACK_PACKAGE_VERSION_MINOR ${PROJECT_VERSION_MINOR})
+set(CPACK_PACKAGE_VERSION_PATCH ${PROJECT_VERSION_PATCH})
+set(CPACK_PACKAGE_INSTALL_DIRECTORY "TraceView")
+set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/LICENSE")
+set(CPACK_PACKAGE_EXECUTABLES "TraceView" "TraceView")
+
+if(WIN32)
+    set(CPACK_GENERATOR "NSIS")
+    # The .exe is installed to the package root above (next to windeployqt's
+    # DLLs), not to a "bin" subfolder -- CPack/NSIS defaults to looking in
+    # "bin" for the Start Menu shortcut target, so point it at "." instead.
+    set(CPACK_NSIS_EXECUTABLES_DIRECTORY ".")
+    set(CPACK_NSIS_MUI_ICON "${CMAKE_SOURCE_DIR}/resources/icons/app.ico")
+    set(CPACK_NSIS_MUI_UNIICON "${CMAKE_SOURCE_DIR}/resources/icons/app.ico")
+    set(CPACK_NSIS_INSTALLED_ICON_NAME "TraceView.exe")
+    set(CPACK_NSIS_DISPLAY_NAME "TraceView")
+    set(CPACK_NSIS_PACKAGE_NAME "TraceView ${PROJECT_VERSION}")
+    set(CPACK_NSIS_ENABLE_UNINSTALL_BEFORE_INSTALL ON)
+    # A fixed, predictable name (rather than CPack's own default) is what
+    # the self-updater (lib/updater/updatechecker.cpp) matches a GitHub
+    # release asset against, by suffix -- ".exe" here, ".tar.gz" below.
+    set(CPACK_PACKAGE_FILE_NAME "TraceView-${PROJECT_VERSION}-windows-x64")
+elseif(UNIX)
+    set(CPACK_GENERATOR "TGZ")
+    set(CPACK_PACKAGE_FILE_NAME "TraceView-${PROJECT_VERSION}-linux-x64")
+endif()
+
+include(CPack)

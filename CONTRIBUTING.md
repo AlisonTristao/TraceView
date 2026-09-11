@@ -75,8 +75,16 @@ Release flow:
 2. Run `python scripts/check_style.py` and `python scripts/smoke_test.py`
    (see "Project scripts" below), plus `ctest` in the build directory (see
    "Tests" below), and fix whatever they flag.
-3. Merge `release/x.y.z` into `main`, tag `vx.y.z` on `main`. If the
-   release included a repo-wide reformat, add that commit's SHA to
+3. Merge `release/x.y.z` into `main`, tag `vx.y.z` on `main` and push the tag
+   (`git push origin vx.y.z`, or `git push --follow-tags`). This triggers
+   `.github/workflows/release.yml`, which builds the Windows NSIS installer
+   and Linux `.tar.gz` and publishes them as a GitHub Release with a combined
+   `SHA256SUMS.txt` -- the same release `lib/updater/` polls every user's
+   installed copy against. Mark it `--prerelease` on the GitHub release page
+   for a version you want validated before it reaches everyone automatically;
+   `UpdateChecker` still finds it either way (see that file's own comment for
+   why), so a prerelease is a way to hold back confidence, not visibility. If
+   the release included a repo-wide reformat, add that commit's SHA to
    `.git-blame-ignore-revs` so `git blame` steps over it — only ever for
    genuinely mechanical commits, so blame still lands on whoever last made
    a real decision about a line.
@@ -85,6 +93,14 @@ Release flow:
 5. Delete `release/x.y.z`.
 
 Hotfixes follow the same pattern starting from `main` instead of `develop`.
+
+Tag names must match `CMakeLists.txt`'s `project(... VERSION x.y.z)` exactly
+(`vx.y.z`) -- `UpdateChecker` compares a release's tag against the running
+build's own version, so a mismatched tag either hides a real release or
+advertises one that isn't there. (`v2.16.0` in this repo's history is a
+known-bad tag cut before this check existed and does not match any real
+`CMakeLists.txt` version; leave it alone unless you're specifically cleaning
+up tag history, since nothing depends on it today.)
 
 ## Code style
 

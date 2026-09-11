@@ -18,6 +18,9 @@ constexpr char kAutoReconnectKey[] = "connections/autoReconnect";
 constexpr char kReconnectIntervalSecondsKey[] = "connections/reconnectIntervalSeconds";
 constexpr char kFrameLogCapacityKey[] = "diagnostics/frameLogCapacity";
 constexpr char kNotificationHistoryCapacityKey[] = "diagnostics/notificationHistoryCapacity";
+constexpr char kUpdateAutoCheckEnabledKey[] = "updates/autoCheckEnabled";
+constexpr char kUpdateLastCheckEpochMsKey[] = "updates/lastCheckEpochMs";
+constexpr char kUpdateSkippedVersionKey[] = "updates/skippedVersion";
 
 constexpr int kLowFps = 15;
 constexpr int kMediumFps = 30;
@@ -100,6 +103,18 @@ int AppSettings::notificationHistoryCapacity() const {
     return value(kNotificationHistoryCapacityKey, 500, 100, 10000);
 }
 
+bool AppSettings::updateAutoCheckEnabled() const {
+    return QSettings().value(kUpdateAutoCheckEnabledKey, true).toBool();
+}
+
+qint64 AppSettings::updateLastCheckEpochMs() const {
+    return QSettings().value(kUpdateLastCheckEpochMsKey, 0).toLongLong();
+}
+
+QString AppSettings::updateSkippedVersion() const {
+    return QSettings().value(kUpdateSkippedVersionKey).toString();
+}
+
 void AppSettings::setRenderProfile(RenderProfile profile) {
     setValue(kRenderProfileKey, int(profile));
     emit dashboardPreferencesChanged();
@@ -158,6 +173,19 @@ void AppSettings::setFrameLogCapacity(int entries) {
 
 void AppSettings::setNotificationHistoryCapacity(int entries) {
     setValue(kNotificationHistoryCapacityKey, qBound(100, entries, 10000));
+}
+
+void AppSettings::setUpdateAutoCheckEnabled(bool enabled) {
+    QSettings().setValue(kUpdateAutoCheckEnabledKey, enabled);
+    emit updatePreferencesChanged();
+}
+
+void AppSettings::setUpdateLastCheckEpochMs(qint64 epochMs) {
+    QSettings().setValue(kUpdateLastCheckEpochMsKey, epochMs);
+}
+
+void AppSettings::setUpdateSkippedVersion(const QString& version) {
+    QSettings().setValue(kUpdateSkippedVersionKey, version);
 }
 
 int AppSettings::value(const char* key, int fallback, int minimum, int maximum) const {

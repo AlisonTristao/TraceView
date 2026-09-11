@@ -7,6 +7,24 @@ release flow.
 
 ## [Unreleased]
 
+## [2.5.0] - 2026-09-11
+
+### Added
+
+- **Self-update.** TraceView checks GitHub Releases for a newer version on
+  startup (at most once a day) and from the new **Updates** category in
+  Settings, which also has a "Check now" button and an on/off toggle for the
+  automatic check. Finding one only shows a confirm/skip prompt with the
+  release notes -- nothing downloads or installs without clicking
+  "Update Now". Windows downloads and runs the NSIS installer; Linux extracts
+  the `.tar.gz` and swaps it in over the current install directory once
+  TraceView quits (falls back to pointing at the release page if that
+  directory isn't writable by the current user). Every downloaded package is
+  checked against a `SHA256SUMS.txt` published alongside it before anything
+  runs. `.github/workflows/release.yml` now builds and publishes both
+  packages (as a GitHub Release) whenever a `vX.Y.Z` tag is pushed -- see
+  CONTRIBUTING.md's release flow.
+
 ## [2.4.0] - 2026-09-02
 
 ### Added

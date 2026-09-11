@@ -12,6 +12,7 @@
 #include "devices/device.h"
 #include "devices/hubpeeraccumulator.h"
 #include "telemetry/telemetrybinding.h"
+#include "updater/updateinfo.h"
 
 class QAction;
 class QEvent;
@@ -43,6 +44,8 @@ class PropertiesPanel;
 class Ribbon;
 class SerialWidgetBridge;
 class SettingsPage;
+class UpdateChecker;
+class UpdateDownloader;
 class WorkspaceSwitcher;
 
 class MainWindow : public QMainWindow {
@@ -282,6 +285,25 @@ private:
     void onDebug();
     void onFullscreenToggled(bool checked);
 
+    // Fires once, ~5s after startup: runs checkForUpdates(false) if the user
+    // hasn't disabled auto-checking and it's been at least a day since the
+    // last one (successful or not). Settings ▸ Updates' "Check now" button
+    // goes through checkForUpdates(true) instead, bypassing that cooldown.
+    void maybeCheckForUpdatesOnStartup();
+    // `manual` distinguishes a user-initiated check from the startup one:
+    // only a manual check surfaces "up to date"/failure feedback (via
+    // postStatus) and re-shows a release the user previously skipped.
+    void checkForUpdates(bool manual);
+    void onUpdateAvailable(const UpdateInfo& info);
+    void onUpdateUpToDate();
+    void onUpdateCheckFailed(const QString& reason);
+    // Kicks off UpdateDownloader for `info`'s platform asset -- or, if this
+    // release has nothing installable for this platform (or no
+    // SHA256SUMS.txt to verify it against), opens the release page instead.
+    void startUpdateDownload(const UpdateInfo& info);
+    void onUpdateDownloadFinished(const QString& filePath);
+    void onUpdateDownloadFailed(const QString& reason);
+
     DashboardGrid* m_dashboardGrid = nullptr;
     // Devices tab's content -- swapped in for m_dashboardGrid via
     // m_contentStack, never shown at the same time (see onRibbonTabChanged).
@@ -477,6 +499,16 @@ private:
     QToolButton* m_fullscreenButton = nullptr;
     bool m_wasMaximized = false;
     QByteArray m_preFullscreenGeometry;
+
+    // Self-update (see lib/updater). Both created once in the constructor and
+    // reused for every check/download -- unlike m_settingsTab, there is
+    // always exactly one of each for the app's whole lifetime.
+    UpdateChecker* m_updateChecker = nullptr;
+    UpdateDownloader* m_updateDownloader = nullptr;
+    // Set right before each checkForUpdates() call and read back by the
+    // UpdateChecker signal handlers, since the signal itself carries no
+    // record of which call triggered it.
+    bool m_updateCheckWasManual = false;
 };
 
 }  // namespace traceview
