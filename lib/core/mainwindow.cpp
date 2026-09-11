@@ -5,6 +5,7 @@
 #include <QColor>
 #include <QCoreApplication>
 #include <QDateTime>
+#include <QDesktopServices>
 #include <QEvent>
 #include <QFileDialog>
 #include <QFileInfo>
@@ -67,6 +68,10 @@
 #include "traceview/languagemanager.h"
 #include "traceview/thememanager.h"
 #include "traceview/version.h"
+#include "updateavailabledialog.h"
+#include "updater/updatechecker.h"
+#include "updater/updatedownloader.h"
+#include "updater/updateinstaller.h"
 #include "usbhidmanager.h"
 #include "workspaceswitcher.h"
 
@@ -165,6 +170,22 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     // feeds them.
     m_notificationLog = new NotificationLog(this);
     m_frameLog = new FrameLog(this);
+
+    // Self-update (see lib/updater). Wired once here regardless of whether
+    // Settings ▸ Updates has ever been opened -- the startup check below
+    // needs both to exist independently of that tab's lifecycle.
+    m_updateChecker = new UpdateChecker(this);
+    connect(m_updateChecker, &UpdateChecker::updateAvailable, this,
+            &MainWindow::onUpdateAvailable);
+    connect(m_updateChecker, &UpdateChecker::upToDate, this, &MainWindow::onUpdateUpToDate);
+    connect(m_updateChecker, &UpdateChecker::checkFailed, this,
+            &MainWindow::onUpdateCheckFailed);
+    m_updateDownloader = new UpdateDownloader(this);
+    connect(m_updateDownloader, &UpdateDownloader::finished, this,
+            &MainWindow::onUpdateDownloadFinished);
+    connect(m_updateDownloader, &UpdateDownloader::failed, this,
+            &MainWindow::onUpdateDownloadFailed);
+    QTimer::singleShot(5000, this, &MainWindow::maybeCheckForUpdatesOnStartup);
 
     buildMenus();
 
@@ -2203,6 +2224,8 @@ void MainWindow::onOpenSettingsTab() {
                                 QCoreApplication::arguments().mid(1));
         QCoreApplication::quit();
     });
+    connect(m_settingsTab, &SettingsPage::checkForUpdatesRequested, this,
+            [this] { checkForUpdates(/*manual=*/true); });
     m_contentStack->addWidget(m_settingsTab);
 
     // An empty ribbon page: this tab carries no ribbon buttons of its own, the
@@ -2500,6 +2523,101 @@ void MainWindow::onFullscreenToggled(bool checked) {
     }
     setUpdatesEnabled(true);
     updateRibbonIcons();
+}
+
+void MainWindow::maybeCheckForUpdatesOnStartup() {
+    AppSettings& settings = AppSettings::instance();
+    if (!settings.updateAutoCheckEnabled()) {
+        return;
+    }
+    constexpr qint64 kMinIntervalMs = 24LL * 60 * 60 * 1000;
+    if (QDateTime::currentMSecsSinceEpoch() - settings.updateLastCheckEpochMs() < kMinIntervalMs) {
+        return;
+    }
+    checkForUpdates(/*manual=*/false);
+}
+
+void MainWindow::checkForUpdates(bool manual) {
+    if (m_updateChecker->checkInFlight()) {
+        return;
+    }
+    m_updateCheckWasManual = manual;
+    m_updateChecker->checkForUpdates();
+}
+
+void MainWindow::onUpdateAvailable(const UpdateInfo& info) {
+    AppSettings& settings = AppSettings::instance();
+    settings.setUpdateLastCheckEpochMs(QDateTime::currentMSecsSinceEpoch());
+    if (m_settingsTab != nullptr) {
+        m_settingsTab->setUpdateStatusText(tr("Update available: v%1").arg(info.version));
+    }
+
+    // A silently-run startup check respects a version the user already
+    // dismissed; a manual "Check now" click always shows the dialog again --
+    // the user asked, so it's not a repeat interruption.
+    if (!m_updateCheckWasManual && info.version == settings.updateSkippedVersion()) {
+        return;
+    }
+
+    UpdateAvailableDialog dialog(info, this);
+    connect(&dialog, &UpdateAvailableDialog::skipRequested, &settings,
+            [info] { AppSettings::instance().setUpdateSkippedVersion(info.version); });
+    connect(&dialog, &UpdateAvailableDialog::updateRequested, this,
+            [this, info] { startUpdateDownload(info); });
+    dialog.exec();
+}
+
+void MainWindow::onUpdateUpToDate() {
+    AppSettings::instance().setUpdateLastCheckEpochMs(QDateTime::currentMSecsSinceEpoch());
+    if (m_settingsTab != nullptr) {
+        m_settingsTab->setUpdateStatusText(tr("Up to date (v%1)").arg(kVersion));
+    }
+    if (m_updateCheckWasManual) {
+        postStatus(tr("TraceView is up to date."), 4000, StatusSeverity::Info);
+    }
+}
+
+void MainWindow::onUpdateCheckFailed(const QString& reason) {
+    // Deliberately does not update lastCheckEpochMs -- a failed attempt (most
+    // likely: offline) should be retried at the next startup rather than
+    // waiting out the full cooldown from an attempt that found nothing.
+    if (m_updateCheckWasManual) {
+        postStatus(tr("Update check failed: %1").arg(reason), 5000, StatusSeverity::Warning);
+    }
+}
+
+void MainWindow::startUpdateDownload(const UpdateInfo& info) {
+    if (!info.assetUrl.isValid()) {
+        QMessageBox::information(
+            this, tr("Update"),
+            tr("This release has no download for this platform. Opening the release "
+               "page instead."));
+        QDesktopServices::openUrl(info.releaseUrl);
+        return;
+    }
+    if (!info.checksumsUrl.isValid()) {
+        QMessageBox::warning(
+            this, tr("Update"),
+            tr("This release has no SHA256SUMS.txt to verify the download against, so "
+               "it can't be installed automatically. Opening the release page instead."));
+        QDesktopServices::openUrl(info.releaseUrl);
+        return;
+    }
+    postStatus(tr("Downloading TraceView %1...").arg(info.version), 4000);
+    m_updateDownloader->download(info.assetUrl, info.assetName, info.checksumsUrl);
+}
+
+void MainWindow::onUpdateDownloadFinished(const QString& filePath) {
+    QString reason;
+    if (UpdateInstaller::install(filePath, &reason)) {
+        QCoreApplication::quit();
+        return;
+    }
+    QMessageBox::warning(this, tr("Update"), reason);
+}
+
+void MainWindow::onUpdateDownloadFailed(const QString& reason) {
+    QMessageBox::warning(this, tr("Update"), reason);
 }
 
 }  // namespace traceview

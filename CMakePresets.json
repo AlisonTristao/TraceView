@@ -27,6 +27,16 @@
             }
         },
         {
+            "name": "windows-mingw-release",
+            "displayName": "Windows (MinGW + Ninja, Release)",
+            "description": "Release build for packaging: optimized, no debug symbols. Used to produce the NSIS installer via CPack.",
+            "inherits": "windows-mingw",
+            "binaryDir": "${sourceDir}/build/windows-mingw-release",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release"
+            }
+        },
+        {
             "name": "windows-msvc",
             "displayName": "Windows (Visual Studio 2022)",
             "description": "Build with Visual Studio 2022 and its matching MSVC Qt kit. Set QT_ROOT_DIR first.",
@@ -58,6 +68,16 @@
             "cacheVariables": {
                 "CMAKE_PREFIX_PATH": "$env{QT_ROOT_DIR}"
             }
+        },
+        {
+            "name": "linux-ninja-release",
+            "displayName": "Linux (Ninja, Release)",
+            "description": "Release build for packaging: optimized, no debug symbols. Used to produce the .tar.gz package via CPack.",
+            "inherits": "linux-ninja",
+            "binaryDir": "${sourceDir}/build/linux-ninja-release",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release"
+            }
         }
     ],
     "buildPresets": [
@@ -83,6 +103,24 @@
         {
             "name": "linux-ninja",
             "configurePreset": "linux-ninja",
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Linux"
+            }
+        },
+        {
+            "name": "windows-mingw-release",
+            "configurePreset": "windows-mingw-release",
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Windows"
+            }
+        },
+        {
+            "name": "linux-ninja-release",
+            "configurePreset": "linux-ninja-release",
             "condition": {
                 "type": "equals",
                 "lhs": "${hostSystemName}",

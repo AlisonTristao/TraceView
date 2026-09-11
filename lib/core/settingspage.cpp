@@ -2,6 +2,7 @@
 
 #include <QCheckBox>
 #include <QComboBox>
+#include <QDateTime>
 #include <QFormLayout>
 #include <QGroupBox>
 #include <QHBoxLayout>
@@ -9,6 +10,7 @@
 #include <QLabel>
 #include <QListWidget>
 #include <QListWidgetItem>
+#include <QLocale>
 #include <QPainter>
 #include <QPixmap>
 #include <QPolygonF>
@@ -33,7 +35,7 @@ namespace {
 // list's small icon size and pick up the active theme's colour. Every glyph
 // is laid out in an 18px design space.
 constexpr int kCategoryIconSize = 18;
-constexpr int kCategoryCount = 6;
+constexpr int kCategoryCount = 7;
 
 // Draws a transparent 18px pixmap with an antialiased round-capped pen already
 // set to `color`; `draw` fills in the glyph. Painter is torn down before the
@@ -98,12 +100,22 @@ QPixmap categoryPixmapFor(int index, const QColor& color) {
                 p.drawRoundedRect(QRectF(1.5, 6.0, 10.0, 6.0), 3.0, 3.0);
                 p.drawRoundedRect(QRectF(6.5, 6.0, 10.0, 6.0), 3.0, 3.0);
             });
-        default:  // Diagnostics -- a heartbeat trace.
+        case 5:  // Diagnostics -- a heartbeat trace.
             return categoryPixmap(color, [](QPainter& p) {
                 QPolygonF pulse;
                 pulse << QPointF(1.5, 9.0) << QPointF(5.0, 9.0) << QPointF(7.0, 3.5)
                       << QPointF(9.0, 14.5) << QPointF(11.0, 9.0) << QPointF(16.5, 9.0);
                 p.drawPolyline(pulse);
+            });
+        default:  // Updates -- a circular refresh arrow.
+            return categoryPixmap(color, [&](QPainter& p) {
+                const QRectF disc(2.5, 2.5, 13.0, 13.0);
+                p.drawArc(disc, 20 * 16, 300 * 16);
+                p.setBrush(QBrush(color));
+                QPolygonF arrowhead;
+                arrowhead << QPointF(13.4, 2.4) << QPointF(16.0, 3.6) << QPointF(13.5, 5.8);
+                p.drawPolygon(arrowhead);
+                p.setBrush(Qt::NoBrush);
             });
     }
 }
@@ -182,8 +194,9 @@ SettingsPage::SettingsPage(QWidget* parent) : QWidget(parent) {
     // just for this navigation list.
     categories->setStyleSheet(QStringLiteral("QListWidget::item { padding: 7px 10px; }"));
     categories->setSpacing(3);
-    const QStringList categoryNames = {tr("General"), tr("Appearance"), tr("Dashboard"),
-                                       tr("Terminal"), tr("Connections"), tr("Diagnostics")};
+    const QStringList categoryNames = {tr("General"),     tr("Appearance"),  tr("Dashboard"),
+                                       tr("Terminal"),    tr("Connections"), tr("Diagnostics"),
+                                       tr("Updates")};
     for (const QString& name : categoryNames) {
         auto* item = new QListWidgetItem(name, categories);
         item->setSizeHint(QSize(-1, 36));
@@ -381,6 +394,32 @@ SettingsPage::SettingsPage(QWidget* parent) : QWidget(parent) {
     qobject_cast<QVBoxLayout*>(diagnosticsPage->layout())->addStretch();
     pages->addWidget(diagnosticsPage);
 
+    QWidget* updatesPage = createCategoryPage(
+        pages, tr("Updates"),
+        tr("TraceView can check GitHub for a newer release. Nothing is downloaded or "
+           "installed without your confirmation."));
+    QGroupBox* updatesSection = addSection(updatesPage, tr("Automatic checks"));
+    auto* autoCheckUpdates =
+        new QCheckBox(tr("Check for updates on startup"), updatesSection);
+    autoCheckUpdates->setChecked(settings.updateAutoCheckEnabled());
+    formFor(updatesSection)->addRow(autoCheckUpdates);
+    connect(autoCheckUpdates, &QCheckBox::toggled, &settings,
+            &AppSettings::setUpdateAutoCheckEnabled);
+    m_updateStatusLabel = new QLabel(updatesPage);
+    formFor(updatesSection)->addRow(tr("Last checked"), m_updateStatusLabel);
+    const qint64 lastCheckEpochMs = settings.updateLastCheckEpochMs();
+    m_updateStatusLabel->setText(
+        lastCheckEpochMs > 0
+            ? QLocale().toString(QDateTime::fromMSecsSinceEpoch(lastCheckEpochMs),
+                                 QLocale::ShortFormat)
+            : tr("Never"));
+    auto* checkNowButton = new QPushButton(tr("Check now"), updatesSection);
+    formFor(updatesSection)->addRow(QString(), checkNowButton);
+    connect(checkNowButton, &QPushButton::clicked, this,
+            &SettingsPage::checkForUpdatesRequested);
+    qobject_cast<QVBoxLayout*>(updatesPage->layout())->addStretch();
+    pages->addWidget(updatesPage);
+
     connect(categories, &QListWidget::currentRowChanged, pages, &QStackedWidget::setCurrentIndex);
     categories->setCurrentRow(0);
 
@@ -393,6 +432,12 @@ SettingsPage::SettingsPage(QWidget* parent) : QWidget(parent) {
     rootLayout->addLayout(restartRow);
     connect(m_restartButton, &QPushButton::clicked, this, &SettingsPage::restartRequested);
     refreshRestartNotice();
+}
+
+void SettingsPage::setUpdateStatusText(const QString& text) {
+    if (m_updateStatusLabel != nullptr) {
+        m_updateStatusLabel->setText(text);
+    }
 }
 
 void SettingsPage::refreshRestartNotice() {

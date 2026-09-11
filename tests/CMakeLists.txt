@@ -132,6 +132,13 @@ add_traceview_test(test_logfilereader traceview_protocol)
 add_traceview_test(test_otaclient traceview_ota)
 add_traceview_test(test_mdnsresolver traceview_ota)
 
+# Self-update (lib/updater). Both pure logic, no live network round trip
+# (see test_updatechecker.cpp's own comment, same reasoning as test_otaclient
+# above): tag/version precedence and the GitHub /releases response parsing
+# UpdateChecker's network callback hands off to.
+add_traceview_test(test_semver traceview_updater)
+add_traceview_test(test_updatechecker traceview_updater)
+
 # Diagnostics (lib/diagnostics): the two in-memory buffers behind the
 # Notification History window and the BTP Traffic Monitor, the hex-dump
 # formatter they share, and the seal/open round trip the monitor's Decrypt
