@@ -138,6 +138,7 @@ add_traceview_test(test_mdnsresolver traceview_ota)
 # UpdateChecker's network callback hands off to.
 add_traceview_test(test_semver traceview_updater)
 add_traceview_test(test_updatechecker traceview_updater)
+add_traceview_test(test_updatedownloader traceview_updater)
 
 # Diagnostics (lib/diagnostics): the two in-memory buffers behind the
 # Notification History window and the BTP Traffic Monitor, the hex-dump

@@ -9,6 +9,17 @@ class QNetworkAccessManager;
 
 namespace traceview {
 
+// Finds `assetName`'s hash in `checksumsData` (a SHA256SUMS.txt body: one
+// "<hex hash>  <filename>" line per asset, the format sha256sum/CertUtil
+// both write). Returns an empty string if no line's *last*
+// whitespace-separated token matches `assetName` exactly
+// (case-insensitively) -- including when two lines have been run together
+// with no newline between them, which merges a line's filename into the
+// next line's hash token instead of leaving it last. Exposed as a free
+// function so this parsing is unit-testable without a live download --
+// see tests/test_updatedownloader.cpp.
+QString findChecksum(const QByteArray& checksumsData, const QString& assetName);
+
 // Downloads one release asset plus the release's SHA256SUMS.txt (published
 // alongside every asset by .github/workflows/release.yml) and refuses to
 // hand back a file whose hash doesn't match -- the app is about to execute
