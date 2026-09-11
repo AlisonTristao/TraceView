@@ -77,6 +77,16 @@ SerialTerminalWidget::SerialTerminalWidget(QWidget* parent) : QPlainTextEdit(par
     setUndoRedoEnabled(false);
     setFont(QFontDatabase::systemFont(QFontDatabase::FixedFont));
 
+    // QPlainTextEdit's default frame comes from whichever native QStyle is
+    // active, and this app's global stylesheet (theme/stylesheet.cpp) has no
+    // rule for QPlainTextEdit to override it -- a build linked against a
+    // different Qt distribution (e.g. MSYS2's Qt6 packages, used by
+    // .github/workflows/release.yml, vs. the official Qt installer kit most
+    // contributors build with locally) can render a visibly different
+    // default frame around the exact same widget. Force it off explicitly so
+    // this looks the same regardless of which Qt build compiled the app.
+    setFrameShape(QFrame::NoFrame);
+
     // The local QTextCursor is only an implementation detail used to render
     // the line. Hide Qt's editable-text caret and paint a cursor at the
     // dongle-reported terminal position below, otherwise clicking/selecting
