@@ -7,6 +7,20 @@ release flow.
 
 ## [Unreleased]
 
+## [2.5.2] - 2026-09-11
+
+### Fixed
+
+- The serial monitor's terminal widget could show a visible frame/border
+  around it or not, depending entirely on which Qt build compiled the app --
+  this app's global stylesheet has no rule for `QPlainTextEdit` at all (see
+  `lib/diagram/diagramblockconfigdialog.cpp`'s own long-standing note on the
+  same gap), so it fell back to whatever the active native `QStyle` draws by
+  default, and that can differ between Qt distributions (e.g. the official
+  Qt installer kit most contributors build with locally vs. MSYS2's Qt6
+  packages, used by `.github/workflows/release.yml`). `SerialTerminalWidget`
+  now forces `QFrame::NoFrame` explicitly, so it looks the same everywhere.
+
 ## [2.5.1] - 2026-09-11
 
 ### Fixed
