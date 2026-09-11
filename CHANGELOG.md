@@ -7,6 +7,19 @@ release flow.
 
 ## [Unreleased]
 
+## [2.5.3] - 2026-09-11
+
+### Fixed
+
+- The self-updater reported "TraceView-*-windows-x64.exe is not listed in
+  SHA256SUMS.txt" for every release, because `release.yml`'s Windows
+  checksum step wrote its line with `-NoNewline`. With no newline to
+  separate it, the `publish` job's `cat sha256-windows.txt sha256-linux.txt
+  > SHA256SUMS.txt` glued the Windows line directly onto the start of the
+  Linux one -- `UpdateDownloader`'s parser (correctly) only matches a
+  filename that is the *last* token on its own line, so the Windows asset's
+  line was never found once the two were merged. Removed `-NoNewline`.
+
 ## [2.5.2] - 2026-09-11
 
 ### Fixed

@@ -12,6 +12,18 @@
 
 namespace traceview {
 
+QString findChecksum(const QByteArray& checksumsData, const QString& assetName) {
+    const QString checksumsText = QString::fromUtf8(checksumsData);
+    for (const QString& line : checksumsText.split('\n', Qt::SkipEmptyParts)) {
+        const QStringList parts =
+            line.trimmed().split(QRegularExpression(QStringLiteral("\\s+")), Qt::SkipEmptyParts);
+        if (parts.size() >= 2 && parts.last().compare(assetName, Qt::CaseInsensitive) == 0) {
+            return parts.first().toLower();
+        }
+    }
+    return QString();
+}
+
 UpdateDownloader::UpdateDownloader(QObject* parent) : QObject(parent) {
     m_manager = new QNetworkAccessManager(this);
 }
