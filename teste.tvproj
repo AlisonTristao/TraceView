@@ -14,6 +14,7 @@
                 "parentDeviceId": "",
                 "peerSourceId": 0,
                 "portName": "COM8",
+                "script": "",
                 "transportType": 0,
                 "usbPath": "\\\\?\\HID#INTC816#3&27ef53f1&0&0000#{4d1e55b2-f16f-11cf-88cb-001111000030}"
             },
@@ -32,23 +33,7 @@
                 "peerPassword": "alison",
                 "peerSourceId": 2672043140,
                 "portName": "",
-                "transportType": 2,
-                "usbPath": "\\\\?\\HID#INTC816#3&27ef53f1&0&0000#{4d1e55b2-f16f-11cf-88cb-001111000030}"
-            },
-            {
-                "baudRate": 921600,
-                "cacheOtaPassword": false,
-                "cachePeerPassword": true,
-                "commType": 0,
-                "description": "",
-                "id": "65674208-c9e6-4483-b9bd-cfe4d1183295",
-                "lineTerminator": 1,
-                "name": "Esp32-CAM",
-                "otaAddress": "",
-                "parentDeviceId": "7343d9f3-c204-44a7-9f14-6e183cc70af4",
-                "peerPassword": "alison",
-                "peerSourceId": 460116852,
-                "portName": "",
+                "script": "",
                 "transportType": 2,
                 "usbPath": "\\\\?\\HID#INTC816#3&27ef53f1&0&0000#{4d1e55b2-f16f-11cf-88cb-001111000030}"
             }
@@ -71,9 +56,6 @@
                                     },
                                     {
                                         "deviceId": "ec1f2d5f-546e-4aee-8c08-9b3c6e9d47bf"
-                                    },
-                                    {
-                                        "deviceId": "65674208-c9e6-4483-b9bd-cfe4d1183295"
                                     }
                                 ]
                             },
@@ -104,24 +86,6 @@
                             "width": 0.21666666666666667,
                             "x": 0.7333333333333335,
                             "y": 0.125
-                        },
-                        {
-                            "config": {
-                                "deviceId": "65674208-c9e6-4483-b9bd-cfe4d1183295",
-                                "sampleTimeMs": 10,
-                                "sourceId": "0X1B6CD374",
-                                "text": "",
-                                "topicId": "0X0202"
-                            },
-                            "groupId": "",
-                            "height": 0.6,
-                            "id": "25cf2df7-9eb0-48fb-bb1a-9909d0523a27",
-                            "key": "",
-                            "name": "Esp32-CAM",
-                            "type": "text_board",
-                            "width": 0.23333333333333334,
-                            "x": 0.48333333333333334,
-                            "y": 0.15
                         }
                     ]
                 },
