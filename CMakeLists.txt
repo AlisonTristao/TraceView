@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.21)
 
 project(TraceView
-    VERSION 2.5.0
+    VERSION 2.5.1
     DESCRIPTION "Real-time telemetry dashboard for ESP32/ESP-NOW robots"
     LANGUAGES CXX
 )
@@ -197,6 +197,27 @@ if(WIN32)
             execute_process(COMMAND \"${WINDEPLOYQT_EXECUTABLE}\" --compiler-runtime
                 \"\${CMAKE_INSTALL_PREFIX}/TraceView.exe\")
         ")
+    endif()
+
+    # windeployqt's --compiler-runtime only bundles libgcc/libstdc++/
+    # libwinpthread -- it has no notion of a Qt module's OWN third-party
+    # shared-library dependencies (e.g. a MinGW/MSYS2-built Qt6Network.dll
+    # linking against a separate libbrotlidec DLL for HTTP decompression,
+    # which the official Qt installer's kit doesn't need at all). Sweeping
+    # the staged install directory with `ldd` afterwards catches whatever
+    # windeployqt didn't -- see scripts/collect_windows_deps.sh's own
+    # comment for the exact failure this fixes.
+    find_program(BASH_EXECUTABLE bash)
+    if(BASH_EXECUTABLE)
+        install(CODE "
+            execute_process(COMMAND \"${BASH_EXECUTABLE}\"
+                \"${CMAKE_SOURCE_DIR}/scripts/collect_windows_deps.sh\"
+                \"\${CMAKE_INSTALL_PREFIX}\")
+        ")
+    else()
+        message(WARNING "bash not found: a CPack/NSIS package built from this "
+            "configure may be missing a Qt module's own third-party DLL "
+            "dependency (see scripts/collect_windows_deps.sh).")
     endif()
 else()
     install(TARGETS TraceView RUNTIME DESTINATION bin)
