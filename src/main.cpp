@@ -1,5 +1,6 @@
 #include <QApplication>
 #include <QIcon>
+#include <QStyleFactory>
 
 #include "core/mainwindow.h"
 #include "traceview/fontmanager.h"
@@ -20,6 +21,18 @@ QIcon loadAppIcon() {
 }  // namespace
 
 int main(int argc, char* argv[]) {
+    // Fusion draws every widget itself instead of asking the native theme
+    // to -- this app already paints its whole look on top via ThemeManager's
+    // QSS (theme/stylesheet.cpp), and anything that QSS doesn't cover (e.g.
+    // QPlainTextEdit's frame, see SerialTerminalWidget) previously fell back
+    // to whatever the OS/Qt-build's own native style drew by default, which
+    // is exactly what made the same widget look different depending on
+    // which Qt distribution compiled the app (the official installer's kit
+    // locally vs. MSYS2's Qt6 packages in CI). Fusion has no OS/build
+    // dependency at all, so every gap in the QSS now renders identically
+    // everywhere instead of silently drifting.
+    QApplication::setStyle(QStyleFactory::create("Fusion"));
+
     QApplication app(argc, argv);
     QApplication::setApplicationName("TraceView");
     QApplication::setOrganizationName("AlisonTristao");
