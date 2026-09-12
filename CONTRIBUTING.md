@@ -4,13 +4,206 @@ This document defines the branching model, commit conventions, and release
 process for TraceView. It applies to all contributors, including the
 maintainer, to keep `main` always in a releasable state.
 
+## Repository layout
+
+| Path | Responsibility |
+|---|---|
+| `src/` | Application entry point. |
+| `lib/core/` | Main window, device connections, transports and UI integration. |
+| `lib/backend/`, `lib/telemetry/` | Backend contract and protocol-independent telemetry types. |
+| `lib/protocol/` | BTP sessions, handshake, manifests, subscriptions, hub binding and channel sealing. |
+| `lib/dashboard/`, `lib/devices/`, `lib/project/` | Widgets, device models, workspace persistence and undoable edits. |
+| `lib/diagram/` | Per-device JavaScript runtime/editor and the shelved diagram canvas. |
+| `lib/ota/`, `lib/updater/`, `lib/diagnostics/` | Firmware upload, application updates and diagnostics. |
+| `tests/`, `tools/` | CTest suites and standalone visual/benchmark tools. |
+| `resources/`, `translations/` | Assets and translation catalogs. |
+| `docs/`, `scripts/`, `.github/workflows/` | Technical documentation, contributor scripts and CI. |
+
+## Building from source
+
+TraceView builds on Windows and Linux. The first CMake configure needs Git
+and internet access: BTP, hidapi and mbedTLS are pinned and fetched
+automatically, so they do not need separate checkouts.
+
+Clone the repository and run all configure/build/test commands from its root:
+
+```sh
+git clone https://github.com/AlisonTristao/TraceView.git
+cd TraceView
+```
+
+Common requirements:
+
+- CMake 3.21 or newer and Ninja;
+- a C and C++ compiler with C++17 support;
+- Qt 6 with Widgets, Network, SerialPort, Qml, LinguistTools and, while tests are
+  enabled, Test;
+- Python 3.9 or newer only for the contributor scripts under `scripts/` (see "Project
+  scripts" below).
+
+Qt Qml provides `QJSEngine` for device scripts; the UI uses Qt Widgets.
+The declarative development module is required even when you do not use
+scripts. Dependency revisions are defined in the root `CMakeLists.txt`
+and the fetched BTP project.
+
+### Windows with MinGW
+
+Install a Qt 6 Desktop MinGW 64-bit kit and the matching MinGW and Ninja tools.
+In PowerShell, adjust the example paths to the version installed on the machine:
+
+```powershell
+$env:QT_ROOT_DIR = "C:/Qt/6.9.2/mingw_64"
+$env:Path = "$env:QT_ROOT_DIR\bin;C:\Qt\Tools\mingw1310_64\bin;C:\Qt\Tools\Ninja;$env:Path"
+
+cmake --preset windows-mingw
+cmake --build --preset windows-mingw
+ctest --preset windows-mingw
+./build/windows-mingw/TraceView.exe
+```
+
+The compiler and Qt kit must use the same ABI: a MinGW Qt kit cannot be built
+with MSVC, or the other way around. `ctest` needs Qt's DLLs on `PATH` (test
+binaries aren't deployed the way `windeployqt` deploys the app below); when
+found, `windeployqt` runs after the build and copies the required Qt runtime
+beside `TraceView.exe` itself, so the last line above works even without Qt
+on `PATH`.
+
+### Windows with Visual Studio
+
+Install Visual Studio 2022 with the **Desktop development with C++** workload
+and a Qt 6 `msvc2022_64` kit:
+
+```powershell
+$env:QT_ROOT_DIR = "C:/Qt/6.9.2/msvc2022_64"
+$env:Path = "$env:QT_ROOT_DIR\bin;$env:Path"
+
+cmake --preset windows-msvc
+cmake --build --preset windows-msvc
+ctest --preset windows-msvc
+./build/windows-msvc/Debug/TraceView.exe
+```
+
+### Linux (Debian/Ubuntu)
+
+Install the compiler, Qt development modules and the native hidapi backends:
+
+```sh
+sudo apt update
+sudo apt install git cmake ninja-build build-essential pkg-config python3 \
+    qt6-base-dev qt6-declarative-dev qt6-serialport-dev qt6-tools-dev qt6-l10n-tools qt6-wayland \
+    libudev-dev libusb-1.0-0-dev
+
+cmake --preset linux-ninja
+cmake --build --preset linux-ninja
+ctest --preset linux-ninja
+./build/linux-ninja/TraceView
+```
+
+Distribution package names vary. When using a Qt installation outside the
+system paths, set its root before configuring, for example:
+
+```sh
+export QT_ROOT_DIR="$HOME/Qt/6.9.2/gcc_64"
+cmake --preset linux-ninja
+```
+
+Opening serial and USB HID devices on Linux also requires OS permissions. Add
+the user to the distribution's serial-port group (commonly `dialout`) and
+install a device-specific udev rule for HID access; log out and back in after
+changing group membership.
+
+Tests and developer-only visual tools are enabled by default. They can be
+disabled for a smaller application-only build:
+
+```sh
+cmake --preset linux-ninja \
+    -DTRACEVIEW_BUILD_TESTS=OFF \
+    -DTRACEVIEW_BUILD_TOOLS=OFF
+```
+
+`CMakeUserPresets.json` is intentionally ignored by Git and can hold
+machine-specific overrides without changing the shared presets.
+
+### CI and troubleshooting
+
+[build.yml](.github/workflows/build.yml) configures, builds and runs CTest
+on Windows 2025 with MSYS2 UCRT64, Ubuntu 24.04, Fedora 44, Arch Linux and
+Linux Mint 22.3. Linux jobs use `QT_QPA_PLATFORM=offscreen`. MSVC is a local
+preset, outside this CI matrix. The workflow contains each distribution's
+package list.
+
+- If Qt is not found, check `QT_ROOT_DIR` and installed modules. Presets
+  pass that root as `CMAKE_PREFIX_PATH`.
+- When changing compiler, generator or Qt ABI, use a separate build
+  directory through a user preset instead of reusing an incompatible cache.
+- If Windows tests cannot load DLLs, put the matching Qt and compiler
+  runtime directories on `PATH`; app deployment does not deploy tests.
+- On headless Linux, export `QT_QPA_PLATFORM=offscreen` before testing.
+  This does not validate native desktop integration.
+
+### Packaging
+
+Produces a Windows NSIS installer or a Linux `.tar.gz` from a Release build.
+`.github/workflows/release.yml` runs the same steps and publishes the result
+as a GitHub Release whenever a `vX.Y.Z` tag is pushed (see "Versioning and
+releases" below) -- the commands below are for building a package locally
+without cutting a release.
+
+**Windows (NSIS installer)** — requires [NSIS](https://nsis.sourceforge.io/)
+for `makensis.exe`, installed once:
+
+```powershell
+winget install --id NSIS.NSIS -e
+```
+
+Also make `bash` and `ldd` available through Git Bash/MSYS2. During
+installation, `scripts/collect_windows_deps.sh` checks third-party DLLs
+that `windeployqt` may not collect. Review deployment warnings before
+sharing a package.
+
+Then, with the same Qt/MinGW environment as the Windows-with-MinGW build above:
+
+```powershell
+cmake --preset windows-mingw-release
+cmake --build --preset windows-mingw-release
+cd build/windows-mingw-release
+cpack -G NSIS
+```
+
+The installer bundles the Qt and MinGW runtime DLLs (`windeployqt
+--compiler-runtime`), so it runs on a machine without Qt or this MinGW kit
+installed.
+
+**Linux (.tar.gz)**:
+
+Install `patchelf` before configuring (`sudo apt install patchelf`).
+Packaging also needs `bash` and Qt's `qmake6`/`qmake` on `PATH`. If these
+are missing at configure time, CMake warns and skips dependency bundling.
+
+```sh
+cmake --preset linux-ninja-release
+cmake --build --preset linux-ninja-release
+cd build/linux-ninja-release
+cpack -G TGZ
+```
+
+Requires [patchelf](https://github.com/NixOS/patchelf) (`apt install patchelf`),
+used to point the bundled binary and libraries at each other instead of the
+system search path.
+
+The tarball bundles Qt and its own third-party libraries (ICU, OpenSSL,
+fontconfig, etc.) into `lib/` and `plugins/`, so it runs on a machine
+without Qt 6 installed. It still relies on the target having glibc and the
+X11/Wayland/GL stack a Linux desktop already has -- those aren't bundled,
+the same way the Windows installer above doesn't bundle `user32.dll`.
+
 ## Branch model
 
 TraceView follows a Git Flow variant with two permanent branches:
 
 | Branch    | Purpose                                                                 | Protection |
 |-----------|--------------------------------------------------------------------------|------------|
-| `main`    | Latest **stable** release. Every commit on `main` is tagged and buildable. | Protected — no direct pushes, merge via PR only. |
+| `main`    | Release history; tag release commits and keep the branch buildable. | Policy: protected — no direct pushes, merge via PR only. |
 | `develop` | Integration branch for the next release. All finished features land here first. | No direct pushes to shared history; prefer PRs. |
 
 Supporting, short-lived branches are created off `develop` (or off `main` for
@@ -75,19 +268,28 @@ Release flow:
 2. Run `python scripts/check_style.py` and `python scripts/smoke_test.py`
    (see "Project scripts" below), plus `ctest` in the build directory (see
    "Tests" below), and fix whatever they flag.
-3. Merge `release/x.y.z` into `main`, tag `vx.y.z` on `main` and push the tag
-   (`git push origin vx.y.z`, or `git push --follow-tags`). This triggers
-   `.github/workflows/release.yml`, which builds the Windows NSIS installer
-   and Linux `.tar.gz` and publishes them as a GitHub Release with a combined
-   `SHA256SUMS.txt` -- the same release `lib/updater/` polls every user's
-   installed copy against. Mark it `--prerelease` on the GitHub release page
-   for a version you want validated before it reaches everyone automatically;
-   `UpdateChecker` still finds it either way (see that file's own comment for
-   why), so a prerelease is a way to hold back confidence, not visibility. If
-   the release included a repo-wide reformat, add that commit's SHA to
-   `.git-blame-ignore-revs` so `git blame` steps over it — only ever for
-   genuinely mechanical commits, so blame still lands on whoever last made
-   a real decision about a line.
+3. Merge `release/x.y.z` into `main`, then tag the merged release commit:
+
+   ```sh
+   git switch main
+   git pull --ff-only origin main
+   git tag -a vx.y.z -m "TraceView x.y.z"
+   git push origin vx.y.z
+   ```
+
+   Replace `x.y.z` with the version verified in `CMakeLists.txt`.
+   [release.yml](.github/workflows/release.yml) publishes the Windows and
+   Linux packages, `SHA256SUMS.txt` and generated release notes. It currently
+   sets `--prerelease` unconditionally. The updater examines the first
+   entry in the release list, including prereleases; this flag does not
+   exclude a build from update notifications.
+
+   After publication, the workflow deletes other GitHub releases and their
+   assets in the same `MAJOR.MINOR` line, preserving Git tags. Account for
+   this before publishing an older patch or rebuilding a release.
+   The packaging workflow does not run CTest: complete the test gate before
+   pushing the tag. Download and launch the packaged builds on clean target
+   systems to check bundled runtime dependencies.
 4. Merge `release/x.y.z` back into `develop` so the version bump and any
    last-minute fixes aren't lost.
 5. Delete `release/x.y.z`.
@@ -108,7 +310,7 @@ up tag history, since nothing depends on it today.)
   100-column limit) — run `clang-format -i` before committing.
 - Qt naming conventions: `PascalCase` for classes, `camelCase` for methods and
   variables, `m_` prefix for private member variables, `k` prefix for
-  constants (matches `include/traceview/version.h`).
+  constants (matches `include/traceview/version.h.in`).
 - Keep protocol/transport code (anything talking to a serial port or parsing
   telemetry frames) isolated from UI code — see
   [docs/ECOSYSTEM.md](docs/ECOSYSTEM.md) for why this boundary matters across
@@ -116,15 +318,18 @@ up tag history, since nothing depends on it today.)
 - No new abstractions or configuration options without a concrete use case;
   avoid speculative generality.
 
+For repository-wide mechanical formatting, record the formatting commit in
+`.git-blame-ignore-revs`. Keep semantic edits out of that commit.
+
 ## Project scripts
 
 Two Python scripts under `scripts/` help keep `develop` releasable. Neither
 runs as a Git hook — CMake builds and the Qt Test suite run in CI on Windows
 and Linux instead (see `.github/workflows/build.yml`); run these by hand
 before cutting a release, or any time you want a sanity check after a change.
-Each script bootstraps its own virtual environment and installs whatever it
-needs on first run (see `scripts/_bootstrap.py`), so a plain `python` on
-`PATH` is enough to get started:
+Both scripts currently use only Python's standard library. Their shared
+`_bootstrap.py` supports dependency installation, but the current empty
+requirement lists do not create a virtual environment or install packages.
 
 - `python scripts/check_style.py` — checks the C++ source against the
   "Code style" rules above: runs `clang-format` in check mode if it's on
@@ -138,7 +343,7 @@ needs on first run (see `scripts/_bootstrap.py`), so a plain `python` on
   copies across the Bally repositories, hash-checked in each — see
   `tests/test_ballychannels.cpp`). Note that `clang-format` is not on
   `PATH` by default on a Qt install; it ships at
-  `Tools/llvm-mingw*/bin/clang-format.exe`, and the check silently skips
+  `Tools/llvm-mingw*/bin/clang-format.exe`, and the check warns and skips
   the formatting half if it can't find it.
 - `python scripts/smoke_test.py` — selects `windows-mingw` or `linux-ninja`
   for the host, builds the project and launches the resulting TraceView
@@ -162,48 +367,60 @@ from a configured build directory. On a headless Linux host, set
 the matching Qt runtime on `PATH`; `CMakeUserPresets.json` can carry those
 machine-specific environment overrides.
 
-Current coverage — 33 suites, grouped by what they exercise. Enumerated by
-area rather than one line per file, so this section stays accurate as
-suites are added; `tests/CMakeLists.txt` is the authoritative list and
-carries a comment on each non-obvious one.
+The authoritative suite list is [tests/CMakeLists.txt](tests/CMakeLists.txt).
+Coverage includes BTP framing/session lifecycle, handshake, manifests,
+subscriptions, hub binding/endpoints, device presence, transport error
+paths, project persistence, dashboard widgets, telemetry buffers, OTA/mDNS
+logic, updater logic and diagnostics. The shared `bally_channels.h`
+contract has a dedicated hash check.
 
-- **Protocol / wire format** (no QWidget, per topico 14's acceptance
-  criterion) — `test_btpsession`, `test_btpsessionframing`,
-  `test_btphandshake`, `test_protocolrouter`, `test_packedledecoder`,
-  `test_telemetrycatalog`, `test_telemetryfieldrouter`,
-  `test_subscriptionmanager`, `test_statusreport`, `test_logfilereader`,
-  `test_clocksync`, `test_manifestclient`, `test_keyderivation`,
-  `test_ballychannels`.
-- **Transports** — `test_serialmanager`, `test_usbhidmanager`,
-  `test_deviceconnection`, `test_hubtransport`, `test_hubendpoint`,
-  `test_mdnsresolver`, `test_otaclient`. None of these touch real hardware
-  or a real network: the OTA suite aims at TEST-NET-1 (RFC 5737), and the
-  hub suites drive a real `DeviceConnection`/`BtpBackend` pair with no port
-  behind it.
-- **Devices** — `test_device`, `test_devicesgrid`,
-  `test_hubpeeraccumulator`.
-- **Dashboard / project** — `test_projectstore`, `test_workspacemanager`,
-  `test_dashboarditem`, `test_widgetregistry`, `test_dashboardgrid`
-  (including mouse-driven drag/resize via
-  `QTest::mousePress`/`mouseMove`/`mouseRelease`), `test_chartdata`,
-  `test_controldata`, `test_telemetryseriesbuffer`,
-  `test_serialterminalwidget`.
+List or run a focused subset with the matching host preset:
 
-Not covered yet, and worth knowing before you rely on a change being
-caught:
+```sh
+ctest --preset windows-mingw -N
+ctest --preset windows-mingw -R 'test_(hub|btp)' --output-on-failure
+```
 
-- **UI chrome** — `MainWindow`, `Ribbon`, `PropertiesPanel`, `OtaTab`,
-  `LogViewer`, `DeviceConfigDialog`. `smoke_test.py` is still the only
-  check that the app boots at all, and manual verification per
-  [docs/DASHBOARD.md](docs/DASHBOARD.md) is still how dashboard editing
-  gets exercised end-to-end. Where logic worth testing has ended up behind
-  UI, the fix has been to move it below the UI layer rather than to write a
-  widget test — `HubPeerAccumulator` (`lib/devices/hubpeeraccumulator.h`)
-  is the pattern: `MainWindow` kept only the part that genuinely needs a
-  `Backend`.
-- **`BtpBackend`** (`lib/protocol/btpbackend.cpp`) is exercised indirectly
-  by the transport suites above, but has no suite of its own. It is the
-  obvious next suite to write.
+Tests use synthetic frames and controlled failure paths. They do not
+establish real Serial/USB HID operation, ESP-NOW range, mDNS discovery or
+firmware-flash compatibility. `BtpBackend` is exercised indirectly through
+hub and connection tests; it has no dedicated suite.
+
+### Validation before a pull request
+
+1. Configure and build with the appropriate preset, then run its CTest suite.
+2. For C++ edits, run `python scripts/check_style.py`. Ensure `clang-format`
+   is available before reporting formatting as checked.
+3. For startup, dependency or UI changes, run
+   `python scripts/smoke_test.py --preset windows-mingw` (or the matching
+   host preset). It configures/builds, launches the app, checks that it stays
+   alive briefly and terminates it. It does not exercise UI flows.
+4. For dashboard/project changes, open `example.tvproj`, edit properties,
+   drag/resize widgets, undo/redo, save a separate copy and reopen it.
+   Verify layout, bindings and device configuration persistence.
+5. For connection changes, check the affected real transport. For hub
+   changes, check child discovery, reconnect and independent robot restart.
+   For OTA changes, follow [docs/OTA.md](docs/OTA.md). Device script changes
+   need manual checks of callbacks, timers and outbound actions.
+6. Describe the observable change, affected layers, checks run and remaining
+   hardware/platform validation in the PR. Update `[Unreleased]` in
+   `CHANGELOG.md` for user-visible behavior changes.
+
+The full main window, OTA/update flows and native desktop integration still
+need manual checks. For documentation-only changes, verify commands and
+links against the repository; rebuilding unchanged C++ is unnecessary.
+
+Visual tools are enabled by `TRACEVIEW_BUILD_TOOLS`. They are separate
+executables, excluded from installed packages and CTest. For example:
+
+```sh
+cmake --build --preset windows-mingw --target chart_preview
+```
+
+On Windows, run
+`build/windows-mingw/tools/chart_preview/chart_preview.exe`; on Linux,
+`build/linux-ninja/tools/chart_preview`. See
+[tools/CMakeLists.txt](tools/CMakeLists.txt) for available targets.
 
 ## Scope of "features"
 
@@ -211,7 +428,7 @@ Given TraceView's role in the Bally ecosystem (see
 [docs/ECOSYSTEM.md](docs/ECOSYSTEM.md)), a "feature" is expected to state,
 in the PR description, which layer it touches:
 
-- **Transport** — how bytes arrive (Serial, future transports).
+- **Transport** — how bytes arrive (Serial, USB HID and hub channels).
 - **Protocol** — how bytes are decoded into telemetry records.
 - **Presentation** — how decoded records are displayed (plots, log view,
   robot state view).
