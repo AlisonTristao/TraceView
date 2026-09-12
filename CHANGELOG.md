@@ -32,6 +32,17 @@ release flow.
   every such gap renders identically everywhere instead of silently
   drifting with whichever Qt build produced the binary.
 
+- On Windows, clicking "Update Now" launched the installer and quit
+  TraceView, but nothing ever brought it back -- the installer's own
+  Finish page was never configured to relaunch anything, so an update
+  just... closed the app. `UpdateInstaller::install()` now writes a small
+  PowerShell script that waits for this process to exit, runs the NSIS
+  installer fully silently (`/S`, no wizard pages at all), and relaunches
+  TraceView from the same path it was already running from. One prompt is
+  still unavoidable: Windows' own UAC consent dialog, since the installer
+  requires admin rights to write to Program Files -- `/S` only removes the
+  installer's *own* wizard, not that OS-level gate.
+
 ## [2.5.2] - 2026-09-11
 
 ### Fixed

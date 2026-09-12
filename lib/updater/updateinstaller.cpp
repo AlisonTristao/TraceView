@@ -15,6 +15,33 @@ namespace traceview {
 
 #if defined(Q_OS_WIN)
 
+namespace {
+
+// Waits for `pid` (this process, already about to quit) to exit, runs the
+// NSIS installer completely silently (/S -- CPACK_NSIS_ENABLE_UNINSTALL_
+// BEFORE_INSTALL means it uninstalls the current version itself first, also
+// silently), and relaunches TraceView from the same path it was already
+// running from. /S skips the directory-picker page entirely, so an
+// upgrade-in-place always lands back in whatever directory the previous
+// install already registered -- the same one this running copy's own
+// applicationFilePath() points at.
+//
+// One prompt is unavoidable here: the installer's RequestExecutionLevel is
+// admin (it installs to Program Files), so Windows shows its own UAC
+// consent dialog no matter how this process is launched. /S only removes
+// the installer's own wizard pages, not that OS-level gate.
+QString buildApplyScript(qint64 pid, const QString& installerPath, const QString& exePath) {
+    return QStringLiteral(
+               "while (Get-Process -Id %1 -ErrorAction SilentlyContinue) { "
+               "Start-Sleep -Milliseconds 300 }\n"
+               "Start-Process -FilePath '%2' -ArgumentList '/S' -Wait\n"
+               "Start-Process -FilePath '%3'\n")
+        .arg(pid)
+        .arg(QDir::toNativeSeparators(installerPath), QDir::toNativeSeparators(exePath));
+}
+
+}  // namespace
+
 bool UpdateInstaller::install(const QString& downloadedFilePath, QString* reason) {
     if (!QFileInfo::exists(downloadedFilePath)) {
         if (reason) {
@@ -22,7 +49,25 @@ bool UpdateInstaller::install(const QString& downloadedFilePath, QString* reason
         }
         return false;
     }
-    return QProcess::startDetached(downloadedFilePath, {});
+
+    const QString scriptPath =
+        QDir::tempPath() + QStringLiteral("/traceview_update_apply.ps1");
+    QFile script(scriptPath);
+    if (!script.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+        if (reason) {
+            *reason = QObject::tr("Couldn't write the update script.");
+        }
+        return false;
+    }
+    script.write(buildApplyScript(QCoreApplication::applicationPid(), downloadedFilePath,
+                                   QCoreApplication::applicationFilePath())
+                     .toUtf8());
+    script.close();
+
+    return QProcess::startDetached(
+        QStringLiteral("powershell.exe"),
+        {QStringLiteral("-NoProfile"), QStringLiteral("-ExecutionPolicy"), QStringLiteral("Bypass"),
+         QStringLiteral("-File"), scriptPath});
 }
 
 #elif defined(Q_OS_LINUX)
