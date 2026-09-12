@@ -8,12 +8,15 @@ namespace traceview {
 // end the same way: on success the caller quits (QCoreApplication::quit())
 // and something else finishes the swap and brings TraceView back.
 //
-// Windows: the downloaded NSIS .exe is simply run, not silently -- the user
-// already confirmed "Update Now" in UpdateAvailableDialog, so the installer
-// wizard appearing once more is expected, not automation running behind
-// their back. CPACK_NSIS_ENABLE_UNINSTALL_BEFORE_INSTALL (see CMakeLists.txt)
-// means it uninstalls the current version itself before installing the new
-// one; nothing here duplicates that.
+// Windows: install() writes a small PowerShell script that waits for this
+// process to exit, runs the downloaded NSIS .exe fully silently (/S -- no
+// wizard pages at all; CPACK_NSIS_ENABLE_UNINSTALL_BEFORE_INSTALL, see
+// CMakeLists.txt, means it uninstalls the current version itself first,
+// also silently), and relaunches TraceView from the same path it was
+// already running from -- then launches that script detached. The one
+// thing this can't make disappear is Windows' own UAC consent prompt: the
+// installer's RequestExecutionLevel is admin (it installs to Program
+// Files), so that dialog appears regardless of /S.
 //
 // Linux: there is no installer, just a .tar.gz -- install() extracts it with
 // the system `tar` binary, writes a small shell script that waits for this
