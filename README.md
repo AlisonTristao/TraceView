@@ -321,7 +321,7 @@ Install the compiler, Qt development modules and the native hidapi backends:
 ```sh
 sudo apt update
 sudo apt install git cmake ninja-build build-essential pkg-config python3 \
-    qt6-base-dev qt6-serialport-dev qt6-tools-dev qt6-l10n-tools \
+    qt6-base-dev qt6-serialport-dev qt6-tools-dev qt6-l10n-tools qt6-wayland \
     libudev-dev libusb-1.0-0-dev
 
 cmake --preset linux-ninja
