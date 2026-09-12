@@ -39,8 +39,25 @@ mkdir -p "$lib_dir" "$plugins_dir"
 # Everything below this is assumed already present, correctly versioned, on
 # any machine the package targets -- glibc/libgcc (kernel & C++ ABI), and the
 # X11/Wayland/GL/driver stack (must match the running display server/GPU
-# driver, bundling a copy would only risk a conflict with it).
-system_lib_regex='^lib(c|m|dl|rt|pthread|resolv|util|selinux|nss_[a-z]+)\.so|^ld-linux|^linux-vdso\.so|^libgcc_s\.so|^lib(X11(-xcb)?|xcb[a-z0-9_-]*|Xau|Xdmcp|Xext|Xrender|Xi|Xrandr|Xfixes|Xcursor|Xcomposite|Xdamage|Xtst)\.so|^lib(GL|GLX|GLdispatch|EGL|gbm|drm)\.so|^libwayland-|^libxkbcommon'
+# driver, bundling a copy would only risk a conflict with it). The xcb branch
+# only lists the actual X11/xcb protocol libraries (part of any X11 client
+# stack) -- it deliberately does NOT blanket-match every libxcb-*, because
+# libxcb-icccm/-image/-keysyms/-render-util are the separate "xcb-util"
+# convenience project Qt's own xcb plugin links against, not the X protocol
+# itself: found missing (Qt platform plugin failing to load with "libxcb-
+# icccm.so.4: cannot open shared object file") on a clean Fedora, which
+# doesn't pull them in the way Ubuntu's qt6-base-dev does on the build
+# machine -- so those four fall through below and get bundled like any other
+# Qt-side dependency instead of being assumed present on the target. Same
+# reasoning excludes "selinux" from the glibc-family group below it: it's
+# not part of glibc itself, just something the Ubuntu build machine's
+# libmount/libgio/etc. happen to be linked against -- Arch doesn't ship
+# libselinux at all (SELinux isn't part of its base system, and there isn't
+# even a distro package for it to tell an Arch user to install), so it has
+# to be bundled too, found the same way (a clean archlinux/base container
+# with no SELinux support whatsoever failing every one of those with
+# "libselinux.so.1: cannot open shared object file").
+system_lib_regex='^lib(c|m|dl|rt|pthread|resolv|util|nss_[a-z]+)\.so|^ld-linux|^linux-vdso\.so|^libgcc_s\.so|^lib(X11(-xcb)?|xcb|xcb-(shm|sync|xfixes|randr|render|shape|present|dri2|dri3|glx|composite|damage|xkb|res|screensaver|record|xtest|xv|xvmc|dpms|dbe)|Xau|Xdmcp|Xext|Xrender|Xi|Xrandr|Xfixes|Xcursor|Xcomposite|Xdamage|Xtst)\.so|^lib(GL|GLX|GLdispatch|EGL|gbm|drm)\.so|^libwayland-|^libxkbcommon'
 
 copy_deps() {
     local target="$1"
