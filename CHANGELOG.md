@@ -7,21 +7,12 @@ release flow.
 
 ## [Unreleased]
 
-## [2.5.3] - 2026-09-11
+## [2.5.4] - 2026-09-11
 
 ### Fixed
 
-- The self-updater reported "TraceView-*-windows-x64.exe is not listed in
-  SHA256SUMS.txt" for every release, because `release.yml`'s Windows
-  checksum step wrote its line with `-NoNewline`. With no newline to
-  separate it, the `publish` job's `cat sha256-windows.txt sha256-linux.txt
-  > SHA256SUMS.txt` glued the Windows line directly onto the start of the
-  Linux one -- `UpdateDownloader`'s parser (correctly) only matches a
-  filename that is the *last* token on its own line, so the Windows asset's
-  line was never found once the two were merged. Removed `-NoNewline`.
-
-- More generally: several widgets (the serial terminal's frame among them)
-  could look different depending on which Qt build compiled the app,
+- Several widgets (the serial terminal's frame among them) could look
+  different depending on which Qt build compiled the app,
   because this app draws its whole theme on top of whatever native OS
   style is active (see `theme/stylesheet.cpp`), and any widget property
   that stylesheet doesn't cover fell back to that native style's own
@@ -42,6 +33,19 @@ release flow.
   still unavoidable: Windows' own UAC consent dialog, since the installer
   requires admin rights to write to Program Files -- `/S` only removes the
   installer's *own* wizard, not that OS-level gate.
+
+## [2.5.3] - 2026-09-11
+
+### Fixed
+
+- The self-updater reported "TraceView-*-windows-x64.exe is not listed in
+  SHA256SUMS.txt" for every release, because `release.yml`'s Windows
+  checksum step wrote its line with `-NoNewline`. With no newline to
+  separate it, the `publish` job's `cat sha256-windows.txt sha256-linux.txt
+  > SHA256SUMS.txt` glued the Windows line directly onto the start of the
+  Linux one -- `UpdateDownloader`'s parser (correctly) only matches a
+  filename that is the *last* token on its own line, so the Windows asset's
+  line was never found once the two were merged. Removed `-NoNewline`.
 
 ## [2.5.2] - 2026-09-11
 
