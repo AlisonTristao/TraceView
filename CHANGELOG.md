@@ -7,6 +7,35 @@ release flow.
 
 ## [Unreleased]
 
+## [2.6.2] - 2026-09-12
+
+### Fixed
+
+- The Linux `.tar.gz` package's `qxcb` platform plugin failed to load on a
+  clean Fedora with "libxcb-icccm.so.4: cannot open shared object file"
+  (and the same for `libxcb-image`, `libxcb-keysyms`, `libxcb-render-util`)
+  -- reproduced by running the actual v2.6.1 release asset in a bare
+  `fedora:44` container. `scripts/collect_linux_deps.sh`'s system-library
+  regex treated every `libxcb-*` as part of the base X11/xcb stack the
+  target machine is assumed to already have, when these four are actually
+  the separate "xcb-util" convenience libraries Qt's own xcb plugin links
+  against -- present on the Ubuntu build machine as a `qt6-base-dev`
+  dependency, so the gap never showed up building or packaging there, but
+  absent from a stock Fedora install. Narrowed the regex to the real X11/xcb
+  protocol libraries so these four fall through and get bundled like any
+  other Qt-side dependency, same as ICU/harfbuzz/etc. already are. Verified
+  by rebuilding the package and running it in a clean `fedora:44` container
+  with no Qt or `xcb-util-*` packages installed.
+
+- The same package failed the same way on a clean Arch install, but with
+  "libselinux.so.1: cannot open shared object file" instead -- Arch has no
+  SELinux support and no `libselinux` package at all (nothing to tell an
+  Arch user to install), while the Ubuntu build machine's `libmount`/`libgio`/
+  etc. happen to be linked against it, so `collect_linux_deps.sh` had
+  `selinux` lumped in with the actual glibc family (`libc`/`libm`/`libdl`/...)
+  as always-present. Dropped it from that group so it gets bundled too.
+  Verified the same way, in a clean `archlinux/base` container.
+
 ## [2.6.1] - 2026-09-11
 
 ### Fixed
