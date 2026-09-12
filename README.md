@@ -1,65 +1,113 @@
 # TraceView
 
-Real-time telemetry dashboard for ESP32/ESP-NOW robots, built in C++ with Qt.
+Real-time telemetry dashboard for ESP32/ESP-NOW robots, built with C++17
+and Qt 6 Widgets for Windows and Linux.
 
 ![TraceView screenshot](docs/images/example.png)
 
 ## What it does
 
-TraceView connects to a robot (directly or through a dongle acting as a hub)
-and turns its telemetry into a live dashboard:
+TraceView connects to BTP-compatible devices over serial or USB HID,
+including robots reached through a Bally dongle acting as an ESP-NOW hub.
+A `.tvproj` workspace stores device configuration and dashboard layouts.
 
-- **Live charts, gauges and controls** for whatever topics/fields the device
-  declares, laid out on a dashboard you build per project.
-- **Multiple devices at once** — each with its own connection, its own
-  dashboard tab, and its own serial terminal.
-- **Hub support** — one cable to the dongle can carry several robots behind
-  it; each still shows up as its own device with its own manifest, charts
-  and terminal, and each recovers on its own if it reboots or drops out of
-  range.
-- **Firmware updates over Wi-Fi** from the OTA tab, with live reachability
-  and per-device progress.
-- **Log viewer** for a robot's `.blog` event log, and a multi-tab serial
-  monitor for raw device output.
-- **Settings** for render rate, terminal, connection and diagnostic
-  preferences, plus themes and light/dark appearance.
+- **Live dashboards** with charts, gauges, text boards and controls.
+  Telemetry bindings select fields from the device's advertised catalog;
+  widgets can be arranged, resized and configured per project.
+- **Multiple devices** with independent connections, dashboard tabs and
+  terminal routing. Hub children share a physical connection while keeping
+  their own protocol sessions and recovery state.
+- **Device scripts** executed by Qt's JavaScript engine, with callbacks for
+  telemetry, terminal output, connection state, status and device info.
+  Scripts can use timers and send commands or terminal input; the runtime
+  remains active while its editor is closed.
+- **Firmware upload over Wi-Fi** with per-device reachability, reported
+  firmware version and upload progress in the OTA tab.
+- **Logs and diagnostics** including a `.blog` event-log viewer, multi-tab
+  serial monitor, BTP traffic inspection and notification history.
+- **Application preferences** for rendering, terminals, connections,
+  diagnostics, themes, fonts and translated UI text.
 
 ## How it works
 
-TraceView speaks [BTP](https://github.com/AlisonTristao/BTP) to whatever it
-is connected to — a device over serial or USB HID. Each device advertises a
-catalog of topics and fields (its manifest); TraceView subscribes to the
-ones a dashboard widget needs and decodes the incoming frames into values
-that widget understands.
+A `DeviceConnection` combines transport handling with a `Backend` for one
+device. The transport moves bytes; `BtpBackend` implements BTP session
+setup, manifest discovery, subscriptions and telemetry decoding. The
+backend exposes decoded samples and connection information to the UI
+through the contract in [lib/backend/backend.h](lib/backend/backend.h).
 
-The dashboard/UI layer never talks to BTP directly — it sits behind a
-`Backend` interface (`lib/backend/backend.h`), with `BtpBackend` as the
-concrete implementation. That keeps protocol/transport code isolated from
-the UI, and is what lets a hub transparently multiply one cable into
-several independent devices: each node behind it gets its own `Backend`
-instance, sealed end-to-end, with the hub only relaying bytes it can't
-read.
+The device manifest describes available topics and fields. Dashboard
+bindings identify the source, topic, field and array element to consume.
+The subscription manager aggregates consumers per topic and manages their
+requested rates; incoming samples feed the widgets' telemetry buffers.
+The display render rate is separate from the device's telemetry rate.
 
-See [docs/DEVICES.md](docs/DEVICES.md) for the device/hub contract in
-detail, [docs/PROTOCOL.md](docs/PROTOCOL.md) for the wire format, and
-[docs/ECOSYSTEM.md](docs/ECOSYSTEM.md) for how this fits with the rest of
-the Bally firmware.
+For a hub child, TraceView routes BTP frames through the parent's connection
+and maintains a separate backend/session for that robot. Channel sealing
+protects the child's end-to-end traffic; the dongle relays the sealed
+payload. Hub presence information and robot session state support child
+recovery without treating every robot as the same connection.
 
-## Download
+Firmware OTA uses a separate HTTP connection over Wi-Fi: `GET /status`
+checks the robot and `POST /update` uploads the binary. Firmware images do
+not travel through the BTP telemetry connection. Application self-updates
+use GitHub Releases and are separate from robot firmware updates.
 
-Prebuilt Windows and Linux builds are published on the
-[GitHub Releases page](https://github.com/AlisonTristao/TraceView/releases):
+## Getting started
 
-- **Windows** — an NSIS installer bundling the Qt/MinGW runtime; no separate
-  Qt install needed.
-- **Linux** — a `.tar.gz` bundling Qt and its own dependencies; requires the
-  X11/Wayland/GL stack a Linux desktop already has.
+1. Install a packaged build from the
+   [Releases page](https://github.com/AlisonTristao/TraceView/releases), or
+   follow [Building from source](CONTRIBUTING.md#building-from-source).
+2. Create a project or open [example.tvproj](example.tvproj) to inspect an
+   existing layout. Live data requires matching devices and configuration.
+3. Add a device and configure its serial port or USB HID connection. For a
+   robot behind a hub, configure the parent device and the child's hub
+   channel/identity according to [Devices and hubs](docs/DEVICES.md).
+4. Connect the device and wait for session setup and manifest discovery.
+   Select the advertised telemetry fields in the widget properties.
+5. Open the **Layout** tab, use **Add**, and edit each widget's
+   type, properties, position and size. Switch to **Run** to operate the
+   dashboard, then save the workspace as a `.tvproj` file.
+6. For firmware upload, configure the device's OTA address, open
+   **File > Upload Firmware (OTA)...**, check reachability and select the
+   firmware binary. See [OTA procedures](docs/OTA.md) for passwords, mDNS
+   resolution and upload behavior.
 
-TraceView checks for a newer release on startup (once a day at most) and
-from **Settings ▸ Updates**; it only prompts, nothing installs without
-clicking "Update Now".
+## Download and application updates
 
-Building from source instead? See [CONTRIBUTING.md](CONTRIBUTING.md).
+The release workflow produces these x64 packages:
+
+| Platform | Package | Runtime requirements |
+|---|---|---|
+| Windows | `TraceView-<version>-windows-x64.exe` NSIS installer | Bundles Qt and MinGW runtime libraries. |
+| Linux | `TraceView-<version>-linux-x64.tar.gz` | Bundles Qt, plugins and collected third-party dependencies; requires compatible glibc and the desktop X11/Wayland/GL stack. |
+
+On Linux, extract the complete archive and run `bin/TraceView` inside the
+extracted directory. Keep its sibling `lib/` and `plugins/` directories.
+Serial and HID access also require the operating system's device permissions.
+
+TraceView checks for an application update at startup, at most once a day,
+and from **Settings > Updates**. Installation requires **Update Now**.
+The current release workflow marks builds as prereleases, and the updater
+includes those releases when checking for a newer version. Packages are
+published with `SHA256SUMS.txt`.
+
+## Technical documentation
+
+| Document | Contents |
+|---|---|
+| [Contributing](CONTRIBUTING.md) | Dependencies, build/test commands, branch conventions and release procedure. |
+| [Devices and hubs](docs/DEVICES.md) | Device model, connections and hub/child contract. |
+| [Protocol](docs/PROTOCOL.md) | TraceView's BTP integration and wire-format references. |
+| [Dashboard](docs/DASHBOARD.md) | Layout model, widget editing and persistence. |
+| [OTA](docs/OTA.md) | Firmware upload, status polling, credentials and mDNS. |
+| [Ecosystem](docs/ECOSYSTEM.md) | Boundaries between TraceView, BTP and Bally firmware. |
+| [Theming](docs/THEMING.md) | Theme implementation and extension points. |
+| [Changelog](CHANGELOG.md) | Changes by release. |
+
+The shared protocol implementation is maintained in
+[BTP](https://github.com/AlisonTristao/BTP) and fetched at the revision pinned
+in `CMakeLists.txt`.
 
 ## License
 
