@@ -7,6 +7,30 @@ release flow.
 
 ## [Unreleased]
 
+## [2.6.0] - 2026-09-11
+
+### Added
+
+- The Linux `.tar.gz` package now bundles Qt itself, instead of assuming the
+  target machine already has a matching system Qt 6 install. It ships next
+  to a `lib/` and `plugins/` directory containing everything the app's Qt
+  modules pull in (found the same way `windeployqt` does for the Windows
+  installer -- by walking the actual shared-library dependency graph, not a
+  fixed list), so it now runs on a bare Linux machine the same way the
+  Windows installer already ran on a machine without Qt or MinGW installed.
+  Still assumes glibc and the X11/Wayland/GL stack a Linux desktop already
+  has, the same way the Windows build assumes `user32.dll` and friends.
+
+### Fixed
+
+- The Windows installer's `ldd` safety-net sweep (the one that catches a Qt
+  module's own third-party DLL windeployqt doesn't know about -- see the
+  2.5.1 entry below) silently did nothing whenever CPack was packaged from
+  outside a Git Bash terminal, including `release.yml`'s own Windows runner,
+  which defaults to PowerShell. A bare `bash.exe` subprocess never sources
+  the profile that puts Git's own `usr/bin` -- where `ldd.exe` lives -- on
+  `PATH`, so every release built so far had quietly skipped that check.
+
 ## [2.5.4] - 2026-09-11
 
 ### Fixed

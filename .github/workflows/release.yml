@@ -115,7 +115,8 @@ jobs:
             qt6-tools-dev \
             qt6-l10n-tools \
             libudev-dev \
-            libusb-1.0-0-dev
+            libusb-1.0-0-dev \
+            patchelf
 
       - name: Configure (Release)
         run: cmake --preset linux-ninja-release

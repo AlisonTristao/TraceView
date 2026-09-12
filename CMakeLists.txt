@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.21)
 
 project(TraceView
-    VERSION 2.5.4
+    VERSION 2.6.0
     DESCRIPTION "Real-time telemetry dashboard for ESP32/ESP-NOW robots"
     LANGUAGES CXX
 )
@@ -182,12 +182,13 @@ endif()
 # dir -- TraceView is a root-level target, so $<TARGET_FILE_DIR:TraceView>
 # is the build directory itself and also holds CMakeCache.txt/CMakeFiles/
 # test and tool binaries/etc., none of which belong in the package).
-# Linux: TGZ generator -> plain tarball with just the binary, assuming a
-# matching system Qt6 already exists on the target machine (the same
-# assumption CI makes when it installs Qt via pacman/apt/dnf). BTP and
-# hidapi are fetched as static libs (BUILD_SHARED_LIBS forced OFF above),
-# so there is nothing else to bundle. macOS is out of scope here even
-# though MACOSX_BUNDLE is set above.
+# Linux: TGZ generator -> bin/TraceView + Qt (and Qt's own third-party libs)
+# bundled into lib/ and plugins/ by scripts/collect_linux_deps.sh, the same
+# "bundle everything except the OS itself" idea as windeployqt above -- see
+# that script for exactly what does and doesn't get bundled and why. BTP and
+# hidapi are fetched as static libs (BUILD_SHARED_LIBS forced OFF above), so
+# only Qt itself needs collecting. macOS is out of scope here even though
+# MACOSX_BUNDLE is set above.
 # -----------------------------------------------------------------------------
 if(WIN32)
     install(TARGETS TraceView RUNTIME DESTINATION .)
@@ -209,8 +210,18 @@ if(WIN32)
     # comment for the exact failure this fixes.
     find_program(BASH_EXECUTABLE bash)
     if(BASH_EXECUTABLE)
+        # bash.exe run as a bare subprocess (not an interactive/login shell)
+        # never sources the profile that puts Git's own usr/bin -- where its
+        # ldd.exe lives -- on PATH, so the script's `command -v ldd` check
+        # fails silently whenever cpack itself is run from something other
+        # than a Git Bash terminal (PowerShell locally, or CI's Windows
+        # runner, which defaults its `run:` steps to PowerShell too). Prepend
+        # it explicitly so the sweep actually runs everywhere cpack does.
+        get_filename_component(BASH_BIN_DIR "${BASH_EXECUTABLE}" DIRECTORY)
         install(CODE "
-            execute_process(COMMAND \"${BASH_EXECUTABLE}\"
+            execute_process(COMMAND \"${CMAKE_COMMAND}\" -E env
+                \"PATH=${BASH_BIN_DIR};\$ENV{PATH}\"
+                \"${BASH_EXECUTABLE}\"
                 \"${CMAKE_SOURCE_DIR}/scripts/collect_windows_deps.sh\"
                 \"\${CMAKE_INSTALL_PREFIX}\")
         ")
@@ -221,6 +232,32 @@ if(WIN32)
     endif()
 else()
     install(TARGETS TraceView RUNTIME DESTINATION bin)
+
+    # qmake is Qt's own blessed way to ask "where are your plugins", and
+    # covers every distro layout (Debian's /usr/lib/x86_64-linux-gnu/qt6/...,
+    # Arch's /usr/lib/qt6/..., etc.) without hardcoding one.
+    find_program(QMAKE_EXECUTABLE NAMES qmake6 qmake)
+    find_program(PATCHELF_EXECUTABLE NAMES patchelf)
+    # Invoked via bash explicitly (like collect_windows_deps.sh below), not
+    # relying on the script's own +x bit -- this repo's checkouts are mostly
+    # on Windows, where git file-mode tracking isn't reliable.
+    find_program(BASH_EXECUTABLE bash)
+    if(QMAKE_EXECUTABLE AND PATCHELF_EXECUTABLE AND BASH_EXECUTABLE)
+        execute_process(
+            COMMAND "${QMAKE_EXECUTABLE}" -query QT_INSTALL_PLUGINS
+            OUTPUT_VARIABLE QT_PLUGINS_DIR
+            OUTPUT_STRIP_TRAILING_WHITESPACE
+        )
+        install(CODE "
+            execute_process(COMMAND \"${BASH_EXECUTABLE}\"
+                \"${CMAKE_SOURCE_DIR}/scripts/collect_linux_deps.sh\"
+                \"\${CMAKE_INSTALL_PREFIX}\" \"${QT_PLUGINS_DIR}\")
+        ")
+    else()
+        message(WARNING "qmake/patchelf/bash not found: a CPack/TGZ package "
+            "built from this configure will not bundle Qt, and will need a "
+            "matching system Qt6 install on the target machine to run.")
+    endif()
 endif()
 
 set(CPACK_PACKAGE_NAME "TraceView")

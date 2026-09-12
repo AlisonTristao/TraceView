@@ -396,9 +396,15 @@ cd build/linux-ninja-release
 cpack -G TGZ
 ```
 
-The tarball does not bundle Qt: the target machine needs a matching system
-Qt 6 install, the same packages the
-[Linux build](#linux-debianubuntu) section installs.
+Requires [patchelf](https://github.com/NixOS/patchelf) (`apt install patchelf`),
+used to point the bundled binary and libraries at each other instead of the
+system search path.
+
+The tarball bundles Qt and its own third-party libraries (ICU, OpenSSL,
+fontconfig, etc.) into `lib/` and `plugins/`, so it runs on a machine
+without Qt 6 installed. It still relies on the target having glibc and the
+X11/Wayland/GL stack a Linux desktop already has -- those aren't bundled,
+the same way the Windows installer above doesn't bundle `user32.dll`.
 
 ## Auto-update
 
