@@ -7,6 +7,16 @@ release flow.
 
 ## [Unreleased]
 
+## [2.6.1] - 2026-09-11
+
+### Fixed
+
+- The Linux `.tar.gz` package's CI build never installed `qt6-wayland`, so the
+  build machine had no Wayland QPA plugin for `collect_linux_deps.sh` to
+  bundle -- every 2.6.0 Linux package shipped with `xcb` only, failing to
+  start under a native Wayland session (e.g. Fedora/GNOME) with "Could not
+  find the Qt platform plugin wayland".
+
 ## [2.6.0] - 2026-09-11
 
 ### Added
