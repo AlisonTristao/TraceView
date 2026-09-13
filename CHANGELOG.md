@@ -7,6 +7,19 @@ release flow.
 
 ## [Unreleased]
 
+## [2.7.1] - 2026-09-13
+
+### Fixed
+
+- Line and bar chart labels (Y-axis min/mid/max, the legend's last-value
+  row, grid-point markers, the hover tooltip, and bar values) formatted
+  numbers with a variable number of significant digits, so the axis gutter
+  and tooltip balloon visibly resized frame to frame as a value's fractional
+  digits changed. Added a Decimals setting to the chart properties panel's
+  Y Axis section (same 0-6 range the gauge widget's own Decimals field
+  already used) so every one of those labels renders at a fixed width
+  instead.
+
 ## [2.7.0] - 2026-09-13
 
 ### Added
