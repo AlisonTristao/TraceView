@@ -22,7 +22,10 @@ release flow.
 
 - The status bar's per-topic summary appended "(limited, asked X Hz)" next
   to every rate-limited topic, which added noise without being actionable
-  from that view. Removed; the effective rate alone is shown there now.
+  from that view. Removed; the effective rate alone is shown there now --
+  a rate-limited or rejected SUBSCRIBE already logs to Notification History
+  (View > Notification History), now identifying the topic by name instead
+  of a raw id pair.
 
 ## [2.7.1] - 2026-09-13
 
