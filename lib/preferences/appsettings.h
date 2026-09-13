@@ -20,6 +20,14 @@ public:
     int customRenderFps() const;
     int repaintIntervalMs() const;
 
+    // When enabled, this rate replaces every widget's own requested rate
+    // (chart/text board sample time, the gauge's fixed rate) at subscribe
+    // time -- one dial for the whole dashboard's subscribe load instead of
+    // editing each widget's config. The server-side topic still clamps it to
+    // that topic's own max/min, same as any per-widget request would be.
+    bool subscribeRateOverrideEnabled() const;
+    int subscribeRateOverrideHz() const;
+
     int recentProjectsLimit() const;
     bool autoConnectOnProjectOpen() const;
 
@@ -46,6 +54,8 @@ public:
 
     void setRenderProfile(RenderProfile profile);
     void setCustomRenderFps(int fps);
+    void setSubscribeRateOverrideEnabled(bool enabled);
+    void setSubscribeRateOverrideHz(int hz);
     void setRecentProjectsLimit(int limit);
     void setAutoConnectOnProjectOpen(bool enabled);
     void setTerminalScrollbackLines(int lines);

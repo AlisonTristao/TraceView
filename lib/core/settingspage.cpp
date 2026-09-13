@@ -318,6 +318,27 @@ SettingsPage::SettingsPage(QWidget* parent) : QWidget(parent) {
             });
     connect(customFps, qOverload<int>(&QSpinBox::valueChanged), &settings,
             &AppSettings::setCustomRenderFps);
+
+    QGroupBox* subscribeRateSection = addSection(dashboardPage, tr("Telemetry subscribe rate"));
+    auto* subscribeRateOverride =
+        new QCheckBox(tr("Override every widget's requested rate"), subscribeRateSection);
+    subscribeRateOverride->setChecked(settings.subscribeRateOverrideEnabled());
+    formFor(subscribeRateSection)->addRow(subscribeRateOverride);
+    auto* subscribeRateHz = new QSpinBox(subscribeRateSection);
+    subscribeRateHz->setRange(1, 1000);
+    subscribeRateHz->setValue(settings.subscribeRateOverrideHz());
+    subscribeRateHz->setSuffix(tr(" Hz"));
+    subscribeRateHz->setEnabled(settings.subscribeRateOverrideEnabled());
+    subscribeRateHz->setToolTip(
+        tr("Applied to every chart, gauge and text board on this dashboard, in place of each "
+           "widget's own sample time. Each topic still clamps it to its own max/min rate."));
+    formFor(subscribeRateSection)->addRow(tr("Rate"), subscribeRateHz);
+    connect(subscribeRateOverride, &QCheckBox::toggled, &settings,
+            &AppSettings::setSubscribeRateOverrideEnabled);
+    connect(subscribeRateOverride, &QCheckBox::toggled, subscribeRateHz, &QSpinBox::setEnabled);
+    connect(subscribeRateHz, qOverload<int>(&QSpinBox::valueChanged), &settings,
+            &AppSettings::setSubscribeRateOverrideHz);
+
     qobject_cast<QVBoxLayout*>(dashboardPage->layout())->addStretch();
     pages->addWidget(dashboardPage);
 

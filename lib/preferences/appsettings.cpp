@@ -8,6 +8,8 @@ namespace traceview {
 namespace {
 constexpr char kRenderProfileKey[] = "dashboard/renderProfile";
 constexpr char kCustomRenderFpsKey[] = "dashboard/customRenderFps";
+constexpr char kSubscribeRateOverrideEnabledKey[] = "dashboard/subscribeRateOverrideEnabled";
+constexpr char kSubscribeRateOverrideHzKey[] = "dashboard/subscribeRateOverrideHz";
 constexpr char kRecentProjectsLimitKey[] = "general/recentProjectsLimit";
 constexpr char kAutoConnectOnProjectOpenKey[] = "connections/autoConnectOnProjectOpen";
 constexpr char kTerminalScrollbackLinesKey[] = "terminal/scrollbackLines";
@@ -62,6 +64,14 @@ int AppSettings::repaintIntervalMs() const {
             break;
     }
     return qMax(1, qRound(1000.0 / fps));
+}
+
+bool AppSettings::subscribeRateOverrideEnabled() const {
+    return QSettings().value(kSubscribeRateOverrideEnabledKey, false).toBool();
+}
+
+int AppSettings::subscribeRateOverrideHz() const {
+    return value(kSubscribeRateOverrideHzKey, 10, 1, 1000);
 }
 
 int AppSettings::recentProjectsLimit() const {
@@ -128,6 +138,18 @@ void AppSettings::setRenderProfile(RenderProfile profile) {
 void AppSettings::setCustomRenderFps(int fps) {
     setValue(kCustomRenderFpsKey, qBound(1, fps, 240));
     if (renderProfile() == RenderProfile::Custom) {
+        emit dashboardPreferencesChanged();
+    }
+}
+
+void AppSettings::setSubscribeRateOverrideEnabled(bool enabled) {
+    QSettings().setValue(kSubscribeRateOverrideEnabledKey, enabled);
+    emit dashboardPreferencesChanged();
+}
+
+void AppSettings::setSubscribeRateOverrideHz(int hz) {
+    setValue(kSubscribeRateOverrideHzKey, qBound(1, hz, 1000));
+    if (subscribeRateOverrideEnabled()) {
         emit dashboardPreferencesChanged();
     }
 }
