@@ -7,6 +7,17 @@ release flow.
 
 ## [Unreleased]
 
+## [2.8.2] - 2026-09-13
+
+### Fixed
+
+- A subscription pinned above its topic's source-granted max (or below its
+  min) re-posted the "limited to X Hz (requested Y Hz)" notification on
+  every lease renewal -- every ~7.5 s by default -- for as long as it
+  stayed open, instead of once when that fact first became true. Both the
+  status bar toast and the Notification History entry now fire only when
+  the granted rate actually changes.
+
 ## [2.8.1] - 2026-09-13
 
 ### Fixed
