@@ -28,12 +28,15 @@ constexpr quint16 kGaugeFieldId2 = 3;
 constexpr quint16 kGaugeFieldId3 = 4;
 
 QJsonObject seriesJson(const QString& name, int fieldId, const QString& color,
-                       const QString& style) {
+                       const QString& style, const QString& unit = QString()) {
     QJsonObject series;
     series["name"] = name;
     series["fieldId"] = fieldId;
     series["color"] = color;
     series["style"] = style;
+    if (!unit.isEmpty()) {
+        series["unit"] = unit;
+    }
     return series;
 }
 
@@ -59,6 +62,34 @@ QJsonObject lineChartConfig() {
     series.append(seriesJson("Temp", 1, "#3B82F6", "solid"));
     series.append(seriesJson("Pressure", 2, "#F97316", "dashed"));
     series.append(seriesJson("Humidity", 3, "#22C55E", "cross"));
+    config["series"] = series;
+    return config;
+}
+
+// Exercises ChartConfig::autoAxis: three series bound to three different
+// units (m/s, rad/s, %) on the same chart -- with autoAxis off, plotting
+// these together on one shared axis would squash the smaller-magnitude
+// series flat; with it on, each unit gets its own stacked, auto-ranged Y
+// axis (see resolveYAxes()/paintYAxes() in chartwidgets.cpp), tinted to that
+// axis's own series color.
+QJsonObject autoAxisLineChartConfig() {
+    QJsonObject config;
+    config["sourceId"] = QString::number(kSourceId);
+    config["topicId"] = QString::number(kLineTopicId);
+
+    QJsonObject xAxis;
+    xAxis["mode"] = "samples";
+    xAxis["limit"] = 150;
+    config["xAxis"] = xAxis;
+
+    QJsonObject yAxis;
+    yAxis["autoAxis"] = true;
+    config["yAxis"] = yAxis;
+
+    QJsonArray series;
+    series.append(seriesJson("Speed", 1, "#3B82F6", "solid", "m/s"));
+    series.append(seriesJson("Turn rate", 2, "#F97316", "dashed", "rad/s"));
+    series.append(seriesJson("Duty cycle", 3, "#22C55E", "cross", "%"));
     config["series"] = series;
     return config;
 }
@@ -118,7 +149,7 @@ int main(int argc, char** argv) {
 
     QWidget window;
     window.setWindowTitle("Chart preview -- synthetic data, no serial");
-    window.resize(960, 720);
+    window.resize(960, 960);
 
     auto* layout = new QGridLayout(&window);
 
@@ -126,13 +157,17 @@ int main(int argc, char** argv) {
     lineChart->setConfig(lineChartConfig());
     layout->addWidget(lineChart, 0, 0, 1, 2);
 
+    auto* autoAxisChart = new DummyLineChartWidget();
+    autoAxisChart->setConfig(autoAxisLineChartConfig());
+    layout->addWidget(autoAxisChart, 1, 0, 1, 2);
+
     auto* barChart = new DummyBarChartWidget();
     barChart->setConfig(barChartConfig());
-    layout->addWidget(barChart, 1, 0);
+    layout->addWidget(barChart, 2, 0);
 
     auto* gauge = new DummyGaugeWidget();
     gauge->setConfig(gaugeConfig());
-    layout->addWidget(gauge, 1, 1);
+    layout->addWidget(gauge, 2, 1);
 
     window.show();
 
@@ -156,6 +191,18 @@ int main(int argc, char** argv) {
         gauge->appendFieldSample(kGaugeFieldId, timestampUs, v0);
         gauge->appendFieldSample(kGaugeFieldId2, timestampUs, v1);
         gauge->appendFieldSample(kGaugeFieldId3, timestampUs, v2);
+
+        // Three wildly different magnitudes/units on one autoAxis chart --
+        // m/s and rad/s stay small, "%" swings across the full 0-100 range --
+        // so it's obvious at a glance that each is scaled against its own
+        // stacked axis rather than one shared one (which would flatten the
+        // first two to a barely-visible sliver next to the third).
+        const double speed = 1.5 * qSin(t * 0.04);
+        const double turnRate = 4.0 * qSin(t * 0.04 + 1.0);
+        const double duty = 50.0 + 45.0 * qSin(t * 0.04 + 2.0);
+        autoAxisChart->appendFieldSample(1, timestampUs, speed);
+        autoAxisChart->appendFieldSample(2, timestampUs, turnRate);
+        autoAxisChart->appendFieldSample(3, timestampUs, duty);
 
         // Five sines at increasing frequencies, fed every tick -- see
         // debugchartswindow.cpp's tick() (this tool's configs are kept in

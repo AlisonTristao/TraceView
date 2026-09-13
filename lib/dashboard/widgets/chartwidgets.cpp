@@ -94,15 +94,41 @@ constexpr int kBarYGridDivisions = 10;
 
 // `gridDivisions` evenly spaced horizontal gridlines across plotRect's
 // height (gridDivisions + 1 lines, including the top/bottom edges), plus the
-// min/mid/max value labels in a gutter to plotRect's left sized to the
-// widest of the three (see axisLabelWidth()) -- always exactly 3 labels
-// regardless of how many gridlines are drawn, so a denser bar-chart grid
-// doesn't turn into a wall of overlapping numbers. The value labels (and
-// unit) stay up regardless of `showGrid` -- that toggle is about the guide
-// lines across the plot, not about losing the ability to read the axis.
-void paintYAxis(QPainter& painter, const QRect& plotRect, double yMin, double yMax,
-                const QString& unit, bool showGrid, int gridDivisions, int labelWidth,
-                int decimals, const ThemePalette& palette) {
+// min/mid/max value labels in a gutter sized to the widest of the three (see
+// axisLabelWidth()) -- always exactly 3 labels regardless of how many
+// gridlines are drawn, so a denser bar-chart grid doesn't turn into a wall of
+// overlapping numbers. The value labels (and unit) stay up regardless of
+// `showGrid` -- that toggle is about the guide lines across the plot, not
+// about losing the ability to read the axis.
+//
+// Ruler tick marks (see paintYAxis's `showRuler`) poke this many px left of
+// the vertical ruler line, toward the value gutter they annotate -- same
+// idea as a physical ruler's hash marks pointing at its printed numbers.
+constexpr int kAxisTickLength = 4;
+
+// `axisRight` is the x-coordinate this axis's gutter sits immediately left
+// of -- plotRect.left() for the one axis a chart normally has, or a cursor
+// stepped further left for each additional stacked axis under
+// ChartConfig::autoAxis (see paintYAxes() below), so several axes' gutters
+// can sit side by side without overlapping. `textColor` lets a stacked axis's
+// labels be tinted to match the color of the series it scales (paintYAxes()
+// picks that color; every other caller just passes palette.textSecondary,
+// this function's original, unconditional color).
+//
+// `showGrid` and `showRuler` are separate controls sharing one on/off
+// preference (ChartConfig::showGrid): `showGrid` draws the horizontal
+// min/mid/max lines spanning the whole plot -- only asked for once, from the
+// primary axis, since every axis normalizes its own range into the same
+// plotRect height and so would draw those same three rows again, not new
+// ones. `showRuler` instead draws this one axis's own vertical spine (at
+// `axisRight`) with tick marks at its own min/mid/max -- asked for from
+// *every* axis, since stacked axes each get their own spine at their own x
+// position, giving the "one line per axis" a multi-axis chart otherwise has
+// no visual anchor for.
+void paintYAxis(QPainter& painter, const QRect& plotRect, int axisRight, double yMin, double yMax,
+                const QString& unit, bool showGrid, bool showRuler, int gridDivisions,
+                int labelWidth, int decimals, const QColor& textColor,
+                const ThemePalette& palette) {
     if (plotRect.height() <= 0 || plotRect.width() <= 0) {
         return;
     }
@@ -115,17 +141,25 @@ void paintYAxis(QPainter& painter, const QRect& plotRect, double yMin, double yM
             painter.drawLine(plotRect.left(), y, plotRect.right(), y);
         }
     }
+    if (showRuler) {
+        painter.setPen(QPen(palette.border, 1));
+        painter.drawLine(axisRight, plotRect.top(), axisRight, plotRect.bottom());
+        auto drawTick = [&](int y) {
+            painter.drawLine(axisRight - kAxisTickLength, y, axisRight, y);
+        };
+        drawTick(plotRect.top());
+        drawTick(midY);
+        drawTick(plotRect.bottom());
+    }
 
-    painter.setPen(palette.textSecondary);
+    painter.setPen(textColor);
     const QFontMetrics fm(painter.font());
-    // Derived from plotRect itself (not a separate running x) so this stays
-    // correct regardless of whether the caller reserved extra left space
-    // for the rotated unit strip below. `labelWidth` comes from the caller
-    // (axisLabelWidth(), same yMin/yMax) instead of being recomputed here --
-    // plotLeftMargin() already needs that exact value to size the gutter
-    // this paints into, so computing it twice per frame was pure duplicate
-    // work for an identical result.
-    const int gutterRight = plotRect.left() - kAxisLabelGap;
+    // `labelWidth` comes from the caller (axisLabelWidth(), same yMin/yMax)
+    // instead of being recomputed here -- plotLeftMargin()/axisWidth()
+    // already need that exact value to size the gutter this paints into, so
+    // computing it twice per frame was pure duplicate work for an identical
+    // result.
+    const int gutterRight = axisRight - kAxisLabelGap;
     const QRect gutter(gutterRight - labelWidth, 0, labelWidth, fm.height());
     auto drawValue = [&](double value, int centerY) {
         painter.drawText(
@@ -391,19 +425,27 @@ int plotTopMargin(const QPainter& painter) {
     return kOuterPadding + legendRowHeight(painter) + kOuterPadding;
 }
 
-// Left inset for plotRect: kOuterPadding from the widget's own edge, then
-// -- when a unit is configured -- the rotated unit strip and a tight
-// kAxisLabelGap ahead of the value gutter, then the gutter itself (sized to
-// `labelWidth`, the caller's own axisLabelWidth() for this frame's range)
-// and another kAxisLabelGap before the plot starts. Mirrors the strip/gutter
-// layout paintYAxis() draws into, so plotRect always reserves exactly as
+// Total width one Y axis's chrome takes up -- the rotated unit strip (when
+// `hasUnit`) plus a tight kAxisLabelGap ahead of the value gutter, the gutter
+// itself (sized to `labelWidth`, the caller's own axisLabelWidth() for this
+// axis's range), and another kAxisLabelGap before whatever sits to its left
+// (the plot itself for the one axis a chart normally has, or the next
+// stacked axis under ChartConfig::autoAxis -- see paintYAxes()). Mirrors the
+// strip/gutter layout paintYAxis() draws into, so callers reserve exactly as
 // much space as that call will actually use -- no more, no less, regardless
-// of how many digits the current range needs. Takes `labelWidth` instead of
-// yMin/yMax directly so the caller can compute it once and hand the same
-// value to both this and paintYAxis() rather than each deriving its own.
-int plotLeftMargin(const QPainter& painter, bool hasUnit, int labelWidth) {
+// of how many digits the current range needs.
+int axisWidth(const QPainter& painter, bool hasUnit, int labelWidth) {
     const int unitPart = hasUnit ? unitStripWidth(painter) + kAxisLabelGap : 0;
-    return kOuterPadding + unitPart + labelWidth + kAxisLabelGap;
+    return unitPart + labelWidth + kAxisLabelGap;
+}
+
+// Left inset for plotRect when a chart has just the one Y axis: kOuterPadding
+// from the widget's own edge, then that axis's own chrome (see axisWidth()).
+// Takes `labelWidth` instead of yMin/yMax directly so the caller can compute
+// it once and hand the same value to both this and paintYAxis() rather than
+// each deriving its own.
+int plotLeftMargin(const QPainter& painter, bool hasUnit, int labelWidth) {
+    return kOuterPadding + axisWidth(painter, hasUnit, labelWidth);
 }
 
 // Bottom inset for plotRect: mirrors plotTopMargin()'s legend-row math, but
@@ -602,15 +644,12 @@ bool isMarkerStyle(ChartSeriesStyle style) {
     return style == ChartSeriesStyle::Cross || style == ChartSeriesStyle::Asterisk;
 }
 
-// Y range to map buffered values into plotRect's height: the configured
-// fixed range, or an auto range spanning whatever's currently buffered
-// (with a little headroom so extreme points don't touch the plot edges).
-QPair<double, double> computeYRange(const ChartConfig& config,
-                                    const QVector<QVector<double>>& buffers) {
-    if (config.yAxisMode == ChartYAxisMode::Fixed) {
-        return {config.yMin, qMax(config.yMax, config.yMin + 1e-6)};
-    }
-
+// Range spanning whatever's currently buffered across `buffers`, with a
+// little headroom so extreme points don't touch the plot edges -- the "Auto"
+// half of computeYRange() below, pulled out so ChartConfig::autoAxis's
+// per-unit axis groups (resolveYAxes() below) can auto-range just their own
+// member series' buffers instead of the whole chart's.
+QPair<double, double> autoYRange(const QVector<QVector<double>>& buffers) {
     bool any = false;
     double lo = 0.0;
     double hi = 0.0;
@@ -633,6 +672,123 @@ QPair<double, double> computeYRange(const ChartConfig& config,
     }
     const double pad = (hi - lo) * 0.05;
     return {lo - pad, hi + pad};
+}
+
+// Y range to map buffered values into plotRect's height: the configured
+// fixed range, or an auto range spanning whatever's currently buffered.
+QPair<double, double> computeYRange(const ChartConfig& config,
+                                    const QVector<QVector<double>>& buffers) {
+    if (config.yAxisMode == ChartYAxisMode::Fixed) {
+        return {config.yMin, qMax(config.yMax, config.yMin + 1e-6)};
+    }
+    return autoYRange(buffers);
+}
+
+// Everything DummyLineChartWidget::paintEvent()/DummyBarChartWidget::
+// paintEvent() need to know to draw a chart's Y axis/axes and scale its
+// series, for either mode:
+//   - ChartConfig::autoAxis == false: one axis, `yMin`/`yMax`/`labelWidth`
+//     below (paintYAxis() called once, directly by the caller); `axes` stays
+//     empty.
+//   - ChartConfig::autoAxis == true: one axis per distinct
+//     ChartSeriesConfig::unit, in `axes` (stacking order == first-appearance
+//     order, see chartAxisGroups()); `yMin`/`yMax`/`labelWidth` above go
+//     unused.
+// Either way, `yMins`/`yMaxs` give every series (same index as
+// ChartConfig::series) the range it should actually be plotted against, so
+// paintLineSeries()/paintGridPointMarkers()/paintHoverCrosshair()/
+// paintBarSnapshot() never need to know which mode is active.
+struct ResolvedYAxes {
+    int leftMargin = 0;
+    QVector<double> yMins;
+    QVector<double> yMaxs;
+
+    double yMin = 0.0;
+    double yMax = 0.0;
+    int labelWidth = 0;
+
+    struct Axis {
+        QString unit;
+        double yMin = 0.0;
+        double yMax = 0.0;
+        int labelWidth = 0;
+        // Neutral palette.textSecondary for a lone axis; tinted to its first
+        // member series' color once there's more than one axis, so the eye
+        // can match "this axis" to "this line" without a separate legend.
+        QColor color;
+        bool isPrimary = false;  // draws gridlines; see paintYAxes()
+    };
+    QVector<Axis> axes;
+};
+
+ResolvedYAxes resolveYAxes(const QPainter& painter, const ChartConfig& config,
+                          const QVector<QVector<double>>& seriesValues,
+                          const ThemePalette& palette) {
+    ResolvedYAxes result;
+    if (!config.autoAxis) {
+        const auto [yMin, yMax] = computeYRange(config, seriesValues);
+        result.yMin = yMin;
+        result.yMax = yMax;
+        result.labelWidth = axisLabelWidth(painter, yMin, yMax, config.decimals);
+        result.leftMargin = plotLeftMargin(painter, !config.yUnit.isEmpty(), result.labelWidth);
+        result.yMins.fill(yMin, config.series.size());
+        result.yMaxs.fill(yMax, config.series.size());
+        return result;
+    }
+
+    const QVector<ChartAxisGroup> groups = chartAxisGroups(config);
+    result.yMins.fill(0.0, config.series.size());
+    result.yMaxs.fill(0.0, config.series.size());
+    int totalWidth = 0;
+    for (int g = 0; g < groups.size(); ++g) {
+        const ChartAxisGroup& group = groups[g];
+        QVector<QVector<double>> memberBuffers;
+        memberBuffers.reserve(group.seriesIndices.size());
+        for (int idx : group.seriesIndices) {
+            memberBuffers.append(idx < seriesValues.size() ? seriesValues[idx] : QVector<double>());
+        }
+        const auto [yMin, yMax] = autoYRange(memberBuffers);
+        for (int idx : group.seriesIndices) {
+            result.yMins[idx] = yMin;
+            result.yMaxs[idx] = yMax;
+        }
+
+        ResolvedYAxes::Axis axis;
+        axis.unit = group.unit;
+        axis.yMin = yMin;
+        axis.yMax = yMax;
+        axis.labelWidth = axisLabelWidth(painter, yMin, yMax, config.decimals);
+        axis.isPrimary = (g == 0);
+        axis.color = (groups.size() > 1 && !group.seriesIndices.isEmpty())
+                         ? config.series[group.seriesIndices.first()].color
+                         : palette.textSecondary;
+        totalWidth += axisWidth(painter, !axis.unit.isEmpty(), axis.labelWidth);
+        result.axes.append(axis);
+    }
+    result.leftMargin = kOuterPadding + totalWidth;
+    return result;
+}
+
+// Draws every axis in `resolved.axes` (the ChartConfig::autoAxis path only --
+// see DummyLineChartWidget::paintEvent()/DummyBarChartWidget::paintEvent()
+// for the single-axis path, a direct paintYAxis() call), stacked leftward
+// from plotRect's own left edge: the primary axis (axes[0]) sits innermost,
+// closest to the plot, and is the only one whose full-width gridlines get
+// drawn (every axis shares the same plotRect, so drawing every axis's
+// gridlines would just overlap into a denser, less readable grid with no
+// added meaning past the first). Every axis, primary or not, still gets its
+// own vertical ruler + min/mid/max ticks (paintYAxis's `showRuler`) at its
+// own stacked x position -- that's what gives a multi-axis chart one visibly
+// distinct line per axis instead of only the primary's shared grid.
+void paintYAxes(QPainter& painter, const QRect& plotRect, const ResolvedYAxes& resolved,
+               bool showGrid, int gridDivisions, int decimals, const ThemePalette& palette) {
+    int cursor = plotRect.left();
+    for (const ResolvedYAxes::Axis& axis : resolved.axes) {
+        paintYAxis(painter, plotRect, cursor, axis.yMin, axis.yMax, axis.unit,
+                  showGrid && axis.isPrimary, /*showRuler=*/showGrid, gridDivisions,
+                  axis.labelWidth, decimals, axis.color, palette);
+        cursor -= axisWidth(painter, !axis.unit.isEmpty(), axis.labelWidth);
+    }
 }
 
 // Pixel step between adjacent samples, sized against the series' full
@@ -886,9 +1042,10 @@ bool valueAtX(ChartLineInterpolation interpolation, bool markerStyle, const QRec
 void paintGridPointMarkers(QPainter& painter, const QRect& plotRect, int capacity,
                            const QVector<int>& xLines,
                            const QVector<ChartSeriesConfig>& seriesConfigs,
-                           const QVector<QVector<double>>& buffers, double yMin, double yMax,
-                           ChartLineInterpolation interpolation, int decimals,
-                           const QVector<bool>& hiddenSeries, const ThemePalette& palette) {
+                           const QVector<QVector<double>>& buffers, const QVector<double>& yMins,
+                           const QVector<double>& yMaxs, ChartLineInterpolation interpolation,
+                           int decimals, const QVector<bool>& hiddenSeries,
+                           const ThemePalette& palette) {
     if (xLines.isEmpty()) {
         return;
     }
@@ -904,6 +1061,8 @@ void paintGridPointMarkers(QPainter& painter, const QRect& plotRect, int capacit
             continue;
         }
         const QVector<double>& values = buffers[series];
+        const double yMin = yMins[series];
+        const double yMax = yMaxs[series];
         const bool marker = isMarkerStyle(seriesConfigs[series].style);
         for (int gridX : xLines) {
             qreal x = 0.0;
@@ -962,9 +1121,10 @@ void paintGridPointMarkers(QPainter& painter, const QRect& plotRect, int capacit
 // widget at all").
 void paintHoverCrosshair(QPainter& painter, const QRect& plotRect, int capacity,
                          const QPoint& mousePos, const QVector<ChartSeriesConfig>& seriesConfigs,
-                         const QVector<QVector<double>>& buffers, double yMin, double yMax,
-                         ChartLineInterpolation interpolation, int decimals,
-                         const QVector<bool>& hiddenSeries, const ThemePalette& palette) {
+                         const QVector<QVector<double>>& buffers, const QVector<double>& yMins,
+                         const QVector<double>& yMaxs, ChartLineInterpolation interpolation,
+                         int decimals, const QVector<bool>& hiddenSeries,
+                         const ThemePalette& palette) {
     if (!plotRect.contains(mousePos)) {
         return;
     }
@@ -986,7 +1146,8 @@ void paintHoverCrosshair(QPainter& painter, const QRect& plotRect, int capacity,
         qreal y = 0.0;
         double value = 0.0;
         const bool found = valueAtX(interpolation, isMarkerStyle(seriesConfigs[i].style), plotRect,
-                                    capacity, buffers[i], yMin, yMax, hoverX, &x, &y, &value);
+                                    capacity, buffers[i], yMins[i], yMaxs[i], hoverX, &x, &y,
+                                    &value);
         if (found) {
             rows.append({&seriesConfigs[i], value, x, y});
         }
@@ -1089,8 +1250,8 @@ void paintHoverCrosshair(QPainter& painter, const QRect& plotRect, int capacity,
 // of leaving a blank gap where it used to sit.
 void paintBarSnapshot(QPainter& painter, const QRect& plotRect, const QRect& area,
                       const QVector<ChartSeriesConfig>& seriesConfigs,
-                      const QVector<QVector<double>>& buffers, double yMin, double yMax,
-                      int decimals, const QVector<bool>& hiddenSeries,
+                      const QVector<QVector<double>>& buffers, const QVector<double>& yMins,
+                      const QVector<double>& yMaxs, int decimals, const QVector<bool>& hiddenSeries,
                       const ThemePalette& palette) {
     QVector<int> visible;
     visible.reserve(seriesConfigs.size());
@@ -1102,18 +1263,20 @@ void paintBarSnapshot(QPainter& painter, const QRect& plotRect, const QRect& are
     if (visible.isEmpty() || plotRect.width() <= 0 || plotRect.height() <= 0) {
         return;
     }
-    const double yRange = (yMax - yMin) != 0.0 ? (yMax - yMin) : 1.0;
     const int barCount = visible.size();
     const qreal slot = qreal(plotRect.width()) / qreal(barCount);
     constexpr qreal kBarGapFraction = 0.3;
     const qreal barWidth = qMax(1.0, slot * (1.0 - kBarGapFraction));
-    const qreal zeroY = zeroBaselineY(plotRect, yMin, yMax);
 
     const int rowHeight = legendRowHeight(painter);
     const int labelY = area.bottom() - kOuterPadding - rowHeight + 1;
 
     for (int slotIndex = 0; slotIndex < barCount; ++slotIndex) {
         const int series = visible[slotIndex];
+        const double yMin = yMins[series];
+        const double yMax = yMaxs[series];
+        const double yRange = (yMax - yMin) != 0.0 ? (yMax - yMin) : 1.0;
+        const qreal zeroY = zeroBaselineY(plotRect, yMin, yMax);
         const qreal slotLeft = plotRect.left() + slot * slotIndex;
         const qreal x = slotLeft + (slot - barWidth) / 2.0;
 
@@ -1280,21 +1443,23 @@ void DummyLineChartWidget::paintEvent(QPaintEvent*) {
         seriesValues.append(buffer.values());
     }
 
-    const auto [yMin, yMax] = computeYRange(m_config, seriesValues);
-    // Computed once and handed to both plotLeftMargin() (to size the reserved
-    // gutter) and paintYAxis() (to actually draw into it) -- both used to call
-    // axisLabelWidth() separately with the same yMin/yMax, redoing the same
-    // font-metrics work twice a frame for an identical result.
-    const int labelWidth = axisLabelWidth(painter, yMin, yMax, m_config.decimals);
+    const ResolvedYAxes resolved = resolveYAxes(painter, m_config, seriesValues, palette);
     const int topMargin = plotTopMargin(painter);
-    const int leftMargin = plotLeftMargin(painter, !m_config.yUnit.isEmpty(), labelWidth);
     const int bottomMargin = plotBottomMargin(painter);
-    const QRect plotRect = area.adjusted(leftMargin, topMargin, -kOuterPadding, -bottomMargin);
+    const QRect plotRect =
+        area.adjusted(resolved.leftMargin, topMargin, -kOuterPadding, -bottomMargin);
     const int capacity = chartBufferCapacity(m_config);
     const QVector<int> xLines = xGridLines(plotRect);
 
-    paintYAxis(painter, plotRect, yMin, yMax, m_config.yUnit, m_config.showGrid,
-               kLineYGridDivisions, labelWidth, m_config.decimals, palette);
+    if (m_config.autoAxis) {
+        paintYAxes(painter, plotRect, resolved, m_config.showGrid, kLineYGridDivisions,
+                  m_config.decimals, palette);
+    } else {
+        paintYAxis(painter, plotRect, plotRect.left(), resolved.yMin, resolved.yMax,
+                  m_config.yUnit, m_config.showGrid, /*showRuler=*/m_config.showGrid,
+                  kLineYGridDivisions, resolved.labelWidth, m_config.decimals,
+                  palette.textSecondary, palette);
+    }
     paintXAxis(painter, plotRect, xLines, m_config.showGrid, palette);
     for (int i = 0; i < m_config.series.size() && i < seriesValues.size(); ++i) {
         // A series hidden via its legend entry (see mousePressEvent()) is
@@ -1303,21 +1468,21 @@ void DummyLineChartWidget::paintEvent(QPaintEvent*) {
         if (i < m_seriesHidden.size() && m_seriesHidden[i]) {
             continue;
         }
-        paintLineSeries(painter, plotRect, capacity, m_config.series[i], seriesValues[i], yMin,
-                        yMax, m_lineInterpolation);
+        paintLineSeries(painter, plotRect, capacity, m_config.series[i], seriesValues[i],
+                        resolved.yMins[i], resolved.yMaxs[i], m_lineInterpolation);
     }
     // Gated on showGrid too -- the markers are dots at the gridline
     // crossings, so they lose their reference entirely once the gridlines
     // themselves are hidden.
     if (m_showGridPointMarkers && m_config.showGrid) {
         paintGridPointMarkers(painter, plotRect, capacity, xLines, m_config.series, seriesValues,
-                              yMin, yMax, m_lineInterpolation, m_config.decimals, m_seriesHidden,
-                              palette);
+                              resolved.yMins, resolved.yMaxs, m_lineInterpolation,
+                              m_config.decimals, m_seriesHidden, palette);
     }
     if (m_showHoverCrosshair && m_hasHoverPos) {
         paintHoverCrosshair(painter, plotRect, capacity, m_hoverPos, m_config.series, seriesValues,
-                            yMin, yMax, m_lineInterpolation, m_config.decimals, m_seriesHidden,
-                            palette);
+                            resolved.yMins, resolved.yMaxs, m_lineInterpolation, m_config.decimals,
+                            m_seriesHidden, palette);
     }
 
     // No more redundant "Line Chart" corner label -- DashboardCell's header
@@ -1347,23 +1512,27 @@ void DummyBarChartWidget::paintEvent(QPaintEvent*) {
         seriesValues.append(buffer.values());
     }
 
-    const auto [yMin, yMax] = computeYRange(m_config, seriesValues);
-    // See DummyLineChartWidget::paintEvent() -- shared once instead of each
-    // of plotLeftMargin()/paintYAxis() recomputing it.
-    const int labelWidth = axisLabelWidth(painter, yMin, yMax, m_config.decimals);
+    const ResolvedYAxes resolved = resolveYAxes(painter, m_config, seriesValues, palette);
     const int topMargin = plotTopMargin(painter);
-    const int leftMargin = plotLeftMargin(painter, !m_config.yUnit.isEmpty(), labelWidth);
     const int bottomMargin = plotBottomMargin(painter);
-    const QRect plotRect = area.adjusted(leftMargin, topMargin, -kOuterPadding, -bottomMargin);
+    const QRect plotRect =
+        area.adjusted(resolved.leftMargin, topMargin, -kOuterPadding, -bottomMargin);
 
     // No paintXAxis()/xGridLines() here -- those are time/sample gridlines,
     // and this chart no longer has a time/sample axis: it's a fixed bar per
     // series, each labeled with its own current value directly below it
     // (paintBarSnapshot() below) rather than scrolling through history.
-    paintYAxis(painter, plotRect, yMin, yMax, m_config.yUnit, m_config.showGrid, kBarYGridDivisions,
-               labelWidth, m_config.decimals, palette);
-    paintBarSnapshot(painter, plotRect, area, m_config.series, seriesValues, yMin, yMax,
-                     m_config.decimals, m_seriesHidden, palette);
+    if (m_config.autoAxis) {
+        paintYAxes(painter, plotRect, resolved, m_config.showGrid, kBarYGridDivisions,
+                  m_config.decimals, palette);
+    } else {
+        paintYAxis(painter, plotRect, plotRect.left(), resolved.yMin, resolved.yMax,
+                  m_config.yUnit, m_config.showGrid, /*showRuler=*/m_config.showGrid,
+                  kBarYGridDivisions, resolved.labelWidth, m_config.decimals,
+                  palette.textSecondary, palette);
+    }
+    paintBarSnapshot(painter, plotRect, area, m_config.series, seriesValues, resolved.yMins,
+                     resolved.yMaxs, m_config.decimals, m_seriesHidden, palette);
 
     // Top name row only -- no bottom "last value" row or "t"/"k" tag, since
     // each bar already carries its own current value (see above). See
