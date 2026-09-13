@@ -106,6 +106,7 @@ private:
     QDoubleSpinBox* m_yMinSpin = nullptr;
     QDoubleSpinBox* m_yMaxSpin = nullptr;
     QLineEdit* m_yUnitEdit = nullptr;
+    QSpinBox* m_decimalsSpin = nullptr;
     QCheckBox* m_gridCheck = nullptr;
     QTableWidget* m_seriesTable = nullptr;
     QPushButton* m_addSeriesButton = nullptr;

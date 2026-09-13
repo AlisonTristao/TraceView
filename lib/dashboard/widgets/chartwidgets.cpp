@@ -46,12 +46,17 @@ int unitStripWidth(const QPainter& painter) {
 // Callers reserve exactly this much gutter space instead of a fixed
 // worst-case width most values never fill -- e.g. "0"/"50"/"100" only needs
 // a third of what "-100000"/"0"/"100000" would, so a flat constant either
-// wastes space for small ranges or clips large ones.
-int axisLabelWidth(const QPainter& painter, double yMin, double yMax) {
+// wastes space for small ranges or clips large ones. `decimals` is always
+// the same fixed number of fractional digits (ChartConfig::decimals) rather
+// than a variable significant-digit count, so this width -- and everything
+// laid out from it (the gutter, the plot area) -- stays put frame to frame
+// instead of resizing as the auto-ranged min/max happen to need more or
+// fewer digits to display.
+int axisLabelWidth(const QPainter& painter, double yMin, double yMax, int decimals) {
     const QFontMetrics fm(painter.font());
-    const int maxWidth = fm.horizontalAdvance(QString::number(yMax, 'g', 4));
-    const int midWidth = fm.horizontalAdvance(QString::number((yMin + yMax) / 2.0, 'g', 4));
-    const int minWidth = fm.horizontalAdvance(QString::number(yMin, 'g', 4));
+    const int maxWidth = fm.horizontalAdvance(QString::number(yMax, 'f', decimals));
+    const int midWidth = fm.horizontalAdvance(QString::number((yMin + yMax) / 2.0, 'f', decimals));
+    const int minWidth = fm.horizontalAdvance(QString::number(yMin, 'f', decimals));
     return qMax(maxWidth, qMax(midWidth, minWidth));
 }
 
@@ -97,7 +102,7 @@ constexpr int kBarYGridDivisions = 10;
 // lines across the plot, not about losing the ability to read the axis.
 void paintYAxis(QPainter& painter, const QRect& plotRect, double yMin, double yMax,
                 const QString& unit, bool showGrid, int gridDivisions, int labelWidth,
-                const ThemePalette& palette) {
+                int decimals, const ThemePalette& palette) {
     if (plotRect.height() <= 0 || plotRect.width() <= 0) {
         return;
     }
@@ -125,7 +130,7 @@ void paintYAxis(QPainter& painter, const QRect& plotRect, double yMin, double yM
     auto drawValue = [&](double value, int centerY) {
         painter.drawText(
             QRect(gutter.x(), centerY - gutter.height() / 2, gutter.width(), gutter.height()),
-            Qt::AlignRight | Qt::AlignVCenter, QString::number(value, 'g', 4));
+            Qt::AlignRight | Qt::AlignVCenter, QString::number(value, 'f', decimals));
     };
     drawValue(yMax, plotRect.top());
     drawValue((yMin + yMax) / 2.0, midY);
@@ -219,13 +224,13 @@ QString seriesDisplayName(const ChartSeriesConfig& series) {
 // paintYAxis's drawValue) so the two read consistently. "--" for a series
 // with no data yet rather than 0 -- an absent reading and an actual zero
 // reading need to look different.
-QString formatLatestValue(const QVector<double>& buffer) {
+QString formatLatestValue(const QVector<double>& buffer, int decimals) {
     if (buffer.isEmpty()) {
         // Free function -- see seriesDisplayName() above for why this uses
         // QCoreApplication::translate() instead of tr().
         return QCoreApplication::translate("ChartWidgets", "--");
     }
-    return QString::number(buffer.last(), 'g', 4);
+    return QString::number(buffer.last(), 'f', decimals);
 }
 
 struct LegendColumn {
@@ -311,8 +316,9 @@ void paintLegendRow(QPainter& painter, int y, int rowHeight, const QVector<Legen
 void paintSeriesLegends(QPainter& painter, const QRect& area,
                         const QVector<ChartSeriesConfig>& seriesConfigs,
                         const QVector<QVector<double>>& seriesBuffers, ChartXAxisMode xAxisMode,
-                        bool showLastValueRow, bool showXAxisTag, const QVector<bool>& hiddenSeries,
-                        const ThemePalette& palette, QVector<QRect>* outHitRects = nullptr) {
+                        bool showLastValueRow, bool showXAxisTag, int decimals,
+                        const QVector<bool>& hiddenSeries, const ThemePalette& palette,
+                        QVector<QRect>* outHitRects = nullptr) {
     const QFontMetrics fm(painter.font());
     const int rowHeight = legendRowHeight(painter);
     // Free function -- see seriesDisplayName() above for why this uses
@@ -338,8 +344,8 @@ void paintSeriesLegends(QPainter& painter, const QRect& area,
     QStringList values;
     for (int i = 0; i < seriesConfigs.size(); ++i) {
         names << seriesDisplayName(seriesConfigs[i]);
-        values << formatLatestValue(i < seriesBuffers.size() ? seriesBuffers[i]
-                                                             : QVector<double>());
+        values << formatLatestValue(
+            i < seriesBuffers.size() ? seriesBuffers[i] : QVector<double>(), decimals);
     }
 
     const QVector<LegendColumn> columns =
@@ -881,8 +887,8 @@ void paintGridPointMarkers(QPainter& painter, const QRect& plotRect, int capacit
                            const QVector<int>& xLines,
                            const QVector<ChartSeriesConfig>& seriesConfigs,
                            const QVector<QVector<double>>& buffers, double yMin, double yMax,
-                           ChartLineInterpolation interpolation, const QVector<bool>& hiddenSeries,
-                           const ThemePalette& palette) {
+                           ChartLineInterpolation interpolation, int decimals,
+                           const QVector<bool>& hiddenSeries, const ThemePalette& palette) {
     if (xLines.isEmpty()) {
         return;
     }
@@ -908,7 +914,7 @@ void paintGridPointMarkers(QPainter& painter, const QRect& plotRect, int capacit
                 continue;
             }
 
-            const QString text = QString::number(value, 'g', 4);
+            const QString text = QString::number(value, 'f', decimals);
             const int textWidth = fm.horizontalAdvance(text);
             // Anchored above the dot when there's room, otherwise below --
             // keeps the label inside plotRect near its top gridline instead
@@ -957,8 +963,8 @@ void paintGridPointMarkers(QPainter& painter, const QRect& plotRect, int capacit
 void paintHoverCrosshair(QPainter& painter, const QRect& plotRect, int capacity,
                          const QPoint& mousePos, const QVector<ChartSeriesConfig>& seriesConfigs,
                          const QVector<QVector<double>>& buffers, double yMin, double yMax,
-                         ChartLineInterpolation interpolation, const QVector<bool>& hiddenSeries,
-                         const ThemePalette& palette) {
+                         ChartLineInterpolation interpolation, int decimals,
+                         const QVector<bool>& hiddenSeries, const ThemePalette& palette) {
     if (!plotRect.contains(mousePos)) {
         return;
     }
@@ -1017,7 +1023,7 @@ void paintHoverCrosshair(QPainter& painter, const QRect& plotRect, int capacity,
         // attempted for this pass.
         const QString text =
             QCoreApplication::translate("ChartWidgets", "%1: %2")
-                .arg(seriesDisplayName(*row.series), QString::number(row.value, 'g', 4));
+                .arg(seriesDisplayName(*row.series), QString::number(row.value, 'f', decimals));
         lines << text;
         textWidth = qMax(textWidth, fm.horizontalAdvance(text));
     }
@@ -1084,7 +1090,8 @@ void paintHoverCrosshair(QPainter& painter, const QRect& plotRect, int capacity,
 void paintBarSnapshot(QPainter& painter, const QRect& plotRect, const QRect& area,
                       const QVector<ChartSeriesConfig>& seriesConfigs,
                       const QVector<QVector<double>>& buffers, double yMin, double yMax,
-                      const QVector<bool>& hiddenSeries, const ThemePalette& palette) {
+                      int decimals, const QVector<bool>& hiddenSeries,
+                      const ThemePalette& palette) {
     QVector<int> visible;
     visible.reserve(seriesConfigs.size());
     for (int i = 0; i < seriesConfigs.size(); ++i) {
@@ -1126,7 +1133,7 @@ void paintBarSnapshot(QPainter& painter, const QRect& plotRect, const QRect& are
         painter.setPen(palette.textSecondary);
         // Free function -- see seriesDisplayName() above for why this uses
         // QCoreApplication::translate() instead of tr().
-        const QString text = hasValue ? QString::number(values.last(), 'g', 4)
+        const QString text = hasValue ? QString::number(values.last(), 'f', decimals)
                                       : QCoreApplication::translate("ChartWidgets", "--");
         const QRect labelRect(qRound(slotLeft), labelY, qRound(slot), rowHeight);
         painter.drawText(labelRect, Qt::AlignCenter, text);
@@ -1278,7 +1285,7 @@ void DummyLineChartWidget::paintEvent(QPaintEvent*) {
     // gutter) and paintYAxis() (to actually draw into it) -- both used to call
     // axisLabelWidth() separately with the same yMin/yMax, redoing the same
     // font-metrics work twice a frame for an identical result.
-    const int labelWidth = axisLabelWidth(painter, yMin, yMax);
+    const int labelWidth = axisLabelWidth(painter, yMin, yMax, m_config.decimals);
     const int topMargin = plotTopMargin(painter);
     const int leftMargin = plotLeftMargin(painter, !m_config.yUnit.isEmpty(), labelWidth);
     const int bottomMargin = plotBottomMargin(painter);
@@ -1287,7 +1294,7 @@ void DummyLineChartWidget::paintEvent(QPaintEvent*) {
     const QVector<int> xLines = xGridLines(plotRect);
 
     paintYAxis(painter, plotRect, yMin, yMax, m_config.yUnit, m_config.showGrid,
-               kLineYGridDivisions, labelWidth, palette);
+               kLineYGridDivisions, labelWidth, m_config.decimals, palette);
     paintXAxis(painter, plotRect, xLines, m_config.showGrid, palette);
     for (int i = 0; i < m_config.series.size() && i < seriesValues.size(); ++i) {
         // A series hidden via its legend entry (see mousePressEvent()) is
@@ -1304,11 +1311,13 @@ void DummyLineChartWidget::paintEvent(QPaintEvent*) {
     // themselves are hidden.
     if (m_showGridPointMarkers && m_config.showGrid) {
         paintGridPointMarkers(painter, plotRect, capacity, xLines, m_config.series, seriesValues,
-                              yMin, yMax, m_lineInterpolation, m_seriesHidden, palette);
+                              yMin, yMax, m_lineInterpolation, m_config.decimals, m_seriesHidden,
+                              palette);
     }
     if (m_showHoverCrosshair && m_hasHoverPos) {
         paintHoverCrosshair(painter, plotRect, capacity, m_hoverPos, m_config.series, seriesValues,
-                            yMin, yMax, m_lineInterpolation, m_seriesHidden, palette);
+                            yMin, yMax, m_lineInterpolation, m_config.decimals, m_seriesHidden,
+                            palette);
     }
 
     // No more redundant "Line Chart" corner label -- DashboardCell's header
@@ -1317,7 +1326,8 @@ void DummyLineChartWidget::paintEvent(QPaintEvent*) {
     // for anyway.
     paintSeriesLegends(painter, area, m_config.series, seriesValues, m_config.xAxisMode,
                        m_showLastValueRow,
-                       /*showXAxisTag=*/true, m_seriesHidden, palette, &m_legendHitRects);
+                       /*showXAxisTag=*/true, m_config.decimals, m_seriesHidden, palette,
+                       &m_legendHitRects);
 }
 
 DummyBarChartWidget::DummyBarChartWidget(QWidget* parent) : ChartWidgetBase(parent) {}
@@ -1340,7 +1350,7 @@ void DummyBarChartWidget::paintEvent(QPaintEvent*) {
     const auto [yMin, yMax] = computeYRange(m_config, seriesValues);
     // See DummyLineChartWidget::paintEvent() -- shared once instead of each
     // of plotLeftMargin()/paintYAxis() recomputing it.
-    const int labelWidth = axisLabelWidth(painter, yMin, yMax);
+    const int labelWidth = axisLabelWidth(painter, yMin, yMax, m_config.decimals);
     const int topMargin = plotTopMargin(painter);
     const int leftMargin = plotLeftMargin(painter, !m_config.yUnit.isEmpty(), labelWidth);
     const int bottomMargin = plotBottomMargin(painter);
@@ -1351,9 +1361,9 @@ void DummyBarChartWidget::paintEvent(QPaintEvent*) {
     // series, each labeled with its own current value directly below it
     // (paintBarSnapshot() below) rather than scrolling through history.
     paintYAxis(painter, plotRect, yMin, yMax, m_config.yUnit, m_config.showGrid, kBarYGridDivisions,
-               labelWidth, palette);
+               labelWidth, m_config.decimals, palette);
     paintBarSnapshot(painter, plotRect, area, m_config.series, seriesValues, yMin, yMax,
-                     m_seriesHidden, palette);
+                     m_config.decimals, m_seriesHidden, palette);
 
     // Top name row only -- no bottom "last value" row or "t"/"k" tag, since
     // each bar already carries its own current value (see above). See
@@ -1361,7 +1371,8 @@ void DummyBarChartWidget::paintEvent(QPaintEvent*) {
     // "Bar Chart" corner label.
     paintSeriesLegends(painter, area, m_config.series, seriesValues, m_config.xAxisMode,
                        /*showLastValueRow=*/false,
-                       /*showXAxisTag=*/false, m_seriesHidden, palette, &m_legendHitRects);
+                       /*showXAxisTag=*/false, m_config.decimals, m_seriesHidden, palette,
+                       &m_legendHitRects);
 }
 
 DummyGaugeWidget::DummyGaugeWidget(QWidget* parent) : DashboardWidget(parent) {
