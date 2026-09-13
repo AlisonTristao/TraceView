@@ -188,6 +188,13 @@ private:
         bool deferredForBootId = false;  // waiting on MANIFEST_DATA for target_boot_id
         quint8 lastStatus = 0;
         quint16 lastErrorCode = 0;
+        // The (requested, effective) pair subscriptionRateLimited() was last
+        // emitted for, so a lease renewal that comes back clamped the same way
+        // it already was doesn't re-notify every ~renewIntervalFor() (see
+        // handleSubscribeResult()). Zero once the topic stops being limited,
+        // so a later re-limit -- even at identical numbers -- notifies again.
+        quint32 lastLimitNotifiedRequestedMillihz = 0;
+        quint32 lastLimitNotifiedEffectiveMillihz = 0;
     };
 
     static quint64 makeKey(quint32 sourceId, quint16 topicId);

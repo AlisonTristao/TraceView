@@ -357,8 +357,20 @@ void SubscriptionManager::handleSubscribeResult(const BtpFrame& frame) {
         if (effectiveRate != 0 && effectiveRate < requested) {
             // The source clamped the request to its own schema maximum. Never
             // assume the requested rate from here on: everything the UI shows
-            // comes from effectiveRateMillihz.
-            emit subscriptionRateLimited(topic.sourceId, topic.topicId, requested, effectiveRate);
+            // comes from effectiveRateMillihz. Only notify when this pair is
+            // new -- otherwise every lease renewal (every ~renewIntervalFor(),
+            // by default ~7.5 s) would re-post the same notification for as
+            // long as the topic stays limited.
+            if (requested != topic.lastLimitNotifiedRequestedMillihz ||
+                effectiveRate != topic.lastLimitNotifiedEffectiveMillihz) {
+                topic.lastLimitNotifiedRequestedMillihz = requested;
+                topic.lastLimitNotifiedEffectiveMillihz = effectiveRate;
+                emit subscriptionRateLimited(topic.sourceId, topic.topicId, requested,
+                                             effectiveRate);
+            }
+        } else {
+            topic.lastLimitNotifiedRequestedMillihz = 0;
+            topic.lastLimitNotifiedEffectiveMillihz = 0;
         }
     } else {
         topic.subscriptionId = 0;
