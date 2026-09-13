@@ -6,6 +6,7 @@
 add_executable(chart_preview chart_preview/main.cpp)
 add_executable(chart_benchmark chart_benchmark/main.cpp)
 add_executable(text_board_preview text_board_preview/main.cpp)
+add_executable(example_preview example_preview/main.cpp)
 
 target_link_libraries(text_board_preview PRIVATE
     Qt6::Widgets
@@ -25,6 +26,12 @@ target_link_libraries(chart_benchmark PRIVATE
     traceview_theme
 )
 
+target_link_libraries(example_preview PRIVATE
+    Qt6::Widgets
+    traceview_dashboard
+    traceview_theme
+)
+
 if(WIN32)
     # Same reasoning as TraceView's own post-build step (see root
     # CMakeLists.txt): without deployed DLLs next to the exe, Windows' DLL
@@ -33,7 +40,7 @@ if(WIN32)
     # failing to start with STATUS_ENTRY_POINT_NOT_FOUND. Each harness gets
     # its own runtime directory so parallel post-build deployments never race
     # while copying the same Qt DLL.
-    foreach(tool chart_preview chart_benchmark text_board_preview)
+    foreach(tool chart_preview chart_benchmark text_board_preview example_preview)
         set_target_properties(${tool} PROPERTIES
             RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/${tool}"
         )
@@ -55,6 +62,10 @@ if(WIN32)
         add_custom_command(TARGET text_board_preview POST_BUILD
             COMMAND "${WINDEPLOYQT_EXECUTABLE}" --no-translations "$<TARGET_FILE:text_board_preview>"
             COMMENT "Deploying Qt runtime DLLs next to text_board_preview.exe"
+        )
+        add_custom_command(TARGET example_preview POST_BUILD
+            COMMAND "${WINDEPLOYQT_EXECUTABLE}" --no-translations "$<TARGET_FILE:example_preview>"
+            COMMENT "Deploying Qt runtime DLLs next to example_preview.exe"
         )
     endif()
 endif()
