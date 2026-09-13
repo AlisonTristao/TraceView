@@ -7,6 +7,43 @@ release flow.
 
 ## [Unreleased]
 
+## [2.7.1] - 2026-09-13
+
+### Fixed
+
+- Line and bar chart labels (Y-axis min/mid/max, the legend's last-value
+  row, grid-point markers, the hover tooltip, and bar values) formatted
+  numbers with a variable number of significant digits, so the axis gutter
+  and tooltip balloon visibly resized frame to frame as a value's fractional
+  digits changed. Added a Decimals setting to the chart properties panel's
+  Y Axis section (same 0-6 range the gauge widget's own Decimals field
+  already used) so every one of those labels renders at a fixed width
+  instead.
+
+## [2.7.0] - 2026-09-13
+
+### Added
+
+- A file-backed diagnostic log: one file per session under the user's
+  profile directory (falling back to the system temp directory if that's
+  unwritable), covering serial/USB-HID open, close and error events, every
+  connection retry, and every status-bar message. Reachable via
+  Settings > Diagnostics or the View menu's "Open Log Folder". Raw serial
+  byte dumps are an opt-in toggle there, off by default so a high-rate
+  device doesn't fill the file fast.
+
+### Fixed
+
+- A serial or USB-HID connection that failed to open (e.g. `Permission
+  denied` on Linux when the user isn't in the `dialout`/`uucp` group) left
+  the Connect action looking like a no-op, with no error shown anywhere.
+  `Transport::errorOccurred` is now surfaced through to the status bar like
+  every other connection event.
+- A subscription whose SUBSCRIBE or SUBSCRIBE_RESULT was lost over a lossy
+  link (e.g. ESP-NOW near a robot's motors) could stay wedged "pending"
+  indefinitely with no self-heal. It now retries once the round-trip
+  budget elapses.
+
 ## [2.6.2] - 2026-09-12
 
 ### Fixed

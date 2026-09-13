@@ -153,6 +153,13 @@ ChartConfigEditor::ChartConfigEditor(QWidget* parent) : WidgetConfigEditor(paren
     m_yUnitEdit->setPlaceholderText(tr("V, °C, %..."));
     m_yUnitEdit->setToolTip(tr("Unit label shown alongside the Y axis."));
 
+    m_decimalsSpin = new QSpinBox(this);
+    m_decimalsSpin->setRange(0, 6);
+    m_decimalsSpin->setValue(0);
+    m_decimalsSpin->setToolTip(
+        tr("Decimal places shown for axis, legend, and tooltip values -- fixed instead of "
+           "variable, so labels keep the same width as values change."));
+
     m_gridCheck = new QCheckBox(this);
     m_gridCheck->setChecked(true);
     m_gridCheck->setToolTip(tr("Show the min/mid/max gridlines across the plot."));
@@ -194,6 +201,7 @@ ChartConfigEditor::ChartConfigEditor(QWidget* parent) : WidgetConfigEditor(paren
     m_formLayout->addRow(tr("Y Axis"), m_yAxisModeCombo);
     m_formLayout->addRow(tr("Range"), m_yRangeRow);
     m_formLayout->addRow(tr("Unit"), m_yUnitEdit);
+    m_formLayout->addRow(tr("Decimals"), m_decimalsSpin);
     m_formLayout->addRow(tr("Grid"), m_gridCheck);
 
     auto* divider = new QFrame(this);
@@ -296,6 +304,7 @@ ChartConfigEditor::ChartConfigEditor(QWidget* parent) : WidgetConfigEditor(paren
     connect(m_yMinSpin, &QDoubleSpinBox::valueChanged, this, [this](double) { emitChanged(); });
     connect(m_yMaxSpin, &QDoubleSpinBox::valueChanged, this, [this](double) { emitChanged(); });
     connect(m_yUnitEdit, &QLineEdit::editingFinished, this, [this]() { emitChanged(); });
+    connect(m_decimalsSpin, &QSpinBox::valueChanged, this, [this](int) { emitChanged(); });
     connect(m_gridCheck, &QCheckBox::toggled, this, [this](bool) { emitChanged(); });
     connect(m_seriesTable, &QTableWidget::itemChanged, this,
             [this](QTableWidgetItem*) { emitChanged(); });
@@ -321,6 +330,7 @@ void ChartConfigEditor::setConfig(const QJsonObject& config) {
     m_yMinSpin->setValue(yAxis.value("min").toDouble(0.0));
     m_yMaxSpin->setValue(yAxis.value("max").toDouble(100.0));
     m_yUnitEdit->setText(yAxis.value("unit").toString());
+    m_decimalsSpin->setValue(yAxis.value("decimals").toInt(0));
     m_gridCheck->setChecked(yAxis.value("grid").toBool(true));
 
     m_seriesTable->setRowCount(0);
@@ -350,6 +360,7 @@ QJsonObject ChartConfigEditor::config() const {
     yAxis["min"] = m_yMinSpin->value();
     yAxis["max"] = m_yMaxSpin->value();
     yAxis["unit"] = m_yUnitEdit->text();
+    yAxis["decimals"] = m_decimalsSpin->value();
     yAxis["grid"] = m_gridCheck->isChecked();
     cfg["yAxis"] = yAxis;
 
