@@ -117,6 +117,7 @@ private slots:
     void closingTheLastConsumerSendsUnsubscribe();
     void loweringTheTopRateResubscribesInsteadOfUnsubscribing();
     void limitedEffectiveRateIsReportedNotAssumed();
+    void limitedEffectiveRateIsNotReNotifiedOnRenewal();
     void rejectedSubscribeIsReportedAndLeavesNoGrant();
     void subscribeWaitsForTheSourceBootIdFromTheManifest();
     void reconnectResubscribesEveryLiveConsumer();
@@ -256,6 +257,36 @@ void TestSubscriptionManager::limitedEffectiveRateIsReportedNotAssumed() {
     exact.grantSubscribe(exact.lastSent(), /*subscriptionId=*/52, /*effectiveRateMillihz=*/50000);
     QCOMPARE(exactSpy.size(), 0);
     QVERIFY(!exact.manager.subscriptions().at(0).rateLimited());
+}
+
+void TestSubscriptionManager::limitedEffectiveRateIsNotReNotifiedOnRenewal() {
+    Harness h;
+    QSignalSpy limitedSpy(&h.manager, &SubscriptionManager::subscriptionRateLimited);
+
+    h.manager.addSubscriber(kSourceId, kTopicId, 200000);  // 200 Hz, above the source's max
+    h.grantSubscribe(h.lastSent(), /*subscriptionId=*/61, /*effectiveRateMillihz=*/50000,
+                     /*grantedLeaseMs=*/2000);
+    QCOMPARE(limitedSpy.size(), 1);
+
+    // A lease renewal granted at the exact same (requested, effective) pair
+    // must not re-post the notification -- otherwise it would repeat every
+    // renewInterval (half the granted lease) for as long as the topic stays
+    // limited, which is indefinitely for a fixed override/schema pairing.
+    const qint64 now = QDateTime::currentMSecsSinceEpoch();
+    h.manager.renewDueSubscriptions(now + 1500);  // past half the 2000 ms lease
+    QCOMPARE(h.sent.size(), 2);
+    h.grantSubscribe(h.lastSent(), /*subscriptionId=*/61, /*effectiveRateMillihz=*/50000,
+                     /*grantedLeaseMs=*/2000);
+    QCOMPARE(limitedSpy.size(), 1);
+
+    // A later renewal that comes back limited differently (e.g. the schema's
+    // ceiling changed) is a genuinely new fact and does notify again.
+    h.manager.renewDueSubscriptions(now + 3000);
+    QCOMPARE(h.sent.size(), 3);
+    h.grantSubscribe(h.lastSent(), /*subscriptionId=*/61, /*effectiveRateMillihz=*/25000,
+                     /*grantedLeaseMs=*/2000);
+    QCOMPARE(limitedSpy.size(), 2);
+    QCOMPARE(limitedSpy.at(1).at(3).toUInt(), quint32(25000));
 }
 
 void TestSubscriptionManager::rejectedSubscribeIsReportedAndLeavesNoGrant() {
