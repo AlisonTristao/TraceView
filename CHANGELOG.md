@@ -7,6 +7,16 @@ release flow.
 
 ## [Unreleased]
 
+## [2.8.1] - 2026-09-13
+
+### Fixed
+
+- A rate-limited or rejected SUBSCRIBE already logged to Notification
+  History (View > Notification History) by raw "0x.../0x..." id pair.
+  Resolved against the telemetry catalog instead, so the entry reads
+  "robot.sensors limited to 50 Hz (requested 200 Hz)" once that topic's
+  schema has arrived.
+
 ## [2.8.0] - 2026-09-13
 
 ### Added
@@ -22,10 +32,7 @@ release flow.
 
 - The status bar's per-topic summary appended "(limited, asked X Hz)" next
   to every rate-limited topic, which added noise without being actionable
-  from that view. Removed; the effective rate alone is shown there now --
-  a rate-limited or rejected SUBSCRIBE already logs to Notification History
-  (View > Notification History), now identifying the topic by name instead
-  of a raw id pair.
+  from that view. Removed; the effective rate alone is shown there now.
 
 ## [2.7.1] - 2026-09-13
 
