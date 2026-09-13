@@ -180,6 +180,7 @@ private:
         quint32 targetBootId = 0;      // boot this subscription was addressed to
         quint32 sentRateMillihz = 0;   // rate carried by the newest SUBSCRIBE sent
         quint32 inFlightSequence = 0;  // 0 = no SUBSCRIBE awaiting its result
+        qint64 subscribeSentAtMs = 0;  // when inFlightSequence was sent, for the retry timeout
         quint32 subscriptionId = 0;
         quint32 effectiveRateMillihz = 0;
         quint32 grantedLeaseMs = 0;

@@ -5,6 +5,8 @@
 #include <QThread>
 #include <cstring>
 
+#include "core/applog.h"
+
 namespace traceview {
 
 namespace {
@@ -59,14 +61,17 @@ UsbHidManager::~UsbHidManager() {
 
 bool UsbHidManager::open(const QString& path) {
     close();
+    qCInfo(lcUsbHid) << "opening" << path;
 
     if (path.isEmpty() || hid_init() != 0) {
+        qCWarning(lcUsbHid) << "open failed: empty path or hid_init() error";
         return false;
     }
 
     const QByteArray pathBytes = path.toLocal8Bit();
     hid_device* handle = hid_open_path(pathBytes.constData());
     if (!handle) {
+        qCWarning(lcUsbHid) << "hid_open_path failed for" << path;
         emit errorOccurred(tr("Could not open HID device: %1").arg(path));
         return false;
     }
@@ -79,6 +84,7 @@ bool UsbHidManager::open(const QString& path) {
     m_connected.store(true);
     m_thread->start();
 
+    qCInfo(lcUsbHid) << "opened" << path;
     emit connectionStateChanged(true);
     return true;
 }
@@ -87,6 +93,7 @@ void UsbHidManager::close() {
     if (!m_thread) {
         return;  // never opened, or already fully closed
     }
+    qCInfo(lcUsbHid) << "closing" << m_path;
     m_stopRequested.store(true);
     m_thread->wait();
     delete m_thread;
@@ -136,6 +143,7 @@ void UsbHidManager::readLoop() {
     while (!m_stopRequested.load()) {
         const int result = hid_read_timeout(m_handle, buffer, sizeof(buffer), kReadTimeoutMs);
         if (result < 0) {
+            qCWarning(lcUsbHid) << "read error on" << m_path << "-- treating as disconnect";
             emit errorOccurred(tr("HID device disconnected"));
             break;
         }

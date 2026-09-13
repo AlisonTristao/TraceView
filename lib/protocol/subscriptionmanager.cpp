@@ -33,6 +33,25 @@ constexpr int kUnsubscribeResultSize = 16;  // 12 ref + 1 + 1 + 2
 constexpr quint32 kMinRenewIntervalMs = 500;
 constexpr int kLeaseTimerIntervalMs = 1000;
 
+// Nothing else ever clears TopicState::inFlightSequence except a correlated
+// SUBSCRIBE_RESULT (handleSubscribeResult()) -- renewDueSubscriptions() itself
+// skips a topic while one is in flight, so a single lost SUBSCRIBE or
+// SUBSCRIBE_RESULT over a lossy radio link wedges that topic in "pending"
+// forever with no self-heal.
+//
+// A robot running its motors is the known noisy case (BallyRobot.h's own
+// kStatusPeriodUs comment: "near the motors ESP-NOW loses frames"), and it is
+// exactly when a renewal is most likely to get lost. The margin this class
+// has to work with is the OTHER half of the lease (kMinRenewIntervalMs's
+// comment above): a renewal fires at half the granted lease, but the ORIGINAL
+// grant does not actually expire at the source until the full lease elapses --
+// so there is a real window to retry in before the subscription is truly
+// gone, not just one shot. Short enough that several attempts fit in that
+// window (a burst of 2-3 consecutive lost frames near the motors, not just
+// one, still recovers before expiry) while staying well above any real
+// round-trip time.
+constexpr qint64 kSubscribePendingTimeoutMs = 1500;
+
 // A ByteView over a QByteArray, for the btp::messages decoders.
 const std::uint8_t* asBytes(const QByteArray& data) {
     return reinterpret_cast<const std::uint8_t*>(data.constData());
@@ -199,6 +218,7 @@ void SubscriptionManager::sendSubscribe(TopicState& topic, quint32 rateMillihz) 
     topic.targetBootId = bootId;
     topic.sentRateMillihz = rateMillihz;
     topic.inFlightSequence = sequence;
+    topic.subscribeSentAtMs = QDateTime::currentMSecsSinceEpoch();
     topic.deferredForBootId = false;
     m_pendingSubscribes.insert(sequence, makeKey(topic.sourceId, topic.topicId));
 }
@@ -473,8 +493,32 @@ void SubscriptionManager::renewDueSubscriptions(qint64 nowMs) {
             continue;
         }
         TopicState& topic = it.value();
-        if (topic.subscriptionId == 0 || topic.inFlightSequence != 0 || topic.renewAtMs == 0 ||
-            nowMs < topic.renewAtMs) {
+
+        if (topic.inFlightSequence != 0) {
+            if (nowMs - topic.subscribeSentAtMs < kSubscribePendingTimeoutMs) {
+                continue;  // still within the round-trip's normal budget
+            }
+            // Give up on the stale sequence rather than leave it in
+            // m_pendingSubscribes forever: a very late reply for it would
+            // otherwise sit unmatched anyway (handleSubscribeResult() only
+            // acts on an entry it finds there), so dropping it first just
+            // avoids an ever-growing map. Retrying is safe unconditionally --
+            // SubscriptionTable::handle_subscribe() on the source treats a
+            // second SUBSCRIBE from the same requester/topic as a renewal of
+            // the same slot, whether or not the first one actually landed.
+            m_pendingSubscribes.remove(topic.inFlightSequence);
+            topic.inFlightSequence = 0;
+            const quint32 desired = desiredRateFor(key);
+            if (desired != 0) {
+                sendSubscribe(topic, desired);
+            } else {
+                dropTopicIfIdle(key);
+            }
+            emit subscriptionsChanged();
+            continue;
+        }
+
+        if (topic.subscriptionId == 0 || topic.renewAtMs == 0 || nowMs < topic.renewAtMs) {
             continue;
         }
         const quint32 desired = desiredRateFor(key);

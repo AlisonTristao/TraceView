@@ -7,6 +7,30 @@ release flow.
 
 ## [Unreleased]
 
+## [2.7.0] - 2026-09-13
+
+### Added
+
+- A file-backed diagnostic log: one file per session under the user's
+  profile directory (falling back to the system temp directory if that's
+  unwritable), covering serial/USB-HID open, close and error events, every
+  connection retry, and every status-bar message. Reachable via
+  Settings > Diagnostics or the View menu's "Open Log Folder". Raw serial
+  byte dumps are an opt-in toggle there, off by default so a high-rate
+  device doesn't fill the file fast.
+
+### Fixed
+
+- A serial or USB-HID connection that failed to open (e.g. `Permission
+  denied` on Linux when the user isn't in the `dialout`/`uucp` group) left
+  the Connect action looking like a no-op, with no error shown anywhere.
+  `Transport::errorOccurred` is now surfaced through to the status bar like
+  every other connection event.
+- A subscription whose SUBSCRIBE or SUBSCRIBE_RESULT was lost over a lossy
+  link (e.g. ESP-NOW near a robot's motors) could stay wedged "pending"
+  indefinitely with no self-heal. It now retries once the round-trip
+  budget elapses.
+
 ## [2.6.2] - 2026-09-12
 
 ### Fixed
