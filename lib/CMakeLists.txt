@@ -500,6 +500,8 @@ target_link_libraries(traceview_updater PUBLIC
 add_library(traceview_ui STATIC
     core/aboutdialog.cpp
     core/aboutdialog.h
+    core/applog.cpp
+    core/applog.h
     core/shortcutsdialog.cpp
     core/shortcutsdialog.h
     core/donatedialog.cpp

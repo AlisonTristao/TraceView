@@ -4,6 +4,7 @@
 #include <btp/codec.hpp>
 
 #include "backend/backend.h"
+#include "core/applog.h"
 #include "hubtransport.h"
 #include "preferences/appsettings.h"
 #include "protocol/btpbackend.h"
@@ -95,6 +96,7 @@ DeviceConnection::DeviceConnection(CommType commType, TransportType transportTyp
             &Backend::onTransportConnectionChanged);
     connect(m_transport, &Transport::connectionStateChanged, this,
             &DeviceConnection::connectionStateChanged);
+    connect(m_transport, &Transport::errorOccurred, this, &DeviceConnection::errorOccurred);
     connect(m_backend, &Backend::deviceIdentified, this, &DeviceConnection::deviceIdentified);
     connect(m_backend, &Backend::deviceInfoReported, this, &DeviceConnection::deviceInfoReported);
     // A dead session on a live transport: close it and let the retry timer
@@ -140,10 +142,13 @@ void DeviceConnection::connectTo(const QString& target, qint32 baudRate) {
     m_shouldBeConnected = !target.isEmpty();
 
     if (!m_shouldBeConnected) {
+        qCInfo(lcConnection) << "target cleared, intent now offline";
         m_retryTimer->stop();
         closeTransportGracefully();
         return;
     }
+    qCInfo(lcConnection) << "target set to" << target << "baud" << baudRate
+                        << (targetChanged ? "(changed)" : "(unchanged)");
 
     if (targetChanged && m_transport->isConnected()) {
         closeTransportGracefully();
@@ -195,6 +200,7 @@ void DeviceConnection::connectVia(DeviceConnection* parentConnection, quint32 se
 }
 
 void DeviceConnection::disconnectFrom() {
+    qCInfo(lcConnection) << "disconnect requested for" << m_target;
     m_shouldBeConnected = false;
     m_retryTimer->stop();
     closeTransportGracefully();
@@ -228,6 +234,7 @@ void DeviceConnection::attemptReconnect() {
     if (!m_shouldBeConnected || m_transport->isConnected()) {
         return;
     }
+    qCInfo(lcConnection) << "attempting connect to" << m_target;
     if (m_serialManager) {
         m_serialManager->open(m_target, m_baudRate);
     } else if (m_usbHidManager) {

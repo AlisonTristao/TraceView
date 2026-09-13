@@ -30,6 +30,12 @@ public:
 
     bool autoReconnect() const;
     int reconnectIntervalSeconds() const;
+    // Whether SerialManager logs every raw byte it writes/reads (as a hex
+    // dump, via AppLog's file logger) rather than just open/close/error
+    // lifecycle events. Off by default -- a device streaming telemetry at a
+    // high rate would otherwise fill the log file fast -- and meant to be
+    // switched on only while actively chasing a connection problem.
+    bool verboseSerialLogging() const;
 
     int frameLogCapacity() const;
     int notificationHistoryCapacity() const;
@@ -48,6 +54,7 @@ public:
     void setTerminalCursorBlink(bool enabled);
     void setAutoReconnect(bool enabled);
     void setReconnectIntervalSeconds(int seconds);
+    void setVerboseSerialLogging(bool enabled);
     void setFrameLogCapacity(int entries);
     void setNotificationHistoryCapacity(int entries);
 

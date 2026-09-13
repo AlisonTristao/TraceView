@@ -16,6 +16,7 @@ constexpr char kTerminalAutoScrollKey[] = "terminal/autoScroll";
 constexpr char kTerminalCursorBlinkKey[] = "terminal/cursorBlink";
 constexpr char kAutoReconnectKey[] = "connections/autoReconnect";
 constexpr char kReconnectIntervalSecondsKey[] = "connections/reconnectIntervalSeconds";
+constexpr char kVerboseSerialLoggingKey[] = "connections/verboseSerialLogging";
 constexpr char kFrameLogCapacityKey[] = "diagnostics/frameLogCapacity";
 constexpr char kNotificationHistoryCapacityKey[] = "diagnostics/notificationHistoryCapacity";
 constexpr char kUpdateAutoCheckEnabledKey[] = "updates/autoCheckEnabled";
@@ -95,6 +96,10 @@ int AppSettings::reconnectIntervalSeconds() const {
     return value(kReconnectIntervalSecondsKey, 3, 1, 60);
 }
 
+bool AppSettings::verboseSerialLogging() const {
+    return QSettings().value(kVerboseSerialLoggingKey, false).toBool();
+}
+
 int AppSettings::frameLogCapacity() const {
     return value(kFrameLogCapacityKey, 2000, 100, 50000);
 }
@@ -164,6 +169,11 @@ void AppSettings::setAutoReconnect(bool enabled) {
 
 void AppSettings::setReconnectIntervalSeconds(int seconds) {
     setValue(kReconnectIntervalSecondsKey, qBound(1, seconds, 60));
+    emit connectionPreferencesChanged();
+}
+
+void AppSettings::setVerboseSerialLogging(bool enabled) {
+    QSettings().setValue(kVerboseSerialLoggingKey, enabled);
     emit connectionPreferencesChanged();
 }
 

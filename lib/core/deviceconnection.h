@@ -125,6 +125,12 @@ signals:
     // Mirrors Backend::deviceInfoReported (the device's MANIFEST_DATA
     // source_info block, BTP's docs/commands.md section 3.12).
     void deviceInfoReported(const QVector<traceview::DeviceInfoRecord>& info);
+    // Mirrors Transport::errorOccurred (e.g. QSerialPort::open() failing with
+    // PermissionError on Linux when the user isn't in the dialout/uucp group)
+    // so a failed connect attempt is not silently swallowed -- previously
+    // nothing forwarded this past the transport, so clicking Connect against
+    // an unopenable port did nothing visible at all.
+    void errorOccurred(const QString& message);
 
 private:
     void attemptReconnect();

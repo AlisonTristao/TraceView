@@ -2,6 +2,7 @@
 #include <QIcon>
 #include <QStyleFactory>
 
+#include "core/applog.h"
 #include "core/mainwindow.h"
 #include "traceview/fontmanager.h"
 #include "traceview/languagemanager.h"
@@ -38,6 +39,11 @@ int main(int argc, char* argv[]) {
     QApplication::setOrganizationName("AlisonTristao");
     QApplication::setApplicationVersion(traceview::kVersion);
     QApplication::setWindowIcon(loadAppIcon());
+
+    // After setApplicationName/setOrganizationName (logDirectory() resolves
+    // against them) and before MainWindow, so every device connection it
+    // creates logs through an already-open file.
+    traceview::AppLog::install();
 
     traceview::ThemeManager::instance().applyCurrentTheme();
     traceview::FontManager::instance().applyCurrentFont();

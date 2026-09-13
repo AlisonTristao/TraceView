@@ -28,9 +28,11 @@
 #include <QTimer>
 #include <QToolButton>
 #include <QUndoGroup>
+#include <QUrl>
 #include <QVBoxLayout>
 
 #include "aboutdialog.h"
+#include "applog.h"
 #include "backend/backend.h"
 #include "dashboard/dashboardgrid.h"
 #include "dashboard/widgetconfigeditor.h"
@@ -379,6 +381,24 @@ void MainWindow::postStatus(const QString& text, int timeoutMs, StatusSeverity s
                             const QString& source) {
     statusBar()->showMessage(text, timeoutMs);
     m_notificationLog->append({QDateTime::currentDateTime(), text, severity, source});
+
+    // Every status-bar message funnels through here regardless of which
+    // device/subsystem raised it (session established/failed, subscription
+    // rejections, update results...) -- logging it here, once, captures all
+    // of that for free instead of instrumenting each call site separately.
+    const QString line = source.isEmpty() ? text : QStringLiteral("[%1] %2").arg(source, text);
+    switch (severity) {
+        case StatusSeverity::Info:
+        case StatusSeverity::Success:
+            qCInfo(lcApp).noquote() << line;
+            break;
+        case StatusSeverity::Warning:
+            qCWarning(lcApp).noquote() << line;
+            break;
+        case StatusSeverity::Error:
+            qCCritical(lcApp).noquote() << line;
+            break;
+    }
 }
 
 void MainWindow::wireChartWidgetToTelemetry(DashboardWidget* widget) {
@@ -596,6 +616,11 @@ void MainWindow::buildMenus() {
     auto* shortcutsAction = viewMenu->addAction(tr("&Keyboard Shortcuts..."));
     shortcutsAction->setShortcut(QKeySequence(Qt::Key_F1));
     connect(shortcutsAction, &QAction::triggered, this, &MainWindow::onShowKeyboardShortcuts);
+
+    auto* logFolderAction = viewMenu->addAction(tr("Open &Log Folder"));
+    connect(logFolderAction, &QAction::triggered, this, [] {
+        QDesktopServices::openUrl(QUrl::fromLocalFile(AppLog::logDirectory()));
+    });
     viewMenu->addSeparator();
 
     auto* themeMenu = viewMenu->addMenu(tr("&Theme"));
@@ -1741,6 +1766,13 @@ DeviceConnection* MainWindow::createDeviceConnection(const Device& device) {
     connect(connection, &DeviceConnection::deviceInfoReported, this,
             [this, id = device.id](const QVector<DeviceInfoRecord>& info) {
                 m_devicesGrid->setDeviceReportedInfo(id, info);
+            });
+    // Previously nothing surfaced this at all: a transport that fails to
+    // open (e.g. QSerialPort::open() PermissionError on Linux when the user
+    // isn't in the dialout/uucp group) left Connect looking like a no-op.
+    connect(connection, &DeviceConnection::errorOccurred, this,
+            [this, name = device.name](const QString& text) {
+                postStatus(text, 6000, StatusSeverity::Warning, name);
             });
     // This device's script runtime's onDeviceInfo().
     connect(connection, &DeviceConnection::deviceInfoReported, this,

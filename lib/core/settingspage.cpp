@@ -3,6 +3,7 @@
 #include <QCheckBox>
 #include <QComboBox>
 #include <QDateTime>
+#include <QDesktopServices>
 #include <QFormLayout>
 #include <QGroupBox>
 #include <QHBoxLayout>
@@ -17,10 +18,12 @@
 #include <QPushButton>
 #include <QSpinBox>
 #include <QStackedWidget>
+#include <QUrl>
 #include <QVBoxLayout>
 
 #include <functional>
 
+#include "core/applog.h"
 #include "preferences/appsettings.h"
 #include "traceview/fontmanager.h"
 #include "traceview/languagemanager.h"
@@ -391,6 +394,26 @@ SettingsPage::SettingsPage(QWidget* parent) : QWidget(parent) {
                 settings.setNotificationHistoryCapacity(value);
                 refreshRestartNotice();
             });
+    QGroupBox* logFileSection = addSection(diagnosticsPage, tr("Log file"));
+    auto* logFileLabel = new QLabel(AppLog::currentLogFilePath(), logFileSection);
+    logFileLabel->setWordWrap(true);
+    logFileLabel->setTextInteractionFlags(Qt::TextSelectableByMouse);
+    formFor(logFileSection)->addRow(tr("Current session"), logFileLabel);
+    auto* verboseSerialLog =
+        new QCheckBox(tr("Log raw serial bytes (verbose)"), logFileSection);
+    verboseSerialLog->setChecked(settings.verboseSerialLogging());
+    verboseSerialLog->setToolTip(
+        tr("Every byte written to and read from a serial device is logged as hex. Leave off "
+           "unless you're actively investigating a connection problem -- a device streaming "
+           "telemetry fills the log fast."));
+    formFor(logFileSection)->addRow(verboseSerialLog);
+    connect(verboseSerialLog, &QCheckBox::toggled, &settings,
+            &AppSettings::setVerboseSerialLogging);
+    auto* openLogFolderButton = new QPushButton(tr("Open log folder"), logFileSection);
+    formFor(logFileSection)->addRow(QString(), openLogFolderButton);
+    connect(openLogFolderButton, &QPushButton::clicked, this,
+            [] { QDesktopServices::openUrl(QUrl::fromLocalFile(AppLog::logDirectory())); });
+
     qobject_cast<QVBoxLayout*>(diagnosticsPage->layout())->addStretch();
     pages->addWidget(diagnosticsPage);
 

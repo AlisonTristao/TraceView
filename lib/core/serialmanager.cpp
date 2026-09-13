@@ -3,6 +3,10 @@
 #include <QElapsedTimer>
 #include <QSerialPortInfo>
 
+#include "core/applog.h"
+#include "diagnostics/hexdump.h"
+#include "preferences/appsettings.h"
+
 namespace traceview {
 
 QByteArray lineTerminatorBytes(LineTerminator terminator) {
@@ -36,6 +40,7 @@ QStringList SerialManager::availablePorts() const {
 
 bool SerialManager::open(const QString& portName, qint32 baudRate) {
     close();
+    qCInfo(lcSerial) << "opening" << portName << "at" << baudRate << "baud";
 
     // 1200 baud is not a data rate on the dongle's native USB-CDC -- it is the
     // shortcut esptool uses to drop the ESP32-S3 into its ROM bootloader
@@ -47,6 +52,8 @@ bool SerialManager::open(const QString& portName, qint32 baudRate) {
     qint32 effectiveBaud = baudRate;
     if (effectiveBaud == 1200) {
         effectiveBaud = 115200;
+        qCWarning(lcSerial) << "1200 baud requested on" << portName
+                            << "-- folding up to 115200 to avoid a bootloader reset";
         emit errorOccurred(
             tr("1200 baud resets the ESP32-S3 into its bootloader; using 115200"));
     }
@@ -61,9 +68,13 @@ bool SerialManager::open(const QString& portName, qint32 baudRate) {
     if (!m_port->open(QIODevice::ReadWrite)) {
         // QSerialPort::open() failure already raised its own errorOccurred
         // signal internally (forwarded by onErrorOccurred below) -- emitting
-        // here too would double-report the same failure.
+        // here too would double-report the same failure. onErrorOccurred logs
+        // it (with QSerialPort's own errorString(), e.g. "Permission error"
+        // on Linux when the user isn't in the dialout/uucp group), so nothing
+        // further is logged here either.
         return false;
     }
+    qCInfo(lcSerial) << "opened" << portName;
 
     // The dongle's native USB-CDC (ARDUINO_USB_MODE=0) only transmits while the
     // host asserts DTR: TinyUSB's tud_cdc_n_connected() tests the DTR bit
@@ -101,8 +112,10 @@ void SerialManager::close() {
     // first keeps every transition here as `!rts`, which the machine ignores.
     m_port->setRequestToSend(false);
     m_port->setDataTerminalReady(false);
+    const QString name = m_port->portName();
     m_port->close();
     m_closing = false;
+    qCInfo(lcSerial) << "closed" << name;
     emit connectionStateChanged(false);
 }
 
@@ -121,6 +134,9 @@ qint32 SerialManager::baudRate() const {
 bool SerialManager::write(const QByteArray& data) {
     if (!m_port->isOpen()) {
         return false;
+    }
+    if (AppSettings::instance().verboseSerialLogging()) {
+        qCDebug(lcSerial) << "write" << data.size() << "bytes:" << hexInline(data);
     }
     return m_port->write(data) != -1;
 }
@@ -146,7 +162,11 @@ bool SerialManager::writeCommand(const QByteArray& command) {
 }
 
 void SerialManager::onReadyRead() {
-    emit dataReceived(m_port->readAll());
+    const QByteArray data = m_port->readAll();
+    if (AppSettings::instance().verboseSerialLogging()) {
+        qCDebug(lcSerial) << "read" << data.size() << "bytes:" << hexInline(data);
+    }
+    emit dataReceived(data);
 }
 
 void SerialManager::onErrorOccurred(QSerialPort::SerialPortError error) {
@@ -154,6 +174,7 @@ void SerialManager::onErrorOccurred(QSerialPort::SerialPortError error) {
         return;
     }
     const QString message = m_port->errorString();
+    qCWarning(lcSerial) << "error on" << m_port->portName() << ":" << message;
     // A device yanked mid-session (unplugged, driver reset) surfaces as
     // ResourceError without QSerialPort closing itself -- do that here so
     // isConnected()/connectionStateChanged() stay truthful.
