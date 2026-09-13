@@ -7,6 +7,23 @@ release flow.
 
 ## [Unreleased]
 
+## [2.8.0] - 2026-09-13
+
+### Added
+
+- A "Telemetry subscribe rate" override in Settings > Dashboard: when
+  enabled, one rate replaces every widget's own requested rate (chart/text
+  board sample time, the gauge's fixed 5 Hz), so the whole dashboard's
+  subscribe load can be tuned from a single control instead of each
+  widget's config editor. Each topic's own max/min rate on the source
+  still applies on top of it.
+
+### Fixed
+
+- The status bar's per-topic summary appended "(limited, asked X Hz)" next
+  to every rate-limited topic, which added noise without being actionable
+  from that view. Removed; the effective rate alone is shown there now.
+
 ## [2.7.1] - 2026-09-13
 
 ### Fixed
