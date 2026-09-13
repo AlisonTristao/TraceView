@@ -115,6 +115,21 @@ QString formatRateMillihz(quint32 millihz) {
     return QString::number(millihz / 1000.0, 'g', 4) + " Hz";
 }
 
+// Same "name, falling back to the hex pair" rule MainWindow's status bar
+// summary uses -- so a rate-limited/rejected notification reads "robot.sensors"
+// instead of a bare id pair whenever the schema for it has already arrived.
+QString topicLabelFor(const QVector<TelemetryTopicSchema>& schemas, quint32 sourceId,
+                      quint16 topicId) {
+    for (const TelemetryTopicSchema& schema : schemas) {
+        if (schema.sourceId == sourceId && schema.topicId == topicId) {
+            return schema.name;
+        }
+    }
+    return QString("0x%1/0x%2")
+        .arg(sourceId, 8, 16, QChar('0'))
+        .arg(topicId, 4, 16, QChar('0'));
+}
+
 // Human-readable mirrors of TELEMETRY.md's wire enums, for
 // BtpBackend::catalogTopics() (CatalogTopicInfo::encoding/CatalogTopicField::
 // type are display strings, not the wire codes -- see telemetry/
@@ -432,22 +447,23 @@ BtpBackend::BtpBackend(BtpSession::Framing framing, const btp::TransportLimits& 
     // what was asked for.
     connect(m_subscriptionManager, &SubscriptionManager::subscriptionRateLimited, this,
             [this](quint32 sourceId, quint16 topicId, quint32 requested, quint32 effective) {
-                emit statusMessage(
-                    tr("Topic 0x%1 of source 0x%2 limited to %3 (requested %4)")
-                        .arg(topicId, 4, 16, QChar('0'))
-                        .arg(sourceId, 8, 16, QChar('0'))
-                        .arg(formatRateMillihz(effective), formatRateMillihz(requested)),
-                    8000, StatusSeverity::Warning);
+                const QString label =
+                    topicLabelFor(m_telemetryCatalog->allSchemas(), sourceId, topicId);
+                emit statusMessage(tr("%1 limited to %2 (requested %3)")
+                                       .arg(label, formatRateMillihz(effective),
+                                            formatRateMillihz(requested)),
+                                   8000, StatusSeverity::Warning);
             });
     connect(m_subscriptionManager, &SubscriptionManager::subscriptionRejected, this,
             [this](quint32 sourceId, quint16 topicId, quint8 status, quint16 errorCode) {
-                emit statusMessage(tr("SUBSCRIBE rejected for topic 0x%1 of source 0x%2 "
-                                      "(status 0x%3, error 0x%4)")
-                                       .arg(topicId, 4, 16, QChar('0'))
-                                       .arg(sourceId, 8, 16, QChar('0'))
-                                       .arg(status, 2, 16, QChar('0'))
-                                       .arg(errorCode, 4, 16, QChar('0')),
-                                   8000, StatusSeverity::Error);
+                const QString label =
+                    topicLabelFor(m_telemetryCatalog->allSchemas(), sourceId, topicId);
+                emit statusMessage(
+                    tr("SUBSCRIBE rejected for %1 (status 0x%2, error 0x%3)")
+                        .arg(label)
+                        .arg(status, 2, 16, QChar('0'))
+                        .arg(errorCode, 4, 16, QChar('0')),
+                    8000, StatusSeverity::Error);
             });
     connect(m_subscriptionManager, &SubscriptionManager::subscriptionsChanged, this,
             &Backend::subscriptionsChanged);
