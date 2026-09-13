@@ -70,6 +70,7 @@ void TestChartData::parsesDefaultsFromEmptyConfig() {
     QCOMPARE(config.yMin, 0.0);
     QCOMPARE(config.yMax, 100.0);
     QCOMPARE(config.showGrid, true);
+    QCOMPARE(config.decimals, 0);
     QVERIFY(config.series.isEmpty());
 }
 
@@ -90,6 +91,7 @@ void TestChartData::parsesExplicitConfig() {
     yAxis["max"] = 5.0;
     yAxis["unit"] = "V";
     yAxis["grid"] = false;
+    yAxis["decimals"] = 3;
     json["yAxis"] = yAxis;
 
     QJsonObject one;
@@ -112,6 +114,7 @@ void TestChartData::parsesExplicitConfig() {
     QCOMPARE(config.yMax, 5.0);
     QCOMPARE(config.yUnit, QStringLiteral("V"));
     QCOMPARE(config.showGrid, false);
+    QCOMPARE(config.decimals, 3);
     QCOMPARE(config.series.size(), 1);
     QCOMPARE(config.series[0].name, QStringLiteral("Accel X"));
     QCOMPARE(config.series[0].fieldId, quint16(3));

@@ -84,6 +84,13 @@ struct ChartConfig {
     double yMax = 100.0;
     QString yUnit;
     bool showGrid = true;
+    // Fixed decimal places for every Y-axis/value label this chart draws
+    // (axis min/mid/max, legend last-value row, grid-point markers, hover
+    // tooltip, bar labels) -- mirrors GaugeConfig::decimals below. Without
+    // this, labels used a variable-significant-digit format whose rendered
+    // width (and thus the axis gutter/tooltip width) changed from frame to
+    // frame as the underlying value's fractional digits changed.
+    int decimals = 0;
 
     QVector<ChartSeriesConfig> series;
 };

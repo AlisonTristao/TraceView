@@ -79,6 +79,7 @@ ChartConfig parseChartConfig(const QJsonObject& json) {
     config.yMax = yAxis.value("max").toDouble(100.0);
     config.yUnit = yAxis.value("unit").toString();
     config.showGrid = yAxis.value("grid").toBool(true);
+    config.decimals = yAxis.value("decimals").toInt(0);
 
     for (const QJsonValue& value : json.value("series").toArray()) {
         config.series.append(parseSeriesConfig(value.toObject()));
