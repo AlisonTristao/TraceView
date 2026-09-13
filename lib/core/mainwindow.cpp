@@ -131,21 +131,30 @@ struct WidgetTopicRequest {
 
 WidgetTopicRequest widgetTopicRequest(DashboardWidget* widget, DashboardGrid* grid) {
     const QString deviceId = grid->configForWidget(widget).value("deviceId").toString();
+    WidgetTopicRequest request;
     if (auto* chart = dynamic_cast<ChartWidgetBase*>(widget)) {
         const ChartConfig& config = chart->config();
-        return {deviceId, config.sourceId, config.topicId,
-                requestedRateMillihzFor(config.sampleTimeMs)};
-    }
-    if (auto* gauge = dynamic_cast<DummyGaugeWidget*>(widget)) {
+        request = {deviceId, config.sourceId, config.topicId,
+                   requestedRateMillihzFor(config.sampleTimeMs)};
+    } else if (auto* gauge = dynamic_cast<DummyGaugeWidget*>(widget)) {
         const GaugeConfig& config = gauge->config();
-        return {deviceId, config.sourceId, config.topicId, kGaugeRequestedRateMillihz};
-    }
-    if (auto* board = dynamic_cast<TextBoardWidget*>(widget)) {
+        request = {deviceId, config.sourceId, config.topicId, kGaugeRequestedRateMillihz};
+    } else if (auto* board = dynamic_cast<TextBoardWidget*>(widget)) {
         const TextBoardConfig& config = board->config();
-        return {deviceId, config.sourceId, config.topicId,
-                requestedRateMillihzFor(config.sampleTimeMs)};
+        request = {deviceId, config.sourceId, config.topicId,
+                   requestedRateMillihzFor(config.sampleTimeMs)};
+    } else {
+        return {};
     }
-    return {};
+
+    // Settings > Dashboard's subscribe rate override, when on, replaces
+    // whatever rate the widget itself asked for -- one dial for the whole
+    // dashboard's subscribe load instead of each widget's own sample time.
+    // The topic's own max/min on the robot still clamps it either way.
+    if (request.topicId != 0 && AppSettings::instance().subscribeRateOverrideEnabled()) {
+        request.rateMillihz = quint32(AppSettings::instance().subscribeRateOverrideHz()) * 1000U;
+    }
+    return request;
 }
 
 quint64 topicStatusKey(quint32 sourceId, quint16 topicId) {
@@ -535,10 +544,6 @@ void MainWindow::updateTelemetryStatusLabel() {
             rate = QStringLiteral("not granted");
         }
         QString entry = topicLabel + ' ' + rate;
-        if (state.rateLimited()) {
-            entry +=
-                QString(" (limited, asked %1)").arg(formatRateMillihz(state.requestedRateMillihz));
-        }
         summary.append(entry);
 
         QString line = entry;
@@ -805,6 +810,11 @@ Ribbon* MainWindow::buildRibbon() {
     // must have subscribed -- every path that edits a config goes through the
     // undo stack, so this one hook covers them all (topico 17 PASSO 2/5).
     connect(m_dashboardGrid->undoStack(), &QUndoStack::indexChanged, this,
+            &MainWindow::refreshWidgetSubscriptions);
+    // Toggling or changing Settings > Dashboard's subscribe rate override
+    // needs every already-open widget resubscribed at the new rate, not just
+    // widgets created afterward.
+    connect(&AppSettings::instance(), &AppSettings::dashboardPreferencesChanged, this,
             &MainWindow::refreshWidgetSubscriptions);
     // Chart/gauge widgets subscribe to live telemetry the moment they're
     // created -- topico 15's "varios assinantes por campo" wiring, covering
