@@ -71,10 +71,9 @@ struct TelemetryFieldSchema {
     quint16 maxElementCount = 0;  // set (with elementCount == 0) for a
                                   // variable-count array
     bool nullable = false;
-    // The field's own declared operating range (manifest_format_version >= 3
-    // -- not carried by any BTP release TraceView currently depends on, so
-    // this stays at its NaN "not declared" default everywhere it's populated
-    // today; see manifestclient.cpp). NaN in either means "not declared".
+    // The field's own declared operating range (manifest_format_version >= 3).
+    // NaN in either means "not declared"; the BTP reader supplies that
+    // sentinel for older manifests and fields without kFieldHasRange.
     double minValue = qQNaN();
     double maxValue = qQNaN();
 
