@@ -65,7 +65,7 @@
                             "key": "",
                             "name": "",
                             "type": "serial_monitor",
-                            "width": 1,
+                            "width": 0.5833333333333334,
                             "x": 0,
                             "y": 0
                         },
@@ -84,8 +84,200 @@
                             "name": "Monitor Stats",
                             "type": "text_board",
                             "width": 0.21666666666666667,
-                            "x": 0.7333333333333335,
-                            "y": 0.125
+                            "x": 0.7833333333333331,
+                            "y": 0
+                        },
+                        {
+                            "config": {
+                                "deviceId": "ec1f2d5f-546e-4aee-8c08-9b3c6e9d47bf",
+                                "series": [
+                                    {
+                                        "color": "#00007f",
+                                        "fieldId": 5,
+                                        "name": "Accel y",
+                                        "style": "solid",
+                                        "unit": "m/s^2"
+                                    },
+                                    {
+                                        "color": "#ffaa00",
+                                        "fieldId": 3,
+                                        "name": "gyro z",
+                                        "style": "solid",
+                                        "unit": "rad/s"
+                                    }
+                                ],
+                                "sourceId": "0X9F442484",
+                                "topicId": "0X0004",
+                                "xAxis": {
+                                    "limit": 140,
+                                    "mode": "samples",
+                                    "sampleTimeMs": 99
+                                },
+                                "yAxis": {
+                                    "autoAxis": true,
+                                    "decimals": 2,
+                                    "grid": true,
+                                    "max": 5,
+                                    "min": -5,
+                                    "mode": "fixed",
+                                    "unit": ""
+                                }
+                            },
+                            "groupId": "",
+                            "height": 0.3500000000000001,
+                            "id": "c048c722-5999-46ce-abc5-62001f1023fc",
+                            "key": "",
+                            "name": "Accel",
+                            "type": "dummy_line",
+                            "width": 0.2,
+                            "x": 0.5833333333333331,
+                            "y": 0.325
+                        },
+                        {
+                            "config": {
+                                "deviceId": "ec1f2d5f-546e-4aee-8c08-9b3c6e9d47bf",
+                                "series": [
+                                    {
+                                        "color": "#e85d8a",
+                                        "fieldId": 8,
+                                        "name": "idx_1",
+                                        "style": "solid"
+                                    },
+                                    {
+                                        "color": "#8e6c9e",
+                                        "fieldId": 9,
+                                        "name": "idx_2",
+                                        "style": "solid"
+                                    },
+                                    {
+                                        "color": "#d9a441",
+                                        "fieldId": 10,
+                                        "name": "idx_3",
+                                        "style": "solid"
+                                    },
+                                    {
+                                        "color": "#6fae7d",
+                                        "fieldId": 11,
+                                        "name": "idx_4",
+                                        "style": "solid"
+                                    },
+                                    {
+                                        "color": "#c43d34",
+                                        "fieldId": 12,
+                                        "name": "idx_6",
+                                        "style": "solid"
+                                    },
+                                    {
+                                        "color": "#5e9fbf",
+                                        "fieldId": 14,
+                                        "name": "idx_7",
+                                        "style": "solid"
+                                    },
+                                    {
+                                        "color": "#e85d8a",
+                                        "fieldId": 15,
+                                        "name": "idx_8",
+                                        "style": "solid"
+                                    }
+                                ],
+                                "sourceId": "0X9F442484",
+                                "topicId": "0X0004",
+                                "xAxis": {
+                                    "limit": 500,
+                                    "mode": "samples",
+                                    "sampleTimeMs": 100
+                                },
+                                "yAxis": {
+                                    "decimals": 0,
+                                    "grid": true,
+                                    "max": 150,
+                                    "min": 0,
+                                    "mode": "fixed",
+                                    "unit": ""
+                                }
+                            },
+                            "groupId": "",
+                            "height": 0.32499999999999996,
+                            "id": "aef29374-d294-4cd8-9414-f8fb94dfe92e",
+                            "key": "",
+                            "name": "Arr Sensors",
+                            "type": "dummy_bar",
+                            "width": 0.30000000000000004,
+                            "x": 0.7,
+                            "y": 0.6749999999999998
+                        },
+                        {
+                            "config": {
+                                "deviceId": "ec1f2d5f-546e-4aee-8c08-9b3c6e9d47bf",
+                                "series": [
+                                    {
+                                        "color": "#00007f",
+                                        "fieldId": 1,
+                                        "name": "linear_speed",
+                                        "style": "solid",
+                                        "unit": "m/s"
+                                    },
+                                    {
+                                        "color": "#ffaa00",
+                                        "fieldId": 2,
+                                        "name": "angular_speed",
+                                        "style": "solid",
+                                        "unit": "rad/s"
+                                    }
+                                ],
+                                "sourceId": "0X9F442484",
+                                "topicId": "0X0004",
+                                "xAxis": {
+                                    "limit": 140,
+                                    "mode": "samples",
+                                    "sampleTimeMs": 1
+                                },
+                                "yAxis": {
+                                    "autoAxis": true,
+                                    "decimals": 2,
+                                    "grid": true,
+                                    "max": 100,
+                                    "min": 0,
+                                    "mode": "auto",
+                                    "unit": ""
+                                }
+                            },
+                            "groupId": "",
+                            "height": 0.32499999999999996,
+                            "id": "4ff409e3-47ed-4d49-b04d-e0fa4f212373",
+                            "key": "",
+                            "name": "speed",
+                            "type": "dummy_line",
+                            "width": 0.2,
+                            "x": 0.5833333333333331,
+                            "y": 1.3877787807814457e-17
+                        },
+                        {
+                            "config": {
+                                "decimals": 0,
+                                "deviceId": "7343d9f3-c204-44a7-9f14-6e183cc70af4",
+                                "max": 0,
+                                "min": -100,
+                                "series": [
+                                    {
+                                        "color": "#e85d8a",
+                                        "fieldId": 7,
+                                        "name": "Series 1"
+                                    }
+                                ],
+                                "sourceId": "0X0C30AA5C",
+                                "topicId": "0X0F03",
+                                "unit": "dB"
+                            },
+                            "groupId": "",
+                            "height": 0.325,
+                            "id": "e0a784cc-d99f-4325-9027-211178cf5a2b",
+                            "key": "",
+                            "name": "Signal",
+                            "type": "dummy_gauge",
+                            "width": 0.11666666666666667,
+                            "x": 0.5833333333333333,
+                            "y": 0.675
                         }
                     ]
                 },

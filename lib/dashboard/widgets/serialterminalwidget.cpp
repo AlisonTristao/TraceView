@@ -358,6 +358,11 @@ void SerialTerminalWidget::resizeEvent(QResizeEvent* event) {
     updateCursorOverlay();
 }
 
+bool SerialTerminalWidget::focusNextPrevChild(bool next) {
+    Q_UNUSED(next);
+    return false;
+}
+
 void SerialTerminalWidget::putChar(QChar c) {
     if (m_cursorCol < m_currentLine.size()) {
         m_currentLine[m_cursorCol] = c;

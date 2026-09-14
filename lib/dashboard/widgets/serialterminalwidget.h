@@ -75,6 +75,14 @@ protected:
     void focusOutEvent(QFocusEvent* event) override;
     void resizeEvent(QResizeEvent* event) override;
 
+    // QPlainTextEdit only blocks Qt's own Tab-driven focus change while it is
+    // editable (see its focusNextPrevChild()); setReadOnly(true) above turns
+    // that guard off, so without this override QWidget::event() steals every
+    // Tab/Shift+Tab press to move focus to the next widget in the chain
+    // *before* keyPressEvent() ever runs -- the dongle never sees '\t' and
+    // the terminal loses focus instead. Always keep Tab as terminal input.
+    bool focusNextPrevChild(bool next) override;
+
 private:
     static constexpr int kCursorBlinkIntervalMs = 600;
 

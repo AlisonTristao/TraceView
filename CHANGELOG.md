@@ -7,6 +7,17 @@ release flow.
 
 ## [Unreleased]
 
+## [2.9.1] - 2026-09-13
+
+### Fixed
+
+- Pressing Tab in the serial terminal to trigger the dongle shell's
+  autocomplete moved keyboard focus to the next widget instead of sending
+  the keystroke -- `QPlainTextEdit::focusNextPrevChild()` only blocks Qt's
+  default Tab-focus-change while the widget is editable, and this terminal
+  is read-only by design. `SerialTerminalWidget` now overrides
+  `focusNextPrevChild()` to keep Tab/Shift+Tab as terminal input.
+
 ## [2.9.0] - 2026-09-13
 
 ### Added
