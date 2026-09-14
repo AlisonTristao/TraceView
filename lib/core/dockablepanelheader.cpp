@@ -1,12 +1,9 @@
 #include "dockablepanelheader.h"
 
 #include <QApplication>
-#include <QHBoxLayout>
 #include <QMouseEvent>
-#include <QToolButton>
 
 #include "ribbon.h"
-#include "ribbonicons.h"
 
 namespace traceview {
 
@@ -22,18 +19,12 @@ DockablePanelHeader::DockablePanelHeader(QWidget* parent) : QWidget(parent) {
     // grab to move/dock it, the same way DockResizeGrip's cursor signals a
     // resize handle.
     setCursor(Qt::SizeAllCursor);
-
-    m_pinButton = new QToolButton(this);
-    m_pinButton->setObjectName("pinButton");
-    m_pinButton->setCheckable(true);
-    m_pinButton->setAutoRaise(true);
-    m_pinButton->setFixedSize(kRibbonButtonSize, kRibbonButtonSize);
-    m_pinButton->setIconSize(QSize(kRibbonIconSize, kRibbonIconSize));
-
-    auto* layout = new QHBoxLayout(this);
-    layout->setContentsMargins(0, 0, 0, 0);
-    layout->addStretch(1);
-    layout->addWidget(m_pinButton);
+    // No child widgets left in here (the pin toggle this used to host is
+    // gone -- panel visibility is MainWindow's show/hide toggle now, see
+    // MainWindow::onTogglePanelsClicked()), so nothing else gives this bar a
+    // height; pin it to the same size ribbon buttons use so it stays a
+    // visible, easily-grabbed strip.
+    setFixedHeight(kRibbonButtonSize);
 }
 
 void DockablePanelHeader::mousePressEvent(QMouseEvent* event) {

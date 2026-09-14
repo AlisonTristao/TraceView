@@ -14,6 +14,7 @@
 #include <QLabel>
 #include <QLineEdit>
 #include <QPushButton>
+#include <QScrollBar>
 #include <QSpinBox>
 #include <QTableWidget>
 #include <QVBoxLayout>
@@ -372,10 +373,18 @@ void ChartConfigEditor::setConfig(const QJsonObject& config) {
     m_decimalsSpin->setValue(yAxis.value("decimals").toInt(0));
     m_gridCheck->setChecked(yAxis.value("grid").toBool(true));
 
+    // setRowCount(0) + addSeriesRow() below destroys and recreates every
+    // row's widgets from scratch (this is how every single-row edit --
+    // e.g. picking a different field in one row's combo -- round-trips
+    // through the undo stack and back into setConfig()), which resets the
+    // table's scroll position to the top. Save/restore it so re-selecting
+    // a field doesn't jump the whole series list back up.
+    const int seriesScrollPosition = m_seriesTable->verticalScrollBar()->value();
     m_seriesTable->setRowCount(0);
     for (const QJsonValue& value : config.value("series").toArray()) {
         addSeriesRow(value.toObject());
     }
+    m_seriesTable->verticalScrollBar()->setValue(seriesScrollPosition);
 
     updateAxisRowsVisibility();
     updateIdentityDisplay();
@@ -457,7 +466,6 @@ void ChartConfigEditor::addSeriesRow(const QJsonObject& series) {
     const QVector<CatalogTopicField> fields = currentTopicFields();
     populateFieldCombo(fieldIdCombo, fields);
     fieldIdCombo->setProperty("fieldId", fieldId);
-    fieldIdCombo->setCurrentText(QString::number(fieldId));
     // Falls back to whatever unit/range this row was last saved with (JSON's
     // "unit"/"min"/"max") when the live catalog doesn't know this field yet
     // -- same graceful-degradation idea as resolveCatalogTopicName() falling
@@ -465,6 +473,16 @@ void ChartConfigEditor::addSeriesRow(const QJsonObject& series) {
     // to "no unit"/"no declared range" just because the device hasn't
     // reported its schema this session.
     const CatalogTopicField* field = findField(fields, fieldId);
+    // Show the catalog's "Name (id)" label when this field is known, instead
+    // of the raw numeric id -- setCurrentText() with the bare number would
+    // just leave that number displayed since it doesn't match any item's
+    // label text.
+    const int comboIndex = fieldIdCombo->findData(fieldId);
+    if (comboIndex >= 0) {
+        fieldIdCombo->setCurrentIndex(comboIndex);
+    } else {
+        fieldIdCombo->setCurrentText(QString::number(fieldId));
+    }
     setResolvedField(fieldIdCombo, field);
     if (!field) {
         fieldIdCombo->setProperty("fieldUnit", series.value("unit").toString());
@@ -525,8 +543,12 @@ void ChartConfigEditor::addSeriesRow(const QJsonObject& series) {
     connect(styleCombo, &QComboBox::currentIndexChanged, this, [this](int) { emitChanged(); });
     m_seriesTable->setCellWidget(row, kStyleColumn, styleCombo);
 
-    auto* removeButton = new QPushButton("✕");
-    removeButton->setFixedWidth(28);
+    auto* removeButton = new QPushButton("X");
+    // Wide enough to actually fit the label: the global QPushButton QSS
+    // (stylesheet.cpp) applies 14px of horizontal padding per side plus a
+    // 1px border, so anything narrower than ~30px leaves no room for the
+    // text at all and the button renders blank.
+    removeButton->setFixedWidth(36);
     removeButton->setToolTip(tr("Remove series"));
     connect(removeButton, &QPushButton::clicked, this, [this, removeButton]() {
         for (int r = 0; r < m_seriesTable->rowCount(); ++r) {

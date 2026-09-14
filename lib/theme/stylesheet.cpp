@@ -215,27 +215,6 @@ QToolButton:disabled {
     outline: none;
 }
 
-/* Panel pin toggles (PropertiesPanel/LayersPanel) already show their pinned
-   state through the icon itself (hollow vs. filled pushpin) -- the generic
-   solid-accent checked background above would double up on that and just
-   look like a stray blue box, so keep this one flat and let hover be the
-   only surface feedback. Opaque @surface@ (matching the panels' own fill,
-   see "QWidget#layersPanel"/"QWidget#propertiesPanel" above) rather than
-   the generic QToolButton's transparent, though, so the button doesn't
-   stand out as a different-colored patch against its panel. */
-QToolButton#pinButton {
-    background-color: @surface@;
-}
-QToolButton#pinButton:checked {
-    background-color: @surface@;
-    color: @textPrimary@;
-    border-color: transparent;
-}
-QToolButton#pinButton:checked:hover {
-    background-color: @surfaceAlt@;
-    border-color: @border@;
-}
-
 QStatusBar {
     background-color: @surface@;
     border-top: 1px solid @border@;

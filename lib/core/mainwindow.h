@@ -94,12 +94,36 @@ private:
     void updateRibbonIcons();
 
     void onRibbonTabChanged(int index);
+    // The "enable editing" lock toggle on the Dashboard tab's toolbar --
+    // flips m_editModeEnabled and re-runs exactly the same follow-up calls
+    // onRibbonTabChanged() used to make when the (now-removed) Layout tab
+    // became active: DashboardGrid edit mode, m_addWidgetAction's enabled
+    // state, panel visibility and selection-action gating.
+    void onEditModeToggled(bool enabled);
+    void updateEditModeIcon();
+    // The panel show/hide toggle next to the lock -- the sole control for
+    // m_layersPanel/m_propertiesPanel's visibility while editing (see
+    // updatePanelVisibility()), so this is also how a user reaches
+    // m_layersPanel's Add Widget button on an empty canvas, or reclaims
+    // canvas space on demand without leaving edit mode.
+    void onTogglePanelsClicked(bool visible);
+    void updateTogglePanelsIcon();
+    // Whether the Layout-era editing affordances (DashboardGrid edit mode,
+    // its ribbon actions, the Layers/Properties panels) should be active --
+    // true only while the Dashboard tab is current AND the edit-mode toggle
+    // is on. Replaces the old m_configureTabActive, which used to be derived
+    // straight from "is the Layout tab the current one".
+    bool editingActive() const {
+        return m_dashboardTabActive && m_editModeEnabled;
+    }
     void onSelectionChanged(const QString& itemId);
     void updateSelectionActions();
-    // Shows m_propertiesPanel/m_layersPanel only on the Layout tab, and then
-    // only while something is selected or the panel's own pin toggle is
-    // engaged (see PropertiesPanel/LayersPanel::isPinned()). Called on tab
-    // change, selection change, and either panel's pinnedChanged().
+    // Shows m_propertiesPanel/m_layersPanel only while the Dashboard tab is
+    // active AND editing is enabled (see editingActive()) AND the panel
+    // show/hide toggle is on (m_panelsVisible) -- selection used to also
+    // open them on its own, which made them pop in/out independent of the
+    // toggle's own state. Called on tab change, selection change, the
+    // edit-mode toggle, and the panel show/hide toggle.
     void updatePanelVisibility();
     // Pushes the current selection's type/name/key into m_propertiesPanel.
     // Called on selectionChanged and whenever the undo stack moves, since a
@@ -122,7 +146,7 @@ private:
     // selection -- called on DevicesGrid::selectionChanged and on every tab
     // switch, so m_removeDeviceAction stays gated to "Devices tab active AND
     // a device is selected" (same shape as m_removeAction's own
-    // m_configureTabActive-gated condition, kept mutually exclusive so both
+    // editingActive()-gated condition, kept mutually exclusive so both
     // never share an enabled Delete shortcut at once).
     void updateDeviceSelectionActions();
     // Builds and wires one DeviceConnection the way onDeviceAdded() always
@@ -404,10 +428,23 @@ private:
     // resets to null on its own once the user closes it, instead of leaving
     // a dangling raw pointer behind for the next "Debug" click to dereference.
     QPointer<DebugChartsWindow> m_debugChartsWindow;
-    int m_configureTabIndex = -1;
     int m_devicesTabIndex = -1;
-    bool m_configureTabActive = false;
-    // Gates m_removeDeviceAction the same way m_configureTabActive gates
+    // Whether the Dashboard tab (m_dashboardTabIndex) is the current one --
+    // combined with m_editModeEnabled by editingActive() to decide whether
+    // the Layout-era editing affordances should be active.
+    bool m_dashboardTabActive = false;
+    // The "enable editing" lock toggle's state, set by onEditModeToggled().
+    // Unlike the old m_configureTabActive, this is a persistent user choice,
+    // not derived from which tab is current -- switching to Devices and back
+    // to Dashboard leaves it exactly as the user left it.
+    bool m_editModeEnabled = false;
+    // The panel show/hide toggle's state (see onTogglePanelsClicked()) --
+    // the sole control for whether m_layersPanel/m_propertiesPanel are shown
+    // while editing. Defaults to true so turning editing on shows them
+    // immediately, even on an empty dashboard with nothing selected --
+    // otherwise there'd be no visible way to reach Add Widget at all.
+    bool m_panelsVisible = true;
+    // Gates m_removeDeviceAction the same way editingActive() gates
     // m_removeAction -- see updateDeviceSelectionActions().
     bool m_devicesTabActive = false;
     // Same gating for m_removeDeviceAction while the OTA tab is the visible
@@ -439,7 +476,7 @@ private:
     // rate, plus bytes/drops from a status_version=2 STATUS), aggregated
     // across every connected device's Backend.
     void updateTelemetryStatusLabel();
-    // Rebuilds the Run tab's device status strip from m_devicesGrid's
+    // Rebuilds the Dashboard tab's device status strip from m_devicesGrid's
     // current list/connection state. Called on every device add/remove/
     // update/connection-state change, and on theme change (dot colors).
     void refreshDeviceStatusLabel();
@@ -491,11 +528,16 @@ private:
     // frames are flowing, which bypasses this path entirely.
     QHash<QString, int> m_hubChildOfflineTicks;
     QLabel* m_telemetryStatusLabel = nullptr;
-    int m_runTabIndex = -1;
+    int m_dashboardTabIndex = -1;
     // Read-only "device: dot" strip replacing the old single-connection port/
     // baud/connect bar -- per-device connection config now lives in the
     // Devices tab (DeviceConfigDialog) instead.
     QLabel* m_deviceStatusLabel = nullptr;
+    // Panel show/hide toggle and "enable editing" lock, top-right of the
+    // Dashboard tab's toolbar in that order (m_deviceStatusLabel sits at its
+    // top-left) -- see onTogglePanelsClicked()/onEditModeToggled().
+    QToolButton* m_togglePanelsButton = nullptr;
+    QToolButton* m_editModeButton = nullptr;
     QToolButton* m_fullscreenButton = nullptr;
     bool m_wasMaximized = false;
     QByteArray m_preFullscreenGeometry;

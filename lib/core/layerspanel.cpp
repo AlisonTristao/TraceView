@@ -19,6 +19,10 @@ LayersPanel::LayersPanel(QWidget* parent) : DockablePanel(parent) {
             [this](QListWidgetItem* current, QListWidgetItem*) { onCurrentItemChanged(current); });
 }
 
+void LayersPanel::setToolbar(QWidget* toolbar) {
+    bodyLayout()->insertWidget(0, toolbar);
+}
+
 void LayersPanel::setItems(const QVector<DashboardLayerEntry>& entries, const QString& selectedId) {
     m_syncing = true;
 
@@ -40,7 +44,7 @@ void LayersPanel::setItems(const QVector<DashboardLayerEntry>& entries, const QS
 }
 
 int LayersPanel::preferredThickness() const {
-    return kPropertiesPanelWidth / 3;
+    return kPropertiesPanelWidth;
 }
 
 void LayersPanel::onCurrentItemChanged(QListWidgetItem* current) {

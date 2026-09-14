@@ -22,6 +22,7 @@
 #include <QPushButton>
 #include <QSerialPortInfo>
 #include <QSettings>
+#include <QSignalBlocker>
 #include <QStackedWidget>
 #include <QStatusBar>
 #include <QStringList>
@@ -348,6 +349,17 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     centralLayout->addWidget(ribbon);
     centralLayout->addWidget(m_contentRow, /*stretch=*/1);
     setCentralWidget(central);
+
+    // Ribbon::currentTabChanged is only connected inside buildRibbon(),
+    // *after* its fixed tabs are added -- so the currentChanged(0) QTabBar
+    // fires the moment the first tab is added (Dashboard) never reaches
+    // onRibbonTabChanged(), and m_dashboardTabActive would otherwise stay
+    // false (and editingActive() with it) until the user switches tabs away
+    // and back at least once. Everything onRibbonTabChanged()/
+    // updatePanelVisibility() touch (m_contentStack, m_dockController,
+    // m_devicesGrid, m_layersPanel/m_propertiesPanel) exists by this point,
+    // so drive it once here to pick up the actual initial tab.
+    onRibbonTabChanged(ribbon->currentIndex());
 
     // Permanent readout of what telemetry is actually flowing: the effective
     // rate each subscribed topic was granted (never the rate that was asked
@@ -841,22 +853,47 @@ Ribbon* MainWindow::buildRibbon() {
     m_removeDeviceAction->setEnabled(false);
     m_removeDeviceAction->setShortcut(QKeySequence::Delete);
 
-    auto* runPage = new QWidget(this);
-    runPage->setObjectName("ribbonPage");
-    runPage->setFixedHeight(kRibbonPageHeight);
-    auto* runLayout = new QHBoxLayout(runPage);
-    runLayout->setContentsMargins(kRibbonPageMarginH, kRibbonPageMarginV, kRibbonPageMarginH,
-                                  kRibbonPageMarginV);
-    runLayout->setSpacing(kRibbonGroupSpacing);
+    auto* dashboardPage = new QWidget(this);
+    dashboardPage->setObjectName("ribbonPage");
+    dashboardPage->setFixedHeight(kRibbonPageHeight);
+    auto* dashboardLayout = new QHBoxLayout(dashboardPage);
+    dashboardLayout->setContentsMargins(kRibbonPageMarginH, kRibbonPageMarginV, kRibbonPageMarginH,
+                                        kRibbonPageMarginV);
+    dashboardLayout->setSpacing(kRibbonGroupSpacing);
 
     // Port/baud/connect used to live here as one global bar (see git history
     // pre-multi-device-refactor) -- each device now owns its own connection
     // config, set in the Devices tab (DeviceConfigDialog). This read-only
-    // strip is what's left for Run: an at-a-glance glance at every
-    // configured device's live connection state, for when you're looking at
-    // the dashboard and not at any cell bound to a disconnected device.
-    m_deviceStatusLabel = new QLabel(runPage);
+    // strip is what's left for the Dashboard tab: an at-a-glance glance at
+    // every configured device's live connection state, for when you're
+    // looking at the dashboard and not at any cell bound to a disconnected
+    // device.
+    m_deviceStatusLabel = new QLabel(dashboardPage);
     m_deviceStatusLabel->setTextFormat(Qt::RichText);
+
+    // Top-right, left of the lock: shows/hides m_layersPanel/m_propertiesPanel
+    // on demand. Needed because updatePanelVisibility()'s usual "only while
+    // something is selected or pinned" gating would otherwise leave both
+    // panels -- Add Widget included, now that it lives in the Layers panel --
+    // unreachable on an empty canvas. See onTogglePanelsClicked().
+    m_togglePanelsButton = new QToolButton(dashboardPage);
+    m_togglePanelsButton->setCheckable(true);
+    m_togglePanelsButton->setChecked(m_panelsVisible);
+    m_togglePanelsButton->setAutoRaise(true);
+    m_togglePanelsButton->setFixedSize(kRibbonButtonSize, kRibbonButtonSize);
+    m_togglePanelsButton->setIconSize(QSize(kRibbonIconSize, kRibbonIconSize));
+    connect(m_togglePanelsButton, &QToolButton::toggled, this,
+            &MainWindow::onTogglePanelsClicked);
+
+    // Top-right lock toggle: turns the Dashboard tab's canvas into the old
+    // Layout tab's editable mode in place, instead of that being a separate
+    // tab. See onEditModeToggled() for what flipping it actually does.
+    m_editModeButton = new QToolButton(dashboardPage);
+    m_editModeButton->setCheckable(true);
+    m_editModeButton->setAutoRaise(true);
+    m_editModeButton->setFixedSize(kRibbonButtonSize, kRibbonButtonSize);
+    m_editModeButton->setIconSize(QSize(kRibbonIconSize, kRibbonIconSize));
+    connect(m_editModeButton, &QToolButton::toggled, this, &MainWindow::onEditModeToggled);
 
     // Lives in the status bar (bottom-left, see below) rather than on this
     // page: the ribbon's tab strip hides during fullscreen
@@ -923,35 +960,16 @@ Ribbon* MainWindow::buildRibbon() {
     connect(&ThemeManager::instance(), &ThemeManager::themeChanged, this,
             [this](const ThemePalette&) { updateRibbonIcons(); });
 
-    runLayout->addWidget(m_deviceStatusLabel);
-    runLayout->addStretch();
+    dashboardLayout->addWidget(m_deviceStatusLabel);
+    dashboardLayout->addStretch();
+    dashboardLayout->addWidget(m_togglePanelsButton);
+    dashboardLayout->addWidget(m_editModeButton);
 
     // Initial refreshDeviceStatusLabel() call happens once m_devicesGrid
     // exists (buildRibbon() runs before it -- see the constructor); this
     // just keeps it live across a later theme change (dot colors).
     connect(&ThemeManager::instance(), &ThemeManager::themeChanged, this,
             [this](const ThemePalette&) { refreshDeviceStatusLabel(); });
-
-    auto* configurePage = new QWidget(this);
-    configurePage->setObjectName("ribbonPage");
-    configurePage->setFixedHeight(kRibbonPageHeight);
-    auto* configureLayout = new QHBoxLayout(configurePage);
-    configureLayout->setContentsMargins(kRibbonPageMarginH, kRibbonPageMarginV, kRibbonPageMarginH,
-                                        kRibbonPageMarginV);
-    configureLayout->setSpacing(kRibbonGroupSpacing);
-
-    configureLayout->addWidget(
-        Ribbon::createButtonGroup(configurePage, {m_addWidgetAction, m_removeAction}));
-    configureLayout->addWidget(Ribbon::createButtonGroup(
-        configurePage,
-        {m_bringToFrontAction, m_bringForwardAction, m_sendBackwardAction, m_sendToBackAction}));
-    configureLayout->addWidget(
-        Ribbon::createButtonGroup(configurePage, {m_copyAction, m_pasteAction}));
-    configureLayout->addWidget(
-        Ribbon::createButtonGroup(configurePage, {m_groupAction, m_ungroupAction}));
-    configureLayout->addWidget(
-        Ribbon::createButtonGroup(configurePage, {m_undoAction, m_redoAction}));
-    configureLayout->addStretch();
 
     auto* devicesPage = new QWidget(this);
     devicesPage->setObjectName("ribbonPage");
@@ -966,8 +984,7 @@ Ribbon* MainWindow::buildRibbon() {
     devicesLayout->addStretch();
 
     auto* ribbon = new Ribbon(this);
-    m_runTabIndex = ribbon->addTab(tr("Run"), runPage);
-    m_configureTabIndex = ribbon->addTab(tr("Layout"), configurePage);
+    m_dashboardTabIndex = ribbon->addTab(tr("Dashboard"), dashboardPage);
     m_devicesTabIndex = ribbon->addTab(tr("Devices"), devicesPage);
 
     connect(ribbon, &Ribbon::currentTabChanged, this, &MainWindow::onRibbonTabChanged);
@@ -975,12 +992,11 @@ Ribbon* MainWindow::buildRibbon() {
 
     m_ribbon = ribbon;
 
-    // Ctrl+1/2/3 jump to the fixed Run/Layout/Devices tabs -- window-level so
+    // Ctrl+1/2 jump to the fixed Dashboard/Devices tabs -- window-level so
     // they keep working with the menu bar hidden (same as fullscreen above).
     // Ctrl+Tab is already taken for workspace cycling, so digits it is.
-    const QVector<QKeyCombination> fixedTabChords = {Qt::CTRL | Qt::Key_1, Qt::CTRL | Qt::Key_2,
-                                                     Qt::CTRL | Qt::Key_3};
-    const QVector<int> fixedTabIndices = {m_runTabIndex, m_configureTabIndex, m_devicesTabIndex};
+    const QVector<QKeyCombination> fixedTabChords = {Qt::CTRL | Qt::Key_1, Qt::CTRL | Qt::Key_2};
+    const QVector<int> fixedTabIndices = {m_dashboardTabIndex, m_devicesTabIndex};
     for (int i = 0; i < fixedTabChords.size(); ++i) {
         auto* action = new QAction(this);
         action->setShortcut(QKeySequence(fixedTabChords[i]));
@@ -1104,9 +1120,38 @@ void MainWindow::onWorkspaceDeleteRequested(const QString& id) {
 void MainWindow::buildLayersPanel() {
     m_layersPanel = new LayersPanel(this);
     connect(m_layersPanel, &LayersPanel::itemSelected, m_dashboardGrid, &DashboardGrid::selectItem);
-    connect(m_layersPanel, &LayersPanel::pinnedChanged, this, &MainWindow::updatePanelVisibility);
 
-    // Only relevant while editing the layout -- matches m_propertiesPanel
+    // These used to be their own ribbon page (the Layout tab); now that
+    // editing is a mode of the Dashboard tab instead of a separate tab, they
+    // live inside the Layers panel itself, above the list -- two rows since
+    // five button groups don't fit in one at this panel's width.
+    auto* toolbar = new QWidget(m_layersPanel);
+    auto* toolbarLayout = new QVBoxLayout(toolbar);
+    toolbarLayout->setContentsMargins(kRibbonPageMarginH, kRibbonPageMarginV, kRibbonPageMarginH,
+                                      kRibbonPageMarginV);
+    toolbarLayout->setSpacing(kRibbonGroupPadding);
+
+    auto* toolbarRow1 = new QHBoxLayout();
+    toolbarRow1->setSpacing(kRibbonGroupSpacing);
+    toolbarRow1->addWidget(
+        Ribbon::createButtonGroup(toolbar, {m_addWidgetAction, m_removeAction}));
+    toolbarRow1->addWidget(Ribbon::createButtonGroup(toolbar, {m_copyAction, m_pasteAction}));
+    toolbarRow1->addStretch();
+    toolbarLayout->addLayout(toolbarRow1);
+
+    auto* toolbarRow2 = new QHBoxLayout();
+    toolbarRow2->setSpacing(kRibbonGroupSpacing);
+    toolbarRow2->addWidget(Ribbon::createButtonGroup(
+        toolbar,
+        {m_bringToFrontAction, m_bringForwardAction, m_sendBackwardAction, m_sendToBackAction}));
+    toolbarRow2->addWidget(Ribbon::createButtonGroup(toolbar, {m_groupAction, m_ungroupAction}));
+    toolbarRow2->addWidget(Ribbon::createButtonGroup(toolbar, {m_undoAction, m_redoAction}));
+    toolbarRow2->addStretch();
+    toolbarLayout->addLayout(toolbarRow2);
+
+    m_layersPanel->setToolbar(toolbar);
+
+    // Only relevant while editing is enabled -- matches m_propertiesPanel
     // (see buildPropertiesPanel() below).
     m_layersPanel->hide();
 }
@@ -1123,12 +1168,10 @@ void MainWindow::buildPropertiesPanel() {
             &MainWindow::onPanelKeyChangeRequested);
     connect(m_propertiesPanel, &PropertiesPanel::configChangeRequested, this,
             &MainWindow::onPanelConfigChangeRequested);
-    connect(m_propertiesPanel, &PropertiesPanel::pinnedChanged, this,
-            &MainWindow::updatePanelVisibility);
 
-    // Only relevant while editing the layout — matches m_addWidgetAction,
-    // which also starts disabled until the Layout tab is active (see
-    // onRibbonTabChanged).
+    // Only relevant while editing is enabled — matches m_addWidgetAction,
+    // which also starts disabled until editingActive() is true (see
+    // onRibbonTabChanged/onEditModeToggled).
     m_propertiesPanel->hide();
 }
 
@@ -1188,10 +1231,35 @@ void MainWindow::updateRibbonIcons() {
     if (m_workspaceSwitcher) {
         m_workspaceSwitcher->updateIcons(palette.textPrimary);
     }
+    updateEditModeIcon();
+    updateTogglePanelsIcon();
+}
+
+void MainWindow::updateEditModeIcon() {
+    const ThemePalette& palette = ThemeManager::instance().currentTheme();
+    // Always textPrimary, like m_fullscreenButton's own icon (see
+    // makeFullscreenIcon's call site below) -- QToolButton:checked's QSS
+    // paints the button's background @accent@ (stylesheet.cpp), so drawing
+    // the glyph itself in palette.accent when checked (as this used to)
+    // made it disappear into its own background. On/off is conveyed by the
+    // padlock's shape (open/closed), not by recoloring it.
+    m_editModeButton->setIcon(makeLockIcon(palette.textPrimary, !m_editModeEnabled));
+    m_editModeButton->setToolTip(m_editModeEnabled
+                                     ? tr("Disable editing — lock the dashboard layout")
+                                     : tr("Enable editing — rearrange the dashboard layout"));
+}
+
+void MainWindow::updateTogglePanelsIcon() {
+    const ThemePalette& palette = ThemeManager::instance().currentTheme();
+    // Always textPrimary -- same reasoning as updateEditModeIcon() above.
+    m_togglePanelsButton->setIcon(makePanelsIcon(palette.textPrimary, m_panelsVisible));
+    m_togglePanelsButton->setToolTip(m_panelsVisible
+                                         ? tr("Hide the Layers/Properties panels")
+                                         : tr("Show the Layers/Properties panels"));
 }
 
 void MainWindow::onRibbonTabChanged(int index) {
-    m_configureTabActive = index == m_configureTabIndex;
+    m_dashboardTabActive = index == m_dashboardTabIndex;
     m_devicesTabActive = index == m_devicesTabIndex;
     // Matched by ribbon page pointer rather than by index, same reasoning as
     // m_openLogTabs: the OTA tab is closable, so its index shifts whenever
@@ -1200,28 +1268,31 @@ void MainWindow::onRibbonTabChanged(int index) {
     // updateDeviceSelectionActions() runs a few lines down.
     QWidget* currentPage = m_ribbon->pageAt(index);
     m_otaTabActive = currentPage != nullptr && currentPage == m_otaTabPage;
-    m_dashboardGrid->setEditMode(m_configureTabActive);
-    m_addWidgetAction->setEnabled(m_configureTabActive);
+    m_dashboardGrid->setEditMode(editingActive());
+    m_addWidgetAction->setEnabled(editingActive());
+    m_togglePanelsButton->setEnabled(editingActive());
     // Ctrl+Z/Ctrl+Y (m_undoAction/m_redoAction) are created from m_undoGroup,
     // not either stack directly -- flip which one is "active" here so they
-    // always undo/redo whatever the visible tab actually shows. Run and
-    // Layout both display the dashboard, so both fall through to its stack.
+    // always undo/redo whatever the visible tab actually shows. The
+    // Dashboard tab displays the dashboard in both its read-only and
+    // editable modes, so either way it falls through to its stack.
     m_undoGroup->setActiveStack(m_devicesTabActive ? m_devicesGrid->undoStack()
                                                    : m_dashboardGrid->undoStack());
     updatePanelVisibility();
     updateSelectionActions();
     updateDeviceSelectionActions();
 
-    if (index == m_runTabIndex) {
+    if (index == m_dashboardTabIndex) {
         refreshDeviceStatusLabel();
     }
 
     // Swaps the whole content area between the canvas, the Devices grid and
-    // whichever log tab is now current; Run/Layout both keep showing the
-    // canvas, only Devices/a log tab swap away from it (m_configureTabActive
-    // above already goes false here on its own, so edit mode/panels don't
-    // need any extra handling for those). Log tabs are matched by their
-    // ribbon page pointer rather than by index -- see m_openLogTabs.
+    // whichever log tab is now current; the Dashboard tab keeps showing the
+    // canvas in both its modes, only Devices/a log tab swap away from it
+    // (m_dashboardTabActive above already goes false here on its own, so
+    // edit mode/panels don't need any extra handling for those). Log tabs
+    // are matched by their ribbon page pointer rather than by index -- see
+    // m_openLogTabs.
     QWidget* activeContent = m_dashboardGrid;
     if (index == m_devicesTabIndex) {
         activeContent = m_devicesGrid;
@@ -1248,6 +1319,25 @@ void MainWindow::onRibbonTabChanged(int index) {
     }
 }
 
+void MainWindow::onEditModeToggled(bool enabled) {
+    m_editModeEnabled = enabled;
+    updateEditModeIcon();
+    // Same follow-up calls onRibbonTabChanged() makes for m_dashboardTabActive
+    // -- editingActive() folds both flags together, so flipping either one
+    // needs the same refresh.
+    m_dashboardGrid->setEditMode(editingActive());
+    m_addWidgetAction->setEnabled(editingActive());
+    m_togglePanelsButton->setEnabled(editingActive());
+    updatePanelVisibility();
+    updateSelectionActions();
+}
+
+void MainWindow::onTogglePanelsClicked(bool visible) {
+    m_panelsVisible = visible;
+    updateTogglePanelsIcon();
+    updatePanelVisibility();
+}
+
 void MainWindow::onSelectionChanged(const QString&) {
     updateSelectionActions();
     refreshPropertiesPanel();
@@ -1263,12 +1353,29 @@ void MainWindow::updatePanelVisibility() {
     if (m_dockController->isDragging()) {
         return;
     }
-    const bool hasSelection = m_dashboardGrid->selectedCount() > 0;
-    const bool showProperties =
-        m_configureTabActive && (hasSelection || m_propertiesPanel->isPinned());
-    const bool showLayers = m_configureTabActive && (hasSelection || m_layersPanel->isPinned());
+    // m_panelsVisible (the show/hide toggle) is the direct, sole control for
+    // these panels -- selection used to also open them on its own, but that
+    // made them pop in and out as the selection changed, on top of the
+    // toggle's own effect, which read as two things fighting over the same
+    // panels. Either way, both stay hidden outright unless editingActive()
+    // -- the lock being off (or the Devices tab being current) always wins,
+    // regardless of what m_panelsVisible itself remembers.
+    const bool showPanels = editingActive() && m_panelsVisible;
+    const bool showProperties = showPanels;
+    const bool showLayers = showPanels;
     m_propertiesPanel->setVisible(showProperties);
     m_layersPanel->setVisible(showLayers);
+    // Keep the toggle button's own checked look in sync with whether panels
+    // are actually showing right now, not just with m_panelsVisible -- while
+    // locked (editingActive() false) it's disabled anyway, but without this
+    // it would stay visually checked (from before the lock closed) instead
+    // of reading as off like the hidden panels it no longer controls.
+    // Blocked so this doesn't loop back into onTogglePanelsClicked() and
+    // stomp the very m_panelsVisible preference it's supposed to reflect.
+    {
+        const QSignalBlocker blocker(m_togglePanelsButton);
+        m_togglePanelsButton->setChecked(showPanels);
+    }
     // Both panels are floated over m_dashboardGrid rather than laid out
     // beside it (see positionOverlayPanels()), so re-showing one has to
     // explicitly reclaim the top of the stack -- a plain setVisible(true)
@@ -1293,18 +1400,18 @@ void MainWindow::positionOverlayPanels() {
 }
 
 void MainWindow::updateSelectionActions() {
-    const bool hasAnySelection = m_configureTabActive && m_dashboardGrid->selectedCount() > 0;
+    const bool hasAnySelection = editingActive() && m_dashboardGrid->selectedCount() > 0;
     const bool hasSingleSelection =
-        m_configureTabActive && !m_dashboardGrid->selectedItemId().isEmpty();
+        editingActive() && !m_dashboardGrid->selectedItemId().isEmpty();
     m_removeAction->setEnabled(hasAnySelection);
     m_copyAction->setEnabled(hasSingleSelection);
-    m_pasteAction->setEnabled(m_configureTabActive && m_dashboardGrid->canPaste());
+    m_pasteAction->setEnabled(editingActive() && m_dashboardGrid->canPaste());
     m_bringToFrontAction->setEnabled(hasSingleSelection);
     m_bringForwardAction->setEnabled(hasSingleSelection);
     m_sendBackwardAction->setEnabled(hasSingleSelection);
     m_sendToBackAction->setEnabled(hasSingleSelection);
-    m_groupAction->setEnabled(m_configureTabActive && m_dashboardGrid->selectedCount() >= 2);
-    m_ungroupAction->setEnabled(m_configureTabActive && m_dashboardGrid->selectionHasGroup());
+    m_groupAction->setEnabled(editingActive() && m_dashboardGrid->selectedCount() >= 2);
+    m_ungroupAction->setEnabled(editingActive() && m_dashboardGrid->selectionHasGroup());
 }
 
 void MainWindow::refreshPropertiesPanel() {

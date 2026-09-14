@@ -262,7 +262,7 @@ QIcon makeUngroupIcon(const QColor& color) {
     return QIcon(pixmap);
 }
 
-QIcon makePinIcon(const QColor& color, bool active) {
+QIcon makeLockIcon(const QColor& color, bool locked) {
     QPixmap pixmap(kRibbonIconSize, kRibbonIconSize);
     pixmap.fill(Qt::transparent);
 
@@ -270,17 +270,62 @@ QIcon makePinIcon(const QColor& color, bool active) {
     painter.setRenderHint(QPainter::Antialiasing);
     QPen pen(color, 1.6);
     pen.setCapStyle(Qt::RoundCap);
+    pen.setJoinStyle(Qt::RoundJoin);
     painter.setPen(pen);
-    painter.setBrush(active ? QBrush(color) : Qt::NoBrush);
+    painter.setBrush(Qt::NoBrush);
 
-    // A pushpin reduced to its two readable strokes: a round head (the
-    // handle) and a straight needle below it -- filled head when pinned,
-    // hollow when not.
-    const double cx = kRibbonIconSize / 2.0;
-    const double headCy = 4.6;
-    const double r = 2.6;
-    painter.drawEllipse(QPointF(cx, headCy), r, r);
-    painter.drawLine(QPointF(cx, headCy + r), QPointF(cx, kRibbonIconSize - 2.0));
+    // Body: a small rounded rect low in the icon. Shackle: an arc that meets
+    // the body on both sides when locked, or is lifted clear of one side
+    // (leaving a gap, `unlockedLift`) when unlocked. Sized so the shackle's
+    // raised unlocked position still clears the icon's top edge (pen stroke
+    // included) -- the original 9x6 body / 3.2 radius / 2.0 lift pushed the
+    // unlocked arc's bounding box above y=0, clipping its top against the
+    // pixmap edge.
+    const double bodyW = 8.0;
+    const double bodyH = 5.5;
+    const double bodyX = (kRibbonIconSize - bodyW) / 2.0;
+    const double bodyY = kRibbonIconSize - bodyH - 2.0;
+    painter.drawRoundedRect(QRectF(bodyX, bodyY, bodyW, bodyH), 1.3, 1.3);
+
+    const double shackleR = 2.6;
+    const double unlockedLift = 1.3;
+    const double shackleCx = kRibbonIconSize / 2.0;
+    const double shackleTopCy = bodyY - shackleR - (locked ? 0.0 : unlockedLift);
+    QRectF shackleRect(shackleCx - shackleR, shackleTopCy - shackleR, 2 * shackleR, 2 * shackleR);
+    // Half-circle open at the bottom, drawn from 180° to 360° (Qt angles are
+    // in 1/16ths of a degree, counter-clockwise from 3 o'clock).
+    painter.drawArc(shackleRect, 0, 180 * 16);
+    painter.drawLine(QPointF(shackleCx - shackleR, shackleTopCy),
+                      QPointF(shackleCx - shackleR, bodyY - (locked ? 0.0 : unlockedLift)));
+    painter.drawLine(QPointF(shackleCx + shackleR, shackleTopCy),
+                      QPointF(shackleCx + shackleR, bodyY));
+
+    return QIcon(pixmap);
+}
+
+QIcon makePanelsIcon(const QColor& color, bool visible) {
+    QPixmap pixmap(kRibbonIconSize, kRibbonIconSize);
+    pixmap.fill(Qt::transparent);
+
+    QPainter painter(&pixmap);
+    painter.setRenderHint(QPainter::Antialiasing);
+    QPen pen(color, 1.4);
+    pen.setJoinStyle(Qt::RoundJoin);
+    painter.setPen(pen);
+    painter.setBrush(Qt::NoBrush);
+
+    const double margin = 2.0;
+    const QRectF outline(margin, margin, kRibbonIconSize - 2 * margin, kRibbonIconSize - 2 * margin);
+    painter.drawRoundedRect(outline, 1.5, 1.5);
+
+    const double dividerX = outline.left() + outline.width() * 0.38;
+    painter.drawLine(QPointF(dividerX, outline.top()), QPointF(dividerX, outline.bottom()));
+
+    if (visible) {
+        painter.fillRect(QRectF(outline.left(), outline.top(), dividerX - outline.left(),
+                                outline.height()),
+                         color);
+    }
 
     return QIcon(pixmap);
 }

@@ -8,24 +8,18 @@ namespace traceview {
 
 class DockablePanelHeader;
 
-// Shared base for LayersPanel/PropertiesPanel: owns the header (drag handle
-// + pin toggle, see DockablePanelHeader) and the pin state/signal that both
-// panels used to duplicate byte-for-byte. A subclass just adds its real
-// content to bodyLayout() and reports how thick it wants to be when docked
-// (see preferredThickness()) -- everything about *where* the panel actually
-// sits (edge, floating, drag handling) lives in PanelDockController instead,
-// which this class knows nothing about.
+// Shared base for LayersPanel/PropertiesPanel: owns the header (drag handle,
+// see DockablePanelHeader) that both panels used to duplicate byte-for-byte.
+// A subclass just adds its real content to bodyLayout() and reports how
+// thick it wants to be when docked (see preferredThickness()) -- everything
+// about *where* the panel actually sits (edge, floating, drag handling,
+// visibility) lives in PanelDockController/MainWindow instead, which this
+// class knows nothing about.
 class DockablePanel : public QWidget {
     Q_OBJECT
 
 public:
     explicit DockablePanel(QWidget* parent = nullptr);
-
-    // Whether the pin toggle is engaged -- MainWindow keeps the panel visible
-    // even with no selection while this is true.
-    bool isPinned() const {
-        return m_pinned;
-    }
 
     // The panel's fixed size along its docked axis: width when docked
     // left/right, height when docked top/bottom. Also used as the starting
@@ -39,9 +33,6 @@ public:
     DockablePanelHeader* header() const {
         return m_header;
     }
-
-signals:
-    void pinnedChanged(bool pinned);
 
 protected:
     // Subclasses add their real content here instead of building their own
@@ -57,13 +48,9 @@ protected:
     }
 
 private:
-    void onPinToggled(bool checked);
-    void updatePinIcon();
-
     DockablePanelHeader* m_header = nullptr;
     QVBoxLayout* m_mainLayout = nullptr;
     QVBoxLayout* m_bodyLayout = nullptr;
-    bool m_pinned = false;
 };
 
 }  // namespace traceview

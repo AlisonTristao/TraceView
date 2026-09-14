@@ -16,7 +16,9 @@ There is no `QLayout` involved — cells are positioned manually
 
 ## Editing a layout
 
-The top toolbar's **Configure Layout** action toggles edit mode:
+The Dashboard tab's "enable editing" lock toggle (top-right of its toolbar,
+next to the device status strip) toggles edit mode in place, rather than
+switching to a separate tab:
 
 - Off: widgets are locked in place, no chrome is shown.
 - On: each widget gets a header (drag handle + remove button) and a
@@ -87,7 +89,7 @@ each item's position in the project's item list (`DashboardItem` order,
 persisted as-is in the `.tvproj` file, see "Project file" below) — the last
 item is frontmost, no separate z-index field.
 
-Four ribbon actions (Layout tab, next to Add/Remove) reorder the
+Four actions (in the Layers panel's toolbar, next to Add/Remove) reorder the
 selected widget's stacking position, each undoable like every other grid
 edit: **To Front** / **Forward** / **Backward** / **To Back**
 (`DashboardGrid::bringSelectedToFront`/`bringSelectedForward`/

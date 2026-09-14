@@ -7,6 +7,14 @@ release flow.
 
 ## [Unreleased]
 
+## [3.0.0] - 2026-09-14
+
+### Added
+
+- Unified the Layout and Run workspace tabs into the Dashboard tab.
+- Added a Dashboard editing toggle to enable or disable chart layout and
+  configuration changes.
+
 ## [2.9.1] - 2026-09-13
 
 ### Fixed

@@ -37,7 +37,7 @@ inline constexpr int kPropertiesPanelWidth = 380;
 // Dumb like Ribbon — MainWindow feeds it state via
 // setAvailableTypes()/setSelection() and reacts to the *ChangeRequested
 // signals by calling into DashboardGrid; this widget never touches
-// DashboardGrid directly. Header/pin toggle/drag-to-dock behavior lives in
+// DashboardGrid directly. Header/drag-to-dock behavior lives in
 // DockablePanel, this class only owns the fields below it.
 class PropertiesPanel : public DockablePanel {
     Q_OBJECT
@@ -89,8 +89,8 @@ private:
     QJsonObject m_currentConfig;
 
     // Everything setSelection() enables/disables based on hasSelection --
-    // kept separate from `this` so the pin button in the header stays
-    // clickable even with no selection.
+    // kept separate from `this` so the header (the panel's drag handle)
+    // stays usable even with no selection.
     QWidget* m_content = nullptr;
 
     QComboBox* m_typeCombo = nullptr;

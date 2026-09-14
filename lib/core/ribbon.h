@@ -76,6 +76,7 @@ public:
     int count() const;
 
     void setCurrentIndex(int index);
+    int currentIndex() const;
 
     // Builds one outlined "ribbonGroup" frame holding one QToolButton per
     // action (via QToolButton::setDefaultAction). For use inside a page

@@ -79,6 +79,10 @@ void Ribbon::setCurrentIndex(int index) {
     m_tabBar->setCurrentIndex(index);
 }
 
+int Ribbon::currentIndex() const {
+    return m_tabBar->currentIndex();
+}
+
 void Ribbon::setTabBarVisible(bool visible) {
     m_tabBar->setVisible(visible);
 }

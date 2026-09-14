@@ -1,14 +1,15 @@
 # Devices tab
 
-The Devices tab (`Ribbon`, alongside **Run** and **Layout**) swaps the main
-content area for `DevicesGrid`
+The Devices tab (`Ribbon`, alongside **Dashboard**) swaps the main content
+area for `DevicesGrid`
 ([lib/devices/devicesgrid.h](../lib/devices/devicesgrid.h)) instead of the
 dashboard canvas (`DashboardGrid`) — `MainWindow` holds both inside a
 `QStackedWidget` and switches which one is current on tab change
 (`MainWindow::onRibbonTabChanged`, `lib/core/mainwindow.cpp`). The
-layers/properties panels stay hidden here exactly as they already do outside
-the Layout tab (`updatePanelVisibility()` gates them on
-`m_configureTabActive`, which is only ever true for Layout).
+layers/properties panels stay hidden here exactly as they already do on the
+Dashboard tab while its "enable editing" lock is off
+(`updatePanelVisibility()` gates them on `editingActive()`, which is only
+ever true on the Dashboard tab with editing enabled).
 
 ## Pieces
 

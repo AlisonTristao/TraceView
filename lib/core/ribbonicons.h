@@ -34,9 +34,17 @@ QIcon makeSendToBackIcon(const QColor& color);
 // disconnected corner brackets for Ungroup ("loose / split apart").
 QIcon makeGroupIcon(const QColor& color);
 QIcon makeUngroupIcon(const QColor& color);
-// Thumbtack, tilted 45°: filled when active=true (pinned open), outlined
-// otherwise -- used by the panel pin toggle (see PropertiesPanel/LayersPanel).
-QIcon makePinIcon(const QColor& color, bool active);
+// A padlock: body plus a shackle. Closed (shackle down, meeting the body) when
+// locked=true -- editing disabled, the Dashboard tab shows read-only; open
+// (shackle lifted, gap on one side) when locked=false -- editing enabled.
+// Used by MainWindow's "enable editing" toggle on the Dashboard tab.
+QIcon makeLockIcon(const QColor& color, bool locked);
+// A window outline with a vertical divider near its left edge -- the classic
+// "toggle sidebar" glyph. That left strip is filled when visible=true (the
+// Layers/Properties panels are shown), hollow when false. Used by
+// MainWindow's panel show/hide toggle on the Dashboard tab, next to the
+// "enable editing" lock.
+QIcon makePanelsIcon(const QColor& color, bool visible);
 // A 2x2 grid of small squares -- the workspace switcher's button icon,
 // evoking a dashboard layout.
 QIcon makeWorkspaceIcon(const QColor& color);

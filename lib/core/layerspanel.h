@@ -16,8 +16,8 @@ struct DashboardLayerEntry;
 // -- lets a widget that ends up hidden behind another (now that overlapping
 // placement is allowed, see DashboardGrid::isPlacementValid()) stay
 // selectable instead of getting lost/forgotten underneath. Docked to the
-// left of the canvas by default, at 1/3 of PropertiesPanel's width on the
-// right -- see preferredThickness().
+// left of the canvas by default, at the same width as PropertiesPanel --
+// see preferredThickness().
 //
 // Dumb like PropertiesPanel/Ribbon -- MainWindow feeds it state via
 // setItems() and reacts to itemSelected() by calling
@@ -25,8 +25,8 @@ struct DashboardLayerEntry;
 // directly. Selecting a row is exactly the same "temporarily bring to
 // front, restore its own layer on deselect" behavior canvas clicks get,
 // since both funnel through that one DashboardGrid::selectItem() call.
-// Header/pin toggle/drag-to-dock behavior lives in DockablePanel, this
-// class only owns the list itself.
+// Header/drag-to-dock behavior lives in DockablePanel, this class only owns
+// the list plus the editing toolbar above it.
 class LayersPanel : public DockablePanel {
     Q_OBJECT
 
@@ -37,6 +37,14 @@ public:
     // reversed (front-most first). selectedId highlights the matching row
     // (empty clears the highlight). Never emits itemSelected().
     void setItems(const QVector<DashboardLayerEntry>& entries, const QString& selectedId);
+
+    // Installs the editing toolbar (add/remove, z-order, copy/paste, group/
+    // ungroup, undo/redo -- the buttons that used to live on the ribbon's
+    // Layout tab) above the layer list. MainWindow builds `toolbar` from its
+    // own QActions via Ribbon::createButtonGroup() and calls this once, in
+    // buildLayersPanel() -- this panel just hosts it and otherwise stays as
+    // dumb about it as the list above.
+    void setToolbar(QWidget* toolbar);
 
     int preferredThickness() const override;
 
