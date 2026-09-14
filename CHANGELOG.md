@@ -7,6 +7,23 @@ release flow.
 
 ## [Unreleased]
 
+## [2.9.0] - 2026-09-13
+
+### Added
+
+- Chart widgets can group their series into multiple Y axes automatically,
+  by unit -- an "Automatic axis" toggle in the chart's config editor groups
+  series by the unit their bound field reports, stacks one auto-ranged axis
+  per distinct unit to the left of the plot (each with its own vertical
+  ruler and min/mid/max ticks), and colors each axis's labels to match the
+  series it scales. Off by default, so existing dashboards are unaffected.
+- A chart series' Y-axis range now prefers the bound field's own declared
+  range (from the device's manifest, when it reports one) over guessing
+  from buffered samples -- in both the single shared axis and the new
+  per-unit automatic axes above. Requires a device on BTP manifest format
+  version 3 or newer; falls back to the existing auto-range behavior
+  otherwise.
+
 ## [2.8.2] - 2026-09-13
 
 ### Fixed

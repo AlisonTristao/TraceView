@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.21)
 
 project(TraceView
-    VERSION 2.8.2
+    VERSION 2.9.0
     DESCRIPTION "Real-time telemetry dashboard for ESP32/ESP-NOW robots"
     LANGUAGES CXX
 )
