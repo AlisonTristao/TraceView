@@ -101,6 +101,35 @@ QByteArray fieldRecord(quint16 fieldId, quint8 type, const QString& name, const 
     return record;
 }
 
+// kFieldHasRange (BTP messages.hpp), 0x04: the flags bit that puts min_value/
+// max_value on the wire at all (format >= 3 only) -- a field that doesn't set
+// it carries no range bytes, same as fieldRecord() above.
+constexpr quint8 kFieldHasRange = 0x04;
+
+QByteArray fieldRecordWithRange(quint16 fieldId, quint8 type, const QString& name,
+                                const QString& unit, double minValue, double maxValue) {
+    QByteArray body;
+    appendLe16(body, fieldId);
+    appendLe16(body, fieldId);  // order
+    body.append(char(type));
+    body.append(char(kFieldHasRange));  // flags
+    appendLe16(body, 1);   // elementCount: scalar
+    appendLe16(body, 0);   // maxElementCount
+    appendF64(body, 1.0);  // scale
+    appendF64(body, 0.0);  // offset
+    appendF64(body, minValue);
+    appendF64(body, maxValue);
+    appendLe16(body, 0);   // enumCount
+    appendUtf8(body, name);
+    appendUtf8(body, unit);
+    appendUtf8(body, QString());  // description
+
+    QByteArray record;
+    appendLe32(record, quint32(body.size()));
+    record.append(body);
+    return record;
+}
+
 QByteArray topicRecord(quint16 topicId, quint16 schemaVersion, const QString& name,
                        const QVector<QByteArray>& fields) {
     QByteArray body;
@@ -271,6 +300,7 @@ private slots:
     void notModifiedRecordsTheBootIdWithoutTouchingSchemas();
     void aNonSuccessStatusAppliesNothing();
     void anUnsupportedFormatVersionIsRejected();
+    void aFormatThreeManifestAppliesRangePerField();
     void sourceInfoIsParsedAndReportedOnFullAndNotModified();
     void aTruncatedPayloadIsRejected();
     void aTopicRecordRunningPastItsSizeIsRejected();
@@ -505,18 +535,60 @@ void TestManifestClient::aNonSuccessStatusAppliesNothing() {
 }
 
 void TestManifestClient::anUnsupportedFormatVersionIsRejected() {
-    // Formats 1 and 2 are defined (commands.md 3.12). A later one may reorder
-    // or resize anything below the fixed prefix, so parsing on would be
-    // reading a layout nobody promised.
+    // Formats 1, 2 and 3 are defined (commands.md 3.12; format 3 added the
+    // per-field min_value/max_value range, BTP v2.45.0). A later one may
+    // reorder or resize anything below the fixed prefix, so parsing on would
+    // be reading a layout nobody promised.
     Fixture fixture;
     QSignalSpy updated(&fixture.client, &ManifestClient::catalogUpdated);
 
     ManifestOptions future = twoTopicManifest();
-    future.formatVersion = 3;
+    future.formatVersion = 4;
     fixture.router.onFrameReceived(manifestDataFrame(future));
 
     QCOMPARE(updated.count(), 0);
     QVERIFY(fixture.catalog.allSchemas().isEmpty());
+}
+
+void TestManifestClient::aFormatThreeManifestAppliesRangePerField() {
+    // v2.44.0 wrote min_value/max_value for EVERY field once format 3 was
+    // used, even ones with nothing to declare; v2.45.0 made it opt-in via
+    // kFieldHasRange. A reader that doesn't honor the flag per field
+    // desyncs the byte offset the moment it meets a field without it,
+    // corrupting every field record after -- this is what actually broke
+    // the catalog end-to-end (bally_OS's current_a/current_b/pwm_left/
+    // pwm_right are ranged, the rest of robot.sensors/robot.flags are not).
+    Fixture fixture;
+    QSignalSpy updated(&fixture.client, &ManifestClient::catalogUpdated);
+
+    ManifestOptions ranged;
+    ranged.formatVersion = 3;
+    ranged.topics = {
+        topicRecord(0x0002, 3, QStringLiteral("robot.state"),
+                    {fieldRecordWithRange(1, 0x09, QStringLiteral("current_a"),
+                                          QStringLiteral("A"), 0.0, 4095.0),
+                     fieldRecord(2, 0x03, QStringLiteral("ticks"), QStringLiteral("1"))}),
+    };
+    fixture.router.onFrameReceived(manifestDataFrame(ranged));
+
+    QCOMPARE(updated.count(), 1);
+    const TelemetryTopicSchema* state = fixture.catalog.lookup(kRobot, 0x0002, 3);
+    QVERIFY(state != nullptr);
+    QCOMPARE(state->fields.size(), 2);
+
+    const TelemetryFieldSchema* currentA = state->fieldById(1);
+    QVERIFY(currentA != nullptr);
+    QCOMPARE(currentA->minValue, 0.0);
+    QCOMPARE(currentA->maxValue, 4095.0);
+
+    // The field right after the ranged one is where a fixed-width reader
+    // would land wrong if it always consumed 16 bytes of range regardless
+    // of the flag -- ticks must still parse as itself, with no range.
+    const TelemetryFieldSchema* ticks = state->fieldById(2);
+    QVERIFY(ticks != nullptr);
+    QCOMPARE(ticks->name, QStringLiteral("ticks"));
+    QVERIFY(qIsNaN(ticks->minValue));
+    QVERIFY(qIsNaN(ticks->maxValue));
 }
 
 void TestManifestClient::sourceInfoIsParsedAndReportedOnFullAndNotModified() {
