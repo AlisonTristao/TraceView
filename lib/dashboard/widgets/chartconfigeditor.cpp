@@ -17,6 +17,7 @@
 #include <QSpinBox>
 #include <QTableWidget>
 #include <QVBoxLayout>
+#include <QtMath>
 
 #include "traceview/thememanager.h"
 
@@ -73,6 +74,32 @@ QColor swatchColor(QPushButton* button) {
 void setSwatchColor(QPushButton* button, const QColor& color) {
     button->setProperty("swatchColor", color);
     button->setStyleSheet(QString("background-color: %1;").arg(color.name()));
+}
+
+// `fieldId` within `fields` (resolveCatalogTopicFields()'s result for the
+// chart's currently bound topic), or nullptr if that field isn't in there
+// (device hasn't reported it, or the topic has no live catalog at all).
+const CatalogTopicField* findField(const QVector<CatalogTopicField>& fields, int fieldId) {
+    for (const CatalogTopicField& field : fields) {
+        if (field.fieldId == fieldId) {
+            return &field;
+        }
+    }
+    return nullptr;
+}
+
+// Copies `field`'s unit/declared range onto `combo`'s "fieldUnit"/
+// "fieldMinValue"/"fieldMaxValue" properties -- the single place
+// ChartConfigEditor::config() and every field-picking handler below read
+// and write per-series catalog metadata, so they can never drift out of
+// sync with each other. `field` null (the picked/typed id isn't in the
+// live catalog) clears all three -- callers that want to fall back to a
+// previously saved value instead (addSeriesRow(), for a row whose device
+// isn't reporting this session) do that themselves afterward.
+void setResolvedField(QComboBox* combo, const CatalogTopicField* field) {
+    combo->setProperty("fieldUnit", field ? field->unit : QString());
+    combo->setProperty("fieldMinValue", field ? field->minValue : qQNaN());
+    combo->setProperty("fieldMaxValue", field ? field->maxValue : qQNaN());
 }
 
 }  // namespace
@@ -153,6 +180,12 @@ ChartConfigEditor::ChartConfigEditor(QWidget* parent) : WidgetConfigEditor(paren
     m_yUnitEdit->setPlaceholderText(tr("V, °C, %..."));
     m_yUnitEdit->setToolTip(tr("Unit label shown alongside the Y axis."));
 
+    m_autoAxisCheck = new QCheckBox(this);
+    m_autoAxisCheck->setToolTip(
+        tr("Group series by the unit their bound field reports (from the device's catalog) and "
+           "draw one auto-ranged Y axis per distinct unit instead of the single Y Axis/Range/Unit "
+           "above -- useful when a topic mixes fields of different units."));
+
     m_decimalsSpin = new QSpinBox(this);
     m_decimalsSpin->setRange(0, 6);
     m_decimalsSpin->setValue(0);
@@ -201,6 +234,7 @@ ChartConfigEditor::ChartConfigEditor(QWidget* parent) : WidgetConfigEditor(paren
     m_formLayout->addRow(tr("Y Axis"), m_yAxisModeCombo);
     m_formLayout->addRow(tr("Range"), m_yRangeRow);
     m_formLayout->addRow(tr("Unit"), m_yUnitEdit);
+    m_formLayout->addRow(tr("Automatic axis"), m_autoAxisCheck);
     m_formLayout->addRow(tr("Decimals"), m_decimalsSpin);
     m_formLayout->addRow(tr("Grid"), m_gridCheck);
 
@@ -304,6 +338,10 @@ ChartConfigEditor::ChartConfigEditor(QWidget* parent) : WidgetConfigEditor(paren
     connect(m_yMinSpin, &QDoubleSpinBox::valueChanged, this, [this](double) { emitChanged(); });
     connect(m_yMaxSpin, &QDoubleSpinBox::valueChanged, this, [this](double) { emitChanged(); });
     connect(m_yUnitEdit, &QLineEdit::editingFinished, this, [this]() { emitChanged(); });
+    connect(m_autoAxisCheck, &QCheckBox::toggled, this, [this](bool) {
+        updateAxisRowsVisibility();
+        emitChanged();
+    });
     connect(m_decimalsSpin, &QSpinBox::valueChanged, this, [this](int) { emitChanged(); });
     connect(m_gridCheck, &QCheckBox::toggled, this, [this](bool) { emitChanged(); });
     connect(m_seriesTable, &QTableWidget::itemChanged, this,
@@ -330,6 +368,7 @@ void ChartConfigEditor::setConfig(const QJsonObject& config) {
     m_yMinSpin->setValue(yAxis.value("min").toDouble(0.0));
     m_yMaxSpin->setValue(yAxis.value("max").toDouble(100.0));
     m_yUnitEdit->setText(yAxis.value("unit").toString());
+    m_autoAxisCheck->setChecked(yAxis.value("autoAxis").toBool(false));
     m_decimalsSpin->setValue(yAxis.value("decimals").toInt(0));
     m_gridCheck->setChecked(yAxis.value("grid").toBool(true));
 
@@ -360,6 +399,7 @@ QJsonObject ChartConfigEditor::config() const {
     yAxis["min"] = m_yMinSpin->value();
     yAxis["max"] = m_yMaxSpin->value();
     yAxis["unit"] = m_yUnitEdit->text();
+    yAxis["autoAxis"] = m_autoAxisCheck->isChecked();
     yAxis["decimals"] = m_decimalsSpin->value();
     yAxis["grid"] = m_gridCheck->isChecked();
     cfg["yAxis"] = yAxis;
@@ -373,6 +413,18 @@ QJsonObject ChartConfigEditor::config() const {
         if (auto* fieldIdCombo =
                 qobject_cast<QComboBox*>(m_seriesTable->cellWidget(row, kFieldIdColumn))) {
             series["fieldId"] = fieldIdCombo->property("fieldId").toInt();
+            series["unit"] = fieldIdCombo->property("fieldUnit").toString();
+            // JSON has no NaN literal, so "not declared" is the key simply
+            // being absent -- parseSeriesConfig()'s toDouble(qQNaN())
+            // defaults land back on the same NaN either way.
+            const double declaredMin = fieldIdCombo->property("fieldMinValue").toDouble();
+            const double declaredMax = fieldIdCombo->property("fieldMaxValue").toDouble();
+            if (!qIsNaN(declaredMin)) {
+                series["min"] = declaredMin;
+            }
+            if (!qIsNaN(declaredMax)) {
+                series["max"] = declaredMax;
+            }
         }
         if (auto* colorButton =
                 qobject_cast<QPushButton*>(m_seriesTable->cellWidget(row, kColorColumn))) {
@@ -402,17 +454,31 @@ void ChartConfigEditor::addSeriesRow(const QJsonObject& series) {
     auto* fieldIdCombo = new QComboBox();
     fieldIdCombo->setEditable(true);
     const int fieldId = series.value("fieldId").toInt(row + 1);
-    populateFieldCombo(fieldIdCombo, resolveCatalogTopicFields(
-                                         m_devices, m_deviceCombo->currentData().toString(),
-                                         formatHexId(m_sourceId, 8), formatHexId(m_topicId, 4)));
+    const QVector<CatalogTopicField> fields = currentTopicFields();
+    populateFieldCombo(fieldIdCombo, fields);
     fieldIdCombo->setProperty("fieldId", fieldId);
     fieldIdCombo->setCurrentText(QString::number(fieldId));
+    // Falls back to whatever unit/range this row was last saved with (JSON's
+    // "unit"/"min"/"max") when the live catalog doesn't know this field yet
+    // -- same graceful-degradation idea as resolveCatalogTopicName() falling
+    // back to raw hex: a saved multi-axis assignment shouldn't reset itself
+    // to "no unit"/"no declared range" just because the device hasn't
+    // reported its schema this session.
+    const CatalogTopicField* field = findField(fields, fieldId);
+    setResolvedField(fieldIdCombo, field);
+    if (!field) {
+        fieldIdCombo->setProperty("fieldUnit", series.value("unit").toString());
+        fieldIdCombo->setProperty("fieldMinValue", series.value("min").toDouble(qQNaN()));
+        fieldIdCombo->setProperty("fieldMaxValue", series.value("max").toDouble(qQNaN()));
+    }
     fieldIdCombo->setToolTip(
         tr("Which field of the bound topic this series plots -- pick one the device has "
            "already reported (shown by name), or type a numeric id by hand for one it "
            "hasn't reported yet."));
     connect(fieldIdCombo, &QComboBox::activated, this, [this, fieldIdCombo](int index) {
-        fieldIdCombo->setProperty("fieldId", fieldIdCombo->itemData(index));
+        const int pickedFieldId = fieldIdCombo->itemData(index).toInt();
+        fieldIdCombo->setProperty("fieldId", pickedFieldId);
+        setResolvedField(fieldIdCombo, findField(currentTopicFields(), pickedFieldId));
         emitChanged();
     });
     connect(fieldIdCombo->lineEdit(), &QLineEdit::editingFinished, this, [this, fieldIdCombo]() {
@@ -420,6 +486,7 @@ void ChartConfigEditor::addSeriesRow(const QJsonObject& series) {
         const int typed = fieldIdCombo->currentText().trimmed().toInt(&ok);
         if (ok) {
             fieldIdCombo->setProperty("fieldId", typed);
+            setResolvedField(fieldIdCombo, findField(currentTopicFields(), typed));
         }
         emitChanged();
     });
@@ -488,17 +555,41 @@ void ChartConfigEditor::updateAxisRowsVisibility() {
     // the two, so switching to " s" never needs a relayout.
     m_xLimitSpin->setSuffix(timeMode ? tr(" s") : tr(" pts"));
 
-    m_formLayout->setRowVisible(m_yRangeRow, m_yAxisModeCombo->currentData().toString() == "fixed");
+    // Y Axis/Range/Unit only mean anything for the single shared axis --
+    // once "Automatic axis" groups series by their own field's unit, the
+    // range is always auto-computed per group and the unit comes from the
+    // catalog instead of this manual text, so hide all three rather than let
+    // them sit there disconnected from what's actually drawn.
+    const bool autoAxis = m_autoAxisCheck->isChecked();
+    m_formLayout->setRowVisible(m_yAxisModeCombo, !autoAxis);
+    m_formLayout->setRowVisible(
+        m_yRangeRow, !autoAxis && m_yAxisModeCombo->currentData().toString() == "fixed");
+    m_formLayout->setRowVisible(m_yUnitEdit, !autoAxis);
+}
+
+QVector<CatalogTopicField> ChartConfigEditor::currentTopicFields() const {
+    return resolveCatalogTopicFields(m_devices, m_deviceCombo->currentData().toString(),
+                                     formatHexId(m_sourceId, 8), formatHexId(m_topicId, 4));
 }
 
 void ChartConfigEditor::refreshSeriesFieldOptions() {
-    const QVector<CatalogTopicField> fields =
-        resolveCatalogTopicFields(m_devices, m_deviceCombo->currentData().toString(),
-                                  formatHexId(m_sourceId, 8), formatHexId(m_topicId, 4));
+    const QVector<CatalogTopicField> fields = currentTopicFields();
     for (int row = 0; row < m_seriesTable->rowCount(); ++row) {
         if (auto* fieldIdCombo =
                 qobject_cast<QComboBox*>(m_seriesTable->cellWidget(row, kFieldIdColumn))) {
             populateFieldCombo(fieldIdCombo, fields);
+            // Re-resolve this row's unit/range against the just-refreshed
+            // catalog (e.g. the device just connected, or the topic changed)
+            // -- matched by the row's current fieldId, same as
+            // populateFieldCombo() itself re-matches by the combo's
+            // previous text. Only overwrites when the field actually
+            // resolves -- still offline/unreported keeps whatever was
+            // already there (a saved value, or a previous session's
+            // resolve) instead of blanking it out.
+            if (const CatalogTopicField* field =
+                    findField(fields, fieldIdCombo->property("fieldId").toInt())) {
+                setResolvedField(fieldIdCombo, field);
+            }
         }
     }
 }

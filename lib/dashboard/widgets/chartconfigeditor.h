@@ -67,6 +67,12 @@ private:
     // whenever that topic could have changed: from updateIdentityDisplay()
     // and from addSeriesRow() for a freshly inserted row.
     void refreshSeriesFieldOptions();
+    // resolveCatalogTopicFields() for the currently bound topic (m_sourceId/
+    // m_topicId against m_devices) -- the same lookup addSeriesRow(),
+    // refreshSeriesFieldOptions(), and each series row's Field ID combo
+    // handler all need to resolve a field's catalog unit, pulled into one
+    // place instead of each repeating the same four-argument call.
+    QVector<CatalogTopicField> currentTopicFields() const;
 
     bool m_updating = false;
 
@@ -106,6 +112,13 @@ private:
     QDoubleSpinBox* m_yMinSpin = nullptr;
     QDoubleSpinBox* m_yMaxSpin = nullptr;
     QLineEdit* m_yUnitEdit = nullptr;
+    // "Automatic axis (per unit)" -- ChartConfig::autoAxis. Series get
+    // grouped by their own resolved catalog unit (see the fieldId combo's
+    // "fieldUnit" property, set in addSeriesRow()/refreshSeriesFieldOptions())
+    // into one stacked Y axis per distinct unit instead of the single shared
+    // axis above, so Y Axis/Range/Unit stop applying and updateAxisRowsVisibility()
+    // hides them while this is checked.
+    QCheckBox* m_autoAxisCheck = nullptr;
     QSpinBox* m_decimalsSpin = nullptr;
     QCheckBox* m_gridCheck = nullptr;
     QTableWidget* m_seriesTable = nullptr;

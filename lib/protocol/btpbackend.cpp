@@ -205,6 +205,8 @@ CatalogTopicInfo toCatalogTopicInfo(const TelemetryTopicSchema& schema) {
                             : QStringLiteral("[%1]").arg(field.elementCount);
         }
         out.unit = field.unit;
+        out.minValue = field.minValue;
+        out.maxValue = field.maxValue;
         info.fields.append(out);
     }
     return info;

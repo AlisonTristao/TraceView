@@ -4,6 +4,7 @@
 #include <QString>
 #include <QVector>
 #include <QtGlobal>
+#include <QtMath>
 
 #include <btp/telemetry.hpp>
 
@@ -70,6 +71,12 @@ struct TelemetryFieldSchema {
     quint16 maxElementCount = 0;  // set (with elementCount == 0) for a
                                   // variable-count array
     bool nullable = false;
+    // The field's own declared operating range (manifest_format_version >= 3
+    // -- not carried by any BTP release TraceView currently depends on, so
+    // this stays at its NaN "not declared" default everywhere it's populated
+    // today; see manifestclient.cpp). NaN in either means "not declared".
+    double minValue = qQNaN();
+    double maxValue = qQNaN();
 
     bool isVariableLength() const {
         return elementCount == 0 && maxElementCount > 0;

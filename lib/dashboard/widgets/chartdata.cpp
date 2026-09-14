@@ -25,6 +25,9 @@ ChartSeriesConfig parseSeriesConfig(const QJsonObject& json) {
     const QColor color(json.value("color").toString("#3B82F6"));
     series.color = color.isValid() ? color : QColor("#3B82F6");
     series.style = seriesStyleFromId(json.value("style").toString("solid"));
+    series.unit = json.value("unit").toString();
+    series.declaredMin = json.value("min").toDouble(qQNaN());
+    series.declaredMax = json.value("max").toDouble(qQNaN());
     return series;
 }
 
@@ -78,6 +81,7 @@ ChartConfig parseChartConfig(const QJsonObject& json) {
     config.yMin = yAxis.value("min").toDouble(0.0);
     config.yMax = yAxis.value("max").toDouble(100.0);
     config.yUnit = yAxis.value("unit").toString();
+    config.autoAxis = yAxis.value("autoAxis").toBool(false);
     config.showGrid = yAxis.value("grid").toBool(true);
     config.decimals = yAxis.value("decimals").toInt(0);
 
@@ -117,6 +121,26 @@ void appendFieldSample(QVector<TelemetrySeriesBuffer>& buffers, const ChartConfi
             buffers[i].append(timestampUs, value);
         }
     }
+}
+
+QVector<ChartAxisGroup> chartAxisGroups(const ChartConfig& config) {
+    QVector<ChartAxisGroup> groups;
+    for (int i = 0; i < config.series.size(); ++i) {
+        const QString& unit = config.series[i].unit;
+        int groupIndex = -1;
+        for (int g = 0; g < groups.size(); ++g) {
+            if (groups[g].unit == unit) {
+                groupIndex = g;
+                break;
+            }
+        }
+        if (groupIndex < 0) {
+            groupIndex = groups.size();
+            groups.append({unit, {}});
+        }
+        groups[groupIndex].seriesIndices.append(i);
+    }
+    return groups;
 }
 
 GaugeSeriesConfig parseGaugeSeriesConfig(const QJsonObject& json) {

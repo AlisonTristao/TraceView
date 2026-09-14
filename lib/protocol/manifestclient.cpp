@@ -96,7 +96,8 @@ bool parseManifestData(const QByteArray& payload, ParsedManifestData* out) {
             topic.encoding = static_cast<TelemetryEncoding>(topicRec.encoding);
             topic.fields.reserve(topicRec.field_count);
 
-            btp::FieldRecordReader fields(fieldBytes, topicRec.field_count);
+            btp::FieldRecordReader fields(fieldBytes, topicRec.field_count,
+                                         header.manifest_format_version);
             btp::FieldRecord fieldRec{};
             btp::ByteView enumBytes{};
             for (auto fstep = fields.next(&fieldRec, &enumBytes); fstep == btp::ManifestStep::Item;
@@ -114,6 +115,14 @@ bool parseManifestData(const QByteArray& payload, ParsedManifestData* out) {
                 field.elementCount = fieldRec.element_count;
                 field.maxElementCount = fieldRec.max_element_count;
                 field.nullable = (fieldRec.flags & 0x01) != 0;
+                // manifest_format_version < 3 (or a device that never
+                // declared a range): BTP's own reader already leaves these
+                // at kNoRangeBound (NaN) in `fieldRec`, so this copy needs no
+                // format-version check of its own -- it mirrors whatever
+                // fieldRec.min_value/max_value already resolved to, same as
+                // unit/scale/offset above.
+                field.minValue = fieldRec.min_value;
+                field.maxValue = fieldRec.max_value;
                 topic.fields.append(field);
             }
             if (fields.error() != btp::MessageError::Ok)

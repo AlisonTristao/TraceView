@@ -1,10 +1,13 @@
 #include <QJsonArray>
 #include <QJsonObject>
+#include <QtMath>
 #include <QtTest>
 
 #include "dashboard/widgets/chartdata.h"
 
 using traceview::appendFieldSample;
+using traceview::chartAxisGroups;
+using traceview::ChartAxisGroup;
 using traceview::chartBufferCapacity;
 using traceview::ChartConfig;
 using traceview::ChartSeriesStyle;
@@ -18,10 +21,14 @@ using traceview::TelemetrySeriesBuffer;
 
 namespace {
 
-QJsonObject seriesJson(int fieldId, const QString& style = "solid") {
+QJsonObject seriesJson(int fieldId, const QString& style = "solid",
+                       const QString& unit = QString()) {
     QJsonObject series;
     series["fieldId"] = fieldId;
     series["style"] = style;
+    if (!unit.isEmpty()) {
+        series["unit"] = unit;
+    }
     return series;
 }
 
@@ -35,12 +42,25 @@ ChartConfig configWithFields(const QVector<int>& fieldIds) {
     return parseChartConfig(json);
 }
 
+// One series per entry in `units`, fieldId 1..N in order -- just enough for
+// chartAxisGroups() to have something to group by unit.
+ChartConfig configWithUnits(const QVector<QString>& units) {
+    QJsonObject json;
+    QJsonArray series;
+    for (int i = 0; i < units.size(); ++i) {
+        series.append(seriesJson(i + 1, "solid", units[i]));
+    }
+    json["series"] = series;
+    return parseChartConfig(json);
+}
+
 class TestChartData : public QObject {
     Q_OBJECT
 
 private slots:
     void parsesDefaultsFromEmptyConfig();
     void parsesExplicitConfig();
+    void parsesSeriesDeclaredRangeAsNaNWhenAbsent();
     void parsesSourceAndTopicIdsFromHexOrDecimalStrings();
 
     void bufferCapacityInSamplesMode();
@@ -51,6 +71,10 @@ private slots:
     void appendFieldSampleFeedsMultipleSeriesWithSameFieldId();
 
     void resizeCarriesOverByPositionAndTrims();
+
+    void chartAxisGroupsGroupsSeriesByUnitInFirstAppearanceOrder();
+    void chartAxisGroupsTreatsMissingUnitAsItsOwnGroup();
+    void chartAxisGroupsEmptyForNoSeries();
 
     void gaugeConfigParsesSeries();
     void gaugeConfigMigratesLegacyFieldId();
@@ -69,6 +93,7 @@ void TestChartData::parsesDefaultsFromEmptyConfig() {
     QCOMPARE(config.yAxisMode, ChartYAxisMode::Auto);
     QCOMPARE(config.yMin, 0.0);
     QCOMPARE(config.yMax, 100.0);
+    QCOMPARE(config.autoAxis, false);
     QCOMPARE(config.showGrid, true);
     QCOMPARE(config.decimals, 0);
     QVERIFY(config.series.isEmpty());
@@ -90,6 +115,7 @@ void TestChartData::parsesExplicitConfig() {
     yAxis["min"] = -5.0;
     yAxis["max"] = 5.0;
     yAxis["unit"] = "V";
+    yAxis["autoAxis"] = true;
     yAxis["grid"] = false;
     yAxis["decimals"] = 3;
     json["yAxis"] = yAxis;
@@ -99,6 +125,9 @@ void TestChartData::parsesExplicitConfig() {
     one["fieldId"] = 3;
     one["color"] = "#ff0000";
     one["style"] = "dashed";
+    one["unit"] = "m/s^2";
+    one["min"] = -20.0;
+    one["max"] = 20.0;
     QJsonArray series;
     series.append(one);
     json["series"] = series;
@@ -113,6 +142,7 @@ void TestChartData::parsesExplicitConfig() {
     QCOMPARE(config.yMin, -5.0);
     QCOMPARE(config.yMax, 5.0);
     QCOMPARE(config.yUnit, QStringLiteral("V"));
+    QCOMPARE(config.autoAxis, true);
     QCOMPARE(config.showGrid, false);
     QCOMPARE(config.decimals, 3);
     QCOMPARE(config.series.size(), 1);
@@ -120,6 +150,18 @@ void TestChartData::parsesExplicitConfig() {
     QCOMPARE(config.series[0].fieldId, quint16(3));
     QCOMPARE(config.series[0].color, QColor("#ff0000"));
     QCOMPARE(config.series[0].style, ChartSeriesStyle::Dashed);
+    QCOMPARE(config.series[0].unit, QStringLiteral("m/s^2"));
+    QCOMPARE(config.series[0].declaredMin, -20.0);
+    QCOMPARE(config.series[0].declaredMax, 20.0);
+}
+
+void TestChartData::parsesSeriesDeclaredRangeAsNaNWhenAbsent() {
+    // A field with no manifest-declared range (every field, until manifest
+    // v3 ships) must parse to NaN, not some other placeholder like 0 -- 0 is
+    // a real, plottable bound and would silently look "declared".
+    const ChartConfig config = configWithFields({1});
+    QVERIFY(qIsNaN(config.series[0].declaredMin));
+    QVERIFY(qIsNaN(config.series[0].declaredMax));
 }
 
 void TestChartData::parsesSourceAndTopicIdsFromHexOrDecimalStrings() {
@@ -210,6 +252,36 @@ void TestChartData::resizeCarriesOverByPositionAndTrims() {
     config.xLimit = 2;
     resized = resizeChartBuffers(previous, config);
     QCOMPARE(resized[0].values(), (QVector<double>{2.0, 3.0}));
+}
+
+void TestChartData::chartAxisGroupsGroupsSeriesByUnitInFirstAppearanceOrder() {
+    // Same unit merges into one group; a distinct unit starts a new one, in
+    // the order units first appear -- not sorted, not grouped by fieldId.
+    const ChartConfig config = configWithUnits({"m/s", "rad/s", "m/s", "%"});
+    const QVector<ChartAxisGroup> groups = chartAxisGroups(config);
+
+    QCOMPARE(groups.size(), 3);
+    QCOMPARE(groups[0].unit, QStringLiteral("m/s"));
+    QCOMPARE(groups[0].seriesIndices, (QVector<int>{0, 2}));
+    QCOMPARE(groups[1].unit, QStringLiteral("rad/s"));
+    QCOMPARE(groups[1].seriesIndices, (QVector<int>{1}));
+    QCOMPARE(groups[2].unit, QStringLiteral("%"));
+    QCOMPARE(groups[2].seriesIndices, (QVector<int>{3}));
+}
+
+void TestChartData::chartAxisGroupsTreatsMissingUnitAsItsOwnGroup() {
+    const ChartConfig config = configWithUnits({"", "V", ""});
+    const QVector<ChartAxisGroup> groups = chartAxisGroups(config);
+
+    QCOMPARE(groups.size(), 2);
+    QCOMPARE(groups[0].unit, QString());
+    QCOMPARE(groups[0].seriesIndices, (QVector<int>{0, 2}));
+    QCOMPARE(groups[1].unit, QStringLiteral("V"));
+    QCOMPARE(groups[1].seriesIndices, (QVector<int>{1}));
+}
+
+void TestChartData::chartAxisGroupsEmptyForNoSeries() {
+    QVERIFY(chartAxisGroups(ChartConfig()).isEmpty());
 }
 
 void TestChartData::gaugeConfigParsesSeries() {

@@ -6,6 +6,7 @@
 #include <QString>
 #include <QVector>
 #include <QtGlobal>
+#include <QtMath>
 
 #include "telemetry/telemetryseriesbuffer.h"
 
@@ -68,6 +69,25 @@ struct ChartSeriesConfig {
                           // (sourceId, topicId) below.
     QColor color = QColor("#3B82F6");
     ChartSeriesStyle style = ChartSeriesStyle::Solid;
+    // The bound field's catalog unit (CatalogTopicField::unit), mirrored here
+    // by ChartConfigEditor when a field is picked -- same denormalized-copy
+    // pattern as `name` -- so chartdata/chartwidgets can group series by unit
+    // (see ChartConfig::autoAxis/chartAxisGroups() below) without needing a
+    // live catalog lookup at paint time. Empty when unresolved (device never
+    // reported this field's schema) or not yet picked.
+    QString unit;
+    // The bound field's own declared value range (CatalogTopicField::
+    // minValue/maxValue), mirrored the same way as `unit` above -- a
+    // device's manifest can report the true operating range of a field
+    // (BTP's manifest_format_version >= 3, not yet wired end-to-end as of
+    // this writing -- see manifestclient.cpp), which chartwidgets.cpp's Auto
+    // range then uses verbatim in preference to guessing from whatever's
+    // been buffered so far (see autoYRange()). NaN in either means "not
+    // declared" -- the ordinary case today, and always the case until a
+    // device actually reports one -- in which case Auto range falls back to
+    // its existing buffer-scan behavior exactly as before this existed.
+    double declaredMin = qQNaN();
+    double declaredMax = qQNaN();
 };
 
 struct ChartConfig {
@@ -83,6 +103,14 @@ struct ChartConfig {
     double yMin = 0.0;
     double yMax = 100.0;
     QString yUnit;
+    // Opt-in "Automatic axis" toggle (ChartConfigEditor's checkbox of the
+    // same name): when true, yAxisMode/yMin/yMax/yUnit above are ignored for
+    // rendering -- series are grouped by their own ChartSeriesConfig::unit
+    // instead (see chartAxisGroups() below), each group auto-ranged from its
+    // own buffered values and drawn as its own stacked Y axis. Defaults to
+    // false so every dashboard saved before this existed keeps rendering
+    // exactly as one single manually-labeled axis, unchanged.
+    bool autoAxis = false;
     bool showGrid = true;
     // Fixed decimal places for every Y-axis/value label this chart draws
     // (axis min/mid/max, legend last-value row, grid-point markers, hover
@@ -122,6 +150,24 @@ QVector<TelemetrySeriesBuffer> resizeChartBuffers(const QVector<TelemetrySeriesB
 // `fieldId`.
 void appendFieldSample(QVector<TelemetrySeriesBuffer>& buffers, const ChartConfig& config,
                        quint16 fieldId, quint64 timestampUs, double value);
+
+// One Y-axis group under ChartConfig::autoAxis: every series sharing the
+// same ChartSeriesConfig::unit gets plotted against, and scaled by, one
+// shared axis. `unit` is the group's key ("" is a valid group -- fields with
+// no resolved unit); `seriesIndices` are indices into ChartConfig::series, in
+// the order those series appear in the config.
+struct ChartAxisGroup {
+    QString unit;
+    QVector<int> seriesIndices;
+};
+
+// Groups config.series by unit, preserving each unit's first-appearance order
+// (that order is also the stacking order chartwidgets.cpp draws axes in --
+// group 0 is the primary axis, drawn innermost/closest to the plot) and each
+// group's series in their original relative order. A no-op returning one
+// entry per distinct unit even when config.autoAxis is false -- callers only
+// consult this when autoAxis is actually on.
+QVector<ChartAxisGroup> chartAxisGroups(const ChartConfig& config);
 
 // One ring of a (possibly multi-ring) gauge: which field it tracks and the
 // color its track/pointer are painted in. Mirrors ChartSeriesConfig's shape
