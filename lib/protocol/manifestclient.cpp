@@ -114,6 +114,13 @@ bool parseManifestData(const QByteArray& payload, ParsedManifestData* out) {
                 field.elementCount = fieldRec.element_count;
                 field.maxElementCount = fieldRec.max_element_count;
                 field.nullable = (fieldRec.flags & 0x01) != 0;
+                // field.minValue/maxValue are left at their NaN "not
+                // declared" default here: BTP's FieldRecord doesn't carry a
+                // declared range at the commit this app's CMakeLists.txt
+                // currently pins (manifest_format_version tops out at 2).
+                // Once a BTP release adds FieldRecord::min_value/max_value
+                // (manifest_format_version 3) and that pin is bumped, copy
+                // them the same way `unit`/`scale`/`offset` are above.
                 topic.fields.append(field);
             }
             if (fields.error() != btp::MessageError::Ok)

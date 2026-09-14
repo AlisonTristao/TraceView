@@ -6,6 +6,7 @@
 #include <QString>
 #include <QVector>
 #include <QtGlobal>
+#include <QtMath>
 
 #include "telemetry/telemetryseriesbuffer.h"
 
@@ -75,6 +76,18 @@ struct ChartSeriesConfig {
     // live catalog lookup at paint time. Empty when unresolved (device never
     // reported this field's schema) or not yet picked.
     QString unit;
+    // The bound field's own declared value range (CatalogTopicField::
+    // minValue/maxValue), mirrored the same way as `unit` above -- a
+    // device's manifest can report the true operating range of a field
+    // (BTP's manifest_format_version >= 3, not yet wired end-to-end as of
+    // this writing -- see manifestclient.cpp), which chartwidgets.cpp's Auto
+    // range then uses verbatim in preference to guessing from whatever's
+    // been buffered so far (see autoYRange()). NaN in either means "not
+    // declared" -- the ordinary case today, and always the case until a
+    // device actually reports one -- in which case Auto range falls back to
+    // its existing buffer-scan behavior exactly as before this existed.
+    double declaredMin = qQNaN();
+    double declaredMax = qQNaN();
 };
 
 struct ChartConfig {

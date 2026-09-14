@@ -26,6 +26,8 @@ ChartSeriesConfig parseSeriesConfig(const QJsonObject& json) {
     series.color = color.isValid() ? color : QColor("#3B82F6");
     series.style = seriesStyleFromId(json.value("style").toString("solid"));
     series.unit = json.value("unit").toString();
+    series.declaredMin = json.value("min").toDouble(qQNaN());
+    series.declaredMax = json.value("max").toDouble(qQNaN());
     return series;
 }
 

@@ -17,6 +17,7 @@
 #include <QSpinBox>
 #include <QTableWidget>
 #include <QVBoxLayout>
+#include <QtMath>
 
 #include "traceview/thememanager.h"
 
@@ -75,17 +76,30 @@ void setSwatchColor(QPushButton* button, const QColor& color) {
     button->setStyleSheet(QString("background-color: %1;").arg(color.name()));
 }
 
-// The catalog unit of `fieldId` within `fields` (resolveCatalogTopicFields()'s
-// result for the chart's currently bound topic), or an empty string if that
-// field isn't in there (device hasn't reported it, or the topic has no live
-// catalog at all).
-QString unitForField(const QVector<CatalogTopicField>& fields, int fieldId) {
+// `fieldId` within `fields` (resolveCatalogTopicFields()'s result for the
+// chart's currently bound topic), or nullptr if that field isn't in there
+// (device hasn't reported it, or the topic has no live catalog at all).
+const CatalogTopicField* findField(const QVector<CatalogTopicField>& fields, int fieldId) {
     for (const CatalogTopicField& field : fields) {
         if (field.fieldId == fieldId) {
-            return field.unit;
+            return &field;
         }
     }
-    return QString();
+    return nullptr;
+}
+
+// Copies `field`'s unit/declared range onto `combo`'s "fieldUnit"/
+// "fieldMinValue"/"fieldMaxValue" properties -- the single place
+// ChartConfigEditor::config() and every field-picking handler below read
+// and write per-series catalog metadata, so they can never drift out of
+// sync with each other. `field` null (the picked/typed id isn't in the
+// live catalog) clears all three -- callers that want to fall back to a
+// previously saved value instead (addSeriesRow(), for a row whose device
+// isn't reporting this session) do that themselves afterward.
+void setResolvedField(QComboBox* combo, const CatalogTopicField* field) {
+    combo->setProperty("fieldUnit", field ? field->unit : QString());
+    combo->setProperty("fieldMinValue", field ? field->minValue : qQNaN());
+    combo->setProperty("fieldMaxValue", field ? field->maxValue : qQNaN());
 }
 
 }  // namespace
@@ -400,6 +414,17 @@ QJsonObject ChartConfigEditor::config() const {
                 qobject_cast<QComboBox*>(m_seriesTable->cellWidget(row, kFieldIdColumn))) {
             series["fieldId"] = fieldIdCombo->property("fieldId").toInt();
             series["unit"] = fieldIdCombo->property("fieldUnit").toString();
+            // JSON has no NaN literal, so "not declared" is the key simply
+            // being absent -- parseSeriesConfig()'s toDouble(qQNaN())
+            // defaults land back on the same NaN either way.
+            const double declaredMin = fieldIdCombo->property("fieldMinValue").toDouble();
+            const double declaredMax = fieldIdCombo->property("fieldMaxValue").toDouble();
+            if (!qIsNaN(declaredMin)) {
+                series["min"] = declaredMin;
+            }
+            if (!qIsNaN(declaredMax)) {
+                series["max"] = declaredMax;
+            }
         }
         if (auto* colorButton =
                 qobject_cast<QPushButton*>(m_seriesTable->cellWidget(row, kColorColumn))) {
@@ -433,15 +458,19 @@ void ChartConfigEditor::addSeriesRow(const QJsonObject& series) {
     populateFieldCombo(fieldIdCombo, fields);
     fieldIdCombo->setProperty("fieldId", fieldId);
     fieldIdCombo->setCurrentText(QString::number(fieldId));
-    // Falls back to whatever unit this row was last saved with (JSON's
-    // "unit") when the live catalog doesn't know this field yet -- same
-    // graceful-degradation idea as resolveCatalogTopicName() falling back to
-    // raw hex: a saved multi-axis assignment shouldn't reset itself to
-    // "no unit" just because the device hasn't reported its schema this
-    // session.
-    const QString resolvedUnit = unitForField(fields, fieldId);
-    fieldIdCombo->setProperty(
-        "fieldUnit", resolvedUnit.isEmpty() ? series.value("unit").toString() : resolvedUnit);
+    // Falls back to whatever unit/range this row was last saved with (JSON's
+    // "unit"/"min"/"max") when the live catalog doesn't know this field yet
+    // -- same graceful-degradation idea as resolveCatalogTopicName() falling
+    // back to raw hex: a saved multi-axis assignment shouldn't reset itself
+    // to "no unit"/"no declared range" just because the device hasn't
+    // reported its schema this session.
+    const CatalogTopicField* field = findField(fields, fieldId);
+    setResolvedField(fieldIdCombo, field);
+    if (!field) {
+        fieldIdCombo->setProperty("fieldUnit", series.value("unit").toString());
+        fieldIdCombo->setProperty("fieldMinValue", series.value("min").toDouble(qQNaN()));
+        fieldIdCombo->setProperty("fieldMaxValue", series.value("max").toDouble(qQNaN()));
+    }
     fieldIdCombo->setToolTip(
         tr("Which field of the bound topic this series plots -- pick one the device has "
            "already reported (shown by name), or type a numeric id by hand for one it "
@@ -449,7 +478,7 @@ void ChartConfigEditor::addSeriesRow(const QJsonObject& series) {
     connect(fieldIdCombo, &QComboBox::activated, this, [this, fieldIdCombo](int index) {
         const int pickedFieldId = fieldIdCombo->itemData(index).toInt();
         fieldIdCombo->setProperty("fieldId", pickedFieldId);
-        fieldIdCombo->setProperty("fieldUnit", unitForField(currentTopicFields(), pickedFieldId));
+        setResolvedField(fieldIdCombo, findField(currentTopicFields(), pickedFieldId));
         emitChanged();
     });
     connect(fieldIdCombo->lineEdit(), &QLineEdit::editingFinished, this, [this, fieldIdCombo]() {
@@ -457,7 +486,7 @@ void ChartConfigEditor::addSeriesRow(const QJsonObject& series) {
         const int typed = fieldIdCombo->currentText().trimmed().toInt(&ok);
         if (ok) {
             fieldIdCombo->setProperty("fieldId", typed);
-            fieldIdCombo->setProperty("fieldUnit", unitForField(currentTopicFields(), typed));
+            setResolvedField(fieldIdCombo, findField(currentTopicFields(), typed));
         }
         emitChanged();
     });
@@ -549,14 +578,17 @@ void ChartConfigEditor::refreshSeriesFieldOptions() {
         if (auto* fieldIdCombo =
                 qobject_cast<QComboBox*>(m_seriesTable->cellWidget(row, kFieldIdColumn))) {
             populateFieldCombo(fieldIdCombo, fields);
-            // Re-resolve this row's unit against the just-refreshed catalog
-            // (e.g. the device just connected, or the topic changed) --
-            // matched by the row's current fieldId, same as populateFieldCombo()
-            // itself re-matches by the combo's previous text.
-            const QString resolvedUnit =
-                unitForField(fields, fieldIdCombo->property("fieldId").toInt());
-            if (!resolvedUnit.isEmpty()) {
-                fieldIdCombo->setProperty("fieldUnit", resolvedUnit);
+            // Re-resolve this row's unit/range against the just-refreshed
+            // catalog (e.g. the device just connected, or the topic changed)
+            // -- matched by the row's current fieldId, same as
+            // populateFieldCombo() itself re-matches by the combo's
+            // previous text. Only overwrites when the field actually
+            // resolves -- still offline/unreported keeps whatever was
+            // already there (a saved value, or a previous session's
+            // resolve) instead of blanking it out.
+            if (const CatalogTopicField* field =
+                    findField(fields, fieldIdCombo->property("fieldId").toInt())) {
+                setResolvedField(fieldIdCombo, field);
             }
         }
     }

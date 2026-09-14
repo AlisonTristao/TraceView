@@ -28,7 +28,8 @@ constexpr quint16 kGaugeFieldId2 = 3;
 constexpr quint16 kGaugeFieldId3 = 4;
 
 QJsonObject seriesJson(const QString& name, int fieldId, const QString& color,
-                       const QString& style, const QString& unit = QString()) {
+                       const QString& style, const QString& unit = QString(),
+                       double declaredMin = qQNaN(), double declaredMax = qQNaN()) {
     QJsonObject series;
     series["name"] = name;
     series["fieldId"] = fieldId;
@@ -36,6 +37,12 @@ QJsonObject seriesJson(const QString& name, int fieldId, const QString& color,
     series["style"] = style;
     if (!unit.isEmpty()) {
         series["unit"] = unit;
+    }
+    if (!qIsNaN(declaredMin)) {
+        series["min"] = declaredMin;
+    }
+    if (!qIsNaN(declaredMax)) {
+        series["max"] = declaredMax;
     }
     return series;
 }
@@ -72,6 +79,13 @@ QJsonObject lineChartConfig() {
 // series flat; with it on, each unit gets its own stacked, auto-ranged Y
 // axis (see resolveYAxes()/paintYAxes() in chartwidgets.cpp), tinted to that
 // axis's own series color.
+//
+// "Speed" also carries a declared range (-1..1) narrower than what it
+// actually swings (+-1.5, see the timer tick below) -- exercises
+// autoYRange()'s other new behavior: a device-declared range wins outright
+// over the buffer scan, so this one axis should visibly clip/touch its own
+// edges instead of auto-stretching to fit the sine's real amplitude the way
+// "Turn rate" and "Duty cycle" (no declared range) still do.
 QJsonObject autoAxisLineChartConfig() {
     QJsonObject config;
     config["sourceId"] = QString::number(kSourceId);
@@ -87,7 +101,7 @@ QJsonObject autoAxisLineChartConfig() {
     config["yAxis"] = yAxis;
 
     QJsonArray series;
-    series.append(seriesJson("Speed", 1, "#3B82F6", "solid", "m/s"));
+    series.append(seriesJson("Speed", 1, "#3B82F6", "solid", "m/s", -1.0, 1.0));
     series.append(seriesJson("Turn rate", 2, "#F97316", "dashed", "rad/s"));
     series.append(seriesJson("Duty cycle", 3, "#22C55E", "cross", "%"));
     config["series"] = series;

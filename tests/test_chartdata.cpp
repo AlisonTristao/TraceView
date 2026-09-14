@@ -1,5 +1,6 @@
 #include <QJsonArray>
 #include <QJsonObject>
+#include <QtMath>
 #include <QtTest>
 
 #include "dashboard/widgets/chartdata.h"
@@ -59,6 +60,7 @@ class TestChartData : public QObject {
 private slots:
     void parsesDefaultsFromEmptyConfig();
     void parsesExplicitConfig();
+    void parsesSeriesDeclaredRangeAsNaNWhenAbsent();
     void parsesSourceAndTopicIdsFromHexOrDecimalStrings();
 
     void bufferCapacityInSamplesMode();
@@ -124,6 +126,8 @@ void TestChartData::parsesExplicitConfig() {
     one["color"] = "#ff0000";
     one["style"] = "dashed";
     one["unit"] = "m/s^2";
+    one["min"] = -20.0;
+    one["max"] = 20.0;
     QJsonArray series;
     series.append(one);
     json["series"] = series;
@@ -147,6 +151,17 @@ void TestChartData::parsesExplicitConfig() {
     QCOMPARE(config.series[0].color, QColor("#ff0000"));
     QCOMPARE(config.series[0].style, ChartSeriesStyle::Dashed);
     QCOMPARE(config.series[0].unit, QStringLiteral("m/s^2"));
+    QCOMPARE(config.series[0].declaredMin, -20.0);
+    QCOMPARE(config.series[0].declaredMax, 20.0);
+}
+
+void TestChartData::parsesSeriesDeclaredRangeAsNaNWhenAbsent() {
+    // A field with no manifest-declared range (every field, until manifest
+    // v3 ships) must parse to NaN, not some other placeholder like 0 -- 0 is
+    // a real, plottable bound and would silently look "declared".
+    const ChartConfig config = configWithFields({1});
+    QVERIFY(qIsNaN(config.series[0].declaredMin));
+    QVERIFY(qIsNaN(config.series[0].declaredMax));
 }
 
 void TestChartData::parsesSourceAndTopicIdsFromHexOrDecimalStrings() {

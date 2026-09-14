@@ -3,6 +3,7 @@
 #include <QString>
 #include <QVector>
 #include <QtGlobal>
+#include <QtMath>
 
 namespace traceview {
 
@@ -17,6 +18,13 @@ struct CatalogTopicField {
     QString name;
     QString type;  // e.g. "float32", "uint8[4]"
     QString unit;
+    // The field's own declared operating range, mirroring
+    // TelemetryFieldSchema::minValue/maxValue -- NaN in either means "not
+    // declared" (every field, always, until manifest_format_version >= 3
+    // ships and TraceView's BTP dependency is bumped to a version that
+    // carries it -- see manifestclient.cpp).
+    double minValue = qQNaN();
+    double maxValue = qQNaN();
 };
 
 // One (source_id, topic_id, schema_version) schema a Backend's catalog

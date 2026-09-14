@@ -649,7 +649,36 @@ bool isMarkerStyle(ChartSeriesStyle style) {
 // half of computeYRange() below, pulled out so ChartConfig::autoAxis's
 // per-unit axis groups (resolveYAxes() below) can auto-range just their own
 // member series' buffers instead of the whole chart's.
-QPair<double, double> autoYRange(const QVector<QVector<double>>& buffers) {
+//
+// `declaredMins`/`declaredMaxs` are ChartSeriesConfig::declaredMin/Max, same
+// index/order as `buffers` -- when every one of them is a real (non-NaN)
+// number, their union (lowest min, highest max) is used verbatim instead of
+// scanning `buffers` at all: a device-declared field range is authoritative,
+// not a guess, so it wins outright over however little (or however
+// misleadingly narrow) has been sampled so far. Falls back to the ordinary
+// buffer scan the moment even one member lacks a declared range -- which is
+// every field, always, until a device actually reports one -- so this is
+// purely additive over the pre-existing behavior.
+QPair<double, double> autoYRange(const QVector<QVector<double>>& buffers,
+                                 const QVector<double>& declaredMins,
+                                 const QVector<double>& declaredMaxs) {
+    bool allDeclared = !buffers.isEmpty();
+    double declaredLo = 0.0;
+    double declaredHi = 0.0;
+    for (int i = 0; allDeclared && i < buffers.size(); ++i) {
+        const double dMin = i < declaredMins.size() ? declaredMins[i] : qQNaN();
+        const double dMax = i < declaredMaxs.size() ? declaredMaxs[i] : qQNaN();
+        if (qIsNaN(dMin) || qIsNaN(dMax)) {
+            allDeclared = false;
+            break;
+        }
+        declaredLo = (i == 0) ? dMin : qMin(declaredLo, dMin);
+        declaredHi = (i == 0) ? dMax : qMax(declaredHi, dMax);
+    }
+    if (allDeclared) {
+        return {declaredLo, qMax(declaredHi, declaredLo + 1e-6)};
+    }
+
     bool any = false;
     double lo = 0.0;
     double hi = 0.0;
@@ -675,13 +704,23 @@ QPair<double, double> autoYRange(const QVector<QVector<double>>& buffers) {
 }
 
 // Y range to map buffered values into plotRect's height: the configured
-// fixed range, or an auto range spanning whatever's currently buffered.
+// fixed range, or an auto range (see autoYRange()) spanning whatever's
+// currently buffered -- or every series' own declared range, if every one
+// of them has one.
 QPair<double, double> computeYRange(const ChartConfig& config,
                                     const QVector<QVector<double>>& buffers) {
     if (config.yAxisMode == ChartYAxisMode::Fixed) {
         return {config.yMin, qMax(config.yMax, config.yMin + 1e-6)};
     }
-    return autoYRange(buffers);
+    QVector<double> declaredMins;
+    QVector<double> declaredMaxs;
+    declaredMins.reserve(config.series.size());
+    declaredMaxs.reserve(config.series.size());
+    for (const ChartSeriesConfig& series : config.series) {
+        declaredMins.append(series.declaredMin);
+        declaredMaxs.append(series.declaredMax);
+    }
+    return autoYRange(buffers, declaredMins, declaredMaxs);
 }
 
 // Everything DummyLineChartWidget::paintEvent()/DummyBarChartWidget::
@@ -743,11 +782,17 @@ ResolvedYAxes resolveYAxes(const QPainter& painter, const ChartConfig& config,
     for (int g = 0; g < groups.size(); ++g) {
         const ChartAxisGroup& group = groups[g];
         QVector<QVector<double>> memberBuffers;
+        QVector<double> memberDeclaredMins;
+        QVector<double> memberDeclaredMaxs;
         memberBuffers.reserve(group.seriesIndices.size());
+        memberDeclaredMins.reserve(group.seriesIndices.size());
+        memberDeclaredMaxs.reserve(group.seriesIndices.size());
         for (int idx : group.seriesIndices) {
             memberBuffers.append(idx < seriesValues.size() ? seriesValues[idx] : QVector<double>());
+            memberDeclaredMins.append(config.series[idx].declaredMin);
+            memberDeclaredMaxs.append(config.series[idx].declaredMax);
         }
-        const auto [yMin, yMax] = autoYRange(memberBuffers);
+        const auto [yMin, yMax] = autoYRange(memberBuffers, memberDeclaredMins, memberDeclaredMaxs);
         for (int idx : group.seriesIndices) {
             result.yMins[idx] = yMin;
             result.yMaxs[idx] = yMax;
