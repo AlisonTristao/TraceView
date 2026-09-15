@@ -47,6 +47,10 @@ add_traceview_test(test_textboardwidget traceview_dashboard)
 # foreground coloring, and the bounded ring (oldest dropped past kCapacity) --
 # see lib/dashboard/widgets/robotlogmodel.h.
 add_traceview_test(test_robotlogmodel traceview_dashboard)
+# The multi-tab robot log widget: config migration (bare deviceId / {} -> one
+# tab), the tab list, device-name labels, per-device inbound routing and
+# per-tab Clear -- same coverage shape as test_serialmonitorwidget.
+add_traceview_test(test_robotlogwidget traceview_dashboard)
 # topico 26: a Device that connects THROUGH another Device. traceview_ui so
 # it can build a real DeviceConnection/BtpBackend pair, which is what the
 # multiplexing test drives -- no port and no hardware are involved.

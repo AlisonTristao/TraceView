@@ -81,11 +81,14 @@ void SerialWidgetBridge::wireWidget(DashboardWidget* widget) {
         rewireMonitorInbound(monitor);
         monitor->setDeviceNames(m_deviceNames);
     } else if (auto* logWidget = qobject_cast<RobotLogWidget*>(widget)) {
+        connect(logWidget, &RobotLogWidget::tabsChanged, this,
+                [this, logWidget]() { rewireLogInbound(logWidget); });
         connect(logWidget, &QObject::destroyed, this,
                 [this, logWidget]() { m_logInbound.remove(logWidget); });
 
         m_logInbound.insert(logWidget, {});
         rewireLogInbound(logWidget);
+        logWidget->setDeviceNames(m_deviceNames);
     }
 }
 
@@ -120,16 +123,36 @@ void SerialWidgetBridge::rewireMonitorInbound(SerialMonitorWidget* monitor) {
 }
 
 void SerialWidgetBridge::rewireLogInbound(RobotLogWidget* widget) {
-    QMetaObject::Connection& connection = m_logInbound[widget];
-    QObject::disconnect(connection);
-    connection = {};
+    QList<QMetaObject::Connection>& connections = m_logInbound[widget];
+    for (const QMetaObject::Connection& connection : connections) {
+        QObject::disconnect(connection);
+    }
+    connections.clear();
 
-    DeviceConnection* deviceConnection = deviceConnectionForWidget(widget);
-    if (!deviceConnection || !deviceConnection->backend()) {
+    if (!m_deviceConnectionFor) {
         return;
     }
-    connection = connect(deviceConnection->backend(), &Backend::logReceived, widget,
-                         &RobotLogWidget::appendEntry);
+
+    QSet<QString> wired;
+    const QStringList deviceIds = widget->tabDeviceIds();
+    for (const QString& deviceId : deviceIds) {
+        if (deviceId.isEmpty() || wired.contains(deviceId)) {
+            continue;
+        }
+        wired.insert(deviceId);
+
+        DeviceConnection* connection = m_deviceConnectionFor(deviceId);
+        if (!connection || !connection->backend()) {
+            continue;
+        }
+        connections.append(connect(
+            connection->backend(), &Backend::logReceived, widget,
+            [widget, deviceId](quint64 timestampUs, quint32 sourceId, quint32 bootId,
+                               quint32 sequence, quint8 severity, const QString& message) {
+                widget->feedDevice(deviceId, timestampUs, sourceId, bootId, sequence, severity,
+                                   message);
+            }));
+    }
 }
 
 void SerialWidgetBridge::refreshTerminalWiring() {
@@ -148,6 +171,10 @@ void SerialWidgetBridge::setDeviceNames(const QHash<QString, QString>& namesById
     const QList<SerialMonitorWidget*> monitors = m_monitorInbound.keys();
     for (SerialMonitorWidget* monitor : monitors) {
         monitor->setDeviceNames(m_deviceNames);
+    }
+    const QList<RobotLogWidget*> logWidgets = m_logInbound.keys();
+    for (RobotLogWidget* logWidget : logWidgets) {
+        logWidget->setDeviceNames(m_deviceNames);
     }
 }
 

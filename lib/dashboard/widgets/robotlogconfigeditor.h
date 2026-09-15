@@ -1,15 +1,21 @@
 #pragma once
 
+#include <QVector>
+
 #include "dashboard/widgetconfigeditor.h"
 
 class QComboBox;
+class QVBoxLayout;
 
 namespace traceview {
 
-// Settings for RobotLogWidget: which device's LOG channel this instance
-// shows -- the only setting, since (unlike SerialMonitorConfigEditor) one
-// widget is always exactly one device's log, never a tab strip of several.
-// Same minimal "Device" combo shape as controlconfigeditor.h.
+// Settings for RobotLogWidget (see widgets/robotlogwidget.h): the ordered
+// list of tabs, one row per tab, each naming the device whose LOG channel
+// that tab shows. Persisted as { "tabs": [ { "deviceId": ... }, ... ] }; a
+// pre-tabs config (a bare "deviceId", or none) is read as a single tab.
+// Same dynamic-row shape as SerialMonitorConfigEditor -- every add/remove/
+// reorder/pick emits configChanged() and the new value is fetched via
+// config().
 class RobotLogConfigEditor : public WidgetConfigEditor {
     Q_OBJECT
 
@@ -21,10 +27,16 @@ public:
     void setAvailableDevices(const QVector<DeviceOption>& devices) override;
 
 private:
-    void emitChanged();
+    void rebuildRows(const QStringList& deviceIds);
+    void addRowWidget(const QString& deviceId);
+    QStringList currentDeviceIds() const;
+    void onStructureChanged();  // rebuild + emit
+    void onPickChanged();       // just emit
 
     bool m_updating = false;
-    QComboBox* m_deviceCombo = nullptr;
+    QVBoxLayout* m_rowsLayout = nullptr;
+    QVector<QComboBox*> m_deviceCombos;
+    QVector<DeviceOption> m_devices;
 };
 
 }  // namespace traceview

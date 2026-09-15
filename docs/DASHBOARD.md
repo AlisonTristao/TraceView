@@ -155,21 +155,26 @@ lives in its own module under
   device's `Backend::terminalDataReceived()` back to the matching tab via
   `feedDevice()`, re-deriving all of it on `tabsChanged()`.
 - **Robot Log** (`robot_log`) — `widgets/robotlogwidget.h`/`.cpp`. A
-  read-only "serial monitor" for one device's LOG channel: the same header
-  row + right-aligned **Clear** button as Serial Monitor, but no tab strip
-  (one widget = one device, `widgets/robotlogconfigeditor.h`/`.cpp`'s only
-  setting) and no input line — LOG has no reply half to type into, only
-  firmware output. Rows go into a `QTableView`/`widgets/robotlogmodel.h`/`.cpp`
-  with the same columns `logs/logviewer.h` uses for an offline `.blog` file
-  (Timestamp/Severity/Source ID/Boot ID/Sequence/Message), bounded at
-  `RobotLogModel::kCapacity` (oldest dropped first, same ring shape as
-  `diagnostics/framelog.h`) rather than a `QTableWidget`'s per-item bulk-load
-  shape, since this one appends continuously instead of loading a file once.
-  Severity colors the row via `ThemePalette` tokens the same way
-  `SerialTerminalWidget`'s ANSI colors do. `core/serialwidgetbridge.h`
-  resolves the configured device and forwards its `Backend::logReceived()`
-  to `appendEntry()`, re-deriving the connection whenever the config's
-  device changes (the same refresh hook Serial Monitor's inbound wiring
+  read-only "serial monitor" for one or more robots' LOG channels: the same
+  header row (a tab strip `widgets/terminaltabbar.h`/`.cpp`, reused as-is
+  from Serial Monitor, on the left, a right-aligned **Clear** button that
+  wipes the visible tab's log) over one `QTableView`/`widgets/robotlogmodel.h`/
+  `.cpp` pair per tab — no input line, since LOG has no reply half to type
+  into, only firmware output. Each table's columns match `logs/logviewer.h`'s
+  offline `.blog` view (Timestamp/Severity/Source ID/Boot ID/Sequence/
+  Message), bounded at `RobotLogModel::kCapacity` (oldest dropped first, same
+  ring shape as `diagnostics/framelog.h`) rather than a `QTableWidget`'s
+  per-item bulk-load shape, since this one appends continuously instead of
+  loading a file once. Severity colors the row via `ThemePalette` tokens the
+  same way `SerialTerminalWidget`'s ANSI colors do. The tab list is the
+  widget's config — `{ "tabs": [ { "deviceId": … }, … ] }`, edited in
+  `widgets/robotlogconfigeditor.h`/`.cpp` (add/remove/reorder rows, same
+  shape as Serial Monitor's own config editor). A pre-tabs config (a bare
+  `deviceId`, or none) reads as a single tab, and a lone tab hides the strip
+  (leaving just the Clear button). `core/serialwidgetbridge.h` resolves each
+  tab's device and wires every bound device's `Backend::logReceived()` to
+  the matching tab via `feedDevice()`, re-deriving all of it on
+  `tabsChanged()` (the same refresh hook Serial Monitor's inbound wiring
   already uses).
 - **Text Board** (`text_board`) — `widgets/textboardwidget.h`/`.cpp`. A
   fixed-pitch, read-only surface for one whole `UTF8` telemetry topic. Every
