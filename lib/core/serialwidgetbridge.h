@@ -12,6 +12,7 @@ namespace traceview {
 class DashboardGrid;
 class DashboardWidget;
 class DeviceConnection;
+class RobotLogWidget;
 class SerialMonitorWidget;
 
 // Wires each control/serial-monitor widget's send/receive to whichever
@@ -40,6 +41,14 @@ class SerialMonitorWidget;
 // set whenever the monitor's tab list changes (SerialMonitorWidget::tabsChanged,
 // and the subscription-refresh hook MainWindow already drives). MainWindow also
 // pushes device names through here for the tab labels.
+//
+// RobotLogWidget is inbound-only and single-device (its config's "deviceId",
+// same field control widgets already use -- see deviceConnectionForWidget()):
+// one standing Backend::logReceived -> widget->appendEntry() connection,
+// rebuilt by rewireLogInbound() whenever its config's device changes.
+// refreshTerminalWiring() below re-derives this alongside the monitors on
+// every config edit despite its name (same hook, no new one needed) -- an
+// unrenamed name that still means "everything with inbound wiring" here.
 class SerialWidgetBridge : public QObject {
     Q_OBJECT
 
@@ -66,6 +75,9 @@ private:
     // Tears down `monitor`'s inbound connections and rebuilds one per distinct
     // non-empty device id in monitor->tabDeviceIds().
     void rewireMonitorInbound(SerialMonitorWidget* monitor);
+    // Tears down `widget`'s single inbound connection and rebuilds it against
+    // whatever device its config currently names, if any.
+    void rewireLogInbound(RobotLogWidget* widget);
 
     DashboardGrid* m_grid;
     std::function<DeviceConnection*(const QString&)> m_deviceConnectionFor;
@@ -73,6 +85,10 @@ private:
     // per distinct bound device). The key set also enumerates the monitors
     // for refreshTerminalWiring()/the device-meta pushes.
     QHash<SerialMonitorWidget*, QList<QMetaObject::Connection>> m_monitorInbound;
+    // Every robot log widget wired so far -> its single live inbound
+    // connection (a default-constructed, disconnected QMetaObject::Connection
+    // while unbound). The key set enumerates them for refreshTerminalWiring().
+    QHash<RobotLogWidget*, QMetaObject::Connection> m_logInbound;
 
     QHash<QString, QString> m_deviceNames;
 };

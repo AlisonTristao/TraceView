@@ -264,6 +264,14 @@ private:
     static constexpr int kNodeTickIntervalMs = 250;
 
     void onTerminalFrameReceived(const traceview::BtpFrame& frame);
+    // Re-emits every LOG frame ProtocolRouter routes as Backend::
+    // logReceived() -- unlike TERMINAL there is no reply/request half to
+    // filter for, and unlike a .blog file's LogFileReader this never
+    // reassembles fragments: Logger.cpp (bally_OS) always puts one LOG
+    // record's worth of text on the wire as its own single-fragment message
+    // (see its class comment), so every frame here is already one complete
+    // line.
+    void onLogFrameReceived(const traceview::BtpFrame& frame);
     // Replaces the direct BtpSession::frameReceived -> ProtocolRouter::
     // onFrameReceived connection: opens a sealed (ENCRYPTED) frame under
     // m_endpointKey before forwarding, drops it if opening fails or no key

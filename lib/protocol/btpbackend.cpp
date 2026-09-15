@@ -478,6 +478,8 @@ BtpBackend::BtpBackend(BtpSession::Framing framing, const btp::TransportLimits& 
     // just TERMINAL_OUT.
     connect(m_protocolRouter, &ProtocolRouter::terminalFrameReceived, this,
             &BtpBackend::onTerminalFrameReceived);
+    connect(m_protocolRouter, &ProtocolRouter::logFrameReceived, this,
+            &BtpBackend::onLogFrameReceived);
 }
 
 BtpBackend::~BtpBackend() {
@@ -1109,6 +1111,14 @@ void BtpBackend::onTerminalFrameReceived(const traceview::BtpFrame& frame) {
     if (frame.objectId == kTerminalOutObjectId) {
         emit terminalDataReceived(frame.payload);
     }
+}
+
+void BtpBackend::onLogFrameReceived(const traceview::BtpFrame& frame) {
+    // The LOG channel's object_id carries severity (traceview::LogSeverity),
+    // not a topic id -- see logfilereader.cpp's identical reading of a
+    // .blog file's own header.object_id.
+    emit logReceived(frame.timestampUs, frame.sourceId, frame.bootId, frame.sequence,
+                     static_cast<quint8>(frame.objectId), QString::fromUtf8(frame.payload));
 }
 
 quint64 BtpBackend::addSubscriber(quint32 sourceId, quint16 topicId, quint32 requestedRateMillihz) {

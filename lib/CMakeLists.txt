@@ -242,6 +242,12 @@ add_library(traceview_dashboard STATIC
     dashboard/widgets/chartwidgets.h
     dashboard/widgets/gaugeconfigeditor.cpp
     dashboard/widgets/gaugeconfigeditor.h
+    dashboard/widgets/robotlogconfigeditor.cpp
+    dashboard/widgets/robotlogconfigeditor.h
+    dashboard/widgets/robotlogmodel.cpp
+    dashboard/widgets/robotlogmodel.h
+    dashboard/widgets/robotlogwidget.cpp
+    dashboard/widgets/robotlogwidget.h
     dashboard/widgets/serialmonitorconfigeditor.cpp
     dashboard/widgets/serialmonitorconfigeditor.h
     dashboard/widgets/serialmonitorwidget.cpp

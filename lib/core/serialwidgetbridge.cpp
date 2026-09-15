@@ -5,6 +5,7 @@
 #include "backend/backend.h"
 #include "dashboard/dashboardgrid.h"
 #include "dashboard/widgets/controlwidgets.h"
+#include "dashboard/widgets/robotlogwidget.h"
 #include "dashboard/widgets/serialmonitorwidget.h"
 #include "deviceconnection.h"
 #include "serialmanager.h"
@@ -79,6 +80,12 @@ void SerialWidgetBridge::wireWidget(DashboardWidget* widget) {
         m_monitorInbound.insert(monitor, {});
         rewireMonitorInbound(monitor);
         monitor->setDeviceNames(m_deviceNames);
+    } else if (auto* logWidget = qobject_cast<RobotLogWidget*>(widget)) {
+        connect(logWidget, &QObject::destroyed, this,
+                [this, logWidget]() { m_logInbound.remove(logWidget); });
+
+        m_logInbound.insert(logWidget, {});
+        rewireLogInbound(logWidget);
     }
 }
 
@@ -112,10 +119,27 @@ void SerialWidgetBridge::rewireMonitorInbound(SerialMonitorWidget* monitor) {
     }
 }
 
+void SerialWidgetBridge::rewireLogInbound(RobotLogWidget* widget) {
+    QMetaObject::Connection& connection = m_logInbound[widget];
+    QObject::disconnect(connection);
+    connection = {};
+
+    DeviceConnection* deviceConnection = deviceConnectionForWidget(widget);
+    if (!deviceConnection || !deviceConnection->backend()) {
+        return;
+    }
+    connection = connect(deviceConnection->backend(), &Backend::logReceived, widget,
+                         &RobotLogWidget::appendEntry);
+}
+
 void SerialWidgetBridge::refreshTerminalWiring() {
     const QList<SerialMonitorWidget*> monitors = m_monitorInbound.keys();
     for (SerialMonitorWidget* monitor : monitors) {
         rewireMonitorInbound(monitor);
+    }
+    const QList<RobotLogWidget*> logWidgets = m_logInbound.keys();
+    for (RobotLogWidget* logWidget : logWidgets) {
+        rewireLogInbound(logWidget);
     }
 }
 

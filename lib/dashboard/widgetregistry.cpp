@@ -8,6 +8,8 @@
 #include "widgets/controlconfigeditor.h"
 #include "widgets/controlwidgets.h"
 #include "widgets/gaugeconfigeditor.h"
+#include "widgets/robotlogconfigeditor.h"
+#include "widgets/robotlogwidget.h"
 #include "widgets/serialmonitorconfigeditor.h"
 #include "widgets/serialmonitorwidget.h"
 #include "widgets/textboardconfigeditor.h"
@@ -41,6 +43,12 @@ WidgetRegistry::WidgetRegistry() {
          [](QWidget* parent) -> DashboardWidget* { return new SerialMonitorWidget(parent); },
          [](QWidget* parent) -> WidgetConfigEditor* {
              return new SerialMonitorConfigEditor(parent);
+         }});
+    registerType(
+        {"robot_log", QCoreApplication::translate("WidgetRegistry", "Robot Log"),
+         [](QWidget* parent) -> DashboardWidget* { return new RobotLogWidget(parent); },
+         [](QWidget* parent) -> WidgetConfigEditor* {
+             return new RobotLogConfigEditor(parent);
          }});
     registerType(
         {"text_board", QCoreApplication::translate("WidgetRegistry", "Text Board"),

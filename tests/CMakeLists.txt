@@ -43,6 +43,10 @@ add_traceview_test(test_serialterminalwidget traceview_dashboard)
 # device-tagged outbound signal -- all widget-level, no transport.
 add_traceview_test(test_serialmonitorwidget traceview_dashboard)
 add_traceview_test(test_textboardwidget traceview_dashboard)
+# The live robot-log table model: field mapping per column, severity
+# foreground coloring, and the bounded ring (oldest dropped past kCapacity) --
+# see lib/dashboard/widgets/robotlogmodel.h.
+add_traceview_test(test_robotlogmodel traceview_dashboard)
 # topico 26: a Device that connects THROUGH another Device. traceview_ui so
 # it can build a real DeviceConnection/BtpBackend pair, which is what the
 # multiplexing test drives -- no port and no hardware are involved.

@@ -65,7 +65,7 @@
                             "key": "",
                             "name": "",
                             "type": "serial_monitor",
-                            "width": 0.5833333333333334,
+                            "width": 0.46666666666666673,
                             "x": 0,
                             "y": 0
                         },
@@ -99,9 +99,9 @@
                                         "unit": "m/s^2"
                                     },
                                     {
-                                        "color": "#ffaa00",
+                                        "color": "#aa0000",
                                         "fieldId": 3,
-                                        "name": "gyro z",
+                                        "name": "Gyro z",
                                         "style": "solid",
                                         "unit": "rad/s"
                                     }
@@ -129,8 +129,8 @@
                             "key": "",
                             "name": "Accel",
                             "type": "dummy_line",
-                            "width": 0.2,
-                            "x": 0.5833333333333331,
+                            "width": 0.3166666666666667,
+                            "x": 0.4666666666666665,
                             "y": 0.325
                         },
                         {
@@ -203,7 +203,7 @@
                             "name": "Arr Sensors",
                             "type": "dummy_bar",
                             "width": 0.30000000000000004,
-                            "x": 0.7,
+                            "x": 0.5833333333333333,
                             "y": 0.6749999999999998
                         },
                         {
@@ -218,7 +218,7 @@
                                         "unit": "m/s"
                                     },
                                     {
-                                        "color": "#ffaa00",
+                                        "color": "#aa0000",
                                         "fieldId": 2,
                                         "name": "angular_speed",
                                         "style": "solid",
@@ -246,10 +246,10 @@
                             "height": 0.32499999999999996,
                             "id": "4ff409e3-47ed-4d49-b04d-e0fa4f212373",
                             "key": "",
-                            "name": "speed",
+                            "name": "Speed",
                             "type": "dummy_line",
-                            "width": 0.2,
-                            "x": 0.5833333333333331,
+                            "width": 0.3166666666666667,
+                            "x": 0.4666666666666665,
                             "y": 1.3877787807814457e-17
                         },
                         {
@@ -276,7 +276,46 @@
                             "name": "Signal",
                             "type": "dummy_gauge",
                             "width": 0.11666666666666667,
-                            "x": 0.5833333333333333,
+                            "x": 0.4666666666666666,
+                            "y": 0.675
+                        },
+                        {
+                            "config": {
+                                "deviceId": "ec1f2d5f-546e-4aee-8c08-9b3c6e9d47bf",
+                                "series": [
+                                    {
+                                        "color": "#e85d8a",
+                                        "fieldId": 2,
+                                        "name": "Series 1",
+                                        "style": "solid",
+                                        "unit": "1"
+                                    }
+                                ],
+                                "sourceId": "0X9F442484",
+                                "topicId": "0X0005",
+                                "xAxis": {
+                                    "limit": 10,
+                                    "mode": "samples",
+                                    "sampleTimeMs": 100
+                                },
+                                "yAxis": {
+                                    "autoAxis": false,
+                                    "decimals": 0,
+                                    "grid": true,
+                                    "max": 100,
+                                    "min": 0,
+                                    "mode": "auto",
+                                    "unit": ""
+                                }
+                            },
+                            "groupId": "",
+                            "height": 0.325,
+                            "id": "cb553939-c483-4c24-8294-7b0ad01e1f31",
+                            "key": "",
+                            "name": "",
+                            "type": "dummy_line",
+                            "width": 0.11666666666666667,
+                            "x": 0.8833333333333333,
                             "y": 0.675
                         }
                     ]

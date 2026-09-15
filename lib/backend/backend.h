@@ -131,6 +131,14 @@ signals:
     // Bytes received back for a terminal/serial-monitor widget (the reply
     // side of sendTerminalIn()).
     void terminalDataReceived(const QByteArray& data);
+    // One already-reassembled LOG record from this device's own log channel
+    // -- a robot's firmware log, one emission per line. `severity` is the
+    // channel's raw per-message discriminator (traceview::LogSeverity in
+    // protocol/logseverity.h for BtpBackend; kept as a plain octet here, the
+    // same reasoning as fieldSample()'s bare source/topic ids above, so this
+    // interface still depends on nothing beyond traceview_telemetry).
+    void logReceived(quint64 timestampUs, quint32 sourceId, quint32 bootId, quint32 sequence,
+                     quint8 severity, const QString& message);
     // Any change to a topic's state (grant, rejection, rate change,
     // subscriber count) -- a UI refresh hook, coarse on purpose.
     void subscriptionsChanged();
