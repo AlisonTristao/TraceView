@@ -101,7 +101,7 @@ QString resolveSourceLabel(const QVector<DeviceOption>& devices, quint32 sourceI
 }
 
 QString formatHexId(quint32 value, int digits) {
-    return QString("0x%1").arg(value, digits, 16, QChar('0')).toUpper();
+    return QStringLiteral("0x") + QString("%1").arg(value, digits, 16, QChar('0')).toUpper();
 }
 
 QVector<CatalogTopicField> resolveCatalogTopicFields(const QVector<DeviceOption>& devices,
