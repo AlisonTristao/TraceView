@@ -7,6 +7,15 @@ release flow.
 
 ## [Unreleased]
 
+## [3.1.1] - 2026-09-15
+
+### Fixed
+
+- `formatHexId()` uppercased the `0x` prefix along with the hex digits
+  (`"0X11223344"` instead of `"0x11223344"`), affecting the Robot Log
+  widget's Source ID/Boot ID columns and the sourceId/topicId fields in
+  the chart, gauge and text board config editors.
+
 ## [3.1.0] - 2026-09-15
 
 ### Added
