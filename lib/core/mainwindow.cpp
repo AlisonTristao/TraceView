@@ -22,6 +22,7 @@
 #include <QPushButton>
 #include <QSerialPortInfo>
 #include <QSettings>
+#include <QShowEvent>
 #include <QSignalBlocker>
 #include <QStackedWidget>
 #include <QStatusBar>
@@ -638,6 +639,11 @@ void MainWindow::buildMenus() {
     connect(logFolderAction, &QAction::triggered, this, [] {
         QDesktopServices::openUrl(QUrl::fromLocalFile(AppLog::logDirectory()));
     });
+
+    auto* resetPanelsAction = viewMenu->addAction(tr("&Reset Panel Positions"));
+    connect(resetPanelsAction, &QAction::triggered, this,
+            [this] { m_dockController->resetToDefaults(); });
+
     viewMenu->addSeparator();
 
     auto* themeMenu = viewMenu->addMenu(tr("&Theme"));
@@ -1397,6 +1403,14 @@ bool MainWindow::eventFilter(QObject* watched, QEvent* event) {
 
 void MainWindow::positionOverlayPanels() {
     m_dockController->relayout();
+}
+
+void MainWindow::showEvent(QShowEvent* event) {
+    QMainWindow::showEvent(event);
+    if (!m_floatingPanelsPositioned) {
+        m_floatingPanelsPositioned = true;
+        m_dockController->applyFloatingPositions();
+    }
 }
 
 void MainWindow::updateSelectionActions() {

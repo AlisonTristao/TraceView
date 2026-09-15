@@ -65,8 +65,28 @@ public:
     // QSettings (see saveState()) and applies it, falling back to the
     // defaultEdge/preferredThickness() passed to/declared by registerPanel()
     // for a panel with nothing saved yet. Call once, after every
-    // registerPanel() call.
+    // registerPanel() call. A panel restored as Floating is left without
+    // geometry applied yet -- see applyFloatingPositions().
     void restoreState();
+
+    // Positions every currently-floating panel from its saved geometry,
+    // which is stored (see saveState()) as an offset from m_window's
+    // top-left rather than raw screen coordinates -- so a panel dragged out
+    // over a second monitor still opens in the same place relative to
+    // TraceView next time, even if the window ends up on a different
+    // monitor, or the monitor layout changed since. Separate from
+    // restoreState() because it needs m_window's real on-screen position,
+    // which doesn't exist yet at construction time (restoreState() runs
+    // before the window is shown): call this once, from MainWindow's first
+    // showEvent(), instead.
+    void applyFloatingPositions();
+
+    // Puts every registered panel back at the edge/thickness passed to its
+    // registerPanel() call (or, for a panel whose default is itself
+    // Floating, back to defaultFloatingGeometry()) -- the escape hatch for a
+    // panel dragged somewhere unreachable, e.g. off every screen. Persists
+    // the result via saveState() same as a drag would.
+    void resetToDefaults();
 
     // True while a header-initiated move or a grip-initiated resize is in
     // progress -- MainWindow uses this to avoid hiding a panel (via
@@ -87,6 +107,10 @@ signals:
 private:
     struct PanelState {
         DockEdge edge = DockEdge::Left;
+        // The edge passed to registerPanel() -- kept around (separately from
+        // the mutable `edge` above) so resetToDefaults() has something to
+        // reset back to.
+        DockEdge defaultEdge = DockEdge::Left;
         QString settingsId;
         // Current docked width (Left/Right) or height (Top/Bottom); also
         // what a floating panel is sized to the first time it's ever

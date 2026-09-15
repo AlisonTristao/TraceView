@@ -18,6 +18,7 @@ class QAction;
 class QEvent;
 class QLabel;
 class QMenu;
+class QShowEvent;
 class QStackedWidget;
 class QTimer;
 class QToolButton;
@@ -64,6 +65,11 @@ protected:
     // m_propertiesPanel (floated over the canvas, not laid out beside it --
     // see positionOverlayPanels()) get repositioned whenever it changes size.
     bool eventFilter(QObject* watched, QEvent* event) override;
+    // Applies any floating panel's saved position on the very first show --
+    // m_dockController defers that (see PanelDockController::
+    // applyFloatingPositions()) because it needs this window's real
+    // on-screen position, which doesn't exist yet in the constructor.
+    void showEvent(QShowEvent* event) override;
 
 private:
     void buildMenus();
@@ -398,6 +404,11 @@ private:
     QWidget* m_contentRow = nullptr;
     // Owns the panels' drag-to-dock/float behavior -- see paneldockcontroller.h.
     PanelDockController* m_dockController = nullptr;
+    // Guards showEvent() so applyFloatingPositions() runs once, on the
+    // window's first real appearance, rather than snapping any
+    // since-repositioned floating panel back every time the window is
+    // reshown (e.g. after minimizing).
+    bool m_floatingPanelsPositioned = false;
     Ribbon* m_ribbon = nullptr;
     WorkspaceSwitcher* m_workspaceSwitcher = nullptr;
     QAction* m_addWidgetAction = nullptr;

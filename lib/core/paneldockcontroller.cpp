@@ -81,6 +81,7 @@ void PanelDockController::registerPanel(DockablePanel* panel, const QString& set
                                         DockEdge defaultEdge) {
     PanelState state;
     state.edge = defaultEdge;
+    state.defaultEdge = defaultEdge;
     state.settingsId = settingsId;
     state.thickness = panel->preferredThickness();
     state.edgeGrip = new DockResizeGrip(DockResizeGrip::Orientation::Horizontal, m_contentRow);
@@ -139,18 +140,54 @@ void PanelDockController::restoreState() {
 
         const DockEdge edge = edgeFromString(settings.value(prefix + "edge").toString());
         if (edge == DockEdge::Floating) {
-            QRect geometry = settings.value(prefix + "floatingGeometry").toRect();
-            if (!isGeometryOnScreen(geometry)) {
-                geometry = defaultFloatingGeometry(panel);
-            }
             state.edge = DockEdge::Floating;
             panel->setParent(m_window, Qt::Tool | Qt::FramelessWindowHint);
-            panel->setGeometry(geometry);
+            // Geometry comes later, from applyFloatingPositions() -- m_window
+            // isn't on-screen yet at this point (see its own comment).
         } else {
             dockPanel(panel, edge);
         }
     }
     relayout();
+}
+
+void PanelDockController::applyFloatingPositions() {
+    const QSettings settings;
+    for (DockablePanel* panel : m_dockOrder) {
+        PanelState& state = m_states[panel];
+        if (state.edge != DockEdge::Floating) {
+            continue;
+        }
+        const QString prefix = QString(kSettingsPrefix) + state.settingsId + "/";
+        QRect geometry =
+            settings.value(prefix + "floatingGeometry").toRect().translated(m_window->geometry().topLeft());
+        if (!isGeometryOnScreen(geometry)) {
+            geometry = defaultFloatingGeometry(panel);
+        }
+        panel->setGeometry(geometry);
+        updateGripVisibility(panel);
+    }
+}
+
+void PanelDockController::resetToDefaults() {
+    for (DockablePanel* panel : m_dockOrder) {
+        PanelState& state = m_states[panel];
+        state.thickness = panel->preferredThickness();
+        if (state.defaultEdge == DockEdge::Floating) {
+            state.edge = DockEdge::Floating;
+            panel->setParent(m_window, Qt::Tool | Qt::FramelessWindowHint);
+            panel->setGeometry(defaultFloatingGeometry(panel));
+        } else {
+            dockPanel(panel, state.defaultEdge);
+        }
+        saveState(panel);
+    }
+    // dockPanel()/setGeometry() above don't touch visibility (same reasoning
+    // as restoreState()) -- relayout() picks up every panel's new geometry,
+    // and dragFinished lets MainWindow re-apply whatever show/hide state
+    // updatePanelVisibility() already decided on, same as after a real drag.
+    relayout();
+    emit dragFinished();
 }
 
 void PanelDockController::onDragStarted(DockablePanel* panel, QPoint globalPos) {
@@ -407,7 +444,10 @@ void PanelDockController::saveState(DockablePanel* panel) const {
     settings.setValue(prefix + "edge", edgeToString(state.edge));
     settings.setValue(prefix + "thickness", state.thickness);
     if (state.edge == DockEdge::Floating) {
-        settings.setValue(prefix + "floatingGeometry", panel->geometry());
+        // Stored relative to m_window's top-left, not raw screen coordinates
+        // -- see applyFloatingPositions().
+        settings.setValue(prefix + "floatingGeometry",
+                          panel->geometry().translated(-m_window->geometry().topLeft()));
     }
 }
 
