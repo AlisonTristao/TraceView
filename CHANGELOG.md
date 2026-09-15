@@ -7,6 +7,16 @@ release flow.
 
 ## [Unreleased]
 
+## [3.1.0] - 2026-09-15
+
+### Added
+
+- Robot Log widget (`robot_log`): a read-only "serial monitor" for one or
+  more robots' LOG channels, with the same tab-per-device strip as Serial
+  Monitor. Rows show Timestamp/Severity/Source ID/Boot ID/Sequence/Message,
+  colored by severity, bounded to a fixed history so a long-running session
+  doesn't grow without limit.
+
 ## [3.0.0] - 2026-09-14
 
 ### Added
