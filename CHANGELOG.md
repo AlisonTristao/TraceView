@@ -7,6 +7,22 @@ release flow.
 
 ## [Unreleased]
 
+## [3.1.2] - 2026-09-15
+
+### Added
+
+- "Reset Panel Positions" (View menu): puts the Layers and Properties
+  panels back at their default dock edge and thickness, for one dragged
+  somewhere unreachable (e.g. off every screen).
+
+### Fixed
+
+- A floating Layers/Properties panel's saved position was raw screen
+  coordinates, so a monitor layout change (a second monitor added or
+  removed, resolution change, etc.) could open it off-screen or on the
+  wrong monitor. Position is now stored relative to the main window
+  instead, so it stays anchored to TraceView regardless of monitor setup.
+
 ## [3.1.1] - 2026-09-15
 
 ### Fixed
