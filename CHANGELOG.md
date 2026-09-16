@@ -7,6 +7,17 @@ release flow.
 
 ## [Unreleased]
 
+## [3.1.3] - 2026-09-16
+
+### Fixed
+
+- A floating Layers/Properties panel didn't move along with the main
+  window while it was being dragged (including onto a different
+  monitor) -- it's a separate top-level window, and nothing was
+  repositioning it. 3.1.2 only anchored a floating panel's saved
+  position across restarts; it stays anchored to the window through a
+  live drag now too.
+
 ## [3.1.2] - 2026-09-15
 
 ### Added
