@@ -169,6 +169,17 @@ void PanelDockController::applyFloatingPositions() {
     }
 }
 
+void PanelDockController::trackWindowMoved(QPoint delta) {
+    if (delta.isNull()) {
+        return;
+    }
+    for (DockablePanel* panel : m_dockOrder) {
+        if (m_states.value(panel).edge == DockEdge::Floating) {
+            panel->move(panel->pos() + delta);
+        }
+    }
+}
+
 void PanelDockController::resetToDefaults() {
     for (DockablePanel* panel : m_dockOrder) {
         PanelState& state = m_states[panel];

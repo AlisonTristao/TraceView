@@ -18,6 +18,7 @@
 #include <QMenu>
 #include <QMenuBar>
 #include <QMessageBox>
+#include <QMoveEvent>
 #include <QProcess>
 #include <QPushButton>
 #include <QSerialPortInfo>
@@ -1410,6 +1411,16 @@ void MainWindow::showEvent(QShowEvent* event) {
     if (!m_floatingPanelsPositioned) {
         m_floatingPanelsPositioned = true;
         m_dockController->applyFloatingPositions();
+    }
+}
+
+void MainWindow::moveEvent(QMoveEvent* event) {
+    QMainWindow::moveEvent(event);
+    // Ignore moves before the first applyFloatingPositions() -- any floating
+    // panel is still sitting wherever its constructor left it, so there's
+    // nothing meaningful to carry along yet.
+    if (m_floatingPanelsPositioned) {
+        m_dockController->trackWindowMoved(event->pos() - event->oldPos());
     }
 }
 

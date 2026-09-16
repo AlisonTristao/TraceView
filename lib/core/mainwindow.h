@@ -18,6 +18,7 @@ class QAction;
 class QEvent;
 class QLabel;
 class QMenu;
+class QMoveEvent;
 class QShowEvent;
 class QStackedWidget;
 class QTimer;
@@ -70,6 +71,12 @@ protected:
     // applyFloatingPositions()) because it needs this window's real
     // on-screen position, which doesn't exist yet in the constructor.
     void showEvent(QShowEvent* event) override;
+    // Keeps any floating panel visually anchored to the window while it's
+    // being dragged live (including onto a different monitor): shifts every
+    // floating panel by the same delta the window itself just moved by, so
+    // dragging TraceView carries its floating panels along instead of
+    // leaving them behind at their old screen position.
+    void moveEvent(QMoveEvent* event) override;
 
 private:
     void buildMenus();

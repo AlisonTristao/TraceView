@@ -81,6 +81,16 @@ public:
     // showEvent(), instead.
     void applyFloatingPositions();
 
+    // Shifts every currently-floating panel by delta, the same amount
+    // m_window itself just moved by -- call from MainWindow::moveEvent() so
+    // a floating panel stays visually anchored to the window while it's
+    // being dragged live, including across monitors, instead of being left
+    // behind at its old screen position. Since both the panel and m_window
+    // move by the same delta, the offset saveState() persists (panel
+    // geometry relative to m_window's top-left) doesn't change -- no need to
+    // re-save here.
+    void trackWindowMoved(QPoint delta);
+
     // Puts every registered panel back at the edge/thickness passed to its
     // registerPanel() call (or, for a panel whose default is itself
     // Floating, back to defaultFloatingGeometry()) -- the escape hatch for a
