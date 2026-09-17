@@ -1,0 +1,37 @@
+<RCC>
+  <qresource prefix="/">
+    <file alias="icons/ribbon/plus.svg">ribbon/plus.svg</file>
+    <file alias="icons/ribbon/minus.svg">ribbon/minus.svg</file>
+    <file alias="icons/ribbon/arrow-left.svg">ribbon/arrow-left.svg</file>
+    <file alias="icons/ribbon/arrow-right.svg">ribbon/arrow-right.svg</file>
+    <file alias="icons/ribbon/copy.svg">ribbon/copy.svg</file>
+    <file alias="icons/ribbon/paste.svg">ribbon/paste.svg</file>
+    <file alias="icons/ribbon/fullscreen-enter.svg">ribbon/fullscreen-enter.svg</file>
+    <file alias="icons/ribbon/fullscreen-exit.svg">ribbon/fullscreen-exit.svg</file>
+    <file alias="icons/ribbon/bring-to-front.svg">ribbon/bring-to-front.svg</file>
+    <file alias="icons/ribbon/bring-forward.svg">ribbon/bring-forward.svg</file>
+    <file alias="icons/ribbon/send-backward.svg">ribbon/send-backward.svg</file>
+    <file alias="icons/ribbon/send-to-back.svg">ribbon/send-to-back.svg</file>
+    <file alias="icons/ribbon/group.svg">ribbon/group.svg</file>
+    <file alias="icons/ribbon/ungroup.svg">ribbon/ungroup.svg</file>
+    <file alias="icons/ribbon/lock-locked.svg">ribbon/lock-locked.svg</file>
+    <file alias="icons/ribbon/lock-unlocked.svg">ribbon/lock-unlocked.svg</file>
+    <file alias="icons/ribbon/panels-visible.svg">ribbon/panels-visible.svg</file>
+    <file alias="icons/ribbon/panels-hidden.svg">ribbon/panels-hidden.svg</file>
+    <file alias="icons/ribbon/workspace.svg">ribbon/workspace.svg</file>
+    <file alias="icons/ribbon/trash.svg">ribbon/trash.svg</file>
+    <file alias="icons/ribbon/folder.svg">ribbon/folder.svg</file>
+
+    <file alias="icons/settings/general.svg">settings/general.svg</file>
+    <file alias="icons/settings/appearance.svg">settings/appearance.svg</file>
+    <file alias="icons/settings/dashboard.svg">settings/dashboard.svg</file>
+    <file alias="icons/settings/terminal.svg">settings/terminal.svg</file>
+    <file alias="icons/settings/connections.svg">settings/connections.svg</file>
+    <file alias="icons/settings/diagnostics.svg">settings/diagnostics.svg</file>
+    <file alias="icons/settings/updates.svg">settings/updates.svg</file>
+
+    <file alias="icons/dashboard/play.svg">dashboard/play.svg</file>
+    <file alias="icons/dashboard/pause.svg">dashboard/pause.svg</file>
+    <file alias="icons/dashboard/clear.svg">dashboard/clear.svg</file>
+  </qresource>
+</RCC>

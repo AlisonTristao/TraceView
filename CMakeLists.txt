@@ -40,7 +40,11 @@ endif()
 # script runtime (lib/diagram/diagramscriptruntime.h). No QML/.qml files, no
 # scene graph: this is the lightweight "just the JS engine" half of the
 # module, the same subset embedders reach for.
-find_package(Qt6 REQUIRED COMPONENTS Widgets SerialPort Network Qml LinguistTools)
+# Svg is here for lib/theme/iconutils.cpp: every flat UI glyph (ribbon
+# buttons, settings categories, dashboard cell header controls) is an SVG
+# resource (resources/icons/ui.qrc) rendered via QSvgRenderer and tinted to
+# the active theme color at runtime, instead of hand-drawn with QPainter.
+find_package(Qt6 REQUIRED COMPONENTS Widgets SerialPort Network Qml Svg LinguistTools)
 
 # BTP is the canonical, shared source of the BTP v1 wire format and codec
 # (see BTP/PLANO_GERAL.txt) -- TraceView does not keep its own copy of the
@@ -104,6 +108,7 @@ endif()
 qt_add_executable(TraceView
     src/main.cpp
     resources/icons/app.qrc
+    resources/icons/ui.qrc
 )
 
 qt_add_translations(TraceView

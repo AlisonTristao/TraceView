@@ -22,6 +22,8 @@ add_library(traceview_theme STATIC
     ${CMAKE_SOURCE_DIR}/include/traceview/font.h
     theme/busyspinner.cpp
     theme/busyspinner.h
+    theme/iconutils.cpp
+    theme/iconutils.h
 )
 
 target_include_directories(traceview_theme PUBLIC
@@ -31,6 +33,7 @@ target_include_directories(traceview_theme PUBLIC
 
 target_link_libraries(traceview_theme PUBLIC
     Qt6::Widgets
+    Qt6::Svg
 )
 
 # traceview_locale: language/translation definitions and the LanguageManager

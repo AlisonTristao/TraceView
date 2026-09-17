@@ -15,6 +15,7 @@
 
 #include "dashboard/roundedcorners.h"
 #include "dashboardwidget.h"
+#include "theme/iconutils.h"
 #include "traceview/thememanager.h"
 
 namespace traceview {
@@ -89,36 +90,16 @@ void drawTypeIcon(QPainter& painter, const QRect& r, const QString& typeId, cons
 // these sit borderless inside the 24px cell header at kIconSize (14px).
 
 // Play glyph (triangle) while paused -- click resumes; pause glyph (two
-// bars) while running -- click pauses.
+// bars) while running -- click pauses. Loaded from resources/icons/dashboard/
+// (see theme/iconutils.h) instead of hand-drawn, same as the ribbon icons.
 void drawPlayPauseIcon(QPainter& painter, const QRect& r, bool paused, const QColor& color) {
-    painter.save();
-    painter.setRenderHint(QPainter::Antialiasing);
-    painter.translate(r.topLeft());
-    const qreal s = r.width();
-    painter.setPen(Qt::NoPen);
-    painter.setBrush(color);
-
-    if (paused) {
-        painter.drawPolygon(QPolygonF({QPointF(s * 0.22, s * 0.15), QPointF(s * 0.22, s * 0.85),
-                                       QPointF(s * 0.85, s * 0.5)}));
-    } else {
-        const qreal barWidth = s * 0.22;
-        painter.drawRect(QRectF(s * 0.2, s * 0.15, barWidth, s * 0.7));
-        painter.drawRect(QRectF(s * 0.58, s * 0.15, barWidth, s * 0.7));
-    }
-    painter.restore();
+    drawTintedIcon(painter, r, paused ? ":/icons/dashboard/play.svg" : ":/icons/dashboard/pause.svg",
+                   color);
 }
 
 // Stop/clear glyph -- the classic plain filled square.
 void drawClearIcon(QPainter& painter, const QRect& r, const QColor& color) {
-    painter.save();
-    painter.setRenderHint(QPainter::Antialiasing);
-    painter.translate(r.topLeft());
-    const qreal s = r.width();
-    painter.setPen(Qt::NoPen);
-    painter.setBrush(color);
-    painter.drawRect(QRectF(s * 0.18, s * 0.18, s * 0.64, s * 0.64));
-    painter.restore();
+    drawTintedIcon(painter, r, ":/icons/dashboard/clear.svg", color);
 }
 
 // Settings gear glyph -- a ringed hub with radial ticks standing in for

@@ -45,6 +45,16 @@ export EXTRA_PLATFORM_PLUGINS="${EXTRA_PLATFORM_PLUGINS:-libqoffscreen.so;libqwa
 export VERSION="$version" ARCH=x86_64
 
 cmake --install "$build" --prefix "$stage/AppDir/usr"
+# Let linuxdeploy's AppRun keep its Qt environment setup, then apply our
+# platform default before launching TraceView. Explicit user choices win.
+mkdir -p "$stage/AppDir/apprun-hooks"
+cat > "$stage/AppDir/apprun-hooks/traceview-platform.sh" <<'EOF'
+#!/usr/bin/env bash
+# XCB is currently more stable for TraceView, including under XWayland.
+if [ -z "${QT_QPA_PLATFORM:-}" ]; then
+    export QT_QPA_PLATFORM=xcb
+fi
+EOF
 cd "$stage"
 export OUTPUT="TraceView-$version-linux-x64.AppImage"
 # Qt's TLS backend dlopens OpenSSL, so ldd cannot discover libssl for us.
