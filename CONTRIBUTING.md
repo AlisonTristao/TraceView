@@ -99,6 +99,9 @@ ctest --preset linux-ninja
 ./build/linux-ninja/TraceView
 ```
 
+On Ubuntu 22.04, replace `qt6-svg-dev` with `libqt6svg6-dev` and
+`qt6-serialport-dev` with `libqt6serialport6-dev` in the install command above.
+
 Distribution package names vary. When using a Qt installation outside the
 system paths, set its root before configuring, for example:
 
