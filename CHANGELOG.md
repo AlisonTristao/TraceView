@@ -7,6 +7,15 @@ release flow.
 
 ## [Unreleased]
 
+## [3.2.1] - 2026-09-17
+
+### Fixed
+
+- Release CI's Linux package job installed `qt6-serialport-dev`, which
+  doesn't exist on the `ubuntu-22.04` runner (only from `noble`/24.04
+  onward); switched to `libqt6serialport6-dev`, the correct package on
+  jammy.
+
 ## [3.2.0] - 2026-09-17
 
 ### Changed
