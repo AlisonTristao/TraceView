@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Usage: bash scripts/build_linux_appimage.sh [configured-release-build]
+# Usage: bash scripts/build_linux_appimage.sh [configured-release-build] [package-version]
 [[ $(uname -s) == Linux && $(uname -m) == x86_64 ]] || {
     echo 'AppImage packaging requires Linux x86_64.' >&2; exit 1;
 }
 build=$(realpath "${1:-build/linux-ninja-release}")
-version=$(cat "$build/appimage-version.txt")
+version=${2-$(cat "$build/appimage-version.txt")}
 [[ $version =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || {
-    echo 'Invalid or missing CMake project version.' >&2; exit 1;
+    echo 'Invalid or missing package version (expected X.Y.Z).' >&2; exit 1;
 }
 tools="$build/appimage-tools"
 mkdir -p "$tools"

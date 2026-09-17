@@ -152,6 +152,12 @@ as a GitHub Release whenever a `vX.Y.Z` tag is pushed (see "Versioning and
 releases" below) -- the commands below are for building a package locally
 without cutting a release.
 
+Published package filenames take their version from the release tag, even
+if `CMakeLists.txt` still contains an older version. For example, `v3.2.7`
+produces `TraceView-3.2.7-windows-x64.exe` and
+`TraceView-3.2.7-linux-x64.AppImage`. Local packages default to the CMake
+version; the AppImage script also accepts a package version as its second argument.
+
 **Windows (NSIS installer)** — requires [NSIS](https://nsis.sourceforge.io/)
 for `makensis.exe`, installed once:
 

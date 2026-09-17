@@ -7,6 +7,60 @@ release flow.
 
 ## [Unreleased]
 
+## [3.2.9] - 2026-09-17
+
+### Fixed
+
+- Release packaging on Ubuntu 22.04 now uses the correct runner-specific Qt
+  and system dependency setup, avoiding mismatches between the 22.04 build
+  host and the newer 24.04 assumptions in the appimage workflow.
+
+## [3.2.8] - 2026-09-17
+
+### Changed
+
+- Added the Qt SVG development package to the release and build jobs so the
+  app's vector icon resources are available during CI validation and final
+  package creation.
+
+## [3.2.7] - 2026-09-17
+
+### Changed
+
+- Switched the app's ribbon and settings glyphs to SVG assets, and defaulted
+  the Linux AppImage runtime to the XCB platform plugin for more reliable
+  desktop startup behavior.
+
+## [3.2.6] - 2026-09-17
+
+### Fixed
+
+- Corrected the project version metadata for the 3.2.6 release so the
+  packaged build and version checks line up with the tagged release.
+
+## [3.2.5] - 2026-09-17
+
+### Fixed
+
+- Polished the chart and control configuration editors plus the device
+  configuration dialog so dashboard editing and per-device settings remain
+  consistent during release validation.
+
+## [3.2.4] - 2026-09-17
+
+### Added
+
+- Added a Windows installer smoke test to the release workflow, and tightened
+  the Ubuntu 22.04 packaging checks so package validation covers the supported
+  Linux runner more reliably.
+
+## [3.2.3] - 2026-09-17
+
+### Changed
+
+- Updated the release workflow to the newer Qt package version used by the
+  packaging and build environment.
+
 ## [3.2.2] - 2026-09-17
 
 ### Fixed
