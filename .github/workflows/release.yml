@@ -89,12 +89,42 @@ jobs:
             build/windows-mingw-release/sha256-windows.txt
           if-no-files-found: error
 
+  windows-smoke:
+    name: Windows installer smoke
+    needs: windows-package
+    runs-on: windows-2025
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download package artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: windows-package
+          path: package
+
+      - name: Install and launch package
+        shell: pwsh
+        run: |
+          $installer = Get-ChildItem package/TraceView-*-windows-x64.exe | Select-Object -First 1
+          if (-not $installer) { throw "No Windows installer found under package" }
+          .\scripts\smoke_windows_installer.ps1 -Installer $installer.FullName
+
   # ============================================================
   # Linux package (.AppImage)
   # ============================================================
   linux-package:
     name: Linux package (.AppImage)
-    runs-on: ubuntu-24.04
+    # Built on the oldest Ubuntu LTS we still support (22.04) rather than
+    # ubuntu-24.04: binaries link against whatever glibc/libstdc++ is on the
+    # build host, and glibc symbol versioning is forward-only (an older
+    # glibc's libc.so.6 can't satisfy a GLIBC_2.38 requirement baked in by a
+    # 24.04 build). AppImage bundles Qt but never libc itself, so building on
+    # 24.04 silently produced AppImages that only ran on 24.04+ hosts -- this
+    # is what broke the ubuntu:22.04 leg of the linux-smoke matrix below.
+    runs-on: ubuntu-22.04
     timeout-minutes: 30
 
     steps:
@@ -204,7 +234,7 @@ jobs:
   # ============================================================
   publish:
     name: Publish release
-    needs: [windows-package, linux-package, linux-smoke]
+    needs: [windows-package, windows-smoke, linux-package, linux-smoke]
     runs-on: ubuntu-24.04
     timeout-minutes: 15
 
