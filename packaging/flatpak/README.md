@@ -10,7 +10,7 @@ then run these commands from the repository root on Linux x86_64:
 ```sh
 flatpak remote-add --user --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
 flatpak install --user flathub org.kde.Platform//6.10 org.kde.Sdk//6.10
-flatpak-builder --user --install --force-clean --repo=flatpak-repo build-flatpak packaging/flatpak/io.github.alisontristao.TraceView.yml
+flatpak-builder --user --install --force-clean --repo=flatpak-repo build-flatpak io.github.alisontristao.TraceView.yml
 flatpak run io.github.alisontristao.TraceView
 flatpak info --show-permissions io.github.alisontristao.TraceView
 ```

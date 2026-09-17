@@ -28,7 +28,7 @@ jobs:
           appstreamcli validate --no-net resources/linux/io.github.alisontristao.TraceView.metainfo.xml
       - name: Build in offline sandbox and export bundle
         run: |
-          manifest=packaging/flatpak/io.github.alisontristao.TraceView.yml
+          manifest=io.github.alisontristao.TraceView.yml
           flatpak-builder --user --download-only build-flatpak "$manifest"
           flatpak-builder --user --disable-download --sandbox --force-clean --repo=flatpak-repo build-flatpak "$manifest"
           version=$(sed -n 's/^    VERSION \([0-9.]*\)$/\1/p' CMakeLists.txt)

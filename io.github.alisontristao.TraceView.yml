@@ -35,7 +35,7 @@ modules:
       # Development/CI builds use the checked-out revision, including local edits.
       # Flathub submission must replace this with a pinned upstream git source.
       - type: dir
-        path: ../..
+        path: .
         skip: [.git, build, .flatpak-builder, flatpak-repo, build-flatpak]
       - type: git
         url: https://github.com/AlisonTristao/BTP.git
