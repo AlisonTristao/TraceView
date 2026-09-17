@@ -8,7 +8,8 @@
 #include <QProcess>
 
 #if defined(Q_OS_LINUX)
-#include <QTemporaryDir>
+#include <QSaveFile>
+#include <QProcessEnvironment>
 #endif
 
 namespace traceview {
@@ -72,102 +73,72 @@ bool UpdateInstaller::install(const QString& downloadedFilePath, QString* reason
 
 #elif defined(Q_OS_LINUX)
 
-namespace {
-
-// Waits for `pid` to exit, replaces `installDir`'s contents with
-// `stagingDir`'s, and relaunches `exePath` -- run detached so it survives
-// this process quitting. `cp -a ".../." installDir/` copies over the
-// existing tree (including dotfiles) rather than removing it first: a
-// failure partway (e.g. a permission the writability check below didn't
-// catch) leaves whatever files were already copied instead of an empty
-// install directory.
-QString buildApplyScript(qint64 pid, const QString& stagingDir, const QString& installDir,
-                          const QString& exePath) {
-    return QStringLiteral(
-               "#!/bin/sh\n"
-               "while kill -0 %1 2>/dev/null; do sleep 0.3; done\n"
-               "if cp -a \"%2/.\" \"%3/\"; then\n"
-               "  rm -rf \"%2\"\n"
-               "  nohup \"%4\" >/dev/null 2>&1 &\n"
-               "fi\n")
-        .arg(pid)
-        .arg(stagingDir, installDir, exePath);
-}
-
-}  // namespace
-
 bool UpdateInstaller::install(const QString& downloadedFilePath, QString* reason) {
-    if (!QFileInfo::exists(downloadedFilePath)) {
-        if (reason) {
-            *reason = QObject::tr("Downloaded archive not found: %1").arg(downloadedFilePath);
-        }
+    const auto fail = [reason](const QString& message) {
+        if (reason) *reason = message;
         return false;
+    };
+    const QString appImage = qEnvironmentVariable("APPIMAGE");
+    const QFileInfo imageInfo(appImage);
+    if (appImage.isEmpty() || !imageInfo.isAbsolute() || !imageInfo.isFile()) {
+        return fail(QObject::tr("Automatic installation requires running an AppImage. "
+                                "Download the AppImage from the release page."));
     }
-
-    // applicationDirPath() is .../bin for a Linux install (see CMakeLists.txt's
-    // install(TARGETS ... RUNTIME DESTINATION bin)); its parent is the tree
-    // the tarball originally expanded into, wherever the user put it.
-    QDir installQDir(QCoreApplication::applicationDirPath());
-    installQDir.cdUp();
-    const QFileInfo installDirInfo(installQDir.absolutePath());
-    if (!installDirInfo.isWritable()) {
-        if (reason) {
-            *reason = QObject::tr(
-                          "%1 is not writable by this user -- download the new version from "
-                          "the release page and replace it manually.")
-                          .arg(installDirInfo.absoluteFilePath());
-        }
-        return false;
+    // Resolve symlinks so an update replaces the actual image, not its launcher link.
+    const QString target = imageInfo.canonicalFilePath();
+    const QFileInfo targetInfo(target);
+    if (!targetInfo.isWritable() || !QFileInfo(targetInfo.absolutePath()).isWritable()) {
+        return fail(QObject::tr("The AppImage and its directory must be writable. "
+                                "Download the update and replace it manually."));
     }
-
-    // setAutoRemove(false): the apply script deletes this directory itself
-    // once the copy succeeds, after this object (and the process it belongs
-    // to) is already gone.
-    QTemporaryDir stagingDir;
-    stagingDir.setAutoRemove(false);
-    if (!stagingDir.isValid()) {
-        if (reason) {
-            *reason = QObject::tr("Couldn't create a temporary directory to extract into.");
-        }
-        return false;
+    QFile source(downloadedFilePath);
+    if (QFileInfo(downloadedFilePath).canonicalFilePath() == target ||
+        !source.open(QIODevice::ReadOnly)) {
+        return fail(QObject::tr("Couldn't open the downloaded AppImage."));
     }
-
-    QProcess tar;
-    tar.start(QStringLiteral("tar"), {QStringLiteral("xzf"), downloadedFilePath, QStringLiteral("-C"),
-                                       stagingDir.path()});
-    if (!tar.waitForFinished(60000) || tar.exitStatus() != QProcess::NormalExit ||
-        tar.exitCode() != 0) {
-        if (reason) {
-            *reason = QObject::tr("Couldn't extract the downloaded archive.");
-        }
-        return false;
+    // Type-2 AppImage: ELF magic followed by AI\x02 at offset 8.
+    const QByteArray header = source.peek(11);
+    if (header.size() != 11 || header.left(4) != QByteArray::fromHex("7f454c46") ||
+        header.mid(8, 3) != QByteArray::fromHex("414902")) {
+        return fail(QObject::tr("The downloaded file is not a supported AppImage."));
     }
-
-    // CPack's TGZ generator wraps the tree in one top-level
-    // "TraceView-<version>-<platform>" directory (CPACK_PACKAGE_FILE_NAME);
-    // find it rather than assuming a fixed name, since that names the
-    // version being installed TO, not the one already running.
-    const QDir extracted(stagingDir.path());
-    const QStringList topLevel = extracted.entryList(QDir::Dirs | QDir::NoDotAndDotDot);
-    const QString sourceDir =
-        topLevel.size() == 1 ? extracted.filePath(topLevel.first()) : extracted.path();
-
-    const QString scriptPath = stagingDir.path() + QStringLiteral("_apply.sh");
-    QFile script(scriptPath);
-    if (!script.open(QIODevice::WriteOnly)) {
-        if (reason) {
-            *reason = QObject::tr("Couldn't write the update script.");
-        }
-        return false;
+    // QSaveFile stages on the same filesystem, then atomically renames. Never
+    // fall back to truncating the running image. Linux keeps its mounted inode
+    // alive until this process exits, even after its pathname is replaced.
+    QSaveFile replacement(target);
+    replacement.setDirectWriteFallback(false);
+    if (!replacement.open(QIODevice::WriteOnly)) return fail(replacement.errorString());
+    while (!source.atEnd()) {
+        const QByteArray chunk = source.read(1024 * 1024);
+        if (chunk.isEmpty() && source.error() != QFileDevice::NoError)
+            return fail(source.errorString());
+        if (replacement.write(chunk) != chunk.size()) return fail(replacement.errorString());
     }
-    script.write(buildApplyScript(QCoreApplication::applicationPid(), sourceDir,
-                                   installDirInfo.absoluteFilePath(),
-                                   QCoreApplication::applicationFilePath())
-                     .toUtf8());
-    script.close();
-    script.setPermissions(script.permissions() | QFileDevice::ExeOwner);
+    if (!replacement.setPermissions(targetInfo.permissions() | QFileDevice::ExeOwner))
+        return fail(replacement.errorString());
+    if (!replacement.commit()) return fail(replacement.errorString());
 
-    return QProcess::startDetached(QStringLiteral("/bin/sh"), {scriptPath});
+    // Pass paths as arguments, never as shell source. Drop paths into the old
+    // AppImage mount; the new AppRun will configure its own Qt/library paths.
+    QProcess launcher;
+    auto environment = QProcessEnvironment::systemEnvironment();
+    for (const auto* key : {"APPIMAGE", "APPDIR", "ARGV0", "OWD", "LD_LIBRARY_PATH",
+                            "LD_PRELOAD", "QT_PLUGIN_PATH", "QT_QPA_PLATFORM_PLUGIN_PATH",
+                            "QML2_IMPORT_PATH", "QML_IMPORT_PATH"}) {
+        environment.remove(QString::fromLatin1(key));
+    }
+    launcher.setProcessEnvironment(environment);
+    launcher.setWorkingDirectory(targetInfo.absolutePath());
+    launcher.setProgram(QStringLiteral("/bin/sh"));
+    launcher.setArguments({QStringLiteral("-c"),
+        QStringLiteral("while kill -0 \"$1\" 2>/dev/null; do sleep 0.3; done; exec \"$2\""),
+        QStringLiteral("traceview-relaunch"), QString::number(QCoreApplication::applicationPid()),
+        target});
+    if (!launcher.startDetached()) {
+        return fail(QObject::tr("The update was installed, but relaunch failed. "
+                                "Close TraceView and open the AppImage again."));
+    }
+    return true;
 }
 
 #else

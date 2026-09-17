@@ -146,6 +146,9 @@ add_traceview_test(test_mdnsresolver traceview_ota)
 # UpdateChecker's network callback hands off to.
 add_traceview_test(test_semver traceview_updater)
 add_traceview_test(test_updatechecker traceview_updater)
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    add_traceview_test(test_updateinstaller traceview_updater)
+endif()
 add_traceview_test(test_updatedownloader traceview_updater)
 
 # Diagnostics (lib/diagnostics): the two in-memory buffers behind the

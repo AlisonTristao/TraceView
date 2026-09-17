@@ -80,10 +80,13 @@ The release workflow produces these x64 packages:
 | Platform | Package | Runtime requirements |
 |---|---|---|
 | Windows | `TraceView-<version>-windows-x64.exe` NSIS installer | Bundles Qt and MinGW runtime libraries. |
-| Linux | `TraceView-<version>-linux-x64.tar.gz` | Bundles Qt, plugins and collected third-party dependencies; requires compatible glibc and the desktop X11/Wayland/GL stack. |
+| Linux | `TraceView-<version>-linux-x64.AppImage` | Bundles Qt, plugins and collected third-party dependencies; requires compatible glibc and the desktop X11/Wayland/GL stack. |
 
-On Linux, extract the complete archive and run `bin/TraceView` inside the
-extracted directory. Keep its sibling `lib/` and `plugins/` directories.
+On Linux, run `chmod +x TraceView-*-linux-x64.AppImage`, then open the AppImage.
+If FUSE is unavailable, run it with `--appimage-extract-and-run`.
+Automatic installation requires a writable AppImage and its containing directory.
+Development builds can check releases but cannot install updates automatically.
+Older `.tar.gz` installations need a one-time manual download of the AppImage.
 Serial and HID access also require the operating system's device permissions.
 
 TraceView checks for an application update at startup, at most once a day,

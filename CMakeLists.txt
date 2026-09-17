@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.21)
 
 project(TraceView
-    VERSION 3.1.3
+    VERSION 3.2.0
     DESCRIPTION "Real-time telemetry dashboard for ESP32/ESP-NOW robots"
     LANGUAGES CXX
 )
@@ -182,13 +182,7 @@ endif()
 # dir -- TraceView is a root-level target, so $<TARGET_FILE_DIR:TraceView>
 # is the build directory itself and also holds CMakeCache.txt/CMakeFiles/
 # test and tool binaries/etc., none of which belong in the package).
-# Linux: TGZ generator -> bin/TraceView + Qt (and Qt's own third-party libs)
-# bundled into lib/ and plugins/ by scripts/collect_linux_deps.sh, the same
-# "bundle everything except the OS itself" idea as windeployqt above -- see
-# that script for exactly what does and doesn't get bundled and why. BTP and
-# hidapi are fetched as static libs (BUILD_SHARED_LIBS forced OFF above), so
-# only Qt itself needs collecting. macOS is out of scope here even though
-# MACOSX_BUNDLE is set above.
+# Linux: AppImage via scripts/build_linux_appimage.sh and linuxdeploy-plugin-qt.
 # -----------------------------------------------------------------------------
 if(WIN32)
     install(TARGETS TraceView RUNTIME DESTINATION .)
@@ -233,31 +227,14 @@ if(WIN32)
 else()
     install(TARGETS TraceView RUNTIME DESTINATION bin)
 
-    # qmake is Qt's own blessed way to ask "where are your plugins", and
-    # covers every distro layout (Debian's /usr/lib/x86_64-linux-gnu/qt6/...,
-    # Arch's /usr/lib/qt6/..., etc.) without hardcoding one.
-    find_program(QMAKE_EXECUTABLE NAMES qmake6 qmake)
-    find_program(PATCHELF_EXECUTABLE NAMES patchelf)
-    # Invoked via bash explicitly (like collect_windows_deps.sh below), not
-    # relying on the script's own +x bit -- this repo's checkouts are mostly
-    # on Windows, where git file-mode tracking isn't reliable.
-    find_program(BASH_EXECUTABLE bash)
-    if(QMAKE_EXECUTABLE AND PATCHELF_EXECUTABLE AND BASH_EXECUTABLE)
-        execute_process(
-            COMMAND "${QMAKE_EXECUTABLE}" -query QT_INSTALL_PLUGINS
-            OUTPUT_VARIABLE QT_PLUGINS_DIR
-            OUTPUT_STRIP_TRAILING_WHITESPACE
-        )
-        install(CODE "
-            execute_process(COMMAND \"${BASH_EXECUTABLE}\"
-                \"${CMAKE_SOURCE_DIR}/scripts/collect_linux_deps.sh\"
-                \"\${CMAKE_INSTALL_PREFIX}\" \"${QT_PLUGINS_DIR}\")
-        ")
-    else()
-        message(WARNING "qmake/patchelf/bash not found: a CPack/TGZ package "
-            "built from this configure will not bundle Qt, and will need a "
-            "matching system Qt6 install on the target machine to run.")
+    if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+        install(FILES resources/linux/traceview.desktop DESTINATION share/applications)
+        install(FILES resources/icons/app_256.png
+            DESTINATION share/icons/hicolor/256x256/apps RENAME traceview.png)
+        file(GENERATE OUTPUT "${CMAKE_BINARY_DIR}/appimage-version.txt"
+            CONTENT "${PROJECT_VERSION}\n")
     endif()
+
 endif()
 
 set(CPACK_PACKAGE_NAME "TraceView")
@@ -285,11 +262,7 @@ if(WIN32)
     set(CPACK_NSIS_ENABLE_UNINSTALL_BEFORE_INSTALL ON)
     # A fixed, predictable name (rather than CPack's own default) is what
     # the self-updater (lib/updater/updatechecker.cpp) matches a GitHub
-    # release asset against, by suffix -- ".exe" here, ".tar.gz" below.
+    # release asset against, by suffix -- ".exe" here, ".AppImage" on Linux.
     set(CPACK_PACKAGE_FILE_NAME "TraceView-${PROJECT_VERSION}-windows-x64")
-elseif(UNIX)
-    set(CPACK_GENERATOR "TGZ")
-    set(CPACK_PACKAGE_FILE_NAME "TraceView-${PROJECT_VERSION}-linux-x64")
+    include(CPack)
 endif()
-
-include(CPack)

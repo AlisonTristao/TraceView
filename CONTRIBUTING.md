@@ -143,7 +143,7 @@ package list.
 
 ### Packaging
 
-Produces a Windows NSIS installer or a Linux `.tar.gz` from a Release build.
+Produces a Windows NSIS installer or a Linux AppImage from a Release build.
 `.github/workflows/release.yml` runs the same steps and publishes the result
 as a GitHub Release whenever a `vX.Y.Z` tag is pushed (see "Versioning and
 releases" below) -- the commands below are for building a package locally
@@ -174,28 +174,39 @@ The installer bundles the Qt and MinGW runtime DLLs (`windeployqt
 --compiler-runtime`), so it runs on a machine without Qt or this MinGW kit
 installed.
 
-**Linux (.tar.gz)**:
+**Linux (AppImage)**:
 
-Install `patchelf` before configuring (`sudo apt install patchelf`).
-Packaging also needs `bash` and Qt's `qmake6`/`qmake` on `PATH`. If these
-are missing at configure time, CMake warns and skips dependency bundling.
+Install `curl`, `file`, `patchelf`, `desktop-file-utils`, Qt 6 development
+packages, OpenSSL 3 runtime (`libssl3`) and `qt6-wayland`. Qt's `qmake6` must be on PATH (or set `QMAKE`).
 
 ```sh
 cmake --preset linux-ninja-release
 cmake --build --preset linux-ninja-release
-cd build/linux-ninja-release
-cpack -G TGZ
+bash scripts/build_linux_appimage.sh build/linux-ninja-release
 ```
 
-Requires [patchelf](https://github.com/NixOS/patchelf) (`apt install patchelf`),
-used to point the bundled binary and libraries at each other instead of the
-system search path.
+The script downloads linuxdeploy and linuxdeploy-plugin-qt into the build
+folder, installs into a fresh AppDir and produces
+`build/linux-ninja-release/TraceView-<version>-linux-x64.AppImage`.
+Set `LINUXDEPLOY` and `LINUXDEPLOY_PLUGIN_QT` to use existing tools.
+The Qt plugin bundles libraries, plugins and translations; see its
+[configuration](https://github.com/linuxdeploy/linuxdeploy-plugin-qt).
+The legacy manual Qt bundling script has been replaced by linuxdeploy.
+OpenSSL is included explicitly because Qt loads its TLS backend dynamically.
 
-The tarball bundles Qt and its own third-party libraries (ICU, OpenSSL,
-fontconfig, etc.) into `lib/` and `plugins/`, so it runs on a machine
-without Qt 6 installed. It still relies on the target having glibc and the
-X11/Wayland/GL stack a Linux desktop already has -- those aren't bundled,
-the same way the Windows installer above doesn't bundle `user32.dll`.
+Release packaging uses Ubuntu 22.04 for its older glibc baseline. Targets
+still need compatible glibc and the desktop graphics stack, but no system Qt.
+Use `--appimage-extract-and-run` where FUSE is unavailable.
+
+The release workflow gates publication on headless startup smoke tests in
+Ubuntu, Fedora, Arch and Mint containers with no system Qt. Run the same check
+locally with `bash scripts/smoke_linux_appimage.sh <artifact.AppImage>`.
+Before releasing, also check X11/Wayland, translations, networking and device access
+on desktop installations.
+Test an update between two AppImages in a writable folder: verify the checksum,
+replacement at the original path, executable permission and relaunch. Repeat
+with spaces/apostrophes in the path and a read-only destination. Development
+builds refuse installation. Older TGZ releases require a manual first migration.
 
 ## Branch model
 

@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=TraceView
+Comment=Real-time telemetry dashboard
+Exec=TraceView
+Icon=traceview
+Terminal=false
+Categories=Development;
+StartupWMClass=TraceView

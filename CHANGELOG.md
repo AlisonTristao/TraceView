@@ -7,6 +7,20 @@ release flow.
 
 ## [Unreleased]
 
+## [3.2.0] - 2026-09-17
+
+### Changed
+
+- Linux packaging migrated from a manually-bundled `.tar.gz` (CPack TGZ +
+  `scripts/collect_linux_deps.sh`) to an `.AppImage` built with
+  `scripts/build_linux_appimage.sh` and linuxdeploy/linuxdeploy-plugin-qt.
+- The self-updater's Linux install step now replaces the running AppImage
+  in place (verify checksum, atomic swap, relaunch) instead of extracting
+  a tarball over the install directory. Automatic installation requires
+  running as an AppImage from a writable location; other cases are sent
+  to the release page to download the AppImage manually. Older `.tar.gz`
+  installations need a one-time manual migration to the AppImage.
+
 ## [3.1.3] - 2026-09-16
 
 ### Fixed

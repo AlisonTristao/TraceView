@@ -2761,6 +2761,15 @@ void MainWindow::onUpdateCheckFailed(const QString& reason) {
 }
 
 void MainWindow::startUpdateDownload(const UpdateInfo& info) {
+#if defined(Q_OS_LINUX)
+    if (qEnvironmentVariableIsEmpty("APPIMAGE")) {
+        QMessageBox::information(this, tr("Update"),
+            tr("Automatic installation requires running an AppImage. "
+               "Download the AppImage from the release page."));
+        QDesktopServices::openUrl(info.releaseUrl);
+        return;
+    }
+#endif
     if (!info.assetUrl.isValid()) {
         QMessageBox::information(
             this, tr("Update"),

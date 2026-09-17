@@ -1,6 +1,6 @@
 name: Release
 
-# Builds the Windows NSIS installer and the Linux .tar.gz from a Release
+# Builds the Windows NSIS installer and the Linux .AppImage from a Release
 # configuration (see CMakePresets.json's *-release presets and CMakeLists.txt's
 # CPack block) and publishes both, plus a combined SHA256SUMS.txt, as a GitHub
 # Release -- what lib/updater/updatechecker.cpp polls for. See CONTRIBUTING.md
@@ -90,11 +90,11 @@ jobs:
           if-no-files-found: error
 
   # ============================================================
-  # Linux package (.tar.gz)
+  # Linux package (.AppImage)
   # ============================================================
   linux-package:
-    name: Linux package (.tar.gz)
-    runs-on: ubuntu-24.04
+    name: Linux package (.AppImage)
+    runs-on: ubuntu-22.04
     timeout-minutes: 30
 
     steps:
@@ -117,7 +117,10 @@ jobs:
             qt6-wayland \
             libudev-dev \
             libusb-1.0-0-dev \
-            patchelf
+            patchelf \
+            curl \
+            file \
+            desktop-file-utils
 
       - name: Configure (Release)
         run: cmake --preset linux-ninja-release
@@ -125,31 +128,74 @@ jobs:
       - name: Build (Release)
         run: cmake --build --preset linux-ninja-release
 
-      - name: Package (CPack / TGZ)
-        run: |
-          cd build/linux-ninja-release
-          cpack -G TGZ
+      - name: Package (AppImage)
+        run: bash scripts/build_linux_appimage.sh build/linux-ninja-release
 
       - name: Compute checksum
         run: |
           cd build/linux-ninja-release
-          sha256sum TraceView-*-linux-x64.tar.gz > sha256-linux.txt
+          sha256sum TraceView-*-linux-x64.AppImage > sha256-linux.txt
 
       - name: Upload package artifact
         uses: actions/upload-artifact@v4
         with:
           name: linux-package
           path: |
-            build/linux-ninja-release/TraceView-*-linux-x64.tar.gz
+            build/linux-ninja-release/TraceView-*-linux-x64.AppImage
             build/linux-ninja-release/sha256-linux.txt
           if-no-files-found: error
+
+  linux-smoke:
+    name: AppImage smoke (${{ matrix.image }})
+    needs: linux-package
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        image: [ubuntu:22.04, fedora:44, 'archlinux:base-devel', 'linuxmintd/mint22.3-amd64:latest']
+    container:
+      image: ${{ matrix.image }}
+    steps:
+      - name: Install desktop runtime (no Qt)
+        shell: bash
+        run: |
+          if command -v apt-get >/dev/null; then
+            apt-get update
+            apt-get install -y --no-install-recommends ca-certificates libgl1 libegl1 libopengl0 libharfbuzz0b \
+              libxkbcommon-x11-0 libxcb-cursor0 libxcb-icccm4 libxcb-image0 \
+              libxcb-keysyms1 libxcb-render-util0 libxcb-xinerama0 libfontconfig1 \
+              libdbus-1-3 libudev1
+          elif command -v dnf >/dev/null; then
+            dnf install -y mesa-libGL mesa-libEGL libglvnd-opengl harfbuzz libxkbcommon-x11 xcb-util-cursor \
+              xcb-util-wm xcb-util-image xcb-util-keysyms xcb-util-renderutil \
+              fontconfig dbus-libs systemd-libs
+          else
+            pacman -Syu --noconfirm
+            pacman -S --noconfirm --needed mesa libglvnd libxkbcommon-x11 \
+              xcb-util-cursor xcb-util-wm xcb-util-image xcb-util-keysyms \
+              xcb-util-renderutil fontconfig harfbuzz dbus systemd-libs
+          fi
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: linux-package
+          path: package
+      - name: Launch without system Qt or FUSE
+        shell: bash
+        run: |
+          if ldconfig -p | grep 'libQt6Core'; then
+            echo 'Smoke image unexpectedly contains system Qt 6' >&2
+            exit 1
+          fi
+          bash scripts/smoke_linux_appimage.sh package/TraceView-*-linux-x64.AppImage
 
   # ============================================================
   # Publish the GitHub Release both packages feed into
   # ============================================================
   publish:
     name: Publish release
-    needs: [windows-package, linux-package]
+    needs: [windows-package, linux-package, linux-smoke]
     runs-on: ubuntu-24.04
     timeout-minutes: 15
 
@@ -170,7 +216,7 @@ jobs:
         run: |
           gh release create "${{ github.ref_name }}" \
             packages/windows-package/TraceView-*-windows-x64.exe \
-            packages/linux-package/TraceView-*-linux-x64.tar.gz \
+            packages/linux-package/TraceView-*-linux-x64.AppImage \
             SHA256SUMS.txt \
             --repo "${{ github.repository }}" \
             --title "TraceView ${{ github.ref_name }}" \

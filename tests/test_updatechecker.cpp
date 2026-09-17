@@ -33,8 +33,12 @@ QByteArray releasesJson(const QString& tagName, bool prerelease = false) {
         "assets": [
             {"name": "TraceView-9.9.9-windows-x64.exe",
              "browser_download_url": "https://example.invalid/win.exe", "size": 123},
+            {"name": "TraceView-9.9.9-linux-x64.AppImage",
+             "browser_download_url": "https://example.invalid/linux.AppImage", "size": 456},
+            {"name": "TraceView-9.9.9-linux-arm64.AppImage",
+             "browser_download_url": "https://example.invalid/arm.AppImage", "size": 789},
             {"name": "TraceView-9.9.9-linux-x64.tar.gz",
-             "browser_download_url": "https://example.invalid/linux.tar.gz", "size": 456},
+             "browser_download_url": "https://example.invalid/legacy.tar.gz", "size": 999},
             {"name": "SHA256SUMS.txt",
              "browser_download_url": "https://example.invalid/SHA256SUMS.txt", "size": 78}
         ]
@@ -49,6 +53,12 @@ void TestUpdateChecker::detectsNewerRelease() {
     QVERIFY(result.has_value());
     QVERIFY(result->hasUpdate);
     QCOMPARE(result->info.version, QStringLiteral("2.5.0"));
+#if defined(Q_OS_LINUX)
+    QCOMPARE(result->info.assetName, QStringLiteral("TraceView-9.9.9-linux-x64.AppImage"));
+    QCOMPARE(result->info.assetSize, qint64(456));
+#elif defined(Q_OS_WIN)
+    QCOMPARE(result->info.assetName, QStringLiteral("TraceView-9.9.9-windows-x64.exe"));
+#endif
     QVERIFY(result->info.releaseUrl.isValid());
     QVERIFY(result->info.checksumsUrl.isValid());
 }

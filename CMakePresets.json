@@ -72,7 +72,7 @@
         {
             "name": "linux-ninja-release",
             "displayName": "Linux (Ninja, Release)",
-            "description": "Release build for packaging: optimized, no debug symbols. Used to produce the .tar.gz package via CPack.",
+            "description": "Release build for packaging: optimized, no debug symbols. Used to produce the AppImage via scripts/build_linux_appimage.sh.",
             "inherits": "linux-ninja",
             "binaryDir": "${sourceDir}/build/linux-ninja-release",
             "cacheVariables": {
