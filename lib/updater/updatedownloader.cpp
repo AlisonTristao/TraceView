@@ -30,6 +30,10 @@ UpdateDownloader::UpdateDownloader(QObject* parent) : QObject(parent) {
 
 void UpdateDownloader::download(const QUrl& assetUrl, const QString& assetName,
                                  const QUrl& checksumsUrl) {
+#if defined(TRACEVIEW_FLATPAK_BUILD)
+    emit failed(tr("Updates are managed by Flatpak. Use 'flatpak update'."));
+    return;
+#endif
     m_assetUrl = assetUrl;
     m_assetName = assetName;
     m_checksumsUrl = checksumsUrl;

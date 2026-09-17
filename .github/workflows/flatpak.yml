@@ -1,0 +1,66 @@
+name: Flatpak
+
+on:
+  workflow_call:
+  workflow_dispatch:
+  pull_request:
+  push:
+    branches: [main, develop]
+
+permissions:
+  contents: read
+
+jobs:
+  linux-flatpak-package:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Flatpak tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y flatpak flatpak-builder appstream desktop-file-utils
+          flatpak remote-add --user --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+          flatpak install --user --noninteractive -y flathub org.kde.Platform//6.10 org.kde.Sdk//6.10
+      - name: Validate Linux metadata
+        run: |
+          desktop-file-validate resources/linux/io.github.alisontristao.TraceView.desktop
+          appstreamcli validate --no-net resources/linux/io.github.alisontristao.TraceView.metainfo.xml
+      - name: Build in offline sandbox and export bundle
+        run: |
+          manifest=packaging/flatpak/io.github.alisontristao.TraceView.yml
+          flatpak-builder --user --download-only build-flatpak "$manifest"
+          flatpak-builder --user --disable-download --sandbox --force-clean --repo=flatpak-repo build-flatpak "$manifest"
+          version=$(sed -n 's/^    VERSION \([0-9.]*\)$/\1/p' CMakeLists.txt)
+          if [[ $GITHUB_REF_TYPE == tag ]]; then version=${GITHUB_REF_NAME#v}; fi
+          [[ $version =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]
+          mkdir -p build/flatpak-package
+          flatpak build-bundle --runtime-repo=https://flathub.org/repo/flathub.flatpakrepo \
+            flatpak-repo "build/flatpak-package/TraceView-$version-linux-x64.flatpak" \
+            io.github.alisontristao.TraceView stable
+          cd build/flatpak-package
+          sha256sum TraceView-*-linux-x64.flatpak > sha256-flatpak.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux-flatpak-package
+          path: build/flatpak-package/*
+          if-no-files-found: error
+
+  linux-flatpak-smoke:
+    needs: linux-flatpak-package
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: linux-flatpak-package
+          path: package
+      - name: Install Flatpak runtime
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y flatpak dbus-daemon
+          flatpak remote-add --user --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+          flatpak install --user --noninteractive -y flathub org.kde.Platform//6.10
+      - name: Launch packaged application
+        run: dbus-run-session -- bash scripts/smoke_linux_flatpak.sh package/TraceView-*-linux-x64.flatpak

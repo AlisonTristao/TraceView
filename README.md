@@ -80,6 +80,7 @@ The release workflow produces these x64 packages:
 | Platform | Package | Runtime requirements |
 |---|---|---|
 | Windows | `TraceView-<version>-windows-x64.exe` NSIS installer | Bundles Qt and MinGW runtime libraries. |
+| Linux | `TraceView-<version>-linux-x64.flatpak` | Uses the KDE Flatpak runtime; no host Qt or FUSE required. |
 | Linux | `TraceView-<version>-linux-x64.AppImage` | Bundles Qt, plugins and collected third-party dependencies; requires compatible glibc and the desktop X11/Wayland/GL stack. |
 
 On Linux, run `chmod +x TraceView-*-linux-x64.AppImage`, then open the AppImage.
@@ -89,7 +90,13 @@ Development builds can check releases but cannot install updates automatically.
 Older `.tar.gz` installations need a one-time manual download of the AppImage.
 Serial and HID access also require the operating system's device permissions.
 
-TraceView checks for an application update at startup, at most once a day,
+Flatpak build/install instructions and the hardware validation checklist are in
+[packaging/flatpak/README.md](packaging/flatpak/README.md). Install downloaded
+bundles using `flatpak install --user ./TraceView-<version>-linux-x64.flatpak`.
+Flatpak builds disable the built-in updater. Standalone bundles require manual
+updates until a Flatpak repository is published; TraceView is not yet on Flathub.
+
+Windows and AppImage builds check for an application update at startup, at most once a day,
 and from **Settings > Updates**. Installation requires **Update Now**.
 The current release workflow marks builds as prereleases, and the updater
 includes those releases when checking for a newer version. Packages are

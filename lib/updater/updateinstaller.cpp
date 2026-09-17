@@ -14,7 +14,16 @@
 
 namespace traceview {
 
-#if defined(Q_OS_WIN)
+#if defined(TRACEVIEW_FLATPAK_BUILD)
+
+bool UpdateInstaller::install(const QString&, QString* reason) {
+    if (reason) {
+        *reason = QObject::tr("Updates are managed by Flatpak. Use 'flatpak update'.");
+    }
+    return false;
+}
+
+#elif defined(Q_OS_WIN)
 
 namespace {
 

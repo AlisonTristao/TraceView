@@ -7,6 +7,15 @@ release flow.
 
 ## [Unreleased]
 
+## [3.3.0] - 2026-09-17
+
+### Added
+
+- Linux Flatpak packaging with the KDE runtime, pinned offline build dependencies,
+  application metadata, and CI bundle/smoke jobs alongside the existing AppImage.
+- Flatpak-managed updates: the Flatpak build disables the GitHub self-updater
+  and directs users to their software manager or `flatpak update`.
+
 ## [3.2.9] - 2026-09-17
 
 ### Fixed
@@ -149,7 +158,7 @@ release flow.
 - Added a Dashboard editing toggle to enable or disable chart layout and
   configuration changes.
 
-## [2.9.1] - 2026-09-13
+c## [2.9.1] - 2026-09-13
 
 ### Fixed
 

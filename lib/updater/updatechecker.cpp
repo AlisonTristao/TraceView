@@ -20,7 +20,9 @@ constexpr char kChecksumsAssetName[] = "SHA256SUMS.txt";
 // "...-windows-x64.exe" / "...-linux-x64.AppImage". Empty on any other platform
 // -- there is no packaged build to match there, so the asset lookup below
 // just never finds one.
-#if defined(Q_OS_WIN)
+#if defined(TRACEVIEW_FLATPAK_BUILD)
+constexpr char kAssetSuffix[] = "";
+#elif defined(Q_OS_WIN)
 constexpr char kAssetSuffix[] = ".exe";
 #elif defined(Q_OS_LINUX)
 constexpr char kAssetSuffix[] = "-linux-x64.AppImage";
@@ -90,6 +92,10 @@ bool UpdateChecker::checkInFlight() const {
 }
 
 void UpdateChecker::checkForUpdates() {
+#if defined(TRACEVIEW_FLATPAK_BUILD)
+    emit checkFailed(tr("Updates are managed by Flatpak. Use 'flatpak update'."));
+    return;
+#endif
     if (m_reply != nullptr) {
         return;
     }

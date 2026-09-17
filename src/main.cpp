@@ -36,6 +36,9 @@ int main(int argc, char* argv[]) {
 
     QApplication app(argc, argv);
     QApplication::setApplicationName("TraceView");
+#if defined(Q_OS_LINUX)
+    QApplication::setDesktopFileName("io.github.alisontristao.TraceView");
+#endif
     QApplication::setOrganizationName("AlisonTristao");
     QApplication::setApplicationVersion(traceview::kVersion);
     QApplication::setWindowIcon(loadAppIcon());

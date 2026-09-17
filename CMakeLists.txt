@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.21)
 
 project(TraceView
-    VERSION 3.2.6
+    VERSION 3.3.0
     DESCRIPTION "Real-time telemetry dashboard for ESP32/ESP-NOW robots"
     LANGUAGES CXX
 )
@@ -20,6 +20,11 @@ endif()
 
 option(TRACEVIEW_BUILD_TESTS "Build the Qt Test suite under tests/" ON)
 option(TRACEVIEW_BUILD_TOOLS "Build dev-only visual harnesses under tools/" ON)
+option(TRACEVIEW_FLATPAK_BUILD "Use Flatpak-managed application updates" OFF)
+
+if(TRACEVIEW_FLATPAK_BUILD)
+    add_compile_definitions(TRACEVIEW_FLATPAK_BUILD)
+endif()
 
 if(WIN32)
     enable_language(RC)
@@ -233,9 +238,10 @@ else()
     install(TARGETS TraceView RUNTIME DESTINATION bin)
 
     if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
-        install(FILES resources/linux/traceview.desktop DESTINATION share/applications)
+        install(FILES resources/linux/io.github.alisontristao.TraceView.desktop DESTINATION share/applications)
+        install(FILES resources/linux/io.github.alisontristao.TraceView.metainfo.xml DESTINATION share/metainfo)
         install(FILES resources/icons/app_256.png
-            DESTINATION share/icons/hicolor/256x256/apps RENAME traceview.png)
+            DESTINATION share/icons/hicolor/256x256/apps RENAME io.github.alisontristao.TraceView.png)
         file(GENERATE OUTPUT "${CMAKE_BINARY_DIR}/appimage-version.txt"
             CONTENT "${PROJECT_VERSION}\n")
     endif()

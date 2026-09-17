@@ -363,6 +363,12 @@ SettingsPage::SettingsPage(QWidget* parent) : QWidget(parent) {
     qobject_cast<QVBoxLayout*>(diagnosticsPage->layout())->addStretch();
     pages->addWidget(diagnosticsPage);
 
+#if defined(TRACEVIEW_FLATPAK_BUILD)
+    QWidget* updatesPage = createCategoryPage(
+        pages, tr("Updates"),
+        tr("This installation is managed by Flatpak. Use your system's software "
+           "manager or 'flatpak update' to update TraceView."));
+#else
     QWidget* updatesPage = createCategoryPage(
         pages, tr("Updates"),
         tr("TraceView can check GitHub for a newer release. Nothing is downloaded or "
@@ -386,6 +392,7 @@ SettingsPage::SettingsPage(QWidget* parent) : QWidget(parent) {
     formFor(updatesSection)->addRow(QString(), checkNowButton);
     connect(checkNowButton, &QPushButton::clicked, this,
             &SettingsPage::checkForUpdatesRequested);
+#endif
     qobject_cast<QVBoxLayout*>(updatesPage->layout())->addStretch();
     pages->addWidget(updatesPage);
 

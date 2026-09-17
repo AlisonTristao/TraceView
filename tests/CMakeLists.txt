@@ -146,10 +146,21 @@ add_traceview_test(test_mdnsresolver traceview_ota)
 # UpdateChecker's network callback hands off to.
 add_traceview_test(test_semver traceview_updater)
 add_traceview_test(test_updatechecker traceview_updater)
-if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND NOT TRACEVIEW_FLATPAK_BUILD)
     add_traceview_test(test_updateinstaller traceview_updater)
 endif()
 add_traceview_test(test_updatedownloader traceview_updater)
+
+# Compile the Flatpak policy separately so ordinary Windows/Linux CI also
+# exercises the managed-update guards without needing a Flatpak runtime.
+add_traceview_test(test_flatpak_updater Qt6::Network)
+target_sources(test_flatpak_updater PRIVATE
+    ../lib/updater/updatechecker.cpp
+    ../lib/updater/updatedownloader.cpp
+    ../lib/updater/updateinstaller.cpp
+    ../lib/updater/semver.cpp)
+target_include_directories(test_flatpak_updater PRIVATE ../lib ../include ${CMAKE_BINARY_DIR}/generated)
+target_compile_definitions(test_flatpak_updater PRIVATE TRACEVIEW_FLATPAK_BUILD)
 
 # Diagnostics (lib/diagnostics): the two in-memory buffers behind the
 # Notification History window and the BTP Traffic Monitor, the hex-dump

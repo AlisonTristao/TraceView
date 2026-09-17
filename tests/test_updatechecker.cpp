@@ -53,7 +53,9 @@ void TestUpdateChecker::detectsNewerRelease() {
     QVERIFY(result.has_value());
     QVERIFY(result->hasUpdate);
     QCOMPARE(result->info.version, QStringLiteral("2.5.0"));
-#if defined(Q_OS_LINUX)
+#if defined(TRACEVIEW_FLATPAK_BUILD)
+    QVERIFY(result->info.assetName.isEmpty());
+#elif defined(Q_OS_LINUX)
     QCOMPARE(result->info.assetName, QStringLiteral("TraceView-9.9.9-linux-x64.AppImage"));
     QCOMPARE(result->info.assetSize, qint64(456));
 #elif defined(Q_OS_WIN)

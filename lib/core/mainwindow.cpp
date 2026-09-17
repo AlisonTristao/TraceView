@@ -199,7 +199,9 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
             &MainWindow::onUpdateDownloadFinished);
     connect(m_updateDownloader, &UpdateDownloader::failed, this,
             &MainWindow::onUpdateDownloadFailed);
+#if !defined(TRACEVIEW_FLATPAK_BUILD)
     QTimer::singleShot(5000, this, &MainWindow::maybeCheckForUpdatesOnStartup);
+#endif
 
     buildMenus();
 

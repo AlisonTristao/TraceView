@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github.alisontristao.TraceView</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>MIT</project_license>
+  <name>TraceView</name>
+  <summary>Monitor and debug robot telemetry</summary>
+  <developer id="io.github.alisontristao">
+    <name>Alison Tristao</name>
+  </developer>
+  <description>
+    <p>TraceView is a real-time telemetry dashboard for ESP32 and ESP-NOW robots.
+    Connect over serial or USB HID to inspect device data and troubleshoot firmware.</p>
+    <p>Build dashboards, inspect recorded logs, save projects, and update device
+    firmware over the network.</p>
+  </description>
+  <launchable type="desktop-id">io.github.alisontristao.TraceView.desktop</launchable>
+  <url type="homepage">https://github.com/AlisonTristao/TraceView</url>
+  <url type="bugtracker">https://github.com/AlisonTristao/TraceView/issues</url>
+  <url type="vcs-browser">https://github.com/AlisonTristao/TraceView</url>
+  <categories><category>Development</category></categories>
+  <screenshots>
+    <screenshot type="default">
+      <caption>TraceView telemetry dashboard</caption>
+      <image>https://raw.githubusercontent.com/AlisonTristao/TraceView/main/docs/images/example.png</image>
+    </screenshot>
+  </screenshots>
+  <content_rating type="oars-1.1"/>
+  <releases>
+    <release version="3.3.0" date="2026-09-17"/>
+  </releases>
+</component>
