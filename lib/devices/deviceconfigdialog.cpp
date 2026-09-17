@@ -33,6 +33,27 @@ namespace {
 // Deliberately not actual JSON (no braces/quotes/commas): this is a
 // read-only display meant to be scanned, not copy-pasted and parsed, so
 // that punctuation would only add noise.
+// Stand-in for QFormLayout::setRowVisible(), which only exists from Qt 6.4 --
+// Ubuntu 22.04's packaged Qt is 6.2. Hides/shows the label and field of a row,
+// descending into a field that is itself a layout (e.g. a combo box paired
+// with a refresh button, see m_portRowIndex/m_usbDeviceRowIndex).
+void setFormRowVisible(QFormLayout* layout, int row, bool visible) {
+    const auto setItemVisible = [visible](QLayoutItem* item) {
+        if (!item) return;
+        if (QWidget* widget = item->widget()) {
+            widget->setVisible(visible);
+        } else if (QLayout* childLayout = item->layout()) {
+            for (int i = 0; i < childLayout->count(); ++i) {
+                if (QWidget* childWidget = childLayout->itemAt(i)->widget()) {
+                    childWidget->setVisible(visible);
+                }
+            }
+        }
+    };
+    setItemVisible(layout->itemAt(row, QFormLayout::LabelRole));
+    setItemVisible(layout->itemAt(row, QFormLayout::FieldRole));
+}
+
 QString catalogTopicBlock(const CatalogTopicInfo& topic) {
     const QString label = topic.name.isEmpty() ? QObject::tr("(unnamed topic)") : topic.name;
     QStringList lines;
@@ -544,15 +565,15 @@ void DeviceConfigDialog::updateTransportFieldsVisibility() {
     const bool isUsbHid = transport == TransportType::UsbHid;
     const bool isHub = transport == TransportType::HubChannel;
 
-    m_connectionLayout->setRowVisible(m_portRowIndex, isSerial);
-    m_connectionLayout->setRowVisible(m_baudRowIndex, isSerial);
-    m_connectionLayout->setRowVisible(m_lineTerminatorRowIndex, isSerial);
-    m_connectionLayout->setRowVisible(m_usbDeviceRowIndex, isUsbHid);
-    m_connectionLayout->setRowVisible(m_parentRowIndex, isHub);
-    m_connectionLayout->setRowVisible(m_peerSourceIdRowIndex, isHub);
-    m_connectionLayout->setRowVisible(m_childSourceIdRowIndex, isHub);
-    m_connectionLayout->setRowVisible(m_peerPasswordRowIndex, isHub);
-    m_connectionLayout->setRowVisible(m_cachePasswordRowIndex, isHub);
+    setFormRowVisible(m_connectionLayout, m_portRowIndex, isSerial);
+    setFormRowVisible(m_connectionLayout, m_baudRowIndex, isSerial);
+    setFormRowVisible(m_connectionLayout, m_lineTerminatorRowIndex, isSerial);
+    setFormRowVisible(m_connectionLayout, m_usbDeviceRowIndex, isUsbHid);
+    setFormRowVisible(m_connectionLayout, m_parentRowIndex, isHub);
+    setFormRowVisible(m_connectionLayout, m_peerSourceIdRowIndex, isHub);
+    setFormRowVisible(m_connectionLayout, m_childSourceIdRowIndex, isHub);
+    setFormRowVisible(m_connectionLayout, m_peerPasswordRowIndex, isHub);
+    setFormRowVisible(m_connectionLayout, m_cachePasswordRowIndex, isHub);
 }
 
 void DeviceConfigDialog::setAvailableParentDevices(

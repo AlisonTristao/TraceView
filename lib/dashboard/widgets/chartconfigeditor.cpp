@@ -33,6 +33,41 @@ constexpr int kStyleColumn = 3;
 constexpr int kRemoveColumn = 4;
 constexpr int kColumnCount = 5;
 
+// Stand-ins for QFormLayout::setRowVisible(), which only exists from Qt 6.4 --
+// Ubuntu 22.04's packaged Qt is 6.2. Hides/shows a row's label plus field,
+// descending into a field that is itself a layout (e.g. m_yRangeRow's Min/Max
+// pair).
+void setFormRowVisible(QFormLayout* layout, int row, bool visible) {
+    const auto setItemVisible = [visible](QLayoutItem* item) {
+        if (!item) return;
+        if (QWidget* widget = item->widget()) {
+            widget->setVisible(visible);
+        } else if (QLayout* childLayout = item->layout()) {
+            for (int i = 0; i < childLayout->count(); ++i) {
+                if (QWidget* childWidget = childLayout->itemAt(i)->widget()) {
+                    childWidget->setVisible(visible);
+                }
+            }
+        }
+    };
+    setItemVisible(layout->itemAt(row, QFormLayout::LabelRole));
+    setItemVisible(layout->itemAt(row, QFormLayout::FieldRole));
+}
+
+void setFormRowVisible(QFormLayout* layout, QWidget* fieldWidget, bool visible) {
+    int row = -1;
+    QFormLayout::ItemRole role;
+    layout->getWidgetPosition(fieldWidget, &row, &role);
+    if (row >= 0) setFormRowVisible(layout, row, visible);
+}
+
+void setFormRowVisible(QFormLayout* layout, QLayout* fieldLayout, bool visible) {
+    int row = -1;
+    QFormLayout::ItemRole role;
+    layout->getLayoutPosition(fieldLayout, &row, &role);
+    if (row >= 0) setFormRowVisible(layout, row, visible);
+}
+
 // String ids are what's persisted in the config JSON — stable across
 // re-orderings of the combo items; the matching display labels are built
 // locally in addSeriesRow() (via tr()) instead of a parallel static list,
@@ -583,10 +618,10 @@ void ChartConfigEditor::updateAxisRowsVisibility() {
     // catalog instead of this manual text, so hide all three rather than let
     // them sit there disconnected from what's actually drawn.
     const bool autoAxis = m_autoAxisCheck->isChecked();
-    m_formLayout->setRowVisible(m_yAxisModeCombo, !autoAxis);
-    m_formLayout->setRowVisible(
-        m_yRangeRow, !autoAxis && m_yAxisModeCombo->currentData().toString() == "fixed");
-    m_formLayout->setRowVisible(m_yUnitEdit, !autoAxis);
+    setFormRowVisible(m_formLayout, m_yAxisModeCombo, !autoAxis);
+    setFormRowVisible(m_formLayout, m_yRangeRow,
+                      !autoAxis && m_yAxisModeCombo->currentData().toString() == "fixed");
+    setFormRowVisible(m_formLayout, m_yUnitEdit, !autoAxis);
 }
 
 QVector<CatalogTopicField> ChartConfigEditor::currentTopicFields() const {

@@ -28,6 +28,20 @@ const QStringList kVariantLabels = {
 };
 
 const QStringList kButtonModeIds = {"momentary", "pulse"};
+
+// Stand-in for QFormLayout::setRowVisible(QWidget*, bool), which only exists
+// from Qt 6.4 -- Ubuntu 22.04's packaged Qt is 6.2.
+void setFormRowVisible(QFormLayout* layout, QWidget* fieldWidget, bool visible) {
+    int row = -1;
+    QFormLayout::ItemRole role;
+    layout->getWidgetPosition(fieldWidget, &row, &role);
+    if (row < 0) return;
+    for (QFormLayout::ItemRole r : {QFormLayout::LabelRole, QFormLayout::FieldRole}) {
+        if (QLayoutItem* item = layout->itemAt(row, r)) {
+            if (QWidget* widget = item->widget()) widget->setVisible(visible);
+        }
+    }
+}
 const QStringList kButtonModeLabels = {
     QCoreApplication::translate("ControlConfigEditor", "Momentary (press + release)"),
     QCoreApplication::translate("ControlConfigEditor", "Pulse (single command)"),
@@ -183,10 +197,10 @@ QJsonObject PushButtonConfigEditor::config() const {
 
 void PushButtonConfigEditor::updateRowsVisibility() {
     const bool momentary = kButtonModeIds.value(m_modeCombo->currentIndex()) == "momentary";
-    m_formLayout->setRowVisible(m_onReleaseEdit, momentary);
-    m_formLayout->setRowVisible(m_repeatIntervalSpin, m_repeatCheck->isChecked());
-    m_formLayout->setRowVisible(m_longPressThresholdSpin, m_longPressCheck->isChecked());
-    m_formLayout->setRowVisible(m_longPressCommandEdit, m_longPressCheck->isChecked());
+    setFormRowVisible(m_formLayout, m_onReleaseEdit, momentary);
+    setFormRowVisible(m_formLayout, m_repeatIntervalSpin, m_repeatCheck->isChecked());
+    setFormRowVisible(m_formLayout, m_longPressThresholdSpin, m_longPressCheck->isChecked());
+    setFormRowVisible(m_formLayout, m_longPressCommandEdit, m_longPressCheck->isChecked());
 }
 
 void PushButtonConfigEditor::setAvailableDevices(const QVector<DeviceOption>& devices) {
@@ -412,8 +426,8 @@ QJsonObject SliderConfigEditor::config() const {
 }
 
 void SliderConfigEditor::updateRowsVisibility() {
-    m_formLayout->setRowVisible(
-        m_throttleSpin, kSendModeIds.value(m_sendModeCombo->currentIndex()) == "continuous");
+    setFormRowVisible(m_formLayout, m_throttleSpin,
+                      kSendModeIds.value(m_sendModeCombo->currentIndex()) == "continuous");
 }
 
 void SliderConfigEditor::setAvailableDevices(const QVector<DeviceOption>& devices) {
