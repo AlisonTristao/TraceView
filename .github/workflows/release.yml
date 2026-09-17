@@ -115,12 +115,21 @@ jobs:
             qt6-tools-dev \
             qt6-l10n-tools \
             qt6-wayland \
+            libgl1-mesa-dev \
             libudev-dev \
             libusb-1.0-0-dev \
             patchelf \
             curl \
             file \
             desktop-file-utils
+
+      - name: Work around missing Qt6::lprodump in qt6-l10n-tools
+        # Debian/Ubuntu's qt6-l10n-tools never ships lprodump (only lconvert,
+        # lrelease, lupdate, and the -pro helpers), but Qt6LinguistToolsTargets.cmake
+        # unconditionally checks every imported target's file exists, failing
+        # find_package(Qt6 ... LinguistTools) outright. We don't use lprodump
+        # (no .pro files), so a stub pointing at an existing tool satisfies the check.
+        run: sudo ln -sf /usr/lib/qt6/libexec/lupdate-pro /usr/lib/qt6/libexec/lprodump
 
       - name: Configure (Release)
         run: cmake --preset linux-ninja-release

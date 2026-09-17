@@ -7,6 +7,17 @@ release flow.
 
 ## [Unreleased]
 
+## [3.2.2] - 2026-09-17
+
+### Fixed
+
+- Release CI's Linux package job failed to configure: OpenGL dev headers
+  were missing (`libgl1-mesa-dev`), and `find_package(Qt6 ... LinguistTools)`
+  hard-failed because Debian/Ubuntu's `qt6-l10n-tools` package never ships
+  the `lprodump` tool that `Qt6LinguistToolsTargets.cmake` unconditionally
+  checks for. Added `libgl1-mesa-dev` and a CI-only symlink stub for
+  `lprodump` (unused by this project, no `.pro` files).
+
 ## [3.2.1] - 2026-09-17
 
 ### Fixed
