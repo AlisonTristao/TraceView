@@ -36,6 +36,7 @@ jobs:
             pkg-config \
             qt6-base-dev \
             qt6-declarative-dev \
+            qt6-svg-dev \
             qt6-serialport-dev \
             qt6-tools-dev \
             qt6-l10n-tools \
@@ -79,6 +80,7 @@ jobs:
             pkgconf-pkg-config \
             qt6-qtbase-devel \
             qt6-qtdeclarative-devel \
+            qt6-qtsvg-devel \
             qt6-qtserialport-devel \
             qt6-qttools-devel \
             systemd-devel \
@@ -122,6 +124,7 @@ jobs:
             pkgconf \
             qt6-base \
             qt6-declarative \
+            qt6-svg \
             qt6-serialport \
             qt6-tools \
             libusb \
@@ -167,6 +170,7 @@ jobs:
             pkg-config \
             qt6-base-dev \
             qt6-declarative-dev \
+            qt6-svg-dev \
             qt6-serialport-dev \
             qt6-tools-dev \
             qt6-l10n-tools \
@@ -216,6 +220,7 @@ jobs:
             ninja:p
             qt6-base:p
             qt6-declarative:p
+            qt6-svg:p
             qt6-serialport:p
             qt6-tools:p
 
