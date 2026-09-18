@@ -93,8 +93,11 @@ Serial and HID access also require the operating system's device permissions.
 Flatpak build/install instructions and the hardware validation checklist are in
 [packaging/flatpak/README.md](packaging/flatpak/README.md). Install downloaded
 bundles using `flatpak install --user ./TraceView-<version>-linux-x64.flatpak`.
-Flatpak builds disable the built-in updater. Standalone bundles require manual
-updates until a Flatpak repository is published; TraceView is not yet on Flathub.
+The recommended installation uses the TraceView Flatpak repository at
+`https://alisontristao.github.io/TraceView/TraceView.flatpakref`. Flatpak builds
+disable the built-in updater; use `flatpak update io.github.alisontristao.TraceView`.
+The project-hosted KDE runtime repository must be available to the installation
+before the application is installed.
 
 Windows and AppImage builds check for an application update at startup, at most once a day,
 and from **Settings > Updates**. Installation requires **Update Now**.

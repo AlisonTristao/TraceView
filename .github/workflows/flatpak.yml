@@ -2,13 +2,25 @@ name: Flatpak
 
 on:
   workflow_call:
+    inputs:
+      publish:
+        required: false
+        type: boolean
+        default: false
   workflow_dispatch:
+    inputs:
+      publish:
+        description: Publish the Flatpak repository to gh-pages
+        required: false
+        type: boolean
+        default: false
   pull_request:
-  push:
-    branches: [main, develop]
 
 permissions:
-  contents: read
+  contents: write
+
+env:
+  TRACEVIEW_FLATPAK_RUNTIME_REPO: ${{ vars.TRACEVIEW_FLATPAK_RUNTIME_REPO || 'https://alisontristao.github.io/TraceView/flatpak-runtime/' }}
 
 jobs:
   linux-flatpak-package:
@@ -16,12 +28,19 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
+      - name: Restore published Flatpak repository
+        if: inputs.publish
+        uses: actions/checkout@v4
+        continue-on-error: true
+        with:
+          ref: gh-pages
+          path: gh-pages
       - name: Install Flatpak tools
         run: |
           sudo apt-get update
           sudo apt-get install -y flatpak flatpak-builder appstream desktop-file-utils
-          flatpak remote-add --user --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
-          flatpak install --user --noninteractive -y flathub org.kde.Platform//6.10 org.kde.Sdk//6.10
+          flatpak remote-add --user --if-not-exists traceview-runtime "$TRACEVIEW_FLATPAK_RUNTIME_REPO"
+          flatpak install --user --noninteractive -y traceview-runtime org.kde.Platform//6.10 org.kde.Sdk//6.10
       - name: Validate Linux metadata
         run: |
           desktop-file-validate resources/linux/io.github.alisontristao.TraceView.desktop
@@ -29,13 +48,18 @@ jobs:
       - name: Build in offline sandbox and export bundle
         run: |
           manifest=io.github.alisontristao.TraceView.yml
+          if [[ -d gh-pages/flatpak/objects ]]; then
+            mkdir -p flatpak-repo
+            cp -a gh-pages/flatpak/. flatpak-repo/
+          fi
           flatpak-builder --user --download-only build-flatpak "$manifest"
           flatpak-builder --user --disable-download --sandbox --force-clean --repo=flatpak-repo build-flatpak "$manifest"
+          flatpak build-update-repo --generate-static-deltas flatpak-repo
           version=$(sed -n 's/^    VERSION \([0-9.]*\)$/\1/p' CMakeLists.txt)
           if [[ $GITHUB_REF_TYPE == tag ]]; then version=${GITHUB_REF_NAME#v}; fi
           [[ $version =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]
           mkdir -p build/flatpak-package
-          flatpak build-bundle --runtime-repo=https://flathub.org/repo/flathub.flatpakrepo \
+          flatpak build-bundle --runtime-repo="$TRACEVIEW_FLATPAK_RUNTIME_REPO" \
             flatpak-repo "build/flatpak-package/TraceView-$version-linux-x64.flatpak" \
             io.github.alisontristao.TraceView stable
           cd build/flatpak-package
@@ -44,6 +68,11 @@ jobs:
         with:
           name: linux-flatpak-package
           path: build/flatpak-package/*
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux-flatpak-repo
+          path: flatpak-repo
           if-no-files-found: error
 
   linux-flatpak-smoke:
@@ -56,11 +85,13 @@ jobs:
         with:
           name: linux-flatpak-package
           path: package
-      - name: Install Flatpak runtime
+      - name: Install Flatpak tools
         run: |
           sudo apt-get update
           sudo apt-get install -y flatpak dbus-daemon
-          flatpak remote-add --user --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
-          flatpak install --user --noninteractive -y flathub org.kde.Platform//6.10
+      - name: Install Flatpak runtime
+        run: |
+          flatpak remote-add --user --if-not-exists traceview-runtime "$TRACEVIEW_FLATPAK_RUNTIME_REPO"
+          flatpak install --user --noninteractive -y traceview-runtime org.kde.Platform//6.10
       - name: Launch packaged application
         run: dbus-run-session -- bash scripts/smoke_linux_flatpak.sh package/TraceView-*-linux-x64.flatpak

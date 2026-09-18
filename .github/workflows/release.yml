@@ -236,13 +236,15 @@ jobs:
           bash scripts/smoke_linux_appimage.sh package/TraceView-*-linux-x64.AppImage
 
   # ============================================================
-  # Publish the GitHub Release both packages feed into
+  # Publish the GitHub Release packages feed into
   # ============================================================
   linux-flatpak:
     name: Linux Flatpak package and smoke
     uses: ./.github/workflows/flatpak.yml
+    with:
+      publish: true
     permissions:
-      contents: read
+      contents: write
 
   publish:
     name: Publish release
@@ -255,6 +257,40 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           path: packages
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: linux-flatpak-repo
+          path: flatpak-repo
+
+      - name: Update the GitHub Pages Flatpak repository
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if git clone --branch gh-pages "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" pages; then
+            echo 'Restored existing gh-pages branch'
+          else
+            rm -rf pages
+            mkdir pages
+            cd pages
+            git init
+            git checkout -b gh-pages
+            git remote add origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+            cd ..
+          fi
+          rm -rf pages/flatpak
+          mkdir -p pages/flatpak
+          cp -a flatpak-repo/. pages/flatpak/
+          cp packaging/flatpak/TraceView.flatpakref pages/TraceView.flatpakref
+          cp packaging/flatpak/traceview.flatpakrepo pages/traceview.flatpakrepo
+          cp packaging/flatpak/index.html pages/index.html
+          cd pages
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add flatpak TraceView.flatpakref traceview.flatpakrepo index.html
+          git commit -m "Publish TraceView ${GITHUB_REF_NAME}" || true
+          git push origin gh-pages
 
       - name: Combine checksums
         run: |

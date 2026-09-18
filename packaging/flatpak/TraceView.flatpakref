@@ -1,0 +1,10 @@
+[Flatpak Ref]
+Name=io.github.alisontristao.TraceView
+Branch=stable
+Title=TraceView
+IsRuntime=false
+Url=https://alisontristao.github.io/TraceView/flatpak/
+RuntimeRepo=https://alisontristao.github.io/TraceView/flatpak-runtime/
+Homepage=https://github.com/AlisonTristao/TraceView
+Comment=TraceView Flatpak repository
+Description=Official Flatpak repository for TraceView.

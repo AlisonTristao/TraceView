@@ -15,6 +15,8 @@ release flow.
   application metadata, and CI bundle/smoke jobs alongside the existing AppImage.
 - Flatpak-managed updates: the Flatpak build disables the GitHub self-updater
   and directs users to their software manager or `flatpak update`.
+- The official Flatpak channel is now a project-owned repository published to
+  GitHub Pages, with `.flatpakref` and `.flatpakrepo` installation links.
 
 ## [3.2.9] - 2026-09-17
 

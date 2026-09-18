@@ -1,0 +1,6 @@
+[Flatpak Repo]
+Title=TraceView
+Url=https://alisontristao.github.io/TraceView/flatpak/
+Homepage=https://github.com/AlisonTristao/TraceView
+Comment=Official TraceView Flatpak repository
+Description=Install and update TraceView from the project repository.
