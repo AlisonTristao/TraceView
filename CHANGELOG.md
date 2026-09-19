@@ -7,6 +7,16 @@ release flow.
 
 ## [Unreleased]
 
+## [3.3.11] - 2026-09-19
+
+### Fixed
+
+- The release workflow's `publish` job never checked out the repository, so
+  it failed copying `packaging/flatpak/TraceView.flatpakref` and the other
+  Flatpak Pages files it needs -- a pre-existing gap that only surfaced now
+  that the Flatpak job upstream of it finally succeeds again. Added the
+  missing checkout step.
+
 ## [3.3.10] - 2026-09-19
 
 ### Fixed
