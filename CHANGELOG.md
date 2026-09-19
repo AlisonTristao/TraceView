@@ -7,6 +7,21 @@ release flow.
 
 ## [Unreleased]
 
+## [3.3.9] - 2026-09-19
+
+### Fixed
+
+- Reverted the Linux Flatpak release workflow's attempt to self-host the KDE
+  runtime mirror on GitHub Pages: it never reliably cleared CI (ostree ref
+  resolution kept failing, then a direct Flathub pull got blocked with an
+  HTTP 403). The Flatpak build depends on Flathub for `org.kde.Platform`
+  again, as before; the application itself remains fully self-hosted on
+  TraceView's own GitHub Pages Flatpak repository.
+- `CMakeLists.txt`'s project version had drifted out of sync with the last
+  several release tags (stuck at `3.3.0` through tags `v3.3.1`–`v3.3.8`),
+  which `UpdateChecker` relies on matching exactly; bumped it back in step
+  with the tag this version is released under.
+
 ## [3.3.0] - 2026-09-17
 
 ### Added
