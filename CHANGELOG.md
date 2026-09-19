@@ -7,6 +7,19 @@ release flow.
 
 ## [Unreleased]
 
+## [3.3.15] - 2026-09-19
+
+### Fixed
+
+- With `secrets: inherit` finally in place, the publish job reached static
+  delta generation for the first time since v3.3.1 and hit
+  `error: Listing refs: opendir(refs/remotes): No such file or directory`.
+  The gh-pages-restore step copies the previously published ostree repo with
+  `cp -a`, but git never stored `refs/mirrors`/`refs/remotes` because they
+  were empty directories -- `flatpak build-update-repo --generate-static-deltas`
+  expects them to exist alongside `refs/heads`. Recreate both after the
+  restore copy.
+
 ## [3.3.14] - 2026-09-19
 
 ### Fixed

@@ -63,6 +63,10 @@ jobs:
           if [[ -d gh-pages/flatpak/objects ]]; then
             mkdir -p flatpak-repo
             cp -a gh-pages/flatpak/. flatpak-repo/
+            # git doesn't track empty directories, so refs/mirrors and
+            # refs/remotes never made it into the gh-pages commit; ostree
+            # still expects them to exist alongside refs/heads.
+            mkdir -p flatpak-repo/refs/mirrors flatpak-repo/refs/remotes
           fi
           flatpak-builder --user --download-only build-flatpak "$manifest"
           flatpak-builder --user --disable-download --sandbox --force-clean --repo=flatpak-repo build-flatpak "$manifest"
