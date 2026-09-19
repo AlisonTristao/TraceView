@@ -117,7 +117,7 @@ jobs:
           else
             ostree --repo=runtime-repo init --mode=archive
           fi
-          ostree --repo=runtime-repo pull-local "$HOME/.local/share/flatpak/repo" runtime/org.kde.Platform/x86_64/6.10
+          ostree --repo=runtime-repo pull-local --mirror "$HOME/.local/share/flatpak/repo" flathub:runtime/org.kde.Platform/x86_64/6.10
           flatpak build-update-repo runtime-repo
       - uses: actions/upload-artifact@v4
         with:
