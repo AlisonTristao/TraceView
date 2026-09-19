@@ -86,16 +86,18 @@ jobs:
   # pulling a several-hundred-MB runtime on every PR would be slow and mostly wasted,
   # since the runtime version rarely changes between releases.
   #
-  # ostree pull --mirror copies the runtime's commit objects byte-for-byte, so nothing
-  # here re-signs or re-builds it -- it is the same content Flathub serves, just
-  # re-hosted. It pulls directly from Flathub's own repo URL rather than through a
-  # local `flatpak install`, since flatpak namespaces an installed ref under its
-  # remote (refs/remotes/flathub/...) instead of leaving a plain ref pull-local can
-  # resolve, and --mirror is what writes the plain, servable ref this job needs.
+  # ostree pull-local copies the runtime's commit objects byte-for-byte, so nothing here
+  # re-signs or re-builds it -- it is the same content Flathub serves, just re-hosted.
+  # It copies from the already-installed local Flatpak (GPG-verified by that install)
+  # rather than pulling straight from Flathub's raw repo URL, which GitHub-hosted
+  # runners get an HTTP 403 from -- Flathub's CDN evidently treats bare ostree mirror
+  # pulls differently from a normal `flatpak install`. --remote tells pull-local the
+  # ref is namespaced under the local flathub remote in the source repo; the ref may
+  # or may not come out bare in the destination depending on the ostree version, so
+  # the ref-normalize step below guarantees the plain, servable ref name either way.
   # Neither this repo nor packaging/flatpak/traceview-runtime.flatpakrepo declares a
   # GPGKey, matching the (also unsigned) io.github.alisontristao.TraceView app repo:
-  # flatpak treats a remote with no GPGKey as gpg-verify=false, and --no-gpg-verify
-  # below matches that same trust level for the pull itself.
+  # flatpak treats a remote with no GPGKey as gpg-verify=false.
   linux-flatpak-runtime-mirror:
     name: Mirror KDE runtime to GitHub Pages
     if: inputs.publish
@@ -112,6 +114,8 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y flatpak ostree
+          flatpak remote-add --user --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+          flatpak install --user --noninteractive -y flathub org.kde.Platform//6.10
       - name: Update the mirror repository
         run: |
           mkdir -p runtime-repo
@@ -120,8 +124,12 @@ jobs:
           else
             ostree --repo=runtime-repo init --mode=archive
           fi
-          ostree --repo=runtime-repo remote add --if-not-exists --no-gpg-verify flathub https://dl.flathub.org/repo/
-          ostree --repo=runtime-repo pull --mirror flathub runtime/org.kde.Platform/x86_64/6.10
+          ref=runtime/org.kde.Platform/x86_64/6.10
+          ostree --repo=runtime-repo pull-local --remote=flathub "$HOME/.local/share/flatpak/repo" "$ref"
+          if ! ostree --repo=runtime-repo rev-parse "$ref" >/dev/null 2>&1; then
+            commit=$(ostree --repo=runtime-repo rev-parse "flathub:$ref")
+            ostree --repo=runtime-repo refs --create="$ref" "$commit"
+          fi
           flatpak build-update-repo runtime-repo
       - uses: actions/upload-artifact@v4
         with:
