@@ -7,6 +7,20 @@ release flow.
 
 ## [Unreleased]
 
+## [3.3.12] - 2026-09-19
+
+### Fixed
+
+- The published Flatpak repository was never GPG-signed
+  (`flatpak build-update-repo` ran without `--gpg-sign`), but
+  `TraceView.flatpakref`/`traceview.flatpakrepo` had no `GPGKey=`, so
+  `flatpak remote-add` defaulted to requiring a verified summary that could
+  never exist -- `flatpak install` failed with "GPG verification enabled,
+  but no summary found" even though the repository itself was reachable.
+  The release workflow now signs the repository with a dedicated key
+  (`TRACEVIEW_FLATPAK_GPG_PRIVATE_KEY` secret) when publishing, and the ref
+  files embed the matching public key.
+
 ## [3.3.11] - 2026-09-19
 
 ### Fixed

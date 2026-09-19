@@ -21,6 +21,10 @@ permissions:
 
 env:
   TRACEVIEW_FLATPAK_RUNTIME_REPO: ${{ vars.TRACEVIEW_FLATPAK_RUNTIME_REPO || 'https://flathub.org/repo/flathub.flatpakrepo' }}
+  # Public fingerprint of the key packaging/flatpak/TraceView.flatpakref and
+  # traceview.flatpakrepo embed as GPGKey=. The private half is the
+  # TRACEVIEW_FLATPAK_GPG_PRIVATE_KEY repository secret.
+  TRACEVIEW_FLATPAK_GPG_KEY_ID: F971923166EC1E6546CC222995B651D31326BBAA
 
 jobs:
   linux-flatpak-package:
@@ -45,6 +49,14 @@ jobs:
         run: |
           desktop-file-validate resources/linux/io.github.alisontristao.TraceView.desktop
           appstreamcli validate --no-net resources/linux/io.github.alisontristao.TraceView.metainfo.xml
+      - name: Import Flatpak signing key
+        if: inputs.publish
+        env:
+          TRACEVIEW_FLATPAK_GPG_PRIVATE_KEY: ${{ secrets.TRACEVIEW_FLATPAK_GPG_PRIVATE_KEY }}
+        run: |
+          mkdir -p /tmp/tv-gpg
+          chmod 700 /tmp/tv-gpg
+          echo "$TRACEVIEW_FLATPAK_GPG_PRIVATE_KEY" | gpg --homedir /tmp/tv-gpg --batch --import
       - name: Build in offline sandbox and export bundle
         run: |
           manifest=io.github.alisontristao.TraceView.yml
@@ -54,7 +66,11 @@ jobs:
           fi
           flatpak-builder --user --download-only build-flatpak "$manifest"
           flatpak-builder --user --disable-download --sandbox --force-clean --repo=flatpak-repo build-flatpak "$manifest"
-          flatpak build-update-repo --generate-static-deltas flatpak-repo
+          gpg_args=()
+          if [[ "${{ inputs.publish }}" == "true" ]]; then
+            gpg_args=(--gpg-sign="$TRACEVIEW_FLATPAK_GPG_KEY_ID" --gpg-homedir=/tmp/tv-gpg)
+          fi
+          flatpak build-update-repo --generate-static-deltas "${gpg_args[@]}" flatpak-repo
           version=$(sed -n 's/^    VERSION \([0-9.]*\)$/\1/p' CMakeLists.txt)
           if [[ $GITHUB_REF_TYPE == tag ]]; then version=${GITHUB_REF_NAME#v}; fi
           [[ $version =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]
