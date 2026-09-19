@@ -7,7 +7,7 @@ release flow.
 
 ## [Unreleased]
 
-## [3.3.9] - 2026-09-19
+## [3.3.10] - 2026-09-19
 
 ### Fixed
 
@@ -18,7 +18,7 @@ release flow.
   again, as before; the application itself remains fully self-hosted on
   TraceView's own GitHub Pages Flatpak repository.
 - `CMakeLists.txt`'s project version had drifted out of sync with the last
-  several release tags (stuck at `3.3.0` through tags `v3.3.1`–`v3.3.8`),
+  several release tags (stuck at `3.3.0` through tags `v3.3.1`–`v3.3.9`),
   which `UpdateChecker` relies on matching exactly; bumped it back in step
   with the tag this version is released under.
 
