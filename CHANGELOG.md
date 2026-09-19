@@ -7,6 +7,22 @@ release flow.
 
 ## [Unreleased]
 
+## [3.3.17] - 2026-09-19
+
+### Fixed
+
+- Ribbon, settings and dashboard icons looked blurry on any display scaled
+  above 100% (the Windows default). `iconutils::tintedPixmap` rasterized each
+  SVG at the exact device-independent icon size (16-18px), so Qt then
+  upscaled that single low-res bitmap to fill the larger physical button area
+  on HiDPI screens, softening every edge. It now renders at 4x that size and
+  tags the pixmap with a matching device pixel ratio, giving Qt native
+  resolution to draw from instead of stretching a small bitmap.
+- Six ribbon icons (arrows, plus/minus, fullscreen) used a heavier
+  `stroke-width="2"` than the rest of the set (1.4-1.6), making them read as
+  disproportionately bold and harder to tell apart from one another at a
+  glance. Normalized them to 1.5 to match the rest of the icon set.
+
 ## [3.3.16] - 2026-09-19
 
 ### Fixed
