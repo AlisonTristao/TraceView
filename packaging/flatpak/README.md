@@ -40,7 +40,7 @@ third-party app store: the app is served from TraceView's own Flatpak repo,
 and `org.kde.Platform` is mirrored into a repo of its own by the
 `linux-flatpak-runtime-mirror` CI job (`.github/workflows/flatpak.yml`), which
 copies the runtime's OSTree commit objects out of Flathub byte-for-byte
-(`ostree pull-local`) rather than rebuilding or re-signing them. CI uses the
+(`ostree pull --mirror`) rather than rebuilding or re-signing them. CI uses the
 `TRACEVIEW_FLATPAK_RUNTIME_REPO` repository variable to point
 `flatpak build-bundle --runtime-repo` at that mirror's `.flatpakrepo`
 descriptor, defaulting to
