@@ -248,7 +248,7 @@ jobs:
 
   publish:
     name: Publish release
-    needs: [windows-package, windows-smoke, linux-package, linux-smoke, linux-flatpak]
+    needs: [windows-smoke, linux-smoke, linux-flatpak]
     runs-on: ubuntu-24.04
     timeout-minutes: 15
 

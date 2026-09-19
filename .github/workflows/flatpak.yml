@@ -20,7 +20,7 @@ permissions:
   contents: write
 
 env:
-  TRACEVIEW_FLATPAK_RUNTIME_REPO: ${{ vars.TRACEVIEW_FLATPAK_RUNTIME_REPO || 'https://alisontristao.github.io/TraceView/flatpak-runtime/' }}
+  TRACEVIEW_FLATPAK_RUNTIME_REPO: ${{ vars.TRACEVIEW_FLATPAK_RUNTIME_REPO || 'https://flathub.org/repo/flathub.flatpakrepo' }}
 
 jobs:
   linux-flatpak-package:

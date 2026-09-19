@@ -9,8 +9,8 @@ Install `flatpak` and `flatpak-builder` using your distribution's package manage
 then run these commands from the repository root on Linux x86_64:
 
 ```sh
-flatpak remote-add --user --if-not-exists traceview-runtime https://alisontristao.github.io/TraceView/flatpak-runtime/
-flatpak install --user traceview-runtime org.kde.Platform//6.10 org.kde.Sdk//6.10
+flatpak remote-add --user --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+flatpak install --user flathub org.kde.Platform//6.10 org.kde.Sdk//6.10
 flatpak-builder --user --install --force-clean --repo=flatpak-repo build-flatpak io.github.alisontristao.TraceView.yml
 flatpak run io.github.alisontristao.TraceView
 flatpak info --show-permissions io.github.alisontristao.TraceView
@@ -23,7 +23,7 @@ fully disconnected. CI also separates download and sandboxed build phases.
 To export a bundle, replace `X.Y.Z` with the release version:
 
 ```sh
-flatpak build-bundle --runtime-repo=https://alisontristao.github.io/TraceView/flatpak-runtime/ flatpak-repo TraceView-X.Y.Z-linux-x64.flatpak io.github.alisontristao.TraceView stable
+flatpak build-bundle --runtime-repo=https://flathub.org/repo/flathub.flatpakrepo flatpak-repo TraceView-X.Y.Z-linux-x64.flatpak io.github.alisontristao.TraceView stable
 flatpak install --user ./TraceView-X.Y.Z-linux-x64.flatpak
 dbus-run-session -- bash scripts/smoke_linux_flatpak.sh ./TraceView-X.Y.Z-linux-x64.flatpak
 ```
@@ -34,11 +34,12 @@ from the same repository with `flatpak update`. Standalone bundles require
 manually installing newer bundles. The app never downloads or replaces itself
 with an AppImage in a Flatpak installation.
 
-The application repository and the KDE runtime repository are separate. CI uses
-the `TRACEVIEW_FLATPAK_RUNTIME_REPO` repository variable, defaulting to
-`https://alisontristao.github.io/TraceView/flatpak-runtime/`; that repository
-must contain `org.kde.Platform` and `org.kde.Sdk` before Flatpak CI or end-user
-installation can succeed.
+The application repository and the KDE runtime repository are separate: the app
+is served from TraceView's own GitHub Pages Flatpak repo, while the KDE
+runtime (`org.kde.Platform`/`org.kde.Sdk`) is fetched from Flathub, which
+already hosts and maintains it. CI uses the `TRACEVIEW_FLATPAK_RUNTIME_REPO`
+repository variable to point `flatpak build-bundle --runtime-repo` at the
+runtime source, defaulting to `https://flathub.org/repo/flathub.flatpakrepo`.
 
 Network access supports OTA and mDNS. Device access supports serial ports and
 hidraw, but host udev rules and serial group permissions still apply. There is
