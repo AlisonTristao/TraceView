@@ -68,12 +68,12 @@ jobs:
             # still expects them to exist alongside refs/heads.
             mkdir -p flatpak-repo/refs/mirrors flatpak-repo/refs/remotes
           fi
-          flatpak-builder --user --download-only build-flatpak "$manifest"
-          flatpak-builder --user --disable-download --sandbox --force-clean --repo=flatpak-repo build-flatpak "$manifest"
           gpg_args=()
           if [[ "${{ inputs.publish }}" == "true" ]]; then
             gpg_args=(--gpg-sign="$TRACEVIEW_FLATPAK_GPG_KEY_ID" --gpg-homedir=/tmp/tv-gpg)
           fi
+          flatpak-builder --user --download-only build-flatpak "$manifest"
+          flatpak-builder --user --disable-download --sandbox --force-clean --repo=flatpak-repo "${gpg_args[@]}" build-flatpak "$manifest"
           flatpak build-update-repo --generate-static-deltas "${gpg_args[@]}" flatpak-repo
           version=$(sed -n 's/^    VERSION \([0-9.]*\)$/\1/p' CMakeLists.txt)
           if [[ $GITHUB_REF_TYPE == tag ]]; then version=${GITHUB_REF_NAME#v}; fi

@@ -7,6 +7,17 @@ release flow.
 
 ## [Unreleased]
 
+## [3.3.16] - 2026-09-19
+
+### Fixed
+
+- `flatpak install` fetched the signed summary fine but then failed pulling
+  the app commit itself: "GPG verification enabled, but no signatures
+  found". `flatpak build-update-repo --gpg-sign` only signs the summary
+  file; the commits it lists are signed separately when `flatpak-builder`
+  exports them into the repo, which never received `--gpg-sign`. Pass the
+  same GPG args to the `flatpak-builder --repo=flatpak-repo` build step.
+
 ## [3.3.15] - 2026-09-19
 
 ### Fixed
