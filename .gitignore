@@ -3,7 +3,6 @@ build/
 build-*/
 .flatpak-builder/
 flatpak-repo/
-runtime-repo/
 out/
 cmake-build-*/
 

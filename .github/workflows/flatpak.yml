@@ -20,12 +20,7 @@ permissions:
   contents: write
 
 env:
-  # A .flatpakrepo descriptor (not the raw repo URL) -- flatpak build-bundle
-  # needs its Title/Url/GPGKey fields to add the remote automatically when an
-  # end user installs the bundle without the runtime already present. Mirrored
-  # by the linux-flatpak-runtime-mirror job below, not fetched from Flathub, so
-  # end-user installs never depend on a third-party app store.
-  TRACEVIEW_FLATPAK_RUNTIME_REPO: ${{ vars.TRACEVIEW_FLATPAK_RUNTIME_REPO || 'https://alisontristao.github.io/TraceView/traceview-runtime.flatpakrepo' }}
+  TRACEVIEW_FLATPAK_RUNTIME_REPO: ${{ vars.TRACEVIEW_FLATPAK_RUNTIME_REPO || 'https://flathub.org/repo/flathub.flatpakrepo' }}
 
 jobs:
   linux-flatpak-package:
@@ -78,64 +73,6 @@ jobs:
         with:
           name: linux-flatpak-repo
           path: flatpak-repo
-          if-no-files-found: error
-
-  # Mirrors org.kde.Platform (the runtime declared by io.github.alisontristao.TraceView.yml,
-  # not the Sdk -- end users installing the bundle never need that) from Flathub into
-  # this project's own GitHub Pages repository. Runs only on real releases (not PRs):
-  # pulling a several-hundred-MB runtime on every PR would be slow and mostly wasted,
-  # since the runtime version rarely changes between releases.
-  #
-  # ostree pull-local copies the runtime's commit objects byte-for-byte, so nothing here
-  # re-signs or re-builds it -- it is the same content Flathub serves, just re-hosted.
-  # It copies from the already-installed local Flatpak (GPG-verified by that install)
-  # rather than pulling straight from Flathub's raw repo URL, which GitHub-hosted
-  # runners get an HTTP 403 from -- Flathub's CDN evidently treats bare ostree mirror
-  # pulls differently from a normal `flatpak install`. flatpak install only leaves the
-  # runtime under the flathub-namespaced ref (refs/remotes/flathub/...); pull-local's
-  # REFS argument is validated as a literal, already-existing ref name (no "remote:ref"
-  # syntax, no implicit --remote namespace lookup), so the source repo needs an actual
-  # bare ref created for it first -- which is what the two ostree calls before
-  # pull-local below do.
-  # Neither this repo nor packaging/flatpak/traceview-runtime.flatpakrepo declares a
-  # GPGKey, matching the (also unsigned) io.github.alisontristao.TraceView app repo:
-  # flatpak treats a remote with no GPGKey as gpg-verify=false.
-  linux-flatpak-runtime-mirror:
-    name: Mirror KDE runtime to GitHub Pages
-    if: inputs.publish
-    runs-on: ubuntu-24.04
-    timeout-minutes: 60
-    steps:
-      - name: Restore published runtime mirror
-        uses: actions/checkout@v4
-        continue-on-error: true
-        with:
-          ref: gh-pages
-          path: gh-pages
-      - name: Install Flatpak and OSTree tools
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y flatpak ostree
-          flatpak remote-add --user --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
-          flatpak install --user --noninteractive -y flathub org.kde.Platform//6.10
-      - name: Update the mirror repository
-        run: |
-          mkdir -p runtime-repo
-          if [[ -d gh-pages/flatpak-runtime/objects ]]; then
-            cp -a gh-pages/flatpak-runtime/. runtime-repo/
-          else
-            ostree --repo=runtime-repo init --mode=archive
-          fi
-          ref=runtime/org.kde.Platform/x86_64/6.10
-          src="$HOME/.local/share/flatpak/repo"
-          commit=$(ostree --repo="$src" rev-parse "flathub:$ref")
-          ostree --repo="$src" refs --create="$ref" "$commit"
-          ostree --repo=runtime-repo pull-local "$src" "$ref"
-          flatpak build-update-repo runtime-repo
-      - uses: actions/upload-artifact@v4
-        with:
-          name: linux-flatpak-runtime-repo
-          path: runtime-repo
           if-no-files-found: error
 
   linux-flatpak-smoke:

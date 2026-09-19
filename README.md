@@ -96,8 +96,8 @@ bundles using `flatpak install --user ./TraceView-<version>-linux-x64.flatpak`.
 The recommended installation uses the TraceView Flatpak repository at
 `https://alisontristao.github.io/TraceView/TraceView.flatpakref`. Flatpak builds
 disable the built-in updater; use `flatpak update io.github.alisontristao.TraceView`.
-The project-hosted KDE runtime repository must be available to the installation
-before the application is installed.
+If the KDE runtime isn't already installed, Flathub must be reachable to fetch
+it during installation.
 
 Windows and AppImage builds check for an application update at startup, at most once a day,
 and from **Settings > Updates**. Installation requires **Update Now**.

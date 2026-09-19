@@ -263,11 +263,6 @@ jobs:
           name: linux-flatpak-repo
           path: flatpak-repo
 
-      - uses: actions/download-artifact@v4
-        with:
-          name: linux-flatpak-runtime-repo
-          path: flatpak-runtime-repo
-
       - name: Update the GitHub Pages Flatpak repository
         env:
           GH_TOKEN: ${{ github.token }}
@@ -284,18 +279,16 @@ jobs:
             git remote add origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
             cd ..
           fi
-          rm -rf pages/flatpak pages/flatpak-runtime
-          mkdir -p pages/flatpak pages/flatpak-runtime
+          rm -rf pages/flatpak
+          mkdir -p pages/flatpak
           cp -a flatpak-repo/. pages/flatpak/
-          cp -a flatpak-runtime-repo/. pages/flatpak-runtime/
           cp packaging/flatpak/TraceView.flatpakref pages/TraceView.flatpakref
           cp packaging/flatpak/traceview.flatpakrepo pages/traceview.flatpakrepo
-          cp packaging/flatpak/traceview-runtime.flatpakrepo pages/traceview-runtime.flatpakrepo
           cp packaging/flatpak/index.html pages/index.html
           cd pages
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add flatpak flatpak-runtime TraceView.flatpakref traceview.flatpakrepo traceview-runtime.flatpakrepo index.html
+          git add flatpak TraceView.flatpakref traceview.flatpakrepo index.html
           git commit -m "Publish TraceView ${GITHUB_REF_NAME}" || true
           git push origin gh-pages
 

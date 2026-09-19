@@ -1,6 +1,0 @@
-[Flatpak Repo]
-Title=TraceView Runtime Mirror
-Url=https://alisontristao.github.io/TraceView/flatpak-runtime/
-Homepage=https://github.com/AlisonTristao/TraceView
-Comment=Mirror of the KDE runtime the TraceView Flatpak depends on
-Description=Hosts org.kde.Platform so the TraceView Flatpak bundle can install its runtime dependency without a third-party app store.
