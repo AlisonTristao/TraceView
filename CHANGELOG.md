@@ -7,6 +7,17 @@ release flow.
 
 ## [Unreleased]
 
+## [3.3.14] - 2026-09-19
+
+### Fixed
+
+- The `linux-flatpak` job in the release workflow calls `flatpak.yml` as a
+  reusable workflow (`workflow_call`) but never declared `secrets: inherit`,
+  so `TRACEVIEW_FLATPAK_GPG_PRIVATE_KEY` reached the job as an empty string
+  regardless of how the secret was configured -- `gpg --import` failed with
+  "no valid OpenPGP data found" on every attempt. The rotated key from 3.3.13
+  was never actually broken. Added `secrets: inherit` to the caller job.
+
 ## [3.3.13] - 2026-09-19
 
 ### Fixed

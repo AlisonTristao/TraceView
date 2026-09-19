@@ -243,6 +243,7 @@ jobs:
     uses: ./.github/workflows/flatpak.yml
     with:
       publish: true
+    secrets: inherit
     permissions:
       contents: write
 
