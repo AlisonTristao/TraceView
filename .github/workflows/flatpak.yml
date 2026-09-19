@@ -91,10 +91,12 @@ jobs:
   # It copies from the already-installed local Flatpak (GPG-verified by that install)
   # rather than pulling straight from Flathub's raw repo URL, which GitHub-hosted
   # runners get an HTTP 403 from -- Flathub's CDN evidently treats bare ostree mirror
-  # pulls differently from a normal `flatpak install`. --remote tells pull-local the
-  # ref is namespaced under the local flathub remote in the source repo; the ref may
-  # or may not come out bare in the destination depending on the ostree version, so
-  # the ref-normalize step below guarantees the plain, servable ref name either way.
+  # pulls differently from a normal `flatpak install`. flatpak install only leaves the
+  # runtime under the flathub-namespaced ref (refs/remotes/flathub/...); pull-local's
+  # REFS argument is validated as a literal, already-existing ref name (no "remote:ref"
+  # syntax, no implicit --remote namespace lookup), so the source repo needs an actual
+  # bare ref created for it first -- which is what the two ostree calls before
+  # pull-local below do.
   # Neither this repo nor packaging/flatpak/traceview-runtime.flatpakrepo declares a
   # GPGKey, matching the (also unsigned) io.github.alisontristao.TraceView app repo:
   # flatpak treats a remote with no GPGKey as gpg-verify=false.
@@ -125,11 +127,10 @@ jobs:
             ostree --repo=runtime-repo init --mode=archive
           fi
           ref=runtime/org.kde.Platform/x86_64/6.10
-          ostree --repo=runtime-repo pull-local --remote=flathub "$HOME/.local/share/flatpak/repo" "$ref"
-          if ! ostree --repo=runtime-repo rev-parse "$ref" >/dev/null 2>&1; then
-            commit=$(ostree --repo=runtime-repo rev-parse "flathub:$ref")
-            ostree --repo=runtime-repo refs --create="$ref" "$commit"
-          fi
+          src="$HOME/.local/share/flatpak/repo"
+          commit=$(ostree --repo="$src" rev-parse "flathub:$ref")
+          ostree --repo="$src" refs --create="$ref" "$commit"
+          ostree --repo=runtime-repo pull-local "$src" "$ref"
           flatpak build-update-repo runtime-repo
       - uses: actions/upload-artifact@v4
         with:
