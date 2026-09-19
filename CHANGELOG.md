@@ -7,6 +7,18 @@ release flow.
 
 ## [Unreleased]
 
+## [3.3.13] - 2026-09-19
+
+### Fixed
+
+- The Flatpak signing key added in 3.3.12 never reached the CI job -- the
+  `TRACEVIEW_FLATPAK_GPG_PRIVATE_KEY` secret was empty or misnamed, so
+  `gpg --import` failed with "no valid OpenPGP data found" and the publish
+  job never signed the repository. Rotated to a fresh signing key (the
+  previous private key was already discarded and could not be recovered)
+  and re-embedded the new public key in `TraceView.flatpakref` and
+  `traceview.flatpakrepo`.
+
 ## [3.3.12] - 2026-09-19
 
 ### Fixed
