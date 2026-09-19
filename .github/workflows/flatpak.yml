@@ -39,8 +39,8 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y flatpak flatpak-builder appstream desktop-file-utils
-          flatpak remote-add --user --if-not-exists traceview-runtime "$TRACEVIEW_FLATPAK_RUNTIME_REPO"
-          flatpak install --user --noninteractive -y traceview-runtime org.kde.Platform//6.10 org.kde.Sdk//6.10
+          flatpak remote-add --user --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+          flatpak install --user --noninteractive -y flathub org.kde.Platform//6.10 org.kde.Sdk//6.10
       - name: Validate Linux metadata
         run: |
           desktop-file-validate resources/linux/io.github.alisontristao.TraceView.desktop
@@ -91,7 +91,7 @@ jobs:
           sudo apt-get install -y flatpak dbus-daemon
       - name: Install Flatpak runtime
         run: |
-          flatpak remote-add --user --if-not-exists traceview-runtime "$TRACEVIEW_FLATPAK_RUNTIME_REPO"
-          flatpak install --user --noninteractive -y traceview-runtime org.kde.Platform//6.10
+          flatpak remote-add --user --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+          flatpak install --user --noninteractive -y flathub org.kde.Platform//6.10
       - name: Launch packaged application
         run: dbus-run-session -- bash scripts/smoke_linux_flatpak.sh package/TraceView-*-linux-x64.flatpak
