@@ -2096,8 +2096,6 @@ void MainWindow::onDeviceConnectionStateChanged(const QString& deviceId, bool co
     // Every chart/gauge/control/terminal cell currently configured for this
     // device (config()["deviceId"]) -- not just the Devices tab's own card.
     m_dashboardGrid->setDeviceConnected(deviceId, connected && !isHubChild);
-    refreshDeviceStatusLabel();
-
     // setDeviceConnected(), not updateDevice() -- this fires from live
     // connection state (including DeviceConnection's own ambient retry
     // loop), not a user edit, so it must not land on m_devicesGrid's undo
@@ -2126,6 +2124,7 @@ void MainWindow::onDeviceConnectionStateChanged(const QString& deviceId, bool co
         syncHubPeerWatches();
         reconcileHubChildPresence();
     }
+    refreshDeviceStatusLabel();
 }
 
 void MainWindow::onPanelTypeChangeRequested(const QString& typeId) {

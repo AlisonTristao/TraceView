@@ -7,6 +7,16 @@ release flow.
 
 ## [Unreleased]
 
+## [3.3.19] - 2026-09-20
+
+### Fixed
+
+- Hub devices could keep a red status dot while telemetry continued arriving
+  after the hub connected or reconnected. Reattaching children during a parent
+  connection notification now preserves their connection-state transitions.
+- The device status bar now refreshes after connection and peer-presence state
+  changes, so its indicators reflect the updated state.
+
 ## [3.3.18] - 2026-09-19
 
 ### Fixed

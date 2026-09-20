@@ -41,6 +41,9 @@ class Transport;
 class DeviceConnection : public QObject {
     Q_OBJECT
 
+    // Allows the transport regression fixture to simulate a physical hub link.
+    friend class TestHubTransport;
+
 public:
     explicit DeviceConnection(CommType commType,
                               TransportType transportType = TransportType::Serial,

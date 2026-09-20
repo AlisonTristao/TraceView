@@ -20,7 +20,10 @@ void HubTransport::detach() {
 }
 
 void HubTransport::attachTo(DeviceConnection* parent) {
-    const bool wasConnected = isConnected();
+    // The parent may already have changed state while an earlier observer of
+    // its signal reattaches the children. Compare with our last notified state,
+    // not the parent's new state, or that transition is silently swallowed.
+    const bool wasConnected = m_open;
     detach();
 
     m_parent = parent;
@@ -49,7 +52,7 @@ void HubTransport::setPeerSourceId(quint32 peerSourceId) {
     if (peerSourceId == m_peerSourceId) {
         return;
     }
-    const bool wasConnected = isConnected();
+    const bool wasConnected = m_open;
     m_peerSourceId = peerSourceId;
     m_open = isConnected();
     if (m_open != wasConnected) {

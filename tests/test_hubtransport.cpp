@@ -57,6 +57,8 @@ QByteArray espNowFrame(quint32 sourceId, quint32 sequence, const QByteArray& pay
 
 }  // namespace
 
+namespace traceview {
+
 class TestHubTransport : public QObject {
     Q_OBJECT
 
@@ -67,7 +69,41 @@ private slots:
     void unconfiguredPeerNeverConnectsAndNeverClaims();
     void closingOneChildLeavesTheParentAndItsSiblingAlone();
     void detachingTheParentDropsTheChild();
+    void reattachingDuringParentStateChangeNotifiesChildren();
 };
+
+void TestHubTransport::reattachingDuringParentStateChangeNotifiesChildren() {
+    class SimulatedTransport : public Transport {
+    public:
+        using Transport::Transport;
+        bool connected = false;
+        bool isConnected() const override { return connected; }
+        bool write(const QByteArray&) override { return connected; }
+        void close() override { connected = false; }
+    };
+
+    DeviceConnection parent(CommType::Btp, TransportType::Serial);
+    auto* link = new SimulatedTransport(&parent);
+    parent.m_transport = link;
+    HubTransport child(0x0A0A0A0AU);
+    // MainWindow handles the parent's signal first and reattaches its children
+    // through DevicesGrid::deviceUpdated before their own slots can run.
+    connect(&parent, &DeviceConnection::connectionStateChanged, &child,
+            [&] { child.attachTo(&parent); });
+    child.attachTo(&parent);
+    QSignalSpy states(&child, &Transport::connectionStateChanged);
+
+    for (bool connected : {true, false, true}) {
+        link->connected = connected;
+        emit parent.connectionStateChanged(connected);
+        QCOMPARE(child.isConnected(), connected);
+        QCOMPARE(states.size(), 1);
+        QCOMPARE(states.takeFirst().at(0).toBool(), connected);
+        // Repeated configuration must not reset an established session.
+        child.attachTo(&parent);
+        QVERIFY(states.isEmpty());
+    }
+}
 
 // The topico's stated acceptance criterion, and the reason the hub needs no
 // routing table: every child sees every frame the parent decoded, and the
@@ -243,5 +279,7 @@ void TestHubTransport::detachingTheParentDropsTheChild() {
     QCOMPARE(spy.count(), 1);  // still one: nothing arrived after detaching
 }
 
-QTEST_MAIN(TestHubTransport)
+}  // namespace traceview
+
+QTEST_MAIN(traceview::TestHubTransport)
 #include "test_hubtransport.moc"
