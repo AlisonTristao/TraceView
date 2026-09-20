@@ -4,7 +4,7 @@
 # `ctest` from the build directory, or a single one directly (e.g.
 # `./tests/test_projectstore`).
 
-find_package(Qt6 REQUIRED COMPONENTS Test)
+find_package(Qt6 REQUIRED COMPONENTS Test Network)
 
 function(add_traceview_test name)
     add_executable(${name} ${name}.cpp)
@@ -86,6 +86,9 @@ add_traceview_test(test_ballychannels traceview_protocol btp::codec)
 target_compile_definitions(test_ballychannels PRIVATE
     BALLY_CHANNELS_HEADER_PATH="${CMAKE_SOURCE_DIR}/include/bally_channels.h")
 add_traceview_test(test_serialmanager traceview_ui)
+# TCP transport -- an asynchronous local-server loopback covers connection,
+# bidirectional bytes and clean close without requiring robot hardware.
+add_traceview_test(test_tcptransport traceview_ui Qt6::Network)
 # USB HID transport (BTP's "usb_hid" profile) -- mirrors
 # test_serialmanager's shape/coverage (mostly the "can't reach real
 # hardware in CI" paths: starts disconnected, closes/writes cleanly with
@@ -94,7 +97,7 @@ add_traceview_test(test_usbhidmanager traceview_ui)
 # One device's real connection (Transport + Backend pair, ambient reconnect
 # intent) -- see lib/core/deviceconnection.h. traceview_ui so it can
 # construct a BtpBackend the same way DeviceConnection itself does.
-add_traceview_test(test_deviceconnection traceview_ui)
+add_traceview_test(test_deviceconnection traceview_ui Qt6::Network)
 
 # Generic telemetry value types (lib/telemetry) -- no BTP dependency at all
 # (traceview_telemetry links just Qt6::Core; see lib/CMakeLists.txt).
@@ -170,3 +173,10 @@ add_traceview_test(test_notificationlog traceview_diagnostics)
 add_traceview_test(test_framelog traceview_diagnostics)
 add_traceview_test(test_hexdump traceview_diagnostics)
 add_traceview_test(test_channelopen traceview_protocol btp::codec)
+# TAREFAS_TCP_BLE_ANDROID.txt T21-T24: BtpBackend::setDirectEndpointKey() --
+# a direct TCP (later BLE) session's counterpart to setHubEndpoint()
+# (test_hubendpoint), narrow on purpose: only wires the channel-B key so a
+# sealed reply from the robot (TERMINAL_OUT/TELEMETRY/MANIFEST_DATA/
+# SUBSCRIBE_RESULT/UNSUBSCRIBE_RESULT/COMMAND_RESULT) can be opened, without
+# adopting any of the hub-child role's other side effects.
+add_traceview_test(test_directendpointkey traceview_protocol btp::codec)

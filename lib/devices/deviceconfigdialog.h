@@ -12,6 +12,7 @@ class QFormLayout;
 class QLabel;
 class QLineEdit;
 class QPlainTextEdit;
+class QSpinBox;
 class QToolButton;
 
 namespace traceview {
@@ -144,6 +145,8 @@ private:
     int m_portRowIndex = -1;
     int m_baudRowIndex = -1;
     int m_lineTerminatorRowIndex = -1;
+    int m_tcpHostRowIndex = -1;
+    int m_tcpPortRowIndex = -1;
     int m_usbDeviceRowIndex = -1;
     int m_parentRowIndex = -1;
     int m_peerSourceIdRowIndex = -1;
@@ -155,6 +158,8 @@ private:
     QToolButton* m_refreshPortsButton = nullptr;
     QComboBox* m_baudCombo = nullptr;
     QComboBox* m_lineTerminatorCombo = nullptr;
+    QLineEdit* m_tcpHostEdit = nullptr;
+    QSpinBox* m_tcpPortSpin = nullptr;
     QComboBox* m_usbDeviceCombo = nullptr;
     QToolButton* m_refreshUsbDevicesButton = nullptr;
 

@@ -14,6 +14,9 @@ QJsonObject deviceToJson(const Device& device) {
     object["baudRate"] = device.baudRate;
     object["lineTerminator"] = device.lineTerminator;
     object["usbPath"] = device.usbPath;
+    object["tcpHost"] = device.tcpHost;
+    object["tcpPort"] = device.tcpPort;
+    object["blePeerUuid"] = device.blePeerUuid;
     object["parentDeviceId"] = device.parentDeviceId;
     // Written as a double because QJsonValue has no unsigned integer type and
     // a source_id spans the full uint32 range -- int would wrap the top half
@@ -63,6 +66,12 @@ Device deviceFromJson(const QJsonObject& object, bool* ok) {
         case int(TransportType::HubChannel):
             device.transportType = TransportType::HubChannel;
             break;
+        case int(TransportType::Tcp):
+            device.transportType = TransportType::Tcp;
+            break;
+        case int(TransportType::Ble):
+            device.transportType = TransportType::Ble;
+            break;
         default:
             device.transportType = TransportType::Serial;
             break;
@@ -71,6 +80,12 @@ Device deviceFromJson(const QJsonObject& object, bool* ok) {
     device.baudRate = object.value("baudRate").toInt(921600);
     device.lineTerminator = object.value("lineTerminator").toInt(1);
     device.usbPath = object.value("usbPath").toString();
+    device.tcpHost = object.value("tcpHost").toString();
+    const int storedTcpPort = object.value("tcpPort").toInt(44300);
+    device.tcpPort = storedTcpPort >= 1 && storedTcpPort <= 65535
+                         ? quint16(storedTcpPort)
+                         : quint16(44300);
+    device.blePeerUuid = object.value("blePeerUuid").toString();
 
     device.parentDeviceId = object.value("parentDeviceId").toString();
     // A project written before hub channels existed has no peerSourceId, and

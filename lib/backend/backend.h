@@ -74,6 +74,11 @@ public slots:
     // (re)negotiating a session; a lost one means forgetting whatever grants
     // depended on it.
     virtual void onTransportConnectionChanged(bool connected) = 0;
+    // The transport rejected an outbound write. The default is deliberately
+    // empty so non-BTP backends can opt in without changing their contract.
+    virtual void onTransportWriteRejected(const QString& reason) {
+        Q_UNUSED(reason);
+    }
     // Raw bytes typed into a serial monitor/terminal widget, to be framed
     // and sent as this backend sees fit.
     virtual void sendTerminalIn(const QByteArray& bytes) = 0;

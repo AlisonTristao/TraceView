@@ -1814,6 +1814,15 @@ void MainWindow::applyDeviceTarget(DeviceConnection* connection, const Device& d
         }
         return;
     }
+    if (device.transportType == TransportType::Tcp) {
+        // Same channel-B password as a hub child (Device::peerPassword) --
+        // the user's own decision: one password per device covers hub, TCP
+        // and, later, BLE. See BtpBackend::setDirectEndpointKey()'s comment
+        // for why this is NOT routed through setHubEndpoint()/connectVia().
+        connection->connectToTcp(device.tcpHost, device.tcpPort,
+                                 deriveChannelKey(device.peerPassword));
+        return;
+    }
     const QString target =
         device.transportType == TransportType::UsbHid ? device.usbPath : device.portName;
     connection->connectTo(target, device.baudRate);

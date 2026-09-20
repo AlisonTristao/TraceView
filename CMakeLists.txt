@@ -21,6 +21,10 @@ endif()
 option(TRACEVIEW_BUILD_TESTS "Build the Qt Test suite under tests/" ON)
 option(TRACEVIEW_BUILD_TOOLS "Build dev-only visual harnesses under tools/" ON)
 option(TRACEVIEW_FLATPAK_BUILD "Use Flatpak-managed application updates" OFF)
+option(TRACEVIEW_ENABLE_SERIAL "Build the QSerialPort transport" ON)
+option(TRACEVIEW_ENABLE_USB_HID "Build the hidapi USB HID transport" ON)
+option(TRACEVIEW_ENABLE_TCP "Enable the TCP transport integration" OFF)
+option(TRACEVIEW_ENABLE_BLE "Enable the BLE transport integration" OFF)
 
 if(TRACEVIEW_FLATPAK_BUILD)
     add_compile_definitions(TRACEVIEW_FLATPAK_BUILD)
@@ -49,7 +53,14 @@ endif()
 # buttons, settings categories, dashboard cell header controls) is an SVG
 # resource (resources/icons/ui.qrc) rendered via QSvgRenderer and tinted to
 # the active theme color at runtime, instead of hand-drawn with QPainter.
-find_package(Qt6 REQUIRED COMPONENTS Widgets SerialPort Network Qml Svg LinguistTools)
+set(TRACEVIEW_QT_COMPONENTS Widgets Network Qml Svg LinguistTools)
+if(TRACEVIEW_ENABLE_SERIAL)
+    list(APPEND TRACEVIEW_QT_COMPONENTS SerialPort)
+endif()
+if(TRACEVIEW_ENABLE_BLE)
+    list(APPEND TRACEVIEW_QT_COMPONENTS Bluetooth)
+endif()
+find_package(Qt6 REQUIRED COMPONENTS ${TRACEVIEW_QT_COMPONENTS})
 
 # BTP is the canonical, shared source of the BTP v1 wire format and codec
 # (see BTP/PLANO_GERAL.txt) -- TraceView does not keep its own copy of the
@@ -91,13 +102,28 @@ FetchContent_MakeAvailable(btp)
 # here (see lib/CMakeLists.txt) instead of leaving a DLL for windeployqt to
 # chase; hidapi's own default is ON (inherited from the global CMake
 # variable) if this isn't set first.
-set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
-FetchContent_Declare(
-    hidapi
-    GIT_REPOSITORY https://github.com/libusb/hidapi.git
-    GIT_TAG hidapi-0.15.0
-)
-FetchContent_MakeAvailable(hidapi)
+if(TRACEVIEW_ENABLE_USB_HID)
+    set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
+    FetchContent_Declare(
+        hidapi
+        GIT_REPOSITORY https://github.com/libusb/hidapi.git
+        GIT_TAG hidapi-0.15.0
+    )
+    FetchContent_MakeAvailable(hidapi)
+endif()
+
+if(TRACEVIEW_ENABLE_SERIAL)
+    add_compile_definitions(TRACEVIEW_ENABLE_SERIAL)
+endif()
+if(TRACEVIEW_ENABLE_USB_HID)
+    add_compile_definitions(TRACEVIEW_ENABLE_USB_HID)
+endif()
+if(TRACEVIEW_ENABLE_TCP)
+    add_compile_definitions(TRACEVIEW_ENABLE_TCP)
+endif()
+if(TRACEVIEW_ENABLE_BLE)
+    add_compile_definitions(TRACEVIEW_ENABLE_BLE)
+endif()
 
 add_subdirectory(lib)
 
@@ -137,11 +163,14 @@ target_include_directories(TraceView PRIVATE include)
 
 target_link_libraries(TraceView PRIVATE
     Qt6::Widgets
-    Qt6::SerialPort
     traceview_ui
     traceview_theme
     traceview_locale
 )
+
+if(TRACEVIEW_ENABLE_SERIAL)
+    target_link_libraries(TraceView PRIVATE Qt6::SerialPort)
+endif()
 
 set_target_properties(TraceView PROPERTIES
     WIN32_EXECUTABLE ON

@@ -81,6 +81,8 @@ class BtpBackend : public Backend, public btp::NodeConfig {
     Q_OBJECT
 
 public:
+    enum class SessionStartMode { Console, DirectBtp };
+
     // `framing`/`encodeProfile` are the two axes the underlying BtpSession
     // is built on -- how frames are delimited on the link, and which profile
     // ceiling they are encoded under (see btpsession.h; they do not always
@@ -88,11 +90,13 @@ public:
     // TransportType (devices/device.h), converted there since
     // traceview_devices can't depend on btp::codec directly.
     BtpBackend(BtpSession::Framing framing, const btp::TransportLimits& encodeProfile,
+               SessionStartMode sessionStartMode = SessionStartMode::Console,
                QObject* parent = nullptr);
     // Convenience overload for the profiles whose framing is implied
     // (Serial/COBS, UsbHid/pre-framed) -- same reasoning as BtpSession's own
     // convenience constructor: existing call sites keep working unchanged.
     explicit BtpBackend(const btp::TransportLimits& transport = btp::kSerialTransport,
+                        SessionStartMode sessionStartMode = SessionStartMode::Console,
                         QObject* parent = nullptr);
     // Declared (rather than left implicit) because m_telemetryCatalog is a
     // plain (non-QObject) heap object this class owns and frees itself.
@@ -165,6 +169,72 @@ public:
     // onSessionFrameReceived()).
     void setHubEndpoint(quint32 selfSourceId, quint32 peerSourceId, const QByteArray& endpointKey);
 
+    // --- Direct session role: TCP (topico T22/T24) and, later, BLE --------
+    //
+    // A direct-TCP (or BLE) session talks to the robot end to end, with no
+    // dongle and no ESP-NOW mesh in between -- but it is NOT a hub child, and
+    // must not become one. Reusing setHubEndpoint() here would be wrong on
+    // three counts, each read off bally_OS itself (utils/BallyRobot/
+    // BallyRobot.{h,cpp}, RobotTcpLink/tcp_node_) before writing this:
+    //
+    //  - It would overwrite m_terminalSourceId with a caller-supplied
+    //    "stable" id. A direct session already has btp::Node's own random,
+    //    non-zero, per-run session identity (the same one the console path
+    //    uses) -- there is no hub bind table keying on it, so nothing needs
+    //    it to survive a restart.
+    //  - It would set m_peerSourceId non-zero, which flips this backend into
+    //    the "child" role throughout: onTransportConnectionChanged() skips
+    //    HELLO entirely and asks for a manifest addressed to peerSourceId
+    //    instead (bally_OS's TCP responder DOES speak HELLO -- it is a real
+    //    btp::Node session, tcp_node_->enable_session()/arm_session() --  so
+    //    skipping it here would simply never connect); onSessionFrameReceived
+    //    ()'s "drop an unsealed frame on a keyed child" downgrade check and
+    //    CommandClient/SubscriptionManager's hub-child addressing would all
+    //    also misfire against a peer id that does not mean what they assume.
+    //  - It would reconfigure m_subscriptionManager/m_commandClient to seal
+    //    every outbound SUBSCRIBE/UNSUBSCRIBE/COMMAND_REQUEST/TERMINAL_IN --
+    //    unnecessary here: reading bally_OS's receive path (btp::Node::
+    //    route_decoded()/finish(), BTP/src/node.cpp) shows the robot only
+    //    attempts RadioSeal::open_e when the INCOMING frame's own header
+    //    already carries kFlagEncrypted; it processes every one of those
+    //    message types in the clear just as readily when the sender does not
+    //    set that flag. Nothing on the robot's receive side requires (or is
+    //    even aware of) TraceView encrypting its own outbound TCP traffic.
+    //
+    // What direct-TCP sessions DO need a key for: bally_OS seals almost
+    // everything it sends back over TCP with channel-B key E --
+    // RobotTcpLink::seal()/reply_seal() (MANIFEST_DATA, SUBSCRIBE_RESULT,
+    // UNSUBSCRIBE_RESULT), CommandProcessor::send_result(..., protocol_tcp_)
+    // (COMMAND_RESULT, seal_endpoint_ = RadioSeal::seal_e), and
+    // TelemetryPublisher::bind_tcp_target() / TerminalResponder::
+    // bind_tcp_target() (TELEMETRY, TERMINAL_OUT), all confirmed by reading
+    // BallyRobot.cpp. The ONE thing that stays cleartext, unconditionally, on
+    // both ends, is HELLO/HELLO_RESULT (BTP/src/node.cpp's route_decoded():
+    // the session reply is sent with an explicit seal=nullptr, bypassing
+    // reply_seal_for() entirely -- "the handshake bootstraps the session
+    // before any key"). So this method only has to make onSessionFrameReceived
+    // () (and, for the COMMAND_RESULT shadow copy m_node itself decodes, this
+    // class's own has_open()/open()) able to open a sealed reply -- both
+    // already work off m_endpointKey alone, independent of m_peerSourceId
+    // (read onSessionFrameReceived() yourself before trusting this comment).
+    //
+    // `endpointKey` is the same derived channel-B key setHubEndpoint() takes
+    // (keyderivation.h's deriveChannelKey(Device::peerPassword) -- ONE
+    // password per device now covers hub, TCP and, later, BLE). Empty means
+    // "no key configured yet": every sealed reply from the robot is then
+    // dropped rather than forwarded unauthenticated, exactly like an unkeyed
+    // hub child -- but, unlike a hub child, an UNSEALED frame is still
+    // accepted (this is a console-role session; see onSessionFrameReceived(),
+    // its "drop an unsealed frame" branch is gated on m_peerSourceId != 0,
+    // which a direct session never sets). That lets this run unkeyed against
+    // a robot/simulator that has no key provisioned yet, exactly as
+    // setHubEndpoint()'s own empty-key case documents.
+    //
+    // Call before the first onTransportConnectionChanged(true), same timing
+    // requirement as setHubEndpoint() and for the same reason: a sealed reply
+    // could in principle arrive as early as the first bytes after connect.
+    void setDirectEndpointKey(const QByteArray& endpointKey);
+
     // Declares, to the DONGLE this backend is connected to, that a child
     // device with `childSourceId` speaks to the robot `peerSourceId`. Called
     // on the PARENT's backend, never on the child's -- see HubBinder for why
@@ -236,6 +306,7 @@ signals:
 public slots:
     void feedBytes(const QByteArray& data) override;
     void onTransportConnectionChanged(bool connected) override;
+    void onTransportWriteRejected(const QString& reason) override;
     void sendTerminalIn(const QByteArray& bytes) override;
     void sendCommand(const QByteArray& text) override;
     void onPeerPresence(bool online, quint32 bootId) override;
@@ -371,6 +442,7 @@ private:
     // sealed one.
     quint32 m_sessionSequence = 0;
     bool m_sessionClosing = false;
+    SessionStartMode m_sessionStartMode = SessionStartMode::Console;
 
     // Both zero for the console-facing backend; both set for a child. Zero is
     // the "not a child" test rather than a separate flag, because BTP reserves

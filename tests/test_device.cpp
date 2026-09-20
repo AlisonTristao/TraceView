@@ -18,6 +18,8 @@ class TestDevice : public QObject {
 private slots:
     void roundTripsAllFieldsExceptLiveState();
     void roundTripsUsbHidTransport();
+    void keepsTransportOrdinalsAndDedicatedConfiguration();
+    void roundTripsDirectTransportConfiguration();
     void fromJsonRejectsMissingId();
     void fromJsonDefaultsMissingOptionalFields();
     void roundTripsHubChannelByPeerSourceIdNotChannelIndex();
@@ -120,6 +122,50 @@ void TestDevice::roundTripsUsbHidTransport() {
     QCOMPARE(roundTripped.usbPath, device.usbPath);
 }
 
+void TestDevice::keepsTransportOrdinalsAndDedicatedConfiguration() {
+    QCOMPARE(int(TransportType::Serial), 0);
+    QCOMPARE(int(TransportType::UsbHid), 1);
+    QCOMPARE(int(TransportType::HubChannel), 2);
+    QCOMPARE(int(TransportType::Tcp), 3);
+    QCOMPARE(int(TransportType::Ble), 4);
+
+    Device tcp;
+    tcp.transportType = TransportType::Tcp;
+    tcp.tcpHost = "robot.local";
+    tcp.tcpPort = 44300;
+    QVERIFY(tcp.portName.isEmpty());
+    QCOMPARE(tcp.baudRate, qint32(921600));
+
+    Device ble;
+    ble.transportType = TransportType::Ble;
+    ble.blePeerUuid = "robot-uuid";
+    QVERIFY(ble.tcpHost.isEmpty());
+    QCOMPARE(ble.tcpPort, quint16(44300));
+}
+
+void TestDevice::roundTripsDirectTransportConfiguration() {
+    Device device;
+    device.id = "direct-1";
+    device.transportType = TransportType::Tcp;
+    device.tcpHost = "192.0.2.10";
+    device.tcpPort = 44301;
+    device.blePeerUuid = "robot-uuid";
+
+    bool ok = false;
+    const Device loaded = deviceFromJson(deviceToJson(device), &ok);
+
+    QVERIFY(ok);
+    QCOMPARE(loaded.transportType, TransportType::Tcp);
+    QCOMPARE(loaded.tcpHost, device.tcpHost);
+    QCOMPARE(loaded.tcpPort, device.tcpPort);
+    QCOMPARE(loaded.blePeerUuid, device.blePeerUuid);
+
+    const Device invalidPort = deviceFromJson(
+        QJsonObject{{"id", "invalid-port"}, {"tcpPort", 70000}}, &ok);
+    QVERIFY(ok);
+    QCOMPARE(invalidPort.tcpPort, quint16(44300));
+}
+
 void TestDevice::fromJsonRejectsMissingId() {
     bool ok = true;
     deviceFromJson(QJsonObject{{"name", "No id"}}, &ok);
@@ -140,6 +186,9 @@ void TestDevice::fromJsonDefaultsMissingOptionalFields() {
     QCOMPARE(device.baudRate, 921600);
     QCOMPARE(device.lineTerminator, 1);
     QVERIFY(device.usbPath.isEmpty());
+    QVERIFY(device.tcpHost.isEmpty());
+    QCOMPARE(device.tcpPort, quint16(44300));
+    QVERIFY(device.blePeerUuid.isEmpty());
     QVERIFY(!device.connected);
 }
 

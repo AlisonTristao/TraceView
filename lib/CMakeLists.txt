@@ -73,6 +73,47 @@ target_link_libraries(traceview_preferences PUBLIC
     Qt6::Core
 )
 
+# traceview_applog: the app-wide file logger (AppLog) and its logging
+# categories (lcSerial/lcUsbHid/lcConnection/lcApp). Split out of traceview_ui
+# (topico T07, TAREFAS_TCP_BLE_ANDROID.txt) because traceview_transport below
+# needs it too (SerialManager/UsbHidManager/DeviceConnection all log through
+# it) and Q_LOGGING_CATEGORY's storage must be compiled exactly once --
+# traceview_ui and traceview_transport both link this instead of one of them
+# compiling applog.cpp itself, which would either duplicate the symbol or
+# force a dependency cycle between the two. Only QtCore.
+add_library(traceview_applog STATIC
+    core/applog.cpp
+    core/applog.h
+)
+
+target_include_directories(traceview_applog PUBLIC
+    ${CMAKE_SOURCE_DIR}/include
+    ${CMAKE_SOURCE_DIR}/lib
+)
+
+target_link_libraries(traceview_applog PUBLIC
+    Qt6::Core
+)
+
+# traceview_hexdump: hex-dump formatting helpers (hexDump/hexInline) for raw
+# byte payloads. Split out of traceview_diagnostics for the same reason as
+# traceview_applog above: traceview_transport's SerialManager needs it too,
+# and traceview_diagnostics links Qt6::Widgets publicly, which transport must
+# not pull in. Only QtCore.
+add_library(traceview_hexdump STATIC
+    diagnostics/hexdump.cpp
+    diagnostics/hexdump.h
+)
+
+target_include_directories(traceview_hexdump PUBLIC
+    ${CMAKE_SOURCE_DIR}/include
+    ${CMAKE_SOURCE_DIR}/lib
+)
+
+target_link_libraries(traceview_hexdump PUBLIC
+    Qt6::Core
+)
+
 # traceview_telemetry: generic telemetry value types and data structures
 # with no BTP dependency -- TelemetryFieldBinding, TopicSubscriptionState,
 # StatusTopicRecord, TelemetrySeriesBuffer. These describe what a Backend
@@ -372,8 +413,6 @@ add_library(traceview_diagnostics STATIC
     diagnostics/framelogentry.h
     diagnostics/framelog.cpp
     diagnostics/framelog.h
-    diagnostics/hexdump.cpp
-    diagnostics/hexdump.h
     diagnostics/btpmonitortab.cpp
     diagnostics/btpmonitortab.h
 )
@@ -390,6 +429,7 @@ target_link_libraries(traceview_diagnostics
     PRIVATE
         traceview_theme
         traceview_preferences
+        traceview_hexdump
 )
 
 # traceview_ota: the OTA Update tab's content -- OtaClient (a
@@ -503,14 +543,77 @@ target_link_libraries(traceview_updater PUBLIC
     Qt6::Network
 )
 
+# traceview_transport: the transport/connection layer -- Transport (the
+# common bytes-in/bytes-out interface), SerialManager, UsbHidManager,
+# HubTransport (the third Transport, multiplexed over a parent device's
+# connection) and DeviceConnection (owns one device's Transport+Backend
+# pair). Split out of traceview_ui (topico T07, TAREFAS_TCP_BLE_ANDROID.txt,
+# ETAPA 2 "biblioteca de comunicacao compila sem Qt Widgets") so a headless
+# consumer -- an Android build, a CLI tool, a unit test -- can link the wire
+# protocol without pulling in QtWidgets at all. None of these 5 files ever
+# used a QWidget or a project widget type (DashboardGrid/SerialMonitorWidget/
+# RobotLogWidget); the only genuinely widget-coupled file that used to sit
+# next to them, core/serialwidgetbridge.cpp, stays in traceview_ui below.
+# Only QtCore + QtSerialPort (SerialManager's public header embeds a
+# QSerialPort member and a QSerialPort::SerialPortError slot parameter, so
+# QtSerialPort has to be a PUBLIC dependency here, same as traceview_ui's own
+# link further down) -- hidapi and the BTP-aware libraries below are private
+# implementation details of the .cpp files, not exposed by any public header
+# in this target.
+add_library(traceview_transport STATIC
+    core/transport.h
+    core/deviceconnection.cpp
+    core/deviceconnection.h
+    core/hubtransport.cpp
+    core/hubtransport.h
+    core/serialmanager.cpp
+    core/serialmanager.h
+    core/tcptransport.cpp
+    core/tcptransport.h
+    core/usbhidmanager.cpp
+    core/usbhidmanager.h
+)
+
+target_include_directories(traceview_transport PUBLIC
+    ${CMAKE_SOURCE_DIR}/include
+    ${CMAKE_SOURCE_DIR}/lib
+)
+
+target_link_libraries(traceview_transport
+    PUBLIC
+        Qt6::Core
+    PRIVATE
+        # deviceconnection.cpp/hubtransport.cpp build/own the BtpBackend for
+        # a device's session (BtpSession::Framing, btp::TransportLimits);
+        # neither symbol appears in a public header of this target, so this
+        # stays private -- traceview_ui and anything else calling
+        # DeviceConnection::backend() already links traceview_protocol
+        # itself to get BtpBackend's full definition.
+        traceview_protocol
+        # deviceconnection.cpp wires Transport::dataReceived/bytesToWrite
+        # against the full Backend interface. Same "private, .cpp only"
+        # reasoning as traceview_protocol above.
+        traceview_backend
+        # AppSettings::instance() (autoReconnect/reconnectIntervalSeconds) --
+        # deviceconnection.cpp and serialmanager.cpp only.
+        traceview_preferences
+        traceview_applog
+        traceview_hexdump
+)
+
+if(TRACEVIEW_ENABLE_SERIAL)
+    target_link_libraries(traceview_transport PUBLIC Qt6::SerialPort)
+endif()
+if(TRACEVIEW_ENABLE_USB_HID)
+    target_link_libraries(traceview_transport PRIVATE hidapi::hidapi)
+endif()
+
 # traceview_ui: MainWindow/Ribbon/AboutDialog — application chrome and
 # coordination. Depends on the dashboard/project/theme layers to wire them
 # together; nothing else is allowed to depend on traceview_ui.
 add_library(traceview_ui STATIC
     core/aboutdialog.cpp
     core/aboutdialog.h
-    core/applog.cpp
-    core/applog.h
     core/shortcutsdialog.cpp
     core/shortcutsdialog.h
     core/donatedialog.cpp
@@ -545,17 +648,8 @@ add_library(traceview_ui STATIC
     core/ribbonicons.h
     core/ribbontabbar.cpp
     core/ribbontabbar.h
-    core/deviceconnection.cpp
-    core/deviceconnection.h
-    core/hubtransport.cpp
-    core/hubtransport.h
-    core/serialmanager.cpp
-    core/serialmanager.h
     core/serialwidgetbridge.cpp
     core/serialwidgetbridge.h
-    core/transport.h
-    core/usbhidmanager.cpp
-    core/usbhidmanager.h
     core/workspaceswitcher.cpp
     core/workspaceswitcher.h
     vendor/qrcodegen/qrcodegen.cpp
@@ -571,7 +665,6 @@ target_include_directories(traceview_ui PUBLIC
 target_link_libraries(traceview_ui
     PUBLIC
         Qt6::Widgets
-        Qt6::SerialPort
     PRIVATE
         traceview_dashboard
         traceview_devices
@@ -590,8 +683,19 @@ target_link_libraries(traceview_ui
         traceview_locale
         traceview_preferences
         traceview_updater
-        # UsbHidManager (core/usbhidmanager.h) is the only consumer -- a
-        # transport-layer implementation detail, so PRIVATE (nothing above
-        # traceview_ui needs to see hidapi's own headers).
-        hidapi::hidapi
+        # Transport/DeviceConnection/SerialManager/UsbHidManager/HubTransport
+        # (see traceview_transport's own comment above) -- MainWindow owns one
+        # DeviceConnection per Device and SerialWidgetBridge wires
+        # SerialManager's writeCommand()/lineTerminator() to the raw
+        # control/terminal widgets.
+        traceview_transport
+        # AppLog::install()/currentLogFilePath()/logDirectory() -- called from
+        # main.cpp/mainwindow.cpp/settingspage.cpp (the "Open log folder"
+        # action). Compiled once in traceview_transport above already; this is
+        # the same target under a different consumer.
+        traceview_applog
 )
+
+if(TRACEVIEW_ENABLE_SERIAL)
+    target_link_libraries(traceview_ui PUBLIC Qt6::SerialPort)
+endif()

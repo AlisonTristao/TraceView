@@ -214,12 +214,16 @@ CatalogTopicInfo toCatalogTopicInfo(const TelemetryTopicSchema& schema) {
 
 }  // namespace
 
-BtpBackend::BtpBackend(const btp::TransportLimits& transport, QObject* parent)
-    : BtpBackend(BtpSession::framingFor(transport), transport, parent) {}
+BtpBackend::BtpBackend(const btp::TransportLimits& transport, SessionStartMode sessionStartMode,
+                                             QObject* parent)
+        : BtpBackend(BtpSession::framingFor(transport), transport, sessionStartMode, parent) {}
 
 BtpBackend::BtpBackend(BtpSession::Framing framing, const btp::TransportLimits& encodeProfile,
-                       QObject* parent)
-    : Backend(parent), m_terminalSourceId(randomNonZero()), m_terminalBootId(randomNonZero()) {
+                                             SessionStartMode sessionStartMode, QObject* parent)
+        : Backend(parent),
+            m_terminalSourceId(randomNonZero()),
+            m_terminalBootId(randomNonZero()),
+            m_sessionStartMode(sessionStartMode) {
     // BTP v1 client stack (topico 14): raw bytes -> BtpSession (COBS decode,
     // or direct btp::decode() when the link is already pre-framed -- see
     // btpsession.h -- plus envelope/CRC validation and reassembly either
@@ -587,8 +591,25 @@ void BtpBackend::onNodeTick() {
         return;
     }
     m_node->tick(static_cast<std::uint64_t>(QDateTime::currentMSecsSinceEpoch()));
-    // The one outcome tick() alone can produce with no NodeRx to carry it:
-    // a command timing out with no COMMAND_RESULT ever arriving. A no-op
+    // tick() alone (no incoming frame to carry a NodeRx) can still produce an
+    // initiator TimedOut: SessionInitiator::poll() -- what Node::tick() calls
+    // internally -- returns TimedOut once the connect() deadline
+    // (AwaitingResult, i.e. no HELLO_RESULT within kHelloTimeoutMs) or the
+    // negotiated session_timeout_ms (Active, i.e. an established session gone
+    // quiet) has passed, and None otherwise (session.hpp's own comment on
+    // poll()). A peer that never sends a single byte -- not even a malformed
+    // frame -- is NEVER fed through onRawFrameForNode()'s receive() path
+    // (T24 found this the hard way: a TCP server that accepts the connection
+    // and then stays silent left the phase stuck in NegotiatingBtp forever,
+    // because this function used to only ever check for a command timeout),
+    // so this tick()-only path is the ONLY place that outcome can surface.
+    if (m_node->initiator_event() == btp::InitiatorEvent::TimedOut) {
+        onNodeConnectFailed(m_sessionEstablished
+                                ? tr("session watchdog: no traffic from the peer")
+                                : tr("no HELLO_RESULT within %1 ms").arg(kHelloTimeoutMs));
+    }
+    // The one outcome tick() alone can also produce with no NodeRx to carry
+    // it: a command timing out with no COMMAND_RESULT ever arriving. A no-op
     // unless m_commandClient actually has one outstanding.
     m_commandClient->notifyOutcome();
 }
@@ -726,6 +747,24 @@ void BtpBackend::setHubEndpoint(quint32 selfSourceId, quint32 peerSourceId,
         [this] { return nextEndpointSequence(); });
     m_commandClient->configure(peerSourceId, m_telemetryCatalog,
                                [this] { return !m_endpointKey.isEmpty(); });
+}
+
+void BtpBackend::setDirectEndpointKey(const QByteArray& endpointKey) {
+    // See this method's own comment in btpbackend.h for the full reasoning.
+    // Deliberately just this one line: m_selfSourceId/m_peerSourceId/
+    // m_terminalSourceId stay whatever they already are (0 / 0 / the random
+    // per-run id btp::Node's console-role session already uses), and
+    // m_subscriptionManager/m_commandClient are left unconfigured, because
+    // bally_OS's TCP responder does not require TraceView's own outbound
+    // SUBSCRIBE/UNSUBSCRIBE/COMMAND_REQUEST/TERMINAL_IN to be sealed --
+    // confirmed by reading BTP/src/node.cpp's route_decoded()/finish() (open()
+    // only runs when the INCOMING frame already carries kFlagEncrypted) before
+    // writing this. has_seal()/has_open()/seal()/open() above and
+    // onSessionFrameReceived() all key off m_endpointKey alone already, so
+    // setting it is enough to let this session open the robot's own sealed
+    // replies (MANIFEST_DATA/SUBSCRIBE_RESULT/UNSUBSCRIBE_RESULT/
+    // COMMAND_RESULT/TELEMETRY/TERMINAL_OUT).
+    m_endpointKey = endpointKey;
 }
 
 quint32 BtpBackend::nextEndpointSequence() {
@@ -947,7 +986,14 @@ void BtpBackend::onTransportConnectionChanged(bool connected) {
             m_subscriptionManager->onSessionEstablished();
             return;
         }
-        m_btpHandshake->start();
+        if (m_sessionStartMode == SessionStartMode::DirectBtp) {
+            // TCP and BLE already provide a byte channel for BTP. They do not
+            // expose the serial console, so HELLO starts as soon as the link
+            // is usable instead of waiting for ENTER/READY text.
+            onReadyForHello();
+        } else {
+            m_btpHandshake->start();
+        }
     } else {
         // No session, nothing to keep alive. The next sessionEstablished
         // re-arms it.
@@ -978,6 +1024,12 @@ void BtpBackend::onTransportConnectionChanged(bool connected) {
         // died with the session, and resendAll() restores it on the next one.
         m_hubBinder->onSessionLost();
     }
+}
+
+void BtpBackend::onTransportWriteRejected(const QString& reason) {
+    emit statusMessage(tr("transport rejected an outbound BTP frame: %1").arg(reason), 8000,
+                       StatusSeverity::Error);
+    emit sessionRecoveryNeeded();
 }
 
 void BtpBackend::onPeerPresence(bool online, quint32 bootId) {

@@ -15,7 +15,16 @@ class Backend;
 class SerialManager;
 class UsbHidManager;
 class HubTransport;
+class TcpTransport;
 class Transport;
+
+enum class ConnectionPhase {
+    Disconnected,
+    Connecting,
+    PreparingTransport,
+    NegotiatingBtp,
+    Ready,
+};
 
 // Owns one device's real, independent connection: a Transport (raw bytes --
 // concretely a SerialManager or a UsbHidManager, chosen once at construction
@@ -71,6 +80,9 @@ public:
     }
 
     bool isConnected() const;
+    ConnectionPhase connectionPhase() const {
+        return m_connectionPhase;
+    }
     // Current intent: true from connectTo() (with a non-empty target) until
     // disconnectFrom() or a connectTo() with an empty target -- stays true
     // across a transport drop/retry, unlike isConnected(). What the
@@ -78,6 +90,9 @@ public:
     // decide whether to connect or disconnect.
     bool wantsConnection() const {
         return m_shouldBeConnected;
+    }
+    bool isAvailable() const {
+        return m_transportAvailable;
     }
 
     // Updates the connection target and marks intent "online" (unless
@@ -109,9 +124,38 @@ public:
     // then refuses rather than treat as channel A's "in the clear".
     void connectVia(DeviceConnection* parentConnection, quint32 selfSourceId, quint32 peerSourceId,
                     const QByteArray& endpointKey);
+    // The TCP counterpart of connectTo(): a host plus a numeric port has no
+    // honest spelling as the (target, baudRate) pair connectTo() shares
+    // between Serial and UsbHid, so -- for the same reason connectVia() is
+    // separate -- this is its own call. No-op if transportType is not
+    // TransportType::Tcp. An empty host or a zero port means "not
+    // configured", exactly as an empty target does for connectTo().
+    //
+    // `endpointKey` is the SAME derived channel-B key connectVia() takes
+    // (deriveChannelKey() applied to Device::peerPassword by the caller --
+    // one password per device now covers hub, TCP and, later, BLE; see
+    // BtpBackend::setDirectEndpointKey()'s own comment for why this is a
+    // distinct method from setHubEndpoint()/connectVia() rather than a
+    // reuse). Empty means "not configured yet", same convention as
+    // connectVia(): every sealed reply from the robot is dropped rather
+    // than forwarded unauthenticated, but this connection still comes up
+    // and accepts the robot's unsealed traffic (a direct session is not a
+    // hub child -- see setDirectEndpointKey()).
+    void connectToTcp(const QString& host, quint16 port, const QByteArray& endpointKey);
     // Marks intent "offline" and closes. Stops the retry timer -- unlike a
     // transport drop, this does not come back on its own.
     void disconnectFrom();
+
+    // Platform/lifecycle boundary. Availability does not erase the user's
+    // connection intent: suspension closes the current session and pauses
+    // retries; making the environment available starts a fresh session.
+    void setAvailable(bool available);
+    void suspend() {
+        setAvailable(false);
+    }
+    void resume() {
+        setAvailable(true);
+    }
 
     // No-op unless transportType == TransportType::Serial -- USB HID has no
     // console/raw-text channel for a line terminator to apply to (see
@@ -122,6 +166,12 @@ signals:
     // Mirrors Transport::connectionStateChanged so callers don't have to
     // reach through serialManager()/usbHidManager() themselves.
     void connectionStateChanged(bool connected);
+    // Rich asynchronous phase for UI/platform consumers. The boolean signal
+    // above remains for existing dashboard consumers.
+    void connectionPhaseChanged(traceview::ConnectionPhase phase);
+    // Emitted when the transport refuses bytes produced by the backend.
+    void writeRejected(const QString& reason);
+    void availabilityChanged(bool available);
     // Mirrors Backend::deviceIdentified so callers don't have to reach
     // through backend() themselves.
     void deviceIdentified(const QString& btpVersion, const QString& btpId);
@@ -136,6 +186,7 @@ signals:
     void errorOccurred(const QString& message);
 
 private:
+    void setConnectionPhase(ConnectionPhase phase);
     void attemptReconnect();
     // Intentional close path. Unlike session-recovery recycling, this first
     // asks an established serial BTP session to close and drains that final
@@ -147,11 +198,17 @@ private:
     SerialManager* m_serialManager = nullptr;
     UsbHidManager* m_usbHidManager = nullptr;
     HubTransport* m_hubTransport = nullptr;
+    TcpTransport* m_tcpTransport = nullptr;
     Backend* m_backend = nullptr;
     QTimer* m_retryTimer;
     QString m_target;
     qint32 m_baudRate = 0;
+    QString m_tcpHost;
+    quint16 m_tcpPort = 0;
     bool m_shouldBeConnected = false;
+    bool m_transportAvailable = true;
+    bool m_attemptInProgress = false;
+    ConnectionPhase m_connectionPhase = ConnectionPhase::Disconnected;
 };
 
 }  // namespace traceview

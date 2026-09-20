@@ -12,6 +12,7 @@
 #include <QLineEdit>
 #include <QPlainTextEdit>
 #include <QPushButton>
+#include <QSpinBox>
 #include <QToolButton>
 #include <QVBoxLayout>
 
@@ -120,7 +121,8 @@ DeviceConfigDialog::DeviceConfigDialog(const Device& initial, QWidget* parent)
     formLayout->addRow(tr("Description:"), m_descriptionEdit);
 
     // Connection group -- transport type plus whichever of
-    // port/baud/line-terminator (Serial) or USB device (UsbHid) it needs,
+    // port/baud/line-terminator (Serial), host/port (TCP), or USB device
+    // (UsbHid) it needs,
     // the config a DeviceConnection (core/deviceconnection.h) actually opens
     // with. Lives here now, one per device, instead of the old single
     // global Run tab bar.
@@ -140,11 +142,28 @@ DeviceConfigDialog::DeviceConfigDialog(const Device& initial, QWidget* parent)
                                   int(TransportType::UsbHid));
     m_transportTypeCombo->addItem(transportTypeLabel(TransportType::HubChannel),
                                   int(TransportType::HubChannel));
+    m_transportTypeCombo->addItem(transportTypeLabel(TransportType::Tcp), int(TransportType::Tcp));
+    // Ble is deliberately not offered yet -- no BleTransport exists
+    // (TAREFAS_TCP_BLE_ANDROID.txt T26+), so selecting it would produce a
+    // device DeviceConnection can never actually open.
     const int transportTypeIndex = m_transportTypeCombo->findData(int(m_device.transportType));
     m_transportTypeCombo->setCurrentIndex(transportTypeIndex >= 0 ? transportTypeIndex : 0);
     connect(m_transportTypeCombo, &QComboBox::currentIndexChanged, this,
             &DeviceConfigDialog::updateTransportFieldsVisibility);
     m_connectionLayout->addRow(tr("Transport:"), m_transportTypeCombo);
+
+    m_tcpHostEdit = new QLineEdit(m_device.tcpHost, connectionGroup);
+    m_tcpHostEdit->setPlaceholderText(tr("e.g. robot.local or 192.168.4.1"));
+    m_tcpHostEdit->setToolTip(tr("Hostname or IP address of the robot TCP server."));
+    m_tcpHostRowIndex = m_connectionLayout->rowCount();
+    m_connectionLayout->addRow(tr("TCP host:"), m_tcpHostEdit);
+
+    m_tcpPortSpin = new QSpinBox(connectionGroup);
+    m_tcpPortSpin->setRange(1, 65535);
+    m_tcpPortSpin->setValue(m_device.tcpPort);
+    m_tcpPortSpin->setToolTip(tr("TCP server port."));
+    m_tcpPortRowIndex = m_connectionLayout->rowCount();
+    m_connectionLayout->addRow(tr("TCP port:"), m_tcpPortSpin);
 
     m_portCombo = new QComboBox(connectionGroup);
     m_portCombo->setEditable(true);
@@ -336,11 +355,12 @@ DeviceConfigDialog::DeviceConfigDialog(const Device& initial, QWidget* parent)
     m_cachePasswordRowIndex = m_connectionLayout->rowCount();
     m_connectionLayout->addRow(QString(), m_cachePasswordCheck);
 
-    // Lock the Connection group to the tallest of the three transports' row
+    // Lock the Connection group to the tallest of the four transports' row
     // sets (Hub has the most: through-device/source_id/this-device's-id/
-    // password/cache checkbox) instead of leaving it to shrink-wrap whichever
-    // one happens
-    // to be selected. Without this, switching the Transport combo hides/
+    // password/cache checkbox; Tcp ties Hub on the last two now that a
+    // direct session shares the same channel-B password field -- see
+    // updateTransportFieldsVisibility()) instead of leaving it to shrink-wrap
+    // whichever one happens to be selected. Without this, switching the Transport combo hides/
     // shows rows via setRowVisible() and the whole dialog resizes itself
     // around it every time -- jarring, and it undoes the height the user set
     // by dragging the dialog. Measured by actually cycling through every
@@ -355,8 +375,8 @@ DeviceConfigDialog::DeviceConfigDialog(const Device& initial, QWidget* parent)
     // just that transport's.
     {
         int maxConnectionHeight = 0;
-        for (TransportType type :
-             {TransportType::Serial, TransportType::UsbHid, TransportType::HubChannel}) {
+        for (TransportType type : {TransportType::Serial, TransportType::UsbHid,
+                       TransportType::HubChannel, TransportType::Tcp}) {
             const int index = m_transportTypeCombo->findData(int(type));
             m_transportTypeCombo->setCurrentIndex(index);
             updateTransportFieldsVisibility();
@@ -538,6 +558,8 @@ Device DeviceConfigDialog::result() const {
     device.portName = m_portCombo->currentText();
     device.baudRate = m_baudCombo->currentText().toInt();
     device.lineTerminator = m_lineTerminatorCombo->currentData().toInt();
+    device.tcpHost = m_tcpHostEdit->text().trimmed();
+    device.tcpPort = quint16(m_tcpPortSpin->value());
     device.usbPath = m_usbDeviceCombo->currentData().toString();
     device.parentDeviceId = m_parentCombo->currentData().toString();
     // m_peerSourceId is the ground truth (see its own declaration) --
@@ -562,18 +584,31 @@ void DeviceConfigDialog::updateTransportFieldsVisibility() {
     // treating Hub as "not serial" would offer it a USB device picker.
     const TransportType transport = TransportType(m_transportTypeCombo->currentData().toInt());
     const bool isSerial = transport == TransportType::Serial;
+    const bool isTcp = transport == TransportType::Tcp;
     const bool isUsbHid = transport == TransportType::UsbHid;
     const bool isHub = transport == TransportType::HubChannel;
 
     setFormRowVisible(m_connectionLayout, m_portRowIndex, isSerial);
     setFormRowVisible(m_connectionLayout, m_baudRowIndex, isSerial);
     setFormRowVisible(m_connectionLayout, m_lineTerminatorRowIndex, isSerial);
+    setFormRowVisible(m_connectionLayout, m_tcpHostRowIndex, isTcp);
+    setFormRowVisible(m_connectionLayout, m_tcpPortRowIndex, isTcp);
     setFormRowVisible(m_connectionLayout, m_usbDeviceRowIndex, isUsbHid);
     setFormRowVisible(m_connectionLayout, m_parentRowIndex, isHub);
     setFormRowVisible(m_connectionLayout, m_peerSourceIdRowIndex, isHub);
     setFormRowVisible(m_connectionLayout, m_childSourceIdRowIndex, isHub);
-    setFormRowVisible(m_connectionLayout, m_peerPasswordRowIndex, isHub);
-    setFormRowVisible(m_connectionLayout, m_cachePasswordRowIndex, isHub);
+    // The password field is Device::peerPassword -- ONE channel-B password
+    // per device now covers HubChannel and Tcp (and, later, Ble): a direct
+    // TCP session derives the exact same key a hub child would (see
+    // BtpBackend::setDirectEndpointKey()'s comment for why that key is wired
+    // in without adopting any of the hub-child role's other side effects).
+    // "Cache password" belongs next to it for the same reason it does for
+    // Hub: whether to persist the typed password in the .tvproj (vs. asking
+    // again every session) is a property of the password field itself, not
+    // of which transport happens to consume the derived key.
+    const bool showsPeerPassword = isHub || isTcp;
+    setFormRowVisible(m_connectionLayout, m_peerPasswordRowIndex, showsPeerPassword);
+    setFormRowVisible(m_connectionLayout, m_cachePasswordRowIndex, showsPeerPassword);
 }
 
 void DeviceConfigDialog::setAvailableParentDevices(

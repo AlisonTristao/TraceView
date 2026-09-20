@@ -73,6 +73,8 @@ private slots:
     // BtpBackend (m_node->connect()) -- these drive a real BtpBackend end to
     // end, exactly what an ordinary serial device does.
     void helloAdvertisesTheLibrarysFullSupportedVersionRange();
+    void directModeSendsHelloWithoutEnterReady();
+    void rejectedWriteIsReportedByTheBackend();
     void sessionEstablishedWhenSelectedVersionIsWithinTheAdvertisedRange();
     void sessionFailsWhenSelectedVersionIsOutsideTheAdvertisedRange();
 };
@@ -179,7 +181,9 @@ void TestBtpHandshake::consoleLineBeforeEstablishedIsIgnored() {
 
 class BackendHarness {
 public:
-    BackendHarness() {
+    explicit BackendHarness(BtpBackend::SessionStartMode mode =
+                                BtpBackend::SessionStartMode::Console)
+        : backend(btp::kSerialTransport, mode) {
         QObject::connect(&backend, &Backend::bytesToWrite, &loopback, &BtpSession::feedBytes);
         QObject::connect(&loopback, &BtpSession::bytesToWrite, &backend, &Backend::feedBytes);
         QObject::connect(&loopback, &BtpSession::frameReceived, &loopback,
@@ -197,6 +201,12 @@ public:
     const BtpFrame& sendHelloAndCapture() {
         backend.onTransportConnectionChanged(true);
         backend.feedBytes("BTP/1 READY " + nonceOf(enterLine) + "\r\n");
+        helloFrame = sent.last();
+        return helloFrame;
+    }
+
+    const BtpFrame& sendDirectHelloAndCapture() {
+        backend.onTransportConnectionChanged(true);
         helloFrame = sent.last();
         return helloFrame;
     }
@@ -266,6 +276,27 @@ void TestBtpHandshake::helloAdvertisesTheLibrarysFullSupportedVersionRange() {
         const int offset = kHelloPayloadFixedSize + (version - btp::kMinimumProtocolVersion);
         QCOMPARE(quint8(hello.payload.at(offset)), version);
     }
+}
+
+void TestBtpHandshake::directModeSendsHelloWithoutEnterReady() {
+    BackendHarness h(BtpBackend::SessionStartMode::DirectBtp);
+    const BtpFrame& hello = h.sendDirectHelloAndCapture();
+
+    QVERIFY(h.enterLine.isEmpty());
+    QCOMPARE(hello.type, btp::MessageType::Control);
+    QCOMPARE(hello.objectId, kControlHello);
+}
+
+void TestBtpHandshake::rejectedWriteIsReportedByTheBackend() {
+    BtpBackend backend;
+    QSignalSpy statusSpy(&backend, &Backend::statusMessage);
+    QSignalSpy recoverySpy(&backend, &Backend::sessionRecoveryNeeded);
+
+    backend.onTransportWriteRejected(QStringLiteral("queue full"));
+
+    QCOMPARE(statusSpy.count(), 1);
+    QVERIFY(statusSpy.at(0).at(0).toString().contains(QStringLiteral("queue full")));
+    QCOMPARE(recoverySpy.count(), 1);
 }
 
 void TestBtpHandshake::sessionEstablishedWhenSelectedVersionIsWithinTheAdvertisedRange() {

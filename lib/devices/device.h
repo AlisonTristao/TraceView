@@ -36,9 +36,17 @@ enum class CommType { Btp };
 // link at all, but a channel multiplexed over ANOTHER device's connection --
 // a robot reached through the dongle it sits behind (see core/hubtransport.h).
 // It lives in the same enum because everything above this layer asks the same
-// question of it as of the other two ("which transport does this device
-// use"), and DeviceConnection remains the single switch point for all three.
-enum class TransportType { Serial, UsbHid, HubChannel };
+// question of it as of the other transports ("which transport does this
+// device use"), and DeviceConnection remains the single switch point.
+// Existing values are explicit: project files and other consumers already
+// persist these ordinals, so new transports must only be appended.
+enum class TransportType {
+    Serial = 0,
+    UsbHid = 1,
+    HubChannel = 2,
+    Tcp = 3,
+    Ble = 4,
+};
 
 inline QString transportTypeLabel(TransportType type) {
     switch (type) {
@@ -48,6 +56,10 @@ inline QString transportTypeLabel(TransportType type) {
             return QCoreApplication::translate("Device", "USB");
         case TransportType::HubChannel:
             return QCoreApplication::translate("Device", "Hub");
+        case TransportType::Tcp:
+            return QCoreApplication::translate("Device", "TCP");
+        case TransportType::Ble:
+            return QCoreApplication::translate("Device", "BLE");
     }
     return QString();
 }
@@ -171,6 +183,18 @@ struct Device {
     // as an empty portName -- DeviceConnection then never attempts to open
     // it.
     QString usbPath;
+
+    // --- Direct TCP -------------------------------------------------------
+    // Hostname or numeric address of the ESP32-S3 TCP server. This is kept
+    // separate from portName/baudRate because TCP has no serial settings.
+    QString tcpHost;
+    quint16 tcpPort = 44300;
+
+    // --- Direct BLE -------------------------------------------------------
+    // Stable identity learned from HELLO_RESULT, when known. A platform BLE
+    // address or display name is only a discovery hint and is intentionally
+    // not represented as the device identity here.
+    QString blePeerUuid;
 
     // --- TransportType::HubChannel only -----------------------------------
     // A device reached THROUGH another device: a robot behind the dongle it

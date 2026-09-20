@@ -9,6 +9,7 @@
 #include "preferences/appsettings.h"
 #include "protocol/btpbackend.h"
 #include "serialmanager.h"
+#include "tcptransport.h"
 #include "usbhidmanager.h"
 
 namespace traceview {
@@ -52,6 +53,23 @@ BtpSessionAxes toBtpSessionAxes(TransportType type) {
             return {BtpSession::Framing::PreFramed, btp::kUsbHidTransport};
         case TransportType::HubChannel:
             return {BtpSession::Framing::PreFramed, btp::kEspNowTransport};
+        case TransportType::Tcp:
+            // btp::kTcpTransport already exists in the BTP library (added
+            // alongside the TCP contract -- see TAREFAS_TCP_BLE_ANDROID.txt
+            // T03), but this repo's FetchContent still pins tag v2.45.0
+            // (root CMakeLists.txt), which predates it. Standing in with the
+            // Serial profile until that pin moves is deliberate: it
+            // under-provisions TCP's intended frame budget (4056 vs 8152
+            // octets) rather than referencing a symbol this build doesn't
+            // have. Revisit once the BTP dependency is bumped.
+            return {BtpSession::Framing::CobsStream, btp::kSerialTransport};
+        case TransportType::Ble:
+            // No BleTransport exists yet (TAREFAS_TCP_BLE_ANDROID.txt
+            // T26+); nothing constructs a BtpBackend with this transport
+            // today (see the ctor below). Present only for switch
+            // exhaustiveness, using the USB HID profile as the closer
+            // analog -- both hand over one already-framed block at a time.
+            return {BtpSession::Framing::PreFramed, btp::kUsbHidTransport};
     }
     return {BtpSession::Framing::CobsStream, btp::kSerialTransport};
 }
@@ -75,12 +93,39 @@ DeviceConnection::DeviceConnection(CommType commType, TransportType transportTyp
             m_hubTransport = new HubTransport(0, this);
             m_transport = m_hubTransport;
             break;
+        case TransportType::Tcp:
+            m_tcpTransport = new TcpTransport(this);
+            // DeviceConnection's own m_retryTimer already retries every
+            // transport uniformly (see attemptReconnect()) -- TcpTransport's
+            // internal reconnect exists for its standalone/testing use and
+            // must be off here. Left enabled, a drop would race two
+            // independent retry loops: TcpTransport reopening the socket on
+            // its own timer and emitting connectionStateChanged(true)
+            // directly, without DeviceConnection ever having left
+            // Disconnected for PreparingTransport first -- the phase-gated
+            // lambda a few lines below would then discard that transition
+            // silently (connected but m_connectionPhase never advances).
+            m_tcpTransport->setReconnectEnabled(false);
+            m_transport = m_tcpTransport;
+            break;
+        case TransportType::Ble:
+            // No BleTransport exists yet (TAREFAS_TCP_BLE_ANDROID.txt
+            // T26+); DeviceConfigDialog does not offer Ble as a selectable
+            // transport for exactly this reason. m_transport stays null --
+            // nothing calls connectTo()/connectToTcp()/attemptReconnect()
+            // for a Ble device today, so the connect() calls just below see
+            // a null sender and no-op (Qt warns, does not crash).
+            break;
     }
 
     switch (commType) {
         case CommType::Btp: {
             const BtpSessionAxes axes = toBtpSessionAxes(transportType);
-            m_backend = new BtpBackend(axes.framing, axes.encodeProfile, this);
+            const auto sessionStartMode =
+                (transportType == TransportType::Tcp || transportType == TransportType::Ble)
+                    ? BtpBackend::SessionStartMode::DirectBtp
+                    : BtpBackend::SessionStartMode::Console;
+            m_backend = new BtpBackend(axes.framing, axes.encodeProfile, sessionStartMode, this);
             break;
         }
     }
@@ -91,21 +136,62 @@ DeviceConnection::DeviceConnection(CommType commType, TransportType transportTyp
     // now, so this is identical regardless of which concrete transport
     // `transportType` picked above.
     connect(m_transport, &Transport::dataReceived, m_backend, &Backend::feedBytes);
-    connect(m_backend, &Backend::bytesToWrite, m_transport, &Transport::write);
+    connect(m_backend, &Backend::bytesToWrite, this, [this](const QByteArray& data) {
+        if (!m_transport->write(data)) {
+            const QString reason = tr("transport rejected %1 bytes").arg(data.size());
+            emit writeRejected(reason);
+            m_backend->onTransportWriteRejected(reason);
+        }
+    });
     connect(m_transport, &Transport::connectionStateChanged, m_backend,
             &Backend::onTransportConnectionChanged);
-    connect(m_transport, &Transport::connectionStateChanged, this,
-            &DeviceConnection::connectionStateChanged);
+    connect(m_transport, &Transport::connectionStateChanged, this, [this](bool connected) {
+        if (connected &&
+            (!m_shouldBeConnected || m_connectionPhase != ConnectionPhase::PreparingTransport)) {
+            return;
+        }
+        if (!connected && m_shouldBeConnected &&
+            (m_connectionPhase == ConnectionPhase::Connecting ||
+             m_connectionPhase == ConnectionPhase::PreparingTransport)) {
+            // A late close from a superseded attempt must not tear down the
+            // state of the new attempt.
+            m_attemptInProgress = false;
+            return;
+        }
+        m_attemptInProgress = false;
+        emit connectionStateChanged(connected);
+        setConnectionPhase(connected
+                       ? (m_transportType == TransportType::HubChannel
+                          ? ConnectionPhase::Ready
+                          : ConnectionPhase::NegotiatingBtp)
+                       : ConnectionPhase::Disconnected);
+        });
     connect(m_transport, &Transport::errorOccurred, this, &DeviceConnection::errorOccurred);
     connect(m_backend, &Backend::deviceIdentified, this, &DeviceConnection::deviceIdentified);
+        connect(m_backend, &Backend::deviceIdentified, this,
+            [this](const QString&, const QString&) {
+                if (m_shouldBeConnected && m_connectionPhase == ConnectionPhase::NegotiatingBtp) {
+                    setConnectionPhase(ConnectionPhase::Ready);
+                }
+            });
     connect(m_backend, &Backend::deviceInfoReported, this, &DeviceConnection::deviceInfoReported);
+    connect(m_transport, &Transport::errorOccurred, this, [this](const QString&) {
+        if (!m_transport->isConnected() &&
+            (m_connectionPhase == ConnectionPhase::PreparingTransport ||
+             m_connectionPhase == ConnectionPhase::NegotiatingBtp ||
+             m_connectionPhase == ConnectionPhase::Ready)) {
+            m_attemptInProgress = false;
+            setConnectionPhase(ConnectionPhase::Disconnected);
+        }
+    });
     // A dead session on a live transport: close it and let the retry timer
     // below reopen it, which restarts the handshake through
     // onTransportConnectionChanged(). Closing is what makes attemptReconnect()
     // eligible at all -- it returns early while the transport is still
     // connected, which is exactly the state a failed handshake leaves behind.
     connect(m_backend, &Backend::sessionRecoveryNeeded, this, [this] {
-        if (m_shouldBeConnected && AppSettings::instance().autoReconnect()) {
+        if (m_shouldBeConnected && m_connectionPhase == ConnectionPhase::NegotiatingBtp &&
+            AppSettings::instance().autoReconnect()) {
             m_transport->close();
         }
     });
@@ -125,6 +211,7 @@ DeviceConnection::DeviceConnection(CommType commType, TransportType transportTyp
 
 DeviceConnection::~DeviceConnection() {
     m_shouldBeConnected = false;
+    m_attemptInProgress = false;
     if (m_retryTimer) {
         m_retryTimer->stop();
     }
@@ -140,6 +227,7 @@ void DeviceConnection::connectTo(const QString& target, qint32 baudRate) {
     m_target = target;
     m_baudRate = baudRate;
     m_shouldBeConnected = !target.isEmpty();
+    m_attemptInProgress = false;
 
     if (!m_shouldBeConnected) {
         qCInfo(lcConnection) << "target cleared, intent now offline";
@@ -147,7 +235,58 @@ void DeviceConnection::connectTo(const QString& target, qint32 baudRate) {
         closeTransportGracefully();
         return;
     }
+    if (!m_transportAvailable) {
+        setConnectionPhase(ConnectionPhase::Disconnected);
+        return;
+    }
+    setConnectionPhase(ConnectionPhase::Connecting);
     qCInfo(lcConnection) << "target set to" << target << "baud" << baudRate
+                        << (targetChanged ? "(changed)" : "(unchanged)");
+
+    if (targetChanged && m_transport->isConnected()) {
+        closeTransportGracefully();
+    }
+    attemptReconnect();
+    if (AppSettings::instance().autoReconnect()) {
+        m_retryTimer->start();
+    }
+}
+
+void DeviceConnection::connectToTcp(const QString& host, quint16 port,
+                                    const QByteArray& endpointKey) {
+    if (m_tcpTransport == nullptr) {
+        return;
+    }
+
+    const QString trimmedHost = host.trimmed();
+    const bool targetChanged = trimmedHost != m_tcpHost || port != m_tcpPort;
+    m_tcpHost = trimmedHost;
+    m_tcpPort = port;
+    m_shouldBeConnected = !trimmedHost.isEmpty() && port != 0;
+    m_attemptInProgress = false;
+
+    // Told before the link can come up, same reasoning as connectVia()'s own
+    // setHubEndpoint() call: a sealed reply from the robot could in principle
+    // arrive as early as the first bytes after connect. Unlike connectVia(),
+    // this never touches this backend's identity or its outbound sealing --
+    // see BtpBackend::setDirectEndpointKey()'s own comment for why a direct
+    // TCP session must not become a hub child.
+    if (auto* btpBackend = qobject_cast<BtpBackend*>(m_backend)) {
+        btpBackend->setDirectEndpointKey(endpointKey);
+    }
+
+    if (!m_shouldBeConnected) {
+        qCInfo(lcConnection) << "TCP target cleared, intent now offline";
+        m_retryTimer->stop();
+        closeTransportGracefully();
+        return;
+    }
+    if (!m_transportAvailable) {
+        setConnectionPhase(ConnectionPhase::Disconnected);
+        return;
+    }
+    setConnectionPhase(ConnectionPhase::Connecting);
+    qCInfo(lcConnection) << "TCP target set to" << m_tcpHost << m_tcpPort
                         << (targetChanged ? "(changed)" : "(unchanged)");
 
     if (targetChanged && m_transport->isConnected()) {
@@ -172,6 +311,8 @@ void DeviceConnection::connectVia(DeviceConnection* parentConnection, quint32 se
         return;
     }
 
+    m_attemptInProgress = false;
+    setConnectionPhase(ConnectionPhase::Connecting);
     m_hubTransport->setPeerSourceId(peerSourceId);
     m_hubTransport->attachTo(parentConnection);
 
@@ -202,8 +343,42 @@ void DeviceConnection::connectVia(DeviceConnection* parentConnection, quint32 se
 void DeviceConnection::disconnectFrom() {
     qCInfo(lcConnection) << "disconnect requested for" << m_target;
     m_shouldBeConnected = false;
+    m_attemptInProgress = false;
     m_retryTimer->stop();
+    setConnectionPhase(ConnectionPhase::Disconnected);
     closeTransportGracefully();
+}
+
+void DeviceConnection::setAvailable(bool available) {
+    if (m_transportAvailable == available) {
+        return;
+    }
+    m_transportAvailable = available;
+    emit availabilityChanged(available);
+    m_attemptInProgress = false;
+
+    if (!available) {
+        m_retryTimer->stop();
+        closeTransportGracefully();
+        setConnectionPhase(ConnectionPhase::Disconnected);
+        return;
+    }
+
+    if (m_shouldBeConnected && !m_transport->isConnected()) {
+        setConnectionPhase(ConnectionPhase::Connecting);
+        attemptReconnect();
+        if (AppSettings::instance().autoReconnect()) {
+            m_retryTimer->start();
+        }
+    }
+}
+
+void DeviceConnection::setConnectionPhase(ConnectionPhase phase) {
+    if (m_connectionPhase == phase) {
+        return;
+    }
+    m_connectionPhase = phase;
+    emit connectionPhaseChanged(phase);
 }
 
 void DeviceConnection::closeTransportGracefully() {
@@ -231,14 +406,21 @@ void DeviceConnection::setLineTerminator(int terminator) {
 }
 
 void DeviceConnection::attemptReconnect() {
-    if (!m_shouldBeConnected || m_transport->isConnected()) {
+    if (!m_shouldBeConnected || !m_transportAvailable || m_transport->isConnected() ||
+        m_attemptInProgress) {
         return;
     }
-    qCInfo(lcConnection) << "attempting connect to" << m_target;
+    qCInfo(lcConnection) << "attempting connect to"
+                        << (m_tcpTransport ? QString("%1:%2").arg(m_tcpHost).arg(m_tcpPort)
+                                           : m_target);
+    m_attemptInProgress = true;
+    setConnectionPhase(ConnectionPhase::PreparingTransport);
     if (m_serialManager) {
         m_serialManager->open(m_target, m_baudRate);
     } else if (m_usbHidManager) {
         m_usbHidManager->open(m_target);
+    } else if (m_tcpTransport) {
+        m_tcpTransport->open(m_tcpHost, m_tcpPort);
     }
     // HubChannel has nothing to retry: it has no port to reopen, and its
     // connected state is a function of its parent's, which it is already

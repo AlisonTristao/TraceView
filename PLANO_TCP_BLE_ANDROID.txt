@@ -1,0 +1,248 @@
+PLANO DE IMPLEMENTAÇÃO — TCP E BLE, COM PREPARAÇÃO PARA ANDROID
+TraceView / ESP32-S3
+Data: 2026-09-20
+
+OBJETIVO
+
+Implementar comunicação direta entre TraceView e robô ESP32-S3 por TCP
+sobre Wi-Fi e por Bluetooth Low Energy (BLE), preservando o protocolo BTP.
+Validar primeiro no desktop e, posteriormente, compilar para Android com
+a mesma implementação de comunicação.
+
+Este documento é um plano. A implementação ainda não foi realizada.
+O firmware do robô precisa ser examinado para localizar os pontos exatos
+de integração. O trabalho envolve TraceView, firmware e especificação BTP.
+
+ARQUITETURA PROPOSTA
+
+Dashboard / comandos / terminal
+               |
+          Backend BTP
+               |
+       DeviceConnection
+        /             \
+   TcpTransport    BleTransport
+        |               |
+   Wi-Fi do S3      BLE do S3
+
+O ESP32-S3 utiliza BLE; Bluetooth clássico/SPP não faz parte deste plano.
+Serial, USB HID e hub existentes devem continuar funcionando.
+
+1. DEFINIR O CONTRATO DOS TRANSPORTES
+
+TCP:
+- TraceView atua como cliente TCP; ESP32-S3 como servidor TCP.
+- Endereço configurado por IP/hostname e porta.
+- BTP binário com enquadramento COBS.
+- HELLO BTP após o estabelecimento da conexão.
+
+BLE:
+- TraceView atua como central/cliente GATT; ESP32-S3 como periférico.
+- Serviço BTP próprio com características RX e TX.
+- RX recebe escritas do TraceView; TX envia notificações ao TraceView.
+- BTP binário com COBS, dividido em blocos compatíveis com a conexão.
+- HELLO BTP somente após descoberta do serviço e habilitação de TX.
+
+Reaproveitar COBS não significa reproduzir o procedimento serial inteiro.
+A serial atual tem entrada em modo BTP por ENTER/READY. TCP e BLE devem
+entrar diretamente no protocolo, sem simular um console serial.
+
+Definir na especificação canônica do repositório BTP:
+- Limites de frame, filas e tempos de espera.
+- UUIDs do serviço BLE e das características RX/TX.
+- Versão do serviço e identidade estável do robô.
+- Política inicial de uma sessão de controle por robô, rejeitando
+  explicitamente uma segunda sessão concorrente.
+- Requisitos de autenticação. A proteção atual dos canais do hub não
+  deve ser presumida como proteção automática das conexões diretas.
+- Regras de encerramento, recuperação de sessão e compatibilidade.
+
+OTA permanece no HTTP existente nesta etapa, inclusive ao usar BLE
+para telemetria. Não implementar OTA sobre BLE neste escopo inicial.
+
+2. PREPARAR A ARQUITETURA COMPARTILHADA
+
+Pontos atuais de integração:
+- lib/core/transport.h
+- lib/core/deviceconnection.h e .cpp
+- lib/protocol/btpsession.h e .cpp
+- lib/protocol/btpbackend.h e .cpp
+- lib/protocol/btphandshake.h e .cpp
+- lib/devices/device.h e .cpp
+- lib/CMakeLists.txt e CMakeLists.txt
+
+Mudanças:
+- Extrair transportes e gerenciamento de conexão de traceview_ui para
+  uma biblioteca sem dependência de Widgets, ajustando dependências
+  auxiliares que hoje pertencem à UI quando necessário.
+- Adicionar Tcp e Ble a TransportType, preservando os valores numéricos
+  existentes, pois eles já são gravados nos projetos.
+- Usar configurações específicas por transporte, sem reutilizar os
+  parâmetros de porta serial e baud rate para TCP ou BLE.
+- Separar explicitamente enquadramento, limites do transporte e
+  procedimento de início de sessão.
+- Representar estados assíncronos: desconectado, conectando, preparando
+  transporte, negociando BTP e pronto.
+- Impedir tentativas de reconexão sobrepostas.
+- Cancelar operações pendentes ao desconectar e descartar callbacks
+  pertencentes a conexões anteriores.
+- Definir o contrato de escrita: aceitar bytes na fila não significa
+  que o robô recebeu ou executou um comando.
+- Propagar falhas de fila ao backend. A ligação atual por sinais não
+  aproveita diretamente o retorno booleano de Transport::write().
+
+Critério de conclusão:
+Serial, USB HID e hub continuam funcionando; testes de regressão passam.
+
+3. IMPLEMENTAR TCP PRIMEIRO
+
+No TraceView:
+- Criar TcpTransport com QTcpSocket.
+- Adicionar hostname/IP e porta na configuração do dispositivo.
+- Começar com endereço informado manualmente. Descoberta automática
+  pode ser acrescentada depois.
+- Implementar timeout, cancelamento e reconexão com espera progressiva.
+- Tratar leituras parciais e vários frames recebidos na mesma leitura.
+- Limitar filas de escrita e detectar ausência de resposta pela sessão BTP.
+- Tratar escritas parciais e encerramento sem bloquear a interface.
+
+TCP entrega um fluxo ordenado de bytes e não preserva limites de frames.
+O enquadramento COBS será usado para delimitar esses frames.
+
+No firmware:
+- Criar servidor TCP não bloqueante.
+- Conectar os bytes recebidos ao processamento BTP.
+- Encaminhar catálogo, respostas, terminal e telemetria à sessão correta.
+- Limpar assinaturas e estado quando o cliente sair.
+- Impedir que um cliente lento bloqueie o controle do robô.
+- Em sobrecarga, reduzir ou descartar telemetria antes da serialização,
+  sem cortar bytes de frames já enfileirados.
+
+Conectividade inicial:
+- PC/celular e robô na mesma rede; ou
+- PC/celular conectado à rede criada pelo robô.
+A configuração automática do Wi-Fi pelo aplicativo fica para depois.
+
+Critério de conclusão:
+Descobrir catálogo, assinar tópicos, plotar dados, executar comandos e
+recuperar a sessão após queda de Wi-Fi ou reinício do robô.
+
+4. IMPLEMENTAR BLE
+
+No TraceView:
+- Adicionar Qt6::Bluetooth.
+- Criar BleDiscoveryService e BleTransport.
+- Buscar dispositivos pelo UUID do serviço BTP.
+- Conectar, descobrir características e habilitar notificações.
+- Iniciar o handshake BTP somente quando RX/TX estiverem utilizáveis.
+- Persistir identidade do robô. Nome e endereço Bluetooth são pistas
+  para descoberta, não a identidade definitiva.
+- Tratar Bluetooth desligado, permissão negada, dispositivo ausente
+  e serviço incompatível.
+- Implementar reconexão e filas limitadas.
+
+No firmware ESP32-S3:
+- Anunciar o serviço BTP por advertising.
+- Expor RX para escrita e TX para notificações.
+- Manter filas limitadas e evitar trabalho pesado nos callbacks BLE.
+- Ajustar os blocos ao tamanho permitido pela conexão.
+- Recuperar advertising e estado da sessão após desconexão.
+
+Estratégia inicial:
+- TraceView -> robô: escrita com resposta, com operações serializadas.
+- Robô -> TraceView: notificações.
+- A resposta BTP continua sendo a confirmação de execução do comando;
+  confirmação GATT não significa execução concluída.
+- Não assumir MTU grande. Um frame COBS pode atravessar várias operações
+  BLE; o receptor reconstrói o fluxo.
+- Validar limites e tempos de reassembly também com blocos pequenos.
+- Definir controle de fluxo e tratamento de saturação dos dois lados;
+  notificações não devem ser produzidas sem respeitar a fila da pilha BLE.
+
+Critério de conclusão:
+Mesma funcionalidade BTP do TCP, com medição da vazão sustentável e
+indicação de sobrecarga, sem crescimento ilimitado das filas.
+
+5. PREPARAR ANDROID DURANTE A IMPLEMENTAÇÃO
+
+A compilação Android é posterior, mas as decisões abaixo entram agora:
+- Tornar SerialPort e hidapi opcionais; TCP/BLE independentes delas.
+- Criar opções CMake por transporte.
+- Validar um build desktop com apenas TCP/BLE para conferir a separação.
+- Criar tratamento assíncrono de permissões e disponibilidade.
+- Expor descoberta e conexão por sinais/modelos, sem depender de janelas.
+- Preparar API para suspensão e recuperação de sessões ao retornar.
+- Revalidar identidade e sessão na reconexão.
+- Não reenviar comandos antigos automaticamente após reconectar.
+- Persistir novas configurações no .tvproj preservando projetos antigos.
+
+Na etapa Android:
+- Selecionar versão de Qt e SDK/NDK/JDK compatíveis.
+- Gerar build ARM64 e configurar pacote, assinatura e permissões.
+- Solicitar permissões de descoberta/conexão BLE em tempo de execução.
+- Conferir requisitos de rede local conforme Android e target SDK usados.
+- Adaptar interface para toque e telas menores.
+- Testar suspensão/retomada e mudanças de conectividade em aparelho real.
+
+Escopo mobile inicial: funcionamento em primeiro plano.
+Operação contínua em segundo plano exige uma etapa própria.
+
+6. TESTES E CRITÉRIOS DE ACEITE
+
+Automatizados:
+- Compatibilidade de serialização dos projetos antigos e novos.
+- TCP com servidor simulado: frames parciais, agrupados, falhas e quedas.
+- BLE com camada simulada: divisão de bytes, MTU pequeno, filas,
+  cancelamento e callbacks atrasados.
+- Handshake direto separado do procedimento ENTER/READY da serial.
+- Reconexão sem sobreposição e descarte de estado da sessão anterior.
+- Regressão de serial, USB HID e hub.
+
+Com hardware real:
+- Handshake, catálogo, assinaturas, comandos e terminal nos dois transportes.
+- Reinício do robô, perda de sinal e desconexão durante comandos.
+- Troca explícita entre TCP e BLE.
+- Segunda sessão concorrente e identidade do robô conectado.
+- Carga prolongada com gráficos, logs e scripts.
+- Se Wi-Fi/BLE/ESP-NOW permanecerem ativos juntos, medir a coexistência
+  no firmware real e o impacto no controle do robô.
+
+Medir com o mesmo conjunto de tópicos:
+- Bytes/s e amostras/s.
+- Latência de comandos.
+- Tamanho das filas e ocorrências de sobrecarga.
+- Tempo de reconexão.
+- Consumo de memória e estabilidade ao longo do tempo.
+
+Os limites de desempenho serão definidos pela carga real do robô.
+Testes simulados não substituem a validação do rádio e do aparelho físico.
+
+7. ORDEM DAS ENTREGAS
+
+1) Contrato BTP dos transportes, compartilhado com o firmware.
+2) Refatoração da conexão, configuração e persistência.
+3) TCP completo no desktop e no ESP32-S3.
+4) BLE completo no desktop e no ESP32-S3.
+5) Validação de estabilidade, carga, falhas e coexistência.
+6) Compilação Android, permissões, interface e testes em aparelho físico.
+
+Primeiro marco funcional: TCP direto com o ESP32-S3, com telemetria real
+no dashboard. BLE aproveita essa base; Android concentra depois o trabalho
+em plataforma e interface.
+
+REFERÊNCIAS
+
+Qt TCP:
+https://doc.qt.io/qt-6/qtcpsocket.html
+
+Qt Bluetooth — plataformas e permissões:
+https://doc.qt.io/qt-6/qtbluetooth-index.html
+
+Qt GATT — escrita e notificações:
+https://doc.qt.io/qt-6/qlowenergyservice.html
+
+Permissões Bluetooth no Android:
+https://developer.android.com/develop/connectivity/bluetooth/bt-permissions
+
+ESP32-S3 BLE:
+https://docs.espressif.com/projects/esp-idf/en/latest/esp32s3/api-guides/ble/overview.html
