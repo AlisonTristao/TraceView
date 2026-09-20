@@ -674,6 +674,20 @@ void BtpBackend::onNodeConnected() {
     m_sessionClosing = false;
     m_sessionEstablished = true;
     m_sessionPeerSourceId = m_node->connected_peer_source_id();
+    if (m_sessionStartMode == SessionStartMode::DirectBtp) {
+        // A direct TCP/BLE session HELLOs the robot itself (no dongle in
+        // between), so the peer HELLO_RESULT just identified IS the robot to
+        // address -- unlike a hub child (configured upfront via
+        // setHubEndpoint(), before any HELLO ever happens) this target is
+        // only known now, once the handshake completes. Reuses the exact
+        // same (targetSourceId, catalog, hasEndpointKey) shape
+        // setHubEndpoint() configures CommandClient with, so
+        // BtpBackend::sendCommand() behaves identically for either kind of
+        // session: refuses to send without setDirectEndpointKey()/
+        // setHubEndpoint() having set a key first.
+        m_commandClient->configure(m_sessionPeerSourceId, m_telemetryCatalog,
+                                   [this] { return !m_endpointKey.isEmpty(); });
+    }
     m_btpHandshake->onSessionEstablished();
     m_keepaliveTimer->start();
     m_manifestClient->onSessionEstablished(m_node->connected_peer_config_revision());
@@ -877,9 +891,16 @@ void BtpBackend::unbindHubChild(quint32 childSourceId) {
 }
 
 void BtpBackend::sendCommand(const QByteArray& text) {
-    if (m_peerSourceId == 0) {
-        return;  // not a hub-channel device: no robot to address a COMMAND_REQUEST to
-    }
+    // No guard here on purpose: CommandClient::send() already no-ops when
+    // m_targetSourceId == 0 (commandclient.cpp), which is exactly the state
+    // it's left in for a plain Console-role session (Serial/UsbHid talking
+    // to the dongle's own shell -- typed commands go through
+    // sendTerminalIn()/the raw console instead, never through here) since
+    // nothing ever calls configure() for that case. A hub child gets
+    // configure()d by setHubEndpoint() up front; a direct TCP/BLE session
+    // gets it from onNodeConnected() once the HELLO_RESULT identifies the
+    // robot. Removing this used to mean "not a hub-channel device" here,
+    // which was true before direct sessions could address a robot too.
     m_commandClient->send(QString::fromUtf8(text));
 }
 

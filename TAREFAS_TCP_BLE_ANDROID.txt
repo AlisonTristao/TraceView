@@ -163,14 +163,28 @@ ETAPA 1 — LEVANTAMENTO E CONTRATO COMPARTILHADO
     telemetria que ia falhar. So HELLO_RESULT/SESSION_CLOSE_RESULT
     continuam em claro (bootstrap do protocolo, gap de biblioteca
     pre-existente, nao corrigivel do lado do app).
-    GAP NOVO ENCONTRADO (nao e regressao desta sessao, ja existia):
-    BtpBackend::sendCommand() tem `if (m_peerSourceId == 0) return;` —
-    COMMAND_REQUEST hoje SO e enviado em sessoes hub-child, nunca em uma
-    sessao TCP/console direta. Ou seja, com o estado atual do codigo,
-    executar comandos no robo via TCP nao funciona ainda (terminal via
-    sendTerminalIn() funciona independente disso). Corrigir isso e
-    trabalho novo, fora do escopo desta rodada — avisar o usuario antes de
-    T25.
+    GAP ENCONTRADO E FECHADO (nao era regressao desta sessao, ja existia
+    antes): BtpBackend::sendCommand() tinha `if (m_peerSourceId == 0)
+    return;` — COMMAND_REQUEST so era enviado em sessao hub-child, nunca em
+    sessao TCP/console direta. Corrigido: BtpBackend::onNodeConnected()
+    agora chama m_commandClient->configure(m_sessionPeerSourceId, ...)
+    quando m_sessionStartMode == DirectBtp (o peer que acabou de responder
+    HELLO_RESULT E o robo a enderecar, diferente de hub-child onde o alvo
+    ja era conhecido antes de conectar). sendCommand() perdeu a guarda
+    redundante — CommandClient::send() ja se recusa sozinho quando
+    m_targetSourceId==0 (o estado padrao de uma sessao Console/serial, que
+    nunca chama configure()), entao console continua seguro sem guarda
+    extra. Exige a mesma senha (setDirectEndpointKey) que ja fecha o
+    catalogo/telemetria — comando sem senha configurada continua recusado
+    com aviso, mesmo o firmware nao exigindo cifra nessa direcao (decisao
+    deliberada: T03/T06 pedem cifra obrigatoria em TCP).
+    PENDENCIA DE TESTE: nao escrevi um teste de ponta a ponta pra isso —
+    provar de verdade exigiria simular HELLO_RESULT E MANIFEST_DATA (o
+    catalogo so aceita sourceBootId() != 0 depois do manifest), e nenhum
+    teste existente no repo ja monta esse payload; nao quis arriscar um
+    teste fragil/proprio-errado sem um padrao pra copiar. Build + suite
+    completa (49/49) continuam verdes (regressao, nao prova o caminho
+    novo). Validacao real fica para o teste com hardware (T25).
 
 ETAPA 2 — BASE COMPARTILHADA E PREPARAÇÃO PARA ANDROID
 
