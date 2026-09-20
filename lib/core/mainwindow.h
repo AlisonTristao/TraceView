@@ -323,9 +323,9 @@ private:
     void onFullscreenToggled(bool checked);
 
     // Fires once, ~5s after startup: runs checkForUpdates(false) if the user
-    // hasn't disabled auto-checking and it's been at least a day since the
-    // last one (successful or not). Settings ▸ Updates' "Check now" button
-    // goes through checkForUpdates(true) instead, bypassing that cooldown.
+    // hasn't disabled auto-checking. Runs on every launch, regardless of
+    // the last successful check. Settings ▸ Updates' "Check now" button
+    // goes through checkForUpdates(true) instead.
     void maybeCheckForUpdatesOnStartup();
     // `manual` distinguishes a user-initiated check from the startup one:
     // only a manual check surfaces "up to date"/failure feedback (via

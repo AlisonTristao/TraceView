@@ -7,6 +7,15 @@ release flow.
 
 ## [Unreleased]
 
+## [3.3.18] - 2026-09-19
+
+### Fixed
+
+- Automatic update checks now run on every launch when enabled, five seconds
+  after startup. Removed the 24-hour interval that previously prevented a new
+  check after a recent successful one. Skipped versions remain hidden during
+  automatic checks.
+
 ## [3.3.17] - 2026-09-19
 
 ### Fixed

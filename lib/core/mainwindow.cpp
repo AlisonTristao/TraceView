@@ -2706,10 +2706,6 @@ void MainWindow::maybeCheckForUpdatesOnStartup() {
     if (!settings.updateAutoCheckEnabled()) {
         return;
     }
-    constexpr qint64 kMinIntervalMs = 24LL * 60 * 60 * 1000;
-    if (QDateTime::currentMSecsSinceEpoch() - settings.updateLastCheckEpochMs() < kMinIntervalMs) {
-        return;
-    }
     checkForUpdates(/*manual=*/false);
 }
 
@@ -2754,9 +2750,7 @@ void MainWindow::onUpdateUpToDate() {
 }
 
 void MainWindow::onUpdateCheckFailed(const QString& reason) {
-    // Deliberately does not update lastCheckEpochMs -- a failed attempt (most
-    // likely: offline) should be retried at the next startup rather than
-    // waiting out the full cooldown from an attempt that found nothing.
+    // Keep the displayed last-check time tied to the last successful check.
     if (m_updateCheckWasManual) {
         postStatus(tr("Update check failed: %1").arg(reason), 5000, StatusSeverity::Warning);
     }
