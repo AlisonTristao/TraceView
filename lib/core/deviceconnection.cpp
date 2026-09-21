@@ -73,11 +73,12 @@ BtpSessionAxes toBtpSessionAxes(TransportType type) {
             // BleTransport (T28-T30) forwards raw GATT notification bytes
             // exactly as TcpTransport forwards raw socket bytes -- neither
             // transport bounds a frame itself, so BtpSession's own
-            // CobsStream decoder has to. btp::kBleTransport exists only in
-            // the BTP library's docs so far (T04's note), not yet in
-            // include/btp/codec.hpp at the v2.45.0 tag this repo pins,
-            // hence the same kSerialTransport stand-in TCP uses -- revisit
-            // together with Tcp's case once the BTP dependency is bumped.
+            // CobsStream decoder has to. btp::kBleTransport now exists for
+            // real (T34, added to the BTP library alongside bally_OS's own
+            // BLE work), but this repo still pins the v2.45.0 tag (root
+            // CMakeLists.txt), which predates it -- same kSerialTransport
+            // stand-in TCP uses meanwhile, revisit together with Tcp's case
+            // once the BTP dependency is bumped.
             return {BtpSession::Framing::CobsStream, btp::kSerialTransport};
     }
     return {BtpSession::Framing::CobsStream, btp::kSerialTransport};

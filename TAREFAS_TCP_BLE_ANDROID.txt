@@ -849,25 +849,123 @@ que Tcp usa, mesma pendencia de subprovisionamento de limite de frame.
     o dialogo de um device BLE, conferir que os campos aparecem/escondem
     certo ao trocar Transporte, e testar Scan quando tiver hardware.
 
-[ ] T33 — Criar serviço GATT no ESP32-S3
+[x] T33 — Criar serviço GATT no ESP32-S3
     Frente: firmware. Depende de: T04, T05, T06, T25.
     Fazer: advertising BTP, RX para escrita e TX para notificações,
     identidade e política de sessão conforme contrato.
     Aceite: central descobre serviço e características corretas.
+    Nota (2026-09-21): lib/BleBtpServer/ (bally_OS) -- NimBLE (nao Bluedroid,
+    sdkconfig.defaults: CONFIG_BT_NIMBLE_ENABLED=y; a regra "sem BT
+    classico/SPP" tambem e trivialmente satisfeita pelo proprio radio do
+    ESP32-S3, que so tem BLE). BleBtpServer e deliberadamente BTP-unaware
+    igual TcpBtpServer, exceto por UMA coisa que TCP nao precisa: fatiar o
+    envio pro MTU negociado (ver nota do T34/T29 sobre por que isso e
+    simetrico e correto). UUIDs de servico/RX/TX identicos aos do T04/
+    TraceView, escritos no .cpp na MESMA ordem esquerda-pra-direita da
+    string do UUID (revertidos pro BLE_UUID128_INIT por uma funcao auxiliar
+    comentada, nao a mao em cada macro) -- e logados via ble_uuid_to_str()
+    no boot pra pegar erro de transcricao de hex o quanto antes, ja que
+    nao ha como testar isso sem hardware real. Exclusividade de sessao no
+    nivel GAP (decisao do T04): start_advertising() so e chamado nos casos
+    CONNECT-falhou e DISCONNECT, nunca enquanto ha central conectado --
+    ZERO logica de "segunda conexao pendente" tipo TcpBusyResponder, porque
+    uma segunda central literalmente nao consegue descobrir o servico
+    enquanto a primeira estiver conectada. Sem bonding/pairing (SM
+    desligado): a confidencialidade/autenticidade real e o AEAD do proprio
+    BTP (canal B/chave E), igual TCP -- ver T06. ACHADOS DE API (Qt teve
+    achados parecidos do lado TraceView): QLowEnergyService-equivalente
+    aqui, `ble_gatt_chr_def`, exige ordem de designated initializer IGUAL a
+    ordem de declaracao do struct (`.flags` antes de `.val_handle`, nao
+    depois -- erro de compilacao real, corrigido); os 2 callbacks estaticos
+    passados por endereco pra tabela GATT (arquivo-escopo, fora da classe)
+    tem que ser `public`, nao `private` (erro de compilacao real,
+    corrigido). Validado com `pio run -e esp32-s3`: SUCCESS (rodei eu
+    mesmo), RAM 65.5% (214752/327680B, +17860B sobre o T25b/so-TCP), Flash
+    20.5% (1709821/8323072B) -- sem hardware real pra flashear/confirmar
+    "central descobre servico e characteristics corretas" de verdade.
 
-[ ] T34 — Integrar BLE ao BTP do firmware
+[x] T34 — Integrar BLE ao BTP do firmware
     Frente: firmware/BTP. Depende de: T33.
     Fazer: receber RX, reconstruir fluxo e enviar BTP em blocos TX;
     manter processamento pesado fora dos callbacks BLE.
     Aceite: HELLO, catálogo, assinaturas, comandos e terminal funcionam
     respeitando tamanho permitido pela conexão, sem presumir MTU grande.
+    Nota (2026-09-21): mesmo padrao do T21/T22 (TCP), duplicado pra BLE em
+    vez de reaproveitar as classes do TCP -- ble_node_ (SEGUNDO
+    btp::StaticNode completo, mesmo motivo do tcp_node_: enable_session()
+    trocaria o node_ do ESP-NOW por um que exige HELLO), RobotBleLink
+    (NodeConfig, sempre canal B/chave E, copia verbatim de RobotTcpLink a
+    nao ser pelo destino do send()), protocol_ble_/protocol_ble_telemetry_
+    (par de BtpEndpoint, mesma razao do T23 pra distinguir prioridade na
+    fila sem decodificar BTP dentro de BleBtpServer). onBleConnect()/
+    onBleReceive()/onBleDisconnect() espelham onTcpConnect()/onTcpReceive()/
+    onTcpDisconnect() linha a linha. ACHADO DE BTP-BIBLIOTECA (nao so
+    firmware): btp::kBleTransport NAO existia em include/btp/codec.hpp (so
+    documentado, nota do T04) -- diferente do TCP, que ja tinha
+    kTcpTransport de verdade la, entao aqui NAO tem como usar um
+    placeholder tipo kSerialTransport sem also mexer no BTP (bally_OS
+    compila contra o checkout local c:/git/BTP direto, nao uma tag). Optei
+    por implementar kBleTransport de verdade no BTP (max_frame_size=512,
+    allow_encrypted=true, mesmos valores do T04/T05) em vez de mais um
+    workaround -- validado com pio test -e native (87/87, cobre
+    test_btp_integration). TraceView continua sem poder usar esse preset
+    novo (ainda fixa a tag v2.45.0), isso nao mudou.
+    DECISAO DE FRAMING (a MESMA do lado TraceView, ver nota geral da
+    ETAPA 4 sobre toBtpSessionAxes()): protocol_link_ble_.transport =
+    btp::kBleTransport, MAS o BleBtpServer em si nao entende COBS nem
+    fronteira de frame -- ele so fatia/desfatia bytes crus pro tamanho do
+    MTU. Quem delimita o frame BTP e o proprio btp::Node/decoder da lib
+    (igual faz pra TCP), nao esta classe. "processamento pesado fora dos
+    callbacks BLE": gatt_access_handler() so copia a mbuf pra um buffer
+    fixo (512B) e chama on_receive() sincrono -- que so enfileira em
+    ble_node_->receive()/receivedDataQueue, mesma pipeline sincrona-mas-
+    rapida que TCP ja tem, nenhum trabalho pesado novo dentro do callback
+    NimBLE. HELLO/catalogo/assinaturas/comandos/terminal todos passam pelo
+    mesmo btp::Node generico que TCP ja usa -- nao ha caminho especial de
+    BLE pra nenhum desses, sao a mesma logica com endpoints diferentes.
+    "Sem presumir MTU grande": drainNext()-equivalente (BleBtpServer::
+    drain_send_queue()) sempre calcula o chunk pelo ATT_MTU atual
+    (att_mtu_, atualizado no evento BLE_GAP_EVENT_MTU, piso de 23 antes da
+    negociacao), nunca um tamanho fixo. PENDENCIA: nada disso foi
+    exercitado contra um central de verdade (sem hardware).
 
-[ ] T35 — Controlar saturação e desconexão BLE no firmware
+[x] T35 — Controlar saturação e desconexão BLE no firmware
     Frente: firmware. Depende de: T34.
     Fazer: filas limitadas, controle de notificações conforme capacidade
     da pilha, limpeza de sessão e retomada de advertising.
     Aceite: saturação não bloqueia controle nem cresce sem limite;
     desconectar permite uma nova sessão limpa.
+    Nota (2026-09-21): saiu praticamente pronto junto do T33/T34 (mesmo
+    padrao do TCP, onde T21/22/23 tambem colaram um no outro). Fila:
+    send_queue_ com 8 frames (T05, kSendQueueDepth) + a MESMA logica de
+    admissao com reserva de 25% pra Normal que TcpSendAdmission.h (T23) ja
+    tinha -- reaproveitada tal e qual (a funcao ja era generica, so nunca
+    tinha um segundo consumidor). Controle de notificacoes conforme
+    capacidade da pilha: notify_in_flight_ (atomic) so deixa UMA
+    ble_gatts_notify_custom() pendente por vez, o proximo chunk so sai
+    depois do evento BLE_GAP_EVENT_NOTIFY_TX confirmando que o anterior
+    realmente saiu do controller -- sem isso, nada impede enfileirar
+    notificacoes mais rapido do que o controller BLE consegue escoar.
+    Limpeza de sessao: onBleDisconnect() desliga
+    telemetry.unbind_ble_target()/terminal_responder.unbind_ble_target()
+    ANTES de ble_node_.reset() (mesma ordem do T22 pro TCP, pela mesma
+    razao -- telemetry guarda ponteiro cru pra dentro da SubscriptionTable
+    do ble_node_). Retomada de advertising: automatica, ver nota do T33
+    (start_advertising() no proprio handler do evento DISCONNECT).
+    "Saturacao nao bloqueia controle": um comando chega e e enfileirado em
+    receivedDataQueue (controle de verdade do robo) ANTES de qualquer
+    tentativa de resposta via BLE -- a fila do BleBtpServer so afeta se o
+    COMMAND_RESULT consegue voltar pro cliente, nunca se o comando executa.
+    TelemetryPublisher.h/TerminalResponder.h ganharam um TERCEIRO alvo
+    (bind_ble_target()/unbind_ble_target(), kMaxTargets 2->3,
+    LinkTarget::Ble) em vez de reaproveitar o slot do TCP -- TCP e BLE sao
+    mutuamente exclusivos na pratica (comm_mode escolhe so um transporte
+    direto por boot), mas nenhuma dessas duas classes depende disso pra
+    estar correta, e reaproveitar o slot com o nome "tcp" pra trafego BLE
+    ia confundir quem ler depois. Validado junto com T33/T34 (pio test -e
+    native 87/87, pio run -e esp32-s3 SUCCESS). PENDENCIA: sem hardware
+    real, "saturacao nao cresce sem limite" e uma propriedade que so foi
+    lida no codigo, nao observada sob carga de verdade.
 
 [ ] T36 — Automatizar testes BLE com camada simulada
     Frente: testes. Depende de: T29, T30, T31.
