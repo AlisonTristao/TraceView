@@ -78,6 +78,38 @@
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Release"
             }
+        },
+        {
+            "name": "android-arm64",
+            "displayName": "Android (arm64-v8a)",
+            "description": "Cross-compiles for Android with a Qt for Android kit -- UNVALIDATED, see docs/ANDROID_BUILD.md before using. Requires ANDROID_SDK_ROOT, ANDROID_NDK_ROOT, QT_ANDROID_ROOT_DIR (the android_arm64_v8a Qt kit) and QT_ROOT_DIR (a matching desktop Qt kit, for host moc/rcc/androiddeployqt) set first.",
+            "inherits": "default",
+            "binaryDir": "${sourceDir}/build/android-arm64",
+            "cacheVariables": {
+                "CMAKE_TOOLCHAIN_FILE": "$env{ANDROID_NDK_ROOT}/build/cmake/android.toolchain.cmake",
+                "ANDROID_ABI": "arm64-v8a",
+                "ANDROID_PLATFORM": "android-28",
+                "ANDROID_SDK_ROOT": "$env{ANDROID_SDK_ROOT}",
+                "CMAKE_PREFIX_PATH": "$env{QT_ANDROID_ROOT_DIR}",
+                "QT_HOST_PATH": "$env{QT_ROOT_DIR}",
+                "QT_ANDROID_BUILD_ALL_ABIS": "OFF",
+                "TRACEVIEW_ENABLE_SERIAL": "OFF",
+                "TRACEVIEW_ENABLE_USB_HID": "OFF",
+                "TRACEVIEW_ENABLE_TCP": "ON",
+                "TRACEVIEW_ENABLE_BLE": "ON",
+                "TRACEVIEW_BUILD_TESTS": "OFF",
+                "TRACEVIEW_BUILD_TOOLS": "OFF"
+            }
+        },
+        {
+            "name": "android-arm64-release",
+            "displayName": "Android (arm64-v8a, Release)",
+            "description": "Release build for packaging -- see android-arm64's own description first. Signing a distributable package still needs a real keystore (see docs/ANDROID_BUILD.md); this only gets past Gradle's debug-keystore default.",
+            "inherits": "android-arm64",
+            "binaryDir": "${sourceDir}/build/android-arm64-release",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release"
+            }
         }
     ],
     "buildPresets": [
@@ -126,6 +158,14 @@
                 "lhs": "${hostSystemName}",
                 "rhs": "Linux"
             }
+        },
+        {
+            "name": "android-arm64",
+            "configurePreset": "android-arm64"
+        },
+        {
+            "name": "android-arm64-release",
+            "configurePreset": "android-arm64-release"
         }
     ],
     "testPresets": [

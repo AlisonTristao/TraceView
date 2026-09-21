@@ -1025,11 +1025,28 @@ ETAPA 5 — ESTABILIDADE E ACEITE DESKTOP
 
 ETAPA 6 — ANDROID
 
-[ ] T44 — Definir ambiente Android compatível
+[x] T44 — Definir ambiente Android compatível
     Frente: build/Android. Depende de: T43.
     Fazer: selecionar Qt, SDK, NDK, JDK e target SDK compatíveis;
     verificar requisitos de Bluetooth e rede local nas versões escolhidas.
     Aceite: versões e procedimento de preparação documentados.
+    Nota (2026-09-21): docs/ANDROID_BUILD.md (novo) -- Qt for Android 6.9.2
+    (mesma versao do desktop, evita manter dois Qt divergentes), NDK r27c
+    (27.2.12479018, r26b tambem suportado pelo Qt 6.9 -- confirmar qual o
+    kit realmente traz), JDK 17 (esta maquina so tem JDK 25 instalado,
+    precisa instalar 17 a parte), minSdkVersion 28/compileSdk+targetSdk 35,
+    ABI arm64-v8a. Fontes: doc.qt.io/qt-6.9/android.html e o blog post "Qt
+    6.9 Android Updates". minSdk 28 (nao mais alto) e deliberado: T46
+    precisa suportar tanto BLUETOOTH_SCAN/CONNECT (Android 12+) quanto
+    ACCESS_FINE_LOCATION (versoes antigas). Transportes: SERIAL=OFF,
+    USB_HID=OFF, TCP=ON, BLE=ON (mesma matriz do T38). Preset android-arm64/
+    android-arm64-release adicionados em CMakePresets.json (validado só
+    como JSON/schema via `cmake --list-presets`, nunca configurado de
+    verdade -- esta maquina nao tem Android Studio/SDK/NDK/kit Qt-for-
+    Android instalado, so um JDK). AndroidManifest.xml customizado (com as
+    permissoes de Bluetooth/rede) fica pro T46, nao aqui -- risco de
+    escrever um manifesto a mao e ele quebrar o empacotamento por faltar um
+    placeholder que o androiddeployqt espera substituir.
 
 [ ] T45 — Gerar pacote ARM64 instalável
     Frente: build/Android. Depende de: T44.
@@ -1080,6 +1097,106 @@ ETAPA 6 — ANDROID
     resultados de testes, medições e limitações por plataforma.
     Aceite: outra pessoa consegue reproduzir build e conexão; evidências
     desktop, firmware e Android estão vinculadas às tarefas correspondentes.
+
+TESTES DETALHADOS — ETAPA 6 (ANDROID / APK)
+
+Checklist manual de verificação para T44-T52. Não substitui Frente/Depende de/Fazer/
+Aceite de cada tarefa acima; detalha como validar cada uma na hora de executar. Sem
+testes automatizados novos, seguindo a mesma convenção já adotada no BTP.
+
+T44 — Ambiente Android:
+- Versão do Qt for Android escolhida bate com a matriz oficial de compatibilidade de
+  SDK/NDK/JDK; registrar as versões exatas em doc (ex. docs/ANDROID_BUILD.md, novo).
+- minSdkVersion/targetSdkVersion escolhidos suportam BLE central role e o modelo de
+  permissão runtime relevante (Android 12+ BLUETOOTH_SCAN/BLUETOOTH_CONNECT vs.
+  ACCESS_FINE_LOCATION em versões antigas).
+- Reprodutibilidade: seguir só o doc em uma máquina limpa (ou outra pessoa) e chegar
+  ao mesmo toolchain funcionando.
+
+T45 — Pacote ARM64 / APK:
+- Novo preset android-arm64 em CMakePresets.json, no mesmo padrão de windows-mingw/
+  linux-ninja, com TRACEVIEW_ENABLE_SERIAL=OFF, TRACEVIEW_ENABLE_USB_HID=OFF,
+  TRACEVIEW_ENABLE_TCP=ON, TRACEVIEW_ENABLE_BLE=ON — reaproveita a mesma matriz de
+  opções já testada em T38, só cross-compilando. androiddeployqt roda sem erro e
+  produz AndroidManifest.xml + APK.
+- Identidade do pacote e versão (nome/versionCode) vêm da mesma fonte que os builds
+  desktop usam hoje (CHANGELOG/versão do CMake), sem duplicar/divergir.
+- Assinatura: keystore de debug funciona para iteração; procedimento de assinatura de
+  release documentado (mesmo padrão de "gotchas documentados" já usado no Flatpak
+  assinado por GPG).
+- Smoke test de instalação: instala e abre sem crash em (a) emulador no minSdk
+  escolhido e (b) pelo menos um aparelho físico ARM64 real — janela principal
+  renderiza.
+
+T46 — Permissões e disponibilidade:
+- Fluxo de concessão: BLE scan/connect concedido → isAvailable()/availabilityChanged
+  (já existentes em lib/core/deviceconnection.h:97-98,166-172,188) refletem true e a
+  conexão prossegue.
+- Fluxo de negação: usuário nega → estado de erro claro na UI, sem travar (bate com o
+  critério de aceite já escrito em T46).
+- Revogação em runtime: revogar a permissão pelas configurações do Android com o app
+  conectado → availabilityChanged(false) (ou equivalente), sem crash, sem tentativa
+  nova de conectar sem a permissão.
+- Bluetooth desligado/religado durante uma sessão ativa — mesma categoria de teste.
+- Primeira execução (cold start): diálogo de permissão só aparece quando o usuário
+  tenta conectar, não proativamente na abertura do app.
+
+T47 — Configuração/conexão por toque:
+- Toda ação hoje dependente só de hover (os ~25 setToolTip() em mainwindow.cpp, ex.
+  linhas 602, 1123, 1131, 1158, 1169, 1438-1470) continua acionável por toque simples,
+  sem precisar do tooltip aparecer primeiro.
+- Botões de tamanho fixo (kRibbonButtonSize, ex. mainwindow.cpp:1088,1121,1128) medem
+  pelo menos o alvo de toque recomendado (48dp) na densidade real do aparelho testado.
+- Teclado virtual do Android não cobre os campos de IP/hostname/porta/nome do
+  dispositivo ao ganhar foco.
+- O m_screenSizeMenu (Phone/Tablet/Notebook, já implementado no trabalho de dashboard
+  responsivo) escolhe o breakpoint certo automaticamente em telas Android reais, não
+  só em janelas desktop redimensionadas.
+
+T48 — Dashboard/comandos/terminal por toque:
+- Arrastar/redimensionar widgets do dashboard funciona com alvo de dedo, não só a
+  hotspot de 1px do cursor de mouse.
+- Terminal: teclado virtual, rolagem por arraste sem disparar seleção de texto de
+  forma disruptiva.
+- Gráficos: gesto de zoom/pan por toque equivalente ao scroll do mouse no desktop, ou
+  documentar explicitamente como limitação conhecida se não houver.
+
+T49 — Suspensão/retomada:
+- Background do app (home/app switcher) conectado → DeviceConnection::suspend()
+  (deviceconnection.h:166-172) é chamado, sessão pausa sem crash; volta ao primeiro
+  plano → resume() reconecta, deviceIdentified dispara e a revalidação de identidade
+  já existente (mainwindow.cpp:2307-2324, herdada de T31) não acusa mismatch falso
+  para o mesmo robô.
+- Background longo o bastante pro Android matar o processo → reabrir volta a um
+  estado limpo de "desconectado", não preso em "conectando".
+- Background durante um comando BTP em voo → ao retomar, o comando antigo não é
+  reenviado automaticamente (mesma regra já valendo pra reconexão desktop em
+  T31/T40).
+- Bloqueio de tela conectado — confirmar qual caminho é seguido (suspend/resume ou
+  no-op) e deixar isso documentado.
+
+T50 — TCP em aparelho real:
+- Repetir a mesma matriz funcional de T17-T25 (catálogo, assinaturas, gráficos,
+  comandos, terminal, recuperação após queda de Wi-Fi/reinício do robô) fisicamente
+  no Android.
+- Trocar de rede Wi-Fi no meio da sessão (Android pode trocar sozinho pra uma rede
+  com internet, derrubando a rede do robô) → app mostra desconexão clara, não trava
+  em silêncio.
+
+T51 — BLE em aparelho real:
+- Mesma matriz funcional de T37 (catálogo, telemetria, comandos, terminal, throughput
+  e indicação de saturação) no aparelho.
+- Testar em pelo menos dois aparelhos/fabricantes Android diferentes quando possível
+  — o comportamento da pilha BLE varia bastante por OEM; registrar como risco
+  conhecido, não assumir que um aparelho só generaliza.
+- Revalidar aqui, em contexto funcional (não só o diálogo), os caminhos de permissão
+  negada e Bluetooth desligado definidos em T46.
+
+T52 — Consolidação:
+- Reprodutibilidade: outra pessoa (ou a mesma, em máquina limpa) segue só os docs de
+  T44/T45 e produz um APK instalável sem precisar perguntar nada.
+- Conferir que cada critério de aceite de T44-T51 tem um resultado registrado (OK) ou
+  uma limitação conhecida documentada — mesmo padrão já usado no fechamento de T43.
 
 MARCOS DE ENTREGA
 
