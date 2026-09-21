@@ -108,6 +108,16 @@ void DevicesGrid::setDeviceIdentity(const QString& id, const QString& btpVersion
     emit deviceUpdated(m_devices[idx]);
 }
 
+void DevicesGrid::setDeviceBlePeerUuid(const QString& id, const QString& peerUuid) {
+    const int idx = indexOfDevice(id);
+    if (idx < 0 || peerUuid.isEmpty() || !m_devices[idx].blePeerUuid.isEmpty()) {
+        return;
+    }
+    m_devices[idx].blePeerUuid = peerUuid;
+    m_cards[idx]->setDevice(m_devices[idx]);
+    emit deviceUpdated(m_devices[idx]);
+}
+
 void DevicesGrid::setDevicePeerState(const QString& id, bool peerOnline, bool peerPresenceKnown,
                                     quint32 peerBootId, qint8 peerRssi, quint32 peerRttMs) {
     const int idx = indexOfDevice(id);
@@ -300,6 +310,25 @@ void DevicesGrid::handleConfigRequested(const QString& deviceId) {
         });
         hubPeerTimer->start();
     }
+    // BLE scan results, same polling shape as the hub-peer timer just above
+    // and for the same reason: they arrive continuously for as long as a
+    // scan runs, not once up front. The toggle itself (start/stop) is a
+    // direct call, not polled.
+    if (m_bleScanToggleHandler) {
+        connect(&dialog, &DeviceConfigDialog::scanBleRequested, &dialog,
+                [this](bool start) { m_bleScanToggleHandler(start); });
+    }
+    if (m_bleDeviceListProvider) {
+        auto* bleScanTimer = new QTimer(&dialog);
+        bleScanTimer->setInterval(500);
+        connect(bleScanTimer, &QTimer::timeout, &dialog, [this, &dialog]() {
+            const QVector<QPair<QString, QString>> found = m_bleDeviceListProvider();
+            for (const auto& [name, address] : found) {
+                dialog.addDiscoveredBleDevice(name, address);
+            }
+        });
+        bleScanTimer->start();
+    }
     // Connect button: applies the dialog's current fields (same as OK) but
     // leaves the dialog open. The actual (re)connect happens asynchronously
     // over in MainWindow (listening to deviceUpdated), so its result is
@@ -350,7 +379,15 @@ void DevicesGrid::handleConfigRequested(const QString& deviceId) {
                 }
                 dialog.setCatalogTopics(m_topicCatalogProvider(deviceId));
             });
-    if (dialog.exec() == QDialog::Accepted) {
+    const int dialogResult = dialog.exec();
+    // Closing the dialog (however it closed) must not leave a scan running
+    // with nothing left able to stop it -- stopping an already-stopped scan
+    // is a no-op (BleDiscoveryService::stop()), so this is unconditional
+    // rather than tracking whether one was actually left on.
+    if (m_bleScanToggleHandler) {
+        m_bleScanToggleHandler(false);
+    }
+    if (dialogResult == QDialog::Accepted) {
         updateDevice(dialog.result());
     }
 }

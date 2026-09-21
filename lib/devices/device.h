@@ -191,6 +191,15 @@ struct Device {
     quint16 tcpPort = 44300;
 
     // --- Direct BLE -------------------------------------------------------
+    // Discovery hint used to dial the connection: the platform address
+    // BleDiscoveryService reported (a MAC on most backends, an opaque
+    // per-pairing UUID on some -- see QBluetoothDeviceInfo::address()/
+    // deviceUuid()), or typed by hand. This is NOT identity -- a robot can
+    // change address across a firmware update or a different host OS, and
+    // nothing stops two different robots from being dialed at the same
+    // address at different times. BleTransport::open() takes exactly this
+    // string; nothing below the transport ever reads it as meaning anything.
+    QString bleAddress;
     // Stable identity learned from HELLO_RESULT, when known. A platform BLE
     // address or display name is only a discovery hint and is intentionally
     // not represented as the device identity here.

@@ -11,6 +11,9 @@
 #include "serialmanager.h"
 #include "tcptransport.h"
 #include "usbhidmanager.h"
+#ifdef TRACEVIEW_ENABLE_BLE
+#include "bletransport.h"
+#endif
 
 namespace traceview {
 
@@ -64,12 +67,18 @@ BtpSessionAxes toBtpSessionAxes(TransportType type) {
             // have. Revisit once the BTP dependency is bumped.
             return {BtpSession::Framing::CobsStream, btp::kSerialTransport};
         case TransportType::Ble:
-            // No BleTransport exists yet (TAREFAS_TCP_BLE_ANDROID.txt
-            // T26+); nothing constructs a BtpBackend with this transport
-            // today (see the ctor below). Present only for switch
-            // exhaustiveness, using the USB HID profile as the closer
-            // analog -- both hand over one already-framed block at a time.
-            return {BtpSession::Framing::PreFramed, btp::kUsbHidTransport};
+            // Same reasoning and same placeholder as Tcp just above: rule
+            // 19 of TAREFAS_TCP_BLE_ANDROID.txt mandates COBS on BLE too
+            // (fragmentation-and-transports.md section 8), and
+            // BleTransport (T28-T30) forwards raw GATT notification bytes
+            // exactly as TcpTransport forwards raw socket bytes -- neither
+            // transport bounds a frame itself, so BtpSession's own
+            // CobsStream decoder has to. btp::kBleTransport exists only in
+            // the BTP library's docs so far (T04's note), not yet in
+            // include/btp/codec.hpp at the v2.45.0 tag this repo pins,
+            // hence the same kSerialTransport stand-in TCP uses -- revisit
+            // together with Tcp's case once the BTP dependency is bumped.
+            return {BtpSession::Framing::CobsStream, btp::kSerialTransport};
     }
     return {BtpSession::Framing::CobsStream, btp::kSerialTransport};
 }
@@ -109,13 +118,24 @@ DeviceConnection::DeviceConnection(CommType commType, TransportType transportTyp
             m_transport = m_tcpTransport;
             break;
         case TransportType::Ble:
-            // No BleTransport exists yet (TAREFAS_TCP_BLE_ANDROID.txt
-            // T26+); DeviceConfigDialog does not offer Ble as a selectable
-            // transport for exactly this reason. m_transport stays null --
-            // nothing calls connectTo()/connectToTcp()/attemptReconnect()
-            // for a Ble device today, so the connect() calls just below see
-            // a null sender and no-op (Qt warns, does not crash).
+#ifdef TRACEVIEW_ENABLE_BLE
+            // Unlike TcpTransport, BleTransport has no internal reconnect
+            // of its own to disable -- see its class comment: every attempt
+            // is a clean rebuild, driven solely by DeviceConnection's own
+            // m_retryTimer/attemptReconnect(), uniformly across transports.
+            m_bleTransport = new BleTransport(this);
+            m_transport = m_bleTransport;
             break;
+#else
+            // Without TRACEVIEW_ENABLE_BLE, no BleTransport type even
+            // exists to construct. DeviceConfigDialog does not offer Ble as
+            // a selectable transport in that configuration for exactly this
+            // reason. m_transport stays null -- nothing calls
+            // connectTo()/connectToBle()/attemptReconnect() for a Ble
+            // device in this build, so the connect() calls just below see a
+            // null sender and no-op (Qt warns, does not crash).
+            break;
+#endif
     }
 
     switch (commType) {
@@ -298,6 +318,54 @@ void DeviceConnection::connectToTcp(const QString& host, quint16 port,
     }
 }
 
+void DeviceConnection::connectToBle(const QString& address, const QByteArray& endpointKey) {
+#ifdef TRACEVIEW_ENABLE_BLE
+    if (m_bleTransport == nullptr) {
+        return;
+    }
+
+    const QString trimmedAddress = address.trimmed();
+    const bool targetChanged = trimmedAddress != m_bleAddress;
+    m_bleAddress = trimmedAddress;
+    m_shouldBeConnected = !trimmedAddress.isEmpty();
+    m_attemptInProgress = false;
+
+    // Same reasoning as connectToTcp()'s own call: told before the link can
+    // come up, since a sealed reply from the robot could arrive as early as
+    // the first notification after HELLO. A direct BLE session is not a hub
+    // child either, for the same reason a direct TCP session isn't -- see
+    // BtpBackend::setDirectEndpointKey()'s own comment.
+    if (auto* btpBackend = qobject_cast<BtpBackend*>(m_backend)) {
+        btpBackend->setDirectEndpointKey(endpointKey);
+    }
+
+    if (!m_shouldBeConnected) {
+        qCInfo(lcConnection) << "BLE target cleared, intent now offline";
+        m_retryTimer->stop();
+        closeTransportGracefully();
+        return;
+    }
+    if (!m_transportAvailable) {
+        setConnectionPhase(ConnectionPhase::Disconnected);
+        return;
+    }
+    setConnectionPhase(ConnectionPhase::Connecting);
+    qCInfo(lcConnection) << "BLE target set to" << m_bleAddress
+                        << (targetChanged ? "(changed)" : "(unchanged)");
+
+    if (targetChanged && m_transport->isConnected()) {
+        closeTransportGracefully();
+    }
+    attemptReconnect();
+    if (AppSettings::instance().autoReconnect()) {
+        m_retryTimer->start();
+    }
+#else
+    Q_UNUSED(address);
+    Q_UNUSED(endpointKey);
+#endif
+}
+
 void DeviceConnection::connectVia(DeviceConnection* parentConnection, quint32 selfSourceId,
                                   quint32 peerSourceId, const QByteArray& endpointKey) {
     // The HubChannel counterpart of connectTo(), and separate from it for the
@@ -410,9 +478,15 @@ void DeviceConnection::attemptReconnect() {
         m_attemptInProgress) {
         return;
     }
-    qCInfo(lcConnection) << "attempting connect to"
-                        << (m_tcpTransport ? QString("%1:%2").arg(m_tcpHost).arg(m_tcpPort)
-                                           : m_target);
+    QString attemptTarget = m_target;
+    if (m_tcpTransport) {
+        attemptTarget = QString("%1:%2").arg(m_tcpHost).arg(m_tcpPort);
+#ifdef TRACEVIEW_ENABLE_BLE
+    } else if (m_bleTransport) {
+        attemptTarget = m_bleAddress;
+#endif
+    }
+    qCInfo(lcConnection) << "attempting connect to" << attemptTarget;
     m_attemptInProgress = true;
     setConnectionPhase(ConnectionPhase::PreparingTransport);
     if (m_serialManager) {
@@ -421,6 +495,10 @@ void DeviceConnection::attemptReconnect() {
         m_usbHidManager->open(m_target);
     } else if (m_tcpTransport) {
         m_tcpTransport->open(m_tcpHost, m_tcpPort);
+#ifdef TRACEVIEW_ENABLE_BLE
+    } else if (m_bleTransport) {
+        m_bleTransport->open(m_bleAddress);
+#endif
     }
     // HubChannel has nothing to retry: it has no port to reopen, and its
     // connected state is a function of its parent's, which it is already

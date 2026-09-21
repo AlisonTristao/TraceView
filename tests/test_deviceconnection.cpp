@@ -35,6 +35,10 @@ private slots:
     void connectToTcpWithZeroPortStaysDisconnected();
     void connectToTcpReachesNegotiatingBtpAgainstALocalServer();
     void connectToTcpSessionRecoversWhenHelloResultNeverArrives();
+#ifdef TRACEVIEW_ENABLE_BLE
+    void bleTransportBuildsNeitherSerialNorUsbHidManager();
+    void connectToBleWithEmptyAddressStaysDisconnected();
+#endif
 };
 
 void TestDeviceConnection::startsDisconnectedWithABackend() {
@@ -246,6 +250,35 @@ void TestDeviceConnection::connectToTcpSessionRecoversWhenHelloResultNeverArrive
 
     peer->deleteLater();
 }
+
+#ifdef TRACEVIEW_ENABLE_BLE
+void TestDeviceConnection::bleTransportBuildsNeitherSerialNorUsbHidManager() {
+    // Same regression shape as tcpTransportBuildsNeitherSerialNorUsbHidManager
+    // above, for Ble's own ctor case (deviceconnection.cpp).
+    DeviceConnection connection(CommType::Btp, TransportType::Ble);
+    QCOMPARE(connection.transportType(), TransportType::Ble);
+    QVERIFY(connection.serialManager() == nullptr);
+    QVERIFY(connection.usbHidManager() == nullptr);
+    QVERIFY(connection.backend() != nullptr);
+    QVERIFY(!connection.isConnected());
+}
+
+void TestDeviceConnection::connectToBleWithEmptyAddressStaysDisconnected() {
+    DeviceConnection connection(CommType::Btp, TransportType::Ble);
+    QSignalSpy stateSpy(&connection, &DeviceConnection::connectionStateChanged);
+
+    // Empty address means "not configured" -- must never attempt
+    // BleTransport::open() (which would need real Bluetooth hardware/a real
+    // peripheral, neither available in CI -- see test_bletransport.cpp's own
+    // comment), same contract as connectTo()/connectToTcp() with nothing
+    // configured.
+    connection.connectToBle(QString(), QByteArray());
+
+    QVERIFY(!connection.isConnected());
+    QVERIFY(!connection.wantsConnection());
+    QCOMPARE(stateSpy.count(), 0);
+}
+#endif
 
 }  // namespace
 

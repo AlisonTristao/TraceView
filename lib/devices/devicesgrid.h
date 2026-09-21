@@ -76,6 +76,19 @@ public:
     // Called with empty strings when the connection drops, so a stale
     // identity from a previous session never lingers in the UI.
     void setDeviceIdentity(const QString& id, const QString& btpVersion, const QString& btpId);
+    // Learns a direct BLE device's stable identity the first time HELLO_RESULT
+    // reports one (Device::blePeerUuid's own comment: a platform address is
+    // only a discovery hint, never identity -- TAREFAS_TCP_BLE_ANDROID.txt
+    // T31). Unlike setDeviceIdentity() above, blePeerUuid IS persisted
+    // (deviceToJson()), so this is the one "handshake reporting what the
+    // device is" setter that must actually stick across sessions -- it still
+    // bypasses the undo stack (not a user edit) but does emit
+    // deviceUpdated(), same as setDeviceIdentity(). No-op if id is unknown, if
+    // a peer id is already known and unchanged, or if `peerUuid` is empty
+    // (nothing to learn yet). Never overwrites an already-known identity with
+    // a different one -- see MainWindow's caller for the mismatch warning
+    // that case produces instead.
+    void setDeviceBlePeerUuid(const QString& id, const QString& peerUuid);
     // Mirrors reconcileHubChildPresence's verdict for a hub child's robot into
     // device.peerOnline/peerPresenceKnown/peerBootId/peerRssi/peerRttMs --
     // same non-undoable, not-persisted treatment as
@@ -181,6 +194,28 @@ public:
         m_hubPeerListProvider = std::move(provider);
     }
 
+    // Starts/stops a BLE scan in response to the gear icon's "Scan" toggle
+    // (DeviceConfigDialog::scanBleRequested()) -- traceview_devices doesn't
+    // depend on Qt6::Bluetooth (see lib/CMakeLists.txt: BleDiscoveryService
+    // is conditional on TRACEVIEW_ENABLE_BLE), so MainWindow injects the
+    // actual start/stop here, same reasoning as every other provider above.
+    // Safe to leave unset: the Scan button then just does nothing.
+    void setBleScanToggleHandler(std::function<void(bool)> handler) {
+        m_bleScanToggleHandler = std::move(handler);
+    }
+    // Supplies (name, address) pairs for every peripheral seen so far by
+    // whatever BleDiscoveryService setBleScanToggleHandler() above drives --
+    // polled on a timer while the dialog is open, same pattern as
+    // setHubPeerListProvider() above and for the same reason: results arrive
+    // continuously for as long as a scan runs, not once up front. A plain
+    // QPair rather than BleDiscoveryService::DiscoveredDevice for the same
+    // reason UsbDeviceOption exists instead of hidapi's own type (devices.h):
+    // this layer must not know a Bluetooth type exists. Safe to leave unset:
+    // the address combo then only ever shows what's typed by hand.
+    void setBleDeviceListProvider(std::function<QVector<QPair<QString, QString>>()> provider) {
+        m_bleDeviceListProvider = std::move(provider);
+    }
+
 signals:
     void selectionChanged();
     // Fired from applyInsertDevice()/applyRemoveDeviceById()/
@@ -244,6 +279,8 @@ private:
     QString m_selectedId;          // empty when nothing is selected
     std::function<QStringList()> m_portListProvider;
     std::function<QVector<UsbDeviceOption>()> m_usbDeviceListProvider;
+    std::function<void(bool)> m_bleScanToggleHandler;
+    std::function<QVector<QPair<QString, QString>>()> m_bleDeviceListProvider;
     std::function<QVector<CatalogTopicInfo>(const QString&)> m_topicCatalogProvider;
     std::function<QVector<HubPeer>(const QString&)> m_hubPeerListProvider;
     QUndoStack* m_undoStack;

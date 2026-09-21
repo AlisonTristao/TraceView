@@ -180,3 +180,15 @@ add_traceview_test(test_channelopen traceview_protocol btp::codec)
 # SUBSCRIBE_RESULT/UNSUBSCRIBE_RESULT/COMMAND_RESULT) can be opened, without
 # adopting any of the hub-child role's other side effects.
 add_traceview_test(test_directendpointkey traceview_protocol btp::codec)
+
+if(TRACEVIEW_ENABLE_BLE)
+    # T27/T28-T30: BleDiscoveryService's start/stop lifecycle and
+    # BleTransport's own-input validation (empty address, close()/write()
+    # with nothing open). Deliberately does NOT exercise a real scan or GATT
+    # round trip -- that needs either real hardware (T37) or the simulated
+    # peripheral layer T36 is for, neither of which exists yet. What's
+    # covered here is exactly what test_tcptransport's own "can't reach real
+    # hardware in CI" paths cover for TCP: the object doesn't crash or hang
+    # with no adapter/peripheral behind it.
+    add_traceview_test(test_bletransport traceview_ui Qt6::Bluetooth)
+endif()

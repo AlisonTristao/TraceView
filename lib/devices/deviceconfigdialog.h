@@ -52,6 +52,15 @@ public:
     // refreshPortsRequested() fires.
     void setAvailablePorts(const QStringList& ports);
 
+    // Adds (or updates) one scan result in the BLE address combo -- called
+    // repeatedly, live, as BleDiscoveryService reports peripherals while a
+    // scan is running (see scanBleRequested()). De-duplicated by address:
+    // a peripheral seen again (most backends re-emit per advertisement)
+    // refreshes its displayed name rather than appending a second entry.
+    // Never touches the currently-typed/selected text, same "don't clobber
+    // what the user is looking at" treatment as setAvailablePorts().
+    void addDiscoveredBleDevice(const QString& name, const QString& address);
+
     // Repopulates the USB device combo from a fresh OS enumeration, same
     // "preserve the current selection even if it's not in the new list"
     // treatment as setAvailablePorts() above -- a device's own usbPath (its
@@ -125,6 +134,12 @@ signals:
     // Same reasoning as refreshPortsRequested() above, for the USB device
     // combo -- traceview_devices doesn't depend on hidapi either.
     void refreshUsbDevicesRequested();
+    // Emitted when the user clicks the BLE "Scan"/"Stop" toggle button --
+    // true to start, false to stop. traceview_devices can't scan itself
+    // (doesn't depend on Qt6::Bluetooth -- see lib/CMakeLists.txt); the
+    // owner is expected to drive a BleDiscoveryService and call
+    // addDiscoveredBleDevice() as results arrive.
+    void scanBleRequested(bool start);
     // Emitted when the user clicks Connect -- unlike OK/Cancel this does not
     // close the dialog. The owner (DevicesGrid) is expected to read back
     // result() and apply it (same as an OK) so the edited port/baud/etc.
@@ -162,6 +177,17 @@ private:
     QSpinBox* m_tcpPortSpin = nullptr;
     QComboBox* m_usbDeviceCombo = nullptr;
     QToolButton* m_refreshUsbDevicesButton = nullptr;
+
+    // Direct BLE row: an editable combo (same "picker with a manual-entry
+    // escape hatch" shape as m_peerSourceIdCombo) holding platform addresses
+    // -- picking a scan result sets the visible text to the raw address
+    // (itemData), never the decorated "name (address)" label, so
+    // result()'s plain currentText() read stays correct either way, same
+    // convention as m_portCombo.
+    int m_bleAddressRowIndex = -1;
+    QComboBox* m_bleAddressCombo = nullptr;
+    QToolButton* m_scanBleButton = nullptr;
+    bool m_bleScanning = false;
 
     // Hub-channel rows: the device this one rides, the robot behind it, and
     // the endpoint-key password for that robot.

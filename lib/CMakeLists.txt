@@ -560,7 +560,7 @@ target_link_libraries(traceview_updater PUBLIC
 # link further down) -- hidapi and the BTP-aware libraries below are private
 # implementation details of the .cpp files, not exposed by any public header
 # in this target.
-add_library(traceview_transport STATIC
+set(TRACEVIEW_TRANSPORT_SOURCES
     core/transport.h
     core/deviceconnection.cpp
     core/deviceconnection.h
@@ -573,6 +573,25 @@ add_library(traceview_transport STATIC
     core/usbhidmanager.cpp
     core/usbhidmanager.h
 )
+# blediscoveryservice/bletransport #include <QLowEnergyController> and
+# friends directly -- unlike tcptransport.cpp (QTcpSocket lives in Qt6::
+# Network, already an unconditional dependency of this whole project, see
+# root CMakeLists.txt), those headers only exist when Qt6::Bluetooth was
+# actually found, which only happens `if(TRACEVIEW_ENABLE_BLE)` there.
+# Compiling them unconditionally would break a BLE-disabled configuration
+# outright (T26's acceptance: "builds com BLE ativado e desativado resolvem
+# dependências"), so the two files themselves -- not just the link below --
+# are conditional.
+if(TRACEVIEW_ENABLE_BLE)
+    list(APPEND TRACEVIEW_TRANSPORT_SOURCES
+        core/blediscoveryservice.cpp
+        core/blediscoveryservice.h
+        core/bletransport.cpp
+        core/bletransport.h
+    )
+endif()
+
+add_library(traceview_transport STATIC ${TRACEVIEW_TRANSPORT_SOURCES})
 
 target_include_directories(traceview_transport PUBLIC
     ${CMAKE_SOURCE_DIR}/include
@@ -606,6 +625,14 @@ if(TRACEVIEW_ENABLE_SERIAL)
 endif()
 if(TRACEVIEW_ENABLE_USB_HID)
     target_link_libraries(traceview_transport PRIVATE hidapi::hidapi)
+endif()
+if(TRACEVIEW_ENABLE_BLE)
+    # PUBLIC for the same reason SerialPort is above: bletransport.h embeds
+    # QLowEnergyCharacteristic/QLowEnergyService members and a QBluetoothUuid
+    # in its own public interface, so anything that includes it (this
+    # target's own deviceconnection.h does not, but a future direct consumer
+    # could) needs the include paths too.
+    target_link_libraries(traceview_transport PUBLIC Qt6::Bluetooth)
 endif()
 
 # traceview_ui: MainWindow/Ribbon/AboutDialog — application chrome and

@@ -572,52 +572,282 @@ ETAPA 3 — TCP NO DESKTOP E NO ESP32-S3
     Aceite: telemetria real no dashboard e recuperação após queda de
     Wi-Fi/reinício, com limpeza da sessão anterior.
 
+ETAPA 3B — SELETOR FISICO DE MODO DE COMUNICACAO (ADENDO, NAO ESTAVA NO
+PLANO ORIGINAL — pedido do usuario em 2026-09-21, decisoes confirmadas
+por ele antes de implementar)
+
+[x] T25b — Seletor de modo de comunicacao (BOOT + LEDs) no firmware
+    IMPLEMENTADO, falta so validacao fisica (nao testavel sem hardware).
+    Nota (2026-09-21): novo estado COMM_CONFIG=9 (StateMachine); trigger
+    puro e testavel em lib/StateMachine/SetupCommTrigger.h (decide(held,
+    elapsed_ms), sem FreeRTOS/GPIO); SETUP faz poll de gpio_get_level(btn0)
+    direto (nao ISR) por ate 1.5s. ACHADO REAL: a linha antiga
+    {SETUP, BIT_0, WAIT} no transitionTable tinha virado um conflito de
+    verdade com a espera de 1.5s (checkStateMachine() roda a cada 250ms
+    numa task separada e sobrescreveria current_state por baixo do loop
+    bloqueante) — removida e documentada. ACHADO REAL: mover ota.process()/
+    updateTcpServerLifecycle() de processDebug() (so DEBUG) pra routine()
+    (todo estado) expos que ota.is_active() tambem controlava se os testes
+    de sensor do DEBUG podiam rodar — com comm_mode=TCP mantendo
+    phase()==SERVING pra sempre em background, isso travava os testes DEBUG
+    permanentemente; corrigido com OTAUpdater::is_upload_session() (ativo E
+    nao e conexao direta) so pra essa checagem. ACHADO REAL: um "ota start"
+    de verdade chegando com comm_mode=TCP ja conectado em background ia
+    silenciosamente nao fazer nada; corrigido com upgrade-in-place em
+    OTAUpdater::begin_scanning(). comm_mode=3 (nenhum) desliga
+    configureCommunication() inteiro, radio_enabled_ guarda so os 2
+    esp_now_send() reais de main.cpp (unicos no projeto, confirmado por
+    grep). Mapeamento LED->opcao (azul/verde/amarelo/vermelho =
+    ESP-NOW/TCP/BLE/nenhum) foi uma escolha do agente, nao especificada
+    pelo usuario — confirmar. pio test -e native: 87/87 (rodei eu mesmo).
+    pio run -e esp32-s3: SUCCESS (rodei eu mesmo, confirmado
+    independentemente) — RAM 60.1% (196892/327680B, +32B), Flash 17.8%
+    (1480589/8323072B), sem mudanca significativa. Nada commitado.
+    PENDENCIA REAL (registrada, NAO implementada a pedido do usuario —
+    outro chat vai seguir com BLE a partir daqui): unificar boot_enter_ota/
+    boot_enter_storage (hoje checagem instantanea de nivel dentro de
+    ROBOT::init(), antes da maquina de estados existir) sob o mesmo padrao
+    de hold-1.5s-dentro-do-SETUP que comm_mode agora usa — btn0=comm,
+    btn1=storage, btn2=OTA, um mecanismo so em vez de dois. Risco real
+    (regressao em algo que ja funciona, sem hardware pra validar), nao e
+    parte do plano original.
+    Frente: firmware. Depende de: T21-T24.
+    Motivacao: TCP hoje so fica disponivel enquanto ota.phase()==SERVING
+    (decisao do T22) — o usuario quer TCP como um modo de comunicacao de
+    verdade, escolhido no proprio robo, independente de estar em OTA.
+    Fazer: segurar btn0 (BOOT, GPIO0) por ~1.5s (corrigido de 800ms a
+    pedido do usuario; conferido que NAO existe uma constante de "tempo de
+    decisao" ja usada em outra logica de boot pra igualar — boot_enter_ota/
+    boot_enter_storage em BallyRobot.cpp e uma checagem instantanea de
+    nivel de GPIO, sem hold-duration nenhum; 1.5s e so o valor novo
+    escolhido) logo apos o boot normal
+    (NAO durante o reset — isso continua entrando no bootloader nativo da
+    Espressif, sem mudanca) entra num estado novo COMM_CONFIG a partir de
+    SETUP (que hoje transiciona instantaneo, ganha uma janela curta de
+    checagem por nivel de GPIO, nao por ISR/flag, pra evitar a corrida
+    entre a task interrupts e a task state_machine que a investigacao
+    encontrou). Dentro de COMM_CONFIG: btn1/btn2 navegam entre 4 opcoes
+    (ESP-NOW/TCP/BLE/nenhum), um dos 4 LEDs discretos (azul/verde/amarelo/
+    vermelho) acende conforme a selecao atual (nao e blink-count, sao 4
+    LEDs fisicos separados). btn0 confirma: persiste em RobotSettings
+    (campo novo comm_mode, modulo "comm", u8, default 0=ESP-NOW preserva
+    comportamento atual de robos existentes) e reinicia (aplicar por
+    reboot, nao em runtime — decisao do usuario). Timeout de inatividade
+    (~30s sem botao) sai sem salvar, reinicia no modo anterior — rede de
+    seguranca contra o robo ficar preso no menu.
+    Dispatch no boot conforme comm_mode: 0=ESP-NOW, comportamento atual
+    sem mudanca; 1=TCP — sobe Wi-Fi STA reaproveitando o mesmo codigo/
+    lista de redes do SD que o OTA ja usa, mas INDEPENDENTE de
+    ota.phase()==SERVING (isso fecha a lacuna que motivou o pedido); o
+    endpoint HTTP de upload do OTA continua atras do fluxo DEBUG+
+    "ota start" existente, sem expor upload de firmware so por estar em
+    modo de comunicacao TCP (separacao de responsabilidade de seguranca);
+    2=BLE — ainda nao implementado (T33+), logar aviso claro e cair para
+    ESP-NOW em vez de deixar o robo sem nenhuma comunicacao; 3=nenhum —
+    nao sobe ESP-NOW nem Wi-Fi, robo totalmente offline; investigar e
+    proteger qualquer caminho (TxScheduler/BtpTransport) que hoje presuma
+    o radio sempre inicializado, pra nao crashar.
+    Aceite: pio test -e native passando; pio run -e esp32-s3 compilando de
+    verdade (build only, sem flash — validar RAM/Flash nao explodiu);
+    comportamento de um robo com comm_mode nunca configurado (campo novo,
+    default 0) identico ao de antes desta tarefa. Validacao fisica de
+    verdade (segurar o botao, ver o LED, confirmar) fica para o usuario
+    com hardware real — nao e testavel em pio test -e native.
+
 ETAPA 4 — BLE NO DESKTOP E NO ESP32-S3
 
-[ ] T26 — Adicionar Qt Bluetooth e validar build
+NOTA GERAL (2026-09-21, decisao do usuario): T26-T32 (lado TraceView/desktop)
+implementados sem esperar T25 (validacao do TCP com hardware real), a pedido
+explicito do usuario -- "estamos mexendo em algumas partes do codigo, entao
+releva". TCP (T17-T24) continua sem validacao em hardware real; nada aqui
+depende disso tecnicamente (BLE e um transporte irmao, nao built em cima do
+TCP), mas o marco M3 (T17-T25) formalmente ainda nao fecha. Build validado
+nos dois sentidos: TRACEVIEW_ENABLE_BLE=ON compila TraceView.exe + suite
+completa (50/50 ctest, incluindo os testes novos abaixo) e
+TRACEVIEW_ENABLE_BLE=OFF (default) continua compilando sem tocar
+Qt6::Bluetooth -- valida o aceite do T26 nos dois sentidos. Build/testes
+rodados por mim; NENHUMA verificacao manual da UI foi feita (risco de GUI
+automation ja documentado -- cliques as cegas sem ver a janela) e nenhum
+hardware BLE real foi usado -- ver pendencias por tarefa abaixo.
+DECISAO DE PROTOCOLO (corrige a nota do T09): toBtpSessionAxes() para Ble
+mudou de {PreFramed, kUsbHidTransport} (um palpite escrito antes de existir
+qualquer transporte BLE) para {CobsStream, kSerialTransport} -- mesmo par
+que Tcp usa, e pela mesma razao: a regra 19 ("usar BTP binario com COBS em
+TCP e BLE", valida para todas as tarefas deste plano) e o fato de que um
+fluxo de notificacoes GATT nao tem alinhamento de frame proprio, exatamente
+como um socket TCP nao tem. BleTransport portanto NAO reimplementa
+delimitacao/reassembly de frame BTP -- BtpSession::feedBytes() (seu
+decodificador COBS incremental, ja testado em test_btpsession.cpp/
+test_btpsessionframing.cpp) faz isso, do mesmo jeito que ja faz para TCP.
+kBleTransport continua so documentado no BTP (nota do T04), nao em
+include/btp/codec.hpp na tag v2.45.0 -- mesmo placeholder kSerialTransport
+que Tcp usa, mesma pendencia de subprovisionamento de limite de frame.
+
+[x] T26 — Adicionar Qt Bluetooth e validar build
     Frente: TraceView/build. Depende de: T08, T25.
     Fazer: integrar Qt6::Bluetooth sob a opção de transporte BLE.
     Aceite: builds com BLE ativado e desativado resolvem dependências.
+    Nota (2026-09-21): Qt6::Bluetooth ja era buscado condicionalmente
+    (CMakeLists.txt raiz, T08) mas nunca linkado a nada. lib/CMakeLists.txt
+    agora torna a PROPRIA lista de arquivos de core/blediscoveryservice.*/
+    core/bletransport.* condicional a TRACEVIEW_ENABLE_BLE (nao so o link) --
+    diferente de tcptransport.cpp, esses dois incluem <QLowEnergyController>
+    e amigos diretamente, e Qt6::Network (base do TCP) e incondicional
+    enquanto Qt6::Bluetooth so existe quando o flag esta ON. Validado
+    compilando TraceView.exe + suite completa com ambos os valores do flag
+    (ver nota geral da etapa acima).
 
-[ ] T27 — Implementar descoberta BLE
+[x] T27 — Implementar descoberta BLE
     Frente: TraceView. Depende de: T04, T15, T26.
     Fazer: criar BleDiscoveryService, filtrar pelo UUID BTP e expor
     resultados por sinais/modelos, com cancelamento.
     Aceite: dispositivos compatíveis são listados e descoberta cancelada
     não publica resultados obsoletos.
+    Nota (2026-09-21): lib/core/blediscoveryservice.{h,cpp} -- envolve
+    QBluetoothDeviceDiscoveryAgent (LowEnergyMethod, sem Bluetooth
+    classico), filtra por QBluetoothDeviceInfo::serviceUuids().contains(uuid
+    do servico BTP). Cancelamento nao para o agente e espera -- stop()
+    desconecta todos os sinais e deleteLater() o agente na hora, entao
+    nenhum resultado que o backend ja tivesse enfileirado internamente
+    consegue emitir deviceDiscovered() depois disso, mesmo que o objeto real
+    va e ser destruido so no proximo ciclo do event loop. PENDENCIA: filtro
+    depende do backend Windows realmente popular serviceUuids() a partir do
+    advertisement (nao validado com um peer BLE de verdade -- alguns
+    backends so retornam isso num scan mais "ativo"); "dispositivos
+    compativeis sao listados" so sera confirmado no T37/T25 com hardware.
+    Teste (test_bletransport.cpp): ciclo start/stop/restart do agente sem
+    crash e sem duplicar; UUID do servico confere com o documentado no BTP.
 
-[ ] T28 — Implementar preparação GATT do BleTransport
+[x] T28 — Implementar preparação GATT do BleTransport
     Frente: TraceView. Depende de: T27, T11, T13.
     Fazer: conectar, descobrir serviço/RX/TX e habilitar notificações.
     Aceite: HELLO só começa quando RX/TX estão utilizáveis; serviço
     incompatível produz falha explícita.
+    Nota (2026-09-21): lib/core/bletransport.{h,cpp} -- QLowEnergyController
+    central, discoverServices()->onDiscoveryFinished() confere o UUID do
+    servico BTP nos servicos anunciados, cria o QLowEnergyService,
+    discoverDetails()->onServiceStateChanged() resolve as characteristics
+    RX/TX pelo UUID fixo (T04) e escreve o descriptor Client Characteristic
+    Configuration da TX (0x0001, habilita notify). connectionStateChanged
+    (true) SO dispara em onDescriptorWritten() quando esse write especifico
+    e confirmado -- BtpBackend::onTransportConnectionChanged so manda HELLO
+    depois disso, entao a corrida que preocupava o aceite nao existe.
+    Servico ausente, characteristic RX/TX ausente ou TX sem CCCD chamam
+    failConnection() explicitamente (erro + fecha), nunca ficam presos
+    silenciosamente em PreparingTransport. ACHADO (API do Qt 6.9.2, nao do
+    plano): QLowEnergyService nao tem errorString() nesta versao, so o enum
+    error() -- resolvido com QMetaEnum::valueToKey() pra virar texto de log/
+    status. QLowEnergyDescriptor::characteristicHandle() e
+    QLowEnergyCharacteristic::handle() sao PRIVADOS nesta versao do Qt
+    (diferente do que a documentacao publica sugere) -- a identificacao "e
+    este o descriptor que eu escrevi" usa comparacao por valor
+    (QLowEnergyDescriptor::operator==) contra o descriptor guardado, nao
+    handle. PENDENCIA: nunca conectado a um peripheral BLE de verdade --
+    toda a cadeia connectToDevice()->discoverServices()->discoverDetails()->
+    writeDescriptor() e assincrona e depende do stack Bluetooth do SO, sem
+    forma de simular sem hardware ou um peripheral falso (T36).
 
-[ ] T29 — Implementar envio BLE fragmentado
+[x] T29 — Implementar envio BLE fragmentado
     Frente: TraceView. Depende de: T28, T05, T14.
     Fazer: dividir fluxo COBS em blocos permitidos, serializar escritas
     com resposta e limitar fila.
     Aceite: frame maior que o bloco é enviado intacto, inclusive com
     blocos pequenos; confirmação GATT não conclui comando BTP.
+    Nota (2026-09-21): BleTransport::write() enfileira o payload inteiro que
+    BtpSession entrega (fila de 8, T05 "Profundidade de fila: BLE 8
+    frames") e drainNext() fatia cada um em blocos de ate mtuPayloadSize()
+    (QLowEnergyController::mtu() - 3 de overhead ATT, piso de 20 quando o
+    MTU ainda nao foi negociado -- 23 e o MTU minimo/padrao do Bluetooth,
+    nao um numero do BTP). RX e escrito com WriteWithResponse (contrato do
+    T04); o proximo bloco so sai depois do characteristicWritten() do
+    anterior -- e isso, nao um limite artificial, que da a contrapressao
+    real contra um link lento. "Confirmacao GATT nao conclui comando BTP" e
+    verdade por construcao: este transporte nunca alega execucao, so aceite
+    de bytes -- mesmo contrato que TcpTransport ja tinha. PENDENCIA:
+    fragmentacao de verdade contra um MTU pequeno de verdade (ex.: 23 legado
+    vs. os 512 negociaveis) nunca foi exercitada contra hardware.
 
-[ ] T30 — Implementar recepção BLE e reassembly
+[x] T30 — Implementar recepção BLE e reassembly
     Frente: TraceView. Depende de: T28, T05.
     Fazer: reconstruir fluxo a partir de notificações com limites e
     tempos de espera, descartando estado ao encerrar a sessão.
     Aceite: frames fragmentados/agrupados são interpretados e frames
     incompletos não acumulam memória indefinidamente.
+    Nota (2026-09-21): DECISAO DE DESIGN, nao so implementacao -- ver a nota
+    geral da etapa sobre toBtpSessionAxes(). onCharacteristicChanged() so
+    repassa emit dataReceived(value) com os bytes crus da notificacao, sem
+    nenhuma logica de fronteira de frame aqui: notificacoes de UMA
+    characteristic chegam em ordem sobre um unico link ATT (sem reordenacao
+    possivel), entao encadear os bytes na ordem de chegada JA E um stream de
+    bytes correto -- exatamente o que BtpSession::feedBytes() em modo
+    CobsStream ja espera (mesmo contrato do TcpTransport::onReadyRead()).
+    "Frames incompletos nao acumulam memoria indefinidamente" e responsabi-
+    lidade do decoder COBS incremental da BtpSession (buffers de tamanho
+    fixo, timeout de reassembly de mensagens fragmentadas) -- ja coberto
+    pelos testes existentes de BtpSession, nenhum estado novo foi criado
+    aqui pra vazar. "Descartando estado ao encerrar a sessao": teardown()
+    limpa a fila de escrita pendente e as referencias RX/TX/descriptor a
+    cada open()/close(); o reset do decodificador COBS/reassembly em si e
+    BtpSession::reset(), chamado pelo mesmo caminho que ja cobre Serial/TCP,
+    sem necessidade de logica nova no transporte.
 
-[ ] T31 — Tratar identidade e recuperação BLE
+[x] T31 — Tratar identidade e recuperação BLE
     Frente: TraceView. Depende de: T28, T10, T13, T15.
     Fazer: persistir/revalidar identidade; tratar Bluetooth desligado,
     permissão negada, robô ausente e reconexão.
     Aceite: nome/endereço são apenas pistas; nova sessão valida o robô e
     ignora callbacks/comandos antigos, expondo os erros ao usuário.
+    Nota (2026-09-21): Device ganhou bleAddress (dica de descoberta -- MAC/
+    UUID de plataforma, usada so pra discar a conexao) SEPARADO de
+    blePeerUuid (identidade estavel, ja existia desde o T09 mas nunca era
+    preenchida por ninguem). DevicesGrid::setDeviceBlePeerUuid() aprende
+    UMA vez (blePeerUuid vazio -> aceita o btpId do primeiro HELLO_RESULT) e
+    NUNCA sobrescreve um valor ja conhecido; MainWindow::deviceIdentified
+    compara o btpId de toda sessao BLE contra o blePeerUuid ja salvo e
+    posta um aviso explicito (postStatus, Warning) se um endereco conhecido
+    responder como um robo DIFERENTE -- exatamente o "nome/endereco sao so
+    pistas" do aceite. "Ignora callbacks/comandos antigos": reaproveita o
+    mecanismo de fase ja existente em DeviceConnection (m_attemptInProgress/
+    connectionPhase, provado pelo T13 pra TCP) -- nao foi escrita logica
+    nova, so verificado que BleTransport::teardown() sempre reconstroi
+    RX/TX/descriptor do zero a cada open(), entao um characteristicChanged/
+    Written de uma tentativa anterior nao tem como confundir com a atual
+    (o QLowEnergyService antigo e desconectado e deleteLater() antes). Erros
+    de "Bluetooth desligado"/"permissao negada" chegam via
+    QLowEnergyController::errorOccurred (PoweredOffError/
+    MissingPermissionsError etc.) -> BleTransport::failConnection() ->
+    DeviceConnection::errorOccurred -> postStatus -- generico (a mensagem e
+    o nome do erro do Qt, nao um texto amigavel dedicado por causa), o que e
+    suficiente pra desktop; fluxo de permissao em RUNTIME (pedir permissao
+    ao SO, tratar recusa) e explicitamente Android/T46, fora do escopo
+    desktop desta tarefa. PENDENCIA: nada disso foi exercitado contra
+    Bluetooth de verdade desligado/sem permissao -- só o caminho de codigo
+    foi lido e comparado com a doc do Qt.
 
-[ ] T32 — Adicionar seleção BLE na interface
+[x] T32 — Adicionar seleção BLE na interface
     Frente: TraceView/UI. Depende de: T27, T31.
     Fazer: exibir descoberta, seleção, estados e falhas sem acoplar
     BleDiscoveryService/BleTransport a janelas.
     Aceite: usuário encontra, seleciona, salva e reconecta ao robô.
+    Nota (2026-09-21): "BLE" no combo de Transporte (so quando
+    TRACEVIEW_ENABLE_BLE), campo de endereco (combo editavel -- aceita tanto
+    um resultado de scan quanto endereco digitado a mao) mais botao Scan/
+    Stop em DeviceConfigDialog; reaproveita o campo de senha ja existente
+    (Device::peerPassword, mesma chave de canal B do Hub/TCP). Acoplamento
+    evitado do jeito que setPortListProvider()/setUsbDeviceListProvider()
+    ja evitavam pra Serial/USB: DevicesGrid::setBleScanToggleHandler()/
+    setBleDeviceListProvider() (traceview_devices continua sem depender de
+    Qt6::Bluetooth) injetados por MainWindow, que e quem de fato possui um
+    BleDiscoveryService (so existe com TRACEVIEW_ENABLE_BLE). Resultados
+    chegam por polling de 500ms enquanto o dialogo esta aberto (mesmo
+    padrao ja usado pelo hub.peers, T20-era) em vez de um novo mecanismo de
+    push; handleConfigRequested() para o scan incondicionalmente ao fechar
+    o dialogo (aceite ou nao), pra nunca deixar um QBluetoothDeviceDiscovery
+    Agent rodando sem ninguem pra parar. NAO VERIFICADO NA TELA: risco de
+    automacao de GUI ja documentado (cliques as cegas sem ver a janela, e
+    esta sessao de terminal nao enxerga janelas) -- pedir pro usuario abrir
+    o dialogo de um device BLE, conferir que os campos aparecem/escondem
+    certo ao trocar Transporte, e testar Scan quando tiver hardware.
 
 [ ] T33 — Criar serviço GATT no ESP32-S3
     Frente: firmware. Depende de: T04, T05, T06, T25.

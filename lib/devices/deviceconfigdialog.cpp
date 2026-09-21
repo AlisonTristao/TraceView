@@ -143,9 +143,13 @@ DeviceConfigDialog::DeviceConfigDialog(const Device& initial, QWidget* parent)
     m_transportTypeCombo->addItem(transportTypeLabel(TransportType::HubChannel),
                                   int(TransportType::HubChannel));
     m_transportTypeCombo->addItem(transportTypeLabel(TransportType::Tcp), int(TransportType::Tcp));
-    // Ble is deliberately not offered yet -- no BleTransport exists
-    // (TAREFAS_TCP_BLE_ANDROID.txt T26+), so selecting it would produce a
-    // device DeviceConnection can never actually open.
+#ifdef TRACEVIEW_ENABLE_BLE
+    m_transportTypeCombo->addItem(transportTypeLabel(TransportType::Ble), int(TransportType::Ble));
+#endif
+    // Without TRACEVIEW_ENABLE_BLE, Ble is deliberately not offered -- no
+    // BleTransport exists in that configuration (see deviceconnection.cpp's
+    // constructor), so selecting it would produce a device DeviceConnection
+    // can never actually open.
     const int transportTypeIndex = m_transportTypeCombo->findData(int(m_device.transportType));
     m_transportTypeCombo->setCurrentIndex(transportTypeIndex >= 0 ? transportTypeIndex : 0);
     connect(m_transportTypeCombo, &QComboBox::currentIndexChanged, this,
@@ -164,6 +168,40 @@ DeviceConfigDialog::DeviceConfigDialog(const Device& initial, QWidget* parent)
     m_tcpPortSpin->setToolTip(tr("TCP server port."));
     m_tcpPortRowIndex = m_connectionLayout->rowCount();
     m_connectionLayout->addRow(tr("TCP port:"), m_tcpPortSpin);
+
+    m_bleAddressCombo = new QComboBox(connectionGroup);
+    m_bleAddressCombo->setEditable(true);
+    m_bleAddressCombo->setToolTip(
+        tr("Platform BLE address of the robot -- a discovery hint used to dial the "
+           "connection, not its identity (see \"Reported by device\" for that). Pick a "
+           "scan result, or type one by hand for a robot the scan hasn't found yet."));
+    m_bleAddressCombo->lineEdit()->setPlaceholderText(tr("Scan, or type an address"));
+    if (!m_device.bleAddress.isEmpty()) {
+        m_bleAddressCombo->addItem(m_device.bleAddress, m_device.bleAddress);
+        m_bleAddressCombo->setCurrentText(m_device.bleAddress);
+    }
+    connect(m_bleAddressCombo, &QComboBox::activated, this, [this](int index) {
+        // The visible text becomes the raw address (itemData), never the
+        // decorated "name (address)" label a scan result is shown with --
+        // see addDiscoveredBleDevice().
+        m_bleAddressCombo->setCurrentText(m_bleAddressCombo->itemData(index).toString());
+    });
+
+    m_scanBleButton = new QToolButton(connectionGroup);
+    m_scanBleButton->setText(tr("Scan"));
+    m_scanBleButton->setCheckable(true);
+    m_scanBleButton->setToolTip(tr("Scan for nearby BTP-capable BLE robots."));
+    connect(m_scanBleButton, &QToolButton::toggled, this, [this](bool checked) {
+        m_bleScanning = checked;
+        m_scanBleButton->setText(checked ? tr("Stop") : tr("Scan"));
+        emit scanBleRequested(checked);
+    });
+
+    auto* bleAddressRow = new QHBoxLayout;
+    bleAddressRow->addWidget(m_bleAddressCombo, /*stretch=*/1);
+    bleAddressRow->addWidget(m_scanBleButton);
+    m_bleAddressRowIndex = m_connectionLayout->rowCount();
+    m_connectionLayout->addRow(tr("BLE address:"), bleAddressRow);
 
     m_portCombo = new QComboBox(connectionGroup);
     m_portCombo->setEditable(true);
@@ -355,10 +393,10 @@ DeviceConfigDialog::DeviceConfigDialog(const Device& initial, QWidget* parent)
     m_cachePasswordRowIndex = m_connectionLayout->rowCount();
     m_connectionLayout->addRow(QString(), m_cachePasswordCheck);
 
-    // Lock the Connection group to the tallest of the four transports' row
-    // sets (Hub has the most: through-device/source_id/this-device's-id/
-    // password/cache checkbox; Tcp ties Hub on the last two now that a
-    // direct session shares the same channel-B password field -- see
+    // Lock the Connection group to the tallest of the transports' row sets
+    // (Hub has the most: through-device/source_id/this-device's-id/password/
+    // cache checkbox; Tcp and Ble tie Hub on the last two now that a direct
+    // session shares the same channel-B password field -- see
     // updateTransportFieldsVisibility()) instead of leaving it to shrink-wrap
     // whichever one happens to be selected. Without this, switching the Transport combo hides/
     // shows rows via setRowVisible() and the whole dialog resizes itself
@@ -376,7 +414,11 @@ DeviceConfigDialog::DeviceConfigDialog(const Device& initial, QWidget* parent)
     {
         int maxConnectionHeight = 0;
         for (TransportType type : {TransportType::Serial, TransportType::UsbHid,
-                       TransportType::HubChannel, TransportType::Tcp}) {
+                       TransportType::HubChannel, TransportType::Tcp,
+#ifdef TRACEVIEW_ENABLE_BLE
+                       TransportType::Ble,
+#endif
+                       }) {
             const int index = m_transportTypeCombo->findData(int(type));
             m_transportTypeCombo->setCurrentIndex(index);
             updateTransportFieldsVisibility();
@@ -560,6 +602,7 @@ Device DeviceConfigDialog::result() const {
     device.lineTerminator = m_lineTerminatorCombo->currentData().toInt();
     device.tcpHost = m_tcpHostEdit->text().trimmed();
     device.tcpPort = quint16(m_tcpPortSpin->value());
+    device.bleAddress = m_bleAddressCombo->currentText().trimmed();
     device.usbPath = m_usbDeviceCombo->currentData().toString();
     device.parentDeviceId = m_parentCombo->currentData().toString();
     // m_peerSourceId is the ground truth (see its own declaration) --
@@ -585,6 +628,7 @@ void DeviceConfigDialog::updateTransportFieldsVisibility() {
     const TransportType transport = TransportType(m_transportTypeCombo->currentData().toInt());
     const bool isSerial = transport == TransportType::Serial;
     const bool isTcp = transport == TransportType::Tcp;
+    const bool isBle = transport == TransportType::Ble;
     const bool isUsbHid = transport == TransportType::UsbHid;
     const bool isHub = transport == TransportType::HubChannel;
 
@@ -593,20 +637,26 @@ void DeviceConfigDialog::updateTransportFieldsVisibility() {
     setFormRowVisible(m_connectionLayout, m_lineTerminatorRowIndex, isSerial);
     setFormRowVisible(m_connectionLayout, m_tcpHostRowIndex, isTcp);
     setFormRowVisible(m_connectionLayout, m_tcpPortRowIndex, isTcp);
+    setFormRowVisible(m_connectionLayout, m_bleAddressRowIndex, isBle);
+    // Leaving the dialog on the BLE row with a scan left running would keep
+    // the discovery agent alive with nothing left able to stop it politely.
+    if (!isBle && m_bleScanning) {
+        m_scanBleButton->setChecked(false);
+    }
     setFormRowVisible(m_connectionLayout, m_usbDeviceRowIndex, isUsbHid);
     setFormRowVisible(m_connectionLayout, m_parentRowIndex, isHub);
     setFormRowVisible(m_connectionLayout, m_peerSourceIdRowIndex, isHub);
     setFormRowVisible(m_connectionLayout, m_childSourceIdRowIndex, isHub);
     // The password field is Device::peerPassword -- ONE channel-B password
-    // per device now covers HubChannel and Tcp (and, later, Ble): a direct
-    // TCP session derives the exact same key a hub child would (see
+    // per device covers HubChannel, Tcp and Ble alike: a direct TCP/BLE
+    // session derives the exact same key a hub child would (see
     // BtpBackend::setDirectEndpointKey()'s comment for why that key is wired
     // in without adopting any of the hub-child role's other side effects).
     // "Cache password" belongs next to it for the same reason it does for
     // Hub: whether to persist the typed password in the .tvproj (vs. asking
     // again every session) is a property of the password field itself, not
     // of which transport happens to consume the derived key.
-    const bool showsPeerPassword = isHub || isTcp;
+    const bool showsPeerPassword = isHub || isTcp || isBle;
     setFormRowVisible(m_connectionLayout, m_peerPasswordRowIndex, showsPeerPassword);
     setFormRowVisible(m_connectionLayout, m_cachePasswordRowIndex, showsPeerPassword);
 }
@@ -703,6 +753,22 @@ void DeviceConfigDialog::setAvailablePorts(const QStringList& ports) {
         m_portCombo->insertItem(0, current);
     }
     m_portCombo->setCurrentText(current);
+}
+
+void DeviceConfigDialog::addDiscoveredBleDevice(const QString& name, const QString& address) {
+    if (address.isEmpty()) {
+        return;
+    }
+    const QString label = name.isEmpty() ? address : tr("%1 (%2)").arg(name, address);
+    const int existing = m_bleAddressCombo->findData(address);
+    if (existing >= 0) {
+        // Re-seen (most backends re-emit per advertisement) -- refresh the
+        // label only (a name can arrive on a later advertisement than the
+        // first one this address was seen on), never the current selection.
+        m_bleAddressCombo->setItemText(existing, label);
+        return;
+    }
+    m_bleAddressCombo->addItem(label, address);
 }
 
 void DeviceConfigDialog::setAvailableHubPeers(const QVector<HubPeer>& peers) {

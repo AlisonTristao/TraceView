@@ -28,6 +28,9 @@ class QUndoGroup;
 namespace traceview {
 
 class Backend;
+#ifdef TRACEVIEW_ENABLE_BLE
+class BleDiscoveryService;
+#endif
 class BtpMonitorTab;
 class DashboardGrid;
 class DashboardWidget;
@@ -395,6 +398,22 @@ private:
     // core/deviceconnection.h. Created/destroyed/updated in lockstep with
     // m_devicesGrid's own list (onDeviceAdded/onDeviceRemoved/onDeviceUpdated).
     QHash<QString, DeviceConnection*> m_deviceConnections;
+#ifdef TRACEVIEW_ENABLE_BLE
+    // Backs DevicesGrid::setBleScanToggleHandler()/setBleDeviceListProvider()
+    // (TAREFAS_TCP_BLE_ANDROID.txt T27/T32) -- traceview_devices can't own
+    // this itself (doesn't depend on Qt6::Bluetooth, see lib/CMakeLists.txt).
+    // Created on first scan, torn down (deleteLater) on stop rather than
+    // kept idle between scans -- same one-shot-per-attempt lifecycle
+    // BleDiscoveryService itself already gives start()/stop().
+    BleDiscoveryService* m_bleDiscovery = nullptr;
+    // Every (name, address) seen since the discovery service's own list was
+    // last cleared (on each fresh start() -- see onBleScanToggled()),
+    // de-duplicated by address so a peripheral re-advertising repeatedly
+    // doesn't grow this without bound. What setBleDeviceListProvider()'s
+    // polled callback reads.
+    QVector<QPair<QString, QString>> m_bleDiscoveredDevices;
+    void onBleScanToggled(bool start);
+#endif
     // Holds the dashboard, Devices grid and Settings page; whichever one is current is
     // what fills m_contentRow. Unlike the layers/properties panels below,
     // this genuinely shares layout space (contentLayout->addWidget()) rather

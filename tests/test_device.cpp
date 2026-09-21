@@ -138,6 +138,7 @@ void TestDevice::keepsTransportOrdinalsAndDedicatedConfiguration() {
 
     Device ble;
     ble.transportType = TransportType::Ble;
+    ble.bleAddress = "AA:BB:CC:DD:EE:FF";
     ble.blePeerUuid = "robot-uuid";
     QVERIFY(ble.tcpHost.isEmpty());
     QCOMPARE(ble.tcpPort, quint16(44300));
@@ -149,6 +150,7 @@ void TestDevice::roundTripsDirectTransportConfiguration() {
     device.transportType = TransportType::Tcp;
     device.tcpHost = "192.0.2.10";
     device.tcpPort = 44301;
+    device.bleAddress = "AA:BB:CC:DD:EE:FF";
     device.blePeerUuid = "robot-uuid";
 
     bool ok = false;
@@ -158,6 +160,7 @@ void TestDevice::roundTripsDirectTransportConfiguration() {
     QCOMPARE(loaded.transportType, TransportType::Tcp);
     QCOMPARE(loaded.tcpHost, device.tcpHost);
     QCOMPARE(loaded.tcpPort, device.tcpPort);
+    QCOMPARE(loaded.bleAddress, device.bleAddress);
     QCOMPARE(loaded.blePeerUuid, device.blePeerUuid);
 
     const Device invalidPort = deviceFromJson(
@@ -188,6 +191,7 @@ void TestDevice::fromJsonDefaultsMissingOptionalFields() {
     QVERIFY(device.usbPath.isEmpty());
     QVERIFY(device.tcpHost.isEmpty());
     QCOMPARE(device.tcpPort, quint16(44300));
+    QVERIFY(device.bleAddress.isEmpty());
     QVERIFY(device.blePeerUuid.isEmpty());
     QVERIFY(!device.connected);
 }

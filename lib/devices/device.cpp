@@ -16,6 +16,7 @@ QJsonObject deviceToJson(const Device& device) {
     object["usbPath"] = device.usbPath;
     object["tcpHost"] = device.tcpHost;
     object["tcpPort"] = device.tcpPort;
+    object["bleAddress"] = device.bleAddress;
     object["blePeerUuid"] = device.blePeerUuid;
     object["parentDeviceId"] = device.parentDeviceId;
     // Written as a double because QJsonValue has no unsigned integer type and
@@ -85,6 +86,7 @@ Device deviceFromJson(const QJsonObject& object, bool* ok) {
     device.tcpPort = storedTcpPort >= 1 && storedTcpPort <= 65535
                          ? quint16(storedTcpPort)
                          : quint16(44300);
+    device.bleAddress = object.value("bleAddress").toString();
     device.blePeerUuid = object.value("blePeerUuid").toString();
 
     device.parentDeviceId = object.value("parentDeviceId").toString();

@@ -1,5 +1,7 @@
 #include "mainwindow.h"
 
+#include <algorithm>
+
 #include <QActionGroup>
 #include <QClipboard>
 #include <QColor>
@@ -37,6 +39,9 @@
 #include "aboutdialog.h"
 #include "applog.h"
 #include "backend/backend.h"
+#ifdef TRACEVIEW_ENABLE_BLE
+#include "blediscoveryservice.h"
+#endif
 #include "dashboard/dashboardgrid.h"
 #include "dashboard/widgetconfigeditor.h"
 #include "dashboard/widgetregistry.h"
@@ -301,6 +306,16 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
         }
         return options;
     });
+#ifdef TRACEVIEW_ENABLE_BLE
+    // Same reasoning as setUsbDeviceListProvider() above: DevicesGrid can't
+    // scan for BLE peripherals itself (traceview_devices doesn't depend on
+    // Qt6::Bluetooth, see lib/CMakeLists.txt). Unlike the two synchronous
+    // OS-query providers above, this is push/toggle-based (see
+    // MainWindow::onBleScanToggled()) -- a scan runs for as long as the
+    // dialog leaves it on, not a one-shot list.
+    m_devicesGrid->setBleScanToggleHandler([this](bool start) { onBleScanToggled(start); });
+    m_devicesGrid->setBleDeviceListProvider([this]() { return m_bleDiscoveredDevices; });
+#endif
     // Same reasoning as setPortListProvider() above: DevicesGrid can't reach
     // a Backend itself (traceview_devices doesn't depend on
     // traceview_protocol), so MainWindow supplies the gear icon's "Reported
@@ -1823,10 +1838,58 @@ void MainWindow::applyDeviceTarget(DeviceConnection* connection, const Device& d
                                  deriveChannelKey(device.peerPassword));
         return;
     }
+    if (device.transportType == TransportType::Ble) {
+        // Same one-password-per-device channel-B key as Tcp above
+        // (Device::peerPassword). connectToBle() itself no-ops without
+        // TRACEVIEW_ENABLE_BLE (no BleTransport exists in that
+        // configuration -- see deviceconnection.cpp's constructor), so no
+        // build-time guard is needed here.
+        connection->connectToBle(device.bleAddress, deriveChannelKey(device.peerPassword));
+        return;
+    }
     const QString target =
         device.transportType == TransportType::UsbHid ? device.usbPath : device.portName;
     connection->connectTo(target, device.baudRate);
 }
+
+#ifdef TRACEVIEW_ENABLE_BLE
+void MainWindow::onBleScanToggled(bool start) {
+    if (!start) {
+        // deleteLater(), not delete: this can run from inside a signal
+        // handler chain started by the discovery agent itself (the dialog's
+        // Scan button toggling off, or handleConfigRequested()'s
+        // unconditional stop after exec() returns -- see its own comment).
+        if (m_bleDiscovery != nullptr) {
+            m_bleDiscovery->deleteLater();
+            m_bleDiscovery = nullptr;
+        }
+        return;
+    }
+
+    // A fresh scan starts from a clean list -- see m_bleDiscoveredDevices's
+    // own comment. Stale entries from a much earlier scan (a robot that's
+    // since been powered off, moved out of range, or reflashed with a new
+    // address) would otherwise sit in the combo indefinitely, offering a
+    // pick that can no longer actually connect.
+    m_bleDiscoveredDevices.clear();
+    if (m_bleDiscovery == nullptr) {
+        m_bleDiscovery = new BleDiscoveryService(this);
+        connect(m_bleDiscovery, &BleDiscoveryService::deviceDiscovered, this,
+                [this](const BleDiscoveryService::DiscoveredDevice& found) {
+                    for (const auto& [name, address] : m_bleDiscoveredDevices) {
+                        Q_UNUSED(name);
+                        if (address == found.address) {
+                            return;
+                        }
+                    }
+                    m_bleDiscoveredDevices.append({found.name, found.address});
+                });
+        connect(m_bleDiscovery, &BleDiscoveryService::errorOccurred, this,
+                [this](const QString& message) { postStatus(message, 6000, StatusSeverity::Warning); });
+    }
+    m_bleDiscovery->start();
+}
+#endif
 
 void MainWindow::reattachHubChildren() {
     const QVector<Device> devices = m_devicesGrid->devices();
@@ -1911,6 +1974,32 @@ DeviceConnection* MainWindow::createDeviceConnection(const Device& device) {
     connect(connection, &DeviceConnection::deviceIdentified, this,
             [this, id = device.id](const QString& btpVersion, const QString& btpId) {
                 m_devicesGrid->setDeviceIdentity(id, btpVersion, btpId);
+                // Direct BLE identity revalidation (TAREFAS_TCP_BLE_ANDROID.txt
+                // T31: "nome/endereço são apenas pistas; nova sessão valida o
+                // robô"). Re-fetched rather than using the `device` this
+                // lambda closed over, which is a snapshot from when the
+                // connection was created and would never see an id learned on
+                // an earlier session. Learns silently the first time (empty
+                // blePeerUuid); a DIFFERENT id than the one already known means
+                // this address now answers for a different robot, which is
+                // exactly what an operator needs surfaced rather than silently
+                // accepted or silently overwritten.
+                if (!btpId.isEmpty()) {
+                    const QVector<Device> current = m_devicesGrid->devices();
+                    const auto it = std::find_if(current.begin(), current.end(),
+                                                 [&id](const Device& d) { return d.id == id; });
+                    if (it != current.end() && it->transportType == TransportType::Ble) {
+                        if (it->blePeerUuid.isEmpty()) {
+                            m_devicesGrid->setDeviceBlePeerUuid(id, btpId);
+                        } else if (it->blePeerUuid != btpId) {
+                            postStatus(tr("%1: this BLE address now answers as a different robot "
+                                          "(expected %2, got %3)")
+                                          .arg(it->name.isEmpty() ? id : it->name, it->blePeerUuid,
+                                               btpId),
+                                      8000, StatusSeverity::Warning);
+                        }
+                    }
+                }
                 // The session coming up (or dropping, which clears the pair)
                 // is an amber<->green transition for the status-bar dots too
                 // (topico 35 D.2).

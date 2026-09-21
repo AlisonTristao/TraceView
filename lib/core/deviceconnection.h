@@ -16,6 +16,9 @@ class SerialManager;
 class UsbHidManager;
 class HubTransport;
 class TcpTransport;
+#ifdef TRACEVIEW_ENABLE_BLE
+class BleTransport;
+#endif
 class Transport;
 
 enum class ConnectionPhase {
@@ -142,6 +145,17 @@ public:
     // and accepts the robot's unsealed traffic (a direct session is not a
     // hub child -- see setDirectEndpointKey()).
     void connectToTcp(const QString& host, quint16 port, const QByteArray& endpointKey);
+    // The BLE counterpart of connectToTcp(): `address` is a platform BLE
+    // address (Device::bleAddress -- a discovery hint, not identity; see
+    // its own comment), and `endpointKey` is the SAME derived channel-B key
+    // connectToTcp()/connectVia() take (Device::peerPassword covers hub, TCP
+    // and BLE alike -- see BtpBackend::setDirectEndpointKey()). No-op if
+    // transportType is not TransportType::Ble, and a no-op built entirely
+    // without TRACEVIEW_ENABLE_BLE (no BleTransport exists in that
+    // configuration at all -- see the constructor's Ble case). Empty address
+    // means "not configured", same convention as connectToTcp()'s empty
+    // host.
+    void connectToBle(const QString& address, const QByteArray& endpointKey);
     // Marks intent "offline" and closes. Stops the retry timer -- unlike a
     // transport drop, this does not come back on its own.
     void disconnectFrom();
@@ -199,12 +213,16 @@ private:
     UsbHidManager* m_usbHidManager = nullptr;
     HubTransport* m_hubTransport = nullptr;
     TcpTransport* m_tcpTransport = nullptr;
+#ifdef TRACEVIEW_ENABLE_BLE
+    BleTransport* m_bleTransport = nullptr;
+#endif
     Backend* m_backend = nullptr;
     QTimer* m_retryTimer;
     QString m_target;
     qint32 m_baudRate = 0;
     QString m_tcpHost;
     quint16 m_tcpPort = 0;
+    QString m_bleAddress;
     bool m_shouldBeConnected = false;
     bool m_transportAvailable = true;
     bool m_attemptInProgress = false;
