@@ -88,6 +88,16 @@ public:
     // isn't wanted.
     void setTabBarVisible(bool visible);
 
+    // Hides/shows one tab without removing its page -- the page (and
+    // whatever state/connections it owns) stays alive underneath, only its
+    // spot in the tab strip and its ability to become current disappear.
+    // Used to hide the Devices tab in User mode (see UserModeManager)
+    // without tearing down its DeviceConnections. Unlike setTabBarVisible()
+    // above (hides the whole strip), this targets one tab; callers must
+    // switch away from `index` first if it's currently current, since a
+    // hidden tab can't be the active one.
+    void setTabVisible(int index, bool visible);
+
 signals:
     void currentTabChanged(int index);
     void tabCloseRequested(int index);

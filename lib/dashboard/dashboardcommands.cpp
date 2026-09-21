@@ -59,38 +59,42 @@ void RemoveWidgetsCommand::undo() {
 
 MoveWidgetsCommand::MoveWidgetsCommand(DashboardGrid* grid,
                                        const QMap<QString, QPointF>& fromPositions,
-                                       const QMap<QString, QPointF>& toPositions)
+                                       const QMap<QString, QPointF>& toPositions,
+                                       DashboardBreakpoint breakpoint)
     : QUndoCommand(QCoreApplication::translate("DashboardCommands", "Move Widget")),
       m_grid(grid),
       m_fromPositions(fromPositions),
-      m_toPositions(toPositions) {}
+      m_toPositions(toPositions),
+      m_breakpoint(breakpoint) {}
 
 void MoveWidgetsCommand::redo() {
     for (auto it = m_toPositions.constBegin(); it != m_toPositions.constEnd(); ++it) {
-        m_grid->applyMove(it.key(), it.value());
+        m_grid->applyMove(it.key(), it.value(), m_breakpoint);
     }
 }
 
 void MoveWidgetsCommand::undo() {
     for (auto it = m_fromPositions.constBegin(); it != m_fromPositions.constEnd(); ++it) {
-        m_grid->applyMove(it.key(), it.value());
+        m_grid->applyMove(it.key(), it.value(), m_breakpoint);
     }
 }
 
 ResizeWidgetCommand::ResizeWidgetCommand(DashboardGrid* grid, const QString& itemId,
-                                         const QRectF& fromGeometry, const QRectF& toGeometry)
+                                         const QRectF& fromGeometry, const QRectF& toGeometry,
+                                         DashboardBreakpoint breakpoint)
     : QUndoCommand(QCoreApplication::translate("DashboardCommands", "Resize Widget")),
       m_grid(grid),
       m_itemId(itemId),
       m_fromGeometry(fromGeometry),
-      m_toGeometry(toGeometry) {}
+      m_toGeometry(toGeometry),
+      m_breakpoint(breakpoint) {}
 
 void ResizeWidgetCommand::redo() {
-    m_grid->applyResize(m_itemId, m_toGeometry);
+    m_grid->applyResize(m_itemId, m_toGeometry, m_breakpoint);
 }
 
 void ResizeWidgetCommand::undo() {
-    m_grid->applyResize(m_itemId, m_fromGeometry);
+    m_grid->applyResize(m_itemId, m_fromGeometry, m_breakpoint);
 }
 
 RenameWidgetCommand::RenameWidgetCommand(DashboardGrid* grid, const QString& itemId,

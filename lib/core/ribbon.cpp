@@ -87,6 +87,10 @@ void Ribbon::setTabBarVisible(bool visible) {
     m_tabBar->setVisible(visible);
 }
 
+void Ribbon::setTabVisible(int index, bool visible) {
+    m_tabBar->setTabVisible(index, visible);
+}
+
 QWidget* Ribbon::createButtonGroup(QWidget* parent, const QList<QAction*>& actions) {
     auto* frame = new QFrame(parent);
     frame->setObjectName("ribbonGroup");

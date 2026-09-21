@@ -116,10 +116,18 @@ void WorkspaceSwitcher::setWorkspaces(const QVector<Entry>& entries, const QStri
     rebuildMenu();
 }
 
+void WorkspaceSwitcher::setManagementEnabled(bool enabled) {
+    if (m_managementEnabled == enabled) {
+        return;
+    }
+    m_managementEnabled = enabled;
+    rebuildMenu();
+}
+
 void WorkspaceSwitcher::rebuildMenu() {
     m_menu->clear();
 
-    const bool deletable = m_entries.size() > 1;
+    const bool deletable = m_managementEnabled && m_entries.size() > 1;
     for (const Entry& entry : m_entries) {
         const QString id = entry.id;
         auto* row = new WorkspaceRow(entry.name, id == m_activeId, deletable, m_menu);
@@ -160,10 +168,12 @@ void WorkspaceSwitcher::rebuildMenu() {
         m_menu->addAction(action);
     }
 
-    m_menu->addSeparator();
-    QAction* newWorkspaceAction = m_menu->addAction(tr("New Workspace…"));
-    connect(newWorkspaceAction, &QAction::triggered, this,
-            &WorkspaceSwitcher::newWorkspaceRequested);
+    if (m_managementEnabled) {
+        m_menu->addSeparator();
+        QAction* newWorkspaceAction = m_menu->addAction(tr("New Workspace…"));
+        connect(newWorkspaceAction, &QAction::triggered, this,
+                &WorkspaceSwitcher::newWorkspaceRequested);
+    }
 }
 
 void WorkspaceSwitcher::updateIcons(const QColor& color) {

@@ -7,6 +7,32 @@ release flow.
 
 ## [Unreleased]
 
+### Added
+
+- Developer/User access mode: the app now always starts in a restricted User
+  mode, unlockable via a new **Access** menu login (username/password
+  against locally registered accounts, managed from the same menu). Every
+  install/device ships with the same default account out of the box (no
+  first-run setup step) — change its password or add other accounts via
+  Manage Users. In User mode the Devices tab, the dashboard edit-mode lock,
+  the Layers/Properties panel toggle, and workspace creation/deletion are
+  hidden; switching between existing workspaces, themes and language stays
+  available. Developer accounts persist across restarts; the logged-in
+  session itself does not.
+- Per-screen-size dashboard layouts: each dashboard item now stores an
+  independent position/size for three breakpoints (Phone/Tablet/Notebook)
+  instead of one shared layout, selected manually via a new toolbar button
+  (Developer mode only, next to the edit-mode lock) that also resizes the
+  TraceView window itself to approximate that device's shape (clamped to
+  fit the current screen, restored on returning to Notebook or leaving
+  Developer mode). In User mode the breakpoint instead follows the real
+  screen automatically. A +/− pair next to that button (hidden on Notebook)
+  lets a Phone/Tablet layout grow taller than the window one step at a time,
+  scrolling instead of being squeezed to fit once it exceeds the window;
+  off by default, and persisted per breakpoint alongside its layout.
+  Projects saved before this feature keep the same layout on all three
+  sizes until customized.
+
 ## [3.3.19] - 2026-09-20
 
 ### Fixed

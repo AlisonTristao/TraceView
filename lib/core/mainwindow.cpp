@@ -1,7 +1,5 @@
 #include "mainwindow.h"
 
-#include <algorithm>
-
 #include <QActionGroup>
 #include <QClipboard>
 #include <QColor>
@@ -11,6 +9,7 @@
 #include <QEvent>
 #include <QFileDialog>
 #include <QFileInfo>
+#include <QFrame>
 #include <QGuiApplication>
 #include <QHBoxLayout>
 #include <QInputDialog>
@@ -23,6 +22,9 @@
 #include <QMoveEvent>
 #include <QProcess>
 #include <QPushButton>
+#include <QResizeEvent>
+#include <QScreen>
+#include <QScrollArea>
 #include <QSerialPortInfo>
 #include <QSettings>
 #include <QShowEvent>
@@ -35,6 +37,7 @@
 #include <QUndoGroup>
 #include <QUrl>
 #include <QVBoxLayout>
+#include <algorithm>
 
 #include "aboutdialog.h"
 #include "applog.h"
@@ -51,24 +54,26 @@
 #include "deviceconnection.h"
 #include "devices/devicesgrid.h"
 #include "diagnostics/btpmonitortab.h"
-#include "diagram/diagramblockconfigdialog.h"
-#include "diagram/diagramscriptruntime.h"
 #include "diagnostics/framelog.h"
 #include "diagnostics/notificationhistorywindow.h"
 #include "diagnostics/notificationlog.h"
+#include "diagram/diagramblockconfigdialog.h"
+#include "diagram/diagramscriptruntime.h"
 #include "donatedialog.h"
 #include "fontmenuaction.h"
-#include "protocol/btpbackend.h"
-#include "protocol/btpframe.h"
-#include "protocol/keyderivation.h"
 #include "layerspanel.h"
+#include "logindialog.h"
 #include "logs/logviewer.h"
+#include "manageusersdialog.h"
 #include "ota/otatab.h"
 #include "paneldockcontroller.h"
 #include "preferences/appsettings.h"
 #include "project/projectstore.h"
 #include "project/workspacemanager.h"
 #include "propertiespanel.h"
+#include "protocol/btpbackend.h"
+#include "protocol/btpframe.h"
+#include "protocol/keyderivation.h"
 #include "ribbon.h"
 #include "ribbonicons.h"
 #include "serialwidgetbridge.h"
@@ -94,6 +99,27 @@ namespace {
 const QString kProjectFileFilter =
     QCoreApplication::translate("MainWindow", "TraceView Project (*.tvproj)");
 constexpr const char* kRecentFilesSettingsKey = "recentFiles/paths";
+
+// Thresholds for auto-detecting a screen-size breakpoint from a monitor's
+// own availableGeometry() width (see MainWindow::applyAutoBreakpoint()), in
+// logical pixels. Starting defaults, not validated against real phone/
+// tablet hardware yet -- easy to retune once this runs on an actual small
+// screen.
+constexpr int kSmallBreakpointMaxWidth = 700;
+constexpr int kMediumBreakpointMaxWidth = 1280;
+
+// Window sizes MainWindow itself resizes to for a manual Phone/Tablet
+// preview (see MainWindow::applyBreakpointWindowSize()) -- rough portrait
+// phone/tablet proportions, not any specific real device. Starting
+// defaults, not validated against real hardware yet; always clamped to the
+// current screen's own available space (see applyBreakpointWindowSize())
+// so the preview window never spills off a smaller monitor.
+const QSize kPhonePreviewWindowSize(360, 700);
+const QSize kTabletPreviewWindowSize(700, 900);
+// Left/top-ish breathing room subtracted from the screen's available size
+// when clamping, so the window doesn't land flush against the taskbar/
+// screen edge with zero margin.
+constexpr int kBreakpointPreviewScreenMargin = 60;
 
 // What a gauge asks for: it has no sample-time setting of its own (a gauge
 // only ever shows the newest value), so it requests a modest fixed rate
@@ -194,11 +220,9 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     // Settings ▸ Updates has ever been opened -- the startup check below
     // needs both to exist independently of that tab's lifecycle.
     m_updateChecker = new UpdateChecker(this);
-    connect(m_updateChecker, &UpdateChecker::updateAvailable, this,
-            &MainWindow::onUpdateAvailable);
+    connect(m_updateChecker, &UpdateChecker::updateAvailable, this, &MainWindow::onUpdateAvailable);
     connect(m_updateChecker, &UpdateChecker::upToDate, this, &MainWindow::onUpdateUpToDate);
-    connect(m_updateChecker, &UpdateChecker::checkFailed, this,
-            &MainWindow::onUpdateCheckFailed);
+    connect(m_updateChecker, &UpdateChecker::checkFailed, this, &MainWindow::onUpdateCheckFailed);
     m_updateDownloader = new UpdateDownloader(this);
     connect(m_updateDownloader, &UpdateDownloader::finished, this,
             &MainWindow::onUpdateDownloadFinished);
@@ -336,8 +360,22 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     refreshDeviceStatusLabel();  // starts empty ("No devices configured...")
     refreshPropertiesPanelDevices();
 
+    // Wraps the canvas so a screen-size breakpoint that needs more vertical
+    // room than the viewport (Small/Medium -- see DashboardGrid::
+    // contentSize()) gets a scrollbar instead of squeezing every widget down
+    // to fit. widgetResizable keeps the grid's width following the viewport
+    // (no horizontal scrollbar is ever wanted here) while letting its height
+    // exceed the viewport when contentSize() asks for more.
+    m_dashboardScrollArea = new QScrollArea(m_contentRow);
+    m_dashboardScrollArea->setWidget(m_dashboardGrid);
+    m_dashboardScrollArea->setWidgetResizable(true);
+    m_dashboardScrollArea->setFrameShape(QFrame::NoFrame);
+    m_dashboardScrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    connect(m_dashboardGrid, &DashboardGrid::breakpointChanged, this,
+            &MainWindow::updateScreenSizeButtonIcon);
+
     m_contentStack = new QStackedWidget(m_contentRow);
-    m_contentStack->addWidget(m_dashboardGrid);
+    m_contentStack->addWidget(m_dashboardScrollArea);
     m_contentStack->addWidget(m_devicesGrid);
     // Each log opened via onOpenLogFile() (File > Open Log Offline) gets its
     // own LogViewer, added here on demand -- see m_openLogTabs.
@@ -392,6 +430,14 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     // Added last so it lands to the right of m_telemetryStatusLabel above --
     // each addPermanentWidget() call appends further right.
     buildWorkspaceSwitcher();
+
+    // The app always starts in User mode (UserModeManager never persists a
+    // login across restarts) -- apply that once now so the Devices tab and
+    // edit-mode lock are already hidden before the window is ever shown,
+    // then react to any later login/logout the same way.
+    connect(&UserModeManager::instance(), &UserModeManager::modeChanged, this,
+            &MainWindow::applyUserMode);
+    applyUserMode(UserModeManager::instance().mode());
 
     // Keeps every connected hub child's online/offline (and robot-reboot
     // detection) current off the dongle's hub.peers, independent of whether a
@@ -654,9 +700,8 @@ void MainWindow::buildMenus() {
     connect(shortcutsAction, &QAction::triggered, this, &MainWindow::onShowKeyboardShortcuts);
 
     auto* logFolderAction = viewMenu->addAction(tr("Open &Log Folder"));
-    connect(logFolderAction, &QAction::triggered, this, [] {
-        QDesktopServices::openUrl(QUrl::fromLocalFile(AppLog::logDirectory()));
-    });
+    connect(logFolderAction, &QAction::triggered, this,
+            [] { QDesktopServices::openUrl(QUrl::fromLocalFile(AppLog::logDirectory())); });
 
     auto* resetPanelsAction = viewMenu->addAction(tr("&Reset Panel Positions"));
     connect(resetPanelsAction, &QAction::triggered, this,
@@ -737,6 +782,9 @@ void MainWindow::buildMenus() {
         });
     }
 
+    m_accessMenu = menuBar()->addMenu(tr("&Access"));
+    updateAccessMenu();
+
     auto* debugAction = menuBar()->addAction(tr("&Debug"));
     connect(debugAction, &QAction::triggered, this, &MainWindow::onDebug);
     debugAction->setVisible(false);
@@ -746,6 +794,126 @@ void MainWindow::buildMenus() {
 
     auto* donateAction = menuBar()->addAction(tr("Dona&te"));
     connect(donateAction, &QAction::triggered, this, &MainWindow::onDonate);
+}
+
+void MainWindow::updateAccessMenu() {
+    m_accessMenu->clear();
+
+    UserModeManager& userMode = UserModeManager::instance();
+    if (userMode.mode() == UserModeManager::UserMode::Developer) {
+        QAction* whoAction =
+            m_accessMenu->addAction(tr("Connected as: %1").arg(userMode.currentUserName()));
+        whoAction->setEnabled(false);
+        m_accessMenu->addSeparator();
+
+        QAction* manageAction = m_accessMenu->addAction(tr("&Manage Users..."));
+        connect(manageAction, &QAction::triggered, this, [this] {
+            ManageUsersDialog dialog(this);
+            dialog.exec();
+        });
+
+        QAction* logoutAction = m_accessMenu->addAction(tr("&Exit Developer Mode"));
+        connect(logoutAction, &QAction::triggered, this,
+                [] { UserModeManager::instance().logout(); });
+    } else {
+        QAction* loginAction = m_accessMenu->addAction(tr("&Enter Developer Mode..."));
+        connect(loginAction, &QAction::triggered, this, [this] {
+            LoginDialog dialog(this);
+            dialog.exec();
+        });
+    }
+}
+
+void MainWindow::applyUserMode(UserModeManager::UserMode mode) {
+    const bool isDeveloper = mode == UserModeManager::UserMode::Developer;
+
+    // Losing developer access while Devices is the current tab would
+    // otherwise leave the ribbon pointed at a tab that's about to disappear
+    // -- fall back to Dashboard first.
+    if (!isDeveloper && m_ribbon->currentIndex() == m_devicesTabIndex) {
+        m_ribbon->setCurrentIndex(m_dashboardTabIndex);
+    }
+    m_ribbon->setTabVisible(m_devicesTabIndex, isDeveloper);
+
+    // Force the dashboard back to read-only before hiding the toggle that
+    // controls it -- otherwise a grid left unlocked from a previous
+    // developer session would sit there editable with no visible way to
+    // relock it. setChecked(false) runs the same onEditModeToggled() cleanup
+    // a manual click would.
+    if (!isDeveloper && m_editModeButton->isChecked()) {
+        m_editModeButton->setChecked(false);
+    }
+    m_editModeButton->setVisible(isDeveloper);
+    m_screenSizeButton->setVisible(isDeveloper);
+    // The Layers/Properties panels it shows/hides are only ever visible
+    // while editing is enabled (see updatePanelVisibility()), which is
+    // itself Developer-only -- so the toggle has nothing to control in User
+    // mode either.
+    m_togglePanelsButton->setVisible(isDeveloper);
+
+    if (m_workspaceSwitcher) {
+        m_workspaceSwitcher->setManagementEnabled(isDeveloper);
+    }
+
+    updateAccessMenu();
+
+    if (!isDeveloper) {
+        // A manual Phone/Tablet window preview (see
+        // applyBreakpointWindowSize()) is Developer-only -- leaving
+        // Developer mode while one was active must restore the window to
+        // its pre-preview size first (a no-op if none was active). Without
+        // this, the window stayed shrunk to whatever preview size it was
+        // left at while the breakpoint below jumped to User mode's own
+        // auto-detected one (based on the real screen, not the window),
+        // leaving a phone-sized window rendering a Notebook-shaped layout.
+        applyBreakpointWindowSize(DashboardBreakpoint::Large);
+    }
+    // No-op in Developer mode (see its own comment) -- in User mode, this is
+    // what actually replaces whatever breakpoint was last selected manually
+    // with the one this real screen calls for.
+    applyAutoBreakpoint();
+    // Refreshes the canvas +/- buttons' Developer-mode visibility even when
+    // applyAutoBreakpoint() above didn't actually change the breakpoint
+    // (which is the only other thing that would have triggered this via
+    // DashboardGrid::breakpointChanged).
+    updateScreenSizeButtonIcon();
+}
+
+void MainWindow::applyAutoBreakpoint() {
+    QScreen* current = screen();
+    if (current != m_watchedScreen) {
+        if (m_watchedScreen) {
+            disconnect(m_watchedScreen, &QScreen::availableGeometryChanged, this,
+                       &MainWindow::applyAutoBreakpoint);
+        }
+        m_watchedScreen = current;
+        if (m_watchedScreen) {
+            connect(m_watchedScreen, &QScreen::availableGeometryChanged, this,
+                    &MainWindow::applyAutoBreakpoint);
+        }
+    }
+
+    if (!current || UserModeManager::instance().mode() != UserModeManager::UserMode::User) {
+        return;
+    }
+
+    const int availableWidth = current->availableGeometry().width();
+    DashboardBreakpoint breakpoint = DashboardBreakpoint::Large;
+    if (availableWidth < kSmallBreakpointMaxWidth) {
+        breakpoint = DashboardBreakpoint::Small;
+    } else if (availableWidth < kMediumBreakpointMaxWidth) {
+        breakpoint = DashboardBreakpoint::Medium;
+    }
+    m_dashboardGrid->setBreakpoint(breakpoint);
+}
+
+void MainWindow::loadDashboardJson(const QJsonObject& json) {
+    m_dashboardGrid->fromJson(json);
+    // The breakpoint fromJson() just applied is whatever a developer last
+    // had selected while editing this workspace -- correct for Developer
+    // mode, but User mode always tracks the real screen instead (see
+    // applyAutoBreakpoint(), a no-op here if not in User mode).
+    applyAutoBreakpoint();
 }
 
 Ribbon* MainWindow::buildRibbon() {
@@ -906,8 +1074,63 @@ Ribbon* MainWindow::buildRibbon() {
     m_togglePanelsButton->setAutoRaise(true);
     m_togglePanelsButton->setFixedSize(kRibbonButtonSize, kRibbonButtonSize);
     m_togglePanelsButton->setIconSize(QSize(kRibbonIconSize, kRibbonIconSize));
-    connect(m_togglePanelsButton, &QToolButton::toggled, this,
-            &MainWindow::onTogglePanelsClicked);
+    connect(m_togglePanelsButton, &QToolButton::toggled, this, &MainWindow::onTogglePanelsClicked);
+
+    // Screen-size breakpoint toggle -- Developer-mode-only (hidden/shown by
+    // applyUserMode(), same as the lock below): lets a developer preview and
+    // arrange each of the three per-screen-size layouts (see
+    // dashboarditem.h) independently. In User mode the breakpoint instead
+    // follows the real screen automatically (see applyAutoBreakpoint()) and
+    // this button plays no part.
+    m_screenSizeButton = new QToolButton(dashboardPage);
+    m_screenSizeButton->setAutoRaise(true);
+    m_screenSizeButton->setPopupMode(QToolButton::InstantPopup);
+    m_screenSizeButton->setFixedSize(kRibbonButtonSize, kRibbonButtonSize);
+    m_screenSizeButton->setIconSize(QSize(kRibbonIconSize, kRibbonIconSize));
+
+    m_screenSizeMenu = new QMenu(m_screenSizeButton);
+    auto* screenSizeGroup = new QActionGroup(this);
+    screenSizeGroup->setExclusive(true);
+    const QVector<QPair<DashboardBreakpoint, QString>> screenSizeOptions = {
+        {DashboardBreakpoint::Small, tr("Phone")},
+        {DashboardBreakpoint::Medium, tr("Tablet")},
+        {DashboardBreakpoint::Large, tr("Notebook")},
+    };
+    for (const auto& option : screenSizeOptions) {
+        auto* action = m_screenSizeMenu->addAction(option.second);
+        action->setCheckable(true);
+        action->setData(int(option.first));
+        screenSizeGroup->addAction(action);
+        connect(action, &QAction::triggered, this, [this, breakpoint = option.first]() {
+            onScreenSizeBreakpointSelected(breakpoint);
+        });
+    }
+
+    m_screenSizeButton->setMenu(m_screenSizeMenu);
+
+    // Canvas height +/- -- Small/Medium only (hidden for Notebook, see
+    // updateCanvasHeightButtons()): grows/shrinks that breakpoint's canvas
+    // past the viewport's own height one step at a time
+    // (DashboardGrid::growCanvasHeight()/shrinkCanvasHeight()), for an
+    // arrangement that needs more room than even the phone/tablet preview
+    // window (applyBreakpointWindowSize()) gives it. MainWindow's
+    // QScrollArea shows a scrollbar once the canvas is actually taller than
+    // the window.
+    m_canvasShrinkButton = new QToolButton(dashboardPage);
+    m_canvasShrinkButton->setAutoRaise(true);
+    m_canvasShrinkButton->setFixedSize(kRibbonButtonSize, kRibbonButtonSize);
+    m_canvasShrinkButton->setIconSize(QSize(kRibbonIconSize, kRibbonIconSize));
+    m_canvasShrinkButton->setToolTip(tr("Shrink the canvas"));
+    connect(m_canvasShrinkButton, &QToolButton::clicked, this,
+            [this]() { m_dashboardGrid->shrinkCanvasHeight(); });
+
+    m_canvasGrowButton = new QToolButton(dashboardPage);
+    m_canvasGrowButton->setAutoRaise(true);
+    m_canvasGrowButton->setFixedSize(kRibbonButtonSize, kRibbonButtonSize);
+    m_canvasGrowButton->setIconSize(QSize(kRibbonIconSize, kRibbonIconSize));
+    m_canvasGrowButton->setToolTip(tr("Grow the canvas"));
+    connect(m_canvasGrowButton, &QToolButton::clicked, this,
+            [this]() { m_dashboardGrid->growCanvasHeight(); });
 
     // Top-right lock toggle: turns the Dashboard tab's canvas into the old
     // Layout tab's editable mode in place, instead of that being a separate
@@ -987,6 +1210,9 @@ Ribbon* MainWindow::buildRibbon() {
     dashboardLayout->addWidget(m_deviceStatusLabel);
     dashboardLayout->addStretch();
     dashboardLayout->addWidget(m_togglePanelsButton);
+    dashboardLayout->addWidget(m_screenSizeButton);
+    dashboardLayout->addWidget(m_canvasShrinkButton);
+    dashboardLayout->addWidget(m_canvasGrowButton);
     dashboardLayout->addWidget(m_editModeButton);
 
     // Initial refreshDeviceStatusLabel() call happens once m_devicesGrid
@@ -1066,7 +1292,7 @@ void MainWindow::switchToWorkspace(const QString& id) {
 
     workspaces.setDashboardFor(workspaces.activeId(), m_dashboardGrid->toJson());
     workspaces.setActiveId(id);
-    m_dashboardGrid->fromJson(workspaces.dashboardFor(id));
+    loadDashboardJson(workspaces.dashboardFor(id));
     m_dashboardGrid->undoStack()->clear();
     refreshPropertiesPanel();
     refreshLayersPanel();
@@ -1107,7 +1333,7 @@ void MainWindow::onNewWorkspaceRequested() {
     WorkspaceManager& workspaces = WorkspaceManager::instance();
     workspaces.setDashboardFor(workspaces.activeId(), m_dashboardGrid->toJson());
     workspaces.createWorkspace(name.trimmed());
-    m_dashboardGrid->fromJson(QJsonObject());
+    loadDashboardJson(QJsonObject());
     m_dashboardGrid->undoStack()->clear();
     refreshPropertiesPanel();
     refreshLayersPanel();
@@ -1132,7 +1358,7 @@ void MainWindow::onWorkspaceDeleteRequested(const QString& id) {
     const bool wasActive = id == workspaces.activeId();
     workspaces.removeWorkspace(id);
     if (wasActive) {
-        m_dashboardGrid->fromJson(workspaces.dashboardFor(workspaces.activeId()));
+        loadDashboardJson(workspaces.dashboardFor(workspaces.activeId()));
         m_dashboardGrid->undoStack()->clear();
         refreshPropertiesPanel();
         refreshLayersPanel();
@@ -1157,8 +1383,7 @@ void MainWindow::buildLayersPanel() {
 
     auto* toolbarRow1 = new QHBoxLayout();
     toolbarRow1->setSpacing(kRibbonGroupSpacing);
-    toolbarRow1->addWidget(
-        Ribbon::createButtonGroup(toolbar, {m_addWidgetAction, m_removeAction}));
+    toolbarRow1->addWidget(Ribbon::createButtonGroup(toolbar, {m_addWidgetAction, m_removeAction}));
     toolbarRow1->addWidget(Ribbon::createButtonGroup(toolbar, {m_copyAction, m_pasteAction}));
     toolbarRow1->addStretch();
     toolbarLayout->addLayout(toolbarRow1);
@@ -1257,6 +1482,108 @@ void MainWindow::updateRibbonIcons() {
     }
     updateEditModeIcon();
     updateTogglePanelsIcon();
+    updateScreenSizeButtonIcon();
+}
+
+void MainWindow::updateScreenSizeButtonIcon() {
+    if (!m_screenSizeButton) {
+        return;
+    }
+    const ThemePalette& palette = ThemeManager::instance().currentTheme();
+    const DashboardBreakpoint breakpoint = m_dashboardGrid->currentBreakpoint();
+    switch (breakpoint) {
+        case DashboardBreakpoint::Small:
+            m_screenSizeButton->setIcon(makePhoneIcon(palette.textPrimary));
+            m_screenSizeButton->setToolTip(tr("Screen size: Phone"));
+            break;
+        case DashboardBreakpoint::Medium:
+            m_screenSizeButton->setIcon(makeTabletIcon(palette.textPrimary));
+            m_screenSizeButton->setToolTip(tr("Screen size: Tablet"));
+            break;
+        case DashboardBreakpoint::Large:
+            m_screenSizeButton->setIcon(makeNotebookIcon(palette.textPrimary));
+            m_screenSizeButton->setToolTip(tr("Screen size: Notebook"));
+            break;
+    }
+    const QList<QAction*> actions = m_screenSizeMenu->actions();
+    for (QAction* action : actions) {
+        const QSignalBlocker blocker(action);
+        action->setChecked(DashboardBreakpoint(action->data().toInt()) == breakpoint);
+    }
+
+    // Growing/shrinking the canvas only means anything for Small/Medium
+    // (see DashboardGrid::growCanvasHeight()) -- hide both buttons on
+    // Notebook instead of leaving them uselessly clickable. Also gated by
+    // editingActive() rather than just Developer mode: it's an edit to the
+    // arrangement, same as dragging/resizing a widget, so it stays locked
+    // behind the edit-mode padlock even while already logged in as
+    // developer (unlike the screen-size button itself, which only switches
+    // which layout is *shown*, not editable).
+    const bool canvasHeightAdjustable = breakpoint != DashboardBreakpoint::Large && editingActive();
+    m_canvasShrinkButton->setIcon(makeMinusIcon(palette.textPrimary));
+    m_canvasGrowButton->setIcon(makePlusIcon(palette.textPrimary));
+    m_canvasShrinkButton->setVisible(canvasHeightAdjustable);
+    m_canvasGrowButton->setVisible(canvasHeightAdjustable);
+}
+
+void MainWindow::onScreenSizeBreakpointSelected(DashboardBreakpoint breakpoint) {
+    m_dashboardGrid->setBreakpoint(breakpoint);
+    applyBreakpointWindowSize(breakpoint);
+}
+
+void MainWindow::applyBreakpointWindowSize(DashboardBreakpoint breakpoint) {
+    if (breakpoint == DashboardBreakpoint::Large) {
+        if (!m_breakpointPreviewActive) {
+            return;
+        }
+        m_breakpointPreviewActive = false;
+        if (m_wasMaximizedBeforeBreakpointPreview) {
+            showMaximized();
+        } else {
+            showNormal();
+            resize(m_preBreakpointPreviewSize);
+        }
+        return;
+    }
+
+    // Remember what the window looked like before entering a preview only
+    // once, on the way in -- switching straight from Phone to Tablet (both
+    // previews) must keep restoring back to the original Notebook size/
+    // state, not to whichever preview size was active a moment ago.
+    if (!m_breakpointPreviewActive) {
+        m_wasMaximizedBeforeBreakpointPreview = isMaximized();
+        m_preBreakpointPreviewSize = size();
+        m_breakpointPreviewActive = true;
+    }
+    if (isMaximized()) {
+        showNormal();
+    }
+
+    QSize target = breakpoint == DashboardBreakpoint::Small ? kPhonePreviewWindowSize
+                                                            : kTabletPreviewWindowSize;
+    QScreen* current = screen();
+    if (current) {
+        // Never let the preview exceed what's actually visible on this
+        // monitor -- a fixed target size alone could spill off a smaller
+        // screen or one already mostly covered by the taskbar.
+        const QSize margin(kBreakpointPreviewScreenMargin, kBreakpointPreviewScreenMargin);
+        target = target.boundedTo(current->availableGeometry().size() - margin);
+    }
+    resize(target);
+
+    if (current) {
+        // The window's existing position can still push the smaller preview
+        // partly off-screen (e.g. it was sitting near the right/bottom edge
+        // before) -- pull it back fully inside this monitor's available area
+        // if resizing alone wasn't enough.
+        const QRect available = current->availableGeometry();
+        const QRect frame = frameGeometry();
+        const int x = qBound(available.left(), frame.left(), available.right() - frame.width());
+        const int y = qBound(available.top(), frame.top(), available.bottom() - frame.height());
+        if (x != frame.left() || y != frame.top()) {
+            move(x, y);
+        }
+    }
 }
 
 void MainWindow::updateEditModeIcon() {
@@ -1277,9 +1604,8 @@ void MainWindow::updateTogglePanelsIcon() {
     const ThemePalette& palette = ThemeManager::instance().currentTheme();
     // Always textPrimary -- same reasoning as updateEditModeIcon() above.
     m_togglePanelsButton->setIcon(makePanelsIcon(palette.textPrimary, m_panelsVisible));
-    m_togglePanelsButton->setToolTip(m_panelsVisible
-                                         ? tr("Hide the Layers/Properties panels")
-                                         : tr("Show the Layers/Properties panels"));
+    m_togglePanelsButton->setToolTip(m_panelsVisible ? tr("Hide the Layers/Properties panels")
+                                                     : tr("Show the Layers/Properties panels"));
 }
 
 void MainWindow::onRibbonTabChanged(int index) {
@@ -1295,6 +1621,9 @@ void MainWindow::onRibbonTabChanged(int index) {
     m_dashboardGrid->setEditMode(editingActive());
     m_addWidgetAction->setEnabled(editingActive());
     m_togglePanelsButton->setEnabled(editingActive());
+    // The canvas +/- buttons are gated by editingActive() too (see its own
+    // comment) -- switching tabs can flip it just like the padlock can.
+    updateScreenSizeButtonIcon();
     // Ctrl+Z/Ctrl+Y (m_undoAction/m_redoAction) are created from m_undoGroup,
     // not either stack directly -- flip which one is "active" here so they
     // always undo/redo whatever the visible tab actually shows. The
@@ -1317,7 +1646,7 @@ void MainWindow::onRibbonTabChanged(int index) {
     // edit mode/panels don't need any extra handling for those). Log tabs
     // are matched by their ribbon page pointer rather than by index -- see
     // m_openLogTabs.
-    QWidget* activeContent = m_dashboardGrid;
+    QWidget* activeContent = m_dashboardScrollArea;
     if (index == m_devicesTabIndex) {
         activeContent = m_devicesGrid;
     } else if (m_otaTabActive) {
@@ -1352,6 +1681,9 @@ void MainWindow::onEditModeToggled(bool enabled) {
     m_dashboardGrid->setEditMode(editingActive());
     m_addWidgetAction->setEnabled(editingActive());
     m_togglePanelsButton->setEnabled(editingActive());
+    // The canvas +/- buttons are locked behind the padlock too -- see their
+    // own comment in updateScreenSizeButtonIcon().
+    updateScreenSizeButtonIcon();
     updatePanelVisibility();
     updateSelectionActions();
 }
@@ -1439,12 +1771,19 @@ void MainWindow::moveEvent(QMoveEvent* event) {
     if (m_floatingPanelsPositioned) {
         m_dockController->trackWindowMoved(event->pos() - event->oldPos());
     }
+    // A move can carry the window onto a different monitor -- re-sync which
+    // QScreen is watched and, in User mode, re-derive the breakpoint from it.
+    applyAutoBreakpoint();
+}
+
+void MainWindow::resizeEvent(QResizeEvent* event) {
+    QMainWindow::resizeEvent(event);
+    applyAutoBreakpoint();
 }
 
 void MainWindow::updateSelectionActions() {
     const bool hasAnySelection = editingActive() && m_dashboardGrid->selectedCount() > 0;
-    const bool hasSingleSelection =
-        editingActive() && !m_dashboardGrid->selectedItemId().isEmpty();
+    const bool hasSingleSelection = editingActive() && !m_dashboardGrid->selectedItemId().isEmpty();
     m_removeAction->setEnabled(hasAnySelection);
     m_copyAction->setEnabled(hasSingleSelection);
     m_pasteAction->setEnabled(editingActive() && m_dashboardGrid->canPaste());
@@ -1681,8 +2020,7 @@ void MainWindow::reconcileHubChildPresence() {
                 lastPeerFrameMs = btp->lastPeerDataFrameMsSinceEpoch();
             }
         }
-        const bool dataFlowing =
-            lastPeerFrameMs != 0 && nowMs - lastPeerFrameMs < kPeerFrameLiveMs;
+        const bool dataFlowing = lastPeerFrameMs != 0 && nowMs - lastPeerFrameMs < kPeerFrameLiveMs;
 
         // (2) Fallback: the dongle's hub.peers opinion, for the window before a
         // subscription is producing telemetry. Also the only source of the
@@ -1782,7 +2120,7 @@ void MainWindow::refreshDeviceStatusLabel() {
         const DeviceLinkState linkState = deviceLinkState(device);
         const QColor dotColor = (linkState == DeviceLinkState::Live)      ? palette.success
                                 : (linkState == DeviceLinkState::Offline) ? palette.danger
-                                                                         : palette.warning;
+                                                                          : palette.warning;
         const QString name = device.name.isEmpty() ? tr("(unnamed)") : device.name;
         parts.append(QString("<span style='color:%1;'>&#9679;</span> %2")
                          .arg(dotColor.name(), name.toHtmlEscaped()));
@@ -1884,8 +2222,9 @@ void MainWindow::onBleScanToggled(bool start) {
                     }
                     m_bleDiscoveredDevices.append({found.name, found.address});
                 });
-        connect(m_bleDiscovery, &BleDiscoveryService::errorOccurred, this,
-                [this](const QString& message) { postStatus(message, 6000, StatusSeverity::Warning); });
+        connect(
+            m_bleDiscovery, &BleDiscoveryService::errorOccurred, this,
+            [this](const QString& message) { postStatus(message, 6000, StatusSeverity::Warning); });
     }
     m_bleDiscovery->start();
 }
@@ -1924,21 +2263,22 @@ DeviceConnection* MainWindow::createDeviceConnection(const Device& device) {
     // once per device, the same way MainWindow used to hook the app's one
     // Backend before the multi-device refactor.
     Backend* backend = connection->backend();
-    connect(backend, &Backend::statusMessage, this,
-            [this, name = device.name](const QString& text, int timeoutMs,
-                                       StatusSeverity severity) {
-                postStatus(text, timeoutMs, severity, name);
-            });
+    connect(
+        backend, &Backend::statusMessage, this,
+        [this, name = device.name](const QString& text, int timeoutMs, StatusSeverity severity) {
+            postStatus(text, timeoutMs, severity, name);
+        });
     // This device's script runtime's onStatus() -- the same statusMessage
     // signal the status bar uses, so a script sees session established/
     // failed, subscription rejections, and sendCommand() results (CommandClient
     // -> BtpBackend -> here) without a separate command-result channel.
-    connect(backend, &Backend::statusMessage, this,
-            [this, id = device.id](const QString& text, int /*timeoutMs*/, StatusSeverity severity) {
-                if (DiagramScriptRuntime* runtime = m_scriptRuntimes.value(id)) {
-                    runtime->handleStatus(text, severity);
-                }
-            });
+    connect(
+        backend, &Backend::statusMessage, this,
+        [this, id = device.id](const QString& text, int /*timeoutMs*/, StatusSeverity severity) {
+            if (DiagramScriptRuntime* runtime = m_scriptRuntimes.value(id)) {
+                runtime->handleStatus(text, severity);
+            }
+        });
     // BTP traffic monitor taps -- every frame this device's session sends or
     // receives, and every decode failure, tagged with the device. A hub child
     // and its parent both report the child's relayed frames (once each,
@@ -1994,9 +2334,9 @@ DeviceConnection* MainWindow::createDeviceConnection(const Device& device) {
                         } else if (it->blePeerUuid != btpId) {
                             postStatus(tr("%1: this BLE address now answers as a different robot "
                                           "(expected %2, got %3)")
-                                          .arg(it->name.isEmpty() ? id : it->name, it->blePeerUuid,
-                                               btpId),
-                                      8000, StatusSeverity::Warning);
+                                           .arg(it->name.isEmpty() ? id : it->name, it->blePeerUuid,
+                                                btpId),
+                                       8000, StatusSeverity::Warning);
                         }
                     }
                 }
@@ -2045,8 +2385,8 @@ DeviceConnection* MainWindow::createDeviceConnection(const Device& device) {
             [this, id = device.id](const TelemetryFieldBinding& binding, quint64 timestampUs,
                                    double value) {
                 if (DiagramScriptRuntime* runtime = m_scriptRuntimes.value(id)) {
-                    runtime->handleTelemetry(binding.topicId, binding.fieldId,
-                                             binding.elementIndex, value, timestampUs);
+                    runtime->handleTelemetry(binding.topicId, binding.fieldId, binding.elementIndex,
+                                             value, timestampUs);
                 }
             });
     connect(backend, &Backend::terminalDataReceived, this,
@@ -2258,7 +2598,7 @@ void MainWindow::onNewProject() {
 
     ProjectStore::instance().reset();
     WorkspaceManager::instance().reset();
-    m_dashboardGrid->fromJson(QJsonObject());
+    loadDashboardJson(QJsonObject());
     m_dashboardGrid->undoStack()->clear();
     m_devicesGrid->fromJson(QJsonObject());
     m_devicesGrid->undoStack()->clear();
@@ -2615,7 +2955,7 @@ void MainWindow::openRecentFile(const QString& path) {
     m_devicesGrid->fromJson(ProjectStore::instance().section("devices"));
     m_loadingProject = false;
     m_devicesGrid->undoStack()->clear();
-    m_dashboardGrid->fromJson(
+    loadDashboardJson(
         WorkspaceManager::instance().dashboardFor(WorkspaceManager::instance().activeId()));
     m_dashboardGrid->undoStack()->clear();
     refreshPropertiesPanel();
@@ -2692,16 +3032,15 @@ void MainWindow::onShowKeyboardShortcuts() {
 
     QVector<Section> sections;
 
-    sections.append(Section{
-        tr("Project"),
-        {Row{tr("New project"), stdKeys(QKeySequence::New)},
-         Row{tr("Open project"), stdKeys(QKeySequence::Open)},
-         Row{tr("Save project"), stdKeys(QKeySequence::Save)},
-         Row{tr("Save project as"), stdKeys(QKeySequence::SaveAs)},
-         Row{tr("Open log offline"), keysOf(m_openLogFileAction)},
-         Row{tr("Upload firmware (OTA)"), keysOf(m_openOtaTabAction)},
-         Row{tr("BTP traffic monitor"), keysOf(m_openBtpMonitorAction)},
-         Row{tr("Settings"), keysOf(m_openSettingsTabAction)}}});
+    sections.append(Section{tr("Project"),
+                            {Row{tr("New project"), stdKeys(QKeySequence::New)},
+                             Row{tr("Open project"), stdKeys(QKeySequence::Open)},
+                             Row{tr("Save project"), stdKeys(QKeySequence::Save)},
+                             Row{tr("Save project as"), stdKeys(QKeySequence::SaveAs)},
+                             Row{tr("Open log offline"), keysOf(m_openLogFileAction)},
+                             Row{tr("Upload firmware (OTA)"), keysOf(m_openOtaTabAction)},
+                             Row{tr("BTP traffic monitor"), keysOf(m_openBtpMonitorAction)},
+                             Row{tr("Settings"), keysOf(m_openSettingsTabAction)}}});
 
     sections.append(Section{
         tr("Layout & widgets"),
@@ -2715,8 +3054,7 @@ void MainWindow::onShowKeyboardShortcuts() {
              keysOf(m_sendBackwardAction) + QStringLiteral("  ·  ") + keysOf(m_sendToBackAction)},
          Row{tr("Group / ungroup"),
              keysOf(m_groupAction) + QStringLiteral("  ·  ") + keysOf(m_ungroupAction)},
-         Row{tr("Undo"), keysOf(m_undoAction)},
-         Row{tr("Redo"), keysOf(m_redoAction)}}});
+         Row{tr("Undo"), keysOf(m_undoAction)}, Row{tr("Redo"), keysOf(m_redoAction)}}});
 
     sections.append(Section{tr("Devices"),
                             {Row{tr("Add device"), keysOf(m_addDeviceAction)},
@@ -2740,14 +3078,12 @@ void MainWindow::onShowKeyboardShortcuts() {
              chord(Qt::ControlModifier, Qt::Key_1) + QStringLiteral(" · ") +
                  chord(Qt::ControlModifier, Qt::Key_2) + QStringLiteral(" · ") +
                  chord(Qt::ControlModifier, Qt::Key_3)},
-         Row{tr("Next / previous workspace"), chord(Qt::ControlModifier, Qt::Key_Tab) +
-                                                  QStringLiteral("  ·  ") +
-                                                  chord(Qt::ControlModifier | Qt::ShiftModifier,
-                                                        Qt::Key_Tab)},
+         Row{tr("Next / previous workspace"),
+             chord(Qt::ControlModifier, Qt::Key_Tab) + QStringLiteral("  ·  ") +
+                 chord(Qt::ControlModifier | Qt::ShiftModifier, Qt::Key_Tab)},
          Row{tr("Fullscreen dashboard"), chord(Qt::NoModifier, Qt::Key_F11)},
          Row{tr("Exit fullscreen"), chord(Qt::NoModifier, Qt::Key_Escape)},
-         Row{tr("Notification history"),
-             chord(Qt::ControlModifier | Qt::ShiftModifier, Qt::Key_H)},
+         Row{tr("Notification history"), chord(Qt::ControlModifier | Qt::ShiftModifier, Qt::Key_H)},
          Row{tr("Keyboard shortcuts"), chord(Qt::NoModifier, Qt::Key_F1)}}});
 
     ShortcutsDialog dialog(sections, this);
@@ -2857,8 +3193,8 @@ void MainWindow::startUpdateDownload(const UpdateInfo& info) {
 #if defined(Q_OS_LINUX)
     if (qEnvironmentVariableIsEmpty("APPIMAGE")) {
         QMessageBox::information(this, tr("Update"),
-            tr("Automatic installation requires running an AppImage. "
-               "Download the AppImage from the release page."));
+                                 tr("Automatic installation requires running an AppImage. "
+                                    "Download the AppImage from the release page."));
         QDesktopServices::openUrl(info.releaseUrl);
         return;
     }

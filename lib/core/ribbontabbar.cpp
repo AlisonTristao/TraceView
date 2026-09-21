@@ -53,6 +53,13 @@ void RibbonTabBar::paintEvent(QPaintEvent*) {
     painter.fillRect(rect(), palette.background);
 
     for (int i = 0; i < count(); ++i) {
+        // QTabBar::setTabVisible() excludes a hidden tab from the native
+        // layout/hit-testing, but doesn't stop our own paintEvent from
+        // drawing it -- since this class paints entirely by hand (see class
+        // comment), that check has to happen here too.
+        if (!isTabVisible(i)) {
+            continue;
+        }
         // Shrink 2px off the right edge so adjacent trapezoids read as
         // separate file tabs rather than one fused strip.
         const QRectF r = QRectF(tabRect(i)).adjusted(0, 0, -2, 0);
@@ -122,6 +129,9 @@ void RibbonTabBar::mouseMoveEvent(QMouseEvent* event) {
     const int index = tabAt(event->pos());
     int hoverClose = -1;
     for (int i = 0; i < count(); ++i) {
+        if (!isTabVisible(i)) {
+            continue;
+        }
         if (closeButtonRect(i).contains(event->pos())) {
             hoverClose = i;
             break;
@@ -138,6 +148,9 @@ void RibbonTabBar::mouseMoveEvent(QMouseEvent* event) {
 void RibbonTabBar::mousePressEvent(QMouseEvent* event) {
     if (event->button() == Qt::LeftButton) {
         for (int i = 0; i < count(); ++i) {
+            if (!isTabVisible(i)) {
+                continue;
+            }
             if (closeButtonRect(i).contains(event->pos())) {
                 emit tabCloseRequested(i);
                 return;  // swallowed -- doesn't fall through to tab selection

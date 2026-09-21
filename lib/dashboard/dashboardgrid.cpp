@@ -77,6 +77,35 @@ constexpr double kDefaultHeaderlessItemHeight = 6.0 / kGridRows;
 // floating-point rounding from snapping math without treating touching
 // edges as overlapping.
 constexpr double kEpsilon = 1e-6;
+// growCanvasHeight()/shrinkCanvasHeight()'s step size and ceiling -- see
+// their own comments. The ceiling is a sanity cap against runaway clicking,
+// not a meaningful design limit ("as tall as needed" has no real one).
+constexpr double kCanvasHeightStep = 0.2;
+constexpr double kMaxCanvasHeightMultiplier = 8.0;
+
+QString breakpointToString(DashboardBreakpoint breakpoint) {
+    switch (breakpoint) {
+        case DashboardBreakpoint::Small:
+            return QStringLiteral("small");
+        case DashboardBreakpoint::Medium:
+            return QStringLiteral("medium");
+        case DashboardBreakpoint::Large:
+            return QStringLiteral("large");
+    }
+    return QStringLiteral("large");
+}
+
+// Defaults to Large for anything unrecognized -- absent (projects saved
+// before per-screen-size layouts existed) or corrupt alike.
+DashboardBreakpoint breakpointFromString(const QString& value) {
+    if (value == QStringLiteral("small")) {
+        return DashboardBreakpoint::Small;
+    }
+    if (value == QStringLiteral("medium")) {
+        return DashboardBreakpoint::Medium;
+    }
+    return DashboardBreakpoint::Large;
+}
 }  // namespace
 
 DashboardGrid::DashboardGrid(QWidget* parent) : QWidget(parent), m_undoStack(new QUndoStack(this)) {
@@ -296,10 +325,13 @@ void DashboardGrid::addItem(const QString& typeId) {
     DashboardItem item;
     item.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
     item.typeId = typeId;
-    item.x = x;
-    item.y = y;
-    item.width = width;
-    item.height = height;
+    // Seeded identically across all three screen-size layouts -- a brand-new
+    // item looks the same everywhere until a developer customizes one
+    // breakpoint's arrangement on its own (see dashboarditem.h).
+    const DashboardItem::Geometry geometry{x, y, width, height};
+    item.small = geometry;
+    item.medium = geometry;
+    item.large = geometry;
 
     m_undoStack->push(new AddWidgetCommand(this, item));
     // Selected right away so the properties panel comes up already showing
@@ -376,16 +408,26 @@ void DashboardGrid::pasteItem() {
 
     // Prefer landing one cell down-right of the copied spot (reads as "a
     // copy placed next to the original"); fall back to the first free cell
-    // like addItem() does if that spot is occupied or off-canvas.
+    // like addItem() does if that spot is occupied or off-canvas. Only
+    // currentBreakpoint()'s geometry is considered/adjusted here -- the
+    // pasted copy's other two breakpoints keep whatever the original item
+    // had there (unchanged by this placement search), same as any other
+    // per-breakpoint customization being left for a developer to sort out
+    // on that screen size separately.
     DashboardItem offsetCandidate = item;
-    offsetCandidate.x = item.x + 1.0 / kGridColumns;
-    offsetCandidate.y = item.y + 1.0 / kGridRows;
+    DashboardItem::Geometry& offsetGeometry = offsetCandidate.geometry(m_breakpoint);
+    offsetGeometry.x = item.geometry(m_breakpoint).x + 1.0 / kGridColumns;
+    offsetGeometry.y = item.geometry(m_breakpoint).y + 1.0 / kGridRows;
     if (isPlacementFree(offsetCandidate, QString())) {
-        item.x = offsetCandidate.x;
-        item.y = offsetCandidate.y;
-    } else if (!findFreeSlot(item.width, item.height, &item.x, &item.y)) {
-        item.x = 0.0;
-        item.y = 0.0;
+        item.geometry(m_breakpoint).x = offsetGeometry.x;
+        item.geometry(m_breakpoint).y = offsetGeometry.y;
+    } else if (double x = 0.0, y = 0.0; findFreeSlot(item.geometry(m_breakpoint).width,
+                                                     item.geometry(m_breakpoint).height, &x, &y)) {
+        item.geometry(m_breakpoint).x = x;
+        item.geometry(m_breakpoint).y = y;
+    } else {
+        item.geometry(m_breakpoint).x = 0.0;
+        item.geometry(m_breakpoint).y = 0.0;
     }
 
     m_undoStack->push(new AddWidgetCommand(this, item));
@@ -574,22 +616,37 @@ void DashboardGrid::applyRemoveItemById(const QString& itemId) {
     removeItem(itemId);
 }
 
-void DashboardGrid::applyMove(const QString& itemId, const QPointF& position) {
+void DashboardGrid::applyMove(const QString& itemId, const QPointF& position,
+                              DashboardBreakpoint breakpoint) {
     if (DashboardItem* item = itemById(itemId)) {
-        item->x = position.x();
-        item->y = position.y();
+        DashboardItem::Geometry& geometry = item->geometry(breakpoint);
+        geometry.x = position.x();
+        geometry.y = position.y();
     }
-    relayoutItem(itemId);
+    // Only visible right now if this is the layout currently on screen --
+    // otherwise there's no cell to reposition (see applyResize()'s own
+    // comment).
+    if (breakpoint == m_breakpoint) {
+        relayoutItem(itemId);
+    }
 }
 
-void DashboardGrid::applyResize(const QString& itemId, const QRectF& geometry) {
+void DashboardGrid::applyResize(const QString& itemId, const QRectF& geometry,
+                                DashboardBreakpoint breakpoint) {
     if (DashboardItem* item = itemById(itemId)) {
-        item->x = geometry.x();
-        item->y = geometry.y();
-        item->width = geometry.width();
-        item->height = geometry.height();
+        DashboardItem::Geometry& itemGeometry = item->geometry(breakpoint);
+        itemGeometry.x = geometry.x();
+        itemGeometry.y = geometry.y();
+        itemGeometry.width = geometry.width();
+        itemGeometry.height = geometry.height();
     }
-    relayoutItem(itemId);
+    // A resize recorded for a breakpoint other than the one currently shown
+    // (an undo/redo reaching back to it after the grid was switched away --
+    // see ResizeWidgetCommand's own comment) changes stored geometry only;
+    // nothing on screen currently reflects that layout to re-lay out.
+    if (breakpoint == m_breakpoint) {
+        relayoutItem(itemId);
+    }
 }
 
 void DashboardGrid::applyTypeChange(const QString& itemId, const QString& typeId) {
@@ -717,6 +774,22 @@ QJsonObject DashboardGrid::toJson() const {
         items.append(dashboardItemToJson(item));
     }
     object["items"] = items;
+    // The last breakpoint a developer had selected while editing this
+    // workspace -- restored on load so reopening a project resumes where
+    // they left off. User mode re-asserts its own auto-detected breakpoint
+    // on top right after load regardless (see MainWindow::
+    // loadDashboardJson()); this value only matters to Developer mode.
+    object["breakpoint"] = breakpointToString(m_breakpoint);
+    // How much growCanvasHeight() has grown Small/Medium's canvas past the
+    // viewport, if at all -- part of how that breakpoint's arrangement was
+    // built (see growCanvasHeight()'s own comment), so it round-trips with
+    // everything else instead of resetting to "off" on every reload.
+    QJsonObject canvasHeightMultiplier;
+    canvasHeightMultiplier["small"] =
+        m_canvasHeightMultiplier.value(DashboardBreakpoint::Small, 0.0);
+    canvasHeightMultiplier["medium"] =
+        m_canvasHeightMultiplier.value(DashboardBreakpoint::Medium, 0.0);
+    object["canvasHeightMultiplier"] = canvasHeightMultiplier;
     return object;
 }
 
@@ -734,9 +807,17 @@ void DashboardGrid::fromJson(const QJsonObject& object) {
         createCell(item);
     }
 
+    m_breakpoint = breakpointFromString(object.value("breakpoint").toString());
+    m_canvasHeightMultiplier.clear();
+    const QJsonObject canvasHeightMultiplier = object.value("canvasHeightMultiplier").toObject();
+    m_canvasHeightMultiplier[DashboardBreakpoint::Small] =
+        qMax(0.0, canvasHeightMultiplier.value("small").toDouble(0.0));
+    m_canvasHeightMultiplier[DashboardBreakpoint::Medium] =
+        qMax(0.0, canvasHeightMultiplier.value("medium").toDouble(0.0));
     updateGeometry();
     relayout();
     emit itemsChanged();
+    emit breakpointChanged(m_breakpoint);
 }
 
 QSize DashboardGrid::sizeHint() const {
@@ -749,12 +830,82 @@ QSize DashboardGrid::minimumSizeHint() const {
 
 QSize DashboardGrid::contentSize() const {
     // A sane floor so the grid never collapses to zero.
-    return QSize(320, 240);
+    constexpr QSize kFloor(320, 240);
+    const double heightMultiplier = m_canvasHeightMultiplier.value(m_breakpoint, 0.0);
+    if (m_breakpoint == DashboardBreakpoint::Large || heightMultiplier <= 0.0) {
+        // Off (the default): the canvas just fills whatever it's given,
+        // same as Large always has -- no reason to ask for extra height
+        // until growCanvasHeight() has actually been used to grow this
+        // breakpoint's canvas past the viewport's own height.
+        return kFloor;
+    }
+    // Grown by growCanvasHeight(): ask for more height than the floor so
+    // the canvas can exceed the viewport's own height -- MainWindow's
+    // QScrollArea then shows a scrollbar (widgetResizable() keeps the grid
+    // at least this tall) instead of squeezing every item's row height down
+    // to fit. Width stays at the floor either way so the viewport's own
+    // width always wins instead -- no horizontal scrollbar is wanted here.
+    const int w = qMax(width(), kFloor.width());
+    return QSize(kFloor.width(), qMax(kFloor.height(), qRound(w * heightMultiplier)));
+}
+
+void DashboardGrid::growCanvasHeight() {
+    if (m_breakpoint == DashboardBreakpoint::Large) {
+        return;
+    }
+    double& multiplier = m_canvasHeightMultiplier[m_breakpoint];
+    // First grow: start one step above 1.0 (matching the width -- already
+    // taller than any real phone/tablet's own aspect ratio) rather than
+    // from 0, so the very first click gives a visibly taller canvas right
+    // away instead of a no-op-looking jump from "off" to "barely on".
+    multiplier = qMin(kMaxCanvasHeightMultiplier,
+                      (multiplier <= 0.0 ? 1.0 : multiplier) + kCanvasHeightStep);
+    updateGeometry();
+}
+
+void DashboardGrid::shrinkCanvasHeight() {
+    if (m_breakpoint == DashboardBreakpoint::Large) {
+        return;
+    }
+    const auto it = m_canvasHeightMultiplier.find(m_breakpoint);
+    if (it == m_canvasHeightMultiplier.end() || it.value() <= 0.0) {
+        return;
+    }
+    const double shrunk = it.value() - kCanvasHeightStep;
+    // Back down to (or past) the starting point growCanvasHeight() grows
+    // from -- reset to fully off instead of leaving a barely-taller-than-
+    // nothing canvas around, so this mirrors growCanvasHeight() exactly in
+    // reverse and the scrollbar actually disappears once shrunk all the
+    // way back.
+    it.value() = shrunk <= 1.0 ? 0.0 : shrunk;
+    updateGeometry();
+}
+
+void DashboardGrid::setBreakpoint(DashboardBreakpoint breakpoint) {
+    if (m_breakpoint == breakpoint) {
+        return;
+    }
+    m_breakpoint = breakpoint;
+    // Selection and any in-progress drag reference the outgoing breakpoint's
+    // geometry (candidates/originals snapshots) -- neither carries over
+    // meaningfully to the new one.
+    m_drag.reset();
+    selectItem(QString());
+    relayout();
+    // contentSize() differs by breakpoint -- let QScrollArea (see
+    // MainWindow) know it needs to re-check whether a scrollbar is needed.
+    updateGeometry();
+    emit breakpointChanged(m_breakpoint);
 }
 
 void DashboardGrid::resizeEvent(QResizeEvent* event) {
     QWidget::resizeEvent(event);
     relayout();
+    // contentSize() for Small/Medium depends on the canvas's own width (see
+    // its own comment) -- ask Qt to re-query sizeHint()/minimumSizeHint()
+    // now that it just changed, so QScrollArea's height follows within the
+    // same resize pass instead of lagging a frame behind.
+    updateGeometry();
 }
 
 void DashboardGrid::paintEvent(QPaintEvent*) {
@@ -882,11 +1033,12 @@ QRect DashboardGrid::usableRect() const {
 }
 
 QRect DashboardGrid::slotRect(const DashboardItem& item) const {
+    const DashboardItem::Geometry& geometry = item.geometry(m_breakpoint);
     const QRect area = usableRect();
-    const int left = area.left() + qRound(item.x * area.width());
-    const int top = area.top() + qRound(item.y * area.height());
-    const int width = qRound(item.width * area.width());
-    const int height = qRound(item.height * area.height());
+    const int left = area.left() + qRound(geometry.x * area.width());
+    const int top = area.top() + qRound(geometry.y * area.height());
+    const int width = qRound(geometry.width * area.width());
+    const int height = qRound(geometry.height * area.height());
     return QRect(left, top, width, height);
 }
 
@@ -937,13 +1089,14 @@ bool DashboardGrid::findFreeSlot(double width, double height, double* outX, doub
     for (int r = 0; r + rowCells <= kGridRows; ++r) {
         for (int c = 0; c + columnCells <= kGridColumns; ++c) {
             DashboardItem probe;
-            probe.x = c / double(kGridColumns);
-            probe.y = r / double(kGridRows);
-            probe.width = width;
-            probe.height = height;
+            DashboardItem::Geometry& geometry = probe.geometry(m_breakpoint);
+            geometry.x = c / double(kGridColumns);
+            geometry.y = r / double(kGridRows);
+            geometry.width = width;
+            geometry.height = height;
             if (isPlacementFree(probe, QString())) {
-                *outX = probe.x;
-                *outY = probe.y;
+                *outX = geometry.x;
+                *outY = geometry.y;
                 return true;
             }
         }
@@ -952,11 +1105,12 @@ bool DashboardGrid::findFreeSlot(double width, double height, double* outX, doub
 }
 
 bool DashboardGrid::isPlacementValid(const DashboardItem& candidate, const QString&) const {
-    if (candidate.x < -kEpsilon || candidate.y < -kEpsilon) {
+    const DashboardItem::Geometry& geometry = candidate.geometry(m_breakpoint);
+    if (geometry.x < -kEpsilon || geometry.y < -kEpsilon) {
         return false;
     }
-    if (candidate.x + candidate.width > 1.0 + kEpsilon ||
-        candidate.y + candidate.height > 1.0 + kEpsilon) {
+    if (geometry.x + geometry.width > 1.0 + kEpsilon ||
+        geometry.y + geometry.height > 1.0 + kEpsilon) {
         return false;
     }
     return true;
@@ -968,14 +1122,16 @@ bool DashboardGrid::isPlacementFree(const DashboardItem& candidate,
         return false;
     }
 
+    const DashboardItem::Geometry& geometry = candidate.geometry(m_breakpoint);
     for (const DashboardItem& other : m_items) {
         if (other.id == excludeId) {
             continue;
         }
-        const bool overlapsX = candidate.x < other.x + other.width - kEpsilon &&
-                               other.x < candidate.x + candidate.width - kEpsilon;
-        const bool overlapsY = candidate.y < other.y + other.height - kEpsilon &&
-                               other.y < candidate.y + candidate.height - kEpsilon;
+        const DashboardItem::Geometry& otherGeometry = other.geometry(m_breakpoint);
+        const bool overlapsX = geometry.x < otherGeometry.x + otherGeometry.width - kEpsilon &&
+                               otherGeometry.x < geometry.x + geometry.width - kEpsilon;
+        const bool overlapsY = geometry.y < otherGeometry.y + otherGeometry.height - kEpsilon &&
+                               otherGeometry.y < geometry.y + geometry.height - kEpsilon;
         if (overlapsX && overlapsY) {
             return false;
         }
@@ -1089,7 +1245,7 @@ void DashboardGrid::handleDragMoved(const QString& itemId, const QPoint& globalP
     double loDeltaY = -std::numeric_limits<double>::infinity();
     double hiDeltaY = std::numeric_limits<double>::infinity();
     for (auto it = m_drag->originals.constBegin(); it != m_drag->originals.constEnd(); ++it) {
-        const DashboardItem& original = it.value();
+        const DashboardItem::Geometry& original = it.value().geometry(m_breakpoint);
         loDeltaX = qMax(loDeltaX, -original.x);
         hiDeltaX = qMin(hiDeltaX, qMax(0.0, 1.0 - original.width) - original.x);
         loDeltaY = qMax(loDeltaY, -original.y);
@@ -1107,8 +1263,10 @@ void DashboardGrid::handleDragMoved(const QString& itemId, const QPoint& globalP
     for (auto it = m_drag->originals.constBegin(); it != m_drag->originals.constEnd(); ++it) {
         const QString& id = it.key();
         DashboardItem candidate = it.value();
-        candidate.x = it.value().x + deltaX;
-        candidate.y = it.value().y + deltaY;
+        DashboardItem::Geometry& candidateGeometry = candidate.geometry(m_breakpoint);
+        const DashboardItem::Geometry& originalGeometry = it.value().geometry(m_breakpoint);
+        candidateGeometry.x = originalGeometry.x + deltaX;
+        candidateGeometry.y = originalGeometry.y + deltaY;
         m_drag->candidates[id] = candidate;
 
         if (DashboardCell* cell = m_cells.value(id)) {
@@ -1144,8 +1302,9 @@ void DashboardGrid::handleDragFinished(const QString& itemId, const QPoint&) {
         QMap<QString, QPointF> toPositions;
         for (auto it = m_drag->originals.constBegin(); it != m_drag->originals.constEnd(); ++it) {
             const QString& id = it.key();
-            const DashboardItem& original = it.value();
-            const DashboardItem& candidate = m_drag->candidates.value(id);
+            const DashboardItem::Geometry& original = it.value().geometry(m_breakpoint);
+            const DashboardItem::Geometry& candidate =
+                m_drag->candidates.value(id).geometry(m_breakpoint);
             if (qAbs(original.x - candidate.x) > kEpsilon ||
                 qAbs(original.y - candidate.y) > kEpsilon) {
                 fromPositions.insert(id, QPointF(original.x, original.y));
@@ -1153,7 +1312,8 @@ void DashboardGrid::handleDragFinished(const QString& itemId, const QPoint&) {
             }
         }
         if (!fromPositions.isEmpty()) {
-            m_undoStack->push(new MoveWidgetsCommand(this, fromPositions, toPositions));
+            m_undoStack->push(
+                new MoveWidgetsCommand(this, fromPositions, toPositions, m_breakpoint));
         }
     }
 
@@ -1215,8 +1375,9 @@ void DashboardGrid::handleResizeMoved(const QString& itemId, const QPoint& globa
     const bool resizesTop = m_drag->handle == Handle::Top || m_drag->handle == Handle::TopLeft ||
                             m_drag->handle == Handle::TopRight;
 
-    const DashboardItem original = m_drag->originals.value(itemId);
-    DashboardItem candidate = original;
+    DashboardItem candidate = m_drag->originals.value(itemId);
+    const DashboardItem::Geometry original = candidate.geometry(m_breakpoint);
+    DashboardItem::Geometry& candidateGeometry = candidate.geometry(m_breakpoint);
 
     const DashboardCell* resizingCell = m_cells.value(itemId);
     const bool compact = resizingCell && !resizingCell->hasHeader();
@@ -1224,22 +1385,23 @@ void DashboardGrid::handleResizeMoved(const QString& itemId, const QPoint& globa
     const double minHeight = compact ? kMinHeaderlessItemHeight : kMinItemHeight;
 
     if (resizesRight) {
-        candidate.width =
-            qBound(minWidth, original.width + deltaWidth, qMax(minWidth, 1.0 - candidate.x));
+        candidateGeometry.width = qBound(minWidth, original.width + deltaWidth,
+                                         qMax(minWidth, 1.0 - candidateGeometry.x));
     } else if (resizesLeft) {
         const double rightEdge = original.x + original.width;
-        candidate.width = qBound(minWidth, original.width - deltaWidth, qMax(minWidth, rightEdge));
-        candidate.x = rightEdge - candidate.width;
+        candidateGeometry.width =
+            qBound(minWidth, original.width - deltaWidth, qMax(minWidth, rightEdge));
+        candidateGeometry.x = rightEdge - candidateGeometry.width;
     }
 
     if (resizesBottom) {
-        candidate.height =
-            qBound(minHeight, original.height + deltaHeight, qMax(minHeight, 1.0 - candidate.y));
+        candidateGeometry.height = qBound(minHeight, original.height + deltaHeight,
+                                          qMax(minHeight, 1.0 - candidateGeometry.y));
     } else if (resizesTop) {
         const double bottomEdge = original.y + original.height;
-        candidate.height =
+        candidateGeometry.height =
             qBound(minHeight, original.height - deltaHeight, qMax(minHeight, bottomEdge));
-        candidate.y = bottomEdge - candidate.height;
+        candidateGeometry.y = bottomEdge - candidateGeometry.height;
     }
 
     m_drag->candidates[itemId] = candidate;
@@ -1259,14 +1421,17 @@ void DashboardGrid::handleResizeFinished(const QString& itemId, const QPoint&) {
     const DashboardItem candidate = m_drag->candidates.value(itemId);
     if (isPlacementValid(candidate, itemId)) {
         if (const DashboardItem* item = itemById(itemId)) {
-            const QRectF fromGeometry(item->x, item->y, item->width, item->height);
-            const QRectF toGeometry(candidate.x, candidate.y, candidate.width, candidate.height);
+            const DashboardItem::Geometry& from = item->geometry(m_breakpoint);
+            const DashboardItem::Geometry& to = candidate.geometry(m_breakpoint);
+            const QRectF fromGeometry(from.x, from.y, from.width, from.height);
+            const QRectF toGeometry(to.x, to.y, to.width, to.height);
             const bool changed = qAbs(fromGeometry.x() - toGeometry.x()) > kEpsilon ||
                                  qAbs(fromGeometry.y() - toGeometry.y()) > kEpsilon ||
                                  qAbs(fromGeometry.width() - toGeometry.width()) > kEpsilon ||
                                  qAbs(fromGeometry.height() - toGeometry.height()) > kEpsilon;
             if (changed) {
-                m_undoStack->push(new ResizeWidgetCommand(this, itemId, fromGeometry, toGeometry));
+                m_undoStack->push(
+                    new ResizeWidgetCommand(this, itemId, fromGeometry, toGeometry, m_breakpoint));
             }
         }
     }

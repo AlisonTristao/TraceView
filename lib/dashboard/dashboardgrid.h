@@ -87,6 +87,32 @@ public:
         return m_editMode;
     }
 
+    // Which of the three screen-size layouts (see dashboarditem.h) is
+    // currently shown/editable. Switching clears selection/any in-progress
+    // drag (their candidates reference the outgoing breakpoint's geometry)
+    // and re-lays out every cell from the new breakpoint's own geometry.
+    // Large is the default -- existing/legacy dashboards look exactly as
+    // before until a developer customizes Small/Medium on their own.
+    void setBreakpoint(DashboardBreakpoint breakpoint);
+    DashboardBreakpoint currentBreakpoint() const {
+        return m_breakpoint;
+    }
+
+    // Small/Medium only (Large's canvas always just matches the viewport,
+    // same as a notebook window being resized normally) -- each call grows/
+    // shrinks that breakpoint's canvas height by one step past the
+    // viewport's own height, so a developer can make as much vertical room
+    // as an arrangement actually needs instead of the canvas being capped
+    // to whatever fits on screen. Off (canvas exactly matches the viewport,
+    // no scrollbar) until the first growCanvasHeight() call; shrinking back
+    // past that same first step resets it to that same off state. Persisted
+    // per project/workspace (see toJson()/fromJson()) since it's part of
+    // how that breakpoint's arrangement was built, not a one-off preview
+    // setting -- MainWindow's QScrollArea shows a scrollbar whenever this
+    // makes contentSize() taller than the viewport.
+    void growCanvasHeight();
+    void shrinkCanvasHeight();
+
     // Live connection state for one device (see core/deviceconnection.h),
     // pushed by MainWindow whenever a DeviceConnection's own
     // connectionStateChanged() fires. Drives the header status dot (see
@@ -238,6 +264,11 @@ signals:
     // multi-tab serial monitors so each tab's connection dot stays live --
     // the per-cell header dot is handled inline in setDeviceConnected().
     void deviceConnectionStateChanged(const QString& deviceId, bool connected);
+    // Fires whenever the active breakpoint changes -- via setBreakpoint()
+    // directly, or a fromJson() load applying whatever breakpoint that
+    // project last saved. MainWindow uses this to keep the screen-size
+    // button's icon/menu in sync regardless of which of those caused it.
+    void breakpointChanged(DashboardBreakpoint breakpoint);
 
 protected:
     void resizeEvent(QResizeEvent* event) override;
@@ -284,11 +315,17 @@ private:
     // which direction (redo/undo) to call these with.
     void applyInsertItem(const DashboardItem& item);
     void applyRemoveItemById(const QString& itemId);
-    void applyMove(const QString& itemId, const QPointF& position);
+    // `breakpoint` targets whichever layout the move/resize was actually
+    // made in (see MoveWidgetsCommand's own comment) -- not necessarily
+    // currentBreakpoint(), if a later undo/redo lands after the grid has
+    // since been switched to preview a different one. Only re-lays out the
+    // affected cell(s) when it matches currentBreakpoint(); otherwise the
+    // change is to geometry nothing on screen currently reflects anyway.
+    void applyMove(const QString& itemId, const QPointF& position, DashboardBreakpoint breakpoint);
     // geometry.x()/y()/width()/height() are all fractions (0.0-1.0) of the
     // canvas, matching DashboardItem — a QRectF here since edge/corner
     // resizing can move the anchored position, not just the size.
-    void applyResize(const QString& itemId, const QRectF& geometry);
+    void applyResize(const QString& itemId, const QRectF& geometry, DashboardBreakpoint breakpoint);
     void applyTypeChange(const QString& itemId, const QString& typeId);
     void applyRename(const QString& itemId, const QString& name);
     void applySetKey(const QString& itemId, const QString& key);
@@ -353,6 +390,13 @@ private:
     void handleSelectRequested(const QString& itemId, Qt::KeyboardModifiers modifiers);
 
     bool m_editMode = false;
+    // Which screen-size layout is currently shown/editable -- see
+    // setBreakpoint(). Large by default, matching the geometry every
+    // existing/legacy dashboard already has.
+    DashboardBreakpoint m_breakpoint = DashboardBreakpoint::Large;
+    // Per-breakpoint canvas height multiplier -- see growCanvasHeight().
+    // Missing entry (QHash::value's default) means "off": 0.0.
+    QHash<DashboardBreakpoint, double> m_canvasHeightMultiplier;
     // deviceId -> last-known connected state, pushed by setDeviceConnected().
     // A device with no entry (never reported) counts as disconnected.
     QHash<QString, bool> m_deviceConnectionStates;

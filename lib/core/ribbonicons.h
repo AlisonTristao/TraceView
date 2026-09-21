@@ -57,5 +57,12 @@ QIcon makeTrashIcon(const QColor& color, int size = kRibbonIconSize);
 // A closed folder: body plus the small tab notch on its top-left corner --
 // the Logs tab's "Open Log File..." affordance.
 QIcon makeFolderIcon(const QColor& color);
+// The screen-size breakpoint toggle's three states (see DashboardBreakpoint
+// in dashboarditem.h): a narrow phone outline, a wider tablet outline, and a
+// laptop (screen + base). Developer-mode-only, next to the dashboard edit
+// lock -- see MainWindow's m_screenSizeButton.
+QIcon makePhoneIcon(const QColor& color);
+QIcon makeTabletIcon(const QColor& color);
+QIcon makeNotebookIcon(const QColor& color);
 
 }  // namespace traceview

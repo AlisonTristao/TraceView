@@ -5,6 +5,14 @@
 
 namespace traceview {
 
+// The three screen-size configurations a dashboard can be arranged for --
+// phone/tablet/notebook in the UI. DashboardGrid keeps exactly one active at
+// a time (see DashboardGrid::setBreakpoint()); every item carries its own
+// geometry for all three (see DashboardItem::Geometry below) so each size
+// can be laid out independently in Developer mode instead of one layout
+// just being rescaled for the others.
+enum class DashboardBreakpoint { Small, Medium, Large };
+
 // Where one dashboard widget sits on the grid: its registered type and its
 // position/size as fractions (0.0-1.0) of the grid's usable canvas area.
 // Proportional coordinates keep layouts resolution-independent — an item
@@ -29,10 +37,35 @@ struct DashboardItem {
                          // always select/drag together as one rigid unit (see
                          // DashboardGrid::groupSelected()/ungroupSelected())
 
-    double x = 0.0;
-    double y = 0.0;
-    double width = 0.0;
-    double height = 0.0;
+    // Position/size as fractions of the canvas, same shape as the old flat
+    // x/y/width/height this replaces -- one independent copy per screen-size
+    // breakpoint. DashboardGrid is the only thing that reads/writes these
+    // directly (via geometry()/setGeometry() below), always for whichever
+    // breakpoint is currently active.
+    struct Geometry {
+        double x = 0.0;
+        double y = 0.0;
+        double width = 0.0;
+        double height = 0.0;
+    };
+    Geometry small;
+    Geometry medium;
+    Geometry large;
+
+    Geometry& geometry(DashboardBreakpoint breakpoint) {
+        switch (breakpoint) {
+            case DashboardBreakpoint::Small:
+                return small;
+            case DashboardBreakpoint::Medium:
+                return medium;
+            case DashboardBreakpoint::Large:
+                return large;
+        }
+        return large;
+    }
+    const Geometry& geometry(DashboardBreakpoint breakpoint) const {
+        return const_cast<DashboardItem*>(this)->geometry(breakpoint);
+    }
 };
 
 QJsonObject dashboardItemToJson(const DashboardItem& item);

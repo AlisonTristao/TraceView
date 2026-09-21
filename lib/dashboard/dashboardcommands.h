@@ -69,8 +69,13 @@ private:
 // dedicated single-item MoveWidgetCommand.
 class MoveWidgetsCommand : public QUndoCommand {
 public:
+    // `breakpoint` is the screen-size layout this move was made in -- always
+    // whichever one DashboardGrid was showing at the time (see
+    // DashboardGrid::currentBreakpoint()) -- and stays fixed for this
+    // command's whole life, so undo/redo write back to the same layout even
+    // if the grid has since been switched to preview a different one.
     MoveWidgetsCommand(DashboardGrid* grid, const QMap<QString, QPointF>& fromPositions,
-                       const QMap<QString, QPointF>& toPositions);
+                       const QMap<QString, QPointF>& toPositions, DashboardBreakpoint breakpoint);
 
     void undo() override;
     void redo() override;
@@ -79,15 +84,17 @@ private:
     DashboardGrid* m_grid;
     QMap<QString, QPointF> m_fromPositions;
     QMap<QString, QPointF> m_toPositions;
+    DashboardBreakpoint m_breakpoint;
 };
 
 class ResizeWidgetCommand : public QUndoCommand {
 public:
     // Geometry is position + size (both fractions of the canvas) since
     // resizing from a top/left edge or corner moves the anchored position
-    // along with the size, not just the size.
+    // along with the size, not just the size. `breakpoint` pins this to the
+    // layout it was recorded in -- same reasoning as MoveWidgetsCommand's.
     ResizeWidgetCommand(DashboardGrid* grid, const QString& itemId, const QRectF& fromGeometry,
-                        const QRectF& toGeometry);
+                        const QRectF& toGeometry, DashboardBreakpoint breakpoint);
 
     void undo() override;
     void redo() override;
@@ -97,6 +104,7 @@ private:
     QString m_itemId;
     QRectF m_fromGeometry;
     QRectF m_toGeometry;
+    DashboardBreakpoint m_breakpoint;
 };
 
 class RenameWidgetCommand : public QUndoCommand {

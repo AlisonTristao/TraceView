@@ -661,8 +661,12 @@ add_library(traceview_ui STATIC
     core/fontmenuaction.h
     core/layerspanel.cpp
     core/layerspanel.h
+    core/logindialog.cpp
+    core/logindialog.h
     core/mainwindow.cpp
     core/mainwindow.h
+    core/manageusersdialog.cpp
+    core/manageusersdialog.h
     core/settingspage.cpp
     core/settingspage.h
     core/paneldockcontroller.cpp
@@ -677,6 +681,8 @@ add_library(traceview_ui STATIC
     core/ribbontabbar.h
     core/serialwidgetbridge.cpp
     core/serialwidgetbridge.h
+    core/usermodemanager.cpp
+    core/usermodemanager.h
     core/workspaceswitcher.cpp
     core/workspaceswitcher.h
     vendor/qrcodegen/qrcodegen.cpp

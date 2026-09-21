@@ -40,6 +40,13 @@ public:
     // last workspace can't be deleted.
     void setWorkspaces(const QVector<Entry>& entries, const QString& activeId);
 
+    // Hides "New Workspace…" and every row's delete button while false --
+    // switching between existing workspaces stays available either way (an
+    // ordinary user action), only creating/deleting them is gated. Driven by
+    // UserModeManager via MainWindow; defaults to true so nothing changes
+    // for a build that never wires it up.
+    void setManagementEnabled(bool enabled);
+
     // Re-themes the button/menu icons -- called from MainWindow::
     // updateRibbonIcons() alongside every other ribbon icon.
     void updateIcons(const QColor& color);
@@ -57,6 +64,7 @@ private:
     QVector<Entry> m_entries;
     QString m_activeId;
     QColor m_iconColor;
+    bool m_managementEnabled = true;
 };
 
 }  // namespace traceview

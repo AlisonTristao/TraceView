@@ -84,4 +84,16 @@ QIcon makeFolderIcon(const QColor& color) {
     return loadTintedIcon(":/icons/ribbon/folder.svg", color, kRibbonIconSize);
 }
 
+QIcon makePhoneIcon(const QColor& color) {
+    return loadTintedIcon(":/icons/ribbon/screen-phone.svg", color, kRibbonIconSize);
+}
+
+QIcon makeTabletIcon(const QColor& color) {
+    return loadTintedIcon(":/icons/ribbon/screen-tablet.svg", color, kRibbonIconSize);
+}
+
+QIcon makeNotebookIcon(const QColor& color) {
+    return loadTintedIcon(":/icons/ribbon/screen-notebook.svg", color, kRibbonIconSize);
+}
+
 }  // namespace traceview

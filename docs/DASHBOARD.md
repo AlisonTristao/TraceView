@@ -11,10 +11,23 @@ the canvas) across window resizes, with no clamping or reflow needed.
 in dashboardgrid.cpp) only drives grid-line painting and drag/resize snap
 granularity, it is not part of the persisted model.
 
+Every item actually stores **three** independent copies of that fraction
+geometry, one per screen-size breakpoint (`DashboardItem::small`/`medium`/
+`large`, see [dashboarditem.h](../lib/dashboard/dashboarditem.h)) —
+see "Screen-size breakpoints" below.
+
 There is no `QLayout` involved — cells are positioned manually
 (`setGeometry`) so they can be dragged and resized with the mouse.
 
 ## Editing a layout
+
+Editing is Developer-mode only (see `UserModeManager`,
+[lib/core/usermodemanager.h](../lib/core/usermodemanager.h)): the lock
+toggle, the screen-size button below, and the Layers/Properties panel
+show/hide toggle are all hidden in the app's default User mode, unlocked by
+logging in via the **Access** menu. A User-mode session can still open a
+ready-made dashboard, switch between its existing workspaces, and change
+theme/language.
 
 The Dashboard tab's "enable editing" lock toggle (top-right of its toolbar,
 next to the device status strip) toggles edit mode in place, rather than
@@ -106,6 +119,53 @@ like clicking it directly would: `DashboardGrid::selectItem()` temporarily
 raises the selected widget to the very front (purely visual — it does not
 touch the persisted stacking order) so it's fully reachable to drag out from
 under whatever was covering it; deselecting restores it to its own layer.
+
+## Screen-size breakpoints
+
+Every `DashboardItem` carries three independent geometries — `small`,
+`medium`, `large` (`DashboardBreakpoint` in
+[dashboarditem.h](../lib/dashboard/dashboarditem.h)) — for a phone, tablet
+and notebook arrangement of the same dashboard. `DashboardGrid` shows/edits
+exactly one at a time (`setBreakpoint()`/`currentBreakpoint()`); switching
+clears the current selection and re-lays out every cell from the new
+breakpoint's own fractions. A brand-new item is seeded identically across
+all three until a developer moves/resizes it in one breakpoint specifically
+— that edit only ever touches the breakpoint being shown at the time (see
+`applyMove()`/`applyResize()` in
+[dashboardgrid.cpp](../lib/dashboard/dashboardgrid.cpp), and note that undo/
+redo always targets the breakpoint a move/resize was originally made in,
+not whichever one happens to be on screen when Undo is pressed later).
+
+**Developer mode** (see "Editing a layout" above) has a screen-size button
+next to the edit-mode lock — three icons (phone/tablet/notebook). Picking
+Phone or Tablet does two things: switches `DashboardGrid` to that
+breakpoint, and resizes the TraceView window itself to a rough phone/tablet
+portrait size (`MainWindow::applyBreakpointWindowSize()`, clamped to fit the
+current screen) so the arrangement is previewed at roughly the shape it'll
+actually be seen at, restoring the window's prior size/maximized state when
+switching back to Notebook (also triggered by leaving Developer mode
+altogether — see `MainWindow::applyUserMode()`).
+
+Next to it, a +/− pair (`DashboardGrid::growCanvasHeight()`/
+`shrinkCanvasHeight()`, hidden on Notebook and, unlike the screen-size
+button itself, also hidden whenever the edit-mode lock is closed — see
+`MainWindow::updateScreenSizeButtonIcon()`'s `editingActive()` check) lets a
+developer grow that breakpoint's canvas taller than the window one step at
+a time, for an
+arrangement that needs more vertical room than even the resized preview
+window gives it — `contentSize()` then asks for more height, and
+MainWindow's `QScrollArea` shows a scrollbar for the difference instead of
+squeezing every item to fit. Off (canvas exactly matches the window) until
+the first click; shrinking back past that same first step resets it fully.
+Persisted per breakpoint alongside its layout (`canvasHeightMultiplier` in
+the project file, see "Project file" below), since it's part of how that
+breakpoint's arrangement was built.
+
+**User mode** never shows that button and never resizes the window itself —
+the breakpoint instead follows whichever real screen the window is running
+on, automatically (`MainWindow::applyAutoBreakpoint()`, driven by
+`QScreen::availableGeometry()`'s width against two tunable thresholds), on
+launch and on every screen/resolution/window-size change.
 
 ## Element kinds
 
@@ -315,9 +375,15 @@ independent top-level sections:
                 "yAxis": { "mode": "auto", "min": 0.0, "max": 100.0, "unit": "", "grid": true },
                 "series": []
               },
-              "x": 0.0, "y": 0.0, "width": 0.3333, "height": 0.25
+              "layouts": {
+                "small": { "x": 0.0, "y": 0.0, "width": 0.3333, "height": 0.25 },
+                "medium": { "x": 0.0, "y": 0.0, "width": 0.3333, "height": 0.25 },
+                "large": { "x": 0.0, "y": 0.0, "width": 0.3333, "height": 0.25 }
+              }
             }
-          ]
+          ],
+          "breakpoint": "large",
+          "canvasHeightMultiplier": { "small": 0.0, "medium": 0.0 }
         }
       }
     ]
@@ -337,6 +403,23 @@ save or switch (`WorkspaceManager::setDashboardFor`). Opening a `.tvproj`
 saved before workspaces existed (no `workspaces` section, only a bare
 top-level `dashboard`) migrates that single layout into one `"Default"`
 workspace.
+
+Each item's `layouts` object holds its `small`/`medium`/`large` geometry
+(see "Screen-size breakpoints" above); `dashboard.breakpoint` remembers
+which one a developer last had selected while editing that workspace,
+restored on load (User mode re-asserts its own auto-detected breakpoint on
+top right after, regardless of what's stored — see
+`MainWindow::loadDashboardJson()`). `dashboard.canvasHeightMultiplier` holds
+Small/Medium's own canvas-growth state (see `DashboardGrid::
+growCanvasHeight()` above); `0.0` (the default) means "off, canvas matches
+the window" — Large has no entry since it never grows. A project saved
+before per-screen-size layouts existed has a flat `"x"/"y"/"width"/"height"`
+per item instead of `layouts`, and neither a `breakpoint` nor a
+`canvasHeightMultiplier` field; loading one seeds all three breakpoints
+identically from those flat fields and leaves canvas growth off, so it
+looks exactly as before until a developer customizes one breakpoint on its
+own (`dashboardItemFromJson()` in
+[dashboarditem.cpp](../lib/dashboard/dashboarditem.cpp)).
 
 To persist another new kind of config later (e.g. a serial connection
 profile), call `ProjectStore::instance().setSection("connection", {...})`

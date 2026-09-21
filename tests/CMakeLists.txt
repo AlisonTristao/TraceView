@@ -98,6 +98,14 @@ add_traceview_test(test_usbhidmanager traceview_ui)
 # intent) -- see lib/core/deviceconnection.h. traceview_ui so it can
 # construct a BtpBackend the same way DeviceConnection itself does.
 add_traceview_test(test_deviceconnection traceview_ui Qt6::Network)
+# Developer/User access mode (lib/core/usermodemanager.h): default "admin"
+# account seeding on first run, login/logout, and the account-management
+# mutators' Developer-mode gating (refusing to touch accounts, or to drop
+# the last remaining one, outside it). traceview_ui since UserModeManager
+# lives under lib/core. Isolates every QSettings read/write to a throwaway
+# directory (see the test's own initTestCase()) so it neither reads nor
+# leaves behind the real TraceView account list.
+add_traceview_test(test_usermodemanager traceview_ui)
 
 # Generic telemetry value types (lib/telemetry) -- no BTP dependency at all
 # (traceview_telemetry links just Qt6::Core; see lib/CMakeLists.txt).

@@ -1,15 +1,18 @@
 #include <QJsonArray>
 #include <QJsonObject>
 #include <QPainter>
+#include <QSignalSpy>
 #include <QStringList>
 #include <QtTest>
 
 #include "dashboard/dashboardcell.h"
 #include "dashboard/dashboardgrid.h"
+#include "dashboard/dashboarditem.h"
 #include "dashboard/dashboardwidget.h"
 #include "dashboard/roundedcorners.h"
 #include "traceview/thememanager.h"
 
+using traceview::DashboardBreakpoint;
 using traceview::DashboardCell;
 using traceview::DashboardGrid;
 using traceview::DashboardLayerEntry;
@@ -43,6 +46,14 @@ int colorDistance(const QColor& a, const QColor& b) {
     return qAbs(a.red() - b.red()) + qAbs(a.green() - b.green()) + qAbs(a.blue() - b.blue());
 }
 
+// None of these tests ever touch the screen-size breakpoint toggle, so every
+// edit lands in the default Large layout -- geometry now lives nested under
+// item["layouts"]["large"] rather than flat item["x"]/["width"]/etc. (see
+// dashboarditem.h), and every assertion below needs that same path.
+QJsonObject largeGeometry(const QJsonObject& item) {
+    return item.value("layouts").toObject().value("large").toObject();
+}
+
 // palette.border is a deliberately translucent "subtle divider" token (see
 // "Border contrast" in docs/VISUAL_IDENTITY.md) -- it never covers what's
 // beneath it fully opaquely, so a pixel rendered under it must be compared
@@ -65,6 +76,12 @@ private slots:
     void changeSelectedConfigIsUndoable();
     void changeSelectedTypeIsUndoable();
     void toJsonFromJsonRoundTrips();
+    void addItemSeedsAllBreakpointsIdentically();
+    void breakpointDragOnlyAffectsThatBreakpoint();
+    void setBreakpointClearsSelectionAndEmitsSignal();
+    void toJsonFromJsonRoundTripsActiveBreakpoint();
+    void growShrinkCanvasHeightAffectsOnlySmallMedium();
+    void toJsonFromJsonRoundTripsCanvasHeightMultiplier();
     void dragMovesAndSnapsToNearestGridCell();
     void dragOntoAnotherItemIsNowAllowed();
     void resizeChangesGeometryWithUndo();
@@ -197,6 +214,161 @@ void TestDashboardGrid::toJsonFromJsonRoundTrips() {
     QCOMPARE(target.toJson(), json);
 }
 
+void TestDashboardGrid::addItemSeedsAllBreakpointsIdentically() {
+    DashboardGrid grid;
+    grid.addItem("dummy_line");
+
+    const QJsonObject item = grid.toJson().value("items").toArray().first().toObject();
+    const QJsonObject layouts = item.value("layouts").toObject();
+    // A brand-new item hasn't been customized for any particular screen
+    // size yet -- all three breakpoints must start out identical (see
+    // DashboardGrid::addItem()).
+    QCOMPARE(layouts.value("small").toObject(), layouts.value("medium").toObject());
+    QCOMPARE(layouts.value("medium").toObject(), layouts.value("large").toObject());
+}
+
+void TestDashboardGrid::breakpointDragOnlyAffectsThatBreakpoint() {
+    DashboardGrid grid;
+    // Same 8px-per-cell setup as dragMovesAndSnapsToNearestGridCell below.
+    grid.resize(496, 336);
+    grid.setEditMode(true);
+    grid.show();
+    QVERIFY(QTest::qWaitForWindowExposed(&grid));
+
+    grid.addItem("dummy_line");  // default size, auto-placed at (0,0), all breakpoints identical
+    auto* cell = grid.findChild<DashboardCell*>();
+    QVERIFY(cell != nullptr);
+
+    QCOMPARE(grid.currentBreakpoint(), DashboardBreakpoint::Large);
+
+    // Drag while Large (the default) is the active breakpoint.
+    const QPoint headerPoint(80, 10);
+    const QPoint dragged = headerPoint + QPoint(27, 13);
+    QTest::mousePress(cell, Qt::LeftButton, Qt::NoModifier, headerPoint);
+    QTest::mouseMove(cell, dragged);
+    QTest::mouseRelease(cell, Qt::LeftButton, Qt::NoModifier, dragged);
+
+    const QJsonObject item = grid.toJson().value("items").toArray().first().toObject();
+    const QJsonObject layouts = item.value("layouts").toObject();
+    // Large moved (same assertion as dragMovesAndSnapsToNearestGridCell)...
+    QCOMPARE(layouts.value("large").toObject().value("x").toDouble(), 3.0 / 60.0);
+    QCOMPARE(layouts.value("large").toObject().value("y").toDouble(), 2.0 / 40.0);
+    // ...but Small/Medium, never shown during that drag, must be untouched --
+    // this is exactly the bug per-breakpoint geometry could regress into:
+    // applyMove()/applyResize() writing through to whichever breakpoint is
+    // merely *active* has to stay scoped to it, not leak into the others.
+    QCOMPARE(layouts.value("small").toObject().value("x").toDouble(), 0.0);
+    QCOMPARE(layouts.value("small").toObject().value("y").toDouble(), 0.0);
+    QCOMPARE(layouts.value("medium").toObject().value("x").toDouble(), 0.0);
+    QCOMPARE(layouts.value("medium").toObject().value("y").toDouble(), 0.0);
+}
+
+void TestDashboardGrid::setBreakpointClearsSelectionAndEmitsSignal() {
+    DashboardGrid grid;
+    grid.addItem("dummy_line");
+    QVERIFY(!grid.selectedItemId().isEmpty());
+
+    QSignalSpy breakpointSpy(&grid, &DashboardGrid::breakpointChanged);
+    grid.setBreakpoint(DashboardBreakpoint::Small);
+    QCOMPARE(grid.currentBreakpoint(), DashboardBreakpoint::Small);
+    QVERIFY(grid.selectedItemId().isEmpty());  // outgoing breakpoint's selection doesn't carry over
+    QCOMPARE(breakpointSpy.count(), 1);
+
+    // Setting it to what it already is must not re-emit or re-clear.
+    grid.selectItem(grid.layerEntries().first().id);
+    grid.setBreakpoint(DashboardBreakpoint::Small);
+    QCOMPARE(breakpointSpy.count(), 1);
+    QVERIFY(!grid.selectedItemId().isEmpty());
+}
+
+void TestDashboardGrid::toJsonFromJsonRoundTripsActiveBreakpoint() {
+    DashboardGrid source;
+    source.addItem("dummy_line");
+    source.setBreakpoint(DashboardBreakpoint::Medium);
+
+    const QJsonObject json = source.toJson();
+    QCOMPARE(json.value("breakpoint").toString(), QString("medium"));
+
+    DashboardGrid target;
+    target.fromJson(json);
+    QCOMPARE(target.currentBreakpoint(), DashboardBreakpoint::Medium);
+
+    // A project saved before per-screen-size layouts existed has no
+    // "breakpoint" field at all -- must default to Large.
+    DashboardGrid legacyTarget;
+    QJsonObject legacyJson = json;
+    legacyJson.remove("breakpoint");
+    legacyTarget.fromJson(legacyJson);
+    QCOMPARE(legacyTarget.currentBreakpoint(), DashboardBreakpoint::Large);
+}
+
+void TestDashboardGrid::growShrinkCanvasHeightAffectsOnlySmallMedium() {
+    DashboardGrid grid;
+    grid.resize(400, 300);
+    QCOMPARE(grid.currentBreakpoint(), DashboardBreakpoint::Large);
+
+    const QSize largeBefore = grid.sizeHint();
+    grid.growCanvasHeight();  // no-op on Large
+    QCOMPARE(grid.sizeHint(), largeBefore);
+
+    grid.setBreakpoint(DashboardBreakpoint::Small);
+    const QSize smallUngrown = grid.sizeHint();
+    grid.growCanvasHeight();
+    const QSize smallGrown = grid.sizeHint();
+    QVERIFY(smallGrown.height() > smallUngrown.height());
+    QCOMPARE(smallGrown.width(), smallUngrown.width());  // never widens
+
+    grid.growCanvasHeight();
+    const QSize smallGrownMore = grid.sizeHint();
+    QVERIFY(smallGrownMore.height() > smallGrown.height());
+
+    grid.shrinkCanvasHeight();
+    QCOMPARE(grid.sizeHint().height(), smallGrown.height());
+
+    grid.shrinkCanvasHeight();
+    // Back to (or past) the starting point -- resets fully to "off", same
+    // as before any growth, rather than leaving a barely-grown canvas.
+    QCOMPARE(grid.sizeHint(), smallUngrown);
+
+    // Medium's own growth is independent of Small's.
+    grid.setBreakpoint(DashboardBreakpoint::Medium);
+    QCOMPARE(grid.sizeHint(), smallUngrown);  // same floor, never grown
+    grid.growCanvasHeight();
+    QVERIFY(grid.sizeHint().height() > smallUngrown.height());
+
+    grid.setBreakpoint(DashboardBreakpoint::Small);
+    QCOMPARE(grid.sizeHint(),
+             smallUngrown);  // Small's own earlier reset is untouched by Medium's growth
+}
+
+void TestDashboardGrid::toJsonFromJsonRoundTripsCanvasHeightMultiplier() {
+    DashboardGrid source;
+    source.resize(400, 300);
+    source.setBreakpoint(DashboardBreakpoint::Small);
+    source.growCanvasHeight();
+    source.growCanvasHeight();
+
+    const QJsonObject json = source.toJson();
+    const QJsonObject multipliers = json.value("canvasHeightMultiplier").toObject();
+    QCOMPARE(multipliers.value("small").toDouble(), 1.4);
+    QCOMPARE(multipliers.value("medium").toDouble(), 0.0);
+
+    DashboardGrid target;
+    target.resize(400, 300);
+    target.fromJson(json);
+    QCOMPARE(target.sizeHint(), source.sizeHint());
+
+    // A project saved before this feature existed has no
+    // "canvasHeightMultiplier" object at all -- must default to off (0.0),
+    // same as a brand-new grid.
+    DashboardGrid legacyTarget;
+    legacyTarget.resize(400, 300);
+    QJsonObject legacyJson = json;
+    legacyJson.remove("canvasHeightMultiplier");
+    legacyTarget.fromJson(legacyJson);
+    QCOMPARE(legacyTarget.sizeHint(), QSize(320, 240));
+}
+
 void TestDashboardGrid::dragMovesAndSnapsToNearestGridCell() {
     DashboardGrid grid;
     // 496x336 total => 480x320 usable area (8px margin each side, see
@@ -224,18 +396,18 @@ void TestDashboardGrid::dragMovesAndSnapsToNearestGridCell() {
     QTest::mouseRelease(cell, Qt::LeftButton, Qt::NoModifier, dragged);
 
     QJsonObject item = grid.toJson().value("items").toArray().first().toObject();
-    QCOMPARE(item.value("x").toDouble(), 3.0 / 60.0);  // 27px snapped to 3 columns
-    QCOMPARE(item.value("y").toDouble(), 2.0 / 40.0);  // 13px snapped to 2 rows
+    QCOMPARE(largeGeometry(item).value("x").toDouble(), 3.0 / 60.0);  // 27px snapped to 3 columns
+    QCOMPARE(largeGeometry(item).value("y").toDouble(), 2.0 / 40.0);  // 13px snapped to 2 rows
 
     QCOMPARE(grid.undoStack()->count(), 2);  // AddWidgetCommand + MoveWidgetsCommand
     grid.undoStack()->undo();
     item = grid.toJson().value("items").toArray().first().toObject();
-    QCOMPARE(item.value("x").toDouble(), 0.0);
-    QCOMPARE(item.value("y").toDouble(), 0.0);
+    QCOMPARE(largeGeometry(item).value("x").toDouble(), 0.0);
+    QCOMPARE(largeGeometry(item).value("y").toDouble(), 0.0);
 
     grid.undoStack()->redo();
     item = grid.toJson().value("items").toArray().first().toObject();
-    QCOMPARE(item.value("x").toDouble(), 3.0 / 60.0);
+    QCOMPARE(largeGeometry(item).value("x").toDouble(), 3.0 / 60.0);
 }
 
 void TestDashboardGrid::dragOntoAnotherItemIsNowAllowed() {
@@ -255,7 +427,7 @@ void TestDashboardGrid::dragOntoAnotherItemIsNowAllowed() {
     const QString secondId = grid.selectedItemId();
 
     QJsonObject secondBefore = grid.toJson().value("items").toArray().at(1).toObject();
-    QCOMPARE(secondBefore.value("x").toDouble(), 16.0 / 60.0);
+    QCOMPARE(largeGeometry(secondBefore).value("x").toDouble(), 16.0 / 60.0);
 
     DashboardCell* secondCell = nullptr;
     for (DashboardCell* cell : grid.findChildren<DashboardCell*>()) {
@@ -278,8 +450,10 @@ void TestDashboardGrid::dragOntoAnotherItemIsNowAllowed() {
 
     const QJsonObject firstItem = grid.toJson().value("items").toArray().at(0).toObject();
     const QJsonObject secondAfter = grid.toJson().value("items").toArray().at(1).toObject();
-    QCOMPARE(secondAfter.value("x").toDouble(), firstItem.value("x").toDouble());
-    QCOMPARE(secondAfter.value("y").toDouble(), firstItem.value("y").toDouble());
+    QCOMPARE(largeGeometry(secondAfter).value("x").toDouble(),
+             largeGeometry(firstItem).value("x").toDouble());
+    QCOMPARE(largeGeometry(secondAfter).value("y").toDouble(),
+             largeGeometry(firstItem).value("y").toDouble());
 }
 
 void TestDashboardGrid::resizeChangesGeometryWithUndo() {
@@ -303,13 +477,13 @@ void TestDashboardGrid::resizeChangesGeometryWithUndo() {
     QTest::mouseRelease(cell, Qt::LeftButton, Qt::NoModifier, dragged);
 
     QJsonObject item = grid.toJson().value("items").toArray().first().toObject();
-    QCOMPARE(item.value("width").toDouble(), 18.0 / 60.0);
-    QCOMPARE(item.value("height").toDouble(), 13.0 / 40.0);
+    QCOMPARE(largeGeometry(item).value("width").toDouble(), 18.0 / 60.0);
+    QCOMPARE(largeGeometry(item).value("height").toDouble(), 13.0 / 40.0);
 
     grid.undoStack()->undo();
     item = grid.toJson().value("items").toArray().first().toObject();
-    QCOMPARE(item.value("width").toDouble(), 16.0 / 60.0);
-    QCOMPARE(item.value("height").toDouble(), 12.0 / 40.0);
+    QCOMPARE(largeGeometry(item).value("width").toDouble(), 16.0 / 60.0);
+    QCOMPARE(largeGeometry(item).value("height").toDouble(), 12.0 / 40.0);
 }
 
 void TestDashboardGrid::resizeClampsToMinimumSize() {
@@ -333,8 +507,8 @@ void TestDashboardGrid::resizeClampsToMinimumSize() {
     QTest::mouseRelease(cell, Qt::LeftButton, Qt::NoModifier, dragged);
 
     const QJsonObject item = grid.toJson().value("items").toArray().first().toObject();
-    QCOMPARE(item.value("width").toDouble(), 5.0 / 60.0);   // kMinItemWidth
-    QCOMPARE(item.value("height").toDouble(), 5.0 / 40.0);  // kMinItemHeight
+    QCOMPARE(largeGeometry(item).value("width").toDouble(), 5.0 / 60.0);   // kMinItemWidth
+    QCOMPARE(largeGeometry(item).value("height").toDouble(), 5.0 / 40.0);  // kMinItemHeight
 }
 
 void TestDashboardGrid::cellHasIdleBorderAndSelectedBorderOverlaysIt() {
@@ -603,12 +777,16 @@ void TestDashboardGrid::rubberBandSelectsAndDragsMultipleItemsRigidly() {
             afterB = o;
     }
 
-    QVERIFY(afterA.value("y").toDouble() > beforeA.value("y").toDouble());
+    QVERIFY(largeGeometry(afterA).value("y").toDouble() >
+            largeGeometry(beforeA).value("y").toDouble());
     // Rigid: both items moved by exactly the same offset.
-    QCOMPARE(afterA.value("y").toDouble() - beforeA.value("y").toDouble(),
-             afterB.value("y").toDouble() - beforeB.value("y").toDouble());
-    QCOMPARE(afterA.value("x").toDouble(), beforeA.value("x").toDouble());
-    QCOMPARE(afterB.value("x").toDouble(), beforeB.value("x").toDouble());
+    QCOMPARE(
+        largeGeometry(afterA).value("y").toDouble() - largeGeometry(beforeA).value("y").toDouble(),
+        largeGeometry(afterB).value("y").toDouble() - largeGeometry(beforeB).value("y").toDouble());
+    QCOMPARE(largeGeometry(afterA).value("x").toDouble(),
+             largeGeometry(beforeA).value("x").toDouble());
+    QCOMPARE(largeGeometry(afterB).value("x").toDouble(),
+             largeGeometry(beforeB).value("x").toDouble());
 
     grid.undoStack()->undo();
     for (const QJsonValue& v : grid.toJson().value("items").toArray()) {
