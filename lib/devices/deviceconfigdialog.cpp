@@ -136,20 +136,25 @@ DeviceConfigDialog::DeviceConfigDialog(const Device& initial, QWidget* parent)
     m_connectionLayout->setRowWrapPolicy(QFormLayout::WrapAllRows);
 
     m_transportTypeCombo = new QComboBox(connectionGroup);
+#ifdef TRACEVIEW_ENABLE_SERIAL
     m_transportTypeCombo->addItem(transportTypeLabel(TransportType::Serial),
                                   int(TransportType::Serial));
+#endif
+#ifdef TRACEVIEW_ENABLE_USB_HID
     m_transportTypeCombo->addItem(transportTypeLabel(TransportType::UsbHid),
                                   int(TransportType::UsbHid));
+#endif
     m_transportTypeCombo->addItem(transportTypeLabel(TransportType::HubChannel),
                                   int(TransportType::HubChannel));
     m_transportTypeCombo->addItem(transportTypeLabel(TransportType::Tcp), int(TransportType::Tcp));
 #ifdef TRACEVIEW_ENABLE_BLE
     m_transportTypeCombo->addItem(transportTypeLabel(TransportType::Ble), int(TransportType::Ble));
 #endif
-    // Without TRACEVIEW_ENABLE_BLE, Ble is deliberately not offered -- no
-    // BleTransport exists in that configuration (see deviceconnection.cpp's
-    // constructor), so selecting it would produce a device DeviceConnection
-    // can never actually open.
+    // Without TRACEVIEW_ENABLE_SERIAL/_USB_HID/_BLE, that transport is
+    // deliberately not offered -- no SerialManager/UsbHidManager/BleTransport
+    // exists in that configuration (see deviceconnection.cpp's constructor),
+    // so selecting it would produce a device DeviceConnection can never
+    // actually open.
     const int transportTypeIndex = m_transportTypeCombo->findData(int(m_device.transportType));
     m_transportTypeCombo->setCurrentIndex(transportTypeIndex >= 0 ? transportTypeIndex : 0);
     connect(m_transportTypeCombo, &QComboBox::currentIndexChanged, this,
@@ -413,7 +418,13 @@ DeviceConfigDialog::DeviceConfigDialog(const Device& initial, QWidget* parent)
     // just that transport's.
     {
         int maxConnectionHeight = 0;
-        for (TransportType type : {TransportType::Serial, TransportType::UsbHid,
+        for (TransportType type : {
+#ifdef TRACEVIEW_ENABLE_SERIAL
+                       TransportType::Serial,
+#endif
+#ifdef TRACEVIEW_ENABLE_USB_HID
+                       TransportType::UsbHid,
+#endif
                        TransportType::HubChannel, TransportType::Tcp,
 #ifdef TRACEVIEW_ENABLE_BLE
                        TransportType::Ble,

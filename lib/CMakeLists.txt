@@ -566,13 +566,27 @@ set(TRACEVIEW_TRANSPORT_SOURCES
     core/deviceconnection.h
     core/hubtransport.cpp
     core/hubtransport.h
-    core/serialmanager.cpp
-    core/serialmanager.h
     core/tcptransport.cpp
     core/tcptransport.h
-    core/usbhidmanager.cpp
-    core/usbhidmanager.h
 )
+# Same reasoning as the BLE sources below: serialmanager.h/usbhidmanager.h
+# #include <QSerialPort>/hidapi.h unconditionally, so compiling them without
+# the option that pulls in that dependency (see TRACEVIEW_ENABLE_SERIAL/
+# TRACEVIEW_ENABLE_USB_HID's own link guards further down) fails outright --
+# first surfaced building the android-arm64 preset, where neither module
+# exists for the target ABI at all.
+if(TRACEVIEW_ENABLE_SERIAL)
+    list(APPEND TRACEVIEW_TRANSPORT_SOURCES
+        core/serialmanager.cpp
+        core/serialmanager.h
+    )
+endif()
+if(TRACEVIEW_ENABLE_USB_HID)
+    list(APPEND TRACEVIEW_TRANSPORT_SOURCES
+        core/usbhidmanager.cpp
+        core/usbhidmanager.h
+    )
+endif()
 # blediscoveryservice/bletransport #include <QLowEnergyController> and
 # friends directly -- unlike tcptransport.cpp (QTcpSocket lives in Qt6::
 # Network, already an unconditional dependency of this whole project, see

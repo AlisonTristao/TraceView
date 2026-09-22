@@ -8,7 +8,9 @@
 #include "dashboard/widgets/robotlogwidget.h"
 #include "dashboard/widgets/serialmonitorwidget.h"
 #include "deviceconnection.h"
+#ifdef TRACEVIEW_ENABLE_SERIAL
 #include "serialmanager.h"
+#endif
 
 namespace traceview {
 
@@ -29,10 +31,12 @@ DeviceConnection* SerialWidgetBridge::deviceConnectionForWidget(DashboardWidget*
 
 void SerialWidgetBridge::sendControlCommand(DeviceConnection* connection,
                                             const QByteArray& command) {
+#ifdef TRACEVIEW_ENABLE_SERIAL
     if (SerialManager* serial = connection->serialManager()) {
         serial->writeCommand(command);
         return;
     }
+#endif
     if (Backend* backend = connection->backend()) {
         backend->sendCommand(command);
     }

@@ -116,6 +116,130 @@ jobs:
           .\scripts\smoke_windows_installer.ps1 -Installer $installer.FullName
 
   # ============================================================
+  # Android package (.apk)
+  # ============================================================
+  # UNVALIDATED in CI -- the android-arm64 preset itself was only just
+  # exercised for the first time on a developer machine (see
+  # docs/ANDROID_BUILD.md and TAREFAS_TCP_BLE_ANDROID.txt's T45 note); this
+  # job mirrors that local recipe but has not yet run green here. Debug-
+  # keystore signed (android-arm64-release only gets past Gradle's debug-
+  # keystore default, see that preset's own description) -- fine while the
+  # app itself is still unstable, real release signing is a separate T45
+  # follow-up.
+  android-package:
+    name: Android package (arm64-v8a)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+
+    env:
+      ANDROID_NDK_VERSION: "27.2.12479018"
+      QT_VERSION: "6.9.2"
+      QT_INSTALL_DIR: ${{ github.workspace }}/qt
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        # androiddeployqt/Gradle need this specific major version -- see
+        # docs/ANDROID_BUILD.md's "Why these versions" table (this machine's
+        # own JDK 25 is too new for what Qt 6.9 was validated against).
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Install Ninja
+        run: sudo apt-get update && sudo apt-get install --no-install-recommends -y ninja-build
+
+      - name: Install Qt (desktop host tools)
+        # moc/rcc/androiddeployqt/qmlimportscanner must run as native Linux
+        # binaries even though TraceView itself cross-compiles for Android --
+        # see docs/ANDROID_BUILD.md's QT_ROOT_DIR explanation. set-env:false
+        # on both Qt installs below -- the action would otherwise have the
+        # second install's QT_ROOT_DIR silently clobber the first's.
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: ${{ env.QT_VERSION }}
+          host: linux
+          target: desktop
+          arch: gcc_64
+          dir: ${{ env.QT_INSTALL_DIR }}
+          set-env: false
+
+      - name: Install Qt (Android arm64-v8a)
+        # qtconnectivity is an addon module (not installed by default) --
+        # required because TRACEVIEW_ENABLE_BLE=ON in the android-arm64
+        # preset links Qt6::Bluetooth.
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: ${{ env.QT_VERSION }}
+          host: linux
+          target: android
+          arch: android_arm64_v8a
+          modules: qtconnectivity
+          dir: ${{ env.QT_INSTALL_DIR }}
+          set-env: false
+
+      - name: Install Android SDK command-line tools
+        # Downloaded directly rather than via a third-party setup action --
+        # same recipe validated by hand on a developer machine (see
+        # TAREFAS_TCP_BLE_ANDROID.txt's T45 note), so ANDROID_SDK_ROOT ends
+        # up at a path this job fully controls instead of guessing whatever
+        # env var name/location an action happens to export.
+        run: |
+          mkdir -p "$ANDROID_SDK_ROOT/cmdline-tools"
+          curl -fsSL -o /tmp/cmdline-tools.zip \
+            "https://dl.google.com/android/repository/commandlinetools-linux-15859902_latest.zip"
+          unzip -q /tmp/cmdline-tools.zip -d /tmp/cmdline-tools-extract
+          mv /tmp/cmdline-tools-extract/cmdline-tools "$ANDROID_SDK_ROOT/cmdline-tools/latest"
+        env:
+          ANDROID_SDK_ROOT: ${{ github.workspace }}/android-sdk
+
+      - name: Install SDK platform, build-tools and NDK
+        # Exact versions pinned in docs/ANDROID_BUILD.md's compatibility
+        # table.
+        run: |
+          yes | "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager" --sdk_root="$ANDROID_SDK_ROOT" --licenses >/dev/null || true
+          "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager" --sdk_root="$ANDROID_SDK_ROOT" \
+            "platform-tools" "platforms;android-35" "build-tools;35.0.0" "ndk;${{ env.ANDROID_NDK_VERSION }}"
+        env:
+          ANDROID_SDK_ROOT: ${{ github.workspace }}/android-sdk
+
+      - name: Configure (Release)
+        env:
+          ANDROID_SDK_ROOT: ${{ github.workspace }}/android-sdk
+          ANDROID_NDK_ROOT: ${{ github.workspace }}/android-sdk/ndk/${{ env.ANDROID_NDK_VERSION }}
+          QT_ANDROID_ROOT_DIR: ${{ env.QT_INSTALL_DIR }}/${{ env.QT_VERSION }}/android_arm64_v8a
+          QT_ROOT_DIR: ${{ env.QT_INSTALL_DIR }}/${{ env.QT_VERSION }}/gcc_64
+        run: cmake --preset android-arm64-release
+
+      - name: Build (Release)
+        env:
+          ANDROID_SDK_ROOT: ${{ github.workspace }}/android-sdk
+          ANDROID_NDK_ROOT: ${{ github.workspace }}/android-sdk/ndk/${{ env.ANDROID_NDK_VERSION }}
+          QT_ANDROID_ROOT_DIR: ${{ env.QT_INSTALL_DIR }}/${{ env.QT_VERSION }}/android_arm64_v8a
+          QT_ROOT_DIR: ${{ env.QT_INSTALL_DIR }}/${{ env.QT_VERSION }}/gcc_64
+        run: cmake --build --preset android-arm64-release
+
+      - name: Rename and checksum APK
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          [[ $version =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo 'Invalid release version' >&2; exit 1; }
+          cd build/android-arm64-release/android-build
+          cp TraceView.apk "TraceView-$version-android-arm64.apk"
+          sha256sum "TraceView-$version-android-arm64.apk" > sha256-android.txt
+
+      - name: Upload package artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-package
+          path: |
+            build/android-arm64-release/android-build/TraceView-*-android-arm64.apk
+            build/android-arm64-release/android-build/sha256-android.txt
+          if-no-files-found: error
+
+  # ============================================================
   # Linux package (.AppImage)
   # ============================================================
   linux-package:
@@ -249,7 +373,7 @@ jobs:
 
   publish:
     name: Publish release
-    needs: [windows-smoke, linux-smoke, linux-flatpak]
+    needs: [windows-smoke, linux-smoke, linux-flatpak, android-package]
     runs-on: ubuntu-24.04
     timeout-minutes: 15
 
@@ -298,7 +422,7 @@ jobs:
 
       - name: Combine checksums
         run: |
-          cat packages/windows-package/sha256-windows.txt packages/linux-package/sha256-linux.txt packages/linux-flatpak-package/sha256-flatpak.txt > SHA256SUMS.txt
+          cat packages/windows-package/sha256-windows.txt packages/linux-package/sha256-linux.txt packages/linux-flatpak-package/sha256-flatpak.txt packages/android-package/sha256-android.txt > SHA256SUMS.txt
           cat SHA256SUMS.txt
 
       - name: Publish GitHub Release
@@ -309,6 +433,7 @@ jobs:
             packages/windows-package/TraceView-*-windows-x64.exe \
             packages/linux-package/TraceView-*-linux-x64.AppImage \
             packages/linux-flatpak-package/TraceView-*-linux-x64.flatpak \
+            packages/android-package/TraceView-*-android-arm64.apk \
             SHA256SUMS.txt \
             --repo "${{ github.repository }}" \
             --title "TraceView ${{ github.ref_name }}" \

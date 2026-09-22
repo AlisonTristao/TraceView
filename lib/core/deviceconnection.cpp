@@ -8,9 +8,13 @@
 #include "hubtransport.h"
 #include "preferences/appsettings.h"
 #include "protocol/btpbackend.h"
-#include "serialmanager.h"
 #include "tcptransport.h"
+#ifdef TRACEVIEW_ENABLE_SERIAL
+#include "serialmanager.h"
+#endif
+#ifdef TRACEVIEW_ENABLE_USB_HID
 #include "usbhidmanager.h"
+#endif
 #ifdef TRACEVIEW_ENABLE_BLE
 #include "bletransport.h"
 #endif
@@ -89,13 +93,26 @@ DeviceConnection::DeviceConnection(CommType commType, TransportType transportTyp
     : QObject(parent), m_transportType(transportType) {
     switch (transportType) {
         case TransportType::Serial:
+#ifdef TRACEVIEW_ENABLE_SERIAL
             m_serialManager = new SerialManager(this);
             m_transport = m_serialManager;
             break;
+#else
+            // Same as the Ble case below: without TRACEVIEW_ENABLE_SERIAL, no
+            // SerialManager type even exists to construct.
+            // DeviceConfigDialog does not offer Serial as a selectable
+            // transport in that configuration for exactly this reason.
+            break;
+#endif
         case TransportType::UsbHid:
+#ifdef TRACEVIEW_ENABLE_USB_HID
             m_usbHidManager = new UsbHidManager(this);
             m_transport = m_usbHidManager;
             break;
+#else
+            // Same as Serial just above, for TRACEVIEW_ENABLE_USB_HID.
+            break;
+#endif
         case TransportType::HubChannel:
             // Built unconfigured (peer 0) and pointed at a robot later by
             // connectVia(), the same way the other two are built before
@@ -455,6 +472,7 @@ void DeviceConnection::closeTransportGracefully() {
         return;
     }
 
+#ifdef TRACEVIEW_ENABLE_SERIAL
     if (m_serialManager != nullptr) {
         if (auto* btpBackend = qobject_cast<BtpBackend*>(m_backend)) {
             if (btpBackend->requestSessionClose()) {
@@ -465,13 +483,18 @@ void DeviceConnection::closeTransportGracefully() {
             }
         }
     }
+#endif
     m_transport->close();
 }
 
 void DeviceConnection::setLineTerminator(int terminator) {
+#ifdef TRACEVIEW_ENABLE_SERIAL
     if (m_serialManager) {
         m_serialManager->setLineTerminator(LineTerminator(terminator));
     }
+#else
+    Q_UNUSED(terminator);
+#endif
 }
 
 void DeviceConnection::attemptReconnect() {
@@ -491,9 +514,13 @@ void DeviceConnection::attemptReconnect() {
     m_attemptInProgress = true;
     setConnectionPhase(ConnectionPhase::PreparingTransport);
     if (m_serialManager) {
+#ifdef TRACEVIEW_ENABLE_SERIAL
         m_serialManager->open(m_target, m_baudRate);
+#endif
     } else if (m_usbHidManager) {
+#ifdef TRACEVIEW_ENABLE_USB_HID
         m_usbHidManager->open(m_target);
+#endif
     } else if (m_tcpTransport) {
         m_tcpTransport->open(m_tcpHost, m_tcpPort);
 #ifdef TRACEVIEW_ENABLE_BLE

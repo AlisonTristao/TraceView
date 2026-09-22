@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.21)
 
 project(TraceView
-    VERSION 3.3.19
+    VERSION 4.0.0
     DESCRIPTION "Real-time telemetry dashboard for ESP32/ESP-NOW robots"
     LANGUAGES CXX
 )
@@ -200,6 +200,23 @@ set_target_properties(TraceView PROPERTIES
     MACOSX_BUNDLE ON
 )
 
+if(ANDROID)
+    # Without these, androiddeployqt falls back to its own placeholder
+    # (org.qtproject.example.TraceView, versionName 1.0, versionCode 1) --
+    # same package identity for every build regardless of what's actually
+    # installed, so a newer APK can't even be told apart from an older one.
+    # versionCode has to be an integer Android treats as monotonically
+    # increasing across installs; MAJOR*10000 + MINOR*100 + PATCH leaves
+    # room under each digit without ever colliding across versions.
+    math(EXPR TRACEVIEW_ANDROID_VERSION_CODE
+        "${PROJECT_VERSION_MAJOR} * 10000 + ${PROJECT_VERSION_MINOR} * 100 + ${PROJECT_VERSION_PATCH}")
+    set_target_properties(TraceView PROPERTIES
+        QT_ANDROID_PACKAGE_NAME "io.github.alisontristao.traceview"
+        QT_ANDROID_VERSION_NAME "${PROJECT_VERSION}"
+        QT_ANDROID_VERSION_CODE "${TRACEVIEW_ANDROID_VERSION_CODE}"
+    )
+endif()
+
 if(WIN32)
     # Keeps the Qt runtime DLLs sitting next to TraceView.exe in sync with
     # whatever Qt modules it links. Without this, adding a new Qt module
@@ -287,7 +304,7 @@ if(WIN32)
             "dependency (see scripts/collect_windows_deps.sh).")
     endif()
 else()
-    install(TARGETS TraceView RUNTIME DESTINATION bin)
+    install(TARGETS TraceView RUNTIME DESTINATION bin LIBRARY DESTINATION lib)
 
     if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
         install(FILES resources/linux/io.github.alisontristao.TraceView.desktop DESTINATION share/applications)

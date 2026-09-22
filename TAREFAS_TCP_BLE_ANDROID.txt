@@ -1053,6 +1053,39 @@ ETAPA 6 — ANDROID
     Fazer: configurar build, identificação do pacote, assinatura e
     manifesto/permissões, usando opções de transporte adequadas.
     Aceite: pacote instala e abre em aparelho físico.
+    Nota (2026-09-22): ambiente T44 instalado e validado de verdade nesta
+    maquina (Qt 6.9.2 android_arm64_v8a kit, Android SDK/NDK r27c via
+    sdkmanager, JDK 17 Temurin a parte) -- primeira vez que o preset
+    android-arm64 realmente configura/compila/empacota, nao so o JSON do
+    preset. Dois bugs reais corrigidos no caminho (nao especificos desta
+    maquina):
+    1. CMakePresets.json apontava CMAKE_TOOLCHAIN_FILE pro toolchain cru do
+       NDK; o find_package(Qt6) so funciona com o wrapper do proprio Qt
+       (lib/cmake/Qt6/qt.toolchain.cmake), que ajusta CMAKE_FIND_ROOT_PATH.
+    2. install(TARGETS TraceView RUNTIME DESTINATION bin) na raiz do
+       CMakeLists.txt nao tinha LIBRARY DESTINATION -- no Android o alvo e
+       uma lib compartilhada (.so), nao um executavel; CMake recusa
+       configurar sem isso.
+    Gap maior encontrado: TRACEVIEW_ENABLE_SERIAL=OFF/_USB_HID=OFF (exigido
+    aqui, ver T44) nunca tinha sido de fato compilado em lugar nenhum --
+    T38 continua em aberto. deviceconnection.cpp, mainwindow.cpp,
+    serialwidgetbridge.cpp e deviceconfigdialog.cpp referenciavam
+    SerialManager/UsbHidManager sem guard nenhum (diferente do padrao
+    #ifdef TRACEVIEW_ENABLE_BLE ja usado pra Bluetooth); lib/CMakeLists.txt
+    tambem compilava core/serialmanager.cpp/usbhidmanager.cpp incondicional.
+    Apliquei o mesmo padrao ja usado pra BLE (fonte condicional +
+    #ifdef/#else nos call sites, UI do DeviceConfigDialog so oferece o
+    transporte quando a opcao correspondente esta ligada) nos quatro
+    arquivos. Isso destrava a compilacao (e deveria destravar T38 tambem,
+    mas T38 ainda nao foi validado rodando de verdade no desktop).
+    APK debug gerado com sucesso: build/android-arm64/android-build/
+    TraceView.apk (~56MB, keystore de debug do Gradle). Ainda faltam pro
+    aceite completo: (a) identidade do pacote/versao ainda e o placeholder
+    do proprio Qt (org.qtproject.example.TraceView, versionName 1.0,
+    versionCode 1) -- nao configurado a partir de PROJECT_VERSION ainda;
+    (b) nenhum AndroidManifest.xml customizado (permissoes ficam pro T46,
+    ver nota do T44); (c) nenhum smoke test de instalacao em emulador ou
+    aparelho fisico ainda -- sem aparelho disponivel nesta sessao.
 
 [ ] T46 — Implementar permissões e disponibilidade Android
     Frente: TraceView/Android. Depende de: T45, T15.

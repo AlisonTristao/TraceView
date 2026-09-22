@@ -25,7 +25,9 @@
 #include <QResizeEvent>
 #include <QScrollArea>
 #include <QScrollBar>
+#ifdef TRACEVIEW_ENABLE_SERIAL
 #include <QSerialPortInfo>
+#endif
 #include <QSettings>
 #include <QShowEvent>
 #include <QSignalBlocker>
@@ -89,7 +91,9 @@
 #include "updater/updatechecker.h"
 #include "updater/updatedownloader.h"
 #include "updater/updateinstaller.h"
+#ifdef TRACEVIEW_ENABLE_USB_HID
 #include "usbhidmanager.h"
+#endif
 #include "workspaceswitcher.h"
 
 namespace traceview {
@@ -371,6 +375,7 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     // DevicesGrid can't enumerate ports itself (traceview_devices doesn't
     // depend on QSerialPort, see lib/CMakeLists.txt) -- MainWindow supplies
     // the live list DeviceConfigDialog's port combo offers.
+#ifdef TRACEVIEW_ENABLE_SERIAL
     m_devicesGrid->setPortListProvider([]() -> QStringList {
         QStringList names;
         const QList<QSerialPortInfo> infos = QSerialPortInfo::availablePorts();
@@ -380,9 +385,11 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
         }
         return names;
     });
+#endif
     // Same reasoning as setPortListProvider() above, for the USB device
     // combo -- DevicesGrid can't enumerate HID devices itself
     // (traceview_devices doesn't depend on hidapi, see lib/CMakeLists.txt).
+#ifdef TRACEVIEW_ENABLE_USB_HID
     m_devicesGrid->setUsbDeviceListProvider([]() -> QVector<UsbDeviceOption> {
         QVector<UsbDeviceOption> options;
         const QVector<UsbHidManager::DeviceInfo> devices = UsbHidManager::availableDevices();
@@ -392,6 +399,7 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
         }
         return options;
     });
+#endif
 #ifdef TRACEVIEW_ENABLE_BLE
     // Same reasoning as setUsbDeviceListProvider() above: DevicesGrid can't
     // scan for BLE peripherals itself (traceview_devices doesn't depend on
