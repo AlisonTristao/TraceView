@@ -1896,10 +1896,21 @@ void MainWindow::updateChromeVisibility() {
     // mode. Centralize this with fullscreen to avoid restoring it on exit.
     m_ribbon->setTabBarVisible(developerUiActive() && !fullscreen);
     menuBar()->setVisible(!compact && !fullscreen);
-    // Share the device-status row on Dashboard. Other pages keep the options
-    // menu in the top bar so Access remains reachable from every tab.
-    const bool dashboard = m_ribbon->currentIndex() == m_dashboardTabIndex;
-    QWidget* optionsRow = dashboard ? m_deviceStatusLabel->parentWidget() : m_chromeTopBar;
+    // Host the options menu at the left of the current tab's ribbon page on
+    // EVERY tab (not only Dashboard's device-status row), so it stays in the
+    // same spot while switching tabs. Log/BTP/Settings pages are built empty,
+    // so they get the same row layout the button-group pages use on demand.
+    QWidget* optionsRow = m_ribbon->pageAt(m_ribbon->currentIndex());
+    if (optionsRow && !optionsRow->layout()) {
+        auto* rowLayout = new QHBoxLayout(optionsRow);
+        rowLayout->setContentsMargins(kRibbonPageMarginH, kRibbonPageMarginV, kRibbonPageMarginH,
+                                      kRibbonPageMarginV);
+        rowLayout->setSpacing(kRibbonGroupSpacing);
+        rowLayout->addStretch();
+    }
+    if (!optionsRow) {
+        optionsRow = m_chromeTopBar;
+    }
     if (m_optionsButton->parentWidget() != optionsRow) {
         m_optionsButton->parentWidget()->layout()->removeWidget(m_optionsButton);
         static_cast<QHBoxLayout*>(optionsRow->layout())->insertWidget(0, m_optionsButton);
@@ -1907,7 +1918,15 @@ void MainWindow::updateChromeVisibility() {
     m_optionsButton->setVisible(compact);
     // Keep manual size selection available while previewing the User interface.
     m_screenSizeButton->setVisible(isDeveloper);
-    m_chromeTopBar->setVisible(compact && !dashboard);
+    m_chromeTopBar->setVisible(compact && optionsRow == m_chromeTopBar);
+}
+
+void MainWindow::removeRibbonTab(int index) {
+    if (m_optionsButton->parentWidget() == m_ribbon->pageAt(index)) {
+        m_optionsButton->parentWidget()->layout()->removeWidget(m_optionsButton);
+        static_cast<QHBoxLayout*>(m_chromeTopBar->layout())->insertWidget(0, m_optionsButton);
+    }
+    m_ribbon->removeTab(index);
 }
 
 void MainWindow::applyBreakpointViewport() {
@@ -3080,12 +3099,12 @@ void MainWindow::onLogTabCloseRequested(int index) {
             continue;
         }
         LogViewer* viewer = m_openLogTabs[i].viewer;
-        // Removed before Ribbon::removeTab() below, which -- if this tab is
+        // Removed before removeRibbonTab() below, which -- if this tab is
         // the current one -- synchronously re-enters onRibbonTabChanged()
         // for whichever tab becomes current next; that lookup must not find
         // this entry anymore.
         m_openLogTabs.removeAt(i);
-        m_ribbon->removeTab(index);
+        removeRibbonTab(index);
         m_contentStack->removeWidget(viewer);
         viewer->deleteLater();
         break;
@@ -3136,7 +3155,7 @@ void MainWindow::onOtaTabCloseRequested(int index) {
     if (m_otaTab == nullptr || m_ribbon->pageAt(index) != m_otaTabPage) {
         return;
     }
-    m_ribbon->removeTab(index);
+    removeRibbonTab(index);
     m_contentStack->removeWidget(m_otaTab);
     m_otaTab->deleteLater();
     m_otaTab = nullptr;
@@ -3184,7 +3203,7 @@ void MainWindow::onBtpMonitorTabCloseRequested(int index) {
     if (m_btpMonitorTab == nullptr || m_ribbon->pageAt(index) != m_btpMonitorTabPage) {
         return;
     }
-    m_ribbon->removeTab(index);
+    removeRibbonTab(index);
     m_contentStack->removeWidget(m_btpMonitorTab);
     m_btpMonitorTab->deleteLater();
     m_btpMonitorTab = nullptr;
@@ -3231,7 +3250,7 @@ void MainWindow::onSettingsTabCloseRequested(int index) {
     if (m_settingsTab == nullptr || m_ribbon->pageAt(index) != m_settingsTabPage) {
         return;
     }
-    m_ribbon->removeTab(index);
+    removeRibbonTab(index);
     m_contentStack->removeWidget(m_settingsTab);
     m_settingsTab->deleteLater();
     m_settingsTab = nullptr;

@@ -199,6 +199,10 @@ private:
     // the other's (see onFullscreenToggled()). Called from syncBreakpointChrome()
     // (breakpoint/mode changes) and directly from onFullscreenToggled().
     void updateChromeVisibility();
+    // Ribbon::removeTab() deletes the page synchronously; parks
+    // m_optionsButton back in m_chromeTopBar first so it isn't deleted along
+    // with the page it's currently hosted in (see updateChromeVisibility()).
+    void removeRibbonTab(int index);
     Ribbon* buildRibbon();
     void buildPropertiesPanel();
     void buildLayersPanel();
