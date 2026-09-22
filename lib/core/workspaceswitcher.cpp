@@ -5,6 +5,8 @@
 #include <QLabel>
 #include <QMenu>
 #include <QMouseEvent>
+#include <QPainter>
+#include <QPixmap>
 #include <QToolButton>
 #include <QWidgetAction>
 #include <functional>
@@ -19,6 +21,26 @@ namespace {
 // A bit larger than kRibbonIconSize (16) -- at that size the trash glyph
 // read as too small/fiddly against the row's text next to it.
 constexpr int kTrashIconSize = 20;
+
+// Extra gap between the switcher button's icon and its label. QToolButton
+// has no QSS/API knob for that spacing (the style hardcodes a few px), so
+// the icon is drawn onto a wider transparent canvas instead.
+constexpr int kIconTextGap = 6;
+
+QIcon padIconRight(const QIcon& icon, int size, int pad) {
+    QIcon padded;
+    for (const qreal dpr : {1.0, 1.5, 2.0, 3.0}) {
+        const QPixmap src = icon.pixmap(QSize(size, size), dpr);
+        QPixmap dst(qRound((size + pad) * dpr), qRound(size * dpr));
+        dst.setDevicePixelRatio(dpr);
+        dst.fill(Qt::transparent);
+        QPainter painter(&dst);
+        painter.drawPixmap(0, 0, src);
+        painter.end();
+        padded.addPixmap(dst);
+    }
+    return padded;
+}
 
 // One menu row: the workspace's name (click anywhere on it to select) plus
 // an optional trash button. Not a QObject -- clicks are reported through a
@@ -82,7 +104,7 @@ WorkspaceSwitcher::WorkspaceSwitcher(QWidget* parent) : QWidget(parent) {
     m_button->setAutoRaise(true);
     m_button->setPopupMode(QToolButton::InstantPopup);
     m_button->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
-    m_button->setIconSize(QSize(kRibbonIconSize, kRibbonIconSize));
+    m_button->setIconSize(QSize(kRibbonIconSize + kIconTextGap, kRibbonIconSize));
     m_button->setMenu(m_menu);
     // The style-drawn popup arrow (QToolButton::menu-indicator) otherwise
     // sits hard against/over the label with no reserved space of its own --
@@ -185,7 +207,7 @@ void WorkspaceSwitcher::rebuildMenu() {
 
 void WorkspaceSwitcher::updateIcons(const QColor& color) {
     m_iconColor = color;
-    m_button->setIcon(makeWorkspaceIcon(color));
+    m_button->setIcon(padIconRight(makeWorkspaceIcon(color), kRibbonIconSize, kIconTextGap));
     rebuildMenu();
 }
 
