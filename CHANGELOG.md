@@ -50,6 +50,12 @@ release flow.
 
 ### Fixed
 
+- Scrollbars are now thin rounded pills on a transparent track (subtle at
+  rest, brighter on hover, accent-colored while dragged) instead of square
+  blocks with arrow buttons. A `//` comment inside the app stylesheet —
+  QSS only understands `/* */` — was silently discarding every theme rule
+  after it (scrollbars, buttons, checkboxes, lists…), which is why styling
+  changes in that part of the theme had no effect.
 - Dialogs on Android (About, Donate, login, device settings, confirmations,
   messages…) no longer open as bare, undecorated windows with arbitrary
   size and position and no way to close them but their own buttons. On

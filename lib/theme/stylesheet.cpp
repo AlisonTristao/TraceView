@@ -215,13 +215,15 @@ QToolButton:disabled {
     outline: none;
 }
 
-// QWidget#statusRow is MainWindow's own m_statusRow -- it replaced the
-// native QStatusBar (see MainWindow::showStatusMessage()) so it can live
-// inside m_appShell/m_devicePreviewFrame like everything else a Phone/
-// Tablet preview needs to frame, which the native bar (owned by QMainWindow
-// itself, outside centralWidget()) could not. Same rule kept for QStatusBar
-// too in case anything ever calls statusBar() again -- costs nothing and
-// keeps that widget from looking undressed if it does.
+/* QWidget#statusRow is MainWindow's own m_statusRow -- it replaced the
+   native QStatusBar (see MainWindow::showStatusMessage()) so it can live
+   inside m_appShell/m_devicePreviewFrame like everything else a Phone/
+   Tablet preview needs to frame, which the native bar (owned by QMainWindow
+   itself, outside centralWidget()) could not. Same rule kept for QStatusBar
+   too in case anything ever calls statusBar() again -- costs nothing and
+   keeps that widget from looking undressed if it does.
+   NOTE: this is inside the QSS string -- QSS only understands block
+   comments; a // comment here silently drops every rule after it. */
 QStatusBar, QWidget#statusRow {
     background-color: @surface@;
     border-top: 1px solid @border@;
@@ -510,40 +512,65 @@ QCheckBox::indicator:checked {
     image: url("@checkArrowUri@");
 }
 
+/* Thin floating pill: transparent track, handle inset 3px from the edges
+   with a radius of half its thickness so both ends are fully rounded. */
 QScrollBar:vertical {
-    background: @background@;
+    background: transparent;
     width: 12px;
     margin: 0;
 }
 QScrollBar::handle:vertical {
-    background: @surfaceAlt@;
-    border: 1px solid @border@;
-    min-height: 24px;
-    border-radius: 4px;
+    background: @textDisabled@;
+    border: none;
+    min-height: 32px;
+    margin: 3px;
+    border-radius: 3px;
 }
 QScrollBar::handle:vertical:hover {
+    background: @textSecondary@;
+}
+QScrollBar::handle:vertical:pressed {
     background: @accent@;
 }
 QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
     height: 0;
+    border: none;
+    background: none;
+}
+QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
+    background: none;
 }
 
 QScrollBar:horizontal {
-    background: @background@;
+    background: transparent;
     height: 12px;
     margin: 0;
 }
 QScrollBar::handle:horizontal {
-    background: @surfaceAlt@;
-    border: 1px solid @border@;
-    min-width: 24px;
-    border-radius: 4px;
+    background: @textDisabled@;
+    border: none;
+    min-width: 32px;
+    margin: 3px;
+    border-radius: 3px;
 }
 QScrollBar::handle:horizontal:hover {
+    background: @textSecondary@;
+}
+QScrollBar::handle:horizontal:pressed {
     background: @accent@;
 }
 QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {
     width: 0;
+    border: none;
+    background: none;
+}
+QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal {
+    background: none;
+}
+
+QAbstractScrollArea::corner {
+    background: transparent;
+    border: none;
 }
 )";
 
