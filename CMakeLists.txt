@@ -222,7 +222,10 @@ if(ANDROID)
         # template (all %%INSERT_...%% placeholders intact -- androiddeployqt
         # substitutes them at build time; hand-editing anything else here
         # risks breaking packaging, see docs/ANDROID_BUILD.md) with just
-        # Theme.Black.NoTitleBar added to the activity.
+        # Theme.Black.NoTitleBar added to the activity and android:icon
+        # pointed at @mipmap/ic_launcher (android/res/: an adaptive icon
+        # built from resources/icons/app.svg, plus PNG fallbacks) -- left as
+        # the placeholder, the APK ships with the generic Android icon.
         QT_ANDROID_PACKAGE_SOURCE_DIR "${CMAKE_SOURCE_DIR}/android"
         # Qt's Android kit ships the qopensslbackend TLS plugin
         # (plugins/tls/) but not the OpenSSL shared libraries it dlopen()s

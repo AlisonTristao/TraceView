@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Adaptive-icon foreground: the trace glyph of resources/icons/app.svg
+     (256-unit viewBox) without its rounded tile; the launcher supplies the
+     mask and ic_launcher_background supplies the color. The glyph's bounds
+     (x 17..231, y 61..187, centered on 124,124) are scaled by 0.27 and
+     centered on 54,54 so it sits inside the 66dp safe zone of the 108dp
+     canvas that every launcher mask shape keeps visible. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <group
+        android:scaleX="0.27"
+        android:scaleY="0.27"
+        android:translateX="20.52"
+        android:translateY="20.52">
+        <path
+            android:pathData="M164,124 C180,124 194,76 216,76 M164,124 C180,124 194,172 216,172"
+            android:strokeColor="#3D8BFF"
+            android:strokeWidth="17"
+            android:strokeLineCap="round"
+            android:strokeLineJoin="round" />
+        <path
+            android:pathData="M32,124 H68 C82,124 84,111 91,86 C97,63 108,64 114,90 C121,121 132,176 140,166 C146,159 149,128 164,124 H216"
+            android:strokeColor="#F5F7FA"
+            android:strokeWidth="17"
+            android:strokeLineCap="round"
+            android:strokeLineJoin="round" />
+        <path
+            android:fillColor="#F5F7FA"
+            android:pathData="M17,124 a15,15 0 1,0 30,0 a15,15 0 1,0 -30,0 M201,76 a15,15 0 1,0 30,0 a15,15 0 1,0 -30,0 M201,124 a15,15 0 1,0 30,0 a15,15 0 1,0 -30,0 M201,172 a15,15 0 1,0 30,0 a15,15 0 1,0 -30,0" />
+        <path
+            android:fillColor="#3D8BFF"
+            android:pathData="M23.5,124 a8.5,8.5 0 1,0 17,0 a8.5,8.5 0 1,0 -17,0 M207.5,76 a8.5,8.5 0 1,0 17,0 a8.5,8.5 0 1,0 -17,0 M207.5,124 a8.5,8.5 0 1,0 17,0 a8.5,8.5 0 1,0 -17,0 M207.5,172 a8.5,8.5 0 1,0 17,0 a8.5,8.5 0 1,0 -17,0" />
+    </group>
+</vector>
