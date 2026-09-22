@@ -54,3 +54,8 @@ Thumbs.db
 *.dll
 *.so
 *.dylib
+
+# Vendored prebuilt OpenSSL for Android (see CMakeLists.txt's
+# QT_ANDROID_EXTRA_LIBS comment) -- third-party binaries we track on
+# purpose, not build output the *.so rule above means to catch.
+!android/openssl/**/*.so

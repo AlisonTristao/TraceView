@@ -224,6 +224,15 @@ if(ANDROID)
         # risks breaking packaging, see docs/ANDROID_BUILD.md) with just
         # Theme.Black.NoTitleBar added to the activity.
         QT_ANDROID_PACKAGE_SOURCE_DIR "${CMAKE_SOURCE_DIR}/android"
+        # Qt's Android kit ships the qopensslbackend TLS plugin
+        # (plugins/tls/) but not the OpenSSL shared libraries it dlopen()s
+        # at runtime -- Android has no system OpenSSL to link against the
+        # way desktop Linux does, so without these every HTTPS request
+        # (UpdateChecker's GitHub API polling included) fails outright.
+        # Prebuilt from KDAB/android_openssl (the library Qt's own Android
+        # docs point to for this) -- ssl_3 build, matching Qt 6.5+'s
+        # OpenSSL 3.x requirement.
+        QT_ANDROID_EXTRA_LIBS "${CMAKE_SOURCE_DIR}/android/openssl/arm64-v8a/libcrypto_3.so;${CMAKE_SOURCE_DIR}/android/openssl/arm64-v8a/libssl_3.so"
     )
 endif()
 
