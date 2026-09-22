@@ -21,17 +21,21 @@ release flow.
   session itself does not.
 - Per-screen-size dashboard layouts: each dashboard item now stores an
   independent position/size for three breakpoints (Phone/Tablet/Notebook)
-  instead of one shared layout, selected manually via a new toolbar button
-  (Developer mode only, next to the edit-mode lock) that also resizes the
-  TraceView window itself to approximate that device's shape (clamped to
-  fit the current screen, restored on returning to Notebook or leaving
-  Developer mode). In User mode the breakpoint instead follows the real
-  screen automatically. A +/− pair next to that button (hidden on Notebook)
-  lets a Phone/Tablet layout grow taller than the window one step at a time,
-  scrolling instead of being squeezed to fit once it exceeds the window;
-  off by default, and persisted per breakpoint alongside its layout.
-  Projects saved before this feature keep the same layout on all three
-  sizes until customized.
+  instead of one shared layout, selected manually via a new screen-size
+  button (Developer mode only, a menu-bar corner widget so it's reachable
+  from any tab, not just Dashboard) that also resizes the TraceView window
+  itself to approximate that device's shape (clamped to fit the current
+  screen, restored on returning to Notebook or leaving Developer mode). In
+  User mode the breakpoint instead follows the real screen automatically. A
+  +/− pair on the Dashboard tab's own toolbar, next to the edit-mode lock
+  (hidden on Notebook and whenever that lock is closed), lets a Phone/Tablet
+  layout grow taller than the window one step at a time, scrolling instead
+  of being squeezed to fit once it exceeds the window; off by default, and
+  persisted per breakpoint alongside its layout. Projects saved before this
+  feature keep the same layout on all three sizes until customized.
+- A "More options" button (⋮, status bar) mirrors the File/View/Access menus
+  as a plain widget, independent of the menu bar's own platform-specific
+  rendering.
 
 ## [3.3.19] - 2026-09-20
 

@@ -137,7 +137,10 @@ redo always targets the breakpoint a move/resize was originally made in,
 not whichever one happens to be on screen when Undo is pressed later).
 
 **Developer mode** (see "Editing a layout" above) has a screen-size button
-next to the edit-mode lock — three icons (phone/tablet/notebook). Picking
+with three icons (phone/tablet/notebook) — a corner widget of the menu bar
+(`QMenuBar::setCornerWidget()`, top-right), not the Dashboard tab's own
+toolbar, since it isn't specific to that tab being current (unlike the lock/
+panels/canvas-height buttons below, which stay in that toolbar). Picking
 Phone or Tablet does two things: switches `DashboardGrid` to that
 breakpoint, and resizes the TraceView window itself to a rough phone/tablet
 portrait size (`MainWindow::applyBreakpointWindowSize()`, clamped to fit the
@@ -146,20 +149,20 @@ actually be seen at, restoring the window's prior size/maximized state when
 switching back to Notebook (also triggered by leaving Developer mode
 altogether — see `MainWindow::applyUserMode()`).
 
-Next to it, a +/− pair (`DashboardGrid::growCanvasHeight()`/
-`shrinkCanvasHeight()`, hidden on Notebook and, unlike the screen-size
-button itself, also hidden whenever the edit-mode lock is closed — see
-`MainWindow::updateScreenSizeButtonIcon()`'s `editingActive()` check) lets a
-developer grow that breakpoint's canvas taller than the window one step at
-a time, for an
-arrangement that needs more vertical room than even the resized preview
-window gives it — `contentSize()` then asks for more height, and
-MainWindow's `QScrollArea` shows a scrollbar for the difference instead of
-squeezing every item to fit. Off (canvas exactly matches the window) until
-the first click; shrinking back past that same first step resets it fully.
-Persisted per breakpoint alongside its layout (`canvasHeightMultiplier` in
-the project file, see "Project file" below), since it's part of how that
-breakpoint's arrangement was built.
+On the Dashboard tab's own toolbar, next to the edit-mode lock, a +/− pair
+(`DashboardGrid::growCanvasHeight()`/`shrinkCanvasHeight()`, hidden on
+Notebook and, unlike the screen-size button itself, also hidden whenever
+the edit-mode lock is closed — see `MainWindow::updateScreenSizeButtonIcon()`'s
+`editingActive()` check) lets a developer grow that breakpoint's canvas
+taller than the window one step at a time, for an arrangement that needs
+more vertical room than even the resized preview window gives it —
+`contentSize()` then asks for more height, and MainWindow's `QScrollArea`
+shows a scrollbar for the difference instead of squeezing every item to
+fit. Off (canvas exactly matches the window) until the first click;
+shrinking back past that same first step resets it fully. Persisted per
+breakpoint alongside its layout (`canvasHeightMultiplier` in the project
+file, see "Project file" below), since it's part of how that breakpoint's
+arrangement was built.
 
 **User mode** never shows that button and never resizes the window itself —
 the breakpoint instead follows whichever real screen the window is running

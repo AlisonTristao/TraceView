@@ -115,7 +115,10 @@ constexpr int kMediumBreakpointMaxWidth = 1280;
 // current screen's own available space (see applyBreakpointWindowSize())
 // so the preview window never spills off a smaller monitor.
 const QSize kPhonePreviewWindowSize(360, 700);
-const QSize kTabletPreviewWindowSize(700, 900);
+// Narrower than an early draft (700x900, which read as too wide/square for
+// a "tablet") -- closer to a real Android tablet's portrait aspect ratio
+// (~0.6-0.65, e.g. 800x1280) than to a near-square shape.
+const QSize kTabletPreviewWindowSize(600, 1000);
 // Left/top-ish breathing room subtracted from the screen's available size
 // when clamping, so the window doesn't land flush against the taskbar/
 // screen edge with zero margin.
@@ -794,6 +797,36 @@ void MainWindow::buildMenus() {
 
     auto* donateAction = menuBar()->addAction(tr("Dona&te"));
     connect(donateAction, &QAction::triggered, this, &MainWindow::onDonate);
+
+    // Android-safe stand-in for the menu bar above -- a QMenuBar's own
+    // rendering on Android is unconfirmed (older Qt-for-Android versions
+    // relocated it into the native, now-deprecated Android options-menu
+    // instead of showing it as a normal widget row; whether that still
+    // applies hasn't been tested on a device). Reuses the exact same File/
+    // View/Access QMenu objects as submenus here -- QMenu::menuAction()'s
+    // own docs call this out as the supported way to re-add a menu to
+    // another widget -- so nothing here duplicates state: updateAccessMenu()'s
+    // rebuilds show up in this copy for free, no separate upkeep. Lives in
+    // the status bar (see buildRibbon()), a plain widget row with none of
+    // the menu bar's own platform ambiguity.
+    auto* optionsButton = new QToolButton(this);
+    optionsButton->setAutoRaise(true);
+    optionsButton->setPopupMode(QToolButton::InstantPopup);
+    // Vertical ellipsis -- the same "more options" glyph Android's own
+    // overflow icon uses, same plain-text-as-icon approach the notification
+    // history button (see buildRibbon()) already takes.
+    optionsButton->setText(QStringLiteral("⋮"));
+    optionsButton->setToolTip(tr("More options"));
+
+    auto* optionsMenu = new QMenu(optionsButton);
+    optionsMenu->addAction(fileMenu->menuAction());
+    optionsMenu->addAction(viewMenu->menuAction());
+    optionsMenu->addAction(m_accessMenu->menuAction());
+    optionsMenu->addSeparator();
+    optionsMenu->addAction(aboutAction);
+    optionsMenu->addAction(donateAction);
+    optionsButton->setMenu(optionsMenu);
+    statusBar()->addWidget(optionsButton);
 }
 
 void MainWindow::updateAccessMenu() {
@@ -1081,8 +1114,12 @@ Ribbon* MainWindow::buildRibbon() {
     // arrange each of the three per-screen-size layouts (see
     // dashboarditem.h) independently. In User mode the breakpoint instead
     // follows the real screen automatically (see applyAutoBreakpoint()) and
-    // this button plays no part.
-    m_screenSizeButton = new QToolButton(dashboardPage);
+    // this button plays no part. Lives in the menu bar's corner (see
+    // setCornerWidget() below), not the Dashboard tab's own toolbar --
+    // unlike the lock/panels/canvas-height buttons, it isn't specific to
+    // that tab being the current one, so it stays reachable regardless of
+    // which tab is showing.
+    m_screenSizeButton = new QToolButton(this);
     m_screenSizeButton->setAutoRaise(true);
     m_screenSizeButton->setPopupMode(QToolButton::InstantPopup);
     m_screenSizeButton->setFixedSize(kRibbonButtonSize, kRibbonButtonSize);
@@ -1107,6 +1144,15 @@ Ribbon* MainWindow::buildRibbon() {
     }
 
     m_screenSizeButton->setMenu(m_screenSizeMenu);
+    // Anchors it to the menu bar's own row instead of the ribbon -- visible
+    // no matter which ribbon tab is current. Note for later: a QMenuBar's
+    // own rendering on Android is unconfirmed (older Qt-for-Android
+    // versions relocated it into the native, now-deprecated Android
+    // options-menu instead of showing it as a normal widget row) -- if that
+    // turns out to still apply, whatever lives in its corner would be
+    // affected too, and this button might need a different home once that's
+    // actually tested on a device.
+    menuBar()->setCornerWidget(m_screenSizeButton, Qt::TopRightCorner);
 
     // Canvas height +/- -- Small/Medium only (hidden for Notebook, see
     // updateCanvasHeightButtons()): grows/shrinks that breakpoint's canvas
@@ -1210,7 +1256,6 @@ Ribbon* MainWindow::buildRibbon() {
     dashboardLayout->addWidget(m_deviceStatusLabel);
     dashboardLayout->addStretch();
     dashboardLayout->addWidget(m_togglePanelsButton);
-    dashboardLayout->addWidget(m_screenSizeButton);
     dashboardLayout->addWidget(m_canvasShrinkButton);
     dashboardLayout->addWidget(m_canvasGrowButton);
     dashboardLayout->addWidget(m_editModeButton);
