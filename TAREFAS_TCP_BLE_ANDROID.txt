@@ -1117,7 +1117,15 @@ ETAPA 6 — ANDROID
        trabalho que a assinatura GPG do Flatpak exigiu) fica como
        pendencia separada, nao bloqueia essa entrega instavel.
     v4.0.0 publicado no GitHub Releases com os quatro pacotes + checksums
-    apos essas correcoes. Smoke test em emulador ainda nao existe:
+    apos essas correcoes -- mas o bug 3 (apk sem assinatura) so foi
+    percebido porque o usuario tentou instalar de verdade no aparelho
+    ("arquivo invalido") e eu reproduzi rodando apksigner a mao; nao havia
+    nada no CI que pegasse isso antes de publicar. Corrigido com uma nova
+    etapa "Verify APK signature and manifest" na job (roda apksigner
+    verify + aapt dump badging no apk logo depois do build, antes de
+    subir o artifact) -- barato, sem emulador, teria pego exatamente essa
+    falha (e tambem pega identidade de pacote errada, ver bug (a) acima).
+    Smoke test completo (instalar+abrir num emulador) ainda nao existe:
     o APK e arm64-v8a e os runners padrao do GitHub sao x86_64 -- emulador
     acelerado por KVM ai normalmente nao roda ARM64 nativo direito
     (tradução de instrucoes e lenta/pouco confiavel). Decisao consciente

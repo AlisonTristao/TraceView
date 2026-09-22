@@ -253,6 +253,24 @@ jobs:
           cp TraceView.apk "TraceView-$version-android-arm64.apk"
           sha256sum "TraceView-$version-android-arm64.apk" > sha256-android.txt
 
+      # Cheap, no emulator needed -- catches the exact failure class that
+      # shipped in the first v4.0.0 attempt (an unsigned APK from the
+      # Release preset, which installs nowhere: apksigner reported "Missing
+      # META-INF/MANIFEST.MF", device installers just say "invalid file").
+      # `aapt dump badging` separately confirms AndroidManifest.xml parses
+      # and prints the resolved package identity into the job log, so a
+      # wrong package name/version (like the Qt placeholder this job also
+      # used to ship, see T45's note) shows up here too instead of only
+      # being caught by eyeballing a release page.
+      - name: Verify APK signature and manifest
+        run: |
+          apk="build/android-arm64/android-build/TraceView-*-android-arm64.apk"
+          build_tools="$ANDROID_SDK_ROOT/build-tools/35.0.0"
+          "$build_tools/apksigner" verify --verbose $apk
+          "$build_tools/aapt" dump badging $apk | grep -E "^package:|launchable-activity:"
+        env:
+          ANDROID_SDK_ROOT: ${{ github.workspace }}/android-sdk
+
       - name: Upload package artifact
         uses: actions/upload-artifact@v4
         with:
