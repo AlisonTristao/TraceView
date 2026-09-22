@@ -118,14 +118,12 @@ jobs:
   # ============================================================
   # Android package (.apk)
   # ============================================================
-  # UNVALIDATED in CI -- the android-arm64 preset itself was only just
-  # exercised for the first time on a developer machine (see
-  # docs/ANDROID_BUILD.md and TAREFAS_TCP_BLE_ANDROID.txt's T45 note); this
-  # job mirrors that local recipe but has not yet run green here. Debug-
-  # keystore signed (android-arm64-release only gets past Gradle's debug-
-  # keystore default, see that preset's own description) -- fine while the
-  # app itself is still unstable, real release signing is a separate T45
-  # follow-up.
+  # Builds the android-arm64 preset (Debug, not android-arm64-release --
+  # see that step's own comment for why) validated for the first time on a
+  # developer machine for T45 (see docs/ANDROID_BUILD.md and
+  # TAREFAS_TCP_BLE_ANDROID.txt's note there). Debug-keystore signed --
+  # fine while the app itself is still unstable; real release signing is a
+  # separate follow-up (same kind of pass Flatpak's GPG signing needed).
   android-package:
     name: Android package (arm64-v8a)
     runs-on: ubuntu-24.04
@@ -219,27 +217,39 @@ jobs:
         env:
           ANDROID_SDK_ROOT: ${{ github.workspace }}/android-sdk
 
-      - name: Configure (Release)
+      # Deliberately the Debug preset, not android-arm64-release: Gradle's
+      # Android plugin only auto-signs assembleDebug with its built-in debug
+      # keystore -- assembleRelease (what the -release preset drives) is
+      # UNSIGNED by default unless a real signingConfig is wired in, and an
+      # unsigned APK fails to install at all ("arquivo inválido" on-device,
+      # confirmed locally: apksigner verify reports "Missing
+      # META-INF/MANIFEST.MF"). Real release signing needs a keystore
+      # generated and stored safely (GitHub Secrets, same kind of pass
+      # Flatpak's GPG signing needed -- see CONTRIBUTING.md) -- a separate
+      # follow-up, not done here. The Debug preset's debug-keystore APK is
+      # a real, installable build, which is what this unstable release
+      # cycle actually needs.
+      - name: Configure (Debug)
         env:
           ANDROID_SDK_ROOT: ${{ github.workspace }}/android-sdk
           ANDROID_NDK_ROOT: ${{ github.workspace }}/android-sdk/ndk/${{ env.ANDROID_NDK_VERSION }}
           QT_ANDROID_ROOT_DIR: ${{ env.QT_INSTALL_DIR }}/${{ env.QT_VERSION }}/android_arm64_v8a
           QT_ROOT_DIR: ${{ env.QT_INSTALL_DIR }}/${{ env.QT_VERSION }}/gcc_64
-        run: cmake --preset android-arm64-release
+        run: cmake --preset android-arm64
 
-      - name: Build (Release)
+      - name: Build (Debug)
         env:
           ANDROID_SDK_ROOT: ${{ github.workspace }}/android-sdk
           ANDROID_NDK_ROOT: ${{ github.workspace }}/android-sdk/ndk/${{ env.ANDROID_NDK_VERSION }}
           QT_ANDROID_ROOT_DIR: ${{ env.QT_INSTALL_DIR }}/${{ env.QT_VERSION }}/android_arm64_v8a
           QT_ROOT_DIR: ${{ env.QT_INSTALL_DIR }}/${{ env.QT_VERSION }}/gcc_64
-        run: cmake --build --preset android-arm64-release
+        run: cmake --build --preset android-arm64
 
       - name: Rename and checksum APK
         run: |
           version="${GITHUB_REF_NAME#v}"
           [[ $version =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo 'Invalid release version' >&2; exit 1; }
-          cd build/android-arm64-release/android-build
+          cd build/android-arm64/android-build
           cp TraceView.apk "TraceView-$version-android-arm64.apk"
           sha256sum "TraceView-$version-android-arm64.apk" > sha256-android.txt
 
@@ -248,8 +258,8 @@ jobs:
         with:
           name: android-package
           path: |
-            build/android-arm64-release/android-build/TraceView-*-android-arm64.apk
-            build/android-arm64-release/android-build/sha256-android.txt
+            build/android-arm64/android-build/TraceView-*-android-arm64.apk
+            build/android-arm64/android-build/sha256-android.txt
           if-no-files-found: error
 
   # ============================================================

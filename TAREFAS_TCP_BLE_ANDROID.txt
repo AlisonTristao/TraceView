@@ -1087,6 +1087,43 @@ ETAPA 6 — ANDROID
     ver nota do T44); (c) nenhum smoke test de instalacao em emulador ou
     aparelho fisico ainda -- sem aparelho disponivel nesta sessao.
 
+    Nota 2 (2026-09-22): (a) resolvido -- CMakeLists.txt agora seta
+    QT_ANDROID_PACKAGE_NAME/_VERSION_NAME/_VERSION_CODE a partir de
+    PROJECT_VERSION quando ANDROID (io.github.alisontristao.traceview,
+    versionCode MAJOR*10000+MINOR*100+PATCH). android-package adicionado
+    a .github/workflows/release.yml, disparado por tag vX.Y.Z junto com os
+    pacotes Windows/Linux/Flatpak existentes. Levou tres rodadas reais de
+    CI pra ficar verde, cada uma um problema diferente:
+    1. jurplel/install-qt-action com arch "gcc_64" pro alvo desktop Linux
+       falha em qualquer versao 6.9.x ("packages ['qt_base'] were not
+       found") -- aqtinstall (checado localmente: v3.2.1 e v3.3.0) so
+       resolve com o identificador completo "linux_gcc_64".
+    2. A mesma action falha pro alvo android com "No latest version
+       available": a resolucao interna dela (`aqt list-qt linux android
+       --spec <versao> --latest-version`) usa um indice local de versoes
+       que so vai ate 6.7.3, desatualizado em relacao ao repositorio real.
+       Chamar `aqt install-qt` direto (sem passar por essa resolucao)
+       funciona pros dois alvos -- troquei os dois passos de instalacao do
+       Qt na job pra chamar aqt via pip diretamente, tirando a action do
+       meio.
+    3. Preset android-arm64-release (Release) produz um APK SEM assinatura
+       nenhuma (`apksigner verify` reporta "Missing META-INF/MANIFEST.MF")
+       -- builds assembleRelease do Gradle/Android nao sao assinados por
+       padrao, diferente de assembleDebug (que usa automaticamente o
+       keystore de debug). Um APK sem assinatura nao instala em aparelho
+       nenhum ("arquivo invalido"). A job agora builda o preset Debug
+       (android-arm64) em vez do Release -- assinatura de release de
+       verdade (keystore gerado e guardado com seguranca, mesmo tipo de
+       trabalho que a assinatura GPG do Flatpak exigiu) fica como
+       pendencia separada, nao bloqueia essa entrega instavel.
+    v4.0.0 publicado no GitHub Releases com os quatro pacotes + checksums
+    apos essas correcoes. Smoke test em emulador ainda nao existe:
+    o APK e arm64-v8a e os runners padrao do GitHub sao x86_64 -- emulador
+    acelerado por KVM ai normalmente nao roda ARM64 nativo direito
+    (tradução de instrucoes e lenta/pouco confiavel). Decisao consciente
+    de nao investir nisso agora; validacao real fica pro T50 com aparelho
+    fisico, como ja previsto.
+
 [ ] T46 — Implementar permissões e disponibilidade Android
     Frente: TraceView/Android. Depende de: T45, T15.
     Fazer: solicitar permissões BLE em tempo de execução e cumprir
