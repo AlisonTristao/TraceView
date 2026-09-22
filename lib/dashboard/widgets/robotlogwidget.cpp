@@ -152,6 +152,11 @@ void RobotLogWidget::rebuildTabs(const QStringList& deviceIds) {
         table->horizontalHeader()->setStretchLastSection(true);
         table->setWordWrap(false);
         table->setMinimumHeight(120);
+        // Boot ID and Sequence are mostly noise for a live dashboard tile --
+        // hidden rather than removed from the model, so Message (the
+        // stretched last section) picks up their freed width automatically.
+        table->hideColumn(RobotLogModel::BootIdColumn);
+        table->hideColumn(RobotLogModel::SequenceColumn);
 
         m_models.append(model);
         m_tables.append(table);

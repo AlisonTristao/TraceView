@@ -4,6 +4,12 @@ namespace traceview {
 
 namespace {
 
+// Single source of truth for the breakpoint <-> JSON-key mapping used by
+// both directions below -- one array instead of a switch per direction, so
+// breakpointFromString's loop is exhaustive by construction instead of an
+// if/if/fallthrough that silently drops a size someone forgets to add.
+constexpr const char* kBreakpointNames[kDashboardBreakpointCount] = {"small", "medium", "large"};
+
 QJsonObject geometryToJson(const DashboardItem::Geometry& geometry) {
     QJsonObject object;
     object["x"] = geometry.x;
@@ -24,6 +30,21 @@ DashboardItem::Geometry geometryFromJson(const QJsonObject& object) {
 
 }  // namespace
 
+QString breakpointToString(DashboardBreakpoint breakpoint) {
+    return QString::fromLatin1(kBreakpointNames[size_t(breakpoint)]);
+}
+
+// Defaults to Large for anything unrecognized -- absent (projects saved
+// before per-screen-size layouts existed) or corrupt alike.
+DashboardBreakpoint breakpointFromString(const QString& value) {
+    for (int i = 0; i < kDashboardBreakpointCount; ++i) {
+        if (value == QLatin1String(kBreakpointNames[i])) {
+            return DashboardBreakpoint(i);
+        }
+    }
+    return DashboardBreakpoint::Large;
+}
+
 QJsonObject dashboardItemToJson(const DashboardItem& item) {
     QJsonObject object;
     object["id"] = item.id;
@@ -34,9 +55,10 @@ QJsonObject dashboardItemToJson(const DashboardItem& item) {
     object["groupId"] = item.groupId;
 
     QJsonObject layouts;
-    layouts["small"] = geometryToJson(item.small);
-    layouts["medium"] = geometryToJson(item.medium);
-    layouts["large"] = geometryToJson(item.large);
+    for (int i = 0; i < kDashboardBreakpointCount; ++i) {
+        const DashboardBreakpoint breakpoint = DashboardBreakpoint(i);
+        layouts[breakpointToString(breakpoint)] = geometryToJson(item.geometry(breakpoint));
+    }
     object["layouts"] = layouts;
     return object;
 }
@@ -61,22 +83,22 @@ DashboardItem dashboardItemFromJson(const QJsonObject& object, bool* ok) {
 
     if (object.contains("layouts")) {
         const QJsonObject layouts = object.value("layouts").toObject();
-        item.small = geometryFromJson(layouts.value("small").toObject());
-        item.medium = geometryFromJson(layouts.value("medium").toObject());
-        item.large = geometryFromJson(layouts.value("large").toObject());
+        for (int i = 0; i < kDashboardBreakpointCount; ++i) {
+            const DashboardBreakpoint breakpoint = DashboardBreakpoint(i);
+            item.geometry(breakpoint) =
+                geometryFromJson(layouts.value(breakpointToString(breakpoint)).toObject());
+        }
     } else {
         // Projects saved before per-screen-size layouts existed store a
         // single flat x/y/width/height -- seed all three breakpoints with it
         // so an old dashboard looks exactly as before until a developer
         // customizes one breakpoint's arrangement on its own.
         const DashboardItem::Geometry legacy = geometryFromJson(object);
-        item.small = legacy;
-        item.medium = legacy;
-        item.large = legacy;
+        item.geometries.fill(legacy);
     }
 
-    *ok = !item.id.isEmpty() && !item.typeId.isEmpty() && item.large.width > 0.0 &&
-          item.large.height > 0.0;
+    const DashboardItem::Geometry& large = item.geometry(DashboardBreakpoint::Large);
+    *ok = !item.id.isEmpty() && !item.typeId.isEmpty() && large.width > 0.0 && large.height > 0.0;
     return item;
 }
 

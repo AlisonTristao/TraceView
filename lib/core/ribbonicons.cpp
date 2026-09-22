@@ -96,4 +96,8 @@ QIcon makeNotebookIcon(const QColor& color) {
     return loadTintedIcon(":/icons/ribbon/screen-notebook.svg", color, kRibbonIconSize);
 }
 
+QIcon makeOptionsIcon(const QColor& color) {
+    return loadTintedIcon(":/icons/ribbon/options.svg", color, kRibbonIconSize);
+}
+
 }  // namespace traceview

@@ -1302,6 +1302,10 @@
 <context>
     <name>traceview::MainWindow</name>
     <message>
+        <source>View as user</source>
+        <translation>Visualizar como usuário</translation>
+    </message>
+    <message>
         <location filename="../lib/core/mainwindow.cpp" line="144" />
         <source>TraceView v%1</source>
         <translation>TraceView v%1</translation>

@@ -307,38 +307,42 @@ void TestDashboardGrid::growShrinkCanvasHeightAffectsOnlySmallMedium() {
     grid.resize(400, 300);
     QCOMPARE(grid.currentBreakpoint(), DashboardBreakpoint::Large);
 
-    const QSize largeBefore = grid.sizeHint();
+    // The grown height used to show up in the grid's own sizeHint(); it now
+    // lives in canvasHeightMultiplier(), which DevicePreviewFrame reads to
+    // size its device rect (see DashboardGrid::contentSize()). The grid's
+    // own size hint is a fixed floor again, so assert that too -- a
+    // regression there would silently reintroduce the old coupling.
+    const QSize floorHint = grid.sizeHint();
+
     grid.growCanvasHeight();  // no-op on Large
-    QCOMPARE(grid.sizeHint(), largeBefore);
+    QCOMPARE(grid.canvasHeightMultiplier(DashboardBreakpoint::Large), 0.0);
+    QCOMPARE(grid.sizeHint(), floorHint);
 
     grid.setBreakpoint(DashboardBreakpoint::Small);
-    const QSize smallUngrown = grid.sizeHint();
+    QCOMPARE(grid.canvasHeightMultiplier(DashboardBreakpoint::Small), 0.0);
     grid.growCanvasHeight();
-    const QSize smallGrown = grid.sizeHint();
-    QVERIFY(smallGrown.height() > smallUngrown.height());
-    QCOMPARE(smallGrown.width(), smallUngrown.width());  // never widens
+    const double smallGrown = grid.canvasHeightMultiplier(DashboardBreakpoint::Small);
+    QVERIFY(smallGrown > 0.0);
+    QCOMPARE(grid.sizeHint(), floorHint);  // never grows the grid itself
 
     grid.growCanvasHeight();
-    const QSize smallGrownMore = grid.sizeHint();
-    QVERIFY(smallGrownMore.height() > smallGrown.height());
+    QVERIFY(grid.canvasHeightMultiplier(DashboardBreakpoint::Small) > smallGrown);
 
     grid.shrinkCanvasHeight();
-    QCOMPARE(grid.sizeHint().height(), smallGrown.height());
+    QCOMPARE(grid.canvasHeightMultiplier(DashboardBreakpoint::Small), smallGrown);
 
     grid.shrinkCanvasHeight();
     // Back to (or past) the starting point -- resets fully to "off", same
     // as before any growth, rather than leaving a barely-grown canvas.
-    QCOMPARE(grid.sizeHint(), smallUngrown);
+    QCOMPARE(grid.canvasHeightMultiplier(DashboardBreakpoint::Small), 0.0);
 
     // Medium's own growth is independent of Small's.
     grid.setBreakpoint(DashboardBreakpoint::Medium);
-    QCOMPARE(grid.sizeHint(), smallUngrown);  // same floor, never grown
+    QCOMPARE(grid.canvasHeightMultiplier(DashboardBreakpoint::Medium), 0.0);
     grid.growCanvasHeight();
-    QVERIFY(grid.sizeHint().height() > smallUngrown.height());
-
-    grid.setBreakpoint(DashboardBreakpoint::Small);
-    QCOMPARE(grid.sizeHint(),
-             smallUngrown);  // Small's own earlier reset is untouched by Medium's growth
+    QVERIFY(grid.canvasHeightMultiplier(DashboardBreakpoint::Medium) > 0.0);
+    // Small's own earlier reset is untouched by Medium's growth.
+    QCOMPARE(grid.canvasHeightMultiplier(DashboardBreakpoint::Small), 0.0);
 }
 
 void TestDashboardGrid::toJsonFromJsonRoundTripsCanvasHeightMultiplier() {

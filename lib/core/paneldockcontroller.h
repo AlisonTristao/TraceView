@@ -91,6 +91,15 @@ public:
     // re-save here.
     void trackWindowMoved(QPoint delta);
 
+    // Pulls every floating panel back inside whichever screen it's nearest
+    // to, if it isn't fully on one already. Call after any programmatic
+    // window-geometry change that trackWindowMoved() deliberately doesn't
+    // follow (a fullscreen toggle, a restoreGeometry()) -- those can leave a
+    // panel stranded at coordinates no monitor covers, with no drag left to
+    // bring it back. A no-op for panels already fully on-screen, so it's
+    // safe to call unconditionally.
+    void clampFloatingPanelsToScreen();
+
     // Puts every registered panel back at the edge/thickness passed to its
     // registerPanel() call (or, for a panel whose default is itself
     // Floating, back to defaultFloatingGeometry()) -- the escape hatch for a

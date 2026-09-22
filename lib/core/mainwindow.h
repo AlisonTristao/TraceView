@@ -23,12 +23,12 @@ class QLabel;
 class QMenu;
 class QMoveEvent;
 class QResizeEvent;
-class QScreen;
 class QScrollArea;
 class QShowEvent;
 class QStackedWidget;
 class QTimer;
 class QToolButton;
+class QTreeWidget;
 class QUndoGroup;
 
 namespace traceview {
@@ -42,6 +42,7 @@ class DashboardGrid;
 class DashboardWidget;
 class DebugChartsWindow;
 class DeviceConnection;
+class DevicePreviewFrame;
 class DevicesGrid;
 class DiagramScriptRuntime;
 class FrameLog;
@@ -73,7 +74,11 @@ public:
 protected:
     // Watches m_contentRow for QEvent::Resize so m_layersPanel/
     // m_propertiesPanel (floated over the canvas, not laid out beside it --
-    // see positionOverlayPanels()) get repositioned whenever it changes size.
+    // see positionOverlayPanels()) get repositioned whenever it changes size;
+    // also watches m_dashboardScrollArea->viewport() for QEvent::Resize so
+    // applyBreakpointViewport() can re-derive the canvas-height-multiplier
+    // pixel math (which reads that viewport's current height) whenever it
+    // changes, not just when the breakpoint itself does.
     bool eventFilter(QObject* watched, QEvent* event) override;
     // Applies any floating panel's saved position on the very first show --
     // m_dockController defers that (see PanelDockController::
@@ -86,11 +91,13 @@ protected:
     // dragging TraceView carries its floating panels along instead of
     // leaving them behind at their old screen position.
     void moveEvent(QMoveEvent* event) override;
-    // Re-asserts the auto-detected screen-size breakpoint (see
-    // applyAutoBreakpoint()) on every resize while in User mode -- most
-    // resizes won't actually change which monitor's availableGeometry()
-    // drives the decision, so this is a cheap, idempotent double-check
-    // alongside the QScreen signals applyAutoBreakpoint() itself wires up.
+    // Re-derives the auto-detected screen-size breakpoint (see
+    // applyAutoBreakpoint()) on every resize while in User mode. This is now
+    // the primary way the breakpoint tracks the window's real size -- unlike
+    // before the device-viewport preview existed, a resize genuinely can
+    // change the result, so applyAutoBreakpoint()'s own dead band is what
+    // keeps this from thrashing setBreakpoint() while a border is dragged
+    // back and forth across a threshold.
     void resizeEvent(QResizeEvent* event) override;
 
 private:
@@ -108,16 +115,19 @@ private:
     // UI reflects the mode it always starts in (User) before the window is
     // ever shown.
     void applyUserMode(UserModeManager::UserMode mode);
-    // Recomputes the auto-detected screen-size breakpoint from whichever
-    // monitor the window is currently on (QScreen::availableGeometry()) and
-    // applies it to m_dashboardGrid -- but only while in User mode; in
-    // Developer mode the screen-size button (m_screenSizeButton) is the only
-    // thing that changes the breakpoint, never a screen/resolution change.
-    // Safe to call unconditionally from anywhere (mode change, a dashboard
-    // reload, a resize, a screen signal) -- it's a no-op outside User mode.
-    // Also keeps m_watchedScreen's availableGeometryChanged subscription
-    // pointed at the right QScreen, regardless of mode, so that's already
-    // correct the moment User mode is (re-)entered.
+    // Recomputes the auto-detected screen-size breakpoint from
+    // m_dashboardScrollArea->viewport()'s own width and applies it to
+    // m_dashboardGrid -- but only while in User mode; in Developer mode the
+    // screen-size button (m_screenSizeButton) is the only thing that changes
+    // the breakpoint, never a resize. Safe to call unconditionally from
+    // anywhere (mode change, a dashboard reload, a resize) -- it's a no-op
+    // outside User mode. In User mode there's no device frame (see
+    // applyBreakpointViewport()), so the viewport's width already equals the
+    // canvas's own -- the same thing Developer mode's manual preview reads
+    // through the frame. Applies a +/-40px dead band around each threshold,
+    // measured against the breakpoint already active, so dragging the window
+    // border back and forth across a threshold doesn't thrash setBreakpoint()
+    // (and the relayout() it triggers) once every pixel.
     void applyAutoBreakpoint();
     // Re-applies whichever screen-size breakpoint a just-loaded dashboard's
     // own JSON carries (see DashboardGrid::fromJson()), then -- since that
@@ -129,24 +139,66 @@ private:
     // DashboardGrid::breakpointChanged handler -- keeps m_screenSizeButton's
     // icon/tooltip and its menu's checked entry in sync with whichever
     // breakpoint is actually active, however it got there (the button's own
-    // menu, an undo/redo, a project load, or auto-detection).
+    // menu, an undo/redo, a project load, or auto-detection). Icon/tooltip
+    // only -- canvas +/- visibility is updateCanvasHeightButtons()'s job and
+    // the options button's is now a fixed platform choice (see
+    // kUsesCompactChrome in mainwindow.cpp); syncBreakpointChrome() is the
+    // one place that still calls all of the breakpoint-driven updates together.
     void updateScreenSizeButtonIcon();
+    // Canvas height +/- buttons' visibility/icons -- shown only for a
+    // preview breakpoint (isPreviewBreakpoint()) while editingActive(), same
+    // condition as before this was split out of updateScreenSizeButtonIcon().
+    void updateCanvasHeightButtons();
+    // Runs updateScreenSizeButtonIcon() and updateCanvasHeightButtons()
+    // together -- the facade every call site that used to call the combined
+    // updateScreenSizeButtonIcon() now calls instead (breakpointChanged,
+    // applyUserMode(), updateRibbonIcons(), the ribbon tab change, the
+    // edit-mode toggle).
+    void syncBreakpointChrome();
     // The screen-size menu's own three actions (Phone/Tablet/Notebook) call
     // this instead of DashboardGrid::setBreakpoint() directly -- it does
-    // that AND resizes the app window itself to approximate that device's
-    // real shape (see applyBreakpointWindowSize()). Manual selection only:
-    // auto-detection (applyAutoBreakpoint(), User mode) never touches the
-    // window's size, since the window is presumed to already match the real
-    // screen it's running on.
+    // that AND applies the matching device viewport (see
+    // applyBreakpointViewport()). Manual selection only: auto-detection
+    // (applyAutoBreakpoint(), User mode) never touches the viewport itself,
+    // since there the canvas is presumed to already match the real screen
+    // it's running on (no frame).
     void onScreenSizeBreakpointSelected(DashboardBreakpoint breakpoint);
-    // Resizes the app window to a fixed phone/tablet preview size for
-    // Small/Medium, so a developer sees roughly what that screen size will
-    // actually look like rather than just a differently-arranged canvas
-    // inside the same window. Remembers the window's own size (and
-    // maximized state) the first time it does this, and restores both when
-    // `breakpoint` comes back to Large -- so leaving the preview doesn't
-    // strand the window at a small size.
-    void applyBreakpointWindowSize(DashboardBreakpoint breakpoint);
+    // True while Developer mode has a Small/Medium breakpoint selected --
+    // the one condition that means "a manual device preview is up" (see
+    // applyBreakpointViewport()). Factored out so compactChromeActive() can
+    // reuse the exact same test instead of re-deriving "preview active" a
+    // second way.
+    bool previewActive() const;
+    // Sets m_devicePreviewFrame's device size to the (unmultiplied) Phone/
+    // Tablet viewport whenever previewActive() -- kPhoneViewportSize/
+    // kTabletViewportSize's height is no longer scaled by
+    // m_dashboardGrid->canvasHeightMultiplier() here (that used to stretch
+    // the DEVICE itself); a phone's screen is a fixed size, so growing the
+    // canvas now grows m_dashboardGrid's own minimumHeight instead, scrolled
+    // via m_dashboardScrollArea *inside* the fixed device -- see the .cpp.
+    // QSize() (no frame) for Large or outside Developer mode. Called
+    // whenever the breakpoint changes by any path (manual selection, auto-
+    // detection, undo/redo, a project load), whenever the canvas height +/-
+    // buttons change the multiplier for the currently active breakpoint, and
+    // (via the eventFilter() on m_dashboardScrollArea's viewport) whenever
+    // that viewport resizes, since the canvas-height pixel math depends on
+    // its current size.
+    void applyBreakpointViewport();
+    // True whenever the app is showing the chrome a phone/tablet gets
+    // instead of the desktop's native menu bar: always on Android
+    // (kUsesCompactChrome), and on desktop while a Developer-mode Phone/
+    // Tablet preview is up (previewActive()) -- so the preview genuinely
+    // shows the mobile chrome the app will render on a phone, rather than a
+    // desktop window with a few pieces hidden. Drives menuBar()/
+    // m_optionsButton/m_chromeTopBar visibility (see updateChromeVisibility()).
+    bool compactChromeActive() const;
+    // The single place that reconciles menuBar()/m_optionsButton/
+    // m_chromeTopBar visibility against BOTH compactChromeActive() and
+    // fullscreen (m_fullscreenButton->isChecked()) -- the two independent
+    // reasons the menu bar can be hidden, so neither one's logic clobbers
+    // the other's (see onFullscreenToggled()). Called from syncBreakpointChrome()
+    // (breakpoint/mode changes) and directly from onFullscreenToggled().
+    void updateChromeVisibility();
     Ribbon* buildRibbon();
     void buildPropertiesPanel();
     void buildLayersPanel();
@@ -194,7 +246,12 @@ private:
     // is on. Replaces the old m_configureTabActive, which used to be derived
     // straight from "is the Layout tab the current one".
     bool editingActive() const {
-        return m_dashboardTabActive && m_editModeEnabled;
+        return developerUiActive() && !m_subscriptionsWorkspaceActive &&
+               m_dashboardTabActive && m_editModeEnabled;
+    }
+    bool developerUiActive() const {
+        return UserModeManager::instance().mode() == UserModeManager::UserMode::Developer &&
+               !m_previewAsUser;
     }
     void onSelectionChanged(const QString& itemId);
     void updateSelectionActions();
@@ -377,6 +434,14 @@ private:
     void postStatus(const QString& text, int timeoutMs,
                     traceview::StatusSeverity severity = traceview::StatusSeverity::Info,
                     const QString& source = QString());
+    // Replaces statusBar()->showMessage(text, timeoutMs) now that m_statusRow
+    // is a plain QWidget, not a QStatusBar: sets m_statusMessageLabel's text
+    // and (re)starts m_statusMessageTimer to clear it after timeoutMs (0 =
+    // stays until replaced, same as QStatusBar's own convention). A member
+    // QTimer restarted on every call, rather than a fresh QTimer::singleShot
+    // each time, so an earlier message's timer can't outlive it and clear a
+    // newer one early. postStatus() is the sole caller.
+    void showStatusMessage(const QString& text, int timeoutMs);
     // Forwards OtaTab::passwordCacheChanged into an actual Device mutation --
     // OtaTab has no undo stack of its own to push this onto.
     void onOtaPasswordCacheChanged(const QString& deviceId, const QString& password, bool cache);
@@ -485,11 +550,13 @@ private:
     // fraction-of-canvas geometry constraint, so swapping/resizing it here
     // doesn't reflow anything the way shrinking the canvas would.
     QStackedWidget* m_contentStack = nullptr;
-    // Wraps m_dashboardGrid so a screen-size breakpoint that needs more
-    // vertical room than the viewport (Small/Medium -- see
-    // DashboardGrid::contentSize()) gets a scrollbar instead of squeezing
-    // every widget down to fit; what's actually added to m_contentStack in
-    // its place. See MainWindow::MainWindow().
+    // Wraps m_dashboardGrid directly (setWidget(m_dashboardGrid)) so a canvas
+    // taller than the device's own screen -- Small/Medium, once canvas height
+    // +/- has grown m_dashboardGrid's minimumHeight past it, see
+    // applyBreakpointViewport() -- gets a scrollbar *inside* the device
+    // instead of the device itself growing. Unlike before the whole-app
+    // preview (see m_devicePreviewFrame below), this no longer wraps a frame:
+    // the frame moved up to emolder the entire app, not just this canvas.
     QScrollArea* m_dashboardScrollArea = nullptr;
     PropertiesPanel* m_propertiesPanel = nullptr;
     LayersPanel* m_layersPanel = nullptr;
@@ -498,6 +565,28 @@ private:
     // float above m_dashboardGrid instead of sharing its row -- see
     // positionOverlayPanels().
     QWidget* m_contentRow = nullptr;
+    // Compact top bar: options on the left. The screen-size selector lives
+    // in the status row. Hidden on desktop by updateChromeVisibility().
+    QWidget* m_chromeTopBar = nullptr;
+    // Everything the app actually shows -- m_chromeTopBar, the ribbon,
+    // m_contentRow, m_statusRow -- reparented here as this frame's sole
+    // content (see DevicePreviewFrame::setContentWidget()) so a Developer-
+    // mode Phone/Tablet preview frames the WHOLE app, not just the dashboard
+    // canvas: the ribbon, m_chromeTopBar (which is what a phone build shows
+    // instead of the native menu bar -- see compactChromeActive()) and
+    // m_statusRow (which replaces the native status bar) all shrink to
+    // device size together, exactly as they will on Android. Sits directly
+    // inside m_devicePreviewFrame; QSize() (no frame, Notebook/User mode)
+    // just lets it fill the frame's own rect() unchanged. See
+    // MainWindow::MainWindow() for the full widget tree.
+    QWidget* m_appShell = nullptr;
+    // Frames m_appShell inside a device-shaped viewport for a manual Phone/
+    // Tablet preview (Developer mode only), or lets it fill the whole central
+    // widget for Notebook/User mode -- see devicepreviewframe.h. What
+    // setCentralWidget()'s own top-level layout actually wraps now (in place
+    // of the ribbon/m_contentRow stack directly); m_appShell becomes its
+    // child instead.
+    DevicePreviewFrame* m_devicePreviewFrame = nullptr;
     // Owns the panels' drag-to-dock/float behavior -- see paneldockcontroller.h.
     PanelDockController* m_dockController = nullptr;
     // Guards showEvent() so applyFloatingPositions() runs once, on the
@@ -536,6 +625,8 @@ private:
     // differs enough between User/Developer that toggling individual action
     // visibility isn't simpler than just clearing and re-adding).
     QMenu* m_accessMenu = nullptr;
+    // Visual preview only: preserves the developer session and manual breakpoint.
+    bool m_previewAsUser = false;
     // WA_DeleteOnClose'd (see debugchartswindow.cpp) -- QPointer so this
     // resets to null on its own once the user closes it, instead of leaving
     // a dangling raw pointer behind for the next "Debug" click to dereference.
@@ -584,10 +675,10 @@ private:
     // config edit (or its undo/redo) could have changed a widget's device/
     // source/topic/sample time.
     void refreshWidgetSubscriptions();
-    // Recomputes the status-bar telemetry summary (requested vs. effective
+    // Recomputes the built-in subscriptions table (requested vs. effective
     // rate, plus bytes/drops from a status_version=2 STATUS), aggregated
     // across every connected device's Backend.
-    void updateTelemetryStatusLabel();
+    void updateSubscriptionsWorkspace();
     // Rebuilds the Dashboard tab's device status strip from m_devicesGrid's
     // current list/connection state. Called on every device add/remove/
     // update/connection-state change, and on theme change (dot colors).
@@ -639,7 +730,28 @@ private:
     // or hand BtpBackend an on/off/on); cleared the moment the robot's own
     // frames are flowing, which bypasses this path entirely.
     QHash<QString, int> m_hubChildOfflineTicks;
-    QLabel* m_telemetryStatusLabel = nullptr;
+    // Own status row replacing the native QStatusBar (see MainWindow::
+    // showStatusMessage()/buildRibbon()/buildMenus()) -- a plain QWidget so
+    // it lives inside m_appShell/m_devicePreviewFrame like everything else
+    // the preview needs to frame, which a real QStatusBar (owned by
+    // QMainWindow itself, outside centralWidget()) could not. Normal widgets
+    // (m_fullscreenButton, the notification-history button) on the left, a
+    // stretch (m_statusMessageLabel doubles as it), permanent widgets
+    // (m_workspaceSwitcher, m_screenSizeButton) on the right -- same
+    // visual order the old statusBar()->addWidget()/addPermanentWidget() call
+    // sites built, minus m_optionsButton (moved to m_chromeTopBar instead).
+    QWidget* m_statusRow = nullptr;
+    // What showStatusMessage() writes to -- sits where QStatusBar's own
+    // transient message area did, between the normal and permanent widgets
+    // (see m_statusRow above), with an expanding size policy so it also
+    // supplies m_statusRow's stretch.
+    QLabel* m_statusMessageLabel = nullptr;
+    // Restarted (never a fresh QTimer::singleShot) by every showStatusMessage()
+    // call so an earlier message's timeout can't fire after a newer message
+    // replaced it and clear that one early instead.
+    QTimer* m_statusMessageTimer = nullptr;
+    QTreeWidget* m_subscriptionsTable = nullptr;
+    bool m_subscriptionsWorkspaceActive = false;
     int m_dashboardTabIndex = -1;
     // Read-only "device: dot" strip replacing the old single-connection port/
     // baud/connect bar -- per-device connection config now lives in the
@@ -650,14 +762,24 @@ private:
     // top-left) -- see onTogglePanelsClicked()/onEditModeToggled().
     QToolButton* m_togglePanelsButton = nullptr;
     // Screen-size breakpoint toggle (phone/tablet/notebook) -- Developer-
-    // mode-only, sits left of the edit-mode lock. Its menu's three actions
-    // call DashboardGrid::setBreakpoint() directly; updateScreenSizeButtonIcon()
-    // keeps the button's own icon/tooltip and the menu's checked entry in
-    // sync with whatever's actually active.
+    // mode-only. Lives at the right of the status row, including View as user.
+    // Its menu's
+    // three actions call DashboardGrid::setBreakpoint() directly;
+    // updateScreenSizeButtonIcon() keeps the button's own icon/tooltip and
+    // the menu's checked entry in sync with whatever's actually active.
     QToolButton* m_screenSizeButton = nullptr;
     QMenu* m_screenSizeMenu = nullptr;
+    // "More options" -- mirrors the File/View/Access menus as a plain widget
+    // of m_chromeTopBar (see buildMenus()), not the status bar anymore (see
+    // m_statusRow above): compactChromeActive() now governs its visibility
+    // (via updateChromeVisibility()), not just the fixed kUsesCompactChrome
+    // platform choice alone -- a desktop Developer-mode Phone/Tablet preview
+    // needs it shown too, same reasoning as compactChromeActive()'s own
+    // comment (the preview must show the real mobile chrome, not a desktop
+    // window with pieces hidden).
+    QToolButton* m_optionsButton = nullptr;
     // Canvas height +/- -- Small/Medium only, hidden otherwise (see
-    // updateScreenSizeButtonIcon()). Call DashboardGrid::growCanvasHeight()/
+    // updateCanvasHeightButtons()). Call DashboardGrid::growCanvasHeight()/
     // shrinkCanvasHeight() directly.
     QToolButton* m_canvasShrinkButton = nullptr;
     QToolButton* m_canvasGrowButton = nullptr;
@@ -665,18 +787,6 @@ private:
     QToolButton* m_fullscreenButton = nullptr;
     bool m_wasMaximized = false;
     QByteArray m_preFullscreenGeometry;
-    // Whichever QScreen applyAutoBreakpoint() last subscribed to for
-    // availableGeometryChanged -- re-synced on every call so a monitor
-    // change is picked up without a dedicated QWindow::screenChanged
-    // connection. QPointer since a QScreen can, in principle, go away (a
-    // monitor being unplugged) without MainWindow hearing about it first.
-    QPointer<QScreen> m_watchedScreen;
-    // Whether applyBreakpointWindowSize() has already resized the window for
-    // a Small/Medium preview and needs to restore it on the way back to
-    // Large -- see m_preBreakpointPreviewSize/m_wasMaximizedBeforePreview.
-    bool m_breakpointPreviewActive = false;
-    QSize m_preBreakpointPreviewSize;
-    bool m_wasMaximizedBeforeBreakpointPreview = false;
 
     // Self-update (see lib/updater). Both created once in the constructor and
     // reused for every check/download -- unlike m_settingsTab, there is

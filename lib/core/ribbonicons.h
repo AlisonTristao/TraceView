@@ -64,5 +64,11 @@ QIcon makeFolderIcon(const QColor& color);
 QIcon makePhoneIcon(const QColor& color);
 QIcon makeTabletIcon(const QColor& color);
 QIcon makeNotebookIcon(const QColor& color);
+// Three filled dots, stacked vertically -- the "kebab menu"/overflow glyph
+// (matches Android's own convention for the same idea). Used by
+// MainWindow's "More options" status-bar button, which mirrors the File/
+// View/Access menus as a plain widget for Phone/Tablet (see
+// docs/ANDROID_BUILD.md's T47 notes).
+QIcon makeOptionsIcon(const QColor& color);
 
 }  // namespace traceview

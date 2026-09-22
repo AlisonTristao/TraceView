@@ -23,17 +23,18 @@
 #include <QProcess>
 #include <QPushButton>
 #include <QResizeEvent>
-#include <QScreen>
 #include <QScrollArea>
+#include <QScrollBar>
 #include <QSerialPortInfo>
 #include <QSettings>
 #include <QShowEvent>
 #include <QSignalBlocker>
+#include <QSizeGrip>
 #include <QStackedWidget>
-#include <QStatusBar>
 #include <QStringList>
 #include <QTimer>
 #include <QToolButton>
+#include <QTreeWidget>
 #include <QUndoGroup>
 #include <QUrl>
 #include <QVBoxLayout>
@@ -52,6 +53,7 @@
 #include "dashboard/widgets/textboardwidget.h"
 #include "debugchartswindow.h"
 #include "deviceconnection.h"
+#include "devicepreviewframe.h"
 #include "devices/devicesgrid.h"
 #include "diagnostics/btpmonitortab.h"
 #include "diagnostics/framelog.h"
@@ -99,30 +101,37 @@ namespace {
 const QString kProjectFileFilter =
     QCoreApplication::translate("MainWindow", "TraceView Project (*.tvproj)");
 constexpr const char* kRecentFilesSettingsKey = "recentFiles/paths";
+constexpr const char* kSubscriptionsWorkspaceId = "builtin:subscriptions";
 
-// Thresholds for auto-detecting a screen-size breakpoint from a monitor's
-// own availableGeometry() width (see MainWindow::applyAutoBreakpoint()), in
-// logical pixels. Starting defaults, not validated against real phone/
-// tablet hardware yet -- easy to retune once this runs on an actual small
-// screen.
-constexpr int kSmallBreakpointMaxWidth = 700;
-constexpr int kMediumBreakpointMaxWidth = 1280;
+// Thresholds for auto-detecting a screen-size breakpoint from
+// m_dashboardScrollArea->viewport()'s own width (see MainWindow::
+// applyAutoBreakpoint()), in logical pixels. Starting defaults, not
+// validated against real phone/tablet hardware yet -- easy to retune once
+// this runs on an actual small screen.
+constexpr int kSmallBreakpointMaxViewportWidth = 700;
+constexpr int kMediumBreakpointMaxViewportWidth = 1280;
+// Dead band applied around each threshold above, measured against the
+// breakpoint already active (see applyAutoBreakpoint()) -- without it, a
+// window resize that lands a pixel to either side of a threshold while
+// being dragged would flip setBreakpoint() (and the relayout() it causes)
+// back and forth on every pixel crossed.
+constexpr int kBreakpointHysteresisPx = 40;
 
-// Window sizes MainWindow itself resizes to for a manual Phone/Tablet
-// preview (see MainWindow::applyBreakpointWindowSize()) -- rough portrait
-// phone/tablet proportions, not any specific real device. Starting
-// defaults, not validated against real hardware yet; always clamped to the
-// current screen's own available space (see applyBreakpointWindowSize())
-// so the preview window never spills off a smaller monitor.
-const QSize kPhonePreviewWindowSize(360, 700);
-// Narrower than an early draft (700x900, which read as too wide/square for
-// a "tablet") -- closer to a real Android tablet's portrait aspect ratio
-// (~0.6-0.65, e.g. 800x1280) than to a near-square shape.
-const QSize kTabletPreviewWindowSize(600, 1000);
-// Left/top-ish breathing room subtracted from the screen's available size
-// when clamping, so the window doesn't land flush against the taskbar/
-// screen edge with zero margin.
-constexpr int kBreakpointPreviewScreenMargin = 60;
+// Platforms where QMenuBar isn't a dependable route to File/View/Access
+// (see docs/ANDROID_BUILD.md's T47 notes) and m_chromeTopBar's overflow
+// button (m_optionsButton) answers for them instead. First platform #ifdef
+// in lib/ -- until now the dashboard breakpoint stood in for this, which
+// made the button vanish on a tablet wide enough to auto-detect Notebook.
+// Just the platform half of the story now -- see MainWindow::
+// compactChromeActive(), which ORs this with a desktop Developer-mode
+// preview being up, so a Phone/Tablet preview shows the exact chrome
+// Android gets instead of a desktop window with pieces hidden.
+constexpr bool kUsesCompactChrome =
+#ifdef Q_OS_ANDROID
+    true;
+#else
+    false;
+#endif
 
 // What a gauge asks for: it has no sample-time setting of its own (a gauge
 // only ever shows the newest value), so it requests a modest fixed rate
@@ -207,6 +216,19 @@ constexpr char kHubPeersTopicName[] = "hub.peers";
 // asking for more would only be clamped away. As with every SUBSCRIBE this
 // is a request: the source answers with the effective rate.
 constexpr quint32 kHubPeersRequestedRateMillihz = 2000;  // 2 Hz
+
+// QAction::data() round-trip for the screen-size menu (see buildMenus()):
+// validates the stored int is actually one of the enum's values before the
+// cast, instead of casting blindly. Out-of-range (shouldn't normally happen
+// -- only every DashboardBreakpoint value is ever stored there) falls back
+// to Large, the same default breakpointFromString() uses for unrecognized
+// input.
+DashboardBreakpoint breakpointFromActionData(int value) {
+    if (value < 0 || value >= kDashboardBreakpointCount) {
+        return DashboardBreakpoint::Large;
+    }
+    return DashboardBreakpoint(value);
+}
 }  // namespace
 
 MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
@@ -234,6 +256,43 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
 #if !defined(TRACEVIEW_FLATPAK_BUILD)
     QTimer::singleShot(5000, this, &MainWindow::maybeCheckForUpdatesOnStartup);
 #endif
+
+    // m_chromeTopBar/m_statusRow exist before buildMenus()/buildRibbon() run
+    // because both of those still build widgets (m_optionsButton,
+    // m_screenSizeButton, m_fullscreenButton, the notification-history
+    // button) that get appended into one or the other the moment each is
+    // constructed -- the same incremental-assembly style the old
+    // statusBar()->addWidget() call sites used. QWidget(this) here is just a
+    // temporary owner; both get reparented into m_appShell's layout once
+    // that's assembled further down (see this constructor's tail).
+    m_chromeTopBar = new QWidget(this);
+    auto* chromeTopBarLayout = new QHBoxLayout(m_chromeTopBar);
+    chromeTopBarLayout->setContentsMargins(kRibbonPageMarginH, kRibbonPageMarginV, kRibbonPageMarginH,
+                                           kRibbonPageMarginV);
+    chromeTopBarLayout->setSpacing(kRibbonGroupSpacing);
+    // Keep the compact options menu against the left edge.
+    chromeTopBarLayout->addStretch();
+
+    m_statusRow = new QWidget(this);
+    // Matched by lib/theme/stylesheet.cpp's own QStatusBar rule (shared via
+    // a combined selector) so this looks exactly like the native status bar
+    // it replaced -- same background/border-top/text color.
+    m_statusRow->setObjectName("statusRow");
+    auto* statusRowLayout = new QHBoxLayout(m_statusRow);
+    statusRowLayout->setContentsMargins(kRibbonPageMarginH, kRibbonPageMarginV, kRibbonPageMarginH,
+                                        kRibbonPageMarginV);
+    statusRowLayout->setSpacing(kRibbonGroupSpacing);
+    // Stands in for QStatusBar's own transient message area AND this row's
+    // stretch at once (see showStatusMessage()'s comment in mainwindow.h) --
+    // added first so it already sits between wherever the "normal" widgets
+    // (inserted to its left, by index, below) and the "permanent" ones
+    // (appended to its right, further down) end up.
+    m_statusMessageLabel = new QLabel(m_statusRow);
+    m_statusMessageLabel->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+    statusRowLayout->addWidget(m_statusMessageLabel, /*stretch=*/1);
+    m_statusMessageTimer = new QTimer(this);
+    m_statusMessageTimer->setSingleShot(true);
+    connect(m_statusMessageTimer, &QTimer::timeout, m_statusMessageLabel, &QLabel::clear);
 
     buildMenus();
 
@@ -363,23 +422,56 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     refreshDeviceStatusLabel();  // starts empty ("No devices configured...")
     refreshPropertiesPanelDevices();
 
-    // Wraps the canvas so a screen-size breakpoint that needs more vertical
-    // room than the viewport (Small/Medium -- see DashboardGrid::
-    // contentSize()) gets a scrollbar instead of squeezing every widget down
-    // to fit. widgetResizable keeps the grid's width following the viewport
-    // (no horizontal scrollbar is ever wanted here) while letting its height
-    // exceed the viewport when contentSize() asks for more.
+    // m_dashboardScrollArea now wraps m_dashboardGrid directly -- the device
+    // frame moved up to emolder the WHOLE app (m_appShell below), not just
+    // this canvas (see m_devicePreviewFrame's own comment in mainwindow.h).
+    // widgetResizable keeps the grid's width following the viewport (no
+    // horizontal scrollbar is ever wanted here) while letting the grid's own
+    // minimumHeight (see applyBreakpointViewport()'s canvas-height-multiplier
+    // handling) exceed the viewport's -- so a Small/Medium canvas grown past
+    // its device's own screen scrolls INSIDE that screen, the way scrolling
+    // a too-tall page works on an actual phone, instead of the device itself
+    // growing (that's now fixed size -- see DevicePreviewFrame).
     m_dashboardScrollArea = new QScrollArea(m_contentRow);
     m_dashboardScrollArea->setWidget(m_dashboardGrid);
     m_dashboardScrollArea->setWidgetResizable(true);
     m_dashboardScrollArea->setFrameShape(QFrame::NoFrame);
     m_dashboardScrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    // applyBreakpointViewport()'s canvas-height-multiplier math reads this
+    // viewport's own height -- re-run it whenever that height changes for
+    // ANY reason (not just a breakpoint change): a window resize, the device
+    // frame clamping to a different available area, etc. (see eventFilter()).
+    m_dashboardScrollArea->viewport()->installEventFilter(this);
     connect(m_dashboardGrid, &DashboardGrid::breakpointChanged, this,
-            &MainWindow::updateScreenSizeButtonIcon);
+            &MainWindow::syncBreakpointChrome);
+    connect(m_dashboardGrid, &DashboardGrid::breakpointChanged, this,
+            &MainWindow::applyBreakpointViewport);
 
     m_contentStack = new QStackedWidget(m_contentRow);
     m_contentStack->addWidget(m_dashboardScrollArea);
     m_contentStack->addWidget(m_devicesGrid);
+    m_subscriptionsTable = new QTreeWidget(m_contentStack);
+    m_subscriptionsTable->setObjectName("subscriptionsWorkspace");
+    m_subscriptionsTable->setRootIsDecorated(false);
+    m_subscriptionsTable->setAlternatingRowColors(false);
+    // A single column: every row (heading, subscription, empty state) is
+    // one spanned, centered string -- see refreshSubscriptionsTable(). A
+    // second column existed only for the old right-aligned-name/left-
+    // aligned-rate layout, whose "meeting point" depended on Qt's Stretch
+    // mode splitting two columns exactly 50/50 (not guaranteed) and, even
+    // then, wasn't the same thing as the combined text actually being
+    // centered. One column has no boundary to land off-true.
+    m_subscriptionsTable->setColumnCount(1);
+    m_subscriptionsTable->setHeaderHidden(true);
+    m_subscriptionsTable->setFrameShape(QFrame::NoFrame);
+    m_subscriptionsTable->setSelectionMode(QAbstractItemView::NoSelection);
+    m_subscriptionsTable->setFocusPolicy(Qt::NoFocus);
+    m_subscriptionsTable->setStyleSheet(
+        "QTreeWidget#subscriptionsWorkspace { background: transparent; border: none; }"
+        "QTreeWidget#subscriptionsWorkspace::item { padding: 8px 16px; border: none;"
+        " background: transparent; }"
+        "QTreeWidget#subscriptionsWorkspace::item:hover { background: transparent; }");
+    m_contentStack->addWidget(m_subscriptionsTable);
     // Each log opened via onOpenLogFile() (File > Open Log Offline) gets its
     // own LogViewer, added here on demand -- see m_openLogTabs.
     contentLayout->addWidget(m_contentStack);
@@ -402,12 +494,37 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     connect(m_dockController, &PanelDockController::dragFinished, this,
             &MainWindow::updatePanelVisibility);
 
+    // m_appShell holds everything the app actually shows -- m_chromeTopBar,
+    // the ribbon, m_contentRow, m_statusRow, in that order -- the exact
+    // stack central used to hold directly, plus the two new chrome rows.
+    // m_devicePreviewFrame then frames THIS (see below), so a Developer-mode
+    // Phone/Tablet preview shows the real mobile chrome (m_chromeTopBar
+    // standing in for the hidden menuBar(), m_statusRow standing in for the
+    // hidden native status bar -- see compactChromeActive()) instead of a
+    // desktop window with pieces hidden. Margins/spacing are exactly what
+    // central's own layout used to set directly on [ribbon, m_contentRow].
+    m_appShell = new QWidget(this);
+    auto* appShellLayout = new QVBoxLayout(m_appShell);
+    appShellLayout->setContentsMargins(0, kRibbonTopMargin, 0, 0);
+    appShellLayout->setSpacing(0);
+    appShellLayout->addWidget(m_chromeTopBar);
+    appShellLayout->addWidget(ribbon);
+    appShellLayout->addWidget(m_contentRow, /*stretch=*/1);
+    appShellLayout->addWidget(m_statusRow);
+
+    // Frames m_appShell -- the WHOLE app -- inside a device-shaped viewport
+    // for a manual Phone/Tablet preview, or lets it fill the window exactly
+    // for Notebook/User mode (see applyBreakpointViewport()). Sits directly
+    // under central's own layout now, in place of [ribbon, m_contentRow]
+    // being added there directly.
+    m_devicePreviewFrame = new DevicePreviewFrame(this);
+    m_devicePreviewFrame->setContentWidget(m_appShell);
+
     auto* central = new QWidget(this);
     auto* centralLayout = new QVBoxLayout(central);
-    centralLayout->setContentsMargins(0, kRibbonTopMargin, 0, 0);
+    centralLayout->setContentsMargins(0, 0, 0, 0);
     centralLayout->setSpacing(0);
-    centralLayout->addWidget(ribbon);
-    centralLayout->addWidget(m_contentRow, /*stretch=*/1);
+    centralLayout->addWidget(m_devicePreviewFrame, /*stretch=*/1);
     setCentralWidget(central);
 
     // Ribbon::currentTabChanged is only connected inside buildRibbon(),
@@ -421,18 +538,15 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     // so drive it once here to pick up the actual initial tab.
     onRibbonTabChanged(ribbon->currentIndex());
 
-    // Permanent readout of what telemetry is actually flowing: the effective
-    // rate each subscribed topic was granted (never the rate that was asked
-    // for), plus per-topic bytes/drops when the peer publishes
-    // status_version=2 (commands.md section 5.1). The transient
-    // showMessage() calls above stay for one-off events; this is the standing
-    // state.
-    m_telemetryStatusLabel = new QLabel(this);
-    statusBar()->addPermanentWidget(m_telemetryStatusLabel);
-
-    // Added last so it lands to the right of m_telemetryStatusLabel above --
-    // each addPermanentWidget() call appends further right.
+    // Workspace navigation and manual preview size stay at the right of the footer.
     buildWorkspaceSwitcher();
+    m_statusRow->layout()->addWidget(m_screenSizeButton);
+
+    // The native QStatusBar this row replaced showed one of these in its
+    // bottom-right corner by default (sizeGripEnabled() defaults to true,
+    // and nothing here ever turned it off) -- added last so it lands at the
+    // far right, past m_workspaceSwitcher, same corner it occupied before.
+    m_statusRow->layout()->addWidget(new QSizeGrip(m_statusRow));
 
     // The app always starts in User mode (UserModeManager never persists a
     // login across restarts) -- apply that once now so the Devices tab and
@@ -468,7 +582,7 @@ MainWindow::~MainWindow() {
 
 void MainWindow::postStatus(const QString& text, int timeoutMs, StatusSeverity severity,
                             const QString& source) {
-    statusBar()->showMessage(text, timeoutMs);
+    showStatusMessage(text, timeoutMs);
     m_notificationLog->append({QDateTime::currentDateTime(), text, severity, source});
 
     // Every status-bar message funnels through here regardless of which
@@ -487,6 +601,19 @@ void MainWindow::postStatus(const QString& text, int timeoutMs, StatusSeverity s
         case StatusSeverity::Error:
             qCCritical(lcApp).noquote() << line;
             break;
+    }
+}
+
+void MainWindow::showStatusMessage(const QString& text, int timeoutMs) {
+    m_statusMessageLabel->setText(text);
+    // Restart rather than a fresh QTimer::singleShot() each call: a bare
+    // singleShot() from an earlier, still-pending call would otherwise fire
+    // on its own original schedule and clear a message that replaced it in
+    // the meantime -- stop()+start() here cancels that pending clear the
+    // same way QStatusBar::showMessage() itself does internally.
+    m_statusMessageTimer->stop();
+    if (timeoutMs > 0) {
+        m_statusMessageTimer->start(timeoutMs);
     }
 }
 
@@ -571,78 +698,92 @@ void MainWindow::refreshWidgetSubscriptions() {
     }
 }
 
-void MainWindow::updateTelemetryStatusLabel() {
-    if (!m_telemetryStatusLabel) {
+void MainWindow::updateSubscriptionsWorkspace() {
+    if (!m_subscriptionsTable) {
         return;
     }
-
-    // Aggregated across every connected device's Backend -- (sourceId,
-    // topicId) is only unique *within* one device's session, so two
-    // different devices reporting the same pair would collide in
-    // statusByTopic; harmless here since this is a human-readable summary,
-    // not anything routing decisions depend on.
-    QVector<TopicSubscriptionState> states;
-    QHash<quint64, StatusTopicRecord> statusByTopic;
-    // Resolved from each device's catalog (MANIFEST_DATA) so the summary
-    // below can show "motor_state" instead of a bare "0x11223344/0x0101" --
-    // falls back to the hex pair for a topic whose schema hasn't arrived
-    // (or isn't known) yet.
-    QHash<quint64, QString> topicNames;
-    const QList<DeviceConnection*> connections = m_deviceConnections.values();
-    for (DeviceConnection* connection : connections) {
+    const int scrollPosition = m_subscriptionsTable->verticalScrollBar()->value();
+    m_subscriptionsTable->setUpdatesEnabled(false);
+    m_subscriptionsTable->clear();
+    // Resolve names and metrics within each device: topic IDs can repeat
+    // across devices and must never share lookup entries.
+    for (const Device& device : m_devicesGrid->devices()) {
+        DeviceConnection* connection = m_deviceConnections.value(device.id);
+        if (!connection) {
+            continue;
+        }
         Backend* backend = connection->backend();
-        states += backend->subscriptions();
-        for (const StatusTopicRecord& record : backend->topicStatuses()) {
-            statusByTopic.insert(topicStatusKey(record.sourceId, record.topicId), record);
+        QHash<quint64, QString> names;
+        QHash<quint64, StatusTopicRecord> statuses;
+        for (const auto& topic : backend->catalogTopics()) {
+            names.insert(topicStatusKey(topic.sourceId, topic.topicId), topic.name);
         }
-        for (const CatalogTopicInfo& topic : backend->catalogTopics()) {
-            topicNames.insert(topicStatusKey(topic.sourceId, topic.topicId), topic.name);
+        for (const auto& status : backend->topicStatuses()) {
+            statuses.insert(topicStatusKey(status.sourceId, status.topicId), status);
+        }
+        const auto subscriptions = backend->subscriptions();
+        if (!subscriptions.isEmpty()) {
+            auto* heading = new QTreeWidgetItem(m_subscriptionsTable, {device.name});
+            heading->setFirstColumnSpanned(true);
+            heading->setTextAlignment(0, Qt::AlignCenter);
+            QFont headingFont = m_subscriptionsTable->font();
+            headingFont.setBold(true);
+            heading->setFont(0, headingFont);
+            heading->setSizeHint(0, QSize(0, 56));
+            heading->setToolTip(0, device.id);
+        }
+        for (const auto& state : subscriptions) {
+            const auto key = topicStatusKey(state.sourceId, state.topicId);
+            const QString raw = QString("0x%1/0x%2")
+                                    .arg(state.sourceId, 8, 16, QChar('0'))
+                                    .arg(state.topicId, 4, 16, QChar('0'));
+            const QString granted = state.effectiveRateMillihz != 0
+                                        ? formatRateMillihz(state.effectiveRateMillihz)
+                                        : (state.awaitingResult ? tr("Pending") : tr("Not granted"));
+            const auto status = statuses.constFind(key);
+            // One spanned, centered column -- same pattern the heading and
+            // empty-state rows already use -- rather than a right-aligned
+            // name meeting a left-aligned rate across two Stretch columns.
+            // That layout only looked centered when both columns landed at
+            // exactly the same width, which Qt's Stretch mode doesn't
+            // guarantee for two columns; worse, even at a true 50/50 split,
+            // "meets in the middle" isn't "centered" once the name and the
+            // rate text differ much in length, so the combined block still
+            // read as pulled toward whichever side had more text. A single
+            // centered string sidesteps both: there's no column boundary to
+            // land off-true, and the block centers on its own actual width.
+            //
+            // Name and sample rate only, nothing else -- no raw source/topic
+            // hex (falls back to a plain placeholder instead of `raw` when
+            // the catalog hasn't named this topic, rather than surfacing the
+            // ID codes in the row itself) and no "requested: ..." half,
+            // which doubled the row's length for a number this compact view
+            // isn't meant to carry. `raw` and the requested rate still live
+            // in the tooltip (see `detail` below) for whoever needs them.
+            auto* row = new QTreeWidgetItem(
+                m_subscriptionsTable,
+                {tr("%1: %2").arg(names.value(key, tr("Unknown topic")), granted)});
+            row->setFirstColumnSpanned(true);
+            row->setTextAlignment(0, Qt::AlignCenter);
+            QString detail = tr("%1\nRequested: %2\nWidgets: %3")
+                                 .arg(raw, formatRateMillihz(state.requestedRateMillihz))
+                                 .arg(state.subscriberCount);
+            if (status != statuses.constEnd()) {
+                detail += tr("\nBytes: %1\nDrops: %2")
+                              .arg(status->bytesTotal).arg(status->samplesDroppedTotal);
+            }
+            row->setToolTip(0, detail);
         }
     }
-
-    if (states.isEmpty()) {
-        m_telemetryStatusLabel->clear();
-        m_telemetryStatusLabel->setToolTip(QString());
-        return;
+    if (m_subscriptionsTable->topLevelItemCount() == 0) {
+        auto* empty = new QTreeWidgetItem(m_subscriptionsTable,
+                                         {tr("No subscriptions")});
+        empty->setFirstColumnSpanned(true);
+        empty->setTextAlignment(0, Qt::AlignCenter);
+        empty->setFlags(Qt::NoItemFlags);
     }
-
-    QStringList summary;
-    QStringList detail;
-    for (const TopicSubscriptionState& state : states) {
-        const QString rawLabel = QString("0x%1/0x%2")
-                                     .arg(state.sourceId, 8, 16, QChar('0'))
-                                     .arg(state.topicId, 4, 16, QChar('0'));
-        const QString resolvedName =
-            topicNames.value(topicStatusKey(state.sourceId, state.topicId));
-        const QString topicLabel = resolvedName.isEmpty() ? rawLabel : resolvedName;
-        QString rate;
-        if (state.effectiveRateMillihz != 0) {
-            rate = formatRateMillihz(state.effectiveRateMillihz);
-        } else if (state.awaitingResult) {
-            rate = QStringLiteral("pending");
-        } else {
-            rate = QStringLiteral("not granted");
-        }
-        QString entry = topicLabel + ' ' + rate;
-        summary.append(entry);
-
-        QString line = entry;
-        if (!resolvedName.isEmpty()) {
-            line += QString(" (%1)").arg(rawLabel);
-        }
-        line += QString(" | %1 widget(s) here").arg(state.subscriberCount);
-        const auto record = statusByTopic.constFind(topicStatusKey(state.sourceId, state.topicId));
-        if (record != statusByTopic.constEnd()) {
-            // status_version=2 per-topic metrics (section 5.1).
-            line += QString(" | %1 subscriber(s) at source | %2 B | %3 drops")
-                        .arg(record->subscriberCount)
-                        .arg(record->bytesTotal)
-                        .arg(record->samplesDroppedTotal);
-        }
-        detail.append(line);
-    }
-    m_telemetryStatusLabel->setText(summary.join(QStringLiteral("   ")));
-    m_telemetryStatusLabel->setToolTip(detail.join(QStringLiteral("\n")));
+    m_subscriptionsTable->verticalScrollBar()->setValue(scrollPosition);
+    m_subscriptionsTable->setUpdatesEnabled(true);
 }
 
 void MainWindow::buildMenus() {
@@ -807,26 +948,40 @@ void MainWindow::buildMenus() {
     // own docs call this out as the supported way to re-add a menu to
     // another widget -- so nothing here duplicates state: updateAccessMenu()'s
     // rebuilds show up in this copy for free, no separate upkeep. Lives in
-    // the status bar (see buildRibbon()), a plain widget row with none of
-    // the menu bar's own platform ambiguity.
-    auto* optionsButton = new QToolButton(this);
-    optionsButton->setAutoRaise(true);
-    optionsButton->setPopupMode(QToolButton::InstantPopup);
-    // Vertical ellipsis -- the same "more options" glyph Android's own
-    // overflow icon uses, same plain-text-as-icon approach the notification
-    // history button (see buildRibbon()) already takes.
-    optionsButton->setText(QStringLiteral("⋮"));
-    optionsButton->setToolTip(tr("More options"));
+    // m_chromeTopBar (see MainWindow::MainWindow()), not the status bar
+    // anymore -- that puts it next to m_screenSizeButton, in the same row a
+    // phone build's own chrome will actually use, rather than the bottom
+    // status bar. Its visibility is decided by compactChromeActive() (see
+    // updateChromeVisibility()), not set here: kUsesCompactChrome alone used
+    // to be enough (this button existed only to stand in for a menu bar
+    // Android might not render), but now a desktop Developer-mode Phone/
+    // Tablet preview needs it too, for the same reason -- the preview must
+    // show the real mobile chrome, not a desktop window with pieces hidden.
+    m_optionsButton = new QToolButton(this);
+    m_optionsButton->setObjectName("optionsButton");
+    m_optionsButton->setAutoRaise(true);
+    m_optionsButton->setPopupMode(QToolButton::InstantPopup);
+    m_optionsButton->setToolTip(tr("More options"));
+    m_optionsButton->setIconSize(QSize(kRibbonIconSize, kRibbonIconSize));
+    m_optionsButton->setFixedSize(kRibbonButtonSize, kRibbonButtonSize);
+    // Icon-only kebab-menu button -- the dot icon already reads as "this
+    // opens a menu" (same as Android's own overflow icon), so the style's
+    // usual drop-down arrow indicator next to it would be a redundant
+    // second affordance saying the same thing; suppressed rather than
+    // repositioned (contrast WorkspaceSwitcher's own corner-widget button,
+    // which keeps the indicator because it's paired with visible text).
+    m_optionsButton->setStyleSheet(
+        "QToolButton#optionsButton::menu-indicator { image: none; width: 0px; }");
 
-    auto* optionsMenu = new QMenu(optionsButton);
+    auto* optionsMenu = new QMenu(m_optionsButton);
     optionsMenu->addAction(fileMenu->menuAction());
     optionsMenu->addAction(viewMenu->menuAction());
     optionsMenu->addAction(m_accessMenu->menuAction());
     optionsMenu->addSeparator();
     optionsMenu->addAction(aboutAction);
     optionsMenu->addAction(donateAction);
-    optionsButton->setMenu(optionsMenu);
-    statusBar()->addWidget(optionsButton);
+    m_optionsButton->setMenu(optionsMenu);
+    static_cast<QHBoxLayout*>(m_chromeTopBar->layout())->insertWidget(0, m_optionsButton);
 }
 
 void MainWindow::updateAccessMenu() {
@@ -837,7 +992,28 @@ void MainWindow::updateAccessMenu() {
         QAction* whoAction =
             m_accessMenu->addAction(tr("Connected as: %1").arg(userMode.currentUserName()));
         whoAction->setEnabled(false);
+
+        // Right after "Connected as", before the separator that groups the
+        // actionable items below -- stays visible without pushing Manage
+        // Users/Exit out of view, and reads as a status line alongside the
+        // other one rather than an alert competing with them.
+        if (userMode.usingDefaultPassword()) {
+            QAction* defaultPasswordAction = m_accessMenu->addAction(
+                tr("Using the default admin password -- change it in Manage Users"));
+            defaultPasswordAction->setEnabled(false);
+        }
         m_accessMenu->addSeparator();
+
+        QAction* previewAction = m_accessMenu->addAction(tr("View as user"));
+        previewAction->setCheckable(true);
+        previewAction->setChecked(m_previewAsUser);
+        connect(previewAction, &QAction::triggered, this, [this](bool checked) {
+            // applyUserMode rebuilds this menu, so wait until the popup unwinds.
+            QMetaObject::invokeMethod(this, [this, checked] {
+                m_previewAsUser = checked;
+                applyUserMode(UserModeManager::instance().mode());
+            }, Qt::QueuedConnection);
+        });
 
         QAction* manageAction = m_accessMenu->addAction(tr("&Manage Users..."));
         connect(manageAction, &QAction::triggered, this, [this] {
@@ -846,25 +1022,52 @@ void MainWindow::updateAccessMenu() {
         });
 
         QAction* logoutAction = m_accessMenu->addAction(tr("&Exit Developer Mode"));
-        connect(logoutAction, &QAction::triggered, this,
-                [] { UserModeManager::instance().logout(); });
+        // Deferred to the next event-loop turn rather than called straight
+        // from here -- same hazard WorkspaceSwitcher::rebuildMenu() already
+        // guards against (see its own comment): logout() emits
+        // modeChanged() synchronously, which reaches back into this very
+        // function via MainWindow::applyUserMode() -> updateAccessMenu() ->
+        // m_accessMenu->clear(), deleting logoutAction while its own
+        // triggered() handler is still on the call stack (this menu is also
+        // a submenu of the "More options" button, so that stack can run
+        // through its popup handling too). Scheduling the call lets that
+        // frame unwind first.
+        connect(logoutAction, &QAction::triggered, this, [this] {
+            QMetaObject::invokeMethod(
+                this, [] { UserModeManager::instance().logout(); }, Qt::QueuedConnection);
+        });
     } else {
         QAction* loginAction = m_accessMenu->addAction(tr("&Enter Developer Mode..."));
+        // Same deferral as logoutAction above: LoginDialog::exec() runs its
+        // own nested event loop, and a successful login inside it calls
+        // UserModeManager::login(), which would otherwise rebuild (and
+        // delete) this menu while still inside loginAction's own
+        // triggered() call.
         connect(loginAction, &QAction::triggered, this, [this] {
-            LoginDialog dialog(this);
-            dialog.exec();
+            QMetaObject::invokeMethod(
+                this,
+                [this] {
+                    LoginDialog dialog(this);
+                    dialog.exec();
+                },
+                Qt::QueuedConnection);
         });
     }
 }
 
 void MainWindow::applyUserMode(UserModeManager::UserMode mode) {
-    const bool isDeveloper = mode == UserModeManager::UserMode::Developer;
+    if (mode != UserModeManager::UserMode::Developer) {
+        m_previewAsUser = false;
+    }
+    const bool isDeveloper = developerUiActive();
 
     // Losing developer access while Devices is the current tab would
     // otherwise leave the ribbon pointed at a tab that's about to disappear
     // -- fall back to Dashboard first.
-    if (!isDeveloper && m_ribbon->currentIndex() == m_devicesTabIndex) {
+    if (!isDeveloper) {
         m_ribbon->setCurrentIndex(m_dashboardTabIndex);
+        // Also return from offline content when Dashboard was already selected.
+        onRibbonTabChanged(m_dashboardTabIndex);
     }
     m_ribbon->setTabVisible(m_devicesTabIndex, isDeveloper);
 
@@ -890,52 +1093,75 @@ void MainWindow::applyUserMode(UserModeManager::UserMode mode) {
 
     updateAccessMenu();
 
-    if (!isDeveloper) {
-        // A manual Phone/Tablet window preview (see
-        // applyBreakpointWindowSize()) is Developer-only -- leaving
-        // Developer mode while one was active must restore the window to
-        // its pre-preview size first (a no-op if none was active). Without
-        // this, the window stayed shrunk to whatever preview size it was
-        // left at while the breakpoint below jumped to User mode's own
-        // auto-detected one (based on the real screen, not the window),
-        // leaving a phone-sized window rendering a Notebook-shaped layout.
-        applyBreakpointWindowSize(DashboardBreakpoint::Large);
-    }
     // No-op in Developer mode (see its own comment) -- in User mode, this is
     // what actually replaces whatever breakpoint was last selected manually
-    // with the one this real screen calls for.
+    // with the one this real screen calls for. There's no window/frame
+    // state to restore on the way out of a Developer-mode preview anymore
+    // (see docs/DASHBOARD.md's "Screen-size breakpoints" section) --
+    // applyBreakpointViewport(), wired to DashboardGrid::breakpointChanged,
+    // already collapses the frame back to none the moment setBreakpoint()
+    // below actually changes anything.
     applyAutoBreakpoint();
-    // Refreshes the canvas +/- buttons' Developer-mode visibility even when
-    // applyAutoBreakpoint() above didn't actually change the breakpoint
-    // (which is the only other thing that would have triggered this via
-    // DashboardGrid::breakpointChanged).
-    updateScreenSizeButtonIcon();
+    // Both of these run unconditionally, for the same reason: they are
+    // otherwise only reached via DashboardGrid::breakpointChanged, which
+    // setBreakpoint() suppresses when handed the breakpoint already active.
+    // Leaving Developer mode while previewing Phone, on a window narrow
+    // enough that auto-detection picks Small too, is exactly that case --
+    // the breakpoint doesn't change, no signal fires, and without these the
+    // device frame would stay up (and the canvas +/- buttons stay visible)
+    // in User mode.
+    applyBreakpointViewport();
+    syncBreakpointChrome();
 }
 
 void MainWindow::applyAutoBreakpoint() {
-    QScreen* current = screen();
-    if (current != m_watchedScreen) {
-        if (m_watchedScreen) {
-            disconnect(m_watchedScreen, &QScreen::availableGeometryChanged, this,
-                       &MainWindow::applyAutoBreakpoint);
-        }
-        m_watchedScreen = current;
-        if (m_watchedScreen) {
-            connect(m_watchedScreen, &QScreen::availableGeometryChanged, this,
-                    &MainWindow::applyAutoBreakpoint);
-        }
-    }
-
-    if (!current || UserModeManager::instance().mode() != UserModeManager::UserMode::User) {
+    if (UserModeManager::instance().mode() != UserModeManager::UserMode::User) {
         return;
     }
 
-    const int availableWidth = current->availableGeometry().width();
-    DashboardBreakpoint breakpoint = DashboardBreakpoint::Large;
-    if (availableWidth < kSmallBreakpointMaxWidth) {
-        breakpoint = DashboardBreakpoint::Small;
-    } else if (availableWidth < kMediumBreakpointMaxWidth) {
-        breakpoint = DashboardBreakpoint::Medium;
+    // Before the window's first show(), m_dashboardScrollArea hasn't been
+    // laid out yet and its viewport can report 0 width (or something else
+    // meaningless) -- bail out instead of snapping to Small on nothing;
+    // resizeEvent() re-runs this once real geometry exists, right after.
+    const int availableWidth = m_dashboardScrollArea->viewport()->width();
+    if (availableWidth <= 0) {
+        return;
+    }
+
+    const DashboardBreakpoint current = m_dashboardGrid->currentBreakpoint();
+    DashboardBreakpoint breakpoint = current;
+    // Dead band (kBreakpointHysteresisPx) around each threshold, measured
+    // against the breakpoint already active -- see this function's own doc
+    // comment in mainwindow.h. The three cases below chain rather than
+    // looking each threshold up independently, so a resize that jumps
+    // clean across both thresholds in one event (e.g. straight from Large
+    // to Small) still lands on the right breakpoint instead of getting
+    // stuck one step short.
+    switch (current) {
+        case DashboardBreakpoint::Small:
+            if (availableWidth > kSmallBreakpointMaxViewportWidth + kBreakpointHysteresisPx) {
+                breakpoint =
+                    availableWidth > kMediumBreakpointMaxViewportWidth + kBreakpointHysteresisPx
+                        ? DashboardBreakpoint::Large
+                        : DashboardBreakpoint::Medium;
+            }
+            break;
+        case DashboardBreakpoint::Medium:
+            if (availableWidth < kSmallBreakpointMaxViewportWidth - kBreakpointHysteresisPx) {
+                breakpoint = DashboardBreakpoint::Small;
+            } else if (availableWidth >
+                       kMediumBreakpointMaxViewportWidth + kBreakpointHysteresisPx) {
+                breakpoint = DashboardBreakpoint::Large;
+            }
+            break;
+        case DashboardBreakpoint::Large:
+            if (availableWidth < kMediumBreakpointMaxViewportWidth - kBreakpointHysteresisPx) {
+                breakpoint =
+                    availableWidth < kSmallBreakpointMaxViewportWidth - kBreakpointHysteresisPx
+                        ? DashboardBreakpoint::Small
+                        : DashboardBreakpoint::Medium;
+            }
+            break;
     }
     m_dashboardGrid->setBreakpoint(breakpoint);
 }
@@ -1094,6 +1320,7 @@ Ribbon* MainWindow::buildRibbon() {
     // looking at the dashboard and not at any cell bound to a disconnected
     // device.
     m_deviceStatusLabel = new QLabel(dashboardPage);
+    m_deviceStatusLabel->setObjectName("deviceStatusLabel");
     m_deviceStatusLabel->setTextFormat(Qt::RichText);
 
     // Top-right, left of the lock: shows/hides m_layersPanel/m_propertiesPanel
@@ -1114,14 +1341,14 @@ Ribbon* MainWindow::buildRibbon() {
     // arrange each of the three per-screen-size layouts (see
     // dashboarditem.h) independently. In User mode the breakpoint instead
     // follows the real screen automatically (see applyAutoBreakpoint()) and
-    // this button plays no part. Lives in the menu bar's corner (see
-    // setCornerWidget() below), not the Dashboard tab's own toolbar --
-    // unlike the lock/panels/canvas-height buttons, it isn't specific to
-    // that tab being the current one, so it stays reachable regardless of
-    // which tab is showing.
+    // this button plays no part. Lives at the right of the status row and
+    // remains available during View as user without ending the developer session.
     m_screenSizeButton = new QToolButton(this);
+    m_screenSizeButton->setObjectName("screenSizeButton");
     m_screenSizeButton->setAutoRaise(true);
     m_screenSizeButton->setPopupMode(QToolButton::InstantPopup);
+    m_screenSizeButton->setStyleSheet(
+        "QToolButton#screenSizeButton::menu-indicator { image: none; width: 0px; }");
     m_screenSizeButton->setFixedSize(kRibbonButtonSize, kRibbonButtonSize);
     m_screenSizeButton->setIconSize(QSize(kRibbonIconSize, kRibbonIconSize));
 
@@ -1129,9 +1356,9 @@ Ribbon* MainWindow::buildRibbon() {
     auto* screenSizeGroup = new QActionGroup(this);
     screenSizeGroup->setExclusive(true);
     const QVector<QPair<DashboardBreakpoint, QString>> screenSizeOptions = {
-        {DashboardBreakpoint::Small, tr("Phone")},
-        {DashboardBreakpoint::Medium, tr("Tablet")},
-        {DashboardBreakpoint::Large, tr("Notebook")},
+        {DashboardBreakpoint::Small, tr("Small")},
+        {DashboardBreakpoint::Medium, tr("Medium")},
+        {DashboardBreakpoint::Large, tr("Large")},
     };
     for (const auto& option : screenSizeOptions) {
         auto* action = m_screenSizeMenu->addAction(option.second);
@@ -1144,39 +1371,36 @@ Ribbon* MainWindow::buildRibbon() {
     }
 
     m_screenSizeButton->setMenu(m_screenSizeMenu);
-    // Anchors it to the menu bar's own row instead of the ribbon -- visible
-    // no matter which ribbon tab is current. Note for later: a QMenuBar's
-    // own rendering on Android is unconfirmed (older Qt-for-Android
-    // versions relocated it into the native, now-deprecated Android
-    // options-menu instead of showing it as a normal widget row) -- if that
-    // turns out to still apply, whatever lives in its corner would be
-    // affected too, and this button might need a different home once that's
-    // actually tested on a device.
-    menuBar()->setCornerWidget(m_screenSizeButton, Qt::TopRightCorner);
 
     // Canvas height +/- -- Small/Medium only (hidden for Notebook, see
     // updateCanvasHeightButtons()): grows/shrinks that breakpoint's canvas
-    // past the viewport's own height one step at a time
+    // past the device viewport's own height one step at a time
     // (DashboardGrid::growCanvasHeight()/shrinkCanvasHeight()), for an
     // arrangement that needs more room than even the phone/tablet preview
-    // window (applyBreakpointWindowSize()) gives it. MainWindow's
-    // QScrollArea shows a scrollbar once the canvas is actually taller than
-    // the window.
+    // frame (DevicePreviewFrame, applied via applyBreakpointViewport())
+    // gives it. Neither button has a DashboardGrid signal to react to, so
+    // each click also re-runs applyBreakpointViewport() itself, right here,
+    // to resize the frame -- MainWindow's QScrollArea then shows a
+    // scrollbar once the frame is actually taller than the viewport.
     m_canvasShrinkButton = new QToolButton(dashboardPage);
     m_canvasShrinkButton->setAutoRaise(true);
     m_canvasShrinkButton->setFixedSize(kRibbonButtonSize, kRibbonButtonSize);
     m_canvasShrinkButton->setIconSize(QSize(kRibbonIconSize, kRibbonIconSize));
     m_canvasShrinkButton->setToolTip(tr("Shrink the canvas"));
-    connect(m_canvasShrinkButton, &QToolButton::clicked, this,
-            [this]() { m_dashboardGrid->shrinkCanvasHeight(); });
+    connect(m_canvasShrinkButton, &QToolButton::clicked, this, [this]() {
+        m_dashboardGrid->shrinkCanvasHeight();
+        applyBreakpointViewport();
+    });
 
     m_canvasGrowButton = new QToolButton(dashboardPage);
     m_canvasGrowButton->setAutoRaise(true);
     m_canvasGrowButton->setFixedSize(kRibbonButtonSize, kRibbonButtonSize);
     m_canvasGrowButton->setIconSize(QSize(kRibbonIconSize, kRibbonIconSize));
     m_canvasGrowButton->setToolTip(tr("Grow the canvas"));
-    connect(m_canvasGrowButton, &QToolButton::clicked, this,
-            [this]() { m_dashboardGrid->growCanvasHeight(); });
+    connect(m_canvasGrowButton, &QToolButton::clicked, this, [this]() {
+        m_dashboardGrid->growCanvasHeight();
+        applyBreakpointViewport();
+    });
 
     // Top-right lock toggle: turns the Dashboard tab's canvas into the old
     // Layout tab's editable mode in place, instead of that being a separate
@@ -1188,14 +1412,14 @@ Ribbon* MainWindow::buildRibbon() {
     m_editModeButton->setIconSize(QSize(kRibbonIconSize, kRibbonIconSize));
     connect(m_editModeButton, &QToolButton::toggled, this, &MainWindow::onEditModeToggled);
 
-    // Lives in the status bar (bottom-left, see below) rather than on this
+    // Lives in m_statusRow (bottom-left, see below) rather than on this
     // page: the ribbon's tab strip hides during fullscreen
     // (onFullscreenToggled -- m_ribbon->setTabBarVisible(false)), which
     // used to be harmless for this button since the Run page itself stayed
     // visible, but placing the workspace switcher in the ribbon's tab row
-    // (topico's earlier design) broke under that same hide. The status bar
-    // is never touched by fullscreen, so anything anchored there survives
-    // it for free.
+    // (topico's earlier design) broke under that same hide. m_statusRow is
+    // never touched by fullscreen, so anything anchored there survives it
+    // for free.
     m_fullscreenButton = new QToolButton(this);
     m_fullscreenButton->setCheckable(true);
     m_fullscreenButton->setAutoRaise(true);
@@ -1203,10 +1427,18 @@ Ribbon* MainWindow::buildRibbon() {
     m_fullscreenButton->setIconSize(QSize(kRibbonIconSize, kRibbonIconSize));
     m_fullscreenButton->setToolTip(tr("Fullscreen dashboard (F11)"));
     connect(m_fullscreenButton, &QToolButton::toggled, this, &MainWindow::onFullscreenToggled);
-    statusBar()->addWidget(m_fullscreenButton);
+    // Inserted just left of m_statusMessageLabel (rather than appended, which
+    // would land it in the permanent group on the right) -- see this
+    // constructor's own comment on m_statusRow for why indexOf() rather than
+    // a fixed index.
+    {
+        auto* statusRowLayout = qobject_cast<QHBoxLayout*>(m_statusRow->layout());
+        statusRowLayout->insertWidget(statusRowLayout->indexOf(m_statusMessageLabel),
+                                      m_fullscreenButton);
+    }
 
-    // Opens the history of every status-bar message posted this session -- the
-    // ones that otherwise scroll away. Anchored in the status bar (never
+    // Opens the history of every status message posted this session -- the
+    // ones that otherwise scroll away. Anchored in m_statusRow (never
     // touched by fullscreen), immediately left of the transient message area.
     auto* historyButton = new QToolButton(this);
     historyButton->setAutoRaise(true);
@@ -1214,7 +1446,10 @@ Ribbon* MainWindow::buildRibbon() {
     historyButton->setText(QStringLiteral("≡"));
     historyButton->setToolTip(tr("Notification history"));
     connect(historyButton, &QToolButton::clicked, this, &MainWindow::onShowNotificationHistory);
-    statusBar()->addWidget(historyButton);
+    {
+        auto* statusRowLayout = qobject_cast<QHBoxLayout*>(m_statusRow->layout());
+        statusRowLayout->insertWidget(statusRowLayout->indexOf(m_statusMessageLabel), historyButton);
+    }
 
     // Window-level shortcuts (not menu items) so they keep working once the
     // menu bar is hidden while fullscreen (see onFullscreenToggled). Routed
@@ -1249,7 +1484,6 @@ Ribbon* MainWindow::buildRibbon() {
     addAction(previousWorkspaceAction);
     connect(previousWorkspaceAction, &QAction::triggered, this, [this]() { cycleWorkspace(-1); });
 
-    updateRibbonIcons();
     connect(&ThemeManager::instance(), &ThemeManager::themeChanged, this,
             [this](const ThemePalette&) { updateRibbonIcons(); });
 
@@ -1287,6 +1521,9 @@ Ribbon* MainWindow::buildRibbon() {
 
     m_ribbon = ribbon;
 
+    // Icon refresh also synchronizes chrome visibility, so the ribbon must exist.
+    updateRibbonIcons();
+
     // Ctrl+1/2 jump to the fixed Dashboard/Devices tabs -- window-level so
     // they keep working with the menu bar hidden (same as fullscreen above).
     // Ctrl+Tab is already taken for workspace cycling, so digits it is.
@@ -1297,15 +1534,18 @@ Ribbon* MainWindow::buildRibbon() {
         action->setShortcut(QKeySequence(fixedTabChords[i]));
         addAction(action);
         const int tabIndex = fixedTabIndices[i];
-        connect(action, &QAction::triggered, this,
-                [this, tabIndex]() { m_ribbon->setCurrentIndex(tabIndex); });
+        connect(action, &QAction::triggered, this, [this, tabIndex]() {
+            if (developerUiActive() || tabIndex == m_dashboardTabIndex) {
+                m_ribbon->setCurrentIndex(tabIndex);
+            }
+        });
     }
 
     return ribbon;
 }
 
 void MainWindow::buildWorkspaceSwitcher() {
-    // Status bar (bottom-right), not the ribbon: see the comment above
+    // m_statusRow (bottom-right), not the ribbon: see the comment above
     // m_fullscreenButton's construction in buildRibbon() for why -- the
     // ribbon's tab row is hidden while fullscreen, which this widget used
     // to live inside via Ribbon::setCornerWidget().
@@ -1318,7 +1558,7 @@ void MainWindow::buildWorkspaceSwitcher() {
             &MainWindow::onNewWorkspaceRequested);
     m_workspaceSwitcher->updateIcons(ThemeManager::instance().currentTheme().textPrimary);
     refreshWorkspaceSwitcher();
-    statusBar()->addPermanentWidget(m_workspaceSwitcher);
+    m_statusRow->layout()->addWidget(m_workspaceSwitcher);
 }
 
 void MainWindow::refreshWorkspaceSwitcher() {
@@ -1326,11 +1566,21 @@ void MainWindow::refreshWorkspaceSwitcher() {
     for (const Workspace& workspace : WorkspaceManager::instance().workspaces()) {
         entries.append({workspace.id, workspace.name});
     }
-    m_workspaceSwitcher->setWorkspaces(entries, WorkspaceManager::instance().activeId());
+    entries.append({QString::fromLatin1(kSubscriptionsWorkspaceId), tr("Subscriptions"), true});
+    m_workspaceSwitcher->setWorkspaces(entries, m_subscriptionsWorkspaceActive
+        ? QString::fromLatin1(kSubscriptionsWorkspaceId) : WorkspaceManager::instance().activeId());
 }
 
 void MainWindow::switchToWorkspace(const QString& id) {
     WorkspaceManager& workspaces = WorkspaceManager::instance();
+    m_subscriptionsWorkspaceActive = id == QLatin1String(kSubscriptionsWorkspaceId);
+    m_ribbon->setCurrentIndex(m_dashboardTabIndex);
+    onRibbonTabChanged(m_dashboardTabIndex);
+    refreshWorkspaceSwitcher();
+    if (m_subscriptionsWorkspaceActive) {
+        updateSubscriptionsWorkspace();
+        return;
+    }
     if (id == workspaces.activeId()) {
         return;
     }
@@ -1345,22 +1595,16 @@ void MainWindow::switchToWorkspace(const QString& id) {
 }
 
 void MainWindow::cycleWorkspace(int direction) {
-    const QVector<Workspace>& workspaces = WorkspaceManager::instance().workspaces();
-    if (workspaces.size() < 2) {
-        return;
+    QStringList ids;
+    for (const auto& workspace : WorkspaceManager::instance().workspaces()) {
+        ids.append(workspace.id);
     }
-
-    const QString activeId = WorkspaceManager::instance().activeId();
-    int index = 0;
-    for (int i = 0; i < workspaces.size(); ++i) {
-        if (workspaces[i].id == activeId) {
-            index = i;
-            break;
-        }
-    }
-
-    const int nextIndex = (index + direction + workspaces.size()) % workspaces.size();
-    switchToWorkspace(workspaces[nextIndex].id);
+    ids.append(QString::fromLatin1(kSubscriptionsWorkspaceId));
+    const QString activeId = m_subscriptionsWorkspaceActive
+                                 ? QString::fromLatin1(kSubscriptionsWorkspaceId)
+                                 : WorkspaceManager::instance().activeId();
+    const int index = qMax(0, int(ids.indexOf(activeId)));
+    switchToWorkspace(ids[(index + direction + ids.size()) % ids.size()]);
 }
 
 void MainWindow::onWorkspaceSelected(const QString& id) {
@@ -1378,6 +1622,9 @@ void MainWindow::onNewWorkspaceRequested() {
     WorkspaceManager& workspaces = WorkspaceManager::instance();
     workspaces.setDashboardFor(workspaces.activeId(), m_dashboardGrid->toJson());
     workspaces.createWorkspace(name.trimmed());
+    m_subscriptionsWorkspaceActive = false;
+    m_ribbon->setCurrentIndex(m_dashboardTabIndex);
+    onRibbonTabChanged(m_dashboardTabIndex);
     loadDashboardJson(QJsonObject());
     m_dashboardGrid->undoStack()->clear();
     refreshPropertiesPanel();
@@ -1387,6 +1634,9 @@ void MainWindow::onNewWorkspaceRequested() {
 }
 
 void MainWindow::onWorkspaceDeleteRequested(const QString& id) {
+    if (id == QLatin1String(kSubscriptionsWorkspaceId)) {
+        return;
+    }
     WorkspaceManager& workspaces = WorkspaceManager::instance();
     if (workspaces.workspaces().size() <= 1) {
         return;
@@ -1525,9 +1775,10 @@ void MainWindow::updateRibbonIcons() {
     if (m_workspaceSwitcher) {
         m_workspaceSwitcher->updateIcons(palette.textPrimary);
     }
+    m_optionsButton->setIcon(makeOptionsIcon(palette.textPrimary));
     updateEditModeIcon();
     updateTogglePanelsIcon();
-    updateScreenSizeButtonIcon();
+    syncBreakpointChrome();
 }
 
 void MainWindow::updateScreenSizeButtonIcon() {
@@ -1539,95 +1790,138 @@ void MainWindow::updateScreenSizeButtonIcon() {
     switch (breakpoint) {
         case DashboardBreakpoint::Small:
             m_screenSizeButton->setIcon(makePhoneIcon(palette.textPrimary));
-            m_screenSizeButton->setToolTip(tr("Screen size: Phone"));
+            m_screenSizeButton->setToolTip(tr("Screen size: Small"));
             break;
         case DashboardBreakpoint::Medium:
             m_screenSizeButton->setIcon(makeTabletIcon(palette.textPrimary));
-            m_screenSizeButton->setToolTip(tr("Screen size: Tablet"));
+            m_screenSizeButton->setToolTip(tr("Screen size: Medium"));
             break;
         case DashboardBreakpoint::Large:
             m_screenSizeButton->setIcon(makeNotebookIcon(palette.textPrimary));
-            m_screenSizeButton->setToolTip(tr("Screen size: Notebook"));
+            m_screenSizeButton->setToolTip(tr("Screen size: Large"));
             break;
     }
+    // No QSignalBlocker here (there used to be one): the menu's own actions
+    // connect to triggered(), never toggled(), so setChecked() below -- which
+    // only ever emits toggled() -- had nothing to block in the first place.
     const QList<QAction*> actions = m_screenSizeMenu->actions();
     for (QAction* action : actions) {
-        const QSignalBlocker blocker(action);
-        action->setChecked(DashboardBreakpoint(action->data().toInt()) == breakpoint);
+        action->setChecked(breakpointFromActionData(action->data().toInt()) == breakpoint);
     }
+}
 
-    // Growing/shrinking the canvas only means anything for Small/Medium
-    // (see DashboardGrid::growCanvasHeight()) -- hide both buttons on
-    // Notebook instead of leaving them uselessly clickable. Also gated by
-    // editingActive() rather than just Developer mode: it's an edit to the
-    // arrangement, same as dragging/resizing a widget, so it stays locked
-    // behind the edit-mode padlock even while already logged in as
-    // developer (unlike the screen-size button itself, which only switches
-    // which layout is *shown*, not editable).
-    const bool canvasHeightAdjustable = breakpoint != DashboardBreakpoint::Large && editingActive();
+void MainWindow::updateCanvasHeightButtons() {
+    if (!m_canvasShrinkButton || !m_canvasGrowButton) {
+        return;
+    }
+    const ThemePalette& palette = ThemeManager::instance().currentTheme();
+    const DashboardBreakpoint breakpoint = m_dashboardGrid->currentBreakpoint();
+    // Growing/shrinking the canvas only means anything for a preview
+    // breakpoint (see DashboardGrid::growCanvasHeight()) -- hide both
+    // buttons on Notebook instead of leaving them uselessly clickable. Also
+    // gated by editingActive() rather than just Developer mode: it's an
+    // edit to the arrangement, same as dragging/resizing a widget, so it
+    // stays locked behind the edit-mode padlock even while already logged
+    // in as developer (unlike the screen-size button itself, which only
+    // switches which layout is *shown*, not editable).
+    const bool canvasHeightAdjustable = isPreviewBreakpoint(breakpoint) && editingActive();
     m_canvasShrinkButton->setIcon(makeMinusIcon(palette.textPrimary));
     m_canvasGrowButton->setIcon(makePlusIcon(palette.textPrimary));
     m_canvasShrinkButton->setVisible(canvasHeightAdjustable);
     m_canvasGrowButton->setVisible(canvasHeightAdjustable);
 }
 
-void MainWindow::onScreenSizeBreakpointSelected(DashboardBreakpoint breakpoint) {
-    m_dashboardGrid->setBreakpoint(breakpoint);
-    applyBreakpointWindowSize(breakpoint);
+void MainWindow::syncBreakpointChrome() {
+    updateScreenSizeButtonIcon();
+    updateCanvasHeightButtons();
+    // compactChromeActive() depends on previewActive(), which depends on the
+    // breakpoint -- every call site that reaches this facade (breakpoint
+    // changes, tab changes, applyUserMode(), theme refresh) is exactly the
+    // set of places menuBar()/m_optionsButton/m_chromeTopBar visibility can
+    // need to change too.
+    updateChromeVisibility();
 }
 
-void MainWindow::applyBreakpointWindowSize(DashboardBreakpoint breakpoint) {
-    if (breakpoint == DashboardBreakpoint::Large) {
-        if (!m_breakpointPreviewActive) {
-            return;
-        }
-        m_breakpointPreviewActive = false;
-        if (m_wasMaximizedBeforeBreakpointPreview) {
-            showMaximized();
-        } else {
-            showNormal();
-            resize(m_preBreakpointPreviewSize);
-        }
+void MainWindow::onScreenSizeBreakpointSelected(DashboardBreakpoint breakpoint) {
+    m_dashboardGrid->setBreakpoint(breakpoint);
+    applyBreakpointViewport();
+}
+
+bool MainWindow::previewActive() const {
+    // Only Developer mode's manual Phone/Tablet preview ever shows a device
+    // frame: User mode's breakpoint already tracks the real screen (see
+    // applyAutoBreakpoint()), so there's no smaller device left to simulate,
+    // same as the old window-resize preview was Developer-only.
+    return UserModeManager::instance().mode() == UserModeManager::UserMode::Developer &&
+           isPreviewBreakpoint(m_dashboardGrid->currentBreakpoint());
+}
+
+bool MainWindow::compactChromeActive() const {
+    return kUsesCompactChrome || previewActive();
+}
+
+void MainWindow::updateChromeVisibility() {
+    const bool compact = compactChromeActive();
+    const bool isDeveloper =
+        UserModeManager::instance().mode() == UserModeManager::UserMode::Developer;
+    // Fullscreen hides the native menu bar to maximize screen space, for a
+    // reason entirely independent of compactChromeActive() -- but the two
+    // must not fight over the same widget: entering fullscreen while compact
+    // chrome is already active must not "restore" a menu bar that was never
+    // meant to be there once fullscreen ends, and leaving fullscreen while
+    // still in a preview must not bring one back either. Either reason is
+    // enough to keep it down; only when NEITHER applies does it come back.
+    const bool fullscreen = m_fullscreenButton && m_fullscreenButton->isChecked();
+    // Hide the whole tab row so its height returns to the dashboard in User
+    // mode. Centralize this with fullscreen to avoid restoring it on exit.
+    m_ribbon->setTabBarVisible(developerUiActive() && !fullscreen);
+    menuBar()->setVisible(!compact && !fullscreen);
+    // Share the device-status row on Dashboard. Other pages keep the options
+    // menu in the top bar so Access remains reachable from every tab.
+    const bool dashboard = m_ribbon->currentIndex() == m_dashboardTabIndex;
+    QWidget* optionsRow = dashboard ? m_deviceStatusLabel->parentWidget() : m_chromeTopBar;
+    if (m_optionsButton->parentWidget() != optionsRow) {
+        m_optionsButton->parentWidget()->layout()->removeWidget(m_optionsButton);
+        static_cast<QHBoxLayout*>(optionsRow->layout())->insertWidget(0, m_optionsButton);
+    }
+    m_optionsButton->setVisible(compact);
+    // Keep manual size selection available while previewing the User interface.
+    m_screenSizeButton->setVisible(isDeveloper);
+    m_chromeTopBar->setVisible(compact && !dashboard);
+}
+
+void MainWindow::applyBreakpointViewport() {
+    const DashboardBreakpoint breakpoint = m_dashboardGrid->currentBreakpoint();
+    if (!previewActive()) {
+        m_devicePreviewFrame->setDeviceSize(QSize());
+        m_dashboardGrid->setMinimumHeight(0);
         return;
     }
 
-    // Remember what the window looked like before entering a preview only
-    // once, on the way in -- switching straight from Phone to Tablet (both
-    // previews) must keep restoring back to the original Notebook size/
-    // state, not to whichever preview size was active a moment ago.
-    if (!m_breakpointPreviewActive) {
-        m_wasMaximizedBeforeBreakpointPreview = isMaximized();
-        m_preBreakpointPreviewSize = size();
-        m_breakpointPreviewActive = true;
-    }
-    if (isMaximized()) {
-        showNormal();
-    }
+    // The device's own screen is a fixed size now (see DevicePreviewFrame's
+    // item-5 rewrite: both its dimensions clamp to whatever room is actually
+    // available, the way a real phone's screen is always shown whole) --
+    // canvasHeightMultiplier() no longer stretches the DEVICE (that used to
+    // make the frame itself grow past the available space and get wrapped
+    // in an outer scroll area); it stretches the CONTENT inside it instead,
+    // below, the same way a too-tall page scrolls on an actual phone.
+    const QSize base =
+        breakpoint == DashboardBreakpoint::Small ? kPhoneViewportSize : kTabletViewportSize;
+    m_devicePreviewFrame->setDeviceSize(base);
 
-    QSize target = breakpoint == DashboardBreakpoint::Small ? kPhonePreviewWindowSize
-                                                            : kTabletPreviewWindowSize;
-    QScreen* current = screen();
-    if (current) {
-        // Never let the preview exceed what's actually visible on this
-        // monitor -- a fixed target size alone could spill off a smaller
-        // screen or one already mostly covered by the taskbar.
-        const QSize margin(kBreakpointPreviewScreenMargin, kBreakpointPreviewScreenMargin);
-        target = target.boundedTo(current->availableGeometry().size() - margin);
-    }
-    resize(target);
-
-    if (current) {
-        // The window's existing position can still push the smaller preview
-        // partly off-screen (e.g. it was sitting near the right/bottom edge
-        // before) -- pull it back fully inside this monitor's available area
-        // if resizing alone wasn't enough.
-        const QRect available = current->availableGeometry();
-        const QRect frame = frameGeometry();
-        const int x = qBound(available.left(), frame.left(), available.right() - frame.width());
-        const int y = qBound(available.top(), frame.top(), available.bottom() - frame.height());
-        if (x != frame.left() || y != frame.top()) {
-            move(x, y);
-        }
+    const double multiplier = m_dashboardGrid->canvasHeightMultiplier(breakpoint);
+    if (multiplier > 0.0) {
+        // 0.0 means growCanvasHeight() has never been clicked for this
+        // breakpoint ("off") -- floored at 1.0 here so the very first grow
+        // step reads as a visible jump rather than starting from zero, same
+        // as this used to floor the device's own height. m_dashboardScrollArea
+        // -- not the device frame -- is what's actually available for canvas
+        // content once the chrome around it (m_chromeTopBar, the ribbon,
+        // m_statusRow) is accounted for.
+        const int visibleHeight = m_dashboardScrollArea->viewport()->height();
+        m_dashboardGrid->setMinimumHeight(qRound(visibleHeight * qMax(1.0, multiplier)));
+    } else {
+        m_dashboardGrid->setMinimumHeight(0);
     }
 }
 
@@ -1668,7 +1962,7 @@ void MainWindow::onRibbonTabChanged(int index) {
     m_togglePanelsButton->setEnabled(editingActive());
     // The canvas +/- buttons are gated by editingActive() too (see its own
     // comment) -- switching tabs can flip it just like the padlock can.
-    updateScreenSizeButtonIcon();
+    syncBreakpointChrome();
     // Ctrl+Z/Ctrl+Y (m_undoAction/m_redoAction) are created from m_undoGroup,
     // not either stack directly -- flip which one is "active" here so they
     // always undo/redo whatever the visible tab actually shows. The
@@ -1691,7 +1985,9 @@ void MainWindow::onRibbonTabChanged(int index) {
     // edit mode/panels don't need any extra handling for those). Log tabs
     // are matched by their ribbon page pointer rather than by index -- see
     // m_openLogTabs.
-    QWidget* activeContent = m_dashboardScrollArea;
+    QWidget* activeContent = m_subscriptionsWorkspaceActive
+                                 ? static_cast<QWidget*>(m_subscriptionsTable)
+                                 : static_cast<QWidget*>(m_dashboardScrollArea);
     if (index == m_devicesTabIndex) {
         activeContent = m_devicesGrid;
     } else if (m_otaTabActive) {
@@ -1727,8 +2023,8 @@ void MainWindow::onEditModeToggled(bool enabled) {
     m_addWidgetAction->setEnabled(editingActive());
     m_togglePanelsButton->setEnabled(editingActive());
     // The canvas +/- buttons are locked behind the padlock too -- see their
-    // own comment in updateScreenSizeButtonIcon().
-    updateScreenSizeButtonIcon();
+    // own comment in updateCanvasHeightButtons().
+    syncBreakpointChrome();
     updatePanelVisibility();
     updateSelectionActions();
 }
@@ -1792,6 +2088,10 @@ void MainWindow::updatePanelVisibility() {
 bool MainWindow::eventFilter(QObject* watched, QEvent* event) {
     if (watched == m_contentRow && event->type() == QEvent::Resize) {
         positionOverlayPanels();
+    } else if (watched == m_dashboardScrollArea->viewport() && event->type() == QEvent::Resize) {
+        // Re-derives the canvas-height-multiplier pixel math, which reads
+        // this viewport's current height -- see applyBreakpointViewport().
+        applyBreakpointViewport();
     }
     return QMainWindow::eventFilter(watched, event);
 }
@@ -1813,12 +2113,18 @@ void MainWindow::moveEvent(QMoveEvent* event) {
     // Ignore moves before the first applyFloatingPositions() -- any floating
     // panel is still sitting wherever its constructor left it, so there's
     // nothing meaningful to carry along yet.
-    if (m_floatingPanelsPositioned) {
+    //
+    // WindowNoState is the guard for "this is a user dragging the window",
+    // which is the only move trackWindowMoved() is meant to follow. A
+    // maximize or fullscreen transition also emits moveEvent, with a delta
+    // that jumps the window to the screen corner -- following that dragged
+    // floating panels off-screen, and the transition back doesn't produce a
+    // symmetric delta to undo it (onFullscreenToggled() restores via
+    // restoreGeometry(), not by moving). A window can't be dragged while
+    // maximized or fullscreen anyway, so nothing legitimate is lost here.
+    if (m_floatingPanelsPositioned && windowState() == Qt::WindowNoState) {
         m_dockController->trackWindowMoved(event->pos() - event->oldPos());
     }
-    // A move can carry the window onto a different monitor -- re-sync which
-    // QScreen is watched and, in User mode, re-derive the breakpoint from it.
-    applyAutoBreakpoint();
 }
 
 void MainWindow::resizeEvent(QResizeEvent* event) {
@@ -2339,8 +2645,9 @@ DeviceConnection* MainWindow::createDeviceConnection(const Device& device) {
                     m_frameLog->recordDecodeError(id, name, reason);
                 });
     }
-    connect(backend, &Backend::subscriptionsChanged, this, &MainWindow::updateTelemetryStatusLabel);
-    connect(backend, &Backend::statusReceived, this, &MainWindow::updateTelemetryStatusLabel);
+    connect(backend, &Backend::catalogChanged, this, &MainWindow::updateSubscriptionsWorkspace);
+    connect(backend, &Backend::subscriptionsChanged, this, &MainWindow::updateSubscriptionsWorkspace);
+    connect(backend, &Backend::statusReceived, this, &MainWindow::updateSubscriptionsWorkspace);
     // A manifest exchange completing/updating is when catalogTopics() first
     // has (or changes) the readable names chart/gauge config editors resolve
     // sourceId/topicId against -- refresh their cached DeviceOption list
@@ -2493,6 +2800,7 @@ void MainWindow::onDeviceRemoved(const QString& id) {
     m_hubChildOfflineTicks.remove(id);
     delete m_scriptRuntimes.take(id);
     DeviceConnection* connection = m_deviceConnections.take(id);
+    updateSubscriptionsWorkspace();
     if (!connection) {
         return;
     }
@@ -3160,13 +3468,20 @@ void MainWindow::onFullscreenToggled(bool checked) {
         // Capture before hiding chrome or entering fullscreen.
         m_preFullscreenGeometry = saveGeometry();
         m_wasMaximized = isMaximized();
-        menuBar()->hide();
-        m_ribbon->setTabBarVisible(false);
+        // menuBar()->hide() used to be unconditional here; now routed through
+        // updateChromeVisibility() so it ANDs with compactChromeActive()
+        // instead of fighting it (see that function's own comment) -- reads
+        // m_fullscreenButton->isChecked(), which the toggled() signal this
+        // slot handles has already updated to `checked` by this point.
+        updateChromeVisibility();
         showFullScreen();
         m_fullscreenButton->setToolTip(tr("Exit fullscreen (F11 / Esc)"));
     } else {
-        menuBar()->show();
-        m_ribbon->setTabBarVisible(true);
+        // Same reasoning as the hide() above, in reverse: this must NOT
+        // unconditionally bring the menu bar back if compactChromeActive()
+        // is why it was down in the first place (Android, or a Developer-
+        // mode preview left running through the fullscreen toggle).
+        updateChromeVisibility();
         // A single setWindowState() call transitions straight from
         // WindowFullScreen to the target state, so the Windows backend never
         // passes through the intermediate "normal" bounds that caused the
@@ -3177,6 +3492,16 @@ void MainWindow::onFullscreenToggled(bool checked) {
     }
     setUpdatesEnabled(true);
     updateRibbonIcons();
+    // The transition just moved/resized the window without moveEvent
+    // carrying floating panels along (see moveEvent()'s own comment). That's
+    // the right call for the panels' own positions, but a panel that was
+    // already near a screen edge can end up unreachable once the window
+    // jumps -- and, entering fullscreen, sitting under the now-fullscreen
+    // window. Deferred one turn so the window-state change has actually
+    // landed and screen geometry reads true.
+    QMetaObject::invokeMethod(
+        this, [this] { m_dockController->clampFloatingPanelsToScreen(); },
+        Qt::QueuedConnection);
 }
 
 void MainWindow::maybeCheckForUpdatesOnStartup() {

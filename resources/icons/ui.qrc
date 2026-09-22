@@ -24,6 +24,7 @@
     <file alias="icons/ribbon/screen-phone.svg">ribbon/screen-phone.svg</file>
     <file alias="icons/ribbon/screen-tablet.svg">ribbon/screen-tablet.svg</file>
     <file alias="icons/ribbon/screen-notebook.svg">ribbon/screen-notebook.svg</file>
+    <file alias="icons/ribbon/options.svg">ribbon/options.svg</file>
 
     <file alias="icons/settings/general.svg">settings/general.svg</file>
     <file alias="icons/settings/appearance.svg">settings/appearance.svg</file>

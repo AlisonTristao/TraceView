@@ -124,6 +124,19 @@ cmake --preset linux-ninja \
     -DTRACEVIEW_BUILD_TOOLS=OFF
 ```
 
+The developer account TraceView seeds on first run also comes from configure
+time, so no credential lives in the tracked source:
+
+```sh
+cmake --preset linux-ninja     -DTRACEVIEW_DEFAULT_ADMIN_USER=operator     -DTRACEVIEW_DEFAULT_ADMIN_PASSWORD='set-your-own'
+```
+
+Both default to `admin`. A build left at that default still works, but the
+Access menu tells whoever logs in that the shipped password is in use until
+it's changed. Treat this as an operator gate rather than a security boundary
+either way: the value is compiled in, so anyone with the binary can recover
+it.
+
 `CMakeUserPresets.json` is intentionally ignored by Git and can hold
 machine-specific overrides without changing the shared presets.
 

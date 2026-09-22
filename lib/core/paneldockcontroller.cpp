@@ -70,6 +70,22 @@ bool isGeometryOnScreen(const QRect& geometry) {
     }
     return false;
 }
+
+// Stricter than isGeometryOnScreen() above, which only asks for any overlap
+// at all: a panel left with a sliver on screen passes that test while being
+// useless -- its header, the only thing you can drag it back by, is off in
+// the void. clampFloatingPanelsToScreen() wants "fully reachable" instead.
+bool isGeometryFullyOnScreen(const QRect& geometry) {
+    if (!geometry.isValid()) {
+        return false;
+    }
+    for (const QScreen* screen : QGuiApplication::screens()) {
+        if (screen->availableGeometry().contains(geometry)) {
+            return true;
+        }
+    }
+    return false;
+}
 }  // namespace
 
 PanelDockController::PanelDockController(QWidget* contentRow, QWidget* window, QObject* parent)
@@ -177,6 +193,39 @@ void PanelDockController::trackWindowMoved(QPoint delta) {
         if (m_states.value(panel).edge == DockEdge::Floating) {
             panel->move(panel->pos() + delta);
         }
+    }
+}
+
+void PanelDockController::clampFloatingPanelsToScreen() {
+    for (DockablePanel* panel : m_dockOrder) {
+        if (m_states.value(panel).edge != DockEdge::Floating) {
+            continue;
+        }
+        const QRect geometry = panel->frameGeometry();
+        if (isGeometryFullyOnScreen(geometry)) {
+            continue;
+        }
+        // Not fully reachable any more -- pick the screen it's nearest to
+        // and pull it fully inside that one's available area,
+        // rather than resetting to defaultFloatingGeometry(): the user chose
+        // this size and roughly this corner, and only the position needs
+        // rescuing.
+        const QScreen* target = QGuiApplication::screenAt(geometry.center());
+        if (!target) {
+            target = m_window ? m_window->screen() : QGuiApplication::primaryScreen();
+        }
+        if (!target) {
+            continue;
+        }
+        const QRect available = target->availableGeometry();
+        const int x = qBound(available.left(), geometry.left(),
+                             qMax(available.left(), available.right() - geometry.width()));
+        const int y = qBound(available.top(), geometry.top(),
+                             qMax(available.top(), available.bottom() - geometry.height()));
+        panel->move(x, y);
+        // Per panel, inside the loop: only the ones actually rescued need
+        // their persisted offset rewritten, and saveState() is per-panel.
+        saveState(panel);
     }
 }
 

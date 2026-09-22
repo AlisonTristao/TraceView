@@ -106,6 +106,7 @@ add_traceview_test(test_deviceconnection traceview_ui Qt6::Network)
 # directory (see the test's own initTestCase()) so it neither reads nor
 # leaves behind the real TraceView account list.
 add_traceview_test(test_usermodemanager traceview_ui)
+add_traceview_test(test_mainwindowchrome traceview_ui)
 
 # Generic telemetry value types (lib/telemetry) -- no BTP dependency at all
 # (traceview_telemetry links just Qt6::Core; see lib/CMakeLists.txt).

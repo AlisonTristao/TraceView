@@ -26,6 +26,29 @@ option(TRACEVIEW_ENABLE_USB_HID "Build the hidapi USB HID transport" ON)
 option(TRACEVIEW_ENABLE_TCP "Enable the TCP transport integration" OFF)
 option(TRACEVIEW_ENABLE_BLE "Enable the BLE transport integration" OFF)
 
+# The developer-mode login seeded on every fresh install (see
+# UserModeManager::seedDefaultAccount()) used to hardcode "admin233#" in
+# usermodemanager.cpp -- trivially extractable from an Android APK. The
+# value now comes from here instead, via lib/core/usermodedefaults.h.in, so
+# a given deployment can set its own at configure time without touching
+# tracked source. Left at the "admin" placeholder, MainWindow's Access menu
+# warns that the default is still in use (see
+# kDefaultAdminPasswordIsPlaceholder in the generated header).
+set(TRACEVIEW_DEFAULT_ADMIN_USER "admin" CACHE STRING
+    "Developer account username seeded on first run")
+set(TRACEVIEW_DEFAULT_ADMIN_PASSWORD "admin" CACHE STRING
+    "Password for the seeded developer account. Override at configure time per deployment.")
+
+# Compared here rather than in the generated header: a C++-side check would
+# have to compare string contents at compile time, and the obvious-looking
+# sizeof() shortcut compares lengths instead -- any 5-character password
+# would then masquerade as the shipped default and trip the warning.
+if(TRACEVIEW_DEFAULT_ADMIN_PASSWORD STREQUAL "admin")
+    set(TRACEVIEW_DEFAULT_ADMIN_PASSWORD_IS_PLACEHOLDER "true")
+else()
+    set(TRACEVIEW_DEFAULT_ADMIN_PASSWORD_IS_PLACEHOLDER "false")
+endif()
+
 if(TRACEVIEW_FLATPAK_BUILD)
     add_compile_definitions(TRACEVIEW_FLATPAK_BUILD)
 endif()

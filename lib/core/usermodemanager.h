@@ -48,6 +48,14 @@ public:
     bool login(const QString& username, const QString& password);
     void logout();
 
+    // True only while the seeded default account ("admin", see the .cpp)
+    // still has its build-shipped placeholder password -- i.e. the build
+    // left TRACEVIEW_DEFAULT_ADMIN_PASSWORD unset AND nobody has changed
+    // "admin"'s password since. Drives the warning MainWindow's Access menu
+    // shows while logged in as developer; false for any build that set its
+    // own password at configure time, regardless of account state.
+    bool usingDefaultPassword() const;
+
     // Only meaningful while already in Developer mode -- every mutator below
     // is a no-op (returns false) otherwise.
     bool addAccount(const QString& username, const QString& password);

@@ -2,6 +2,7 @@
 
 #include "dashboard/dashboarditem.h"
 
+using traceview::DashboardBreakpoint;
 using traceview::DashboardItem;
 using traceview::dashboardItemFromJson;
 using traceview::dashboardItemToJson;
@@ -25,9 +26,9 @@ void TestDashboardItem::roundTripsAllFields() {
     item.name = "My Chart";
     item.key = "chart1";
     item.config = QJsonObject{{"series", 3}};
-    item.small = {0.1, 0.2, 0.4, 0.4};
-    item.medium = {0.15, 0.3, 0.35, 0.3};
-    item.large = {0.25, 0.5, 0.3333, 0.125};
+    item.geometry(DashboardBreakpoint::Small) = {0.1, 0.2, 0.4, 0.4};
+    item.geometry(DashboardBreakpoint::Medium) = {0.15, 0.3, 0.35, 0.3};
+    item.geometry(DashboardBreakpoint::Large) = {0.25, 0.5, 0.3333, 0.125};
 
     bool ok = false;
     const DashboardItem roundTripped = dashboardItemFromJson(dashboardItemToJson(item), &ok);
@@ -38,16 +39,26 @@ void TestDashboardItem::roundTripsAllFields() {
     QCOMPARE(roundTripped.name, item.name);
     QCOMPARE(roundTripped.key, item.key);
     QCOMPARE(roundTripped.config, item.config);
-    QCOMPARE(roundTripped.small.x, item.small.x);
-    QCOMPARE(roundTripped.small.y, item.small.y);
-    QCOMPARE(roundTripped.small.width, item.small.width);
-    QCOMPARE(roundTripped.small.height, item.small.height);
-    QCOMPARE(roundTripped.medium.x, item.medium.x);
-    QCOMPARE(roundTripped.medium.width, item.medium.width);
-    QCOMPARE(roundTripped.large.x, item.large.x);
-    QCOMPARE(roundTripped.large.y, item.large.y);
-    QCOMPARE(roundTripped.large.width, item.large.width);
-    QCOMPARE(roundTripped.large.height, item.large.height);
+    QCOMPARE(roundTripped.geometry(DashboardBreakpoint::Small).x,
+             item.geometry(DashboardBreakpoint::Small).x);
+    QCOMPARE(roundTripped.geometry(DashboardBreakpoint::Small).y,
+             item.geometry(DashboardBreakpoint::Small).y);
+    QCOMPARE(roundTripped.geometry(DashboardBreakpoint::Small).width,
+             item.geometry(DashboardBreakpoint::Small).width);
+    QCOMPARE(roundTripped.geometry(DashboardBreakpoint::Small).height,
+             item.geometry(DashboardBreakpoint::Small).height);
+    QCOMPARE(roundTripped.geometry(DashboardBreakpoint::Medium).x,
+             item.geometry(DashboardBreakpoint::Medium).x);
+    QCOMPARE(roundTripped.geometry(DashboardBreakpoint::Medium).width,
+             item.geometry(DashboardBreakpoint::Medium).width);
+    QCOMPARE(roundTripped.geometry(DashboardBreakpoint::Large).x,
+             item.geometry(DashboardBreakpoint::Large).x);
+    QCOMPARE(roundTripped.geometry(DashboardBreakpoint::Large).y,
+             item.geometry(DashboardBreakpoint::Large).y);
+    QCOMPARE(roundTripped.geometry(DashboardBreakpoint::Large).width,
+             item.geometry(DashboardBreakpoint::Large).width);
+    QCOMPARE(roundTripped.geometry(DashboardBreakpoint::Large).height,
+             item.geometry(DashboardBreakpoint::Large).height);
 }
 
 void TestDashboardItem::fromJsonRejectsMissingIdOrType() {
@@ -74,12 +85,12 @@ void TestDashboardItem::fromJsonClampsFractionsToUnitRange() {
                                                      &ok);
 
     QVERIFY(ok);
-    QCOMPARE(item.small.x, 0.0);
-    QCOMPARE(item.small.y, 1.0);
-    QCOMPARE(item.medium.x, 0.0);
-    QCOMPARE(item.medium.y, 1.0);
-    QCOMPARE(item.large.x, 0.0);
-    QCOMPARE(item.large.y, 1.0);
+    QCOMPARE(item.geometry(DashboardBreakpoint::Small).x, 0.0);
+    QCOMPARE(item.geometry(DashboardBreakpoint::Small).y, 1.0);
+    QCOMPARE(item.geometry(DashboardBreakpoint::Medium).x, 0.0);
+    QCOMPARE(item.geometry(DashboardBreakpoint::Medium).y, 1.0);
+    QCOMPARE(item.geometry(DashboardBreakpoint::Large).x, 0.0);
+    QCOMPARE(item.geometry(DashboardBreakpoint::Large).y, 1.0);
 }
 
 void TestDashboardItem::fromJsonDefaultsMissingOptionalFields() {

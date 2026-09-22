@@ -30,6 +30,7 @@ public:
     struct Entry {
         QString id;
         QString name;
+        bool builtIn = false;
     };
 
     explicit WorkspaceSwitcher(QWidget* parent = nullptr);

@@ -3,6 +3,8 @@
         "devices": [
             {
                 "baudRate": 5000000,
+                "bleAddress": "",
+                "blePeerUuid": "",
                 "cacheOtaPassword": false,
                 "cachePeerPassword": false,
                 "commType": 0,
@@ -13,13 +15,17 @@
                 "otaAddress": "",
                 "parentDeviceId": "",
                 "peerSourceId": 0,
-                "portName": "COM8",
+                "portName": "COM17",
                 "script": "",
+                "tcpHost": "",
+                "tcpPort": 44300,
                 "transportType": 0,
                 "usbPath": "\\\\?\\HID#INTC816#3&27ef53f1&0&0000#{4d1e55b2-f16f-11cf-88cb-001111000030}"
             },
             {
                 "baudRate": 921600,
+                "bleAddress": "",
+                "blePeerUuid": "",
                 "cacheOtaPassword": true,
                 "cachePeerPassword": true,
                 "commType": 0,
@@ -34,6 +40,8 @@
                 "peerSourceId": 2672043140,
                 "portName": "",
                 "script": "",
+                "tcpHost": "",
+                "tcpPort": 44300,
                 "transportType": 2,
                 "usbPath": "\\\\?\\HID#INTC816#3&27ef53f1&0&0000#{4d1e55b2-f16f-11cf-88cb-001111000030}"
             }
@@ -47,6 +55,11 @@
         "list": [
             {
                 "dashboard": {
+                    "breakpoint": "large",
+                    "canvasHeightMultiplier": {
+                        "medium": 0,
+                        "small": 3.2000000000000006
+                    },
                     "items": [
                         {
                             "config": {
@@ -60,32 +73,30 @@
                                 ]
                             },
                             "groupId": "",
-                            "height": 1,
                             "id": "d2ea39ce-39e3-41bd-9e32-fac0f7b0fbf1",
                             "key": "",
-                            "name": "",
-                            "type": "serial_monitor",
-                            "width": 0.46666666666666673,
-                            "x": 0,
-                            "y": 0
-                        },
-                        {
-                            "config": {
-                                "deviceId": "ec1f2d5f-546e-4aee-8c08-9b3c6e9d47bf",
-                                "sampleTimeMs": 1000,
-                                "sourceId": "0X9F442484",
-                                "text": "",
-                                "topicId": "0X0003"
+                            "layouts": {
+                                "large": {
+                                    "height": 0.5,
+                                    "width": 0.46666666666666673,
+                                    "x": 0,
+                                    "y": 0
+                                },
+                                "medium": {
+                                    "height": 0.5,
+                                    "width": 0.46666666666666673,
+                                    "x": 0,
+                                    "y": 0
+                                },
+                                "small": {
+                                    "height": 0.15000000000000002,
+                                    "width": 1,
+                                    "x": 0,
+                                    "y": 0
+                                }
                             },
-                            "groupId": "",
-                            "height": 0.675,
-                            "id": "f9d287b9-4c80-4b1e-8df7-5310de5a0723",
-                            "key": "",
-                            "name": "Monitor Stats",
-                            "type": "text_board",
-                            "width": 0.21666666666666667,
-                            "x": 0.7833333333333331,
-                            "y": 0
+                            "name": "",
+                            "type": "serial_monitor"
                         },
                         {
                             "config": {
@@ -124,14 +135,30 @@
                                 }
                             },
                             "groupId": "",
-                            "height": 0.3500000000000001,
                             "id": "c048c722-5999-46ce-abc5-62001f1023fc",
                             "key": "",
+                            "layouts": {
+                                "large": {
+                                    "height": 0.3750000000000001,
+                                    "width": 0.5333333333333334,
+                                    "x": 0.4666666666666665,
+                                    "y": 0.35
+                                },
+                                "medium": {
+                                    "height": 0.3750000000000001,
+                                    "width": 0.5333333333333334,
+                                    "x": 0.4666666666666665,
+                                    "y": 0.35
+                                },
+                                "small": {
+                                    "height": 0.17500000000000013,
+                                    "width": 1,
+                                    "x": 0,
+                                    "y": 0.49999999999999983
+                                }
+                            },
                             "name": "Accel",
-                            "type": "dummy_line",
-                            "width": 0.3166666666666667,
-                            "x": 0.4666666666666665,
-                            "y": 0.325
+                            "type": "dummy_line"
                         },
                         {
                             "config": {
@@ -197,14 +224,30 @@
                                 }
                             },
                             "groupId": "",
-                            "height": 0.32499999999999996,
                             "id": "aef29374-d294-4cd8-9414-f8fb94dfe92e",
                             "key": "",
+                            "layouts": {
+                                "large": {
+                                    "height": 0.27499999999999997,
+                                    "width": 0.30000000000000004,
+                                    "x": 0.5833333333333333,
+                                    "y": 0.7249999999999999
+                                },
+                                "medium": {
+                                    "height": 0.27499999999999997,
+                                    "width": 0.30000000000000004,
+                                    "x": 0.5833333333333333,
+                                    "y": 0.7249999999999999
+                                },
+                                "small": {
+                                    "height": 0.125,
+                                    "width": 0.41666666666666674,
+                                    "x": 0.5833333333333333,
+                                    "y": 0.6749999999999998
+                                }
+                            },
                             "name": "Arr Sensors",
-                            "type": "dummy_bar",
-                            "width": 0.30000000000000004,
-                            "x": 0.5833333333333333,
-                            "y": 0.6749999999999998
+                            "type": "dummy_bar"
                         },
                         {
                             "config": {
@@ -243,14 +286,30 @@
                                 }
                             },
                             "groupId": "",
-                            "height": 0.32499999999999996,
                             "id": "4ff409e3-47ed-4d49-b04d-e0fa4f212373",
                             "key": "",
+                            "layouts": {
+                                "large": {
+                                    "height": 0.35,
+                                    "width": 0.5333333333333334,
+                                    "x": 0.4666666666666665,
+                                    "y": 1.3877787807814457e-17
+                                },
+                                "medium": {
+                                    "height": 0.35,
+                                    "width": 0.5333333333333334,
+                                    "x": 0.4666666666666665,
+                                    "y": 1.3877787807814457e-17
+                                },
+                                "small": {
+                                    "height": 0.19999999999999998,
+                                    "width": 1,
+                                    "x": 0,
+                                    "y": 0.30000000000000004
+                                }
+                            },
                             "name": "Speed",
-                            "type": "dummy_line",
-                            "width": 0.3166666666666667,
-                            "x": 0.4666666666666665,
-                            "y": 1.3877787807814457e-17
+                            "type": "dummy_line"
                         },
                         {
                             "config": {
@@ -270,14 +329,30 @@
                                 "unit": "dB"
                             },
                             "groupId": "",
-                            "height": 0.325,
                             "id": "e0a784cc-d99f-4325-9027-211178cf5a2b",
                             "key": "",
+                            "layouts": {
+                                "large": {
+                                    "height": 0.275,
+                                    "width": 0.11666666666666667,
+                                    "x": 0.4666666666666666,
+                                    "y": 0.725
+                                },
+                                "medium": {
+                                    "height": 0.275,
+                                    "width": 0.11666666666666667,
+                                    "x": 0.4666666666666666,
+                                    "y": 0.725
+                                },
+                                "small": {
+                                    "height": 0.125,
+                                    "width": 0.5833333333333333,
+                                    "x": 0,
+                                    "y": 0.675
+                                }
+                            },
                             "name": "Signal",
-                            "type": "dummy_gauge",
-                            "width": 0.11666666666666667,
-                            "x": 0.4666666666666666,
-                            "y": 0.675
+                            "type": "dummy_gauge"
                         },
                         {
                             "config": {
@@ -286,13 +361,20 @@
                                     {
                                         "color": "#e85d8a",
                                         "fieldId": 2,
-                                        "name": "Series 1",
+                                        "name": "sen",
+                                        "style": "solid",
+                                        "unit": "1"
+                                    },
+                                    {
+                                        "color": "#0a0f1e",
+                                        "fieldId": 2,
+                                        "name": "btn",
                                         "style": "solid",
                                         "unit": "1"
                                     }
                                 ],
-                                "sourceId": "0X9F442484",
-                                "topicId": "0X0005",
+                                "sourceId": "0x9F442484",
+                                "topicId": "0x0005",
                                 "xAxis": {
                                     "limit": 10,
                                     "mode": "samples",
@@ -309,19 +391,98 @@
                                 }
                             },
                             "groupId": "",
-                            "height": 0.325,
                             "id": "cb553939-c483-4c24-8294-7b0ad01e1f31",
                             "key": "",
+                            "layouts": {
+                                "large": {
+                                    "height": 0.275,
+                                    "width": 0.11666666666666667,
+                                    "x": 0.8833333333333333,
+                                    "y": 0.725
+                                },
+                                "medium": {
+                                    "height": 0.275,
+                                    "width": 0.11666666666666667,
+                                    "x": 0.8833333333333333,
+                                    "y": 0.725
+                                },
+                                "small": {
+                                    "height": 0.2,
+                                    "width": 1,
+                                    "x": 0,
+                                    "y": 0.8
+                                }
+                            },
                             "name": "",
-                            "type": "dummy_line",
-                            "width": 0.11666666666666667,
-                            "x": 0.8833333333333333,
-                            "y": 0.675
+                            "type": "dummy_line"
+                        },
+                        {
+                            "config": {
+                                "tabs": [
+                                    {
+                                        "deviceId": "7343d9f3-c204-44a7-9f14-6e183cc70af4"
+                                    },
+                                    {
+                                        "deviceId": "ec1f2d5f-546e-4aee-8c08-9b3c6e9d47bf"
+                                    }
+                                ]
+                            },
+                            "groupId": "",
+                            "id": "5320275f-dd59-447d-a8f0-38dc3724691f",
+                            "key": "",
+                            "layouts": {
+                                "large": {
+                                    "height": 0.5,
+                                    "width": 0.4666666666666667,
+                                    "x": 0,
+                                    "y": 0.5
+                                },
+                                "medium": {
+                                    "height": 0.5,
+                                    "width": 0.4666666666666667,
+                                    "x": 0,
+                                    "y": 0.5
+                                },
+                                "small": {
+                                    "height": 0.15000000000000005,
+                                    "width": 1,
+                                    "x": 0,
+                                    "y": 0.15
+                                }
+                            },
+                            "name": "Logs Monitor",
+                            "type": "robot_log"
                         }
                     ]
                 },
                 "id": "d2bb648c-6cba-4d7b-90bc-f511295b4b4c",
                 "name": "Default"
+            },
+            {
+                "dashboard": {
+                    "items": [
+                        {
+                            "config": {
+                                "deviceId": "ec1f2d5f-546e-4aee-8c08-9b3c6e9d47bf",
+                                "sampleTimeMs": 1000,
+                                "sourceId": "0x9F442484",
+                                "text": "",
+                                "topicId": "0x0003"
+                            },
+                            "groupId": "",
+                            "height": 1,
+                            "id": "b7701a3d-41c8-41f5-9819-f18ae973483a",
+                            "key": "",
+                            "name": "",
+                            "type": "text_board",
+                            "width": 0.3833333333333333,
+                            "x": 0,
+                            "y": 0
+                        }
+                    ]
+                },
+                "id": "80588e15-470a-4a28-b0a0-8701b5372b9c",
+                "name": "monitor_stats"
             }
         ]
     }

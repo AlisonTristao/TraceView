@@ -4,6 +4,12 @@
 #include <QtTest>
 
 #include "core/usermodemanager.h"
+// The seeded account's credentials come from the build
+// (TRACEVIEW_DEFAULT_ADMIN_USER/_PASSWORD -> usermodedefaults.h), so this
+// reads them from there rather than hardcoding the shipped defaults --
+// otherwise configuring with a different password would fail every case
+// below, which is precisely the configuration the option exists for.
+#include "usermodedefaults.h"
 
 using traceview::UserModeManager;
 
@@ -54,11 +60,11 @@ void TestUserModeManager::seedsDefaultAdminAccountOnFirstRun() {
     // seeds) the singleton right here.
     UserModeManager& manager = UserModeManager::instance();
     QCOMPARE(manager.mode(), UserModeManager::UserMode::User);
-    QVERIFY(manager.accountNames().contains("admin"));
+    QVERIFY(manager.accountNames().contains(kDefaultAdminUsername));
 
-    QVERIFY(manager.login("admin", "admin233#"));
+    QVERIFY(manager.login(kDefaultAdminUsername, kDefaultAdminPassword));
     QCOMPARE(manager.mode(), UserModeManager::UserMode::Developer);
-    QCOMPARE(manager.currentUserName(), QString("admin"));
+    QCOMPARE(manager.currentUserName(), QString(kDefaultAdminUsername));
 
     manager.logout();
     QCOMPARE(manager.mode(), UserModeManager::UserMode::User);
@@ -67,8 +73,8 @@ void TestUserModeManager::seedsDefaultAdminAccountOnFirstRun() {
 
 void TestUserModeManager::loginRejectsWrongCredentials() {
     UserModeManager& manager = UserModeManager::instance();
-    QVERIFY(!manager.login("admin", "not-the-password"));
-    QVERIFY(!manager.login("nobody", "admin233#"));
+    QVERIFY(!manager.login(kDefaultAdminUsername, "not-the-password"));
+    QVERIFY(!manager.login("nobody", kDefaultAdminPassword));
     QCOMPARE(manager.mode(), UserModeManager::UserMode::User);
 }
 
@@ -79,7 +85,7 @@ void TestUserModeManager::logoutIsANoOpWhenAlreadyLoggedOut() {
     manager.logout();  // already logged out (previous test ended that way)
     QCOMPARE(modeSpy.count(), 0);
 
-    QVERIFY(manager.login("admin", "admin233#"));
+    QVERIFY(manager.login(kDefaultAdminUsername, kDefaultAdminPassword));
     QCOMPARE(modeSpy.count(), 1);
     manager.logout();
     QCOMPARE(modeSpy.count(), 2);
@@ -93,7 +99,7 @@ void TestUserModeManager::addAccountRequiresDeveloperMode() {
     QVERIFY(!manager.addAccount("bob", "password1"));
     QVERIFY(!manager.accountNames().contains("bob"));
 
-    QVERIFY(manager.login("admin", "admin233#"));
+    QVERIFY(manager.login(kDefaultAdminUsername, kDefaultAdminPassword));
     QVERIFY(manager.addAccount("bob", "password1"));
     QVERIFY(manager.accountNames().contains("bob"));
     QVERIFY(manager.login("bob", "password1"));  // the new account works too
@@ -102,7 +108,7 @@ void TestUserModeManager::addAccountRequiresDeveloperMode() {
 
 void TestUserModeManager::addAccountRejectsDuplicateOrEmptyFields() {
     UserModeManager& manager = UserModeManager::instance();
-    QVERIFY(manager.login("admin", "admin233#"));
+    QVERIFY(manager.login(kDefaultAdminUsername, kDefaultAdminPassword));
 
     QVERIFY(!manager.addAccount("bob", "somethingElse"));  // "bob" already exists
     QVERIFY(!manager.addAccount("", "somepassword"));      // empty username
@@ -114,26 +120,26 @@ void TestUserModeManager::addAccountRejectsDuplicateOrEmptyFields() {
 
 void TestUserModeManager::removeAccountRefusesTheLastOne() {
     UserModeManager& manager = UserModeManager::instance();
-    QVERIFY(manager.login("admin", "admin233#"));
+    QVERIFY(manager.login(kDefaultAdminUsername, kDefaultAdminPassword));
 
-    QVERIFY(manager.removeAccount("bob"));  // fine, "admin" still remains
+    QVERIFY(manager.removeAccount("bob"));  // fine, the seeded account still remains
     QVERIFY(!manager.accountNames().contains("bob"));
 
-    // "admin" is now the sole remaining account.
-    QVERIFY(!manager.removeAccount("admin"));
-    QVERIFY(manager.accountNames().contains("admin"));
+    // The seeded account is now the sole remaining one.
+    QVERIFY(!manager.removeAccount(kDefaultAdminUsername));
+    QVERIFY(manager.accountNames().contains(kDefaultAdminUsername));
 
     manager.logout();
 }
 
 void TestUserModeManager::changePasswordUpdatesLogin() {
     UserModeManager& manager = UserModeManager::instance();
-    QVERIFY(manager.login("admin", "admin233#"));
-    QVERIFY(manager.changePassword("admin", "a-new-password"));
+    QVERIFY(manager.login(kDefaultAdminUsername, kDefaultAdminPassword));
+    QVERIFY(manager.changePassword(kDefaultAdminUsername, "a-new-password"));
     manager.logout();
 
-    QVERIFY(!manager.login("admin", "admin233#"));      // old password rejected
-    QVERIFY(manager.login("admin", "a-new-password"));  // new one works
+    QVERIFY(!manager.login(kDefaultAdminUsername, kDefaultAdminPassword));      // old password rejected
+    QVERIFY(manager.login(kDefaultAdminUsername, "a-new-password"));  // new one works
     manager.logout();
 }
 

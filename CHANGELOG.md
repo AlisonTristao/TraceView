@@ -11,11 +11,16 @@ release flow.
 
 - Developer/User access mode: the app now always starts in a restricted User
   mode, unlockable via a new **Access** menu login (username/password
-  against locally registered accounts, managed from the same menu). Every
-  install/device ships with the same default account out of the box (no
-  first-run setup step) — change its password or add other accounts via
-  Manage Users. In User mode the Devices tab, the dashboard edit-mode lock,
-  the Layers/Properties panel toggle, and workspace creation/deletion are
+  against locally registered accounts, managed from the same menu). A
+  default account is seeded on first run (no first-run setup step); its
+  username and password come from the `TRACEVIEW_DEFAULT_ADMIN_USER` and
+  `TRACEVIEW_DEFAULT_ADMIN_PASSWORD` CMake options rather than from the
+  source, so a deployment sets its own at configure time and the tracked
+  source carries no credential. While the password is still the shipped
+  default, the Access menu says so. This is an operator gate, not a security
+  boundary — change the password or add other accounts via Manage Users.
+  In User mode the Devices tab, the dashboard edit-mode lock, the
+  Layers/Properties panel toggle, and workspace creation/deletion are
   hidden; switching between existing workspaces, themes and language stays
   available. Developer accounts persist across restarts; the logged-in
   session itself does not.
@@ -23,19 +28,25 @@ release flow.
   independent position/size for three breakpoints (Phone/Tablet/Notebook)
   instead of one shared layout, selected manually via a new screen-size
   button (Developer mode only, a menu-bar corner widget so it's reachable
-  from any tab, not just Dashboard) that also resizes the TraceView window
-  itself to approximate that device's shape (clamped to fit the current
-  screen, restored on returning to Notebook or leaving Developer mode). In
-  User mode the breakpoint instead follows the real screen automatically. A
-  +/− pair on the Dashboard tab's own toolbar, next to the edit-mode lock
+  from any tab, not just Dashboard). Picking Phone or Tablet previews the
+  arrangement in a device-shaped viewport inside the window, dimming the
+  surround, rather than resizing the TraceView window itself — so the
+  preview behaves the same on every platform, including ones with no
+  resizable window at all, and never disturbs your window arrangement. In
+  User mode there is no frame and the breakpoint follows the dashboard's own
+  available width automatically, with a dead band around each threshold so
+  dragging a window edge across one settles instead of flickering. A +/−
+  pair on the Dashboard tab's own toolbar, next to the edit-mode lock
   (hidden on Notebook and whenever that lock is closed), lets a Phone/Tablet
-  layout grow taller than the window one step at a time, scrolling instead
-  of being squeezed to fit once it exceeds the window; off by default, and
-  persisted per breakpoint alongside its layout. Projects saved before this
-  feature keep the same layout on all three sizes until customized.
-- A "More options" button (⋮, status bar) mirrors the File/View/Access menus
-  as a plain widget, independent of the menu bar's own platform-specific
-  rendering.
+  layout grow taller than one screenful a step at a time, scrolling instead
+  of being squeezed to fit; off by default, and persisted per breakpoint
+  alongside its layout. Projects saved before this feature keep the same
+  layout on all three sizes until customized.
+- A "More options" button (⋮, status bar) mirrors the File/View/Access
+  menus as a plain widget, independent of the menu bar's own platform-
+  specific rendering. Shown on platforms where the menu bar isn't a
+  dependable route to those menus — a property of the platform, not of
+  which dashboard layout happens to be showing.
 
 ## [3.3.19] - 2026-09-20
 

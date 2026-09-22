@@ -82,30 +82,6 @@ constexpr double kEpsilon = 1e-6;
 // not a meaningful design limit ("as tall as needed" has no real one).
 constexpr double kCanvasHeightStep = 0.2;
 constexpr double kMaxCanvasHeightMultiplier = 8.0;
-
-QString breakpointToString(DashboardBreakpoint breakpoint) {
-    switch (breakpoint) {
-        case DashboardBreakpoint::Small:
-            return QStringLiteral("small");
-        case DashboardBreakpoint::Medium:
-            return QStringLiteral("medium");
-        case DashboardBreakpoint::Large:
-            return QStringLiteral("large");
-    }
-    return QStringLiteral("large");
-}
-
-// Defaults to Large for anything unrecognized -- absent (projects saved
-// before per-screen-size layouts existed) or corrupt alike.
-DashboardBreakpoint breakpointFromString(const QString& value) {
-    if (value == QStringLiteral("small")) {
-        return DashboardBreakpoint::Small;
-    }
-    if (value == QStringLiteral("medium")) {
-        return DashboardBreakpoint::Medium;
-    }
-    return DashboardBreakpoint::Large;
-}
 }  // namespace
 
 DashboardGrid::DashboardGrid(QWidget* parent) : QWidget(parent), m_undoStack(new QUndoStack(this)) {
@@ -329,9 +305,7 @@ void DashboardGrid::addItem(const QString& typeId) {
     // item looks the same everywhere until a developer customizes one
     // breakpoint's arrangement on its own (see dashboarditem.h).
     const DashboardItem::Geometry geometry{x, y, width, height};
-    item.small = geometry;
-    item.medium = geometry;
-    item.large = geometry;
+    item.geometries.fill(geometry);
 
     m_undoStack->push(new AddWidgetCommand(this, item));
     // Selected right away so the properties panel comes up already showing
@@ -783,12 +757,18 @@ QJsonObject DashboardGrid::toJson() const {
     // How much growCanvasHeight() has grown Small/Medium's canvas past the
     // viewport, if at all -- part of how that breakpoint's arrangement was
     // built (see growCanvasHeight()'s own comment), so it round-trips with
-    // everything else instead of resetting to "off" on every reload.
+    // everything else instead of resetting to "off" on every reload. Large
+    // has no adjustable canvas height (see isPreviewBreakpoint()) and is
+    // deliberately omitted from the JSON, same as before.
     QJsonObject canvasHeightMultiplier;
-    canvasHeightMultiplier["small"] =
-        m_canvasHeightMultiplier.value(DashboardBreakpoint::Small, 0.0);
-    canvasHeightMultiplier["medium"] =
-        m_canvasHeightMultiplier.value(DashboardBreakpoint::Medium, 0.0);
+    for (int i = 0; i < kDashboardBreakpointCount; ++i) {
+        const DashboardBreakpoint breakpoint = DashboardBreakpoint(i);
+        if (!isPreviewBreakpoint(breakpoint)) {
+            continue;
+        }
+        canvasHeightMultiplier[breakpointToString(breakpoint)] =
+            m_canvasHeightMultiplier[size_t(breakpoint)];
+    }
     object["canvasHeightMultiplier"] = canvasHeightMultiplier;
     return object;
 }
@@ -808,12 +788,16 @@ void DashboardGrid::fromJson(const QJsonObject& object) {
     }
 
     m_breakpoint = breakpointFromString(object.value("breakpoint").toString());
-    m_canvasHeightMultiplier.clear();
+    m_canvasHeightMultiplier.fill(0.0);
     const QJsonObject canvasHeightMultiplier = object.value("canvasHeightMultiplier").toObject();
-    m_canvasHeightMultiplier[DashboardBreakpoint::Small] =
-        qMax(0.0, canvasHeightMultiplier.value("small").toDouble(0.0));
-    m_canvasHeightMultiplier[DashboardBreakpoint::Medium] =
-        qMax(0.0, canvasHeightMultiplier.value("medium").toDouble(0.0));
+    for (int i = 0; i < kDashboardBreakpointCount; ++i) {
+        const DashboardBreakpoint breakpoint = DashboardBreakpoint(i);
+        if (!isPreviewBreakpoint(breakpoint)) {
+            continue;
+        }
+        m_canvasHeightMultiplier[size_t(breakpoint)] =
+            qMax(0.0, canvasHeightMultiplier.value(breakpointToString(breakpoint)).toDouble(0.0));
+    }
     updateGeometry();
     relayout();
     emit itemsChanged();
@@ -829,31 +813,23 @@ QSize DashboardGrid::minimumSizeHint() const {
 }
 
 QSize DashboardGrid::contentSize() const {
-    // A sane floor so the grid never collapses to zero.
+    // A sane floor so the grid never collapses to zero. This used to grow
+    // past the floor for a Small/Medium breakpoint whose canvas height had
+    // been grown (see growCanvasHeight()) -- that responsibility moved to
+    // DevicePreviewFrame (lib/core/devicepreviewframe.h), which now hosts
+    // the grid inside a device-shaped viewport and reports its own
+    // minimumSizeHint() from the device height plus this multiplier (see
+    // MainWindow::applyBreakpointViewport()). The grid itself just always
+    // fills whatever it's given, same as Large always has.
     constexpr QSize kFloor(320, 240);
-    const double heightMultiplier = m_canvasHeightMultiplier.value(m_breakpoint, 0.0);
-    if (m_breakpoint == DashboardBreakpoint::Large || heightMultiplier <= 0.0) {
-        // Off (the default): the canvas just fills whatever it's given,
-        // same as Large always has -- no reason to ask for extra height
-        // until growCanvasHeight() has actually been used to grow this
-        // breakpoint's canvas past the viewport's own height.
-        return kFloor;
-    }
-    // Grown by growCanvasHeight(): ask for more height than the floor so
-    // the canvas can exceed the viewport's own height -- MainWindow's
-    // QScrollArea then shows a scrollbar (widgetResizable() keeps the grid
-    // at least this tall) instead of squeezing every item's row height down
-    // to fit. Width stays at the floor either way so the viewport's own
-    // width always wins instead -- no horizontal scrollbar is wanted here.
-    const int w = qMax(width(), kFloor.width());
-    return QSize(kFloor.width(), qMax(kFloor.height(), qRound(w * heightMultiplier)));
+    return kFloor;
 }
 
 void DashboardGrid::growCanvasHeight() {
-    if (m_breakpoint == DashboardBreakpoint::Large) {
+    if (!isPreviewBreakpoint(m_breakpoint)) {
         return;
     }
-    double& multiplier = m_canvasHeightMultiplier[m_breakpoint];
+    double& multiplier = m_canvasHeightMultiplier[size_t(m_breakpoint)];
     // First grow: start one step above 1.0 (matching the width -- already
     // taller than any real phone/tablet's own aspect ratio) rather than
     // from 0, so the very first click gives a visibly taller canvas right
@@ -864,20 +840,20 @@ void DashboardGrid::growCanvasHeight() {
 }
 
 void DashboardGrid::shrinkCanvasHeight() {
-    if (m_breakpoint == DashboardBreakpoint::Large) {
+    if (!isPreviewBreakpoint(m_breakpoint)) {
         return;
     }
-    const auto it = m_canvasHeightMultiplier.find(m_breakpoint);
-    if (it == m_canvasHeightMultiplier.end() || it.value() <= 0.0) {
+    double& multiplier = m_canvasHeightMultiplier[size_t(m_breakpoint)];
+    if (multiplier <= 0.0) {
         return;
     }
-    const double shrunk = it.value() - kCanvasHeightStep;
+    const double shrunk = multiplier - kCanvasHeightStep;
     // Back down to (or past) the starting point growCanvasHeight() grows
     // from -- reset to fully off instead of leaving a barely-taller-than-
     // nothing canvas around, so this mirrors growCanvasHeight() exactly in
     // reverse and the scrollbar actually disappears once shrunk all the
     // way back.
-    it.value() = shrunk <= 1.0 ? 0.0 : shrunk;
+    multiplier = shrunk <= 1.0 ? 0.0 : shrunk;
     updateGeometry();
 }
 
@@ -901,11 +877,6 @@ void DashboardGrid::setBreakpoint(DashboardBreakpoint breakpoint) {
 void DashboardGrid::resizeEvent(QResizeEvent* event) {
     QWidget::resizeEvent(event);
     relayout();
-    // contentSize() for Small/Medium depends on the canvas's own width (see
-    // its own comment) -- ask Qt to re-query sizeHint()/minimumSizeHint()
-    // now that it just changed, so QScrollArea's height follows within the
-    // same resize pass instead of lagging a frame behind.
-    updateGeometry();
 }
 
 void DashboardGrid::paintEvent(QPaintEvent*) {

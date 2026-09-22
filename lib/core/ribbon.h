@@ -2,6 +2,7 @@
 
 #include <QList>
 #include <QString>
+#include <QHBoxLayout>
 #include <QWidget>
 
 class QAction;
@@ -98,11 +99,24 @@ public:
     // hidden tab can't be the active one.
     void setTabVisible(int index, bool visible);
 
+    // Parks a widget at the right end of the tab strip's own row, past the
+    // tabs themselves. For controls that belong to the window rather than
+    // to any one tab -- the screen-size preview toggle -- which would
+    // otherwise need a strip of their own, costing a row of vertical space
+    // for a single button. Takes ownership by reparenting; one at a time.
+    void setTabBarCornerWidget(QWidget* widget);
+
 signals:
     void currentTabChanged(int index);
     void tabCloseRequested(int index);
 
 private:
+    // Wraps m_tabBar so setTabBarCornerWidget() has somewhere to put a
+    // corner widget beside it. setTabBarVisible() hides this row, not
+    // m_tabBar alone, so "hide the tab strip" keeps meaning the whole strip.
+    QWidget* m_tabRow = nullptr;
+    QHBoxLayout* m_tabRowLayout = nullptr;
+    QWidget* m_tabBarCornerWidget = nullptr;
     RibbonTabBar* m_tabBar;
     QStackedWidget* m_stack;
 };

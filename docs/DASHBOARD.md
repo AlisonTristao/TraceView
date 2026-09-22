@@ -122,16 +122,17 @@ under whatever was covering it; deselecting restores it to its own layer.
 
 ## Screen-size breakpoints
 
-Every `DashboardItem` carries three independent geometries — `small`,
-`medium`, `large` (`DashboardBreakpoint` in
-[dashboarditem.h](../lib/dashboard/dashboarditem.h)) — for a phone, tablet
-and notebook arrangement of the same dashboard. `DashboardGrid` shows/edits
-exactly one at a time (`setBreakpoint()`/`currentBreakpoint()`); switching
-clears the current selection and re-lays out every cell from the new
-breakpoint's own fractions. A brand-new item is seeded identically across
-all three until a developer moves/resizes it in one breakpoint specifically
-— that edit only ever touches the breakpoint being shown at the time (see
-`applyMove()`/`applyResize()` in
+Every `DashboardItem` carries three independent geometries, one per
+`DashboardBreakpoint` (`Small`/`Medium`/`Large` in
+[dashboarditem.h](../lib/dashboard/dashboarditem.h), indexed into a
+`std::array` rather than named members) — a phone, tablet and notebook
+arrangement of the same dashboard. `DashboardGrid` shows/edits exactly one
+at a time (`setBreakpoint()`/`currentBreakpoint()`); switching clears the
+current selection and re-lays out every cell from the new breakpoint's own
+fractions. A brand-new item is seeded identically across all three until a
+developer moves/resizes it in one breakpoint specifically — that edit only
+ever touches the breakpoint being shown at the time (see `applyMove()`/
+`applyResize()` in
 [dashboardgrid.cpp](../lib/dashboard/dashboardgrid.cpp), and note that undo/
 redo always targets the breakpoint a move/resize was originally made in,
 not whichever one happens to be on screen when Undo is pressed later).
@@ -141,34 +142,71 @@ with three icons (phone/tablet/notebook) — a corner widget of the menu bar
 (`QMenuBar::setCornerWidget()`, top-right), not the Dashboard tab's own
 toolbar, since it isn't specific to that tab being current (unlike the lock/
 panels/canvas-height buttons below, which stay in that toolbar). Picking
-Phone or Tablet does two things: switches `DashboardGrid` to that
-breakpoint, and resizes the TraceView window itself to a rough phone/tablet
-portrait size (`MainWindow::applyBreakpointWindowSize()`, clamped to fit the
-current screen) so the arrangement is previewed at roughly the shape it'll
-actually be seen at, restoring the window's prior size/maximized state when
-switching back to Notebook (also triggered by leaving Developer mode
-altogether — see `MainWindow::applyUserMode()`).
+Phone or Tablet switches `DashboardGrid` to that breakpoint and shrinks the
+canvas into a device-shaped viewport inside the window —
+[`DevicePreviewFrame`](../lib/core/devicepreviewframe.h), which hosts the
+canvas as its child, centers it at the device's width, and dims the
+surround. The TraceView window itself is never touched.
+
+That matters more than it looks. An earlier version previewed by resizing
+the OS window instead, which had three problems this replaces: Android has
+no resizable window, so the mechanism meant to preview Android did nothing
+there; a 360px-wide desktop window at DPR 1.0 is not a phone at DPR 3x, so
+fonts and icons sat at the wrong scale relative to the layout being
+designed; and remembering the pre-preview window size meant a resize made
+*during* a preview was silently discarded on the way out. A viewport inside
+the window has none of those — it behaves identically on every host, and
+leaves the window alone.
 
 On the Dashboard tab's own toolbar, next to the edit-mode lock, a +/− pair
 (`DashboardGrid::growCanvasHeight()`/`shrinkCanvasHeight()`, hidden on
-Notebook and, unlike the screen-size button itself, also hidden whenever
-the edit-mode lock is closed — see `MainWindow::updateScreenSizeButtonIcon()`'s
+Notebook and, unlike the screen-size button itself, also hidden whenever the
+edit-mode lock is closed — see `MainWindow::updateCanvasHeightButtons()`'s
 `editingActive()` check) lets a developer grow that breakpoint's canvas
-taller than the window one step at a time, for an arrangement that needs
-more vertical room than even the resized preview window gives it —
-`contentSize()` then asks for more height, and MainWindow's `QScrollArea`
-shows a scrollbar for the difference instead of squeezing every item to
-fit. Off (canvas exactly matches the window) until the first click;
-shrinking back past that same first step resets it fully. Persisted per
-breakpoint alongside its layout (`canvasHeightMultiplier` in the project
-file, see "Project file" below), since it's part of how that breakpoint's
-arrangement was built.
+taller than the device viewport one step at a time, for an arrangement that
+needs more vertical room than one screenful. The grid no longer computes
+that pixel height itself: `growCanvasHeight()` only moves a per-breakpoint
+multiplier, and `MainWindow::applyBreakpointViewport()` reads it back to
+size the frame's device rect, whose `minimumSizeHint()` is what makes the
+surrounding `QScrollArea` show a scrollbar. Off (canvas exactly one device
+tall) until the first click; shrinking back past that same first step resets
+it fully. Persisted per breakpoint alongside its layout
+(`canvasHeightMultiplier` in the project file, see "Project file" below),
+since it's part of how that breakpoint's arrangement was built.
 
-**User mode** never shows that button and never resizes the window itself —
-the breakpoint instead follows whichever real screen the window is running
-on, automatically (`MainWindow::applyAutoBreakpoint()`, driven by
-`QScreen::availableGeometry()`'s width against two tunable thresholds), on
-launch and on every screen/resolution/window-size change.
+**User mode** never shows either button and never gets a device frame at
+any breakpoint — the real screen already *is* whatever size it is, so there
+is no smaller device left to simulate. The breakpoint instead follows the
+dashboard's own available width automatically
+(`MainWindow::applyAutoBreakpoint()`, driven by the `QScrollArea`
+viewport's width against two tunable thresholds), on launch and on every
+resize.
+
+Measuring the viewport rather than `QScreen::availableGeometry()` is
+deliberate: the screen's width can't change when a window is merely
+resized, so a window dragged down to a sliver on a 1920px monitor used to
+keep the Notebook layout and squeeze it, and a developer's preview and a
+user's real session were deciding from two different numbers. Both now read
+the same one. Because a resize can finally change the outcome, the
+thresholds carry a ±`kBreakpointHysteresisPx` dead band measured against
+the breakpoint currently active, so dragging a window edge across a
+threshold settles instead of flickering between two layouts.
+
+**Known limitation**: pasting an item only repositions the geometry of the
+breakpoint currently on screen (see `pasteItem()` in
+[dashboardgrid.cpp](../lib/dashboard/dashboardgrid.cpp)); in the other two
+it keeps whatever position the copied original had, so a pasted item can
+overlap in a layout you aren't looking at.
+
+**Note on the "More options" button** (the status-bar ⋮ that mirrors the
+File/View/Access menus): its visibility is *not* a function of the
+breakpoint. It keys off `kUsesCompactChrome` in
+[mainwindow.cpp](../lib/core/mainwindow.cpp) — a build-time platform check
+— because whether `QMenuBar` is a dependable route to those menus is a
+property of the platform, not of which dashboard layout is showing. Tying
+it to the breakpoint, as an earlier version did, meant a tablet wide enough
+to auto-detect Notebook would lose the ⋮ *and* possibly the menu bar,
+stranding the user with no way to reach Access and log in.
 
 ## Element kinds
 

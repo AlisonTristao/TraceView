@@ -13,6 +13,7 @@
 #include <QUndoStack>
 #include <QVector>
 #include <QWidget>
+#include <array>
 #include <optional>
 
 #include "dashboardcell.h"
@@ -112,6 +113,14 @@ public:
     // makes contentSize() taller than the viewport.
     void growCanvasHeight();
     void shrinkCanvasHeight();
+    // Current multiplier for `breakpoint` (0.0 = off/unused, otherwise how
+    // many multiples of the device viewport's own height growCanvasHeight()
+    // has grown it to) -- read by MainWindow to size DevicePreviewFrame's
+    // device rect (see MainWindow::applyBreakpointViewport()), since the
+    // grid no longer computes that pixel height itself (see contentSize()).
+    double canvasHeightMultiplier(DashboardBreakpoint breakpoint) const {
+        return m_canvasHeightMultiplier[size_t(breakpoint)];
+    }
 
     // Live connection state for one device (see core/deviceconnection.h),
     // pushed by MainWindow whenever a DeviceConnection's own
@@ -395,8 +404,10 @@ private:
     // existing/legacy dashboard already has.
     DashboardBreakpoint m_breakpoint = DashboardBreakpoint::Large;
     // Per-breakpoint canvas height multiplier -- see growCanvasHeight().
-    // Missing entry (QHash::value's default) means "off": 0.0.
-    QHash<DashboardBreakpoint, double> m_canvasHeightMultiplier;
+    // Indexed by DashboardBreakpoint; zero-initialized, so an untouched
+    // entry (0.0) means "off" -- same meaning the old QHash's missing-entry
+    // default carried.
+    std::array<double, kDashboardBreakpointCount> m_canvasHeightMultiplier{};
     // deviceId -> last-known connected state, pushed by setDeviceConnected().
     // A device with no entry (never reported) counts as disconnected.
     QHash<QString, bool> m_deviceConnectionStates;

@@ -2,6 +2,7 @@
 
 #include <QJsonObject>
 #include <QString>
+#include <array>
 
 namespace traceview {
 
@@ -12,6 +13,29 @@ namespace traceview {
 // can be laid out independently in Developer mode instead of one layout
 // just being rescaled for the others.
 enum class DashboardBreakpoint { Small, Medium, Large };
+
+// Number of DashboardBreakpoint members -- drives the size of every
+// per-breakpoint array (DashboardItem::geometries, DashboardGrid::
+// m_canvasHeightMultiplier) so adding a size only means adding it to the
+// enum plus kBreakpointNames in dashboarditem.cpp, not hunting down every
+// place a 4th slot would need to be added by hand.
+constexpr int kDashboardBreakpointCount = 3;
+
+// Converts DashboardBreakpoint to/from its persisted JSON string ("small"/
+// "medium"/"large"). Defined in dashboarditem.cpp; breakpointFromString
+// defaults to Large for anything unrecognized -- absent (projects saved
+// before per-screen-size layouts existed) or corrupt alike.
+QString breakpointToString(DashboardBreakpoint breakpoint);
+DashboardBreakpoint breakpointFromString(const QString& value);
+
+// True for the two breakpoints that get a device-frame preview and
+// growable canvas height (Small/Medium) -- false for Large, whose canvas
+// just matches the viewport like a notebook window being resized normally.
+// Centralizes what used to be scattered `!= DashboardBreakpoint::Large`/
+// `== DashboardBreakpoint::Large` comparisons in dashboardgrid.cpp.
+constexpr bool isPreviewBreakpoint(DashboardBreakpoint bp) {
+    return bp != DashboardBreakpoint::Large;
+}
 
 // Where one dashboard widget sits on the grid: its registered type and its
 // position/size as fractions (0.0-1.0) of the grid's usable canvas area.
@@ -48,23 +72,16 @@ struct DashboardItem {
         double width = 0.0;
         double height = 0.0;
     };
-    Geometry small;
-    Geometry medium;
-    Geometry large;
+    // Indexed by DashboardBreakpoint (see geometry() below) instead of one
+    // named member per size -- adding a 4th breakpoint only means bumping
+    // kDashboardBreakpointCount, not adding a matching member here too.
+    std::array<Geometry, kDashboardBreakpointCount> geometries;
 
     Geometry& geometry(DashboardBreakpoint breakpoint) {
-        switch (breakpoint) {
-            case DashboardBreakpoint::Small:
-                return small;
-            case DashboardBreakpoint::Medium:
-                return medium;
-            case DashboardBreakpoint::Large:
-                return large;
-        }
-        return large;
+        return geometries[size_t(breakpoint)];
     }
     const Geometry& geometry(DashboardBreakpoint breakpoint) const {
-        return const_cast<DashboardItem*>(this)->geometry(breakpoint);
+        return geometries[size_t(breakpoint)];
     }
 };
 

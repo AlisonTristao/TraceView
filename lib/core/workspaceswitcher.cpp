@@ -127,10 +127,17 @@ void WorkspaceSwitcher::setManagementEnabled(bool enabled) {
 void WorkspaceSwitcher::rebuildMenu() {
     m_menu->clear();
 
-    const bool deletable = m_managementEnabled && m_entries.size() > 1;
+    int editableCount = 0;
+    for (const Entry& entry : m_entries) {
+        if (!entry.builtIn) {
+            ++editableCount;
+        }
+    }
+    const bool deletable = m_managementEnabled && editableCount > 1;
     for (const Entry& entry : m_entries) {
         const QString id = entry.id;
-        auto* row = new WorkspaceRow(entry.name, id == m_activeId, deletable, m_menu);
+        auto* row = new WorkspaceRow(entry.name, id == m_activeId,
+                                     deletable && !entry.builtIn, m_menu);
         row->trashButton()->setIcon(makeTrashIcon(m_iconColor, kTrashIconSize));
         // Deferred to the next event-loop turn (rather than emitted straight
         // from here): both handlers below end up back in rebuildMenu() via

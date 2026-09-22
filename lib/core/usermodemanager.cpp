@@ -4,6 +4,8 @@
 #include <QRandomGenerator>
 #include <QSettings>
 
+#include "usermodedefaults.h"
+
 namespace traceview {
 
 namespace {
@@ -11,13 +13,6 @@ constexpr char kAccountsGroup[] = "developerAccounts";
 // Multiple of sizeof(quint32) -- randomSalt() fills it via
 // QRandomGenerator::fillRange(), which works in quint32 units.
 constexpr int kSaltLength = 16;
-// The same fixed login on every TraceView install/device -- not a secret
-// (it's the same value in this source file everywhere TraceView runs), just
-// a shared operator gate so a fresh install never needs an interactive
-// first-run setup step. Change it (or add other accounts) via Manage Users
-// once logged in, same as any other account.
-constexpr char kDefaultAdminUsername[] = "admin";
-constexpr char kDefaultAdminPassword[] = "admin233#";
 }  // namespace
 
 UserModeManager& UserModeManager::instance() {
@@ -63,6 +58,27 @@ QByteArray UserModeManager::hashPassword(const QString& password, const QByteArr
     hash.addData(salt);
     hash.addData(password.toUtf8());
     return hash.result();
+}
+
+bool UserModeManager::usingDefaultPassword() const {
+    // Only worth checking at all if the build left the password at its
+    // shipped placeholder in the first place -- a deployment that set its
+    // own TRACEVIEW_DEFAULT_ADMIN_PASSWORD never matches kDefaultAdminPassword
+    // below (see usermodedefaults.h.in), so this is also just a cheap
+    // early-out.
+    if (!kDefaultAdminPasswordIsPlaceholder) {
+        return false;
+    }
+    const int index = indexOfAccount(QString::fromLatin1(kDefaultAdminUsername));
+    if (index < 0) {
+        return false;
+    }
+    // Reuses the same hashPassword() the real login() path uses, against
+    // that account's own salt -- true only if nobody has changed "admin"'s
+    // password away from the seeded default since.
+    const Account& account = m_accounts[index];
+    return hashPassword(QString::fromLatin1(kDefaultAdminPassword), account.salt) ==
+           account.passwordHash;
 }
 
 void UserModeManager::seedDefaultAccount() {

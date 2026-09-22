@@ -22,7 +22,19 @@ Ribbon::Ribbon(QWidget* parent) : QWidget(parent) {
     auto* layout = new QVBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
     layout->setSpacing(0);
-    layout->addWidget(m_tabBar);
+    // The tabs share their row with whatever setTabBarCornerWidget() parks
+    // at the right end, so the row -- not m_tabBar directly -- is what goes
+    // into the column here. Zero margins/spacing keep it visually identical
+    // to m_tabBar having been added on its own.
+    m_tabRow = new QWidget(this);
+    m_tabRowLayout = new QHBoxLayout(m_tabRow);
+    m_tabRowLayout->setContentsMargins(0, 0, 0, 0);
+    m_tabRowLayout->setSpacing(0);
+    // Give the bar all space left by the corner control. A separate stretch
+    // competes with the bar and can trigger scrolling while the row has room.
+    m_tabRowLayout->addWidget(m_tabBar, /*stretch=*/1);
+
+    layout->addWidget(m_tabRow);
     layout->addWidget(m_stack);
 
     connect(m_tabBar, &QTabBar::currentChanged, m_stack, &QStackedWidget::setCurrentIndex);
@@ -84,7 +96,24 @@ int Ribbon::currentIndex() const {
 }
 
 void Ribbon::setTabBarVisible(bool visible) {
-    m_tabBar->setVisible(visible);
+    // The whole row, so a corner widget goes down with the tabs -- callers
+    // mean "hide the strip", and leaving a lone button floating where the
+    // tabs were is not that.
+    m_tabRow->setVisible(visible);
+}
+
+void Ribbon::setTabBarCornerWidget(QWidget* widget) {
+    if (m_tabBarCornerWidget == widget) {
+        return;
+    }
+    if (m_tabBarCornerWidget) {
+        m_tabRowLayout->removeWidget(m_tabBarCornerWidget);
+    }
+    m_tabBarCornerWidget = widget;
+    if (m_tabBarCornerWidget) {
+        // The tab bar absorbs the remaining width, keeping this at the right edge.
+        m_tabRowLayout->addWidget(m_tabBarCornerWidget);
+    }
 }
 
 void Ribbon::setTabVisible(int index, bool visible) {
