@@ -11,10 +11,12 @@
 #include <QLabel>
 #include <QListWidget>
 #include <QListWidgetItem>
+#include <QMouseEvent>
 #include <QLocale>
 #include <QPixmap>
 #include <QPushButton>
 #include <QResizeEvent>
+#include <QScrollArea>
 #include <QSpinBox>
 #include <QStackedWidget>
 #include <QUrl>
@@ -51,6 +53,24 @@ constexpr int kCompactCategoryListWidth = 56;
 // sidebar plus a side-by-side QFormLayout leaves the actual settings
 // values too cramped to read or tap accurately.
 constexpr int kCompactLayoutMaxWidth = 700;
+// Outer/page margins and sidebar gap, desktop vs compact. On a phone every
+// pixel of horizontal margin is taken straight out of the combo/spin box
+// width, so compact mode trims them hard.
+constexpr int kFullRootMargin = 18;
+constexpr int kCompactRootMargin = 8;
+constexpr int kFullBodySpacing = 18;
+constexpr int kCompactBodySpacing = 8;
+constexpr int kFullPageMarginH = 28;
+constexpr int kFullPageMarginV = 24;
+constexpr int kCompactPageMarginH = 10;
+constexpr int kCompactPageMarginV = 12;
+// Every combo/spin box shares one fixed width, taken from the Appearance
+// page's combos (clamped to this range) so fields don't vary page to page.
+constexpr int kMinFieldWidth = 180;
+constexpr int kMaxFieldWidth = 260;
+// Group box frame + inner margins + a vertical scrollbar's width -- the
+// horizontal space a field row loses beyond the page's own margins.
+constexpr int kFieldRowChrome = 40;
 
 QPixmap categoryPixmapFor(int index, const QColor& color) {
     static const char* const kCategorySvgs[kCategoryCount] = {
@@ -81,7 +101,8 @@ void applyCategoryIcons(QListWidget* list, const QColor& normal, const QColor& s
 QWidget* createCategoryPage(QWidget* parent, const QString& title, const QString& description) {
     auto* page = new QWidget(parent);
     auto* layout = new QVBoxLayout(page);
-    layout->setContentsMargins(28, 24, 28, 24);
+    layout->setContentsMargins(kFullPageMarginH, kFullPageMarginV, kFullPageMarginH,
+                               kFullPageMarginV);
     layout->setSpacing(20);
 
     auto* titleLabel = new QLabel(QString("<h2>%1</h2>").arg(title.toHtmlEscaped()), page);
@@ -107,6 +128,58 @@ QGroupBox* addSection(QWidget* page, const QString& title) {
 QFormLayout* formFor(QGroupBox* section) {
     return qobject_cast<QFormLayout*>(section->layout());
 }
+
+// A word-wrapping label that toggles its checkbox when clicked, standing in
+// for QCheckBox's own text (which never wraps and so pushes long options
+// like "Connect configured devices when a project opens" off a phone screen).
+class CheckBoxLabel final : public QLabel {
+public:
+    CheckBoxLabel(const QString& text, QCheckBox* target, QWidget* parent)
+        : QLabel(text, parent), m_target(target) {
+        setWordWrap(true);
+        setToolTip(target->toolTip());
+    }
+
+protected:
+    void mouseReleaseEvent(QMouseEvent* event) override {
+        if (event->button() == Qt::LeftButton && rect().contains(event->position().toPoint()) &&
+            m_target->isEnabled()) {
+            m_target->toggle();
+        }
+        QLabel::mouseReleaseEvent(event);
+    }
+
+private:
+    QCheckBox* m_target;
+};
+
+void addCheckBoxRow(QFormLayout* form, QCheckBox* checkBox) {
+    auto* row = new QWidget(checkBox->parentWidget());
+    auto* layout = new QHBoxLayout(row);
+    layout->setContentsMargins(0, 0, 0, 0);
+    layout->setSpacing(8);
+    auto* label = new CheckBoxLabel(checkBox->text(), checkBox, row);
+    checkBox->setText(QString());
+    checkBox->setParent(row);
+    layout->addWidget(checkBox, 0, Qt::AlignTop);
+    layout->addWidget(label, 1);
+    form->addRow(row);
+}
+
+// A file path has no spaces to break at, so a word-wrapping QLabel can't
+// wrap it and it overflows narrow screens. Zero-width spaces after each
+// separator give it break points without changing how it looks.
+QString breakablePath(const QString& path) {
+    QString result;
+    result.reserve(path.size() * 2);
+    for (const QChar ch : path) {
+        result.append(ch);
+        if (ch == QLatin1Char('/') || ch == QLatin1Char('\\')) {
+            result.append(QChar(0x200B));
+        }
+    }
+    return result;
+}
 }  // namespace
 
 SettingsPage::SettingsPage(QWidget* parent) : QWidget(parent) {
@@ -116,7 +189,9 @@ SettingsPage::SettingsPage(QWidget* parent) : QWidget(parent) {
     m_initialNotificationHistoryCapacity = settings.notificationHistoryCapacity();
 
     auto* rootLayout = new QVBoxLayout(this);
-    rootLayout->setContentsMargins(18, 18, 18, 18);
+    m_rootLayout = rootLayout;
+    rootLayout->setContentsMargins(kFullRootMargin, kFullRootMargin, kFullRootMargin,
+                                   kFullRootMargin);
     rootLayout->setSpacing(12);
 
     auto* header = new QLabel(tr("Settings"), this);
@@ -128,10 +203,17 @@ SettingsPage::SettingsPage(QWidget* parent) : QWidget(parent) {
     rootLayout->addWidget(header);
 
     auto* body = new QHBoxLayout;
-    body->setSpacing(18);
+    m_bodyLayout = body;
+    body->setSpacing(kFullBodySpacing);
     auto* categories = new QListWidget(this);
     categories->setFixedWidth(kFullCategoryListWidth);
     m_categoryList = categories;
+    // This is a fixed-width nav strip, never meant to scroll sideways --
+    // but Qt's own content-width calculation for icon-only rows (compact
+    // mode, applyCompactLayout() below) can land a hair over
+    // kCompactCategoryListWidth, which otherwise shows a needless
+    // horizontal scrollbar under it.
+    categories->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     categories->setIconSize(QSize(kCategoryIconSize, kCategoryIconSize));
     // The app-wide QListWidget::item rule only reserves 4px around the label;
     // with an icon in front of it that leaves the glyph hard against the
@@ -161,6 +243,22 @@ SettingsPage::SettingsPage(QWidget* parent) : QWidget(parent) {
 
     auto* pages = new QStackedWidget(this);
     body->addWidget(pages, 1);
+    // Each category page goes into its own vertical-only scroll area. In
+    // compact mode WrapAllRows roughly doubles every form's height, and on a
+    // phone-height screen a non-scrolling page would otherwise have its
+    // combos/spin boxes squeezed below a readable height to make it fit.
+    const auto addPage = [this, pages](QWidget* page) {
+        auto* scroll = new QScrollArea(pages);
+        scroll->setWidgetResizable(true);
+        scroll->setFrameShape(QFrame::NoFrame);
+        scroll->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+        // Let the page's own themed background show through instead of the
+        // viewport's default palette fill.
+        scroll->viewport()->setAutoFillBackground(false);
+        scroll->setWidget(page);
+        m_pageLayouts.append(qobject_cast<QVBoxLayout*>(page->layout()));
+        pages->addWidget(scroll);
+    };
     rootLayout->addLayout(body, 1);
 
     QWidget* generalPage = createCategoryPage(
@@ -182,10 +280,10 @@ SettingsPage::SettingsPage(QWidget* parent) : QWidget(parent) {
     auto* autoConnect =
         new QCheckBox(tr("Connect configured devices when a project opens"), startupSection);
     autoConnect->setChecked(settings.autoConnectOnProjectOpen());
-    formFor(startupSection)->addRow(autoConnect);
+    addCheckBoxRow(formFor(startupSection), autoConnect);
     connect(autoConnect, &QCheckBox::toggled, &settings, &AppSettings::setAutoConnectOnProjectOpen);
     qobject_cast<QVBoxLayout*>(generalPage->layout())->addStretch();
-    pages->addWidget(generalPage);
+    addPage(generalPage);
 
     QWidget* appearancePage =
         createCategoryPage(pages, tr("Appearance"),
@@ -232,7 +330,7 @@ SettingsPage::SettingsPage(QWidget* parent) : QWidget(parent) {
         refreshRestartNotice();
     });
     qobject_cast<QVBoxLayout*>(appearancePage->layout())->addStretch();
-    pages->addWidget(appearancePage);
+    addPage(appearancePage);
 
     QWidget* dashboardPage =
         createCategoryPage(pages, tr("Dashboard"),
@@ -266,7 +364,7 @@ SettingsPage::SettingsPage(QWidget* parent) : QWidget(parent) {
     auto* subscribeRateOverride =
         new QCheckBox(tr("Override every widget's requested rate"), subscribeRateSection);
     subscribeRateOverride->setChecked(settings.subscribeRateOverrideEnabled());
-    formFor(subscribeRateSection)->addRow(subscribeRateOverride);
+    addCheckBoxRow(formFor(subscribeRateSection), subscribeRateOverride);
     auto* subscribeRateHz = new QSpinBox(subscribeRateSection);
     subscribeRateHz->setRange(1, 1000);
     subscribeRateHz->setValue(settings.subscribeRateOverrideHz());
@@ -283,7 +381,7 @@ SettingsPage::SettingsPage(QWidget* parent) : QWidget(parent) {
             &AppSettings::setSubscribeRateOverrideHz);
 
     qobject_cast<QVBoxLayout*>(dashboardPage->layout())->addStretch();
-    pages->addWidget(dashboardPage);
+    addPage(dashboardPage);
 
     QWidget* terminalPage = createCategoryPage(
         pages, tr("Terminal"),
@@ -297,20 +395,20 @@ SettingsPage::SettingsPage(QWidget* parent) : QWidget(parent) {
     formFor(terminalSection)->addRow(tr("Scrollback limit"), scrollback);
     auto* wordWrap = new QCheckBox(tr("Wrap long lines"), terminalSection);
     wordWrap->setChecked(settings.terminalWordWrap());
-    formFor(terminalSection)->addRow(wordWrap);
+    addCheckBoxRow(formFor(terminalSection), wordWrap);
     auto* autoScroll = new QCheckBox(tr("Follow new output"), terminalSection);
     autoScroll->setChecked(settings.terminalAutoScroll());
-    formFor(terminalSection)->addRow(autoScroll);
+    addCheckBoxRow(formFor(terminalSection), autoScroll);
     auto* cursorBlink = new QCheckBox(tr("Blink remote cursor"), terminalSection);
     cursorBlink->setChecked(settings.terminalCursorBlink());
-    formFor(terminalSection)->addRow(cursorBlink);
+    addCheckBoxRow(formFor(terminalSection), cursorBlink);
     connect(scrollback, qOverload<int>(&QSpinBox::valueChanged), &settings,
             &AppSettings::setTerminalScrollbackLines);
     connect(wordWrap, &QCheckBox::toggled, &settings, &AppSettings::setTerminalWordWrap);
     connect(autoScroll, &QCheckBox::toggled, &settings, &AppSettings::setTerminalAutoScroll);
     connect(cursorBlink, &QCheckBox::toggled, &settings, &AppSettings::setTerminalCursorBlink);
     qobject_cast<QVBoxLayout*>(terminalPage->layout())->addStretch();
-    pages->addWidget(terminalPage);
+    addPage(terminalPage);
 
     QWidget* connectionsPage =
         createCategoryPage(pages, tr("Connections"),
@@ -319,7 +417,7 @@ SettingsPage::SettingsPage(QWidget* parent) : QWidget(parent) {
     auto* autoReconnect =
         new QCheckBox(tr("Retry disconnected devices automatically"), reconnectSection);
     autoReconnect->setChecked(settings.autoReconnect());
-    formFor(reconnectSection)->addRow(autoReconnect);
+    addCheckBoxRow(formFor(reconnectSection), autoReconnect);
     auto* reconnectDelay = new QSpinBox(reconnectSection);
     reconnectDelay->setRange(1, 60);
     reconnectDelay->setValue(settings.reconnectIntervalSeconds());
@@ -329,7 +427,7 @@ SettingsPage::SettingsPage(QWidget* parent) : QWidget(parent) {
     connect(reconnectDelay, qOverload<int>(&QSpinBox::valueChanged), &settings,
             &AppSettings::setReconnectIntervalSeconds);
     qobject_cast<QVBoxLayout*>(connectionsPage->layout())->addStretch();
-    pages->addWidget(connectionsPage);
+    addPage(connectionsPage);
 
     QWidget* diagnosticsPage =
         createCategoryPage(pages, tr("Diagnostics"),
@@ -359,7 +457,8 @@ SettingsPage::SettingsPage(QWidget* parent) : QWidget(parent) {
                 refreshRestartNotice();
             });
     QGroupBox* logFileSection = addSection(diagnosticsPage, tr("Log file"));
-    auto* logFileLabel = new QLabel(AppLog::currentLogFilePath(), logFileSection);
+    auto* logFileLabel = new QLabel(breakablePath(AppLog::currentLogFilePath()), logFileSection);
+    logFileLabel->setToolTip(AppLog::currentLogFilePath());
     logFileLabel->setWordWrap(true);
     logFileLabel->setTextInteractionFlags(Qt::TextSelectableByMouse);
     formFor(logFileSection)->addRow(tr("Current session"), logFileLabel);
@@ -370,7 +469,7 @@ SettingsPage::SettingsPage(QWidget* parent) : QWidget(parent) {
         tr("Every byte written to and read from a serial device is logged as hex. Leave off "
            "unless you're actively investigating a connection problem -- a device streaming "
            "telemetry fills the log fast."));
-    formFor(logFileSection)->addRow(verboseSerialLog);
+    addCheckBoxRow(formFor(logFileSection), verboseSerialLog);
     connect(verboseSerialLog, &QCheckBox::toggled, &settings,
             &AppSettings::setVerboseSerialLogging);
     auto* openLogFolderButton = new QPushButton(tr("Open log folder"), logFileSection);
@@ -379,7 +478,7 @@ SettingsPage::SettingsPage(QWidget* parent) : QWidget(parent) {
             [] { QDesktopServices::openUrl(QUrl::fromLocalFile(AppLog::logDirectory())); });
 
     qobject_cast<QVBoxLayout*>(diagnosticsPage->layout())->addStretch();
-    pages->addWidget(diagnosticsPage);
+    addPage(diagnosticsPage);
 
 #if defined(TRACEVIEW_FLATPAK_BUILD)
     QWidget* updatesPage = createCategoryPage(
@@ -395,7 +494,7 @@ SettingsPage::SettingsPage(QWidget* parent) : QWidget(parent) {
     auto* autoCheckUpdates =
         new QCheckBox(tr("Check for updates on startup"), updatesSection);
     autoCheckUpdates->setChecked(settings.updateAutoCheckEnabled());
-    formFor(updatesSection)->addRow(autoCheckUpdates);
+    addCheckBoxRow(formFor(updatesSection), autoCheckUpdates);
     connect(autoCheckUpdates, &QCheckBox::toggled, &settings,
             &AppSettings::setUpdateAutoCheckEnabled);
     m_updateStatusLabel = new QLabel(updatesPage);
@@ -412,7 +511,7 @@ SettingsPage::SettingsPage(QWidget* parent) : QWidget(parent) {
             &SettingsPage::checkForUpdatesRequested);
 #endif
     qobject_cast<QVBoxLayout*>(updatesPage->layout())->addStretch();
-    pages->addWidget(updatesPage);
+    addPage(updatesPage);
 
     // Every section's QFormLayout is a child of `pages` in the QObject tree
     // (addSection() parents it to the QGroupBox it creates, which is in
@@ -420,6 +519,27 @@ SettingsPage::SettingsPage(QWidget* parent) : QWidget(parent) {
     // instead of threading a QList through all eleven addSection() call
     // sites above. Used by applyCompactLayout()/resizeEvent() below.
     m_formLayouts = pages->findChildren<QFormLayout*>();
+
+    // One fixed size for every combo/spin box, matching the Appearance
+    // page's combos -- see kMinFieldWidth. Fixed, so they neither stretch
+    // across a wide row nor get squeezed by the layout on a narrow one;
+    // applyFieldWidth() only caps it when the screen is genuinely narrower.
+    int fieldWidth = kMinFieldWidth;
+    for (const QComboBox* combo : {themeCombo, fontCombo, languageCombo}) {
+        fieldWidth = qMax(fieldWidth, combo->sizeHint().width());
+    }
+    m_fieldWidth = qMin(fieldWidth, kMaxFieldWidth);
+    const int fieldHeight = themeCombo->sizeHint().height();
+    for (QComboBox* combo : pages->findChildren<QComboBox*>()) {
+        m_fieldWidgets.append(combo);
+    }
+    for (QSpinBox* spin : pages->findChildren<QSpinBox*>()) {
+        m_fieldWidgets.append(spin);
+    }
+    for (QWidget* field : std::as_const(m_fieldWidgets)) {
+        field->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+        field->setFixedHeight(fieldHeight);
+    }
 
     connect(categories, &QListWidget::currentRowChanged, pages, &QStackedWidget::setCurrentIndex);
     categories->setCurrentRow(0);
@@ -446,6 +566,20 @@ void SettingsPage::resizeEvent(QResizeEvent* event) {
     const bool compact = width() <= kCompactLayoutMaxWidth;
     if (compact != m_compactLayout) {
         applyCompactLayout(compact);
+    } else {
+        applyFieldWidth();
+    }
+}
+
+void SettingsPage::applyFieldWidth() {
+    int width = m_fieldWidth;
+    if (m_compactLayout) {
+        const int available = this->width() - 2 * kCompactRootMargin - kCompactCategoryListWidth -
+                              kCompactBodySpacing - 2 * kCompactPageMarginH - kFieldRowChrome;
+        width = qBound(1, available, m_fieldWidth);
+    }
+    for (QWidget* field : std::as_const(m_fieldWidgets)) {
+        field->setFixedWidth(width);
     }
 }
 
@@ -472,7 +606,26 @@ void SettingsPage::applyCompactLayout(bool compact) {
         compact ? QFormLayout::WrapAllRows : QFormLayout::DontWrapRows;
     for (QFormLayout* form : std::as_const(m_formLayouts)) {
         form->setRowWrapPolicy(policy);
+        form->setHorizontalSpacing(compact ? 8 : 18);
+        form->setVerticalSpacing(compact ? 8 : 12);
     }
+
+    const int rootMargin = compact ? kCompactRootMargin : kFullRootMargin;
+    if (m_rootLayout != nullptr) {
+        m_rootLayout->setContentsMargins(rootMargin, rootMargin, rootMargin, rootMargin);
+    }
+    if (m_bodyLayout != nullptr) {
+        m_bodyLayout->setSpacing(compact ? kCompactBodySpacing : kFullBodySpacing);
+    }
+    const int pageMarginH = compact ? kCompactPageMarginH : kFullPageMarginH;
+    const int pageMarginV = compact ? kCompactPageMarginV : kFullPageMarginV;
+    for (QVBoxLayout* pageLayout : std::as_const(m_pageLayouts)) {
+        if (pageLayout != nullptr) {
+            pageLayout->setContentsMargins(pageMarginH, pageMarginV, pageMarginH, pageMarginV);
+            pageLayout->setSpacing(compact ? 12 : 20);
+        }
+    }
+    applyFieldWidth();
 }
 
 void SettingsPage::setUpdateStatusText(const QString& text) {

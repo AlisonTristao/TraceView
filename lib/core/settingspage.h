@@ -9,6 +9,8 @@ class QLabel;
 class QPushButton;
 class QListWidget;
 class QFormLayout;
+class QHBoxLayout;
+class QVBoxLayout;
 class QResizeEvent;
 
 namespace traceview {
@@ -40,6 +42,9 @@ private:
     // label above its field instead of beside it -- see resizeEvent()'s
     // own comment for why this exists.
     void applyCompactLayout(bool compact);
+    // Sets every combo/spin box to m_fieldWidth, capped in compact mode to
+    // what the current width can actually fit.
+    void applyFieldWidth();
 
     QLabel* m_restartNotice = nullptr;
     QPushButton* m_restartButton = nullptr;
@@ -51,6 +56,12 @@ private:
     QListWidget* m_categoryList = nullptr;
     QStringList m_categoryNames;
     QList<QFormLayout*> m_formLayouts;
+    // Margins/spacing that applyCompactLayout() trims on narrow screens.
+    QVBoxLayout* m_rootLayout = nullptr;
+    QHBoxLayout* m_bodyLayout = nullptr;
+    QList<QVBoxLayout*> m_pageLayouts;
+    QList<QWidget*> m_fieldWidgets;
+    int m_fieldWidth = 0;
     bool m_compactLayout = false;
 };
 

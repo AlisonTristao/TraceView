@@ -835,11 +835,6 @@ void MainWindow::buildMenus() {
     connect(m_openBtpMonitorAction, &QAction::triggered, this, &MainWindow::onOpenBtpMonitor);
     fileMenu->addAction(m_openBtpMonitorAction);
 
-    m_openSettingsTabAction = new QAction(tr("&Settings..."), this);
-    m_openSettingsTabAction->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_Comma));
-    connect(m_openSettingsTabAction, &QAction::triggered, this, &MainWindow::onOpenSettingsTab);
-    fileMenu->addAction(m_openSettingsTabAction);
-
     auto* viewMenu = menuBar()->addMenu(tr("&View"));
 
     auto* notificationHistoryAction = viewMenu->addAction(tr("&Notification History..."));
@@ -937,6 +932,20 @@ void MainWindow::buildMenus() {
     m_accessMenu = menuBar()->addMenu(tr("&Access"));
     updateAccessMenu();
 
+    // Top-level entry of its own (like About/Donate) rather than buried in
+    // File. The menu-bar item is a separate shortcut-less action: a QMenuBar
+    // renders a top-level action's shortcut next to its text ("Settings
+    // Ctrl+,"). The Ctrl+, chord lives on m_openSettingsTabAction instead,
+    // added to the window itself so it also works with the menu bar hidden
+    // (compact chrome / fullscreen).
+    auto* settingsMenuBarAction = menuBar()->addAction(tr("&Settings"));
+    connect(settingsMenuBarAction, &QAction::triggered, this, &MainWindow::onOpenSettingsTab);
+
+    m_openSettingsTabAction = new QAction(tr("&Settings"), this);
+    m_openSettingsTabAction->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_Comma));
+    connect(m_openSettingsTabAction, &QAction::triggered, this, &MainWindow::onOpenSettingsTab);
+    addAction(m_openSettingsTabAction);
+
     auto* debugAction = menuBar()->addAction(tr("&Debug"));
     connect(debugAction, &QAction::triggered, this, &MainWindow::onDebug);
     debugAction->setVisible(false);
@@ -985,6 +994,7 @@ void MainWindow::buildMenus() {
     optionsMenu->addAction(fileMenu->menuAction());
     optionsMenu->addAction(viewMenu->menuAction());
     optionsMenu->addAction(m_accessMenu->menuAction());
+    optionsMenu->addAction(settingsMenuBarAction);
     optionsMenu->addSeparator();
     optionsMenu->addAction(aboutAction);
     optionsMenu->addAction(donateAction);

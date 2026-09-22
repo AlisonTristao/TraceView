@@ -409,7 +409,7 @@ private:
     // lifecycle as onOpenOtaTab()/onOtaTabCloseRequested().
     void onOpenBtpMonitor();
     void onBtpMonitorTabCloseRequested(int index);
-    // File > "Settings..." -- opens the singleton Settings tab (creating it on
+    // Menu bar "Settings" -- opens the singleton Settings tab (creating it on
     // first use) or switches to it. Same singleton-closable-tab lifecycle as
     // onOpenOtaTab()/onOtaTabCloseRequested().
     void onOpenSettingsTab();
