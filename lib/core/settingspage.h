@@ -1,10 +1,15 @@
 #pragma once
 
+#include <QList>
 #include <QString>
+#include <QStringList>
 #include <QWidget>
 
 class QLabel;
 class QPushButton;
+class QListWidget;
+class QFormLayout;
+class QResizeEvent;
 
 namespace traceview {
 
@@ -26,8 +31,15 @@ signals:
     void restartRequested();
     void checkForUpdatesRequested();
 
+protected:
+    void resizeEvent(QResizeEvent* event) override;
+
 private:
     void refreshRestartNotice();
+    // Narrow category sidebar to icons-only and stack each form row's
+    // label above its field instead of beside it -- see resizeEvent()'s
+    // own comment for why this exists.
+    void applyCompactLayout(bool compact);
 
     QLabel* m_restartNotice = nullptr;
     QPushButton* m_restartButton = nullptr;
@@ -35,6 +47,11 @@ private:
     QString m_initialLanguageId;
     int m_initialFrameLogCapacity = 0;
     int m_initialNotificationHistoryCapacity = 0;
+
+    QListWidget* m_categoryList = nullptr;
+    QStringList m_categoryNames;
+    QList<QFormLayout*> m_formLayouts;
+    bool m_compactLayout = false;
 };
 
 }  // namespace traceview

@@ -14,10 +14,13 @@
 #include <QLocale>
 #include <QPixmap>
 #include <QPushButton>
+#include <QResizeEvent>
 #include <QSpinBox>
 #include <QStackedWidget>
 #include <QUrl>
 #include <QVBoxLayout>
+
+#include <utility>
 
 #include "core/applog.h"
 #include "preferences/appsettings.h"
@@ -35,6 +38,19 @@ namespace {
 // tinted to the active theme's colour at load time -- see theme/iconutils.h.
 constexpr int kCategoryIconSize = 18;
 constexpr int kCategoryCount = 7;
+constexpr int kFullCategoryListWidth = 186;
+// Icon (18px) + the item padding below (10px each side) + a little room so
+// a touch target isn't flush against the icon -- comfortable to tap without
+// needing the label text compact mode hides.
+constexpr int kCompactCategoryListWidth = 56;
+// Same threshold as MainWindow's own kSmallBreakpointMaxViewportWidth
+// (mainwindow.cpp) -- this page has no access to that constant or to
+// DashboardGrid's breakpoint machinery (it's a standalone widget, not part
+// of the Dashboard tab), so it re-derives "phone-narrow" from its own width
+// instead. Kept in sync deliberately: below this, the fixed-width category
+// sidebar plus a side-by-side QFormLayout leaves the actual settings
+// values too cramped to read or tap accurately.
+constexpr int kCompactLayoutMaxWidth = 700;
 
 QPixmap categoryPixmapFor(int index, const QColor& color) {
     static const char* const kCategorySvgs[kCategoryCount] = {
@@ -114,7 +130,8 @@ SettingsPage::SettingsPage(QWidget* parent) : QWidget(parent) {
     auto* body = new QHBoxLayout;
     body->setSpacing(18);
     auto* categories = new QListWidget(this);
-    categories->setFixedWidth(186);
+    categories->setFixedWidth(kFullCategoryListWidth);
+    m_categoryList = categories;
     categories->setIconSize(QSize(kCategoryIconSize, kCategoryIconSize));
     // The app-wide QListWidget::item rule only reserves 4px around the label;
     // with an icon in front of it that leaves the glyph hard against the
@@ -125,6 +142,7 @@ SettingsPage::SettingsPage(QWidget* parent) : QWidget(parent) {
     const QStringList categoryNames = {tr("General"),     tr("Appearance"),  tr("Dashboard"),
                                        tr("Terminal"),    tr("Connections"), tr("Diagnostics"),
                                        tr("Updates")};
+    m_categoryNames = categoryNames;
     for (const QString& name : categoryNames) {
         auto* item = new QListWidgetItem(name, categories);
         item->setSizeHint(QSize(-1, 36));
@@ -396,6 +414,13 @@ SettingsPage::SettingsPage(QWidget* parent) : QWidget(parent) {
     qobject_cast<QVBoxLayout*>(updatesPage->layout())->addStretch();
     pages->addWidget(updatesPage);
 
+    // Every section's QFormLayout is a child of `pages` in the QObject tree
+    // (addSection() parents it to the QGroupBox it creates, which is in
+    // turn added to one of the pages above) -- one findChildren() sweep
+    // instead of threading a QList through all eleven addSection() call
+    // sites above. Used by applyCompactLayout()/resizeEvent() below.
+    m_formLayouts = pages->findChildren<QFormLayout*>();
+
     connect(categories, &QListWidget::currentRowChanged, pages, &QStackedWidget::setCurrentIndex);
     categories->setCurrentRow(0);
 
@@ -408,6 +433,46 @@ SettingsPage::SettingsPage(QWidget* parent) : QWidget(parent) {
     rootLayout->addLayout(restartRow);
     connect(m_restartButton, &QPushButton::clicked, this, &SettingsPage::restartRequested);
     refreshRestartNotice();
+
+    // Establishes the correct starting layout even if this page is first
+    // shown already narrow (e.g. the app opened directly at a phone-sized
+    // window) -- resizeEvent() alone would only react to a resize *after*
+    // construction, not the size it's first laid out at.
+    applyCompactLayout(width() <= kCompactLayoutMaxWidth);
+}
+
+void SettingsPage::resizeEvent(QResizeEvent* event) {
+    QWidget::resizeEvent(event);
+    const bool compact = width() <= kCompactLayoutMaxWidth;
+    if (compact != m_compactLayout) {
+        applyCompactLayout(compact);
+    }
+}
+
+void SettingsPage::applyCompactLayout(bool compact) {
+    m_compactLayout = compact;
+    if (m_categoryList != nullptr) {
+        m_categoryList->setFixedWidth(compact ? kCompactCategoryListWidth : kFullCategoryListWidth);
+        // Icon-only when compact -- the full label doesn't fit a sidebar
+        // this narrow. Tooltip always carries the name either way, so it's
+        // still discoverable on a long-press/hover.
+        const int rows = qMin(m_categoryList->count(), m_categoryNames.size());
+        for (int i = 0; i < rows; ++i) {
+            QListWidgetItem* item = m_categoryList->item(i);
+            item->setText(compact ? QString() : m_categoryNames.at(i));
+            item->setToolTip(m_categoryNames.at(i));
+        }
+    }
+    // WrapAllRows stacks each row's label above its field instead of beside
+    // it, the same fix deviceconfigdialog.cpp already applies unconditionally
+    // for its own (always-narrow) form -- here it's conditional because this
+    // page is full-width on desktop, where the side-by-side default reads
+    // better.
+    const QFormLayout::RowWrapPolicy policy =
+        compact ? QFormLayout::WrapAllRows : QFormLayout::DontWrapRows;
+    for (QFormLayout* form : std::as_const(m_formLayouts)) {
+        form->setRowWrapPolicy(policy);
+    }
 }
 
 void SettingsPage::setUpdateStatusText(const QString& text) {
