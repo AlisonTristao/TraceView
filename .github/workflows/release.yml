@@ -158,12 +158,21 @@ jobs:
         # see docs/ANDROID_BUILD.md's QT_ROOT_DIR explanation. set-env:false
         # on both Qt installs below -- the action would otherwise have the
         # second install's QT_ROOT_DIR silently clobber the first's.
+        # arch is "linux_gcc_64", not the bare "gcc_64" a lot of examples
+        # use -- aqtinstall (checked locally: v3.2.1 and v3.3.0, current
+        # latest) fails to resolve the Linux desktop qt_base package at all
+        # with the short form ("packages ['qt_base'] were not found while
+        # parsing XML of package information!"); the long form is what
+        # `aqt list-qt linux desktop --arch 6.9.2` itself reports as the
+        # real identifier. The installed layout still lands at
+        # <dir>/<version>/gcc_64 either way (confirmed locally), matching
+        # QT_ROOT_DIR below.
         uses: jurplel/install-qt-action@v4
         with:
           version: ${{ env.QT_VERSION }}
           host: linux
           target: desktop
-          arch: gcc_64
+          arch: linux_gcc_64
           dir: ${{ env.QT_INSTALL_DIR }}
           set-env: false
 
