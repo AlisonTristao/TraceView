@@ -214,6 +214,16 @@ if(ANDROID)
         QT_ANDROID_PACKAGE_NAME "io.github.alisontristao.traceview"
         QT_ANDROID_VERSION_NAME "${PROJECT_VERSION}"
         QT_ANDROID_VERSION_CODE "${TRACEVIEW_ANDROID_VERSION_CODE}"
+        # Qt's own built-in manifest template (used when this isn't set)
+        # sets no android:theme at all, so the OS falls back to its default
+        # theme -- which includes a native ActionBar showing the app label
+        # ("TraceView") across the top, on top of TraceView's own menu bar/
+        # ribbon. android/AndroidManifest.xml is a copy of that same
+        # template (all %%INSERT_...%% placeholders intact -- androiddeployqt
+        # substitutes them at build time; hand-editing anything else here
+        # risks breaking packaging, see docs/ANDROID_BUILD.md) with just
+        # Theme.Black.NoTitleBar added to the activity.
+        QT_ANDROID_PACKAGE_SOURCE_DIR "${CMAKE_SOURCE_DIR}/android"
     )
 endif()
 
