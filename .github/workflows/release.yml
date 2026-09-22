@@ -135,6 +135,7 @@ jobs:
       ANDROID_NDK_VERSION: "27.2.12479018"
       QT_VERSION: "6.9.2"
       QT_INSTALL_DIR: ${{ github.workspace }}/qt
+      AQTINSTALL_VERSION: "3.3.0"
 
     steps:
       - name: Checkout repository
@@ -152,43 +153,46 @@ jobs:
       - name: Install Ninja
         run: sudo apt-get update && sudo apt-get install --no-install-recommends -y ninja-build
 
+      - name: Install aqtinstall
+        run: python3 -m pip install --quiet "aqtinstall==${{ env.AQTINSTALL_VERSION }}"
+
       - name: Install Qt (desktop host tools)
         # moc/rcc/androiddeployqt/qmlimportscanner must run as native Linux
         # binaries even though TraceView itself cross-compiles for Android --
-        # see docs/ANDROID_BUILD.md's QT_ROOT_DIR explanation. set-env:false
-        # on both Qt installs below -- the action would otherwise have the
-        # second install's QT_ROOT_DIR silently clobber the first's.
-        # arch is "linux_gcc_64", not the bare "gcc_64" a lot of examples
-        # use -- aqtinstall (checked locally: v3.2.1 and v3.3.0, current
-        # latest) fails to resolve the Linux desktop qt_base package at all
-        # with the short form ("packages ['qt_base'] were not found while
-        # parsing XML of package information!"); the long form is what
-        # `aqt list-qt linux desktop --arch 6.9.2` itself reports as the
-        # real identifier. The installed layout still lands at
+        # see docs/ANDROID_BUILD.md's QT_ROOT_DIR explanation. Called
+        # directly rather than via jurplel/install-qt-action -- that
+        # action's own version-resolution step (`aqt list-qt ... --spec
+        # ... --latest-version`) hit a separate quirk for the Android target
+        # below, so a direct aqt call is one less layer to debug blind for
+        # both. arch is "linux_gcc_64", not the bare "gcc_64" a lot of
+        # examples use -- aqtinstall (checked locally: v3.2.1 and v3.3.0,
+        # current latest) fails to resolve the Linux desktop qt_base package
+        # at all with the short form ("packages ['qt_base'] were not found
+        # while parsing XML of package information!"); the long form is
+        # what `aqt list-qt linux desktop --arch 6.9.2` itself reports as
+        # the real identifier. The installed layout still lands at
         # <dir>/<version>/gcc_64 either way (confirmed locally), matching
         # QT_ROOT_DIR below.
-        uses: jurplel/install-qt-action@v4
-        with:
-          version: ${{ env.QT_VERSION }}
-          host: linux
-          target: desktop
-          arch: linux_gcc_64
-          dir: ${{ env.QT_INSTALL_DIR }}
-          set-env: false
+        run: |
+          python3 -m aqt install-qt linux desktop "${{ env.QT_VERSION }}" linux_gcc_64 \
+            --outputdir "${{ env.QT_INSTALL_DIR }}"
 
       - name: Install Qt (Android arm64-v8a)
         # qtconnectivity is an addon module (not installed by default) --
         # required because TRACEVIEW_ENABLE_BLE=ON in the android-arm64
-        # preset links Qt6::Bluetooth.
-        uses: jurplel/install-qt-action@v4
-        with:
-          version: ${{ env.QT_VERSION }}
-          host: linux
-          target: android
-          arch: android_arm64_v8a
-          modules: qtconnectivity
-          dir: ${{ env.QT_INSTALL_DIR }}
-          set-env: false
+        # preset links Qt6::Bluetooth. Called directly rather than via
+        # jurplel/install-qt-action -- that action's internal version
+        # resolution (`aqt list-qt linux android --spec 6.9.2
+        # --latest-version`) failed with "No latest version available for
+        # this request": `aqt list-qt linux android` (bare, no --arch) only
+        # enumerates versions up to 6.7.3 in its locally bundled index,
+        # stale relative to what the live repository actually serves. A
+        # direct `aqt install-qt` call (no --spec resolution step) finds
+        # and installs 6.9.2 fine, confirmed locally including a real
+        # package download.
+        run: |
+          python3 -m aqt install-qt linux android "${{ env.QT_VERSION }}" android_arm64_v8a \
+            --modules qtconnectivity --outputdir "${{ env.QT_INSTALL_DIR }}"
 
       - name: Install Android SDK command-line tools
         # Downloaded directly rather than via a third-party setup action --
