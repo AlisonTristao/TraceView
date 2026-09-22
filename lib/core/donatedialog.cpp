@@ -7,8 +7,10 @@
 #include <QLabel>
 #include <QPainter>
 #include <QPixmap>
+#include <QSizePolicy>
 #include <QString>
 #include <QVBoxLayout>
+#include <QWidget>
 
 #include "vendor/qrcodegen/qrcodegen.hpp"
 
@@ -89,6 +91,37 @@ QPixmap renderQrCode(const qrcodegen::QrCode& qr, int scale = 8, int border = 4)
     return QPixmap::fromImage(image);
 }
 
+// Shows the QR code at its natural size when there's room and scales it
+// down, still square, when there isn't -- on a phone the fixed-size
+// rendering alone was wider than the screen and forced the whole dialog to
+// scroll sideways. Nearest-neighbour scaling keeps the modules crisp enough
+// for a banking app's scanner.
+class QrCodeView : public QWidget {
+public:
+    QrCodeView(const QPixmap& pixmap, QWidget* parent) : QWidget(parent), m_pixmap(pixmap) {
+        QSizePolicy policy(QSizePolicy::Preferred, QSizePolicy::Preferred);
+        policy.setHeightForWidth(true);
+        setSizePolicy(policy);
+    }
+
+    QSize sizeHint() const override { return m_pixmap.size(); }
+    QSize minimumSizeHint() const override { return {kMinimumSide, kMinimumSide}; }
+    bool hasHeightForWidth() const override { return true; }
+    int heightForWidth(int width) const override { return qMin(width, m_pixmap.width()); }
+
+protected:
+    void paintEvent(QPaintEvent*) override {
+        const int side = qMin(qMin(width(), height()), m_pixmap.width());
+        const QRect target((width() - side) / 2, (height() - side) / 2, side, side);
+        QPainter painter(this);
+        painter.drawPixmap(target, m_pixmap);
+    }
+
+private:
+    static constexpr int kMinimumSide = 160;
+    QPixmap m_pixmap;
+};
+
 }  // namespace
 
 DonateDialog::DonateDialog(QWidget* parent) : QDialog(parent) {
@@ -103,9 +136,7 @@ DonateDialog::DonateDialog(QWidget* parent) : QDialog(parent) {
     phraseLabel->setWordWrap(true);
     phraseLabel->setAlignment(Qt::AlignHCenter);
 
-    auto* qrLabel = new QLabel(this);
-    qrLabel->setPixmap(renderQrCode(qr));
-    qrLabel->setAlignment(Qt::AlignHCenter);
+    auto* qrView = new QrCodeView(renderQrCode(qr), this);
 
     auto* pixKeyLabel =
         new QLabel(tr("Pix key (phone): %1").arg(QString::fromLatin1(kPixKeyDisplay)), this);
@@ -128,7 +159,7 @@ DonateDialog::DonateDialog(QWidget* parent) : QDialog(parent) {
     auto* layout = new QVBoxLayout(this);
     layout->addWidget(phraseLabel);
     layout->addSpacing(8);
-    layout->addWidget(qrLabel);
+    layout->addWidget(qrView);
     layout->addWidget(pixKeyLabel);
     layout->addSpacing(8);
     layout->addWidget(separator);

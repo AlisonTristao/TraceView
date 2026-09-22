@@ -7,7 +7,6 @@
 #include <QHBoxLayout>
 #include <QHeaderView>
 #include <QLineEdit>
-#include <QMessageBox>
 #include <QProgressBar>
 #include <QPushButton>
 #include <QStackedWidget>
@@ -16,6 +15,7 @@
 #include <QVBoxLayout>
 
 #include "ota/otaclient.h"
+#include "theme/dialogpresenter.h"
 
 namespace traceview {
 
@@ -331,7 +331,7 @@ void OtaTab::onUploadFinished(const QString& deviceId, bool success, const QStri
     }
 
     if (!success) {
-        QMessageBox::warning(this, tr("Firmware Upload"), message);
+        DialogPresenter::warning(this, tr("Firmware Upload"), message);
     }
 }
 
@@ -342,8 +342,8 @@ void OtaTab::startUpload(const QString& deviceId) {
     const Device& device = m_devices.at(row);
 
     if (device.otaAddress.isEmpty()) {
-        QMessageBox::warning(this, tr("Firmware Upload"),
-                             tr("Set this device's OTA address in Device Settings first."));
+        DialogPresenter::warning(this, tr("Firmware Upload"),
+                                 tr("Set this device's OTA address in Device Settings first."));
         return;
     }
 

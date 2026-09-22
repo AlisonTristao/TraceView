@@ -48,6 +48,20 @@ release flow.
   dependable route to those menus — a property of the platform, not of
   which dashboard layout happens to be showing.
 
+### Fixed
+
+- Dialogs on Android (About, Donate, login, device settings, confirmations,
+  messages…) no longer open as bare, undecorated windows with arbitrary
+  size and position and no way to close them but their own buttons. On
+  Android — and in the desktop Phone/Tablet preview, so it can be checked
+  without a phone — they now open inside the app: short dialogs as a card
+  centered over a dimmed backdrop, fitted to the screen's width with no
+  scrollbar (text wraps, button rows stack, the Pix QR code scales down),
+  and large ones (device settings, shortcuts, user management, block
+  scripts, notification history) as a full-screen page with a back arrow.
+  Android's Back key closes the topmost dialog instead of the app. Desktop
+  dialogs are unchanged.
+
 ## [3.3.19] - 2026-09-20
 
 ### Fixed

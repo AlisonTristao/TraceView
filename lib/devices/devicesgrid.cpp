@@ -11,6 +11,7 @@
 #include "devicecard.h"
 #include "devicecommands.h"
 #include "deviceconfigdialog.h"
+#include "theme/dialogpresenter.h"
 
 namespace traceview {
 
@@ -379,7 +380,7 @@ void DevicesGrid::handleConfigRequested(const QString& deviceId) {
                 }
                 dialog.setCatalogTopics(m_topicCatalogProvider(deviceId));
             });
-    const int dialogResult = dialog.exec();
+    const int dialogResult = DialogPresenter::exec(dialog, DialogPresenter::Style::Page);
     // Closing the dialog (however it closed) must not leave a scan running
     // with nothing left able to stop it -- stopping an already-stopped scan
     // is a no-op (BleDiscoveryService::stop()), so this is unconditional

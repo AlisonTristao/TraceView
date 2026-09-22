@@ -13,6 +13,7 @@
 #include "diagramscene.h"
 #include "diagramscriptruntime.h"
 #include "diagramview.h"
+#include "theme/dialogpresenter.h"
 
 namespace traceview {
 
@@ -155,7 +156,7 @@ void DiagramPage::onBlockActivated(const QString& deviceId) {
         return;
     }
     DiagramBlockConfigDialog dialog(block->label(), m_scripts.value(deviceId), runtime, this);
-    if (dialog.exec() == QDialog::Accepted) {
+    if (DialogPresenter::exec(dialog, DialogPresenter::Style::Page) == QDialog::Accepted) {
         m_scripts.insert(deviceId, dialog.script());
     }
 }

@@ -12,7 +12,6 @@
 #include <QFrame>
 #include <QGuiApplication>
 #include <QHBoxLayout>
-#include <QInputDialog>
 #include <QKeySequence>
 #include <QLabel>
 #include <QLineEdit>
@@ -83,6 +82,7 @@
 #include "serialwidgetbridge.h"
 #include "settingspage.h"
 #include "shortcutsdialog.h"
+#include "theme/dialogpresenter.h"
 #include "traceview/fontmanager.h"
 #include "traceview/languagemanager.h"
 #include "traceview/thememanager.h"
@@ -527,6 +527,11 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     // being added there directly.
     m_devicePreviewFrame = new DevicePreviewFrame(this);
     m_devicePreviewFrame->setContentWidget(m_appShell);
+    // Embedded dialogs (see DialogPresenter) overlay m_appShell rather than
+    // the whole window, so a Phone/Tablet preview shows them inside the
+    // device frame; setEmbedded() follows compactChromeActive() in
+    // updateChromeVisibility().
+    DialogPresenter::setHost(m_appShell);
 
     auto* central = new QWidget(this);
     auto* centralLayout = new QVBoxLayout(central);
@@ -912,16 +917,10 @@ void MainWindow::buildMenus() {
             }
             LanguageManager::instance().setLanguage(id);
 
-            QMessageBox restartBox(this);
-            restartBox.setWindowTitle(tr("Restart Required"));
-            restartBox.setText(
-                tr("The application needs to restart to apply the new language. Restart now?"));
-            auto* restartNowButton =
-                restartBox.addButton(tr("Restart Now"), QMessageBox::AcceptRole);
-            restartBox.addButton(tr("Later"), QMessageBox::RejectRole);
-            restartBox.exec();
-
-            if (restartBox.clickedButton() == restartNowButton) {
+            if (DialogPresenter::confirm(
+                    this, tr("Restart Required"),
+                    tr("The application needs to restart to apply the new language. Restart now?"),
+                    tr("Restart Now"), tr("Later"))) {
                 QProcess::startDetached(QCoreApplication::applicationFilePath(),
                                         QCoreApplication::arguments().mid(1));
                 QCoreApplication::quit();
@@ -1036,7 +1035,7 @@ void MainWindow::updateAccessMenu() {
         QAction* manageAction = m_accessMenu->addAction(tr("&Manage Users..."));
         connect(manageAction, &QAction::triggered, this, [this] {
             ManageUsersDialog dialog(this);
-            dialog.exec();
+            DialogPresenter::exec(dialog, DialogPresenter::Style::Page);
         });
 
         QAction* logoutAction = m_accessMenu->addAction(tr("&Exit Developer Mode"));
@@ -1066,7 +1065,7 @@ void MainWindow::updateAccessMenu() {
                 this,
                 [this] {
                     LoginDialog dialog(this);
-                    dialog.exec();
+                    DialogPresenter::exec(dialog, DialogPresenter::Style::Card);
                 },
                 Qt::QueuedConnection);
         });
@@ -1631,8 +1630,8 @@ void MainWindow::onWorkspaceSelected(const QString& id) {
 
 void MainWindow::onNewWorkspaceRequested() {
     bool ok = false;
-    const QString name = QInputDialog::getText(this, tr("New Workspace"), tr("Name:"),
-                                               QLineEdit::Normal, tr("Workspace"), &ok);
+    const QString name = DialogPresenter::getText(this, tr("New Workspace"), tr("Name:"),
+                                                  QLineEdit::Normal, tr("Workspace"), &ok);
     if (!ok || name.trimmed().isEmpty()) {
         return;
     }
@@ -1661,10 +1660,10 @@ void MainWindow::onWorkspaceDeleteRequested(const QString& id) {
     }
 
     const QString name = workspaces.nameFor(id);
-    if (QMessageBox::question(this, tr("Delete Workspace"),
-                              tr("Delete workspace \"%1\"? This cannot be undone.").arg(name),
-                              QMessageBox::Yes | QMessageBox::No,
-                              QMessageBox::No) != QMessageBox::Yes) {
+    if (DialogPresenter::question(
+            this, tr("Delete Workspace"),
+            tr("Delete workspace \"%1\"? This cannot be undone.").arg(name),
+            QMessageBox::Yes | QMessageBox::No, QMessageBox::No) != QMessageBox::Yes) {
         return;
     }
 
@@ -1880,6 +1879,9 @@ bool MainWindow::compactChromeActive() const {
 
 void MainWindow::updateChromeVisibility() {
     const bool compact = compactChromeActive();
+    // No window manager on Android (and none simulated in a preview): dialogs
+    // go in-window there instead of opening as bare top-level windows.
+    DialogPresenter::setEmbedded(compact);
     const bool isDeveloper =
         UserModeManager::instance().mode() == UserModeManager::UserMode::Developer;
     // Fullscreen hides the native menu bar to maximize screen space, for a
@@ -2960,10 +2962,10 @@ void MainWindow::onPanelConfigChangeRequested(const QJsonObject& config) {
 }
 
 void MainWindow::onNewProject() {
-    if (QMessageBox::question(this, tr("New Project"),
-                              tr("Discard the current dashboard and start a new, empty project?"),
-                              QMessageBox::Yes | QMessageBox::No,
-                              QMessageBox::No) != QMessageBox::Yes) {
+    if (DialogPresenter::question(
+            this, tr("New Project"),
+            tr("Discard the current dashboard and start a new, empty project?"),
+            QMessageBox::Yes | QMessageBox::No, QMessageBox::No) != QMessageBox::Yes) {
         return;
     }
 
@@ -2992,7 +2994,7 @@ void MainWindow::onSaveProject() {
     }
 
     if (!ProjectStore::instance().save()) {
-        QMessageBox::warning(this, tr("Save Project"), ProjectStore::instance().lastError());
+        DialogPresenter::warning(this, tr("Save Project"), ProjectStore::instance().lastError());
         return;
     }
     addRecentFile(path);
@@ -3011,7 +3013,7 @@ void MainWindow::onSaveProjectAs() {
     }
 
     if (!ProjectStore::instance().saveAs(path)) {
-        QMessageBox::warning(this, tr("Save Project"), ProjectStore::instance().lastError());
+        DialogPresenter::warning(this, tr("Save Project"), ProjectStore::instance().lastError());
         return;
     }
     addRecentFile(path);
@@ -3253,7 +3255,7 @@ void MainWindow::onDeviceScriptRequested(const QString& deviceId) {
     }
 
     DiagramBlockConfigDialog dialog(label, currentScript, runtime, this);
-    if (dialog.exec() != QDialog::Accepted) {
+    if (DialogPresenter::exec(dialog, DialogPresenter::Style::Page) != QDialog::Accepted) {
         return;
     }
     for (const Device& existing : devices) {
@@ -3268,13 +3270,10 @@ void MainWindow::onDeviceScriptRequested(const QString& deviceId) {
 }
 
 void MainWindow::onShowNotificationHistory() {
-    if (m_notificationWindow) {
-        m_notificationWindow->raise();
-        m_notificationWindow->activateWindow();
-        return;
+    if (!m_notificationWindow) {
+        m_notificationWindow = new NotificationHistoryWindow(m_notificationLog, this);
     }
-    m_notificationWindow = new NotificationHistoryWindow(m_notificationLog, this);
-    m_notificationWindow->show();
+    DialogPresenter::show(m_notificationWindow, DialogPresenter::Style::Page);
 }
 
 void MainWindow::onOtaPasswordCacheChanged(const QString& deviceId, const QString& password,
@@ -3300,7 +3299,7 @@ void MainWindow::refreshOtaTabDevices() {
 
 void MainWindow::openRecentFile(const QString& path) {
     if (!ProjectStore::instance().load(path)) {
-        QMessageBox::warning(this, tr("Open Project"), ProjectStore::instance().lastError());
+        DialogPresenter::warning(this, tr("Open Project"), ProjectStore::instance().lastError());
         return;
     }
 
@@ -3377,7 +3376,7 @@ void MainWindow::onClearRecentFiles() {
 
 void MainWindow::onAbout() {
     AboutDialog dialog(this);
-    dialog.exec();
+    DialogPresenter::exec(dialog, DialogPresenter::Style::Card);
 }
 
 void MainWindow::onShowKeyboardShortcuts() {
@@ -3458,12 +3457,12 @@ void MainWindow::onShowKeyboardShortcuts() {
          Row{tr("Keyboard shortcuts"), chord(Qt::NoModifier, Qt::Key_F1)}}});
 
     ShortcutsDialog dialog(sections, this);
-    dialog.exec();
+    DialogPresenter::exec(dialog, DialogPresenter::Style::Page);
 }
 
 void MainWindow::onDonate() {
     DonateDialog dialog(this);
-    dialog.exec();
+    DialogPresenter::exec(dialog, DialogPresenter::Style::Card);
 }
 
 void MainWindow::onDebug() {
@@ -3474,9 +3473,7 @@ void MainWindow::onDebug() {
     if (!m_debugChartsWindow) {
         m_debugChartsWindow = new DebugChartsWindow(this);
     }
-    m_debugChartsWindow->show();
-    m_debugChartsWindow->raise();
-    m_debugChartsWindow->activateWindow();
+    DialogPresenter::show(m_debugChartsWindow, DialogPresenter::Style::Page);
 }
 
 void MainWindow::onFullscreenToggled(bool checked) {
@@ -3557,7 +3554,7 @@ void MainWindow::onUpdateAvailable(const UpdateInfo& info) {
             [info] { AppSettings::instance().setUpdateSkippedVersion(info.version); });
     connect(&dialog, &UpdateAvailableDialog::updateRequested, this,
             [this, info] { startUpdateDownload(info); });
-    dialog.exec();
+    DialogPresenter::exec(dialog, DialogPresenter::Style::Card);
 }
 
 void MainWindow::onUpdateUpToDate() {
@@ -3580,15 +3577,15 @@ void MainWindow::onUpdateCheckFailed(const QString& reason) {
 void MainWindow::startUpdateDownload(const UpdateInfo& info) {
 #if defined(Q_OS_LINUX)
     if (qEnvironmentVariableIsEmpty("APPIMAGE")) {
-        QMessageBox::information(this, tr("Update"),
-                                 tr("Automatic installation requires running an AppImage. "
-                                    "Download the AppImage from the release page."));
+        DialogPresenter::information(this, tr("Update"),
+                                     tr("Automatic installation requires running an AppImage. "
+                                        "Download the AppImage from the release page."));
         QDesktopServices::openUrl(info.releaseUrl);
         return;
     }
 #endif
     if (!info.assetUrl.isValid()) {
-        QMessageBox::information(
+        DialogPresenter::information(
             this, tr("Update"),
             tr("This release has no download for this platform. Opening the release "
                "page instead."));
@@ -3596,7 +3593,7 @@ void MainWindow::startUpdateDownload(const UpdateInfo& info) {
         return;
     }
     if (!info.checksumsUrl.isValid()) {
-        QMessageBox::warning(
+        DialogPresenter::warning(
             this, tr("Update"),
             tr("This release has no SHA256SUMS.txt to verify the download against, so "
                "it can't be installed automatically. Opening the release page instead."));
@@ -3613,11 +3610,11 @@ void MainWindow::onUpdateDownloadFinished(const QString& filePath) {
         QCoreApplication::quit();
         return;
     }
-    QMessageBox::warning(this, tr("Update"), reason);
+    DialogPresenter::warning(this, tr("Update"), reason);
 }
 
 void MainWindow::onUpdateDownloadFailed(const QString& reason) {
-    QMessageBox::warning(this, tr("Update"), reason);
+    DialogPresenter::warning(this, tr("Update"), reason);
 }
 
 }  // namespace traceview

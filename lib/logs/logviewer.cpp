@@ -4,7 +4,6 @@
 
 #include <QAbstractItemView>
 #include <QHeaderView>
-#include <QMessageBox>
 #include <QTableWidget>
 #include <QThread>
 #include <QVBoxLayout>
@@ -12,6 +11,7 @@
 #include "protocol/logfilereader.h"
 #include "protocol/logseverity.h"
 #include "theme/busyspinner.h"
+#include "theme/dialogpresenter.h"
 
 namespace traceview {
 
@@ -93,7 +93,7 @@ void LogViewer::openFile(const QString& filePath) {
     connect(thread, &QThread::finished, this, [this, result] {
         m_spinner->stop();
         if (!result->ok) {
-            QMessageBox::warning(this, tr("Open Log File"), result->error);
+            DialogPresenter::warning(this, tr("Open Log File"), result->error);
             return;
         }
         populateTable(result->entries);

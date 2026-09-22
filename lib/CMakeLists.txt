@@ -22,6 +22,8 @@ add_library(traceview_theme STATIC
     ${CMAKE_SOURCE_DIR}/include/traceview/font.h
     theme/busyspinner.cpp
     theme/busyspinner.h
+    theme/dialogpresenter.cpp
+    theme/dialogpresenter.h
     theme/iconutils.cpp
     theme/iconutils.h
 )
@@ -458,6 +460,10 @@ target_link_libraries(traceview_ota
         Qt6::Widgets
         Qt6::Network
         traceview_devices
+    PRIVATE
+        # DialogPresenter (theme/dialogpresenter.h) only -- OtaTab's upload
+        # warnings go through it like every other dialog in the app.
+        traceview_theme
 )
 
 # traceview_diagram: the Control tab's content -- a Simulink-style block

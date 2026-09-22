@@ -2,7 +2,6 @@
 
 #include <QDialogButtonBox>
 #include <QHBoxLayout>
-#include <QInputDialog>
 #include <QLineEdit>
 #include <QListWidget>
 #include <QMessageBox>
@@ -10,6 +9,7 @@
 #include <QVBoxLayout>
 
 #include "core/usermodemanager.h"
+#include "theme/dialogpresenter.h"
 
 namespace traceview {
 
@@ -57,18 +57,19 @@ void ManageUsersDialog::refreshList() {
 void ManageUsersDialog::onAddClicked() {
     bool ok = false;
     const QString username =
-        QInputDialog::getText(this, tr("Add User"), tr("Username:"), QLineEdit::Normal, {}, &ok);
+        DialogPresenter::getText(this, tr("Add User"), tr("Username:"), QLineEdit::Normal, {}, &ok);
     if (!ok || username.trimmed().isEmpty()) {
         return;
     }
     const QString password =
-        QInputDialog::getText(this, tr("Add User"), tr("Password:"), QLineEdit::Password, {}, &ok);
+        DialogPresenter::getText(this, tr("Add User"), tr("Password:"), QLineEdit::Password, {},
+                                 &ok);
     if (!ok || password.isEmpty()) {
         return;
     }
     if (!UserModeManager::instance().addAccount(username, password)) {
-        QMessageBox::warning(this, tr("Add User"),
-                             tr("Couldn't add that user — the username may already be taken."));
+        DialogPresenter::warning(this, tr("Add User"),
+                                 tr("Couldn't add that user — the username may already be taken."));
     }
 }
 
@@ -78,14 +79,14 @@ void ManageUsersDialog::onRemoveClicked() {
         return;
     }
     const QString username = item->text();
-    if (QMessageBox::question(this, tr("Remove User"),
-                              tr("Remove developer account \"%1\"?").arg(username)) !=
+    if (DialogPresenter::question(this, tr("Remove User"),
+                                  tr("Remove developer account \"%1\"?").arg(username)) !=
         QMessageBox::Yes) {
         return;
     }
     if (!UserModeManager::instance().removeAccount(username)) {
-        QMessageBox::warning(this, tr("Remove User"),
-                             tr("Couldn't remove the last remaining developer account."));
+        DialogPresenter::warning(this, tr("Remove User"),
+                                 tr("Couldn't remove the last remaining developer account."));
     }
 }
 
@@ -96,9 +97,9 @@ void ManageUsersDialog::onChangePasswordClicked() {
     }
     const QString username = item->text();
     bool ok = false;
-    const QString password = QInputDialog::getText(this, tr("Change Password"),
-                                                   tr("New password for \"%1\":").arg(username),
-                                                   QLineEdit::Password, {}, &ok);
+    const QString password = DialogPresenter::getText(
+        this, tr("Change Password"), tr("New password for \"%1\":").arg(username),
+        QLineEdit::Password, {}, &ok);
     if (!ok || password.isEmpty()) {
         return;
     }
