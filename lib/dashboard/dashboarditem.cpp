@@ -19,12 +19,14 @@ QJsonObject geometryToJson(const DashboardItem::Geometry& geometry) {
     return object;
 }
 
-DashboardItem::Geometry geometryFromJson(const QJsonObject& object) {
+// maxPages bounds y/height: 1.0 for Large (and the legacy flat format), up
+// to kMaxCanvasPages for a Small/Medium layout -- see DashboardItem::Geometry.
+DashboardItem::Geometry geometryFromJson(const QJsonObject& object, double maxPages = 1.0) {
     DashboardItem::Geometry geometry;
     geometry.x = qBound(0.0, object.value("x").toDouble(0.0), 1.0);
-    geometry.y = qBound(0.0, object.value("y").toDouble(0.0), 1.0);
+    geometry.y = qBound(0.0, object.value("y").toDouble(0.0), maxPages);
     geometry.width = qBound(0.0, object.value("width").toDouble(0.0), 1.0);
-    geometry.height = qBound(0.0, object.value("height").toDouble(0.0), 1.0);
+    geometry.height = qBound(0.0, object.value("height").toDouble(0.0), maxPages);
     return geometry;
 }
 
@@ -86,7 +88,8 @@ DashboardItem dashboardItemFromJson(const QJsonObject& object, bool* ok) {
         for (int i = 0; i < kDashboardBreakpointCount; ++i) {
             const DashboardBreakpoint breakpoint = DashboardBreakpoint(i);
             item.geometry(breakpoint) =
-                geometryFromJson(layouts.value(breakpointToString(breakpoint)).toObject());
+                geometryFromJson(layouts.value(breakpointToString(breakpoint)).toObject(),
+                                 isPreviewBreakpoint(breakpoint) ? kMaxCanvasPages : 1.0);
         }
     } else {
         // Projects saved before per-screen-size layouts existed store a

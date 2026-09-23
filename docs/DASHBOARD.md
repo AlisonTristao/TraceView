@@ -7,9 +7,12 @@ fractions (0.0-1.0) of the canvas area, not pixels or cell indices — so a
 layout is resolution-independent and stays visually identical (relative to
 the canvas) across window resizes, with no clamping or reflow needed.
 `DashboardGrid` is the only place that converts those fractions to pixels
-(`itemRect()`); a fixed logical division count (`kGridColumns`/`kGridRows`
-in dashboardgrid.cpp) only drives grid-line painting and drag/resize snap
-granularity, it is not part of the persisted model.
+(`itemRect()`); a per-breakpoint logical division count (`kGridSpecs` in
+dashboardgrid.cpp: 12 columns × 20 rows per screen on a phone, 24 × 30 on a
+tablet, 60 × 40 on a notebook) only drives grid-dot painting, drag/resize
+snap granularity and default/minimum widget sizes; it is not part of the
+persisted model. (Small/Medium `y`/`height` are in pages rather than 0-1 —
+see the canvas +/− notes under "Screen-size breakpoints".)
 
 Every item actually stores **three** independent copies of that fraction
 geometry, one per screen-size breakpoint (`DashboardItem::small`/`medium`/
@@ -164,13 +167,20 @@ Large and, unlike the screen-size button itself, also hidden whenever the
 edit-mode lock is closed — see `MainWindow::updateCanvasHeightButtons()`'s
 `editingActive()` check) lets a developer grow that breakpoint's canvas
 taller than the device viewport one step at a time, for an arrangement that
-needs more vertical room than one screenful. The grid no longer computes
-that pixel height itself: `growCanvasHeight()` only moves a per-breakpoint
-multiplier, and `MainWindow::applyBreakpointViewport()` reads it back to
-size the frame's device rect, whose `minimumSizeHint()` is what makes the
-surrounding `QScrollArea` show a scrollbar. Off (canvas exactly one device
-tall) until the first click; shrinking back past that same first step resets
-it fully. Persisted per breakpoint alongside its layout
+needs more vertical room than one screenful. Growing adds grid rows below;
+existing widgets keep their on-screen size, because Small/Medium `y`/`height`
+are measured in *pages* (one viewport height), not fractions of the whole
+canvas. `growCanvasHeight()` only moves a per-breakpoint multiplier (the page
+count), and `MainWindow::applyBreakpointViewport()` reads it back to set the
+grid's minimum height to viewport × pages, so the dashboard scrolls
+vertically inside `m_dashboardScrollArea` while the ribbon and the mobile
+`WorkspaceDock` stay put. That applies to any Small/Medium breakpoint — a
+real phone/tablet in User mode as well as the Developer preview. On
+Android/iOS the page also scrolls by finger drag (`QScroller`), except while
+editing, where a drag moves widgets. Off (canvas exactly one viewport tall)
+until the first click; shrinking back past that same first step resets it
+fully, and shrinking never cuts off the lowest widget. Persisted per
+breakpoint alongside its layout
 (`canvasHeightMultiplier` in the project file, see "Project file" below),
 since it's part of how that breakpoint's arrangement was built.
 
@@ -317,8 +327,8 @@ lives in its own module under
   every pixel of the actual control to be opaque to avoid a leak, and
   `QPushButton`'s default vertical size policy is `Fixed`, so it wasn't.
   Also
-  resizable much smaller than other kinds (`kMinHeaderlessItemWidth`/
-  `kMinHeaderlessItemHeight` in
+  resizable much smaller than other kinds (`minHeaderlessColumns`/
+  `minHeaderlessRows` in `kGridSpecs`,
   [dashboardgrid.cpp](../lib/dashboard/dashboardgrid.cpp), picked via
   `DashboardCell::hasHeader()` — see "Editing a layout" above), since there's
   no header height to stay legible above:
@@ -432,7 +442,8 @@ independent top-level sections:
             }
           ],
           "breakpoint": "large",
-          "canvasHeightMultiplier": { "small": 0.0, "medium": 0.0 }
+          "canvasHeightMultiplier": { "small": 0.0, "medium": 0.0 },
+          "verticalUnit": "page"
         }
       }
     ]
@@ -472,7 +483,11 @@ comes from the device (project open) or carries over (workspace switch)
 instead; see `MainWindow::loadDashboardJson()`. `dashboard.canvasHeightMultiplier` holds
 Small/Medium's own canvas-growth state (see `DashboardGrid::
 growCanvasHeight()` above); `0.0` (the default) means "off, canvas matches
-the window" — Large has no entry since it never grows. A project saved
+the window" — Large has no entry since it never grows. `verticalUnit:
+"page"` marks Small/Medium `y`/`height` as measured in pages; a project
+without it stored them as fractions of the whole grown canvas, and
+`fromJson()` multiplies them by that breakpoint's page count on load so every
+widget stays where it was. A project saved
 before per-screen-size layouts existed has a flat `"x"/"y"/"width"/"height"`
 per item instead of `layouts`, and neither a `breakpoint` nor a
 `canvasHeightMultiplier` field; loading one seeds all three breakpoints

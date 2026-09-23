@@ -47,11 +47,13 @@ struct DashboardLayerEntry {
 };
 
 // A Bootstrap-like grid of DashboardWidgets: each item's position/size is
-// stored as fractions (0.0-1.0) of the canvas area, so layouts stay
-// resolution-independent — an item keeps its relative spot/size across
-// resizes with no clamping or reflow needed. A fixed logical division count
-// (see kGridColumns/kGridRows in the .cpp) drives grid-line painting and
-// drag/resize snapping only; it is not part of the persisted model. Cells
+// stored as fractions of the canvas width and of one page (viewport) height
+// (see DashboardItem::Geometry), so layouts stay resolution-independent — an
+// item keeps its relative spot/size across resizes with no clamping or
+// reflow needed. A per-breakpoint logical division count (see kGridSpecs in
+// the .cpp -- far fewer columns on a phone than a notebook) drives grid-dot
+// painting and drag/resize snapping only; it is not part of the persisted
+// model. Cells
 // are positioned manually (no QLayout) so they can be dragged/resized with
 // the mouse in edit mode.
 //
@@ -104,7 +106,10 @@ public:
     // shrinks that breakpoint's canvas height by one step past the
     // viewport's own height, so a developer can make as much vertical room
     // as an arrangement actually needs instead of the canvas being capped
-    // to whatever fits on screen. Off (canvas exactly matches the viewport,
+    // to whatever fits on screen. Growing adds grid rows below; existing
+    // items keep their on-screen size (their y/height are in pages, see
+    // DashboardItem::Geometry). Shrinking stops at the lowest item's bottom
+    // edge. Off (canvas exactly matches the viewport,
     // no scrollbar) until the first growCanvasHeight() call; shrinking back
     // past that same first step resets it to that same off state. Persisted
     // per project/workspace (see toJson()/fromJson()) since it's part of
@@ -357,16 +362,31 @@ private:
     // key is always available — it just means "no key set").
     bool isKeyAvailable(const QString& key, const QString& excludeId) const;
 
-    bool findFreeSlot(double width, double height, double* outX, double* outY) const;
+    // How many viewport heights ("pages") `breakpoint`'s canvas spans: 1.0
+    // for Large and for an ungrown Small/Medium, otherwise its
+    // canvasHeightMultiplier(). Item y/height are measured in these (see
+    // DashboardItem::Geometry).
+    double canvasPages(DashboardBreakpoint breakpoint) const;
+    // Snap rows across the whole canvas -- rows per page times canvasPages(),
+    // so growing the canvas adds rows below rather than stretching them.
+    int totalRows(DashboardBreakpoint breakpoint) const;
+    int totalRows() const {
+        return totalRows(m_breakpoint);
+    }
+
+    bool findFreeSlot(DashboardBreakpoint breakpoint, double width, double height, double* outX,
+                      double* outY) const;
     // Canvas-bounds check only -- overlapping another item is allowed. Used
     // to accept/reject an interactive drag or resize.
     bool isPlacementValid(const DashboardItem& candidate, const QString& excludeId) const;
+    bool isPlacementValidIn(const DashboardItem& candidate, DashboardBreakpoint breakpoint) const;
     // isPlacementValid() plus "doesn't overlap any other item" -- used only
     // to find a genuinely empty spot for a brand-new or pasted item (nicer
     // default than dropping it right on top of something when there's free
     // space available); falls back to a spot that may overlap when there
     // isn't, same as before.
-    bool isPlacementFree(const DashboardItem& candidate, const QString& excludeId) const;
+    bool isPlacementFree(const DashboardItem& candidate, const QString& excludeId,
+                         DashboardBreakpoint breakpoint) const;
     DashboardItem* itemById(const QString& itemId);
     const DashboardItem* itemById(const QString& itemId) const;
     int indexOfItem(const QString& itemId) const;

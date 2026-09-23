@@ -37,6 +37,13 @@ constexpr bool isPreviewBreakpoint(DashboardBreakpoint bp) {
     return bp != DashboardBreakpoint::Large;
 }
 
+// Ceiling for how many viewport heights ("pages") a Small/Medium canvas can
+// be grown to (see DashboardGrid::growCanvasHeight()) -- also the upper
+// bound a Small/Medium item's y/height is clamped to on load, since those
+// are measured in pages rather than fractions of the whole canvas (see
+// DashboardItem::Geometry).
+constexpr double kMaxCanvasPages = 8.0;
+
 // Where one dashboard widget sits on the grid: its registered type and its
 // position/size as fractions (0.0-1.0) of the grid's usable canvas area.
 // Proportional coordinates keep layouts resolution-independent — an item
@@ -61,11 +68,14 @@ struct DashboardItem {
                          // always select/drag together as one rigid unit (see
                          // DashboardGrid::groupSelected()/ungroupSelected())
 
-    // Position/size as fractions of the canvas, same shape as the old flat
-    // x/y/width/height this replaces -- one independent copy per screen-size
-    // breakpoint. DashboardGrid is the only thing that reads/writes these
-    // directly (via geometry()/setGeometry() below), always for whichever
-    // breakpoint is currently active.
+    // Position/size, one independent copy per screen-size breakpoint. x/width
+    // are always fractions of the canvas width. y/height are fractions of one
+    // "page" -- the viewport's own height: for Large that is the whole canvas
+    // (0.0-1.0, same as always), while a Small/Medium canvas grown past the
+    // viewport (see DashboardGrid::growCanvasHeight()) spans 0.0 up to its
+    // page count, so growing it adds room below instead of stretching every
+    // item taller. DashboardGrid is the only thing that reads/writes these
+    // directly (via geometry() below).
     struct Geometry {
         double x = 0.0;
         double y = 0.0;

@@ -36,14 +36,43 @@ constexpr int kMaxGutter = 32;
 // dashboardItemToJson() object, so paste can reuse the same (de)serializer
 // as project save/load instead of a bespoke copy of DashboardItem's fields.
 constexpr const char* kClipboardMimeType = "application/x-traceview-dashboarditem+json";
-// Fixed logical division count driving grid-line painting and drag/resize
-// snap granularity. Deliberately independent of window size — items are
-// stored as fractions of the canvas (see DashboardItem), so this constant
-// only shapes interaction feel, never item geometry directly. That's what
-// keeps relayout() resize-safe: there is no per-window column/row count to
-// go stale and clamp items against.
-constexpr int kGridColumns = 60;
-constexpr int kGridRows = 40;
+// Logical division counts driving grid-dot painting and drag/resize snap
+// granularity, plus the minimum/default item footprints in those same
+// cells -- one set per breakpoint. Deliberately independent of window size:
+// items are stored as fractions of the canvas width and of one page height
+// (see DashboardItem::Geometry), so these only shape interaction feel, never
+// item geometry directly. That's what keeps relayout() resize-safe: there is
+// no per-window column/row count to go stale and clamp items against.
+//
+// A phone/tablet gets far fewer, roughly square columns than a notebook's
+// 60 -- a 12-column phone grid is ~30px per cell, big enough to hit with a
+// finger, where 60 columns would be 6px slivers. rowsPerPage is how many
+// rows one viewport height holds; growing a Small/Medium canvas (see
+// growCanvasHeight()) adds more rows of that same size below.
+// "Header-less" kinds (DashboardWidget::wantsCellHeader() == false -- the
+// control types: push button/toggle/slider, see widgets/controlwidgets.h)
+// have no 24px header eating into the cell, so they get a smaller minimum
+// and a smaller starting footprint than a chart/gauge/serial monitor.
+struct GridSpec {
+    int columns;
+    int rowsPerPage;
+    int minColumns;
+    int minRows;
+    int minHeaderlessColumns;
+    int minHeaderlessRows;
+    int defaultColumns;
+    int defaultRows;
+    int defaultHeaderlessColumns;
+    int defaultHeaderlessRows;
+};
+constexpr GridSpec kGridSpecs[kDashboardBreakpointCount] = {
+    /* Small  */ {12, 20, 2, 3, 1, 1, 12, 7, 4, 2},
+    /* Medium */ {24, 30, 3, 4, 1, 2, 12, 10, 6, 3},
+    /* Large  */ {60, 40, 5, 5, 2, 2, 16, 12, 8, 6},
+};
+const GridSpec& gridSpec(DashboardBreakpoint breakpoint) {
+    return kGridSpecs[size_t(breakpoint)];
+}
 // Radius of the small dots painted at each grid node in edit mode (see
 // paintEvent()) — deliberately subtle, just a hint of the snap points.
 // Kept small relative to the grid density above so denser dots don't read
@@ -53,35 +82,19 @@ constexpr double kGridDotRadius = 0.9;
 // stopping at full opacity right at usableRect's edge (see paintEvent()) —
 // makes the grid dissolve into the margin instead of a hard cutoff.
 constexpr int kGridEdgeFadeCells = 2;
-// A widget below this fraction in either dimension is too small to be
-// usable (header alone is 24px). Mirrors the old 5-cell minimum.
-constexpr double kMinItemWidth = 5.0 / kGridColumns;
-constexpr double kMinItemHeight = 5.0 / kGridRows;
-// Header-less kinds (DashboardWidget::wantsCellHeader() == false — the
-// control types: push button/toggle/slider, see widgets/controlwidgets.h)
-// have no 24px header eating into the cell, so they can shrink much closer
-// to "just the control itself" than the default minimum above.
-constexpr double kMinHeaderlessItemWidth = 2.0 / kGridColumns;
-constexpr double kMinHeaderlessItemHeight = 2.0 / kGridRows;
-constexpr double kDefaultItemWidth = 16.0 / kGridColumns;
-constexpr double kDefaultItemHeight = 12.0 / kGridRows;
-// Smaller starting footprint for the same header-less control kinds
-// referenced above (push button/toggle/slider) -- the default sized for a
-// chart/gauge/serial monitor above reads as oversized for a single small
-// control. Roughly double kMinHeaderlessItemWidth/Height, half of
-// kDefaultItemWidth/Height -- big enough to comfortably show the control,
-// small enough not to dominate the canvas the way the chart default does.
-constexpr double kDefaultHeaderlessItemWidth = 8.0 / kGridColumns;
-constexpr double kDefaultHeaderlessItemHeight = 6.0 / kGridRows;
 // Tolerance for fraction comparisons (bounds/overlap checks), to absorb
 // floating-point rounding from snapping math without treating touching
 // edges as overlapping.
 constexpr double kEpsilon = 1e-6;
-// growCanvasHeight()/shrinkCanvasHeight()'s step size and ceiling -- see
-// their own comments. The ceiling is a sanity cap against runaway clicking,
-// not a meaningful design limit ("as tall as needed" has no real one).
+// growCanvasHeight()/shrinkCanvasHeight()'s step size, in pages -- see their
+// own comments. The ceiling (kMaxCanvasPages, dashboarditem.h) is a sanity
+// cap against runaway clicking, not a meaningful design limit.
 constexpr double kCanvasHeightStep = 0.2;
-constexpr double kMaxCanvasHeightMultiplier = 8.0;
+// Written by toJson() as "verticalUnit" -- marks Small/Medium y/height as
+// measured in pages (see DashboardItem::Geometry). Projects saved before
+// that stored them as fractions of the whole grown canvas instead; fromJson()
+// converts those on load.
+constexpr const char* kVerticalUnitPage = "page";
 }  // namespace
 
 DashboardGrid::DashboardGrid(QWidget* parent) : QWidget(parent), m_undoStack(new QUndoStack(this)) {
@@ -288,24 +301,30 @@ void DashboardGrid::addItem(const QString& typeId) {
         headerless = !probe->wantsCellHeader();
         delete probe;
     }
-    const double width = headerless ? kDefaultHeaderlessItemWidth : kDefaultItemWidth;
-    const double height = headerless ? kDefaultHeaderlessItemHeight : kDefaultItemHeight;
-
-    double x = 0.0;
-    double y = 0.0;
-    if (!findFreeSlot(width, height, &x, &y)) {
-        x = 0.0;
-        y = 0.0;
-    }
-
     DashboardItem item;
     item.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
     item.typeId = typeId;
-    // Seeded identically across all three screen-size layouts -- a brand-new
-    // item looks the same everywhere until a developer customizes one
-    // breakpoint's arrangement on its own (see dashboarditem.h).
-    const DashboardItem::Geometry geometry{x, y, width, height};
-    item.geometries.fill(geometry);
+    // Each screen-size layout gets its own default footprint (in that
+    // breakpoint's own cells -- a phone's default is full width, a
+    // notebook's a quarter) placed in that layout's first free spot, so a
+    // widget added while arranging one size doesn't land on top of
+    // something in the others.
+    for (int i = 0; i < kDashboardBreakpointCount; ++i) {
+        const DashboardBreakpoint breakpoint = DashboardBreakpoint(i);
+        const GridSpec& spec = gridSpec(breakpoint);
+        const double width =
+            (headerless ? spec.defaultHeaderlessColumns : spec.defaultColumns) /
+            double(spec.columns);
+        const double height =
+            (headerless ? spec.defaultHeaderlessRows : spec.defaultRows) / double(spec.rowsPerPage);
+        double x = 0.0;
+        double y = 0.0;
+        if (!findFreeSlot(breakpoint, width, height, &x, &y)) {
+            x = 0.0;
+            y = 0.0;
+        }
+        item.geometry(breakpoint) = {x, y, width, height};
+    }
 
     m_undoStack->push(new AddWidgetCommand(this, item));
     // Selected right away so the properties panel comes up already showing
@@ -388,15 +407,17 @@ void DashboardGrid::pasteItem() {
     // had there (unchanged by this placement search), same as any other
     // per-breakpoint customization being left for a developer to sort out
     // on that screen size separately.
+    const GridSpec& spec = gridSpec(m_breakpoint);
     DashboardItem offsetCandidate = item;
     DashboardItem::Geometry& offsetGeometry = offsetCandidate.geometry(m_breakpoint);
-    offsetGeometry.x = item.geometry(m_breakpoint).x + 1.0 / kGridColumns;
-    offsetGeometry.y = item.geometry(m_breakpoint).y + 1.0 / kGridRows;
-    if (isPlacementFree(offsetCandidate, QString())) {
+    offsetGeometry.x = item.geometry(m_breakpoint).x + 1.0 / spec.columns;
+    offsetGeometry.y = item.geometry(m_breakpoint).y + 1.0 / spec.rowsPerPage;
+    if (isPlacementFree(offsetCandidate, QString(), m_breakpoint)) {
         item.geometry(m_breakpoint).x = offsetGeometry.x;
         item.geometry(m_breakpoint).y = offsetGeometry.y;
-    } else if (double x = 0.0, y = 0.0; findFreeSlot(item.geometry(m_breakpoint).width,
-                                                     item.geometry(m_breakpoint).height, &x, &y)) {
+    } else if (double x = 0.0, y = 0.0;
+               findFreeSlot(m_breakpoint, item.geometry(m_breakpoint).width,
+                            item.geometry(m_breakpoint).height, &x, &y)) {
         item.geometry(m_breakpoint).x = x;
         item.geometry(m_breakpoint).y = y;
     } else {
@@ -770,6 +791,7 @@ QJsonObject DashboardGrid::toJson() const {
             m_canvasHeightMultiplier[size_t(breakpoint)];
     }
     object["canvasHeightMultiplier"] = canvasHeightMultiplier;
+    object["verticalUnit"] = QString::fromLatin1(kVerticalUnitPage);
     return object;
 }
 
@@ -796,7 +818,26 @@ void DashboardGrid::fromJson(const QJsonObject& object) {
             continue;
         }
         m_canvasHeightMultiplier[size_t(breakpoint)] =
-            qMax(0.0, canvasHeightMultiplier.value(breakpointToString(breakpoint)).toDouble(0.0));
+            qBound(0.0, canvasHeightMultiplier.value(breakpointToString(breakpoint)).toDouble(0.0),
+                   kMaxCanvasPages);
+    }
+    // Before "verticalUnit", a grown Small/Medium canvas stored y/height as
+    // fractions of the WHOLE canvas (so growing it stretched every item);
+    // now they're in pages (see DashboardItem::Geometry). Scaling by the page
+    // count converts one to the other and keeps every item exactly where it
+    // was on screen.
+    if (object.value("verticalUnit").toString() != QLatin1String(kVerticalUnitPage)) {
+        for (int i = 0; i < kDashboardBreakpointCount; ++i) {
+            const DashboardBreakpoint breakpoint = DashboardBreakpoint(i);
+            const double pages = canvasPages(breakpoint);
+            if (pages <= 1.0) {
+                continue;
+            }
+            for (DashboardItem& item : m_items) {
+                item.geometry(breakpoint).y *= pages;
+                item.geometry(breakpoint).height *= pages;
+            }
+        }
     }
     updateGeometry();
     relayout();
@@ -834,9 +875,10 @@ void DashboardGrid::growCanvasHeight() {
     // taller than any real phone/tablet's own aspect ratio) rather than
     // from 0, so the very first click gives a visibly taller canvas right
     // away instead of a no-op-looking jump from "off" to "barely on".
-    multiplier = qMin(kMaxCanvasHeightMultiplier,
-                      (multiplier <= 0.0 ? 1.0 : multiplier) + kCanvasHeightStep);
+    multiplier =
+        qMin(kMaxCanvasPages, (multiplier <= 0.0 ? 1.0 : multiplier) + kCanvasHeightStep);
     updateGeometry();
+    relayout();
 }
 
 void DashboardGrid::shrinkCanvasHeight() {
@@ -847,14 +889,32 @@ void DashboardGrid::shrinkCanvasHeight() {
     if (multiplier <= 0.0) {
         return;
     }
-    const double shrunk = multiplier - kCanvasHeightStep;
+    // Never shrink past the lowest item's bottom edge -- that would leave it
+    // hanging off the canvas, unreachable and impossible to drag back.
+    double contentBottom = 0.0;
+    for (const DashboardItem& item : m_items) {
+        const DashboardItem::Geometry& geometry = item.geometry(m_breakpoint);
+        contentBottom = qMax(contentBottom, geometry.y + geometry.height);
+    }
+    const double shrunk = qMax(multiplier - kCanvasHeightStep, contentBottom);
+    if (shrunk >= multiplier - kEpsilon) {
+        return;
+    }
     // Back down to (or past) the starting point growCanvasHeight() grows
     // from -- reset to fully off instead of leaving a barely-taller-than-
     // nothing canvas around, so this mirrors growCanvasHeight() exactly in
     // reverse and the scrollbar actually disappears once shrunk all the
     // way back.
-    multiplier = shrunk <= 1.0 ? 0.0 : shrunk;
+    multiplier = shrunk <= 1.0 + kEpsilon ? 0.0 : shrunk;
     updateGeometry();
+    relayout();
+}
+
+double DashboardGrid::canvasPages(DashboardBreakpoint breakpoint) const {
+    if (!isPreviewBreakpoint(breakpoint)) {
+        return 1.0;
+    }
+    return qMax(1.0, m_canvasHeightMultiplier[size_t(breakpoint)]);
 }
 
 void DashboardGrid::setBreakpoint(DashboardBreakpoint breakpoint) {
@@ -915,12 +975,14 @@ void DashboardGrid::paintEvent(QPaintEvent*) {
     // cutting off mid-dot.
     painter.setRenderHint(QPainter::Antialiasing);
     painter.setPen(Qt::NoPen);
-    for (int c = 0; c <= kGridColumns; ++c) {
-        const int x = area.left() + qRound(c * area.width() / double(kGridColumns));
-        const int edgeDistanceX = qMin(c, kGridColumns - c);
-        for (int r = 0; r <= kGridRows; ++r) {
-            const int y = area.top() + qRound(r * area.height() / double(kGridRows));
-            const int edgeDistance = qMin(edgeDistanceX, qMin(r, kGridRows - r));
+    const int columns = gridSpec(m_breakpoint).columns;
+    const int rows = totalRows();
+    for (int c = 0; c <= columns; ++c) {
+        const int x = area.left() + qRound(c * area.width() / double(columns));
+        const int edgeDistanceX = qMin(c, columns - c);
+        for (int r = 0; r <= rows; ++r) {
+            const int y = area.top() + qRound(r * area.height() / double(rows));
+            const int edgeDistance = qMin(edgeDistanceX, qMin(r, rows - r));
             QColor dotColor = palette.textDisabled;
             if (edgeDistance < kGridEdgeFadeCells) {
                 dotColor.setAlphaF(dotColor.alphaF() * (edgeDistance + 1) /
@@ -1006,10 +1068,13 @@ QRect DashboardGrid::usableRect() const {
 QRect DashboardGrid::slotRect(const DashboardItem& item) const {
     const DashboardItem::Geometry& geometry = item.geometry(m_breakpoint);
     const QRect area = usableRect();
+    // y/height are in pages (see DashboardItem::Geometry); the canvas holds
+    // canvasPages() of them stacked vertically.
+    const double pageHeight = area.height() / canvasPages(m_breakpoint);
     const int left = area.left() + qRound(geometry.x * area.width());
-    const int top = area.top() + qRound(geometry.y * area.height());
+    const int top = area.top() + qRound(geometry.y * pageHeight);
     const int width = qRound(geometry.width * area.width());
-    const int height = qRound(geometry.height * area.height());
+    const int height = qRound(geometry.height * pageHeight);
     return QRect(left, top, width, height);
 }
 
@@ -1054,18 +1119,25 @@ void DashboardGrid::clearItems() {
     m_rubberBandPending = false;
 }
 
-bool DashboardGrid::findFreeSlot(double width, double height, double* outX, double* outY) const {
-    const int columnCells = qBound(1, qRound(width * kGridColumns), kGridColumns);
-    const int rowCells = qBound(1, qRound(height * kGridRows), kGridRows);
-    for (int r = 0; r + rowCells <= kGridRows; ++r) {
-        for (int c = 0; c + columnCells <= kGridColumns; ++c) {
+int DashboardGrid::totalRows(DashboardBreakpoint breakpoint) const {
+    return qMax(1, qRound(gridSpec(breakpoint).rowsPerPage * canvasPages(breakpoint)));
+}
+
+bool DashboardGrid::findFreeSlot(DashboardBreakpoint breakpoint, double width, double height,
+                                 double* outX, double* outY) const {
+    const GridSpec& spec = gridSpec(breakpoint);
+    const int rows = totalRows(breakpoint);
+    const int columnCells = qBound(1, qRound(width * spec.columns), spec.columns);
+    const int rowCells = qBound(1, qRound(height * spec.rowsPerPage), rows);
+    for (int r = 0; r + rowCells <= rows; ++r) {
+        for (int c = 0; c + columnCells <= spec.columns; ++c) {
             DashboardItem probe;
-            DashboardItem::Geometry& geometry = probe.geometry(m_breakpoint);
-            geometry.x = c / double(kGridColumns);
-            geometry.y = r / double(kGridRows);
+            DashboardItem::Geometry& geometry = probe.geometry(breakpoint);
+            geometry.x = c / double(spec.columns);
+            geometry.y = r / double(spec.rowsPerPage);
             geometry.width = width;
             geometry.height = height;
-            if (isPlacementFree(probe, QString())) {
+            if (isPlacementFree(probe, QString(), breakpoint)) {
                 *outX = geometry.x;
                 *outY = geometry.y;
                 return true;
@@ -1076,29 +1148,34 @@ bool DashboardGrid::findFreeSlot(double width, double height, double* outX, doub
 }
 
 bool DashboardGrid::isPlacementValid(const DashboardItem& candidate, const QString&) const {
-    const DashboardItem::Geometry& geometry = candidate.geometry(m_breakpoint);
+    return isPlacementValidIn(candidate, m_breakpoint);
+}
+
+bool DashboardGrid::isPlacementValidIn(const DashboardItem& candidate,
+                                       DashboardBreakpoint breakpoint) const {
+    const DashboardItem::Geometry& geometry = candidate.geometry(breakpoint);
     if (geometry.x < -kEpsilon || geometry.y < -kEpsilon) {
         return false;
     }
     if (geometry.x + geometry.width > 1.0 + kEpsilon ||
-        geometry.y + geometry.height > 1.0 + kEpsilon) {
+        geometry.y + geometry.height > canvasPages(breakpoint) + kEpsilon) {
         return false;
     }
     return true;
 }
 
-bool DashboardGrid::isPlacementFree(const DashboardItem& candidate,
-                                    const QString& excludeId) const {
-    if (!isPlacementValid(candidate, excludeId)) {
+bool DashboardGrid::isPlacementFree(const DashboardItem& candidate, const QString& excludeId,
+                                    DashboardBreakpoint breakpoint) const {
+    if (!isPlacementValidIn(candidate, breakpoint)) {
         return false;
     }
 
-    const DashboardItem::Geometry& geometry = candidate.geometry(m_breakpoint);
+    const DashboardItem::Geometry& geometry = candidate.geometry(breakpoint);
     for (const DashboardItem& other : m_items) {
         if (other.id == excludeId) {
             continue;
         }
-        const DashboardItem::Geometry& otherGeometry = other.geometry(m_breakpoint);
+        const DashboardItem::Geometry& otherGeometry = other.geometry(breakpoint);
         const bool overlapsX = geometry.x < otherGeometry.x + otherGeometry.width - kEpsilon &&
                                otherGeometry.x < geometry.x + geometry.width - kEpsilon;
         const bool overlapsY = geometry.y < otherGeometry.y + otherGeometry.height - kEpsilon &&
@@ -1201,11 +1278,13 @@ void DashboardGrid::handleDragMoved(const QString& itemId, const QPoint& globalP
     }
 
     const QRect area = usableRect();
+    const GridSpec& spec = gridSpec(m_breakpoint);
+    const double pages = canvasPages(m_breakpoint);
     const QPoint deltaPx = globalPos - m_drag->startGlobalPos;
-    const int deltaColumnCells = qRound(deltaPx.x() / double(area.width()) * kGridColumns);
-    const int deltaRowCells = qRound(deltaPx.y() / double(area.height()) * kGridRows);
-    double deltaX = deltaColumnCells / double(kGridColumns);
-    double deltaY = deltaRowCells / double(kGridRows);
+    const int deltaColumnCells = qRound(deltaPx.x() / double(area.width()) * spec.columns);
+    const int deltaRowCells = qRound(deltaPx.y() / double(area.height()) * totalRows());
+    double deltaX = deltaColumnCells / double(spec.columns);
+    double deltaY = deltaRowCells / double(spec.rowsPerPage);
 
     // Clamp the delta itself (not each member's candidate independently) so
     // a multi/group drag stays rigid: every member keeps its exact pre-drag
@@ -1220,7 +1299,7 @@ void DashboardGrid::handleDragMoved(const QString& itemId, const QPoint& globalP
         loDeltaX = qMax(loDeltaX, -original.x);
         hiDeltaX = qMin(hiDeltaX, qMax(0.0, 1.0 - original.width) - original.x);
         loDeltaY = qMax(loDeltaY, -original.y);
-        hiDeltaY = qMin(hiDeltaY, qMax(0.0, 1.0 - original.height) - original.y);
+        hiDeltaY = qMin(hiDeltaY, qMax(0.0, pages - original.height) - original.y);
     }
     // Defensive only -- shouldn't trigger for a selection that was already
     // entirely on-canvas before the drag started.
@@ -1325,11 +1404,13 @@ void DashboardGrid::handleResizeMoved(const QString& itemId, const QPoint& globa
     }
 
     const QRect area = usableRect();
+    const GridSpec& spec = gridSpec(m_breakpoint);
+    const double pages = canvasPages(m_breakpoint);
     const QPoint deltaPx = globalPos - m_drag->startGlobalPos;
-    const int deltaColumnCells = qRound(deltaPx.x() / double(area.width()) * kGridColumns);
-    const int deltaRowCells = qRound(deltaPx.y() / double(area.height()) * kGridRows);
-    const double deltaWidth = deltaColumnCells / double(kGridColumns);
-    const double deltaHeight = deltaRowCells / double(kGridRows);
+    const int deltaColumnCells = qRound(deltaPx.x() / double(area.width()) * spec.columns);
+    const int deltaRowCells = qRound(deltaPx.y() / double(area.height()) * totalRows());
+    const double deltaWidth = deltaColumnCells / double(spec.columns);
+    const double deltaHeight = deltaRowCells / double(spec.rowsPerPage);
 
     // Edges resize a single dimension while anchoring the opposite edge;
     // corners resize both. Left/top anchor the position too, since their
@@ -1352,8 +1433,10 @@ void DashboardGrid::handleResizeMoved(const QString& itemId, const QPoint& globa
 
     const DashboardCell* resizingCell = m_cells.value(itemId);
     const bool compact = resizingCell && !resizingCell->hasHeader();
-    const double minWidth = compact ? kMinHeaderlessItemWidth : kMinItemWidth;
-    const double minHeight = compact ? kMinHeaderlessItemHeight : kMinItemHeight;
+    const double minWidth =
+        (compact ? spec.minHeaderlessColumns : spec.minColumns) / double(spec.columns);
+    const double minHeight =
+        (compact ? spec.minHeaderlessRows : spec.minRows) / double(spec.rowsPerPage);
 
     if (resizesRight) {
         candidateGeometry.width = qBound(minWidth, original.width + deltaWidth,
@@ -1367,7 +1450,7 @@ void DashboardGrid::handleResizeMoved(const QString& itemId, const QPoint& globa
 
     if (resizesBottom) {
         candidateGeometry.height = qBound(minHeight, original.height + deltaHeight,
-                                          qMax(minHeight, 1.0 - candidateGeometry.y));
+                                          qMax(minHeight, pages - candidateGeometry.y));
     } else if (resizesTop) {
         const double bottomEdge = original.y + original.height;
         candidateGeometry.height =

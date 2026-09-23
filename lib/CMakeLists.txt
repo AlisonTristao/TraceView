@@ -737,6 +737,8 @@ add_library(traceview_ui STATIC
     core/workspaceswitcher.h
     core/workspacedock.cpp
     core/workspacedock.h
+    core/touchscroll.cpp
+    core/touchscroll.h
     core/iconpickerdialog.cpp
     core/iconpickerdialog.h
     core/brandcornermark.cpp

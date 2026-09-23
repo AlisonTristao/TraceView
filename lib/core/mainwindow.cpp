@@ -83,6 +83,7 @@
 #include "serialwidgetbridge.h"
 #include "settingspage.h"
 #include "shortcutsdialog.h"
+#include "touchscroll.h"
 #include "theme/dialogpresenter.h"
 #include "theme/iconlibrary.h"
 #include "traceview/fontmanager.h"
@@ -2127,23 +2128,28 @@ void MainWindow::restoreScreenSizeButtonToStatusRow() {
 
 void MainWindow::applyBreakpointViewport() {
     const DashboardBreakpoint breakpoint = m_dashboardGrid->currentBreakpoint();
-    if (!previewActive()) {
+    // The device's own screen is a fixed size (see DevicePreviewFrame: both
+    // its dimensions clamp to whatever room is actually available, the way
+    // a real phone's screen is always shown whole) -- only a Developer-mode
+    // preview shows one at all.
+    if (previewActive()) {
+        m_devicePreviewFrame->setDeviceSize(
+            breakpoint == DashboardBreakpoint::Small ? kSmallViewportSize : kMediumViewportSize);
+    } else {
         m_devicePreviewFrame->setDeviceSize(QSize());
+    }
+
+    // canvasHeightMultiplier() stretches the CONTENT, not the device: the
+    // dashboard scrolls vertically inside m_dashboardScrollArea while the
+    // chrome around it (ribbon, m_workspaceDock) stays put, the same way a
+    // too-tall page scrolls on an actual phone. Applied for any Small/Medium
+    // breakpoint -- a real phone/tablet in User mode included, not just the
+    // preview; gating it on previewActive() is what used to snap the canvas
+    // back to one screen the moment Developer mode was left.
+    if (!isPreviewBreakpoint(breakpoint)) {
         m_dashboardGrid->setMinimumHeight(0);
         return;
     }
-
-    // The device's own screen is a fixed size now (see DevicePreviewFrame's
-    // item-5 rewrite: both its dimensions clamp to whatever room is actually
-    // available, the way a real phone's screen is always shown whole) --
-    // canvasHeightMultiplier() no longer stretches the DEVICE (that used to
-    // make the frame itself grow past the available space and get wrapped
-    // in an outer scroll area); it stretches the CONTENT inside it instead,
-    // below, the same way a too-tall page scrolls on an actual phone.
-    const QSize base =
-        breakpoint == DashboardBreakpoint::Small ? kSmallViewportSize : kMediumViewportSize;
-    m_devicePreviewFrame->setDeviceSize(base);
-
     const double multiplier = m_dashboardGrid->canvasHeightMultiplier(breakpoint);
     if (multiplier > 0.0) {
         // 0.0 means growCanvasHeight() has never been clicked for this
@@ -2193,6 +2199,7 @@ void MainWindow::onRibbonTabChanged(int index) {
     QWidget* currentPage = m_ribbon->pageAt(index);
     m_otaTabActive = currentPage != nullptr && currentPage == m_otaTabPage;
     m_dashboardGrid->setEditMode(editingActive());
+    setTouchScroll(m_dashboardScrollArea, !editingActive());
     m_addWidgetAction->setEnabled(editingActive());
     m_togglePanelsButton->setEnabled(editingActive());
     // The canvas +/- buttons are gated by editingActive() too (see its own
@@ -2253,6 +2260,7 @@ void MainWindow::onEditModeToggled(bool enabled) {
     // -- editingActive() folds both flags together, so flipping either one
     // needs the same refresh.
     m_dashboardGrid->setEditMode(editingActive());
+    setTouchScroll(m_dashboardScrollArea, !editingActive());
     m_addWidgetAction->setEnabled(editingActive());
     m_togglePanelsButton->setEnabled(editingActive());
     // The canvas +/- buttons are locked behind the padlock too -- see their

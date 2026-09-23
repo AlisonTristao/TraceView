@@ -76,7 +76,8 @@ private slots:
     void changeSelectedConfigIsUndoable();
     void changeSelectedTypeIsUndoable();
     void toJsonFromJsonRoundTrips();
-    void addItemSeedsAllBreakpointsIdentically();
+    void addItemSeedsEachBreakpointWithItsOwnDefault();
+    void growCanvasAddsRoomBelowWithoutStretchingItems();
     void breakpointDragOnlyAffectsThatBreakpoint();
     void setBreakpointClearsSelectionAndEmitsSignal();
     void toJsonFromJsonRoundTripsActiveBreakpoint();
@@ -214,17 +215,62 @@ void TestDashboardGrid::toJsonFromJsonRoundTrips() {
     QCOMPARE(target.toJson(), json);
 }
 
-void TestDashboardGrid::addItemSeedsAllBreakpointsIdentically() {
+void TestDashboardGrid::addItemSeedsEachBreakpointWithItsOwnDefault() {
     DashboardGrid grid;
     grid.addItem("dummy_line");
+    grid.addItem("dummy_line");
 
-    const QJsonObject item = grid.toJson().value("items").toArray().first().toObject();
-    const QJsonObject layouts = item.value("layouts").toObject();
-    // A brand-new item hasn't been customized for any particular screen
-    // size yet -- all three breakpoints must start out identical (see
-    // DashboardGrid::addItem()).
-    QCOMPARE(layouts.value("small").toObject(), layouts.value("medium").toObject());
-    QCOMPARE(layouts.value("medium").toObject(), layouts.value("large").toObject());
+    const QJsonArray items = grid.toJson().value("items").toArray();
+    const QJsonObject first = items.at(0).toObject().value("layouts").toObject();
+    const QJsonObject second = items.at(1).toObject().value("layouts").toObject();
+    // Each screen size seeds its own default footprint in its own cells (see
+    // kGridSpecs): full width on a phone, half on a tablet, 16/60 on a
+    // notebook.
+    QCOMPARE(first.value("small").toObject().value("width").toDouble(), 1.0);
+    QCOMPARE(first.value("medium").toObject().value("width").toDouble(), 0.5);
+    QCOMPARE(first.value("large").toObject().value("width").toDouble(), 16.0 / 60.0);
+    // ...and a second item lands in each layout's own next free spot: below
+    // the full-width first item on a phone, beside it on a notebook.
+    QCOMPARE(second.value("small").toObject().value("x").toDouble(), 0.0);
+    QCOMPARE(second.value("small").toObject().value("y").toDouble(), 7.0 / 20.0);
+    QCOMPARE(second.value("large").toObject().value("x").toDouble(), 16.0 / 60.0);
+    QCOMPARE(second.value("large").toObject().value("y").toDouble(), 0.0);
+}
+
+void TestDashboardGrid::growCanvasAddsRoomBelowWithoutStretchingItems() {
+    DashboardGrid grid;
+    grid.resize(360, 500);
+    grid.show();
+    QVERIFY(QTest::qWaitForWindowExposed(&grid));
+    grid.setBreakpoint(DashboardBreakpoint::Small);
+    grid.addItem("dummy_line");
+    auto* cell = grid.findChild<DashboardCell*>();
+    QVERIFY(cell);
+    const int heightBefore = cell->height();
+
+    // What MainWindow::applyBreakpointViewport() does after a grow: the
+    // canvas becomes page-height x multiplier tall.
+    grid.growCanvasHeight();
+    const double pages = grid.canvasHeightMultiplier(DashboardBreakpoint::Small);
+    grid.resize(360, qRound(500 * pages));
+    QVERIFY(qAbs(cell->height() - heightBefore) <= 1);
+
+    // An item parked in the new room keeps shrinking from cutting it off.
+    grid.addItem("dummy_line");
+    const QJsonObject json = grid.toJson();
+    QJsonObject edited = json;
+    QJsonArray items = json.value("items").toArray();
+    QJsonObject second = items.at(1).toObject();
+    QJsonObject layouts = second.value("layouts").toObject();
+    QJsonObject small = layouts.value("small").toObject();
+    small["y"] = pages - small.value("height").toDouble();
+    layouts["small"] = small;
+    second["layouts"] = layouts;
+    items[1] = second;
+    edited["items"] = items;
+    grid.fromJson(edited);
+    grid.shrinkCanvasHeight();
+    QCOMPARE(grid.canvasHeightMultiplier(DashboardBreakpoint::Small), pages);
 }
 
 void TestDashboardGrid::breakpointDragOnlyAffectsThatBreakpoint() {

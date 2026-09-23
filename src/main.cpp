@@ -6,6 +6,7 @@
 
 #include "core/applog.h"
 #include "core/mainwindow.h"
+#include "core/touchscroll.h"
 #include "traceview/fontmanager.h"
 #include "traceview/languagemanager.h"
 #include "traceview/thememanager.h"
@@ -56,6 +57,10 @@ int main(int argc, char* argv[]) {
     traceview::LanguageManager::instance().applyCurrentLanguage();
     traceview::ThemeManager::instance().applyCurrentTheme();
     traceview::FontManager::instance().applyCurrentFont();
+
+    // Before MainWindow: its scroll areas are polished (and so hooked) on
+    // first show, which has to find the filter already installed.
+    traceview::installTouchScrolling();
 
     traceview::MainWindow window;
     window.show();

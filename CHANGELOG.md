@@ -7,6 +7,24 @@ release flow.
 
 ## [Unreleased]
 
+## [4.4.0] - 2026-09-23
+
+### Changed
+
+- On phones and tablets the dashboard grid has fewer, larger cells: 12
+  columns on a phone and 24 on a tablet (the notebook layout keeps 60). A new
+  widget starts at full width on a phone.
+- The canvas **+** button on a phone or tablet layout now adds rows below the
+  existing widgets instead of stretching them taller. **−** never cuts off the
+  lowest widget. Projects saved by older versions open with every widget in
+  the same place.
+- A phone/tablet dashboard made taller with **+** stays that tall outside
+  Developer mode too. The dashboard scrolls vertically while the bottom
+  workspace bar stays in place.
+- On Android and iOS, lists, settings pages, dialogs and the dashboard scroll
+  by dragging a finger. The dashboard turns this off while being edited, where
+  a drag moves widgets.
+
 ## [4.3.1] - 2026-09-23
 
 ### Fixed
