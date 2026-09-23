@@ -12,6 +12,7 @@ class QFormLayout;
 class QHBoxLayout;
 class QVBoxLayout;
 class QResizeEvent;
+class QShowEvent;
 
 namespace traceview {
 
@@ -31,11 +32,6 @@ public:
     // window hosting it already titles it (embedded Page dialog top bar).
     void setTitleVisible(bool visible);
 
-    // User mode only exposes the Appearance page (theme, font, language):
-    // the category sidebar is hidden and the page is pinned to Appearance.
-    // MainWindow calls this on open and again whenever the mode changes.
-    void setDeveloperMode(bool developer);
-
 signals:
     void clearRecentProjectsRequested();
     void restartRequested();
@@ -43,6 +39,7 @@ signals:
 
 protected:
     void resizeEvent(QResizeEvent* event) override;
+    void showEvent(QShowEvent* event) override;
 
 private:
     void refreshRestartNotice();
@@ -53,8 +50,8 @@ private:
     // Sets every combo/spin box to m_fieldWidth, capped in compact mode to
     // what the current width can actually fit.
     void applyFieldWidth();
-    // Caps the category list at its rows' height so its frame ends under
-    // the last icon instead of running to the bottom of the page.
+    // Sizes the category list to exactly its rows' height so its frame ends
+    // under the last icon instead of running to the bottom of the page.
     void fitCategoryListHeight();
 
     QLabel* m_titleLabel = nullptr;

@@ -7,6 +7,29 @@ release flow.
 
 ## [Unreleased]
 
+## [4.1.9] - 2026-09-23
+
+### Changed
+
+- **About** is shorter and more technical: version, platform (OS and CPU
+  architecture), where this copy was installed from (GitHub Releases
+  installer/AppImage/APK, Flatpak, or a local build), Qt version,
+  developer and contact e-mail, and license.
+- The update prompt now asks "A new update is available. Do you want to
+  update?" above the version numbers.
+- In User mode the **View** menu only shows Theme, Font and Language.
+  Keyboard Shortcuts, Open Log Folder and Reset Panel Positions are
+  Developer-only now.
+
+### Fixed
+
+- The Settings category list sits at the top of the page again instead of
+  floating in the middle of the screen on phones, and is tall enough for
+  every category, with no scrollbar.
+- Settings shows every category again in User mode. Since 4.1.6 it only
+  showed the Appearance page there, and the category list was hidden, which
+  on phones looked like it had disappeared.
+
 ## [4.1.8] - 2026-09-23
 
 ### Fixed

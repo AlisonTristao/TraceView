@@ -14,6 +14,11 @@ class AboutDialog : public QDialog {
 
 public:
     explicit AboutDialog(QWidget* parent = nullptr);
+
+private:
+    // Which distribution channel this copy came from, for the "Installed
+    // from" row.
+    static QString installSource();
 };
 
 }  // namespace traceview

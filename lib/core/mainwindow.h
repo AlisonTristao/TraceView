@@ -677,6 +677,10 @@ private:
     // Developer-only: hidden (and its shortcuts disabled) by applyUserMode()
     // whenever developerUiActive() is false, "View as user" included.
     QMenu* m_fileMenu = nullptr;
+    // View's Developer-only entries (Keyboard Shortcuts, Open Log Folder,
+    // Reset Panel Positions and the separator after them) -- User mode keeps
+    // only Theme/Font/Language there.
+    QList<QAction*> m_developerViewActions;
     // Visual preview only: preserves the developer session and manual breakpoint.
     bool m_previewAsUser = false;
     // WA_DeleteOnClose'd (see debugchartswindow.cpp) -- QPointer so this

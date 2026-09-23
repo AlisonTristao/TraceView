@@ -885,7 +885,8 @@ void MainWindow::buildMenus() {
     connect(resetPanelsAction, &QAction::triggered, this,
             [this] { m_dockController->resetToDefaults(); });
 
-    viewMenu->addSeparator();
+    m_developerViewActions = {shortcutsAction, logFolderAction, resetPanelsAction,
+                              viewMenu->addSeparator()};
 
     auto* themeMenu = viewMenu->addMenu(tr("&Theme"));
 
@@ -1148,6 +1149,11 @@ void MainWindow::applyUserMode(UserModeManager::UserMode mode) {
     for (QAction* action : m_fileMenu->actions()) {
         action->setEnabled(isDeveloper);
     }
+    // Same for View: User mode keeps Theme/Font/Language only (F1 included).
+    for (QAction* action : std::as_const(m_developerViewActions)) {
+        action->setVisible(isDeveloper);
+        action->setEnabled(isDeveloper);
+    }
 
     // Force the dashboard back to read-only before hiding the toggle that
     // controls it -- otherwise a grid left unlocked from a previous
@@ -1171,10 +1177,6 @@ void MainWindow::applyUserMode(UserModeManager::UserMode mode) {
     }
 
     updateAccessMenu();
-
-    if (m_settingsPage) {
-        m_settingsPage->setDeveloperMode(isDeveloper);
-    }
 
     // No-op in Developer mode (see its own comment) -- in User mode, this is
     // what actually replaces whatever breakpoint was last selected manually
@@ -3425,7 +3427,6 @@ void MainWindow::onOpenSettings() {
     // Embedded, the Page top bar already reads "<- Settings" -- the page's
     // own big heading would just repeat it.
     m_settingsPage->setTitleVisible(!DialogPresenter::embedded());
-    m_settingsPage->setDeveloperMode(developerUiActive());
     DialogPresenter::show(m_settingsWindow, DialogPresenter::Style::Page);
 }
 

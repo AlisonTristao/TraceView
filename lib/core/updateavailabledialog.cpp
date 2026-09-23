@@ -16,6 +16,10 @@ UpdateAvailableDialog::UpdateAvailableDialog(const UpdateInfo& info, QWidget* pa
     auto* titleLabel = new QLabel(tr("<b>Update available</b>"), this);
     titleLabel->setTextFormat(Qt::RichText);
 
+    auto* questionLabel =
+        new QLabel(tr("A new update is available. Do you want to update?"), this);
+    questionLabel->setWordWrap(true);
+
     auto* versionsLabel = new QLabel(
         tr("New version: v%1<br>Your version: v%2").arg(info.version, kVersion), this);
     versionsLabel->setTextFormat(Qt::RichText);
@@ -39,6 +43,7 @@ UpdateAvailableDialog::UpdateAvailableDialog(const UpdateInfo& info, QWidget* pa
 
     auto* layout = new QVBoxLayout(this);
     layout->addWidget(titleLabel);
+    layout->addWidget(questionLabel);
     layout->addWidget(versionsLabel);
     layout->addSpacing(8);
     layout->addLayout(buttonRow);

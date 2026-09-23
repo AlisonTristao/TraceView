@@ -215,6 +215,9 @@ SettingsPage::SettingsPage(QWidget* parent) : QWidget(parent) {
     // kCompactCategoryListWidth, which otherwise shows a needless
     // horizontal scrollbar under it.
     categories->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    // Never taller than its rows either (fitCategoryListHeight()), so no
+    // vertical scrollbar -- the page scrolls instead on a short screen.
+    categories->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     categories->setIconSize(QSize(kCategoryIconSize, kCategoryIconSize));
     // The app-wide QListWidget::item rule only reserves 4px around the label;
     // with an icon in front of it that leaves the glyph hard against the
@@ -223,11 +226,10 @@ SettingsPage::SettingsPage(QWidget* parent) : QWidget(parent) {
     categories->setStyleSheet(QStringLiteral("QListWidget::item { padding: 7px 10px; }"));
     categories->setSpacing(3);
     // The frame should hug the category rows, not run down to the bottom of
-    // the page with an empty strip under the last icon. Ignored vertical
-    // policy + a maximum height (set in fitCategoryListHeight()) lets the box
-    // layout place it top-aligned at exactly its content height, while still
-    // shrinking -- and scrolling -- on a window too short to fit all rows.
-    categories->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Ignored);
+    // the page with an empty strip under the last icon: a fixed height of
+    // exactly the rows (fitCategoryListHeight()), added AlignTop below. On a
+    // window too short for it, the page itself scrolls (DialogPresenter's
+    // Page on a phone).
     const QStringList categoryNames = {tr("General"),     tr("Appearance"),  tr("Dashboard"),
                                        tr("Terminal"),    tr("Connections"), tr("Diagnostics"),
                                        tr("Updates")};
@@ -247,7 +249,9 @@ SettingsPage::SettingsPage(QWidget* parent) : QWidget(parent) {
     // tab is open, so keep the glyphs in step (the switcher/ribbon do the same).
     connect(&ThemeManager::instance(), &ThemeManager::themeChanged, this,
             [refreshCategoryIcons](const ThemePalette&) { refreshCategoryIcons(); });
-    body->addWidget(categories);
+    // AlignTop: a box layout centers a widget shorter than its row, which
+    // left the list floating mid-page on a phone.
+    body->addWidget(categories, 0, Qt::AlignTop);
 
     auto* pages = new QStackedWidget(this);
     body->addWidget(pages, 1);
@@ -584,15 +588,19 @@ void SettingsPage::resizeEvent(QResizeEvent* event) {
     }
 }
 
+void SettingsPage::showEvent(QShowEvent* event) {
+    QWidget::showEvent(event);
+    // Measured again once actually on screen: on a phone DialogPresenter
+    // reparents the window into its overlay first, which re-polishes the
+    // list (frame included) after the constructor's measurement.
+    fitCategoryListHeight();
+}
+
 void SettingsPage::applyFieldWidth() {
     int width = m_fieldWidth;
     if (m_compactLayout) {
-        // No sidebar in User mode (setDeveloperMode()), so its width is free.
-        const int sidebar = m_categoryList->isHidden()
-                                ? 0
-                                : kCompactCategoryListWidth + kCompactBodySpacing;
-        const int available = this->width() - 2 * kCompactRootMargin - sidebar -
-                              2 * kCompactPageMarginH - kFieldRowChrome;
+        const int available = this->width() - 2 * kCompactRootMargin - kCompactCategoryListWidth -
+                              kCompactBodySpacing - 2 * kCompactPageMarginH - kFieldRowChrome;
         width = qBound(1, available, m_fieldWidth);
     }
     for (QWidget* field : std::as_const(m_fieldWidgets)) {
@@ -607,13 +615,24 @@ void SettingsPage::fitCategoryListHeight() {
     // Picks up the app stylesheet's frame/border before measuring it.
     m_categoryList->ensurePolished();
     // QListView lays rows out with `spacing` before the first row and after
-    // every row, so n rows take n * (height + spacing) + spacing.
+    // every row, so n rows take n * (height + spacing) + spacing -- the
+    // estimate. The rows' real laid-out bottom wins when it's lower: on
+    // Android the estimate came up a few pixels short, which put a
+    // scrollbar on a list that had room for every row.
     const int rows = m_categoryList->count();
     const int spacing = m_categoryList->spacing();
+    int contentHeight = rows * (kCategoryRowHeight + spacing) + spacing;
+    if (rows > 0) {
+        m_categoryList->doItemsLayout();
+        m_categoryList->scrollToTop();
+        const QRect lastRow = m_categoryList->visualItemRect(m_categoryList->item(rows - 1));
+        if (lastRow.isValid()) {
+            contentHeight = qMax(contentHeight, lastRow.bottom() + 1 + spacing);
+        }
+    }
     const QMargins margins = m_categoryList->contentsMargins();
-    const int height = rows * (kCategoryRowHeight + spacing) + spacing + margins.top() +
-                       margins.bottom() + 2 * m_categoryList->frameWidth();
-    m_categoryList->setMaximumHeight(height);
+    m_categoryList->setFixedHeight(contentHeight + margins.top() + margins.bottom() +
+                                   2 * m_categoryList->frameWidth());
 }
 
 void SettingsPage::applyCompactLayout(bool compact) {
@@ -669,16 +688,6 @@ void SettingsPage::setUpdateStatusText(const QString& text) {
 
 void SettingsPage::setTitleVisible(bool visible) {
     m_titleLabel->setVisible(visible);
-}
-
-void SettingsPage::setDeveloperMode(bool developer) {
-    // Row 1 is Appearance -- see categoryNames in the constructor.
-    constexpr int kAppearanceRow = 1;
-    if (!developer) {
-        m_categoryList->setCurrentRow(kAppearanceRow);
-    }
-    m_categoryList->setVisible(developer);
-    applyFieldWidth();
 }
 
 void SettingsPage::refreshRestartNotice() {

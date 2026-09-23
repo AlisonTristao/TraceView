@@ -586,34 +586,91 @@
 <context>
     <name>traceview::AboutDialog</name>
     <message>
-        <location filename="../lib/core/aboutdialog.cpp" line="+13"/>
+        <location filename="../lib/core/aboutdialog.cpp" line="+24"/>
         <source>About TraceView</source>
         <translation>Acerca de TraceView</translation>
     </message>
     <message>
+        <location line="+16"/>
+        <source>Version:</source>
+        <translation>Versión:</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Platform:</source>
+        <translation>Plataforma:</translation>
+    </message>
+    <message>
         <location line="+3"/>
-        <source>&lt;b&gt;TraceView&lt;/b&gt; v%1</source>
-        <translation>&lt;b&gt;TraceView&lt;/b&gt; v%1</translation>
+        <source>Installed from:</source>
+        <translation>Instalado desde:</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Qt:</source>
+        <translation>Qt:</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Developer:</source>
+        <translation>Desarrollador:</translation>
     </message>
     <message>
         <location line="+2"/>
+        <source>Contact:</source>
+        <translation>Contacto:</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>License:</source>
+        <translation>Licencia:</translation>
+    </message>
+    <message>
+        <location line="+18"/>
+        <source>Flatpak (alisontristao.github.io/TraceView)</source>
+        <translation>Flatpak (alisontristao.github.io/TraceView)</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>APK from GitHub Releases</source>
+        <translation>APK de GitHub Releases</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Windows installer from GitHub Releases</source>
+        <translation>Instalador de Windows de GitHub Releases</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <location line="+5"/>
+        <location line="+2"/>
+        <source>Local build</source>
+        <translation>Compilación local</translation>
+    </message>
+    <message>
+        <location line="-4"/>
+        <source>AppImage from GitHub Releases</source>
+        <translation>AppImage de GitHub Releases</translation>
+    </message>
+    <message>
+        <source>&lt;b&gt;TraceView&lt;/b&gt; v%1</source>
+        <translation type="vanished">&lt;b&gt;TraceView&lt;/b&gt; v%1</translation>
+    </message>
+    <message>
         <source>Real-time telemetry dashboard for ESP32/ESP-NOW robots</source>
-        <translation>Panel de telemetría en tiempo real para robots ESP32/ESP-NOW</translation>
+        <translation type="vanished">Panel de telemetría en tiempo real para robots ESP32/ESP-NOW</translation>
     </message>
     <message>
-        <location line="+4"/>
         <source>Built with Qt %1 &amp;middot; running with Qt %2</source>
-        <translation>Compilado con Qt %1 &amp;middot; ejecutándose con Qt %2</translation>
+        <translation type="vanished">Compilado con Qt %1 &amp;middot; ejecutándose con Qt %2</translation>
     </message>
     <message>
-        <location line="+3"/>
         <source>MIT License &amp;middot; AlisonTristao</source>
-        <translation>Licencia MIT &amp;middot; AlisonTristao</translation>
+        <translation type="vanished">Licencia MIT &amp;middot; AlisonTristao</translation>
     </message>
     <message>
-        <location line="+3"/>
         <source>See CHANGELOG.md for release history.</source>
-        <translation>Consulte CHANGELOG.md para el historial de versiones.</translation>
+        <translation type="vanished">Consulte CHANGELOG.md para el historial de versiones.</translation>
     </message>
 </context>
 <context>
@@ -2038,7 +2095,7 @@ RTT: %3 ms</translation>
 <context>
     <name>traceview::LoginDialog</name>
     <message>
-        <location filename="../lib/core/logindialog.cpp" line="+15"/>
+        <location filename="../lib/core/logindialog.cpp" line="+17"/>
         <source>Enter Developer Mode</source>
         <translation>Entrar en Modo Desarrollador</translation>
     </message>
@@ -4075,6 +4132,11 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
         <location line="+2"/>
         <source>&lt;b&gt;Update available&lt;/b&gt;</source>
         <translation>&lt;b&gt;Actualización disponible&lt;/b&gt;</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>A new update is available. Do you want to update?</source>
+        <translation>Hay una nueva actualización disponible. ¿Deseas actualizar?</translation>
     </message>
     <message>
         <location line="+4"/>
