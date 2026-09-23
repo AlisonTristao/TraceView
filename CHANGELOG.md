@@ -7,8 +7,27 @@ release flow.
 
 ## [Unreleased]
 
+## [4.1.0] - 2026-09-22
+
 ### Added
 
+- Workspace icons: every workspace can now have its own icon, picked from
+  the bundled [Lucide](https://lucide.dev) set (2,100+ icons, searchable by
+  name and tag). Pick it right after creating a workspace, from the icon
+  beside each workspace in the switcher menu, or by long-pressing its button
+  on mobile. The choice is saved in the project file.
+- On mobile (and in the Developer-mode Phone/Tablet preview) the bottom bar
+  is now a taller workspace dock: one icon button per workspace,
+  spaced evenly and centered. Tap to switch; long-press shows the
+  workspace's name and, in Developer mode, Change Icon/Delete; a **+**
+  button creates a workspace. The fullscreen button and the status text no
+  longer take room there (messages are still in **Notifications**), and the
+  screen-size selector moves up next to the ⋮ options button.
+- User mode: the TraceView wordmark now sits in the top-right corner, its
+  signal lines running in from the right edge of the window. The middle
+  line follows the border between the top bar and the dashboard. The mark
+  lets clicks through to anything under it and follows the light/dark
+  theme.
 - Developer/User access mode: the app now always starts in a restricted User
   mode, unlockable via a new **Access** menu login (username/password
   against locally registered accounts, managed from the same menu). A
@@ -48,6 +67,16 @@ release flow.
   dependable route to those menus — a property of the platform, not of
   which dashboard layout happens to be showing.
 
+### Changed
+
+- Notification History is now a top-level **Notifications** entry next to
+  File/View/Access/Settings (also in the ⋮ options menu), replacing the ≡
+  button in the bottom status row and the View > Notification History item.
+  Ctrl+Shift+H still opens it, even with the menu bar hidden.
+- The empty device-status label now reads just "No devices configured",
+  dropping the "— add one in the Devices tab." hint (a tab User mode
+  doesn't even show).
+
 ### Fixed
 
 - Scrollbars are now thin rounded pills on a transparent track (subtle at
@@ -67,6 +96,27 @@ release flow.
   scripts, notification history) as a full-screen page with a back arrow.
   Android's Back key closes the topmost dialog instead of the app. Desktop
   dialogs are unchanged.
+- User mode is now properly locked down: the **File** menu (projects,
+  offline logs, OTA, BTP monitor) is hidden and its shortcuts disabled
+  outside Developer mode, including while "View as user" is on. Leaving
+  Developer mode (logging out or turning on "View as user") now closes
+  every tab besides Dashboard/Devices (offline logs, OTA Update, BTP
+  Traffic, Settings), instead of leaving them open behind the hidden tab
+  bar.
+- In User mode (and fullscreen) the device-status bar now sits flush
+  against the top of the screen/menu bar. The small gap kept above the tab
+  strip used to stay behind once the strip was hidden, showing as a thin
+  band of background color — most visible on mobile.
+- Developer mode: the Small/Medium/Large screen size no longer changes on
+  its own when switching, creating or deleting a workspace. It now stays on
+  whatever was picked until the screen-size button is clicked again or
+  Developer mode is left. Opening or creating a project always starts on
+  the size this device's own screen calls for.
+- Mobile: the "Settings" title, the large number on a single-value
+  dashboard widget and the back arrow on full-screen dialogs now come out
+  larger than the surrounding text, as on desktop. On Android the title
+  and the number were showing up tiny, and the back arrow wasn't getting
+  any larger than normal text.
 
 ## [3.3.19] - 2026-09-20
 
