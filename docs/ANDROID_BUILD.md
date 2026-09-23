@@ -99,9 +99,54 @@ This should (unvalidated — see the top of this file) produce a debug APK
 under `build/android-arm64/android-build/build/outputs/apk/debug/`, signed
 with Gradle's auto-generated debug keystore (fine for iteration, not for
 distribution). `build/android-arm64-release` from the `android-arm64-release`
-preset is the Release counterpart — release signing needs a real keystore
-and is not set up yet (T45 still needs to document that procedure, the same
-way `CONTRIBUTING.md`'s Flatpak section documents its own signing gotchas).
+preset is the Release counterpart. Its APK comes out unsigned; see
+[Release signing](#release-signing) below.
+
+## Release signing
+
+Published APKs are signed with one project keystore, always the same one.
+Android only installs an APK over an existing install when both carry the
+same certificate, so the in-app updater depends on this. Losing the
+keystore (or its password) means every user has to uninstall and
+reinstall once to move to a new key, so keep an offline backup of both.
+
+`release.yml` builds `android-arm64-release`, then signs with `apksigner`
+using two repository secrets:
+
+| Secret | Content |
+| --- | --- |
+| `ANDROID_KEYSTORE_BASE64` | the `.jks` file, base64-encoded |
+| `ANDROID_KEYSTORE_PASSWORD` | the keystore password (PKCS12: same for store and key) |
+
+The key alias is fixed as `traceview`. The optional repository **variable**
+`ANDROID_SIGNING_CERT_SHA256` pins the certificate: when set, the release
+fails if the APK was signed by anything else.
+
+The easiest path is `scripts\setup_android_signing.ps1`: it generates a
+random password and the keystore, keeps both in
+`%USERPROFILE%\TraceView-android-signing`, and copies each secret to the
+clipboard in turn for pasting into the GitHub web UI. By hand instead:
+
+Generating the keystore once (JDK `keytool`, prompts for the password):
+
+```powershell
+keytool -genkeypair -v -keystore traceview-release.jks -alias traceview `
+  -keyalg RSA -keysize 4096 -validity 10000 -dname "CN=TraceView"
+```
+
+Uploading it (GitHub CLI, reads from stdin so nothing lands in shell history):
+
+```powershell
+[Convert]::ToBase64String([IO.File]::ReadAllBytes("traceview-release.jks")) |
+  gh secret set ANDROID_KEYSTORE_BASE64
+gh secret set ANDROID_KEYSTORE_PASSWORD   # prompts for the value
+keytool -list -v -keystore traceview-release.jks -alias traceview   # SHA256 line
+gh variable set ANDROID_SIGNING_CERT_SHA256 --body "<that SHA256>"
+```
+
+Signing a local Release build by hand works the same way:
+`apksigner sign --ks traceview-release.jks --ks-key-alias traceview --out
+TraceView-signed.apk build/android-arm64-release/android-build/TraceView.apk`.
 
 If `androiddeployqt` fails immediately, the most likely causes are: the
 preset's environment variables above aren't actually set, `QT_HOST_PATH`
@@ -115,8 +160,6 @@ Qt Android kit expects (see the NDK row above).
   actually expects, and correct the table above.
 - Actually run the configure/build above once the toolchain exists, and fix
   whatever the (unvalidated) preset gets wrong.
-- Release signing procedure (keystore generation, where it's stored, how
-  CI would use it if this is ever automated).
 - Install/launch smoke test on an emulator and a real arm64 device (T45's
   own acceptance criterion).
 - T46-T52: runtime permissions, touch adaptation, background suspend/

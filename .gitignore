@@ -59,3 +59,8 @@ Thumbs.db
 # QT_ANDROID_EXTRA_LIBS comment) -- third-party binaries we track on
 # purpose, not build output the *.so rule above means to catch.
 !android/openssl/**/*.so
+
+# Android release signing keys -- never commit them (see
+# docs/ANDROID_BUILD.md, "Release signing").
+*.jks
+*.keystore

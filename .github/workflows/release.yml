@@ -118,12 +118,11 @@ jobs:
   # ============================================================
   # Android package (.apk)
   # ============================================================
-  # Builds the android-arm64 preset (Debug, not android-arm64-release --
-  # see that step's own comment for why) validated for the first time on a
-  # developer machine for T45 (see docs/ANDROID_BUILD.md and
-  # TAREFAS_TCP_BLE_ANDROID.txt's note there). Debug-keystore signed --
-  # fine while the app itself is still unstable; real release signing is a
-  # separate follow-up (same kind of pass Flatpak's GPG signing needed).
+  # Builds the android-arm64-release preset and signs it with the project's
+  # own release keystore (GitHub Secrets, see docs/ANDROID_BUILD.md's
+  # "Release signing"). Every release MUST carry the same key: Android only
+  # installs an APK over an existing one signed by the same certificate,
+  # which is what the in-app updater relies on.
   android-package:
     name: Android package (arm64-v8a)
     runs-on: ubuntu-24.04
@@ -217,40 +216,52 @@ jobs:
         env:
           ANDROID_SDK_ROOT: ${{ github.workspace }}/android-sdk
 
-      # Deliberately the Debug preset, not android-arm64-release: Gradle's
-      # Android plugin only auto-signs assembleDebug with its built-in debug
-      # keystore -- assembleRelease (what the -release preset drives) is
-      # UNSIGNED by default unless a real signingConfig is wired in, and an
-      # unsigned APK fails to install at all ("arquivo inválido" on-device,
-      # confirmed locally: apksigner verify reports "Missing
-      # META-INF/MANIFEST.MF"). Real release signing needs a keystore
-      # generated and stored safely (GitHub Secrets, same kind of pass
-      # Flatpak's GPG signing needed -- see CONTRIBUTING.md) -- a separate
-      # follow-up, not done here. The Debug preset's debug-keystore APK is
-      # a real, installable build, which is what this unstable release
-      # cycle actually needs.
-      - name: Configure (Debug)
+      # Release, not Debug: the Debug preset's APK is signed with a debug
+      # keystore Gradle generates fresh on every CI runner, so each release
+      # used to carry a different certificate and Android refused to update
+      # one over another ("package conflicts"). assembleRelease produces an
+      # unsigned (already zipaligned) APK that the next step signs with the
+      # project's own key.
+      - name: Configure (Release)
         env:
           ANDROID_SDK_ROOT: ${{ github.workspace }}/android-sdk
           ANDROID_NDK_ROOT: ${{ github.workspace }}/android-sdk/ndk/${{ env.ANDROID_NDK_VERSION }}
           QT_ANDROID_ROOT_DIR: ${{ env.QT_INSTALL_DIR }}/${{ env.QT_VERSION }}/android_arm64_v8a
           QT_ROOT_DIR: ${{ env.QT_INSTALL_DIR }}/${{ env.QT_VERSION }}/gcc_64
-        run: cmake --preset android-arm64
+        run: cmake --preset android-arm64-release
 
-      - name: Build (Debug)
+      - name: Build (Release)
         env:
           ANDROID_SDK_ROOT: ${{ github.workspace }}/android-sdk
           ANDROID_NDK_ROOT: ${{ github.workspace }}/android-sdk/ndk/${{ env.ANDROID_NDK_VERSION }}
           QT_ANDROID_ROOT_DIR: ${{ env.QT_INSTALL_DIR }}/${{ env.QT_VERSION }}/android_arm64_v8a
           QT_ROOT_DIR: ${{ env.QT_INSTALL_DIR }}/${{ env.QT_VERSION }}/gcc_64
-        run: cmake --build --preset android-arm64
+        run: cmake --build --preset android-arm64-release
 
-      - name: Rename and checksum APK
+      # Secrets: ANDROID_KEYSTORE_BASE64 (the .jks, base64-encoded) and
+      # ANDROID_KEYSTORE_PASSWORD (PKCS12 keystores use one password for both
+      # the store and the key). The key alias is always "traceview". Fails
+      # loudly rather than ever falling back to an unsigned or debug-signed
+      # APK, which would break updates for everyone who installed this one.
+      - name: Sign APK
+        env:
+          ANDROID_SDK_ROOT: ${{ github.workspace }}/android-sdk
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
         run: |
+          [[ -n $ANDROID_KEYSTORE_BASE64 && -n $ANDROID_KEYSTORE_PASSWORD ]] ||
+            { echo 'ANDROID_KEYSTORE_BASE64 / ANDROID_KEYSTORE_PASSWORD secrets are not set' >&2; exit 1; }
           version="${GITHUB_REF_NAME#v}"
           [[ $version =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo 'Invalid release version' >&2; exit 1; }
-          cd build/android-arm64/android-build
-          cp TraceView.apk "TraceView-$version-android-arm64.apk"
+          keystore="$RUNNER_TEMP/traceview-release.jks"
+          trap 'rm -f "$keystore"' EXIT
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$keystore"
+          build_tools="$ANDROID_SDK_ROOT/build-tools/35.0.0"
+          cd build/android-arm64-release/android-build
+          "$build_tools/zipalign" -c -P 16 4 TraceView.apk
+          "$build_tools/apksigner" sign --ks "$keystore" --ks-key-alias traceview \
+            --ks-pass env:ANDROID_KEYSTORE_PASSWORD --key-pass env:ANDROID_KEYSTORE_PASSWORD \
+            --out "TraceView-$version-android-arm64.apk" TraceView.apk
           sha256sum "TraceView-$version-android-arm64.apk" > sha256-android.txt
 
       # Cheap, no emulator needed -- catches the exact failure class that
@@ -261,23 +272,33 @@ jobs:
       # and prints the resolved package identity into the job log, so a
       # wrong package name/version (like the Qt placeholder this job also
       # used to ship, see T45's note) shows up here too instead of only
-      # being caught by eyeballing a release page.
+      # being caught by eyeballing a release page. When the repository
+      # variable ANDROID_SIGNING_CERT_SHA256 is set, the signer certificate
+      # must match it too -- a swapped keystore secret would otherwise ship
+      # an APK no existing install can update to.
       - name: Verify APK signature and manifest
         run: |
-          apk="build/android-arm64/android-build/TraceView-*-android-arm64.apk"
+          apk=$(echo build/android-arm64-release/android-build/TraceView-*-android-arm64.apk)
           build_tools="$ANDROID_SDK_ROOT/build-tools/35.0.0"
-          "$build_tools/apksigner" verify --verbose $apk
-          "$build_tools/aapt" dump badging $apk | grep -E "^package:|launchable-activity:"
+          "$build_tools/apksigner" verify --verbose --print-certs "$apk" | tee "$RUNNER_TEMP/apk-certs.txt"
+          "$build_tools/aapt" dump badging "$apk" | grep -E "^package:|launchable-activity:"
+          if [[ -n $EXPECTED_CERT_SHA256 ]]; then
+            actual=$(grep -m1 'certificate SHA-256 digest:' "$RUNNER_TEMP/apk-certs.txt" | awk '{print $NF}')
+            expected=$(echo "$EXPECTED_CERT_SHA256" | tr -d ': ' | tr 'A-F' 'a-f')
+            [[ $actual == "$expected" ]] ||
+              { echo "Signer certificate $actual does not match ANDROID_SIGNING_CERT_SHA256" >&2; exit 1; }
+          fi
         env:
           ANDROID_SDK_ROOT: ${{ github.workspace }}/android-sdk
+          EXPECTED_CERT_SHA256: ${{ vars.ANDROID_SIGNING_CERT_SHA256 }}
 
       - name: Upload package artifact
         uses: actions/upload-artifact@v4
         with:
           name: android-package
           path: |
-            build/android-arm64/android-build/TraceView-*-android-arm64.apk
-            build/android-arm64/android-build/sha256-android.txt
+            build/android-arm64-release/android-build/TraceView-*-android-arm64.apk
+            build/android-arm64-release/android-build/sha256-android.txt
           if-no-files-found: error
 
   # ============================================================

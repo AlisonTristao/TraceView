@@ -51,6 +51,10 @@ private:
     QFont m_baseFont;
 };
 
+// Returns `base` with `option`'s family, fallbacks and style hint applied
+// (unchanged for the "System Default" option). Size/weight are untouched.
+QFont fontForOption(QFont base, const FontOption& option);
+
 // Returns `font` scaled by `factor`, in whichever unit it was specified.
 // Android's platform font is pixel-sized, so pointSize() there is -1 and the
 // usual `setPointSize(pointSize() + n)` shrinks text to a few points instead

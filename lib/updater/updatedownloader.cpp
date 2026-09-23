@@ -93,8 +93,16 @@ void UpdateDownloader::verifyAndFinish() {
         return;
     }
 
+#if defined(Q_OS_ANDROID)
+    // The package installer reads the APK through Qt's FileProvider
+    // (${applicationId}.qtprovider), whose paths cover the app's files/ dir
+    // but not cache/ -- which is where TempLocation points on Android.
+    const QString dir = QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation) +
+                        QStringLiteral("/TraceViewUpdate");
+#else
     const QString dir = QStandardPaths::writableLocation(QStandardPaths::TempLocation) +
                          QStringLiteral("/TraceViewUpdate");
+#endif
     QDir().mkpath(dir);
     const QString filePath = dir + QStringLiteral("/") + m_assetName;
 

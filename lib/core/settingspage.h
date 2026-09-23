@@ -23,10 +23,18 @@ public:
 
     // Called by MainWindow after any update check (auto or manual) resolves,
     // so the "Last checked" label reflects it without needing this tab to be
-    // reopened. A no-op if called after this instance has already been torn
-    // down is impossible by construction -- MainWindow only calls it through
-    // its own m_settingsTab, which it nulls out on tab close.
+    // reopened. MainWindow only calls it through a QPointer to this page,
+    // which nulls out once the Settings window closes.
     void setUpdateStatusText(const QString& text);
+
+    // Shows/hides the page's own "Settings" heading -- redundant when the
+    // window hosting it already titles it (embedded Page dialog top bar).
+    void setTitleVisible(bool visible);
+
+    // User mode only exposes the Appearance page (theme, font, language):
+    // the category sidebar is hidden and the page is pinned to Appearance.
+    // MainWindow calls this on open and again whenever the mode changes.
+    void setDeveloperMode(bool developer);
 
 signals:
     void clearRecentProjectsRequested();
@@ -45,7 +53,11 @@ private:
     // Sets every combo/spin box to m_fieldWidth, capped in compact mode to
     // what the current width can actually fit.
     void applyFieldWidth();
+    // Caps the category list at its rows' height so its frame ends under
+    // the last icon instead of running to the bottom of the page.
+    void fitCategoryListHeight();
 
+    QLabel* m_titleLabel = nullptr;
     QLabel* m_restartNotice = nullptr;
     QPushButton* m_restartButton = nullptr;
     QLabel* m_updateStatusLabel = nullptr;

@@ -21,13 +21,19 @@ namespace traceview {
 // Linux: copies the verified AppImage to a same-directory temporary file,
 // atomically replaces APPIMAGE, and launches a detached waiter to restart it.
 // Running outside an AppImage or from a read-only location refuses installation.
+//
+// Android: the exception to "the caller quits". install() only opens the
+// system package installer on the downloaded APK; TraceView keeps running
+// until the user confirms there, and Android itself stops it while
+// replacing the package. The caller must NOT quit on success.
 class UpdateInstaller {
 public:
     // Returns false (and leaves the app running) if the update couldn't even
     // be started -- e.g. the downloaded file is missing, or (Linux only) the
     // copy/permission check failed. `reason` is set to a human-readable
-    // explanation in that case. On true, the caller must quit immediately:
-    // this may already have started tearing down the current install.
+    // explanation in that case. On true, the caller must quit immediately
+    // (except on Android, see above): this may already have started tearing
+    // down the current install.
     static bool install(const QString& downloadedFilePath, QString* reason);
 };
 

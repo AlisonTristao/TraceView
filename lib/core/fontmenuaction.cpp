@@ -7,6 +7,8 @@
 #include <QStylePainter>
 #include <QVBoxLayout>
 
+#include "traceview/fontmanager.h"
+
 namespace traceview {
 
 namespace {
@@ -37,11 +39,7 @@ protected:
 
 private:
     QFont fontForDisplay() const {
-        QFont f = font();
-        if (!m_font.family.isEmpty()) {
-            f.setFamily(m_font.family);
-        }
-        return f;
+        return fontForOption(font(), m_font);
     }
 
     FontOption m_font;

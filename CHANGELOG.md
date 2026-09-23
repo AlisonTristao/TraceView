@@ -7,6 +7,36 @@ release flow.
 
 ## [Unreleased]
 
+## [4.1.6] - 2026-09-23
+
+### Changed
+
+- Settings opens in its own window (a full page on phones) instead of a
+  ribbon tab. In User mode it only shows the Appearance page (theme, font,
+  language).
+- The update prompt is simpler: just the new version and your version,
+  with **Later** and **Update Now** side by side (also on phones). The
+  release notes box and **Skip This Version** are gone.
+
+### Fixed
+
+- Android: after locking and unlocking the phone, the screen no longer
+  stays black.
+- Android: the font options (Consolas, Georgia, Verdana) now look
+  different from each other. Those are Windows fonts, so each one falls
+  back to a similar font that Android does have.
+- Android: **Update Now** no longer shows the Linux AppImage message. It
+  downloads the release APK, checks it against `SHA256SUMS.txt` and opens
+  the Android installer.
+- Android: restarting to apply a language or diagnostics change no longer
+  closes TraceView for good. Android can't relaunch an app, so it now
+  offers **Close App** (then open it again) or **Later** (the change
+  applies the next time TraceView opens).
+- Android: the APK is now a Release build signed with the project's own
+  key, the same on every release, so new versions install over old ones.
+  Earlier APKs were signed with a different throwaway key each time:
+  uninstall that version once before installing this one.
+
 ## [4.1.5] - 2026-09-22
 
 ### Fixed

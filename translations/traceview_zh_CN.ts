@@ -208,7 +208,7 @@
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="+110"/>
+        <location filename="../lib/core/mainwindow.cpp" line="+111"/>
         <source>TraceView Project (*.tvproj)</source>
         <translation>TraceView 项目 (*.tvproj)</translation>
     </message>
@@ -389,7 +389,7 @@
         <translation>&lt;b&gt;JavaScript&lt;/b&gt;,在此设备的真实流量上实时运行。&lt;br&gt;&lt;br&gt;&lt;b&gt;定义以下函数以响应流量:&lt;/b&gt;&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;onTelemetry(sample)&lt;/code&gt; -- 当其他地方(如仪表盘图表)已订阅的遥测值到达时调用。&lt;code&gt;sample&lt;/code&gt; 包含 &lt;code&gt;topicId&lt;/code&gt;、&lt;code&gt;fieldId&lt;/code&gt;、&lt;code&gt;elementIndex&lt;/code&gt;、&lt;code&gt;value&lt;/code&gt;、&lt;code&gt;timestampUs&lt;/code&gt;。&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;onTerminal(text)&lt;/code&gt; -- 此设备的控制台/串口通道每返回一段文本时调用。&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;onConnectionChange(connected)&lt;/code&gt; -- 此设备连接或断开时调用。&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;onStatus(text, severity)&lt;/code&gt; -- 一次性状态更新时调用(会话建立/失败、订阅被拒绝、sendCommand() 的结果……)-- 与状态栏显示的文本相同。&lt;code&gt;severity&lt;/code&gt; 为 &lt;code&gt;&quot;info&quot;&lt;/code&gt;、&lt;code&gt;&quot;success&quot;&lt;/code&gt;、&lt;code&gt;&quot;warning&quot;&lt;/code&gt;、&lt;code&gt;&quot;error&quot;&lt;/code&gt; 之一。&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;onDeviceInfo(info)&lt;/code&gt; -- 此设备上报其信息块(固件版本、芯片、分区……)时调用。&lt;code&gt;info&lt;/code&gt; 是 &lt;code&gt;{key, label, value}&lt;/code&gt; 数组。&lt;br&gt;&lt;br&gt;&lt;b&gt;可随时调用:&lt;/b&gt;&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;device.log(text)&lt;/code&gt; -- 写入输出面板。&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;device.sendCommand(text)&lt;/code&gt; -- 向此设备发送命令。&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;device.sendTerminal(text)&lt;/code&gt; -- 通过其控制台通道发送文本。&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;device.setInterval(fn, ms)&lt;/code&gt; / &lt;code&gt;device.clearInterval(id)&lt;/code&gt; -- 每 &lt;code&gt;ms&lt;/code&gt; 毫秒运行一次 &lt;code&gt;fn&lt;/code&gt;,直到取消。&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;device.setTimeout(fn, ms)&lt;/code&gt; / &lt;code&gt;device.clearTimeout(id)&lt;/code&gt; -- 在 &lt;code&gt;ms&lt;/code&gt; 毫秒后运行 &lt;code&gt;fn&lt;/code&gt; 一次。</translation>
     </message>
     <message>
-        <location filename="../lib/updater/updatechecker.cpp" line="+46"/>
+        <location filename="../lib/updater/updatechecker.cpp" line="+49"/>
         <source>No published releases found.</source>
         <translation>未找到已发布的版本。</translation>
     </message>
@@ -399,17 +399,29 @@
         <translation>无法解析最新版本的版本号。</translation>
     </message>
     <message>
-        <location filename="../lib/updater/updateinstaller.cpp" line="+21"/>
+        <location filename="../lib/updater/updateinstaller.cpp" line="+24"/>
         <source>Updates are managed by Flatpak. Use &apos;flatpak update&apos;.</source>
         <translation>更新由 Flatpak 管理。请使用 &apos;flatpak update&apos;。</translation>
     </message>
     <message>
-        <location line="+37"/>
+        <location line="+21"/>
+        <location line="+72"/>
         <source>Downloaded installer not found: %1</source>
         <translation>未找到已下载的安装程序: %1</translation>
     </message>
     <message>
-        <location line="+10"/>
+        <location line="-67"/>
+        <location line="+30"/>
+        <source>Couldn&apos;t start the Android package installer.</source>
+        <translation>无法启动 Android 软件包安装程序。</translation>
+    </message>
+    <message>
+        <location line="-16"/>
+        <source>Couldn&apos;t share the downloaded APK with the package installer.</source>
+        <translation>无法将下载的 APK 共享给软件包安装程序。</translation>
+    </message>
+    <message>
+        <location line="+63"/>
         <source>Couldn&apos;t write the update script.</source>
         <translation>无法写入更新脚本。</translation>
     </message>
@@ -607,52 +619,43 @@
 <context>
     <name>traceview::BleDiscoveryService</name>
     <message>
-        <location filename="../lib/core/blediscoveryservice.cpp" line="+77"/>
         <source>BLE discovery failed</source>
-        <translation>BLE 发现失败</translation>
+        <translation type="vanished">BLE 发现失败</translation>
     </message>
 </context>
 <context>
     <name>traceview::BleTransport</name>
     <message>
-        <location filename="../lib/core/bletransport.cpp" line="+67"/>
         <source>failed to create a BLE controller</source>
-        <translation>无法创建 BLE 控制器</translation>
+        <translation type="vanished">无法创建 BLE 控制器</translation>
     </message>
     <message>
-        <location line="+65"/>
         <source>BLE peripheral disconnected before HELLO</source>
-        <translation>BLE 外设在 HELLO 之前断开</translation>
+        <translation type="vanished">BLE 外设在 HELLO 之前断开</translation>
     </message>
     <message>
-        <location line="+16"/>
         <source>peripheral does not advertise the BTP service</source>
-        <translation>外设未广播 BTP 服务</translation>
+        <translation type="vanished">外设未广播 BTP 服务</translation>
     </message>
     <message>
-        <location line="+5"/>
         <source>failed to create BTP service object</source>
-        <translation>无法创建 BTP 服务对象</translation>
+        <translation type="vanished">无法创建 BTP 服务对象</translation>
     </message>
     <message>
-        <location line="+25"/>
         <source>BTP service is missing its RX/TX characteristics</source>
-        <translation>BTP 服务缺少 RX/TX 特征</translation>
+        <translation type="vanished">BTP 服务缺少 RX/TX 特征</translation>
     </message>
     <message>
-        <location line="+7"/>
         <source>TX characteristic has no notification descriptor</source>
-        <translation>TX 特征没有通知描述符</translation>
+        <translation type="vanished">TX 特征没有通知描述符</translation>
     </message>
     <message>
-        <location line="+13"/>
         <source>BLE service error</source>
-        <translation>BLE 服务错误</translation>
+        <translation type="vanished">BLE 服务错误</translation>
     </message>
     <message>
-        <location line="+47"/>
         <source>BLE connection timed out</source>
-        <translation>BLE 连接超时</translation>
+        <translation type="vanished">BLE 连接超时</translation>
     </message>
 </context>
 <context>
@@ -2208,7 +2211,7 @@ Drops: %2</source>
         <translation>语言(&amp;L)</translation>
     </message>
     <message>
-        <location line="+20"/>
+        <location line="+24"/>
         <source>Restart Required</source>
         <translation>需要重启</translation>
     </message>
@@ -2224,11 +2227,12 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+0"/>
+        <location line="+2867"/>
         <source>Later</source>
         <translation>稍后</translation>
     </message>
     <message>
-        <location line="+8"/>
+        <location line="-2860"/>
         <source>&amp;Access</source>
         <translation>访问(&amp;A)</translation>
     </message>
@@ -2294,7 +2298,7 @@ Drops: %2</source>
         <translation>进入开发者模式(&amp;E)...</translation>
     </message>
     <message>
-        <location line="+175"/>
+        <location line="+179"/>
         <source>Add</source>
         <translation>添加</translation>
     </message>
@@ -2345,18 +2349,18 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+18"/>
-        <location line="+2295"/>
+        <location line="+2268"/>
         <source>Undo</source>
         <translation>撤销</translation>
     </message>
     <message>
-        <location line="-2293"/>
-        <location line="+2293"/>
+        <location line="-2266"/>
+        <location line="+2266"/>
         <source>Redo</source>
         <translation>重做</translation>
     </message>
     <message>
-        <location line="-2252"/>
+        <location line="-2225"/>
         <source>Add Device</source>
         <translation>添加设备</translation>
     </message>
@@ -2392,12 +2396,12 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+29"/>
-        <location line="+2197"/>
+        <location line="+2170"/>
         <source>Fullscreen dashboard (F11)</source>
         <translation>全屏仪表盘(F11)</translation>
     </message>
     <message>
-        <location line="-2017"/>
+        <location line="-1990"/>
         <source>Rename Workspace</source>
         <translation>重命名工作区</translation>
     </message>
@@ -2407,12 +2411,12 @@ Drops: %2</source>
         <translation>已将工作区&quot;%1&quot;重命名为&quot;%2&quot;。</translation>
     </message>
     <message>
-        <location line="+2046"/>
+        <location line="+2019"/>
         <source>Update available: v%1</source>
         <translation>有可用更新: v%1</translation>
     </message>
     <message>
-        <location line="+21"/>
+        <location line="+12"/>
         <source>Up to date (v%1)</source>
         <translation>已是最新 (v%1)</translation>
     </message>
@@ -2427,16 +2431,16 @@ Drops: %2</source>
         <translation>检查更新失败: %1</translation>
     </message>
     <message>
-        <location line="+7"/>
+        <location line="+8"/>
         <location line="+9"/>
         <location line="+8"/>
-        <location line="+16"/>
-        <location line="+4"/>
+        <location line="+23"/>
+        <location line="+27"/>
         <source>Update</source>
         <translation>更新</translation>
     </message>
     <message>
-        <location line="-36"/>
+        <location line="-66"/>
         <source>Automatic installation requires running an AppImage. Download the AppImage from the release page.</source>
         <translation>自动安装需要运行 AppImage。请从发布页面下载 AppImage。</translation>
     </message>
@@ -2456,13 +2460,37 @@ Drops: %2</source>
         <translation>正在下载 TraceView %1...</translation>
     </message>
     <message>
-        <location line="-2219"/>
-        <location line="+2045"/>
+        <location line="+10"/>
+        <source>Confirm the installation in the Android installer.</source>
+        <translation>请在 Android 安装程序中确认安装。</translation>
+    </message>
+    <message>
+        <location line="+18"/>
+        <source>Close TraceView</source>
+        <translation>关闭 TraceView</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>TraceView needs to be closed and opened again to apply these changes. After closing, open it again from your apps.
+
+Choose Later to keep working -- the changes will apply the next time you open TraceView.</source>
+        <translation>需要关闭并重新打开 TraceView 才能应用这些更改。关闭后，请从应用列表中再次打开。
+
+选择“稍后”可继续使用 -- 更改将在下次打开 TraceView 时生效。</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Close App</source>
+        <translation>关闭应用</translation>
+    </message>
+    <message>
+        <location line="-2217"/>
+        <location line="+2018"/>
         <source>Devices</source>
         <translation>设备</translation>
     </message>
     <message>
-        <location line="-1970"/>
+        <location line="-1943"/>
         <source>Subscriptions</source>
         <translation>订阅</translation>
     </message>
@@ -2504,23 +2532,23 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+71"/>
-        <location line="+1755"/>
+        <location line="+1728"/>
         <source>Add widget</source>
         <translation>添加控件</translation>
     </message>
     <message>
-        <location line="-1752"/>
+        <location line="-1725"/>
         <source>Remove selected widget (%1)</source>
         <translation>删除所选控件(%1)</translation>
     </message>
     <message>
         <location line="+3"/>
-        <location line="+1762"/>
+        <location line="+1735"/>
         <source>Add device</source>
         <translation>添加设备</translation>
     </message>
     <message>
-        <location line="-1759"/>
+        <location line="-1732"/>
         <source>Remove selected device (%1)</source>
         <translation>删除所选设备(%1)</translation>
     </message>
@@ -2605,7 +2633,7 @@ Drops: %2</source>
         <translation>显示图层/属性面板</translation>
     </message>
     <message>
-        <location line="+248"/>
+        <location line="+246"/>
         <source>New Device</source>
         <translation>新设备</translation>
     </message>
@@ -2631,12 +2659,12 @@ Drops: %2</source>
         <translation>(未命名)</translation>
     </message>
     <message>
-        <location line="-1111"/>
+        <location line="-1109"/>
         <source>Dashboard</source>
         <translation>仪表盘</translation>
     </message>
     <message>
-        <location line="+1323"/>
+        <location line="+1321"/>
         <source>%1: this BLE address now answers as a different robot (expected %2, got %3)</source>
         <translation>%1: 此 BLE 地址现在以另一台机器人身份应答 (应为 %2,实际为 %3)</translation>
     </message>
@@ -2673,12 +2701,12 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+14"/>
-        <location line="+278"/>
+        <location line="+253"/>
         <source>Open Project</source>
         <translation>打开项目</translation>
     </message>
     <message>
-        <location line="-269"/>
+        <location line="-244"/>
         <source>Open Log File</source>
         <translation>打开日志文件</translation>
     </message>
@@ -2688,7 +2716,7 @@ Drops: %2</source>
         <translation>BTP 日志 (*.blog)</translation>
     </message>
     <message>
-        <location line="+97"/>
+        <location line="+93"/>
         <source>OTA Update</source>
         <translation>OTA 更新</translation>
     </message>
@@ -2698,8 +2726,8 @@ Drops: %2</source>
         <translation>BTP 流量</translation>
     </message>
     <message>
-        <location line="+47"/>
-        <location line="+190"/>
+        <location line="+20"/>
+        <location line="+196"/>
         <source>Settings</source>
         <translation>设置</translation>
     </message>
@@ -3432,49 +3460,49 @@ Drops: %2</source>
 <context>
     <name>traceview::SettingsPage</name>
     <message>
-        <location filename="../lib/core/settingspage.cpp" line="+199"/>
+        <location filename="../lib/core/settingspage.cpp" line="+198"/>
         <source>Settings</source>
         <translation>设置</translation>
     </message>
     <message>
-        <location line="+26"/>
-        <location line="+41"/>
+        <location line="+33"/>
+        <location line="+42"/>
         <source>General</source>
         <translation>常规</translation>
     </message>
     <message>
-        <location line="-41"/>
-        <location line="+65"/>
+        <location line="-42"/>
+        <location line="+66"/>
         <source>Appearance</source>
         <translation>外观</translation>
     </message>
     <message>
-        <location line="-65"/>
-        <location line="+112"/>
+        <location line="-66"/>
+        <location line="+113"/>
         <source>Dashboard</source>
         <translation>仪表盘</translation>
     </message>
     <message>
-        <location line="-111"/>
-        <location line="+162"/>
+        <location line="-112"/>
+        <location line="+163"/>
         <source>Terminal</source>
         <translation>终端</translation>
     </message>
     <message>
-        <location line="-162"/>
-        <location line="+189"/>
+        <location line="-163"/>
+        <location line="+190"/>
         <source>Connections</source>
         <translation>连接</translation>
     </message>
     <message>
-        <location line="-189"/>
-        <location line="+208"/>
+        <location line="-190"/>
+        <location line="+209"/>
         <source>Diagnostics</source>
         <translation>诊断</translation>
     </message>
     <message>
-        <location line="-207"/>
-        <location line="+259"/>
+        <location line="-208"/>
+        <location line="+260"/>
         <location line="+5"/>
         <source>Updates</source>
         <translation>更新</translation>
@@ -3760,17 +3788,27 @@ Drops: %2</source>
         <translation>立即检查</translation>
     </message>
     <message>
-        <location line="+43"/>
+        <location line="+45"/>
+        <source>Close app</source>
+        <translation>关闭应用</translation>
+    </message>
+    <message>
+        <location line="+2"/>
         <source>Restart now</source>
         <translation>立即重启</translation>
     </message>
     <message>
-        <location line="+93"/>
+        <location line="+129"/>
+        <source>Close and reopen TraceView to apply language or diagnostics history changes, or they will apply the next time you open it.</source>
+        <translation>关闭并重新打开 TraceView 以应用语言或诊断历史记录更改，否则将在下次打开时生效。</translation>
+    </message>
+    <message>
+        <location line="+4"/>
         <source>Restart TraceView to apply language or diagnostics history changes.</source>
         <translation>重启 TraceView 以应用语言或诊断历史的更改。</translation>
     </message>
     <message>
-        <location line="+1"/>
+        <location line="+4"/>
         <source>Changes apply immediately unless noted otherwise.</source>
         <translation>除非另有说明,更改会立即生效。</translation>
     </message>
@@ -4028,34 +4066,45 @@ Drops: %2</source>
 <context>
     <name>traceview::UpdateAvailableDialog</name>
     <message>
-        <location filename="../lib/core/updateavailabledialog.cpp" line="+15"/>
+        <location filename="../lib/core/updateavailabledialog.cpp" line="+14"/>
         <source>Update Available</source>
         <translation>有可用更新</translation>
     </message>
     <message>
+        <location line="+2"/>
+        <source>&lt;b&gt;Update available&lt;/b&gt;</source>
+        <translation>&lt;b&gt;有可用更新&lt;/b&gt;</translation>
+    </message>
+    <message>
         <location line="+4"/>
+        <source>New version: v%1&lt;br&gt;Your version: v%2</source>
+        <translation>新版本：v%1&lt;br&gt;您的版本：v%2</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Later</source>
+        <translation>稍后</translation>
+    </message>
+    <message>
         <source>&lt;b&gt;TraceView %1&lt;/b&gt; is available (you have v%2).</source>
-        <translation>&lt;b&gt;TraceView %1&lt;/b&gt; 已发布 (您当前为 v%2)。</translation>
+        <translation type="vanished">&lt;b&gt;TraceView %1&lt;/b&gt; 已发布 (您当前为 v%2)。</translation>
     </message>
     <message>
-        <location line="+6"/>
         <source>No release notes provided.</source>
-        <translation>未提供发布说明。</translation>
+        <translation type="vanished">未提供发布说明。</translation>
     </message>
     <message>
-        <location line="+5"/>
+        <location line="+1"/>
         <source>Update Now</source>
         <translation>立即更新</translation>
     </message>
     <message>
-        <location line="+2"/>
         <source>Skip This Version</source>
-        <translation>跳过此版本</translation>
+        <translation type="vanished">跳过此版本</translation>
     </message>
     <message>
-        <location line="+1"/>
         <source>Remind Me Later</source>
-        <translation>稍后提醒</translation>
+        <translation type="vanished">稍后提醒</translation>
     </message>
 </context>
 <context>
@@ -4094,7 +4143,7 @@ Drops: %2</source>
         <translation>%1 的校验和不匹配 -- 下载可能已损坏。</translation>
     </message>
     <message>
-        <location line="+12"/>
+        <location line="+20"/>
         <source>Couldn&apos;t write %1</source>
         <translation>无法写入 %1</translation>
     </message>

@@ -18,6 +18,7 @@
 #include "updater/updateinfo.h"
 
 class QAction;
+class QDialog;
 class QEvent;
 class QLabel;
 class QMenu;
@@ -443,11 +444,12 @@ private:
     // lifecycle as onOpenOtaTab()/onOtaTabCloseRequested().
     void onOpenBtpMonitor();
     void onBtpMonitorTabCloseRequested(int index);
-    // Menu bar "Settings" -- opens the singleton Settings tab (creating it on
-    // first use) or switches to it. Same singleton-closable-tab lifecycle as
-    // onOpenOtaTab()/onOtaTabCloseRequested().
-    void onOpenSettingsTab();
-    void onSettingsTabCloseRequested(int index);
+    // Menu bar "Settings" / Ctrl+, -- shows the Settings window (creating it
+    // on first use) or raises it. Presented like the notification history:
+    // a separate window on desktop, an in-window page with a back arrow when
+    // DialogPresenter embeds dialogs (Android, Phone/Tablet preview) -- so
+    // it never depends on the ribbon's tab strip, which User mode hides.
+    void onOpenSettings();
     // Script icon on a device's card (DeviceCard::scriptRequested) -- opens
     // that device's DiagramScriptRuntime script editor
     // (DiagramBlockConfigDialog). The canvas/diagram tab this used to live
@@ -495,7 +497,7 @@ private:
     void maybeCheckForUpdatesOnStartup();
     // `manual` distinguishes a user-initiated check from the startup one:
     // only a manual check surfaces "up to date"/failure feedback (via
-    // postStatus) and re-shows a release the user previously skipped.
+    // postStatus).
     void checkForUpdates(bool manual);
     void onUpdateAvailable(const UpdateInfo& info);
     void onUpdateUpToDate();
@@ -506,6 +508,10 @@ private:
     void startUpdateDownload(const UpdateInfo& info);
     void onUpdateDownloadFinished(const QString& filePath);
     void onUpdateDownloadFailed(const QString& reason);
+    // Relaunches TraceView to apply a restart-only setting (language,
+    // diagnostics history). On Android, which can't relaunch an app from
+    // inside itself, asks to close it instead (Close App / Later).
+    void restartApplication();
 
     DashboardGrid* m_dashboardGrid = nullptr;
     // Devices tab's content -- swapped in for m_dashboardGrid via
@@ -536,10 +542,11 @@ private:
     // "empty ribbon page as a stable key" trick as the OTA tab above.
     QWidget* m_btpMonitorTabPage = nullptr;
     BtpMonitorTab* m_btpMonitorTab = nullptr;
-    // The Settings tab -- same singleton-closable-tab lifecycle and "empty
-    // ribbon page as a stable key" trick as the OTA / BTP monitor tabs above.
-    QWidget* m_settingsTabPage = nullptr;
-    SettingsPage* m_settingsTab = nullptr;
+    // The Settings window and the SettingsPage it wraps -- WA_DeleteOnClose'd
+    // like m_notificationWindow, so both QPointers null out on close and the
+    // next onOpenSettings() builds a fresh one.
+    QPointer<QDialog> m_settingsWindow;
+    QPointer<SettingsPage> m_settingsPage;
     // One live script engine per device (lib/diagram/diagramscriptruntime.h),
     // created alongside its DeviceConnection in onDeviceAdded() and kept for
     // that device's whole lifetime -- independent of whether its script
@@ -644,7 +651,7 @@ private:
     QAction* m_openLogFileAction = nullptr;
     QAction* m_openOtaTabAction = nullptr;
     QAction* m_openBtpMonitorAction = nullptr;
-    QAction* m_openSettingsTabAction = nullptr;
+    QAction* m_openSettingsAction = nullptr;
     QAction* m_removeAction = nullptr;
     QAction* m_copyAction = nullptr;
     QAction* m_pasteAction = nullptr;
@@ -834,7 +841,7 @@ private:
     QByteArray m_preFullscreenGeometry;
 
     // Self-update (see lib/updater). Both created once in the constructor and
-    // reused for every check/download -- unlike m_settingsTab, there is
+    // reused for every check/download -- unlike m_settingsWindow, there is
     // always exactly one of each for the app's whole lifetime.
     UpdateChecker* m_updateChecker = nullptr;
     UpdateDownloader* m_updateDownloader = nullptr;

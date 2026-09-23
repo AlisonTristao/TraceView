@@ -208,7 +208,7 @@
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="+110"/>
+        <location filename="../lib/core/mainwindow.cpp" line="+111"/>
         <source>TraceView Project (*.tvproj)</source>
         <translation>Progetto TraceView (*.tvproj)</translation>
     </message>
@@ -389,7 +389,7 @@
         <translation>&lt;b&gt;JavaScript&lt;/b&gt;, eseguito dal vivo sul traffico reale di questo dispositivo.&lt;br&gt;&lt;br&gt;&lt;b&gt;Definisci per reagire al traffico:&lt;/b&gt;&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;onTelemetry(sample)&lt;/code&gt; -- chiamata per un valore di telemetria già sottoscritto altrove (es. un grafico del Dashboard). &lt;code&gt;sample&lt;/code&gt; ha &lt;code&gt;topicId&lt;/code&gt;, &lt;code&gt;fieldId&lt;/code&gt;, &lt;code&gt;elementIndex&lt;/code&gt;, &lt;code&gt;value&lt;/code&gt;, &lt;code&gt;timestampUs&lt;/code&gt;.&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;onTerminal(text)&lt;/code&gt; -- chiamata per ogni blocco di testo restituito dal canale console/seriale di questo dispositivo.&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;onConnectionChange(connected)&lt;/code&gt; -- chiamata quando questo dispositivo si connette o disconnette.&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;onStatus(text, severity)&lt;/code&gt; -- chiamata per un aggiornamento di stato una tantum (sessione stabilita/fallita, sottoscrizione rifiutata, un risultato di sendCommand(), ...) -- lo stesso testo mostrato dalla barra di stato. &lt;code&gt;severity&lt;/code&gt; è uno tra &lt;code&gt;&quot;info&quot;&lt;/code&gt;, &lt;code&gt;&quot;success&quot;&lt;/code&gt;, &lt;code&gt;&quot;warning&quot;&lt;/code&gt;, &lt;code&gt;&quot;error&quot;&lt;/code&gt;.&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;onDeviceInfo(info)&lt;/code&gt; -- chiamata quando questo dispositivo invia il suo blocco di informazioni (versione firmware, chip, partizione, ...). &lt;code&gt;info&lt;/code&gt; è un array di &lt;code&gt;{key, label, value}&lt;/code&gt;.&lt;br&gt;&lt;br&gt;&lt;b&gt;Richiamabili in qualsiasi momento:&lt;/b&gt;&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;device.log(text)&lt;/code&gt; -- scrive nel pannello di output.&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;device.sendCommand(text)&lt;/code&gt; -- invia un comando a questo dispositivo.&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;device.sendTerminal(text)&lt;/code&gt; -- invia testo sul suo canale console.&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;device.setInterval(fn, ms)&lt;/code&gt; / &lt;code&gt;device.clearInterval(id)&lt;/code&gt; -- esegue &lt;code&gt;fn&lt;/code&gt; ogni &lt;code&gt;ms&lt;/code&gt; millisecondi finché non viene annullato.&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;device.setTimeout(fn, ms)&lt;/code&gt; / &lt;code&gt;device.clearTimeout(id)&lt;/code&gt; -- esegue &lt;code&gt;fn&lt;/code&gt; una volta, tra &lt;code&gt;ms&lt;/code&gt; millisecondi.</translation>
     </message>
     <message>
-        <location filename="../lib/updater/updatechecker.cpp" line="+46"/>
+        <location filename="../lib/updater/updatechecker.cpp" line="+49"/>
         <source>No published releases found.</source>
         <translation>Nessuna versione pubblicata trovata.</translation>
     </message>
@@ -399,17 +399,29 @@
         <translation>Impossibile leggere la versione dell&apos;ultima release.</translation>
     </message>
     <message>
-        <location filename="../lib/updater/updateinstaller.cpp" line="+21"/>
+        <location filename="../lib/updater/updateinstaller.cpp" line="+24"/>
         <source>Updates are managed by Flatpak. Use &apos;flatpak update&apos;.</source>
         <translation>Gli aggiornamenti sono gestiti da Flatpak. Usa &apos;flatpak update&apos;.</translation>
     </message>
     <message>
-        <location line="+37"/>
+        <location line="+21"/>
+        <location line="+72"/>
         <source>Downloaded installer not found: %1</source>
         <translation>Programma di installazione scaricato non trovato: %1</translation>
     </message>
     <message>
-        <location line="+10"/>
+        <location line="-67"/>
+        <location line="+30"/>
+        <source>Couldn&apos;t start the Android package installer.</source>
+        <translation>Impossibile avviare il programma di installazione dei pacchetti Android.</translation>
+    </message>
+    <message>
+        <location line="-16"/>
+        <source>Couldn&apos;t share the downloaded APK with the package installer.</source>
+        <translation>Impossibile condividere l&apos;APK scaricato con il programma di installazione.</translation>
+    </message>
+    <message>
+        <location line="+63"/>
         <source>Couldn&apos;t write the update script.</source>
         <translation>Impossibile scrivere lo script di aggiornamento.</translation>
     </message>
@@ -607,52 +619,43 @@
 <context>
     <name>traceview::BleDiscoveryService</name>
     <message>
-        <location filename="../lib/core/blediscoveryservice.cpp" line="+77"/>
         <source>BLE discovery failed</source>
-        <translation>Ricerca BLE non riuscita</translation>
+        <translation type="vanished">Ricerca BLE non riuscita</translation>
     </message>
 </context>
 <context>
     <name>traceview::BleTransport</name>
     <message>
-        <location filename="../lib/core/bletransport.cpp" line="+67"/>
         <source>failed to create a BLE controller</source>
-        <translation>impossibile creare un controller BLE</translation>
+        <translation type="vanished">impossibile creare un controller BLE</translation>
     </message>
     <message>
-        <location line="+65"/>
         <source>BLE peripheral disconnected before HELLO</source>
-        <translation>la periferica BLE si è disconnessa prima dell&apos;HELLO</translation>
+        <translation type="vanished">la periferica BLE si è disconnessa prima dell&apos;HELLO</translation>
     </message>
     <message>
-        <location line="+16"/>
         <source>peripheral does not advertise the BTP service</source>
-        <translation>la periferica non annuncia il servizio BTP</translation>
+        <translation type="vanished">la periferica non annuncia il servizio BTP</translation>
     </message>
     <message>
-        <location line="+5"/>
         <source>failed to create BTP service object</source>
-        <translation>impossibile creare l&apos;oggetto del servizio BTP</translation>
+        <translation type="vanished">impossibile creare l&apos;oggetto del servizio BTP</translation>
     </message>
     <message>
-        <location line="+25"/>
         <source>BTP service is missing its RX/TX characteristics</source>
-        <translation>al servizio BTP mancano le caratteristiche RX/TX</translation>
+        <translation type="vanished">al servizio BTP mancano le caratteristiche RX/TX</translation>
     </message>
     <message>
-        <location line="+7"/>
         <source>TX characteristic has no notification descriptor</source>
-        <translation>la caratteristica TX non ha un descrittore di notifica</translation>
+        <translation type="vanished">la caratteristica TX non ha un descrittore di notifica</translation>
     </message>
     <message>
-        <location line="+13"/>
         <source>BLE service error</source>
-        <translation>Errore del servizio BLE</translation>
+        <translation type="vanished">Errore del servizio BLE</translation>
     </message>
     <message>
-        <location line="+47"/>
         <source>BLE connection timed out</source>
-        <translation>Timeout della connessione BLE</translation>
+        <translation type="vanished">Timeout della connessione BLE</translation>
     </message>
 </context>
 <context>
@@ -2209,7 +2212,7 @@ Perdite: %2</translation>
         <translation>&amp;Lingua</translation>
     </message>
     <message>
-        <location line="+20"/>
+        <location line="+24"/>
         <source>Restart Required</source>
         <translation>Riavvio necessario</translation>
     </message>
@@ -2225,11 +2228,12 @@ Perdite: %2</translation>
     </message>
     <message>
         <location line="+0"/>
+        <location line="+2867"/>
         <source>Later</source>
         <translation>Più tardi</translation>
     </message>
     <message>
-        <location line="+8"/>
+        <location line="-2860"/>
         <source>&amp;Access</source>
         <translation>&amp;Accesso</translation>
     </message>
@@ -2295,7 +2299,7 @@ Perdite: %2</translation>
         <translation>&amp;Entra in Modalità Sviluppatore...</translation>
     </message>
     <message>
-        <location line="+175"/>
+        <location line="+179"/>
         <source>Add</source>
         <translation>Aggiungi</translation>
     </message>
@@ -2346,18 +2350,18 @@ Perdite: %2</translation>
     </message>
     <message>
         <location line="+18"/>
-        <location line="+2295"/>
+        <location line="+2268"/>
         <source>Undo</source>
         <translation>Annulla</translation>
     </message>
     <message>
-        <location line="-2293"/>
-        <location line="+2293"/>
+        <location line="-2266"/>
+        <location line="+2266"/>
         <source>Redo</source>
         <translation>Ripeti</translation>
     </message>
     <message>
-        <location line="-2252"/>
+        <location line="-2225"/>
         <source>Add Device</source>
         <translation>Aggiungi dispositivo</translation>
     </message>
@@ -2393,12 +2397,12 @@ Perdite: %2</translation>
     </message>
     <message>
         <location line="+29"/>
-        <location line="+2197"/>
+        <location line="+2170"/>
         <source>Fullscreen dashboard (F11)</source>
         <translation>Dashboard a schermo intero (F11)</translation>
     </message>
     <message>
-        <location line="-2017"/>
+        <location line="-1990"/>
         <source>Rename Workspace</source>
         <translation>Rinomina Spazio di Lavoro</translation>
     </message>
@@ -2408,12 +2412,12 @@ Perdite: %2</translation>
         <translation>Spazio di lavoro &quot;%1&quot; rinominato in &quot;%2&quot;.</translation>
     </message>
     <message>
-        <location line="+2046"/>
+        <location line="+2019"/>
         <source>Update available: v%1</source>
         <translation>Aggiornamento disponibile: v%1</translation>
     </message>
     <message>
-        <location line="+21"/>
+        <location line="+12"/>
         <source>Up to date (v%1)</source>
         <translation>Aggiornato (v%1)</translation>
     </message>
@@ -2428,16 +2432,16 @@ Perdite: %2</translation>
         <translation>Controllo aggiornamenti non riuscito: %1</translation>
     </message>
     <message>
-        <location line="+7"/>
+        <location line="+8"/>
         <location line="+9"/>
         <location line="+8"/>
-        <location line="+16"/>
-        <location line="+4"/>
+        <location line="+23"/>
+        <location line="+27"/>
         <source>Update</source>
         <translation>Aggiorna</translation>
     </message>
     <message>
-        <location line="-36"/>
+        <location line="-66"/>
         <source>Automatic installation requires running an AppImage. Download the AppImage from the release page.</source>
         <translation>L&apos;installazione automatica richiede l&apos;esecuzione di un AppImage. Scarica l&apos;AppImage dalla pagina della release.</translation>
     </message>
@@ -2457,13 +2461,37 @@ Perdite: %2</translation>
         <translation>Download di TraceView %1...</translation>
     </message>
     <message>
-        <location line="-2219"/>
-        <location line="+2045"/>
+        <location line="+10"/>
+        <source>Confirm the installation in the Android installer.</source>
+        <translation>Conferma l&apos;installazione nel programma di installazione di Android.</translation>
+    </message>
+    <message>
+        <location line="+18"/>
+        <source>Close TraceView</source>
+        <translation>Chiudi TraceView</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>TraceView needs to be closed and opened again to apply these changes. After closing, open it again from your apps.
+
+Choose Later to keep working -- the changes will apply the next time you open TraceView.</source>
+        <translation>TraceView deve essere chiuso e riaperto per applicare queste modifiche. Dopo la chiusura, riaprilo dalle tue app.
+
+Scegli Più tardi per continuare a lavorare -- le modifiche verranno applicate la prossima volta che apri TraceView.</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Close App</source>
+        <translation>Chiudi app</translation>
+    </message>
+    <message>
+        <location line="-2217"/>
+        <location line="+2018"/>
         <source>Devices</source>
         <translation>Dispositivi</translation>
     </message>
     <message>
-        <location line="-1970"/>
+        <location line="-1943"/>
         <source>Subscriptions</source>
         <translation>Sottoscrizioni</translation>
     </message>
@@ -2505,23 +2533,23 @@ Perdite: %2</translation>
     </message>
     <message>
         <location line="+71"/>
-        <location line="+1755"/>
+        <location line="+1728"/>
         <source>Add widget</source>
         <translation>Aggiungi widget</translation>
     </message>
     <message>
-        <location line="-1752"/>
+        <location line="-1725"/>
         <source>Remove selected widget (%1)</source>
         <translation>Rimuovi widget selezionato (%1)</translation>
     </message>
     <message>
         <location line="+3"/>
-        <location line="+1762"/>
+        <location line="+1735"/>
         <source>Add device</source>
         <translation>Aggiungi dispositivo</translation>
     </message>
     <message>
-        <location line="-1759"/>
+        <location line="-1732"/>
         <source>Remove selected device (%1)</source>
         <translation>Rimuovi dispositivo selezionato (%1)</translation>
     </message>
@@ -2606,7 +2634,7 @@ Perdite: %2</translation>
         <translation>Mostra i pannelli Livelli/Proprietà</translation>
     </message>
     <message>
-        <location line="+248"/>
+        <location line="+246"/>
         <source>New Device</source>
         <translation>Nuovo Dispositivo</translation>
     </message>
@@ -2632,12 +2660,12 @@ Perdite: %2</translation>
         <translation>(senza nome)</translation>
     </message>
     <message>
-        <location line="-1111"/>
+        <location line="-1109"/>
         <source>Dashboard</source>
         <translation>Dashboard</translation>
     </message>
     <message>
-        <location line="+1323"/>
+        <location line="+1321"/>
         <source>%1: this BLE address now answers as a different robot (expected %2, got %3)</source>
         <translation>%1: questo indirizzo BLE ora risponde come un robot diverso (atteso %2, ricevuto %3)</translation>
     </message>
@@ -2674,12 +2702,12 @@ Perdite: %2</translation>
     </message>
     <message>
         <location line="+14"/>
-        <location line="+278"/>
+        <location line="+253"/>
         <source>Open Project</source>
         <translation>Apri progetto</translation>
     </message>
     <message>
-        <location line="-269"/>
+        <location line="-244"/>
         <source>Open Log File</source>
         <translation>Apri file di log</translation>
     </message>
@@ -2689,7 +2717,7 @@ Perdite: %2</translation>
         <translation>Log BTP (*.blog)</translation>
     </message>
     <message>
-        <location line="+97"/>
+        <location line="+93"/>
         <source>OTA Update</source>
         <translation>Aggiornamento OTA</translation>
     </message>
@@ -2699,8 +2727,8 @@ Perdite: %2</translation>
         <translation>Traffico BTP</translation>
     </message>
     <message>
-        <location line="+47"/>
-        <location line="+190"/>
+        <location line="+20"/>
+        <location line="+196"/>
         <source>Settings</source>
         <translation>Impostazioni</translation>
     </message>
@@ -3433,49 +3461,49 @@ Perdite: %2</translation>
 <context>
     <name>traceview::SettingsPage</name>
     <message>
-        <location filename="../lib/core/settingspage.cpp" line="+199"/>
+        <location filename="../lib/core/settingspage.cpp" line="+198"/>
         <source>Settings</source>
         <translation>Impostazioni</translation>
     </message>
     <message>
-        <location line="+26"/>
-        <location line="+41"/>
+        <location line="+33"/>
+        <location line="+42"/>
         <source>General</source>
         <translation>Generale</translation>
     </message>
     <message>
-        <location line="-41"/>
-        <location line="+65"/>
+        <location line="-42"/>
+        <location line="+66"/>
         <source>Appearance</source>
         <translation>Aspetto</translation>
     </message>
     <message>
-        <location line="-65"/>
-        <location line="+112"/>
+        <location line="-66"/>
+        <location line="+113"/>
         <source>Dashboard</source>
         <translation>Dashboard</translation>
     </message>
     <message>
-        <location line="-111"/>
-        <location line="+162"/>
+        <location line="-112"/>
+        <location line="+163"/>
         <source>Terminal</source>
         <translation>Terminale</translation>
     </message>
     <message>
-        <location line="-162"/>
-        <location line="+189"/>
+        <location line="-163"/>
+        <location line="+190"/>
         <source>Connections</source>
         <translation>Connessioni</translation>
     </message>
     <message>
-        <location line="-189"/>
-        <location line="+208"/>
+        <location line="-190"/>
+        <location line="+209"/>
         <source>Diagnostics</source>
         <translation>Diagnostica</translation>
     </message>
     <message>
-        <location line="-207"/>
-        <location line="+259"/>
+        <location line="-208"/>
+        <location line="+260"/>
         <location line="+5"/>
         <source>Updates</source>
         <translation>Aggiornamenti</translation>
@@ -3761,17 +3789,27 @@ Perdite: %2</translation>
         <translation>Controlla ora</translation>
     </message>
     <message>
-        <location line="+43"/>
+        <location line="+45"/>
+        <source>Close app</source>
+        <translation>Chiudi app</translation>
+    </message>
+    <message>
+        <location line="+2"/>
         <source>Restart now</source>
         <translation>Riavvia ora</translation>
     </message>
     <message>
-        <location line="+93"/>
+        <location line="+129"/>
+        <source>Close and reopen TraceView to apply language or diagnostics history changes, or they will apply the next time you open it.</source>
+        <translation>Chiudi e riapri TraceView per applicare le modifiche alla lingua o alla cronologia di diagnostica, altrimenti verranno applicate alla prossima apertura.</translation>
+    </message>
+    <message>
+        <location line="+4"/>
         <source>Restart TraceView to apply language or diagnostics history changes.</source>
         <translation>Riavvia TraceView per applicare le modifiche alla lingua o alla cronologia di diagnostica.</translation>
     </message>
     <message>
-        <location line="+1"/>
+        <location line="+4"/>
         <source>Changes apply immediately unless noted otherwise.</source>
         <translation>Le modifiche si applicano subito salvo diversa indicazione.</translation>
     </message>
@@ -4029,34 +4067,45 @@ Perdite: %2</translation>
 <context>
     <name>traceview::UpdateAvailableDialog</name>
     <message>
-        <location filename="../lib/core/updateavailabledialog.cpp" line="+15"/>
+        <location filename="../lib/core/updateavailabledialog.cpp" line="+14"/>
         <source>Update Available</source>
         <translation>Aggiornamento Disponibile</translation>
     </message>
     <message>
+        <location line="+2"/>
+        <source>&lt;b&gt;Update available&lt;/b&gt;</source>
+        <translation>&lt;b&gt;Aggiornamento disponibile&lt;/b&gt;</translation>
+    </message>
+    <message>
         <location line="+4"/>
+        <source>New version: v%1&lt;br&gt;Your version: v%2</source>
+        <translation>Nuova versione: v%1&lt;br&gt;La tua versione: v%2</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Later</source>
+        <translation>Più tardi</translation>
+    </message>
+    <message>
         <source>&lt;b&gt;TraceView %1&lt;/b&gt; is available (you have v%2).</source>
-        <translation>&lt;b&gt;TraceView %1&lt;/b&gt; è disponibile (hai la v%2).</translation>
+        <translation type="vanished">&lt;b&gt;TraceView %1&lt;/b&gt; è disponibile (hai la v%2).</translation>
     </message>
     <message>
-        <location line="+6"/>
         <source>No release notes provided.</source>
-        <translation>Nessuna nota di rilascio fornita.</translation>
+        <translation type="vanished">Nessuna nota di rilascio fornita.</translation>
     </message>
     <message>
-        <location line="+5"/>
+        <location line="+1"/>
         <source>Update Now</source>
         <translation>Aggiorna Ora</translation>
     </message>
     <message>
-        <location line="+2"/>
         <source>Skip This Version</source>
-        <translation>Salta Questa Versione</translation>
+        <translation type="vanished">Salta Questa Versione</translation>
     </message>
     <message>
-        <location line="+1"/>
         <source>Remind Me Later</source>
-        <translation>Ricordamelo Più Tardi</translation>
+        <translation type="vanished">Ricordamelo Più Tardi</translation>
     </message>
 </context>
 <context>
@@ -4095,7 +4144,7 @@ Perdite: %2</translation>
         <translation>Checksum non corrispondente per %1 -- il download potrebbe essere danneggiato.</translation>
     </message>
     <message>
-        <location line="+12"/>
+        <location line="+20"/>
         <source>Couldn&apos;t write %1</source>
         <translation>Impossibile scrivere %1</translation>
     </message>

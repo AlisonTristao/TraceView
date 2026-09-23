@@ -8,7 +8,8 @@ namespace traceview {
 // What UpdateChecker found on GitHub Releases for this platform. assetUrl/
 // assetName/assetSize describe the one release asset matching this OS (see
 // UpdateChecker's asset-picking loop) -- Windows picks the "-windows-*.exe"
-// asset, Linux the "-linux-x64.AppImage" one. An invalid assetUrl means the
+// asset, Linux the "-linux-x64.AppImage" one, Android the
+// "-android-arm64.apk" one. An invalid assetUrl means the
 // release has no asset for this platform (nothing to download; only
 // releaseUrl is useful then). checksumsUrl is the release's SHA256SUMS.txt,
 // used by UpdateDownloader to verify assetUrl before anything is installed.

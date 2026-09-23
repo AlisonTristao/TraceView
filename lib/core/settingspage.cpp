@@ -45,6 +45,7 @@ constexpr int kFullCategoryListWidth = 186;
 // a touch target isn't flush against the icon -- comfortable to tap without
 // needing the label text compact mode hides.
 constexpr int kCompactCategoryListWidth = 56;
+constexpr int kCategoryRowHeight = 36;
 // Same threshold as MainWindow's own kSmallBreakpointMaxViewportWidth
 // (mainwindow.cpp) -- this page has no access to that constant or to
 // DashboardGrid's breakpoint machinery (it's a standalone widget, not part
@@ -195,6 +196,7 @@ SettingsPage::SettingsPage(QWidget* parent) : QWidget(parent) {
     rootLayout->setSpacing(12);
 
     auto* header = new QLabel(tr("Settings"), this);
+    m_titleLabel = header;
     header->setObjectName("settingsTitle");
     QFont headerFont = scaledFont(header->font(), 1.6);
     headerFont.setBold(true);
@@ -220,14 +222,21 @@ SettingsPage::SettingsPage(QWidget* parent) : QWidget(parent) {
     // just for this navigation list.
     categories->setStyleSheet(QStringLiteral("QListWidget::item { padding: 7px 10px; }"));
     categories->setSpacing(3);
+    // The frame should hug the category rows, not run down to the bottom of
+    // the page with an empty strip under the last icon. Ignored vertical
+    // policy + a maximum height (set in fitCategoryListHeight()) lets the box
+    // layout place it top-aligned at exactly its content height, while still
+    // shrinking -- and scrolling -- on a window too short to fit all rows.
+    categories->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Ignored);
     const QStringList categoryNames = {tr("General"),     tr("Appearance"),  tr("Dashboard"),
                                        tr("Terminal"),    tr("Connections"), tr("Diagnostics"),
                                        tr("Updates")};
     m_categoryNames = categoryNames;
     for (const QString& name : categoryNames) {
         auto* item = new QListWidgetItem(name, categories);
-        item->setSizeHint(QSize(-1, 36));
+        item->setSizeHint(QSize(-1, kCategoryRowHeight));
     }
+    fitCategoryListHeight();
 
     const auto refreshCategoryIcons = [categories] {
         const ThemePalette& theme = ThemeManager::instance().currentTheme();
@@ -547,7 +556,12 @@ SettingsPage::SettingsPage(QWidget* parent) : QWidget(parent) {
     m_restartNotice = new QLabel(this);
     m_restartNotice->setWordWrap(true);
     restartRow->addWidget(m_restartNotice, 1);
+#if defined(Q_OS_ANDROID)
+    // Android can't relaunch the app (see MainWindow::restartApplication).
+    m_restartButton = new QPushButton(tr("Close app"), this);
+#else
     m_restartButton = new QPushButton(tr("Restart now"), this);
+#endif
     restartRow->addWidget(m_restartButton);
     rootLayout->addLayout(restartRow);
     connect(m_restartButton, &QPushButton::clicked, this, &SettingsPage::restartRequested);
@@ -573,13 +587,33 @@ void SettingsPage::resizeEvent(QResizeEvent* event) {
 void SettingsPage::applyFieldWidth() {
     int width = m_fieldWidth;
     if (m_compactLayout) {
-        const int available = this->width() - 2 * kCompactRootMargin - kCompactCategoryListWidth -
-                              kCompactBodySpacing - 2 * kCompactPageMarginH - kFieldRowChrome;
+        // No sidebar in User mode (setDeveloperMode()), so its width is free.
+        const int sidebar = m_categoryList->isHidden()
+                                ? 0
+                                : kCompactCategoryListWidth + kCompactBodySpacing;
+        const int available = this->width() - 2 * kCompactRootMargin - sidebar -
+                              2 * kCompactPageMarginH - kFieldRowChrome;
         width = qBound(1, available, m_fieldWidth);
     }
     for (QWidget* field : std::as_const(m_fieldWidgets)) {
         field->setFixedWidth(width);
     }
+}
+
+void SettingsPage::fitCategoryListHeight() {
+    if (m_categoryList == nullptr) {
+        return;
+    }
+    // Picks up the app stylesheet's frame/border before measuring it.
+    m_categoryList->ensurePolished();
+    // QListView lays rows out with `spacing` before the first row and after
+    // every row, so n rows take n * (height + spacing) + spacing.
+    const int rows = m_categoryList->count();
+    const int spacing = m_categoryList->spacing();
+    const QMargins margins = m_categoryList->contentsMargins();
+    const int height = rows * (kCategoryRowHeight + spacing) + spacing + margins.top() +
+                       margins.bottom() + 2 * m_categoryList->frameWidth();
+    m_categoryList->setMaximumHeight(height);
 }
 
 void SettingsPage::applyCompactLayout(bool compact) {
@@ -633,15 +667,37 @@ void SettingsPage::setUpdateStatusText(const QString& text) {
     }
 }
 
+void SettingsPage::setTitleVisible(bool visible) {
+    m_titleLabel->setVisible(visible);
+}
+
+void SettingsPage::setDeveloperMode(bool developer) {
+    // Row 1 is Appearance -- see categoryNames in the constructor.
+    constexpr int kAppearanceRow = 1;
+    if (!developer) {
+        m_categoryList->setCurrentRow(kAppearanceRow);
+    }
+    m_categoryList->setVisible(developer);
+    applyFieldWidth();
+}
+
 void SettingsPage::refreshRestartNotice() {
     const AppSettings& settings = AppSettings::instance();
     const bool restartRequired =
         LanguageManager::instance().currentLanguage().id != m_initialLanguageId ||
         settings.frameLogCapacity() != m_initialFrameLogCapacity ||
         settings.notificationHistoryCapacity() != m_initialNotificationHistoryCapacity;
-    m_restartNotice->setText(
-        restartRequired ? tr("Restart TraceView to apply language or diagnostics history changes.")
-                        : tr("Changes apply immediately unless noted otherwise."));
+#if defined(Q_OS_ANDROID)
+    const QString restartText =
+        tr("Close and reopen TraceView to apply language or diagnostics history changes, "
+           "or they will apply the next time you open it.");
+#else
+    const QString restartText =
+        tr("Restart TraceView to apply language or diagnostics history changes.");
+#endif
+    m_restartNotice->setText(restartRequired
+                                 ? restartText
+                                 : tr("Changes apply immediately unless noted otherwise."));
     m_restartButton->setEnabled(restartRequired);
 }
 

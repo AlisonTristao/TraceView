@@ -99,8 +99,10 @@ app -- see `TODO_VISUAL_IDENTITY.txt` TAREFA 0).
 Current options: **System Default** (leaves the platform's own font alone),
 **Consolas**, **Georgia**, **Verdana**. Adding another one is
 `registerFont(...)` in `FontManager`'s constructor -- no other code changes,
-same shape as adding a theme above. If the named family isn't installed, Qt
-silently substitutes its closest match rather than failing.
+same shape as adding a theme above. The named families are Windows fonts, so
+each option also carries `fallbackFamilies` (Android/Linux equivalents, e.g.
+Droid Sans Mono / Noto Serif) and a `styleHint`; without them Qt substitutes
+the platform sans-serif and every option looks identical on Android.
 
 Switch fonts from the running app via **View → Font**; the choice is
 persisted (`QSettings`, key `appearance/font`) across restarts.

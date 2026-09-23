@@ -50,7 +50,6 @@ public:
 
     bool updateAutoCheckEnabled() const;
     qint64 updateLastCheckEpochMs() const;
-    QString updateSkippedVersion() const;
 
     void setRenderProfile(RenderProfile profile);
     void setCustomRenderFps(int fps);
@@ -70,7 +69,6 @@ public:
 
     void setUpdateAutoCheckEnabled(bool enabled);
     void setUpdateLastCheckEpochMs(qint64 epochMs);
-    void setUpdateSkippedVersion(const QString& version);
 
 signals:
     void dashboardPreferencesChanged();

@@ -23,7 +23,6 @@ constexpr char kFrameLogCapacityKey[] = "diagnostics/frameLogCapacity";
 constexpr char kNotificationHistoryCapacityKey[] = "diagnostics/notificationHistoryCapacity";
 constexpr char kUpdateAutoCheckEnabledKey[] = "updates/autoCheckEnabled";
 constexpr char kUpdateLastCheckEpochMsKey[] = "updates/lastCheckEpochMs";
-constexpr char kUpdateSkippedVersionKey[] = "updates/skippedVersion";
 
 constexpr int kLowFps = 15;
 constexpr int kMediumFps = 30;
@@ -126,10 +125,6 @@ qint64 AppSettings::updateLastCheckEpochMs() const {
     return QSettings().value(kUpdateLastCheckEpochMsKey, 0).toLongLong();
 }
 
-QString AppSettings::updateSkippedVersion() const {
-    return QSettings().value(kUpdateSkippedVersionKey).toString();
-}
-
 void AppSettings::setRenderProfile(RenderProfile profile) {
     setValue(kRenderProfileKey, int(profile));
     emit dashboardPreferencesChanged();
@@ -214,10 +209,6 @@ void AppSettings::setUpdateAutoCheckEnabled(bool enabled) {
 
 void AppSettings::setUpdateLastCheckEpochMs(qint64 epochMs) {
     QSettings().setValue(kUpdateLastCheckEpochMsKey, epochMs);
-}
-
-void AppSettings::setUpdateSkippedVersion(const QString& version) {
-    QSettings().setValue(kUpdateSkippedVersionKey, version);
 }
 
 int AppSettings::value(const char* key, int fallback, int minimum, int maximum) const {

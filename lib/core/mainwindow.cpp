@@ -5,6 +5,7 @@
 #include <QColor>
 #include <QCoreApplication>
 #include <QDateTime>
+#include <QDialog>
 #include <QDesktopServices>
 #include <QEvent>
 #include <QFileDialog>
@@ -316,9 +317,9 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     buildMenus();
 
     m_dashboardGrid = new DashboardGrid(this);
-    // The Settings page itself is built on demand (onOpenSettingsTab), same as
-    // the OTA / BTP monitor tabs -- but the recent-files cap it exposes lives
-    // in QSettings and has to stay trimmed whether or not that tab is open.
+    // The Settings window itself is built on demand (onOpenSettings) -- but
+    // the recent-files cap it exposes lives in QSettings and has to stay
+    // trimmed whether or not that window is open.
     connect(&AppSettings::instance(), &AppSettings::generalPreferencesChanged, this, [this] {
         QSettings settings;
         QStringList files = settings.value(kRecentFilesSettingsKey).toStringList();
@@ -942,14 +943,17 @@ void MainWindow::buildMenus() {
             }
             LanguageManager::instance().setLanguage(id);
 
+#if defined(Q_OS_ANDROID)
+            // restartApplication() asks for itself there (Close App / Later).
+            restartApplication();
+#else
             if (DialogPresenter::confirm(
                     this, tr("Restart Required"),
                     tr("The application needs to restart to apply the new language. Restart now?"),
                     tr("Restart Now"), tr("Later"))) {
-                QProcess::startDetached(QCoreApplication::applicationFilePath(),
-                                        QCoreApplication::arguments().mid(1));
-                QCoreApplication::quit();
+                restartApplication();
             }
+#endif
         });
     }
 
@@ -959,16 +963,16 @@ void MainWindow::buildMenus() {
     // Top-level entry of its own (like About/Donate) rather than buried in
     // File. The menu-bar item is a separate shortcut-less action: a QMenuBar
     // renders a top-level action's shortcut next to its text ("Settings
-    // Ctrl+,"). The Ctrl+, chord lives on m_openSettingsTabAction instead,
+    // Ctrl+,"). The Ctrl+, chord lives on m_openSettingsAction instead,
     // added to the window itself so it also works with the menu bar hidden
     // (compact chrome / fullscreen).
     auto* settingsMenuBarAction = menuBar()->addAction(tr("&Settings"));
-    connect(settingsMenuBarAction, &QAction::triggered, this, &MainWindow::onOpenSettingsTab);
+    connect(settingsMenuBarAction, &QAction::triggered, this, &MainWindow::onOpenSettings);
 
-    m_openSettingsTabAction = new QAction(tr("&Settings"), this);
-    m_openSettingsTabAction->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_Comma));
-    connect(m_openSettingsTabAction, &QAction::triggered, this, &MainWindow::onOpenSettingsTab);
-    addAction(m_openSettingsTabAction);
+    m_openSettingsAction = new QAction(tr("&Settings"), this);
+    m_openSettingsAction->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_Comma));
+    connect(m_openSettingsAction, &QAction::triggered, this, &MainWindow::onOpenSettings);
+    addAction(m_openSettingsAction);
 
     // Same split as Settings above: a shortcut-less top-level menu-bar entry,
     // plus a window-level action carrying Ctrl+Shift+H so the chord still
@@ -1125,7 +1129,7 @@ void MainWindow::applyUserMode(UserModeManager::UserMode mode) {
         // Also return from offline content when Dashboard was already selected.
         onRibbonTabChanged(m_dashboardTabIndex);
         // Everything past the fixed Dashboard/Devices tabs (offline logs,
-        // OTA, BTP Traffic, Settings) is closed outright rather than left
+        // OTA, BTP Traffic) is closed outright rather than left
         // hidden behind the now-invisible tab bar -- "View as user" included.
         // Walked back to front: each close shifts the indices after it.
         for (int i = m_ribbon->count() - 1; i >= 0; --i) {
@@ -1167,6 +1171,10 @@ void MainWindow::applyUserMode(UserModeManager::UserMode mode) {
     }
 
     updateAccessMenu();
+
+    if (m_settingsPage) {
+        m_settingsPage->setDeveloperMode(isDeveloper);
+    }
 
     // No-op in Developer mode (see its own comment) -- in User mode, this is
     // what actually replaces whatever breakpoint was last selected manually
@@ -2207,8 +2215,6 @@ void MainWindow::onRibbonTabChanged(int index) {
         activeContent = m_otaTab;
     } else if (currentPage != nullptr && currentPage == m_btpMonitorTabPage) {
         activeContent = m_btpMonitorTab;
-    } else if (currentPage != nullptr && currentPage == m_settingsTabPage) {
-        activeContent = m_settingsTab;
     } else if (currentPage != nullptr) {
         for (const OpenLogTab& tab : m_openLogTabs) {
             if (tab.ribbonPage == currentPage) {
@@ -3281,10 +3287,6 @@ void MainWindow::onLogTabCloseRequested(int index) {
         onBtpMonitorTabCloseRequested(index);
         return;
     }
-    if (page != nullptr && page == m_settingsTabPage) {
-        onSettingsTabCloseRequested(index);
-        return;
-    }
     for (int i = 0; i < m_openLogTabs.size(); ++i) {
         if (m_openLogTabs[i].ribbonPage != page) {
             continue;
@@ -3401,51 +3403,30 @@ void MainWindow::onBtpMonitorTabCloseRequested(int index) {
     m_btpMonitorTabPage = nullptr;
 }
 
-void MainWindow::onOpenSettingsTab() {
-    if (m_settingsTab != nullptr) {
-        for (int i = 0; i < m_ribbon->count(); ++i) {
-            if (m_ribbon->pageAt(i) == m_settingsTabPage) {
-                m_ribbon->setCurrentIndex(i);
-                break;
-            }
-        }
-        return;
+void MainWindow::onOpenSettings() {
+    if (!m_settingsWindow) {
+        m_settingsWindow = new QDialog(this);
+        m_settingsWindow->setWindowTitle(tr("Settings"));
+        m_settingsWindow->setAttribute(Qt::WA_DeleteOnClose);
+        m_settingsWindow->resize(900, 640);
+        // SettingsPage keeps its own margins -- the window adds none, so it
+        // looks exactly like it did as a tab.
+        auto* layout = new QVBoxLayout(m_settingsWindow);
+        layout->setContentsMargins(0, 0, 0, 0);
+        m_settingsPage = new SettingsPage(m_settingsWindow);
+        layout->addWidget(m_settingsPage);
+        connect(m_settingsPage, &SettingsPage::clearRecentProjectsRequested, this,
+                &MainWindow::onClearRecentFiles);
+        connect(m_settingsPage, &SettingsPage::restartRequested, this,
+                &MainWindow::restartApplication);
+        connect(m_settingsPage, &SettingsPage::checkForUpdatesRequested, this,
+                [this] { checkForUpdates(/*manual=*/true); });
     }
-
-    m_settingsTab = new SettingsPage(this);
-    connect(m_settingsTab, &SettingsPage::clearRecentProjectsRequested, this,
-            &MainWindow::onClearRecentFiles);
-    connect(m_settingsTab, &SettingsPage::restartRequested, this, [] {
-        QProcess::startDetached(QCoreApplication::applicationFilePath(),
-                                QCoreApplication::arguments().mid(1));
-        QCoreApplication::quit();
-    });
-    connect(m_settingsTab, &SettingsPage::checkForUpdatesRequested, this,
-            [this] { checkForUpdates(/*manual=*/true); });
-    m_contentStack->addWidget(m_settingsTab);
-
-    // An empty ribbon page: this tab carries no ribbon buttons of its own, the
-    // page just gives it a slot in Ribbon's stack and a stable lookup key
-    // (m_settingsTabPage) -- same trick as m_otaTabPage / m_btpMonitorTabPage.
-    auto* page = new QWidget(this);
-    page->setObjectName("ribbonPage");
-    page->setFixedHeight(kRibbonPageHeight);
-
-    const int index = m_ribbon->addTab(tr("Settings"), page, /*enabled=*/true, QString(),
-                                       /*closable=*/true);
-    m_settingsTabPage = page;
-    m_ribbon->setCurrentIndex(index);
-}
-
-void MainWindow::onSettingsTabCloseRequested(int index) {
-    if (m_settingsTab == nullptr || m_ribbon->pageAt(index) != m_settingsTabPage) {
-        return;
-    }
-    removeRibbonTab(index);
-    m_contentStack->removeWidget(m_settingsTab);
-    m_settingsTab->deleteLater();
-    m_settingsTab = nullptr;
-    m_settingsTabPage = nullptr;
+    // Embedded, the Page top bar already reads "<- Settings" -- the page's
+    // own big heading would just repeat it.
+    m_settingsPage->setTitleVisible(!DialogPresenter::embedded());
+    m_settingsPage->setDeveloperMode(developerUiActive());
+    DialogPresenter::show(m_settingsWindow, DialogPresenter::Style::Page);
 }
 
 void MainWindow::onDeviceScriptRequested(const QString& deviceId) {
@@ -3621,7 +3602,7 @@ void MainWindow::onShowKeyboardShortcuts() {
                              Row{tr("Open log offline"), keysOf(m_openLogFileAction)},
                              Row{tr("Upload firmware (OTA)"), keysOf(m_openOtaTabAction)},
                              Row{tr("BTP traffic monitor"), keysOf(m_openBtpMonitorAction)},
-                             Row{tr("Settings"), keysOf(m_openSettingsTabAction)}}});
+                             Row{tr("Settings"), keysOf(m_openSettingsAction)}}});
 
     sections.append(Section{
         tr("Layout & widgets"),
@@ -3749,20 +3730,11 @@ void MainWindow::checkForUpdates(bool manual) {
 void MainWindow::onUpdateAvailable(const UpdateInfo& info) {
     AppSettings& settings = AppSettings::instance();
     settings.setUpdateLastCheckEpochMs(QDateTime::currentMSecsSinceEpoch());
-    if (m_settingsTab != nullptr) {
-        m_settingsTab->setUpdateStatusText(tr("Update available: v%1").arg(info.version));
-    }
-
-    // A silently-run startup check respects a version the user already
-    // dismissed; a manual "Check now" click always shows the dialog again --
-    // the user asked, so it's not a repeat interruption.
-    if (!m_updateCheckWasManual && info.version == settings.updateSkippedVersion()) {
-        return;
+    if (m_settingsPage) {
+        m_settingsPage->setUpdateStatusText(tr("Update available: v%1").arg(info.version));
     }
 
     UpdateAvailableDialog dialog(info, this);
-    connect(&dialog, &UpdateAvailableDialog::skipRequested, &settings,
-            [info] { AppSettings::instance().setUpdateSkippedVersion(info.version); });
     connect(&dialog, &UpdateAvailableDialog::updateRequested, this,
             [this, info] { startUpdateDownload(info); });
     DialogPresenter::exec(dialog, DialogPresenter::Style::Card);
@@ -3770,8 +3742,8 @@ void MainWindow::onUpdateAvailable(const UpdateInfo& info) {
 
 void MainWindow::onUpdateUpToDate() {
     AppSettings::instance().setUpdateLastCheckEpochMs(QDateTime::currentMSecsSinceEpoch());
-    if (m_settingsTab != nullptr) {
-        m_settingsTab->setUpdateStatusText(tr("Up to date (v%1)").arg(kVersion));
+    if (m_settingsPage) {
+        m_settingsPage->setUpdateStatusText(tr("Up to date (v%1)").arg(kVersion));
     }
     if (m_updateCheckWasManual) {
         postStatus(tr("TraceView is up to date."), 4000, StatusSeverity::Info);
@@ -3786,7 +3758,8 @@ void MainWindow::onUpdateCheckFailed(const QString& reason) {
 }
 
 void MainWindow::startUpdateDownload(const UpdateInfo& info) {
-#if defined(Q_OS_LINUX)
+    // Q_OS_LINUX is defined on Android too, which has no AppImage.
+#if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
     if (qEnvironmentVariableIsEmpty("APPIMAGE")) {
         DialogPresenter::information(this, tr("Update"),
                                      tr("Automatic installation requires running an AppImage. "
@@ -3818,10 +3791,40 @@ void MainWindow::startUpdateDownload(const UpdateInfo& info) {
 void MainWindow::onUpdateDownloadFinished(const QString& filePath) {
     QString reason;
     if (UpdateInstaller::install(filePath, &reason)) {
+#if defined(Q_OS_ANDROID)
+        // The system installer is now on screen; Android stops TraceView
+        // itself once the user confirms, so nothing to quit here.
+        postStatus(tr("Confirm the installation in the Android installer."), 5000,
+                   StatusSeverity::Info);
+#else
         QCoreApplication::quit();
+#endif
         return;
     }
     DialogPresenter::warning(this, tr("Update"), reason);
+}
+
+void MainWindow::restartApplication() {
+#if defined(Q_OS_ANDROID)
+    // Android has no way for an app to relaunch itself: startDetached() on
+    // the app's own .so silently does nothing, so a desktop-style restart
+    // just closed TraceView for good. Instead the user closes it and opens
+    // it again -- or keeps working and gets the change on the next launch,
+    // since everything that needs a restart is already persisted.
+    if (DialogPresenter::confirm(
+            this, tr("Close TraceView"),
+            tr("TraceView needs to be closed and opened again to apply these changes. "
+               "After closing, open it again from your apps.\n\n"
+               "Choose Later to keep working -- the changes will apply the next time "
+               "you open TraceView."),
+            tr("Close App"), tr("Later"))) {
+        QCoreApplication::quit();
+    }
+#else
+    QProcess::startDetached(QCoreApplication::applicationFilePath(),
+                            QCoreApplication::arguments().mid(1));
+    QCoreApplication::quit();
+#endif
 }
 
 void MainWindow::onUpdateDownloadFailed(const QString& reason) {

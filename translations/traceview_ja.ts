@@ -208,7 +208,7 @@
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="+110"/>
+        <location filename="../lib/core/mainwindow.cpp" line="+111"/>
         <source>TraceView Project (*.tvproj)</source>
         <translation>TraceView プロジェクト (*.tvproj)</translation>
     </message>
@@ -389,7 +389,7 @@
         <translation>&lt;b&gt;JavaScript&lt;/b&gt;。このデバイスの実際のトラフィックに対してライブで実行されます。&lt;br&gt;&lt;br&gt;&lt;b&gt;トラフィックに反応するには次を定義します:&lt;/b&gt;&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;onTelemetry(sample)&lt;/code&gt; -- 他の場所 (例: ダッシュボードのチャート) で既に購読されているテレメトリ値ごとに呼ばれます。&lt;code&gt;sample&lt;/code&gt; は &lt;code&gt;topicId&lt;/code&gt;、&lt;code&gt;fieldId&lt;/code&gt;、&lt;code&gt;elementIndex&lt;/code&gt;、&lt;code&gt;value&lt;/code&gt;、&lt;code&gt;timestampUs&lt;/code&gt; を持ちます。&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;onTerminal(text)&lt;/code&gt; -- このデバイスのコンソール/シリアルチャンネルが返すテキストの断片ごとに呼ばれます。&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;onConnectionChange(connected)&lt;/code&gt; -- このデバイスが接続または切断したときに呼ばれます。&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;onStatus(text, severity)&lt;/code&gt; -- 単発のステータス更新 (セッション確立/失敗、購読拒否、sendCommand() の結果など) で呼ばれます -- ステータスバーに表示されるのと同じテキストです。&lt;code&gt;severity&lt;/code&gt; は &lt;code&gt;&quot;info&quot;&lt;/code&gt;、&lt;code&gt;&quot;success&quot;&lt;/code&gt;、&lt;code&gt;&quot;warning&quot;&lt;/code&gt;、&lt;code&gt;&quot;error&quot;&lt;/code&gt; のいずれかです。&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;onDeviceInfo(info)&lt;/code&gt; -- このデバイスが情報ブロック (ファームウェアバージョン、チップ、パーティションなど) を報告したときに呼ばれます。&lt;code&gt;info&lt;/code&gt; は &lt;code&gt;{key, label, value}&lt;/code&gt; の配列です。&lt;br&gt;&lt;br&gt;&lt;b&gt;いつでも呼び出せるもの:&lt;/b&gt;&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;device.log(text)&lt;/code&gt; -- 出力ペインに書き込みます。&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;device.sendCommand(text)&lt;/code&gt; -- このデバイスにコマンドを送信します。&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;device.sendTerminal(text)&lt;/code&gt; -- コンソールチャンネル経由でテキストを送信します。&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;device.setInterval(fn, ms)&lt;/code&gt; / &lt;code&gt;device.clearInterval(id)&lt;/code&gt; -- キャンセルされるまで &lt;code&gt;ms&lt;/code&gt; ミリ秒ごとに &lt;code&gt;fn&lt;/code&gt; を実行します。&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;device.setTimeout(fn, ms)&lt;/code&gt; / &lt;code&gt;device.clearTimeout(id)&lt;/code&gt; -- &lt;code&gt;ms&lt;/code&gt; ミリ秒後に &lt;code&gt;fn&lt;/code&gt; を 1 回実行します。</translation>
     </message>
     <message>
-        <location filename="../lib/updater/updatechecker.cpp" line="+46"/>
+        <location filename="../lib/updater/updatechecker.cpp" line="+49"/>
         <source>No published releases found.</source>
         <translation>公開済みのリリースが見つかりません。</translation>
     </message>
@@ -399,17 +399,29 @@
         <translation>最新リリースのバージョンを解析できませんでした。</translation>
     </message>
     <message>
-        <location filename="../lib/updater/updateinstaller.cpp" line="+21"/>
+        <location filename="../lib/updater/updateinstaller.cpp" line="+24"/>
         <source>Updates are managed by Flatpak. Use &apos;flatpak update&apos;.</source>
         <translation>アップデートは Flatpak で管理されています。&apos;flatpak update&apos; を使用してください。</translation>
     </message>
     <message>
-        <location line="+37"/>
+        <location line="+21"/>
+        <location line="+72"/>
         <source>Downloaded installer not found: %1</source>
         <translation>ダウンロードしたインストーラーが見つかりません: %1</translation>
     </message>
     <message>
-        <location line="+10"/>
+        <location line="-67"/>
+        <location line="+30"/>
+        <source>Couldn&apos;t start the Android package installer.</source>
+        <translation>Android パッケージインストーラーを起動できませんでした。</translation>
+    </message>
+    <message>
+        <location line="-16"/>
+        <source>Couldn&apos;t share the downloaded APK with the package installer.</source>
+        <translation>ダウンロードした APK をパッケージインストーラーに渡せませんでした。</translation>
+    </message>
+    <message>
+        <location line="+63"/>
         <source>Couldn&apos;t write the update script.</source>
         <translation>アップデートスクリプトを書き込めませんでした。</translation>
     </message>
@@ -607,52 +619,43 @@
 <context>
     <name>traceview::BleDiscoveryService</name>
     <message>
-        <location filename="../lib/core/blediscoveryservice.cpp" line="+77"/>
         <source>BLE discovery failed</source>
-        <translation>BLE の検出に失敗しました</translation>
+        <translation type="vanished">BLE の検出に失敗しました</translation>
     </message>
 </context>
 <context>
     <name>traceview::BleTransport</name>
     <message>
-        <location filename="../lib/core/bletransport.cpp" line="+67"/>
         <source>failed to create a BLE controller</source>
-        <translation>BLE コントローラーを作成できませんでした</translation>
+        <translation type="vanished">BLE コントローラーを作成できませんでした</translation>
     </message>
     <message>
-        <location line="+65"/>
         <source>BLE peripheral disconnected before HELLO</source>
-        <translation>HELLO の前に BLE ペリフェラルが切断されました</translation>
+        <translation type="vanished">HELLO の前に BLE ペリフェラルが切断されました</translation>
     </message>
     <message>
-        <location line="+16"/>
         <source>peripheral does not advertise the BTP service</source>
-        <translation>ペリフェラルが BTP サービスをアドバタイズしていません</translation>
+        <translation type="vanished">ペリフェラルが BTP サービスをアドバタイズしていません</translation>
     </message>
     <message>
-        <location line="+5"/>
         <source>failed to create BTP service object</source>
-        <translation>BTP サービスオブジェクトを作成できませんでした</translation>
+        <translation type="vanished">BTP サービスオブジェクトを作成できませんでした</translation>
     </message>
     <message>
-        <location line="+25"/>
         <source>BTP service is missing its RX/TX characteristics</source>
-        <translation>BTP サービスに RX/TX キャラクタリスティックがありません</translation>
+        <translation type="vanished">BTP サービスに RX/TX キャラクタリスティックがありません</translation>
     </message>
     <message>
-        <location line="+7"/>
         <source>TX characteristic has no notification descriptor</source>
-        <translation>TX キャラクタリスティックに通知ディスクリプタがありません</translation>
+        <translation type="vanished">TX キャラクタリスティックに通知ディスクリプタがありません</translation>
     </message>
     <message>
-        <location line="+13"/>
         <source>BLE service error</source>
-        <translation>BLE サービスエラー</translation>
+        <translation type="vanished">BLE サービスエラー</translation>
     </message>
     <message>
-        <location line="+47"/>
         <source>BLE connection timed out</source>
-        <translation>BLE 接続がタイムアウトしました</translation>
+        <translation type="vanished">BLE 接続がタイムアウトしました</translation>
     </message>
 </context>
 <context>
@@ -2208,7 +2211,7 @@ Drops: %2</source>
         <translation>言語(&amp;L)</translation>
     </message>
     <message>
-        <location line="+20"/>
+        <location line="+24"/>
         <source>Restart Required</source>
         <translation>再起動が必要です</translation>
     </message>
@@ -2224,11 +2227,12 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+0"/>
+        <location line="+2867"/>
         <source>Later</source>
         <translation>後で</translation>
     </message>
     <message>
-        <location line="+8"/>
+        <location line="-2860"/>
         <source>&amp;Access</source>
         <translation>アクセス(&amp;A)</translation>
     </message>
@@ -2294,7 +2298,7 @@ Drops: %2</source>
         <translation>開発者モードに入る(&amp;E)...</translation>
     </message>
     <message>
-        <location line="+175"/>
+        <location line="+179"/>
         <source>Add</source>
         <translation>追加</translation>
     </message>
@@ -2345,18 +2349,18 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+18"/>
-        <location line="+2295"/>
+        <location line="+2268"/>
         <source>Undo</source>
         <translation>元に戻す</translation>
     </message>
     <message>
-        <location line="-2293"/>
-        <location line="+2293"/>
+        <location line="-2266"/>
+        <location line="+2266"/>
         <source>Redo</source>
         <translation>やり直し</translation>
     </message>
     <message>
-        <location line="-2252"/>
+        <location line="-2225"/>
         <source>Add Device</source>
         <translation>デバイスを追加</translation>
     </message>
@@ -2392,12 +2396,12 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+29"/>
-        <location line="+2197"/>
+        <location line="+2170"/>
         <source>Fullscreen dashboard (F11)</source>
         <translation>ダッシュボードを全画面表示(F11)</translation>
     </message>
     <message>
-        <location line="-2017"/>
+        <location line="-1990"/>
         <source>Rename Workspace</source>
         <translation>ワークスペースの名前を変更</translation>
     </message>
@@ -2407,12 +2411,12 @@ Drops: %2</source>
         <translation>ワークスペース「%1」の名前を「%2」に変更しました。</translation>
     </message>
     <message>
-        <location line="+2046"/>
+        <location line="+2019"/>
         <source>Update available: v%1</source>
         <translation>アップデートあり: v%1</translation>
     </message>
     <message>
-        <location line="+21"/>
+        <location line="+12"/>
         <source>Up to date (v%1)</source>
         <translation>最新です (v%1)</translation>
     </message>
@@ -2427,16 +2431,16 @@ Drops: %2</source>
         <translation>アップデートの確認に失敗しました: %1</translation>
     </message>
     <message>
-        <location line="+7"/>
+        <location line="+8"/>
         <location line="+9"/>
         <location line="+8"/>
-        <location line="+16"/>
-        <location line="+4"/>
+        <location line="+23"/>
+        <location line="+27"/>
         <source>Update</source>
         <translation>アップデート</translation>
     </message>
     <message>
-        <location line="-36"/>
+        <location line="-66"/>
         <source>Automatic installation requires running an AppImage. Download the AppImage from the release page.</source>
         <translation>自動インストールには AppImage での実行が必要です。リリースページから AppImage をダウンロードしてください。</translation>
     </message>
@@ -2456,13 +2460,37 @@ Drops: %2</source>
         <translation>TraceView %1 をダウンロード中...</translation>
     </message>
     <message>
-        <location line="-2219"/>
-        <location line="+2045"/>
+        <location line="+10"/>
+        <source>Confirm the installation in the Android installer.</source>
+        <translation>Android インストーラーでインストールを確認してください。</translation>
+    </message>
+    <message>
+        <location line="+18"/>
+        <source>Close TraceView</source>
+        <translation>TraceView を閉じる</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>TraceView needs to be closed and opened again to apply these changes. After closing, open it again from your apps.
+
+Choose Later to keep working -- the changes will apply the next time you open TraceView.</source>
+        <translation>これらの変更を適用するには、TraceView を閉じてから再度開く必要があります。閉じた後、アプリ一覧から再度開いてください。
+
+「後で」を選ぶと作業を続けられます -- 変更は次回 TraceView を開いたときに適用されます。</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Close App</source>
+        <translation>アプリを閉じる</translation>
+    </message>
+    <message>
+        <location line="-2217"/>
+        <location line="+2018"/>
         <source>Devices</source>
         <translation>デバイス</translation>
     </message>
     <message>
-        <location line="-1970"/>
+        <location line="-1943"/>
         <source>Subscriptions</source>
         <translation>購読</translation>
     </message>
@@ -2504,23 +2532,23 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+71"/>
-        <location line="+1755"/>
+        <location line="+1728"/>
         <source>Add widget</source>
         <translation>ウィジェットを追加</translation>
     </message>
     <message>
-        <location line="-1752"/>
+        <location line="-1725"/>
         <source>Remove selected widget (%1)</source>
         <translation>選択したウィジェットを削除(%1)</translation>
     </message>
     <message>
         <location line="+3"/>
-        <location line="+1762"/>
+        <location line="+1735"/>
         <source>Add device</source>
         <translation>デバイスを追加</translation>
     </message>
     <message>
-        <location line="-1759"/>
+        <location line="-1732"/>
         <source>Remove selected device (%1)</source>
         <translation>選択したデバイスを削除(%1)</translation>
     </message>
@@ -2605,7 +2633,7 @@ Drops: %2</source>
         <translation>レイヤー/プロパティパネルを表示</translation>
     </message>
     <message>
-        <location line="+248"/>
+        <location line="+246"/>
         <source>New Device</source>
         <translation>新しいデバイス</translation>
     </message>
@@ -2631,12 +2659,12 @@ Drops: %2</source>
         <translation>(名前なし)</translation>
     </message>
     <message>
-        <location line="-1111"/>
+        <location line="-1109"/>
         <source>Dashboard</source>
         <translation>ダッシュボード</translation>
     </message>
     <message>
-        <location line="+1323"/>
+        <location line="+1321"/>
         <source>%1: this BLE address now answers as a different robot (expected %2, got %3)</source>
         <translation>%1: この BLE アドレスは別のロボットとして応答しています (期待値 %2、実際 %3)</translation>
     </message>
@@ -2673,12 +2701,12 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+14"/>
-        <location line="+278"/>
+        <location line="+253"/>
         <source>Open Project</source>
         <translation>プロジェクトを開く</translation>
     </message>
     <message>
-        <location line="-269"/>
+        <location line="-244"/>
         <source>Open Log File</source>
         <translation>ログファイルを開く</translation>
     </message>
@@ -2688,7 +2716,7 @@ Drops: %2</source>
         <translation>BTP ログ (*.blog)</translation>
     </message>
     <message>
-        <location line="+97"/>
+        <location line="+93"/>
         <source>OTA Update</source>
         <translation>OTA アップデート</translation>
     </message>
@@ -2698,8 +2726,8 @@ Drops: %2</source>
         <translation>BTP トラフィック</translation>
     </message>
     <message>
-        <location line="+47"/>
-        <location line="+190"/>
+        <location line="+20"/>
+        <location line="+196"/>
         <source>Settings</source>
         <translation>設定</translation>
     </message>
@@ -3432,49 +3460,49 @@ Drops: %2</source>
 <context>
     <name>traceview::SettingsPage</name>
     <message>
-        <location filename="../lib/core/settingspage.cpp" line="+199"/>
+        <location filename="../lib/core/settingspage.cpp" line="+198"/>
         <source>Settings</source>
         <translation>設定</translation>
     </message>
     <message>
-        <location line="+26"/>
-        <location line="+41"/>
+        <location line="+33"/>
+        <location line="+42"/>
         <source>General</source>
         <translation>一般</translation>
     </message>
     <message>
-        <location line="-41"/>
-        <location line="+65"/>
+        <location line="-42"/>
+        <location line="+66"/>
         <source>Appearance</source>
         <translation>外観</translation>
     </message>
     <message>
-        <location line="-65"/>
-        <location line="+112"/>
+        <location line="-66"/>
+        <location line="+113"/>
         <source>Dashboard</source>
         <translation>ダッシュボード</translation>
     </message>
     <message>
-        <location line="-111"/>
-        <location line="+162"/>
+        <location line="-112"/>
+        <location line="+163"/>
         <source>Terminal</source>
         <translation>ターミナル</translation>
     </message>
     <message>
-        <location line="-162"/>
-        <location line="+189"/>
+        <location line="-163"/>
+        <location line="+190"/>
         <source>Connections</source>
         <translation>接続</translation>
     </message>
     <message>
-        <location line="-189"/>
-        <location line="+208"/>
+        <location line="-190"/>
+        <location line="+209"/>
         <source>Diagnostics</source>
         <translation>診断</translation>
     </message>
     <message>
-        <location line="-207"/>
-        <location line="+259"/>
+        <location line="-208"/>
+        <location line="+260"/>
         <location line="+5"/>
         <source>Updates</source>
         <translation>アップデート</translation>
@@ -3760,17 +3788,27 @@ Drops: %2</source>
         <translation>今すぐ確認</translation>
     </message>
     <message>
-        <location line="+43"/>
+        <location line="+45"/>
+        <source>Close app</source>
+        <translation>アプリを閉じる</translation>
+    </message>
+    <message>
+        <location line="+2"/>
         <source>Restart now</source>
         <translation>今すぐ再起動</translation>
     </message>
     <message>
-        <location line="+93"/>
+        <location line="+129"/>
+        <source>Close and reopen TraceView to apply language or diagnostics history changes, or they will apply the next time you open it.</source>
+        <translation>言語または診断履歴の変更を適用するには TraceView を閉じて再度開いてください。そうしない場合は次回起動時に適用されます。</translation>
+    </message>
+    <message>
+        <location line="+4"/>
         <source>Restart TraceView to apply language or diagnostics history changes.</source>
         <translation>言語や診断履歴の変更を適用するには TraceView を再起動してください。</translation>
     </message>
     <message>
-        <location line="+1"/>
+        <location line="+4"/>
         <source>Changes apply immediately unless noted otherwise.</source>
         <translation>特に記載がない限り、変更はすぐに適用されます。</translation>
     </message>
@@ -4028,34 +4066,45 @@ Drops: %2</source>
 <context>
     <name>traceview::UpdateAvailableDialog</name>
     <message>
-        <location filename="../lib/core/updateavailabledialog.cpp" line="+15"/>
+        <location filename="../lib/core/updateavailabledialog.cpp" line="+14"/>
         <source>Update Available</source>
         <translation>アップデートがあります</translation>
     </message>
     <message>
+        <location line="+2"/>
+        <source>&lt;b&gt;Update available&lt;/b&gt;</source>
+        <translation>&lt;b&gt;アップデートがあります&lt;/b&gt;</translation>
+    </message>
+    <message>
         <location line="+4"/>
+        <source>New version: v%1&lt;br&gt;Your version: v%2</source>
+        <translation>新しいバージョン: v%1&lt;br&gt;現在のバージョン: v%2</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Later</source>
+        <translation>後で</translation>
+    </message>
+    <message>
         <source>&lt;b&gt;TraceView %1&lt;/b&gt; is available (you have v%2).</source>
-        <translation>&lt;b&gt;TraceView %1&lt;/b&gt; が利用可能です (現在 v%2)。</translation>
+        <translation type="vanished">&lt;b&gt;TraceView %1&lt;/b&gt; が利用可能です (現在 v%2)。</translation>
     </message>
     <message>
-        <location line="+6"/>
         <source>No release notes provided.</source>
-        <translation>リリースノートはありません。</translation>
+        <translation type="vanished">リリースノートはありません。</translation>
     </message>
     <message>
-        <location line="+5"/>
+        <location line="+1"/>
         <source>Update Now</source>
         <translation>今すぐアップデート</translation>
     </message>
     <message>
-        <location line="+2"/>
         <source>Skip This Version</source>
-        <translation>このバージョンをスキップ</translation>
+        <translation type="vanished">このバージョンをスキップ</translation>
     </message>
     <message>
-        <location line="+1"/>
         <source>Remind Me Later</source>
-        <translation>後で通知</translation>
+        <translation type="vanished">後で通知</translation>
     </message>
 </context>
 <context>
@@ -4094,7 +4143,7 @@ Drops: %2</source>
         <translation>%1 のチェックサムが一致しません -- ダウンロードが破損している可能性があります。</translation>
     </message>
     <message>
-        <location line="+12"/>
+        <location line="+20"/>
         <source>Couldn&apos;t write %1</source>
         <translation>%1 を書き込めませんでした</translation>
     </message>

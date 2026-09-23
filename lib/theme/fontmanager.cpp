@@ -22,9 +22,23 @@ FontManager::FontManager() {
     }
 
     registerFont({"system", QCoreApplication::translate("FontManager", "System Default"), ""});
-    registerFont({"consolas", "Consolas", "Consolas"});
-    registerFont({"georgia", "Georgia", "Georgia"});
-    registerFont({"verdana", "Verdana", "Verdana"});
+    // Fallbacks: Android system fonts first, then common Linux ones.
+    registerFont({"consolas",
+                  "Consolas",
+                  "Consolas",
+                  {"Droid Sans Mono", "Cutive Mono", "DejaVu Sans Mono", "Liberation Mono",
+                   "monospace"},
+                  QFont::Monospace});
+    registerFont({"georgia",
+                  "Georgia",
+                  "Georgia",
+                  {"Noto Serif", "Droid Serif", "DejaVu Serif", "Liberation Serif", "serif"},
+                  QFont::Serif});
+    registerFont({"verdana",
+                  "Verdana",
+                  "Verdana",
+                  {"DejaVu Sans", "Noto Sans", "Droid Sans", "sans-serif"},
+                  QFont::SansSerif});
 
     const QSettings settings;
     const QString savedId = settings.value(kSettingsKey, kDefaultFontId).toString();
@@ -62,12 +76,7 @@ void FontManager::setFont(const QString& id) {
 
 void FontManager::applyCurrentFont() {
     if (auto* app = qApp) {
-        const FontOption& font = currentFont();
-        QFont f = m_baseFont;
-        if (!font.family.isEmpty()) {
-            f.setFamily(font.family);
-        }
-        app->setFont(f);
+        app->setFont(fontForOption(m_baseFont, currentFont()));
 
         // QApplication::setFont() alone doesn't repolish widgets that were
         // already styled by the app-wide QSS (see ThemeManager) -- their
@@ -86,6 +95,17 @@ int FontManager::indexOf(const QString& id) const {
         }
     }
     return -1;
+}
+
+QFont fontForOption(QFont base, const FontOption& option) {
+    if (option.family.isEmpty()) {
+        return base;
+    }
+    // setFamilies (not setFamily): the family list is what lets the
+    // fallbacks win over Qt's generic substitution when `family` is missing.
+    base.setFamilies(QStringList{option.family} + option.fallbackFamilies);
+    base.setStyleHint(option.styleHint);
+    return base;
 }
 
 QFont scaledFont(QFont font, qreal factor) {

@@ -7,7 +7,10 @@
 #include <QObject>
 #include <QProcess>
 
-#if defined(Q_OS_LINUX)
+#if defined(Q_OS_ANDROID)
+#include <QJniEnvironment>
+#include <QJniObject>
+#elif defined(Q_OS_LINUX)
 #include <QSaveFile>
 #include <QProcessEnvironment>
 #endif
@@ -21,6 +24,62 @@ bool UpdateInstaller::install(const QString&, QString* reason) {
         *reason = QObject::tr("Updates are managed by Flatpak. Use 'flatpak update'.");
     }
     return false;
+}
+
+#elif defined(Q_OS_ANDROID)
+
+// An app can't replace its own APK: this hands the verified file to the
+// system package installer (ACTION_VIEW on a FileProvider content:// URI --
+// Android 7+ rejects bare file:// URIs across apps). Qt's own
+// ${applicationId}.qtprovider FileProvider serves it, which is why
+// UpdateDownloader saves under files/ on Android. The installer takes it
+// from there: it asks for the "install unknown apps" permission the first
+// time (REQUEST_INSTALL_PACKAGES in android/AndroidManifest.xml), then
+// kills this process itself when it replaces the package.
+bool UpdateInstaller::install(const QString& downloadedFilePath, QString* reason) {
+    const auto fail = [reason](const QString& message) {
+        if (reason) *reason = message;
+        return false;
+    };
+    if (!QFileInfo::exists(downloadedFilePath)) {
+        return fail(QObject::tr("Downloaded installer not found: %1").arg(downloadedFilePath));
+    }
+
+    const QJniObject context = QNativeInterface::QAndroidApplication::context();
+    if (!context.isValid()) {
+        return fail(QObject::tr("Couldn't start the Android package installer."));
+    }
+    QJniEnvironment env;
+
+    const QString packageName =
+        context.callObjectMethod("getPackageName", "()Ljava/lang/String;").toString();
+    const QJniObject authority = QJniObject::fromString(packageName + QStringLiteral(".qtprovider"));
+    const QJniObject path = QJniObject::fromString(downloadedFilePath);
+    const QJniObject file("java/io/File", "(Ljava/lang/String;)V", path.object<jstring>());
+    const QJniObject uri = QJniObject::callStaticObjectMethod(
+        "androidx/core/content/FileProvider", "getUriForFile",
+        "(Landroid/content/Context;Ljava/lang/String;Ljava/io/File;)Landroid/net/Uri;",
+        context.object(), authority.object<jstring>(), file.object());
+    if (env.checkAndClearExceptions() || !uri.isValid()) {
+        return fail(QObject::tr("Couldn't share the downloaded APK with the package installer."));
+    }
+
+    const QJniObject action = QJniObject::fromString(QStringLiteral("android.intent.action.VIEW"));
+    const QJniObject mimeType =
+        QJniObject::fromString(QStringLiteral("application/vnd.android.package-archive"));
+    QJniObject intent("android/content/Intent", "(Ljava/lang/String;)V", action.object<jstring>());
+    intent.callObjectMethod("setDataAndType",
+                            "(Landroid/net/Uri;Ljava/lang/String;)Landroid/content/Intent;",
+                            uri.object(), mimeType.object<jstring>());
+    constexpr jint kFlagGrantReadUriPermission = 0x00000001;
+    constexpr jint kFlagActivityNewTask = 0x10000000;
+    intent.callObjectMethod("addFlags", "(I)Landroid/content/Intent;",
+                            kFlagGrantReadUriPermission | kFlagActivityNewTask);
+    context.callMethod<void>("startActivity", "(Landroid/content/Intent;)V", intent.object());
+    if (env.checkAndClearExceptions()) {
+        return fail(QObject::tr("Couldn't start the Android package installer."));
+    }
+    return true;
 }
 
 #elif defined(Q_OS_WIN)

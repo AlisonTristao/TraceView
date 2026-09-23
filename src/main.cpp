@@ -1,5 +1,7 @@
 #include <QApplication>
+#include <QDialog>
 #include <QIcon>
+#include <QPointer>
 #include <QStyleFactory>
 
 #include "core/applog.h"
@@ -57,6 +59,42 @@ int main(int argc, char* argv[]) {
 
     traceview::MainWindow window;
     window.show();
+
+#if defined(Q_OS_ANDROID)
+    // Locking the screen destroys the Activity's surface; the one Android
+    // hands back on unlock starts out empty and stayed black for good, since
+    // nothing asked the widgets to paint into it again. Floating panels
+    // (PanelDockController's Qt::Tool top-levels) each own a surface of
+    // their own too, and one coming back blank on top of the main window
+    // blacks it out the same way -- so they're hidden while suspended and
+    // shown again once the main surface is back.
+    QObject::connect(qApp, &QGuiApplication::applicationStateChanged, &window,
+                     [&window](Qt::ApplicationState state) {
+                         static QList<QPointer<QWidget>> hiddenPanels;
+                         if (state == Qt::ApplicationSuspended) {
+                             for (QWidget* w : QApplication::topLevelWidgets()) {
+                                 if (w != &window && w->isVisible() &&
+                                     w->windowType() == Qt::Tool &&
+                                     !qobject_cast<QDialog*>(w)) {
+                                     hiddenPanels.append(w);
+                                     w->hide();
+                                 }
+                             }
+                         } else if (state == Qt::ApplicationActive) {
+                             for (const QPointer<QWidget>& w : std::as_const(hiddenPanels)) {
+                                 if (w) {
+                                     w->show();
+                                 }
+                             }
+                             hiddenPanels.clear();
+                             for (QWidget* w : QApplication::topLevelWidgets()) {
+                                 if (w->isVisible()) {
+                                     w->update();
+                                 }
+                             }
+                         }
+                     });
+#endif
 
     return QApplication::exec();
 }
