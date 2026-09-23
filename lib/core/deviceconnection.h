@@ -2,6 +2,7 @@
 
 #include <QByteArray>
 #include <QObject>
+#include <QPointer>
 #include <QString>
 #include <QtGlobal>
 
@@ -50,6 +51,13 @@ enum class ConnectionPhase {
 // recovering from an unplug/replug. disconnectFrom() (or clearing the
 // target via connectTo()) is the only thing that turns the intent back off;
 // a transport error/drop does not.
+//
+// What the rest of the app sees (connectionStateChanged) is tracked
+// separately again, in m_reportedConnected, and the retry timer keeps
+// reconciling it against the transport even after a successful connect: a
+// transition the phase gate dropped (or one that raced a re-entrant
+// connectTo()/connectVia() from MainWindow::onDeviceUpdated) must not leave
+// a device painted offline while its link is actually up, or vice versa.
 class DeviceConnection : public QObject {
     Q_OBJECT
 
@@ -203,6 +211,15 @@ signals:
 
 private:
     void setConnectionPhase(ConnectionPhase phase);
+    // The single place connectionStateChanged is emitted from: deduplicated
+    // against m_reportedConnected, and moves the phase along with it
+    // (connected -> NegotiatingBtp, or Ready for a hub child; disconnected ->
+    // Disconnected).
+    void reportConnected(bool connected);
+    // A hub child has no attempt of its own -- its state is a pure function
+    // of its parent's (HubTransport::isConnected()) and the intent. Brings
+    // the reported state and phase in line with that, idempotently.
+    void syncHubState();
     void attemptReconnect();
     // Intentional close path. Unlike session-recovery recycling, this first
     // asks an established serial BTP session to close and drains that final
@@ -228,6 +245,16 @@ private:
     bool m_shouldBeConnected = false;
     bool m_transportAvailable = true;
     bool m_attemptInProgress = false;
+    // Last value emitted through connectionStateChanged -- see
+    // reportConnected().
+    bool m_reportedConnected = false;
+    // What connectVia() last configured, so a repeat call with the same
+    // arguments (MainWindow::reattachHubChildren() runs on every device
+    // update, including every live connected/identity change) is a no-op
+    // instead of knocking an established child back to Connecting.
+    QPointer<DeviceConnection> m_hubParent;
+    quint32 m_hubSelfSourceId = 0;
+    QByteArray m_hubEndpointKey;
     ConnectionPhase m_connectionPhase = ConnectionPhase::Disconnected;
 };
 

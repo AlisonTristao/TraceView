@@ -7,6 +7,7 @@
 #include "core/deviceconnection.h"
 #include "core/hubtransport.h"
 #include "devices/device.h"
+#include "preferences/appsettings.h"
 #include "protocol/btpbackend.h"
 
 using namespace traceview;
@@ -55,6 +56,24 @@ QByteArray espNowFrame(quint32 sourceId, quint32 sequence, const QByteArray& pay
     return QByteArray(reinterpret_cast<const char*>(encoded.data()), int(written));
 }
 
+// Stands in for the parent's physical link (the dongle's serial port), so a
+// parent can be "connected" without hardware. Swapped in through the friend
+// access DeviceConnection grants this fixture.
+class SimulatedTransport : public traceview::Transport {
+public:
+    using Transport::Transport;
+    bool connected = false;
+    bool isConnected() const override {
+        return connected;
+    }
+    bool write(const QByteArray&) override {
+        return connected;
+    }
+    void close() override {
+        connected = false;
+    }
+};
+
 }  // namespace
 
 namespace traceview {
@@ -70,18 +89,212 @@ private slots:
     void closingOneChildLeavesTheParentAndItsSiblingAlone();
     void detachingTheParentDropsTheChild();
     void reattachingDuringParentStateChangeNotifiesChildren();
+    void childConfiguredUnderAReadyParentReportsConnected();
+    void repeatedConnectViaIsANoOp();
+    void childToggledOffAndOnUnderALiveParentComesBack();
+    void childWaitsForTheParentSessionNotJustItsPort();
+    void parentReconnectWithChildrenReattachedMidTransition();
+    void reapplyingTheSameTargetKeepsThePhase();
+    void sessionLossAfterReadyRecyclesTheTransport();
+    void anUnreportedLinkChangeIsReconciledOnTheNextTick();
+
+private:
+    // A Serial DeviceConnection whose transport is a SimulatedTransport and
+    // whose real port is out of the picture, so nothing here ever opens one.
+    static SimulatedTransport* simulateLink(DeviceConnection& parent);
+    static void bringUp(DeviceConnection& parent, SimulatedTransport* link, ConnectionPhase phase);
+    static void bringDown(DeviceConnection& parent, SimulatedTransport* link);
 };
 
-void TestHubTransport::reattachingDuringParentStateChangeNotifiesChildren() {
-    class SimulatedTransport : public Transport {
-    public:
-        using Transport::Transport;
-        bool connected = false;
-        bool isConnected() const override { return connected; }
-        bool write(const QByteArray&) override { return connected; }
-        void close() override { connected = false; }
-    };
+SimulatedTransport* TestHubTransport::simulateLink(DeviceConnection& parent) {
+    auto* link = new SimulatedTransport(&parent);
+    parent.m_transport = link;
+    parent.m_serialTransport = nullptr;
+    parent.m_target = QStringLiteral("SIM");
+    parent.m_baudRate = 115200;
+    parent.m_shouldBeConnected = true;
+    return link;
+}
 
+void TestHubTransport::bringUp(DeviceConnection& parent, SimulatedTransport* link,
+                               ConnectionPhase phase) {
+    link->connected = true;
+    parent.reportConnected(true);  // what the transport lambda does on open
+    parent.setConnectionPhase(phase);
+}
+
+void TestHubTransport::bringDown(DeviceConnection& parent, SimulatedTransport* link) {
+    link->connected = false;
+    parent.reportConnected(false);
+}
+
+// The bug this block is about: a child configured (or loaded, or toggled back
+// on) while the dongle is already up used to be told "connected" in the one
+// phase its own gate threw that away in -- and since nothing ever re-announced
+// it, the card stayed red over a working link.
+void TestHubTransport::childConfiguredUnderAReadyParentReportsConnected() {
+    DeviceConnection parent(CommType::Btp, TransportType::Serial);
+    SimulatedTransport* link = simulateLink(parent);
+    bringUp(parent, link, ConnectionPhase::Ready);
+
+    DeviceConnection child(CommType::Btp, TransportType::HubChannel);
+    QSignalSpy states(&child, &DeviceConnection::connectionStateChanged);
+    child.connectVia(&parent, 0x11111111U, 0x0A0A0A0AU, QByteArray());
+
+    QCOMPARE(states.size(), 1);
+    QCOMPARE(states.at(0).at(0).toBool(), true);
+    QCOMPARE(child.connectionPhase(), ConnectionPhase::Ready);
+}
+
+// MainWindow::reattachHubChildren() runs on every device update, including
+// from inside the parent's own signals. Same arguments must change nothing.
+void TestHubTransport::repeatedConnectViaIsANoOp() {
+    DeviceConnection parent(CommType::Btp, TransportType::Serial);
+    SimulatedTransport* link = simulateLink(parent);
+    bringUp(parent, link, ConnectionPhase::Ready);
+
+    DeviceConnection child(CommType::Btp, TransportType::HubChannel);
+    child.connectVia(&parent, 0x11111111U, 0x0A0A0A0AU, QByteArray());
+    QSignalSpy states(&child, &DeviceConnection::connectionStateChanged);
+    QSignalSpy phases(&child, &DeviceConnection::connectionPhaseChanged);
+
+    for (int i = 0; i < 3; ++i) {
+        child.connectVia(&parent, 0x11111111U, 0x0A0A0A0AU, QByteArray());
+    }
+    QCOMPARE(states.size(), 0);
+    QCOMPARE(phases.size(), 0);
+    QCOMPARE(child.connectionPhase(), ConnectionPhase::Ready);
+}
+
+// Clicking a child's status dot twice with the dongle online.
+void TestHubTransport::childToggledOffAndOnUnderALiveParentComesBack() {
+    DeviceConnection parent(CommType::Btp, TransportType::Serial);
+    SimulatedTransport* link = simulateLink(parent);
+    bringUp(parent, link, ConnectionPhase::Ready);
+
+    DeviceConnection child(CommType::Btp, TransportType::HubChannel);
+    child.connectVia(&parent, 0x11111111U, 0x0A0A0A0AU, QByteArray());
+    QSignalSpy states(&child, &DeviceConnection::connectionStateChanged);
+
+    child.disconnectFrom();
+    QCOMPARE(states.size(), 1);
+    QCOMPARE(states.takeFirst().at(0).toBool(), false);
+    QVERIFY(!child.isConnected());
+
+    child.connectVia(&parent, 0x11111111U, 0x0A0A0A0AU, QByteArray());
+    QCOMPARE(states.size(), 1);
+    QCOMPARE(states.takeFirst().at(0).toBool(), true);
+    QCOMPARE(child.connectionPhase(), ConnectionPhase::Ready);
+}
+
+// The dongle's port being open is not enough: until its own handshake is
+// done it is in console mode and has not re-bound its children.
+void TestHubTransport::childWaitsForTheParentSessionNotJustItsPort() {
+    DeviceConnection parent(CommType::Btp, TransportType::Serial);
+    SimulatedTransport* link = simulateLink(parent);
+    bringUp(parent, link, ConnectionPhase::NegotiatingBtp);
+
+    DeviceConnection child(CommType::Btp, TransportType::HubChannel);
+    QSignalSpy states(&child, &DeviceConnection::connectionStateChanged);
+    child.connectVia(&parent, 0x11111111U, 0x0A0A0A0AU, QByteArray());
+    QCOMPARE(states.size(), 0);
+    QVERIFY(!child.isConnected());
+    QCOMPARE(child.connectionPhase(), ConnectionPhase::Connecting);
+
+    parent.setConnectionPhase(ConnectionPhase::Ready);
+    QCOMPARE(states.size(), 1);
+    QCOMPARE(states.takeFirst().at(0).toBool(), true);
+
+    // The parent dropping takes the child down, but the child keeps wanting
+    // to be online -- it waits, it is not switched off.
+    bringDown(parent, link);
+    QCOMPARE(states.size(), 1);
+    QCOMPARE(states.takeFirst().at(0).toBool(), false);
+    QVERIFY(child.wantsConnection());
+    QCOMPARE(child.connectionPhase(), ConnectionPhase::Connecting);
+}
+
+// The real app's ordering: MainWindow sees the parent's signals first and
+// re-applies every child's target from inside them (DevicesGrid emits
+// deviceUpdated for live state too), before HubTransport's own slot runs.
+void TestHubTransport::parentReconnectWithChildrenReattachedMidTransition() {
+    DeviceConnection parent(CommType::Btp, TransportType::Serial);
+    SimulatedTransport* link = simulateLink(parent);
+    DeviceConnection child(CommType::Btp, TransportType::HubChannel);
+    auto reattach = [&] { child.connectVia(&parent, 0x11111111U, 0x0A0A0A0AU, QByteArray()); };
+    connect(&parent, &DeviceConnection::connectionStateChanged, &child, reattach);
+    connect(&parent, &DeviceConnection::deviceIdentified, &child, reattach);
+    reattach();
+
+    QSignalSpy states(&child, &DeviceConnection::connectionStateChanged);
+    for (int cycle = 0; cycle < 3; ++cycle) {
+        bringUp(parent, link, ConnectionPhase::NegotiatingBtp);
+        QVERIFY(states.isEmpty());
+        emit parent.backend()->deviceIdentified(QStringLiteral("BTP/1"),
+                                                QStringLiteral("0x0D0D0D0D"));
+        QCOMPARE(parent.connectionPhase(), ConnectionPhase::Ready);
+        QCOMPARE(states.size(), 1);
+        QCOMPARE(states.takeFirst().at(0).toBool(), true);
+
+        bringDown(parent, link);
+        QCOMPARE(states.size(), 1);
+        QCOMPARE(states.takeFirst().at(0).toBool(), false);
+    }
+}
+
+// Re-applying an unchanged target (every deviceUpdated does) used to knock a
+// handshaking parent back to Connecting, where both the Ready promotion and a
+// later drop were ignored.
+void TestHubTransport::reapplyingTheSameTargetKeepsThePhase() {
+    DeviceConnection parent(CommType::Btp, TransportType::Serial);
+    SimulatedTransport* link = simulateLink(parent);
+    bringUp(parent, link, ConnectionPhase::NegotiatingBtp);
+
+    parent.connectTo(QStringLiteral("SIM"), 115200);
+    QCOMPARE(parent.connectionPhase(), ConnectionPhase::NegotiatingBtp);
+
+    emit parent.backend()->deviceIdentified(QStringLiteral("BTP/1"), QStringLiteral("0x0D0D0D0D"));
+    QCOMPARE(parent.connectionPhase(), ConnectionPhase::Ready);
+
+    parent.connectTo(QStringLiteral("SIM"), 115200);
+    QCOMPARE(parent.connectionPhase(), ConnectionPhase::Ready);
+    QVERIFY(link->connected);
+}
+
+// A session that dies after it was established (the dongle back to BTP/1
+// CONSOLE) must recycle the port, not leave it open and mute.
+void TestHubTransport::sessionLossAfterReadyRecyclesTheTransport() {
+    if (!AppSettings::instance().autoReconnect()) {
+        QSKIP("auto-reconnect is disabled in this machine's settings");
+    }
+    DeviceConnection parent(CommType::Btp, TransportType::Serial);
+    SimulatedTransport* link = simulateLink(parent);
+    bringUp(parent, link, ConnectionPhase::Ready);
+
+    emit parent.backend()->sessionRecoveryNeeded();
+    QVERIFY(!link->connected);
+}
+
+// Safety net: however a transition got lost, the retry tick re-announces the
+// link's real state.
+void TestHubTransport::anUnreportedLinkChangeIsReconciledOnTheNextTick() {
+    DeviceConnection parent(CommType::Btp, TransportType::Serial);
+    SimulatedTransport* link = simulateLink(parent);
+    link->connected = true;  // up, but nobody was told
+    QSignalSpy states(&parent, &DeviceConnection::connectionStateChanged);
+
+    parent.attemptReconnect();
+    QCOMPARE(states.size(), 1);
+    QCOMPARE(states.at(0).at(0).toBool(), true);
+    QCOMPARE(parent.connectionPhase(), ConnectionPhase::NegotiatingBtp);
+
+    link->connected = false;  // and down, again without a word
+    parent.attemptReconnect();
+    QCOMPARE(states.size(), 2);
+    QCOMPARE(states.at(1).at(0).toBool(), false);
+}
+
+void TestHubTransport::reattachingDuringParentStateChangeNotifiesChildren() {
     DeviceConnection parent(CommType::Btp, TransportType::Serial);
     auto* link = new SimulatedTransport(&parent);
     parent.m_transport = link;
@@ -95,6 +308,10 @@ void TestHubTransport::reattachingDuringParentStateChangeNotifiesChildren() {
 
     for (bool connected : {true, false, true}) {
         link->connected = connected;
+        // A child rides the parent's session, not just its port: Ready is
+        // what connects it.
+        parent.m_connectionPhase =
+            connected ? ConnectionPhase::Ready : ConnectionPhase::Disconnected;
         emit parent.connectionStateChanged(connected);
         QCOMPARE(child.isConnected(), connected);
         QCOMPARE(states.size(), 1);

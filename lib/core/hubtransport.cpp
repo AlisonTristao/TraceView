@@ -38,8 +38,12 @@ void HubTransport::attachTo(DeviceConnection* parent) {
                 &HubTransport::onParentFrameBytes);
     }
     if (m_parent) {
+        // The phase is what isConnected() reads; the boolean signal is kept
+        // too so a drop is seen even if it arrives without a phase change.
+        connect(m_parent, &DeviceConnection::connectionPhaseChanged, this,
+                &HubTransport::onParentStateChanged);
         connect(m_parent, &DeviceConnection::connectionStateChanged, this,
-                &HubTransport::onParentConnectionChanged);
+                &HubTransport::onParentStateChanged);
     }
 
     m_open = isConnected();
@@ -65,7 +69,7 @@ bool HubTransport::isConnected() const {
     // unreachable: no hub to ride, a hub that is not on the wire, or a child
     // nobody has told which robot it is for.
     return m_parentBackend != nullptr && m_parent != nullptr && m_parent->isConnected() &&
-           m_peerSourceId != 0;
+           m_parent->connectionPhase() == ConnectionPhase::Ready && m_peerSourceId != 0;
 }
 
 void HubTransport::close() {
@@ -101,9 +105,9 @@ void HubTransport::onParentFrameBytes(quint32 sourceId, const QByteArray& raw) {
     emit dataReceived(raw);
 }
 
-void HubTransport::onParentConnectionChanged(bool) {
-    // Recomputed rather than taken from the argument: the parent's state is
-    // only one of this transport's three conditions (see isConnected()).
+void HubTransport::onParentStateChanged() {
+    // Recomputed rather than taken from any argument: the parent's state is
+    // only one of this transport's conditions (see isConnected()).
     const bool nowConnected = isConnected();
     if (nowConnected == m_open) {
         return;

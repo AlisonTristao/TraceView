@@ -201,26 +201,38 @@ DeviceConnection::DeviceConnection(CommType commType, TransportType transportTyp
     connect(m_transport, &Transport::connectionStateChanged, m_backend,
             &Backend::onTransportConnectionChanged);
     connect(m_transport, &Transport::connectionStateChanged, this, [this](bool connected) {
+        if (m_transportType == TransportType::HubChannel) {
+            // A hub child makes no attempts of its own, so there is no
+            // attempt for a stale signal to belong to: the phase gate below
+            // does not apply. Gating it anyway is what left children red --
+            // connectVia() sets Connecting and then attaches, and a parent
+            // that is already up reports connected right there, in the one
+            // phase the gate throws a `true` away in.
+            syncHubState();
+            return;
+        }
         if (connected &&
             (!m_shouldBeConnected || m_connectionPhase != ConnectionPhase::PreparingTransport)) {
+            // Not ours to act on now; attemptReconnect() reconciles it on the
+            // next tick if the link really is up and wanted.
             return;
         }
         if (!connected && m_shouldBeConnected &&
             (m_connectionPhase == ConnectionPhase::Connecting ||
              m_connectionPhase == ConnectionPhase::PreparingTransport)) {
             // A late close from a superseded attempt must not tear down the
-            // state of the new attempt.
+            // phase of the new attempt -- but the link it reported on is
+            // gone, so the app must still stop showing it as connected.
             m_attemptInProgress = false;
+            if (m_reportedConnected) {
+                m_reportedConnected = false;
+                emit connectionStateChanged(false);
+            }
             return;
         }
         m_attemptInProgress = false;
-        emit connectionStateChanged(connected);
-        setConnectionPhase(connected
-                       ? (m_transportType == TransportType::HubChannel
-                          ? ConnectionPhase::Ready
-                          : ConnectionPhase::NegotiatingBtp)
-                       : ConnectionPhase::Disconnected);
-        });
+        reportConnected(connected);
+    });
     connect(m_transport, &Transport::errorOccurred, this, &DeviceConnection::errorOccurred);
     connect(m_backend, &Backend::deviceIdentified, this, &DeviceConnection::deviceIdentified);
         connect(m_backend, &Backend::deviceIdentified, this,
@@ -236,7 +248,7 @@ DeviceConnection::DeviceConnection(CommType commType, TransportType transportTyp
              m_connectionPhase == ConnectionPhase::NegotiatingBtp ||
              m_connectionPhase == ConnectionPhase::Ready)) {
             m_attemptInProgress = false;
-            setConnectionPhase(ConnectionPhase::Disconnected);
+            reportConnected(false);
         }
     });
     // A dead session on a live transport: close it and let the retry timer
@@ -244,9 +256,19 @@ DeviceConnection::DeviceConnection(CommType commType, TransportType transportTyp
     // onTransportConnectionChanged(). Closing is what makes attemptReconnect()
     // eligible at all -- it returns early while the transport is still
     // connected, which is exactly the state a failed handshake leaves behind.
+    //
+    // Ready counts too, not only NegotiatingBtp: a session can also die after
+    // it was established (the dongle rebooting back to BTP/1 CONSOLE, a
+    // rejected write), and a port left open under a dead session is a device
+    // -- and every hub child riding it -- that looks connected and never
+    // talks again. Never for a hub child: closing it would only detach it
+    // from a parent that is fine.
     connect(m_backend, &Backend::sessionRecoveryNeeded, this, [this] {
-        if (m_shouldBeConnected && m_connectionPhase == ConnectionPhase::NegotiatingBtp &&
+        if (m_transportType != TransportType::HubChannel && m_shouldBeConnected &&
+            (m_connectionPhase == ConnectionPhase::NegotiatingBtp ||
+             m_connectionPhase == ConnectionPhase::Ready) &&
             AppSettings::instance().autoReconnect()) {
+            qCInfo(lcConnection) << "session lost on a live transport, recycling" << m_target;
             m_transport->close();
         }
     });
@@ -258,7 +280,9 @@ DeviceConnection::DeviceConnection(CommType commType, TransportType transportTyp
         m_retryTimer->setInterval(AppSettings::instance().reconnectIntervalSeconds() * 1000);
         if (!AppSettings::instance().autoReconnect()) {
             m_retryTimer->stop();
-        } else if (m_shouldBeConnected && !m_transport->isConnected()) {
+        } else if (m_shouldBeConnected) {
+            // Also while connected: the tick is what reconciles the reported
+            // state (see attemptReconnect()).
             m_retryTimer->start();
         }
     });
@@ -279,6 +303,19 @@ bool DeviceConnection::isConnected() const {
 
 void DeviceConnection::connectTo(const QString& target, qint32 baudRate) {
     const bool targetChanged = target != m_target || baudRate != m_baudRate;
+    // Same target, already wanted, already up or on its way up: nothing to
+    // do. MainWindow calls this on every deviceUpdated, which DevicesGrid
+    // also emits for live state (connected, HELLO identity) -- from inside
+    // this very connection's own signals. Falling through would knock the
+    // phase back to Connecting mid-handshake, and in Connecting both the
+    // Ready promotion and a later drop are ignored.
+    if (!targetChanged && !target.isEmpty() && m_shouldBeConnected && m_transportAvailable &&
+        (m_transport->isConnected() || m_attemptInProgress)) {
+        if (AppSettings::instance().autoReconnect() && !m_retryTimer->isActive()) {
+            m_retryTimer->start();
+        }
+        return;
+    }
     m_target = target;
     m_baudRate = baudRate;
     m_shouldBeConnected = !target.isEmpty();
@@ -288,6 +325,7 @@ void DeviceConnection::connectTo(const QString& target, qint32 baudRate) {
         qCInfo(lcConnection) << "target cleared, intent now offline";
         m_retryTimer->stop();
         closeTransportGracefully();
+        reportConnected(false);
         return;
     }
     if (!m_transportAvailable) {
@@ -317,8 +355,8 @@ void DeviceConnection::connectToTcp(const QString& host, quint16 port,
     const bool targetChanged = trimmedHost != m_tcpHost || port != m_tcpPort;
     m_tcpHost = trimmedHost;
     m_tcpPort = port;
+    const bool wasWanted = m_shouldBeConnected;
     m_shouldBeConnected = !trimmedHost.isEmpty() && port != 0;
-    m_attemptInProgress = false;
 
     // Told before the link can come up, same reasoning as connectVia()'s own
     // setHubEndpoint() call: a sealed reply from the robot could in principle
@@ -334,8 +372,18 @@ void DeviceConnection::connectToTcp(const QString& host, quint16 port,
         qCInfo(lcConnection) << "TCP target cleared, intent now offline";
         m_retryTimer->stop();
         closeTransportGracefully();
+        reportConnected(false);
         return;
     }
+    // Same idempotency as connectTo() -- see its comment.
+    if (!targetChanged && wasWanted && m_transportAvailable &&
+        (m_transport->isConnected() || m_attemptInProgress)) {
+        if (AppSettings::instance().autoReconnect() && !m_retryTimer->isActive()) {
+            m_retryTimer->start();
+        }
+        return;
+    }
+    m_attemptInProgress = false;
     if (!m_transportAvailable) {
         setConnectionPhase(ConnectionPhase::Disconnected);
         return;
@@ -362,8 +410,8 @@ void DeviceConnection::connectToBle(const QString& address, const QByteArray& en
     const QString trimmedAddress = address.trimmed();
     const bool targetChanged = trimmedAddress != m_bleAddress;
     m_bleAddress = trimmedAddress;
+    const bool wasWanted = m_shouldBeConnected;
     m_shouldBeConnected = !trimmedAddress.isEmpty();
-    m_attemptInProgress = false;
 
     // Same reasoning as connectToTcp()'s own call: told before the link can
     // come up, since a sealed reply from the robot could arrive as early as
@@ -378,8 +426,18 @@ void DeviceConnection::connectToBle(const QString& address, const QByteArray& en
         qCInfo(lcConnection) << "BLE target cleared, intent now offline";
         m_retryTimer->stop();
         closeTransportGracefully();
+        reportConnected(false);
         return;
     }
+    // Same idempotency as connectTo() -- see its comment.
+    if (!targetChanged && wasWanted && m_transportAvailable &&
+        (m_transport->isConnected() || m_attemptInProgress)) {
+        if (AppSettings::instance().autoReconnect() && !m_retryTimer->isActive()) {
+            m_retryTimer->start();
+        }
+        return;
+    }
+    m_attemptInProgress = false;
     if (!m_transportAvailable) {
         setConnectionPhase(ConnectionPhase::Disconnected);
         return;
@@ -414,30 +472,57 @@ void DeviceConnection::connectVia(DeviceConnection* parentConnection, quint32 se
         return;
     }
 
-    m_attemptInProgress = false;
-    setConnectionPhase(ConnectionPhase::Connecting);
-    m_hubTransport->setPeerSourceId(peerSourceId);
-    m_hubTransport->attachTo(parentConnection);
-
-    // Told before the link can come up, because coming up is what makes the
-    // child ask its robot for a catalog -- and it has to know which robot by
-    // then.
-    if (auto* btpBackend = qobject_cast<BtpBackend*>(m_backend)) {
-        btpBackend->setHubEndpoint(selfSourceId, peerSourceId, endpointKey);
-    }
-
     // Same ambient-intent model as connectTo(): "not configured" means no
     // parent or no peer, and anything else means this child should be online
     // whenever its parent is. A parent that drops does NOT clear the intent,
     // so the child comes back on its own when the cable does -- which is the
     // behavior a hub needs, since the parent going away is the common case
     // (unplugging the dongle) and not an instruction from the user.
-    m_shouldBeConnected = parentConnection != nullptr && peerSourceId != 0;
-    if (!m_shouldBeConnected) {
-        m_retryTimer->stop();
-        closeTransportGracefully();
+    const bool wantConnection = parentConnection != nullptr && peerSourceId != 0;
+
+    // MainWindow::reattachHubChildren() re-issues this for every child on
+    // every device update -- including the parent's own connected/identity
+    // changes, from inside the parent's signals. With nothing changed that
+    // must be a no-op, not a reset of an established child.
+    const bool unchanged = m_hubParent == parentConnection && m_hubSelfSourceId == selfSourceId &&
+                           m_hubTransport->peerSourceId() == peerSourceId &&
+                           m_hubEndpointKey == endpointKey &&
+                           m_shouldBeConnected == wantConnection &&
+                           m_hubTransport->isAttached() == wantConnection;
+    if (unchanged) {
+        syncHubState();
         return;
     }
+
+    m_hubParent = parentConnection;
+    m_hubSelfSourceId = selfSourceId;
+    m_hubEndpointKey = endpointKey;
+    // Set before attaching: attaching to a parent that is already up reports
+    // connected synchronously, and that report is judged against the intent.
+    m_shouldBeConnected = wantConnection;
+    m_attemptInProgress = false;
+
+    // Told before the link can come up, because coming up is what makes the
+    // child ask its robot for a catalog -- and it has to know which robot by
+    // then. It also fixes the child's own source_id, which BtpBackend latches
+    // exactly once on its first connect: attaching first would let a parent
+    // that is already up bring this backend up as a console session under a
+    // random identity, for good.
+    if (auto* btpBackend = qobject_cast<BtpBackend*>(m_backend)) {
+        btpBackend->setHubEndpoint(selfSourceId, peerSourceId, endpointKey);
+    }
+
+    if (!wantConnection) {
+        m_retryTimer->stop();
+        m_hubTransport->setPeerSourceId(peerSourceId);
+        closeTransportGracefully();
+        reportConnected(false);
+        return;
+    }
+
+    m_hubTransport->setPeerSourceId(peerSourceId);
+    m_hubTransport->attachTo(parentConnection);
+    syncHubState();
     if (AppSettings::instance().autoReconnect()) {
         m_retryTimer->start();
     }
@@ -448,8 +533,8 @@ void DeviceConnection::disconnectFrom() {
     m_shouldBeConnected = false;
     m_attemptInProgress = false;
     m_retryTimer->stop();
-    setConnectionPhase(ConnectionPhase::Disconnected);
     closeTransportGracefully();
+    reportConnected(false);
 }
 
 void DeviceConnection::setAvailable(bool available) {
@@ -463,7 +548,7 @@ void DeviceConnection::setAvailable(bool available) {
     if (!available) {
         m_retryTimer->stop();
         closeTransportGracefully();
-        setConnectionPhase(ConnectionPhase::Disconnected);
+        reportConnected(false);
         return;
     }
 
@@ -484,7 +569,53 @@ void DeviceConnection::setConnectionPhase(ConnectionPhase phase) {
     emit connectionPhaseChanged(phase);
 }
 
+void DeviceConnection::reportConnected(bool connected) {
+    if (m_reportedConnected != connected) {
+        m_reportedConnected = connected;
+        emit connectionStateChanged(connected);
+        // A listener may have changed our state re-entrantly (a disconnect
+        // from the UI, say); its outcome wins over this one's phase.
+        if (m_reportedConnected != connected) {
+            return;
+        }
+    }
+    if (!connected) {
+        setConnectionPhase(ConnectionPhase::Disconnected);
+        return;
+    }
+    if (m_connectionPhase != ConnectionPhase::NegotiatingBtp &&
+        m_connectionPhase != ConnectionPhase::Ready) {
+        setConnectionPhase(m_transportType == TransportType::HubChannel
+                               ? ConnectionPhase::Ready
+                               : ConnectionPhase::NegotiatingBtp);
+    }
+}
+
+void DeviceConnection::syncHubState() {
+    if (m_hubTransport == nullptr) {
+        return;
+    }
+    if (m_shouldBeConnected && m_transportAvailable && m_hubTransport->isConnected()) {
+        reportConnected(true);
+        return;
+    }
+    if (m_reportedConnected) {
+        reportConnected(false);
+    }
+    // Waiting on the parent is Connecting, not Disconnected: the intent is
+    // still on and nothing but the parent stands in the way.
+    setConnectionPhase(m_shouldBeConnected && m_transportAvailable ? ConnectionPhase::Connecting
+                                                                   : ConnectionPhase::Disconnected);
+}
+
 void DeviceConnection::closeTransportGracefully() {
+    if (m_hubTransport != nullptr) {
+        // Always, not only while connected: close() is also what detaches a
+        // child from its parent, and a child left attached under an "offline"
+        // intent would still be handed the parent's link coming up.
+        m_hubTransport->close();
+        return;
+    }
     if (m_transport == nullptr || !m_transport->isConnected()) {
         return;
     }
@@ -515,8 +646,38 @@ void DeviceConnection::setLineTerminator(int terminator) {
 }
 
 void DeviceConnection::attemptReconnect() {
-    if (!m_shouldBeConnected || !m_transportAvailable || m_transport->isConnected() ||
-        m_attemptInProgress) {
+    if (!m_shouldBeConnected || !m_transportAvailable) {
+        return;
+    }
+    if (m_hubTransport != nullptr) {
+        // A hub child has no port to reopen: its link is its parent's, which
+        // it already watches. What the tick does here is re-attach a child
+        // that close() detached (suspend/resume) and reconcile.
+        if (!m_hubTransport->isAttached() && m_hubParent != nullptr) {
+            m_hubTransport->attachTo(m_hubParent);
+        }
+        syncHubState();
+        return;
+    }
+    if (m_transport->isConnected()) {
+        // The link is up; make sure the app has been told so. A `true` the
+        // phase gate dropped (a 1200-baud warning arriving before a
+        // successful open, an async open finishing late) would otherwise
+        // leave the device painted offline over a working link for good --
+        // nothing else would ever re-announce it.
+        if (!m_reportedConnected) {
+            qCInfo(lcConnection) << "link up but not reported, reconciling" << m_target;
+            m_attemptInProgress = false;
+            reportConnected(true);
+        }
+        return;
+    }
+    if (m_reportedConnected && !m_attemptInProgress) {
+        // The mirror case: a drop that was never reported.
+        qCInfo(lcConnection) << "link down but reported up, reconciling" << m_target;
+        reportConnected(false);
+    }
+    if (m_attemptInProgress) {
         return;
     }
     QString attemptTarget = m_target;
@@ -545,12 +706,6 @@ void DeviceConnection::attemptReconnect() {
         m_bleTransport->open(m_bleAddress);
 #endif
     }
-    // HubChannel has nothing to retry: it has no port to reopen, and its
-    // connected state is a function of its parent's, which it is already
-    // watching. The retry timer still runs so that a parent attached before
-    // it was connected is re-evaluated, which HubTransport does on its own
-    // signal -- so this branch is deliberately empty rather than absent, to
-    // say that the omission is a decision and not a missing case.
 }
 
 }  // namespace traceview

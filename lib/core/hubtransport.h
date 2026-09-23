@@ -78,6 +78,12 @@ public:
         return m_peerSourceId;
     }
 
+    // Whether attachTo() bound a parent that still exists. close() detaches,
+    // so this is how DeviceConnection notices a child it has to re-attach.
+    bool isAttached() const {
+        return m_parent != nullptr;
+    }
+
     // Repoints this child at a different robot. Separate from the constructor
     // because a Device can be reconfigured while it exists, exactly as a
     // serial device can be moved to another port; zero puts it back to "not
@@ -86,9 +92,17 @@ public:
 
     void close() override;
 
-    // True only when the parent is connected AND this child has a configured
-    // peer. There is no third state to report: a child cannot be reachable
-    // through a parent that is not.
+    // True only when the parent has an established BTP session (its
+    // ConnectionPhase is Ready) AND this child has a configured peer. There
+    // is no third state to report: a child cannot be reachable through a
+    // parent that is not.
+    //
+    // Ready rather than the parent's raw port being open: until the dongle's
+    // own ENTER/HELLO completes it is still in console mode, and its hub
+    // bindings (HubBinder) have not been re-issued yet -- a child's catalog
+    // request or SUBSCRIBE sent then goes nowhere. And a parent session that
+    // dies with the port still open (the dongle rebooting to BTP/1 CONSOLE)
+    // must take its children down with it.
     //
     // Whether the robot itself is currently answering is a separate question,
     // answered by the hub's own hub.peers topic, and deliberately not folded
@@ -104,7 +118,8 @@ public:
 
 private:
     void onParentFrameBytes(quint32 sourceId, const QByteArray& raw);
-    void onParentConnectionChanged(bool connected);
+    // Re-evaluates isConnected() on any parent state or phase change.
+    void onParentStateChanged();
     void detach();
 
     quint32 m_peerSourceId;
