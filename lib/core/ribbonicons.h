@@ -61,13 +61,13 @@ QIcon makeFolderIcon(const QColor& color);
 // in dashboarditem.h): a narrow phone outline, a wider tablet outline, and a
 // laptop (screen + base). Developer-mode-only, next to the dashboard edit
 // lock -- see MainWindow's m_screenSizeButton.
-QIcon makePhoneIcon(const QColor& color);
-QIcon makeTabletIcon(const QColor& color);
-QIcon makeNotebookIcon(const QColor& color);
+QIcon makeSmallScreenIcon(const QColor& color);
+QIcon makeMediumScreenIcon(const QColor& color);
+QIcon makeLargeScreenIcon(const QColor& color);
 // Three filled dots, stacked vertically -- the "kebab menu"/overflow glyph
 // (matches Android's own convention for the same idea). Used by
 // MainWindow's "More options" status-bar button, which mirrors the File/
-// View/Access menus as a plain widget for Phone/Tablet (see
+// View/Access menus as a plain widget for Small/Medium (see
 // docs/ANDROID_BUILD.md's T47 notes).
 QIcon makeOptionsIcon(const QColor& color);
 

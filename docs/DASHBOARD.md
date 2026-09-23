@@ -142,7 +142,7 @@ with three icons (phone/tablet/notebook) — a corner widget of the menu bar
 (`QMenuBar::setCornerWidget()`, top-right), not the Dashboard tab's own
 toolbar, since it isn't specific to that tab being current (unlike the lock/
 panels/canvas-height buttons below, which stay in that toolbar). Picking
-Phone or Tablet switches `DashboardGrid` to that breakpoint and shrinks the
+Small or Medium switches `DashboardGrid` to that breakpoint and shrinks the
 canvas into a device-shaped viewport inside the window —
 [`DevicePreviewFrame`](../lib/core/devicepreviewframe.h), which hosts the
 canvas as its child, centers it at the device's width, and dims the
@@ -160,7 +160,7 @@ leaves the window alone.
 
 On the Dashboard tab's own toolbar, next to the edit-mode lock, a +/− pair
 (`DashboardGrid::growCanvasHeight()`/`shrinkCanvasHeight()`, hidden on
-Notebook and, unlike the screen-size button itself, also hidden whenever the
+Large and, unlike the screen-size button itself, also hidden whenever the
 edit-mode lock is closed — see `MainWindow::updateCanvasHeightButtons()`'s
 `editingActive()` check) lets a developer grow that breakpoint's canvas
 taller than the device viewport one step at a time, for an arrangement that
@@ -193,7 +193,7 @@ resize.
 Measuring the viewport rather than `QScreen::availableGeometry()` is
 deliberate: the screen's width can't change when a window is merely
 resized, so a window dragged down to a sliver on a 1920px monitor used to
-keep the Notebook layout and squeeze it, and a developer's preview and a
+keep the Large layout and squeeze it, and a developer's preview and a
 user's real session were deciding from two different numbers. Both now read
 the same one. Because a resize can finally change the outcome, the
 thresholds carry a ±`kBreakpointHysteresisPx` dead band measured against
@@ -213,7 +213,7 @@ breakpoint. It keys off `kUsesCompactChrome` in
 — because whether `QMenuBar` is a dependable route to those menus is a
 property of the platform, not of which dashboard layout is showing. Tying
 it to the breakpoint, as an earlier version did, meant a tablet wide enough
-to auto-detect Notebook would lose the ⋮ *and* possibly the menu bar,
+to auto-detect Large would lose the ⋮ *and* possibly the menu bar,
 stranding the user with no way to reach Access and log in.
 
 ## Element kinds
@@ -458,7 +458,7 @@ workspace.
 refresh it with `tools/import_lucide.py`) that the user picked for the
 workspace with `IconPickerDialog`. It is left out until one is picked, and an
 id this build doesn't know falls back to the default glyph. On mobile
-(compact chrome: Android, or a Developer-mode Phone/Tablet preview) the
+(compact chrome: Android, or a Developer-mode Small/Medium preview) the
 status bar is replaced by `WorkspaceDock`
 ([lib/core/workspacedock.h](../lib/core/workspacedock.h)): one icon button
 per workspace, spaced evenly and centered. Tap switches workspace;

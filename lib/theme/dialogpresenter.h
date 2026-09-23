@@ -18,7 +18,7 @@ namespace traceview {
 // becomes a separate undecorated top-level window with an arbitrary
 // size/position and no way to close it but its own buttons. So while
 // embedding is on (MainWindow turns it on whenever compact chrome is
-// active, i.e. on Android and in a desktop Phone/Tablet preview), the
+// active, i.e. on Android and in a desktop Small/Medium preview), the
 // dialog is instead reparented INTO the registered host widget, on an
 // overlay covering it:
 //
@@ -37,7 +37,7 @@ namespace DialogPresenter {
 enum class Style { Card, Page };
 
 // The widget embedded dialogs overlay -- MainWindow's m_appShell, so a
-// desktop Phone/Tablet preview shows them inside the device frame, same
+// desktop Small/Medium preview shows them inside the device frame, same
 // as a real phone would.
 void setHost(QWidget* host);
 void setEmbedded(bool embedded);

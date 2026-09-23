@@ -176,7 +176,7 @@ private:
     // applyUserMode(), updateRibbonIcons(), the ribbon tab change, the
     // edit-mode toggle).
     void syncBreakpointChrome();
-    // The screen-size menu's own three actions (Phone/Tablet/Notebook) call
+    // The screen-size menu's own three actions (Small/Medium/Large) call
     // this instead of DashboardGrid::setBreakpoint() directly -- it does
     // that AND applies the matching device viewport (see
     // applyBreakpointViewport()). Manual selection only: auto-detection
@@ -190,9 +190,9 @@ private:
     // reuse the exact same test instead of re-deriving "preview active" a
     // second way.
     bool previewActive() const;
-    // Sets m_devicePreviewFrame's device size to the (unmultiplied) Phone/
-    // Tablet viewport whenever previewActive() -- kPhoneViewportSize/
-    // kTabletViewportSize's height is no longer scaled by
+    // Sets m_devicePreviewFrame's device size to the (unmultiplied) Small/
+    // Medium viewport whenever previewActive() -- kSmallViewportSize/
+    // kMediumViewportSize's height is no longer scaled by
     // m_dashboardGrid->canvasHeightMultiplier() here (that used to stretch
     // the DEVICE itself); a phone's screen is a fixed size, so growing the
     // canvas now grows m_dashboardGrid's own minimumHeight instead, scrolled
@@ -207,8 +207,8 @@ private:
     void applyBreakpointViewport();
     // True whenever the app is showing the chrome a phone/tablet gets
     // instead of the desktop's native menu bar: always on Android
-    // (kUsesCompactChrome), and on desktop while a Developer-mode Phone/
-    // Tablet preview is up (previewActive()) -- so the preview genuinely
+    // (kUsesCompactChrome), and on desktop while a Developer-mode Small/
+    // Medium preview is up (previewActive()) -- so the preview genuinely
     // shows the mobile chrome the app will render on a phone, rather than a
     // desktop window with a few pieces hidden. Drives menuBar()/
     // m_optionsButton/m_chromeTopBar visibility (see updateChromeVisibility()).
@@ -447,7 +447,7 @@ private:
     // Menu bar "Settings" / Ctrl+, -- shows the Settings window (creating it
     // on first use) or raises it. Presented like the notification history:
     // a separate window on desktop, an in-window page with a back arrow when
-    // DialogPresenter embeds dialogs (Android, Phone/Tablet preview) -- so
+    // DialogPresenter embeds dialogs (Android, Small/Medium preview) -- so
     // it never depends on the ribbon's tab strip, which User mode hides.
     void onOpenSettings();
     // Script icon on a device's card (DeviceCard::scriptRequested) -- opens
@@ -612,18 +612,18 @@ private:
     // Everything the app actually shows -- m_chromeTopBar, the ribbon,
     // m_contentRow, m_statusRow -- reparented here as this frame's sole
     // content (see DevicePreviewFrame::setContentWidget()) so a Developer-
-    // mode Phone/Tablet preview frames the WHOLE app, not just the dashboard
+    // mode Small/Medium preview frames the WHOLE app, not just the dashboard
     // canvas: the ribbon, m_chromeTopBar (which is what a phone build shows
     // instead of the native menu bar -- see compactChromeActive()) and
     // m_statusRow (which replaces the native status bar) all shrink to
     // device size together, exactly as they will on Android. Sits directly
-    // inside m_devicePreviewFrame; QSize() (no frame, Notebook/User mode)
+    // inside m_devicePreviewFrame; QSize() (no frame, Large/User mode)
     // just lets it fill the frame's own rect() unchanged. See
     // MainWindow::MainWindow() for the full widget tree.
     QWidget* m_appShell = nullptr;
-    // Frames m_appShell inside a device-shaped viewport for a manual Phone/
-    // Tablet preview (Developer mode only), or lets it fill the whole central
-    // widget for Notebook/User mode -- see devicepreviewframe.h. What
+    // Frames m_appShell inside a device-shaped viewport for a manual Small/
+    // Medium preview (Developer mode only), or lets it fill the whole central
+    // widget for Large/User mode -- see devicepreviewframe.h. What
     // setCentralWidget()'s own top-level layout actually wraps now (in place
     // of the ribbon/m_contentRow stack directly); m_appShell becomes its
     // child instead.
@@ -825,7 +825,7 @@ private:
     // of m_chromeTopBar (see buildMenus()), not the status bar anymore (see
     // m_statusRow above): compactChromeActive() now governs its visibility
     // (via updateChromeVisibility()), not just the fixed kUsesCompactChrome
-    // platform choice alone -- a desktop Developer-mode Phone/Tablet preview
+    // platform choice alone -- a desktop Developer-mode Small/Medium preview
     // needs it shown too, same reasoning as compactChromeActive()'s own
     // comment (the preview must show the real mobile chrome, not a desktop
     // window with pieces hidden).

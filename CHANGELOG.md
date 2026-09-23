@@ -7,6 +7,15 @@ release flow.
 
 ## [Unreleased]
 
+## [4.1.7] - 2026-09-23
+
+### Fixed
+
+- The Developer-mode Medium screen-size preview is now 800×1280 (was
+  600×1000). The old width fell inside Small's auto-detect range, so a
+  real portrait tablet showed the Small layout instead of the Medium one
+  designed in the preview.
+
 ## [4.1.6] - 2026-09-23
 
 ### Changed

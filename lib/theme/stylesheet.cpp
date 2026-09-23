@@ -217,8 +217,8 @@ QToolButton:disabled {
 
 /* QWidget#statusRow is MainWindow's own m_statusRow -- it replaced the
    native QStatusBar (see MainWindow::showStatusMessage()) so it can live
-   inside m_appShell/m_devicePreviewFrame like everything else a Phone/
-   Tablet preview needs to frame, which the native bar (owned by QMainWindow
+   inside m_appShell/m_devicePreviewFrame like everything else a Small/
+   Medium preview needs to frame, which the native bar (owned by QMainWindow
    itself, outside centralWidget()) could not. Same rule kept for QStatusBar
    too in case anything ever calls statusBar() again -- costs nothing and
    keeps that widget from looking undressed if it does. QWidget#workspaceDock

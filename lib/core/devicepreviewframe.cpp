@@ -10,7 +10,7 @@ namespace traceview {
 
 namespace {
 // Breathing room around the device rect, on every side, whenever a frame is
-// active (Phone/Tablet) -- keeps the bezel outline from landing flush
+// active (Small/Medium) -- keeps the bezel outline from landing flush
 // against this frame's own edge, and is subtracted from the available space
 // in both axes before clamping the device to it (see layoutContent()).
 constexpr int kDeviceMargin = 24;
@@ -63,7 +63,7 @@ void DevicePreviewFrame::layoutContent() {
     }
 
     if (!m_deviceSize.isValid()) {
-        // Notebook/User mode: no frame around the content -- it fills this
+        // Large/User mode: no frame around the content -- it fills this
         // frame's whole rect() exactly, the same as it filled central's own
         // layout directly before this class framed the whole app.
         m_deviceRect = QRect();
@@ -72,7 +72,7 @@ void DevicePreviewFrame::layoutContent() {
         return;
     }
 
-    // Phone/Tablet: center in BOTH axes, clamping BOTH dimensions to
+    // Small/Medium: center in BOTH axes, clamping BOTH dimensions to
     // whatever room this frame actually has -- never the device's own
     // nominal size unconditionally -- so the device's screen is always
     // shown whole, the way a real phone's screen is, instead of spilling

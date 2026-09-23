@@ -13,8 +13,8 @@ class QHBoxLayout;
 
 namespace traceview {
 
-// The bottom bar in compact chrome (Android, or a Developer-mode Phone/
-// Tablet preview -- see MainWindow::compactChromeActive()): replaces
+// The bottom bar in compact chrome (Android, or a Developer-mode Small/
+// Medium preview -- see MainWindow::compactChromeActive()): replaces
 // m_statusRow there and gives the whole bar to workspace navigation. One
 // icon-only button per workspace (each Entry::icon, an IconLibrary id),
 // spaced evenly and centered, on a bar taller than the status row (see

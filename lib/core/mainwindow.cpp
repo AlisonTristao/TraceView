@@ -142,10 +142,10 @@ constexpr int kBreakpointHysteresisPx = 40;
 // (see docs/ANDROID_BUILD.md's T47 notes) and m_chromeTopBar's overflow
 // button (m_optionsButton) answers for them instead. First platform #ifdef
 // in lib/ -- until now the dashboard breakpoint stood in for this, which
-// made the button vanish on a tablet wide enough to auto-detect Notebook.
+// made the button vanish on a tablet wide enough to auto-detect Large.
 // Just the platform half of the story now -- see MainWindow::
 // compactChromeActive(), which ORs this with a desktop Developer-mode
-// preview being up, so a Phone/Tablet preview shows the exact chrome
+// preview being up, so a Small/Medium preview shows the exact chrome
 // Android gets instead of a desktop window with pieces hidden.
 constexpr bool kUsesCompactChrome =
 #ifdef Q_OS_ANDROID
@@ -522,7 +522,7 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     // the ribbon, m_contentRow, m_statusRow, in that order -- the exact
     // stack central used to hold directly, plus the two new chrome rows.
     // m_devicePreviewFrame then frames THIS (see below), so a Developer-mode
-    // Phone/Tablet preview shows the real mobile chrome (m_chromeTopBar
+    // Small/Medium preview shows the real mobile chrome (m_chromeTopBar
     // standing in for the hidden menuBar(), m_statusRow standing in for the
     // hidden native status bar -- see compactChromeActive()) instead of a
     // desktop window with pieces hidden. Margins/spacing are exactly what
@@ -537,14 +537,14 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     appShellLayout->addWidget(m_statusRow);
 
     // Frames m_appShell -- the WHOLE app -- inside a device-shaped viewport
-    // for a manual Phone/Tablet preview, or lets it fill the window exactly
-    // for Notebook/User mode (see applyBreakpointViewport()). Sits directly
+    // for a manual Small/Medium preview, or lets it fill the window exactly
+    // for Large/User mode (see applyBreakpointViewport()). Sits directly
     // under central's own layout now, in place of [ribbon, m_contentRow]
     // being added there directly.
     m_devicePreviewFrame = new DevicePreviewFrame(this);
     m_devicePreviewFrame->setContentWidget(m_appShell);
     // Embedded dialogs (see DialogPresenter) overlay m_appShell rather than
-    // the whole window, so a Phone/Tablet preview shows them inside the
+    // the whole window, so a Small/Medium preview shows them inside the
     // device frame; setEmbedded() follows compactChromeActive() in
     // updateChromeVisibility().
     DialogPresenter::setHost(m_appShell);
@@ -1012,8 +1012,8 @@ void MainWindow::buildMenus() {
     // status bar. Its visibility is decided by compactChromeActive() (see
     // updateChromeVisibility()), not set here: kUsesCompactChrome alone used
     // to be enough (this button existed only to stand in for a menu bar
-    // Android might not render), but now a desktop Developer-mode Phone/
-    // Tablet preview needs it too, for the same reason -- the preview must
+    // Android might not render), but now a desktop Developer-mode Small/
+    // Medium preview needs it too, for the same reason -- the preview must
     // show the real mobile chrome, not a desktop window with pieces hidden.
     m_optionsButton = new QToolButton(this);
     m_optionsButton->setObjectName("optionsButton");
@@ -1188,7 +1188,7 @@ void MainWindow::applyUserMode(UserModeManager::UserMode mode) {
     // Both of these run unconditionally, for the same reason: they are
     // otherwise only reached via DashboardGrid::breakpointChanged, which
     // setBreakpoint() suppresses when handed the breakpoint already active.
-    // Leaving Developer mode while previewing Phone, on a window narrow
+    // Leaving Developer mode while previewing Small, on a window narrow
     // enough that auto-detection picks Small too, is exactly that case --
     // the breakpoint doesn't change, no signal fires, and without these the
     // device frame would stay up (and the canvas +/- buttons stay visible)
@@ -1472,7 +1472,7 @@ Ribbon* MainWindow::buildRibbon() {
 
     m_screenSizeButton->setMenu(m_screenSizeMenu);
 
-    // Canvas height +/- -- Small/Medium only (hidden for Notebook, see
+    // Canvas height +/- -- Small/Medium only (hidden for Large, see
     // updateCanvasHeightButtons()): grows/shrinks that breakpoint's canvas
     // past the device viewport's own height one step at a time
     // (DashboardGrid::growCanvasHeight()/shrinkCanvasHeight()), for an
@@ -1938,15 +1938,15 @@ void MainWindow::updateScreenSizeButtonIcon() {
     const DashboardBreakpoint breakpoint = m_dashboardGrid->currentBreakpoint();
     switch (breakpoint) {
         case DashboardBreakpoint::Small:
-            m_screenSizeButton->setIcon(makePhoneIcon(palette.textPrimary));
+            m_screenSizeButton->setIcon(makeSmallScreenIcon(palette.textPrimary));
             m_screenSizeButton->setToolTip(tr("Screen size: Small"));
             break;
         case DashboardBreakpoint::Medium:
-            m_screenSizeButton->setIcon(makeTabletIcon(palette.textPrimary));
+            m_screenSizeButton->setIcon(makeMediumScreenIcon(palette.textPrimary));
             m_screenSizeButton->setToolTip(tr("Screen size: Medium"));
             break;
         case DashboardBreakpoint::Large:
-            m_screenSizeButton->setIcon(makeNotebookIcon(palette.textPrimary));
+            m_screenSizeButton->setIcon(makeLargeScreenIcon(palette.textPrimary));
             m_screenSizeButton->setToolTip(tr("Screen size: Large"));
             break;
     }
@@ -1967,7 +1967,7 @@ void MainWindow::updateCanvasHeightButtons() {
     const DashboardBreakpoint breakpoint = m_dashboardGrid->currentBreakpoint();
     // Growing/shrinking the canvas only means anything for a preview
     // breakpoint (see DashboardGrid::growCanvasHeight()) -- hide both
-    // buttons on Notebook instead of leaving them uselessly clickable. Also
+    // buttons on Large instead of leaving them uselessly clickable. Also
     // gated by editingActive() rather than just Developer mode: it's an
     // edit to the arrangement, same as dragging/resizing a widget, so it
     // stays locked behind the edit-mode padlock even while already logged
@@ -1997,7 +1997,7 @@ void MainWindow::onScreenSizeBreakpointSelected(DashboardBreakpoint breakpoint) 
 }
 
 bool MainWindow::previewActive() const {
-    // Only Developer mode's manual Phone/Tablet preview ever shows a device
+    // Only Developer mode's manual Small/Medium preview ever shows a device
     // frame: User mode's breakpoint already tracks the real screen (see
     // applyAutoBreakpoint()), so there's no smaller device left to simulate,
     // same as the old window-resize preview was Developer-only.
@@ -2064,7 +2064,7 @@ void MainWindow::updateChromeVisibility() {
         m_workspaceDock->setVisible(compact);
     }
     // The screen-size selector must stay reachable in a Developer preview
-    // (it's the way back out of Phone/Tablet), so it follows the options
+    // (it's the way back out of Small/Medium), so it follows the options
     // button up to the right end of the current ribbon page; back to its
     // spot in m_statusRow, just left of the size grip, otherwise.
     // Skipped until the constructor's tail has seated it in m_statusRow
@@ -2127,7 +2127,7 @@ void MainWindow::applyBreakpointViewport() {
     // in an outer scroll area); it stretches the CONTENT inside it instead,
     // below, the same way a too-tall page scrolls on an actual phone.
     const QSize base =
-        breakpoint == DashboardBreakpoint::Small ? kPhoneViewportSize : kTabletViewportSize;
+        breakpoint == DashboardBreakpoint::Small ? kSmallViewportSize : kMediumViewportSize;
     m_devicePreviewFrame->setDeviceSize(base);
 
     const double multiplier = m_dashboardGrid->canvasHeightMultiplier(breakpoint);
