@@ -12,6 +12,11 @@
     <!-- Serial over USB OTG (UsbSerialBridge). Not required: phones without
          USB host still install, they just offer no serial ports. -->
     <uses-feature android:name="android.hardware.usb.host" android:required="false" />
+    <!-- BLE transport (BleTransport). Its permissions (BLUETOOTH_SCAN/
+         CONNECT, or location before Android 12) come from Qt Bluetooth's own
+         dependency list via INSERT_PERMISSIONS above and are asked for at
+         runtime (lib/core/blepermission.cpp). Not required either. -->
+    <uses-feature android:name="android.hardware.bluetooth_le" android:required="false" />
     <supports-screens
         android:anyDensity="true"
         android:largeScreens="true"

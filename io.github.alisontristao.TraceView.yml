@@ -11,6 +11,10 @@ finish-args:
   - --socket=fallback-x11
   # QSerialPort (/dev/ttyACM*, /dev/ttyUSB*) and hidapi (/dev/hidraw*).
   - --device=all
+  # BLE transport: Qt Bluetooth drives BlueZ over the system D-Bus
+  # (QtConnectivity ships in the org.kde.Platform runtime itself).
+  - --system-talk-name=org.bluez
+  - --allow=bluetooth
 cleanup:
   - /include
   - /lib/cmake

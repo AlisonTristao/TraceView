@@ -80,6 +80,58 @@
             }
         },
         {
+            "name": "macos",
+            "displayName": "macOS (Ninja)",
+            "description": "Build with a Qt for macOS kit (clang_64). Set QT_ROOT_DIR to it (e.g. ~/Qt/6.9.2/macos). Produces TraceView.app; see docs/MACOS_IOS_BUILD.md.",
+            "inherits": "default",
+            "binaryDir": "${sourceDir}/build/macos",
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Darwin"
+            },
+            "cacheVariables": {
+                "CMAKE_PREFIX_PATH": "$env{QT_ROOT_DIR}",
+                "CMAKE_OSX_DEPLOYMENT_TARGET": "12.0"
+            }
+        },
+        {
+            "name": "macos-release",
+            "displayName": "macOS (Ninja, Release)",
+            "description": "Release build for packaging: Apple Silicon (arm64) only. scripts/build_macos_dmg.sh turns it into the .dmg.",
+            "inherits": "macos",
+            "binaryDir": "${sourceDir}/build/macos-release",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
+                "CMAKE_OSX_ARCHITECTURES": "arm64",
+                "TRACEVIEW_BUILD_TESTS": "OFF",
+                "TRACEVIEW_BUILD_TOOLS": "OFF"
+            }
+        },
+        {
+            "name": "ios",
+            "displayName": "iOS (Xcode, device)",
+            "description": "Cross-compiles for iOS devices with a Qt for iOS kit -- NO serial and NO USB HID (iOS forbids both; BLE/TCP/hub only). Requires QT_IOS_ROOT_DIR (the ios Qt kit) and QT_ROOT_DIR (a matching macOS Qt kit, for host tools). Needs a Mac with Xcode; see docs/MACOS_IOS_BUILD.md.",
+            "generator": "Xcode",
+            "binaryDir": "${sourceDir}/build/ios",
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Darwin"
+            },
+            "toolchainFile": "$env{QT_IOS_ROOT_DIR}/lib/cmake/Qt6/qt.toolchain.cmake",
+            "cacheVariables": {
+                "CMAKE_PREFIX_PATH": "$env{QT_IOS_ROOT_DIR}",
+                "QT_HOST_PATH": "$env{QT_ROOT_DIR}",
+                "TRACEVIEW_ENABLE_SERIAL": "OFF",
+                "TRACEVIEW_ENABLE_USB_HID": "OFF",
+                "TRACEVIEW_ENABLE_TCP": "ON",
+                "TRACEVIEW_ENABLE_BLE": "ON",
+                "TRACEVIEW_BUILD_TESTS": "OFF",
+                "TRACEVIEW_BUILD_TOOLS": "OFF"
+            }
+        },
+        {
             "name": "android-arm64",
             "displayName": "Android (arm64-v8a)",
             "description": "Cross-compiles for Android with a Qt for Android kit -- UNVALIDATED, see docs/ANDROID_BUILD.md before using. Requires ANDROID_SDK_ROOT, ANDROID_NDK_ROOT, QT_ANDROID_ROOT_DIR (the android_arm64_v8a Qt kit) and QT_ROOT_DIR (a matching desktop Qt kit, for host moc/rcc/androiddeployqt) set first.",
@@ -160,6 +212,34 @@
             }
         },
         {
+            "name": "macos",
+            "configurePreset": "macos",
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Darwin"
+            }
+        },
+        {
+            "name": "macos-release",
+            "configurePreset": "macos-release",
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Darwin"
+            }
+        },
+        {
+            "name": "ios",
+            "configurePreset": "ios",
+            "configuration": "Release",
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Darwin"
+            }
+        },
+        {
             "name": "android-arm64",
             "configurePreset": "android-arm64"
         },
@@ -201,6 +281,18 @@
                 "type": "equals",
                 "lhs": "${hostSystemName}",
                 "rhs": "Linux"
+            },
+            "output": {
+                "outputOnFailure": true
+            }
+        },
+        {
+            "name": "macos",
+            "configurePreset": "macos",
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Darwin"
             },
             "output": {
                 "outputOnFailure": true

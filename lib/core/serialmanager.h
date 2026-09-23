@@ -30,6 +30,11 @@ public:
     // call this again rather than caching it.
     QStringList availablePorts() const;
 
+    // True for a port name that duplicates another listed port and must not
+    // be offered: macOS's /dev/tty.* dial-in twin of each /dev/cu.* device.
+    // Always false elsewhere.
+    static bool isDuplicateDialInPort(const QString& portName);
+
     // See SerialTransport::open(). Always synchronous here: returns false
     // and emits errorOccurred() on failure; emits connectionStateChanged(true)
     // on success.

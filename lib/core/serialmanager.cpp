@@ -19,9 +19,25 @@ QStringList SerialManager::availablePorts() const {
     const QList<QSerialPortInfo> infos = QSerialPortInfo::availablePorts();
     names.reserve(infos.size());
     for (const QSerialPortInfo& info : infos) {
+        if (isDuplicateDialInPort(info.portName())) {
+            continue;
+        }
         names.append(info.portName());
     }
     return names;
+}
+
+bool SerialManager::isDuplicateDialInPort(const QString& portName) {
+#ifdef Q_OS_MACOS
+    // macOS exposes every serial device twice: /dev/tty.* (dial-in, whose
+    // open() waits for carrier detect) and /dev/cu.* (call-out, opens
+    // immediately). QSerialPortInfo lists both; only cu.* is the one to use,
+    // so tty.* is hidden rather than offered as a port that may hang.
+    return portName.startsWith(QLatin1String("tty."));
+#else
+    Q_UNUSED(portName);
+    return false;
+#endif
 }
 
 bool SerialManager::open(const QString& portName, qint32 baudRate) {

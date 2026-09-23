@@ -1,6 +1,7 @@
 name: Release
 
-# Builds the Windows NSIS installer and the Linux .AppImage from a Release
+# Builds the Windows NSIS installer, the Linux .AppImage/Flatpak, the Android
+# .apk and the macOS .dmg from a Release
 # configuration (see CMakePresets.json's *-release presets and CMakeLists.txt's
 # CPack block) and publishes both, plus a combined SHA256SUMS.txt, as a GitHub
 # Release -- what lib/updater/updatechecker.cpp polls for. See CONTRIBUTING.md
@@ -53,6 +54,7 @@ jobs:
             qt6-declarative:p
             qt6-svg:p
             qt6-serialport:p
+            qt6-connectivity:p
             qt6-tools:p
 
       # NSIS itself (makensis.exe) isn't an MSYS2/Qt package -- installed as a
@@ -349,6 +351,84 @@ jobs:
           if-no-files-found: ignore
 
   # ============================================================
+  # macOS package (.dmg, Apple Silicon)
+  # ============================================================
+  # Ad-hoc signed only (scripts/build_macos_dmg.sh): there is no Apple
+  # Developer ID in this project yet, so Gatekeeper asks the user to
+  # confirm the first launch. See docs/MACOS_IOS_BUILD.md. No iOS package:
+  # an unsigned iOS app installs nowhere.
+  macos-package:
+    name: macOS package (.dmg, arm64)
+    runs-on: macos-14
+    timeout-minutes: 45
+
+    env:
+      QT_VERSION: "6.9.2"
+      AQTINSTALL_VERSION: "3.3.0"
+      QT_ROOT_DIR: ${{ github.workspace }}/qt/6.9.2/macos
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Ninja and aqtinstall
+        run: |
+          brew install ninja
+          python -m pip install --quiet "aqtinstall==${{ env.AQTINSTALL_VERSION }}"
+
+      - name: Install Qt (macOS)
+        run: |
+          python -m aqt install-qt mac desktop "${{ env.QT_VERSION }}" clang_64 \
+            --modules qtserialport qtconnectivity --outputdir "${{ github.workspace }}/qt"
+
+      - name: Configure (Release)
+        run: cmake --preset macos-release
+
+      - name: Build (Release)
+        run: cmake --build --preset macos-release
+
+      - name: Package (.dmg)
+        run: bash scripts/build_macos_dmg.sh build/macos-release "${GITHUB_REF_NAME#v}"
+
+      - name: Compute checksum
+        run: |
+          cd build/macos-release
+          shasum -a 256 TraceView-*-macos-arm64.dmg > sha256-macos.txt
+
+      - name: Upload package artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-package
+          path: |
+            build/macos-release/TraceView-*-macos-arm64.dmg
+            build/macos-release/sha256-macos.txt
+          if-no-files-found: error
+
+  macos-smoke:
+    name: macOS .dmg smoke
+    needs: macos-package
+    runs-on: macos-14
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download package artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: macos-package
+          path: package
+
+      - name: Mount, install and launch
+        run: bash scripts/smoke_macos_dmg.sh package/TraceView-*-macos-arm64.dmg
+
+  # ============================================================
   # Linux package (.AppImage)
   # ============================================================
   linux-package:
@@ -381,6 +461,7 @@ jobs:
             qt6-declarative-dev \
             libqt6svg6-dev \
             libqt6serialport6-dev \
+            qt6-connectivity-dev \
             qt6-tools-dev \
             qt6-l10n-tools \
             qt6-wayland \
@@ -482,7 +563,7 @@ jobs:
 
   publish:
     name: Publish release
-    needs: [windows-smoke, linux-smoke, linux-flatpak, android-smoke]
+    needs: [windows-smoke, linux-smoke, linux-flatpak, android-smoke, macos-smoke]
     runs-on: ubuntu-24.04
     timeout-minutes: 15
 
@@ -531,7 +612,7 @@ jobs:
 
       - name: Combine checksums
         run: |
-          cat packages/windows-package/sha256-windows.txt packages/linux-package/sha256-linux.txt packages/linux-flatpak-package/sha256-flatpak.txt packages/android-package/sha256-android.txt > SHA256SUMS.txt
+          cat packages/windows-package/sha256-windows.txt packages/linux-package/sha256-linux.txt packages/linux-flatpak-package/sha256-flatpak.txt packages/android-package/sha256-android.txt packages/macos-package/sha256-macos.txt > SHA256SUMS.txt
           cat SHA256SUMS.txt
 
       - name: Publish GitHub Release
@@ -543,6 +624,7 @@ jobs:
             packages/linux-package/TraceView-*-linux-x64.AppImage \
             packages/linux-flatpak-package/TraceView-*-linux-x64.flatpak \
             packages/android-package/TraceView-*-android-arm64.apk \
+            packages/macos-package/TraceView-*-macos-arm64.dmg \
             SHA256SUMS.txt \
             --repo "${{ github.repository }}" \
             --title "TraceView ${{ github.ref_name }}" \

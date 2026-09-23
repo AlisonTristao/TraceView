@@ -38,6 +38,7 @@ jobs:
             qt6-declarative-dev \
             qt6-svg-dev \
             qt6-serialport-dev \
+            qt6-connectivity-dev \
             qt6-tools-dev \
             qt6-l10n-tools \
             libudev-dev \
@@ -82,6 +83,7 @@ jobs:
             qt6-qtdeclarative-devel \
             qt6-qtsvg-devel \
             qt6-qtserialport-devel \
+            qt6-qtconnectivity-devel \
             qt6-qttools-devel \
             systemd-devel \
             libusb1-devel
@@ -126,6 +128,7 @@ jobs:
             qt6-declarative \
             qt6-svg \
             qt6-serialport \
+            qt6-connectivity \
             qt6-tools \
             libusb \
             systemd
@@ -172,6 +175,7 @@ jobs:
             qt6-declarative-dev \
             qt6-svg-dev \
             qt6-serialport-dev \
+            qt6-connectivity-dev \
             qt6-tools-dev \
             qt6-l10n-tools \
             libudev-dev \
@@ -222,6 +226,7 @@ jobs:
             qt6-declarative:p
             qt6-svg:p
             qt6-serialport:p
+            qt6-connectivity:p
             qt6-tools:p
 
       - name: Configure
@@ -232,6 +237,104 @@ jobs:
 
       - name: Test
         run: ctest --preset windows-mingw
+
+  # ============================================================
+  # macOS (Apple Silicon)
+  # Qt from aqtinstall rather than Homebrew: the same pinned 6.9.2 the
+  # Android jobs use, and the same kit release.yml packages with
+  # macdeployqt. qtserialport/qtconnectivity are addon modules there.
+  # ============================================================
+  macos:
+    name: macOS 14 (Apple Clang, arm64)
+    runs-on: macos-14
+    timeout-minutes: 45
+
+    env:
+      QT_VERSION: "6.9.2"
+      AQTINSTALL_VERSION: "3.3.0"
+      QT_ROOT_DIR: ${{ github.workspace }}/qt/6.9.2/macos
+      QT_QPA_PLATFORM: offscreen
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Ninja and aqtinstall
+        run: |
+          brew install ninja
+          python -m pip install --quiet "aqtinstall==${{ env.AQTINSTALL_VERSION }}"
+
+      - name: Install Qt (macOS)
+        run: |
+          python -m aqt install-qt mac desktop "${{ env.QT_VERSION }}" clang_64 \
+            --modules qtserialport qtconnectivity --outputdir "${{ github.workspace }}/qt"
+
+      - name: Configure
+        run: cmake --preset macos
+
+      - name: Build
+        run: cmake --build --preset macos
+
+      # test_bletransport is left out here only: its discovery lifecycle
+      # case starts a real scan, and macOS refuses Bluetooth to a bare test
+      # executable (no app bundle, so no NSBluetoothAlwaysUsageDescription)
+      # -- the permission comes back Denied and the scan never starts. The
+      # same test runs on every other desktop job.
+      - name: Test
+        run: ctest --preset macos -E '^test_bletransport$'
+
+
+  # ============================================================
+  # iOS (arm64 device)
+  # Build only, unsigned (CODE_SIGNING_ALLOWED=NO): installing on a device
+  # needs an Apple Developer signing identity, which CI does not have. No
+  # serial or USB HID on iOS -- the ios preset turns both off, see
+  # docs/MACOS_IOS_BUILD.md. The macOS kit is the host (moc/rcc/lrelease).
+  # ============================================================
+  ios:
+    name: iOS (arm64, build only, unsigned)
+    runs-on: macos-14
+    timeout-minutes: 60
+
+    env:
+      QT_VERSION: "6.9.2"
+      AQTINSTALL_VERSION: "3.3.0"
+      QT_ROOT_DIR: ${{ github.workspace }}/qt/6.9.2/macos
+      QT_IOS_ROOT_DIR: ${{ github.workspace }}/qt/6.9.2/ios
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install aqtinstall
+        run: python -m pip install --quiet "aqtinstall==${{ env.AQTINSTALL_VERSION }}"
+
+      - name: Install Qt (macOS host tools)
+        run: |
+          python -m aqt install-qt mac desktop "${{ env.QT_VERSION }}" clang_64 \
+            --outputdir "${{ github.workspace }}/qt"
+
+      - name: Install Qt (iOS)
+        run: |
+          python -m aqt install-qt mac ios "${{ env.QT_VERSION }}" ios \
+            --modules qtconnectivity --outputdir "${{ github.workspace }}/qt"
+
+      - name: Configure
+        run: cmake --preset ios
+
+      - name: Build
+        run: cmake --build --preset ios -- CODE_SIGNING_ALLOWED=NO
+
 
   # ============================================================
   # Android (arm64-v8a)

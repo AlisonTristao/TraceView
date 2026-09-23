@@ -4,6 +4,7 @@
 #include <QBluetoothDeviceInfo>
 
 #include "core/applog.h"
+#include "core/blepermission.h"
 
 namespace traceview {
 
@@ -27,6 +28,29 @@ void BleDiscoveryService::start() {
     // silently doing nothing or running two agents at once.
     stop();
 
+    // The scan itself waits for the Bluetooth permission (see
+    // blepermission.h) -- synchronous on desktop, a system prompt on
+    // Android/macOS/iOS. `generation` is what lets a stop() or a newer
+    // start() made while that prompt is up win over its late answer.
+    m_awaitingPermission = true;
+    const quint64 generation = ++m_generation;
+    withBluetoothPermission(this, [this, generation](bool granted) {
+        if (generation != m_generation) {
+            return;
+        }
+        m_awaitingPermission = false;
+        if (!granted) {
+            qCWarning(lcConnection) << "BLE discovery: Bluetooth permission denied";
+            emit errorOccurred(tr("Bluetooth permission denied. Allow TraceView to use "
+                                  "Bluetooth in the system settings."));
+            emit finished();
+            return;
+        }
+        startAgent();
+    });
+}
+
+void BleDiscoveryService::startAgent() {
     m_agent = new QBluetoothDeviceDiscoveryAgent(this);
     // The ESP32-S3's BTP peripheral is BLE-only (no Bluetooth classic/SPP --
     // TAREFAS_TCP_BLE_ANDROID.txt rule for all tasks). Restricting the
@@ -42,6 +66,9 @@ void BleDiscoveryService::start() {
 }
 
 void BleDiscoveryService::stop() {
+    // Also cancels a start() still waiting on the permission prompt.
+    ++m_generation;
+    m_awaitingPermission = false;
     if (m_agent == nullptr) {
         return;
     }
@@ -61,7 +88,12 @@ void BleDiscoveryService::onDeviceDiscovered(const QBluetoothDeviceInfo& info) {
     if (!info.serviceUuids().contains(btpServiceUuid())) {
         return;
     }
-    emit deviceDiscovered(DiscoveredDevice{info.address().toString(), info.name()});
+    // CoreBluetooth (macOS/iOS) never exposes a peripheral's MAC: address()
+    // is null there and deviceUuid() is the only handle -- which
+    // BleTransport::open() already accepts in place of a MAC.
+    const QString address = info.address().isNull() ? info.deviceUuid().toString()
+                                                     : info.address().toString();
+    emit deviceDiscovered(DiscoveredDevice{address, info.name()});
 }
 
 void BleDiscoveryService::onAgentFinished() {

@@ -209,6 +209,28 @@ bool UpdateInstaller::install(const QString& downloadedFilePath, QString* reason
     return true;
 }
 
+#elif defined(Q_OS_MACOS)
+
+// A running .app can't be swapped from inside itself the way an AppImage
+// can, and writing into /Applications would need admin rights anyway. The
+// verified .dmg is opened in Finder instead (it shows TraceView next to an
+// Applications shortcut, see scripts/build_macos_dmg.sh) and TraceView
+// quits, so the user's drag-and-replace isn't blocked by a running copy.
+bool UpdateInstaller::install(const QString& downloadedFilePath, QString* reason) {
+    const auto fail = [reason](const QString& message) {
+        if (reason) *reason = message;
+        return false;
+    };
+    if (!QFileInfo::exists(downloadedFilePath)) {
+        return fail(QObject::tr("Downloaded installer not found: %1").arg(downloadedFilePath));
+    }
+    if (!QProcess::startDetached(QStringLiteral("/usr/bin/open"), {downloadedFilePath})) {
+        return fail(QObject::tr("Couldn't open the downloaded disk image: %1")
+                        .arg(downloadedFilePath));
+    }
+    return true;
+}
+
 #else
 
 bool UpdateInstaller::install(const QString&, QString* reason) {

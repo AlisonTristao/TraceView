@@ -17,16 +17,19 @@ constexpr char kReleasesUrl[] = "https://api.github.com/repos/AlisonTristao/Trac
 constexpr char kChecksumsAssetName[] = "SHA256SUMS.txt";
 
 // Matches CPACK_PACKAGE_FILE_NAME's per-platform suffix (see CMakeLists.txt):
-// "...-windows-x64.exe" / "...-linux-x64.AppImage" / "...-android-arm64.apk".
-// Android is checked before Linux because Q_OS_LINUX is defined there too. Empty on any other platform
-// -- there is no packaged build to match there, so the asset lookup below
-// just never finds one.
+// "...-windows-x64.exe" / "...-linux-x64.AppImage" / "...-android-arm64.apk" /
+// "...-macos-arm64.dmg" (scripts/build_macos_dmg.sh).
+// Android is checked before Linux because Q_OS_LINUX is defined there too. Empty on any other
+// platform (iOS included: an iOS app may not download and install itself) -- there is no
+// packaged build to match there, so the asset lookup below just never finds one.
 #if defined(TRACEVIEW_FLATPAK_BUILD)
 constexpr char kAssetSuffix[] = "";
 #elif defined(Q_OS_ANDROID)
 constexpr char kAssetSuffix[] = "-android-arm64.apk";
 #elif defined(Q_OS_WIN)
 constexpr char kAssetSuffix[] = ".exe";
+#elif defined(Q_OS_MACOS)
+constexpr char kAssetSuffix[] = "-macos-arm64.dmg";
 #elif defined(Q_OS_LINUX)
 constexpr char kAssetSuffix[] = "-linux-x64.AppImage";
 #else

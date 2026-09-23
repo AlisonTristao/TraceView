@@ -7,6 +7,7 @@
 
 #include "blediscoveryservice.h"
 #include "core/applog.h"
+#include "core/blepermission.h"
 
 namespace traceview {
 
@@ -53,10 +54,31 @@ bool BleTransport::open(const QString& address) {
     m_address = trimmed;
     m_closing = false;
 
-    const QBluetoothAddress macAddress(trimmed);
+    // Connecting waits for the Bluetooth permission (see blepermission.h):
+    // synchronous on desktop, a system prompt on Android/macOS/iOS. A
+    // reconnect after an earlier Grant is synchronous everywhere. m_attempt
+    // is bumped by teardown(), so a close() or a newer open() made while the
+    // prompt is up discards this attempt's late answer.
+    const quint64 attempt = m_attempt;
+    withBluetoothPermission(this, [this, attempt](bool granted) {
+        if (attempt != m_attempt) {
+            return;
+        }
+        if (!granted) {
+            failConnection(tr("Bluetooth permission denied. Allow TraceView to use "
+                              "Bluetooth in the system settings."));
+            return;
+        }
+        startController();
+    });
+    return true;
+}
+
+void BleTransport::startController() {
+    const QBluetoothAddress macAddress(m_address);
     QBluetoothDeviceInfo info = !macAddress.isNull()
         ? QBluetoothDeviceInfo(macAddress, QString(), 0)
-        : QBluetoothDeviceInfo(QBluetoothUuid(trimmed), QString(), 0);
+        : QBluetoothDeviceInfo(QBluetoothUuid(m_address), QString(), 0);
     info.setCoreConfigurations(QBluetoothDeviceInfo::LowEnergyCoreConfiguration);
 
     m_controller = QLowEnergyController::createCentral(info, this);
@@ -65,7 +87,7 @@ bool BleTransport::open(const QString& address) {
         // cheaper to guard than to let connectToDevice() below dereference a
         // null pointer if it ever does happen.
         failConnection(tr("failed to create a BLE controller"));
-        return false;
+        return;
     }
     connect(m_controller, &QLowEnergyController::connected, this,
             &BleTransport::onControllerConnected);
@@ -79,7 +101,6 @@ bool BleTransport::open(const QString& address) {
     qCInfo(lcConnection) << "connecting BLE to" << m_address;
     m_connectTimer.start(m_connectTimeoutMs);
     m_controller->connectToDevice();
-    return true;
 }
 
 void BleTransport::close() {
@@ -294,6 +315,7 @@ void BleTransport::failConnection(const QString& reason) {
 }
 
 void BleTransport::teardown(bool disconnectController) {
+    ++m_attempt;
     m_connectTimer.stop();
     m_connected = false;
     m_pendingFrames.clear();

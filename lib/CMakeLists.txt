@@ -625,6 +625,8 @@ if(TRACEVIEW_ENABLE_BLE)
     list(APPEND TRACEVIEW_TRANSPORT_SOURCES
         core/blediscoveryservice.cpp
         core/blediscoveryservice.h
+        core/blepermission.cpp
+        core/blepermission.h
         core/bletransport.cpp
         core/bletransport.h
     )

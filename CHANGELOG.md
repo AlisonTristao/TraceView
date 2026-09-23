@@ -7,6 +7,45 @@ release flow.
 
 ## [Unreleased]
 
+## [4.3.0] - 2026-09-23
+
+### Added
+
+- macOS build (Apple Silicon, macOS 12+). Releases include
+  `TraceView-<version>-macos-arm64.dmg`. It is not notarized, so confirm the
+  first launch with right-click > **Open**. The updater downloads the new
+  `.dmg` and opens it for you.
+- iOS build from source for your own iPhone or iPad, built in CI but not
+  released. **iOS has no serial or USB HID connection**, because Apple does
+  not allow it. Use BLE, TCP or a hub channel there. See
+  `docs/MACOS_IOS_BUILD.md`.
+
+### Changed
+
+- BLE is now built on every platform. Scanning or connecting over BLE asks
+  for the Bluetooth permission first on Android 12+ (location on Android
+  9–11), macOS and iOS.
+- On macOS, the serial port list shows each device once (`cu.*`).
+- A hub channel device now comes online when the dongle's BTP session is
+  established, not as soon as its serial port opens.
+
+### Fixed
+
+- Hub channel devices no longer stay red while the dongle is connected. This
+  happened when you added or edited a hub channel device with the dongle
+  already online, clicked its status dot off and on, opened a project with
+  the dongle plugged in, or reconnected the dongle.
+- A hub channel device added while the dongle was already connected now
+  speaks with its own stable source ID. It could start with a random one and
+  never receive its robot's replies.
+- A device no longer stays green after the dongle is unplugged, and it no
+  longer loses the session status after the handshake.
+- When the dongle resets back to console mode (`BTP/1 CONSOLE`) during a
+  session, TraceView now reopens the port and handshakes again. Before, the
+  port stayed open with no session until you unplugged the dongle.
+- If a connect or disconnect is ever missed, the reconnect timer now corrects
+  the status dot within one reconnect interval.
+
 ## [4.2.2] - 2026-09-23
 
 ### Fixed

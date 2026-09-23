@@ -98,6 +98,8 @@
 #endif
 #if defined(TRACEVIEW_ENABLE_SERIAL) && defined(Q_OS_ANDROID)
 #include "androidusbserialtransport.h"
+#elif defined(TRACEVIEW_ENABLE_SERIAL)
+#include "serialmanager.h"
 #endif
 #include "iconpickerdialog.h"
 #include "workspacedock.h"
@@ -151,7 +153,7 @@ constexpr int kBreakpointHysteresisPx = 40;
 // preview being up, so a Small/Medium preview shows the exact chrome
 // Android gets instead of a desktop window with pieces hidden.
 constexpr bool kUsesCompactChrome =
-#ifdef Q_OS_ANDROID
+#if defined(Q_OS_ANDROID) || defined(Q_OS_IOS)
     true;
 #else
     false;
@@ -403,6 +405,9 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
         const QList<QSerialPortInfo> infos = QSerialPortInfo::availablePorts();
         ports.reserve(infos.size());
         for (const QSerialPortInfo& info : infos) {
+            if (SerialManager::isDuplicateDialInPort(info.portName())) {
+                continue;
+            }
             ports.append({info.portName(), info.portName()});
         }
         return ports;
@@ -951,7 +956,7 @@ void MainWindow::buildMenus() {
             }
             LanguageManager::instance().setLanguage(id);
 
-#if defined(Q_OS_ANDROID)
+#if defined(Q_OS_ANDROID) || defined(Q_OS_IOS)
             // restartApplication() asks for itself there (Close App / Later).
             restartApplication();
 #else
@@ -3813,8 +3818,8 @@ void MainWindow::onUpdateDownloadFinished(const QString& filePath) {
 }
 
 void MainWindow::restartApplication() {
-#if defined(Q_OS_ANDROID)
-    // Android has no way for an app to relaunch itself: startDetached() on
+#if defined(Q_OS_ANDROID) || defined(Q_OS_IOS)
+    // Neither Android nor iOS lets an app relaunch itself: startDetached() on
     // the app's own .so silently does nothing, so a desktop-style restart
     // just closed TraceView for good. Instead the user closes it and opens
     // it again -- or keeps working and gets the change on the next launch,

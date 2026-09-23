@@ -75,13 +75,28 @@ use GitHub Releases and are separate from robot firmware updates.
 
 ## Download and application updates
 
-The release workflow produces these x64 packages:
+The release workflow produces these packages:
 
 | Platform | Package | Runtime requirements |
 |---|---|---|
 | Windows | `TraceView-<version>-windows-x64.exe` NSIS installer | Bundles Qt and MinGW runtime libraries. |
 | Linux | `TraceView-<version>-linux-x64.flatpak` | Uses the KDE Flatpak runtime; no host Qt or FUSE required. |
 | Linux | `TraceView-<version>-linux-x64.AppImage` | Bundles Qt, plugins and collected third-party dependencies; requires compatible glibc and the desktop X11/Wayland/GL stack. |
+| Android | `TraceView-<version>-android-arm64.apk` | Android 9+ on arm64. |
+| macOS | `TraceView-<version>-macos-arm64.dmg` | macOS 12+ on Apple Silicon. Not notarized: confirm the first launch with right-click > **Open**. |
+
+There is no iOS package. iOS builds from source for your own devices only,
+and **iOS has no serial or USB HID connection**, because Apple does not let
+apps use USB-serial or HID devices. On iOS, connect over BLE, TCP or a hub
+channel. See [macOS and iOS builds](docs/MACOS_IOS_BUILD.md).
+
+| Transport | Windows | Linux | macOS | Android | iOS |
+|---|---|---|---|---|---|
+| Serial (USB-CDC, CP210x, CH340...) | yes | yes | yes | yes (USB OTG) | **no** |
+| USB HID | yes | yes | yes | no | **no** |
+| BLE | yes | yes | yes | yes | yes |
+| TCP | yes | yes | yes | yes | yes |
+| Hub channel | yes | yes | yes | yes | yes |
 
 On Linux, run `chmod +x TraceView-*-linux-x64.AppImage`, then open the AppImage.
 If FUSE is unavailable, run it with `--appimage-extract-and-run`.
@@ -116,6 +131,7 @@ published with `SHA256SUMS.txt`.
 | [OTA](docs/OTA.md) | Firmware upload, status polling, credentials and mDNS. |
 | [Ecosystem](docs/ECOSYSTEM.md) | Boundaries between TraceView, BTP and Bally firmware. |
 | [Theming](docs/THEMING.md) | Theme implementation and extension points. |
+| [macOS and iOS builds](docs/MACOS_IOS_BUILD.md) | Apple toolchains, packaging, signing, and why iOS has no serial or USB HID. |
 | [Changelog](CHANGELOG.md) | Changes by release. |
 
 The shared protocol implementation is maintained in

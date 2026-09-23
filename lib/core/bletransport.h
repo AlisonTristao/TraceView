@@ -55,7 +55,9 @@ public:
     // Starts an asynchronous connection to the peripheral at `address` (a
     // platform BLE address -- see Device::bleAddress's own comment; parsed
     // as a MAC first, then as a UUID for backends that identify peripherals
-    // that way). Returns false for an empty address. Any existing controller
+    // that way). Returns false for an empty address. The connection itself
+    // starts once the Bluetooth permission is granted (see blepermission.h);
+    // a denial is reported through errorOccurred(). Any existing controller
     // is torn down first, so calling this again (a new address, or a retry
     // of the same one) always starts a clean attempt.
     bool open(const QString& address);
@@ -90,6 +92,7 @@ private slots:
     void onConnectTimeout();
 
 private:
+    void startController();
     void teardown(bool disconnectController);
     void failConnection(const QString& reason);
     int mtuPayloadSize() const;
@@ -117,6 +120,9 @@ private:
     // identify "is this the one write I'm waiting for" any other way.
     QLowEnergyDescriptor m_txNotificationDescriptor;
     QString m_address;
+    // Bumped by every teardown() (so by open() and close() too): a
+    // permission answer for an older attempt compares unequal and is dropped.
+    quint64 m_attempt = 0;
     bool m_connected = false;
     // Set by close(); tells onControllerDisconnected()/onServiceError() not
     // to report an error for a drop this class itself caused.

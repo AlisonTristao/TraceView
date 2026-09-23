@@ -71,6 +71,15 @@ QString AboutDialog::installSource() {
     return tr("Flatpak (alisontristao.github.io/TraceView)");
 #elif defined(Q_OS_ANDROID)
     return tr("APK from GitHub Releases");
+#elif defined(Q_OS_IOS)
+    return tr("iOS build (sideloaded)");
+#elif defined(Q_OS_MACOS)
+    // The .dmg asks to be dragged into /Applications; running from anywhere
+    // else is most likely a build tree.
+    if (QCoreApplication::applicationDirPath().startsWith(QStringLiteral("/Applications/"))) {
+        return tr("macOS disk image from GitHub Releases");
+    }
+    return tr("Local build");
 #elif defined(Q_OS_WIN)
     const QString programFiles = QDir::fromNativeSeparators(qEnvironmentVariable("ProgramFiles"));
     if (!programFiles.isEmpty() &&

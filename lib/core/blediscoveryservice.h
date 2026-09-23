@@ -54,8 +54,10 @@ public:
     // afterwards. A restart via start() begins a fresh scan from scratch.
     void stop();
 
+    // True from start() on, including while the Bluetooth permission prompt
+    // is still up (see blepermission.h), until stop() or a denied permission.
     bool isScanning() const {
-        return m_agent != nullptr;
+        return m_agent != nullptr || m_awaitingPermission;
     }
 
 signals:
@@ -69,11 +71,16 @@ signals:
     void errorOccurred(const QString& message);
 
 private:
+    void startAgent();
     void onDeviceDiscovered(const QBluetoothDeviceInfo& info);
     void onAgentFinished();
     void onAgentError();
 
     QBluetoothDeviceDiscoveryAgent* m_agent = nullptr;
+    bool m_awaitingPermission = false;
+    // Bumped by every start()/stop(), so a permission answer arriving after
+    // either one is recognized as stale and dropped.
+    quint64 m_generation = 0;
 };
 
 }  // namespace traceview

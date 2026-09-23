@@ -560,8 +560,8 @@ SettingsPage::SettingsPage(QWidget* parent) : QWidget(parent) {
     m_restartNotice = new QLabel(this);
     m_restartNotice->setWordWrap(true);
     restartRow->addWidget(m_restartNotice, 1);
-#if defined(Q_OS_ANDROID)
-    // Android can't relaunch the app (see MainWindow::restartApplication).
+#if defined(Q_OS_ANDROID) || defined(Q_OS_IOS)
+    // Android/iOS can't relaunch the app (see MainWindow::restartApplication).
     m_restartButton = new QPushButton(tr("Close app"), this);
 #else
     m_restartButton = new QPushButton(tr("Restart now"), this);
@@ -696,7 +696,7 @@ void SettingsPage::refreshRestartNotice() {
         LanguageManager::instance().currentLanguage().id != m_initialLanguageId ||
         settings.frameLogCapacity() != m_initialFrameLogCapacity ||
         settings.notificationHistoryCapacity() != m_initialNotificationHistoryCapacity;
-#if defined(Q_OS_ANDROID)
+#if defined(Q_OS_ANDROID) || defined(Q_OS_IOS)
     const QString restartText =
         tr("Close and reopen TraceView to apply language or diagnostics history changes, "
            "or they will apply the next time you open it.");
