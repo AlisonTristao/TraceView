@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.21)
 
 project(TraceView
-    VERSION 4.2.1
+    VERSION 4.2.2
     DESCRIPTION "Real-time telemetry dashboard for ESP32/ESP-NOW robots"
     LANGUAGES CXX
 )
@@ -21,10 +21,33 @@ endif()
 option(TRACEVIEW_BUILD_TESTS "Build the Qt Test suite under tests/" ON)
 option(TRACEVIEW_BUILD_TOOLS "Build dev-only visual harnesses under tools/" ON)
 option(TRACEVIEW_FLATPAK_BUILD "Use Flatpak-managed application updates" OFF)
-option(TRACEVIEW_ENABLE_SERIAL "Build the serial transport (QSerialPort; USB Host API on Android)" ON)
-option(TRACEVIEW_ENABLE_USB_HID "Build the hidapi USB HID transport" ON)
+# iOS has no serial and no USB HID transport, by platform rule rather than
+# by missing code: iOS gives apps no access to USB-serial adapters (CP210x,
+# CH340, the ESP32's own USB-CDC) or raw HID devices -- the only sanctioned
+# route is Apple's MFi ExternalAccessory program, which needs an Apple
+# authentication chip in the peripheral itself. On iOS, TraceView talks to
+# devices over BLE, TCP or a hub channel only. See docs/MACOS_IOS_BUILD.md.
+if(IOS)
+    set(TRACEVIEW_WIRED_TRANSPORTS_DEFAULT OFF)
+else()
+    set(TRACEVIEW_WIRED_TRANSPORTS_DEFAULT ON)
+endif()
+option(TRACEVIEW_ENABLE_SERIAL "Build the serial transport (QSerialPort; USB Host API on Android; never on iOS)"
+    ${TRACEVIEW_WIRED_TRANSPORTS_DEFAULT})
+option(TRACEVIEW_ENABLE_USB_HID "Build the hidapi USB HID transport (never on iOS)"
+    ${TRACEVIEW_WIRED_TRANSPORTS_DEFAULT})
 option(TRACEVIEW_ENABLE_TCP "Enable the TCP transport integration" OFF)
-option(TRACEVIEW_ENABLE_BLE "Enable the BLE transport integration" OFF)
+# ON by default since 4.3.0: the transport (lib/core/bletransport.cpp) and
+# the firmware's GATT service both exist; it was only left OFF while they
+# were being written. Needs the Qt Connectivity module (Qt6::Bluetooth).
+option(TRACEVIEW_ENABLE_BLE "Enable the BLE transport integration" ON)
+
+if(IOS AND (TRACEVIEW_ENABLE_SERIAL OR TRACEVIEW_ENABLE_USB_HID))
+    message(FATAL_ERROR
+        "TRACEVIEW_ENABLE_SERIAL and TRACEVIEW_ENABLE_USB_HID must be OFF on iOS: "
+        "iOS does not let apps talk to USB-serial or USB HID devices. Use BLE or "
+        "TCP instead (see docs/MACOS_IOS_BUILD.md).")
+endif()
 
 # The developer-mode login seeded on every fresh install (see
 # UserModeManager::seedDefaultAccount()) used to hardcode "admin233#" in
@@ -206,6 +229,53 @@ set_target_properties(TraceView PROPERTIES
     MACOSX_BUNDLE ON
 )
 
+if(APPLE)
+    # One bundle identity for macOS and iOS, matching the Flatpak/desktop
+    # app id. XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER is what Xcode (the
+    # iOS generator) signs against; the plist templates read
+    # MACOSX_BUNDLE_GUI_IDENTIFIER.
+    set_target_properties(TraceView PROPERTIES
+        MACOSX_BUNDLE_BUNDLE_NAME "TraceView"
+        MACOSX_BUNDLE_GUI_IDENTIFIER "io.github.alisontristao.TraceView"
+        MACOSX_BUNDLE_SHORT_VERSION_STRING "${PROJECT_VERSION}"
+        MACOSX_BUNDLE_BUNDLE_VERSION "${PROJECT_VERSION}"
+        MACOSX_BUNDLE_COPYRIGHT "Copyright (c) Alison Tristao. MIT License."
+        XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER "io.github.alisontristao.TraceView"
+    )
+    if(IOS)
+        # Own Info.plist for the Bluetooth/local-network usage descriptions
+        # (see the template's own comment). The asset catalog carries the
+        # app icon: a single opaque 1024px image, which Xcode 14+ scales to
+        # every size itself.
+        target_sources(TraceView PRIVATE resources/ios/Assets.xcassets)
+        set_source_files_properties(resources/ios/Assets.xcassets PROPERTIES
+            MACOSX_PACKAGE_LOCATION Resources)
+        set_target_properties(TraceView PROPERTIES
+            MACOSX_BUNDLE_INFO_PLIST "${CMAKE_SOURCE_DIR}/resources/ios/Info.plist.in"
+            XCODE_ATTRIBUTE_ASSETCATALOG_COMPILER_APPICON_NAME "AppIcon"
+            # iPhone and iPad.
+            XCODE_ATTRIBUTE_TARGETED_DEVICE_FAMILY "1,2"
+        )
+    else()
+        # The plist's LSMinimumSystemVersion. Qt 6.9 itself needs macOS 12+,
+        # which is also what the macos-* presets pin.
+        if(CMAKE_OSX_DEPLOYMENT_TARGET)
+            set(TRACEVIEW_MACOS_MIN_VERSION "${CMAKE_OSX_DEPLOYMENT_TARGET}")
+        else()
+            set(TRACEVIEW_MACOS_MIN_VERSION "12.0")
+        endif()
+        # app.icns is generated from resources/icons/app.svg (1024px down to
+        # 16px) -- regenerate it whenever the SVG changes.
+        target_sources(TraceView PRIVATE resources/icons/app.icns)
+        set_source_files_properties(resources/icons/app.icns PROPERTIES
+            MACOSX_PACKAGE_LOCATION Resources)
+        set_target_properties(TraceView PROPERTIES
+            MACOSX_BUNDLE_ICON_FILE "app.icns"
+            MACOSX_BUNDLE_INFO_PLIST "${CMAKE_SOURCE_DIR}/resources/macos/Info.plist.in"
+        )
+    endif()
+endif()
+
 if(ANDROID)
     # Without these, androiddeployqt falls back to its own placeholder
     # (org.qtproject.example.TraceView, versionName 1.0, versionCode 1) --
@@ -339,7 +409,13 @@ if(WIN32)
             "dependency (see scripts/collect_windows_deps.sh).")
     endif()
 else()
-    install(TARGETS TraceView RUNTIME DESTINATION bin LIBRARY DESTINATION lib)
+    # BUNDLE is required for the macOS/iOS .app (a MACOSX_BUNDLE target):
+    # without it, configure fails outright on Apple platforms. The macOS
+    # .dmg itself is built by scripts/build_macos_dmg.sh, not CPack.
+    install(TARGETS TraceView
+        BUNDLE DESTINATION .
+        RUNTIME DESTINATION bin
+        LIBRARY DESTINATION lib)
 
     if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
         install(FILES resources/linux/io.github.alisontristao.TraceView.desktop DESTINATION share/applications)

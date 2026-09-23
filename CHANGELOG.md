@@ -7,6 +7,14 @@ release flow.
 
 ## [Unreleased]
 
+## [4.2.2] - 2026-09-23
+
+### Fixed
+
+- The Android release smoke test no longer fails on crashes logged by other
+  apps on the emulator; it checks only TraceView's own process and crashes,
+  and prints the exact reason when it fails.
+
 ## [4.2.1] - 2026-09-23
 
 ### Changed

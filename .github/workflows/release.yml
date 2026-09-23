@@ -345,7 +345,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: android-smoke-logcat
-          path: ${{ runner.temp }}/android-smoke-logcat.txt
+          path: ${{ runner.temp }}/android-smoke/
           if-no-files-found: ignore
 
   # ============================================================
