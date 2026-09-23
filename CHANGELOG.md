@@ -7,6 +7,16 @@ release flow.
 
 ## [Unreleased]
 
+## [4.1.8] - 2026-09-23
+
+### Fixed
+
+- Logging in to Developer mode after a wrong password now works. The
+  wrong password used to stay in the field, hidden behind the dots, so
+  whatever you typed next was added to it and the login failed again.
+  After a failed attempt the field is now cleared and selected again,
+  and on phones the keyboard opens again.
+
 ## [4.1.7] - 2026-09-23
 
 ### Fixed
