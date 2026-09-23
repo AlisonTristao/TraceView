@@ -46,6 +46,11 @@ public:
     QString iconFor(const QString& id) const;
     // No-op if `id` is unknown. Empty `icon` goes back to the default.
     void setIconFor(const QString& id, const QString& icon);
+    // Renames `id`, disambiguated against the *other* workspaces the same
+    // way createWorkspace() does. Returns the name actually stored, or an
+    // empty QString (and changes nothing) if `id` is unknown or `name` is
+    // blank.
+    QString renameWorkspace(const QString& id, const QString& name);
 
     // Adds a new workspace with an empty dashboard and makes it active.
     // `name` is disambiguated against existing names ("Workspace" ->
@@ -77,7 +82,8 @@ private:
     // Appends `name` (disambiguated) as a fresh workspace with `dashboard`
     // and returns its id, without touching m_activeId.
     QString addWorkspace(const QString& name, const QJsonObject& dashboard);
-    QString disambiguate(const QString& name) const;
+    // `ignoreId`'s own name never counts as a collision (renaming in place).
+    QString disambiguate(const QString& name, const QString& ignoreId = QString()) const;
     int indexOf(const QString& id) const;
 
     QVector<Workspace> m_workspaces;

@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.21)
 
 project(TraceView
-    VERSION 4.1.0
+    VERSION 4.1.4
     DESCRIPTION "Real-time telemetry dashboard for ESP32/ESP-NOW robots"
     LANGUAGES CXX
 )
@@ -241,6 +241,13 @@ if(ANDROID)
         # OpenSSL 3.x requirement.
         QT_ANDROID_EXTRA_LIBS "${CMAKE_SOURCE_DIR}/android/openssl/arm64-v8a/libcrypto_3.so;${CMAKE_SOURCE_DIR}/android/openssl/arm64-v8a/libssl_3.so"
     )
+    # The OpenSSL libraries above are useless without that TLS plugin, and
+    # Qt only lists a module's plugins in android-deploy-plugins when the
+    # executable links the module directly -- Qt6::Network reaching
+    # TraceView only through traceview_* left plugins/tls/ out of the APK
+    # entirely ("TLS initialization failed" on-device, despite libssl being
+    # packaged).
+    target_link_libraries(TraceView PRIVATE Qt6::Network)
 endif()
 
 if(WIN32)

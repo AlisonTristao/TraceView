@@ -249,6 +249,8 @@ private:
     // Opens IconPickerDialog for `id` and stores the pick in WorkspaceManager.
     // Returns false when the user cancelled.
     bool pickWorkspaceIcon(const QString& id);
+    // Prompts for a new name for `id` and stores it in WorkspaceManager.
+    void renameWorkspace(const QString& id);
     // Re-applies m_dockController's geometry to every docked panel. Called
     // whenever m_contentRow resizes (see eventFilter) since the panels are
     // positioned directly rather than managed by a layout.

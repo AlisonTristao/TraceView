@@ -20,6 +20,7 @@ private slots:
     void resetStartsWithOneDefaultWorkspace();
     void createWorkspaceBecomesActiveWithEmptyDashboard();
     void createWorkspaceDisambiguatesDuplicateNames();
+    void renameWorkspaceDisambiguatesAgainstOthersOnly();
     void removingActiveWorkspaceMovesActiveIdElsewhere();
     void removingNonActiveWorkspaceLeavesActiveIdUnchanged();
     void removingTheLastWorkspaceIsANoOp();
@@ -58,6 +59,22 @@ void TestWorkspaceManager::createWorkspaceDisambiguatesDuplicateNames() {
     QVERIFY(first != second);
     QCOMPARE(manager.nameFor(first), QString("Workspace"));
     QCOMPARE(manager.nameFor(second), QString("Workspace 2"));
+}
+
+void TestWorkspaceManager::renameWorkspaceDisambiguatesAgainstOthersOnly() {
+    WorkspaceManager& manager = WorkspaceManager::instance();
+    manager.reset();
+
+    const QString first = manager.createWorkspace("Charts");
+    const QString second = manager.createWorkspace("Logs");
+    // Keeping (or re-trimming to) its own name is not a collision.
+    QCOMPARE(manager.renameWorkspace(first, "  Charts "), QString("Charts"));
+    QCOMPARE(manager.renameWorkspace(second, "Charts"), QString("Charts 2"));
+    QCOMPARE(manager.nameFor(second), QString("Charts 2"));
+    // Blank or unknown: nothing changes.
+    QVERIFY(manager.renameWorkspace(second, "   ").isEmpty());
+    QCOMPARE(manager.nameFor(second), QString("Charts 2"));
+    QVERIFY(manager.renameWorkspace("no-such-id", "X").isEmpty());
 }
 
 void TestWorkspaceManager::removingActiveWorkspaceMovesActiveIdElsewhere() {

@@ -99,8 +99,8 @@ QString headerDump(const FrameLogEntry& e) {
                .arg(messageTypeLabel(f.type))
                .arg(quint8(f.type), 2, 16, QChar('0'));
     out += QObject::tr("direction     %1\n")
-               .arg(e.direction == FrameDirection::Outbound ? QStringLiteral("TX (sent)")
-                                                            : QStringLiteral("RX (received)"));
+               .arg(e.direction == FrameDirection::Outbound ? QObject::tr("TX (sent)")
+                                                            : QObject::tr("RX (received)"));
     out += QObject::tr("flags         0x%1  %2\n")
                .arg(f.flags, 4, 16, QChar('0'))
                .arg(flagsLabel(f.flags).isEmpty() ? QStringLiteral("-") : flagsLabel(f.flags));

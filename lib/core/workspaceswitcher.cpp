@@ -50,7 +50,7 @@ QIcon padIconRight(const QIcon& icon, int size, int pad) {
 // QObject already, so its own clicked() still connects normally).
 class WorkspaceRow : public QWidget {
 public:
-    WorkspaceRow(const QString& name, bool active, bool deletable, bool iconEditable,
+    WorkspaceRow(const QString& name, bool active, bool deletable, bool editable,
                  QWidget* parent)
         : QWidget(parent) {
         setCursor(Qt::PointingHandCursor);
@@ -66,7 +66,7 @@ public:
         m_iconButton->setAutoRaise(true);
         m_iconButton->setFixedSize(24, 24);
         m_iconButton->setIconSize(QSize(kRibbonIconSize, kRibbonIconSize));
-        if (iconEditable) {
+        if (editable) {
             m_iconButton->setToolTip(QObject::tr("Change icon"));
         } else {
             m_iconButton->setAttribute(Qt::WA_TransparentForMouseEvents);
@@ -79,6 +79,14 @@ public:
         label->setFont(font);
         layout->addWidget(label, /*stretch=*/1);
 
+        m_renameButton = new QToolButton(this);
+        m_renameButton->setAutoRaise(true);
+        m_renameButton->setFixedSize(24, 24);
+        m_renameButton->setIconSize(QSize(kRibbonIconSize, kRibbonIconSize));
+        m_renameButton->setVisible(editable);
+        m_renameButton->setToolTip(QObject::tr("Rename workspace"));
+        layout->addWidget(m_renameButton);
+
         m_trashButton = new QToolButton(this);
         m_trashButton->setAutoRaise(true);
         m_trashButton->setFixedSize(24, 24);
@@ -90,6 +98,10 @@ public:
 
     QToolButton* iconButton() const {
         return m_iconButton;
+    }
+
+    QToolButton* renameButton() const {
+        return m_renameButton;
     }
 
     QToolButton* trashButton() const {
@@ -109,6 +121,7 @@ protected:
 
 private:
     QToolButton* m_iconButton = nullptr;
+    QToolButton* m_renameButton = nullptr;
     QToolButton* m_trashButton = nullptr;
 };
 
@@ -180,11 +193,13 @@ void WorkspaceSwitcher::rebuildMenu() {
     const bool deletable = m_managementEnabled && editableCount > 1;
     for (const Entry& entry : m_entries) {
         const QString id = entry.id;
-        const bool iconEditable = m_managementEnabled && !entry.builtIn;
+        const bool editable = m_managementEnabled && !entry.builtIn;
         auto* row = new WorkspaceRow(entry.name, id == m_activeId,
-                                     deletable && !entry.builtIn, iconEditable, m_menu);
+                                     deletable && !entry.builtIn, editable, m_menu);
         row->iconButton()->setIcon(
             IconLibrary::instance().icon(entry.icon, m_iconColor, kRibbonIconSize));
+        row->renameButton()->setIcon(IconLibrary::instance().icon(
+            QStringLiteral("lucide:pencil"), m_iconColor, kRibbonIconSize));
         row->trashButton()->setIcon(makeTrashIcon(m_iconColor, kTrashIconSize));
         // Deferred to the next event-loop turn (rather than emitted straight
         // from here): both handlers below end up back in rebuildMenu() via
@@ -207,13 +222,22 @@ void WorkspaceSwitcher::rebuildMenu() {
                 },
                 Qt::QueuedConnection);
         };
-        if (iconEditable) {
+        if (editable) {
             connect(row->iconButton(), &QToolButton::clicked, this, [this, id]() {
                 QMetaObject::invokeMethod(
                     this,
                     [this, id]() {
                         m_menu->close();
                         emit iconChangeRequested(id);
+                    },
+                    Qt::QueuedConnection);
+            });
+            connect(row->renameButton(), &QToolButton::clicked, this, [this, id]() {
+                QMetaObject::invokeMethod(
+                    this,
+                    [this, id]() {
+                        m_menu->close();
+                        emit renameRequested(id);
                     },
                     Qt::QueuedConnection);
             });

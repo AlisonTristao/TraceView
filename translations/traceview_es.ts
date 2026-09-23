@@ -4,40 +4,40 @@
 <context>
     <name>ChartWidgets</name>
     <message>
-        <location filename="../lib/dashboard/widgets/chartwidgets.cpp" line="214" />
-        <location filename="../lib/dashboard/widgets/chartwidgets.cpp" line="503" />
+        <location filename="../lib/dashboard/widgets/chartwidgets.cpp" line="+254"/>
+        <location line="+298"/>
         <source>Field %1</source>
         <translation>Campo %1</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/chartwidgets.cpp" line="226" />
-        <location filename="../lib/dashboard/widgets/chartwidgets.cpp" line="555" />
-        <location filename="../lib/dashboard/widgets/chartwidgets.cpp" line="1130" />
+        <location line="-286"/>
+        <location line="+338"/>
+        <location line="+742"/>
         <source>--</source>
         <translation>--</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/chartwidgets.cpp" line="321" />
+        <location line="-984"/>
         <source>t</source>
         <translation>t</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/chartwidgets.cpp" line="322" />
+        <location line="+1"/>
         <source>k</source>
         <translation>k</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/chartwidgets.cpp" line="556" />
+        <location line="+242"/>
         <source>%1%2</source>
         <translation>%1%2</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/chartwidgets.cpp" line="562" />
+        <location line="+6"/>
         <source>%1  %2</source>
         <translation>%1  %2</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/chartwidgets.cpp" line="1019" />
+        <location line="+621"/>
         <source>%1: %2</source>
         <translation>%1: %2</translation>
     </message>
@@ -45,42 +45,42 @@
 <context>
     <name>ControlConfigEditor</name>
     <message>
-        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="24" />
+        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="+24"/>
         <source>Default</source>
         <translation>Predeterminado</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="25" />
+        <location line="+1"/>
         <source>Success</source>
         <translation>Éxito</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="26" />
+        <location line="+1"/>
         <source>Warning</source>
         <translation>Advertencia</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="27" />
+        <location line="+1"/>
         <source>Danger</source>
         <translation>Peligro</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="32" />
+        <location line="+19"/>
         <source>Momentary (press + release)</source>
         <translation>Momentáneo (pulsar + soltar)</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="33" />
+        <location line="+1"/>
         <source>Pulse (single command)</source>
         <translation>Pulso (comando único)</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="38" />
+        <location line="+5"/>
         <source>Continuous (while dragging)</source>
         <translation>Continuo (mientras se arrastra)</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="39" />
+        <location line="+1"/>
         <source>On release</source>
         <translation>Al soltar</translation>
     </message>
@@ -88,57 +88,57 @@
 <context>
     <name>DashboardCommands</name>
     <message>
-        <location filename="../lib/dashboard/dashboardcommands.cpp" line="14" />
+        <location filename="../lib/dashboard/dashboardcommands.cpp" line="+14"/>
         <source>Add Widget</source>
         <translation>Añadir widget</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/dashboardcommands.cpp" line="27" />
+        <location line="+13"/>
         <source>Remove Widget</source>
         <translation>Eliminar widget</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/dashboardcommands.cpp" line="41" />
+        <location line="+14"/>
         <source>Remove Widgets</source>
         <translation>Eliminar widgets</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/dashboardcommands.cpp" line="63" />
+        <location line="+23"/>
         <source>Move Widget</source>
         <translation>Mover widget</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/dashboardcommands.cpp" line="82" />
+        <location line="+21"/>
         <source>Resize Widget</source>
         <translation>Redimensionar widget</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/dashboardcommands.cpp" line="98" />
+        <location line="+17"/>
         <source>Rename Widget</source>
         <translation>Renombrar widget</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/dashboardcommands.cpp" line="114" />
+        <location line="+16"/>
         <source>Set Widget Key</source>
         <translation>Definir clave del widget</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/dashboardcommands.cpp" line="131" />
+        <location line="+17"/>
         <source>Set Widget Config</source>
         <translation>Definir configuración del widget</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/dashboardcommands.cpp" line="147" />
+        <location line="+16"/>
         <source>Change Widget Type</source>
         <translation>Cambiar tipo de widget</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/dashboardcommands.cpp" line="180" />
+        <location line="+33"/>
         <source>Group Widgets</source>
         <translation>Agrupar widgets</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/dashboardcommands.cpp" line="199" />
+        <location line="+19"/>
         <source>Ungroup Widgets</source>
         <translation>Desagrupar widgets</translation>
     </message>
@@ -146,43 +146,61 @@
 <context>
     <name>Device</name>
     <message>
-        <location filename="../lib/devices/device.h" line="43" />
+        <location filename="../lib/devices/device.h" line="+54"/>
         <source>Serial</source>
         <translation>Serie</translation>
     </message>
     <message>
-        <location filename="../lib/devices/device.h" line="45" />
+        <location line="+2"/>
         <source>USB</source>
         <translation>USB</translation>
     </message>
     <message>
-        <location filename="../lib/devices/device.h" line="47" />
+        <location line="+2"/>
         <source>Hub</source>
         <translation>Concentrador</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>TCP</source>
+        <translation>TCP</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>BLE</source>
+        <translation>BLE</translation>
     </message>
 </context>
 <context>
     <name>DeviceCommands</name>
     <message>
-        <location filename="../lib/devices/devicecommands.cpp" line="13" />
+        <location filename="../lib/devices/devicecommands.cpp" line="+13"/>
         <source>Add Device</source>
         <translation>Añadir dispositivo</translation>
     </message>
     <message>
-        <location filename="../lib/devices/devicecommands.cpp" line="27" />
+        <location line="+14"/>
         <source>Remove Device</source>
         <translation>Eliminar dispositivo</translation>
     </message>
     <message>
-        <location filename="../lib/devices/devicecommands.cpp" line="42" />
+        <location line="+15"/>
         <source>Edit Device</source>
         <translation>Editar dispositivo</translation>
     </message>
 </context>
 <context>
+    <name>DialogPresenter</name>
+    <message>
+        <location filename="../lib/theme/dialogpresenter.cpp" line="+90"/>
+        <source>Back</source>
+        <translation>Atrás</translation>
+    </message>
+</context>
+<context>
     <name>FontManager</name>
     <message>
-        <location filename="../lib/theme/fontmanager.cpp" line="24" />
+        <location filename="../lib/theme/fontmanager.cpp" line="+24"/>
         <source>System Default</source>
         <translation>Predeterminado del Sistema</translation>
     </message>
@@ -190,7 +208,7 @@
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="68" />
+        <location filename="../lib/core/mainwindow.cpp" line="+110"/>
         <source>TraceView Project (*.tvproj)</source>
         <translation>Proyecto TraceView (*.tvproj)</translation>
     </message>
@@ -198,7 +216,7 @@
 <context>
     <name>ProjectStore</name>
     <message>
-        <location filename="../lib/project/projectstore.cpp" line="31" />
+        <location filename="../lib/project/projectstore.cpp" line="+31"/>
         <source>No project path set yet — use Save Project to choose a file first.</source>
         <translation>Aún no se ha definido una ruta de proyecto — use Guardar proyecto para elegir un archivo primero.</translation>
     </message>
@@ -206,74 +224,270 @@
 <context>
     <name>QObject</name>
     <message>
-        <location filename="../lib/core/debugchartswindow.cpp" line="25" />
+        <location filename="../lib/core/debugchartswindow.cpp" line="+28"/>
         <source>Debug -- synthetic chart data</source>
         <translation>Depuración -- datos de gráfico sintéticos</translation>
     </message>
     <message>
-        <location filename="../lib/core/workspaceswitcher.cpp" line="49" />
+        <location filename="../lib/core/workspaceswitcher.cpp" line="+87"/>
+        <source>Rename workspace</source>
+        <translation>Renombrar espacio de trabajo</translation>
+    </message>
+    <message>
+        <location line="+8"/>
         <source>Delete workspace</source>
         <translation>Eliminar espacio de trabajo</translation>
     </message>
     <message>
-        <location filename="../lib/devices/deviceconfigdialog.cpp" line="37" />
+        <location filename="../lib/devices/deviceconfigdialog.cpp" line="+59"/>
         <source>(unnamed topic)</source>
         <translation>(tema sin nombre)</translation>
     </message>
     <message>
-        <location filename="../lib/devices/deviceconfigdialog.cpp" line="56" />
+        <location line="+19"/>
         <source>(unnamed)</source>
         <translation>(sin nombre)</translation>
     </message>
     <message>
+        <location filename="../lib/core/workspaceswitcher.cpp" line="-25"/>
         <source>Change icon</source>
         <translation>Cambiar icono</translation>
+    </message>
+    <message>
+        <location filename="../lib/dashboard/widgets/textboardwidget.cpp" line="+243"/>
+        <source>%1 packet(s)</source>
+        <translation>%1 paquete(s)</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>   jitter %1%2 ms</source>
+        <translation>   jitter %1%2 ms</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>   jitter --</source>
+        <translation>   jitter --</translation>
+    </message>
+    <message>
+        <location filename="../lib/diagnostics/btpmonitortab.cpp" line="+94"/>
+        <source>Decode failure: %1</source>
+        <translation>Fallo de decodificación: %1</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>type          %1 (0x%2)
+</source>
+        <translation>type          %1 (0x%2)
+</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>direction     %1
+</source>
+        <translation>direction     %1
+</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>TX (sent)</source>
+        <translation>TX (enviado)</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>RX (received)</source>
+        <translation>RX (recibido)</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>flags         0x%1  %2
+</source>
+        <translation>flags         0x%1  %2
+</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>cipher        %1
+</source>
+        <translation>cipher        %1
+</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>source_id     %1
+</source>
+        <translation>source_id     %1
+</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>boot_id       %1
+</source>
+        <translation>boot_id       %1
+</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>sequence      %1
+</source>
+        <translation>sequence      %1
+</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>timestamp_us  %1
+</source>
+        <translation>timestamp_us  %1
+</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>object_id     %1
+</source>
+        <translation>object_id     %1
+</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>fragment      %1 / %2
+</source>
+        <translation>fragment      %1 / %2
+</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>payload       %1 octet(s)
+
+</source>
+        <translation>payload       %1 octeto(s)
+
+</translation>
+    </message>
+    <message>
+        <location filename="../lib/diagnostics/notificationhistorywindow.cpp" line="+29"/>
+        <location line="+8"/>
+        <source>Info</source>
+        <translation>Info</translation>
+    </message>
+    <message>
+        <location line="-6"/>
+        <source>Success</source>
+        <translation>Éxito</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Warning</source>
+        <translation>Advertencia</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Error</source>
+        <translation>Error</translation>
+    </message>
+    <message>
+        <location filename="../lib/diagram/diagramblockconfigdialog.cpp" line="+32"/>
+        <source>&lt;b&gt;JavaScript&lt;/b&gt;, run live against this device&apos;s real traffic.&lt;br&gt;&lt;br&gt;&lt;b&gt;Define to react to traffic:&lt;/b&gt;&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;onTelemetry(sample)&lt;/code&gt; -- called for a telemetry value already subscribed elsewhere (e.g. a Dashboard chart). &lt;code&gt;sample&lt;/code&gt; has &lt;code&gt;topicId&lt;/code&gt;, &lt;code&gt;fieldId&lt;/code&gt;, &lt;code&gt;elementIndex&lt;/code&gt;, &lt;code&gt;value&lt;/code&gt;, &lt;code&gt;timestampUs&lt;/code&gt;.&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;onTerminal(text)&lt;/code&gt; -- called for each chunk of text this device&apos;s console/serial channel sends back.&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;onConnectionChange(connected)&lt;/code&gt; -- called when this device connects or disconnects.&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;onStatus(text, severity)&lt;/code&gt; -- called for a one-off status update (session established/failed, a subscription rejected, a sendCommand() result, ...) -- the same text the status bar shows. &lt;code&gt;severity&lt;/code&gt; is one of &lt;code&gt;&quot;info&quot;&lt;/code&gt;, &lt;code&gt;&quot;success&quot;&lt;/code&gt;, &lt;code&gt;&quot;warning&quot;&lt;/code&gt;, &lt;code&gt;&quot;error&quot;&lt;/code&gt;.&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;onDeviceInfo(info)&lt;/code&gt; -- called when this device reports its info block (firmware version, chip, partition, ...). &lt;code&gt;info&lt;/code&gt; is an array of &lt;code&gt;{key, label, value}&lt;/code&gt;.&lt;br&gt;&lt;br&gt;&lt;b&gt;Call any time:&lt;/b&gt;&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;device.log(text)&lt;/code&gt; -- write to the output pane.&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;device.sendCommand(text)&lt;/code&gt; -- send a command to this device.&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;device.sendTerminal(text)&lt;/code&gt; -- send text over its console channel.&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;device.setInterval(fn, ms)&lt;/code&gt; / &lt;code&gt;device.clearInterval(id)&lt;/code&gt; -- run &lt;code&gt;fn&lt;/code&gt; every &lt;code&gt;ms&lt;/code&gt; milliseconds until cancelled.&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;device.setTimeout(fn, ms)&lt;/code&gt; / &lt;code&gt;device.clearTimeout(id)&lt;/code&gt; -- run &lt;code&gt;fn&lt;/code&gt; once, &lt;code&gt;ms&lt;/code&gt; milliseconds from now.</source>
+        <translation>&lt;b&gt;JavaScript&lt;/b&gt;, ejecutado en vivo sobre el tráfico real de este dispositivo.&lt;br&gt;&lt;br&gt;&lt;b&gt;Defina para reaccionar al tráfico:&lt;/b&gt;&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;onTelemetry(sample)&lt;/code&gt; -- se llama para un valor de telemetría ya suscrito en otro lugar (p. ej., un gráfico del Dashboard). &lt;code&gt;sample&lt;/code&gt; tiene &lt;code&gt;topicId&lt;/code&gt;, &lt;code&gt;fieldId&lt;/code&gt;, &lt;code&gt;elementIndex&lt;/code&gt;, &lt;code&gt;value&lt;/code&gt;, &lt;code&gt;timestampUs&lt;/code&gt;.&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;onTerminal(text)&lt;/code&gt; -- se llama por cada fragmento de texto que devuelve el canal de consola/serie de este dispositivo.&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;onConnectionChange(connected)&lt;/code&gt; -- se llama cuando este dispositivo se conecta o desconecta.&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;onStatus(text, severity)&lt;/code&gt; -- se llama para una actualización de estado puntual (sesión establecida/fallida, una suscripción rechazada, un resultado de sendCommand(), ...) -- el mismo texto que muestra la barra de estado. &lt;code&gt;severity&lt;/code&gt; es uno de &lt;code&gt;&quot;info&quot;&lt;/code&gt;, &lt;code&gt;&quot;success&quot;&lt;/code&gt;, &lt;code&gt;&quot;warning&quot;&lt;/code&gt;, &lt;code&gt;&quot;error&quot;&lt;/code&gt;.&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;onDeviceInfo(info)&lt;/code&gt; -- se llama cuando este dispositivo informa su bloque de información (versión de firmware, chip, partición, ...). &lt;code&gt;info&lt;/code&gt; es un array de &lt;code&gt;{key, label, value}&lt;/code&gt;.&lt;br&gt;&lt;br&gt;&lt;b&gt;Llame en cualquier momento:&lt;/b&gt;&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;device.log(text)&lt;/code&gt; -- escribe en el panel de salida.&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;device.sendCommand(text)&lt;/code&gt; -- envía un comando a este dispositivo.&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;device.sendTerminal(text)&lt;/code&gt; -- envía texto por su canal de consola.&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;device.setInterval(fn, ms)&lt;/code&gt; / &lt;code&gt;device.clearInterval(id)&lt;/code&gt; -- ejecuta &lt;code&gt;fn&lt;/code&gt; cada &lt;code&gt;ms&lt;/code&gt; milisegundos hasta cancelarlo.&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;device.setTimeout(fn, ms)&lt;/code&gt; / &lt;code&gt;device.clearTimeout(id)&lt;/code&gt; -- ejecuta &lt;code&gt;fn&lt;/code&gt; una vez, dentro de &lt;code&gt;ms&lt;/code&gt; milisegundos.</translation>
+    </message>
+    <message>
+        <location filename="../lib/updater/updatechecker.cpp" line="+46"/>
+        <source>No published releases found.</source>
+        <translation>No se encontraron versiones publicadas.</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Couldn&apos;t parse the latest release&apos;s version.</source>
+        <translation>No se pudo interpretar la versión de la última publicación.</translation>
+    </message>
+    <message>
+        <location filename="../lib/updater/updateinstaller.cpp" line="+21"/>
+        <source>Updates are managed by Flatpak. Use &apos;flatpak update&apos;.</source>
+        <translation>Las actualizaciones las gestiona Flatpak. Use &apos;flatpak update&apos;.</translation>
+    </message>
+    <message>
+        <location line="+37"/>
+        <source>Downloaded installer not found: %1</source>
+        <translation>No se encontró el instalador descargado: %1</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>Couldn&apos;t write the update script.</source>
+        <translation>No se pudo escribir el script de actualización.</translation>
+    </message>
+    <message>
+        <location line="+25"/>
+        <source>Automatic installation requires running an AppImage. Download the AppImage from the release page.</source>
+        <translation>La instalación automática requiere ejecutar un AppImage. Descargue el AppImage desde la página de la versión.</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>The AppImage and its directory must be writable. Download the update and replace it manually.</source>
+        <translation>El AppImage y su carpeta deben tener permiso de escritura. Descargue la actualización y reemplácelo manualmente.</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Couldn&apos;t open the downloaded AppImage.</source>
+        <translation>No se pudo abrir el AppImage descargado.</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>The downloaded file is not a supported AppImage.</source>
+        <translation>El archivo descargado no es un AppImage compatible.</translation>
+    </message>
+    <message>
+        <location line="+35"/>
+        <source>The update was installed, but relaunch failed. Close TraceView and open the AppImage again.</source>
+        <translation>La actualización se instaló, pero no se pudo reiniciar. Cierre TraceView y abra el AppImage de nuevo.</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>Automatic install isn&apos;t supported on this platform.</source>
+        <translation>La instalación automática no es compatible con esta plataforma.</translation>
     </message>
 </context>
 <context>
     <name>ThemeManager</name>
     <message>
-        <location filename="../lib/theme/palettes.cpp" line="12" />
+        <location filename="../lib/theme/palettes.cpp" line="+12"/>
         <source>Dark</source>
         <translation>Oscuro</translation>
     </message>
     <message>
-        <location filename="../lib/theme/palettes.cpp" line="41" />
+        <location line="+29"/>
         <source>Light</source>
         <translation>Claro</translation>
     </message>
     <message>
-        <location filename="../lib/theme/palettes.cpp" line="74" />
+        <location line="+33"/>
         <source>Wood</source>
         <translation>Madera</translation>
     </message>
     <message>
-        <location filename="../lib/theme/palettes.cpp" line="103" />
+        <location line="+29"/>
         <source>Black</source>
         <translation>Negro</translation>
     </message>
     <message>
-        <location filename="../lib/theme/palettes.cpp" line="134" />
+        <location line="+31"/>
         <source>Matrix</source>
         <translation>Matrix</translation>
     </message>
     <message>
-        <location filename="../lib/theme/palettes.cpp" line="165" />
+        <location line="+31"/>
         <source>Synthwave</source>
         <translation>Synthwave</translation>
     </message>
     <message>
-        <location filename="../lib/theme/palettes.cpp" line="197" />
+        <location line="+32"/>
         <source>Amber</source>
         <translation>Ámbar</translation>
     </message>
     <message>
-        <location filename="../lib/theme/palettes.cpp" line="228" />
+        <location line="+31"/>
         <source>Arctic</source>
         <translation>Ártico</translation>
     </message>
     <message>
-        <location filename="../lib/theme/palettes.cpp" line="257" />
+        <location line="+29"/>
         <source>Sakura</source>
         <translation>Sakura</translation>
     </message>
@@ -281,22 +495,22 @@
 <context>
     <name>WidgetConfigEditor</name>
     <message>
-        <location filename="../lib/dashboard/widgetconfigeditor.cpp" line="12" />
+        <location filename="../lib/dashboard/widgetconfigeditor.cpp" line="+12"/>
         <source>(No device)</source>
         <translation>(Ningún dispositivo)</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgetconfigeditor.cpp" line="15" />
+        <location line="+3"/>
         <source>(Unnamed device)</source>
         <translation>(Dispositivo sin nombre)</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgetconfigeditor.cpp" line="37" />
+        <location line="+22"/>
         <source>(unnamed topic)</source>
         <translation>(tema sin nombre)</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgetconfigeditor.cpp" line="140" />
+        <location line="+103"/>
         <source>Field %1</source>
         <translation>Campo %1</translation>
     </message>
@@ -304,37 +518,47 @@
 <context>
     <name>WidgetRegistry</name>
     <message>
-        <location filename="../lib/dashboard/widgetregistry.cpp" line="26" />
+        <location filename="../lib/dashboard/widgetregistry.cpp" line="+30"/>
         <source>Line Chart (dummy)</source>
         <translation>Gráfico de líneas (ficticio)</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgetregistry.cpp" line="30" />
+        <location line="+4"/>
         <source>Bar Chart (dummy)</source>
         <translation>Gráfico de barras (ficticio)</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgetregistry.cpp" line="34" />
+        <location line="+4"/>
         <source>Gauge (dummy)</source>
         <translation>Medidor (ficticio)</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgetregistry.cpp" line="38" />
+        <location line="+4"/>
         <source>Serial Monitor</source>
         <translation>Monitor serie</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgetregistry.cpp" line="43" />
+        <location line="+6"/>
+        <source>Robot Log</source>
+        <translation>Registro del Robot</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Text Board</source>
+        <translation>Tablero de Texto</translation>
+    </message>
+    <message>
+        <location line="+5"/>
         <source>Push Button</source>
         <translation>Botón pulsador</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgetregistry.cpp" line="49" />
+        <location line="+6"/>
         <source>Toggle Switch</source>
         <translation>Interruptor</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgetregistry.cpp" line="55" />
+        <location line="+6"/>
         <source>Slider</source>
         <translation>Control deslizante</translation>
     </message>
@@ -342,7 +566,7 @@
 <context>
     <name>WorkspaceManager</name>
     <message>
-        <location filename="../lib/project/workspacemanager.cpp" line="155" />
+        <location filename="../lib/project/workspacemanager.cpp" line="+180"/>
         <source>Default</source>
         <translation>Predeterminado</translation>
     </message>
@@ -350,317 +574,557 @@
 <context>
     <name>traceview::AboutDialog</name>
     <message>
-        <location filename="../lib/core/aboutdialog.cpp" line="13" />
+        <location filename="../lib/core/aboutdialog.cpp" line="+13"/>
         <source>About TraceView</source>
         <translation>Acerca de TraceView</translation>
     </message>
     <message>
-        <location filename="../lib/core/aboutdialog.cpp" line="16" />
+        <location line="+3"/>
         <source>&lt;b&gt;TraceView&lt;/b&gt; v%1</source>
         <translation>&lt;b&gt;TraceView&lt;/b&gt; v%1</translation>
     </message>
     <message>
-        <location filename="../lib/core/aboutdialog.cpp" line="18" />
+        <location line="+2"/>
         <source>Real-time telemetry dashboard for ESP32/ESP-NOW robots</source>
         <translation>Panel de telemetría en tiempo real para robots ESP32/ESP-NOW</translation>
     </message>
     <message>
-        <location filename="../lib/core/aboutdialog.cpp" line="22" />
+        <location line="+4"/>
         <source>Built with Qt %1 &amp;middot; running with Qt %2</source>
         <translation>Compilado con Qt %1 &amp;middot; ejecutándose con Qt %2</translation>
     </message>
     <message>
-        <location filename="../lib/core/aboutdialog.cpp" line="25" />
+        <location line="+3"/>
         <source>MIT License &amp;middot; AlisonTristao</source>
         <translation>Licencia MIT &amp;middot; AlisonTristao</translation>
     </message>
     <message>
-        <location filename="../lib/core/aboutdialog.cpp" line="28" />
+        <location line="+3"/>
         <source>See CHANGELOG.md for release history.</source>
         <translation>Consulte CHANGELOG.md para el historial de versiones.</translation>
     </message>
 </context>
 <context>
+    <name>traceview::BleDiscoveryService</name>
+    <message>
+        <location filename="../lib/core/blediscoveryservice.cpp" line="+77"/>
+        <source>BLE discovery failed</source>
+        <translation>Falló la búsqueda BLE</translation>
+    </message>
+</context>
+<context>
+    <name>traceview::BleTransport</name>
+    <message>
+        <location filename="../lib/core/bletransport.cpp" line="+67"/>
+        <source>failed to create a BLE controller</source>
+        <translation>no se pudo crear un controlador BLE</translation>
+    </message>
+    <message>
+        <location line="+65"/>
+        <source>BLE peripheral disconnected before HELLO</source>
+        <translation>el periférico BLE se desconectó antes del HELLO</translation>
+    </message>
+    <message>
+        <location line="+16"/>
+        <source>peripheral does not advertise the BTP service</source>
+        <translation>el periférico no anuncia el servicio BTP</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>failed to create BTP service object</source>
+        <translation>no se pudo crear el objeto del servicio BTP</translation>
+    </message>
+    <message>
+        <location line="+25"/>
+        <source>BTP service is missing its RX/TX characteristics</source>
+        <translation>al servicio BTP le faltan las características RX/TX</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>TX characteristic has no notification descriptor</source>
+        <translation>la característica TX no tiene descriptor de notificación</translation>
+    </message>
+    <message>
+        <location line="+13"/>
+        <source>BLE service error</source>
+        <translation>Error del servicio BLE</translation>
+    </message>
+    <message>
+        <location line="+47"/>
+        <source>BLE connection timed out</source>
+        <translation>Tiempo de conexión BLE agotado</translation>
+    </message>
+</context>
+<context>
     <name>traceview::BtpBackend</name>
     <message>
-        <location filename="../lib/protocol/btpbackend.cpp" line="173" />
+        <location filename="../lib/protocol/btpbackend.cpp" line="+326"/>
+        <source>Robot 0x%1 is online but its catalog has not arrived — check the dongle (hub -manifest)</source>
+        <translation>El robot 0x%1 está en línea, pero su catálogo no ha llegado — revise el dongle (hub -manifest)</translation>
+    </message>
+    <message>
+        <location line="+100"/>
+        <source>Robot 0x%1 rebooted — catalog and subscriptions refreshed</source>
+        <translation>El robot 0x%1 se reinició — catálogo y suscripciones actualizados</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>config rev %1</source>
+        <translation>config rev %1</translation>
+    </message>
+    <message>
+        <location line="+22"/>
+        <source>%1 limited to %2 (requested %3)</source>
+        <translation>%1 limitado a %2 (solicitado %3)</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>SUBSCRIBE rejected for %1 (status 0x%2, error 0x%3)</source>
+        <translation>SUBSCRIBE rechazado para %1 (estado 0x%2, error 0x%3)</translation>
+    </message>
+    <message>
+        <location line="+99"/>
+        <source>HELLO rejected</source>
+        <translation>HELLO rechazado</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <location line="+39"/>
+        <source>no HELLO_RESULT within %1 ms</source>
+        <translation>ningún HELLO_RESULT en %1 ms</translation>
+    </message>
+    <message>
+        <location line="-1"/>
+        <source>session watchdog: no traffic from the peer</source>
+        <translation>watchdog de sesión: sin tráfico del otro extremo</translation>
+    </message>
+    <message>
+        <location line="+41"/>
+        <source>failed to encode or send HELLO</source>
+        <translation>no se pudo codificar o enviar el HELLO</translation>
+    </message>
+    <message>
+        <location line="+19"/>
+        <source>HELLO_RESULT selected an unadvertised version %1</source>
+        <translation>HELLO_RESULT seleccionó una versión no anunciada: %1</translation>
+    </message>
+    <message>
+        <location line="+4"/>
         <source>BTP session established (HELLO_RESULT=SUCCESS)</source>
         <translation>Sesión BTP establecida (HELLO_RESULT=SUCCESS)</translation>
     </message>
     <message>
-        <location filename="../lib/protocol/btpbackend.cpp" line="181" />
+        <location line="+32"/>
         <source>BTP/%1</source>
         <translation>BTP/%1</translation>
     </message>
     <message>
-        <location filename="../lib/protocol/btpbackend.cpp" line="185" />
+        <location line="+21"/>
+        <source>dongle returned to console (BTP/1 CONSOLE)</source>
+        <translation>el dongle volvió a la consola (BTP/1 CONSOLE)</translation>
+    </message>
+    <message>
+        <location line="+197"/>
+        <source>Dropped an unsealed frame on a sealed hub channel (check the robot&apos;s channel-B password)</source>
+        <translation>Se descartó una trama no sellada en un canal de hub sellado (revise la contraseña del canal B del robot)</translation>
+    </message>
+    <message>
+        <location line="+129"/>
+        <source>transport rejected an outbound BTP frame: %1</source>
+        <translation>el transporte rechazó una trama BTP saliente: %1</translation>
+    </message>
+    <message>
+        <location line="+82"/>
+        <source>terminal input not sent: endpoint key not configured</source>
+        <translation>entrada de terminal no enviada: clave del endpoint no configurada</translation>
+    </message>
+    <message>
+        <location line="+34"/>
+        <source>terminal input not sent: failed to seal</source>
+        <translation>entrada de terminal no enviada: no se pudo sellar</translation>
+    </message>
+    <message>
+        <location line="-815"/>
+        <location line="+359"/>
         <source>BTP handshake failed: %1</source>
         <translation>Fallo en el protocolo de enlace BTP: %1</translation>
-    </message>
-    <message>
-        <location filename="../lib/protocol/btpbackend.cpp" line="211" />
-        <source>Topic 0x%1 of source 0x%2 limited to %3 (requested %4)</source>
-        <translation>El tema 0x%1 de la fuente 0x%2 se limitó a %3 (solicitado %4)</translation>
-    </message>
-    <message>
-        <location filename="../lib/protocol/btpbackend.cpp" line="219" />
-        <source>SUBSCRIBE rejected for topic 0x%1 of source 0x%2 (status 0x%3, error 0x%4)</source>
-        <translation>SUBSCRIBE rechazado para el tema 0x%1 de la fuente 0x%2 (estado 0x%3, error 0x%4)</translation>
     </message>
 </context>
 <context>
     <name>traceview::BtpHandshake</name>
     <message>
-        <location filename="../lib/protocol/btphandshake.cpp" line="135" />
-        <source>failed to encode HELLO frame</source>
-        <translation>no se pudo codificar el marco HELLO</translation>
+        <location filename="../lib/protocol/btphandshake.cpp" line="+121"/>
+        <source>no BTP/1 READY after %1 attempts over %2 ms</source>
+        <translation>ningún BTP/1 READY tras %1 intentos en %2 ms</translation>
+    </message>
+</context>
+<context>
+    <name>traceview::BtpMonitorTab</name>
+    <message>
+        <location filename="../lib/diagnostics/btpmonitortab.cpp" line="+245"/>
+        <location line="+85"/>
+        <source>Pause</source>
+        <translation>Pausar</translation>
     </message>
     <message>
-        <location filename="../lib/protocol/btphandshake.cpp" line="147" />
-        <source>HELLO_RESULT payload too short</source>
-        <translation>el payload de HELLO_RESULT es demasiado corto</translation>
+        <location line="-81"/>
+        <source>Clear</source>
+        <translation>Limpiar</translation>
     </message>
     <message>
-        <location filename="../lib/protocol/btphandshake.cpp" line="163" />
-        <source>HELLO_RESULT selected an unadvertised version %1</source>
-        <translation>HELLO_RESULT seleccionó una versión no anunciada %1</translation>
+        <location line="+3"/>
+        <source>Hide TELEMETRY</source>
+        <translation>Ocultar TELEMETRY</translation>
     </message>
     <message>
-        <location filename="../lib/protocol/btphandshake.cpp" line="180" />
-        <source>HELLO rejected, status=%1</source>
-        <translation>HELLO rechazado, estado=%1</translation>
+        <location line="+3"/>
+        <source>Device:</source>
+        <translation>Dispositivo:</translation>
     </message>
     <message>
-        <location filename="../lib/protocol/btphandshake.cpp" line="186" />
-        <source>no BTP/1 READY within %1 ms</source>
-        <translation>no se recibió BTP/1 READY en %1 ms</translation>
+        <location line="+2"/>
+        <source>All</source>
+        <translation>Todos</translation>
     </message>
     <message>
-        <location filename="../lib/protocol/btphandshake.cpp" line="192" />
-        <source>no HELLO_RESULT within %1 ms</source>
-        <translation>no se recibió HELLO_RESULT en %1 ms</translation>
+        <location line="+4"/>
+        <source>Filter (type, id, hex)…</source>
+        <translation>Filtrar (tipo, id, hex)…</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Export…</source>
+        <translation>Exportar…</translation>
+    </message>
+    <message>
+        <location line="+29"/>
+        <source>Decrypt (channel B / key E)</source>
+        <translation>Descifrar (canal B / clave E)</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>robot channel-B password</source>
+        <translation>contraseña del canal B del robot</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Show</source>
+        <translation>Mostrar</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Decrypt selected frame</source>
+        <translation>Descifrar trama seleccionada</translation>
+    </message>
+    <message>
+        <location line="+22"/>
+        <source>Resume</source>
+        <translation>Reanudar</translation>
+    </message>
+    <message>
+        <location line="+32"/>
+        <source>Select a frame to inspect it.</source>
+        <translation>Seleccione una trama para inspeccionarla.</translation>
+    </message>
+    <message>
+        <location line="+21"/>
+        <source>This frame is not sealed (ENCRYPTED flag not set) — the payload above is already in the clear.</source>
+        <translation>Esta trama no está sellada (flag ENCRYPTED sin activar) — el payload de arriba ya está en claro.</translation>
+    </message>
+    <message>
+        <location line="+23"/>
+        <source>Enter a password first.</source>
+        <translation>Introduzca primero una contraseña.</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>This frame is not sealed; nothing to decrypt.</source>
+        <translation>Esta trama no está sellada; no hay nada que descifrar.</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Could not derive a key from that password.</source>
+        <translation>No se pudo derivar una clave de esa contraseña.</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>verify tag  %1
+
+</source>
+        <translation>verify tag  %1
+
+</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>OK — %1 octet(s) of plaintext:
+
+</source>
+        <translation>OK — %1 octeto(s) de texto plano:
+
+</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>as text: </source>
+        <translation>como texto:</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Authentication failed — wrong password, or this is not channel-B (key E) traffic. Compare the verify tag above with the robot&apos;s key file.</source>
+        <translation>Falló la autenticación — contraseña incorrecta, o esto no es tráfico del canal B (clave E). Compare la verify tag de arriba con el archivo de clave del robot.</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>Export Captured Frames</source>
+        <translation>Exportar Tramas Capturadas</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>JSON Lines (*.jsonl);;CSV (*.csv)</source>
+        <translation>JSON Lines (*.jsonl);;CSV (*.csv)</translation>
     </message>
 </context>
 <context>
     <name>traceview::ChartConfigEditor</name>
     <message>
-        <location filename="../lib/dashboard/widgets/chartconfigeditor.cpp" line="99" />
+        <location filename="../lib/dashboard/widgets/chartconfigeditor.cpp" line="+162"/>
         <source>0x0101</source>
         <translation>0x0101</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/chartconfigeditor.cpp" line="86" />
+        <location line="-13"/>
         <source>Which device this chart reads from -- must match the sourceId below.</source>
         <translation>De qué dispositivo lee este gráfico: debe coincidir con el sourceId de abajo.</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/chartconfigeditor.cpp" line="90" />
+        <location line="+4"/>
         <source>(auto)</source>
         <translation>(auto)</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/chartconfigeditor.cpp" line="92" />
+        <location line="+2"/>
         <source>BTP source_id this chart reads from -- derived from the Topic field below, shown by device name when known.</source>
         <translation>source_id BTP del que lee este gráfico: derivado del campo Tema de abajo, mostrado por nombre de dispositivo cuando se conoce.</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/chartconfigeditor.cpp" line="101" />
-        <source>BTP topic_id (TELEMETRY.md) this chart's series bind fields of -- pick one the device has already reported (shown by name), or type a hex/decimal id by hand for one it hasn't reported yet.</source>
+        <location line="+9"/>
+        <source>BTP topic_id (TELEMETRY.md) this chart&apos;s series bind fields of -- pick one the device has already reported (shown by name), or type a hex/decimal id by hand for one it hasn&apos;t reported yet.</source>
         <translation>topic_id BTP (TELEMETRY.md) a cuyos campos se vinculan las series de este gráfico: elija uno que el dispositivo ya haya informado (mostrado por nombre) o escriba a mano un id hex/decimal para uno que aún no haya informado.</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/chartconfigeditor.cpp" line="106" />
+        <location line="+5"/>
         <source>Samples</source>
         <translation>Muestras</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/chartconfigeditor.cpp" line="107" />
+        <location line="+1"/>
         <source>Time</source>
         <translation>Tiempo</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/chartconfigeditor.cpp" line="109" />
+        <location line="+2"/>
         <source>Ts</source>
         <translation>Ts</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/chartconfigeditor.cpp" line="114" />
+        <location line="+5"/>
         <source> ms</source>
         <translation> ms</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/chartconfigeditor.cpp" line="118" />
+        <location line="+4"/>
         <source>Time between samples (Ts), not the time a frame arrives — elapsed time for N samples is Ts * N.</source>
         <translation>Tiempo entre muestras (Ts), no el momento en que llega un marco — el tiempo transcurrido para N muestras es Ts * N.</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/chartconfigeditor.cpp" line="127" />
-        <location filename="../lib/dashboard/widgets/chartconfigeditor.cpp" line="478" />
+        <location line="+9"/>
+        <location line="+423"/>
         <source> pts</source>
         <translation> pts</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/chartconfigeditor.cpp" line="131" />
+        <location line="-419"/>
         <source>How much history the chart keeps before older data scrolls off — in samples or seconds, matching X Axis.</source>
         <translation>Cuánto historial conserva el gráfico antes de que los datos más antiguos desaparezcan — en muestras o segundos, según el Eje X.</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/chartconfigeditor.cpp" line="135" />
+        <location line="+4"/>
         <source>Auto</source>
         <translation>Automático</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/chartconfigeditor.cpp" line="136" />
+        <location line="+1"/>
         <source>Fixed</source>
         <translation>Fijo</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/chartconfigeditor.cpp" line="153" />
+        <location line="+17"/>
         <source>V, °C, %...</source>
         <translation>V, °C, %...</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/chartconfigeditor.cpp" line="154" />
+        <location line="+1"/>
         <source>Unit label shown alongside the Y axis.</source>
         <translation>Etiqueta de unidad mostrada junto al eje Y.</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/chartconfigeditor.cpp" line="158" />
+        <location line="+4"/>
+        <source>Group series by the unit their bound field reports (from the device&apos;s catalog) and draw one auto-ranged Y axis per distinct unit instead of the single Y Axis/Range/Unit above -- useful when a topic mixes fields of different units.</source>
+        <translation>Agrupa las series por la unidad que informa su campo vinculado (del catálogo del dispositivo) y dibuja un eje Y con escala automática por cada unidad distinta en lugar del Eje Y/Rango/Unidad únicos de arriba -- útil cuando un tema mezcla campos de unidades diferentes.</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>Decimal places shown for axis, legend, and tooltip values -- fixed instead of variable, so labels keep the same width as values change.</source>
+        <translation>Decimales mostrados en los valores de eje, leyenda y tooltip -- fijos en vez de variables, para que las etiquetas mantengan el mismo ancho al cambiar los valores.</translation>
+    </message>
+    <message>
+        <location line="+5"/>
         <source>Show the min/mid/max gridlines across the plot.</source>
         <translation>Muestra las líneas de cuadrícula de mín/medio/máx en todo el gráfico.</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/chartconfigeditor.cpp" line="173" />
+        <location line="+15"/>
         <source>Min</source>
         <translation>Mín</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/chartconfigeditor.cpp" line="176" />
+        <location line="+3"/>
         <source>Max</source>
         <translation>Máx</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/chartconfigeditor.cpp" line="189" />
+        <location line="+13"/>
         <source>Device</source>
         <translation>Dispositivo</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/chartconfigeditor.cpp" line="190" />
+        <location line="+1"/>
         <source>Source</source>
         <translation>Fuente</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/chartconfigeditor.cpp" line="191" />
+        <location line="+1"/>
         <source>Topic</source>
         <translation>Tema</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/chartconfigeditor.cpp" line="192" />
+        <location line="+1"/>
         <source>X Axis</source>
         <translation>Eje X</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/chartconfigeditor.cpp" line="193" />
+        <location line="+1"/>
         <source>Limit</source>
         <translation>Límite</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/chartconfigeditor.cpp" line="194" />
+        <location line="+1"/>
         <source>Y Axis</source>
         <translation>Eje Y</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/chartconfigeditor.cpp" line="195" />
+        <location line="+1"/>
         <source>Range</source>
         <translation>Rango</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/chartconfigeditor.cpp" line="196" />
+        <location line="+1"/>
         <source>Unit</source>
         <translation>Unidad</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/chartconfigeditor.cpp" line="197" />
+        <location line="+1"/>
+        <source>Automatic axis</source>
+        <translation>Eje automático</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Decimals</source>
+        <translation>Decimales</translation>
+    </message>
+    <message>
+        <location line="+1"/>
         <source>Grid</source>
         <translation>Cuadrícula</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/chartconfigeditor.cpp" line="206" />
+        <location line="+9"/>
         <source>Name</source>
         <translation>Nombre</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/chartconfigeditor.cpp" line="206" />
+        <location line="+0"/>
         <source>Field ID</source>
         <translation>ID de campo</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/chartconfigeditor.cpp" line="206" />
+        <location line="+0"/>
         <source>Color</source>
         <translation>Color</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/chartconfigeditor.cpp" line="206" />
+        <location line="+0"/>
         <source>Style</source>
         <translation>Estilo</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/chartconfigeditor.cpp" line="225" />
+        <location line="+19"/>
         <source>+ Add series</source>
         <translation>+ Añadir serie</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/chartconfigeditor.cpp" line="388" />
+        <location line="+192"/>
         <source>Series %1</source>
         <translation>Serie %1</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/chartconfigeditor.cpp" line="400" />
-        <source>Which field of the bound topic this series plots -- pick one the device has already reported (shown by name), or type a numeric id by hand for one it hasn't reported yet.</source>
+        <location line="+33"/>
+        <source>Which field of the bound topic this series plots -- pick one the device has already reported (shown by name), or type a numeric id by hand for one it hasn&apos;t reported yet.</source>
         <translation>Qué campo del tema vinculado traza esta serie: elija uno que el dispositivo ya haya informado (mostrado por nombre) o escriba a mano un id numérico para uno que aún no haya informado.</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/chartconfigeditor.cpp" line="430" />
+        <location line="+33"/>
         <source>Series Color</source>
         <translation>Color de la serie</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/chartconfigeditor.cpp" line="442" />
+        <location line="+12"/>
         <source>Solid</source>
         <translation>Sólido</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/chartconfigeditor.cpp" line="442" />
+        <location line="+0"/>
         <source>Dashed</source>
         <translation>Discontinuo</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/chartconfigeditor.cpp" line="442" />
+        <location line="+0"/>
         <source>Dotted</source>
         <translation>Punteado</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/chartconfigeditor.cpp" line="443" />
+        <location line="+1"/>
         <source>Dash-Dot</source>
         <translation>Raya-punto</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/chartconfigeditor.cpp" line="443" />
+        <location line="+0"/>
         <source>Cross</source>
         <translation>Cruz</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/chartconfigeditor.cpp" line="443" />
+        <location line="+0"/>
         <source>Asterisk</source>
         <translation>Asterisco</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/chartconfigeditor.cpp" line="452" />
+        <location line="+13"/>
         <source>Remove series</source>
         <translation>Eliminar serie</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/chartconfigeditor.cpp" line="478" />
+        <location line="+26"/>
         <source> s</source>
         <translation> s</translation>
     </message>
@@ -668,55 +1132,93 @@
 <context>
     <name>traceview::ClockSync</name>
     <message>
-        <location filename="../lib/protocol/clocksync.cpp" line="163" />
-        <source>dongle clock sync failed: %1</source>
-        <translation>error al sincronizar el reloj del dongle: %1</translation>
+        <location filename="../lib/protocol/clocksync.cpp" line="+179"/>
+        <source>dongle clock sync failed: %1 [RTT %2ms]</source>
+        <translation>falló la sincronización del reloj del dongle: %1 [RTT %2ms]</translation>
     </message>
     <message>
-        <location filename="../lib/protocol/clocksync.cpp" line="185" />
-        <source>dongle clock corrected (%1)</source>
-        <translation>reloj del dongle corregido (%1)</translation>
+        <location line="+30"/>
+        <source>dongle clock corrected (%1) [RTT %2ms]</source>
+        <translation>reloj del dongle corregido (%1) [RTT %2ms]</translation>
+    </message>
+</context>
+<context>
+    <name>traceview::CommandClient</name>
+    <message>
+        <location filename="../lib/protocol/commandclient.cpp" line="+33"/>
+        <source>command not sent: endpoint key not configured</source>
+        <translation>comando no enviado: clave del endpoint no configurada</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>command not sent: robot manifest not received yet</source>
+        <translation>comando no enviado: aún no se recibió el manifiesto del robot</translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <source>command not sent: could not encode or seal request</source>
+        <translation>comando no enviado: no se pudo codificar o sellar la solicitud</translation>
+    </message>
+    <message>
+        <location line="+18"/>
+        <source>command timed out waiting for a result</source>
+        <translation>tiempo agotado esperando el resultado del comando</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>command failed (status 0x%1, error 0x%2): %3</source>
+        <translation>el comando falló (estado 0x%1, error 0x%2): %3</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>command result: (empty)</source>
+        <translation>resultado del comando: (vacío)</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>command result: %1</source>
+        <translation>resultado del comando: %1</translation>
     </message>
 </context>
 <context>
     <name>traceview::DashboardCell</name>
     <message>
-        <location filename="../lib/dashboard/dashboardcell.cpp" line="340" />
+        <location filename="../lib/dashboard/dashboardcell.cpp" line="+321"/>
         <source>Show last value</source>
         <translation>Mostrar último valor</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/dashboardcell.cpp" line="346" />
+        <location line="+6"/>
         <source>Show grid point values</source>
         <translation>Mostrar valores de los puntos de la cuadrícula</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/dashboardcell.cpp" line="352" />
+        <location line="+6"/>
         <source>Show hover crosshair</source>
         <translation>Mostrar retícula al pasar el cursor</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/dashboardcell.cpp" line="370" />
+        <location line="+18"/>
         <source>Interpolation:</source>
         <translation>Interpolación:</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/dashboardcell.cpp" line="372" />
+        <location line="+2"/>
         <source>Linear</source>
         <translation>Lineal</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/dashboardcell.cpp" line="373" />
+        <location line="+1"/>
         <source>ZOH (step)</source>
         <translation>ZOH (escalón)</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/dashboardcell.cpp" line="374" />
+        <location line="+1"/>
         <source>Stem</source>
         <translation>Tallo</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/dashboardcell.cpp" line="375" />
+        <location line="+1"/>
         <source>None (points)</source>
         <translation>Ninguna (puntos)</translation>
     </message>
@@ -724,22 +1226,22 @@
 <context>
     <name>traceview::DashboardGrid</name>
     <message>
-        <location filename="../lib/dashboard/dashboardgrid.cpp" line="478" />
+        <location filename="../lib/dashboard/dashboardgrid.cpp" line="+496"/>
         <source>Bring to Front</source>
         <translation>Traer al frente</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/dashboardgrid.cpp" line="494" />
+        <location line="+16"/>
         <source>Bring Forward</source>
         <translation>Avanzar</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/dashboardgrid.cpp" line="510" />
+        <location line="+16"/>
         <source>Send Backward</source>
         <translation>Retroceder</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/dashboardgrid.cpp" line="522" />
+        <location line="+12"/>
         <source>Send to Back</source>
         <translation>Enviar al fondo</translation>
     </message>
@@ -747,53 +1249,53 @@
 <context>
     <name>traceview::DebugChartsWindow</name>
     <message>
-        <location filename="../lib/core/debugchartswindow.cpp" line="222" />
-        <location filename="../lib/core/debugchartswindow.cpp" line="226" />
+        <location filename="../lib/core/debugchartswindow.cpp" line="+198"/>
+        <location line="+4"/>
         <source>Modo estresse: desligado (50ms/tick)</source>
         <translation>Modo estrés: desactivado (50ms/tick)</translation>
     </message>
     <message>
-        <location filename="../lib/core/debugchartswindow.cpp" line="225" />
+        <location line="-1"/>
         <source>Modo estresse: ligado (atualizacao maxima)</source>
         <translation>Modo estrés: activado (actualización máxima)</translation>
     </message>
     <message>
-        <location filename="../lib/core/debugchartswindow.cpp" line="238" />
+        <location line="+13"/>
         <source>Line Chart</source>
         <translation>Gráfico de líneas</translation>
     </message>
     <message>
-        <location filename="../lib/core/debugchartswindow.cpp" line="243" />
+        <location line="+5"/>
         <source>Bar Chart</source>
         <translation>Gráfico de barras</translation>
     </message>
     <message>
-        <location filename="../lib/core/debugchartswindow.cpp" line="248" />
+        <location line="+5"/>
         <source>Gauge</source>
         <translation>Medidor</translation>
     </message>
     <message>
-        <location filename="../lib/core/debugchartswindow.cpp" line="252" />
+        <location line="+4"/>
         <source>Serial Monitor</source>
         <translation>Monitor serie</translation>
     </message>
     <message>
-        <location filename="../lib/core/debugchartswindow.cpp" line="265" />
+        <location line="+13"/>
         <source>Push Button</source>
         <translation>Botón pulsador</translation>
     </message>
     <message>
-        <location filename="../lib/core/debugchartswindow.cpp" line="272" />
+        <location line="+7"/>
         <source>Toggle Switch</source>
         <translation>Interruptor</translation>
     </message>
     <message>
-        <location filename="../lib/core/debugchartswindow.cpp" line="278" />
+        <location line="+6"/>
         <source>Slider</source>
         <translation>Control deslizante</translation>
     </message>
     <message>
-        <location filename="../lib/core/debugchartswindow.cpp" line="330" />
+        <location line="+52"/>
         <source> -- %1 fps</source>
         <translation> -- %1 fps</translation>
     </message>
@@ -801,512 +1303,777 @@
 <context>
     <name>traceview::DeviceCard</name>
     <message>
-        <location filename="../lib/devices/devicecard.cpp" line="201" />
+        <location filename="../lib/devices/devicecard.cpp" line="+260"/>
+        <source>%1 dBm</source>
+        <translation>%1 dBm</translation>
+    </message>
+    <message>
+        <location line="+53"/>
         <source>ID %1</source>
         <translation>ID %1</translation>
     </message>
     <message>
-        <location filename="../lib/devices/devicecard.cpp" line="203" />
+        <location line="+2"/>
         <source>v%1</source>
         <translation>v%1</translation>
     </message>
     <message>
-        <location filename="../lib/devices/devicecard.cpp" line="204" />
+        <location line="+1"/>
         <source>v%1 · ID %2</source>
         <translation>v%1 · ID %2</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>port open, waiting for BTP session</source>
+        <translation>puerto abierto, esperando sesión BTP</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>hub link up, no data from robot</source>
+        <translation>enlace del hub activo, sin datos del robot</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>hub link up, locating robot…</source>
+        <translation>enlace del hub activo, buscando el robot…</translation>
     </message>
 </context>
 <context>
     <name>traceview::DeviceConfigDialog</name>
     <message>
-        <location filename="../lib/devices/deviceconfigdialog.cpp" line="72" />
+        <location filename="../lib/devices/deviceconfigdialog.cpp" line="+16"/>
         <source>Device Settings</source>
         <translation>Configuración del Dispositivo</translation>
     </message>
     <message>
-        <location filename="../lib/devices/deviceconfigdialog.cpp" line="80" />
-        <source>Shown as this device's title -- on its card in the Devices panel, and anywhere else it's picked from a list.</source>
+        <location line="+8"/>
+        <source>Shown as this device&apos;s title -- on its card in the Devices panel, and anywhere else it&apos;s picked from a list.</source>
         <translation>Se muestra como título de este dispositivo: en su tarjeta del panel Dispositivos y en cualquier otro lugar donde se elija de una lista.</translation>
     </message>
     <message>
-        <location filename="../lib/devices/deviceconfigdialog.cpp" line="88" />
+        <location line="+8"/>
         <source>Free-form notes about this device, shown on its card below the name.</source>
         <translation>Notas libres sobre este dispositivo, mostradas en su tarjeta debajo del nombre.</translation>
     </message>
     <message>
-        <location filename="../lib/devices/deviceconfigdialog.cpp" line="96" />
+        <location line="+8"/>
         <source>General</source>
         <translation>General</translation>
     </message>
     <message>
-        <location filename="../lib/devices/deviceconfigdialog.cpp" line="98" />
+        <location line="+2"/>
         <source>Name:</source>
         <translation>Nombre:</translation>
     </message>
     <message>
-        <location filename="../lib/devices/deviceconfigdialog.cpp" line="99" />
+        <location line="+1"/>
         <source>Description:</source>
         <translation>Descripción:</translation>
     </message>
     <message>
-        <location filename="../lib/devices/deviceconfigdialog.cpp" line="106" />
+        <location line="+8"/>
         <source>Connection</source>
         <translation>Conexión</translation>
     </message>
     <message>
-        <location filename="../lib/devices/deviceconfigdialog.cpp" line="126" />
+        <location line="+33"/>
         <source>Transport:</source>
         <translation>Transporte:</translation>
     </message>
     <message>
-        <location filename="../lib/devices/deviceconfigdialog.cpp" line="130" />
+        <location line="+3"/>
+        <source>e.g. robot.local or 192.168.4.1</source>
+        <translation>p. ej., robot.local o 192.168.4.1</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Hostname or IP address of the robot TCP server.</source>
+        <translation>Nombre de host o dirección IP del servidor TCP del robot.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>TCP host:</source>
+        <translation>Host TCP:</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>TCP server port.</source>
+        <translation>Puerto del servidor TCP.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>TCP port:</source>
+        <translation>Puerto TCP:</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Platform BLE address of the robot -- a discovery hint used to dial the connection, not its identity (see &quot;Reported by device&quot; for that). Pick a scan result, or type one by hand for a robot the scan hasn&apos;t found yet.</source>
+        <translation>Dirección BLE del robot en la plataforma -- una pista de búsqueda para establecer la conexión, no su identidad (vea &quot;Informado por el dispositivo&quot; para eso). Elija un resultado del escaneo o escriba una a mano para un robot que el escaneo aún no ha encontrado.</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Scan, or type an address</source>
+        <translation>Escanee o escriba una dirección</translation>
+    </message>
+    <message>
+        <location line="+13"/>
+        <location line="+5"/>
+        <source>Scan</source>
+        <translation>Escanear</translation>
+    </message>
+    <message>
+        <location line="-3"/>
+        <source>Scan for nearby BTP-capable BLE robots.</source>
+        <translation>Buscar robots BLE cercanos compatibles con BTP.</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Stop</source>
+        <translation>Detener</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>BLE address:</source>
+        <translation>Dirección BLE:</translation>
+    </message>
+    <message>
+        <location line="+4"/>
         <source>Serial port</source>
         <translation>Puerto serie</translation>
     </message>
     <message>
-        <location filename="../lib/devices/deviceconfigdialog.cpp" line="138" />
+        <location line="+8"/>
         <source>Refresh port list</source>
         <translation>Actualizar lista de puertos</translation>
     </message>
     <message>
-        <location filename="../lib/devices/deviceconfigdialog.cpp" line="148" />
+        <location line="+10"/>
         <source>Port:</source>
         <translation>Puerto:</translation>
     </message>
     <message>
-        <location filename="../lib/devices/deviceconfigdialog.cpp" line="157" />
-        <source>Baud rate (type a custom value if yours isn't listed)</source>
+        <location line="+9"/>
+        <source>Baud rate (type a custom value if yours isn&apos;t listed)</source>
         <translation>Velocidad en baudios (escriba un valor personalizado si el suyo no aparece)</translation>
     </message>
     <message>
-        <location filename="../lib/devices/deviceconfigdialog.cpp" line="160" />
+        <location line="+3"/>
         <source>Baud:</source>
         <translation>Baudios:</translation>
     </message>
     <message>
-        <location filename="../lib/devices/deviceconfigdialog.cpp" line="166" />
+        <location line="+6"/>
         <source>None</source>
         <translation>Ninguno</translation>
     </message>
     <message>
-        <location filename="../lib/devices/deviceconfigdialog.cpp" line="167" />
+        <location line="+1"/>
         <source>LF (\n)</source>
         <translation>LF (\n)</translation>
     </message>
     <message>
-        <location filename="../lib/devices/deviceconfigdialog.cpp" line="168" />
+        <location line="+1"/>
         <source>CR (\r)</source>
         <translation>CR (\r)</translation>
     </message>
     <message>
-        <location filename="../lib/devices/deviceconfigdialog.cpp" line="169" />
+        <location line="+1"/>
         <source>CRLF (\r\n)</source>
         <translation>CRLF (\r\n)</translation>
     </message>
     <message>
-        <location filename="../lib/devices/deviceconfigdialog.cpp" line="173" />
-        <source>Line terminator appended to control-widget commands sent to this device. Doesn't affect its serial terminal's raw keystrokes.</source>
+        <location line="+4"/>
+        <source>Line terminator appended to control-widget commands sent to this device. Doesn&apos;t affect its serial terminal&apos;s raw keystrokes.</source>
         <translation>Terminador de línea añadido a los comandos de los widgets de control enviados a este dispositivo. No afecta a las pulsaciones en bruto de su terminal serie.</translation>
     </message>
     <message>
-        <location filename="../lib/devices/deviceconfigdialog.cpp" line="185" />
+        <location line="+12"/>
         <source>Terminator:</source>
         <translation>Terminador:</translation>
     </message>
     <message>
-        <location filename="../lib/devices/deviceconfigdialog.cpp" line="194" />
+        <location line="+9"/>
         <source>USB HID device</source>
         <translation>Dispositivo USB HID</translation>
     </message>
     <message>
-        <location filename="../lib/devices/deviceconfigdialog.cpp" line="201" />
+        <location line="+7"/>
         <source>Refresh USB device list</source>
         <translation>Actualizar lista de dispositivos USB</translation>
     </message>
     <message>
-        <location filename="../lib/devices/deviceconfigdialog.cpp" line="210" />
+        <location line="+9"/>
         <source>USB:</source>
         <translation>USB:</translation>
     </message>
     <message>
-        <location filename="../lib/devices/deviceconfigdialog.cpp" line="222" />
+        <location line="+12"/>
         <source>The device whose connection carries this one.</source>
         <translation>El dispositivo cuya conexión transporta esta.</translation>
     </message>
     <message>
-        <location filename="../lib/devices/deviceconfigdialog.cpp" line="227" />
+        <location line="+5"/>
         <source>Via:</source>
         <translation>Vía:</translation>
     </message>
     <message>
-        <location filename="../lib/devices/deviceconfigdialog.cpp" line="248" />
-        <source>The robot's BTP source_id -- its permanent address, not the channel number the hub shows. Pick one the hub has actually heard (refreshed live while it's connected), or type a hex/decimal id by hand for a robot it hasn't heard yet.</source>
+        <location line="+21"/>
+        <source>The robot&apos;s BTP source_id -- its permanent address, not the channel number the hub shows. Pick one the hub has actually heard (refreshed live while it&apos;s connected), or type a hex/decimal id by hand for a robot it hasn&apos;t heard yet.</source>
         <translation>El source_id BTP del robot: su dirección permanente, no el número de canal que muestra el concentrador. Elija uno que el concentrador haya oído realmente (se actualiza en vivo mientras está conectado) o escriba a mano un id hex/decimal para un robot que aún no haya oído.</translation>
     </message>
     <message>
-        <location filename="../lib/devices/deviceconfigdialog.cpp" line="251" />
+        <location line="+3"/>
         <source>e.g. 0x0A0A0A0A</source>
         <translation>p. ej. 0x0A0A0A0A</translation>
     </message>
     <message>
-        <location filename="../lib/devices/deviceconfigdialog.cpp" line="282" />
+        <location line="+31"/>
         <source>Source ID:</source>
         <translation>ID de origen:</translation>
     </message>
     <message>
-        <location filename="../lib/devices/deviceconfigdialog.cpp" line="286" />
-        <source>Password for this robot's endpoint key.</source>
+        <location line="+11"/>
+        <source>This device&apos;s own source_id. Pass it as the first argument to the dongle&apos;s &quot;hub -bind&quot; command, with the robot&apos;s Source ID above as the second, so the hub knows which robot this device&apos;s SUBSCRIBE/COMMAND traffic is for.</source>
+        <translation>El source_id de este dispositivo. Páselo como primer argumento del comando &quot;hub -bind&quot; del dongle, con el Source ID del robot de arriba como segundo, para que el hub sepa a qué robot va el tráfico SUBSCRIBE/COMMAND de este dispositivo.</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>This device&apos;s ID:</source>
+        <translation>ID de este dispositivo:</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Password for this robot&apos;s endpoint key.</source>
         <translation>Contraseña de la clave de extremo de este robot.</translation>
     </message>
     <message>
-        <location filename="../lib/devices/deviceconfigdialog.cpp" line="288" />
-        <location filename="../lib/devices/deviceconfigdialog.cpp" line="351" />
+        <location line="+2"/>
+        <location line="+93"/>
         <source>Password:</source>
         <translation>Contraseña:</translation>
     </message>
     <message>
-        <location filename="../lib/devices/deviceconfigdialog.cpp" line="296" />
-        <location filename="../lib/devices/deviceconfigdialog.cpp" line="355" />
+        <location line="-85"/>
+        <location line="+89"/>
         <source>Save this password in the project file</source>
         <translation>Guardar esta contraseña en el archivo del proyecto</translation>
     </message>
     <message>
-        <location filename="../lib/devices/deviceconfigdialog.cpp" line="299" />
-        <location filename="../lib/devices/deviceconfigdialog.cpp" line="358" />
+        <location line="-86"/>
+        <location line="+89"/>
         <source>Anyone who opens the project file can read a saved password.</source>
         <translation>Cualquiera que abra el archivo del proyecto puede leer una contraseña guardada.</translation>
     </message>
     <message>
-        <location filename="../lib/devices/deviceconfigdialog.cpp" line="339" />
+        <location line="-37"/>
         <source>OTA</source>
         <translation>OTA</translation>
     </message>
     <message>
-        <location filename="../lib/devices/deviceconfigdialog.cpp" line="342" />
+        <location line="+3"/>
+        <location line="+293"/>
         <source>e.g. robot1.local</source>
         <translation>p. ej. robot1.local</translation>
     </message>
     <message>
-        <location filename="../lib/devices/deviceconfigdialog.cpp" line="344" />
-        <source>Hostname or IP the OTA tab uses for this device's firmware upload. Left blank, the device is listed there but nothing can be polled or uploaded.</source>
+        <location line="-291"/>
+        <source>Hostname or IP the OTA tab uses for this device&apos;s firmware upload. Left blank, the device is listed there but nothing can be polled or uploaded.</source>
         <translation>Nombre de host o IP que la pestaña OTA usa para subir el firmware de este dispositivo. En blanco, el dispositivo aparece allí pero no se puede consultar ni subir nada.</translation>
     </message>
     <message>
-        <location filename="../lib/devices/deviceconfigdialog.cpp" line="346" />
+        <location line="+8"/>
+        <source>Use reported</source>
+        <translation>Usar el informado</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Fill in the address the device reported for itself.</source>
+        <translation>Rellenar con la dirección que el dispositivo informó de sí mismo.</translation>
+    </message>
+    <message>
+        <location line="+11"/>
         <source>Address:</source>
         <translation>Dirección:</translation>
     </message>
     <message>
-        <location filename="../lib/devices/deviceconfigdialog.cpp" line="350" />
-        <source>Password for this device's X-OTA-Password header.</source>
+        <location line="+4"/>
+        <source>Password for this device&apos;s X-OTA-Password header.</source>
         <translation>Contraseña para la cabecera X-OTA-Password de este dispositivo.</translation>
     </message>
     <message>
-        <location filename="../lib/devices/deviceconfigdialog.cpp" line="375" />
-        <location filename="../lib/devices/deviceconfigdialog.cpp" line="558" />
+        <location line="+25"/>
+        <location line="+253"/>
         <source>Connected</source>
         <translation>Conectado</translation>
     </message>
     <message>
-        <location filename="../lib/devices/deviceconfigdialog.cpp" line="375" />
-        <location filename="../lib/devices/deviceconfigdialog.cpp" line="558" />
+        <location line="-253"/>
+        <location line="+253"/>
         <source>Disconnected</source>
         <translation>Desconectado</translation>
     </message>
     <message>
-        <location filename="../lib/devices/deviceconfigdialog.cpp" line="378" />
-        <location filename="../lib/devices/deviceconfigdialog.cpp" line="381" />
+        <location line="-250"/>
+        <location line="+3"/>
         <source>(not connected yet)</source>
         <translation>(aún no conectado)</translation>
     </message>
     <message>
-        <location filename="../lib/devices/deviceconfigdialog.cpp" line="383" />
+        <location line="+10"/>
         <source>Status:</source>
         <translation>Estado:</translation>
     </message>
     <message>
-        <location filename="../lib/devices/deviceconfigdialog.cpp" line="384" />
+        <location line="+1"/>
         <source>Version:</source>
         <translation>Versión:</translation>
     </message>
     <message>
-        <location filename="../lib/devices/deviceconfigdialog.cpp" line="385" />
+        <location line="+1"/>
         <source>ID:</source>
         <translation>ID:</translation>
     </message>
     <message>
-        <location filename="../lib/devices/deviceconfigdialog.cpp" line="395" />
+        <location line="+1"/>
+        <source>Info:</source>
+        <translation>Info:</translation>
+    </message>
+    <message>
+        <location line="+11"/>
         <source>Reported catalog</source>
         <translation>Catálogo informado</translation>
     </message>
     <message>
-        <location filename="../lib/devices/deviceconfigdialog.cpp" line="411" />
+        <location line="+16"/>
         <source>Connect</source>
         <translation>Conectar</translation>
     </message>
     <message>
-        <location filename="../lib/devices/deviceconfigdialog.cpp" line="413" />
+        <location line="+2"/>
         <source>Apply the settings above and (re)connect now, without closing this dialog.</source>
         <translation>Aplicar la configuración anterior y (re)conectar ahora, sin cerrar este diálogo.</translation>
     </message>
     <message>
-        <location filename="../lib/devices/deviceconfigdialog.cpp" line="519" />
+        <location line="+130"/>
         <source>(none)</source>
         <translation>(ninguno)</translation>
     </message>
     <message>
-        <location filename="../lib/devices/deviceconfigdialog.cpp" line="530" />
+        <location line="+11"/>
         <source>%1 (unavailable)</source>
         <translation>%1 (no disponible)</translation>
     </message>
     <message>
-        <location filename="../lib/devices/deviceconfigdialog.cpp" line="538" />
+        <location line="+8"/>
         <source>(no topics reported yet)</source>
         <translation>(aún no se ha informado ningún tema)</translation>
     </message>
     <message>
-        <location filename="../lib/devices/deviceconfigdialog.cpp" line="581" />
+        <location line="+33"/>
+        <source>(nothing reported yet)</source>
+        <translation>(aún no se ha informado nada)</translation>
+    </message>
+    <message>
+        <location line="+16"/>
+        <source>device reports: %1</source>
+        <translation>el dispositivo informa: %1</translation>
+    </message>
+    <message>
+        <location line="+24"/>
+        <source>%1 (%2)</source>
+        <translation>%1 (%2)</translation>
+    </message>
+    <message>
+        <location line="+22"/>
         <source>online</source>
         <translation>en línea</translation>
     </message>
     <message>
-        <location filename="../lib/devices/deviceconfigdialog.cpp" line="581" />
+        <location line="+0"/>
         <source>offline %1s</source>
         <translation>sin conexión %1s</translation>
     </message>
     <message>
-        <location filename="../lib/devices/deviceconfigdialog.cpp" line="582" />
+        <location line="+1"/>
         <source>Ch %1 -- %2, %3</source>
         <translation>Can. %1 -- %2, %3</translation>
     </message>
     <message>
-        <location filename="../lib/devices/deviceconfigdialog.cpp" line="369" />
+        <location line="+4"/>
+        <source>%1
+RSSI: %2 dBm
+RTT: %3 ms</source>
+        <translation>%1
+RSSI: %2 dBm
+RTT: %3 ms</translation>
+    </message>
+    <message>
+        <location line="-303"/>
         <source>Reported by device</source>
         <translation>Reportado por el dispositivo</translation>
     </message>
-    </context>
+</context>
 <context>
-    <name>traceview::DockablePanel</name>
+    <name>traceview::DeviceConnection</name>
     <message>
-        <location filename="../lib/core/dockablepanel.cpp" line="47" />
-        <source>Unpin — panel will hide when nothing is selected</source>
-        <translation>Desanclar — el panel se ocultará cuando no haya nada seleccionado</translation>
+        <location filename="../lib/core/deviceconnection.cpp" line="+179"/>
+        <source>transport rejected %1 bytes</source>
+        <translation>el transporte rechazó %1 bytes</translation>
+    </message>
+</context>
+<context>
+    <name>traceview::DiagramBlockConfigDialog</name>
+    <message>
+        <location filename="../lib/diagram/diagramblockconfigdialog.cpp" line="+44"/>
+        <source>Configure %1</source>
+        <translation>Configurar %1</translation>
     </message>
     <message>
-        <location filename="../lib/core/dockablepanel.cpp" line="48" />
-        <source>Pin — keep panel open with nothing selected</source>
-        <translation>Anclar — mantener el panel abierto sin nada seleccionado</translation>
+        <location line="+22"/>
+        <source>Help ▾</source>
+        <translation>Ayuda ▾</translation>
+    </message>
+    <message>
+        <location line="+16"/>
+        <source>// Script for this block</source>
+        <translation>// Script de este bloque</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>No log output yet</source>
+        <translation>Aún no hay salida de registro</translation>
+    </message>
+    <message>
+        <location line="+23"/>
+        <source>Error: %1</source>
+        <translation>Error: %1</translation>
+    </message>
+</context>
+<context>
+    <name>traceview::DiagramScriptRuntime</name>
+    <message>
+        <location filename="../lib/diagram/diagramscriptruntime.cpp" line="+41"/>
+        <location line="+84"/>
+        <source>Line %1: %2</source>
+        <translation>Línea %1: %2</translation>
+    </message>
+    <message>
+        <location line="-81"/>
+        <location line="+84"/>
+        <source>Error: %1</source>
+        <translation>Error: %1</translation>
     </message>
 </context>
 <context>
     <name>traceview::DonateDialog</name>
     <message>
-        <location filename="../lib/core/donatedialog.cpp" line="95" />
+        <location filename="../lib/core/donatedialog.cpp" line="+128"/>
         <source>Support TraceView</source>
         <translation>Apoya a TraceView</translation>
     </message>
     <message>
-        <location filename="../lib/core/donatedialog.cpp" line="102" />
+        <location line="+7"/>
         <source>If TraceView has helped you, a little coffee via Pix is always welcome.</source>
         <translation>Si TraceView te ha ayudado, un cafecito vía Pix siempre es bienvenido.</translation>
     </message>
     <message>
-        <location filename="../lib/core/donatedialog.cpp" line="111" />
+        <location line="+7"/>
         <source>Pix key (phone): %1</source>
         <translation>Clave Pix (teléfono): %1</translation>
     </message>
     <message>
-        <location filename="../lib/core/donatedialog.cpp" line="120" />
-        <source>Outside Brazil? An international donation option isn't set up yet, but it's on the way. Thanks for considering supporting the project either way!</source>
+        <location line="+9"/>
+        <source>Outside Brazil? An international donation option isn&apos;t set up yet, but it&apos;s on the way. Thanks for considering supporting the project either way!</source>
         <translation>¿Fuera de Brasil? Todavía no hay una opción de donación internacional, pero está en camino. ¡Gracias de todos modos por considerar apoyar el proyecto!</translation>
     </message>
 </context>
 <context>
-    <name>traceview::DummyGaugeWidget</name>
+    <name>traceview::FrameTableModel</name>
     <message>
-        <location filename="../lib/dashboard/widgets/chartwidgets.cpp" line="1524" />
-        <source>%1%2</source>
-        <translation>%1%2</translation>
+        <location filename="../lib/diagnostics/btpmonitortab.cpp" line="-357"/>
+        <source>decode error</source>
+        <translation>error de decodificación</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/chartwidgets.cpp" line="1525" />
-        <source>--</source>
-        <translation>--</translation>
+        <location line="+24"/>
+        <source>Time</source>
+        <translation>Hora</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Dir</source>
+        <translation>Dir</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Device</source>
+        <translation>Dispositivo</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Type</source>
+        <translation>Tipo</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Object</source>
+        <translation>Objeto</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Seq</source>
+        <translation>Sec</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Flags</source>
+        <translation>Flags</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Len</source>
+        <translation>Long</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Payload</source>
+        <translation>Payload</translation>
     </message>
 </context>
 <context>
     <name>traceview::GaugeConfigEditor</name>
     <message>
-        <location filename="../lib/dashboard/widgets/gaugeconfigeditor.cpp" line="58" />
+        <location filename="../lib/dashboard/widgets/gaugeconfigeditor.cpp" line="+58"/>
         <source>0x0101</source>
         <translation>0x0101</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/gaugeconfigeditor.cpp" line="45" />
+        <location line="-13"/>
         <source>Which device this gauge reads from -- must match the sourceId below.</source>
         <translation>De qué dispositivo lee este medidor: debe coincidir con el sourceId de abajo.</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/gaugeconfigeditor.cpp" line="49" />
+        <location line="+4"/>
         <source>(auto)</source>
         <translation>(auto)</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/gaugeconfigeditor.cpp" line="51" />
+        <location line="+2"/>
         <source>BTP source_id this gauge reads from -- derived from the Topic field below, shown by device name when known.</source>
         <translation>source_id BTP del que lee este medidor: derivado del campo Tema de abajo, mostrado por nombre de dispositivo cuando se conoce.</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/gaugeconfigeditor.cpp" line="60" />
-        <source>BTP topic_id (TELEMETRY.md) this gauge's rings bind fields of -- pick one the device has already reported (shown by name), or type a hex/decimal id by hand for one it hasn't reported yet.</source>
+        <location line="+9"/>
+        <source>BTP topic_id (TELEMETRY.md) this gauge&apos;s rings bind fields of -- pick one the device has already reported (shown by name), or type a hex/decimal id by hand for one it hasn&apos;t reported yet.</source>
         <translation>topic_id BTP (TELEMETRY.md) a cuyos campos se vinculan los anillos de este medidor: elija uno que el dispositivo ya haya informado (mostrado por nombre) o escriba a mano un id hex/decimal para uno que aún no haya informado.</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/gaugeconfigeditor.cpp" line="69" />
+        <location line="+9"/>
         <source>Shared scale floor -- every ring maps its own field onto this same range.</source>
         <translation>Piso de escala compartido -- cada anillo mapea su propio campo en este mismo rango.</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/gaugeconfigeditor.cpp" line="76" />
+        <location line="+7"/>
         <source>Shared scale ceiling -- every ring maps its own field onto this same range.</source>
         <translation>Techo de escala compartido -- cada anillo mapea su propio campo en este mismo rango.</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/gaugeconfigeditor.cpp" line="79" />
+        <location line="+3"/>
         <source>V, °C, %...</source>
         <translation>V, °C, %...</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/gaugeconfigeditor.cpp" line="84" />
-        <source>Decimal places shown for each ring's current value.</source>
+        <location line="+5"/>
+        <source>Decimal places shown for each ring&apos;s current value.</source>
         <translation>Decimales mostrados para el valor actual de cada anillo.</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/gaugeconfigeditor.cpp" line="89" />
+        <location line="+5"/>
         <source>Device</source>
         <translation>Dispositivo</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/gaugeconfigeditor.cpp" line="90" />
+        <location line="+1"/>
         <source>Source</source>
         <translation>Fuente</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/gaugeconfigeditor.cpp" line="91" />
+        <location line="+1"/>
         <source>Topic</source>
         <translation>Tema</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/gaugeconfigeditor.cpp" line="92" />
+        <location line="+1"/>
         <source>Min</source>
         <translation>Mín</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/gaugeconfigeditor.cpp" line="93" />
+        <location line="+1"/>
         <source>Max</source>
         <translation>Máx</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/gaugeconfigeditor.cpp" line="94" />
+        <location line="+1"/>
         <source>Unit</source>
         <translation>Unidad</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/gaugeconfigeditor.cpp" line="95" />
+        <location line="+1"/>
         <source>Decimals</source>
         <translation>Decimales</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/gaugeconfigeditor.cpp" line="105" />
+        <location line="+10"/>
         <source>Name</source>
         <translation>Nombre</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/gaugeconfigeditor.cpp" line="105" />
+        <location line="+0"/>
         <source>Field ID</source>
         <translation>ID de campo</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/gaugeconfigeditor.cpp" line="105" />
+        <location line="+0"/>
         <source>Color</source>
         <translation>Color</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/gaugeconfigeditor.cpp" line="116" />
+        <location line="+11"/>
         <source>+ Add ring</source>
         <translation>+ Añadir anillo</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/gaugeconfigeditor.cpp" line="256" />
+        <location line="+140"/>
         <source>Ring %1</source>
         <translation>Anillo %1</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/gaugeconfigeditor.cpp" line="268" />
-        <source>Which field of the bound topic this ring plots -- pick one the device has already reported (shown by name), or type a numeric id by hand for one it hasn't reported yet.</source>
+        <location line="+12"/>
+        <source>Which field of the bound topic this ring plots -- pick one the device has already reported (shown by name), or type a numeric id by hand for one it hasn&apos;t reported yet.</source>
         <translation>Qué campo del tema vinculado traza este anillo: elija uno que el dispositivo ya haya informado (mostrado por nombre) o escriba a mano un id numérico para uno que aún no haya informado.</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/gaugeconfigeditor.cpp" line="298" />
+        <location line="+30"/>
         <source>Ring Color</source>
         <translation>Color del anillo</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/gaugeconfigeditor.cpp" line="309" />
+        <location line="+11"/>
         <source>Remove ring</source>
         <translation>Eliminar anillo</translation>
     </message>
 </context>
 <context>
-    <name>traceview::LayersPanel</name>
-    </context>
+    <name>traceview::HubBinder</name>
+    <message>
+        <location filename="../lib/protocol/hubbinder.cpp" line="+149"/>
+        <source>could not send hub binding for device 0x%1</source>
+        <translation>no se pudo enviar el enlace del hub para el dispositivo 0x%1</translation>
+    </message>
+    <message>
+        <location line="+44"/>
+        <source>hub rejected the binding for device 0x%1: %2</source>
+        <translation>el hub rechazó el enlace del dispositivo 0x%1: %2</translation>
+    </message>
+</context>
+<context>
+    <name>traceview::IconPickerDialog</name>
+    <message>
+        <location filename="../lib/core/iconpickerdialog.cpp" line="+81"/>
+        <source>Choose Icon</source>
+        <translation>Elegir icono</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Search icons (English names and tags)</source>
+        <translation>Buscar iconos (nombres y etiquetas en inglés)</translation>
+    </message>
+    <message>
+        <location line="+59"/>
+        <source>No icon selected</source>
+        <translation>Ningún icono seleccionado</translation>
+    </message>
+</context>
 <context>
     <name>traceview::LogViewer</name>
     <message>
-        <location filename="../lib/logs/logviewer.cpp" line="43" />
+        <location filename="../lib/logs/logviewer.cpp" line="+47"/>
         <source>Timestamp (µs)</source>
         <translation>Marca de tiempo (µs)</translation>
     </message>
     <message>
-        <location filename="../lib/logs/logviewer.cpp" line="43" />
+        <location line="+0"/>
         <source>Severity</source>
         <translation>Gravedad</translation>
     </message>
     <message>
-        <location filename="../lib/logs/logviewer.cpp" line="44" />
+        <location line="+1"/>
         <source>Source ID</source>
         <translation>ID de origen</translation>
     </message>
     <message>
-        <location filename="../lib/logs/logviewer.cpp" line="44" />
+        <location line="+0"/>
         <source>Boot ID</source>
         <translation>ID de arranque</translation>
     </message>
     <message>
-        <location filename="../lib/logs/logviewer.cpp" line="44" />
+        <location line="+0"/>
         <source>Sequence</source>
         <translation>Secuencia</translation>
     </message>
     <message>
-        <location filename="../lib/logs/logviewer.cpp" line="45" />
+        <location line="+1"/>
         <source>Message</source>
         <translation>Mensaje</translation>
     </message>
     <message>
-        <location filename="../lib/logs/logviewer.cpp" line="60" />
+        <location line="+47"/>
         <source>Open Log File</source>
         <translation>Abrir archivo de registro</translation>
     </message>
 </context>
 <context>
+    <name>traceview::LoginDialog</name>
+    <message>
+        <location filename="../lib/core/logindialog.cpp" line="+15"/>
+        <source>Enter Developer Mode</source>
+        <translation>Entrar en Modo Desarrollador</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Enter your developer username and password.</source>
+        <translation>Introduzca su usuario y contraseña de desarrollador.</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>Username:</source>
+        <translation>Usuario:</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Password:</source>
+        <translation>Contraseña:</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>Log In</source>
+        <translation>Iniciar sesión</translation>
+    </message>
+    <message>
+        <location line="+18"/>
+        <source>Incorrect username or password.</source>
+        <translation>Usuario o contraseña incorrectos.</translation>
+    </message>
+</context>
+<context>
     <name>traceview::MainWindow</name>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="144" />
+        <location filename="../lib/core/mainwindow.cpp" line="+145"/>
         <source>TraceView v%1</source>
         <translation>TraceView v%1</translation>
     </message>
     <message numerus="yes">
-        <location filename="../lib/core/mainwindow.cpp" line="199" />
+        <location line="+125"/>
         <source>This device carries %n other device(s) (%1). Remove or repoint them first.</source>
         <translation>
             <numerusform>Este dispositivo transporta %n dispositivo más (%1). Elimínelo o rediríjalo primero.</numerusform>
@@ -1314,511 +2081,1041 @@
         </translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="201" />
+        <location line="+2"/>
         <source>, </source>
         <translation>, </translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="466" />
+        <location line="+402"/>
+        <source>Pending</source>
+        <translation>Pendiente</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Not granted</source>
+        <translation>No concedido</translation>
+    </message>
+    <message>
+        <location line="+23"/>
+        <source>%1: %2</source>
+        <translation>%1: %2</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Unknown topic</source>
+        <translation>Tema desconocido</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>%1
+Requested: %2
+Widgets: %3</source>
+        <translation>%1
+Solicitado: %2
+Widgets: %3</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>
+Bytes: %1
+Drops: %2</source>
+        <translation>
+Bytes: %1
+Pérdidas: %2</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>No subscriptions</source>
+        <translation>Sin suscripciones</translation>
+    </message>
+    <message>
+        <location line="+10"/>
         <source>&amp;File</source>
         <translation>&amp;Archivo</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="468" />
+        <location line="+3"/>
         <source>&amp;New Project</source>
         <translation>&amp;Nuevo proyecto</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="472" />
+        <location line="+4"/>
         <source>&amp;Open Project...</source>
         <translation>&amp;Abrir proyecto...</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="476" />
+        <location line="+4"/>
         <source>Open &amp;Recent</source>
         <translation>Abrir &amp;reciente</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="481" />
+        <location line="+5"/>
         <source>&amp;Save Project</source>
         <translation>&amp;Guardar proyecto</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="485" />
+        <location line="+4"/>
         <source>Save Project &amp;As...</source>
         <translation>Guardar proyecto &amp;como...</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="491" />
+        <location line="+6"/>
         <source>Open &amp;Log Offline...</source>
         <translation>Abrir ®istro sin conexión...</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="495" />
+        <location line="+5"/>
         <source>Upload &amp;Firmware (OTA)...</source>
         <translation>Subir &amp;firmware (OTA)...</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="499" />
+        <location line="+5"/>
+        <source>BTP Traffic &amp;Monitor...</source>
+        <translation>&amp;Monitor de Tráfico BTP...</translation>
+    </message>
+    <message>
+        <location line="+5"/>
         <source>&amp;View</source>
         <translation>&amp;Ver</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="500" />
+        <location line="+2"/>
+        <source>&amp;Keyboard Shortcuts...</source>
+        <translation>Atajos de &amp;Teclado...</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Open &amp;Log Folder</source>
+        <translation>Abrir Carpeta de &amp;Registros</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>&amp;Reset Panel Positions</source>
+        <translation>&amp;Restablecer Posiciones de Paneles</translation>
+    </message>
+    <message>
+        <location line="+6"/>
         <source>&amp;Theme</source>
         <translation>&amp;Tema</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="517" />
+        <location line="+17"/>
         <source>&amp;Font</source>
         <translation>&amp;Fuente</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="537" />
+        <location line="+20"/>
         <source>&amp;Language</source>
         <translation>&amp;Idioma</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="557" />
+        <location line="+20"/>
         <source>Restart Required</source>
         <translation>Reinicio necesario</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="559" />
+        <location line="+1"/>
         <source>The application needs to restart to apply the new language. Restart now?</source>
         <translation>La aplicación debe reiniciarse para aplicar el nuevo idioma. ¿Reiniciar ahora?</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="561" />
+        <location line="+1"/>
         <source>Restart Now</source>
         <translation>Reiniciar ahora</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="562" />
+        <location line="+0"/>
         <source>Later</source>
         <translation>Más tarde</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="573" />
+        <location line="+8"/>
+        <source>&amp;Access</source>
+        <translation>&amp;Acceso</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <location line="+3"/>
+        <source>&amp;Settings</source>
+        <translation>&amp;Configuración</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>&amp;Notifications</source>
+        <translation>&amp;Notificaciones</translation>
+    </message>
+    <message>
+        <location line="+10"/>
         <source>&amp;Debug</source>
         <translation>&amp;Depuración</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="577" />
+        <location line="+4"/>
         <source>&amp;About</source>
         <translation>A&amp;cerca de</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="580" />
+        <location line="+3"/>
         <source>Dona&amp;te</source>
         <translation>Do&amp;nar</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="585" />
+        <location line="+25"/>
+        <source>More options</source>
+        <translation>Más opciones</translation>
+    </message>
+    <message>
+        <location line="+31"/>
+        <source>Connected as: %1</source>
+        <translation>Conectado como: %1</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>Using the default admin password -- change it in Manage Users</source>
+        <translation>Usando la contraseña de admin por defecto -- cámbiela en Gestionar Usuarios</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>View as user</source>
+        <translation>Ver como usuario</translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <source>&amp;Manage Users...</source>
+        <translation>&amp;Gestionar Usuarios...</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>&amp;Exit Developer Mode</source>
+        <translation>&amp;Salir del Modo Desarrollador</translation>
+    </message>
+    <message>
+        <location line="+16"/>
+        <source>&amp;Enter Developer Mode...</source>
+        <translation>&amp;Entrar en Modo Desarrollador...</translation>
+    </message>
+    <message>
+        <location line="+175"/>
         <source>Add</source>
         <translation>Añadir</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="589" />
+        <location line="+5"/>
         <source>Remove</source>
         <translation>Eliminar</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="594" />
+        <location line="+5"/>
         <source>Copy</source>
         <translation>Copiar</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="599" />
+        <location line="+5"/>
         <source>Paste</source>
         <translation>Pegar</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="604" />
+        <location line="+10"/>
         <source>To Front</source>
         <translation>Al frente</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="609" />
+        <location line="+6"/>
         <source>Forward</source>
         <translation>Avanzar</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="614" />
+        <location line="+6"/>
         <source>Backward</source>
         <translation>Retroceder</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="619" />
+        <location line="+6"/>
         <source>To Back</source>
         <translation>Al fondo</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="624" />
+        <location line="+6"/>
         <source>Group</source>
         <translation>Agrupar</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="628" />
+        <location line="+5"/>
         <source>Ungroup</source>
         <translation>Desagrupar</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="645" />
+        <location line="+18"/>
+        <location line="+2295"/>
         <source>Undo</source>
         <translation>Deshacer</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="647" />
+        <location line="-2293"/>
+        <location line="+2293"/>
         <source>Redo</source>
         <translation>Rehacer</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="680" />
+        <location line="-2252"/>
         <source>Add Device</source>
         <translation>Añadir Dispositivo</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="688" />
+        <location line="+9"/>
         <source>Remove Device</source>
         <translation>Eliminar Dispositivo</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="722" />
-        <location filename="../lib/core/mainwindow.cpp" line="1948" />
+        <location line="+56"/>
+        <source>Small</source>
+        <translation>Pequeño</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Medium</source>
+        <translation>Mediano</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Large</source>
+        <translation>Grande</translation>
+    </message>
+    <message>
+        <location line="+28"/>
+        <source>Shrink the canvas</source>
+        <translation>Reducir el lienzo</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>Grow the canvas</source>
+        <translation>Ampliar el lienzo</translation>
+    </message>
+    <message>
+        <location line="+29"/>
+        <location line="+2197"/>
         <source>Fullscreen dashboard (F11)</source>
         <translation>Panel en pantalla completa (F11)</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="806" />
-        <source>Run</source>
-        <translation>Ejecutar</translation>
+        <location line="-2017"/>
+        <source>Rename Workspace</source>
+        <translation>Renombrar Espacio de Trabajo</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="807" />
-        <source>Layout</source>
-        <translation>Diseño</translation>
+        <location line="+7"/>
+        <source>Renamed workspace &quot;%1&quot; to &quot;%2&quot;.</source>
+        <translation>Espacio de trabajo &quot;%1&quot; renombrado a &quot;%2&quot;.</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="808" />
+        <location line="+2046"/>
+        <source>Update available: v%1</source>
+        <translation>Actualización disponible: v%1</translation>
+    </message>
+    <message>
+        <location line="+21"/>
+        <source>Up to date (v%1)</source>
+        <translation>Actualizado (v%1)</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>TraceView is up to date.</source>
+        <translation>TraceView está actualizado.</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Update check failed: %1</source>
+        <translation>Falló la búsqueda de actualizaciones: %1</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <location line="+9"/>
+        <location line="+8"/>
+        <location line="+16"/>
+        <location line="+4"/>
+        <source>Update</source>
+        <translation>Actualizar</translation>
+    </message>
+    <message>
+        <location line="-36"/>
+        <source>Automatic installation requires running an AppImage. Download the AppImage from the release page.</source>
+        <translation>La instalación automática requiere ejecutar un AppImage. Descargue el AppImage desde la página de la versión.</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>This release has no download for this platform. Opening the release page instead.</source>
+        <translation>Esta versión no tiene descarga para esta plataforma. Abriendo la página de la versión.</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>This release has no SHA256SUMS.txt to verify the download against, so it can&apos;t be installed automatically. Opening the release page instead.</source>
+        <translation>Esta versión no tiene SHA256SUMS.txt para verificar la descarga, así que no puede instalarse automáticamente. Abriendo la página de la versión.</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Downloading TraceView %1...</source>
+        <translation>Descargando TraceView %1...</translation>
+    </message>
+    <message>
+        <location line="-2219"/>
+        <location line="+2045"/>
         <source>Devices</source>
         <translation>Dispositivos</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="882" />
+        <location line="-1970"/>
+        <source>Subscriptions</source>
+        <translation>Suscripciones</translation>
+    </message>
+    <message>
+        <location line="+83"/>
         <source>New Workspace</source>
         <translation>Nuevo Espacio de Trabajo</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="882" />
+        <location line="-53"/>
+        <location line="+53"/>
         <source>Name:</source>
         <translation>Nombre:</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="883" />
+        <location line="+1"/>
         <source>Workspace</source>
         <translation>Espacio de Trabajo</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="896" />
-        <source>Created workspace "%1".</source>
+        <location line="+19"/>
+        <source>Created workspace &quot;%1&quot;.</source>
         <translation>Espacio de trabajo «%1» creado.</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="906" />
+        <location line="+14"/>
         <source>Delete Workspace</source>
         <translation>Eliminar Espacio de Trabajo</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="907" />
-        <source>Delete workspace "%1"? This cannot be undone.</source>
+        <location line="+1"/>
+        <source>Delete workspace &quot;%1&quot;? This cannot be undone.</source>
         <translation>¿Eliminar el espacio de trabajo «%1»? Esta acción no se puede deshacer.</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="922" />
-        <source>Deleted workspace "%1".</source>
+        <location line="+14"/>
+        <source>Deleted workspace &quot;%1&quot;.</source>
         <translation>Espacio de trabajo «%1» eliminado.</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="959" />
+        <location line="+71"/>
+        <location line="+1755"/>
         <source>Add widget</source>
         <translation>Añadir widget</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="962" />
+        <location line="-1752"/>
         <source>Remove selected widget (%1)</source>
         <translation>Eliminar widget seleccionado (%1)</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="965" />
+        <location line="+3"/>
+        <location line="+1762"/>
         <source>Add device</source>
         <translation>Añadir dispositivo</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="968" />
+        <location line="-1759"/>
         <source>Remove selected device (%1)</source>
         <translation>Eliminar dispositivo seleccionado (%1)</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="971" />
+        <location line="+3"/>
         <source>Open a .blog log file</source>
         <translation>Abrir un archivo de registro .blog</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="973" />
+        <location line="+2"/>
         <source>Copy selected widget (%1)</source>
         <translation>Copiar widget seleccionado (%1)</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="977" />
+        <location line="+4"/>
         <source>Paste as a new widget (%1)</source>
         <translation>Pegar como nuevo widget (%1)</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="980" />
+        <location line="+3"/>
         <source>Bring to front</source>
         <translation>Traer al frente</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="982" />
+        <location line="+2"/>
         <source>Bring forward</source>
         <translation>Avanzar</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="984" />
+        <location line="+2"/>
         <source>Send backward</source>
         <translation>Retroceder</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="986" />
+        <location line="+2"/>
         <source>Send to back</source>
         <translation>Enviar al fondo</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="988" />
-        <source>Group — lock the selected widgets' positions together</source>
+        <location line="+3"/>
+        <source>Group — lock the selected widgets&apos; positions together</source>
         <translation>Agrupar — bloquea las posiciones de los widgets seleccionados entre sí</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="990" />
+        <location line="+3"/>
         <source>Ungroup — let the selected widgets move independently again</source>
         <translation>Desagrupar — permite que los widgets seleccionados se muevan de forma independiente de nuevo</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="1146" />
+        <location line="+28"/>
+        <source>Screen size: Small</source>
+        <translation>Tamaño de pantalla: Pequeño</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Screen size: Medium</source>
+        <translation>Tamaño de pantalla: Mediano</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Screen size: Large</source>
+        <translation>Tamaño de pantalla: Grande</translation>
+    </message>
+    <message>
+        <location line="+209"/>
+        <source>Disable editing — lock the dashboard layout</source>
+        <translation>Desactivar edición — bloquear el diseño del dashboard</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Enable editing — rearrange the dashboard layout</source>
+        <translation>Activar edición — reorganizar el diseño del dashboard</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Hide the Layers/Properties panels</source>
+        <translation>Ocultar los paneles Capas/Propiedades</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Show the Layers/Properties panels</source>
+        <translation>Mostrar los paneles Capas/Propiedades</translation>
+    </message>
+    <message>
+        <location line="+248"/>
         <source>New Device</source>
         <translation>Nuevo Dispositivo</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="1306" />
+        <location line="+243"/>
+        <source>%1: robot is responding again</source>
+        <translation>%1: el robot vuelve a responder</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>%1: robot stopped responding (hub link still up)</source>
+        <translation>%1: el robot dejó de responder (el enlace del hub sigue activo)</translation>
+    </message>
+    <message>
+        <location line="+40"/>
         <source>No devices configured</source>
         <translation>No hay dispositivos configurados</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="1314" />
+        <location line="-42"/>
+        <location line="+55"/>
         <source>(unnamed)</source>
         <translation>(sin nombre)</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="1531" />
-        <source>Key "%1" is already used by another widget.</source>
+        <location line="-1111"/>
+        <source>Dashboard</source>
+        <translation>Dashboard</translation>
+    </message>
+    <message>
+        <location line="+1323"/>
+        <source>%1: this BLE address now answers as a different robot (expected %2, got %3)</source>
+        <translation>%1: esta dirección BLE ahora responde como otro robot (se esperaba %2, se obtuvo %3)</translation>
+    </message>
+    <message>
+        <location line="+244"/>
+        <source>Key &quot;%1&quot; is already used by another widget.</source>
         <translation>La clave «%1» ya está en uso por otro widget.</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="1545" />
+        <location line="+15"/>
         <source>New Project</source>
         <translation>Nuevo proyecto</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="1546" />
+        <location line="+1"/>
         <source>Discard the current dashboard and start a new, empty project?</source>
         <translation>¿Descartar el panel actual y comenzar un nuevo proyecto vacío?</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="1561" />
+        <location line="+14"/>
         <source>Started a new project.</source>
         <translation>Se inició un nuevo proyecto.</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="1577" />
-        <location filename="../lib/core/mainwindow.cpp" line="1596" />
+        <location line="+16"/>
+        <location line="+19"/>
         <source>Save Project</source>
         <translation>Guardar proyecto</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="1590" />
+        <location line="-6"/>
         <source>Save Project As</source>
         <translation>Guardar proyecto como</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="1604" />
-        <location filename="../lib/core/mainwindow.cpp" line="1740" />
+        <location line="+14"/>
+        <location line="+278"/>
         <source>Open Project</source>
         <translation>Abrir proyecto</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="1613" />
+        <location line="-269"/>
         <source>Open Log File</source>
         <translation>Abrir archivo de registro</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="1613" />
+        <location line="+0"/>
         <source>BTP Log (*.blog)</source>
         <translation>Registro BTP (*.blog)</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="1701" />
+        <location line="+97"/>
         <source>OTA Update</source>
         <translation>Actualización OTA</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="1791" />
+        <location line="+47"/>
+        <source>BTP Traffic</source>
+        <translation>Tráfico BTP</translation>
+    </message>
+    <message>
+        <location line="+47"/>
+        <location line="+190"/>
+        <source>Settings</source>
+        <translation>Configuración</translation>
+    </message>
+    <message>
+        <location line="-58"/>
         <source>(No Recent Projects)</source>
         <translation>(Sin proyectos recientes)</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="1803" />
+        <location line="+12"/>
         <source>Clear Recent Projects</source>
         <translation>Borrar proyectos recientes</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="1937" />
+        <location line="+38"/>
+        <source>Project</source>
+        <translation>Proyecto</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>New project</source>
+        <translation>Nuevo proyecto</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Open project</source>
+        <translation>Abrir proyecto</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Save project</source>
+        <translation>Guardar proyecto</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Save project as</source>
+        <translation>Guardar proyecto como</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Open log offline</source>
+        <translation>Abrir registro sin conexión</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Upload firmware (OTA)</source>
+        <translation>Cargar firmware (OTA)</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>BTP traffic monitor</source>
+        <translation>Monitor de tráfico BTP</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Layout &amp; widgets</source>
+        <translation>Diseño y widgets</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Remove selected</source>
+        <translation>Eliminar seleccionados</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Copy widget</source>
+        <translation>Copiar widget</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Paste widget</source>
+        <translation>Pegar widget</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Bring forward / to front</source>
+        <translation>Traer adelante / al frente</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Send backward / to back</source>
+        <translation>Enviar atrás / al fondo</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Group / ungroup</source>
+        <translation>Agrupar / desagrupar</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Remove device</source>
+        <translation>Eliminar dispositivo</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Serial monitor terminal</source>
+        <translation>Terminal del monitor serie</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Switch device tab</source>
+        <translation>Cambiar pestaña de dispositivo</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Copy selection</source>
+        <translation>Copiar selección</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Send interrupt (SIGINT)</source>
+        <translation>Enviar interrupción (SIGINT)</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>%1 (nothing selected)</source>
+        <translation>%1 (nada seleccionado)</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Paste into terminal</source>
+        <translation>Pegar en el terminal</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Navigation &amp; view</source>
+        <translation>Navegación y vista</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Run / Layout / Devices tab</source>
+        <translation>Pestaña Ejecutar / Diseño / Dispositivos</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Next / previous workspace</source>
+        <translation>Espacio de trabajo siguiente / anterior</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Fullscreen dashboard</source>
+        <translation>Dashboard a pantalla completa</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Exit fullscreen</source>
+        <translation>Salir de pantalla completa</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Notification history</source>
+        <translation>Historial de notificaciones</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Keyboard shortcuts</source>
+        <translation>Atajos de teclado</translation>
+    </message>
+    <message>
+        <location line="+36"/>
         <source>Exit fullscreen (F11 / Esc)</source>
         <translation>Salir de pantalla completa (F11 / Esc)</translation>
     </message>
 </context>
 <context>
+    <name>traceview::ManageUsersDialog</name>
+    <message>
+        <location filename="../lib/core/manageusersdialog.cpp" line="+17"/>
+        <source>Manage Developer Users</source>
+        <translation>Gestionar Usuarios Desarrolladores</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Add...</source>
+        <translation>Añadir...</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Remove</source>
+        <translation>Eliminar</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Change Password...</source>
+        <translation>Cambiar Contraseña...</translation>
+    </message>
+    <message>
+        <location line="+36"/>
+        <location line="+5"/>
+        <location line="+6"/>
+        <source>Add User</source>
+        <translation>Añadir Usuario</translation>
+    </message>
+    <message>
+        <location line="-11"/>
+        <source>Username:</source>
+        <translation>Usuario:</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Password:</source>
+        <translation>Contraseña:</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Couldn&apos;t add that user — the username may already be taken.</source>
+        <translation>No se pudo añadir el usuario — puede que el nombre ya esté en uso.</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <location line="+6"/>
+        <source>Remove User</source>
+        <translation>Eliminar Usuario</translation>
+    </message>
+    <message>
+        <location line="-5"/>
+        <source>Remove developer account &quot;%1&quot;?</source>
+        <translation>¿Eliminar la cuenta de desarrollador &quot;%1&quot;?</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Couldn&apos;t remove the last remaining developer account.</source>
+        <translation>No se puede eliminar la última cuenta de desarrollador.</translation>
+    </message>
+    <message>
+        <location line="+12"/>
+        <source>Change Password</source>
+        <translation>Cambiar Contraseña</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>New password for &quot;%1&quot;:</source>
+        <translation>Nueva contraseña para &quot;%1&quot;:</translation>
+    </message>
+</context>
+<context>
+    <name>traceview::NotificationHistoryWindow</name>
+    <message>
+        <location filename="../lib/diagnostics/notificationhistorywindow.cpp" line="+23"/>
+        <source>Notification History</source>
+        <translation>Historial de Notificaciones</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Severity:</source>
+        <translation>Gravedad:</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>All</source>
+        <translation>Todas</translation>
+    </message>
+    <message>
+        <location line="+12"/>
+        <source>Copy</source>
+        <translation>Copiar</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Clear</source>
+        <translation>Limpiar</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>Time</source>
+        <translation>Hora</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Severity</source>
+        <translation>Gravedad</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Source</source>
+        <translation>Origen</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Message</source>
+        <translation>Mensaje</translation>
+    </message>
+</context>
+<context>
     <name>traceview::OtaClient</name>
     <message>
-        <location filename="../lib/ota/otaclient.cpp" line="79" />
-        <location filename="../lib/ota/otaclient.cpp" line="141" />
+        <location filename="../lib/ota/otaclient.cpp" line="+79"/>
+        <location line="+62"/>
         <source>No OTA address configured for this device.</source>
         <translation>No hay dirección OTA configurada para este dispositivo.</translation>
     </message>
     <message>
-        <location filename="../lib/ota/otaclient.cpp" line="167" />
-        <source>Couldn't open %1</source>
+        <location line="+26"/>
+        <source>Couldn&apos;t open %1</source>
         <translation>No se pudo abrir %1</translation>
     </message>
 </context>
 <context>
     <name>traceview::OtaTab</name>
     <message>
-        <location filename="../lib/ota/otatab.cpp" line="65" />
+        <location filename="../lib/ota/otatab.cpp" line="+71"/>
         <source>Name</source>
         <translation>Nombre</translation>
     </message>
     <message>
-        <location filename="../lib/ota/otatab.cpp" line="65" />
+        <location line="+0"/>
         <source>OTA Address</source>
         <translation>Dirección OTA</translation>
     </message>
     <message>
-        <location filename="../lib/ota/otatab.cpp" line="65" />
+        <location line="+0"/>
         <source>OTA Online</source>
         <translation>OTA en línea</translation>
     </message>
     <message>
-        <location filename="../lib/ota/otatab.cpp" line="66" />
+        <location line="+1"/>
         <source>Firmware</source>
         <translation>Firmware</translation>
     </message>
     <message>
-        <location filename="../lib/ota/otatab.cpp" line="66" />
+        <location line="+0"/>
         <source>Password</source>
         <translation>Contraseña</translation>
     </message>
     <message>
-        <location filename="../lib/ota/otatab.cpp" line="66" />
+        <location line="+0"/>
         <source>Upload</source>
         <translation>Subir</translation>
     </message>
     <message>
-        <location filename="../lib/ota/otatab.cpp" line="137" />
+        <location line="+71"/>
         <source>(not configured)</source>
         <translation>(no configurado)</translation>
     </message>
     <message>
-        <location filename="../lib/ota/otatab.cpp" line="141" />
-        <location filename="../lib/ota/otatab.cpp" line="149" />
-        <location filename="../lib/ota/otatab.cpp" line="268" />
+        <location line="+4"/>
+        <location line="+8"/>
+        <location line="+122"/>
         <source>—</source>
         <translation>—</translation>
     </message>
     <message>
-        <location filename="../lib/ota/otatab.cpp" line="141" />
+        <location line="-130"/>
         <source>Checking…</source>
         <translation>Comprobando…</translation>
     </message>
     <message>
-        <location filename="../lib/ota/otatab.cpp" line="158" />
+        <location line="+17"/>
         <source>OTA password</source>
         <translation>Contraseña OTA</translation>
     </message>
     <message>
-        <location filename="../lib/ota/otatab.cpp" line="162" />
+        <location line="+4"/>
         <source>Remember</source>
         <translation>Recordar</translation>
     </message>
     <message>
-        <location filename="../lib/ota/otatab.cpp" line="164" />
+        <location line="+2"/>
         <source>Save this password in the project file.</source>
         <translation>Guardar esta contraseña en el archivo del proyecto.</translation>
     </message>
     <message>
-        <location filename="../lib/ota/otatab.cpp" line="189" />
+        <location line="+25"/>
         <source>Upload…</source>
         <translation>Subir…</translation>
     </message>
     <message>
-        <location filename="../lib/ota/otatab.cpp" line="193" />
-        <location filename="../lib/ota/otatab.cpp" line="337" />
-        <source>Set this device's OTA address in Device Settings first.</source>
+        <location line="+4"/>
+        <location line="+147"/>
+        <source>Set this device&apos;s OTA address in Device Settings first.</source>
         <translation>Primero establezca la dirección OTA de este dispositivo en la configuración del dispositivo.</translation>
     </message>
     <message>
-        <location filename="../lib/ota/otatab.cpp" line="198" />
+        <location line="-142"/>
         <source>Uploading… %p%</source>
         <translation>Subiendo… %p%</translation>
     </message>
     <message>
-        <location filename="../lib/ota/otatab.cpp" line="276" />
+        <location line="+81"/>
         <source>Offline</source>
         <translation>Sin conexión</translation>
     </message>
     <message>
-        <location filename="../lib/ota/otatab.cpp" line="283" />
+        <location line="+7"/>
         <source>Not reachable</source>
         <translation>No accesible</translation>
     </message>
     <message>
-        <location filename="../lib/ota/otatab.cpp" line="285" />
+        <location line="+2"/>
         <source>Online (busy)</source>
         <translation>En línea (ocupado)</translation>
     </message>
     <message>
-        <location filename="../lib/ota/otatab.cpp" line="287" />
+        <location line="+2"/>
         <source>A firmware write is already in progress on the robot.</source>
         <translation>Ya hay una escritura de firmware en curso en el robot.</translation>
     </message>
     <message>
-        <location filename="../lib/ota/otatab.cpp" line="289" />
+        <location line="+2"/>
         <source>Online</source>
         <translation>En línea</translation>
     </message>
     <message>
-        <location filename="../lib/ota/otatab.cpp" line="325" />
-        <location filename="../lib/ota/otatab.cpp" line="336" />
+        <location line="+36"/>
+        <location line="+11"/>
         <source>Firmware Upload</source>
         <translation>Subida de firmware</translation>
     </message>
     <message>
-        <location filename="../lib/ota/otatab.cpp" line="342" />
+        <location line="+6"/>
         <source>Select Firmware</source>
         <translation>Seleccionar firmware</translation>
     </message>
     <message>
-        <location filename="../lib/ota/otatab.cpp" line="342" />
+        <location line="+0"/>
         <source>Firmware Binary (*.bin);;All Files (*)</source>
         <translation>Binario de firmware (*.bin);;Todos los archivos (*)</translation>
     </message>
@@ -1826,137 +3123,137 @@
 <context>
     <name>traceview::PropertiesPanel</name>
     <message>
-        <location filename="../lib/core/propertiespanel.cpp" line="21" />
+        <location filename="../lib/core/propertiespanel.cpp" line="+21"/>
         <source>(none)</source>
         <translation>(ninguno)</translation>
     </message>
     <message>
-        <location filename="../lib/core/propertiespanel.cpp" line="22" />
+        <location line="+1"/>
         <source>Optional, must be unique — the handle future data updates will target this widget by.</source>
         <translation>Opcional, debe ser único — es el identificador que usarán las futuras actualizaciones de datos para dirigirse a este widget.</translation>
     </message>
     <message>
-        <location filename="../lib/core/propertiespanel.cpp" line="26" />
+        <location line="+4"/>
         <source>Type</source>
         <translation>Tipo</translation>
     </message>
     <message>
-        <location filename="../lib/core/propertiespanel.cpp" line="27" />
+        <location line="+1"/>
         <source>Name</source>
         <translation>Nombre</translation>
     </message>
     <message>
-        <location filename="../lib/core/propertiespanel.cpp" line="28" />
+        <location line="+1"/>
         <source>Key</source>
         <translation>Clave</translation>
     </message>
-    </context>
+</context>
 <context>
     <name>traceview::PushButtonConfigEditor</name>
     <message>
-        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="46" />
-        <source>Which device this button's commands are sent to.</source>
+        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="+7"/>
+        <source>Which device this button&apos;s commands are sent to.</source>
         <translation>A qué dispositivo se envían los comandos de este botón.</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="49" />
+        <location line="+3"/>
         <source>Button</source>
         <translation>Botón</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="57" />
+        <location line="+8"/>
         <source>Momentary sends the press command on press and the release command on release. Pulse sends only the press command, once per click.</source>
         <translation>Momentáneo envía el comando de pulsación al pulsar y el comando de liberación al soltar. Pulso envía solo el comando de pulsación, una vez por clic.</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="61" />
+        <location line="+4"/>
         <source>Command sent on press</source>
         <translation>Comando enviado al pulsar</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="64" />
+        <location line="+3"/>
         <source>Command sent on release</source>
         <translation>Comando enviado al soltar</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="66" />
+        <location line="+2"/>
         <source>Repeat while held</source>
         <translation>Repetir mientras se mantiene pulsado</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="70" />
-        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="77" />
-        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="85" />
+        <location line="+4"/>
+        <location line="+7"/>
+        <location line="+8"/>
         <source> ms</source>
         <translation> ms</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="73" />
+        <location line="-12"/>
         <source>Long-press action</source>
         <translation>Acción de pulsación larga</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="81" />
+        <location line="+8"/>
         <source>Command sent once held past the threshold</source>
         <translation>Comando enviado al mantener pulsado más allá del umbral</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="88" />
+        <location line="+7"/>
         <source>Minimum time between triggers — extra presses inside this window are ignored.</source>
         <translation>Tiempo mínimo entre activaciones — las pulsaciones adicionales dentro de esta ventana se ignoran.</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="90" />
+        <location line="+2"/>
         <source>Confirm before sending</source>
         <translation>Confirmar antes de enviar</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="95" />
+        <location line="+5"/>
         <source>Device</source>
         <translation>Dispositivo</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="96" />
+        <location line="+1"/>
         <source>Label</source>
         <translation>Etiqueta</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="97" />
+        <location line="+1"/>
         <source>Style</source>
         <translation>Estilo</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="98" />
+        <location line="+1"/>
         <source>Mode</source>
         <translation>Modo</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="99" />
+        <location line="+1"/>
         <source>On press</source>
         <translation>Al pulsar</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="100" />
+        <location line="+1"/>
         <source>On release</source>
         <translation>Al soltar</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="102" />
+        <location line="+2"/>
         <source>Repeat interval</source>
         <translation>Intervalo de repetición</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="104" />
+        <location line="+2"/>
         <source>Long-press time</source>
         <translation>Tiempo de pulsación larga</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="105" />
+        <location line="+1"/>
         <source>Long-press command</source>
         <translation>Comando de pulsación larga</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="106" />
+        <location line="+1"/>
         <source>Debounce</source>
         <translation>Antirrebote</translation>
     </message>
@@ -1964,248 +3261,887 @@
 <context>
     <name>traceview::PushButtonWidget</name>
     <message>
-        <location filename="../lib/dashboard/widgets/controlwidgets.cpp" line="92" />
-        <location filename="../lib/dashboard/widgets/controlwidgets.cpp" line="114" />
+        <location filename="../lib/dashboard/widgets/controlwidgets.cpp" line="+92"/>
+        <location line="+22"/>
         <source>Push Button</source>
         <translation>Botón pulsador</translation>
     </message>
 </context>
 <context>
-    <name>traceview::SerialMonitorConfigEditor</name>
+    <name>traceview::RobotLogConfigEditor</name>
     <message>
-        <location filename="../lib/dashboard/widgets/serialmonitorconfigeditor.cpp" line="12" />
-        <source>Which device this terminal's TERMINAL_IN/TERMINAL_OUT traffic is routed to.</source>
-        <translation>A qué dispositivo se enruta el tráfico TERMINAL_IN/TERMINAL_OUT de este terminal.</translation>
+        <location filename="../lib/dashboard/widgets/robotlogconfigeditor.cpp" line="+17"/>
+        <source>Tabs — one log per device</source>
+        <translation>Pestañas — un registro por dispositivo</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/serialmonitorconfigeditor.cpp" line="17" />
-        <source>Device</source>
-        <translation>Dispositivo</translation>
+        <location line="+9"/>
+        <source>Add tab</source>
+        <translation>Añadir pestaña</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Add another log tab for a device.</source>
+        <translation>Añadir otra pestaña de registro para un dispositivo.</translation>
+    </message>
+    <message>
+        <location line="+95"/>
+        <source>Device this tab&apos;s log reads from.</source>
+        <translation>Dispositivo del que lee el registro de esta pestaña.</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Move tab left</source>
+        <translation>Mover pestaña a la izquierda</translation>
+    </message>
+    <message>
+        <location line="+16"/>
+        <source>Move tab right</source>
+        <translation>Mover pestaña a la derecha</translation>
+    </message>
+    <message>
+        <location line="+16"/>
+        <source>Remove this tab</source>
+        <translation>Eliminar esta pestaña</translation>
+    </message>
+</context>
+<context>
+    <name>traceview::RobotLogModel</name>
+    <message>
+        <location filename="../lib/dashboard/widgets/robotlogmodel.cpp" line="+93"/>
+        <source>Timestamp (µs)</source>
+        <translation>Marca de tiempo (µs)</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Severity</source>
+        <translation>Gravedad</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Source ID</source>
+        <translation>Source ID</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Boot ID</source>
+        <translation>Boot ID</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Sequence</source>
+        <translation>Secuencia</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Message</source>
+        <translation>Mensaje</translation>
+    </message>
+</context>
+<context>
+    <name>traceview::RobotLogWidget</name>
+    <message>
+        <location filename="../lib/dashboard/widgets/robotlogwidget.cpp" line="+31"/>
+        <source>Clear</source>
+        <translation>Limpiar</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Clear this log</source>
+        <translation>Limpiar este registro</translation>
+    </message>
+    <message>
+        <location line="+161"/>
+        <source>(no device)</source>
+        <translation>(sin dispositivo)</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>(unnamed device)</source>
+        <translation>(dispositivo sin nombre)</translation>
+    </message>
+</context>
+<context>
+    <name>traceview::SerialManager</name>
+    <message>
+        <location filename="../lib/core/serialmanager.cpp" line="+58"/>
+        <source>1200 baud resets the ESP32-S3 into its bootloader; using 115200</source>
+        <translation>1200 baudios reinicia el ESP32-S3 en su bootloader; usando 115200</translation>
+    </message>
+</context>
+<context>
+    <name>traceview::SerialMonitorConfigEditor</name>
+    <message>
+        <location filename="../lib/dashboard/widgets/serialmonitorconfigeditor.cpp" line="+17"/>
+        <source>Tabs — one terminal per device</source>
+        <translation>Pestañas — un terminal por dispositivo</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>Add tab</source>
+        <translation>Añadir pestaña</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Add another terminal tab for a device.</source>
+        <translation>Añadir otra pestaña de terminal para un dispositivo.</translation>
+    </message>
+    <message>
+        <location line="+102"/>
+        <source>Device this tab&apos;s terminal talks to.</source>
+        <translation>Dispositivo con el que se comunica el terminal de esta pestaña.</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Move tab left</source>
+        <translation>Mover pestaña a la izquierda</translation>
+    </message>
+    <message>
+        <location line="+16"/>
+        <source>Move tab right</source>
+        <translation>Mover pestaña a la derecha</translation>
+    </message>
+    <message>
+        <location line="+16"/>
+        <source>Remove this tab</source>
+        <translation>Eliminar esta pestaña</translation>
+    </message>
+</context>
+<context>
+    <name>traceview::SerialMonitorWidget</name>
+    <message>
+        <location filename="../lib/dashboard/widgets/serialmonitorwidget.cpp" line="+27"/>
+        <source>Clear</source>
+        <translation>Limpiar</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Clear this terminal</source>
+        <translation>Limpiar este terminal</translation>
+    </message>
+    <message>
+        <location line="+150"/>
+        <source>(no device)</source>
+        <translation>(sin dispositivo)</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>(unnamed device)</source>
+        <translation>(dispositivo sin nombre)</translation>
+    </message>
+</context>
+<context>
+    <name>traceview::SettingsPage</name>
+    <message>
+        <location filename="../lib/core/settingspage.cpp" line="+199"/>
+        <source>Settings</source>
+        <translation>Configuración</translation>
+    </message>
+    <message>
+        <location line="+26"/>
+        <location line="+41"/>
+        <source>General</source>
+        <translation>General</translation>
+    </message>
+    <message>
+        <location line="-41"/>
+        <location line="+65"/>
+        <source>Appearance</source>
+        <translation>Apariencia</translation>
+    </message>
+    <message>
+        <location line="-65"/>
+        <location line="+112"/>
+        <source>Dashboard</source>
+        <translation>Dashboard</translation>
+    </message>
+    <message>
+        <location line="-111"/>
+        <location line="+162"/>
+        <source>Terminal</source>
+        <translation>Terminal</translation>
+    </message>
+    <message>
+        <location line="-162"/>
+        <location line="+189"/>
+        <source>Connections</source>
+        <translation>Conexiones</translation>
+    </message>
+    <message>
+        <location line="-189"/>
+        <location line="+208"/>
+        <source>Diagnostics</source>
+        <translation>Diagnóstico</translation>
+    </message>
+    <message>
+        <location line="-207"/>
+        <location line="+259"/>
+        <location line="+5"/>
+        <source>Updates</source>
+        <translation>Actualizaciones</translation>
+    </message>
+    <message>
+        <location line="-225"/>
+        <source>Project and startup preferences shared by the application.</source>
+        <translation>Preferencias de proyecto e inicio compartidas por la aplicación.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Recent projects</source>
+        <translation>Proyectos recientes</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source> projects</source>
+        <translation> proyectos</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Remember</source>
+        <translation>Recordar</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Clear recent projects</source>
+        <translation>Borrar proyectos recientes</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Project startup</source>
+        <translation>Inicio del proyecto</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Connect configured devices when a project opens</source>
+        <translation>Conectar los dispositivos configurados al abrir un proyecto</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>Theme and typeface changes apply immediately. Changing the language is saved for the next start.</source>
+        <translation>Los cambios de tema y tipografía se aplican al instante. El cambio de idioma se guarda para el próximo inicio.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Application appearance</source>
+        <translation>Apariencia de la aplicación</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>Theme</source>
+        <translation>Tema</translation>
+    </message>
+    <message>
+        <location line="+13"/>
+        <source>Interface font</source>
+        <translation>Fuente de la interfaz</translation>
+    </message>
+    <message>
+        <location line="+13"/>
+        <source>Language</source>
+        <translation>Idioma</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>Rendering caps redraws only; telemetry samples continue to be recorded at their requested rate.</source>
+        <translation>La calidad de renderizado solo limita los redibujados; las muestras de telemetría se siguen registrando a la tasa solicitada.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Rendering quality</source>
+        <translation>Calidad de renderizado</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Low (15 FPS)</source>
+        <translation>Baja (15 FPS)</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Medium (30 FPS)</source>
+        <translation>Media (30 FPS)</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>High (60 FPS)</source>
+        <translation>Alta (60 FPS)</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Custom</source>
+        <translation>Personalizada</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Profile</source>
+        <translation>Perfil</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source> FPS</source>
+        <translation> FPS</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Custom rate</source>
+        <translation>Tasa personalizada</translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <source>Telemetry subscribe rate</source>
+        <translation>Tasa de suscripción de telemetría</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Override every widget&apos;s requested rate</source>
+        <translation>Sobrescribir la tasa solicitada por cada widget</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source> Hz</source>
+        <translation> Hz</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Applied to every chart, gauge and text board on this dashboard, in place of each widget&apos;s own sample time. Each topic still clamps it to its own max/min rate.</source>
+        <translation>Se aplica a todos los gráficos, indicadores y tableros de texto de este dashboard, en lugar del tiempo de muestreo de cada widget. Cada tema la sigue limitando a su propio máximo/mínimo.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Rate</source>
+        <translation>Tasa</translation>
+    </message>
+    <message>
+        <location line="+12"/>
+        <source>These controls are applied to all open serial terminal widgets immediately.</source>
+        <translation>Estos controles se aplican de inmediato a todos los terminales serie abiertos.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Terminal display</source>
+        <translation>Visualización del terminal</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source> lines</source>
+        <translation> líneas</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Scrollback limit</source>
+        <translation>Límite de historial</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Wrap long lines</source>
+        <translation>Ajustar líneas largas</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Follow new output</source>
+        <translation>Seguir la salida nueva</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Blink remote cursor</source>
+        <translation>Parpadeo del cursor remoto</translation>
+    </message>
+    <message>
+        <location line="+13"/>
+        <source>Controls how TraceView restores and retries device connections.</source>
+        <translation>Controla cómo TraceView restaura y reintenta las conexiones de dispositivos.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Reconnect</source>
+        <translation>Reconexión</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Retry disconnected devices automatically</source>
+        <translation>Reintentar automáticamente los dispositivos desconectados</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source> seconds</source>
+        <translation> segundos</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Retry interval</source>
+        <translation>Intervalo de reintento</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>Keep enough history for investigation without letting long-running sessions use unbounded memory.</source>
+        <translation>Conserve historial suficiente para investigar sin que las sesiones largas usen memoria ilimitada.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>In-memory history</source>
+        <translation>Historial en memoria</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source> frames</source>
+        <translation> tramas</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>BTP traffic history</source>
+        <translation>Historial de tráfico BTP</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source> messages</source>
+        <translation> mensajes</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Notification history</source>
+        <translation>Historial de notificaciones</translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <source>Log file</source>
+        <translation>Archivo de registro</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Current session</source>
+        <translation>Sesión actual</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Log raw serial bytes (verbose)</source>
+        <translation>Registrar bytes serie en bruto (detallado)</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Every byte written to and read from a serial device is logged as hex. Leave off unless you&apos;re actively investigating a connection problem -- a device streaming telemetry fills the log fast.</source>
+        <translation>Cada byte escrito y leído de un dispositivo serie se registra en hex. Déjelo desactivado salvo que esté investigando un problema de conexión -- un dispositivo que transmite telemetría llena el registro rápidamente.</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Open log folder</source>
+        <translation>Abrir carpeta de registros</translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <source>This installation is managed by Flatpak. Use your system&apos;s software manager or &apos;flatpak update&apos; to update TraceView.</source>
+        <translation>Esta instalación la gestiona Flatpak. Use el gestor de software del sistema o &apos;flatpak update&apos; para actualizar TraceView.</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>TraceView can check GitHub for a newer release. Nothing is downloaded or installed without your confirmation.</source>
+        <translation>TraceView puede consultar GitHub en busca de una versión más reciente. No se descarga ni instala nada sin su confirmación.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Automatic checks</source>
+        <translation>Comprobaciones automáticas</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Check for updates on startup</source>
+        <translation>Buscar actualizaciones al iniciar</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Last checked</source>
+        <translation>Última comprobación</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Never</source>
+        <translation>Nunca</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Check now</source>
+        <translation>Comprobar ahora</translation>
+    </message>
+    <message>
+        <location line="+43"/>
+        <source>Restart now</source>
+        <translation>Reiniciar ahora</translation>
+    </message>
+    <message>
+        <location line="+93"/>
+        <source>Restart TraceView to apply language or diagnostics history changes.</source>
+        <translation>Reinicie TraceView para aplicar los cambios de idioma o del historial de diagnóstico.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Changes apply immediately unless noted otherwise.</source>
+        <translation>Los cambios se aplican al instante salvo que se indique lo contrario.</translation>
+    </message>
+</context>
+<context>
+    <name>traceview::ShortcutsDialog</name>
+    <message>
+        <location filename="../lib/core/shortcutsdialog.cpp" line="+13"/>
+        <source>Keyboard Shortcuts</source>
+        <translation>Atajos de Teclado</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Action</source>
+        <translation>Acción</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Shortcut</source>
+        <translation>Atajo</translation>
     </message>
 </context>
 <context>
     <name>traceview::SliderConfigEditor</name>
     <message>
-        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="296" />
-        <source>Which device this slider's commands are sent to.</source>
+        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="+190"/>
+        <source>Which device this slider&apos;s commands are sent to.</source>
         <translation>A qué dispositivo se envían los comandos de este deslizador.</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="299" />
+        <location line="+3"/>
         <source>Slider</source>
         <translation>Control deslizante</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="322" />
+        <location line="+23"/>
         <source>V, %, ...</source>
         <translation>V, %, ...</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="324" />
+        <location line="+2"/>
         <source>Show current value</source>
         <translation>Mostrar valor actual</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="330" />
+        <location line="+6"/>
         <source>Continuous sends the command on every step while dragging, throttled below. On release sends it once, when the handle is let go.</source>
         <translation>Continuo envía el comando en cada paso mientras se arrastra, limitado abajo. Al soltar lo envía una sola vez, cuando se suelta la manija.</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="335" />
+        <location line="+5"/>
         <source> ms</source>
         <translation> ms</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="338" />
-        <source>Minimum time between sends while dragging, so every pixel of motion isn't its own message.</source>
+        <location line="+3"/>
+        <source>Minimum time between sends while dragging, so every pixel of motion isn&apos;t its own message.</source>
         <translation>Tiempo mínimo entre envíos mientras se arrastra, para que no cada píxel de movimiento sea su propio mensaje.</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="342" />
+        <location line="+4"/>
         <source>SET {value}</source>
         <translation>SET {value}</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="344" />
+        <location line="+2"/>
         <source>Command sent on change — {value} is replaced with the current slider value.</source>
         <translation>Comando enviado al cambiar — {value} se reemplaza con el valor actual del control deslizante.</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="349" />
+        <location line="+5"/>
         <source>Device</source>
         <translation>Dispositivo</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="350" />
+        <location line="+1"/>
         <source>Label</source>
         <translation>Etiqueta</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="351" />
+        <location line="+1"/>
         <source>Min</source>
         <translation>Mín</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="352" />
+        <location line="+1"/>
         <source>Max</source>
         <translation>Máx</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="353" />
+        <location line="+1"/>
         <source>Step</source>
         <translation>Paso</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="354" />
+        <location line="+1"/>
         <source>Default</source>
         <translation>Predeterminado</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="355" />
+        <location line="+1"/>
         <source>Unit</source>
         <translation>Unidad</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="357" />
+        <location line="+2"/>
         <source>Send</source>
         <translation>Enviar</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="358" />
+        <location line="+1"/>
         <source>Throttle</source>
         <translation>Limitación</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="359" />
+        <location line="+1"/>
         <source>Command</source>
         <translation>Comando</translation>
     </message>
 </context>
 <context>
-    <name>traceview::ToggleSwitchConfigEditor</name>
+    <name>traceview::TcpTransport</name>
     <message>
-        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="209" />
-        <source>Which device this toggle's commands are sent to.</source>
-        <translation>A qué dispositivo se envían los comandos de este interruptor.</translation>
+        <location filename="../lib/core/tcptransport.cpp" line="+102"/>
+        <source>TCP connection timed out</source>
+        <translation>Tiempo de conexión TCP agotado</translation>
+    </message>
+</context>
+<context>
+    <name>traceview::TextBoardConfigEditor</name>
+    <message>
+        <location filename="../lib/dashboard/widgets/textboardconfigeditor.cpp" line="+17"/>
+        <source>(auto)</source>
+        <translation>(auto)</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="212" />
-        <source>Toggle</source>
-        <translation>Interruptor</translation>
+        <location line="+6"/>
+        <source>UTF8 telemetry topic displayed by this board. Pick a reported text topic or type its numeric id.</source>
+        <translation>Tema de telemetría UTF8 que muestra este tablero. Elija un tema de texto informado o escriba su id numérico.</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="215" />
-        <source>ON</source>
-        <translation>ENCENDIDO</translation>
+        <location line="+6"/>
+        <source> ms</source>
+        <translation> ms</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="218" />
-        <source>OFF</source>
-        <translation>APAGADO</translation>
+        <location line="+3"/>
+        <source>Requested update period. 3000 ms is approximately 0.33 Hz.</source>
+        <translation>Periodo de actualización solicitado. 3000 ms equivalen aproximadamente a 0,33 Hz.</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="220" />
-        <source>Starts ON</source>
-        <translation>Comienza encendido</translation>
+        <location line="+3"/>
+        <source>Text shown until the first sample arrives</source>
+        <translation>Texto mostrado hasta que llegue la primera muestra</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="223" />
-        <source>Command sent when turned ON</source>
-        <translation>Comando enviado al encender</translation>
-    </message>
-    <message>
-        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="226" />
-        <source>Command sent when turned OFF</source>
-        <translation>Comando enviado al apagar</translation>
-    </message>
-    <message>
-        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="228" />
-        <source>Confirm before toggling</source>
-        <translation>Confirmar antes de alternar</translation>
-    </message>
-    <message>
-        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="233" />
+        <location line="+6"/>
         <source>Device</source>
         <translation>Dispositivo</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="234" />
+        <location line="+1"/>
+        <source>Source</source>
+        <translation>Origen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Text topic</source>
+        <translation>Tema de texto</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Sample period</source>
+        <translation>Periodo de muestreo</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Initial text</source>
+        <translation>Texto inicial</translation>
+    </message>
+</context>
+<context>
+    <name>traceview::ToggleSwitchConfigEditor</name>
+    <message>
+        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="-150"/>
+        <source>Which device this toggle&apos;s commands are sent to.</source>
+        <translation>A qué dispositivo se envían los comandos de este interruptor.</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Toggle</source>
+        <translation>Interruptor</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>ON</source>
+        <translation>ENCENDIDO</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>OFF</source>
+        <translation>APAGADO</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Starts ON</source>
+        <translation>Comienza encendido</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Command sent when turned ON</source>
+        <translation>Comando enviado al encender</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Command sent when turned OFF</source>
+        <translation>Comando enviado al apagar</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Confirm before toggling</source>
+        <translation>Confirmar antes de alternar</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Device</source>
+        <translation>Dispositivo</translation>
+    </message>
+    <message>
+        <location line="+1"/>
         <source>Label</source>
         <translation>Etiqueta</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="235" />
+        <location line="+1"/>
         <source>On text</source>
         <translation>Texto de encendido</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="236" />
+        <location line="+1"/>
         <source>Off text</source>
         <translation>Texto de apagado</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="238" />
+        <location line="+2"/>
         <source>On command</source>
         <translation>Comando de encendido</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="239" />
+        <location line="+1"/>
         <source>Off command</source>
         <translation>Comando de apagado</translation>
     </message>
 </context>
 <context>
-    <name>traceview::ToggleSwitchWidget</name>
-    </context>
+    <name>traceview::UpdateAvailableDialog</name>
+    <message>
+        <location filename="../lib/core/updateavailabledialog.cpp" line="+15"/>
+        <source>Update Available</source>
+        <translation>Actualización Disponible</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>&lt;b&gt;TraceView %1&lt;/b&gt; is available (you have v%2).</source>
+        <translation>&lt;b&gt;TraceView %1&lt;/b&gt; está disponible (tiene la v%2).</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>No release notes provided.</source>
+        <translation>No se proporcionaron notas de la versión.</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Update Now</source>
+        <translation>Actualizar Ahora</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Skip This Version</source>
+        <translation>Omitir Esta Versión</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Remind Me Later</source>
+        <translation>Recordar Más Tarde</translation>
+    </message>
+</context>
+<context>
+    <name>traceview::UpdateChecker</name>
+    <message>
+        <location filename="../lib/updater/updatechecker.cpp" line="+44"/>
+        <source>Updates are managed by Flatpak. Use &apos;flatpak update&apos;.</source>
+        <translation>Las actualizaciones las gestiona Flatpak. Use &apos;flatpak update&apos;.</translation>
+    </message>
+</context>
+<context>
+    <name>traceview::UpdateDownloader</name>
+    <message>
+        <location filename="../lib/updater/updatedownloader.cpp" line="+34"/>
+        <source>Updates are managed by Flatpak. Use &apos;flatpak update&apos;.</source>
+        <translation>Las actualizaciones las gestiona Flatpak. Use &apos;flatpak update&apos;.</translation>
+    </message>
+    <message>
+        <location line="+14"/>
+        <source>Couldn&apos;t download SHA256SUMS.txt: %1</source>
+        <translation>No se pudo descargar SHA256SUMS.txt: %1</translation>
+    </message>
+    <message>
+        <location line="+14"/>
+        <source>Couldn&apos;t download %1: %2</source>
+        <translation>No se pudo descargar %1: %2</translation>
+    </message>
+    <message>
+        <location line="+22"/>
+        <source>%1 is not listed in SHA256SUMS.txt.</source>
+        <translation>%1 no figura en SHA256SUMS.txt.</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Checksum mismatch for %1 -- the download may be corrupted.</source>
+        <translation>La suma de verificación de %1 no coincide -- la descarga puede estar dañada.</translation>
+    </message>
+    <message>
+        <location line="+12"/>
+        <source>Couldn&apos;t write %1</source>
+        <translation>No se pudo escribir %1</translation>
+    </message>
+</context>
 <context>
     <name>traceview::UsbHidManager</name>
     <message>
-        <location filename="../lib/core/usbhidmanager.cpp" line="70" />
+        <location filename="../lib/core/usbhidmanager.cpp" line="+75"/>
         <source>Could not open HID device: %1</source>
         <translation>No se pudo abrir el dispositivo HID: %1</translation>
     </message>
     <message>
-        <location filename="../lib/core/usbhidmanager.cpp" line="139" />
+        <location line="+72"/>
         <source>HID device disconnected</source>
         <translation>Dispositivo HID desconectado</translation>
     </message>
 </context>
 <context>
-    <name>traceview::WorkspaceSwitcher</name>
-    <message>
-        <location filename="../lib/core/workspaceswitcher.cpp" line="164" />
-        <source>New Workspace…</source>
-        <translation>Nuevo Espacio de Trabajo…</translation>
-    </message>
-</context>
-<context>
-    <name>traceview::IconPickerDialog</name>
-    <message>
-        <source>Choose Icon</source>
-        <translation>Elegir icono</translation>
-    </message>
-    <message>
-        <source>Search icons (English names and tags)</source>
-        <translation>Buscar iconos (nombres y etiquetas en inglés)</translation>
-    </message>
-    <message>
-        <source>No icon selected</source>
-        <translation>Ningún icono seleccionado</translation>
-    </message>
-</context>
-<context>
     <name>traceview::WorkspaceDock</name>
     <message>
+        <location filename="../lib/core/workspacedock.cpp" line="+178"/>
         <source>New Workspace…</source>
         <translation>Nuevo Espacio de Trabajo…</translation>
     </message>
     <message>
+        <location line="+19"/>
+        <source>Rename…</source>
+        <translation>Renombrar…</translation>
+    </message>
+    <message>
+        <location line="+2"/>
         <source>Change Icon…</source>
         <translation>Cambiar icono…</translation>
     </message>
     <message>
+        <location line="+3"/>
         <source>Delete Workspace</source>
         <translation>Eliminar Espacio de Trabajo</translation>
+    </message>
+</context>
+<context>
+    <name>traceview::WorkspaceSwitcher</name>
+    <message>
+        <location filename="../lib/core/workspaceswitcher.cpp" line="+192"/>
+        <source>New Workspace…</source>
+        <translation>Nuevo Espacio de Trabajo…</translation>
     </message>
 </context>
 </TS>

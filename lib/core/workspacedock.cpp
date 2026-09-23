@@ -194,6 +194,8 @@ void WorkspaceDock::showEntryMenu(const WorkspaceSwitcher::Entry& entry, QWidget
     if (m_managementEnabled && !entry.builtIn) {
         menu->addSeparator();
         const QString id = entry.id;
+        connect(menu->addAction(tr("Rename…")), &QAction::triggered, this,
+                [this, id]() { emitDeferred([this, id]() { emit renameRequested(id); }); });
         connect(menu->addAction(tr("Change Icon…")), &QAction::triggered, this,
                 [this, id]() { emitDeferred([this, id]() { emit iconChangeRequested(id); }); });
         if (deletable) {

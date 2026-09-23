@@ -21,8 +21,12 @@ namespace {
 
 // Base window title the FPS readout (updateFpsTitle()) appends onto once per
 // second -- kept separate so the FPS suffix can be added/refreshed without
-// rebuilding the rest of the title string each tick.
-const QString kBaseWindowTitle = QObject::tr("Debug -- synthetic chart data");
+// rebuilding the rest of the title string each tick. A function, not a
+// file-scope QString: a static initializer runs before main() installs the
+// translator, so it would always stay in English.
+QString baseWindowTitle() {
+    return QObject::tr("Debug -- synthetic chart data");
+}
 
 constexpr quint16 kTempFieldId = 1;
 constexpr quint16 kPressureFieldId = 2;
@@ -205,7 +209,7 @@ DashboardCell* wrapInCell(const QString& itemId, const QString& typeId, const QS
 }  // namespace
 
 DebugChartsWindow::DebugChartsWindow(QWidget* parent) : QDialog(parent) {
-    setWindowTitle(kBaseWindowTitle);
+    setWindowTitle(baseWindowTitle());
     setAttribute(Qt::WA_DeleteOnClose);
     resize(980, 640);
 
@@ -327,7 +331,7 @@ void DebugChartsWindow::updateFpsTitle() {
     const quint64 frameCount = paintFrameCounter().loadRelaxed();
     const quint64 fps = frameCount - m_lastFrameCount;
     m_lastFrameCount = frameCount;
-    setWindowTitle(kBaseWindowTitle + tr(" -- %1 fps").arg(fps));
+    setWindowTitle(baseWindowTitle() + tr(" -- %1 fps").arg(fps));
 }
 
 void DebugChartsWindow::tick() {

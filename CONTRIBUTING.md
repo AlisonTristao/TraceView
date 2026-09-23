@@ -300,7 +300,9 @@ Release flow:
    release-blocking bugs on this branch.
 2. Run `python scripts/check_style.py` and `python scripts/smoke_test.py`
    (see "Project scripts" below), plus `ctest` in the build directory (see
-   "Tests" below), and fix whatever they flag.
+   "Tests" below), and fix whatever they flag. Refresh the translation
+   catalogs and confirm none has unfinished entries (see "Translations"
+   below).
 3. Merge `release/x.y.z` into `main`, then tag the merged release commit:
 
    ```sh
@@ -353,6 +355,52 @@ up tag history, since nothing depends on it today.)
 
 For repository-wide mechanical formatting, record the formatting commit in
 `.git-blame-ignore-revs`. Keep semantic edits out of that commit.
+
+## Translations
+
+TraceView ships eight catalogs under `translations/` (`pt_BR`, `es`, `fr`,
+`de`, `it`, `ru`, `zh_CN`, `ja`). English is the source language. A language
+change applies after a restart (`LanguageManager` persists it; widgets are
+not retranslated live).
+
+Rules for UI text:
+
+- Wrap every user-visible string in `tr()` inside a `Q_OBJECT` class, or in
+  `QCoreApplication::translate("Context", "...")` / `QObject::tr()` elsewhere.
+  A class without `Q_OBJECT` must not call its own `tr()`: at runtime it
+  looks up the base class's context, so the translation never matches
+  (`lupdate` warns "lacks Q_OBJECT macro").
+- Write the source text in English, never in another language.
+- Don't translate at static-initialization time (a file-scope
+  `const QString k... = tr(...)`), and don't touch a singleton that builds
+  display names (`ThemeManager`, `FontManager`, ...) before
+  `LanguageManager::applyCurrentLanguage()` runs in `main.cpp`. Both run
+  before the translator is installed and stay in English.
+- Leave pure formatting out of `tr()` (`"%1%2"`, `"--"`, `"0x0003"`).
+  Protocol identifiers (`HELLO`, `SUBSCRIBE`, `source_id`, ...) stay in
+  English inside translated sentences.
+
+After adding or changing UI text, refresh the catalogs from the repository
+root and translate every new entry in all eight languages:
+
+```sh
+lupdate -no-obsolete -locations relative src lib include -ts translations/*.ts
+```
+
+Use the Qt install's own `lupdate` (for example
+`C:/Qt/6.9.2/mingw_64/bin/lupdate.exe`). Don't use the CMake
+`update_translations` target: it only scans the sources compiled in the
+current configuration, so with BLE off it marks the BLE strings obsolete,
+and `-no-obsolete` would then delete their translations.
+
+A catalog is complete when it has no unfinished entries:
+
+```sh
+grep -c 'type="unfinished"' translations/*.ts   # every count must be 0
+```
+
+Missing entries don't fail the build. The string just shows in English, so
+check this before every release.
 
 ## Project scripts
 

@@ -240,7 +240,7 @@ void drawGrayMatrix(QPainter& painter, int rowCount, int columnCount,
 // comment for why an absolute latency can't be derived here) -- "--" until
 // a second sample gives it a baseline to compare against.
 QString formatInfoStrip(quint8 fragmentCount, bool hasJitter, double jitterMs) {
-    QString text = QObject::tr("%1 pacote(s)").arg(fragmentCount);
+    QString text = QObject::tr("%1 packet(s)").arg(fragmentCount);
     if (hasJitter) {
         text += QObject::tr("   jitter %1%2 ms")
                     .arg(jitterMs >= 0.0 ? QStringLiteral("+") : QString())

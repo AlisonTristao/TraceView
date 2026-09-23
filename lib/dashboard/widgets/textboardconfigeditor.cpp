@@ -18,7 +18,7 @@ TextBoardConfigEditor::TextBoardConfigEditor(QWidget* parent) : WidgetConfigEdit
 
     m_topicIdEdit = new QComboBox(this);
     m_topicIdEdit->setEditable(true);
-    m_topicIdEdit->lineEdit()->setPlaceholderText(tr("0x0003"));
+    m_topicIdEdit->lineEdit()->setPlaceholderText(QStringLiteral("0x0003"));
     m_topicIdEdit->setToolTip(
         tr("UTF8 telemetry topic displayed by this board. Pick a reported text topic or type "
            "its numeric id."));

@@ -7,6 +7,53 @@ release flow.
 
 ## [Unreleased]
 
+## [4.1.4] - 2026-09-22
+
+### Added
+
+- Workspaces can be renamed: a pencil button next to each workspace in
+  the workspace menu, or "Rename…" in the long-press menu of the mobile
+  workspace dock. A name already used by another workspace gets a number
+  added ("Charts 2"). Like changing the icon, it is only available while
+  workspace management is enabled.
+
+### Changed
+
+- The built-in Subscriptions workspace now uses a satellite dish icon
+  instead of the RSS icon, which looked like a Wi-Fi indicator.
+
+## [4.1.3] - 2026-09-22
+
+### Fixed
+
+- Switching the language now translates the whole interface. About 370
+  strings added since the Devices/OTA/Logs screens (BTP Traffic Monitor,
+  Settings, developer users, Text Board, updater, TCP/BLE connection
+  messages, keyboard shortcuts, workspace rename, ...) were missing from
+  every translation catalog and always showed in English. All eight
+  languages are complete again.
+- Theme and font names in the menus now follow the chosen language. They
+  were built before the translator was installed, so they stayed in
+  English.
+- The Text Board packet counter no longer shows Portuguese ("pacote(s)")
+  in the English interface.
+
+## [4.1.2] - 2026-09-22
+
+### Fixed
+
+- Android: checking for updates no longer fails with "TLS initialization
+  failed". The APK now includes Qt's OpenSSL TLS plugin, without which the
+  bundled OpenSSL libraries were never loaded and every HTTPS request
+  failed.
+
+## [4.1.1] - 2026-09-22
+
+### Fixed
+
+- On mobile, the Settings category sidebar is about 15% wider, so the
+  Updates icon is no longer clipped at its edge.
+
 ## [4.1.0] - 2026-09-22
 
 ### Added

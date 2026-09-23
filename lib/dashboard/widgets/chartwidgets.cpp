@@ -1747,11 +1747,12 @@ void DummyGaugeWidget::paintEvent(QPaintEvent*) {
             valueFont.setBold(true);
             painter.setFont(valueFont);
             painter.setPen(palette.textPrimary);
-            // Class member function -- plain tr() works here (unlike the
-            // free-function helpers above it in the anonymous namespace).
-            const QString text =
-                hasValue ? tr("%1%2").arg(value, 0, 'f', m_config.decimals).arg(m_config.unit)
-                         : tr("--");
+            // Nothing translatable here (value + unit, or a dash), and this
+            // class has no Q_OBJECT, so tr() would look up the wrong context.
+            const QString text = hasValue ? QStringLiteral("%1%2")
+                                                .arg(value, 0, 'f', m_config.decimals)
+                                                .arg(m_config.unit)
+                                          : QStringLiteral("--");
             painter.drawText(arcRect, Qt::AlignCenter, text);
         }
     }

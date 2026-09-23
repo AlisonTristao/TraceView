@@ -43,8 +43,10 @@ constexpr int kCategoryCount = 7;
 constexpr int kFullCategoryListWidth = 186;
 // Icon (18px) + the item padding below (10px each side) + a little room so
 // a touch target isn't flush against the icon -- comfortable to tap without
-// needing the label text compact mode hides.
-constexpr int kCompactCategoryListWidth = 56;
+// needing the label text compact mode hides. 56px clipped the "Updates"
+// icon on device (item padding + frame + selection border eat more than
+// the math above suggests), so it carries ~15% extra headroom.
+constexpr int kCompactCategoryListWidth = 64;
 // Same threshold as MainWindow's own kSmallBreakpointMaxViewportWidth
 // (mainwindow.cpp) -- this page has no access to that constant or to
 // DashboardGrid's breakpoint machinery (it's a standalone widget, not part

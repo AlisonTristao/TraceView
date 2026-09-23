@@ -22,10 +22,10 @@ namespace traceview {
 //
 // Tap switches workspace. Long-press (right-click on desktop) opens a small
 // menu headed by the workspace's name -- the only place an icon-only bar
-// can show it -- plus Change Icon.../Delete while management is enabled,
+// can show it -- plus Rename.../Change Icon.../Delete while management is enabled,
 // and a trailing "+" button creates a workspace. Dumb like
 // WorkspaceSwitcher: MainWindow feeds it entries and handles its signals
-// (the same ones, plus iconChangeRequested).
+// (the same ones).
 class WorkspaceDock : public QWidget {
     Q_OBJECT
 
@@ -44,6 +44,7 @@ signals:
     void workspaceSelected(const QString& id);
     void workspaceDeleteRequested(const QString& id);
     void iconChangeRequested(const QString& id);
+    void renameRequested(const QString& id);
     void newWorkspaceRequested();
 
 private:

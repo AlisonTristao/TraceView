@@ -48,9 +48,12 @@ int main(int argc, char* argv[]) {
     // creates logs through an already-open file.
     traceview::AppLog::install();
 
+    // Language first: ThemeManager/FontManager build their display names
+    // (QCoreApplication::translate) in their constructors, so the translator
+    // has to be installed before those singletons are first touched.
+    traceview::LanguageManager::instance().applyCurrentLanguage();
     traceview::ThemeManager::instance().applyCurrentTheme();
     traceview::FontManager::instance().applyCurrentFont();
-    traceview::LanguageManager::instance().applyCurrentLanguage();
 
     traceview::MainWindow window;
     window.show();

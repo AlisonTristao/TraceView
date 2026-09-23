@@ -114,7 +114,7 @@ constexpr const char* kSubscriptionsWorkspaceId = "builtin:subscriptions";
 // what a workspace shows until the user picks its own icon, and the fixed
 // one of the built-in Subscriptions entry.
 constexpr const char* kDefaultWorkspaceIconId = "lucide:layout-dashboard";
-constexpr const char* kSubscriptionsWorkspaceIconId = "lucide:rss";
+constexpr const char* kSubscriptionsWorkspaceIconId = "lucide:satellite-dish";
 
 // The stored pick when this build knows it, else the default -- an empty
 // (never picked) or unknown (newer project, renamed upstream) id alike.
@@ -1636,6 +1636,8 @@ void MainWindow::buildWorkspaceSwitcher() {
             &MainWindow::onNewWorkspaceRequested);
     connect(m_workspaceSwitcher, &WorkspaceSwitcher::iconChangeRequested, this,
             &MainWindow::pickWorkspaceIcon);
+    connect(m_workspaceSwitcher, &WorkspaceSwitcher::renameRequested, this,
+            &MainWindow::renameWorkspace);
     m_workspaceSwitcher->updateIcons(ThemeManager::instance().currentTheme().textPrimary);
     m_statusRow->layout()->addWidget(m_workspaceSwitcher);
 
@@ -1650,6 +1652,8 @@ void MainWindow::buildWorkspaceSwitcher() {
             &MainWindow::onNewWorkspaceRequested);
     connect(m_workspaceDock, &WorkspaceDock::iconChangeRequested, this,
             &MainWindow::pickWorkspaceIcon);
+    connect(m_workspaceDock, &WorkspaceDock::renameRequested, this,
+            &MainWindow::renameWorkspace);
     const ThemePalette& palette = ThemeManager::instance().currentTheme();
     m_workspaceDock->updateIcons(palette.textPrimary, palette.background);
     m_workspaceDock->setVisible(compactChromeActive());
@@ -1684,6 +1688,24 @@ bool MainWindow::pickWorkspaceIcon(const QString& id) {
     workspaces.setIconFor(id, dialog.selectedId());
     refreshWorkspaceSwitcher();
     return true;
+}
+
+void MainWindow::renameWorkspace(const QString& id) {
+    WorkspaceManager& workspaces = WorkspaceManager::instance();
+    const QString oldName = workspaces.nameFor(id);
+    if (oldName.isEmpty()) {
+        return;  // built-in (Subscriptions) or already deleted
+    }
+    bool ok = false;
+    const QString name = DialogPresenter::getText(this, tr("Rename Workspace"), tr("Name:"),
+                                                  QLineEdit::Normal, oldName, &ok);
+    if (!ok || name.trimmed().isEmpty() || name.trimmed() == oldName) {
+        return;
+    }
+    const QString stored = workspaces.renameWorkspace(id, name);
+    refreshWorkspaceSwitcher();
+    postStatus(tr("Renamed workspace \"%1\" to \"%2\".").arg(oldName, stored), 3000,
+               StatusSeverity::Success);
 }
 
 void MainWindow::switchToWorkspace(const QString& id) {

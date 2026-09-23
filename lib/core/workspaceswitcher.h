@@ -61,6 +61,9 @@ signals:
     // A row's icon was clicked while management is enabled (never for a
     // built-in entry) -- MainWindow opens IconPickerDialog.
     void iconChangeRequested(const QString& id);
+    // A row's pencil was clicked (same gating as iconChangeRequested) --
+    // MainWindow prompts for the new name.
+    void renameRequested(const QString& id);
     void newWorkspaceRequested();
 
 private:

@@ -54,15 +54,24 @@ void WorkspaceManager::setIconFor(const QString& id, const QString& icon) {
     }
 }
 
-QString WorkspaceManager::disambiguate(const QString& name) const {
-    bool collides = false;
-    for (const Workspace& workspace : m_workspaces) {
-        if (workspace.name == name) {
-            collides = true;
-            break;
-        }
+QString WorkspaceManager::renameWorkspace(const QString& id, const QString& name) {
+    const int index = indexOf(id);
+    const QString trimmed = name.trimmed();
+    if (index < 0 || trimmed.isEmpty()) {
+        return QString();
     }
-    if (!collides) {
+    m_workspaces[index].name = disambiguate(trimmed, id);
+    return m_workspaces[index].name;
+}
+
+QString WorkspaceManager::disambiguate(const QString& name, const QString& ignoreId) const {
+    const auto taken = [this, &ignoreId](const QString& candidate) {
+        return std::any_of(m_workspaces.cbegin(), m_workspaces.cend(),
+                           [&](const Workspace& workspace) {
+                               return workspace.id != ignoreId && workspace.name == candidate;
+                           });
+    };
+    if (!taken(name)) {
         return name;
     }
 
@@ -70,9 +79,7 @@ QString WorkspaceManager::disambiguate(const QString& name) const {
     QString candidate;
     do {
         candidate = QStringLiteral("%1 %2").arg(name).arg(suffix++);
-    } while (std::any_of(
-        m_workspaces.cbegin(), m_workspaces.cend(),
-        [&candidate](const Workspace& workspace) { return workspace.name == candidate; }));
+    } while (taken(candidate));
     return candidate;
 }
 
