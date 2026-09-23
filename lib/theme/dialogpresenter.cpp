@@ -22,6 +22,7 @@
 #include <QWheelEvent>
 #include <utility>
 
+#include "traceview/fontmanager.h"
 #include "traceview/thememanager.h"
 
 namespace traceview {
@@ -88,9 +89,7 @@ public:
             m_backButton->setText(QString(QChar(0x2190)));  // leftwards arrow
             m_backButton->setToolTip(QCoreApplication::translate("DialogPresenter", "Back"));
             m_backButton->setAutoRaise(true);
-            QFont arrowFont = m_backButton->font();
-            arrowFont.setPointSizeF(arrowFont.pointSizeF() * 1.4);
-            m_backButton->setFont(arrowFont);
+            m_backButton->setFont(scaledFont(m_backButton->font(), 1.4));
             connect(m_backButton, &QToolButton::clicked, dialog, &QDialog::reject);
         }
 

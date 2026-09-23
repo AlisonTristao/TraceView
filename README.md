@@ -125,3 +125,6 @@ in `CMakeLists.txt`.
 ## License
 
 [MIT](LICENSE)
+
+Workspace icons come from [Lucide](https://lucide.dev), ISC-licensed — see
+[resources/icons/lucide/LICENSE](resources/icons/lucide/LICENSE).

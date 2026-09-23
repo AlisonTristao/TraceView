@@ -55,7 +55,7 @@
         "list": [
             {
                 "dashboard": {
-                    "breakpoint": "large",
+                    "breakpoint": "small",
                     "canvasHeightMultiplier": {
                         "medium": 0,
                         "small": 3.2000000000000006
@@ -460,29 +460,31 @@
             },
             {
                 "dashboard": {
+                    "breakpoint": "small",
+                    "canvasHeightMultiplier": {
+                        "medium": 0,
+                        "small": 0
+                    },
                     "items": [
-                        {
-                            "config": {
-                                "deviceId": "ec1f2d5f-546e-4aee-8c08-9b3c6e9d47bf",
-                                "sampleTimeMs": 1000,
-                                "sourceId": "0x9F442484",
-                                "text": "",
-                                "topicId": "0x0003"
-                            },
-                            "groupId": "",
-                            "height": 1,
-                            "id": "b7701a3d-41c8-41f5-9819-f18ae973483a",
-                            "key": "",
-                            "name": "",
-                            "type": "text_board",
-                            "width": 0.3833333333333333,
-                            "x": 0,
-                            "y": 0
-                        }
                     ]
                 },
-                "id": "80588e15-470a-4a28-b0a0-8701b5372b9c",
-                "name": "monitor_stats"
+                "icon": "lucide:activity",
+                "id": "ee1cb9c4-1bcf-4f5e-9b0e-ff190d211fd3",
+                "name": "MonitorStats"
+            },
+            {
+                "dashboard": {
+                    "breakpoint": "small",
+                    "canvasHeightMultiplier": {
+                        "medium": 0,
+                        "small": 0
+                    },
+                    "items": [
+                    ]
+                },
+                "icon": "lucide:globe-code",
+                "id": "3f86150e-d659-45c3-b086-2116b4c73f14",
+                "name": "NxyNet"
             }
         ]
     }

@@ -174,6 +174,14 @@ it fully. Persisted per breakpoint alongside its layout
 (`canvasHeightMultiplier` in the project file, see "Project file" below),
 since it's part of how that breakpoint's arrangement was built.
 
+A Developer's pick is sticky: switching, creating or deleting a workspace
+keeps whichever breakpoint is on screen (`DashboardLoadBreakpoint::
+KeepCurrent` in `MainWindow::loadDashboardJson()`), so moving between
+workspaces never flips Small/Medium/Large on its own. Only another click on
+the screen-size button, or leaving Developer mode, changes it. Opening or
+creating a project (`DeviceDefault`) always starts on the breakpoint this
+device's own screen calls for, in either mode.
+
 **User mode** never shows either button and never gets a device frame at
 any breakpoint — the real screen already *is* whatever size it is, so there
 is no smaller device left to simulate. The breakpoint instead follows the
@@ -405,7 +413,7 @@ independent top-level sections:
     "activeId": "5d8f...",
     "list": [
       {
-        "id": "5d8f...", "name": "Default",
+        "id": "5d8f...", "name": "Default", "icon": "lucide:gauge",
         "dashboard": {
           "items": [
             {
@@ -445,12 +453,23 @@ saved before workspaces existed (no `workspaces` section, only a bare
 top-level `dashboard`) migrates that single layout into one `"Default"`
 workspace.
 
+`icon` is optional: an [IconLibrary](../lib/theme/iconlibrary.h) id
+(`"lucide:<name>"`, from the vendored [Lucide](https://lucide.dev) set —
+refresh it with `tools/import_lucide.py`) that the user picked for the
+workspace with `IconPickerDialog`. It is left out until one is picked, and an
+id this build doesn't know falls back to the default glyph. On mobile
+(compact chrome: Android, or a Developer-mode Phone/Tablet preview) the
+status bar is replaced by `WorkspaceDock`
+([lib/core/workspacedock.h](../lib/core/workspacedock.h)): one icon button
+per workspace, spaced evenly and centered. Tap switches workspace;
+long-press (or right-click) opens Change icon/Delete for a Developer.
+
 Each item's `layouts` object holds its `small`/`medium`/`large` geometry
 (see "Screen-size breakpoints" above); `dashboard.breakpoint` remembers
-which one a developer last had selected while editing that workspace,
-restored on load (User mode re-asserts its own auto-detected breakpoint on
-top right after, regardless of what's stored — see
-`MainWindow::loadDashboardJson()`). `dashboard.canvasHeightMultiplier` holds
+which one a developer last had selected while editing that workspace. It
+is still written but no longer applied on load — the active breakpoint
+comes from the device (project open) or carries over (workspace switch)
+instead; see `MainWindow::loadDashboardJson()`. `dashboard.canvasHeightMultiplier` holds
 Small/Medium's own canvas-growth state (see `DashboardGrid::
 growCanvasHeight()` above); `0.0` (the default) means "off, canvas matches
 the window" — Large has no entry since it never grows. A project saved

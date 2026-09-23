@@ -225,6 +225,10 @@
         <source>(unnamed)</source>
         <translation>(名前なし)</translation>
     </message>
+    <message>
+        <source>Change icon</source>
+        <translation>アイコンを変更</translation>
+    </message>
 </context>
 <context>
     <name>ThemeManager</name>
@@ -1606,8 +1610,8 @@
     </message>
     <message>
         <location filename="../lib/core/mainwindow.cpp" line="1306" />
-        <source>No devices configured — add one in the Devices tab.</source>
-        <translation>デバイスが設定されていません — 「デバイス」タブで追加してください。</translation>
+        <source>No devices configured</source>
+        <translation>デバイスが設定されていません</translation>
     </message>
     <message>
         <location filename="../lib/core/mainwindow.cpp" line="1314" />
@@ -2171,6 +2175,36 @@
         <location filename="../lib/core/workspaceswitcher.cpp" line="164" />
         <source>New Workspace…</source>
         <translation>新しいワークスペース…</translation>
+    </message>
+</context>
+<context>
+    <name>traceview::IconPickerDialog</name>
+    <message>
+        <source>Choose Icon</source>
+        <translation>アイコンを選択</translation>
+    </message>
+    <message>
+        <source>Search icons (English names and tags)</source>
+        <translation>アイコンを検索（英語の名前とタグ）</translation>
+    </message>
+    <message>
+        <source>No icon selected</source>
+        <translation>アイコンが選択されていません</translation>
+    </message>
+</context>
+<context>
+    <name>traceview::WorkspaceDock</name>
+    <message>
+        <source>New Workspace…</source>
+        <translation>新しいワークスペース…</translation>
+    </message>
+    <message>
+        <source>Change Icon…</source>
+        <translation>アイコンを変更…</translation>
+    </message>
+    <message>
+        <source>Delete Workspace</source>
+        <translation>ワークスペースを削除</translation>
     </message>
 </context>
 </TS>

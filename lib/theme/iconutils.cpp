@@ -18,17 +18,16 @@ namespace {
 // (or lightly upscale, up to 4x display scaling) without visible softening.
 constexpr qreal kSupersample = 4.0;
 
-// Renders `svgResourcePath` into a `size`x`size` (device-independent pixels)
+// Renders `renderer`'s SVG into a `size`x`size` (device-independent pixels)
 // transparent pixmap at kSupersample native resolution, then replaces every
 // opaque pixel with `color` via SourceIn -- the SVG's own colors never reach
 // the screen, only its alpha shape (anti-aliased edges included) does.
-QPixmap tintedPixmap(const QString& svgResourcePath, const QColor& color, int size) {
+QPixmap tintedPixmap(QSvgRenderer& renderer, const QColor& color, int size) {
     const int physicalSize = qRound(size * kSupersample);
     QPixmap pixmap(physicalSize, physicalSize);
     pixmap.fill(Qt::transparent);
     pixmap.setDevicePixelRatio(kSupersample);
 
-    QSvgRenderer renderer(svgResourcePath);
     QPainter painter(&pixmap);
     painter.setRenderHint(QPainter::Antialiasing);
     renderer.render(&painter, QRectF(0, 0, size, size));
@@ -39,7 +38,17 @@ QPixmap tintedPixmap(const QString& svgResourcePath, const QColor& color, int si
     return pixmap;
 }
 
+QPixmap tintedPixmap(const QString& svgResourcePath, const QColor& color, int size) {
+    QSvgRenderer renderer(svgResourcePath);
+    return tintedPixmap(renderer, color, size);
+}
+
 }  // namespace
+
+QPixmap renderTintedSvg(const QByteArray& svgData, const QColor& color, int size) {
+    QSvgRenderer renderer(svgData);
+    return tintedPixmap(renderer, color, size);
+}
 
 QIcon loadTintedIcon(const QString& svgResourcePath, const QColor& color, int size) {
     return QIcon(tintedPixmap(svgResourcePath, color, size));

@@ -88,4 +88,13 @@ int FontManager::indexOf(const QString& id) const {
     return -1;
 }
 
+QFont scaledFont(QFont font, qreal factor) {
+    if (font.pointSizeF() > 0) {
+        font.setPointSizeF(font.pointSizeF() * factor);
+    } else if (font.pixelSize() > 0) {
+        font.setPixelSize(qRound(font.pixelSize() * factor));
+    }
+    return font;
+}
+
 }  // namespace traceview

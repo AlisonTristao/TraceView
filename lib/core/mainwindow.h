@@ -58,6 +58,8 @@ class SerialWidgetBridge;
 class SettingsPage;
 class UpdateChecker;
 class UpdateDownloader;
+class WorkspaceDock;
+class BrandCornerMark;
 class WorkspaceSwitcher;
 
 class MainWindow : public QMainWindow {
@@ -129,13 +131,31 @@ private:
     // border back and forth across a threshold doesn't thrash setBreakpoint()
     // (and the relayout() it triggers) once every pixel.
     void applyAutoBreakpoint();
-    // Re-applies whichever screen-size breakpoint a just-loaded dashboard's
-    // own JSON carries (see DashboardGrid::fromJson()), then -- since that
-    // persisted breakpoint reflects whoever last edited it in Developer
-    // mode, not this screen -- re-asserts the auto-detected one on top if
-    // currently in User mode. Every MainWindow call site that used to call
-    // m_dashboardGrid->fromJson() directly goes through this instead.
-    void loadDashboardJson(const QJsonObject& json);
+    // The detection itself, minus the User-mode gate and without applying
+    // anything: picks Small/Medium/Large from the viewport's width with a
+    // +/-hysteresisPx dead band around each threshold measured against
+    // `current` (0 = plain lookup). Returns `current` while the viewport has
+    // no width yet. applyAutoBreakpoint() passes the resize dead band;
+    // loadDashboardJson() passes 0 when a project is opened, so it starts on
+    // this device's own breakpoint in either mode.
+    DashboardBreakpoint detectBreakpoint(DashboardBreakpoint current, int hysteresisPx) const;
+    // Which breakpoint loadDashboardJson() leaves active -- never the one
+    // persisted in the dashboard's own JSON (that reflects whoever last
+    // edited it, not this screen or the developer's current pick).
+    enum class DashboardLoadBreakpoint {
+        // Workspace switch/create/delete: keep whatever was already showing,
+        // so a Developer-mode manual pick doesn't flip per workspace.
+        KeepCurrent,
+        // Project open/new: the breakpoint this device's screen calls for.
+        DeviceDefault,
+    };
+    // Loads a dashboard's JSON into m_dashboardGrid with `policy`'s
+    // breakpoint (auto-detected instead in User mode) already in place, so
+    // the stored one never shows even briefly.
+    // Every MainWindow call site that used to call m_dashboardGrid->fromJson()
+    // directly goes through this instead.
+    void loadDashboardJson(const QJsonObject& json,
+                           DashboardLoadBreakpoint policy = DashboardLoadBreakpoint::KeepCurrent);
     // DashboardGrid::breakpointChanged handler -- keeps m_screenSizeButton's
     // icon/tooltip and its menu's checked entry in sync with whichever
     // breakpoint is actually active, however it got there (the button's own
@@ -203,6 +223,9 @@ private:
     // m_optionsButton back in m_chromeTopBar first so it isn't deleted along
     // with the page it's currently hosted in (see updateChromeVisibility()).
     void removeRibbonTab(int index);
+    // Puts m_screenSizeButton back in m_statusRow after compact chrome (or a
+    // closing ribbon page) had it elsewhere -- see updateChromeVisibility().
+    void restoreScreenSizeButtonToStatusRow();
     Ribbon* buildRibbon();
     void buildPropertiesPanel();
     void buildLayersPanel();
@@ -223,10 +246,15 @@ private:
     void onWorkspaceSelected(const QString& id);
     void onWorkspaceDeleteRequested(const QString& id);
     void onNewWorkspaceRequested();
+    // Opens IconPickerDialog for `id` and stores the pick in WorkspaceManager.
+    // Returns false when the user cancelled.
+    bool pickWorkspaceIcon(const QString& id);
     // Re-applies m_dockController's geometry to every docked panel. Called
     // whenever m_contentRow resizes (see eventFilter) since the panels are
     // positioned directly rather than managed by a layout.
     void positionOverlayPanels();
+    // Keeps m_brandCornerMark flush with m_appShell's top-right corner.
+    void positionBrandCornerMark();
     void updateRibbonIcons();
 
     void onRibbonTabChanged(int index);
@@ -600,6 +628,14 @@ private:
     bool m_floatingPanelsPositioned = false;
     Ribbon* m_ribbon = nullptr;
     WorkspaceSwitcher* m_workspaceSwitcher = nullptr;
+    // Takes m_statusRow's place in compact chrome (see
+    // updateChromeVisibility()): the bottom bar becomes icon-only workspace
+    // navigation. Fed the same entries as m_workspaceSwitcher by
+    // refreshWorkspaceSwitcher().
+    WorkspaceDock* m_workspaceDock = nullptr;
+    // User-mode-only wordmark overlaid on m_appShell's top-right corner --
+    // see brandcornermark.h; shown/hidden by updateChromeVisibility().
+    BrandCornerMark* m_brandCornerMark = nullptr;
     QAction* m_addWidgetAction = nullptr;
     QAction* m_addDeviceAction = nullptr;
     QAction* m_removeDeviceAction = nullptr;
@@ -629,6 +665,9 @@ private:
     // differs enough between User/Developer that toggling individual action
     // visibility isn't simpler than just clearing and re-adding).
     QMenu* m_accessMenu = nullptr;
+    // Developer-only: hidden (and its shortcuts disabled) by applyUserMode()
+    // whenever developerUiActive() is false, "View as user" included.
+    QMenu* m_fileMenu = nullptr;
     // Visual preview only: preserves the developer session and manual breakpoint.
     bool m_previewAsUser = false;
     // WA_DeleteOnClose'd (see debugchartswindow.cpp) -- QPointer so this
@@ -739,7 +778,7 @@ private:
     // it lives inside m_appShell/m_devicePreviewFrame like everything else
     // the preview needs to frame, which a real QStatusBar (owned by
     // QMainWindow itself, outside centralWidget()) could not. Normal widgets
-    // (m_fullscreenButton, the notification-history button) on the left, a
+    // (m_fullscreenButton) on the left, a
     // stretch (m_statusMessageLabel doubles as it), permanent widgets
     // (m_workspaceSwitcher, m_screenSizeButton) on the right -- same
     // visual order the old statusBar()->addWidget()/addPermanentWidget() call

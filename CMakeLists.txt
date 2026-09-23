@@ -163,6 +163,10 @@ qt_add_executable(TraceView
     src/main.cpp
     resources/icons/app.qrc
     resources/icons/ui.qrc
+    # Lucide (ISC), the user-pickable icon set -- see lib/theme/iconlibrary.h.
+    resources/icons/lucide/lucide.qrc
+    # Wordmark shown in User mode -- see lib/core/brandcornermark.h.
+    resources/branding/branding.qrc
 )
 
 qt_add_translations(TraceView

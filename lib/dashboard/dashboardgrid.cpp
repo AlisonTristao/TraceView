@@ -749,10 +749,10 @@ QJsonObject DashboardGrid::toJson() const {
     }
     object["items"] = items;
     // The last breakpoint a developer had selected while editing this
-    // workspace -- restored on load so reopening a project resumes where
-    // they left off. User mode re-asserts its own auto-detected breakpoint
-    // on top right after load regardless (see MainWindow::
-    // loadDashboardJson()); this value only matters to Developer mode.
+    // workspace. fromJson() still applies it, but MainWindow::
+    // loadDashboardJson() always overrides it right after (the device's own
+    // breakpoint on project open, the current one on a workspace switch),
+    // so it's informational only.
     object["breakpoint"] = breakpointToString(m_breakpoint);
     // How much growCanvasHeight() has grown Small/Medium's canvas past the
     // viewport, if at all -- part of how that breakpoint's arrangement was

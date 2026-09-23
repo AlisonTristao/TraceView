@@ -51,4 +51,10 @@ private:
     QFont m_baseFont;
 };
 
+// Returns `font` scaled by `factor`, in whichever unit it was specified.
+// Android's platform font is pixel-sized, so pointSize() there is -1 and the
+// usual `setPointSize(pointSize() + n)` shrinks text to a few points instead
+// of growing it -- always scale fonts through this.
+QFont scaledFont(QFont font, qreal factor);
+
 }  // namespace traceview

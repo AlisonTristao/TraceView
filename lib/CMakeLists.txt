@@ -26,6 +26,8 @@ add_library(traceview_theme STATIC
     theme/dialogpresenter.h
     theme/iconutils.cpp
     theme/iconutils.h
+    theme/iconlibrary.cpp
+    theme/iconlibrary.h
 )
 
 target_include_directories(traceview_theme PUBLIC
@@ -714,6 +716,12 @@ add_library(traceview_ui STATIC
     core/usermodemanager.h
     core/workspaceswitcher.cpp
     core/workspaceswitcher.h
+    core/workspacedock.cpp
+    core/workspacedock.h
+    core/iconpickerdialog.cpp
+    core/iconpickerdialog.h
+    core/brandcornermark.cpp
+    core/brandcornermark.h
     vendor/qrcodegen/qrcodegen.cpp
     vendor/qrcodegen/qrcodegen.hpp
 )

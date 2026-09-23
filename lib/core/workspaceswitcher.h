@@ -31,6 +31,9 @@ public:
         QString id;
         QString name;
         bool builtIn = false;
+        // IconLibrary id, already resolved by MainWindow (a workspace with
+        // no pick gets the default) -- shown on the button and each row.
+        QString icon;
     };
 
     explicit WorkspaceSwitcher(QWidget* parent = nullptr);
@@ -55,10 +58,14 @@ public:
 signals:
     void workspaceSelected(const QString& id);
     void workspaceDeleteRequested(const QString& id);
+    // A row's icon was clicked while management is enabled (never for a
+    // built-in entry) -- MainWindow opens IconPickerDialog.
+    void iconChangeRequested(const QString& id);
     void newWorkspaceRequested();
 
 private:
     void rebuildMenu();
+    void updateButtonIcon();
 
     QToolButton* m_button;
     QMenu* m_menu;

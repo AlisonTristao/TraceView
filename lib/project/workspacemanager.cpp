@@ -42,6 +42,18 @@ QString WorkspaceManager::nameFor(const QString& id) const {
     return index >= 0 ? m_workspaces[index].name : QString();
 }
 
+QString WorkspaceManager::iconFor(const QString& id) const {
+    const int index = indexOf(id);
+    return index >= 0 ? m_workspaces[index].icon : QString();
+}
+
+void WorkspaceManager::setIconFor(const QString& id, const QString& icon) {
+    const int index = indexOf(id);
+    if (index >= 0) {
+        m_workspaces[index].icon = icon;
+    }
+}
+
 QString WorkspaceManager::disambiguate(const QString& name) const {
     bool collides = false;
     for (const Workspace& workspace : m_workspaces) {
@@ -106,6 +118,11 @@ QJsonObject WorkspaceManager::toJson() const {
         QJsonObject entry;
         entry["id"] = workspace.id;
         entry["name"] = workspace.name;
+        // Omitted rather than written empty: a project that never picked an
+        // icon stays byte-identical to what older builds saved.
+        if (!workspace.icon.isEmpty()) {
+            entry["icon"] = workspace.icon;
+        }
         entry["dashboard"] = workspace.dashboard;
         list.append(entry);
     }
@@ -133,6 +150,7 @@ void WorkspaceManager::fromJson(const QJsonObject& object) {
         Workspace workspace;
         workspace.id = id;
         workspace.name = entryObject.value("name").toString();
+        workspace.icon = entryObject.value("icon").toString();
         workspace.dashboard = entryObject.value("dashboard").toObject();
         workspaces.append(workspace);
     }

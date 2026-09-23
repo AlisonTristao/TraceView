@@ -13,6 +13,7 @@
 
 #include "ribbon.h"
 #include "ribbonicons.h"
+#include "theme/iconlibrary.h"
 
 namespace traceview {
 
@@ -49,13 +50,28 @@ QIcon padIconRight(const QIcon& icon, int size, int pad) {
 // QObject already, so its own clicked() still connects normally).
 class WorkspaceRow : public QWidget {
 public:
-    WorkspaceRow(const QString& name, bool active, bool deletable, QWidget* parent)
+    WorkspaceRow(const QString& name, bool active, bool deletable, bool iconEditable,
+                 QWidget* parent)
         : QWidget(parent) {
         setCursor(Qt::PointingHandCursor);
 
         auto* layout = new QHBoxLayout(this);
         layout->setContentsMargins(kRibbonGroupPadding, 4, kRibbonGroupPadding, 4);
         layout->setSpacing(kRibbonGroupPadding);
+
+        // The workspace's own icon; clicking it re-picks the icon when
+        // editable. Otherwise it's purely decorative and lets the click
+        // through to the row (select), like the name label does.
+        m_iconButton = new QToolButton(this);
+        m_iconButton->setAutoRaise(true);
+        m_iconButton->setFixedSize(24, 24);
+        m_iconButton->setIconSize(QSize(kRibbonIconSize, kRibbonIconSize));
+        if (iconEditable) {
+            m_iconButton->setToolTip(QObject::tr("Change icon"));
+        } else {
+            m_iconButton->setAttribute(Qt::WA_TransparentForMouseEvents);
+        }
+        layout->addWidget(m_iconButton);
 
         auto* label = new QLabel(name, this);
         QFont font = label->font();
@@ -70,6 +86,10 @@ public:
         m_trashButton->setVisible(deletable);
         m_trashButton->setToolTip(QObject::tr("Delete workspace"));
         layout->addWidget(m_trashButton);
+    }
+
+    QToolButton* iconButton() const {
+        return m_iconButton;
     }
 
     QToolButton* trashButton() const {
@@ -88,6 +108,7 @@ protected:
     }
 
 private:
+    QToolButton* m_iconButton = nullptr;
     QToolButton* m_trashButton = nullptr;
 };
 
@@ -135,6 +156,7 @@ void WorkspaceSwitcher::setWorkspaces(const QVector<Entry>& entries, const QStri
     m_button->setText(activeName);
     m_button->setToolTip(activeName);
 
+    updateButtonIcon();
     rebuildMenu();
 }
 
@@ -158,8 +180,11 @@ void WorkspaceSwitcher::rebuildMenu() {
     const bool deletable = m_managementEnabled && editableCount > 1;
     for (const Entry& entry : m_entries) {
         const QString id = entry.id;
+        const bool iconEditable = m_managementEnabled && !entry.builtIn;
         auto* row = new WorkspaceRow(entry.name, id == m_activeId,
-                                     deletable && !entry.builtIn, m_menu);
+                                     deletable && !entry.builtIn, iconEditable, m_menu);
+        row->iconButton()->setIcon(
+            IconLibrary::instance().icon(entry.icon, m_iconColor, kRibbonIconSize));
         row->trashButton()->setIcon(makeTrashIcon(m_iconColor, kTrashIconSize));
         // Deferred to the next event-loop turn (rather than emitted straight
         // from here): both handlers below end up back in rebuildMenu() via
@@ -182,6 +207,17 @@ void WorkspaceSwitcher::rebuildMenu() {
                 },
                 Qt::QueuedConnection);
         };
+        if (iconEditable) {
+            connect(row->iconButton(), &QToolButton::clicked, this, [this, id]() {
+                QMetaObject::invokeMethod(
+                    this,
+                    [this, id]() {
+                        m_menu->close();
+                        emit iconChangeRequested(id);
+                    },
+                    Qt::QueuedConnection);
+            });
+        }
         connect(row->trashButton(), &QToolButton::clicked, this, [this, id]() {
             QMetaObject::invokeMethod(
                 this,
@@ -207,8 +243,24 @@ void WorkspaceSwitcher::rebuildMenu() {
 
 void WorkspaceSwitcher::updateIcons(const QColor& color) {
     m_iconColor = color;
-    m_button->setIcon(padIconRight(makeWorkspaceIcon(color), kRibbonIconSize, kIconTextGap));
+    updateButtonIcon();
     rebuildMenu();
+}
+
+void WorkspaceSwitcher::updateButtonIcon() {
+    // The active workspace's picked icon; the generic workspace glyph only
+    // while nothing resolves (entries not fed yet, or an unknown id).
+    QIcon icon;
+    for (const Entry& entry : m_entries) {
+        if (entry.id == m_activeId) {
+            icon = IconLibrary::instance().icon(entry.icon, m_iconColor, kRibbonIconSize);
+            break;
+        }
+    }
+    if (icon.isNull()) {
+        icon = makeWorkspaceIcon(m_iconColor);
+    }
+    m_button->setIcon(padIconRight(icon, kRibbonIconSize, kIconTextGap));
 }
 
 }  // namespace traceview

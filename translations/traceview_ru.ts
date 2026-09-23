@@ -225,6 +225,10 @@
         <source>(unnamed)</source>
         <translation>(без имени)</translation>
     </message>
+    <message>
+        <source>Change icon</source>
+        <translation>Изменить значок</translation>
+    </message>
 </context>
 <context>
     <name>ThemeManager</name>
@@ -1608,8 +1612,8 @@
     </message>
     <message>
         <location filename="../lib/core/mainwindow.cpp" line="1306" />
-        <source>No devices configured — add one in the Devices tab.</source>
-        <translation>Устройства не настроены — добавьте одно на вкладке «Устройства».</translation>
+        <source>No devices configured</source>
+        <translation>Устройства не настроены</translation>
     </message>
     <message>
         <location filename="../lib/core/mainwindow.cpp" line="1314" />
@@ -2173,6 +2177,36 @@
         <location filename="../lib/core/workspaceswitcher.cpp" line="164" />
         <source>New Workspace…</source>
         <translation>Новое рабочее пространство…</translation>
+    </message>
+</context>
+<context>
+    <name>traceview::IconPickerDialog</name>
+    <message>
+        <source>Choose Icon</source>
+        <translation>Выбрать значок</translation>
+    </message>
+    <message>
+        <source>Search icons (English names and tags)</source>
+        <translation>Поиск значков (английские названия и теги)</translation>
+    </message>
+    <message>
+        <source>No icon selected</source>
+        <translation>Значок не выбран</translation>
+    </message>
+</context>
+<context>
+    <name>traceview::WorkspaceDock</name>
+    <message>
+        <source>New Workspace…</source>
+        <translation>Новое рабочее пространство…</translation>
+    </message>
+    <message>
+        <source>Change Icon…</source>
+        <translation>Изменить значок…</translation>
+    </message>
+    <message>
+        <source>Delete Workspace</source>
+        <translation>Удалить рабочее пространство</translation>
     </message>
 </context>
 </TS>

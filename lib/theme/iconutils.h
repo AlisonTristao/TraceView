@@ -1,10 +1,12 @@
 #pragma once
 
+#include <QByteArray>
 #include <QColor>
 #include <QIcon>
 #include <QString>
 
 class QPainter;
+class QPixmap;
 class QRect;
 
 namespace traceview {
@@ -22,5 +24,10 @@ QIcon loadTintedIcon(const QString& svgResourcePath, const QColor& color, int si
 // than handed to a QAbstractButton/QAction as an icon.
 void drawTintedIcon(QPainter& painter, const QRect& rect, const QString& svgResourcePath,
                      const QColor& color);
+
+// Same tinting again, from in-memory SVG markup instead of a resource path --
+// for IconLibrary's user-pickable glyphs, which all live in one JSON blob
+// rather than as individual resource files.
+QPixmap renderTintedSvg(const QByteArray& svgData, const QColor& color, int size);
 
 }  // namespace traceview

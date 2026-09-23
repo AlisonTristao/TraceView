@@ -221,10 +221,12 @@ QToolButton:disabled {
    Tablet preview needs to frame, which the native bar (owned by QMainWindow
    itself, outside centralWidget()) could not. Same rule kept for QStatusBar
    too in case anything ever calls statusBar() again -- costs nothing and
-   keeps that widget from looking undressed if it does.
+   keeps that widget from looking undressed if it does. QWidget#workspaceDock
+   (MainWindow's m_workspaceDock) takes m_statusRow's place in compact
+   chrome, so it wears the same bar.
    NOTE: this is inside the QSS string -- QSS only understands block
    comments; a // comment here silently drops every rule after it. */
-QStatusBar, QWidget#statusRow {
+QStatusBar, QWidget#statusRow, QWidget#workspaceDock {
     background-color: @surface@;
     border-top: 1px solid @border@;
     color: @textSecondary@;

@@ -225,6 +225,10 @@
         <source>(unnamed)</source>
         <translation>(未命名)</translation>
     </message>
+    <message>
+        <source>Change icon</source>
+        <translation>更改图标</translation>
+    </message>
 </context>
 <context>
     <name>ThemeManager</name>
@@ -1606,8 +1610,8 @@
     </message>
     <message>
         <location filename="../lib/core/mainwindow.cpp" line="1306" />
-        <source>No devices configured — add one in the Devices tab.</source>
-        <translation>未配置设备 — 请在“设备”选项卡中添加一个。</translation>
+        <source>No devices configured</source>
+        <translation>未配置设备</translation>
     </message>
     <message>
         <location filename="../lib/core/mainwindow.cpp" line="1314" />
@@ -2171,6 +2175,36 @@
         <location filename="../lib/core/workspaceswitcher.cpp" line="164" />
         <source>New Workspace…</source>
         <translation>新建工作区…</translation>
+    </message>
+</context>
+<context>
+    <name>traceview::IconPickerDialog</name>
+    <message>
+        <source>Choose Icon</source>
+        <translation>选择图标</translation>
+    </message>
+    <message>
+        <source>Search icons (English names and tags)</source>
+        <translation>搜索图标（英文名称和标签）</translation>
+    </message>
+    <message>
+        <source>No icon selected</source>
+        <translation>未选择图标</translation>
+    </message>
+</context>
+<context>
+    <name>traceview::WorkspaceDock</name>
+    <message>
+        <source>New Workspace…</source>
+        <translation>新建工作区…</translation>
+    </message>
+    <message>
+        <source>Change Icon…</source>
+        <translation>更改图标…</translation>
+    </message>
+    <message>
+        <source>Delete Workspace</source>
+        <translation>删除工作区</translation>
     </message>
 </context>
 </TS>

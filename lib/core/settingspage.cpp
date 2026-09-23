@@ -196,8 +196,7 @@ SettingsPage::SettingsPage(QWidget* parent) : QWidget(parent) {
 
     auto* header = new QLabel(tr("Settings"), this);
     header->setObjectName("settingsTitle");
-    QFont headerFont = header->font();
-    headerFont.setPointSize(headerFont.pointSize() + 6);
+    QFont headerFont = scaledFont(header->font(), 1.6);
     headerFont.setBold(true);
     header->setFont(headerFont);
     rootLayout->addWidget(header);

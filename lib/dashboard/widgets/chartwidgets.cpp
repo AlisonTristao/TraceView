@@ -10,6 +10,7 @@
 #include <QtMath>
 
 #include "dashboard/paintframecounter.h"
+#include "traceview/fontmanager.h"
 #include "traceview/thememanager.h"
 
 namespace traceview {
@@ -1742,8 +1743,7 @@ void DummyGaugeWidget::paintEvent(QPaintEvent*) {
             // stays system default weight/size.
             const double value = m_values.value(0, qQNaN());
             const bool hasValue = !qIsNaN(value);
-            QFont valueFont = painter.font();
-            valueFont.setPointSize(valueFont.pointSize() + 6);
+            QFont valueFont = scaledFont(painter.font(), 1.6);
             valueFont.setBold(true);
             painter.setFont(valueFont);
             painter.setPen(palette.textPrimary);

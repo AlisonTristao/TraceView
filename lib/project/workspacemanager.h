@@ -8,10 +8,12 @@ namespace traceview {
 
 // One named dashboard layout. `dashboard` is exactly what DashboardGrid::
 // toJson()/fromJson() produce/consume -- WorkspaceManager never looks inside
-// it.
+// it. `icon` is an IconLibrary id ("lucide:gauge") the user picked for the
+// workspace's button, or empty for the UI's default -- also opaque here.
 struct Workspace {
     QString id;
     QString name;
+    QString icon;
     QJsonObject dashboard;
 };
 
@@ -40,6 +42,10 @@ public:
     void setDashboardFor(const QString& id, const QJsonObject& dashboard);
     // Empty QString if `id` is unknown.
     QString nameFor(const QString& id) const;
+    // Empty QString if `id` is unknown or no icon was ever picked.
+    QString iconFor(const QString& id) const;
+    // No-op if `id` is unknown. Empty `icon` goes back to the default.
+    void setIconFor(const QString& id, const QString& icon);
 
     // Adds a new workspace with an empty dashboard and makes it active.
     // `name` is disambiguated against existing names ("Workspace" ->

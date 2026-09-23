@@ -112,9 +112,12 @@ void TestWorkspaceManager::toJsonFromJsonRoundTrips() {
     dashboard["items"] = QJsonArray{QJsonObject{{"id", "abc"}}};
     manager.setDashboardFor(defaultId, dashboard);
     const QString secondId = manager.createWorkspace("Second");
+    manager.setIconFor(secondId, "lucide:gauge");
     manager.setActiveId(defaultId);
 
     const QJsonObject serialized = manager.toJson();
+    // An unpicked icon is left out of the file entirely.
+    QVERIFY(!serialized["list"].toArray()[0].toObject().contains("icon"));
 
     manager.reset();  // scramble state before reloading, like ProjectStore::load() would
     manager.fromJson(serialized);
@@ -123,6 +126,8 @@ void TestWorkspaceManager::toJsonFromJsonRoundTrips() {
     QCOMPARE(manager.activeId(), defaultId);
     QCOMPARE(manager.dashboardFor(defaultId), dashboard);
     QCOMPARE(manager.nameFor(secondId), QString("Second"));
+    QCOMPARE(manager.iconFor(secondId), QString("lucide:gauge"));
+    QVERIFY(manager.iconFor(defaultId).isEmpty());
 }
 
 void TestWorkspaceManager::fromJsonOnEmptyInputResets() {

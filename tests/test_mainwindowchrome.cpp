@@ -10,6 +10,7 @@
 #include <QtTest>
 
 #include "core/mainwindow.h"
+#include "core/workspacedock.h"
 #include "core/workspaceswitcher.h"
 #include "project/workspacemanager.h"
 #include "core/usermodemanager.h"
@@ -47,6 +48,13 @@ void TestMainWindowChrome::userPreviewKeepsManualSizes() {
     QVERIFY(grid);
     QVERIFY(options);
     QVERIFY(deviceStatus);
+    auto* dock = window.findChild<WorkspaceDock*>();
+    auto* statusRow = window.findChild<QWidget*>("statusRow");
+    QVERIFY(dock);
+    QVERIFY(statusRow);
+    // Desktop, no preview: the status row, not the compact dock.
+    QVERIFY(statusRow->isVisible());
+    QVERIFY(!dock->isVisible());
     QVERIFY(!tabs->isVisible());
     QVERIFY(!selector->isVisible());
     QCOMPARE(selector->parentWidget()->objectName(), QString("statusRow"));
@@ -89,6 +97,12 @@ void TestMainWindowChrome::userPreviewKeepsManualSizes() {
         QCOMPARE(options->parentWidget()->layout()->indexOf(options), 0);
         QCOMPARE(options->parentWidget()->layout()->indexOf(deviceStatus), 1);
         QCOMPARE(options->isVisible(), i < 2);
+        // Phone/Tablet preview = compact chrome: the dock replaces the
+        // status row, and the size selector moves up beside the options
+        // button so the preview can still be left.
+        QCOMPARE(dock->isVisible(), i < 2);
+        QCOMPARE(statusRow->isVisible(), i >= 2);
+        QCOMPARE(selector->parentWidget(), i < 2 ? options->parentWidget() : statusRow);
     }
     previewAction()->trigger();
     QTRY_VERIFY(tabs->isVisible());
