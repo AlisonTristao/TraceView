@@ -7,6 +7,14 @@ release flow.
 
 ## [Unreleased]
 
+## [4.3.1] - 2026-09-23
+
+### Fixed
+
+- The Android release smoke test runs on an Android 14 emulator instead of
+  Android 11, whose ARM translation layer crashed on instructions the app
+  uses (an emulator limitation; real arm64 phones were not affected).
+
 ## [4.3.0] - 2026-09-23
 
 ### Added

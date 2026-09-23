@@ -2,7 +2,7 @@
 # Installs the release APK on an already-booted emulator/device (adb must see
 # exactly one), launches it and checks it is still alive after 15 s with no
 # crash of its own. Used by release.yml's android-smoke job, which runs it on
-# an x86_64 API 30 emulator: the APK is arm64-only, and those system images
+# an x86_64 API 34 emulator: the APK is arm64-only, and those system images
 # run arm64 apps through Android's built-in ARM translation.
 #
 # Only TraceView's own crashes count: a freshly booted emulator's system

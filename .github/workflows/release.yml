@@ -306,10 +306,13 @@ jobs:
           if-no-files-found: error
 
   # Boots an emulator and launches the signed APK. The APK is arm64-only
-  # and GitHub's runners are x86_64, so this uses an API 30 x86_64 image:
-  # Android 11+ x86 system images translate arm64 apps natively (slower,
-  # but fine for "does it start without crashing"). KVM is available on
-  # the standard Linux runners but needs the udev rule to be usable.
+  # and GitHub's runners are x86_64, so this uses an x86_64 image, whose
+  # libndk_translation runs arm64 apps (slower, but fine for "does it start
+  # without crashing"). API 34, not 30: 4.2.2's run on API 30 died with
+  # SIGILL inside libndk_translation (DecodeSimdScalarTwoRegMisc) -- that
+  # older translator doesn't implement every arm64 SIMD instruction Qt
+  # uses, a limit of the emulator rather than of the app. KVM is available
+  # on the standard Linux runners but needs the udev rule to be usable.
   android-smoke:
     name: Android APK smoke (emulator)
     needs: android-package
@@ -335,7 +338,7 @@ jobs:
       - name: Install and launch on emulator
         uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: 30
+          api-level: 34
           arch: x86_64
           target: google_apis
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
