@@ -7,6 +7,15 @@ release flow.
 
 ## [Unreleased]
 
+## [4.1.5] - 2026-09-22
+
+### Fixed
+
+- The Settings **Updates** icon was redrawn as a round arrow with a proper
+  arrowhead. Its tip used to be a small detached triangle, which made the
+  icon look cut off. The mobile Settings sidebar is back to its original
+  width, since the extra 15% from 4.1.1 wasn't the real fix.
+
 ## [4.1.4] - 2026-09-22
 
 ### Added
