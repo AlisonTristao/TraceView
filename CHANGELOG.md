@@ -7,6 +7,15 @@ release flow.
 
 ## [Unreleased]
 
+## [4.2.1] - 2026-09-23
+
+### Changed
+
+- CI builds the Android APK on every push and pull request (build only; the
+  Android preset has no tests).
+- Releases now install and launch the signed APK on an Android emulator
+  before publishing, and stop if it crashes on startup.
+
 ## [4.2.0] - 2026-09-23
 
 ### Added

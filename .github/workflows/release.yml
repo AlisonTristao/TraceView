@@ -303,6 +303,51 @@ jobs:
             build/android-arm64-release/android-build/sha256-android.txt
           if-no-files-found: error
 
+  # Boots an emulator and launches the signed APK. The APK is arm64-only
+  # and GitHub's runners are x86_64, so this uses an API 30 x86_64 image:
+  # Android 11+ x86 system images translate arm64 apps natively (slower,
+  # but fine for "does it start without crashing"). KVM is available on
+  # the standard Linux runners but needs the udev rule to be usable.
+  android-smoke:
+    name: Android APK smoke (emulator)
+    needs: android-package
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download package artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: android-package
+          path: package
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Install and launch on emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 30
+          arch: x86_64
+          target: google_apis
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          disable-animations: true
+          script: bash scripts/smoke_android_apk.sh package/TraceView-*-android-arm64.apk
+
+      - name: Upload logcat
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-smoke-logcat
+          path: ${{ runner.temp }}/android-smoke-logcat.txt
+          if-no-files-found: ignore
+
   # ============================================================
   # Linux package (.AppImage)
   # ============================================================
@@ -437,7 +482,7 @@ jobs:
 
   publish:
     name: Publish release
-    needs: [windows-smoke, linux-smoke, linux-flatpak, android-package]
+    needs: [windows-smoke, linux-smoke, linux-flatpak, android-smoke]
     runs-on: ubuntu-24.04
     timeout-minutes: 15
 

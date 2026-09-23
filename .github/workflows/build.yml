@@ -232,3 +232,72 @@ jobs:
 
       - name: Test
         run: ctest --preset windows-mingw
+
+  # ============================================================
+  # Android (arm64-v8a)
+  # Build only: the android-arm64 preset sets TRACEVIEW_BUILD_TESTS=OFF,
+  # since arm64 test binaries can't run on this x86 runner. Debug preset,
+  # so Gradle signs with a throwaway debug key and no secrets are needed
+  # (PRs from forks work). Setup mirrors release.yml's android-package;
+  # see that job's comments for why each step is done the way it is.
+  # ============================================================
+  android:
+    name: Android (arm64-v8a, build only)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+
+    env:
+      ANDROID_NDK_VERSION: "27.2.12479018"
+      QT_VERSION: "6.9.2"
+      QT_INSTALL_DIR: ${{ github.workspace }}/qt
+      AQTINSTALL_VERSION: "3.3.0"
+      ANDROID_SDK_ROOT: ${{ github.workspace }}/android-sdk
+      ANDROID_NDK_ROOT: ${{ github.workspace }}/android-sdk/ndk/27.2.12479018
+      QT_ANDROID_ROOT_DIR: ${{ github.workspace }}/qt/6.9.2/android_arm64_v8a
+      QT_ROOT_DIR: ${{ github.workspace }}/qt/6.9.2/gcc_64
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Install Ninja
+        run: sudo apt-get update && sudo apt-get install --no-install-recommends -y ninja-build
+
+      - name: Install aqtinstall
+        run: python3 -m pip install --quiet "aqtinstall==${{ env.AQTINSTALL_VERSION }}"
+
+      - name: Install Qt (desktop host tools)
+        run: |
+          python3 -m aqt install-qt linux desktop "${{ env.QT_VERSION }}" linux_gcc_64 \
+            --outputdir "${{ env.QT_INSTALL_DIR }}"
+
+      - name: Install Qt (Android arm64-v8a)
+        run: |
+          python3 -m aqt install-qt linux android "${{ env.QT_VERSION }}" android_arm64_v8a \
+            --modules qtconnectivity --outputdir "${{ env.QT_INSTALL_DIR }}"
+
+      - name: Install Android SDK command-line tools
+        run: |
+          mkdir -p "$ANDROID_SDK_ROOT/cmdline-tools"
+          curl -fsSL -o /tmp/cmdline-tools.zip \
+            "https://dl.google.com/android/repository/commandlinetools-linux-15859902_latest.zip"
+          unzip -q /tmp/cmdline-tools.zip -d /tmp/cmdline-tools-extract
+          mv /tmp/cmdline-tools-extract/cmdline-tools "$ANDROID_SDK_ROOT/cmdline-tools/latest"
+
+      - name: Install SDK platform, build-tools and NDK
+        run: |
+          yes | "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager" --sdk_root="$ANDROID_SDK_ROOT" --licenses >/dev/null || true
+          "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager" --sdk_root="$ANDROID_SDK_ROOT" \
+            "platform-tools" "platforms;android-35" "build-tools;35.0.0" "ndk;${{ env.ANDROID_NDK_VERSION }}"
+
+      - name: Configure
+        run: cmake --preset android-arm64
+
+      - name: Build
+        run: cmake --build --preset android-arm64
