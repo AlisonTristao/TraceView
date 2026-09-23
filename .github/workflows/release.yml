@@ -284,9 +284,11 @@ jobs:
           "$build_tools/aapt" dump badging "$apk" | grep -E "^package:|launchable-activity:"
           if [[ -n $EXPECTED_CERT_SHA256 ]]; then
             actual=$(grep -m1 'certificate SHA-256 digest:' "$RUNNER_TEMP/apk-certs.txt" | awk '{print $NF}')
-            expected=$(echo "$EXPECTED_CERT_SHA256" | tr -d ': ' | tr 'A-F' 'a-f')
+            # Keep only hex digits: tolerates "AA:BB:..." (keytool's format),
+            # stray spaces/newlines/quotes pasted into the variable, any case.
+            expected=$(printf '%s' "$EXPECTED_CERT_SHA256" | tr -cd '0-9a-fA-F' | tr 'A-F' 'a-f')
             [[ $actual == "$expected" ]] ||
-              { echo "Signer certificate $actual does not match ANDROID_SIGNING_CERT_SHA256" >&2; exit 1; }
+              { echo "Signer certificate $actual does not match ANDROID_SIGNING_CERT_SHA256 ($expected)" >&2; exit 1; }
           fi
         env:
           ANDROID_SDK_ROOT: ${{ github.workspace }}/android-sdk
