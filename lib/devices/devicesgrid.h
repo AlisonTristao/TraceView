@@ -158,7 +158,7 @@ public:
     // (see lib/CMakeLists.txt) -- so MainWindow injects it here once. Safe
     // to leave unset: the dialog's port combo then just starts empty and
     // Refresh is a no-op, same as before this existed.
-    void setPortListProvider(std::function<QStringList()> provider) {
+    void setPortListProvider(std::function<QVector<SerialPortOption>()> provider) {
         m_portListProvider = std::move(provider);
     }
 
@@ -277,7 +277,7 @@ private:
     QVector<Device> m_devices;     // insertion order = display order
     QVector<DeviceCard*> m_cards;  // parallel to m_devices, same order/index
     QString m_selectedId;          // empty when nothing is selected
-    std::function<QStringList()> m_portListProvider;
+    std::function<QVector<SerialPortOption>()> m_portListProvider;
     std::function<QVector<UsbDeviceOption>()> m_usbDeviceListProvider;
     std::function<void(bool)> m_bleScanToggleHandler;
     std::function<QVector<QPair<QString, QString>>()> m_bleDeviceListProvider;

@@ -7,6 +7,18 @@ release flow.
 
 ## [Unreleased]
 
+## [4.2.0] - 2026-09-23
+
+### Added
+
+- **Serial on Android over USB OTG.** Plug the dongle (or an ESP32 board with
+  native USB) into the phone with an OTG adapter and pick it as a Serial
+  device, as on desktop. The first connection asks for the USB permission.
+  If you refuse, TraceView asks again only after the device is replugged.
+  Android can also offer to open TraceView when the dongle is plugged in.
+  Only CDC-ACM devices are supported. Boards with a CH340, CP210x or FTDI
+  USB-serial chip are not.
+
 ## [4.1.9] - 2026-09-23
 
 ### Changed

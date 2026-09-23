@@ -9,6 +9,9 @@
          system package installer (the user still confirms each install). -->
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
     <!-- %%INSERT_FEATURES -->
+    <!-- Serial over USB OTG (UsbSerialBridge). Not required: phones without
+         USB host still install, they just offer no serial ports. -->
+    <uses-feature android:name="android.hardware.usb.host" android:required="false" />
     <supports-screens
         android:anyDensity="true"
         android:largeScreens="true"
@@ -35,6 +38,14 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <!-- Plugging in a device from res/xml/usb_device_filter.xml offers
+                 to open TraceView and grants it that device's permission. -->
+            <intent-filter>
+                <action android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED" />
+            </intent-filter>
+            <meta-data
+                android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED"
+                android:resource="@xml/usb_device_filter" />
 
           <meta-data
                 android:name="android.app.lib_name"

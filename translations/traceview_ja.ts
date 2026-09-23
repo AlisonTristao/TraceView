@@ -3446,6 +3446,22 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     </message>
 </context>
 <context>
+    <name>traceview::AndroidUsbSerialTransport</name>
+    <message>
+        <location filename="../lib/core/androidusbserialtransport.cpp" line="+0"/>
+        <source>USB serial is not available on this device</source>
+        <translation>このデバイスでは USB シリアルを使用できません</translation>
+    </message>
+    <message>
+        <source>USB permission was denied for %1; unplug and replug it to be asked again</source>
+        <translation>%1 の USB アクセス許可が拒否されました。デバイスを抜き差しすると再度確認されます</translation>
+    </message>
+    <message>
+        <source>1200 baud resets the ESP32-S3 into its bootloader; using 115200</source>
+        <translation>1200 baud では ESP32-S3 がブートローダーにリセットされるため、115200 を使用します</translation>
+    </message>
+</context>
+<context>
     <name>traceview::SerialManager</name>
     <message>
         <location filename="../lib/core/serialmanager.cpp" line="+58"/>

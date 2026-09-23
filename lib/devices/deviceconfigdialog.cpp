@@ -212,7 +212,7 @@ DeviceConfigDialog::DeviceConfigDialog(const Device& initial, QWidget* parent)
     m_portCombo->setEditable(true);
     m_portCombo->setToolTip(tr("Serial port"));
     if (!m_device.portName.isEmpty()) {
-        m_portCombo->addItem(m_device.portName);
+        m_portCombo->addItem(m_device.portName, m_device.portName);
     }
     m_portCombo->setCurrentText(m_device.portName);
 
@@ -242,7 +242,7 @@ DeviceConfigDialog::DeviceConfigDialog(const Device& initial, QWidget* parent)
     m_baudRowIndex = m_connectionLayout->rowCount();
     m_connectionLayout->addRow(tr("Baud:"), m_baudCombo);
 
-    // Values match traceview::LineTerminator's ordinals (core/serialmanager.h)
+    // Values match traceview::LineTerminator's ordinals (core/serialtransport.h)
     // -- Device::lineTerminator stores that same ordinal as a plain int since
     // this module can't depend on that enum's header (see device.h).
     m_lineTerminatorCombo = new QComboBox(connectionGroup);
@@ -608,7 +608,15 @@ Device DeviceConfigDialog::result() const {
     device.name = m_nameEdit->text();
     device.description = m_descriptionEdit->toPlainText();
     device.transportType = TransportType(m_transportTypeCombo->currentData().toInt());
-    device.portName = m_portCombo->currentText();
+    // The combo is editable, so the shown text is either a listed option's
+    // label (store its name, which differs from the label on Android) or
+    // something typed by hand (store it verbatim, as before).
+    {
+        const QString text = m_portCombo->currentText();
+        const int index = m_portCombo->findText(text);
+        const QString name = index >= 0 ? m_portCombo->itemData(index).toString() : QString();
+        device.portName = name.isEmpty() ? text : name;
+    }
     device.baudRate = m_baudCombo->currentText().toInt();
     device.lineTerminator = m_lineTerminatorCombo->currentData().toInt();
     device.tcpHost = m_tcpHostEdit->text().trimmed();
@@ -756,14 +764,31 @@ void DeviceConfigDialog::setConnectionStatus(bool connected) {
     m_statusLabel->setText(connected ? tr("Connected") : tr("Disconnected"));
 }
 
-void DeviceConfigDialog::setAvailablePorts(const QStringList& ports) {
-    const QString current = m_portCombo->currentText();
+void DeviceConfigDialog::setAvailablePorts(const QVector<SerialPortOption>& ports) {
+    // Preserve by stored name, not shown text: on Android the device's
+    // portName is a key whose label only the fresh list knows.
+    const QString currentText = m_portCombo->currentText();
+    const int currentIndex = m_portCombo->findText(currentText);
+    const QString currentData =
+        currentIndex >= 0 ? m_portCombo->itemData(currentIndex).toString() : QString();
+    const QString current = currentData.isEmpty() ? currentText : currentData;
     m_portCombo->clear();
-    m_portCombo->addItems(ports);
-    if (!current.isEmpty() && m_portCombo->findText(current) < 0) {
-        m_portCombo->insertItem(0, current);
+    for (const SerialPortOption& port : ports) {
+        m_portCombo->addItem(port.label, port.name);
     }
-    m_portCombo->setCurrentText(current);
+    if (current.isEmpty()) {
+        m_portCombo->setCurrentText(QString());
+        return;
+    }
+    int index = m_portCombo->findData(current);
+    if (index < 0) {
+        index = m_portCombo->findText(current);
+    }
+    if (index < 0) {
+        m_portCombo->insertItem(0, current, current);
+        index = 0;
+    }
+    m_portCombo->setCurrentIndex(index);
 }
 
 void DeviceConfigDialog::addDiscoveredBleDevice(const QString& name, const QString& address) {

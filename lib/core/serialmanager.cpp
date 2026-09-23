@@ -9,21 +9,7 @@
 
 namespace traceview {
 
-QByteArray lineTerminatorBytes(LineTerminator terminator) {
-    switch (terminator) {
-        case LineTerminator::None:
-            return QByteArray();
-        case LineTerminator::Lf:
-            return QByteArray("\n");
-        case LineTerminator::Cr:
-            return QByteArray("\r");
-        case LineTerminator::CrLf:
-            return QByteArray("\r\n");
-    }
-    return QByteArray();
-}
-
-SerialManager::SerialManager(QObject* parent) : Transport(parent), m_port(new QSerialPort(this)) {
+SerialManager::SerialManager(QObject* parent) : SerialTransport(parent), m_port(new QSerialPort(this)) {
     connect(m_port, &QSerialPort::readyRead, this, &SerialManager::onReadyRead);
     connect(m_port, &QSerialPort::errorOccurred, this, &SerialManager::onErrorOccurred);
 }
@@ -49,9 +35,8 @@ bool SerialManager::open(const QString& portName, qint32 baudRate) {
     // fold it up to a working rate. The rate is otherwise cosmetic on a CDC
     // ACM link (the USB stack ignores it), which is why silently substituting
     // one is safe here.
-    qint32 effectiveBaud = baudRate;
-    if (effectiveBaud == 1200) {
-        effectiveBaud = 115200;
+    const qint32 effectiveBaud = safeBaudRate(baudRate);
+    if (effectiveBaud != baudRate) {
         qCWarning(lcSerial) << "1200 baud requested on" << portName
                             << "-- folding up to 115200 to avoid a bootloader reset";
         emit errorOccurred(
@@ -155,10 +140,6 @@ bool SerialManager::drainWrites(int timeoutMs) {
         }
     }
     return true;
-}
-
-bool SerialManager::writeCommand(const QByteArray& command) {
-    return write(command + lineTerminatorBytes(m_lineTerminator));
 }
 
 void SerialManager::onReadyRead() {

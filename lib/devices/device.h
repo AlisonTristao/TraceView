@@ -76,6 +76,18 @@ struct UsbDeviceOption {
     QString label;
 };
 
+// One entry in DeviceConfigDialog's serial port picker. `name` is what gets
+// stored in Device::portName and handed to SerialTransport::open(); `label`
+// is only what the combo shows. On desktop the two are the same OS port name
+// ("COM3", "ttyACM0"); on Android `name` is a stable "usb:VVVV:PPPP[:serial]"
+// key (the OS device path changes on every replug, see
+// core/androidusbserialtransport.h) and `label` the product name the user
+// recognizes. Same reason as UsbDeviceOption above for living here.
+struct SerialPortOption {
+    QString name;
+    QString label;
+};
+
 // One hub.peers entry, decoded from the dongle's own live telemetry -- see
 // MainWindow::hubPeersFor()/onHubPeerFieldSample() (core/mainwindow.cpp).
 // traceview_devices never decodes BTP itself; this arrives as an
@@ -168,7 +180,7 @@ struct Device {
     // baudRate/portName are plain types here rather than QSerialPort ones.
     QString portName;
     qint32 baudRate = 921600;  // matches the old Run tab's default
-    // Ordinal mirroring traceview::LineTerminator (core/serialmanager.h:
+    // Ordinal mirroring traceview::LineTerminator (core/serialtransport.h:
     // None=0, Lf=1, Cr=2, CrLf=3) -- kept as a plain int for the same reason
     // portName/baudRate are plain types, rather than depending on that enum
     // directly. Only meaningful for TransportType::Serial (control-widget

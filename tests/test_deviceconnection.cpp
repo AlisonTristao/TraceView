@@ -45,7 +45,7 @@ void TestDeviceConnection::startsDisconnectedWithABackend() {
     DeviceConnection connection(CommType::Btp);
     QVERIFY(!connection.isConnected());
     QCOMPARE(connection.transportType(), TransportType::Serial);
-    QVERIFY(connection.serialManager() != nullptr);
+    QVERIFY(connection.serialTransport() != nullptr);
     QVERIFY(connection.usbHidManager() == nullptr);
     // Only CommType::Btp exists today -- the ctor must always build a
     // concrete Backend for it (see the switch in deviceconnection.cpp).
@@ -89,13 +89,13 @@ void TestDeviceConnection::disconnectFromStopsRetryingAfterAFailedAttempt() {
 void TestDeviceConnection::setLineTerminatorForwardsToSerialManager() {
     DeviceConnection connection(CommType::Btp);
     connection.setLineTerminator(int(LineTerminator::CrLf));
-    QCOMPARE(connection.serialManager()->lineTerminator(), LineTerminator::CrLf);
+    QCOMPARE(connection.serialTransport()->lineTerminator(), LineTerminator::CrLf);
 }
 
 void TestDeviceConnection::usbHidTransportBuildsUsbHidManagerNotSerialManager() {
     DeviceConnection connection(CommType::Btp, TransportType::UsbHid);
     QCOMPARE(connection.transportType(), TransportType::UsbHid);
-    QVERIFY(connection.serialManager() == nullptr);
+    QVERIFY(connection.serialTransport() == nullptr);
     QVERIFY(connection.usbHidManager() != nullptr);
     QVERIFY(connection.backend() != nullptr);
     QVERIFY(!connection.isConnected());
@@ -107,7 +107,7 @@ void TestDeviceConnection::setLineTerminatorIsNoopForUsbHidTransport() {
     // not crash.
     DeviceConnection connection(CommType::Btp, TransportType::UsbHid);
     connection.setLineTerminator(int(LineTerminator::CrLf));
-    QVERIFY(connection.serialManager() == nullptr);
+    QVERIFY(connection.serialTransport() == nullptr);
 }
 
 void TestDeviceConnection::exposesAsyncConnectionPhases() {
@@ -167,7 +167,7 @@ void TestDeviceConnection::tcpTransportBuildsNeitherSerialNorUsbHidManager() {
     // construction and report the right shape.
     DeviceConnection connection(CommType::Btp, TransportType::Tcp);
     QCOMPARE(connection.transportType(), TransportType::Tcp);
-    QVERIFY(connection.serialManager() == nullptr);
+    QVERIFY(connection.serialTransport() == nullptr);
     QVERIFY(connection.usbHidManager() == nullptr);
     QVERIFY(connection.backend() != nullptr);
     QVERIFY(!connection.isConnected());
@@ -257,7 +257,7 @@ void TestDeviceConnection::bleTransportBuildsNeitherSerialNorUsbHidManager() {
     // above, for Ble's own ctor case (deviceconnection.cpp).
     DeviceConnection connection(CommType::Btp, TransportType::Ble);
     QCOMPARE(connection.transportType(), TransportType::Ble);
-    QVERIFY(connection.serialManager() == nullptr);
+    QVERIFY(connection.serialTransport() == nullptr);
     QVERIFY(connection.usbHidManager() == nullptr);
     QVERIFY(connection.backend() != nullptr);
     QVERIFY(!connection.isConnected());

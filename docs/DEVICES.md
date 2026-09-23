@@ -20,7 +20,8 @@ ever true on the Dashboard tab with editing enabled).
   `CommType` enum — only `CommType::Btp` exists today), `description`,
   `transportType` (a `TransportType` enum — `Serial`, `UsbHid` or
   `HubChannel`, see "Transports" below) plus whichever of `portName`/
-  `baudRate`/`lineTerminator` (Serial), `usbPath` (UsbHid) or
+  `baudRate`/`lineTerminator` (Serial; on Android `portName` is a
+  `usb:VVVV:PPPP[:serial]` key rather than an OS port name), `usbPath` (UsbHid) or
   `parentDeviceId`/`peerSourceId` (HubChannel) it selects — the real
   transport config a `DeviceConnection` opens with — plus `otaAddress`/
   `otaPassword`/`cacheOtaPassword` (the OTA side channel, see
@@ -151,7 +152,9 @@ Real per-device transport now lives in **`DeviceConnection`**
 ([lib/core/deviceconnection.h](../lib/core/deviceconnection.h)) --
 `traceview_ui`, not `traceview_devices` (see the layering note above): each
 `Device` gets its own `Transport` (`lib/core/transport.h` -- concretely a
-`SerialManager`, a `UsbHidManager` or a `HubTransport`, chosen once at
+`SerialTransport` (`SerialManager` on desktop, `AndroidUsbSerialTransport`
+on Android, see docs/ANDROID_BUILD.md), a `UsbHidManager` or a
+`HubTransport`, chosen once at
 construction by `transportType` and never swapped afterward) plus `Backend` (protocol
 decode/encode, concretely a `BtpBackend`, itself told which `btp::
 TransportLimits` to speak), so several devices can be open at once, each

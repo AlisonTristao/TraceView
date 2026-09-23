@@ -3447,6 +3447,22 @@ Scegli Più tardi per continuare a lavorare -- le modifiche verranno applicate l
     </message>
 </context>
 <context>
+    <name>traceview::AndroidUsbSerialTransport</name>
+    <message>
+        <location filename="../lib/core/androidusbserialtransport.cpp" line="+0"/>
+        <source>USB serial is not available on this device</source>
+        <translation>La seriale USB non è disponibile su questo dispositivo</translation>
+    </message>
+    <message>
+        <source>USB permission was denied for %1; unplug and replug it to be asked again</source>
+        <translation>Il permesso USB per %1 è stato negato; scollegalo e ricollegalo per ricevere di nuovo la richiesta</translation>
+    </message>
+    <message>
+        <source>1200 baud resets the ESP32-S3 into its bootloader; using 115200</source>
+        <translation>1200 baud riavvia l&apos;ESP32-S3 nel bootloader; uso 115200</translation>
+    </message>
+</context>
+<context>
     <name>traceview::SerialManager</name>
     <message>
         <location filename="../lib/core/serialmanager.cpp" line="+58"/>

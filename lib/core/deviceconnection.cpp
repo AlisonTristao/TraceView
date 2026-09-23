@@ -10,7 +10,11 @@
 #include "protocol/btpbackend.h"
 #include "tcptransport.h"
 #ifdef TRACEVIEW_ENABLE_SERIAL
+#ifdef Q_OS_ANDROID
+#include "androidusbserialtransport.h"
+#else
 #include "serialmanager.h"
+#endif
 #endif
 #ifdef TRACEVIEW_ENABLE_USB_HID
 #include "usbhidmanager.h"
@@ -94,12 +98,25 @@ DeviceConnection::DeviceConnection(CommType commType, TransportType transportTyp
     switch (transportType) {
         case TransportType::Serial:
 #ifdef TRACEVIEW_ENABLE_SERIAL
-            m_serialManager = new SerialManager(this);
-            m_transport = m_serialManager;
+#ifdef Q_OS_ANDROID
+        {
+            auto* usbSerial = new AndroidUsbSerialTransport(this);
+            // A replug is the moment a retry can succeed -- take it now
+            // rather than up to one reconnect interval later.
+            // attemptReconnect() is already a no-op while connected or
+            // mid-attempt.
+            connect(usbSerial, &AndroidUsbSerialTransport::deviceAttached, this,
+                    &DeviceConnection::attemptReconnect);
+            m_serialTransport = usbSerial;
+        }
+#else
+            m_serialTransport = new SerialManager(this);
+#endif
+            m_transport = m_serialTransport;
             break;
 #else
             // Same as the Ble case below: without TRACEVIEW_ENABLE_SERIAL, no
-            // SerialManager type even exists to construct.
+            // SerialTransport implementation even exists to construct.
             // DeviceConfigDialog does not offer Serial as a selectable
             // transport in that configuration for exactly this reason.
             break;
@@ -473,13 +490,13 @@ void DeviceConnection::closeTransportGracefully() {
     }
 
 #ifdef TRACEVIEW_ENABLE_SERIAL
-    if (m_serialManager != nullptr) {
+    if (m_serialTransport != nullptr) {
         if (auto* btpBackend = qobject_cast<BtpBackend*>(m_backend)) {
             if (btpBackend->requestSessionClose()) {
-                // bytesToWrite -> SerialManager::write is a direct connection
+                // bytesToWrite -> SerialTransport::write is a direct connection
                 // in this thread, so the frame is already queued here. Drain
                 // it before close() lowers DTR and tears the native CDC down.
-                m_serialManager->drainWrites(kCloseWriteDrainTimeoutMs);
+                m_serialTransport->drainWrites(kCloseWriteDrainTimeoutMs);
             }
         }
     }
@@ -489,8 +506,8 @@ void DeviceConnection::closeTransportGracefully() {
 
 void DeviceConnection::setLineTerminator(int terminator) {
 #ifdef TRACEVIEW_ENABLE_SERIAL
-    if (m_serialManager) {
-        m_serialManager->setLineTerminator(LineTerminator(terminator));
+    if (m_serialTransport) {
+        m_serialTransport->setLineTerminator(LineTerminator(terminator));
     }
 #else
     Q_UNUSED(terminator);
@@ -513,9 +530,9 @@ void DeviceConnection::attemptReconnect() {
     qCInfo(lcConnection) << "attempting connect to" << attemptTarget;
     m_attemptInProgress = true;
     setConnectionPhase(ConnectionPhase::PreparingTransport);
-    if (m_serialManager) {
+    if (m_serialTransport) {
 #ifdef TRACEVIEW_ENABLE_SERIAL
-        m_serialManager->open(m_target, m_baudRate);
+        m_serialTransport->open(m_target, m_baudRate);
 #endif
     } else if (m_usbHidManager) {
 #ifdef TRACEVIEW_ENABLE_USB_HID

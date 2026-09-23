@@ -145,6 +145,11 @@ that order, so the CDC line-state machine never steps toward its reset
 sequence). `open()` also folds a configured 1200 baud up to 115200: 1200 is
 the CDC's bootloader-touch, never a working data rate here.
 
+On Android the same contract is kept by `UsbSerialBridge.java` (see
+docs/ANDROID_BUILD.md, "Serial over USB OTG"). After `SET_LINE_CODING` it
+sends one CDC `SET_CONTROL_LINE_STATE` with DTR|RTS. On close it sends DTR
+only (RTS low), then 0, so the ordering matches the desktop.
+
 ## Handshake and version negotiation (topico 15)
 
 `BtpHandshake` (`lib/protocol/btphandshake.h`) drives the plain-text

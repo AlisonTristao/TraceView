@@ -50,7 +50,9 @@ public:
     // port name. Called once up front by whoever opens this dialog
     // (DevicesGrid, supplied by MainWindow) and again each time
     // refreshPortsRequested() fires.
-    void setAvailablePorts(const QStringList& ports);
+    // Each option's `label` is shown; its `name` is what result() stores in
+    // Device::portName (identical on desktop, see SerialPortOption).
+    void setAvailablePorts(const QVector<SerialPortOption>& ports);
 
     // Adds (or updates) one scan result in the BLE address combo -- called
     // repeatedly, live, as BleDiscoveryService reports peripherals while a

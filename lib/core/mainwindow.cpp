@@ -25,7 +25,7 @@
 #include <QResizeEvent>
 #include <QScrollArea>
 #include <QScrollBar>
-#ifdef TRACEVIEW_ENABLE_SERIAL
+#if defined(TRACEVIEW_ENABLE_SERIAL) && !defined(Q_OS_ANDROID)
 #include <QSerialPortInfo>
 #endif
 #include <QSettings>
@@ -95,6 +95,9 @@
 #include "updater/updateinstaller.h"
 #ifdef TRACEVIEW_ENABLE_USB_HID
 #include "usbhidmanager.h"
+#endif
+#if defined(TRACEVIEW_ENABLE_SERIAL) && defined(Q_OS_ANDROID)
+#include "androidusbserialtransport.h"
 #endif
 #include "iconpickerdialog.h"
 #include "workspacedock.h"
@@ -392,15 +395,19 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     // depend on QSerialPort, see lib/CMakeLists.txt) -- MainWindow supplies
     // the live list DeviceConfigDialog's port combo offers.
 #ifdef TRACEVIEW_ENABLE_SERIAL
-    m_devicesGrid->setPortListProvider([]() -> QStringList {
-        QStringList names;
+#ifdef Q_OS_ANDROID
+    m_devicesGrid->setPortListProvider(&AndroidUsbSerialTransport::availablePorts);
+#else
+    m_devicesGrid->setPortListProvider([]() -> QVector<SerialPortOption> {
+        QVector<SerialPortOption> ports;
         const QList<QSerialPortInfo> infos = QSerialPortInfo::availablePorts();
-        names.reserve(infos.size());
+        ports.reserve(infos.size());
         for (const QSerialPortInfo& info : infos) {
-            names.append(info.portName());
+            ports.append({info.portName(), info.portName()});
         }
-        return names;
+        return ports;
     });
+#endif
 #endif
     // Same reasoning as setPortListProvider() above, for the USB device
     // combo -- DevicesGrid can't enumerate HID devices itself

@@ -93,7 +93,7 @@
                 "CMAKE_PREFIX_PATH": "$env{QT_ANDROID_ROOT_DIR}",
                 "QT_HOST_PATH": "$env{QT_ROOT_DIR}",
                 "QT_ANDROID_BUILD_ALL_ABIS": "OFF",
-                "TRACEVIEW_ENABLE_SERIAL": "OFF",
+                "TRACEVIEW_ENABLE_SERIAL": "ON",
                 "TRACEVIEW_ENABLE_USB_HID": "OFF",
                 "TRACEVIEW_ENABLE_TCP": "ON",
                 "TRACEVIEW_ENABLE_BLE": "ON",

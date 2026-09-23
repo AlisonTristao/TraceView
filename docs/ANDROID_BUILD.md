@@ -47,10 +47,35 @@ than from scratch, since a hand-written manifest can silently break
 packaging if it's missing a placeholder androiddeployqt expects to
 substitute.
 
-Transport selection mirrors the desktop TCP/BLE-only build already exercised
-in T38: `TRACEVIEW_ENABLE_SERIAL=OFF` and `TRACEVIEW_ENABLE_USB_HID=OFF`
-(neither QSerialPort nor hidapi's USB paths mean anything on a phone/tablet),
-`TRACEVIEW_ENABLE_TCP=ON` and `TRACEVIEW_ENABLE_BLE=ON`.
+Transport selection: `TRACEVIEW_ENABLE_SERIAL=ON`, `TRACEVIEW_ENABLE_TCP=ON`,
+`TRACEVIEW_ENABLE_BLE=ON` and `TRACEVIEW_ENABLE_USB_HID=OFF` (hidapi's USB
+paths do not work on a phone/tablet).
+
+### Serial over USB OTG
+
+Qt ships no QSerialPort backend for Android, and an app cannot open
+`/dev/ttyACM*` without root. On Android, `TRACEVIEW_ENABLE_SERIAL` therefore
+builds `AndroidUsbSerialTransport` (`lib/core/androidusbserialtransport.cpp`)
+instead of `SerialManager`. It drives
+`android/src/io/github/alisontristao/traceview/UsbSerialBridge.java`, a small
+CDC-ACM driver over the Android USB Host API, through JNI (`QJniObject`). No
+Qt SerialPort module and no third-party library are needed. `androiddeployqt`
+compiles `android/src/` on its own because it sits under
+`QT_ANDROID_PACKAGE_SOURCE_DIR`.
+
+- **Supported devices:** CDC-ACM only (the dongle, and ESP32 boards with
+  native USB). USB-serial bridge chips (CH340, CP210x, FTDI) are not driven.
+- **Port names** are stable keys, `usb:VVVV:PPPP[:serial]`. The OS device path
+  changes on every replug. Android only lets the app read the serial number
+  once it holds the device permission, so before that a key matches by
+  VID:PID.
+- **Permission:** the first connection shows the system USB permission
+  dialog. If it is refused, the app does not ask again until the device is
+  replugged. `android/res/xml/usb_device_filter.xml` (Espressif VID
+  `0x303A`) makes Android offer to open TraceView when the device is plugged
+  in, and with "always open" the permission is remembered.
+- **Testing:** needs a real phone with OTG. The emulator has no practical USB
+  passthrough.
 
 ## One-time environment setup
 

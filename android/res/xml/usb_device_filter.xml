@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Devices that make Android offer to open TraceView when plugged in over
+     OTG (and, with "always open", remember the USB permission for them).
+     Espressif's VID covers the dongle and ESP32 boards with native USB
+     (TinyUSB CDC and the USB-Serial/JTAG peripheral alike). Only CDC-ACM
+     devices are driven; see android/src/.../UsbSerialBridge.java. -->
+<resources>
+    <usb-device vendor-id="12346" />
+</resources>

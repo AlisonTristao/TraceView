@@ -12,7 +12,7 @@ class QTimer;
 namespace traceview {
 
 class Backend;
-class SerialManager;
+class SerialTransport;
 class UsbHidManager;
 class HubTransport;
 class TcpTransport;
@@ -63,11 +63,13 @@ public:
     ~DeviceConnection() override;
 
     // Non-null only when transportType == TransportType::Serial; nullptr
-    // otherwise. Callers that need serial-only extras (writeCommand(),
+    // otherwise. Concretely a SerialManager on desktop or an
+    // AndroidUsbSerialTransport on Android (see core/serialtransport.h).
+    // Callers that need serial-only extras (writeCommand(),
     // lineTerminator()) must check for null first -- see
     // SerialWidgetBridge::wireWidget() for the pattern.
-    SerialManager* serialManager() const {
-        return m_serialManager;
+    SerialTransport* serialTransport() const {
+        return m_serialTransport;
     }
     // Non-null only when transportType == TransportType::UsbHid; nullptr
     // otherwise.
@@ -178,7 +180,7 @@ public:
 
 signals:
     // Mirrors Transport::connectionStateChanged so callers don't have to
-    // reach through serialManager()/usbHidManager() themselves.
+    // reach through serialTransport()/usbHidManager() themselves.
     void connectionStateChanged(bool connected);
     // Rich asynchronous phase for UI/platform consumers. The boolean signal
     // above remains for existing dashboard consumers.
@@ -209,7 +211,7 @@ private:
 
     TransportType m_transportType;
     Transport* m_transport = nullptr;
-    SerialManager* m_serialManager = nullptr;
+    SerialTransport* m_serialTransport = nullptr;
     UsbHidManager* m_usbHidManager = nullptr;
     HubTransport* m_hubTransport = nullptr;
     TcpTransport* m_tcpTransport = nullptr;

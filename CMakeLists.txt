@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.21)
 
 project(TraceView
-    VERSION 4.1.9
+    VERSION 4.2.0
     DESCRIPTION "Real-time telemetry dashboard for ESP32/ESP-NOW robots"
     LANGUAGES CXX
 )
@@ -21,7 +21,7 @@ endif()
 option(TRACEVIEW_BUILD_TESTS "Build the Qt Test suite under tests/" ON)
 option(TRACEVIEW_BUILD_TOOLS "Build dev-only visual harnesses under tools/" ON)
 option(TRACEVIEW_FLATPAK_BUILD "Use Flatpak-managed application updates" OFF)
-option(TRACEVIEW_ENABLE_SERIAL "Build the QSerialPort transport" ON)
+option(TRACEVIEW_ENABLE_SERIAL "Build the serial transport (QSerialPort; USB Host API on Android)" ON)
 option(TRACEVIEW_ENABLE_USB_HID "Build the hidapi USB HID transport" ON)
 option(TRACEVIEW_ENABLE_TCP "Enable the TCP transport integration" OFF)
 option(TRACEVIEW_ENABLE_BLE "Enable the BLE transport integration" OFF)
@@ -77,7 +77,9 @@ endif()
 # resource (resources/icons/ui.qrc) rendered via QSvgRenderer and tinted to
 # the active theme color at runtime, instead of hand-drawn with QPainter.
 set(TRACEVIEW_QT_COMPONENTS Widgets Network Qml Svg LinguistTools)
-if(TRACEVIEW_ENABLE_SERIAL)
+# Android's serial transport goes through the USB Host API instead (see
+# lib/CMakeLists.txt) -- Qt ships no QSerialPort backend for it.
+if(TRACEVIEW_ENABLE_SERIAL AND NOT ANDROID)
     list(APPEND TRACEVIEW_QT_COMPONENTS SerialPort)
 endif()
 if(TRACEVIEW_ENABLE_BLE)
@@ -195,7 +197,7 @@ target_link_libraries(TraceView PRIVATE
     traceview_locale
 )
 
-if(TRACEVIEW_ENABLE_SERIAL)
+if(TRACEVIEW_ENABLE_SERIAL AND NOT ANDROID)
     target_link_libraries(TraceView PRIVATE Qt6::SerialPort)
 endif()
 

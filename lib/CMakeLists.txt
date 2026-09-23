@@ -583,11 +583,28 @@ set(TRACEVIEW_TRANSPORT_SOURCES
 # TRACEVIEW_ENABLE_USB_HID's own link guards further down) fails outright --
 # first surfaced building the android-arm64 preset, where neither module
 # exists for the target ABI at all.
+#
+# TRACEVIEW_ENABLE_SERIAL means "TransportType::Serial exists", not "uses
+# QSerialPort": Qt has no QSerialPort backend on Android, so there the same
+# SerialTransport interface (core/serialtransport.h) is implemented over the
+# Android USB Host API instead (core/androidusbserialtransport.cpp, talking
+# to android/src/.../UsbSerialBridge.java over JNI).
 if(TRACEVIEW_ENABLE_SERIAL)
     list(APPEND TRACEVIEW_TRANSPORT_SOURCES
-        core/serialmanager.cpp
-        core/serialmanager.h
+        core/serialtransport.cpp
+        core/serialtransport.h
     )
+    if(ANDROID)
+        list(APPEND TRACEVIEW_TRANSPORT_SOURCES
+            core/androidusbserialtransport.cpp
+            core/androidusbserialtransport.h
+        )
+    else()
+        list(APPEND TRACEVIEW_TRANSPORT_SOURCES
+            core/serialmanager.cpp
+            core/serialmanager.h
+        )
+    endif()
 endif()
 if(TRACEVIEW_ENABLE_USB_HID)
     list(APPEND TRACEVIEW_TRANSPORT_SOURCES
@@ -642,7 +659,7 @@ target_link_libraries(traceview_transport
         traceview_hexdump
 )
 
-if(TRACEVIEW_ENABLE_SERIAL)
+if(TRACEVIEW_ENABLE_SERIAL AND NOT ANDROID)
     target_link_libraries(traceview_transport PUBLIC Qt6::SerialPort)
 endif()
 if(TRACEVIEW_ENABLE_USB_HID)
@@ -768,6 +785,6 @@ target_link_libraries(traceview_ui
         traceview_applog
 )
 
-if(TRACEVIEW_ENABLE_SERIAL)
+if(TRACEVIEW_ENABLE_SERIAL AND NOT ANDROID)
     target_link_libraries(traceview_ui PUBLIC Qt6::SerialPort)
 endif()
