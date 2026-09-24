@@ -7,6 +7,14 @@ release flow.
 
 ## [Unreleased]
 
+## [4.6.2] - 2026-09-24
+
+### Changed
+
+- Release CI: the Android SDK install retries up to three times when a
+  download arrives corrupted, and the Linux jobs are listed last so the
+  Actions graph lines up.
+
 ## [4.6.1] - 2026-09-24
 
 ### Changed
