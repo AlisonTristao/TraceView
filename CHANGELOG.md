@@ -7,6 +7,20 @@ release flow.
 
 ## [Unreleased]
 
+## [4.6.1] - 2026-09-24
+
+### Changed
+
+- Dashboard cells and chart backgrounds have half the corner rounding (6px
+  instead of 12px).
+- Buttons no longer change color on hover, press or when checked. A toggle
+  shows its state through its icon or text, and the active workspace in the
+  bottom dock is marked by an accent-tinted icon.
+
+### Fixed
+
+- The chat's input row is centred again when no file is attached.
+
 ## [4.6.0] - 2026-09-24
 
 ### Added

@@ -1696,7 +1696,7 @@ void MainWindow::buildWorkspaceSwitcher() {
     connect(m_workspaceDock, &WorkspaceDock::renameRequested, this,
             &MainWindow::renameWorkspace);
     const ThemePalette& palette = ThemeManager::instance().currentTheme();
-    m_workspaceDock->updateIcons(palette.textPrimary, palette.background);
+    m_workspaceDock->updateIcons(palette.textPrimary, palette.accent);
     m_workspaceDock->setVisible(compactChromeActive());
     m_appShell->layout()->addWidget(m_workspaceDock);
 
@@ -1955,7 +1955,7 @@ void MainWindow::updateRibbonIcons() {
         makeFullscreenIcon(palette.textPrimary, m_fullscreenButton->isChecked()));
     if (m_workspaceSwitcher) {
         m_workspaceSwitcher->updateIcons(palette.textPrimary);
-        m_workspaceDock->updateIcons(palette.textPrimary, palette.background);
+        m_workspaceDock->updateIcons(palette.textPrimary, palette.accent);
     }
     m_optionsButton->setIcon(makeOptionsIcon(palette.textPrimary));
     updateEditModeIcon();
@@ -2187,11 +2187,9 @@ void MainWindow::applyBreakpointViewport() {
 void MainWindow::updateEditModeIcon() {
     const ThemePalette& palette = ThemeManager::instance().currentTheme();
     // Always textPrimary, like m_fullscreenButton's own icon (see
-    // makeFullscreenIcon's call site below) -- QToolButton:checked's QSS
-    // paints the button's background @accent@ (stylesheet.cpp), so drawing
-    // the glyph itself in palette.accent when checked (as this used to)
-    // made it disappear into its own background. On/off is conveyed by the
-    // padlock's shape (open/closed), not by recoloring it.
+    // makeFullscreenIcon's call site below). Buttons have no checked fill
+    // (stylesheet.cpp), so on/off is conveyed by the padlock's shape
+    // (open/closed), not by the background.
     m_editModeButton->setIcon(makeLockIcon(palette.textPrimary, !m_editModeEnabled));
     m_editModeButton->setToolTip(m_editModeEnabled
                                      ? tr("Disable editing — lock the dashboard layout")

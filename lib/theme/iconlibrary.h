@@ -44,10 +44,9 @@ public:
     // redrawing the same icon (theme refresh, picker scrolling) is cheap
     // while the picker's ~2000 glyphs can't pin memory forever.
     QIcon icon(const QString& id, const QColor& color, int size) const;
-    // Same, with a second color for QIcon::On -- a checkable button whose
-    // checked state paints an accent background (see stylesheet.cpp's
-    // QToolButton:checked rule) needs the glyph in the background color
-    // there to stay visible.
+    // Same, with a second color for QIcon::On -- buttons have no checked
+    // fill (see stylesheet.cpp), so a checkable button marks its active
+    // state by tinting the glyph (e.g. accent) instead.
     QIcon icon(const QString& id, const QColor& color, const QColor& checkedColor, int size) const;
 
 private:

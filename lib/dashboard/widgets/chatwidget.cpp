@@ -208,7 +208,10 @@ ChatWidget::ChatWidget(QWidget* parent) : DashboardWidget(parent), m_userName(tr
     m_removeAttachmentButton = makeIconButton(this, tr("Remove attachment"));
     connect(m_removeAttachmentButton, &QToolButton::clicked, this,
             [this] { setPendingAttachment({}); });
-    auto* chipRow = new QHBoxLayout;
+    // Its own widget so hiding it drops the row's margins too -- a bare
+    // layout keeps them and pushes the compose row off-centre.
+    m_attachmentRow = new QWidget(this);
+    auto* chipRow = new QHBoxLayout(m_attachmentRow);
     chipRow->setContentsMargins(kPadding, 4, 4, 0);
     chipRow->setSpacing(4);
     chipRow->addWidget(m_attachmentChip, 1);
@@ -235,7 +238,7 @@ ChatWidget::ChatWidget(QWidget* parent) : DashboardWidget(parent), m_userName(tr
     layout->setContentsMargins(0, 0, 0, 0);
     layout->setSpacing(0);
     layout->addWidget(m_feed, 1);
-    layout->addLayout(chipRow, 0);
+    layout->addWidget(m_attachmentRow, 0);
     layout->addLayout(composeRow, 0);
 
     connect(&ThemeManager::instance(), &ThemeManager::themeChanged, this,
@@ -338,8 +341,7 @@ void ChatWidget::pickAttachment() {
 void ChatWidget::setPendingAttachment(const QString& path) {
     m_pendingAttachment = path;
     const bool has = !path.isEmpty();
-    m_attachmentChip->setVisible(has);
-    m_removeAttachmentButton->setVisible(has);
+    m_attachmentRow->setVisible(has);
     if (has) {
         m_attachmentChip->setText(QFileInfo(path).fileName());
         m_attachmentChip->setToolTip(QDir::toNativeSeparators(path));

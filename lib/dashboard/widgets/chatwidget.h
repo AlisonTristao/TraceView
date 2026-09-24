@@ -59,6 +59,7 @@ private:
     QLineEdit* m_input = nullptr;
     QToolButton* m_attachButton = nullptr;
     QToolButton* m_sendButton = nullptr;
+    QWidget* m_attachmentRow = nullptr;
     QLabel* m_attachmentChip = nullptr;
     QToolButton* m_removeAttachmentButton = nullptr;
 

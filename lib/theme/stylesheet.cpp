@@ -174,41 +174,29 @@ QToolBar {
 QToolButton {
     background-color: transparent;
     color: @textPrimary@;
-    border: 1px solid transparent;
-    border-radius: 4px;
+    border: none;
     padding: 2px;
-    /* Kill the dotted focus rectangle Qt's native style draws around a
-       button's label after it's clicked -- it reads as a stray "selected
-       text" box. Buttons still show focus through hover/pressed fills.
-       Repeated on every pseudo-state below because the native style's
-       focus cue (and the QWidget-wide selection-background-color/
+    /* No frame and no hover/pressed/checked fill: the hit box stays, but a
+       button never lights up. A checkable button shows its state through
+       its glyph (open/closed padlock, enter/exit fullscreen, accent-tinted
+       workspace icon...), never through its background.
+       outline/selection kill the dotted focus rectangle Qt's native style
+       draws around a clicked button's label -- it reads as a stray
+       "selected text" box. Repeated on every pseudo-state below because the
+       native focus cue (and the QWidget-wide selection-background-color/
        selection-color further up) can otherwise show through once a more
        specific state selector is the one being matched. */
     outline: none;
     selection-background-color: transparent;
     selection-color: @textPrimary@;
 }
-QToolButton:hover {
-    background-color: @surfaceAlt@;
-    border-color: @border@;
+QToolButton:hover, QToolButton:pressed, QToolButton:checked {
+    background-color: transparent;
+    color: @textPrimary@;
+    border: none;
     outline: none;
-    selection-background-color: @surfaceAlt@;
+    selection-background-color: transparent;
     selection-color: @textPrimary@;
-}
-QToolButton:pressed {
-    background-color: @accentPressed@;
-    color: @background@;
-    outline: none;
-    selection-background-color: @accentPressed@;
-    selection-color: @background@;
-}
-QToolButton:checked {
-    background-color: @accent@;
-    color: @background@;
-    border-color: @accent@;
-    outline: none;
-    selection-background-color: @accent@;
-    selection-color: @background@;
 }
 QToolButton:disabled {
     color: @textDisabled@;
@@ -247,27 +235,16 @@ QPushButton {
     selection-background-color: @surface@;
     selection-color: @textPrimary@;
 }
-QPushButton:hover {
-    background-color: @surfaceAlt@;
-    border-color: @accentHover@;
+/* Same as QToolButton: the frame is static -- no hover/pressed/checked
+   recolor. A checkable push button conveys its state through its text
+   (Pause/Resume, ...). */
+QPushButton:hover, QPushButton:pressed, QPushButton:checked {
+    background-color: @surface@;
+    color: @textPrimary@;
+    border-color: @borderStrong@;
     outline: none;
-    selection-background-color: @surfaceAlt@;
+    selection-background-color: @surface@;
     selection-color: @textPrimary@;
-}
-QPushButton:pressed {
-    background-color: @accentPressed@;
-    color: @background@;
-    outline: none;
-    selection-background-color: @accentPressed@;
-    selection-color: @background@;
-}
-QPushButton:checked {
-    background-color: @accent@;
-    color: @background@;
-    border-color: @accent@;
-    outline: none;
-    selection-background-color: @accent@;
-    selection-color: @background@;
 }
 QPushButton:disabled {
     color: @textDisabled@;

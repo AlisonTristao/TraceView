@@ -13,7 +13,7 @@ namespace traceview {
 // stylesheet.cpp instead -- this constant is only for the two things named
 // above, which both need to land on the exact same curve or a straight
 // corner shows through/past the rounded one.
-constexpr qreal kContainerCornerRadius = 12.0;
+constexpr qreal kContainerCornerRadius = 6.0;
 
 // A rounded rect where any corner can be forced square instead. Built by
 // unioning a fully-rounded path with a square patch over each corner that

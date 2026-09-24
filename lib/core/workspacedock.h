@@ -36,8 +36,8 @@ public:
     // Same gate as WorkspaceSwitcher::setManagementEnabled(): switching is
     // always allowed, creating/deleting/re-iconing is Developer-only.
     void setManagementEnabled(bool enabled);
-    // `color` for idle glyphs, `checkedColor` for the active one (drawn on
-    // the accent fill of QToolButton:checked, see stylesheet.cpp).
+    // `color` for idle glyphs, `checkedColor` for the active one -- the dock
+    // has no checked fill (see stylesheet.cpp), so the tint marks it.
     void updateIcons(const QColor& color, const QColor& checkedColor);
 
 signals:

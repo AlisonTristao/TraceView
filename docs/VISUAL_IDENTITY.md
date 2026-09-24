@@ -9,12 +9,13 @@ needs to deviate, update this file in the same change.
 
 - **4px** for QSS-driven controls (buttons, inputs, combo boxes, checkboxes)
   — already the de facto value across `stylesheet.cpp`, kept as-is.
-- **12px** for large custom-painted containers: `DashboardCell`'s outer
+- **6px** for large custom-painted containers: `DashboardCell`'s outer
   border and the flat background rect drawn by `paintBackground()` in
   `chartwidgets.cpp` (line chart/bar chart/gauge). Larger than the control
   radius because these are bigger areas. Originally set to 6px in TAREFA 0;
   doubled to 12px on 2026-08-09 after seeing TAREFA 1 live — 6px read as
-  barely-rounded on cells this size.
+  barely-rounded on cells this size. Halved back to 6px on 2026-09-24:
+  12px read as too rounded.
 - Both radii must be applied with a `QPainterPath`, not `drawRoundedRect`
   on a plain fill, and the corners must line up: `DashboardCell`'s outline
   and the child `DashboardWidget`'s opaque background fill (`WA_StyledBackground`,
