@@ -573,7 +573,9 @@ jobs:
 
   publish:
     name: Publish release
-    needs: [windows-smoke, linux-smoke, linux-flatpak, android-smoke, macos-smoke]
+    # Linux last: its smoke is a 4-distro matrix, the widest node in the
+    # Actions graph, and anywhere else it bends the other platforms' lines.
+    needs: [windows-smoke, android-smoke, macos-smoke, linux-smoke, linux-flatpak]
     runs-on: ubuntu-24.04
     timeout-minutes: 15
 
