@@ -630,18 +630,29 @@ jobs:
       - name: Publish GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
+        # A re-pushed tag (git push --force) re-runs this workflow for a
+        # release that already exists -- replace its assets instead of
+        # failing on "a release with the same tag name already exists".
         run: |
-          gh release create "${{ github.ref_name }}" \
-            packages/windows-package/TraceView-*-windows-x64.exe \
-            packages/linux-package/TraceView-*-linux-x64.AppImage \
-            packages/linux-flatpak-package/TraceView-*-linux-x64.flatpak \
-            packages/android-package/TraceView-*-android-arm64.apk \
-            packages/macos-package/TraceView-*-macos-arm64.dmg \
-            SHA256SUMS.txt \
-            --repo "${{ github.repository }}" \
-            --title "TraceView ${{ github.ref_name }}" \
-            --generate-notes \
-            --prerelease
+          assets=(
+            packages/windows-package/TraceView-*-windows-x64.exe
+            packages/linux-package/TraceView-*-linux-x64.AppImage
+            packages/linux-flatpak-package/TraceView-*-linux-x64.flatpak
+            packages/android-package/TraceView-*-android-arm64.apk
+            packages/macos-package/TraceView-*-macos-arm64.dmg
+            SHA256SUMS.txt
+          )
+          if gh release view "${{ github.ref_name }}" --repo "${{ github.repository }}" >/dev/null 2>&1; then
+            gh release upload "${{ github.ref_name }}" "${assets[@]}" \
+              --repo "${{ github.repository }}" \
+              --clobber
+          else
+            gh release create "${{ github.ref_name }}" "${assets[@]}" \
+              --repo "${{ github.repository }}" \
+              --title "TraceView ${{ github.ref_name }}" \
+              --generate-notes \
+              --prerelease
+          fi
 
       # A tag in this same MAJOR.MINOR line (e.g. v2.5.4 superseding
       # v2.5.0-v2.5.3) means the older ones were patch-level fixes on top of

@@ -13,7 +13,8 @@ release flow.
 
 - Release CI: the Android SDK install retries up to three times when a
   download arrives corrupted, and the Linux jobs are listed last so the
-  Actions graph lines up.
+  Actions graph lines up. Re-pushing a release tag updates the existing
+  release's files instead of failing.
 
 ## [4.6.1] - 2026-09-24
 
