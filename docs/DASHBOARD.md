@@ -8,7 +8,7 @@ layout is resolution-independent and stays visually identical (relative to
 the canvas) across window resizes, with no clamping or reflow needed.
 `DashboardGrid` is the only place that converts those fractions to pixels
 (`itemRect()`); a per-breakpoint logical division count (`kGridSpecs` in
-dashboardgrid.cpp: 12 columns × 20 rows per screen on a phone, 24 × 30 on a
+dashboardgrid.cpp: 24 columns × 40 rows per screen on a phone, 48 × 60 on a
 tablet, 60 × 40 on a notebook) only drives grid-dot painting, drag/resize
 snap granularity and default/minimum widget sizes; it is not part of the
 persisted model. (Small/Medium `y`/`height` are in pages rather than 0-1 —

@@ -144,6 +144,44 @@
     </message>
 </context>
 <context>
+    <name>DashboardGallery</name>
+    <message>
+        <location filename="../lib/project/dashboardgallery.cpp" line="+92"/>
+        <source>The name can&apos;t be empty.</source>
+        <translation>名前を空にすることはできません。</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>The name can&apos;t start or end with a space or a dot.</source>
+        <translation>名前の先頭または末尾にスペースやドットは使用できません。</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>The name can&apos;t contain any of these characters: \ / : * ? &quot; &lt; &gt; |</source>
+        <translation>名前に次の文字は使用できません: \ / : * ? &quot; &lt; &gt; |</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>The name is too long (100 characters at most).</source>
+        <translation>名前が長すぎます (最大 100 文字)。</translation>
+    </message>
+    <message>
+        <location line="+17"/>
+        <source>A dashboard with that name already exists.</source>
+        <translation>その名前のダッシュボードは既に存在します。</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>Couldn&apos;t rename the dashboard file.</source>
+        <translation>ダッシュボードファイルの名前を変更できませんでした。</translation>
+    </message>
+    <message>
+        <location line="+14"/>
+        <source>Couldn&apos;t delete the dashboard file.</source>
+        <translation>ダッシュボードファイルを削除できませんでした。</translation>
+    </message>
+</context>
+<context>
     <name>Device</name>
     <message>
         <location filename="../lib/devices/device.h" line="+54"/>
@@ -208,7 +246,7 @@
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="+111"/>
+        <location filename="../lib/core/mainwindow.cpp" line="+119"/>
         <source>TraceView Project (*.tvproj)</source>
         <translation>TraceView プロジェクト (*.tvproj)</translation>
     </message>
@@ -389,7 +427,7 @@
         <translation>&lt;b&gt;JavaScript&lt;/b&gt;。このデバイスの実際のトラフィックに対してライブで実行されます。&lt;br&gt;&lt;br&gt;&lt;b&gt;トラフィックに反応するには次を定義します:&lt;/b&gt;&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;onTelemetry(sample)&lt;/code&gt; -- 他の場所 (例: ダッシュボードのチャート) で既に購読されているテレメトリ値ごとに呼ばれます。&lt;code&gt;sample&lt;/code&gt; は &lt;code&gt;topicId&lt;/code&gt;、&lt;code&gt;fieldId&lt;/code&gt;、&lt;code&gt;elementIndex&lt;/code&gt;、&lt;code&gt;value&lt;/code&gt;、&lt;code&gt;timestampUs&lt;/code&gt; を持ちます。&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;onTerminal(text)&lt;/code&gt; -- このデバイスのコンソール/シリアルチャンネルが返すテキストの断片ごとに呼ばれます。&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;onConnectionChange(connected)&lt;/code&gt; -- このデバイスが接続または切断したときに呼ばれます。&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;onStatus(text, severity)&lt;/code&gt; -- 単発のステータス更新 (セッション確立/失敗、購読拒否、sendCommand() の結果など) で呼ばれます -- ステータスバーに表示されるのと同じテキストです。&lt;code&gt;severity&lt;/code&gt; は &lt;code&gt;&quot;info&quot;&lt;/code&gt;、&lt;code&gt;&quot;success&quot;&lt;/code&gt;、&lt;code&gt;&quot;warning&quot;&lt;/code&gt;、&lt;code&gt;&quot;error&quot;&lt;/code&gt; のいずれかです。&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;onDeviceInfo(info)&lt;/code&gt; -- このデバイスが情報ブロック (ファームウェアバージョン、チップ、パーティションなど) を報告したときに呼ばれます。&lt;code&gt;info&lt;/code&gt; は &lt;code&gt;{key, label, value}&lt;/code&gt; の配列です。&lt;br&gt;&lt;br&gt;&lt;b&gt;いつでも呼び出せるもの:&lt;/b&gt;&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;device.log(text)&lt;/code&gt; -- 出力ペインに書き込みます。&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;device.sendCommand(text)&lt;/code&gt; -- このデバイスにコマンドを送信します。&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;device.sendTerminal(text)&lt;/code&gt; -- コンソールチャンネル経由でテキストを送信します。&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;device.setInterval(fn, ms)&lt;/code&gt; / &lt;code&gt;device.clearInterval(id)&lt;/code&gt; -- キャンセルされるまで &lt;code&gt;ms&lt;/code&gt; ミリ秒ごとに &lt;code&gt;fn&lt;/code&gt; を実行します。&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;device.setTimeout(fn, ms)&lt;/code&gt; / &lt;code&gt;device.clearTimeout(id)&lt;/code&gt; -- &lt;code&gt;ms&lt;/code&gt; ミリ秒後に &lt;code&gt;fn&lt;/code&gt; を 1 回実行します。</translation>
     </message>
     <message>
-        <location filename="../lib/updater/updatechecker.cpp" line="+49"/>
+        <location filename="../lib/updater/updatechecker.cpp" line="+52"/>
         <source>No published releases found.</source>
         <translation>公開済みのリリースが見つかりません。</translation>
     </message>
@@ -406,11 +444,12 @@
     <message>
         <location line="+21"/>
         <location line="+72"/>
+        <location line="+108"/>
         <source>Downloaded installer not found: %1</source>
         <translation>ダウンロードしたインストーラーが見つかりません: %1</translation>
     </message>
     <message>
-        <location line="-67"/>
+        <location line="-175"/>
         <location line="+30"/>
         <source>Couldn&apos;t start the Android package installer.</source>
         <translation>Android パッケージインストーラーを起動できませんでした。</translation>
@@ -449,6 +488,11 @@
         <location line="+35"/>
         <source>The update was installed, but relaunch failed. Close TraceView and open the AppImage again.</source>
         <translation>アップデートはインストールされましたが、再起動に失敗しました。TraceView を閉じて AppImage をもう一度開いてください。</translation>
+    </message>
+    <message>
+        <location line="+22"/>
+        <source>Couldn&apos;t open the downloaded disk image: %1</source>
+        <translation>ダウンロードしたディスクイメージを開けませんでした: %1</translation>
     </message>
     <message>
         <location line="+10"/>
@@ -636,12 +680,23 @@
         <translation>GitHub Releases の APK</translation>
     </message>
     <message>
+        <location line="+2"/>
+        <source>iOS build (sideloaded)</source>
+        <translation>iOS ビルド (サイドロード)</translation>
+    </message>
+    <message>
         <location line="+5"/>
+        <source>macOS disk image from GitHub Releases</source>
+        <translation>GitHub Releases の macOS ディスクイメージ</translation>
+    </message>
+    <message>
+        <location line="+7"/>
         <source>Windows installer from GitHub Releases</source>
         <translation>GitHub Releases の Windows インストーラー</translation>
     </message>
     <message>
-        <location line="+2"/>
+        <location line="-5"/>
+        <location line="+7"/>
         <location line="+5"/>
         <location line="+2"/>
         <source>Local build</source>
@@ -674,45 +729,79 @@
     </message>
 </context>
 <context>
+    <name>traceview::AndroidUsbSerialTransport</name>
+    <message>
+        <source>USB serial is not available on this device</source>
+        <translation type="vanished">このデバイスでは USB シリアルを使用できません</translation>
+    </message>
+    <message>
+        <source>USB permission was denied for %1; unplug and replug it to be asked again</source>
+        <translation type="vanished">%1 の USB アクセス許可が拒否されました。デバイスを抜き差しすると再度確認されます</translation>
+    </message>
+    <message>
+        <source>1200 baud resets the ESP32-S3 into its bootloader; using 115200</source>
+        <translation type="vanished">1200 baud では ESP32-S3 がブートローダーにリセットされるため、115200 を使用します</translation>
+    </message>
+</context>
+<context>
     <name>traceview::BleDiscoveryService</name>
     <message>
+        <location filename="../lib/core/blediscoveryservice.cpp" line="+44"/>
+        <source>Bluetooth permission denied. Allow TraceView to use Bluetooth in the system settings.</source>
+        <translation>Bluetooth の権限が拒否されました。システム設定で TraceView に Bluetooth の使用を許可してください。</translation>
+    </message>
+    <message>
+        <location line="+65"/>
         <source>BLE discovery failed</source>
-        <translation type="vanished">BLE の検出に失敗しました</translation>
+        <translation>BLE の検出に失敗しました</translation>
     </message>
 </context>
 <context>
     <name>traceview::BleTransport</name>
     <message>
+        <location filename="../lib/core/bletransport.cpp" line="+68"/>
+        <source>Bluetooth permission denied. Allow TraceView to use Bluetooth in the system settings.</source>
+        <translation>Bluetooth の権限が拒否されました。システム設定で TraceView に Bluetooth の使用を許可してください。</translation>
+    </message>
+    <message>
+        <location line="+21"/>
         <source>failed to create a BLE controller</source>
-        <translation type="vanished">BLE コントローラーを作成できませんでした</translation>
+        <translation>BLE コントローラーを作成できませんでした</translation>
     </message>
     <message>
+        <location line="+64"/>
         <source>BLE peripheral disconnected before HELLO</source>
-        <translation type="vanished">HELLO の前に BLE ペリフェラルが切断されました</translation>
+        <translation>HELLO の前に BLE ペリフェラルが切断されました</translation>
     </message>
     <message>
+        <location line="+16"/>
         <source>peripheral does not advertise the BTP service</source>
-        <translation type="vanished">ペリフェラルが BTP サービスをアドバタイズしていません</translation>
+        <translation>ペリフェラルが BTP サービスをアドバタイズしていません</translation>
     </message>
     <message>
+        <location line="+5"/>
         <source>failed to create BTP service object</source>
-        <translation type="vanished">BTP サービスオブジェクトを作成できませんでした</translation>
+        <translation>BTP サービスオブジェクトを作成できませんでした</translation>
     </message>
     <message>
+        <location line="+25"/>
         <source>BTP service is missing its RX/TX characteristics</source>
-        <translation type="vanished">BTP サービスに RX/TX キャラクタリスティックがありません</translation>
+        <translation>BTP サービスに RX/TX キャラクタリスティックがありません</translation>
     </message>
     <message>
+        <location line="+7"/>
         <source>TX characteristic has no notification descriptor</source>
-        <translation type="vanished">TX キャラクタリスティックに通知ディスクリプタがありません</translation>
+        <translation>TX キャラクタリスティックに通知ディスクリプタがありません</translation>
     </message>
     <message>
+        <location line="+13"/>
         <source>BLE service error</source>
-        <translation type="vanished">BLE サービスエラー</translation>
+        <translation>BLE サービスエラー</translation>
     </message>
     <message>
+        <location line="+47"/>
         <source>BLE connection timed out</source>
-        <translation type="vanished">BLE 接続がタイムアウトしました</translation>
+        <translation>BLE 接続がタイムアウトしました</translation>
     </message>
 </context>
 <context>
@@ -1284,9 +1373,95 @@
     </message>
 </context>
 <context>
+    <name>traceview::DashboardGalleryDialog</name>
+    <message>
+        <location filename="../lib/core/dashboardgallerydialog.cpp" line="+27"/>
+        <source>Dashboard Gallery</source>
+        <translation>ダッシュボードギャラリー</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Dashboards kept inside TraceView. The default one opens every time the app starts; with none chosen, the built-in example opens.</source>
+        <translation>TraceView 内に保存されたダッシュボードです。既定のものがアプリ起動時に毎回開きます。何も選択されていない場合は組み込みのサンプルが開きます。</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>Open</source>
+        <translation>開く</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Set as Default</source>
+        <translation>既定に設定</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Rename...</source>
+        <translation>名前の変更...</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Delete</source>
+        <translation>削除</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Export...</source>
+        <translation>エクスポート...</translation>
+    </message>
+    <message>
+        <location line="+39"/>
+        <source>%1 (default)</source>
+        <translation>%1 (既定)</translation>
+    </message>
+    <message>
+        <location line="+12"/>
+        <source>Built-in example</source>
+        <translation>組み込みのサンプル</translation>
+    </message>
+    <message>
+        <location line="+60"/>
+        <location line="+9"/>
+        <source>Rename Dashboard</source>
+        <translation>ダッシュボードの名前変更</translation>
+    </message>
+    <message>
+        <location line="-9"/>
+        <source>New name:</source>
+        <translation>新しい名前:</translation>
+    </message>
+    <message>
+        <location line="+25"/>
+        <location line="+8"/>
+        <source>Delete Dashboard</source>
+        <translation>ダッシュボードの削除</translation>
+    </message>
+    <message>
+        <location line="-7"/>
+        <source>Delete &quot;%1&quot; from the gallery? This can&apos;t be undone.</source>
+        <translation>&quot;%1&quot; をギャラリーから削除しますか? この操作は元に戻せません。</translation>
+    </message>
+    <message>
+        <location line="+26"/>
+        <location line="+10"/>
+        <source>Export Dashboard</source>
+        <translation>ダッシュボードのエクスポート</translation>
+    </message>
+    <message>
+        <location line="-9"/>
+        <source>TraceView Project (*.tvproj)</source>
+        <translation>TraceView プロジェクト (*.tvproj)</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>Couldn&apos;t write &quot;%1&quot;.</source>
+        <translation>&quot;%1&quot; に書き込めませんでした。</translation>
+    </message>
+</context>
+<context>
     <name>traceview::DashboardGrid</name>
     <message>
-        <location filename="../lib/dashboard/dashboardgrid.cpp" line="+496"/>
+        <location filename="../lib/dashboard/dashboardgrid.cpp" line="+517"/>
         <source>Bring to Front</source>
         <translation>最前面へ移動</translation>
     </message>
@@ -1631,12 +1806,12 @@
     </message>
     <message>
         <location line="+3"/>
-        <location line="+293"/>
+        <location line="+301"/>
         <source>e.g. robot1.local</source>
         <translation>例: robot1.local</translation>
     </message>
     <message>
-        <location line="-291"/>
+        <location line="-299"/>
         <source>Hostname or IP the OTA tab uses for this device&apos;s firmware upload. Left blank, the device is listed there but nothing can be polled or uploaded.</source>
         <translation>OTA タブがこのデバイスのファームウェアをアップロードする際に使うホスト名または IP。空欄の場合、デバイスは一覧に出ますが、問い合わせもアップロードもできません。</translation>
     </message>
@@ -1662,18 +1837,18 @@
     </message>
     <message>
         <location line="+25"/>
-        <location line="+253"/>
+        <location line="+261"/>
         <source>Connected</source>
         <translation>接続済み</translation>
     </message>
     <message>
-        <location line="-253"/>
-        <location line="+253"/>
+        <location line="-261"/>
+        <location line="+261"/>
         <source>Disconnected</source>
         <translation>切断されました</translation>
     </message>
     <message>
-        <location line="-250"/>
+        <location line="-258"/>
         <location line="+3"/>
         <source>(not connected yet)</source>
         <translation>(未接続)</translation>
@@ -1714,7 +1889,7 @@
         <translation>上記の設定を適用し、このダイアログを閉じずに今すぐ（再）接続します。</translation>
     </message>
     <message>
-        <location line="+130"/>
+        <location line="+138"/>
         <source>(none)</source>
         <translation>(なし)</translation>
     </message>
@@ -1739,7 +1914,7 @@
         <translation>デバイスの報告: %1</translation>
     </message>
     <message>
-        <location line="+24"/>
+        <location line="+41"/>
         <source>%1 (%2)</source>
         <translation>%1 (%2)</translation>
     </message>
@@ -1768,7 +1943,7 @@ RSSI: %2 dBm
 RTT: %3 ms</translation>
     </message>
     <message>
-        <location line="-303"/>
+        <location line="-328"/>
         <source>Reported by device</source>
         <translation>デバイスからの報告</translation>
     </message>
@@ -1776,7 +1951,7 @@ RTT: %3 ms</translation>
 <context>
     <name>traceview::DeviceConnection</name>
     <message>
-        <location filename="../lib/core/deviceconnection.cpp" line="+179"/>
+        <location filename="../lib/core/deviceconnection.cpp" line="+196"/>
         <source>transport rejected %1 bytes</source>
         <translation>トランスポートが %1 バイトを拒否しました</translation>
     </message>
@@ -2145,7 +2320,7 @@ RTT: %3 ms</translation>
         <translation>、</translation>
     </message>
     <message>
-        <location line="+402"/>
+        <location line="+413"/>
         <source>Pending</source>
         <translation>保留中</translation>
     </message>
@@ -2219,6 +2394,16 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+6"/>
+        <source>Add to &amp;Gallery...</source>
+        <translation>ギャラリーに追加(&amp;G)...</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Dashboard Gall&amp;ery...</source>
+        <translation>ダッシュボードギャラリー(&amp;E)...</translation>
+    </message>
+    <message>
+        <location line="+5"/>
         <source>Open &amp;Log Offline...</source>
         <translation>ログをオフラインで開く(&amp;L)...</translation>
     </message>
@@ -2253,7 +2438,7 @@ Drops: %2</source>
         <translation>パネル位置をリセット(&amp;R)</translation>
     </message>
     <message>
-        <location line="+6"/>
+        <location line="+7"/>
         <source>&amp;Theme</source>
         <translation>テーマ(&amp;T)</translation>
     </message>
@@ -2284,12 +2469,12 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+0"/>
-        <location line="+2867"/>
+        <location line="+2971"/>
         <source>Later</source>
         <translation>後で</translation>
     </message>
     <message>
-        <location line="-2860"/>
+        <location line="-2964"/>
         <source>&amp;Access</source>
         <translation>アクセス(&amp;A)</translation>
     </message>
@@ -2355,7 +2540,7 @@ Drops: %2</source>
         <translation>開発者モードに入る(&amp;E)...</translation>
     </message>
     <message>
-        <location line="+179"/>
+        <location line="+180"/>
         <source>Add</source>
         <translation>追加</translation>
     </message>
@@ -2406,18 +2591,18 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+18"/>
-        <location line="+2268"/>
+        <location line="+2371"/>
         <source>Undo</source>
         <translation>元に戻す</translation>
     </message>
     <message>
-        <location line="-2266"/>
-        <location line="+2266"/>
+        <location line="-2369"/>
+        <location line="+2369"/>
         <source>Redo</source>
         <translation>やり直し</translation>
     </message>
     <message>
-        <location line="-2225"/>
+        <location line="-2328"/>
         <source>Add Device</source>
         <translation>デバイスを追加</translation>
     </message>
@@ -2453,12 +2638,12 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+29"/>
-        <location line="+2170"/>
+        <location line="+2273"/>
         <source>Fullscreen dashboard (F11)</source>
         <translation>ダッシュボードを全画面表示(F11)</translation>
     </message>
     <message>
-        <location line="-1990"/>
+        <location line="-2093"/>
         <source>Rename Workspace</source>
         <translation>ワークスペースの名前を変更</translation>
     </message>
@@ -2468,7 +2653,56 @@ Drops: %2</source>
         <translation>ワークスペース「%1」の名前を「%2」に変更しました。</translation>
     </message>
     <message>
-        <location line="+2019"/>
+        <location line="+1551"/>
+        <location line="+8"/>
+        <location line="+5"/>
+        <location line="+8"/>
+        <location line="+11"/>
+        <source>Add to Gallery</source>
+        <translation>ギャラリーに追加</translation>
+    </message>
+    <message>
+        <location line="-32"/>
+        <source>Dashboard name:</source>
+        <translation>ダッシュボード名:</translation>
+    </message>
+    <message>
+        <location line="+14"/>
+        <source>The gallery already has a dashboard named &quot;%1&quot;. Replace it?</source>
+        <translation>ギャラリーには既に &quot;%1&quot; という名前のダッシュボードがあります。置き換えますか?</translation>
+    </message>
+    <message>
+        <location line="+15"/>
+        <source>Added &quot;%1&quot; to the gallery -- it now opens at startup.</source>
+        <translation>&quot;%1&quot; をギャラリーに追加しました -- 起動時に開くようになりました。</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Open &quot;%1&quot; every time TraceView starts, instead of &quot;%2&quot;?</source>
+        <translation>TraceView の起動時に &quot;%2&quot; の代わりに &quot;%1&quot; を毎回開きますか?</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Set as Default</source>
+        <translation>既定に設定</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Not Now</source>
+        <translation>後で</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>&quot;%1&quot; now opens at startup.</source>
+        <translation>&quot;%1&quot; が起動時に開くようになりました。</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Saved &quot;%1&quot; to the gallery.</source>
+        <translation>&quot;%1&quot; をギャラリーに保存しました。</translation>
+    </message>
+    <message>
+        <location line="+532"/>
         <source>Update available: v%1</source>
         <translation>アップデートあり: v%1</translation>
     </message>
@@ -2541,13 +2775,13 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>アプリを閉じる</translation>
     </message>
     <message>
-        <location line="-2217"/>
-        <location line="+2018"/>
+        <location line="-2320"/>
+        <location line="+2121"/>
         <source>Devices</source>
         <translation>デバイス</translation>
     </message>
     <message>
-        <location line="-1943"/>
+        <location line="-2046"/>
         <source>Subscriptions</source>
         <translation>購読</translation>
     </message>
@@ -2589,23 +2823,23 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     </message>
     <message>
         <location line="+71"/>
-        <location line="+1728"/>
+        <location line="+1831"/>
         <source>Add widget</source>
         <translation>ウィジェットを追加</translation>
     </message>
     <message>
-        <location line="-1725"/>
+        <location line="-1828"/>
         <source>Remove selected widget (%1)</source>
         <translation>選択したウィジェットを削除(%1)</translation>
     </message>
     <message>
         <location line="+3"/>
-        <location line="+1735"/>
+        <location line="+1838"/>
         <source>Add device</source>
         <translation>デバイスを追加</translation>
     </message>
     <message>
-        <location line="-1732"/>
+        <location line="-1835"/>
         <source>Remove selected device (%1)</source>
         <translation>選択したデバイスを削除(%1)</translation>
     </message>
@@ -2670,7 +2904,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>画面サイズ: 大</translation>
     </message>
     <message>
-        <location line="+209"/>
+        <location line="+214"/>
         <source>Disable editing — lock the dashboard layout</source>
         <translation>編集を無効化 — ダッシュボードのレイアウトをロック</translation>
     </message>
@@ -2690,7 +2924,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>レイヤー/プロパティパネルを表示</translation>
     </message>
     <message>
-        <location line="+246"/>
+        <location line="+248"/>
         <source>New Device</source>
         <translation>新しいデバイス</translation>
     </message>
@@ -2716,12 +2950,12 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>(名前なし)</translation>
     </message>
     <message>
-        <location line="-1109"/>
+        <location line="-1116"/>
         <source>Dashboard</source>
         <translation>ダッシュボード</translation>
     </message>
     <message>
-        <location line="+1321"/>
+        <location line="+1328"/>
         <source>%1: this BLE address now answers as a different robot (expected %2, got %3)</source>
         <translation>%1: この BLE アドレスは別のロボットとして応答しています (期待値 %2、実際 %3)</translation>
     </message>
@@ -2746,8 +2980,8 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>新しいプロジェクトを開始しました。</translation>
     </message>
     <message>
+        <location line="+26"/>
         <location line="+16"/>
-        <location line="+19"/>
         <source>Save Project</source>
         <translation>プロジェクトを保存</translation>
     </message>
@@ -2758,12 +2992,12 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     </message>
     <message>
         <location line="+14"/>
-        <location line="+253"/>
+        <location line="+329"/>
         <source>Open Project</source>
         <translation>プロジェクトを開く</translation>
     </message>
     <message>
-        <location line="-244"/>
+        <location line="-243"/>
         <source>Open Log File</source>
         <translation>ログファイルを開く</translation>
     </message>
@@ -2784,7 +3018,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     </message>
     <message>
         <location line="+20"/>
-        <location line="+196"/>
+        <location line="+208"/>
         <source>Settings</source>
         <translation>設定</translation>
     </message>
@@ -3446,25 +3680,9 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     </message>
 </context>
 <context>
-    <name>traceview::AndroidUsbSerialTransport</name>
-    <message>
-        <location filename="../lib/core/androidusbserialtransport.cpp" line="+0"/>
-        <source>USB serial is not available on this device</source>
-        <translation>このデバイスでは USB シリアルを使用できません</translation>
-    </message>
-    <message>
-        <source>USB permission was denied for %1; unplug and replug it to be asked again</source>
-        <translation>%1 の USB アクセス許可が拒否されました。デバイスを抜き差しすると再度確認されます</translation>
-    </message>
-    <message>
-        <source>1200 baud resets the ESP32-S3 into its bootloader; using 115200</source>
-        <translation>1200 baud では ESP32-S3 がブートローダーにリセットされるため、115200 を使用します</translation>
-    </message>
-</context>
-<context>
     <name>traceview::SerialManager</name>
     <message>
-        <location filename="../lib/core/serialmanager.cpp" line="+58"/>
+        <location filename="../lib/core/serialmanager.cpp" line="+59"/>
         <source>1200 baud resets the ESP32-S3 into its bootloader; using 115200</source>
         <translation>1200 baud では ESP32-S3 がブートローダーにリセットされるため、115200 を使用します</translation>
     </message>
@@ -3538,44 +3756,44 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>設定</translation>
     </message>
     <message>
-        <location line="+33"/>
-        <location line="+42"/>
+        <location line="+35"/>
+        <location line="+44"/>
         <source>General</source>
         <translation>一般</translation>
     </message>
     <message>
-        <location line="-42"/>
-        <location line="+66"/>
+        <location line="-44"/>
+        <location line="+68"/>
         <source>Appearance</source>
         <translation>外観</translation>
     </message>
     <message>
-        <location line="-66"/>
-        <location line="+113"/>
+        <location line="-68"/>
+        <location line="+115"/>
         <source>Dashboard</source>
         <translation>ダッシュボード</translation>
     </message>
     <message>
-        <location line="-112"/>
-        <location line="+163"/>
+        <location line="-114"/>
+        <location line="+165"/>
         <source>Terminal</source>
         <translation>ターミナル</translation>
     </message>
     <message>
-        <location line="-163"/>
-        <location line="+190"/>
+        <location line="-165"/>
+        <location line="+192"/>
         <source>Connections</source>
         <translation>接続</translation>
     </message>
     <message>
-        <location line="-190"/>
-        <location line="+209"/>
+        <location line="-192"/>
+        <location line="+211"/>
         <source>Diagnostics</source>
         <translation>診断</translation>
     </message>
     <message>
-        <location line="-208"/>
-        <location line="+260"/>
+        <location line="-210"/>
+        <location line="+262"/>
         <location line="+5"/>
         <source>Updates</source>
         <translation>アップデート</translation>
@@ -3871,7 +4089,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>今すぐ再起動</translation>
     </message>
     <message>
-        <location line="+129"/>
+        <location line="+134"/>
         <source>Close and reopen TraceView to apply language or diagnostics history changes, or they will apply the next time you open it.</source>
         <translation>言語または診断履歴の変更を適用するには TraceView を閉じて再度開いてください。そうしない場合は次回起動時に適用されます。</translation>
     </message>

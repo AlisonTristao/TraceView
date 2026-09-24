@@ -259,6 +259,8 @@ target_link_libraries(traceview_protocol PUBLIC
 # traceview_project: .tvproj (de)serialization. No dependency on the UI or
 # dashboard layers.
 add_library(traceview_project STATIC
+    project/dashboardgallery.cpp
+    project/dashboardgallery.h
     project/projectstore.cpp
     project/projectstore.h
     project/workspacemanager.cpp
@@ -717,6 +719,8 @@ add_library(traceview_ui STATIC
     core/mainwindow.h
     core/manageusersdialog.cpp
     core/manageusersdialog.h
+    core/dashboardgallerydialog.cpp
+    core/dashboardgallerydialog.h
     core/settingspage.cpp
     core/settingspage.h
     core/paneldockcontroller.cpp

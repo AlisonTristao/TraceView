@@ -424,6 +424,11 @@ private:
     void onSaveProject();
     void onSaveProjectAs();
     void onOpenProject();
+    // File > Add to Gallery: stores the current dashboard as an in-app
+    // gallery entry (see project/dashboardgallery.h) and keeps it as the
+    // open project, so Save updates that entry from then on.
+    void onAddToGallery();
+    void onOpenGallery();
     void onOpenLogFile();
     // RibbonTabBar's "x" click (forwarded through Ribbon::tabCloseRequested)
     // on one of m_openLogTabs -- removes that tab and deletes its LogViewer.
@@ -482,6 +487,17 @@ private:
     // OtaTab has no undo stack of its own to push this onto.
     void onOtaPasswordCacheChanged(const QString& deviceId, const QString& password, bool cache);
     void openRecentFile(const QString& path);
+    // The load + refresh sequence behind openRecentFile(), without its error
+    // dialog or recent-files bookkeeping. False (ProjectStore::lastError()
+    // says why) leaves the current dashboard untouched.
+    bool loadProjectFile(const QString& path);
+    // Opens the gallery's default dashboard, falling back to the built-in
+    // example -- run once at startup, after the window is first shown so the
+    // breakpoint is picked against its real size.
+    void openStartupDashboard();
+    // Copies the live workspaces/devices state into ProjectStore's sections
+    // ahead of a save.
+    void syncProjectSections();
     void addRecentFile(const QString& path);
     void updateRecentFilesMenu();
     void onClearRecentFiles();

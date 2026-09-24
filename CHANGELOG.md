@@ -7,6 +7,28 @@ release flow.
 
 ## [Unreleased]
 
+## [4.5.0] - 2026-09-24
+
+### Added
+
+- TraceView opens with a dashboard at startup: the built-in example, or a
+  dashboard from the new in-app gallery. In Developer mode, **File ▸ Add to
+  Gallery** saves the current dashboard inside the app, and **File ▸ Dashboard
+  Gallery** opens, renames, deletes, exports or chooses the startup dashboard.
+- The built-in example has its own layout for phone, tablet and notebook
+  screens.
+
+### Changed
+
+- The phone and tablet dashboard grids are twice as fine: 24 columns on a
+  phone and 48 on a tablet. Widgets keep their size and position.
+
+### Fixed
+
+- Dragging or resizing a widget on a phone or tablet layout now lines it up
+  with the grid. Widgets from projects made before 4.4.0 could stay between
+  grid lines. Opening a project now moves them onto the nearest grid line.
+
 ## [4.4.0] - 2026-09-23
 
 ### Changed

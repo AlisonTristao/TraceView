@@ -3,6 +3,8 @@
         "devices": [
             {
                 "baudRate": 921600,
+                "bleAddress": "",
+                "blePeerUuid": "",
                 "cacheOtaPassword": false,
                 "cachePeerPassword": false,
                 "commType": 0,
@@ -14,11 +16,16 @@
                 "parentDeviceId": "",
                 "peerSourceId": 0,
                 "portName": "",
+                "script": "",
+                "tcpHost": "",
+                "tcpPort": 44300,
                 "transportType": 0,
                 "usbPath": ""
             },
             {
                 "baudRate": 921600,
+                "bleAddress": "",
+                "blePeerUuid": "",
                 "cacheOtaPassword": false,
                 "cachePeerPassword": false,
                 "commType": 0,
@@ -30,6 +37,9 @@
                 "parentDeviceId": "",
                 "peerSourceId": 0,
                 "portName": "",
+                "script": "",
+                "tcpHost": "",
+                "tcpPort": 44300,
                 "transportType": 0,
                 "usbPath": ""
             }
@@ -43,6 +53,11 @@
         "list": [
             {
                 "dashboard": {
+                    "breakpoint": "medium",
+                    "canvasHeightMultiplier": {
+                        "medium": 0,
+                        "small": 1.9
+                    },
                     "items": [
                         {
                             "config": {
@@ -83,14 +98,30 @@
                                 }
                             },
                             "groupId": "",
-                            "height": 0.5,
                             "id": "18ef7496-ac5f-4299-a1cb-237e172a00b5",
                             "key": "",
+                            "layouts": {
+                                "large": {
+                                    "height": 0.5,
+                                    "width": 0.6,
+                                    "x": 0,
+                                    "y": 0
+                                },
+                                "medium": {
+                                    "height": 0.5,
+                                    "width": 0.5208333333333334,
+                                    "x": 0,
+                                    "y": 0
+                                },
+                                "small": {
+                                    "height": 0.5,
+                                    "width": 1,
+                                    "x": 0,
+                                    "y": 0
+                                }
+                            },
                             "name": "",
-                            "type": "dummy_line",
-                            "width": 0.19999999999999996,
-                            "x": 0,
-                            "y": 0
+                            "type": "dummy_line"
                         },
                         {
                             "config": {
@@ -119,27 +150,59 @@
                                 "unit": ""
                             },
                             "groupId": "",
-                            "height": 0.5,
                             "id": "24f0c6d3-607f-4b1e-af1d-e0af44e78acb",
                             "key": "",
+                            "layouts": {
+                                "large": {
+                                    "height": 0.5,
+                                    "width": 0.2,
+                                    "x": 0.6,
+                                    "y": 0
+                                },
+                                "medium": {
+                                    "height": 0.5,
+                                    "width": 0.25,
+                                    "x": 0.5208333333333334,
+                                    "y": 0
+                                },
+                                "small": {
+                                    "height": 0.4,
+                                    "width": 0.5,
+                                    "x": 0,
+                                    "y": 1.5
+                                }
+                            },
                             "name": "",
-                            "type": "dummy_gauge",
-                            "width": 0.20000000000000004,
-                            "x": 0.5999999999999999,
-                            "y": 0
+                            "type": "dummy_gauge"
                         },
                         {
                             "config": {
                             },
                             "groupId": "",
-                            "height": 0.5,
                             "id": "8a9fa6ef-cedf-4f41-ac41-bf1bcac64a80",
                             "key": "",
+                            "layouts": {
+                                "large": {
+                                    "height": 0.5,
+                                    "width": 0.8,
+                                    "x": 0,
+                                    "y": 0.5
+                                },
+                                "medium": {
+                                    "height": 0.5,
+                                    "width": 0.75,
+                                    "x": 0,
+                                    "y": 0.5
+                                },
+                                "small": {
+                                    "height": 0.5,
+                                    "width": 1,
+                                    "x": 0,
+                                    "y": 0.5
+                                }
+                            },
                             "name": "",
-                            "type": "serial_monitor",
-                            "width": 0.85,
-                            "x": 0,
-                            "y": 0.5
+                            "type": "serial_monitor"
                         },
                         {
                             "config": {
@@ -153,14 +216,30 @@
                                 "onLabel": ""
                             },
                             "groupId": "",
-                            "height": 0.12499999999999997,
                             "id": "f57984e7-d848-47ae-91bf-1b86e41ec276",
                             "key": "",
+                            "layouts": {
+                                "large": {
+                                    "height": 0.125,
+                                    "width": 0.06666666666666665,
+                                    "x": 0.8,
+                                    "y": 0.5
+                                },
+                                "medium": {
+                                    "height": 0.1333333333333333,
+                                    "width": 0.08333333333333326,
+                                    "x": 0.75,
+                                    "y": 0.5
+                                },
+                                "small": {
+                                    "height": 0.175,
+                                    "width": 0.3333333333333333,
+                                    "x": 0,
+                                    "y": 1
+                                }
+                            },
                             "name": "",
-                            "type": "toggle_switch",
-                            "width": 0.04999999999999998,
-                            "x": 0.8499999999999999,
-                            "y": 0.5
+                            "type": "toggle_switch"
                         },
                         {
                             "config": {
@@ -174,40 +253,30 @@
                                 "onLabel": ""
                             },
                             "groupId": "",
-                            "height": 0.12499999999999997,
                             "id": "b7659272-2505-4327-8a5c-1ead3faa254b",
                             "key": "",
-                            "name": "",
-                            "type": "toggle_switch",
-                            "width": 0.04999999999999998,
-                            "x": 0.9,
-                            "y": 0.5
-                        },
-                        {
-                            "config": {
+                            "layouts": {
+                                "large": {
+                                    "height": 0.125,
+                                    "width": 0.06666666666666665,
+                                    "x": 0.8666666666666667,
+                                    "y": 0.5
+                                },
+                                "medium": {
+                                    "height": 0.13333333333333341,
+                                    "width": 0.08333333333333326,
+                                    "x": 0.8333333333333334,
+                                    "y": 0.5
+                                },
+                                "small": {
+                                    "height": 0.175,
+                                    "width": 0.3333333333333333,
+                                    "x": 0.3333333333333333,
+                                    "y": 1
+                                }
                             },
-                            "groupId": "",
-                            "height": 0.125,
-                            "id": "61fa2fb4-aeb7-45fe-870f-848c00dec8c9",
-                            "key": "",
                             "name": "",
-                            "type": "push_button",
-                            "width": 0.15000000000000002,
-                            "x": 0.8499999999999999,
-                            "y": 0.75
-                        },
-                        {
-                            "config": {
-                            },
-                            "groupId": "",
-                            "height": 0.125,
-                            "id": "a59def95-6152-4b4e-9bf4-76fee5c0638d",
-                            "key": "",
-                            "name": "",
-                            "type": "push_button",
-                            "width": 0.15000000000000002,
-                            "x": 0.85,
-                            "y": 0.875
+                            "type": "toggle_switch"
                         },
                         {
                             "config": {
@@ -221,14 +290,30 @@
                                 "onLabel": ""
                             },
                             "groupId": "",
-                            "height": 0.12499999999999997,
                             "id": "3a43d433-ab4f-4891-8013-e65104e15faa",
                             "key": "",
+                            "layouts": {
+                                "large": {
+                                    "height": 0.125,
+                                    "width": 0.06666666666666665,
+                                    "x": 0.9333333333333333,
+                                    "y": 0.5
+                                },
+                                "medium": {
+                                    "height": 0.13333333333333341,
+                                    "width": 0.08333333333333337,
+                                    "x": 0.9166666666666666,
+                                    "y": 0.5
+                                },
+                                "small": {
+                                    "height": 0.175,
+                                    "width": 0.33333333333333337,
+                                    "x": 0.6666666666666666,
+                                    "y": 1
+                                }
+                            },
                             "name": "",
-                            "type": "toggle_switch",
-                            "width": 0.04999999999999998,
-                            "x": 0.95,
-                            "y": 0.5
+                            "type": "toggle_switch"
                         },
                         {
                             "config": {
@@ -242,14 +327,30 @@
                                 "onLabel": ""
                             },
                             "groupId": "",
-                            "height": 0.12499999999999997,
                             "id": "adc113b9-6986-4343-930a-ff46112e1559",
                             "key": "",
+                            "layouts": {
+                                "large": {
+                                    "height": 0.125,
+                                    "width": 0.06666666666666665,
+                                    "x": 0.8,
+                                    "y": 0.625
+                                },
+                                "medium": {
+                                    "height": 0.1333333333333333,
+                                    "width": 0.08333333333333326,
+                                    "x": 0.75,
+                                    "y": 0.6333333333333333
+                                },
+                                "small": {
+                                    "height": 0.175,
+                                    "width": 0.3333333333333333,
+                                    "x": 0,
+                                    "y": 1.175
+                                }
+                            },
                             "name": "",
-                            "type": "toggle_switch",
-                            "width": 0.04999999999999998,
-                            "x": 0.85,
-                            "y": 0.625
+                            "type": "toggle_switch"
                         },
                         {
                             "config": {
@@ -263,14 +364,30 @@
                                 "onLabel": ""
                             },
                             "groupId": "",
-                            "height": 0.12499999999999997,
                             "id": "b51b9d39-8546-4b7b-92e8-ff995b247330",
                             "key": "",
+                            "layouts": {
+                                "large": {
+                                    "height": 0.125,
+                                    "width": 0.06666666666666665,
+                                    "x": 0.8666666666666667,
+                                    "y": 0.625
+                                },
+                                "medium": {
+                                    "height": 0.1333333333333333,
+                                    "width": 0.08333333333333337,
+                                    "x": 0.8333333333333334,
+                                    "y": 0.6333333333333333
+                                },
+                                "small": {
+                                    "height": 0.175,
+                                    "width": 0.3333333333333333,
+                                    "x": 0.3333333333333333,
+                                    "y": 1.175
+                                }
+                            },
                             "name": "",
-                            "type": "toggle_switch",
-                            "width": 0.04999999999999998,
-                            "x": 0.8999999999999999,
-                            "y": 0.625
+                            "type": "toggle_switch"
                         },
                         {
                             "config": {
@@ -284,14 +401,30 @@
                                 "onLabel": ""
                             },
                             "groupId": "",
-                            "height": 0.12499999999999997,
                             "id": "c3979cf6-d2ec-42c2-9c8a-137fcd9f4b69",
                             "key": "",
+                            "layouts": {
+                                "large": {
+                                    "height": 0.125,
+                                    "width": 0.06666666666666665,
+                                    "x": 0.9333333333333333,
+                                    "y": 0.625
+                                },
+                                "medium": {
+                                    "height": 0.1333333333333333,
+                                    "width": 0.08333333333333337,
+                                    "x": 0.9166666666666666,
+                                    "y": 0.6333333333333333
+                                },
+                                "small": {
+                                    "height": 0.175,
+                                    "width": 0.33333333333333337,
+                                    "x": 0.6666666666666666,
+                                    "y": 1.175
+                                }
+                            },
                             "name": "",
-                            "type": "toggle_switch",
-                            "width": 0.04999999999999998,
-                            "x": 0.95,
-                            "y": 0.625
+                            "type": "toggle_switch"
                         },
                         {
                             "config": {
@@ -320,184 +453,138 @@
                                 "unit": ""
                             },
                             "groupId": "",
-                            "height": 0.5,
                             "id": "eb9cac34-f8d0-4a60-8daa-349be3a55326",
                             "key": "",
+                            "layouts": {
+                                "large": {
+                                    "height": 0.5,
+                                    "width": 0.2,
+                                    "x": 0.8,
+                                    "y": 0
+                                },
+                                "medium": {
+                                    "height": 0.5,
+                                    "width": 0.22916666666666663,
+                                    "x": 0.7708333333333334,
+                                    "y": 0
+                                },
+                                "small": {
+                                    "height": 0.4,
+                                    "width": 0.5,
+                                    "x": 0.5,
+                                    "y": 1.5
+                                }
+                            },
                             "name": "",
-                            "type": "dummy_gauge",
-                            "width": 0.20000000000000004,
-                            "x": 0.7999999999999999,
-                            "y": 0
+                            "type": "dummy_gauge"
                         },
                         {
                             "config": {
-                                "deviceId": "",
-                                "series": [
-                                    {
-                                        "color": "#2e6fe0",
-                                        "fieldId": 1,
-                                        "name": "Series 1",
-                                        "style": "solid"
-                                    },
-                                    {
-                                        "color": "#0a0f1e",
-                                        "fieldId": 2,
-                                        "name": "Series 2",
-                                        "style": "solid"
-                                    },
-                                    {
-                                        "color": "#b9821f",
-                                        "fieldId": 3,
-                                        "name": "Series 3",
-                                        "style": "solid"
-                                    }
-                                ],
-                                "sourceId": "0",
-                                "topicId": "0",
-                                "xAxis": {
-                                    "limit": 500,
-                                    "mode": "samples",
-                                    "sampleTimeMs": 100
-                                },
-                                "yAxis": {
-                                    "grid": true,
-                                    "max": 100,
-                                    "min": 0,
-                                    "mode": "fixed",
-                                    "unit": ""
-                                }
                             },
                             "groupId": "",
-                            "height": 0.25,
-                            "id": "77d1d96e-fefb-4d0e-991d-5514c5f7196a",
+                            "id": "91525ee1-2f18-4767-a88a-dc9ed97f280e",
                             "key": "",
+                            "layouts": {
+                                "large": {
+                                    "height": 0.125,
+                                    "width": 0.19999999999999996,
+                                    "x": 0.8,
+                                    "y": 0.75
+                                },
+                                "medium": {
+                                    "height": 0.11666666666666659,
+                                    "width": 0.25,
+                                    "x": 0.75,
+                                    "y": 0.7666666666666667
+                                },
+                                "small": {
+                                    "height": 0.15,
+                                    "width": 0.5,
+                                    "x": 0,
+                                    "y": 1.35
+                                }
+                            },
                             "name": "",
-                            "type": "dummy_line",
-                            "width": 0.19999999999999996,
-                            "x": 0.19999999999999996,
-                            "y": 0
+                            "type": "push_button"
                         },
                         {
                             "config": {
-                                "deviceId": "",
-                                "series": [
-                                    {
-                                        "color": "#2e6fe0",
-                                        "fieldId": 1,
-                                        "name": "Series 1",
-                                        "style": "solid"
-                                    },
-                                    {
-                                        "color": "#0a0f1e",
-                                        "fieldId": 2,
-                                        "name": "Series 2",
-                                        "style": "solid"
-                                    },
-                                    {
-                                        "color": "#b9821f",
-                                        "fieldId": 3,
-                                        "name": "Series 3",
-                                        "style": "solid"
-                                    }
-                                ],
-                                "sourceId": "0",
-                                "topicId": "0",
-                                "xAxis": {
-                                    "limit": 500,
-                                    "mode": "samples",
-                                    "sampleTimeMs": 100
-                                },
-                                "yAxis": {
-                                    "grid": true,
-                                    "max": 100,
-                                    "min": 0,
-                                    "mode": "fixed",
-                                    "unit": ""
-                                }
                             },
                             "groupId": "",
-                            "height": 0.25,
-                            "id": "283b8312-a8a5-4fdf-9732-8e91137bd744",
+                            "id": "5c5941e7-3419-4d43-a98e-cb78b0e93b59",
                             "key": "",
-                            "name": "",
-                            "type": "dummy_line",
-                            "width": 0.19999999999999996,
-                            "x": 0.19999999999999996,
-                            "y": 0.25
-                        },
-                        {
-                            "config": {
-                                "deviceId": "",
-                                "series": [
-                                    {
-                                        "color": "#2e6fe0",
-                                        "fieldId": 1,
-                                        "name": "Series 1",
-                                        "style": "solid"
-                                    },
-                                    {
-                                        "color": "#0a0f1e",
-                                        "fieldId": 2,
-                                        "name": "Series 2",
-                                        "style": "solid"
-                                    },
-                                    {
-                                        "color": "#b9821f",
-                                        "fieldId": 3,
-                                        "name": "Series 3",
-                                        "style": "solid"
-                                    }
-                                ],
-                                "sourceId": "0",
-                                "topicId": "0",
-                                "xAxis": {
-                                    "limit": 500,
-                                    "mode": "time",
-                                    "sampleTimeMs": 100
+                            "layouts": {
+                                "large": {
+                                    "height": 0.125,
+                                    "width": 0.19999999999999996,
+                                    "x": 0.8,
+                                    "y": 0.875
                                 },
-                                "yAxis": {
-                                    "grid": true,
-                                    "max": 100,
-                                    "min": 0,
-                                    "mode": "auto",
-                                    "unit": ""
+                                "medium": {
+                                    "height": 0.1166666666666667,
+                                    "width": 0.25,
+                                    "x": 0.75,
+                                    "y": 0.8833333333333333
+                                },
+                                "small": {
+                                    "height": 0.15,
+                                    "width": 0.5,
+                                    "x": 0.5,
+                                    "y": 1.35
                                 }
                             },
-                            "groupId": "",
-                            "height": 0.5,
-                            "id": "5f11a1ee-1c3b-4460-b90b-599f35b9a828",
-                            "key": "",
                             "name": "",
-                            "type": "dummy_bar",
-                            "width": 0.2,
-                            "x": 0.4,
-                            "y": 0
+                            "type": "push_button"
                         }
-                    ]
+                    ],
+                    "verticalUnit": "page"
                 },
                 "id": "acd551e3-b8e3-46b8-a0be-b4ea1ea228ae",
                 "name": "Default"
             },
             {
                 "dashboard": {
+                    "breakpoint": "small",
+                    "canvasHeightMultiplier": {
+                        "medium": 0,
+                        "small": 0
+                    },
                     "items": [
                         {
                             "config": {
                             },
                             "groupId": "",
-                            "height": 1,
                             "id": "9a99a6aa-e900-4385-8499-f4983b915e7c",
                             "key": "",
+                            "layouts": {
+                                "large": {
+                                    "height": 1,
+                                    "width": 1,
+                                    "x": 0,
+                                    "y": 0
+                                },
+                                "medium": {
+                                    "height": 1,
+                                    "width": 1,
+                                    "x": 0,
+                                    "y": 0
+                                },
+                                "small": {
+                                    "height": 1,
+                                    "width": 1,
+                                    "x": 0,
+                                    "y": 0
+                                }
+                            },
                             "name": "",
-                            "type": "serial_monitor",
-                            "width": 1,
-                            "x": 0,
-                            "y": 0
+                            "type": "serial_monitor"
                         }
-                    ]
+                    ],
+                    "verticalUnit": "page"
                 },
+                "icon": "lucide:square-terminal",
                 "id": "8d1b7188-00b8-4b70-bcae-e83a187cb047",
-                "name": "Workspace"
+                "name": "Serial_Monitor"
             }
         ]
     }

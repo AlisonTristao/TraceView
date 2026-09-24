@@ -1,0 +1,5 @@
+<RCC>
+  <qresource prefix="/">
+    <file alias="projects/example.tvproj">../../example.tvproj</file>
+  </qresource>
+</RCC>

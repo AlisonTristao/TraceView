@@ -83,6 +83,7 @@ private slots:
     void toJsonFromJsonRoundTripsActiveBreakpoint();
     void growShrinkCanvasHeightAffectsOnlySmallMedium();
     void toJsonFromJsonRoundTripsCanvasHeightMultiplier();
+    void fromJsonSnapsOffGridItemsToTheirGrid();
     void dragMovesAndSnapsToNearestGridCell();
     void dragOntoAnotherItemIsNowAllowed();
     void resizeChangesGeometryWithUndo();
@@ -417,6 +418,38 @@ void TestDashboardGrid::toJsonFromJsonRoundTripsCanvasHeightMultiplier() {
     legacyJson.remove("canvasHeightMultiplier");
     legacyTarget.fromJson(legacyJson);
     QCOMPARE(legacyTarget.sizeHint(), QSize(320, 240));
+}
+
+void TestDashboardGrid::fromJsonSnapsOffGridItemsToTheirGrid() {
+    DashboardGrid grid;
+    grid.addItem("dummy_line");
+    QJsonObject json = grid.toJson();
+    QJsonArray items = json.value("items").toArray();
+    QJsonObject item = items.at(0).toObject();
+    QJsonObject layouts = item.value("layouts").toObject();
+    const QJsonObject large = layouts.value("large").toObject();
+    // Between the phone grid's lines (24 columns x 40 rows per page), as a
+    // layout from the older 12x20 phone grid rescaled by hand could be.
+    QJsonObject small;
+    small["x"] = 2.4 / 24.0;
+    small["y"] = 13.2 / 40.0;
+    small["width"] = 11.04 / 24.0;
+    small["height"] = 8.0 / 40.0;
+    layouts["small"] = small;
+    item["layouts"] = layouts;
+    items[0] = item;
+    json["items"] = items;
+
+    grid.fromJson(json);
+    const QJsonObject loaded =
+        grid.toJson().value("items").toArray().at(0).toObject().value("layouts").toObject();
+    const QJsonObject snapped = loaded.value("small").toObject();
+    QCOMPARE(snapped.value("x").toDouble(), 2.0 / 24.0);
+    QCOMPARE(snapped.value("y").toDouble(), 13.0 / 40.0);
+    QCOMPARE(snapped.value("width").toDouble(), 11.0 / 24.0);
+    QCOMPARE(snapped.value("height").toDouble(), 8.0 / 40.0);
+    // Already on its own grid -- untouched.
+    QCOMPARE(loaded.value("large").toObject(), large);
 }
 
 void TestDashboardGrid::dragMovesAndSnapsToNearestGridCell() {

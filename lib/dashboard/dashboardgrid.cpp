@@ -10,6 +10,7 @@
 #include <QPainter>
 #include <QRubberBand>
 #include <QUuid>
+#include <cmath>
 #include <limits>
 
 #include "dashboardcell.h"
@@ -44,9 +45,11 @@ constexpr const char* kClipboardMimeType = "application/x-traceview-dashboardite
 // item geometry directly. That's what keeps relayout() resize-safe: there is
 // no per-window column/row count to go stale and clamp items against.
 //
-// A phone/tablet gets far fewer, roughly square columns than a notebook's
-// 60 -- a 12-column phone grid is ~30px per cell, big enough to hit with a
-// finger, where 60 columns would be 6px slivers. rowsPerPage is how many
+// A phone/tablet gets fewer, roughly square columns than a notebook's 60 --
+// a 24-column phone grid is ~15px per cell, fine enough to line widgets up
+// without the 6px slivers 60 columns would give. Small/Medium are exactly
+// double their first (12x20 / 24x30) grids, so every position snapped on
+// those is still on a grid line here. rowsPerPage is how many
 // rows one viewport height holds; growing a Small/Medium canvas (see
 // growCanvasHeight()) adds more rows of that same size below.
 // "Header-less" kinds (DashboardWidget::wantsCellHeader() == false -- the
@@ -66,12 +69,17 @@ struct GridSpec {
     int defaultHeaderlessRows;
 };
 constexpr GridSpec kGridSpecs[kDashboardBreakpointCount] = {
-    /* Small  */ {12, 20, 2, 3, 1, 1, 12, 7, 4, 2},
-    /* Medium */ {24, 30, 3, 4, 1, 2, 12, 10, 6, 3},
+    /* Small  */ {24, 40, 4, 6, 2, 2, 24, 14, 8, 4},
+    /* Medium */ {48, 60, 6, 8, 2, 4, 24, 20, 12, 6},
     /* Large  */ {60, 40, 5, 5, 2, 2, 16, 12, 8, 6},
 };
 const GridSpec& gridSpec(DashboardBreakpoint breakpoint) {
     return kGridSpecs[size_t(breakpoint)];
+}
+// Nearest grid line to `value`, with `cells` lines per unit (columns per
+// canvas width, or rows per page).
+double snapToGrid(double value, int cells) {
+    return std::round(value * cells) / cells;
 }
 // Radius of the small dots painted at each grid node in edit mode (see
 // paintEvent()) — deliberately subtle, just a hint of the snap points.
@@ -839,6 +847,25 @@ void DashboardGrid::fromJson(const QJsonObject& object) {
             }
         }
     }
+    // Lines every item up with its breakpoint's grid. Layouts saved against
+    // an older, coarser mobile grid (or rescaled by the conversion above)
+    // otherwise sit between grid lines for good -- moves by at most half a
+    // cell, and is a no-op for anything already on the grid.
+    for (int i = 0; i < kDashboardBreakpointCount; ++i) {
+        const DashboardBreakpoint breakpoint = DashboardBreakpoint(i);
+        const GridSpec& spec = gridSpec(breakpoint);
+        const double pages = canvasPages(breakpoint);
+        for (DashboardItem& item : m_items) {
+            DashboardItem::Geometry& geometry = item.geometry(breakpoint);
+            geometry.width =
+                qBound(1.0 / spec.columns, snapToGrid(geometry.width, spec.columns), 1.0);
+            geometry.height = qBound(1.0 / spec.rowsPerPage,
+                                     snapToGrid(geometry.height, spec.rowsPerPage), pages);
+            geometry.x = qBound(0.0, snapToGrid(geometry.x, spec.columns), 1.0 - geometry.width);
+            geometry.y =
+                qBound(0.0, snapToGrid(geometry.y, spec.rowsPerPage), pages - geometry.height);
+        }
+    }
     updateGeometry();
     relayout();
     emit itemsChanged();
@@ -1281,10 +1308,17 @@ void DashboardGrid::handleDragMoved(const QString& itemId, const QPoint& globalP
     const GridSpec& spec = gridSpec(m_breakpoint);
     const double pages = canvasPages(m_breakpoint);
     const QPoint deltaPx = globalPos - m_drag->startGlobalPos;
-    const int deltaColumnCells = qRound(deltaPx.x() / double(area.width()) * spec.columns);
-    const int deltaRowCells = qRound(deltaPx.y() / double(area.height()) * totalRows());
-    double deltaX = deltaColumnCells / double(spec.columns);
-    double deltaY = deltaRowCells / double(spec.rowsPerPage);
+    // Snaps where the dragged item lands, not how far it moved: a delta of
+    // whole cells would carry an item that starts between grid lines (a
+    // layout from an older, coarser grid) along without ever lining it up.
+    // The rest of a multi/group drag follows by the same delta.
+    const DashboardItem::Geometry& primary =
+        m_drag->originals.value(itemId).geometry(m_breakpoint);
+    double deltaX =
+        snapToGrid(primary.x + deltaPx.x() / double(area.width()), spec.columns) - primary.x;
+    double deltaY = snapToGrid(primary.y + deltaPx.y() / (area.height() / pages),
+                               spec.rowsPerPage) -
+                    primary.y;
 
     // Clamp the delta itself (not each member's candidate independently) so
     // a multi/group drag stays rigid: every member keeps its exact pre-drag
@@ -1407,10 +1441,8 @@ void DashboardGrid::handleResizeMoved(const QString& itemId, const QPoint& globa
     const GridSpec& spec = gridSpec(m_breakpoint);
     const double pages = canvasPages(m_breakpoint);
     const QPoint deltaPx = globalPos - m_drag->startGlobalPos;
-    const int deltaColumnCells = qRound(deltaPx.x() / double(area.width()) * spec.columns);
-    const int deltaRowCells = qRound(deltaPx.y() / double(area.height()) * totalRows());
-    const double deltaWidth = deltaColumnCells / double(spec.columns);
-    const double deltaHeight = deltaRowCells / double(spec.rowsPerPage);
+    const double rawDeltaX = deltaPx.x() / double(area.width());
+    const double rawDeltaY = deltaPx.y() / (area.height() / pages);
 
     // Edges resize a single dimension while anchoring the opposite edge;
     // corners resize both. Left/top anchor the position too, since their
@@ -1438,23 +1470,31 @@ void DashboardGrid::handleResizeMoved(const QString& itemId, const QPoint& globa
     const double minHeight =
         (compact ? spec.minHeaderlessRows : spec.minRows) / double(spec.rowsPerPage);
 
+    // The moving edge snaps to the nearest grid line (same reasoning as
+    // handleDragMoved()); the opposite edge stays exactly where it was.
     if (resizesRight) {
-        candidateGeometry.width = qBound(minWidth, original.width + deltaWidth,
+        const double rightEdge =
+            snapToGrid(original.x + original.width + rawDeltaX, spec.columns);
+        candidateGeometry.width = qBound(minWidth, rightEdge - original.x,
                                          qMax(minWidth, 1.0 - candidateGeometry.x));
     } else if (resizesLeft) {
         const double rightEdge = original.x + original.width;
+        const double leftEdge = snapToGrid(original.x + rawDeltaX, spec.columns);
         candidateGeometry.width =
-            qBound(minWidth, original.width - deltaWidth, qMax(minWidth, rightEdge));
+            qBound(minWidth, rightEdge - leftEdge, qMax(minWidth, rightEdge));
         candidateGeometry.x = rightEdge - candidateGeometry.width;
     }
 
     if (resizesBottom) {
-        candidateGeometry.height = qBound(minHeight, original.height + deltaHeight,
+        const double bottomEdge =
+            snapToGrid(original.y + original.height + rawDeltaY, spec.rowsPerPage);
+        candidateGeometry.height = qBound(minHeight, bottomEdge - original.y,
                                           qMax(minHeight, pages - candidateGeometry.y));
     } else if (resizesTop) {
         const double bottomEdge = original.y + original.height;
+        const double topEdge = snapToGrid(original.y + rawDeltaY, spec.rowsPerPage);
         candidateGeometry.height =
-            qBound(minHeight, original.height - deltaHeight, qMax(minHeight, bottomEdge));
+            qBound(minHeight, bottomEdge - topEdge, qMax(minHeight, bottomEdge));
         candidateGeometry.y = bottomEdge - candidateGeometry.height;
     }
 

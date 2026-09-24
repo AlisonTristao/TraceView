@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.21)
 
 project(TraceView
-    VERSION 4.4.0
+    VERSION 4.5.0
     DESCRIPTION "Real-time telemetry dashboard for ESP32/ESP-NOW robots"
     LANGUAGES CXX
 )
@@ -192,6 +192,9 @@ qt_add_executable(TraceView
     resources/icons/lucide/lucide.qrc
     # Wordmark shown in User mode -- see lib/core/brandcornermark.h.
     resources/branding/branding.qrc
+    # The built-in example dashboard the app starts on until the gallery has
+    # a default of its own -- see lib/project/dashboardgallery.h.
+    resources/projects/projects.qrc
 )
 
 qt_add_translations(TraceView

@@ -68,10 +68,12 @@
 #include "layerspanel.h"
 #include "logindialog.h"
 #include "logs/logviewer.h"
+#include "dashboardgallerydialog.h"
 #include "manageusersdialog.h"
 #include "ota/otatab.h"
 #include "paneldockcontroller.h"
 #include "preferences/appsettings.h"
+#include "project/dashboardgallery.h"
 #include "project/projectstore.h"
 #include "project/workspacemanager.h"
 #include "propertiespanel.h"
@@ -620,6 +622,10 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     connect(m_hubPeerReconcileTimer, &QTimer::timeout, this,
             &MainWindow::reconcileHubChildPresence);
     m_hubPeerReconcileTimer->start();
+
+    // Queued, so it runs once the event loop starts -- after main() has
+    // shown the window (see openStartupDashboard()).
+    QTimer::singleShot(0, this, &MainWindow::openStartupDashboard);
 }
 
 MainWindow::~MainWindow() {
@@ -866,6 +872,14 @@ void MainWindow::buildMenus() {
     auto* saveAsAction = fileMenu->addAction(tr("Save Project &As..."));
     saveAsAction->setShortcut(QKeySequence::SaveAs);
     connect(saveAsAction, &QAction::triggered, this, &MainWindow::onSaveProjectAs);
+
+    fileMenu->addSeparator();
+
+    auto* addToGalleryAction = fileMenu->addAction(tr("Add to &Gallery..."));
+    connect(addToGalleryAction, &QAction::triggered, this, &MainWindow::onAddToGallery);
+
+    auto* galleryAction = fileMenu->addAction(tr("Dashboard Gall&ery..."));
+    connect(galleryAction, &QAction::triggered, this, &MainWindow::onOpenGallery);
 
     fileMenu->addSeparator();
 
@@ -3219,13 +3233,23 @@ void MainWindow::onNewProject() {
     postStatus(tr("Started a new project."), 3000);
 }
 
-void MainWindow::onSaveProject() {
+void MainWindow::syncProjectSections() {
     WorkspaceManager::instance().setDashboardFor(WorkspaceManager::instance().activeId(),
                                                  m_dashboardGrid->toJson());
     ProjectStore::instance().setSection("workspaces", WorkspaceManager::instance().toJson());
     ProjectStore::instance().setSection("devices", m_devicesGrid->toJson());
+}
 
-    QString path = ProjectStore::instance().currentPath();
+void MainWindow::onSaveProject() {
+    const QString path = ProjectStore::instance().currentPath();
+    // The built-in example is compiled in and can't be written -- saving it
+    // means keeping a copy in the gallery instead.
+    if (DashboardGallery::isBuiltInExample(path)) {
+        onAddToGallery();
+        return;
+    }
+
+    syncProjectSections();
     if (path.isEmpty()) {
         onSaveProjectAs();
         return;
@@ -3239,10 +3263,7 @@ void MainWindow::onSaveProject() {
 }
 
 void MainWindow::onSaveProjectAs() {
-    WorkspaceManager::instance().setDashboardFor(WorkspaceManager::instance().activeId(),
-                                                 m_dashboardGrid->toJson());
-    ProjectStore::instance().setSection("workspaces", WorkspaceManager::instance().toJson());
-    ProjectStore::instance().setSection("devices", m_devicesGrid->toJson());
+    syncProjectSections();
 
     const QString path =
         QFileDialog::getSaveFileName(this, tr("Save Project As"), QString(), kProjectFileFilter);
@@ -3264,6 +3285,83 @@ void MainWindow::onOpenProject() {
         return;
     }
     openRecentFile(path);
+}
+
+void MainWindow::onAddToGallery() {
+    // Suggest the entry already open, so re-adding it reads as an update.
+    const QString current = DashboardGallery::nameForPath(ProjectStore::instance().currentPath());
+    bool ok = false;
+    const QString name =
+        DialogPresenter::getText(this, tr("Add to Gallery"), tr("Dashboard name:"),
+                                 QLineEdit::Normal, current, &ok)
+            .trimmed();
+    if (!ok) {
+        return;
+    }
+    QString error;
+    if (!DashboardGallery::isValidName(name, &error)) {
+        DialogPresenter::warning(this, tr("Add to Gallery"), error);
+        return;
+    }
+    if (name != current && DashboardGallery::contains(name) &&
+        DialogPresenter::question(
+            this, tr("Add to Gallery"),
+            tr("The gallery already has a dashboard named \"%1\". Replace it?").arg(name)) !=
+            QMessageBox::Yes) {
+        return;
+    }
+
+    syncProjectSections();
+    if (!ProjectStore::instance().saveAs(DashboardGallery::pathFor(name))) {
+        DialogPresenter::warning(this, tr("Add to Gallery"), ProjectStore::instance().lastError());
+        return;
+    }
+
+    // The first entry ever added takes over from the built-in example
+    // straight away; after that, changing the default is an explicit choice.
+    if (!DashboardGallery::contains(DashboardGallery::defaultName())) {
+        DashboardGallery::setDefaultName(name);
+        postStatus(tr("Added \"%1\" to the gallery -- it now opens at startup.").arg(name), 5000);
+    } else if (DashboardGallery::defaultName() != name &&
+               DialogPresenter::confirm(
+                   this, tr("Add to Gallery"),
+                   tr("Open \"%1\" every time TraceView starts, instead of \"%2\"?")
+                       .arg(name, DashboardGallery::defaultName()),
+                   tr("Set as Default"), tr("Not Now"))) {
+        DashboardGallery::setDefaultName(name);
+        postStatus(tr("\"%1\" now opens at startup.").arg(name), 5000);
+    } else {
+        postStatus(tr("Saved \"%1\" to the gallery.").arg(name), 3000);
+    }
+}
+
+void MainWindow::onOpenGallery() {
+    DashboardGalleryDialog dialog(this);
+    QString toOpen;
+    connect(&dialog, &DashboardGalleryDialog::openRequested, this,
+            [&toOpen](const QString& path) { toOpen = path; });
+    DialogPresenter::exec(dialog, DialogPresenter::Style::Page);
+    // Opened only after the dialog is gone, so its own teardown doesn't
+    // race the dashboard rebuild.
+    if (!toOpen.isEmpty()) {
+        openRecentFile(toOpen);
+    }
+}
+
+void MainWindow::openStartupDashboard() {
+    const QString path = DashboardGallery::startupPath();
+    if (loadProjectFile(path)) {
+        return;
+    }
+    // A broken gallery entry must never leave the app on an empty screen --
+    // outside Developer mode there's no way to open anything else by hand.
+    qCWarning(lcApp) << "Startup dashboard" << path
+                     << "failed to load:" << ProjectStore::instance().lastError();
+    if (!DashboardGallery::isBuiltInExample(path) &&
+        !loadProjectFile(DashboardGallery::kBuiltInExamplePath)) {
+        qCWarning(lcApp) << "Built-in example failed to load:"
+                         << ProjectStore::instance().lastError();
+    }
 }
 
 void MainWindow::onOpenLogFile() {
@@ -3510,9 +3608,16 @@ void MainWindow::refreshOtaTabDevices() {
 }
 
 void MainWindow::openRecentFile(const QString& path) {
-    if (!ProjectStore::instance().load(path)) {
+    if (!loadProjectFile(path)) {
         DialogPresenter::warning(this, tr("Open Project"), ProjectStore::instance().lastError());
         return;
+    }
+    addRecentFile(path);
+}
+
+bool MainWindow::loadProjectFile(const QString& path) {
+    if (!ProjectStore::instance().load(path)) {
+        return false;
     }
 
     const QJsonObject workspacesSection = ProjectStore::instance().section("workspaces");
@@ -3544,10 +3649,16 @@ void MainWindow::openRecentFile(const QString& path) {
     refreshPropertiesPanel();
     refreshLayersPanel();
     refreshWorkspaceSwitcher();
-    addRecentFile(path);
+    return true;
 }
 
 void MainWindow::addRecentFile(const QString& path) {
+    // Gallery entries (and the built-in example) have their own window --
+    // Open Recent stays about files the developer picked on disk.
+    if (DashboardGallery::isBuiltInExample(path) ||
+        !DashboardGallery::nameForPath(path).isEmpty()) {
+        return;
+    }
     QSettings settings;
     QStringList files = settings.value(kRecentFilesSettingsKey).toStringList();
     files.removeAll(path);

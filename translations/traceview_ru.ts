@@ -144,6 +144,44 @@
     </message>
 </context>
 <context>
+    <name>DashboardGallery</name>
+    <message>
+        <location filename="../lib/project/dashboardgallery.cpp" line="+92"/>
+        <source>The name can&apos;t be empty.</source>
+        <translation>Имя не может быть пустым.</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>The name can&apos;t start or end with a space or a dot.</source>
+        <translation>Имя не может начинаться или заканчиваться пробелом или точкой.</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>The name can&apos;t contain any of these characters: \ / : * ? &quot; &lt; &gt; |</source>
+        <translation>Имя не может содержать эти символы: \ / : * ? &quot; &lt; &gt; |</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>The name is too long (100 characters at most).</source>
+        <translation>Имя слишком длинное (не более 100 символов).</translation>
+    </message>
+    <message>
+        <location line="+17"/>
+        <source>A dashboard with that name already exists.</source>
+        <translation>Дашборд с таким именем уже существует.</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>Couldn&apos;t rename the dashboard file.</source>
+        <translation>Не удалось переименовать файл дашборда.</translation>
+    </message>
+    <message>
+        <location line="+14"/>
+        <source>Couldn&apos;t delete the dashboard file.</source>
+        <translation>Не удалось удалить файл дашборда.</translation>
+    </message>
+</context>
+<context>
     <name>Device</name>
     <message>
         <location filename="../lib/devices/device.h" line="+54"/>
@@ -208,7 +246,7 @@
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="+111"/>
+        <location filename="../lib/core/mainwindow.cpp" line="+119"/>
         <source>TraceView Project (*.tvproj)</source>
         <translation>Проект TraceView (*.tvproj)</translation>
     </message>
@@ -389,7 +427,7 @@
         <translation>&lt;b&gt;JavaScript&lt;/b&gt;, выполняется в реальном времени на настоящем трафике этого устройства.&lt;br&gt;&lt;br&gt;&lt;b&gt;Определите, чтобы реагировать на трафик:&lt;/b&gt;&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;onTelemetry(sample)&lt;/code&gt; -- вызывается для значения телеметрии, на которое уже есть подписка в другом месте (например, график на Dashboard). &lt;code&gt;sample&lt;/code&gt; содержит &lt;code&gt;topicId&lt;/code&gt;, &lt;code&gt;fieldId&lt;/code&gt;, &lt;code&gt;elementIndex&lt;/code&gt;, &lt;code&gt;value&lt;/code&gt;, &lt;code&gt;timestampUs&lt;/code&gt;.&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;onTerminal(text)&lt;/code&gt; -- вызывается для каждого фрагмента текста, который возвращает консольный/последовательный канал этого устройства.&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;onConnectionChange(connected)&lt;/code&gt; -- вызывается при подключении или отключении этого устройства.&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;onStatus(text, severity)&lt;/code&gt; -- вызывается для разового обновления статуса (сессия установлена/не удалась, подписка отклонена, результат sendCommand(), ...) -- тот же текст, что показывает строка состояния. &lt;code&gt;severity&lt;/code&gt; — одно из &lt;code&gt;&quot;info&quot;&lt;/code&gt;, &lt;code&gt;&quot;success&quot;&lt;/code&gt;, &lt;code&gt;&quot;warning&quot;&lt;/code&gt;, &lt;code&gt;&quot;error&quot;&lt;/code&gt;.&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;onDeviceInfo(info)&lt;/code&gt; -- вызывается, когда устройство сообщает свой информационный блок (версия прошивки, чип, раздел, ...). &lt;code&gt;info&lt;/code&gt; — массив &lt;code&gt;{key, label, value}&lt;/code&gt;.&lt;br&gt;&lt;br&gt;&lt;b&gt;Можно вызывать в любой момент:&lt;/b&gt;&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;device.log(text)&lt;/code&gt; -- вывести в панель вывода.&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;device.sendCommand(text)&lt;/code&gt; -- отправить команду этому устройству.&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;device.sendTerminal(text)&lt;/code&gt; -- отправить текст по его консольному каналу.&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;device.setInterval(fn, ms)&lt;/code&gt; / &lt;code&gt;device.clearInterval(id)&lt;/code&gt; -- выполнять &lt;code&gt;fn&lt;/code&gt; каждые &lt;code&gt;ms&lt;/code&gt; миллисекунд до отмены.&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;device.setTimeout(fn, ms)&lt;/code&gt; / &lt;code&gt;device.clearTimeout(id)&lt;/code&gt; -- выполнить &lt;code&gt;fn&lt;/code&gt; один раз через &lt;code&gt;ms&lt;/code&gt; миллисекунд.</translation>
     </message>
     <message>
-        <location filename="../lib/updater/updatechecker.cpp" line="+49"/>
+        <location filename="../lib/updater/updatechecker.cpp" line="+52"/>
         <source>No published releases found.</source>
         <translation>Опубликованные версии не найдены.</translation>
     </message>
@@ -406,11 +444,12 @@
     <message>
         <location line="+21"/>
         <location line="+72"/>
+        <location line="+108"/>
         <source>Downloaded installer not found: %1</source>
         <translation>Загруженный установщик не найден: %1</translation>
     </message>
     <message>
-        <location line="-67"/>
+        <location line="-175"/>
         <location line="+30"/>
         <source>Couldn&apos;t start the Android package installer.</source>
         <translation>Не удалось запустить установщик пакетов Android.</translation>
@@ -449,6 +488,11 @@
         <location line="+35"/>
         <source>The update was installed, but relaunch failed. Close TraceView and open the AppImage again.</source>
         <translation>Обновление установлено, но перезапуск не удался. Закройте TraceView и снова откройте AppImage.</translation>
+    </message>
+    <message>
+        <location line="+22"/>
+        <source>Couldn&apos;t open the downloaded disk image: %1</source>
+        <translation>Не удалось открыть загруженный образ диска: %1</translation>
     </message>
     <message>
         <location line="+10"/>
@@ -636,12 +680,23 @@
         <translation>APK из GitHub Releases</translation>
     </message>
     <message>
+        <location line="+2"/>
+        <source>iOS build (sideloaded)</source>
+        <translation>Сборка iOS (sideload)</translation>
+    </message>
+    <message>
         <location line="+5"/>
+        <source>macOS disk image from GitHub Releases</source>
+        <translation>Образ диска macOS из GitHub Releases</translation>
+    </message>
+    <message>
+        <location line="+7"/>
         <source>Windows installer from GitHub Releases</source>
         <translation>Установщик Windows из GitHub Releases</translation>
     </message>
     <message>
-        <location line="+2"/>
+        <location line="-5"/>
+        <location line="+7"/>
         <location line="+5"/>
         <location line="+2"/>
         <source>Local build</source>
@@ -674,45 +729,79 @@
     </message>
 </context>
 <context>
+    <name>traceview::AndroidUsbSerialTransport</name>
+    <message>
+        <source>USB serial is not available on this device</source>
+        <translation type="vanished">USB-последовательный порт недоступен на этом устройстве</translation>
+    </message>
+    <message>
+        <source>USB permission was denied for %1; unplug and replug it to be asked again</source>
+        <translation type="vanished">Доступ к USB для %1 запрещён; отключите и снова подключите устройство, чтобы запрос появился снова</translation>
+    </message>
+    <message>
+        <source>1200 baud resets the ESP32-S3 into its bootloader; using 115200</source>
+        <translation type="vanished">1200 бод перезагружает ESP32-S3 в загрузчик; используется 115200</translation>
+    </message>
+</context>
+<context>
     <name>traceview::BleDiscoveryService</name>
     <message>
+        <location filename="../lib/core/blediscoveryservice.cpp" line="+44"/>
+        <source>Bluetooth permission denied. Allow TraceView to use Bluetooth in the system settings.</source>
+        <translation>Доступ к Bluetooth запрещён. Разрешите TraceView использовать Bluetooth в настройках системы.</translation>
+    </message>
+    <message>
+        <location line="+65"/>
         <source>BLE discovery failed</source>
-        <translation type="vanished">Ошибка поиска BLE</translation>
+        <translation>Ошибка поиска BLE</translation>
     </message>
 </context>
 <context>
     <name>traceview::BleTransport</name>
     <message>
+        <location filename="../lib/core/bletransport.cpp" line="+68"/>
+        <source>Bluetooth permission denied. Allow TraceView to use Bluetooth in the system settings.</source>
+        <translation>Доступ к Bluetooth запрещён. Разрешите TraceView использовать Bluetooth в настройках системы.</translation>
+    </message>
+    <message>
+        <location line="+21"/>
         <source>failed to create a BLE controller</source>
-        <translation type="vanished">не удалось создать контроллер BLE</translation>
+        <translation>не удалось создать контроллер BLE</translation>
     </message>
     <message>
+        <location line="+64"/>
         <source>BLE peripheral disconnected before HELLO</source>
-        <translation type="vanished">BLE-устройство отключилось до HELLO</translation>
+        <translation>BLE-устройство отключилось до HELLO</translation>
     </message>
     <message>
+        <location line="+16"/>
         <source>peripheral does not advertise the BTP service</source>
-        <translation type="vanished">устройство не объявляет службу BTP</translation>
+        <translation>устройство не объявляет службу BTP</translation>
     </message>
     <message>
+        <location line="+5"/>
         <source>failed to create BTP service object</source>
-        <translation type="vanished">не удалось создать объект службы BTP</translation>
+        <translation>не удалось создать объект службы BTP</translation>
     </message>
     <message>
+        <location line="+25"/>
         <source>BTP service is missing its RX/TX characteristics</source>
-        <translation type="vanished">у службы BTP нет характеристик RX/TX</translation>
+        <translation>у службы BTP нет характеристик RX/TX</translation>
     </message>
     <message>
+        <location line="+7"/>
         <source>TX characteristic has no notification descriptor</source>
-        <translation type="vanished">у характеристики TX нет дескриптора уведомлений</translation>
+        <translation>у характеристики TX нет дескриптора уведомлений</translation>
     </message>
     <message>
+        <location line="+13"/>
         <source>BLE service error</source>
-        <translation type="vanished">Ошибка службы BLE</translation>
+        <translation>Ошибка службы BLE</translation>
     </message>
     <message>
+        <location line="+47"/>
         <source>BLE connection timed out</source>
-        <translation type="vanished">Истекло время подключения BLE</translation>
+        <translation>Истекло время подключения BLE</translation>
     </message>
 </context>
 <context>
@@ -1284,9 +1373,95 @@
     </message>
 </context>
 <context>
+    <name>traceview::DashboardGalleryDialog</name>
+    <message>
+        <location filename="../lib/core/dashboardgallerydialog.cpp" line="+27"/>
+        <source>Dashboard Gallery</source>
+        <translation>Галерея дашбордов</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Dashboards kept inside TraceView. The default one opens every time the app starts; with none chosen, the built-in example opens.</source>
+        <translation>Дашборды, хранящиеся внутри TraceView. Дашборд по умолчанию открывается при каждом запуске приложения; если он не выбран, открывается встроенный пример.</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>Open</source>
+        <translation>Открыть</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Set as Default</source>
+        <translation>Сделать по умолчанию</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Rename...</source>
+        <translation>Переименовать...</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Delete</source>
+        <translation>Удалить</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Export...</source>
+        <translation>Экспорт...</translation>
+    </message>
+    <message>
+        <location line="+39"/>
+        <source>%1 (default)</source>
+        <translation>%1 (по умолчанию)</translation>
+    </message>
+    <message>
+        <location line="+12"/>
+        <source>Built-in example</source>
+        <translation>Встроенный пример</translation>
+    </message>
+    <message>
+        <location line="+60"/>
+        <location line="+9"/>
+        <source>Rename Dashboard</source>
+        <translation>Переименовать дашборд</translation>
+    </message>
+    <message>
+        <location line="-9"/>
+        <source>New name:</source>
+        <translation>Новое имя:</translation>
+    </message>
+    <message>
+        <location line="+25"/>
+        <location line="+8"/>
+        <source>Delete Dashboard</source>
+        <translation>Удалить дашборд</translation>
+    </message>
+    <message>
+        <location line="-7"/>
+        <source>Delete &quot;%1&quot; from the gallery? This can&apos;t be undone.</source>
+        <translation>Удалить &quot;%1&quot; из галереи? Это действие нельзя отменить.</translation>
+    </message>
+    <message>
+        <location line="+26"/>
+        <location line="+10"/>
+        <source>Export Dashboard</source>
+        <translation>Экспорт дашборда</translation>
+    </message>
+    <message>
+        <location line="-9"/>
+        <source>TraceView Project (*.tvproj)</source>
+        <translation>Проект TraceView (*.tvproj)</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>Couldn&apos;t write &quot;%1&quot;.</source>
+        <translation>Не удалось записать &quot;%1&quot;.</translation>
+    </message>
+</context>
+<context>
     <name>traceview::DashboardGrid</name>
     <message>
-        <location filename="../lib/dashboard/dashboardgrid.cpp" line="+496"/>
+        <location filename="../lib/dashboard/dashboardgrid.cpp" line="+517"/>
         <source>Bring to Front</source>
         <translation>На передний план</translation>
     </message>
@@ -1631,12 +1806,12 @@
     </message>
     <message>
         <location line="+3"/>
-        <location line="+293"/>
+        <location line="+301"/>
         <source>e.g. robot1.local</source>
         <translation>напр. robot1.local</translation>
     </message>
     <message>
-        <location line="-291"/>
+        <location line="-299"/>
         <source>Hostname or IP the OTA tab uses for this device&apos;s firmware upload. Left blank, the device is listed there but nothing can be polled or uploaded.</source>
         <translation>Имя хоста или IP, который вкладка OTA использует для загрузки прошивки этого устройства. Если пусто, устройство там перечислено, но опрашивать и загружать нечего.</translation>
     </message>
@@ -1662,18 +1837,18 @@
     </message>
     <message>
         <location line="+25"/>
-        <location line="+253"/>
+        <location line="+261"/>
         <source>Connected</source>
         <translation>Подключено</translation>
     </message>
     <message>
-        <location line="-253"/>
-        <location line="+253"/>
+        <location line="-261"/>
+        <location line="+261"/>
         <source>Disconnected</source>
         <translation>Отключено</translation>
     </message>
     <message>
-        <location line="-250"/>
+        <location line="-258"/>
         <location line="+3"/>
         <source>(not connected yet)</source>
         <translation>(ещё не подключено)</translation>
@@ -1714,7 +1889,7 @@
         <translation>Применить настройки выше и (пере)подключиться сейчас, не закрывая это окно.</translation>
     </message>
     <message>
-        <location line="+130"/>
+        <location line="+138"/>
         <source>(none)</source>
         <translation>(нет)</translation>
     </message>
@@ -1739,7 +1914,7 @@
         <translation>устройство сообщает: %1</translation>
     </message>
     <message>
-        <location line="+24"/>
+        <location line="+41"/>
         <source>%1 (%2)</source>
         <translation>%1 (%2)</translation>
     </message>
@@ -1768,7 +1943,7 @@ RSSI: %2 dBm
 RTT: %3 ms</translation>
     </message>
     <message>
-        <location line="-303"/>
+        <location line="-328"/>
         <source>Reported by device</source>
         <translation>Сообщено устройством</translation>
     </message>
@@ -1776,7 +1951,7 @@ RTT: %3 ms</translation>
 <context>
     <name>traceview::DeviceConnection</name>
     <message>
-        <location filename="../lib/core/deviceconnection.cpp" line="+179"/>
+        <location filename="../lib/core/deviceconnection.cpp" line="+196"/>
         <source>transport rejected %1 bytes</source>
         <translation>транспорт отклонил %1 байт</translation>
     </message>
@@ -2147,7 +2322,7 @@ RTT: %3 ms</translation>
         <translation>, </translation>
     </message>
     <message>
-        <location line="+402"/>
+        <location line="+413"/>
         <source>Pending</source>
         <translation>Ожидание</translation>
     </message>
@@ -2221,6 +2396,16 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+6"/>
+        <source>Add to &amp;Gallery...</source>
+        <translation>Добавить в галерею... (&amp;G)</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Dashboard Gall&amp;ery...</source>
+        <translation>Галерея дашбордов... (&amp;E)</translation>
+    </message>
+    <message>
+        <location line="+5"/>
         <source>Open &amp;Log Offline...</source>
         <translation>Открыть &amp;журнал офлайн...</translation>
     </message>
@@ -2255,7 +2440,7 @@ Drops: %2</source>
         <translation>Сбросить положение панелей (&amp;R)</translation>
     </message>
     <message>
-        <location line="+6"/>
+        <location line="+7"/>
         <source>&amp;Theme</source>
         <translation>Тема (&amp;T)</translation>
     </message>
@@ -2286,12 +2471,12 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+0"/>
-        <location line="+2867"/>
+        <location line="+2971"/>
         <source>Later</source>
         <translation>Позже</translation>
     </message>
     <message>
-        <location line="-2860"/>
+        <location line="-2964"/>
         <source>&amp;Access</source>
         <translation>Доступ (&amp;A)</translation>
     </message>
@@ -2357,7 +2542,7 @@ Drops: %2</source>
         <translation>Войти в режим разработчика (&amp;E)...</translation>
     </message>
     <message>
-        <location line="+179"/>
+        <location line="+180"/>
         <source>Add</source>
         <translation>Добавить</translation>
     </message>
@@ -2408,18 +2593,18 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+18"/>
-        <location line="+2268"/>
+        <location line="+2371"/>
         <source>Undo</source>
         <translation>Отменить</translation>
     </message>
     <message>
-        <location line="-2266"/>
-        <location line="+2266"/>
+        <location line="-2369"/>
+        <location line="+2369"/>
         <source>Redo</source>
         <translation>Повторить</translation>
     </message>
     <message>
-        <location line="-2225"/>
+        <location line="-2328"/>
         <source>Add Device</source>
         <translation>Добавить устройство</translation>
     </message>
@@ -2455,12 +2640,12 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+29"/>
-        <location line="+2170"/>
+        <location line="+2273"/>
         <source>Fullscreen dashboard (F11)</source>
         <translation>Панель в полноэкранном режиме (F11)</translation>
     </message>
     <message>
-        <location line="-1990"/>
+        <location line="-2093"/>
         <source>Rename Workspace</source>
         <translation>Переименовать рабочее пространство</translation>
     </message>
@@ -2470,7 +2655,56 @@ Drops: %2</source>
         <translation>Рабочее пространство «%1» переименовано в «%2».</translation>
     </message>
     <message>
-        <location line="+2019"/>
+        <location line="+1551"/>
+        <location line="+8"/>
+        <location line="+5"/>
+        <location line="+8"/>
+        <location line="+11"/>
+        <source>Add to Gallery</source>
+        <translation>Добавить в галерею</translation>
+    </message>
+    <message>
+        <location line="-32"/>
+        <source>Dashboard name:</source>
+        <translation>Имя дашборда:</translation>
+    </message>
+    <message>
+        <location line="+14"/>
+        <source>The gallery already has a dashboard named &quot;%1&quot;. Replace it?</source>
+        <translation>В галерее уже есть дашборд &quot;%1&quot;. Заменить его?</translation>
+    </message>
+    <message>
+        <location line="+15"/>
+        <source>Added &quot;%1&quot; to the gallery -- it now opens at startup.</source>
+        <translation>&quot;%1&quot; добавлен в галерею -- теперь он открывается при запуске.</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Open &quot;%1&quot; every time TraceView starts, instead of &quot;%2&quot;?</source>
+        <translation>Открывать &quot;%1&quot; при каждом запуске TraceView вместо &quot;%2&quot;?</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Set as Default</source>
+        <translation>Сделать по умолчанию</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Not Now</source>
+        <translation>Не сейчас</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>&quot;%1&quot; now opens at startup.</source>
+        <translation>&quot;%1&quot; теперь открывается при запуске.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Saved &quot;%1&quot; to the gallery.</source>
+        <translation>&quot;%1&quot; сохранён в галерее.</translation>
+    </message>
+    <message>
+        <location line="+532"/>
         <source>Update available: v%1</source>
         <translation>Доступно обновление: v%1</translation>
     </message>
@@ -2543,13 +2777,13 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>Закрыть приложение</translation>
     </message>
     <message>
-        <location line="-2217"/>
-        <location line="+2018"/>
+        <location line="-2320"/>
+        <location line="+2121"/>
         <source>Devices</source>
         <translation>Устройства</translation>
     </message>
     <message>
-        <location line="-1943"/>
+        <location line="-2046"/>
         <source>Subscriptions</source>
         <translation>Подписки</translation>
     </message>
@@ -2591,23 +2825,23 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     </message>
     <message>
         <location line="+71"/>
-        <location line="+1728"/>
+        <location line="+1831"/>
         <source>Add widget</source>
         <translation>Добавить виджет</translation>
     </message>
     <message>
-        <location line="-1725"/>
+        <location line="-1828"/>
         <source>Remove selected widget (%1)</source>
         <translation>Удалить выбранный виджет (%1)</translation>
     </message>
     <message>
         <location line="+3"/>
-        <location line="+1735"/>
+        <location line="+1838"/>
         <source>Add device</source>
         <translation>Добавить устройство</translation>
     </message>
     <message>
-        <location line="-1732"/>
+        <location line="-1835"/>
         <source>Remove selected device (%1)</source>
         <translation>Удалить выбранное устройство (%1)</translation>
     </message>
@@ -2672,7 +2906,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>Размер экрана: большой</translation>
     </message>
     <message>
-        <location line="+209"/>
+        <location line="+214"/>
         <source>Disable editing — lock the dashboard layout</source>
         <translation>Отключить редактирование — заблокировать макет дашборда</translation>
     </message>
@@ -2692,7 +2926,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>Показать панели Слои/Свойства</translation>
     </message>
     <message>
-        <location line="+246"/>
+        <location line="+248"/>
         <source>New Device</source>
         <translation>Новое устройство</translation>
     </message>
@@ -2718,12 +2952,12 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>(без имени)</translation>
     </message>
     <message>
-        <location line="-1109"/>
+        <location line="-1116"/>
         <source>Dashboard</source>
         <translation>Dashboard</translation>
     </message>
     <message>
-        <location line="+1321"/>
+        <location line="+1328"/>
         <source>%1: this BLE address now answers as a different robot (expected %2, got %3)</source>
         <translation>%1: этот BLE-адрес теперь отвечает как другой робот (ожидался %2, получен %3)</translation>
     </message>
@@ -2748,8 +2982,8 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>Начат новый проект.</translation>
     </message>
     <message>
+        <location line="+26"/>
         <location line="+16"/>
-        <location line="+19"/>
         <source>Save Project</source>
         <translation>Сохранить проект</translation>
     </message>
@@ -2760,12 +2994,12 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     </message>
     <message>
         <location line="+14"/>
-        <location line="+253"/>
+        <location line="+329"/>
         <source>Open Project</source>
         <translation>Открыть проект</translation>
     </message>
     <message>
-        <location line="-244"/>
+        <location line="-243"/>
         <source>Open Log File</source>
         <translation>Открыть файл журнала</translation>
     </message>
@@ -2786,7 +3020,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     </message>
     <message>
         <location line="+20"/>
-        <location line="+196"/>
+        <location line="+208"/>
         <source>Settings</source>
         <translation>Настройки</translation>
     </message>
@@ -3448,25 +3682,9 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     </message>
 </context>
 <context>
-    <name>traceview::AndroidUsbSerialTransport</name>
-    <message>
-        <location filename="../lib/core/androidusbserialtransport.cpp" line="+0"/>
-        <source>USB serial is not available on this device</source>
-        <translation>USB-последовательный порт недоступен на этом устройстве</translation>
-    </message>
-    <message>
-        <source>USB permission was denied for %1; unplug and replug it to be asked again</source>
-        <translation>Доступ к USB для %1 запрещён; отключите и снова подключите устройство, чтобы запрос появился снова</translation>
-    </message>
-    <message>
-        <source>1200 baud resets the ESP32-S3 into its bootloader; using 115200</source>
-        <translation>1200 бод перезагружает ESP32-S3 в загрузчик; используется 115200</translation>
-    </message>
-</context>
-<context>
     <name>traceview::SerialManager</name>
     <message>
-        <location filename="../lib/core/serialmanager.cpp" line="+58"/>
+        <location filename="../lib/core/serialmanager.cpp" line="+59"/>
         <source>1200 baud resets the ESP32-S3 into its bootloader; using 115200</source>
         <translation>1200 бод перезагружает ESP32-S3 в загрузчик; используется 115200</translation>
     </message>
@@ -3540,44 +3758,44 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>Настройки</translation>
     </message>
     <message>
-        <location line="+33"/>
-        <location line="+42"/>
+        <location line="+35"/>
+        <location line="+44"/>
         <source>General</source>
         <translation>Общие</translation>
     </message>
     <message>
-        <location line="-42"/>
-        <location line="+66"/>
+        <location line="-44"/>
+        <location line="+68"/>
         <source>Appearance</source>
         <translation>Внешний вид</translation>
     </message>
     <message>
-        <location line="-66"/>
-        <location line="+113"/>
+        <location line="-68"/>
+        <location line="+115"/>
         <source>Dashboard</source>
         <translation>Dashboard</translation>
     </message>
     <message>
-        <location line="-112"/>
-        <location line="+163"/>
+        <location line="-114"/>
+        <location line="+165"/>
         <source>Terminal</source>
         <translation>Терминал</translation>
     </message>
     <message>
-        <location line="-163"/>
-        <location line="+190"/>
+        <location line="-165"/>
+        <location line="+192"/>
         <source>Connections</source>
         <translation>Подключения</translation>
     </message>
     <message>
-        <location line="-190"/>
-        <location line="+209"/>
+        <location line="-192"/>
+        <location line="+211"/>
         <source>Diagnostics</source>
         <translation>Диагностика</translation>
     </message>
     <message>
-        <location line="-208"/>
-        <location line="+260"/>
+        <location line="-210"/>
+        <location line="+262"/>
         <location line="+5"/>
         <source>Updates</source>
         <translation>Обновления</translation>
@@ -3873,7 +4091,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>Перезапустить</translation>
     </message>
     <message>
-        <location line="+129"/>
+        <location line="+134"/>
         <source>Close and reopen TraceView to apply language or diagnostics history changes, or they will apply the next time you open it.</source>
         <translation>Закройте и снова откройте TraceView, чтобы применить изменения языка или истории диагностики, иначе они применятся при следующем запуске.</translation>
     </message>

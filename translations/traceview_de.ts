@@ -144,6 +144,44 @@
     </message>
 </context>
 <context>
+    <name>DashboardGallery</name>
+    <message>
+        <location filename="../lib/project/dashboardgallery.cpp" line="+92"/>
+        <source>The name can&apos;t be empty.</source>
+        <translation>Der Name darf nicht leer sein.</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>The name can&apos;t start or end with a space or a dot.</source>
+        <translation>Der Name darf nicht mit einem Leerzeichen oder Punkt beginnen oder enden.</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>The name can&apos;t contain any of these characters: \ / : * ? &quot; &lt; &gt; |</source>
+        <translation>Der Name darf keines dieser Zeichen enthalten: \ / : * ? &quot; &lt; &gt; |</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>The name is too long (100 characters at most).</source>
+        <translation>Der Name ist zu lang (höchstens 100 Zeichen).</translation>
+    </message>
+    <message>
+        <location line="+17"/>
+        <source>A dashboard with that name already exists.</source>
+        <translation>Ein Dashboard mit diesem Namen existiert bereits.</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>Couldn&apos;t rename the dashboard file.</source>
+        <translation>Die Dashboard-Datei konnte nicht umbenannt werden.</translation>
+    </message>
+    <message>
+        <location line="+14"/>
+        <source>Couldn&apos;t delete the dashboard file.</source>
+        <translation>Die Dashboard-Datei konnte nicht gelöscht werden.</translation>
+    </message>
+</context>
+<context>
     <name>Device</name>
     <message>
         <location filename="../lib/devices/device.h" line="+54"/>
@@ -208,7 +246,7 @@
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="+111"/>
+        <location filename="../lib/core/mainwindow.cpp" line="+119"/>
         <source>TraceView Project (*.tvproj)</source>
         <translation>TraceView-Projekt (*.tvproj)</translation>
     </message>
@@ -389,7 +427,7 @@
         <translation>&lt;b&gt;JavaScript&lt;/b&gt;, live auf dem echten Datenverkehr dieses Geräts ausgeführt.&lt;br&gt;&lt;br&gt;&lt;b&gt;Definieren, um auf Datenverkehr zu reagieren:&lt;/b&gt;&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;onTelemetry(sample)&lt;/code&gt; -- wird für einen Telemetriewert aufgerufen, der bereits anderswo abonniert ist (z. B. ein Dashboard-Diagramm). &lt;code&gt;sample&lt;/code&gt; enthält &lt;code&gt;topicId&lt;/code&gt;, &lt;code&gt;fieldId&lt;/code&gt;, &lt;code&gt;elementIndex&lt;/code&gt;, &lt;code&gt;value&lt;/code&gt;, &lt;code&gt;timestampUs&lt;/code&gt;.&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;onTerminal(text)&lt;/code&gt; -- wird für jeden Textblock aufgerufen, den der Konsolen-/Seriellkanal dieses Geräts zurücksendet.&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;onConnectionChange(connected)&lt;/code&gt; -- wird aufgerufen, wenn dieses Gerät sich verbindet oder trennt.&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;onStatus(text, severity)&lt;/code&gt; -- wird für eine einmalige Statusmeldung aufgerufen (Sitzung aufgebaut/fehlgeschlagen, Abonnement abgelehnt, ein sendCommand()-Ergebnis, ...) -- derselbe Text, den die Statusleiste zeigt. &lt;code&gt;severity&lt;/code&gt; ist einer von &lt;code&gt;&quot;info&quot;&lt;/code&gt;, &lt;code&gt;&quot;success&quot;&lt;/code&gt;, &lt;code&gt;&quot;warning&quot;&lt;/code&gt;, &lt;code&gt;&quot;error&quot;&lt;/code&gt;.&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;onDeviceInfo(info)&lt;/code&gt; -- wird aufgerufen, wenn dieses Gerät seinen Infoblock meldet (Firmware-Version, Chip, Partition, ...). &lt;code&gt;info&lt;/code&gt; ist ein Array aus &lt;code&gt;{key, label, value}&lt;/code&gt;.&lt;br&gt;&lt;br&gt;&lt;b&gt;Jederzeit aufrufbar:&lt;/b&gt;&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;device.log(text)&lt;/code&gt; -- schreibt in den Ausgabebereich.&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;device.sendCommand(text)&lt;/code&gt; -- sendet einen Befehl an dieses Gerät.&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;device.sendTerminal(text)&lt;/code&gt; -- sendet Text über seinen Konsolenkanal.&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;device.setInterval(fn, ms)&lt;/code&gt; / &lt;code&gt;device.clearInterval(id)&lt;/code&gt; -- führt &lt;code&gt;fn&lt;/code&gt; alle &lt;code&gt;ms&lt;/code&gt; Millisekunden aus, bis es abgebrochen wird.&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;device.setTimeout(fn, ms)&lt;/code&gt; / &lt;code&gt;device.clearTimeout(id)&lt;/code&gt; -- führt &lt;code&gt;fn&lt;/code&gt; einmal aus, in &lt;code&gt;ms&lt;/code&gt; Millisekunden.</translation>
     </message>
     <message>
-        <location filename="../lib/updater/updatechecker.cpp" line="+49"/>
+        <location filename="../lib/updater/updatechecker.cpp" line="+52"/>
         <source>No published releases found.</source>
         <translation>Keine veröffentlichten Versionen gefunden.</translation>
     </message>
@@ -406,11 +444,12 @@
     <message>
         <location line="+21"/>
         <location line="+72"/>
+        <location line="+108"/>
         <source>Downloaded installer not found: %1</source>
         <translation>Heruntergeladenes Installationsprogramm nicht gefunden: %1</translation>
     </message>
     <message>
-        <location line="-67"/>
+        <location line="-175"/>
         <location line="+30"/>
         <source>Couldn&apos;t start the Android package installer.</source>
         <translation>Der Android-Paketinstaller konnte nicht gestartet werden.</translation>
@@ -449,6 +488,11 @@
         <location line="+35"/>
         <source>The update was installed, but relaunch failed. Close TraceView and open the AppImage again.</source>
         <translation>Das Update wurde installiert, aber der Neustart ist fehlgeschlagen. Schließen Sie TraceView und öffnen Sie das AppImage erneut.</translation>
+    </message>
+    <message>
+        <location line="+22"/>
+        <source>Couldn&apos;t open the downloaded disk image: %1</source>
+        <translation>Das heruntergeladene Disk-Image konnte nicht geöffnet werden: %1</translation>
     </message>
     <message>
         <location line="+10"/>
@@ -636,12 +680,23 @@
         <translation>APK von GitHub Releases</translation>
     </message>
     <message>
+        <location line="+2"/>
+        <source>iOS build (sideloaded)</source>
+        <translation>iOS-Build (Sideload)</translation>
+    </message>
+    <message>
         <location line="+5"/>
+        <source>macOS disk image from GitHub Releases</source>
+        <translation>macOS-Disk-Image aus GitHub Releases</translation>
+    </message>
+    <message>
+        <location line="+7"/>
         <source>Windows installer from GitHub Releases</source>
         <translation>Windows-Installer von GitHub Releases</translation>
     </message>
     <message>
-        <location line="+2"/>
+        <location line="-5"/>
+        <location line="+7"/>
         <location line="+5"/>
         <location line="+2"/>
         <source>Local build</source>
@@ -674,45 +729,79 @@
     </message>
 </context>
 <context>
+    <name>traceview::AndroidUsbSerialTransport</name>
+    <message>
+        <source>USB serial is not available on this device</source>
+        <translation type="vanished">USB-Seriell ist auf diesem Gerät nicht verfügbar</translation>
+    </message>
+    <message>
+        <source>USB permission was denied for %1; unplug and replug it to be asked again</source>
+        <translation type="vanished">Die USB-Berechtigung für %1 wurde verweigert; Gerät aus- und wieder einstecken, um erneut gefragt zu werden</translation>
+    </message>
+    <message>
+        <source>1200 baud resets the ESP32-S3 into its bootloader; using 115200</source>
+        <translation type="vanished">1200 Baud setzt den ESP32-S3 in seinen Bootloader zurück; verwende 115200</translation>
+    </message>
+</context>
+<context>
     <name>traceview::BleDiscoveryService</name>
     <message>
+        <location filename="../lib/core/blediscoveryservice.cpp" line="+44"/>
+        <source>Bluetooth permission denied. Allow TraceView to use Bluetooth in the system settings.</source>
+        <translation>Bluetooth-Berechtigung verweigert. Erlauben Sie TraceView die Nutzung von Bluetooth in den Systemeinstellungen.</translation>
+    </message>
+    <message>
+        <location line="+65"/>
         <source>BLE discovery failed</source>
-        <translation type="vanished">BLE-Suche fehlgeschlagen</translation>
+        <translation>BLE-Suche fehlgeschlagen</translation>
     </message>
 </context>
 <context>
     <name>traceview::BleTransport</name>
     <message>
+        <location filename="../lib/core/bletransport.cpp" line="+68"/>
+        <source>Bluetooth permission denied. Allow TraceView to use Bluetooth in the system settings.</source>
+        <translation>Bluetooth-Berechtigung verweigert. Erlauben Sie TraceView die Nutzung von Bluetooth in den Systemeinstellungen.</translation>
+    </message>
+    <message>
+        <location line="+21"/>
         <source>failed to create a BLE controller</source>
-        <translation type="vanished">BLE-Controller konnte nicht erstellt werden</translation>
+        <translation>BLE-Controller konnte nicht erstellt werden</translation>
     </message>
     <message>
+        <location line="+64"/>
         <source>BLE peripheral disconnected before HELLO</source>
-        <translation type="vanished">BLE-Peripheriegerät hat vor dem HELLO getrennt</translation>
+        <translation>BLE-Peripheriegerät hat vor dem HELLO getrennt</translation>
     </message>
     <message>
+        <location line="+16"/>
         <source>peripheral does not advertise the BTP service</source>
-        <translation type="vanished">das Peripheriegerät bietet den BTP-Dienst nicht an</translation>
+        <translation>das Peripheriegerät bietet den BTP-Dienst nicht an</translation>
     </message>
     <message>
+        <location line="+5"/>
         <source>failed to create BTP service object</source>
-        <translation type="vanished">BTP-Dienstobjekt konnte nicht erstellt werden</translation>
+        <translation>BTP-Dienstobjekt konnte nicht erstellt werden</translation>
     </message>
     <message>
+        <location line="+25"/>
         <source>BTP service is missing its RX/TX characteristics</source>
-        <translation type="vanished">dem BTP-Dienst fehlen die RX/TX-Charakteristiken</translation>
+        <translation>dem BTP-Dienst fehlen die RX/TX-Charakteristiken</translation>
     </message>
     <message>
+        <location line="+7"/>
         <source>TX characteristic has no notification descriptor</source>
-        <translation type="vanished">die TX-Charakteristik hat keinen Benachrichtigungsdeskriptor</translation>
+        <translation>die TX-Charakteristik hat keinen Benachrichtigungsdeskriptor</translation>
     </message>
     <message>
+        <location line="+13"/>
         <source>BLE service error</source>
-        <translation type="vanished">BLE-Dienstfehler</translation>
+        <translation>BLE-Dienstfehler</translation>
     </message>
     <message>
+        <location line="+47"/>
         <source>BLE connection timed out</source>
-        <translation type="vanished">Zeitüberschreitung bei der BLE-Verbindung</translation>
+        <translation>Zeitüberschreitung bei der BLE-Verbindung</translation>
     </message>
 </context>
 <context>
@@ -1284,9 +1373,95 @@
     </message>
 </context>
 <context>
+    <name>traceview::DashboardGalleryDialog</name>
+    <message>
+        <location filename="../lib/core/dashboardgallerydialog.cpp" line="+27"/>
+        <source>Dashboard Gallery</source>
+        <translation>Dashboard-Galerie</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Dashboards kept inside TraceView. The default one opens every time the app starts; with none chosen, the built-in example opens.</source>
+        <translation>In TraceView gespeicherte Dashboards. Das Standard-Dashboard wird bei jedem App-Start geöffnet; ist keines gewählt, wird das integrierte Beispiel geöffnet.</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>Open</source>
+        <translation>Öffnen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Set as Default</source>
+        <translation>Als Standard festlegen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Rename...</source>
+        <translation>Umbenennen...</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Delete</source>
+        <translation>Löschen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Export...</source>
+        <translation>Exportieren...</translation>
+    </message>
+    <message>
+        <location line="+39"/>
+        <source>%1 (default)</source>
+        <translation>%1 (Standard)</translation>
+    </message>
+    <message>
+        <location line="+12"/>
+        <source>Built-in example</source>
+        <translation>Integriertes Beispiel</translation>
+    </message>
+    <message>
+        <location line="+60"/>
+        <location line="+9"/>
+        <source>Rename Dashboard</source>
+        <translation>Dashboard umbenennen</translation>
+    </message>
+    <message>
+        <location line="-9"/>
+        <source>New name:</source>
+        <translation>Neuer Name:</translation>
+    </message>
+    <message>
+        <location line="+25"/>
+        <location line="+8"/>
+        <source>Delete Dashboard</source>
+        <translation>Dashboard löschen</translation>
+    </message>
+    <message>
+        <location line="-7"/>
+        <source>Delete &quot;%1&quot; from the gallery? This can&apos;t be undone.</source>
+        <translation>&quot;%1&quot; aus der Galerie löschen? Dies kann nicht rückgängig gemacht werden.</translation>
+    </message>
+    <message>
+        <location line="+26"/>
+        <location line="+10"/>
+        <source>Export Dashboard</source>
+        <translation>Dashboard exportieren</translation>
+    </message>
+    <message>
+        <location line="-9"/>
+        <source>TraceView Project (*.tvproj)</source>
+        <translation>TraceView-Projekt (*.tvproj)</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>Couldn&apos;t write &quot;%1&quot;.</source>
+        <translation>&quot;%1&quot; konnte nicht geschrieben werden.</translation>
+    </message>
+</context>
+<context>
     <name>traceview::DashboardGrid</name>
     <message>
-        <location filename="../lib/dashboard/dashboardgrid.cpp" line="+496"/>
+        <location filename="../lib/dashboard/dashboardgrid.cpp" line="+517"/>
         <source>Bring to Front</source>
         <translation>In den Vordergrund</translation>
     </message>
@@ -1631,12 +1806,12 @@
     </message>
     <message>
         <location line="+3"/>
-        <location line="+293"/>
+        <location line="+301"/>
         <source>e.g. robot1.local</source>
         <translation>z. B. robot1.local</translation>
     </message>
     <message>
-        <location line="-291"/>
+        <location line="-299"/>
         <source>Hostname or IP the OTA tab uses for this device&apos;s firmware upload. Left blank, the device is listed there but nothing can be polled or uploaded.</source>
         <translation>Hostname oder IP, die der OTA-Tab für den Firmware-Upload dieses Geräts verwendet. Leer gelassen wird das Gerät dort aufgeführt, aber nichts kann abgefragt oder hochgeladen werden.</translation>
     </message>
@@ -1662,18 +1837,18 @@
     </message>
     <message>
         <location line="+25"/>
-        <location line="+253"/>
+        <location line="+261"/>
         <source>Connected</source>
         <translation>Verbunden</translation>
     </message>
     <message>
-        <location line="-253"/>
-        <location line="+253"/>
+        <location line="-261"/>
+        <location line="+261"/>
         <source>Disconnected</source>
         <translation>Getrennt</translation>
     </message>
     <message>
-        <location line="-250"/>
+        <location line="-258"/>
         <location line="+3"/>
         <source>(not connected yet)</source>
         <translation>(noch nicht verbunden)</translation>
@@ -1714,7 +1889,7 @@
         <translation>Die obigen Einstellungen anwenden und jetzt (neu) verbinden, ohne diesen Dialog zu schließen.</translation>
     </message>
     <message>
-        <location line="+130"/>
+        <location line="+138"/>
         <source>(none)</source>
         <translation>(keine)</translation>
     </message>
@@ -1739,7 +1914,7 @@
         <translation>Gerät meldet: %1</translation>
     </message>
     <message>
-        <location line="+24"/>
+        <location line="+41"/>
         <source>%1 (%2)</source>
         <translation>%1 (%2)</translation>
     </message>
@@ -1768,7 +1943,7 @@ RSSI: %2 dBm
 RTT: %3 ms</translation>
     </message>
     <message>
-        <location line="-303"/>
+        <location line="-328"/>
         <source>Reported by device</source>
         <translation>Vom Gerät gemeldet</translation>
     </message>
@@ -1776,7 +1951,7 @@ RTT: %3 ms</translation>
 <context>
     <name>traceview::DeviceConnection</name>
     <message>
-        <location filename="../lib/core/deviceconnection.cpp" line="+179"/>
+        <location filename="../lib/core/deviceconnection.cpp" line="+196"/>
         <source>transport rejected %1 bytes</source>
         <translation>der Transport hat %1 Bytes abgelehnt</translation>
     </message>
@@ -2146,7 +2321,7 @@ RTT: %3 ms</translation>
         <translation>, </translation>
     </message>
     <message>
-        <location line="+402"/>
+        <location line="+413"/>
         <source>Pending</source>
         <translation>Ausstehend</translation>
     </message>
@@ -2220,6 +2395,16 @@ Verluste: %2</translation>
     </message>
     <message>
         <location line="+6"/>
+        <source>Add to &amp;Gallery...</source>
+        <translation>Zur &amp;Galerie hinzufügen...</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Dashboard Gall&amp;ery...</source>
+        <translation>Dashboard-Gal&amp;erie...</translation>
+    </message>
+    <message>
+        <location line="+5"/>
         <source>Open &amp;Log Offline...</source>
         <translation>&amp;Protokoll offline öffnen...</translation>
     </message>
@@ -2254,7 +2439,7 @@ Verluste: %2</translation>
         <translation>Panel-Positionen &amp;zurücksetzen</translation>
     </message>
     <message>
-        <location line="+6"/>
+        <location line="+7"/>
         <source>&amp;Theme</source>
         <translation>&amp;Design</translation>
     </message>
@@ -2285,12 +2470,12 @@ Verluste: %2</translation>
     </message>
     <message>
         <location line="+0"/>
-        <location line="+2867"/>
+        <location line="+2971"/>
         <source>Later</source>
         <translation>Später</translation>
     </message>
     <message>
-        <location line="-2860"/>
+        <location line="-2964"/>
         <source>&amp;Access</source>
         <translation>&amp;Zugang</translation>
     </message>
@@ -2356,7 +2541,7 @@ Verluste: %2</translation>
         <translation>&amp;Entwicklermodus aktivieren...</translation>
     </message>
     <message>
-        <location line="+179"/>
+        <location line="+180"/>
         <source>Add</source>
         <translation>Hinzufügen</translation>
     </message>
@@ -2407,18 +2592,18 @@ Verluste: %2</translation>
     </message>
     <message>
         <location line="+18"/>
-        <location line="+2268"/>
+        <location line="+2371"/>
         <source>Undo</source>
         <translation>Rückgängig</translation>
     </message>
     <message>
-        <location line="-2266"/>
-        <location line="+2266"/>
+        <location line="-2369"/>
+        <location line="+2369"/>
         <source>Redo</source>
         <translation>Wiederholen</translation>
     </message>
     <message>
-        <location line="-2225"/>
+        <location line="-2328"/>
         <source>Add Device</source>
         <translation>Gerät hinzufügen</translation>
     </message>
@@ -2454,12 +2639,12 @@ Verluste: %2</translation>
     </message>
     <message>
         <location line="+29"/>
-        <location line="+2170"/>
+        <location line="+2273"/>
         <source>Fullscreen dashboard (F11)</source>
         <translation>Dashboard im Vollbildmodus (F11)</translation>
     </message>
     <message>
-        <location line="-1990"/>
+        <location line="-2093"/>
         <source>Rename Workspace</source>
         <translation>Arbeitsbereich umbenennen</translation>
     </message>
@@ -2469,7 +2654,56 @@ Verluste: %2</translation>
         <translation>Arbeitsbereich „%1“ in „%2“ umbenannt.</translation>
     </message>
     <message>
-        <location line="+2019"/>
+        <location line="+1551"/>
+        <location line="+8"/>
+        <location line="+5"/>
+        <location line="+8"/>
+        <location line="+11"/>
+        <source>Add to Gallery</source>
+        <translation>Zur Galerie hinzufügen</translation>
+    </message>
+    <message>
+        <location line="-32"/>
+        <source>Dashboard name:</source>
+        <translation>Dashboard-Name:</translation>
+    </message>
+    <message>
+        <location line="+14"/>
+        <source>The gallery already has a dashboard named &quot;%1&quot;. Replace it?</source>
+        <translation>Die Galerie enthält bereits ein Dashboard namens &quot;%1&quot;. Ersetzen?</translation>
+    </message>
+    <message>
+        <location line="+15"/>
+        <source>Added &quot;%1&quot; to the gallery -- it now opens at startup.</source>
+        <translation>&quot;%1&quot; zur Galerie hinzugefügt -- es wird jetzt beim Start geöffnet.</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Open &quot;%1&quot; every time TraceView starts, instead of &quot;%2&quot;?</source>
+        <translation>&quot;%1&quot; bei jedem Start von TraceView öffnen, statt &quot;%2&quot;?</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Set as Default</source>
+        <translation>Als Standard festlegen</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Not Now</source>
+        <translation>Nicht jetzt</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>&quot;%1&quot; now opens at startup.</source>
+        <translation>&quot;%1&quot; wird jetzt beim Start geöffnet.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Saved &quot;%1&quot; to the gallery.</source>
+        <translation>&quot;%1&quot; in der Galerie gespeichert.</translation>
+    </message>
+    <message>
+        <location line="+532"/>
         <source>Update available: v%1</source>
         <translation>Update verfügbar: v%1</translation>
     </message>
@@ -2542,13 +2776,13 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
         <translation>App schließen</translation>
     </message>
     <message>
-        <location line="-2217"/>
-        <location line="+2018"/>
+        <location line="-2320"/>
+        <location line="+2121"/>
         <source>Devices</source>
         <translation>Geräte</translation>
     </message>
     <message>
-        <location line="-1943"/>
+        <location line="-2046"/>
         <source>Subscriptions</source>
         <translation>Abonnements</translation>
     </message>
@@ -2590,23 +2824,23 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
     </message>
     <message>
         <location line="+71"/>
-        <location line="+1728"/>
+        <location line="+1831"/>
         <source>Add widget</source>
         <translation>Widget hinzufügen</translation>
     </message>
     <message>
-        <location line="-1725"/>
+        <location line="-1828"/>
         <source>Remove selected widget (%1)</source>
         <translation>Ausgewähltes Widget entfernen (%1)</translation>
     </message>
     <message>
         <location line="+3"/>
-        <location line="+1735"/>
+        <location line="+1838"/>
         <source>Add device</source>
         <translation>Gerät hinzufügen</translation>
     </message>
     <message>
-        <location line="-1732"/>
+        <location line="-1835"/>
         <source>Remove selected device (%1)</source>
         <translation>Ausgewähltes Gerät entfernen (%1)</translation>
     </message>
@@ -2671,7 +2905,7 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
         <translation>Bildschirmgröße: Groß</translation>
     </message>
     <message>
-        <location line="+209"/>
+        <location line="+214"/>
         <source>Disable editing — lock the dashboard layout</source>
         <translation>Bearbeitung deaktivieren — Dashboard-Layout sperren</translation>
     </message>
@@ -2691,7 +2925,7 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
         <translation>Ebenen-/Eigenschaften-Panels anzeigen</translation>
     </message>
     <message>
-        <location line="+246"/>
+        <location line="+248"/>
         <source>New Device</source>
         <translation>Neues Gerät</translation>
     </message>
@@ -2717,12 +2951,12 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
         <translation>(unbenannt)</translation>
     </message>
     <message>
-        <location line="-1109"/>
+        <location line="-1116"/>
         <source>Dashboard</source>
         <translation>Dashboard</translation>
     </message>
     <message>
-        <location line="+1321"/>
+        <location line="+1328"/>
         <source>%1: this BLE address now answers as a different robot (expected %2, got %3)</source>
         <translation>%1: diese BLE-Adresse antwortet jetzt als anderer Roboter (erwartet %2, erhalten %3)</translation>
     </message>
@@ -2747,8 +2981,8 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
         <translation>Neues Projekt gestartet.</translation>
     </message>
     <message>
+        <location line="+26"/>
         <location line="+16"/>
-        <location line="+19"/>
         <source>Save Project</source>
         <translation>Projekt speichern</translation>
     </message>
@@ -2759,12 +2993,12 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
     </message>
     <message>
         <location line="+14"/>
-        <location line="+253"/>
+        <location line="+329"/>
         <source>Open Project</source>
         <translation>Projekt öffnen</translation>
     </message>
     <message>
-        <location line="-244"/>
+        <location line="-243"/>
         <source>Open Log File</source>
         <translation>Protokolldatei öffnen</translation>
     </message>
@@ -2785,7 +3019,7 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
     </message>
     <message>
         <location line="+20"/>
-        <location line="+196"/>
+        <location line="+208"/>
         <source>Settings</source>
         <translation>Einstellungen</translation>
     </message>
@@ -3447,25 +3681,9 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
     </message>
 </context>
 <context>
-    <name>traceview::AndroidUsbSerialTransport</name>
-    <message>
-        <location filename="../lib/core/androidusbserialtransport.cpp" line="+0"/>
-        <source>USB serial is not available on this device</source>
-        <translation>USB-Seriell ist auf diesem Gerät nicht verfügbar</translation>
-    </message>
-    <message>
-        <source>USB permission was denied for %1; unplug and replug it to be asked again</source>
-        <translation>Die USB-Berechtigung für %1 wurde verweigert; Gerät aus- und wieder einstecken, um erneut gefragt zu werden</translation>
-    </message>
-    <message>
-        <source>1200 baud resets the ESP32-S3 into its bootloader; using 115200</source>
-        <translation>1200 Baud setzt den ESP32-S3 in seinen Bootloader zurück; verwende 115200</translation>
-    </message>
-</context>
-<context>
     <name>traceview::SerialManager</name>
     <message>
-        <location filename="../lib/core/serialmanager.cpp" line="+58"/>
+        <location filename="../lib/core/serialmanager.cpp" line="+59"/>
         <source>1200 baud resets the ESP32-S3 into its bootloader; using 115200</source>
         <translation>1200 Baud setzt den ESP32-S3 in seinen Bootloader zurück; verwende 115200</translation>
     </message>
@@ -3539,44 +3757,44 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
         <translation>Einstellungen</translation>
     </message>
     <message>
-        <location line="+33"/>
-        <location line="+42"/>
+        <location line="+35"/>
+        <location line="+44"/>
         <source>General</source>
         <translation>Allgemein</translation>
     </message>
     <message>
-        <location line="-42"/>
-        <location line="+66"/>
+        <location line="-44"/>
+        <location line="+68"/>
         <source>Appearance</source>
         <translation>Darstellung</translation>
     </message>
     <message>
-        <location line="-66"/>
-        <location line="+113"/>
+        <location line="-68"/>
+        <location line="+115"/>
         <source>Dashboard</source>
         <translation>Dashboard</translation>
     </message>
     <message>
-        <location line="-112"/>
-        <location line="+163"/>
+        <location line="-114"/>
+        <location line="+165"/>
         <source>Terminal</source>
         <translation>Terminal</translation>
     </message>
     <message>
-        <location line="-163"/>
-        <location line="+190"/>
+        <location line="-165"/>
+        <location line="+192"/>
         <source>Connections</source>
         <translation>Verbindungen</translation>
     </message>
     <message>
-        <location line="-190"/>
-        <location line="+209"/>
+        <location line="-192"/>
+        <location line="+211"/>
         <source>Diagnostics</source>
         <translation>Diagnose</translation>
     </message>
     <message>
-        <location line="-208"/>
-        <location line="+260"/>
+        <location line="-210"/>
+        <location line="+262"/>
         <location line="+5"/>
         <source>Updates</source>
         <translation>Updates</translation>
@@ -3872,7 +4090,7 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
         <translation>Jetzt neu starten</translation>
     </message>
     <message>
-        <location line="+129"/>
+        <location line="+134"/>
         <source>Close and reopen TraceView to apply language or diagnostics history changes, or they will apply the next time you open it.</source>
         <translation>Schließen und öffnen Sie TraceView erneut, um Sprach- oder Diagnoseverlaufsänderungen zu übernehmen, sonst gelten sie beim nächsten Öffnen.</translation>
     </message>
