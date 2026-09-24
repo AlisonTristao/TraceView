@@ -75,6 +75,14 @@ protected:
     void focusOutEvent(QFocusEvent* event) override;
     void resizeEvent(QResizeEvent* event) override;
 
+    // Soft keyboard (Android/iOS). setReadOnly(true) clears
+    // WA_InputMethodEnabled, so the platform never raises the keyboard on tap;
+    // these re-enable it and forward the IME's committed text to the dongle
+    // (a soft keyboard delivers typed text as QInputMethodEvent, not keys).
+    void mouseReleaseEvent(QMouseEvent* event) override;
+    void inputMethodEvent(QInputMethodEvent* event) override;
+    QVariant inputMethodQuery(Qt::InputMethodQuery query) const override;
+
     // QPlainTextEdit only blocks Qt's own Tab-driven focus change while it is
     // editable (see its focusNextPrevChild()); setReadOnly(true) above turns
     // that guard off, so without this override QWidget::event() steals every

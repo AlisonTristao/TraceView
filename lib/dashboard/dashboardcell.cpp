@@ -78,6 +78,27 @@ void drawTypeIcon(QPainter& painter, const QRect& r, const QString& typeId, cons
         painter.drawPolyline(QPolygonF(
             {QPointF(s * 0.1, s * 0.25), QPointF(s * 0.4, s * 0.5), QPointF(s * 0.1, s * 0.75)}));
         painter.drawLine(QPointF(s * 0.5, s * 0.82), QPointF(s * 0.9, s * 0.82));
+    } else if (typeId == "robot_log") {
+        // Log sheet: a page outline with three text lines.
+        QPen pen(color, 1.5);
+        pen.setCapStyle(Qt::RoundCap);
+        pen.setJoinStyle(Qt::RoundJoin);
+        painter.setPen(pen);
+        painter.setBrush(Qt::NoBrush);
+        painter.drawRoundedRect(QRectF(s * 0.15, s * 0.05, s * 0.7, s * 0.9), s * 0.1, s * 0.1);
+        painter.drawLine(QPointF(s * 0.32, s * 0.3), QPointF(s * 0.68, s * 0.3));
+        painter.drawLine(QPointF(s * 0.32, s * 0.5), QPointF(s * 0.68, s * 0.5));
+        painter.drawLine(QPointF(s * 0.32, s * 0.7), QPointF(s * 0.55, s * 0.7));
+    } else if (typeId == "chat") {
+        // Speech bubble with a tail at the bottom left.
+        QPen pen(color, 1.5);
+        pen.setCapStyle(Qt::RoundCap);
+        pen.setJoinStyle(Qt::RoundJoin);
+        painter.setPen(pen);
+        painter.setBrush(Qt::NoBrush);
+        painter.drawRoundedRect(QRectF(s * 0.08, s * 0.1, s * 0.84, s * 0.6), s * 0.15, s * 0.15);
+        painter.drawPolyline(QPolygonF(
+            {QPointF(s * 0.3, s * 0.7), QPointF(s * 0.2, s * 0.92), QPointF(s * 0.48, s * 0.7)}));
     }
 
     painter.restore();

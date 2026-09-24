@@ -693,6 +693,7 @@ private:
     // Developer-only: hidden (and its shortcuts disabled) by applyUserMode()
     // whenever developerUiActive() is false, "View as user" included.
     QMenu* m_fileMenu = nullptr;
+    QAction* m_debugAction = nullptr;
     // View's Developer-only entries (Keyboard Shortcuts, Open Log Folder,
     // Reset Panel Positions and the separator after them) -- User mode keeps
     // only Theme/Font/Language there.

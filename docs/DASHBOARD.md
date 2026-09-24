@@ -295,6 +295,16 @@ lives in its own module under
   the matching tab via `feedDevice()`, re-deriving all of it on
   `tabsChanged()` (the same refresh hook Serial Monitor's inbound wiring
   already uses).
+- **Chat** (`chat`) — `widgets/chatwidget.h`/`.cpp`. A message feed in the
+  style of early Twitter: flat cards with the author top-left, the text
+  below (no avatar), time bottom-left and delivery status (Sending/Sent/Not
+  sent) bottom-right, painted by a `QStyledItemDelegate` over a
+  `QListWidget`. Below it a compose row: a paperclip (one attachment per
+  message, limited to `ChatWidget::allowedAttachmentSuffixes()` and
+  `kMaxAttachmentBytes`), a text field and a send button. Visual only for
+  now — no transport: `send()` marks the message Sending and a timer flips
+  it to Sent; `setMessageStatus()` is the hook a backend will drive. Config
+  is `{ "userName": … }` (no config editor yet, defaults to "You").
 - **Text Board** (`text_board`) — `widgets/textboardwidget.h`/`.cpp`. A
   fixed-pitch, read-only surface for one whole `UTF8` telemetry topic. Every
   sample replaces the previous document, so a formatted status table appears

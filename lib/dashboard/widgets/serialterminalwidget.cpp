@@ -3,6 +3,8 @@
 #include <QClipboard>
 #include <QFontDatabase>
 #include <QGuiApplication>
+#include <QInputMethod>
+#include <QInputMethodEvent>
 #include <QKeyEvent>
 #include <QPainter>
 #include <QScrollBar>
@@ -74,6 +76,9 @@ SerialTerminalWidget::SerialTerminalWidget(QWidget* parent) : QPlainTextEdit(par
     // appendData(), fed by the dongle's own TERMINAL_OUT (PASSO 4/6: no
     // locally-drawn prompt, no double echo).
     setReadOnly(true);
+    // setReadOnly() just cleared this; without it a phone never shows the
+    // soft keyboard for the terminal (see inputMethodEvent()).
+    setAttribute(Qt::WA_InputMethodEnabled, true);
     setUndoRedoEnabled(false);
     setFont(QFontDatabase::systemFont(QFontDatabase::FixedFont));
 
@@ -351,6 +356,49 @@ void SerialTerminalWidget::focusInEvent(QFocusEvent* event) {
 
 void SerialTerminalWidget::focusOutEvent(QFocusEvent* event) {
     QPlainTextEdit::focusOutEvent(event);
+}
+
+void SerialTerminalWidget::mouseReleaseEvent(QMouseEvent* event) {
+    QPlainTextEdit::mouseReleaseEvent(event);
+    // A plain tap (no drag-selection of scrollback) means "I want to type":
+    // read-only text controls never request the input panel themselves.
+    if (event->button() == Qt::LeftButton && !textCursor().hasSelection()) {
+        setFocus(Qt::MouseFocusReason);
+        QGuiApplication::inputMethod()->show();
+    }
+}
+
+void SerialTerminalWidget::inputMethodEvent(QInputMethodEvent* event) {
+    // Only committed text is sent; pre-edit (composition) is never rendered
+    // locally -- the dongle's echo is the only visible text (PASSO 4/6).
+    const QString commit = event->commitString();
+    if (!commit.isEmpty()) {
+        emit sendRequested(commit.toUtf8());
+    }
+    event->accept();
+}
+
+QVariant SerialTerminalWidget::inputMethodQuery(Qt::InputMethodQuery query) const {
+    switch (query) {
+        case Qt::ImEnabled:
+            return true;
+        case Qt::ImHints:
+            // No autocorrect/prediction (it would buffer words in pre-edit
+            // instead of sending each key) and no auto-capitalisation of
+            // shell commands.
+            return int(Qt::ImhNoPredictiveText | Qt::ImhNoAutoUppercase |
+                       Qt::ImhPreferLowercase);
+        case Qt::ImSurroundingText:
+        case Qt::ImCurrentSelection:
+            // The scrollback is not an editable buffer; report it as empty so
+            // the IME never tries to delete/replace text around the cursor.
+            return QString();
+        case Qt::ImCursorPosition:
+        case Qt::ImAnchorPosition:
+            return 0;
+        default:
+            return QPlainTextEdit::inputMethodQuery(query);
+    }
 }
 
 void SerialTerminalWidget::resizeEvent(QResizeEvent* event) {

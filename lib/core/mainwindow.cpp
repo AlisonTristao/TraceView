@@ -1015,9 +1015,11 @@ void MainWindow::buildMenus() {
             &MainWindow::onShowNotificationHistory);
     addAction(notificationHistoryShortcut);
 
-    auto* debugAction = menuBar()->addAction(tr("&Debug"));
-    connect(debugAction, &QAction::triggered, this, &MainWindow::onDebug);
-    debugAction->setVisible(false);
+    // Developer-only (synthetic-data DebugChartsWindow): shown/enabled by
+    // applyUserMode(), same as the File menu.
+    m_debugAction = menuBar()->addAction(tr("&Debug"));
+    connect(m_debugAction, &QAction::triggered, this, &MainWindow::onDebug);
+    m_debugAction->setVisible(false);
 
     auto* aboutAction = menuBar()->addAction(tr("&About"));
     connect(aboutAction, &QAction::triggered, this, &MainWindow::onAbout);
@@ -1173,6 +1175,8 @@ void MainWindow::applyUserMode(UserModeManager::UserMode mode) {
     // bar is hidden in compact chrome and shortcuts fire anyway), so each
     // action is disabled too.
     m_fileMenu->menuAction()->setVisible(isDeveloper);
+    m_debugAction->setVisible(isDeveloper);
+    m_debugAction->setEnabled(isDeveloper);
     for (QAction* action : m_fileMenu->actions()) {
         action->setEnabled(isDeveloper);
     }

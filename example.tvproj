@@ -49,7 +49,7 @@
         "formatVersion": 1
     },
     "workspaces": {
-        "activeId": "acd551e3-b8e3-46b8-a0be-b4ea1ea228ae",
+        "activeId": "8d1b7188-00b8-4b70-bcae-e83a187cb047",
         "list": [
             {
                 "dashboard": {
@@ -61,35 +61,40 @@
                     "items": [
                         {
                             "config": {
-                                "deviceId": "",
+                                "deviceId": "dda1282d-8ade-45ef-86c0-45b9be54e036",
                                 "series": [
                                     {
                                         "color": "#2e6fe0",
                                         "fieldId": 1,
                                         "name": "Series 1",
-                                        "style": "solid"
+                                        "style": "solid",
+                                        "unit": ""
                                     },
                                     {
                                         "color": "#0a0f1e",
                                         "fieldId": 2,
                                         "name": "Series 2",
-                                        "style": "solid"
+                                        "style": "solid",
+                                        "unit": ""
                                     },
                                     {
                                         "color": "#b9821f",
                                         "fieldId": 3,
                                         "name": "Series 3",
-                                        "style": "solid"
+                                        "style": "solid",
+                                        "unit": ""
                                     }
                                 ],
-                                "sourceId": "0",
-                                "topicId": "0",
+                                "sourceId": "0x00000001",
+                                "topicId": "0x0101",
                                 "xAxis": {
                                     "limit": 500,
                                     "mode": "samples",
                                     "sampleTimeMs": 100
                                 },
                                 "yAxis": {
+                                    "autoAxis": false,
+                                    "decimals": 0,
                                     "grid": true,
                                     "max": 100,
                                     "min": 0,
@@ -145,9 +150,10 @@
                                         "name": "Ring 3"
                                     }
                                 ],
-                                "sourceId": "0",
-                                "topicId": "0",
-                                "unit": ""
+                                "sourceId": "0x00000001",
+                                "topicId": "0x0102",
+                                "unit": "",
+                                "deviceId": "dda1282d-8ade-45ef-86c0-45b9be54e036"
                             },
                             "groupId": "",
                             "id": "24f0c6d3-607f-4b1e-af1d-e0af44e78acb",
@@ -176,8 +182,7 @@
                             "type": "dummy_gauge"
                         },
                         {
-                            "config": {
-                            },
+                            "config": {},
                             "groupId": "",
                             "id": "8a9fa6ef-cedf-4f41-ac41-bf1bcac64a80",
                             "key": "",
@@ -221,13 +226,13 @@
                             "layouts": {
                                 "large": {
                                     "height": 0.125,
-                                    "width": 0.06666666666666665,
+                                    "width": 0.06666666666666667,
                                     "x": 0.8,
                                     "y": 0.5
                                 },
                                 "medium": {
-                                    "height": 0.1333333333333333,
-                                    "width": 0.08333333333333326,
+                                    "height": 0.13333333333333333,
+                                    "width": 0.08333333333333333,
                                     "x": 0.75,
                                     "y": 0.5
                                 },
@@ -258,13 +263,13 @@
                             "layouts": {
                                 "large": {
                                     "height": 0.125,
-                                    "width": 0.06666666666666665,
+                                    "width": 0.06666666666666667,
                                     "x": 0.8666666666666667,
                                     "y": 0.5
                                 },
                                 "medium": {
-                                    "height": 0.13333333333333341,
-                                    "width": 0.08333333333333326,
+                                    "height": 0.13333333333333333,
+                                    "width": 0.08333333333333333,
                                     "x": 0.8333333333333334,
                                     "y": 0.5
                                 },
@@ -295,19 +300,19 @@
                             "layouts": {
                                 "large": {
                                     "height": 0.125,
-                                    "width": 0.06666666666666665,
+                                    "width": 0.06666666666666667,
                                     "x": 0.9333333333333333,
                                     "y": 0.5
                                 },
                                 "medium": {
-                                    "height": 0.13333333333333341,
-                                    "width": 0.08333333333333337,
+                                    "height": 0.13333333333333333,
+                                    "width": 0.08333333333333333,
                                     "x": 0.9166666666666666,
                                     "y": 0.5
                                 },
                                 "small": {
                                     "height": 0.175,
-                                    "width": 0.33333333333333337,
+                                    "width": 0.3333333333333333,
                                     "x": 0.6666666666666666,
                                     "y": 1
                                 }
@@ -332,13 +337,13 @@
                             "layouts": {
                                 "large": {
                                     "height": 0.125,
-                                    "width": 0.06666666666666665,
+                                    "width": 0.06666666666666667,
                                     "x": 0.8,
                                     "y": 0.625
                                 },
                                 "medium": {
-                                    "height": 0.1333333333333333,
-                                    "width": 0.08333333333333326,
+                                    "height": 0.13333333333333333,
+                                    "width": 0.08333333333333333,
                                     "x": 0.75,
                                     "y": 0.6333333333333333
                                 },
@@ -369,13 +374,13 @@
                             "layouts": {
                                 "large": {
                                     "height": 0.125,
-                                    "width": 0.06666666666666665,
+                                    "width": 0.06666666666666667,
                                     "x": 0.8666666666666667,
                                     "y": 0.625
                                 },
                                 "medium": {
-                                    "height": 0.1333333333333333,
-                                    "width": 0.08333333333333337,
+                                    "height": 0.13333333333333333,
+                                    "width": 0.08333333333333333,
                                     "x": 0.8333333333333334,
                                     "y": 0.6333333333333333
                                 },
@@ -406,19 +411,19 @@
                             "layouts": {
                                 "large": {
                                     "height": 0.125,
-                                    "width": 0.06666666666666665,
+                                    "width": 0.06666666666666667,
                                     "x": 0.9333333333333333,
                                     "y": 0.625
                                 },
                                 "medium": {
-                                    "height": 0.1333333333333333,
-                                    "width": 0.08333333333333337,
+                                    "height": 0.13333333333333333,
+                                    "width": 0.08333333333333333,
                                     "x": 0.9166666666666666,
                                     "y": 0.6333333333333333
                                 },
                                 "small": {
                                     "height": 0.175,
-                                    "width": 0.33333333333333337,
+                                    "width": 0.3333333333333333,
                                     "x": 0.6666666666666666,
                                     "y": 1.175
                                 }
@@ -448,9 +453,10 @@
                                         "name": "Ring 3"
                                     }
                                 ],
-                                "sourceId": "0",
-                                "topicId": "0",
-                                "unit": ""
+                                "sourceId": "0x00000002",
+                                "topicId": "0x0201",
+                                "unit": "",
+                                "deviceId": "87e2c0aa-3aa2-4d0c-ad48-26effe505053"
                             },
                             "groupId": "",
                             "id": "eb9cac34-f8d0-4a60-8daa-349be3a55326",
@@ -464,7 +470,7 @@
                                 },
                                 "medium": {
                                     "height": 0.5,
-                                    "width": 0.22916666666666663,
+                                    "width": 0.22916666666666666,
                                     "x": 0.7708333333333334,
                                     "y": 0
                                 },
@@ -479,20 +485,19 @@
                             "type": "dummy_gauge"
                         },
                         {
-                            "config": {
-                            },
+                            "config": {},
                             "groupId": "",
                             "id": "91525ee1-2f18-4767-a88a-dc9ed97f280e",
                             "key": "",
                             "layouts": {
                                 "large": {
                                     "height": 0.125,
-                                    "width": 0.19999999999999996,
+                                    "width": 0.2,
                                     "x": 0.8,
                                     "y": 0.75
                                 },
                                 "medium": {
-                                    "height": 0.11666666666666659,
+                                    "height": 0.11666666666666667,
                                     "width": 0.25,
                                     "x": 0.75,
                                     "y": 0.7666666666666667
@@ -508,20 +513,19 @@
                             "type": "push_button"
                         },
                         {
-                            "config": {
-                            },
+                            "config": {},
                             "groupId": "",
                             "id": "5c5941e7-3419-4d43-a98e-cb78b0e93b59",
                             "key": "",
                             "layouts": {
                                 "large": {
                                     "height": 0.125,
-                                    "width": 0.19999999999999996,
+                                    "width": 0.2,
                                     "x": 0.8,
                                     "y": 0.875
                                 },
                                 "medium": {
-                                    "height": 0.1166666666666667,
+                                    "height": 0.11666666666666667,
                                     "width": 0.25,
                                     "x": 0.75,
                                     "y": 0.8833333333333333
@@ -544,17 +548,87 @@
             },
             {
                 "dashboard": {
-                    "breakpoint": "small",
+                    "breakpoint": "large",
                     "canvasHeightMultiplier": {
                         "medium": 0,
                         "small": 0
                     },
                     "items": [
                         {
-                            "config": {
-                            },
+                            "config": {},
                             "groupId": "",
                             "id": "9a99a6aa-e900-4385-8499-f4983b915e7c",
+                            "key": "",
+                            "layouts": {
+                                "large": {
+                                    "height": 1,
+                                    "width": 0.5,
+                                    "x": 0,
+                                    "y": 0
+                                },
+                                "medium": {
+                                    "height": 1,
+                                    "width": 0.5,
+                                    "x": 0,
+                                    "y": 0
+                                },
+                                "small": {
+                                    "height": 0.525,
+                                    "width": 1,
+                                    "x": 0,
+                                    "y": 0
+                                }
+                            },
+                            "name": "",
+                            "type": "serial_monitor"
+                        },
+                        {
+                            "config": {},
+                            "groupId": "",
+                            "id": "d1c4719a-cbec-4308-bed7-de36cf062831",
+                            "key": "",
+                            "layouts": {
+                                "large": {
+                                    "height": 1,
+                                    "width": 0.5,
+                                    "x": 0.5,
+                                    "y": 0
+                                },
+                                "medium": {
+                                    "height": 1,
+                                    "width": 0.5,
+                                    "x": 0.5,
+                                    "y": 0
+                                },
+                                "small": {
+                                    "height": 0.475,
+                                    "width": 1,
+                                    "x": 0,
+                                    "y": 0.525
+                                }
+                            },
+                            "name": "",
+                            "type": "robot_log"
+                        }
+                    ],
+                    "verticalUnit": "page"
+                },
+                "icon": "lucide:square-terminal",
+                "id": "8d1b7188-00b8-4b70-bcae-e83a187cb047",
+                "name": "Serial_Monitor"
+            },
+            {
+                "dashboard": {
+                    "breakpoint": "medium",
+                    "canvasHeightMultiplier": {
+                        "medium": 0,
+                        "small": 0
+                    },
+                    "items": [
+                        {
+                            "config": {},
+                            "groupId": "",
+                            "id": "ebd291ab-7588-447c-a82a-5c85ac87c811",
                             "key": "",
                             "layouts": {
                                 "large": {
@@ -577,14 +651,14 @@
                                 }
                             },
                             "name": "",
-                            "type": "serial_monitor"
+                            "type": "chat"
                         }
                     ],
                     "verticalUnit": "page"
                 },
-                "icon": "lucide:square-terminal",
-                "id": "8d1b7188-00b8-4b70-bcae-e83a187cb047",
-                "name": "Serial_Monitor"
+                "icon": "lucide:mail",
+                "id": "ca25b5da-d5c4-46fc-bd73-9d2f58cf22d8",
+                "name": "Messages"
             }
         ]
     }

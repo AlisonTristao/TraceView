@@ -12,6 +12,7 @@
 #include "dashboard/dashboardcell.h"
 #include "dashboard/paintframecounter.h"
 #include "dashboard/widgets/chartwidgets.h"
+#include "dashboard/widgets/chatwidget.h"
 #include "dashboard/widgets/controlwidgets.h"
 #include "dashboard/widgets/serialmonitorwidget.h"
 
@@ -280,6 +281,29 @@ DebugChartsWindow::DebugChartsWindow(QWidget* parent) : QDialog(parent) {
     connect(slider, &SliderWidget::sendRequested, m_serialMonitor,
             &SerialMonitorWidget::appendData);
     layout->addWidget(wrapInCell("debug-slider", "slider", tr("Slider"), slider, this), 2, 2);
+
+    // Chat (widgets/chatwidget.h) down the right edge, seeded with a short
+    // conversation covering all three delivery states. Visual only: what the
+    // user types here goes nowhere yet (see ChatWidget::send()).
+    auto* chat = new ChatWidget();
+    chat->setConfig(QJsonObject{{"userName", tr("Operator")}});
+    chat->appendMessage(QStringLiteral("robot_01"), tr("Boot OK. Battery at 87%."), QString(),
+                        ChatWidget::MessageStatus::Sent);
+    chat->appendMessage(tr("Operator"), tr("Start the calibration routine, please."), QString(),
+                        ChatWidget::MessageStatus::Sent);
+    chat->appendMessage(QStringLiteral("robot_01"),
+                        tr("Calibration done. Offsets saved; log attached."),
+                        QStringLiteral("calibration_2026-09-24.csv"),
+                        ChatWidget::MessageStatus::Sent);
+    chat->appendMessage(tr("Operator"), tr("Sending the new route map."),
+                        QStringLiteral("route_map.json"), ChatWidget::MessageStatus::Failed);
+    chat->appendMessage(tr("Operator"), tr("Retrying over the other link..."), QString(),
+                        ChatWidget::MessageStatus::Sending);
+    layout->addWidget(wrapInCell("debug-chat", "chat", tr("Chat"), chat, this), 0, 3, 3, 1);
+    layout->setColumnStretch(0, 3);
+    layout->setColumnStretch(1, 3);
+    layout->setColumnStretch(2, 3);
+    layout->setColumnStretch(3, 2);
 
     // Rows would otherwise split available height evenly -- way more than a
     // single small control (push button/toggle/slider) needs, and much more

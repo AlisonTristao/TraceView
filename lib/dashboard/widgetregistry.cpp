@@ -3,6 +3,7 @@
 #include <QCoreApplication>
 
 #include "dashboardwidget.h"
+#include "widgets/chatwidget.h"
 #include "widgets/chartconfigeditor.h"
 #include "widgets/chartwidgets.h"
 #include "widgets/controlconfigeditor.h"
@@ -56,6 +57,8 @@ WidgetRegistry::WidgetRegistry() {
          [](QWidget* parent) -> WidgetConfigEditor* {
              return new TextBoardConfigEditor(parent);
          }});
+    registerType({"chat", QCoreApplication::translate("WidgetRegistry", "Chat"),
+                  [](QWidget* parent) -> DashboardWidget* { return new ChatWidget(parent); }});
     registerType({"push_button", QCoreApplication::translate("WidgetRegistry", "Push Button"),
                   [](QWidget* parent) -> DashboardWidget* { return new PushButtonWidget(parent); },
                   [](QWidget* parent) -> WidgetConfigEditor* {

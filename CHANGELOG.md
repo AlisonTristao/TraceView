@@ -7,6 +7,25 @@ release flow.
 
 ## [Unreleased]
 
+## [4.6.0] - 2026-09-24
+
+### Added
+
+- New **Chat** widget: a message feed with the author's name on top, the
+  text below and the delivery status (Sending, Sent, Not sent) at the bottom
+  right. You write at the bottom and can attach one file per message (text,
+  CSV, JSON, log, PNG/JPG or .bin, up to 5 MB). Messages are not sent to a
+  device yet.
+- The built-in example has a **Messages** workspace with the chat. Its
+  line chart and two gauges now point at the Robot and the Dongle, so they
+  show up in the Subscriptions tab once the devices connect.
+- On a phone, tapping the serial terminal opens the keyboard.
+
+### Changed
+
+- The **Debug** menu (synthetic-data window) is available again, in Developer
+  mode only.
+
 ## [4.5.0] - 2026-09-24
 
 ### Added
