@@ -213,8 +213,15 @@ jobs:
         # table.
         run: |
           yes | "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager" --sdk_root="$ANDROID_SDK_ROOT" --licenses >/dev/null || true
-          "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager" --sdk_root="$ANDROID_SDK_ROOT" \
-            "platform-tools" "platforms;android-35" "build-tools;35.0.0" "ndk;${{ env.ANDROID_NDK_VERSION }}"
+          # Retried: a download occasionally arrives truncated on the runner
+          # ("Error reading Zip content"), which is transient.
+          for attempt in 1 2 3; do
+            "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager" --sdk_root="$ANDROID_SDK_ROOT" \
+              "platform-tools" "platforms;android-35" "build-tools;35.0.0" "ndk;${{ env.ANDROID_NDK_VERSION }}" \
+              && break
+            [ "$attempt" = 3 ] && exit 1
+            echo "sdkmanager failed (attempt $attempt), retrying..."; sleep 15
+          done
         env:
           ANDROID_SDK_ROOT: ${{ github.workspace }}/android-sdk
 
