@@ -4,6 +4,7 @@
 #include <QTcpSocket>
 
 #include "core/applog.h"
+#include "ota/mdnsresolver.h"
 
 namespace traceview {
 
@@ -18,6 +19,10 @@ TcpTransport::TcpTransport(QObject* parent) : Transport(parent), m_socket(new QT
     m_retryTimer.setSingleShot(true);
     connect(&m_connectTimer, &QTimer::timeout, this, &TcpTransport::onConnectTimeout);
     connect(&m_retryTimer, &QTimer::timeout, this, &TcpTransport::retryConnection);
+
+    m_resolver = new MdnsResolver(this);
+    connect(m_resolver, &MdnsResolver::resolved, this, &TcpTransport::onMdnsResolved);
+    connect(m_resolver, &MdnsResolver::resolveFailed, this, &TcpTransport::onMdnsResolveFailed);
 }
 
 bool TcpTransport::open(const QString& host, quint16 port) {
@@ -34,13 +39,14 @@ bool TcpTransport::open(const QString& host, quint16 port) {
     m_pendingFrames.clear();
     m_pendingOffset = 0;
     qCInfo(lcConnection) << "connecting TCP to" << m_host << m_port;
-    m_socket->connectToHost(m_host, m_port);
+    dial();
     return true;
 }
 
 void TcpTransport::close() {
     m_retryTimer.stop();
     m_connectTimer.stop();
+    ++m_dialSequence;  // a lookup still in flight must not dial after close()
     if (m_socket->state() == QAbstractSocket::UnconnectedState) {
         return;
     }
@@ -117,8 +123,41 @@ void TcpTransport::retryConnection() {
         return;
     }
     qCInfo(lcConnection) << "retrying TCP connection to" << m_host << m_port;
-    m_socket->connectToHost(m_host, m_port);
+    dial();
     m_connectTimer.start(m_connectTimeoutMs);
+}
+
+void TcpTransport::dial() {
+    // A new attempt supersedes any lookup still in flight for an older one.
+    const QString requestId = QString::number(++m_dialSequence);
+    if (!MdnsResolver::isMdnsHostname(m_host)) {
+        m_socket->connectToHost(m_host, m_port);
+        return;
+    }
+    // The robot's IP changes on every reboot but its mDNS name
+    // (OTAUpdater's ota_hostname, "ballyrobot" by default) does not, and the
+    // OS resolver cannot look it up on Windows. Resolved again on EVERY
+    // attempt, so a retry after a reboot finds the new address.
+    qCInfo(lcConnection) << "resolving" << m_host << "via mDNS";
+    m_resolver->resolve(requestId, m_host);
+}
+
+void TcpTransport::onMdnsResolved(const QString& requestId, const QHostAddress& address) {
+    if (requestId != QString::number(m_dialSequence) || m_closing ||
+        m_socket->state() != QAbstractSocket::UnconnectedState) {
+        return;
+    }
+    qCInfo(lcConnection) << m_host << "resolved to" << address.toString();
+    m_socket->connectToHost(address, m_port);
+}
+
+void TcpTransport::onMdnsResolveFailed(const QString& requestId) {
+    if (requestId != QString::number(m_dialSequence) || m_closing) {
+        return;
+    }
+    qCWarning(lcConnection) << "mDNS lookup failed for" << m_host;
+    emit errorOccurred(tr("Could not find %1 on the network (mDNS)").arg(m_host));
+    scheduleReconnect();
 }
 
 void TcpTransport::drainPendingFrames() {

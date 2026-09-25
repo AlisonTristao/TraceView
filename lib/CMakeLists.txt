@@ -449,9 +449,23 @@ target_link_libraries(traceview_diagnostics
 # cacheOtaPassword) and directly on Qt6::Network -- the first library in
 # this app that actually uses it for network access rather than just
 # QPasswordDigestor (see traceview_protocol's own link comment above).
-add_library(traceview_ota STATIC
+# traceview_mdns: the one-shot *.local resolver (ota/mdnsresolver.*), on its
+# own so the TCP transport can resolve a robot's mDNS name without linking
+# the whole OTA tab (Widgets, devices, theme). Windows has no mDNS resolver
+# of its own -- see the class comment.
+add_library(traceview_mdns STATIC
     ota/mdnsresolver.cpp
     ota/mdnsresolver.h
+)
+
+target_include_directories(traceview_mdns PUBLIC
+    ${CMAKE_SOURCE_DIR}/include
+    ${CMAKE_SOURCE_DIR}/lib
+)
+
+target_link_libraries(traceview_mdns PUBLIC Qt6::Network)
+
+add_library(traceview_ota STATIC
     ota/otaclient.cpp
     ota/otaclient.h
     ota/otatab.cpp
@@ -468,6 +482,7 @@ target_link_libraries(traceview_ota
         Qt6::Widgets
         Qt6::Network
         traceview_devices
+        traceview_mdns
     PRIVATE
         # DialogPresenter (theme/dialogpresenter.h) only -- OtaTab's upload
         # warnings go through it like every other dialog in the app.
@@ -649,6 +664,9 @@ target_link_libraries(traceview_transport
     PUBLIC
         Qt6::Core
     PRIVATE
+        # TcpTransport resolves *.local hosts itself (the robot's IP changes
+        # on every reboot; its mDNS name does not).
+        traceview_mdns
         # deviceconnection.cpp/hubtransport.cpp build/own the BtpBackend for
         # a device's session (BtpSession::Framing, btp::TransportLimits);
         # neither symbol appears in a public header of this target, so this
