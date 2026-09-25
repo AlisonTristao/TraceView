@@ -621,7 +621,21 @@ Device DeviceConfigDialog::result() const {
     device.lineTerminator = m_lineTerminatorCombo->currentData().toInt();
     device.tcpHost = m_tcpHostEdit->text().trimmed();
     device.tcpPort = quint16(m_tcpPortSpin->value());
-    device.bleAddress = m_bleAddressCombo->currentText().trimmed();
+    // The edit text can still be a scan result's decorated "name (address)"
+    // label, not the raw address: the activated() handler rewrites it, but
+    // an editable combo also mirrors the label back into the edit text
+    // whenever the current item's text is set (addDiscoveredBleDevice()), or
+    // when the first scan result becomes current on its own. Saving that
+    // label made BleTransport dial "BallyRobot (14:C1:...)" -- an invalid
+    // address. Map a label back to the address its item carries; hand-typed
+    // text that matches no item is kept as-is.
+    {
+        const QString text = m_bleAddressCombo->currentText().trimmed();
+        const int index = m_bleAddressCombo->findText(text);
+        const QString data =
+            index >= 0 ? m_bleAddressCombo->itemData(index).toString() : QString();
+        device.bleAddress = data.isEmpty() ? text : data;
+    }
     device.usbPath = m_usbDeviceCombo->currentData().toString();
     device.parentDeviceId = m_parentCombo->currentData().toString();
     // m_peerSourceId is the ground truth (see its own declaration) --
@@ -801,7 +815,12 @@ void DeviceConfigDialog::addDiscoveredBleDevice(const QString& name, const QStri
         // Re-seen (most backends re-emit per advertisement) -- refresh the
         // label only (a name can arrive on a later advertisement than the
         // first one this address was seen on), never the current selection.
-        m_bleAddressCombo->setItemText(existing, label);
+        // Only when it actually changed: on an editable combo, setItemText()
+        // on the current item also overwrites the edit text, which would
+        // put the label back over the raw address every sweep.
+        if (m_bleAddressCombo->itemText(existing) != label) {
+            m_bleAddressCombo->setItemText(existing, label);
+        }
         return;
     }
     m_bleAddressCombo->addItem(label, address);
