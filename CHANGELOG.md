@@ -7,6 +7,14 @@ release flow.
 
 ## [Unreleased]
 
+## [4.6.5] - 2026-09-25
+
+### Fixed
+
+- Android: the keyboard no longer closes and reopens on every Backspace
+  with keyboards (seen on Xiaomi) that briefly report themselves hidden
+  while resizing their suggestion strip.
+
 ## [4.6.4] - 2026-09-25
 
 ### Added
