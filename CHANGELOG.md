@@ -7,6 +7,14 @@ release flow.
 
 ## [Unreleased]
 
+## [4.6.6] - 2026-09-25
+
+### Changed
+
+- Developer mode: the keyboard diagnostics overlay also shows the Android
+  side (keyboard insets, keyboard show/hide animations, focus moves), and a
+  new "Copy Keyboard Log" option copies the whole trace to the clipboard.
+
 ## [4.6.5] - 2026-09-25
 
 ### Fixed
