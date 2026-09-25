@@ -646,7 +646,7 @@ void DeviceConnection::setLineTerminator(int terminator) {
 }
 
 void DeviceConnection::attemptReconnect() {
-    if (!m_shouldBeConnected || !m_transportAvailable) {
+    if (!m_shouldBeConnected || !m_transportAvailable || m_reconnectPaused) {
         return;
     }
     if (m_hubTransport != nullptr) {

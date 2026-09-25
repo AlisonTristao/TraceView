@@ -348,6 +348,13 @@ private:
     // place that knows all three, so the three call sites below do not each
     // have to.
     void applyDeviceTarget(DeviceConnection* connection, const Device& device);
+    // deriveChannelKey() is PBKDF2 at 200000 iterations -- slow on purpose,
+    // and applyDeviceTarget() runs on the UI thread on every device update
+    // and every reattachHubChildren() (i.e. on every connection-state change
+    // while something is retrying). Deriving each time froze the window
+    // every few seconds; a password's key never changes, so derive it once.
+    QByteArray channelKeyFor(const QString& password);
+    QHash<QString, QByteArray> m_channelKeyCache;
     // Re-points every hub-channel child at its parent. Needed because a
     // child can exist before its parent does: loading a project walks the
     // saved device list in order, and nothing guarantees a hub comes before

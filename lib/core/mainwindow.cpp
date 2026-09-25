@@ -405,6 +405,12 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
                     8000, StatusSeverity::Warning);
             });
     connect(m_devicesGrid, &DevicesGrid::deviceUpdated, this, &MainWindow::onDeviceUpdated);
+    connect(m_devicesGrid, &DevicesGrid::configDialogActiveChanged, this,
+            [this](const QString& deviceId, bool active) {
+                if (DeviceConnection* connection = m_deviceConnections.value(deviceId)) {
+                    connection->setReconnectPaused(active);
+                }
+            });
     connect(m_devicesGrid, &DevicesGrid::connectToggleRequested, this,
             &MainWindow::onDeviceConnectToggleRequested);
     connect(m_devicesGrid, &DevicesGrid::scriptRequested, this,
@@ -2814,6 +2820,16 @@ void MainWindow::refreshDeviceStatusLabel() {
     m_deviceStatusLabel->setText(parts.join("&nbsp;&nbsp;&nbsp;&nbsp;"));
 }
 
+QByteArray MainWindow::channelKeyFor(const QString& password) {
+    const auto it = m_channelKeyCache.constFind(password);
+    if (it != m_channelKeyCache.constEnd()) {
+        return it.value();
+    }
+    const QByteArray key = deriveChannelKey(password);
+    m_channelKeyCache.insert(password, key);
+    return key;
+}
+
 void MainWindow::applyDeviceTarget(DeviceConnection* connection, const Device& device) {
     if (connection == nullptr) {
         return;
@@ -2830,7 +2846,7 @@ void MainWindow::applyDeviceTarget(DeviceConnection* connection, const Device& d
         // reattachHubChildren() runs again once it does exist.
         DeviceConnection* parent = m_deviceConnections.value(device.parentDeviceId);
         connection->connectVia(parent, hubChannelSourceId(device.id), device.peerSourceId,
-                               deriveChannelKey(device.peerPassword));
+                               channelKeyFor(device.peerPassword));
 
         // Tell the hub where this child's downstream traffic goes. Nothing on
         // the wire can carry that: a BTP header has no destination field, and
@@ -2859,7 +2875,7 @@ void MainWindow::applyDeviceTarget(DeviceConnection* connection, const Device& d
         // and, later, BLE. See BtpBackend::setDirectEndpointKey()'s comment
         // for why this is NOT routed through setHubEndpoint()/connectVia().
         connection->connectToTcp(device.tcpHost, device.tcpPort,
-                                 deriveChannelKey(device.peerPassword));
+                                 channelKeyFor(device.peerPassword));
         return;
     }
     if (device.transportType == TransportType::Ble) {
@@ -2868,7 +2884,7 @@ void MainWindow::applyDeviceTarget(DeviceConnection* connection, const Device& d
         // TRACEVIEW_ENABLE_BLE (no BleTransport exists in that
         // configuration -- see deviceconnection.cpp's constructor), so no
         // build-time guard is needed here.
-        connection->connectToBle(device.bleAddress, deriveChannelKey(device.peerPassword));
+        connection->connectToBle(device.bleAddress, channelKeyFor(device.peerPassword));
         return;
     }
     const QString target =
@@ -3177,6 +3193,9 @@ void MainWindow::onDeviceUpdated(const Device& device) {
         m_deviceConnections.insert(device.id, connection);
     }
     connection->setLineTerminator(device.lineTerminator);
+    // OK / Connect in the config dialog: the user asked for THESE settings
+    // now, so lift the while-editing pause before dialing them.
+    connection->setReconnectPaused(false);
     applyDeviceTarget(connection, device);
     reattachHubChildren();
     refreshDeviceStatusLabel();

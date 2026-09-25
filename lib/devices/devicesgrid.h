@@ -227,6 +227,10 @@ signals:
     void deviceAdded(const Device& device);
     void deviceRemoved(const QString& id);
     void deviceUpdated(const Device& device);
+    // True while `deviceId`'s config dialog is open, false once it closes
+    // (however it closed). Lets the connection owner hold off automatic
+    // reconnects with the OLD settings while the user is still editing them.
+    void configDialogActiveChanged(const QString& deviceId, bool active);
     // Bridges notifyCatalogChanged() (above) to whichever config dialog is
     // currently open for `id` -- see handleConfigRequested(). Internal to
     // this class's own dialog-refresh wiring; nothing outside DevicesGrid

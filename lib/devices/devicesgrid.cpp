@@ -380,7 +380,9 @@ void DevicesGrid::handleConfigRequested(const QString& deviceId) {
                 }
                 dialog.setCatalogTopics(m_topicCatalogProvider(deviceId));
             });
+    emit configDialogActiveChanged(deviceId, true);
     const int dialogResult = DialogPresenter::exec(dialog, DialogPresenter::Style::Page);
+    emit configDialogActiveChanged(deviceId, false);
     // Closing the dialog (however it closed) must not leave a scan running
     // with nothing left able to stop it -- stopping an already-stopped scan
     // is a no-op (BleDiscoveryService::stop()), so this is unconditional

@@ -104,6 +104,13 @@ public:
     bool wantsConnection() const {
         return m_shouldBeConnected;
     }
+    // While true, the retry timer's ticks do nothing -- set while this
+    // device's config dialog is open, so it stops redialing with settings
+    // the user is in the middle of changing. An explicit connect (dialog
+    // OK/Connect -> MainWindow::onDeviceUpdated) clears it first.
+    void setReconnectPaused(bool paused) {
+        m_reconnectPaused = paused;
+    }
     bool isAvailable() const {
         return m_transportAvailable;
     }
@@ -243,6 +250,7 @@ private:
     quint16 m_tcpPort = 0;
     QString m_bleAddress;
     bool m_shouldBeConnected = false;
+    bool m_reconnectPaused = false;
     bool m_transportAvailable = true;
     bool m_attemptInProgress = false;
     // Last value emitted through connectionStateChanged -- see
