@@ -580,6 +580,17 @@ void DeviceConnection::reportConnected(bool connected) {
         }
     }
     if (!connected) {
+        // A listener of the emit above may already have started the next
+        // attempt from inside it (MainWindow -> applyDeviceTarget() ->
+        // connectTo*() -> attemptReconnect(): attempt in progress, phase
+        // PreparingTransport). Overwriting that with Disconnected orphaned
+        // the attempt: an attempt that then failed WITHOUT ever connecting
+        // (an mDNS lookup for a robot still booting) was ignored by the
+        // phase-gated error handler, m_attemptInProgress stayed true, and
+        // attemptReconnect() refused every later retry -- forever.
+        if (m_attemptInProgress && m_connectionPhase == ConnectionPhase::PreparingTransport) {
+            return;
+        }
         setConnectionPhase(ConnectionPhase::Disconnected);
         return;
     }
