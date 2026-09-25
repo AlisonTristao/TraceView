@@ -7,6 +7,25 @@ release flow.
 
 ## [Unreleased]
 
+## [4.6.3] - 2026-09-24
+
+### Added
+
+- Chat: a settings section in the Properties panel with the user name and
+  "Show my messages on the right" (on by default), which mirrors your own
+  messages to the right side of the feed.
+
+### Fixed
+
+- Chat: the time, delivery status and attachment line no longer shrink to a
+  tiny size on phones (the mobile font is pixel-sized and the old scaling
+  only handled point sizes).
+- Android: the keyboard no longer drops and reappears on every Backspace in
+  text fields (predictive text is turned off for line/plain-text edits).
+- Translations: all chat strings are translated in every language, and the
+  Android USB serial messages keep their translations again (lupdate now
+  scans that Android-only file too).
+
 ## [4.6.2] - 2026-09-24
 
 ### Changed
