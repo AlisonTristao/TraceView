@@ -68,6 +68,11 @@ found, `windeployqt` runs after the build and copies the required Qt runtime
 beside `TraceView.exe` itself, so the last line above works even without Qt
 on `PATH`.
 
+BLE does not work in a MinGW build on Windows: Qt's MinGW kit ships no
+Windows Bluetooth backend (QtBluetooth logs "Dummy backend running" and
+every scan fails). Use the Visual Studio build below to work on BLE; the
+released installer is built with MSVC for the same reason.
+
 ### Windows with Visual Studio
 
 Install Visual Studio 2022 with the **Desktop development with C++** workload
@@ -178,23 +183,22 @@ for `makensis.exe`, installed once:
 winget install --id NSIS.NSIS -e
 ```
 
-Also make `bash` and `ldd` available through Git Bash/MSYS2. During
-installation, `scripts/collect_windows_deps.sh` checks third-party DLLs
-that `windeployqt` may not collect. Review deployment warnings before
-sharing a package.
-
-Then, with the same Qt/MinGW environment as the Windows-with-MinGW build above:
+The installer is built with MSVC and the official Qt MSVC kit (the MinGW
+kit has no Windows Bluetooth backend). From an **x64 Native Tools Command
+Prompt for VS 2022** (or after `vcvars64.bat`), with Ninja and CMake on
+`PATH`:
 
 ```powershell
-cmake --preset windows-mingw-release
-cmake --build --preset windows-mingw-release
-cd build/windows-mingw-release
+$env:QT_ROOT_DIR = "C:/Qt/6.9.2/msvc2022_64"
+cmake --preset windows-msvc-release -DTRACEVIEW_BUILD_TESTS=OFF -DTRACEVIEW_BUILD_TOOLS=OFF
+cmake --build --preset windows-msvc-release
+cd build/windows-msvc-release
 cpack -G NSIS
 ```
 
-The installer bundles the Qt and MinGW runtime DLLs (`windeployqt
---compiler-runtime`), so it runs on a machine without Qt or this MinGW kit
-installed.
+The installer bundles the Qt runtime (`windeployqt`) and the VC++ runtime
+DLLs (`InstallRequiredSystemLibraries`), so it runs on a machine without Qt
+or the VC++ Redistributable installed.
 
 **Linux (AppImage)**:
 

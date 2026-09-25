@@ -28,70 +28,68 @@ jobs:
   windows-package:
     name: Windows package (NSIS)
     runs-on: windows-2025
-    timeout-minutes: 30
+    timeout-minutes: 45
 
-    env:
-      QT_ROOT_DIR: C:/msys64/ucrt64
-
+    # MSVC + the official Qt kit, not MSYS2/MinGW: Qt's MinGW build ships no
+    # Windows Bluetooth backend (QtBluetooth logs "Dummy backend running"), so
+    # an installer built with MinGW could never find a BLE robot. Qt 6.9.2 is
+    # the same kit the Windows BLE path was validated with.
     defaults:
       run:
-        shell: msys2 {0}
+        shell: pwsh
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup MSYS2
-        uses: msys2/setup-msys2@v2
+      - name: Install Qt (MSVC)
+        uses: jurplel/install-qt-action@v4
         with:
-          msystem: UCRT64
-          update: true
-          pacboy: >-
-            toolchain:p
-            cmake:p
-            ninja:p
-            qt6-base:p
-            qt6-declarative:p
-            qt6-svg:p
-            qt6-serialport:p
-            qt6-connectivity:p
-            qt6-tools:p
+          version: "6.9.2"
+          host: windows
+          target: desktop
+          arch: win64_msvc2022_64
+          modules: qtconnectivity qtserialport
+          cache: true
 
-      # NSIS itself (makensis.exe) isn't an MSYS2/Qt package -- installed as a
-      # regular Windows tool via Chocolatey (preinstalled on this runner image),
-      # in its own PowerShell step since the job's default shell is msys2/bash.
-      - name: Install NSIS
-        shell: pwsh
-        run: choco install nsis -y --no-progress
+      - name: Set up MSVC (x64)
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
+      # NSIS itself (makensis.exe) is a regular Windows tool, installed via
+      # Chocolatey (preinstalled on this runner image); Ninja likewise.
+      - name: Install NSIS and Ninja
+        run: choco install nsis ninja -y --no-progress
 
       - name: Configure (Release)
-        run: cmake --preset windows-mingw-release
+        run: cmake --preset windows-msvc-release -DTRACEVIEW_BUILD_TESTS=OFF -DTRACEVIEW_BUILD_TOOLS=OFF
 
       - name: Build (Release)
-        run: cmake --build --preset windows-mingw-release
+        run: cmake --build --preset windows-msvc-release
 
       - name: Package (CPack / NSIS)
         run: |
-          version="${GITHUB_REF_NAME#v}"
-          [[ $version =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo 'Invalid release version' >&2; exit 1; }
-          cd build/windows-mingw-release
+          $version = "$env:GITHUB_REF_NAME".TrimStart('v')
+          if ($version -notmatch '^[0-9]+\.[0-9]+\.[0-9]+$') { throw 'Invalid release version' }
+          Set-Location build/windows-msvc-release
           cpack -G NSIS -D "CPACK_PACKAGE_FILE_NAME=TraceView-$version-windows-x64"
+          if ($LASTEXITCODE -ne 0) { throw "cpack failed ($LASTEXITCODE)" }
 
       - name: Compute checksum
-        shell: pwsh
         run: |
-          $file = Get-ChildItem build/windows-mingw-release/TraceView-*-windows-x64.exe | Select-Object -First 1
-          if (-not $file) { throw "No NSIS installer found under build/windows-mingw-release" }
+          $file = Get-ChildItem build/windows-msvc-release/TraceView-*-windows-x64.exe | Select-Object -First 1
+          if (-not $file) { throw "No NSIS installer found under build/windows-msvc-release" }
           $hash = (Get-FileHash $file.FullName -Algorithm SHA256).Hash.ToLower()
-          "$hash  $($file.Name)" | Out-File -FilePath "build/windows-mingw-release/sha256-windows.txt" -Encoding ascii
+          "$hash  $($file.Name)" | Out-File -FilePath "build/windows-msvc-release/sha256-windows.txt" -Encoding ascii
 
       - name: Upload package artifact
         uses: actions/upload-artifact@v4
         with:
           name: windows-package
           path: |
-            build/windows-mingw-release/TraceView-*-windows-x64.exe
-            build/windows-mingw-release/sha256-windows.txt
+            build/windows-msvc-release/TraceView-*-windows-x64.exe
+            build/windows-msvc-release/sha256-windows.txt
           if-no-files-found: error
 
   windows-smoke:
