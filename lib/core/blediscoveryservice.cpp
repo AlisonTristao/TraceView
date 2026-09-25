@@ -2,6 +2,7 @@
 
 #include <QBluetoothDeviceDiscoveryAgent>
 #include <QBluetoothDeviceInfo>
+#include <QTimer>
 
 #include "core/applog.h"
 #include "core/blepermission.h"
@@ -63,12 +64,41 @@ void BleDiscoveryService::startAgent() {
     connect(m_agent, &QBluetoothDeviceDiscoveryAgent::errorOccurred, this,
             &BleDiscoveryService::onAgentError);
     m_agent->start(QBluetoothDeviceDiscoveryAgent::LowEnergyMethod);
+
+    // deviceDiscovered() fires once per device, carrying only what the
+    // backend knew at that moment. On Windows (Qt 6.9 winrt backend,
+    // QBluetoothDeviceDiscoveryAgentPrivate::registerDevice()) service UUIDs
+    // learned from a LATER advertisement or scan response are merged into
+    // discoveredDevices() silently -- no deviceDiscovered(), no
+    // deviceUpdated(). A robot whose first seen PDU lacked the BTP UUID was
+    // therefore filtered out for the whole scan. Sweeping the agent's own
+    // list catches those; duplicates are fine (see deviceDiscovered()).
+    if (m_sweepTimer == nullptr) {
+        m_sweepTimer = new QTimer(this);
+        m_sweepTimer->setInterval(500);
+        connect(m_sweepTimer, &QTimer::timeout, this,
+                &BleDiscoveryService::sweepDiscoveredDevices);
+    }
+    m_sweepTimer->start();
+}
+
+void BleDiscoveryService::sweepDiscoveredDevices() {
+    if (m_agent == nullptr) {
+        return;
+    }
+    const QList<QBluetoothDeviceInfo> devices = m_agent->discoveredDevices();
+    for (const QBluetoothDeviceInfo& info : devices) {
+        onDeviceDiscovered(info);
+    }
 }
 
 void BleDiscoveryService::stop() {
     // Also cancels a start() still waiting on the permission prompt.
     ++m_generation;
     m_awaitingPermission = false;
+    if (m_sweepTimer != nullptr) {
+        m_sweepTimer->stop();
+    }
     if (m_agent == nullptr) {
         return;
     }
@@ -97,6 +127,11 @@ void BleDiscoveryService::onDeviceDiscovered(const QBluetoothDeviceInfo& info) {
 }
 
 void BleDiscoveryService::onAgentFinished() {
+    // One last pass: UUIDs merged after the final timer tick still count.
+    sweepDiscoveredDevices();
+    if (m_sweepTimer != nullptr) {
+        m_sweepTimer->stop();
+    }
     emit finished();
 }
 

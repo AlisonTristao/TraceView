@@ -6,6 +6,7 @@
 
 class QBluetoothDeviceDiscoveryAgent;
 class QBluetoothDeviceInfo;
+class QTimer;
 
 namespace traceview {
 
@@ -75,8 +76,12 @@ private:
     void onDeviceDiscovered(const QBluetoothDeviceInfo& info);
     void onAgentFinished();
     void onAgentError();
+    void sweepDiscoveredDevices();
 
     QBluetoothDeviceDiscoveryAgent* m_agent = nullptr;
+    // Re-checks m_agent->discoveredDevices() while a scan runs -- see
+    // startAgent()'s comment for why deviceDiscovered() alone misses robots.
+    QTimer* m_sweepTimer = nullptr;
     bool m_awaitingPermission = false;
     // Bumped by every start()/stop(), so a permission answer arriving after
     // either one is recognized as stale and dropped.
