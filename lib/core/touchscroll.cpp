@@ -4,6 +4,8 @@
 #include <QAbstractScrollArea>
 #include <QApplication>
 #include <QEvent>
+#include <QLineEdit>
+#include <QPlainTextEdit>
 #include <QScroller>
 #include <QScrollerProperties>
 
@@ -62,6 +64,18 @@ public:
             auto* scrollArea = qobject_cast<QAbstractScrollArea*>(watched);
             if (scrollArea != nullptr && !scrollArea->property(kManualProperty).toBool()) {
                 grab(scrollArea);
+            }
+            // Android keyboards keep a "composing" word while predictive text
+            // is on, and Qt restarts the input connection when a Backspace
+            // edits it -- the keyboard visibly drops and comes back on every
+            // delete. Without predictions there is nothing composing, so
+            // deletes are plain key events. SerialTerminalWidget (a
+            // QPlainTextEdit) answers ImHints itself, so this is moot there.
+            if (qobject_cast<QLineEdit*>(watched) != nullptr ||
+                qobject_cast<QPlainTextEdit*>(watched) != nullptr) {
+                auto* widget = static_cast<QWidget*>(watched);
+                widget->setInputMethodHints(widget->inputMethodHints() |
+                                            Qt::ImhNoPredictiveText);
             }
         }
         return QObject::eventFilter(watched, event);
