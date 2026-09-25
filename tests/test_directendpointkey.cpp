@@ -2,6 +2,7 @@
 #include <QtTest/QtTest>
 #include <btp/codec.hpp>
 #include <cstdint>
+#include <optional>
 #include <vector>
 
 #include "protocol/btpbackend.h"
@@ -24,12 +25,11 @@ using namespace traceview;
 //
 // BtpBackend::setDirectEndpointKey() is what lets a direct session open
 // those sealed replies WITHOUT adopting setHubEndpoint()'s hub-child side
-// effects (identity rewrite, outbound sealing, the "drop an unsealed frame"
-// downgrade check) -- see its own comment in btpbackend.h for the full
-// reasoning, including why the robot's receive side does NOT require
-// TraceView's own outbound traffic to be sealed (confirmed by reading
-// BTP/src/node.cpp's route_decoded()/finish(): open() only runs when the
-// INCOMING frame already carries kFlagEncrypted).
+// effects (identity rewrite, hub-cache exemptions) -- see its own comment in
+// btpbackend.h. Since BTP 2.46.0 a keyed robot also DROPS any unsealed
+// message past the handshake, so a keyed direct session (SessionStartMode::
+// DirectBtp) seals everything it sends and, symmetrically, drops any unsealed
+// frame except HELLO_RESULT / SESSION_CLOSE_RESULT.
 //
 // This exercises setDirectEndpointKey() directly, the same way
 // test_hubendpoint.cpp exercises setHubEndpoint() -- using TERMINAL_OUT as
@@ -90,6 +90,9 @@ private slots:
     void wrongPasswordFailsClosed();
     void doesNotAdoptHubChildRoleOrIdentity();
     void unsealedFrameStillReachesAConsoleRoleSessionEvenWithAKeyConfigured();
+    void keyedDirectSessionDropsAnUnsealedFrame();
+    void keyedDirectSessionSealsTerminalIn();
+    void unkeyedDirectSessionSendsTerminalInInTheClear();
 };
 
 // The core contract: once setDirectEndpointKey() has the right key, a
@@ -185,15 +188,11 @@ void TestDirectEndpointKey::doesNotAdoptHubChildRoleOrIdentity() {
              "a direct session must HELLO, not ask a hub-child-style manifest request");
 }
 
-// Confirmed by reading BallyRobot.cpp / BTP/src/node.cpp (Phase 1 of this
-// task): bally_OS does not require inbound encryption for the message types
-// it accepts over TCP, and TraceView's own downgrade protection
-// (onSessionFrameReceived()'s "dropped an unsealed frame on a sealed hub
-// channel" branch) is gated on m_peerSourceId != 0. A direct session never
-// sets it, so an unsealed frame must still be delivered even with a key
-// configured -- unlike a keyed hub child (contrast
-// test_hubendpoint.cpp, which has no equivalent "still delivered" case for
-// its own keyed children on that path).
+// The unsealed-frame drop is specific to a DIRECT session (DirectBtp) and a
+// keyed hub child. A console-role backend (the dongle's own serial session,
+// SessionStartMode::Console) keeps delivering the dongle's cleartext traffic
+// even with a key configured -- contrast keyedDirectSessionDropsAnUnsealedFrame
+// below.
 void TestDirectEndpointKey::unsealedFrameStillReachesAConsoleRoleSessionEvenWithAKeyConfigured() {
     BtpBackend backend(BtpSession::Framing::PreFramed, btp::kEspNowTransport);
     backend.setDirectEndpointKey(deriveChannelKey(QStringLiteral("senha-do-robo")));
@@ -204,6 +203,87 @@ void TestDirectEndpointKey::unsealedFrameStillReachesAConsoleRoleSessionEvenWith
     backend.feedBytes(encodedFrame(header, QByteArrayLiteral("plain text reply\n")));
 
     QCOMPARE(terminalSpy.count(), 1);
+}
+
+// A keyed direct session: the robot seals everything past the handshake, so
+// an unsealed TERMINAL_OUT is a downgrade or a spoof and must not surface.
+void TestDirectEndpointKey::keyedDirectSessionDropsAnUnsealedFrame() {
+    BtpBackend backend(BtpSession::Framing::PreFramed, btp::kEspNowTransport,
+                       BtpBackend::SessionStartMode::DirectBtp);
+    const QByteArray key = deriveChannelKey(QStringLiteral("senha-do-robo"));
+    backend.setDirectEndpointKey(key);
+
+    QSignalSpy terminalSpy(&backend, &Backend::terminalDataReceived);
+
+    btp::Header plainHeader = terminalOutHeader();  // flags = 0, never sealed
+    backend.feedBytes(encodedFrame(plainHeader, QByteArrayLiteral("spoofed\n")));
+    QCOMPARE(terminalSpy.count(), 0);
+
+    // The same session still opens a properly sealed one.
+    btp::Header sealedHeader = terminalOutHeader();
+    sealedHeader.sequence = 2;
+    const QByteArray sealed = ChannelSeal::seal(key, sealedHeader, QByteArrayLiteral("real\n"));
+    QVERIFY(!sealed.isEmpty());
+    backend.feedBytes(encodedFrame(sealedHeader, sealed));
+    QCOMPARE(terminalSpy.count(), 1);
+    QCOMPARE(terminalSpy.at(0).at(0).toByteArray(), QByteArrayLiteral("real\n"));
+}
+
+namespace {
+
+// Decodes the one pre-framed frame a bytesToWrite emission carried.
+bool decodeWrittenFrame(const QByteArray& written, std::vector<std::uint8_t>* storage,
+                        btp::DecodedFrame* out) {
+    storage->assign(written.constBegin(), written.constEnd());
+    return btp::decode(storage->data(), storage->size(), btp::kEspNowTransport, out) ==
+           btp::Error::Ok;
+}
+
+}  // namespace
+
+// A keyed robot drops unsealed input (BTP 2.46.0), so a keyed direct session
+// seals TERMINAL_IN with the channel-B key -- the robot's RadioSeal::open_e
+// opens it back to the typed bytes.
+void TestDirectEndpointKey::keyedDirectSessionSealsTerminalIn() {
+    BtpBackend backend(BtpSession::Framing::PreFramed, btp::kEspNowTransport,
+                       BtpBackend::SessionStartMode::DirectBtp);
+    const QByteArray key = deriveChannelKey(QStringLiteral("senha-do-robo"));
+    backend.setDirectEndpointKey(key);
+
+    QSignalSpy written(&backend, &Backend::bytesToWrite);
+    backend.sendTerminalIn(QByteArrayLiteral("ls\r"));
+    QCOMPARE(written.count(), 1);
+
+    std::vector<std::uint8_t> storage;
+    btp::DecodedFrame decoded{};
+    QVERIFY(decodeWrittenFrame(written.at(0).at(0).toByteArray(), &storage, &decoded));
+    QCOMPARE(int(decoded.header.type), int(btp::MessageType::Terminal));
+    QVERIFY((decoded.header.flags & btp::kFlagEncrypted) != 0U);
+    const std::optional<QByteArray> plain = ChannelSeal::open(
+        key, decoded.header,
+        QByteArray(reinterpret_cast<const char*>(decoded.payload.data),
+                   int(decoded.payload.size)));
+    QVERIFY(plain.has_value());
+    QCOMPARE(*plain, QByteArrayLiteral("ls\r"));
+}
+
+// No key configured: nothing to seal with, so TERMINAL_IN stays cleartext --
+// which only an unkeyed robot/simulator accepts.
+void TestDirectEndpointKey::unkeyedDirectSessionSendsTerminalInInTheClear() {
+    BtpBackend backend(BtpSession::Framing::PreFramed, btp::kEspNowTransport,
+                       BtpBackend::SessionStartMode::DirectBtp);
+
+    QSignalSpy written(&backend, &Backend::bytesToWrite);
+    backend.sendTerminalIn(QByteArrayLiteral("ls\r"));
+    QCOMPARE(written.count(), 1);
+
+    std::vector<std::uint8_t> storage;
+    btp::DecodedFrame decoded{};
+    QVERIFY(decodeWrittenFrame(written.at(0).at(0).toByteArray(), &storage, &decoded));
+    QVERIFY((decoded.header.flags & btp::kFlagEncrypted) == 0U);
+    QCOMPARE(QByteArray(reinterpret_cast<const char*>(decoded.payload.data),
+                        int(decoded.payload.size)),
+             QByteArrayLiteral("ls\r"));
 }
 
 QTEST_MAIN(TestDirectEndpointKey)

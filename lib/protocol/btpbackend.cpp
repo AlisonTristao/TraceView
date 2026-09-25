@@ -62,6 +62,18 @@ bool isHubPlaintextControlResponse(const BtpFrame& frame) {
     }
 }
 
+// The session handshake's replies, the only CONTROL a keyed direct TCP/BLE
+// robot sends in the clear: they answer before any key is in use (BTP
+// docs/encryption.md section 8), everything after them is sealed.
+constexpr quint16 kControlHelloResult = 0x0002;
+constexpr quint16 kControlSessionCloseResult = 0x000B;
+
+bool isSessionHandshakeResponse(const BtpFrame& frame) {
+    return frame.type == btp::MessageType::Control &&
+           (frame.objectId == kControlHelloResult ||
+            frame.objectId == kControlSessionCloseResult);
+}
+
 // session-and-terminal.md section 4.1. The dongle handles this request in
 // its protocol loop immediately; 500 ms is the allowance for returning
 // SESSION_CLOSE_RESULT and cleaning its queues before console ownership.
@@ -692,7 +704,14 @@ void BtpBackend::onNodeConnected() {
     m_keepaliveTimer->start();
     m_manifestClient->onSessionEstablished(m_node->connected_peer_config_revision());
     m_subscriptionManager->onSessionEstablished();
-    m_clockSync->onSessionEstablished(m_sessionPeerSourceId, m_node->connected_peer_boot_id());
+    // Clock sync is a "dongle -clock" shell command for a hub. A direct
+    // session's peer is the robot itself, which has no such command (and,
+    // keyed, drops the unsealed request anyway) -- same reason a hub child
+    // skips it in onTransportConnectionChanged().
+    if (m_sessionStartMode != SessionStartMode::DirectBtp) {
+        m_clockSync->onSessionEstablished(m_sessionPeerSourceId,
+                                          m_node->connected_peer_boot_id());
+    }
     // Re-issued on EVERY session: HubRegistry's table is RAM-only on the
     // dongle, so a dongle reboot silently empties it while this desktop still
     // believes its children are routed.
@@ -765,20 +784,29 @@ void BtpBackend::setHubEndpoint(quint32 selfSourceId, quint32 peerSourceId,
 
 void BtpBackend::setDirectEndpointKey(const QByteArray& endpointKey) {
     // See this method's own comment in btpbackend.h for the full reasoning.
-    // Deliberately just this one line: m_selfSourceId/m_peerSourceId/
-    // m_terminalSourceId stay whatever they already are (0 / 0 / the random
-    // per-run id btp::Node's console-role session already uses), and
-    // m_subscriptionManager/m_commandClient are left unconfigured, because
-    // bally_OS's TCP responder does not require TraceView's own outbound
-    // SUBSCRIBE/UNSUBSCRIBE/COMMAND_REQUEST/TERMINAL_IN to be sealed --
-    // confirmed by reading BTP/src/node.cpp's route_decoded()/finish() (open()
-    // only runs when the INCOMING frame already carries kFlagEncrypted) before
-    // writing this. has_seal()/has_open()/seal()/open() above and
-    // onSessionFrameReceived() all key off m_endpointKey alone already, so
-    // setting it is enough to let this session open the robot's own sealed
-    // replies (MANIFEST_DATA/SUBSCRIBE_RESULT/UNSUBSCRIBE_RESULT/
-    // COMMAND_RESULT/TELEMETRY/TERMINAL_OUT).
+    // m_selfSourceId/m_peerSourceId/m_terminalSourceId stay whatever they
+    // already are (0 / 0 / the random per-run id m_node's session uses).
     m_endpointKey = endpointKey;
+    // A keyed robot drops every unsealed message after the handshake (BTP
+    // 2.46.0), so everything this session originates is sealed with the same
+    // key, as m_terminalSourceId, from the one shared endpoint counter:
+    // SUBSCRIBE/UNSUBSCRIBE here, MANIFEST_REQUEST here, TERMINAL_IN and the
+    // keepalive in sendTerminalIn()/sendSessionKeepalive(), COMMAND_REQUEST
+    // through m_node's own has_seal(). Unkeyed, all of it stays cleartext --
+    // which only an unkeyed robot/simulator will accept.
+    if (endpointKey.isEmpty()) {
+        m_subscriptionManager->setEndpointIdentity(0, 0, QByteArray(), {});
+        m_manifestClient->setEndpointSeal(0, 0, QByteArray(), {});
+        return;
+    }
+    m_subscriptionManager->setEndpointIdentity(m_terminalSourceId, m_terminalBootId, endpointKey,
+                                               [this] { return nextEndpointSequence(); });
+    m_manifestClient->setEndpointSeal(m_terminalSourceId, m_terminalBootId, endpointKey,
+                                      [this] { return nextEndpointSequence(); });
+}
+
+bool BtpBackend::sealsDirectSession() const {
+    return m_sessionStartMode == SessionStartMode::DirectBtp && !m_endpointKey.isEmpty();
 }
 
 quint32 BtpBackend::nextEndpointSequence() {
@@ -826,16 +854,27 @@ void BtpBackend::sendSessionKeepalive() {
         payload.append(static_cast<char>((v >> 24) & 0xFF));
     }
 
+    // A keyed direct session seals it (its robot drops an unsealed one, BTP
+    // 2.46.0), from the shared endpoint counter like every other sealed send.
+    const bool sealed = sealsDirectSession();
+
     btp::Header header{};
     header.type = btp::MessageType::Control;
     header.flags = 0;
     header.source_id = m_terminalSourceId;  // this backend's own stable-per-run id
     header.boot_id = m_terminalBootId;
-    header.sequence = ++m_sessionSequence;
+    header.sequence = sealed ? nextEndpointSequence() : ++m_sessionSequence;
     header.timestamp_us = static_cast<quint64>(QDateTime::currentMSecsSinceEpoch()) * 1000ULL;
     header.object_id = kControlManifestRequest;
     header.fragment_index = 0;
     header.fragment_count = 1;
+
+    if (sealed) {
+        payload = ChannelSeal::seal(m_endpointKey, header, payload);
+        if (payload.isEmpty()) {
+            return;
+        }
+    }
 
     const btp::Frame frame{header,
                            {reinterpret_cast<const std::uint8_t*>(payload.constData()),
@@ -906,6 +945,21 @@ void BtpBackend::sendCommand(const QByteArray& text) {
 
 void BtpBackend::onSessionFrameReceived(const BtpFrame& frame) {
     if ((frame.flags & btp::kFlagEncrypted) == 0U) {
+        if (sealsDirectSession() && !isSessionHandshakeResponse(frame)) {
+            // Keyed direct TCP/BLE session: the robot seals everything past
+            // the handshake with this same key, so an unsealed frame is a
+            // downgrade or a spoof -- the same rule the keyed hub channel
+            // below applies, without its hub-cache exemptions (there is no
+            // hub on this link).
+            if (!m_unsealedDowngradeReported) {
+                m_unsealedDowngradeReported = true;
+                emit statusMessage(
+                    tr("Dropped an unsealed frame on a sealed direct session "
+                       "(check the robot's channel-B password)"),
+                    6000, StatusSeverity::Warning);
+            }
+            return;
+        }
         if (m_peerSourceId != 0 && !m_endpointKey.isEmpty() &&
             !isHubPlaintextControlResponse(frame)) {
             // Keyed hub channel: robot DATA (telemetry, command results) is
@@ -1126,9 +1180,11 @@ void BtpBackend::sendTerminalIn(const QByteArray& bytes) {
     // On a hub child (setHubEndpoint()), the terminal talks end to end with a
     // robot: TERMINAL_IN is sealed with the channel-B key exactly like a
     // COMMAND_REQUEST, and the dongle relays it verbatim to the robot's
-    // TerminalResponder. On the console backend it stays unsealed -- that is
-    // the dongle's own ShellLineEditor at the other end.
-    const bool sealed = (m_peerSourceId != 0);
+    // TerminalResponder. A keyed direct TCP/BLE session seals it the same way
+    // (its robot drops unsealed input, BTP 2.46.0). On the console backend it
+    // stays unsealed -- that is the dongle's own ShellLineEditor at the other
+    // end.
+    const bool sealed = (m_peerSourceId != 0) || sealsDirectSession();
     if (sealed && m_endpointKey.isEmpty()) {
         emit statusMessage(tr("terminal input not sent: endpoint key not configured"), 5000,
                            StatusSeverity::Warning);

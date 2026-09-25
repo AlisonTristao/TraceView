@@ -132,10 +132,12 @@ set(BTP_ENABLE_AEAD ON CACHE BOOL "" FORCE)
 FetchContent_Declare(
     btp
     GIT_REPOSITORY https://github.com/AlisonTristao/BTP.git
-    # v2.45.0: manifest format 3 field ranges are optional per field via
-    # kFieldHasRange (see manifestclient.cpp and
-    # dashboard/widgets/chartdata.h's ChartSeriesConfig::declaredMin/Max).
-    GIT_TAG v2.45.0
+    # v2.46.0: a keyed btp::Node drops unsealed messages past the handshake
+    # (NodeConfig::accept_cleartext()) -- the reason a keyed direct TCP/BLE
+    # session now seals everything it sends (btpbackend.h's
+    # setDirectEndpointKey()). Carries 2.45.0's per-field optional manifest
+    # ranges (manifestclient.cpp, dashboard/widgets/chartdata.h).
+    GIT_TAG v2.46.0
 )
 FetchContent_MakeAvailable(btp)
 

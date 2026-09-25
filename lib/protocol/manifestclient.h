@@ -1,9 +1,11 @@
 #pragma once
 
+#include <QByteArray>
 #include <QHash>
 #include <QObject>
 #include <QVector>
 #include <QtGlobal>
+#include <functional>
 
 #include "telemetry/deviceinforecord.h"
 
@@ -74,6 +76,16 @@ public slots:
     // flood the link with duplicate requests while a reply is in flight.
     void onUnknownSchema(quint32 sourceId, quint16 topicId, quint16 schemaVersion);
 
+public:
+    // Seals every MANIFEST_REQUEST with `key` (channel B) and sends it as
+    // (sourceId, bootId), drawing each sequence from `nextSequence` -- the
+    // backend's one shared endpoint counter, so no two sealed messages reuse
+    // an AEAD nonce. For a direct TCP/BLE session to a keyed robot, which
+    // drops a cleartext request (BTP 2.46.0). An empty `key` restores the
+    // default: cleartext, under this client's own private identity.
+    void setEndpointSeal(quint32 sourceId, quint32 bootId, const QByteArray& key,
+                         std::function<quint32()> nextSequence);
+
 signals:
     // Emitted after a successful MANIFEST_DATA response was applied to the
     // catalog: topic schemas added/replaced, and/or that source's current
@@ -110,6 +122,12 @@ private:
     quint32 m_clientSourceId;
     quint32 m_clientBootId;
     quint32 m_nextSequence = 1;
+
+    // Set by setEndpointSeal(); an empty key means requests go out cleartext.
+    QByteArray m_endpointKey;
+    quint32 m_endpointSourceId = 0;
+    quint32 m_endpointBootId = 0;
+    std::function<quint32()> m_nextEndpointSequence;
 
     bool m_haveDongleConfigRevision = false;
     quint32 m_lastDongleConfigRevision = 0;

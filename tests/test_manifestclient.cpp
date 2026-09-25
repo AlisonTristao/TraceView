@@ -7,6 +7,7 @@
 
 #include "protocol/btpframe.h"
 #include "protocol/btpsession.h"
+#include "protocol/channelseal.h"
 #include "protocol/manifestclient.h"
 #include "protocol/protocolrouter.h"
 #include "protocol/telemetrycatalog.h"
@@ -294,6 +295,7 @@ private slots:
     void unknownSchemaIsRateLimitedPerSource();
     void unknownSchemaCarriesTheRevisionAlreadyCached();
     void aFailedResponseClearsTheCooldownSoARetryIsPossible();
+    void anEndpointSealSealsTheRequestAndAnEmptyKeyUndoesIt();
 
     // Parse side
     void aSuccessfulResponseRegistersEverySchemaAndTheBootId();
@@ -427,6 +429,42 @@ void TestManifestClient::aFailedResponseClearsTheCooldownSoARetryIsPossible() {
 
     fixture.client.onUnknownSchema(kRobot, 0x0001, 9);
     QCOMPARE(fixture.written.count(), 2);
+}
+
+// A direct TCP/BLE session to a keyed robot: the robot drops a cleartext
+// MANIFEST_REQUEST (BTP 2.46.0), so setEndpointSeal() seals it with the
+// channel-B key, as the given identity, from the given sequence source -- and
+// an empty key goes back to the cleartext default.
+void TestManifestClient::anEndpointSealSealsTheRequestAndAnEmptyKeyUndoesIt() {
+    Fixture fixture;
+    const QByteArray key(16, 'k');
+    quint32 nextSequence = 41;
+    fixture.client.setEndpointSeal(0x00001234u, 0x00005678u, key,
+                                   [&nextSequence] { return ++nextSequence; });
+    fixture.client.requestCatalogFor(0x0A0A0A0Au);
+
+    QCOMPARE(fixture.written.count(), 1);
+    btp::DecodedFrame frame{};
+    std::vector<std::uint8_t> storage;
+    QVERIFY(decodeWritten(fixture.written.at(0).at(0).toByteArray(), &frame, &storage));
+    QCOMPARE(frame.header.object_id, kControlManifestRequest);
+    QVERIFY((frame.header.flags & btp::kFlagEncrypted) != 0U);
+    QCOMPARE(frame.header.source_id, 0x00001234u);
+    QCOMPARE(frame.header.boot_id, 0x00005678u);
+    QCOMPARE(frame.header.sequence, 42u);
+    const std::optional<QByteArray> plain = ChannelSeal::open(
+        key, frame.header,
+        QByteArray(reinterpret_cast<const char*>(frame.payload.data), int(frame.payload.size)));
+    QVERIFY(plain.has_value());
+    QCOMPARE(readLe32(*plain, 0), 0x0A0A0A0Au);
+
+    fixture.client.setEndpointSeal(0, 0, QByteArray(), {});
+    fixture.client.requestCatalogFor(0x0B0B0B0Bu);
+    QCOMPARE(fixture.written.count(), 2);
+    quint32 target = 0;
+    quint32 revision = 0;
+    QVERIFY(fixture.request(1, &target, &revision));  // decodes as plain again
+    QCOMPARE(target, 0x0B0B0B0Bu);
 }
 
 // ============================================================== parse side

@@ -9,6 +9,7 @@
 
 #include "protocol/btpframe.h"
 #include "protocol/btpsession.h"
+#include "protocol/channelseal.h"
 #include "protocol/protocolrouter.h"
 #include "protocol/telemetrycatalog.h"
 
@@ -214,23 +215,42 @@ void ManifestClient::sendRequest(quint32 targetSourceId, quint32 targetBootId,
         return;
     }
     const QByteArray payload(reinterpret_cast<const char*>(buffer), static_cast<int>(written));
+    const bool sealed = !m_endpointKey.isEmpty();
 
     btp::Header header{};
     header.type = btp::MessageType::Control;
     header.flags = 0;
-    header.source_id = m_clientSourceId;
-    header.boot_id = m_clientBootId;
-    header.sequence = m_nextSequence++;
+    header.source_id = sealed ? m_endpointSourceId : m_clientSourceId;
+    header.boot_id = sealed ? m_endpointBootId : m_clientBootId;
+    header.sequence = sealed ? m_nextEndpointSequence() : m_nextSequence++;
     header.timestamp_us = static_cast<quint64>(QDateTime::currentMSecsSinceEpoch()) * 1000ULL;
     header.object_id = kControlManifestRequest;
     header.fragment_index = 0;
     header.fragment_count = 1;
 
+    QByteArray wirePayload = payload;
+    if (sealed) {
+        // Sets ENCRYPTED on `header` itself; fail closed rather than fall back
+        // to a cleartext request the robot would drop anyway.
+        wirePayload = ChannelSeal::seal(m_endpointKey, header, payload);
+        if (wirePayload.isEmpty()) {
+            return;
+        }
+    }
+
     btp::Frame frame{};
     frame.header = header;
-    frame.payload.data = reinterpret_cast<const std::uint8_t*>(payload.constData());
-    frame.payload.size = static_cast<std::size_t>(payload.size());
+    frame.payload.data = reinterpret_cast<const std::uint8_t*>(wirePayload.constData());
+    frame.payload.size = static_cast<std::size_t>(wirePayload.size());
     m_session->sendFrame(frame);
+}
+
+void ManifestClient::setEndpointSeal(quint32 sourceId, quint32 bootId, const QByteArray& key,
+                                     std::function<quint32()> nextSequence) {
+    m_endpointSourceId = sourceId;
+    m_endpointBootId = bootId;
+    m_endpointKey = nextSequence ? key : QByteArray();
+    m_nextEndpointSequence = std::move(nextSequence);
 }
 
 void ManifestClient::onControlFrameReceived(const BtpFrame& frame) {

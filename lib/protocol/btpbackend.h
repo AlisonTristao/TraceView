@@ -174,7 +174,7 @@ public:
     // A direct-TCP (or BLE) session talks to the robot end to end, with no
     // dongle and no ESP-NOW mesh in between -- but it is NOT a hub child, and
     // must not become one. Reusing setHubEndpoint() here would be wrong on
-    // three counts, each read off bally_OS itself (utils/BallyRobot/
+    // two counts, each read off bally_OS itself (utils/BallyRobot/
     // BallyRobot.{h,cpp}, RobotTcpLink/tcp_node_) before writing this:
     //
     //  - It would overwrite m_terminalSourceId with a caller-supplied
@@ -191,44 +191,29 @@ public:
     //    ()'s "drop an unsealed frame on a keyed child" downgrade check and
     //    CommandClient/SubscriptionManager's hub-child addressing would all
     //    also misfire against a peer id that does not mean what they assume.
-    //  - It would reconfigure m_subscriptionManager/m_commandClient to seal
-    //    every outbound SUBSCRIBE/UNSUBSCRIBE/COMMAND_REQUEST/TERMINAL_IN --
-    //    unnecessary here: reading bally_OS's receive path (btp::Node::
-    //    route_decoded()/finish(), BTP/src/node.cpp) shows the robot only
-    //    attempts RadioSeal::open_e when the INCOMING frame's own header
-    //    already carries kFlagEncrypted; it processes every one of those
-    //    message types in the clear just as readily when the sender does not
-    //    set that flag. Nothing on the robot's receive side requires (or is
-    //    even aware of) TraceView encrypting its own outbound TCP traffic.
     //
-    // What direct-TCP sessions DO need a key for: bally_OS seals almost
-    // everything it sends back over TCP with channel-B key E --
-    // RobotTcpLink::seal()/reply_seal() (MANIFEST_DATA, SUBSCRIBE_RESULT,
-    // UNSUBSCRIBE_RESULT), CommandProcessor::send_result(..., protocol_tcp_)
-    // (COMMAND_RESULT, seal_endpoint_ = RadioSeal::seal_e), and
-    // TelemetryPublisher::bind_tcp_target() / TerminalResponder::
-    // bind_tcp_target() (TELEMETRY, TERMINAL_OUT), all confirmed by reading
-    // BallyRobot.cpp. The ONE thing that stays cleartext, unconditionally, on
-    // both ends, is HELLO/HELLO_RESULT (BTP/src/node.cpp's route_decoded():
-    // the session reply is sent with an explicit seal=nullptr, bypassing
-    // reply_seal_for() entirely -- "the handshake bootstraps the session
-    // before any key"). So this method only has to make onSessionFrameReceived
-    // () (and, for the COMMAND_RESULT shadow copy m_node itself decodes, this
-    // class's own has_open()/open()) able to open a sealed reply -- both
-    // already work off m_endpointKey alone, independent of m_peerSourceId
-    // (read onSessionFrameReceived() yourself before trusting this comment).
+    // What a direct session DOES share with a keyed hub child is the key
+    // discipline, both ways (BTP 2.46.0: a keyed btp::Node drops every
+    // unsealed message past the handshake):
+    //  - Outbound, everything this session originates is sealed with key E as
+    //    m_terminalSourceId, from the one shared endpoint counter:
+    //    SUBSCRIBE/UNSUBSCRIBE (m_subscriptionManager) and MANIFEST_REQUEST
+    //    (m_manifestClient), both configured right here; TERMINAL_IN and the
+    //    keepalive (sealsDirectSession()); COMMAND_REQUEST through m_node's own
+    //    has_seal().
+    //  - Inbound, the robot seals everything past the handshake too
+    //    (RobotTcpLink::seal()/reply_seal(), CommandProcessor::send_result(...,
+    //    protocol_tcp_), TelemetryPublisher/TerminalResponder's TCP/BLE
+    //    targets), so onSessionFrameReceived() drops any unsealed frame except
+    //    HELLO_RESULT / SESSION_CLOSE_RESULT, which answer before any key.
     //
     // `endpointKey` is the same derived channel-B key setHubEndpoint() takes
     // (keyderivation.h's deriveChannelKey(Device::peerPassword) -- ONE
-    // password per device now covers hub, TCP and, later, BLE). Empty means
-    // "no key configured yet": every sealed reply from the robot is then
-    // dropped rather than forwarded unauthenticated, exactly like an unkeyed
-    // hub child -- but, unlike a hub child, an UNSEALED frame is still
-    // accepted (this is a console-role session; see onSessionFrameReceived(),
-    // its "drop an unsealed frame" branch is gated on m_peerSourceId != 0,
-    // which a direct session never sets). That lets this run unkeyed against
-    // a robot/simulator that has no key provisioned yet, exactly as
-    // setHubEndpoint()'s own empty-key case documents.
+    // password per device covers hub, TCP and BLE). Empty means "no key
+    // configured yet": nothing is sealed, every sealed reply from the robot is
+    // dropped rather than forwarded unauthenticated, and unsealed frames are
+    // accepted -- which only works against a robot/simulator with no key
+    // provisioned, since a keyed one drops unsealed input.
     //
     // Call before the first onTransportConnectionChanged(true), same timing
     // requirement as setHubEndpoint() and for the same reason: a sealed reply
@@ -355,6 +340,10 @@ private:
     // (m_peerSourceId == 0, no key) still forwards the dongle's cleartext
     // channel-A traffic unchanged.
     void onSessionFrameReceived(const traceview::BtpFrame& frame);
+    // A direct TCP/BLE session (SessionStartMode::DirectBtp) with a key set:
+    // everything it sends is sealed and every unsealed frame past the
+    // handshake is dropped -- see setDirectEndpointKey().
+    bool sealsDirectSession() const;
     // The one sequence counter every sealed message this backend originates
     // shares -- see CommandClient::configure()'s comment on why two
     // different sealed messages must never draw the same value. Reserved
