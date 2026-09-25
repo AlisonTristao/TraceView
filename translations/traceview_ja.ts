@@ -262,7 +262,7 @@
 <context>
     <name>QObject</name>
     <message>
-        <location filename="../lib/core/debugchartswindow.cpp" line="+28"/>
+        <location filename="../lib/core/debugchartswindow.cpp" line="+29"/>
         <source>Debug -- synthetic chart data</source>
         <translation>デバッグ -- 合成チャートデータ</translation>
     </message>
@@ -574,7 +574,7 @@
 <context>
     <name>WidgetRegistry</name>
     <message>
-        <location filename="../lib/dashboard/widgetregistry.cpp" line="+30"/>
+        <location filename="../lib/dashboard/widgetregistry.cpp" line="+32"/>
         <source>Line Chart (dummy)</source>
         <translation>折れ線グラフ(ダミー)</translation>
     </message>
@@ -602,6 +602,11 @@
         <location line="+6"/>
         <source>Text Board</source>
         <translation>テキストボード</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Chat</source>
+        <translation>チャット</translation>
     </message>
     <message>
         <location line="+5"/>
@@ -731,16 +736,19 @@
 <context>
     <name>traceview::AndroidUsbSerialTransport</name>
     <message>
+        <location filename="../lib/core/androidusbserialtransport.cpp" line="+185"/>
         <source>USB serial is not available on this device</source>
-        <translation type="vanished">このデバイスでは USB シリアルを使用できません</translation>
+        <translation>このデバイスでは USB シリアルを使用できません</translation>
     </message>
     <message>
+        <location line="+7"/>
         <source>USB permission was denied for %1; unplug and replug it to be asked again</source>
-        <translation type="vanished">%1 の USB アクセス許可が拒否されました。デバイスを抜き差しすると再度確認されます</translation>
+        <translation>%1 の USB アクセス許可が拒否されました。デバイスを抜き差しすると再度確認されます</translation>
     </message>
     <message>
+        <location line="+8"/>
         <source>1200 baud resets the ESP32-S3 into its bootloader; using 115200</source>
-        <translation type="vanished">1200 baud では ESP32-S3 がブートローダーにリセットされるため、115200 を使用します</translation>
+        <translation>1200 baud では ESP32-S3 がブートローダーにリセットされるため、115200 を使用します</translation>
     </message>
 </context>
 <context>
@@ -1279,6 +1287,88 @@
     </message>
 </context>
 <context>
+    <name>traceview::ChatConfigEditor</name>
+    <message>
+        <location filename="../lib/dashboard/widgets/chatconfigeditor.cpp" line="+11"/>
+        <source>You</source>
+        <translation>あなた</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Show my messages on the right</source>
+        <translation>自分のメッセージを右側に表示</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>User name</source>
+        <translation>ユーザー名</translation>
+    </message>
+</context>
+<context>
+    <name>traceview::ChatWidget</name>
+    <message>
+        <location filename="../lib/dashboard/widgets/chatwidget.cpp" line="+44"/>
+        <source>Sending...</source>
+        <translation>送信中...</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Sent</source>
+        <translation>送信済み</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Not sent</source>
+        <translation>未送信</translation>
+    </message>
+    <message>
+        <location line="+160"/>
+        <location line="+81"/>
+        <source>You</source>
+        <translation>あなた</translation>
+    </message>
+    <message>
+        <location line="-65"/>
+        <source>Remove attachment</source>
+        <translation>添付を削除</translation>
+    </message>
+    <message>
+        <location line="+12"/>
+        <location line="+109"/>
+        <location line="+9"/>
+        <location line="+6"/>
+        <source>Attach a file</source>
+        <translation>ファイルを添付</translation>
+    </message>
+    <message>
+        <location line="-120"/>
+        <source>Write a message...</source>
+        <translation>メッセージを入力...</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Send</source>
+        <translation>送信</translation>
+    </message>
+    <message>
+        <location line="+101"/>
+        <source>Supported files (%1)</source>
+        <translation>対応ファイル (%1)</translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <source>This file type can&apos;t be sent.
+Allowed: %1</source>
+        <translation>この種類のファイルは送信できません。
+使用可能: %1</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>This file is too large (limit %1 MB).</source>
+        <translation>ファイルが大きすぎます (上限 %1 MB)。</translation>
+    </message>
+</context>
+<context>
     <name>traceview::ClockSync</name>
     <message>
         <location filename="../lib/protocol/clocksync.cpp" line="+179"/>
@@ -1332,7 +1422,7 @@
 <context>
     <name>traceview::DashboardCell</name>
     <message>
-        <location filename="../lib/dashboard/dashboardcell.cpp" line="+321"/>
+        <location filename="../lib/dashboard/dashboardcell.cpp" line="+342"/>
         <source>Show last value</source>
         <translation>最新値を表示</translation>
     </message>
@@ -1461,7 +1551,7 @@
 <context>
     <name>traceview::DashboardGrid</name>
     <message>
-        <location filename="../lib/dashboard/dashboardgrid.cpp" line="+517"/>
+        <location filename="../lib/dashboard/dashboardgrid.cpp" line="+525"/>
         <source>Bring to Front</source>
         <translation>最前面へ移動</translation>
     </message>
@@ -1530,7 +1620,45 @@
         <translation>スライダー</translation>
     </message>
     <message>
-        <location line="+52"/>
+        <location line="+6"/>
+        <location line="+3"/>
+        <location line="+6"/>
+        <location line="+2"/>
+        <source>Operator</source>
+        <translation>オペレーター</translation>
+    </message>
+    <message>
+        <location line="-10"/>
+        <source>Boot OK. Battery at 87%.</source>
+        <translation>起動OK。バッテリー 87%。</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Start the calibration routine, please.</source>
+        <translation>キャリブレーションを開始してください。</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Calibration done. Offsets saved; log attached.</source>
+        <translation>キャリブレーション完了。オフセット保存済み、ログを添付します。</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Sending the new route map.</source>
+        <translation>新しいルートマップを送信します。</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Retrying over the other link...</source>
+        <translation>別のリンクで再試行中...</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Chat</source>
+        <translation>チャット</translation>
+    </message>
+    <message>
+        <location line="+56"/>
         <source> -- %1 fps</source>
         <translation> -- %1 fps</translation>
     </message>
@@ -2469,12 +2597,12 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+0"/>
-        <location line="+2971"/>
+        <location line="+2973"/>
         <source>Later</source>
         <translation>後で</translation>
     </message>
     <message>
-        <location line="-2964"/>
+        <location line="-2966"/>
         <source>&amp;Access</source>
         <translation>アクセス(&amp;A)</translation>
     </message>
@@ -2490,7 +2618,7 @@ Drops: %2</source>
         <translation>通知(&amp;N)</translation>
     </message>
     <message>
-        <location line="+10"/>
+        <location line="+12"/>
         <source>&amp;Debug</source>
         <translation>デバッグ(&amp;D)</translation>
     </message>
@@ -2540,7 +2668,7 @@ Drops: %2</source>
         <translation>開発者モードに入る(&amp;E)...</translation>
     </message>
     <message>
-        <location line="+180"/>
+        <location line="+182"/>
         <source>Add</source>
         <translation>追加</translation>
     </message>
@@ -2591,18 +2719,18 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+18"/>
-        <location line="+2371"/>
+        <location line="+2369"/>
         <source>Undo</source>
         <translation>元に戻す</translation>
     </message>
     <message>
-        <location line="-2369"/>
-        <location line="+2369"/>
+        <location line="-2367"/>
+        <location line="+2367"/>
         <source>Redo</source>
         <translation>やり直し</translation>
     </message>
     <message>
-        <location line="-2328"/>
+        <location line="-2326"/>
         <source>Add Device</source>
         <translation>デバイスを追加</translation>
     </message>
@@ -2638,12 +2766,12 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+29"/>
-        <location line="+2273"/>
+        <location line="+2271"/>
         <source>Fullscreen dashboard (F11)</source>
         <translation>ダッシュボードを全画面表示(F11)</translation>
     </message>
     <message>
-        <location line="-2093"/>
+        <location line="-2091"/>
         <source>Rename Workspace</source>
         <translation>ワークスペースの名前を変更</translation>
     </message>
@@ -2653,7 +2781,7 @@ Drops: %2</source>
         <translation>ワークスペース「%1」の名前を「%2」に変更しました。</translation>
     </message>
     <message>
-        <location line="+1551"/>
+        <location line="+1549"/>
         <location line="+8"/>
         <location line="+5"/>
         <location line="+8"/>
@@ -2775,13 +2903,13 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>アプリを閉じる</translation>
     </message>
     <message>
-        <location line="-2320"/>
-        <location line="+2121"/>
+        <location line="-2318"/>
+        <location line="+2119"/>
         <source>Devices</source>
         <translation>デバイス</translation>
     </message>
     <message>
-        <location line="-2046"/>
+        <location line="-2044"/>
         <source>Subscriptions</source>
         <translation>購読</translation>
     </message>
@@ -2823,23 +2951,23 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     </message>
     <message>
         <location line="+71"/>
-        <location line="+1831"/>
+        <location line="+1829"/>
         <source>Add widget</source>
         <translation>ウィジェットを追加</translation>
     </message>
     <message>
-        <location line="-1828"/>
+        <location line="-1826"/>
         <source>Remove selected widget (%1)</source>
         <translation>選択したウィジェットを削除(%1)</translation>
     </message>
     <message>
         <location line="+3"/>
-        <location line="+1838"/>
+        <location line="+1836"/>
         <source>Add device</source>
         <translation>デバイスを追加</translation>
     </message>
     <message>
-        <location line="-1835"/>
+        <location line="-1833"/>
         <source>Remove selected device (%1)</source>
         <translation>選択したデバイスを削除(%1)</translation>
     </message>
@@ -2904,7 +3032,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>画面サイズ: 大</translation>
     </message>
     <message>
-        <location line="+214"/>
+        <location line="+212"/>
         <source>Disable editing — lock the dashboard layout</source>
         <translation>編集を無効化 — ダッシュボードのレイアウトをロック</translation>
     </message>
@@ -2950,12 +3078,12 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>(名前なし)</translation>
     </message>
     <message>
-        <location line="-1116"/>
+        <location line="-1114"/>
         <source>Dashboard</source>
         <translation>ダッシュボード</translation>
     </message>
     <message>
-        <location line="+1328"/>
+        <location line="+1326"/>
         <source>%1: this BLE address now answers as a different robot (expected %2, got %3)</source>
         <translation>%1: この BLE アドレスは別のロボットとして応答しています (期待値 %2、実際 %3)</translation>
     </message>

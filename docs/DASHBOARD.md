@@ -304,7 +304,7 @@ lives in its own module under
   `kMaxAttachmentBytes`), a text field and a send button. Visual only for
   now — no transport: `send()` marks the message Sending and a timer flips
   it to Sent; `setMessageStatus()` is the hook a backend will drive. Config
-  is `{ "userName": … }` (no config editor yet, defaults to "You").
+  is `{ "userName": … }` plus `"ownMessagesOnRight"` (default true), edited by ChatConfigEditor; name defaults to "You".
 - **Text Board** (`text_board`) — `widgets/textboardwidget.h`/`.cpp`. A
   fixed-pitch, read-only surface for one whole `UTF8` telemetry topic. Every
   sample replaces the previous document, so a formatted status table appears

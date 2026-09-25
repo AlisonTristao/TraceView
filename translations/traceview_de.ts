@@ -262,7 +262,7 @@
 <context>
     <name>QObject</name>
     <message>
-        <location filename="../lib/core/debugchartswindow.cpp" line="+28"/>
+        <location filename="../lib/core/debugchartswindow.cpp" line="+29"/>
         <source>Debug -- synthetic chart data</source>
         <translation>Debug -- synthetische Diagrammdaten</translation>
     </message>
@@ -574,7 +574,7 @@
 <context>
     <name>WidgetRegistry</name>
     <message>
-        <location filename="../lib/dashboard/widgetregistry.cpp" line="+30"/>
+        <location filename="../lib/dashboard/widgetregistry.cpp" line="+32"/>
         <source>Line Chart (dummy)</source>
         <translation>Liniendiagramm (Platzhalter)</translation>
     </message>
@@ -602,6 +602,11 @@
         <location line="+6"/>
         <source>Text Board</source>
         <translation>Textanzeige</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Chat</source>
+        <translation>Chat</translation>
     </message>
     <message>
         <location line="+5"/>
@@ -731,16 +736,19 @@
 <context>
     <name>traceview::AndroidUsbSerialTransport</name>
     <message>
+        <location filename="../lib/core/androidusbserialtransport.cpp" line="+185"/>
         <source>USB serial is not available on this device</source>
-        <translation type="vanished">USB-Seriell ist auf diesem Gerät nicht verfügbar</translation>
+        <translation>USB-Seriell ist auf diesem Gerät nicht verfügbar</translation>
     </message>
     <message>
+        <location line="+7"/>
         <source>USB permission was denied for %1; unplug and replug it to be asked again</source>
-        <translation type="vanished">Die USB-Berechtigung für %1 wurde verweigert; Gerät aus- und wieder einstecken, um erneut gefragt zu werden</translation>
+        <translation>Die USB-Berechtigung für %1 wurde verweigert; Gerät aus- und wieder einstecken, um erneut gefragt zu werden</translation>
     </message>
     <message>
+        <location line="+8"/>
         <source>1200 baud resets the ESP32-S3 into its bootloader; using 115200</source>
-        <translation type="vanished">1200 Baud setzt den ESP32-S3 in seinen Bootloader zurück; verwende 115200</translation>
+        <translation>1200 Baud setzt den ESP32-S3 in seinen Bootloader zurück; verwende 115200</translation>
     </message>
 </context>
 <context>
@@ -1279,6 +1287,88 @@
     </message>
 </context>
 <context>
+    <name>traceview::ChatConfigEditor</name>
+    <message>
+        <location filename="../lib/dashboard/widgets/chatconfigeditor.cpp" line="+11"/>
+        <source>You</source>
+        <translation>Du</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Show my messages on the right</source>
+        <translation>Meine Nachrichten rechts anzeigen</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>User name</source>
+        <translation>Benutzername</translation>
+    </message>
+</context>
+<context>
+    <name>traceview::ChatWidget</name>
+    <message>
+        <location filename="../lib/dashboard/widgets/chatwidget.cpp" line="+44"/>
+        <source>Sending...</source>
+        <translation>Wird gesendet...</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Sent</source>
+        <translation>Gesendet</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Not sent</source>
+        <translation>Nicht gesendet</translation>
+    </message>
+    <message>
+        <location line="+160"/>
+        <location line="+81"/>
+        <source>You</source>
+        <translation>Du</translation>
+    </message>
+    <message>
+        <location line="-65"/>
+        <source>Remove attachment</source>
+        <translation>Anhang entfernen</translation>
+    </message>
+    <message>
+        <location line="+12"/>
+        <location line="+109"/>
+        <location line="+9"/>
+        <location line="+6"/>
+        <source>Attach a file</source>
+        <translation>Datei anhängen</translation>
+    </message>
+    <message>
+        <location line="-120"/>
+        <source>Write a message...</source>
+        <translation>Nachricht schreiben...</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Send</source>
+        <translation>Senden</translation>
+    </message>
+    <message>
+        <location line="+101"/>
+        <source>Supported files (%1)</source>
+        <translation>Unterstützte Dateien (%1)</translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <source>This file type can&apos;t be sent.
+Allowed: %1</source>
+        <translation>Dieser Dateityp kann nicht gesendet werden.
+Erlaubt: %1</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>This file is too large (limit %1 MB).</source>
+        <translation>Diese Datei ist zu groß (Limit %1 MB).</translation>
+    </message>
+</context>
+<context>
     <name>traceview::ClockSync</name>
     <message>
         <location filename="../lib/protocol/clocksync.cpp" line="+179"/>
@@ -1332,7 +1422,7 @@
 <context>
     <name>traceview::DashboardCell</name>
     <message>
-        <location filename="../lib/dashboard/dashboardcell.cpp" line="+321"/>
+        <location filename="../lib/dashboard/dashboardcell.cpp" line="+342"/>
         <source>Show last value</source>
         <translation>Letzten Wert anzeigen</translation>
     </message>
@@ -1461,7 +1551,7 @@
 <context>
     <name>traceview::DashboardGrid</name>
     <message>
-        <location filename="../lib/dashboard/dashboardgrid.cpp" line="+517"/>
+        <location filename="../lib/dashboard/dashboardgrid.cpp" line="+525"/>
         <source>Bring to Front</source>
         <translation>In den Vordergrund</translation>
     </message>
@@ -1530,7 +1620,45 @@
         <translation>Schieberegler</translation>
     </message>
     <message>
-        <location line="+52"/>
+        <location line="+6"/>
+        <location line="+3"/>
+        <location line="+6"/>
+        <location line="+2"/>
+        <source>Operator</source>
+        <translation>Bediener</translation>
+    </message>
+    <message>
+        <location line="-10"/>
+        <source>Boot OK. Battery at 87%.</source>
+        <translation>Start OK. Akku bei 87 %.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Start the calibration routine, please.</source>
+        <translation>Bitte die Kalibrierroutine starten.</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Calibration done. Offsets saved; log attached.</source>
+        <translation>Kalibrierung fertig. Offsets gespeichert; Log angehängt.</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Sending the new route map.</source>
+        <translation>Sende die neue Routenkarte.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Retrying over the other link...</source>
+        <translation>Neuer Versuch über die andere Verbindung...</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Chat</source>
+        <translation>Chat</translation>
+    </message>
+    <message>
+        <location line="+56"/>
         <source> -- %1 fps</source>
         <translation> -- %1 fps</translation>
     </message>
@@ -2470,12 +2598,12 @@ Verluste: %2</translation>
     </message>
     <message>
         <location line="+0"/>
-        <location line="+2971"/>
+        <location line="+2973"/>
         <source>Later</source>
         <translation>Später</translation>
     </message>
     <message>
-        <location line="-2964"/>
+        <location line="-2966"/>
         <source>&amp;Access</source>
         <translation>&amp;Zugang</translation>
     </message>
@@ -2491,7 +2619,7 @@ Verluste: %2</translation>
         <translation>&amp;Benachrichtigungen</translation>
     </message>
     <message>
-        <location line="+10"/>
+        <location line="+12"/>
         <source>&amp;Debug</source>
         <translation>De&amp;bug</translation>
     </message>
@@ -2541,7 +2669,7 @@ Verluste: %2</translation>
         <translation>&amp;Entwicklermodus aktivieren...</translation>
     </message>
     <message>
-        <location line="+180"/>
+        <location line="+182"/>
         <source>Add</source>
         <translation>Hinzufügen</translation>
     </message>
@@ -2592,18 +2720,18 @@ Verluste: %2</translation>
     </message>
     <message>
         <location line="+18"/>
-        <location line="+2371"/>
+        <location line="+2369"/>
         <source>Undo</source>
         <translation>Rückgängig</translation>
     </message>
     <message>
-        <location line="-2369"/>
-        <location line="+2369"/>
+        <location line="-2367"/>
+        <location line="+2367"/>
         <source>Redo</source>
         <translation>Wiederholen</translation>
     </message>
     <message>
-        <location line="-2328"/>
+        <location line="-2326"/>
         <source>Add Device</source>
         <translation>Gerät hinzufügen</translation>
     </message>
@@ -2639,12 +2767,12 @@ Verluste: %2</translation>
     </message>
     <message>
         <location line="+29"/>
-        <location line="+2273"/>
+        <location line="+2271"/>
         <source>Fullscreen dashboard (F11)</source>
         <translation>Dashboard im Vollbildmodus (F11)</translation>
     </message>
     <message>
-        <location line="-2093"/>
+        <location line="-2091"/>
         <source>Rename Workspace</source>
         <translation>Arbeitsbereich umbenennen</translation>
     </message>
@@ -2654,7 +2782,7 @@ Verluste: %2</translation>
         <translation>Arbeitsbereich „%1“ in „%2“ umbenannt.</translation>
     </message>
     <message>
-        <location line="+1551"/>
+        <location line="+1549"/>
         <location line="+8"/>
         <location line="+5"/>
         <location line="+8"/>
@@ -2776,13 +2904,13 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
         <translation>App schließen</translation>
     </message>
     <message>
-        <location line="-2320"/>
-        <location line="+2121"/>
+        <location line="-2318"/>
+        <location line="+2119"/>
         <source>Devices</source>
         <translation>Geräte</translation>
     </message>
     <message>
-        <location line="-2046"/>
+        <location line="-2044"/>
         <source>Subscriptions</source>
         <translation>Abonnements</translation>
     </message>
@@ -2824,23 +2952,23 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
     </message>
     <message>
         <location line="+71"/>
-        <location line="+1831"/>
+        <location line="+1829"/>
         <source>Add widget</source>
         <translation>Widget hinzufügen</translation>
     </message>
     <message>
-        <location line="-1828"/>
+        <location line="-1826"/>
         <source>Remove selected widget (%1)</source>
         <translation>Ausgewähltes Widget entfernen (%1)</translation>
     </message>
     <message>
         <location line="+3"/>
-        <location line="+1838"/>
+        <location line="+1836"/>
         <source>Add device</source>
         <translation>Gerät hinzufügen</translation>
     </message>
     <message>
-        <location line="-1835"/>
+        <location line="-1833"/>
         <source>Remove selected device (%1)</source>
         <translation>Ausgewähltes Gerät entfernen (%1)</translation>
     </message>
@@ -2905,7 +3033,7 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
         <translation>Bildschirmgröße: Groß</translation>
     </message>
     <message>
-        <location line="+214"/>
+        <location line="+212"/>
         <source>Disable editing — lock the dashboard layout</source>
         <translation>Bearbeitung deaktivieren — Dashboard-Layout sperren</translation>
     </message>
@@ -2951,12 +3079,12 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
         <translation>(unbenannt)</translation>
     </message>
     <message>
-        <location line="-1116"/>
+        <location line="-1114"/>
         <source>Dashboard</source>
         <translation>Dashboard</translation>
     </message>
     <message>
-        <location line="+1328"/>
+        <location line="+1326"/>
         <source>%1: this BLE address now answers as a different robot (expected %2, got %3)</source>
         <translation>%1: diese BLE-Adresse antwortet jetzt als anderer Roboter (erwartet %2, erhalten %3)</translation>
     </message>

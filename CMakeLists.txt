@@ -208,6 +208,10 @@ qt_add_translations(TraceView
         translations/traceview_zh_CN.ts
         translations/traceview_ja.ts
     RESOURCE_PREFIX "/translations"
+    # Only compiled on Android, so lupdate run on a desktop build would never
+    # see its strings and mark their translations vanished -- list it here.
+    SOURCES
+        lib/core/androidusbserialtransport.cpp
 )
 
 if(WIN32)

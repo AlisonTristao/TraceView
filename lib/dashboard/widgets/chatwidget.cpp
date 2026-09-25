@@ -17,6 +17,7 @@
 #include <QToolButton>
 #include <QVBoxLayout>
 
+#include "traceview/fontmanager.h"
 #include "theme/iconlibrary.h"
 #include "traceview/thememanager.h"
 
@@ -29,6 +30,7 @@ constexpr int kTextRole = Qt::UserRole + 2;
 constexpr int kAttachmentRole = Qt::UserRole + 3;
 constexpr int kStatusRole = Qt::UserRole + 4;
 constexpr int kTimeRole = Qt::UserRole + 5;
+constexpr int kOwnRole = Qt::UserRole + 6;
 
 constexpr int kPadding = 10;
 constexpr int kLineGap = 4;
@@ -67,18 +69,25 @@ QFont authorFont(const QFont& base) {
     return font;
 }
 
+// Time/status/attachment line, a notch smaller than the body. scaledFont()
+// because on mobile the app font is pixel-sized (pointSizeF() is -1), and
+// scaling only the point size there collapsed it to the 6pt floor.
 QFont metaFont(const QFont& base) {
-    QFont font = base;
-    font.setPointSizeF(qMax(6.0, base.pointSizeF() * 0.85));
-    return font;
+    return scaledFont(base, 0.85);
 }
 
 // Paints one message as a flat card: author top-left, wrapped text (and an
 // attachment line) below it, time bottom-left, status bottom-right, and a
-// divider under the card -- no bubbles, no avatar.
+// divider under the card -- no bubbles, no avatar. With ownOnRight set, the
+// user's own messages are mirrored: everything right-aligned, time on the
+// right and status on the left.
 class ChatMessageDelegate : public QStyledItemDelegate {
 public:
     explicit ChatMessageDelegate(QListWidget* view) : QStyledItemDelegate(view), m_view(view) {}
+
+    void setOwnOnRight(bool on) {
+        m_ownOnRight = on;
+    }
 
     QSize sizeHint(const QStyleOptionViewItem& option, const QModelIndex& index) const override {
         const int width = qMax(80, m_view->viewport()->width());
@@ -100,13 +109,15 @@ public:
 
         const QRect inner = r.adjusted(kPadding, kPadding, -kPadding, -kPadding);
         int y = inner.top();
+        const bool mirrored = m_ownOnRight && index.data(kOwnRole).toBool();
+        const Qt::Alignment side = mirrored ? Qt::AlignRight : Qt::AlignLeft;
 
         const QFont nameFont = authorFont(option.font);
         painter->setFont(nameFont);
         painter->setPen(palette.textPrimary);
         const QFontMetrics nameMetrics(nameFont);
         painter->drawText(QRect(inner.left(), y, inner.width(), nameMetrics.height()),
-                          Qt::AlignLeft | Qt::AlignVCenter,
+                          side | Qt::AlignVCenter,
                           nameMetrics.elidedText(index.data(kAuthorRole).toString(),
                                                  Qt::ElideRight, inner.width()));
         y += nameMetrics.height() + kLineGap;
@@ -118,7 +129,7 @@ public:
                                        .boundingRect(QRect(inner.left(), y, inner.width(), 100000),
                                                      Qt::TextWordWrap, text);
             painter->drawText(QRect(inner.left(), y, inner.width(), textRect.height()),
-                              Qt::TextWordWrap, text);
+                              side | Qt::TextWordWrap, text);
             y += textRect.height() + kLineGap;
         }
 
@@ -131,23 +142,28 @@ public:
             const QIcon clip = IconLibrary::instance().icon(QStringLiteral("lucide:paperclip"),
                                                             palette.accent, kIconSize);
             const int lineHeight = qMax(kIconSize, smallMetrics.height());
-            clip.paint(painter, QRect(inner.left(), y, kIconSize, lineHeight));
+            const int textWidth = inner.width() - kIconSize - 4;
+            const QString label = smallMetrics.elidedText(attachment, Qt::ElideMiddle, textWidth);
+            // Mirrored, the clip sits just left of the right-aligned name.
+            const int iconLeft =
+                mirrored ? inner.right() - smallMetrics.horizontalAdvance(label) - 4 - kIconSize
+                         : inner.left();
+            clip.paint(painter, QRect(iconLeft, y, kIconSize, lineHeight));
             painter->setPen(palette.accent);
-            const int textLeft = inner.left() + kIconSize + 4;
-            painter->drawText(QRect(textLeft, y, inner.right() - textLeft, lineHeight),
-                              Qt::AlignLeft | Qt::AlignVCenter,
-                              smallMetrics.elidedText(attachment, Qt::ElideMiddle,
-                                                      inner.right() - textLeft));
+            const int textLeft = mirrored ? inner.left() : inner.left() + kIconSize + 4;
+            painter->drawText(QRect(textLeft, y, textWidth, lineHeight), side | Qt::AlignVCenter,
+                              label);
             y += lineHeight + kLineGap;
         }
 
         const auto status = static_cast<ChatWidget::MessageStatus>(index.data(kStatusRole).toInt());
         const QRect metaRect(inner.left(), y, inner.width(), smallMetrics.height());
         painter->setPen(palette.textSecondary);
-        painter->drawText(metaRect, Qt::AlignLeft | Qt::AlignVCenter,
+        painter->drawText(metaRect, side | Qt::AlignVCenter,
                           index.data(kTimeRole).toDateTime().toString(QStringLiteral("HH:mm")));
         painter->setPen(statusColor(status, palette));
-        painter->drawText(metaRect, Qt::AlignRight | Qt::AlignVCenter, statusText(status));
+        painter->drawText(metaRect, (mirrored ? Qt::AlignLeft : Qt::AlignRight) | Qt::AlignVCenter,
+                          statusText(status));
 
         painter->restore();
     }
@@ -171,6 +187,7 @@ private:
     }
 
     QListWidget* m_view;
+    bool m_ownOnRight = true;
 };
 
 QToolButton* makeIconButton(QWidget* parent, const QString& toolTip) {
@@ -192,7 +209,8 @@ QStringList ChatWidget::allowedAttachmentSuffixes() {
 
 ChatWidget::ChatWidget(QWidget* parent) : DashboardWidget(parent), m_userName(tr("You")) {
     m_feed = new QListWidget(this);
-    m_feed->setItemDelegate(new ChatMessageDelegate(m_feed));
+    m_delegate = new ChatMessageDelegate(m_feed);
+    m_feed->setItemDelegate(m_delegate);
     m_feed->setFrameShape(QFrame::NoFrame);
     m_feed->setSelectionMode(QAbstractItemView::NoSelection);
     m_feed->setFocusPolicy(Qt::NoFocus);
@@ -225,7 +243,14 @@ ChatWidget::ChatWidget(QWidget* parent) : DashboardWidget(parent), m_userName(tr
     connect(m_input, &QLineEdit::returnPressed, this, &ChatWidget::send);
 
     m_sendButton = makeIconButton(this, tr("Send"));
+#if defined(Q_OS_ANDROID) || defined(Q_OS_IOS)
+    // The tap that lands here also closes the soft keyboard; the window
+    // shrinks back and moves the button out from under the finger before the
+    // release, so clicked() never fires. Send on press instead.
+    connect(m_sendButton, &QToolButton::pressed, this, &ChatWidget::send);
+#else
     connect(m_sendButton, &QToolButton::clicked, this, &ChatWidget::send);
+#endif
 
     auto* composeRow = new QHBoxLayout;
     composeRow->setContentsMargins(4, 4, 4, 4);
@@ -264,6 +289,9 @@ bool ChatWidget::eventFilter(QObject* watched, QEvent* event) {
 void ChatWidget::setConfig(const QJsonObject& config) {
     const QString name = config.value(QStringLiteral("userName")).toString().trimmed();
     m_userName = name.isEmpty() ? tr("You") : name;
+    static_cast<ChatMessageDelegate*>(m_delegate)
+        ->setOwnOnRight(config.value(QStringLiteral("ownMessagesOnRight")).toBool(true));
+    m_feed->viewport()->update();
 }
 
 int ChatWidget::appendMessage(const QString& author, const QString& text,
@@ -273,6 +301,7 @@ int ChatWidget::appendMessage(const QString& author, const QString& text,
 
     auto* item = new QListWidgetItem(m_feed);
     item->setData(kAuthorRole, author);
+    item->setData(kOwnRole, author == m_userName);
     item->setData(kTextRole, text);
     item->setData(kAttachmentRole, attachment);
     item->setData(kStatusRole, int(status));

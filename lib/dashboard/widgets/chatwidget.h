@@ -10,6 +10,7 @@
 class QLabel;
 class QLineEdit;
 class QListWidget;
+class QStyledItemDelegate;
 class QToolButton;
 
 namespace traceview {
@@ -36,7 +37,9 @@ public:
 
     explicit ChatWidget(QWidget* parent = nullptr);
 
-    // config: {"userName": "..."} -- the name outgoing messages carry.
+    // config: {"userName": "...", "ownMessagesOnRight": true} -- the name
+    // outgoing messages carry, and whether messages by that name are drawn
+    // mirrored on the right (default on).
     void setConfig(const QJsonObject& config) override;
 
     // Appends a message and returns its row, for setMessageStatus().
@@ -56,6 +59,7 @@ private:
     void refreshIcons();
 
     QListWidget* m_feed = nullptr;
+    QStyledItemDelegate* m_delegate = nullptr;
     QLineEdit* m_input = nullptr;
     QToolButton* m_attachButton = nullptr;
     QToolButton* m_sendButton = nullptr;
