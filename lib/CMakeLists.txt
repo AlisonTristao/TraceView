@@ -753,6 +753,8 @@ add_library(traceview_ui STATIC
     core/iconpickerdialog.h
     core/brandcornermark.cpp
     core/brandcornermark.h
+    core/startuploadingoverlay.cpp
+    core/startuploadingoverlay.h
     vendor/qrcodegen/qrcodegen.cpp
     vendor/qrcodegen/qrcodegen.hpp
 )

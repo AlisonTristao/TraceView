@@ -61,6 +61,7 @@ class UpdateChecker;
 class UpdateDownloader;
 class WorkspaceDock;
 class BrandCornerMark;
+class StartupLoadingOverlay;
 class WorkspaceSwitcher;
 
 class MainWindow : public QMainWindow {
@@ -495,6 +496,9 @@ private:
     // example -- run once at startup, after the window is first shown so the
     // breakpoint is picked against its real size.
     void openStartupDashboard();
+    // Runs openStartupDashboard() once, then drops m_startupOverlay; later
+    // calls are no-ops (see the constructor's startup wiring).
+    void finishStartup();
     // Copies the live workspaces/devices state into ProjectStore's sections
     // ahead of a save.
     void syncProjectSections();
@@ -661,6 +665,8 @@ private:
     // User-mode-only wordmark overlaid on m_appShell's top-right corner --
     // see brandcornermark.h; shown/hidden by updateChromeVisibility().
     BrandCornerMark* m_brandCornerMark = nullptr;
+    // Covers the window until the startup dashboard is built; null after.
+    StartupLoadingOverlay* m_startupOverlay = nullptr;
     QAction* m_addWidgetAction = nullptr;
     QAction* m_addDeviceAction = nullptr;
     QAction* m_removeDeviceAction = nullptr;

@@ -4234,6 +4234,14 @@ Escolha Mais tarde para continuar usando -- as alterações serão aplicadas na 
     </message>
 </context>
 <context>
+    <name>traceview::StartupLoadingOverlay</name>
+    <message>
+        <location filename="../lib/core/startuploadingoverlay.cpp" line="+74"/>
+        <source>Loading dashboard...</source>
+        <translation>Carregando dashboard...</translation>
+    </message>
+</context>
+<context>
     <name>traceview::ShortcutsDialog</name>
     <message>
         <location filename="../lib/core/shortcutsdialog.cpp" line="+13"/>

@@ -66,6 +66,7 @@
 #include "donatedialog.h"
 #include "fontmenuaction.h"
 #include "inputdiagnostics.h"
+#include "startuploadingoverlay.h"
 #include "layerspanel.h"
 #include "logindialog.h"
 #include "logs/logviewer.h"
@@ -624,9 +625,25 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
             &MainWindow::reconcileHubChildPresence);
     m_hubPeerReconcileTimer->start();
 
-    // Queued, so it runs once the event loop starts -- after main() has
-    // shown the window (see openStartupDashboard()).
-    QTimer::singleShot(0, this, &MainWindow::openStartupDashboard);
+    // Building the startup dashboard blocks the event loop, so a cover goes
+    // up first and the load only starts once that cover has been painted
+    // (plus a beat for the frame to reach the screen) -- otherwise the
+    // window sat blank until the widgets appeared. The fallback timer covers
+    // a window that never gets painted (hidden, or no real screen).
+    m_startupOverlay = new StartupLoadingOverlay(this);
+    connect(m_startupOverlay, &StartupLoadingOverlay::firstPainted, this, [this] {
+        QTimer::singleShot(30, this, &MainWindow::finishStartup);
+    });
+    QTimer::singleShot(3000, this, &MainWindow::finishStartup);
+}
+
+void MainWindow::finishStartup() {
+    if (!m_startupOverlay) {
+        return;
+    }
+    openStartupDashboard();
+    delete m_startupOverlay;
+    m_startupOverlay = nullptr;
 }
 
 MainWindow::~MainWindow() {

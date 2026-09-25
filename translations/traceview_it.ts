@@ -4234,6 +4234,14 @@ Scegli Più tardi per continuare a lavorare -- le modifiche verranno applicate l
     </message>
 </context>
 <context>
+    <name>traceview::StartupLoadingOverlay</name>
+    <message>
+        <location filename="../lib/core/startuploadingoverlay.cpp" line="+74"/>
+        <source>Loading dashboard...</source>
+        <translation>Caricamento della dashboard...</translation>
+    </message>
+</context>
+<context>
     <name>traceview::ShortcutsDialog</name>
     <message>
         <location filename="../lib/core/shortcutsdialog.cpp" line="+13"/>
