@@ -607,10 +607,10 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     // The ribbon's bottom edge moves when its tab row is shown/hidden.
     m_ribbon->installEventFilter(this);
 
-    // The app always starts in User mode (UserModeManager never persists a
-    // login across restarts) -- apply that once now so the Devices tab and
-    // edit-mode lock are already hidden before the window is ever shown,
-    // then react to any later login/logout the same way.
+    // Apply the mode the app starts in (User, or a developer login
+    // UserModeManager resumed from the last run) once now so the Devices
+    // tab and edit-mode lock are already right before the window is ever
+    // shown, then react to any later login/logout the same way.
     connect(&UserModeManager::instance(), &UserModeManager::modeChanged, this,
             &MainWindow::applyUserMode);
     applyUserMode(UserModeManager::instance().mode());
