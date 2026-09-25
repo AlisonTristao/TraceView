@@ -65,6 +65,7 @@
 #include "diagram/diagramscriptruntime.h"
 #include "donatedialog.h"
 #include "fontmenuaction.h"
+#include "inputdiagnostics.h"
 #include "layerspanel.h"
 #include "logindialog.h"
 #include "logs/logviewer.h"
@@ -1021,6 +1022,15 @@ void MainWindow::buildMenus() {
     connect(m_debugAction, &QAction::triggered, this, &MainWindow::onDebug);
     m_debugAction->setVisible(false);
 
+    // Developer-only, temporary: on-screen soft-keyboard event trace (see
+    // inputdiagnostics.h). In the options menu too, since that's the only
+    // menu a phone shows.
+    m_keyboardDiagnosticsAction = menuBar()->addAction(tr("Keyboard Diagnostics"));
+    m_keyboardDiagnosticsAction->setCheckable(true);
+    connect(m_keyboardDiagnosticsAction, &QAction::toggled, this,
+            [this](bool on) { setInputDiagnosticsEnabled(this, on); });
+    m_keyboardDiagnosticsAction->setVisible(false);
+
     auto* aboutAction = menuBar()->addAction(tr("&About"));
     connect(aboutAction, &QAction::triggered, this, &MainWindow::onAbout);
 
@@ -1070,6 +1080,7 @@ void MainWindow::buildMenus() {
     optionsMenu->addSeparator();
     optionsMenu->addAction(aboutAction);
     optionsMenu->addAction(donateAction);
+    optionsMenu->addAction(m_keyboardDiagnosticsAction);
     m_optionsButton->setMenu(optionsMenu);
     static_cast<QHBoxLayout*>(m_chromeTopBar->layout())->insertWidget(0, m_optionsButton);
 }
@@ -1177,6 +1188,10 @@ void MainWindow::applyUserMode(UserModeManager::UserMode mode) {
     m_fileMenu->menuAction()->setVisible(isDeveloper);
     m_debugAction->setVisible(isDeveloper);
     m_debugAction->setEnabled(isDeveloper);
+    m_keyboardDiagnosticsAction->setVisible(isDeveloper);
+    if (!isDeveloper) {
+        m_keyboardDiagnosticsAction->setChecked(false);
+    }
     for (QAction* action : m_fileMenu->actions()) {
         action->setEnabled(isDeveloper);
     }
