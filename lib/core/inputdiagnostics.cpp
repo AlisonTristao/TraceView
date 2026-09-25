@@ -11,13 +11,19 @@
 #include <QLabel>
 #include <QPointer>
 #include <QStringList>
+#include <QTimer>
 #include <QWidget>
+
+#if defined(Q_OS_ANDROID)
+#include <QJniObject>
+#endif
 
 namespace traceview {
 
 namespace {
 
-constexpr int kMaxLines = 16;
+constexpr int kMaxLines = 24;
+constexpr int kMaxHistoryLines = 600;
 
 QString describe(const QObject* object) {
     if (object == nullptr) {
@@ -65,12 +71,30 @@ public:
                 [this](Qt::ApplicationState state) { log(QStringLiteral("appState %1").arg(int(state))); });
         qApp->installEventFilter(this);
 
+#if defined(Q_OS_ANDROID)
+        // Platform-side keyboard events (insets passes, IME animations,
+        // Android focus moves) recorded by KeyboardInsetsDebounce.java.
+        auto* poll = new QTimer(this);
+        connect(poll, &QTimer::timeout, this, [this] {
+            const QString text = QJniObject::callStaticObjectMethod<jstring>(
+                                     "io/github/alisontristao/traceview/KeyboardInsetsDebounce",
+                                     "drainTrace")
+                                     .toString();
+            if (!text.isEmpty()) {
+                appendLines(text.split('\n'));
+            }
+        });
+        poll->start(100);
+#endif
+
         log(QStringLiteral("diagnostics on"));
         m_label->show();
         m_label->raise();
     }
 
     ~InputDiagnostics() override { delete m_label; }
+
+    QString history() const { return m_history.join('\n'); }
 
 protected:
     bool eventFilter(QObject* watched, QEvent* event) override {
@@ -137,8 +161,18 @@ protected:
 
 private:
     void log(const QString& line) {
+        // Monotonic ms since boot, the clock the Java-side lines use too.
+        const qint64 now = m_clock.msecsSinceReference() + m_clock.elapsed();
+        appendLines({QStringLiteral("%1 %2").arg(now % 100000, 5).arg(line)});
+    }
+
+    void appendLines(const QStringList& lines) {
         m_logging = true;
-        m_lines.append(QStringLiteral("%1 %2").arg(m_clock.elapsed() % 100000, 5).arg(line));
+        m_history.append(lines);
+        if (m_history.size() > kMaxHistoryLines) {
+            m_history.remove(0, m_history.size() - kMaxHistoryLines);
+        }
+        m_lines.append(lines);
         while (m_lines.size() > kMaxLines) {
             m_lines.removeFirst();
         }
@@ -156,6 +190,7 @@ private:
     QPointer<QWidget> m_host;
     QLabel* m_label = nullptr;
     QStringList m_lines;
+    QStringList m_history;
     QElapsedTimer m_clock;
     bool m_logging = false;
 };
@@ -170,6 +205,10 @@ void setInputDiagnosticsEnabled(QWidget* host, bool enabled) {
     } else if (!enabled && s_instance) {
         delete s_instance;
     }
+}
+
+QString inputDiagnosticsLog() {
+    return s_instance ? s_instance->history() : QString();
 }
 
 }  // namespace traceview

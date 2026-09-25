@@ -695,6 +695,7 @@ private:
     QMenu* m_fileMenu = nullptr;
     QAction* m_debugAction = nullptr;
     QAction* m_keyboardDiagnosticsAction = nullptr;
+    QAction* m_copyKeyboardLogAction = nullptr;
     // View's Developer-only entries (Keyboard Shortcuts, Open Log Folder,
     // Reset Panel Positions and the separator after them) -- User mode keeps
     // only Theme/Font/Language there.

@@ -1028,8 +1028,18 @@ void MainWindow::buildMenus() {
     m_keyboardDiagnosticsAction = menuBar()->addAction(tr("Keyboard Diagnostics"));
     m_keyboardDiagnosticsAction->setCheckable(true);
     connect(m_keyboardDiagnosticsAction, &QAction::toggled, this,
-            [this](bool on) { setInputDiagnosticsEnabled(this, on); });
+            [this](bool on) {
+                setInputDiagnosticsEnabled(this, on);
+                m_copyKeyboardLogAction->setVisible(on);
+            });
     m_keyboardDiagnosticsAction->setVisible(false);
+    // Shown only while the trace is on: puts its whole history on the
+    // clipboard so it can be pasted into a message.
+    m_copyKeyboardLogAction = menuBar()->addAction(tr("Copy Keyboard Log"));
+    connect(m_copyKeyboardLogAction, &QAction::triggered, this, [] {
+        QGuiApplication::clipboard()->setText(inputDiagnosticsLog());
+    });
+    m_copyKeyboardLogAction->setVisible(false);
 
     auto* aboutAction = menuBar()->addAction(tr("&About"));
     connect(aboutAction, &QAction::triggered, this, &MainWindow::onAbout);
@@ -1081,6 +1091,7 @@ void MainWindow::buildMenus() {
     optionsMenu->addAction(aboutAction);
     optionsMenu->addAction(donateAction);
     optionsMenu->addAction(m_keyboardDiagnosticsAction);
+    optionsMenu->addAction(m_copyKeyboardLogAction);
     m_optionsButton->setMenu(optionsMenu);
     static_cast<QHBoxLayout*>(m_chromeTopBar->layout())->insertWidget(0, m_optionsButton);
 }
