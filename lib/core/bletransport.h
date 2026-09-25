@@ -103,11 +103,13 @@ private:
     static QBluetoothUuid rxCharacteristicUuid();
     static QBluetoothUuid txCharacteristicUuid();
 
-    // Queue depth 8 (T05's note: "Profundidade de fila: BLE 8 frames"), one
-    // whole logical write (a complete COBS-wrapped BTP frame from
-    // BtpSession) per entry -- MTU-sized fragmentation happens below this,
-    // in drainNext().
-    static constexpr int kMaxPendingFrames = 8;
+    // One whole COBS-wrapped BTP frame from BtpSession per entry;
+    // drainNext() packs as many of them as fit into each MTU-sized write.
+    // Was 8 (T05's "BLE 8 frames"), sized for one write per frame: at one
+    // write-with-response round trip per frame, a burst of terminal
+    // keystrokes plus the session's own control traffic overflowed it and
+    // write() started refusing frames ("transport rejected 60 bytes").
+    static constexpr int kMaxPendingFrames = 64;
 
     QLowEnergyController* m_controller = nullptr;
     QLowEnergyService* m_service = nullptr;

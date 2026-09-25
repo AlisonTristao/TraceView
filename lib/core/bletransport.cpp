@@ -270,29 +270,41 @@ void BleTransport::drainNext() {
     if (!m_connected || m_writeInFlight) {
         return;
     }
-    if (m_currentFrame.isEmpty()) {
-        if (m_pendingFrames.isEmpty()) {
-            return;
+    // RX is a byte stream (fragmentation-and-transports.md section 8.2: the
+    // robot concatenates writes and COBS-decodes), so one write may carry
+    // the tail of one frame and the start of the next. Filling every write
+    // up to the MTU instead of one frame per write is what keeps small
+    // frames (a terminal keystroke is ~60 octets) from each paying a full
+    // write-with-response round trip.
+    const qsizetype capacity = mtuPayloadSize();
+    QByteArray chunk;
+    chunk.reserve(capacity);
+    while (chunk.size() < capacity) {
+        if (m_currentFrame.isEmpty()) {
+            if (m_pendingFrames.isEmpty()) {
+                break;
+            }
+            m_currentFrame = m_pendingFrames.dequeue();
+            m_currentOffset = 0;
         }
-        m_currentFrame = m_pendingFrames.dequeue();
-        m_currentOffset = 0;
+        const qsizetype take =
+            qMin(capacity - chunk.size(), m_currentFrame.size() - m_currentOffset);
+        chunk.append(m_currentFrame.constData() + m_currentOffset, take);
+        m_currentOffset += take;
+        if (m_currentOffset >= m_currentFrame.size()) {
+            m_currentFrame.clear();
+            m_currentOffset = 0;
+        }
     }
-
-    const int chunkSize =
-        qMin(qsizetype(mtuPayloadSize()), m_currentFrame.size() - m_currentOffset);
-    const QByteArray chunk = m_currentFrame.mid(m_currentOffset, chunkSize);
-    m_currentOffset += chunkSize;
+    if (chunk.isEmpty()) {
+        return;
+    }
     m_writeInFlight = true;
     // RX is "write with response" by contract (T04) -- the next chunk is
     // only sent from onCharacteristicWritten(), which is also what gives a
     // slow/congested link real backpressure instead of queuing writes the
     // controller has no room for.
     m_service->writeCharacteristic(m_rxCharacteristic, chunk, QLowEnergyService::WriteWithResponse);
-
-    if (m_currentOffset >= m_currentFrame.size()) {
-        m_currentFrame.clear();
-        m_currentOffset = 0;
-    }
 }
 
 int BleTransport::mtuPayloadSize() const {
