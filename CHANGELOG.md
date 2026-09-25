@@ -7,6 +7,14 @@ release flow.
 
 ## [Unreleased]
 
+## [4.6.10] - 2026-09-25
+
+### Fixed
+
+- Windows: BLE works in the installed TraceView. The installer is now built
+  with MSVC; the MinGW build it came from before has no Windows Bluetooth
+  backend, so scanning never found a robot.
+
 ## [4.6.9] - 2026-09-25
 
 ### Fixed
