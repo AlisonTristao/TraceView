@@ -7,6 +7,37 @@ release flow.
 
 ## [Unreleased]
 
+Next up: the direct TCP link to the robot, now that direct BLE works end to
+end.
+
+## [4.6.7] - 2026-09-25
+
+### Added
+
+- Developer mode: a developer login is remembered across launches.
+- A loading cover is shown while the startup dashboard is being built,
+  instead of a blank window.
+
+### Fixed
+
+- Direct BLE link to the robot, end to end:
+  - Scanning lists the robot even when its service UUID only arrives on a
+    later advertisement or scan response.
+  - Picking a scan result saves the robot's address, not the
+    "Name (address)" label, which could not be dialed.
+  - Several queued frames are packed into each GATT write, so fast typing
+    in the terminal no longer overflows the send queue ("transport rejected
+    60 bytes").
+  - On Windows, BLE needs the MSVC build: the MinGW Qt kit ships no
+    Bluetooth backend, and scanning there never finds anything.
+- The window no longer freezes every few seconds while a device is
+  retrying its connection (the channel key was re-derived on the UI thread
+  on every connection-state change). This also affected the dongle/ESP-NOW
+  path.
+- A device no longer reconnects with its old settings while its settings
+  dialog is still open.
+- The window reopens at its last size, maximized on the first run.
+
 ## [4.6.6] - 2026-09-25
 
 ### Changed
