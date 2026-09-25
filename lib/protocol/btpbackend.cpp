@@ -86,6 +86,15 @@ constexpr quint32 kCloseDrainTimeoutMs = 500;
 // is never fatal. See BtpBackend::sendSessionKeepalive().
 constexpr int kKeepaliveIntervalMs = 5000;
 
+// A DIRECT TCP/BLE session talks to the robot itself, which answers every
+// keepalive (see sendSessionKeepalive()), so the watchdog can be short: a
+// robot that powers off or reboots leaves a TCP socket open with no FIN, and
+// at 30 s the app looked connected long after the robot was gone. The
+// negotiated timeout is the minimum of both HELLOs, so advertising 5 s here
+// is enough; 1.5 s keepalives leave room for two to be lost.
+constexpr quint32 kDirectSessionTimeoutMs = 5000;
+constexpr int kDirectKeepaliveIntervalMs = 1500;
+
 // The keepalive is a MANIFEST_REQUEST for a source_id that cannot exist: the
 // dongle answers a small NOT_FOUND that ManifestClient already discards
 // without touching the catalog, so the exchange renews the watchdog and
@@ -646,7 +655,9 @@ void BtpBackend::onReadyForHello() {
     // negotiated watchdog is min of the two). The desktop keepalive
     // (sendSessionKeepalive) refreshes it every ~5s; this window is the
     // backstop for a desktop that vanished without a SESSION_CLOSE.
-    hello.session_timeout_ms = 30000;
+    hello.session_timeout_ms = m_sessionStartMode == SessionStartMode::DirectBtp
+                                   ? kDirectSessionTimeoutMs
+                                   : 30000;
     for (auto& octet : hello.peer_uuid) {
         // peer_uuid: opaque, stable-for-this-run, non-zero identity. A
         // per-process random UUID is enough for topico 15's vertical slice;
@@ -699,8 +710,19 @@ void BtpBackend::onNodeConnected() {
         // setHubEndpoint() having set a key first.
         m_commandClient->configure(m_sessionPeerSourceId, m_telemetryCatalog,
                                    [this] { return !m_endpointKey.isEmpty(); });
+        // The HELLO_RESULT names the robot's CURRENT boot. SUBSCRIBE and
+        // COMMAND_REQUEST both address (source, boot), and the catalog only
+        // learns a boot from MANIFEST_DATA -- which ManifestClient skips when
+        // the config revision is unchanged. After a robot reboot every
+        // SUBSCRIBE went out with the old boot and was rejected as
+        // STALE_TARGET_BOOT, so the widgets never got data again.
+        m_telemetryCatalog->registerSourceBootId(m_sessionPeerSourceId,
+                                                 m_node->connected_peer_boot_id());
     }
     m_btpHandshake->onSessionEstablished();
+    m_keepaliveTimer->setInterval(m_sessionStartMode == SessionStartMode::DirectBtp
+                                      ? kDirectKeepaliveIntervalMs
+                                      : kKeepaliveIntervalMs);
     m_keepaliveTimer->start();
     m_manifestClient->onSessionEstablished(m_node->connected_peer_config_revision());
     m_subscriptionManager->onSessionEstablished();
@@ -845,9 +867,27 @@ void BtpBackend::sendSessionKeepalive() {
     // source that cannot exist so the reply is a small NOT_FOUND the
     // ManifestClient discards untouched; the point is only that the dongle
     // sees a valid BTP frame and refreshes its watchdog.
+    // A robot on a DIRECT TCP/BLE session does not answer that sentinel:
+    // btp::Node::serve_manifest() silently ignores a request aimed at another
+    // source, so the keepalive got no reply, nothing renewed this end's
+    // watchdog, and every idle direct session died after session_timeout_ms
+    // ("session watchdog: no traffic from the peer"). Aim it at the robot
+    // itself with a boot_id that is NOT its current one instead: it answers
+    // at once with a small STALE_TARGET_BOOT MANIFEST_DATA, which
+    // ManifestClient drops as a non-success without touching the catalog --
+    // the same "rejected and discarded" shape the dongle's NOT_FOUND has.
+    quint32 target = kKeepaliveSentinelSource;
+    quint32 targetBoot = 0;
+    if (m_sessionStartMode == SessionStartMode::DirectBtp && m_sessionPeerSourceId != 0) {
+        target = m_sessionPeerSourceId;
+        targetBoot = m_node->connected_peer_boot_id() + 1U;
+        if (targetBoot == 0) {
+            targetBoot = 1;  // 0 means "any boot" and would get the full catalog
+        }
+    }
     QByteArray payload;
     payload.reserve(12);
-    for (quint32 v : {kKeepaliveSentinelSource, quint32(0), quint32(0)}) {
+    for (quint32 v : {target, targetBoot, quint32(0)}) {
         payload.append(static_cast<char>(v & 0xFF));
         payload.append(static_cast<char>((v >> 8) & 0xFF));
         payload.append(static_cast<char>((v >> 16) & 0xFF));
