@@ -103,6 +103,8 @@ protected:
     // keeps this from thrashing setBreakpoint() while a border is dragged
     // back and forth across a threshold.
     void resizeEvent(QResizeEvent* event) override;
+    // Saves the window geometry restored by the constructor.
+    void closeEvent(QCloseEvent* event) override;
 
 private:
     void buildMenus();

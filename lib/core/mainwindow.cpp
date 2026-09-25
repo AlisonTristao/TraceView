@@ -2,6 +2,7 @@
 
 #include <QActionGroup>
 #include <QClipboard>
+#include <QCloseEvent>
 #include <QColor>
 #include <QCoreApplication>
 #include <QDateTime>
@@ -139,6 +140,7 @@ QString resolvedWorkspaceIcon(const QString& stored) {
 // applyAutoBreakpoint()), in logical pixels. Starting defaults, not
 // validated against real phone/tablet hardware yet -- easy to retune once
 // this runs on an actual small screen.
+constexpr char kWindowGeometrySettingsKey[] = "window/geometry";
 constexpr int kSmallBreakpointMaxViewportWidth = 700;
 constexpr int kMediumBreakpointMaxViewportWidth = 1280;
 // Dead band applied around each threshold above, measured against the
@@ -265,6 +267,15 @@ DashboardBreakpoint breakpointFromActionData(int value) {
 MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     setWindowTitle(tr("TraceView v%1").arg(kVersion));
     resize(1024, 640);
+#if !defined(Q_OS_ANDROID) && !defined(Q_OS_IOS)
+    // Reopen at the size/place the window was closed at -- maximized on the
+    // very first run. The startup dashboard picks its breakpoint from the
+    // window's width, and Developer mode never re-picks it on resize, so a
+    // window always starting at 1024 px opened every project as a tablet.
+    if (!restoreGeometry(QSettings().value(kWindowGeometrySettingsKey).toByteArray())) {
+        setWindowState(Qt::WindowMaximized);
+    }
+#endif
 
     // Diagnostics buffers first: buildMenus()/buildRibbon() below wire actions
     // that open views onto these, and every DeviceConnection created later
@@ -2442,6 +2453,13 @@ void MainWindow::moveEvent(QMoveEvent* event) {
     if (m_floatingPanelsPositioned && windowState() == Qt::WindowNoState) {
         m_dockController->trackWindowMoved(event->pos() - event->oldPos());
     }
+}
+
+void MainWindow::closeEvent(QCloseEvent* event) {
+    // Full screen is left out: the window reopens as it was before it.
+    QSettings().setValue(kWindowGeometrySettingsKey,
+                         isFullScreen() ? m_preFullscreenGeometry : saveGeometry());
+    QMainWindow::closeEvent(event);
 }
 
 void MainWindow::resizeEvent(QResizeEvent* event) {
