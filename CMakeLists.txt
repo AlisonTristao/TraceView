@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.21)
 
 project(TraceView
-    VERSION 4.6.7
+    VERSION 4.6.8
     DESCRIPTION "Real-time telemetry dashboard for ESP32/ESP-NOW robots"
     LANGUAGES CXX
 )
@@ -36,7 +36,10 @@ option(TRACEVIEW_ENABLE_SERIAL "Build the serial transport (QSerialPort; USB Hos
     ${TRACEVIEW_WIRED_TRANSPORTS_DEFAULT})
 option(TRACEVIEW_ENABLE_USB_HID "Build the hidapi USB HID transport (never on iOS)"
     ${TRACEVIEW_WIRED_TRANSPORTS_DEFAULT})
-option(TRACEVIEW_ENABLE_TCP "Enable the TCP transport integration" OFF)
+# ON by default since 4.6.8: the direct TCP link to bally_OS works end to end
+# (mDNS *.local lookup, keepalive, reconnect). Only QtNetwork, which the app
+# already links unconditionally.
+option(TRACEVIEW_ENABLE_TCP "Enable the TCP transport integration" ON)
 # ON by default since 4.3.0: the transport (lib/core/bletransport.cpp) and
 # the firmware's GATT service both exist; it was only left OFF while they
 # were being written. Needs the Qt Connectivity module (Qt6::Bluetooth).

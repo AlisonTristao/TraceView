@@ -7,8 +7,27 @@ release flow.
 
 ## [Unreleased]
 
-Next up: the direct TCP link to the robot, now that direct BLE works end to
-end.
+## [4.6.8] - 2026-09-25
+
+### Added
+
+- Direct TCP link to the robot over Wi-Fi, now built in by default. The
+  robot's host can be its mDNS name (e.g. `ballyrobot.local`): it is looked
+  up again on every connection attempt, so the robot's IP changing on each
+  reboot no longer matters, and it works on Windows without Bonjour.
+
+### Fixed
+
+- Direct TCP/BLE sessions no longer drop every 30 s while idle ("session
+  watchdog: no traffic from the peer"): the keepalive is now answered by
+  the robot itself.
+- A robot that powers off or reboots is noticed in about 5 s instead of
+  30 s on a direct link.
+- After the robot reboots, charts and commands work again on their own:
+  subscriptions are re-sent to the robot's new boot instead of being
+  rejected.
+- A device whose reconnect attempt failed without ever connecting (e.g. the
+  robot still booting) no longer stops retrying for good.
 
 ## [4.6.7] - 2026-09-25
 
