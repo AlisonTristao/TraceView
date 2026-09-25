@@ -7,6 +7,16 @@ release flow.
 
 ## [Unreleased]
 
+## [4.6.9] - 2026-09-25
+
+### Fixed
+
+- Android: on the Xiaomi keyboard, Backspace in a text field no longer
+  makes the keyboard close and reopen, when the keyboard reports
+  fullscreen mode (Qt restarted the keyboard on every raw key). The
+  keyboard log now records each key and whether it took this path, to
+  confirm the fix on the phone.
+
 ## [4.6.8] - 2026-09-25
 
 ### Added
