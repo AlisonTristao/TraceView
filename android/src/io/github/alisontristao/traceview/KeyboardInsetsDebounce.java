@@ -7,6 +7,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.SystemClock;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.View;
 import android.view.WindowInsets;
 import android.view.WindowInsetsAnimation;
@@ -48,6 +49,12 @@ public final class KeyboardInsetsDebounce {
                 installTracing(activity);
             } catch (Throwable e) {
                 Log.w(TAG, "keyboard tracing not installed", e);
+            }
+            try {
+                installKeyBypass(activity);
+            } catch (Throwable e) {
+                trace("key bypass NOT installed: " + e);
+                Log.w(TAG, "keyboard key bypass not installed", e);
             }
             try {
                 installOnUiThread(activity);
@@ -128,6 +135,60 @@ public final class KeyboardInsetsDebounce {
                         }
                     }
                 });
+    }
+
+    // Qt's QtEditText.onKeyDown() calls QtInputConnection.restartImmInput()
+    // on every raw key the IME sends, which runs InputMethodManager
+    // .restartInput() whenever the IME has reported fullscreen mode. Letters
+    // arrive as commitText() and never get there, but Backspace arrives as a
+    // KEYCODE_DEL key event; the Xiaomi keyboard answers each restart by
+    // hiding and re-showing itself, so it drops on every delete.
+    //
+    // An OnKeyListener on each QtEditText runs before its onKeyDown(). When
+    // that restart would happen, key-downs are handed straight to the
+    // activity's onKeyDown() -- where Qt takes keys from anyway once the edit
+    // text declines them -- and the edit text never sees them.
+    private static void installKeyBypass(final Activity activity) throws Exception {
+        Class<?> nativeIc = Class.forName("org.qtproject.qt.android.QtNativeInputConnection");
+        final Method fullscreenMode = nativeIc.getDeclaredMethod("fullscreenMode");
+        fullscreenMode.setAccessible(true);
+
+        final View.OnKeyListener bypass = (view, keyCode, event) -> {
+            if (event.getAction() != KeyEvent.ACTION_DOWN
+                    || keyCode == KeyEvent.KEYCODE_BACK) {
+                return false;
+            }
+            boolean fullscreen;
+            try {
+                fullscreen = (Boolean) fullscreenMode.invoke(null);
+            } catch (Throwable e) {
+                return false;
+            }
+            trace("key down " + KeyEvent.keyCodeToString(keyCode) + " fullscreen="
+                  + fullscreen + (fullscreen ? " -> bypass restartInput" : ""));
+            if (!fullscreen) {
+                return false;
+            }
+            activity.onKeyDown(keyCode, event);
+            return true;
+        };
+
+        final View decor = activity.getWindow().getDecorView();
+        decor.getViewTreeObserver().addOnGlobalFocusChangeListener((oldFocus, newFocus) -> {
+            if (isQtEditText(newFocus)) {
+                newFocus.setOnKeyListener(bypass);
+            }
+        });
+        View current = activity.getCurrentFocus();
+        if (isQtEditText(current)) {
+            current.setOnKeyListener(bypass);
+        }
+        trace("key bypass installed");
+    }
+
+    private static boolean isQtEditText(View view) {
+        return view != null && view.getClass().getName().equals(
+                "org.qtproject.qt.android.QtEditText");
     }
 
     @TargetApi(Build.VERSION_CODES.R)
