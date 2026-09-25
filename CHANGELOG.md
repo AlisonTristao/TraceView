@@ -7,6 +7,31 @@ release flow.
 
 ## [Unreleased]
 
+## [4.6.4] - 2026-09-25
+
+### Added
+
+- Developer mode: an on-screen keyboard diagnostics overlay (focus, input
+  panel, keyboard geometry and key events) to chase the Android keyboard
+  dropping on Backspace without adb. Temporary.
+
+### Changed
+
+- Requires BTP 2.46.0.
+
+### Fixed
+
+- Direct TCP/BLE sessions with a password now seal everything they send
+  (catalog request, subscriptions, terminal input, keepalive) -- a robot on
+  BTP 2.46 drops unsealed traffic -- and drop unsealed frames from the robot
+  past the handshake. Clock sync is no longer sent to a robot on a direct
+  session.
+
+### Reverted
+
+- Android: predictive text is enabled again in text fields -- turning it off
+  did not stop the keyboard dropping on Backspace and hid the suggestions.
+
 ## [4.6.3] - 2026-09-24
 
 ### Added
