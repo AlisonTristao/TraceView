@@ -107,9 +107,8 @@ DeviceConfigDialog::DeviceConfigDialog(const Device& initial, QWidget* parent)
         tr("Shown as this device's title -- on its card in the Devices panel, and "
            "anywhere else it's picked from a list."));
     // The card title is an override of the robot's name, so it lives with
-    // the connection's advanced fields below. There is no description to
-    // edit: the card shows what the device reports about itself instead.
-    m_nameEdit->hide();
+    // the connection's fields below. There is no description to edit: the
+    // card shows what the device reports about itself instead.
 
     // Connection group -- every way to reach this device, as one table (row 1
     // is the primary link, the rest Device::extraLinks, tried in that order;
@@ -145,37 +144,10 @@ DeviceConfigDialog::DeviceConfigDialog(const Device& initial, QWidget* parent)
         }
     }
 
-    // Advanced view: the same links as a table -- order, baud rate, TCP port,
-    // hand-typed targets, USB HID. Collapsed unless the device already uses
-    // something only the table can show.
-    m_advancedButton = new QToolButton(connectionGroup);
-    m_advancedButton->setText(tr("Advanced"));
-    m_advancedButton->setCheckable(true);
-    m_advancedButton->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
-    m_advancedButton->setAutoRaise(true);
-    m_advancedButton->setToolTip(
-        tr("Every link as a table: the order they are tried in, baud rate, TCP port, "
-           "and targets typed by hand."));
-    connectionLayout->addWidget(m_advancedButton);
-
+    // Advanced view, always shown: the same links as a table -- order, baud
+    // rate, TCP port, hand-typed targets, USB HID.
     m_linksTable = new DeviceLinksTable(links, connectionGroup);
     connectionLayout->addWidget(m_linksTable, /*stretch=*/1);
-    connect(m_advancedButton, &QToolButton::toggled, this, [this](bool on) {
-        m_advancedButton->setArrowType(on ? Qt::DownArrow : Qt::RightArrow);
-        m_linksTable->setVisible(on);
-        updateConnectionRows();
-    });
-    bool needsTable = false;
-    QVector<TransportType> seenTypes;
-    for (const DeviceLink& link : links) {
-        needsTable = needsTable || link.transportType == TransportType::UsbHid ||
-                     (!link.autoTarget && deviceLinkConfigured(link)) ||
-                     !link.enabled || seenTypes.contains(link.transportType);
-        seenTypes.append(link.transportType);
-    }
-    m_advancedButton->setChecked(needsTable);
-    m_advancedButton->setArrowType(needsTable ? Qt::DownArrow : Qt::RightArrow);
-    m_linksTable->setVisible(needsTable);
 
     // The two views edit one list: whichever was edited pushes it to the other.
     connect(m_linksPanel, &RobotLinksPanel::linksEdited, this,
@@ -366,9 +338,10 @@ DeviceConfigDialog::DeviceConfigDialog(const Device& initial, QWidget* parent)
     // the device itself reports on the right -- OTA sits above "Reported by
     // device"/"Reported catalog" instead of under the connection group,
     // which keeps the left column (and so the dialog) from growing too tall.
+    // The connection group stretches to the full column height, so both
+    // columns end at the same line.
     auto* leftColumn = new QVBoxLayout;
-    leftColumn->addWidget(connectionGroup);
-    leftColumn->addStretch();
+    leftColumn->addWidget(connectionGroup, /*stretch=*/1);
 
     auto* rightColumn = new QVBoxLayout;
     rightColumn->addWidget(otaGroup);
@@ -434,8 +407,6 @@ Device DeviceConfigDialog::result() const {
 
 void DeviceConfigDialog::updateConnectionRows() {
     if (!m_connectionLayout) return;
-    const bool advanced = m_advancedButton->isChecked();
-    setFormRowVisible(m_connectionLayout, 0, advanced);
     const bool anyDirectOrHub = m_linksTable->hasLinkOfType(TransportType::Tcp) ||
                                 m_linksTable->hasLinkOfType(TransportType::Ble) ||
                                 m_linksTable->hasLinkOfType(TransportType::HubChannel);
@@ -444,9 +415,9 @@ void DeviceConfigDialog::updateConnectionRows() {
     setFormRowVisible(m_connectionLayout, m_peerPasswordRowIndex, anyDirectOrHub);
     setFormRowVisible(m_connectionLayout, m_cachePasswordRowIndex, anyDirectOrHub);
     setFormRowVisible(m_connectionLayout, m_lineTerminatorRowIndex,
-                      advanced && m_linksTable->hasLinkOfType(TransportType::Serial));
+                      m_linksTable->hasLinkOfType(TransportType::Serial));
     setFormRowVisible(m_connectionLayout, m_childSourceIdRowIndex,
-                      advanced && m_linksTable->hasLinkOfType(TransportType::HubChannel));
+                      m_linksTable->hasLinkOfType(TransportType::HubChannel));
 }
 
 void DeviceConfigDialog::setAvailableParentDevices(

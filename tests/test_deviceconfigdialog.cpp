@@ -62,11 +62,6 @@ private slots:
             QTest::qWait(20);
             QCOMPARE(dialog.size(), size);
         }
-        for (auto* button : dialog.findChildren<QToolButton*>()) {
-            if (button->text() == "Advanced") button->setChecked(true);
-        }
-        QTest::qWait(20);
-        QCOMPARE(dialog.size(), size);
     }
 
     void manualConfigurationIsPreserved() {
