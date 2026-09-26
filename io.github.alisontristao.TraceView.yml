@@ -42,8 +42,8 @@ modules:
         skip: [.git, build, .flatpak-builder, flatpak-repo, build-flatpak]
       - type: git
         url: https://github.com/AlisonTristao/BTP.git
-        tag: v2.45.0
-        commit: fe0cb9eb8efaffd6c4c2a882caec53fbafa442be
+        tag: v2.48.0
+        commit: 1320734741506295635c48f861d0b1eb63bff2e1
         dest: deps/btp
       - type: git
         url: https://github.com/libusb/hidapi.git
