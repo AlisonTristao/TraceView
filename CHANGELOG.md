@@ -7,6 +7,8 @@ release flow.
 
 ## [Unreleased]
 
+## [4.7.0] - 2026-09-26
+
 ### Added
 
 - Several ways to connect to one device: a device can have Serial, Wi-Fi
