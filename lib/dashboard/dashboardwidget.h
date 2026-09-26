@@ -1,12 +1,16 @@
 #pragma once
 
 #include <QByteArray>
+#include <QFlags>
 #include <QJsonObject>
 #include <QPainterPath>
 #include <QString>
+#include <QVariant>
+#include <QVector>
 #include <QWidget>
 
-#include "dashboard/roundedcorners.h"
+#include "traceview/framestyle.h"
+#include "dashboard/widgetviewoption.h"
 
 namespace traceview {
 
@@ -66,20 +70,27 @@ public:
         Q_UNUSED(config);
     }
 
-    // True for kinds that want the extra operational cluster DashboardCell's
-    // header draws in Run mode: a connection-state dot before the title, and
-    // pause/resume + clear + settings-gear buttons at the header's right
-    // edge (see dashboard/dashboardcell.cpp). Defaults to false so gauge/
-    // serial-monitor headers stay exactly as they are today; ChartWidgetBase
-    // (widgets/chartwidgets.h) is the only override for now.
-    virtual bool wantsHeaderControls() const {
-        return false;
+    // The operational controls DashboardCell's header draws for this widget
+    // in Run mode (see dashboard/dashboardcell.cpp): a connection-state dot
+    // before the title, and buttons packed from the header's right edge in
+    // the order Settings (gear), Clear, Pause -- so a widget offering only
+    // Clear gets it in the corner a chart's gear sits in. None by default.
+    enum class HeaderControl : quint8 {
+        ConnectionDot = 1u << 0,
+        Pause = 1u << 1,
+        Clear = 1u << 2,
+        Settings = 1u << 3,
+    };
+    Q_DECLARE_FLAGS(HeaderControls, HeaderControl)
+
+    virtual HeaderControls headerControls() const {
+        return {};
     }
 
     // Pause state the header's play/pause button toggles: while paused, a
     // chart-family widget drops incoming samples instead of buffering them,
     // so the plot visibly freezes until resumed. No-ops for kinds that don't
-    // override wantsHeaderControls().
+    // offer HeaderControl::Pause.
     virtual bool isPaused() const {
         return false;
     }
@@ -87,75 +98,39 @@ public:
         Q_UNUSED(paused);
     }
 
-    // Clears whatever history this widget is currently holding (chart series
-    // buffers), triggered by the header's clear button.
+    // Clears whatever this widget is currently showing -- chart series
+    // buffers, a terminal's scrollback, a log -- triggered by the header's
+    // clear button (HeaderControl::Clear).
     virtual void clearChartData() {}
 
-    // Whether the "latest value" row below the plot is drawn — the header's
-    // settings-gear menu toggles this. Defaults to true, matching the
-    // always-on behavior before this toggle existed.
-    virtual bool showsLastValueRow() const {
-        return true;
-    }
-    virtual void setShowsLastValueRow(bool show) {
-        Q_UNUSED(show);
-    }
-
-    // Whether a line chart marks every point where a series' line crosses a
-    // vertical X-gridline with a dot + its interpolated value -- the header's
-    // settings-gear menu toggles this. Defaults to false (opt-in via the
-    // gear), unlike showsLastValueRow() above, since a dot-per-gridline-per-
-    // series is visually busier than a single legend row.
-    virtual bool showsGridPointMarkers() const {
-        return false;
-    }
-    virtual void setShowsGridPointMarkers(bool show) {
-        Q_UNUSED(show);
+    // The header settings-gear menu's content (DashboardCell::
+    // showSettingsMenu()): every option this widget offers, with its
+    // current value. Empty (the default) means no gear menu at all. Chart
+    // kinds build this from their ChartViewOptions (widgets/chartstyle.h);
+    // see docs/CHART_STYLE.md.
+    virtual QVector<WidgetViewOption> viewOptions() const {
+        return {};
     }
 
-    // Whether a line chart tracks the mouse with a vertical guide line plus a
-    // balloon (beside the cursor) listing every series' interpolated value at
-    // the hovered X -- the header's settings-gear menu toggles this. Defaults
-    // to false (opt-in via the gear), same reasoning as showsGridPointMarkers()
-    // above.
-    virtual bool showsHoverCrosshair() const {
-        return false;
-    }
-    virtual void setShowsHoverCrosshair(bool show) {
-        Q_UNUSED(show);
-    }
-
-    // Which shape a line chart reconstructs between buffered samples with --
-    // the header's settings-gear menu's interpolation select box reads/writes
-    // this. A plain QString id ("linear"/"zoh"/"stem"/"none", see
-    // ChartLineInterpolation in widgets/chartdata.h) rather than that enum
-    // type directly, so this base class stays free of any one widget kind's
-    // types -- same reasoning as the typeId strings WidgetRegistry dispatches
-    // on elsewhere. Defaults to "linear", matching the straight-line behavior
-    // before this setting existed. Only ChartWidgetBase overrides this (bar
-    // chart inherits it, same as showsGridPointMarkers(), but its paintEvent
-    // never reads it).
-    virtual QString lineInterpolation() const {
-        return QStringLiteral("linear");
-    }
-    virtual void setLineInterpolation(const QString& id) {
+    // This widget's view state (the object DashboardGrid stores under
+    // config["view"]) with option `id` changed to `value` -- a bool for a
+    // Toggle option, a choice id for a Choice. Pure: nothing changes until
+    // setViewConfig() is called with the result.
+    virtual QJsonObject viewConfigWith(const QString& id, const QVariant& value) const {
         Q_UNUSED(id);
+        Q_UNUSED(value);
+        return {};
     }
 
-    // Whether the header's settings-gear menu has anything to show at all --
-    // gates the three chart toggles above (showsLastValueRow/
-    // showsGridPointMarkers/showsHoverCrosshair) as a group. Defaults to
-    // false, matching every non-chart kind (which has no gear menu content
-    // regardless, see wantsHeaderControls()). DummyLineChartWidget is the
-    // only override for now: DummyBarChartWidget's snapshot-style render
-    // always shows each bar's current value directly under it and has no
-    // line/grid/hover concept to toggle, so it deliberately stays false
-    // rather than exposing options that would silently do nothing.
-    virtual bool hasChartOptionsMenu() const {
-        return false;
+    // Applies a view state produced by viewConfigWith(). setConfig() applies
+    // config["view"] the same way, so a saved dashboard reopens with the
+    // view it was saved with.
+    virtual void setViewConfig(const QJsonObject& view) {
+        Q_UNUSED(view);
     }
 
-    // Which of this widget's own corners should read as rounded, kept in
+    // Which of this widget's own corners take the frame style's corner shape
+    // (rounded, chamfered...; see traceview/framestyle.h), kept in
     // sync by DashboardCell::updateContentMask() every time header
     // presence/geometry changes -- bottom corners are rounded whenever they
     // sit on the cell's outer edge, top corners only when there's no header
@@ -174,10 +149,11 @@ public:
         m_roundBottomRight = bottomRight;
     }
 
-    // `r` rounded at this widget's own per-corner state.
+    // `r` in the current frame style's shape, at this widget's own
+    // per-corner state.
     QPainterPath roundedPath(const QRectF& r) const {
-        return partiallyRoundedRect(r, kContainerCornerRadius, m_roundTopLeft, m_roundTopRight,
-                                    m_roundBottomLeft, m_roundBottomRight);
+        return currentFramePath(r, m_roundTopLeft, m_roundTopRight, m_roundBottomLeft,
+                                m_roundBottomRight);
     }
 
     // This widget's rounded fill spans its true, full bounds. The cell
@@ -193,5 +169,7 @@ private:
     bool m_roundBottomLeft = true;
     bool m_roundBottomRight = true;
 };
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(DashboardWidget::HeaderControls)
 
 }  // namespace traceview

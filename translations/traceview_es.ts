@@ -2,44 +2,193 @@
 <!DOCTYPE TS>
 <TS version="2.1" language="es">
 <context>
+    <name>Appearance</name>
+    <message>
+        <location filename="../lib/theme/appearance.cpp" line="+124"/>
+        <source>Palette colors</source>
+        <translation>Colores de la paleta</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>MATLAB</source>
+        <translation>MATLAB</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Tableau</source>
+        <translation>Tableau</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Color-blind safe</source>
+        <translation>Apta para daltónicos</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Monochrome</source>
+        <translation>Monocromo</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Per series (as configured)</source>
+        <translation>Por serie (como está configurado)</translation>
+    </message>
+    <message>
+        <location line="+54"/>
+        <source>Compact</source>
+        <translation>Compacta</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Comfortable</source>
+        <translation>Amplia</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Normal</source>
+        <translation>Normal</translation>
+    </message>
+    <message>
+        <location line="+35"/>
+        <source>Line</source>
+        <translation>Línea</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>On hover</source>
+        <translation>Al pasar el ratón</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Filled</source>
+        <translation>Relleno</translation>
+    </message>
+    <message>
+        <location line="+20"/>
+        <source>Dots</source>
+        <translation>Puntos</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Grid</source>
+        <translation>Cuadrícula</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Gradient</source>
+        <translation>Degradado</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Plain</source>
+        <translation>Liso</translation>
+    </message>
+    <message>
+        <location line="+18"/>
+        <source>Reduced</source>
+        <translation>Reducido</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Animated</source>
+        <translation>Animado</translation>
+    </message>
+    <message>
+        <location filename="../lib/core/appearancecatalog.cpp" line="+232"/>
+        <source>TraceView</source>
+        <translation>TraceView</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Lab</source>
+        <translation>Laboratorio</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Paper</source>
+        <translation>Artículo</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>HUD</source>
+        <translation>HUD</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Synthwave</source>
+        <translation>Synthwave</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Accessible</source>
+        <translation>Accesible</translation>
+    </message>
+</context>
+<context>
+    <name>ChartStyle</name>
+    <message>
+        <location filename="../lib/dashboard/widgets/chartstyle.cpp" line="+125"/>
+        <source>Engineering</source>
+        <translation>Ingeniería</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Scientific</source>
+        <translation>Científico</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Dashboard</source>
+        <translation>Panel</translation>
+    </message>
+</context>
+<context>
     <name>ChartWidgets</name>
     <message>
-        <location filename="../lib/dashboard/widgets/chartwidgets.cpp" line="+254"/>
-        <location line="+298"/>
+        <location filename="../lib/dashboard/widgets/chartwidgets.cpp" line="+38"/>
         <source>Field %1</source>
         <translation>Campo %1</translation>
     </message>
     <message>
-        <location line="-286"/>
-        <location line="+338"/>
-        <location line="+742"/>
+        <location line="+9"/>
+        <location line="+494"/>
+        <location line="+231"/>
         <source>--</source>
         <translation>--</translation>
     </message>
     <message>
-        <location line="-984"/>
         <source>t</source>
-        <translation>t</translation>
+        <translation type="vanished">t</translation>
+    </message>
+    <message>
+        <source>k</source>
+        <translation type="vanished">k</translation>
     </message>
     <message>
         <location line="+1"/>
-        <source>k</source>
-        <translation>k</translation>
-    </message>
-    <message>
-        <location line="+242"/>
         <source>%1%2</source>
         <translation>%1%2</translation>
     </message>
     <message>
         <location line="+6"/>
+        <location line="+305"/>
         <source>%1  %2</source>
         <translation>%1  %2</translation>
     </message>
     <message>
-        <location line="+621"/>
+        <location line="-659"/>
         <source>%1: %2</source>
         <translation>%1: %2</translation>
+    </message>
+    <message>
+        <location filename="../lib/dashboard/widgets/chartpainting.cpp" line="+617"/>
+        <source>Time (s)</source>
+        <translation>Tiempo (s)</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Samples</source>
+        <translation>Muestras</translation>
     </message>
 </context>
 <context>
@@ -249,9 +398,32 @@
     </message>
 </context>
 <context>
+    <name>FrameStyle</name>
+    <message>
+        <location filename="../lib/theme/framestyle.cpp" line="+103"/>
+        <source>Square</source>
+        <translation>Recto</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Borderless</source>
+        <translation>Sin borde</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Chamfered</source>
+        <translation>Biselado</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Rounded</source>
+        <translation>Redondeado</translation>
+    </message>
+</context>
+<context>
     <name>MainWindow</name>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="+127"/>
+        <location filename="../lib/core/mainwindow.cpp" line="+131"/>
         <source>TraceView Project (*.tvproj)</source>
         <translation>Proyecto TraceView (*.tvproj)</translation>
     </message>
@@ -632,7 +804,7 @@
 <context>
     <name>WorkspaceManager</name>
     <message>
-        <location filename="../lib/project/workspacemanager.cpp" line="+180"/>
+        <location filename="../lib/project/workspacemanager.cpp" line="+203"/>
         <source>Default</source>
         <translation>Predeterminado</translation>
     </message>
@@ -1422,22 +1594,57 @@ Permitidos: %1</translation>
 <context>
     <name>traceview::DashboardCell</name>
     <message>
-        <location filename="../lib/dashboard/dashboardcell.cpp" line="+342"/>
+        <location filename="../lib/dashboard/widgets/chartstyle.cpp" line="+381"/>
+        <source>Style:</source>
+        <translation>Estilo:</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>App default</source>
+        <translation>Predeterminado de la aplicación</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Show X axis title</source>
+        <translation>Mostrar título del eje X</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Show X axis values</source>
+        <translation>Mostrar valores del eje X</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Show Y axis title</source>
+        <translation>Mostrar título del eje Y</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Show Y axis values</source>
+        <translation>Mostrar valores del eje Y</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Show scale values</source>
+        <translation>Mostrar valores de la escala</translation>
+    </message>
+    <message>
+        <location line="+2"/>
         <source>Show last value</source>
         <translation>Mostrar último valor</translation>
     </message>
     <message>
-        <location line="+6"/>
+        <location line="+2"/>
         <source>Show grid point values</source>
         <translation>Mostrar valores de los puntos de la cuadrícula</translation>
     </message>
     <message>
-        <location line="+6"/>
+        <location line="+2"/>
         <source>Show hover crosshair</source>
         <translation>Mostrar retícula al pasar el cursor</translation>
     </message>
     <message>
-        <location line="+18"/>
+        <location line="+2"/>
         <source>Interpolation:</source>
         <translation>Interpolación:</translation>
     </message>
@@ -1447,19 +1654,109 @@ Permitidos: %1</translation>
         <translation>Lineal</translation>
     </message>
     <message>
-        <location line="+1"/>
+        <location line="+2"/>
         <source>ZOH (step)</source>
         <translation>ZOH (escalón)</translation>
     </message>
     <message>
-        <location line="+1"/>
+        <location line="+2"/>
         <source>Stem</source>
         <translation>Tallo</translation>
     </message>
     <message>
-        <location line="+1"/>
+        <location line="+2"/>
         <source>None (points)</source>
         <translation>Ninguna (puntos)</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Y axis ticks:</source>
+        <translation>Marcas del eje Y:</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Auto</source>
+        <translation>Automático</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Legend:</source>
+        <translation>Leyenda:</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Outside the plot</source>
+        <translation>Fuera del gráfico</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Top left</source>
+        <translation>Arriba a la izquierda</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Top right</source>
+        <translation>Arriba a la derecha</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Bottom left</source>
+        <translation>Abajo a la izquierda</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Bottom right</source>
+        <translation>Abajo a la derecha</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Hidden</source>
+        <translation>Oculta</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Legend background:</source>
+        <translation>Fondo de la leyenda:</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>%1%</source>
+        <translation>%1%</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Line width:</source>
+        <translation>Grosor de línea:</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>%1 px</source>
+        <translation>%1 px</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Shape:</source>
+        <translation>Forma:</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Ring (270°)</source>
+        <translation>Anillo (270°)</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Half circle</source>
+        <translation>Semicírculo</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Bar</source>
+        <translation>Barra</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Number</source>
+        <translation>Número</translation>
     </message>
 </context>
 <context>
@@ -1551,7 +1848,7 @@ Permitidos: %1</translation>
 <context>
     <name>traceview::DashboardGrid</name>
     <message>
-        <location filename="../lib/dashboard/dashboardgrid.cpp" line="+525"/>
+        <location filename="../lib/dashboard/dashboardgrid.cpp" line="+554"/>
         <source>Bring to Front</source>
         <translation>Traer al frente</translation>
     </message>
@@ -1729,12 +2026,12 @@ Permitidos: %1</translation>
         <translation>Se muestra como título de este dispositivo: en su tarjeta del panel Dispositivos y en cualquier otro lugar donde se elija de una lista.</translation>
     </message>
     <message>
-        <location line="+13"/>
+        <location line="+12"/>
         <source>Connection</source>
         <translation>Conexión</translation>
     </message>
     <message>
-        <location line="+108"/>
+        <location line="+81"/>
         <source>None</source>
         <translation>Ninguno</translation>
     </message>
@@ -1764,17 +2061,15 @@ Permitidos: %1</translation>
         <translation>ID de este dispositivo:</translation>
     </message>
     <message>
-        <location line="-102"/>
         <source>Advanced</source>
-        <translation>Avanzado</translation>
+        <translation type="vanished">Avanzado</translation>
     </message>
     <message>
-        <location line="+5"/>
         <source>Every link as a table: the order they are tried in, baud rate, TCP port, and targets typed by hand.</source>
-        <translation>Todas las conexiones en una tabla: el orden en que se prueban, la velocidad en baudios, el puerto TCP y los destinos escritos a mano.</translation>
+        <translation type="vanished">Todas las conexiones en una tabla: el orden en que se prueban, la velocidad en baudios, el puerto TCP y los destinos escritos a mano.</translation>
     </message>
     <message>
-        <location line="+43"/>
+        <location line="-54"/>
         <source>Card title:</source>
         <translation>Título de la tarjeta:</translation>
     </message>
@@ -1818,12 +2113,12 @@ Permitidos: %1</translation>
     </message>
     <message>
         <location line="+3"/>
-        <location line="+282"/>
+        <location line="+281"/>
         <source>e.g. robot1.local</source>
         <translation>p. ej. robot1.local</translation>
     </message>
     <message>
-        <location line="-280"/>
+        <location line="-279"/>
         <source>Hostname or IP the OTA tab uses for this device&apos;s firmware upload. Left blank, the device is listed there but nothing can be polled or uploaded.</source>
         <translation>Nombre de host o IP que la pestaña OTA usa para subir el firmware de este dispositivo. En blanco, el dispositivo aparece allí pero no se puede consultar ni subir nada.</translation>
     </message>
@@ -1849,25 +2144,25 @@ Permitidos: %1</translation>
     </message>
     <message>
         <location line="+24"/>
-        <location line="+243"/>
+        <location line="+242"/>
         <source>Connected</source>
         <translation>Conectado</translation>
     </message>
     <message>
-        <location line="-243"/>
-        <location line="+243"/>
+        <location line="-242"/>
+        <location line="+242"/>
         <source>Disconnected</source>
         <translation>Desconectado</translation>
     </message>
     <message>
-        <location line="-240"/>
+        <location line="-239"/>
         <location line="+3"/>
-        <location line="+156"/>
+        <location line="+155"/>
         <source>(not connected yet)</source>
         <translation>(aún no conectado)</translation>
     </message>
     <message>
-        <location line="-146"/>
+        <location line="-145"/>
         <source>Status:</source>
         <translation>Estado:</translation>
     </message>
@@ -1902,7 +2197,7 @@ Permitidos: %1</translation>
         <translation>Aplicar la configuración anterior y (re)conectar ahora, sin cerrar este diálogo.</translation>
     </message>
     <message>
-        <location line="+115"/>
+        <location line="+114"/>
         <source>%1 (last connection)</source>
         <translation>%1 (última conexión)</translation>
     </message>
@@ -1928,7 +2223,7 @@ Permitidos: %1</translation>
         <translation>el dispositivo informa: %1</translation>
     </message>
     <message>
-        <location line="-242"/>
+        <location line="-241"/>
         <source>Reported by device</source>
         <translation>Reportado por el dispositivo</translation>
     </message>
@@ -2618,12 +2913,11 @@ Pérdidas: %2</translation>
         <translation>&amp;Restablecer Posiciones de Paneles</translation>
     </message>
     <message>
-        <location line="+7"/>
         <source>&amp;Theme</source>
-        <translation>&amp;Tema</translation>
+        <translation type="vanished">&amp;Tema</translation>
     </message>
     <message>
-        <location line="+17"/>
+        <location line="+10"/>
         <source>&amp;Font</source>
         <translation>&amp;Fuente</translation>
     </message>
@@ -2649,12 +2943,12 @@ Pérdidas: %2</translation>
     </message>
     <message>
         <location line="+0"/>
-        <location line="+3431"/>
+        <location line="+3618"/>
         <source>Later</source>
         <translation>Más tarde</translation>
     </message>
     <message>
-        <location line="-3424"/>
+        <location line="-3611"/>
         <source>&amp;Access</source>
         <translation>&amp;Acceso</translation>
     </message>
@@ -2781,18 +3075,18 @@ Pérdidas: %2</translation>
     </message>
     <message>
         <location line="+18"/>
-        <location line="+2796"/>
+        <location line="+2983"/>
         <source>Undo</source>
         <translation>Deshacer</translation>
     </message>
     <message>
-        <location line="-2794"/>
-        <location line="+2794"/>
+        <location line="-2981"/>
+        <location line="+2981"/>
         <source>Redo</source>
         <translation>Rehacer</translation>
     </message>
     <message>
-        <location line="-2751"/>
+        <location line="-2938"/>
         <source>Add Device</source>
         <translation>Añadir Dispositivo</translation>
     </message>
@@ -2828,12 +3122,12 @@ Pérdidas: %2</translation>
     </message>
     <message>
         <location line="+29"/>
-        <location line="+2696"/>
+        <location line="+2883"/>
         <source>Fullscreen dashboard (F11)</source>
         <translation>Panel en pantalla completa (F11)</translation>
     </message>
     <message>
-        <location line="-2516"/>
+        <location line="-2703"/>
         <source>Rename Workspace</source>
         <translation>Renombrar Espacio de Trabajo</translation>
     </message>
@@ -2843,7 +3137,78 @@ Pérdidas: %2</translation>
         <translation>Espacio de trabajo &quot;%1&quot; renombrado a &quot;%2&quot;.</translation>
     </message>
     <message>
-        <location line="+1233"/>
+        <location line="+32"/>
+        <source>Appearance &amp;Presets</source>
+        <translation>&amp;Ajustes de apariencia</translation>
+    </message>
+    <message>
+        <location line="+22"/>
+        <source>Save Current Appearance as Preset...</source>
+        <translation>Guardar apariencia actual como ajuste...</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Delete Preset</source>
+        <translation>Eliminar ajuste</translation>
+    </message>
+    <message>
+        <location line="+35"/>
+        <source>New Palette...</source>
+        <translation>Nueva paleta...</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Edit Palette...</source>
+        <translation>Editar paleta...</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <location line="+62"/>
+        <source>Delete Palette</source>
+        <translation>Eliminar paleta</translation>
+    </message>
+    <message>
+        <location line="-56"/>
+        <source>&amp;Workspace Appearance</source>
+        <translation>Apariencia del &amp;espacio</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Pin Current Appearance to This Workspace</source>
+        <translation>Fijar la apariencia actual en este espacio de trabajo</translation>
+    </message>
+    <message>
+        <location line="+21"/>
+        <source>Save Appearance Preset</source>
+        <translation>Guardar ajuste de apariencia</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Preset name:</source>
+        <translation>Nombre del ajuste:</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Saved appearance preset &quot;%1&quot;.</source>
+        <translation>Ajuste de apariencia "%1" guardado.</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>%1 (custom)</source>
+        <translation>%1 (personalizada)</translation>
+    </message>
+    <message>
+        <location line="+20"/>
+        <source>Delete the palette &quot;%1&quot;?</source>
+        <translation>¿Eliminar la paleta "%1"?</translation>
+    </message>
+    <message>
+        <location line="+45"/>
+        <source>This workspace now keeps its own appearance.</source>
+        <translation>Este espacio de trabajo ahora tiene su propia apariencia.</translation>
+    </message>
+    <message>
+        <location line="+1213"/>
         <source>%1: found at %2</source>
         <translation>%1: encontrado en %2</translation>
     </message>
@@ -2853,7 +3218,7 @@ Pérdidas: %2</translation>
         <translation>%1: probando %2</translation>
     </message>
     <message>
-        <location line="+419"/>
+        <location line="+420"/>
         <location line="+8"/>
         <location line="+5"/>
         <location line="+8"/>
@@ -2902,7 +3267,7 @@ Pérdidas: %2</translation>
         <translation>&quot;%1&quot; guardado en la galería.</translation>
     </message>
     <message>
-        <location line="+532"/>
+        <location line="+535"/>
         <source>Update available: v%1</source>
         <translation>Actualización disponible: v%1</translation>
     </message>
@@ -2975,24 +3340,24 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
         <translation>Cerrar app</translation>
     </message>
     <message>
-        <location line="-2743"/>
-        <location line="+2544"/>
+        <location line="-2930"/>
+        <location line="+2731"/>
         <source>Devices</source>
         <translation>Dispositivos</translation>
     </message>
     <message>
-        <location line="-2469"/>
+        <location line="-2656"/>
         <source>Subscriptions</source>
         <translation>Suscripciones</translation>
     </message>
     <message>
-        <location line="+83"/>
+        <location line="+266"/>
         <source>New Workspace</source>
         <translation>Nuevo Espacio de Trabajo</translation>
     </message>
     <message>
-        <location line="-53"/>
-        <location line="+53"/>
+        <location line="-236"/>
+        <location line="+236"/>
         <source>Name:</source>
         <translation>Nombre:</translation>
     </message>
@@ -3023,23 +3388,23 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
     </message>
     <message>
         <location line="+71"/>
-        <location line="+2252"/>
+        <location line="+2256"/>
         <source>Add widget</source>
         <translation>Añadir widget</translation>
     </message>
     <message>
-        <location line="-2249"/>
+        <location line="-2253"/>
         <source>Remove selected widget (%1)</source>
         <translation>Eliminar widget seleccionado (%1)</translation>
     </message>
     <message>
         <location line="+3"/>
-        <location line="+2259"/>
+        <location line="+2263"/>
         <source>Add device</source>
         <translation>Añadir dispositivo</translation>
     </message>
     <message>
-        <location line="-2256"/>
+        <location line="-2260"/>
         <source>Remove selected device (%1)</source>
         <translation>Eliminar dispositivo seleccionado (%1)</translation>
     </message>
@@ -3150,12 +3515,52 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
         <translation>(sin nombre)</translation>
     </message>
     <message>
-        <location line="-1164"/>
+        <location filename="../lib/core/appearancecatalog.cpp" line="-149"/>
+        <source>&amp;Palette</source>
+        <translation>&amp;Paleta</translation>
+    </message>
+    <message>
+        <location line="+19"/>
+        <source>Fra&amp;me</source>
+        <translation>&amp;Marco</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>&amp;Chart Style</source>
+        <translation>&amp;Estilo de gráficos</translation>
+    </message>
+    <message>
+        <location line="+13"/>
+        <source>&amp;Data Colors</source>
+        <translation>&amp;Colores de datos</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>&amp;Density</source>
+        <translation>&amp;Densidad</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>Card &amp;Header</source>
+        <translation>Ca&amp;becera de tarjeta</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>Can&amp;vas</source>
+        <translation>Fondo del lien&amp;zo</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>M&amp;otion</source>
+        <translation>M&amp;ovimiento</translation>
+    </message>
+    <message>
+        <location filename="../lib/core/mainwindow.cpp" line="-1347"/>
         <source>Dashboard</source>
         <translation>Dashboard</translation>
     </message>
     <message>
-        <location line="+1503"/>
+        <location line="+1686"/>
         <source>%1: this BLE address now answers as a different robot (expected %2, got %3)</source>
         <translation>%1: esta dirección BLE ahora responde como otro robot (se esperaba %2, se obtuvo %3)</translation>
     </message>
@@ -3175,7 +3580,7 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
         <translation>¿Descartar el panel actual y comenzar un nuevo proyecto vacío?</translation>
     </message>
     <message>
-        <location line="+14"/>
+        <location line="+15"/>
         <source>Started a new project.</source>
         <translation>Se inició un nuevo proyecto.</translation>
     </message>
@@ -3218,7 +3623,7 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
     </message>
     <message>
         <location line="+20"/>
-        <location line="+208"/>
+        <location line="+211"/>
         <source>Settings</source>
         <translation>Configuración</translation>
     </message>
@@ -3639,6 +4044,157 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
     </message>
 </context>
 <context>
+    <name>traceview::PaletteEditorDialog</name>
+    <message>
+        <location filename="../lib/core/paletteeditordialog.cpp" line="+32"/>
+        <source>Surfaces</source>
+        <translation>Superficies</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Background</source>
+        <translation>Fondo</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Cards and panels</source>
+        <translation>Tarjetas y paneles</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Headers and inputs</source>
+        <translation>Cabeceras y campos</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Borders</source>
+        <translation>Bordes</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Strong borders</source>
+        <translation>Bordes fuertes</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Text</source>
+        <translation>Texto</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Primary text</source>
+        <translation>Texto principal</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Secondary text</source>
+        <translation>Texto secundario</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Disabled text</source>
+        <translation>Texto deshabilitado</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <location line="+1"/>
+        <source>Accent</source>
+        <translation>Acento</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Accent (hover)</source>
+        <translation>Acento (hover)</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Accent (pressed)</source>
+        <translation>Acento (pulsado)</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Status</source>
+        <translation>Estado</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Success</source>
+        <translation>Éxito</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Warning</source>
+        <translation>Advertencia</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Danger</source>
+        <translation>Peligro</translation>
+    </message>
+    <message>
+        <location line="+48"/>
+        <source>New Palette</source>
+        <translation>Nueva paleta</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Edit Palette</source>
+        <translation>Editar paleta</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>Name</source>
+        <translation>Nombre</translation>
+    </message>
+    <message>
+        <location line="+23"/>
+        <source>Data series</source>
+        <translation>Series de datos</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Series %1</source>
+        <translation>Serie %1</translation>
+    </message>
+    <message>
+        <location line="+51"/>
+        <source>Choose Color</source>
+        <translation>Elegir color</translation>
+    </message>
+    <message>
+        <location line="+27"/>
+        <source>Primary text on background</source>
+        <translation>Texto principal sobre el fondo</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Primary text on cards</source>
+        <translation>Texto principal sobre las tarjetas</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Secondary text on cards</source>
+        <translation>Texto secundario sobre las tarjetas</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>%1: %2:1 (at least 4.5:1 recommended)</source>
+        <translation>%1: %2:1 (se recomienda al menos 4,5:1)</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Text contrast is good.</source>
+        <translation>El contraste del texto es bueno.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Low contrast, text may be hard to read:
+%1</source>
+        <translation>Contraste bajo, el texto puede ser difícil de leer:
+%1</translation>
+    </message>
+</context>
+<context>
     <name>traceview::PropertiesPanel</name>
     <message>
         <location filename="../lib/core/propertiespanel.cpp" line="+21"/>
@@ -3975,17 +4531,15 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
 <context>
     <name>traceview::RobotLogWidget</name>
     <message>
-        <location filename="../lib/dashboard/widgets/robotlogwidget.cpp" line="+31"/>
         <source>Clear</source>
-        <translation>Limpiar</translation>
+        <translation type="vanished">Limpiar</translation>
     </message>
     <message>
-        <location line="+1"/>
         <source>Clear this log</source>
-        <translation>Limpiar este registro</translation>
+        <translation type="vanished">Limpiar este registro</translation>
     </message>
     <message>
-        <location line="+161"/>
+        <location filename="../lib/dashboard/widgets/robotlogwidget.cpp" line="+181"/>
         <source>(no device)</source>
         <translation>(sin dispositivo)</translation>
     </message>
@@ -4044,17 +4598,15 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
 <context>
     <name>traceview::SerialMonitorWidget</name>
     <message>
-        <location filename="../lib/dashboard/widgets/serialmonitorwidget.cpp" line="+27"/>
         <source>Clear</source>
-        <translation>Limpiar</translation>
+        <translation type="vanished">Limpiar</translation>
     </message>
     <message>
-        <location line="+1"/>
         <source>Clear this terminal</source>
-        <translation>Limpiar este terminal</translation>
+        <translation type="vanished">Limpiar este terminal</translation>
     </message>
     <message>
-        <location line="+150"/>
+        <location filename="../lib/dashboard/widgets/serialmonitorwidget.cpp" line="+167"/>
         <source>(no device)</source>
         <translation>(sin dispositivo)</translation>
     </message>
@@ -4067,7 +4619,7 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
 <context>
     <name>traceview::SettingsPage</name>
     <message>
-        <location filename="../lib/core/settingspage.cpp" line="+199"/>
+        <location filename="../lib/core/settingspage.cpp" line="+203"/>
         <source>Settings</source>
         <translation>Configuración</translation>
     </message>
@@ -4085,37 +4637,37 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
     </message>
     <message>
         <location line="-68"/>
-        <location line="+115"/>
+        <location line="+156"/>
         <source>Dashboard</source>
         <translation>Dashboard</translation>
     </message>
     <message>
-        <location line="-114"/>
-        <location line="+166"/>
+        <location line="-155"/>
+        <location line="+207"/>
         <source>Terminal</source>
         <translation>Terminal</translation>
     </message>
     <message>
-        <location line="-166"/>
-        <location line="+193"/>
+        <location line="-207"/>
+        <location line="+234"/>
         <source>Connections</source>
         <translation>Conexiones</translation>
     </message>
     <message>
-        <location line="-193"/>
-        <location line="+252"/>
+        <location line="-234"/>
+        <location line="+293"/>
         <source>Diagnostics</source>
         <translation>Diagnóstico</translation>
     </message>
     <message>
-        <location line="-251"/>
-        <location line="+303"/>
+        <location line="-292"/>
+        <location line="+344"/>
         <location line="+5"/>
         <source>Updates</source>
         <translation>Actualizaciones</translation>
     </message>
     <message>
-        <location line="-266"/>
+        <location line="-307"/>
         <source>Project and startup preferences shared by the application.</source>
         <translation>Preferencias de proyecto e inicio compartidas por la aplicación.</translation>
     </message>
@@ -4150,22 +4702,68 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
         <translation>Conectar los dispositivos configurados al abrir un proyecto</translation>
     </message>
     <message>
-        <location line="+9"/>
         <source>Theme and typeface changes apply immediately. Changing the language is saved for the next start.</source>
-        <translation>Los cambios de tema y tipografía se aplican al instante. El cambio de idioma se guarda para el próximo inicio.</translation>
+        <translation type="vanished">Los cambios de tema y tipografía se aplican al instante. El cambio de idioma se guarda para el próximo inicio.</translation>
     </message>
     <message>
-        <location line="+2"/>
+        <location line="+11"/>
         <source>Application appearance</source>
         <translation>Apariencia de la aplicación</translation>
     </message>
     <message>
-        <location line="+9"/>
         <source>Theme</source>
-        <translation>Tema</translation>
+        <translation type="vanished">Tema</translation>
+    </message>
+    <message>
+        <source>Palette, chart style and typeface changes apply immediately. Changing the language is saved for the next start.</source>
+        <translation type="vanished">Los cambios de paleta, estilo de gráficos y fuente se aplican al instante. El cambio de idioma se guarda para el próximo inicio.</translation>
+    </message>
+    <message>
+        <source>Palette, frame, chart style and typeface changes apply immediately. Changing the language is saved for the next start.</source>
+        <translation type="vanished">Los cambios de paleta, marco, estilo de gráficos y fuente se aplican al instante. El cambio de idioma se guarda para el próximo inicio.</translation>
+    </message>
+    <message>
+        <location filename="../lib/core/appearancecatalog.cpp" line="-77"/>
+        <source>Palette</source>
+        <translation>Paleta</translation>
+    </message>
+    <message>
+        <location line="+19"/>
+        <source>Frame</source>
+        <translation>Marco</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>Chart style</source>
+        <translation>Estilo de gráficos</translation>
     </message>
     <message>
         <location line="+13"/>
+        <source>Data colors</source>
+        <translation>Colores de datos</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>Density</source>
+        <translation>Densidad</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>Card header</source>
+        <translation>Cabecera de tarjeta</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>Canvas</source>
+        <translation>Fondo del lienzo</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>Motion</source>
+        <translation>Movimiento</translation>
+    </message>
+    <message>
+        <location filename="../lib/core/settingspage.cpp" line="+63"/>
         <source>Interface font</source>
         <translation>Fuente de la interfaz</translation>
     </message>
@@ -4205,12 +4803,23 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
         <translation>Muy alta (240 FPS)</translation>
     </message>
     <message>
-        <location line="+1"/>
+        <location line="-85"/>
+        <location line="+86"/>
         <source>Custom</source>
         <translation>Personalizada</translation>
     </message>
     <message>
-        <location line="+2"/>
+        <location line="-96"/>
+        <source>Appearance changes apply immediately. Changing the language is saved for the next start.</source>
+        <translation>Los cambios de apariencia se aplican al instante. El cambio de idioma se guarda para el próximo inicio.</translation>
+    </message>
+    <message>
+        <location line="+20"/>
+        <source>Preset</source>
+        <translation>Ajuste</translation>
+    </message>
+    <message>
+        <location line="+78"/>
         <source>Profile</source>
         <translation>Perfil</translation>
     </message>

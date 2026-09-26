@@ -16,9 +16,14 @@ target_link_libraries(text_board_preview PRIVATE
 
 target_link_libraries(chart_preview PRIVATE
     Qt6::Widgets
+    traceview_ui
     traceview_dashboard
     traceview_theme
 )
+# The cell header's pause/clear icons are SVG resources; without them the
+# --snapshot sheets would show only the hand-drawn gear.
+target_sources(chart_preview PRIVATE ${CMAKE_SOURCE_DIR}/resources/icons/ui.qrc)
+set_target_properties(chart_preview PROPERTIES AUTORCC ON)
 
 target_link_libraries(chart_benchmark PRIVATE
     Qt6::Widgets

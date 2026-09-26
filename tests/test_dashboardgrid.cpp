@@ -9,7 +9,7 @@
 #include "dashboard/dashboardgrid.h"
 #include "dashboard/dashboarditem.h"
 #include "dashboard/dashboardwidget.h"
-#include "dashboard/roundedcorners.h"
+#include "traceview/framestyle.h"
 #include "traceview/thememanager.h"
 
 using traceview::DashboardBreakpoint;
@@ -74,6 +74,7 @@ private slots:
     void renameSelectedUpdatesDisplayName();
     void setSelectedKeyRejectsDuplicateKeys();
     void changeSelectedConfigIsUndoable();
+    void gearViewConfigIsStoredAndSurvivesEditorEdits();
     void changeSelectedTypeIsUndoable();
     void toJsonFromJsonRoundTrips();
     void addItemSeedsEachBreakpointWithItsOwnDefault();
@@ -182,6 +183,31 @@ void TestDashboardGrid::changeSelectedConfigIsUndoable() {
 
     grid.undoStack()->redo();
     QCOMPARE(grid.selectedItemConfig(), config);
+}
+
+// The header gear menu stores its view state under config["view"]; the
+// properties panel editors rebuild the config without that key, and must
+// not wipe it.
+void TestDashboardGrid::gearViewConfigIsStoredAndSurvivesEditorEdits() {
+    DashboardGrid grid;
+    grid.addItem("dummy_line");
+    auto* cell = grid.findChild<DashboardCell*>();
+    QVERIFY(cell);
+
+    QJsonObject view;
+    view["style"] = "engineering";
+    emit cell->viewConfigChanged(cell->itemId(), view);
+    QCOMPARE(grid.selectedItemConfig().value("view").toObject(), view);
+
+    QJsonObject edited;
+    edited["series"] = 2;
+    grid.changeSelectedConfig(edited);
+    QCOMPARE(grid.selectedItemConfig().value("series").toInt(), 2);
+    QCOMPARE(grid.selectedItemConfig().value("view").toObject(), view);
+
+    grid.undoStack()->undo();  // the editor edit
+    grid.undoStack()->undo();  // the gear change
+    QVERIFY(!grid.selectedItemConfig().contains("view"));
 }
 
 void TestDashboardGrid::changeSelectedTypeIsUndoable() {

@@ -19,7 +19,7 @@ namespace {
 // Push button inset from the cell edge (see below for why). Small enough to
 // still read as "fills the cell", large enough that the QPushButton's own
 // 4px QSS corner (stylesheet.cpp) never touches the DashboardWidget mask's
-// 12px corner (kContainerCornerRadius) around it.
+// corner (its shape follows the frame style, traceview/framestyle.h).
 constexpr int kControlInset = 8;
 
 // Toggles the QSS-driven "dashboardControlPanel" surface fill (see
@@ -66,7 +66,7 @@ QColor blendColor(const QColor& a, const QColor& b, qreal t) {
 //
 // That inset itself: at zero margin, QPushButton used to sit flush against
 // the cell edge, i.e. exactly on the same corner DashboardWidget's mask
-// rounds at kContainerCornerRadius (12px, see roundedcorners.h). But the
+// shapes per the frame style (traceview/framestyle.h). But the
 // button draws its own corner via QSS at the separate, smaller 4px control
 // radius (stylesheet.cpp) -- a tighter curve than the mask around it,
 // leaving a wedge between the two where the button's border cuts inward

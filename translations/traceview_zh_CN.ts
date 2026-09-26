@@ -2,44 +2,193 @@
 <!DOCTYPE TS>
 <TS version="2.1" language="zh_CN">
 <context>
+    <name>Appearance</name>
+    <message>
+        <location filename="../lib/theme/appearance.cpp" line="+124"/>
+        <source>Palette colors</source>
+        <translation>调色板颜色</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>MATLAB</source>
+        <translation>MATLAB</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Tableau</source>
+        <translation>Tableau</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Color-blind safe</source>
+        <translation>色盲友好</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Monochrome</source>
+        <translation>单色</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Per series (as configured)</source>
+        <translation>按系列(按配置)</translation>
+    </message>
+    <message>
+        <location line="+54"/>
+        <source>Compact</source>
+        <translation>紧凑</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Comfortable</source>
+        <translation>宽松</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Normal</source>
+        <translation>标准</translation>
+    </message>
+    <message>
+        <location line="+35"/>
+        <source>Line</source>
+        <translation>线条</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>On hover</source>
+        <translation>悬停时</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Filled</source>
+        <translation>填充</translation>
+    </message>
+    <message>
+        <location line="+20"/>
+        <source>Dots</source>
+        <translation>点</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Grid</source>
+        <translation>网格</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Gradient</source>
+        <translation>渐变</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Plain</source>
+        <translation>纯色</translation>
+    </message>
+    <message>
+        <location line="+18"/>
+        <source>Reduced</source>
+        <translation>减少</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Animated</source>
+        <translation>动画</translation>
+    </message>
+    <message>
+        <location filename="../lib/core/appearancecatalog.cpp" line="+232"/>
+        <source>TraceView</source>
+        <translation>TraceView</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Lab</source>
+        <translation>实验室</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Paper</source>
+        <translation>论文</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>HUD</source>
+        <translation>HUD</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Synthwave</source>
+        <translation>Synthwave</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Accessible</source>
+        <translation>无障碍</translation>
+    </message>
+</context>
+<context>
+    <name>ChartStyle</name>
+    <message>
+        <location filename="../lib/dashboard/widgets/chartstyle.cpp" line="+125"/>
+        <source>Engineering</source>
+        <translation>工程</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Scientific</source>
+        <translation>科学</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Dashboard</source>
+        <translation>仪表盘</translation>
+    </message>
+</context>
+<context>
     <name>ChartWidgets</name>
     <message>
-        <location filename="../lib/dashboard/widgets/chartwidgets.cpp" line="+254"/>
-        <location line="+298"/>
+        <location filename="../lib/dashboard/widgets/chartwidgets.cpp" line="+38"/>
         <source>Field %1</source>
         <translation>字段 %1</translation>
     </message>
     <message>
-        <location line="-286"/>
-        <location line="+338"/>
-        <location line="+742"/>
+        <location line="+9"/>
+        <location line="+494"/>
+        <location line="+231"/>
         <source>--</source>
         <translation>--</translation>
     </message>
     <message>
-        <location line="-984"/>
         <source>t</source>
-        <translation>t</translation>
+        <translation type="vanished">t</translation>
+    </message>
+    <message>
+        <source>k</source>
+        <translation type="vanished">k</translation>
     </message>
     <message>
         <location line="+1"/>
-        <source>k</source>
-        <translation>k</translation>
-    </message>
-    <message>
-        <location line="+242"/>
         <source>%1%2</source>
         <translation>%1%2</translation>
     </message>
     <message>
         <location line="+6"/>
+        <location line="+305"/>
         <source>%1  %2</source>
         <translation>%1  %2</translation>
     </message>
     <message>
-        <location line="+621"/>
+        <location line="-659"/>
         <source>%1: %2</source>
         <translation>%1: %2</translation>
+    </message>
+    <message>
+        <location filename="../lib/dashboard/widgets/chartpainting.cpp" line="+617"/>
+        <source>Time (s)</source>
+        <translation>时间 (s)</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Samples</source>
+        <translation>采样数</translation>
     </message>
 </context>
 <context>
@@ -249,9 +398,32 @@
     </message>
 </context>
 <context>
+    <name>FrameStyle</name>
+    <message>
+        <location filename="../lib/theme/framestyle.cpp" line="+103"/>
+        <source>Square</source>
+        <translation>直角</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Borderless</source>
+        <translation>无边框</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Chamfered</source>
+        <translation>切角</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Rounded</source>
+        <translation>圆角</translation>
+    </message>
+</context>
+<context>
     <name>MainWindow</name>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="+127"/>
+        <location filename="../lib/core/mainwindow.cpp" line="+131"/>
         <source>TraceView Project (*.tvproj)</source>
         <translation>TraceView 项目 (*.tvproj)</translation>
     </message>
@@ -632,7 +804,7 @@
 <context>
     <name>WorkspaceManager</name>
     <message>
-        <location filename="../lib/project/workspacemanager.cpp" line="+180"/>
+        <location filename="../lib/project/workspacemanager.cpp" line="+203"/>
         <source>Default</source>
         <translation>默认</translation>
     </message>
@@ -1422,22 +1594,57 @@ Allowed: %1</source>
 <context>
     <name>traceview::DashboardCell</name>
     <message>
-        <location filename="../lib/dashboard/dashboardcell.cpp" line="+342"/>
+        <location filename="../lib/dashboard/widgets/chartstyle.cpp" line="+381"/>
+        <source>Style:</source>
+        <translation>样式:</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>App default</source>
+        <translation>应用默认</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Show X axis title</source>
+        <translation>显示 X 轴标题</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Show X axis values</source>
+        <translation>显示 X 轴数值</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Show Y axis title</source>
+        <translation>显示 Y 轴标题</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Show Y axis values</source>
+        <translation>显示 Y 轴数值</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Show scale values</source>
+        <translation>显示刻度值</translation>
+    </message>
+    <message>
+        <location line="+2"/>
         <source>Show last value</source>
         <translation>显示最新值</translation>
     </message>
     <message>
-        <location line="+6"/>
+        <location line="+2"/>
         <source>Show grid point values</source>
         <translation>显示网格点数值</translation>
     </message>
     <message>
-        <location line="+6"/>
+        <location line="+2"/>
         <source>Show hover crosshair</source>
         <translation>显示悬停十字线</translation>
     </message>
     <message>
-        <location line="+18"/>
+        <location line="+2"/>
         <source>Interpolation:</source>
         <translation>插值:</translation>
     </message>
@@ -1447,19 +1654,109 @@ Allowed: %1</source>
         <translation>线性</translation>
     </message>
     <message>
-        <location line="+1"/>
+        <location line="+2"/>
         <source>ZOH (step)</source>
         <translation>ZOH(阶梯)</translation>
     </message>
     <message>
-        <location line="+1"/>
+        <location line="+2"/>
         <source>Stem</source>
         <translation>杆状图</translation>
     </message>
     <message>
-        <location line="+1"/>
+        <location line="+2"/>
         <source>None (points)</source>
         <translation>无(仅点)</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Y axis ticks:</source>
+        <translation>Y 轴刻度:</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Auto</source>
+        <translation>自动</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Legend:</source>
+        <translation>图例:</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Outside the plot</source>
+        <translation>图表外</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Top left</source>
+        <translation>左上</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Top right</source>
+        <translation>右上</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Bottom left</source>
+        <translation>左下</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Bottom right</source>
+        <translation>右下</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Hidden</source>
+        <translation>隐藏</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Legend background:</source>
+        <translation>图例背景:</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>%1%</source>
+        <translation>%1%</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Line width:</source>
+        <translation>线宽:</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>%1 px</source>
+        <translation>%1 px</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Shape:</source>
+        <translation>形状:</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Ring (270°)</source>
+        <translation>圆环 (270°)</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Half circle</source>
+        <translation>半圆</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Bar</source>
+        <translation>条形</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Number</source>
+        <translation>数字</translation>
     </message>
 </context>
 <context>
@@ -1551,7 +1848,7 @@ Allowed: %1</source>
 <context>
     <name>traceview::DashboardGrid</name>
     <message>
-        <location filename="../lib/dashboard/dashboardgrid.cpp" line="+525"/>
+        <location filename="../lib/dashboard/dashboardgrid.cpp" line="+554"/>
         <source>Bring to Front</source>
         <translation>置于顶层</translation>
     </message>
@@ -1729,12 +2026,12 @@ Allowed: %1</source>
         <translation>作为此设备的标题显示 -- 显示在“设备”面板的卡片上，以及任何从列表中选择它的地方。</translation>
     </message>
     <message>
-        <location line="+13"/>
+        <location line="+12"/>
         <source>Connection</source>
         <translation>连接</translation>
     </message>
     <message>
-        <location line="+108"/>
+        <location line="+81"/>
         <source>None</source>
         <translation>无</translation>
     </message>
@@ -1764,17 +2061,15 @@ Allowed: %1</source>
         <translation>此设备的 ID:</translation>
     </message>
     <message>
-        <location line="-102"/>
         <source>Advanced</source>
-        <translation>高级</translation>
+        <translation type="vanished">高级</translation>
     </message>
     <message>
-        <location line="+5"/>
         <source>Every link as a table: the order they are tried in, baud rate, TCP port, and targets typed by hand.</source>
-        <translation>以表格显示所有连接：尝试顺序、波特率、TCP 端口以及手动输入的目标。</translation>
+        <translation type="vanished">以表格显示所有连接：尝试顺序、波特率、TCP 端口以及手动输入的目标。</translation>
     </message>
     <message>
-        <location line="+43"/>
+        <location line="-54"/>
         <source>Card title:</source>
         <translation>卡片标题：</translation>
     </message>
@@ -1818,12 +2113,12 @@ Allowed: %1</source>
     </message>
     <message>
         <location line="+3"/>
-        <location line="+282"/>
+        <location line="+281"/>
         <source>e.g. robot1.local</source>
         <translation>例如 robot1.local</translation>
     </message>
     <message>
-        <location line="-280"/>
+        <location line="-279"/>
         <source>Hostname or IP the OTA tab uses for this device&apos;s firmware upload. Left blank, the device is listed there but nothing can be polled or uploaded.</source>
         <translation>OTA 选项卡上传此设备固件所用的主机名或 IP。留空时设备仍会列出，但无法轮询或上传。</translation>
     </message>
@@ -1849,25 +2144,25 @@ Allowed: %1</source>
     </message>
     <message>
         <location line="+24"/>
-        <location line="+243"/>
+        <location line="+242"/>
         <source>Connected</source>
         <translation>已连接</translation>
     </message>
     <message>
-        <location line="-243"/>
-        <location line="+243"/>
+        <location line="-242"/>
+        <location line="+242"/>
         <source>Disconnected</source>
         <translation>已断开</translation>
     </message>
     <message>
-        <location line="-240"/>
+        <location line="-239"/>
         <location line="+3"/>
-        <location line="+156"/>
+        <location line="+155"/>
         <source>(not connected yet)</source>
         <translation>(尚未连接)</translation>
     </message>
     <message>
-        <location line="-146"/>
+        <location line="-145"/>
         <source>Status:</source>
         <translation>状态：</translation>
     </message>
@@ -1902,7 +2197,7 @@ Allowed: %1</source>
         <translation>应用以上设置并立即（重新）连接，而不关闭此对话框。</translation>
     </message>
     <message>
-        <location line="+115"/>
+        <location line="+114"/>
         <source>%1 (last connection)</source>
         <translation>%1（上次连接）</translation>
     </message>
@@ -1928,7 +2223,7 @@ Allowed: %1</source>
         <translation>设备上报: %1</translation>
     </message>
     <message>
-        <location line="-242"/>
+        <location line="-241"/>
         <source>Reported by device</source>
         <translation>设备报告</translation>
     </message>
@@ -2617,12 +2912,11 @@ Drops: %2</source>
         <translation>重置面板位置(&amp;R)</translation>
     </message>
     <message>
-        <location line="+7"/>
         <source>&amp;Theme</source>
-        <translation>主题(&amp;T)</translation>
+        <translation type="vanished">主题(&amp;T)</translation>
     </message>
     <message>
-        <location line="+17"/>
+        <location line="+10"/>
         <source>&amp;Font</source>
         <translation>字体(&amp;F)</translation>
     </message>
@@ -2648,12 +2942,12 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+0"/>
-        <location line="+3431"/>
+        <location line="+3618"/>
         <source>Later</source>
         <translation>稍后</translation>
     </message>
     <message>
-        <location line="-3424"/>
+        <location line="-3611"/>
         <source>&amp;Access</source>
         <translation>访问(&amp;A)</translation>
     </message>
@@ -2780,18 +3074,18 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+18"/>
-        <location line="+2796"/>
+        <location line="+2983"/>
         <source>Undo</source>
         <translation>撤销</translation>
     </message>
     <message>
-        <location line="-2794"/>
-        <location line="+2794"/>
+        <location line="-2981"/>
+        <location line="+2981"/>
         <source>Redo</source>
         <translation>重做</translation>
     </message>
     <message>
-        <location line="-2751"/>
+        <location line="-2938"/>
         <source>Add Device</source>
         <translation>添加设备</translation>
     </message>
@@ -2827,12 +3121,12 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+29"/>
-        <location line="+2696"/>
+        <location line="+2883"/>
         <source>Fullscreen dashboard (F11)</source>
         <translation>全屏仪表盘(F11)</translation>
     </message>
     <message>
-        <location line="-2516"/>
+        <location line="-2703"/>
         <source>Rename Workspace</source>
         <translation>重命名工作区</translation>
     </message>
@@ -2842,7 +3136,78 @@ Drops: %2</source>
         <translation>已将工作区&quot;%1&quot;重命名为&quot;%2&quot;。</translation>
     </message>
     <message>
-        <location line="+1233"/>
+        <location line="+32"/>
+        <source>Appearance &amp;Presets</source>
+        <translation>外观预设(&amp;P)</translation>
+    </message>
+    <message>
+        <location line="+22"/>
+        <source>Save Current Appearance as Preset...</source>
+        <translation>将当前外观保存为预设...</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Delete Preset</source>
+        <translation>删除预设</translation>
+    </message>
+    <message>
+        <location line="+35"/>
+        <source>New Palette...</source>
+        <translation>新建调色板...</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Edit Palette...</source>
+        <translation>编辑调色板...</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <location line="+62"/>
+        <source>Delete Palette</source>
+        <translation>删除调色板</translation>
+    </message>
+    <message>
+        <location line="-56"/>
+        <source>&amp;Workspace Appearance</source>
+        <translation>工作区外观(&amp;W)</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Pin Current Appearance to This Workspace</source>
+        <translation>将当前外观固定到此工作区</translation>
+    </message>
+    <message>
+        <location line="+21"/>
+        <source>Save Appearance Preset</source>
+        <translation>保存外观预设</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Preset name:</source>
+        <translation>预设名称:</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Saved appearance preset &quot;%1&quot;.</source>
+        <translation>已保存外观预设"%1"。</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>%1 (custom)</source>
+        <translation>%1 (自定义)</translation>
+    </message>
+    <message>
+        <location line="+20"/>
+        <source>Delete the palette &quot;%1&quot;?</source>
+        <translation>删除调色板"%1"?</translation>
+    </message>
+    <message>
+        <location line="+45"/>
+        <source>This workspace now keeps its own appearance.</source>
+        <translation>此工作区现在有自己的外观。</translation>
+    </message>
+    <message>
+        <location line="+1213"/>
         <source>%1: found at %2</source>
         <translation>%1：在 %2 找到</translation>
     </message>
@@ -2852,7 +3217,7 @@ Drops: %2</source>
         <translation>%1：正在尝试 %2</translation>
     </message>
     <message>
-        <location line="+419"/>
+        <location line="+420"/>
         <location line="+8"/>
         <location line="+5"/>
         <location line="+8"/>
@@ -2901,7 +3266,7 @@ Drops: %2</source>
         <translation>已将 &quot;%1&quot; 保存到库。</translation>
     </message>
     <message>
-        <location line="+532"/>
+        <location line="+535"/>
         <source>Update available: v%1</source>
         <translation>有可用更新: v%1</translation>
     </message>
@@ -2974,24 +3339,24 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>关闭应用</translation>
     </message>
     <message>
-        <location line="-2743"/>
-        <location line="+2544"/>
+        <location line="-2930"/>
+        <location line="+2731"/>
         <source>Devices</source>
         <translation>设备</translation>
     </message>
     <message>
-        <location line="-2469"/>
+        <location line="-2656"/>
         <source>Subscriptions</source>
         <translation>订阅</translation>
     </message>
     <message>
-        <location line="+83"/>
+        <location line="+266"/>
         <source>New Workspace</source>
         <translation>新建工作区</translation>
     </message>
     <message>
-        <location line="-53"/>
-        <location line="+53"/>
+        <location line="-236"/>
+        <location line="+236"/>
         <source>Name:</source>
         <translation>名称:</translation>
     </message>
@@ -3022,23 +3387,23 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     </message>
     <message>
         <location line="+71"/>
-        <location line="+2252"/>
+        <location line="+2256"/>
         <source>Add widget</source>
         <translation>添加控件</translation>
     </message>
     <message>
-        <location line="-2249"/>
+        <location line="-2253"/>
         <source>Remove selected widget (%1)</source>
         <translation>删除所选控件(%1)</translation>
     </message>
     <message>
         <location line="+3"/>
-        <location line="+2259"/>
+        <location line="+2263"/>
         <source>Add device</source>
         <translation>添加设备</translation>
     </message>
     <message>
-        <location line="-2256"/>
+        <location line="-2260"/>
         <source>Remove selected device (%1)</source>
         <translation>删除所选设备(%1)</translation>
     </message>
@@ -3149,12 +3514,52 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>(未命名)</translation>
     </message>
     <message>
-        <location line="-1164"/>
+        <location filename="../lib/core/appearancecatalog.cpp" line="-149"/>
+        <source>&amp;Palette</source>
+        <translation>调色板(&amp;P)</translation>
+    </message>
+    <message>
+        <location line="+19"/>
+        <source>Fra&amp;me</source>
+        <translation>边框(&amp;M)</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>&amp;Chart Style</source>
+        <translation>图表样式(&amp;C)</translation>
+    </message>
+    <message>
+        <location line="+13"/>
+        <source>&amp;Data Colors</source>
+        <translation>数据颜色(&amp;D)</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>&amp;Density</source>
+        <translation>密度(&amp;E)</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>Card &amp;Header</source>
+        <translation>卡片标题(&amp;H)</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>Can&amp;vas</source>
+        <translation>画布背景(&amp;V)</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>M&amp;otion</source>
+        <translation>动效(&amp;O)</translation>
+    </message>
+    <message>
+        <location filename="../lib/core/mainwindow.cpp" line="-1347"/>
         <source>Dashboard</source>
         <translation>仪表盘</translation>
     </message>
     <message>
-        <location line="+1503"/>
+        <location line="+1686"/>
         <source>%1: this BLE address now answers as a different robot (expected %2, got %3)</source>
         <translation>%1: 此 BLE 地址现在以另一台机器人身份应答 (应为 %2,实际为 %3)</translation>
     </message>
@@ -3174,7 +3579,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>放弃当前仪表盘并新建一个空项目?</translation>
     </message>
     <message>
-        <location line="+14"/>
+        <location line="+15"/>
         <source>Started a new project.</source>
         <translation>已新建项目。</translation>
     </message>
@@ -3217,7 +3622,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     </message>
     <message>
         <location line="+20"/>
-        <location line="+208"/>
+        <location line="+211"/>
         <source>Settings</source>
         <translation>设置</translation>
     </message>
@@ -3638,6 +4043,157 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     </message>
 </context>
 <context>
+    <name>traceview::PaletteEditorDialog</name>
+    <message>
+        <location filename="../lib/core/paletteeditordialog.cpp" line="+32"/>
+        <source>Surfaces</source>
+        <translation>表面</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Background</source>
+        <translation>背景</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Cards and panels</source>
+        <translation>卡片和面板</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Headers and inputs</source>
+        <translation>标题和输入框</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Borders</source>
+        <translation>边框</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Strong borders</source>
+        <translation>强调边框</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Text</source>
+        <translation>文本</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Primary text</source>
+        <translation>主要文本</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Secondary text</source>
+        <translation>次要文本</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Disabled text</source>
+        <translation>禁用文本</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <location line="+1"/>
+        <source>Accent</source>
+        <translation>强调色</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Accent (hover)</source>
+        <translation>强调色(悬停)</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Accent (pressed)</source>
+        <translation>强调色(按下)</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Status</source>
+        <translation>状态</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Success</source>
+        <translation>成功</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Warning</source>
+        <translation>警告</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Danger</source>
+        <translation>危险</translation>
+    </message>
+    <message>
+        <location line="+48"/>
+        <source>New Palette</source>
+        <translation>新建调色板</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Edit Palette</source>
+        <translation>编辑调色板</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>Name</source>
+        <translation>名称</translation>
+    </message>
+    <message>
+        <location line="+23"/>
+        <source>Data series</source>
+        <translation>数据系列</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Series %1</source>
+        <translation>系列 %1</translation>
+    </message>
+    <message>
+        <location line="+51"/>
+        <source>Choose Color</source>
+        <translation>选择颜色</translation>
+    </message>
+    <message>
+        <location line="+27"/>
+        <source>Primary text on background</source>
+        <translation>背景上的主要文本</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Primary text on cards</source>
+        <translation>卡片上的主要文本</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Secondary text on cards</source>
+        <translation>卡片上的次要文本</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>%1: %2:1 (at least 4.5:1 recommended)</source>
+        <translation>%1: %2:1 (建议至少 4.5:1)</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Text contrast is good.</source>
+        <translation>文本对比度良好。</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Low contrast, text may be hard to read:
+%1</source>
+        <translation>对比度低,文本可能难以阅读:
+%1</translation>
+    </message>
+</context>
+<context>
     <name>traceview::PropertiesPanel</name>
     <message>
         <location filename="../lib/core/propertiespanel.cpp" line="+21"/>
@@ -3974,17 +4530,15 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
 <context>
     <name>traceview::RobotLogWidget</name>
     <message>
-        <location filename="../lib/dashboard/widgets/robotlogwidget.cpp" line="+31"/>
         <source>Clear</source>
-        <translation>清除</translation>
+        <translation type="vanished">清除</translation>
     </message>
     <message>
-        <location line="+1"/>
         <source>Clear this log</source>
-        <translation>清除此日志</translation>
+        <translation type="vanished">清除此日志</translation>
     </message>
     <message>
-        <location line="+161"/>
+        <location filename="../lib/dashboard/widgets/robotlogwidget.cpp" line="+181"/>
         <source>(no device)</source>
         <translation>(无设备)</translation>
     </message>
@@ -4043,17 +4597,15 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
 <context>
     <name>traceview::SerialMonitorWidget</name>
     <message>
-        <location filename="../lib/dashboard/widgets/serialmonitorwidget.cpp" line="+27"/>
         <source>Clear</source>
-        <translation>清除</translation>
+        <translation type="vanished">清除</translation>
     </message>
     <message>
-        <location line="+1"/>
         <source>Clear this terminal</source>
-        <translation>清除此终端</translation>
+        <translation type="vanished">清除此终端</translation>
     </message>
     <message>
-        <location line="+150"/>
+        <location filename="../lib/dashboard/widgets/serialmonitorwidget.cpp" line="+167"/>
         <source>(no device)</source>
         <translation>(无设备)</translation>
     </message>
@@ -4066,7 +4618,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
 <context>
     <name>traceview::SettingsPage</name>
     <message>
-        <location filename="../lib/core/settingspage.cpp" line="+199"/>
+        <location filename="../lib/core/settingspage.cpp" line="+203"/>
         <source>Settings</source>
         <translation>设置</translation>
     </message>
@@ -4084,37 +4636,37 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     </message>
     <message>
         <location line="-68"/>
-        <location line="+115"/>
+        <location line="+156"/>
         <source>Dashboard</source>
         <translation>仪表盘</translation>
     </message>
     <message>
-        <location line="-114"/>
-        <location line="+166"/>
+        <location line="-155"/>
+        <location line="+207"/>
         <source>Terminal</source>
         <translation>终端</translation>
     </message>
     <message>
-        <location line="-166"/>
-        <location line="+193"/>
+        <location line="-207"/>
+        <location line="+234"/>
         <source>Connections</source>
         <translation>连接</translation>
     </message>
     <message>
-        <location line="-193"/>
-        <location line="+252"/>
+        <location line="-234"/>
+        <location line="+293"/>
         <source>Diagnostics</source>
         <translation>诊断</translation>
     </message>
     <message>
-        <location line="-251"/>
-        <location line="+303"/>
+        <location line="-292"/>
+        <location line="+344"/>
         <location line="+5"/>
         <source>Updates</source>
         <translation>更新</translation>
     </message>
     <message>
-        <location line="-266"/>
+        <location line="-307"/>
         <source>Project and startup preferences shared by the application.</source>
         <translation>应用程序共享的项目和启动偏好设置。</translation>
     </message>
@@ -4149,22 +4701,68 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>打开项目时连接已配置的设备</translation>
     </message>
     <message>
-        <location line="+9"/>
         <source>Theme and typeface changes apply immediately. Changing the language is saved for the next start.</source>
-        <translation>主题和字体的更改会立即生效。语言更改将在下次启动时生效。</translation>
+        <translation type="vanished">主题和字体的更改会立即生效。语言更改将在下次启动时生效。</translation>
     </message>
     <message>
-        <location line="+2"/>
+        <location line="+11"/>
         <source>Application appearance</source>
         <translation>应用程序外观</translation>
     </message>
     <message>
-        <location line="+9"/>
         <source>Theme</source>
-        <translation>主题</translation>
+        <translation type="vanished">主题</translation>
+    </message>
+    <message>
+        <source>Palette, chart style and typeface changes apply immediately. Changing the language is saved for the next start.</source>
+        <translation type="vanished">调色板、图表样式和字体的更改立即生效。更改语言将在下次启动时生效。</translation>
+    </message>
+    <message>
+        <source>Palette, frame, chart style and typeface changes apply immediately. Changing the language is saved for the next start.</source>
+        <translation type="vanished">调色板、边框、图表样式和字体的更改立即生效。更改语言将在下次启动时生效。</translation>
+    </message>
+    <message>
+        <location filename="../lib/core/appearancecatalog.cpp" line="-77"/>
+        <source>Palette</source>
+        <translation>调色板</translation>
+    </message>
+    <message>
+        <location line="+19"/>
+        <source>Frame</source>
+        <translation>边框</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>Chart style</source>
+        <translation>图表样式</translation>
     </message>
     <message>
         <location line="+13"/>
+        <source>Data colors</source>
+        <translation>数据颜色</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>Density</source>
+        <translation>密度</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>Card header</source>
+        <translation>卡片标题</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>Canvas</source>
+        <translation>画布背景</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>Motion</source>
+        <translation>动效</translation>
+    </message>
+    <message>
+        <location filename="../lib/core/settingspage.cpp" line="+63"/>
         <source>Interface font</source>
         <translation>界面字体</translation>
     </message>
@@ -4204,12 +4802,23 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>超高 (240 FPS)</translation>
     </message>
     <message>
-        <location line="+1"/>
+        <location line="-85"/>
+        <location line="+86"/>
         <source>Custom</source>
         <translation>自定义</translation>
     </message>
     <message>
-        <location line="+2"/>
+        <location line="-96"/>
+        <source>Appearance changes apply immediately. Changing the language is saved for the next start.</source>
+        <translation>外观更改立即生效。更改语言将在下次启动时生效。</translation>
+    </message>
+    <message>
+        <location line="+20"/>
+        <source>Preset</source>
+        <translation>预设</translation>
+    </message>
+    <message>
+        <location line="+78"/>
         <source>Profile</source>
         <translation>配置</translation>
     </message>

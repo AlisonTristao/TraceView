@@ -1,6 +1,8 @@
 #include "mainwindow.h"
 
 #include <QActionGroup>
+#include <QUuid>
+#include <QJsonDocument>
 #include <QClipboard>
 #include <QCloseEvent>
 #include <QColor>
@@ -68,6 +70,7 @@
 #include "diagram/diagramblockconfigdialog.h"
 #include "diagram/diagramscriptruntime.h"
 #include "donatedialog.h"
+#include "appearancecatalog.h"
 #include "fontmenuaction.h"
 #include "inputdiagnostics.h"
 #include "startuploadingoverlay.h"
@@ -113,6 +116,7 @@
 #include "serialmanager.h"
 #endif
 #include "iconpickerdialog.h"
+#include "paletteeditordialog.h"
 #include "workspacedock.h"
 #include "brandcornermark.h"
 #include "workspaceswitcher.h"
@@ -1172,22 +1176,8 @@ void MainWindow::buildMenus() {
     m_developerViewActions = {shortcutsAction, logFolderAction, resetPanelsAction,
                               viewMenu->addSeparator()};
 
-    auto* themeMenu = viewMenu->addMenu(tr("&Theme"));
-
-    auto* group = new QActionGroup(this);
-    group->setExclusive(true);
-
-    const QString currentId = ThemeManager::instance().currentTheme().id;
-    for (const ThemePalette& palette : ThemeManager::instance().availableThemes()) {
-        auto* action = themeMenu->addAction(palette.displayName);
-        action->setCheckable(true);
-        action->setChecked(palette.id == currentId);
-        action->setData(palette.id);
-        group->addAction(action);
-
-        connect(action, &QAction::triggered, this,
-                [id = palette.id]() { ThemeManager::instance().setTheme(id); });
-    }
+    buildAppearanceMenus(viewMenu);
+    viewMenu->addSeparator();
 
     auto* fontMenu = viewMenu->addMenu(tr("&Font"));
 
@@ -2046,6 +2036,7 @@ void MainWindow::switchToWorkspace(const QString& id) {
     onRibbonTabChanged(m_dashboardTabIndex);
     refreshWorkspaceSwitcher();
     if (m_subscriptionsWorkspaceActive) {
+        applyWorkspaceAppearance();
         updateSubscriptionsWorkspace();
         return;
     }
@@ -2055,11 +2046,193 @@ void MainWindow::switchToWorkspace(const QString& id) {
 
     workspaces.setDashboardFor(workspaces.activeId(), m_dashboardGrid->toJson());
     workspaces.setActiveId(id);
+    applyWorkspaceAppearance();
     loadDashboardJson(workspaces.dashboardFor(id));
     m_dashboardGrid->undoStack()->clear();
     refreshPropertiesPanel();
     refreshLayersPanel();
     refreshWorkspaceSwitcher();
+}
+
+void MainWindow::buildAppearanceMenus(QMenu* viewMenu) {
+    // Presets: one click applies a whole look (palette, frame, chart
+    // style, data colors, density, card header, canvas).
+    auto* presetsMenu = viewMenu->addMenu(tr("Appearance &Presets"));
+    connect(presetsMenu, &QMenu::aboutToShow, this, [this, presetsMenu]() {
+        presetsMenu->clear();
+        const QVector<AppearancePreset> presets = appearancePresets();
+        const AppearanceSnapshot current = currentAppearance();
+        bool userSection = false;
+        QVector<AppearancePreset> userPresets;
+        for (const AppearancePreset& preset : presets) {
+            if (!preset.builtIn && !userSection) {
+                presetsMenu->addSeparator();
+                userSection = true;
+            }
+            if (!preset.builtIn) {
+                userPresets.append(preset);
+            }
+            QAction* action = presetsMenu->addAction(preset.name);
+            action->setCheckable(true);
+            action->setChecked(preset.values == current);
+            const AppearanceSnapshot values = preset.values;
+            connect(action, &QAction::triggered, this, [values]() { applyAppearance(values); });
+        }
+        presetsMenu->addSeparator();
+        presetsMenu->addAction(tr("Save Current Appearance as Preset..."), this,
+                               &MainWindow::onSaveAppearancePreset);
+        if (!userPresets.isEmpty()) {
+            QMenu* deleteMenu = presetsMenu->addMenu(tr("Delete Preset"));
+            for (const AppearancePreset& preset : userPresets) {
+                const QString id = preset.id;
+                deleteMenu->addAction(preset.name, this,
+                                      [id]() { removeUserAppearancePreset(id); });
+            }
+        }
+    });
+
+    // One submenu per appearance option, rebuilt on open.
+    for (const AppearanceOption& option : appearanceOptions()) {
+        QMenu* menu = viewMenu->addMenu(option.menuTitle);
+        const QString key = option.key;
+        connect(menu, &QMenu::aboutToShow, this, [this, menu, key]() {
+            menu->clear();
+            for (const AppearanceOption& current : appearanceOptions()) {
+                if (current.key != key) {
+                    continue;
+                }
+                auto* group = new QActionGroup(menu);
+                group->setExclusive(true);
+                const QString selected = current.current();
+                for (const AppearanceChoice& choice : current.choices()) {
+                    QAction* action = menu->addAction(choice.label);
+                    action->setCheckable(true);
+                    action->setChecked(choice.id == selected);
+                    group->addAction(action);
+                    const auto apply = current.apply;
+                    const QString id = choice.id;
+                    connect(action, &QAction::triggered, this, [apply, id]() { apply(id); });
+                }
+            }
+            if (key == QLatin1String("palette")) {
+                const bool custom = isCustomPaletteId(ThemeManager::instance().currentTheme().id);
+                menu->addSeparator();
+                menu->addAction(tr("New Palette..."), this, &MainWindow::onNewPalette);
+                menu->addAction(tr("Edit Palette..."), this, &MainWindow::onEditPalette)
+                    ->setEnabled(custom);
+                menu->addAction(tr("Delete Palette"), this, &MainWindow::onDeletePalette)
+                    ->setEnabled(custom);
+            }
+        });
+    }
+
+    auto* workspaceMenu = viewMenu->addMenu(tr("&Workspace Appearance"));
+    connect(workspaceMenu, &QMenu::aboutToShow, this, [this, workspaceMenu]() {
+        workspaceMenu->clear();
+        QAction* pin = workspaceMenu->addAction(tr("Pin Current Appearance to This Workspace"));
+        pin->setCheckable(true);
+        const QString active = WorkspaceManager::instance().activeId();
+        pin->setEnabled(!m_subscriptionsWorkspaceActive);
+        pin->setChecked(!m_subscriptionsWorkspaceActive &&
+                        !WorkspaceManager::instance().appearanceFor(active).isEmpty());
+        connect(pin, &QAction::toggled, this, &MainWindow::setWorkspaceAppearancePinned);
+    });
+
+    connectAppearanceChanged(this, [this]() { onAppearanceChanged(); });
+    // The app-wide appearance, remembered separately so leaving a pinned
+    // workspace can go back to it (QSettings "appearance/global").
+    m_globalAppearance =
+        QJsonDocument::fromJson(QSettings().value("appearance/global").toByteArray()).object();
+    if (m_globalAppearance.isEmpty()) {
+        m_globalAppearance = appearanceToJson(currentAppearance());
+    }
+}
+
+void MainWindow::onSaveAppearancePreset() {
+    bool ok = false;
+    const QString name = DialogPresenter::getText(this, tr("Save Appearance Preset"),
+                                                  tr("Preset name:"), QLineEdit::Normal,
+                                                  QString(), &ok);
+    if (ok && !name.trimmed().isEmpty()) {
+        saveUserAppearancePreset(name.trimmed());
+        postStatus(tr("Saved appearance preset \"%1\".").arg(name.trimmed()), 3000);
+    }
+}
+
+void MainWindow::onNewPalette() {
+    ThemeManager& theme = ThemeManager::instance();
+    ThemePalette palette = theme.currentTheme();
+    palette.id = QStringLiteral("custom:") + QUuid::createUuid().toString(QUuid::WithoutBraces);
+    palette.displayName = tr("%1 (custom)").arg(theme.currentTheme().displayName);
+    PaletteEditorDialog dialog(palette, /*isNew=*/true, this);
+    DialogPresenter::exec(dialog, DialogPresenter::Style::Page);
+}
+
+void MainWindow::onEditPalette() {
+    const ThemePalette palette = ThemeManager::instance().currentTheme();
+    if (!isCustomPaletteId(palette.id)) {
+        return;
+    }
+    PaletteEditorDialog dialog(palette, /*isNew=*/false, this);
+    DialogPresenter::exec(dialog, DialogPresenter::Style::Page);
+}
+
+void MainWindow::onDeletePalette() {
+    const ThemePalette palette = ThemeManager::instance().currentTheme();
+    if (!isCustomPaletteId(palette.id)) {
+        return;
+    }
+    if (DialogPresenter::question(this, tr("Delete Palette"),
+                                  tr("Delete the palette \"%1\"?").arg(palette.displayName),
+                                  QMessageBox::Yes | QMessageBox::No,
+                                  QMessageBox::No) == QMessageBox::Yes) {
+        ThemeManager::instance().removeCustomTheme(palette.id);
+    }
+}
+
+void MainWindow::applyWorkspaceAppearance() {
+    const QJsonObject pinned =
+        m_subscriptionsWorkspaceActive
+            ? QJsonObject()
+            : WorkspaceManager::instance().appearanceFor(WorkspaceManager::instance().activeId());
+    const QJsonObject target = pinned.isEmpty() ? m_globalAppearance : pinned;
+    if (target.isEmpty()) {
+        return;
+    }
+    m_applyingAppearance = true;
+    applyAppearance(appearanceFromJson(target));
+    m_applyingAppearance = false;
+}
+
+void MainWindow::onAppearanceChanged() {
+    if (m_applyingAppearance) {
+        return;
+    }
+    const QJsonObject current = appearanceToJson(currentAppearance());
+    WorkspaceManager& workspaces = WorkspaceManager::instance();
+    const QString active = workspaces.activeId();
+    if (!m_subscriptionsWorkspaceActive && !workspaces.appearanceFor(active).isEmpty()) {
+        workspaces.setAppearanceFor(active, current);
+        return;
+    }
+    m_globalAppearance = current;
+    QSettings().setValue("appearance/global",
+                         QJsonDocument(m_globalAppearance).toJson(QJsonDocument::Compact));
+}
+
+void MainWindow::setWorkspaceAppearancePinned(bool pinned) {
+    if (m_subscriptionsWorkspaceActive) {
+        return;
+    }
+    WorkspaceManager& workspaces = WorkspaceManager::instance();
+    const QString active = workspaces.activeId();
+    if (pinned) {
+        workspaces.setAppearanceFor(active, appearanceToJson(currentAppearance()));
+        postStatus(tr("This workspace now keeps its own appearance."), 3000);
+    } else {
+        workspaces.setAppearanceFor(active, QJsonObject());
+        applyWorkspaceAppearance();  // back to the app-wide appearance
+    }
 }
 
 void MainWindow::cycleWorkspace(int direction) {
@@ -3940,6 +4113,7 @@ void MainWindow::onNewProject() {
 
     ProjectStore::instance().reset();
     WorkspaceManager::instance().reset();
+    applyWorkspaceAppearance();  // a fresh workspace follows the app-wide look
     loadDashboardJson(QJsonObject(), DashboardLoadBreakpoint::DeviceDefault);
     m_dashboardGrid->undoStack()->clear();
     m_devicesGrid->fromJson(QJsonObject());
@@ -4359,6 +4533,9 @@ bool MainWindow::loadProjectFile(const QString& path) {
     m_devicesGrid->fromJson(ProjectStore::instance().section("devices"));
     m_loadingProject = false;
     m_devicesGrid->undoStack()->clear();
+    // Before the widgets are built, so they come up in the workspace's own
+    // appearance (if it pinned one) instead of repainting right after.
+    applyWorkspaceAppearance();
     loadDashboardJson(
         WorkspaceManager::instance().dashboardFor(WorkspaceManager::instance().activeId()),
         DashboardLoadBreakpoint::DeviceDefault);

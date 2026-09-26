@@ -4,6 +4,9 @@
 #include <QComboBox>
 #include <QFontMetrics>
 #include <QHBoxLayout>
+#include <QHash>
+#include <functional>
+#include <QKeyEvent>
 #include <QLabel>
 #include <QMenu>
 #include <QMouseEvent>
@@ -11,9 +14,10 @@
 #include <QPainterPath>
 #include <QPolygonF>
 #include <QRegion>
+#include <QSignalBlocker>
 #include <QWidgetAction>
 
-#include "dashboard/roundedcorners.h"
+#include "traceview/framestyle.h"
 #include "dashboardwidget.h"
 #include "theme/iconutils.h"
 #include "traceview/thememanager.h"
@@ -21,14 +25,13 @@
 namespace traceview {
 
 namespace {
-constexpr int kHeaderHeight = 24;
 constexpr int kGripSize = 14;   // hit/visual size of the 4 corner handles
 constexpr int kEdgeMargin = 6;  // hit thickness of the 4 edge handles
 constexpr int kSelectionAnimMs = 150;
 
 constexpr int kIconSize = 14;
 constexpr int kIconMargin = 6;
-// Header-controls cluster (see DashboardWidget::wantsHeaderControls()): the
+// Header-controls cluster (see DashboardWidget::headerControls()): the
 // connection dot before the title, and the pause/resume + clear + gear
 // buttons at the header's right edge -- all sized/spaced off the same
 // kIconSize/kIconMargin as the type glyph above, per the "respect the
@@ -180,12 +183,13 @@ protected:
                                   ? m_selectionAnimation->currentValue().toReal()
                                   : 0.0;
         const bool selectionVisible = selectT > 0.0;
-        constexpr qreal kBorderWidth = 2.0;
+        const FrameStyle& frame = ThemeManager::instance().currentFrameStyle();
 
-        const QRectF borderRect = QRectF(rect()).adjusted(kBorderWidth / 2.0, kBorderWidth / 2.0,
-                                                          -kBorderWidth / 2.0, -kBorderWidth / 2.0);
-        const QPainterPath outline =
-            partiallyRoundedRect(borderRect, kContainerCornerRadius, true, true, true, true);
+        // One path for both outlines, inset by the (wider) selection stroke
+        // so neither is clipped at the widget edge.
+        constexpr qreal kInset = kFrameSelectionWidth / 2.0;
+        const QRectF borderRect = QRectF(rect()).adjusted(kInset, kInset, -kInset, -kInset);
+        const QPainterPath outline = frameShapePath(borderRect, frame);
 
         // Same palette.border convention as DeviceCard's outline (see
         // devicecard.cpp): always visible, so a cell's extent reads clearly
@@ -195,8 +199,9 @@ protected:
         // widgets/controlwidgets.cpp) -- those already read as bare controls
         // rather than cards (see "Control panel fill" in
         // docs/VISUAL_IDENTITY.md), and an idle outline would fight that.
-        if (m_content->wantsCellHeader()) {
-            painter.setPen(QPen(palette.border, kBorderWidth));
+        // The frame style may drop the idle outline entirely (Borderless).
+        if (m_content->wantsCellHeader() && frame.idleOutline && frame.borderWidth > 0.0) {
+            painter.setPen(QPen(palette.border, frame.borderWidth));
             painter.setBrush(Qt::NoBrush);
             painter.drawPath(outline);
         }
@@ -205,7 +210,7 @@ protected:
             QColor selectionColor =
                 property("dragInvalid").toBool() ? palette.danger : palette.accent;
             selectionColor.setAlphaF(selectT);
-            painter.setPen(QPen(selectionColor, kBorderWidth));
+            painter.setPen(QPen(selectionColor, kFrameSelectionWidth));
             painter.drawPath(outline);
         }
     }
@@ -213,6 +218,36 @@ protected:
 private:
     QVariantAnimation* m_selectionAnimation;
     DashboardWidget* m_content;
+};
+// The "On hover" card header (CardHeaderId::Hover): the title strip drawn
+// over the top of the content while the mouse is over the card, instead of
+// taking space above it. Paints and handles clicks through the owning cell,
+// so it is the exact same strip with the exact same buttons.
+class HoverHeaderStrip final : public QWidget {
+public:
+    HoverHeaderStrip(std::function<void(QPainter&)> paint,
+                     std::function<bool(const QPoint&)> press, QWidget* parent)
+        : QWidget(parent), m_paint(std::move(paint)), m_press(std::move(press)) {
+        setAttribute(Qt::WA_TranslucentBackground, true);
+    }
+
+protected:
+    void paintEvent(QPaintEvent*) override {
+        QPainter painter(this);
+        painter.setRenderHint(QPainter::Antialiasing);
+        m_paint(painter);
+    }
+    void mousePressEvent(QMouseEvent* event) override {
+        if (event->button() == Qt::LeftButton && m_press(event->position().toPoint())) {
+            event->accept();
+            return;
+        }
+        QWidget::mousePressEvent(event);
+    }
+
+private:
+    std::function<void(QPainter&)> m_paint;
+    std::function<bool(const QPoint&)> m_press;
 };
 }  // namespace
 
@@ -225,6 +260,10 @@ DashboardCell::DashboardCell(const QString& itemId, const QString& typeId, const
     setProperty("dashboardCell", true);
     m_content->setParent(this);
     m_borderOverlay = new BorderOverlay(&m_selectionAnim, m_content, this);
+    m_hoverHeader = new HoverHeaderStrip(
+        [this](QPainter& painter) { paintHeader(painter, /*floating=*/true); },
+        [this](const QPoint& pos) { return handleHeaderPress(pos); }, this);
+    m_hoverHeader->hide();
 
     setMouseTracking(true);
     layoutChildren();
@@ -234,6 +273,15 @@ DashboardCell::DashboardCell(const QString& itemId, const QString& typeId, const
     m_selectionAnim.setEndValue(1.0);
     connect(&m_selectionAnim, &QVariantAnimation::valueChanged, m_borderOverlay,
             QOverload<>::of(&QWidget::update));
+    // Any appearance change arrives as themeChanged: a frame style reshapes
+    // the silhouette (content mask), a density changes the header height,
+    // a card header style may hide the strip -- so lay out again, not just
+    // repaint.
+    connect(&ThemeManager::instance(), &ThemeManager::themeChanged, this,
+            [this](const ThemePalette&) {
+                layoutChildren();
+                update();
+            });
 }
 
 void DashboardCell::setTitle(const QString& title) {
@@ -257,9 +305,9 @@ void DashboardCell::setEditMode(bool enabled) {
     m_content->setEditModeHint(enabled);
     if (!enabled) {
         m_selected = false;
-        m_selectionAnim.setDirection(QAbstractAnimation::Backward);
-        m_selectionAnim.start();
+        startSelectionAnimation(QAbstractAnimation::Backward);
     }
+    m_hoverHeader->hide();
     updateCursor();
     layoutChildren();
     update();
@@ -270,9 +318,8 @@ void DashboardCell::setSelected(bool selected) {
         return;
     }
     m_selected = selected;
-    m_selectionAnim.setDirection(selected ? QAbstractAnimation::Forward
-                                          : QAbstractAnimation::Backward);
-    m_selectionAnim.start();
+    startSelectionAnimation(selected ? QAbstractAnimation::Forward
+                                     : QAbstractAnimation::Backward);
     updateCursor();
     update();
 }
@@ -302,92 +349,168 @@ void DashboardCell::setResizable(bool resizable) {
     update();
 }
 
+void DashboardCell::startSelectionAnimation(QAbstractAnimation::Direction direction) {
+    // Reduced motion: the outline snaps instead of fading.
+    m_selectionAnim.setDuration(ThemeManager::instance().reduceMotion() ? 0 : kSelectionAnimMs);
+    m_selectionAnim.setDirection(direction);
+    m_selectionAnim.start();
+}
+
+int DashboardCell::headerStripHeight() const {
+    return m_content->wantsCellHeader() ? ThemeManager::instance().currentDensity().headerHeight
+                                        : 0;
+}
+
 int DashboardCell::headerHeight() const {
-    return m_content->wantsCellHeader() ? kHeaderHeight : 0;
+    if (!m_editMode && ThemeManager::instance().cardHeader() == CardHeaderId::Hover) {
+        return 0;
+    }
+    return headerStripHeight();
 }
 
 QRect DashboardCell::headerRect() const {
-    return QRect(0, 0, width(), headerHeight());
+    return QRect(0, 0, width(), headerStripHeight());
 }
 
 QRect DashboardCell::gripRect() const {
     return QRect(width() - kGripSize, height() - kGripSize, kGripSize, kGripSize);
 }
 
-QRect DashboardCell::gearButtonRect() const {
+QRect DashboardCell::headerButtonRect(DashboardWidget::HeaderControl control) const {
+    using HC = DashboardWidget::HeaderControl;
+    const DashboardWidget::HeaderControls offered = m_content->headerControls();
+    if (!offered.testFlag(control) || control == HC::ConnectionDot) {
+        return QRect();
+    }
     const QRect header = headerRect();
     const int y = (header.height() - kIconSize) / 2;
-    return QRect(header.right() - kIconMargin - kIconSize + 1, y, kIconSize, kIconSize);
+    int right = header.right() + 1 - kIconMargin;
+    for (HC button : {HC::Settings, HC::Clear, HC::Pause}) {
+        if (!offered.testFlag(button)) {
+            continue;
+        }
+        const QRect rect(right - kIconSize, y, kIconSize, kIconSize);
+        if (button == control) {
+            return rect;
+        }
+        right = rect.left() - kIconMargin;
+    }
+    return QRect();
 }
 
-QRect DashboardCell::clearButtonRect() const {
-    const QRect gear = gearButtonRect();
-    return QRect(gear.left() - kIconMargin - kIconSize, gear.top(), kIconSize, kIconSize);
-}
+namespace {
 
-QRect DashboardCell::pauseButtonRect() const {
-    const QRect clear = clearButtonRect();
-    return QRect(clear.left() - kIconMargin - kIconSize, clear.top(), kIconSize, kIconSize);
-}
+// Flipping a checkable entry keeps the gear menu open, so several options
+// can be changed in one visit -- a plain QMenu closes on every triggered
+// action. Select boxes already keep it open (their popup is its own window).
+class StickyMenu : public QMenu {
+public:
+    using QMenu::QMenu;
+
+protected:
+    void mouseReleaseEvent(QMouseEvent* event) override {
+        if (triggerCheckable()) {
+            event->accept();
+            return;
+        }
+        QMenu::mouseReleaseEvent(event);
+    }
+
+    void keyPressEvent(QKeyEvent* event) override {
+        const bool activates = event->key() == Qt::Key_Return ||
+                               event->key() == Qt::Key_Enter || event->key() == Qt::Key_Space;
+        if (activates && triggerCheckable()) {
+            event->accept();
+            return;
+        }
+        QMenu::keyPressEvent(event);
+    }
+
+private:
+    bool triggerCheckable() {
+        QAction* action = activeAction();
+        if (!action || !action->isEnabled() || !action->isCheckable()) {
+            return false;
+        }
+        action->trigger();
+        return true;
+    }
+};
+
+}  // namespace
 
 void DashboardCell::showSettingsMenu() {
-    // Kinds with nothing to configure yet (DummyBarChartWidget, see
-    // DashboardWidget::hasChartOptionsMenu()) skip the menu entirely rather
-    // than popping up an empty one.
-    if (!m_content->hasChartOptionsMenu()) {
+    // Kinds with nothing to configure skip the menu entirely rather than
+    // popping up an empty one.
+    const QVector<WidgetViewOption> options = m_content->viewOptions();
+    if (options.isEmpty()) {
         return;
     }
 
-    QMenu menu(this);
-    QAction* lastValueAction = menu.addAction(tr("Show last value"));
-    lastValueAction->setCheckable(true);
-    lastValueAction->setChecked(m_content->showsLastValueRow());
-    connect(lastValueAction, &QAction::toggled, this,
-            [this](bool on) { m_content->setShowsLastValueRow(on); });
+    StickyMenu menu(this);
+    QHash<QString, QAction*> toggles;
+    QHash<QString, QComboBox*> combos;
 
-    QAction* gridPointsAction = menu.addAction(tr("Show grid point values"));
-    gridPointsAction->setCheckable(true);
-    gridPointsAction->setChecked(m_content->showsGridPointMarkers());
-    connect(gridPointsAction, &QAction::toggled, this,
-            [this](bool on) { m_content->setShowsGridPointMarkers(on); });
+    // Re-reads every control from the widget after each change, since the
+    // menu stays open across changes.
+    auto resync = [&]() {
+        for (const WidgetViewOption& option : m_content->viewOptions()) {
+            if (QAction* action = toggles.value(option.id)) {
+                const QSignalBlocker blocker(action);
+                action->setChecked(option.value.toBool());
+            }
+            if (QComboBox* combo = combos.value(option.id)) {
+                const QSignalBlocker blocker(combo);
+                combo->setCurrentIndex(qMax(0, combo->findData(option.value.toString())));
+            }
+        }
+    };
+    auto apply = [this, &resync](const QString& id, const QVariant& value) {
+        const QJsonObject view = m_content->viewConfigWith(id, value);
+        m_content->setViewConfig(view);
+        emit viewConfigChanged(m_itemId, view);
+        resync();
+    };
 
-    QAction* hoverCrosshairAction = menu.addAction(tr("Show hover crosshair"));
-    hoverCrosshairAction->setCheckable(true);
-    hoverCrosshairAction->setChecked(m_content->showsHoverCrosshair());
-    connect(hoverCrosshairAction, &QAction::toggled, this,
-            [this](bool on) { m_content->setShowsHoverCrosshair(on); });
+    for (int i = 0; i < options.size(); ++i) {
+        const WidgetViewOption& option = options[i];
+        if (option.startsSection && i > 0) {
+            menu.addSeparator();
+        }
+        if (option.kind == WidgetViewOption::Kind::Toggle) {
+            QAction* action = menu.addAction(option.label);
+            action->setCheckable(true);
+            action->setChecked(option.value.toBool());
+            const QString id = option.id;
+            connect(action, &QAction::toggled, this, [apply, id](bool on) { apply(id, on); });
+            toggles.insert(option.id, action);
+            continue;
+        }
 
-    menu.addSeparator();
+        // A select box via QWidgetAction rather than a submenu of checkable
+        // actions -- the user asked for a dropdown specifically.
+        auto* row = new QWidget(&menu);
+        auto* rowLayout = new QHBoxLayout(row);
+        rowLayout->setContentsMargins(12, 4, 12, 4);
+        rowLayout->addWidget(new QLabel(option.label, row));
+        auto* combo = new QComboBox(row);
+        for (const auto& choice : option.choices) {
+            combo->addItem(choice.second, choice.first);
+        }
+        combo->setCurrentIndex(qMax(0, combo->findData(option.value.toString())));
+        rowLayout->addWidget(combo);
+        const QString id = option.id;
+        connect(combo, &QComboBox::currentIndexChanged, this,
+                [apply, combo, id](int index) { apply(id, combo->itemData(index)); });
+        combos.insert(option.id, combo);
 
-    // Select box for the line-shape a line chart reconstructs between
-    // buffered samples with (DashboardWidget::lineInterpolation(), see
-    // ChartLineInterpolation in widgets/chartdata.h) -- a QComboBox via
-    // QWidgetAction rather than a submenu of checkable actions, since the
-    // user asked for a dropdown specifically. Covered by the
-    // hasChartOptionsMenu() guard above like everything else in this menu, so
-    // it only ever shows for DummyLineChartWidget in practice.
-    auto* interpolationRow = new QWidget(&menu);
-    auto* interpolationLayout = new QHBoxLayout(interpolationRow);
-    interpolationLayout->setContentsMargins(12, 4, 12, 4);
-    interpolationLayout->addWidget(new QLabel(tr("Interpolation:"), interpolationRow));
-    auto* interpolationCombo = new QComboBox(interpolationRow);
-    interpolationCombo->addItem(tr("Linear"), "linear");
-    interpolationCombo->addItem(tr("ZOH (step)"), "zoh");
-    interpolationCombo->addItem(tr("Stem"), "stem");
-    interpolationCombo->addItem(tr("None (points)"), "none");
-    interpolationCombo->setCurrentIndex(
-        qMax(0, interpolationCombo->findData(m_content->lineInterpolation())));
-    interpolationLayout->addWidget(interpolationCombo);
-    connect(interpolationCombo, &QComboBox::currentIndexChanged, this,
-            [this, interpolationCombo](int index) {
-                m_content->setLineInterpolation(interpolationCombo->itemData(index).toString());
-            });
+        auto* widgetAction = new QWidgetAction(&menu);
+        widgetAction->setDefaultWidget(row);
+        menu.addAction(widgetAction);
+    }
 
-    auto* interpolationAction = new QWidgetAction(&menu);
-    interpolationAction->setDefaultWidget(interpolationRow);
-    menu.addAction(interpolationAction);
-
-    menu.exec(mapToGlobal(gearButtonRect().bottomLeft()));
+    menu.exec(mapToGlobal(
+        headerButtonRect(DashboardWidget::HeaderControl::Settings).bottomLeft()));
 }
 
 DashboardCell::ResizeHandle DashboardCell::handleAt(const QPoint& pos) const {
@@ -445,6 +568,11 @@ void DashboardCell::layoutChildren() {
     const int headerH = headerHeight();
     m_content->setGeometry(0, headerH, width(), height() - headerH);
     updateContentMask();
+    m_hoverHeader->setGeometry(headerRect());
+    if (headerH > 0) {
+        m_hoverHeader->hide();
+    }
+    m_hoverHeader->raise();
     m_borderOverlay->setGeometry(rect());
     m_borderOverlay->raise();
 }
@@ -480,6 +608,101 @@ void DashboardCell::resizeEvent(QResizeEvent* event) {
     layoutChildren();
 }
 
+void DashboardCell::paintHeader(QPainter& painter, bool floating) const {
+    const ThemePalette& palette = ThemeManager::instance().currentTheme();
+    const CardHeaderId style = ThemeManager::instance().cardHeader();
+    const QRect header = headerRect();
+    const int stripHeight = header.height();
+
+    // Filled (and the floating hover strip): a solid strip, accent while
+    // selected. Line: the card's own fill with a separator underneath, the
+    // accent moving to the title and separator while selected.
+    const bool line = style == CardHeaderId::Line && !floating;
+    painter.save();
+    painter.setClipPath(currentFramePath(QRectF(rect())));
+    if (line) {
+        painter.fillRect(header, palette.surface);
+        painter.setPen(QPen(m_selected ? palette.accent : palette.border, m_selected ? 2 : 1));
+        const qreal y = header.bottom() + (m_selected ? 0.0 : 0.5);
+        painter.drawLine(QPointF(header.left(), y), QPointF(header.right() + 1, y));
+    } else {
+        QColor fill = m_selected ? palette.accent : palette.surfaceAlt;
+        if (floating) {
+            fill.setAlphaF(0.94f);
+        }
+        painter.fillRect(header, fill);
+    }
+    painter.restore();
+
+    const QColor headerFg = line ? (m_selected ? palette.accent : palette.textPrimary)
+                                 : (m_selected ? palette.background : palette.textPrimary);
+    QRect textRect = header.adjusted(kIconMargin, 0, -kIconMargin, 0);
+
+    const QRect iconRect(kIconMargin, (stripHeight - kIconSize) / 2, kIconSize, kIconSize);
+    drawTypeIcon(painter, iconRect, m_typeId, headerFg);
+    if (iconRect.width() > 0) {
+        textRect.setLeft(iconRect.right() + kIconMargin);
+    }
+
+    using HC = DashboardWidget::HeaderControl;
+    const DashboardWidget::HeaderControls controls = m_content->headerControls();
+    if (controls.testFlag(HC::ConnectionDot)) {
+        // Connection dot -- red/green, driven by setConnected() -- right
+        // after the type glyph, ahead of the title.
+        const QRect dotRect(textRect.left(), (stripHeight - kStatusDotSize) / 2, kStatusDotSize,
+                            kStatusDotSize);
+        painter.setPen(Qt::NoPen);
+        painter.setBrush(m_connected ? palette.success : palette.danger);
+        painter.drawEllipse(dotRect);
+        textRect.setLeft(dotRect.right() + kIconMargin);
+    }
+
+    // Right-aligned buttons -- textRect stops short of the leftmost one so a
+    // long title elides instead of running underneath.
+    for (HC button : {HC::Settings, HC::Clear, HC::Pause}) {
+        const QRect rect = headerButtonRect(button);
+        if (rect.isNull()) {
+            continue;
+        }
+        textRect.setRight(qMin(textRect.right(), rect.left() - kIconMargin));
+        if (button == HC::Settings) {
+            drawGearIcon(painter, rect, headerFg);
+        } else if (button == HC::Clear) {
+            drawClearIcon(painter, rect, headerFg);
+        } else {
+            drawPlayPauseIcon(painter, rect, m_content->isPaused(), headerFg);
+        }
+    }
+
+    painter.setPen(headerFg);
+    const QFontMetrics fm(painter.font());
+    const QString elidedTitle = fm.elidedText(m_title, Qt::ElideRight, textRect.width());
+    painter.drawText(textRect, Qt::AlignVCenter | Qt::AlignLeft, elidedTitle);
+}
+
+bool DashboardCell::handleHeaderPress(const QPoint& pos) {
+    using HC = DashboardWidget::HeaderControl;
+    if (m_editMode) {
+        return false;
+    }
+    if (headerButtonRect(HC::Pause).contains(pos)) {
+        m_content->setPaused(!m_content->isPaused());
+        update();
+        m_hoverHeader->update();
+        return true;
+    }
+    if (headerButtonRect(HC::Clear).contains(pos)) {
+        m_content->clearChartData();
+        emit chartDataCleared(m_content);
+        return true;
+    }
+    if (headerButtonRect(HC::Settings).contains(pos)) {
+        showSettingsMenu();
+        return true;
+    }
+    return false;
+}
+
 void DashboardCell::paintEvent(QPaintEvent*) {
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing);
@@ -488,49 +711,11 @@ void DashboardCell::paintEvent(QPaintEvent*) {
     // Paint only the cell silhouette. Filling rect() here erases the grid
     // backdrop in the four corner notches, which reads as a small square
     // around an otherwise rounded widget while editing the layout.
-    painter.fillPath(
-        partiallyRoundedRect(QRectF(rect()), kContainerCornerRadius, true, true, true, true),
-        palette.background);
+    const QPainterPath silhouette = currentFramePath(QRectF(rect()));
+    painter.fillPath(silhouette, palette.background);
 
     if (headerHeight() > 0) {
-        painter.save();
-        painter.setClipPath(
-            partiallyRoundedRect(rect(), kContainerCornerRadius, true, true, true, true));
-        painter.fillRect(headerRect(), m_selected ? palette.accent : palette.surfaceAlt);
-        painter.restore();
-
-        const QColor headerFg = m_selected ? palette.background : palette.textPrimary;
-        QRect textRect = headerRect().adjusted(kIconMargin, 0, -kIconMargin, 0);
-
-        const QRect iconRect(kIconMargin, (headerHeight() - kIconSize) / 2, kIconSize, kIconSize);
-        drawTypeIcon(painter, iconRect, m_typeId, headerFg);
-        if (iconRect.width() > 0) {
-            textRect.setLeft(iconRect.right() + kIconMargin);
-        }
-
-        if (m_content->wantsHeaderControls()) {
-            // Connection dot -- red/green, driven by setConnected() -- right
-            // after the type glyph, ahead of the title.
-            const QRect dotRect(textRect.left(), (headerHeight() - kStatusDotSize) / 2,
-                                kStatusDotSize, kStatusDotSize);
-            painter.setPen(Qt::NoPen);
-            painter.setBrush(m_connected ? palette.success : palette.danger);
-            painter.drawEllipse(dotRect);
-            textRect.setLeft(dotRect.right() + kIconMargin);
-
-            // Right-aligned pause/resume + clear + gear -- textRect stops
-            // short of them so a long title elides instead of running
-            // underneath.
-            textRect.setRight(pauseButtonRect().left() - kIconMargin);
-            drawPlayPauseIcon(painter, pauseButtonRect(), m_content->isPaused(), headerFg);
-            drawClearIcon(painter, clearButtonRect(), headerFg);
-            drawGearIcon(painter, gearButtonRect(), headerFg);
-        }
-
-        painter.setPen(headerFg);
-        const QFontMetrics fm(painter.font());
-        const QString elidedTitle = fm.elidedText(m_title, Qt::ElideRight, textRect.width());
-        painter.drawText(textRect, Qt::AlignVCenter | Qt::AlignLeft, elidedTitle);
+        paintHeader(painter, /*floating=*/false);
     }
 
     if (!m_editMode || !m_selected || !m_resizable) {
@@ -561,26 +746,11 @@ void DashboardCell::mousePressEvent(QMouseEvent* event) {
     // Header controls (pause/resume, clear, gear) are Run-mode-only -- in
     // Layout/edit mode the header stays a pure drag handle, unchanged from
     // before this feature.
-    if (!m_editMode && event->button() == Qt::LeftButton && m_content->wantsHeaderControls() &&
-        headerHeight() > 0 && headerRect().contains(event->position().toPoint())) {
-        const QPoint pos = event->position().toPoint();
-        if (pauseButtonRect().contains(pos)) {
-            m_content->setPaused(!m_content->isPaused());
-            update();
-            event->accept();
-            return;
-        }
-        if (clearButtonRect().contains(pos)) {
-            m_content->clearChartData();
-            emit chartDataCleared(m_content);
-            event->accept();
-            return;
-        }
-        if (gearButtonRect().contains(pos)) {
-            showSettingsMenu();
-            event->accept();
-            return;
-        }
+    if (!m_editMode && event->button() == Qt::LeftButton && headerHeight() > 0 &&
+        headerRect().contains(event->position().toPoint()) &&
+        handleHeaderPress(event->position().toPoint())) {
+        event->accept();
+        return;
     }
 
     if (!m_editMode || event->button() != Qt::LeftButton) {
@@ -667,10 +837,23 @@ void DashboardCell::mouseReleaseEvent(QMouseEvent* event) {
     QWidget::mouseReleaseEvent(event);
 }
 
+void DashboardCell::enterEvent(QEnterEvent* event) {
+    // "On hover" card header: the strip floats in over the content while the
+    // mouse is over the card (Run mode only -- edit mode always reserves it).
+    if (!m_editMode && headerHeight() == 0 && headerStripHeight() > 0) {
+        m_hoverHeader->setGeometry(headerRect());
+        m_hoverHeader->show();
+        m_hoverHeader->raise();
+        m_borderOverlay->raise();
+    }
+    QWidget::enterEvent(event);
+}
+
 void DashboardCell::leaveEvent(QEvent* event) {
     if (m_selected) {
         unsetCursor();
     }
+    m_hoverHeader->hide();
     QWidget::leaveEvent(event);
 }
 

@@ -5,7 +5,95 @@ any widget redesign started. These are the defaults every later TAREFA
 should follow instead of inventing its own convention; if a later TAREFA
 needs to deviate, update this file in the same change.
 
+## Appearance
+
+Every app-wide look choice sits under **View** (and Settings → Appearance),
+and each one is a token table rather than literals in paint code:
+
+| Choice | Owner | Tokens | Options |
+|---|---|---|---|
+| Palette | `ThemeManager` | `ThemePalette` ([THEMING.md](THEMING.md)) | built-in templates + custom palettes |
+| Frame | `ThemeManager` | `traceview/framestyle.h` (below) | Rounded, Square, Borderless, Chamfered |
+| Chart style | `AppSettings` | `widgets/chartstyle.h` ([CHART_STYLE.md](CHART_STYLE.md)) | Dashboard, Engineering, Scientific |
+| Data colors | `ThemeManager` | `traceview/appearance.h` | Per series, Palette, MATLAB, Tableau, Color-blind safe (Okabe-Ito), Monochrome |
+| Density | `ThemeManager` | `traceview/appearance.h` | Compact, Normal, Comfortable |
+| Card header | `ThemeManager` | `traceview/appearance.h` | Filled, Line, On hover |
+| Canvas | `ThemeManager` | `traceview/appearance.h` | Plain, Dots, Grid, Gradient |
+| Motion | `ThemeManager` | `traceview/appearance.h` | Animated, Reduced |
+
+- **One list drives every picker.** `core/appearancecatalog.h` describes each
+  choice (menu title, row label, choices, how to read and apply it). The
+  View menu, Settings → Appearance, the presets and the per-workspace pin
+  are all built from it. A new choice is one entry there plus its tokens.
+- **Every change arrives as `themeChanged()`.** Setters re-apply the
+  stylesheet and emit it, so anything that already follows the palette also
+  picks up a density, frame or data color change. `DashboardCell` and
+  `DashboardGrid` lay out again on it, since density changes the header
+  height and the gap between cards.
+- **Data colors** override each series' configured color by index while a
+  scheme other than "Per series" is picked. The configured colors are kept
+  (`ChartWidgetBase::m_ownColors`) and come back on "Per series".
+- **Density** sets the card header height (20/24/30px), the chart inner
+  padding (`chartOuterPadding()`, 8/12/16px) and scales the gap between
+  cards (x0.5/1/1.6).
+- **Card header "On hover"** takes no space in Run mode: the strip floats in
+  over the top of the card while the mouse is on it (`HoverHeaderStrip` in
+  `dashboardcell.cpp`). Touch-only platforms have no hover, so they get
+  "Line" instead (`ThemeManager::cardHeader()`).
+- **Motion "Reduced"** makes gauge needles and bars jump to a new value
+  instead of easing (`StyledChartWidget::easedValues()`) and makes the
+  selection outline snap. It is not part of presets or workspace pins,
+  because it is an accessibility preference that belongs to the person
+  rather than to a look.
+- **Presets** apply palette, frame, chart style, data colors, density, card
+  header and canvas together. The built-in ones are TraceView, Lab, Paper,
+  HUD, Synthwave and Accessible. **Save Current Appearance as Preset...**
+  adds user presets (QSettings `appearance/userPresets`).
+- **Per-workspace appearance**: **View → Workspace Appearance → Pin...**
+  stores the current appearance in the workspace (project file, workspace
+  `"appearance"`). A pinned workspace applies it whenever it becomes active
+  and records every appearance change made while it is. Unpinned workspaces
+  share the app-wide appearance (QSettings `appearance/global`).
+- `tools/chart_preview --snapshot <dir>` writes `preset-<id>.png`: a real
+  dashboard with every widget kind, once per built-in preset.
+
+## Frame styles
+
+The shape and outline of every large custom-painted container (dashboard
+cells, the widgets inside them, device cards) and the corner radius of the
+QSS-driven controls come from the app-wide **frame style**, picked under
+**View → Frame** or Settings → Appearance and owned by `ThemeManager` next to
+the palette. The palette decides colors and the frame decides shapes. The
+tokens live in
+[include/traceview/framestyle.h](../include/traceview/framestyle.h):
+
+| | Rounded (default) | Square | Borderless | Chamfered |
+|---|---|---|---|---|
+| Corner | Round, 6px | Square | Round, 6px | Cut at 45°, 8px |
+| Idle outline | 2px `palette.border` | 1px | none | 2px |
+| QSS controls | 4px radius (as written) | square | 4px radius | square |
+| Selection outline | 2px accent | 2px accent | 2px accent | 2px accent |
+
+- Paint every container through `currentFramePath()`/`frameShapePath()`
+  (or `DashboardWidget::roundedPath()`/`contentFillPath()`, which use it),
+  never a hard-coded radius, so a new frame style reaches it for free.
+- Check `FrameStyle::idleOutline` before stroking a decorative border.
+  Borderless means that no container draws one. The selection outline is
+  always drawn (`kFrameSelectionWidth`).
+- QSS radii reach the controls through `scaleStyleSheetRadii()`, which
+  multiplies every `border-radius` in the built stylesheet by the frame's
+  `controlRadiusScale`. Keep writing radii in `stylesheet.cpp` as plain
+  `border-radius: Npx`.
+- Changing the frame rebuilds the stylesheet and emits `themeChanged()`, so
+  anything that already repaints on a palette change also reshapes.
+  `DashboardCell` also rebuilds its content mask then.
+- `tools/chart_preview --snapshot <dir>` writes `frames-<theme>.png` with
+  every frame style on real cells (idle, selected) and controls.
+
 ## Corner radius
+
+The values below are the **Rounded** frame style. The rules about lining up
+fills, masks and outlines hold for every frame style.
 
 - **4px** for QSS-driven controls (buttons, inputs, combo boxes, checkboxes)
   — already the de facto value across `stylesheet.cpp`, kept as-is.
@@ -40,7 +128,7 @@ needs to deviate, update this file in the same change.
   would let the content cover its straight runs while a few high-contrast
   pixels survive around the rounded corners. Do not move the outline back
   under the content.
-- `partiallyRoundedRect()` uses `Qt::WindingFill` when it welds square
+- `partiallyRoundedRect()` (now in `traceview/framestyle.h`) uses `Qt::WindingFill` when it welds square
   corner patches onto the rounded base. The default odd/even rule subtracts
   their overlap and leaves a visible radius-sized square hole under headers.
 

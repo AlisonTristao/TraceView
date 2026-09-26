@@ -63,6 +63,13 @@ public:
     bool updateAutoCheckEnabled() const;
     qint64 updateLastCheckEpochMs() const;
 
+    // The app-wide chart style (View > Chart Style): "dashboard",
+    // "engineering" or "scientific", see ChartStyleId in
+    // dashboard/widgets/chartstyle.h. Every chart whose own gear menu is left
+    // at "App default" draws in it. Kept as the plain id string so this
+    // library stays independent of the dashboard one.
+    QString chartStyleId() const;
+
     void setRenderProfile(RenderProfile profile);
     void setCustomRenderFps(int fps);
     void setSubscribeRateOverrideEnabled(bool enabled);
@@ -84,12 +91,17 @@ public:
     void setUpdateAutoCheckEnabled(bool enabled);
     void setUpdateLastCheckEpochMs(qint64 epochMs);
 
+    void setChartStyleId(const QString& id);
+
 signals:
     void dashboardPreferencesChanged();
     void generalPreferencesChanged();
     void terminalPreferencesChanged();
     void connectionPreferencesChanged();
     void updatePreferencesChanged();
+    // Its own signal rather than dashboardPreferencesChanged(): charts only
+    // need a repaint, not the resubscribe that one triggers.
+    void chartStyleChanged();
 
 private:
     AppSettings();

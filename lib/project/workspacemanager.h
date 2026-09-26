@@ -15,6 +15,10 @@ struct Workspace {
     QString name;
     QString icon;
     QJsonObject dashboard;
+    // Appearance pinned to this workspace (core/appearancecatalog.h snapshot
+    // as JSON), applied whenever it becomes active. Empty = follows the
+    // app-wide appearance.
+    QJsonObject appearance;
 };
 
 // Holds every workspace ("N dashboard layouts per project") and which one is
@@ -46,6 +50,10 @@ public:
     QString iconFor(const QString& id) const;
     // No-op if `id` is unknown. Empty `icon` goes back to the default.
     void setIconFor(const QString& id, const QString& icon);
+    // Empty QJsonObject if `id` is unknown or has no pinned appearance.
+    QJsonObject appearanceFor(const QString& id) const;
+    // No-op if `id` is unknown. Empty `appearance` unpins it.
+    void setAppearanceFor(const QString& id, const QJsonObject& appearance);
     // Renames `id`, disambiguated against the *other* workspaces the same
     // way createWorkspace() does. Returns the name actually stored, or an
     // empty QString (and changes nothing) if `id` is unknown or `name` is

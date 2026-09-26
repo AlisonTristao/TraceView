@@ -250,10 +250,14 @@ lives in its own module under
   the frame is raw bytes), a fixed min/max range, unit, and decimals.
   No history/axis settings and no threshold-triggered actions —
   deliberately left out, it only ever reflects the current value.
+  How every chart looks (Dashboard, Engineering or Scientific style, axis
+  titles and values, overlays) is picked from its header gear menu and
+  saved under its config's `"view"` object. The styles, the shared paint
+  building blocks and the checklist for a new chart kind are in
+  [CHART_STYLE.md](CHART_STYLE.md).
 - **Serial Monitor** — `widgets/serialmonitorwidget.h`/`.cpp`
-  (`serial_monitor`): a header row (a tab strip
-  `widgets/terminaltabbar.h`/`.cpp` on the left, a right-aligned **Clear**
-  button that wipes the visible terminal's scrollback) over one
+  (`serial_monitor`): a tab strip (`widgets/terminaltabbar.h`/`.cpp`) over
+  one
   `widgets/serialterminalwidget.h`/`.cpp` per tab — a
   miniterm/PlatformIO-Serial-Monitor-style terminal with no input line, one
   tab per device. The tabs are plain butted rectangles
@@ -268,16 +272,18 @@ lives in its own module under
   the widget's config — `{ "tabs": [ { "deviceId": … }, … ] }`, edited in
   `widgets/serialmonitorconfigeditor.h`/`.cpp` (add/remove/reorder rows).
   A pre-tabs config (a bare `deviceId`, or none) reads as a single tab, and
-  a lone tab hides the strip (leaving just the Clear button).
+  a lone tab hides the strip. The clear button that wipes the visible
+  terminal's scrollback is in the cell header, in the corner a chart's gear
+  sits in (`HeaderControl::Clear`, see "Header controls" below).
   `core/serialwidgetbridge.h` resolves each tab's device and wires the
   active terminal to its `Backend::sendTerminalIn()` and every bound
   device's `Backend::terminalDataReceived()` back to the matching tab via
   `feedDevice()`, re-deriving all of it on `tabsChanged()`.
 - **Robot Log** (`robot_log`) — `widgets/robotlogwidget.h`/`.cpp`. A
   read-only "serial monitor" for one or more robots' LOG channels: the same
-  header row (a tab strip `widgets/terminaltabbar.h`/`.cpp`, reused as-is
-  from Serial Monitor, on the left, a right-aligned **Clear** button that
-  wipes the visible tab's log) over one `QTableView`/`widgets/robotlogmodel.h`/
+  tab strip (`widgets/terminaltabbar.h`/`.cpp`, reused as-is from Serial
+  Monitor) and the same cell-header clear button (it wipes the visible tab's
+  log) over one `QTableView`/`widgets/robotlogmodel.h`/
   `.cpp` pair per tab — no input line, since LOG has no reply half to type
   into, only firmware output. Each table's columns match `logs/logviewer.h`'s
   offline `.blog` view (Timestamp/Severity/Source ID/Boot ID/Sequence/
@@ -289,8 +295,8 @@ lives in its own module under
   widget's config — `{ "tabs": [ { "deviceId": … }, … ] }`, edited in
   `widgets/robotlogconfigeditor.h`/`.cpp` (add/remove/reorder rows, same
   shape as Serial Monitor's own config editor). A pre-tabs config (a bare
-  `deviceId`, or none) reads as a single tab, and a lone tab hides the strip
-  (leaving just the Clear button). `core/serialwidgetbridge.h` resolves each
+  `deviceId`, or none) reads as a single tab, and a lone tab hides the strip.
+  `core/serialwidgetbridge.h` resolves each
   tab's device and wires every bound device's `Backend::logReceived()` to
   the matching tab via `feedDevice()`, re-deriving all of it on
   `tabsChanged()` (the same refresh hook Serial Monitor's inbound wiring
@@ -374,6 +380,24 @@ lives in its own module under
 `DashboardGrid`, `DashboardItem`, and `PropertiesPanel` treat every kind
 identically; only the widget's own implementation differs.
 
+## Header controls
+
+In Run mode the cell header can carry a connection dot before the title and
+up to three buttons at its right edge. A widget lists the ones it wants in
+`DashboardWidget::headerControls()`:
+
+| Control | Does | Offered by |
+|---|---|---|
+| `ConnectionDot` | green/red for the widget's device (`DashboardCell::setConnected()`) | charts, gauge |
+| `Settings` | the gear menu (`viewOptions()`) | charts, gauge |
+| `Clear` | `clearChartData()` | charts, gauge, Serial Monitor, Robot Log |
+| `Pause` | `setPaused()` | charts, gauge |
+
+Buttons are packed from the right edge in the order Settings, Clear, Pause,
+so a widget offering only Clear gets it where the other kinds have their
+gear. A widget with a clear action should offer it here rather than add a
+button of its own.
+
 ## Adding a new widget type
 
 1. Subclass `DashboardWidget`
@@ -394,6 +418,14 @@ identically; only the widget's own implementation differs.
 That's it — the **Type** dropdown in the properties panel enumerates
 `WidgetRegistry::availableTypes()`, so a new type shows up automatically.
 No grid or `MainWindow` code needs to change.
+
+A new **chart** kind should also follow [CHART_STYLE.md](CHART_STYLE.md)
+("Adding a chart kind"), so it gets the three chart styles and the header
+gear menu for free. Any widget can have a gear menu: return its entries from
+`DashboardWidget::viewOptions()` and apply them in `viewConfigWith()`/
+`setViewConfig()`. `DashboardGrid` stores the result under the item's
+`config["view"]`, and keeps it when the properties panel edits the rest of
+the config.
 
 ## Per-type config editor
 

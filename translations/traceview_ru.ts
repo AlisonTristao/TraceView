@@ -2,44 +2,193 @@
 <!DOCTYPE TS>
 <TS version="2.1" language="ru">
 <context>
+    <name>Appearance</name>
+    <message>
+        <location filename="../lib/theme/appearance.cpp" line="+124"/>
+        <source>Palette colors</source>
+        <translation>Цвета палитры</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>MATLAB</source>
+        <translation>MATLAB</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Tableau</source>
+        <translation>Tableau</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Color-blind safe</source>
+        <translation>Для дальтоников</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Monochrome</source>
+        <translation>Монохромные</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Per series (as configured)</source>
+        <translation>По рядам (как настроено)</translation>
+    </message>
+    <message>
+        <location line="+54"/>
+        <source>Compact</source>
+        <translation>Компактная</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Comfortable</source>
+        <translation>Просторная</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Normal</source>
+        <translation>Обычная</translation>
+    </message>
+    <message>
+        <location line="+35"/>
+        <source>Line</source>
+        <translation>Линия</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>On hover</source>
+        <translation>При наведении</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Filled</source>
+        <translation>Залитый</translation>
+    </message>
+    <message>
+        <location line="+20"/>
+        <source>Dots</source>
+        <translation>Точки</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Grid</source>
+        <translation>Сетка</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Gradient</source>
+        <translation>Градиент</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Plain</source>
+        <translation>Простой</translation>
+    </message>
+    <message>
+        <location line="+18"/>
+        <source>Reduced</source>
+        <translation>Уменьшено</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Animated</source>
+        <translation>С анимацией</translation>
+    </message>
+    <message>
+        <location filename="../lib/core/appearancecatalog.cpp" line="+232"/>
+        <source>TraceView</source>
+        <translation>TraceView</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Lab</source>
+        <translation>Лаборатория</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Paper</source>
+        <translation>Статья</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>HUD</source>
+        <translation>HUD</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Synthwave</source>
+        <translation>Synthwave</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Accessible</source>
+        <translation>Доступный</translation>
+    </message>
+</context>
+<context>
+    <name>ChartStyle</name>
+    <message>
+        <location filename="../lib/dashboard/widgets/chartstyle.cpp" line="+125"/>
+        <source>Engineering</source>
+        <translation>Инженерный</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Scientific</source>
+        <translation>Научный</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Dashboard</source>
+        <translation>Панель</translation>
+    </message>
+</context>
+<context>
     <name>ChartWidgets</name>
     <message>
-        <location filename="../lib/dashboard/widgets/chartwidgets.cpp" line="+254"/>
-        <location line="+298"/>
+        <location filename="../lib/dashboard/widgets/chartwidgets.cpp" line="+38"/>
         <source>Field %1</source>
         <translation>Поле %1</translation>
     </message>
     <message>
-        <location line="-286"/>
-        <location line="+338"/>
-        <location line="+742"/>
+        <location line="+9"/>
+        <location line="+494"/>
+        <location line="+231"/>
         <source>--</source>
         <translation>--</translation>
     </message>
     <message>
-        <location line="-984"/>
         <source>t</source>
-        <translation>t</translation>
+        <translation type="vanished">t</translation>
+    </message>
+    <message>
+        <source>k</source>
+        <translation type="vanished">k</translation>
     </message>
     <message>
         <location line="+1"/>
-        <source>k</source>
-        <translation>k</translation>
-    </message>
-    <message>
-        <location line="+242"/>
         <source>%1%2</source>
         <translation>%1%2</translation>
     </message>
     <message>
         <location line="+6"/>
+        <location line="+305"/>
         <source>%1  %2</source>
         <translation>%1  %2</translation>
     </message>
     <message>
-        <location line="+621"/>
+        <location line="-659"/>
         <source>%1: %2</source>
         <translation>%1: %2</translation>
+    </message>
+    <message>
+        <location filename="../lib/dashboard/widgets/chartpainting.cpp" line="+617"/>
+        <source>Time (s)</source>
+        <translation>Время (с)</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Samples</source>
+        <translation>Отсчёты</translation>
     </message>
 </context>
 <context>
@@ -249,9 +398,32 @@
     </message>
 </context>
 <context>
+    <name>FrameStyle</name>
+    <message>
+        <location filename="../lib/theme/framestyle.cpp" line="+103"/>
+        <source>Square</source>
+        <translation>Прямая</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Borderless</source>
+        <translation>Без рамки</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Chamfered</source>
+        <translation>Со срезанными углами</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Rounded</source>
+        <translation>Скруглённая</translation>
+    </message>
+</context>
+<context>
     <name>MainWindow</name>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="+127"/>
+        <location filename="../lib/core/mainwindow.cpp" line="+131"/>
         <source>TraceView Project (*.tvproj)</source>
         <translation>Проект TraceView (*.tvproj)</translation>
     </message>
@@ -632,7 +804,7 @@
 <context>
     <name>WorkspaceManager</name>
     <message>
-        <location filename="../lib/project/workspacemanager.cpp" line="+180"/>
+        <location filename="../lib/project/workspacemanager.cpp" line="+203"/>
         <source>Default</source>
         <translation>По умолчанию</translation>
     </message>
@@ -1422,22 +1594,57 @@ Allowed: %1</source>
 <context>
     <name>traceview::DashboardCell</name>
     <message>
-        <location filename="../lib/dashboard/dashboardcell.cpp" line="+342"/>
+        <location filename="../lib/dashboard/widgets/chartstyle.cpp" line="+381"/>
+        <source>Style:</source>
+        <translation>Стиль:</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>App default</source>
+        <translation>Как в приложении</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Show X axis title</source>
+        <translation>Показывать заголовок оси X</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Show X axis values</source>
+        <translation>Показывать значения оси X</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Show Y axis title</source>
+        <translation>Показывать заголовок оси Y</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Show Y axis values</source>
+        <translation>Показывать значения оси Y</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Show scale values</source>
+        <translation>Показывать значения шкалы</translation>
+    </message>
+    <message>
+        <location line="+2"/>
         <source>Show last value</source>
         <translation>Показывать последнее значение</translation>
     </message>
     <message>
-        <location line="+6"/>
+        <location line="+2"/>
         <source>Show grid point values</source>
         <translation>Показывать значения точек сетки</translation>
     </message>
     <message>
-        <location line="+6"/>
+        <location line="+2"/>
         <source>Show hover crosshair</source>
         <translation>Показывать перекрестие при наведении</translation>
     </message>
     <message>
-        <location line="+18"/>
+        <location line="+2"/>
         <source>Interpolation:</source>
         <translation>Интерполяция:</translation>
     </message>
@@ -1447,19 +1654,109 @@ Allowed: %1</source>
         <translation>Линейная</translation>
     </message>
     <message>
-        <location line="+1"/>
+        <location line="+2"/>
         <source>ZOH (step)</source>
         <translation>ZOH (ступенчатая)</translation>
     </message>
     <message>
-        <location line="+1"/>
+        <location line="+2"/>
         <source>Stem</source>
         <translation>Стебель</translation>
     </message>
     <message>
-        <location line="+1"/>
+        <location line="+2"/>
         <source>None (points)</source>
         <translation>Нет (точки)</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Y axis ticks:</source>
+        <translation>Деления оси Y:</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Auto</source>
+        <translation>Авто</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Legend:</source>
+        <translation>Легенда:</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Outside the plot</source>
+        <translation>Вне графика</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Top left</source>
+        <translation>Сверху слева</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Top right</source>
+        <translation>Сверху справа</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Bottom left</source>
+        <translation>Снизу слева</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Bottom right</source>
+        <translation>Снизу справа</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Hidden</source>
+        <translation>Скрыта</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Legend background:</source>
+        <translation>Фон легенды:</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>%1%</source>
+        <translation>%1%</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Line width:</source>
+        <translation>Толщина линии:</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>%1 px</source>
+        <translation>%1 пикс.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Shape:</source>
+        <translation>Форма:</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Ring (270°)</source>
+        <translation>Кольцо (270°)</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Half circle</source>
+        <translation>Полукруг</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Bar</source>
+        <translation>Полоса</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Number</source>
+        <translation>Число</translation>
     </message>
 </context>
 <context>
@@ -1551,7 +1848,7 @@ Allowed: %1</source>
 <context>
     <name>traceview::DashboardGrid</name>
     <message>
-        <location filename="../lib/dashboard/dashboardgrid.cpp" line="+525"/>
+        <location filename="../lib/dashboard/dashboardgrid.cpp" line="+554"/>
         <source>Bring to Front</source>
         <translation>На передний план</translation>
     </message>
@@ -1729,12 +2026,12 @@ Allowed: %1</source>
         <translation>Отображается как название этого устройства -- на его карточке в панели «Устройства» и везде, где оно выбирается из списка.</translation>
     </message>
     <message>
-        <location line="+13"/>
+        <location line="+12"/>
         <source>Connection</source>
         <translation>Подключение</translation>
     </message>
     <message>
-        <location line="+108"/>
+        <location line="+81"/>
         <source>None</source>
         <translation>Нет</translation>
     </message>
@@ -1764,17 +2061,15 @@ Allowed: %1</source>
         <translation>ID этого устройства:</translation>
     </message>
     <message>
-        <location line="-102"/>
         <source>Advanced</source>
-        <translation>Дополнительно</translation>
+        <translation type="vanished">Дополнительно</translation>
     </message>
     <message>
-        <location line="+5"/>
         <source>Every link as a table: the order they are tried in, baud rate, TCP port, and targets typed by hand.</source>
-        <translation>Все подключения в виде таблицы: порядок попыток, скорость передачи, TCP-порт и адреса, введённые вручную.</translation>
+        <translation type="vanished">Все подключения в виде таблицы: порядок попыток, скорость передачи, TCP-порт и адреса, введённые вручную.</translation>
     </message>
     <message>
-        <location line="+43"/>
+        <location line="-54"/>
         <source>Card title:</source>
         <translation>Заголовок карточки:</translation>
     </message>
@@ -1818,12 +2113,12 @@ Allowed: %1</source>
     </message>
     <message>
         <location line="+3"/>
-        <location line="+282"/>
+        <location line="+281"/>
         <source>e.g. robot1.local</source>
         <translation>напр. robot1.local</translation>
     </message>
     <message>
-        <location line="-280"/>
+        <location line="-279"/>
         <source>Hostname or IP the OTA tab uses for this device&apos;s firmware upload. Left blank, the device is listed there but nothing can be polled or uploaded.</source>
         <translation>Имя хоста или IP, который вкладка OTA использует для загрузки прошивки этого устройства. Если пусто, устройство там перечислено, но опрашивать и загружать нечего.</translation>
     </message>
@@ -1849,25 +2144,25 @@ Allowed: %1</source>
     </message>
     <message>
         <location line="+24"/>
-        <location line="+243"/>
+        <location line="+242"/>
         <source>Connected</source>
         <translation>Подключено</translation>
     </message>
     <message>
-        <location line="-243"/>
-        <location line="+243"/>
+        <location line="-242"/>
+        <location line="+242"/>
         <source>Disconnected</source>
         <translation>Отключено</translation>
     </message>
     <message>
-        <location line="-240"/>
+        <location line="-239"/>
         <location line="+3"/>
-        <location line="+156"/>
+        <location line="+155"/>
         <source>(not connected yet)</source>
         <translation>(ещё не подключено)</translation>
     </message>
     <message>
-        <location line="-146"/>
+        <location line="-145"/>
         <source>Status:</source>
         <translation>Состояние:</translation>
     </message>
@@ -1902,7 +2197,7 @@ Allowed: %1</source>
         <translation>Применить настройки выше и (пере)подключиться сейчас, не закрывая это окно.</translation>
     </message>
     <message>
-        <location line="+115"/>
+        <location line="+114"/>
         <source>%1 (last connection)</source>
         <translation>%1 (последнее подключение)</translation>
     </message>
@@ -1928,7 +2223,7 @@ Allowed: %1</source>
         <translation>устройство сообщает: %1</translation>
     </message>
     <message>
-        <location line="-242"/>
+        <location line="-241"/>
         <source>Reported by device</source>
         <translation>Сообщено устройством</translation>
     </message>
@@ -2619,12 +2914,11 @@ Drops: %2</source>
         <translation>Сбросить положение панелей (&amp;R)</translation>
     </message>
     <message>
-        <location line="+7"/>
         <source>&amp;Theme</source>
-        <translation>Тема (&amp;T)</translation>
+        <translation type="vanished">Тема (&amp;T)</translation>
     </message>
     <message>
-        <location line="+17"/>
+        <location line="+10"/>
         <source>&amp;Font</source>
         <translation>Шрифт (&amp;F)</translation>
     </message>
@@ -2650,12 +2944,12 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+0"/>
-        <location line="+3431"/>
+        <location line="+3618"/>
         <source>Later</source>
         <translation>Позже</translation>
     </message>
     <message>
-        <location line="-3424"/>
+        <location line="-3611"/>
         <source>&amp;Access</source>
         <translation>Доступ (&amp;A)</translation>
     </message>
@@ -2782,18 +3076,18 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+18"/>
-        <location line="+2796"/>
+        <location line="+2983"/>
         <source>Undo</source>
         <translation>Отменить</translation>
     </message>
     <message>
-        <location line="-2794"/>
-        <location line="+2794"/>
+        <location line="-2981"/>
+        <location line="+2981"/>
         <source>Redo</source>
         <translation>Повторить</translation>
     </message>
     <message>
-        <location line="-2751"/>
+        <location line="-2938"/>
         <source>Add Device</source>
         <translation>Добавить устройство</translation>
     </message>
@@ -2829,12 +3123,12 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+29"/>
-        <location line="+2696"/>
+        <location line="+2883"/>
         <source>Fullscreen dashboard (F11)</source>
         <translation>Панель в полноэкранном режиме (F11)</translation>
     </message>
     <message>
-        <location line="-2516"/>
+        <location line="-2703"/>
         <source>Rename Workspace</source>
         <translation>Переименовать рабочее пространство</translation>
     </message>
@@ -2844,7 +3138,78 @@ Drops: %2</source>
         <translation>Рабочее пространство «%1» переименовано в «%2».</translation>
     </message>
     <message>
-        <location line="+1233"/>
+        <location line="+32"/>
+        <source>Appearance &amp;Presets</source>
+        <translation>&amp;Наборы оформления</translation>
+    </message>
+    <message>
+        <location line="+22"/>
+        <source>Save Current Appearance as Preset...</source>
+        <translation>Сохранить текущее оформление как набор...</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Delete Preset</source>
+        <translation>Удалить набор</translation>
+    </message>
+    <message>
+        <location line="+35"/>
+        <source>New Palette...</source>
+        <translation>Новая палитра...</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Edit Palette...</source>
+        <translation>Изменить палитру...</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <location line="+62"/>
+        <source>Delete Palette</source>
+        <translation>Удалить палитру</translation>
+    </message>
+    <message>
+        <location line="-56"/>
+        <source>&amp;Workspace Appearance</source>
+        <translation>Оформление &amp;рабочей области</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Pin Current Appearance to This Workspace</source>
+        <translation>Закрепить текущее оформление за этой рабочей областью</translation>
+    </message>
+    <message>
+        <location line="+21"/>
+        <source>Save Appearance Preset</source>
+        <translation>Сохранить набор оформления</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Preset name:</source>
+        <translation>Название набора:</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Saved appearance preset &quot;%1&quot;.</source>
+        <translation>Набор оформления «%1» сохранён.</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>%1 (custom)</source>
+        <translation>%1 (своя)</translation>
+    </message>
+    <message>
+        <location line="+20"/>
+        <source>Delete the palette &quot;%1&quot;?</source>
+        <translation>Удалить палитру «%1»?</translation>
+    </message>
+    <message>
+        <location line="+45"/>
+        <source>This workspace now keeps its own appearance.</source>
+        <translation>Теперь у этой рабочей области своё оформление.</translation>
+    </message>
+    <message>
+        <location line="+1213"/>
         <source>%1: found at %2</source>
         <translation>%1: найден на %2</translation>
     </message>
@@ -2854,7 +3219,7 @@ Drops: %2</source>
         <translation>%1: пробую %2</translation>
     </message>
     <message>
-        <location line="+419"/>
+        <location line="+420"/>
         <location line="+8"/>
         <location line="+5"/>
         <location line="+8"/>
@@ -2903,7 +3268,7 @@ Drops: %2</source>
         <translation>&quot;%1&quot; сохранён в галерее.</translation>
     </message>
     <message>
-        <location line="+532"/>
+        <location line="+535"/>
         <source>Update available: v%1</source>
         <translation>Доступно обновление: v%1</translation>
     </message>
@@ -2976,24 +3341,24 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>Закрыть приложение</translation>
     </message>
     <message>
-        <location line="-2743"/>
-        <location line="+2544"/>
+        <location line="-2930"/>
+        <location line="+2731"/>
         <source>Devices</source>
         <translation>Устройства</translation>
     </message>
     <message>
-        <location line="-2469"/>
+        <location line="-2656"/>
         <source>Subscriptions</source>
         <translation>Подписки</translation>
     </message>
     <message>
-        <location line="+83"/>
+        <location line="+266"/>
         <source>New Workspace</source>
         <translation>Новое рабочее пространство</translation>
     </message>
     <message>
-        <location line="-53"/>
-        <location line="+53"/>
+        <location line="-236"/>
+        <location line="+236"/>
         <source>Name:</source>
         <translation>Имя:</translation>
     </message>
@@ -3024,23 +3389,23 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     </message>
     <message>
         <location line="+71"/>
-        <location line="+2252"/>
+        <location line="+2256"/>
         <source>Add widget</source>
         <translation>Добавить виджет</translation>
     </message>
     <message>
-        <location line="-2249"/>
+        <location line="-2253"/>
         <source>Remove selected widget (%1)</source>
         <translation>Удалить выбранный виджет (%1)</translation>
     </message>
     <message>
         <location line="+3"/>
-        <location line="+2259"/>
+        <location line="+2263"/>
         <source>Add device</source>
         <translation>Добавить устройство</translation>
     </message>
     <message>
-        <location line="-2256"/>
+        <location line="-2260"/>
         <source>Remove selected device (%1)</source>
         <translation>Удалить выбранное устройство (%1)</translation>
     </message>
@@ -3151,12 +3516,52 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>(без имени)</translation>
     </message>
     <message>
-        <location line="-1164"/>
+        <location filename="../lib/core/appearancecatalog.cpp" line="-149"/>
+        <source>&amp;Palette</source>
+        <translation>&amp;Палитра</translation>
+    </message>
+    <message>
+        <location line="+19"/>
+        <source>Fra&amp;me</source>
+        <translation>&amp;Рамка</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>&amp;Chart Style</source>
+        <translation>&amp;Стиль графиков</translation>
+    </message>
+    <message>
+        <location line="+13"/>
+        <source>&amp;Data Colors</source>
+        <translation>&amp;Цвета данных</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>&amp;Density</source>
+        <translation>&amp;Плотность</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>Card &amp;Header</source>
+        <translation>&amp;Заголовок карточки</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>Can&amp;vas</source>
+        <translation>&amp;Фон холста</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>M&amp;otion</source>
+        <translation>&amp;Движение</translation>
+    </message>
+    <message>
+        <location filename="../lib/core/mainwindow.cpp" line="-1347"/>
         <source>Dashboard</source>
         <translation>Dashboard</translation>
     </message>
     <message>
-        <location line="+1503"/>
+        <location line="+1686"/>
         <source>%1: this BLE address now answers as a different robot (expected %2, got %3)</source>
         <translation>%1: этот BLE-адрес теперь отвечает как другой робот (ожидался %2, получен %3)</translation>
     </message>
@@ -3176,7 +3581,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>Отменить текущую панель и начать новый пустой проект?</translation>
     </message>
     <message>
-        <location line="+14"/>
+        <location line="+15"/>
         <source>Started a new project.</source>
         <translation>Начат новый проект.</translation>
     </message>
@@ -3219,7 +3624,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     </message>
     <message>
         <location line="+20"/>
-        <location line="+208"/>
+        <location line="+211"/>
         <source>Settings</source>
         <translation>Настройки</translation>
     </message>
@@ -3640,6 +4045,157 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     </message>
 </context>
 <context>
+    <name>traceview::PaletteEditorDialog</name>
+    <message>
+        <location filename="../lib/core/paletteeditordialog.cpp" line="+32"/>
+        <source>Surfaces</source>
+        <translation>Поверхности</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Background</source>
+        <translation>Фон</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Cards and panels</source>
+        <translation>Карточки и панели</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Headers and inputs</source>
+        <translation>Заголовки и поля</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Borders</source>
+        <translation>Рамки</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Strong borders</source>
+        <translation>Выделенные рамки</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Text</source>
+        <translation>Текст</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Primary text</source>
+        <translation>Основной текст</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Secondary text</source>
+        <translation>Второстепенный текст</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Disabled text</source>
+        <translation>Неактивный текст</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <location line="+1"/>
+        <source>Accent</source>
+        <translation>Акцент</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Accent (hover)</source>
+        <translation>Акцент (наведение)</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Accent (pressed)</source>
+        <translation>Акцент (нажатие)</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Status</source>
+        <translation>Состояния</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Success</source>
+        <translation>Успех</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Warning</source>
+        <translation>Предупреждение</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Danger</source>
+        <translation>Опасность</translation>
+    </message>
+    <message>
+        <location line="+48"/>
+        <source>New Palette</source>
+        <translation>Новая палитра</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Edit Palette</source>
+        <translation>Изменить палитру</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>Name</source>
+        <translation>Название</translation>
+    </message>
+    <message>
+        <location line="+23"/>
+        <source>Data series</source>
+        <translation>Ряды данных</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Series %1</source>
+        <translation>Ряд %1</translation>
+    </message>
+    <message>
+        <location line="+51"/>
+        <source>Choose Color</source>
+        <translation>Выбрать цвет</translation>
+    </message>
+    <message>
+        <location line="+27"/>
+        <source>Primary text on background</source>
+        <translation>Основной текст на фоне</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Primary text on cards</source>
+        <translation>Основной текст на карточках</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Secondary text on cards</source>
+        <translation>Второстепенный текст на карточках</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>%1: %2:1 (at least 4.5:1 recommended)</source>
+        <translation>%1: %2:1 (рекомендуется не менее 4,5:1)</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Text contrast is good.</source>
+        <translation>Контраст текста хороший.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Low contrast, text may be hard to read:
+%1</source>
+        <translation>Низкий контраст, текст может плохо читаться:
+%1</translation>
+    </message>
+</context>
+<context>
     <name>traceview::PropertiesPanel</name>
     <message>
         <location filename="../lib/core/propertiespanel.cpp" line="+21"/>
@@ -3976,17 +4532,15 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
 <context>
     <name>traceview::RobotLogWidget</name>
     <message>
-        <location filename="../lib/dashboard/widgets/robotlogwidget.cpp" line="+31"/>
         <source>Clear</source>
-        <translation>Очистить</translation>
+        <translation type="vanished">Очистить</translation>
     </message>
     <message>
-        <location line="+1"/>
         <source>Clear this log</source>
-        <translation>Очистить этот журнал</translation>
+        <translation type="vanished">Очистить этот журнал</translation>
     </message>
     <message>
-        <location line="+161"/>
+        <location filename="../lib/dashboard/widgets/robotlogwidget.cpp" line="+181"/>
         <source>(no device)</source>
         <translation>(нет устройства)</translation>
     </message>
@@ -4045,17 +4599,15 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
 <context>
     <name>traceview::SerialMonitorWidget</name>
     <message>
-        <location filename="../lib/dashboard/widgets/serialmonitorwidget.cpp" line="+27"/>
         <source>Clear</source>
-        <translation>Очистить</translation>
+        <translation type="vanished">Очистить</translation>
     </message>
     <message>
-        <location line="+1"/>
         <source>Clear this terminal</source>
-        <translation>Очистить этот терминал</translation>
+        <translation type="vanished">Очистить этот терминал</translation>
     </message>
     <message>
-        <location line="+150"/>
+        <location filename="../lib/dashboard/widgets/serialmonitorwidget.cpp" line="+167"/>
         <source>(no device)</source>
         <translation>(нет устройства)</translation>
     </message>
@@ -4068,7 +4620,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
 <context>
     <name>traceview::SettingsPage</name>
     <message>
-        <location filename="../lib/core/settingspage.cpp" line="+199"/>
+        <location filename="../lib/core/settingspage.cpp" line="+203"/>
         <source>Settings</source>
         <translation>Настройки</translation>
     </message>
@@ -4086,37 +4638,37 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     </message>
     <message>
         <location line="-68"/>
-        <location line="+115"/>
+        <location line="+156"/>
         <source>Dashboard</source>
         <translation>Dashboard</translation>
     </message>
     <message>
-        <location line="-114"/>
-        <location line="+166"/>
+        <location line="-155"/>
+        <location line="+207"/>
         <source>Terminal</source>
         <translation>Терминал</translation>
     </message>
     <message>
-        <location line="-166"/>
-        <location line="+193"/>
+        <location line="-207"/>
+        <location line="+234"/>
         <source>Connections</source>
         <translation>Подключения</translation>
     </message>
     <message>
-        <location line="-193"/>
-        <location line="+252"/>
+        <location line="-234"/>
+        <location line="+293"/>
         <source>Diagnostics</source>
         <translation>Диагностика</translation>
     </message>
     <message>
-        <location line="-251"/>
-        <location line="+303"/>
+        <location line="-292"/>
+        <location line="+344"/>
         <location line="+5"/>
         <source>Updates</source>
         <translation>Обновления</translation>
     </message>
     <message>
-        <location line="-266"/>
+        <location line="-307"/>
         <source>Project and startup preferences shared by the application.</source>
         <translation>Настройки проекта и запуска, общие для приложения.</translation>
     </message>
@@ -4151,22 +4703,68 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>Подключать настроенные устройства при открытии проекта</translation>
     </message>
     <message>
-        <location line="+9"/>
         <source>Theme and typeface changes apply immediately. Changing the language is saved for the next start.</source>
-        <translation>Смена темы и шрифта применяется сразу. Смена языка сохраняется до следующего запуска.</translation>
+        <translation type="vanished">Смена темы и шрифта применяется сразу. Смена языка сохраняется до следующего запуска.</translation>
     </message>
     <message>
-        <location line="+2"/>
+        <location line="+11"/>
         <source>Application appearance</source>
         <translation>Внешний вид приложения</translation>
     </message>
     <message>
-        <location line="+9"/>
         <source>Theme</source>
-        <translation>Тема</translation>
+        <translation type="vanished">Тема</translation>
+    </message>
+    <message>
+        <source>Palette, chart style and typeface changes apply immediately. Changing the language is saved for the next start.</source>
+        <translation type="vanished">Палитра, стиль графиков и шрифт меняются сразу. Смена языка сохраняется до следующего запуска.</translation>
+    </message>
+    <message>
+        <source>Palette, frame, chart style and typeface changes apply immediately. Changing the language is saved for the next start.</source>
+        <translation type="vanished">Палитра, рамка, стиль графиков и шрифт меняются сразу. Смена языка сохраняется до следующего запуска.</translation>
+    </message>
+    <message>
+        <location filename="../lib/core/appearancecatalog.cpp" line="-77"/>
+        <source>Palette</source>
+        <translation>Палитра</translation>
+    </message>
+    <message>
+        <location line="+19"/>
+        <source>Frame</source>
+        <translation>Рамка</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>Chart style</source>
+        <translation>Стиль графиков</translation>
     </message>
     <message>
         <location line="+13"/>
+        <source>Data colors</source>
+        <translation>Цвета данных</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>Density</source>
+        <translation>Плотность</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>Card header</source>
+        <translation>Заголовок карточки</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>Canvas</source>
+        <translation>Фон холста</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>Motion</source>
+        <translation>Движение</translation>
+    </message>
+    <message>
+        <location filename="../lib/core/settingspage.cpp" line="+63"/>
         <source>Interface font</source>
         <translation>Шрифт интерфейса</translation>
     </message>
@@ -4206,12 +4804,23 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>Очень высокое (240 FPS)</translation>
     </message>
     <message>
-        <location line="+1"/>
+        <location line="-85"/>
+        <location line="+86"/>
         <source>Custom</source>
         <translation>Своё</translation>
     </message>
     <message>
-        <location line="+2"/>
+        <location line="-96"/>
+        <source>Appearance changes apply immediately. Changing the language is saved for the next start.</source>
+        <translation>Изменения оформления применяются сразу. Смена языка сохраняется до следующего запуска.</translation>
+    </message>
+    <message>
+        <location line="+20"/>
+        <source>Preset</source>
+        <translation>Набор</translation>
+    </message>
+    <message>
+        <location line="+78"/>
         <source>Profile</source>
         <translation>Профиль</translation>
     </message>

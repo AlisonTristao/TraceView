@@ -24,6 +24,21 @@ unless the new template needs a rule the current stylesheet doesn't cover
 yet (in which case, add that rule as a token-driven line in
 `buildStyleSheet()`, not a hardcoded color).
 
+## Custom palettes
+
+**View → Palette → New Palette...** opens `PaletteEditorDialog`
+(`core/paletteeditordialog.h`). It starts from a copy of the current palette
+and has one color button per token below, plus the six data series colors.
+Changes preview live on the whole app. The dialog warns when primary or
+secondary text falls under a 4.5:1 contrast ratio (WCAG AA, `contrastRatio()`
+in `traceview/appearance.h`). **Edit Palette...** and **Delete Palette**
+work on the current palette when it is a custom one.
+
+Custom palettes have ids starting with `custom:`, are stored as JSON in
+QSettings (`appearance/customPalettes`, `paletteToJson()`), and are listed
+after the built-in templates. Cancel restores exactly what was there
+before.
+
 ## Token reference
 
 | Token           | Role                                                   |
@@ -82,8 +97,12 @@ in `colorForRole()` in `lib/dashboard/widgets/serialterminalwidget.cpp`.
 - **Sakura** — soft pink background, deep maroon text, pink accent
   (`#E85D8A`).
 
-Switch templates from the running app via **View → Theme**; the choice is
-persisted (`QSettings`, key `appearance/theme`) across restarts.
+Switch templates from the running app via **View → Palette** (a template
+only swaps colors; the shape of cards and controls is **View → Frame**, see
+"Frame styles" in [VISUAL_IDENTITY.md](VISUAL_IDENTITY.md), and how charts
+are drawn is **View → Chart Style**, see [CHART_STYLE.md](CHART_STYLE.md));
+the choice is persisted (`QSettings`, key `appearance/theme`, and
+`appearance/frameStyle` for the frame) across restarts.
 
 ## Fonts
 

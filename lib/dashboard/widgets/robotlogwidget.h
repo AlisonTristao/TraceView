@@ -10,7 +10,6 @@
 
 class QStackedWidget;
 class QTableView;
-class QToolButton;
 
 namespace traceview {
 
@@ -21,8 +20,8 @@ class TerminalTabBar;
 // a tab strip (TerminalTabBar, reused as-is from SerialMonitorWidget -- see
 // widgets/terminaltabbar.h) over one QTableView/RobotLogModel pair per tab,
 // each bound to its own device. Same shape as SerialMonitorWidget (thin
-// header row, tab strip hidden when there's only one tab, right-aligned
-// Clear button) but no input line -- LOG has no reply half to type into,
+// header row, tab strip hidden when there's only one tab, clear button in
+// the cell header) but no input line -- LOG has no reply half to type into,
 // only firmware output.
 //
 // Port/baud/connect config lives per-device in the Devices tab; which
@@ -39,6 +38,15 @@ public:
     explicit RobotLogWidget(QWidget* parent = nullptr);
 
     void setConfig(const QJsonObject& config) override;
+
+    // The cell header's clear button runs clearLog() -- same corner as a
+    // chart's gear, see SerialMonitorWidget.
+    HeaderControls headerControls() const override {
+        return HeaderControl::Clear;
+    }
+    void clearChartData() override {
+        clearLog();
+    }
 
     // The per-tab device ids, tab order left to right. Empty strings are
     // kept (a tab with no device chosen yet) so indices line up with the tab
@@ -73,7 +81,6 @@ private:
     void refreshTabLabels();
 
     TerminalTabBar* m_tabBar = nullptr;
-    QToolButton* m_clearButton = nullptr;
     QStackedWidget* m_stack = nullptr;
     QVector<QTableView*> m_tables;
     QVector<RobotLogModel*> m_models;

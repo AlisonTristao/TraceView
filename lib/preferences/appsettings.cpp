@@ -25,6 +25,7 @@ constexpr char kFrameLogCapacityKey[] = "diagnostics/frameLogCapacity";
 constexpr char kNotificationHistoryCapacityKey[] = "diagnostics/notificationHistoryCapacity";
 constexpr char kUpdateAutoCheckEnabledKey[] = "updates/autoCheckEnabled";
 constexpr char kUpdateLastCheckEpochMsKey[] = "updates/lastCheckEpochMs";
+constexpr char kChartStyleKey[] = "appearance/chartStyle";
 
 constexpr int kLowFps = 30;
 constexpr int kMediumFps = 60;
@@ -47,6 +48,18 @@ AppSettings::RenderProfile AppSettings::renderProfile() const {
 
 int AppSettings::customRenderFps() const {
     return value(kCustomRenderFpsKey, kMediumFps, 1, 240);
+}
+
+QString AppSettings::chartStyleId() const {
+    return QSettings().value(kChartStyleKey, QStringLiteral("dashboard")).toString();
+}
+
+void AppSettings::setChartStyleId(const QString& id) {
+    if (id == chartStyleId()) {
+        return;
+    }
+    QSettings().setValue(kChartStyleKey, id);
+    emit chartStyleChanged();
 }
 
 int AppSettings::repaintIntervalMs() const {
