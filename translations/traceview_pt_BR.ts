@@ -717,26 +717,6 @@
         <source>AppImage from GitHub Releases</source>
         <translation>AppImage do GitHub Releases</translation>
     </message>
-    <message>
-        <source>&lt;b&gt;TraceView&lt;/b&gt; v%1</source>
-        <translation type="vanished">&lt;b&gt;TraceView&lt;/b&gt; v%1</translation>
-    </message>
-    <message>
-        <source>Real-time telemetry dashboard for ESP32/ESP-NOW robots</source>
-        <translation type="vanished">Dashboard de telemetria em tempo real para robôs ESP32/ESP-NOW</translation>
-    </message>
-    <message>
-        <source>Built with Qt %1 &amp;middot; running with Qt %2</source>
-        <translation type="vanished">Construído com Qt %1 &amp;middot; executando com Qt %2</translation>
-    </message>
-    <message>
-        <source>MIT License &amp;middot; AlisonTristao</source>
-        <translation type="vanished">Licença MIT &amp;middot; AlisonTristao</translation>
-    </message>
-    <message>
-        <source>See CHANGELOG.md for release history.</source>
-        <translation type="vanished">Consulte o CHANGELOG.md para o histórico de versões.</translation>
-    </message>
 </context>
 <context>
     <name>traceview::AndroidUsbSerialTransport</name>
@@ -840,10 +820,6 @@
 <context>
     <name>traceview::BtpBackend</name>
     <message>
-        <source>Robot 0x%1 is online but its catalog has not arrived — check the dongle (hub -manifest)</source>
-        <translation type="vanished">O robô 0x%1 está online, mas o catálogo dele não chegou — verifique o dongle (hub -manifest)</translation>
-    </message>
-    <message>
         <location filename="../lib/protocol/btpbackend.cpp" line="+346"/>
         <source>Robot 0x%1 is online but its catalog has not arrived — check the hub (hub -manifest)</source>
         <translation>O robô 0x%1 está online mas o catálogo dele não chegou — confira o hub (hub -manifest)</translation>
@@ -872,10 +848,6 @@
         <location line="+134"/>
         <source>HELLO rejected</source>
         <translation>HELLO rejeitado</translation>
-    </message>
-    <message>
-        <source>no HELLO_RESULT within %1 ms</source>
-        <translation type="vanished">nenhum HELLO_RESULT em %1 ms</translation>
     </message>
     <message>
         <location line="+53"/>
@@ -918,10 +890,6 @@
         <translation>Frame sem selo descartado numa sessão direta selada (confira a senha do canal B do robô)</translation>
     </message>
     <message>
-        <source>dongle returned to console (BTP/1 CONSOLE)</source>
-        <translation type="vanished">o dongle voltou ao console (BTP/1 CONSOLE)</translation>
-    </message>
-    <message>
         <location line="+19"/>
         <source>Dropped an unsealed frame on a sealed hub channel (check the robot&apos;s channel-B password)</source>
         <translation>Frame não selado descartado em um canal de hub selado (verifique a senha do canal B do robô)</translation>
@@ -945,13 +913,6 @@
         <location line="-523"/>
         <source>BTP handshake failed: %1</source>
         <translation>Falha no handshake BTP: %1</translation>
-    </message>
-</context>
-<context>
-    <name>traceview::BtpHandshake</name>
-    <message>
-        <source>no BTP/1 READY after %1 attempts over %2 ms</source>
-        <translation type="vanished">nenhum BTP/1 READY após %1 tentativas em %2 ms</translation>
     </message>
 </context>
 <context>
@@ -1410,14 +1371,6 @@ Permitidos: %1</translation>
 <context>
     <name>traceview::ClockSync</name>
     <message>
-        <source>dongle clock sync failed: %1 [RTT %2ms]</source>
-        <translation type="vanished">falha na sincronização do relógio do dongle: %1 [RTT %2ms]</translation>
-    </message>
-    <message>
-        <source>dongle clock corrected (%1) [RTT %2ms]</source>
-        <translation type="vanished">relógio do dongle corrigido (%1) [RTT %2ms]</translation>
-    </message>
-    <message>
         <location filename="../lib/protocol/clocksync.cpp" line="+179"/>
         <source>clock sync failed: %1 [RTT %2ms]</source>
         <translation>falha ao sincronizar o relógio: %1 [RTT %2ms]</translation>
@@ -1776,93 +1729,9 @@ Permitidos: %1</translation>
         <translation>Mostrado como título deste dispositivo -- no cartão dele no painel Dispositivos e em qualquer outro lugar em que ele seja escolhido em uma lista.</translation>
     </message>
     <message>
-        <source>Free-form notes about this device, shown on its card below the name.</source>
-        <translation type="vanished">Anotações livres sobre este dispositivo, mostradas no cartão dele abaixo do nome.</translation>
-    </message>
-    <message>
-        <source>General</source>
-        <translation type="vanished">Geral</translation>
-    </message>
-    <message>
-        <source>Name:</source>
-        <translation type="vanished">Nome:</translation>
-    </message>
-    <message>
-        <source>Description:</source>
-        <translation type="vanished">Descrição:</translation>
-    </message>
-    <message>
         <location line="+13"/>
         <source>Connection</source>
         <translation>Conexão</translation>
-    </message>
-    <message>
-        <source>Transport:</source>
-        <translation type="vanished">Transporte:</translation>
-    </message>
-    <message>
-        <source>e.g. robot.local or 192.168.4.1</source>
-        <translation type="vanished">ex.: robot.local ou 192.168.4.1</translation>
-    </message>
-    <message>
-        <source>Hostname or IP address of the robot TCP server.</source>
-        <translation type="vanished">Hostname ou endereço IP do servidor TCP do robô.</translation>
-    </message>
-    <message>
-        <source>TCP host:</source>
-        <translation type="vanished">Host TCP:</translation>
-    </message>
-    <message>
-        <source>TCP server port.</source>
-        <translation type="vanished">Porta do servidor TCP.</translation>
-    </message>
-    <message>
-        <source>TCP port:</source>
-        <translation type="vanished">Porta TCP:</translation>
-    </message>
-    <message>
-        <source>Platform BLE address of the robot -- a discovery hint used to dial the connection, not its identity (see &quot;Reported by device&quot; for that). Pick a scan result, or type one by hand for a robot the scan hasn&apos;t found yet.</source>
-        <translation type="vanished">Endereço BLE do robô na plataforma -- uma dica de descoberta usada para abrir a conexão, não a identidade dele (veja &quot;Informado pelo dispositivo&quot; para isso). Escolha um resultado da busca, ou digite um manualmente para um robô que a busca ainda não encontrou.</translation>
-    </message>
-    <message>
-        <source>Scan, or type an address</source>
-        <translation type="vanished">Busque, ou digite um endereço</translation>
-    </message>
-    <message>
-        <source>Scan</source>
-        <translation type="vanished">Buscar</translation>
-    </message>
-    <message>
-        <source>Scan for nearby BTP-capable BLE robots.</source>
-        <translation type="vanished">Buscar robôs BLE próximos compatíveis com BTP.</translation>
-    </message>
-    <message>
-        <source>Stop</source>
-        <translation type="vanished">Parar</translation>
-    </message>
-    <message>
-        <source>BLE address:</source>
-        <translation type="vanished">Endereço BLE:</translation>
-    </message>
-    <message>
-        <source>Serial port</source>
-        <translation type="vanished">Porta serial</translation>
-    </message>
-    <message>
-        <source>Refresh port list</source>
-        <translation type="vanished">Atualizar lista de portas</translation>
-    </message>
-    <message>
-        <source>Port:</source>
-        <translation type="vanished">Porta:</translation>
-    </message>
-    <message>
-        <source>Baud rate (type a custom value if yours isn&apos;t listed)</source>
-        <translation type="vanished">Taxa de transmissão (digite um valor personalizado se o seu não estiver na lista)</translation>
-    </message>
-    <message>
-        <source>Baud:</source>
-        <translation type="vanished">Baud:</translation>
     </message>
     <message>
         <location line="+108"/>
@@ -1885,58 +1754,14 @@ Permitidos: %1</translation>
         <translation>CRLF (\r\n)</translation>
     </message>
     <message>
-        <source>Line terminator appended to control-widget commands sent to this device. Doesn&apos;t affect its serial terminal&apos;s raw keystrokes.</source>
-        <translation type="vanished">Terminador de linha acrescentado aos comandos de widgets de controle enviados a este dispositivo. Não afeta as teclas cruas do terminal serial dele.</translation>
-    </message>
-    <message>
         <location line="+7"/>
         <source>Terminator:</source>
         <translation>Terminador:</translation>
     </message>
     <message>
-        <source>USB HID device</source>
-        <translation type="vanished">Dispositivo USB HID</translation>
-    </message>
-    <message>
-        <source>Refresh USB device list</source>
-        <translation type="vanished">Atualizar lista de dispositivos USB</translation>
-    </message>
-    <message>
-        <source>USB:</source>
-        <translation type="vanished">USB:</translation>
-    </message>
-    <message>
-        <source>The device whose connection carries this one.</source>
-        <translation type="vanished">O dispositivo cuja conexão carrega esta.</translation>
-    </message>
-    <message>
-        <source>Via:</source>
-        <translation type="vanished">Via:</translation>
-    </message>
-    <message>
-        <source>The robot&apos;s BTP source_id -- its permanent address, not the channel number the hub shows. Pick one the hub has actually heard (refreshed live while it&apos;s connected), or type a hex/decimal id by hand for a robot it hasn&apos;t heard yet.</source>
-        <translation type="vanished">O source_id BTP do robô -- o endereço permanente dele, não o número de canal que o hub mostra. Escolha um que o hub realmente ouviu (atualizado ao vivo enquanto ele estiver conectado) ou digite um id hex/decimal à mão para um robô que ele ainda não ouviu.</translation>
-    </message>
-    <message>
-        <source>e.g. 0x0A0A0A0A</source>
-        <translation type="vanished">ex.: 0x0A0A0A0A</translation>
-    </message>
-    <message>
-        <source>Source ID:</source>
-        <translation type="vanished">ID de origem:</translation>
-    </message>
-    <message>
-        <source>This device&apos;s own source_id. Pass it as the first argument to the dongle&apos;s &quot;hub -bind&quot; command, with the robot&apos;s Source ID above as the second, so the hub knows which robot this device&apos;s SUBSCRIBE/COMMAND traffic is for.</source>
-        <translation type="vanished">O source_id deste dispositivo. Passe-o como primeiro argumento do comando &quot;hub -bind&quot; do dongle, com o Source ID do robô acima como segundo, para o hub saber a qual robô se destina o tráfego SUBSCRIBE/COMMAND deste dispositivo.</translation>
-    </message>
-    <message>
         <location line="+16"/>
         <source>This device&apos;s ID:</source>
         <translation>ID deste dispositivo:</translation>
-    </message>
-    <message>
-        <source>Password for this robot&apos;s endpoint key.</source>
-        <translation type="vanished">Senha da chave de endpoint deste robô.</translation>
     </message>
     <message>
         <location line="-102"/>
@@ -2082,14 +1907,6 @@ Permitidos: %1</translation>
         <translation>%1 (última conexão)</translation>
     </message>
     <message>
-        <source>(none)</source>
-        <translation type="vanished">(nenhum)</translation>
-    </message>
-    <message>
-        <source>%1 (unavailable)</source>
-        <translation type="vanished">%1 (indisponível)</translation>
-    </message>
-    <message>
         <location line="+9"/>
         <source>(no topics reported yet)</source>
         <translation>(nenhum tópico reportado ainda)</translation>
@@ -2109,30 +1926,6 @@ Permitidos: %1</translation>
         <location line="+16"/>
         <source>device reports: %1</source>
         <translation>dispositivo informa: %1</translation>
-    </message>
-    <message>
-        <source>%1 (%2)</source>
-        <translation type="vanished">%1 (%2)</translation>
-    </message>
-    <message>
-        <source>online</source>
-        <translation type="vanished">online</translation>
-    </message>
-    <message>
-        <source>offline %1s</source>
-        <translation type="vanished">offline há %1s</translation>
-    </message>
-    <message>
-        <source>Ch %1 -- %2, %3</source>
-        <translation type="vanished">Canal %1 -- %2, %3</translation>
-    </message>
-    <message>
-        <source>%1
-RSSI: %2 dBm
-RTT: %3 ms</source>
-        <translation type="vanished">%1
-RSSI: %2 dBm
-RTT: %3 ms</translation>
     </message>
     <message>
         <location line="-242"/>
@@ -4011,21 +3804,9 @@ Escolha Mais tarde para continuar usando -- as alterações serão aplicadas na 
         <translation>Parar</translation>
     </message>
     <message>
-        <source>USB serial</source>
-        <translation type="vanished">Serial USB</translation>
-    </message>
-    <message>
-        <source>Wi-Fi (TCP)</source>
-        <translation type="vanished">Wi-Fi (TCP)</translation>
-    </message>
-    <message>
         <location line="-98"/>
         <source>Bluetooth</source>
         <translation>Bluetooth</translation>
-    </message>
-    <message>
-        <source>Hub (dongle)</source>
-        <translation type="vanished">Hub (dongle)</translation>
     </message>
     <message>
         <location line="+75"/>
@@ -4118,10 +3899,6 @@ Escolha Mais tarde para continuar usando -- as alterações serão aplicadas na 
         <location line="+0"/>
         <source>(choose the hub)</source>
         <translation>(escolha o hub)</translation>
-    </message>
-    <message>
-        <source>Automatic: %1.local</source>
-        <translation type="vanished">Automático: %1.local</translation>
     </message>
 </context>
 <context>
@@ -4972,25 +4749,9 @@ Escolha Mais tarde para continuar usando -- as alterações serão aplicadas na 
         <translation>Mais tarde</translation>
     </message>
     <message>
-        <source>&lt;b&gt;TraceView %1&lt;/b&gt; is available (you have v%2).</source>
-        <translation type="vanished">&lt;b&gt;TraceView %1&lt;/b&gt; está disponível (você tem a v%2).</translation>
-    </message>
-    <message>
-        <source>No release notes provided.</source>
-        <translation type="vanished">Nenhuma nota de versão fornecida.</translation>
-    </message>
-    <message>
         <location line="+1"/>
         <source>Update Now</source>
         <translation>Atualizar Agora</translation>
-    </message>
-    <message>
-        <source>Skip This Version</source>
-        <translation type="vanished">Pular Esta Versão</translation>
-    </message>
-    <message>
-        <source>Remind Me Later</source>
-        <translation type="vanished">Lembrar Mais Tarde</translation>
     </message>
 </context>
 <context>
