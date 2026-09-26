@@ -4,6 +4,10 @@
 #include <QPointer>
 #include <QStyleFactory>
 
+#if defined(Q_OS_ANDROID)
+#include <QJniObject>
+#endif
+
 #include "core/applog.h"
 #include "core/mainwindow.h"
 #include "core/touchscroll.h"
@@ -66,6 +70,13 @@ int main(int argc, char* argv[]) {
     window.show();
 
 #if defined(Q_OS_ANDROID)
+    // Keeps the soft keyboard from dropping and reopening when an IME
+    // briefly reports itself hidden while resizing (see the Java class).
+    QJniObject::callStaticMethod<void>(
+        "io/github/alisontristao/traceview/KeyboardInsetsDebounce", "install",
+        "(Landroid/app/Activity;)V",
+        QNativeInterface::QAndroidApplication::context().object<jobject>());
+
     // Locking the screen destroys the Activity's surface; the one Android
     // hands back on unlock starts out empty and stayed black for good, since
     // nothing asked the widgets to paint into it again. Floating panels

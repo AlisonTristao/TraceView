@@ -208,6 +208,11 @@
         <source>BLE</source>
         <translation>BLE</translation>
     </message>
+    <message>
+        <location filename="../lib/devices/device.cpp" line="+292"/>
+        <source>auto</source>
+        <translation>auto</translation>
+    </message>
 </context>
 <context>
     <name>DeviceCommands</name>
@@ -246,7 +251,7 @@
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="+119"/>
+        <location filename="../lib/core/mainwindow.cpp" line="+127"/>
         <source>TraceView Project (*.tvproj)</source>
         <translation>TraceView-Projekt (*.tvproj)</translation>
     </message>
@@ -277,7 +282,7 @@
         <translation>Arbeitsbereich löschen</translation>
     </message>
     <message>
-        <location filename="../lib/devices/deviceconfigdialog.cpp" line="+59"/>
+        <location filename="../lib/devices/deviceconfigdialog.cpp" line="+64"/>
         <source>(unnamed topic)</source>
         <translation>(unbenanntes Thema)</translation>
     </message>
@@ -712,31 +717,11 @@
         <source>AppImage from GitHub Releases</source>
         <translation>AppImage von GitHub Releases</translation>
     </message>
-    <message>
-        <source>&lt;b&gt;TraceView&lt;/b&gt; v%1</source>
-        <translation type="vanished">&lt;b&gt;TraceView&lt;/b&gt; v%1</translation>
-    </message>
-    <message>
-        <source>Real-time telemetry dashboard for ESP32/ESP-NOW robots</source>
-        <translation type="vanished">Echtzeit-Telemetrie-Dashboard für ESP32/ESP-NOW-Roboter</translation>
-    </message>
-    <message>
-        <source>Built with Qt %1 &amp;middot; running with Qt %2</source>
-        <translation type="vanished">Erstellt mit Qt %1 &amp;middot; ausgeführt mit Qt %2</translation>
-    </message>
-    <message>
-        <source>MIT License &amp;middot; AlisonTristao</source>
-        <translation type="vanished">MIT-Lizenz &amp;middot; AlisonTristao</translation>
-    </message>
-    <message>
-        <source>See CHANGELOG.md for release history.</source>
-        <translation type="vanished">Siehe CHANGELOG.md für die Versionshistorie.</translation>
-    </message>
 </context>
 <context>
     <name>traceview::AndroidUsbSerialTransport</name>
     <message>
-        <location filename="../lib/core/androidusbserialtransport.cpp" line="+185"/>
+        <location filename="../lib/core/androidusbserialtransport.cpp" line="+194"/>
         <source>USB serial is not available on this device</source>
         <translation>USB-Seriell ist auf diesem Gerät nicht verfügbar</translation>
     </message>
@@ -754,12 +739,12 @@
 <context>
     <name>traceview::BleDiscoveryService</name>
     <message>
-        <location filename="../lib/core/blediscoveryservice.cpp" line="+44"/>
+        <location filename="../lib/core/blediscoveryservice.cpp" line="+45"/>
         <source>Bluetooth permission denied. Allow TraceView to use Bluetooth in the system settings.</source>
         <translation>Bluetooth-Berechtigung verweigert. Erlauben Sie TraceView die Nutzung von Bluetooth in den Systemeinstellungen.</translation>
     </message>
     <message>
-        <location line="+65"/>
+        <location line="+99"/>
         <source>BLE discovery failed</source>
         <translation>BLE-Suche fehlgeschlagen</translation>
     </message>
@@ -767,12 +752,32 @@
 <context>
     <name>traceview::BleTransport</name>
     <message>
-        <location filename="../lib/core/bletransport.cpp" line="+68"/>
+        <location filename="../lib/core/bletransport.cpp" line="+99"/>
         <source>Bluetooth permission denied. Allow TraceView to use Bluetooth in the system settings.</source>
         <translation>Bluetooth-Berechtigung verweigert. Erlauben Sie TraceView die Nutzung von Bluetooth in den Systemeinstellungen.</translation>
     </message>
     <message>
-        <location line="+21"/>
+        <location line="+53"/>
+        <source>BLE scan failed: %1</source>
+        <translation>BLE-Suche fehlgeschlagen: %1</translation>
+    </message>
+    <message>
+        <location line="+23"/>
+        <source>no BTP robot named &quot;%1&quot; found nearby (no BTP robot advertising at all)</source>
+        <translation>kein BTP-Roboter namens &quot;%1&quot; in der Nähe gefunden (überhaupt kein BTP-Roboter sendet)</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>no BTP robot named &quot;%1&quot; found nearby (seen: %2)</source>
+        <translation>kein BTP-Roboter namens &quot;%1&quot; in der Nähe gefunden (gesehen: %2)</translation>
+    </message>
+    <message>
+        <location line="+13"/>
+        <source>%1 BLE robots are named &quot;%2&quot; (%3) -- give each robot its own name, or pick one by address</source>
+        <translation>%1 BLE-Roboter heißen &quot;%2&quot; (%3) -- geben Sie jedem Roboter einen eigenen Namen oder wählen Sie einen über seine Adresse</translation>
+    </message>
+    <message>
+        <location line="+38"/>
         <source>failed to create a BLE controller</source>
         <translation>BLE-Controller konnte nicht erstellt werden</translation>
     </message>
@@ -815,12 +820,12 @@
 <context>
     <name>traceview::BtpBackend</name>
     <message>
-        <location filename="../lib/protocol/btpbackend.cpp" line="+326"/>
-        <source>Robot 0x%1 is online but its catalog has not arrived — check the dongle (hub -manifest)</source>
-        <translation>Roboter 0x%1 ist online, aber sein Katalog ist nicht angekommen — prüfen Sie den Dongle (hub -manifest)</translation>
+        <location filename="../lib/protocol/btpbackend.cpp" line="+346"/>
+        <source>Robot 0x%1 is online but its catalog has not arrived — check the hub (hub -manifest)</source>
+        <translation>Roboter 0x%1 ist online, aber sein Katalog ist nicht angekommen — prüfen Sie den Hub (hub -manifest)</translation>
     </message>
     <message>
-        <location line="+100"/>
+        <location line="+91"/>
         <source>Robot 0x%1 rebooted — catalog and subscriptions refreshed</source>
         <translation>Roboter 0x%1 hat neu gestartet — Katalog und Abonnements aktualisiert</translation>
     </message>
@@ -830,7 +835,7 @@
         <translation>config rev %1</translation>
     </message>
     <message>
-        <location line="+22"/>
+        <location line="+23"/>
         <source>%1 limited to %2 (requested %3)</source>
         <translation>%1 begrenzt auf %2 (angefordert %3)</translation>
     </message>
@@ -840,23 +845,22 @@
         <translation>SUBSCRIBE für %1 abgelehnt (Status 0x%2, Fehler 0x%3)</translation>
     </message>
     <message>
-        <location line="+99"/>
+        <location line="+134"/>
         <source>HELLO rejected</source>
         <translation>HELLO abgelehnt</translation>
     </message>
     <message>
-        <location line="+3"/>
-        <location line="+39"/>
-        <source>no HELLO_RESULT within %1 ms</source>
-        <translation>kein HELLO_RESULT innerhalb von %1 ms</translation>
-    </message>
-    <message>
-        <location line="-1"/>
+        <location line="+53"/>
         <source>session watchdog: no traffic from the peer</source>
         <translation>Sitzungs-Watchdog: kein Datenverkehr von der Gegenstelle</translation>
     </message>
     <message>
-        <location line="+41"/>
+        <location line="+11"/>
+        <source>no HELLO_RESULT after %1 attempts of %2 ms</source>
+        <translation>kein HELLO_RESULT nach %1 Versuchen zu je %2 ms</translation>
+    </message>
+    <message>
+        <location line="+40"/>
         <source>failed to encode or send HELLO</source>
         <translation>HELLO konnte nicht kodiert oder gesendet werden</translation>
     </message>
@@ -871,27 +875,32 @@
         <translation>BTP-Sitzung hergestellt (HELLO_RESULT=SUCCESS)</translation>
     </message>
     <message>
-        <location line="+32"/>
+        <location line="+60"/>
         <source>BTP/%1</source>
         <translation>BTP/%1</translation>
     </message>
     <message>
         <location line="+21"/>
-        <source>dongle returned to console (BTP/1 CONSOLE)</source>
-        <translation>Dongle ist zur Konsole zurückgekehrt (BTP/1 CONSOLE)</translation>
+        <source>device returned to console (BTP/1 CONSOLE)</source>
+        <translation>Gerät ist zur Konsole zurückgekehrt (BTP/1 CONSOLE)</translation>
     </message>
     <message>
-        <location line="+197"/>
+        <location line="+246"/>
+        <source>Dropped an unsealed frame on a sealed direct session (check the robot&apos;s channel-B password)</source>
+        <translation>Unversiegelter Frame in einer versiegelten Direktsitzung verworfen (prüfen Sie das Kanal-B-Passwort des Roboters)</translation>
+    </message>
+    <message>
+        <location line="+19"/>
         <source>Dropped an unsealed frame on a sealed hub channel (check the robot&apos;s channel-B password)</source>
         <translation>Unversiegelter Frame auf einem versiegelten Hub-Kanal verworfen (prüfen Sie das Kanal-B-Passwort des Roboters)</translation>
     </message>
     <message>
-        <location line="+129"/>
+        <location line="+126"/>
         <source>transport rejected an outbound BTP frame: %1</source>
         <translation>der Transport hat einen ausgehenden BTP-Frame abgelehnt: %1</translation>
     </message>
     <message>
-        <location line="+82"/>
+        <location line="+84"/>
         <source>terminal input not sent: endpoint key not configured</source>
         <translation>Terminaleingabe nicht gesendet: Endpunktschlüssel nicht konfiguriert</translation>
     </message>
@@ -901,18 +910,9 @@
         <translation>Terminaleingabe nicht gesendet: Versiegeln fehlgeschlagen</translation>
     </message>
     <message>
-        <location line="-815"/>
-        <location line="+359"/>
+        <location line="-523"/>
         <source>BTP handshake failed: %1</source>
         <translation>BTP-Handshake fehlgeschlagen: %1</translation>
-    </message>
-</context>
-<context>
-    <name>traceview::BtpHandshake</name>
-    <message>
-        <location filename="../lib/protocol/btphandshake.cpp" line="+121"/>
-        <source>no BTP/1 READY after %1 attempts over %2 ms</source>
-        <translation>kein BTP/1 READY nach %1 Versuchen in %2 ms</translation>
     </message>
 </context>
 <context>
@@ -1307,7 +1307,7 @@
 <context>
     <name>traceview::ChatWidget</name>
     <message>
-        <location filename="../lib/dashboard/widgets/chatwidget.cpp" line="+44"/>
+        <location filename="../lib/dashboard/widgets/chatwidget.cpp" line="+45"/>
         <source>Sending...</source>
         <translation>Wird gesendet...</translation>
     </message>
@@ -1322,7 +1322,7 @@
         <translation>Nicht gesendet</translation>
     </message>
     <message>
-        <location line="+160"/>
+        <location line="+161"/>
         <location line="+81"/>
         <source>You</source>
         <translation>Du</translation>
@@ -1372,13 +1372,13 @@ Erlaubt: %1</translation>
     <name>traceview::ClockSync</name>
     <message>
         <location filename="../lib/protocol/clocksync.cpp" line="+179"/>
-        <source>dongle clock sync failed: %1 [RTT %2ms]</source>
-        <translation>Uhrsynchronisation des Dongles fehlgeschlagen: %1 [RTT %2ms]</translation>
+        <source>clock sync failed: %1 [RTT %2ms]</source>
+        <translation>Uhrsynchronisation fehlgeschlagen: %1 [RTT %2ms]</translation>
     </message>
     <message>
         <location line="+30"/>
-        <source>dongle clock corrected (%1) [RTT %2ms]</source>
-        <translation>Dongle-Uhr korrigiert (%1) [RTT %2ms]</translation>
+        <source>clock corrected (%1) [RTT %2ms]</source>
+        <translation>Uhr korrigiert (%1) [RTT %2ms]</translation>
     </message>
 </context>
 <context>
@@ -1666,7 +1666,7 @@ Erlaubt: %1</translation>
 <context>
     <name>traceview::DeviceCard</name>
     <message>
-        <location filename="../lib/devices/devicecard.cpp" line="+260"/>
+        <location filename="../lib/devices/devicecard.cpp" line="+268"/>
         <source>%1 dBm</source>
         <translation>%1 dBm</translation>
     </message>
@@ -1700,6 +1700,21 @@ Erlaubt: %1</translation>
         <source>hub link up, locating robot…</source>
         <translation>Hub-Verbindung aktiv, suche Roboter…</translation>
     </message>
+    <message>
+        <location line="+4"/>
+        <source>via %1</source>
+        <translation>über %1</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>saved from the last connection</source>
+        <translation>von der letzten Verbindung gespeichert</translation>
+    </message>
+    <message>
+        <location line="+20"/>
+        <source>%1: %2</source>
+        <translation>%1: %2</translation>
+    </message>
 </context>
 <context>
     <name>traceview::DeviceConfigDialog</name>
@@ -1714,118 +1729,12 @@ Erlaubt: %1</translation>
         <translation>Wird als Titel dieses Geräts angezeigt -- auf seiner Karte im Geräte-Panel und überall dort, wo es aus einer Liste gewählt wird.</translation>
     </message>
     <message>
-        <location line="+8"/>
-        <source>Free-form notes about this device, shown on its card below the name.</source>
-        <translation>Freie Notizen zu diesem Gerät, auf seiner Karte unter dem Namen angezeigt.</translation>
-    </message>
-    <message>
-        <location line="+8"/>
-        <source>General</source>
-        <translation>Allgemein</translation>
-    </message>
-    <message>
-        <location line="+2"/>
-        <source>Name:</source>
-        <translation>Name:</translation>
-    </message>
-    <message>
-        <location line="+1"/>
-        <source>Description:</source>
-        <translation>Beschreibung:</translation>
-    </message>
-    <message>
-        <location line="+8"/>
+        <location line="+13"/>
         <source>Connection</source>
         <translation>Verbindung</translation>
     </message>
     <message>
-        <location line="+33"/>
-        <source>Transport:</source>
-        <translation>Transport:</translation>
-    </message>
-    <message>
-        <location line="+3"/>
-        <source>e.g. robot.local or 192.168.4.1</source>
-        <translation>z. B. robot.local oder 192.168.4.1</translation>
-    </message>
-    <message>
-        <location line="+1"/>
-        <source>Hostname or IP address of the robot TCP server.</source>
-        <translation>Hostname oder IP-Adresse des TCP-Servers des Roboters.</translation>
-    </message>
-    <message>
-        <location line="+2"/>
-        <source>TCP host:</source>
-        <translation>TCP-Host:</translation>
-    </message>
-    <message>
-        <location line="+5"/>
-        <source>TCP server port.</source>
-        <translation>Port des TCP-Servers.</translation>
-    </message>
-    <message>
-        <location line="+2"/>
-        <source>TCP port:</source>
-        <translation>TCP-Port:</translation>
-    </message>
-    <message>
-        <location line="+5"/>
-        <source>Platform BLE address of the robot -- a discovery hint used to dial the connection, not its identity (see &quot;Reported by device&quot; for that). Pick a scan result, or type one by hand for a robot the scan hasn&apos;t found yet.</source>
-        <translation>Plattform-BLE-Adresse des Roboters -- ein Suchhinweis zum Aufbau der Verbindung, nicht seine Identität (siehe dafür „Vom Gerät gemeldet“). Wählen Sie ein Suchergebnis oder geben Sie eine Adresse von Hand ein für einen Roboter, den die Suche noch nicht gefunden hat.</translation>
-    </message>
-    <message>
-        <location line="+3"/>
-        <source>Scan, or type an address</source>
-        <translation>Suchen oder Adresse eingeben</translation>
-    </message>
-    <message>
-        <location line="+13"/>
-        <location line="+5"/>
-        <source>Scan</source>
-        <translation>Suchen</translation>
-    </message>
-    <message>
-        <location line="-3"/>
-        <source>Scan for nearby BTP-capable BLE robots.</source>
-        <translation>Nach BTP-fähigen BLE-Robotern in der Nähe suchen.</translation>
-    </message>
-    <message>
-        <location line="+3"/>
-        <source>Stop</source>
-        <translation>Stopp</translation>
-    </message>
-    <message>
-        <location line="+8"/>
-        <source>BLE address:</source>
-        <translation>BLE-Adresse:</translation>
-    </message>
-    <message>
-        <location line="+4"/>
-        <source>Serial port</source>
-        <translation>Serieller Port</translation>
-    </message>
-    <message>
-        <location line="+8"/>
-        <source>Refresh port list</source>
-        <translation>Portliste aktualisieren</translation>
-    </message>
-    <message>
-        <location line="+10"/>
-        <source>Port:</source>
-        <translation>Port:</translation>
-    </message>
-    <message>
-        <location line="+9"/>
-        <source>Baud rate (type a custom value if yours isn&apos;t listed)</source>
-        <translation>Baudrate (eigenen Wert eingeben, falls Ihrer nicht aufgeführt ist)</translation>
-    </message>
-    <message>
-        <location line="+3"/>
-        <source>Baud:</source>
-        <translation>Baud:</translation>
-    </message>
-    <message>
-        <location line="+6"/>
+        <location line="+108"/>
         <source>None</source>
         <translation>Keiner</translation>
     </message>
@@ -1845,101 +1754,76 @@ Erlaubt: %1</translation>
         <translation>CRLF (\r\n)</translation>
     </message>
     <message>
-        <location line="+4"/>
-        <source>Line terminator appended to control-widget commands sent to this device. Doesn&apos;t affect its serial terminal&apos;s raw keystrokes.</source>
-        <translation>Zeilenende, das an Steuerelement-Befehle an dieses Gerät angehängt wird. Betrifft nicht die rohen Tastenanschläge seines seriellen Terminals.</translation>
-    </message>
-    <message>
-        <location line="+12"/>
+        <location line="+7"/>
         <source>Terminator:</source>
         <translation>Zeilenende:</translation>
     </message>
     <message>
-        <location line="+9"/>
-        <source>USB HID device</source>
-        <translation>USB-HID-Gerät</translation>
-    </message>
-    <message>
-        <location line="+7"/>
-        <source>Refresh USB device list</source>
-        <translation>USB-Geräteliste aktualisieren</translation>
-    </message>
-    <message>
-        <location line="+9"/>
-        <source>USB:</source>
-        <translation>USB:</translation>
-    </message>
-    <message>
-        <location line="+12"/>
-        <source>The device whose connection carries this one.</source>
-        <translation>Das Gerät, dessen Verbindung diese trägt.</translation>
-    </message>
-    <message>
-        <location line="+5"/>
-        <source>Via:</source>
-        <translation>Über:</translation>
-    </message>
-    <message>
-        <location line="+21"/>
-        <source>The robot&apos;s BTP source_id -- its permanent address, not the channel number the hub shows. Pick one the hub has actually heard (refreshed live while it&apos;s connected), or type a hex/decimal id by hand for a robot it hasn&apos;t heard yet.</source>
-        <translation>Die BTP-source_id des Roboters -- seine dauerhafte Adresse, nicht die vom Hub angezeigte Kanalnummer. Wählen Sie eine, die der Hub tatsächlich gehört hat (live aktualisiert, solange er verbunden ist), oder geben Sie eine Hex-/Dezimal-ID von Hand ein für einen noch nicht gehörten Roboter.</translation>
-    </message>
-    <message>
-        <location line="+3"/>
-        <source>e.g. 0x0A0A0A0A</source>
-        <translation>z. B. 0x0A0A0A0A</translation>
-    </message>
-    <message>
-        <location line="+31"/>
-        <source>Source ID:</source>
-        <translation>Quell-ID:</translation>
-    </message>
-    <message>
-        <location line="+11"/>
-        <source>This device&apos;s own source_id. Pass it as the first argument to the dongle&apos;s &quot;hub -bind&quot; command, with the robot&apos;s Source ID above as the second, so the hub knows which robot this device&apos;s SUBSCRIBE/COMMAND traffic is for.</source>
-        <translation>Die eigene source_id dieses Geräts. Übergeben Sie sie als erstes Argument an den Befehl „hub -bind“ des Dongles, mit der Source ID des Roboters oben als zweitem, damit der Hub weiß, für welchen Roboter der SUBSCRIBE/COMMAND-Verkehr dieses Geräts bestimmt ist.</translation>
-    </message>
-    <message>
-        <location line="+4"/>
+        <location line="+16"/>
         <source>This device&apos;s ID:</source>
         <translation>ID dieses Geräts:</translation>
     </message>
     <message>
-        <location line="+4"/>
-        <source>Password for this robot&apos;s endpoint key.</source>
-        <translation>Passwort für den Endpunktschlüssel dieses Roboters.</translation>
+        <location line="-102"/>
+        <source>Advanced</source>
+        <translation>Erweitert</translation>
     </message>
     <message>
-        <location line="+2"/>
-        <location line="+93"/>
+        <location line="+5"/>
+        <source>Every link as a table: the order they are tried in, baud rate, TCP port, and targets typed by hand.</source>
+        <translation>Alle Verbindungen als Tabelle: die Reihenfolge, in der sie versucht werden, Baudrate, TCP-Port und von Hand eingegebene Ziele.</translation>
+    </message>
+    <message>
+        <location line="+43"/>
+        <source>Card title:</source>
+        <translation>Kartentitel:</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>The robot&apos;s channel-B password. One per device: every TCP, BLE and hub connection above uses it.</source>
+        <translation>Das Kanal-B-Passwort des Roboters. Eines pro Gerät: Alle TCP-, BLE- und Hub-Verbindungen oben verwenden es.</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <location line="+81"/>
         <source>Password:</source>
         <translation>Passwort:</translation>
     </message>
     <message>
-        <location line="-85"/>
-        <location line="+89"/>
+        <location line="-73"/>
+        <location line="+77"/>
         <source>Save this password in the project file</source>
         <translation>Dieses Passwort in der Projektdatei speichern</translation>
     </message>
     <message>
-        <location line="-86"/>
-        <location line="+89"/>
+        <location line="-74"/>
+        <location line="+77"/>
         <source>Anyone who opens the project file can read a saved password.</source>
         <translation>Wer die Projektdatei öffnet, kann ein gespeichertes Passwort lesen.</translation>
     </message>
     <message>
-        <location line="-37"/>
+        <location line="-61"/>
+        <source>Line terminator appended to control-widget commands sent over serial. Doesn&apos;t affect its serial terminal&apos;s raw keystrokes.</source>
+        <translation>Zeilenabschluss, der an Befehle von Steuer-Widgets über die serielle Schnittstelle angehängt wird. Betrifft nicht die direkten Tastenanschläge seines seriellen Terminals.</translation>
+    </message>
+    <message>
+        <location line="+15"/>
+        <source>This device&apos;s own source_id. Pass it as the first argument to the hub&apos;s &quot;hub -bind&quot; command, with the robot&apos;s id as the second, so the hub knows which robot this device&apos;s SUBSCRIBE/COMMAND traffic is for.</source>
+        <translation>Die eigene source_id dieses Geräts. Übergeben Sie sie als erstes Argument an den Befehl &quot;hub -bind&quot; des Hubs, mit der ID des Roboters als zweitem, damit der Hub weiß, für welchen Roboter der SUBSCRIBE/COMMAND-Verkehr dieses Geräts bestimmt ist.</translation>
+    </message>
+    <message>
+        <location line="+9"/>
         <source>OTA</source>
         <translation>OTA</translation>
     </message>
     <message>
         <location line="+3"/>
-        <location line="+301"/>
+        <location line="+282"/>
         <source>e.g. robot1.local</source>
         <translation>z. B. robot1.local</translation>
     </message>
     <message>
-        <location line="-299"/>
+        <location line="-280"/>
         <source>Hostname or IP the OTA tab uses for this device&apos;s firmware upload. Left blank, the device is listed there but nothing can be polled or uploaded.</source>
         <translation>Hostname oder IP, die der OTA-Tab für den Firmware-Upload dieses Geräts verwendet. Leer gelassen wird das Gerät dort aufgeführt, aber nichts kann abgefragt oder hochgeladen werden.</translation>
     </message>
@@ -1964,25 +1848,26 @@ Erlaubt: %1</translation>
         <translation>Passwort für den X-OTA-Password-Header dieses Geräts.</translation>
     </message>
     <message>
-        <location line="+25"/>
-        <location line="+261"/>
+        <location line="+24"/>
+        <location line="+243"/>
         <source>Connected</source>
         <translation>Verbunden</translation>
     </message>
     <message>
-        <location line="-261"/>
-        <location line="+261"/>
+        <location line="-243"/>
+        <location line="+243"/>
         <source>Disconnected</source>
         <translation>Getrennt</translation>
     </message>
     <message>
-        <location line="-258"/>
+        <location line="-240"/>
         <location line="+3"/>
+        <location line="+156"/>
         <source>(not connected yet)</source>
         <translation>(noch nicht verbunden)</translation>
     </message>
     <message>
-        <location line="+10"/>
+        <location line="-146"/>
         <source>Status:</source>
         <translation>Status:</translation>
     </message>
@@ -2017,22 +1902,23 @@ Erlaubt: %1</translation>
         <translation>Die obigen Einstellungen anwenden und jetzt (neu) verbinden, ohne diesen Dialog zu schließen.</translation>
     </message>
     <message>
-        <location line="+138"/>
-        <source>(none)</source>
-        <translation>(keine)</translation>
+        <location line="+115"/>
+        <source>%1 (last connection)</source>
+        <translation>%1 (letzte Verbindung)</translation>
     </message>
     <message>
-        <location line="+11"/>
-        <source>%1 (unavailable)</source>
-        <translation>%1 (nicht verfügbar)</translation>
-    </message>
-    <message>
-        <location line="+8"/>
+        <location line="+9"/>
         <source>(no topics reported yet)</source>
         <translation>(noch keine Themen gemeldet)</translation>
     </message>
     <message>
-        <location line="+33"/>
+        <location line="+6"/>
+        <location line="+28"/>
+        <source>(saved from the last connection)</source>
+        <translation>(von der letzten Verbindung gespeichert)</translation>
+    </message>
+    <message>
+        <location line="+14"/>
         <source>(nothing reported yet)</source>
         <translation>(noch nichts gemeldet)</translation>
     </message>
@@ -2042,36 +1928,7 @@ Erlaubt: %1</translation>
         <translation>Gerät meldet: %1</translation>
     </message>
     <message>
-        <location line="+41"/>
-        <source>%1 (%2)</source>
-        <translation>%1 (%2)</translation>
-    </message>
-    <message>
-        <location line="+22"/>
-        <source>online</source>
-        <translation>online</translation>
-    </message>
-    <message>
-        <location line="+0"/>
-        <source>offline %1s</source>
-        <translation>offline %1s</translation>
-    </message>
-    <message>
-        <location line="+1"/>
-        <source>Ch %1 -- %2, %3</source>
-        <translation>Kan. %1 -- %2, %3</translation>
-    </message>
-    <message>
-        <location line="+4"/>
-        <source>%1
-RSSI: %2 dBm
-RTT: %3 ms</source>
-        <translation>%1
-RSSI: %2 dBm
-RTT: %3 ms</translation>
-    </message>
-    <message>
-        <location line="-328"/>
+        <location line="-242"/>
         <source>Reported by device</source>
         <translation>Vom Gerät gemeldet</translation>
     </message>
@@ -2082,6 +1939,200 @@ RTT: %3 ms</translation>
         <location filename="../lib/core/deviceconnection.cpp" line="+196"/>
         <source>transport rejected %1 bytes</source>
         <translation>der Transport hat %1 Bytes abgelehnt</translation>
+    </message>
+</context>
+<context>
+    <name>traceview::DeviceLinksTable</name>
+    <message>
+        <location filename="../lib/devices/devicelinkstable.cpp" line="+91"/>
+        <source>On</source>
+        <translation>An</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Type</source>
+        <translation>Typ</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Target</source>
+        <translation>Ziel</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Option</source>
+        <translation>Option</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>Every way to reach this device. Row 1 is tried first; when the connection in use stops working, TraceView tries the next enabled row, and starts over after the last.</source>
+        <translation>Alle Wege, dieses Gerät zu erreichen. Zeile 1 wird zuerst versucht; wenn die verwendete Verbindung nicht mehr funktioniert, versucht TraceView die nächste aktivierte Zeile und beginnt nach der letzten von vorn.</translation>
+    </message>
+    <message>
+        <location line="+14"/>
+        <source>Add</source>
+        <translation>Hinzufügen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Remove</source>
+        <translation>Entfernen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Up</source>
+        <translation>Nach oben</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Down</source>
+        <translation>Nach unten</translation>
+    </message>
+    <message>
+        <location line="+12"/>
+        <source>Ports</source>
+        <translation>Ports</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Refresh the serial port list</source>
+        <translation>Liste der seriellen Ports aktualisieren</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>USB</source>
+        <translation>USB</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Refresh the USB HID device list</source>
+        <translation>Liste der USB-HID-Geräte aktualisieren</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <location line="+4"/>
+        <source>Scan BLE</source>
+        <translation>BLE suchen</translation>
+    </message>
+    <message>
+        <location line="-2"/>
+        <source>Scan for nearby BTP-capable BLE robots.</source>
+        <translation>Nach BTP-fähigen BLE-Robotern in der Nähe suchen.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Stop scan</source>
+        <translation>Suche stoppen</translation>
+    </message>
+    <message>
+        <location line="+104"/>
+        <source>Unticked: kept, but skipped when looking for a working connection.</source>
+        <translation>Nicht angehakt: bleibt erhalten, wird aber bei der Suche nach einer funktionierenden Verbindung übersprungen.</translation>
+    </message>
+    <message>
+        <location line="+33"/>
+        <source>port, e.g. COM5</source>
+        <translation>Port, z. B. COM5</translation>
+    </message>
+    <message>
+        <location line="+12"/>
+        <source>Baud rate (type a custom value if yours isn&apos;t listed)</source>
+        <translation>Baudrate (geben Sie einen eigenen Wert ein, falls Ihrer nicht aufgeführt ist)</translation>
+    </message>
+    <message>
+        <location line="+23"/>
+        <source>host or IP, e.g. 192.168.4.1</source>
+        <translation>Host oder IP, z. B. 192.168.4.1</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>TCP server port</source>
+        <translation>Port des TCP-Servers</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>robot name, e.g. BallyRobot</source>
+        <translation>Robotername, z. B. BallyRobot</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>The name the robot advertises, like a hostname: TraceView scans for it on every connection, so it keeps working if the robot&apos;s address changes. A MAC address is also accepted. Scan to pick a robot nearby.</source>
+        <translation>Der Name, den der Roboter ankündigt, wie ein Hostname: TraceView sucht bei jeder Verbindung danach, daher funktioniert es weiter, wenn sich die Adresse des Roboters ändert. Eine MAC-Adresse wird ebenfalls akzeptiert. Suchen Sie, um einen Roboter in der Nähe auszuwählen.</translation>
+    </message>
+    <message>
+        <location line="+12"/>
+        <source>The hub whose connection carries this one.</source>
+        <translation>Der Hub, über dessen Verbindung diese läuft.</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>robot name or id</source>
+        <translation>Robotername oder ID</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>The robot behind the hub. Pick one the hub has heard (listed by name), or type its name or its BTP source_id (hex or decimal). What is saved is the source_id -- its permanent address, not the channel number the hub shows.</source>
+        <translation>Der Roboter hinter dem Hub. Wählen Sie einen, den der Hub gehört hat (nach Namen aufgelistet), oder geben Sie seinen Namen oder seine BTP-source_id ein (hex oder dezimal). Gespeichert wird die source_id -- seine dauerhafte Adresse, nicht die Kanalnummer, die der Hub anzeigt.</translation>
+    </message>
+    <message>
+        <location line="+19"/>
+        <source>Automatic (robot name)</source>
+        <translation>Automatisch (Robotername)</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Found by the robot name above each time it connects. To use a specific target instead, pick one in the list above the table.</source>
+        <translation>Wird bei jeder Verbindung über den Roboternamen oben gefunden. Um stattdessen ein bestimmtes Ziel zu verwenden, wählen Sie eines in der Liste über der Tabelle.</translation>
+    </message>
+    <message>
+        <location line="+56"/>
+        <source>%1 (%2)</source>
+        <translation>%1 (%2)</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>(any hub)</source>
+        <translation>(beliebiger Hub)</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>(choose the hub)</source>
+        <translation>(Hub wählen)</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>%1 (unavailable)</source>
+        <translation>%1 (nicht verfügbar)</translation>
+    </message>
+    <message>
+        <location line="+30"/>
+        <source>online</source>
+        <translation>online</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>offline %1s</source>
+        <translation>offline seit %1 s</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>%1 (ch %2, %3)</source>
+        <translation>%1 (Kanal %2, %3)</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>%1 (%2, %3)</source>
+        <translation>%1 (%2, %3)</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>channel %1</source>
+        <translation>Kanal %1</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>channel %1, %2</source>
+        <translation>Kanal %1, %2</translation>
     </message>
 </context>
 <context>
@@ -2431,12 +2482,12 @@ RTT: %3 ms</translation>
 <context>
     <name>traceview::MainWindow</name>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="+145"/>
+        <location filename="../lib/core/mainwindow.cpp" line="+227"/>
         <source>TraceView v%1</source>
         <translation>TraceView v%1</translation>
     </message>
     <message numerus="yes">
-        <location line="+125"/>
+        <location line="+153"/>
         <source>This device carries %n other device(s) (%1). Remove or repoint them first.</source>
         <translation>
             <numerusform>Dieses Gerät trägt %n weiteres Gerät (%1). Entfernen oder umleiten Sie es zuerst.</numerusform>
@@ -2449,7 +2500,7 @@ RTT: %3 ms</translation>
         <translation>, </translation>
     </message>
     <message>
-        <location line="+413"/>
+        <location line="+552"/>
         <source>Pending</source>
         <translation>Ausstehend</translation>
     </message>
@@ -2598,12 +2649,12 @@ Verluste: %2</translation>
     </message>
     <message>
         <location line="+0"/>
-        <location line="+2973"/>
+        <location line="+3431"/>
         <source>Later</source>
         <translation>Später</translation>
     </message>
     <message>
-        <location line="-2966"/>
+        <location line="-3424"/>
         <source>&amp;Access</source>
         <translation>&amp;Zugang</translation>
     </message>
@@ -2624,7 +2675,17 @@ Verluste: %2</translation>
         <translation>De&amp;bug</translation>
     </message>
     <message>
-        <location line="+4"/>
+        <location line="+7"/>
+        <source>Keyboard Diagnostics</source>
+        <translation>Tastaturdiagnose</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>Copy Keyboard Log</source>
+        <translation>Tastatur-Log kopieren</translation>
+    </message>
+    <message>
+        <location line="+6"/>
         <source>&amp;About</source>
         <translation>&amp;Info</translation>
     </message>
@@ -2639,7 +2700,7 @@ Verluste: %2</translation>
         <translation>Weitere Optionen</translation>
     </message>
     <message>
-        <location line="+31"/>
+        <location line="+33"/>
         <source>Connected as: %1</source>
         <translation>Angemeldet als: %1</translation>
     </message>
@@ -2669,7 +2730,7 @@ Verluste: %2</translation>
         <translation>&amp;Entwicklermodus aktivieren...</translation>
     </message>
     <message>
-        <location line="+182"/>
+        <location line="+192"/>
         <source>Add</source>
         <translation>Hinzufügen</translation>
     </message>
@@ -2720,18 +2781,18 @@ Verluste: %2</translation>
     </message>
     <message>
         <location line="+18"/>
-        <location line="+2369"/>
+        <location line="+2796"/>
         <source>Undo</source>
         <translation>Rückgängig</translation>
     </message>
     <message>
-        <location line="-2367"/>
-        <location line="+2367"/>
+        <location line="-2794"/>
+        <location line="+2794"/>
         <source>Redo</source>
         <translation>Wiederholen</translation>
     </message>
     <message>
-        <location line="-2326"/>
+        <location line="-2751"/>
         <source>Add Device</source>
         <translation>Gerät hinzufügen</translation>
     </message>
@@ -2767,12 +2828,12 @@ Verluste: %2</translation>
     </message>
     <message>
         <location line="+29"/>
-        <location line="+2271"/>
+        <location line="+2696"/>
         <source>Fullscreen dashboard (F11)</source>
         <translation>Dashboard im Vollbildmodus (F11)</translation>
     </message>
     <message>
-        <location line="-2091"/>
+        <location line="-2516"/>
         <source>Rename Workspace</source>
         <translation>Arbeitsbereich umbenennen</translation>
     </message>
@@ -2782,7 +2843,17 @@ Verluste: %2</translation>
         <translation>Arbeitsbereich „%1“ in „%2“ umbenannt.</translation>
     </message>
     <message>
-        <location line="+1549"/>
+        <location line="+1233"/>
+        <source>%1: found at %2</source>
+        <translation>%1: gefunden unter %2</translation>
+    </message>
+    <message>
+        <location line="+322"/>
+        <source>%1: trying %2</source>
+        <translation>%1: versuche %2</translation>
+    </message>
+    <message>
+        <location line="+419"/>
         <location line="+8"/>
         <location line="+5"/>
         <location line="+8"/>
@@ -2904,13 +2975,13 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
         <translation>App schließen</translation>
     </message>
     <message>
-        <location line="-2318"/>
-        <location line="+2119"/>
+        <location line="-2743"/>
+        <location line="+2544"/>
         <source>Devices</source>
         <translation>Geräte</translation>
     </message>
     <message>
-        <location line="-2044"/>
+        <location line="-2469"/>
         <source>Subscriptions</source>
         <translation>Abonnements</translation>
     </message>
@@ -2946,29 +3017,29 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
         <translation>Arbeitsbereich „%1“ löschen? Dies kann nicht rückgängig gemacht werden.</translation>
     </message>
     <message>
-        <location line="+14"/>
+        <location line="+16"/>
         <source>Deleted workspace &quot;%1&quot;.</source>
         <translation>Arbeitsbereich „%1“ gelöscht.</translation>
     </message>
     <message>
         <location line="+71"/>
-        <location line="+1829"/>
+        <location line="+2252"/>
         <source>Add widget</source>
         <translation>Widget hinzufügen</translation>
     </message>
     <message>
-        <location line="-1826"/>
+        <location line="-2249"/>
         <source>Remove selected widget (%1)</source>
         <translation>Ausgewähltes Widget entfernen (%1)</translation>
     </message>
     <message>
         <location line="+3"/>
-        <location line="+1836"/>
+        <location line="+2259"/>
         <source>Add device</source>
         <translation>Gerät hinzufügen</translation>
     </message>
     <message>
-        <location line="-1833"/>
+        <location line="-2256"/>
         <source>Remove selected device (%1)</source>
         <translation>Ausgewähltes Gerät entfernen (%1)</translation>
     </message>
@@ -3053,12 +3124,12 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
         <translation>Ebenen-/Eigenschaften-Panels anzeigen</translation>
     </message>
     <message>
-        <location line="+248"/>
+        <location line="+255"/>
         <source>New Device</source>
         <translation>Neues Gerät</translation>
     </message>
     <message>
-        <location line="+243"/>
+        <location line="+284"/>
         <source>%1: robot is responding again</source>
         <translation>%1: Roboter antwortet wieder</translation>
     </message>
@@ -3079,17 +3150,17 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
         <translation>(unbenannt)</translation>
     </message>
     <message>
-        <location line="-1114"/>
+        <location line="-1164"/>
         <source>Dashboard</source>
         <translation>Dashboard</translation>
     </message>
     <message>
-        <location line="+1326"/>
+        <location line="+1503"/>
         <source>%1: this BLE address now answers as a different robot (expected %2, got %3)</source>
         <translation>%1: diese BLE-Adresse antwortet jetzt als anderer Roboter (erwartet %2, erhalten %3)</translation>
     </message>
     <message>
-        <location line="+244"/>
+        <location line="+492"/>
         <source>Key &quot;%1&quot; is already used by another widget.</source>
         <translation>Der Schlüssel „%1“ wird bereits von einem anderen Widget verwendet.</translation>
     </message>
@@ -3715,6 +3786,122 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
     </message>
 </context>
 <context>
+    <name>traceview::RobotLinksPanel</name>
+    <message>
+        <location filename="../lib/devices/robotlinkspanel.cpp" line="+37"/>
+        <source>Serial (USB)</source>
+        <translation>Seriell (USB)</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Wi-Fi</source>
+        <translation>WLAN</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Bluetooth</source>
+        <translation>Bluetooth</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Hub</source>
+        <translation>Hub</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>Automatic: the USB port whose device reports the robot&apos;s name (or, if none does, the port last picked here). Pick or type a port to always use that one.</source>
+        <translation>Automatisch: der USB-Port, dessen Gerät den Namen des Roboters meldet (oder, falls keiner das tut, der zuletzt hier gewählte Port). Wählen oder geben Sie einen Port ein, um immer diesen zu verwenden.</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Automatic: &lt;robot name&gt;.local, found over mDNS. Type a host or IP to use that instead (e.g. 192.168.4.1).</source>
+        <translation>Automatisch: &lt;Robotername&gt;.local, über mDNS gefunden. Geben Sie einen Host oder eine IP ein, um stattdessen diese zu verwenden (z. B. 192.168.4.1).</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Automatic: the Bluetooth robot advertising the robot&apos;s name. Pick or type an address to always use that one.</source>
+        <translation>Automatisch: der Bluetooth-Roboter, der den Namen des Roboters ankündigt. Wählen oder geben Sie eine Adresse ein, um immer diese zu verwenden.</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Automatic: the robot of this name behind any connected hub. Pick a hub to only look behind that one.</source>
+        <translation>Automatisch: der Roboter mit diesem Namen hinter einem beliebigen verbundenen Hub. Wählen Sie einen Hub, um nur hinter diesem zu suchen.</translation>
+    </message>
+    <message>
+        <location line="+45"/>
+        <source>Name:</source>
+        <translation>Name:</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>robot name, e.g. BallyRobot</source>
+        <translation>Robotername, z. B. BallyRobot</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>The name the robot is configured with (&quot;settings -set identity name ...&quot;). Every link set to Automatic finds the robot by it: the USB port that reports it, &lt;name&gt;.local over Wi-Fi, the Bluetooth device advertising it, the robot of that name behind a hub.</source>
+        <translation>Der im Roboter konfigurierte Name (&quot;settings -set identity name ...&quot;). Jede auf Automatisch gestellte Verbindung findet den Roboter darüber: der USB-Port, der ihn meldet, &lt;Name&gt;.local über WLAN, das Bluetooth-Gerät, das ihn ankündigt, der Roboter mit diesem Namen hinter einem Hub.</translation>
+    </message>
+    <message>
+        <location line="+14"/>
+        <location line="+6"/>
+        <source>Search</source>
+        <translation>Suchen</translation>
+    </message>
+    <message>
+        <location line="-3"/>
+        <source>Look for robots nearby: refreshes the serial ports and scans for Bluetooth robots. Names found are offered in the Robot list.</source>
+        <translation>Nach Robotern in der Nähe suchen: aktualisiert die seriellen Ports und sucht nach Bluetooth-Robotern. Gefundene Namen werden in der Roboterliste angeboten.</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Stop</source>
+        <translation>Stopp</translation>
+    </message>
+    <message>
+        <location line="+35"/>
+        <source>Ticked: the robot can be reached this way.</source>
+        <translation>Angehakt: Der Roboter ist auf diesem Weg erreichbar.</translation>
+    </message>
+    <message>
+        <location line="+82"/>
+        <location line="+11"/>
+        <source>Automatic (%1)</source>
+        <translation>Automatisch (%1)</translation>
+    </message>
+    <message>
+        <location line="-10"/>
+        <location line="+9"/>
+        <source>Automatic (by robot name)</source>
+        <translation>Automatisch (über den Roboternamen)</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>%1 (%2)</source>
+        <translation>%1 (%2)</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Automatic (&lt;robot name&gt;.local)</source>
+        <translation>Automatisch (&lt;Robotername&gt;.local)</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Automatic (%1.local)</source>
+        <translation>Automatisch (%1.local)</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Automatic (any hub)</source>
+        <translation>Automatisch (beliebiger Hub)</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>(choose the hub)</source>
+        <translation>(Hub wählen)</translation>
+    </message>
+</context>
+<context>
     <name>traceview::RobotLogConfigEditor</name>
     <message>
         <location filename="../lib/dashboard/widgets/robotlogconfigeditor.cpp" line="+17"/>
@@ -3811,7 +3998,7 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
 <context>
     <name>traceview::SerialManager</name>
     <message>
-        <location filename="../lib/core/serialmanager.cpp" line="+59"/>
+        <location filename="../lib/core/serialmanager.cpp" line="+119"/>
         <source>1200 baud resets the ESP32-S3 into its bootloader; using 115200</source>
         <translation>1200 Baud setzt den ESP32-S3 in seinen Bootloader zurück; verwende 115200</translation>
     </message>
@@ -3880,7 +4067,7 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
 <context>
     <name>traceview::SettingsPage</name>
     <message>
-        <location filename="../lib/core/settingspage.cpp" line="+198"/>
+        <location filename="../lib/core/settingspage.cpp" line="+199"/>
         <source>Settings</source>
         <translation>Einstellungen</translation>
     </message>
@@ -3904,31 +4091,31 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
     </message>
     <message>
         <location line="-114"/>
-        <location line="+165"/>
+        <location line="+166"/>
         <source>Terminal</source>
         <translation>Terminal</translation>
     </message>
     <message>
-        <location line="-165"/>
-        <location line="+192"/>
+        <location line="-166"/>
+        <location line="+193"/>
         <source>Connections</source>
         <translation>Verbindungen</translation>
     </message>
     <message>
-        <location line="-192"/>
-        <location line="+211"/>
+        <location line="-193"/>
+        <location line="+252"/>
         <source>Diagnostics</source>
         <translation>Diagnose</translation>
     </message>
     <message>
-        <location line="-210"/>
-        <location line="+262"/>
+        <location line="-251"/>
+        <location line="+303"/>
         <location line="+5"/>
         <source>Updates</source>
         <translation>Updates</translation>
     </message>
     <message>
-        <location line="-225"/>
+        <location line="-266"/>
         <source>Project and startup preferences shared by the application.</source>
         <translation>Projekt- und Starteinstellungen der Anwendung.</translation>
     </message>
@@ -3999,18 +4186,23 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
     </message>
     <message>
         <location line="+2"/>
-        <source>Low (15 FPS)</source>
-        <translation>Niedrig (15 FPS)</translation>
+        <source>Low (30 FPS)</source>
+        <translation>Niedrig (30 FPS)</translation>
     </message>
     <message>
         <location line="+1"/>
-        <source>Medium (30 FPS)</source>
-        <translation>Mittel (30 FPS)</translation>
+        <source>Medium (60 FPS)</source>
+        <translation>Mittel (60 FPS)</translation>
     </message>
     <message>
         <location line="+1"/>
-        <source>High (60 FPS)</source>
-        <translation>Hoch (60 FPS)</translation>
+        <source>High (120 FPS)</source>
+        <translation>Hoch (120 FPS)</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Extra High (240 FPS)</source>
+        <translation>Sehr hoch (240 FPS)</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -4118,7 +4310,40 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
         <translation>Wiederholungsintervall</translation>
     </message>
     <message>
+        <location line="+5"/>
+        <source>Manifest cache</source>
+        <translation>Manifest-Cache</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Remember each device&apos;s manifest between sessions</source>
+        <translation>Manifest jedes Geräts zwischen Sitzungen speichern</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>A reconnect then only asks whether the device&apos;s catalog changed, and the topics of a known device are listed even while it is offline.</source>
+        <translation>Eine Wiederverbindung fragt dann nur, ob sich der Katalog des Geräts geändert hat, und die Themen eines bekannten Geräts werden auch angezeigt, während es offline ist.</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Trust the cache without asking when the device reports the same revision (TCP/BLE)</source>
+        <translation>Dem Cache ohne Nachfrage vertrauen, wenn das Gerät dieselbe Revision meldet (TCP/BLE)</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Not recommended: the question it skips is tiny, and it is what keeps the device&apos;s reported information (firmware version and the like) up to date.</source>
+        <translation>Nicht empfohlen: Die übersprungene Frage ist winzig, und genau sie hält die vom Gerät gemeldeten Informationen (Firmware-Version und Ähnliches) aktuell.</translation>
+    </message>
+    <message numerus="yes">
         <location line="+9"/>
+        <source>Clear cache (%n device(s))</source>
+        <translation>
+            <numerusform>Cache leeren (%n Gerät)</numerusform>
+            <numerusform>Cache leeren (%n Geräte)</numerusform>
+        </translation>
+    </message>
+    <message>
+        <location line="+19"/>
         <source>Keep enough history for investigation without letting long-running sessions use unbounded memory.</source>
         <translation>Genug Verlauf für Analysen behalten, ohne dass lange Sitzungen unbegrenzt Speicher belegen.</translation>
     </message>
@@ -4350,11 +4575,24 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
     </message>
 </context>
 <context>
+    <name>traceview::StartupLoadingOverlay</name>
+    <message>
+        <location filename="../lib/core/startuploadingoverlay.cpp" line="+74"/>
+        <source>Loading dashboard...</source>
+        <translation>Dashboard wird geladen...</translation>
+    </message>
+</context>
+<context>
     <name>traceview::TcpTransport</name>
     <message>
-        <location filename="../lib/core/tcptransport.cpp" line="+102"/>
+        <location filename="../lib/core/tcptransport.cpp" line="+108"/>
         <source>TCP connection timed out</source>
         <translation>Zeitüberschreitung bei der TCP-Verbindung</translation>
+    </message>
+    <message>
+        <location line="+51"/>
+        <source>Could not find %1 on the network (mDNS)</source>
+        <translation>%1 wurde im Netzwerk nicht gefunden (mDNS)</translation>
     </message>
 </context>
 <context>
@@ -4511,25 +4749,9 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
         <translation>Später</translation>
     </message>
     <message>
-        <source>&lt;b&gt;TraceView %1&lt;/b&gt; is available (you have v%2).</source>
-        <translation type="vanished">&lt;b&gt;TraceView %1&lt;/b&gt; ist verfügbar (Sie haben v%2).</translation>
-    </message>
-    <message>
-        <source>No release notes provided.</source>
-        <translation type="vanished">Keine Versionshinweise angegeben.</translation>
-    </message>
-    <message>
         <location line="+1"/>
         <source>Update Now</source>
         <translation>Jetzt aktualisieren</translation>
-    </message>
-    <message>
-        <source>Skip This Version</source>
-        <translation type="vanished">Diese Version überspringen</translation>
-    </message>
-    <message>
-        <source>Remind Me Later</source>
-        <translation type="vanished">Später erinnern</translation>
     </message>
 </context>
 <context>

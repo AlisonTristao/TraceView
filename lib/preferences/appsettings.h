@@ -12,7 +12,9 @@ class AppSettings : public QObject {
     Q_OBJECT
 
 public:
-    enum class RenderProfile { Low, Medium, High, Custom };
+    // Stored as an int in QSettings: append new profiles at the end so a
+    // saved value keeps meaning the same profile.
+    enum class RenderProfile { Low, Medium, High, Custom, ExtraHigh };
 
     static AppSettings& instance();
 
@@ -38,6 +40,16 @@ public:
 
     bool autoReconnect() const;
     int reconnectIntervalSeconds() const;
+
+    // Manifest cache (BTP 2.48.0, protocol/manifeststore.h): keep each
+    // device's manifest on disk so the next session asks "still revision N?"
+    // and gets a tiny NOT_MODIFIED instead of the whole catalog. On by default.
+    bool manifestCacheEnabled() const;
+    // Direct TCP/BLE only: skip even that question when HELLO_RESULT already
+    // reports the cached revision. Off by default, and off is recommended --
+    // the skipped answer is tiny and is what refreshes the device's reported
+    // info (firmware version etc.).
+    bool manifestCacheSkipOnHello() const;
     // Whether SerialManager logs every raw byte it writes/reads (as a hex
     // dump, via AppLog's file logger) rather than just open/close/error
     // lifecycle events. Off by default -- a device streaming telemetry at a
@@ -63,6 +75,8 @@ public:
     void setTerminalCursorBlink(bool enabled);
     void setAutoReconnect(bool enabled);
     void setReconnectIntervalSeconds(int seconds);
+    void setManifestCacheEnabled(bool enabled);
+    void setManifestCacheSkipOnHello(bool skip);
     void setVerboseSerialLogging(bool enabled);
     void setFrameLogCapacity(int entries);
     void setNotificationHistoryCapacity(int entries);

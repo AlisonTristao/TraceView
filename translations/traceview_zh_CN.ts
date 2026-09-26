@@ -208,6 +208,11 @@
         <source>BLE</source>
         <translation>BLE</translation>
     </message>
+    <message>
+        <location filename="../lib/devices/device.cpp" line="+292"/>
+        <source>auto</source>
+        <translation>自动</translation>
+    </message>
 </context>
 <context>
     <name>DeviceCommands</name>
@@ -246,7 +251,7 @@
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="+119"/>
+        <location filename="../lib/core/mainwindow.cpp" line="+127"/>
         <source>TraceView Project (*.tvproj)</source>
         <translation>TraceView 项目 (*.tvproj)</translation>
     </message>
@@ -277,7 +282,7 @@
         <translation>删除工作区</translation>
     </message>
     <message>
-        <location filename="../lib/devices/deviceconfigdialog.cpp" line="+59"/>
+        <location filename="../lib/devices/deviceconfigdialog.cpp" line="+64"/>
         <source>(unnamed topic)</source>
         <translation>(未命名主题)</translation>
     </message>
@@ -712,31 +717,11 @@
         <source>AppImage from GitHub Releases</source>
         <translation>来自 GitHub Releases 的 AppImage</translation>
     </message>
-    <message>
-        <source>&lt;b&gt;TraceView&lt;/b&gt; v%1</source>
-        <translation type="vanished">&lt;b&gt;TraceView&lt;/b&gt; v%1</translation>
-    </message>
-    <message>
-        <source>Real-time telemetry dashboard for ESP32/ESP-NOW robots</source>
-        <translation type="vanished">面向 ESP32/ESP-NOW 机器人的实时遥测仪表盘</translation>
-    </message>
-    <message>
-        <source>Built with Qt %1 &amp;middot; running with Qt %2</source>
-        <translation type="vanished">使用 Qt %1 构建 &amp;middot; 使用 Qt %2 运行</translation>
-    </message>
-    <message>
-        <source>MIT License &amp;middot; AlisonTristao</source>
-        <translation type="vanished">MIT 许可证 &amp;middot; AlisonTristao</translation>
-    </message>
-    <message>
-        <source>See CHANGELOG.md for release history.</source>
-        <translation type="vanished">版本历史请参见 CHANGELOG.md。</translation>
-    </message>
 </context>
 <context>
     <name>traceview::AndroidUsbSerialTransport</name>
     <message>
-        <location filename="../lib/core/androidusbserialtransport.cpp" line="+185"/>
+        <location filename="../lib/core/androidusbserialtransport.cpp" line="+194"/>
         <source>USB serial is not available on this device</source>
         <translation>此设备不支持 USB 串口</translation>
     </message>
@@ -754,12 +739,12 @@
 <context>
     <name>traceview::BleDiscoveryService</name>
     <message>
-        <location filename="../lib/core/blediscoveryservice.cpp" line="+44"/>
+        <location filename="../lib/core/blediscoveryservice.cpp" line="+45"/>
         <source>Bluetooth permission denied. Allow TraceView to use Bluetooth in the system settings.</source>
         <translation>蓝牙权限被拒绝。请在系统设置中允许 TraceView 使用蓝牙。</translation>
     </message>
     <message>
-        <location line="+65"/>
+        <location line="+99"/>
         <source>BLE discovery failed</source>
         <translation>BLE 发现失败</translation>
     </message>
@@ -767,12 +752,32 @@
 <context>
     <name>traceview::BleTransport</name>
     <message>
-        <location filename="../lib/core/bletransport.cpp" line="+68"/>
+        <location filename="../lib/core/bletransport.cpp" line="+99"/>
         <source>Bluetooth permission denied. Allow TraceView to use Bluetooth in the system settings.</source>
         <translation>蓝牙权限被拒绝。请在系统设置中允许 TraceView 使用蓝牙。</translation>
     </message>
     <message>
-        <location line="+21"/>
+        <location line="+53"/>
+        <source>BLE scan failed: %1</source>
+        <translation>BLE 扫描失败：%1</translation>
+    </message>
+    <message>
+        <location line="+23"/>
+        <source>no BTP robot named &quot;%1&quot; found nearby (no BTP robot advertising at all)</source>
+        <translation>附近未找到名为 &quot;%1&quot; 的 BTP 机器人（没有任何 BTP 机器人在广播）</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>no BTP robot named &quot;%1&quot; found nearby (seen: %2)</source>
+        <translation>附近未找到名为 &quot;%1&quot; 的 BTP 机器人（已发现：%2）</translation>
+    </message>
+    <message>
+        <location line="+13"/>
+        <source>%1 BLE robots are named &quot;%2&quot; (%3) -- give each robot its own name, or pick one by address</source>
+        <translation>有 %1 个 BLE 机器人名为 &quot;%2&quot;（%3）-- 请为每个机器人设置不同的名称，或按地址选择一个</translation>
+    </message>
+    <message>
+        <location line="+38"/>
         <source>failed to create a BLE controller</source>
         <translation>无法创建 BLE 控制器</translation>
     </message>
@@ -815,12 +820,12 @@
 <context>
     <name>traceview::BtpBackend</name>
     <message>
-        <location filename="../lib/protocol/btpbackend.cpp" line="+326"/>
-        <source>Robot 0x%1 is online but its catalog has not arrived — check the dongle (hub -manifest)</source>
-        <translation>机器人 0x%1 已上线,但其目录尚未到达 — 请检查 dongle (hub -manifest)</translation>
+        <location filename="../lib/protocol/btpbackend.cpp" line="+346"/>
+        <source>Robot 0x%1 is online but its catalog has not arrived — check the hub (hub -manifest)</source>
+        <translation>机器人 0x%1 在线，但其目录尚未到达 — 请检查集线器（hub -manifest）</translation>
     </message>
     <message>
-        <location line="+100"/>
+        <location line="+91"/>
         <source>Robot 0x%1 rebooted — catalog and subscriptions refreshed</source>
         <translation>机器人 0x%1 已重启 — 目录和订阅已刷新</translation>
     </message>
@@ -830,7 +835,7 @@
         <translation>config rev %1</translation>
     </message>
     <message>
-        <location line="+22"/>
+        <location line="+23"/>
         <source>%1 limited to %2 (requested %3)</source>
         <translation>%1 限制为 %2 (请求 %3)</translation>
     </message>
@@ -840,23 +845,22 @@
         <translation>%1 的 SUBSCRIBE 被拒绝 (状态 0x%2,错误 0x%3)</translation>
     </message>
     <message>
-        <location line="+99"/>
+        <location line="+134"/>
         <source>HELLO rejected</source>
         <translation>HELLO 被拒绝</translation>
     </message>
     <message>
-        <location line="+3"/>
-        <location line="+39"/>
-        <source>no HELLO_RESULT within %1 ms</source>
-        <translation>%1 ms 内未收到 HELLO_RESULT</translation>
-    </message>
-    <message>
-        <location line="-1"/>
+        <location line="+53"/>
         <source>session watchdog: no traffic from the peer</source>
         <translation>会话看门狗: 对端无流量</translation>
     </message>
     <message>
-        <location line="+41"/>
+        <location line="+11"/>
+        <source>no HELLO_RESULT after %1 attempts of %2 ms</source>
+        <translation>%1 次尝试（每次 %2 ms）后仍无 HELLO_RESULT</translation>
+    </message>
+    <message>
+        <location line="+40"/>
         <source>failed to encode or send HELLO</source>
         <translation>无法编码或发送 HELLO</translation>
     </message>
@@ -871,27 +875,32 @@
         <translation>BTP 会话已建立 (HELLO_RESULT=SUCCESS)</translation>
     </message>
     <message>
-        <location line="+32"/>
+        <location line="+60"/>
         <source>BTP/%1</source>
         <translation>BTP/%1</translation>
     </message>
     <message>
         <location line="+21"/>
-        <source>dongle returned to console (BTP/1 CONSOLE)</source>
-        <translation>dongle 已返回控制台 (BTP/1 CONSOLE)</translation>
+        <source>device returned to console (BTP/1 CONSOLE)</source>
+        <translation>设备已返回控制台（BTP/1 CONSOLE）</translation>
     </message>
     <message>
-        <location line="+197"/>
+        <location line="+246"/>
+        <source>Dropped an unsealed frame on a sealed direct session (check the robot&apos;s channel-B password)</source>
+        <translation>在已加密的直连会话中丢弃了一个未加密的帧（请检查机器人的 B 通道密码）</translation>
+    </message>
+    <message>
+        <location line="+19"/>
         <source>Dropped an unsealed frame on a sealed hub channel (check the robot&apos;s channel-B password)</source>
         <translation>在已加密的集线器通道上丢弃了一个未加密的帧 (请检查机器人的 B 通道密码)</translation>
     </message>
     <message>
-        <location line="+129"/>
+        <location line="+126"/>
         <source>transport rejected an outbound BTP frame: %1</source>
         <translation>传输层拒绝了一个外发 BTP 帧: %1</translation>
     </message>
     <message>
-        <location line="+82"/>
+        <location line="+84"/>
         <source>terminal input not sent: endpoint key not configured</source>
         <translation>终端输入未发送: 端点密钥未配置</translation>
     </message>
@@ -901,18 +910,9 @@
         <translation>终端输入未发送: 加密封装失败</translation>
     </message>
     <message>
-        <location line="-815"/>
-        <location line="+359"/>
+        <location line="-523"/>
         <source>BTP handshake failed: %1</source>
         <translation>BTP 握手失败:%1</translation>
-    </message>
-</context>
-<context>
-    <name>traceview::BtpHandshake</name>
-    <message>
-        <location filename="../lib/protocol/btphandshake.cpp" line="+121"/>
-        <source>no BTP/1 READY after %1 attempts over %2 ms</source>
-        <translation>%2 ms 内尝试 %1 次后仍未收到 BTP/1 READY</translation>
     </message>
 </context>
 <context>
@@ -1307,7 +1307,7 @@
 <context>
     <name>traceview::ChatWidget</name>
     <message>
-        <location filename="../lib/dashboard/widgets/chatwidget.cpp" line="+44"/>
+        <location filename="../lib/dashboard/widgets/chatwidget.cpp" line="+45"/>
         <source>Sending...</source>
         <translation>发送中...</translation>
     </message>
@@ -1322,7 +1322,7 @@
         <translation>未发送</translation>
     </message>
     <message>
-        <location line="+160"/>
+        <location line="+161"/>
         <location line="+81"/>
         <source>You</source>
         <translation>你</translation>
@@ -1372,13 +1372,13 @@ Allowed: %1</source>
     <name>traceview::ClockSync</name>
     <message>
         <location filename="../lib/protocol/clocksync.cpp" line="+179"/>
-        <source>dongle clock sync failed: %1 [RTT %2ms]</source>
-        <translation>dongle 时钟同步失败: %1 [RTT %2ms]</translation>
+        <source>clock sync failed: %1 [RTT %2ms]</source>
+        <translation>时钟同步失败：%1 [RTT %2ms]</translation>
     </message>
     <message>
         <location line="+30"/>
-        <source>dongle clock corrected (%1) [RTT %2ms]</source>
-        <translation>dongle 时钟已校正 (%1) [RTT %2ms]</translation>
+        <source>clock corrected (%1) [RTT %2ms]</source>
+        <translation>时钟已校正（%1）[RTT %2ms]</translation>
     </message>
 </context>
 <context>
@@ -1666,7 +1666,7 @@ Allowed: %1</source>
 <context>
     <name>traceview::DeviceCard</name>
     <message>
-        <location filename="../lib/devices/devicecard.cpp" line="+260"/>
+        <location filename="../lib/devices/devicecard.cpp" line="+268"/>
         <source>%1 dBm</source>
         <translation>%1 dBm</translation>
     </message>
@@ -1700,6 +1700,21 @@ Allowed: %1</source>
         <source>hub link up, locating robot…</source>
         <translation>集线器链路已连接,正在定位机器人…</translation>
     </message>
+    <message>
+        <location line="+4"/>
+        <source>via %1</source>
+        <translation>通过 %1</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>saved from the last connection</source>
+        <translation>上次连接时保存</translation>
+    </message>
+    <message>
+        <location line="+20"/>
+        <source>%1: %2</source>
+        <translation>%1：%2</translation>
+    </message>
 </context>
 <context>
     <name>traceview::DeviceConfigDialog</name>
@@ -1714,118 +1729,12 @@ Allowed: %1</source>
         <translation>作为此设备的标题显示 -- 显示在“设备”面板的卡片上，以及任何从列表中选择它的地方。</translation>
     </message>
     <message>
-        <location line="+8"/>
-        <source>Free-form notes about this device, shown on its card below the name.</source>
-        <translation>关于此设备的自由格式备注，显示在其卡片上名称下方。</translation>
-    </message>
-    <message>
-        <location line="+8"/>
-        <source>General</source>
-        <translation>常规</translation>
-    </message>
-    <message>
-        <location line="+2"/>
-        <source>Name:</source>
-        <translation>名称:</translation>
-    </message>
-    <message>
-        <location line="+1"/>
-        <source>Description:</source>
-        <translation>描述:</translation>
-    </message>
-    <message>
-        <location line="+8"/>
+        <location line="+13"/>
         <source>Connection</source>
         <translation>连接</translation>
     </message>
     <message>
-        <location line="+33"/>
-        <source>Transport:</source>
-        <translation>传输方式：</translation>
-    </message>
-    <message>
-        <location line="+3"/>
-        <source>e.g. robot.local or 192.168.4.1</source>
-        <translation>例如 robot.local 或 192.168.4.1</translation>
-    </message>
-    <message>
-        <location line="+1"/>
-        <source>Hostname or IP address of the robot TCP server.</source>
-        <translation>机器人 TCP 服务器的主机名或 IP 地址。</translation>
-    </message>
-    <message>
-        <location line="+2"/>
-        <source>TCP host:</source>
-        <translation>TCP 主机:</translation>
-    </message>
-    <message>
-        <location line="+5"/>
-        <source>TCP server port.</source>
-        <translation>TCP 服务器端口。</translation>
-    </message>
-    <message>
-        <location line="+2"/>
-        <source>TCP port:</source>
-        <translation>TCP 端口:</translation>
-    </message>
-    <message>
-        <location line="+5"/>
-        <source>Platform BLE address of the robot -- a discovery hint used to dial the connection, not its identity (see &quot;Reported by device&quot; for that). Pick a scan result, or type one by hand for a robot the scan hasn&apos;t found yet.</source>
-        <translation>机器人的平台 BLE 地址 -- 用于建立连接的发现提示,而非其身份(身份请见&quot;设备上报&quot;)。请选择一个扫描结果,或为扫描尚未发现的机器人手动输入地址。</translation>
-    </message>
-    <message>
-        <location line="+3"/>
-        <source>Scan, or type an address</source>
-        <translation>扫描,或输入地址</translation>
-    </message>
-    <message>
-        <location line="+13"/>
-        <location line="+5"/>
-        <source>Scan</source>
-        <translation>扫描</translation>
-    </message>
-    <message>
-        <location line="-3"/>
-        <source>Scan for nearby BTP-capable BLE robots.</source>
-        <translation>扫描附近支持 BTP 的 BLE 机器人。</translation>
-    </message>
-    <message>
-        <location line="+3"/>
-        <source>Stop</source>
-        <translation>停止</translation>
-    </message>
-    <message>
-        <location line="+8"/>
-        <source>BLE address:</source>
-        <translation>BLE 地址:</translation>
-    </message>
-    <message>
-        <location line="+4"/>
-        <source>Serial port</source>
-        <translation>串口</translation>
-    </message>
-    <message>
-        <location line="+8"/>
-        <source>Refresh port list</source>
-        <translation>刷新端口列表</translation>
-    </message>
-    <message>
-        <location line="+10"/>
-        <source>Port:</source>
-        <translation>端口：</translation>
-    </message>
-    <message>
-        <location line="+9"/>
-        <source>Baud rate (type a custom value if yours isn&apos;t listed)</source>
-        <translation>波特率（如未列出，可自行输入）</translation>
-    </message>
-    <message>
-        <location line="+3"/>
-        <source>Baud:</source>
-        <translation>波特率：</translation>
-    </message>
-    <message>
-        <location line="+6"/>
+        <location line="+108"/>
         <source>None</source>
         <translation>无</translation>
     </message>
@@ -1845,101 +1754,76 @@ Allowed: %1</source>
         <translation>CRLF (\r\n)</translation>
     </message>
     <message>
-        <location line="+4"/>
-        <source>Line terminator appended to control-widget commands sent to this device. Doesn&apos;t affect its serial terminal&apos;s raw keystrokes.</source>
-        <translation>附加到发送给此设备的控件命令末尾的行结束符。不影响其串口终端的原始按键。</translation>
-    </message>
-    <message>
-        <location line="+12"/>
+        <location line="+7"/>
         <source>Terminator:</source>
         <translation>结束符：</translation>
     </message>
     <message>
-        <location line="+9"/>
-        <source>USB HID device</source>
-        <translation>USB HID 设备</translation>
-    </message>
-    <message>
-        <location line="+7"/>
-        <source>Refresh USB device list</source>
-        <translation>刷新 USB 设备列表</translation>
-    </message>
-    <message>
-        <location line="+9"/>
-        <source>USB:</source>
-        <translation>USB：</translation>
-    </message>
-    <message>
-        <location line="+12"/>
-        <source>The device whose connection carries this one.</source>
-        <translation>承载此连接的设备。</translation>
-    </message>
-    <message>
-        <location line="+5"/>
-        <source>Via:</source>
-        <translation>经由：</translation>
-    </message>
-    <message>
-        <location line="+21"/>
-        <source>The robot&apos;s BTP source_id -- its permanent address, not the channel number the hub shows. Pick one the hub has actually heard (refreshed live while it&apos;s connected), or type a hex/decimal id by hand for a robot it hasn&apos;t heard yet.</source>
-        <translation>机器人的 BTP source_id -- 它的永久地址，而不是集线器显示的通道号。请选择集线器实际听到过的一个（连接时实时刷新），或为尚未听到的机器人手动输入十六进制/十进制 id。</translation>
-    </message>
-    <message>
-        <location line="+3"/>
-        <source>e.g. 0x0A0A0A0A</source>
-        <translation>例如 0x0A0A0A0A</translation>
-    </message>
-    <message>
-        <location line="+31"/>
-        <source>Source ID:</source>
-        <translation>源 ID：</translation>
-    </message>
-    <message>
-        <location line="+11"/>
-        <source>This device&apos;s own source_id. Pass it as the first argument to the dongle&apos;s &quot;hub -bind&quot; command, with the robot&apos;s Source ID above as the second, so the hub knows which robot this device&apos;s SUBSCRIBE/COMMAND traffic is for.</source>
-        <translation>此设备自身的 source_id。将其作为 dongle &quot;hub -bind&quot; 命令的第一个参数,上方机器人的 Source ID 作为第二个参数,以便集线器知道此设备的 SUBSCRIBE/COMMAND 流量发往哪个机器人。</translation>
-    </message>
-    <message>
-        <location line="+4"/>
+        <location line="+16"/>
         <source>This device&apos;s ID:</source>
         <translation>此设备的 ID:</translation>
     </message>
     <message>
-        <location line="+4"/>
-        <source>Password for this robot&apos;s endpoint key.</source>
-        <translation>此机器人端点密钥的密码。</translation>
+        <location line="-102"/>
+        <source>Advanced</source>
+        <translation>高级</translation>
     </message>
     <message>
-        <location line="+2"/>
-        <location line="+93"/>
+        <location line="+5"/>
+        <source>Every link as a table: the order they are tried in, baud rate, TCP port, and targets typed by hand.</source>
+        <translation>以表格显示所有连接：尝试顺序、波特率、TCP 端口以及手动输入的目标。</translation>
+    </message>
+    <message>
+        <location line="+43"/>
+        <source>Card title:</source>
+        <translation>卡片标题：</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>The robot&apos;s channel-B password. One per device: every TCP, BLE and hub connection above uses it.</source>
+        <translation>机器人的 B 通道密码。每个设备一个：上面所有 TCP、BLE 和集线器连接都使用它。</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <location line="+81"/>
         <source>Password:</source>
         <translation>密码：</translation>
     </message>
     <message>
-        <location line="-85"/>
-        <location line="+89"/>
+        <location line="-73"/>
+        <location line="+77"/>
         <source>Save this password in the project file</source>
         <translation>将此密码保存到项目文件中</translation>
     </message>
     <message>
-        <location line="-86"/>
-        <location line="+89"/>
+        <location line="-74"/>
+        <location line="+77"/>
         <source>Anyone who opens the project file can read a saved password.</source>
         <translation>任何打开项目文件的人都可以读取已保存的密码。</translation>
     </message>
     <message>
-        <location line="-37"/>
+        <location line="-61"/>
+        <source>Line terminator appended to control-widget commands sent over serial. Doesn&apos;t affect its serial terminal&apos;s raw keystrokes.</source>
+        <translation>通过串口发送控制组件命令时附加的行结束符。不影响其串口终端的原始按键。</translation>
+    </message>
+    <message>
+        <location line="+15"/>
+        <source>This device&apos;s own source_id. Pass it as the first argument to the hub&apos;s &quot;hub -bind&quot; command, with the robot&apos;s id as the second, so the hub knows which robot this device&apos;s SUBSCRIBE/COMMAND traffic is for.</source>
+        <translation>此设备自身的 source_id。将其作为集线器 &quot;hub -bind&quot; 命令的第一个参数，机器人的 id 作为第二个参数，集线器便知道此设备的 SUBSCRIBE/COMMAND 流量发往哪个机器人。</translation>
+    </message>
+    <message>
+        <location line="+9"/>
         <source>OTA</source>
         <translation>OTA</translation>
     </message>
     <message>
         <location line="+3"/>
-        <location line="+301"/>
+        <location line="+282"/>
         <source>e.g. robot1.local</source>
         <translation>例如 robot1.local</translation>
     </message>
     <message>
-        <location line="-299"/>
+        <location line="-280"/>
         <source>Hostname or IP the OTA tab uses for this device&apos;s firmware upload. Left blank, the device is listed there but nothing can be polled or uploaded.</source>
         <translation>OTA 选项卡上传此设备固件所用的主机名或 IP。留空时设备仍会列出，但无法轮询或上传。</translation>
     </message>
@@ -1964,25 +1848,26 @@ Allowed: %1</source>
         <translation>此设备 X-OTA-Password 标头的密码。</translation>
     </message>
     <message>
-        <location line="+25"/>
-        <location line="+261"/>
+        <location line="+24"/>
+        <location line="+243"/>
         <source>Connected</source>
         <translation>已连接</translation>
     </message>
     <message>
-        <location line="-261"/>
-        <location line="+261"/>
+        <location line="-243"/>
+        <location line="+243"/>
         <source>Disconnected</source>
         <translation>已断开</translation>
     </message>
     <message>
-        <location line="-258"/>
+        <location line="-240"/>
         <location line="+3"/>
+        <location line="+156"/>
         <source>(not connected yet)</source>
         <translation>(尚未连接)</translation>
     </message>
     <message>
-        <location line="+10"/>
+        <location line="-146"/>
         <source>Status:</source>
         <translation>状态：</translation>
     </message>
@@ -2017,22 +1902,23 @@ Allowed: %1</source>
         <translation>应用以上设置并立即（重新）连接，而不关闭此对话框。</translation>
     </message>
     <message>
-        <location line="+138"/>
-        <source>(none)</source>
-        <translation>(无)</translation>
+        <location line="+115"/>
+        <source>%1 (last connection)</source>
+        <translation>%1（上次连接）</translation>
     </message>
     <message>
-        <location line="+11"/>
-        <source>%1 (unavailable)</source>
-        <translation>%1（不可用）</translation>
-    </message>
-    <message>
-        <location line="+8"/>
+        <location line="+9"/>
         <source>(no topics reported yet)</source>
         <translation>(尚未上报任何主题)</translation>
     </message>
     <message>
-        <location line="+33"/>
+        <location line="+6"/>
+        <location line="+28"/>
+        <source>(saved from the last connection)</source>
+        <translation>（上次连接时保存）</translation>
+    </message>
+    <message>
+        <location line="+14"/>
         <source>(nothing reported yet)</source>
         <translation>(尚未上报任何内容)</translation>
     </message>
@@ -2042,36 +1928,7 @@ Allowed: %1</source>
         <translation>设备上报: %1</translation>
     </message>
     <message>
-        <location line="+41"/>
-        <source>%1 (%2)</source>
-        <translation>%1 (%2)</translation>
-    </message>
-    <message>
-        <location line="+22"/>
-        <source>online</source>
-        <translation>在线</translation>
-    </message>
-    <message>
-        <location line="+0"/>
-        <source>offline %1s</source>
-        <translation>离线 %1 秒</translation>
-    </message>
-    <message>
-        <location line="+1"/>
-        <source>Ch %1 -- %2, %3</source>
-        <translation>通道 %1 -- %2, %3</translation>
-    </message>
-    <message>
-        <location line="+4"/>
-        <source>%1
-RSSI: %2 dBm
-RTT: %3 ms</source>
-        <translation>%1
-RSSI: %2 dBm
-RTT: %3 ms</translation>
-    </message>
-    <message>
-        <location line="-328"/>
+        <location line="-242"/>
         <source>Reported by device</source>
         <translation>设备报告</translation>
     </message>
@@ -2082,6 +1939,200 @@ RTT: %3 ms</translation>
         <location filename="../lib/core/deviceconnection.cpp" line="+196"/>
         <source>transport rejected %1 bytes</source>
         <translation>传输层拒绝了 %1 字节</translation>
+    </message>
+</context>
+<context>
+    <name>traceview::DeviceLinksTable</name>
+    <message>
+        <location filename="../lib/devices/devicelinkstable.cpp" line="+91"/>
+        <source>On</source>
+        <translation>启用</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Type</source>
+        <translation>类型</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Target</source>
+        <translation>目标</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Option</source>
+        <translation>选项</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>Every way to reach this device. Row 1 is tried first; when the connection in use stops working, TraceView tries the next enabled row, and starts over after the last.</source>
+        <translation>连接此设备的所有方式。首先尝试第 1 行；当前使用的连接失效时，TraceView 会尝试下一个已启用的行，并在最后一行之后从头开始。</translation>
+    </message>
+    <message>
+        <location line="+14"/>
+        <source>Add</source>
+        <translation>添加</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Remove</source>
+        <translation>删除</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Up</source>
+        <translation>上移</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Down</source>
+        <translation>下移</translation>
+    </message>
+    <message>
+        <location line="+12"/>
+        <source>Ports</source>
+        <translation>端口</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Refresh the serial port list</source>
+        <translation>刷新串口列表</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>USB</source>
+        <translation>USB</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Refresh the USB HID device list</source>
+        <translation>刷新 USB HID 设备列表</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <location line="+4"/>
+        <source>Scan BLE</source>
+        <translation>扫描 BLE</translation>
+    </message>
+    <message>
+        <location line="-2"/>
+        <source>Scan for nearby BTP-capable BLE robots.</source>
+        <translation>扫描附近支持 BTP 的 BLE 机器人。</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Stop scan</source>
+        <translation>停止扫描</translation>
+    </message>
+    <message>
+        <location line="+104"/>
+        <source>Unticked: kept, but skipped when looking for a working connection.</source>
+        <translation>未勾选：保留，但在寻找可用连接时跳过。</translation>
+    </message>
+    <message>
+        <location line="+33"/>
+        <source>port, e.g. COM5</source>
+        <translation>端口，例如 COM5</translation>
+    </message>
+    <message>
+        <location line="+12"/>
+        <source>Baud rate (type a custom value if yours isn&apos;t listed)</source>
+        <translation>波特率（如果列表中没有，请输入自定义值）</translation>
+    </message>
+    <message>
+        <location line="+23"/>
+        <source>host or IP, e.g. 192.168.4.1</source>
+        <translation>主机或 IP，例如 192.168.4.1</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>TCP server port</source>
+        <translation>TCP 服务器端口</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>robot name, e.g. BallyRobot</source>
+        <translation>机器人名称，例如 BallyRobot</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>The name the robot advertises, like a hostname: TraceView scans for it on every connection, so it keeps working if the robot&apos;s address changes. A MAC address is also accepted. Scan to pick a robot nearby.</source>
+        <translation>机器人广播的名称，类似主机名：TraceView 每次连接时都会查找它，因此即使机器人的地址改变也能继续工作。也可以使用 MAC 地址。扫描以选择附近的机器人。</translation>
+    </message>
+    <message>
+        <location line="+12"/>
+        <source>The hub whose connection carries this one.</source>
+        <translation>承载此连接的集线器。</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>robot name or id</source>
+        <translation>机器人名称或 id</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>The robot behind the hub. Pick one the hub has heard (listed by name), or type its name or its BTP source_id (hex or decimal). What is saved is the source_id -- its permanent address, not the channel number the hub shows.</source>
+        <translation>集线器后面的机器人。选择集线器已发现的机器人（按名称列出），或输入其名称或 BTP source_id（十六进制或十进制）。保存的是 source_id -- 它的永久地址，而不是集线器显示的通道号。</translation>
+    </message>
+    <message>
+        <location line="+19"/>
+        <source>Automatic (robot name)</source>
+        <translation>自动（机器人名称）</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Found by the robot name above each time it connects. To use a specific target instead, pick one in the list above the table.</source>
+        <translation>每次连接时按上方的机器人名称查找。要改用特定目标，请在表格上方的列表中选择。</translation>
+    </message>
+    <message>
+        <location line="+56"/>
+        <source>%1 (%2)</source>
+        <translation>%1 (%2)</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>(any hub)</source>
+        <translation>（任意集线器）</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>(choose the hub)</source>
+        <translation>（选择集线器）</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>%1 (unavailable)</source>
+        <translation>%1（不可用）</translation>
+    </message>
+    <message>
+        <location line="+30"/>
+        <source>online</source>
+        <translation>在线</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>offline %1s</source>
+        <translation>离线 %1 秒</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>%1 (ch %2, %3)</source>
+        <translation>%1（通道 %2，%3）</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>%1 (%2, %3)</source>
+        <translation>%1 (%2, %3)</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>channel %1</source>
+        <translation>通道 %1</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>channel %1, %2</source>
+        <translation>通道 %1，%2</translation>
     </message>
 </context>
 <context>
@@ -2431,12 +2482,12 @@ RTT: %3 ms</translation>
 <context>
     <name>traceview::MainWindow</name>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="+145"/>
+        <location filename="../lib/core/mainwindow.cpp" line="+227"/>
         <source>TraceView v%1</source>
         <translation>TraceView v%1</translation>
     </message>
     <message numerus="yes">
-        <location line="+125"/>
+        <location line="+153"/>
         <source>This device carries %n other device(s) (%1). Remove or repoint them first.</source>
         <translation>
             <numerusform>此设备还承载 %n 个其他设备（%1）。请先移除或重新指向它们。</numerusform>
@@ -2448,7 +2499,7 @@ RTT: %3 ms</translation>
         <translation>、</translation>
     </message>
     <message>
-        <location line="+413"/>
+        <location line="+552"/>
         <source>Pending</source>
         <translation>待定</translation>
     </message>
@@ -2597,12 +2648,12 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+0"/>
-        <location line="+2973"/>
+        <location line="+3431"/>
         <source>Later</source>
         <translation>稍后</translation>
     </message>
     <message>
-        <location line="-2966"/>
+        <location line="-3424"/>
         <source>&amp;Access</source>
         <translation>访问(&amp;A)</translation>
     </message>
@@ -2623,7 +2674,17 @@ Drops: %2</source>
         <translation>调试(&amp;D)</translation>
     </message>
     <message>
-        <location line="+4"/>
+        <location line="+7"/>
+        <source>Keyboard Diagnostics</source>
+        <translation>键盘诊断</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>Copy Keyboard Log</source>
+        <translation>复制键盘日志</translation>
+    </message>
+    <message>
+        <location line="+6"/>
         <source>&amp;About</source>
         <translation>关于(&amp;A)</translation>
     </message>
@@ -2638,7 +2699,7 @@ Drops: %2</source>
         <translation>更多选项</translation>
     </message>
     <message>
-        <location line="+31"/>
+        <location line="+33"/>
         <source>Connected as: %1</source>
         <translation>已连接为: %1</translation>
     </message>
@@ -2668,7 +2729,7 @@ Drops: %2</source>
         <translation>进入开发者模式(&amp;E)...</translation>
     </message>
     <message>
-        <location line="+182"/>
+        <location line="+192"/>
         <source>Add</source>
         <translation>添加</translation>
     </message>
@@ -2719,18 +2780,18 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+18"/>
-        <location line="+2369"/>
+        <location line="+2796"/>
         <source>Undo</source>
         <translation>撤销</translation>
     </message>
     <message>
-        <location line="-2367"/>
-        <location line="+2367"/>
+        <location line="-2794"/>
+        <location line="+2794"/>
         <source>Redo</source>
         <translation>重做</translation>
     </message>
     <message>
-        <location line="-2326"/>
+        <location line="-2751"/>
         <source>Add Device</source>
         <translation>添加设备</translation>
     </message>
@@ -2766,12 +2827,12 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+29"/>
-        <location line="+2271"/>
+        <location line="+2696"/>
         <source>Fullscreen dashboard (F11)</source>
         <translation>全屏仪表盘(F11)</translation>
     </message>
     <message>
-        <location line="-2091"/>
+        <location line="-2516"/>
         <source>Rename Workspace</source>
         <translation>重命名工作区</translation>
     </message>
@@ -2781,7 +2842,17 @@ Drops: %2</source>
         <translation>已将工作区&quot;%1&quot;重命名为&quot;%2&quot;。</translation>
     </message>
     <message>
-        <location line="+1549"/>
+        <location line="+1233"/>
+        <source>%1: found at %2</source>
+        <translation>%1：在 %2 找到</translation>
+    </message>
+    <message>
+        <location line="+322"/>
+        <source>%1: trying %2</source>
+        <translation>%1：正在尝试 %2</translation>
+    </message>
+    <message>
+        <location line="+419"/>
         <location line="+8"/>
         <location line="+5"/>
         <location line="+8"/>
@@ -2903,13 +2974,13 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>关闭应用</translation>
     </message>
     <message>
-        <location line="-2318"/>
-        <location line="+2119"/>
+        <location line="-2743"/>
+        <location line="+2544"/>
         <source>Devices</source>
         <translation>设备</translation>
     </message>
     <message>
-        <location line="-2044"/>
+        <location line="-2469"/>
         <source>Subscriptions</source>
         <translation>订阅</translation>
     </message>
@@ -2945,29 +3016,29 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>删除工作区“%1”？此操作无法撤销。</translation>
     </message>
     <message>
-        <location line="+14"/>
+        <location line="+16"/>
         <source>Deleted workspace &quot;%1&quot;.</source>
         <translation>已删除工作区“%1”。</translation>
     </message>
     <message>
         <location line="+71"/>
-        <location line="+1829"/>
+        <location line="+2252"/>
         <source>Add widget</source>
         <translation>添加控件</translation>
     </message>
     <message>
-        <location line="-1826"/>
+        <location line="-2249"/>
         <source>Remove selected widget (%1)</source>
         <translation>删除所选控件(%1)</translation>
     </message>
     <message>
         <location line="+3"/>
-        <location line="+1836"/>
+        <location line="+2259"/>
         <source>Add device</source>
         <translation>添加设备</translation>
     </message>
     <message>
-        <location line="-1833"/>
+        <location line="-2256"/>
         <source>Remove selected device (%1)</source>
         <translation>删除所选设备(%1)</translation>
     </message>
@@ -3052,12 +3123,12 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>显示图层/属性面板</translation>
     </message>
     <message>
-        <location line="+248"/>
+        <location line="+255"/>
         <source>New Device</source>
         <translation>新设备</translation>
     </message>
     <message>
-        <location line="+243"/>
+        <location line="+284"/>
         <source>%1: robot is responding again</source>
         <translation>%1: 机器人已恢复响应</translation>
     </message>
@@ -3078,17 +3149,17 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>(未命名)</translation>
     </message>
     <message>
-        <location line="-1114"/>
+        <location line="-1164"/>
         <source>Dashboard</source>
         <translation>仪表盘</translation>
     </message>
     <message>
-        <location line="+1326"/>
+        <location line="+1503"/>
         <source>%1: this BLE address now answers as a different robot (expected %2, got %3)</source>
         <translation>%1: 此 BLE 地址现在以另一台机器人身份应答 (应为 %2,实际为 %3)</translation>
     </message>
     <message>
-        <location line="+244"/>
+        <location line="+492"/>
         <source>Key &quot;%1&quot; is already used by another widget.</source>
         <translation>键“%1”已被其他控件使用。</translation>
     </message>
@@ -3714,6 +3785,122 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     </message>
 </context>
 <context>
+    <name>traceview::RobotLinksPanel</name>
+    <message>
+        <location filename="../lib/devices/robotlinkspanel.cpp" line="+37"/>
+        <source>Serial (USB)</source>
+        <translation>串口 (USB)</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Wi-Fi</source>
+        <translation>Wi-Fi</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Bluetooth</source>
+        <translation>蓝牙</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Hub</source>
+        <translation>集线器</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>Automatic: the USB port whose device reports the robot&apos;s name (or, if none does, the port last picked here). Pick or type a port to always use that one.</source>
+        <translation>自动：设备报告机器人名称的 USB 端口（如果没有，则为上次在此选择的端口）。选择或输入端口以始终使用该端口。</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Automatic: &lt;robot name&gt;.local, found over mDNS. Type a host or IP to use that instead (e.g. 192.168.4.1).</source>
+        <translation>自动：&lt;机器人名称&gt;.local，通过 mDNS 查找。输入主机或 IP 可改用它（例如 192.168.4.1）。</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Automatic: the Bluetooth robot advertising the robot&apos;s name. Pick or type an address to always use that one.</source>
+        <translation>自动：广播该机器人名称的蓝牙机器人。选择或输入地址以始终使用该地址。</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Automatic: the robot of this name behind any connected hub. Pick a hub to only look behind that one.</source>
+        <translation>自动：任意已连接集线器后面具有此名称的机器人。选择一个集线器以仅在其后面查找。</translation>
+    </message>
+    <message>
+        <location line="+45"/>
+        <source>Name:</source>
+        <translation>名称:</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>robot name, e.g. BallyRobot</source>
+        <translation>机器人名称，例如 BallyRobot</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>The name the robot is configured with (&quot;settings -set identity name ...&quot;). Every link set to Automatic finds the robot by it: the USB port that reports it, &lt;name&gt;.local over Wi-Fi, the Bluetooth device advertising it, the robot of that name behind a hub.</source>
+        <translation>机器人中配置的名称（&quot;settings -set identity name ...&quot;）。所有设为自动的连接都通过它找到机器人：报告该名称的 USB 端口、Wi-Fi 上的 &lt;名称&gt;.local、广播该名称的蓝牙设备、集线器后面具有该名称的机器人。</translation>
+    </message>
+    <message>
+        <location line="+14"/>
+        <location line="+6"/>
+        <source>Search</source>
+        <translation>搜索</translation>
+    </message>
+    <message>
+        <location line="-3"/>
+        <source>Look for robots nearby: refreshes the serial ports and scans for Bluetooth robots. Names found are offered in the Robot list.</source>
+        <translation>查找附近的机器人：刷新串口并扫描蓝牙机器人。找到的名称会出现在机器人列表中。</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Stop</source>
+        <translation>停止</translation>
+    </message>
+    <message>
+        <location line="+35"/>
+        <source>Ticked: the robot can be reached this way.</source>
+        <translation>已勾选：可以通过此方式连接机器人。</translation>
+    </message>
+    <message>
+        <location line="+82"/>
+        <location line="+11"/>
+        <source>Automatic (%1)</source>
+        <translation>自动（%1）</translation>
+    </message>
+    <message>
+        <location line="-10"/>
+        <location line="+9"/>
+        <source>Automatic (by robot name)</source>
+        <translation>自动（按机器人名称）</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>%1 (%2)</source>
+        <translation>%1 (%2)</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Automatic (&lt;robot name&gt;.local)</source>
+        <translation>自动（&lt;机器人名称&gt;.local）</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Automatic (%1.local)</source>
+        <translation>自动（%1.local）</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Automatic (any hub)</source>
+        <translation>自动（任意集线器）</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>(choose the hub)</source>
+        <translation>（选择集线器）</translation>
+    </message>
+</context>
+<context>
     <name>traceview::RobotLogConfigEditor</name>
     <message>
         <location filename="../lib/dashboard/widgets/robotlogconfigeditor.cpp" line="+17"/>
@@ -3810,7 +3997,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
 <context>
     <name>traceview::SerialManager</name>
     <message>
-        <location filename="../lib/core/serialmanager.cpp" line="+59"/>
+        <location filename="../lib/core/serialmanager.cpp" line="+119"/>
         <source>1200 baud resets the ESP32-S3 into its bootloader; using 115200</source>
         <translation>1200 波特率会使 ESP32-S3 重启进入引导程序;改用 115200</translation>
     </message>
@@ -3879,7 +4066,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
 <context>
     <name>traceview::SettingsPage</name>
     <message>
-        <location filename="../lib/core/settingspage.cpp" line="+198"/>
+        <location filename="../lib/core/settingspage.cpp" line="+199"/>
         <source>Settings</source>
         <translation>设置</translation>
     </message>
@@ -3903,31 +4090,31 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     </message>
     <message>
         <location line="-114"/>
-        <location line="+165"/>
+        <location line="+166"/>
         <source>Terminal</source>
         <translation>终端</translation>
     </message>
     <message>
-        <location line="-165"/>
-        <location line="+192"/>
+        <location line="-166"/>
+        <location line="+193"/>
         <source>Connections</source>
         <translation>连接</translation>
     </message>
     <message>
-        <location line="-192"/>
-        <location line="+211"/>
+        <location line="-193"/>
+        <location line="+252"/>
         <source>Diagnostics</source>
         <translation>诊断</translation>
     </message>
     <message>
-        <location line="-210"/>
-        <location line="+262"/>
+        <location line="-251"/>
+        <location line="+303"/>
         <location line="+5"/>
         <source>Updates</source>
         <translation>更新</translation>
     </message>
     <message>
-        <location line="-225"/>
+        <location line="-266"/>
         <source>Project and startup preferences shared by the application.</source>
         <translation>应用程序共享的项目和启动偏好设置。</translation>
     </message>
@@ -3998,18 +4185,23 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     </message>
     <message>
         <location line="+2"/>
-        <source>Low (15 FPS)</source>
-        <translation>低 (15 FPS)</translation>
+        <source>Low (30 FPS)</source>
+        <translation>低 (30 FPS)</translation>
     </message>
     <message>
         <location line="+1"/>
-        <source>Medium (30 FPS)</source>
-        <translation>中 (30 FPS)</translation>
+        <source>Medium (60 FPS)</source>
+        <translation>中 (60 FPS)</translation>
     </message>
     <message>
         <location line="+1"/>
-        <source>High (60 FPS)</source>
-        <translation>高 (60 FPS)</translation>
+        <source>High (120 FPS)</source>
+        <translation>高 (120 FPS)</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Extra High (240 FPS)</source>
+        <translation>超高 (240 FPS)</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -4117,7 +4309,39 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>重试间隔</translation>
     </message>
     <message>
+        <location line="+5"/>
+        <source>Manifest cache</source>
+        <translation>清单缓存</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Remember each device&apos;s manifest between sessions</source>
+        <translation>在会话之间记住每个设备的清单</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>A reconnect then only asks whether the device&apos;s catalog changed, and the topics of a known device are listed even while it is offline.</source>
+        <translation>重新连接时只询问设备的目录是否有变化，已知设备的主题即使在离线时也会列出。</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Trust the cache without asking when the device reports the same revision (TCP/BLE)</source>
+        <translation>当设备报告相同版本时无需询问直接信任缓存 (TCP/BLE)</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Not recommended: the question it skips is tiny, and it is what keeps the device&apos;s reported information (firmware version and the like) up to date.</source>
+        <translation>不推荐：跳过的询问非常小，而正是它让设备报告的信息（固件版本等）保持最新。</translation>
+    </message>
+    <message numerus="yes">
         <location line="+9"/>
+        <source>Clear cache (%n device(s))</source>
+        <translation>
+            <numerusform>清除缓存（%n 个设备）</numerusform>
+        </translation>
+    </message>
+    <message>
+        <location line="+19"/>
         <source>Keep enough history for investigation without letting long-running sessions use unbounded memory.</source>
         <translation>保留足够的历史记录用于排查,同时避免长时间会话无限占用内存。</translation>
     </message>
@@ -4349,11 +4573,24 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     </message>
 </context>
 <context>
+    <name>traceview::StartupLoadingOverlay</name>
+    <message>
+        <location filename="../lib/core/startuploadingoverlay.cpp" line="+74"/>
+        <source>Loading dashboard...</source>
+        <translation>正在加载仪表板...</translation>
+    </message>
+</context>
+<context>
     <name>traceview::TcpTransport</name>
     <message>
-        <location filename="../lib/core/tcptransport.cpp" line="+102"/>
+        <location filename="../lib/core/tcptransport.cpp" line="+108"/>
         <source>TCP connection timed out</source>
         <translation>TCP 连接超时</translation>
+    </message>
+    <message>
+        <location line="+51"/>
+        <source>Could not find %1 on the network (mDNS)</source>
+        <translation>在网络上找不到 %1 (mDNS)</translation>
     </message>
 </context>
 <context>
@@ -4510,25 +4747,9 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>稍后</translation>
     </message>
     <message>
-        <source>&lt;b&gt;TraceView %1&lt;/b&gt; is available (you have v%2).</source>
-        <translation type="vanished">&lt;b&gt;TraceView %1&lt;/b&gt; 已发布 (您当前为 v%2)。</translation>
-    </message>
-    <message>
-        <source>No release notes provided.</source>
-        <translation type="vanished">未提供发布说明。</translation>
-    </message>
-    <message>
         <location line="+1"/>
         <source>Update Now</source>
         <translation>立即更新</translation>
-    </message>
-    <message>
-        <source>Skip This Version</source>
-        <translation type="vanished">跳过此版本</translation>
-    </message>
-    <message>
-        <source>Remind Me Later</source>
-        <translation type="vanished">稍后提醒</translation>
     </message>
 </context>
 <context>

@@ -12,12 +12,16 @@ class QFormLayout;
 class QLabel;
 class QLineEdit;
 class QPlainTextEdit;
+class QPushButton;
 class QSpinBox;
 class QToolButton;
 
 namespace traceview {
 
-// Edits one Device: name/description directly, a "Connection" section
+class DeviceLinksTable;
+class RobotLinksPanel;
+
+// Edits one Device: a "Connection" section
 // (port/baud/line terminator -- the config DeviceConnection, core/
 // deviceconnection.h, actually opens with, moved here now that each device
 // owns its own connection instead of sharing the old single Run tab bar)
@@ -105,6 +109,15 @@ public:
     // when the connection drops.
     void setReportedInfo(const QVector<DeviceInfoRecord>& info);
 
+    // What this device described on its last connection (the manifest cache,
+    // see ManifestStore): shown in "Reported by device"/"Reported catalog",
+    // marked as saved, wherever nothing live has arrived -- so the dialog of
+    // a disconnected device is not blank. Live data replaces it as it comes
+    // in and gives way back to it if it goes away. Never copied into
+    // m_device: result() carries live session state only.
+    void setCachedDescription(const QVector<CatalogTopicInfo>& topics,
+                              const QVector<DeviceInfoRecord>& info);
+
     // Refreshes the read-only status line the same way, and for the same
     // reason -- see setReportedIdentity() above.
     void setConnectionStatus(bool connected);
@@ -150,63 +163,30 @@ signals:
     void applyRequested();
 
 private:
-    void updateTransportFieldsVisibility();
+    // Shows the rows under the connections table that only some link types
+    // need: the password (TCP/BLE/Hub), the terminator (Serial), this
+    // device's id (Hub).
+    void updateConnectionRows();
 
     Device m_device;
 
     QLineEdit* m_nameEdit = nullptr;
-    QPlainTextEdit* m_descriptionEdit = nullptr;
 
+    // Every way to reach the device -- row 1 is the primary link, the rest
+    // Device::extraLinks. See DeviceLinksTable.
+    DeviceLinksTable* m_linksTable = nullptr;
+    // The simple view of the same links: one robot name, one checkbox per
+    // kind of link. See RobotLinksPanel.
+    RobotLinksPanel* m_linksPanel = nullptr;
+    // Shows/hides m_linksTable.
+    QToolButton* m_advancedButton = nullptr;
+    // The device-wide rows under the table.
     QFormLayout* m_connectionLayout = nullptr;
-    QComboBox* m_transportTypeCombo = nullptr;
-    int m_portRowIndex = -1;
-    int m_baudRowIndex = -1;
     int m_lineTerminatorRowIndex = -1;
-    int m_tcpHostRowIndex = -1;
-    int m_tcpPortRowIndex = -1;
-    int m_usbDeviceRowIndex = -1;
-    int m_parentRowIndex = -1;
-    int m_peerSourceIdRowIndex = -1;
     int m_childSourceIdRowIndex = -1;
     int m_peerPasswordRowIndex = -1;
     int m_cachePasswordRowIndex = -1;
-
-    QComboBox* m_portCombo = nullptr;
-    QToolButton* m_refreshPortsButton = nullptr;
-    QComboBox* m_baudCombo = nullptr;
     QComboBox* m_lineTerminatorCombo = nullptr;
-    QLineEdit* m_tcpHostEdit = nullptr;
-    QSpinBox* m_tcpPortSpin = nullptr;
-    QComboBox* m_usbDeviceCombo = nullptr;
-    QToolButton* m_refreshUsbDevicesButton = nullptr;
-
-    // Direct BLE row: an editable combo (same "picker with a manual-entry
-    // escape hatch" shape as m_peerSourceIdCombo) holding platform addresses
-    // -- picking a scan result sets the visible text to the raw address
-    // (itemData), never the decorated "name (address)" label, so
-    // result()'s plain currentText() read stays correct either way, same
-    // convention as m_portCombo.
-    int m_bleAddressRowIndex = -1;
-    QComboBox* m_bleAddressCombo = nullptr;
-    QToolButton* m_scanBleButton = nullptr;
-    bool m_bleScanning = false;
-
-    // Hub-channel rows: the device this one rides, the robot behind it, and
-    // the endpoint-key password for that robot.
-    QComboBox* m_parentCombo = nullptr;
-    // Editable: offers whatever peers the hub has actually reported on its
-    // hub.peers topic (see setAvailableHubPeers()) as pickable entries, but
-    // still accepts a hand-typed hex/decimal source_id for a robot it
-    // hasn't heard yet -- same "picker with a manual-entry escape hatch"
-    // shape as m_topicIdEdit in the chart/gauge config editors. The actual
-    // bound value lives in m_peerSourceId below, never re-parsed from
-    // whatever text happens to be displayed (a picked entry's label isn't
-    // meant to be typed back in).
-    QComboBox* m_peerSourceIdCombo = nullptr;
-    // Ground truth for the combo above -- set from picking a peer
-    // (m_peerSourceIdCombo's activated handler) or typing a numeric id by
-    // hand (its lineEdit's editingFinished). What result() actually reads.
-    quint32 m_peerSourceId = 0;
     // Read-only: this device's own source_id on the wire (hubChannelSourceId()
     // in devices/device.h), the value an operator must pass as the first
     // argument to the dongle's `hub -bind` -- shown here because nothing else
@@ -233,6 +213,9 @@ private:
     QToolButton* m_useReportedOtaButton = nullptr;
     QString m_reportedOtaEndpoint;
     void updateReportedOtaHint();
+    // Redraw the catalog list / info label from live data, else the cache.
+    void renderCatalog();
+    void renderReportedInfo();
     // The OTA tab (lib/ota/otatab.h) can also edit otaPassword/
     // cacheOtaPassword -- from its own per-row password field, committed via
     // OtaTab::passwordCacheChanged() -- but a device is configured here
@@ -256,6 +239,11 @@ private:
     // comment. Plain text (not a QListWidget) so the catalog can be shown as
     // indented, JSON-like text rather than one truncated line per topic.
     QPlainTextEdit* m_catalogList = nullptr;
+
+    // Last setCatalogTopics(), and setCachedDescription()'s fallback.
+    QVector<CatalogTopicInfo> m_liveTopics;
+    QVector<CatalogTopicInfo> m_cachedTopics;
+    QVector<DeviceInfoRecord> m_cachedInfo;
 };
 
 }  // namespace traceview

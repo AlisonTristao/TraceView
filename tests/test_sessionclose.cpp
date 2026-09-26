@@ -66,21 +66,14 @@ bool decodeWritten(const QByteArray& written, btp::DecodedFrame* out,
            btp::Error::Ok;
 }
 
-// Runs the real ENTER/READY/HELLO_RESULT exchange far enough that
-// BtpBackend regards the session as established. Other bootstrap requests
-// (manifest and clock sync) may be emitted afterward; callers deliberately
-// locate frames by object id rather than relying on an incidental index.
+// Runs the real HELLO/HELLO_RESULT exchange far enough that BtpBackend
+// regards the session as established. Other bootstrap requests (manifest and
+// clock sync) may be emitted afterward; callers deliberately locate frames by
+// object id rather than relying on an incidental index.
 void establishSession(BtpBackend& backend, QSignalSpy& written) {
+    const int beforeHello = written.count();
     backend.onTransportConnectionChanged(true);
-    QVERIFY(written.count() >= 1);
-
-    const QByteArray enter = written.at(0).at(0).toByteArray();
-    QVERIFY(enter.startsWith(QByteArrayLiteral("BTP/1 ENTER ")));
-    QByteArray nonce = enter.mid(QByteArrayLiteral("BTP/1 ENTER ").size());
-    nonce.chop(2);  // CRLF
-    const int beforeReady = written.count();
-    backend.feedBytes(QByteArrayLiteral("BTP/1 READY ") + nonce + QByteArrayLiteral("\r\n"));
-    QVERIFY(written.count() > beforeReady);
+    QVERIFY(written.count() > beforeHello);
 
     // The HELLO btp::Node just sent, framed with this backend's own identity
     // (BtpBackend::m_terminalSourceId/m_terminalBootId -- random per run) and
@@ -90,7 +83,7 @@ void establishSession(BtpBackend& backend, QSignalSpy& written) {
     // SessionInitiator::connect()'s own comment on why.
     btp::DecodedFrame hello{};
     std::vector<std::uint8_t> helloStorage;
-    QVERIFY(decodeWritten(written.at(beforeReady).at(0).toByteArray(), &hello, &helloStorage));
+    QVERIFY(decodeWritten(written.at(beforeHello).at(0).toByteArray(), &hello, &helloStorage));
     QCOMPARE(int(hello.header.type), int(btp::MessageType::Control));
     QCOMPARE(hello.header.object_id, kControlHello);
 

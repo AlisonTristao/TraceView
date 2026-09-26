@@ -300,7 +300,8 @@ void TestHubEndpoint::childTerminalInputWithoutAKeyIsNotSent() {
 }
 
 // The regression that matters most: an ordinary serial device is untouched. It
-// still handshakes, which is what a hub offers and a robot does not.
+// still handshakes, which is what a hub offers and a robot on the radio does
+// not.
 void TestHubEndpoint::anOrdinarySerialBackendStillHandshakes() {
     BtpBackend backend;  // the default: Serial / COBS, no hub endpoint set
     QCOMPARE(backend.peerSourceId(), 0u);
@@ -308,12 +309,14 @@ void TestHubEndpoint::anOrdinarySerialBackendStillHandshakes() {
     QSignalSpy written(&backend, &Backend::bytesToWrite);
     backend.onTransportConnectionChanged(true);
 
-    // BtpHandshake opens with the ENTER line, in plain text and not a frame --
-    // the marker that the console path is still the one being taken.
+    // It opens with HELLO -- the marker that the session path is still the
+    // one being taken.
     QVERIFY2(written.count() >= 1, "a serial backend must still start its handshake");
-    const QByteArray first = written.at(0).at(0).toByteArray();
-    QVERIFY2(first.startsWith("BTP/"), qPrintable(QStringLiteral("expected an ENTER line, got: %1")
-                                                      .arg(QString::fromLatin1(first.left(16)))));
+    btp::DecodedFrame decoded{};
+    std::vector<std::uint8_t> storage;
+    QVERIFY(decodeWritten(written.at(0).at(0).toByteArray(), /*cobsWrapped=*/true, &decoded,
+                          &storage));
+    QCOMPARE(decoded.header.object_id, quint16(0x0001));  // HELLO
 }
 
 // A child whose robot was never configured must ask nothing at all. Peer 0 is
@@ -334,7 +337,7 @@ void TestHubEndpoint::anUnconfiguredChildAsksNobodyAnything() {
         std::vector<std::uint8_t> storage;
         if (!decodeWritten(written.at(i).at(0).toByteArray(), /*cobsWrapped=*/false, &decoded,
                            &storage)) {
-            continue;  // the ENTER line is text, not a frame
+            continue;
         }
         QVERIFY2(decoded.header.object_id != 0x0003,
                  "no manifest request may be sent when no robot is configured");

@@ -10,6 +10,9 @@ namespace traceview {
 
 namespace {
 constexpr char kAccountsGroup[] = "developerAccounts";
+// Username of the developer session to resume on the next launch; absent
+// while in User mode.
+constexpr char kSessionUserKey[] = "session/developerUser";
 // Multiple of sizeof(quint32) -- randomSalt() fills it via
 // QRandomGenerator::fillRange(), which works in quint32 units.
 constexpr int kSaltLength = 16;
@@ -24,6 +27,28 @@ UserModeManager::UserModeManager() {
     loadAccounts();
     if (m_accounts.isEmpty()) {
         seedDefaultAccount();
+    }
+    restoreSession();
+}
+
+void UserModeManager::restoreSession() {
+    QSettings settings;
+    const int index = indexOfAccount(settings.value(kSessionUserKey).toString());
+    if (index < 0) {
+        // Never logged in, logged out, or the account is gone since.
+        settings.remove(kSessionUserKey);
+        return;
+    }
+    m_currentUserName = m_accounts[index].username;
+    m_mode = UserMode::Developer;
+}
+
+void UserModeManager::saveSession() const {
+    QSettings settings;
+    if (m_mode == UserMode::Developer) {
+        settings.setValue(kSessionUserKey, m_currentUserName);
+    } else {
+        settings.remove(kSessionUserKey);
     }
 }
 
@@ -100,6 +125,7 @@ bool UserModeManager::login(const QString& username, const QString& password) {
     }
     m_currentUserName = account.username;
     m_mode = UserMode::Developer;
+    saveSession();
     emit modeChanged(m_mode);
     return true;
 }
@@ -110,6 +136,7 @@ void UserModeManager::logout() {
     }
     m_mode = UserMode::User;
     m_currentUserName.clear();
+    saveSession();
     emit modeChanged(m_mode);
 }
 

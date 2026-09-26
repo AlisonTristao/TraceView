@@ -17,6 +17,8 @@ namespace {
 constexpr quint16 kControlHello = 0x0001;
 constexpr quint16 kControlHelloResult = 0x0002;
 constexpr int kHelloPayloadFixedSize = 40;  // offset where `versions` starts
+// BtpBackend's own HELLO_RESULT deadline (kHelloTimeoutMs, private there).
+constexpr int kHelloTimeoutMs = 3000;
 
 void appendLe(QByteArray& out, quint32 value, int width) {
     for (int i = 0; i < width; ++i) {
@@ -24,48 +26,16 @@ void appendLe(QByteArray& out, quint32 value, int width) {
     }
 }
 
-// The nonce out of an ENTER line: "BTP/1 ENTER <16 hex>\r\n".
-QByteArray nonceOf(const QByteArray& line) {
-    QByteArray nonce = line.mid(QByteArray("BTP/1 ENTER ").size());
-    nonce.chop(2);  // trailing \r\n
-    return nonce;
-}
-
 // ---------------------------------------------------------------------------
-// Standalone BtpHandshake: the ENTER/READY link handshake and the CONSOLE
-// watch it still owns (session-and-terminal.md section 3) -- see
-// btphandshake.h's class comment for why HELLO/HELLO_RESULT moved out of
-// this class entirely (btp::Node::connect(), driven by BtpBackend). Nothing
-// here decodes a frame; readyForHello() is as far as this class goes on its
-// own.
+// Standalone BtpHandshake: all that is left of it is the CONSOLE watch -- see
+// btphandshake.h's class comment. There is no ENTER/READY any more; HELLO is
+// btp::Node::connect(), driven by BtpBackend.
 // ---------------------------------------------------------------------------
-
-class HandshakeHarness {
-public:
-    explicit HandshakeHarness(int enterTimeoutMs = -1, int maxEnterAttempts = -1)
-        : handshake(nullptr, enterTimeoutMs, maxEnterAttempts) {
-        QObject::connect(&handshake, &BtpHandshake::bytesToWrite, &handshake,
-                         [this](const QByteArray& data) {
-                             enterLine = data;
-                             enterLines.append(data);
-                         });
-        QObject::connect(&handshake, &BtpHandshake::readyForHello, &handshake,
-                         [this] { ++readyCount; });
-    }
-
-    BtpHandshake handshake;
-    QByteArray enterLine;       // the most recent one
-    QVector<QByteArray> enterLines;  // every one, in order
-    int readyCount = 0;
-};
 
 class TestBtpHandshake : public QObject {
     Q_OBJECT
 
 private slots:
-    void enterIsResentWithTheSameNonceWhenNoReadyArrives();
-    void aReadyArrivingAfterAnEarlierTimeoutStillFiresReadyForHello();
-    void silenceThroughTheWholeBudgetFailsWithEnterFailed();
     void consoleLineAfterEstablishedFiresConsoleLineDetected();
     void consoleLineBeforeEstablishedIsIgnored();
 
@@ -73,85 +43,28 @@ private slots:
     // BtpBackend (m_node->connect()) -- these drive a real BtpBackend end to
     // end, exactly what an ordinary serial device does.
     void helloAdvertisesTheLibrarysFullSupportedVersionRange();
-    void directModeSendsHelloWithoutEnterReady();
+    void serialSendsHelloStraightAwayWithNoEnterLine();
+    void directModeSendsHelloStraightAway();
+    void helloIsResentWhenNoHelloResultArrives();
     void rejectedWriteIsReportedByTheBackend();
     void sessionEstablishedWhenSelectedVersionIsWithinTheAdvertisedRange();
     void sessionFailsWhenSelectedVersionIsOutsideTheAdvertisedRange();
 };
 
-// A lost ENTER is the common failure here -- the first line is written while
-// the dongle is still deep in AppRuntime::begin() (SD, SQLite, ESP-NOW) and
-// not yet reading the port, or into a device that just power-cycled.
-// Resending is the whole recovery.
-void TestBtpHandshake::enterIsResentWithTheSameNonceWhenNoReadyArrives() {
-    HandshakeHarness h(/*enterTimeoutMs=*/150, /*maxEnterAttempts=*/5);
-    h.handshake.start();
-    QCOMPARE(h.enterLines.size(), 1);
-
-    // ">= 2", never "== 2": the retry timer keeps firing, so under load the
-    // count can step past 2 between two polls of the QTRY loop and an
-    // equality check would then wait out its whole timeout and fail on a
-    // retry budget that is working exactly as intended.
-    QTRY_VERIFY_WITH_TIMEOUT(h.enterLines.size() >= 2, 4000);
-
-    // The SAME nonce, not a fresh one: a READY answering the first ENTER can
-    // still arrive late, and it has to keep matching. See m_enterNonce.
-    QCOMPARE(nonceOf(h.enterLines.at(1)), nonceOf(h.enterLines.at(0)));
-}
-
-// The reason the nonce is stable across retries, stated as a test: a slow
-// dongle answers the FIRST ENTER after that ENTER's own timeout already
-// fired. With a fresh nonce per attempt that reply would match nothing and
-// the handshake would stall until the budget ran out, even though the peer
-// did reply.
-void TestBtpHandshake::aReadyArrivingAfterAnEarlierTimeoutStillFiresReadyForHello() {
-    HandshakeHarness h(/*enterTimeoutMs=*/150, /*maxEnterAttempts=*/5);
-    h.handshake.start();
-    const QByteArray firstNonce = nonceOf(h.enterLines.at(0));
-    QTRY_VERIFY_WITH_TIMEOUT(h.enterLines.size() >= 2, 4000);
-
-    // Answering the FIRST attempt, long after its timer expired.
-    h.handshake.feedRawBytes("BTP/1 READY " + firstNonce + "\r\n");
-
-    QCOMPARE(h.readyCount, 1);
-}
-
-// Exhausting the budget is a real failure and has to say so exactly once --
-// BtpBackend turns enterFailed into the recovery that recycles the port
-// (Backend::sessionRecoveryNeeded), and a second emission would recycle a
-// connection that is already being reopened.
-void TestBtpHandshake::silenceThroughTheWholeBudgetFailsWithEnterFailed() {
-    HandshakeHarness h(/*enterTimeoutMs=*/100, /*maxEnterAttempts=*/3);
-    QSignalSpy failedSpy(&h.handshake, &BtpHandshake::enterFailed);
-
-    h.handshake.start();
-
-    QTRY_VERIFY_WITH_TIMEOUT(failedSpy.size() >= 1, 4000);
-    // Exactly the configured number of attempts, and not one more after the
-    // failure: the timer is single-shot and onEnterTimeout() stops retrying
-    // once the state left AwaitingReady.
-    QCOMPARE(h.enterLines.size(), 3);
-    // Well past another interval: nothing more is written once the budget is
-    // spent, and the failure is announced exactly once.
-    QTest::qWait(300);
-    QCOMPARE(h.enterLines.size(), 3);
-    QCOMPARE(failedSpy.size(), 1);
-}
-
 // The dongle prints "BTP/1 CONSOLE\r\n" whenever it drops the session back to
 // console (its inactivity watchdog, a SESSION_CLOSE, a bench human). The
 // transport stays up and BtpSession has no watchdog, so without this the
 // desktop would sit on a dead session forever. onSessionEstablished() is
-// BtpBackend's own signal that HELLO succeeded (this class no longer
-// negotiates it, so it no longer knows on its own).
+// BtpBackend's own signal that HELLO succeeded (this class does not
+// negotiate it, so it does not know on its own).
 void TestBtpHandshake::consoleLineAfterEstablishedFiresConsoleLineDetected() {
-    HandshakeHarness h;
-    h.handshake.onSessionEstablished();
+    BtpHandshake handshake;
+    handshake.onSessionEstablished();
 
-    QSignalSpy consoleSpy(&h.handshake, &BtpHandshake::consoleLineDetected);
+    QSignalSpy consoleSpy(&handshake, &BtpHandshake::consoleLineDetected);
     // Arrives glued to the tail of a binary frame, exactly as it would on the
     // wire -- the scan is over raw bytes, not parsed frames.
-    h.handshake.feedRawBytes(QByteArrayLiteral("\x00\x11\x22") + "BTP/1 CONSOLE\r\n");
+    handshake.feedRawBytes(QByteArrayLiteral("\x00\x11\x22") + "BTP/1 CONSOLE\r\n");
 
     QCOMPARE(consoleSpy.size(), 1);
 }
@@ -160,16 +73,11 @@ void TestBtpHandshake::consoleLineAfterEstablishedFiresConsoleLineDetected() {
 // during negotiation (a previous session's tail, a bench human) must not be
 // mistaken for a failure of the handshake in progress.
 void TestBtpHandshake::consoleLineBeforeEstablishedIsIgnored() {
-    HandshakeHarness h;
-    h.handshake.start();  // AwaitingReady
+    BtpHandshake handshake;
 
-    QSignalSpy consoleSpy(&h.handshake, &BtpHandshake::consoleLineDetected);
-    h.handshake.feedRawBytes("BTP/1 CONSOLE\r\n");
+    QSignalSpy consoleSpy(&handshake, &BtpHandshake::consoleLineDetected);
+    handshake.feedRawBytes("BTP/1 CONSOLE\r\n");
     QCOMPARE(consoleSpy.size(), 0);
-
-    // And the real READY still lands.
-    h.handshake.feedRawBytes("BTP/1 READY " + nonceOf(h.enterLine) + "\r\n");
-    QCOMPARE(h.readyCount, 1);
 }
 
 // ---------------------------------------------------------------------------
@@ -189,26 +97,25 @@ public:
         QObject::connect(&loopback, &BtpSession::frameReceived, &loopback,
                          [this](const BtpFrame& frame) { sent.append(frame); });
         QObject::connect(&backend, &Backend::bytesToWrite, &backend,
-                         [this](const QByteArray& data) {
-                             if (data.startsWith("BTP/1 ENTER ")) {
-                                 enterLine = data;
-                             }
-                         });
+                         [this](const QByteArray& data) { written.append(data); });
     }
 
-    // Runs the ENTER/READY handshake far enough that HELLO fires, and
-    // returns the HELLO frame captured on the other end of the loopback.
+    // Brings the link up -- HELLO goes out at once -- and returns the HELLO
+    // frame captured on the other end of the loopback.
     const BtpFrame& sendHelloAndCapture() {
         backend.onTransportConnectionChanged(true);
-        backend.feedBytes("BTP/1 READY " + nonceOf(enterLine) + "\r\n");
         helloFrame = sent.last();
         return helloFrame;
     }
 
-    const BtpFrame& sendDirectHelloAndCapture() {
-        backend.onTransportConnectionChanged(true);
-        helloFrame = sent.last();
-        return helloFrame;
+    int helloCount() const {
+        int count = 0;
+        for (const BtpFrame& frame : sent) {
+            if (frame.type == btp::MessageType::Control && frame.objectId == kControlHello) {
+                ++count;
+            }
+        }
+        return count;
     }
 
     // Delivers a HELLO_RESULT exactly as a real dongle would build one: the
@@ -252,7 +159,7 @@ public:
     BtpBackend backend;    // default: Serial / COBS, no hub endpoint
     BtpSession loopback;   // the "dongle" side of the cable
     QVector<BtpFrame> sent;
-    QByteArray enterLine;
+    QVector<QByteArray> written;  // every raw write, text or frame
     BtpFrame helloFrame;
 };
 
@@ -278,13 +185,38 @@ void TestBtpHandshake::helloAdvertisesTheLibrarysFullSupportedVersionRange() {
     }
 }
 
-void TestBtpHandshake::directModeSendsHelloWithoutEnterReady() {
-    BackendHarness h(BtpBackend::SessionStartMode::DirectBtp);
-    const BtpFrame& hello = h.sendDirectHelloAndCapture();
+// No ENTER/READY text exchange on serial any more: the very first bytes on
+// the wire are the HELLO frame, the same as TCP/BLE.
+void TestBtpHandshake::serialSendsHelloStraightAwayWithNoEnterLine() {
+    BackendHarness h;
+    const BtpFrame& hello = h.sendHelloAndCapture();
 
-    QVERIFY(h.enterLine.isEmpty());
     QCOMPARE(hello.type, btp::MessageType::Control);
     QCOMPARE(hello.objectId, kControlHello);
+    QCOMPARE(h.helloCount(), 1);
+    for (const QByteArray& data : h.written) {
+        QVERIFY2(!data.contains("BTP/1"), data.constData());
+    }
+}
+
+void TestBtpHandshake::directModeSendsHelloStraightAway() {
+    BackendHarness h(BtpBackend::SessionStartMode::DirectBtp);
+    const BtpFrame& hello = h.sendHelloAndCapture();
+
+    QCOMPARE(hello.type, btp::MessageType::Control);
+    QCOMPARE(hello.objectId, kControlHello);
+}
+
+// The first HELLO on a serial port is easily lost (opening the port can
+// reset the ESP32), so a missing HELLO_RESULT is answered with another HELLO
+// before the port is recycled.
+void TestBtpHandshake::helloIsResentWhenNoHelloResultArrives() {
+    BackendHarness h;
+    QSignalSpy recoverySpy(&h.backend, &Backend::sessionRecoveryNeeded);
+    h.sendHelloAndCapture();
+
+    QTRY_VERIFY_WITH_TIMEOUT(h.helloCount() >= 2, kHelloTimeoutMs + 2000);
+    QCOMPARE(recoverySpy.size(), 0);
 }
 
 void TestBtpHandshake::rejectedWriteIsReportedByTheBackend() {

@@ -273,6 +273,10 @@ signals:
     // grid (e.g. SerialWidgetBridge wiring a control's output to
     // SerialManager -- BACKEND_TODO.txt Task 9/10).
     void widgetCreated(DashboardWidget* widget);
+    // A widget's header clear button was clicked (DashboardCell::
+    // chartDataCleared) -- MainWindow drops the retained history of the
+    // fields it plots too, or it would come back on the next rebuild.
+    void widgetDataCleared(DashboardWidget* widget);
     // Fires from setDeviceConnected() only when the remembered state for
     // `deviceId` actually flips. SerialWidgetBridge forwards it to the
     // multi-tab serial monitors so each tab's connection dot stays live --

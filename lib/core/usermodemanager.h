@@ -8,13 +8,14 @@
 
 namespace traceview {
 
-// Session-only gate between the two ways TraceView can be operated: a
-// restricted "user" mode (the default on every launch, never persisted) and
-// an unlocked "developer" mode reached by logging in as one of the
-// registered accounts. MainWindow reacts to modeChanged() to hide/show the
-// Devices tab, the dashboard edit-mode lock, workspace management, and the
-// screen-size breakpoint toggle -- see its own modeChanged wiring for what
-// exactly that covers.
+// Gate between the two ways TraceView can be operated: a restricted "user"
+// mode (the default) and an unlocked "developer" mode reached by logging in
+// as one of the registered accounts. A developer login is remembered across
+// launches (QSettings) until logout, so the app reopens in the mode it was
+// left in; it lapses if that account has since been removed. MainWindow
+// reacts to modeChanged() to hide/show the Devices tab, the dashboard
+// edit-mode lock, workspace management, and the screen-size breakpoint
+// toggle -- see its own modeChanged wiring for what exactly that covers.
 //
 // Accounts themselves DO persist (QSettings, app-wide, not per .tvproj)
 // since they represent who is allowed to operate this installation, not
@@ -80,6 +81,10 @@ private:
 
     void loadAccounts();
     void saveAccounts() const;
+    // Resumes the developer login saved by saveSession(), if its account
+    // still exists. Constructor only, so no modeChanged() is emitted.
+    void restoreSession();
+    void saveSession() const;
     // Called once from the constructor when loadAccounts() leaves m_accounts
     // empty (a fresh install, or every account somehow got removed outside
     // the UI, e.g. a wiped QSettings) -- adds the fixed default "admin"

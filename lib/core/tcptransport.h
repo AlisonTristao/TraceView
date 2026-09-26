@@ -8,9 +8,12 @@
 
 #include "transport.h"
 
+class QHostAddress;
 class QTcpSocket;
 
 namespace traceview {
+
+class MdnsResolver;
 
 // Asynchronous TCP byte transport. It owns no protocol state: callers receive
 // exactly the bytes emitted by QTcpSocket and decide how to frame them.
@@ -61,13 +64,22 @@ private slots:
     void onSocketError();
     void onConnectTimeout();
     void retryConnection();
+    void onMdnsResolved(const QString& requestId, const QHostAddress& address);
+    void onMdnsResolveFailed(const QString& requestId);
 
 private:
+    // One connection attempt: connectToHost() directly, or -- for a *.local
+    // host -- an mDNS lookup first (see the .cpp).
+    void dial();
     void drainPendingFrames();
     void scheduleReconnect();
 
     static constexpr int kMaxPendingFrames = 16;
     QTcpSocket* m_socket = nullptr;
+    MdnsResolver* m_resolver = nullptr;
+    // Bumped by every dial() and close(); an mDNS answer for an older
+    // attempt no longer matches and is dropped.
+    quint64 m_dialSequence = 0;
     QString m_host;
     quint16 m_port = 0;
     bool m_closing = false;

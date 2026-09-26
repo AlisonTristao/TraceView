@@ -474,6 +474,17 @@ saved before workspaces existed (no `workspaces` section, only a bare
 top-level `dashboard`) migrates that single layout into one `"Default"`
 workspace.
 
+Switching destroys the outgoing widgets, but their data does not go with
+them. Every chart and gauge in a workspace that isn't showing keeps its
+topic subscribed in the background, derived from that workspace's saved
+`dashboard` JSON (`MainWindow::syncBackgroundTelemetry()`). Every field any
+workspace plots is recorded in `TelemetryHistory`
+([lib/telemetry/telemetryhistory.h](../lib/telemetry/telemetryhistory.h)),
+up to the largest buffer any of its charts needs. A widget built by a switch
+seeds its buffers from that history before going live, so it comes back
+already up to date. The header's clear button also clears the history of
+the fields that widget plots.
+
 `icon` is optional: an [IconLibrary](../lib/theme/iconlibrary.h) id
 (`"lucide:<name>"`, from the vendored [Lucide](https://lucide.dev) set —
 refresh it with `tools/import_lucide.py`) that the user picked for the

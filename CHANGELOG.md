@@ -7,6 +7,133 @@ release flow.
 
 ## [Unreleased]
 
+## [4.7.0] - 2026-09-26
+
+### Added
+
+- Several ways to connect to one device: a device can have Serial, Wi-Fi
+  (TCP), Bluetooth and Hub links at once. Enabled links are tried in order
+  until one connects, and a link that fails moves on to the next within
+  about a second.
+- Connect by name: in Device Settings, type the robot's name and tick the
+  links it has. Serial finds the port whose USB device reports that name,
+  Wi-Fi dials `<name>.local`, Bluetooth scans for the advertised name, and
+  Hub finds the robot among the connected hubs' peers. Two robots sharing a
+  name are never picked automatically. Search offers the names seen over
+  USB, Bluetooth and hubs; manual addresses, link order, baud rate and TCP
+  port live under Advanced. Existing manual connections stay manual.
+- The serial port picker shows which robot is on each port ("COM5 —
+  BallyRobot") without opening it, on Windows, Linux, macOS and Android.
+- Manifest cache: each device's manifest is kept between sessions, so a
+  reconnect only asks whether the catalog changed. On by default, with a
+  switch and a clear button under Settings → Connections.
+- Charts and gauges keep updating while their workspace is not showing.
+  Switching back shows them already up to date instead of empty. The topics
+  they plot stay subscribed in the background, at the same rate as when
+  visible.
+- Device cards and the device settings dialog are no longer blank while
+  the robot is disconnected: they show what the robot described on its last
+  connection (from the manifest cache), marked as saved, until live data
+  replaces it.
+
+### Changed
+
+- Rendering is smoother by default: the Medium profile (the default) now
+  draws at 60 FPS (was 30). Low is 30 FPS and High 120 FPS, and a new
+  Extra High profile draws at 240 FPS for fast displays.
+- Device Settings is simpler: the Description field is gone, and the
+  device card shows the information the device itself reports instead.
+  The settings area scrolls, and Connect applies the settings without
+  closing the dialog.
+- New Serial links default to 5,000,000 baud (the robot's native USB port
+  ignores the baud rate).
+- Requires BTP 2.48.0: manifests are requested and received through
+  `btp::Node`, which also owns the manifest cache.
+
+## [4.6.10] - 2026-09-25
+
+### Fixed
+
+- Windows: BLE works in the installed TraceView. The installer is now built
+  with MSVC; the MinGW build it came from before has no Windows Bluetooth
+  backend, so scanning never found a robot.
+
+## [4.6.9] - 2026-09-25
+
+### Fixed
+
+- Android: on the Xiaomi keyboard, Backspace in a text field no longer
+  makes the keyboard close and reopen, when the keyboard reports
+  fullscreen mode (Qt restarted the keyboard on every raw key). The
+  keyboard log now records each key and whether it took this path, to
+  confirm the fix on the phone.
+
+## [4.6.8] - 2026-09-25
+
+### Added
+
+- Direct TCP link to the robot over Wi-Fi, now built in by default. The
+  robot's host can be its mDNS name (e.g. `ballyrobot.local`): it is looked
+  up again on every connection attempt, so the robot's IP changing on each
+  reboot no longer matters, and it works on Windows without Bonjour.
+
+### Fixed
+
+- Direct TCP/BLE sessions no longer drop every 30 s while idle ("session
+  watchdog: no traffic from the peer"): the keepalive is now answered by
+  the robot itself.
+- A robot that powers off or reboots is noticed in about 5 s instead of
+  30 s on a direct link.
+- After the robot reboots, charts and commands work again on their own:
+  subscriptions are re-sent to the robot's new boot instead of being
+  rejected.
+- A device whose reconnect attempt failed without ever connecting (e.g. the
+  robot still booting) no longer stops retrying for good.
+
+## [4.6.7] - 2026-09-25
+
+### Added
+
+- Developer mode: a developer login is remembered across launches.
+- A loading cover is shown while the startup dashboard is being built,
+  instead of a blank window.
+
+### Fixed
+
+- Direct BLE link to the robot, end to end:
+  - Scanning lists the robot even when its service UUID only arrives on a
+    later advertisement or scan response.
+  - Picking a scan result saves the robot's address, not the
+    "Name (address)" label, which could not be dialed.
+  - Several queued frames are packed into each GATT write, so fast typing
+    in the terminal no longer overflows the send queue ("transport rejected
+    60 bytes").
+  - On Windows, BLE needs the MSVC build: the MinGW Qt kit ships no
+    Bluetooth backend, and scanning there never finds anything.
+- The window no longer freezes every few seconds while a device is
+  retrying its connection (the channel key was re-derived on the UI thread
+  on every connection-state change). This also affected the dongle/ESP-NOW
+  path.
+- A device no longer reconnects with its old settings while its settings
+  dialog is still open.
+- The window reopens at its last size, maximized on the first run.
+
+## [4.6.6] - 2026-09-25
+
+### Changed
+
+- Developer mode: the keyboard diagnostics overlay also shows the Android
+  side (keyboard insets, keyboard show/hide animations, focus moves), and a
+  new "Copy Keyboard Log" option copies the whole trace to the clipboard.
+
+## [4.6.5] - 2026-09-25
+
+### Fixed
+
+- Android: the keyboard no longer closes and reopens on every Backspace
+  with keyboards (seen on Xiaomi) that briefly report themselves hidden
+  while resizing their suggestion strip.
+
 ## [4.6.4] - 2026-09-25
 
 ### Added

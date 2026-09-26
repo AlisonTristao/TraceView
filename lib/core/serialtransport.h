@@ -54,6 +54,14 @@ public:
     // the deadline expires.
     virtual bool drainWrites(int timeoutMs) = 0;
 
+    // Whether `portName` belongs to a bally dongle (kDongleVid:kDonglePid,
+    // its TinyUSB CDC+HID composite -- bally_dongle's UsbComposite.cpp). A
+    // bally_OS robot speaks BTP on its own TinyUSB CDC with esp_tinyusb's
+    // default product id instead, and HELLO_RESULT carries no role, so this
+    // is how a serial device is told apart as dongle or robot before any
+    // byte is exchanged. False when the port's ids are unknown.
+    virtual bool isDonglePort(const QString& portName) const = 0;
+
     // The terminator writeCommand() appends -- a global, port-level setting
     // (Run ribbon tab), not per-widget (docs/PROTOCOL.md "Outbound: control
     // commands"). Defaults to Lf, matching the inbound frame terminator.
@@ -79,6 +87,10 @@ public:
     static qint32 safeBaudRate(qint32 requested) {
         return requested == 1200 ? 115200 : requested;
     }
+
+    // Must follow bally_dongle's kDeviceDescriptor if that ever changes.
+    static constexpr quint16 kDongleVid = 0x303A;
+    static constexpr quint16 kDonglePid = 0x8A17;
 
 private:
     LineTerminator m_lineTerminator = LineTerminator::Lf;

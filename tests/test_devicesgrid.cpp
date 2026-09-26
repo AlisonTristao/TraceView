@@ -8,6 +8,7 @@
 #include "devices/devicesgrid.h"
 
 using traceview::CommType;
+using traceview::CachedDeviceDescription;
 using traceview::Device;
 using traceview::DeviceCard;
 using traceview::DevicesGrid;
@@ -41,6 +42,7 @@ private slots:
     void addDeviceReturnsUsableIdAndOrdersLeftToRightThenWraps();
     void removeDeviceCompactsRemainingLayout();
     void updateDeviceRefreshesCardData();
+    void cardFallsBackToCachedInfoOnlyWhileNothingLiveIsReported();
     void clickSelectsCardAndReplacesPreviousSelection();
     void removeSelectedRemovesTheSelectedDevice();
     void removeDeviceClearsSelectionIfRemovedDeviceWasSelected();
@@ -54,7 +56,7 @@ void TestDevicesGrid::addDeviceReturnsUsableIdAndOrdersLeftToRightThenWraps() {
     // Both dimensions <= 849 so gutter() clamps to its 8px floor
     // deterministically (see kMinGutter/kGutterFraction in
     // devicesgrid.cpp) no matter the exact rounding: 600 * 0.01 = 6, below
-    // the floor either way. At an 8px gutter, kDeviceCardSize (260x140)
+    // the floor either way. At an 8px gutter, kDeviceCardSize (260x180)
     // gives a 268px row pitch; 600 - 8 = 592px usable width fits exactly 2
     // cards per row (2*268=536 <= 592 < 3*268=804).
     grid.resize(600, 600);
@@ -74,9 +76,9 @@ void TestDevicesGrid::addDeviceReturnsUsableIdAndOrdersLeftToRightThenWraps() {
     DeviceCard* cardC = cardFor(grid, idC);
     QVERIFY(cardA && cardB && cardC);
 
-    QCOMPARE(cardA->geometry(), QRect(8, 8, 260, 140));
-    QCOMPARE(cardB->geometry(), QRect(276, 8, 260, 140));
-    QCOMPARE(cardC->geometry(), QRect(8, 156, 260, 140));  // wraps to row 2
+    QCOMPARE(cardA->geometry(), QRect(8, 8, 260, 180));
+    QCOMPARE(cardB->geometry(), QRect(276, 8, 260, 180));
+    QCOMPARE(cardC->geometry(), QRect(8, 196, 260, 180));  // wraps to row 2
 }
 
 void TestDevicesGrid::removeDeviceCompactsRemainingLayout() {
@@ -105,8 +107,8 @@ void TestDevicesGrid::removeDeviceCompactsRemainingLayout() {
 
     // idC re-flows from row 2, col 0 into idB's old row 1, col 1 slot --
     // no gap left where idB used to be.
-    QCOMPARE(cardA->geometry(), QRect(8, 8, 260, 140));
-    QCOMPARE(cardC->geometry(), QRect(276, 8, 260, 140));
+    QCOMPARE(cardA->geometry(), QRect(8, 8, 260, 180));
+    QCOMPARE(cardC->geometry(), QRect(276, 8, 260, 180));
 }
 
 void TestDevicesGrid::updateDeviceRefreshesCardData() {
@@ -129,6 +131,38 @@ void TestDevicesGrid::updateDeviceRefreshesCardData() {
     // device exists here, but check the model itself reflects the edit too.
     QCOMPARE(grid.devices().size(), 1);
     QCOMPARE(grid.devices().first().name, QString("Alpha Renamed"));
+}
+
+void TestDevicesGrid::cardFallsBackToCachedInfoOnlyWhileNothingLiveIsReported() {
+    DevicesGrid grid;
+    Device device;
+    device.name = "Robot";
+    const QString id = grid.addDevice(device);
+    DeviceCard* card = cardFor(grid, id);
+    QVERIFY(card);
+    QVERIFY(card->cachedInfo().isEmpty());
+
+    int lookups = 0;
+    grid.setCachedDescriptionProvider([&lookups](const QString&) {
+        ++lookups;
+        CachedDeviceDescription cached;
+        cached.info = {{"fw_version", "Firmware", "1dd9fc5"}};
+        return cached;
+    });
+    // Setting the provider fills the existing, offline card.
+    QCOMPARE(card->cachedInfo().size(), 1);
+    QCOMPARE(card->cachedInfo().at(0).value, QString("1dd9fc5"));
+
+    // Live info: the cache is not even looked up.
+    const int before = lookups;
+    grid.setDeviceReportedInfo(id, {{"fw_version", "Firmware", "abc1234"}});
+    QCOMPARE(lookups, before);
+    QVERIFY(card->cachedInfo().isEmpty());
+    QCOMPARE(card->device().reportedInfo.at(0).value, QString("abc1234"));
+
+    // Dropped connection: back to the cache.
+    grid.setDeviceReportedInfo(id, {});
+    QCOMPARE(card->cachedInfo().size(), 1);
 }
 
 void TestDevicesGrid::clickSelectsCardAndReplacesPreviousSelection() {

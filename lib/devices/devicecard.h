@@ -11,12 +11,12 @@ namespace traceview {
 
 // Fixed footprint every DeviceCard is placed at (DevicesGrid setGeometry()s
 // each card to exactly this) -- comfortably fits the header's icon/status
-// dot/title/gear plus a body of a word-wrapped description and a reported
-// BTP version/ID line below it, without crowding.
+// dot/title/gear plus a body of the device's reported info (a handful of
+// "label: value" lines) and a reported BTP version/ID line below it.
 // `inline` (C++17 inline variable) so this single definition is shared
 // across every TU that includes this header, same as devicesgrid.cpp's
 // layout math needing the same constant.
-inline const QSize kDeviceCardSize(260, 140);
+inline const QSize kDeviceCardSize(260, 180);
 
 // One device's card, painted in the same procedural-QPainter style as
 // DashboardCell's header chrome (see dashboard/dashboardcell.cpp:
@@ -34,6 +34,15 @@ public:
     explicit DeviceCard(QWidget* parent = nullptr);
 
     void setDevice(const Device& device);
+
+    // What the device reported on its last connection (the manifest cache's
+    // source_info), drawn dimmed in place of Device::reportedInfo while that
+    // is empty -- so a disconnected card is not blank. DevicesGrid supplies
+    // it; the card never reads the cache itself.
+    void setCachedInfo(const QVector<DeviceInfoRecord>& info);
+    const QVector<DeviceInfoRecord>& cachedInfo() const {
+        return m_cachedInfo;
+    }
     const Device& device() const {
         return m_device;
     }
@@ -77,6 +86,7 @@ private:
     QRect statusDotRect() const;
 
     Device m_device;
+    QVector<DeviceInfoRecord> m_cachedInfo;
     bool m_selected = false;
 };
 

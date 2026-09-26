@@ -24,8 +24,21 @@ echo "Device ABIs: $(adb shell getprop ro.product.cpu.abilist)"
 adb install -r "$apk"
 adb logcat -c
 adb logcat -b crash -c || true
-adb shell am start -W -n "$package/$activity"
-sleep 15
+# Right after install the system is still reconciling the new package's data
+# directories, and a launch in that window can fail inside system_server
+# ("ActivityManager: Failure starting process <package>") before any of the
+# app's code runs. That is the emulator, not TraceView, so relaunch when that
+# exact message shows up; a crash of the app itself is never retried.
+for attempt in 1 2 3; do
+    adb shell am start -W -n "$package/$activity"
+    sleep 3
+    adb logcat -d | grep -q "Failure starting process $package" || break
+    (( attempt < 3 )) || break
+    echo "Launch attempt $attempt failed in system_server before the app ran; retrying"
+    adb logcat -c
+    sleep 5
+done
+sleep 12
 
 adb logcat -d > "$out/logcat-full.txt"
 adb logcat -b crash -d > "$out/logcat-crash.txt" || true

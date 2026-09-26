@@ -41,8 +41,14 @@ QStringList DevicesGrid::childDeviceIds(const QString& id) const {
         return children;
     }
     for (const Device& device : m_devices) {
-        if (device.transportType == TransportType::HubChannel && device.parentDeviceId == id) {
-            children.append(device.id);
+        // Any of its links riding `id` makes it a child -- deleting the hub
+        // would leave that link pointing at nothing.
+        for (int i = 0; i < deviceLinkCount(device); ++i) {
+            const DeviceLink link = deviceLinkAt(device, i);
+            if (link.transportType == TransportType::HubChannel && link.parentDeviceId == id) {
+                children.append(device.id);
+                break;
+            }
         }
     }
     return children;
@@ -93,7 +99,7 @@ void DevicesGrid::setDeviceConnected(const QString& id, bool connected) {
         return;
     }
     m_devices[idx].connected = connected;
-    m_cards[idx]->setDevice(m_devices[idx]);
+    refreshCard(idx);
     emit deviceUpdated(m_devices[idx]);
 }
 
@@ -105,8 +111,17 @@ void DevicesGrid::setDeviceIdentity(const QString& id, const QString& btpVersion
     }
     m_devices[idx].btpVersion = btpVersion;
     m_devices[idx].btpId = btpId;
-    m_cards[idx]->setDevice(m_devices[idx]);
+    refreshCard(idx);
     emit deviceUpdated(m_devices[idx]);
+}
+
+void DevicesGrid::setDeviceActiveLink(const QString& id, int activeLink) {
+    const int idx = indexOfDevice(id);
+    if (idx < 0 || m_devices[idx].activeLink == activeLink) {
+        return;
+    }
+    m_devices[idx].activeLink = activeLink;
+    refreshCard(idx);
 }
 
 void DevicesGrid::setDeviceBlePeerUuid(const QString& id, const QString& peerUuid) {
@@ -115,7 +130,7 @@ void DevicesGrid::setDeviceBlePeerUuid(const QString& id, const QString& peerUui
         return;
     }
     m_devices[idx].blePeerUuid = peerUuid;
-    m_cards[idx]->setDevice(m_devices[idx]);
+    refreshCard(idx);
     emit deviceUpdated(m_devices[idx]);
 }
 
@@ -133,7 +148,7 @@ void DevicesGrid::setDevicePeerState(const QString& id, bool peerOnline, bool pe
     m_devices[idx].peerBootId = peerBootId;
     m_devices[idx].peerRssi = peerRssi;
     m_devices[idx].peerRttMs = peerRttMs;
-    m_cards[idx]->setDevice(m_devices[idx]);
+    refreshCard(idx);
     // Deliberately no emit deviceUpdated() -- see the header. MainWindow reads
     // devices() directly in reconcileHubChildPresence(); nothing else needs a
     // push for this.
@@ -154,11 +169,29 @@ void DevicesGrid::setDeviceReportedInfo(const QString& id, const QVector<DeviceI
         return;
     }
     m_devices[idx].reportedInfo = info;
-    m_cards[idx]->setDevice(m_devices[idx]);
+    refreshCard(idx);
     // No emit deviceUpdated() -- see the header (same reason as
     // setDevicePeerState). The open config dialog gets it via the dedicated
     // signal below instead.
     emit deviceReportedInfoChanged(id);
+}
+
+void DevicesGrid::setCachedDescriptionProvider(
+    std::function<CachedDeviceDescription(const QString&)> provider) {
+    m_cachedDescriptionProvider = std::move(provider);
+    for (int i = 0; i < m_cards.size(); ++i) {
+        refreshCard(i);
+    }
+}
+
+void DevicesGrid::refreshCard(int idx) {
+    const Device& device = m_devices[idx];
+    // Only looked up while nothing live is there to show -- the card ignores
+    // it otherwise, and a connected device refreshes often (peer state).
+    m_cards[idx]->setCachedInfo(device.reportedInfo.isEmpty() && m_cachedDescriptionProvider
+                                    ? m_cachedDescriptionProvider(device.id).info
+                                    : QVector<DeviceInfoRecord>());
+    m_cards[idx]->setDevice(device);
 }
 
 void DevicesGrid::notifyCatalogChanged(const QString& id) {
@@ -170,13 +203,13 @@ void DevicesGrid::applyInsertDevice(const Device& device, int index) {
     m_devices.insert(clampedIndex, device);
 
     auto* card = new DeviceCard(this);
-    card->setDevice(device);
     connect(card, &DeviceCard::configRequested, this, &DevicesGrid::handleConfigRequested);
     connect(card, &DeviceCard::selectRequested, this, &DevicesGrid::handleCardSelectRequested);
     connect(card, &DeviceCard::connectToggleRequested, this, &DevicesGrid::connectToggleRequested);
     connect(card, &DeviceCard::scriptRequested, this, &DevicesGrid::scriptRequested);
     card->show();
     m_cards.insert(clampedIndex, card);
+    refreshCard(clampedIndex);
 
     relayout();
     emit deviceAdded(device);
@@ -207,7 +240,7 @@ void DevicesGrid::applyUpdateDevice(const Device& device) {
         return;
     }
     m_devices[idx] = device;
-    m_cards[idx]->setDevice(device);
+    refreshCard(idx);
     emit deviceUpdated(device);
 }
 
@@ -290,6 +323,10 @@ void DevicesGrid::handleConfigRequested(const QString& deviceId) {
             parents.append({candidate.id, candidate.name});
         }
         dialog.setAvailableParentDevices(parents);
+    }
+    if (m_cachedDescriptionProvider) {
+        const CachedDeviceDescription cached = m_cachedDescriptionProvider(m_devices[idx].id);
+        dialog.setCachedDescription(cached.topics, cached.info);
     }
     if (m_topicCatalogProvider) {
         dialog.setCatalogTopics(m_topicCatalogProvider(m_devices[idx].id));
@@ -380,7 +417,9 @@ void DevicesGrid::handleConfigRequested(const QString& deviceId) {
                 }
                 dialog.setCatalogTopics(m_topicCatalogProvider(deviceId));
             });
+    emit configDialogActiveChanged(deviceId, true);
     const int dialogResult = DialogPresenter::exec(dialog, DialogPresenter::Style::Page);
+    emit configDialogActiveChanged(deviceId, false);
     // Closing the dialog (however it closed) must not leave a scan running
     // with nothing left able to stop it -- stopping an already-stopped scan
     // is a no-op (BleDiscoveryService::stop()), so this is unconditional

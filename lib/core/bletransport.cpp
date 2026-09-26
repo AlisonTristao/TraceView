@@ -31,17 +31,48 @@ QBluetoothUuid BleTransport::txCharacteristicUuid() {
     return QBluetoothUuid(QStringLiteral("20f96ede-2f3b-4e02-b2cf-be6bb75dbe35"));
 }
 
+bool BleTransport::isPlatformAddress(const QString& target) {
+    const QString trimmed = target.trimmed();
+    return !QBluetoothAddress(trimmed).isNull() || !QBluetoothUuid(trimmed).isNull();
+}
+
+QHash<QString, QString>& BleTransport::nameCache() {
+    static QHash<QString, QString> cache;
+    return cache;
+}
+
+QString BleTransport::cachedAddressForName(const QString& name) {
+    return nameCache().value(name.trimmed().toCaseFolded());
+}
+
+void BleTransport::rememberAddressForName(const QString& name, const QString& address) {
+    const QString key = name.trimmed().toCaseFolded();
+    if (key.isEmpty() || !isPlatformAddress(address) || nameCache().contains(key)) {
+        return;
+    }
+    nameCache().insert(key, address.trimmed());
+}
+
+bool BleTransport::bleNameMatches(const QString& advertised, const QString& wanted) {
+    const QString name = advertised.trimmed();
+    return !name.isEmpty() && name.compare(wanted.trimmed(), Qt::CaseInsensitive) == 0;
+}
+
 BleTransport::BleTransport(QObject* parent) : Transport(parent) {
     m_connectTimer.setSingleShot(true);
     connect(&m_connectTimer, &QTimer::timeout, this, &BleTransport::onConnectTimeout);
+    m_lookupTimer.setSingleShot(true);
+    connect(&m_lookupTimer, &QTimer::timeout, this, &BleTransport::onNameLookupTimeout);
+    m_settleTimer.setSingleShot(true);
+    connect(&m_settleTimer, &QTimer::timeout, this, &BleTransport::finishNameLookup);
 }
 
 BleTransport::~BleTransport() {
     teardown(/*disconnectController=*/false);
 }
 
-bool BleTransport::open(const QString& address) {
-    const QString trimmed = address.trimmed();
+bool BleTransport::open(const QString& target) {
+    const QString trimmed = target.trimmed();
     if (trimmed.isEmpty()) {
         return false;
     }
@@ -69,16 +100,125 @@ bool BleTransport::open(const QString& address) {
                               "Bluetooth in the system settings."));
             return;
         }
-        startController();
+        if (isPlatformAddress(m_address)) {
+            startController(m_address);
+        } else {
+            startNameLookup();
+        }
     });
     return true;
 }
 
-void BleTransport::startController() {
-    const QBluetoothAddress macAddress(m_address);
+void BleTransport::startNameLookup() {
+    m_cachedAddress = cachedAddressForName(m_address);
+    qCInfo(lcConnection) << "looking up BLE robot named" << m_address
+                         << (m_cachedAddress.isEmpty()
+                                 ? QString()
+                                 : QStringLiteral("(last seen at %1)").arg(m_cachedAddress));
+    m_lookupMatches.clear();
+    m_lookupSeen.clear();
+    m_lookup = new BleDiscoveryService(this);
+    // BleDiscoveryService already filters on the BTP service UUID, so only
+    // the name is left to compare. It re-emits the same peripheral on every
+    // sweep; the list below keeps each address once.
+    //
+    // The address this name last resolved to counts as a match even while
+    // its advertised name is still empty: the name travels in the scan
+    // response, which Windows in particular often reports late or not at
+    // all, while the UUID-bearing advertisement is already in.
+    connect(m_lookup, &BleDiscoveryService::deviceDiscovered, this,
+            [this](const BleDiscoveryService::DiscoveredDevice& device) {
+                const QString seen = device.name.isEmpty()
+                                         ? device.address
+                                         : QStringLiteral("%1 %2").arg(device.name, device.address);
+                if (!m_lookupSeen.contains(seen)) {
+                    m_lookupSeen.append(seen);
+                }
+                const bool nameMatches = bleNameMatches(device.name, m_address);
+                const bool cachedMatches = device.name.trimmed().isEmpty() &&
+                                           !m_cachedAddress.isEmpty() &&
+                                           device.address == m_cachedAddress;
+                if ((!nameMatches && !cachedMatches) ||
+                    m_lookupMatches.contains(device.address)) {
+                    return;
+                }
+                m_lookupMatches.append(device.address);
+                if (m_lookupMatches.size() == 1) {
+                    m_settleTimer.start(kNameSettleMs);
+                }
+            });
+    connect(m_lookup, &BleDiscoveryService::errorOccurred, this,
+            [this](const QString& message) {
+                failConnection(tr("BLE scan failed: %1").arg(message));
+            });
+    m_lookupTimer.start(kNameLookupTimeoutMs);
+    m_lookup->start();
+}
+
+void BleTransport::onNameLookupTimeout() {
+    const QString cached = m_cachedAddress;
+    const QStringList seen = m_lookupSeen;
+    stopNameLookup();
+    qCInfo(lcConnection) << "BLE lookup for" << m_address << "saw"
+                         << (seen.isEmpty() ? QStringLiteral("no BTP peripheral")
+                                            : seen.join(QStringLiteral("; ")));
+    if (!cached.isEmpty()) {
+        // Not heard advertising, but it answered to this name before: dial
+        // it directly -- a robot that is up but whose advertisements this
+        // scan missed still connects, and one that is off just times out.
+        qCInfo(lcConnection) << "BLE name" << m_address << "not seen, trying last address"
+                             << cached;
+        startController(cached);
+        return;
+    }
+    failConnection(seen.isEmpty()
+                       ? tr("no BTP robot named \"%1\" found nearby (no BTP robot "
+                            "advertising at all)")
+                             .arg(m_address)
+                       : tr("no BTP robot named \"%1\" found nearby (seen: %2)")
+                             .arg(m_address, seen.join(QStringLiteral("; "))));
+}
+
+void BleTransport::finishNameLookup() {
+    const QStringList matches = m_lookupMatches;
+    // Scanning while connecting slows the connection down on several
+    // backends (Android in particular), so the scan ends first.
+    stopNameLookup();
+    if (matches.isEmpty()) {
+        return;
+    }
+    if (matches.size() > 1) {
+        failConnection(tr("%1 BLE robots are named \"%2\" (%3) -- give each robot its own "
+                          "name, or pick one by address")
+                           .arg(matches.size())
+                           .arg(m_address, matches.join(QStringLiteral(", "))));
+        return;
+    }
+    qCInfo(lcConnection) << "BLE name" << m_address << "found at" << matches.first();
+    nameCache().insert(m_address.toCaseFolded(), matches.first());
+    startController(matches.first());
+}
+
+void BleTransport::stopNameLookup() {
+    m_lookupTimer.stop();
+    m_settleTimer.stop();
+    m_lookupMatches.clear();
+    m_lookupSeen.clear();
+    if (m_lookup != nullptr) {
+        // deleteLater(), not delete: this can run from inside one of
+        // m_lookup's own signals (an error, or the match that ends the scan).
+        m_lookup->disconnect(this);
+        m_lookup->stop();
+        m_lookup->deleteLater();
+        m_lookup = nullptr;
+    }
+}
+
+void BleTransport::startController(const QString& address) {
+    const QBluetoothAddress macAddress(address);
     QBluetoothDeviceInfo info = !macAddress.isNull()
         ? QBluetoothDeviceInfo(macAddress, QString(), 0)
-        : QBluetoothDeviceInfo(QBluetoothUuid(m_address), QString(), 0);
+        : QBluetoothDeviceInfo(QBluetoothUuid(address), QString(), 0);
     info.setCoreConfigurations(QBluetoothDeviceInfo::LowEnergyCoreConfiguration);
 
     m_controller = QLowEnergyController::createCentral(info, this);
@@ -98,7 +238,7 @@ void BleTransport::startController() {
     connect(m_controller, &QLowEnergyController::discoveryFinished, this,
             &BleTransport::onDiscoveryFinished);
 
-    qCInfo(lcConnection) << "connecting BLE to" << m_address;
+    qCInfo(lcConnection) << "connecting BLE to" << address;
     m_connectTimer.start(m_connectTimeoutMs);
     m_controller->connectToDevice();
 }
@@ -270,29 +410,41 @@ void BleTransport::drainNext() {
     if (!m_connected || m_writeInFlight) {
         return;
     }
-    if (m_currentFrame.isEmpty()) {
-        if (m_pendingFrames.isEmpty()) {
-            return;
+    // RX is a byte stream (fragmentation-and-transports.md section 8.2: the
+    // robot concatenates writes and COBS-decodes), so one write may carry
+    // the tail of one frame and the start of the next. Filling every write
+    // up to the MTU instead of one frame per write is what keeps small
+    // frames (a terminal keystroke is ~60 octets) from each paying a full
+    // write-with-response round trip.
+    const qsizetype capacity = mtuPayloadSize();
+    QByteArray chunk;
+    chunk.reserve(capacity);
+    while (chunk.size() < capacity) {
+        if (m_currentFrame.isEmpty()) {
+            if (m_pendingFrames.isEmpty()) {
+                break;
+            }
+            m_currentFrame = m_pendingFrames.dequeue();
+            m_currentOffset = 0;
         }
-        m_currentFrame = m_pendingFrames.dequeue();
-        m_currentOffset = 0;
+        const qsizetype take =
+            qMin(capacity - chunk.size(), m_currentFrame.size() - m_currentOffset);
+        chunk.append(m_currentFrame.constData() + m_currentOffset, take);
+        m_currentOffset += take;
+        if (m_currentOffset >= m_currentFrame.size()) {
+            m_currentFrame.clear();
+            m_currentOffset = 0;
+        }
     }
-
-    const int chunkSize =
-        qMin(qsizetype(mtuPayloadSize()), m_currentFrame.size() - m_currentOffset);
-    const QByteArray chunk = m_currentFrame.mid(m_currentOffset, chunkSize);
-    m_currentOffset += chunkSize;
+    if (chunk.isEmpty()) {
+        return;
+    }
     m_writeInFlight = true;
     // RX is "write with response" by contract (T04) -- the next chunk is
     // only sent from onCharacteristicWritten(), which is also what gives a
     // slow/congested link real backpressure instead of queuing writes the
     // controller has no room for.
     m_service->writeCharacteristic(m_rxCharacteristic, chunk, QLowEnergyService::WriteWithResponse);
-
-    if (m_currentOffset >= m_currentFrame.size()) {
-        m_currentFrame.clear();
-        m_currentOffset = 0;
-    }
 }
 
 int BleTransport::mtuPayloadSize() const {
@@ -317,6 +469,7 @@ void BleTransport::failConnection(const QString& reason) {
 void BleTransport::teardown(bool disconnectController) {
     ++m_attempt;
     m_connectTimer.stop();
+    stopNameLookup();
     m_connected = false;
     m_pendingFrames.clear();
     m_currentFrame.clear();

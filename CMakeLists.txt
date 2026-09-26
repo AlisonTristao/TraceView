@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.21)
 
 project(TraceView
-    VERSION 4.6.4
+    VERSION 4.7.0
     DESCRIPTION "Real-time telemetry dashboard for ESP32/ESP-NOW robots"
     LANGUAGES CXX
 )
@@ -36,7 +36,10 @@ option(TRACEVIEW_ENABLE_SERIAL "Build the serial transport (QSerialPort; USB Hos
     ${TRACEVIEW_WIRED_TRANSPORTS_DEFAULT})
 option(TRACEVIEW_ENABLE_USB_HID "Build the hidapi USB HID transport (never on iOS)"
     ${TRACEVIEW_WIRED_TRANSPORTS_DEFAULT})
-option(TRACEVIEW_ENABLE_TCP "Enable the TCP transport integration" OFF)
+# ON by default since 4.6.8: the direct TCP link to bally_OS works end to end
+# (mDNS *.local lookup, keepalive, reconnect). Only QtNetwork, which the app
+# already links unconditionally.
+option(TRACEVIEW_ENABLE_TCP "Enable the TCP transport integration" ON)
 # ON by default since 4.3.0: the transport (lib/core/bletransport.cpp) and
 # the firmware's GATT service both exist; it was only left OFF while they
 # were being written. Needs the Qt Connectivity module (Qt6::Bluetooth).
@@ -132,12 +135,12 @@ set(BTP_ENABLE_AEAD ON CACHE BOOL "" FORCE)
 FetchContent_Declare(
     btp
     GIT_REPOSITORY https://github.com/AlisonTristao/BTP.git
-    # v2.46.0: a keyed btp::Node drops unsealed messages past the handshake
-    # (NodeConfig::accept_cleartext()) -- the reason a keyed direct TCP/BLE
-    # session now seals everything it sends (btpbackend.h's
-    # setDirectEndpointKey()). Carries 2.45.0's per-field optional manifest
-    # ranges (manifestclient.cpp, dashboard/widgets/chartdata.h).
-    GIT_TAG v2.46.0
+    # v2.48.0: btp::Node consumes manifests for many sources (on_manifest())
+    # and owns the manifest cache (NodeConfig::manifest_load()/store(), backed
+    # by protocol/manifeststore.h) -- ManifestClient now requests and receives
+    # through m_node. Carries 2.46.0's keyed-node cleartext drop
+    # (setDirectEndpointKey()) and 2.45.0's per-field optional manifest ranges.
+    GIT_TAG v2.48.0
 )
 FetchContent_MakeAvailable(btp)
 
@@ -342,6 +345,15 @@ if(WIN32)
         NAMES windeployqt6 windeployqt
         HINTS "${Qt6_DIR}/../../../bin"
     )
+    # MinGW: the kit's own libstdc++/libgcc/libwinpthread must ship next to
+    # the exe (see below). MSVC: windeployqt's --compiler-runtime would only
+    # drop vc_redist.x64.exe in the folder; the VC++ runtime DLLs are
+    # installed app-local by InstallRequiredSystemLibraries instead.
+    if(MINGW)
+        set(TRACEVIEW_WINDEPLOYQT_RUNTIME_FLAG --compiler-runtime)
+    else()
+        set(TRACEVIEW_WINDEPLOYQT_RUNTIME_FLAG --no-compiler-runtime)
+    endif()
     if(WINDEPLOYQT_EXECUTABLE)
         # --no-translations removed: the app now ships real translations
         # (see LanguageManager), and it also installs Qt's own qtbase_*.qm
@@ -355,8 +367,8 @@ if(WIN32)
         # packaged app fails to start with STATUS_DLL_NOT_FOUND on a clean
         # machine.
         add_custom_command(TARGET TraceView POST_BUILD
-            COMMAND "${WINDEPLOYQT_EXECUTABLE}" --compiler-runtime "$<TARGET_FILE:TraceView>"
-            COMMENT "Deploying Qt + MinGW runtime next to TraceView.exe"
+            COMMAND "${WINDEPLOYQT_EXECUTABLE}" ${TRACEVIEW_WINDEPLOYQT_RUNTIME_FLAG} "$<TARGET_FILE:TraceView>"
+            COMMENT "Deploying the Qt runtime next to TraceView.exe"
         )
     else()
         message(WARNING "windeployqt not found: TraceView.exe will not have "
@@ -382,9 +394,19 @@ if(WIN32)
 
     if(WINDEPLOYQT_EXECUTABLE)
         install(CODE "
-            execute_process(COMMAND \"${WINDEPLOYQT_EXECUTABLE}\" --compiler-runtime
+            execute_process(COMMAND \"${WINDEPLOYQT_EXECUTABLE}\" ${TRACEVIEW_WINDEPLOYQT_RUNTIME_FLAG}
                 \"\${CMAKE_INSTALL_PREFIX}/TraceView.exe\")
         ")
+    endif()
+
+    if(MSVC)
+        # The release installer is built with MSVC (release.yml): Qt's MinGW
+        # kit has no Windows Bluetooth backend ("Dummy backend running"), so
+        # a MinGW TraceView can never find a BLE robot. Ship the VC++ runtime
+        # (vcruntime140*.dll, msvcp140*.dll) next to TraceView.exe so the
+        # installer runs on a machine without the VC++ Redistributable.
+        set(CMAKE_INSTALL_SYSTEM_RUNTIME_DESTINATION .)
+        include(InstallRequiredSystemLibraries)
     endif()
 
     # windeployqt's --compiler-runtime only bundles libgcc/libstdc++/
@@ -395,7 +417,10 @@ if(WIN32)
     # the staged install directory with `ldd` afterwards catches whatever
     # windeployqt didn't -- see scripts/collect_windows_deps.sh's own
     # comment for the exact failure this fixes.
-    find_program(BASH_EXECUTABLE bash)
+    # MinGW/MSYS2 only: the official MSVC Qt kit has no such extra DLLs.
+    if(MINGW)
+        find_program(BASH_EXECUTABLE bash)
+    endif()
     if(BASH_EXECUTABLE)
         # bash.exe run as a bare subprocess (not an interactive/login shell)
         # never sources the profile that puts Git's own usr/bin -- where its
@@ -412,7 +437,7 @@ if(WIN32)
                 \"${CMAKE_SOURCE_DIR}/scripts/collect_windows_deps.sh\"
                 \"\${CMAKE_INSTALL_PREFIX}\")
         ")
-    else()
+    elseif(MINGW)
         message(WARNING "bash not found: a CPack/NSIS package built from this "
             "configure may be missing a Qt module's own third-party DLL "
             "dependency (see scripts/collect_windows_deps.sh).")

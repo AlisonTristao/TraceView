@@ -20,6 +20,7 @@ add_traceview_test(test_dashboardgrid traceview_dashboard)
 # Devices panel data model/card/grid, plus its own JSON persistence (see
 # lib/devices). Only traceview_devices; no dashboard/protocol dependency.
 add_traceview_test(test_device traceview_devices)
+add_traceview_test(test_deviceconfigdialog traceview_devices)
 add_traceview_test(test_devicesgrid traceview_devices)
 # hub.peers reassembly -- six parallel variable-length arrays arriving one
 # (field, element) at a time. Only traceview_devices: the accumulator lives
@@ -111,6 +112,7 @@ add_traceview_test(test_mainwindowchrome traceview_ui)
 # Generic telemetry value types (lib/telemetry) -- no BTP dependency at all
 # (traceview_telemetry links just Qt6::Core; see lib/CMakeLists.txt).
 add_traceview_test(test_telemetryseriesbuffer traceview_telemetry)
+add_traceview_test(test_telemetryhistory traceview_telemetry)
 
 # BTP v1 client (topico 14) -- protocol/transport layer only, no QWidget
 # dependency (traceview_protocol links just Qt6::Core and btp::codec; see

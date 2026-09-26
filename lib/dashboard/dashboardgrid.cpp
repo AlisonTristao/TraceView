@@ -1262,6 +1262,7 @@ DashboardCell* DashboardGrid::createCell(const DashboardItem& item) {
     connect(cell, &DashboardCell::resizeMoved, this, &DashboardGrid::handleResizeMoved);
     connect(cell, &DashboardCell::resizeFinished, this, &DashboardGrid::handleResizeFinished);
     connect(cell, &DashboardCell::selectRequested, this, &DashboardGrid::handleSelectRequested);
+    connect(cell, &DashboardCell::chartDataCleared, this, &DashboardGrid::widgetDataCleared);
 
     m_cells.insert(item.id, cell);
     emit widgetCreated(content);

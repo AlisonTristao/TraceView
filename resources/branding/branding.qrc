@@ -1,5 +1,6 @@
 <RCC>
   <qresource prefix="/">
     <file alias="branding/wordmark-corner.svg">traceview-wordmark-corner-cropped.svg</file>
+    <file alias="branding/wordmark.svg">traceview-wordmark.svg</file>
   </qresource>
 </RCC>

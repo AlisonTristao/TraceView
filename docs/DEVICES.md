@@ -11,6 +11,31 @@ Dashboard tab while its "enable editing" lock is off
 (`updatePanelVisibility()` gates them on `editingActive()`, which is only
 ever true on the Dashboard tab with editing enabled).
 
+## Connecting by name
+
+In Device Settings, enter the name configured on the device and check the
+communications it supports. Connect applies the settings without closing the
+dialog. Enabled links are tried in order until a connection works.
+
+- Serial matches the USB product name to an available port (ignoring case and
+  surrounding spaces). Adapters that only report a generic name such as CH340
+  need a port selected in Advanced; TraceView does not probe unrelated ports.
+- TCP converts the name to a lowercase DNS label: punctuation and spaces become
+  hyphens, repeated hyphens collapse, and the label is limited to 63 characters
+  without leading or trailing hyphens. `Robo 2` becomes `robo-2.local`. The device
+  firmware must advertise that hostname.
+- BLE scans for the advertised device name.
+- Hub searches the peers reported by connected hubs. Different robots sharing
+  a name are not selected automatically. Advanced can restrict the chosen hub.
+
+Search offers names from USB descriptors, BLE advertisements and hub peers.
+Advanced exposes manual addresses, link order, baud rate, TCP port and an
+optional card title. Existing manual connections remain manual. Unchecking a
+communication disables all its links while keeping their settings.
+
+Discovery and reported information update inside a scrollable settings area,
+without changing the window size or moving the dialog buttons off screen.
+
 ## Pieces
 
 - **`Device`** ([lib/devices/device.h](../lib/devices/device.h)) — one
@@ -220,6 +245,22 @@ non-undoable mirroring `setDeviceConnected()` uses for `connected`, so
 device last actually said, never a stale or hand-typed value. A dropped
 connection clears both back to empty (`MainWindow::
 onDeviceConnectionStateChanged()`) until the next successful handshake.
+
+While nothing live is there, the dialog falls back to the manifest cache
+(`ManifestStore`): the source_info and catalog the device described on its
+last connection, marked "saved from the last connection", with the cached
+`source_id` as the ID field's placeholder. `MainWindow` finds the cache
+entry by the device's own `source_id` when known (live `btpId`, or a hub
+link's `peerSourceId`), else by the robot name matched against each cached
+manifest's source_info `name` (`ManifestClient::cachedSourceNamed()`; two
+robots sharing a name match neither). The cached values are display-only --
+never copied into `Device::reportedInfo`, so they never reach the project
+file. Live data replaces them as it arrives.
+
+The card does the same with the cached source_info: `DevicesGrid::
+refreshCard()` hands it to `DeviceCard::setCachedInfo()` whenever the device
+has no live `reportedInfo`, and the card draws it dimmed, with "saved from
+the last connection" on its bottom line.
 
 ## Persistence
 

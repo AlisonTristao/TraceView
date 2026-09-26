@@ -217,7 +217,8 @@ void TestDeviceConnection::connectToTcpReachesNegotiatingBtpAgainstALocalServer(
 // HELLO that SessionStartMode::DirectBtp sends the instant the socket
 // connects. Detecting that is BtpBackend's job, not TcpTransport's --
 // BtpBackend::kHelloTimeoutMs (3000ms, btpbackend.h) drives m_node's own
-// watchdog and, on timeout, emits sessionRecoveryNeeded(), which
+// watchdog; after kMaxHelloAttempts (3) unanswered HELLOs -- ~9 s -- it
+// emits sessionRecoveryNeeded(), which
 // DeviceConnection's ctor already wires to close the transport while still
 // in NegotiatingBtp (see the sessionRecoveryNeeded lambda in
 // deviceconnection.cpp). This is the one new test in this file that
@@ -243,7 +244,7 @@ void TestDeviceConnection::connectToTcpSessionRecoversWhenHelloResultNeverArrive
     // watchdog must notice on its own and fall back to Disconnected (from
     // which the retry timer takes over) instead of sitting in
     // NegotiatingBtp forever.
-    QTRY_COMPARE_WITH_TIMEOUT(connection.connectionPhase(), ConnectionPhase::Disconnected, 5000);
+    QTRY_COMPARE_WITH_TIMEOUT(connection.connectionPhase(), ConnectionPhase::Disconnected, 12000);
     // Recovery, not disconnectFrom(): the caller's intent to be connected
     // must survive so the retry timer actually retries.
     QVERIFY(connection.wantsConnection());

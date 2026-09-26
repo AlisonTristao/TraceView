@@ -37,6 +37,24 @@
             }
         },
         {
+            "name": "windows-msvc-release",
+            "displayName": "Windows (MSVC + Ninja, Release)",
+            "description": "Release build for packaging the Windows installer. MSVC, not MinGW: Qt's MinGW kit ships no Windows Bluetooth backend, so BLE is dead in a MinGW build. Run from a VS x64 developer environment with QT_ROOT_DIR set to an MSVC Qt kit.",
+            "inherits": "default",
+            "binaryDir": "${sourceDir}/build/windows-msvc-release",
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Windows"
+            },
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
+                "CMAKE_C_COMPILER": "cl",
+                "CMAKE_CXX_COMPILER": "cl",
+                "CMAKE_PREFIX_PATH": "$env{QT_ROOT_DIR}"
+            }
+        },
+        {
             "name": "windows-msvc",
             "displayName": "Windows (Visual Studio 2022)",
             "description": "Build with Visual Studio 2022 and its matching MSVC Qt kit. Set QT_ROOT_DIR first.",
@@ -191,6 +209,15 @@
                 "type": "equals",
                 "lhs": "${hostSystemName}",
                 "rhs": "Linux"
+            }
+        },
+        {
+            "name": "windows-msvc-release",
+            "configurePreset": "windows-msvc-release",
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Windows"
             }
         },
         {

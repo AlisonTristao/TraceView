@@ -15,6 +15,7 @@
 #include "devices/device.h"
 #include "devices/hubpeeraccumulator.h"
 #include "telemetry/telemetrybinding.h"
+#include "telemetry/telemetryhistory.h"
 #include "updater/updateinfo.h"
 
 class QAction;
@@ -42,6 +43,7 @@ class BtpMonitorTab;
 class DashboardGrid;
 class DashboardWidget;
 class DebugChartsWindow;
+class Backend;
 class DeviceConnection;
 class DevicePreviewFrame;
 class DevicesGrid;
@@ -61,6 +63,7 @@ class UpdateChecker;
 class UpdateDownloader;
 class WorkspaceDock;
 class BrandCornerMark;
+class StartupLoadingOverlay;
 class WorkspaceSwitcher;
 
 class MainWindow : public QMainWindow {
@@ -102,6 +105,8 @@ protected:
     // keeps this from thrashing setBreakpoint() while a border is dragged
     // back and forth across a threshold.
     void resizeEvent(QResizeEvent* event) override;
+    // Saves the window geometry restored by the constructor.
+    void closeEvent(QCloseEvent* event) override;
 
 private:
     void buildMenus();
@@ -326,6 +331,39 @@ private:
     // factored out so onDeviceUpdated() can rebuild one in place too, when a
     // device's transportType itself changes (see its own comment).
     DeviceConnection* createDeviceConnection(const Device& device);
+    // Tears down `device.id`'s connection and builds a fresh one for the
+    // transport `device` names (a DeviceConnection's Transport/Backend pair is
+    // fixed at construction), keeping every id-keyed hook resolving. Returns
+    // the new connection. `device` is the EFFECTIVE device (effectiveDevice()).
+    DeviceConnection* rebuildDeviceConnection(const Device& device);
+
+    // --- Several ways to connect (Device::extraLinks) ---
+    // Once a second, for every device with more than one usable link: while
+    // it is wanted but not live, keep a probe dialing each of its other
+    // direct links (updateLinkProbes()), and let its DeviceLinkCycler rotate
+    // the device's own connection through the rest (hub channels) -- see
+    // devices/device.h.
+    void tickDeviceLinkCycles();
+    // `searching`: the device is wanted and not live. Then every usable link
+    // but the one in use -- hub channels aside, they ride their parent's
+    // connection -- is dialed at the same time by a silent, throwaway
+    // DeviceConnection of its own; otherwise all of the device's probes go.
+    // The first probe whose session comes up wins (onLinkProbeReady()).
+    void updateLinkProbes(const Device& device, bool searching);
+    void dropLinkProbes(const QString& deviceId);
+    // Probe `index` of `deviceId` reached ConnectionPhase::Ready: drop every
+    // probe and switch the device to that link.
+    void onLinkProbeReady(const QString& deviceId, int index);
+    // The TCP/BLE/serial/USB half of applyDeviceTarget(): dials `connection`
+    // at `device`'s own (already resolved) transport fields.
+    void dialDirectTarget(DeviceConnection* connection, const Device& device);
+    // Makes link `index` (0 = primary) the one `deviceId` dials: records it
+    // as the device's activeLink, rebuilds the connection when the transport
+    // type changes, dials it, and re-points widgets/subscriptions at the new
+    // backend.
+    void switchDeviceLink(const QString& deviceId, int index);
+    // The stored device (DevicesGrid) by id, or nullptr.
+    const Device* findDevice(const QVector<Device>& devices, const QString& id) const;
     // Resolves a Device's own BTP identity the same way for both a
     // hub-channel device (its persisted target, known even before it ever
     // connects) and anything else (its live-reported btpId) -- shared by
@@ -345,6 +383,28 @@ private:
     // place that knows all three, so the three call sites below do not each
     // have to.
     void applyDeviceTarget(DeviceConnection* connection, const Device& device);
+
+    // --- Links found by the robot's name (DeviceLink::autoTarget) ---
+    // What an automatic link can resolve against right now: the serial ports
+    // with their USB product names, and every robot the connected hubs report.
+    LinkDirectory linkDirectory(TransportType forType);
+    // `effective` (an effectiveDevice()) with an automatic link's target
+    // filled in from the robot name; unchanged when the link is manual.
+    Device resolveAutoTarget(const Device& effective);
+    // Same, from what applyDeviceTarget() last resolved rather than resolving
+    // again -- for the read-only questions (which hub, which robot id) asked
+    // many times a second.
+    Device withLastResolvedTarget(const Device& effective) const;
+    // Once per cycle tick: an automatic link that found nothing, or whose
+    // target moved (another port, another hub), is dialed again.
+    void retryAutoTargets();
+    // deriveChannelKey() is PBKDF2 at 200000 iterations -- slow on purpose,
+    // and applyDeviceTarget() runs on the UI thread on every device update
+    // and every reattachHubChildren() (i.e. on every connection-state change
+    // while something is retrying). Deriving each time froze the window
+    // every few seconds; a password's key never changes, so derive it once.
+    QByteArray channelKeyFor(const QString& password);
+    QHash<QString, QByteArray> m_channelKeyCache;
     // Re-points every hub-channel child at its parent. Needed because a
     // child can exist before its parent does: loading a project walks the
     // saved device list in order, and nothing guarantees a hub comes before
@@ -495,6 +555,9 @@ private:
     // example -- run once at startup, after the window is first shown so the
     // breakpoint is picked against its real size.
     void openStartupDashboard();
+    // Runs openStartupDashboard() once, then drops m_startupOverlay; later
+    // calls are no-ops (see the constructor's startup wiring).
+    void finishStartup();
     // Copies the live workspaces/devices state into ProjectStore's sections
     // ahead of a save.
     void syncProjectSections();
@@ -584,6 +647,29 @@ private:
     // core/deviceconnection.h. Created/destroyed/updated in lockstep with
     // m_devicesGrid's own list (onDeviceAdded/onDeviceRemoved/onDeviceUpdated).
     QHash<QString, DeviceConnection*> m_deviceConnections;
+    // One per device -- see tickDeviceLinkCycles().
+    QHash<QString, DeviceLinkCycler> m_deviceLinkCyclers;
+    // Device id -> link index -> the probe dialing it -- see
+    // updateLinkProbes(). `target` is the resolved link it dials, so an
+    // automatic link that resolves elsewhere gets a fresh probe.
+    struct LinkProbe {
+        DeviceConnection* connection = nullptr;
+        DeviceLink target;
+    };
+    QHash<QString, QHash<int, LinkProbe>> m_linkProbes;
+    // Set while switchDeviceLink() closes the previous link, whose errors are
+    // not a verdict on the link about to be tried.
+    bool m_switchingDeviceLink = false;
+    // deviceLinksSignature() as last applied -- onDeviceUpdated() fires for
+    // every connect/disconnect too, and only a real change to the links may
+    // send the device back to its primary one.
+    QHash<QString, QByteArray> m_deviceLinkSignatures;
+    // Per device with an automatic link in use: the link as applyDeviceTarget()
+    // last resolved it. Present = dialed and still wanted (an empty target
+    // means "still looking for the robot"); removed when the user
+    // disconnects, so the retry loop leaves it alone.
+    QHash<QString, DeviceLink> m_autoResolvedLinks;
+    QTimer* m_deviceLinkCycleTimer = nullptr;
 #ifdef TRACEVIEW_ENABLE_BLE
     // Backs DevicesGrid::setBleScanToggleHandler()/setBleDeviceListProvider()
     // (TAREFAS_TCP_BLE_ANDROID.txt T27/T32) -- traceview_devices can't own
@@ -661,6 +747,8 @@ private:
     // User-mode-only wordmark overlaid on m_appShell's top-right corner --
     // see brandcornermark.h; shown/hidden by updateChromeVisibility().
     BrandCornerMark* m_brandCornerMark = nullptr;
+    // Covers the window until the startup dashboard is built; null after.
+    StartupLoadingOverlay* m_startupOverlay = nullptr;
     QAction* m_addWidgetAction = nullptr;
     QAction* m_addDeviceAction = nullptr;
     QAction* m_removeDeviceAction = nullptr;
@@ -695,6 +783,7 @@ private:
     QMenu* m_fileMenu = nullptr;
     QAction* m_debugAction = nullptr;
     QAction* m_keyboardDiagnosticsAction = nullptr;
+    QAction* m_copyKeyboardLogAction = nullptr;
     // View's Developer-only entries (Keyboard Shortcuts, Open Log Folder,
     // Reset Panel Positions and the separator after them) -- User mode keeps
     // only Theme/Font/Language there.
@@ -749,6 +838,24 @@ private:
     // config edit (or its undo/redo) could have changed a widget's device/
     // source/topic/sample time.
     void refreshWidgetSubscriptions();
+    // Keeps every chart/gauge of the workspaces NOT showing subscribed, and
+    // m_telemetryHistory retaining every field any workspace plots, so a
+    // workspace comes back with its charts already up to date. Background
+    // subscriptions are one per (workspace, item), derived from the
+    // workspace's saved dashboard JSON the same way a live widget derives
+    // its own. AddOnly registers/updates them without dropping any and
+    // leaves retention untouched: loadDashboardJson() runs it before the
+    // outgoing widgets are destroyed, so their topics never drop to zero
+    // consumers (an UNSUBSCRIBE and a re-SUBSCRIBE on every switch), then
+    // runs Full once the new widgets exist.
+    enum class BackgroundSync { AddOnly, Full };
+    void syncBackgroundTelemetry(BackgroundSync mode);
+    // Copies m_telemetryHistory into a freshly created chart/gauge widget,
+    // before its live fieldSample connection exists.
+    void seedWidgetFromHistory(DashboardWidget* widget);
+    // Header clear button: drops the retained history of every field the
+    // widget plots, or it would reappear on the next rebuild.
+    void onWidgetDataCleared(DashboardWidget* widget);
     // Recomputes the built-in subscriptions table (requested vs. effective
     // rate, plus bytes/drops from a status_version=2 STATUS), aggregated
     // across every connected device's Backend.
@@ -766,8 +873,26 @@ private:
     struct WidgetSubscription {
         QString deviceId;
         quint64 handle = 0;
+        // The Backend `handle` belongs to. Compared instead of the device id:
+        // switching a device to another link rebuilds its connection, so the
+        // id stays the same while the Backend (and every handle) is new.
+        QPointer<Backend> backend;
     };
     QHash<DashboardWidget*, WidgetSubscription> m_widgetSubscriptions;
+
+    // Recent samples of every field some widget in some workspace plots --
+    // see syncBackgroundTelemetry(). Fed by every DeviceConnection's
+    // Backend::fieldSample (createDeviceConnection()).
+    TelemetryHistory m_telemetryHistory;
+    // One subscription reference held for a dashboard item of a workspace
+    // that isn't showing, keyed by "<workspaceId>/<itemId>". `backend` is a
+    // QPointer because a device rebuild or removal deletes the Backend the
+    // handle belongs to; a dead one is simply re-registered on the new one.
+    struct BackgroundSubscription {
+        QPointer<Backend> backend;
+        quint64 handle = 0;
+    };
+    QHash<QString, BackgroundSubscription> m_backgroundSubscriptions;
 
     // One hub's live hub.peers state, from the moment something first asks
     // for it (hubPeersFor()) until its device goes away. Keyed by the HUB's
@@ -795,6 +920,17 @@ private:
         HubPeerAccumulator accumulator;
     };
     QHash<QString, HubPeersWatch> m_hubPeerWatches;
+    // Per hub (keyed by the HUB's Device::id): robot source_id -> the name
+    // that robot's manifest source_info carries, from every manifest the
+    // hub's session has described (BtpBackend::sourceInfoSeen). Lets
+    // hubPeersFor() label the picker's robots by name even while no child is
+    // connected to any of them. Kept across a hub reconnect -- a robot's name
+    // does not depend on which session reported it.
+    QHash<QString, QHash<quint32, QString>> m_hubPeerNames;
+    // "<hub id>/<source_id>" -> when hubPeersFor() last asked the hub for that
+    // robot's manifest because its name was still unknown -- rate-limits the
+    // ask to one per robot every few seconds while the picker polls.
+    QHash<QString, qint64> m_hubPeerNameRequestMs;
     // Drives reconcileHubChildPresence() at 1 Hz -- the dongle caps hub.peers
     // at 2 Hz and its "online" window is 4 s, so a 1 s reconcile is plenty.
     QTimer* m_hubPeerReconcileTimer = nullptr;

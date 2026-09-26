@@ -7,6 +7,11 @@
 #include "diagnostics/hexdump.h"
 #include "preferences/appsettings.h"
 
+#ifdef Q_OS_WIN
+#include <qt_windows.h>
+#include <setupapi.h>
+#endif
+
 namespace traceview {
 
 SerialManager::SerialManager(QObject* parent) : SerialTransport(parent), m_port(new QSerialPort(this)) {
@@ -38,6 +43,61 @@ bool SerialManager::isDuplicateDialInPort(const QString& portName) {
     Q_UNUSED(portName);
     return false;
 #endif
+}
+
+QHash<QString, QString> SerialManager::portProductNames() {
+    QHash<QString, QString> names;
+#ifdef Q_OS_WIN
+    // GUID_DEVCLASS_PORTS and DEVPKEY_Device_BusReportedDeviceDesc, spelled
+    // out so this needs neither initguid.h nor devpkey.h.
+    static const GUID kPortsClass = {
+        0x4d36e978, 0xe325, 0x11ce, {0xbf, 0xc1, 0x08, 0x00, 0x2b, 0xe1, 0x03, 0x18}};
+    static const DEVPROPKEY kBusReportedDeviceDesc = {
+        {0x540b947e, 0x8b40, 0x45bc, {0xa8, 0xa2, 0x6a, 0x0b, 0x89, 0x4c, 0xbd, 0xa2}}, 4};
+
+    const HDEVINFO set = SetupDiGetClassDevsW(&kPortsClass, nullptr, nullptr, DIGCF_PRESENT);
+    if (set == INVALID_HANDLE_VALUE) {
+        return names;
+    }
+    SP_DEVINFO_DATA info{};
+    info.cbSize = sizeof(info);
+    for (DWORD index = 0; SetupDiEnumDeviceInfo(set, index, &info); ++index) {
+        QString portName;
+        const HKEY key =
+            SetupDiOpenDevRegKey(set, &info, DICS_FLAG_GLOBAL, 0, DIREG_DEV, KEY_READ);
+        if (key != INVALID_HANDLE_VALUE) {
+            wchar_t buffer[64] = {};
+            DWORD size = sizeof(buffer) - sizeof(wchar_t);
+            DWORD type = 0;
+            if (RegQueryValueExW(key, L"PortName", nullptr, &type,
+                                 reinterpret_cast<LPBYTE>(buffer), &size) == ERROR_SUCCESS &&
+                type == REG_SZ) {
+                portName = QString::fromWCharArray(buffer);
+            }
+            RegCloseKey(key);
+        }
+        if (portName.isEmpty()) {
+            continue;
+        }
+        wchar_t description[256] = {};
+        DEVPROPTYPE propertyType = 0;
+        if (SetupDiGetDevicePropertyW(set, &info, &kBusReportedDeviceDesc, &propertyType,
+                                      reinterpret_cast<PBYTE>(description),
+                                      sizeof(description) - sizeof(wchar_t), nullptr, 0) &&
+            propertyType == DEVPROP_TYPE_STRING) {
+            names.insert(portName, QString::fromWCharArray(description).trimmed());
+        }
+    }
+    SetupDiDestroyDeviceInfoList(set);
+#else
+    const QList<QSerialPortInfo> infos = QSerialPortInfo::availablePorts();
+    for (const QSerialPortInfo& info : infos) {
+        if (!info.description().isEmpty()) {
+            names.insert(info.portName(), info.description());
+        }
+    }
+#endif
+    return names;
 }
 
 bool SerialManager::open(const QString& portName, qint32 baudRate) {
@@ -140,6 +200,12 @@ bool SerialManager::write(const QByteArray& data) {
         qCDebug(lcSerial) << "write" << data.size() << "bytes:" << hexInline(data);
     }
     return m_port->write(data) != -1;
+}
+
+bool SerialManager::isDonglePort(const QString& portName) const {
+    const QSerialPortInfo info(portName);
+    return info.hasVendorIdentifier() && info.hasProductIdentifier() &&
+           info.vendorIdentifier() == kDongleVid && info.productIdentifier() == kDonglePid;
 }
 
 bool SerialManager::drainWrites(int timeoutMs) {
