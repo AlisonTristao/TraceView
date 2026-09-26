@@ -17,6 +17,10 @@ add_library(traceview_theme STATIC
     theme/stylesheet.h
     theme/thememanager.cpp
     ${CMAKE_SOURCE_DIR}/include/traceview/thememanager.h
+    theme/framestyle.cpp
+    ${CMAKE_SOURCE_DIR}/include/traceview/framestyle.h
+    theme/appearance.cpp
+    ${CMAKE_SOURCE_DIR}/include/traceview/appearance.h
     theme/fontmanager.cpp
     ${CMAKE_SOURCE_DIR}/include/traceview/fontmanager.h
     ${CMAKE_SOURCE_DIR}/include/traceview/font.h
@@ -286,12 +290,19 @@ add_library(traceview_dashboard STATIC
     dashboard/dashboarditem.cpp
     dashboard/dashboarditem.h
     dashboard/dashboardwidget.h
+    dashboard/widgetviewoption.h
     dashboard/widgetconfigeditor.cpp
     dashboard/widgetconfigeditor.h
     dashboard/widgets/chartconfigeditor.cpp
     dashboard/widgets/chartconfigeditor.h
     dashboard/widgets/chartdata.cpp
     dashboard/widgets/chartdata.h
+    dashboard/widgets/chartpainting.cpp
+    dashboard/widgets/chartpainting.h
+    dashboard/widgets/chartscale.cpp
+    dashboard/widgets/chartscale.h
+    dashboard/widgets/chartstyle.cpp
+    dashboard/widgets/chartstyle.h
     dashboard/widgets/chartwidgets.cpp
     dashboard/widgets/chartwidgets.h
     dashboard/widgets/gaugeconfigeditor.cpp
@@ -782,6 +793,10 @@ add_library(traceview_ui STATIC
     core/inputdiagnostics.h
     core/iconpickerdialog.cpp
     core/iconpickerdialog.h
+    core/appearancecatalog.cpp
+    core/appearancecatalog.h
+    core/paletteeditordialog.cpp
+    core/paletteeditordialog.h
     core/brandcornermark.cpp
     core/brandcornermark.h
     core/startuploadingoverlay.cpp

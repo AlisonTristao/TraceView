@@ -1,15 +1,19 @@
 #pragma once
 
+#include <QColor>
+#include <QElapsedTimer>
 #include <QRect>
 #include <QtMath>
 #include <functional>
 
 #include "dashboard/dashboardwidget.h"
 #include "dashboard/widgets/chartdata.h"
-#include "preferences/appsettings.h"
+#include "dashboard/widgets/chartpainting.h"
+#include "dashboard/widgets/chartstyle.h"
 #include "telemetry/telemetrybinding.h"
 
 class QMouseEvent;
+class QPainter;
 
 namespace traceview {
 
@@ -23,12 +27,10 @@ namespace traceview {
 // widgetregistry.cpp) even though rendering is now real -- renaming is a
 // save-format/UI-label concern independent of this.
 //
-// Wiring these to a live TelemetryFieldRouter::fieldSample() signal (i.e.
-// which widget receives which field, filtered by this widget's own
-// sourceId/topicId/fieldId config) is topico 15's job ("fatia vertical de
-// telemetria binaria"); this class only owns the data model and paint logic
-// and stays paintable/testable with directly-injected synthetic samples
-// either way (see tools/chart_preview).
+// How each chart looks -- axes, grid, frame, legend -- comes from the
+// ChartStyle picked in its header gear menu (widgets/chartstyle.h) and is
+// drawn with the shared building blocks in widgets/chartpainting.h. See
+// docs/CHART_STYLE.md before adding a new chart kind.
 
 // Looks up the retained history of one of a widget's own fields (by
 // fieldId, within the widget's configured device/source/topic) -- nullptr
@@ -36,44 +38,92 @@ namespace traceview {
 // field received while no widget was showing it (telemetry/telemetryhistory.h).
 using FieldHistoryLookup = std::function<const TelemetrySeriesBuffer*(quint16 fieldId)>;
 
-class ChartWidgetBase : public DashboardWidget {
+// What every chart kind has in common, whatever it draws: the header
+// controls (pause, clear, gear), the repaint throttle, and the view state
+// (style + gear toggles) persisted under config["view"]. A new chart kind
+// derives from this (or from ChartWidgetBase below, for series-over-X
+// charts) and only declares which gear options it supports via
+// viewFeatures().
+class StyledChartWidget : public DashboardWidget {
 public:
-    explicit ChartWidgetBase(QWidget* parent = nullptr) : DashboardWidget(parent) {
-        // Needed for mouseMoveEvent() to fire on plain cursor movement (no
-        // button held) -- that's how the hover crosshair below tracks the
-        // mouse across the plot.
-        setMouseTracking(true);
-        m_repaintIntervalMs = AppSettings::instance().repaintIntervalMs();
-        connect(&AppSettings::instance(), &AppSettings::dashboardPreferencesChanged, this,
-                [this] { m_repaintIntervalMs = AppSettings::instance().repaintIntervalMs(); });
-    }
+    explicit StyledChartWidget(QWidget* parent = nullptr);
 
-    void setConfig(const QJsonObject& config) override;
-
-    bool wantsHeaderControls() const override {
-        return true;
+    HeaderControls headerControls() const override {
+        return HeaderControl::ConnectionDot | HeaderControl::Pause | HeaderControl::Clear |
+               HeaderControl::Settings;
     }
     bool isPaused() const override {
         return m_paused;
     }
-    void setPaused(bool paused) override;
+    void setPaused(bool paused) override {
+        m_paused = paused;
+    }
+
+    QVector<WidgetViewOption> viewOptions() const override;
+    QJsonObject viewConfigWith(const QString& id, const QVariant& value) const override;
+    void setViewConfig(const QJsonObject& view) override;
+
+    const ChartViewOptions& viewState() const {
+        return m_view;
+    }
+
+    // The style this chart draws in: its own, or the app-wide one
+    // (AppSettings::chartStyleId()) while its gear menu says "App default".
+    ChartStyleId effectiveStyle() const;
+
+    // Caps how often scheduleRepaint() triggers an actual repaint,
+    // independent of how fast samples arrive (topico 14 PASSO 12: ingestion
+    // rate stays separate from repaint rate). 33ms (~30Hz) by default, from
+    // AppSettings; 0 removes the cap entirely. Exposed only for
+    // DebugChartsWindow's stress-mode toggle -- nothing in production code
+    // calls this.
+    void setRepaintIntervalMs(int ms) {
+        m_repaintIntervalMs = ms;
+    }
+
+protected:
+    // Which gear-menu options this chart kind offers (the style select is
+    // always there).
+    virtual ChartViewFeatures viewFeatures() const = 0;
+
+    // Parses config["view"] -- call from setConfig().
+    void applyViewFromConfig(const QJsonObject& config);
+
+    // Coalesces repaints to at most one per repaint interval.
+    void scheduleRepaint();
+
+    // What to draw for `targets` this frame: each value eased toward its
+    // target (about 120ms) while motion is animated, straight to it while
+    // ThemeManager::reduceMotion(). Keeps repainting itself until every
+    // value has settled; `range` (the value span) decides what "settled"
+    // means. NaN (no reading) never eases -- it shows at once.
+    QVector<double> easedValues(const QVector<double>& targets, double range);
+
+    // Re-applies the data color scheme (ThemeManager::seriesColor()) to the
+    // series colors -- called on every appearance change. Kinds with series
+    // override it; their own configured colors are kept separately so
+    // "Per series" can bring them back.
+    virtual void refreshDataColors() {}
+
+    ChartViewOptions m_view;
+    bool m_paused = false;
+
+private:
+    QVector<double> m_eased;
+    QElapsedTimer m_easeClock;
+    bool m_easeRepaintPending = false;
+    bool m_repaintPending = false;
+    int m_repaintIntervalMs = 33;  // initialized from AppSettings in the constructor
+};
+
+// Series plotted against a value axis: the line and bar charts. Owns the
+// per-series sample buffers, the clickable legend, and the hover position.
+class ChartWidgetBase : public StyledChartWidget {
+public:
+    explicit ChartWidgetBase(QWidget* parent = nullptr);
+
+    void setConfig(const QJsonObject& config) override;
     void clearChartData() override;
-    bool showsLastValueRow() const override {
-        return m_showLastValueRow;
-    }
-    void setShowsLastValueRow(bool show) override;
-    bool showsGridPointMarkers() const override {
-        return m_showGridPointMarkers;
-    }
-    void setShowsGridPointMarkers(bool show) override;
-    bool showsHoverCrosshair() const override {
-        return m_showHoverCrosshair;
-    }
-    void setShowsHoverCrosshair(bool show) override;
-    QString lineInterpolation() const override {
-        return chartLineInterpolationId(m_lineInterpolation);
-    }
-    void setLineInterpolation(const QString& id) override;
 
     // Appends one decoded (timestampUs, value) pair to every series bound to
     // `fieldId` (ChartSeriesConfig::fieldId) and schedules a repaint. A
@@ -105,54 +155,47 @@ public:
         return m_config;
     }
 
-    // Caps how often appendFieldSample() triggers an actual repaint via
-    // scheduleRepaint() (chartwidgets.cpp), independent of how fast samples
-    // arrive (topico 14 PASSO 12: ingestion rate stays separate from repaint
-    // rate) -- data still gets appended to the buffers on every sample
-    // regardless. 33ms (~30Hz) by default; 0 removes the cap entirely
-    // (repaint on every appendFieldSample() call). Exposed only for
-    // DebugChartsWindow's stress-mode toggle (mainwindow.cpp's Debug menu)
-    // to exercise the paint code at its real, unthrottled ceiling -- nothing
-    // in production code calls this.
-    void setRepaintIntervalMs(int ms) {
-        m_repaintIntervalMs = ms;
-    }
-
 protected:
     void mouseMoveEvent(QMouseEvent* event) override;
     void mousePressEvent(QMouseEvent* event) override;
     void leaveEvent(QEvent* event) override;
+    void refreshDataColors() override;
 
-    ChartConfig m_config;
+    // Every series buffer's values, same order as m_config.series.
+    QVector<QVector<double>> seriesValues() const;
+
+    // One value axis request per Y axis this chart draws -- a single axis,
+    // or one per unit under ChartConfig::autoAxis -- and, for every series,
+    // the index of the axis it is scaled by.
+    struct SeriesAxes {
+        QVector<ChartAxisRequest> requests;
+        QVector<int> axisOfSeries;
+    };
+    SeriesAxes seriesAxes(const QVector<QVector<double>>& values) const;
+
+    // The series legend, wherever the view puts it: rows above and below
+    // the plot (Outside), a box in one of the plot's corners, or nowhere.
+    // `withValues` adds each series' latest value -- under its name when
+    // Outside, after it in a corner box. Fills m_legendHitRects.
+    void paintLegends(QPainter& painter, const ChartCartesianLayout& layout,
+                      const QVector<QVector<double>>& values, bool withValues,
+                      const ChartStyle& style, const ChartColors& colors,
+                      const ThemePalette& palette);
+
+    ChartConfig m_config;  // series colors already resolved, see refreshDataColors()
+    QVector<QColor> m_ownColors;  // each series' configured color, same order
     QVector<TelemetrySeriesBuffer> m_seriesBuffers;  // one per m_config.series, same order
     // Per-series "hidden via legend click" flag, same index as m_config.series
     // -- toggled by mousePressEvent() below when a click lands inside
     // m_legendHitRects, kept sized/aligned to m_config.series by setConfig()
-    // (new series default to visible). Read by DummyLineChartWidget::
-    // paintEvent()/DummyBarChartWidget::paintEvent() to skip a hidden series'
-    // line/bar and to gray out its legend row.
+    // (new series default to visible). A hidden series is skipped in the
+    // plot and grayed out in the legend.
     QVector<bool> m_seriesHidden;
     // Clickable rect per series from the legend actually painted last frame
-    // (paintSeriesLegends()'s outHitRects param, same index as m_seriesHidden)
-    // -- mousePressEvent() hit-tests against these instead of recomputing the
-    // legend layout itself, so the click target can never drift from what's
-    // actually drawn.
+    // (same index as m_seriesHidden) -- mousePressEvent() hit-tests against
+    // these instead of recomputing the legend layout itself, so the click
+    // target can never drift from what's actually drawn.
     QVector<QRect> m_legendHitRects;
-    // Read directly by DummyLineChartWidget::paintEvent()/DummyBarChartWidget::
-    // paintEvent() to pass through to paintSeriesLegends().
-    bool m_showLastValueRow = true;
-    // Read directly by DummyLineChartWidget::paintEvent() to gate
-    // paintGridPointMarkers() -- bar charts have no line to mark a crossing
-    // on, so DummyBarChartWidget never reads this.
-    bool m_showGridPointMarkers = false;
-    // Read directly by DummyLineChartWidget::paintEvent() to gate
-    // paintHoverCrosshair() -- same bar-chart exclusion as m_showGridPointMarkers.
-    bool m_showHoverCrosshair = false;
-    // Read directly by DummyLineChartWidget::paintEvent() and passed through
-    // to paintLineSeries()/paintGridPointMarkers()/paintHoverCrosshair() --
-    // same bar-chart exclusion as m_showGridPointMarkers (bar chart inherits
-    // the gear-menu select box but its own paintEvent never reads this).
-    ChartLineInterpolation m_lineInterpolation = ChartLineInterpolation::Linear;
     // Current mouse position in this widget's own coordinates, updated by
     // mouseMoveEvent()/leaveEvent() below and read by DummyLineChartWidget::
     // paintEvent() to place the hover crosshair. m_hasHoverPos is false
@@ -161,62 +204,38 @@ protected:
     // outside plotRect, which paintHoverCrosshair() itself handles.
     QPoint m_hoverPos;
     bool m_hasHoverPos = false;
-
-private:
-    void scheduleRepaint();
-
-    bool m_repaintPending = false;
-    bool m_paused = false;
-    int m_repaintIntervalMs = 33;  // initialized from AppSettings in the constructor
 };
 
 class DummyLineChartWidget : public ChartWidgetBase {
 public:
     explicit DummyLineChartWidget(QWidget* parent = nullptr);
 
-    bool hasChartOptionsMenu() const override {
-        return true;
-    }
-
 protected:
+    ChartViewFeatures viewFeatures() const override;
     void paintEvent(QPaintEvent* event) override;
 };
 
 // Fixed-bar snapshot chart: one bar per configured series (not per sample --
 // see paintBarSnapshot() in chartwidgets.cpp), always redrawn at the same X
 // position and showing only that series' latest buffered value, with the
-// value itself printed on the X axis directly under its bar. Unlike
-// DummyLineChartWidget, there is no history to scroll through and no
-// gear-menu options (hasChartOptionsMenu() stays at DashboardWidget's
-// default false) -- pause/clear from the header still apply.
+// value itself printed directly under its bar. Unlike DummyLineChartWidget,
+// there is no history to scroll through, so its gear menu only offers the
+// style, the Y axis toggles, and the value labels.
 class DummyBarChartWidget : public ChartWidgetBase {
 public:
     explicit DummyBarChartWidget(QWidget* parent = nullptr);
 
 protected:
+    ChartViewFeatures viewFeatures() const override;
     void paintEvent(QPaintEvent* event) override;
 };
 
-class DummyGaugeWidget : public DashboardWidget {
+class DummyGaugeWidget : public StyledChartWidget {
 public:
     explicit DummyGaugeWidget(QWidget* parent = nullptr);
 
     void setConfig(const QJsonObject& config) override;
 
-    // Same header cluster as the line/bar charts (ChartWidgetBase) -- a
-    // connection-state dot, pause/resume, clear, and a settings gear. The
-    // gear stays inert (hasChartOptionsMenu() defaults to false, same as
-    // DummyBarChartWidget): a gauge has no per-series line/grid/hover
-    // options for it to open.
-    bool wantsHeaderControls() const override {
-        return true;
-    }
-    bool isPaused() const override {
-        return m_paused;
-    }
-    void setPaused(bool paused) override {
-        m_paused = paused;
-    }
     // Resets every ring to "no value yet" ("--") -- a gauge has no history
     // to clear, so this is what the header's clear button does here instead.
     void clearChartData() override;
@@ -243,26 +262,17 @@ public:
         return m_config;
     }
 
-    // See ChartWidgetBase::setRepaintIntervalMs() above -- same role, this
-    // class keeps its own throttle state instead of sharing ChartWidgetBase's
-    // since it doesn't derive from it.
-    void setRepaintIntervalMs(int ms) {
-        m_repaintIntervalMs = ms;
-    }
-
 protected:
+    ChartViewFeatures viewFeatures() const override;
     void paintEvent(QPaintEvent* event) override;
+    void refreshDataColors() override;
 
 private:
-    void scheduleRepaint();
-
-    GaugeConfig m_config;
+    GaugeConfig m_config;  // ring colors already resolved, see refreshDataColors()
+    QVector<QColor> m_ownColors;
     QVector<double> m_values;  // one per m_config.series, same order -- kept
                                // in sync as m_config.series changes by
                                // setConfig() in the .cpp.
-    bool m_repaintPending = false;
-    bool m_paused = false;
-    int m_repaintIntervalMs = 33;  // see setRepaintIntervalMs() above
 };
 
 }  // namespace traceview

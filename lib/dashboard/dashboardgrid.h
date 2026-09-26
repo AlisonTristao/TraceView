@@ -21,6 +21,8 @@
 
 class QRubberBand;
 
+class QPainter;
+
 namespace traceview {
 
 class DashboardWidget;
@@ -206,7 +208,10 @@ public:
     // a no-op) otherwise.
     bool setSelectedKey(const QString& newKey);
     // Sets the selected item's type-specific config. No-op if nothing is
-    // selected or the config is unchanged.
+    // selected or the config is unchanged. A `newConfig` without a "view"
+    // object keeps the item's current one: the properties panel editors
+    // don't know about the view state the header gear menu stores there
+    // (see handleViewConfigChanged()), and must not wipe it.
     void changeSelectedConfig(const QJsonObject& newConfig);
 
     // Reorders the selected item's stacking position among overlapping
@@ -323,6 +328,9 @@ private:
     QSize contentSize() const;
 
     void relayout();
+    // The Run-mode backdrop for the current canvas style
+    // (ThemeManager::canvas()).
+    void paintCanvas(QPainter& painter) const;
     void relayoutItem(const QString& itemId);
     void clearItems();
     void removeItem(const QString& itemId);
@@ -421,6 +429,10 @@ private:
     void handleResizeMoved(const QString& itemId, const QPoint& globalPos);
     void handleResizeFinished(const QString& itemId, const QPoint& globalPos);
     void handleSelectRequested(const QString& itemId, Qt::KeyboardModifiers modifiers);
+    // A cell's gear menu changed its widget's view state -- stored under
+    // the item's config["view"] through the undo stack, so it is saved with
+    // the project and Ctrl+Z reverts it like any other config edit.
+    void handleViewConfigChanged(const QString& itemId, const QJsonObject& view);
 
     bool m_editMode = false;
     // Which screen-size layout is currently shown/editable -- see

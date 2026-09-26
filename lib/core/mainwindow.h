@@ -257,6 +257,24 @@ private:
     bool pickWorkspaceIcon(const QString& id);
     // Prompts for a new name for `id` and stores it in WorkspaceManager.
     void renameWorkspace(const QString& id);
+
+    // View menu appearance section (core/appearancecatalog.h): presets, one
+    // submenu per appearance option, palette editing and the workspace pin.
+    // Every submenu is rebuilt when it opens, so it always shows the current
+    // choice and the current list of palettes/presets.
+    void buildAppearanceMenus(QMenu* viewMenu);
+    void onSaveAppearancePreset();
+    // Palette editor: a new palette starts as a copy of the current one.
+    void onNewPalette();
+    void onEditPalette();
+    void onDeletePalette();
+    // Per-workspace appearance: a pinned workspace takes its own snapshot
+    // whenever it becomes active and records every appearance change made
+    // while it is; an unpinned one returns to the app-wide appearance
+    // (m_globalAppearance), which records changes made in unpinned ones.
+    void applyWorkspaceAppearance();
+    void onAppearanceChanged();
+    void setWorkspaceAppearancePinned(bool pinned);
     // Re-applies m_dockController's geometry to every docked panel. Called
     // whenever m_contentRow resizes (see eventFilter) since the panels are
     // positioned directly rather than managed by a layout.
@@ -962,6 +980,11 @@ private:
     QTimer* m_statusMessageTimer = nullptr;
     QTreeWidget* m_subscriptionsTable = nullptr;
     bool m_subscriptionsWorkspaceActive = false;
+    // See applyWorkspaceAppearance(). m_applyingAppearance keeps the change
+    // notifications a snapshot's own setters fire from being recorded as
+    // user changes halfway through applying it.
+    QJsonObject m_globalAppearance;
+    bool m_applyingAppearance = false;
     int m_dashboardTabIndex = -1;
     // Read-only "device: dot" strip replacing the old single-connection port/
     // baud/connect bar -- per-device connection config now lives in the

@@ -5,7 +5,7 @@
 #include <QPainter>
 #include <QPainterPath>
 
-#include "dashboard/roundedcorners.h"
+#include "traceview/framestyle.h"
 #include "traceview/thememanager.h"
 
 namespace traceview {
@@ -201,19 +201,19 @@ void DeviceCard::paintEvent(QPaintEvent*) {
     painter.setRenderHint(QPainter::Antialiasing);
     const ThemePalette& palette = ThemeManager::instance().currentTheme();
 
-    // 2px border width, matching DashboardCell's BorderOverlay (see
-    // dashboard/dashboardcell.cpp) -- the idle and selected outlines below
-    // share one width so selection reads as a color change, not also a
-    // thickness jump.
-    constexpr qreal kBorderWidth = 2.0;
+    // Same frame style (shape, outline width, borderless) as DashboardCell's
+    // BorderOverlay (see dashboard/dashboardcell.cpp), and the same inset by
+    // the selection stroke width.
+    const FrameStyle& frame = ThemeManager::instance().currentFrameStyle();
+    constexpr qreal kInset = kFrameSelectionWidth / 2.0;
     const QPainterPath outline =
-        partiallyRoundedRect(QRectF(rect()).adjusted(kBorderWidth / 2.0, kBorderWidth / 2.0,
-                                                     -kBorderWidth / 2.0, -kBorderWidth / 2.0),
-                             kContainerCornerRadius, true, true, true, true);
+        frameShapePath(QRectF(rect()).adjusted(kInset, kInset, -kInset, -kInset), frame);
     painter.fillPath(outline, palette.surface);
-    painter.setPen(QPen(palette.border, kBorderWidth));
-    painter.setBrush(Qt::NoBrush);
-    painter.drawPath(outline);
+    if (frame.idleOutline && frame.borderWidth > 0.0) {
+        painter.setPen(QPen(palette.border, frame.borderWidth));
+        painter.setBrush(Qt::NoBrush);
+        painter.drawPath(outline);
+    }
 
     painter.save();
     painter.setClipPath(outline);
@@ -383,7 +383,7 @@ void DeviceCard::paintEvent(QPaintEvent*) {
     // showing up as a notch where the border looked thinner across the
     // header than below it.
     if (m_selected) {
-        painter.setPen(QPen(palette.accent, kBorderWidth));
+        painter.setPen(QPen(palette.accent, kFrameSelectionWidth));
         painter.setBrush(Qt::NoBrush);
         painter.drawPath(outline);
     }

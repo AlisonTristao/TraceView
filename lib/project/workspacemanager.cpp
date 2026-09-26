@@ -54,6 +54,24 @@ void WorkspaceManager::setIconFor(const QString& id, const QString& icon) {
     }
 }
 
+QJsonObject WorkspaceManager::appearanceFor(const QString& id) const {
+    for (const Workspace& workspace : m_workspaces) {
+        if (workspace.id == id) {
+            return workspace.appearance;
+        }
+    }
+    return {};
+}
+
+void WorkspaceManager::setAppearanceFor(const QString& id, const QJsonObject& appearance) {
+    for (Workspace& workspace : m_workspaces) {
+        if (workspace.id == id) {
+            workspace.appearance = appearance;
+            return;
+        }
+    }
+}
+
 QString WorkspaceManager::renameWorkspace(const QString& id, const QString& name) {
     const int index = indexOf(id);
     const QString trimmed = name.trimmed();
@@ -131,6 +149,10 @@ QJsonObject WorkspaceManager::toJson() const {
             entry["icon"] = workspace.icon;
         }
         entry["dashboard"] = workspace.dashboard;
+        // Omitted when not pinned, same reasoning as "icon" above.
+        if (!workspace.appearance.isEmpty()) {
+            entry["appearance"] = workspace.appearance;
+        }
         list.append(entry);
     }
 
@@ -158,6 +180,7 @@ void WorkspaceManager::fromJson(const QJsonObject& object) {
         workspace.id = id;
         workspace.name = entryObject.value("name").toString();
         workspace.icon = entryObject.value("icon").toString();
+        workspace.appearance = entryObject.value("appearance").toObject();
         workspace.dashboard = entryObject.value("dashboard").toObject();
         workspaces.append(workspace);
     }

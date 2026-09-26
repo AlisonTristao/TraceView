@@ -7,6 +7,7 @@
 #include <QJsonDocument>
 #include <QMimeData>
 #include <QMouseEvent>
+#include <QLinearGradient>
 #include <QPainter>
 #include <QRubberBand>
 #include <QUuid>
@@ -33,6 +34,9 @@ namespace {
 constexpr double kGutterFraction = 0.01;
 constexpr int kMinGutter = 8;
 constexpr int kMaxGutter = 32;
+// Spacing of the Dots/Grid canvas patterns (View > Canvas), in pixels --
+// fixed rather than tied to the snap grid, so it reads as a texture.
+constexpr int kCanvasPatternStep = 24;
 // Custom clipboard format for copySelected()/pasteItem() — carries a single
 // dashboardItemToJson() object, so paste can reuse the same (de)serializer
 // as project save/load instead of a bespoke copy of DashboardItem's fields.
@@ -108,8 +112,13 @@ constexpr const char* kVerticalUnitPage = "page";
 DashboardGrid::DashboardGrid(QWidget* parent) : QWidget(parent), m_undoStack(new QUndoStack(this)) {
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
+    // A density change moves every cell (the gutter scales with it), a
+    // canvas change only repaints -- both arrive as themeChanged.
     connect(&ThemeManager::instance(), &ThemeManager::themeChanged, this,
-            [this](const ThemePalette&) { update(); });
+            [this](const ThemePalette&) {
+                relayout();
+                update();
+            });
 }
 
 void DashboardGrid::setEditMode(bool enabled) {
@@ -505,11 +514,31 @@ void DashboardGrid::changeSelectedConfig(const QJsonObject& newConfig) {
         return;
     }
     const DashboardItem* item = itemById(id);
-    if (!item || item->config == newConfig) {
+    if (!item) {
+        return;
+    }
+    QJsonObject config = newConfig;
+    if (!config.contains(QLatin1String("view")) && item->config.contains(QLatin1String("view"))) {
+        config[QLatin1String("view")] = item->config.value(QLatin1String("view"));
+    }
+    if (item->config == config) {
         return;
     }
 
-    m_undoStack->push(new SetItemConfigCommand(this, id, item->config, newConfig));
+    m_undoStack->push(new SetItemConfigCommand(this, id, item->config, config));
+}
+
+void DashboardGrid::handleViewConfigChanged(const QString& itemId, const QJsonObject& view) {
+    const DashboardItem* item = itemById(itemId);
+    if (!item) {
+        return;
+    }
+    QJsonObject config = item->config;
+    config[QLatin1String("view")] = view;
+    if (item->config == config) {
+        return;
+    }
+    m_undoStack->push(new SetItemConfigCommand(this, itemId, item->config, config));
 }
 
 void DashboardGrid::bringSelectedToFront() {
@@ -967,11 +996,14 @@ void DashboardGrid::resizeEvent(QResizeEvent* event) {
 }
 
 void DashboardGrid::paintEvent(QPaintEvent*) {
+    QPainter painter(this);
+    // The canvas pattern (View > Canvas) is a Run-mode backdrop; edit mode
+    // has its own snap-point dots below and stays uncluttered.
     if (!m_editMode) {
+        paintCanvas(painter);
         return;
     }
 
-    QPainter painter(this);
     const ThemePalette& palette = ThemeManager::instance().currentTheme();
     const QRect area = usableRect();
 
@@ -1083,7 +1115,54 @@ void DashboardGrid::mouseReleaseEvent(QMouseEvent* event) {
 }
 
 int DashboardGrid::gutter() const {
-    return qBound(kMinGutter, qRound(qMin(width(), height()) * kGutterFraction), kMaxGutter);
+    const double scale = ThemeManager::instance().currentDensity().gutterScale;
+    return qRound(qBound(kMinGutter, qRound(qMin(width(), height()) * kGutterFraction),
+                         kMaxGutter) *
+                  scale);
+}
+
+void DashboardGrid::paintCanvas(QPainter& painter) const {
+    const ThemePalette& palette = ThemeManager::instance().currentTheme();
+    switch (ThemeManager::instance().canvas()) {
+        case CanvasId::Plain:
+            return;
+        case CanvasId::Gradient: {
+            // A soft vertical wash from a hint of the card surface down to
+            // the plain background.
+            QLinearGradient gradient(0, 0, 0, height());
+            QColor top = palette.surface;
+            top.setAlphaF(0.55f);
+            gradient.setColorAt(0.0, top);
+            gradient.setColorAt(1.0, palette.background);
+            painter.fillRect(rect(), gradient);
+            return;
+        }
+        case CanvasId::Dots: {
+            QColor dot = palette.textDisabled;
+            dot.setAlphaF(dot.alphaF() * 0.45f);
+            painter.setPen(Qt::NoPen);
+            painter.setBrush(dot);
+            painter.setRenderHint(QPainter::Antialiasing);
+            for (int y = kCanvasPatternStep / 2; y < height(); y += kCanvasPatternStep) {
+                for (int x = kCanvasPatternStep / 2; x < width(); x += kCanvasPatternStep) {
+                    painter.drawEllipse(QPointF(x, y), 1.0, 1.0);
+                }
+            }
+            return;
+        }
+        case CanvasId::Grid: {
+            QColor line = palette.border;
+            line.setAlphaF(line.alphaF() * 0.5f);
+            painter.setPen(QPen(line, 1));
+            for (int x = 0; x < width(); x += kCanvasPatternStep) {
+                painter.drawLine(QPointF(x + 0.5, 0), QPointF(x + 0.5, height()));
+            }
+            for (int y = 0; y < height(); y += kCanvasPatternStep) {
+                painter.drawLine(QPointF(0, y + 0.5), QPointF(width(), y + 0.5));
+            }
+            return;
+        }
+    }
 }
 
 QRect DashboardGrid::usableRect() const {
@@ -1263,6 +1342,8 @@ DashboardCell* DashboardGrid::createCell(const DashboardItem& item) {
     connect(cell, &DashboardCell::resizeFinished, this, &DashboardGrid::handleResizeFinished);
     connect(cell, &DashboardCell::selectRequested, this, &DashboardGrid::handleSelectRequested);
     connect(cell, &DashboardCell::chartDataCleared, this, &DashboardGrid::widgetDataCleared);
+    connect(cell, &DashboardCell::viewConfigChanged, this,
+            &DashboardGrid::handleViewConfigChanged);
 
     m_cells.insert(item.id, cell);
     emit widgetCreated(content);

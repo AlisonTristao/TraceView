@@ -1,14 +1,18 @@
 #pragma once
 
+#include <QJsonObject>
 #include <QPoint>
 #include <QRect>
 #include <QString>
 #include <QVariantAnimation>
 #include <QWidget>
 
+#include "dashboard/dashboardwidget.h"
+
+class QEnterEvent;
+
 namespace traceview {
 
-class DashboardWidget;
 
 // Chrome wrapped around one DashboardWidget on the grid. The header strip
 // (icon + title) is always visible, in both Layout and Run. In edit mode,
@@ -53,9 +57,10 @@ public:
     // False for a content widget that opts out of the header (see
     // DashboardWidget::wantsCellHeader()) — DashboardGrid uses this to
     // allow a much smaller minimum size when resizing, since there's no
-    // 24px header to keep legible.
+    // header to keep legible. True even while the "On hover" card header
+    // style hides the strip in Run mode.
     bool hasHeader() const {
-        return headerHeight() > 0;
+        return headerStripHeight() > 0;
     }
 
     void setTitle(const QString& title);
@@ -70,7 +75,7 @@ public:
     // Default true (a lone selected cell is always resizable).
     void setResizable(bool resizable);
     // Drives the header's connection-status dot (only drawn when m_content
-    // wants header controls, see DashboardWidget::wantsHeaderControls()) --
+    // offers HeaderControl::ConnectionDot, see DashboardWidget::headerControls()) --
     // set from whichever device this cell's own widget is currently
     // configured for (config()["deviceId"]), propagated through
     // DashboardGrid::setDeviceConnected(deviceId, connected).
@@ -95,6 +100,11 @@ signals:
     // The header's clear button was clicked, after the content widget has
     // already cleared itself.
     void chartDataCleared(DashboardWidget* content);
+    // The gear menu changed the content widget's view state, after the
+    // widget has already applied it (so a cell outside any grid, like the
+    // Debug charts window, still works) -- DashboardGrid persists `view`
+    // into the item's config.
+    void viewConfigChanged(const QString& itemId, const QJsonObject& view);
 
 protected:
     void paintEvent(QPaintEvent* event) override;
@@ -102,23 +112,36 @@ protected:
     void mousePressEvent(QMouseEvent* event) override;
     void mouseMoveEvent(QMouseEvent* event) override;
     void mouseReleaseEvent(QMouseEvent* event) override;
+    void enterEvent(QEnterEvent* event) override;
     void leaveEvent(QEvent* event) override;
 
 private:
     enum class DragMode { None, Moving, Resizing };
 
-    // 0 if m_content opts out via DashboardWidget::wantsCellHeader(),
-    // otherwise the fixed header strip height.
+    // The title strip's height (0 if m_content opts out via
+    // DashboardWidget::wantsCellHeader()), from the current density.
+    int headerStripHeight() const;
+    // Space the strip takes above the content: headerStripHeight(), except
+    // 0 in Run mode under the "On hover" card header style, where the strip
+    // floats over the content instead (m_hoverHeader).
     int headerHeight() const;
+    // Where the strip is drawn, whether it reserves space or floats.
     QRect headerRect() const;
+    // Draws the strip -- type glyph, connection dot, title, buttons -- in
+    // the current card header style. `floating` is the hover strip, drawn
+    // over the content with a near-opaque fill.
+    void paintHeader(QPainter& painter, bool floating) const;
+    // Runs the header button under `pos`, if any. Run mode only.
+    bool handleHeaderPress(const QPoint& pos);
+    void startSelectionAnimation(QAbstractAnimation::Direction direction);
     QRect gripRect() const;
-    // Right-aligned header button rects (pause/resume, clear, settings gear
-    // -- gear rightmost), only meaningful when m_content->wantsHeaderControls().
-    QRect pauseButtonRect() const;
-    QRect clearButtonRect() const;
-    QRect gearButtonRect() const;
-    // Opens the header gear's popup menu (currently just the "Show last
-    // value" toggle) anchored below the gear button.
+    // Where one of the content widget's header buttons sits: packed from the
+    // header's right edge in the order Settings, Clear, Pause, skipping the
+    // ones it doesn't offer (DashboardWidget::headerControls()). Empty when
+    // it isn't offered, or has no button (ConnectionDot).
+    QRect headerButtonRect(DashboardWidget::HeaderControl control) const;
+    // Opens the header gear's popup menu, built from the content widget's
+    // own DashboardWidget::viewOptions(), anchored below the gear button.
     void showSettingsMenu();
     ResizeHandle handleAt(const QPoint& pos) const;
     Qt::CursorShape cursorForHandle(ResizeHandle handle) const;
@@ -131,6 +154,7 @@ private:
     QString m_title;
     DashboardWidget* m_content = nullptr;
     QWidget* m_borderOverlay = nullptr;
+    QWidget* m_hoverHeader = nullptr;  // see headerHeight()
     bool m_editMode = false;
     bool m_selected = false;
     bool m_resizable = true;

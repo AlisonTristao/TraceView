@@ -448,9 +448,11 @@ void TextBoardWidget::paintEvent(QPaintEvent* event) {
 
     const ThemePalette& palette = ThemeManager::instance().currentTheme();
     painter.fillPath(contentFillPath(), palette.surface);
-    painter.setPen(QPen(palette.border, 1));
-    painter.setBrush(Qt::NoBrush);
-    painter.drawPath(roundedPath(QRectF(rect()).adjusted(0.5, 0.5, -0.5, -0.5)));
+    if (ThemeManager::instance().currentFrameStyle().idleOutline) {
+        painter.setPen(QPen(palette.border, 1));
+        painter.setBrush(Qt::NoBrush);
+        painter.drawPath(roundedPath(QRectF(rect()).adjusted(0.5, 0.5, -0.5, -0.5)));
+    }
 
     if (m_hasGrayMatrix) {
         const QRectF stripRect(0, 0, width(), kInfoStripHeight);

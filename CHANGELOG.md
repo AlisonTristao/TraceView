@@ -7,6 +7,64 @@ release flow.
 
 ## [Unreleased]
 
+## [4.8.0] - 2026-09-26
+
+### Added
+
+- Chart styles, picked for the whole app under **View → Chart Style** (or
+  Settings → Appearance), with a per-chart override in each chart's header
+  gear menu. **Dashboard** is the look charts had until now.
+  **Engineering** draws a closed frame with inward ticks and round-number
+  axes snapped to the data, in the manner of lab software. **Scientific**
+  draws open left/bottom axes, outward ticks and a dotted grid, in the
+  manner of a paper figure.
+- New gear-menu switches: X/Y axis titles and X/Y axis values on line
+  charts, Y axis title/values and bar values on bar charts, and scale
+  values around the arc on gauges. The line chart's X axis can now show
+  sample or time values.
+- Frame styles under **View → Frame** (and Settings → Appearance): Rounded
+  (as before), Square, Borderless and Chamfered. They shape every dashboard
+  card, device card and control, in every palette.
+- More appearance choices under **View**, all also in Settings →
+  Appearance:
+  - **Data colors**: keep each series' own color, or draw every chart in
+    the palette's colors, MATLAB's, Tableau's, a color-blind safe set
+    (Okabe-Ito) or shades of one color.
+  - **Density**: compact, normal or comfortable card headers, padding and
+    gaps.
+  - **Card header**: filled (as before), a line under the title, or shown
+    only on mouse hover.
+  - **Canvas**: plain, dots, grid or a soft gradient behind the cards.
+  - **Motion**: gauge needles and bars ease to new values; "Reduced" turns
+    animations off.
+- **Appearance presets** (TraceView, Lab, Paper, HUD, Synthwave,
+  Accessible) apply a whole look at once, and the current appearance can be
+  saved as your own preset.
+- A workspace can keep its own appearance (**View → Workspace Appearance**).
+- Custom palettes: create, edit and delete your own color palettes, with a
+  live preview and a warning when text contrast is too low.
+- Gauge shapes in the gear menu: ring (as before), half circle, bars, or
+  just the number.
+- Legend placement: outside the plot (as before), in any corner of the plot
+  on a background with adjustable opacity, or hidden.
+- Y axis ticks: Auto, or 3, 5, 6 or 11 labeled ticks.
+- Line width for line charts, from 0.5 to 4 px.
+- The gear menu stays open while options are changed. Its choices,
+  including the existing last-value, grid-point, crosshair and
+  interpolation options, are saved with the dashboard and can be undone.
+
+### Changed
+
+- **View → Theme** is now **View → Palette** (and "Palette" in Settings →
+  Appearance), since it only changes colors.
+- Serial Monitor and Robot Log: the Clear button moved into the widget's
+  header, in the corner where charts have their settings gear, with the
+  same clear icon charts use.
+- The "t"/"k" tag in the corner of line charts is gone; turn on the X axis
+  title instead.
+- Device Settings always shows the links table (link order, baud rate, TCP
+  port, addresses typed by hand); the "Advanced" toggle is gone.
+
 ## [4.7.0] - 2026-09-26
 
 ### Added

@@ -8,7 +8,6 @@
 #include "dashboard/dashboardwidget.h"
 
 class QStackedWidget;
-class QToolButton;
 
 namespace traceview {
 
@@ -28,8 +27,9 @@ class TerminalTabBar;
 // feedDevice(), re-deriving all of it whenever the tab list changes.
 //
 // A thin header row carries the tab strip (hidden when there's only one tab,
-// the common case and every pre-tabs project after migration) and a
-// right-aligned "Clear" button that wipes the visible terminal's scrollback.
+// the common case and every pre-tabs project after migration). Clearing the
+// visible terminal's scrollback is the cell header's clear button
+// (HeaderControl::Clear), in the corner a chart's gear sits in.
 class SerialMonitorWidget : public DashboardWidget {
     Q_OBJECT
 
@@ -38,6 +38,12 @@ public:
 
     void setConfig(const QJsonObject& config) override;
     void setEditModeHint(bool editMode) override;
+
+    HeaderControls headerControls() const override {
+        return HeaderControl::Clear;
+    }
+    // Wipes the visible tab's scrollback.
+    void clearChartData() override;
 
     // The per-tab device ids, tab order left to right. Empty strings are kept
     // (a tab with no device chosen yet) so indices line up with the tab bar.
@@ -73,7 +79,6 @@ private:
     void refreshTabLabels();
 
     TerminalTabBar* m_tabBar = nullptr;
-    QToolButton* m_clearButton = nullptr;
     QStackedWidget* m_stack = nullptr;
     QVector<SerialTerminalWidget*> m_terminals;
     QStringList m_deviceIds;

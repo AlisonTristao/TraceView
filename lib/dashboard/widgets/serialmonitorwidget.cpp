@@ -5,7 +5,6 @@
 #include <QJsonObject>
 #include <QSignalBlocker>
 #include <QStackedWidget>
-#include <QToolButton>
 #include <QVBoxLayout>
 
 #include "serialterminalwidget.h"
@@ -20,27 +19,11 @@ SerialMonitorWidget::SerialMonitorWidget(QWidget* parent) : DashboardWidget(pare
     m_stack = new QStackedWidget(this);
     m_stack->setMinimumHeight(120);
 
-    // Wipes the visible tab's scrollback. Right-aligned in the header row so it
-    // stays reachable whether or not the tab strip is showing; flat until
-    // hovered so it doesn't compete with the terminal for attention.
-    m_clearButton = new QToolButton(this);
-    m_clearButton->setText(tr("Clear"));
-    m_clearButton->setToolTip(tr("Clear this terminal"));
-    m_clearButton->setToolButtonStyle(Qt::ToolButtonTextOnly);
-    m_clearButton->setAutoRaise(true);
-    m_clearButton->setFocusPolicy(Qt::NoFocus);
-    connect(m_clearButton, &QToolButton::clicked, this, [this] {
-        if (auto* terminal = qobject_cast<SerialTerminalWidget*>(m_stack->currentWidget())) {
-            terminal->clearTerminal();
-        }
-    });
-
     auto* header = new QHBoxLayout;
     header->setContentsMargins(0, 0, 0, 0);
     header->setSpacing(0);
     header->addWidget(m_tabBar, 0);
     header->addStretch(1);
-    header->addWidget(m_clearButton, 0);
 
     auto* layout = new QVBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
@@ -58,6 +41,12 @@ SerialMonitorWidget::SerialMonitorWidget(QWidget* parent) : DashboardWidget(pare
     // a parent layout), so pin the floor to exactly what the layout needs;
     // below that the cell clips cleanly instead of mangling the terminal.
     setMinimumSize(layout->minimumSize());
+}
+
+void SerialMonitorWidget::clearChartData() {
+    if (auto* terminal = qobject_cast<SerialTerminalWidget*>(m_stack->currentWidget())) {
+        terminal->clearTerminal();
+    }
 }
 
 void SerialMonitorWidget::setConfig(const QJsonObject& config) {

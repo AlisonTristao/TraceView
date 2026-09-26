@@ -178,8 +178,6 @@ private:
     // The simple view of the same links: one robot name, one checkbox per
     // kind of link. See RobotLinksPanel.
     RobotLinksPanel* m_linksPanel = nullptr;
-    // Shows/hides m_linksTable.
-    QToolButton* m_advancedButton = nullptr;
     // The device-wide rows under the table.
     QFormLayout* m_connectionLayout = nullptr;
     int m_lineTerminatorRowIndex = -1;

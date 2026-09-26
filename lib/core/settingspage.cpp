@@ -25,6 +25,10 @@
 #include <utility>
 
 #include "core/applog.h"
+#include <QSignalBlocker>
+
+#include "appearancecatalog.h"
+#include "dashboard/widgets/chartstyle.h"
 #include "preferences/appsettings.h"
 #include "protocol/manifeststore.h"
 #include "theme/iconutils.h"
@@ -300,21 +304,62 @@ SettingsPage::SettingsPage(QWidget* parent) : QWidget(parent) {
 
     QWidget* appearancePage =
         createCategoryPage(pages, tr("Appearance"),
-                           tr("Theme and typeface changes apply immediately. Changing the language "
-                              "is saved for the next start."));
+                           tr("Appearance changes apply immediately. Changing the language is "
+                              "saved for the next start."));
     QGroupBox* appearanceSection = addSection(appearancePage, tr("Application appearance"));
-    auto* themeCombo = new QComboBox(appearanceSection);
-    const QVector<ThemePalette> themes = ThemeManager::instance().availableThemes();
-    for (const ThemePalette& theme : themes) {
-        themeCombo->addItem(theme.displayName, theme.id);
-        if (theme.id == ThemeManager::instance().currentTheme().id) {
-            themeCombo->setCurrentIndex(themeCombo->count() - 1);
+
+    // A preset applies a whole look at once; the combo shows the preset the
+    // current appearance matches, if any.
+    auto* presetCombo = new QComboBox(appearanceSection);
+    auto syncPresetCombo = [presetCombo]() {
+        const QSignalBlocker blocker(presetCombo);
+        presetCombo->clear();
+        presetCombo->addItem(tr("Custom"), QString());
+        const AppearanceSnapshot current = currentAppearance();
+        for (const AppearancePreset& preset : appearancePresets()) {
+            presetCombo->addItem(preset.name, preset.id);
+            if (preset.values == current) {
+                presetCombo->setCurrentIndex(presetCombo->count() - 1);
+            }
         }
-    }
-    formFor(appearanceSection)->addRow(tr("Theme"), themeCombo);
-    connect(themeCombo, &QComboBox::currentIndexChanged, this, [themeCombo](int index) {
-        ThemeManager::instance().setTheme(themeCombo->itemData(index).toString());
+    };
+    syncPresetCombo();
+    formFor(appearanceSection)->addRow(tr("Preset"), presetCombo);
+    connect(presetCombo, &QComboBox::currentIndexChanged, this, [presetCombo](int index) {
+        const QString id = presetCombo->itemData(index).toString();
+        for (const AppearancePreset& preset : appearancePresets()) {
+            if (preset.id == id) {
+                applyAppearance(preset.values);
+            }
+        }
     });
+    connectAppearanceChanged(presetCombo, syncPresetCombo);
+
+    // One row per appearance option (core/appearancecatalog.h), the same
+    // list the View menu is built from.
+    for (const AppearanceOption& option : appearanceOptions()) {
+        auto* combo = new QComboBox(appearanceSection);
+        const QString key = option.key;
+        auto sync = [combo, key]() {
+            for (const AppearanceOption& current : appearanceOptions()) {
+                if (current.key != key) {
+                    continue;
+                }
+                const QSignalBlocker blocker(combo);
+                combo->clear();
+                for (const AppearanceChoice& choice : current.choices()) {
+                    combo->addItem(choice.label, choice.id);
+                }
+                combo->setCurrentIndex(qMax(0, combo->findData(current.current())));
+            }
+        };
+        sync();
+        formFor(appearanceSection)->addRow(option.label, combo);
+        const auto apply = option.apply;
+        connect(combo, &QComboBox::currentIndexChanged, this,
+                [combo, apply](int index) { apply(combo->itemData(index).toString()); });
+        connectAppearanceChanged(combo, sync);
+    }
 
     auto* fontCombo = new QComboBox(appearanceSection);
     const QVector<FontOption> fonts = FontManager::instance().availableFonts();
@@ -579,11 +624,11 @@ SettingsPage::SettingsPage(QWidget* parent) : QWidget(parent) {
     // across a wide row nor get squeezed by the layout on a narrow one;
     // applyFieldWidth() only caps it when the screen is genuinely narrower.
     int fieldWidth = kMinFieldWidth;
-    for (const QComboBox* combo : {themeCombo, fontCombo, languageCombo}) {
+    for (const QComboBox* combo : appearanceSection->findChildren<QComboBox*>()) {
         fieldWidth = qMax(fieldWidth, combo->sizeHint().width());
     }
     m_fieldWidth = qMin(fieldWidth, kMaxFieldWidth);
-    const int fieldHeight = themeCombo->sizeHint().height();
+    const int fieldHeight = fontCombo->sizeHint().height();
     for (QComboBox* combo : pages->findChildren<QComboBox*>()) {
         m_fieldWidgets.append(combo);
     }

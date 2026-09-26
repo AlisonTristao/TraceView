@@ -32,6 +32,14 @@ add_traceview_test(test_hubpeeraccumulator traceview_devices)
 # "known" flag. Pure function (device.h), no MainWindow, no QWidget.
 add_traceview_test(test_hubchildpresence traceview_devices)
 add_traceview_test(test_chartdata traceview_dashboard)
+# Round-number axis ticks and the chart style sheet (widgets/chartscale.h,
+# widgets/chartstyle.h) -- pure functions, no painting.
+add_traceview_test(test_chartscale traceview_dashboard)
+add_traceview_test(test_chartstyle traceview_dashboard)
+# Frame styles (card/control shapes, include/traceview/framestyle.h).
+add_traceview_test(test_framestyle traceview_theme)
+# Appearance tokens and the appearance catalog/presets (core/appearancecatalog.h).
+add_traceview_test(test_appearance traceview_ui)
 add_traceview_test(test_controldata traceview_dashboard)
 # topico 19: the dumb-terminal line model (\r/\b/\n handling) and keystroke
 # forwarding are exercised directly with QTest -- CONTRIBUTING.md's "nothing

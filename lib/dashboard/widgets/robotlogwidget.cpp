@@ -9,7 +9,6 @@
 #include <QSignalBlocker>
 #include <QStackedWidget>
 #include <QTableView>
-#include <QToolButton>
 #include <QVBoxLayout>
 
 #include "protocol/logentry.h"
@@ -25,22 +24,11 @@ RobotLogWidget::RobotLogWidget(QWidget* parent) : DashboardWidget(parent) {
     m_stack = new QStackedWidget(this);
     m_stack->setMinimumHeight(120);
 
-    // Wipes the visible tab's log, same placement/behavior as
-    // SerialMonitorWidget's own Clear button.
-    m_clearButton = new QToolButton(this);
-    m_clearButton->setText(tr("Clear"));
-    m_clearButton->setToolTip(tr("Clear this log"));
-    m_clearButton->setToolButtonStyle(Qt::ToolButtonTextOnly);
-    m_clearButton->setAutoRaise(true);
-    m_clearButton->setFocusPolicy(Qt::NoFocus);
-    connect(m_clearButton, &QToolButton::clicked, this, &RobotLogWidget::clearLog);
-
     auto* header = new QHBoxLayout;
     header->setContentsMargins(0, 0, 0, 0);
     header->setSpacing(0);
     header->addWidget(m_tabBar, 0);
     header->addStretch(1);
-    header->addWidget(m_clearButton, 0);
 
     auto* layout = new QVBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
