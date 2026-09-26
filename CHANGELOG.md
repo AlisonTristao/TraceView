@@ -7,6 +7,8 @@ release flow.
 
 ## [Unreleased]
 
+## [4.8.0] - 2026-09-26
+
 ### Added
 
 - Chart styles, picked for the whole app under **View → Chart Style** (or
