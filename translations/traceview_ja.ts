@@ -211,7 +211,7 @@
     <message>
         <location filename="../lib/devices/device.cpp" line="+292"/>
         <source>auto</source>
-        <translation type="unfinished"></translation>
+        <translation>自動</translation>
     </message>
 </context>
 <context>
@@ -717,26 +717,6 @@
         <source>AppImage from GitHub Releases</source>
         <translation>GitHub Releases の AppImage</translation>
     </message>
-    <message>
-        <source>&lt;b&gt;TraceView&lt;/b&gt; v%1</source>
-        <translation type="vanished">&lt;b&gt;TraceView&lt;/b&gt; v%1</translation>
-    </message>
-    <message>
-        <source>Real-time telemetry dashboard for ESP32/ESP-NOW robots</source>
-        <translation type="vanished">ESP32/ESP-NOW ロボット向けリアルタイムテレメトリダッシュボード</translation>
-    </message>
-    <message>
-        <source>Built with Qt %1 &amp;middot; running with Qt %2</source>
-        <translation type="vanished">Qt %1 でビルド &amp;middot; Qt %2 で実行</translation>
-    </message>
-    <message>
-        <source>MIT License &amp;middot; AlisonTristao</source>
-        <translation type="vanished">MIT ライセンス &amp;middot; AlisonTristao</translation>
-    </message>
-    <message>
-        <source>See CHANGELOG.md for release history.</source>
-        <translation type="vanished">リリース履歴は CHANGELOG.md を参照してください。</translation>
-    </message>
 </context>
 <context>
     <name>traceview::AndroidUsbSerialTransport</name>
@@ -779,22 +759,22 @@
     <message>
         <location line="+53"/>
         <source>BLE scan failed: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>BLE スキャンに失敗しました: %1</translation>
     </message>
     <message>
         <location line="+23"/>
         <source>no BTP robot named &quot;%1&quot; found nearby (no BTP robot advertising at all)</source>
-        <translation type="unfinished"></translation>
+        <translation>近くに &quot;%1&quot; という名前の BTP ロボットが見つかりません (アドバタイズ中の BTP ロボットがありません)</translation>
     </message>
     <message>
         <location line="+3"/>
         <source>no BTP robot named &quot;%1&quot; found nearby (seen: %2)</source>
-        <translation type="unfinished"></translation>
+        <translation>近くに &quot;%1&quot; という名前の BTP ロボットが見つかりません (検出: %2)</translation>
     </message>
     <message>
         <location line="+13"/>
         <source>%1 BLE robots are named &quot;%2&quot; (%3) -- give each robot its own name, or pick one by address</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 台の BLE ロボットが &quot;%2&quot; という名前です (%3) -- ロボットごとに別の名前を付けるか、アドレスで 1 台を選んでください</translation>
     </message>
     <message>
         <location line="+38"/>
@@ -840,13 +820,9 @@
 <context>
     <name>traceview::BtpBackend</name>
     <message>
-        <source>Robot 0x%1 is online but its catalog has not arrived — check the dongle (hub -manifest)</source>
-        <translation type="vanished">ロボット 0x%1 はオンラインですが、カタログが届いていません — ドングルを確認してください (hub -manifest)</translation>
-    </message>
-    <message>
         <location filename="../lib/protocol/btpbackend.cpp" line="+346"/>
         <source>Robot 0x%1 is online but its catalog has not arrived — check the hub (hub -manifest)</source>
-        <translation type="unfinished"></translation>
+        <translation>ロボット 0x%1 はオンラインですが、カタログが届いていません — ハブを確認してください (hub -manifest)</translation>
     </message>
     <message>
         <location line="+91"/>
@@ -872,10 +848,6 @@
         <location line="+134"/>
         <source>HELLO rejected</source>
         <translation>HELLO が拒否されました</translation>
-    </message>
-    <message>
-        <source>no HELLO_RESULT within %1 ms</source>
-        <translation type="vanished">%1 ms 以内に HELLO_RESULT がありません</translation>
     </message>
     <message>
         <location line="+53"/>
@@ -910,16 +882,12 @@
     <message>
         <location line="+21"/>
         <source>device returned to console (BTP/1 CONSOLE)</source>
-        <translation type="unfinished"></translation>
+        <translation>デバイスがコンソールに戻りました (BTP/1 CONSOLE)</translation>
     </message>
     <message>
         <location line="+246"/>
         <source>Dropped an unsealed frame on a sealed direct session (check the robot&apos;s channel-B password)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>dongle returned to console (BTP/1 CONSOLE)</source>
-        <translation type="vanished">ドングルがコンソールに戻りました (BTP/1 CONSOLE)</translation>
+        <translation>封印された直接セッションで、封印されていないフレームを破棄しました (ロボットのチャンネル B パスワードを確認してください)</translation>
     </message>
     <message>
         <location line="+19"/>
@@ -945,13 +913,6 @@
         <location line="-523"/>
         <source>BTP handshake failed: %1</source>
         <translation>BTP ハンドシェイクに失敗しました: %1</translation>
-    </message>
-</context>
-<context>
-    <name>traceview::BtpHandshake</name>
-    <message>
-        <source>no BTP/1 READY after %1 attempts over %2 ms</source>
-        <translation type="vanished">%1 回の試行 (%2 ms) 後も BTP/1 READY がありません</translation>
     </message>
 </context>
 <context>
@@ -1410,22 +1371,14 @@ Allowed: %1</source>
 <context>
     <name>traceview::ClockSync</name>
     <message>
-        <source>dongle clock sync failed: %1 [RTT %2ms]</source>
-        <translation type="vanished">ドングルの時刻同期に失敗しました: %1 [RTT %2ms]</translation>
-    </message>
-    <message>
-        <source>dongle clock corrected (%1) [RTT %2ms]</source>
-        <translation type="vanished">ドングルの時刻を修正しました (%1) [RTT %2ms]</translation>
-    </message>
-    <message>
         <location filename="../lib/protocol/clocksync.cpp" line="+179"/>
         <source>clock sync failed: %1 [RTT %2ms]</source>
-        <translation type="unfinished"></translation>
+        <translation>時刻同期に失敗しました: %1 [RTT %2ms]</translation>
     </message>
     <message>
         <location line="+30"/>
         <source>clock corrected (%1) [RTT %2ms]</source>
-        <translation type="unfinished"></translation>
+        <translation>時刻を補正しました (%1) [RTT %2ms]</translation>
     </message>
 </context>
 <context>
@@ -1750,7 +1703,7 @@ Allowed: %1</source>
     <message>
         <location line="+4"/>
         <source>via %1</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 経由</translation>
     </message>
     <message>
         <location line="+7"/>
@@ -1760,7 +1713,7 @@ Allowed: %1</source>
     <message>
         <location line="+20"/>
         <source>%1: %2</source>
-        <translation type="unfinished">%1: %2</translation>
+        <translation>%1: %2</translation>
     </message>
 </context>
 <context>
@@ -1776,93 +1729,9 @@ Allowed: %1</source>
         <translation>このデバイスのタイトルとして表示されます -- 「デバイス」パネルのカード上、およびリストから選択するすべての場所で。</translation>
     </message>
     <message>
-        <source>Free-form notes about this device, shown on its card below the name.</source>
-        <translation type="vanished">このデバイスに関する自由記述のメモ。カード上の名前の下に表示されます。</translation>
-    </message>
-    <message>
-        <source>General</source>
-        <translation type="vanished">全般</translation>
-    </message>
-    <message>
-        <source>Name:</source>
-        <translation type="vanished">名前:</translation>
-    </message>
-    <message>
-        <source>Description:</source>
-        <translation type="vanished">説明:</translation>
-    </message>
-    <message>
         <location line="+13"/>
         <source>Connection</source>
         <translation>接続</translation>
-    </message>
-    <message>
-        <source>Transport:</source>
-        <translation type="vanished">トランスポート:</translation>
-    </message>
-    <message>
-        <source>e.g. robot.local or 192.168.4.1</source>
-        <translation type="vanished">例: robot.local または 192.168.4.1</translation>
-    </message>
-    <message>
-        <source>Hostname or IP address of the robot TCP server.</source>
-        <translation type="vanished">ロボットの TCP サーバーのホスト名または IP アドレス。</translation>
-    </message>
-    <message>
-        <source>TCP host:</source>
-        <translation type="vanished">TCP ホスト:</translation>
-    </message>
-    <message>
-        <source>TCP server port.</source>
-        <translation type="vanished">TCP サーバーのポート。</translation>
-    </message>
-    <message>
-        <source>TCP port:</source>
-        <translation type="vanished">TCP ポート:</translation>
-    </message>
-    <message>
-        <source>Platform BLE address of the robot -- a discovery hint used to dial the connection, not its identity (see &quot;Reported by device&quot; for that). Pick a scan result, or type one by hand for a robot the scan hasn&apos;t found yet.</source>
-        <translation type="vanished">ロボットのプラットフォーム BLE アドレス -- 接続を確立するための検出ヒントであり、ロボットの識別子ではありません (識別子は「デバイスからの報告」を参照)。スキャン結果を選ぶか、スキャンでまだ見つかっていないロボットの場合は手入力してください。</translation>
-    </message>
-    <message>
-        <source>Scan, or type an address</source>
-        <translation type="vanished">スキャンするか、アドレスを入力</translation>
-    </message>
-    <message>
-        <source>Scan</source>
-        <translation type="vanished">スキャン</translation>
-    </message>
-    <message>
-        <source>Scan for nearby BTP-capable BLE robots.</source>
-        <translation type="vanished">近くの BTP 対応 BLE ロボットをスキャンします。</translation>
-    </message>
-    <message>
-        <source>Stop</source>
-        <translation type="vanished">停止</translation>
-    </message>
-    <message>
-        <source>BLE address:</source>
-        <translation type="vanished">BLE アドレス:</translation>
-    </message>
-    <message>
-        <source>Serial port</source>
-        <translation type="vanished">シリアルポート</translation>
-    </message>
-    <message>
-        <source>Refresh port list</source>
-        <translation type="vanished">ポート一覧を更新</translation>
-    </message>
-    <message>
-        <source>Port:</source>
-        <translation type="vanished">ポート:</translation>
-    </message>
-    <message>
-        <source>Baud rate (type a custom value if yours isn&apos;t listed)</source>
-        <translation type="vanished">ボーレート（一覧にない場合は手入力してください）</translation>
-    </message>
-    <message>
-        <source>Baud:</source>
-        <translation type="vanished">ボーレート:</translation>
     </message>
     <message>
         <location line="+108"/>
@@ -1885,49 +1754,9 @@ Allowed: %1</source>
         <translation>CRLF (\r\n)</translation>
     </message>
     <message>
-        <source>Line terminator appended to control-widget commands sent to this device. Doesn&apos;t affect its serial terminal&apos;s raw keystrokes.</source>
-        <translation type="vanished">このデバイスへ送るコントロールウィジェットのコマンドに付加される行終端。シリアルターミナルの生のキー入力には影響しません。</translation>
-    </message>
-    <message>
         <location line="+7"/>
         <source>Terminator:</source>
         <translation>終端:</translation>
-    </message>
-    <message>
-        <source>USB HID device</source>
-        <translation type="vanished">USB HID デバイス</translation>
-    </message>
-    <message>
-        <source>Refresh USB device list</source>
-        <translation type="vanished">USB デバイス一覧を更新</translation>
-    </message>
-    <message>
-        <source>USB:</source>
-        <translation type="vanished">USB:</translation>
-    </message>
-    <message>
-        <source>The device whose connection carries this one.</source>
-        <translation type="vanished">この接続を中継するデバイス。</translation>
-    </message>
-    <message>
-        <source>Via:</source>
-        <translation type="vanished">経由:</translation>
-    </message>
-    <message>
-        <source>The robot&apos;s BTP source_id -- its permanent address, not the channel number the hub shows. Pick one the hub has actually heard (refreshed live while it&apos;s connected), or type a hex/decimal id by hand for a robot it hasn&apos;t heard yet.</source>
-        <translation type="vanished">ロボットの BTP source_id -- ハブが表示するチャンネル番号ではなく、恒久的なアドレスです。ハブが実際に受信したものを選ぶか（接続中はライブ更新されます）、まだ受信していないロボットには 16 進数／10 進数の id を手入力してください。</translation>
-    </message>
-    <message>
-        <source>e.g. 0x0A0A0A0A</source>
-        <translation type="vanished">例: 0x0A0A0A0A</translation>
-    </message>
-    <message>
-        <source>Source ID:</source>
-        <translation type="vanished">ソース ID:</translation>
-    </message>
-    <message>
-        <source>This device&apos;s own source_id. Pass it as the first argument to the dongle&apos;s &quot;hub -bind&quot; command, with the robot&apos;s Source ID above as the second, so the hub knows which robot this device&apos;s SUBSCRIBE/COMMAND traffic is for.</source>
-        <translation type="vanished">このデバイス自身の source_id。ドングルの「hub -bind」コマンドの第 1 引数に指定し、上のロボットの Source ID を第 2 引数にすると、このデバイスの SUBSCRIBE/COMMAND トラフィックがどのロボット宛てかをハブが認識できます。</translation>
     </message>
     <message>
         <location line="+16"/>
@@ -1935,28 +1764,24 @@ Allowed: %1</source>
         <translation>このデバイスの ID:</translation>
     </message>
     <message>
-        <source>Password for this robot&apos;s endpoint key.</source>
-        <translation type="vanished">このロボットのエンドポイント鍵のパスワード。</translation>
-    </message>
-    <message>
         <location line="-102"/>
         <source>Advanced</source>
-        <translation type="unfinished"></translation>
+        <translation>詳細設定</translation>
     </message>
     <message>
         <location line="+5"/>
         <source>Every link as a table: the order they are tried in, baud rate, TCP port, and targets typed by hand.</source>
-        <translation type="unfinished"></translation>
+        <translation>すべての接続を表で表示: 試行順、ボーレート、TCP ポート、手入力した接続先。</translation>
     </message>
     <message>
         <location line="+43"/>
         <source>Card title:</source>
-        <translation type="unfinished"></translation>
+        <translation>カードのタイトル:</translation>
     </message>
     <message>
         <location line="+5"/>
         <source>The robot&apos;s channel-B password. One per device: every TCP, BLE and hub connection above uses it.</source>
-        <translation type="unfinished"></translation>
+        <translation>ロボットのチャンネル B パスワード。デバイスごとに 1 つ: 上の TCP、BLE、ハブ接続はすべてこれを使います。</translation>
     </message>
     <message>
         <location line="+3"/>
@@ -1979,12 +1804,12 @@ Allowed: %1</source>
     <message>
         <location line="-61"/>
         <source>Line terminator appended to control-widget commands sent over serial. Doesn&apos;t affect its serial terminal&apos;s raw keystrokes.</source>
-        <translation type="unfinished"></translation>
+        <translation>シリアル経由で送信するコントロールウィジェットのコマンドに付加する行末文字。シリアルターミナルのキー入力には影響しません。</translation>
     </message>
     <message>
         <location line="+15"/>
         <source>This device&apos;s own source_id. Pass it as the first argument to the hub&apos;s &quot;hub -bind&quot; command, with the robot&apos;s id as the second, so the hub knows which robot this device&apos;s SUBSCRIBE/COMMAND traffic is for.</source>
-        <translation type="unfinished"></translation>
+        <translation>このデバイス自身の source_id。ハブの &quot;hub -bind&quot; コマンドの第 1 引数に指定し、第 2 引数にロボットの id を指定すると、このデバイスの SUBSCRIBE/COMMAND トラフィックがどのロボット宛てかをハブが認識します。</translation>
     </message>
     <message>
         <location line="+9"/>
@@ -2082,14 +1907,6 @@ Allowed: %1</source>
         <translation>%1（前回の接続）</translation>
     </message>
     <message>
-        <source>(none)</source>
-        <translation type="vanished">(なし)</translation>
-    </message>
-    <message>
-        <source>%1 (unavailable)</source>
-        <translation type="vanished">%1 (利用不可)</translation>
-    </message>
-    <message>
         <location line="+9"/>
         <source>(no topics reported yet)</source>
         <translation>(まだトピックの報告はありません)</translation>
@@ -2111,30 +1928,6 @@ Allowed: %1</source>
         <translation>デバイスの報告: %1</translation>
     </message>
     <message>
-        <source>%1 (%2)</source>
-        <translation type="vanished">%1 (%2)</translation>
-    </message>
-    <message>
-        <source>online</source>
-        <translation type="vanished">オンライン</translation>
-    </message>
-    <message>
-        <source>offline %1s</source>
-        <translation type="vanished">オフライン %1 秒</translation>
-    </message>
-    <message>
-        <source>Ch %1 -- %2, %3</source>
-        <translation type="vanished">Ch %1 -- %2, %3</translation>
-    </message>
-    <message>
-        <source>%1
-RSSI: %2 dBm
-RTT: %3 ms</source>
-        <translation type="vanished">%1
-RSSI: %2 dBm
-RTT: %3 ms</translation>
-    </message>
-    <message>
         <location line="-242"/>
         <source>Reported by device</source>
         <translation>デバイスからの報告</translation>
@@ -2153,193 +1946,193 @@ RTT: %3 ms</translation>
     <message>
         <location filename="../lib/devices/devicelinkstable.cpp" line="+91"/>
         <source>On</source>
-        <translation type="unfinished"></translation>
+        <translation>有効</translation>
     </message>
     <message>
         <location line="+0"/>
         <source>Type</source>
-        <translation type="unfinished">種類</translation>
+        <translation>種類</translation>
     </message>
     <message>
         <location line="+0"/>
         <source>Target</source>
-        <translation type="unfinished"></translation>
+        <translation>接続先</translation>
     </message>
     <message>
         <location line="+0"/>
         <source>Option</source>
-        <translation type="unfinished"></translation>
+        <translation>オプション</translation>
     </message>
     <message>
         <location line="+10"/>
         <source>Every way to reach this device. Row 1 is tried first; when the connection in use stops working, TraceView tries the next enabled row, and starts over after the last.</source>
-        <translation type="unfinished"></translation>
+        <translation>このデバイスに到達するすべての方法。1 行目から試行します。使用中の接続が機能しなくなると、TraceView は次の有効な行を試し、最後の行の後は最初に戻ります。</translation>
     </message>
     <message>
         <location line="+14"/>
         <source>Add</source>
-        <translation type="unfinished">追加</translation>
+        <translation>追加</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Remove</source>
-        <translation type="unfinished">削除</translation>
+        <translation>削除</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Up</source>
-        <translation type="unfinished"></translation>
+        <translation>上へ</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Down</source>
-        <translation type="unfinished"></translation>
+        <translation>下へ</translation>
     </message>
     <message>
         <location line="+12"/>
         <source>Ports</source>
-        <translation type="unfinished"></translation>
+        <translation>ポート</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Refresh the serial port list</source>
-        <translation type="unfinished"></translation>
+        <translation>シリアルポートの一覧を更新</translation>
     </message>
     <message>
         <location line="+8"/>
         <source>USB</source>
-        <translation type="unfinished">USB</translation>
+        <translation>USB</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Refresh the USB HID device list</source>
-        <translation type="unfinished"></translation>
+        <translation>USB HID デバイスの一覧を更新</translation>
     </message>
     <message>
         <location line="+8"/>
         <location line="+4"/>
         <source>Scan BLE</source>
-        <translation type="unfinished"></translation>
+        <translation>BLE をスキャン</translation>
     </message>
     <message>
         <location line="-2"/>
         <source>Scan for nearby BTP-capable BLE robots.</source>
-        <translation type="unfinished">近くの BTP 対応 BLE ロボットをスキャンします。</translation>
+        <translation>近くの BTP 対応 BLE ロボットをスキャンします。</translation>
     </message>
     <message>
         <location line="+2"/>
         <source>Stop scan</source>
-        <translation type="unfinished"></translation>
+        <translation>スキャンを停止</translation>
     </message>
     <message>
         <location line="+104"/>
         <source>Unticked: kept, but skipped when looking for a working connection.</source>
-        <translation type="unfinished"></translation>
+        <translation>チェックなし: 保持されますが、動作する接続を探すときにスキップされます。</translation>
     </message>
     <message>
         <location line="+33"/>
         <source>port, e.g. COM5</source>
-        <translation type="unfinished"></translation>
+        <translation>ポート (例: COM5)</translation>
     </message>
     <message>
         <location line="+12"/>
         <source>Baud rate (type a custom value if yours isn&apos;t listed)</source>
-        <translation type="unfinished">ボーレート（一覧にない場合は手入力してください）</translation>
+        <translation>ボーレート (一覧にない場合は任意の値を入力)</translation>
     </message>
     <message>
         <location line="+23"/>
         <source>host or IP, e.g. 192.168.4.1</source>
-        <translation type="unfinished"></translation>
+        <translation>ホストまたは IP (例: 192.168.4.1)</translation>
     </message>
     <message>
         <location line="+10"/>
         <source>TCP server port</source>
-        <translation type="unfinished"></translation>
+        <translation>TCP サーバーのポート</translation>
     </message>
     <message>
         <location line="+8"/>
         <source>robot name, e.g. BallyRobot</source>
-        <translation type="unfinished"></translation>
+        <translation>ロボット名 (例: BallyRobot)</translation>
     </message>
     <message>
         <location line="+2"/>
         <source>The name the robot advertises, like a hostname: TraceView scans for it on every connection, so it keeps working if the robot&apos;s address changes. A MAC address is also accepted. Scan to pick a robot nearby.</source>
-        <translation type="unfinished"></translation>
+        <translation>ロボットがアドバタイズする名前 (ホスト名のようなもの): TraceView は接続のたびにこの名前を探すため、ロボットのアドレスが変わっても動作し続けます。MAC アドレスも使用できます。スキャンして近くのロボットを選択してください。</translation>
     </message>
     <message>
         <location line="+12"/>
         <source>The hub whose connection carries this one.</source>
-        <translation type="unfinished"></translation>
+        <translation>この接続を中継するハブ。</translation>
     </message>
     <message>
         <location line="+9"/>
         <source>robot name or id</source>
-        <translation type="unfinished"></translation>
+        <translation>ロボット名または id</translation>
     </message>
     <message>
         <location line="+2"/>
         <source>The robot behind the hub. Pick one the hub has heard (listed by name), or type its name or its BTP source_id (hex or decimal). What is saved is the source_id -- its permanent address, not the channel number the hub shows.</source>
-        <translation type="unfinished"></translation>
+        <translation>ハブの先にいるロボット。ハブが検出したロボット (名前で一覧表示) から選ぶか、名前または BTP source_id (16 進数または 10 進数) を入力してください。保存されるのは source_id -- ロボットの恒久的なアドレスで、ハブが表示するチャンネル番号ではありません。</translation>
     </message>
     <message>
         <location line="+19"/>
         <source>Automatic (robot name)</source>
-        <translation type="unfinished"></translation>
+        <translation>自動 (ロボット名)</translation>
     </message>
     <message>
         <location line="+2"/>
         <source>Found by the robot name above each time it connects. To use a specific target instead, pick one in the list above the table.</source>
-        <translation type="unfinished"></translation>
+        <translation>接続のたびに上のロボット名で検索します。特定の接続先を使うには、表の上の一覧から選択してください。</translation>
     </message>
     <message>
         <location line="+56"/>
         <source>%1 (%2)</source>
-        <translation type="unfinished">%1 (%2)</translation>
+        <translation>%1 (%2)</translation>
     </message>
     <message>
         <location line="+6"/>
         <source>(any hub)</source>
-        <translation type="unfinished"></translation>
+        <translation>(任意のハブ)</translation>
     </message>
     <message>
         <location line="+0"/>
         <source>(choose the hub)</source>
-        <translation type="unfinished"></translation>
+        <translation>(ハブを選択)</translation>
     </message>
     <message>
         <location line="+6"/>
         <source>%1 (unavailable)</source>
-        <translation type="unfinished">%1 (利用不可)</translation>
+        <translation>%1 (利用不可)</translation>
     </message>
     <message>
         <location line="+30"/>
         <source>online</source>
-        <translation type="unfinished">オンライン</translation>
+        <translation>オンライン</translation>
     </message>
     <message>
         <location line="+0"/>
         <source>offline %1s</source>
-        <translation type="unfinished">オフライン %1 秒</translation>
+        <translation>オフライン %1 秒</translation>
     </message>
     <message>
         <location line="+3"/>
         <source>%1 (ch %2, %3)</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 (チャンネル %2, %3)</translation>
     </message>
     <message>
         <location line="+2"/>
         <source>%1 (%2, %3)</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 (%2, %3)</translation>
     </message>
     <message>
         <location line="+3"/>
         <source>channel %1</source>
-        <translation type="unfinished"></translation>
+        <translation>チャンネル %1</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>channel %1, %2</source>
-        <translation type="unfinished"></translation>
+        <translation>チャンネル %1, %2</translation>
     </message>
 </context>
 <context>
@@ -2883,12 +2676,12 @@ Drops: %2</source>
     <message>
         <location line="+7"/>
         <source>Keyboard Diagnostics</source>
-        <translation type="unfinished"></translation>
+        <translation>キーボード診断</translation>
     </message>
     <message>
         <location line="+10"/>
         <source>Copy Keyboard Log</source>
-        <translation type="unfinished"></translation>
+        <translation>キーボードログをコピー</translation>
     </message>
     <message>
         <location line="+6"/>
@@ -3051,12 +2844,12 @@ Drops: %2</source>
     <message>
         <location line="+1233"/>
         <source>%1: found at %2</source>
-        <translation type="unfinished"></translation>
+        <translation>%1: %2 で見つかりました</translation>
     </message>
     <message>
         <location line="+322"/>
         <source>%1: trying %2</source>
-        <translation type="unfinished"></translation>
+        <translation>%1: %2 を試行中</translation>
     </message>
     <message>
         <location line="+419"/>
@@ -3996,115 +3789,115 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     <message>
         <location filename="../lib/devices/robotlinkspanel.cpp" line="+37"/>
         <source>Serial (USB)</source>
-        <translation type="unfinished"></translation>
+        <translation>シリアル (USB)</translation>
     </message>
     <message>
         <location line="+2"/>
         <source>Wi-Fi</source>
-        <translation type="unfinished"></translation>
+        <translation>Wi-Fi</translation>
     </message>
     <message>
         <location line="+2"/>
         <source>Bluetooth</source>
-        <translation type="unfinished"></translation>
+        <translation>Bluetooth</translation>
     </message>
     <message>
         <location line="+2"/>
         <source>Hub</source>
-        <translation type="unfinished">ハブ</translation>
+        <translation>ハブ</translation>
     </message>
     <message>
         <location line="+10"/>
         <source>Automatic: the USB port whose device reports the robot&apos;s name (or, if none does, the port last picked here). Pick or type a port to always use that one.</source>
-        <translation type="unfinished"></translation>
+        <translation>自動: デバイスがロボット名を報告している USB ポート (該当がなければ、ここで最後に選んだポート)。常に特定のポートを使うには、選択または入力してください。</translation>
     </message>
     <message>
         <location line="+4"/>
         <source>Automatic: &lt;robot name&gt;.local, found over mDNS. Type a host or IP to use that instead (e.g. 192.168.4.1).</source>
-        <translation type="unfinished"></translation>
+        <translation>自動: &lt;ロボット名&gt;.local を mDNS で検索します。代わりにホストまたは IP を使うには入力してください (例: 192.168.4.1)。</translation>
     </message>
     <message>
         <location line="+4"/>
         <source>Automatic: the Bluetooth robot advertising the robot&apos;s name. Pick or type an address to always use that one.</source>
-        <translation type="unfinished"></translation>
+        <translation>自動: ロボット名をアドバタイズしている Bluetooth ロボット。常に特定のアドレスを使うには、選択または入力してください。</translation>
     </message>
     <message>
         <location line="+4"/>
         <source>Automatic: the robot of this name behind any connected hub. Pick a hub to only look behind that one.</source>
-        <translation type="unfinished"></translation>
+        <translation>自動: 接続中のいずれかのハブの先にいる、この名前のロボット。特定のハブの先だけを探すには、ハブを選択してください。</translation>
     </message>
     <message>
         <location line="+45"/>
         <source>Name:</source>
-        <translation type="unfinished">名前:</translation>
+        <translation>名前:</translation>
     </message>
     <message>
         <location line="+6"/>
         <source>robot name, e.g. BallyRobot</source>
-        <translation type="unfinished"></translation>
+        <translation>ロボット名 (例: BallyRobot)</translation>
     </message>
     <message>
         <location line="+3"/>
         <source>The name the robot is configured with (&quot;settings -set identity name ...&quot;). Every link set to Automatic finds the robot by it: the USB port that reports it, &lt;name&gt;.local over Wi-Fi, the Bluetooth device advertising it, the robot of that name behind a hub.</source>
-        <translation type="unfinished"></translation>
+        <translation>ロボットに設定された名前 (&quot;settings -set identity name ...&quot;)。自動に設定した接続はすべてこの名前でロボットを見つけます: 名前を報告する USB ポート、Wi-Fi の &lt;名前&gt;.local、名前をアドバタイズする Bluetooth デバイス、ハブの先にいるその名前のロボット。</translation>
     </message>
     <message>
         <location line="+14"/>
         <location line="+6"/>
         <source>Search</source>
-        <translation type="unfinished"></translation>
+        <translation>検索</translation>
     </message>
     <message>
         <location line="-3"/>
         <source>Look for robots nearby: refreshes the serial ports and scans for Bluetooth robots. Names found are offered in the Robot list.</source>
-        <translation type="unfinished"></translation>
+        <translation>近くのロボットを探します: シリアルポートを更新し、Bluetooth ロボットをスキャンします。見つかった名前はロボットの一覧に表示されます。</translation>
     </message>
     <message>
         <location line="+3"/>
         <source>Stop</source>
-        <translation type="unfinished">停止</translation>
+        <translation>停止</translation>
     </message>
     <message>
         <location line="+35"/>
         <source>Ticked: the robot can be reached this way.</source>
-        <translation type="unfinished"></translation>
+        <translation>チェックあり: この方法でロボットに接続できます。</translation>
     </message>
     <message>
         <location line="+82"/>
         <location line="+11"/>
         <source>Automatic (%1)</source>
-        <translation type="unfinished"></translation>
+        <translation>自動 (%1)</translation>
     </message>
     <message>
         <location line="-10"/>
         <location line="+9"/>
         <source>Automatic (by robot name)</source>
-        <translation type="unfinished"></translation>
+        <translation>自動 (ロボット名で検索)</translation>
     </message>
     <message>
         <location line="+5"/>
         <source>%1 (%2)</source>
-        <translation type="unfinished">%1 (%2)</translation>
+        <translation>%1 (%2)</translation>
     </message>
     <message>
         <location line="+6"/>
         <source>Automatic (&lt;robot name&gt;.local)</source>
-        <translation type="unfinished"></translation>
+        <translation>自動 (&lt;ロボット名&gt;.local)</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Automatic (%1.local)</source>
-        <translation type="unfinished"></translation>
+        <translation>自動 (%1.local)</translation>
     </message>
     <message>
         <location line="+6"/>
         <source>Automatic (any hub)</source>
-        <translation type="unfinished"></translation>
+        <translation>自動 (任意のハブ)</translation>
     </message>
     <message>
         <location line="+0"/>
         <source>(choose the hub)</source>
-        <translation type="unfinished"></translation>
+        <translation>(ハブを選択)</translation>
     </message>
 </context>
 <context>
@@ -4518,33 +4311,33 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     <message>
         <location line="+5"/>
         <source>Manifest cache</source>
-        <translation type="unfinished"></translation>
+        <translation>マニフェストキャッシュ</translation>
     </message>
     <message>
         <location line="+2"/>
         <source>Remember each device&apos;s manifest between sessions</source>
-        <translation type="unfinished"></translation>
+        <translation>各デバイスのマニフェストをセッション間で保持する</translation>
     </message>
     <message>
         <location line="+3"/>
         <source>A reconnect then only asks whether the device&apos;s catalog changed, and the topics of a known device are listed even while it is offline.</source>
-        <translation type="unfinished"></translation>
+        <translation>再接続時はデバイスのカタログが変更されたかどうかだけを確認し、既知のデバイスのトピックはオフライン中も一覧に表示されます。</translation>
     </message>
     <message>
         <location line="+4"/>
         <source>Trust the cache without asking when the device reports the same revision (TCP/BLE)</source>
-        <translation type="unfinished"></translation>
+        <translation>デバイスが同じリビジョンを報告したときは確認せずにキャッシュを信頼する (TCP/BLE)</translation>
     </message>
     <message>
         <location line="+7"/>
         <source>Not recommended: the question it skips is tiny, and it is what keeps the device&apos;s reported information (firmware version and the like) up to date.</source>
-        <translation type="unfinished"></translation>
+        <translation>非推奨: 省略される確認はごく小さく、デバイスが報告する情報 (ファームウェアのバージョンなど) を最新に保つのはこの確認です。</translation>
     </message>
     <message numerus="yes">
         <location line="+9"/>
         <source>Clear cache (%n device(s))</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>キャッシュをクリア (%n 台のデバイス)</numerusform>
         </translation>
     </message>
     <message>
@@ -4797,7 +4590,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     <message>
         <location line="+51"/>
         <source>Could not find %1 on the network (mDNS)</source>
-        <translation type="unfinished"></translation>
+        <translation>ネットワーク上で %1 が見つかりませんでした (mDNS)</translation>
     </message>
 </context>
 <context>
@@ -4954,25 +4747,9 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>後で</translation>
     </message>
     <message>
-        <source>&lt;b&gt;TraceView %1&lt;/b&gt; is available (you have v%2).</source>
-        <translation type="vanished">&lt;b&gt;TraceView %1&lt;/b&gt; が利用可能です (現在 v%2)。</translation>
-    </message>
-    <message>
-        <source>No release notes provided.</source>
-        <translation type="vanished">リリースノートはありません。</translation>
-    </message>
-    <message>
         <location line="+1"/>
         <source>Update Now</source>
         <translation>今すぐアップデート</translation>
-    </message>
-    <message>
-        <source>Skip This Version</source>
-        <translation type="vanished">このバージョンをスキップ</translation>
-    </message>
-    <message>
-        <source>Remind Me Later</source>
-        <translation type="vanished">後で通知</translation>
     </message>
 </context>
 <context>
