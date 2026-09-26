@@ -176,7 +176,7 @@ void ClockSync::onCommandFrameReceived(const BtpFrame& frame) {
 
     if (status != kResultStatusSuccess) {
         emit statusMessage(
-            tr("dongle clock sync failed: %1 [RTT %2ms]").arg(message).arg(rttMs), 8000,
+            tr("clock sync failed: %1 [RTT %2ms]").arg(message).arg(rttMs), 8000,
             StatusSeverity::Warning);
         return;
     }
@@ -206,7 +206,7 @@ void ClockSync::onCommandFrameReceived(const BtpFrame& frame) {
                          Pending::SetClock);
     } else {
         emit statusMessage(
-            tr("dongle clock corrected (%1) [RTT %2ms]").arg(message).arg(rttMs), 5000,
+            tr("clock corrected (%1) [RTT %2ms]").arg(message).arg(rttMs), 5000,
             StatusSeverity::Success);
     }
 }

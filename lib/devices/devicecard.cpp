@@ -160,6 +160,11 @@ void DeviceCard::setDevice(const Device& device) {
     update();
 }
 
+void DeviceCard::setCachedInfo(const QVector<DeviceInfoRecord>& info) {
+    m_cachedInfo = info;
+    update();
+}
+
 void DeviceCard::setSelected(bool selected) {
     if (m_selected == selected) {
         return;
@@ -249,7 +254,10 @@ void DeviceCard::paintEvent(QPaintEvent*) {
     // Bars are the at-a-glance read (a raw dBm number means little without
     // context); the dBm text stays alongside for anyone who wants the exact
     // value. Weak signal (1-2 bars) colors both red.
-    const bool showSignal = m_device.transportType == TransportType::HubChannel &&
+    // Judged by the link in use -- a device with several connections may be
+    // reached through a hub right now even if its main link is TCP.
+    const Device inUse = effectiveDevice(m_device);
+    const bool showSignal = inUse.transportType == TransportType::HubChannel &&
                             m_device.peerPresenceKnown && m_device.peerOnline;
     QString signalText;
     int signalLevel = 0;
@@ -288,7 +296,7 @@ void DeviceCard::paintEvent(QPaintEvent*) {
         painter.drawText(signalTextRect, Qt::AlignVCenter | Qt::AlignRight, signalText);
     }
 
-    // Body: a word-wrapped description, then (if the device has ever
+    // Body: the device's reported info, then (if the device has ever
     // completed a handshake) the BTP version/ID it last reported -- see
     // Device::btpVersion/btpId. Previously that pair only showed up behind
     // the gear, in DeviceConfigDialog's "Reported by device" section;
@@ -317,18 +325,45 @@ void DeviceCard::paintEvent(QPaintEvent*) {
     // Name the amber state in words, not just a dot colour (topico 35 D.2).
     if (linkState == DeviceLinkState::TransportOnly) {
         reportedLine = tr("port open, waiting for BTP session");
-    } else if (m_device.transportType == TransportType::HubChannel &&
+    } else if (inUse.transportType == TransportType::HubChannel &&
                linkState == DeviceLinkState::PeerStale) {
         reportedLine = m_device.peerPresenceKnown
                            ? tr("hub link up, no data from robot")
                            : tr("hub link up, locating robot…");
     }
+    // With several ways to connect, say which one is in use.
+    if (deviceLinkCount(m_device) > 1 && m_device.connected) {
+        const QString via = tr("via %1").arg(transportTypeLabel(inUse.transportType));
+        reportedLine =
+            reportedLine.isEmpty() ? via : via + QString::fromUtf8(" \xC2\xB7 ") + reportedLine;
+    }
+    // Nothing live: what the last connection reported, dimmed and said so.
+    const bool fromCache = m_device.reportedInfo.isEmpty() && !m_cachedInfo.isEmpty();
+    if (fromCache && reportedLine.isEmpty()) {
+        reportedLine = tr("saved from the last connection");
+    }
     const int reportedHeight = reportedLine.isEmpty() ? 0 : kBodyLineHeight + 4;
 
-    painter.setPen(palette.textPrimary);
-    const QRect descRect(body.left(), body.top(), body.width(), body.height() - reportedHeight);
-    painter.drawText(descRect, Qt::AlignTop | Qt::AlignLeft | Qt::TextWordWrap,
-                     m_device.description);
+    // What the device says about itself (its manifest's source_info:
+    // firmware, chip, partition...), one "label: value" line each, as many
+    // as fit. The name is left out -- it is already the card's title.
+    painter.setPen(fromCache ? palette.textSecondary : palette.textPrimary);
+    const QRect infoRect(body.left(), body.top(), body.width(), body.height() - reportedHeight);
+    int lineTop = infoRect.top();
+    for (const DeviceInfoRecord& entry : fromCache ? m_cachedInfo : m_device.reportedInfo) {
+        if (entry.key == QLatin1String("name") || entry.value.trimmed().isEmpty()) {
+            continue;
+        }
+        if (lineTop + kBodyLineHeight > infoRect.bottom() + 1) {
+            break;
+        }
+        const QString label = entry.label.isEmpty() ? entry.key : entry.label;
+        const QRect lineRect(infoRect.left(), lineTop, infoRect.width(), kBodyLineHeight);
+        painter.drawText(lineRect, Qt::AlignVCenter | Qt::AlignLeft,
+                         bodyMetrics.elidedText(tr("%1: %2").arg(label, entry.value.trimmed()),
+                                                Qt::ElideRight, lineRect.width()));
+        lineTop += kBodyLineHeight;
+    }
 
     if (!reportedLine.isEmpty()) {
         painter.setPen(palette.textSecondary);

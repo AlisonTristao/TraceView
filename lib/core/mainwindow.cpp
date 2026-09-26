@@ -14,6 +14,7 @@
 #include <QFrame>
 #include <QGuiApplication>
 #include <QHBoxLayout>
+#include <QJsonArray>
 #include <QKeySequence>
 #include <QLabel>
 #include <QLineEdit>
@@ -29,6 +30,7 @@
 #if defined(TRACEVIEW_ENABLE_SERIAL) && !defined(Q_OS_ANDROID)
 #include <QSerialPortInfo>
 #endif
+#include <QSet>
 #include <QSettings>
 #include <QShowEvent>
 #include <QSignalBlocker>
@@ -48,6 +50,7 @@
 #include "backend/backend.h"
 #ifdef TRACEVIEW_ENABLE_BLE
 #include "blediscoveryservice.h"
+#include "bletransport.h"
 #endif
 #include "dashboard/dashboardgrid.h"
 #include "dashboard/widgetconfigeditor.h"
@@ -83,6 +86,8 @@
 #include "protocol/btpbackend.h"
 #include "protocol/btpframe.h"
 #include "protocol/keyderivation.h"
+#include "protocol/manifestclient.h"
+#include "protocol/manifeststore.h"
 #include "ribbon.h"
 #include "ribbonicons.h"
 #include "serialwidgetbridge.h"
@@ -208,6 +213,17 @@ struct WidgetTopicRequest {
     quint32 rateMillihz = 0;
 };
 
+// Settings > Dashboard's subscribe rate override, when on, replaces
+// whatever rate the widget itself asked for -- one dial for the whole
+// dashboard's subscribe load instead of each widget's own sample time.
+// The topic's own max/min on the robot still clamps it either way.
+WidgetTopicRequest withRateOverride(WidgetTopicRequest request) {
+    if (request.topicId != 0 && AppSettings::instance().subscribeRateOverrideEnabled()) {
+        request.rateMillihz = quint32(AppSettings::instance().subscribeRateOverrideHz()) * 1000U;
+    }
+    return request;
+}
+
 WidgetTopicRequest widgetTopicRequest(DashboardWidget* widget, DashboardGrid* grid) {
     const QString deviceId = grid->configForWidget(widget).value("deviceId").toString();
     WidgetTopicRequest request;
@@ -226,14 +242,59 @@ WidgetTopicRequest widgetTopicRequest(DashboardWidget* widget, DashboardGrid* gr
         return {};
     }
 
-    // Settings > Dashboard's subscribe rate override, when on, replaces
-    // whatever rate the widget itself asked for -- one dial for the whole
-    // dashboard's subscribe load instead of each widget's own sample time.
-    // The topic's own max/min on the robot still clamps it either way.
-    if (request.topicId != 0 && AppSettings::instance().subscribeRateOverrideEnabled()) {
-        request.rateMillihz = quint32(AppSettings::instance().subscribeRateOverrideHz()) * 1000U;
+    return withRateOverride(request);
+}
+
+// Registry type ids of the widgets whose data TelemetryHistory keeps for a
+// workspace that isn't showing (see MainWindow::syncBackgroundTelemetry()).
+// A text board is left out: it only ever shows its newest document, and
+// keeping its topic subscribed in the background would buy nothing back.
+bool isChartTypeId(const QString& typeId) {
+    return typeId == QLatin1String("dummy_line") || typeId == QLatin1String("dummy_bar");
+}
+bool isGaugeTypeId(const QString& typeId) {
+    return typeId == QLatin1String("dummy_gauge");
+}
+
+// widgetTopicRequest() for a saved dashboard item that has no widget -- one
+// in a workspace that isn't showing. Empty for anything but a chart/gauge.
+WidgetTopicRequest itemTopicRequest(const DashboardItem& item) {
+    const QString deviceId = item.config.value("deviceId").toString();
+    if (isChartTypeId(item.typeId)) {
+        const ChartConfig config = parseChartConfig(item.config);
+        return withRateOverride({deviceId, config.sourceId, config.topicId,
+                                 requestedRateMillihzFor(config.sampleTimeMs)});
     }
-    return request;
+    if (isGaugeTypeId(item.typeId)) {
+        const GaugeConfig config = parseGaugeConfig(item.config);
+        return withRateOverride(
+            {deviceId, config.sourceId, config.topicId, kGaugeRequestedRateMillihz});
+    }
+    return {};
+}
+
+// Raises `demand` to cover every field `config` plots: a chart needs its
+// full buffer capacity, a gauge only the newest value.
+void addRetentionDemand(QHash<TelemetryHistoryKey, int>& demand, const QString& deviceId,
+                        const ChartConfig& config) {
+    if (deviceId.isEmpty() || config.topicId == 0) {
+        return;
+    }
+    const int capacity = chartBufferCapacity(config);
+    for (const ChartSeriesConfig& series : config.series) {
+        int& wanted = demand[{deviceId, config.sourceId, config.topicId, series.fieldId}];
+        wanted = qMax(wanted, capacity);
+    }
+}
+void addRetentionDemand(QHash<TelemetryHistoryKey, int>& demand, const QString& deviceId,
+                        const GaugeConfig& config) {
+    if (deviceId.isEmpty() || config.topicId == 0) {
+        return;
+    }
+    for (const GaugeSeriesConfig& series : config.series) {
+        int& wanted = demand[{deviceId, config.sourceId, config.topicId, series.fieldId}];
+        wanted = qMax(wanted, 1);
+    }
 }
 
 quint64 topicStatusKey(quint32 sourceId, quint16 topicId) {
@@ -262,6 +323,31 @@ DashboardBreakpoint breakpointFromActionData(int value) {
     }
     return DashboardBreakpoint(value);
 }
+
+#ifdef TRACEVIEW_ENABLE_SERIAL
+// Every serial port the OS lists, labelled with (and carrying) the product
+// name its USB device reports -- a bally_OS robot names its USB port after
+// itself, so the picker reads "COM5 -- Robo2". Feeds both the config
+// dialog's pickers and automatic Serial links (resolveLinkByName()).
+QVector<SerialPortOption> currentSerialPorts() {
+#ifdef Q_OS_ANDROID
+    return AndroidUsbSerialTransport::availablePorts();
+#else
+    QVector<SerialPortOption> ports;
+    const QList<QSerialPortInfo> infos = QSerialPortInfo::availablePorts();
+    const QHash<QString, QString> products = SerialManager::portProductNames();
+    ports.reserve(infos.size());
+    for (const QSerialPortInfo& info : infos) {
+        if (SerialManager::isDuplicateDialInPort(info.portName())) {
+            continue;
+        }
+        const QString product = products.value(info.portName());
+        ports.append({info.portName(), serialPortLabel(info.portName(), product), product});
+    }
+    return ports;
+#endif
+}
+#endif
 }  // namespace
 
 MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
@@ -337,7 +423,26 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
 
     buildMenus();
 
+    // The manifest cache is consulted by every BtpBackend through one
+    // process-wide ManifestStore; Settings owns the two switches.
+    const auto applyManifestCachePreferences = [] {
+        ManifestStore::instance().setEnabled(AppSettings::instance().manifestCacheEnabled());
+        ManifestStore::instance().setSkipOnHello(
+            AppSettings::instance().manifestCacheSkipOnHello());
+    };
+    applyManifestCachePreferences();
+    connect(&AppSettings::instance(), &AppSettings::connectionPreferencesChanged, this,
+            applyManifestCachePreferences);
+
     m_dashboardGrid = new DashboardGrid(this);
+
+    // A device with several ways to connect (Device::extraLinks) dials all of
+    // them at once while it is not live, and keeps whichever comes up first
+    // -- see tickDeviceLinkCycles(). A one-second tick is plenty.
+    m_deviceLinkCycleTimer = new QTimer(this);
+    m_deviceLinkCycleTimer->setInterval(1000);
+    connect(m_deviceLinkCycleTimer, &QTimer::timeout, this, &MainWindow::tickDeviceLinkCycles);
+    m_deviceLinkCycleTimer->start();
     // The Settings window itself is built on demand (onOpenSettings) -- but
     // the recent-files cap it exposes lives in QSettings and has to stay
     // trimmed whether or not that window is open.
@@ -419,22 +524,7 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     // depend on QSerialPort, see lib/CMakeLists.txt) -- MainWindow supplies
     // the live list DeviceConfigDialog's port combo offers.
 #ifdef TRACEVIEW_ENABLE_SERIAL
-#ifdef Q_OS_ANDROID
-    m_devicesGrid->setPortListProvider(&AndroidUsbSerialTransport::availablePorts);
-#else
-    m_devicesGrid->setPortListProvider([]() -> QVector<SerialPortOption> {
-        QVector<SerialPortOption> ports;
-        const QList<QSerialPortInfo> infos = QSerialPortInfo::availablePorts();
-        ports.reserve(infos.size());
-        for (const QSerialPortInfo& info : infos) {
-            if (SerialManager::isDuplicateDialInPort(info.portName())) {
-                continue;
-            }
-            ports.append({info.portName(), info.portName()});
-        }
-        return ports;
-    });
-#endif
+    m_devicesGrid->setPortListProvider(&currentSerialPorts);
 #endif
     // Same reasoning as setPortListProvider() above, for the USB device
     // combo -- DevicesGrid can't enumerate HID devices itself
@@ -469,6 +559,27 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
             DeviceConnection* connection = m_deviceConnections.value(deviceId);
             return connection ? connection->backend()->catalogTopics()
                               : QVector<CatalogTopicInfo>();
+        });
+    // A disconnected device's dialog shows what its last connection
+    // described, from the manifest cache. The cache is keyed by source_id:
+    // a hub link knows it offline, a direct link only from its own
+    // HELLO_RESULT -- so failing that, the robot is found by the name its
+    // cached source_info reports.
+    m_devicesGrid->setCachedDescriptionProvider(
+        [this](const QString& deviceId) -> CachedDeviceDescription {
+            CachedDeviceDescription out;
+            const QVector<Device> devices = m_devicesGrid->devices();
+            const Device* device = findDevice(devices, deviceId);
+            if (device == nullptr) {
+                return out;
+            }
+            quint32 sourceId = deviceSelfSourceId(*device);
+            if (sourceId == 0) {
+                sourceId = ManifestClient::cachedSourceNamed(
+                    device->robotName.isEmpty() ? device->name : device->robotName);
+            }
+            BtpBackend::cachedDescription(sourceId, &out.topics, &out.info);
+            return out;
         });
     // The gear icon's "Robot source_id" combo. Unlike the three providers
     // above this one is polled for as long as the dialog stays open (see
@@ -727,11 +838,12 @@ void MainWindow::wireChartWidgetToTelemetry(DashboardWidget* widget) {
     // the handle now.
     connect(widget, &QObject::destroyed, this, [this, widget] {
         const WidgetSubscription sub = m_widgetSubscriptions.take(widget);
-        if (DeviceConnection* connection = m_deviceConnections.value(sub.deviceId)) {
-            connection->backend()->removeSubscriber(sub.handle);
+        if (sub.backend) {
+            sub.backend->removeSubscriber(sub.handle);
         }
     });
 
+    seedWidgetFromHistory(widget);
     refreshWidgetSubscription(widget);
 }
 
@@ -739,25 +851,30 @@ void MainWindow::refreshWidgetSubscription(DashboardWidget* widget) {
     const WidgetTopicRequest request = widgetTopicRequest(widget, m_dashboardGrid);
     WidgetSubscription& sub = m_widgetSubscriptions[widget];
 
-    DeviceConnection* oldConnection = m_deviceConnections.value(sub.deviceId);
+    Backend* oldBackend = sub.backend;
     DeviceConnection* newConnection = m_deviceConnections.value(request.deviceId);
+    Backend* newBackend = newConnection ? newConnection->backend() : nullptr;
 
-    // A device change (or the old one going away) invalidates both the old
-    // subscription handle (it belongs to a different Backend/
-    // SubscriptionManager instance) and the fieldSample connection feeding
-    // this widget.
-    if (oldConnection && oldConnection != newConnection && sub.handle != 0) {
-        oldConnection->backend()->removeSubscriber(sub.handle);
-        disconnect(oldConnection->backend(), &Backend::fieldSample, widget, nullptr);
+    // A device change -- or the same device rebuilt on another link, which
+    // keeps its id but gets a new Backend -- invalidates both the old
+    // subscription handle (it belongs to a different SubscriptionManager
+    // instance) and the fieldSample connection feeding this widget. A Backend
+    // already destroyed took both with it (QPointer reads null).
+    if (oldBackend && oldBackend != newBackend) {
+        if (sub.handle != 0) {
+            oldBackend->removeSubscriber(sub.handle);
+        }
+        disconnect(oldBackend, nullptr, widget, nullptr);
     }
 
     if (!newConnection) {
         sub.deviceId = request.deviceId;
         sub.handle = 0;
+        sub.backend = nullptr;
         return;
     }
 
-    if (oldConnection != newConnection) {
+    if (oldBackend != newBackend) {
         if (auto* chart = dynamic_cast<ChartWidgetBase*>(widget)) {
             connect(newConnection->backend(), &Backend::fieldSample, chart,
                     &ChartWidgetBase::onFieldSample);
@@ -776,10 +893,11 @@ void MainWindow::refreshWidgetSubscription(DashboardWidget* widget) {
     // subscription of its own -- Backend collapses however many widgets
     // read (source, topic) into a single subscription. Reusing the existing
     // handle only makes sense while staying on the same Backend instance.
-    const quint64 handleToReuse = oldConnection == newConnection ? sub.handle : 0;
-    sub.handle = newConnection->backend()->updateSubscriber(handleToReuse, request.sourceId,
-                                                            request.topicId, request.rateMillihz);
+    const quint64 handleToReuse = oldBackend == newBackend ? sub.handle : 0;
+    sub.handle = newBackend->updateSubscriber(handleToReuse, request.sourceId, request.topicId,
+                                              request.rateMillihz);
     sub.deviceId = request.deviceId;
+    sub.backend = newBackend;
 }
 
 void MainWindow::refreshWidgetSubscriptions() {
@@ -792,6 +910,110 @@ void MainWindow::refreshWidgetSubscriptions() {
     // subscriptions just got, see SerialWidgetBridge::refreshTerminalWiring().
     if (m_serialWidgetBridge) {
         m_serialWidgetBridge->refreshTerminalWiring();
+    }
+    // The same edits change what the live widgets need retained, and the
+    // rate override feeds the background subscriptions' rate too.
+    syncBackgroundTelemetry(BackgroundSync::Full);
+}
+
+void MainWindow::syncBackgroundTelemetry(BackgroundSync mode) {
+    const WorkspaceManager& workspaces = WorkspaceManager::instance();
+    QHash<TelemetryHistoryKey, int> demand;
+    QSet<QString> wanted;
+    for (const Workspace& workspace : workspaces.workspaces()) {
+        if (workspace.id == workspaces.activeId()) {
+            continue;
+        }
+        const QJsonArray items = workspace.dashboard.value("items").toArray();
+        for (const QJsonValue& value : items) {
+            bool ok = false;
+            const DashboardItem item = dashboardItemFromJson(value.toObject(), &ok);
+            const WidgetTopicRequest request = ok ? itemTopicRequest(item) : WidgetTopicRequest{};
+            if (request.deviceId.isEmpty() || request.topicId == 0) {
+                continue;
+            }
+            if (isChartTypeId(item.typeId)) {
+                addRetentionDemand(demand, request.deviceId, parseChartConfig(item.config));
+            } else {
+                addRetentionDemand(demand, request.deviceId, parseGaugeConfig(item.config));
+            }
+
+            const QString key = workspace.id + QLatin1Char('/') + item.id;
+            wanted.insert(key);
+            BackgroundSubscription& sub = m_backgroundSubscriptions[key];
+            DeviceConnection* connection = m_deviceConnections.value(request.deviceId);
+            Backend* backend = connection ? connection->backend() : nullptr;
+            if (sub.backend != backend) {
+                if (sub.backend) {
+                    sub.backend->removeSubscriber(sub.handle);
+                }
+                sub.handle = 0;
+                sub.backend = backend;
+            }
+            if (backend) {
+                sub.handle = backend->updateSubscriber(sub.handle, request.sourceId,
+                                                       request.topicId, request.rateMillihz);
+            }
+        }
+    }
+    if (mode == BackgroundSync::AddOnly) {
+        return;
+    }
+
+    for (auto it = m_backgroundSubscriptions.begin(); it != m_backgroundSubscriptions.end();) {
+        if (wanted.contains(it.key())) {
+            ++it;
+            continue;
+        }
+        if (it->backend) {
+            it->backend->removeSubscriber(it->handle);
+        }
+        it = m_backgroundSubscriptions.erase(it);
+    }
+
+    for (auto it = m_widgetSubscriptions.constBegin(); it != m_widgetSubscriptions.constEnd();
+         ++it) {
+        const QString deviceId =
+            m_dashboardGrid->configForWidget(it.key()).value("deviceId").toString();
+        if (auto* chart = dynamic_cast<ChartWidgetBase*>(it.key())) {
+            addRetentionDemand(demand, deviceId, chart->config());
+        } else if (auto* gauge = dynamic_cast<DummyGaugeWidget*>(it.key())) {
+            addRetentionDemand(demand, deviceId, gauge->config());
+        }
+    }
+    m_telemetryHistory.setRetention(demand);
+}
+
+void MainWindow::seedWidgetFromHistory(DashboardWidget* widget) {
+    const QString deviceId = m_dashboardGrid->configForWidget(widget).value("deviceId").toString();
+    if (deviceId.isEmpty()) {
+        return;
+    }
+    if (auto* chart = dynamic_cast<ChartWidgetBase*>(widget)) {
+        const ChartConfig& config = chart->config();
+        chart->seedFromHistory([&](quint16 fieldId) {
+            return m_telemetryHistory.buffer({deviceId, config.sourceId, config.topicId, fieldId});
+        });
+    } else if (auto* gauge = dynamic_cast<DummyGaugeWidget*>(widget)) {
+        const GaugeConfig& config = gauge->config();
+        gauge->seedFromHistory([&](quint16 fieldId) {
+            return m_telemetryHistory.buffer({deviceId, config.sourceId, config.topicId, fieldId});
+        });
+    }
+}
+
+void MainWindow::onWidgetDataCleared(DashboardWidget* widget) {
+    const QString deviceId = m_dashboardGrid->configForWidget(widget).value("deviceId").toString();
+    if (auto* chart = dynamic_cast<ChartWidgetBase*>(widget)) {
+        const ChartConfig& config = chart->config();
+        for (const ChartSeriesConfig& series : config.series) {
+            m_telemetryHistory.clear({deviceId, config.sourceId, config.topicId, series.fieldId});
+        }
+    } else if (auto* gauge = dynamic_cast<DummyGaugeWidget*>(widget)) {
+        const GaugeConfig& config = gauge->config();
+        for (const GaugeSeriesConfig& series : config.series) {
+            m_telemetryHistory.clear({deviceId, config.sourceId, config.topicId, series.fieldId});
+        }
     }
 }
 
@@ -1365,7 +1587,13 @@ void MainWindow::loadDashboardJson(const QJsonObject& json, DashboardLoadBreakpo
     }
     QJsonObject withBreakpoint = json;
     withBreakpoint["breakpoint"] = breakpointToString(target);
+    // Every caller has already made the incoming workspace the active one,
+    // so the outgoing one is now "in the background": subscribe it before
+    // its widgets go, prune (and re-derive retention) once the new ones
+    // exist -- see syncBackgroundTelemetry().
+    syncBackgroundTelemetry(BackgroundSync::AddOnly);
     m_dashboardGrid->fromJson(withBreakpoint);
+    syncBackgroundTelemetry(BackgroundSync::Full);
 }
 
 Ribbon* MainWindow::buildRibbon() {
@@ -1478,6 +1706,8 @@ Ribbon* MainWindow::buildRibbon() {
     // is the single factory path for both, see dashboardgrid.cpp).
     connect(m_dashboardGrid, &DashboardGrid::widgetCreated, this,
             &MainWindow::wireChartWidgetToTelemetry);
+    connect(m_dashboardGrid, &DashboardGrid::widgetDataCleared, this,
+            &MainWindow::onWidgetDataCleared);
     // The clipboard can change from a copySelected() call here, or from
     // another window/app entirely — either way, m_pasteAction's enabled
     // state needs to stay in sync with whether it's currently pasteable.
@@ -1898,6 +2128,8 @@ void MainWindow::onWorkspaceDeleteRequested(const QString& id) {
         m_dashboardGrid->undoStack()->clear();
         refreshPropertiesPanel();
         refreshLayersPanel();
+    } else {
+        syncBackgroundTelemetry(BackgroundSync::Full);
     }
     refreshWorkspaceSwitcher();
     postStatus(tr("Deleted workspace \"%1\".").arg(name), 3000);
@@ -2548,13 +2780,22 @@ quint32 MainWindow::deviceSelfSourceId(const Device& device) const {
     // while disconnected, since it is what the child was configured to talk
     // to. Everything else only becomes known live, from its own HELLO_RESULT
     // (Device::btpId, formatted "0x...." by BtpBackend).
-    if (device.transportType == TransportType::HubChannel) {
-        return device.peerSourceId;
+    const Device effective = withLastResolvedTarget(effectiveDevice(device));
+    if (effective.transportType == TransportType::HubChannel) {
+        return effective.peerSourceId;
     }
-    if (device.btpId.isEmpty()) {
-        return 0;
+    if (!effective.btpId.isEmpty()) {
+        return quint32(effective.btpId.toULongLong(nullptr, 0));
     }
-    return quint32(device.btpId.toULongLong(nullptr, 0));
+    // Not connected over a hub right now, but one of its other links is a
+    // hub channel: that link's robot id is this device's id too.
+    for (int i = 0; i < deviceLinkCount(device); ++i) {
+        const DeviceLink link = deviceLinkAt(device, i);
+        if (link.transportType == TransportType::HubChannel && link.peerSourceId != 0) {
+            return link.peerSourceId;
+        }
+    }
+    return 0;
 }
 
 void MainWindow::refreshPropertiesPanelDevices() {
@@ -2661,15 +2902,46 @@ bool MainWindow::ensureHubPeerWatch(const QString& parentDeviceId) {
 }
 
 QVector<HubPeer> MainWindow::hubPeersFor(const QString& parentDeviceId) {
+    if (parentDeviceId.isEmpty()) {
+        QVector<HubPeer> peers;
+        for (const Device& candidate : m_devicesGrid->devices()) {
+            DeviceConnection* connection = m_deviceConnections.value(candidate.id);
+            if (!candidate.id.isEmpty() && connection && connection->isConnected() &&
+                effectiveDevice(candidate).transportType != TransportType::HubChannel) {
+                peers += hubPeersFor(candidate.id);
+            }
+        }
+        return peers;
+    }
     if (!ensureHubPeerWatch(parentDeviceId)) {
         return {};  // "Via:" not chosen, not connected, or manifest not in yet
     }
-    return m_hubPeerWatches[parentDeviceId].accumulator.peers();
+    // A robot the hub started hearing after its session's one enumeration
+    // has no name here yet: ask the hub for that robot's manifest (answered
+    // from the dongle's own cache) and label it on a later poll.
+    constexpr qint64 kNameRequestCooldownMs = 5000;
+    const qint64 nowMs = QDateTime::currentMSecsSinceEpoch();
+    const QHash<quint32, QString> names = m_hubPeerNames.value(parentDeviceId);
+    auto* btp = qobject_cast<BtpBackend*>(m_deviceConnections.value(parentDeviceId)->backend());
+    QVector<HubPeer> peers = m_hubPeerWatches[parentDeviceId].accumulator.peers();
+    for (HubPeer& peer : peers) {
+        peer.name = names.value(peer.sourceId);
+        if (!peer.name.isEmpty() || btp == nullptr) {
+            continue;
+        }
+        const QString key = parentDeviceId + QLatin1Char('/') + QString::number(peer.sourceId);
+        if (nowMs - m_hubPeerNameRequestMs.value(key, 0) >= kNameRequestCooldownMs) {
+            m_hubPeerNameRequestMs.insert(key, nowMs);
+            btp->requestSourceCatalog(peer.sourceId);
+        }
+    }
+    return peers;
 }
 
 void MainWindow::syncHubPeerWatches() {
     const QVector<Device> devices = m_devicesGrid->devices();
-    for (const Device& device : devices) {
+    for (const Device& stored : devices) {
+        const Device device = withLastResolvedTarget(effectiveDevice(stored));
         if (device.transportType == TransportType::HubChannel && device.connected &&
             !device.parentDeviceId.isEmpty()) {
             ensureHubPeerWatch(device.parentDeviceId);
@@ -2694,7 +2966,8 @@ void MainWindow::reconcileHubChildPresence() {
     const qint64 nowMs = QDateTime::currentMSecsSinceEpoch();
     bool anyChanged = false;
     const QVector<Device> devices = m_devicesGrid->devices();
-    for (const Device& device : devices) {
+    for (const Device& stored : devices) {
+        const Device device = withLastResolvedTarget(effectiveDevice(stored));
         if (device.transportType != TransportType::HubChannel || !device.connected ||
             device.parentDeviceId.isEmpty() || device.peerSourceId == 0) {
             continue;
@@ -2830,12 +3103,22 @@ QByteArray MainWindow::channelKeyFor(const QString& password) {
     return key;
 }
 
-void MainWindow::applyDeviceTarget(DeviceConnection* connection, const Device& device) {
+void MainWindow::applyDeviceTarget(DeviceConnection* connection, const Device& requested) {
     if (connection == nullptr) {
         return;
     }
     if (m_loadingProject && !AppSettings::instance().autoConnectOnProjectOpen()) {
         return;
+    }
+    // An automatic link dials whatever its robot name resolves to right now;
+    // retryAutoTargets() dials again when that changes (a robot found, a port
+    // moved). Nothing resolved is written back into the device.
+    const Device resolved = resolveAutoTarget(requested);
+    const Device& device = resolved;
+    if (requested.autoTarget) {
+        m_autoResolvedLinks.insert(requested.id, deviceLinkAt(resolved, 0));
+    } else {
+        m_autoResolvedLinks.remove(requested.id);
     }
     if (device.transportType == TransportType::HubChannel) {
         // A child addresses its robot by source_id, never by the channel
@@ -2869,6 +3152,10 @@ void MainWindow::applyDeviceTarget(DeviceConnection* connection, const Device& d
         }
         return;
     }
+    dialDirectTarget(connection, device);
+}
+
+void MainWindow::dialDirectTarget(DeviceConnection* connection, const Device& device) {
     if (device.transportType == TransportType::Tcp) {
         // Same channel-B password as a hub child (Device::peerPassword) --
         // the user's own decision: one password per device covers hub, TCP
@@ -2890,6 +3177,107 @@ void MainWindow::applyDeviceTarget(DeviceConnection* connection, const Device& d
     const QString target =
         device.transportType == TransportType::UsbHid ? device.usbPath : device.portName;
     connection->connectTo(target, device.baudRate);
+}
+
+LinkDirectory MainWindow::linkDirectory(TransportType forType) {
+    LinkDirectory directory;
+    if (forType == TransportType::Serial) {
+#ifdef TRACEVIEW_ENABLE_SERIAL
+        directory.ports = currentSerialPorts();
+#endif
+        return directory;
+    }
+    if (forType != TransportType::HubChannel) {
+        return directory;
+    }
+    // Every connected device that is not itself a hub channel may be a hub;
+    // hubPeersFor() reports nothing for one that is not (no hub.peers topic).
+    const QVector<Device> devices = m_devicesGrid->devices();
+    for (const Device& candidate : devices) {
+        if (effectiveDevice(candidate).transportType == TransportType::HubChannel) {
+            continue;
+        }
+        DeviceConnection* connection = m_deviceConnections.value(candidate.id);
+        if (connection == nullptr || !connection->isConnected()) {
+            continue;
+        }
+        const QVector<HubPeer> peers = hubPeersFor(candidate.id);
+        for (const HubPeer& peer : peers) {
+            directory.hubPeers.append({candidate.id, peer});
+        }
+    }
+    return directory;
+}
+
+Device MainWindow::resolveAutoTarget(const Device& effective) {
+    if (!effective.autoTarget) {
+        return effective;
+    }
+    const DeviceLink link = deviceLinkAt(effective, 0);
+#ifdef TRACEVIEW_ENABLE_BLE
+    // A Bluetooth link switched to Automatic keeps the address it was set to
+    // by hand. Until a lookup in this run finds the robot by name, that
+    // address is the best guess at where the name lives (see
+    // BleTransport::cachedAddressForName()).
+    if (link.transportType == TransportType::Ble &&
+        BleTransport::isPlatformAddress(link.bleAddress)) {
+        BleTransport::rememberAddressForName(effective.robotName, link.bleAddress);
+    }
+#endif
+    const LinkDirectory directory =
+        linkNeedsDirectory(link) ? linkDirectory(link.transportType) : LinkDirectory{};
+    return deviceWithLink(effective, resolveLinkByName(effective.robotName, link, directory));
+}
+
+Device MainWindow::withLastResolvedTarget(const Device& effective) const {
+    if (!effective.autoTarget) {
+        return effective;
+    }
+    const auto it = m_autoResolvedLinks.constFind(effective.id);
+    if (it == m_autoResolvedLinks.constEnd() || it->transportType != effective.transportType) {
+        return effective;
+    }
+    return deviceWithLink(effective, *it);
+}
+
+void MainWindow::retryAutoTargets() {
+    if (m_autoResolvedLinks.isEmpty()) {
+        return;
+    }
+    bool anyApplied = false;
+    const QVector<Device> devices = m_devicesGrid->devices();
+    for (const Device& stored : devices) {
+        const auto it = m_autoResolvedLinks.constFind(stored.id);
+        if (it == m_autoResolvedLinks.constEnd()) {
+            continue;
+        }
+        DeviceConnection* connection = m_deviceConnections.value(stored.id);
+        const Device effective = effectiveDevice(stored);
+        if (connection == nullptr || connection->reconnectPaused() || !effective.autoTarget) {
+            continue;
+        }
+        // Still looking for the robot, or dialed but not live: look again.
+        // A live link, or one the user disconnected, is left alone.
+        const bool searching = !deviceLinkConfigured(*it);
+        if (!searching && (!connection->wantsConnection() ||
+                           deviceLinkState(stored) == DeviceLinkState::Live)) {
+            continue;
+        }
+        const DeviceLink now = deviceLinkAt(resolveAutoTarget(effective), 0);
+        if (!deviceLinkConfigured(now) || sameLinkTarget(now, *it)) {
+            continue;
+        }
+        const QString name = stored.name.isEmpty() ? stored.id : stored.name;
+        postStatus(tr("%1: found at %2").arg(name, deviceLinkSummary(now)), 4000,
+                   StatusSeverity::Info, name);
+        applyDeviceTarget(connection, effective);
+        anyApplied = true;
+    }
+    if (anyApplied) {
+        // A hub child that just found its robot has a new source_id.
+        refreshDeviceStatusLabel();
+        refreshPropertiesPanelDevices();
+    }
 }
 
 #ifdef TRACEVIEW_ENABLE_BLE
@@ -2934,7 +3322,8 @@ void MainWindow::onBleScanToggled(bool start) {
 
 void MainWindow::reattachHubChildren() {
     const QVector<Device> devices = m_devicesGrid->devices();
-    for (const Device& device : devices) {
+    for (const Device& stored : devices) {
+        const Device device = effectiveDevice(stored);
         if (device.transportType != TransportType::HubChannel) {
             continue;
         }
@@ -3031,7 +3420,8 @@ DeviceConnection* MainWindow::createDeviceConnection(const Device& device) {
                     const QVector<Device> current = m_devicesGrid->devices();
                     const auto it = std::find_if(current.begin(), current.end(),
                                                  [&id](const Device& d) { return d.id == id; });
-                    if (it != current.end() && it->transportType == TransportType::Ble) {
+                    if (it != current.end() &&
+                        effectiveDevice(*it).transportType == TransportType::Ble) {
                         if (it->blePeerUuid.isEmpty()) {
                             m_devicesGrid->setDeviceBlePeerUuid(id, btpId);
                         } else if (it->blePeerUuid != btpId) {
@@ -3056,8 +3446,19 @@ DeviceConnection* MainWindow::createDeviceConnection(const Device& device) {
     // open (e.g. QSerialPort::open() PermissionError on Linux when the user
     // isn't in the dialout/uucp group) left Connect looking like a no-op.
     connect(connection, &DeviceConnection::errorOccurred, this,
-            [this, name = device.name](const QString& text) {
+            [this, connection, id = device.id, name = device.name](const QString& text) {
                 postStatus(text, 6000, StatusSeverity::Warning, name);
+                // The link being tried failed: the cycle moves on without
+                // waiting out the rest of its window. Not while switching
+                // links, nor from a connection already replaced -- closing
+                // the previous link may complain too.
+                if (!m_switchingDeviceLink && m_deviceConnections.value(id) == connection &&
+                    !connection->isConnected()) {
+                    const auto it = m_deviceLinkCyclers.find(id);
+                    if (it != m_deviceLinkCyclers.end()) {
+                        it->markFailed();
+                    }
+                }
             });
     // This device's script runtime's onDeviceInfo().
     connect(connection, &DeviceConnection::deviceInfoReported, this,
@@ -3080,6 +3481,34 @@ DeviceConnection* MainWindow::createDeviceConnection(const Device& device) {
                                    double value) {
                 onHubPeerFieldSample(id, binding, timestampUs, value);
             });
+    // Same "every device, in case it is a hub" reasoning: the names of the
+    // robots behind a hub, for hubPeersFor() to label its peers with.
+    if (auto* btp = qobject_cast<BtpBackend*>(backend)) {
+        connect(btp, &BtpBackend::sourceInfoSeen, this,
+                [this, id = device.id](quint32 sourceId, const QVector<DeviceInfoRecord>& info) {
+                    QString name;
+                    for (const DeviceInfoRecord& record : info) {
+                        if (record.key == QLatin1String("name")) {
+                            name = record.value.trimmed();
+                            break;
+                        }
+                    }
+                    // A robot whose name was cleared stops being labelled by
+                    // the old one.
+                    if (name.isEmpty()) {
+                        m_hubPeerNames[id].remove(sourceId);
+                    } else {
+                        m_hubPeerNames[id].insert(sourceId, name);
+                    }
+                });
+    }
+    // Every sample, whichever workspace plots it -- TelemetryHistory itself
+    // drops the fields no widget anywhere asked for.
+    connect(backend, &Backend::fieldSample, this,
+            [this, id = device.id](const TelemetryFieldBinding& binding, quint64 timestampUs,
+                                   double value) {
+                m_telemetryHistory.append(id, binding, timestampUs, value);
+            });
     // This device's script runtime (m_scriptRuntimes, created alongside it in
     // onDeviceAdded): every telemetry sample and terminal byte the Backend
     // produces, for as long as its onTelemetry/onTerminal wants to react to
@@ -3099,6 +3528,197 @@ DeviceConnection* MainWindow::createDeviceConnection(const Device& device) {
                 }
             });
     return connection;
+}
+
+DeviceConnection* MainWindow::rebuildDeviceConnection(const Device& device) {
+    // The hub.peers watch holds a handle into the SubscriptionManager of the
+    // backend about to be destroyed, so it cannot outlive it. Dropped rather
+    // than repointed: hubPeersFor() re-resolves against the new backend's
+    // catalog on its next poll anyway.
+    releaseHubPeerWatch(device.id);
+    if (DeviceConnection* old = m_deviceConnections.value(device.id)) {
+        old->disconnectFrom();
+        old->deleteLater();
+    }
+    // Same build steps onDeviceAdded() uses, so every signal connection keyed
+    // by this device's id (properties panel, control widgets, ...) keeps
+    // resolving through m_deviceConnections without a remove/re-add round
+    // trip through the undo stack.
+    DeviceConnection* connection = createDeviceConnection(device);
+    m_deviceConnections.insert(device.id, connection);
+    connection->setLineTerminator(device.lineTerminator);
+    // Every widget and background subscription held a handle into the old
+    // Backend; re-register them all against the new one.
+    refreshWidgetSubscriptions();
+    return connection;
+}
+
+const Device* MainWindow::findDevice(const QVector<Device>& devices, const QString& id) const {
+    for (const Device& device : devices) {
+        if (device.id == id) {
+            return &device;
+        }
+    }
+    return nullptr;
+}
+
+void MainWindow::switchDeviceLink(const QString& deviceId, int index) {
+    const QVector<Device> devices = m_devicesGrid->devices();
+    const Device* stored = findDevice(devices, deviceId);
+    DeviceConnection* connection = m_deviceConnections.value(deviceId);
+    if (stored == nullptr || connection == nullptr) {
+        return;
+    }
+    if (index < 0 || index >= deviceLinkCount(*stored)) {
+        index = 0;
+    }
+    // The probe on `index` (if any) holds the very port/robot the device's
+    // own connection is about to dial; the rest are re-created next tick
+    // around the new link in use.
+    dropLinkProbes(deviceId);
+    // Live state, not an edit -- no undo step (same as setDeviceConnected()).
+    m_devicesGrid->setDeviceActiveLink(deviceId, index);
+    Device device = *stored;
+    device.activeLink = index;
+    const Device effective = effectiveDevice(device);
+
+    m_switchingDeviceLink = true;
+    if (connection->transportType() != effective.transportType) {
+        connection = rebuildDeviceConnection(effective);
+    } else {
+        connection->disconnectFrom();
+    }
+    m_switchingDeviceLink = false;
+    const QString name = device.name.isEmpty() ? deviceId : device.name;
+    postStatus(tr("%1: trying %2")
+                   .arg(name, deviceLinkSummary(deviceLinkAt(device, index), device.robotName)),
+               4000, StatusSeverity::Info, name);
+    applyDeviceTarget(connection, effective);
+    // This device may be a hub parent (its children follow it) or itself a
+    // child now (it needs its bind issued).
+    reattachHubChildren();
+    refreshDeviceStatusLabel();
+}
+
+void MainWindow::tickDeviceLinkCycles() {
+    retryAutoTargets();
+    const qint64 nowMs = QDateTime::currentMSecsSinceEpoch();
+    const QVector<Device> devices = m_devicesGrid->devices();
+    for (const Device& device : devices) {
+        const int count = deviceLinkCount(device);
+        if (count < 2) {
+            continue;  // one way to connect: DeviceConnection's own retry loop is all there is
+        }
+        DeviceConnection* connection = m_deviceConnections.value(device.id);
+        if (connection == nullptr) {
+            continue;
+        }
+        QVector<bool> usable(count);
+        for (int i = 0; i < count; ++i) {
+            const DeviceLink link = deviceLinkAt(device, i);
+            usable[i] = deviceLinkUsable(device, link);
+        }
+        // An automatic link that resolved to nothing dialed an empty target,
+        // which DeviceConnection reads as "offline" -- but the user still
+        // wants the robot (a disconnect drops m_autoResolvedLinks), so the
+        // next link must get its turn rather than the cycle stalling here.
+        const auto resolvedIt = m_autoResolvedLinks.constFind(device.id);
+        const bool unresolved = resolvedIt != m_autoResolvedLinks.constEnd() &&
+                                !deviceLinkConfigured(*resolvedIt);
+        // Not wanted: the user disconnected it, or its config dialog is open
+        // (reconnects are paused while editing). Either way, not our move.
+        const bool wanted =
+            (connection->wantsConnection() || unresolved) && !connection->reconnectPaused();
+        const bool live = deviceLinkState(device) == DeviceLinkState::Live;
+        updateLinkProbes(device, wanted && !live);
+        // Every direct link but the one in use has a probe of its own, so the
+        // device's own connection only rotates through what no probe can
+        // cover: hub channels, which ride their parent's connection.
+        QVector<bool> rotatable(count);
+        for (int i = 0; i < count; ++i) {
+            rotatable[i] = usable.at(i) &&
+                           (i == device.activeLink ||
+                            deviceLinkAt(device, i).transportType == TransportType::HubChannel);
+        }
+        const int next =
+            m_deviceLinkCyclers[device.id].tick(rotatable, wanted, live, nowMs, unresolved);
+        if (next >= 0) {
+            switchDeviceLink(device.id, next);
+        }
+    }
+}
+
+void MainWindow::updateLinkProbes(const Device& device, bool searching) {
+    if (!searching) {
+        dropLinkProbes(device.id);
+        return;
+    }
+    QHash<int, LinkProbe>& probes = m_linkProbes[device.id];
+    const int count = deviceLinkCount(device);
+    for (int i = 0; i < count; ++i) {
+        const DeviceLink link = deviceLinkAt(device, i);
+        const bool probed = i != device.activeLink && deviceLinkUsable(device, link) &&
+                            link.transportType != TransportType::HubChannel;
+        // An automatic link probes whatever its name resolves to right now,
+        // and nothing while it resolves to nothing.
+        const Device resolved = probed ? resolveAutoTarget(deviceWithLink(device, link)) : Device{};
+        const DeviceLink target = deviceLinkAt(resolved, 0);
+        const auto existing = probes.find(i);
+        if (existing != probes.end()) {
+            if (probed && deviceLinkConfigured(target) &&
+                sameLinkTarget(existing->target, target)) {
+                continue;
+            }
+            existing->connection->disconnectFrom();
+            existing->connection->deleteLater();
+            probes.erase(existing);
+        }
+        if (!probed || !deviceLinkConfigured(target)) {
+            continue;
+        }
+        // Deliberately none of createDeviceConnection()'s wiring: a probe is
+        // silent (no status messages, no telemetry) and only ever reports
+        // back that its session came up.
+        auto* connection = new DeviceConnection(device.commType, target.transportType, this);
+        connection->setLineTerminator(device.lineTerminator);
+        connect(connection, &DeviceConnection::connectionPhaseChanged, this,
+                [this, id = device.id, i](ConnectionPhase phase) {
+                    if (phase == ConnectionPhase::Ready) {
+                        // Queued: the winner is torn down from there, and
+                        // must not be deleted inside its own signal.
+                        QMetaObject::invokeMethod(
+                            this, [this, id, i] { onLinkProbeReady(id, i); },
+                            Qt::QueuedConnection);
+                    }
+                });
+        probes.insert(i, {connection, target});
+        qCInfo(lcConnection) << "probing" << deviceLinkSummary(target) << "for" << device.id;
+        dialDirectTarget(connection, resolved);
+    }
+    if (probes.isEmpty()) {
+        m_linkProbes.remove(device.id);
+    }
+}
+
+void MainWindow::dropLinkProbes(const QString& deviceId) {
+    const QHash<int, LinkProbe> probes = m_linkProbes.take(deviceId);
+    for (const LinkProbe& probe : probes) {
+        probe.connection->disconnectFrom();
+        probe.connection->deleteLater();
+    }
+}
+
+void MainWindow::onLinkProbeReady(const QString& deviceId, int index) {
+    const auto it = m_linkProbes.constFind(deviceId);
+    if (it == m_linkProbes.constEnd() || !it->contains(index)) {
+        return;  // dropped meanwhile: the device came up some other way
+    }
+    // The winner is closed too and the device's own connection dials the
+    // same link: that connection carries every widget, subscription and
+    // script hook, and a probe carries none. One more handshake on a link
+    // just proven to work is the whole cost.
+    m_deviceLinkCyclers[deviceId].restart(index, QDateTime::currentMSecsSinceEpoch());
+    switchDeviceLink(deviceId, index);
 }
 
 void MainWindow::onDeviceAdded(const Device& device) {
@@ -3126,6 +3746,8 @@ void MainWindow::onDeviceAdded(const Device& device) {
 
     DeviceConnection* connection = createDeviceConnection(device);
     m_deviceConnections.insert(device.id, connection);
+    m_deviceLinkCyclers[device.id].restart(0, QDateTime::currentMSecsSinceEpoch());
+    m_deviceLinkSignatures.insert(device.id, deviceLinksSignature(device));
     connection->setLineTerminator(device.lineTerminator);
     // A no-op if `device` has no target yet (a freshly added placeholder,
     // see onAddDevice()) -- otherwise opens now, or starts the ambient retry
@@ -3142,13 +3764,20 @@ void MainWindow::onDeviceAdded(const Device& device) {
     refreshDeviceStatusLabel();
     refreshPropertiesPanelDevices();
     refreshOtaTabDevices();
+    // A background workspace may have been waiting for this device.
+    syncBackgroundTelemetry(BackgroundSync::Full);
 }
 
 void MainWindow::onDeviceRemoved(const QString& id) {
     // Before take(): releaseHubPeerWatch() unsubscribes through the
     // connection, so it has to still be reachable in the hash.
     releaseHubPeerWatch(id);
+    m_hubPeerNames.remove(id);
     m_hubChildOfflineTicks.remove(id);
+    m_deviceLinkCyclers.remove(id);
+    dropLinkProbes(id);
+    m_deviceLinkSignatures.remove(id);
+    m_autoResolvedLinks.remove(id);
     delete m_scriptRuntimes.take(id);
     DeviceConnection* connection = m_deviceConnections.take(id);
     updateSubscriptionsWorkspace();
@@ -3168,29 +3797,29 @@ void MainWindow::onDeviceRemoved(const QString& id) {
     refreshOtaTabDevices();
 }
 
-void MainWindow::onDeviceUpdated(const Device& device) {
-    DeviceConnection* connection = m_deviceConnections.value(device.id);
+void MainWindow::onDeviceUpdated(const Device& edited) {
+    DeviceConnection* connection = m_deviceConnections.value(edited.id);
     if (!connection) {
         return;
     }
+    // This also runs on every connect/disconnect (setDeviceConnected() emits
+    // deviceUpdated()). Only an actual edit of HOW to reach the device starts
+    // over from the primary link -- anything else keeps the link in use.
+    Device stored = edited;
+    const QByteArray signature = deviceLinksSignature(edited);
+    if (m_deviceLinkSignatures.value(edited.id) != signature) {
+        m_deviceLinkSignatures.insert(edited.id, signature);
+        dropLinkProbes(edited.id);  // re-created next tick from the new links
+        m_deviceLinkCyclers[edited.id].restart(0, QDateTime::currentMSecsSinceEpoch());
+        m_devicesGrid->setDeviceActiveLink(edited.id, 0);
+        stored.activeLink = 0;
+    }
+    const Device device = effectiveDevice(stored);
     if (connection->transportType() != device.transportType) {
         // DeviceConnection's Transport/Backend pair is fixed at construction
         // (deviceconnection.h) -- can't repoint a live SerialManager-backed
-        // connection at a HID path or vice versa. Rebuild it in place, same
-        // teardown/build steps onDeviceRemoved()/onDeviceAdded() use, so
-        // every signal connection keyed by this device's id (properties
-        // panel, control widgets, ...) keeps resolving through
-        // m_deviceConnections without a remove/re-add round trip through
-        // the undo stack.
-        // The watch holds a handle into the SubscriptionManager of the
-        // backend about to be destroyed, so it cannot outlive it. Dropped
-        // here rather than repointed: hubPeersFor() re-resolves against the
-        // new backend's catalog on its next poll anyway.
-        releaseHubPeerWatch(device.id);
-        connection->disconnectFrom();
-        connection->deleteLater();
-        connection = createDeviceConnection(device);
-        m_deviceConnections.insert(device.id, connection);
+        // connection at a HID path or vice versa. Rebuild it in place.
+        connection = rebuildDeviceConnection(device);
     }
     connection->setLineTerminator(device.lineTerminator);
     // OK / Connect in the config dialog: the user asked for THESE settings
@@ -3211,16 +3840,22 @@ void MainWindow::onDeviceConnectToggleRequested(const QString& deviceId) {
         return;
     }
     if (connection->wantsConnection()) {
+        m_autoResolvedLinks.remove(deviceId);  // stop looking for it, too
+        dropLinkProbes(deviceId);
         connection->disconnectFrom();
         return;
     }
     const QVector<Device> devices = m_devicesGrid->devices();
-    for (const Device& device : devices) {
-        if (device.id == deviceId) {
-            applyDeviceTarget(connection, device);
-            break;
-        }
+    const Device* device = findDevice(devices, deviceId);
+    if (device == nullptr) {
+        return;
     }
+    m_deviceLinkCyclers[deviceId].restart(0, QDateTime::currentMSecsSinceEpoch());
+    if (device->activeLink != 0) {
+        switchDeviceLink(deviceId, 0);  // dials it too
+        return;
+    }
+    applyDeviceTarget(connection, *device);
 }
 
 void MainWindow::onDeviceConnectionStateChanged(const QString& deviceId, bool connected) {
@@ -3233,7 +3868,7 @@ void MainWindow::onDeviceConnectionStateChanged(const QString& deviceId, bool co
     bool isHubChild = false;
     for (const Device& d : m_devicesGrid->devices()) {
         if (d.id == deviceId) {
-            isHubChild = d.transportType == TransportType::HubChannel;
+            isHubChild = effectiveDevice(d).transportType == TransportType::HubChannel;
             break;
         }
     }

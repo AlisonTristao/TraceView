@@ -572,6 +572,7 @@ void DashboardCell::mousePressEvent(QMouseEvent* event) {
         }
         if (clearButtonRect().contains(pos)) {
             m_content->clearChartData();
+            emit chartDataCleared(m_content);
             event->accept();
             return;
         }

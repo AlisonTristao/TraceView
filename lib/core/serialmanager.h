@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QByteArray>
+#include <QHash>
 #include <QObject>
 #include <QSerialPort>
 #include <QString>
@@ -35,6 +36,16 @@ public:
     // Always false elsewhere.
     static bool isDuplicateDialInPort(const QString& portName);
 
+    // Port name -> the product name its USB device reports, for every port
+    // that reports one (see serialPortLabel(), devices/device.h). A bally_OS
+    // robot reports its configured identity name there, so the port picker
+    // can show which robot is on which port without opening any of them.
+    // Windows: the bus-reported description (the USB interface string, or
+    // the product string), since QSerialPortInfo::description() there is
+    // only the driver's generic "USB Serial Device". Elsewhere:
+    // QSerialPortInfo::description(), which already is the product string.
+    static QHash<QString, QString> portProductNames();
+
     // See SerialTransport::open(). Always synchronous here: returns false
     // and emits errorOccurred() on failure; emits connectionStateChanged(true)
     // on success.
@@ -55,6 +66,7 @@ public:
     // Pushes every byte currently queued by QSerialPort toward the OS/USB
     // driver -- see SerialTransport::drainWrites().
     bool drainWrites(int timeoutMs) override;
+    bool isDonglePort(const QString& portName) const override;
 
 private:
     void onReadyRead();

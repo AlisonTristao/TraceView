@@ -13,8 +13,13 @@
 #include <QPlainTextEdit>
 #include <QPushButton>
 #include <QSpinBox>
+#include <QScrollArea>
+#include <QScreen>
 #include <QToolButton>
 #include <QVBoxLayout>
+
+#include "devices/devicelinkstable.h"
+#include "devices/robotlinkspanel.h"
 
 namespace traceview {
 
@@ -101,287 +106,104 @@ DeviceConfigDialog::DeviceConfigDialog(const Device& initial, QWidget* parent)
     m_nameEdit->setToolTip(
         tr("Shown as this device's title -- on its card in the Devices panel, and "
            "anywhere else it's picked from a list."));
-    m_descriptionEdit = new QPlainTextEdit(m_device.description, this);
-    // QPlainTextEdit is a QAbstractScrollArea: the mouse (and so the
-    // ToolTip event) is actually over its viewport child widget, not this
-    // frame, so setToolTip() here alone never shows -- has to go on the
-    // viewport too.
-    const QString descriptionTip =
-        tr("Free-form notes about this device, shown on its card below the name.");
-    m_descriptionEdit->setToolTip(descriptionTip);
-    m_descriptionEdit->viewport()->setToolTip(descriptionTip);
-    m_descriptionEdit->setFixedHeight(64);
+    // The card title is an override of the robot's name, so it lives with
+    // the connection's advanced fields below. There is no description to
+    // edit: the card shows what the device reports about itself instead.
+    m_nameEdit->hide();
 
-    // Grouped like Connection/OTA/etc. below rather than left as a bare
-    // QFormLayout -- otherwise Name/Description were the only fields in the
-    // dialog without a group box around them.
-    auto* generalGroup = new QGroupBox(tr("General"), this);
-    auto* formLayout = new QFormLayout(generalGroup);
-    formLayout->addRow(tr("Name:"), m_nameEdit);
-    formLayout->addRow(tr("Description:"), m_descriptionEdit);
-
-    // Connection group -- transport type plus whichever of
-    // port/baud/line-terminator (Serial), host/port (TCP), or USB device
-    // (UsbHid) it needs,
-    // the config a DeviceConnection (core/deviceconnection.h) actually opens
-    // with. Lives here now, one per device, instead of the old single
-    // global Run tab bar.
+    // Connection group -- every way to reach this device, as one table (row 1
+    // is the primary link, the rest Device::extraLinks, tried in that order;
+    // see DeviceLinksTable), then what is the DEVICE's rather than any one
+    // link's: the channel-B password (the robot's key -- the same for TCP,
+    // BLE and a hub channel), the command line terminator, and this device's
+    // own id for the dongle's "hub -bind".
     auto* connectionGroup = new QGroupBox(tr("Connection"), this);
-    m_connectionLayout = new QFormLayout(connectionGroup);
-    // Label above field rather than beside it -- otherwise the label column's
-    // width tracks whichever row set is currently visible, and switching
-    // Transport (Serial/UsbHid/HubChannel show different rows via
-    // updateTransportFieldsVisibility()) visibly changes this group's width
-    // even with its height already pinned below.
-    m_connectionLayout->setRowWrapPolicy(QFormLayout::WrapAllRows);
+    auto* connectionLayout = new QVBoxLayout(connectionGroup);
 
-    m_transportTypeCombo = new QComboBox(connectionGroup);
-#ifdef TRACEVIEW_ENABLE_SERIAL
-    m_transportTypeCombo->addItem(transportTypeLabel(TransportType::Serial),
-                                  int(TransportType::Serial));
-#endif
-#ifdef TRACEVIEW_ENABLE_USB_HID
-    m_transportTypeCombo->addItem(transportTypeLabel(TransportType::UsbHid),
-                                  int(TransportType::UsbHid));
-#endif
-    m_transportTypeCombo->addItem(transportTypeLabel(TransportType::HubChannel),
-                                  int(TransportType::HubChannel));
-    m_transportTypeCombo->addItem(transportTypeLabel(TransportType::Tcp), int(TransportType::Tcp));
-#ifdef TRACEVIEW_ENABLE_BLE
-    m_transportTypeCombo->addItem(transportTypeLabel(TransportType::Ble), int(TransportType::Ble));
-#endif
-    // Without TRACEVIEW_ENABLE_SERIAL/_USB_HID/_BLE, that transport is
-    // deliberately not offered -- no SerialManager/UsbHidManager/BleTransport
-    // exists in that configuration (see deviceconnection.cpp's constructor),
-    // so selecting it would produce a device DeviceConnection can never
-    // actually open.
-    const int transportTypeIndex = m_transportTypeCombo->findData(int(m_device.transportType));
-    m_transportTypeCombo->setCurrentIndex(transportTypeIndex >= 0 ? transportTypeIndex : 0);
-    connect(m_transportTypeCombo, &QComboBox::currentIndexChanged, this,
-            &DeviceConfigDialog::updateTransportFieldsVisibility);
-    m_connectionLayout->addRow(tr("Transport:"), m_transportTypeCombo);
-
-    m_tcpHostEdit = new QLineEdit(m_device.tcpHost, connectionGroup);
-    m_tcpHostEdit->setPlaceholderText(tr("e.g. robot.local or 192.168.4.1"));
-    m_tcpHostEdit->setToolTip(tr("Hostname or IP address of the robot TCP server."));
-    m_tcpHostRowIndex = m_connectionLayout->rowCount();
-    m_connectionLayout->addRow(tr("TCP host:"), m_tcpHostEdit);
-
-    m_tcpPortSpin = new QSpinBox(connectionGroup);
-    m_tcpPortSpin->setRange(1, 65535);
-    m_tcpPortSpin->setValue(m_device.tcpPort);
-    m_tcpPortSpin->setToolTip(tr("TCP server port."));
-    m_tcpPortRowIndex = m_connectionLayout->rowCount();
-    m_connectionLayout->addRow(tr("TCP port:"), m_tcpPortSpin);
-
-    m_bleAddressCombo = new QComboBox(connectionGroup);
-    m_bleAddressCombo->setEditable(true);
-    m_bleAddressCombo->setToolTip(
-        tr("Platform BLE address of the robot -- a discovery hint used to dial the "
-           "connection, not its identity (see \"Reported by device\" for that). Pick a "
-           "scan result, or type one by hand for a robot the scan hasn't found yet."));
-    m_bleAddressCombo->lineEdit()->setPlaceholderText(tr("Scan, or type an address"));
-    if (!m_device.bleAddress.isEmpty()) {
-        m_bleAddressCombo->addItem(m_device.bleAddress, m_device.bleAddress);
-        m_bleAddressCombo->setCurrentText(m_device.bleAddress);
+    QVector<DeviceLink> links;
+    links.append(deviceLinkAt(m_device, 0));
+    links += m_device.extraLinks;
+    // A fresh device's primary link is a blank placeholder (Serial, no port),
+    // not something the user chose: shown as no link at all, so the simple
+    // view starts with every box unticked.
+    if (!links.first().autoTarget && !deviceLinkConfigured(links.first())) {
+        links.removeFirst();
     }
-    connect(m_bleAddressCombo, &QComboBox::activated, this, [this](int index) {
-        // The visible text becomes the raw address (itemData), never the
-        // decorated "name (address)" label a scan result is shown with --
-        // see addDiscoveredBleDevice().
-        m_bleAddressCombo->setCurrentText(m_bleAddressCombo->itemData(index).toString());
-    });
 
-    m_scanBleButton = new QToolButton(connectionGroup);
-    m_scanBleButton->setText(tr("Scan"));
-    m_scanBleButton->setCheckable(true);
-    m_scanBleButton->setToolTip(tr("Scan for nearby BTP-capable BLE robots."));
-    connect(m_scanBleButton, &QToolButton::toggled, this, [this](bool checked) {
-        m_bleScanning = checked;
-        m_scanBleButton->setText(checked ? tr("Stop") : tr("Scan"));
-        emit scanBleRequested(checked);
-    });
-
-    auto* bleAddressRow = new QHBoxLayout;
-    bleAddressRow->addWidget(m_bleAddressCombo, /*stretch=*/1);
-    bleAddressRow->addWidget(m_scanBleButton);
-    m_bleAddressRowIndex = m_connectionLayout->rowCount();
-    m_connectionLayout->addRow(tr("BLE address:"), bleAddressRow);
-
-    m_portCombo = new QComboBox(connectionGroup);
-    m_portCombo->setEditable(true);
-    m_portCombo->setToolTip(tr("Serial port"));
-    if (!m_device.portName.isEmpty()) {
-        m_portCombo->addItem(m_device.portName, m_device.portName);
-    }
-    m_portCombo->setCurrentText(m_device.portName);
-
-    m_refreshPortsButton = new QToolButton(connectionGroup);
-    m_refreshPortsButton->setText(QString::fromUtf8("\xE2\x9F\xB3"));  // ⟳
-    m_refreshPortsButton->setToolTip(tr("Refresh port list"));
-    m_refreshPortsButton->setAutoRaise(true);
-    connect(m_refreshPortsButton, &QToolButton::clicked, this,
+    // Simple view: one robot name, one checkbox per kind of link, each
+    // defaulting to Automatic (found by that name). See RobotLinksPanel.
+    m_linksPanel = new RobotLinksPanel(
+        m_device.robotName.isEmpty() ? m_device.name : m_device.robotName, links, connectionGroup);
+    connectionLayout->addWidget(m_linksPanel);
+    connect(m_linksPanel, &RobotLinksPanel::refreshPortsRequested, this,
             &DeviceConfigDialog::refreshPortsRequested);
-
-    auto* portRow = new QHBoxLayout;
-    portRow->addWidget(m_portCombo, /*stretch=*/1);
-    portRow->addWidget(m_refreshPortsButton);
-
-    m_portRowIndex = m_connectionLayout->rowCount();
-    m_connectionLayout->addRow(tr("Port:"), portRow);
-
-    // Same list/default the old Run tab offered (extended for BTP v1 dongle
-    // rates, see docs/PROTOCOL.md), now per-device rather than global.
-    m_baudCombo = new QComboBox(connectionGroup);
-    m_baudCombo->setEditable(true);
-    m_baudCombo->addItems({"9600", "19200", "38400", "57600", "115200", "230400", "460800",
-                           "921600", "1000000", "2000000", "3000000", "5000000"});
-    m_baudCombo->setCurrentText(QString::number(m_device.baudRate));
-    m_baudCombo->setToolTip(tr("Baud rate (type a custom value if yours isn't listed)"));
-    m_baudCombo->setValidator(new QIntValidator(1, 10000000, m_baudCombo));
-    m_baudRowIndex = m_connectionLayout->rowCount();
-    m_connectionLayout->addRow(tr("Baud:"), m_baudCombo);
-
-    // Values match traceview::LineTerminator's ordinals (core/serialtransport.h)
-    // -- Device::lineTerminator stores that same ordinal as a plain int since
-    // this module can't depend on that enum's header (see device.h).
-    m_lineTerminatorCombo = new QComboBox(connectionGroup);
-    m_lineTerminatorCombo->addItem(tr("None"), 0);
-    m_lineTerminatorCombo->addItem(tr("LF (\\n)"), 1);
-    m_lineTerminatorCombo->addItem(tr("CR (\\r)"), 2);
-    m_lineTerminatorCombo->addItem(tr("CRLF (\\r\\n)"), 3);
-    const int terminatorIndex = m_lineTerminatorCombo->findData(m_device.lineTerminator);
-    m_lineTerminatorCombo->setCurrentIndex(terminatorIndex >= 0 ? terminatorIndex : 1);
-    m_lineTerminatorCombo->setToolTip(
-        tr("Line terminator appended to control-widget commands sent to this device. "
-           "Doesn't affect its serial terminal's raw keystrokes."));
-    // Fixed rather than left to the form layout's AllNonFixedFieldsGrow
-    // policy -- its longest item ("CRLF (\r\n)") is short, so growing it to
-    // the full row width (matching Port/Baud/USB's more legitimately wide
-    // fields) just left an empty-looking combo box.
-    {
-        QSizePolicy policy = m_lineTerminatorCombo->sizePolicy();
-        policy.setHorizontalPolicy(QSizePolicy::Fixed);
-        m_lineTerminatorCombo->setSizePolicy(policy);
-    }
-    m_lineTerminatorRowIndex = m_connectionLayout->rowCount();
-    m_connectionLayout->addRow(tr("Terminator:"), m_lineTerminatorCombo);
-
-    // USB device picker -- shown instead of the three rows above when
-    // Transport is set to USB (see updateTransportFieldsVisibility()).
-    // hidapi device paths aren't something a user would ever type by hand
-    // (unlike a COM port name), so unlike m_portCombo this one isn't
-    // editable: setAvailableUsbDevices() synthesizes a placeholder entry for
-    // an already-configured-but-not-currently-plugged-in device instead.
-    m_usbDeviceCombo = new QComboBox(connectionGroup);
-    m_usbDeviceCombo->setToolTip(tr("USB HID device"));
-    if (!m_device.usbPath.isEmpty()) {
-        m_usbDeviceCombo->addItem(m_device.usbPath, m_device.usbPath);
-    }
-
-    m_refreshUsbDevicesButton = new QToolButton(connectionGroup);
-    m_refreshUsbDevicesButton->setText(QString::fromUtf8("\xE2\x9F\xB3"));  // ⟳
-    m_refreshUsbDevicesButton->setToolTip(tr("Refresh USB device list"));
-    m_refreshUsbDevicesButton->setAutoRaise(true);
-    connect(m_refreshUsbDevicesButton, &QToolButton::clicked, this,
-            &DeviceConfigDialog::refreshUsbDevicesRequested);
-
-    auto* usbDeviceRow = new QHBoxLayout;
-    usbDeviceRow->addWidget(m_usbDeviceCombo, /*stretch=*/1);
-    usbDeviceRow->addWidget(m_refreshUsbDevicesButton);
-    m_usbDeviceRowIndex = m_connectionLayout->rowCount();
-    m_connectionLayout->addRow(tr("USB:"), usbDeviceRow);
-
-    // Hub-channel rows -- shown instead of every row above when Transport is
-    // set to Hub. A hub channel has no port and no baud rate: its "wire" is
-    // another device's connection.
-    m_parentCombo = new QComboBox(connectionGroup);
-    // Bounded to a fixed content length rather than the default
-    // AdjustToContentsOnFirstShow -- see m_peerSourceIdCombo's own comment
-    // below for why: a long entry (a device with a long name here, a peer's
-    // full label there) must not be able to widen the whole dialog.
-    m_parentCombo->setSizeAdjustPolicy(QComboBox::AdjustToMinimumContentsLengthWithIcon);
-    m_parentCombo->setMinimumContentsLength(20);
-    m_parentCombo->setToolTip(tr("The device whose connection carries this one."));
-    if (!m_device.parentDeviceId.isEmpty()) {
-        m_parentCombo->addItem(m_device.parentDeviceId, m_device.parentDeviceId);
-    }
-    m_parentRowIndex = m_connectionLayout->rowCount();
-    m_connectionLayout->addRow(tr("Via:"), m_parentCombo);
-
-    // Shown as hex because that is how a source_id appears everywhere else
-    // it is user-visible (the device card, the hub's own console). Editable
-    // combo, not a plain picker: the peer list comes live from the hub's own
-    // hub.peers topic (see setAvailableHubPeers()), which needs the hub
-    // connected and its manifest exchanged -- a device has to stay
-    // configurable while nothing is plugged in yet, or for a robot the hub
-    // hasn't heard.
-    m_peerSourceIdCombo = new QComboBox(connectionGroup);
-    m_peerSourceIdCombo->setEditable(true);
-    // A peer's full label ("Ch 3 -- 0x0A0A0A0A, offline 12s [AA:BB:CC:DD:EE:FF]")
-    // is long, and this dialog's default AdjustToContentsOnFirstShow policy
-    // would otherwise let the combo (and with it the whole dialog) grow to
-    // fit the longest one the hub happens to report -- exactly what made
-    // Hub mode noticeably wider than Serial/USB. Fixed content length
-    // instead: the box shows an elided prefix, the full text is still there
-    // in the dropdown and the tooltip (see setAvailableHubPeers()).
-    m_peerSourceIdCombo->setSizeAdjustPolicy(QComboBox::AdjustToMinimumContentsLengthWithIcon);
-    m_peerSourceIdCombo->setMinimumContentsLength(20);
-    m_peerSourceIdCombo->setToolTip(
-        tr("The robot's BTP source_id -- its permanent address, not the channel number the hub "
-           "shows. Pick one the hub has actually heard (refreshed live while it's connected), or "
-           "type a hex/decimal id by hand for a robot it hasn't heard yet."));
-    m_peerSourceIdCombo->lineEdit()->setPlaceholderText(tr("e.g. 0x0A0A0A0A"));
-    m_peerSourceId = m_device.peerSourceId;
-    if (m_peerSourceId != 0) {
-        m_peerSourceIdCombo->setCurrentText(
-            QStringLiteral("0x%1").arg(m_peerSourceId, 8, 16, QLatin1Char('0')).toUpper());
-    }
-    connect(m_peerSourceIdCombo, &QComboBox::activated, this,
-            [this](int index) { m_peerSourceId = m_peerSourceIdCombo->itemData(index).toUInt(); });
-    connect(m_peerSourceIdCombo->lineEdit(), &QLineEdit::editingFinished, this, [this]() {
-        const QString typed = m_peerSourceIdCombo->currentText().trimmed();
-        if (typed.isEmpty()) {
-            // Explicit clear -- same "0 means not configured, never
-            // connects" convention as every other field here (see
-            // result()'s own comment).
-            m_peerSourceId = 0;
-            return;
+    connect(m_linksPanel, &RobotLinksPanel::scanBleRequested, this,
+            &DeviceConfigDialog::scanBleRequested);
+    for (const DeviceInfoRecord& entry : m_device.reportedInfo) {
+        if (entry.key == QLatin1String("name")) {
+            m_linksPanel->addRobotNameCandidate(entry.value);
         }
-        bool parsed = false;
-        const quint32 value = typed.startsWith(QLatin1String("0x"), Qt::CaseInsensitive)
-                                  ? typed.mid(2).toUInt(&parsed, 16)
-                                  : typed.toUInt(&parsed, 10);
-        // Unparseable, non-empty text (most commonly a picked peer's label
-        // still sitting there, untouched) is ignored rather than clearing a
-        // previously valid binding -- same treatment
-        // ChartConfigEditor/GaugeConfigEditor's Topic field gives a resolved
-        // name that isn't meant to be typed back in.
-        if (parsed) {
-            m_peerSourceId = value;
-        }
+    }
+
+    // Advanced view: the same links as a table -- order, baud rate, TCP port,
+    // hand-typed targets, USB HID. Collapsed unless the device already uses
+    // something only the table can show.
+    m_advancedButton = new QToolButton(connectionGroup);
+    m_advancedButton->setText(tr("Advanced"));
+    m_advancedButton->setCheckable(true);
+    m_advancedButton->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+    m_advancedButton->setAutoRaise(true);
+    m_advancedButton->setToolTip(
+        tr("Every link as a table: the order they are tried in, baud rate, TCP port, "
+           "and targets typed by hand."));
+    connectionLayout->addWidget(m_advancedButton);
+
+    m_linksTable = new DeviceLinksTable(links, connectionGroup);
+    connectionLayout->addWidget(m_linksTable, /*stretch=*/1);
+    connect(m_advancedButton, &QToolButton::toggled, this, [this](bool on) {
+        m_advancedButton->setArrowType(on ? Qt::DownArrow : Qt::RightArrow);
+        m_linksTable->setVisible(on);
+        updateConnectionRows();
     });
-    m_peerSourceIdRowIndex = m_connectionLayout->rowCount();
-    m_connectionLayout->addRow(tr("Source ID:"), m_peerSourceIdCombo);
+    bool needsTable = false;
+    QVector<TransportType> seenTypes;
+    for (const DeviceLink& link : links) {
+        needsTable = needsTable || link.transportType == TransportType::UsbHid ||
+                     (!link.autoTarget && deviceLinkConfigured(link)) ||
+                     !link.enabled || seenTypes.contains(link.transportType);
+        seenTypes.append(link.transportType);
+    }
+    m_advancedButton->setChecked(needsTable);
+    m_advancedButton->setArrowType(needsTable ? Qt::DownArrow : Qt::RightArrow);
+    m_linksTable->setVisible(needsTable);
 
-    // This device's OWN identity on the wire, not the robot's -- the value
-    // `hub -bind <this>, <robot source_id>` needs on the dongle's shell.
-    // Read-only and derived, never typed: the hub keys its bind table on it,
-    // so it has to be stable across relaunches (hubChannelSourceId()'s own
-    // comment, devices/device.h).
-    m_childSourceIdLabel = new QLabel(connectionGroup);
-    m_childSourceIdLabel->setText(
-        QStringLiteral("0x%1").arg(hubChannelSourceId(m_device.id), 8, 16, QLatin1Char('0')).toUpper());
-    m_childSourceIdLabel->setToolTip(
-        tr("This device's own source_id. Pass it as the first argument to the dongle's "
-           "\"hub -bind\" command, with the robot's Source ID above as the second, so the "
-           "hub knows which robot this device's SUBSCRIBE/COMMAND traffic is for."));
-    m_childSourceIdRowIndex = m_connectionLayout->rowCount();
-    m_connectionLayout->addRow(tr("This device's ID:"), m_childSourceIdLabel);
+    // The two views edit one list: whichever was edited pushes it to the other.
+    connect(m_linksPanel, &RobotLinksPanel::linksEdited, this,
+            [this](const QVector<DeviceLink>& edited) {
+                m_linksTable->setLinks(edited);
+                updateConnectionRows();
+            });
+    connect(m_linksTable, &DeviceLinksTable::linksChanged, this,
+            [this] { m_linksPanel->setLinks(m_linksTable->links()); });
+    connect(m_linksTable, &DeviceLinksTable::refreshPortsRequested, this,
+            &DeviceConfigDialog::refreshPortsRequested);
+    connect(m_linksTable, &DeviceLinksTable::refreshUsbDevicesRequested, this,
+            &DeviceConfigDialog::refreshUsbDevicesRequested);
+    connect(m_linksTable, &DeviceLinksTable::scanBleRequested, this,
+            &DeviceConfigDialog::scanBleRequested);
+    connect(m_linksTable, &DeviceLinksTable::linksChanged, this,
+            &DeviceConfigDialog::updateConnectionRows);
+
+    m_connectionLayout = new QFormLayout();
+    m_connectionLayout->setRowWrapPolicy(QFormLayout::WrapLongRows);
+    connectionLayout->addLayout(m_connectionLayout);
+    m_connectionLayout->addRow(tr("Card title:"), m_nameEdit);
 
     m_peerPasswordEdit = new QLineEdit(m_device.peerPassword, connectionGroup);
     m_peerPasswordEdit->setEchoMode(QLineEdit::Password);
-    m_peerPasswordEdit->setToolTip(tr("Password for this robot's endpoint key."));
+    m_peerPasswordEdit->setToolTip(
+        tr("The robot's channel-B password. One per device: every TCP, BLE and hub connection "
+           "above uses it."));
     m_peerPasswordRowIndex = m_connectionLayout->rowCount();
     m_connectionLayout->addRow(tr("Password:"), m_peerPasswordEdit);
 
@@ -398,54 +220,42 @@ DeviceConfigDialog::DeviceConfigDialog(const Device& initial, QWidget* parent)
     m_cachePasswordRowIndex = m_connectionLayout->rowCount();
     m_connectionLayout->addRow(QString(), m_cachePasswordCheck);
 
-    // Lock the Connection group to the tallest of the transports' row sets
-    // (Hub has the most: through-device/source_id/this-device's-id/password/
-    // cache checkbox; Tcp and Ble tie Hub on the last two now that a direct
-    // session shares the same channel-B password field -- see
-    // updateTransportFieldsVisibility()) instead of leaving it to shrink-wrap
-    // whichever one happens to be selected. Without this, switching the Transport combo hides/
-    // shows rows via setRowVisible() and the whole dialog resizes itself
-    // around it every time -- jarring, and it undoes the height the user set
-    // by dragging the dialog. Measured by actually cycling through every
-    // transport (rather than a hand-picked row count) so it stays correct
-    // through font/style/translation changes that affect row heights.
-    // updateTransportFieldsVisibility() is called directly rather than
-    // relying on setCurrentIndex()'s currentIndexChanged signal -- if this
-    // device's own transport happens to be the first type in the list below,
-    // setCurrentIndex() on that same index is a no-op (Qt only emits the
-    // signal on an actual change) and the very first measurement would
-    // silently fall back to every row's default-visible state instead of
-    // just that transport's.
-    {
-        int maxConnectionHeight = 0;
-        for (TransportType type : {
-#ifdef TRACEVIEW_ENABLE_SERIAL
-                       TransportType::Serial,
-#endif
-#ifdef TRACEVIEW_ENABLE_USB_HID
-                       TransportType::UsbHid,
-#endif
-                       TransportType::HubChannel, TransportType::Tcp,
-#ifdef TRACEVIEW_ENABLE_BLE
-                       TransportType::Ble,
-#endif
-                       }) {
-            const int index = m_transportTypeCombo->findData(int(type));
-            m_transportTypeCombo->setCurrentIndex(index);
-            updateTransportFieldsVisibility();
-            m_connectionLayout->activate();
-            maxConnectionHeight = qMax(maxConnectionHeight, connectionGroup->sizeHint().height());
-        }
-        connectionGroup->setMinimumHeight(maxConnectionHeight);
-        // Restores the transport this device actually has.
-        const int initialIndex = m_transportTypeCombo->findData(int(m_device.transportType));
-        m_transportTypeCombo->setCurrentIndex(initialIndex >= 0 ? initialIndex : 0);
-        updateTransportFieldsVisibility();
-    }
+    // Values match traceview::LineTerminator's ordinals (core/serialtransport.h)
+    // -- Device::lineTerminator stores that same ordinal as a plain int since
+    // this module can't depend on that enum's header (see device.h). Only
+    // meaningful over a serial console, so shown only when a Serial row exists.
+    m_lineTerminatorCombo = new QComboBox(connectionGroup);
+    m_lineTerminatorCombo->addItem(tr("None"), 0);
+    m_lineTerminatorCombo->addItem(tr("LF (\\n)"), 1);
+    m_lineTerminatorCombo->addItem(tr("CR (\\r)"), 2);
+    m_lineTerminatorCombo->addItem(tr("CRLF (\\r\\n)"), 3);
+    const int terminatorIndex = m_lineTerminatorCombo->findData(m_device.lineTerminator);
+    m_lineTerminatorCombo->setCurrentIndex(terminatorIndex >= 0 ? terminatorIndex : 1);
+    m_lineTerminatorCombo->setToolTip(
+        tr("Line terminator appended to control-widget commands sent over serial. "
+           "Doesn't affect its serial terminal's raw keystrokes."));
+    m_lineTerminatorRowIndex = m_connectionLayout->rowCount();
+    m_connectionLayout->addRow(tr("Terminator:"), m_lineTerminatorCombo);
+
+    // This device's OWN identity on the wire, not the robot's -- the value
+    // `hub -bind <this>, <robot source_id>` needs on the dongle's shell.
+    // Read-only and derived, never typed: the hub keys its bind table on it,
+    // so it has to be stable across relaunches (hubChannelSourceId()'s own
+    // comment, devices/device.h). Shown only when a Hub row exists.
+    m_childSourceIdLabel = new QLabel(connectionGroup);
+    m_childSourceIdLabel->setText(
+        QStringLiteral("0x%1").arg(hubChannelSourceId(m_device.id), 8, 16, QLatin1Char('0')).toUpper());
+    m_childSourceIdLabel->setTextInteractionFlags(Qt::TextSelectableByMouse);
+    m_childSourceIdLabel->setToolTip(
+        tr("This device's own source_id. Pass it as the first argument to the hub's "
+           "\"hub -bind\" command, with the robot's id as the second, so the hub knows which "
+           "robot this device's SUBSCRIBE/COMMAND traffic is for."));
+    m_childSourceIdRowIndex = m_connectionLayout->rowCount();
+    m_connectionLayout->addRow(tr("This device's ID:"), m_childSourceIdLabel);
+    updateConnectionRows();
 
     // OTA group -- a separate Wi-Fi/HTTP channel (see device.h's
-    // otaAddress comment), so unlike the Connection group above it doesn't
-    // depend on transportType and is never hidden.
+    // otaAddress comment), independent of how the device is connected.
     auto* otaGroup = new QGroupBox(tr("OTA"), this);
     auto* otaLayout = new QFormLayout(otaGroup);
     m_otaAddressEdit = new QLineEdit(m_device.otaAddress, otaGroup);
@@ -490,10 +300,9 @@ DeviceConfigDialog::DeviceConfigDialog(const Device& initial, QWidget* parent)
     // something a user should be able to type over (see Device::btpVersion/
     // btpId's own comments in devices/device.h). Empty until a session has
     // actually been established at least once. Placed in the right column,
-    // above "Reported catalog" below, rather than stacked into the left
-    // column: both are read-only, device-reported info, and grouping them
-    // together keeps the left column (settings the user actually edits)
-    // shorter and roughly the same height as the right one.
+    // between OTA and "Reported catalog", rather than stacked into the left
+    // column: keeps the left column (the connection settings) short and
+    // roughly the same height as the right one.
     auto* reportedGroup = new QGroupBox(tr("Reported by device"), this);
     // Connect/disconnect state, not something HELLO_RESULT reports, but it's
     // still the device talking rather than a setting to edit -- grouped here
@@ -553,97 +362,66 @@ DeviceConfigDialog::DeviceConfigDialog(const Device& initial, QWidget* parent)
     connect(buttons, &QDialogButtonBox::accepted, this, &QDialog::accept);
     connect(buttons, &QDialogButtonBox::rejected, this, &QDialog::reject);
 
-    // Two columns: settings the user edits on the left, everything the
-    // device itself reports on the right -- "Reported by device" stacked
-    // above "Reported catalog" instead of piling onto the left column, which
-    // both shortens the left column and keeps the two columns closer in
-    // height.
+    // Two columns: the connection settings on the left, OTA plus everything
+    // the device itself reports on the right -- OTA sits above "Reported by
+    // device"/"Reported catalog" instead of under the connection group,
+    // which keeps the left column (and so the dialog) from growing too tall.
     auto* leftColumn = new QVBoxLayout;
-    leftColumn->addWidget(generalGroup);
     leftColumn->addWidget(connectionGroup);
-    leftColumn->addWidget(otaGroup);
     leftColumn->addStretch();
 
     auto* rightColumn = new QVBoxLayout;
+    rightColumn->addWidget(otaGroup);
     rightColumn->addWidget(reportedGroup);
     rightColumn->addWidget(catalogGroup, /*stretch=*/1);
 
-    // Right column's own sizeHint (just reportedGroup's few short rows plus
-    // whatever the catalog box asks for) is naturally narrower than the left
-    // one's, which is widened by its labeled rows and width-bound combos
-    // (m_peerSourceIdCombo/m_parentCombo). The equal stretch factors below
-    // only redistribute space *beyond* each column's own sizeHint when the
-    // dialog is grown past it -- they don't equalize the two up front. Pin
-    // both right-column group boxes to the left column's natural width
-    // (left stays exactly as it already sizes itself) so "Reported catalog"
-    // starts out the same width as the settings column instead of visibly
-    // narrower.
-    const int leftColumnWidth = leftColumn->sizeHint().width();
-    reportedGroup->setMinimumWidth(leftColumnWidth);
-    catalogGroup->setMinimumWidth(leftColumnWidth);
-
-    auto* columns = new QHBoxLayout;
+    // Contain changing size hints (discovery, manifest, advanced fields)
+    // inside a scroll area rather than growing the native dialog.
+    auto* content = new QWidget(this);
+    auto* columns = new QHBoxLayout(content);
     columns->addLayout(leftColumn, /*stretch=*/1);
     columns->addLayout(rightColumn, /*stretch=*/1);
 
     auto* layout = new QVBoxLayout(this);
-    layout->addLayout(columns);
+    auto* scroll = new QScrollArea(this);
+    scroll->setWidgetResizable(true);
+    scroll->setFrameShape(QFrame::NoFrame);
+    scroll->setWidget(content);
+    layout->addWidget(scroll, 1);
     layout->addSpacing(8);
     layout->addWidget(buttons);
 
-    // Sets the dialog's initial size to fit whichever transport is selected
-    // above. Connection's height is now pinned to Hub's row set regardless
-    // (see the setMinimumHeight() call above), so later Transport switches
-    // don't change sizeHint() and this call is never needed again after
-    // construction. Width doesn't need any such pinning: every row's field
-    // spans the full row width (WrapAllRows, further up) regardless of which
-    // rows are visible, and the two combos whose *content* could otherwise
-    // widen the dialog (m_parentCombo, m_peerSourceIdCombo) are bounded to a
-    // fixed content length regardless of what's actually loaded into them.
-    resize(sizeHint());
+    // The connections table's combos are bounded to a fixed content length
+    // (DeviceLinksTable's boundedCombo()), so no port label, BLE name or peer
+    // label can widen the dialog past this.
+    resize(QSize(1000, 720).boundedTo(screen()->availableGeometry().size() - QSize(40, 60)));
 }
 
 Device DeviceConfigDialog::result() const {
     Device device = m_device;
-    device.name = m_nameEdit->text();
-    device.description = m_descriptionEdit->toPlainText();
-    device.transportType = TransportType(m_transportTypeCombo->currentData().toInt());
-    // The combo is editable, so the shown text is either a listed option's
-    // label (store its name, which differs from the label on Android) or
-    // something typed by hand (store it verbatim, as before).
-    {
-        const QString text = m_portCombo->currentText();
-        const int index = m_portCombo->findText(text);
-        const QString name = index >= 0 ? m_portCombo->itemData(index).toString() : QString();
-        device.portName = name.isEmpty() ? text : name;
+    device.robotName = m_linksPanel->robotName();
+    // No title of its own: the robot's name is the obvious one.
+    const QString title = m_nameEdit->text().trimmed();
+    device.name = title.isEmpty() || title == m_device.robotName ||
+                          (m_device.robotName.isEmpty() && title == m_device.name)
+                      ? device.robotName : title;
+    // Row 1 of the connections table is the primary link (the Device's own
+    // transport fields); the rest become extraLinks. An empty table leaves a
+    // default, unconfigured primary -- same "never connects" state a fresh
+    // device starts in.
+    QVector<DeviceLink> links = m_linksTable->links();
+    // The legacy primary slot has no enabled flag. Put the first enabled
+    // link there, or leave it unconfigured when every transport is disabled.
+    DeviceLink primary;
+    for (int i = 0; i < links.size(); ++i) {
+        if (links.at(i).enabled) {
+            primary = links.takeAt(i);
+            break;
+        }
     }
-    device.baudRate = m_baudCombo->currentText().toInt();
+    device = deviceWithLink(device, primary);
+    device.extraLinks = links;
     device.lineTerminator = m_lineTerminatorCombo->currentData().toInt();
-    device.tcpHost = m_tcpHostEdit->text().trimmed();
-    device.tcpPort = quint16(m_tcpPortSpin->value());
-    // The edit text can still be a scan result's decorated "name (address)"
-    // label, not the raw address: the activated() handler rewrites it, but
-    // an editable combo also mirrors the label back into the edit text
-    // whenever the current item's text is set (addDiscoveredBleDevice()), or
-    // when the first scan result becomes current on its own. Saving that
-    // label made BleTransport dial "BallyRobot (14:C1:...)" -- an invalid
-    // address. Map a label back to the address its item carries; hand-typed
-    // text that matches no item is kept as-is.
-    {
-        const QString text = m_bleAddressCombo->currentText().trimmed();
-        const int index = m_bleAddressCombo->findText(text);
-        const QString data =
-            index >= 0 ? m_bleAddressCombo->itemData(index).toString() : QString();
-        device.bleAddress = data.isEmpty() ? text : data;
-    }
-    device.usbPath = m_usbDeviceCombo->currentData().toString();
-    device.parentDeviceId = m_parentCombo->currentData().toString();
-    // m_peerSourceId is the ground truth (see its own declaration) --
-    // whichever of picking a peer or typing a hex/decimal id last actually
-    // parsed successfully. Never re-derived from the combo's displayed text
-    // here: a picked entry's label ("Channel 0 -- 0x0A0A0A0A (online)") isn't
-    // meant to be parsed back.
-    device.peerSourceId = m_peerSourceId;
     device.cachePeerPassword = m_cachePasswordCheck->isChecked();
     device.peerPassword = m_peerPasswordEdit->text();
     device.otaAddress = m_otaAddressEdit->text().trimmed();
@@ -654,76 +432,63 @@ Device DeviceConfigDialog::result() const {
     return device;
 }
 
-void DeviceConfigDialog::updateTransportFieldsVisibility() {
-    // Switched on the transport rather than on one boolean. With two
-    // transports "serial or not" happened to be right; with three it is not --
-    // treating Hub as "not serial" would offer it a USB device picker.
-    const TransportType transport = TransportType(m_transportTypeCombo->currentData().toInt());
-    const bool isSerial = transport == TransportType::Serial;
-    const bool isTcp = transport == TransportType::Tcp;
-    const bool isBle = transport == TransportType::Ble;
-    const bool isUsbHid = transport == TransportType::UsbHid;
-    const bool isHub = transport == TransportType::HubChannel;
-
-    setFormRowVisible(m_connectionLayout, m_portRowIndex, isSerial);
-    setFormRowVisible(m_connectionLayout, m_baudRowIndex, isSerial);
-    setFormRowVisible(m_connectionLayout, m_lineTerminatorRowIndex, isSerial);
-    setFormRowVisible(m_connectionLayout, m_tcpHostRowIndex, isTcp);
-    setFormRowVisible(m_connectionLayout, m_tcpPortRowIndex, isTcp);
-    setFormRowVisible(m_connectionLayout, m_bleAddressRowIndex, isBle);
-    // Leaving the dialog on the BLE row with a scan left running would keep
-    // the discovery agent alive with nothing left able to stop it politely.
-    if (!isBle && m_bleScanning) {
-        m_scanBleButton->setChecked(false);
-    }
-    setFormRowVisible(m_connectionLayout, m_usbDeviceRowIndex, isUsbHid);
-    setFormRowVisible(m_connectionLayout, m_parentRowIndex, isHub);
-    setFormRowVisible(m_connectionLayout, m_peerSourceIdRowIndex, isHub);
-    setFormRowVisible(m_connectionLayout, m_childSourceIdRowIndex, isHub);
-    // The password field is Device::peerPassword -- ONE channel-B password
-    // per device covers HubChannel, Tcp and Ble alike: a direct TCP/BLE
-    // session derives the exact same key a hub child would (see
-    // BtpBackend::setDirectEndpointKey()'s comment for why that key is wired
-    // in without adopting any of the hub-child role's other side effects).
-    // "Cache password" belongs next to it for the same reason it does for
-    // Hub: whether to persist the typed password in the .tvproj (vs. asking
-    // again every session) is a property of the password field itself, not
-    // of which transport happens to consume the derived key.
-    const bool showsPeerPassword = isHub || isTcp || isBle;
-    setFormRowVisible(m_connectionLayout, m_peerPasswordRowIndex, showsPeerPassword);
-    setFormRowVisible(m_connectionLayout, m_cachePasswordRowIndex, showsPeerPassword);
+void DeviceConfigDialog::updateConnectionRows() {
+    if (!m_connectionLayout) return;
+    const bool advanced = m_advancedButton->isChecked();
+    setFormRowVisible(m_connectionLayout, 0, advanced);
+    const bool anyDirectOrHub = m_linksTable->hasLinkOfType(TransportType::Tcp) ||
+                                m_linksTable->hasLinkOfType(TransportType::Ble) ||
+                                m_linksTable->hasLinkOfType(TransportType::HubChannel);
+    // A serial/USB-only device talks to a dongle's console, which has no
+    // channel-B key -- no password to ask for.
+    setFormRowVisible(m_connectionLayout, m_peerPasswordRowIndex, anyDirectOrHub);
+    setFormRowVisible(m_connectionLayout, m_cachePasswordRowIndex, anyDirectOrHub);
+    setFormRowVisible(m_connectionLayout, m_lineTerminatorRowIndex,
+                      advanced && m_linksTable->hasLinkOfType(TransportType::Serial));
+    setFormRowVisible(m_connectionLayout, m_childSourceIdRowIndex,
+                      advanced && m_linksTable->hasLinkOfType(TransportType::HubChannel));
 }
 
 void DeviceConfigDialog::setAvailableParentDevices(
     const QVector<QPair<QString, QString>>& parents) {
-    const QString current = m_parentCombo->currentData().toString();
-    m_parentCombo->clear();
-    // An unconfigured child is a valid state, so there has to be a way to say
-    // "none", and it has to be where a fresh device lands.
-    m_parentCombo->addItem(tr("(none)"), QString());
-    for (const QPair<QString, QString>& parent : parents) {
-        m_parentCombo->addItem(parent.second.isEmpty() ? parent.first : parent.second,
-                               parent.first);
-    }
-    const QString wanted = current.isEmpty() ? m_device.parentDeviceId : current;
-    int index = m_parentCombo->findData(wanted);
-    if (index < 0 && !wanted.isEmpty()) {
-        // Configured but missing from the offered list (deleted, or no longer
-        // a valid parent). Kept rather than silently repointed at "none" just
-        // because someone opened the dialog.
-        m_parentCombo->addItem(tr("%1 (unavailable)").arg(wanted), wanted);
-        index = m_parentCombo->count() - 1;
-    }
-    m_parentCombo->setCurrentIndex(index >= 0 ? index : 0);
+    m_linksTable->setAvailableParentDevices(parents);
+    m_linksPanel->setAvailableParentDevices(parents);
 }
 
 void DeviceConfigDialog::setCatalogTopics(const QVector<CatalogTopicInfo>& topics) {
+    m_liveTopics = topics;
+    renderCatalog();
+}
+
+void DeviceConfigDialog::setCachedDescription(const QVector<CatalogTopicInfo>& topics,
+                                              const QVector<DeviceInfoRecord>& info) {
+    m_cachedTopics = topics;
+    m_cachedInfo = info;
+    // The robot's id as the placeholder of an empty ID field: HELLO_RESULT
+    // gives it live, but a cached manifest is one source's, so it is known.
+    const QString cachedId =
+        topics.isEmpty()
+            ? QString()
+            : QStringLiteral("0x%1").arg(
+                  QStringLiteral("%1").arg(topics.first().sourceId, 8, 16, QChar('0')).toUpper());
+    m_btpIdEdit->setPlaceholderText(cachedId.isEmpty() ? tr("(not connected yet)")
+                                                       : tr("%1 (last connection)").arg(cachedId));
+    renderCatalog();
+    renderReportedInfo();
+}
+
+void DeviceConfigDialog::renderCatalog() {
+    const bool fromCache = m_liveTopics.isEmpty() && !m_cachedTopics.isEmpty();
+    const QVector<CatalogTopicInfo>& topics = fromCache ? m_cachedTopics : m_liveTopics;
     if (topics.isEmpty()) {
         m_catalogList->setPlainText(tr("(no topics reported yet)"));
         return;
     }
     QStringList blocks;
-    blocks.reserve(topics.size());
+    blocks.reserve(topics.size() + 1);
+    if (fromCache) {
+        blocks << tr("(saved from the last connection)");
+    }
     for (const CatalogTopicInfo& topic : topics) {
         blocks << catalogTopicBlock(topic);
     }
@@ -739,10 +504,19 @@ void DeviceConfigDialog::setReportedIdentity(const QString& btpVersion, const QS
 
 void DeviceConfigDialog::setReportedInfo(const QVector<DeviceInfoRecord>& info) {
     m_device.reportedInfo = info;
+    renderReportedInfo();
+}
+
+void DeviceConfigDialog::renderReportedInfo() {
+    const bool fromCache = m_device.reportedInfo.isEmpty() && !m_cachedInfo.isEmpty();
+    const QVector<DeviceInfoRecord>& info = fromCache ? m_cachedInfo : m_device.reportedInfo;
 
     QString reportedOta;
     QStringList lines;
-    lines.reserve(info.size());
+    lines.reserve(info.size() + 1);
+    if (fromCache) {
+        lines.append(tr("(saved from the last connection)"));
+    }
     for (const DeviceInfoRecord& entry : info) {
         // label is optional on the wire (commands.md 3.12) -- fall back to the
         // machine key so the row is never blank.
@@ -750,6 +524,9 @@ void DeviceConfigDialog::setReportedInfo(const QVector<DeviceInfoRecord>& info) 
         lines.append(QStringLiteral("%1: %2").arg(caption, entry.value));
         if (entry.key == QLatin1String("ota_endpoint")) {
             reportedOta = entry.value.trimmed();
+        }
+        if (entry.key == QLatin1String("name") && m_linksPanel != nullptr) {
+            m_linksPanel->addRobotNameCandidate(entry.value);
         }
     }
     m_reportedInfoLabel->setText(info.isEmpty() ? tr("(nothing reported yet)")
@@ -779,97 +556,26 @@ void DeviceConfigDialog::setConnectionStatus(bool connected) {
 }
 
 void DeviceConfigDialog::setAvailablePorts(const QVector<SerialPortOption>& ports) {
-    // Preserve by stored name, not shown text: on Android the device's
-    // portName is a key whose label only the fresh list knows.
-    const QString currentText = m_portCombo->currentText();
-    const int currentIndex = m_portCombo->findText(currentText);
-    const QString currentData =
-        currentIndex >= 0 ? m_portCombo->itemData(currentIndex).toString() : QString();
-    const QString current = currentData.isEmpty() ? currentText : currentData;
-    m_portCombo->clear();
-    for (const SerialPortOption& port : ports) {
-        m_portCombo->addItem(port.label, port.name);
-    }
-    if (current.isEmpty()) {
-        m_portCombo->setCurrentText(QString());
-        return;
-    }
-    int index = m_portCombo->findData(current);
-    if (index < 0) {
-        index = m_portCombo->findText(current);
-    }
-    if (index < 0) {
-        m_portCombo->insertItem(0, current, current);
-        index = 0;
-    }
-    m_portCombo->setCurrentIndex(index);
+    m_linksTable->setAvailablePorts(ports);
+    m_linksPanel->setAvailablePorts(ports);
 }
 
 void DeviceConfigDialog::addDiscoveredBleDevice(const QString& name, const QString& address) {
-    if (address.isEmpty()) {
-        return;
-    }
-    const QString label = name.isEmpty() ? address : tr("%1 (%2)").arg(name, address);
-    const int existing = m_bleAddressCombo->findData(address);
-    if (existing >= 0) {
-        // Re-seen (most backends re-emit per advertisement) -- refresh the
-        // label only (a name can arrive on a later advertisement than the
-        // first one this address was seen on), never the current selection.
-        // Only when it actually changed: on an editable combo, setItemText()
-        // on the current item also overwrites the edit text, which would
-        // put the label back over the raw address every sweep.
-        if (m_bleAddressCombo->itemText(existing) != label) {
-            m_bleAddressCombo->setItemText(existing, label);
-        }
-        return;
-    }
-    m_bleAddressCombo->addItem(label, address);
+    m_linksTable->addDiscoveredBleDevice(name, address);
+    m_linksPanel->addDiscoveredBleDevice(name, address);
 }
 
 void DeviceConfigDialog::setAvailableHubPeers(const QVector<HubPeer>& peers) {
-    const QString currentText = m_peerSourceIdCombo->currentText();
-    m_peerSourceIdCombo->clear();
-    for (const HubPeer& peer : peers) {
-        const QString hex =
-            QStringLiteral("0x%1").arg(peer.sourceId, 8, 16, QLatin1Char('0')).toUpper();
-        // Kept short -- see m_peerSourceIdCombo's own comment on why a long
-        // item label isn't wanted here. The MAC (when reported) goes in the
-        // item's tooltip instead of getting appended to the label.
-        const QString status =
-            peer.online ? tr("online") : tr("offline %1s").arg(peer.lastSeenAgeMs / 1000);
-        const QString label = tr("Ch %1 -- %2, %3").arg(peer.channel).arg(hex, status);
-        m_peerSourceIdCombo->addItem(label, peer.sourceId);
-        if (!peer.mac.isEmpty()) {
-            const QString tooltip = peer.online
-                ? tr("%1\nRSSI: %2 dBm\nRTT: %3 ms").arg(peer.mac).arg(peer.rssi).arg(peer.rttMs)
-                : peer.mac;
-            m_peerSourceIdCombo->setItemData(m_peerSourceIdCombo->count() - 1, tooltip,
-                                             Qt::ToolTipRole);
-        }
-    }
-    m_peerSourceIdCombo->setCurrentText(currentText);
+    m_linksTable->setAvailableHubPeers(peers);
+    m_linksPanel->setAvailableHubPeers(peers);
 }
 
 QString DeviceConfigDialog::currentParentDeviceId() const {
-    return m_parentCombo->currentData().toString();
+    return m_linksTable->hubParentForPeers();
 }
 
 void DeviceConfigDialog::setAvailableUsbDevices(const QVector<UsbDeviceOption>& devices) {
-    const QString currentPath = m_usbDeviceCombo->currentData().toString();
-    m_usbDeviceCombo->clear();
-    for (const UsbDeviceOption& device : devices) {
-        m_usbDeviceCombo->addItem(device.label, device.path);
-    }
-    const int index = m_usbDeviceCombo->findData(currentPath);
-    if (index >= 0) {
-        m_usbDeviceCombo->setCurrentIndex(index);
-    } else if (!currentPath.isEmpty()) {
-        // Configured but not currently plugged in -- same "don't lose the
-        // remembered target" treatment setAvailablePorts() gives a COM port
-        // that's temporarily absent.
-        m_usbDeviceCombo->insertItem(0, currentPath, currentPath);
-        m_usbDeviceCombo->setCurrentIndex(0);
-    }
+    m_linksTable->setAvailableUsbDevices(devices);
 }
 
 }  // namespace traceview

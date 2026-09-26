@@ -208,6 +208,11 @@
         <source>BLE</source>
         <translation>BLE</translation>
     </message>
+    <message>
+        <location filename="../lib/devices/device.cpp" line="+292"/>
+        <source>auto</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>DeviceCommands</name>
@@ -246,7 +251,7 @@
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="+119"/>
+        <location filename="../lib/core/mainwindow.cpp" line="+127"/>
         <source>TraceView Project (*.tvproj)</source>
         <translation>Проект TraceView (*.tvproj)</translation>
     </message>
@@ -277,7 +282,7 @@
         <translation>Удалить рабочее пространство</translation>
     </message>
     <message>
-        <location filename="../lib/devices/deviceconfigdialog.cpp" line="+59"/>
+        <location filename="../lib/devices/deviceconfigdialog.cpp" line="+64"/>
         <source>(unnamed topic)</source>
         <translation>(тема без имени)</translation>
     </message>
@@ -736,7 +741,7 @@
 <context>
     <name>traceview::AndroidUsbSerialTransport</name>
     <message>
-        <location filename="../lib/core/androidusbserialtransport.cpp" line="+185"/>
+        <location filename="../lib/core/androidusbserialtransport.cpp" line="+194"/>
         <source>USB serial is not available on this device</source>
         <translation>USB-последовательный порт недоступен на этом устройстве</translation>
     </message>
@@ -754,12 +759,12 @@
 <context>
     <name>traceview::BleDiscoveryService</name>
     <message>
-        <location filename="../lib/core/blediscoveryservice.cpp" line="+44"/>
+        <location filename="../lib/core/blediscoveryservice.cpp" line="+45"/>
         <source>Bluetooth permission denied. Allow TraceView to use Bluetooth in the system settings.</source>
         <translation>Доступ к Bluetooth запрещён. Разрешите TraceView использовать Bluetooth в настройках системы.</translation>
     </message>
     <message>
-        <location line="+65"/>
+        <location line="+99"/>
         <source>BLE discovery failed</source>
         <translation>Ошибка поиска BLE</translation>
     </message>
@@ -767,12 +772,32 @@
 <context>
     <name>traceview::BleTransport</name>
     <message>
-        <location filename="../lib/core/bletransport.cpp" line="+68"/>
+        <location filename="../lib/core/bletransport.cpp" line="+99"/>
         <source>Bluetooth permission denied. Allow TraceView to use Bluetooth in the system settings.</source>
         <translation>Доступ к Bluetooth запрещён. Разрешите TraceView использовать Bluetooth в настройках системы.</translation>
     </message>
     <message>
-        <location line="+21"/>
+        <location line="+53"/>
+        <source>BLE scan failed: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+23"/>
+        <source>no BTP robot named &quot;%1&quot; found nearby (no BTP robot advertising at all)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>no BTP robot named &quot;%1&quot; found nearby (seen: %2)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+13"/>
+        <source>%1 BLE robots are named &quot;%2&quot; (%3) -- give each robot its own name, or pick one by address</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+38"/>
         <source>failed to create a BLE controller</source>
         <translation>не удалось создать контроллер BLE</translation>
     </message>
@@ -815,12 +840,16 @@
 <context>
     <name>traceview::BtpBackend</name>
     <message>
-        <location filename="../lib/protocol/btpbackend.cpp" line="+326"/>
         <source>Robot 0x%1 is online but its catalog has not arrived — check the dongle (hub -manifest)</source>
-        <translation>Робот 0x%1 в сети, но его каталог не пришёл — проверьте донгл (hub -manifest)</translation>
+        <translation type="vanished">Робот 0x%1 в сети, но его каталог не пришёл — проверьте донгл (hub -manifest)</translation>
     </message>
     <message>
-        <location line="+100"/>
+        <location filename="../lib/protocol/btpbackend.cpp" line="+346"/>
+        <source>Robot 0x%1 is online but its catalog has not arrived — check the hub (hub -manifest)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+91"/>
         <source>Robot 0x%1 rebooted — catalog and subscriptions refreshed</source>
         <translation>Робот 0x%1 перезагрузился — каталог и подписки обновлены</translation>
     </message>
@@ -830,7 +859,7 @@
         <translation>config rev %1</translation>
     </message>
     <message>
-        <location line="+22"/>
+        <location line="+23"/>
         <source>%1 limited to %2 (requested %3)</source>
         <translation>%1 ограничено до %2 (запрошено %3)</translation>
     </message>
@@ -840,23 +869,26 @@
         <translation>SUBSCRIBE отклонён для %1 (статус 0x%2, ошибка 0x%3)</translation>
     </message>
     <message>
-        <location line="+99"/>
+        <location line="+134"/>
         <source>HELLO rejected</source>
         <translation>HELLO отклонён</translation>
     </message>
     <message>
-        <location line="+3"/>
-        <location line="+39"/>
         <source>no HELLO_RESULT within %1 ms</source>
-        <translation>нет HELLO_RESULT в течение %1 мс</translation>
+        <translation type="vanished">нет HELLO_RESULT в течение %1 мс</translation>
     </message>
     <message>
-        <location line="-1"/>
+        <location line="+53"/>
         <source>session watchdog: no traffic from the peer</source>
         <translation>watchdog сессии: нет трафика от другой стороны</translation>
     </message>
     <message>
-        <location line="+41"/>
+        <location line="+11"/>
+        <source>no HELLO_RESULT after %1 attempts of %2 ms</source>
+        <translation>нет HELLO_RESULT после %1 попыток по %2 мс</translation>
+    </message>
+    <message>
+        <location line="+40"/>
         <source>failed to encode or send HELLO</source>
         <translation>не удалось закодировать или отправить HELLO</translation>
     </message>
@@ -871,27 +903,36 @@
         <translation>Сессия BTP установлена (HELLO_RESULT=SUCCESS)</translation>
     </message>
     <message>
-        <location line="+32"/>
+        <location line="+60"/>
         <source>BTP/%1</source>
         <translation>BTP/%1</translation>
     </message>
     <message>
         <location line="+21"/>
-        <source>dongle returned to console (BTP/1 CONSOLE)</source>
-        <translation>донгл вернулся в консоль (BTP/1 CONSOLE)</translation>
+        <source>device returned to console (BTP/1 CONSOLE)</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+197"/>
+        <location line="+246"/>
+        <source>Dropped an unsealed frame on a sealed direct session (check the robot&apos;s channel-B password)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>dongle returned to console (BTP/1 CONSOLE)</source>
+        <translation type="vanished">донгл вернулся в консоль (BTP/1 CONSOLE)</translation>
+    </message>
+    <message>
+        <location line="+19"/>
         <source>Dropped an unsealed frame on a sealed hub channel (check the robot&apos;s channel-B password)</source>
         <translation>Отброшен незапечатанный фрейм в запечатанном канале хаба (проверьте пароль канала B робота)</translation>
     </message>
     <message>
-        <location line="+129"/>
+        <location line="+126"/>
         <source>transport rejected an outbound BTP frame: %1</source>
         <translation>транспорт отклонил исходящий фрейм BTP: %1</translation>
     </message>
     <message>
-        <location line="+82"/>
+        <location line="+84"/>
         <source>terminal input not sent: endpoint key not configured</source>
         <translation>ввод терминала не отправлен: ключ конечной точки не настроен</translation>
     </message>
@@ -901,8 +942,7 @@
         <translation>ввод терминала не отправлен: не удалось запечатать</translation>
     </message>
     <message>
-        <location line="-815"/>
-        <location line="+359"/>
+        <location line="-523"/>
         <source>BTP handshake failed: %1</source>
         <translation>Ошибка установления соединения BTP: %1</translation>
     </message>
@@ -910,9 +950,8 @@
 <context>
     <name>traceview::BtpHandshake</name>
     <message>
-        <location filename="../lib/protocol/btphandshake.cpp" line="+121"/>
         <source>no BTP/1 READY after %1 attempts over %2 ms</source>
-        <translation>нет BTP/1 READY после %1 попыток за %2 мс</translation>
+        <translation type="vanished">нет BTP/1 READY после %1 попыток за %2 мс</translation>
     </message>
 </context>
 <context>
@@ -1307,7 +1346,7 @@
 <context>
     <name>traceview::ChatWidget</name>
     <message>
-        <location filename="../lib/dashboard/widgets/chatwidget.cpp" line="+44"/>
+        <location filename="../lib/dashboard/widgets/chatwidget.cpp" line="+45"/>
         <source>Sending...</source>
         <translation>Отправка...</translation>
     </message>
@@ -1322,7 +1361,7 @@
         <translation>Не отправлено</translation>
     </message>
     <message>
-        <location line="+160"/>
+        <location line="+161"/>
         <location line="+81"/>
         <source>You</source>
         <translation>Вы</translation>
@@ -1371,14 +1410,22 @@ Allowed: %1</source>
 <context>
     <name>traceview::ClockSync</name>
     <message>
-        <location filename="../lib/protocol/clocksync.cpp" line="+179"/>
         <source>dongle clock sync failed: %1 [RTT %2ms]</source>
-        <translation>не удалось синхронизировать часы донгла: %1 [RTT %2ms]</translation>
+        <translation type="vanished">не удалось синхронизировать часы донгла: %1 [RTT %2ms]</translation>
+    </message>
+    <message>
+        <source>dongle clock corrected (%1) [RTT %2ms]</source>
+        <translation type="vanished">часы донгла скорректированы (%1) [RTT %2ms]</translation>
+    </message>
+    <message>
+        <location filename="../lib/protocol/clocksync.cpp" line="+179"/>
+        <source>clock sync failed: %1 [RTT %2ms]</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+30"/>
-        <source>dongle clock corrected (%1) [RTT %2ms]</source>
-        <translation>часы донгла скорректированы (%1) [RTT %2ms]</translation>
+        <source>clock corrected (%1) [RTT %2ms]</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -1666,7 +1713,7 @@ Allowed: %1</source>
 <context>
     <name>traceview::DeviceCard</name>
     <message>
-        <location filename="../lib/devices/devicecard.cpp" line="+260"/>
+        <location filename="../lib/devices/devicecard.cpp" line="+268"/>
         <source>%1 dBm</source>
         <translation>%1 dBm</translation>
     </message>
@@ -1700,6 +1747,21 @@ Allowed: %1</source>
         <source>hub link up, locating robot…</source>
         <translation>связь с хабом есть, поиск робота…</translation>
     </message>
+    <message>
+        <location line="+4"/>
+        <source>via %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>saved from the last connection</source>
+        <translation>сохранено при последнем подключении</translation>
+    </message>
+    <message>
+        <location line="+20"/>
+        <source>%1: %2</source>
+        <translation type="unfinished">%1: %2</translation>
+    </message>
 </context>
 <context>
     <name>traceview::DeviceConfigDialog</name>
@@ -1714,118 +1776,96 @@ Allowed: %1</source>
         <translation>Отображается как название этого устройства -- на его карточке в панели «Устройства» и везде, где оно выбирается из списка.</translation>
     </message>
     <message>
-        <location line="+8"/>
         <source>Free-form notes about this device, shown on its card below the name.</source>
-        <translation>Произвольные заметки об этом устройстве, показываются на его карточке под именем.</translation>
+        <translation type="vanished">Произвольные заметки об этом устройстве, показываются на его карточке под именем.</translation>
     </message>
     <message>
-        <location line="+8"/>
         <source>General</source>
-        <translation>Общие</translation>
+        <translation type="vanished">Общие</translation>
     </message>
     <message>
-        <location line="+2"/>
         <source>Name:</source>
-        <translation>Имя:</translation>
+        <translation type="vanished">Имя:</translation>
     </message>
     <message>
-        <location line="+1"/>
         <source>Description:</source>
-        <translation>Описание:</translation>
+        <translation type="vanished">Описание:</translation>
     </message>
     <message>
-        <location line="+8"/>
+        <location line="+13"/>
         <source>Connection</source>
         <translation>Подключение</translation>
     </message>
     <message>
-        <location line="+33"/>
         <source>Transport:</source>
-        <translation>Транспорт:</translation>
+        <translation type="vanished">Транспорт:</translation>
     </message>
     <message>
-        <location line="+3"/>
         <source>e.g. robot.local or 192.168.4.1</source>
-        <translation>например, robot.local или 192.168.4.1</translation>
+        <translation type="vanished">например, robot.local или 192.168.4.1</translation>
     </message>
     <message>
-        <location line="+1"/>
         <source>Hostname or IP address of the robot TCP server.</source>
-        <translation>Имя хоста или IP-адрес TCP-сервера робота.</translation>
+        <translation type="vanished">Имя хоста или IP-адрес TCP-сервера робота.</translation>
     </message>
     <message>
-        <location line="+2"/>
         <source>TCP host:</source>
-        <translation>TCP-хост:</translation>
+        <translation type="vanished">TCP-хост:</translation>
     </message>
     <message>
-        <location line="+5"/>
         <source>TCP server port.</source>
-        <translation>Порт TCP-сервера.</translation>
+        <translation type="vanished">Порт TCP-сервера.</translation>
     </message>
     <message>
-        <location line="+2"/>
         <source>TCP port:</source>
-        <translation>TCP-порт:</translation>
+        <translation type="vanished">TCP-порт:</translation>
     </message>
     <message>
-        <location line="+5"/>
         <source>Platform BLE address of the robot -- a discovery hint used to dial the connection, not its identity (see &quot;Reported by device&quot; for that). Pick a scan result, or type one by hand for a robot the scan hasn&apos;t found yet.</source>
-        <translation>BLE-адрес робота на платформе -- подсказка для установки соединения, а не его идентификатор (для этого см. «Сообщено устройством»). Выберите результат сканирования или введите адрес вручную для робота, которого сканирование ещё не нашло.</translation>
+        <translation type="vanished">BLE-адрес робота на платформе -- подсказка для установки соединения, а не его идентификатор (для этого см. «Сообщено устройством»). Выберите результат сканирования или введите адрес вручную для робота, которого сканирование ещё не нашло.</translation>
     </message>
     <message>
-        <location line="+3"/>
         <source>Scan, or type an address</source>
-        <translation>Сканируйте или введите адрес</translation>
+        <translation type="vanished">Сканируйте или введите адрес</translation>
     </message>
     <message>
-        <location line="+13"/>
-        <location line="+5"/>
         <source>Scan</source>
-        <translation>Сканировать</translation>
+        <translation type="vanished">Сканировать</translation>
     </message>
     <message>
-        <location line="-3"/>
         <source>Scan for nearby BTP-capable BLE robots.</source>
-        <translation>Искать поблизости BLE-роботов с поддержкой BTP.</translation>
+        <translation type="vanished">Искать поблизости BLE-роботов с поддержкой BTP.</translation>
     </message>
     <message>
-        <location line="+3"/>
         <source>Stop</source>
-        <translation>Стоп</translation>
+        <translation type="vanished">Стоп</translation>
     </message>
     <message>
-        <location line="+8"/>
         <source>BLE address:</source>
-        <translation>BLE-адрес:</translation>
+        <translation type="vanished">BLE-адрес:</translation>
     </message>
     <message>
-        <location line="+4"/>
         <source>Serial port</source>
-        <translation>Последовательный порт</translation>
+        <translation type="vanished">Последовательный порт</translation>
     </message>
     <message>
-        <location line="+8"/>
         <source>Refresh port list</source>
-        <translation>Обновить список портов</translation>
+        <translation type="vanished">Обновить список портов</translation>
     </message>
     <message>
-        <location line="+10"/>
         <source>Port:</source>
-        <translation>Порт:</translation>
+        <translation type="vanished">Порт:</translation>
     </message>
     <message>
-        <location line="+9"/>
         <source>Baud rate (type a custom value if yours isn&apos;t listed)</source>
-        <translation>Скорость в бодах (введите своё значение, если его нет в списке)</translation>
+        <translation type="vanished">Скорость в бодах (введите своё значение, если его нет в списке)</translation>
     </message>
     <message>
-        <location line="+3"/>
         <source>Baud:</source>
-        <translation>Бод:</translation>
+        <translation type="vanished">Бод:</translation>
     </message>
     <message>
-        <location line="+6"/>
+        <location line="+108"/>
         <source>None</source>
         <translation>Нет</translation>
     </message>
@@ -1845,101 +1885,120 @@ Allowed: %1</source>
         <translation>CRLF (\r\n)</translation>
     </message>
     <message>
-        <location line="+4"/>
         <source>Line terminator appended to control-widget commands sent to this device. Doesn&apos;t affect its serial terminal&apos;s raw keystrokes.</source>
-        <translation>Символ конца строки, добавляемый к командам управляющих виджетов для этого устройства. На необработанные нажатия его последовательного терминала не влияет.</translation>
+        <translation type="vanished">Символ конца строки, добавляемый к командам управляющих виджетов для этого устройства. На необработанные нажатия его последовательного терминала не влияет.</translation>
     </message>
     <message>
-        <location line="+12"/>
+        <location line="+7"/>
         <source>Terminator:</source>
         <translation>Терминатор:</translation>
     </message>
     <message>
-        <location line="+9"/>
         <source>USB HID device</source>
-        <translation>USB HID-устройство</translation>
+        <translation type="vanished">USB HID-устройство</translation>
     </message>
     <message>
-        <location line="+7"/>
         <source>Refresh USB device list</source>
-        <translation>Обновить список USB-устройств</translation>
+        <translation type="vanished">Обновить список USB-устройств</translation>
     </message>
     <message>
-        <location line="+9"/>
         <source>USB:</source>
-        <translation>USB:</translation>
+        <translation type="vanished">USB:</translation>
     </message>
     <message>
-        <location line="+12"/>
         <source>The device whose connection carries this one.</source>
-        <translation>Устройство, чьё подключение несёт это.</translation>
+        <translation type="vanished">Устройство, чьё подключение несёт это.</translation>
     </message>
     <message>
-        <location line="+5"/>
         <source>Via:</source>
-        <translation>Через:</translation>
+        <translation type="vanished">Через:</translation>
     </message>
     <message>
-        <location line="+21"/>
         <source>The robot&apos;s BTP source_id -- its permanent address, not the channel number the hub shows. Pick one the hub has actually heard (refreshed live while it&apos;s connected), or type a hex/decimal id by hand for a robot it hasn&apos;t heard yet.</source>
-        <translation>BTP source_id робота -- его постоянный адрес, а не номер канала, который показывает хаб. Выберите тот, который хаб действительно слышал (обновляется в реальном времени, пока он подключён), либо введите шестнадцатеричный/десятичный id вручную для робота, которого он ещё не слышал.</translation>
+        <translation type="vanished">BTP source_id робота -- его постоянный адрес, а не номер канала, который показывает хаб. Выберите тот, который хаб действительно слышал (обновляется в реальном времени, пока он подключён), либо введите шестнадцатеричный/десятичный id вручную для робота, которого он ещё не слышал.</translation>
     </message>
     <message>
-        <location line="+3"/>
         <source>e.g. 0x0A0A0A0A</source>
-        <translation>напр. 0x0A0A0A0A</translation>
+        <translation type="vanished">напр. 0x0A0A0A0A</translation>
     </message>
     <message>
-        <location line="+31"/>
         <source>Source ID:</source>
-        <translation>ID источника:</translation>
+        <translation type="vanished">ID источника:</translation>
     </message>
     <message>
-        <location line="+11"/>
         <source>This device&apos;s own source_id. Pass it as the first argument to the dongle&apos;s &quot;hub -bind&quot; command, with the robot&apos;s Source ID above as the second, so the hub knows which robot this device&apos;s SUBSCRIBE/COMMAND traffic is for.</source>
-        <translation>Собственный source_id этого устройства. Передайте его первым аргументом команде «hub -bind» донгла, а Source ID робота выше — вторым, чтобы хаб знал, какому роботу предназначен трафик SUBSCRIBE/COMMAND этого устройства.</translation>
+        <translation type="vanished">Собственный source_id этого устройства. Передайте его первым аргументом команде «hub -bind» донгла, а Source ID робота выше — вторым, чтобы хаб знал, какому роботу предназначен трафик SUBSCRIBE/COMMAND этого устройства.</translation>
     </message>
     <message>
-        <location line="+4"/>
+        <location line="+16"/>
         <source>This device&apos;s ID:</source>
         <translation>ID этого устройства:</translation>
     </message>
     <message>
-        <location line="+4"/>
         <source>Password for this robot&apos;s endpoint key.</source>
-        <translation>Пароль для оконечного ключа этого робота.</translation>
+        <translation type="vanished">Пароль для оконечного ключа этого робота.</translation>
     </message>
     <message>
-        <location line="+2"/>
-        <location line="+93"/>
+        <location line="-102"/>
+        <source>Advanced</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Every link as a table: the order they are tried in, baud rate, TCP port, and targets typed by hand.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+43"/>
+        <source>Card title:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>The robot&apos;s channel-B password. One per device: every TCP, BLE and hub connection above uses it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <location line="+81"/>
         <source>Password:</source>
         <translation>Пароль:</translation>
     </message>
     <message>
-        <location line="-85"/>
-        <location line="+89"/>
+        <location line="-73"/>
+        <location line="+77"/>
         <source>Save this password in the project file</source>
         <translation>Сохранить этот пароль в файле проекта</translation>
     </message>
     <message>
-        <location line="-86"/>
-        <location line="+89"/>
+        <location line="-74"/>
+        <location line="+77"/>
         <source>Anyone who opens the project file can read a saved password.</source>
         <translation>Любой, кто откроет файл проекта, сможет прочитать сохранённый пароль.</translation>
     </message>
     <message>
-        <location line="-37"/>
+        <location line="-61"/>
+        <source>Line terminator appended to control-widget commands sent over serial. Doesn&apos;t affect its serial terminal&apos;s raw keystrokes.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+15"/>
+        <source>This device&apos;s own source_id. Pass it as the first argument to the hub&apos;s &quot;hub -bind&quot; command, with the robot&apos;s id as the second, so the hub knows which robot this device&apos;s SUBSCRIBE/COMMAND traffic is for.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+9"/>
         <source>OTA</source>
         <translation>OTA</translation>
     </message>
     <message>
         <location line="+3"/>
-        <location line="+301"/>
+        <location line="+282"/>
         <source>e.g. robot1.local</source>
         <translation>напр. robot1.local</translation>
     </message>
     <message>
-        <location line="-299"/>
+        <location line="-280"/>
         <source>Hostname or IP the OTA tab uses for this device&apos;s firmware upload. Left blank, the device is listed there but nothing can be polled or uploaded.</source>
         <translation>Имя хоста или IP, который вкладка OTA использует для загрузки прошивки этого устройства. Если пусто, устройство там перечислено, но опрашивать и загружать нечего.</translation>
     </message>
@@ -1964,25 +2023,26 @@ Allowed: %1</source>
         <translation>Пароль для заголовка X-OTA-Password этого устройства.</translation>
     </message>
     <message>
-        <location line="+25"/>
-        <location line="+261"/>
+        <location line="+24"/>
+        <location line="+243"/>
         <source>Connected</source>
         <translation>Подключено</translation>
     </message>
     <message>
-        <location line="-261"/>
-        <location line="+261"/>
+        <location line="-243"/>
+        <location line="+243"/>
         <source>Disconnected</source>
         <translation>Отключено</translation>
     </message>
     <message>
-        <location line="-258"/>
+        <location line="-240"/>
         <location line="+3"/>
+        <location line="+156"/>
         <source>(not connected yet)</source>
         <translation>(ещё не подключено)</translation>
     </message>
     <message>
-        <location line="+10"/>
+        <location line="-146"/>
         <source>Status:</source>
         <translation>Состояние:</translation>
     </message>
@@ -2017,22 +2077,31 @@ Allowed: %1</source>
         <translation>Применить настройки выше и (пере)подключиться сейчас, не закрывая это окно.</translation>
     </message>
     <message>
-        <location line="+138"/>
+        <location line="+115"/>
+        <source>%1 (last connection)</source>
+        <translation>%1 (последнее подключение)</translation>
+    </message>
+    <message>
         <source>(none)</source>
-        <translation>(нет)</translation>
+        <translation type="vanished">(нет)</translation>
     </message>
     <message>
-        <location line="+11"/>
         <source>%1 (unavailable)</source>
-        <translation>%1 (недоступно)</translation>
+        <translation type="vanished">%1 (недоступно)</translation>
     </message>
     <message>
-        <location line="+8"/>
+        <location line="+9"/>
         <source>(no topics reported yet)</source>
         <translation>(темы пока не сообщены)</translation>
     </message>
     <message>
-        <location line="+33"/>
+        <location line="+6"/>
+        <location line="+28"/>
+        <source>(saved from the last connection)</source>
+        <translation>(сохранено при последнем подключении)</translation>
+    </message>
+    <message>
+        <location line="+14"/>
         <source>(nothing reported yet)</source>
         <translation>(пока ничего не сообщено)</translation>
     </message>
@@ -2042,36 +2111,31 @@ Allowed: %1</source>
         <translation>устройство сообщает: %1</translation>
     </message>
     <message>
-        <location line="+41"/>
         <source>%1 (%2)</source>
-        <translation>%1 (%2)</translation>
+        <translation type="vanished">%1 (%2)</translation>
     </message>
     <message>
-        <location line="+22"/>
         <source>online</source>
-        <translation>в сети</translation>
+        <translation type="vanished">в сети</translation>
     </message>
     <message>
-        <location line="+0"/>
         <source>offline %1s</source>
-        <translation>не в сети %1 с</translation>
+        <translation type="vanished">не в сети %1 с</translation>
     </message>
     <message>
-        <location line="+1"/>
         <source>Ch %1 -- %2, %3</source>
-        <translation>Кан. %1 -- %2, %3</translation>
+        <translation type="vanished">Кан. %1 -- %2, %3</translation>
     </message>
     <message>
-        <location line="+4"/>
         <source>%1
 RSSI: %2 dBm
 RTT: %3 ms</source>
-        <translation>%1
+        <translation type="vanished">%1
 RSSI: %2 dBm
 RTT: %3 ms</translation>
     </message>
     <message>
-        <location line="-328"/>
+        <location line="-242"/>
         <source>Reported by device</source>
         <translation>Сообщено устройством</translation>
     </message>
@@ -2082,6 +2146,200 @@ RTT: %3 ms</translation>
         <location filename="../lib/core/deviceconnection.cpp" line="+196"/>
         <source>transport rejected %1 bytes</source>
         <translation>транспорт отклонил %1 байт</translation>
+    </message>
+</context>
+<context>
+    <name>traceview::DeviceLinksTable</name>
+    <message>
+        <location filename="../lib/devices/devicelinkstable.cpp" line="+91"/>
+        <source>On</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Type</source>
+        <translation type="unfinished">Тип</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Target</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Option</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>Every way to reach this device. Row 1 is tried first; when the connection in use stops working, TraceView tries the next enabled row, and starts over after the last.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+14"/>
+        <source>Add</source>
+        <translation type="unfinished">Добавить</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Remove</source>
+        <translation type="unfinished">Удалить</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Up</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Down</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+12"/>
+        <source>Ports</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Refresh the serial port list</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>USB</source>
+        <translation type="unfinished">USB</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Refresh the USB HID device list</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <location line="+4"/>
+        <source>Scan BLE</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-2"/>
+        <source>Scan for nearby BTP-capable BLE robots.</source>
+        <translation type="unfinished">Искать поблизости BLE-роботов с поддержкой BTP.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Stop scan</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+104"/>
+        <source>Unticked: kept, but skipped when looking for a working connection.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+33"/>
+        <source>port, e.g. COM5</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+12"/>
+        <source>Baud rate (type a custom value if yours isn&apos;t listed)</source>
+        <translation type="unfinished">Скорость в бодах (введите своё значение, если его нет в списке)</translation>
+    </message>
+    <message>
+        <location line="+23"/>
+        <source>host or IP, e.g. 192.168.4.1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>TCP server port</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>robot name, e.g. BallyRobot</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>The name the robot advertises, like a hostname: TraceView scans for it on every connection, so it keeps working if the robot&apos;s address changes. A MAC address is also accepted. Scan to pick a robot nearby.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+12"/>
+        <source>The hub whose connection carries this one.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>robot name or id</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>The robot behind the hub. Pick one the hub has heard (listed by name), or type its name or its BTP source_id (hex or decimal). What is saved is the source_id -- its permanent address, not the channel number the hub shows.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+19"/>
+        <source>Automatic (robot name)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Found by the robot name above each time it connects. To use a specific target instead, pick one in the list above the table.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+56"/>
+        <source>%1 (%2)</source>
+        <translation type="unfinished">%1 (%2)</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>(any hub)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>(choose the hub)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>%1 (unavailable)</source>
+        <translation type="unfinished">%1 (недоступно)</translation>
+    </message>
+    <message>
+        <location line="+30"/>
+        <source>online</source>
+        <translation type="unfinished">в сети</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>offline %1s</source>
+        <translation type="unfinished">не в сети %1 с</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>%1 (ch %2, %3)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>%1 (%2, %3)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>channel %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>channel %1, %2</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -2431,12 +2689,12 @@ RTT: %3 ms</translation>
 <context>
     <name>traceview::MainWindow</name>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="+145"/>
+        <location filename="../lib/core/mainwindow.cpp" line="+227"/>
         <source>TraceView v%1</source>
         <translation>TraceView v%1</translation>
     </message>
     <message numerus="yes">
-        <location line="+125"/>
+        <location line="+153"/>
         <source>This device carries %n other device(s) (%1). Remove or repoint them first.</source>
         <translation>
             <numerusform>Это устройство несёт ещё %n устройство (%1). Сначала удалите или перенаправьте его.</numerusform>
@@ -2450,7 +2708,7 @@ RTT: %3 ms</translation>
         <translation>, </translation>
     </message>
     <message>
-        <location line="+413"/>
+        <location line="+552"/>
         <source>Pending</source>
         <translation>Ожидание</translation>
     </message>
@@ -2599,12 +2857,12 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+0"/>
-        <location line="+2973"/>
+        <location line="+3431"/>
         <source>Later</source>
         <translation>Позже</translation>
     </message>
     <message>
-        <location line="-2966"/>
+        <location line="-3424"/>
         <source>&amp;Access</source>
         <translation>Доступ (&amp;A)</translation>
     </message>
@@ -2625,7 +2883,17 @@ Drops: %2</source>
         <translation>Отладка (&amp;D)</translation>
     </message>
     <message>
-        <location line="+4"/>
+        <location line="+7"/>
+        <source>Keyboard Diagnostics</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>Copy Keyboard Log</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+6"/>
         <source>&amp;About</source>
         <translation>О программе (&amp;A)</translation>
     </message>
@@ -2640,7 +2908,7 @@ Drops: %2</source>
         <translation>Другие параметры</translation>
     </message>
     <message>
-        <location line="+31"/>
+        <location line="+33"/>
         <source>Connected as: %1</source>
         <translation>Подключён как: %1</translation>
     </message>
@@ -2670,7 +2938,7 @@ Drops: %2</source>
         <translation>Войти в режим разработчика (&amp;E)...</translation>
     </message>
     <message>
-        <location line="+182"/>
+        <location line="+192"/>
         <source>Add</source>
         <translation>Добавить</translation>
     </message>
@@ -2721,18 +2989,18 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+18"/>
-        <location line="+2369"/>
+        <location line="+2796"/>
         <source>Undo</source>
         <translation>Отменить</translation>
     </message>
     <message>
-        <location line="-2367"/>
-        <location line="+2367"/>
+        <location line="-2794"/>
+        <location line="+2794"/>
         <source>Redo</source>
         <translation>Повторить</translation>
     </message>
     <message>
-        <location line="-2326"/>
+        <location line="-2751"/>
         <source>Add Device</source>
         <translation>Добавить устройство</translation>
     </message>
@@ -2768,12 +3036,12 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+29"/>
-        <location line="+2271"/>
+        <location line="+2696"/>
         <source>Fullscreen dashboard (F11)</source>
         <translation>Панель в полноэкранном режиме (F11)</translation>
     </message>
     <message>
-        <location line="-2091"/>
+        <location line="-2516"/>
         <source>Rename Workspace</source>
         <translation>Переименовать рабочее пространство</translation>
     </message>
@@ -2783,7 +3051,17 @@ Drops: %2</source>
         <translation>Рабочее пространство «%1» переименовано в «%2».</translation>
     </message>
     <message>
-        <location line="+1549"/>
+        <location line="+1233"/>
+        <source>%1: found at %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+322"/>
+        <source>%1: trying %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+419"/>
         <location line="+8"/>
         <location line="+5"/>
         <location line="+8"/>
@@ -2905,13 +3183,13 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>Закрыть приложение</translation>
     </message>
     <message>
-        <location line="-2318"/>
-        <location line="+2119"/>
+        <location line="-2743"/>
+        <location line="+2544"/>
         <source>Devices</source>
         <translation>Устройства</translation>
     </message>
     <message>
-        <location line="-2044"/>
+        <location line="-2469"/>
         <source>Subscriptions</source>
         <translation>Подписки</translation>
     </message>
@@ -2947,29 +3225,29 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>Удалить рабочее пространство «%1»? Это действие нельзя отменить.</translation>
     </message>
     <message>
-        <location line="+14"/>
+        <location line="+16"/>
         <source>Deleted workspace &quot;%1&quot;.</source>
         <translation>Рабочее пространство «%1» удалено.</translation>
     </message>
     <message>
         <location line="+71"/>
-        <location line="+1829"/>
+        <location line="+2252"/>
         <source>Add widget</source>
         <translation>Добавить виджет</translation>
     </message>
     <message>
-        <location line="-1826"/>
+        <location line="-2249"/>
         <source>Remove selected widget (%1)</source>
         <translation>Удалить выбранный виджет (%1)</translation>
     </message>
     <message>
         <location line="+3"/>
-        <location line="+1836"/>
+        <location line="+2259"/>
         <source>Add device</source>
         <translation>Добавить устройство</translation>
     </message>
     <message>
-        <location line="-1833"/>
+        <location line="-2256"/>
         <source>Remove selected device (%1)</source>
         <translation>Удалить выбранное устройство (%1)</translation>
     </message>
@@ -3054,12 +3332,12 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>Показать панели Слои/Свойства</translation>
     </message>
     <message>
-        <location line="+248"/>
+        <location line="+255"/>
         <source>New Device</source>
         <translation>Новое устройство</translation>
     </message>
     <message>
-        <location line="+243"/>
+        <location line="+284"/>
         <source>%1: robot is responding again</source>
         <translation>%1: робот снова отвечает</translation>
     </message>
@@ -3080,17 +3358,17 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>(без имени)</translation>
     </message>
     <message>
-        <location line="-1114"/>
+        <location line="-1164"/>
         <source>Dashboard</source>
         <translation>Dashboard</translation>
     </message>
     <message>
-        <location line="+1326"/>
+        <location line="+1503"/>
         <source>%1: this BLE address now answers as a different robot (expected %2, got %3)</source>
         <translation>%1: этот BLE-адрес теперь отвечает как другой робот (ожидался %2, получен %3)</translation>
     </message>
     <message>
-        <location line="+244"/>
+        <location line="+492"/>
         <source>Key &quot;%1&quot; is already used by another widget.</source>
         <translation>Ключ «%1» уже используется другим виджетом.</translation>
     </message>
@@ -3716,6 +3994,122 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     </message>
 </context>
 <context>
+    <name>traceview::RobotLinksPanel</name>
+    <message>
+        <location filename="../lib/devices/robotlinkspanel.cpp" line="+37"/>
+        <source>Serial (USB)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Wi-Fi</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Bluetooth</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Hub</source>
+        <translation type="unfinished">Хаб</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>Automatic: the USB port whose device reports the robot&apos;s name (or, if none does, the port last picked here). Pick or type a port to always use that one.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Automatic: &lt;robot name&gt;.local, found over mDNS. Type a host or IP to use that instead (e.g. 192.168.4.1).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Automatic: the Bluetooth robot advertising the robot&apos;s name. Pick or type an address to always use that one.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Automatic: the robot of this name behind any connected hub. Pick a hub to only look behind that one.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+45"/>
+        <source>Name:</source>
+        <translation type="unfinished">Имя:</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>robot name, e.g. BallyRobot</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>The name the robot is configured with (&quot;settings -set identity name ...&quot;). Every link set to Automatic finds the robot by it: the USB port that reports it, &lt;name&gt;.local over Wi-Fi, the Bluetooth device advertising it, the robot of that name behind a hub.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+14"/>
+        <location line="+6"/>
+        <source>Search</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-3"/>
+        <source>Look for robots nearby: refreshes the serial ports and scans for Bluetooth robots. Names found are offered in the Robot list.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Stop</source>
+        <translation type="unfinished">Стоп</translation>
+    </message>
+    <message>
+        <location line="+35"/>
+        <source>Ticked: the robot can be reached this way.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+82"/>
+        <location line="+11"/>
+        <source>Automatic (%1)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-10"/>
+        <location line="+9"/>
+        <source>Automatic (by robot name)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>%1 (%2)</source>
+        <translation type="unfinished">%1 (%2)</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Automatic (&lt;robot name&gt;.local)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Automatic (%1.local)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Automatic (any hub)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>(choose the hub)</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>traceview::RobotLogConfigEditor</name>
     <message>
         <location filename="../lib/dashboard/widgets/robotlogconfigeditor.cpp" line="+17"/>
@@ -3812,7 +4206,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
 <context>
     <name>traceview::SerialManager</name>
     <message>
-        <location filename="../lib/core/serialmanager.cpp" line="+59"/>
+        <location filename="../lib/core/serialmanager.cpp" line="+119"/>
         <source>1200 baud resets the ESP32-S3 into its bootloader; using 115200</source>
         <translation>1200 бод перезагружает ESP32-S3 в загрузчик; используется 115200</translation>
     </message>
@@ -3881,7 +4275,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
 <context>
     <name>traceview::SettingsPage</name>
     <message>
-        <location filename="../lib/core/settingspage.cpp" line="+198"/>
+        <location filename="../lib/core/settingspage.cpp" line="+199"/>
         <source>Settings</source>
         <translation>Настройки</translation>
     </message>
@@ -3905,31 +4299,31 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     </message>
     <message>
         <location line="-114"/>
-        <location line="+165"/>
+        <location line="+166"/>
         <source>Terminal</source>
         <translation>Терминал</translation>
     </message>
     <message>
-        <location line="-165"/>
-        <location line="+192"/>
+        <location line="-166"/>
+        <location line="+193"/>
         <source>Connections</source>
         <translation>Подключения</translation>
     </message>
     <message>
-        <location line="-192"/>
-        <location line="+211"/>
+        <location line="-193"/>
+        <location line="+252"/>
         <source>Diagnostics</source>
         <translation>Диагностика</translation>
     </message>
     <message>
-        <location line="-210"/>
-        <location line="+262"/>
+        <location line="-251"/>
+        <location line="+303"/>
         <location line="+5"/>
         <source>Updates</source>
         <translation>Обновления</translation>
     </message>
     <message>
-        <location line="-225"/>
+        <location line="-266"/>
         <source>Project and startup preferences shared by the application.</source>
         <translation>Настройки проекта и запуска, общие для приложения.</translation>
     </message>
@@ -4000,18 +4394,23 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     </message>
     <message>
         <location line="+2"/>
-        <source>Low (15 FPS)</source>
-        <translation>Низкое (15 FPS)</translation>
+        <source>Low (30 FPS)</source>
+        <translation>Низкое (30 FPS)</translation>
     </message>
     <message>
         <location line="+1"/>
-        <source>Medium (30 FPS)</source>
-        <translation>Среднее (30 FPS)</translation>
+        <source>Medium (60 FPS)</source>
+        <translation>Среднее (60 FPS)</translation>
     </message>
     <message>
         <location line="+1"/>
-        <source>High (60 FPS)</source>
-        <translation>Высокое (60 FPS)</translation>
+        <source>High (120 FPS)</source>
+        <translation>Высокое (120 FPS)</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Extra High (240 FPS)</source>
+        <translation>Очень высокое (240 FPS)</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -4119,7 +4518,41 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>Интервал повтора</translation>
     </message>
     <message>
+        <location line="+5"/>
+        <source>Manifest cache</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Remember each device&apos;s manifest between sessions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>A reconnect then only asks whether the device&apos;s catalog changed, and the topics of a known device are listed even while it is offline.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Trust the cache without asking when the device reports the same revision (TCP/BLE)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Not recommended: the question it skips is tiny, and it is what keeps the device&apos;s reported information (firmware version and the like) up to date.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
         <location line="+9"/>
+        <source>Clear cache (%n device(s))</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <location line="+19"/>
         <source>Keep enough history for investigation without letting long-running sessions use unbounded memory.</source>
         <translation>Храните достаточно истории для анализа, не позволяя длинным сессиям занимать неограниченную память.</translation>
     </message>
@@ -4232,14 +4665,6 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <location line="+4"/>
         <source>Changes apply immediately unless noted otherwise.</source>
         <translation>Изменения применяются сразу, если не указано иное.</translation>
-    </message>
-</context>
-<context>
-    <name>traceview::StartupLoadingOverlay</name>
-    <message>
-        <location filename="../lib/core/startuploadingoverlay.cpp" line="+74"/>
-        <source>Loading dashboard...</source>
-        <translation>Загрузка панели...</translation>
     </message>
 </context>
 <context>
@@ -4359,11 +4784,24 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     </message>
 </context>
 <context>
+    <name>traceview::StartupLoadingOverlay</name>
+    <message>
+        <location filename="../lib/core/startuploadingoverlay.cpp" line="+74"/>
+        <source>Loading dashboard...</source>
+        <translation>Загрузка панели...</translation>
+    </message>
+</context>
+<context>
     <name>traceview::TcpTransport</name>
     <message>
-        <location filename="../lib/core/tcptransport.cpp" line="+102"/>
+        <location filename="../lib/core/tcptransport.cpp" line="+108"/>
         <source>TCP connection timed out</source>
         <translation>Истекло время подключения TCP</translation>
+    </message>
+    <message>
+        <location line="+51"/>
+        <source>Could not find %1 on the network (mDNS)</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

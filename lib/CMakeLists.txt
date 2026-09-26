@@ -134,6 +134,8 @@ add_library(traceview_telemetry STATIC
     telemetry/deviceinforecord.h
     telemetry/telemetryseriesbuffer.cpp
     telemetry/telemetryseriesbuffer.h
+    telemetry/telemetryhistory.cpp
+    telemetry/telemetryhistory.h
 )
 
 target_include_directories(traceview_telemetry PUBLIC
@@ -200,6 +202,8 @@ add_library(traceview_protocol STATIC
     protocol/logseverity.h
     protocol/manifestclient.cpp
     protocol/manifestclient.h
+    protocol/manifeststore.cpp
+    protocol/manifeststore.h
     protocol/protocolrouter.cpp
     protocol/protocolrouter.h
     protocol/statusreport.cpp
@@ -366,6 +370,10 @@ add_library(traceview_devices STATIC
     devices/hubpeeraccumulator.h
     devices/deviceconfigdialog.cpp
     devices/deviceconfigdialog.h
+    devices/devicelinkstable.cpp
+    devices/robotlinkspanel.cpp
+    devices/robotlinkspanel.h
+    devices/devicelinkstable.h
 )
 
 target_include_directories(traceview_devices PUBLIC
@@ -687,6 +695,11 @@ target_link_libraries(traceview_transport
 
 if(TRACEVIEW_ENABLE_SERIAL AND NOT ANDROID)
     target_link_libraries(traceview_transport PUBLIC Qt6::SerialPort)
+    if(WIN32)
+        # SerialManager::portProductNames() reads each port's USB
+        # bus-reported description through SetupAPI.
+        target_link_libraries(traceview_transport PRIVATE setupapi)
+    endif()
 endif()
 if(TRACEVIEW_ENABLE_USB_HID)
     target_link_libraries(traceview_transport PRIVATE hidapi::hidapi)

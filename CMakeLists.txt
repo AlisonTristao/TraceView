@@ -135,12 +135,12 @@ set(BTP_ENABLE_AEAD ON CACHE BOOL "" FORCE)
 FetchContent_Declare(
     btp
     GIT_REPOSITORY https://github.com/AlisonTristao/BTP.git
-    # v2.46.0: a keyed btp::Node drops unsealed messages past the handshake
-    # (NodeConfig::accept_cleartext()) -- the reason a keyed direct TCP/BLE
-    # session now seals everything it sends (btpbackend.h's
-    # setDirectEndpointKey()). Carries 2.45.0's per-field optional manifest
-    # ranges (manifestclient.cpp, dashboard/widgets/chartdata.h).
-    GIT_TAG v2.46.0
+    # v2.48.0: btp::Node consumes manifests for many sources (on_manifest())
+    # and owns the manifest cache (NodeConfig::manifest_load()/store(), backed
+    # by protocol/manifeststore.h) -- ManifestClient now requests and receives
+    # through m_node. Carries 2.46.0's keyed-node cleartext drop
+    # (setDirectEndpointKey()) and 2.45.0's per-field optional manifest ranges.
+    GIT_TAG v2.48.0
 )
 FetchContent_MakeAvailable(btp)
 

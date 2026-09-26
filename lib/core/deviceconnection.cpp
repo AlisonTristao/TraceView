@@ -704,6 +704,12 @@ void DeviceConnection::attemptReconnect() {
     setConnectionPhase(ConnectionPhase::PreparingTransport);
     if (m_serialTransport) {
 #ifdef TRACEVIEW_ENABLE_SERIAL
+        // A dongle's port is the hub; any other port is taken to be a robot's
+        // own BTP port -- a direct, cleartext session like TCP/BLE minus the
+        // key. See BtpBackend::setSerialRobotPeer().
+        if (auto* btpBackend = qobject_cast<BtpBackend*>(m_backend)) {
+            btpBackend->setSerialRobotPeer(!m_serialTransport->isDonglePort(m_target));
+        }
         m_serialTransport->open(m_target, m_baudRate);
 #endif
     } else if (m_usbHidManager) {

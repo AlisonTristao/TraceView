@@ -19,6 +19,10 @@ private slots:
     void closeWithNothingOpenDoesNotCrash();
     void discoveryServiceStartStopLifecycle();
     void discoveryServiceFiltersByBtpUuid();
+    void addressesAreDialedDirectlyAndEverythingElseIsAName();
+    void nameMatchIsCaseInsensitiveAndNeverEmpty();
+    void closeDuringNameLookupDoesNotCrash();
+    void nameCacheTakesOnlyAddressesAndKeepsTheFirst();
 };
 
 void TestBleTransport::startsDisconnectedAndRejectsEmptyAddress() {
@@ -64,6 +68,58 @@ void TestBleTransport::discoveryServiceFiltersByBtpUuid() {
     // so a change here is a deliberate protocol change, not an accident.
     QCOMPARE(BleDiscoveryService::btpServiceUuid(),
              QBluetoothUuid(QStringLiteral("547a1aae-676e-4b68-8e20-bace26cd0726")));
+}
+
+void TestBleTransport::addressesAreDialedDirectlyAndEverythingElseIsAName() {
+    // MACs (either case) and the per-host UUIDs macOS/iOS hand out.
+    QVERIFY(BleTransport::isPlatformAddress(QStringLiteral("AA:BB:CC:DD:EE:FF")));
+    QVERIFY(BleTransport::isPlatformAddress(QStringLiteral(" aa:bb:cc:dd:ee:01 ")));
+    QVERIFY(BleTransport::isPlatformAddress(
+        QStringLiteral("{547a1aae-676e-4b68-8e20-bace26cd0726}")));
+    QVERIFY(BleTransport::isPlatformAddress(
+        QStringLiteral("547a1aae-676e-4b68-8e20-bace26cd0726")));
+
+    // Anything else is looked up by name, like a TCP hostname.
+    QVERIFY(!BleTransport::isPlatformAddress(QStringLiteral("BallyRobot")));
+    QVERIFY(!BleTransport::isPlatformAddress(QStringLiteral("ballyrobot-2")));
+    QVERIFY(!BleTransport::isPlatformAddress(QStringLiteral("Robo da Bancada")));
+}
+
+void TestBleTransport::nameMatchIsCaseInsensitiveAndNeverEmpty() {
+    QVERIFY(BleTransport::bleNameMatches(QStringLiteral("BallyRobot"), QStringLiteral("ballyrobot")));
+    QVERIFY(BleTransport::bleNameMatches(QStringLiteral(" BallyRobot "), QStringLiteral("BALLYROBOT")));
+    QVERIFY(!BleTransport::bleNameMatches(QStringLiteral("BallyRobot2"), QStringLiteral("BallyRobot")));
+    // A peripheral whose name has not arrived yet is not whatever was asked for.
+    QVERIFY(!BleTransport::bleNameMatches(QString(), QString()));
+    QVERIFY(!BleTransport::bleNameMatches(QString(), QStringLiteral("BallyRobot")));
+}
+
+void TestBleTransport::nameCacheTakesOnlyAddressesAndKeepsTheFirst() {
+    QCOMPARE(BleTransport::cachedAddressForName(QStringLiteral("CacheBot")), QString());
+    BleTransport::rememberAddressForName(QStringLiteral("CacheBot"), QStringLiteral("CacheBot"));
+    QCOMPARE(BleTransport::cachedAddressForName(QStringLiteral("CacheBot")), QString());
+    BleTransport::rememberAddressForName(QStringLiteral(" CacheBot "),
+                                         QStringLiteral("14:C1:9F:44:24:86"));
+    QCOMPARE(BleTransport::cachedAddressForName(QStringLiteral("cachebot")),
+             QStringLiteral("14:C1:9F:44:24:86"));
+    // A hint never replaces what is already known.
+    BleTransport::rememberAddressForName(QStringLiteral("CacheBot"),
+                                         QStringLiteral("AA:BB:CC:DD:EE:FF"));
+    QCOMPARE(BleTransport::cachedAddressForName(QStringLiteral("CacheBot")),
+             QStringLiteral("14:C1:9F:44:24:86"));
+}
+
+void TestBleTransport::closeDuringNameLookupDoesNotCrash() {
+    // A name starts a scan instead of a controller; closing or re-opening in
+    // the middle of it must tear the scan down cleanly, and a stale lookup
+    // must not report anything afterwards.
+    BleTransport transport;
+    QVERIFY(transport.open(QStringLiteral("BallyRobot")));
+    QVERIFY(transport.open(QStringLiteral("OtherRobot")));
+    transport.close();
+    QVERIFY(!transport.isConnected());
+    QTest::qWait(50);
+    QCOMPARE(transport.address(), QStringLiteral("OtherRobot"));
 }
 
 QTEST_MAIN(TestBleTransport)

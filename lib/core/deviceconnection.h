@@ -108,6 +108,9 @@ public:
     // device's config dialog is open, so it stops redialing with settings
     // the user is in the middle of changing. An explicit connect (dialog
     // OK/Connect -> MainWindow::onDeviceUpdated) clears it first.
+    bool reconnectPaused() const {
+        return m_reconnectPaused;
+    }
     void setReconnectPaused(bool paused) {
         m_reconnectPaused = paused;
     }

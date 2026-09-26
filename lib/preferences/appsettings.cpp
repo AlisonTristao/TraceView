@@ -18,15 +18,18 @@ constexpr char kTerminalAutoScrollKey[] = "terminal/autoScroll";
 constexpr char kTerminalCursorBlinkKey[] = "terminal/cursorBlink";
 constexpr char kAutoReconnectKey[] = "connections/autoReconnect";
 constexpr char kReconnectIntervalSecondsKey[] = "connections/reconnectIntervalSeconds";
+constexpr char kManifestCacheEnabledKey[] = "connections/manifestCacheEnabled";
+constexpr char kManifestCacheSkipOnHelloKey[] = "connections/manifestCacheSkipOnHello";
 constexpr char kVerboseSerialLoggingKey[] = "connections/verboseSerialLogging";
 constexpr char kFrameLogCapacityKey[] = "diagnostics/frameLogCapacity";
 constexpr char kNotificationHistoryCapacityKey[] = "diagnostics/notificationHistoryCapacity";
 constexpr char kUpdateAutoCheckEnabledKey[] = "updates/autoCheckEnabled";
 constexpr char kUpdateLastCheckEpochMsKey[] = "updates/lastCheckEpochMs";
 
-constexpr int kLowFps = 15;
-constexpr int kMediumFps = 30;
-constexpr int kHighFps = 60;
+constexpr int kLowFps = 30;
+constexpr int kMediumFps = 60;
+constexpr int kHighFps = 120;
+constexpr int kExtraHighFps = 240;
 }  // namespace
 
 AppSettings& AppSettings::instance() {
@@ -38,7 +41,7 @@ AppSettings::AppSettings() = default;
 
 AppSettings::RenderProfile AppSettings::renderProfile() const {
     const int stored = value(kRenderProfileKey, int(RenderProfile::Medium), int(RenderProfile::Low),
-                             int(RenderProfile::Custom));
+                             int(RenderProfile::ExtraHigh));
     return static_cast<RenderProfile>(stored);
 }
 
@@ -57,6 +60,9 @@ int AppSettings::repaintIntervalMs() const {
             break;
         case RenderProfile::High:
             fps = kHighFps;
+            break;
+        case RenderProfile::ExtraHigh:
+            fps = kExtraHighFps;
             break;
         case RenderProfile::Custom:
             fps = customRenderFps();
@@ -103,6 +109,14 @@ bool AppSettings::autoReconnect() const {
 
 int AppSettings::reconnectIntervalSeconds() const {
     return value(kReconnectIntervalSecondsKey, 3, 1, 60);
+}
+
+bool AppSettings::manifestCacheEnabled() const {
+    return QSettings().value(kManifestCacheEnabledKey, true).toBool();
+}
+
+bool AppSettings::manifestCacheSkipOnHello() const {
+    return QSettings().value(kManifestCacheSkipOnHelloKey, false).toBool();
 }
 
 bool AppSettings::verboseSerialLogging() const {
@@ -181,6 +195,16 @@ void AppSettings::setTerminalCursorBlink(bool enabled) {
 
 void AppSettings::setAutoReconnect(bool enabled) {
     QSettings().setValue(kAutoReconnectKey, enabled);
+    emit connectionPreferencesChanged();
+}
+
+void AppSettings::setManifestCacheEnabled(bool enabled) {
+    QSettings().setValue(kManifestCacheEnabledKey, enabled);
+    emit connectionPreferencesChanged();
+}
+
+void AppSettings::setManifestCacheSkipOnHello(bool skip) {
+    QSettings().setValue(kManifestCacheSkipOnHelloKey, skip);
     emit connectionPreferencesChanged();
 }
 

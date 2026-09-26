@@ -1,15 +1,15 @@
+#include <QHash>
 #include <QSignalSpy>
+#include <QTemporaryDir>
 #include <QtTest/QtTest>
 #include <btp/codec.hpp>
+#include <btp/node.hpp>
 #include <cstdint>
 #include <cstring>
 #include <vector>
 
-#include "protocol/btpframe.h"
-#include "protocol/btpsession.h"
-#include "protocol/channelseal.h"
 #include "protocol/manifestclient.h"
-#include "protocol/protocolrouter.h"
+#include "protocol/manifeststore.h"
 #include "protocol/telemetrycatalog.h"
 
 using namespace traceview;
@@ -26,6 +26,11 @@ using namespace traceview;
 // becoming "enumerate everything" because zero is the wildcard, and an
 // unknown-schema sample stream flooding the link with duplicate requests
 // while a reply is already in flight.
+//
+// Since BTP 2.48.0 both halves run over a real btp::Node: requests are what
+// the node puts on the wire, answers are MANIFEST_DATA frames the node
+// receives and hands over through on_manifest() -- together with the manifest
+// cache, whose NOT_MODIFIED path is pinned here too.
 //
 // The PARSE side is a bounds-checked walk over an attacker-shaped byte
 // buffer. Every early return in it is a case where a malformed response
@@ -46,6 +51,8 @@ constexpr int kCooldownMs = 3000;
 
 constexpr quint32 kRobot = 0x0A0A0A0Au;
 constexpr quint32 kRobotBoot = 0x00BEEF01u;
+constexpr quint32 kClientSourceId = 0x00C11E47u;
+constexpr quint32 kClientBootId = 0x00000B07u;
 
 // --------------------------------------------------------------- builders
 
@@ -169,11 +176,17 @@ struct ManifestOptions {
     QVector<QByteArray> actions;
     // Written after source_name when formatVersion >= 2 (commands.md 3.12).
     QVector<InfoTriple> sourceInfo;
+    // The request reference (12 bytes) this answer echoes; zero = unsolicited.
+    QByteArray requestRef;
 };
 
 QByteArray manifestDataPayload(const ManifestOptions& options) {
     QByteArray payload;
-    payload.append(12, char(0));  // request-reference; correlation isn't used
+    if (options.requestRef.size() == 12) {
+        payload.append(options.requestRef);
+    } else {
+        payload.append(12, char(0));  // request-reference: unsolicited
+    }
     payload.append(char(options.status));
     payload.append(char(options.flags));
     appendLe16(payload, 0);  // errorCode
@@ -210,14 +223,6 @@ QByteArray manifestDataPayload(const ManifestOptions& options) {
     return payload;
 }
 
-BtpFrame manifestDataFrame(const ManifestOptions& options) {
-    BtpFrame frame;
-    frame.type = btp::MessageType::Control;  // ProtocolRouter dispatches on this
-    frame.objectId = kControlManifestData;
-    frame.payload = manifestDataPayload(options);
-    return frame;
-}
-
 // The two-topic response a robot actually sends: one scalar float32 field
 // each, the shape bally_OS's ManifestResponder announces.
 ManifestOptions twoTopicManifest() {
@@ -234,42 +239,78 @@ ManifestOptions twoTopicManifest() {
 
 // --------------------------------------------------------------- fixture
 
-bool decodeWritten(const QByteArray& written, btp::DecodedFrame* out,
-                   std::vector<std::uint8_t>* storage) {
-    if (written.size() < 3 || written.at(0) != char(0) ||
-        written.at(written.size() - 1) != char(0)) {
-        return false;
+// The NodeConfig a BtpBackend would be, reduced to what ManifestClient needs:
+// frames it sends are captured, and an in-memory manifest cache stands in for
+// ManifestStore (on by default -- every backend runs with it on unless the
+// user turns it off in Settings).
+struct CaptureConfig : btp::NodeConfig {
+    std::vector<std::vector<std::uint8_t>> frames;
+    QHash<quint32, QByteArray> cache;
+    bool cacheOn = true;
+    int stores = 0;
+
+    CaptureConfig() {
+        source_id = kClientSourceId;
+        boot_id = kClientBootId;
+        transport = btp::kSerialTransport;
     }
-    const QByteArray block = written.mid(1, written.size() - 2);
-    storage->assign(btp::kSerialMaxFrameSize, 0);
-    std::size_t decoded = 0;
-    if (btp::cobs_decode(reinterpret_cast<const std::uint8_t*>(block.constData()),
-                         std::size_t(block.size()), storage->data(), storage->size(),
-                         &decoded) != btp::CobsError::Ok) {
-        return false;
+    bool send(const std::uint8_t* frame, std::size_t size) override {
+        frames.emplace_back(frame, frame + size);
+        return true;
     }
-    storage->resize(decoded);
-    return btp::decode(storage->data(), storage->size(), btp::kSerialTransport, out) ==
-           btp::Error::Ok;
-}
+    bool has_manifest_cache() const noexcept override {
+        return cacheOn;
+    }
+    bool manifest_load(std::uint32_t sourceId, btp::ByteView* out) override {
+        const auto it = cache.constFind(sourceId);
+        if (it == cache.constEnd()) {
+            return false;
+        }
+        *out = btp::ByteView{reinterpret_cast<const std::uint8_t*>(it->constData()),
+                             std::size_t(it->size())};
+        return true;
+    }
+    void manifest_store(std::uint32_t sourceId, const btp::ManifestHeader&,
+                        btp::ByteView payload) override {
+        ++stores;
+        cache.insert(sourceId,
+                     QByteArray(reinterpret_cast<const char*>(payload.data), int(payload.size)));
+    }
+    void manifest_evict(std::uint32_t sourceId) override {
+        cache.remove(sourceId);
+    }
+};
 
 struct Fixture {
-    BtpSession session{btp::kSerialTransport};
-    ProtocolRouter router;
+    CaptureConfig cfg;
+    btp::StaticNode<4, 700, 2048, 1024> node{cfg};
     TelemetryCatalog catalog;
-    ManifestClient client{&session, &router, &catalog};
-    QSignalSpy written{&session, &BtpSession::bytesToWrite};
+    ManifestClient client{node, &catalog};
+    quint32 robotSequence = 1;
+
+    Fixture() {
+        node.begin();
+    }
+
+    int written() const {
+        return int(cfg.frames.size());
+    }
+
+    bool decodeSent(int index, btp::DecodedFrame* out) const {
+        if (index >= written()) {
+            return false;
+        }
+        const auto& bytes = cfg.frames.at(std::size_t(index));
+        return btp::decode(bytes.data(), bytes.size(), btp::kSerialTransport, out) ==
+               btp::Error::Ok;
+    }
 
     // MANIFEST_REQUEST's payload is target_source_id, target_boot_id,
     // known_revision -- three LE u32s (commands.md section 3.1).
     bool request(int index, quint32* targetSourceId, quint32* knownRevision) const {
         btp::DecodedFrame frame{};
-        std::vector<std::uint8_t> storage;
-        if (index >= written.count() ||
-            !decodeWritten(written.at(index).at(0).toByteArray(), &frame, &storage)) {
-            return false;
-        }
-        if (frame.header.object_id != kControlManifestRequest || frame.payload.size < 12) {
+        if (!decodeSent(index, &frame) || frame.header.object_id != kControlManifestRequest ||
+            frame.payload.size < 12) {
             return false;
         }
         const QByteArray payload(reinterpret_cast<const char*>(frame.payload.data),
@@ -277,6 +318,47 @@ struct Fixture {
         *targetSourceId = readLe32(payload, 0);
         *knownRevision = readLe32(payload, 8);
         return true;
+    }
+
+    // The request reference an answer to sent frame `index` echoes back
+    // (commands.md section 3.2) -- what lets the node tie a rejection, which
+    // names no source, to the target it was asked about.
+    QByteArray replyTo(int index) const {
+        btp::DecodedFrame frame{};
+        QByteArray ref;
+        if (decodeSent(index, &frame)) {
+            appendLe32(ref, frame.header.source_id);
+            appendLe32(ref, frame.header.boot_id);
+            appendLe32(ref, frame.header.sequence);
+        }
+        return ref;
+    }
+
+    // Puts `payload` on the wire as the robot's CONTROL frame and hands it to
+    // the node -- the same path a real MANIFEST_DATA takes.
+    btp::NodeRx deliverPayload(const QByteArray& payload,
+                               quint16 objectId = kControlManifestData) {
+        btp::Frame frame{};
+        frame.header.type = btp::MessageType::Control;
+        frame.header.source_id = kRobot;
+        frame.header.boot_id = kRobotBoot;
+        frame.header.sequence = robotSequence++;
+        frame.header.object_id = objectId;
+        frame.header.fragment_count = 1;
+        frame.payload = btp::ByteView{reinterpret_cast<const std::uint8_t*>(payload.constData()),
+                                      std::size_t(payload.size())};
+        std::vector<std::uint8_t> wire(btp::kSerialMaxFrameSize);
+        std::size_t size = 0;
+        if (btp::encode(frame, btp::kSerialTransport, wire.data(), wire.size(), &size) !=
+            btp::Error::Ok) {
+            return btp::NodeRx::DroppedFrame;
+        }
+        btp::ReceivedMessage out{};
+        return node.receive(wire.data(), size, 0U, &out);
+    }
+
+    btp::NodeRx deliver(const ManifestOptions& options) {
+        return deliverPayload(manifestDataPayload(options));
     }
 };
 
@@ -295,7 +377,14 @@ private slots:
     void unknownSchemaIsRateLimitedPerSource();
     void unknownSchemaCarriesTheRevisionAlreadyCached();
     void aFailedResponseClearsTheCooldownSoARetryIsPossible();
-    void anEndpointSealSealsTheRequestAndAnEmptyKeyUndoesIt();
+    void requestsGoOutAsTheNodesOwnIdentity();
+
+    // Cache
+    void notModifiedAfterARestartServesTopicsFromTheCache();
+    void primeFromCacheRegistersSchemasButNoBoot();
+    void primeFromCacheDoesNothingWithTheCacheOff();
+    void readCachedReturnsTopicsAndSourceInfoWithoutRegistering();
+    void cachedSourceNamedFindsTheRobotByItsReportedName();
 
     // Parse side
     void aSuccessfulResponseRegistersEverySchemaAndTheBootId();
@@ -316,7 +405,7 @@ void TestManifestClient::sessionEstablishedEnumeratesEverything() {
     Fixture fixture;
     fixture.client.onSessionEstablished(42);
 
-    QCOMPARE(fixture.written.count(), 1);
+    QCOMPARE(fixture.written(), 1);
     quint32 target = 0xFFFFFFFFu;
     quint32 revision = 0xFFFFFFFFu;
     QVERIFY(fixture.request(0, &target, &revision));
@@ -332,23 +421,23 @@ void TestManifestClient::reconnectingToAnUnchangedCatalogAsksNothing() {
     // makes it skippable -- the catalog is still in memory and still valid.
     Fixture fixture;
     fixture.client.onSessionEstablished(42);
-    QCOMPARE(fixture.written.count(), 1);
+    QCOMPARE(fixture.written(), 1);
 
     fixture.client.onSessionEstablished(42);
     fixture.client.onSessionEstablished(42);
-    QCOMPARE(fixture.written.count(), 1);
+    QCOMPARE(fixture.written(), 1);
 }
 
 void TestManifestClient::aChangedCatalogRevisionReEnumerates() {
     Fixture fixture;
     fixture.client.onSessionEstablished(42);
     fixture.client.onSessionEstablished(43);
-    QCOMPARE(fixture.written.count(), 2);
+    QCOMPARE(fixture.written(), 2);
 
     // ...and the new revision becomes the one that now counts as unchanged,
     // rather than the check always comparing against the first ever seen.
     fixture.client.onSessionEstablished(43);
-    QCOMPARE(fixture.written.count(), 2);
+    QCOMPARE(fixture.written(), 2);
 }
 
 void TestManifestClient::requestCatalogForAsksOneSourceOnly() {
@@ -358,7 +447,7 @@ void TestManifestClient::requestCatalogForAsksOneSourceOnly() {
     Fixture fixture;
     fixture.client.requestCatalogFor(kRobot);
 
-    QCOMPARE(fixture.written.count(), 1);
+    QCOMPARE(fixture.written(), 1);
     quint32 target = 0;
     quint32 revision = 0xFFFFFFFFu;
     QVERIFY(fixture.request(0, &target, &revision));
@@ -372,7 +461,7 @@ void TestManifestClient::requestCatalogForZeroIsRefusedRatherThanWidened() {
     // answer, leaving a child with no catalog and no error explaining why.
     Fixture fixture;
     fixture.client.requestCatalogFor(0);
-    QCOMPARE(fixture.written.count(), 0);
+    QCOMPARE(fixture.written(), 0);
 }
 
 void TestManifestClient::unknownSchemaIsRateLimitedPerSource() {
@@ -382,17 +471,17 @@ void TestManifestClient::unknownSchemaIsRateLimitedPerSource() {
     // in flight.
     Fixture fixture;
     fixture.client.onUnknownSchema(kRobot, 0x0001, 9);
-    QCOMPARE(fixture.written.count(), 1);
+    QCOMPARE(fixture.written(), 1);
 
     for (int i = 0; i < 20; ++i) {
         fixture.client.onUnknownSchema(kRobot, 0x0001, 9);
     }
-    QCOMPARE(fixture.written.count(), 1);
+    QCOMPARE(fixture.written(), 1);
 
     // Per source, not global: another robot's unknown schema is a separate
     // question and must not be silenced by the first one's cooldown.
     fixture.client.onUnknownSchema(0x0B0B0B0Bu, 0x0001, 9);
-    QCOMPARE(fixture.written.count(), 2);
+    QCOMPARE(fixture.written(), 2);
 }
 
 void TestManifestClient::unknownSchemaCarriesTheRevisionAlreadyCached() {
@@ -403,10 +492,10 @@ void TestManifestClient::unknownSchemaCarriesTheRevisionAlreadyCached() {
     Fixture fixture;
     ManifestOptions options = twoTopicManifest();
     options.configRevision = 99;
-    fixture.router.onFrameReceived(manifestDataFrame(options));
+    fixture.deliver((options));
 
     fixture.client.onUnknownSchema(kRobot, 0x0001, 9);
-    QCOMPARE(fixture.written.count(), 1);
+    QCOMPARE(fixture.written(), 1);
 
     quint32 target = 0;
     quint32 revision = 0;
@@ -421,50 +510,179 @@ void TestManifestClient::aFailedResponseClearsTheCooldownSoARetryIsPossible() {
     // up -- wait out a window started by an attempt that answered nothing.
     Fixture fixture;
     fixture.client.onUnknownSchema(kRobot, 0x0001, 9);
-    QCOMPARE(fixture.written.count(), 1);
+    QCOMPARE(fixture.written(), 1);
 
     ManifestOptions failure;
     failure.status = kStatusNotFound;
-    fixture.router.onFrameReceived(manifestDataFrame(failure));
+    failure.requestRef = fixture.replyTo(0);
+    QCOMPARE(int(fixture.deliver(failure)), int(btp::NodeRx::ManifestRejected));
+    fixture.client.onManifestRejected(fixture.node.manifest_outcome());
 
     fixture.client.onUnknownSchema(kRobot, 0x0001, 9);
-    QCOMPARE(fixture.written.count(), 2);
+    QCOMPARE(fixture.written(), 2);
 }
 
-// A direct TCP/BLE session to a keyed robot: the robot drops a cleartext
-// MANIFEST_REQUEST (BTP 2.46.0), so setEndpointSeal() seals it with the
-// channel-B key, as the given identity, from the given sequence source -- and
-// an empty key goes back to the cleartext default.
-void TestManifestClient::anEndpointSealSealsTheRequestAndAnEmptyKeyUndoesIt() {
+// Sealing and identity are the node's (its NodeConfig's) since BTP 2.48.0 --
+// the same (source_id, boot_id) and sequence space as every other thing the
+// backend sends, which is what keeps AEAD nonces unique on a keyed link.
+void TestManifestClient::requestsGoOutAsTheNodesOwnIdentity() {
     Fixture fixture;
-    const QByteArray key(16, 'k');
-    quint32 nextSequence = 41;
-    fixture.client.setEndpointSeal(0x00001234u, 0x00005678u, key,
-                                   [&nextSequence] { return ++nextSequence; });
-    fixture.client.requestCatalogFor(0x0A0A0A0Au);
+    fixture.client.requestCatalogFor(kRobot);
+    fixture.client.requestFullCatalog();
 
-    QCOMPARE(fixture.written.count(), 1);
-    btp::DecodedFrame frame{};
-    std::vector<std::uint8_t> storage;
-    QVERIFY(decodeWritten(fixture.written.at(0).at(0).toByteArray(), &frame, &storage));
-    QCOMPARE(frame.header.object_id, kControlManifestRequest);
-    QVERIFY((frame.header.flags & btp::kFlagEncrypted) != 0U);
-    QCOMPARE(frame.header.source_id, 0x00001234u);
-    QCOMPARE(frame.header.boot_id, 0x00005678u);
-    QCOMPARE(frame.header.sequence, 42u);
-    const std::optional<QByteArray> plain = ChannelSeal::open(
-        key, frame.header,
-        QByteArray(reinterpret_cast<const char*>(frame.payload.data), int(frame.payload.size)));
-    QVERIFY(plain.has_value());
-    QCOMPARE(readLe32(*plain, 0), 0x0A0A0A0Au);
+    btp::DecodedFrame first{};
+    btp::DecodedFrame second{};
+    QVERIFY(fixture.decodeSent(0, &first));
+    QVERIFY(fixture.decodeSent(1, &second));
+    QCOMPARE(first.header.source_id, kClientSourceId);
+    QCOMPARE(first.header.boot_id, kClientBootId);
+    QCOMPARE(second.header.sequence, first.header.sequence + 1);
+}
 
-    fixture.client.setEndpointSeal(0, 0, QByteArray(), {});
-    fixture.client.requestCatalogFor(0x0B0B0B0Bu);
-    QCOMPARE(fixture.written.count(), 2);
+// ================================================================== cache
+
+void TestManifestClient::notModifiedAfterARestartServesTopicsFromTheCache() {
+    // The point of the cache: a second run asks "still revision 7?", the
+    // robot says NOT_MODIFIED, and the catalog -- empty, this is a fresh
+    // process -- is filled from what the first run stored.
+    QHash<quint32, QByteArray> disk;
+    {
+        Fixture first;
+        first.client.requestCatalogFor(kRobot);
+        ManifestOptions full = twoTopicManifest();
+        full.requestRef = first.replyTo(0);
+        QCOMPARE(int(first.deliver(full)), int(btp::NodeRx::ManifestHandled));
+        QCOMPARE(first.cfg.stores, 1);
+        disk = first.cfg.cache;
+    }
+
+    Fixture second;
+    second.cfg.cache = disk;
+    QSignalSpy described(&second.client, &ManifestClient::sourceDescribed);
+    second.client.requestCatalogFor(kRobot);
     quint32 target = 0;
     quint32 revision = 0;
-    QVERIFY(fixture.request(1, &target, &revision));  // decodes as plain again
-    QCOMPARE(target, 0x0B0B0B0Bu);
+    QVERIFY(second.request(0, &target, &revision));
+    QCOMPARE(target, kRobot);
+    QCOMPARE(revision, 7u);  // twoTopicManifest()'s revision, from the cache
+
+    ManifestOptions unchanged;
+    unchanged.flags = kFlagNotModified;
+    unchanged.describedBootId = 0x00BEEF02u;  // rebooted, same catalog
+    unchanged.requestRef = second.replyTo(0);
+    QCOMPARE(int(second.deliver(unchanged)), int(btp::NodeRx::ManifestHandled));
+
+    QCOMPARE(second.catalog.allSchemas().size(), 2);
+    QVERIFY(second.catalog.lookup(kRobot, 0x0002, 3) != nullptr);
+    QCOMPARE(second.catalog.sourceBootId(kRobot), 0x00BEEF02u);
+    QCOMPARE(described.count(), 1);
+    QCOMPARE(second.cfg.stores, 0);  // nothing new to store
+}
+
+void TestManifestClient::primeFromCacheRegistersSchemasButNoBoot() {
+    // A hub child's topics can be listed before its robot (or even the
+    // dongle) is reachable -- but a SUBSCRIBE still has to wait for a live
+    // boot_id, so none is invented from the cache.
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    ManifestStore& store = ManifestStore::instance();
+    store.setDirectory(dir.path());
+    store.setEnabled(true);
+    store.store(kRobot, manifestDataPayload(twoTopicManifest()));
+
+    Fixture fixture;
+    QSignalSpy updated(&fixture.client, &ManifestClient::catalogUpdated);
+    QVERIFY(fixture.client.primeFromCache(kRobot));
+    QCOMPARE(updated.count(), 1);
+    QCOMPARE(fixture.catalog.allSchemas().size(), 2);
+    QCOMPARE(fixture.catalog.sourceBootId(kRobot), 0u);
+    QCOMPARE(fixture.written(), 0);  // nothing asked on the wire
+
+    // A source with nothing stored is a clean no.
+    QVERIFY(!fixture.client.primeFromCache(0x0B0B0B0Bu));
+    store.clear();
+    store.setDirectory(QString());
+}
+
+void TestManifestClient::primeFromCacheDoesNothingWithTheCacheOff() {
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    ManifestStore& store = ManifestStore::instance();
+    store.setDirectory(dir.path());
+    store.store(kRobot, manifestDataPayload(twoTopicManifest()));
+    store.setEnabled(false);
+
+    Fixture fixture;
+    QVERIFY(!fixture.client.primeFromCache(kRobot));
+    QVERIFY(fixture.catalog.allSchemas().isEmpty());
+
+    store.setEnabled(true);
+    store.clear();
+    store.setDirectory(QString());
+}
+
+void TestManifestClient::readCachedReturnsTopicsAndSourceInfoWithoutRegistering() {
+    // What a device's settings dialog shows while it is offline: the cached
+    // manifest, parsed, touching no catalog.
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    ManifestStore& store = ManifestStore::instance();
+    store.setDirectory(dir.path());
+    store.setEnabled(true);
+    ManifestOptions options = twoTopicManifest();
+    options.formatVersion = 2;
+    options.sourceInfo = {
+        {QStringLiteral("fw_version"), QStringLiteral("Firmware"), QStringLiteral("1dd9fc5")}};
+    store.store(kRobot, manifestDataPayload(options));
+
+    QVector<TelemetryTopicSchema> topics;
+    QVector<DeviceInfoRecord> info;
+    QVERIFY(ManifestClient::readCached(kRobot, &topics, &info));
+    QCOMPARE(topics.size(), 2);
+    QCOMPARE(topics.at(1).name, QStringLiteral("robot.state"));
+    QCOMPARE(info.size(), 1);
+    QCOMPARE(info.at(0).value, QStringLiteral("1dd9fc5"));
+
+    QVERIFY(!ManifestClient::readCached(0x0B0B0B0Bu, &topics, &info));
+    QVERIFY(!ManifestClient::readCached(0, &topics, &info));
+    store.setEnabled(false);
+    QVERIFY(!ManifestClient::readCached(kRobot, &topics, &info));
+
+    store.setEnabled(true);
+    store.clear();
+    store.setDirectory(QString());
+}
+
+void TestManifestClient::cachedSourceNamedFindsTheRobotByItsReportedName() {
+    // A direct link learns its robot's source_id only from HELLO_RESULT, so
+    // offline the cache entry is found by the name its source_info reports.
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    ManifestStore& store = ManifestStore::instance();
+    store.setDirectory(dir.path());
+    store.setEnabled(true);
+    const auto named = [](quint32 sourceId, const QString& name) {
+        ManifestOptions options = twoTopicManifest();
+        options.formatVersion = 2;
+        options.describedSourceId = sourceId;
+        options.sourceInfo = {{QStringLiteral("name"), QStringLiteral("Name"), name}};
+        return manifestDataPayload(options);
+    };
+    store.store(kRobot, named(kRobot, QStringLiteral("bally")));
+    store.store(0x0B0B0B0Bu, named(0x0B0B0B0Bu, QStringLiteral("other")));
+
+    QCOMPARE(store.sourceIds().size(), 2);
+    QCOMPARE(ManifestClient::cachedSourceNamed(QStringLiteral(" Bally ")), kRobot);
+    QCOMPARE(ManifestClient::cachedSourceNamed(QStringLiteral("other")), 0x0B0B0B0Bu);
+    QCOMPARE(ManifestClient::cachedSourceNamed(QStringLiteral("nobody")), 0u);
+    QCOMPARE(ManifestClient::cachedSourceNamed(QString()), 0u);
+
+    // Two robots with one name: neither is picked.
+    store.store(0x0C0C0C0Cu, named(0x0C0C0C0Cu, QStringLiteral("bally")));
+    QCOMPARE(ManifestClient::cachedSourceNamed(QStringLiteral("bally")), 0u);
+
+    store.clear();
+    store.setDirectory(QString());
 }
 
 // ============================================================== parse side
@@ -473,7 +691,7 @@ void TestManifestClient::aSuccessfulResponseRegistersEverySchemaAndTheBootId() {
     Fixture fixture;
     QSignalSpy updated(&fixture.client, &ManifestClient::catalogUpdated);
 
-    fixture.router.onFrameReceived(manifestDataFrame(twoTopicManifest()));
+    fixture.deliver((twoTopicManifest()));
 
     QCOMPARE(updated.count(), 1);
 
@@ -513,7 +731,7 @@ void TestManifestClient::aSuccessfulResponseRegistersEverySchemaAndTheBootId() {
 
 void TestManifestClient::notModifiedRecordsTheBootIdWithoutTouchingSchemas() {
     Fixture fixture;
-    fixture.router.onFrameReceived(manifestDataFrame(twoTopicManifest()));
+    fixture.deliver((twoTopicManifest()));
     QVERIFY(fixture.catalog.lookup(kRobot, 0x0001, 1) != nullptr);
 
     // A reboot with an unchanged catalog: a new boot_id, and that alone has
@@ -528,12 +746,10 @@ void TestManifestClient::notModifiedRecordsTheBootIdWithoutTouchingSchemas() {
     // Sending them is what makes "NOT_MODIFIED means don't read the topic
     // records" an actual assertion.
     //
-    // Two layers enforce that independently -- parseManifestData() skips
-    // the topic records entirely, and onControlFrameReceived() returns
-    // before the register loop -- so removing either one alone still
-    // passes. That redundancy is deliberate on the implementation's part;
-    // noted here so a future reader doesn't take a surviving mutation of
-    // one of them as evidence this case is untested.
+    // (With the cache on, as here, the node pairs this NOT_MODIFIED with the
+    // stored copy of the first response, so the topics re-registered are the
+    // real ones; with it off, parseTopics() reads no topic records from a
+    // NOT_MODIFIED at all. Either way the decoy never lands.)
     QSignalSpy updated(&fixture.client, &ManifestClient::catalogUpdated);
     ManifestOptions notModified;
     notModified.flags = kFlagNotModified;
@@ -541,7 +757,7 @@ void TestManifestClient::notModifiedRecordsTheBootIdWithoutTouchingSchemas() {
     notModified.topics = {
         topicRecord(0x0002, 3, QStringLiteral("overwritten"),
                     {fieldRecord(1, 0x01, QStringLiteral("bogus"), QStringLiteral("1"))})};
-    fixture.router.onFrameReceived(manifestDataFrame(notModified));
+    fixture.deliver((notModified));
 
     QCOMPARE(updated.count(), 1);
     QCOMPARE(fixture.catalog.sourceBootId(kRobot), 0x00BEEF02u);
@@ -562,7 +778,7 @@ void TestManifestClient::aNonSuccessStatusAppliesNothing() {
 
     ManifestOptions failure = twoTopicManifest();
     failure.status = kStatusNotFound;
-    fixture.router.onFrameReceived(manifestDataFrame(failure));
+    fixture.deliver((failure));
 
     // Not even the boot_id: a response that failed describes nothing, and
     // caching a boot from it would address later SUBSCRIBEs at a source the
@@ -582,7 +798,7 @@ void TestManifestClient::anUnsupportedFormatVersionIsRejected() {
 
     ManifestOptions future = twoTopicManifest();
     future.formatVersion = 4;
-    fixture.router.onFrameReceived(manifestDataFrame(future));
+    fixture.deliver((future));
 
     QCOMPARE(updated.count(), 0);
     QVERIFY(fixture.catalog.allSchemas().isEmpty());
@@ -607,7 +823,7 @@ void TestManifestClient::aFormatThreeManifestAppliesRangePerField() {
                                           QStringLiteral("A"), 0.0, 4095.0),
                      fieldRecord(2, 0x03, QStringLiteral("ticks"), QStringLiteral("1"))}),
     };
-    fixture.router.onFrameReceived(manifestDataFrame(ranged));
+    fixture.deliver((ranged));
 
     QCOMPARE(updated.count(), 1);
     const TelemetryTopicSchema* state = fixture.catalog.lookup(kRobot, 0x0002, 3);
@@ -644,7 +860,7 @@ void TestManifestClient::sourceInfoIsParsedAndReportedOnFullAndNotModified() {
         {QStringLiteral("fw_version"), QStringLiteral("Firmware"), QStringLiteral("1dd9fc5")},
         {QStringLiteral("chip"), QString(), QStringLiteral("ESP32-S3")},
     };
-    fixture.router.onFrameReceived(manifestDataFrame(full));
+    fixture.deliver((full));
 
     QCOMPARE(info.count(), 1);
     QCOMPARE(info.at(0).at(0).toUInt(), kRobot);
@@ -666,7 +882,7 @@ void TestManifestClient::sourceInfoIsParsedAndReportedOnFullAndNotModified() {
     unchanged.sourceInfo = {
         {QStringLiteral("fw_version"), QStringLiteral("Firmware"), QStringLiteral("1dd9fc5")},
     };
-    fixture.router.onFrameReceived(manifestDataFrame(unchanged));
+    fixture.deliver((unchanged));
     QCOMPARE(info.count(), 2);
     const auto again = qvariant_cast<QVector<DeviceInfoRecord>>(info.at(1).at(1));
     QCOMPARE(again.size(), 1);
@@ -682,11 +898,7 @@ void TestManifestClient::aTruncatedPayloadIsRejected() {
     // separate bounds check, and a cursor that advanced past the end on any
     // of them would read whatever follows the buffer.
     for (int length = 0; length < full.size(); ++length) {
-        BtpFrame frame;
-        frame.type = btp::MessageType::Control;
-        frame.objectId = kControlManifestData;
-        frame.payload = full.left(length);
-        fixture.router.onFrameReceived(frame);
+        fixture.deliverPayload(full.left(length));
     }
 
     QCOMPARE(updated.count(), 0);
@@ -695,7 +907,7 @@ void TestManifestClient::aTruncatedPayloadIsRejected() {
 
     // The untruncated one still parses, so the loop above was rejecting
     // truncation rather than the payload being unparseable all along.
-    fixture.router.onFrameReceived(manifestDataFrame(twoTopicManifest()));
+    fixture.deliver((twoTopicManifest()));
     QCOMPARE(updated.count(), 1);
     QCOMPARE(fixture.catalog.allSchemas().size(), 2);
 }
@@ -720,7 +932,7 @@ void TestManifestClient::aTopicRecordRunningPastItsSizeIsRejected() {
 
     ManifestOptions options;
     options.topics = {shrunk};
-    fixture.router.onFrameReceived(manifestDataFrame(options));
+    fixture.deliver((options));
 
     QCOMPARE(updated.count(), 0);
     QVERIFY(fixture.catalog.allSchemas().isEmpty());
@@ -738,7 +950,7 @@ void TestManifestClient::trailingActionRecordsAreSkippedNotMisparsed() {
 
     ManifestOptions options = twoTopicManifest();
     options.actions = {action, action};
-    fixture.router.onFrameReceived(manifestDataFrame(options));
+    fixture.deliver((options));
 
     QCOMPARE(fixture.catalog.allSchemas().size(), 2);
     QVERIFY(fixture.catalog.lookup(kRobot, 0x0002, 3) != nullptr);
@@ -750,9 +962,8 @@ void TestManifestClient::aFrameOfAnotherControlObjectIsIgnored() {
     Fixture fixture;
     QSignalSpy updated(&fixture.client, &ManifestClient::catalogUpdated);
 
-    BtpFrame frame = manifestDataFrame(twoTopicManifest());
-    frame.objectId = 0x0005;  // not MANIFEST_DATA
-    fixture.router.onFrameReceived(frame);
+    // not MANIFEST_DATA
+    fixture.deliverPayload(manifestDataPayload(twoTopicManifest()), 0x0005);
 
     QCOMPARE(updated.count(), 0);
     QVERIFY(fixture.catalog.allSchemas().isEmpty());

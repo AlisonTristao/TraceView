@@ -46,6 +46,7 @@ public:
 
     bool isConnected() const override;
     QString portName() const override;
+    bool isDonglePort(const QString& portName) const override;
     qint32 baudRate() const override;
 
     // Queues `data` on the Java I/O thread; true means queued, not yet on the

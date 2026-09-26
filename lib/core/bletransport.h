@@ -2,12 +2,14 @@
 
 #include <QBluetoothUuid>
 #include <QByteArray>
+#include <QHash>
 #include <QLowEnergyCharacteristic>
 #include <QLowEnergyDescriptor>
 #include <QLowEnergyService>
 #include <QObject>
 #include <QQueue>
 #include <QString>
+#include <QStringList>
 #include <QTimer>
 
 #include "transport.h"
@@ -15,6 +17,8 @@
 class QLowEnergyController;
 
 namespace traceview {
+
+class BleDiscoveryService;
 
 // Asynchronous BLE byte transport over the BTP v1 GATT service
 // (BTP/docs/fragmentation-and-transports.md section 8,
@@ -52,15 +56,37 @@ public:
     explicit BleTransport(QObject* parent = nullptr);
     ~BleTransport() override;
 
-    // Starts an asynchronous connection to the peripheral at `address` (a
-    // platform BLE address -- see Device::bleAddress's own comment; parsed
-    // as a MAC first, then as a UUID for backends that identify peripherals
-    // that way). Returns false for an empty address. The connection itself
-    // starts once the Bluetooth permission is granted (see blepermission.h);
-    // a denial is reported through errorOccurred(). Any existing controller
-    // is torn down first, so calling this again (a new address, or a retry
-    // of the same one) always starts a clean attempt.
-    bool open(const QString& address);
+    // Starts an asynchronous connection to `target` -- see Device::bleAddress's
+    // own comment. A platform address (a MAC, or a UUID on backends that
+    // identify peripherals that way -- isPlatformAddress()) is dialed
+    // directly. Anything else is the robot's advertised NAME, the BLE
+    // counterpart of a TCP hostname: a short scan finds the one BTP
+    // peripheral advertising it (bleNameMatches()) and dials its address. Two
+    // robots answering to the same name fail the attempt rather than picking
+    // one -- connecting to the wrong robot, silently, is the one outcome a
+    // name lookup must never have. Returns false for an empty target. The
+    // connection itself starts once the Bluetooth permission is granted (see
+    // blepermission.h); a denial is reported through errorOccurred(). Any
+    // existing controller is torn down first, so calling this again (a new
+    // target, or a retry of the same one) always starts a clean attempt --
+    // and a name is looked up again on every attempt, so a robot whose
+    // address changed is still found.
+    bool open(const QString& target);
+
+    // True when `target` parses as a MAC or a UUID, i.e. is dialed without a
+    // scan. Everything else open() treats as a name.
+    static bool isPlatformAddress(const QString& target);
+    // Whether a peripheral advertising `advertised` is the one a user who
+    // typed `wanted` means: trimmed, case-insensitive. An empty name never
+    // matches -- a peripheral whose name has not arrived yet is not a match.
+    static bool bleNameMatches(const QString& advertised, const QString& wanted);
+    // The address `name` last resolved to in this run, or empty. A lookup
+    // accepts that address even before its name arrives, and dials it
+    // directly when the scan does not hear the robot at all.
+    static QString cachedAddressForName(const QString& name);
+    // Seeds that cache with a hint (an address the user once set by hand).
+    // Never overrides what a lookup actually found.
+    static void rememberAddressForName(const QString& name, const QString& address);
     void close() override;
 
     bool isConnected() const override;
@@ -92,7 +118,12 @@ private slots:
     void onConnectTimeout();
 
 private:
-    void startController();
+    void startController(const QString& address);
+    void startNameLookup();
+    void finishNameLookup();
+    void stopNameLookup();
+    void onNameLookupTimeout();
+    static QHash<QString, QString>& nameCache();
     void teardown(bool disconnectController);
     void failConnection(const QString& reason);
     int mtuPayloadSize() const;
@@ -133,6 +164,26 @@ private:
                                      // handshake; TcpTransport's own 5000ms
                                      // default would be too tight here.
     QTimer m_connectTimer;
+
+    // --- Name lookup (open() with a name, not an address) ---------------
+    // How long a scan may look for the name before the attempt fails. Kept
+    // well under DeviceLinkCycler::kAttemptMs, so a robot that is simply not
+    // there moves the cycler on instead of eating its whole window.
+    static constexpr int kNameLookupTimeoutMs = 6000;
+    // After the first peripheral answering to the name, how long the scan
+    // keeps listening for a SECOND one before dialing the first. The price
+    // of refusing an ambiguous name instead of guessing.
+    static constexpr int kNameSettleMs = 1000;
+    BleDiscoveryService* m_lookup = nullptr;
+    QTimer m_lookupTimer;
+    QTimer m_settleTimer;
+    // Distinct addresses seen advertising the name during this lookup.
+    QStringList m_lookupMatches;
+    // Every BTP peripheral this lookup heard ("name address"), for the log
+    // and the error when the name is not among them.
+    QStringList m_lookupSeen;
+    // cachedAddressForName(m_address) when the lookup started.
+    QString m_cachedAddress;
 
     QQueue<QByteArray> m_pendingFrames;
     QByteArray m_currentFrame;

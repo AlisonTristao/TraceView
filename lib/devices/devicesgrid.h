@@ -10,6 +10,7 @@
 
 #include "devices/device.h"
 #include "telemetry/catalogtopicinfo.h"
+#include "telemetry/deviceinforecord.h"
 
 namespace traceview {
 
@@ -17,6 +18,13 @@ class DeviceCard;
 class AddDeviceCommand;
 class RemoveDeviceCommand;
 class UpdateDeviceCommand;
+
+// What a device described on its last connection, read back from the
+// manifest cache -- see DevicesGrid::setCachedDescriptionProvider().
+struct CachedDeviceDescription {
+    QVector<CatalogTopicInfo> topics;
+    QVector<DeviceInfoRecord> info;
+};
 
 // Auto-flow grid of DeviceCard widgets: fixed card size (see kDeviceCardSize,
 // devicecard.h), left-to-right, wrapping to the next row based on available
@@ -76,6 +84,12 @@ public:
     // Called with empty strings when the connection drops, so a stale
     // identity from a previous session never lingers in the UI.
     void setDeviceIdentity(const QString& id, const QString& btpVersion, const QString& btpId);
+    // Which of the device's links MainWindow is dialing right now
+    // (Device::activeLink). Live state: not undoable, not persisted, and --
+    // like setDevicePeerState() -- does NOT emit deviceUpdated(), since
+    // MainWindow is the one switching and must not be re-entered. Refreshes
+    // the card in place. No-op if id is unknown or unchanged.
+    void setDeviceActiveLink(const QString& id, int activeLink);
     // Learns a direct BLE device's stable identity the first time HELLO_RESULT
     // reports one (Device::blePeerUuid's own comment: a platform address is
     // only a discovery hint, never identity -- TAREFAS_TCP_BLE_ANDROID.txt
@@ -181,6 +195,15 @@ public:
         m_topicCatalogProvider = std::move(provider);
     }
 
+    // Supplies what a device id described on its last connection (its cached
+    // manifest), shown while nothing live has arrived: by the gear icon's
+    // dialog (DeviceConfigDialog::setCachedDescription(), fetched when it
+    // opens) and by the card (DeviceCard::setCachedInfo(), re-fetched each
+    // time the card is refreshed without live info). Setting it refreshes
+    // every card. Safe to leave unset: an offline device then shows nothing.
+    void setCachedDescriptionProvider(
+        std::function<CachedDeviceDescription(const QString&)> provider);
+
     // Supplies the live hub.peers snapshot the gear icon's "Robot source_id"
     // combo offers for a given hub Device::id -- same reasoning as
     // setTopicCatalogProvider() above (traceview_devices doesn't depend on
@@ -265,6 +288,9 @@ private:
     int gutter() const;
     void relayout();
     int indexOfDevice(const QString& id) const;
+    // Pushes m_devices[idx] into its card, plus the cached info it falls back
+    // to while the device reports none live.
+    void refreshCard(int idx);
     void handleConfigRequested(const QString& deviceId);
     void handleCardSelectRequested(const QString& deviceId);
 
@@ -286,6 +312,7 @@ private:
     std::function<void(bool)> m_bleScanToggleHandler;
     std::function<QVector<QPair<QString, QString>>()> m_bleDeviceListProvider;
     std::function<QVector<CatalogTopicInfo>(const QString&)> m_topicCatalogProvider;
+    std::function<CachedDeviceDescription(const QString&)> m_cachedDescriptionProvider;
     std::function<QVector<HubPeer>(const QString&)> m_hubPeerListProvider;
     QUndoStack* m_undoStack;
 };

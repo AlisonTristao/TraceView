@@ -7,6 +7,7 @@
 #include <QMutex>
 #include <QMutexLocker>
 #include <QPointer>
+#include <QStringList>
 
 #include "core/applog.h"
 #include "diagnostics/hexdump.h"
@@ -168,7 +169,15 @@ QVector<SerialPortOption> AndroidUsbSerialTransport::availablePorts() {
     for (jsize i = 0; i + 1 < count; i += 2) {
         auto key = static_cast<jstring>(env->GetObjectArrayElement(array, i));
         auto label = static_cast<jstring>(env->GetObjectArrayElement(array, i + 1));
-        ports.append({fromJString(env.jniEnv(), key), fromJString(env.jniEnv(), label)});
+        const QString labelText = fromJString(env.jniEnv(), label);
+        // UsbSerialBridge.labelFor() builds "<product> (VVVV:PPPP)", with
+        // "USB serial" standing in for a device that reports no product.
+        const int ids = labelText.lastIndexOf(QStringLiteral(" ("));
+        QString product = ids > 0 ? labelText.left(ids) : QString();
+        if (product == QLatin1String("USB serial")) {
+            product.clear();
+        }
+        ports.append({fromJString(env.jniEnv(), key), labelText, product});
         env->DeleteLocalRef(key);
         env->DeleteLocalRef(label);
     }
@@ -232,6 +241,19 @@ bool AndroidUsbSerialTransport::isConnected() const {
 
 QString AndroidUsbSerialTransport::portName() const {
     return m_portName;
+}
+
+bool AndroidUsbSerialTransport::isDonglePort(const QString& portName) const {
+    // "usb:VVVV:PPPP[:serial]", hex -- UsbSerialBridge.keyFor().
+    const QStringList parts = portName.split(QLatin1Char(':'));
+    if (parts.size() < 3 || parts.at(0) != QLatin1String("usb")) {
+        return false;
+    }
+    bool vidOk = false;
+    bool pidOk = false;
+    const uint vid = parts.at(1).toUInt(&vidOk, 16);
+    const uint pid = parts.at(2).toUInt(&pidOk, 16);
+    return vidOk && pidOk && vid == kDongleVid && pid == kDonglePid;
 }
 
 qint32 AndroidUsbSerialTransport::baudRate() const {

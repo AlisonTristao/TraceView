@@ -26,6 +26,7 @@
 
 #include "core/applog.h"
 #include "preferences/appsettings.h"
+#include "protocol/manifeststore.h"
 #include "theme/iconutils.h"
 #include "traceview/fontmanager.h"
 #include "traceview/languagemanager.h"
@@ -350,11 +351,12 @@ SettingsPage::SettingsPage(QWidget* parent) : QWidget(parent) {
                               "recorded at their requested rate."));
     QGroupBox* renderingSection = addSection(dashboardPage, tr("Rendering quality"));
     auto* profileCombo = new QComboBox(renderingSection);
-    profileCombo->addItem(tr("Low (15 FPS)"), int(AppSettings::RenderProfile::Low));
-    profileCombo->addItem(tr("Medium (30 FPS)"), int(AppSettings::RenderProfile::Medium));
-    profileCombo->addItem(tr("High (60 FPS)"), int(AppSettings::RenderProfile::High));
+    profileCombo->addItem(tr("Low (30 FPS)"), int(AppSettings::RenderProfile::Low));
+    profileCombo->addItem(tr("Medium (60 FPS)"), int(AppSettings::RenderProfile::Medium));
+    profileCombo->addItem(tr("High (120 FPS)"), int(AppSettings::RenderProfile::High));
+    profileCombo->addItem(tr("Extra High (240 FPS)"), int(AppSettings::RenderProfile::ExtraHigh));
     profileCombo->addItem(tr("Custom"), int(AppSettings::RenderProfile::Custom));
-    profileCombo->setCurrentIndex(int(settings.renderProfile()));
+    profileCombo->setCurrentIndex(profileCombo->findData(int(settings.renderProfile())));
     formFor(renderingSection)->addRow(tr("Profile"), profileCombo);
     auto* customFps = new QSpinBox(renderingSection);
     customFps->setRange(1, 240);
@@ -438,6 +440,46 @@ SettingsPage::SettingsPage(QWidget* parent) : QWidget(parent) {
     connect(autoReconnect, &QCheckBox::toggled, &settings, &AppSettings::setAutoReconnect);
     connect(reconnectDelay, qOverload<int>(&QSpinBox::valueChanged), &settings,
             &AppSettings::setReconnectIntervalSeconds);
+
+    QGroupBox* manifestSection = addSection(connectionsPage, tr("Manifest cache"));
+    auto* manifestCache =
+        new QCheckBox(tr("Remember each device's manifest between sessions"), manifestSection);
+    manifestCache->setChecked(settings.manifestCacheEnabled());
+    manifestCache->setToolTip(
+        tr("A reconnect then only asks whether the device's catalog changed, and the topics "
+           "of a known device are listed even while it is offline."));
+    addCheckBoxRow(formFor(manifestSection), manifestCache);
+    auto* skipOnHello = new QCheckBox(
+        tr("Trust the cache without asking when the device reports the same revision "
+           "(TCP/BLE)"),
+        manifestSection);
+    skipOnHello->setChecked(settings.manifestCacheSkipOnHello());
+    skipOnHello->setEnabled(manifestCache->isChecked());
+    addCheckBoxRow(formFor(manifestSection), skipOnHello);
+    auto* skipOnHelloNote = new QLabel(
+        tr("Not recommended: the question it skips is tiny, and it is what keeps the device's "
+           "reported information (firmware version and the like) up to date."),
+        manifestSection);
+    skipOnHelloNote->setWordWrap(true);
+    skipOnHelloNote->setEnabled(manifestCache->isChecked());
+    formFor(manifestSection)->addRow(skipOnHelloNote);
+    auto* clearManifests = new QPushButton(manifestSection);
+    const auto refreshClearManifests = [clearManifests] {
+        const int stored = ManifestStore::instance().count();
+        clearManifests->setText(tr("Clear cache (%n device(s))", "", stored));
+        clearManifests->setEnabled(stored > 0);
+    };
+    refreshClearManifests();
+    formFor(manifestSection)->addRow(QString(), clearManifests);
+    connect(manifestCache, &QCheckBox::toggled, &settings, &AppSettings::setManifestCacheEnabled);
+    connect(manifestCache, &QCheckBox::toggled, skipOnHello, &QCheckBox::setEnabled);
+    connect(manifestCache, &QCheckBox::toggled, skipOnHelloNote, &QLabel::setEnabled);
+    connect(skipOnHello, &QCheckBox::toggled, &settings,
+            &AppSettings::setManifestCacheSkipOnHello);
+    connect(clearManifests, &QPushButton::clicked, this, [refreshClearManifests] {
+        ManifestStore::instance().clear();
+        refreshClearManifests();
+    });
     qobject_cast<QVBoxLayout*>(connectionsPage->layout())->addStretch();
     addPage(connectionsPage);
 

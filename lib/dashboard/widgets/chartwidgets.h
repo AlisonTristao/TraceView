@@ -2,6 +2,7 @@
 
 #include <QRect>
 #include <QtMath>
+#include <functional>
 
 #include "dashboard/dashboardwidget.h"
 #include "dashboard/widgets/chartdata.h"
@@ -28,6 +29,12 @@ namespace traceview {
 // telemetria binaria"); this class only owns the data model and paint logic
 // and stays paintable/testable with directly-injected synthetic samples
 // either way (see tools/chart_preview).
+
+// Looks up the retained history of one of a widget's own fields (by
+// fieldId, within the widget's configured device/source/topic) -- nullptr
+// when there is none. How MainWindow hands a freshly built widget what its
+// field received while no widget was showing it (telemetry/telemetryhistory.h).
+using FieldHistoryLookup = std::function<const TelemetrySeriesBuffer*(quint16 fieldId)>;
 
 class ChartWidgetBase : public DashboardWidget {
 public:
@@ -82,6 +89,13 @@ public:
     // still connectable via the functor-based QObject::connect overload.
     void onFieldSample(const traceview::TelemetryFieldBinding& binding, quint64 timestampUs,
                        double value);
+
+    // Replaces every series buffer with its field's retained history (the
+    // newest samples up to this chart's own capacity), leaving a series
+    // whose field has none empty. Meant for a widget just built from JSON,
+    // before live samples are connected -- see MainWindow::
+    // wireChartWidgetToTelemetry().
+    void seedFromHistory(const FieldHistoryLookup& lookup);
 
     // The parsed config this widget is currently rendering. Read by
     // MainWindow to derive the wire-level SUBSCRIBE this widget implies
@@ -219,6 +233,10 @@ public:
     // GaugeConfig's sourceId/topicId instead of ChartConfig's.
     void onFieldSample(const traceview::TelemetryFieldBinding& binding, quint64 timestampUs,
                        double value);
+
+    // See ChartWidgetBase::seedFromHistory() -- a ring only takes its field's
+    // newest retained value.
+    void seedFromHistory(const FieldHistoryLookup& lookup);
 
     // See ChartWidgetBase::config() -- same role for a gauge's own config.
     const GaugeConfig& config() const {

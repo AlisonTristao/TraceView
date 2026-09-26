@@ -7,6 +7,47 @@ release flow.
 
 ## [Unreleased]
 
+### Added
+
+- Several ways to connect to one device: a device can have Serial, Wi-Fi
+  (TCP), Bluetooth and Hub links at once. Enabled links are tried in order
+  until one connects, and a link that fails moves on to the next within
+  about a second.
+- Connect by name: in Device Settings, type the robot's name and tick the
+  links it has. Serial finds the port whose USB device reports that name,
+  Wi-Fi dials `<name>.local`, Bluetooth scans for the advertised name, and
+  Hub finds the robot among the connected hubs' peers. Two robots sharing a
+  name are never picked automatically. Search offers the names seen over
+  USB, Bluetooth and hubs; manual addresses, link order, baud rate and TCP
+  port live under Advanced. Existing manual connections stay manual.
+- The serial port picker shows which robot is on each port ("COM5 —
+  BallyRobot") without opening it, on Windows, Linux, macOS and Android.
+- Manifest cache: each device's manifest is kept between sessions, so a
+  reconnect only asks whether the catalog changed. On by default, with a
+  switch and a clear button under Settings → Connections.
+- Charts and gauges keep updating while their workspace is not showing.
+  Switching back shows them already up to date instead of empty. The topics
+  they plot stay subscribed in the background, at the same rate as when
+  visible.
+- Device cards and the device settings dialog are no longer blank while
+  the robot is disconnected: they show what the robot described on its last
+  connection (from the manifest cache), marked as saved, until live data
+  replaces it.
+
+### Changed
+
+- Rendering is smoother by default: the Medium profile (the default) now
+  draws at 60 FPS (was 30). Low is 30 FPS and High 120 FPS, and a new
+  Extra High profile draws at 240 FPS for fast displays.
+- Device Settings is simpler: the Description field is gone, and the
+  device card shows the information the device itself reports instead.
+  The settings area scrolls, and Connect applies the settings without
+  closing the dialog.
+- New Serial links default to 5,000,000 baud (the robot's native USB port
+  ignores the baud rate).
+- Requires BTP 2.48.0: manifests are requested and received through
+  `btp::Node`, which also owns the manifest cache.
+
 ## [4.6.10] - 2026-09-25
 
 ### Fixed

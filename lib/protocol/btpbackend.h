@@ -81,6 +81,10 @@ class BtpBackend : public Backend, public btp::NodeConfig {
     Q_OBJECT
 
 public:
+    // Who answers the HELLO: Console = a dongle (the hub -- catalog
+    // enumeration, clock sync, hub bindings), DirectBtp = the robot itself
+    // (TCP, BLE, or a robot's own serial port -- see setSerialRobotPeer()).
+    // Both open with HELLO straight away; neither sends ENTER.
     enum class SessionStartMode { Console, DirectBtp };
 
     // `framing`/`encodeProfile` are the two axes the underlying BtpSession
@@ -109,6 +113,12 @@ public:
     QVector<TopicSubscriptionState> subscriptions() const override;
     QVector<StatusTopicRecord> topicStatuses() const override;
     QVector<CatalogTopicInfo> catalogTopics() const override;
+
+    // What `sourceId` described on its last connection, from ManifestStore
+    // (see ManifestClient::readCached()) -- its catalog in catalogTopics()'s
+    // shape plus its source_info. False when nothing usable is cached.
+    static bool cachedDescription(quint32 sourceId, QVector<CatalogTopicInfo>* topics,
+                                  QVector<DeviceInfoRecord>* info);
 
     // --- Hub role: carrying another device's traffic (topico 26) ---------
     //
@@ -140,8 +150,8 @@ public:
     //
     // Being a child changes three things, and each has a reason:
     //
-    //  - No HELLO, and no ENTER. Those negotiate a console session, and a
-    //    robot does not offer one: bally_OS accepts exactly three CONTROL
+    //  - No HELLO. It negotiates a session, and a robot on the radio does
+    //    not offer one: bally_OS accepts exactly three CONTROL
     //    object_ids over the radio (MANIFEST_REQUEST, SUBSCRIBE, UNSUBSCRIBE)
     //    and HELLO is not among them, so a handshake here would be answered by
     //    silence and the connection would never come up.
@@ -220,6 +230,14 @@ public:
     // could in principle arrive as early as the first bytes after connect.
     void setDirectEndpointKey(const QByteArray& endpointKey);
 
+    // Serial only: whether the port is a robot's own BTP port (bally_OS
+    // comm_mode "serial", its native USB CDC) rather than a dongle's. A robot
+    // port is a direct session exactly like TCP/BLE -- the peer IS the robot
+    // -- but cleartext by design: bally_OS never seals that link
+    // (RobotSerialLink), so no key is used and commands go out unsealed even
+    // with a password configured for the device. Call before the port opens.
+    void setSerialRobotPeer(bool robot);
+
     // Declares, to the DONGLE this backend is connected to, that a child
     // device with `childSourceId` speaks to the robot `peerSourceId`. Called
     // on the PARENT's backend, never on the child's -- see HubBinder for why
@@ -234,6 +252,13 @@ public:
     // writes before physically closing it. Returns true only when a frame was
     // emitted. Hub-channel children have no console session and return false.
     bool requestSessionClose();
+
+    // Asks the far end for one source's manifest (with the cached revision,
+    // so an unchanged one costs a NOT_MODIFIED). On a hub's own backend that
+    // is the dongle answering from its cache for a robot behind it -- how a
+    // robot the hub started hearing after the session's one enumeration gets
+    // its source_info (sourceInfoSeen()) read. Ignored for sourceId 0.
+    void requestSourceCatalog(quint32 sourceId);
 
     // Zero unless setHubEndpoint() made this a child.
     quint32 peerSourceId() const {
@@ -261,6 +286,22 @@ public:
     bool has_open() const noexcept override;
     bool open(const btp::Header& header, std::uint16_t sealed_size,
               const std::uint8_t* sealed, std::uint8_t* out_plaintext) override;
+    // A keyed hub child still gets the HUB's own control answers in the clear
+    // (see isHubPlaintextControlResponse() in the .cpp); m_node must accept
+    // those too now that MANIFEST_DATA reaches ManifestClient through it.
+    bool accept_cleartext(const btp::Header& header) override;
+    // A hub child's MANIFEST_REQUEST is answered by the dongle's own manifest
+    // cache, which does not hold the end-to-end key E -- it goes out in the
+    // clear, as it always did. Everyone else's follows has_seal().
+    bool seal_manifest_request(std::uint32_t target_source_id) override;
+    // BTP 2.48.0's manifest cache, backed by ManifestStore::instance() (one
+    // store for every backend -- the same robot over any link finds the same
+    // entry). has_manifest_cache() follows the Settings toggle.
+    bool has_manifest_cache() const noexcept override;
+    bool manifest_load(std::uint32_t cached_source_id, btp::ByteView* out) override;
+    void manifest_store(std::uint32_t cached_source_id, const btp::ManifestHeader& header,
+                        btp::ByteView payload) override;
+    void manifest_evict(std::uint32_t cached_source_id) override;
 
 signals:
     // Hands over one received frame's octets, exactly as they came off the
@@ -276,6 +317,13 @@ signals:
     // does not reassemble, the endpoint does (the child's BtpSession has its
     // own btp::Reassembler).
     void hubFrameBytesReceived(quint32 sourceId, const QByteArray& raw);
+
+    // A source_info block (commands.md 3.12) arrived for ANY source this
+    // session described -- not only this backend's own device (that one is
+    // also Backend::deviceInfoReported). On a hub's backend this is how every
+    // robot behind it reports its configured name, whether or not a child is
+    // connected to it -- what the hub-peer picker labels robots with.
+    void sourceInfoSeen(quint32 sourceId, const QVector<traceview::DeviceInfoRecord>& info);
 
     // Every BTP frame this backend's session decodes (Inbound) or emits
     // (Outbound), plus the reason for any frame that would not decode/
@@ -315,6 +363,9 @@ private:
     // BtpHandshake kHelloTimeoutMs (spec requires it within 2000ms, a little
     // slack).
     static constexpr std::uint64_t kHelloTimeoutMs = 3000U;
+    // HELLOs per connection before the port is recycled. Fits inside
+    // DeviceLinkCycler::kAttemptMs.
+    static constexpr int kMaxHelloAttempts = 3;
     // Drives m_node->tick() (connection watchdog, command timeout) even when
     // no bytes are arriving to piggyback it on.
     static constexpr int kNodeTickIntervalMs = 250;
@@ -363,9 +414,13 @@ private:
     // to m_node->receive(). Reacts to the two outcomes m_node manages:
     // InitiatorHandled (the HELLO handshake) and CommandHandled.
     void onRawFrameForNode(quint32 sourceId, const QByteArray& raw);
-    // BtpHandshake::readyForHello() -- builds the same btp::Hello this
-    // backend has always advertised and drives it through m_node->connect().
+    // Builds the same btp::Hello this backend has always advertised and
+    // drives it through m_node->connect(). Sent as soon as the transport
+    // comes up, and again from onNodeTimedOut().
     void onReadyForHello();
+    // m_node's initiator timed out: the session watchdog on a live session,
+    // or no HELLO_RESULT yet -- resent up to kMaxHelloAttempts times first.
+    void onNodeTimedOut();
     void onNodeConnected();
     void onNodeConnectFailed(const QString& reason);
     // BtpHandshake::consoleLineDetected() -- the dongle dropped back to
@@ -432,6 +487,11 @@ private:
     quint32 m_sessionSequence = 0;
     bool m_sessionClosing = false;
     SessionStartMode m_sessionStartMode = SessionStartMode::Console;
+    // A direct session on a link the robot never seals -- see
+    // setSerialRobotPeer().
+    bool m_cleartextDirectLink = false;
+    // HELLOs sent since the transport last came up -- see onNodeTimedOut().
+    int m_helloAttempts = 0;
 
     // Both zero for the console-facing backend; both set for a child. Zero is
     // the "not a child" test rather than a separate flag, because BTP reserves

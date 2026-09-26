@@ -1461,6 +1461,19 @@ void ChartWidgetBase::onFieldSample(const traceview::TelemetryFieldBinding& bind
     appendFieldSample(binding.fieldId, timestampUs, value);
 }
 
+void ChartWidgetBase::seedFromHistory(const FieldHistoryLookup& lookup) {
+    const int capacity = chartBufferCapacity(m_config);
+    for (int i = 0; i < m_config.series.size() && i < m_seriesBuffers.size(); ++i) {
+        TelemetrySeriesBuffer seeded;
+        if (const TelemetrySeriesBuffer* history = lookup(m_config.series[i].fieldId)) {
+            seeded = *history;
+        }
+        seeded.setCapacity(capacity);
+        m_seriesBuffers[i] = seeded;
+    }
+    update();
+}
+
 void ChartWidgetBase::scheduleRepaint() {
     if (m_repaintPending) {
         return;
@@ -1640,6 +1653,16 @@ void DummyGaugeWidget::onFieldSample(const traceview::TelemetryFieldBinding& bin
         return;
     }
     appendFieldSample(binding.fieldId, timestampUs, value);
+}
+
+void DummyGaugeWidget::seedFromHistory(const FieldHistoryLookup& lookup) {
+    for (int i = 0; i < m_config.series.size() && i < m_values.size(); ++i) {
+        const TelemetrySeriesBuffer* history = lookup(m_config.series[i].fieldId);
+        if (history && !history->samples().isEmpty()) {
+            m_values[i] = history->samples().last().value;
+        }
+    }
+    update();
 }
 
 void DummyGaugeWidget::scheduleRepaint() {

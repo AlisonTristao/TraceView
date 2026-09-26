@@ -92,6 +92,9 @@ signals:
     // modifiers is checked for Qt::ControlModifier by DashboardGrid to
     // decide between a plain Replace-selection and a Ctrl-click toggle.
     void selectRequested(const QString& itemId, Qt::KeyboardModifiers modifiers);
+    // The header's clear button was clicked, after the content widget has
+    // already cleared itself.
+    void chartDataCleared(DashboardWidget* content);
 
 protected:
     void paintEvent(QPaintEvent* event) override;

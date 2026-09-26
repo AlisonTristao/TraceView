@@ -86,7 +86,20 @@ struct UsbDeviceOption {
 struct SerialPortOption {
     QString name;
     QString label;
+    // The product name the USB device behind this port reports, empty when
+    // none (or not a USB port). A bally_OS robot reports its configured
+    // identity name here -- what resolveLinkByName() matches a Serial link
+    // set to "automatic" against.
+    QString productName;
 };
+
+// What the port picker shows for one port: "COM5 — BallyRobot" when the
+// USB device behind it reports a product name (a bally_OS robot reports its
+// configured identity name there, see USBMassStorage::set_product_name()),
+// else just the port name. `productName` is whatever the platform gave --
+// SerialManager::portProductNames() -- and is dropped when it adds nothing
+// (empty, "n/a", or the port name itself).
+QString serialPortLabel(const QString& portName, const QString& productName);
 
 // One hub.peers entry, decoded from the dongle's own live telemetry -- see
 // MainWindow::hubPeersFor()/onHubPeerFieldSample() (core/mainwindow.cpp).
@@ -102,6 +115,12 @@ struct HubPeer {
     quint32 sourceId = 0;
     quint8 channel = 0;
     QString mac;  // "AA:BB:CC:DD:EE:FF", display only
+    // The robot's configured name (its manifest source_info "name"), as the
+    // dongle's cached copy of that manifest reported it. Display only, like
+    // `mac` -- the whole point of showing it is telling robots apart in the
+    // picker, but what gets stored is still `sourceId`. Empty until that
+    // manifest has been read (or when the robot has no name set).
+    QString name;
     quint32 lastSeenAgeMs = 0;
     bool online = false;
     // The boot this robot is currently on, per the dongle's live view. A
@@ -117,6 +136,38 @@ struct HubPeer {
     // this peer (bally_dongle's BtpTransport::notePingSent/notePingReply).
     // 0 before the first one completes.
     quint32 rttMs = 0;
+};
+
+// The default baud rate for a new Serial link: the ESP32-S3's top UART rate
+// (bally_OS's BAUDRATE). A robot on its native USB CDC port ignores the baud
+// rate entirely, so this only matters for a board behind a USB-UART bridge.
+inline constexpr qint32 kDefaultSerialBaudRate = 5000000;
+
+// One way of reaching a device -- a serial port, a USB HID path, a TCP host,
+// a BLE address, or a hub channel (a robot behind a dongle). A Device's own
+// transport fields ARE its primary link; Device::extraLinks holds the others,
+// in the order MainWindow tries them (DeviceLinkCycler below) whenever the one
+// in use is not live. Same field names and meaning as the matching Device
+// fields -- see those for what each one holds.
+struct DeviceLink {
+    TransportType transportType = TransportType::Serial;
+    QString portName;
+    qint32 baudRate = kDefaultSerialBaudRate;
+    QString usbPath;
+    QString tcpHost;
+    quint16 tcpPort = 44300;
+    QString bleAddress;
+    QString parentDeviceId;
+    quint32 peerSourceId = 0;
+    // Unticked in the connections table: kept, but skipped by the cycler.
+    bool enabled = true;
+    // "Automatic": the target is derived from Device::robotName each time the
+    // link is dialed (resolveLinkByName()) instead of the fields above --
+    // Serial finds the port whose USB device reports that name, TCP dials
+    // <name>.local, BLE scans for that advertised name, a hub channel finds
+    // the robot of that name among the hubs' peers. Nothing resolved is ever
+    // written back, so the saved project keeps saying "automatic".
+    bool autoTarget = false;
 };
 
 // One connected/known device, shown as a single card in the Devices panel
@@ -179,7 +230,7 @@ struct Device {
     // QSerialPort-based SerialManager (see lib/CMakeLists.txt layering), so
     // baudRate/portName are plain types here rather than QSerialPort ones.
     QString portName;
-    qint32 baudRate = 921600;  // matches the old Run tab's default
+    qint32 baudRate = kDefaultSerialBaudRate;
     // Ordinal mirroring traceview::LineTerminator (core/serialtransport.h:
     // None=0, Lf=1, Cr=2, CrLf=3) -- kept as a plain int for the same reason
     // portName/baudRate are plain types, rather than depending on that enum
@@ -203,14 +254,18 @@ struct Device {
     quint16 tcpPort = 44300;
 
     // --- Direct BLE -------------------------------------------------------
-    // Discovery hint used to dial the connection: the platform address
-    // BleDiscoveryService reported (a MAC on most backends, an opaque
-    // per-pairing UUID on some -- see QBluetoothDeviceInfo::address()/
-    // deviceUuid()), or typed by hand. This is NOT identity -- a robot can
-    // change address across a firmware update or a different host OS, and
-    // nothing stops two different robots from being dialed at the same
-    // address at different times. BleTransport::open() takes exactly this
-    // string; nothing below the transport ever reads it as meaning anything.
+    // Discovery hint used to dial the connection, in one of two forms:
+    //   - the robot's advertised NAME ("BallyRobot"), the BLE counterpart of
+    //     a TCP hostname -- BleTransport scans for it on every attempt, so it
+    //     survives an address change and means the same thing on every host
+    //     OS (macOS/iOS never expose a MAC, only a per-host UUID);
+    //   - a platform address: a MAC on most backends, an opaque per-host UUID
+    //     on some (see QBluetoothDeviceInfo::address()/deviceUuid()).
+    // Neither is identity -- a name is whatever the robot is configured to
+    // advertise, and an address can change across a firmware update or a
+    // different host OS. BleTransport::open() takes exactly this string
+    // (BleTransport::isPlatformAddress() tells the two forms apart); nothing
+    // below the transport ever reads it as meaning anything.
     QString bleAddress;
     // Stable identity learned from HELLO_RESULT, when known. A platform BLE
     // address or display name is only a discovery hint and is intentionally
@@ -312,6 +367,167 @@ struct Device {
     // Whether otaPassword goes into the saved project. Same opt-in-only
     // convention as cachePeerPassword above, and for the same reason.
     bool cacheOtaPassword = false;
+
+    // --- Several ways to connect ------------------------------------------
+    // Alternatives to the primary link above (its transportType/portName/...
+    // fields), tried in this order after it by MainWindow's DeviceLinkCycler
+    // whenever the link in use is not live. The channel-B password
+    // (peerPassword) is the device's, shared by every link -- it is the
+    // robot's key, not the link's. Persisted.
+    QVector<DeviceLink> extraLinks;
+    // Which link is being used right now: 0 = the primary fields above,
+    // i > 0 = extraLinks[i - 1]. Live state, like `connected`: set by
+    // MainWindow as it cycles, never persisted, 0 on load. effectiveDevice()
+    // folds it back into the flat fields for everything that reads them.
+    int activeLink = 0;
+
+    // --- One name for every link -------------------------------------------
+    // The robot's own name -- the identity name bally_OS reports in its
+    // manifest, advertises over BLE, and puts in its USB descriptor. Links
+    // set to automatic (DeviceLink::autoTarget) are reached through it, so a
+    // robot is configured by typing one name and ticking the links it has.
+    // Persisted; empty = no automatic link can resolve.
+    QString robotName;
+    // DeviceLink::autoTarget for the primary link (the fields above).
+    bool autoTarget = false;
+};
+
+// Link 0 is the device's own transport fields, 1..N its extraLinks.
+int deviceLinkCount(const Device& device);
+DeviceLink deviceLinkAt(const Device& device, int index);
+// `device` with `link` copied over its transport fields (everything else --
+// identity, password, live state -- unchanged).
+Device deviceWithLink(const Device& device, const DeviceLink& link);
+// `device` as it is actually connected right now: its active link's
+// transport fields in place of the primary ones. The same Device when the
+// primary link is in use (or activeLink is out of range).
+Device effectiveDevice(const Device& device);
+// Whether `link` names something to dial at all (a port, a host, an
+// address, a parent + robot) -- an empty row in the table is skipped.
+bool deviceLinkConfigured(const DeviceLink& link);
+// Whether `a` and `b` dial the same thing (transport and target fields;
+// baud rate and the enabled/automatic flags aside).
+bool sameLinkTarget(const DeviceLink& a, const DeviceLink& b);
+// Whether the cycler may try `link` of `device`: enabled, and either
+// configured by hand or automatic with a robot name to resolve.
+bool deviceLinkUsable(const Device& device, const DeviceLink& link);
+
+// "Robo 2" -> "robo-2": the mDNS host label a robot of that name answers to
+// (lowercase letters, digits and '-', at most 63). Empty when nothing is left.
+QString mdnsHostFromName(const QString& name);
+
+// What an automatic link can be resolved against, gathered by MainWindow
+// from the live world: the serial ports (with their USB product names) and
+// every robot each connected hub currently reports.
+struct HubPeerSighting {
+    QString parentDeviceId;
+    HubPeer peer;
+};
+struct LinkDirectory {
+    QVector<SerialPortOption> ports;
+    QVector<HubPeerSighting> hubPeers;
+};
+
+// `link` with its target filled in from `robotName` when it is automatic
+// (see DeviceLink::autoTarget); returned unchanged otherwise. A target that
+// cannot be pinned down -- two ports report the name; no hub has that
+// robot, or two robots share the name -- comes back empty, which dials
+// nothing: guessing would connect to the wrong machine. A Serial link that
+// no port names falls back to the port it was last set to, when present.
+DeviceLink resolveLinkByName(const QString& robotName, const DeviceLink& link,
+                             const LinkDirectory& directory);
+// Whether resolving `link` needs the directory at all (a Serial or hub
+// channel link set to automatic).
+bool linkNeedsDirectory(const DeviceLink& link);
+// Every link's configuration (primary included), as one comparable blob --
+// what changes when the user edits HOW to reach the device, and nothing else
+// (not live state, not the name, not the password).
+QByteArray deviceLinksSignature(const Device& device);
+// "TCP 192.168.0.50:44300", "Serial COM5 @ 921600", "Hub 0x1A2B3C4D" --
+// one line for the connections table, the device card and status messages.
+// With `robotName`, an automatic link names what it resolves to by name.
+QString deviceLinkSummary(const DeviceLink& link, const QString& robotName = QString());
+
+// Decides, once per tick, which of a device's links MainWindow should be
+// dialing. Deliberately pure (no timers, no DeviceConnection) so the rule is
+// testable on its own (tests/test_device.cpp):
+//
+//   - while the link in use is live, or the user does not want this device
+//     connected, nothing moves (and the attempt clock restarts);
+//   - otherwise, once the link in use has had kAttemptMs to come up and has
+//     not, move on to the next usable link, wrapping around to the first.
+//
+// No preemption: a live fallback link is kept even when the primary would
+// be available again -- switching would drop a working session for a guess.
+class DeviceLinkCycler {
+public:
+    // Long enough for a BLE connect + GATT discovery + HELLO, and for a
+    // serial port's HELLO retries, to finish on a link that works.
+    static constexpr qint64 kAttemptMs = 10000;
+    // An automatic link whose name resolved to nothing (no port reports it,
+    // no hub has the robot) has nothing to dial: it only gets a couple of
+    // looks before the next link's turn.
+    static constexpr qint64 kUnresolvedAttemptMs = 2000;
+    // A link that already reported a failure this attempt (mDNS did not find
+    // the host, the BLE scan did not see the robot, the port would not open)
+    // is not going to come up by waiting out kAttemptMs: the next link gets
+    // its turn this soon after the attempt began.
+    static constexpr qint64 kFailedAttemptMs = 1000;
+
+    // `usable[i]`: link i can be tried (deviceLinkUsable). `unresolved`: the
+    // link in use is automatic and found no target this time.
+    // Returns the link to switch to, or -1 to stay on active().
+    int tick(const QVector<bool>& usable, bool wanted, bool live, qint64 nowMs,
+             bool unresolved = false) {
+        if (!wanted || live || m_attemptStartMs < 0) {
+            m_attemptStartMs = nowMs;
+            m_failed = false;
+            return -1;
+        }
+        const qint64 window =
+            unresolved ? kUnresolvedAttemptMs : (m_failed ? kFailedAttemptMs : kAttemptMs);
+        if (nowMs - m_attemptStartMs < window) {
+            return -1;
+        }
+        m_failed = false;
+        const int count = usable.size();
+        for (int step = 1; step <= count; ++step) {
+            const int candidate = (m_active + step) % count;
+            if (!usable.at(candidate)) {
+                continue;
+            }
+            m_attemptStartMs = nowMs;
+            if (candidate == m_active) {
+                return -1;  // the only usable link: keep retrying it
+            }
+            m_active = candidate;
+            return candidate;
+        }
+        m_attemptStartMs = nowMs;
+        return -1;
+    }
+
+    // An outside decision (the user edited the device, or pressed Connect):
+    // start over from `index` with a fresh attempt clock.
+    void restart(int index, qint64 nowMs) {
+        m_active = index;
+        m_attemptStartMs = nowMs;
+        m_failed = false;
+    }
+
+    // The link in use reported an error while not connected.
+    void markFailed() {
+        m_failed = true;
+    }
+
+    int active() const {
+        return m_active;
+    }
+
+private:
+    int m_active = 0;
+    qint64 m_attemptStartMs = -1;
+    bool m_failed = false;
 };
 
 // The BTP source_id a hub-channel device speaks as -- its own identity on the
@@ -363,7 +579,11 @@ enum class DeviceLinkState {
                     // data has stopped
 };
 
-inline DeviceLinkState deviceLinkState(const Device& device) {
+inline DeviceLinkState deviceLinkState(const Device& stored) {
+    // Judged by the link actually in use, not the primary one -- a device
+    // whose primary is TCP but is currently reached through a hub needs the
+    // hub-child rules below.
+    const Device device = effectiveDevice(stored);
     if (!device.connected) {
         return DeviceLinkState::Offline;
     }
