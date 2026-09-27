@@ -170,6 +170,7 @@ private:
     bool m_roundBottomRight = true;
 };
 
-Q_DECLARE_OPERATORS_FOR_FLAGS(DashboardWidget::HeaderControls)
-
 }  // namespace traceview
+
+// Outside the namespace, as Qt requires (see chartstyle.h).
+Q_DECLARE_OPERATORS_FOR_FLAGS(traceview::DashboardWidget::HeaderControls)
