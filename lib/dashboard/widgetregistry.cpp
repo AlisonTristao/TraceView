@@ -3,6 +3,8 @@
 #include <QCoreApplication>
 
 #include "dashboardwidget.h"
+#include "widgets/audiospectrumconfigeditor.h"
+#include "widgets/audiospectrumwidget.h"
 #include "widgets/chatconfigeditor.h"
 #include "widgets/chatwidget.h"
 #include "widgets/chartconfigeditor.h"
@@ -57,6 +59,12 @@ WidgetRegistry::WidgetRegistry() {
          [](QWidget* parent) -> DashboardWidget* { return new TextBoardWidget(parent); },
          [](QWidget* parent) -> WidgetConfigEditor* {
              return new TextBoardConfigEditor(parent);
+         }});
+    registerType(
+        {"audio_spectrum", QCoreApplication::translate("WidgetRegistry", "Audio Spectrum"),
+         [](QWidget* parent) -> DashboardWidget* { return new AudioSpectrumWidget(parent); },
+         [](QWidget* parent) -> WidgetConfigEditor* {
+             return new AudioSpectrumConfigEditor(parent);
          }});
     registerType({"chat", QCoreApplication::translate("WidgetRegistry", "Chat"),
                   [](QWidget* parent) -> DashboardWidget* { return new ChatWidget(parent); },

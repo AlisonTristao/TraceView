@@ -157,14 +157,6 @@
         <translation>--</translation>
     </message>
     <message>
-        <source>t</source>
-        <translation type="vanished">t</translation>
-    </message>
-    <message>
-        <source>k</source>
-        <translation type="vanished">k</translation>
-    </message>
-    <message>
         <location line="+1"/>
         <source>%1%2</source>
         <translation>%1%2</translation>
@@ -181,7 +173,7 @@
         <translation>%1: %2</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/chartpainting.cpp" line="+617"/>
+        <location filename="../lib/dashboard/widgets/chartpainting.cpp" line="+627"/>
         <source>Time (s)</source>
         <translation>Время (с)</translation>
     </message>
@@ -423,7 +415,7 @@
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="+131"/>
+        <location filename="../lib/core/mainwindow.cpp" line="+132"/>
         <source>TraceView Project (*.tvproj)</source>
         <translation>Проект TraceView (*.tvproj)</translation>
     </message>
@@ -751,7 +743,7 @@
 <context>
     <name>WidgetRegistry</name>
     <message>
-        <location filename="../lib/dashboard/widgetregistry.cpp" line="+32"/>
+        <location filename="../lib/dashboard/widgetregistry.cpp" line="+34"/>
         <source>Line Chart (dummy)</source>
         <translation>Линейный график (заглушка)</translation>
     </message>
@@ -779,6 +771,11 @@
         <location line="+6"/>
         <source>Text Board</source>
         <translation>Текстовое табло</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Audio Spectrum</source>
+        <translation>Аудиоспектр</translation>
     </message>
     <message>
         <location line="+5"/>
@@ -909,6 +906,145 @@
     </message>
 </context>
 <context>
+    <name>traceview::AudioPlayback</name>
+    <message>
+        <location filename="../lib/dashboard/widgets/audioplayback.cpp" line="+92"/>
+        <source>No audio output device</source>
+        <translation>Нет устройства вывода звука</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>The audio output reports no usable format</source>
+        <translation>Устройство вывода звука не сообщает пригодного формата</translation>
+    </message>
+    <message>
+        <location line="+12"/>
+        <source>The audio output could not start</source>
+        <translation>Не удалось запустить вывод звука</translation>
+    </message>
+</context>
+<context>
+    <name>traceview::AudioSpectrumConfigEditor</name>
+    <message>
+        <location filename="../lib/dashboard/widgets/audiospectrumconfigeditor.cpp" line="+29"/>
+        <source>(auto)</source>
+        <translation>(авто)</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Stream topic to play: blocks of samples with their rate and a block counter (BTPDevice Topics::stream()). Pick a reported topic or type its numeric id.</source>
+        <translation>Потоковый топик для воспроизведения: блоки отсчётов с частотой и счётчиком блоков (Topics::stream() в BTPDevice). Выберите объявленный топик или введите его числовой id.</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>Sample value that counts as full scale (0 dBFS). Filled from the field&apos;s declared range when a topic is picked.</source>
+        <translation>Значение отсчёта, считающееся полной шкалой (0 dBFS). Берётся из объявленного диапазона поля при выборе топика.</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>Device</source>
+        <translation>Устройство</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Source</source>
+        <translation>Источник</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Stream topic</source>
+        <translation>Потоковый топик</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Full scale</source>
+        <translation>Полная шкала</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Volume</source>
+        <translation>Громкость</translation>
+    </message>
+</context>
+<context>
+    <name>traceview::AudioSpectrumWidget</name>
+    <message>
+        <location filename="../lib/dashboard/widgets/audiospectrumwidget.cpp" line="+140"/>
+        <source>Play audio</source>
+        <translation>Воспроизводить звук</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>FFT size</source>
+        <translation>Размер БПФ</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>%1 points</source>
+        <translation>%1 точек</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Frequency axis</source>
+        <translation>Ось частот</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Logarithmic</source>
+        <translation>Логарифмическая</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Linear</source>
+        <translation>Линейная</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Peak hold</source>
+        <translation>Удержание пиков</translation>
+    </message>
+    <message>
+        <location line="+47"/>
+        <source>muted</source>
+        <translation>без звука</translation>
+    </message>
+    <message>
+        <location line="+145"/>
+        <source>Pick a stream topic in the properties</source>
+        <translation>Выберите потоковый топик в свойствах</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Waiting for audio...</source>
+        <translation>Ожидание звука...</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>%1 kHz</source>
+        <translation>%1 kHz</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>peak %1 Hz</source>
+        <translation>пик %1 Гц</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>%1 dBFS</source>
+        <translation>%1 dBFS</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>lost %1</source>
+        <translation>потеряно %1</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>paused</source>
+        <translation>пауза</translation>
+    </message>
+</context>
+<context>
     <name>traceview::BleDiscoveryService</name>
     <message>
         <location filename="../lib/core/blediscoveryservice.cpp" line="+45"/>
@@ -997,7 +1133,7 @@
         <translation>Робот 0x%1 в сети, но его каталог не пришёл — проверьте хаб (hub -manifest)</translation>
     </message>
     <message>
-        <location line="+91"/>
+        <location line="+93"/>
         <source>Robot 0x%1 rebooted — catalog and subscriptions refreshed</source>
         <translation>Робот 0x%1 перезагрузился — каталог и подписки обновлены</translation>
     </message>
@@ -2061,14 +2197,6 @@ Allowed: %1</source>
         <translation>ID этого устройства:</translation>
     </message>
     <message>
-        <source>Advanced</source>
-        <translation type="vanished">Дополнительно</translation>
-    </message>
-    <message>
-        <source>Every link as a table: the order they are tried in, baud rate, TCP port, and targets typed by hand.</source>
-        <translation type="vanished">Все подключения в виде таблицы: порядок попыток, скорость передачи, TCP-порт и адреса, введённые вручную.</translation>
-    </message>
-    <message>
         <location line="-54"/>
         <source>Card title:</source>
         <translation>Заголовок карточки:</translation>
@@ -2777,7 +2905,7 @@ Allowed: %1</source>
 <context>
     <name>traceview::MainWindow</name>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="+227"/>
+        <location filename="../lib/core/mainwindow.cpp" line="+235"/>
         <source>TraceView v%1</source>
         <translation>TraceView v%1</translation>
     </message>
@@ -2796,7 +2924,7 @@ Allowed: %1</source>
         <translation>, </translation>
     </message>
     <message>
-        <location line="+552"/>
+        <location line="+557"/>
         <source>Pending</source>
         <translation>Ожидание</translation>
     </message>
@@ -2912,10 +3040,6 @@ Drops: %2</source>
         <location line="+4"/>
         <source>&amp;Reset Panel Positions</source>
         <translation>Сбросить положение панелей (&amp;R)</translation>
-    </message>
-    <message>
-        <source>&amp;Theme</source>
-        <translation type="vanished">Тема (&amp;T)</translation>
     </message>
     <message>
         <location line="+10"/>
@@ -4532,14 +4656,6 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
 <context>
     <name>traceview::RobotLogWidget</name>
     <message>
-        <source>Clear</source>
-        <translation type="vanished">Очистить</translation>
-    </message>
-    <message>
-        <source>Clear this log</source>
-        <translation type="vanished">Очистить этот журнал</translation>
-    </message>
-    <message>
         <location filename="../lib/dashboard/widgets/robotlogwidget.cpp" line="+181"/>
         <source>(no device)</source>
         <translation>(нет устройства)</translation>
@@ -4598,14 +4714,6 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
 </context>
 <context>
     <name>traceview::SerialMonitorWidget</name>
-    <message>
-        <source>Clear</source>
-        <translation type="vanished">Очистить</translation>
-    </message>
-    <message>
-        <source>Clear this terminal</source>
-        <translation type="vanished">Очистить этот терминал</translation>
-    </message>
     <message>
         <location filename="../lib/dashboard/widgets/serialmonitorwidget.cpp" line="+167"/>
         <source>(no device)</source>
@@ -4703,25 +4811,9 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>Подключать настроенные устройства при открытии проекта</translation>
     </message>
     <message>
-        <source>Theme and typeface changes apply immediately. Changing the language is saved for the next start.</source>
-        <translation type="vanished">Смена темы и шрифта применяется сразу. Смена языка сохраняется до следующего запуска.</translation>
-    </message>
-    <message>
         <location line="+11"/>
         <source>Application appearance</source>
         <translation>Внешний вид приложения</translation>
-    </message>
-    <message>
-        <source>Theme</source>
-        <translation type="vanished">Тема</translation>
-    </message>
-    <message>
-        <source>Palette, chart style and typeface changes apply immediately. Changing the language is saved for the next start.</source>
-        <translation type="vanished">Палитра, стиль графиков и шрифт меняются сразу. Смена языка сохраняется до следующего запуска.</translation>
-    </message>
-    <message>
-        <source>Palette, frame, chart style and typeface changes apply immediately. Changing the language is saved for the next start.</source>
-        <translation type="vanished">Палитра, рамка, стиль графиков и шрифт меняются сразу. Смена языка сохраняется до следующего запуска.</translation>
     </message>
     <message>
         <location filename="../lib/core/appearancecatalog.cpp" line="-77"/>

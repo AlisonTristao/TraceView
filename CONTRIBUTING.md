@@ -36,8 +36,8 @@ Common requirements:
 
 - CMake 3.21 or newer and Ninja;
 - a C and C++ compiler with C++17 support;
-- Qt 6 with Widgets, Network, SerialPort, Qml, LinguistTools and, while tests are
-  enabled, Test;
+- Qt 6 with Widgets, Network, SerialPort, Qml, Multimedia, LinguistTools and, while
+  tests are enabled, Test;
 - Python 3.9 or newer only for the contributor scripts under `scripts/` (see "Project
   scripts" below).
 
@@ -95,7 +95,7 @@ Install the compiler, Qt development modules and the native hidapi backends:
 ```sh
 sudo apt update
 sudo apt install git cmake ninja-build build-essential pkg-config python3 \
-    qt6-base-dev qt6-declarative-dev qt6-svg-dev qt6-serialport-dev qt6-tools-dev qt6-l10n-tools qt6-wayland \
+    qt6-base-dev qt6-declarative-dev qt6-svg-dev qt6-serialport-dev qt6-multimedia-dev qt6-tools-dev qt6-l10n-tools qt6-wayland \
     libudev-dev libusb-1.0-0-dev
 
 cmake --preset linux-ninja

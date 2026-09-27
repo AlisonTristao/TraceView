@@ -7,6 +7,23 @@ release flow.
 
 ## [Unreleased]
 
+### Added
+
+- **Audio Spectrum** widget: plays a stream topic (blocks of samples with
+  their rate and a block counter, as BTPDevice's `Topics::stream()` sends
+  them) on the default audio output and shows its live FFT, on a log or
+  linear frequency axis with peak hold. FFT size, sound on/off and peak
+  hold are in the header gear menu; the topic, full scale and volume in the
+  properties. Lost blocks are played as silence and counted on screen.
+
+### Changed
+
+- An array field longer than 64 elements no longer arrives one element at a
+  time: it comes whole (the new `Backend::arraySample()`), so a stream of
+  audio blocks does not flood charts, the telemetry history and device
+  scripts. Shorter arrays behave as before.
+- Building now needs the Qt Multimedia module.
+
 ## [4.8.1] - 2026-09-27
 
 ### Fixed

@@ -157,14 +157,6 @@
         <translation>--</translation>
     </message>
     <message>
-        <source>t</source>
-        <translation type="vanished">t</translation>
-    </message>
-    <message>
-        <source>k</source>
-        <translation type="vanished">k</translation>
-    </message>
-    <message>
         <location line="+1"/>
         <source>%1%2</source>
         <translation>%1%2</translation>
@@ -181,7 +173,7 @@
         <translation>%1: %2</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/chartpainting.cpp" line="+617"/>
+        <location filename="../lib/dashboard/widgets/chartpainting.cpp" line="+627"/>
         <source>Time (s)</source>
         <translation>時間 (s)</translation>
     </message>
@@ -423,7 +415,7 @@
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="+131"/>
+        <location filename="../lib/core/mainwindow.cpp" line="+132"/>
         <source>TraceView Project (*.tvproj)</source>
         <translation>TraceView プロジェクト (*.tvproj)</translation>
     </message>
@@ -751,7 +743,7 @@
 <context>
     <name>WidgetRegistry</name>
     <message>
-        <location filename="../lib/dashboard/widgetregistry.cpp" line="+32"/>
+        <location filename="../lib/dashboard/widgetregistry.cpp" line="+34"/>
         <source>Line Chart (dummy)</source>
         <translation>折れ線グラフ(ダミー)</translation>
     </message>
@@ -779,6 +771,11 @@
         <location line="+6"/>
         <source>Text Board</source>
         <translation>テキストボード</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Audio Spectrum</source>
+        <translation>オーディオスペクトラム</translation>
     </message>
     <message>
         <location line="+5"/>
@@ -909,6 +906,145 @@
     </message>
 </context>
 <context>
+    <name>traceview::AudioPlayback</name>
+    <message>
+        <location filename="../lib/dashboard/widgets/audioplayback.cpp" line="+92"/>
+        <source>No audio output device</source>
+        <translation>オーディオ出力デバイスがありません</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>The audio output reports no usable format</source>
+        <translation>オーディオ出力に使用できるフォーマットがありません</translation>
+    </message>
+    <message>
+        <location line="+12"/>
+        <source>The audio output could not start</source>
+        <translation>オーディオ出力を開始できませんでした</translation>
+    </message>
+</context>
+<context>
+    <name>traceview::AudioSpectrumConfigEditor</name>
+    <message>
+        <location filename="../lib/dashboard/widgets/audiospectrumconfigeditor.cpp" line="+29"/>
+        <source>(auto)</source>
+        <translation>(自動)</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Stream topic to play: blocks of samples with their rate and a block counter (BTPDevice Topics::stream()). Pick a reported topic or type its numeric id.</source>
+        <translation>再生するストリームトピック：サンプルレートとブロックカウンタ付きのサンプルブロック（BTPDevice の Topics::stream()）。報告済みのトピックを選ぶか、数値 ID を入力してください。</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>Sample value that counts as full scale (0 dBFS). Filled from the field&apos;s declared range when a topic is picked.</source>
+        <translation>フルスケール（0 dBFS）とみなすサンプル値。トピックを選ぶとフィールドの宣言範囲から入力されます。</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>Device</source>
+        <translation>デバイス</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Source</source>
+        <translation>ソース</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Stream topic</source>
+        <translation>ストリームトピック</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Full scale</source>
+        <translation>フルスケール</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Volume</source>
+        <translation>音量</translation>
+    </message>
+</context>
+<context>
+    <name>traceview::AudioSpectrumWidget</name>
+    <message>
+        <location filename="../lib/dashboard/widgets/audiospectrumwidget.cpp" line="+140"/>
+        <source>Play audio</source>
+        <translation>音声を再生</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>FFT size</source>
+        <translation>FFT サイズ</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>%1 points</source>
+        <translation>%1 ポイント</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Frequency axis</source>
+        <translation>周波数軸</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Logarithmic</source>
+        <translation>対数</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Linear</source>
+        <translation>リニア</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Peak hold</source>
+        <translation>ピークホールド</translation>
+    </message>
+    <message>
+        <location line="+47"/>
+        <source>muted</source>
+        <translation>ミュート</translation>
+    </message>
+    <message>
+        <location line="+145"/>
+        <source>Pick a stream topic in the properties</source>
+        <translation>プロパティでストリームトピックを選んでください</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Waiting for audio...</source>
+        <translation>音声を待っています...</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>%1 kHz</source>
+        <translation>%1 kHz</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>peak %1 Hz</source>
+        <translation>ピーク %1 Hz</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>%1 dBFS</source>
+        <translation>%1 dBFS</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>lost %1</source>
+        <translation>損失 %1</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>paused</source>
+        <translation>一時停止中</translation>
+    </message>
+</context>
+<context>
     <name>traceview::BleDiscoveryService</name>
     <message>
         <location filename="../lib/core/blediscoveryservice.cpp" line="+45"/>
@@ -997,7 +1133,7 @@
         <translation>ロボット 0x%1 はオンラインですが、カタログが届いていません — ハブを確認してください (hub -manifest)</translation>
     </message>
     <message>
-        <location line="+91"/>
+        <location line="+93"/>
         <source>Robot 0x%1 rebooted — catalog and subscriptions refreshed</source>
         <translation>ロボット 0x%1 が再起動しました — カタログと購読を更新しました</translation>
     </message>
@@ -2061,14 +2197,6 @@ Allowed: %1</source>
         <translation>このデバイスの ID:</translation>
     </message>
     <message>
-        <source>Advanced</source>
-        <translation type="vanished">詳細設定</translation>
-    </message>
-    <message>
-        <source>Every link as a table: the order they are tried in, baud rate, TCP port, and targets typed by hand.</source>
-        <translation type="vanished">すべての接続を表で表示: 試行順、ボーレート、TCP ポート、手入力した接続先。</translation>
-    </message>
-    <message>
         <location line="-54"/>
         <source>Card title:</source>
         <translation>カードのタイトル:</translation>
@@ -2777,7 +2905,7 @@ Allowed: %1</source>
 <context>
     <name>traceview::MainWindow</name>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="+227"/>
+        <location filename="../lib/core/mainwindow.cpp" line="+235"/>
         <source>TraceView v%1</source>
         <translation>TraceView v%1</translation>
     </message>
@@ -2794,7 +2922,7 @@ Allowed: %1</source>
         <translation>、</translation>
     </message>
     <message>
-        <location line="+552"/>
+        <location line="+557"/>
         <source>Pending</source>
         <translation>保留中</translation>
     </message>
@@ -2910,10 +3038,6 @@ Drops: %2</source>
         <location line="+4"/>
         <source>&amp;Reset Panel Positions</source>
         <translation>パネル位置をリセット(&amp;R)</translation>
-    </message>
-    <message>
-        <source>&amp;Theme</source>
-        <translation type="vanished">テーマ(&amp;T)</translation>
     </message>
     <message>
         <location line="+10"/>
@@ -4530,14 +4654,6 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
 <context>
     <name>traceview::RobotLogWidget</name>
     <message>
-        <source>Clear</source>
-        <translation type="vanished">クリア</translation>
-    </message>
-    <message>
-        <source>Clear this log</source>
-        <translation type="vanished">このログをクリア</translation>
-    </message>
-    <message>
         <location filename="../lib/dashboard/widgets/robotlogwidget.cpp" line="+181"/>
         <source>(no device)</source>
         <translation>(デバイスなし)</translation>
@@ -4596,14 +4712,6 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
 </context>
 <context>
     <name>traceview::SerialMonitorWidget</name>
-    <message>
-        <source>Clear</source>
-        <translation type="vanished">クリア</translation>
-    </message>
-    <message>
-        <source>Clear this terminal</source>
-        <translation type="vanished">このターミナルをクリア</translation>
-    </message>
     <message>
         <location filename="../lib/dashboard/widgets/serialmonitorwidget.cpp" line="+167"/>
         <source>(no device)</source>
@@ -4701,25 +4809,9 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>プロジェクトを開いたときに設定済みデバイスに接続する</translation>
     </message>
     <message>
-        <source>Theme and typeface changes apply immediately. Changing the language is saved for the next start.</source>
-        <translation type="vanished">テーマとフォントの変更はすぐに適用されます。言語の変更は次回起動時に反映されます。</translation>
-    </message>
-    <message>
         <location line="+11"/>
         <source>Application appearance</source>
         <translation>アプリケーションの外観</translation>
-    </message>
-    <message>
-        <source>Theme</source>
-        <translation type="vanished">テーマ</translation>
-    </message>
-    <message>
-        <source>Palette, chart style and typeface changes apply immediately. Changing the language is saved for the next start.</source>
-        <translation type="vanished">パレット、グラフのスタイル、フォントの変更はすぐに反映されます。言語の変更は次回起動時に適用されます。</translation>
-    </message>
-    <message>
-        <source>Palette, frame, chart style and typeface changes apply immediately. Changing the language is saved for the next start.</source>
-        <translation type="vanished">パレット、枠、グラフのスタイル、フォントの変更はすぐに反映されます。言語の変更は次回起動時に適用されます。</translation>
     </message>
     <message>
         <location filename="../lib/core/appearancecatalog.cpp" line="-77"/>

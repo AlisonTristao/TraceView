@@ -389,6 +389,8 @@ BtpBackend::BtpBackend(BtpSession::Framing framing, const btp::TransportLimits& 
             &TelemetryFieldRouter::onTelemetrySample);
     connect(m_telemetryFieldRouter, &TelemetryFieldRouter::fieldSample, this,
             &Backend::fieldSample);
+    connect(m_telemetryFieldRouter, &TelemetryFieldRouter::arraySample, this,
+            &Backend::arraySample);
     connect(m_telemetryFieldRouter, &TelemetryFieldRouter::textSample, this,
             &Backend::textSample);
     connect(m_telemetryFieldRouter, &TelemetryFieldRouter::binarySample, this,

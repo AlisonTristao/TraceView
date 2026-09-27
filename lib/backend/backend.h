@@ -121,6 +121,11 @@ signals:
     // One decoded telemetry value for `binding`, with its origin timestamp.
     void fieldSample(const traceview::TelemetryFieldBinding& binding, quint64 timestampUs,
                      double value);
+    // One array field, whole (TelemetryFieldRouter::arraySample()): the only
+    // way an array longer than TelemetryFieldRouter::kMaxFannedArrayElements
+    // arrives, e.g. a block of an audio stream.
+    void arraySample(const traceview::TelemetryFieldBinding& binding, quint64 timestampUs,
+                     const QVector<float>& values);
     // One complete UTF8 telemetry document. Unlike fieldSample(), textual
     // telemetry is identified by its topic as a whole (it has no field id).
     void textSample(quint32 sourceId, quint16 topicId, quint64 timestampUs,

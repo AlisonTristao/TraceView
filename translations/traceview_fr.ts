@@ -157,14 +157,6 @@
         <translation>--</translation>
     </message>
     <message>
-        <source>t</source>
-        <translation type="vanished">t</translation>
-    </message>
-    <message>
-        <source>k</source>
-        <translation type="vanished">k</translation>
-    </message>
-    <message>
         <location line="+1"/>
         <source>%1%2</source>
         <translation>%1%2</translation>
@@ -181,7 +173,7 @@
         <translation>%1: %2</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/chartpainting.cpp" line="+617"/>
+        <location filename="../lib/dashboard/widgets/chartpainting.cpp" line="+627"/>
         <source>Time (s)</source>
         <translation>Temps (s)</translation>
     </message>
@@ -423,7 +415,7 @@
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="+131"/>
+        <location filename="../lib/core/mainwindow.cpp" line="+132"/>
         <source>TraceView Project (*.tvproj)</source>
         <translation>Projet TraceView (*.tvproj)</translation>
     </message>
@@ -751,7 +743,7 @@
 <context>
     <name>WidgetRegistry</name>
     <message>
-        <location filename="../lib/dashboard/widgetregistry.cpp" line="+32"/>
+        <location filename="../lib/dashboard/widgetregistry.cpp" line="+34"/>
         <source>Line Chart (dummy)</source>
         <translation>Graphique en ligne (factice)</translation>
     </message>
@@ -779,6 +771,11 @@
         <location line="+6"/>
         <source>Text Board</source>
         <translation>Tableau de Texte</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Audio Spectrum</source>
+        <translation>Spectre audio</translation>
     </message>
     <message>
         <location line="+5"/>
@@ -909,6 +906,145 @@
     </message>
 </context>
 <context>
+    <name>traceview::AudioPlayback</name>
+    <message>
+        <location filename="../lib/dashboard/widgets/audioplayback.cpp" line="+92"/>
+        <source>No audio output device</source>
+        <translation>Aucun périphérique de sortie audio</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>The audio output reports no usable format</source>
+        <translation>La sortie audio ne propose aucun format utilisable</translation>
+    </message>
+    <message>
+        <location line="+12"/>
+        <source>The audio output could not start</source>
+        <translation>Impossible de démarrer la sortie audio</translation>
+    </message>
+</context>
+<context>
+    <name>traceview::AudioSpectrumConfigEditor</name>
+    <message>
+        <location filename="../lib/dashboard/widgets/audiospectrumconfigeditor.cpp" line="+29"/>
+        <source>(auto)</source>
+        <translation>(auto)</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Stream topic to play: blocks of samples with their rate and a block counter (BTPDevice Topics::stream()). Pick a reported topic or type its numeric id.</source>
+        <translation>Topic de flux à lire : blocs d&apos;échantillons avec leur fréquence et un compteur de blocs (Topics::stream() de BTPDevice). Choisissez un topic annoncé ou saisissez son id numérique.</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>Sample value that counts as full scale (0 dBFS). Filled from the field&apos;s declared range when a topic is picked.</source>
+        <translation>Valeur d&apos;échantillon considérée comme pleine échelle (0 dBFS). Reprise de la plage déclarée du champ quand un topic est choisi.</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>Device</source>
+        <translation>Appareil</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Source</source>
+        <translation>Source</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Stream topic</source>
+        <translation>Topic de flux</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Full scale</source>
+        <translation>Pleine échelle</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Volume</source>
+        <translation>Volume</translation>
+    </message>
+</context>
+<context>
+    <name>traceview::AudioSpectrumWidget</name>
+    <message>
+        <location filename="../lib/dashboard/widgets/audiospectrumwidget.cpp" line="+140"/>
+        <source>Play audio</source>
+        <translation>Lire l&apos;audio</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>FFT size</source>
+        <translation>Taille de la FFT</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>%1 points</source>
+        <translation>%1 points</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Frequency axis</source>
+        <translation>Axe des fréquences</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Logarithmic</source>
+        <translation>Logarithmique</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Linear</source>
+        <translation>Linéaire</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Peak hold</source>
+        <translation>Maintien des crêtes</translation>
+    </message>
+    <message>
+        <location line="+47"/>
+        <source>muted</source>
+        <translation>muet</translation>
+    </message>
+    <message>
+        <location line="+145"/>
+        <source>Pick a stream topic in the properties</source>
+        <translation>Choisissez un topic de flux dans les propriétés</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Waiting for audio...</source>
+        <translation>En attente de l&apos;audio...</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>%1 kHz</source>
+        <translation>%1 kHz</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>peak %1 Hz</source>
+        <translation>crête %1 Hz</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>%1 dBFS</source>
+        <translation>%1 dBFS</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>lost %1</source>
+        <translation>perdus %1</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>paused</source>
+        <translation>en pause</translation>
+    </message>
+</context>
+<context>
     <name>traceview::BleDiscoveryService</name>
     <message>
         <location filename="../lib/core/blediscoveryservice.cpp" line="+45"/>
@@ -997,7 +1133,7 @@
         <translation>Le robot 0x%1 est en ligne mais son catalogue n&apos;est pas arrivé — vérifiez le hub (hub -manifest)</translation>
     </message>
     <message>
-        <location line="+91"/>
+        <location line="+93"/>
         <source>Robot 0x%1 rebooted — catalog and subscriptions refreshed</source>
         <translation>Le robot 0x%1 a redémarré — catalogue et abonnements actualisés</translation>
     </message>
@@ -2061,14 +2197,6 @@ Autorisés : %1</translation>
         <translation>ID de cet appareil :</translation>
     </message>
     <message>
-        <source>Advanced</source>
-        <translation type="vanished">Avancé</translation>
-    </message>
-    <message>
-        <source>Every link as a table: the order they are tried in, baud rate, TCP port, and targets typed by hand.</source>
-        <translation type="vanished">Toutes les connexions sous forme de tableau : l&apos;ordre dans lequel elles sont essayées, le débit en bauds, le port TCP et les cibles saisies à la main.</translation>
-    </message>
-    <message>
         <location line="-54"/>
         <source>Card title:</source>
         <translation>Titre de la carte :</translation>
@@ -2777,7 +2905,7 @@ Autorisés : %1</translation>
 <context>
     <name>traceview::MainWindow</name>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="+227"/>
+        <location filename="../lib/core/mainwindow.cpp" line="+235"/>
         <source>TraceView v%1</source>
         <translation>TraceView v%1</translation>
     </message>
@@ -2795,7 +2923,7 @@ Autorisés : %1</translation>
         <translation>, </translation>
     </message>
     <message>
-        <location line="+552"/>
+        <location line="+557"/>
         <source>Pending</source>
         <translation>En attente</translation>
     </message>
@@ -2911,10 +3039,6 @@ Pertes : %2</translation>
         <location line="+4"/>
         <source>&amp;Reset Panel Positions</source>
         <translation>&amp;Réinitialiser la position des panneaux</translation>
-    </message>
-    <message>
-        <source>&amp;Theme</source>
-        <translation type="vanished">&amp;Thème</translation>
     </message>
     <message>
         <location line="+10"/>
@@ -4531,14 +4655,6 @@ Choisissez Plus tard pour continuer à travailler -- les modifications s&apos;ap
 <context>
     <name>traceview::RobotLogWidget</name>
     <message>
-        <source>Clear</source>
-        <translation type="vanished">Effacer</translation>
-    </message>
-    <message>
-        <source>Clear this log</source>
-        <translation type="vanished">Effacer ce journal</translation>
-    </message>
-    <message>
         <location filename="../lib/dashboard/widgets/robotlogwidget.cpp" line="+181"/>
         <source>(no device)</source>
         <translation>(aucun appareil)</translation>
@@ -4597,14 +4713,6 @@ Choisissez Plus tard pour continuer à travailler -- les modifications s&apos;ap
 </context>
 <context>
     <name>traceview::SerialMonitorWidget</name>
-    <message>
-        <source>Clear</source>
-        <translation type="vanished">Effacer</translation>
-    </message>
-    <message>
-        <source>Clear this terminal</source>
-        <translation type="vanished">Effacer ce terminal</translation>
-    </message>
     <message>
         <location filename="../lib/dashboard/widgets/serialmonitorwidget.cpp" line="+167"/>
         <source>(no device)</source>
@@ -4702,25 +4810,9 @@ Choisissez Plus tard pour continuer à travailler -- les modifications s&apos;ap
         <translation>Connecter les appareils configurés à l&apos;ouverture d&apos;un projet</translation>
     </message>
     <message>
-        <source>Theme and typeface changes apply immediately. Changing the language is saved for the next start.</source>
-        <translation type="vanished">Les changements de thème et de police s&apos;appliquent immédiatement. Le changement de langue est enregistré pour le prochain démarrage.</translation>
-    </message>
-    <message>
         <location line="+11"/>
         <source>Application appearance</source>
         <translation>Apparence de l&apos;application</translation>
-    </message>
-    <message>
-        <source>Theme</source>
-        <translation type="vanished">Thème</translation>
-    </message>
-    <message>
-        <source>Palette, chart style and typeface changes apply immediately. Changing the language is saved for the next start.</source>
-        <translation type="vanished">Les changements de palette, de style des graphiques et de police s&apos;appliquent immédiatement. Le changement de langue est enregistré pour le prochain démarrage.</translation>
-    </message>
-    <message>
-        <source>Palette, frame, chart style and typeface changes apply immediately. Changing the language is saved for the next start.</source>
-        <translation type="vanished">Les changements de palette, de cadre, de style des graphiques et de police s&apos;appliquent immédiatement. Le changement de langue est enregistré pour le prochain démarrage.</translation>
     </message>
     <message>
         <location filename="../lib/core/appearancecatalog.cpp" line="-77"/>

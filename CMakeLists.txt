@@ -102,7 +102,9 @@ endif()
 # buttons, settings categories, dashboard cell header controls) is an SVG
 # resource (resources/icons/ui.qrc) rendered via QSvgRenderer and tinted to
 # the active theme color at runtime, instead of hand-drawn with QPainter.
-set(TRACEVIEW_QT_COMPONENTS Widgets Network Qml Svg LinguistTools)
+# Multimedia plays a stream topic's samples (the Audio Spectrum widget,
+# lib/dashboard/widgets/audioplayback.h) through QAudioSink.
+set(TRACEVIEW_QT_COMPONENTS Widgets Network Qml Svg Multimedia LinguistTools)
 # Android's serial transport goes through the USB Host API instead (see
 # lib/CMakeLists.txt) -- Qt ships no QSerialPort backend for it.
 if(TRACEVIEW_ENABLE_SERIAL AND NOT ANDROID)
