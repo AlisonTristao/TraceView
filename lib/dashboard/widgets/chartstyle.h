@@ -289,7 +289,6 @@ enum class ChartViewFeature : quint32 {
     GaugeShape = 1u << 12,
 };
 Q_DECLARE_FLAGS(ChartViewFeatures, ChartViewFeature)
-Q_DECLARE_OPERATORS_FOR_FLAGS(ChartViewFeatures)
 
 // The gear menu for a chart kind offering `features`, in a fixed order:
 // style, then axis options, then legend, then data overlays, then
@@ -298,3 +297,8 @@ QVector<WidgetViewOption> chartViewOptionList(const ChartViewOptions& options,
                                               ChartViewFeatures features);
 
 }  // namespace traceview
+
+// Outside the namespace, as Qt requires: inside it, the global operator|
+// it declares hides Qt's own operators (Qt 6.2 resolves Qt::CTRL | Qt::Key_1
+// to int instead of QKeyCombination in any file including this header).
+Q_DECLARE_OPERATORS_FOR_FLAGS(traceview::ChartViewFeatures)

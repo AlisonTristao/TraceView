@@ -7,6 +7,13 @@ release flow.
 
 ## [Unreleased]
 
+## [4.8.1] - 2026-09-27
+
+### Fixed
+
+- The Linux AppImage failed to build on Ubuntu 22.04 (Qt 6.2), so 4.8.0
+  shipped without it.
+
 ## [4.8.0] - 2026-09-26
 
 ### Added
