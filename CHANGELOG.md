@@ -7,6 +7,8 @@ release flow.
 
 ## [Unreleased]
 
+## [4.9.0] - 2026-09-28
+
 ### Added
 
 - **Audio Analyzer** widget: plays a stream topic (blocks of samples with
