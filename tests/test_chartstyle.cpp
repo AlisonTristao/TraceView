@@ -44,6 +44,7 @@ private slots:
     void dataRangePrefersDeclaredRanges();
     void timeAxisRunsFromOldestToNow();
     void optionListOnlyOffersSupportedFeatures();
+    void infoItemsAndMarkersRoundTrip();
 };
 
 void TestChartStyle::styleIdsRoundTrip() {
@@ -294,6 +295,41 @@ void TestChartStyle::optionListOnlyOffersSupportedFeatures() {
     QVERIFY(line[1].startsSection);  // xAxisTitle opens the axis group
     QVERIFY(line[2].startsSection);  // lastValue opens the overlay group
     QVERIFY(line[3].startsSection);
+}
+
+void TestChartStyle::infoItemsAndMarkersRoundTrip() {
+    // Defaults: the window readouts, no markers.
+    const ChartViewOptions defaults = parseChartViewOptions(QJsonObject());
+    QCOMPARE(defaults.infoItems,
+             QStringList({QStringLiteral("rate"), QStringLiteral("samples"),
+                          QStringLiteral("span")}));
+    QVERIFY(!defaults.rangeMarkers);
+
+    // Picked out of order and with an unknown id: kept in menu order, the
+    // unknown one dropped.
+    ChartViewOptions options = withChartViewOption(
+        defaults, QStringLiteral("infoItems"),
+        QStringList({QStringLiteral("rms"), QStringLiteral("bogus"), QStringLiteral("min")}));
+    options = withChartViewOption(options, QStringLiteral("markers"), true);
+    QCOMPARE(options.infoItems, QStringList({QStringLiteral("min"), QStringLiteral("rms")}));
+
+    const ChartViewOptions back = parseChartViewOptions(chartViewOptionsToJson(options));
+    QCOMPARE(back.infoItems, options.infoItems);
+    QVERIFY(back.rangeMarkers);
+
+    // Offered as one multi-choice entry, only with the feature.
+    const QVector<WidgetViewOption> list =
+        chartViewOptionList(options, ChartViewFeature::InfoRow | ChartViewFeature::InfoItems);
+    bool found = false;
+    for (const WidgetViewOption& option : list) {
+        if (option.id == QLatin1String("infoItems")) {
+            found = true;
+            QCOMPARE(option.kind, WidgetViewOption::Kind::MultiChoice);
+            QCOMPARE(option.value.toStringList(), options.infoItems);
+            QCOMPARE(option.choices.size(), 10);
+        }
+    }
+    QVERIFY(found);
 }
 
 QTEST_MAIN(TestChartStyle)

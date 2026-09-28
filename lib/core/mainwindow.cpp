@@ -57,6 +57,7 @@
 #include "dashboard/dashboardgrid.h"
 #include "dashboard/widgetconfigeditor.h"
 #include "dashboard/widgetregistry.h"
+#include "dashboard/widgets/audiostreamwidget.h"
 #include "dashboard/widgets/chartwidgets.h"
 #include "dashboard/widgets/textboardwidget.h"
 #include "debugchartswindow.h"
@@ -179,6 +180,9 @@ constexpr bool kUsesCompactChrome =
 // only ever shows the newest value), so it requests a modest fixed rate
 // instead of inventing a config field for it.
 constexpr quint32 kGaugeRequestedRateMillihz = 5000;  // 5 Hz
+// What an Audio Spectrum widget asks for. A stream topic is not sampled --
+// the device sends every block while subscribed -- so this is nominal.
+constexpr quint32 kStreamRequestedRateMillihz = 1000;  // 1 Hz
 // Fallback for a chart whose configured sample time is unusable (<= 0).
 constexpr quint32 kDefaultRequestedRateMillihz = 10000;  // 10 Hz
 
@@ -242,6 +246,11 @@ WidgetTopicRequest widgetTopicRequest(DashboardWidget* widget, DashboardGrid* gr
         const TextBoardConfig& config = board->config();
         request = {deviceId, config.sourceId, config.topicId,
                    requestedRateMillihzFor(config.sampleTimeMs)};
+    } else if (auto* audio = dynamic_cast<AudioStreamWidget*>(widget)) {
+        // A stream has no rate to ask for: the device sends every block
+        // while the subscription lasts.
+        const AudioSpectrumConfig& config = audio->config();
+        request = {deviceId, config.sourceId, config.topicId, kStreamRequestedRateMillihz};
     } else {
         return {};
     }
@@ -831,7 +840,7 @@ void MainWindow::showStatusMessage(const QString& text, int timeoutMs) {
 
 void MainWindow::wireChartWidgetToTelemetry(DashboardWidget* widget) {
     if (!dynamic_cast<ChartWidgetBase*>(widget) && !dynamic_cast<DummyGaugeWidget*>(widget) &&
-        !dynamic_cast<TextBoardWidget*>(widget)) {
+        !dynamic_cast<TextBoardWidget*>(widget) && !dynamic_cast<AudioStreamWidget*>(widget)) {
         return;
     }
 
@@ -890,6 +899,11 @@ void MainWindow::refreshWidgetSubscription(DashboardWidget* widget) {
                     &TextBoardWidget::onTextSample);
             connect(newConnection->backend(), &Backend::binarySample, board,
                     &TextBoardWidget::onBinarySample);
+        } else if (auto* audio = dynamic_cast<AudioStreamWidget*>(widget)) {
+            connect(newConnection->backend(), &Backend::fieldSample, audio,
+                    &AudioStreamWidget::onFieldSample);
+            connect(newConnection->backend(), &Backend::arraySample, audio,
+                    &AudioStreamWidget::onArraySample);
         }
     }
 

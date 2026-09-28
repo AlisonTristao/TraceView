@@ -7,6 +7,48 @@ release flow.
 
 ## [Unreleased]
 
+### Added
+
+- **Audio Analyzer** widget: plays a stream topic (blocks of samples with
+  their rate and a block counter, as BTPDevice's `Topics::stream()` sends
+  them) on the default audio output and shows it as a **Spectrum** or a
+  **Spectrogram** ("View:" in the gear menu; switching is instant, both
+  keep running). The topic, full scale and volume are in the properties;
+  sound on/off, FFT size and log/linear frequency axis in the gear menu.
+  Lost blocks are played as silence and counted on screen. Laid out like
+  the line chart, with the same gear options (style, axis titles and
+  values, hover crosshair, info row).
+  - Spectrum: the live FFT with peak hold, in dBFS or linear amplitude (a
+    full-scale sine is 1.0), optional filled area, Y ticks and line width.
+  - Spectrogram: a scrolling time x frequency picture colored by level,
+    newest on the right. History (5 to 60 s), level floor and color map
+    (Inferno, Viridis, theme accent); a color scale right of the plot reads
+    the colors back as dBFS.
+- Line chart: two new gear options, **Show info row** (sample rate, window
+  fill and span above the legend) and **Fill area under the line**. Both
+  are off for existing charts; the audio widgets offer the same toggles, on
+  by default. Info row numbers sit in fixed-width slots, so the row no
+  longer shifts as values change.
+- Line chart info row: pick what it shows from **Info row values** in the
+  gear menu: sample rate, samples in window and window span, and per series
+  minimum, maximum, peak to peak, peak, mean, median and RMS (one aligned
+  row per series). **Range markers (A/B)** add two draggable lines; the
+  statistics are then taken between them instead of over the whole window.
+  The Audio Analyzer offers the values too, as statistics of the audio
+  signal (levels in full-scale units, peak and RMS in dBFS), and in its
+  spectrogram view the markers over its time axis.
+- The Debug window shows the Audio Analyzer in both views on a synthetic
+  stream (a
+  sweeping chirp over a 440 Hz tone); the chat is left out of it for now.
+
+### Changed
+
+- An array field longer than 64 elements no longer arrives one element at a
+  time: it comes whole (the new `Backend::arraySample()`), so a stream of
+  audio blocks does not flood charts, the telemetry history and device
+  scripts. Shorter arrays behave as before.
+- Building now needs the Qt Multimedia module.
+
 ## [4.8.1] - 2026-09-27
 
 ### Fixed

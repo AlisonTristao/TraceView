@@ -293,6 +293,16 @@ add_library(traceview_dashboard STATIC
     dashboard/widgetviewoption.h
     dashboard/widgetconfigeditor.cpp
     dashboard/widgetconfigeditor.h
+    dashboard/widgets/audioplayback.cpp
+    dashboard/widgets/audioplayback.h
+    dashboard/widgets/audioanalyzerwidget.cpp
+    dashboard/widgets/audioanalyzerwidget.h
+    dashboard/widgets/audiospectrumconfigeditor.cpp
+    dashboard/widgets/audiospectrumconfigeditor.h
+    dashboard/widgets/audiostream.cpp
+    dashboard/widgets/audiostream.h
+    dashboard/widgets/audiostreamwidget.cpp
+    dashboard/widgets/audiostreamwidget.h
     dashboard/widgets/chartconfigeditor.cpp
     dashboard/widgets/chartconfigeditor.h
     dashboard/widgets/chartdata.cpp
@@ -355,6 +365,8 @@ target_link_libraries(traceview_dashboard
         Qt6::Widgets
         traceview_protocol
     PRIVATE
+        # The Audio Spectrum widget's sound output (widgets/audioplayback.h).
+        Qt6::Multimedia
         traceview_theme
         traceview_preferences
 )

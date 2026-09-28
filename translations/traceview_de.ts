@@ -127,7 +127,7 @@
 <context>
     <name>ChartStyle</name>
     <message>
-        <location filename="../lib/dashboard/widgets/chartstyle.cpp" line="+125"/>
+        <location filename="../lib/dashboard/widgets/chartstyle.cpp" line="+127"/>
         <source>Engineering</source>
         <translation>Technik</translation>
     </message>
@@ -151,18 +151,10 @@
     </message>
     <message>
         <location line="+9"/>
-        <location line="+494"/>
+        <location line="+507"/>
         <location line="+231"/>
         <source>--</source>
         <translation>--</translation>
-    </message>
-    <message>
-        <source>t</source>
-        <translation type="vanished">t</translation>
-    </message>
-    <message>
-        <source>k</source>
-        <translation type="vanished">k</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -176,12 +168,77 @@
         <translation>%1  %2</translation>
     </message>
     <message>
-        <location line="-659"/>
+        <location line="+133"/>
+        <source>A-B %1 s</source>
+        <translation>A-B %1 s</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>A-B %1 samples</source>
+        <translation>A-B %1 Samples</translation>
+    </message>
+    <message>
+        <location line="+35"/>
+        <source>min %1</source>
+        <translation>min %1</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>max %1</source>
+        <translation>max %1</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>p-p %1</source>
+        <translation>Ss %1</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>peak %1</source>
+        <translation>Spitze %1</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>mean %1</source>
+        <translation>Mittel %1</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>median %1</source>
+        <translation>Median %1</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>rms %1</source>
+        <translation>eff %1</translation>
+    </message>
+    <message>
+        <location line="-59"/>
+        <source>%1 Hz</source>
+        <translation>%1 Hz</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>%1 samples</source>
+        <translation>%1 Samples</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>%1 s</source>
+        <translation>%1 s</translation>
+    </message>
+    <message>
+        <location line="-47"/>
+        <source>paused</source>
+        <translation>pausiert</translation>
+    </message>
+    <message>
+        <location line="-739"/>
         <source>%1: %2</source>
         <translation>%1: %2</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/chartpainting.cpp" line="+617"/>
+        <location filename="../lib/dashboard/widgets/chartpainting.cpp" line="+879"/>
         <source>Time (s)</source>
         <translation>Zeit (s)</translation>
     </message>
@@ -423,7 +480,7 @@
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="+131"/>
+        <location filename="../lib/core/mainwindow.cpp" line="+132"/>
         <source>TraceView Project (*.tvproj)</source>
         <translation>TraceView-Projekt (*.tvproj)</translation>
     </message>
@@ -439,7 +496,7 @@
 <context>
     <name>QObject</name>
     <message>
-        <location filename="../lib/core/debugchartswindow.cpp" line="+29"/>
+        <location filename="../lib/core/debugchartswindow.cpp" line="+32"/>
         <source>Debug -- synthetic chart data</source>
         <translation>Debug -- synthetische Diagrammdaten</translation>
     </message>
@@ -751,7 +808,7 @@
 <context>
     <name>WidgetRegistry</name>
     <message>
-        <location filename="../lib/dashboard/widgetregistry.cpp" line="+32"/>
+        <location filename="../lib/dashboard/widgetregistry.cpp" line="+34"/>
         <source>Line Chart (dummy)</source>
         <translation>Liniendiagramm (Platzhalter)</translation>
     </message>
@@ -779,6 +836,11 @@
         <location line="+6"/>
         <source>Text Board</source>
         <translation>Textanzeige</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>Audio Analyzer</source>
+        <translation>Audioanalysator</translation>
     </message>
     <message>
         <location line="+5"/>
@@ -909,6 +971,291 @@
     </message>
 </context>
 <context>
+    <name>traceview::AudioAnalyzerWidget</name>
+    <message>
+        <location filename="../lib/dashboard/widgets/audioanalyzerwidget.cpp" line="+120"/>
+        <source>View:</source>
+        <translation>Ansicht:</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Spectrum</source>
+        <translation>Spektrum</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Spectrogram</source>
+        <translation>Spektrogramm</translation>
+    </message>
+    <message>
+        <location line="+61"/>
+        <source>Peak hold</source>
+        <translation>Spitzenwert halten</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Level scale:</source>
+        <translation>Pegelskala:</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <location line="+56"/>
+        <location line="+528"/>
+        <source>dBFS</source>
+        <translation>dBFS</translation>
+    </message>
+    <message>
+        <location line="-583"/>
+        <source>Linear amplitude</source>
+        <translation>Lineare Amplitude</translation>
+    </message>
+    <message>
+        <location line="+52"/>
+        <source>Amplitude (FS)</source>
+        <translation>Amplitude (VA)</translation>
+    </message>
+    <message>
+        <location line="+33"/>
+        <location line="+523"/>
+        <source>Frequency (Hz)</source>
+        <translation>Frequenz (Hz)</translation>
+    </message>
+    <message>
+        <location line="-464"/>
+        <location line="+27"/>
+        <location line="+550"/>
+        <source>%1 dB</source>
+        <translation>%1 dB</translation>
+    </message>
+    <message>
+        <location line="-576"/>
+        <location line="+573"/>
+        <source>%1 Hz</source>
+        <translation>%1 Hz</translation>
+    </message>
+    <message>
+        <location line="-560"/>
+        <source>History:</source>
+        <translation>Verlauf:</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <location line="+256"/>
+        <location line="+299"/>
+        <source>%1 s</source>
+        <translation>%1 s</translation>
+    </message>
+    <message>
+        <location line="-550"/>
+        <source>Level floor:</source>
+        <translation>Pegeluntergrenze:</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>Colors:</source>
+        <translation>Farben:</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Inferno</source>
+        <translation>Inferno</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Viridis</source>
+        <translation>Viridis</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Theme accent</source>
+        <translation>Akzentfarbe des Themas</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Show color scale</source>
+        <translation>Farbskala anzeigen</translation>
+    </message>
+    <message>
+        <location line="+226"/>
+        <source>%1 samples</source>
+        <translation>%1 Samples</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>A-B %1 s</source>
+        <translation>A-B %1 s</translation>
+    </message>
+    <message>
+        <location line="+31"/>
+        <source>min %1</source>
+        <translation>min %1</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>max %1</source>
+        <translation>max %1</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>p-p %1</source>
+        <translation>Ss %1</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>peak %1 dBFS</source>
+        <translation>Spitze %1 dBFS</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>mean %1</source>
+        <translation>Mittel %1</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>median %1</source>
+        <translation>Median %1</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>rms %1 dBFS</source>
+        <translation>eff %1 dBFS</translation>
+    </message>
+</context>
+<context>
+    <name>traceview::AudioPlayback</name>
+    <message>
+        <location filename="../lib/dashboard/widgets/audioplayback.cpp" line="+91"/>
+        <source>No audio output device</source>
+        <translation>Kein Audioausgabegerät</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>The audio output reports no usable format</source>
+        <translation>Die Audioausgabe meldet kein nutzbares Format</translation>
+    </message>
+    <message>
+        <location line="+12"/>
+        <source>The audio output could not start</source>
+        <translation>Die Audioausgabe konnte nicht gestartet werden</translation>
+    </message>
+</context>
+<context>
+    <name>traceview::AudioSpectrumConfigEditor</name>
+    <message>
+        <location filename="../lib/dashboard/widgets/audiospectrumconfigeditor.cpp" line="+28"/>
+        <source>(auto)</source>
+        <translation>(automatisch)</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Stream topic to play: blocks of samples with their rate and a block counter (BTPDevice Topics::stream()). Pick a reported topic or type its numeric id.</source>
+        <translation>Wiederzugebendes Stream-Topic: Sample-Blöcke mit ihrer Rate und einem Blockzähler (BTPDevice Topics::stream()). Wählen Sie ein gemeldetes Topic oder geben Sie seine numerische ID ein.</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>Sample value that counts as full scale (0 dBFS). Filled from the field&apos;s declared range when a topic is picked.</source>
+        <translation>Sample-Wert, der als Vollaussteuerung gilt (0 dBFS). Wird beim Wählen eines Topics aus dem deklarierten Bereich des Felds übernommen.</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>Device</source>
+        <translation>Gerät</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Source</source>
+        <translation>Quelle</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Stream topic</source>
+        <translation>Stream-Topic</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Full scale</source>
+        <translation>Vollaussteuerung</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Volume</source>
+        <translation>Lautstärke</translation>
+    </message>
+</context>
+<context>
+    <name>traceview::AudioStreamWidget</name>
+    <message>
+        <location filename="../lib/dashboard/widgets/audiostreamwidget.cpp" line="+170"/>
+        <source>Play audio</source>
+        <translation>Audio abspielen</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>FFT size:</source>
+        <translation>FFT-Größe:</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>%1 points</source>
+        <translation>%1 Punkte</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Frequency axis:</source>
+        <translation>Frequenzachse:</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Logarithmic</source>
+        <translation>Logarithmisch</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Linear</source>
+        <translation>Linear</translation>
+    </message>
+    <message>
+        <location line="+62"/>
+        <source>muted</source>
+        <translation>stumm</translation>
+    </message>
+    <message>
+        <location line="+180"/>
+        <source>Pick a stream topic in the properties</source>
+        <translation>Wählen Sie ein Stream-Topic in den Eigenschaften</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Waiting for audio...</source>
+        <translation>Warte auf Audio...</translation>
+    </message>
+    <message>
+        <location line="+28"/>
+        <source>%1 kHz</source>
+        <translation>%1 kHz</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>peak %1 Hz</source>
+        <translation>Spitze %1 Hz</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>%1 dBFS</source>
+        <translation>%1 dBFS</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>lost %1</source>
+        <translation>verloren %1</translation>
+    </message>
+    <message>
+        <location line="-3"/>
+        <source>paused</source>
+        <translation>pausiert</translation>
+    </message>
+</context>
+<context>
     <name>traceview::BleDiscoveryService</name>
     <message>
         <location filename="../lib/core/blediscoveryservice.cpp" line="+45"/>
@@ -997,7 +1344,7 @@
         <translation>Roboter 0x%1 ist online, aber sein Katalog ist nicht angekommen — prüfen Sie den Hub (hub -manifest)</translation>
     </message>
     <message>
-        <location line="+91"/>
+        <location line="+93"/>
         <source>Robot 0x%1 rebooted — catalog and subscriptions refreshed</source>
         <translation>Roboter 0x%1 hat neu gestartet — Katalog und Abonnements aktualisiert</translation>
     </message>
@@ -1594,7 +1941,57 @@ Erlaubt: %1</translation>
 <context>
     <name>traceview::DashboardCell</name>
     <message>
-        <location filename="../lib/dashboard/widgets/chartstyle.cpp" line="+381"/>
+        <location filename="../lib/dashboard/widgets/chartstyle.cpp" line="+296"/>
+        <source>Sample rate</source>
+        <translation>Abtastrate</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Samples in window</source>
+        <translation>Samples im Fenster</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Window span</source>
+        <translation>Fensterdauer</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Minimum</source>
+        <translation>Minimum</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Maximum</source>
+        <translation>Maximum</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Peak to peak</source>
+        <translation>Spitze-Spitze</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Peak (|x| max)</source>
+        <translation>Spitze (|x| max)</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Mean</source>
+        <translation>Mittelwert</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Median</source>
+        <translation>Median</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>RMS</source>
+        <translation>Effektivwert</translation>
+    </message>
+    <message>
+        <location line="+139"/>
         <source>Style:</source>
         <translation>Stil:</translation>
     </message>
@@ -1637,6 +2034,26 @@ Erlaubt: %1</translation>
         <location line="+2"/>
         <source>Show grid point values</source>
         <translation>Gitterpunktwerte anzeigen</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Show info row</source>
+        <translation>Infozeile anzeigen</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Info row values</source>
+        <translation>Werte der Infozeile</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Range markers (A/B)</source>
+        <translation>Bereichsmarker (A/B)</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Fill area under the line</source>
+        <translation>Fläche unter der Linie füllen</translation>
     </message>
     <message>
         <location line="+2"/>
@@ -1871,7 +2288,7 @@ Erlaubt: %1</translation>
 <context>
     <name>traceview::DebugChartsWindow</name>
     <message>
-        <location filename="../lib/core/debugchartswindow.cpp" line="+198"/>
+        <location filename="../lib/core/debugchartswindow.cpp" line="+233"/>
         <location line="+4"/>
         <source>Modo estresse: desligado (50ms/tick)</source>
         <translation>Stressmodus: aus (50ms/Tick)</translation>
@@ -1917,45 +2334,45 @@ Erlaubt: %1</translation>
         <translation>Schieberegler</translation>
     </message>
     <message>
+        <location line="+7"/>
+        <source>Audio Spectrum</source>
+        <translation>Audiospektrum</translation>
+    </message>
+    <message>
         <location line="+6"/>
-        <location line="+3"/>
-        <location line="+6"/>
-        <location line="+2"/>
+        <source>Audio Spectrogram</source>
+        <translation>Audiospektrogramm</translation>
+    </message>
+    <message>
         <source>Operator</source>
-        <translation>Bediener</translation>
+        <translation type="vanished">Bediener</translation>
     </message>
     <message>
-        <location line="-10"/>
         <source>Boot OK. Battery at 87%.</source>
-        <translation>Start OK. Akku bei 87 %.</translation>
+        <translation type="vanished">Start OK. Akku bei 87 %.</translation>
     </message>
     <message>
-        <location line="+2"/>
         <source>Start the calibration routine, please.</source>
-        <translation>Bitte die Kalibrierroutine starten.</translation>
+        <translation type="vanished">Bitte die Kalibrierroutine starten.</translation>
     </message>
     <message>
-        <location line="+3"/>
         <source>Calibration done. Offsets saved; log attached.</source>
-        <translation>Kalibrierung fertig. Offsets gespeichert; Log angehängt.</translation>
+        <translation type="vanished">Kalibrierung fertig. Offsets gespeichert; Log angehängt.</translation>
     </message>
     <message>
-        <location line="+3"/>
         <source>Sending the new route map.</source>
-        <translation>Sende die neue Routenkarte.</translation>
+        <translation type="vanished">Sende die neue Routenkarte.</translation>
     </message>
     <message>
-        <location line="+2"/>
         <source>Retrying over the other link...</source>
-        <translation>Neuer Versuch über die andere Verbindung...</translation>
+        <translation type="vanished">Neuer Versuch über die andere Verbindung...</translation>
     </message>
     <message>
-        <location line="+2"/>
         <source>Chat</source>
-        <translation>Chat</translation>
+        <translation type="vanished">Chat</translation>
     </message>
     <message>
-        <location line="+56"/>
+        <location line="+62"/>
         <source> -- %1 fps</source>
         <translation> -- %1 fps</translation>
     </message>
@@ -2059,14 +2476,6 @@ Erlaubt: %1</translation>
         <location line="+16"/>
         <source>This device&apos;s ID:</source>
         <translation>ID dieses Geräts:</translation>
-    </message>
-    <message>
-        <source>Advanced</source>
-        <translation type="vanished">Erweitert</translation>
-    </message>
-    <message>
-        <source>Every link as a table: the order they are tried in, baud rate, TCP port, and targets typed by hand.</source>
-        <translation type="vanished">Alle Verbindungen als Tabelle: die Reihenfolge, in der sie versucht werden, Baudrate, TCP-Port und von Hand eingegebene Ziele.</translation>
     </message>
     <message>
         <location line="-54"/>
@@ -2777,7 +3186,7 @@ Erlaubt: %1</translation>
 <context>
     <name>traceview::MainWindow</name>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="+227"/>
+        <location filename="../lib/core/mainwindow.cpp" line="+235"/>
         <source>TraceView v%1</source>
         <translation>TraceView v%1</translation>
     </message>
@@ -2795,7 +3204,7 @@ Erlaubt: %1</translation>
         <translation>, </translation>
     </message>
     <message>
-        <location line="+552"/>
+        <location line="+557"/>
         <source>Pending</source>
         <translation>Ausstehend</translation>
     </message>
@@ -2911,10 +3320,6 @@ Verluste: %2</translation>
         <location line="+4"/>
         <source>&amp;Reset Panel Positions</source>
         <translation>Panel-Positionen &amp;zurücksetzen</translation>
-    </message>
-    <message>
-        <source>&amp;Theme</source>
-        <translation type="vanished">&amp;Design</translation>
     </message>
     <message>
         <location line="+10"/>
@@ -4531,14 +4936,6 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
 <context>
     <name>traceview::RobotLogWidget</name>
     <message>
-        <source>Clear</source>
-        <translation type="vanished">Leeren</translation>
-    </message>
-    <message>
-        <source>Clear this log</source>
-        <translation type="vanished">Dieses Log leeren</translation>
-    </message>
-    <message>
         <location filename="../lib/dashboard/widgets/robotlogwidget.cpp" line="+181"/>
         <source>(no device)</source>
         <translation>(kein Gerät)</translation>
@@ -4597,14 +4994,6 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
 </context>
 <context>
     <name>traceview::SerialMonitorWidget</name>
-    <message>
-        <source>Clear</source>
-        <translation type="vanished">Leeren</translation>
-    </message>
-    <message>
-        <source>Clear this terminal</source>
-        <translation type="vanished">Dieses Terminal leeren</translation>
-    </message>
     <message>
         <location filename="../lib/dashboard/widgets/serialmonitorwidget.cpp" line="+167"/>
         <source>(no device)</source>
@@ -4702,25 +5091,9 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
         <translation>Konfigurierte Geräte beim Öffnen eines Projekts verbinden</translation>
     </message>
     <message>
-        <source>Theme and typeface changes apply immediately. Changing the language is saved for the next start.</source>
-        <translation type="vanished">Änderungen an Design und Schrift gelten sofort. Die Sprachänderung wird für den nächsten Start gespeichert.</translation>
-    </message>
-    <message>
         <location line="+11"/>
         <source>Application appearance</source>
         <translation>Darstellung der Anwendung</translation>
-    </message>
-    <message>
-        <source>Theme</source>
-        <translation type="vanished">Design</translation>
-    </message>
-    <message>
-        <source>Palette, chart style and typeface changes apply immediately. Changing the language is saved for the next start.</source>
-        <translation type="vanished">Änderungen an Palette, Diagrammstil und Schrift gelten sofort. Die Sprachänderung wird für den nächsten Start gespeichert.</translation>
-    </message>
-    <message>
-        <source>Palette, frame, chart style and typeface changes apply immediately. Changing the language is saved for the next start.</source>
-        <translation type="vanished">Änderungen an Palette, Rahmen, Diagrammstil und Schrift gelten sofort. Die Sprachänderung wird für den nächsten Start gespeichert.</translation>
     </message>
     <message>
         <location filename="../lib/core/appearancecatalog.cpp" line="-77"/>

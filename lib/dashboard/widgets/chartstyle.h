@@ -4,6 +4,7 @@
 #include <QFlags>
 #include <QJsonObject>
 #include <QString>
+#include <QStringList>
 #include <QVariant>
 #include <QVector>
 
@@ -203,6 +204,14 @@ ValueScale valueScale(const AxisRange& range, const ChartStyle& style, int maxTi
 ValueScale timeAxisScale(const ChartConfig& config, const ChartStyle& style, bool labeled,
                          int plotWidthPx, int maxTicks);
 
+// The info row's items (gear "Info row values"), in display order: the
+// window readouts ("rate", "samples", "span") and the per-series statistics
+// ("min", "max", "p2p", "peak", "mean", "median", "rms").
+QStringList chartInfoItemIds();
+bool isChartInfoStatistic(const QString& id);
+QString chartInfoItemLabel(const QString& id);  // translated menu text
+QStringList defaultChartInfoItems();            // the window readouts
+
 // Per-widget view state: the style plus every gear-menu toggle, persisted
 // under the widget's config["view"] object. Chart kinds share this one
 // struct and simply don't offer the options they can't use (see
@@ -221,6 +230,12 @@ struct ChartViewOptions {
     bool showLastValueRow = true;
     bool showGridPointMarkers = false;
     bool showHoverCrosshair = false;
+    bool showInfoRow = false;  // live readouts above the plot
+    // What the info row shows, ids from chartInfoItemIds(): window readouts
+    // on one row, statistics on one row per series.
+    QStringList infoItems = defaultChartInfoItems();
+    bool rangeMarkers = false;  // A/B markers bounding the statistics
+    bool fillArea = false;      // tint the area under each line
     ChartLineInterpolation interpolation = ChartLineInterpolation::Linear;
     ChartLegendPlacement legendPlacement = ChartLegendPlacement::Outside;
     int legendOpacity = 75;  // percent, background of an in-plot legend
@@ -250,6 +265,10 @@ inline constexpr char ScaleLabels[] = "scaleLabels";
 inline constexpr char LastValue[] = "lastValue";
 inline constexpr char GridPoints[] = "gridPoints";
 inline constexpr char HoverCrosshair[] = "hoverCrosshair";
+inline constexpr char InfoRow[] = "info";
+inline constexpr char InfoItems[] = "infoItems";
+inline constexpr char RangeMarkers[] = "markers";
+inline constexpr char FillArea[] = "fillArea";
 inline constexpr char Interpolation[] = "interpolation";
 inline constexpr char Legend[] = "legend";
 inline constexpr char LegendOpacity[] = "legendOpacity";
@@ -287,6 +306,10 @@ enum class ChartViewFeature : quint32 {
     YTickCount = 1u << 10,
     LineWidth = 1u << 11,
     GaugeShape = 1u << 12,
+    InfoRow = 1u << 13,
+    FillArea = 1u << 14,
+    InfoItems = 1u << 15,     // pick the info row's values (with InfoRow)
+    RangeMarkers = 1u << 16,  // A/B markers the statistics are taken between
 };
 Q_DECLARE_FLAGS(ChartViewFeatures, ChartViewFeature)
 

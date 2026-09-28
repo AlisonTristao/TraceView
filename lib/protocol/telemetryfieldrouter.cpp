@@ -112,7 +112,8 @@ void TelemetryFieldRouter::onTelemetrySample(const TelemetrySample& sample) {
     }
     ++m_diagnostics.samplesDecoded;
 
-    // Pass 2: emit one fieldSample() per present element. The payload is
+    // Pass 2: emit one fieldSample() per present element (an array only up
+    // to kMaxFannedArrayElements) and each array whole. The payload is
     // stable, so a second reader over the same bytes is free of allocation.
     btp::SampleReader reader(data, size, specs.data(), specCount, encoding, kBodyOnly);
     btp::SampleValue value{};
@@ -126,9 +127,20 @@ void TelemetryFieldRouter::onTelemetrySample(const TelemetrySample& sample) {
             continue;
         }
         binding.fieldId = value.field->field_id;
-        for (std::uint16_t i = 0; i < value.count; ++i) {
-            binding.elementIndex = i;
-            emit fieldSample(binding, sample.timestampUs, value.f64(i));
+        const bool isArray = value.field->element_count != 1U;
+        if (!isArray || value.count <= kMaxFannedArrayElements) {
+            for (std::uint16_t i = 0; i < value.count; ++i) {
+                binding.elementIndex = i;
+                emit fieldSample(binding, sample.timestampUs, value.f64(i));
+            }
+        }
+        if (isArray) {
+            QVector<float> values(value.count);
+            for (std::uint16_t i = 0; i < value.count; ++i) {
+                values[i] = float(value.f64(i));
+            }
+            binding.elementIndex = 0;
+            emit arraySample(binding, sample.timestampUs, values);
         }
     }
     emit diagnosticsChanged();

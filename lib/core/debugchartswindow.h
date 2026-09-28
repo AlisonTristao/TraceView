@@ -1,11 +1,13 @@
 #pragma once
 
 #include <QDialog>
+#include <QElapsedTimer>
 
 class QTimer;
 
 namespace traceview {
 
+class AudioAnalyzerWidget;
 class DummyLineChartWidget;
 class DummyBarChartWidget;
 class DummyGaugeWidget;
@@ -18,12 +20,14 @@ class SerialMonitorWidget;
 // it -- so chart rendering/interaction can be eyeballed without a serial
 // device or a saved project. One instance of every WidgetRegistry type
 // (widgetregistry.cpp) is present -- the three dummy charts plus a serial
-// monitor and the three control widgets (push button/toggle/slider) -- so a
-// font change (FontManager, include/traceview/fontmanager.h) or theme change
-// can be eyeballed across every widget kind at once instead of one at a
-// time. Non-modal (shown via show(), not exec()) so its synthetic feed keeps
-// ticking while the rest of the app stays usable. See tools/chart_preview
-// for the older, bare (no DashboardCell chrome) version of this same idea.
+// monitor, the three control widgets (push button/toggle/slider) and the two
+// audio widgets on a synthetic stream (the chat is left out for now, to give
+// them room) -- so a font change (FontManager, include/traceview/
+// fontmanager.h) or theme change can be eyeballed across every widget kind at
+// once instead of one at a time. Non-modal (shown via show(), not exec()) so
+// its synthetic feed keeps ticking while the rest of the app stays usable.
+// See tools/chart_preview for the older, bare (no DashboardCell chrome)
+// version of this same idea.
 class DebugChartsWindow : public QDialog {
     Q_OBJECT
 
@@ -32,6 +36,8 @@ public:
 
 private:
     void tick();
+    // Feeds the audio widgets a synthetic stream, paced by m_audioClock.
+    void tickAudio();
     void updateFpsTitle();
     // Wired to the stress-mode toggle button (see constructor) -- swaps the
     // synthetic-data tick timer between its normal 50ms pace and firing as
@@ -49,6 +55,13 @@ private:
     DummyBarChartWidget* m_barChart = nullptr;
     DummyGaugeWidget* m_gauge = nullptr;
     SerialMonitorWidget* m_serialMonitor = nullptr;
+    // One Audio Analyzer per view, spectrum and spectrogram.
+    AudioAnalyzerWidget* m_audioSpectrum = nullptr;
+    AudioAnalyzerWidget* m_audioSpectrogram = nullptr;
+    QElapsedTimer m_audioClock;
+    qint64 m_audioSamples = 0;
+    quint32 m_audioSeq = 0;
+    double m_chirpPhase = 0.0;
 };
 
 }  // namespace traceview

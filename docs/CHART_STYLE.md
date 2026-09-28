@@ -198,19 +198,56 @@ toggle. It is stored in the widget's config under `"view"`:
 | Option id | Menu label | Offered by |
 |---|---|---|
 | `style` | Style: App default, Dashboard, Engineering, Scientific | every chart |
-| `xAxisTitle` | Show X axis title | line |
-| `xTickLabels` | Show X axis values | line |
-| `yAxisTitle` | Show Y axis title | line, bar |
-| `yTickLabels` | Show Y axis values | line, bar |
-| `yTicks` | Y axis ticks: Auto, 3, 5, 6, 11 | line, bar |
+| `xAxisTitle` | Show X axis title | line, audio |
+| `xTickLabels` | Show X axis values | line, audio |
+| `yAxisTitle` | Show Y axis title | line, bar, audio |
+| `yTickLabels` | Show Y axis values | line, bar, audio |
+| `yTicks` | Y axis ticks: Auto, 3, 5, 6, 11 | line, bar, audio (spectrum) |
 | `legend` | Legend: Outside the plot, a corner, Hidden | line, bar |
 | `legendOpacity` | Legend background: 0 to 100% | line, bar |
 | `scaleLabels` | Show scale values | gauge |
 | `lastValue` | Show last value | line (values row), bar (value under each bar) |
 | `gridPoints` | Show grid point values | line |
-| `hoverCrosshair` | Show hover crosshair | line |
-| `lineWidth` | Line width: Auto, 0.5 to 4 px | line |
+| `hoverCrosshair` | Show hover crosshair | line, audio |
+| `info` | Show info row (live readouts above the plot) | line, audio |
+| `infoItems` | Info row values (a submenu, any number): sample rate, samples in window, window span; minimum, maximum, peak to peak, peak, mean, median, RMS | line, audio |
+| `markers` | Range markers (A/B) | line, audio (spectrogram) |
+| `fillArea` | Fill area under the line | line, audio (spectrum) |
+| `lineWidth` | Line width: Auto, 0.5 to 4 px | line, audio (spectrum) |
+| `interpolation` | Interpolation: | line |
 | `gaugeShape` | Shape: Ring (270°), Half circle, Bar, Number | gauge |
+
+"audio" is the Audio Analyzer (`AudioAnalyzerWidget`), whose `mode` option
+("View:", first in its menu) switches between `spectrum` and
+`spectrogram`; the menu then offers only that view's options. It starts
+with `xTickLabels`, `info` and `fillArea` on when its saved view has no
+value for them, and adds options of its own to the same `"view"` object:
+`play`, `fft`, `axis` (log/linear frequency), then `peak` and `scale`
+(dBFS/linear amplitude) for the spectrum, `history`, `floor`, `colors` and
+`colorScale` for the spectrogram. The info row
+(`paintChartInfoRow()`) draws each number right-aligned in a slot as wide as
+its widest value, in equal-width digits, so it never shifts.
+
+On the line chart, `infoItems` holds the picked values in menu order. The
+window readouts share one row; each statistic gets a column on one row per
+shown series (color dot and name first). With `markers` on, two dashed
+lines A and B, dragged by their lettered tabs, bound the samples the
+statistics are taken from, and the window row adds the A-B span; with them
+off, the statistics cover the whole window. The markers sit at a fixed
+distance from the newest sample, so the data scrolls through them; their
+positions are not saved. `seriesStatistics()` (chartdata.h) does the math.
+The Audio Analyzer offers the values in both views and the markers in the
+spectrogram, over its time axis. Its statistics describe the audio signal
+itself on a second info row: minimum,
+maximum, peak to peak, mean and median in full-scale units (1.0 = full
+scale), peak and RMS in dBFS. Each column keeps a summary of the samples it
+covers (min, max, sum, sum of squares, median), so everything but the
+median is exact over any span of columns; the median is the median of the
+columns' medians (the spectrogram's columns keep running in the spectrum
+view too). Its window row shows the samples and seconds the history covers.
+
+A multi-choice option is drawn as a sticky submenu of checkable entries
+(`WidgetViewOption::Kind::MultiChoice`).
 
 Two app-wide appearance choices also reach every chart, see "Appearance" in
 [VISUAL_IDENTITY.md](VISUAL_IDENTITY.md):
@@ -221,7 +258,6 @@ Two app-wide appearance choices also reach every chart, see "Appearance" in
 - **Motion**: a value a chart animates (gauge needle, bar height) goes
   through `StyledChartWidget::easedValues()`, never its own timer, so
   "Reduced" motion turns every animation off at once.
-| `interpolation` | Interpolation: | line |
 
 ## Adding a chart kind
 

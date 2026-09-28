@@ -45,6 +45,9 @@ void paintChartBackground(QPainter& painter, const DashboardWidget& widget,
 // `base` with equal-width digits when the style asks for them, so a column
 // of tick labels (and a changing value) doesn't shimmer as digits change.
 QFont chartTickFont(const QFont& base, const ChartStyle& style);
+// `base` with equal-width digits whatever the style (Qt 6.7+; older Qt
+// keeps the font's own digits).
+QFont chartTabularFont(const QFont& base);
 
 // A 1px line drawn at a whole-pixel coordinate lands across two pixel rows
 // under antialiasing; nudging it to the pixel center keeps it crisp.
@@ -125,6 +128,9 @@ struct CartesianChrome {
     // plot takes the room.
     bool topLegendRow = true;
     bool bottomLegendRow = true;
+    // Rows above everything else for live readouts (rate, level, series
+    // statistics...), see paintChartInfoRow(). 0 = none.
+    int infoRows = 0;
 };
 
 // One requested value axis, before layout.
@@ -153,6 +159,9 @@ struct ChartCartesianLayout {
     ValueScale xScale;
     QFont tickFont;
     int legendRowHeight = 0;
+    int infoRowTop = 0;       // y of the first info row, when chrome.infoRows
+    int infoRowPitch = 0;     // from one info row to the next
+    int topLegendTop = 0;     // y of the top legend row (series names)
     int bottomLegendTop = 0;  // y of the bottom legend row (last values)
 };
 
@@ -182,11 +191,88 @@ QVector<qreal> chartXGridPixels(const ChartCartesianLayout& layout);
 // Grid, frame, every Y axis, and the X axis ticks/labels/title, in that
 // order. `xTitle` is ignored unless chrome.xTitle. `categoryXs` gives tick
 // marks at fixed pixel positions (bar centers) for a chart without an X
-// scale; it is ignored when layout.hasXScale.
+// scale; it is ignored when layout.hasXScale. `occupied`, when given,
+// receives the rects of every tick label drawn.
 void paintCartesianAxes(QPainter& painter, const ChartCartesianLayout& layout,
                         const CartesianChrome& chrome, const ChartStyle& style,
                         const ChartColors& colors, const QString& xTitle,
-                        const QVector<qreal>& categoryXs = {});
+                        const QVector<qreal>& categoryXs = {},
+                        QVector<QRect>* occupied = nullptr);
+
+// --- Hand-placed ticks ----------------------------------------------------
+//
+// An axis whose values don't map linearly onto pixels (a log frequency
+// axis) places its own ticks. Lay the chart out as usual, clear that axis'
+// ValueScale ticks before paintCartesianAxes() (it still draws the frame,
+// the spine and the title), then draw the ticks with these -- same marks,
+// label font, offsets and collision rule as a ValueScale's.
+
+struct ChartPixelTick {
+    qreal pos = 0.0;  // x for the X axis, y for a Y axis, in widget pixels
+    QString label;
+};
+
+// Gridlines at every tick strictly inside the plot. Call before
+// paintCartesianAxes() so they sit under the frame, like its own grid.
+void paintChartPixelGrid(QPainter& painter, const QRect& plotRect,
+                         const QVector<ChartPixelTick>& xTicks,
+                         const QVector<ChartPixelTick>& yTicks, const ChartStyle& style,
+                         const ChartColors& colors);
+
+// X tick marks, and the labels when chrome.xTickLabels. A label that would
+// overlap its left neighbor or one of `occupied` is skipped; every label
+// drawn is appended to `occupied`.
+void paintChartPixelXTicks(QPainter& painter, const ChartCartesianLayout& layout,
+                           const CartesianChrome& chrome, const QVector<ChartPixelTick>& ticks,
+                           const ChartStyle& style, const ChartColors& colors,
+                           QVector<QRect>* occupied);
+
+// The primary Y axis' tick marks, and its labels when chrome.yTickLabels,
+// right-aligned in the label column the layout reserved. A label that would
+// overlap the one drawn before it or one of `occupied` is skipped; every
+// label drawn is appended to `occupied`.
+void paintChartPixelYTicks(QPainter& painter, const ChartCartesianLayout& layout,
+                           const CartesianChrome& chrome, const QVector<ChartPixelTick>& ticks,
+                           const ChartStyle& style, const ChartColors& colors,
+                           QVector<QRect>* occupied);
+
+// --- Info row -------------------------------------------------------------
+
+// One readout of the info row: `format` holds "%1" where `value` goes.
+// The value is drawn right-aligned in a slot as wide as `widestValue` (or
+// the value, when longer), so the row stays put while numbers change.
+struct ChartInfoField {
+    QString format;
+    QString value;
+    QString widestValue;
+};
+
+// What starts a series' info row: its color dot and name, in a column
+// `width` wide so the fields after it line up across rows.
+struct ChartInfoLead {
+    QColor swatch;  // invalid = no dot
+    QString text;
+    int width = 0;
+};
+
+// Info row `row` (0 = top), in equal-width digits: `lead`, then `left`
+// fields one after another, `right` against the right edge, elided to the
+// room left.
+void paintChartInfoRow(QPainter& painter, const ChartCartesianLayout& layout, int row,
+                       const QVector<ChartInfoField>& left, const QString& right,
+                       const ChartColors& colors, const ChartInfoLead& lead = {});
+// Width of a lead column holding `text` (dot included).
+int chartInfoLeadWidth(const QFontMetrics& fm, const QString& text);
+
+// --- Range markers ---------------------------------------------------------
+
+// The A/B range markers at pixel columns `xA` and `xB`: the band between
+// them lightly shaded, a dashed line each and a lettered tab on top to grab.
+void paintChartRangeMarkers(QPainter& painter, const QRect& plotRect, qreal xA, qreal xB,
+                            const ThemePalette& palette);
+// Which marker (0 = A, 1 = B) is under `pos` -- its line or its tab, a few
+// pixels either side -- or -1.
+int chartRangeMarkerAt(const QRect& plotRect, qreal xA, qreal xB, const QPoint& pos);
 
 // The X axis title for a line chart: "Samples" or "Time (s)".
 QString chartTimeAxisTitle(ChartXAxisMode mode);
