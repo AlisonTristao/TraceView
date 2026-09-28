@@ -9,10 +9,10 @@ class QSlider;
 
 namespace traceview {
 
-// Properties of an Audio Spectrum widget: the device, the stream topic (any
-// topic with an array field), the samples' full scale and the volume. Picking
-// a topic fills the seq/rate/samples field ids and the full scale from the
-// device's catalogue.
+// Properties of an Audio Analyzer widget (AudioAnalyzerWidget): the device,
+// the stream topic (any topic with an array field), the samples' full scale
+// and the volume. Picking a topic fills the seq/rate/samples field ids and
+// the full scale from the device's catalogue.
 class AudioSpectrumConfigEditor : public WidgetConfigEditor {
     Q_OBJECT
 

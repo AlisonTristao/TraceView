@@ -295,12 +295,14 @@ add_library(traceview_dashboard STATIC
     dashboard/widgetconfigeditor.h
     dashboard/widgets/audioplayback.cpp
     dashboard/widgets/audioplayback.h
+    dashboard/widgets/audioanalyzerwidget.cpp
+    dashboard/widgets/audioanalyzerwidget.h
     dashboard/widgets/audiospectrumconfigeditor.cpp
     dashboard/widgets/audiospectrumconfigeditor.h
-    dashboard/widgets/audiospectrumwidget.cpp
-    dashboard/widgets/audiospectrumwidget.h
     dashboard/widgets/audiostream.cpp
     dashboard/widgets/audiostream.h
+    dashboard/widgets/audiostreamwidget.cpp
+    dashboard/widgets/audiostreamwidget.h
     dashboard/widgets/chartconfigeditor.cpp
     dashboard/widgets/chartconfigeditor.h
     dashboard/widgets/chartdata.cpp

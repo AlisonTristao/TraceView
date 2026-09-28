@@ -3,8 +3,8 @@
 #include <QCoreApplication>
 
 #include "dashboardwidget.h"
+#include "widgets/audioanalyzerwidget.h"
 #include "widgets/audiospectrumconfigeditor.h"
-#include "widgets/audiospectrumwidget.h"
 #include "widgets/chatconfigeditor.h"
 #include "widgets/chatwidget.h"
 #include "widgets/chartconfigeditor.h"
@@ -61,8 +61,10 @@ WidgetRegistry::WidgetRegistry() {
              return new TextBoardConfigEditor(parent);
          }});
     registerType(
-        {"audio_spectrum", QCoreApplication::translate("WidgetRegistry", "Audio Spectrum"),
-         [](QWidget* parent) -> DashboardWidget* { return new AudioSpectrumWidget(parent); },
+        // Spectrum and spectrogram in one: "View:" in its gear menu. The id
+        // predates the spectrogram view; it stays for saved dashboards.
+        {"audio_spectrum", QCoreApplication::translate("WidgetRegistry", "Audio Analyzer"),
+         [](QWidget* parent) -> DashboardWidget* { return new AudioAnalyzerWidget(parent); },
          [](QWidget* parent) -> WidgetConfigEditor* {
              return new AudioSpectrumConfigEditor(parent);
          }});

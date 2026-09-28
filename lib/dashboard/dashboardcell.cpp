@@ -450,6 +450,7 @@ void DashboardCell::showSettingsMenu() {
     StickyMenu menu(this);
     QHash<QString, QAction*> toggles;
     QHash<QString, QComboBox*> combos;
+    QHash<QString, QVector<QAction*>> multiChoices;
 
     // Re-reads every control from the widget after each change, since the
     // menu stays open across changes.
@@ -462,6 +463,11 @@ void DashboardCell::showSettingsMenu() {
             if (QComboBox* combo = combos.value(option.id)) {
                 const QSignalBlocker blocker(combo);
                 combo->setCurrentIndex(qMax(0, combo->findData(option.value.toString())));
+            }
+            const QStringList checked = option.value.toStringList();
+            for (QAction* action : multiChoices.value(option.id)) {
+                const QSignalBlocker blocker(action);
+                action->setChecked(checked.contains(action->data().toString()));
             }
         }
     };
@@ -484,6 +490,33 @@ void DashboardCell::showSettingsMenu() {
             const QString id = option.id;
             connect(action, &QAction::toggled, this, [apply, id](bool on) { apply(id, on); });
             toggles.insert(option.id, action);
+            continue;
+        }
+        if (option.kind == WidgetViewOption::Kind::MultiChoice) {
+            // A sticky submenu: several choices can be flipped in one visit.
+            auto* submenu = new StickyMenu(option.label, &menu);
+            menu.addMenu(submenu);
+            const QString id = option.id;
+            QVector<QAction*> actions;
+            for (const auto& choice : option.choices) {
+                QAction* action = submenu->addAction(choice.second);
+                action->setCheckable(true);
+                action->setData(choice.first);
+                action->setChecked(option.value.toStringList().contains(choice.first));
+                actions.append(action);
+            }
+            for (QAction* action : actions) {
+                connect(action, &QAction::toggled, this, [apply, actions, id](bool) {
+                    QStringList checked;
+                    for (QAction* each : actions) {
+                        if (each->isChecked()) {
+                            checked << each->data().toString();
+                        }
+                    }
+                    apply(id, checked);
+                });
+            }
+            multiChoices.insert(option.id, actions);
             continue;
         }
 

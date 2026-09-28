@@ -131,6 +131,22 @@ ChartConfig parseChartConfig(const QJsonObject& json);
 // seconds at `sampleTimeMs` in Time mode. Always >= 1.
 int chartBufferCapacity(const ChartConfig& config);
 
+// Statistics of one series over values[first..last] (inclusive, clamped to
+// the vector), for the info row. count == 0 when the span holds nothing.
+struct SeriesStatistics {
+    int count = 0;
+    double min = 0.0;
+    double max = 0.0;
+    double mean = 0.0;
+    double median = 0.0;  // the middle value, or the mean of the two middle ones
+    double rms = 0.0;
+    double peak = 0.0;  // largest |value|
+    double peakToPeak() const {
+        return max - min;
+    }
+};
+SeriesStatistics seriesStatistics(const QVector<double>& values, int first, int last);
+
 // Re-derives one buffer per config.series (in order) from `previous`,
 // carrying over history for a series still at the same row position --
 // editing a series' name/color/style shouldn't clear its data -- then

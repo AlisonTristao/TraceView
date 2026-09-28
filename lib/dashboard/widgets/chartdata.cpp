@@ -3,6 +3,7 @@
 #include <QJsonArray>
 #include <QMap>
 #include <QtMath>
+#include <algorithm>
 #include <cmath>
 
 namespace traceview {
@@ -89,6 +90,33 @@ ChartConfig parseChartConfig(const QJsonObject& json) {
         config.series.append(parseSeriesConfig(value.toObject()));
     }
     return config;
+}
+
+SeriesStatistics seriesStatistics(const QVector<double>& values, int first, int last) {
+    SeriesStatistics stats;
+    first = qMax(0, first);
+    last = qMin(int(values.size()) - 1, last);
+    if (first > last) {
+        return stats;
+    }
+    QVector<double> sorted(values.cbegin() + first, values.cbegin() + last + 1);
+    std::sort(sorted.begin(), sorted.end());
+    stats.count = sorted.size();
+    stats.min = sorted.first();
+    stats.max = sorted.last();
+    double sum = 0.0;
+    double sumSq = 0.0;
+    for (double value : sorted) {
+        sum += value;
+        sumSq += value * value;
+    }
+    stats.mean = sum / stats.count;
+    stats.rms = std::sqrt(sumSq / stats.count);
+    stats.peak = qMax(qAbs(stats.min), qAbs(stats.max));
+    const int middle = stats.count / 2;
+    stats.median = stats.count % 2 != 0 ? sorted[middle]
+                                        : (sorted[middle - 1] + sorted[middle]) / 2.0;
+    return stats;
 }
 
 int chartBufferCapacity(const ChartConfig& config) {

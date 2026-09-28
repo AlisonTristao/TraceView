@@ -17,6 +17,8 @@ using traceview::GaugeConfig;
 using traceview::parseChartConfig;
 using traceview::parseGaugeConfig;
 using traceview::resizeChartBuffers;
+using traceview::SeriesStatistics;
+using traceview::seriesStatistics;
 using traceview::TelemetrySeriesBuffer;
 
 namespace {
@@ -80,6 +82,9 @@ private slots:
     void gaugeConfigMigratesLegacyFieldId();
     void gaugeConfigDefaultsToOneSeriesWhenUnconfigured();
     void gaugeConfigEmptySeriesArrayStaysEmpty();
+
+    void statisticsOverTheWholeSeries();
+    void statisticsOverASpanAndAnEmptyOne();
 };
 
 void TestChartData::parsesDefaultsFromEmptyConfig() {
@@ -344,6 +349,32 @@ void TestChartData::gaugeConfigEmptySeriesArrayStaysEmpty() {
 
     const GaugeConfig config = parseGaugeConfig(json);
     QVERIFY(config.series.isEmpty());
+}
+
+void TestChartData::statisticsOverTheWholeSeries() {
+    const QVector<double> values = {3.0, -4.0, 1.0, 2.0};
+    const SeriesStatistics stats = seriesStatistics(values, 0, values.size() - 1);
+    QCOMPARE(stats.count, 4);
+    QCOMPARE(stats.min, -4.0);
+    QCOMPARE(stats.max, 3.0);
+    QCOMPARE(stats.peakToPeak(), 7.0);
+    QCOMPARE(stats.peak, 4.0);
+    QCOMPARE(stats.mean, 0.5);
+    QCOMPARE(stats.median, 1.5);  // mean of the two middle values, 1 and 2
+    QCOMPARE(stats.rms, std::sqrt(30.0 / 4.0));
+}
+
+void TestChartData::statisticsOverASpanAndAnEmptyOne() {
+    const QVector<double> values = {10.0, 1.0, 5.0, 3.0, 10.0};
+    // [1..3] only: the odd count takes the middle value.
+    const SeriesStatistics span = seriesStatistics(values, 1, 3);
+    QCOMPARE(span.count, 3);
+    QCOMPARE(span.max, 5.0);
+    QCOMPARE(span.median, 3.0);
+    // Clamped to the vector; a span past its end holds nothing.
+    QCOMPARE(seriesStatistics(values, -5, 99).count, 5);
+    QCOMPARE(seriesStatistics(values, 7, 9).count, 0);
+    QCOMPARE(seriesStatistics({}, 0, 0).count, 0);
 }
 
 }  // namespace

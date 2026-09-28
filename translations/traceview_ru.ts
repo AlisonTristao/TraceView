@@ -127,7 +127,7 @@
 <context>
     <name>ChartStyle</name>
     <message>
-        <location filename="../lib/dashboard/widgets/chartstyle.cpp" line="+125"/>
+        <location filename="../lib/dashboard/widgets/chartstyle.cpp" line="+127"/>
         <source>Engineering</source>
         <translation>Инженерный</translation>
     </message>
@@ -151,7 +151,7 @@
     </message>
     <message>
         <location line="+9"/>
-        <location line="+494"/>
+        <location line="+507"/>
         <location line="+231"/>
         <source>--</source>
         <translation>--</translation>
@@ -168,12 +168,77 @@
         <translation>%1  %2</translation>
     </message>
     <message>
-        <location line="-659"/>
+        <location line="+133"/>
+        <source>A-B %1 s</source>
+        <translation>A-B %1 с</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>A-B %1 samples</source>
+        <translation>A-B %1 отсчётов</translation>
+    </message>
+    <message>
+        <location line="+35"/>
+        <source>min %1</source>
+        <translation>мин %1</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>max %1</source>
+        <translation>макс %1</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>p-p %1</source>
+        <translation>п-п %1</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>peak %1</source>
+        <translation>пик %1</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>mean %1</source>
+        <translation>сред %1</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>median %1</source>
+        <translation>медиана %1</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>rms %1</source>
+        <translation>скз %1</translation>
+    </message>
+    <message>
+        <location line="-59"/>
+        <source>%1 Hz</source>
+        <translation>%1 Гц</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>%1 samples</source>
+        <translation>%1 отсчётов</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>%1 s</source>
+        <translation>%1 с</translation>
+    </message>
+    <message>
+        <location line="-47"/>
+        <source>paused</source>
+        <translation>пауза</translation>
+    </message>
+    <message>
+        <location line="-739"/>
         <source>%1: %2</source>
         <translation>%1: %2</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/chartpainting.cpp" line="+627"/>
+        <location filename="../lib/dashboard/widgets/chartpainting.cpp" line="+879"/>
         <source>Time (s)</source>
         <translation>Время (с)</translation>
     </message>
@@ -431,7 +496,7 @@
 <context>
     <name>QObject</name>
     <message>
-        <location filename="../lib/core/debugchartswindow.cpp" line="+29"/>
+        <location filename="../lib/core/debugchartswindow.cpp" line="+32"/>
         <source>Debug -- synthetic chart data</source>
         <translation>Отладка -- синтетические данные графика</translation>
     </message>
@@ -773,9 +838,9 @@
         <translation>Текстовое табло</translation>
     </message>
     <message>
-        <location line="+6"/>
-        <source>Audio Spectrum</source>
-        <translation>Аудиоспектр</translation>
+        <location line="+8"/>
+        <source>Audio Analyzer</source>
+        <translation>Аудиоанализатор</translation>
     </message>
     <message>
         <location line="+5"/>
@@ -906,9 +971,160 @@
     </message>
 </context>
 <context>
+    <name>traceview::AudioAnalyzerWidget</name>
+    <message>
+        <location filename="../lib/dashboard/widgets/audioanalyzerwidget.cpp" line="+120"/>
+        <source>View:</source>
+        <translation>Вид:</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Spectrum</source>
+        <translation>Спектр</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Spectrogram</source>
+        <translation>Спектрограмма</translation>
+    </message>
+    <message>
+        <location line="+61"/>
+        <source>Peak hold</source>
+        <translation>Удержание пиков</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Level scale:</source>
+        <translation>Шкала уровня:</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <location line="+56"/>
+        <location line="+528"/>
+        <source>dBFS</source>
+        <translation>dBFS</translation>
+    </message>
+    <message>
+        <location line="-583"/>
+        <source>Linear amplitude</source>
+        <translation>Линейная амплитуда</translation>
+    </message>
+    <message>
+        <location line="+52"/>
+        <source>Amplitude (FS)</source>
+        <translation>Амплитуда (ПШ)</translation>
+    </message>
+    <message>
+        <location line="+33"/>
+        <location line="+523"/>
+        <source>Frequency (Hz)</source>
+        <translation>Частота (Гц)</translation>
+    </message>
+    <message>
+        <location line="-464"/>
+        <location line="+27"/>
+        <location line="+550"/>
+        <source>%1 dB</source>
+        <translation>%1 дБ</translation>
+    </message>
+    <message>
+        <location line="-576"/>
+        <location line="+573"/>
+        <source>%1 Hz</source>
+        <translation>%1 Гц</translation>
+    </message>
+    <message>
+        <location line="-560"/>
+        <source>History:</source>
+        <translation>История:</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <location line="+256"/>
+        <location line="+299"/>
+        <source>%1 s</source>
+        <translation>%1 с</translation>
+    </message>
+    <message>
+        <location line="-550"/>
+        <source>Level floor:</source>
+        <translation>Нижний уровень:</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>Colors:</source>
+        <translation>Цвета:</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Inferno</source>
+        <translation>Inferno</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Viridis</source>
+        <translation>Viridis</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Theme accent</source>
+        <translation>Акцент темы</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Show color scale</source>
+        <translation>Показывать цветовую шкалу</translation>
+    </message>
+    <message>
+        <location line="+226"/>
+        <source>%1 samples</source>
+        <translation>%1 отсчётов</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>A-B %1 s</source>
+        <translation>A-B %1 с</translation>
+    </message>
+    <message>
+        <location line="+31"/>
+        <source>min %1</source>
+        <translation>мин %1</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>max %1</source>
+        <translation>макс %1</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>p-p %1</source>
+        <translation>п-п %1</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>peak %1 dBFS</source>
+        <translation>пик %1 dBFS</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>mean %1</source>
+        <translation>сред %1</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>median %1</source>
+        <translation>медиана %1</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>rms %1 dBFS</source>
+        <translation>скз %1 dBFS</translation>
+    </message>
+</context>
+<context>
     <name>traceview::AudioPlayback</name>
     <message>
-        <location filename="../lib/dashboard/widgets/audioplayback.cpp" line="+92"/>
+        <location filename="../lib/dashboard/widgets/audioplayback.cpp" line="+91"/>
         <source>No audio output device</source>
         <translation>Нет устройства вывода звука</translation>
     </message>
@@ -926,7 +1142,7 @@
 <context>
     <name>traceview::AudioSpectrumConfigEditor</name>
     <message>
-        <location filename="../lib/dashboard/widgets/audiospectrumconfigeditor.cpp" line="+29"/>
+        <location filename="../lib/dashboard/widgets/audiospectrumconfigeditor.cpp" line="+28"/>
         <source>(auto)</source>
         <translation>(авто)</translation>
     </message>
@@ -967,16 +1183,16 @@
     </message>
 </context>
 <context>
-    <name>traceview::AudioSpectrumWidget</name>
+    <name>traceview::AudioStreamWidget</name>
     <message>
-        <location filename="../lib/dashboard/widgets/audiospectrumwidget.cpp" line="+140"/>
+        <location filename="../lib/dashboard/widgets/audiostreamwidget.cpp" line="+170"/>
         <source>Play audio</source>
         <translation>Воспроизводить звук</translation>
     </message>
     <message>
-        <location line="+6"/>
-        <source>FFT size</source>
-        <translation>Размер БПФ</translation>
+        <location line="+7"/>
+        <source>FFT size:</source>
+        <translation>Размер БПФ:</translation>
     </message>
     <message>
         <location line="+4"/>
@@ -985,8 +1201,8 @@
     </message>
     <message>
         <location line="+7"/>
-        <source>Frequency axis</source>
-        <translation>Ось частот</translation>
+        <source>Frequency axis:</source>
+        <translation>Ось частот:</translation>
     </message>
     <message>
         <location line="+3"/>
@@ -999,17 +1215,12 @@
         <translation>Линейная</translation>
     </message>
     <message>
-        <location line="+5"/>
-        <source>Peak hold</source>
-        <translation>Удержание пиков</translation>
-    </message>
-    <message>
-        <location line="+47"/>
+        <location line="+62"/>
         <source>muted</source>
         <translation>без звука</translation>
     </message>
     <message>
-        <location line="+145"/>
+        <location line="+180"/>
         <source>Pick a stream topic in the properties</source>
         <translation>Выберите потоковый топик в свойствах</translation>
     </message>
@@ -1019,7 +1230,7 @@
         <translation>Ожидание звука...</translation>
     </message>
     <message>
-        <location line="+7"/>
+        <location line="+28"/>
         <source>%1 kHz</source>
         <translation>%1 kHz</translation>
     </message>
@@ -1029,17 +1240,17 @@
         <translation>пик %1 Гц</translation>
     </message>
     <message>
-        <location line="+2"/>
+        <location line="+3"/>
         <source>%1 dBFS</source>
         <translation>%1 dBFS</translation>
     </message>
     <message>
-        <location line="+3"/>
+        <location line="+8"/>
         <source>lost %1</source>
         <translation>потеряно %1</translation>
     </message>
     <message>
-        <location line="+3"/>
+        <location line="-3"/>
         <source>paused</source>
         <translation>пауза</translation>
     </message>
@@ -1730,7 +1941,57 @@ Allowed: %1</source>
 <context>
     <name>traceview::DashboardCell</name>
     <message>
-        <location filename="../lib/dashboard/widgets/chartstyle.cpp" line="+381"/>
+        <location filename="../lib/dashboard/widgets/chartstyle.cpp" line="+296"/>
+        <source>Sample rate</source>
+        <translation>Частота выборки</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Samples in window</source>
+        <translation>Отсчётов в окне</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Window span</source>
+        <translation>Длительность окна</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Minimum</source>
+        <translation>Минимум</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Maximum</source>
+        <translation>Максимум</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Peak to peak</source>
+        <translation>Размах</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Peak (|x| max)</source>
+        <translation>Пик (макс |x|)</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Mean</source>
+        <translation>Среднее</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Median</source>
+        <translation>Медиана</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>RMS</source>
+        <translation>СКЗ</translation>
+    </message>
+    <message>
+        <location line="+139"/>
         <source>Style:</source>
         <translation>Стиль:</translation>
     </message>
@@ -1773,6 +2034,26 @@ Allowed: %1</source>
         <location line="+2"/>
         <source>Show grid point values</source>
         <translation>Показывать значения точек сетки</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Show info row</source>
+        <translation>Показывать строку сведений</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Info row values</source>
+        <translation>Значения строки сведений</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Range markers (A/B)</source>
+        <translation>Маркеры диапазона (A/B)</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Fill area under the line</source>
+        <translation>Заливать область под линией</translation>
     </message>
     <message>
         <location line="+2"/>
@@ -2007,7 +2288,7 @@ Allowed: %1</source>
 <context>
     <name>traceview::DebugChartsWindow</name>
     <message>
-        <location filename="../lib/core/debugchartswindow.cpp" line="+198"/>
+        <location filename="../lib/core/debugchartswindow.cpp" line="+233"/>
         <location line="+4"/>
         <source>Modo estresse: desligado (50ms/tick)</source>
         <translation>Режим нагрузки: выкл (50мс/тик)</translation>
@@ -2053,45 +2334,45 @@ Allowed: %1</source>
         <translation>Ползунок</translation>
     </message>
     <message>
+        <location line="+7"/>
+        <source>Audio Spectrum</source>
+        <translation>Аудиоспектр</translation>
+    </message>
+    <message>
         <location line="+6"/>
-        <location line="+3"/>
-        <location line="+6"/>
-        <location line="+2"/>
+        <source>Audio Spectrogram</source>
+        <translation>Аудиоспектрограмма</translation>
+    </message>
+    <message>
         <source>Operator</source>
-        <translation>Оператор</translation>
+        <translation type="vanished">Оператор</translation>
     </message>
     <message>
-        <location line="-10"/>
         <source>Boot OK. Battery at 87%.</source>
-        <translation>Загрузка OK. Батарея 87%.</translation>
+        <translation type="vanished">Загрузка OK. Батарея 87%.</translation>
     </message>
     <message>
-        <location line="+2"/>
         <source>Start the calibration routine, please.</source>
-        <translation>Запусти калибровку, пожалуйста.</translation>
+        <translation type="vanished">Запусти калибровку, пожалуйста.</translation>
     </message>
     <message>
-        <location line="+3"/>
         <source>Calibration done. Offsets saved; log attached.</source>
-        <translation>Калибровка завершена. Смещения сохранены; лог приложен.</translation>
+        <translation type="vanished">Калибровка завершена. Смещения сохранены; лог приложен.</translation>
     </message>
     <message>
-        <location line="+3"/>
         <source>Sending the new route map.</source>
-        <translation>Отправляю новую карту маршрута.</translation>
+        <translation type="vanished">Отправляю новую карту маршрута.</translation>
     </message>
     <message>
-        <location line="+2"/>
         <source>Retrying over the other link...</source>
-        <translation>Повторяю через другой канал...</translation>
+        <translation type="vanished">Повторяю через другой канал...</translation>
     </message>
     <message>
-        <location line="+2"/>
         <source>Chat</source>
-        <translation>Чат</translation>
+        <translation type="vanished">Чат</translation>
     </message>
     <message>
-        <location line="+56"/>
+        <location line="+62"/>
         <source> -- %1 fps</source>
         <translation> -- %1 fps</translation>
     </message>

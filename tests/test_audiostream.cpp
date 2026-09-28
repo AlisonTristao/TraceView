@@ -2,10 +2,10 @@
 #include <QtTest>
 #include <cmath>
 
-#include "dashboard/widgets/audiospectrumwidget.h"
+#include "dashboard/widgets/audioanalyzerwidget.h"
 #include "dashboard/widgets/audiostream.h"
 
-using traceview::AudioSpectrumWidget;
+using traceview::AudioAnalyzerWidget;
 using traceview::AudioStreamBuffer;
 using traceview::SpectrumAnalyzer;
 using traceview::TelemetryFieldBinding;
@@ -50,6 +50,8 @@ private slots:
     void bufferResamplesToTheOutputRate();
     void bufferCountsUnderrunsAndCatchesUp();
     void widgetDecodesAStreamAndCountsLostBlocks();
+    void spectrogramAddsColumnsAtTheTonesRow();
+    void viewSwitchesInTheGearMenu();
 };
 
 void TestAudioStream::spectrumPeaksAtTheToneInDbfs() {
@@ -145,7 +147,7 @@ void TestAudioStream::bufferCountsUnderrunsAndCatchesUp() {
 }
 
 void TestAudioStream::widgetDecodesAStreamAndCountsLostBlocks() {
-    AudioSpectrumWidget widget;
+    AudioAnalyzerWidget widget;
     QJsonObject config;
     config["sourceId"] = QStringLiteral("0x11223344");
     config["topicId"] = QStringLiteral("0x0101");
@@ -184,6 +186,97 @@ void TestAudioStream::widgetDecodesAStreamAndCountsLostBlocks() {
     binding.topicId = 0x0102;
     widget.onArraySample(binding, 0, QVector<float>(1024, 0.0f));
     QCOMPARE(widget.receivedBlocks(), quint64(3));
+}
+
+void TestAudioStream::spectrogramAddsColumnsAtTheTonesRow() {
+    AudioAnalyzerWidget widget;
+    QJsonObject config;
+    config["sourceId"] = QStringLiteral("0x1");
+    config["topicId"] = QStringLiteral("0x0101");
+    config["fullScale"] = 2048.0;
+    // 5 s over 480 columns at 32 kHz: one column every 333 samples.
+    config["view"] =
+        QJsonObject{{"mode", "spectrogram"}, {"play", false}, {"fft", "1024"},
+                    {"axis", "log"}, {"history", "5"}};
+    widget.setConfig(config);
+
+    TelemetryFieldBinding binding;
+    binding.sourceId = 0x1;
+    binding.topicId = 0x0101;
+    const double rate = 32000.0;
+    for (int seq = 0; seq < 8; ++seq) {
+        binding.fieldId = 1;
+        widget.onFieldSample(binding, 0, seq);
+        binding.fieldId = 2;
+        widget.onFieldSample(binding, 0, rate);
+        binding.fieldId = 3;
+        widget.onArraySample(binding, 0, sine(2000, rate, 1024, 1024.0, seq * 1024));
+    }
+    // 8192 samples = 24 hops; the ones before the first full FFT window
+    // (1024 samples) draw nothing.
+    QVERIFY(widget.filledColumns() >= 20);
+    QVERIFY(widget.filledColumns() <= 24);
+
+    // 2 kHz on a 20 Hz..16 kHz log axis sits 69% of the way up.
+    int loudest = 0;
+    for (int row = 1; row < AudioAnalyzerWidget::kRows; ++row) {
+        if (widget.newestLevel(row) > widget.newestLevel(loudest)) {
+            loudest = row;
+        }
+    }
+    const double fraction = std::log(2000.0 / 20.0) / std::log(16000.0 / 20.0);
+    const int expected = int((1.0 - fraction) * AudioAnalyzerWidget::kRows);
+    QVERIFY2(std::abs(loudest - expected) <= 2, qPrintable(QString::number(loudest)));
+    QVERIFY(widget.newestLevel(loudest) > -10.0f);
+
+    // Every column also summed its samples: a half-scale sine.
+    const traceview::SeriesStatistics stats =
+        widget.signalStatistics(0, AudioAnalyzerWidget::kColumns - 1);
+    QVERIFY(stats.count > 0);
+    QVERIFY(qAbs(stats.max - 0.5) < 0.01);
+    QVERIFY(qAbs(stats.min + 0.5) < 0.01);
+    QVERIFY(qAbs(stats.mean) < 0.01);
+    QVERIFY(qAbs(stats.rms - 0.5 / std::sqrt(2.0)) < 0.01);
+    QVERIFY(qAbs(stats.peakToPeak() - 1.0) < 0.02);
+    // Just the newest column: its own stretch of samples.
+    QVERIFY(widget.signalStatistics(0, 0).count > 0);
+    QVERIFY(widget.signalStatistics(0, 0).count < stats.count);
+
+    // Another history length re-times every column: the picture restarts.
+    config["view"] = QJsonObject{{"play", false}, {"fft", "1024"}, {"history", "10"}};
+    widget.setConfig(config);
+    QCOMPARE(widget.filledColumns(), 0);
+}
+
+void TestAudioStream::viewSwitchesInTheGearMenu() {
+    AudioAnalyzerWidget widget;
+    widget.setConfig(QJsonObject{{"topicId", "0x0101"}, {"view", QJsonObject{{"play", false}}}});
+    // Saved before the spectrogram view existed: a spectrum.
+    QCOMPARE(widget.mode(), AudioAnalyzerWidget::Mode::Spectrum);
+
+    // "View:" leads the menu, and each view offers only its own options.
+    const QVector<traceview::WidgetViewOption> spectrumMenu = widget.viewOptions();
+    QCOMPARE(spectrumMenu.first().id, QStringLiteral("mode"));
+    auto offers = [](const QVector<traceview::WidgetViewOption>& menu, const char* id) {
+        for (const traceview::WidgetViewOption& option : menu) {
+            if (option.id == QLatin1String(id)) {
+                return true;
+            }
+        }
+        return false;
+    };
+    QVERIFY(offers(spectrumMenu, "peak"));
+    QVERIFY(!offers(spectrumMenu, "history"));
+    QVERIFY(!offers(spectrumMenu, "markers"));
+
+    widget.setViewConfig(widget.viewConfigWith(QStringLiteral("mode"), QStringLiteral("spectrogram")));
+    QCOMPARE(widget.mode(), AudioAnalyzerWidget::Mode::Spectrogram);
+    const QVector<traceview::WidgetViewOption> spectrogramMenu = widget.viewOptions();
+    QVERIFY(offers(spectrogramMenu, "history"));
+    QVERIFY(offers(spectrogramMenu, "markers"));
+    QVERIFY(!offers(spectrogramMenu, "peak"));
+    // The spectrum's own settings ride along, unchanged.
+    QCOMPARE(widget.viewConfigWith(QStringLiteral("play"), false).value("peak").toBool(), true);
 }
 
 }  // namespace

@@ -1,6 +1,8 @@
 #include "chartstyle.h"
 
 #include <QCoreApplication>
+#include <QHash>
+#include <QJsonArray>
 #include <QtMath>
 #include <cmath>
 
@@ -411,6 +413,39 @@ ValueScale timeAxisScale(const ChartConfig& config, const ChartStyle& style, boo
     return scale;
 }
 
+QStringList chartInfoItemIds() {
+    return {QStringLiteral("rate"), QStringLiteral("samples"), QStringLiteral("span"),
+            QStringLiteral("min"),  QStringLiteral("max"),     QStringLiteral("p2p"),
+            QStringLiteral("peak"), QStringLiteral("mean"),    QStringLiteral("median"),
+            QStringLiteral("rms")};
+}
+
+bool isChartInfoStatistic(const QString& id) {
+    return chartInfoItemIds().indexOf(id) >= 3;
+}
+
+QString chartInfoItemLabel(const QString& id) {
+    static const QHash<QString, const char*> labels = {
+        {QStringLiteral("rate"), QT_TRANSLATE_NOOP("traceview::DashboardCell", "Sample rate")},
+        {QStringLiteral("samples"),
+         QT_TRANSLATE_NOOP("traceview::DashboardCell", "Samples in window")},
+        {QStringLiteral("span"), QT_TRANSLATE_NOOP("traceview::DashboardCell", "Window span")},
+        {QStringLiteral("min"), QT_TRANSLATE_NOOP("traceview::DashboardCell", "Minimum")},
+        {QStringLiteral("max"), QT_TRANSLATE_NOOP("traceview::DashboardCell", "Maximum")},
+        {QStringLiteral("p2p"), QT_TRANSLATE_NOOP("traceview::DashboardCell", "Peak to peak")},
+        {QStringLiteral("peak"), QT_TRANSLATE_NOOP("traceview::DashboardCell", "Peak (|x| max)")},
+        {QStringLiteral("mean"), QT_TRANSLATE_NOOP("traceview::DashboardCell", "Mean")},
+        {QStringLiteral("median"), QT_TRANSLATE_NOOP("traceview::DashboardCell", "Median")},
+        {QStringLiteral("rms"), QT_TRANSLATE_NOOP("traceview::DashboardCell", "RMS")},
+    };
+    const char* text = labels.value(id);
+    return text != nullptr ? menuText(text) : id;
+}
+
+QStringList defaultChartInfoItems() {
+    return {QStringLiteral("rate"), QStringLiteral("samples"), QStringLiteral("span")};
+}
+
 // config["view"]["style"] value meaning "follow the app-wide chart style".
 constexpr char kAppStyleId[] = "app";
 
@@ -431,6 +466,19 @@ ChartViewOptions parseChartViewOptions(const QJsonObject& view) {
     options.showLastValueRow = view.value(ChartViewKey::LastValue).toBool(true);
     options.showGridPointMarkers = view.value(ChartViewKey::GridPoints).toBool(false);
     options.showHoverCrosshair = view.value(ChartViewKey::HoverCrosshair).toBool(false);
+    options.showInfoRow = view.value(ChartViewKey::InfoRow).toBool(false);
+    if (view.contains(ChartViewKey::InfoItems)) {
+        options.infoItems.clear();
+        const QJsonArray items = view.value(ChartViewKey::InfoItems).toArray();
+        // Kept in menu order, unknown ids dropped.
+        for (const QString& id : chartInfoItemIds()) {
+            if (items.contains(id)) {
+                options.infoItems << id;
+            }
+        }
+    }
+    options.rangeMarkers = view.value(ChartViewKey::RangeMarkers).toBool(false);
+    options.fillArea = view.value(ChartViewKey::FillArea).toBool(false);
     options.interpolation =
         chartLineInterpolationFromId(view.value(ChartViewKey::Interpolation).toString());
     options.legendPlacement =
@@ -458,6 +506,10 @@ QJsonObject chartViewOptionsToJson(const ChartViewOptions& options) {
     view[ChartViewKey::LastValue] = options.showLastValueRow;
     view[ChartViewKey::GridPoints] = options.showGridPointMarkers;
     view[ChartViewKey::HoverCrosshair] = options.showHoverCrosshair;
+    view[ChartViewKey::InfoRow] = options.showInfoRow;
+    view[ChartViewKey::InfoItems] = QJsonArray::fromStringList(options.infoItems);
+    view[ChartViewKey::RangeMarkers] = options.rangeMarkers;
+    view[ChartViewKey::FillArea] = options.fillArea;
     view[ChartViewKey::Interpolation] = chartLineInterpolationId(options.interpolation);
     view[ChartViewKey::Legend] = chartLegendPlacementId(options.legendPlacement);
     view[ChartViewKey::LegendOpacity] = options.legendOpacity;
@@ -488,6 +540,20 @@ ChartViewOptions withChartViewOption(ChartViewOptions options, const QString& id
         options.showGridPointMarkers = value.toBool();
     } else if (id == QLatin1String(ChartViewKey::HoverCrosshair)) {
         options.showHoverCrosshair = value.toBool();
+    } else if (id == QLatin1String(ChartViewKey::InfoRow)) {
+        options.showInfoRow = value.toBool();
+    } else if (id == QLatin1String(ChartViewKey::InfoItems)) {
+        const QStringList picked = value.toStringList();
+        options.infoItems.clear();
+        for (const QString& item : chartInfoItemIds()) {
+            if (picked.contains(item)) {
+                options.infoItems << item;
+            }
+        }
+    } else if (id == QLatin1String(ChartViewKey::RangeMarkers)) {
+        options.rangeMarkers = value.toBool();
+    } else if (id == QLatin1String(ChartViewKey::FillArea)) {
+        options.fillArea = value.toBool();
     } else if (id == QLatin1String(ChartViewKey::Interpolation)) {
         options.interpolation = chartLineInterpolationFromId(value.toString());
     } else if (id == QLatin1String(ChartViewKey::Legend)) {
@@ -526,6 +592,14 @@ QVector<WidgetViewOption> chartViewOptionList(const ChartViewOptions& options,
         QT_TRANSLATE_NOOP("traceview::DashboardCell", "Show last value");
     static constexpr const char* kGridPoints =
         QT_TRANSLATE_NOOP("traceview::DashboardCell", "Show grid point values");
+    static constexpr const char* kInfoRow =
+        QT_TRANSLATE_NOOP("traceview::DashboardCell", "Show info row");
+    static constexpr const char* kInfoItems =
+        QT_TRANSLATE_NOOP("traceview::DashboardCell", "Info row values");
+    static constexpr const char* kRangeMarkers =
+        QT_TRANSLATE_NOOP("traceview::DashboardCell", "Range markers (A/B)");
+    static constexpr const char* kFillArea =
+        QT_TRANSLATE_NOOP("traceview::DashboardCell", "Fill area under the line");
     static constexpr const char* kHoverCrosshair =
         QT_TRANSLATE_NOOP("traceview::DashboardCell", "Show hover crosshair");
     static constexpr const char* kInterpolation =
@@ -663,6 +737,21 @@ QVector<WidgetViewOption> chartViewOptionList(const ChartViewOptions& options,
         toggleOption(ChartViewKey::GridPoints, kGridPoints, options.showGridPointMarkers));
     add(ChartViewFeature::HoverCrosshair,
         toggleOption(ChartViewKey::HoverCrosshair, kHoverCrosshair, options.showHoverCrosshair));
+    add(ChartViewFeature::InfoRow,
+        toggleOption(ChartViewKey::InfoRow, kInfoRow, options.showInfoRow));
+    WidgetViewOption infoItems;
+    infoItems.id = QString::fromLatin1(ChartViewKey::InfoItems);
+    infoItems.label = menuText(kInfoItems);
+    infoItems.kind = WidgetViewOption::Kind::MultiChoice;
+    infoItems.value = options.infoItems;
+    for (const QString& item : chartInfoItemIds()) {
+        infoItems.choices.append({item, chartInfoItemLabel(item)});
+    }
+    add(ChartViewFeature::InfoItems, infoItems);
+    add(ChartViewFeature::RangeMarkers,
+        toggleOption(ChartViewKey::RangeMarkers, kRangeMarkers, options.rangeMarkers));
+    add(ChartViewFeature::FillArea,
+        toggleOption(ChartViewKey::FillArea, kFillArea, options.fillArea));
 
     sectionOpen = true;
     WidgetViewOption lineWidth;

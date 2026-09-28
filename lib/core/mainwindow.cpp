@@ -57,7 +57,7 @@
 #include "dashboard/dashboardgrid.h"
 #include "dashboard/widgetconfigeditor.h"
 #include "dashboard/widgetregistry.h"
-#include "dashboard/widgets/audiospectrumwidget.h"
+#include "dashboard/widgets/audiostreamwidget.h"
 #include "dashboard/widgets/chartwidgets.h"
 #include "dashboard/widgets/textboardwidget.h"
 #include "debugchartswindow.h"
@@ -246,7 +246,7 @@ WidgetTopicRequest widgetTopicRequest(DashboardWidget* widget, DashboardGrid* gr
         const TextBoardConfig& config = board->config();
         request = {deviceId, config.sourceId, config.topicId,
                    requestedRateMillihzFor(config.sampleTimeMs)};
-    } else if (auto* audio = dynamic_cast<AudioSpectrumWidget*>(widget)) {
+    } else if (auto* audio = dynamic_cast<AudioStreamWidget*>(widget)) {
         // A stream has no rate to ask for: the device sends every block
         // while the subscription lasts.
         const AudioSpectrumConfig& config = audio->config();
@@ -840,7 +840,7 @@ void MainWindow::showStatusMessage(const QString& text, int timeoutMs) {
 
 void MainWindow::wireChartWidgetToTelemetry(DashboardWidget* widget) {
     if (!dynamic_cast<ChartWidgetBase*>(widget) && !dynamic_cast<DummyGaugeWidget*>(widget) &&
-        !dynamic_cast<TextBoardWidget*>(widget) && !dynamic_cast<AudioSpectrumWidget*>(widget)) {
+        !dynamic_cast<TextBoardWidget*>(widget) && !dynamic_cast<AudioStreamWidget*>(widget)) {
         return;
     }
 
@@ -899,11 +899,11 @@ void MainWindow::refreshWidgetSubscription(DashboardWidget* widget) {
                     &TextBoardWidget::onTextSample);
             connect(newConnection->backend(), &Backend::binarySample, board,
                     &TextBoardWidget::onBinarySample);
-        } else if (auto* audio = dynamic_cast<AudioSpectrumWidget*>(widget)) {
+        } else if (auto* audio = dynamic_cast<AudioStreamWidget*>(widget)) {
             connect(newConnection->backend(), &Backend::fieldSample, audio,
-                    &AudioSpectrumWidget::onFieldSample);
+                    &AudioStreamWidget::onFieldSample);
             connect(newConnection->backend(), &Backend::arraySample, audio,
-                    &AudioSpectrumWidget::onArraySample);
+                    &AudioStreamWidget::onArraySample);
         }
     }
 
