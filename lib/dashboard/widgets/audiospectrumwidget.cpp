@@ -9,6 +9,8 @@
 #include <cmath>
 
 #include "audioplayback.h"
+#include "dashboard/widgets/chartpainting.h"
+#include "preferences/appsettings.h"
 #include "traceview/thememanager.h"
 
 namespace traceview {
@@ -20,10 +22,8 @@ constexpr float kPeakFallDbPerTick = 0.7f;  // ~20 dB/s
 constexpr double kMinFrequency = 20.0;
 constexpr float kMinDb = -120.0f;
 constexpr float kMaxDb = 0.0f;
-constexpr int kInfoStripHeight = 18;
-constexpr int kLeftAxis = 34;
-constexpr int kBottomAxis = 16;
-constexpr int kPadding = 6;
+// dB rows in the Divisions tick placement: one every 20 dB.
+constexpr int kDbGridDivisions = 6;
 // A block counter jump larger than this is a restarted device, not loss.
 constexpr quint32 kMaxGapBlocks = 1000;
 // At most this many lost blocks are replayed as silence (the rest would
@@ -108,6 +108,8 @@ AudioSpectrumWidget::AudioSpectrumWidget(QWidget* parent)
     m_repaintTimer->start();
     connect(&ThemeManager::instance(), &ThemeManager::themeChanged, this,
             [this](const ThemePalette&) { update(); });
+    connect(&AppSettings::instance(), &AppSettings::chartStyleChanged, this,
+            [this] { update(); });
 }
 
 AudioSpectrumWidget::~AudioSpectrumWidget() = default;
@@ -342,17 +344,7 @@ void AudioSpectrumWidget::paintEvent(QPaintEvent* event) {
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing, true);
     const ThemePalette& palette = ThemeManager::instance().currentTheme();
-    painter.fillPath(contentFillPath(), palette.surface);
-    if (ThemeManager::instance().currentFrameStyle().idleOutline) {
-        painter.setPen(QPen(palette.border, 1));
-        painter.setBrush(Qt::NoBrush);
-        painter.drawPath(roundedPath(QRectF(rect()).adjusted(0.5, 0.5, -0.5, -0.5)));
-    }
-
-    QFont small = painter.font();
-    small.setPixelSize(10);
-    painter.setFont(small);
-    const QFontMetricsF metrics(small);
+    paintChartBackground(painter, *this, palette);
 
     if (m_config.topicId == 0 || m_receivedBlocks == 0) {
         painter.setPen(palette.textSecondary);
@@ -362,8 +354,35 @@ void AudioSpectrumWidget::paintEvent(QPaintEvent* event) {
         return;
     }
 
+    // Same layout as the line chart (layoutCartesianChart): the info strip
+    // takes the top legend row, the frequency labels the X axis band.
+    const ChartStyle& style = chartStyle(chartStyleFromId(AppSettings::instance().chartStyleId()));
+    const ChartColors colors = chartColors(style, palette);
+    CartesianChrome chrome;
+    chrome.xTickLabels = true;
+    chrome.xTitle = style.defaultXAxisTitle;
+    chrome.yTickLabels = true;
+    chrome.yTitle = style.defaultYAxisTitle;
+    chrome.gridDivisions = kDbGridDivisions;
+    chrome.topLegendRow = true;
+    chrome.bottomLegendRow = false;
+    ChartAxisRequest dbAxis;
+    dbAxis.range = {double(kMinDb), double(kMaxDb), AxisRange::Source::Fixed};
+    dbAxis.title = tr("dBFS");
+    // The frequency ticks are placed here, not by a ValueScale (whose
+    // mapping is linear): the factory only makes the layout reserve the band.
+    const ChartCartesianLayout layout = layoutCartesianChart(
+        painter, rect(), {dbAxis}, chrome, style, [](int, int) { return ValueScale(); });
+    const QRect& plotRect = layout.plotRect;
+    const QRectF plot(plotRect);
+    if (plot.width() < 20 || plot.height() < 20) {
+        return;
+    }
+    const QFontMetricsF metrics(painter.font());
+
     // Info strip: rate, loudest frequency, block level | output, losses.
-    const QRectF strip(kPadding, 0, width() - 2 * kPadding, kInfoStripHeight);
+    const QRectF strip(chartOuterPadding(), chartOuterPadding(), width() - 2 * chartOuterPadding(),
+                       layout.legendRowHeight);
     const double binHz = m_rate / m_analyzer.size();
     QString left = tr("%1 kHz").arg(m_rate / 1000.0, 0, 'f', 1);
     if (!m_spectrumDb.isEmpty()) {
@@ -380,32 +399,20 @@ void AudioSpectrumWidget::paintEvent(QPaintEvent* event) {
     if (m_paused) {
         right = tr("paused") + (right.isEmpty() ? QString() : separator() + right);
     }
-    painter.setPen(palette.textSecondary);
+    painter.setPen(colors.legendText);
     painter.drawText(strip, Qt::AlignVCenter | Qt::AlignLeft, left);
     const QString elided = metrics.elidedText(
-        right, Qt::ElideRight, qMax(0.0, strip.width() - metrics.horizontalAdvance(left) - 12));
+        right, Qt::ElideRight,
+        qMax(0.0, strip.width() - metrics.horizontalAdvance(left) - kChartLegendItemGap));
     painter.drawText(strip, Qt::AlignVCenter | Qt::AlignRight, elided);
 
-    const QRectF plot(kLeftAxis, kInfoStripHeight + 2, width() - kLeftAxis - kPadding,
-                      height() - kInfoStripHeight - 2 - kBottomAxis);
-    if (plot.width() < 20 || plot.height() < 20) {
-        return;
-    }
-    auto yFor = [&plot](float db) {
-        const float t = (std::clamp(db, kMinDb, kMaxDb) - kMinDb) / (kMaxDb - kMinDb);
-        return float(plot.bottom() - t * plot.height());
+    const ValueScale& dbScale = layout.yAxes.first().scale;
+    auto yFor = [&plotRect, &dbScale](float db) {
+        return float(chartValueToY(plotRect, dbScale, std::clamp(db, kMinDb, kMaxDb)));
     };
 
-    // Grid: every 20 dB, and the decades (log) or even steps (linear).
-    painter.setPen(QPen(palette.border, 1));
-    for (float db = kMinDb; db <= kMaxDb; db += 20.0f) {
-        const float y = yFor(db);
-        painter.drawLine(QPointF(plot.left(), y), QPointF(plot.right(), y));
-        painter.setPen(palette.textSecondary);
-        painter.drawText(QRectF(0, y - 7, kLeftAxis - 4, 14), Qt::AlignRight | Qt::AlignVCenter,
-                         QString::number(int(db)));
-        painter.setPen(QPen(palette.border, 1));
-    }
+    // Frequency grid: the decades (log) or even steps (linear). Drawn before
+    // paintCartesianAxes() so it sits under the frame like the dB rows.
     const double top = m_rate / 2.0;
     QVector<double> ticks;
     if (m_view.logFrequency) {
@@ -422,20 +429,53 @@ void AudioSpectrumWidget::paintEvent(QPaintEvent* event) {
             ticks.append(f);
         }
     }
-    qreal lastLabelRight = -1e9;
+    QVector<qreal> tickXs;
     for (double f : ticks) {
-        const float x = xForFrequency(f, plot);
-        painter.setPen(QPen(palette.border, 1));
-        painter.drawLine(QPointF(x, plot.top()), QPointF(x, plot.bottom()));
-        const QString label = frequencyLabel(f);
-        const qreal w = metrics.horizontalAdvance(label);
-        if (x - w / 2 > lastLabelRight + 4) {
-            painter.setPen(palette.textSecondary);
-            painter.drawText(QRectF(x - w / 2 - 2, plot.bottom() + 1, w + 4, kBottomAxis - 1),
-                             Qt::AlignCenter, label);
-            lastLabelRight = x + w / 2;
+        const qreal x = xForFrequency(f, plot);
+        if (x > plot.left() + 0.5 && x < plot.right() - 0.5) {
+            tickXs.append(x);
         }
     }
+    painter.setPen(QPen(colors.grid, 1, style.gridPenStyle));
+    for (qreal x : tickXs) {
+        painter.drawLine(QPointF(crispCoord(x), crispCoord(plot.top())),
+                         QPointF(crispCoord(x), crispCoord(plot.bottom())));
+    }
+
+    // Grid rows, frame, the dB axis and the X axis title.
+    paintCartesianAxes(painter, layout, chrome, style, colors, tr("Frequency (Hz)"));
+
+    // X tick marks and labels, as paintCartesianAxes() draws a line chart's.
+    painter.setPen(QPen(colors.frame, style.frameWidth));
+    if (style.frame != ChartFrame::Ruler) {
+        const bool inward = style.tickDirection == ChartTickDirection::Inward;
+        const qreal bottom = crispCoord(plot.bottom());
+        for (qreal x : tickXs) {
+            painter.drawLine(QPointF(crispCoord(x), bottom),
+                             QPointF(crispCoord(x), inward ? bottom - style.tickLength
+                                                           : bottom + style.tickLength));
+        }
+    }
+    painter.setFont(layout.tickFont);
+    painter.setPen(colors.tickLabel);
+    const QFontMetrics tickFm(layout.tickFont);
+    const int labelTop = plotRect.bottom() + style.tickLabelOffset;
+    int previousRight = plotRect.left();  // keeps clear of the bottom dB label
+    for (int i = 0; i < ticks.size(); ++i) {
+        const qreal x = xForFrequency(ticks[i], plot);
+        const QString label = frequencyLabel(ticks[i]);
+        const int w = tickFm.horizontalAdvance(label);
+        QRect labelRect(qRound(x) - w / 2, labelTop, w, tickFm.height());
+        if (labelRect.right() > rect().right() - 2) {
+            labelRect.moveRight(rect().right() - 2);
+        }
+        if (labelRect.left() < previousRight + kChartAxisLabelGap) {
+            continue;
+        }
+        painter.drawText(labelRect, Qt::AlignCenter, label);
+        previousRight = labelRect.right();
+    }
+    painter.setFont(font());
 
     if (m_spectrumDb.isEmpty()) {
         return;
@@ -491,7 +531,7 @@ void AudioSpectrumWidget::paintEvent(QPaintEvent* event) {
     QColor area = palette.accent;
     area.setAlphaF(0.25);
     painter.fillPath(fill, area);
-    painter.setPen(QPen(palette.accent, 1.5));
+    painter.setPen(QPen(palette.accent, style.lineWidth));
     painter.drawPath(line);
     if (m_view.peakHold && m_peakDb.size() == m_spectrumDb.size()) {
         QColor peak = palette.textSecondary;
