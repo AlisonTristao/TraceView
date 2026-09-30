@@ -11,7 +11,10 @@ namespace traceview {
 // get there, but Backspace and Shift/Caps Lock arrive as raw key events, so
 // the keyboard visibly dropped and came back on each of those (seen on a
 // Xiaomi phone). While a key release is delivered autoSipEnabled is off;
-// a tap on a field still opens the keyboard.
+// a tap on a field still opens the keyboard. That skipped show() used to be
+// what reopened the keyboard if anything else closed it on that key, so a
+// moment later a focused field whose keyboard is gone asks for it again --
+// at worst the old drop-and-return, never a keyboard that stays gone.
 //
 // Installed once from main() on Android, after the QApplication exists.
 void installKeyboardReshowGuard();
