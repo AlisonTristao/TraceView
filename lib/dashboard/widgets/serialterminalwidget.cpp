@@ -379,6 +379,11 @@ void SerialTerminalWidget::inputMethodEvent(QInputMethodEvent* event) {
 }
 
 QVariant SerialTerminalWidget::inputMethodQuery(Qt::InputMethodQuery query) const {
+    return inputMethodQuery(query, QVariant());
+}
+
+QVariant SerialTerminalWidget::inputMethodQuery(Qt::InputMethodQuery query,
+                                                QVariant argument) const {
     switch (query) {
         case Qt::ImEnabled:
             return true;
@@ -390,15 +395,27 @@ QVariant SerialTerminalWidget::inputMethodQuery(Qt::InputMethodQuery query) cons
                        Qt::ImhPreferLowercase);
         case Qt::ImSurroundingText:
         case Qt::ImCurrentSelection:
+        case Qt::ImTextBeforeCursor:
+        case Qt::ImTextAfterCursor:
             // The scrollback is not an editable buffer; report it as empty so
             // the IME never tries to delete/replace text around the cursor.
             return QString();
         case Qt::ImCursorPosition:
         case Qt::ImAnchorPosition:
-            return 0;
+        case Qt::ImAbsolutePosition:
+            // Always 0, so the selection Android reports to the IME never
+            // moves: it follows the dongle's echo and every line of output
+            // otherwise, none of which the IME typed. A point argument
+            // instead asks which scrollback position a touch landed on
+            // (long-press selection) and still gets the real answer.
+            if (!argument.isValid()) {
+                return 0;
+            }
+            break;
         default:
-            return QPlainTextEdit::inputMethodQuery(query);
+            break;
     }
+    return QPlainTextEdit::inputMethodQuery(query, argument);
 }
 
 void SerialTerminalWidget::resizeEvent(QResizeEvent* event) {

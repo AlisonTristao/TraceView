@@ -7,6 +7,13 @@ release flow.
 
 ## [Unreleased]
 
+### Fixed
+
+- Android: the Serial Monitor terminal no longer hands its scrollback to the
+  soft keyboard, nor moves the cursor the keyboard sees with every line the
+  device prints -- a likely cause of the keyboard dropping and reopening on
+  Backspace or Caps Lock (seen on Xiaomi).
+
 ## [4.8.1] - 2026-09-27
 
 ### Fixed
