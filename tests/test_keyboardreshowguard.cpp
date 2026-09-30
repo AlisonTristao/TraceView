@@ -54,6 +54,19 @@ private slots:
         // A tap on a field still raises the keyboard through autoSip.
         QVERIFY(qApp->autoSipEnabled());
     }
+
+    void fieldDestroyedBeforeTheRecheckIsSafe() {
+        auto* window = new QWidget;
+        auto* edit = new QLineEdit(window);
+        window->show();
+        edit->setFocus();
+        QVERIFY(QTest::qWaitForWindowActive(window));
+
+        QTest::keyClick(edit, Qt::Key_Backspace);
+        delete window;
+
+        QTest::qWait(500);  // past the guard's recheck
+    }
 };
 
 }  // namespace
