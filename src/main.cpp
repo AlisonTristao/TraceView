@@ -9,6 +9,7 @@
 #endif
 
 #include "core/applog.h"
+#include "core/keyboardreshowguard.h"
 #include "core/mainwindow.h"
 #include "core/touchscroll.h"
 #include "traceview/fontmanager.h"
@@ -76,6 +77,10 @@ int main(int argc, char* argv[]) {
         "io/github/alisontristao/traceview/KeyboardInsetsDebounce", "install",
         "(Landroid/app/Activity;)V",
         QNativeInterface::QAndroidApplication::context().object<jobject>());
+
+    // Text fields otherwise re-show the keyboard on every key release, which
+    // drops and reopens it on Backspace and Caps Lock (see the header).
+    traceview::installKeyboardReshowGuard();
 
     // Locking the screen destroys the Activity's surface; the one Android
     // hands back on unlock starts out empty and stayed black for good, since

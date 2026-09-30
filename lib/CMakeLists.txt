@@ -801,6 +801,8 @@ add_library(traceview_ui STATIC
     core/workspacedock.h
     core/touchscroll.cpp
     core/touchscroll.h
+    core/keyboardreshowguard.cpp
+    core/keyboardreshowguard.h
     core/inputdiagnostics.cpp
     core/inputdiagnostics.h
     core/iconpickerdialog.cpp
