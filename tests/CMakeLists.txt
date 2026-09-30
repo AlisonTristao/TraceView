@@ -40,6 +40,8 @@ add_traceview_test(test_chartstyle traceview_dashboard)
 add_traceview_test(test_framestyle traceview_theme)
 # Appearance tokens and the appearance catalog/presets (core/appearancecatalog.h).
 add_traceview_test(test_appearance traceview_ui)
+# Android soft keyboard: key releases must not re-request it (core/keyboardreshowguard.h).
+add_traceview_test(test_keyboardreshowguard traceview_ui)
 add_traceview_test(test_controldata traceview_dashboard)
 # topico 19: the dumb-terminal line model (\r/\b/\n handling) and keystroke
 # forwarding are exercised directly with QTest -- CONTRIBUTING.md's "nothing
