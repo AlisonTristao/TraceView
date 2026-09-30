@@ -1,6 +1,7 @@
 #include <QClipboard>
 #include <QGuiApplication>
 #include <QImage>
+#include <QInputMethodQueryEvent>
 #include <QSignalSpy>
 #include <QTextBlock>
 #include <QTextCharFormat>
@@ -52,6 +53,7 @@ private slots:
     void csiSplitAcrossAppendDataStillResolves();
     void eraseInLineClearsFromCursorToEnd();
     void themeSwitchRetintsColouredScrollback();
+    void imeSeesAnEmptyEditorWhateverTheScrollback();
 };
 
 void TestSerialTerminalWidget::printableKeySendsUtf8BytesAndDoesNotEchoLocally() {
@@ -421,6 +423,38 @@ void TestSerialTerminalWidget::themeSwitchRetintsColouredScrollback() {
     QCOMPARE(fgAt(widget, 0), other.danger);
 
     manager.setTheme(original);  // don't leak the switch into sibling tests
+}
+
+void TestSerialTerminalWidget::imeSeesAnEmptyEditorWhateverTheScrollback() {
+    SerialTerminalWidget widget;
+    widget.appendData(QByteArrayLiteral("boot ok\r\ndongle> ls"));
+
+    // QInputMethod::queryFocusObject(), which Qt's Android input context
+    // uses for getTextBeforeCursor()/getExtractedText(), calls the
+    // invokable overload by name rather than the virtual one.
+    for (const Qt::InputMethodQuery query :
+         {Qt::ImTextBeforeCursor, Qt::ImTextAfterCursor, Qt::ImSurroundingText}) {
+        QVariant value;
+        QVERIFY(QMetaObject::invokeMethod(
+            &widget, "inputMethodQuery", Qt::DirectConnection, Q_RETURN_ARG(QVariant, value),
+            Q_ARG(Qt::InputMethodQuery, query), Q_ARG(QVariant, QVariant(1024))));
+        QCOMPARE(value.toString(), QString());
+    }
+
+    // The selection it reports to the IME comes from a query event, and must
+    // not follow the dongle's output.
+    QInputMethodQueryEvent before(Qt::ImCursorPosition | Qt::ImAnchorPosition |
+                                  Qt::ImAbsolutePosition);
+    QCoreApplication::sendEvent(&widget, &before);
+    widget.appendData(QByteArrayLiteral(" -la\r\ntotal 0\r\ndongle> "));
+    QInputMethodQueryEvent after(Qt::ImCursorPosition | Qt::ImAnchorPosition |
+                                 Qt::ImAbsolutePosition);
+    QCoreApplication::sendEvent(&widget, &after);
+    for (const Qt::InputMethodQuery query :
+         {Qt::ImCursorPosition, Qt::ImAnchorPosition, Qt::ImAbsolutePosition}) {
+        QCOMPARE(before.value(query).toInt(), 0);
+        QCOMPARE(after.value(query).toInt(), 0);
+    }
 }
 
 }  // namespace

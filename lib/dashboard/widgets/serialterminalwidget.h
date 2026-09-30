@@ -41,6 +41,13 @@ class SerialTerminalWidget : public QPlainTextEdit {
 public:
     explicit SerialTerminalWidget(QWidget* parent = nullptr);
 
+    // QInputMethod::queryFocusObject() -- how Qt's Android input context
+    // reads the text around the cursor for the IME -- calls this invokable
+    // overload by name, not the virtual inputMethodQuery() below, so
+    // QPlainTextEdit's would hand the IME the whole scrollback. Same answers
+    // as the virtual one; see its comment.
+    Q_INVOKABLE QVariant inputMethodQuery(Qt::InputMethodQuery query, QVariant argument) const;
+
 public slots:
     // Entry point for a TERMINAL_OUT frame's payload bytes.
     void appendData(const QByteArray& data);

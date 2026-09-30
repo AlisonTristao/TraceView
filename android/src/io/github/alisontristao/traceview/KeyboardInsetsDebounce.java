@@ -6,6 +6,7 @@ import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.SystemClock;
+import android.provider.Settings;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
@@ -45,6 +46,9 @@ public final class KeyboardInsetsDebounce {
             return;
         }
         activity.runOnUiThread(() -> {
+            trace("sdk " + Build.VERSION.SDK_INT + " " + Build.MANUFACTURER + " ime "
+                  + Settings.Secure.getString(activity.getContentResolver(),
+                                              Settings.Secure.DEFAULT_INPUT_METHOD));
             try {
                 installTracing(activity);
             } catch (Throwable e) {
@@ -96,22 +100,52 @@ public final class KeyboardInsetsDebounce {
         return view == null ? "null" : view.getClass().getSimpleName();
     }
 
+    private static Field s_inputConnectionField;
+    private static Object s_lastInputConnection;
+
+    // QtEditText builds a new QtInputConnection each time the IME (re)starts
+    // input on it -- InputMethodManager.restartInput() included, whoever
+    // calls it -- so a changed instance marks a restart in the trace.
+    // Checked at every traced event; restarts can't be hooked directly.
+    private static void noteInputConnection(Activity activity) {
+        View focus = activity.getCurrentFocus();
+        if (!isQtEditText(focus)) {
+            return;
+        }
+        try {
+            if (s_inputConnectionField == null) {
+                s_inputConnectionField = field(focus.getClass(), "m_inputConnection");
+            }
+            Object connection = s_inputConnectionField.get(focus);
+            if (connection != null && connection != s_lastInputConnection) {
+                if (s_lastInputConnection != null) {
+                    trace("input connection restarted");
+                }
+                s_lastInputConnection = connection;
+            }
+        } catch (Throwable ignored) {
+            // tracing only
+        }
+    }
+
     // Records what the platform does with the IME around a Backspace --
     // insets passes, IME show/hide animations, Android-side focus moves --
     // for the overlay, so a keyboard that still drops can be traced to its
     // source on a phone without adb.
     @TargetApi(Build.VERSION_CODES.R)
-    private static void installTracing(Activity activity) {
+    private static void installTracing(final Activity activity) {
         final View decor = activity.getWindow().getDecorView();
-        decor.getViewTreeObserver().addOnGlobalFocusChangeListener(
-                (oldFocus, newFocus) -> trace("focus " + viewName(oldFocus) + " -> "
-                                              + viewName(newFocus)));
+        decor.getViewTreeObserver().addOnGlobalFocusChangeListener((oldFocus, newFocus) -> {
+            trace("focus " + viewName(oldFocus) + " -> " + viewName(newFocus));
+            noteInputConnection(activity);
+        });
         decor.setWindowInsetsAnimationCallback(
                 new WindowInsetsAnimation.Callback(
                         WindowInsetsAnimation.Callback.DISPATCH_MODE_CONTINUE_ON_SUBTREE) {
                     @Override
                     public void onPrepare(WindowInsetsAnimation animation) {
                         if ((animation.getTypeMask() & WindowInsets.Type.ime()) != 0) {
+                            noteInputConnection(activity);
                             WindowInsets now = decor.getRootWindowInsets();
                             trace("ime anim prepare (visible="
                                   + (now != null && now.isVisible(WindowInsets.Type.ime()))
@@ -128,6 +162,7 @@ public final class KeyboardInsetsDebounce {
                     @Override
                     public void onEnd(WindowInsetsAnimation animation) {
                         if ((animation.getTypeMask() & WindowInsets.Type.ime()) != 0) {
+                            noteInputConnection(activity);
                             WindowInsets now = decor.getRootWindowInsets();
                             trace("ime anim end (visible="
                                   + (now != null && now.isVisible(WindowInsets.Type.ime()))
@@ -154,6 +189,10 @@ public final class KeyboardInsetsDebounce {
         fullscreenMode.setAccessible(true);
 
         final View.OnKeyListener bypass = (view, keyCode, event) -> {
+            noteInputConnection(activity);
+            if (event.getAction() == KeyEvent.ACTION_UP) {
+                trace("key up " + KeyEvent.keyCodeToString(keyCode));
+            }
             if (event.getAction() != KeyEvent.ACTION_DOWN
                     || keyCode == KeyEvent.KEYCODE_BACK) {
                 return false;
@@ -192,7 +231,7 @@ public final class KeyboardInsetsDebounce {
     }
 
     @TargetApi(Build.VERSION_CODES.R)
-    private static void installOnUiThread(Activity activity) throws Exception {
+    private static void installOnUiThread(final Activity activity) throws Exception {
         Object activityDelegate = field(activity.getClass(), "m_delegate").get(activity);
         Object inputDelegate = field(activityDelegate.getClass(), "m_inputDelegate")
                 .get(activityDelegate);
@@ -215,6 +254,7 @@ public final class KeyboardInsetsDebounce {
         };
 
         decor.setOnApplyWindowInsetsListener((view, insets) -> {
+            noteInputConnection(activity);
             trace("insets ime=" + insets.isVisible(WindowInsets.Type.ime()) + " bottom="
                   + insets.getInsets(WindowInsets.Type.ime()).bottom);
             if (insets.isVisible(WindowInsets.Type.ime())) {
