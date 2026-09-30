@@ -7,6 +7,20 @@ release flow.
 
 ## [Unreleased]
 
+## [4.9.1] - 2026-09-30
+
+### Fixed
+
+- Android: the keyboard no longer drops and reopens on Backspace or Caps
+  Lock in text fields (password, chat messages, ...), seen with a Xiaomi
+  keyboard. Qt asked for the keyboard again on every key release, and those
+  two keys reach the app as key presses rather than typed text. Should the
+  keyboard still close on such a key, it is reopened a moment later instead
+  of staying gone.
+- Android: the Serial Monitor terminal no longer hands its scrollback to the
+  soft keyboard, nor moves the cursor the keyboard sees with every line the
+  device prints.
+
 ## [4.9.0] - 2026-09-28
 
 ### Added
