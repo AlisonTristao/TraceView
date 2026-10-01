@@ -159,6 +159,32 @@ void DashboardGrid::setDeviceConnected(const QString& deviceId, bool connected) 
     emit deviceConnectionStateChanged(deviceId, connected);
 }
 
+void DashboardGrid::setBindingResolver(BindingResolver resolver) {
+    m_bindingResolver = std::move(resolver);
+}
+
+bool DashboardGrid::resolveBindings() {
+    bool changed = false;
+    for (DashboardItem& item : m_items) {
+        const QJsonObject config = resolvedConfig(item.config);
+        if (config == item.config) {
+            continue;
+        }
+        item.config = config;
+        changed = true;
+        if (DashboardCell* cell = m_cells.value(item.id)) {
+            if (DashboardWidget* content = cell->content()) {
+                content->setConfig(config);
+            }
+        }
+    }
+    return changed;
+}
+
+QJsonObject DashboardGrid::resolvedConfig(const QJsonObject& config) const {
+    return m_bindingResolver ? m_bindingResolver(config) : config;
+}
+
 QJsonObject DashboardGrid::configForWidget(DashboardWidget* widget) const {
     for (auto it = m_cells.constBegin(); it != m_cells.constEnd(); ++it) {
         if (it.value()->content() == widget) {
@@ -521,7 +547,9 @@ void DashboardGrid::changeSelectedConfig(const QJsonObject& newConfig) {
     if (!config.contains(QLatin1String("view")) && item->config.contains(QLatin1String("view"))) {
         config[QLatin1String("view")] = item->config.value(QLatin1String("view"));
     }
-    if (item->config == config) {
+    // Compared as stored: an editor that left out a name the resolver fills
+    // straight back in has not changed anything.
+    if (item->config == resolvedConfig(config)) {
         return;
     }
 
@@ -627,7 +655,9 @@ void DashboardGrid::ungroupSelected() {
     m_undoStack->push(new UngroupItemsCommand(this, previousGroupIds));
 }
 
-void DashboardGrid::applyInsertItem(const DashboardItem& item) {
+void DashboardGrid::applyInsertItem(const DashboardItem& inserted) {
+    DashboardItem item = inserted;
+    item.config = resolvedConfig(item.config);
     m_items.append(item);
     createCell(item);
     updateGeometry();
@@ -716,8 +746,9 @@ void DashboardGrid::applySetKey(const QString& itemId, const QString& key) {
     }
 }
 
-void DashboardGrid::applySetConfig(const QString& itemId, const QJsonObject& config) {
+void DashboardGrid::applySetConfig(const QString& itemId, const QJsonObject& requested) {
     if (DashboardItem* item = itemById(itemId)) {
+        const QJsonObject config = resolvedConfig(requested);
         item->config = config;
         if (DashboardCell* cell = m_cells.value(itemId)) {
             if (DashboardWidget* content = cell->content()) {
@@ -842,6 +873,7 @@ void DashboardGrid::fromJson(const QJsonObject& object) {
         if (!ok || WidgetRegistry::instance().displayName(item.typeId).isEmpty()) {
             continue;
         }
+        item.config = resolvedConfig(item.config);
         m_items.append(item);
         createCell(item);
     }

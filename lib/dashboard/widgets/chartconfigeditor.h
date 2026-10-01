@@ -73,6 +73,9 @@ private:
     // handler all need to resolve a field's catalog unit, pulled into one
     // place instead of each repeating the same four-argument call.
     QVector<CatalogTopicField> currentTopicFields() const;
+    // The topic was re-pointed by the user: drops m_topicName and every
+    // row's field name, which named the previous topic's ids.
+    void forgetBindingNames();
 
     bool m_updating = false;
 
@@ -85,6 +88,14 @@ private:
     // fields below *show* is derived from these, never the other way around.
     quint32 m_sourceId = 0;
     quint16 m_topicId = 0;
+    // The topic's name -- the authoritative half of the binding (see
+    // dashboard/bindingresolver.h), carried through untouched and only
+    // cleared when the user re-points the topic itself (DashboardGrid's
+    // resolver then names it again from the new ids, if the catalog knows
+    // them). Each series row carries its field's name the same way, in its
+    // field combo's "fieldName" property. A device change keeps both: that
+    // is how a chart moves to another device publishing the same topics.
+    QString m_topicName;
 
     QFormLayout* m_formLayout = nullptr;
     QComboBox* m_deviceCombo = nullptr;

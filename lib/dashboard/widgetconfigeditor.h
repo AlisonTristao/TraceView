@@ -113,6 +113,14 @@ QVector<CatalogTopicField> resolveCatalogTopicFields(const QVector<DeviceOption>
 // addSeriesRow()), never parsed back out of the displayed text.
 void populateFieldCombo(QComboBox* combo, const QVector<CatalogTopicField>& fields);
 
+// Re-points a series row's field combo (populateFieldCombo() above) at
+// `fieldId`, by hand -- typed or picked. The combo carries the field's NAME
+// too, in its "fieldName" property: the authoritative half of the binding
+// (see dashboard/bindingresolver.h), written back as the series' "fieldName".
+// A different id drops it, since it named the old field; DashboardGrid's
+// resolver names the new one from the catalog once the edit lands.
+void setBoundFieldId(QComboBox* combo, int fieldId);
+
 // Base class for a widget type's type-specific settings, shown in the
 // PropertiesPanel below the common Type/Name/Key fields (see
 // PropertiesPanel, lib/core/propertiespanel.h). A type opts in by setting

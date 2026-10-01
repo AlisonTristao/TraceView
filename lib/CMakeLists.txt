@@ -287,6 +287,8 @@ target_link_libraries(traceview_project PUBLIC
 # traceview_dashboard: the editable widget grid (items, cells, undo
 # commands, widget registry). Depends on traceview_theme for painting.
 add_library(traceview_dashboard STATIC
+    dashboard/bindingresolver.cpp
+    dashboard/bindingresolver.h
     dashboard/dashboarditem.cpp
     dashboard/dashboarditem.h
     dashboard/dashboardwidget.h

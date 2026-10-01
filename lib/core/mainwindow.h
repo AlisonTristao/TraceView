@@ -388,6 +388,18 @@ private:
     // refreshPropertiesPanelDevices() and hubPeersFor() so the two
     // definitions of "this device's own source_id" can't drift apart.
     quint32 deviceSelfSourceId(const Device& device) const;
+    // One widget config's telemetry binding mapped onto the catalog of the
+    // device it names ("deviceId") -- see dashboard/bindingresolver.h. The
+    // catalog is the live one while that device is connected and has one,
+    // else whatever the manifest cache holds for it (its own source id or
+    // robot name, plus the source the config was last bound to). Installed
+    // as m_dashboardGrid's BindingResolver; also applied to the saved JSON
+    // of the workspaces that aren't showing.
+    QJsonObject resolveWidgetBinding(const QJsonObject& config) const;
+    // Re-runs resolveWidgetBinding() over every workspace -- the live grid
+    // and the saved JSON of the others -- and resubscribes whatever moved.
+    // Called after a project load and whenever a device's catalog changes.
+    void resolveDashboardBindings();
     // Keep m_deviceConnections (one DeviceConnection per Device::id) in sync
     // with m_devicesGrid's own list -- wired to DevicesGrid::deviceAdded/
     // deviceRemoved/deviceUpdated. onDeviceUpdated also re-points the

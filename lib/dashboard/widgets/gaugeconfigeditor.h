@@ -31,6 +31,9 @@ public:
     void setAvailableDevices(const QVector<DeviceOption>& devices) override;
 
 private:
+    // The topic was re-pointed by the user: drops m_topicName and every
+    // ring's field name, which named the previous topic's ids.
+    void forgetBindingNames();
     // Appends one ring row built from `series` (missing fields fall back to
     // sensible defaults). Safe to call both while setConfig() is rebuilding
     // the whole table and from the "+ Add ring" button.
@@ -64,6 +67,11 @@ private:
     // fields below *show* is derived from these, never the other way around.
     quint32 m_sourceId = 0;
     quint16 m_topicId = 0;
+    // The topic's name, and each ring's field name in its field combo's
+    // "fieldName" property -- carried through untouched, cleared only when
+    // the user re-points what they name. Same contract as
+    // ChartConfigEditor::m_topicName.
+    QString m_topicName;
 
     QFormLayout* m_formLayout = nullptr;
     QComboBox* m_deviceCombo = nullptr;

@@ -14,6 +14,7 @@
 #include <QVector>
 #include <QWidget>
 #include <array>
+#include <functional>
 #include <optional>
 
 #include "dashboardcell.h"
@@ -139,6 +140,24 @@ public:
     // any cell created or reconfigured afterward (see createCell()/
     // applySetConfig()).
     void setDeviceConnected(const QString& deviceId, bool connected);
+
+    // Maps one item config's telemetry binding onto what its device
+    // currently reports -- names to ids, and names filled in from ids for a
+    // binding saved before names existed (see dashboard/bindingresolver.h).
+    // Once set, every config entering the grid goes through it: a load
+    // (fromJson()), an insert/paste, and every config edit including its
+    // undo/redo -- so the stored config, what the widget is given and what
+    // toJson() saves always agree. MainWindow installs one that looks up the
+    // config's "deviceId"; without one (tests, by default) configs are kept
+    // exactly as given.
+    using BindingResolver = std::function<QJsonObject(const QJsonObject&)>;
+    void setBindingResolver(BindingResolver resolver);
+    // Runs the resolver again over every item -- for when a device's catalog
+    // changed (it connected, or announced a new manifest revision). Not an
+    // edit: nothing goes on the undo stack, since it records where the
+    // binding's names live now rather than anything the user changed.
+    // Widgets whose config changed get it re-applied; returns whether any did.
+    bool resolveBindings();
 
     // Replaces the current selection with just `itemId` (or clears it, for
     // an empty string) -- expanded to the item's whole group if it belongs
@@ -464,6 +483,10 @@ private:
     QPoint m_rubberBandOrigin;
     bool m_rubberBandAdditive = false;
     bool m_rubberBandPending = false;
+
+    // `config` through m_bindingResolver, or unchanged when none is set.
+    QJsonObject resolvedConfig(const QJsonObject& config) const;
+    BindingResolver m_bindingResolver;
 
     QUndoStack* m_undoStack;
 };

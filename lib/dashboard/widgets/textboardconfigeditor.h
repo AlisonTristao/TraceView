@@ -28,6 +28,10 @@ private:
     QVector<DeviceOption> m_devices;
     quint32 m_sourceId = 0;
     quint16 m_topicId = 0;
+    // The topic's name, carried through untouched and cleared only when the
+    // user re-points the topic -- same contract as
+    // ChartConfigEditor::m_topicName (see dashboard/bindingresolver.h).
+    QString m_topicName;
 
     QComboBox* m_deviceCombo = nullptr;
     QLineEdit* m_sourceIdEdit = nullptr;

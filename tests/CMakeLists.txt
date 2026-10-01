@@ -17,6 +17,10 @@ add_traceview_test(test_workspacemanager traceview_project)
 add_traceview_test(test_dashboarditem traceview_dashboard)
 add_traceview_test(test_widgetregistry traceview_dashboard)
 add_traceview_test(test_dashboardgrid traceview_dashboard)
+# Binding a widget by topic/field NAME (dashboard/bindingresolver.h): names
+# re-pointing ids against another device's catalog, ids-only projects gaining
+# names, unresolvable names falling back to ids, and the .tvproj round trip.
+add_traceview_test(test_bindingresolver traceview_dashboard traceview_project)
 # Devices panel data model/card/grid, plus its own JSON persistence (see
 # lib/devices). Only traceview_devices; no dashboard/protocol dependency.
 add_traceview_test(test_device traceview_devices)

@@ -452,6 +452,59 @@ undo/redo — with no further wiring needed. What that JSON means (parsing
 it into an actual data binding) is up to whatever later consumes it; the
 editor's only job is capturing the settings.
 
+## Telemetry bindings
+
+A telemetry widget (chart, gauge, text board, audio) binds to one topic of
+one device, and a chart or gauge to some of that topic's fields. The config
+JSON carries the binding twice — the names the firmware declares, and the
+numeric ids they currently have:
+
+```json
+{
+  "deviceId": "3f0c...",
+  "sourceId": "0x1A2B3C4D", "topicId": "0x0105", "topicName": "imu",
+  "series": [ { "name": "Accel X", "fieldId": 4, "fieldName": "ax" } ]
+}
+```
+
+| Key | Where | Meaning |
+|---|---|---|
+| `deviceId` | top level | The project's `Device` entry (Devices tab) the widget reads from — stable across renames and links. |
+| `topicName` | top level, next to `topicId` | The topic's declared name (BTP's TELEMETRY.md, section 3). |
+| `fieldName` | each `series` entry (and a pre-multi-ring gauge's top-level `fieldId`) | The field's declared name. |
+| `<x>FieldName` | top level, next to `<x>FieldId` | Same, for the audio widget's `seqFieldId`/`rateFieldId`/`samplesFieldId`. |
+
+The **names are the binding**; `sourceId` (derived from the device's MAC),
+`topicId` and `fieldId` (handed out by the firmware in declaration order)
+are only where those names currently live. They are still written, so older
+TraceView versions — which only read ids — keep working, and they are what
+a widget falls back to when a name doesn't resolve.
+
+`resolveBindingNames()`
+([lib/dashboard/bindingresolver.h](../lib/dashboard/bindingresolver.h))
+maps a config onto the catalog of its device: the topic is found by name
+(on the config's current source first, then the device's own, then the only
+source publishing it — ambiguous otherwise) and the ids are re-pointed at
+it, each field id from its field name. A name the catalog doesn't have keeps
+its id; a topic name it doesn't have leaves the whole binding on its ids. A
+config without names (a project saved before they existed) is looked up by
+its ids instead and gains the names, so the next save writes them; one the
+catalog doesn't know keeps its ids and nothing is dropped.
+
+`MainWindow::resolveWidgetBinding()` supplies the catalog — the device's
+live `Backend::catalogTopics()` while it has one, else the manifest cache
+for its own source id, its robot name, or the source the config was last
+bound to — and is installed as `DashboardGrid::setBindingResolver()`. Every
+config entering the grid goes through it (load, insert/paste, each config
+edit and its undo/redo), and `MainWindow::resolveDashboardBindings()` runs it
+again over every workspace after a project load and whenever a device's
+catalog changes (it connects, or announces a new manifest revision). That
+re-run is not an edit: nothing lands on the undo stack. The config editors
+carry the names through untouched and drop one only when the user re-points
+the id it names; the resolver then names the new id from the catalog. Moving
+a widget to another device keeps its names — that is how a dashboard moves
+from a simulated device to the real one.
+
 ## Project file
 
 `ProjectStore` ([lib/project/projectstore.h](../lib/project/projectstore.h))
