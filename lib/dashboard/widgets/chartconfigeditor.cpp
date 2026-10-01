@@ -336,6 +336,8 @@ ChartConfigEditor::ChartConfigEditor(QWidget* parent) : WidgetConfigEditor(paren
         bool ok = false;
         const qulonglong typed = m_topicIdEdit->currentText().trimmed().toULongLong(&ok, 0);
         if (ok) {
+            const quint32 previousSourceId = m_sourceId;
+            const quint16 previousTopicId = m_topicId;
             m_topicId = quint16(qBound<qulonglong>(0, typed, 65535));
             m_sourceId = 0;
             if (m_topicId != 0) {
@@ -347,6 +349,9 @@ ChartConfigEditor::ChartConfigEditor(QWidget* parent) : WidgetConfigEditor(paren
                     }
                 }
             }
+            if (m_sourceId != previousSourceId || m_topicId != previousTopicId) {
+                forgetBindingNames();
+            }
         }
         updateIdentityDisplay();
         emitChanged();
@@ -354,8 +359,13 @@ ChartConfigEditor::ChartConfigEditor(QWidget* parent) : WidgetConfigEditor(paren
     connect(m_topicIdEdit, &QComboBox::activated, this, [this](int index) {
         QString sourceHex, topicHex;
         if (decodeTopicComboData(m_topicIdEdit->itemData(index), &sourceHex, &topicHex)) {
+            const quint32 previousSourceId = m_sourceId;
+            const quint16 previousTopicId = m_topicId;
             m_sourceId = quint32(sourceHex.toULongLong(nullptr, 0));
             m_topicId = quint16(topicHex.toUInt(nullptr, 0));
+            if (m_sourceId != previousSourceId || m_topicId != previousTopicId) {
+                forgetBindingNames();
+            }
         }
         updateIdentityDisplay();
         emitChanged();
@@ -393,6 +403,7 @@ void ChartConfigEditor::setConfig(const QJsonObject& config) {
     m_deviceCombo->setCurrentIndex(deviceIdx >= 0 ? deviceIdx : 0);
     m_sourceId = quint32(config.value("sourceId").toString("0").toULongLong(nullptr, 0));
     m_topicId = quint16(qBound(0, config.value("topicId").toString("0").toInt(nullptr, 0), 65535));
+    m_topicName = config.value("topicName").toString();
 
     const QJsonObject xAxis = config.value("xAxis").toObject();
     m_xAxisModeCombo->setCurrentIndex(xAxis.value("mode").toString("samples") == "time" ? 1 : 0);
@@ -431,6 +442,9 @@ QJsonObject ChartConfigEditor::config() const {
     cfg["deviceId"] = m_deviceCombo->currentData().toString();
     cfg["sourceId"] = formatHexId(m_sourceId, 8);
     cfg["topicId"] = formatHexId(m_topicId, 4);
+    if (!m_topicName.isEmpty()) {
+        cfg["topicName"] = m_topicName;
+    }
 
     QJsonObject xAxis;
     xAxis["mode"] = m_xAxisModeCombo->currentData().toString();
@@ -457,6 +471,10 @@ QJsonObject ChartConfigEditor::config() const {
         if (auto* fieldIdCombo =
                 qobject_cast<QComboBox*>(m_seriesTable->cellWidget(row, kFieldIdColumn))) {
             series["fieldId"] = fieldIdCombo->property("fieldId").toInt();
+            const QString fieldName = fieldIdCombo->property("fieldName").toString();
+            if (!fieldName.isEmpty()) {
+                series["fieldName"] = fieldName;
+            }
             series["unit"] = fieldIdCombo->property("fieldUnit").toString();
             // JSON has no NaN literal, so "not declared" is the key simply
             // being absent -- parseSeriesConfig()'s toDouble(qQNaN())
@@ -501,6 +519,7 @@ void ChartConfigEditor::addSeriesRow(const QJsonObject& series) {
     const QVector<CatalogTopicField> fields = currentTopicFields();
     populateFieldCombo(fieldIdCombo, fields);
     fieldIdCombo->setProperty("fieldId", fieldId);
+    fieldIdCombo->setProperty("fieldName", series.value("fieldName").toString());
     // Falls back to whatever unit/range this row was last saved with (JSON's
     // "unit"/"min"/"max") when the live catalog doesn't know this field yet
     // -- same graceful-degradation idea as resolveCatalogTopicName() falling
@@ -530,7 +549,7 @@ void ChartConfigEditor::addSeriesRow(const QJsonObject& series) {
            "hasn't reported yet."));
     connect(fieldIdCombo, &QComboBox::activated, this, [this, fieldIdCombo](int index) {
         const int pickedFieldId = fieldIdCombo->itemData(index).toInt();
-        fieldIdCombo->setProperty("fieldId", pickedFieldId);
+        setBoundFieldId(fieldIdCombo, pickedFieldId);
         setResolvedField(fieldIdCombo, findField(currentTopicFields(), pickedFieldId));
         emitChanged();
     });
@@ -538,7 +557,7 @@ void ChartConfigEditor::addSeriesRow(const QJsonObject& series) {
         bool ok = false;
         const int typed = fieldIdCombo->currentText().trimmed().toInt(&ok);
         if (ok) {
-            fieldIdCombo->setProperty("fieldId", typed);
+            setBoundFieldId(fieldIdCombo, typed);
             setResolvedField(fieldIdCombo, findField(currentTopicFields(), typed));
         }
         emitChanged();
@@ -622,6 +641,15 @@ void ChartConfigEditor::updateAxisRowsVisibility() {
     setFormRowVisible(m_formLayout, m_yRangeRow,
                       !autoAxis && m_yAxisModeCombo->currentData().toString() == "fixed");
     setFormRowVisible(m_formLayout, m_yUnitEdit, !autoAxis);
+}
+
+void ChartConfigEditor::forgetBindingNames() {
+    m_topicName.clear();
+    for (int row = 0; row < m_seriesTable->rowCount(); ++row) {
+        if (QWidget* fieldIdCombo = m_seriesTable->cellWidget(row, kFieldIdColumn)) {
+            fieldIdCombo->setProperty("fieldName", QString());
+        }
+    }
 }
 
 QVector<CatalogTopicField> ChartConfigEditor::currentTopicFields() const {

@@ -145,4 +145,11 @@ void populateFieldCombo(QComboBox* combo, const QVector<CatalogTopicField>& fiel
     combo->setCurrentText(previousText);
 }
 
+void setBoundFieldId(QComboBox* combo, int fieldId) {
+    if (combo->property("fieldId").toInt() != fieldId) {
+        combo->setProperty("fieldName", QString());
+    }
+    combo->setProperty("fieldId", fieldId);
+}
+
 }  // namespace traceview

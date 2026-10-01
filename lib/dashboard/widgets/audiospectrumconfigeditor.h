@@ -27,6 +27,9 @@ private:
     void emitChanged();
     void updateIdentityDisplay();
     void adoptTopicFields();
+    // The topic was re-pointed by the user: drops the names below, which
+    // named the previous topic and its fields.
+    void forgetBindingNames();
     QVector<DeviceOption> devicesWithStreamTopics() const;
 
     bool m_updating = false;
@@ -36,6 +39,13 @@ private:
     quint16 m_seqFieldId = 1;
     quint16 m_rateFieldId = 2;
     quint16 m_samplesFieldId = 3;
+    // The binding's names, carried through untouched and cleared only when
+    // the user re-points the topic -- same contract as
+    // ChartConfigEditor::m_topicName (see dashboard/bindingresolver.h).
+    QString m_topicName;
+    QString m_seqFieldName;
+    QString m_rateFieldName;
+    QString m_samplesFieldName;
 
     QComboBox* m_deviceCombo = nullptr;
     QLineEdit* m_sourceIdEdit = nullptr;

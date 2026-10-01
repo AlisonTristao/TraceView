@@ -54,6 +54,7 @@
 #include "blediscoveryservice.h"
 #include "bletransport.h"
 #endif
+#include "dashboard/bindingresolver.h"
 #include "dashboard/dashboardgrid.h"
 #include "dashboard/widgetconfigeditor.h"
 #include "dashboard/widgetregistry.h"
@@ -563,6 +564,11 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     m_devicesGrid->setBleScanToggleHandler([this](bool start) { onBleScanToggled(start); });
     m_devicesGrid->setBleDeviceListProvider([this]() { return m_bleDiscoveredDevices; });
 #endif
+    // Every config entering the dashboard is bound by name from here on --
+    // see resolveWidgetBinding(). Installed once m_devicesGrid exists, which
+    // it reads to find each config's device.
+    m_dashboardGrid->setBindingResolver(
+        [this](const QJsonObject& config) { return resolveWidgetBinding(config); });
     // Same reasoning as setPortListProvider() above: DevicesGrid can't reach
     // a Backend itself (traceview_devices doesn't depend on
     // traceview_protocol), so MainWindow supplies the gear icon's "Reported
@@ -2985,6 +2991,87 @@ quint32 MainWindow::deviceSelfSourceId(const Device& device) const {
     return 0;
 }
 
+QJsonObject MainWindow::resolveWidgetBinding(const QJsonObject& config) const {
+    const QString deviceId = config.value(QLatin1String("deviceId")).toString();
+    if (deviceId.isEmpty() || !config.contains(QLatin1String("topicId")) || !m_devicesGrid) {
+        return config;
+    }
+    const QVector<Device> devices = m_devicesGrid->devices();
+    const Device* device = findDevice(devices, deviceId);
+    if (device == nullptr) {
+        return config;
+    }
+    const quint32 selfSourceId = deviceSelfSourceId(*device);
+
+    QVector<CatalogTopicInfo> catalog;
+    if (DeviceConnection* connection = m_deviceConnections.value(deviceId)) {
+        catalog = connection->backend()->catalogTopics();
+    }
+    if (catalog.isEmpty()) {
+        // Not connected (or no manifest yet): what the cache remembers of
+        // this device, and of the source the config was last bound to -- the
+        // latter is what lets a project saved with ids only gain its names
+        // at open, before anything connects.
+        const quint32 namedSourceId =
+            selfSourceId != 0 ? selfSourceId
+                              : ManifestClient::cachedSourceNamed(
+                                    device->robotName.isEmpty() ? device->name : device->robotName);
+        const quint32 boundSourceId =
+            quint32(config.value(QLatin1String("sourceId")).toString("0").toULongLong(nullptr, 0));
+        QVector<quint32> sourceIds;
+        for (const quint32 sourceId : {namedSourceId, boundSourceId}) {
+            if (sourceId != 0 && !sourceIds.contains(sourceId)) {
+                sourceIds.append(sourceId);
+            }
+        }
+        for (const quint32 sourceId : sourceIds) {
+            QVector<CatalogTopicInfo> cached;
+            if (BtpBackend::cachedDescription(sourceId, &cached, nullptr)) {
+                catalog += cached;
+            }
+        }
+    }
+    return resolveBindingNames(config, catalog, selfSourceId);
+}
+
+void MainWindow::resolveDashboardBindings() {
+    const bool liveChanged = m_dashboardGrid->resolveBindings();
+
+    bool savedChanged = false;
+    WorkspaceManager& workspaces = WorkspaceManager::instance();
+    const QVector<Workspace> list = workspaces.workspaces();
+    for (const Workspace& workspace : list) {
+        if (workspace.id == workspaces.activeId()) {
+            continue;  // m_dashboardGrid is the live copy of this one
+        }
+        QJsonObject dashboard = workspace.dashboard;
+        QJsonArray items = dashboard.value(QLatin1String("items")).toArray();
+        bool changed = false;
+        for (int i = 0; i < items.size(); ++i) {
+            QJsonObject item = items.at(i).toObject();
+            const QJsonObject config = item.value(QLatin1String("config")).toObject();
+            const QJsonObject resolved = resolveWidgetBinding(config);
+            if (resolved != config) {
+                item[QLatin1String("config")] = resolved;
+                items[i] = item;
+                changed = true;
+            }
+        }
+        if (changed) {
+            dashboard[QLatin1String("items")] = items;
+            workspaces.setDashboardFor(workspace.id, dashboard);
+            savedChanged = true;
+        }
+    }
+
+    if (liveChanged) {
+        refreshWidgetSubscriptions();  // background subscriptions too
+        refreshPropertiesPanel();
+    } else if (savedChanged) {
+        syncBackgroundTelemetry(BackgroundSync::Full);
+    }
+}
+
 void MainWindow::refreshPropertiesPanelDevices() {
     const QVector<Device> devices = m_devicesGrid->devices();
     QVector<DeviceOption> options;
@@ -3585,6 +3672,13 @@ DeviceConnection* MainWindow::createDeviceConnection(const Device& device) {
     connect(backend, &Backend::catalogChanged, this, [this, id = device.id]() {
         refreshPropertiesPanelDevices();
         m_devicesGrid->notifyCatalogChanged(id);
+        // The names every widget bound to this device holds may live under
+        // other ids now (another robot, a reordered firmware), and a project
+        // saved with ids only can now learn its names. Queued: this resolves
+        // and resubscribes, which must not re-enter the backend while it is
+        // still emitting.
+        QMetaObject::invokeMethod(
+            this, [this]() { resolveDashboardBindings(); }, Qt::QueuedConnection);
     });
     // setDeviceIdentity(), not updateDevice() -- same reasoning as
     // onDeviceConnectionStateChanged()'s setDeviceConnected() call below: this
@@ -4554,6 +4648,9 @@ bool MainWindow::loadProjectFile(const QString& path) {
         WorkspaceManager::instance().dashboardFor(WorkspaceManager::instance().activeId()),
         DashboardLoadBreakpoint::DeviceDefault);
     m_dashboardGrid->undoStack()->clear();
+    // The active workspace was resolved as it loaded; this covers the
+    // others' saved JSON (names filled in from the manifest cache).
+    resolveDashboardBindings();
     refreshPropertiesPanel();
     refreshLayersPanel();
     refreshWorkspaceSwitcher();

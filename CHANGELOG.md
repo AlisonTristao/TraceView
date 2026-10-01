@@ -50,6 +50,16 @@ release flow.
   audio blocks does not flood charts, the telemetry history and device
   scripts. Shorter arrays behave as before.
 - Building now needs the Qt Multimedia module.
+- Charts, gauges, text boards and audio widgets bind to their topic and
+  fields by **name**, not only by numeric id. A dashboard built on one robot
+  now works on another that publishes the same topics (a simulated device
+  and the real one, or the widget pointed at another device), and survives a
+  firmware that declares its topics in another order: the ids are re-pointed
+  whenever the device's catalog arrives or changes. Projects saved with ids
+  only gain the names from the device's catalog (or the manifest cache) and
+  write them on the next save; a binding no catalog knows keeps its ids. The
+  new `topicName`/`fieldName` keys are additive — older TraceView versions
+  still read the ids.
 
 ## [4.8.1] - 2026-09-27
 
