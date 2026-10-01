@@ -21,6 +21,11 @@ add_traceview_test(test_dashboardgrid traceview_dashboard)
 # re-pointing ids against another device's catalog, ids-only projects gaining
 # names, unresolvable names falling back to ids, and the .tvproj round trip.
 add_traceview_test(test_bindingresolver traceview_dashboard traceview_project)
+# "Add all fields" in the chart editor (series by field name, automatic axes
+# per unit, Y range from the declared ranges) and the unit/range a picked
+# field prefills in the chart and gauge editors without clobbering the
+# user's own values.
+add_traceview_test(test_autochartconfig traceview_dashboard)
 # Devices panel data model/card/grid, plus its own JSON persistence (see
 # lib/devices). Only traceview_devices; no dashboard/protocol dependency.
 add_traceview_test(test_device traceview_devices)
