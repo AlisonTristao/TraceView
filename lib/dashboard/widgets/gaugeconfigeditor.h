@@ -38,6 +38,13 @@ private:
     // sensible defaults). Safe to call both while setConfig() is rebuilding
     // the whole table and from the "+ Add ring" button.
     void addSeriesRow(const QJsonObject& series);
+    // A field was just picked (or typed) in a ring: fills the gauge's shared
+    // Unit and Min/Max from that field's catalog entry while they are still
+    // untouched -- Unit empty, Min/Max at their initial 0..100 and the field
+    // declaring a range. A value the user set is never overwritten, and a
+    // field the catalog doesn't know changes nothing. Emits nothing; the
+    // caller's own emitChanged() follows.
+    void adoptFieldDefaults(int fieldId);
     // Common tail of every field's change handler: no-ops while setConfig()
     // is programmatically repopulating the UI (m_updating), otherwise
     // re-derives config() and emits configChanged().

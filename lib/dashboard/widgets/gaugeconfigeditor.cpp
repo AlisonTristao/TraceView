@@ -289,7 +289,9 @@ void GaugeConfigEditor::addSeriesRow(const QJsonObject& series) {
            "already reported (shown by name), or type a numeric id by hand for one it "
            "hasn't reported yet."));
     connect(fieldIdCombo, &QComboBox::activated, this, [this, fieldIdCombo](int index) {
-        setBoundFieldId(fieldIdCombo, fieldIdCombo->itemData(index).toInt());
+        const int pickedFieldId = fieldIdCombo->itemData(index).toInt();
+        setBoundFieldId(fieldIdCombo, pickedFieldId);
+        adoptFieldDefaults(pickedFieldId);
         emitChanged();
     });
     connect(fieldIdCombo->lineEdit(), &QLineEdit::editingFinished, this, [this, fieldIdCombo]() {
@@ -297,6 +299,7 @@ void GaugeConfigEditor::addSeriesRow(const QJsonObject& series) {
         const int typed = fieldIdCombo->currentText().trimmed().toInt(&ok);
         if (ok) {
             setBoundFieldId(fieldIdCombo, typed);
+            adoptFieldDefaults(typed);
         }
         emitChanged();
     });
@@ -338,6 +341,35 @@ void GaugeConfigEditor::addSeriesRow(const QJsonObject& series) {
     });
     m_seriesTable->setCellWidget(row, kRemoveColumn, removeButton);
 
+    m_updating = wasUpdating;
+}
+
+void GaugeConfigEditor::adoptFieldDefaults(int fieldId) {
+    const QVector<CatalogTopicField> fields =
+        resolveCatalogTopicFields(m_devices, m_deviceCombo->currentData().toString(),
+                                  formatHexId(m_sourceId, 8), formatHexId(m_topicId, 4));
+    const CatalogTopicField* field = nullptr;
+    for (const CatalogTopicField& candidate : fields) {
+        if (candidate.fieldId == fieldId) {
+            field = &candidate;
+            break;
+        }
+    }
+    if (!field) {
+        return;
+    }
+
+    // One edit: the widgets would each emit configChanged() on their own.
+    const bool wasUpdating = m_updating;
+    m_updating = true;
+    if (m_unitEdit->text().isEmpty()) {
+        m_unitEdit->setText(field->unit);
+    }
+    if (m_minSpin->value() == 0.0 && m_maxSpin->value() == 100.0 && !qIsNaN(field->minValue) &&
+        !qIsNaN(field->maxValue) && field->minValue < field->maxValue) {
+        m_minSpin->setValue(field->minValue);
+        m_maxSpin->setValue(field->maxValue);
+    }
     m_updating = wasUpdating;
 }
 

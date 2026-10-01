@@ -480,7 +480,7 @@
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="+132"/>
+        <location filename="../lib/core/mainwindow.cpp" line="+133"/>
         <source>TraceView Project (*.tvproj)</source>
         <translation>TraceView プロジェクト (*.tvproj)</translation>
     </message>
@@ -785,7 +785,7 @@
 <context>
     <name>WidgetConfigEditor</name>
     <message>
-        <location filename="../lib/dashboard/widgetconfigeditor.cpp" line="+12"/>
+        <location filename="../lib/dashboard/widgetconfigeditor.cpp" line="+13"/>
         <source>(No device)</source>
         <translation>(デバイスなし)</translation>
     </message>
@@ -800,7 +800,7 @@
         <translation>(名前なしトピック)</translation>
     </message>
     <message>
-        <location line="+103"/>
+        <location line="+119"/>
         <source>Field %1</source>
         <translation>フィールド %1</translation>
     </message>
@@ -1142,7 +1142,7 @@
 <context>
     <name>traceview::AudioSpectrumConfigEditor</name>
     <message>
-        <location filename="../lib/dashboard/widgets/audiospectrumconfigeditor.cpp" line="+28"/>
+        <location filename="../lib/dashboard/widgets/audiospectrumconfigeditor.cpp" line="+29"/>
         <source>(auto)</source>
         <translation>(自動)</translation>
     </message>
@@ -1564,7 +1564,7 @@
 <context>
     <name>traceview::ChartConfigEditor</name>
     <message>
-        <location filename="../lib/dashboard/widgets/chartconfigeditor.cpp" line="+162"/>
+        <location filename="../lib/dashboard/widgets/chartconfigeditor.cpp" line="+201"/>
         <source>0x0101</source>
         <translation>0x0101</translation>
     </message>
@@ -1615,12 +1615,12 @@
     </message>
     <message>
         <location line="+9"/>
-        <location line="+423"/>
+        <location line="+455"/>
         <source> pts</source>
         <translation> pts</translation>
     </message>
     <message>
-        <location line="-419"/>
+        <location line="-451"/>
         <source>How much history the chart keeps before older data scrolls off — in samples or seconds, matching X Axis.</source>
         <translation>古いデータがスクロールして消えるまでにチャートが保持する履歴の長さ — X軸に合わせてサンプル数または秒で指定します。</translation>
     </message>
@@ -1750,17 +1750,27 @@
         <translation>+ 系列を追加</translation>
     </message>
     <message>
-        <location line="+192"/>
+        <location line="+8"/>
+        <source>+ Add all fields</source>
+        <translation>+ すべてのフィールドを追加</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Add one series for every numeric field of the topic above that isn&apos;t plotted yet, named after the field and with its unit and range from the device&apos;s manifest. Fields in different units get one Y axis per unit; fields sharing a unit and declaring a range get that range.</source>
+        <translation>上のトピックの数値フィールドのうち、まだプロットされていないものごとに系列を追加します。系列名はフィールド名、単位と範囲はデバイスのマニフェストから設定されます。単位が異なるフィールドは単位ごとに Y 軸が割り当てられ、単位が同じで範囲が宣言されているフィールドはその範囲を使用します。</translation>
+    </message>
+    <message>
+        <location line="+209"/>
         <source>Series %1</source>
         <translation>系列 %1</translation>
     </message>
     <message>
-        <location line="+33"/>
+        <location line="+34"/>
         <source>Which field of the bound topic this series plots -- pick one the device has already reported (shown by name), or type a numeric id by hand for one it hasn&apos;t reported yet.</source>
         <translation>この系列がプロットする、バインド済みトピックのフィールド -- デバイスが既に報告済みのもの（名前で表示）を選ぶか、未報告のものは数値 id を手入力してください。</translation>
     </message>
     <message>
-        <location line="+33"/>
+        <location line="+35"/>
         <source>Series Color</source>
         <translation>系列の色</translation>
     </message>
@@ -1803,6 +1813,11 @@
         <location line="+26"/>
         <source> s</source>
         <translation> s</translation>
+    </message>
+    <message>
+        <location line="+41"/>
+        <source>Field %1</source>
+        <translation>フィールド %1</translation>
     </message>
 </context>
 <context>
@@ -2265,7 +2280,7 @@ Allowed: %1</source>
 <context>
     <name>traceview::DashboardGrid</name>
     <message>
-        <location filename="../lib/dashboard/dashboardgrid.cpp" line="+554"/>
+        <location filename="../lib/dashboard/dashboardgrid.cpp" line="+582"/>
         <source>Bring to Front</source>
         <translation>最前面へ移動</translation>
     </message>
@@ -2342,34 +2357,6 @@ Allowed: %1</source>
         <location line="+6"/>
         <source>Audio Spectrogram</source>
         <translation>オーディオスペクトログラム</translation>
-    </message>
-    <message>
-        <source>Operator</source>
-        <translation type="vanished">オペレーター</translation>
-    </message>
-    <message>
-        <source>Boot OK. Battery at 87%.</source>
-        <translation type="vanished">起動OK。バッテリー 87%。</translation>
-    </message>
-    <message>
-        <source>Start the calibration routine, please.</source>
-        <translation type="vanished">キャリブレーションを開始してください。</translation>
-    </message>
-    <message>
-        <source>Calibration done. Offsets saved; log attached.</source>
-        <translation type="vanished">キャリブレーション完了。オフセット保存済み、ログを添付します。</translation>
-    </message>
-    <message>
-        <source>Sending the new route map.</source>
-        <translation type="vanished">新しいルートマップを送信します。</translation>
-    </message>
-    <message>
-        <source>Retrying over the other link...</source>
-        <translation type="vanished">別のリンクで再試行中...</translation>
-    </message>
-    <message>
-        <source>Chat</source>
-        <translation type="vanished">チャット</translation>
     </message>
     <message>
         <location line="+62"/>
@@ -3061,17 +3048,17 @@ Allowed: %1</source>
         <translation>+ リングを追加</translation>
     </message>
     <message>
-        <location line="+140"/>
+        <location line="+159"/>
         <source>Ring %1</source>
         <translation>リング %1</translation>
     </message>
     <message>
-        <location line="+12"/>
+        <location line="+13"/>
         <source>Which field of the bound topic this ring plots -- pick one the device has already reported (shown by name), or type a numeric id by hand for one it hasn&apos;t reported yet.</source>
         <translation>このリングがプロットする、バインド済みトピックのフィールド -- デバイスが既に報告済みのもの（名前で表示）を選ぶか、未報告のものは数値 id を手入力してください。</translation>
     </message>
     <message>
-        <location line="+30"/>
+        <location line="+33"/>
         <source>Ring Color</source>
         <translation>リングの色</translation>
     </message>
@@ -3203,7 +3190,7 @@ Allowed: %1</source>
         <translation>、</translation>
     </message>
     <message>
-        <location line="+557"/>
+        <location line="+562"/>
         <source>Pending</source>
         <translation>保留中</translation>
     </message>
@@ -3347,12 +3334,12 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+0"/>
-        <location line="+3618"/>
+        <location line="+3709"/>
         <source>Later</source>
         <translation>後で</translation>
     </message>
     <message>
-        <location line="-3611"/>
+        <location line="-3702"/>
         <source>&amp;Access</source>
         <translation>アクセス(&amp;A)</translation>
     </message>
@@ -3479,18 +3466,18 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+18"/>
-        <location line="+2983"/>
+        <location line="+3074"/>
         <source>Undo</source>
         <translation>元に戻す</translation>
     </message>
     <message>
-        <location line="-2981"/>
-        <location line="+2981"/>
+        <location line="-3072"/>
+        <location line="+3072"/>
         <source>Redo</source>
         <translation>やり直し</translation>
     </message>
     <message>
-        <location line="-2938"/>
+        <location line="-3029"/>
         <source>Add Device</source>
         <translation>デバイスを追加</translation>
     </message>
@@ -3526,12 +3513,12 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+29"/>
-        <location line="+2883"/>
+        <location line="+2974"/>
         <source>Fullscreen dashboard (F11)</source>
         <translation>ダッシュボードを全画面表示(F11)</translation>
     </message>
     <message>
-        <location line="-2703"/>
+        <location line="-2794"/>
         <source>Rename Workspace</source>
         <translation>ワークスペースの名前を変更</translation>
     </message>
@@ -3612,12 +3599,12 @@ Drops: %2</source>
         <translation>このワークスペースは独自の外観を持つようになりました。</translation>
     </message>
     <message>
-        <location line="+1213"/>
+        <location line="+1294"/>
         <source>%1: found at %2</source>
         <translation>%1: %2 で見つかりました</translation>
     </message>
     <message>
-        <location line="+322"/>
+        <location line="+329"/>
         <source>%1: trying %2</source>
         <translation>%1: %2 を試行中</translation>
     </message>
@@ -3671,7 +3658,7 @@ Drops: %2</source>
         <translation>&quot;%1&quot; をギャラリーに保存しました。</translation>
     </message>
     <message>
-        <location line="+535"/>
+        <location line="+538"/>
         <source>Update available: v%1</source>
         <translation>アップデートあり: v%1</translation>
     </message>
@@ -3744,13 +3731,13 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>アプリを閉じる</translation>
     </message>
     <message>
-        <location line="-2930"/>
-        <location line="+2731"/>
+        <location line="-3021"/>
+        <location line="+2822"/>
         <source>Devices</source>
         <translation>デバイス</translation>
     </message>
     <message>
-        <location line="-2656"/>
+        <location line="-2747"/>
         <source>Subscriptions</source>
         <translation>購読</translation>
     </message>
@@ -3792,23 +3779,23 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     </message>
     <message>
         <location line="+71"/>
-        <location line="+2256"/>
+        <location line="+2347"/>
         <source>Add widget</source>
         <translation>ウィジェットを追加</translation>
     </message>
     <message>
-        <location line="-2253"/>
+        <location line="-2344"/>
         <source>Remove selected widget (%1)</source>
         <translation>選択したウィジェットを削除(%1)</translation>
     </message>
     <message>
         <location line="+3"/>
-        <location line="+2263"/>
+        <location line="+2354"/>
         <source>Add device</source>
         <translation>デバイスを追加</translation>
     </message>
     <message>
-        <location line="-2260"/>
+        <location line="-2351"/>
         <source>Remove selected device (%1)</source>
         <translation>選択したデバイスを削除(%1)</translation>
     </message>
@@ -3898,7 +3885,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>新しいデバイス</translation>
     </message>
     <message>
-        <location line="+284"/>
+        <location line="+365"/>
         <source>%1: robot is responding again</source>
         <translation>%1: ロボットが再び応答しています</translation>
     </message>
@@ -3959,12 +3946,12 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>モーション(&amp;O)</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="-1347"/>
+        <location filename="../lib/core/mainwindow.cpp" line="-1428"/>
         <source>Dashboard</source>
         <translation>ダッシュボード</translation>
     </message>
     <message>
-        <location line="+1686"/>
+        <location line="+1774"/>
         <source>%1: this BLE address now answers as a different robot (expected %2, got %3)</source>
         <translation>%1: この BLE アドレスは別のロボットとして応答しています (期待値 %2、実際 %3)</translation>
     </message>
@@ -4027,7 +4014,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     </message>
     <message>
         <location line="+20"/>
-        <location line="+211"/>
+        <location line="+214"/>
         <source>Settings</source>
         <translation>設定</translation>
     </message>

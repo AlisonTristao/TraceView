@@ -480,7 +480,7 @@
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="+132"/>
+        <location filename="../lib/core/mainwindow.cpp" line="+133"/>
         <source>TraceView Project (*.tvproj)</source>
         <translation>TraceView 项目 (*.tvproj)</translation>
     </message>
@@ -785,7 +785,7 @@
 <context>
     <name>WidgetConfigEditor</name>
     <message>
-        <location filename="../lib/dashboard/widgetconfigeditor.cpp" line="+12"/>
+        <location filename="../lib/dashboard/widgetconfigeditor.cpp" line="+13"/>
         <source>(No device)</source>
         <translation>(无设备)</translation>
     </message>
@@ -800,7 +800,7 @@
         <translation>(未命名主题)</translation>
     </message>
     <message>
-        <location line="+103"/>
+        <location line="+119"/>
         <source>Field %1</source>
         <translation>字段 %1</translation>
     </message>
@@ -1142,7 +1142,7 @@
 <context>
     <name>traceview::AudioSpectrumConfigEditor</name>
     <message>
-        <location filename="../lib/dashboard/widgets/audiospectrumconfigeditor.cpp" line="+28"/>
+        <location filename="../lib/dashboard/widgets/audiospectrumconfigeditor.cpp" line="+29"/>
         <source>(auto)</source>
         <translation>(自动)</translation>
     </message>
@@ -1564,7 +1564,7 @@
 <context>
     <name>traceview::ChartConfigEditor</name>
     <message>
-        <location filename="../lib/dashboard/widgets/chartconfigeditor.cpp" line="+162"/>
+        <location filename="../lib/dashboard/widgets/chartconfigeditor.cpp" line="+201"/>
         <source>0x0101</source>
         <translation>0x0101</translation>
     </message>
@@ -1615,12 +1615,12 @@
     </message>
     <message>
         <location line="+9"/>
-        <location line="+423"/>
+        <location line="+455"/>
         <source> pts</source>
         <translation> pts</translation>
     </message>
     <message>
-        <location line="-419"/>
+        <location line="-451"/>
         <source>How much history the chart keeps before older data scrolls off — in samples or seconds, matching X Axis.</source>
         <translation>图表在较旧数据滚出视图前保留的历史长度 — 以采样数或秒为单位,与 X 轴一致。</translation>
     </message>
@@ -1750,17 +1750,27 @@
         <translation>+ 添加序列</translation>
     </message>
     <message>
-        <location line="+192"/>
+        <location line="+8"/>
+        <source>+ Add all fields</source>
+        <translation>+ 添加全部字段</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Add one series for every numeric field of the topic above that isn&apos;t plotted yet, named after the field and with its unit and range from the device&apos;s manifest. Fields in different units get one Y axis per unit; fields sharing a unit and declaring a range get that range.</source>
+        <translation>为上方主题中尚未绘制的每个数值字段添加一个序列，以字段名命名，并使用设备清单中的单位和范围。单位不同的字段按单位各用一条 Y 轴；单位相同且声明了范围的字段使用该范围。</translation>
+    </message>
+    <message>
+        <location line="+209"/>
         <source>Series %1</source>
         <translation>序列 %1</translation>
     </message>
     <message>
-        <location line="+33"/>
+        <location line="+34"/>
         <source>Which field of the bound topic this series plots -- pick one the device has already reported (shown by name), or type a numeric id by hand for one it hasn&apos;t reported yet.</source>
         <translation>此序列绘制所绑定主题的哪个字段 -- 选择设备已上报的一个（按名称显示），或为尚未上报的手动输入数字 id。</translation>
     </message>
     <message>
-        <location line="+33"/>
+        <location line="+35"/>
         <source>Series Color</source>
         <translation>序列颜色</translation>
     </message>
@@ -1803,6 +1813,11 @@
         <location line="+26"/>
         <source> s</source>
         <translation> s</translation>
+    </message>
+    <message>
+        <location line="+41"/>
+        <source>Field %1</source>
+        <translation>字段 %1</translation>
     </message>
 </context>
 <context>
@@ -2265,7 +2280,7 @@ Allowed: %1</source>
 <context>
     <name>traceview::DashboardGrid</name>
     <message>
-        <location filename="../lib/dashboard/dashboardgrid.cpp" line="+554"/>
+        <location filename="../lib/dashboard/dashboardgrid.cpp" line="+582"/>
         <source>Bring to Front</source>
         <translation>置于顶层</translation>
     </message>
@@ -2342,34 +2357,6 @@ Allowed: %1</source>
         <location line="+6"/>
         <source>Audio Spectrogram</source>
         <translation>音频频谱图</translation>
-    </message>
-    <message>
-        <source>Operator</source>
-        <translation type="vanished">操作员</translation>
-    </message>
-    <message>
-        <source>Boot OK. Battery at 87%.</source>
-        <translation type="vanished">启动正常。电量 87%。</translation>
-    </message>
-    <message>
-        <source>Start the calibration routine, please.</source>
-        <translation type="vanished">请启动校准程序。</translation>
-    </message>
-    <message>
-        <source>Calibration done. Offsets saved; log attached.</source>
-        <translation type="vanished">校准完成。偏移已保存；日志已附上。</translation>
-    </message>
-    <message>
-        <source>Sending the new route map.</source>
-        <translation type="vanished">正在发送新的路线图。</translation>
-    </message>
-    <message>
-        <source>Retrying over the other link...</source>
-        <translation type="vanished">正在通过另一条链路重试...</translation>
-    </message>
-    <message>
-        <source>Chat</source>
-        <translation type="vanished">聊天</translation>
     </message>
     <message>
         <location line="+62"/>
@@ -3061,17 +3048,17 @@ Allowed: %1</source>
         <translation>+ 添加圆环</translation>
     </message>
     <message>
-        <location line="+140"/>
+        <location line="+159"/>
         <source>Ring %1</source>
         <translation>圆环 %1</translation>
     </message>
     <message>
-        <location line="+12"/>
+        <location line="+13"/>
         <source>Which field of the bound topic this ring plots -- pick one the device has already reported (shown by name), or type a numeric id by hand for one it hasn&apos;t reported yet.</source>
         <translation>此圆环绘制所绑定主题的哪个字段 -- 选择设备已上报的一个（按名称显示），或为尚未上报的手动输入数字 id。</translation>
     </message>
     <message>
-        <location line="+30"/>
+        <location line="+33"/>
         <source>Ring Color</source>
         <translation>圆环颜色</translation>
     </message>
@@ -3203,7 +3190,7 @@ Allowed: %1</source>
         <translation>、</translation>
     </message>
     <message>
-        <location line="+557"/>
+        <location line="+562"/>
         <source>Pending</source>
         <translation>待定</translation>
     </message>
@@ -3347,12 +3334,12 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+0"/>
-        <location line="+3618"/>
+        <location line="+3709"/>
         <source>Later</source>
         <translation>稍后</translation>
     </message>
     <message>
-        <location line="-3611"/>
+        <location line="-3702"/>
         <source>&amp;Access</source>
         <translation>访问(&amp;A)</translation>
     </message>
@@ -3479,18 +3466,18 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+18"/>
-        <location line="+2983"/>
+        <location line="+3074"/>
         <source>Undo</source>
         <translation>撤销</translation>
     </message>
     <message>
-        <location line="-2981"/>
-        <location line="+2981"/>
+        <location line="-3072"/>
+        <location line="+3072"/>
         <source>Redo</source>
         <translation>重做</translation>
     </message>
     <message>
-        <location line="-2938"/>
+        <location line="-3029"/>
         <source>Add Device</source>
         <translation>添加设备</translation>
     </message>
@@ -3526,12 +3513,12 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+29"/>
-        <location line="+2883"/>
+        <location line="+2974"/>
         <source>Fullscreen dashboard (F11)</source>
         <translation>全屏仪表盘(F11)</translation>
     </message>
     <message>
-        <location line="-2703"/>
+        <location line="-2794"/>
         <source>Rename Workspace</source>
         <translation>重命名工作区</translation>
     </message>
@@ -3612,12 +3599,12 @@ Drops: %2</source>
         <translation>此工作区现在有自己的外观。</translation>
     </message>
     <message>
-        <location line="+1213"/>
+        <location line="+1294"/>
         <source>%1: found at %2</source>
         <translation>%1：在 %2 找到</translation>
     </message>
     <message>
-        <location line="+322"/>
+        <location line="+329"/>
         <source>%1: trying %2</source>
         <translation>%1：正在尝试 %2</translation>
     </message>
@@ -3671,7 +3658,7 @@ Drops: %2</source>
         <translation>已将 &quot;%1&quot; 保存到库。</translation>
     </message>
     <message>
-        <location line="+535"/>
+        <location line="+538"/>
         <source>Update available: v%1</source>
         <translation>有可用更新: v%1</translation>
     </message>
@@ -3744,13 +3731,13 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>关闭应用</translation>
     </message>
     <message>
-        <location line="-2930"/>
-        <location line="+2731"/>
+        <location line="-3021"/>
+        <location line="+2822"/>
         <source>Devices</source>
         <translation>设备</translation>
     </message>
     <message>
-        <location line="-2656"/>
+        <location line="-2747"/>
         <source>Subscriptions</source>
         <translation>订阅</translation>
     </message>
@@ -3792,23 +3779,23 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     </message>
     <message>
         <location line="+71"/>
-        <location line="+2256"/>
+        <location line="+2347"/>
         <source>Add widget</source>
         <translation>添加控件</translation>
     </message>
     <message>
-        <location line="-2253"/>
+        <location line="-2344"/>
         <source>Remove selected widget (%1)</source>
         <translation>删除所选控件(%1)</translation>
     </message>
     <message>
         <location line="+3"/>
-        <location line="+2263"/>
+        <location line="+2354"/>
         <source>Add device</source>
         <translation>添加设备</translation>
     </message>
     <message>
-        <location line="-2260"/>
+        <location line="-2351"/>
         <source>Remove selected device (%1)</source>
         <translation>删除所选设备(%1)</translation>
     </message>
@@ -3898,7 +3885,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>新设备</translation>
     </message>
     <message>
-        <location line="+284"/>
+        <location line="+365"/>
         <source>%1: robot is responding again</source>
         <translation>%1: 机器人已恢复响应</translation>
     </message>
@@ -3959,12 +3946,12 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>动效(&amp;O)</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="-1347"/>
+        <location filename="../lib/core/mainwindow.cpp" line="-1428"/>
         <source>Dashboard</source>
         <translation>仪表盘</translation>
     </message>
     <message>
-        <location line="+1686"/>
+        <location line="+1774"/>
         <source>%1: this BLE address now answers as a different robot (expected %2, got %3)</source>
         <translation>%1: 此 BLE 地址现在以另一台机器人身份应答 (应为 %2,实际为 %3)</translation>
     </message>
@@ -4027,7 +4014,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     </message>
     <message>
         <location line="+20"/>
-        <location line="+211"/>
+        <location line="+214"/>
         <source>Settings</source>
         <translation>设置</translation>
     </message>

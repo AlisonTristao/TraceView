@@ -138,6 +138,45 @@ void setResolvedField(QComboBox* combo, const CatalogTopicField* field) {
     combo->setProperty("fieldMaxValue", field ? field->maxValue : qQNaN());
 }
 
+// What the series table's rows say, together, about the shared Y axis: the
+// distinct catalog units in use (first-appearance order; "" is a unit of its
+// own, as in chartAxisGroups()) and the union of the declared ranges, valid
+// only when every row declares both ends.
+struct SeriesAxisSummary {
+    QStringList units;
+    bool allRanged = false;
+    double rangeMin = 0.0;
+    double rangeMax = 0.0;
+};
+
+SeriesAxisSummary summarizeSeriesAxis(const QTableWidget* table) {
+    SeriesAxisSummary summary;
+    bool allRanged = table->rowCount() > 0;
+    bool haveRange = false;
+    for (int row = 0; row < table->rowCount(); ++row) {
+        const auto* combo = qobject_cast<QComboBox*>(table->cellWidget(row, kFieldIdColumn));
+        if (!combo) {
+            allRanged = false;
+            continue;
+        }
+        const QString unit = combo->property("fieldUnit").toString();
+        if (!summary.units.contains(unit)) {
+            summary.units.append(unit);
+        }
+        const double declaredMin = combo->property("fieldMinValue").toDouble();
+        const double declaredMax = combo->property("fieldMaxValue").toDouble();
+        if (qIsNaN(declaredMin) || qIsNaN(declaredMax)) {
+            allRanged = false;
+            continue;
+        }
+        summary.rangeMin = haveRange ? qMin(summary.rangeMin, declaredMin) : declaredMin;
+        summary.rangeMax = haveRange ? qMax(summary.rangeMax, declaredMax) : declaredMax;
+        haveRange = true;
+    }
+    summary.allRanged = allRanged;
+    return summary;
+}
+
 }  // namespace
 
 ChartConfigEditor::ChartConfigEditor(QWidget* parent) : WidgetConfigEditor(parent) {
@@ -308,8 +347,19 @@ ChartConfigEditor::ChartConfigEditor(QWidget* parent) : WidgetConfigEditor(paren
         emitChanged();
     });
 
+    m_addAllFieldsButton = new QPushButton(tr("+ Add all fields"), this);
+    m_addAllFieldsButton->setObjectName("addAllFieldsButton");
+    m_addAllFieldsButton->setEnabled(false);
+    m_addAllFieldsButton->setToolTip(
+        tr("Add one series for every numeric field of the topic above that isn't plotted yet, "
+           "named after the field and with its unit and range from the device's manifest. "
+           "Fields in different units get one Y axis per unit; fields sharing a unit and "
+           "declaring a range get that range."));
+    connect(m_addAllFieldsButton, &QPushButton::clicked, this, [this]() { addAllFields(); });
+
     auto* buttonRow = new QHBoxLayout();
     buttonRow->addWidget(m_addSeriesButton);
+    buttonRow->addWidget(m_addAllFieldsButton);
     buttonRow->addStretch(1);
 
     auto* mainLayout = new QVBoxLayout(this);
@@ -551,6 +601,7 @@ void ChartConfigEditor::addSeriesRow(const QJsonObject& series) {
         const int pickedFieldId = fieldIdCombo->itemData(index).toInt();
         setBoundFieldId(fieldIdCombo, pickedFieldId);
         setResolvedField(fieldIdCombo, findField(currentTopicFields(), pickedFieldId));
+        applyAxisDefaults(false);
         emitChanged();
     });
     connect(fieldIdCombo->lineEdit(), &QLineEdit::editingFinished, this, [this, fieldIdCombo]() {
@@ -559,6 +610,7 @@ void ChartConfigEditor::addSeriesRow(const QJsonObject& series) {
         if (ok) {
             setBoundFieldId(fieldIdCombo, typed);
             setResolvedField(fieldIdCombo, findField(currentTopicFields(), typed));
+            applyAxisDefaults(false);
         }
         emitChanged();
     });
@@ -643,6 +695,99 @@ void ChartConfigEditor::updateAxisRowsVisibility() {
     setFormRowVisible(m_formLayout, m_yUnitEdit, !autoAxis);
 }
 
+void ChartConfigEditor::addAllFields() {
+    const QVector<CatalogTopicField> fields = currentTopicFields();
+
+    // A field is already plotted when a row names it, or, for a row with no
+    // name yet (a project from before names), when the row has its id.
+    const auto isPlotted = [this](const CatalogTopicField& field) {
+        for (int row = 0; row < m_seriesTable->rowCount(); ++row) {
+            const auto* combo =
+                qobject_cast<QComboBox*>(m_seriesTable->cellWidget(row, kFieldIdColumn));
+            if (!combo) {
+                continue;
+            }
+            const QString boundName = combo->property("fieldName").toString();
+            if (boundName.isEmpty() ? combo->property("fieldId").toInt() == field.fieldId
+                                    : boundName == field.name) {
+                return true;
+            }
+        }
+        return false;
+    };
+
+    int added = 0;
+    for (const CatalogTopicField& field : fields) {
+        if (!isPlottableScalarField(field) || isPlotted(field)) {
+            continue;
+        }
+        QJsonObject series;
+        series["name"] = field.name.isEmpty() ? tr("Field %1").arg(field.fieldId) : field.name;
+        series["fieldId"] = field.fieldId;
+        if (!field.name.isEmpty()) {
+            series["fieldName"] = field.name;
+        }
+        addSeriesRow(series);
+        ++added;
+    }
+    if (added == 0) {
+        return;
+    }
+
+    // The topic's name is half of the binding too (see m_topicName): known
+    // here from the catalog, so write it now instead of waiting for the grid's
+    // resolver to name it from the ids.
+    if (m_topicName.isEmpty()) {
+        m_topicName =
+            resolveCatalogTopicName(m_devices, m_deviceCombo->currentData().toString(),
+                                    formatHexId(m_sourceId, 8), formatHexId(m_topicId, 4));
+    }
+    applyAxisDefaults(true);
+    emitChanged();
+}
+
+void ChartConfigEditor::applyAxisDefaults(bool presetFixedRange) {
+    const SeriesAxisSummary summary = summarizeSeriesAxis(m_seriesTable);
+    if (summary.units.isEmpty()) {
+        return;
+    }
+
+    // Everything below is one edit: the spin boxes and checkbox would each
+    // emit configChanged() on their own, the caller emits once afterward.
+    const bool wasUpdating = m_updating;
+    m_updating = true;
+    if (summary.units.size() > 1) {
+        if (presetFixedRange) {
+            m_autoAxisCheck->setChecked(true);
+        }
+    } else if (!m_autoAxisCheck->isChecked()) {
+        if (m_yUnitEdit->text().isEmpty()) {
+            m_yUnitEdit->setText(summary.units.first());
+        }
+        // Untouched: Auto mode with the spin boxes at their initial 0..100.
+        // Anything else is the user's own range, left as it is.
+        const bool rangeUntouched = m_yAxisModeCombo->currentData().toString() == "auto" &&
+                                    m_yMinSpin->value() == 0.0 && m_yMaxSpin->value() == 100.0;
+        if (summary.allRanged && summary.rangeMin < summary.rangeMax && rangeUntouched) {
+            m_yMinSpin->setValue(summary.rangeMin);
+            m_yMaxSpin->setValue(summary.rangeMax);
+            if (presetFixedRange) {
+                m_yAxisModeCombo->setCurrentIndex(m_yAxisModeCombo->findData("fixed"));
+            }
+        }
+    }
+    updateAxisRowsVisibility();
+    m_updating = wasUpdating;
+}
+
+void ChartConfigEditor::updateAddAllEnabled() {
+    bool anyPlottable = false;
+    for (const CatalogTopicField& field : currentTopicFields()) {
+        anyPlottable = anyPlottable || isPlottableScalarField(field);
+    }
+    m_addAllFieldsButton->setEnabled(anyPlottable);
+}
+
 void ChartConfigEditor::forgetBindingNames() {
     m_topicName.clear();
     for (int row = 0; row < m_seriesTable->rowCount(); ++row) {
@@ -677,6 +822,7 @@ void ChartConfigEditor::refreshSeriesFieldOptions() {
             }
         }
     }
+    updateAddAllEnabled();
 }
 
 void ChartConfigEditor::setAvailableDevices(const QVector<DeviceOption>& devices) {

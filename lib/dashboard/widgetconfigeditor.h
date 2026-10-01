@@ -102,6 +102,14 @@ QVector<CatalogTopicField> resolveCatalogTopicFields(const QVector<DeviceOption>
                                                      const QString& sourceIdText,
                                                      const QString& topicIdText);
 
+// Whether `field` is one number per sample -- an integer, float, bool or
+// enum, not an array (fixed or variable length) -- which is what a chart
+// series or gauge ring plots. False for arrays and for a type this build does
+// not know. Text and opaque topics declare no fields at all, so they never
+// get here. Shared by the editors that offer "every field" or prefill from a
+// picked one.
+bool isPlottableScalarField(const CatalogTopicField& field);
+
 // Repopulates `combo` (an editable QComboBox) with one entry per field of
 // `fields` -- label combines the field's readable name with its numeric
 // fieldId, itemData is the plain fieldId. Unlike populateDeviceCombo() this

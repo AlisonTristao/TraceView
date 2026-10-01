@@ -505,6 +505,40 @@ the id it names; the resolver then names the new id from the catalog. Moving
 a widget to another device keeps its names — that is how a dashboard moves
 from a simulated device to the real one.
 
+### Configuring from the manifest
+
+A device manifest declares, per field, a name, a unit, an optional range
+(min/max, NaN when unbounded), enum labels and an array size. The chart and
+gauge editors use the unit and range so a widget does not have to be set up
+field by field:
+
+- **+ Add all fields** (chart editor, next to **+ Add series**): adds one
+  series for every numeric field (integer, float, bool, enum) of the bound
+  topic that no series plots yet. Each series is named after the field, bound
+  by `fieldName` and carries the field's `unit`/`min`/`max`; the topic's
+  `topicName` is written too. Array fields and fields of an unknown type are
+  skipped — a line or bar chart plots one number per sample — and a field
+  already plotted, matched by name (or by id for a series with no name yet), is
+  not added twice. Then the axes follow: more than one distinct unit among the
+  series turns **Automatic axis** on (one Y axis per unit); one shared unit
+  fills the Y axis **Unit**, and when every series also declares a range the Y
+  axis becomes **Fixed** over the union of the ranges. A Y axis the user has
+  already set (non-empty unit, Fixed mode or a range other than 0..100) is left
+  alone.
+- **Picking one field** in a chart series row or a gauge ring fills what is
+  still untouched from the manifest: the chart's Y axis **Unit** while it is
+  empty (and the series share one unit), its **Range** while it sits at Auto
+  and 0..100 (the mode stays Auto, which already honours declared ranges), the
+  gauge's **Unit** while empty and its **Min/Max** while at 0..100. Anything
+  the user typed stays, and a field the catalog does not know fills nothing.
+  The Audio Analyzer already did the same for its full scale.
+
+An array field (a fixed-size set of readings) cannot be shown element by
+element yet: a chart series binds to a field id and ignores the element index
+of the sample, so a bar chart cannot give each element its own bar without
+carrying the index through the series config, the telemetry history key and
+the widget subscriptions.
+
 ## Project file
 
 `ProjectStore` ([lib/project/projectstore.h](../lib/project/projectstore.h))

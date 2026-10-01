@@ -43,6 +43,16 @@ release flow.
   stream (a
   sweeping chirp over a 440 Hz tone); the chat is left out of it for now.
 
+- Chart editor: **+ Add all fields** adds one series for every numeric
+  field of the topic that is not plotted yet, named after the field and with
+  its unit and range from the device's manifest, bound by name. Fields in
+  different units turn on **Automatic axis** (one Y axis per unit); fields
+  sharing a unit and declaring a range get a Fixed Y range over their union.
+  Array fields are skipped and fields already plotted are not added twice.
+- Picking a field in a chart series or a gauge ring now fills the Unit (and
+  the chart's Y range, the gauge's Min/Max) from the manifest when they are
+  still empty or at their defaults; values you typed are kept.
+
 ### Changed
 
 - An array field longer than 64 elements no longer arrives one element at a
