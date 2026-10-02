@@ -147,6 +147,32 @@ if(TRACEVIEW_ENABLE_LAB)
     add_traceview_test(test_scenewidget tracelab_scenes traceview_project)
     add_traceview_test(test_labmodule tracelab_module tracelab_scenes traceview_dashboard)
     add_traceview_test(test_loopbacktransport tracelab_plant)
+    # The line-follower benchmark's plant (lab/benchmarks/linefollower/plant):
+    # the track generator against the Python simulator (CPython's random bit
+    # for bit, the tracks of tests/data/linefollower point by point, and the
+    # saved runs/*_track.csv when line_follower_simulator is checked out at
+    # TRACELAB_LF_PYTHON_DIR); the motors' discrete equations, the world pose
+    # against the pygame track transform, the reach rule and the car-frame
+    # future points, and an open-loop replay of the saved Python runs.
+    set(TRACELAB_LF_PYTHON_DIR "${CMAKE_SOURCE_DIR}/../line_follower_simulator" CACHE PATH
+        "line_follower_simulator checkout used by the line-follower tests (skipped when missing)")
+    add_traceview_test(test_lftrackgenerator tracelab_lf_plant)
+    add_traceview_test(test_lfplant tracelab_lf_plant)
+    foreach(test test_lftrackgenerator test_lfplant)
+        target_compile_definitions(${test} PRIVATE
+            TRACELAB_LF_TESTDATA="${CMAKE_CURRENT_SOURCE_DIR}/data/linefollower"
+            TRACELAB_LF_PYTHON_DIR="${TRACELAB_LF_PYTHON_DIR}")
+    endforeach()
+endif()
+
+if(TARGET tracelab_lf_controllers)
+    # The line-follower controllers (lab/benchmarks/linefollower/controllers),
+    # the C++ port of line_follower_simulator's mpc/: the model against the
+    # kinematics it embeds, the box QP against its KKT conditions and its
+    # fallback, the turn-sign convention, input bounds, determinism, every
+    # scheduling strategy x embedding, and GPC with both heading references.
+    # Plain C++ under test, Qt Test only as the harness.
+    add_traceview_test(test_lfcontrollers tracelab_lf_controllers)
 endif()
 
 # Generic telemetry value types (lib/telemetry) -- no BTP dependency at all

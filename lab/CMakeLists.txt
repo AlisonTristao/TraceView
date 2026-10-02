@@ -102,3 +102,7 @@ target_link_libraries(tracelab_module
         tracelab_scenes
         traceview_dashboard
 )
+
+# Benchmarks: a plant, its controllers and a runner app per benchmark
+# (lab/README.md, "Benchmarks").
+add_subdirectory(benchmarks/linefollower)

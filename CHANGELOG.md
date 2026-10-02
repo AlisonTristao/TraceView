@@ -31,6 +31,16 @@ release flow.
   points and the predicted path aligned with the track, a minimap, a compass
   and the fps/coverage/score readouts. Mouse wheel zooms, dragging pans and a
   double click resets the view. See `lab/README.md`.
+- TraceLab line-follower benchmark (`lab/benchmarks/linefollower/`): a C++
+  port of the Python line-follower simulator's plant -- the random track
+  (the same seed and parameters give the same points as Python, CPython's
+  random reproduced bit for bit), the car's motors and kinematics with its
+  world pose, and the pygame reach rule, coverage and car-frame reference
+  points -- and **tracelab-linefollower**, a runner that closes the loop
+  with the C++ qLPV MPC or GPC and shows it in the Line follower scene
+  (real time, `--speed`, `--fast`, `--max-time`, `--log` CSV,
+  `--screenshot`; P/O/R perturbation keys) and prints the run's metrics. A
+  provisional in-process harness until the plant and controller speak BTP.
 - **Audio Analyzer** widget: plays a stream topic (blocks of samples with
   their rate and a block counter, as BTPDevice's `Topics::stream()` sends
   them) on the default audio output and shows it as a **Spectrum** or a

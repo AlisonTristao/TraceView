@@ -48,6 +48,7 @@ lab/
     sceneconfigeditor.h/.cpp  its properties: type, bindings by name, params
     diffdrivecamera.h/.cpp  the line follower's world -> screen math
     diffdrivescene.h/.cpp   DiffDriveScene, "Line follower"
+  benchmarks/linefollower/  the line-follower benchmark: plant, controllers, runner app (see Benchmarks)
   module/               tracelab_module
     labmodule.h/.cpp        LabModule: registers the scene widget and the ribbon tab
 ```
@@ -55,7 +56,9 @@ lab/
 `tools/scene_preview` shows the line-follower scene fed by a synthetic track
 and car (`--screenshot <png>` saves one frame). The tests are
 `tests/test_sceneregistry.cpp`, `test_diffdrivescene.cpp`,
-`test_scenewidget.cpp`, `test_labmodule.cpp` and `test_loopbacktransport.cpp`.
+`test_scenewidget.cpp`, `test_labmodule.cpp`, `test_loopbacktransport.cpp` and,
+for the line-follower benchmark, `test_lftrackgenerator.cpp`, `test_lfplant.cpp`
+and `test_lfcontrollers.cpp`.
 
 Dependencies only go from `lab/` to `lib/`: `tracelab_plant` uses
 `traceview::Transport`, `tracelab_scenes` uses `traceview_dashboard`,
@@ -64,6 +67,72 @@ one. The one change TraceLab needed in `lib/` is generic:
 `TelemetryConsumer` ([lib/dashboard/telemetryconsumer.h](../lib/dashboard/telemetryconsumer.h)),
 how a widget MainWindow does not know by type gets its telemetry, and the
 `"bind"` map in `MainWindow::resolveWidgetBinding()`.
+
+## Benchmarks
+
+`benchmarks/<name>/` holds one benchmark each: its plant, its controllers and
+a runner app, plain C++ below the app so the same code can move behind the
+BTP plant and controller host later.
+
+### Line follower (`benchmarks/linefollower/`)
+
+The C++ port of the Python line-follower simulator (`line_follower_simulator`):
+
+```
+benchmarks/linefollower/
+  plant/          tracelab_lf_plant         plain C++17, no Qt
+    pyrandom.h        CPython's random (MT19937, seed, random, uniform, randint), bit for bit
+    trackgenerator.h  generate_track(): the same seed and parameters give the
+                      same points as Python (splprep/splev periodic spline)
+    cardynamics.h     car_dynamics.py: first-order motors, kinematics, the WORLD pose
+    trackprogress.h   the pygame Cluster logic in metres: reach rule, coverage,
+                      future points in the car frame of the current pose
+    linefollowerplant.h  one step_simulation(): motors, pose, reach, StepData
+  controllers/    tracelab_lf_controllers   the qLPV MPC and the GPC (lfcontroller.h)
+  app/            tracelab-linefollower     the run window
+```
+
+The plant reproduces the Python runs: tests/test_lftrackgenerator.cpp
+compares the tracks with Python's point by point (max error below 1e-13 m),
+and tests/test_lfplant.cpp replays the saved `runs/compare/*.csv` open loop
+(same wheel speeds, pose to 1e-12 m, the same coverage on every step). It
+looks for the Python checkout at `TRACELAB_LF_PYTHON_DIR` (default
+`../line_follower_simulator`) and skips those cases when it is missing.
+
+Two conventions to know: the world is the pygame track frame (metres, drawn
+y down), with the car's heading theta along (cos theta, sin theta), starting
+at the first track point with theta = -pi/2; the car frame of the future
+points and the predictions is the Python one (x lateral, positive right; y
+forward). The reach area is the pygame one: |x| < L_w and -L_w < y < 0 in the
+car frame (L_w the wheel distance), visited cell by cell like Track.draw().
+
+`tracelab-linefollower` closes the loop in one process and shows it in the
+Line follower scene, fed directly (a provisional harness: no BTP, no
+SimulatedPlant or ControllerHost yet). It is built with the lab
+(`TRACEVIEW_ENABLE_LAB`); without the controllers library (CMake option
+`TRACELAB_LF_CONTROLLERS=OFF` or no `controllers/` folder) it drives u = 0
+and says so.
+
+```
+cmake -S . -B build-lab
+cmake --build build-lab --target tracelab-linefollower
+build-lab/lab/tracelab-linefollower/tracelab-linefollower            # qLPV MPC, seed 1112, real time
+build-lab/lab/tracelab-linefollower/tracelab-linefollower --controller gpc --fast --log run.csv
+build-lab/lab/tracelab-linefollower/tracelab-linefollower --screenshot run.png --screenshot-time 8
+```
+
+Options: `--controller qlpv|gpc`, `--seed <n>` (-1 random), `--track-type
+lemniscate|circle`, `--fps <hz>` (Ts = 1/fps, default 80), `--horizon <N>`,
+`--future-spacing <points>`, `--fast` (as fast as possible) or `--speed <x>`
+(time scale), `--max-time <s>`, `--log <file.csv>` (run_logger.py's columns
+where they exist, plus `<file>_track.csv`), `--screenshot <png>` with
+`--screenshot-time <s>`. The simulation steps at Ts whatever the repaint rate;
+when the controller is slower than Ts the real-time run turns to slow motion.
+Keys: P / O perturbation +5 / -5 % (left +q, right -q), R back to 0, Esc
+stops; the mouse wheel zooms. At the end (100 % coverage, `--max-time`, Esc or
+closing the window) it prints runner.py's metrics: lateral error RMS and max,
+mean speed, solve times, QPs. Use a Release build for the qLPV MPC: in Debug,
+Eigen makes it several times slower than real time.
 
 ## The contracts
 
