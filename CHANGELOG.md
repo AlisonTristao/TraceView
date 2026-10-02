@@ -9,6 +9,12 @@ release flow.
 
 ### Added
 
+- Optional application modules: a module compiled into the executable can
+  add widget types and one ribbon tab once it is enabled in **Settings >
+  General > Modules** (applies after a restart; the section only appears
+  when a module is available). `--mode <id>` starts with that module
+  enabled for the session and shows its name in the window title and the
+  corner wordmark. This build includes no modules. See `docs/MODULES.md`.
 - **Audio Analyzer** widget: plays a stream topic (blocks of samples with
   their rate and a block counter, as BTPDevice's `Topics::stream()` sends
   them) on the default audio output and shows it as a **Spectrum** or a

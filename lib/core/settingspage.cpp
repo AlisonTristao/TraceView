@@ -29,6 +29,7 @@
 
 #include "appearancecatalog.h"
 #include "dashboard/widgets/chartstyle.h"
+#include "modules/moduleregistry.h"
 #include "preferences/appsettings.h"
 #include "protocol/manifeststore.h"
 #include "theme/iconutils.h"
@@ -299,6 +300,34 @@ SettingsPage::SettingsPage(QWidget* parent) : QWidget(parent) {
     autoConnect->setChecked(settings.autoConnectOnProjectOpen());
     addCheckBoxRow(formFor(startupSection), autoConnect);
     connect(autoConnect, &QCheckBox::toggled, &settings, &AppSettings::setAutoConnectOnProjectOpen);
+
+    // Only when this build has optional modules to offer (docs/MODULES.md).
+    ModuleRegistry& modules = ModuleRegistry::instance();
+    if (!modules.modules().isEmpty()) {
+        QGroupBox* modulesSection = addSection(generalPage, tr("Modules"));
+        for (const AppModule* module : modules.modules()) {
+            const QString id = module->id();
+            const bool enabled = modules.isEnabledInSettings(id);
+            if (enabled) {
+                m_initialEnabledModules.append(id);
+            }
+            auto* moduleCheck = new QCheckBox(module->displayName(), modulesSection);
+            moduleCheck->setChecked(enabled);
+            addCheckBoxRow(formFor(modulesSection), moduleCheck);
+            auto* moduleDescription = new QLabel(module->description(), modulesSection);
+            moduleDescription->setWordWrap(true);
+            moduleDescription->setObjectName("settingsDescription");
+            formFor(modulesSection)->addRow(moduleDescription);
+            connect(moduleCheck, &QCheckBox::toggled, this, [this, id](bool checked) {
+                ModuleRegistry::instance().setEnabledInSettings(id, checked);
+                refreshRestartNotice();
+            });
+        }
+        auto* modulesNote = new QLabel(
+            tr("Turning a module on or off takes effect after a restart."), modulesSection);
+        modulesNote->setWordWrap(true);
+        formFor(modulesSection)->addRow(modulesNote);
+    }
     qobject_cast<QVBoxLayout*>(generalPage->layout())->addStretch();
     addPage(generalPage);
 
@@ -779,17 +808,24 @@ void SettingsPage::setTitleVisible(bool visible) {
 
 void SettingsPage::refreshRestartNotice() {
     const AppSettings& settings = AppSettings::instance();
+    QStringList enabledModules;
+    for (const AppModule* module : ModuleRegistry::instance().modules()) {
+        if (ModuleRegistry::instance().isEnabledInSettings(module->id())) {
+            enabledModules.append(module->id());
+        }
+    }
     const bool restartRequired =
         LanguageManager::instance().currentLanguage().id != m_initialLanguageId ||
         settings.frameLogCapacity() != m_initialFrameLogCapacity ||
-        settings.notificationHistoryCapacity() != m_initialNotificationHistoryCapacity;
+        settings.notificationHistoryCapacity() != m_initialNotificationHistoryCapacity ||
+        enabledModules != m_initialEnabledModules;
 #if defined(Q_OS_ANDROID) || defined(Q_OS_IOS)
     const QString restartText =
-        tr("Close and reopen TraceView to apply language or diagnostics history changes, "
-           "or they will apply the next time you open it.");
+        tr("Close and reopen TraceView to apply language, diagnostics history or module "
+           "changes, or they will apply the next time you open it.");
 #else
     const QString restartText =
-        tr("Restart TraceView to apply language or diagnostics history changes.");
+        tr("Restart TraceView to apply language, diagnostics history or module changes.");
 #endif
     m_restartNotice->setText(restartRequired
                                  ? restartText

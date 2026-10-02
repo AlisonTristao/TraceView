@@ -480,7 +480,7 @@
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="+132"/>
+        <location filename="../lib/core/mainwindow.cpp" line="+133"/>
         <source>TraceView Project (*.tvproj)</source>
         <translation>TraceView-Projekt (*.tvproj)</translation>
     </message>
@@ -2344,34 +2344,6 @@ Erlaubt: %1</translation>
         <translation>Audiospektrogramm</translation>
     </message>
     <message>
-        <source>Operator</source>
-        <translation type="vanished">Bediener</translation>
-    </message>
-    <message>
-        <source>Boot OK. Battery at 87%.</source>
-        <translation type="vanished">Start OK. Akku bei 87 %.</translation>
-    </message>
-    <message>
-        <source>Start the calibration routine, please.</source>
-        <translation type="vanished">Bitte die Kalibrierroutine starten.</translation>
-    </message>
-    <message>
-        <source>Calibration done. Offsets saved; log attached.</source>
-        <translation type="vanished">Kalibrierung fertig. Offsets gespeichert; Log angehängt.</translation>
-    </message>
-    <message>
-        <source>Sending the new route map.</source>
-        <translation type="vanished">Sende die neue Routenkarte.</translation>
-    </message>
-    <message>
-        <source>Retrying over the other link...</source>
-        <translation type="vanished">Neuer Versuch über die andere Verbindung...</translation>
-    </message>
-    <message>
-        <source>Chat</source>
-        <translation type="vanished">Chat</translation>
-    </message>
-    <message>
         <location line="+62"/>
         <source> -- %1 fps</source>
         <translation> -- %1 fps</translation>
@@ -3185,13 +3157,8 @@ Erlaubt: %1</translation>
 </context>
 <context>
     <name>traceview::MainWindow</name>
-    <message>
-        <location filename="../lib/core/mainwindow.cpp" line="+235"/>
-        <source>TraceView v%1</source>
-        <translation>TraceView v%1</translation>
-    </message>
     <message numerus="yes">
-        <location line="+153"/>
+        <location filename="../lib/core/mainwindow.cpp" line="+392"/>
         <source>This device carries %n other device(s) (%1). Remove or repoint them first.</source>
         <translation>
             <numerusform>Dieses Gerät trägt %n weiteres Gerät (%1). Entfernen oder umleiten Sie es zuerst.</numerusform>
@@ -3204,7 +3171,7 @@ Erlaubt: %1</translation>
         <translation>, </translation>
     </message>
     <message>
-        <location line="+557"/>
+        <location line="+593"/>
         <source>Pending</source>
         <translation>Ausstehend</translation>
     </message>
@@ -3348,12 +3315,12 @@ Verluste: %2</translation>
     </message>
     <message>
         <location line="+0"/>
-        <location line="+3618"/>
+        <location line="+3625"/>
         <source>Later</source>
         <translation>Später</translation>
     </message>
     <message>
-        <location line="-3611"/>
+        <location line="-3618"/>
         <source>&amp;Access</source>
         <translation>&amp;Zugang</translation>
     </message>
@@ -3429,7 +3396,7 @@ Verluste: %2</translation>
         <translation>&amp;Entwicklermodus aktivieren...</translation>
     </message>
     <message>
-        <location line="+192"/>
+        <location line="+193"/>
         <source>Add</source>
         <translation>Hinzufügen</translation>
     </message>
@@ -3480,18 +3447,18 @@ Verluste: %2</translation>
     </message>
     <message>
         <location line="+18"/>
-        <location line="+2983"/>
+        <location line="+2989"/>
         <source>Undo</source>
         <translation>Rückgängig</translation>
     </message>
     <message>
-        <location line="-2981"/>
-        <location line="+2981"/>
+        <location line="-2987"/>
+        <location line="+2987"/>
         <source>Redo</source>
         <translation>Wiederholen</translation>
     </message>
     <message>
-        <location line="-2938"/>
+        <location line="-2944"/>
         <source>Add Device</source>
         <translation>Gerät hinzufügen</translation>
     </message>
@@ -3527,12 +3494,12 @@ Verluste: %2</translation>
     </message>
     <message>
         <location line="+29"/>
-        <location line="+2883"/>
+        <location line="+2889"/>
         <source>Fullscreen dashboard (F11)</source>
         <translation>Dashboard im Vollbildmodus (F11)</translation>
     </message>
     <message>
-        <location line="-2703"/>
+        <location line="-2709"/>
         <source>Rename Workspace</source>
         <translation>Arbeitsbereich umbenennen</translation>
     </message>
@@ -3613,7 +3580,7 @@ Verluste: %2</translation>
         <translation>Dieser Arbeitsbereich hat jetzt eine eigene Darstellung.</translation>
     </message>
     <message>
-        <location line="+1213"/>
+        <location line="+1219"/>
         <source>%1: found at %2</source>
         <translation>%1: gefunden unter %2</translation>
     </message>
@@ -3745,13 +3712,13 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
         <translation>App schließen</translation>
     </message>
     <message>
-        <location line="-2930"/>
-        <location line="+2731"/>
+        <location line="-2936"/>
+        <location line="+2737"/>
         <source>Devices</source>
         <translation>Geräte</translation>
     </message>
     <message>
-        <location line="-2656"/>
+        <location line="-2662"/>
         <source>Subscriptions</source>
         <translation>Abonnements</translation>
     </message>
@@ -3793,23 +3760,23 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
     </message>
     <message>
         <location line="+71"/>
-        <location line="+2256"/>
+        <location line="+2262"/>
         <source>Add widget</source>
         <translation>Widget hinzufügen</translation>
     </message>
     <message>
-        <location line="-2253"/>
+        <location line="-2259"/>
         <source>Remove selected widget (%1)</source>
         <translation>Ausgewähltes Widget entfernen (%1)</translation>
     </message>
     <message>
         <location line="+3"/>
-        <location line="+2263"/>
+        <location line="+2269"/>
         <source>Add device</source>
         <translation>Gerät hinzufügen</translation>
     </message>
     <message>
-        <location line="-2260"/>
+        <location line="-2266"/>
         <source>Remove selected device (%1)</source>
         <translation>Ausgewähltes Gerät entfernen (%1)</translation>
     </message>
@@ -3894,7 +3861,7 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
         <translation>Ebenen-/Eigenschaften-Panels anzeigen</translation>
     </message>
     <message>
-        <location line="+255"/>
+        <location line="+261"/>
         <source>New Device</source>
         <translation>Neues Gerät</translation>
     </message>
@@ -3960,12 +3927,12 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
         <translation>&amp;Bewegung</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="-1347"/>
+        <location filename="../lib/core/mainwindow.cpp" line="-1353"/>
         <source>Dashboard</source>
         <translation>Dashboard</translation>
     </message>
     <message>
-        <location line="+1686"/>
+        <location line="+1692"/>
         <source>%1: this BLE address now answers as a different robot (expected %2, got %3)</source>
         <translation>%1: diese BLE-Adresse antwortet jetzt als anderer Roboter (erwartet %2, erhalten %3)</translation>
     </message>
@@ -5008,7 +4975,7 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
 <context>
     <name>traceview::SettingsPage</name>
     <message>
-        <location filename="../lib/core/settingspage.cpp" line="+203"/>
+        <location filename="../lib/core/settingspage.cpp" line="+204"/>
         <source>Settings</source>
         <translation>Einstellungen</translation>
     </message>
@@ -5020,43 +4987,43 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
     </message>
     <message>
         <location line="-44"/>
-        <location line="+68"/>
+        <location line="+96"/>
         <source>Appearance</source>
         <translation>Darstellung</translation>
     </message>
     <message>
-        <location line="-68"/>
-        <location line="+156"/>
+        <location line="-96"/>
+        <location line="+184"/>
         <source>Dashboard</source>
         <translation>Dashboard</translation>
     </message>
     <message>
-        <location line="-155"/>
-        <location line="+207"/>
+        <location line="-183"/>
+        <location line="+235"/>
         <source>Terminal</source>
         <translation>Terminal</translation>
     </message>
     <message>
-        <location line="-207"/>
-        <location line="+234"/>
+        <location line="-235"/>
+        <location line="+262"/>
         <source>Connections</source>
         <translation>Verbindungen</translation>
     </message>
     <message>
-        <location line="-234"/>
-        <location line="+293"/>
+        <location line="-262"/>
+        <location line="+321"/>
         <source>Diagnostics</source>
         <translation>Diagnose</translation>
     </message>
     <message>
-        <location line="-292"/>
-        <location line="+344"/>
+        <location line="-320"/>
+        <location line="+372"/>
         <location line="+5"/>
         <source>Updates</source>
         <translation>Updates</translation>
     </message>
     <message>
-        <location line="-307"/>
+        <location line="-335"/>
         <source>Project and startup preferences shared by the application.</source>
         <translation>Projekt- und Starteinstellungen der Anwendung.</translation>
     </message>
@@ -5091,7 +5058,7 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
         <translation>Konfigurierte Geräte beim Öffnen eines Projekts verbinden</translation>
     </message>
     <message>
-        <location line="+11"/>
+        <location line="+39"/>
         <source>Application appearance</source>
         <translation>Darstellung der Anwendung</translation>
     </message>
@@ -5182,7 +5149,17 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
         <translation>Benutzerdefiniert</translation>
     </message>
     <message>
-        <location line="-96"/>
+        <location line="-125"/>
+        <source>Modules</source>
+        <translation>Module</translation>
+    </message>
+    <message>
+        <location line="+20"/>
+        <source>Turning a module on or off takes effect after a restart.</source>
+        <translation>Das Ein- oder Ausschalten eines Moduls wird nach einem Neustart wirksam.</translation>
+    </message>
+    <message>
+        <location line="+9"/>
         <source>Appearance changes apply immediately. Changing the language is saved for the next start.</source>
         <translation>Darstellungsänderungen gelten sofort. Die Sprachänderung wird für den nächsten Start gespeichert.</translation>
     </message>
@@ -5425,14 +5402,14 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
         <translation>Jetzt neu starten</translation>
     </message>
     <message>
-        <location line="+134"/>
-        <source>Close and reopen TraceView to apply language or diagnostics history changes, or they will apply the next time you open it.</source>
-        <translation>Schließen und öffnen Sie TraceView erneut, um Sprach- oder Diagnoseverlaufsänderungen zu übernehmen, sonst gelten sie beim nächsten Öffnen.</translation>
+        <location line="+141"/>
+        <source>Close and reopen TraceView to apply language, diagnostics history or module changes, or they will apply the next time you open it.</source>
+        <translation>Schließen und öffnen Sie TraceView erneut, um Änderungen an Sprache, Diagnoseverlauf oder Modulen zu übernehmen, sonst gelten sie beim nächsten Öffnen.</translation>
     </message>
     <message>
         <location line="+4"/>
-        <source>Restart TraceView to apply language or diagnostics history changes.</source>
-        <translation>Starten Sie TraceView neu, um Änderungen an Sprache oder Diagnoseverlauf zu übernehmen.</translation>
+        <source>Restart TraceView to apply language, diagnostics history or module changes.</source>
+        <translation>Starten Sie TraceView neu, um Änderungen an Sprache, Diagnoseverlauf oder Modulen zu übernehmen.</translation>
     </message>
     <message>
         <location line="+4"/>

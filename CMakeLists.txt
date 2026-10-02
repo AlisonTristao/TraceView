@@ -232,6 +232,9 @@ target_link_libraries(TraceView PRIVATE
     traceview_ui
     traceview_theme
     traceview_locale
+    # ModuleRegistry: main.cpp registers the optional modules and reads
+    # --mode before MainWindow is built (see docs/MODULES.md).
+    traceview_modules
 )
 
 if(TRACEVIEW_ENABLE_SERIAL AND NOT ANDROID)

@@ -480,7 +480,7 @@
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="+132"/>
+        <location filename="../lib/core/mainwindow.cpp" line="+133"/>
         <source>TraceView Project (*.tvproj)</source>
         <translation>Progetto TraceView (*.tvproj)</translation>
     </message>
@@ -2344,34 +2344,6 @@ Consentiti: %1</translation>
         <translation>Spettrogramma audio</translation>
     </message>
     <message>
-        <source>Operator</source>
-        <translation type="vanished">Operatore</translation>
-    </message>
-    <message>
-        <source>Boot OK. Battery at 87%.</source>
-        <translation type="vanished">Avvio OK. Batteria all&apos;87%.</translation>
-    </message>
-    <message>
-        <source>Start the calibration routine, please.</source>
-        <translation type="vanished">Avvia la routine di calibrazione, per favore.</translation>
-    </message>
-    <message>
-        <source>Calibration done. Offsets saved; log attached.</source>
-        <translation type="vanished">Calibrazione completata. Offset salvati; log allegato.</translation>
-    </message>
-    <message>
-        <source>Sending the new route map.</source>
-        <translation type="vanished">Invio la nuova mappa del percorso.</translation>
-    </message>
-    <message>
-        <source>Retrying over the other link...</source>
-        <translation type="vanished">Riprovo sull&apos;altro collegamento...</translation>
-    </message>
-    <message>
-        <source>Chat</source>
-        <translation type="vanished">Chat</translation>
-    </message>
-    <message>
         <location line="+62"/>
         <source> -- %1 fps</source>
         <translation> -- %1 fps</translation>
@@ -3185,13 +3157,8 @@ Consentiti: %1</translation>
 </context>
 <context>
     <name>traceview::MainWindow</name>
-    <message>
-        <location filename="../lib/core/mainwindow.cpp" line="+235"/>
-        <source>TraceView v%1</source>
-        <translation>TraceView v%1</translation>
-    </message>
     <message numerus="yes">
-        <location line="+153"/>
+        <location filename="../lib/core/mainwindow.cpp" line="+392"/>
         <source>This device carries %n other device(s) (%1). Remove or repoint them first.</source>
         <translation>
             <numerusform>Questo dispositivo ne trasporta %n altro (%1). Rimuovilo o riassegnalo prima.</numerusform>
@@ -3204,7 +3171,7 @@ Consentiti: %1</translation>
         <translation>, </translation>
     </message>
     <message>
-        <location line="+557"/>
+        <location line="+593"/>
         <source>Pending</source>
         <translation>In attesa</translation>
     </message>
@@ -3348,12 +3315,12 @@ Perdite: %2</translation>
     </message>
     <message>
         <location line="+0"/>
-        <location line="+3618"/>
+        <location line="+3625"/>
         <source>Later</source>
         <translation>Più tardi</translation>
     </message>
     <message>
-        <location line="-3611"/>
+        <location line="-3618"/>
         <source>&amp;Access</source>
         <translation>&amp;Accesso</translation>
     </message>
@@ -3429,7 +3396,7 @@ Perdite: %2</translation>
         <translation>&amp;Entra in Modalità Sviluppatore...</translation>
     </message>
     <message>
-        <location line="+192"/>
+        <location line="+193"/>
         <source>Add</source>
         <translation>Aggiungi</translation>
     </message>
@@ -3480,18 +3447,18 @@ Perdite: %2</translation>
     </message>
     <message>
         <location line="+18"/>
-        <location line="+2983"/>
+        <location line="+2989"/>
         <source>Undo</source>
         <translation>Annulla</translation>
     </message>
     <message>
-        <location line="-2981"/>
-        <location line="+2981"/>
+        <location line="-2987"/>
+        <location line="+2987"/>
         <source>Redo</source>
         <translation>Ripeti</translation>
     </message>
     <message>
-        <location line="-2938"/>
+        <location line="-2944"/>
         <source>Add Device</source>
         <translation>Aggiungi dispositivo</translation>
     </message>
@@ -3527,12 +3494,12 @@ Perdite: %2</translation>
     </message>
     <message>
         <location line="+29"/>
-        <location line="+2883"/>
+        <location line="+2889"/>
         <source>Fullscreen dashboard (F11)</source>
         <translation>Dashboard a schermo intero (F11)</translation>
     </message>
     <message>
-        <location line="-2703"/>
+        <location line="-2709"/>
         <source>Rename Workspace</source>
         <translation>Rinomina Spazio di Lavoro</translation>
     </message>
@@ -3613,7 +3580,7 @@ Perdite: %2</translation>
         <translation>Questa area di lavoro ora ha un aspetto proprio.</translation>
     </message>
     <message>
-        <location line="+1213"/>
+        <location line="+1219"/>
         <source>%1: found at %2</source>
         <translation>%1: trovato su %2</translation>
     </message>
@@ -3745,13 +3712,13 @@ Scegli Più tardi per continuare a lavorare -- le modifiche verranno applicate l
         <translation>Chiudi app</translation>
     </message>
     <message>
-        <location line="-2930"/>
-        <location line="+2731"/>
+        <location line="-2936"/>
+        <location line="+2737"/>
         <source>Devices</source>
         <translation>Dispositivi</translation>
     </message>
     <message>
-        <location line="-2656"/>
+        <location line="-2662"/>
         <source>Subscriptions</source>
         <translation>Sottoscrizioni</translation>
     </message>
@@ -3793,23 +3760,23 @@ Scegli Più tardi per continuare a lavorare -- le modifiche verranno applicate l
     </message>
     <message>
         <location line="+71"/>
-        <location line="+2256"/>
+        <location line="+2262"/>
         <source>Add widget</source>
         <translation>Aggiungi widget</translation>
     </message>
     <message>
-        <location line="-2253"/>
+        <location line="-2259"/>
         <source>Remove selected widget (%1)</source>
         <translation>Rimuovi widget selezionato (%1)</translation>
     </message>
     <message>
         <location line="+3"/>
-        <location line="+2263"/>
+        <location line="+2269"/>
         <source>Add device</source>
         <translation>Aggiungi dispositivo</translation>
     </message>
     <message>
-        <location line="-2260"/>
+        <location line="-2266"/>
         <source>Remove selected device (%1)</source>
         <translation>Rimuovi dispositivo selezionato (%1)</translation>
     </message>
@@ -3894,7 +3861,7 @@ Scegli Più tardi per continuare a lavorare -- le modifiche verranno applicate l
         <translation>Mostra i pannelli Livelli/Proprietà</translation>
     </message>
     <message>
-        <location line="+255"/>
+        <location line="+261"/>
         <source>New Device</source>
         <translation>Nuovo Dispositivo</translation>
     </message>
@@ -3960,12 +3927,12 @@ Scegli Più tardi per continuare a lavorare -- le modifiche verranno applicate l
         <translation>M&amp;ovimento</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="-1347"/>
+        <location filename="../lib/core/mainwindow.cpp" line="-1353"/>
         <source>Dashboard</source>
         <translation>Dashboard</translation>
     </message>
     <message>
-        <location line="+1686"/>
+        <location line="+1692"/>
         <source>%1: this BLE address now answers as a different robot (expected %2, got %3)</source>
         <translation>%1: questo indirizzo BLE ora risponde come un robot diverso (atteso %2, ricevuto %3)</translation>
     </message>
@@ -5008,7 +4975,7 @@ Scegli Più tardi per continuare a lavorare -- le modifiche verranno applicate l
 <context>
     <name>traceview::SettingsPage</name>
     <message>
-        <location filename="../lib/core/settingspage.cpp" line="+203"/>
+        <location filename="../lib/core/settingspage.cpp" line="+204"/>
         <source>Settings</source>
         <translation>Impostazioni</translation>
     </message>
@@ -5020,43 +4987,43 @@ Scegli Più tardi per continuare a lavorare -- le modifiche verranno applicate l
     </message>
     <message>
         <location line="-44"/>
-        <location line="+68"/>
+        <location line="+96"/>
         <source>Appearance</source>
         <translation>Aspetto</translation>
     </message>
     <message>
-        <location line="-68"/>
-        <location line="+156"/>
+        <location line="-96"/>
+        <location line="+184"/>
         <source>Dashboard</source>
         <translation>Dashboard</translation>
     </message>
     <message>
-        <location line="-155"/>
-        <location line="+207"/>
+        <location line="-183"/>
+        <location line="+235"/>
         <source>Terminal</source>
         <translation>Terminale</translation>
     </message>
     <message>
-        <location line="-207"/>
-        <location line="+234"/>
+        <location line="-235"/>
+        <location line="+262"/>
         <source>Connections</source>
         <translation>Connessioni</translation>
     </message>
     <message>
-        <location line="-234"/>
-        <location line="+293"/>
+        <location line="-262"/>
+        <location line="+321"/>
         <source>Diagnostics</source>
         <translation>Diagnostica</translation>
     </message>
     <message>
-        <location line="-292"/>
-        <location line="+344"/>
+        <location line="-320"/>
+        <location line="+372"/>
         <location line="+5"/>
         <source>Updates</source>
         <translation>Aggiornamenti</translation>
     </message>
     <message>
-        <location line="-307"/>
+        <location line="-335"/>
         <source>Project and startup preferences shared by the application.</source>
         <translation>Preferenze di progetto e avvio condivise dall&apos;applicazione.</translation>
     </message>
@@ -5091,7 +5058,7 @@ Scegli Più tardi per continuare a lavorare -- le modifiche verranno applicate l
         <translation>Connetti i dispositivi configurati all&apos;apertura di un progetto</translation>
     </message>
     <message>
-        <location line="+11"/>
+        <location line="+39"/>
         <source>Application appearance</source>
         <translation>Aspetto dell&apos;applicazione</translation>
     </message>
@@ -5182,7 +5149,17 @@ Scegli Più tardi per continuare a lavorare -- le modifiche verranno applicate l
         <translation>Personalizzata</translation>
     </message>
     <message>
-        <location line="-96"/>
+        <location line="-125"/>
+        <source>Modules</source>
+        <translation>Moduli</translation>
+    </message>
+    <message>
+        <location line="+20"/>
+        <source>Turning a module on or off takes effect after a restart.</source>
+        <translation>Attivare o disattivare un modulo ha effetto dopo un riavvio.</translation>
+    </message>
+    <message>
+        <location line="+9"/>
         <source>Appearance changes apply immediately. Changing the language is saved for the next start.</source>
         <translation>Le modifiche all&apos;aspetto si applicano subito. Il cambio di lingua viene salvato per il prossimo avvio.</translation>
     </message>
@@ -5425,14 +5402,14 @@ Scegli Più tardi per continuare a lavorare -- le modifiche verranno applicate l
         <translation>Riavvia ora</translation>
     </message>
     <message>
-        <location line="+134"/>
-        <source>Close and reopen TraceView to apply language or diagnostics history changes, or they will apply the next time you open it.</source>
-        <translation>Chiudi e riapri TraceView per applicare le modifiche alla lingua o alla cronologia di diagnostica, altrimenti verranno applicate alla prossima apertura.</translation>
+        <location line="+141"/>
+        <source>Close and reopen TraceView to apply language, diagnostics history or module changes, or they will apply the next time you open it.</source>
+        <translation>Chiudi e riapri TraceView per applicare le modifiche a lingua, cronologia di diagnostica o moduli, oppure verranno applicate alla prossima apertura.</translation>
     </message>
     <message>
         <location line="+4"/>
-        <source>Restart TraceView to apply language or diagnostics history changes.</source>
-        <translation>Riavvia TraceView per applicare le modifiche alla lingua o alla cronologia di diagnostica.</translation>
+        <source>Restart TraceView to apply language, diagnostics history or module changes.</source>
+        <translation>Riavvia TraceView per applicare le modifiche a lingua, cronologia di diagnostica o moduli.</translation>
     </message>
     <message>
         <location line="+4"/>

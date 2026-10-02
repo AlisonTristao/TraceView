@@ -103,6 +103,30 @@ target_link_libraries(traceview_applog PUBLIC
     Qt6::Core
 )
 
+# traceview_modules: the optional application module contract (AppModule,
+# ModuleHost) and the registry main.cpp fills (see docs/MODULES.md). Its own
+# target rather than part of traceview_ui so a module library can implement
+# AppModule without depending on traceview_ui, which nothing may depend on.
+# Only QtCore: the headers just forward-declare QWidget/QAction/WidgetRegistry.
+add_library(traceview_modules STATIC
+    modules/appmodule.h
+    modules/moduleregistry.cpp
+    modules/moduleregistry.h
+)
+
+target_include_directories(traceview_modules PUBLIC
+    ${CMAKE_SOURCE_DIR}/include
+    ${CMAKE_SOURCE_DIR}/lib
+)
+
+target_link_libraries(traceview_modules
+    PUBLIC
+        Qt6::Core
+    PRIVATE
+        # The "--mode <unknown id>" log line (lcApp).
+        traceview_applog
+)
+
 # traceview_hexdump: hex-dump formatting helpers (hexDump/hexInline) for raw
 # byte payloads. Split out of traceview_diagnostics for the same reason as
 # traceview_applog above: traceview_transport's SerialManager needs it too,
@@ -846,6 +870,9 @@ target_link_libraries(traceview_ui
         traceview_locale
         traceview_preferences
         traceview_updater
+        # MainWindow is the ModuleHost and installs the enabled modules;
+        # SettingsPage lists them.
+        traceview_modules
         # Transport/DeviceConnection/SerialManager/UsbHidManager/HubTransport
         # (see traceview_transport's own comment above) -- MainWindow owns one
         # DeviceConnection per Device and SerialWidgetBridge wires

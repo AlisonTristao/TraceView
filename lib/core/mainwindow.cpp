@@ -80,6 +80,7 @@
 #include "logs/logviewer.h"
 #include "dashboardgallerydialog.h"
 #include "manageusersdialog.h"
+#include "modules/moduleregistry.h"
 #include "ota/otatab.h"
 #include "paneldockcontroller.h"
 #include "preferences/appsettings.h"
@@ -364,7 +365,11 @@ QVector<SerialPortOption> currentSerialPorts() {
 }  // namespace
 
 MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
-    setWindowTitle(tr("TraceView v%1").arg(kVersion));
+    // Started with --mode <id>, the app wears that module's name instead.
+    const AppModule* modeModule = ModuleRegistry::instance().modeModule();
+    const QString productName =
+        modeModule != nullptr ? modeModule->displayName() : QStringLiteral("TraceView");
+    setWindowTitle(QStringLiteral("%1 v%2").arg(productName, QString::fromLatin1(kVersion)));
     resize(1024, 640);
 #if !defined(Q_OS_ANDROID) && !defined(Q_OS_IOS)
     // Reopen at the size/place the window was closed at -- maximized on the
@@ -658,6 +663,14 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     // own LogViewer, added here on demand -- see m_openLogTabs.
     contentLayout->addWidget(m_contentStack);
 
+    // Enabled optional modules plug in now: the ribbon and m_contentStack
+    // exist for their tabs, and the startup dashboard (finishStartup()) has
+    // not been loaded yet, so it can already use their widget types. The
+    // properties panel took its type list in buildPropertiesPanel(), so it
+    // is refreshed for those types.
+    ModuleRegistry::instance().installEnabled(*this);
+    m_propertiesPanel->setAvailableTypes(WidgetRegistry::instance().availableTypes());
+
     // Reparented rather than added to contentLayout: their geometry is set
     // directly by m_dockController (wired below via an event filter on
     // m_contentRow) so they overlay the canvas instead of squeezing it, and
@@ -741,6 +754,9 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     // event filter below.
     m_brandCornerMark = new BrandCornerMark(m_appShell);
     m_brandCornerMark->setForegroundColor(ThemeManager::instance().currentTheme().textPrimary);
+    if (modeModule != nullptr) {
+        m_brandCornerMark->setWordmarkText(modeModule->displayName());
+    }
     connect(&ThemeManager::instance(), &ThemeManager::themeChanged, this,
             [this](const ThemePalette& palette) {
                 m_brandCornerMark->setForegroundColor(palette.textPrimary);
@@ -785,6 +801,31 @@ void MainWindow::finishStartup() {
     openStartupDashboard();
     delete m_startupOverlay;
     m_startupOverlay = nullptr;
+}
+
+WidgetRegistry& MainWindow::widgetRegistry() {
+    return WidgetRegistry::instance();
+}
+
+void MainWindow::addRibbonTab(const QString& label, const QList<QAction*>& actions,
+                              QWidget* content) {
+    // Same shape as devicesPage in buildRibbon(); with no actions it is an
+    // empty page like BTP Traffic's.
+    auto* page = new QWidget(this);
+    page->setObjectName("ribbonPage");
+    page->setFixedHeight(kRibbonPageHeight);
+    auto* pageLayout = new QHBoxLayout(page);
+    pageLayout->setContentsMargins(kRibbonPageMarginH, kRibbonPageMarginV, kRibbonPageMarginH,
+                                   kRibbonPageMarginV);
+    pageLayout->setSpacing(kRibbonGroupSpacing);
+    if (!actions.isEmpty()) {
+        pageLayout->addWidget(Ribbon::createButtonGroup(page, actions));
+    }
+    pageLayout->addStretch();
+
+    m_contentStack->addWidget(content);
+    m_moduleTabs.append(ModuleTab{page, content});
+    m_ribbon->addTab(label, page);
 }
 
 MainWindow::~MainWindow() {
@@ -1443,6 +1484,7 @@ void MainWindow::applyUserMode(UserModeManager::UserMode mode) {
         // Everything past the fixed Dashboard/Devices tabs (offline logs,
         // OTA, BTP Traffic) is closed outright rather than left
         // hidden behind the now-invisible tab bar -- "View as user" included.
+        // Module tabs are not closable and stay, unreachable with the bar.
         // Walked back to front: each close shifts the indices after it.
         for (int i = m_ribbon->count() - 1; i >= 0; --i) {
             if (i != m_dashboardTabIndex && i != m_devicesTabIndex) {
@@ -2735,6 +2777,12 @@ void MainWindow::onRibbonTabChanged(int index) {
         for (const OpenLogTab& tab : m_openLogTabs) {
             if (tab.ribbonPage == currentPage) {
                 activeContent = tab.viewer;
+                break;
+            }
+        }
+        for (const ModuleTab& tab : m_moduleTabs) {
+            if (tab.ribbonPage == currentPage) {
+                activeContent = tab.content;
                 break;
             }
         }

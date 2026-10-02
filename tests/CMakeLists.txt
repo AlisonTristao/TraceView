@@ -120,6 +120,11 @@ add_traceview_test(test_deviceconnection traceview_ui Qt6::Network)
 # leaves behind the real TraceView account list.
 add_traceview_test(test_usermodemanager traceview_ui)
 add_traceview_test(test_mainwindowchrome traceview_ui)
+# Optional application modules (lib/modules, docs/MODULES.md): the registry,
+# saved enabled state and --mode on their own, then MainWindow installing the
+# enabled ones and Settings listing them.
+add_traceview_test(test_moduleregistry traceview_modules traceview_dashboard)
+add_traceview_test(test_mainwindowmodules traceview_ui traceview_modules traceview_dashboard)
 
 # Generic telemetry value types (lib/telemetry) -- no BTP dependency at all
 # (traceview_telemetry links just Qt6::Core; see lib/CMakeLists.txt).

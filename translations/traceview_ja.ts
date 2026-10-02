@@ -480,7 +480,7 @@
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="+132"/>
+        <location filename="../lib/core/mainwindow.cpp" line="+133"/>
         <source>TraceView Project (*.tvproj)</source>
         <translation>TraceView プロジェクト (*.tvproj)</translation>
     </message>
@@ -2344,34 +2344,6 @@ Allowed: %1</source>
         <translation>オーディオスペクトログラム</translation>
     </message>
     <message>
-        <source>Operator</source>
-        <translation type="vanished">オペレーター</translation>
-    </message>
-    <message>
-        <source>Boot OK. Battery at 87%.</source>
-        <translation type="vanished">起動OK。バッテリー 87%。</translation>
-    </message>
-    <message>
-        <source>Start the calibration routine, please.</source>
-        <translation type="vanished">キャリブレーションを開始してください。</translation>
-    </message>
-    <message>
-        <source>Calibration done. Offsets saved; log attached.</source>
-        <translation type="vanished">キャリブレーション完了。オフセット保存済み、ログを添付します。</translation>
-    </message>
-    <message>
-        <source>Sending the new route map.</source>
-        <translation type="vanished">新しいルートマップを送信します。</translation>
-    </message>
-    <message>
-        <source>Retrying over the other link...</source>
-        <translation type="vanished">別のリンクで再試行中...</translation>
-    </message>
-    <message>
-        <source>Chat</source>
-        <translation type="vanished">チャット</translation>
-    </message>
-    <message>
         <location line="+62"/>
         <source> -- %1 fps</source>
         <translation> -- %1 fps</translation>
@@ -3185,13 +3157,8 @@ Allowed: %1</source>
 </context>
 <context>
     <name>traceview::MainWindow</name>
-    <message>
-        <location filename="../lib/core/mainwindow.cpp" line="+235"/>
-        <source>TraceView v%1</source>
-        <translation>TraceView v%1</translation>
-    </message>
     <message numerus="yes">
-        <location line="+153"/>
+        <location filename="../lib/core/mainwindow.cpp" line="+392"/>
         <source>This device carries %n other device(s) (%1). Remove or repoint them first.</source>
         <translation>
             <numerusform>このデバイスは他に %n 台のデバイス (%1) を中継しています。先に削除するか、参照先を変更してください。</numerusform>
@@ -3203,7 +3170,7 @@ Allowed: %1</source>
         <translation>、</translation>
     </message>
     <message>
-        <location line="+557"/>
+        <location line="+593"/>
         <source>Pending</source>
         <translation>保留中</translation>
     </message>
@@ -3347,12 +3314,12 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+0"/>
-        <location line="+3618"/>
+        <location line="+3625"/>
         <source>Later</source>
         <translation>後で</translation>
     </message>
     <message>
-        <location line="-3611"/>
+        <location line="-3618"/>
         <source>&amp;Access</source>
         <translation>アクセス(&amp;A)</translation>
     </message>
@@ -3428,7 +3395,7 @@ Drops: %2</source>
         <translation>開発者モードに入る(&amp;E)...</translation>
     </message>
     <message>
-        <location line="+192"/>
+        <location line="+193"/>
         <source>Add</source>
         <translation>追加</translation>
     </message>
@@ -3479,18 +3446,18 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+18"/>
-        <location line="+2983"/>
+        <location line="+2989"/>
         <source>Undo</source>
         <translation>元に戻す</translation>
     </message>
     <message>
-        <location line="-2981"/>
-        <location line="+2981"/>
+        <location line="-2987"/>
+        <location line="+2987"/>
         <source>Redo</source>
         <translation>やり直し</translation>
     </message>
     <message>
-        <location line="-2938"/>
+        <location line="-2944"/>
         <source>Add Device</source>
         <translation>デバイスを追加</translation>
     </message>
@@ -3526,12 +3493,12 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+29"/>
-        <location line="+2883"/>
+        <location line="+2889"/>
         <source>Fullscreen dashboard (F11)</source>
         <translation>ダッシュボードを全画面表示(F11)</translation>
     </message>
     <message>
-        <location line="-2703"/>
+        <location line="-2709"/>
         <source>Rename Workspace</source>
         <translation>ワークスペースの名前を変更</translation>
     </message>
@@ -3612,7 +3579,7 @@ Drops: %2</source>
         <translation>このワークスペースは独自の外観を持つようになりました。</translation>
     </message>
     <message>
-        <location line="+1213"/>
+        <location line="+1219"/>
         <source>%1: found at %2</source>
         <translation>%1: %2 で見つかりました</translation>
     </message>
@@ -3744,13 +3711,13 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>アプリを閉じる</translation>
     </message>
     <message>
-        <location line="-2930"/>
-        <location line="+2731"/>
+        <location line="-2936"/>
+        <location line="+2737"/>
         <source>Devices</source>
         <translation>デバイス</translation>
     </message>
     <message>
-        <location line="-2656"/>
+        <location line="-2662"/>
         <source>Subscriptions</source>
         <translation>購読</translation>
     </message>
@@ -3792,23 +3759,23 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     </message>
     <message>
         <location line="+71"/>
-        <location line="+2256"/>
+        <location line="+2262"/>
         <source>Add widget</source>
         <translation>ウィジェットを追加</translation>
     </message>
     <message>
-        <location line="-2253"/>
+        <location line="-2259"/>
         <source>Remove selected widget (%1)</source>
         <translation>選択したウィジェットを削除(%1)</translation>
     </message>
     <message>
         <location line="+3"/>
-        <location line="+2263"/>
+        <location line="+2269"/>
         <source>Add device</source>
         <translation>デバイスを追加</translation>
     </message>
     <message>
-        <location line="-2260"/>
+        <location line="-2266"/>
         <source>Remove selected device (%1)</source>
         <translation>選択したデバイスを削除(%1)</translation>
     </message>
@@ -3893,7 +3860,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>レイヤー/プロパティパネルを表示</translation>
     </message>
     <message>
-        <location line="+255"/>
+        <location line="+261"/>
         <source>New Device</source>
         <translation>新しいデバイス</translation>
     </message>
@@ -3959,12 +3926,12 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>モーション(&amp;O)</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="-1347"/>
+        <location filename="../lib/core/mainwindow.cpp" line="-1353"/>
         <source>Dashboard</source>
         <translation>ダッシュボード</translation>
     </message>
     <message>
-        <location line="+1686"/>
+        <location line="+1692"/>
         <source>%1: this BLE address now answers as a different robot (expected %2, got %3)</source>
         <translation>%1: この BLE アドレスは別のロボットとして応答しています (期待値 %2、実際 %3)</translation>
     </message>
@@ -5007,7 +4974,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
 <context>
     <name>traceview::SettingsPage</name>
     <message>
-        <location filename="../lib/core/settingspage.cpp" line="+203"/>
+        <location filename="../lib/core/settingspage.cpp" line="+204"/>
         <source>Settings</source>
         <translation>設定</translation>
     </message>
@@ -5019,43 +4986,43 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     </message>
     <message>
         <location line="-44"/>
-        <location line="+68"/>
+        <location line="+96"/>
         <source>Appearance</source>
         <translation>外観</translation>
     </message>
     <message>
-        <location line="-68"/>
-        <location line="+156"/>
+        <location line="-96"/>
+        <location line="+184"/>
         <source>Dashboard</source>
         <translation>ダッシュボード</translation>
     </message>
     <message>
-        <location line="-155"/>
-        <location line="+207"/>
+        <location line="-183"/>
+        <location line="+235"/>
         <source>Terminal</source>
         <translation>ターミナル</translation>
     </message>
     <message>
-        <location line="-207"/>
-        <location line="+234"/>
+        <location line="-235"/>
+        <location line="+262"/>
         <source>Connections</source>
         <translation>接続</translation>
     </message>
     <message>
-        <location line="-234"/>
-        <location line="+293"/>
+        <location line="-262"/>
+        <location line="+321"/>
         <source>Diagnostics</source>
         <translation>診断</translation>
     </message>
     <message>
-        <location line="-292"/>
-        <location line="+344"/>
+        <location line="-320"/>
+        <location line="+372"/>
         <location line="+5"/>
         <source>Updates</source>
         <translation>アップデート</translation>
     </message>
     <message>
-        <location line="-307"/>
+        <location line="-335"/>
         <source>Project and startup preferences shared by the application.</source>
         <translation>アプリケーション全体で共有されるプロジェクトと起動の設定。</translation>
     </message>
@@ -5090,7 +5057,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>プロジェクトを開いたときに設定済みデバイスに接続する</translation>
     </message>
     <message>
-        <location line="+11"/>
+        <location line="+39"/>
         <source>Application appearance</source>
         <translation>アプリケーションの外観</translation>
     </message>
@@ -5181,7 +5148,17 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>カスタム</translation>
     </message>
     <message>
-        <location line="-96"/>
+        <location line="-125"/>
+        <source>Modules</source>
+        <translation>モジュール</translation>
+    </message>
+    <message>
+        <location line="+20"/>
+        <source>Turning a module on or off takes effect after a restart.</source>
+        <translation>モジュールの有効化・無効化は再起動後に反映されます。</translation>
+    </message>
+    <message>
+        <location line="+9"/>
         <source>Appearance changes apply immediately. Changing the language is saved for the next start.</source>
         <translation>外観の変更はすぐに反映されます。言語の変更は次回起動時に適用されます。</translation>
     </message>
@@ -5423,14 +5400,14 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>今すぐ再起動</translation>
     </message>
     <message>
-        <location line="+134"/>
-        <source>Close and reopen TraceView to apply language or diagnostics history changes, or they will apply the next time you open it.</source>
-        <translation>言語または診断履歴の変更を適用するには TraceView を閉じて再度開いてください。そうしない場合は次回起動時に適用されます。</translation>
+        <location line="+141"/>
+        <source>Close and reopen TraceView to apply language, diagnostics history or module changes, or they will apply the next time you open it.</source>
+        <translation>言語、診断履歴、モジュールの変更を適用するには TraceView を閉じて再度開いてください。そうしない場合は次回起動時に適用されます。</translation>
     </message>
     <message>
         <location line="+4"/>
-        <source>Restart TraceView to apply language or diagnostics history changes.</source>
-        <translation>言語や診断履歴の変更を適用するには TraceView を再起動してください。</translation>
+        <source>Restart TraceView to apply language, diagnostics history or module changes.</source>
+        <translation>言語、診断履歴、モジュールの変更を適用するには TraceView を再起動してください。</translation>
     </message>
     <message>
         <location line="+4"/>

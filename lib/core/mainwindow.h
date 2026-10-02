@@ -14,6 +14,7 @@
 #include "dashboard/dashboarditem.h"
 #include "devices/device.h"
 #include "devices/hubpeeraccumulator.h"
+#include "modules/appmodule.h"
 #include "telemetry/telemetrybinding.h"
 #include "telemetry/telemetryhistory.h"
 #include "updater/updateinfo.h"
@@ -66,7 +67,9 @@ class BrandCornerMark;
 class StartupLoadingOverlay;
 class WorkspaceSwitcher;
 
-class MainWindow : public QMainWindow {
+// Privately a ModuleHost: the enabled optional modules plug in through it
+// once, while the constructor runs (see docs/MODULES.md).
+class MainWindow : public QMainWindow, private ModuleHost {
     Q_OBJECT
 
 public:
@@ -109,6 +112,11 @@ protected:
     void closeEvent(QCloseEvent* event) override;
 
 private:
+    // ModuleHost.
+    WidgetRegistry& widgetRegistry() override;
+    void addRibbonTab(const QString& label, const QList<QAction*>& actions,
+                      QWidget* content) override;
+
     void buildMenus();
     // Rebuilds the Access menu's contents from UserModeManager's current
     // state -- a login prompt while in User mode, or the current username
@@ -639,6 +647,13 @@ private:
     // "empty ribbon page as a stable key" trick as the OTA tab above.
     QWidget* m_btpMonitorTabPage = nullptr;
     BtpMonitorTab* m_btpMonitorTab = nullptr;
+    // One fixed tab per addRibbonTab() call from an enabled module, keyed by
+    // its ribbon page like m_openLogTabs; `content` goes in m_contentStack.
+    struct ModuleTab {
+        QWidget* ribbonPage = nullptr;
+        QWidget* content = nullptr;
+    };
+    QVector<ModuleTab> m_moduleTabs;
     // The Settings window and the SettingsPage it wraps -- WA_DeleteOnClose'd
     // like m_notificationWindow, so both QPointers null out on close and the
     // next onOpenSettings() builds a fresh one.

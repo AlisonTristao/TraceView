@@ -11,6 +11,7 @@
 #include "core/applog.h"
 #include "core/mainwindow.h"
 #include "core/touchscroll.h"
+#include "modules/moduleregistry.h"
 #include "traceview/fontmanager.h"
 #include "traceview/languagemanager.h"
 #include "traceview/thememanager.h"
@@ -65,6 +66,11 @@ int main(int argc, char* argv[]) {
     // Before MainWindow: its scroll areas are polished (and so hooked) on
     // first show, which has to find the filter already installed.
     traceview::installTouchScrolling();
+
+    // Optional modules (see docs/MODULES.md) register here, before --mode is
+    // read and before MainWindow installs the enabled ones. TraceView itself
+    // registers none.
+    traceview::ModuleRegistry::instance().applyModeArgument(QCoreApplication::arguments());
 
     traceview::MainWindow window;
     window.show();

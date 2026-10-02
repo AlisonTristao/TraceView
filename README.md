@@ -131,6 +131,7 @@ published with `SHA256SUMS.txt`.
 | [OTA](docs/OTA.md) | Firmware upload, status polling, credentials and mDNS. |
 | [Ecosystem](docs/ECOSYSTEM.md) | Boundaries between TraceView, BTP and Bally firmware. |
 | [Theming](docs/THEMING.md) | Theme implementation and extension points. |
+| [Modules](docs/MODULES.md) | How an optional application module plugs into the main window. |
 | [macOS and iOS builds](docs/MACOS_IOS_BUILD.md) | Apple toolchains, packaging, signing, and why iOS has no serial or USB HID. |
 | [Changelog](CHANGELOG.md) | Changes by release. |
 

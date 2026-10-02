@@ -2,6 +2,7 @@
 
 #include <QByteArray>
 #include <QColor>
+#include <QString>
 #include <QWidget>
 
 class QSvgRenderer;
@@ -30,6 +31,10 @@ public:
 
     // Re-tints the light parts of the mark; call on every theme change.
     void setForegroundColor(const QColor& color);
+    // Writes `text` in place of the SVG's own "TraceView" lettering -- the
+    // identity of a module the app was started as (--mode, see
+    // docs/MODULES.md). The traces stay as they are.
+    void setWordmarkText(const QString& text);
     // Sizes to `height` (width follows the SVG's aspect ratio, capped at
     // `maxWidth`) and moves flush against the parent's right edge, with the
     // wordmark's middle (white) trace centered on parent y `midlineY`. Shrinks
@@ -40,8 +45,12 @@ protected:
     void paintEvent(QPaintEvent* event) override;
 
 private:
+    void reloadSvg();
+
     QByteArray m_svgTemplate;
     QSvgRenderer* m_renderer = nullptr;
+    QColor m_foregroundColor;
+    QString m_wordmarkText;
 };
 
 }  // namespace traceview
