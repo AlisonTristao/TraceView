@@ -54,6 +54,8 @@ TextBoardConfigEditor::TextBoardConfigEditor(QWidget* parent) : WidgetConfigEdit
         bool ok = false;
         const qulonglong typed = m_topicIdEdit->currentText().trimmed().toULongLong(&ok, 0);
         if (ok) {
+            const quint32 previousSourceId = m_sourceId;
+            const quint16 previousTopicId = m_topicId;
             m_topicId = quint16(qBound<qulonglong>(0, typed, 65535));
             m_sourceId = 0;
             const QString deviceId = m_deviceCombo->currentData().toString();
@@ -63,6 +65,9 @@ TextBoardConfigEditor::TextBoardConfigEditor(QWidget* parent) : WidgetConfigEdit
                     break;
                 }
             }
+            if (m_sourceId != previousSourceId || m_topicId != previousTopicId) {
+                m_topicName.clear();
+            }
         }
         updateIdentityDisplay();
         emitChanged();
@@ -71,8 +76,13 @@ TextBoardConfigEditor::TextBoardConfigEditor(QWidget* parent) : WidgetConfigEdit
         QString sourceHex;
         QString topicHex;
         if (decodeTopicComboData(m_topicIdEdit->itemData(index), &sourceHex, &topicHex)) {
+            const quint32 previousSourceId = m_sourceId;
+            const quint16 previousTopicId = m_topicId;
             m_sourceId = quint32(sourceHex.toULongLong(nullptr, 0));
             m_topicId = quint16(topicHex.toUInt(nullptr, 0));
+            if (m_sourceId != previousSourceId || m_topicId != previousTopicId) {
+                m_topicName.clear();
+            }
         }
         updateIdentityDisplay();
         emitChanged();
@@ -90,6 +100,7 @@ void TextBoardConfigEditor::setConfig(const QJsonObject& config) {
     m_sourceId = quint32(config.value("sourceId").toString("0").toULongLong(nullptr, 0));
     m_topicId = quint16(qBound(0, config.value("topicId").toString("0").toInt(nullptr, 0),
                               65535));
+    m_topicName = config.value("topicName").toString();
     m_sampleTimeSpin->setValue(qMax(1.0, config.value("sampleTimeMs").toDouble(3000.0)));
     m_initialTextEdit->setPlainText(config.value("text").toString());
     updateIdentityDisplay();
@@ -101,6 +112,9 @@ QJsonObject TextBoardConfigEditor::config() const {
     config["deviceId"] = m_deviceCombo->currentData().toString();
     config["sourceId"] = formatHexId(m_sourceId, 8);
     config["topicId"] = formatHexId(m_topicId, 4);
+    if (!m_topicName.isEmpty()) {
+        config["topicName"] = m_topicName;
+    }
     config["sampleTimeMs"] = m_sampleTimeSpin->value();
     config["text"] = m_initialTextEdit->toPlainText();
     return config;

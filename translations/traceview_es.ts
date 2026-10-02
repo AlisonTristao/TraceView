@@ -480,7 +480,7 @@
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="+133"/>
+        <location filename="../lib/core/mainwindow.cpp" line="+134"/>
         <source>TraceView Project (*.tvproj)</source>
         <translation>Proyecto TraceView (*.tvproj)</translation>
     </message>
@@ -785,7 +785,7 @@
 <context>
     <name>WidgetConfigEditor</name>
     <message>
-        <location filename="../lib/dashboard/widgetconfigeditor.cpp" line="+12"/>
+        <location filename="../lib/dashboard/widgetconfigeditor.cpp" line="+13"/>
         <source>(No device)</source>
         <translation>(Ningún dispositivo)</translation>
     </message>
@@ -800,7 +800,7 @@
         <translation>(tema sin nombre)</translation>
     </message>
     <message>
-        <location line="+103"/>
+        <location line="+119"/>
         <source>Field %1</source>
         <translation>Campo %1</translation>
     </message>
@@ -1142,7 +1142,7 @@
 <context>
     <name>traceview::AudioSpectrumConfigEditor</name>
     <message>
-        <location filename="../lib/dashboard/widgets/audiospectrumconfigeditor.cpp" line="+28"/>
+        <location filename="../lib/dashboard/widgets/audiospectrumconfigeditor.cpp" line="+29"/>
         <source>(auto)</source>
         <translation>(automático)</translation>
     </message>
@@ -1564,7 +1564,7 @@
 <context>
     <name>traceview::ChartConfigEditor</name>
     <message>
-        <location filename="../lib/dashboard/widgets/chartconfigeditor.cpp" line="+162"/>
+        <location filename="../lib/dashboard/widgets/chartconfigeditor.cpp" line="+201"/>
         <source>0x0101</source>
         <translation>0x0101</translation>
     </message>
@@ -1615,12 +1615,12 @@
     </message>
     <message>
         <location line="+9"/>
-        <location line="+423"/>
+        <location line="+455"/>
         <source> pts</source>
         <translation> pts</translation>
     </message>
     <message>
-        <location line="-419"/>
+        <location line="-451"/>
         <source>How much history the chart keeps before older data scrolls off — in samples or seconds, matching X Axis.</source>
         <translation>Cuánto historial conserva el gráfico antes de que los datos más antiguos desaparezcan — en muestras o segundos, según el Eje X.</translation>
     </message>
@@ -1750,17 +1750,27 @@
         <translation>+ Añadir serie</translation>
     </message>
     <message>
-        <location line="+192"/>
+        <location line="+8"/>
+        <source>+ Add all fields</source>
+        <translation>+ Añadir todos los campos</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Add one series for every numeric field of the topic above that isn&apos;t plotted yet, named after the field and with its unit and range from the device&apos;s manifest. Fields in different units get one Y axis per unit; fields sharing a unit and declaring a range get that range.</source>
+        <translation>Añade una serie por cada campo numérico del tema de arriba que aún no se grafica, con el nombre del campo y su unidad y rango del manifiesto del dispositivo. Los campos con unidades distintas obtienen un eje Y por unidad; los que comparten unidad y declaran un rango usan ese rango.</translation>
+    </message>
+    <message>
+        <location line="+209"/>
         <source>Series %1</source>
         <translation>Serie %1</translation>
     </message>
     <message>
-        <location line="+33"/>
+        <location line="+34"/>
         <source>Which field of the bound topic this series plots -- pick one the device has already reported (shown by name), or type a numeric id by hand for one it hasn&apos;t reported yet.</source>
         <translation>Qué campo del tema vinculado traza esta serie: elija uno que el dispositivo ya haya informado (mostrado por nombre) o escriba a mano un id numérico para uno que aún no haya informado.</translation>
     </message>
     <message>
-        <location line="+33"/>
+        <location line="+35"/>
         <source>Series Color</source>
         <translation>Color de la serie</translation>
     </message>
@@ -1803,6 +1813,11 @@
         <location line="+26"/>
         <source> s</source>
         <translation> s</translation>
+    </message>
+    <message>
+        <location line="+41"/>
+        <source>Field %1</source>
+        <translation>Campo %1</translation>
     </message>
 </context>
 <context>
@@ -2265,7 +2280,7 @@ Permitidos: %1</translation>
 <context>
     <name>traceview::DashboardGrid</name>
     <message>
-        <location filename="../lib/dashboard/dashboardgrid.cpp" line="+554"/>
+        <location filename="../lib/dashboard/dashboardgrid.cpp" line="+582"/>
         <source>Bring to Front</source>
         <translation>Traer al frente</translation>
     </message>
@@ -3033,17 +3048,17 @@ Permitidos: %1</translation>
         <translation>+ Añadir anillo</translation>
     </message>
     <message>
-        <location line="+140"/>
+        <location line="+159"/>
         <source>Ring %1</source>
         <translation>Anillo %1</translation>
     </message>
     <message>
-        <location line="+12"/>
+        <location line="+13"/>
         <source>Which field of the bound topic this ring plots -- pick one the device has already reported (shown by name), or type a numeric id by hand for one it hasn&apos;t reported yet.</source>
         <translation>Qué campo del tema vinculado traza este anillo: elija uno que el dispositivo ya haya informado (mostrado por nombre) o escriba a mano un id numérico para uno que aún no haya informado.</translation>
     </message>
     <message>
-        <location line="+30"/>
+        <location line="+33"/>
         <source>Ring Color</source>
         <translation>Color del anillo</translation>
     </message>
@@ -3171,7 +3186,7 @@ Permitidos: %1</translation>
         <translation>, </translation>
     </message>
     <message>
-        <location line="+593"/>
+        <location line="+598"/>
         <source>Pending</source>
         <translation>Pendiente</translation>
     </message>
@@ -3315,12 +3330,12 @@ Pérdidas: %2</translation>
     </message>
     <message>
         <location line="+0"/>
-        <location line="+3625"/>
+        <location line="+3716"/>
         <source>Later</source>
         <translation>Más tarde</translation>
     </message>
     <message>
-        <location line="-3618"/>
+        <location line="-3709"/>
         <source>&amp;Access</source>
         <translation>&amp;Acceso</translation>
     </message>
@@ -3447,18 +3462,18 @@ Pérdidas: %2</translation>
     </message>
     <message>
         <location line="+18"/>
-        <location line="+2989"/>
+        <location line="+3080"/>
         <source>Undo</source>
         <translation>Deshacer</translation>
     </message>
     <message>
-        <location line="-2987"/>
-        <location line="+2987"/>
+        <location line="-3078"/>
+        <location line="+3078"/>
         <source>Redo</source>
         <translation>Rehacer</translation>
     </message>
     <message>
-        <location line="-2944"/>
+        <location line="-3035"/>
         <source>Add Device</source>
         <translation>Añadir Dispositivo</translation>
     </message>
@@ -3494,12 +3509,12 @@ Pérdidas: %2</translation>
     </message>
     <message>
         <location line="+29"/>
-        <location line="+2889"/>
+        <location line="+2980"/>
         <source>Fullscreen dashboard (F11)</source>
         <translation>Panel en pantalla completa (F11)</translation>
     </message>
     <message>
-        <location line="-2709"/>
+        <location line="-2800"/>
         <source>Rename Workspace</source>
         <translation>Renombrar Espacio de Trabajo</translation>
     </message>
@@ -3580,12 +3595,12 @@ Pérdidas: %2</translation>
         <translation>Este espacio de trabajo ahora tiene su propia apariencia.</translation>
     </message>
     <message>
-        <location line="+1219"/>
+        <location line="+1300"/>
         <source>%1: found at %2</source>
         <translation>%1: encontrado en %2</translation>
     </message>
     <message>
-        <location line="+322"/>
+        <location line="+329"/>
         <source>%1: trying %2</source>
         <translation>%1: probando %2</translation>
     </message>
@@ -3639,7 +3654,7 @@ Pérdidas: %2</translation>
         <translation>&quot;%1&quot; guardado en la galería.</translation>
     </message>
     <message>
-        <location line="+535"/>
+        <location line="+538"/>
         <source>Update available: v%1</source>
         <translation>Actualización disponible: v%1</translation>
     </message>
@@ -3712,13 +3727,13 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
         <translation>Cerrar app</translation>
     </message>
     <message>
-        <location line="-2936"/>
-        <location line="+2737"/>
+        <location line="-3027"/>
+        <location line="+2828"/>
         <source>Devices</source>
         <translation>Dispositivos</translation>
     </message>
     <message>
-        <location line="-2662"/>
+        <location line="-2753"/>
         <source>Subscriptions</source>
         <translation>Suscripciones</translation>
     </message>
@@ -3760,23 +3775,23 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
     </message>
     <message>
         <location line="+71"/>
-        <location line="+2262"/>
+        <location line="+2353"/>
         <source>Add widget</source>
         <translation>Añadir widget</translation>
     </message>
     <message>
-        <location line="-2259"/>
+        <location line="-2350"/>
         <source>Remove selected widget (%1)</source>
         <translation>Eliminar widget seleccionado (%1)</translation>
     </message>
     <message>
         <location line="+3"/>
-        <location line="+2269"/>
+        <location line="+2360"/>
         <source>Add device</source>
         <translation>Añadir dispositivo</translation>
     </message>
     <message>
-        <location line="-2266"/>
+        <location line="-2357"/>
         <source>Remove selected device (%1)</source>
         <translation>Eliminar dispositivo seleccionado (%1)</translation>
     </message>
@@ -3866,7 +3881,7 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
         <translation>Nuevo Dispositivo</translation>
     </message>
     <message>
-        <location line="+284"/>
+        <location line="+365"/>
         <source>%1: robot is responding again</source>
         <translation>%1: el robot vuelve a responder</translation>
     </message>
@@ -3927,12 +3942,12 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
         <translation>M&amp;ovimiento</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="-1353"/>
+        <location filename="../lib/core/mainwindow.cpp" line="-1434"/>
         <source>Dashboard</source>
         <translation>Dashboard</translation>
     </message>
     <message>
-        <location line="+1692"/>
+        <location line="+1780"/>
         <source>%1: this BLE address now answers as a different robot (expected %2, got %3)</source>
         <translation>%1: esta dirección BLE ahora responde como otro robot (se esperaba %2, se obtuvo %3)</translation>
     </message>
@@ -3995,7 +4010,7 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
     </message>
     <message>
         <location line="+20"/>
-        <location line="+211"/>
+        <location line="+214"/>
         <source>Settings</source>
         <translation>Configuración</translation>
     </message>
