@@ -3,6 +3,7 @@
 #include <QIcon>
 #include <QPointer>
 #include <QStyleFactory>
+#include <memory>
 
 #if defined(Q_OS_ANDROID)
 #include <QJniObject>
@@ -16,6 +17,10 @@
 #include "traceview/languagemanager.h"
 #include "traceview/thememanager.h"
 #include "traceview/version.h"
+
+#if defined(TRACEVIEW_ENABLE_LAB)
+#include "lab/module/labmodule.h"
+#endif
 
 namespace {
 
@@ -68,8 +73,11 @@ int main(int argc, char* argv[]) {
     traceview::installTouchScrolling();
 
     // Optional modules (see docs/MODULES.md) register here, before --mode is
-    // read and before MainWindow installs the enabled ones. TraceView itself
-    // registers none.
+    // read and before MainWindow installs the enabled ones. Each is compiled
+    // in behind its own CMake option.
+#if defined(TRACEVIEW_ENABLE_LAB)
+    traceview::ModuleRegistry::instance().registerModule(std::make_unique<tracelab::LabModule>());
+#endif
     traceview::ModuleRegistry::instance().applyModeArgument(QCoreApplication::arguments());
 
     traceview::MainWindow window;

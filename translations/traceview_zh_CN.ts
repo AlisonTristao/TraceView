@@ -447,6 +447,64 @@
     </message>
 </context>
 <context>
+    <name>DiffDriveScene</name>
+    <message>
+        <location filename="../lab/scenes/diffdrivescene.cpp" line="+130"/>
+        <source>Scale</source>
+        <translation>比例</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Wheel distance</source>
+        <translation>轮距</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Sensor distance</source>
+        <translation>传感器距离</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Sensor count</source>
+        <translation>传感器数量</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Sensor spacing</source>
+        <translation>传感器间距</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Line radius</source>
+        <translation>线条半径</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Render radius</source>
+        <translation>绘制半径</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Perturbation step</source>
+        <translation>扰动步长</translation>
+    </message>
+    <message>
+        <location line="+279"/>
+        <source>covered: %1%</source>
+        <translation>覆盖：%1%</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>score: %1</source>
+        <translation>得分：%1</translation>
+    </message>
+    <message>
+        <location filename="../lab/scenes/sceneregistry.cpp" line="+50"/>
+        <source>Line follower</source>
+        <translation>循线机器人</translation>
+    </message>
+</context>
+<context>
     <name>FontManager</name>
     <message>
         <location filename="../lib/theme/fontmanager.cpp" line="+24"/>
@@ -478,9 +536,27 @@
     </message>
 </context>
 <context>
+    <name>LabModule</name>
+    <message>
+        <location filename="../lab/module/labmodule.cpp" line="+18"/>
+        <source>TraceLab</source>
+        <translation>TraceLab</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Simulates a plant, closes the loop with your controller and animates it.</source>
+        <translation>仿真被控对象，用你的控制器闭合回路并以动画显示。</translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <source>The simulation engine is not available yet. Add a Scene widget to a dashboard to show a plant.</source>
+        <translation>仿真引擎尚不可用。在仪表板中添加“场景”小部件以显示被控对象。</translation>
+    </message>
+</context>
+<context>
     <name>MainWindow</name>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="+134"/>
+        <location filename="../lib/core/mainwindow.cpp" line="+135"/>
         <source>TraceView Project (*.tvproj)</source>
         <translation>TraceView 项目 (*.tvproj)</translation>
     </message>
@@ -735,6 +811,14 @@
     </message>
 </context>
 <context>
+    <name>SceneWidget</name>
+    <message>
+        <location filename="../lab/scenes/scenewidget.cpp" line="+379"/>
+        <source>Scene</source>
+        <translation>场景</translation>
+    </message>
+</context>
+<context>
     <name>ThemeManager</name>
     <message>
         <location filename="../lib/theme/palettes.cpp" line="+12"/>
@@ -869,6 +953,52 @@
         <location filename="../lib/project/workspacemanager.cpp" line="+203"/>
         <source>Default</source>
         <translation>默认</translation>
+    </message>
+</context>
+<context>
+    <name>tracelab::SceneConfigEditor</name>
+    <message>
+        <location filename="../lab/scenes/sceneconfigeditor.cpp" line="+129"/>
+        <source>Bind by name</source>
+        <translation>按名称绑定</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Binds every unbound input to the reported field of the same name</source>
+        <translation>将每个未绑定的输入绑定到设备报告的同名字段</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Scene</source>
+        <translation>场景</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Inputs</source>
+        <translation>输入</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Parameters</source>
+        <translation>参数</translation>
+    </message>
+    <message>
+        <location line="+146"/>
+        <source>(Unbound)</source>
+        <translation>（未绑定）</translation>
+    </message>
+    <message>
+        <location line="+27"/>
+        <source>%1 (offline)</source>
+        <translation>%1（离线）</translation>
+    </message>
+</context>
+<context>
+    <name>tracelab::SceneWidget</name>
+    <message>
+        <location filename="../lab/scenes/scenewidget.cpp" line="-80"/>
+        <source>Unknown scene &quot;%1&quot;</source>
+        <translation>未知场景“%1”</translation>
     </message>
 </context>
 <context>
@@ -3185,7 +3315,7 @@ Allowed: %1</source>
         <translation>、</translation>
     </message>
     <message>
-        <location line="+598"/>
+        <location line="+687"/>
         <source>Pending</source>
         <translation>待定</translation>
     </message>
@@ -3329,12 +3459,12 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+0"/>
-        <location line="+3716"/>
+        <location line="+3730"/>
         <source>Later</source>
         <translation>稍后</translation>
     </message>
     <message>
-        <location line="-3709"/>
+        <location line="-3723"/>
         <source>&amp;Access</source>
         <translation>访问(&amp;A)</translation>
     </message>
@@ -3461,18 +3591,18 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+18"/>
-        <location line="+3080"/>
+        <location line="+3094"/>
         <source>Undo</source>
         <translation>撤销</translation>
     </message>
     <message>
-        <location line="-3078"/>
-        <location line="+3078"/>
+        <location line="-3092"/>
+        <location line="+3092"/>
         <source>Redo</source>
         <translation>重做</translation>
     </message>
     <message>
-        <location line="-3035"/>
+        <location line="-3049"/>
         <source>Add Device</source>
         <translation>添加设备</translation>
     </message>
@@ -3508,12 +3638,12 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+29"/>
-        <location line="+2980"/>
+        <location line="+2994"/>
         <source>Fullscreen dashboard (F11)</source>
         <translation>全屏仪表盘(F11)</translation>
     </message>
     <message>
-        <location line="-2800"/>
+        <location line="-2814"/>
         <source>Rename Workspace</source>
         <translation>重命名工作区</translation>
     </message>
@@ -3594,7 +3724,7 @@ Drops: %2</source>
         <translation>此工作区现在有自己的外观。</translation>
     </message>
     <message>
-        <location line="+1300"/>
+        <location line="+1314"/>
         <source>%1: found at %2</source>
         <translation>%1：在 %2 找到</translation>
     </message>
@@ -3726,13 +3856,13 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>关闭应用</translation>
     </message>
     <message>
-        <location line="-3027"/>
-        <location line="+2828"/>
+        <location line="-3041"/>
+        <location line="+2842"/>
         <source>Devices</source>
         <translation>设备</translation>
     </message>
     <message>
-        <location line="-2753"/>
+        <location line="-2767"/>
         <source>Subscriptions</source>
         <translation>订阅</translation>
     </message>
@@ -3774,23 +3904,23 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     </message>
     <message>
         <location line="+71"/>
-        <location line="+2353"/>
+        <location line="+2367"/>
         <source>Add widget</source>
         <translation>添加控件</translation>
     </message>
     <message>
-        <location line="-2350"/>
+        <location line="-2364"/>
         <source>Remove selected widget (%1)</source>
         <translation>删除所选控件(%1)</translation>
     </message>
     <message>
         <location line="+3"/>
-        <location line="+2360"/>
+        <location line="+2374"/>
         <source>Add device</source>
         <translation>添加设备</translation>
     </message>
     <message>
-        <location line="-2357"/>
+        <location line="-2371"/>
         <source>Remove selected device (%1)</source>
         <translation>删除所选设备(%1)</translation>
     </message>
@@ -3880,7 +4010,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>新设备</translation>
     </message>
     <message>
-        <location line="+365"/>
+        <location line="+379"/>
         <source>%1: robot is responding again</source>
         <translation>%1: 机器人已恢复响应</translation>
     </message>
@@ -3941,12 +4071,12 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>动效(&amp;O)</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="-1434"/>
+        <location filename="../lib/core/mainwindow.cpp" line="-1448"/>
         <source>Dashboard</source>
         <translation>仪表盘</translation>
     </message>
     <message>
-        <location line="+1780"/>
+        <location line="+1794"/>
         <source>%1: this BLE address now answers as a different robot (expected %2, got %3)</source>
         <translation>%1: 此 BLE 地址现在以另一台机器人身份应答 (应为 %2,实际为 %3)</translation>
     </message>

@@ -15,6 +15,7 @@ maintainer, to keep `main` always in a releasable state.
 | `lib/dashboard/`, `lib/devices/`, `lib/project/` | Widgets, device models, workspace persistence and undoable edits. |
 | `lib/diagram/` | Per-device JavaScript runtime/editor and the shelved diagram canvas. |
 | `lib/ota/`, `lib/updater/`, `lib/diagnostics/` | Firmware upload, application updates and diagnostics. |
+| `lab/` | TraceLab, the optional simulation and control module (see `lab/README.md`); may use `lib/`, never the other way round. |
 | `tests/`, `tools/` | CTest suites and standalone visual/benchmark tools. |
 | `resources/`, `translations/` | Assets and translation catalogs. |
 | `docs/`, `scripts/`, `.github/workflows/` | Technical documentation, contributor scripts and CI. |
@@ -388,7 +389,7 @@ After adding or changing UI text, refresh the catalogs from the repository
 root and translate every new entry in all eight languages:
 
 ```sh
-lupdate -no-obsolete -locations relative src lib include -ts translations/*.ts
+lupdate -no-obsolete -locations relative src lib include lab -ts translations/*.ts
 ```
 
 Use the Qt install's own `lupdate` (for example
@@ -421,7 +422,7 @@ requirement lists do not create a virtual environment or install packages.
   `PATH`, plus heuristic checks for `PascalCase` classes, `k`-prefixed
   constants, and `m_`-prefixed member variables. Best-effort (regex-based,
   not a real C++ parser) — it doesn't check function/parameter naming.
-  Covers `src/`, `lib/`, `include/`, `tests/` and `tools/`, and excludes
+  Covers `src/`, `lib/`, `lab/`, `include/`, `tests/` and `tools/`, and excludes
   two things whose bytes belong to someone else: `lib/vendor`
   (reformatting vendored code turns the next upstream update into a merge
   conflict) and `include/bally_channels.h` (one of three byte-identical

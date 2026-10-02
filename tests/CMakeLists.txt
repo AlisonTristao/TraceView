@@ -135,6 +135,20 @@ add_traceview_test(test_mainwindowchrome traceview_ui)
 add_traceview_test(test_moduleregistry traceview_modules traceview_dashboard)
 add_traceview_test(test_mainwindowmodules traceview_ui traceview_modules traceview_dashboard)
 
+if(TRACEVIEW_ENABLE_LAB)
+    # TraceLab (lab/): the scene registry; the line-follower camera (a point
+    # under the car maps to the car's anchor, forward motion moves the world
+    # down, a right turn rotates it counter-clockwise, the pygame step rule)
+    # and the alignment of car-frame points through the pose of their tick;
+    # the Scene widget's config (editor and .tvproj round trip, bind by name,
+    # sample routing); LabModule's install; the loopback transport pair.
+    add_traceview_test(test_sceneregistry tracelab_scenes)
+    add_traceview_test(test_diffdrivescene tracelab_scenes)
+    add_traceview_test(test_scenewidget tracelab_scenes traceview_project)
+    add_traceview_test(test_labmodule tracelab_module tracelab_scenes traceview_dashboard)
+    add_traceview_test(test_loopbacktransport tracelab_plant)
+endif()
+
 # Generic telemetry value types (lib/telemetry) -- no BTP dependency at all
 # (traceview_telemetry links just Qt6::Core; see lib/CMakeLists.txt).
 add_traceview_test(test_telemetryseriesbuffer traceview_telemetry)

@@ -56,6 +56,7 @@
 #endif
 #include "dashboard/bindingresolver.h"
 #include "dashboard/dashboardgrid.h"
+#include "dashboard/telemetryconsumer.h"
 #include "dashboard/widgetconfigeditor.h"
 #include "dashboard/widgetregistry.h"
 #include "dashboard/widgets/audiostreamwidget.h"
@@ -846,6 +847,11 @@ MainWindow::~MainWindow() {
         disconnect(it.key(), nullptr, this, nullptr);
     }
     m_widgetSubscriptions.clear();
+    for (auto it = m_consumerSubscriptions.constBegin(); it != m_consumerSubscriptions.constEnd();
+         ++it) {
+        disconnect(it.key(), nullptr, this, nullptr);
+    }
+    m_consumerSubscriptions.clear();
 }
 
 void MainWindow::postStatus(const QString& text, int timeoutMs, StatusSeverity severity,
@@ -886,6 +892,18 @@ void MainWindow::showStatusMessage(const QString& text, int timeoutMs) {
 }
 
 void MainWindow::wireChartWidgetToTelemetry(DashboardWidget* widget) {
+    if (dynamic_cast<TelemetryConsumer*>(widget)) {
+        connect(widget, &QObject::destroyed, this, [this, widget] {
+            const ConsumerSubscriptions subs = m_consumerSubscriptions.take(widget);
+            for (const WidgetSubscription& sub : subs.topics) {
+                if (sub.backend) {
+                    sub.backend->removeSubscriber(sub.handle);
+                }
+            }
+        });
+        refreshConsumerSubscriptions(widget);
+        return;
+    }
     if (!dynamic_cast<ChartWidgetBase*>(widget) && !dynamic_cast<DummyGaugeWidget*>(widget) &&
         !dynamic_cast<TextBoardWidget*>(widget) && !dynamic_cast<AudioStreamWidget*>(widget)) {
         return;
@@ -965,10 +983,82 @@ void MainWindow::refreshWidgetSubscription(DashboardWidget* widget) {
     sub.backend = newBackend;
 }
 
+void MainWindow::refreshConsumerSubscriptions(DashboardWidget* widget) {
+    auto* consumer = dynamic_cast<TelemetryConsumer*>(widget);
+    if (!consumer) {
+        return;
+    }
+    ConsumerSubscriptions& subs = m_consumerSubscriptions[widget];
+    const QVector<TelemetryTopicRequest> requests = consumer->topicRequests();
+
+    QVector<WidgetSubscription> topics;
+    QList<QPointer<Backend>> wanted;
+    for (int i = 0; i < requests.size(); ++i) {
+        const WidgetTopicRequest request =
+            withRateOverride({requests[i].deviceId, requests[i].sourceId, requests[i].topicId,
+                              requests[i].rateMillihz});
+        DeviceConnection* connection = m_deviceConnections.value(request.deviceId);
+        Backend* backend = connection ? connection->backend() : nullptr;
+        WidgetSubscription sub;
+        sub.deviceId = request.deviceId;
+        sub.backend = backend;
+        if (backend) {
+            // Same position, same Backend: move the existing reference
+            // instead of dropping it, so an unrelated edit puts nothing on
+            // the wire.
+            const bool reuse = i < subs.topics.size() && subs.topics[i].backend == backend;
+            sub.handle =
+                backend->updateSubscriber(reuse ? subs.topics[i].handle : 0, request.sourceId,
+                                          request.topicId, request.rateMillihz);
+            if (!wanted.contains(backend)) {
+                wanted.append(backend);
+            }
+        }
+        topics.append(sub);
+    }
+    for (int i = 0; i < subs.topics.size(); ++i) {
+        const WidgetSubscription& old = subs.topics[i];
+        const bool reused = i < topics.size() && topics[i].backend == old.backend;
+        if (old.backend && !reused) {
+            old.backend->removeSubscriber(old.handle);
+        }
+    }
+
+    for (const QPointer<Backend>& backend : std::as_const(subs.connected)) {
+        if (backend && !wanted.contains(backend)) {
+            disconnect(backend, nullptr, widget, nullptr);
+        }
+    }
+    for (const QPointer<Backend>& backend : std::as_const(wanted)) {
+        if (subs.connected.contains(backend)) {
+            continue;
+        }
+        connect(backend, &Backend::fieldSample, widget,
+                [consumer](const TelemetryFieldBinding& binding, quint64 timestampUs,
+                           double value) { consumer->onFieldSample(binding, timestampUs, value); });
+        connect(backend, &Backend::arraySample, widget,
+                [consumer](const TelemetryFieldBinding& binding, quint64 timestampUs,
+                           const QVector<float>& values) {
+                    consumer->onArraySample(binding, timestampUs, values);
+                });
+        connect(backend, &Backend::textSample, widget,
+                [consumer](quint32 sourceId, quint16 topicId, quint64 timestampUs,
+                           const QString& text) {
+                    consumer->onTextSample(sourceId, topicId, timestampUs, text);
+                });
+    }
+    subs.topics = topics;
+    subs.connected = wanted;
+}
+
 void MainWindow::refreshWidgetSubscriptions() {
     const QList<DashboardWidget*> widgets = m_widgetSubscriptions.keys();
     for (DashboardWidget* widget : widgets) {
         refreshWidgetSubscription(widget);
+    }
+    const QList<DashboardWidget*> consumers = m_consumerSubscriptions.keys();
+    for (DashboardWidget* widget : consumers) {
+        refreshConsumerSubscriptions(widget);
     }
     // A config edit can just as well have re-pointed a terminal widget at a
     // different device -- its inbound wiring needs the same kind of refresh
@@ -3040,6 +3130,20 @@ quint32 MainWindow::deviceSelfSourceId(const Device& device) const {
 }
 
 QJsonObject MainWindow::resolveWidgetBinding(const QJsonObject& config) const {
+    // A widget with several bindings (a TelemetryConsumer, see
+    // dashboard/telemetryconsumer.h) keeps each under "bind", as a binding of
+    // its own with its own "deviceId" -- resolved one by one, like a widget.
+    if (config.value(QLatin1String("bind")).isObject()) {
+        QJsonObject bindings = config.value(QLatin1String("bind")).toObject();
+        for (auto it = bindings.begin(); it != bindings.end(); ++it) {
+            if (it.value().isObject()) {
+                it.value() = resolveWidgetBinding(it.value().toObject());
+            }
+        }
+        QJsonObject out = config;
+        out[QLatin1String("bind")] = bindings;
+        return out;
+    }
     const QString deviceId = config.value(QLatin1String("deviceId")).toString();
     if (deviceId.isEmpty() || !config.contains(QLatin1String("topicId")) || !m_devicesGrid) {
         return config;

@@ -316,6 +316,7 @@ add_library(traceview_dashboard STATIC
     dashboard/dashboarditem.cpp
     dashboard/dashboarditem.h
     dashboard/dashboardwidget.h
+    dashboard/telemetryconsumer.h
     dashboard/widgetviewoption.h
     dashboard/widgetconfigeditor.cpp
     dashboard/widgetconfigeditor.h

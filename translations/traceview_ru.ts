@@ -447,6 +447,64 @@
     </message>
 </context>
 <context>
+    <name>DiffDriveScene</name>
+    <message>
+        <location filename="../lab/scenes/diffdrivescene.cpp" line="+130"/>
+        <source>Scale</source>
+        <translation>Масштаб</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Wheel distance</source>
+        <translation>Колёсная база</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Sensor distance</source>
+        <translation>Расстояние до датчиков</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Sensor count</source>
+        <translation>Число датчиков</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Sensor spacing</source>
+        <translation>Шаг датчиков</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Line radius</source>
+        <translation>Радиус линии</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Render radius</source>
+        <translation>Радиус отрисовки</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Perturbation step</source>
+        <translation>Шаг возмущения</translation>
+    </message>
+    <message>
+        <location line="+279"/>
+        <source>covered: %1%</source>
+        <translation>пройдено: %1%</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>score: %1</source>
+        <translation>счёт: %1</translation>
+    </message>
+    <message>
+        <location filename="../lab/scenes/sceneregistry.cpp" line="+50"/>
+        <source>Line follower</source>
+        <translation>Следование по линии</translation>
+    </message>
+</context>
+<context>
     <name>FontManager</name>
     <message>
         <location filename="../lib/theme/fontmanager.cpp" line="+24"/>
@@ -478,9 +536,27 @@
     </message>
 </context>
 <context>
+    <name>LabModule</name>
+    <message>
+        <location filename="../lab/module/labmodule.cpp" line="+18"/>
+        <source>TraceLab</source>
+        <translation>TraceLab</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Simulates a plant, closes the loop with your controller and animates it.</source>
+        <translation>Моделирует объект, замыкает контур вашим регулятором и анимирует его.</translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <source>The simulation engine is not available yet. Add a Scene widget to a dashboard to show a plant.</source>
+        <translation>Движок моделирования пока недоступен. Добавьте на панель виджет «Сцена», чтобы показать объект.</translation>
+    </message>
+</context>
+<context>
     <name>MainWindow</name>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="+134"/>
+        <location filename="../lib/core/mainwindow.cpp" line="+135"/>
         <source>TraceView Project (*.tvproj)</source>
         <translation>Проект TraceView (*.tvproj)</translation>
     </message>
@@ -735,6 +811,14 @@
     </message>
 </context>
 <context>
+    <name>SceneWidget</name>
+    <message>
+        <location filename="../lab/scenes/scenewidget.cpp" line="+379"/>
+        <source>Scene</source>
+        <translation>Сцена</translation>
+    </message>
+</context>
+<context>
     <name>ThemeManager</name>
     <message>
         <location filename="../lib/theme/palettes.cpp" line="+12"/>
@@ -869,6 +953,52 @@
         <location filename="../lib/project/workspacemanager.cpp" line="+203"/>
         <source>Default</source>
         <translation>По умолчанию</translation>
+    </message>
+</context>
+<context>
+    <name>tracelab::SceneConfigEditor</name>
+    <message>
+        <location filename="../lab/scenes/sceneconfigeditor.cpp" line="+129"/>
+        <source>Bind by name</source>
+        <translation>Связать по имени</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Binds every unbound input to the reported field of the same name</source>
+        <translation>Связывает каждый несвязанный вход с полем того же имени, о котором сообщает устройство</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Scene</source>
+        <translation>Сцена</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Inputs</source>
+        <translation>Входы</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Parameters</source>
+        <translation>Параметры</translation>
+    </message>
+    <message>
+        <location line="+146"/>
+        <source>(Unbound)</source>
+        <translation>(Не связано)</translation>
+    </message>
+    <message>
+        <location line="+27"/>
+        <source>%1 (offline)</source>
+        <translation>%1 (не в сети)</translation>
+    </message>
+</context>
+<context>
+    <name>tracelab::SceneWidget</name>
+    <message>
+        <location filename="../lab/scenes/scenewidget.cpp" line="-80"/>
+        <source>Unknown scene &quot;%1&quot;</source>
+        <translation>Неизвестная сцена «%1»</translation>
     </message>
 </context>
 <context>
@@ -3187,7 +3317,7 @@ Allowed: %1</source>
         <translation>, </translation>
     </message>
     <message>
-        <location line="+598"/>
+        <location line="+687"/>
         <source>Pending</source>
         <translation>Ожидание</translation>
     </message>
@@ -3331,12 +3461,12 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+0"/>
-        <location line="+3716"/>
+        <location line="+3730"/>
         <source>Later</source>
         <translation>Позже</translation>
     </message>
     <message>
-        <location line="-3709"/>
+        <location line="-3723"/>
         <source>&amp;Access</source>
         <translation>Доступ (&amp;A)</translation>
     </message>
@@ -3463,18 +3593,18 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+18"/>
-        <location line="+3080"/>
+        <location line="+3094"/>
         <source>Undo</source>
         <translation>Отменить</translation>
     </message>
     <message>
-        <location line="-3078"/>
-        <location line="+3078"/>
+        <location line="-3092"/>
+        <location line="+3092"/>
         <source>Redo</source>
         <translation>Повторить</translation>
     </message>
     <message>
-        <location line="-3035"/>
+        <location line="-3049"/>
         <source>Add Device</source>
         <translation>Добавить устройство</translation>
     </message>
@@ -3510,12 +3640,12 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+29"/>
-        <location line="+2980"/>
+        <location line="+2994"/>
         <source>Fullscreen dashboard (F11)</source>
         <translation>Панель в полноэкранном режиме (F11)</translation>
     </message>
     <message>
-        <location line="-2800"/>
+        <location line="-2814"/>
         <source>Rename Workspace</source>
         <translation>Переименовать рабочее пространство</translation>
     </message>
@@ -3596,7 +3726,7 @@ Drops: %2</source>
         <translation>Теперь у этой рабочей области своё оформление.</translation>
     </message>
     <message>
-        <location line="+1300"/>
+        <location line="+1314"/>
         <source>%1: found at %2</source>
         <translation>%1: найден на %2</translation>
     </message>
@@ -3728,13 +3858,13 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>Закрыть приложение</translation>
     </message>
     <message>
-        <location line="-3027"/>
-        <location line="+2828"/>
+        <location line="-3041"/>
+        <location line="+2842"/>
         <source>Devices</source>
         <translation>Устройства</translation>
     </message>
     <message>
-        <location line="-2753"/>
+        <location line="-2767"/>
         <source>Subscriptions</source>
         <translation>Подписки</translation>
     </message>
@@ -3776,23 +3906,23 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     </message>
     <message>
         <location line="+71"/>
-        <location line="+2353"/>
+        <location line="+2367"/>
         <source>Add widget</source>
         <translation>Добавить виджет</translation>
     </message>
     <message>
-        <location line="-2350"/>
+        <location line="-2364"/>
         <source>Remove selected widget (%1)</source>
         <translation>Удалить выбранный виджет (%1)</translation>
     </message>
     <message>
         <location line="+3"/>
-        <location line="+2360"/>
+        <location line="+2374"/>
         <source>Add device</source>
         <translation>Добавить устройство</translation>
     </message>
     <message>
-        <location line="-2357"/>
+        <location line="-2371"/>
         <source>Remove selected device (%1)</source>
         <translation>Удалить выбранное устройство (%1)</translation>
     </message>
@@ -3882,7 +4012,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>Новое устройство</translation>
     </message>
     <message>
-        <location line="+365"/>
+        <location line="+379"/>
         <source>%1: robot is responding again</source>
         <translation>%1: робот снова отвечает</translation>
     </message>
@@ -3943,12 +4073,12 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>&amp;Движение</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="-1434"/>
+        <location filename="../lib/core/mainwindow.cpp" line="-1448"/>
         <source>Dashboard</source>
         <translation>Dashboard</translation>
     </message>
     <message>
-        <location line="+1780"/>
+        <location line="+1794"/>
         <source>%1: this BLE address now answers as a different robot (expected %2, got %3)</source>
         <translation>%1: этот BLE-адрес теперь отвечает как другой робот (ожидался %2, получен %3)</translation>
     </message>

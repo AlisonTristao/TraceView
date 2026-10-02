@@ -14,7 +14,23 @@ release flow.
   General > Modules** (applies after a restart; the section only appears
   when a module is available). `--mode <id>` starts with that module
   enabled for the session and shows its name in the window title and the
-  corner wordmark. This build includes no modules. See `docs/MODULES.md`.
+  corner wordmark. See `docs/MODULES.md`.
+- **TraceLab** module (`lab/`, desktop only, CMake option
+  `TRACEVIEW_ENABLE_LAB`, on by default): the first optional module, with a
+  "TraceLab" ribbon tab and a second launcher, **TraceLab**, that starts
+  TraceView with `--mode lab` (Start Menu entry in the Windows installer,
+  second `.desktop` file on Linux). This release ships its structure: the
+  documented contracts of the simulation engine, the simulated plant and the
+  controller host (not functional yet), and a working **Scene** dashboard
+  widget. The Scene widget binds its inputs to telemetry by topic and field
+  name (**Bind by name** matches them against the device catalogs) and saves
+  only the scene type, the bindings and the parameters, never code. Its first
+  scene, **Line follower**, draws a differential-drive robot on a track like
+  the pygame simulator: the car fixed near the bottom right with the world
+  turning around it, the reached part of the track in gray, the reference
+  points and the predicted path aligned with the track, a minimap, a compass
+  and the fps/coverage/score readouts. Mouse wheel zooms, dragging pans and a
+  double click resets the view. See `lab/README.md`.
 - **Audio Analyzer** widget: plays a stream topic (blocks of samples with
   their rate and a block counter, as BTPDevice's `Topics::stream()` sends
   them) on the default audio output and shows it as a **Spectrum** or a

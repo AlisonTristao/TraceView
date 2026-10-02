@@ -505,6 +505,18 @@ the id it names; the resolver then names the new id from the catalog. Moving
 a widget to another device keeps its names — that is how a dashboard moves
 from a simulated device to the real one.
 
+A widget with several bindings keeps each one under `"bind"`, keyed by its
+own input name, every entry a binding of its own in the keys above, with its
+own `deviceId` (TraceLab's Scene widget, [lab/scenes/scenewidget.h](../lab/scenes/scenewidget.h)):
+`resolveWidgetBinding()` resolves the entries one by one. Such a widget is
+not one MainWindow knows by type, so it implements `TelemetryConsumer`
+([telemetryconsumer.h](../lib/dashboard/telemetryconsumer.h)):
+`MainWindow::refreshConsumerSubscriptions()` subscribes every topic its
+`topicRequests()` lists (one reference per topic, kept across edits that do
+not move it) and forwards the `fieldSample`/`arraySample`/`textSample` of
+each Backend it reads from. Workspaces that are not showing keep no
+subscription for it.
+
 ### Configuring from the manifest
 
 A device manifest declares, per field, a name, a unit, an optional range

@@ -60,7 +60,11 @@ export OUTPUT="TraceView-$version-linux-x64.AppImage"
 # Qt's TLS backend dlopens OpenSSL, so ldd cannot discover libssl for us.
 openssl=$(ldconfig -p | awk '$1 == "libssl.so.3" { if (!path) path=$NF } END { print path }')
 [[ -n $openssl ]] || { echo 'OpenSSL 3 runtime (libssl.so.3) is required.' >&2; exit 1; }
-"$LINUXDEPLOY" --appdir "$stage/AppDir" --library "$openssl" --plugin qt --output appimage
+# Named explicitly: a build with TraceLab also installs the TraceLab launcher
+# (TraceView --mode lab), and the AppImage's own entry must stay TraceView's.
+"$LINUXDEPLOY" --appdir "$stage/AppDir" --library "$openssl" --plugin qt \
+    --desktop-file "$stage/AppDir/usr/share/applications/io.github.alisontristao.TraceView.desktop" \
+    --output appimage
 test -s "$OUTPUT"
 chmod +x "$OUTPUT"
 mv -- "$OUTPUT" "$build/$OUTPUT"

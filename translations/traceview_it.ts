@@ -447,6 +447,64 @@
     </message>
 </context>
 <context>
+    <name>DiffDriveScene</name>
+    <message>
+        <location filename="../lab/scenes/diffdrivescene.cpp" line="+130"/>
+        <source>Scale</source>
+        <translation>Scala</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Wheel distance</source>
+        <translation>Distanza tra le ruote</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Sensor distance</source>
+        <translation>Distanza dei sensori</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Sensor count</source>
+        <translation>Numero di sensori</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Sensor spacing</source>
+        <translation>Spaziatura dei sensori</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Line radius</source>
+        <translation>Raggio della linea</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Render radius</source>
+        <translation>Raggio di disegno</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Perturbation step</source>
+        <translation>Passo di perturbazione</translation>
+    </message>
+    <message>
+        <location line="+279"/>
+        <source>covered: %1%</source>
+        <translation>coperto: %1%</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>score: %1</source>
+        <translation>punteggio: %1</translation>
+    </message>
+    <message>
+        <location filename="../lab/scenes/sceneregistry.cpp" line="+50"/>
+        <source>Line follower</source>
+        <translation>Inseguitore di linea</translation>
+    </message>
+</context>
+<context>
     <name>FontManager</name>
     <message>
         <location filename="../lib/theme/fontmanager.cpp" line="+24"/>
@@ -478,9 +536,27 @@
     </message>
 </context>
 <context>
+    <name>LabModule</name>
+    <message>
+        <location filename="../lab/module/labmodule.cpp" line="+18"/>
+        <source>TraceLab</source>
+        <translation>TraceLab</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Simulates a plant, closes the loop with your controller and animates it.</source>
+        <translation>Simula un impianto, chiude l&apos;anello con il tuo controllore e lo anima.</translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <source>The simulation engine is not available yet. Add a Scene widget to a dashboard to show a plant.</source>
+        <translation>Il motore di simulazione non è ancora disponibile. Aggiungi un widget Scena a una dashboard per mostrare un impianto.</translation>
+    </message>
+</context>
+<context>
     <name>MainWindow</name>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="+134"/>
+        <location filename="../lib/core/mainwindow.cpp" line="+135"/>
         <source>TraceView Project (*.tvproj)</source>
         <translation>Progetto TraceView (*.tvproj)</translation>
     </message>
@@ -735,6 +811,14 @@
     </message>
 </context>
 <context>
+    <name>SceneWidget</name>
+    <message>
+        <location filename="../lab/scenes/scenewidget.cpp" line="+379"/>
+        <source>Scene</source>
+        <translation>Scena</translation>
+    </message>
+</context>
+<context>
     <name>ThemeManager</name>
     <message>
         <location filename="../lib/theme/palettes.cpp" line="+12"/>
@@ -869,6 +953,52 @@
         <location filename="../lib/project/workspacemanager.cpp" line="+203"/>
         <source>Default</source>
         <translation>Predefinito</translation>
+    </message>
+</context>
+<context>
+    <name>tracelab::SceneConfigEditor</name>
+    <message>
+        <location filename="../lab/scenes/sceneconfigeditor.cpp" line="+129"/>
+        <source>Bind by name</source>
+        <translation>Collega per nome</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Binds every unbound input to the reported field of the same name</source>
+        <translation>Collega ogni ingresso non collegato al campo segnalato con lo stesso nome</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Scene</source>
+        <translation>Scena</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Inputs</source>
+        <translation>Ingressi</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Parameters</source>
+        <translation>Parametri</translation>
+    </message>
+    <message>
+        <location line="+146"/>
+        <source>(Unbound)</source>
+        <translation>(Non collegato)</translation>
+    </message>
+    <message>
+        <location line="+27"/>
+        <source>%1 (offline)</source>
+        <translation>%1 (offline)</translation>
+    </message>
+</context>
+<context>
+    <name>tracelab::SceneWidget</name>
+    <message>
+        <location filename="../lab/scenes/scenewidget.cpp" line="-80"/>
+        <source>Unknown scene &quot;%1&quot;</source>
+        <translation>Scena sconosciuta &quot;%1&quot;</translation>
     </message>
 </context>
 <context>
@@ -3186,7 +3316,7 @@ Consentiti: %1</translation>
         <translation>, </translation>
     </message>
     <message>
-        <location line="+598"/>
+        <location line="+687"/>
         <source>Pending</source>
         <translation>In attesa</translation>
     </message>
@@ -3330,12 +3460,12 @@ Perdite: %2</translation>
     </message>
     <message>
         <location line="+0"/>
-        <location line="+3716"/>
+        <location line="+3730"/>
         <source>Later</source>
         <translation>Più tardi</translation>
     </message>
     <message>
-        <location line="-3709"/>
+        <location line="-3723"/>
         <source>&amp;Access</source>
         <translation>&amp;Accesso</translation>
     </message>
@@ -3462,18 +3592,18 @@ Perdite: %2</translation>
     </message>
     <message>
         <location line="+18"/>
-        <location line="+3080"/>
+        <location line="+3094"/>
         <source>Undo</source>
         <translation>Annulla</translation>
     </message>
     <message>
-        <location line="-3078"/>
-        <location line="+3078"/>
+        <location line="-3092"/>
+        <location line="+3092"/>
         <source>Redo</source>
         <translation>Ripeti</translation>
     </message>
     <message>
-        <location line="-3035"/>
+        <location line="-3049"/>
         <source>Add Device</source>
         <translation>Aggiungi dispositivo</translation>
     </message>
@@ -3509,12 +3639,12 @@ Perdite: %2</translation>
     </message>
     <message>
         <location line="+29"/>
-        <location line="+2980"/>
+        <location line="+2994"/>
         <source>Fullscreen dashboard (F11)</source>
         <translation>Dashboard a schermo intero (F11)</translation>
     </message>
     <message>
-        <location line="-2800"/>
+        <location line="-2814"/>
         <source>Rename Workspace</source>
         <translation>Rinomina Spazio di Lavoro</translation>
     </message>
@@ -3595,7 +3725,7 @@ Perdite: %2</translation>
         <translation>Questa area di lavoro ora ha un aspetto proprio.</translation>
     </message>
     <message>
-        <location line="+1300"/>
+        <location line="+1314"/>
         <source>%1: found at %2</source>
         <translation>%1: trovato su %2</translation>
     </message>
@@ -3727,13 +3857,13 @@ Scegli Più tardi per continuare a lavorare -- le modifiche verranno applicate l
         <translation>Chiudi app</translation>
     </message>
     <message>
-        <location line="-3027"/>
-        <location line="+2828"/>
+        <location line="-3041"/>
+        <location line="+2842"/>
         <source>Devices</source>
         <translation>Dispositivi</translation>
     </message>
     <message>
-        <location line="-2753"/>
+        <location line="-2767"/>
         <source>Subscriptions</source>
         <translation>Sottoscrizioni</translation>
     </message>
@@ -3775,23 +3905,23 @@ Scegli Più tardi per continuare a lavorare -- le modifiche verranno applicate l
     </message>
     <message>
         <location line="+71"/>
-        <location line="+2353"/>
+        <location line="+2367"/>
         <source>Add widget</source>
         <translation>Aggiungi widget</translation>
     </message>
     <message>
-        <location line="-2350"/>
+        <location line="-2364"/>
         <source>Remove selected widget (%1)</source>
         <translation>Rimuovi widget selezionato (%1)</translation>
     </message>
     <message>
         <location line="+3"/>
-        <location line="+2360"/>
+        <location line="+2374"/>
         <source>Add device</source>
         <translation>Aggiungi dispositivo</translation>
     </message>
     <message>
-        <location line="-2357"/>
+        <location line="-2371"/>
         <source>Remove selected device (%1)</source>
         <translation>Rimuovi dispositivo selezionato (%1)</translation>
     </message>
@@ -3881,7 +4011,7 @@ Scegli Più tardi per continuare a lavorare -- le modifiche verranno applicate l
         <translation>Nuovo Dispositivo</translation>
     </message>
     <message>
-        <location line="+365"/>
+        <location line="+379"/>
         <source>%1: robot is responding again</source>
         <translation>%1: il robot risponde di nuovo</translation>
     </message>
@@ -3942,12 +4072,12 @@ Scegli Più tardi per continuare a lavorare -- le modifiche verranno applicate l
         <translation>M&amp;ovimento</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="-1434"/>
+        <location filename="../lib/core/mainwindow.cpp" line="-1448"/>
         <source>Dashboard</source>
         <translation>Dashboard</translation>
     </message>
     <message>
-        <location line="+1780"/>
+        <location line="+1794"/>
         <source>%1: this BLE address now answers as a different robot (expected %2, got %3)</source>
         <translation>%1: questo indirizzo BLE ora risponde come un robot diverso (atteso %2, ricevuto %3)</translation>
     </message>

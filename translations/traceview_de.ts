@@ -447,6 +447,64 @@
     </message>
 </context>
 <context>
+    <name>DiffDriveScene</name>
+    <message>
+        <location filename="../lab/scenes/diffdrivescene.cpp" line="+130"/>
+        <source>Scale</source>
+        <translation>Maßstab</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Wheel distance</source>
+        <translation>Radabstand</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Sensor distance</source>
+        <translation>Sensorabstand</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Sensor count</source>
+        <translation>Sensoranzahl</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Sensor spacing</source>
+        <translation>Sensorteilung</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Line radius</source>
+        <translation>Linienradius</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Render radius</source>
+        <translation>Darstellungsradius</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Perturbation step</source>
+        <translation>Störungsschritt</translation>
+    </message>
+    <message>
+        <location line="+279"/>
+        <source>covered: %1%</source>
+        <translation>abgedeckt: %1 %</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>score: %1</source>
+        <translation>Punkte: %1</translation>
+    </message>
+    <message>
+        <location filename="../lab/scenes/sceneregistry.cpp" line="+50"/>
+        <source>Line follower</source>
+        <translation>Linienfolger</translation>
+    </message>
+</context>
+<context>
     <name>FontManager</name>
     <message>
         <location filename="../lib/theme/fontmanager.cpp" line="+24"/>
@@ -478,9 +536,27 @@
     </message>
 </context>
 <context>
+    <name>LabModule</name>
+    <message>
+        <location filename="../lab/module/labmodule.cpp" line="+18"/>
+        <source>TraceLab</source>
+        <translation>TraceLab</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Simulates a plant, closes the loop with your controller and animates it.</source>
+        <translation>Simuliert eine Strecke, schließt den Regelkreis mit Ihrem Regler und animiert sie.</translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <source>The simulation engine is not available yet. Add a Scene widget to a dashboard to show a plant.</source>
+        <translation>Die Simulations-Engine ist noch nicht verfügbar. Fügen Sie einem Dashboard ein Szenen-Widget hinzu, um eine Strecke anzuzeigen.</translation>
+    </message>
+</context>
+<context>
     <name>MainWindow</name>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="+134"/>
+        <location filename="../lib/core/mainwindow.cpp" line="+135"/>
         <source>TraceView Project (*.tvproj)</source>
         <translation>TraceView-Projekt (*.tvproj)</translation>
     </message>
@@ -735,6 +811,14 @@
     </message>
 </context>
 <context>
+    <name>SceneWidget</name>
+    <message>
+        <location filename="../lab/scenes/scenewidget.cpp" line="+379"/>
+        <source>Scene</source>
+        <translation>Szene</translation>
+    </message>
+</context>
+<context>
     <name>ThemeManager</name>
     <message>
         <location filename="../lib/theme/palettes.cpp" line="+12"/>
@@ -869,6 +953,52 @@
         <location filename="../lib/project/workspacemanager.cpp" line="+203"/>
         <source>Default</source>
         <translation>Standard</translation>
+    </message>
+</context>
+<context>
+    <name>tracelab::SceneConfigEditor</name>
+    <message>
+        <location filename="../lab/scenes/sceneconfigeditor.cpp" line="+129"/>
+        <source>Bind by name</source>
+        <translation>Nach Namen verknüpfen</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Binds every unbound input to the reported field of the same name</source>
+        <translation>Verknüpft jeden unverknüpften Eingang mit dem gemeldeten Feld gleichen Namens</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Scene</source>
+        <translation>Szene</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Inputs</source>
+        <translation>Eingänge</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Parameters</source>
+        <translation>Parameter</translation>
+    </message>
+    <message>
+        <location line="+146"/>
+        <source>(Unbound)</source>
+        <translation>(Nicht verknüpft)</translation>
+    </message>
+    <message>
+        <location line="+27"/>
+        <source>%1 (offline)</source>
+        <translation>%1 (offline)</translation>
+    </message>
+</context>
+<context>
+    <name>tracelab::SceneWidget</name>
+    <message>
+        <location filename="../lab/scenes/scenewidget.cpp" line="-80"/>
+        <source>Unknown scene &quot;%1&quot;</source>
+        <translation>Unbekannte Szene „%1“</translation>
     </message>
 </context>
 <context>
@@ -3186,7 +3316,7 @@ Erlaubt: %1</translation>
         <translation>, </translation>
     </message>
     <message>
-        <location line="+598"/>
+        <location line="+687"/>
         <source>Pending</source>
         <translation>Ausstehend</translation>
     </message>
@@ -3330,12 +3460,12 @@ Verluste: %2</translation>
     </message>
     <message>
         <location line="+0"/>
-        <location line="+3716"/>
+        <location line="+3730"/>
         <source>Later</source>
         <translation>Später</translation>
     </message>
     <message>
-        <location line="-3709"/>
+        <location line="-3723"/>
         <source>&amp;Access</source>
         <translation>&amp;Zugang</translation>
     </message>
@@ -3462,18 +3592,18 @@ Verluste: %2</translation>
     </message>
     <message>
         <location line="+18"/>
-        <location line="+3080"/>
+        <location line="+3094"/>
         <source>Undo</source>
         <translation>Rückgängig</translation>
     </message>
     <message>
-        <location line="-3078"/>
-        <location line="+3078"/>
+        <location line="-3092"/>
+        <location line="+3092"/>
         <source>Redo</source>
         <translation>Wiederholen</translation>
     </message>
     <message>
-        <location line="-3035"/>
+        <location line="-3049"/>
         <source>Add Device</source>
         <translation>Gerät hinzufügen</translation>
     </message>
@@ -3509,12 +3639,12 @@ Verluste: %2</translation>
     </message>
     <message>
         <location line="+29"/>
-        <location line="+2980"/>
+        <location line="+2994"/>
         <source>Fullscreen dashboard (F11)</source>
         <translation>Dashboard im Vollbildmodus (F11)</translation>
     </message>
     <message>
-        <location line="-2800"/>
+        <location line="-2814"/>
         <source>Rename Workspace</source>
         <translation>Arbeitsbereich umbenennen</translation>
     </message>
@@ -3595,7 +3725,7 @@ Verluste: %2</translation>
         <translation>Dieser Arbeitsbereich hat jetzt eine eigene Darstellung.</translation>
     </message>
     <message>
-        <location line="+1300"/>
+        <location line="+1314"/>
         <source>%1: found at %2</source>
         <translation>%1: gefunden unter %2</translation>
     </message>
@@ -3727,13 +3857,13 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
         <translation>App schließen</translation>
     </message>
     <message>
-        <location line="-3027"/>
-        <location line="+2828"/>
+        <location line="-3041"/>
+        <location line="+2842"/>
         <source>Devices</source>
         <translation>Geräte</translation>
     </message>
     <message>
-        <location line="-2753"/>
+        <location line="-2767"/>
         <source>Subscriptions</source>
         <translation>Abonnements</translation>
     </message>
@@ -3775,23 +3905,23 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
     </message>
     <message>
         <location line="+71"/>
-        <location line="+2353"/>
+        <location line="+2367"/>
         <source>Add widget</source>
         <translation>Widget hinzufügen</translation>
     </message>
     <message>
-        <location line="-2350"/>
+        <location line="-2364"/>
         <source>Remove selected widget (%1)</source>
         <translation>Ausgewähltes Widget entfernen (%1)</translation>
     </message>
     <message>
         <location line="+3"/>
-        <location line="+2360"/>
+        <location line="+2374"/>
         <source>Add device</source>
         <translation>Gerät hinzufügen</translation>
     </message>
     <message>
-        <location line="-2357"/>
+        <location line="-2371"/>
         <source>Remove selected device (%1)</source>
         <translation>Ausgewähltes Gerät entfernen (%1)</translation>
     </message>
@@ -3881,7 +4011,7 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
         <translation>Neues Gerät</translation>
     </message>
     <message>
-        <location line="+365"/>
+        <location line="+379"/>
         <source>%1: robot is responding again</source>
         <translation>%1: Roboter antwortet wieder</translation>
     </message>
@@ -3942,12 +4072,12 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
         <translation>&amp;Bewegung</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="-1434"/>
+        <location filename="../lib/core/mainwindow.cpp" line="-1448"/>
         <source>Dashboard</source>
         <translation>Dashboard</translation>
     </message>
     <message>
-        <location line="+1780"/>
+        <location line="+1794"/>
         <source>%1: this BLE address now answers as a different robot (expected %2, got %3)</source>
         <translation>%1: diese BLE-Adresse antwortet jetzt als anderer Roboter (erwartet %2, erhalten %3)</translation>
     </message>
