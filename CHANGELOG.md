@@ -41,6 +41,16 @@ release flow.
   (real time, `--speed`, `--fast`, `--max-time`, `--log` CSV,
   `--screenshot`; P/O/R perturbation keys) and prints the run's metrics. A
   provisional in-process harness until the plant and controller speak BTP.
+- TraceLab filters (`lab/filters/`): a filter chain in portable C99 meant to
+  be copied into the robot firmware (no allocation, float by default or
+  double, `math.h`/`string.h` only) -- moving average, median, first-order
+  low/high-pass, biquad cascade, complementary filter with optional gyro
+  bias estimate, filtered derivative, rate limiter, dead zone, linear and
+  extended Kalman filters (TinyEKF's predict/update formulation with a
+  Joseph-form covariance update) and user blocks -- plus a host-side design
+  library that computes Butterworth, Chebyshev I/II low/high/band-pass,
+  band-stop and notch coefficients with Iir1 (fetched at 1.9.5). See
+  `lab/README.md`, "Filters".
 - **Audio Analyzer** widget: plays a stream topic (blocks of samples with
   their rate and a block counter, as BTPDevice's `Topics::stream()` sends
   them) on the default audio output and shows it as a **Spectrum** or a

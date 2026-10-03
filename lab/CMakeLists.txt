@@ -103,6 +103,10 @@ target_link_libraries(tracelab_module
         traceview_dashboard
 )
 
+# Filters: the portable C filter runtime and its host-side IIR design
+# (lab/README.md, "Filters").
+add_subdirectory(filters)
+
 # Benchmarks: a plant, its controllers and a runner app per benchmark
 # (lab/README.md, "Benchmarks").
 add_subdirectory(benchmarks/linefollower)

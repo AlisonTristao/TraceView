@@ -165,6 +165,23 @@ if(TRACEVIEW_ENABLE_LAB)
     endforeach()
 endif()
 
+if(TRACEVIEW_ENABLE_LAB AND TARGET tracelab_filters_rt)
+    # TraceLab's filters (lab/filters, lab/README.md "Filters"). test_filters:
+    # the C runtime's blocks in float, as the firmware builds them (moving
+    # average, median, first-order low/high-pass, biquad, complementary,
+    # derivative, rate limiter, dead zone, chain/bank, user block, the
+    # no-allocation contract on the source file itself). test_filters_design:
+    # the Iir1-based designs against the closed-form magnitude responses, the
+    # double runtime reproducing Iir1's filtering sample by sample, the notch.
+    # test_filters_kalman: KF/EKF in float against the textbook update and the
+    # steady-state Riccati solution, the EKF on a pendulum.
+    add_traceview_test(test_filters tracelab_filters_rt)
+    target_compile_definitions(test_filters PRIVATE
+        TLF_RUNTIME_SOURCE="${CMAKE_SOURCE_DIR}/lab/filters/runtime/tlfilter.c")
+    add_traceview_test(test_filters_design tracelab_filters_design tracelab_filters_rt_f64 tracelab_iir1)
+    add_traceview_test(test_filters_kalman tracelab_filters_rt)
+endif()
+
 if(TARGET tracelab_lf_controllers)
     # The line-follower controllers (lab/benchmarks/linefollower/controllers),
     # the C++ port of line_follower_simulator's mpc/: the model against the
