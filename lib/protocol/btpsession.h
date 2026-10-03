@@ -7,6 +7,7 @@
 #include <btp/fragmentation.hpp>
 #include <btp/receiver.hpp>
 #include <btp/stream.hpp>
+#include <array>
 #include <cstddef>
 #include <cstdint>
 #include <vector>
@@ -249,7 +250,12 @@ signals:
     void diagnosticsChanged();
 
 private:
-    static constexpr std::size_t kReassemblySlotCount = 2;
+    // One slot per fragmented message in flight. A message whose last
+    // fragments never come (the sender's queue filled mid-message) holds its
+    // slot until kReassemblyTimeoutMs; with only two, one or two of those
+    // dropped every other fragmented message (a stream's audio blocks) for
+    // seconds. Desktop memory is not the constraint: kReassemblyStorageBytes each.
+    static constexpr std::size_t kReassemblySlotCount = 8;
     static constexpr std::size_t kReassemblyStorageBytes =
         65536;  // covers
                 // the largest logical payloads defined so far (manifest 49152,
@@ -318,10 +324,12 @@ private:
     std::vector<std::uint8_t> m_decodedBuffer;
     btp::SerialDecoder m_decoder;
 
-    std::vector<std::uint8_t> m_reassemblyStorageA;
-    std::vector<std::uint8_t> m_reassemblyStorageB;
+    static std::array<btp::ReassemblyStorage, kReassemblySlotCount> reassemblyViews(
+        std::vector<std::uint8_t>& pool);
+    // kReassemblySlotCount slices of kReassemblyStorageBytes, one per slot.
+    std::vector<std::uint8_t> m_reassemblyPool;
     btp::ReassemblySlot m_reassemblySlots[kReassemblySlotCount];
-    btp::ReassemblyStorage m_reassemblyStorage[kReassemblySlotCount];
+    std::array<btp::ReassemblyStorage, kReassemblySlotCount> m_reassemblyStorage;
     // The decode + CRC + reassembly + timeout-sweep core (btp::Receiver, BTP
     // >= 2.8.0). feedBytes() still owns the COBS / pre-framed decode and the
     // frame-bytes-for-the-monitor emission; this handles only the reassembly

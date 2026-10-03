@@ -16,6 +16,15 @@ BtpSession::Framing BtpSession::framingFor(const btp::TransportLimits& transport
                : Framing::PreFramed;
 }
 
+std::array<btp::ReassemblyStorage, BtpSession::kReassemblySlotCount> BtpSession::reassemblyViews(
+    std::vector<std::uint8_t>& pool) {
+    std::array<btp::ReassemblyStorage, kReassemblySlotCount> views{};
+    for (std::size_t i = 0; i < kReassemblySlotCount; ++i) {
+        views[i] = {pool.data() + i * kReassemblyStorageBytes, kReassemblyStorageBytes};
+    }
+    return views;
+}
+
 BtpSession::BtpSession(Framing framing, const btp::TransportLimits& encodeProfile, QObject* parent)
     : QObject(parent),
       m_framing(framing),
@@ -27,16 +36,12 @@ BtpSession::BtpSession(Framing framing, const btp::TransportLimits& encodeProfil
       m_decodedBuffer(btp::kSerialMaxFrameSize),
       m_decoder(m_encodedBuffer.data(), m_encodedBuffer.size(), m_decodedBuffer.data(),
                 m_decodedBuffer.size()),
-      m_reassemblyStorageA(kReassemblyStorageBytes),
-      m_reassemblyStorageB(kReassemblyStorageBytes),
-      m_reassemblyStorage{
-          {m_reassemblyStorageA.data(), m_reassemblyStorageA.size()},
-          {m_reassemblyStorageB.data(), m_reassemblyStorageB.size()},
-      },
+      m_reassemblyPool(kReassemblySlotCount * kReassemblyStorageBytes),
+      m_reassemblyStorage(reassemblyViews(m_reassemblyPool)),
       // Serial regardless of m_encodeProfile: feedBytes() always decodes
       // against the Serial (largest) ceiling before it reaches the reassembler,
       // and the submit(DecodedFrame) overload used here does not re-decode.
-      m_receiver(m_reassemblySlots, m_reassemblyStorage, kReassemblySlotCount,
+      m_receiver(m_reassemblySlots, m_reassemblyStorage.data(), kReassemblySlotCount,
                  kReassemblyTimeoutMs, btp::kSerialTransport),
       m_reassembledOut(kReassemblyStorageBytes) {}
 
