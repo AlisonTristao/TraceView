@@ -87,7 +87,12 @@ bool LineFollowerRunner::tick() {
         for (const CarFramePoint& p : data.futurePoints) {
             future.push_back({p.x, p.y});
         }
-        m_u = m_controller->step({data.wheelSpeedLeft, data.wheelSpeedRight}, future);
+        const SensorReadings& measured = m_plant->measured();
+        const std::array<double, 2> wheels =
+            m_config.controllerMeasured
+                ? std::array<double, 2>{measured.wheelSpeedLeft, measured.wheelSpeedRight}
+                : std::array<double, 2>{data.wheelSpeedLeft, data.wheelSpeedRight};
+        m_u = m_controller->step(wheels, future);
         const Prediction prediction = m_controller->prediction();
         m_predX = prediction.x;
         m_predY = prediction.y;
@@ -138,6 +143,15 @@ bool LineFollowerRunner::tick() {
         row.qpIters = stats.qpIterations;
     }
 #endif
+    const SensorReadings& trueSensors = m_plant->trueSensors();
+    const SensorReadings& measured = m_plant->measured();
+    row.wLTrue = trueSensors.wheelSpeedLeft;
+    row.wLMeas = measured.wheelSpeedLeft;
+    row.wRTrue = trueSensors.wheelSpeedRight;
+    row.wRMeas = measured.wheelSpeedRight;
+    row.gyroTrue = trueSensors.gyro;
+    row.gyroMeas = measured.gyro;
+    row.line = measured.line;
     m_rows.push_back(row);
     ++m_steps;
     return true;
@@ -190,8 +204,14 @@ bool LineFollowerRunner::saveLog(const std::string& path, std::string* error) co
     std::fputs(
         "t,x,y,heading,speed,omega,w_l,w_r,u_l,u_r,perturbation,lateral_error,coverage,"
         "X_ref_1,Y_ref_1,X_ref_N,Y_ref_N,theta_pred_1,X_pred_1,Y_pred_1,theta_pred_N,X_pred_N,"
-        "Y_pred_N,solve_time_ms,qp,qp_iters\n",
+        "Y_pred_N,solve_time_ms,qp,qp_iters,w_l_true,w_l_meas,w_r_true,w_r_meas,gyro_true,"
+        "gyro_meas",
         file);
+    const int lineCount = m_config.plant.sensors.line.count;
+    for (int i = 0; i < lineCount; ++i) {
+        std::fprintf(file, ",s%d", i);
+    }
+    std::fputs("\n", file);
     for (const RunRow& r : m_rows) {
         const double values[] = {r.t,          r.x,          r.y,         r.heading,    r.speed,
                                  r.omega,      r.wL,         r.wR,        r.uL,         r.uR,
@@ -202,7 +222,14 @@ bool LineFollowerRunner::saveLog(const std::string& path, std::string* error) co
         for (double v : values) {
             line += (std::isnan(v) ? std::string("nan") : number(v)) + ",";
         }
-        line += std::to_string(r.qp) + "," + std::to_string(r.qpIters) + "\n";
+        line += std::to_string(r.qp) + "," + std::to_string(r.qpIters);
+        std::vector<double> sensorValues = {r.wLTrue, r.wLMeas,   r.wRTrue,
+                                            r.wRMeas, r.gyroTrue, r.gyroMeas};
+        sensorValues.insert(sensorValues.end(), r.line.begin(), r.line.end());
+        for (double v : sensorValues) {
+            line += "," + (std::isnan(v) ? std::string("nan") : number(v));
+        }
+        line += "\n";
         std::fputs(line.c_str(), file);
     }
     std::fclose(file);

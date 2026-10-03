@@ -31,6 +31,9 @@ struct RunnerConfig {
     double maxTime = 0.0;  // s, 0 = until the end of the track
     std::string controllerType = "qlpv";  // "qlpv" | "gpc"
     int horizon = 45;
+    // What the controller gets as wheel speeds: false = the plant's true
+    // speeds, true = the encoders' measured speeds (plant.sensors).
+    bool controllerMeasured = false;
 };
 
 // One logged step (runner.log_step()).
@@ -40,6 +43,9 @@ struct RunRow {
     double thetaPred1, xPred1, yPred1, thetaPredN, xPredN, yPredN;
     double solveMs;
     int qp, qpIters;
+    // The sensors: true and measured wheel speeds and yaw rate, measured line array.
+    double wLTrue, wLMeas, wRTrue, wRMeas, gyroTrue, gyroMeas;
+    std::vector<double> line;
 };
 
 class LineFollowerRunner {

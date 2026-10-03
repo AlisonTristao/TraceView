@@ -10,13 +10,19 @@
 //   4. finished when the next point passes the last one; otherwise the
 //      StepData the controller gets: future points (car frame of THIS
 //      pose), speed, omega, wheel speeds, lateral error.
+//   5. the sensors (lfsensors.h) sample the TRUE state: encoders, gyro and
+//      the line sensor array. StepData stays the true values; measured()
+//      is what the car's sensors report, trueSensors() the same channels
+//      without imperfections. The scene keeps using the true pose.
 //
-// Plain C++17, no Qt (target tracelab_lf_plant).
+// Plain C++17 and Eigen (through tracelab_sensors), no Qt (target
+// tracelab_lf_plant).
 
 #include <memory>
 #include <vector>
 
 #include "cardynamics.h"
+#include "lfsensors.h"
 #include "trackgenerator.h"
 #include "trackprogress.h"
 
@@ -25,6 +31,7 @@ namespace tracelab::lf {
 struct PlantParams {
     CarDynamicsParams car;
     TrackProgressParams progress;
+    LineFollowerSensorParams sensors;  // seeded independently of the track
 };
 
 // simulator.StepData without the line sensor.
@@ -59,6 +66,10 @@ public:
     const Pose& pose() const { return m_pose; }
     const CarDynamics& car() const { return m_car; }
     const TrackProgress& progress() const { return m_progress; }
+    // The sensors after the last completed step (NaN after reset()).
+    const SensorReadings& measured() const { return m_sensors.measured(); }
+    const SensorReadings& trueSensors() const { return m_sensors.trueReadings(); }
+    const LineFollowerSensors& sensors() const { return m_sensors; }
     // Completed steps (the ones that returned true) and their time,
     // accumulated like simulator.time_simulation += 1 / fps.
     long long tick() const { return m_tick; }
@@ -70,6 +81,7 @@ private:
     PlantParams m_params;
     CarDynamics m_car;
     TrackProgress m_progress;
+    LineFollowerSensors m_sensors;
     Pose m_pose;
     StepData m_data;
     double m_perturbation = 0.0;

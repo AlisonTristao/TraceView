@@ -41,6 +41,18 @@ release flow.
   (real time, `--speed`, `--fast`, `--max-time`, `--log` CSV,
   `--screenshot`; P/O/R perturbation keys) and prints the run's metrics. A
   provisional in-process harness until the plant and controller speak BTP.
+- TraceLab sensor emulation (`lab/sensors/`): the plant's true state and
+  what its sensors measure are now separate. Linear (`y = H x + D u`) and
+  nonlinear (`y = h(x, u, env)`) observation blocks share one interface,
+  each channel with composable imperfections (white noise, random-walk and
+  Gauss-Markov bias, scale factor and bias, quantization, saturation,
+  delay, own sample rate, dropout, outliers), and the noise is reproducible
+  from its own seed, one stream per sensor. The line follower gets wheel
+  encoders (quantized tick counts), a gyro and a 15-sensor line array
+  (footprint coverage of the line, 12-bit ADC);
+  **tracelab-linefollower** gains `--sensor-noise on|off`, `--sensor-seed`
+  and `--controller-input true|measured`, and its `--log` CSV the true and
+  measured sensor columns. See `lab/README.md`, "Sensors".
 - TraceLab filters (`lab/filters/`): a filter chain in portable C99 meant to
   be copied into the robot firmware (no allocation, float by default or
   double, `math.h`/`string.h` only) -- moving average, median, first-order

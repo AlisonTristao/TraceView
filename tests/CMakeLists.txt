@@ -163,6 +163,14 @@ if(TRACEVIEW_ENABLE_LAB)
             TRACELAB_LF_TESTDATA="${CMAKE_CURRENT_SOURCE_DIR}/data/linefollower"
             TRACELAB_LF_PYTHON_DIR="${TRACELAB_LF_PYTHON_DIR}")
     endforeach()
+    # Sensor emulation (lab/sensors): reproducible noise streams (the standard
+    # mt19937_64, own Box-Muller, one stream per sensor), the statistics of
+    # white noise, random walk and Gauss-Markov, quantization, saturation,
+    # delay, own rate, dropout and outliers, and the linear and nonlinear
+    # observation blocks; then the line follower's encoders, line sensor
+    # array and the plant's true/measured outputs.
+    add_traceview_test(test_sensors tracelab_sensors)
+    add_traceview_test(test_lfsensors tracelab_lf_plant)
 endif()
 
 if(TRACEVIEW_ENABLE_LAB AND TARGET tracelab_filters_rt)

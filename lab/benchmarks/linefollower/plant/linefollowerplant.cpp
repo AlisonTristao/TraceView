@@ -12,13 +12,15 @@ LineFollowerPlant::LineFollowerPlant(Track track, const PlantParams& params)
     : m_track(std::move(track)),
       m_params(params),
       m_car(params.car),
-      m_progress(m_track.x, m_track.y, params.progress) {
+      m_progress(m_track.x, m_track.y, params.progress),
+      m_sensors(m_track, params.sensors, params.car.ts) {
     reset();
 }
 
 void LineFollowerPlant::reset() {
     m_car.reset();
     m_progress.reset();
+    m_sensors.reset();
     m_pose = {};
     if (m_track.size() > 0) {
         m_pose = {m_track.x[0], m_track.y[0], -kHalfPi};
@@ -51,6 +53,7 @@ bool LineFollowerPlant::step(double uLeft, double uRight) {
     m_data.wheelSpeedLeft = wheels.first;
     m_data.wheelSpeedRight = wheels.second;
     m_data.lateralError = m_progress.lateralError();
+    m_sensors.sample(m_car, m_pose, m_time, m_tick);
     return true;
 }
 

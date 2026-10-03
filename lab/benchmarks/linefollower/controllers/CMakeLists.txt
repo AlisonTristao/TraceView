@@ -2,30 +2,7 @@
 # a C++ port of line_follower_simulator's mpc/ package behind lfcontroller.h.
 # Plain C++17 and Eigen, no Qt, so it can later move into firmware.
 
-# Eigen 3.4 (MPL-2, header-only), pinned like BTP and hidapi in the root
-# CMakeLists.txt. Only the sources are fetched: SOURCE_SUBDIR points at a
-# folder with no CMakeLists.txt, so FetchContent_MakeAvailable() populates
-# Eigen without add_subdirectory() -- none of its tests, docs, BLAS/LAPACK
-# targets, pkg-config or uninstall target enter this build, and no global
-# cache variable (BUILD_TESTING, ...) has to be forced to keep them out. A
-# parent project that already provides Eigen3::Eigen is used as is.
-if(NOT TARGET Eigen3::Eigen)
-    include(FetchContent)
-    FetchContent_Declare(
-        tracelab_eigen
-        GIT_REPOSITORY https://gitlab.com/libeigen/eigen.git
-        GIT_TAG 3.4.0
-        GIT_SHALLOW TRUE
-        SOURCE_SUBDIR no-cmake-build
-    )
-    FetchContent_MakeAvailable(tracelab_eigen)
-    add_library(tracelab_eigen INTERFACE)
-    # SYSTEM: Eigen's own warnings are not this project's.
-    target_include_directories(tracelab_eigen SYSTEM INTERFACE ${tracelab_eigen_SOURCE_DIR})
-    # Refuse, at compile time, any Eigen header that is not MPL-2.
-    target_compile_definitions(tracelab_eigen INTERFACE EIGEN_MPL2_ONLY)
-    add_library(Eigen3::Eigen ALIAS tracelab_eigen)
-endif()
+# Eigen3::Eigen comes from lab/CMakeLists.txt (shared with tracelab_sensors).
 
 add_library(tracelab_lf_controllers STATIC
     boxqp.cpp

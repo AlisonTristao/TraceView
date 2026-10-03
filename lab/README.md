@@ -41,6 +41,10 @@ lab/
     controllerhost.h/.cpp   ControllerHost: runs on each loop.state, sends loop.u
     dllcontrolleradapter.h/.cpp     stub: loopctl.h DLL (BTP >= 2.50)
     scriptcontrolleradapter.h/.cpp  stub: QJSEngine controller
+  sensors/              tracelab_sensors  plain C++17 + Eigen, no Qt (see Sensors)
+    sensorrng.h/.cpp        SensorRng (mt19937_64 + own Box-Muller), deriveSeed()
+    imperfections.h/.cpp    ImperfectionConfig, ChannelImperfections
+    observation.h/.cpp      SensorBlock, LinearObservation, NonlinearObservation, SensorSet
   scenes/               tracelab_scenes (working)
     scenerenderer.h         SceneRenderer, SceneInput, SceneParam, SceneFrame, SceneView
     sceneregistry.h/.cpp    SceneRegistry, registerBuiltinScenes()
@@ -58,8 +62,9 @@ lab/
 and car (`--screenshot <png>` saves one frame). The tests are
 `tests/test_sceneregistry.cpp`, `test_diffdrivescene.cpp`,
 `test_scenewidget.cpp`, `test_labmodule.cpp`, `test_loopbacktransport.cpp` and,
-for the line-follower benchmark, `test_lftrackgenerator.cpp`, `test_lfplant.cpp`
-and `test_lfcontrollers.cpp`.
+for the line-follower benchmark, `test_lftrackgenerator.cpp`, `test_lfplant.cpp`,
+`test_lfsensors.cpp` and `test_lfcontrollers.cpp`; the sensor blocks have
+`test_sensors.cpp`.
 
 Dependencies only go from `lab/` to `lib/`: `tracelab_plant` uses
 `traceview::Transport`, `tracelab_scenes` uses `traceview_dashboard`,
@@ -88,7 +93,9 @@ benchmarks/linefollower/
     cardynamics.h     car_dynamics.py: first-order motors, kinematics, the WORLD pose
     trackprogress.h   the pygame Cluster logic in metres: reach rule, coverage,
                       future points in the car frame of the current pose
-    linefollowerplant.h  one step_simulation(): motors, pose, reach, StepData
+    linefollowerplant.h  one step_simulation(): motors, pose, reach, StepData,
+                      then the sensors (true and measured)
+    lfsensors.h       encoders, gyro and the line sensor array (see Sensors)
   controllers/    tracelab_lf_controllers   the qLPV MPC and the GPC (lfcontroller.h)
   app/            tracelab-linefollower     the run window
 ```
@@ -127,13 +134,77 @@ lemniscate|circle`, `--fps <hz>` (Ts = 1/fps, default 80), `--horizon <N>`,
 `--future-spacing <points>`, `--fast` (as fast as possible) or `--speed <x>`
 (time scale), `--max-time <s>`, `--log <file.csv>` (run_logger.py's columns
 where they exist, plus `<file>_track.csv`), `--screenshot <png>` with
-`--screenshot-time <s>`. The simulation steps at Ts whatever the repaint rate;
+`--screenshot-time <s>`, `--sensor-noise on|off` (default off),
+`--sensor-seed <n>` (default 1, independent of the track seed) and
+`--controller-input true|measured` (default measured with noise on, true
+otherwise: the controllers keep their interface, with `measured` their wheel
+speeds are the encoders'). The scene always shows the true pose; the log
+adds `w_l_true`, `w_l_meas`, `w_r_true`, `w_r_meas`, `gyro_true`,
+`gyro_meas` and the measured line array `s0`..`s14`. The simulation steps at Ts whatever the repaint rate;
 when the controller is slower than Ts the real-time run turns to slow motion.
 Keys: P / O perturbation +5 / -5 % (left +q, right -q), R back to 0, Esc
 stops; the mouse wheel zooms. At the end (100 % coverage, `--max-time`, Esc or
 closing the window) it prints runner.py's metrics: lateral error RMS and max,
 mean speed, solve times, QPs. Use a Release build for the qLPV MPC: in Debug,
 Eigen makes it several times slower than real time.
+
+## Sensors
+
+`lab/sensors/` (`tracelab_sensors`) separates a plant's TRUE state from what
+its sensors MEASURE: `y = h(x, u, env) + imperfections`. Simulation side
+only, never exported to firmware.
+
+**Blocks.** `SensorBlock` is the one interface: a name, `outputCount()`
+channels, `configure(Ts, masterSeed)`, one `sample(x, u, env)` per tick,
+`trueOutput()` (the ideal h) and `measured()`. Blocks of any kind mix in a
+`SensorSet`.
+
+- `LinearObservation(name, H, D)`: `y = H x + D u` with the user's Eigen
+  matrices (`D` optional).
+- `NonlinearObservation(name, m, h)`: `y = h(x, u, env)`, the whole
+  measurement vector from one user function -- a `std::function`
+  returning an `Eigen::VectorXd`, or a plain function pointer
+  `void(const double* x, int nx, const double* u, int nu, const
+  SensorEnvironment&, double* y, void* context)` plus its context -- or one
+  callable per channel. `SensorEnvironment` carries `t`, `tick` and an
+  opaque `user` pointer (a track, a map). Range/bearing, for example:
+  `h = [sqrt(x0^2 + x1^2), atan2(x1, x0)]`.
+- A model-specific block (an encoder) derives from `SensorBlock`:
+  `evaluate()` is h, `transduce()` sits between h and the imperfections.
+
+**Imperfections**, per channel (`ImperfectionConfig`, all off by default),
+discrete at Ts and applied in this order: scale factor and constant bias
+`(1 + s) h + b`; random-walk bias `b[k+1] = b[k] + sigma_rw sqrt(Ts) n`;
+first-order Gauss-Markov `b[k+1] = e^(-Ts/tau) b[k] + sigma sqrt(1 -
+e^(-2 Ts/tau)) n` (started stationary); white Gaussian `sigma n`; outliers
+(probability, +/- magnitude); saturation `[min, max]`; quantization (LSB);
+delay (d samples); own sample rate (every N ticks, held in between);
+dropout (probability; hold the last sample or NaN).
+
+**Reproducible noise.** `SensorRng` is `std::mt19937_64` (its sequence is
+fixed by the standard) with its own uniform and Box-Muller Gaussian
+(`std::normal_distribution` differs between standard libraries). Channel i
+of block "name" draws from `deriveSeed(masterSeed, "name/i")` and each
+process in it from its own sub-stream, every tick: adding a sensor or
+turning one model on never changes another's noise.
+
+**Line follower** (`benchmarks/linefollower/plant/lfsensors.h`), sampled on
+every plant step from `x = [w_l, w_r, omega, x, y, theta]`:
+
+| Block | Model | Default |
+|---|---|---|
+| `encoders` | wheel angle integrated over Ts, counted in whole ticks; speed = delta count * 2 pi / (ticks Ts) | 1024 ticks/rev (0.49 rad/s at 80 Hz), no noise |
+| `gyro` | `LinearObservation` picking omega (> 0 turns right) | ideal; noise preset: white 0.02 rad/s, random walk 0.002 rad/s/sqrt(s) |
+| `line` | 15 sensors, 0.008 m apart, 0.15 m ahead, s0 leftmost; reading = fraction of a 4 mm footprint disc covered by the line (half-width 0.02 m, the scene's line radius), then a 12-bit ADC (saturation 0..1, LSB 1/4095) | no noise; noise preset: white 0.02 |
+
+The line reading takes the line locally straight: with d the distance to
+the track polyline, `[A(w - d) - A(-w - d)] / (pi r^2)`, A the disc's area
+on one side of a chord. The nearest segment comes from a uniform grid of the
+polyline segments built once, so a query costs a handful of segments and
+the lemniscate's crossing shows both branches. `noisySensorParams()` is the
+`--sensor-noise on` preset; `PlantParams::sensors.seed` is independent of
+the track seed. `LineFollowerPlant::measured()` and `trueSensors()` give
+both sides; `StepData` stays the true values.
 
 ## Filters
 

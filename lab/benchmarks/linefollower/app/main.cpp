@@ -8,6 +8,7 @@
 //       [--track-type lemniscate|circle] [--fps 80] [--horizon 45]
 //       [--fast | --speed <x>] [--max-time <s>] [--log run.csv]
 //       [--screenshot out.png [--screenshot-time 5]]
+//       [--sensor-noise on|off] [--sensor-seed 1] [--controller-input true|measured]
 //
 // Keys: P / O perturbation +/- 5 %, R back to 0, Esc stops. The metrics of
 // runner.metrics() are printed when the run ends.
@@ -72,9 +73,24 @@ int main(int argc, char* argv[]) {
                                          QStringLiteral("Simulated seconds before --screenshot "
                                                         "(default 5)."),
                                          QStringLiteral("s"), QStringLiteral("5"));
-    for (const QCommandLineOption* o : {&controllerOpt, &seedOpt, &trackOpt, &fpsOpt, &horizonOpt,
-                                        &spacingOpt, &fastOpt, &speedOpt, &maxTimeOpt, &logOpt,
-                                        &shotOpt, &shotTimeOpt}) {
+    const QCommandLineOption sensorNoiseOpt(
+        QStringLiteral("sensor-noise"),
+        QStringLiteral("Synthetic sensor noise: on or off (default off; encoder and ADC "
+                       "quantization are always there)."),
+        QStringLiteral("on|off"), QStringLiteral("off"));
+    const QCommandLineOption sensorSeedOpt(
+        QStringLiteral("sensor-seed"),
+        QStringLiteral("Seed of the sensor noise, independent of the track (default 1)."),
+        QStringLiteral("n"), QStringLiteral("1"));
+    const QCommandLineOption controllerInputOpt(
+        QStringLiteral("controller-input"),
+        QStringLiteral("Wheel speeds the controller gets: true (the plant's) or measured (the "
+                       "encoders'). Default: measured with --sensor-noise on, true otherwise."),
+        QStringLiteral("true|measured"));
+    for (const QCommandLineOption* o :
+         {&controllerOpt, &seedOpt, &trackOpt, &fpsOpt, &horizonOpt, &spacingOpt, &fastOpt,
+          &speedOpt, &maxTimeOpt, &logOpt, &shotOpt, &shotTimeOpt, &sensorNoiseOpt, &sensorSeedOpt,
+          &controllerInputOpt}) {
         parser.addOption(*o);
     }
     parser.process(app);
@@ -118,6 +134,26 @@ int main(int argc, char* argv[]) {
     if (!ok || config.maxTime < 0) {
         return fail("--max-time must be >= 0");
     }
+    const QString sensorNoise = parser.value(sensorNoiseOpt);
+    if (sensorNoise != QLatin1String("on") && sensorNoise != QLatin1String("off")) {
+        return fail("--sensor-noise must be on or off");
+    }
+    const bool noisy = sensorNoise == QLatin1String("on");
+    if (noisy) {
+        config.plant.sensors = noisySensorParams(config.plant.sensors);
+    }
+    config.plant.sensors.seed = parser.value(sensorSeedOpt).toULongLong(&ok);
+    if (!ok) {
+        return fail("--sensor-seed must be a non-negative integer");
+    }
+    const QString controllerInput =
+        parser.isSet(controllerInputOpt)
+            ? parser.value(controllerInputOpt)
+            : (noisy ? QStringLiteral("measured") : QStringLiteral("true"));
+    if (controllerInput != QLatin1String("true") && controllerInput != QLatin1String("measured")) {
+        return fail("--controller-input must be true or measured");
+    }
+    config.controllerMeasured = controllerInput == QLatin1String("measured");
     WindowOptions options;
     options.fast = parser.isSet(fastOpt);
     options.speed = parser.value(speedOpt).toDouble(&ok);
@@ -146,6 +182,8 @@ int main(int argc, char* argv[]) {
     }
 #endif
     std::printf("controller: %s\n", runner.controllerName().c_str());
+    std::printf("sensors: noise %s, seed %llu, controller input %s\n", qPrintable(sensorNoise),
+                (unsigned long long)config.plant.sensors.seed, qPrintable(controllerInput));
     std::fflush(stdout);
 
     SimWindow window(&runner, options);
