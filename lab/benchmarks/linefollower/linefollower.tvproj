@@ -14,7 +14,7 @@
                     "seed": 1112,
                     "sensorNoise": false,
                     "sensorSeed": 1,
-                    "timeScale": 1.0,
+                    "timeScale": 1,
                     "trackType": "lemniscate"
                 },
                 "moduleType": "tracelab.linefollower.plant",
@@ -28,7 +28,7 @@
                 "id": "tracelab-lf-controller",
                 "moduleConfig": {
                     "controller": "qlpv",
-                    "filterTau": 0.0,
+                    "filterTau": 0,
                     "fps": 80,
                     "horizon": 10,
                     "plantDeviceId": "tracelab-lf-plant"
@@ -192,7 +192,7 @@
                                 },
                                 "params": {
                                     "perturbation_step": 5,
-                                    "render_radius_m": 4.0,
+                                    "render_radius_m": 4,
                                     "scale_px_per_m": 300,
                                     "wheel_distance_m": 0.15
                                 },
@@ -203,19 +203,19 @@
                             "key": "",
                             "layouts": {
                                 "large": {
-                                    "height": 1.0,
+                                    "height": 1,
                                     "width": 0.6,
                                     "x": 0,
                                     "y": 0
                                 },
                                 "medium": {
-                                    "height": 1.0,
-                                    "width": 0.6,
+                                    "height": 1,
+                                    "width": 0.6041666666666666,
                                     "x": 0,
                                     "y": 0
                                 },
                                 "small": {
-                                    "height": 1.0,
+                                    "height": 1,
                                     "width": 1,
                                     "x": 0,
                                     "y": 0
@@ -248,6 +248,10 @@
                                 "sourceId": "0x9EC2E162",
                                 "topicId": "0x0001",
                                 "topicName": "ctl.diag",
+                                "view": {
+                                    "legend": "topLeft",
+                                    "yTicks": 5
+                                },
                                 "xAxis": {
                                     "limit": 400,
                                     "mode": "samples",
@@ -257,14 +261,10 @@
                                     "autoAxis": true,
                                     "decimals": 2,
                                     "grid": true,
-                                    "max": 1.0,
-                                    "min": -1.0,
+                                    "max": 1,
+                                    "min": -1,
                                     "mode": "auto",
                                     "unit": "rad"
-                                },
-                                "view": {
-                                    "legend": "topLeft",
-                                    "yTicks": 5
                                 }
                             },
                             "groupId": "",
@@ -272,22 +272,22 @@
                             "key": "",
                             "layouts": {
                                 "large": {
-                                    "height": 0.2,
+                                    "height": 0.25,
                                     "width": 0.4,
                                     "x": 0.6,
-                                    "y": 0.0
+                                    "y": 0
                                 },
                                 "medium": {
                                     "height": 0.2,
-                                    "width": 0.4,
-                                    "x": 0.6,
-                                    "y": 0.0
+                                    "width": 0.3958333333333333,
+                                    "x": 0.6041666666666666,
+                                    "y": 0
                                 },
                                 "small": {
                                     "height": 0.5,
                                     "width": 1,
                                     "x": 0,
-                                    "y": 1.0
+                                    "y": 1
                                 }
                             },
                             "name": "Heading: reference vs predicted",
@@ -309,6 +309,10 @@
                                 "sourceId": "0x2089EB60",
                                 "topicId": "0x0003",
                                 "topicName": "sim.truth",
+                                "view": {
+                                    "legend": "topLeft",
+                                    "yTicks": 5
+                                },
                                 "xAxis": {
                                     "limit": 400,
                                     "mode": "samples",
@@ -318,14 +322,10 @@
                                     "autoAxis": true,
                                     "decimals": 3,
                                     "grid": true,
-                                    "max": 1.0,
-                                    "min": -1.0,
+                                    "max": 1,
+                                    "min": -1,
                                     "mode": "auto",
                                     "unit": "m"
-                                },
-                                "view": {
-                                    "legend": "topLeft",
-                                    "yTicks": 5
                                 }
                             },
                             "groupId": "",
@@ -333,15 +333,15 @@
                             "key": "",
                             "layouts": {
                                 "large": {
-                                    "height": 0.2,
+                                    "height": 0.25,
                                     "width": 0.4,
                                     "x": 0.6,
-                                    "y": 0.2
+                                    "y": 0.25
                                 },
                                 "medium": {
                                     "height": 0.2,
-                                    "width": 0.4,
-                                    "x": 0.6,
+                                    "width": 0.3958333333333333,
+                                    "x": 0.6041666666666666,
                                     "y": 0.2
                                 },
                                 "small": {
@@ -370,6 +370,10 @@
                                 "sourceId": "0x9EC2E162",
                                 "topicId": "0x0001",
                                 "topicName": "ctl.diag",
+                                "view": {
+                                    "legend": "topLeft",
+                                    "yTicks": 5
+                                },
                                 "xAxis": {
                                     "limit": 400,
                                     "mode": "samples",
@@ -379,14 +383,10 @@
                                     "autoAxis": true,
                                     "decimals": 2,
                                     "grid": true,
-                                    "max": 1.0,
-                                    "min": -1.0,
+                                    "max": 1,
+                                    "min": -1,
                                     "mode": "auto",
                                     "unit": "ms"
-                                },
-                                "view": {
-                                    "legend": "topLeft",
-                                    "yTicks": 5
                                 }
                             },
                             "groupId": "",
@@ -394,110 +394,25 @@
                             "key": "",
                             "layouts": {
                                 "large": {
-                                    "height": 0.2,
+                                    "height": 0.25,
                                     "width": 0.4,
                                     "x": 0.6,
-                                    "y": 0.4
+                                    "y": 0.5
                                 },
                                 "medium": {
                                     "height": 0.2,
-                                    "width": 0.4,
-                                    "x": 0.6,
+                                    "width": 0.3958333333333333,
+                                    "x": 0.6041666666666666,
                                     "y": 0.4
                                 },
                                 "small": {
                                     "height": 0.5,
                                     "width": 1,
                                     "x": 0,
-                                    "y": 2.0
+                                    "y": 2
                                 }
                             },
                             "name": "Controller solve time",
-                            "type": "dummy_line"
-                        },
-                        {
-                            "config": {
-                                "deviceId": "tracelab-lf-plant",
-                                "series": [
-                                    {
-                                        "color": "#1f77b4",
-                                        "fieldId": 2,
-                                        "fieldName": "w_l",
-                                        "name": "left true",
-                                        "style": "solid",
-                                        "unit": "rad/s"
-                                    },
-                                    {
-                                        "color": "#d62728",
-                                        "fieldId": 9,
-                                        "fieldName": "w_l_meas",
-                                        "name": "left measured",
-                                        "style": "dashed",
-                                        "unit": "rad/s"
-                                    },
-                                    {
-                                        "color": "#2ca02c",
-                                        "fieldId": 3,
-                                        "fieldName": "w_r",
-                                        "name": "right true",
-                                        "style": "solid",
-                                        "unit": "rad/s"
-                                    },
-                                    {
-                                        "color": "#ff7f0e",
-                                        "fieldId": 10,
-                                        "fieldName": "w_r_meas",
-                                        "name": "right measured",
-                                        "style": "dashed",
-                                        "unit": "rad/s"
-                                    }
-                                ],
-                                "sourceId": "0x2089EB60",
-                                "topicId": "0x0004",
-                                "topicName": "sim.states",
-                                "xAxis": {
-                                    "limit": 400,
-                                    "mode": "samples",
-                                    "sampleTimeMs": 12.5
-                                },
-                                "yAxis": {
-                                    "autoAxis": true,
-                                    "decimals": 1,
-                                    "grid": true,
-                                    "max": 1.0,
-                                    "min": -1.0,
-                                    "mode": "auto",
-                                    "unit": "rad/s"
-                                },
-                                "view": {
-                                    "legend": "topLeft",
-                                    "yTicks": 5
-                                }
-                            },
-                            "groupId": "",
-                            "id": "tracelab-lf-wheels",
-                            "key": "",
-                            "layouts": {
-                                "large": {
-                                    "height": 0.2,
-                                    "width": 0.4,
-                                    "x": 0.6,
-                                    "y": 0.6000000000000001
-                                },
-                                "medium": {
-                                    "height": 0.2,
-                                    "width": 0.4,
-                                    "x": 0.6,
-                                    "y": 0.6000000000000001
-                                },
-                                "small": {
-                                    "height": 0.5,
-                                    "width": 1,
-                                    "x": 0,
-                                    "y": 2.5
-                                }
-                            },
-                            "name": "Wheel speeds: true vs measured",
                             "type": "dummy_line"
                         },
                         {
@@ -524,6 +439,10 @@
                                 "sourceId": "0x9EC2E162",
                                 "topicId": "0x0001",
                                 "topicName": "ctl.diag",
+                                "view": {
+                                    "legend": "topLeft",
+                                    "yTicks": 5
+                                },
                                 "xAxis": {
                                     "limit": 400,
                                     "mode": "samples",
@@ -533,14 +452,10 @@
                                     "autoAxis": true,
                                     "decimals": 1,
                                     "grid": true,
-                                    "max": 1.0,
-                                    "min": -1.0,
+                                    "max": 1,
+                                    "min": -1,
                                     "mode": "auto",
                                     "unit": "rad/s"
-                                },
-                                "view": {
-                                    "legend": "topLeft",
-                                    "yTicks": 5
                                 }
                             },
                             "groupId": "",
@@ -548,22 +463,22 @@
                             "key": "",
                             "layouts": {
                                 "large": {
-                                    "height": 0.2,
+                                    "height": 0.25,
                                     "width": 0.4,
                                     "x": 0.6,
-                                    "y": 0.8
+                                    "y": 0.75
                                 },
                                 "medium": {
                                     "height": 0.2,
-                                    "width": 0.4,
-                                    "x": 0.6,
+                                    "width": 0.3958333333333333,
+                                    "x": 0.6041666666666666,
                                     "y": 0.8
                                 },
                                 "small": {
                                     "height": 0.5,
                                     "width": 1,
                                     "x": 0,
-                                    "y": 3.0
+                                    "y": 3
                                 }
                             },
                             "name": "Wheel speeds the controller uses (filtered)",
