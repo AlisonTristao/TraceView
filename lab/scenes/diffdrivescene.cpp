@@ -486,11 +486,10 @@ void DiffDriveScene::paintCar(QPainter& painter, const SceneView& view) const {
 
 void DiffDriveScene::paintMinimap(QPainter& painter, const SceneView& view) const {
     const double k = hudScale(view);
-    const double cx = view.size.width() / 2.0;
-    const double cy = view.size.height() / 2.0;
-    const QPointF center(cx - 190.0 * k, 1.75 * cy);
+    // Bottom-left corner.
     const double halfWidth = 100.0 * k;
     const double halfHeight = 75.0 * k;
+    const QPointF center(12.0 * k + halfWidth, view.size.height() - 12.0 * k - halfHeight);
     const QRectF rect(center.x() - halfWidth, center.y() - halfHeight, 2 * halfWidth,
                       2 * halfHeight);
 
@@ -524,8 +523,10 @@ void DiffDriveScene::paintMinimap(QPainter& painter, const SceneView& view) cons
 
 void DiffDriveScene::paintCompass(QPainter& painter, const SceneView& view) const {
     const double k = hudScale(view);
-    const QPointF center(view.size.width() / 2.0 + 160.0 * k, 1.75 * view.size.height() / 2.0);
+    // Bottom-right corner; 52 px reaches the N/E/S/W labels, plus a margin.
     const double radius = 40.0 * k;
+    const double reach = 52.0 * k + 20.0 * k;
+    const QPointF center(view.size.width() - reach, view.size.height() - reach);
     // Points up at heading 0 and turns clockwise as the car turns right
     // (screen y down, so the screen angle grows clockwise too).
     const double a = pose().theta - M_PI / 2.0;
