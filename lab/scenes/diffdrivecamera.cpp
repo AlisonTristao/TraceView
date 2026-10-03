@@ -7,7 +7,7 @@ namespace tracelab {
 QPointF diffDriveCarAnchor(const QSizeF& size) {
     const double cx = size.width() / 2.0;
     const double cy = size.height() / 2.0;
-    return {1.36 * cx, 1.8 * cy};
+    return {cx, 1.8 * cy};
 }
 
 QPointF diffDriveWorldToScreen(const QPointF& world, const DiffDrivePose& pose,

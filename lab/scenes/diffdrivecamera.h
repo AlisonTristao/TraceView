@@ -17,7 +17,7 @@ struct DiffDrivePose {
     double theta = 0.0;
 };
 
-// The car's fixed screen point C = (1.36 cx, 1.8 cy), cx, cy = half the
+// The car's fixed screen point C = (cx, 1.8 cy), cx, cy = half the
 // widget size. The car always points up from there; the world moves.
 QPointF diffDriveCarAnchor(const QSizeF& size);
 

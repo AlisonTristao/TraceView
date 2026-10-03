@@ -386,8 +386,11 @@ void DiffDriveScene::paint(QPainter& painter, const SceneView& view) {
     const double cx = view.size.width() / 2.0;
     const double cy = view.size.height() / 2.0;
     painter.setFont(hudFont(view));
-    drawHudText(painter, QStringLiteral("fps: %1").arg(view.renderFps, 0, 'f', 1), 1.99 * cx,
-                0.01 * cy, Anchor::Right, kHud);
+    // Centered layout (pygame kept the car right of center to leave room
+    // for its graphs; in TraceView the charts are separate widgets).
+    const double k = hudScale(view);
+    drawHudText(painter, QStringLiteral("fps: %1").arg(view.renderFps, 0, 'f', 1), cx,
+                0.01 * cy + 30.0 * k, Anchor::Center, kHud);
     QStringList info;
     if (!qIsNaN(m_qps) || !qIsNaN(m_solveMs)) {
         if (!m_controller.isEmpty()) {
@@ -401,14 +404,14 @@ void DiffDriveScene::paint(QPainter& painter, const SceneView& view) {
         }
     }
     if (!info.isEmpty()) {
-        drawHudText(painter, info.join(QStringLiteral(" | ")), 0.70 * cx, 0.01 * cy, Anchor::Center,
+        drawHudText(painter, info.join(QStringLiteral(" | ")), cx, 0.01 * cy, Anchor::Center,
                     kInfo);
     }
     // The plant's own world metres (pygame showed metres + 50, y down).
     const DiffDrivePose current = pose();
     drawHudText(painter,
                 QStringLiteral("x: %1 y: %2").arg(current.x, 0, 'f', 2).arg(current.y, 0, 'f', 2),
-                1.85 * cx, 1.95 * cy, Anchor::Center, kHud);
+                cx + 70.0 * k, 1.95 * cy, Anchor::Left, kHud);
 
     paintCompass(painter, view);
 
@@ -418,15 +421,16 @@ void DiffDriveScene::paint(QPainter& painter, const SceneView& view) {
 
     painter.setFont(hudFont(view));
     const double coverage = coveragePercent();
-    drawHudText(
-        painter,
-        QCoreApplication::translate("DiffDriveScene", "covered: %1%").arg(coverage, 0, 'f', 2),
-        1.0 * cx, 1.95 * cy, Anchor::Left, kHud);
     const double elapsed = elapsedSeconds();
     const double score = elapsed > 0.0 ? 100.0 * coverage / elapsed : 0.0;
-    drawHudText(painter,
-                QCoreApplication::translate("DiffDriveScene", "score: %1").arg(score, 0, 'f', 2),
-                0.25 * cx, 1.95 * cy, Anchor::Left, kHud);
+    // Left and right of the car: the reached track always runs down the
+    // middle of the bottom edge.
+    drawHudText(
+        painter,
+        QCoreApplication::translate("DiffDriveScene", "score: %1").arg(score, 0, 'f', 2) +
+            QStringLiteral("   ") +
+            QCoreApplication::translate("DiffDriveScene", "covered: %1%").arg(coverage, 0, 'f', 2),
+        cx - 70.0 * k, 1.95 * cy, Anchor::Right, kHud);
     painter.restore();
 }
 
@@ -492,7 +496,7 @@ void DiffDriveScene::paintMinimap(QPainter& painter, const SceneView& view) cons
     const double k = hudScale(view);
     const double cx = view.size.width() / 2.0;
     const double cy = view.size.height() / 2.0;
-    const QPointF center(0.9 * cx, 1.75 * cy);
+    const QPointF center(cx - 190.0 * k, 1.75 * cy);
     const double halfWidth = 100.0 * k;
     const double halfHeight = 75.0 * k;
     const QRectF rect(center.x() - halfWidth, center.y() - halfHeight, 2 * halfWidth,
@@ -528,7 +532,7 @@ void DiffDriveScene::paintMinimap(QPainter& painter, const SceneView& view) cons
 
 void DiffDriveScene::paintCompass(QPainter& painter, const SceneView& view) const {
     const double k = hudScale(view);
-    const QPointF center(1.85 * view.size.width() / 2.0, 1.75 * view.size.height() / 2.0);
+    const QPointF center(view.size.width() / 2.0 + 160.0 * k, 1.75 * view.size.height() / 2.0);
     const double radius = 40.0 * k;
     // Points up at heading 0 and turns clockwise as the car turns right
     // (screen y down, so the screen angle grows clockwise too).
