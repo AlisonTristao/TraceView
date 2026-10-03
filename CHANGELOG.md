@@ -7,6 +7,8 @@ release flow.
 
 ## [Unreleased]
 
+## [4.9.0] - 2026-09-28
+
 ### Added
 
 - Optional application modules: a module compiled into the executable can
