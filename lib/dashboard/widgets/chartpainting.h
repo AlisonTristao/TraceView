@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QPainterPath>
 #include <QColor>
 #include <QFont>
 #include <QFontMetrics>
@@ -40,6 +41,12 @@ constexpr int kChartSwatchTextGap = 4;
 // strokes its decorative inner border -- see "Corner radius" in
 // docs/VISUAL_IDENTITY.md.
 void paintChartBackground(QPainter& painter, const DashboardWidget& widget,
+                          const ThemePalette& palette);
+// The same, from paths taken on the GUI thread (for a worker-thread render):
+// `fill` is DashboardWidget::contentFillPath(), `outline` its roundedPath()
+// inset by half a pixel, drawn only when the frame style has an idle outline.
+void paintChartBackground(QPainter& painter, const QPainterPath& fill,
+                          const QPainterPath& outline, bool drawOutline,
                           const ThemePalette& palette);
 
 // `base` with equal-width digits when the style asks for them, so a column

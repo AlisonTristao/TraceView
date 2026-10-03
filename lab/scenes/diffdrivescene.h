@@ -39,6 +39,7 @@ public:
 
     void update(const SceneFrame& frame) override;
     void paint(QPainter& painter, const SceneView& view) override;
+    bool antialiased() const override;
     void document(const QString& input, const QByteArray& body) override;
     std::optional<SceneAction> keyAction(int key) override;
 

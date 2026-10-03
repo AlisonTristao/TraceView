@@ -1,10 +1,13 @@
+#include "dashboard/repaintclock.h"
 #include "scenewidget.h"
 
+#include <QPainterPath>
+#include <QThreadPool>
+#include <QPointer>
 #include <QCoreApplication>
 #include <QKeyEvent>
 #include <QMouseEvent>
 #include <QPainter>
-#include <QTimer>
 #include <QWheelEvent>
 #include <cmath>
 
@@ -13,7 +16,6 @@
 #include "dashboard/widgetregistry.h"
 #include "lab/scenes/sceneconfigeditor.h"
 #include "lab/scenes/sceneregistry.h"
-#include "preferences/appsettings.h"
 
 namespace tracelab {
 
@@ -72,11 +74,6 @@ QJsonObject sceneBindingToJson(const SceneBinding& binding) {
 SceneWidget::SceneWidget(QWidget* parent) : DashboardWidget(parent) {
     setFocusPolicy(Qt::ClickFocus);
     m_clock.start();
-    m_repaintIntervalMs = traceview::AppSettings::instance().repaintIntervalMs();
-    connect(&traceview::AppSettings::instance(),
-            &traceview::AppSettings::dashboardPreferencesChanged, this, [this] {
-                m_repaintIntervalMs = traceview::AppSettings::instance().repaintIntervalMs();
-            });
     setConfig({});
 }
 
@@ -91,7 +88,12 @@ void SceneWidget::setConfig(const QJsonObject& config) {
     }
     if (type != m_sceneType || !m_renderer) {
         m_sceneType = type;
+        // A job in flight keeps the old renderer and mutex alive; its image
+        // is dropped (generation).
         m_renderer = SceneRegistry::instance().create(type);
+        m_rendererMutex = std::make_shared<QMutex>();
+        ++m_generation;
+        m_image = QImage();
         m_pending.clear();
         m_recordOpen = false;
         m_values.clear();
@@ -145,6 +147,7 @@ void SceneWidget::setConfig(const QJsonObject& config) {
         }
 
         const QJsonObject params = config.value(QLatin1String("params")).toObject();
+        const QMutexLocker lock(m_rendererMutex.get());
         for (const SceneParam& param : m_renderer->params()) {
             m_renderer->setParam(param.name, params.value(param.name).toDouble(param.defaultValue));
         }
@@ -247,6 +250,7 @@ void SceneWidget::onTextSample(quint32 sourceId, quint16 topicId, quint64 timest
     for (const QString& input : inputs) {
         m_documents.insert(input, body);
         if (m_renderer) {
+            const QMutexLocker lock(m_rendererMutex.get());
             m_renderer->document(input, body);
         }
     }
@@ -271,42 +275,122 @@ SceneView SceneWidget::view() const {
 }
 
 void SceneWidget::scheduleRepaint() {
-    if (m_repaintPending) {
+    // A visible scene with a frame: render on the next tick, and repaint only
+    // when it is back (renderFinished()).
+    if (isVisible() && !m_image.isNull()) {
+        traceview::RepaintClock::instance().request(this, [this] { startRender(); });
         return;
     }
-    m_repaintPending = true;
-    QTimer::singleShot(m_repaintIntervalMs, this, [this] {
-        m_repaintPending = false;
-        update();
-    });
+    traceview::RepaintClock::instance().request(this);
 }
 
 void SceneWidget::paintEvent(QPaintEvent* event) {
     Q_UNUSED(event);
     traceview::notePaintFrame();
-    const qint64 now = m_clock.elapsed();
-    m_frameTimesMs.append(now);
-    while (!m_frameTimesMs.isEmpty() && m_frameTimesMs.first() <= now - 1000) {
-        m_frameTimesMs.removeFirst();
-    }
-
     QPainter painter(this);
-    painter.setRenderHint(QPainter::Antialiasing, true);
-    painter.setClipPath(contentFillPath());
     if (!m_renderer) {
+        painter.setRenderHint(QPainter::Antialiasing, true);
+        painter.setClipPath(contentFillPath());
         painter.fillRect(rect(), Qt::white);
         painter.setPen(Qt::black);
         painter.drawText(rect(), Qt::AlignCenter, tr("Unknown scene \"%1\"").arg(m_sceneType));
         return;
     }
+    if (!isVisible()) {
+        // grab() of a hidden widget (tests, thumbnails): paint inline.
+        noteFrame();
+        painter.setRenderHint(QPainter::Antialiasing, true);
+        const QMutexLocker lock(m_rendererMutex.get());
+        if (m_renderer->antialiased()) {
+            painter.setClipPath(contentFillPath());
+        }
+        m_renderer->update(takeFrame());
+        m_renderer->paint(painter, view());
+        return;
+    }
+    const qreal dpr = devicePixelRatioF();
+    const bool fresh = !m_image.isNull() && m_image.size() == (QSizeF(size()) * dpr).toSize();
+    if (!m_image.isNull()) {
+        painter.drawImage(QRectF(QPointF(0, 0), QSizeF(size())), m_image);
+    }
+    // A resize, no frame yet or data that came during the last render: render
+    // the next one off-thread (new data alone goes through scheduleRepaint()).
+    if (!fresh || m_renderAgain) {
+        startRender();
+    }
+}
+
+SceneFrame SceneWidget::takeFrame() {
     SceneFrame frame;
     frame.records = m_pending;
     frame.values = m_values;
     frame.arrays = m_arrays;
     m_pending.clear();
     m_recordOpen = false;
-    m_renderer->update(frame);
-    m_renderer->paint(painter, view());
+    return frame;
+}
+
+void SceneWidget::noteFrame() {
+    const qint64 now = m_clock.elapsed();
+    m_frameTimesMs.append(now);
+    while (!m_frameTimesMs.isEmpty() && m_frameTimesMs.first() <= now - 1000) {
+        m_frameTimesMs.removeFirst();
+    }
+}
+
+void SceneWidget::startRender() {
+    if (m_rendering) {
+        m_renderAgain = true;  // once this one is back
+        return;
+    }
+    const qreal dpr = devicePixelRatioF();
+    const QSize pixels = (QSizeF(size()) * dpr).toSize();
+    if (pixels.isEmpty()) {
+        return;
+    }
+    m_rendering = true;
+    m_renderAgain = false;
+    std::shared_ptr<SceneRenderer> renderer = m_renderer;
+    std::shared_ptr<QMutex> mutex = m_rendererMutex;
+    const SceneFrame frame = takeFrame();
+    const SceneView sceneView = view();
+    const QPainterPath clip = contentFillPath();
+    const quint64 generation = m_generation;
+    QPointer<SceneWidget> self(this);
+    QThreadPool::globalInstance()->start([renderer, mutex, frame, sceneView, clip, pixels, dpr,
+                                          generation, self] {
+        QImage image(pixels, QImage::Format_ARGB32_Premultiplied);
+        image.setDevicePixelRatio(dpr);
+        image.fill(Qt::transparent);
+        {
+            QPainter painter(&image);
+            painter.setRenderHint(QPainter::Antialiasing, true);
+            const QMutexLocker lock(mutex.get());
+            // The rounded corners baked in (transparent), so drawing the
+            // image needs no clip.
+            painter.setClipPath(clip);
+            renderer->update(frame);
+            renderer->paint(painter, sceneView);
+        }
+        // Back on the GUI thread; dropped if the widget is gone by then.
+        QMetaObject::invokeMethod(
+            QCoreApplication::instance(),
+            [self, image, generation] {
+                if (self) {
+                    self->renderFinished(image, generation);
+                }
+            },
+            Qt::QueuedConnection);
+    });
+}
+
+void SceneWidget::renderFinished(const QImage& image, quint64 generation) {
+    m_rendering = false;
+    if (generation == m_generation) {
+        m_image = image;
+        noteFrame();
+    }
+    update();
 }
 
 void SceneWidget::wheelEvent(QWheelEvent* event) {
@@ -364,13 +448,48 @@ void SceneWidget::mouseDoubleClickEvent(QMouseEvent* event) {
 
 void SceneWidget::keyPressEvent(QKeyEvent* event) {
     if (m_renderer && !event->isAutoRepeat()) {
-        if (const std::optional<SceneAction> action = m_renderer->keyAction(event->key())) {
+        std::optional<SceneAction> action;
+        {
+            const QMutexLocker lock(m_rendererMutex.get());
+            action = m_renderer->keyAction(event->key());
+        }
+        if (action) {
             emit actionRequested(action->action, action->argument);
+            sendAction(action->action, action->argument);
             event->accept();
             return;
         }
     }
     DashboardWidget::keyPressEvent(event);
+}
+
+void SceneWidget::setCommandSender(CommandSender sender) {
+    m_commandSender = std::move(sender);
+}
+
+QString SceneWidget::actionDeviceId() const {
+    // The plant: the device the pose comes from, else any device a sim.*
+    // topic is bound on.
+    const auto pose = m_bindings.constFind(QStringLiteral("x"));
+    if (pose != m_bindings.constEnd() && !pose->deviceId.isEmpty()) {
+        return pose->deviceId;
+    }
+    for (const SceneBinding& binding : m_bindings) {
+        if (binding.topicName.startsWith(QLatin1String("sim.")) && !binding.deviceId.isEmpty()) {
+            return binding.deviceId;
+        }
+    }
+    return QString();
+}
+
+void SceneWidget::sendAction(const QString& action, double argument) {
+    const QString deviceId = actionDeviceId();
+    if (!m_commandSender || deviceId.isEmpty()) {
+        return;
+    }
+    // The text form every plant's command action takes ("sim.disturb 5"),
+    // a COMMAND_REQUEST over the device's own BTP session.
+    m_commandSender(deviceId, QStringLiteral("%1 %2").arg(action).arg(argument));
 }
 
 void registerSceneWidget(traceview::WidgetRegistry& registry) {

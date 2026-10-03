@@ -3,6 +3,7 @@
 #include <QString>
 #include <QVector>
 #include <QtGlobal>
+#include <functional>
 
 #include "telemetry/telemetrybinding.h"
 
@@ -42,6 +43,16 @@ public:
                                const QVector<float>& values) = 0;
     virtual void onTextSample(quint32 sourceId, quint16 topicId, quint64 timestampUs,
                               const QString& text) = 0;
+
+    // How the consumer sends a command line to one of its devices (by
+    // project Device id): MainWindow hands one over when it wires the widget,
+    // delivered like a device script's sendCommand() (Backend::sendCommand(),
+    // a BTP COMMAND_REQUEST). Optional: the default ignores it.
+    using CommandSender =
+        std::function<void(const QString& deviceId, const QString& commandLine)>;
+    virtual void setCommandSender(CommandSender sender) {
+        (void)sender;
+    }
 
 protected:
     ~TelemetryConsumer() = default;

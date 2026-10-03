@@ -145,13 +145,13 @@
 <context>
     <name>ChartWidgets</name>
     <message>
-        <location filename="../lib/dashboard/widgets/chartwidgets.cpp" line="+38"/>
+        <location filename="../lib/dashboard/widgets/chartwidgets.cpp" line="+46"/>
         <source>Field %1</source>
         <translation>Поле %1</translation>
     </message>
     <message>
         <location line="+9"/>
-        <location line="+507"/>
+        <location line="+560"/>
         <location line="+231"/>
         <source>--</source>
         <translation>--</translation>
@@ -163,12 +163,12 @@
     </message>
     <message>
         <location line="+6"/>
-        <location line="+305"/>
+        <location line="+355"/>
         <source>%1  %2</source>
         <translation>%1  %2</translation>
     </message>
     <message>
-        <location line="+133"/>
+        <location line="+139"/>
         <source>A-B %1 s</source>
         <translation>A-B %1 с</translation>
     </message>
@@ -233,12 +233,12 @@
         <translation>пауза</translation>
     </message>
     <message>
-        <location line="-739"/>
+        <location line="-795"/>
         <source>%1: %2</source>
         <translation>%1: %2</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/chartpainting.cpp" line="+879"/>
+        <location filename="../lib/dashboard/widgets/chartpainting.cpp" line="+891"/>
         <source>Time (s)</source>
         <translation>Время (с)</translation>
     </message>
@@ -390,7 +390,7 @@
 <context>
     <name>Device</name>
     <message>
-        <location filename="../lib/devices/device.h" line="+54"/>
+        <location filename="../lib/devices/device.h" line="+58"/>
         <source>Serial</source>
         <translation>Последовательный</translation>
     </message>
@@ -415,7 +415,12 @@
         <translation>BLE</translation>
     </message>
     <message>
-        <location filename="../lib/devices/device.cpp" line="+292"/>
+        <location line="+2"/>
+        <source>Built-in</source>
+        <translation>Встроенный</translation>
+    </message>
+    <message>
+        <location filename="../lib/devices/device.cpp" line="+303"/>
         <source>auto</source>
         <translation>авто</translation>
     </message>
@@ -449,7 +454,7 @@
 <context>
     <name>DiffDriveScene</name>
     <message>
-        <location filename="../lab/scenes/diffdrivescene.cpp" line="+130"/>
+        <location filename="../lab/scenes/diffdrivescene.cpp" line="+132"/>
         <source>Scale</source>
         <translation>Масштаб</translation>
     </message>
@@ -489,12 +494,17 @@
         <translation>Шаг возмущения</translation>
     </message>
     <message>
-        <location line="+279"/>
+        <location line="+3"/>
+        <source>Antialiasing</source>
+        <translation>Сглаживание</translation>
+    </message>
+    <message>
+        <location line="+282"/>
         <source>covered: %1%</source>
         <translation>пройдено: %1%</translation>
     </message>
     <message>
-        <location line="+5"/>
+        <location line="-1"/>
         <source>score: %1</source>
         <translation>счёт: %1</translation>
     </message>
@@ -547,16 +557,52 @@
         <source>Simulates a plant, closes the loop with your controller and animates it.</source>
         <translation>Моделирует объект, замыкает контур вашим регулятором и анимирует его.</translation>
     </message>
+</context>
+<context>
+    <name>LineControllerAdapter</name>
     <message>
-        <location line="+11"/>
-        <source>The simulation engine is not available yet. Add a Scene widget to a dashboard to show a plant.</source>
-        <translation>Движок моделирования пока недоступен. Добавьте на панель виджет «Сцена», чтобы показать объект.</translation>
+        <location filename="../lab/benchmarks/linefollower/device/lfcontrolleradapter.cpp" line="+137"/>
+        <source>PD (line sensors)</source>
+        <translation>ПД (датчики линии)</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>no controller</source>
+        <translation>нет регулятора</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source> + low-pass %1 s</source>
+        <translation> + ФНЧ %1 с</translation>
+    </message>
+    <message>
+        <location line="+28"/>
+        <source>the plant does not publish s[] and take u_l, u_r</source>
+        <translation>объект не публикует s[] и не принимает u_l, u_r</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>the plant does not publish w_l, w_r and take u_l, u_r</source>
+        <translation>объект не публикует w_l, w_r и не принимает u_l, u_r</translation>
+    </message>
+</context>
+<context>
+    <name>LineFollowerDevices</name>
+    <message>
+        <location filename="../lab/benchmarks/linefollower/device/lfdevices.cpp" line="+173"/>
+        <source>TraceLab: Line follower</source>
+        <translation>TraceLab: Робот по линии</translation>
+    </message>
+    <message>
+        <location line="+22"/>
+        <source>TraceLab: Controller</source>
+        <translation>TraceLab: Регулятор</translation>
     </message>
 </context>
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="+135"/>
+        <location filename="../lib/core/mainwindow.cpp" line="+139"/>
         <source>TraceView Project (*.tvproj)</source>
         <translation>Проект TraceView (*.tvproj)</translation>
     </message>
@@ -813,7 +859,7 @@
 <context>
     <name>SceneWidget</name>
     <message>
-        <location filename="../lab/scenes/scenewidget.cpp" line="+379"/>
+        <location filename="../lab/scenes/scenewidget.cpp" line="+505"/>
         <source>Scene</source>
         <translation>Сцена</translation>
     </message>
@@ -956,9 +1002,320 @@
     </message>
 </context>
 <context>
+    <name>tracelab::EndpointTransport</name>
+    <message>
+        <location filename="../lab/plant/endpointtransport.cpp" line="+30"/>
+        <source>the built-in device did not start</source>
+        <translation>встроенное устройство не запустилось</translation>
+    </message>
+</context>
+<context>
+    <name>tracelab::LabPanel</name>
+    <message>
+        <location filename="../lab/module/labpanel.cpp" line="+41"/>
+        <source>New simulation</source>
+        <translation>Новая симуляция</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Opens the line-follower preset: the simulated plant, the controller and a dashboard with the scene and charts.</source>
+        <translation>Открывает шаблон робота по линии: моделируемый объект, регулятор и панель со сценой и графиками.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Play</source>
+        <translation>Пуск</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Pause</source>
+        <translation>Пауза</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Reset</source>
+        <translation>Сброс</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Step</source>
+        <translation>Шаг</translation>
+    </message>
+    <message>
+        <location line="+12"/>
+        <source>New simulation: Line follower</source>
+        <translation>Новая симуляция: робот по линии</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>No TraceLab device in this project. Start a new simulation, or add a TraceLab device on the Devices tab.</source>
+        <translation>В проекте нет устройств TraceLab. Начните новую симуляцию или добавьте устройство TraceLab на вкладке «Устройства».</translation>
+    </message>
+    <message>
+        <location line="+13"/>
+        <source>Run</source>
+        <translation>Запуск</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Plant:</source>
+        <translation>Объект:</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>1x (real time)</source>
+        <translation>1x (реальное время)</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>2x</source>
+        <translation>2x</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>As fast as possible</source>
+        <translation>Максимально быстро</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Lockstep (waits for the controller)</source>
+        <translation>Синхронно (ждёт регулятор)</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Speed:</source>
+        <translation>Скорость:</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Status:</source>
+        <translation>Состояние:</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Track and sensors</source>
+        <translation>Трасса и датчики</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>-1 draws a random track on every reset.</source>
+        <translation>-1 — случайная трасса при каждом сбросе.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Track seed:</source>
+        <translation>Зерно трассы:</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Lemniscate</source>
+        <translation>Лемниската</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Circle</source>
+        <translation>Окружность</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Track type:</source>
+        <translation>Тип трассы:</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Sensor noise</source>
+        <translation>Шум датчиков</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Synthetic noise on the gyro and the line sensors (the encoders always count whole ticks).</source>
+        <translation>Синтетический шум гироскопа и датчиков линии (энкодеры всегда считают целые импульсы).</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Apply and reset</source>
+        <translation>Применить и сбросить</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Controller</source>
+        <translation>Регулятор</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Device:</source>
+        <translation>Устройство:</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>qLPV MPC</source>
+        <translation>qLPV MPC</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>GPC</source>
+        <translation>GPC</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>PD (line sensors)</source>
+        <translation>ПД (датчики линии)</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Controller:</source>
+        <translation>Регулятор:</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source> s</source>
+        <translation> с</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>off</source>
+        <translation>выкл.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>First-order low-pass on the measured wheel speeds (the C filter runtime); 0 turns it off.</source>
+        <translation>ФНЧ первого порядка для измеренных скоростей колёс (библиотека фильтров на C); 0 — выключен.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Wheel-speed filter:</source>
+        <translation>Фильтр скоростей колёс:</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>qLPV lateral weight:</source>
+        <translation>Вес бокового отклонения qLPV:</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Frozen (rho of now, whole horizon)</source>
+        <translation>Замороженное (текущее rho на весь горизонт)</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Warm start (last prediction)</source>
+        <translation>Тёплый старт (последний прогноз)</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Taylor (first order around now)</source>
+        <translation>Тейлор (первый порядок вокруг текущего момента)</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Iterative (re-solve until rho settles)</source>
+        <translation>Итеративное (повторное решение, пока rho не установится)</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>How the qLPV MPC fills the scheduling variable rho over the horizon.</source>
+        <translation>Как qLPV MPC заполняет переменную планирования rho на горизонте.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>qLPV rho scheduling:</source>
+        <translation>Планирование rho в qLPV:</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>qLPV embedding:</source>
+        <translation>Вложение qLPV:</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Most QPs per step with the iterative scheduling.</source>
+        <translation>Максимум QP за шаг при итеративном планировании.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>qLPV iterations:</source>
+        <translation>Итерации qLPV:</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>GPC control weight:</source>
+        <translation>Вес управления GPC:</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source> %/m</source>
+        <translation> %/m</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Wheel speed difference per metre of line offset under the sensor array.</source>
+        <translation>Разница скоростей колёс на метр смещения линии под линейкой датчиков.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>PD Kp:</source>
+        <translation>PD Kp:</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source> %s/m</source>
+        <translation> %s/m</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>PD Kd:</source>
+        <translation>PD Kd:</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source> %</source>
+        <translation> %</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Command on both wheels before the PD correction: the speed.</source>
+        <translation>Команда на оба колеса до коррекции ПД: скорость.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>PD base speed:</source>
+        <translation>Базовая скорость ПД:</translation>
+    </message>
+    <message>
+        <location line="+138"/>
+        <source>running</source>
+        <translation>работает</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>paused</source>
+        <translation>на паузе</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>, tick %1, t = %2 s, covered %3 %</source>
+        <translation>, такт %1, t = %2 с, пройдено %3 %</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>, perturbation %1 %</source>
+        <translation>, возмущение %1 %</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>, controller connected</source>
+        <translation>, регулятор подключён</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>, controller waiting for the plant</source>
+        <translation>, регулятор ждёт объект</translation>
+    </message>
+</context>
+<context>
     <name>tracelab::SceneConfigEditor</name>
     <message>
-        <location filename="../lab/scenes/sceneconfigeditor.cpp" line="+129"/>
+        <location filename="../lab/scenes/sceneconfigeditor.cpp" line="+130"/>
         <source>Bind by name</source>
         <translation>Связать по имени</translation>
     </message>
@@ -983,7 +1340,7 @@
         <translation>Параметры</translation>
     </message>
     <message>
-        <location line="+146"/>
+        <location line="+160"/>
         <source>(Unbound)</source>
         <translation>(Не связано)</translation>
     </message>
@@ -996,7 +1353,7 @@
 <context>
     <name>tracelab::SceneWidget</name>
     <message>
-        <location filename="../lab/scenes/scenewidget.cpp" line="-80"/>
+        <location filename="../lab/scenes/scenewidget.cpp" line="-203"/>
         <source>Unknown scene &quot;%1&quot;</source>
         <translation>Неизвестная сцена «%1»</translation>
     </message>
@@ -1469,7 +1826,7 @@
 <context>
     <name>traceview::BtpBackend</name>
     <message>
-        <location filename="../lib/protocol/btpbackend.cpp" line="+346"/>
+        <location filename="../lib/protocol/btpbackend.cpp" line="+347"/>
         <source>Robot 0x%1 is online but its catalog has not arrived — check the hub (hub -manifest)</source>
         <translation>Робот 0x%1 в сети, но его каталог не пришёл — проверьте хаб (hub -manifest)</translation>
     </message>
@@ -1534,7 +1891,7 @@
         <translation>устройство вернулось в консоль (BTP/1 CONSOLE)</translation>
     </message>
     <message>
-        <location line="+246"/>
+        <location line="+247"/>
         <source>Dropped an unsealed frame on a sealed direct session (check the robot&apos;s channel-B password)</source>
         <translation>Отброшен незапечатанный фрейм в запечатанном прямом сеансе (проверьте пароль канала B робота)</translation>
     </message>
@@ -1559,7 +1916,7 @@
         <translation>ввод терминала не отправлен: не удалось запечатать</translation>
     </message>
     <message>
-        <location line="-523"/>
+        <location line="-524"/>
         <source>BTP handshake failed: %1</source>
         <translation>Ошибка установления соединения BTP: %1</translation>
     </message>
@@ -2565,7 +2922,7 @@ Allowed: %1</source>
         <translation>Подключение</translation>
     </message>
     <message>
-        <location line="+81"/>
+        <location line="+91"/>
         <source>None</source>
         <translation>Нет</translation>
     </message>
@@ -2595,12 +2952,17 @@ Allowed: %1</source>
         <translation>ID этого устройства:</translation>
     </message>
     <message>
-        <location line="-54"/>
+        <location line="-64"/>
         <source>Card title:</source>
         <translation>Заголовок карточки:</translation>
     </message>
     <message>
-        <location line="+5"/>
+        <location line="+9"/>
+        <source>Built-in device:</source>
+        <translation>Встроенное устройство:</translation>
+    </message>
+    <message>
+        <location line="+6"/>
         <source>The robot&apos;s channel-B password. One per device: every TCP, BLE and hub connection above uses it.</source>
         <translation>Пароль канала B робота. Один на устройство: его используют все подключения TCP, BLE и через хаб выше.</translation>
     </message>
@@ -2639,12 +3001,12 @@ Allowed: %1</source>
     </message>
     <message>
         <location line="+3"/>
-        <location line="+281"/>
+        <location line="+284"/>
         <source>e.g. robot1.local</source>
         <translation>напр. robot1.local</translation>
     </message>
     <message>
-        <location line="-279"/>
+        <location line="-282"/>
         <source>Hostname or IP the OTA tab uses for this device&apos;s firmware upload. Left blank, the device is listed there but nothing can be polled or uploaded.</source>
         <translation>Имя хоста или IP, который вкладка OTA использует для загрузки прошивки этого устройства. Если пусто, устройство там перечислено, но опрашивать и загружать нечего.</translation>
     </message>
@@ -2670,25 +3032,25 @@ Allowed: %1</source>
     </message>
     <message>
         <location line="+24"/>
-        <location line="+242"/>
+        <location line="+245"/>
         <source>Connected</source>
         <translation>Подключено</translation>
     </message>
     <message>
-        <location line="-242"/>
-        <location line="+242"/>
+        <location line="-245"/>
+        <location line="+245"/>
         <source>Disconnected</source>
         <translation>Отключено</translation>
     </message>
     <message>
-        <location line="-239"/>
+        <location line="-242"/>
         <location line="+3"/>
-        <location line="+155"/>
+        <location line="+158"/>
         <source>(not connected yet)</source>
         <translation>(ещё не подключено)</translation>
     </message>
     <message>
-        <location line="-145"/>
+        <location line="-148"/>
         <source>Status:</source>
         <translation>Состояние:</translation>
     </message>
@@ -2723,7 +3085,7 @@ Allowed: %1</source>
         <translation>Применить настройки выше и (пере)подключиться сейчас, не закрывая это окно.</translation>
     </message>
     <message>
-        <location line="+114"/>
+        <location line="+117"/>
         <source>%1 (last connection)</source>
         <translation>%1 (последнее подключение)</translation>
     </message>
@@ -2749,7 +3111,7 @@ Allowed: %1</source>
         <translation>устройство сообщает: %1</translation>
     </message>
     <message>
-        <location line="-241"/>
+        <location line="-244"/>
         <source>Reported by device</source>
         <translation>Сообщено устройством</translation>
     </message>
@@ -2757,7 +3119,12 @@ Allowed: %1</source>
 <context>
     <name>traceview::DeviceConnection</name>
     <message>
-        <location filename="../lib/core/deviceconnection.cpp" line="+196"/>
+        <location filename="../lib/core/deviceconnection.cpp" line="+108"/>
+        <source>device type &quot;%1&quot; is not available (is its module enabled?)</source>
+        <translation>тип устройства «%1» недоступен (включён ли его модуль?)</translation>
+    </message>
+    <message>
+        <location line="+148"/>
         <source>transport rejected %1 bytes</source>
         <translation>транспорт отклонил %1 байт</translation>
     </message>
@@ -3317,7 +3684,7 @@ Allowed: %1</source>
         <translation>, </translation>
     </message>
     <message>
-        <location line="+687"/>
+        <location line="+744"/>
         <source>Pending</source>
         <translation>Ожидание</translation>
     </message>
@@ -3461,12 +3828,12 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+0"/>
-        <location line="+3730"/>
+        <location line="+3760"/>
         <source>Later</source>
         <translation>Позже</translation>
     </message>
     <message>
-        <location line="-3723"/>
+        <location line="-3753"/>
         <source>&amp;Access</source>
         <translation>Доступ (&amp;A)</translation>
     </message>
@@ -3593,18 +3960,18 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+18"/>
-        <location line="+3094"/>
+        <location line="+3124"/>
         <source>Undo</source>
         <translation>Отменить</translation>
     </message>
     <message>
-        <location line="-3092"/>
-        <location line="+3092"/>
+        <location line="-3122"/>
+        <location line="+3122"/>
         <source>Redo</source>
         <translation>Повторить</translation>
     </message>
     <message>
-        <location line="-3049"/>
+        <location line="-3079"/>
         <source>Add Device</source>
         <translation>Добавить устройство</translation>
     </message>
@@ -3640,12 +4007,12 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+29"/>
-        <location line="+2994"/>
+        <location line="+3024"/>
         <source>Fullscreen dashboard (F11)</source>
         <translation>Панель в полноэкранном режиме (F11)</translation>
     </message>
     <message>
-        <location line="-2814"/>
+        <location line="-2844"/>
         <source>Rename Workspace</source>
         <translation>Переименовать рабочее пространство</translation>
     </message>
@@ -3726,12 +4093,17 @@ Drops: %2</source>
         <translation>Теперь у этой рабочей области своё оформление.</translation>
     </message>
     <message>
-        <location line="+1314"/>
+        <location line="+705"/>
+        <source>Robot or board</source>
+        <translation>Робот или плата</translation>
+    </message>
+    <message>
+        <location line="+638"/>
         <source>%1: found at %2</source>
         <translation>%1: найден на %2</translation>
     </message>
     <message>
-        <location line="+329"/>
+        <location line="+330"/>
         <source>%1: trying %2</source>
         <translation>%1: пробую %2</translation>
     </message>
@@ -3858,13 +4230,13 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>Закрыть приложение</translation>
     </message>
     <message>
-        <location line="-3041"/>
-        <location line="+2842"/>
+        <location line="-3071"/>
+        <location line="+2872"/>
         <source>Devices</source>
         <translation>Устройства</translation>
     </message>
     <message>
-        <location line="-2767"/>
+        <location line="-2797"/>
         <source>Subscriptions</source>
         <translation>Подписки</translation>
     </message>
@@ -3906,23 +4278,23 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     </message>
     <message>
         <location line="+71"/>
-        <location line="+2367"/>
+        <location line="+2397"/>
         <source>Add widget</source>
         <translation>Добавить виджет</translation>
     </message>
     <message>
-        <location line="-2364"/>
+        <location line="-2394"/>
         <source>Remove selected widget (%1)</source>
         <translation>Удалить выбранный виджет (%1)</translation>
     </message>
     <message>
         <location line="+3"/>
-        <location line="+2374"/>
+        <location line="+2404"/>
         <source>Add device</source>
         <translation>Добавить устройство</translation>
     </message>
     <message>
-        <location line="-2371"/>
+        <location line="-2401"/>
         <source>Remove selected device (%1)</source>
         <translation>Удалить выбранное устройство (%1)</translation>
     </message>
@@ -4012,7 +4384,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>Новое устройство</translation>
     </message>
     <message>
-        <location line="+379"/>
+        <location line="+404"/>
         <source>%1: robot is responding again</source>
         <translation>%1: робот снова отвечает</translation>
     </message>
@@ -4073,17 +4445,17 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>&amp;Движение</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="-1448"/>
+        <location filename="../lib/core/mainwindow.cpp" line="-1473"/>
         <source>Dashboard</source>
         <translation>Dashboard</translation>
     </message>
     <message>
-        <location line="+1794"/>
+        <location line="+1823"/>
         <source>%1: this BLE address now answers as a different robot (expected %2, got %3)</source>
         <translation>%1: этот BLE-адрес теперь отвечает как другой робот (ожидался %2, получен %3)</translation>
     </message>
     <message>
-        <location line="+492"/>
+        <location line="+493"/>
         <source>Key &quot;%1&quot; is already used by another widget.</source>
         <translation>Ключ «%1» уже используется другим виджетом.</translation>
     </message>
@@ -4114,7 +4486,8 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>Сохранить проект как</translation>
     </message>
     <message>
-        <location line="+14"/>
+        <location line="-3663"/>
+        <location line="+3677"/>
         <location line="+329"/>
         <source>Open Project</source>
         <translation>Открыть проект</translation>
@@ -4862,7 +5235,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
 <context>
     <name>traceview::RobotLinksPanel</name>
     <message>
-        <location filename="../lib/devices/robotlinkspanel.cpp" line="+37"/>
+        <location filename="../lib/devices/robotlinkspanel.cpp" line="+39"/>
         <source>Serial (USB)</source>
         <translation>Последовательный (USB)</translation>
     </message>
@@ -4882,7 +5255,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>Хаб</translation>
     </message>
     <message>
-        <location line="+10"/>
+        <location line="+11"/>
         <source>Automatic: the USB port whose device reports the robot&apos;s name (or, if none does, the port last picked here). Pick or type a port to always use that one.</source>
         <translation>Автоматически: USB-порт, устройство которого сообщает имя робота (или, если такого нет, последний выбранный здесь порт). Выберите или введите порт, чтобы всегда использовать его.</translation>
     </message>
@@ -4902,7 +5275,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>Автоматически: робот с этим именем за любым подключённым хабом. Выберите хаб, чтобы искать только за ним.</translation>
     </message>
     <message>
-        <location line="+45"/>
+        <location line="+46"/>
         <source>Name:</source>
         <translation>Имя:</translation>
     </message>
@@ -5145,31 +5518,31 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     </message>
     <message>
         <location line="-183"/>
-        <location line="+235"/>
+        <location line="+243"/>
         <source>Terminal</source>
         <translation>Терминал</translation>
     </message>
     <message>
-        <location line="-235"/>
-        <location line="+262"/>
+        <location line="-243"/>
+        <location line="+270"/>
         <source>Connections</source>
         <translation>Подключения</translation>
     </message>
     <message>
-        <location line="-262"/>
-        <location line="+321"/>
+        <location line="-270"/>
+        <location line="+329"/>
         <source>Diagnostics</source>
         <translation>Диагностика</translation>
     </message>
     <message>
-        <location line="-320"/>
-        <location line="+372"/>
+        <location line="-328"/>
+        <location line="+380"/>
         <location line="+5"/>
         <source>Updates</source>
         <translation>Обновления</translation>
     </message>
     <message>
-        <location line="-335"/>
+        <location line="-343"/>
         <source>Project and startup preferences shared by the application.</source>
         <translation>Настройки проекта и запуска, общие для приложения.</translation>
     </message>
@@ -5330,7 +5703,17 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>Своя частота</translation>
     </message>
     <message>
-        <location line="+11"/>
+        <location line="+10"/>
+        <source>Fast line drawing</source>
+        <translation>Быстрая отрисовка линий</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Line charts denser than the plot keep only each pixel column&apos;s minimum and maximum, drawn without antialiasing. Lighter on the CPU; the result depends on the screen&apos;s resolution and scale.</source>
+        <translation>Линейные графики, более плотные, чем область построения, сохраняют только минимум и максимум каждого столбца пикселей и рисуются без сглаживания. Меньше нагружает процессор; результат зависит от разрешения и масштаба экрана.</translation>
+    </message>
+    <message>
+        <location line="+6"/>
         <source>Telemetry subscribe rate</source>
         <translation>Частота подписки на телеметрию</translation>
     </message>

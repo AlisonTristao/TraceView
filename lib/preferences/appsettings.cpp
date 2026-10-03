@@ -8,6 +8,7 @@ namespace traceview {
 namespace {
 constexpr char kRenderProfileKey[] = "dashboard/renderProfile";
 constexpr char kCustomRenderFpsKey[] = "dashboard/customRenderFps";
+constexpr char kFastChartLinesKey[] = "dashboard/fastChartLines";
 constexpr char kSubscribeRateOverrideEnabledKey[] = "dashboard/subscribeRateOverrideEnabled";
 constexpr char kSubscribeRateOverrideHzKey[] = "dashboard/subscribeRateOverrideHz";
 constexpr char kRecentProjectsLimitKey[] = "general/recentProjectsLimit";
@@ -82,6 +83,10 @@ int AppSettings::repaintIntervalMs() const {
             break;
     }
     return qMax(1, qRound(1000.0 / fps));
+}
+
+bool AppSettings::fastChartLines() const {
+    return QSettings().value(kFastChartLinesKey, false).toBool();
 }
 
 bool AppSettings::subscribeRateOverrideEnabled() const {
@@ -162,6 +167,14 @@ void AppSettings::setCustomRenderFps(int fps) {
     if (renderProfile() == RenderProfile::Custom) {
         emit dashboardPreferencesChanged();
     }
+}
+
+void AppSettings::setFastChartLines(bool enabled) {
+    if (enabled == fastChartLines()) {
+        return;
+    }
+    QSettings().setValue(kFastChartLinesKey, enabled);
+    emit dashboardPreferencesChanged();
 }
 
 void AppSettings::setSubscribeRateOverrideEnabled(bool enabled) {

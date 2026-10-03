@@ -9,6 +9,7 @@ class QWidget;
 namespace traceview {
 
 class WidgetRegistry;
+struct ModuleDeviceType;
 
 // What an enabled module is given by install(): the few places it may plug
 // into the main window. Implemented by MainWindow; see docs/MODULES.md.
@@ -25,6 +26,24 @@ public:
     // to `content` to keep them alive as long as the tab.
     virtual void addRibbonTab(const QString& label, const QList<QAction*>& actions,
                               QWidget* content) = 0;
+
+    // Registers a kind of in-process device (core/moduledevicetype.h): it
+    // appears in the Devices tab's Add Device menu and in projects as a
+    // device of TransportType::Module. Install runs before the startup
+    // project loads, so saved devices of the type connect. False when the
+    // id is taken or the host offers no devices (the default).
+    virtual bool registerDeviceType(const ModuleDeviceType& type) {
+        (void)type;
+        return false;
+    }
+
+    // Opens the project at `path` (a file or a Qt resource) in place of the
+    // current one and shows its dashboard, as File > Open does. False, with
+    // nothing changed, when it cannot be read (the default: no projects).
+    virtual bool openProject(const QString& path) {
+        (void)path;
+        return false;
+    }
 
 protected:
     ~ModuleHost() = default;

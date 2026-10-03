@@ -13,9 +13,73 @@ The plant and the controller are BTP endpoints that speak the `loop` profile,
 even inside one process (a loopback transport), so either one can be swapped
 for the real robot or the firmware without the other noticing.
 
-This folder is the skeleton: the contracts are written, the presentation side
-(the Scene widget and the line-follower scene) works, and the engine is yours
-to fill in.
+The generic engine (`sim/`, `.tlmodel`) is still a skeleton; the
+line-follower benchmark already runs inside TraceView as two devices (see
+"Running the line follower in TraceView").
+
+## Building against a local BTP
+
+The plant and the controller host need BTP 2.50 (STREAM actions, action
+records in the Catalog, `Node::send_stream()`, `btp/profiles/loop.hpp`),
+which exists only in a local checkout of BTP (branch
+`feature/stream-actions`); the root `CMakeLists.txt` keeps pinning the
+published v2.48.0. Point FetchContent at the checkout (the content name is
+`btp`, so the variable is `FETCHCONTENT_SOURCE_DIR_BTP`):
+
+```
+cmake -S . -B build-lab -DFETCHCONTENT_SOURCE_DIR_BTP=C:/git/BTP
+cmake --build build-lab -j4
+```
+
+With the lab ON and an older BTP, configure stops and says so. With
+`-DTRACEVIEW_ENABLE_LAB=OFF` the pinned 2.48 is enough.
+
+## Running the line follower in TraceView
+
+1. Start TraceView with `--mode lab` (or the TraceLab launcher, or enable
+   TraceLab in Settings > General > Modules).
+2. On the **TraceLab** tab, click **New simulation**. It opens the preset
+   `benchmarks/linefollower/linefollower.tvproj` (built in as a resource):
+   the devices "TraceLab: Line follower" and "TraceLab: Controller" and the
+   workspace "Line follower" (the Scene plus charts of heading reference vs
+   prediction, lateral error, solve time, wheel speeds true vs measured and
+   the filtered speeds the controller uses). The plant starts on its own.
+3. Play / Pause / Reset / Step, the speed (1x, 2x, as fast as possible,
+   lockstep), track seed and type, sensor noise and the controller (qLPV MPC
+   or GPC, wheel-speed filter, main weights) are on the TraceLab tab. With
+   the Scene focused, P / O / R change the perturbation (`sim.disturb`).
+
+Both devices can also be added by hand (Devices tab, **Add Device**).
+
+How it is wired (`benchmarks/linefollower/device/`, `tracelab_lf_devices`):
+
+- `LinePlantDevice` runs `LineFollowerPlant` on a fixed-step clock (80 Hz
+  default; real time with a scale, as fast as possible, or lockstep: tick
+  k+1 waits up to 10 s for the `loop.u` answering tick k). Its manifest
+  (`lfplantmanifest.h`) is the loop profile: `loop.state` (tick, mode, the
+  encoders `w_l`/`w_r`, `gyro`, the line array `s[15]`), `loop.output`,
+  `sim.truth`, `sim.states`, `sim.preview` (tick, car-frame `px[]`, `py[]`),
+  `sim.params`, `sim.track` (UTF8, every k-th track point plus `"stride"` so
+  it fits one BTP message, 255 fragments of 210 octets; `next_point` counts
+  in those points) and the actions
+  `loop.u` (STREAM, ref_tick + `u_l[]`, `u_r[]`, float64), `loop.mode`
+  (DANGEROUS, arm), `loop.config`, `sim.run/pause/reset/step/disturb/speed`.
+  The text command action (id 1, `Backend::sendCommand()`) takes the same
+  names (`sim.disturb 5`). Each link (TraceView, controller) is a
+  `BtpProducerPort` (`plant/`): a `btp::Node` with its own session and
+  subscriptions behind a `LoopbackTransport`.
+- `LineControllerDevice` is a `ControllerHost` (`control/`): a consumer
+  `btp::Node` toward the plant (HELLO, manifest, subscriptions to
+  `loop.state` and `sim.preview`, `loop.mode` REMOTE + arm, then one
+  `send_stream(loop.u)` per tick) and a producer of `ctl.diag` (ref_tick,
+  solve_ms, iterations, pred_x/y/theta[], qps, qp_iterations, rho_error,
+  theta_ref, theta_pred, w_l_filt, w_r_filt) and `ctl.info` toward TraceView.
+- TraceView's side is generic: `TransportType::Module` devices get their
+  Transport from the registered type (`lib/core/moduledevicetype.h`).
+
+The standalone `tracelab-linefollower` harness below is unchanged;
+`tests/test_lfdevices.cpp` checks that the loop through BTP in lockstep
+gives the same steps as that harness.
 
 ## Layout
 
@@ -333,8 +397,9 @@ Python simulator's CSVs (Euler at 80 Hz reproducing `runs/`).
   (`ref_tick`, `solve_ms`, `iterations`, `pred_x[]`, `pred_y[]` in the car
   frame of that tick, plus the adapter's own values) and `ctl.info` (the
   adapter's name).
-- Showing the plant on the Devices tab needs a device type TraceView can
-  create in process; that hook does not exist in `lib/` yet.
+- The plant and the controller host shown on the Devices tab are the
+  line follower's (see "Running the line follower in TraceView"); the
+  generic `SimulatedPlant` still waits for the engine.
 
 ### scenes/ (done)
 
@@ -359,8 +424,8 @@ The line follower reads `sim.truth` (`x`, `y`, `theta`, `tick`,
 `solve_ms`) plus `ctl.info`. Car-frame points are taken to the world with
 the pose of their own tick (history keyed by tick) and drawn with the current
 pose, so everything comes from one pose per frame. P/O/R ask for
-`sim.disturb`: `SceneWidget::actionRequested()` is emitted, but nothing sends
-it yet, since TraceView has no path for a typed BTP action before BTP 2.50.
+`sim.disturb`: `SceneWidget::actionRequested()` is emitted and the text
+command `sim.disturb <value>` goes to the device "x" is bound on.
 
 The scene shows the plant's own world metres in the coordinates readout
 (pygame showed metres + 50 with y down).

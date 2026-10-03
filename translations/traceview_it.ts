@@ -145,13 +145,13 @@
 <context>
     <name>ChartWidgets</name>
     <message>
-        <location filename="../lib/dashboard/widgets/chartwidgets.cpp" line="+38"/>
+        <location filename="../lib/dashboard/widgets/chartwidgets.cpp" line="+46"/>
         <source>Field %1</source>
         <translation>Campo %1</translation>
     </message>
     <message>
         <location line="+9"/>
-        <location line="+507"/>
+        <location line="+560"/>
         <location line="+231"/>
         <source>--</source>
         <translation>--</translation>
@@ -163,12 +163,12 @@
     </message>
     <message>
         <location line="+6"/>
-        <location line="+305"/>
+        <location line="+355"/>
         <source>%1  %2</source>
         <translation>%1  %2</translation>
     </message>
     <message>
-        <location line="+133"/>
+        <location line="+139"/>
         <source>A-B %1 s</source>
         <translation>A-B %1 s</translation>
     </message>
@@ -233,12 +233,12 @@
         <translation>in pausa</translation>
     </message>
     <message>
-        <location line="-739"/>
+        <location line="-795"/>
         <source>%1: %2</source>
         <translation>%1: %2</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/chartpainting.cpp" line="+879"/>
+        <location filename="../lib/dashboard/widgets/chartpainting.cpp" line="+891"/>
         <source>Time (s)</source>
         <translation>Tempo (s)</translation>
     </message>
@@ -390,7 +390,7 @@
 <context>
     <name>Device</name>
     <message>
-        <location filename="../lib/devices/device.h" line="+54"/>
+        <location filename="../lib/devices/device.h" line="+58"/>
         <source>Serial</source>
         <translation>Seriale</translation>
     </message>
@@ -415,7 +415,12 @@
         <translation>BLE</translation>
     </message>
     <message>
-        <location filename="../lib/devices/device.cpp" line="+292"/>
+        <location line="+2"/>
+        <source>Built-in</source>
+        <translation>Integrato</translation>
+    </message>
+    <message>
+        <location filename="../lib/devices/device.cpp" line="+303"/>
         <source>auto</source>
         <translation>auto</translation>
     </message>
@@ -449,7 +454,7 @@
 <context>
     <name>DiffDriveScene</name>
     <message>
-        <location filename="../lab/scenes/diffdrivescene.cpp" line="+130"/>
+        <location filename="../lab/scenes/diffdrivescene.cpp" line="+132"/>
         <source>Scale</source>
         <translation>Scala</translation>
     </message>
@@ -489,12 +494,17 @@
         <translation>Passo di perturbazione</translation>
     </message>
     <message>
-        <location line="+279"/>
+        <location line="+3"/>
+        <source>Antialiasing</source>
+        <translation>Antialiasing</translation>
+    </message>
+    <message>
+        <location line="+282"/>
         <source>covered: %1%</source>
         <translation>coperto: %1%</translation>
     </message>
     <message>
-        <location line="+5"/>
+        <location line="-1"/>
         <source>score: %1</source>
         <translation>punteggio: %1</translation>
     </message>
@@ -547,16 +557,52 @@
         <source>Simulates a plant, closes the loop with your controller and animates it.</source>
         <translation>Simula un impianto, chiude l&apos;anello con il tuo controllore e lo anima.</translation>
     </message>
+</context>
+<context>
+    <name>LineControllerAdapter</name>
     <message>
-        <location line="+11"/>
-        <source>The simulation engine is not available yet. Add a Scene widget to a dashboard to show a plant.</source>
-        <translation>Il motore di simulazione non è ancora disponibile. Aggiungi un widget Scena a una dashboard per mostrare un impianto.</translation>
+        <location filename="../lab/benchmarks/linefollower/device/lfcontrolleradapter.cpp" line="+137"/>
+        <source>PD (line sensors)</source>
+        <translation>PD (sensori di linea)</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>no controller</source>
+        <translation>nessun controllore</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source> + low-pass %1 s</source>
+        <translation> + passa-basso %1 s</translation>
+    </message>
+    <message>
+        <location line="+28"/>
+        <source>the plant does not publish s[] and take u_l, u_r</source>
+        <translation>l&apos;impianto non pubblica s[] e non riceve u_l, u_r</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>the plant does not publish w_l, w_r and take u_l, u_r</source>
+        <translation>l&apos;impianto non pubblica w_l, w_r e non riceve u_l, u_r</translation>
+    </message>
+</context>
+<context>
+    <name>LineFollowerDevices</name>
+    <message>
+        <location filename="../lab/benchmarks/linefollower/device/lfdevices.cpp" line="+173"/>
+        <source>TraceLab: Line follower</source>
+        <translation>TraceLab: Inseguitore di linea</translation>
+    </message>
+    <message>
+        <location line="+22"/>
+        <source>TraceLab: Controller</source>
+        <translation>TraceLab: Controllore</translation>
     </message>
 </context>
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="+135"/>
+        <location filename="../lib/core/mainwindow.cpp" line="+139"/>
         <source>TraceView Project (*.tvproj)</source>
         <translation>Progetto TraceView (*.tvproj)</translation>
     </message>
@@ -813,7 +859,7 @@
 <context>
     <name>SceneWidget</name>
     <message>
-        <location filename="../lab/scenes/scenewidget.cpp" line="+379"/>
+        <location filename="../lab/scenes/scenewidget.cpp" line="+505"/>
         <source>Scene</source>
         <translation>Scena</translation>
     </message>
@@ -956,9 +1002,320 @@
     </message>
 </context>
 <context>
+    <name>tracelab::EndpointTransport</name>
+    <message>
+        <location filename="../lab/plant/endpointtransport.cpp" line="+30"/>
+        <source>the built-in device did not start</source>
+        <translation>il dispositivo integrato non si è avviato</translation>
+    </message>
+</context>
+<context>
+    <name>tracelab::LabPanel</name>
+    <message>
+        <location filename="../lab/module/labpanel.cpp" line="+41"/>
+        <source>New simulation</source>
+        <translation>Nuova simulazione</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Opens the line-follower preset: the simulated plant, the controller and a dashboard with the scene and charts.</source>
+        <translation>Apre il preset dell&apos;inseguitore di linea: l&apos;impianto simulato, il controllore e una dashboard con la scena e i grafici.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Play</source>
+        <translation>Avvia</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Pause</source>
+        <translation>Pausa</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Reset</source>
+        <translation>Reimposta</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Step</source>
+        <translation>Passo</translation>
+    </message>
+    <message>
+        <location line="+12"/>
+        <source>New simulation: Line follower</source>
+        <translation>Nuova simulazione: Inseguitore di linea</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>No TraceLab device in this project. Start a new simulation, or add a TraceLab device on the Devices tab.</source>
+        <translation>Nessun dispositivo TraceLab in questo progetto. Avvia una nuova simulazione o aggiungi un dispositivo TraceLab nella scheda Dispositivi.</translation>
+    </message>
+    <message>
+        <location line="+13"/>
+        <source>Run</source>
+        <translation>Esecuzione</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Plant:</source>
+        <translation>Impianto:</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>1x (real time)</source>
+        <translation>1x (tempo reale)</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>2x</source>
+        <translation>2x</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>As fast as possible</source>
+        <translation>Il più veloce possibile</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Lockstep (waits for the controller)</source>
+        <translation>Lockstep (attende il controllore)</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Speed:</source>
+        <translation>Velocità:</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Status:</source>
+        <translation>Stato:</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Track and sensors</source>
+        <translation>Pista e sensori</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>-1 draws a random track on every reset.</source>
+        <translation>-1 genera una pista casuale a ogni reimpostazione.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Track seed:</source>
+        <translation>Seme della pista:</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Lemniscate</source>
+        <translation>Lemniscata</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Circle</source>
+        <translation>Cerchio</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Track type:</source>
+        <translation>Tipo di pista:</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Sensor noise</source>
+        <translation>Rumore dei sensori</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Synthetic noise on the gyro and the line sensors (the encoders always count whole ticks).</source>
+        <translation>Rumore sintetico sul giroscopio e sui sensori di linea (gli encoder contano sempre impulsi interi).</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Apply and reset</source>
+        <translation>Applica e reimposta</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Controller</source>
+        <translation>Controllore</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Device:</source>
+        <translation>Dispositivo:</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>qLPV MPC</source>
+        <translation>MPC qLPV</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>GPC</source>
+        <translation>GPC</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>PD (line sensors)</source>
+        <translation>PD (sensori di linea)</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Controller:</source>
+        <translation>Controllore:</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source> s</source>
+        <translation> s</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>off</source>
+        <translation>disattivato</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>First-order low-pass on the measured wheel speeds (the C filter runtime); 0 turns it off.</source>
+        <translation>Passa-basso del primo ordine sulle velocità misurate delle ruote (il runtime dei filtri in C); 0 lo disattiva.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Wheel-speed filter:</source>
+        <translation>Filtro delle ruote:</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>qLPV lateral weight:</source>
+        <translation>Peso laterale qLPV:</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Frozen (rho of now, whole horizon)</source>
+        <translation>Congelato (rho attuale, tutto l&apos;orizzonte)</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Warm start (last prediction)</source>
+        <translation>Avvio a caldo (ultima predizione)</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Taylor (first order around now)</source>
+        <translation>Taylor (primo ordine attorno all&apos;istante attuale)</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Iterative (re-solve until rho settles)</source>
+        <translation>Iterativo (risolve di nuovo finché rho si stabilizza)</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>How the qLPV MPC fills the scheduling variable rho over the horizon.</source>
+        <translation>Come l&apos;MPC qLPV riempie la variabile di scheduling rho lungo l&apos;orizzonte.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>qLPV rho scheduling:</source>
+        <translation>Scheduling di rho del qLPV:</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>qLPV embedding:</source>
+        <translation>Embedding del qLPV:</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Most QPs per step with the iterative scheduling.</source>
+        <translation>Numero massimo di QP per passo con lo scheduling iterativo.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>qLPV iterations:</source>
+        <translation>Iterazioni del qLPV:</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>GPC control weight:</source>
+        <translation>Peso di controllo GPC:</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source> %/m</source>
+        <translation> %/m</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Wheel speed difference per metre of line offset under the sensor array.</source>
+        <translation>Differenza di velocità tra le ruote per metro di scostamento della linea sotto la barra di sensori.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>PD Kp:</source>
+        <translation>PD Kp:</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source> %s/m</source>
+        <translation> %s/m</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>PD Kd:</source>
+        <translation>PD Kd:</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source> %</source>
+        <translation> %</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Command on both wheels before the PD correction: the speed.</source>
+        <translation>Comando su entrambe le ruote prima della correzione del PD: la velocità.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>PD base speed:</source>
+        <translation>Velocità di base del PD:</translation>
+    </message>
+    <message>
+        <location line="+138"/>
+        <source>running</source>
+        <translation>in esecuzione</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>paused</source>
+        <translation>in pausa</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>, tick %1, t = %2 s, covered %3 %</source>
+        <translation>, tick %1, t = %2 s, percorso %3 %</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>, perturbation %1 %</source>
+        <translation>, perturbazione %1 %</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>, controller connected</source>
+        <translation>, controllore connesso</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>, controller waiting for the plant</source>
+        <translation>, controllore in attesa dell&apos;impianto</translation>
+    </message>
+</context>
+<context>
     <name>tracelab::SceneConfigEditor</name>
     <message>
-        <location filename="../lab/scenes/sceneconfigeditor.cpp" line="+129"/>
+        <location filename="../lab/scenes/sceneconfigeditor.cpp" line="+130"/>
         <source>Bind by name</source>
         <translation>Collega per nome</translation>
     </message>
@@ -983,7 +1340,7 @@
         <translation>Parametri</translation>
     </message>
     <message>
-        <location line="+146"/>
+        <location line="+160"/>
         <source>(Unbound)</source>
         <translation>(Non collegato)</translation>
     </message>
@@ -996,7 +1353,7 @@
 <context>
     <name>tracelab::SceneWidget</name>
     <message>
-        <location filename="../lab/scenes/scenewidget.cpp" line="-80"/>
+        <location filename="../lab/scenes/scenewidget.cpp" line="-203"/>
         <source>Unknown scene &quot;%1&quot;</source>
         <translation>Scena sconosciuta &quot;%1&quot;</translation>
     </message>
@@ -1469,7 +1826,7 @@
 <context>
     <name>traceview::BtpBackend</name>
     <message>
-        <location filename="../lib/protocol/btpbackend.cpp" line="+346"/>
+        <location filename="../lib/protocol/btpbackend.cpp" line="+347"/>
         <source>Robot 0x%1 is online but its catalog has not arrived — check the hub (hub -manifest)</source>
         <translation>Il robot 0x%1 è online ma il suo catalogo non è arrivato — controlla l&apos;hub (hub -manifest)</translation>
     </message>
@@ -1534,7 +1891,7 @@
         <translation>il dispositivo è tornato alla console (BTP/1 CONSOLE)</translation>
     </message>
     <message>
-        <location line="+246"/>
+        <location line="+247"/>
         <source>Dropped an unsealed frame on a sealed direct session (check the robot&apos;s channel-B password)</source>
         <translation>Frame non sigillato scartato in una sessione diretta sigillata (controlla la password del canale B del robot)</translation>
     </message>
@@ -1559,7 +1916,7 @@
         <translation>input del terminale non inviato: sigillatura non riuscita</translation>
     </message>
     <message>
-        <location line="-523"/>
+        <location line="-524"/>
         <source>BTP handshake failed: %1</source>
         <translation>Handshake BTP non riuscito: %1</translation>
     </message>
@@ -2565,7 +2922,7 @@ Consentiti: %1</translation>
         <translation>Connessione</translation>
     </message>
     <message>
-        <location line="+81"/>
+        <location line="+91"/>
         <source>None</source>
         <translation>Nessuno</translation>
     </message>
@@ -2595,12 +2952,17 @@ Consentiti: %1</translation>
         <translation>ID di questo dispositivo:</translation>
     </message>
     <message>
-        <location line="-54"/>
+        <location line="-64"/>
         <source>Card title:</source>
         <translation>Titolo della scheda:</translation>
     </message>
     <message>
-        <location line="+5"/>
+        <location line="+9"/>
+        <source>Built-in device:</source>
+        <translation>Dispositivo integrato:</translation>
+    </message>
+    <message>
+        <location line="+6"/>
         <source>The robot&apos;s channel-B password. One per device: every TCP, BLE and hub connection above uses it.</source>
         <translation>La password del canale B del robot. Una per dispositivo: tutte le connessioni TCP, BLE e hub qui sopra la usano.</translation>
     </message>
@@ -2639,12 +3001,12 @@ Consentiti: %1</translation>
     </message>
     <message>
         <location line="+3"/>
-        <location line="+281"/>
+        <location line="+284"/>
         <source>e.g. robot1.local</source>
         <translation>es. robot1.local</translation>
     </message>
     <message>
-        <location line="-279"/>
+        <location line="-282"/>
         <source>Hostname or IP the OTA tab uses for this device&apos;s firmware upload. Left blank, the device is listed there but nothing can be polled or uploaded.</source>
         <translation>Nome host o IP che la scheda OTA usa per caricare il firmware di questo dispositivo. Se vuoto, il dispositivo è elencato ma non è possibile interrogarlo né caricare nulla.</translation>
     </message>
@@ -2670,25 +3032,25 @@ Consentiti: %1</translation>
     </message>
     <message>
         <location line="+24"/>
-        <location line="+242"/>
+        <location line="+245"/>
         <source>Connected</source>
         <translation>Connesso</translation>
     </message>
     <message>
-        <location line="-242"/>
-        <location line="+242"/>
+        <location line="-245"/>
+        <location line="+245"/>
         <source>Disconnected</source>
         <translation>Disconnesso</translation>
     </message>
     <message>
-        <location line="-239"/>
+        <location line="-242"/>
         <location line="+3"/>
-        <location line="+155"/>
+        <location line="+158"/>
         <source>(not connected yet)</source>
         <translation>(non ancora connesso)</translation>
     </message>
     <message>
-        <location line="-145"/>
+        <location line="-148"/>
         <source>Status:</source>
         <translation>Stato:</translation>
     </message>
@@ -2723,7 +3085,7 @@ Consentiti: %1</translation>
         <translation>Applica le impostazioni sopra e (ri)connetti ora, senza chiudere questa finestra.</translation>
     </message>
     <message>
-        <location line="+114"/>
+        <location line="+117"/>
         <source>%1 (last connection)</source>
         <translation>%1 (ultima connessione)</translation>
     </message>
@@ -2749,7 +3111,7 @@ Consentiti: %1</translation>
         <translation>il dispositivo segnala: %1</translation>
     </message>
     <message>
-        <location line="-241"/>
+        <location line="-244"/>
         <source>Reported by device</source>
         <translation>Segnalato dal dispositivo</translation>
     </message>
@@ -2757,7 +3119,12 @@ Consentiti: %1</translation>
 <context>
     <name>traceview::DeviceConnection</name>
     <message>
-        <location filename="../lib/core/deviceconnection.cpp" line="+196"/>
+        <location filename="../lib/core/deviceconnection.cpp" line="+108"/>
+        <source>device type &quot;%1&quot; is not available (is its module enabled?)</source>
+        <translation>tipo di dispositivo &quot;%1&quot; non disponibile (il suo modulo è attivo?)</translation>
+    </message>
+    <message>
+        <location line="+148"/>
         <source>transport rejected %1 bytes</source>
         <translation>il trasporto ha rifiutato %1 byte</translation>
     </message>
@@ -3316,7 +3683,7 @@ Consentiti: %1</translation>
         <translation>, </translation>
     </message>
     <message>
-        <location line="+687"/>
+        <location line="+744"/>
         <source>Pending</source>
         <translation>In attesa</translation>
     </message>
@@ -3460,12 +3827,12 @@ Perdite: %2</translation>
     </message>
     <message>
         <location line="+0"/>
-        <location line="+3730"/>
+        <location line="+3760"/>
         <source>Later</source>
         <translation>Più tardi</translation>
     </message>
     <message>
-        <location line="-3723"/>
+        <location line="-3753"/>
         <source>&amp;Access</source>
         <translation>&amp;Accesso</translation>
     </message>
@@ -3592,18 +3959,18 @@ Perdite: %2</translation>
     </message>
     <message>
         <location line="+18"/>
-        <location line="+3094"/>
+        <location line="+3124"/>
         <source>Undo</source>
         <translation>Annulla</translation>
     </message>
     <message>
-        <location line="-3092"/>
-        <location line="+3092"/>
+        <location line="-3122"/>
+        <location line="+3122"/>
         <source>Redo</source>
         <translation>Ripeti</translation>
     </message>
     <message>
-        <location line="-3049"/>
+        <location line="-3079"/>
         <source>Add Device</source>
         <translation>Aggiungi dispositivo</translation>
     </message>
@@ -3639,12 +4006,12 @@ Perdite: %2</translation>
     </message>
     <message>
         <location line="+29"/>
-        <location line="+2994"/>
+        <location line="+3024"/>
         <source>Fullscreen dashboard (F11)</source>
         <translation>Dashboard a schermo intero (F11)</translation>
     </message>
     <message>
-        <location line="-2814"/>
+        <location line="-2844"/>
         <source>Rename Workspace</source>
         <translation>Rinomina Spazio di Lavoro</translation>
     </message>
@@ -3725,12 +4092,17 @@ Perdite: %2</translation>
         <translation>Questa area di lavoro ora ha un aspetto proprio.</translation>
     </message>
     <message>
-        <location line="+1314"/>
+        <location line="+705"/>
+        <source>Robot or board</source>
+        <translation>Robot o scheda</translation>
+    </message>
+    <message>
+        <location line="+638"/>
         <source>%1: found at %2</source>
         <translation>%1: trovato su %2</translation>
     </message>
     <message>
-        <location line="+329"/>
+        <location line="+330"/>
         <source>%1: trying %2</source>
         <translation>%1: provo %2</translation>
     </message>
@@ -3857,13 +4229,13 @@ Scegli Più tardi per continuare a lavorare -- le modifiche verranno applicate l
         <translation>Chiudi app</translation>
     </message>
     <message>
-        <location line="-3041"/>
-        <location line="+2842"/>
+        <location line="-3071"/>
+        <location line="+2872"/>
         <source>Devices</source>
         <translation>Dispositivi</translation>
     </message>
     <message>
-        <location line="-2767"/>
+        <location line="-2797"/>
         <source>Subscriptions</source>
         <translation>Sottoscrizioni</translation>
     </message>
@@ -3905,23 +4277,23 @@ Scegli Più tardi per continuare a lavorare -- le modifiche verranno applicate l
     </message>
     <message>
         <location line="+71"/>
-        <location line="+2367"/>
+        <location line="+2397"/>
         <source>Add widget</source>
         <translation>Aggiungi widget</translation>
     </message>
     <message>
-        <location line="-2364"/>
+        <location line="-2394"/>
         <source>Remove selected widget (%1)</source>
         <translation>Rimuovi widget selezionato (%1)</translation>
     </message>
     <message>
         <location line="+3"/>
-        <location line="+2374"/>
+        <location line="+2404"/>
         <source>Add device</source>
         <translation>Aggiungi dispositivo</translation>
     </message>
     <message>
-        <location line="-2371"/>
+        <location line="-2401"/>
         <source>Remove selected device (%1)</source>
         <translation>Rimuovi dispositivo selezionato (%1)</translation>
     </message>
@@ -4011,7 +4383,7 @@ Scegli Più tardi per continuare a lavorare -- le modifiche verranno applicate l
         <translation>Nuovo Dispositivo</translation>
     </message>
     <message>
-        <location line="+379"/>
+        <location line="+404"/>
         <source>%1: robot is responding again</source>
         <translation>%1: il robot risponde di nuovo</translation>
     </message>
@@ -4072,17 +4444,17 @@ Scegli Più tardi per continuare a lavorare -- le modifiche verranno applicate l
         <translation>M&amp;ovimento</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="-1448"/>
+        <location filename="../lib/core/mainwindow.cpp" line="-1473"/>
         <source>Dashboard</source>
         <translation>Dashboard</translation>
     </message>
     <message>
-        <location line="+1794"/>
+        <location line="+1823"/>
         <source>%1: this BLE address now answers as a different robot (expected %2, got %3)</source>
         <translation>%1: questo indirizzo BLE ora risponde come un robot diverso (atteso %2, ricevuto %3)</translation>
     </message>
     <message>
-        <location line="+492"/>
+        <location line="+493"/>
         <source>Key &quot;%1&quot; is already used by another widget.</source>
         <translation>La chiave «%1» è già utilizzata da un altro widget.</translation>
     </message>
@@ -4113,7 +4485,8 @@ Scegli Più tardi per continuare a lavorare -- le modifiche verranno applicate l
         <translation>Salva progetto come</translation>
     </message>
     <message>
-        <location line="+14"/>
+        <location line="-3663"/>
+        <location line="+3677"/>
         <location line="+329"/>
         <source>Open Project</source>
         <translation>Apri progetto</translation>
@@ -4861,7 +5234,7 @@ Scegli Più tardi per continuare a lavorare -- le modifiche verranno applicate l
 <context>
     <name>traceview::RobotLinksPanel</name>
     <message>
-        <location filename="../lib/devices/robotlinkspanel.cpp" line="+37"/>
+        <location filename="../lib/devices/robotlinkspanel.cpp" line="+39"/>
         <source>Serial (USB)</source>
         <translation>Seriale (USB)</translation>
     </message>
@@ -4881,7 +5254,7 @@ Scegli Più tardi per continuare a lavorare -- le modifiche verranno applicate l
         <translation>Hub</translation>
     </message>
     <message>
-        <location line="+10"/>
+        <location line="+11"/>
         <source>Automatic: the USB port whose device reports the robot&apos;s name (or, if none does, the port last picked here). Pick or type a port to always use that one.</source>
         <translation>Automatico: la porta USB il cui dispositivo riporta il nome del robot (o, se nessuna lo fa, l&apos;ultima porta scelta qui). Scegli o digita una porta per usare sempre quella.</translation>
     </message>
@@ -4901,7 +5274,7 @@ Scegli Più tardi per continuare a lavorare -- le modifiche verranno applicate l
         <translation>Automatico: il robot con questo nome dietro qualsiasi hub connesso. Scegli un hub per cercare solo dietro quello.</translation>
     </message>
     <message>
-        <location line="+45"/>
+        <location line="+46"/>
         <source>Name:</source>
         <translation>Nome:</translation>
     </message>
@@ -5144,31 +5517,31 @@ Scegli Più tardi per continuare a lavorare -- le modifiche verranno applicate l
     </message>
     <message>
         <location line="-183"/>
-        <location line="+235"/>
+        <location line="+243"/>
         <source>Terminal</source>
         <translation>Terminale</translation>
     </message>
     <message>
-        <location line="-235"/>
-        <location line="+262"/>
+        <location line="-243"/>
+        <location line="+270"/>
         <source>Connections</source>
         <translation>Connessioni</translation>
     </message>
     <message>
-        <location line="-262"/>
-        <location line="+321"/>
+        <location line="-270"/>
+        <location line="+329"/>
         <source>Diagnostics</source>
         <translation>Diagnostica</translation>
     </message>
     <message>
-        <location line="-320"/>
-        <location line="+372"/>
+        <location line="-328"/>
+        <location line="+380"/>
         <location line="+5"/>
         <source>Updates</source>
         <translation>Aggiornamenti</translation>
     </message>
     <message>
-        <location line="-335"/>
+        <location line="-343"/>
         <source>Project and startup preferences shared by the application.</source>
         <translation>Preferenze di progetto e avvio condivise dall&apos;applicazione.</translation>
     </message>
@@ -5329,7 +5702,17 @@ Scegli Più tardi per continuare a lavorare -- le modifiche verranno applicate l
         <translation>Frequenza personalizzata</translation>
     </message>
     <message>
-        <location line="+11"/>
+        <location line="+10"/>
+        <source>Fast line drawing</source>
+        <translation>Disegno rapido delle linee</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Line charts denser than the plot keep only each pixel column&apos;s minimum and maximum, drawn without antialiasing. Lighter on the CPU; the result depends on the screen&apos;s resolution and scale.</source>
+        <translation>I grafici a linee più densi dell&apos;area del grafico mantengono solo il minimo e il massimo di ogni colonna di pixel, disegnati senza antialiasing. Più leggero per la CPU; il risultato dipende dalla risoluzione e dalla scala dello schermo.</translation>
+    </message>
+    <message>
+        <location line="+6"/>
         <source>Telemetry subscribe rate</source>
         <translation>Frequenza di sottoscrizione della telemetria</translation>
     </message>

@@ -17,6 +17,7 @@ class SerialTransport;
 class UsbHidManager;
 class HubTransport;
 class TcpTransport;
+class ModuleTransport;
 #ifdef TRACEVIEW_ENABLE_BLE
 class BleTransport;
 #endif
@@ -68,6 +69,12 @@ public:
     explicit DeviceConnection(CommType commType,
                               TransportType transportType = TransportType::Serial,
                               QObject* parent = nullptr);
+    // For `device` as configured: same as the constructor above with its
+    // commType and transportType, plus -- for TransportType::Module -- the
+    // Transport built by the registered type's factory from its id,
+    // moduleType and moduleConfig (core/moduledevicetype.h). A type that is
+    // not registered gets a transport that never comes up and says why.
+    explicit DeviceConnection(const Device& device, QObject* parent = nullptr);
     ~DeviceConnection() override;
 
     // Non-null only when transportType == TransportType::Serial; nullptr
@@ -176,6 +183,10 @@ public:
     // means "not configured", same convention as connectToTcp()'s empty
     // host.
     void connectToBle(const QString& address, const QByteArray& endpointKey);
+    // The TransportType::Module counterpart: an in-process endpoint has no
+    // target to name (its device type was fixed at construction), so this
+    // only records the intent and opens it. No-op on any other transport.
+    void connectToModule();
     // Marks intent "offline" and closes. Stops the retry timer -- unlike a
     // transport drop, this does not come back on its own.
     void disconnectFrom();
@@ -231,6 +242,7 @@ private:
     // the reported state and phase in line with that, idempotently.
     void syncHubState();
     void attemptReconnect();
+    void construct(CommType commType, TransportType transportType, const Device* device);
     // Intentional close path. Unlike session-recovery recycling, this first
     // asks an established serial BTP session to close and drains that final
     // frame before lowering DTR/RTS.
@@ -242,6 +254,7 @@ private:
     UsbHidManager* m_usbHidManager = nullptr;
     HubTransport* m_hubTransport = nullptr;
     TcpTransport* m_tcpTransport = nullptr;
+    ModuleTransport* m_moduleTransport = nullptr;
 #ifdef TRACEVIEW_ENABLE_BLE
     BleTransport* m_bleTransport = nullptr;
 #endif

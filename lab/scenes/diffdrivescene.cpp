@@ -25,6 +25,7 @@ const QString kSensorSpacing = QStringLiteral("sensor_spacing_m");
 const QString kLineRadius = QStringLiteral("line_radius_m");
 const QString kRenderRadius = QStringLiteral("render_radius_m");
 const QString kPerturbationStep = QStringLiteral("perturbation_step");
+const QString kAntialiasing = QStringLiteral("antialiasing");
 
 // A floor dot is left out where a track point is this close (m).
 constexpr double kFloorDotClearance = 0.667;
@@ -143,6 +144,9 @@ QList<SceneParam> DiffDriveScene::params() const {
          50.0, 1},
         {kPerturbationStep, QCoreApplication::translate("DiffDriveScene", "Perturbation step"),
          QStringLiteral("%"), 5.0, 0.1, 100.0, 1},
+        // Smoother shapes and text; off is cheaper to paint (pygame's look).
+        {kAntialiasing, QCoreApplication::translate("DiffDriveScene", "Antialiasing"), QString(),
+         1.0, 0.0, 1.0, 0, true},
     };
 }
 
@@ -152,6 +156,10 @@ void DiffDriveScene::setParam(const QString& name, const QVariant& value) {
     if (ok && m_params.contains(name)) {
         m_params[name] = number;
     }
+}
+
+bool DiffDriveScene::antialiased() const {
+    return param(kAntialiasing) != 0.0;
 }
 
 double DiffDriveScene::param(const QString& name) const {
@@ -374,8 +382,9 @@ double DiffDriveScene::elapsedSeconds() const {
 
 void DiffDriveScene::paint(QPainter& painter, const SceneView& view) {
     painter.save();
-    painter.setRenderHint(QPainter::Antialiasing, true);
-    painter.setRenderHint(QPainter::TextAntialiasing, true);
+    const bool antialiasing = antialiased();
+    painter.setRenderHint(QPainter::Antialiasing, antialiasing);
+    painter.setRenderHint(QPainter::TextAntialiasing, antialiasing);
     painter.fillRect(QRectF(QPointF(0, 0), view.size), kBackground);
 
     paintTrack(painter, view);
@@ -433,22 +442,45 @@ void DiffDriveScene::paintTrack(QPainter& painter, const SceneView& view) const 
     const DiffDrivePose current = pose();
     const double radius = param(kLineRadius) * scale(view);
     const QVector<int> near = trackPointsNear({current.x, current.y}, param(kRenderRadius));
-    painter.setPen(Qt::NoPen);
-    // Reached points first: the unreached ones are stamped over them, as in
-    // index order.
-    painter.setBrush(kTrackReached);
-    for (const int index : near) {
-        if (index < m_nextPoint) {
-            painter.drawEllipse(worldToScreen(m_track[index], view), radius, radius);
+    // One polyline per run of consecutive points, stroked as wide as the line
+    // with round caps and joins: the same look as a dot stamped on every
+    // point joined by strokes, in one call per run instead of two per point.
+    // Reached points (index < next_point) first, gray, the rest over them.
+    // The segment into next_point belongs to the reached run, as in index
+    // order.
+    const auto strokeRuns = [&](bool reached, const QColor& color) {
+        painter.setPen(QPen(color, 2.0 * radius, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
+        painter.setBrush(Qt::NoBrush);
+        QPolygonF run;
+        const auto flush = [&] {
+            if (run.size() == 1) {
+                painter.drawPoint(run.first());
+            } else if (run.size() > 1) {
+                painter.drawPolyline(run);
+            }
+            run.clear();
+        };
+        for (int k = 0; k < near.size(); ++k) {
+            const int index = near[k];
+            if ((index < m_nextPoint) != reached) {
+                // The first unreached point closes the reached run.
+                if (reached && !run.isEmpty() && near[k - 1] == index - 1) {
+                    run.append(worldToScreen(m_track[index], view));
+                }
+                flush();
+                continue;
+            }
+            if (k > 0 && near[k - 1] != index - 1) {
+                flush();
+            }
+            run.append(worldToScreen(m_track[index], view));
         }
-    }
-    painter.setBrush(kTrack);
-    for (const int index : near) {
-        if (index >= m_nextPoint) {
-            painter.drawEllipse(worldToScreen(m_track[index], view), radius, radius);
-        }
-    }
+        flush();
+    };
+    strokeRuns(true, kTrackReached);
+    strokeRuns(false, kTrack);
 }
+
 
 void DiffDriveScene::paintFloorDots(QPainter& painter, const SceneView& view) const {
     const DiffDrivePose current = pose();

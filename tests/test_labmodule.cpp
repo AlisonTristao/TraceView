@@ -1,4 +1,5 @@
 #include <QAction>
+#include <QFile>
 #include <QLabel>
 #include <QWidget>
 #include <QtTest>
@@ -13,6 +14,8 @@
 #include "lab/scenes/sceneconfigeditor.h"
 #include "lab/scenes/sceneregistry.h"
 #include "lab/scenes/scenewidget.h"
+#include "core/moduledevicetype.h"
+#include "lab/module/labpanel.h"
 #include "modules/moduleregistry.h"
 
 using namespace traceview;
@@ -32,6 +35,18 @@ public:
         m_actionCounts.append(actions.size());
         m_contents.emplace_back(content);
     }
+
+    bool registerDeviceType(const ModuleDeviceType& type) override {
+        m_deviceTypes.append(type.id);
+        return true;
+    }
+    bool openProject(const QString& path) override {
+        m_opened.append(path);
+        return true;
+    }
+
+    QStringList m_deviceTypes;
+    QStringList m_opened;
 
     QStringList m_labels;
     QList<int> m_actionCounts;
@@ -91,8 +106,16 @@ void TestLabModule::installRegistersSceneWidgetAndTab() {
     }
 
     QCOMPARE(host.m_labels, QStringList{"TraceLab"});
-    QCOMPARE(host.m_actionCounts, QList<int>{0});
-    QVERIFY(host.m_contents.front()->findChild<QLabel*>());
+    // New simulation, Play, Pause, Reset, Step.
+    QCOMPARE(host.m_actionCounts, QList<int>{5});
+    auto* panel = dynamic_cast<tracelab::LabPanel*>(host.m_contents.front().get());
+    QVERIFY(panel);
+    QCOMPARE(host.m_deviceTypes, (QStringList{"tracelab.linefollower.plant",
+                                              "tracelab.linefollower.controller"}));
+    // "New simulation" opens the built-in preset, which is there.
+    panel->ribbonActions().first()->trigger();
+    QCOMPARE(host.m_opened, QStringList{tracelab::LabPanel::lineFollowerPresetPath()});
+    QVERIFY(QFile::exists(tracelab::LabPanel::lineFollowerPresetPath()));
 }
 
 void TestLabModule::modeArgumentPicksTheLab() {

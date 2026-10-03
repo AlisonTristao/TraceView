@@ -46,6 +46,9 @@ struct SceneParam {
     double minimum = 0.0;
     double maximum = 0.0;
     int decimals = 2;
+    // An on/off option (0 or 1): a check box in the editor instead of a spin
+    // box; minimum, maximum and decimals are ignored.
+    bool toggle = false;
 };
 
 // Everything that arrived from one telemetry sample, for the inputs bound to
@@ -105,6 +108,14 @@ public:
     virtual void update(const SceneFrame& frame) = 0;
     // Draws the whole widget area (background included) for `view`.
     virtual void paint(QPainter& painter, const SceneView& view) = 0;
+
+    // Whether paint() antialiases. When it does not, SceneWidget skips its
+    // antialiased rounded clip (the cell's mask already cuts the corners):
+    // an aliased drawing under a path clip takes Qt's slow path and costs
+    // more than antialiasing saves.
+    virtual bool antialiased() const {
+        return true;
+    }
 
     // A Text input received a document (the line follower's track). `input`
     // is the input's name.

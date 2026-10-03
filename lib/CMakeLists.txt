@@ -316,6 +316,10 @@ add_library(traceview_dashboard STATIC
     dashboard/dashboarditem.cpp
     dashboard/dashboarditem.h
     dashboard/dashboardwidget.h
+    dashboard/repaintclock.cpp
+    dashboard/repaintclock.h
+    dashboard/topicsampledispatcher.cpp
+    dashboard/topicsampledispatcher.h
     dashboard/telemetryconsumer.h
     dashboard/widgetviewoption.h
     dashboard/widgetconfigeditor.cpp
@@ -653,6 +657,8 @@ set(TRACEVIEW_TRANSPORT_SOURCES
     core/deviceconnection.h
     core/hubtransport.cpp
     core/hubtransport.h
+    core/moduledevicetype.cpp
+    core/moduledevicetype.h
     core/tcptransport.cpp
     core/tcptransport.h
 )

@@ -116,6 +116,8 @@ private:
     WidgetRegistry& widgetRegistry() override;
     void addRibbonTab(const QString& label, const QList<QAction*>& actions,
                       QWidget* content) override;
+    bool registerDeviceType(const ModuleDeviceType& type) override;
+    bool openProject(const QString& path) override;
 
     void buildMenus();
     // Rebuilds the Access menu's contents from UserModeManager's current

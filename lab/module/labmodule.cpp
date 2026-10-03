@@ -1,10 +1,10 @@
 #include "labmodule.h"
 
 #include <QCoreApplication>
-#include <QLabel>
-#include <QVBoxLayout>
-#include <QWidget>
 
+#include "core/moduledevicetype.h"
+#include "lab/benchmarks/linefollower/device/lfdevices.h"
+#include "lab/module/labpanel.h"
 #include "lab/scenes/sceneregistry.h"
 #include "lab/scenes/scenewidget.h"
 
@@ -26,19 +26,14 @@ QString LabModule::description() const {
 void LabModule::install(traceview::ModuleHost& host) {
     registerBuiltinScenes(SceneRegistry::instance());
     registerSceneWidget(host.widgetRegistry());
+    // The line-follower benchmark's plant and controller host, as devices of
+    // their own on the Devices tab and in projects.
+    for (const traceview::ModuleDeviceType& type : lf::lineFollowerDeviceTypes()) {
+        host.registerDeviceType(type);
+    }
 
-    // Placeholder until the run panel exists (plan phase T6).
-    auto* content = new QWidget;
-    auto* label = new QLabel(
-        QCoreApplication::translate("LabModule",
-                                    "The simulation engine is not available yet. Add a Scene "
-                                    "widget to a dashboard to show a plant."),
-        content);
-    label->setAlignment(Qt::AlignCenter);
-    label->setWordWrap(true);
-    auto* layout = new QVBoxLayout(content);
-    layout->addWidget(label);
-    host.addRibbonTab(displayName(), {}, content);
+    auto* panel = new LabPanel([&host](const QString& path) { return host.openProject(path); });
+    host.addRibbonTab(displayName(), panel->ribbonActions(), panel);
 }
 
 }  // namespace tracelab

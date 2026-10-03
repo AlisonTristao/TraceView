@@ -1,6 +1,7 @@
 #include "sceneconfigeditor.h"
 
 #include <QComboBox>
+#include <QCheckBox>
 #include <QDoubleSpinBox>
 #include <QFormLayout>
 #include <QLabel>
@@ -263,6 +264,20 @@ void SceneConfigEditor::rebuildRows() {
     }
 
     for (const SceneParam& param : std::as_const(m_params)) {
+        if (param.toggle) {
+            auto* check = new QCheckBox(this);
+            check->setChecked(m_paramValues.value(param.name, param.defaultValue) != 0.0);
+            const QString name = param.name;
+            connect(check, &QCheckBox::toggled, this, [this, name](bool on) {
+                if (m_updating) {
+                    return;
+                }
+                m_paramValues[name] = on ? 1.0 : 0.0;
+                emitChanged();
+            });
+            m_paramsLayout->addRow(param.label, check);
+            continue;
+        }
         auto* spin = new QDoubleSpinBox(this);
         spin->setRange(param.minimum, param.maximum);
         spin->setDecimals(param.decimals);

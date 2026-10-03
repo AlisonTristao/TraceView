@@ -39,6 +39,8 @@ struct ControllerOutput {
     QVector<double> diag;
     QVector<double> predictedX;
     QVector<double> predictedY;
+    // The predicted heading (rad, car frame of this tick), empty without.
+    QVector<double> predictedTheta;
     int iterations = 0;
 };
 
@@ -55,6 +57,14 @@ public:
     // Sizes taken from the plant's manifest: y[] and u[] widths. False, with
     // `error`, when the controller cannot work with them.
     virtual bool configure(int measurementCount, int inputCount, QString* error) = 0;
+    // The names of y[] (loop.state's measurement fields in declaration
+    // order; an array field of n elements is "name[0]".."name[n-1]") and of
+    // u[] (loop.u's inputs), for an adapter that picks its values by name.
+    // Called before configure(); the default ignores them.
+    virtual void setSignalNames(const QStringList& measurements, const QStringList& inputs) {
+        Q_UNUSED(measurements);
+        Q_UNUSED(inputs);
+    }
     // Back to the initial internal state (sim.reset).
     virtual void reset() = 0;
 

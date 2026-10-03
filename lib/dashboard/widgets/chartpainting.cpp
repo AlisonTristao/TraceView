@@ -203,6 +203,18 @@ void paintChartBackground(QPainter& painter, const DashboardWidget& widget,
     painter.drawPath(widget.roundedPath(strokeRect));
 }
 
+void paintChartBackground(QPainter& painter, const QPainterPath& fill,
+                          const QPainterPath& outline, bool drawOutline,
+                          const ThemePalette& palette) {
+    painter.fillPath(fill, palette.surface);
+    if (!drawOutline) {
+        return;
+    }
+    painter.setPen(QPen(palette.border, 1));
+    painter.setBrush(Qt::NoBrush);
+    painter.drawPath(outline);
+}
+
 QFont chartTickFont(const QFont& base, const ChartStyle& style) {
     QFont font = base;
 #if QT_VERSION >= QT_VERSION_CHECK(6, 7, 0)

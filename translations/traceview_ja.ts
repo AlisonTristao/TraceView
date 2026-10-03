@@ -145,13 +145,13 @@
 <context>
     <name>ChartWidgets</name>
     <message>
-        <location filename="../lib/dashboard/widgets/chartwidgets.cpp" line="+38"/>
+        <location filename="../lib/dashboard/widgets/chartwidgets.cpp" line="+46"/>
         <source>Field %1</source>
         <translation>フィールド %1</translation>
     </message>
     <message>
         <location line="+9"/>
-        <location line="+507"/>
+        <location line="+560"/>
         <location line="+231"/>
         <source>--</source>
         <translation>--</translation>
@@ -163,12 +163,12 @@
     </message>
     <message>
         <location line="+6"/>
-        <location line="+305"/>
+        <location line="+355"/>
         <source>%1  %2</source>
         <translation>%1  %2</translation>
     </message>
     <message>
-        <location line="+133"/>
+        <location line="+139"/>
         <source>A-B %1 s</source>
         <translation>A-B %1 s</translation>
     </message>
@@ -233,12 +233,12 @@
         <translation>一時停止中</translation>
     </message>
     <message>
-        <location line="-739"/>
+        <location line="-795"/>
         <source>%1: %2</source>
         <translation>%1: %2</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/chartpainting.cpp" line="+879"/>
+        <location filename="../lib/dashboard/widgets/chartpainting.cpp" line="+891"/>
         <source>Time (s)</source>
         <translation>時間 (s)</translation>
     </message>
@@ -390,7 +390,7 @@
 <context>
     <name>Device</name>
     <message>
-        <location filename="../lib/devices/device.h" line="+54"/>
+        <location filename="../lib/devices/device.h" line="+58"/>
         <source>Serial</source>
         <translation>シリアル</translation>
     </message>
@@ -415,7 +415,12 @@
         <translation>BLE</translation>
     </message>
     <message>
-        <location filename="../lib/devices/device.cpp" line="+292"/>
+        <location line="+2"/>
+        <source>Built-in</source>
+        <translation>内蔵</translation>
+    </message>
+    <message>
+        <location filename="../lib/devices/device.cpp" line="+303"/>
         <source>auto</source>
         <translation>自動</translation>
     </message>
@@ -449,7 +454,7 @@
 <context>
     <name>DiffDriveScene</name>
     <message>
-        <location filename="../lab/scenes/diffdrivescene.cpp" line="+130"/>
+        <location filename="../lab/scenes/diffdrivescene.cpp" line="+132"/>
         <source>Scale</source>
         <translation>スケール</translation>
     </message>
@@ -489,12 +494,17 @@
         <translation>外乱ステップ</translation>
     </message>
     <message>
-        <location line="+279"/>
+        <location line="+3"/>
+        <source>Antialiasing</source>
+        <translation>アンチエイリアス</translation>
+    </message>
+    <message>
+        <location line="+282"/>
         <source>covered: %1%</source>
         <translation>走破: %1%</translation>
     </message>
     <message>
-        <location line="+5"/>
+        <location line="-1"/>
         <source>score: %1</source>
         <translation>スコア: %1</translation>
     </message>
@@ -547,16 +557,52 @@
         <source>Simulates a plant, closes the loop with your controller and animates it.</source>
         <translation>プラントをシミュレーションし、あなたのコントローラーでループを閉じてアニメーション表示します。</translation>
     </message>
+</context>
+<context>
+    <name>LineControllerAdapter</name>
     <message>
-        <location line="+11"/>
-        <source>The simulation engine is not available yet. Add a Scene widget to a dashboard to show a plant.</source>
-        <translation>シミュレーションエンジンはまだ利用できません。プラントを表示するには、ダッシュボードにシーンウィジェットを追加してください。</translation>
+        <location filename="../lab/benchmarks/linefollower/device/lfcontrolleradapter.cpp" line="+137"/>
+        <source>PD (line sensors)</source>
+        <translation>PD（ラインセンサー）</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>no controller</source>
+        <translation>コントローラーなし</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source> + low-pass %1 s</source>
+        <translation> + ローパス %1 s</translation>
+    </message>
+    <message>
+        <location line="+28"/>
+        <source>the plant does not publish s[] and take u_l, u_r</source>
+        <translation>プラントが s[] を公開せず、u_l、u_r も受け付けません</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>the plant does not publish w_l, w_r and take u_l, u_r</source>
+        <translation>プラントが w_l, w_r を公開せず u_l, u_r を受け取りません</translation>
+    </message>
+</context>
+<context>
+    <name>LineFollowerDevices</name>
+    <message>
+        <location filename="../lab/benchmarks/linefollower/device/lfdevices.cpp" line="+173"/>
+        <source>TraceLab: Line follower</source>
+        <translation>TraceLab：ライントレーサー</translation>
+    </message>
+    <message>
+        <location line="+22"/>
+        <source>TraceLab: Controller</source>
+        <translation>TraceLab：コントローラー</translation>
     </message>
 </context>
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="+135"/>
+        <location filename="../lib/core/mainwindow.cpp" line="+139"/>
         <source>TraceView Project (*.tvproj)</source>
         <translation>TraceView プロジェクト (*.tvproj)</translation>
     </message>
@@ -813,7 +859,7 @@
 <context>
     <name>SceneWidget</name>
     <message>
-        <location filename="../lab/scenes/scenewidget.cpp" line="+379"/>
+        <location filename="../lab/scenes/scenewidget.cpp" line="+505"/>
         <source>Scene</source>
         <translation>シーン</translation>
     </message>
@@ -956,9 +1002,320 @@
     </message>
 </context>
 <context>
+    <name>tracelab::EndpointTransport</name>
+    <message>
+        <location filename="../lab/plant/endpointtransport.cpp" line="+30"/>
+        <source>the built-in device did not start</source>
+        <translation>内蔵デバイスが起動しませんでした</translation>
+    </message>
+</context>
+<context>
+    <name>tracelab::LabPanel</name>
+    <message>
+        <location filename="../lab/module/labpanel.cpp" line="+41"/>
+        <source>New simulation</source>
+        <translation>新しいシミュレーション</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Opens the line-follower preset: the simulated plant, the controller and a dashboard with the scene and charts.</source>
+        <translation>ライントレーサーのプリセットを開きます：シミュレートされたプラント、コントローラー、シーンとチャートのダッシュボード。</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Play</source>
+        <translation>再生</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Pause</source>
+        <translation>一時停止</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Reset</source>
+        <translation>リセット</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Step</source>
+        <translation>ステップ</translation>
+    </message>
+    <message>
+        <location line="+12"/>
+        <source>New simulation: Line follower</source>
+        <translation>新しいシミュレーション：ライントレーサー</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>No TraceLab device in this project. Start a new simulation, or add a TraceLab device on the Devices tab.</source>
+        <translation>このプロジェクトには TraceLab デバイスがありません。新しいシミュレーションを開始するか、[デバイス] タブで TraceLab デバイスを追加してください。</translation>
+    </message>
+    <message>
+        <location line="+13"/>
+        <source>Run</source>
+        <translation>実行</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Plant:</source>
+        <translation>プラント：</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>1x (real time)</source>
+        <translation>1x（リアルタイム）</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>2x</source>
+        <translation>2x</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>As fast as possible</source>
+        <translation>できるだけ速く</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Lockstep (waits for the controller)</source>
+        <translation>ロックステップ（コントローラーを待つ）</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Speed:</source>
+        <translation>速度：</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Status:</source>
+        <translation>状態：</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Track and sensors</source>
+        <translation>コースとセンサー</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>-1 draws a random track on every reset.</source>
+        <translation>-1 はリセットのたびにランダムなコースを生成します。</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Track seed:</source>
+        <translation>コースのシード：</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Lemniscate</source>
+        <translation>レムニスケート</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Circle</source>
+        <translation>円</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Track type:</source>
+        <translation>コースの種類：</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Sensor noise</source>
+        <translation>センサーノイズ</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Synthetic noise on the gyro and the line sensors (the encoders always count whole ticks).</source>
+        <translation>ジャイロとラインセンサーへの合成ノイズ（エンコーダーは常に整数パルスを数えます）。</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Apply and reset</source>
+        <translation>適用してリセット</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Controller</source>
+        <translation>コントローラー</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Device:</source>
+        <translation>デバイス：</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>qLPV MPC</source>
+        <translation>qLPV MPC</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>GPC</source>
+        <translation>GPC</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>PD (line sensors)</source>
+        <translation>PD（ラインセンサー）</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Controller:</source>
+        <translation>コントローラー：</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source> s</source>
+        <translation> s</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>off</source>
+        <translation>オフ</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>First-order low-pass on the measured wheel speeds (the C filter runtime); 0 turns it off.</source>
+        <translation>測定した車輪速度に一次ローパス（C フィルターランタイム）をかけます。0 でオフ。</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Wheel-speed filter:</source>
+        <translation>車輪速度フィルター：</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>qLPV lateral weight:</source>
+        <translation>qLPV 横方向の重み：</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Frozen (rho of now, whole horizon)</source>
+        <translation>固定（現在の rho を全ホライズンに）</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Warm start (last prediction)</source>
+        <translation>ウォームスタート（前回の予測）</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Taylor (first order around now)</source>
+        <translation>テイラー（現在まわりの1次近似）</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Iterative (re-solve until rho settles)</source>
+        <translation>反復（rho が収束するまで再計算）</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>How the qLPV MPC fills the scheduling variable rho over the horizon.</source>
+        <translation>qLPV MPC がホライズン全体でスケジューリング変数 rho をどう決めるか。</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>qLPV rho scheduling:</source>
+        <translation>qLPV の rho スケジューリング:</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>qLPV embedding:</source>
+        <translation>qLPV 埋め込み:</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Most QPs per step with the iterative scheduling.</source>
+        <translation>反復スケジューリング時の1ステップあたりの最大 QP 数。</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>qLPV iterations:</source>
+        <translation>qLPV 反復回数:</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>GPC control weight:</source>
+        <translation>GPC 制御の重み：</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source> %/m</source>
+        <translation> %/m</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Wheel speed difference per metre of line offset under the sensor array.</source>
+        <translation>センサーアレイ下のラインのずれ 1 m あたりの左右車輪の速度差。</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>PD Kp:</source>
+        <translation>PD Kp:</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source> %s/m</source>
+        <translation> %s/m</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>PD Kd:</source>
+        <translation>PD Kd:</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source> %</source>
+        <translation> %</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Command on both wheels before the PD correction: the speed.</source>
+        <translation>PD 補正前に両輪へ与える指令値（速度）。</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>PD base speed:</source>
+        <translation>PD 基本速度:</translation>
+    </message>
+    <message>
+        <location line="+138"/>
+        <source>running</source>
+        <translation>実行中</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>paused</source>
+        <translation>一時停止中</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>, tick %1, t = %2 s, covered %3 %</source>
+        <translation>、ティック %1、t = %2 s、走行 %3 %</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>, perturbation %1 %</source>
+        <translation>、外乱 %1 %</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>, controller connected</source>
+        <translation>、コントローラー接続済み</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>, controller waiting for the plant</source>
+        <translation>、コントローラーはプラント待ち</translation>
+    </message>
+</context>
+<context>
     <name>tracelab::SceneConfigEditor</name>
     <message>
-        <location filename="../lab/scenes/sceneconfigeditor.cpp" line="+129"/>
+        <location filename="../lab/scenes/sceneconfigeditor.cpp" line="+130"/>
         <source>Bind by name</source>
         <translation>名前でバインド</translation>
     </message>
@@ -983,7 +1340,7 @@
         <translation>パラメーター</translation>
     </message>
     <message>
-        <location line="+146"/>
+        <location line="+160"/>
         <source>(Unbound)</source>
         <translation>（未バインド）</translation>
     </message>
@@ -996,7 +1353,7 @@
 <context>
     <name>tracelab::SceneWidget</name>
     <message>
-        <location filename="../lab/scenes/scenewidget.cpp" line="-80"/>
+        <location filename="../lab/scenes/scenewidget.cpp" line="-203"/>
         <source>Unknown scene &quot;%1&quot;</source>
         <translation>不明なシーン「%1」</translation>
     </message>
@@ -1469,7 +1826,7 @@
 <context>
     <name>traceview::BtpBackend</name>
     <message>
-        <location filename="../lib/protocol/btpbackend.cpp" line="+346"/>
+        <location filename="../lib/protocol/btpbackend.cpp" line="+347"/>
         <source>Robot 0x%1 is online but its catalog has not arrived — check the hub (hub -manifest)</source>
         <translation>ロボット 0x%1 はオンラインですが、カタログが届いていません — ハブを確認してください (hub -manifest)</translation>
     </message>
@@ -1534,7 +1891,7 @@
         <translation>デバイスがコンソールに戻りました (BTP/1 CONSOLE)</translation>
     </message>
     <message>
-        <location line="+246"/>
+        <location line="+247"/>
         <source>Dropped an unsealed frame on a sealed direct session (check the robot&apos;s channel-B password)</source>
         <translation>封印された直接セッションで、封印されていないフレームを破棄しました (ロボットのチャンネル B パスワードを確認してください)</translation>
     </message>
@@ -1559,7 +1916,7 @@
         <translation>ターミナル入力を送信できません: 封印に失敗しました</translation>
     </message>
     <message>
-        <location line="-523"/>
+        <location line="-524"/>
         <source>BTP handshake failed: %1</source>
         <translation>BTP ハンドシェイクに失敗しました: %1</translation>
     </message>
@@ -2565,7 +2922,7 @@ Allowed: %1</source>
         <translation>接続</translation>
     </message>
     <message>
-        <location line="+81"/>
+        <location line="+91"/>
         <source>None</source>
         <translation>なし</translation>
     </message>
@@ -2595,12 +2952,17 @@ Allowed: %1</source>
         <translation>このデバイスの ID:</translation>
     </message>
     <message>
-        <location line="-54"/>
+        <location line="-64"/>
         <source>Card title:</source>
         <translation>カードのタイトル:</translation>
     </message>
     <message>
-        <location line="+5"/>
+        <location line="+9"/>
+        <source>Built-in device:</source>
+        <translation>内蔵デバイス：</translation>
+    </message>
+    <message>
+        <location line="+6"/>
         <source>The robot&apos;s channel-B password. One per device: every TCP, BLE and hub connection above uses it.</source>
         <translation>ロボットのチャンネル B パスワード。デバイスごとに 1 つ: 上の TCP、BLE、ハブ接続はすべてこれを使います。</translation>
     </message>
@@ -2639,12 +3001,12 @@ Allowed: %1</source>
     </message>
     <message>
         <location line="+3"/>
-        <location line="+281"/>
+        <location line="+284"/>
         <source>e.g. robot1.local</source>
         <translation>例: robot1.local</translation>
     </message>
     <message>
-        <location line="-279"/>
+        <location line="-282"/>
         <source>Hostname or IP the OTA tab uses for this device&apos;s firmware upload. Left blank, the device is listed there but nothing can be polled or uploaded.</source>
         <translation>OTA タブがこのデバイスのファームウェアをアップロードする際に使うホスト名または IP。空欄の場合、デバイスは一覧に出ますが、問い合わせもアップロードもできません。</translation>
     </message>
@@ -2670,25 +3032,25 @@ Allowed: %1</source>
     </message>
     <message>
         <location line="+24"/>
-        <location line="+242"/>
+        <location line="+245"/>
         <source>Connected</source>
         <translation>接続済み</translation>
     </message>
     <message>
-        <location line="-242"/>
-        <location line="+242"/>
+        <location line="-245"/>
+        <location line="+245"/>
         <source>Disconnected</source>
         <translation>切断されました</translation>
     </message>
     <message>
-        <location line="-239"/>
+        <location line="-242"/>
         <location line="+3"/>
-        <location line="+155"/>
+        <location line="+158"/>
         <source>(not connected yet)</source>
         <translation>(未接続)</translation>
     </message>
     <message>
-        <location line="-145"/>
+        <location line="-148"/>
         <source>Status:</source>
         <translation>状態:</translation>
     </message>
@@ -2723,7 +3085,7 @@ Allowed: %1</source>
         <translation>上記の設定を適用し、このダイアログを閉じずに今すぐ（再）接続します。</translation>
     </message>
     <message>
-        <location line="+114"/>
+        <location line="+117"/>
         <source>%1 (last connection)</source>
         <translation>%1（前回の接続）</translation>
     </message>
@@ -2749,7 +3111,7 @@ Allowed: %1</source>
         <translation>デバイスの報告: %1</translation>
     </message>
     <message>
-        <location line="-241"/>
+        <location line="-244"/>
         <source>Reported by device</source>
         <translation>デバイスからの報告</translation>
     </message>
@@ -2757,7 +3119,12 @@ Allowed: %1</source>
 <context>
     <name>traceview::DeviceConnection</name>
     <message>
-        <location filename="../lib/core/deviceconnection.cpp" line="+196"/>
+        <location filename="../lib/core/deviceconnection.cpp" line="+108"/>
+        <source>device type &quot;%1&quot; is not available (is its module enabled?)</source>
+        <translation>デバイスの種類「%1」は使用できません（モジュールは有効ですか？）</translation>
+    </message>
+    <message>
+        <location line="+148"/>
         <source>transport rejected %1 bytes</source>
         <translation>トランスポートが %1 バイトを拒否しました</translation>
     </message>
@@ -3315,7 +3682,7 @@ Allowed: %1</source>
         <translation>、</translation>
     </message>
     <message>
-        <location line="+687"/>
+        <location line="+744"/>
         <source>Pending</source>
         <translation>保留中</translation>
     </message>
@@ -3459,12 +3826,12 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+0"/>
-        <location line="+3730"/>
+        <location line="+3760"/>
         <source>Later</source>
         <translation>後で</translation>
     </message>
     <message>
-        <location line="-3723"/>
+        <location line="-3753"/>
         <source>&amp;Access</source>
         <translation>アクセス(&amp;A)</translation>
     </message>
@@ -3591,18 +3958,18 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+18"/>
-        <location line="+3094"/>
+        <location line="+3124"/>
         <source>Undo</source>
         <translation>元に戻す</translation>
     </message>
     <message>
-        <location line="-3092"/>
-        <location line="+3092"/>
+        <location line="-3122"/>
+        <location line="+3122"/>
         <source>Redo</source>
         <translation>やり直し</translation>
     </message>
     <message>
-        <location line="-3049"/>
+        <location line="-3079"/>
         <source>Add Device</source>
         <translation>デバイスを追加</translation>
     </message>
@@ -3638,12 +4005,12 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+29"/>
-        <location line="+2994"/>
+        <location line="+3024"/>
         <source>Fullscreen dashboard (F11)</source>
         <translation>ダッシュボードを全画面表示(F11)</translation>
     </message>
     <message>
-        <location line="-2814"/>
+        <location line="-2844"/>
         <source>Rename Workspace</source>
         <translation>ワークスペースの名前を変更</translation>
     </message>
@@ -3724,12 +4091,17 @@ Drops: %2</source>
         <translation>このワークスペースは独自の外観を持つようになりました。</translation>
     </message>
     <message>
-        <location line="+1314"/>
+        <location line="+705"/>
+        <source>Robot or board</source>
+        <translation>ロボットまたはボード</translation>
+    </message>
+    <message>
+        <location line="+638"/>
         <source>%1: found at %2</source>
         <translation>%1: %2 で見つかりました</translation>
     </message>
     <message>
-        <location line="+329"/>
+        <location line="+330"/>
         <source>%1: trying %2</source>
         <translation>%1: %2 を試行中</translation>
     </message>
@@ -3856,13 +4228,13 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>アプリを閉じる</translation>
     </message>
     <message>
-        <location line="-3041"/>
-        <location line="+2842"/>
+        <location line="-3071"/>
+        <location line="+2872"/>
         <source>Devices</source>
         <translation>デバイス</translation>
     </message>
     <message>
-        <location line="-2767"/>
+        <location line="-2797"/>
         <source>Subscriptions</source>
         <translation>購読</translation>
     </message>
@@ -3904,23 +4276,23 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     </message>
     <message>
         <location line="+71"/>
-        <location line="+2367"/>
+        <location line="+2397"/>
         <source>Add widget</source>
         <translation>ウィジェットを追加</translation>
     </message>
     <message>
-        <location line="-2364"/>
+        <location line="-2394"/>
         <source>Remove selected widget (%1)</source>
         <translation>選択したウィジェットを削除(%1)</translation>
     </message>
     <message>
         <location line="+3"/>
-        <location line="+2374"/>
+        <location line="+2404"/>
         <source>Add device</source>
         <translation>デバイスを追加</translation>
     </message>
     <message>
-        <location line="-2371"/>
+        <location line="-2401"/>
         <source>Remove selected device (%1)</source>
         <translation>選択したデバイスを削除(%1)</translation>
     </message>
@@ -4010,7 +4382,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>新しいデバイス</translation>
     </message>
     <message>
-        <location line="+379"/>
+        <location line="+404"/>
         <source>%1: robot is responding again</source>
         <translation>%1: ロボットが再び応答しています</translation>
     </message>
@@ -4071,17 +4443,17 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>モーション(&amp;O)</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="-1448"/>
+        <location filename="../lib/core/mainwindow.cpp" line="-1473"/>
         <source>Dashboard</source>
         <translation>ダッシュボード</translation>
     </message>
     <message>
-        <location line="+1794"/>
+        <location line="+1823"/>
         <source>%1: this BLE address now answers as a different robot (expected %2, got %3)</source>
         <translation>%1: この BLE アドレスは別のロボットとして応答しています (期待値 %2、実際 %3)</translation>
     </message>
     <message>
-        <location line="+492"/>
+        <location line="+493"/>
         <source>Key &quot;%1&quot; is already used by another widget.</source>
         <translation>キー「%1」は既に別のウィジェットで使用されています。</translation>
     </message>
@@ -4112,7 +4484,8 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>名前を付けてプロジェクトを保存</translation>
     </message>
     <message>
-        <location line="+14"/>
+        <location line="-3663"/>
+        <location line="+3677"/>
         <location line="+329"/>
         <source>Open Project</source>
         <translation>プロジェクトを開く</translation>
@@ -4860,7 +5233,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
 <context>
     <name>traceview::RobotLinksPanel</name>
     <message>
-        <location filename="../lib/devices/robotlinkspanel.cpp" line="+37"/>
+        <location filename="../lib/devices/robotlinkspanel.cpp" line="+39"/>
         <source>Serial (USB)</source>
         <translation>シリアル (USB)</translation>
     </message>
@@ -4880,7 +5253,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>ハブ</translation>
     </message>
     <message>
-        <location line="+10"/>
+        <location line="+11"/>
         <source>Automatic: the USB port whose device reports the robot&apos;s name (or, if none does, the port last picked here). Pick or type a port to always use that one.</source>
         <translation>自動: デバイスがロボット名を報告している USB ポート (該当がなければ、ここで最後に選んだポート)。常に特定のポートを使うには、選択または入力してください。</translation>
     </message>
@@ -4900,7 +5273,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>自動: 接続中のいずれかのハブの先にいる、この名前のロボット。特定のハブの先だけを探すには、ハブを選択してください。</translation>
     </message>
     <message>
-        <location line="+45"/>
+        <location line="+46"/>
         <source>Name:</source>
         <translation>名前:</translation>
     </message>
@@ -5143,31 +5516,31 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     </message>
     <message>
         <location line="-183"/>
-        <location line="+235"/>
+        <location line="+243"/>
         <source>Terminal</source>
         <translation>ターミナル</translation>
     </message>
     <message>
-        <location line="-235"/>
-        <location line="+262"/>
+        <location line="-243"/>
+        <location line="+270"/>
         <source>Connections</source>
         <translation>接続</translation>
     </message>
     <message>
-        <location line="-262"/>
-        <location line="+321"/>
+        <location line="-270"/>
+        <location line="+329"/>
         <source>Diagnostics</source>
         <translation>診断</translation>
     </message>
     <message>
-        <location line="-320"/>
-        <location line="+372"/>
+        <location line="-328"/>
+        <location line="+380"/>
         <location line="+5"/>
         <source>Updates</source>
         <translation>アップデート</translation>
     </message>
     <message>
-        <location line="-335"/>
+        <location line="-343"/>
         <source>Project and startup preferences shared by the application.</source>
         <translation>アプリケーション全体で共有されるプロジェクトと起動の設定。</translation>
     </message>
@@ -5328,7 +5701,17 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>カスタムレート</translation>
     </message>
     <message>
-        <location line="+11"/>
+        <location line="+10"/>
+        <source>Fast line drawing</source>
+        <translation>高速な線描画</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Line charts denser than the plot keep only each pixel column&apos;s minimum and maximum, drawn without antialiasing. Lighter on the CPU; the result depends on the screen&apos;s resolution and scale.</source>
+        <translation>プロット領域より密な折れ線グラフは、ピクセル列ごとに最小値と最大値だけを残し、アンチエイリアスなしで描画します。CPU 負荷が軽くなります。結果は画面の解像度と拡大率によって異なります。</translation>
+    </message>
+    <message>
+        <location line="+6"/>
         <source>Telemetry subscribe rate</source>
         <translation>テレメトリ購読レート</translation>
     </message>

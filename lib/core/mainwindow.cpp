@@ -1,3 +1,4 @@
+#include "dashboard/topicsampledispatcher.h"
 #include "mainwindow.h"
 
 #include <QActionGroup>
@@ -21,6 +22,7 @@
 #include <QLabel>
 #include <QLineEdit>
 #include <QMenu>
+#include <QCursor>
 #include <QMenuBar>
 #include <QMessageBox>
 #include <QMoveEvent>
@@ -83,6 +85,7 @@
 #include "dashboardgallerydialog.h"
 #include "manageusersdialog.h"
 #include "modules/moduleregistry.h"
+#include "core/moduledevicetype.h"
 #include "ota/otatab.h"
 #include "paneldockcontroller.h"
 #include "preferences/appsettings.h"
@@ -835,6 +838,19 @@ void MainWindow::addRibbonTab(const QString& label, const QList<QAction*>& actio
     m_ribbon->addTab(label, page);
 }
 
+bool MainWindow::registerDeviceType(const ModuleDeviceType& type) {
+    return ModuleDeviceTypeRegistry::instance().registerType(type);
+}
+
+bool MainWindow::openProject(const QString& path) {
+    if (!loadProjectFile(path)) {
+        DialogPresenter::warning(this, tr("Open Project"), ProjectStore::instance().lastError());
+        return false;
+    }
+    m_ribbon->setCurrentIndex(m_dashboardTabIndex);
+    return true;
+}
+
 MainWindow::~MainWindow() {
     // The dashboard's widgets are deleted later, as QObject children, i.e.
     // after this class's own members are gone -- so their destroyed()
@@ -892,7 +908,14 @@ void MainWindow::showStatusMessage(const QString& text, int timeoutMs) {
 }
 
 void MainWindow::wireChartWidgetToTelemetry(DashboardWidget* widget) {
-    if (dynamic_cast<TelemetryConsumer*>(widget)) {
+    if (auto* consumer = dynamic_cast<TelemetryConsumer*>(widget)) {
+        // Its commands go out the way a device script's do (Backend::
+        // sendCommand()), to whichever of its devices it names.
+        consumer->setCommandSender([this](const QString& deviceId, const QString& commandLine) {
+            if (DeviceConnection* target = m_deviceConnections.value(deviceId)) {
+                target->backend()->sendCommand(commandLine.toUtf8());
+            }
+        });
         connect(widget, &QObject::destroyed, this, [this, widget] {
             const ConsumerSubscriptions subs = m_consumerSubscriptions.take(widget);
             for (const WidgetSubscription& sub : subs.topics) {
@@ -946,20 +969,37 @@ void MainWindow::refreshWidgetSubscription(DashboardWidget* widget) {
     }
 
     if (!newConnection) {
+        if (oldBackend) {
+            TopicSampleDispatcher::of(oldBackend)->remove(widget);
+        }
         sub.deviceId = request.deviceId;
         sub.handle = 0;
         sub.backend = nullptr;
         return;
     }
 
+    // Charts and gauges get the scalar samples of their own (source, topic)
+    // only, through the Backend's TopicSampleDispatcher -- re-registered on
+    // every refresh, since the topic can change on the same Backend.
+    if (oldBackend) {
+        TopicSampleDispatcher::of(oldBackend)->remove(widget);
+    }
+    if (auto* chart = dynamic_cast<ChartWidgetBase*>(widget)) {
+        TopicSampleDispatcher::of(newBackend)->add(
+            request.sourceId, request.topicId, chart,
+            [chart](const TelemetryFieldBinding& binding, quint64 timestampUs, double value) {
+                chart->onFieldSample(binding, timestampUs, value);
+            });
+    } else if (auto* gauge = dynamic_cast<DummyGaugeWidget*>(widget)) {
+        TopicSampleDispatcher::of(newBackend)->add(
+            request.sourceId, request.topicId, gauge,
+            [gauge](const TelemetryFieldBinding& binding, quint64 timestampUs, double value) {
+                gauge->onFieldSample(binding, timestampUs, value);
+            });
+    }
+
     if (oldBackend != newBackend) {
-        if (auto* chart = dynamic_cast<ChartWidgetBase*>(widget)) {
-            connect(newConnection->backend(), &Backend::fieldSample, chart,
-                    &ChartWidgetBase::onFieldSample);
-        } else if (auto* gauge = dynamic_cast<DummyGaugeWidget*>(widget)) {
-            connect(newConnection->backend(), &Backend::fieldSample, gauge,
-                    &DummyGaugeWidget::onFieldSample);
-        } else if (auto* board = dynamic_cast<TextBoardWidget*>(widget)) {
+        if (auto* board = dynamic_cast<TextBoardWidget*>(widget)) {
             connect(newConnection->backend(), &Backend::textSample, board,
                     &TextBoardWidget::onTextSample);
             connect(newConnection->backend(), &Backend::binarySample, board,
@@ -1024,6 +1064,29 @@ void MainWindow::refreshConsumerSubscriptions(DashboardWidget* widget) {
         }
     }
 
+    // Scalar samples through each Backend's TopicSampleDispatcher, for the
+    // requested topics only (once per topic, however many requests name it).
+    for (const QPointer<Backend>& backend : std::as_const(subs.connected)) {
+        if (backend) {
+            TopicSampleDispatcher::of(backend)->remove(widget);
+        }
+    }
+    QSet<QPair<Backend*, quint64>> registered;
+    for (int i = 0; i < requests.size(); ++i) {
+        Backend* backend = topics[i].backend;
+        const QPair<Backend*, quint64> topicKey{
+            backend, (quint64(requests[i].sourceId) << 16) | requests[i].topicId};
+        if (backend == nullptr || registered.contains(topicKey)) {
+            continue;
+        }
+        registered.insert(topicKey);
+        TopicSampleDispatcher::of(backend)->add(
+            requests[i].sourceId, requests[i].topicId, widget,
+            [consumer](const TelemetryFieldBinding& binding, quint64 timestampUs, double value) {
+                consumer->onFieldSample(binding, timestampUs, value);
+            });
+    }
+
     for (const QPointer<Backend>& backend : std::as_const(subs.connected)) {
         if (backend && !wanted.contains(backend)) {
             disconnect(backend, nullptr, widget, nullptr);
@@ -1033,9 +1096,6 @@ void MainWindow::refreshConsumerSubscriptions(DashboardWidget* widget) {
         if (subs.connected.contains(backend)) {
             continue;
         }
-        connect(backend, &Backend::fieldSample, widget,
-                [consumer](const TelemetryFieldBinding& binding, quint64 timestampUs,
-                           double value) { consumer->onFieldSample(binding, timestampUs, value); });
         connect(backend, &Backend::arraySample, widget,
                 [consumer](const TelemetryFieldBinding& binding, quint64 timestampUs,
                            const QVector<float>& values) {
@@ -3080,6 +3140,31 @@ void MainWindow::onAddDevice() {
     // this slot doesn't reach into that flow.
     Device device;
     device.name = tr("New Device");
+    // With in-process device types registered by a module, ask which kind:
+    // a robot (the placeholder above) or one of them.
+    const QVector<ModuleDeviceType>& types = ModuleDeviceTypeRegistry::instance().types();
+    if (!types.isEmpty()) {
+        QMenu menu(this);
+        QAction* robot = menu.addAction(tr("Robot or board"));
+        menu.addSeparator();
+        QList<QPair<QAction*, ModuleDeviceType>> entries;
+        for (const ModuleDeviceType& type : types) {
+            entries.append({menu.addAction(type.displayName), type});
+        }
+        QAction* chosen = menu.exec(QCursor::pos());
+        if (chosen == nullptr) {
+            return;
+        }
+        if (chosen != robot) {
+            for (const auto& [action, type] : entries) {
+                if (action == chosen) {
+                    device.name = type.displayName;
+                    device.transportType = TransportType::Module;
+                    device.moduleType = type.id;
+                }
+            }
+        }
+    }
     m_devicesGrid->addDevice(device);
 }
 
@@ -3582,6 +3667,10 @@ void MainWindow::applyDeviceTarget(DeviceConnection* connection, const Device& r
 }
 
 void MainWindow::dialDirectTarget(DeviceConnection* connection, const Device& device) {
+    if (device.transportType == TransportType::Module) {
+        connection->connectToModule();
+        return;
+    }
     if (device.transportType == TransportType::Tcp) {
         // Same channel-B password as a hub child (Device::peerPassword) --
         // the user's own decision: one password per device covers hub, TCP
@@ -3761,7 +3850,7 @@ void MainWindow::reattachHubChildren() {
 }
 
 DeviceConnection* MainWindow::createDeviceConnection(const Device& device) {
-    auto* connection = new DeviceConnection(device.commType, device.transportType, this);
+    auto* connection = new DeviceConnection(device, this);
     connect(
         connection, &DeviceConnection::connectionStateChanged, this,
         [this, id = device.id](bool connected) { onDeviceConnectionStateChanged(id, connected); });

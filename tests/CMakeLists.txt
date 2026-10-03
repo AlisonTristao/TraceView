@@ -17,6 +17,7 @@ add_traceview_test(test_workspacemanager traceview_project)
 add_traceview_test(test_dashboarditem traceview_dashboard)
 add_traceview_test(test_widgetregistry traceview_dashboard)
 add_traceview_test(test_dashboardgrid traceview_dashboard)
+add_traceview_test(test_topicsampledispatcher traceview_dashboard)
 # Binding a widget by topic/field NAME (dashboard/bindingresolver.h): names
 # re-pointing ids against another device's catalog, ids-only projects gaining
 # names, unresolvable names falling back to ids, and the .tvproj round trip.
@@ -120,6 +121,10 @@ add_traceview_test(test_usbhidmanager traceview_ui)
 # intent) -- see lib/core/deviceconnection.h. traceview_ui so it can
 # construct a BtpBackend the same way DeviceConnection itself does.
 add_traceview_test(test_deviceconnection traceview_ui Qt6::Network)
+# In-process device types a module registers (core/moduledevicetype.h): the
+# registry, DeviceConnection dialing the factory's transport, and the
+# TransportType::Module device's .tvproj round trip.
+add_traceview_test(test_moduledevicetype traceview_transport traceview_devices)
 # Developer/User access mode (lib/core/usermodemanager.h): default "admin"
 # account seeding on first run, login/logout, and the account-management
 # mutators' Developer-mode gating (refusing to touch accounts, or to drop
@@ -145,7 +150,8 @@ if(TRACEVIEW_ENABLE_LAB)
     add_traceview_test(test_sceneregistry tracelab_scenes)
     add_traceview_test(test_diffdrivescene tracelab_scenes)
     add_traceview_test(test_scenewidget tracelab_scenes traceview_project)
-    add_traceview_test(test_labmodule tracelab_module tracelab_scenes traceview_dashboard)
+    add_traceview_test(test_labmodule tracelab_module tracelab_scenes traceview_dashboard
+                       traceview_transport)
     add_traceview_test(test_loopbacktransport tracelab_plant)
     # The line-follower benchmark's plant (lab/benchmarks/linefollower/plant):
     # the track generator against the Python simulator (CPython's random bit
@@ -198,6 +204,15 @@ if(TARGET tracelab_lf_controllers)
     # scheduling strategy x embedding, and GPC with both heading references.
     # Plain C++ under test, Qt Test only as the harness.
     add_traceview_test(test_lfcontrollers tracelab_lf_controllers)
+endif()
+
+if(TARGET tracelab_lf_devices)
+    # The line follower as TraceView devices (lab/benchmarks/linefollower/
+    # device): the plant's manifest, the plant over the loopback to a real
+    # BtpBackend (TransportType::Module), a lockstep closed loop through BTP
+    # equal to the in-process harness, and sim.disturb by command.
+    add_traceview_test(test_lfdevices tracelab_lf_devices tracelab_lf_controllers
+                       traceview_transport traceview_devices traceview_backend)
 endif()
 
 # Generic telemetry value types (lib/telemetry) -- no BTP dependency at all

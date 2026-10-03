@@ -352,9 +352,12 @@ private:
     // is dropped by m_node alone, harmlessly: BtpSession's own, separately-
     // sized reassembly is what actually delivers it). No catalog/
     // subscriptions/served-commands: those axes are never enabled here.
+    // ScratchBytes is where Node::command() encodes a COMMAND_REQUEST (20
+    // octets of header plus the command line): 16 refused every command
+    // ("could not encode or seal request").
     using BackendNode =
         btp::StaticNode</*Slots=*/2, /*SlotBytes=*/4096, /*SealBytes=*/1024,
-                        /*ScratchBytes=*/16, /*CatalogTopics=*/1, /*CatalogFields=*/1,
+                        /*ScratchBytes=*/1024, /*CatalogTopics=*/1, /*CatalogFields=*/1,
                         /*CatalogStringBytes=*/16, /*MaxSubscriptions=*/1,
                         /*MaxCommands=*/2, /*CommandBytes=*/16,
                         /*CatalogSourceInfo=*/0>;

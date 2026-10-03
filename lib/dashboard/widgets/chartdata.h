@@ -160,8 +160,8 @@ QVector<TelemetrySeriesBuffer> resizeChartBuffers(const QVector<TelemetrySeriesB
 // config.series[i].fieldId == fieldId (usually zero or one, but nothing
 // stops two series from plotting the same field differently styled), each
 // trimmed to chartBufferCapacity(config). A no-op if no series binds to
-// `fieldId`.
-void appendFieldSample(QVector<TelemetrySeriesBuffer>& buffers, const ChartConfig& config,
+// `fieldId`. Whether any series took the sample.
+bool appendFieldSample(QVector<TelemetrySeriesBuffer>& buffers, const ChartConfig& config,
                        quint16 fieldId, quint64 timestampUs, double value);
 
 // One Y-axis group under ChartConfig::autoAxis: every series sharing the

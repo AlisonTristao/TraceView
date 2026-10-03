@@ -5,6 +5,32 @@
 # Dependency rule: these targets may link lib/ targets; no lib/ target may
 # link one of these. Includes are rooted at the repository ("lab/sim/...").
 
+# The plant and the controller host speak BTP 2.50: STREAM actions, action
+# records in the Catalog, Node::send_stream(), the loop profile headers. That
+# version exists only in a local BTP checkout for now (branch
+# feature/stream-actions), so the lab needs FetchContent's override pointing
+# at it (lab/README.md, "Building against a local BTP"):
+#   cmake -S . -B build-lab -DFETCHCONTENT_SOURCE_DIR_BTP=C:/git/BTP
+set(_tracelab_btp_version_hpp "${btp_SOURCE_DIR}/include/btp/version.hpp")
+set(_tracelab_btp_minor 0)
+if(EXISTS "${_tracelab_btp_version_hpp}")
+    file(STRINGS "${_tracelab_btp_version_hpp}" _tracelab_btp_lines
+         REGEX "kLibraryVersion(Major|Minor)[ 	]*=[ 	]*[0-9]+")
+    string(REGEX MATCH "kLibraryVersionMajor[ 	]*=[ 	]*([0-9]+)" _ "${_tracelab_btp_lines}")
+    set(_tracelab_btp_major "${CMAKE_MATCH_1}")
+    string(REGEX MATCH "kLibraryVersionMinor[ 	]*=[ 	]*([0-9]+)" _ "${_tracelab_btp_lines}")
+    set(_tracelab_btp_minor "${CMAKE_MATCH_1}")
+endif()
+if(NOT _tracelab_btp_major STREQUAL "2" OR _tracelab_btp_minor LESS 50)
+    message(FATAL_ERROR
+        "TraceLab (TRACEVIEW_ENABLE_LAB=ON) needs BTP >= 2.50 (STREAM actions, actions in "
+        "the Catalog, Node::send_stream(), btp/profiles/loop.hpp), but the BTP fetched for "
+        "this build is ${_tracelab_btp_major}.${_tracelab_btp_minor} (${btp_SOURCE_DIR}). "
+        "BTP 2.50 is not published yet: point the build at a local checkout of its "
+        "feature/stream-actions branch with -DFETCHCONTENT_SOURCE_DIR_BTP=<path to BTP>, "
+        "or configure with -DTRACEVIEW_ENABLE_LAB=OFF.")
+endif()
+
 # tracelab_sim: the engine's contracts -- model, compiled ODE system, solver,
 # scheduler, environments. Plain C++17, no Qt, so it can be tested alone and
 # reused by tracelab-cli.
@@ -70,6 +96,10 @@ target_link_libraries(tracelab_sensors PUBLIC Eigen3::Eigen)
 # tracelab_plant: the simulated plant as a BTP device, its manifest built from
 # the model, and the in-process loopback transport.
 add_library(tracelab_plant STATIC
+    plant/btpproducerport.cpp
+    plant/btpproducerport.h
+    plant/endpointtransport.cpp
+    plant/endpointtransport.h
     plant/loopbacktransport.cpp
     plant/loopbacktransport.h
     plant/plantmanifest.cpp
@@ -82,9 +112,11 @@ target_link_libraries(tracelab_plant
     PUBLIC
         Qt6::Core
         tracelab_sim
-        # traceview::Transport (lib/core/transport.h).
+        # traceview::Transport (lib/core/transport.h) and ModuleTransport
+        # (lib/core/moduledevicetype.h).
         traceview_transport
-    PRIVATE
+        # BtpProducerPort is a btp::NodeConfig serving a btp::Catalog.
+        btp::node
         btp::catalog
 )
 
@@ -105,6 +137,10 @@ target_link_libraries(tracelab_control
         # QJSEngine in scriptcontrolleradapter.h.
         Qt6::Qml
         traceview_transport
+        # The consumer btp::Node toward the plant, and BtpProducerPort toward
+        # TraceView.
+        btp::node
+        tracelab_plant
 )
 
 # tracelab_scenes: the SceneRenderer contract, the scene registry, the Scene
@@ -136,6 +172,8 @@ target_link_libraries(tracelab_scenes
 add_library(tracelab_module STATIC
     module/labmodule.cpp
     module/labmodule.h
+    module/labpanel.cpp
+    module/labpanel.h
 )
 target_include_directories(tracelab_module PUBLIC ${CMAKE_SOURCE_DIR})
 target_link_libraries(tracelab_module
@@ -151,6 +189,14 @@ target_link_libraries(tracelab_module
 # (lab/README.md, "Filters").
 add_subdirectory(filters)
 
-# Benchmarks: a plant, its controllers and a runner app per benchmark
-# (lab/README.md, "Benchmarks").
+# Benchmarks: a plant, its controllers, their BTP devices and a runner app per
+# benchmark (lab/README.md, "Benchmarks").
 add_subdirectory(benchmarks/linefollower)
+
+# The line follower's devices and preset project in the TraceLab tab.
+target_link_libraries(tracelab_module PRIVATE tracelab_lf_devices traceview_transport)
+qt_add_resources(tracelab_module tracelab_presets
+    PREFIX "/tracelab"
+    BASE benchmarks/linefollower
+    FILES benchmarks/linefollower/linefollower.tvproj
+)

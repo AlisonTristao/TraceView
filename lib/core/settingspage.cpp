@@ -447,6 +447,14 @@ SettingsPage::SettingsPage(QWidget* parent) : QWidget(parent) {
             });
     connect(customFps, qOverload<int>(&QSpinBox::valueChanged), &settings,
             &AppSettings::setCustomRenderFps);
+    auto* fastChartLines = new QCheckBox(tr("Fast line drawing"), renderingSection);
+    fastChartLines->setChecked(settings.fastChartLines());
+    fastChartLines->setToolTip(
+        tr("Line charts denser than the plot keep only each pixel column's minimum and "
+           "maximum, drawn without antialiasing. Lighter on the CPU; the result depends on "
+           "the screen's resolution and scale."));
+    addCheckBoxRow(formFor(renderingSection), fastChartLines);
+    connect(fastChartLines, &QCheckBox::toggled, &settings, &AppSettings::setFastChartLines);
 
     QGroupBox* subscribeRateSection = addSection(dashboardPage, tr("Telemetry subscribe rate"));
     auto* subscribeRateOverride =

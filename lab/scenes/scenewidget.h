@@ -1,6 +1,8 @@
 #pragma once
 
 #include <QElapsedTimer>
+#include <QImage>
+#include <QMutex>
 #include <QHash>
 #include <QJsonObject>
 #include <QMultiHash>
@@ -75,6 +77,11 @@ public:
                        const QVector<float>& values) override;
     void onTextSample(quint32 sourceId, quint16 topicId, quint64 timestampUs,
                       const QString& text) override;
+    // P/O/R and the other scene keys are sent through it (MainWindow hands
+    // it over): "<action> <argument>" to the bound plant.
+    void setCommandSender(CommandSender sender) override;
+    // The project Device a key's action goes to: the one "x" is bound on.
+    QString actionDeviceId() const;
 
     QString sceneType() const;
     // nullptr when the configured type is not registered.
@@ -82,10 +89,8 @@ public:
     SceneView view() const;
 
 signals:
-    // A key asked the bound plant for `action` (sim.disturb...). Nothing
-    // sends it yet: TraceView has no path for a typed BTP action (that needs
-    // BTP 2.50's actions); Backend::sendCommand() only carries text, and only
-    // to a hub channel.
+    // A key asked the bound plant for `action` (sim.disturb...). Also sent,
+    // as the text command "<action> <argument>", through the command sender.
     void actionRequested(const QString& action, double argument);
 
 protected:
@@ -99,10 +104,26 @@ protected:
 
 private:
     SceneRecord& recordFor(quint32 sourceId, quint16 topicId, quint64 timestampUs);
+    void sendAction(const QString& action, double argument);
     void scheduleRepaint();
+    // The frame to hand the renderer: the records since the last one and the
+    // latest values, then cleared.
+    SceneFrame takeFrame();
+    // Visible widgets render on a worker thread (startRender()); paintEvent()
+    // only draws the finished image. Hidden ones (grab(), tests) paint inline.
+    void startRender();
+    void renderFinished(const QImage& image, quint64 generation);
+    void noteFrame();
 
     QString m_sceneType;
-    std::unique_ptr<SceneRenderer> m_renderer;
+    // Shared with the render job in flight; every use of the renderer, on
+    // either thread, holds m_rendererMutex.
+    std::shared_ptr<SceneRenderer> m_renderer;
+    std::shared_ptr<QMutex> m_rendererMutex = std::make_shared<QMutex>();
+    QImage m_image;              // the last finished frame
+    bool m_rendering = false;    // a job in flight
+    bool m_renderAgain = false;  // something changed while it ran
+    quint64 m_generation = 0;    // bumped when the renderer is replaced
     QHash<QString, SceneBinding> m_bindings;
     // Bound inputs by where their data comes from: (source, topic, field) for
     // Scalar and Array inputs, (source, topic) for Text ones.
@@ -127,8 +148,7 @@ private:
     bool m_dragging = false;
     bool m_editMode = false;
 
-    bool m_repaintPending = false;
-    int m_repaintIntervalMs = 16;
+    CommandSender m_commandSender;
     QElapsedTimer m_clock;
     QVector<qint64> m_frameTimesMs;
 };

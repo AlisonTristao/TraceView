@@ -1,16 +1,23 @@
 #include "chartwidgets.h"
 
+#include <QPainterPath>
+#include <QThreadPool>
+#include <QPointer>
 #include <QCoreApplication>
 #include <QFont>
 #include <QFontMetrics>
 #include <QMouseEvent>
 #include <QPainter>
+#include <algorithm>
+#include <climits>
+#include <cmath>
 #include <QPair>
 #include <QTimer>
 #include <QtMath>
 #include <cmath>
 
 #include "dashboard/paintframecounter.h"
+#include "dashboard/repaintclock.h"
 #include "preferences/appsettings.h"
 #include "traceview/fontmanager.h"
 #include "traceview/thememanager.h"
@@ -81,7 +88,7 @@ qreal zeroBaselineY(const QRect& plotRect, double yMin, double yMax) {
 void paintLineSeries(QPainter& painter, const QRect& plotRect, int capacity,
                      const ChartSeriesConfig& seriesConfig, const QVector<double>& values,
                      double yMin, double yMax, ChartLineInterpolation interpolation,
-                     qreal lineWidth, bool fillArea) {
+                     qreal lineWidth, bool fillArea, bool fastLines) {
     if (values.isEmpty() || plotRect.width() <= 0 || plotRect.height() <= 0) {
         return;
     }
@@ -135,9 +142,54 @@ void paintLineSeries(QPainter& painter, const QRect& plotRect, int capacity,
     // than a QPainterPath for a 100+ point series repainted every frame (see
     // tools/chart_benchmark).
     QPolygonF points;
-    points.reserve(interpolation == ChartLineInterpolation::ZeroOrderHold ? values.size() * 2 - 1
-                                                                          : values.size());
-    for (int i = 0; i < values.size(); ++i) {
+    // AppSettings::fastChartLines(): a Linear series with more samples than
+    // the plot has pixel columns keeps, per column, its first and last
+    // samples and its min and max in index order -- the same pixels the full
+    // polyline would light, from about four points a column instead of all.
+    const bool decimate = fastLines && interpolation == ChartLineInterpolation::Linear &&
+                          values.size() > 2 * plotRect.width();
+    if (decimate) {
+        points.reserve(4 * (plotRect.width() + 1));
+        int column = INT_MIN;
+        int first = 0;
+        int minIndex = 0;
+        int maxIndex = 0;
+        int last = 0;
+        const auto flush = [&] {
+            int order[4] = {first, minIndex, maxIndex, last};
+            std::sort(order, order + 4);
+            for (int k = 0; k < 4; ++k) {
+                if (k == 0 || order[k] != order[k - 1]) {
+                    points.append(pointAt(order[k]));
+                }
+            }
+        };
+        for (int i = 0; i < values.size(); ++i) {
+            const int c = int(std::floor(pointAt(i).x()));
+            if (c != column) {
+                if (column != INT_MIN) {
+                    flush();
+                }
+                column = c;
+                first = minIndex = maxIndex = last = i;
+                continue;
+            }
+            last = i;
+            if (values[i] < values[minIndex]) {
+                minIndex = i;
+            }
+            if (values[i] > values[maxIndex]) {
+                maxIndex = i;
+            }
+        }
+        if (column != INT_MIN) {
+            flush();
+        }
+    }
+    points.reserve(decimate ? points.size()
+                   : interpolation == ChartLineInterpolation::ZeroOrderHold ? values.size() * 2 - 1
+                                                                            : values.size());
+    for (int i = 0; !decimate && i < values.size(); ++i) {
         const QPointF p = pointAt(i);
         if (i > 0 && interpolation == ChartLineInterpolation::ZeroOrderHold) {
             points.append(QPointF(p.x(), points.last().y()));
@@ -158,6 +210,14 @@ void paintLineSeries(QPainter& painter, const QRect& plotRect, int capacity,
         painter.setBrush(Qt::NoBrush);
     }
     painter.setPen(QPen(seriesConfig.color, lineWidth, chartPenStyle(seriesConfig.style)));
+    if (fastLines && points.size() > plotRect.width()) {
+        // Dense enough that antialiasing buys little and costs the most.
+        painter.save();
+        painter.setRenderHint(QPainter::Antialiasing, false);
+        painter.drawPolyline(points);
+        painter.restore();
+        return;
+    }
     painter.drawPolyline(points);
 }
 
@@ -807,8 +867,12 @@ void paintGaugeLegend(QPainter& painter, const QRect& area, const GaugeConfig& c
 
 StyledChartWidget::StyledChartWidget(QWidget* parent) : DashboardWidget(parent) {
     m_repaintIntervalMs = AppSettings::instance().repaintIntervalMs();
-    connect(&AppSettings::instance(), &AppSettings::dashboardPreferencesChanged, this,
-            [this] { m_repaintIntervalMs = AppSettings::instance().repaintIntervalMs(); });
+    m_fastChartLines = AppSettings::instance().fastChartLines();
+    connect(&AppSettings::instance(), &AppSettings::dashboardPreferencesChanged, this, [this] {
+        m_repaintIntervalMs = AppSettings::instance().repaintIntervalMs();
+        m_fastChartLines = AppSettings::instance().fastChartLines();
+        update();
+    });
     connect(&AppSettings::instance(), &AppSettings::chartStyleChanged, this, [this] {
         if (m_view.followAppStyle) {
             update();
@@ -874,6 +938,7 @@ QJsonObject StyledChartWidget::viewConfigWith(const QString& id, const QVariant&
 }
 
 void StyledChartWidget::setViewConfig(const QJsonObject& view) {
+    const QMutexLocker<QRecursiveMutex> lock(&m_sync->mutex);
     m_view = parseChartViewOptions(view);
     update();
 }
@@ -883,14 +948,12 @@ void StyledChartWidget::applyViewFromConfig(const QJsonObject& config) {
 }
 
 void StyledChartWidget::scheduleRepaint() {
-    if (m_repaintPending) {
+    // DebugChartsWindow's stress mode (interval 0): every sample repaints.
+    if (m_repaintIntervalMs == 0) {
+        update();
         return;
     }
-    m_repaintPending = true;
-    QTimer::singleShot(m_repaintIntervalMs, this, [this]() {
-        m_repaintPending = false;
-        update();
-    });
+    RepaintClock::instance().request(this);
 }
 
 // --- ChartWidgetBase -----------------------------------------------------
@@ -903,6 +966,7 @@ ChartWidgetBase::ChartWidgetBase(QWidget* parent) : StyledChartWidget(parent) {
 }
 
 void ChartWidgetBase::setConfig(const QJsonObject& config) {
+    const QMutexLocker<QRecursiveMutex> lock(&m_sync->mutex);
     const ChartConfig newConfig = parseChartConfig(config);
     m_seriesBuffers = resizeChartBuffers(m_seriesBuffers, newConfig);
     // Carried over by row position, same as resizeChartBuffers() above -- a
@@ -924,12 +988,18 @@ void ChartWidgetBase::setConfig(const QJsonObject& config) {
 }
 
 void ChartWidgetBase::refreshDataColors() {
+    const QMutexLocker<QRecursiveMutex> lock(&m_sync->mutex);
     for (int i = 0; i < m_config.series.size() && i < m_ownColors.size(); ++i) {
         m_config.series[i].color = ThemeManager::instance().seriesColor(i, m_ownColors[i]);
     }
 }
 
 void ChartWidgetBase::clearChartData() {
+    const QMutexLocker<QRecursiveMutex> lock(&m_sync->mutex);
+    {
+        const QMutexLocker stage(&m_stageMutex);
+        m_staged.clear();
+    }
     for (TelemetrySeriesBuffer& buffer : m_seriesBuffers) {
         buffer.clear();
     }
@@ -937,6 +1007,7 @@ void ChartWidgetBase::clearChartData() {
 }
 
 void ChartWidgetBase::mouseMoveEvent(QMouseEvent* event) {
+    const QMutexLocker<QRecursiveMutex> lock(&m_sync->mutex);
     if (m_view.showHoverCrosshair) {
         m_hoverPos = event->position().toPoint();
         m_hasHoverPos = true;
@@ -946,6 +1017,7 @@ void ChartWidgetBase::mouseMoveEvent(QMouseEvent* event) {
 }
 
 void ChartWidgetBase::mousePressEvent(QMouseEvent* event) {
+    const QMutexLocker<QRecursiveMutex> lock(&m_sync->mutex);
     if (event->button() == Qt::LeftButton) {
         const QPoint pos = event->position().toPoint();
         for (int i = 0; i < m_legendHitRects.size(); ++i) {
@@ -964,6 +1036,7 @@ void ChartWidgetBase::mousePressEvent(QMouseEvent* event) {
 }
 
 void ChartWidgetBase::leaveEvent(QEvent* event) {
+    const QMutexLocker<QRecursiveMutex> lock(&m_sync->mutex);
     if (m_hasHoverPos) {
         m_hasHoverPos = false;
         update();
@@ -975,7 +1048,24 @@ void ChartWidgetBase::appendFieldSample(quint16 fieldId, quint64 timestampUs, do
     if (m_paused) {
         return;
     }
-    traceview::appendFieldSample(m_seriesBuffers, m_config, fieldId, timestampUs, value);
+    // A sample of a field no series plots (the rest of the topic) neither
+    // changes the chart nor asks for a repaint. The others are queued for the
+    // next render (drainStagedSamples()); m_config is only written on this
+    // thread, so reading it here needs no lock.
+    bool plotted = false;
+    for (const ChartSeriesConfig& series : m_config.series) {
+        if (series.fieldId == fieldId) {
+            plotted = true;
+            break;
+        }
+    }
+    if (!plotted) {
+        return;
+    }
+    {
+        const QMutexLocker stage(&m_stageMutex);
+        m_staged.append({fieldId, timestampUs, value});
+    }
     scheduleRepaint();
 }
 
@@ -988,6 +1078,11 @@ void ChartWidgetBase::onFieldSample(const traceview::TelemetryFieldBinding& bind
 }
 
 void ChartWidgetBase::seedFromHistory(const FieldHistoryLookup& lookup) {
+    const QMutexLocker<QRecursiveMutex> lock(&m_sync->mutex);
+    {
+        const QMutexLocker stage(&m_stageMutex);
+        m_staged.clear();
+    }
     const int capacity = chartBufferCapacity(m_config);
     for (int i = 0; i < m_config.series.size() && i < m_seriesBuffers.size(); ++i) {
         TelemetrySeriesBuffer seeded;
@@ -1000,7 +1095,21 @@ void ChartWidgetBase::seedFromHistory(const FieldHistoryLookup& lookup) {
     update();
 }
 
+void ChartWidgetBase::drainStagedSamples() const {
+    const QMutexLocker<QRecursiveMutex> lock(&m_sync->mutex);
+    QVector<StagedSample> staged;
+    {
+        const QMutexLocker stage(&m_stageMutex);
+        staged.swap(m_staged);
+    }
+    for (const StagedSample& sample : staged) {
+        traceview::appendFieldSample(m_seriesBuffers, m_config, sample.fieldId, sample.timestampUs,
+                                     sample.value);
+    }
+}
+
 QVector<QVector<double>> ChartWidgetBase::seriesValues() const {
+    drainStagedSamples();
     QVector<QVector<double>> values;
     values.reserve(m_seriesBuffers.size());
     for (const TelemetrySeriesBuffer& buffer : m_seriesBuffers) {
@@ -1131,6 +1240,12 @@ void ChartWidgetBase::paintLegends(QPainter& painter, const ChartCartesianLayout
 // --- DummyLineChartWidget ------------------------------------------------
 
 DummyLineChartWidget::DummyLineChartWidget(QWidget* parent) : ChartWidgetBase(parent) {}
+
+DummyLineChartWidget::~DummyLineChartWidget() {
+    // Waits for a render in flight; a queued one then finds `alive` false.
+    const QMutexLocker<QRecursiveMutex> lock(&m_sync->mutex);
+    m_sync->alive = false;
+}
 
 ChartViewFeatures DummyLineChartWidget::viewFeatures() const {
     return ChartViewFeature::XAxisTitle | ChartViewFeature::XTickLabels |
@@ -1317,6 +1432,7 @@ void DummyLineChartWidget::paintInfoRows(QPainter& painter, const ChartCartesian
 }
 
 void DummyLineChartWidget::mousePressEvent(QMouseEvent* event) {
+    const QMutexLocker<QRecursiveMutex> lock(&m_sync->mutex);
     m_draggedMarker = event->button() == Qt::LeftButton ? markerAt(event->pos()) : -1;
     if (m_draggedMarker >= 0) {
         event->accept();
@@ -1326,6 +1442,7 @@ void DummyLineChartWidget::mousePressEvent(QMouseEvent* event) {
 }
 
 void DummyLineChartWidget::mouseMoveEvent(QMouseEvent* event) {
+    const QMutexLocker<QRecursiveMutex> lock(&m_sync->mutex);
     if (m_draggedMarker >= 0) {
         const qreal step = xStepFor(m_plotRect, m_capacity);
         if (step > 0.0) {
@@ -1353,15 +1470,14 @@ void DummyLineChartWidget::mouseReleaseEvent(QMouseEvent* event) {
     ChartWidgetBase::mouseReleaseEvent(event);
 }
 
-void DummyLineChartWidget::paintEvent(QPaintEvent*) {
-    notePaintFrame();
-    QPainter painter(this);
-    painter.setRenderHint(QPainter::Antialiasing);
-    const ThemePalette& palette = ThemeManager::instance().currentTheme();
-    const ChartStyle& style = chartStyle(effectiveStyle());
+void DummyLineChartWidget::paintFrame(QPainter& painter, const QRect& area,
+                                      const QPainterPath& fill, const QPainterPath& outline,
+                                      bool drawOutline, const ThemePalette& palette,
+                                      ChartStyleId styleId) {
+    const ChartStyle& style = chartStyle(styleId);
     const ChartColors colors = chartColors(style, palette);
 
-    paintChartBackground(painter, *this, palette);
+    paintChartBackground(painter, fill, outline, drawOutline, palette);
 
     const QVector<QVector<double>> values = seriesValues();
     const SeriesAxes axes = seriesAxes(values);
@@ -1370,7 +1486,7 @@ void DummyLineChartWidget::paintEvent(QPaintEvent*) {
     const bool xLabeled = chrome.xTickLabels;
     const ChartConfig& config = m_config;
     const ChartCartesianLayout layout = layoutCartesianChart(
-        painter, rect(), axes.requests, chrome, style,
+        painter, area, axes.requests, chrome, style,
         [&config, &style, xLabeled](int plotWidth, int maxTicks) {
             return timeAxisScale(config, style, xLabeled, plotWidth, maxTicks);
         });
@@ -1413,7 +1529,7 @@ void DummyLineChartWidget::paintEvent(QPaintEvent*) {
         }
         paintLineSeries(painter, plotRect, capacity, m_config.series[i], values[i], yMins[i],
                         yMaxs[i], m_view.interpolation, effectiveLineWidth(m_view, style),
-                        m_view.fillArea);
+                        m_view.fillArea, m_fastChartLines);
     }
     painter.restore();
 
@@ -1441,6 +1557,100 @@ void DummyLineChartWidget::paintEvent(QPaintEvent*) {
                             yMins, yMaxs, m_view.interpolation, m_config.decimals,
                             m_seriesHidden, palette);
     }
+}
+
+
+void DummyLineChartWidget::paintEvent(QPaintEvent*) {
+    notePaintFrame();
+    QPainter painter(this);
+    const qreal dpr = devicePixelRatioF();
+    const bool fresh = !m_image.isNull() && m_image.size() == (QSizeF(size()) * dpr).toSize();
+    if (!isVisible() || !fresh) {
+        // grab() of a hidden widget, the first frame and right after a
+        // resize: paint here, at once.
+        painter.setRenderHint(QPainter::Antialiasing);
+        const QRect area = rect();
+        const QMutexLocker<QRecursiveMutex> lock(&m_sync->mutex);
+        paintFrame(painter, area, contentFillPath(),
+                   roundedPath(QRectF(area).adjusted(0.5, 0.5, -0.5, -0.5)),
+                   ThemeManager::instance().currentFrameStyle().idleOutline,
+                   ThemeManager::instance().currentTheme(), effectiveStyle());
+        if (isVisible()) {
+            startRender();
+        }
+        return;
+    }
+    painter.drawImage(QRectF(QPointF(0, 0), QSizeF(size())), m_image);
+    // Anything but the arrival of a finished frame (new samples, the mouse,
+    // a config change) asks for the next one.
+    if (!m_blitOnly || m_renderAgain) {
+        startRender();
+    }
+    m_blitOnly = false;
+}
+
+void DummyLineChartWidget::startRender() {
+    if (m_rendering) {
+        m_renderAgain = true;  // once this one is back
+        return;
+    }
+    const qreal dpr = devicePixelRatioF();
+    const QSize pixels = (QSizeF(size()) * dpr).toSize();
+    if (pixels.isEmpty()) {
+        return;
+    }
+    m_rendering = true;
+    m_renderAgain = false;
+    // Everything the render needs from the GUI thread, taken here.
+    const QRect area = rect();
+    const QPainterPath fill = contentFillPath();
+    const QPainterPath outline = roundedPath(QRectF(area).adjusted(0.5, 0.5, -0.5, -0.5));
+    const bool drawOutline = ThemeManager::instance().currentFrameStyle().idleOutline;
+    const ThemePalette palette = ThemeManager::instance().currentTheme();
+    const ChartStyleId styleId = effectiveStyle();
+    const QFont widgetFont = font();
+    const std::shared_ptr<RenderSync> sync = m_sync;
+    DummyLineChartWidget* chart = this;
+    QPointer<DummyLineChartWidget> self(this);
+    QThreadPool::globalInstance()->start([=] {
+        QImage image(pixels, QImage::Format_ARGB32_Premultiplied);
+        image.setDevicePixelRatio(dpr);
+        image.fill(Qt::transparent);
+        {
+            const QMutexLocker<QRecursiveMutex> lock(&sync->mutex);
+            if (!sync->alive) {
+                return;
+            }
+            QPainter painter(&image);
+            painter.setFont(widgetFont);
+            painter.setRenderHint(QPainter::Antialiasing);
+            chart->paintFrame(painter, area, fill, outline, drawOutline, palette, styleId);
+        }
+        // Back on the GUI thread; dropped if the widget is gone by then.
+        QMetaObject::invokeMethod(
+            QCoreApplication::instance(),
+            [self, image] {
+                if (self) {
+                    self->renderFinished(image);
+                }
+            },
+            Qt::QueuedConnection);
+    });
+}
+
+void DummyLineChartWidget::scheduleRepaint() {
+    if (!isVisible() || m_image.isNull()) {
+        ChartWidgetBase::scheduleRepaint();
+        return;
+    }
+    RepaintClock::instance().request(this, [this] { startRender(); });
+}
+
+void DummyLineChartWidget::renderFinished(const QImage& image) {
+    m_rendering = false;
+    m_image = image;
+    m_blitOnly = true;
+    update();
 }
 
 // --- DummyBarChartWidget -------------------------------------------------

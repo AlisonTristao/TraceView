@@ -14,4 +14,12 @@ if(TRACELAB_LF_CONTROLLERS AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/controllers/CM
     add_subdirectory(controllers)
 endif()
 
+# The plant and the controller host as BTP devices (tracelab_lf_devices), what
+# the TraceLab tab and the Devices tab create. They need the controllers.
+if(NOT TARGET tracelab_lf_controllers)
+    message(FATAL_ERROR "TraceLab's line-follower devices need the controllers "
+                        "(TRACELAB_LF_CONTROLLERS and lab/benchmarks/linefollower/controllers)")
+endif()
+add_subdirectory(device)
+
 add_subdirectory(app)

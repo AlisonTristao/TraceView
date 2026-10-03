@@ -7,6 +7,52 @@ release flow.
 
 ## [Unreleased]
 
+### Added
+
+- Modules can register in-process **device types** (`ModuleHost::
+  registerDeviceType()`, `lib/core/moduledevicetype.h`): they appear in
+  **Add Device** and are saved in projects as `transportType` 5 with
+  `moduleType`/`moduleConfig` only (no port, address or password fields).
+  Dashboard widgets that read several topics can send text commands to their
+  devices (`TelemetryConsumer::setCommandSender()`).
+- TraceLab: the line-follower simulation runs inside TraceView. The plant
+  ("TraceLab: Line follower") and the controller host ("TraceLab:
+  Controller", qLPV MPC or GPC, optional wheel-speed low-pass from the C
+  filter runtime) are BTP devices on an in-process loopback speaking the
+  `loop` profile (`loop.state`, `loop.u` STREAM, `sim.*`, `ctl.diag`). The
+  TraceLab tab opens a preset project (**New simulation**) with the Scene
+  and charts, and drives Play/Pause/Reset/Step, the speed (1x, 2x, as fast
+  as possible, lockstep), the track, sensor noise and the controller. The
+  Scene's P/O/R keys send `sim.disturb` to the plant. The lab needs BTP 2.50,
+  for now from a local checkout (`-DFETCHCONTENT_SOURCE_DIR_BTP`, see
+  `lab/README.md`).
+- TraceLab: a PD controller on the front line sensor array ("PD (line
+  sensors)", Kp, Kd and base speed in the TraceLab tab), as a baseline for
+  the MPC; the qLPV MPC's rho scheduling (frozen, warm start, Taylor,
+  iterative), embedding and iteration limit are now selectable; the Scene has
+  an **Antialiasing** option.
+- Settings > Dashboard > **Fast line drawing** (off by default): line charts
+  denser than the plot keep each pixel column's minimum and maximum and draw
+  without antialiasing.
+
+### Changed
+
+- Line charts and the TraceLab Scene render on worker threads; the GUI
+  thread only draws the finished frame. Every telemetry widget repaints on
+  one shared tick, and charts, gauges and scenes get only the samples of
+  their own topic (one dispatch per sample instead of one call per widget).
+- TraceLab's line-follower preset uses a 10-point preview 5 track points
+  apart (was 45 x 3): the qLPV MPC solves about 35x faster and still tracks
+  the line.
+
+### Fixed
+
+- TraceLab: the simulation no longer stalls for 10 s at start (the plant
+  waited for a first controller answer that only comes after the first
+  preview) and no longer runs ticks on a stale plan when the controller is
+  late, which made the car leave the track; the controller library is
+  optimized in Debug builds too.
+
 ## [4.9.0] - 2026-09-28
 
 ### Added

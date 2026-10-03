@@ -14,6 +14,7 @@
 #include "boxqp.h"
 #include "gpccontroller.h"
 #include "lfcontroller.h"
+#include "pdcontroller.h"
 #include "qlpvcontroller.h"
 #include "qlpvmodel.h"
 #include "qlpvmpc.h"
@@ -180,6 +181,7 @@ class TestLfControllers : public QObject {
     Q_OBJECT
 
 private slots:
+    void pdSteersTowardTheLine();
     void motorDiscretization();
     void modelEmbeddingsAreExact();
     void horizonProfile_data();
@@ -568,6 +570,38 @@ void TestLfControllers::rejectsBadConfigAndInput() {
     controller = makeController(gpcConfig("lookahead"));
     QVERIFY_THROWS_EXCEPTION(std::invalid_argument,
                              controller->step({0.0, 0.0}, straightPoints(10)));
+}
+
+void TestLfControllers::pdSteersTowardTheLine() {
+    using tracelab::lf::PdController;
+    using tracelab::lf::PdParams;
+    PdParams params;
+    params.kp = 1000.0;
+    params.kd = 0.0;
+    params.base = 50.0;
+    PdController pd(params);
+    // The line under the two rightmost of five sensors: offset +1.5 spacing.
+    std::array<double, 2> u = pd.step({0.0, 0.0, 0.0, 1.0, 1.0});
+    QVERIFY(pd.lineSeen());
+    QVERIFY(qAbs(pd.error() - 1.5 * params.spacing) < 1e-12);
+    QVERIFY(u[0] > u[1]);  // u_l > u_r turns right, toward it
+    QVERIFY(qAbs(u[0] - (50.0 + 1000.0 * 1.5 * params.spacing)) < 1e-9);
+    // Centered: straight at the base speed.
+    u = pd.step({0.0, 1.0, 1.0, 1.0, 0.0});
+    QVERIFY(qAbs(u[0] - 50.0) < 1e-9 && qAbs(u[1] - 50.0) < 1e-9);
+    // Lost after being seen on the left: the left edge, turning left.
+    pd.step({1.0, 0.0, 0.0, 0.0, 0.0});
+    u = pd.step({0.0, 0.0, 0.0, 0.0, 0.0});
+    QVERIFY(!pd.lineSeen());
+    QVERIFY(qAbs(pd.error() + 2.0 * params.spacing) < 1e-12);
+    QVERIFY(u[0] < u[1]);
+    // Saturation.
+    PdParams strong = params;
+    strong.kp = 1e6;
+    PdController saturated(strong);
+    u = saturated.step({0.0, 0.0, 0.0, 0.0, 1.0});
+    QCOMPARE(u[0], 100.0);
+    QCOMPARE(u[1], -100.0);
 }
 
 QTEST_GUILESS_MAIN(TestLfControllers)
