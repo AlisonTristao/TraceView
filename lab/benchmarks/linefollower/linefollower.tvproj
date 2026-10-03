@@ -258,13 +258,13 @@
                                     "sampleTimeMs": 12.5
                                 },
                                 "yAxis": {
-                                    "autoAxis": true,
+                                    "autoAxis": false,
                                     "decimals": 2,
                                     "grid": true,
                                     "max": 1,
                                     "min": -1,
                                     "mode": "auto",
-                                    "unit": "rad"
+                                    "unit": "Heading [rad]"
                                 }
                             },
                             "groupId": "",
@@ -319,13 +319,13 @@
                                     "sampleTimeMs": 12.5
                                 },
                                 "yAxis": {
-                                    "autoAxis": true,
+                                    "autoAxis": false,
                                     "decimals": 3,
                                     "grid": true,
                                     "max": 1,
                                     "min": -1,
                                     "mode": "auto",
-                                    "unit": "m"
+                                    "unit": "Lateral error [m]"
                                 }
                             },
                             "groupId": "",
@@ -380,13 +380,13 @@
                                     "sampleTimeMs": 12.5
                                 },
                                 "yAxis": {
-                                    "autoAxis": true,
+                                    "autoAxis": false,
                                     "decimals": 2,
                                     "grid": true,
                                     "max": 1,
                                     "min": -1,
                                     "mode": "auto",
-                                    "unit": "ms"
+                                    "unit": "Solve time [ms]"
                                 }
                             },
                             "groupId": "",
@@ -449,13 +449,13 @@
                                     "sampleTimeMs": 12.5
                                 },
                                 "yAxis": {
-                                    "autoAxis": true,
+                                    "autoAxis": false,
                                     "decimals": 1,
                                     "grid": true,
                                     "max": 1,
                                     "min": -1,
                                     "mode": "auto",
-                                    "unit": "rad/s"
+                                    "unit": "Wheel speed [rad/s]"
                                 }
                             },
                             "groupId": "",
