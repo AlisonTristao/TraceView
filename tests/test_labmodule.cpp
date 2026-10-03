@@ -1,5 +1,6 @@
 #include <QAction>
 #include <QFile>
+#include <QJsonObject>
 #include <QLabel>
 #include <QWidget>
 #include <QtTest>
@@ -44,9 +45,30 @@ public:
         m_opened.append(path);
         return true;
     }
+    void registerExampleProject(const QString& group, const QString& name,
+                                const QString& path) override {
+        m_examples.append(group + QLatin1Char('/') + name + QLatin1Char('=') + path);
+    }
+    QString addModuleDevice(const QString& typeId, const QString& name,
+                            const QJsonObject& config) override {
+        Q_UNUSED(name);
+        m_addedDevices.append(typeId);
+        m_addedConfigs.append(config);
+        return QStringLiteral("dev%1").arg(m_addedDevices.size());
+    }
+    bool addDashboardWidget(const QString& typeId, const QJsonObject& config) override {
+        m_addedWidgets.append(typeId);
+        m_addedWidgetConfigs.append(config);
+        return true;
+    }
 
     QStringList m_deviceTypes;
     QStringList m_opened;
+    QStringList m_examples;
+    QStringList m_addedDevices;
+    QList<QJsonObject> m_addedConfigs;
+    QStringList m_addedWidgets;
+    QList<QJsonObject> m_addedWidgetConfigs;
 
     QStringList m_labels;
     QList<int> m_actionCounts;
@@ -106,16 +128,28 @@ void TestLabModule::installRegistersSceneWidgetAndTab() {
     }
 
     QCOMPARE(host.m_labels, QStringList{"TraceLab"});
-    // New simulation, Play, Pause, Reset, Step.
-    QCOMPARE(host.m_actionCounts, QList<int>{5});
+    // Add plant, Add controller, Add scene, Play, Pause, Reset, Step.
+    QCOMPARE(host.m_actionCounts, QList<int>{7});
     auto* panel = dynamic_cast<tracelab::LabPanel*>(host.m_contents.front().get());
     QVERIFY(panel);
     QCOMPARE(host.m_deviceTypes, (QStringList{"tracelab.linefollower.plant",
                                               "tracelab.linefollower.controller"}));
-    // "New simulation" opens the built-in preset, which is there.
-    panel->ribbonActions().first()->trigger();
-    QCOMPARE(host.m_opened, QStringList{tracelab::LabPanel::lineFollowerPresetPath()});
-    QVERIFY(QFile::exists(tracelab::LabPanel::lineFollowerPresetPath()));
+    // The benchmark is a project (File > Open Example), not a tab button.
+    QCOMPARE(host.m_examples,
+             QStringList{"TraceLab benchmarks/Line follower=" +
+                         tracelab::LabPanel::lineFollowerProjectPath()});
+    QVERIFY(QFile::exists(tracelab::LabPanel::lineFollowerProjectPath()));
+    QVERIFY(host.m_opened.isEmpty());
+
+    // The build tools: a plant first; a controller or a scene needs one.
+    const QList<QAction*> actions = panel->ribbonActions();
+    actions[1]->trigger();  // Add controller, no plant
+    actions[2]->trigger();  // Add scene, no plant
+    QVERIFY(host.m_addedDevices.isEmpty());
+    QVERIFY(host.m_addedWidgets.isEmpty());
+    actions[0]->trigger();  // Add plant
+    QCOMPARE(host.m_addedDevices, QStringList{"tracelab.linefollower.plant"});
+    QCOMPARE(host.m_addedConfigs.first().value("horizon").toInt(), 10);
 }
 
 void TestLabModule::modeArgumentPicksTheLab() {

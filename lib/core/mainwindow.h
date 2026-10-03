@@ -118,6 +118,11 @@ private:
                       QWidget* content) override;
     bool registerDeviceType(const ModuleDeviceType& type) override;
     bool openProject(const QString& path) override;
+    void registerExampleProject(const QString& group, const QString& name,
+                                const QString& path) override;
+    QString addModuleDevice(const QString& typeId, const QString& name,
+                            const QJsonObject& config) override;
+    bool addDashboardWidget(const QString& typeId, const QJsonObject& config) override;
 
     void buildMenus();
     // Rebuilds the Access menu's contents from UserModeManager's current
@@ -661,6 +666,16 @@ private:
     // "empty ribbon page as a stable key" trick as the OTA tab above.
     QWidget* m_btpMonitorTabPage = nullptr;
     BtpMonitorTab* m_btpMonitorTab = nullptr;
+    // registerExampleProject(): File > Open Example, by group.
+    struct ExampleProject {
+        QString group;
+        QString name;
+        QString path;
+    };
+    QVector<ExampleProject> m_exampleProjects;
+    QMenu* m_examplesMenu = nullptr;
+    void updateExamplesMenu();
+
     // One fixed tab per addRibbonTab() call from an enabled module, keyed by
     // its ribbon page like m_openLogTabs; `content` goes in m_contentStack.
     struct ModuleTab {

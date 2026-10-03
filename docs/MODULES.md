@@ -19,7 +19,7 @@ enabled. The contract lives in [lib/modules](../lib/modules) (target
   - `install(ModuleHost&)`: called once while the main window is built, and
     only when the module is enabled.
 - **`ModuleHost`** (same header) is what `install()` receives; `MainWindow`
-  implements it. It offers two hooks:
+  implements it. It offers these hooks:
   - `widgetRegistry()`: the dashboard's `WidgetRegistry`, to register the
     module's widget types (see [DASHBOARD.md](DASHBOARD.md)). Install runs
     before the startup dashboard loads, so saved projects can use them.
@@ -32,6 +32,17 @@ enabled. The contract lives in [lib/modules](../lib/modules) (target
     holds one button group made from `actions`, and `content` (owned by the
     window from then on) fills the area under the ribbon while the tab is
     current. Parent the actions to `content`.
+  - `registerDeviceType(type)`: an in-process device kind
+    ([moduledevicetype.h](../lib/core/moduledevicetype.h)), offered by Add
+    Device and saved in projects with its `moduleConfig` only.
+  - `openProject(path)`: opens a project file or Qt resource, as File > Open.
+  - `registerExampleProject(group, name, path)`: a project the module ships
+    (a Qt resource), listed under File > Open Example in `group`. Saving one
+    asks for a file. TraceLab lists each benchmark this way.
+  - `addModuleDevice(typeId, name, config)` and
+    `addDashboardWidget(typeId, config)`: add a device of a registered type
+    to the open project, or a widget to the dashboard -- what a module's own
+    build tools use (TraceLab's Add plant, Add controller, Add scene).
 - **`ModuleRegistry`** ([moduleregistry.h](../lib/modules/moduleregistry.h))
   holds the modules this executable offers and knows which are enabled.
 

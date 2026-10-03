@@ -12,6 +12,10 @@ class QLabel;
 class QPushButton;
 class QSpinBox;
 
+namespace traceview {
+class ModuleHost;
+}
+
 namespace tracelab::lf {
 class LineControllerDevice;
 class LinePlantDevice;
@@ -19,8 +23,10 @@ class LinePlantDevice;
 
 namespace tracelab {
 
-// The TraceLab tab's page: start a simulation from the preset project and
-// drive the live TraceLab devices of the open project -- run, pause, reset,
+// The TraceLab tab's page: the tools to build a lab in the open project (add
+// a simulated plant, a controller host bound to it and a Scene showing them;
+// the benchmarks themselves are projects, under File > Open Example) and to
+// drive its live TraceLab devices -- run, pause, reset,
 // one step, the clock (1x, 2x, as fast as possible, lockstep), the track
 // (seed and type, applied on reset), sensor noise, and the controller (qLPV
 // MPC or GPC, the wheel-speed filter and the main weights).
@@ -28,19 +34,25 @@ class LabPanel : public QWidget {
     Q_OBJECT
 
 public:
-    // `openProject` opens a project file (ModuleHost::openProject()).
-    explicit LabPanel(std::function<bool(const QString&)> openProject,
-                      QWidget* parent = nullptr);
+    // `host` adds the devices and widgets the tools build; it must outlive
+    // the panel (null: the tools do nothing).
+    explicit LabPanel(traceview::ModuleHost* host, QWidget* parent = nullptr);
 
-    // The ribbon's buttons (parented to this panel): New simulation, Play,
-    // Pause, Reset, Step.
+    // The ribbon's buttons (parented to this panel): Add plant, Add
+    // controller, Add scene, Play, Pause, Reset, Step.
     QList<QAction*> ribbonActions() const;
 
-    // The preset project "New simulation > Line follower" opens.
-    static QString lineFollowerPresetPath();
+    // The line-follower benchmark project (File > Open Example).
+    static QString lineFollowerProjectPath();
 
 public slots:
-    void newLineFollowerSimulation();
+    // A simulated line-follower plant, with the default settings.
+    void addLineFollowerPlant();
+    // A controller host bound to the plant picked in the Run box (or the
+    // only one); nothing without a plant.
+    void addController();
+    // A Scene bound by name to that plant and controller.
+    void addScene();
     void play();
     void pauseSimulation();
     void resetSimulation();
@@ -56,8 +68,12 @@ private:
     void applyTrackAndSensors();
     void applyController();
 
-    std::function<bool(const QString&)> m_openProject;
-    QAction* m_newAction = nullptr;
+    QString currentPlantId() const;
+
+    traceview::ModuleHost* m_host = nullptr;
+    QAction* m_addPlantAction = nullptr;
+    QAction* m_addControllerAction = nullptr;
+    QAction* m_addSceneAction = nullptr;
     QAction* m_playAction = nullptr;
     QAction* m_pauseAction = nullptr;
     QAction* m_resetAction = nullptr;

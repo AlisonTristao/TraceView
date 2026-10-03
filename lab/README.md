@@ -38,15 +38,21 @@ With the lab ON and an older BTP, configure stops and says so. With
 
 1. Start TraceView with `--mode lab` (or the TraceLab launcher, or enable
    TraceLab in Settings > General > Modules).
-2. On the **TraceLab** tab, click **New simulation**. It opens the preset
-   `benchmarks/linefollower/linefollower.tvproj` (built in as a resource):
+2. Open the benchmark with **File > Open Example > TraceLab benchmarks >
+   Line follower**. Each benchmark is a project of its own,
+   `benchmarks/linefollower/linefollower.tvproj` (built in as a resource;
+   saving asks for a file):
    the devices "TraceLab: Line follower" and "TraceLab: Controller" and the
    workspace "Line follower" (the Scene plus charts of heading reference vs
    prediction, lateral error, solve time, wheel speeds true vs measured and
    the filtered speeds the controller uses). The plant starts on its own.
-3. Play / Pause / Reset / Step, the speed (1x, 2x, as fast as possible,
+3. The **TraceLab** tab holds the tools to build a lab in any project --
+   **Add plant**, **Add controller** (bound to the plant) and **Add scene**
+   (a Scene bound by name to both) -- and to drive it: Play / Pause / Reset
+   / Step, the speed (1x, 2x, as fast as possible,
    lockstep), track seed and type, sensor noise and the controller (qLPV MPC
-   or GPC, wheel-speed filter, main weights) are on the TraceLab tab. With
+   with its rho scheduling, GPC or the PD on the line sensors, wheel-speed
+   filter, main weights). With
    the Scene focused, P / O / R change the perturbation (`sim.disturb`).
 
 Both devices can also be added by hand (Devices tab, **Add Device**).

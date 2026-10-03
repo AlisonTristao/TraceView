@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QJsonObject>
 #include <QList>
 #include <QString>
 
@@ -42,6 +43,35 @@ public:
     // nothing changed, when it cannot be read (the default: no projects).
     virtual bool openProject(const QString& path) {
         (void)path;
+        return false;
+    }
+
+    // A ready-made project the module ships (a Qt resource), listed under
+    // File > Open Example in `group` as `name`. Opening it is File > Open;
+    // saving it asks for a file, since a resource cannot be written.
+    virtual void registerExampleProject(const QString& group, const QString& name,
+                                        const QString& path) {
+        (void)group;
+        (void)name;
+        (void)path;
+    }
+
+    // Adds a device of the in-process type `typeId` (registerDeviceType()) to
+    // the open project, named `name` and configured with `config` (its
+    // Device::moduleConfig). Its id, or empty when the host has no devices.
+    virtual QString addModuleDevice(const QString& typeId, const QString& name,
+                                    const QJsonObject& config) {
+        (void)typeId;
+        (void)name;
+        (void)config;
+        return QString();
+    }
+
+    // Adds a widget of `typeId` with `config` to the dashboard and shows it.
+    // False when the host has no dashboard.
+    virtual bool addDashboardWidget(const QString& typeId, const QJsonObject& config) {
+        (void)typeId;
+        (void)config;
         return false;
     }
 

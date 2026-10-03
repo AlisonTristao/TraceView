@@ -32,7 +32,13 @@ void LabModule::install(traceview::ModuleHost& host) {
         host.registerDeviceType(type);
     }
 
-    auto* panel = new LabPanel([&host](const QString& path) { return host.openProject(path); });
+    // Each benchmark is a project of its own.
+    host.registerExampleProject(QCoreApplication::translate("LabModule", "TraceLab benchmarks"),
+                                QCoreApplication::translate("LabModule", "Line follower"),
+                                LabPanel::lineFollowerProjectPath());
+
+    // The tab holds the tools to build a lab and drive it.
+    auto* panel = new LabPanel(&host);
     host.addRibbonTab(displayName(), panel->ribbonActions(), panel);
 }
 

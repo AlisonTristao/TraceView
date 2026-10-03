@@ -851,6 +851,49 @@ bool MainWindow::openProject(const QString& path) {
     return true;
 }
 
+void MainWindow::registerExampleProject(const QString& group, const QString& name,
+                                        const QString& path) {
+    m_exampleProjects.append({group, name, path});
+    updateExamplesMenu();
+}
+
+void MainWindow::updateExamplesMenu() {
+    if (m_examplesMenu == nullptr) {
+        return;
+    }
+    m_examplesMenu->clear();
+    m_examplesMenu->menuAction()->setVisible(!m_exampleProjects.isEmpty());
+    QString group;
+    for (const ExampleProject& example : std::as_const(m_exampleProjects)) {
+        if (example.group != group) {
+            group = example.group;
+            m_examplesMenu->addSection(group);
+        }
+        const QString path = example.path;
+        connect(m_examplesMenu->addAction(example.name), &QAction::triggered, this,
+                [this, path] { openProject(path); });
+    }
+}
+
+QString MainWindow::addModuleDevice(const QString& typeId, const QString& name,
+                                    const QJsonObject& config) {
+    if (ModuleDeviceTypeRegistry::instance().find(typeId) == nullptr) {
+        return QString();
+    }
+    Device device;
+    device.name = name;
+    device.transportType = TransportType::Module;
+    device.moduleType = typeId;
+    device.moduleConfig = config;
+    return m_devicesGrid->addDevice(device);
+}
+
+bool MainWindow::addDashboardWidget(const QString& typeId, const QJsonObject& config) {
+    m_dashboardGrid->addItem(typeId, config);
+    m_ribbon->setCurrentIndex(m_dashboardTabIndex);
+    return true;
+}
+
 MainWindow::~MainWindow() {
     // The dashboard's widgets are deleted later, as QObject children, i.e.
     // after this class's own members are gone -- so their destroyed()
@@ -1332,6 +1375,10 @@ void MainWindow::buildMenus() {
     openAction->setShortcut(QKeySequence::Open);
     connect(openAction, &QAction::triggered, this, &MainWindow::onOpenProject);
 
+    // Projects the enabled modules ship (registerExampleProject()); hidden
+    // while there are none.
+    m_examplesMenu = fileMenu->addMenu(tr("Open E&xample"));
+    updateExamplesMenu();
     m_recentFilesMenu = fileMenu->addMenu(tr("Open &Recent"));
     updateRecentFilesMenu();
 
@@ -4486,6 +4533,11 @@ void MainWindow::onSaveProject() {
     // means keeping a copy in the gallery instead.
     if (DashboardGallery::isBuiltInExample(path)) {
         onAddToGallery();
+        return;
+    }
+    // A module's example (a Qt resource) cannot be written: save a copy.
+    if (path.startsWith(QLatin1String(":/"))) {
+        onSaveProjectAs();
         return;
     }
 

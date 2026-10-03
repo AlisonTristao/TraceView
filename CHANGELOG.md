@@ -20,8 +20,10 @@ release flow.
   Controller", qLPV MPC or GPC, optional wheel-speed low-pass from the C
   filter runtime) are BTP devices on an in-process loopback speaking the
   `loop` profile (`loop.state`, `loop.u` STREAM, `sim.*`, `ctl.diag`). The
-  TraceLab tab opens a preset project (**New simulation**) with the Scene
-  and charts, and drives Play/Pause/Reset/Step, the speed (1x, 2x, as fast
+  benchmark is a project, under **File > Open Example** (modules can ship
+  example projects: `ModuleHost::registerExampleProject()`). The TraceLab tab
+  holds the tools to build a lab (**Add plant**, **Add controller**, **Add
+  scene**) and drives Play/Pause/Reset/Step, the speed (1x, 2x, as fast
   as possible, lockstep), the track, sensor noise and the controller. The
   Scene's P/O/R keys send `sim.disturb` to the plant. The lab needs BTP 2.50,
   for now from a local checkout (`-DFETCHCONTENT_SOURCE_DIR_BTP`, see

@@ -198,7 +198,7 @@ public:
     QJsonObject selectedItemConfig() const;
 
     // Auto-places a new item of `typeId` in the first free cell.
-    void addItem(const QString& typeId);
+    void addItem(const QString& typeId, const QJsonObject& config = QJsonObject());
     // No-op if nothing is selected; removes every selected item as one undo
     // step when more than one is selected.
     void removeSelected();

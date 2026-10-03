@@ -7,6 +7,7 @@
 #include <QFormLayout>
 #include <QGroupBox>
 #include <QHBoxLayout>
+#include <QJsonObject>
 #include <QLabel>
 #include <QPushButton>
 #include <QSpinBox>
@@ -15,6 +16,9 @@
 
 #include "lab/benchmarks/linefollower/device/lfdevices.h"
 #include "lab/control/controllerhost.h"
+#include "lab/scenes/diffdrivescene.h"
+#include "lab/scenes/scenewidget.h"
+#include "modules/appmodule.h"
 
 namespace tracelab {
 
@@ -36,16 +40,24 @@ const Speed kSpeeds[] = {
 
 }  // namespace
 
-LabPanel::LabPanel(std::function<bool(const QString&)> openProject, QWidget* parent)
-    : QWidget(parent), m_openProject(std::move(openProject)) {
-    m_newAction = new QAction(tr("New simulation"), this);
-    m_newAction->setToolTip(tr("Opens the line-follower preset: the simulated plant, the "
-                               "controller and a dashboard with the scene and charts."));
+LabPanel::LabPanel(traceview::ModuleHost* host, QWidget* parent)
+    : QWidget(parent), m_host(host) {
+    m_addPlantAction = new QAction(tr("Add plant"), this);
+    m_addPlantAction->setToolTip(tr("Adds a simulated line-follower plant to this project's "
+                                    "devices."));
+    m_addControllerAction = new QAction(tr("Add controller"), this);
+    m_addControllerAction->setToolTip(tr("Adds a controller host that closes the loop on the "
+                                         "plant picked below."));
+    m_addSceneAction = new QAction(tr("Add scene"), this);
+    m_addSceneAction->setToolTip(tr("Adds a Scene to the dashboard, bound to the plant and "
+                                    "controller picked below."));
     m_playAction = new QAction(tr("Play"), this);
     m_pauseAction = new QAction(tr("Pause"), this);
     m_resetAction = new QAction(tr("Reset"), this);
     m_stepAction = new QAction(tr("Step"), this);
-    connect(m_newAction, &QAction::triggered, this, &LabPanel::newLineFollowerSimulation);
+    connect(m_addPlantAction, &QAction::triggered, this, &LabPanel::addLineFollowerPlant);
+    connect(m_addControllerAction, &QAction::triggered, this, &LabPanel::addController);
+    connect(m_addSceneAction, &QAction::triggered, this, &LabPanel::addScene);
     connect(m_playAction, &QAction::triggered, this, &LabPanel::play);
     connect(m_pauseAction, &QAction::triggered, this, &LabPanel::pauseSimulation);
     connect(m_resetAction, &QAction::triggered, this, &LabPanel::resetSimulation);
@@ -55,15 +67,22 @@ LabPanel::LabPanel(std::function<bool(const QString&)> openProject, QWidget* par
     layout->setContentsMargins(24, 24, 24, 24);
     layout->setSpacing(16);
 
-    auto* newRow = new QHBoxLayout;
-    auto* newButton = new QPushButton(tr("New simulation: Line follower"), this);
-    connect(newButton, &QPushButton::clicked, this, &LabPanel::newLineFollowerSimulation);
-    newRow->addWidget(newButton);
-    newRow->addStretch();
-    layout->addLayout(newRow);
+    // Build: the same tools as the ribbon.
+    auto* buildRow = new QHBoxLayout;
+    for (QAction* action : {m_addPlantAction, m_addControllerAction, m_addSceneAction}) {
+        auto* button = new QPushButton(action->text(), this);
+        button->setToolTip(action->toolTip());
+        connect(button, &QPushButton::clicked, action, &QAction::trigger);
+        connect(action, &QAction::changed, button,
+                [button, action] { button->setEnabled(action->isEnabled()); });
+        buildRow->addWidget(button);
+    }
+    buildRow->addStretch();
+    layout->addLayout(buildRow);
 
-    m_emptyLabel = new QLabel(tr("No TraceLab device in this project. Start a new simulation, "
-                                 "or add a TraceLab device on the Devices tab."),
+    m_emptyLabel = new QLabel(tr("No TraceLab device in this project. Open a benchmark "
+                                 "(File > Open Example), or build a lab: add a plant, a "
+                                 "controller and a scene."),
                               this);
     m_emptyLabel->setWordWrap(true);
     layout->addWidget(m_emptyLabel);
@@ -211,17 +230,73 @@ LabPanel::LabPanel(std::function<bool(const QString&)> openProject, QWidget* par
 }
 
 QList<QAction*> LabPanel::ribbonActions() const {
-    return {m_newAction, m_playAction, m_pauseAction, m_resetAction, m_stepAction};
+    return {m_addPlantAction, m_addControllerAction, m_addSceneAction, m_playAction,
+            m_pauseAction, m_resetAction, m_stepAction};
 }
 
-QString LabPanel::lineFollowerPresetPath() {
+QString LabPanel::lineFollowerProjectPath() {
     return QStringLiteral(":/tracelab/linefollower.tvproj");
 }
 
-void LabPanel::newLineFollowerSimulation() {
-    if (m_openProject) {
-        m_openProject(lineFollowerPresetPath());
+QString LabPanel::currentPlantId() const {
+    const QString picked = m_plantCombo->currentData().toString();
+    if (!picked.isEmpty()) {
+        return picked;
     }
+    const QStringList ids = lf::LineDeviceRegistry::instance().plantIds();
+    return ids.size() == 1 ? ids.first() : QString();
+}
+
+void LabPanel::addLineFollowerPlant() {
+    if (m_host) {
+        m_host->addModuleDevice(QString::fromLatin1(lf::kPlantDeviceType),
+                                tr("TraceLab: Line follower"), lf::PlantSettings().toJson());
+    }
+}
+
+void LabPanel::addController() {
+    const QString plantId = currentPlantId();
+    if (!m_host || plantId.isEmpty()) {
+        return;  // the action is disabled without a plant
+    }
+    lf::ControllerSettings settings;
+    settings.plantDeviceId = plantId;
+    m_host->addModuleDevice(QString::fromLatin1(lf::kControllerDeviceType),
+                            tr("TraceLab: Controller"), settings.toJson());
+}
+
+void LabPanel::addScene() {
+    const QString plantId = currentPlantId();
+    if (!m_host || plantId.isEmpty()) {
+        return;  // the action is disabled without a plant
+    }
+    // The controller bound to this plant, if any (ctl.* topics).
+    QString controllerId;
+    for (const QString& id : lf::LineDeviceRegistry::instance().controllerIds()) {
+        const lf::LineControllerDevice* c = lf::LineDeviceRegistry::instance().controller(id);
+        if (c != nullptr && (c->settings().plantDeviceId == plantId || controllerId.isEmpty())) {
+            controllerId = id;
+        }
+    }
+    // Bound by name (docs/DASHBOARD.md "Telemetry bindings"): MainWindow
+    // fills the ids from the device's catalog.
+    QJsonObject bind;
+    DiffDriveScene scene;
+    for (const SceneInput& input : scene.inputs()) {
+        const bool fromController = input.defaultTopic.startsWith(QLatin1String("ctl."));
+        const QString deviceId = fromController ? controllerId : plantId;
+        if (deviceId.isEmpty() || input.defaultTopic.isEmpty()) {
+            continue;
+        }
+        QJsonObject entry{{"deviceId", deviceId}, {"topicName", input.defaultTopic}};
+        if (!input.defaultField.isEmpty()) {
+            entry.insert(QStringLiteral("fieldName"), input.defaultField);
+        }
+        bind.insert(input.name, entry);
+    }
+    m_host->addDashboardWidget(QString::fromLatin1(kSceneWidgetTypeId),
+                               QJsonObject{{"scene", QString::fromLatin1(DiffDriveScene::kTypeId)},
+                                           {"bind", bind}});
 }
 
 lf::LinePlantDevice* LabPanel::plant() const {
@@ -274,6 +349,10 @@ void LabPanel::refreshDevices() {
     const bool any = m_plantCombo->count() > 0 || m_controllerCombo->count() > 0;
     m_emptyLabel->setVisible(!any);
     m_controls->setVisible(any);
+    // A controller and a scene are built around a plant.
+    const bool hasPlant = m_plantCombo->count() > 0;
+    m_addControllerAction->setEnabled(hasPlant);
+    m_addSceneAction->setEnabled(hasPlant);
     refreshFromDevices();
 }
 

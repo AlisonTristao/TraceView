@@ -145,7 +145,7 @@
 <context>
     <name>ChartWidgets</name>
     <message>
-        <location filename="../lib/dashboard/widgets/chartwidgets.cpp" line="+46"/>
+        <location filename="../lib/dashboard/widgets/chartwidgets.cpp" line="+45"/>
         <source>Field %1</source>
         <translation>フィールド %1</translation>
     </message>
@@ -163,7 +163,7 @@
     </message>
     <message>
         <location line="+6"/>
-        <location line="+355"/>
+        <location line="+354"/>
         <source>%1  %2</source>
         <translation>%1  %2</translation>
     </message>
@@ -233,7 +233,7 @@
         <translation>一時停止中</translation>
     </message>
     <message>
-        <location line="-795"/>
+        <location line="-794"/>
         <source>%1: %2</source>
         <translation>%1: %2</translation>
     </message>
@@ -454,7 +454,7 @@
 <context>
     <name>DiffDriveScene</name>
     <message>
-        <location filename="../lab/scenes/diffdrivescene.cpp" line="+132"/>
+        <location filename="../lab/scenes/diffdrivescene.cpp" line="+131"/>
         <source>Scale</source>
         <translation>スケール</translation>
     </message>
@@ -499,7 +499,7 @@
         <translation>アンチエイリアス</translation>
     </message>
     <message>
-        <location line="+282"/>
+        <location line="+281"/>
         <source>covered: %1%</source>
         <translation>走破: %1%</translation>
     </message>
@@ -557,6 +557,16 @@
         <source>Simulates a plant, closes the loop with your controller and animates it.</source>
         <translation>プラントをシミュレーションし、あなたのコントローラーでループを閉じてアニメーション表示します。</translation>
     </message>
+    <message>
+        <location line="+14"/>
+        <source>TraceLab benchmarks</source>
+        <translation>TraceLab ベンチマーク</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Line follower</source>
+        <translation>ライントレーサー</translation>
+    </message>
 </context>
 <context>
     <name>LineControllerAdapter</name>
@@ -602,7 +612,7 @@
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="+139"/>
+        <location filename="../lib/core/mainwindow.cpp" line="+138"/>
         <source>TraceView Project (*.tvproj)</source>
         <translation>TraceView プロジェクト (*.tvproj)</translation>
     </message>
@@ -859,7 +869,7 @@
 <context>
     <name>SceneWidget</name>
     <message>
-        <location filename="../lab/scenes/scenewidget.cpp" line="+505"/>
+        <location filename="../lab/scenes/scenewidget.cpp" line="+498"/>
         <source>Scene</source>
         <translation>シーン</translation>
     </message>
@@ -1012,17 +1022,7 @@
 <context>
     <name>tracelab::LabPanel</name>
     <message>
-        <location filename="../lab/module/labpanel.cpp" line="+41"/>
-        <source>New simulation</source>
-        <translation>新しいシミュレーション</translation>
-    </message>
-    <message>
-        <location line="+1"/>
-        <source>Opens the line-follower preset: the simulated plant, the controller and a dashboard with the scene and charts.</source>
-        <translation>ライントレーサーのプリセットを開きます：シミュレートされたプラント、コントローラー、シーンとチャートのダッシュボード。</translation>
-    </message>
-    <message>
-        <location line="+2"/>
+        <location filename="../lab/module/labpanel.cpp" line="+54"/>
         <source>Play</source>
         <translation>再生</translation>
     </message>
@@ -1042,17 +1042,42 @@
         <translation>ステップ</translation>
     </message>
     <message>
-        <location line="+12"/>
-        <source>New simulation: Line follower</source>
-        <translation>新しいシミュレーション：ライントレーサー</translation>
+        <location line="-12"/>
+        <source>Add plant</source>
+        <translation>プラントを追加</translation>
     </message>
     <message>
-        <location line="+6"/>
-        <source>No TraceLab device in this project. Start a new simulation, or add a TraceLab device on the Devices tab.</source>
-        <translation>このプロジェクトには TraceLab デバイスがありません。新しいシミュレーションを開始するか、[デバイス] タブで TraceLab デバイスを追加してください。</translation>
+        <location line="+1"/>
+        <source>Adds a simulated line-follower plant to this project&apos;s devices.</source>
+        <translation>このプロジェクトのデバイスに、シミュレーションのライントレースプラントを追加します。</translation>
     </message>
     <message>
-        <location line="+13"/>
+        <location line="+2"/>
+        <source>Add controller</source>
+        <translation>コントローラーを追加</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Adds a controller host that closes the loop on the plant picked below.</source>
+        <translation>下で選んだプラントでループを閉じるコントローラーホストを追加します。</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Add scene</source>
+        <translation>シーンを追加</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Adds a Scene to the dashboard, bound to the plant and controller picked below.</source>
+        <translation>下で選んだプラントとコントローラーに結び付けたシーンをダッシュボードに追加します。</translation>
+    </message>
+    <message>
+        <location line="+31"/>
+        <source>No TraceLab device in this project. Open a benchmark (File &gt; Open Example), or build a lab: add a plant, a controller and a scene.</source>
+        <translation>このプロジェクトに TraceLab デバイスはありません。ベンチマークを開く（ファイル &gt; サンプルを開く）か、プラント・コントローラー・シーンを追加してラボを組み立ててください。</translation>
+    </message>
+    <message>
+        <location line="+14"/>
         <source>Run</source>
         <translation>実行</translation>
     </message>
@@ -1282,7 +1307,17 @@
         <translation>PD 基本速度:</translation>
     </message>
     <message>
-        <location line="+138"/>
+        <location line="+52"/>
+        <source>TraceLab: Line follower</source>
+        <translation>TraceLab：ライントレーサー</translation>
+    </message>
+    <message>
+        <location line="+12"/>
+        <source>TraceLab: Controller</source>
+        <translation>TraceLab：コントローラー</translation>
+    </message>
+    <message>
+        <location line="+134"/>
         <source>running</source>
         <translation>実行中</translation>
     </message>
@@ -1353,7 +1388,7 @@
 <context>
     <name>tracelab::SceneWidget</name>
     <message>
-        <location filename="../lab/scenes/scenewidget.cpp" line="-203"/>
+        <location filename="../lab/scenes/scenewidget.cpp" line="-202"/>
         <source>Unknown scene &quot;%1&quot;</source>
         <translation>不明なシーン「%1」</translation>
     </message>
@@ -1826,7 +1861,7 @@
 <context>
     <name>traceview::BtpBackend</name>
     <message>
-        <location filename="../lib/protocol/btpbackend.cpp" line="+347"/>
+        <location filename="../lib/protocol/btpbackend.cpp" line="+346"/>
         <source>Robot 0x%1 is online but its catalog has not arrived — check the hub (hub -manifest)</source>
         <translation>ロボット 0x%1 はオンラインですが、カタログが届いていません — ハブを確認してください (hub -manifest)</translation>
     </message>
@@ -1891,7 +1926,7 @@
         <translation>デバイスがコンソールに戻りました (BTP/1 CONSOLE)</translation>
     </message>
     <message>
-        <location line="+247"/>
+        <location line="+246"/>
         <source>Dropped an unsealed frame on a sealed direct session (check the robot&apos;s channel-B password)</source>
         <translation>封印された直接セッションで、封印されていないフレームを破棄しました (ロボットのチャンネル B パスワードを確認してください)</translation>
     </message>
@@ -1916,7 +1951,7 @@
         <translation>ターミナル入力を送信できません: 封印に失敗しました</translation>
     </message>
     <message>
-        <location line="-524"/>
+        <location line="-523"/>
         <source>BTP handshake failed: %1</source>
         <translation>BTP ハンドシェイクに失敗しました: %1</translation>
     </message>
@@ -2767,7 +2802,7 @@ Allowed: %1</source>
 <context>
     <name>traceview::DashboardGrid</name>
     <message>
-        <location filename="../lib/dashboard/dashboardgrid.cpp" line="+582"/>
+        <location filename="../lib/dashboard/dashboardgrid.cpp" line="+583"/>
         <source>Bring to Front</source>
         <translation>最前面へ移動</translation>
     </message>
@@ -3682,7 +3717,7 @@ Allowed: %1</source>
         <translation>、</translation>
     </message>
     <message>
-        <location line="+744"/>
+        <location line="+787"/>
         <source>Pending</source>
         <translation>保留中</translation>
     </message>
@@ -3740,7 +3775,12 @@ Drops: %2</source>
         <translation>プロジェクトを開く(&amp;O)...</translation>
     </message>
     <message>
-        <location line="+4"/>
+        <location line="+6"/>
+        <source>Open E&amp;xample</source>
+        <translation>サンプルを開く(&amp;X)</translation>
+    </message>
+    <message>
+        <location line="+2"/>
         <source>Open &amp;Recent</source>
         <translation>最近使用したプロジェクト(&amp;R)</translation>
     </message>
@@ -3826,12 +3866,12 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+0"/>
-        <location line="+3760"/>
+        <location line="+3764"/>
         <source>Later</source>
         <translation>後で</translation>
     </message>
     <message>
-        <location line="-3753"/>
+        <location line="-3757"/>
         <source>&amp;Access</source>
         <translation>アクセス(&amp;A)</translation>
     </message>
@@ -3958,18 +3998,18 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+18"/>
-        <location line="+3124"/>
+        <location line="+3128"/>
         <source>Undo</source>
         <translation>元に戻す</translation>
     </message>
     <message>
-        <location line="-3122"/>
-        <location line="+3122"/>
+        <location line="-3126"/>
+        <location line="+3126"/>
         <source>Redo</source>
         <translation>やり直し</translation>
     </message>
     <message>
-        <location line="-3079"/>
+        <location line="-3083"/>
         <source>Add Device</source>
         <translation>デバイスを追加</translation>
     </message>
@@ -4005,12 +4045,12 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+29"/>
-        <location line="+3024"/>
+        <location line="+3028"/>
         <source>Fullscreen dashboard (F11)</source>
         <translation>ダッシュボードを全画面表示(F11)</translation>
     </message>
     <message>
-        <location line="-2844"/>
+        <location line="-2848"/>
         <source>Rename Workspace</source>
         <translation>ワークスペースの名前を変更</translation>
     </message>
@@ -4101,12 +4141,12 @@ Drops: %2</source>
         <translation>%1: %2 で見つかりました</translation>
     </message>
     <message>
-        <location line="+330"/>
+        <location line="+329"/>
         <source>%1: trying %2</source>
         <translation>%1: %2 を試行中</translation>
     </message>
     <message>
-        <location line="+420"/>
+        <location line="+425"/>
         <location line="+8"/>
         <location line="+5"/>
         <location line="+8"/>
@@ -4228,13 +4268,13 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>アプリを閉じる</translation>
     </message>
     <message>
-        <location line="-3071"/>
-        <location line="+2872"/>
+        <location line="-3075"/>
+        <location line="+2876"/>
         <source>Devices</source>
         <translation>デバイス</translation>
     </message>
     <message>
-        <location line="-2797"/>
+        <location line="-2801"/>
         <source>Subscriptions</source>
         <translation>購読</translation>
     </message>
@@ -4276,23 +4316,23 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     </message>
     <message>
         <location line="+71"/>
-        <location line="+2397"/>
+        <location line="+2401"/>
         <source>Add widget</source>
         <translation>ウィジェットを追加</translation>
     </message>
     <message>
-        <location line="-2394"/>
+        <location line="-2398"/>
         <source>Remove selected widget (%1)</source>
         <translation>選択したウィジェットを削除(%1)</translation>
     </message>
     <message>
         <location line="+3"/>
-        <location line="+2404"/>
+        <location line="+2408"/>
         <source>Add device</source>
         <translation>デバイスを追加</translation>
     </message>
     <message>
-        <location line="-2401"/>
+        <location line="-2405"/>
         <source>Remove selected device (%1)</source>
         <translation>選択したデバイスを削除(%1)</translation>
     </message>
@@ -4453,7 +4493,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>%1: この BLE アドレスは別のロボットとして応答しています (期待値 %2、実際 %3)</translation>
     </message>
     <message>
-        <location line="+493"/>
+        <location line="+492"/>
         <source>Key &quot;%1&quot; is already used by another widget.</source>
         <translation>キー「%1」は既に別のウィジェットで使用されています。</translation>
     </message>
@@ -4473,7 +4513,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>新しいプロジェクトを開始しました。</translation>
     </message>
     <message>
-        <location line="+26"/>
+        <location line="+31"/>
         <location line="+16"/>
         <source>Save Project</source>
         <translation>プロジェクトを保存</translation>
@@ -4484,8 +4524,8 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>名前を付けてプロジェクトを保存</translation>
     </message>
     <message>
-        <location line="-3663"/>
-        <location line="+3677"/>
+        <location line="-3714"/>
+        <location line="+3728"/>
         <location line="+329"/>
         <source>Open Project</source>
         <translation>プロジェクトを開く</translation>

@@ -332,7 +332,7 @@ QJsonObject DashboardGrid::selectedItemConfig() const {
     return QJsonObject();
 }
 
-void DashboardGrid::addItem(const QString& typeId) {
+void DashboardGrid::addItem(const QString& typeId, const QJsonObject& config) {
     // wantsCellHeader() is only known once an instance exists, so a
     // throwaway probe (same WidgetRegistry::create() createCell() below
     // will use for real) decides which default footprint applies -- keeps
@@ -347,6 +347,7 @@ void DashboardGrid::addItem(const QString& typeId) {
     DashboardItem item;
     item.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
     item.typeId = typeId;
+    item.config = config;
     // Each screen-size layout gets its own default footprint (in that
     // breakpoint's own cells -- a phone's default is full width, a
     // notebook's a quarter) placed in that layout's first free spot, so a

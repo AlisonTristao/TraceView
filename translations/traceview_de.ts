@@ -145,7 +145,7 @@
 <context>
     <name>ChartWidgets</name>
     <message>
-        <location filename="../lib/dashboard/widgets/chartwidgets.cpp" line="+46"/>
+        <location filename="../lib/dashboard/widgets/chartwidgets.cpp" line="+45"/>
         <source>Field %1</source>
         <translation>Feld %1</translation>
     </message>
@@ -163,7 +163,7 @@
     </message>
     <message>
         <location line="+6"/>
-        <location line="+355"/>
+        <location line="+354"/>
         <source>%1  %2</source>
         <translation>%1  %2</translation>
     </message>
@@ -233,7 +233,7 @@
         <translation>pausiert</translation>
     </message>
     <message>
-        <location line="-795"/>
+        <location line="-794"/>
         <source>%1: %2</source>
         <translation>%1: %2</translation>
     </message>
@@ -454,7 +454,7 @@
 <context>
     <name>DiffDriveScene</name>
     <message>
-        <location filename="../lab/scenes/diffdrivescene.cpp" line="+132"/>
+        <location filename="../lab/scenes/diffdrivescene.cpp" line="+131"/>
         <source>Scale</source>
         <translation>Maßstab</translation>
     </message>
@@ -499,7 +499,7 @@
         <translation>Kantenglättung</translation>
     </message>
     <message>
-        <location line="+282"/>
+        <location line="+281"/>
         <source>covered: %1%</source>
         <translation>abgedeckt: %1 %</translation>
     </message>
@@ -557,6 +557,16 @@
         <source>Simulates a plant, closes the loop with your controller and animates it.</source>
         <translation>Simuliert eine Strecke, schließt den Regelkreis mit Ihrem Regler und animiert sie.</translation>
     </message>
+    <message>
+        <location line="+14"/>
+        <source>TraceLab benchmarks</source>
+        <translation>TraceLab-Benchmarks</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Line follower</source>
+        <translation>Linienfolger</translation>
+    </message>
 </context>
 <context>
     <name>LineControllerAdapter</name>
@@ -602,7 +612,7 @@
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="+139"/>
+        <location filename="../lib/core/mainwindow.cpp" line="+138"/>
         <source>TraceView Project (*.tvproj)</source>
         <translation>TraceView-Projekt (*.tvproj)</translation>
     </message>
@@ -859,7 +869,7 @@
 <context>
     <name>SceneWidget</name>
     <message>
-        <location filename="../lab/scenes/scenewidget.cpp" line="+505"/>
+        <location filename="../lab/scenes/scenewidget.cpp" line="+498"/>
         <source>Scene</source>
         <translation>Szene</translation>
     </message>
@@ -1012,17 +1022,7 @@
 <context>
     <name>tracelab::LabPanel</name>
     <message>
-        <location filename="../lab/module/labpanel.cpp" line="+41"/>
-        <source>New simulation</source>
-        <translation>Neue Simulation</translation>
-    </message>
-    <message>
-        <location line="+1"/>
-        <source>Opens the line-follower preset: the simulated plant, the controller and a dashboard with the scene and charts.</source>
-        <translation>Öffnet die Linienfolger-Vorlage: die simulierte Strecke, den Regler und ein Dashboard mit Szene und Diagrammen.</translation>
-    </message>
-    <message>
-        <location line="+2"/>
+        <location filename="../lab/module/labpanel.cpp" line="+54"/>
         <source>Play</source>
         <translation>Start</translation>
     </message>
@@ -1042,17 +1042,42 @@
         <translation>Schritt</translation>
     </message>
     <message>
-        <location line="+12"/>
-        <source>New simulation: Line follower</source>
-        <translation>Neue Simulation: Linienfolger</translation>
+        <location line="-12"/>
+        <source>Add plant</source>
+        <translation>Strecke hinzufügen</translation>
     </message>
     <message>
-        <location line="+6"/>
-        <source>No TraceLab device in this project. Start a new simulation, or add a TraceLab device on the Devices tab.</source>
-        <translation>Kein TraceLab-Gerät in diesem Projekt. Starten Sie eine neue Simulation oder fügen Sie auf der Registerkarte Geräte ein TraceLab-Gerät hinzu.</translation>
+        <location line="+1"/>
+        <source>Adds a simulated line-follower plant to this project&apos;s devices.</source>
+        <translation>Fügt den Geräten dieses Projekts eine simulierte Linienfolger-Strecke hinzu.</translation>
     </message>
     <message>
-        <location line="+13"/>
+        <location line="+2"/>
+        <source>Add controller</source>
+        <translation>Regler hinzufügen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Adds a controller host that closes the loop on the plant picked below.</source>
+        <translation>Fügt einen Regler-Host hinzu, der den Regelkreis über die unten gewählte Strecke schließt.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Add scene</source>
+        <translation>Szene hinzufügen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Adds a Scene to the dashboard, bound to the plant and controller picked below.</source>
+        <translation>Fügt dem Dashboard eine Szene hinzu, verbunden mit der unten gewählten Strecke und dem Regler.</translation>
+    </message>
+    <message>
+        <location line="+31"/>
+        <source>No TraceLab device in this project. Open a benchmark (File &gt; Open Example), or build a lab: add a plant, a controller and a scene.</source>
+        <translation>Kein TraceLab-Gerät in diesem Projekt. Öffnen Sie einen Benchmark (Datei &gt; Beispiel öffnen) oder bauen Sie ein Labor auf: Strecke, Regler und Szene hinzufügen.</translation>
+    </message>
+    <message>
+        <location line="+14"/>
         <source>Run</source>
         <translation>Ablauf</translation>
     </message>
@@ -1282,7 +1307,17 @@
         <translation>PD-Grundgeschwindigkeit:</translation>
     </message>
     <message>
-        <location line="+138"/>
+        <location line="+52"/>
+        <source>TraceLab: Line follower</source>
+        <translation>TraceLab: Linienfolger</translation>
+    </message>
+    <message>
+        <location line="+12"/>
+        <source>TraceLab: Controller</source>
+        <translation>TraceLab: Regler</translation>
+    </message>
+    <message>
+        <location line="+134"/>
         <source>running</source>
         <translation>läuft</translation>
     </message>
@@ -1353,7 +1388,7 @@
 <context>
     <name>tracelab::SceneWidget</name>
     <message>
-        <location filename="../lab/scenes/scenewidget.cpp" line="-203"/>
+        <location filename="../lab/scenes/scenewidget.cpp" line="-202"/>
         <source>Unknown scene &quot;%1&quot;</source>
         <translation>Unbekannte Szene „%1“</translation>
     </message>
@@ -1826,7 +1861,7 @@
 <context>
     <name>traceview::BtpBackend</name>
     <message>
-        <location filename="../lib/protocol/btpbackend.cpp" line="+347"/>
+        <location filename="../lib/protocol/btpbackend.cpp" line="+346"/>
         <source>Robot 0x%1 is online but its catalog has not arrived — check the hub (hub -manifest)</source>
         <translation>Roboter 0x%1 ist online, aber sein Katalog ist nicht angekommen — prüfen Sie den Hub (hub -manifest)</translation>
     </message>
@@ -1891,7 +1926,7 @@
         <translation>Gerät ist zur Konsole zurückgekehrt (BTP/1 CONSOLE)</translation>
     </message>
     <message>
-        <location line="+247"/>
+        <location line="+246"/>
         <source>Dropped an unsealed frame on a sealed direct session (check the robot&apos;s channel-B password)</source>
         <translation>Unversiegelter Frame in einer versiegelten Direktsitzung verworfen (prüfen Sie das Kanal-B-Passwort des Roboters)</translation>
     </message>
@@ -1916,7 +1951,7 @@
         <translation>Terminaleingabe nicht gesendet: Versiegeln fehlgeschlagen</translation>
     </message>
     <message>
-        <location line="-524"/>
+        <location line="-523"/>
         <source>BTP handshake failed: %1</source>
         <translation>BTP-Handshake fehlgeschlagen: %1</translation>
     </message>
@@ -2767,7 +2802,7 @@ Erlaubt: %1</translation>
 <context>
     <name>traceview::DashboardGrid</name>
     <message>
-        <location filename="../lib/dashboard/dashboardgrid.cpp" line="+582"/>
+        <location filename="../lib/dashboard/dashboardgrid.cpp" line="+583"/>
         <source>Bring to Front</source>
         <translation>In den Vordergrund</translation>
     </message>
@@ -3683,7 +3718,7 @@ Erlaubt: %1</translation>
         <translation>, </translation>
     </message>
     <message>
-        <location line="+744"/>
+        <location line="+787"/>
         <source>Pending</source>
         <translation>Ausstehend</translation>
     </message>
@@ -3741,7 +3776,12 @@ Verluste: %2</translation>
         <translation>Projekt &amp;öffnen...</translation>
     </message>
     <message>
-        <location line="+4"/>
+        <location line="+6"/>
+        <source>Open E&amp;xample</source>
+        <translation>&amp;Beispiel öffnen</translation>
+    </message>
+    <message>
+        <location line="+2"/>
         <source>Open &amp;Recent</source>
         <translation>&amp;Zuletzt geöffnet</translation>
     </message>
@@ -3827,12 +3867,12 @@ Verluste: %2</translation>
     </message>
     <message>
         <location line="+0"/>
-        <location line="+3760"/>
+        <location line="+3764"/>
         <source>Later</source>
         <translation>Später</translation>
     </message>
     <message>
-        <location line="-3753"/>
+        <location line="-3757"/>
         <source>&amp;Access</source>
         <translation>&amp;Zugang</translation>
     </message>
@@ -3959,18 +3999,18 @@ Verluste: %2</translation>
     </message>
     <message>
         <location line="+18"/>
-        <location line="+3124"/>
+        <location line="+3128"/>
         <source>Undo</source>
         <translation>Rückgängig</translation>
     </message>
     <message>
-        <location line="-3122"/>
-        <location line="+3122"/>
+        <location line="-3126"/>
+        <location line="+3126"/>
         <source>Redo</source>
         <translation>Wiederholen</translation>
     </message>
     <message>
-        <location line="-3079"/>
+        <location line="-3083"/>
         <source>Add Device</source>
         <translation>Gerät hinzufügen</translation>
     </message>
@@ -4006,12 +4046,12 @@ Verluste: %2</translation>
     </message>
     <message>
         <location line="+29"/>
-        <location line="+3024"/>
+        <location line="+3028"/>
         <source>Fullscreen dashboard (F11)</source>
         <translation>Dashboard im Vollbildmodus (F11)</translation>
     </message>
     <message>
-        <location line="-2844"/>
+        <location line="-2848"/>
         <source>Rename Workspace</source>
         <translation>Arbeitsbereich umbenennen</translation>
     </message>
@@ -4102,12 +4142,12 @@ Verluste: %2</translation>
         <translation>%1: gefunden unter %2</translation>
     </message>
     <message>
-        <location line="+330"/>
+        <location line="+329"/>
         <source>%1: trying %2</source>
         <translation>%1: versuche %2</translation>
     </message>
     <message>
-        <location line="+420"/>
+        <location line="+425"/>
         <location line="+8"/>
         <location line="+5"/>
         <location line="+8"/>
@@ -4229,13 +4269,13 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
         <translation>App schließen</translation>
     </message>
     <message>
-        <location line="-3071"/>
-        <location line="+2872"/>
+        <location line="-3075"/>
+        <location line="+2876"/>
         <source>Devices</source>
         <translation>Geräte</translation>
     </message>
     <message>
-        <location line="-2797"/>
+        <location line="-2801"/>
         <source>Subscriptions</source>
         <translation>Abonnements</translation>
     </message>
@@ -4277,23 +4317,23 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
     </message>
     <message>
         <location line="+71"/>
-        <location line="+2397"/>
+        <location line="+2401"/>
         <source>Add widget</source>
         <translation>Widget hinzufügen</translation>
     </message>
     <message>
-        <location line="-2394"/>
+        <location line="-2398"/>
         <source>Remove selected widget (%1)</source>
         <translation>Ausgewähltes Widget entfernen (%1)</translation>
     </message>
     <message>
         <location line="+3"/>
-        <location line="+2404"/>
+        <location line="+2408"/>
         <source>Add device</source>
         <translation>Gerät hinzufügen</translation>
     </message>
     <message>
-        <location line="-2401"/>
+        <location line="-2405"/>
         <source>Remove selected device (%1)</source>
         <translation>Ausgewähltes Gerät entfernen (%1)</translation>
     </message>
@@ -4454,7 +4494,7 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
         <translation>%1: diese BLE-Adresse antwortet jetzt als anderer Roboter (erwartet %2, erhalten %3)</translation>
     </message>
     <message>
-        <location line="+493"/>
+        <location line="+492"/>
         <source>Key &quot;%1&quot; is already used by another widget.</source>
         <translation>Der Schlüssel „%1“ wird bereits von einem anderen Widget verwendet.</translation>
     </message>
@@ -4474,7 +4514,7 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
         <translation>Neues Projekt gestartet.</translation>
     </message>
     <message>
-        <location line="+26"/>
+        <location line="+31"/>
         <location line="+16"/>
         <source>Save Project</source>
         <translation>Projekt speichern</translation>
@@ -4485,8 +4525,8 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
         <translation>Projekt speichern unter</translation>
     </message>
     <message>
-        <location line="-3663"/>
-        <location line="+3677"/>
+        <location line="-3714"/>
+        <location line="+3728"/>
         <location line="+329"/>
         <source>Open Project</source>
         <translation>Projekt öffnen</translation>
