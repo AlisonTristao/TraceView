@@ -152,7 +152,7 @@
     <message>
         <location line="+9"/>
         <location line="+560"/>
-        <location line="+231"/>
+        <location line="+232"/>
         <source>--</source>
         <translation>--</translation>
     </message>
@@ -233,12 +233,12 @@
         <translation>in pausa</translation>
     </message>
     <message>
-        <location line="-794"/>
+        <location line="-795"/>
         <source>%1: %2</source>
         <translation>%1: %2</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/chartpainting.cpp" line="+891"/>
+        <location filename="../lib/dashboard/widgets/chartpainting.cpp" line="+898"/>
         <source>Time (s)</source>
         <translation>Tempo (s)</translation>
     </message>
@@ -2478,7 +2478,7 @@ Consentiti: %1</translation>
 <context>
     <name>traceview::DashboardCell</name>
     <message>
-        <location filename="../lib/dashboard/widgets/chartstyle.cpp" line="+296"/>
+        <location filename="../lib/dashboard/widgets/chartstyle.cpp" line="+318"/>
         <source>Sample rate</source>
         <translation>Frequenza di campionamento</translation>
     </message>
@@ -2528,7 +2528,7 @@ Consentiti: %1</translation>
         <translation>RMS</translation>
     </message>
     <message>
-        <location line="+139"/>
+        <location line="+143"/>
         <source>Style:</source>
         <translation>Stile:</translation>
     </message>
@@ -2631,6 +2631,21 @@ Consentiti: %1</translation>
         <location line="+1"/>
         <source>Auto</source>
         <translation>Automatico</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Y axis numbers:</source>
+        <translation>Numeri dell’asse Y:</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Fixed (0.0015)</source>
+        <translation>Fisso (0.0015)</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Scientific (1.5e-3)</source>
+        <translation>Scientifico (1.5e-3)</translation>
     </message>
     <message>
         <location line="+2"/>

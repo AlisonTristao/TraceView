@@ -629,6 +629,7 @@ CartesianChrome cartesianChrome(const ChartViewOptions& view, const ChartConfig&
     chrome.showGrid = config.showGrid;
     chrome.gridDivisions = gridDivisions;
     chrome.yTickCount = view.yTickCount;
+    chrome.yNumberFormat = view.yNumberFormat;
     const bool outside = view.legendPlacement == ChartLegendPlacement::Outside;
     chrome.topLegendRow = outside;
     chrome.bottomLegendRow = outside;

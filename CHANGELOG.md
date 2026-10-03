@@ -33,6 +33,10 @@ release flow.
   the MPC; the qLPV MPC's rho scheduling (frozen, warm start, Taylor,
   iterative), embedding and iteration limit are now selectable; the Scene has
   an **Antialiasing** option.
+- Line and bar charts: **Y axis numbers** in the gear menu -- Auto (the
+  default: scientific notation when fixed digits would need many zeros or
+  decimals), Fixed or Scientific. Scientific labels share one exponent
+  (0, 0.5e-3, 1.0e-3, 1.5e-3).
 - Settings > Dashboard > **Fast line drawing** (off by default): line charts
   denser than the plot keep each pixel column's minimum and maximum and draw
   without antialiasing.

@@ -152,7 +152,7 @@
     <message>
         <location line="+9"/>
         <location line="+560"/>
-        <location line="+231"/>
+        <location line="+232"/>
         <source>--</source>
         <translation>--</translation>
     </message>
@@ -233,12 +233,12 @@
         <translation>一時停止中</translation>
     </message>
     <message>
-        <location line="-794"/>
+        <location line="-795"/>
         <source>%1: %2</source>
         <translation>%1: %2</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/chartpainting.cpp" line="+891"/>
+        <location filename="../lib/dashboard/widgets/chartpainting.cpp" line="+898"/>
         <source>Time (s)</source>
         <translation>時間 (s)</translation>
     </message>
@@ -2478,7 +2478,7 @@ Allowed: %1</source>
 <context>
     <name>traceview::DashboardCell</name>
     <message>
-        <location filename="../lib/dashboard/widgets/chartstyle.cpp" line="+296"/>
+        <location filename="../lib/dashboard/widgets/chartstyle.cpp" line="+318"/>
         <source>Sample rate</source>
         <translation>サンプリングレート</translation>
     </message>
@@ -2528,7 +2528,7 @@ Allowed: %1</source>
         <translation>実効値</translation>
     </message>
     <message>
-        <location line="+139"/>
+        <location line="+143"/>
         <source>Style:</source>
         <translation>スタイル:</translation>
     </message>
@@ -2631,6 +2631,21 @@ Allowed: %1</source>
         <location line="+1"/>
         <source>Auto</source>
         <translation>自動</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Y axis numbers:</source>
+        <translation>Y 軸の数値:</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Fixed (0.0015)</source>
+        <translation>固定 (0.0015)</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Scientific (1.5e-3)</source>
+        <translation>指数表記 (1.5e-3)</translation>
     </message>
     <message>
         <location line="+2"/>

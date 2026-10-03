@@ -4,7 +4,11 @@
 
 #include "dashboard/widgets/chartscale.h"
 
+using traceview::formatScientificTicks;
 using traceview::formatTick;
+using traceview::formatTicks;
+using traceview::TickNumberFormat;
+using traceview::useScientificTicks;
 using traceview::maxTicksFor;
 using traceview::NiceScale;
 using traceview::niceScale;
@@ -14,6 +18,8 @@ class TestChartScale : public QObject {
     Q_OBJECT
 
 private slots:
+    void scientificTicksShareOneExponent();
+    void autoFormatPicksScientificForUnwieldyNumbers();
     void picksRoundTicksInsideTheRange();
     void expandSnapsTheRangeToTheOuterTicks();
     void neverExceedsTheTickBudget();
@@ -122,6 +128,32 @@ void TestChartScale::maxTicksForClampsToReadableRange() {
     QCOMPARE(maxTicksFor(100, 0), 2);
     QCOMPARE(maxTicksFor(200, 40), 6);
     QCOMPARE(maxTicksFor(5000, 40), 11);
+}
+
+void TestChartScale::scientificTicksShareOneExponent() {
+    QCOMPARE(formatScientificTicks({0.0, 0.0005, 0.001, 0.0015}),
+             (QStringList{"0", "0.5e-3", "1.0e-3", "1.5e-3"}));
+    QCOMPARE(formatScientificTicks({-20000.0, 0.0, 20000.0, 40000.0}),
+             (QStringList{"-2.0e4", "0", "2.0e4", "4.0e4"}));
+    QCOMPARE(formatScientificTicks({0.0, 0.0}), (QStringList{"0", "0"}));
+}
+
+void TestChartScale::autoFormatPicksScientificForUnwieldyNumbers() {
+    // Plain numbers stay fixed.
+    QCOMPARE(formatTicks({0.0, 25.0, 50.0}, 0, TickNumberFormat::Auto),
+             (QStringList{"0", "25", "50"}));
+    QCOMPARE(formatTicks({0.0, 0.5, 1.0}, 1, TickNumberFormat::Auto),
+             (QStringList{"0.0", "0.5", "1.0"}));
+    // Many zeros or decimals go scientific.
+    QVERIFY(useScientificTicks({0.0, 200000.0}, 0));
+    QVERIFY(useScientificTicks({0.0, 0.004}, 3));
+    QVERIFY(useScientificTicks({0.0, 0.0125, 0.025}, 4));
+    QVERIFY(!useScientificTicks({0.0, 0.0}, 0));
+    // Forced either way.
+    QCOMPARE(formatTicks({0.0, 0.0015}, 4, TickNumberFormat::Fixed),
+             (QStringList{"0.0000", "0.0015"}));
+    QCOMPARE(formatTicks({0.0, 50.0}, 0, TickNumberFormat::Scientific),
+             (QStringList{"0", "5.0e1"}));
 }
 
 QTEST_MAIN(TestChartScale)

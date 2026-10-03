@@ -67,8 +67,10 @@ int titleStripWidth(const QFontMetrics& fm) {
 
 int widestTickLabel(const QFontMetrics& fm, const ValueScale& scale) {
     int width = 0;
-    for (double tick : scale.ticks) {
-        width = qMax(width, fm.horizontalAdvance(formatTick(tick, scale.decimals)));
+    for (int i = 0; i < scale.ticks.size(); ++i) {
+        const QString text =
+            i < scale.labels.size() ? scale.labels[i] : formatTick(scale.ticks[i], scale.decimals);
+        width = qMax(width, fm.horizontalAdvance(text));
     }
     return width;
 }
@@ -133,12 +135,15 @@ void paintValueAxis(QPainter& painter, const QRect& plot, const ChartValueAxis& 
         painter.setFont(tickFont);
         painter.setPen(labelColor);
         const QFontMetrics tickFm(tickFont);
-        for (double tick : axis.scale.ticks) {
+        for (int i = 0; i < axis.scale.ticks.size(); ++i) {
+            const double tick = axis.scale.ticks[i];
             const int y = qRound(chartValueToY(plot, axis.scale, tick));
             const QRect rect(labelRight - axis.labelWidth, y - tickFm.height() / 2,
                              axis.labelWidth, tickFm.height());
             painter.drawText(rect, Qt::AlignRight | Qt::AlignVCenter,
-                             formatTick(tick, axis.scale.decimals));
+                             i < axis.scale.labels.size()
+                                 ? axis.scale.labels[i]
+                                 : formatTick(tick, axis.scale.decimals));
             if (occupied) {
                 occupied->append(rect);
             }
@@ -478,6 +483,8 @@ ChartCartesianLayout layoutCartesianChart(const QPainter& painter, const QRect& 
         ChartValueAxis axis;
         axis.scale = valueScale(request.range, style, maxYTicks, chrome.gridDivisions,
                                 request.configDecimals, chrome.yTickCount);
+        axis.scale.labels =
+            formatTicks(axis.scale.ticks, axis.scale.decimals, chrome.yNumberFormat);
         axis.title = request.title;
         axis.labelColor = request.labelColor;
         axis.primary = (i == 0);
