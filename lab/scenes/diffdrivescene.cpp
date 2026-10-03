@@ -383,54 +383,46 @@ void DiffDriveScene::paint(QPainter& painter, const SceneView& view) {
     paintCar(painter, view);
     paintMinimap(painter, view);
 
-    const double cx = view.size.width() / 2.0;
-    const double cy = view.size.height() / 2.0;
-    painter.setFont(hudFont(view));
-    // Centered layout (pygame kept the car right of center to leave room
-    // for its graphs; in TraceView the charts are separate widgets).
-    const double k = hudScale(view);
-    drawHudText(painter, QStringLiteral("fps: %1").arg(view.renderFps, 0, 'f', 1), cx,
-                0.01 * cy + 30.0 * k, Anchor::Center, kHud);
-    QStringList info;
-    if (!qIsNaN(m_qps) || !qIsNaN(m_solveMs)) {
-        if (!m_controller.isEmpty()) {
-            info.append(m_controller);
-        }
-        if (!qIsNaN(m_qps)) {
-            info.append(QStringLiteral("QPs: %1").arg(qRound(m_qps)));
-        }
-        if (!qIsNaN(m_solveMs)) {
-            info.append(QStringLiteral("%1 ms").arg(m_solveMs, 0, 'f', 2));
-        }
-    }
-    if (!info.isEmpty()) {
-        drawHudText(painter, info.join(QStringLiteral(" | ")), cx, 0.01 * cy, Anchor::Center,
-                    kInfo);
-    }
-    // The plant's own world metres (pygame showed metres + 50, y down).
-    const DiffDrivePose current = pose();
-    drawHudText(painter,
-                QStringLiteral("x: %1 y: %2").arg(current.x, 0, 'f', 2).arg(current.y, 0, 'f', 2),
-                cx + 70.0 * k, 1.95 * cy, Anchor::Left, kHud);
-
     paintCompass(painter, view);
 
     const double lineRadius = param(kLineRadius) * scale(view);
     paintCarFramePoints(painter, view, m_preview, kReference, 0.5 * lineRadius);
     paintCarFramePoints(painter, view, m_prediction, kPrediction, qMax(1.0, 0.25 * lineRadius));
 
+    // HUD: one value per line, left-aligned in the top-left corner (the
+    // pygame layout spread them around the screen and joined the controller
+    // info with " | ").
     painter.setFont(hudFont(view));
+    const double k = hudScale(view);
+    const double left = 12.0 * k;
+    double top = 8.0 * k;
+    const double lineHeight = QFontMetricsF(painter.font()).height();
+    const auto line = [&](const QString& text, const QColor& color) {
+        drawHudText(painter, text, left, top, Anchor::Left, color);
+        top += lineHeight;
+    };
+    if (!qIsNaN(m_qps) || !qIsNaN(m_solveMs)) {
+        if (!m_controller.isEmpty()) {
+            line(m_controller, kInfo);
+        }
+        if (!qIsNaN(m_qps)) {
+            line(QStringLiteral("QPs: %1").arg(qRound(m_qps)), kInfo);
+        }
+        if (!qIsNaN(m_solveMs)) {
+            line(QStringLiteral("solve: %1 ms").arg(m_solveMs, 0, 'f', 2), kInfo);
+        }
+    }
+    line(QStringLiteral("fps: %1").arg(view.renderFps, 0, 'f', 1), kHud);
     const double coverage = coveragePercent();
     const double elapsed = elapsedSeconds();
     const double score = elapsed > 0.0 ? 100.0 * coverage / elapsed : 0.0;
-    // Left and right of the car: the reached track always runs down the
-    // middle of the bottom edge.
-    drawHudText(
-        painter,
-        QCoreApplication::translate("DiffDriveScene", "score: %1").arg(score, 0, 'f', 2) +
-            QStringLiteral("   ") +
-            QCoreApplication::translate("DiffDriveScene", "covered: %1%").arg(coverage, 0, 'f', 2),
-        cx - 70.0 * k, 1.95 * cy, Anchor::Right, kHud);
+    line(QCoreApplication::translate("DiffDriveScene", "score: %1").arg(score, 0, 'f', 2), kHud);
+    line(QCoreApplication::translate("DiffDriveScene", "covered: %1%").arg(coverage, 0, 'f', 2),
+         kHud);
+    // The plant's own world metres (pygame showed metres + 50, y down).
+    const DiffDrivePose current = pose();
+    line(QStringLiteral("x: %1").arg(current.x, 0, 'f', 2), kHud);
+    line(QStringLiteral("y: %1").arg(current.y, 0, 'f', 2), kHud);
     painter.restore();
 }
 

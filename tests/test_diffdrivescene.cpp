@@ -58,7 +58,7 @@ private slots:
 };
 
 void TestDiffDriveScene::carAnchorIsFixedFractionOfTheView() {
-    QVERIFY(near(diffDriveCarAnchor(QSizeF(1000, 800)), QPointF(680, 720)));
+    QVERIFY(near(diffDriveCarAnchor(QSizeF(1000, 800)), QPointF(500, 720)));
 }
 
 void TestDiffDriveScene::worldPointUnderTheCarMapsToTheAnchor() {
