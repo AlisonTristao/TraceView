@@ -8,11 +8,13 @@
 #include <QLabel>
 #include <QLocale>
 #include <QPushButton>
+#include <QScrollArea>
 #include <QSpinBox>
 #include <QVBoxLayout>
 
 #include "lab/code/codeblockowner.h"
-#include "lab/module/blockeditor.h"
+#include "lab/module/blockpage.h"
+#include "lab/module/labui.h"
 #include "lab/plant/labplantdevice.h"
 #include "theme/doublespinbox.h"
 
@@ -20,7 +22,10 @@ namespace tracelab {
 
 namespace {
 
-constexpr int kFieldWidth = 180;
+constexpr int kFieldWidth = 170;
+constexpr int kColumnMinWidth = 300;
+constexpr int kColumnMaxWidth = 420;
+constexpr int kStatWidth = 84;
 
 // The speed choices, in combo order.
 struct Speed {
@@ -44,48 +49,36 @@ QFormLayout* makeForm(QWidget* parent) {
     return form;
 }
 
-QLabel* fieldLabel(const QString& text, QWidget* parent) {
-    auto* label = new QLabel(text, parent);
-    label->setObjectName(QStringLiteral("labFieldLabel"));
-    return label;
-}
-
-QLabel* heading(const QString& text, QWidget* parent) {
-    auto* label = new QLabel(text, parent);
-    QFont font = label->font();
-    font.setBold(true);
-    label->setFont(font);
-    return label;
-}
-
 }  // namespace
 
 PlantPage::PlantPage(QWidget* parent) : QWidget(parent) {
     auto* layout = new QVBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
-    layout->setSpacing(12);
-    m_title = heading(QString(), this);
-    QFont titleFont = m_title->font();
-    titleFont.setPointSizeF(titleFont.pointSizeF() * 1.15);
-    m_title->setFont(titleFont);
-    layout->addWidget(m_title);
+    layout->setSpacing(0);
+    // The code's columns and the header; the plant's own column goes first.
+    m_page = new BlockPage(this);
+    m_page->setAutoHeader(false);
+    layout->addWidget(m_page);
 
-    m_stats = new QHBoxLayout;
-    m_stats->setSpacing(8);
-    m_stats->addStretch();
-    layout->addLayout(m_stats);
+    m_stats = new QWidget(this);
+    auto* statsLayout = new QHBoxLayout(m_stats);
+    statsLayout->setContentsMargins(0, 0, 0, 0);
+    statsLayout->setSpacing(8);
+    m_page->header()->addExtra(m_stats);
     addStat(tr("tick"));
     addStat(tr("time"));
 
-    auto* columns = new QHBoxLayout;
-    columns->setSpacing(32);
-    auto* clockBox = new QWidget(this);
-    auto* clockLayout = new QVBoxLayout(clockBox);
-    clockLayout->setContentsMargins(0, 0, 0, 0);
-    clockLayout->addWidget(heading(tr("Clock"), clockBox));
+    auto* column = new QWidget(this);
+    column->setMaximumWidth(kColumnMaxWidth);
+    column->setMinimumWidth(kColumnMinWidth);
+    auto* columnLayout = new QVBoxLayout(column);
+    columnLayout->setContentsMargins(0, 0, 0, 0);
+    columnLayout->setSpacing(12);
+
+    auto* clock = new LabSection(tr("Clock"), column);
     QFormLayout* clockForm = makeForm(nullptr);
-    clockLayout->addLayout(clockForm);
-    m_speedCombo = new QComboBox(clockBox);
+    clock->body()->addLayout(clockForm);
+    m_speedCombo = new QComboBox(clock);
     m_speedCombo->addItem(tr("1x (real time)"));
     m_speedCombo->addItem(tr("2x"));
     m_speedCombo->addItem(tr("As fast as possible"));
@@ -94,37 +87,40 @@ PlantPage::PlantPage(QWidget* parent) : QWidget(parent) {
                                     "so the run does not depend on how fast it computes."),
                               Qt::ToolTipRole);
     m_speedCombo->setMinimumWidth(kFieldWidth);
-    clockForm->addRow(fieldLabel(tr("Speed"), clockBox), m_speedCombo);
-    m_rateSpin = new QSpinBox(clockBox);
+    clockForm->addRow(ui::fieldLabel(tr("Speed"), clock), m_speedCombo);
+    m_rateSpin = new QSpinBox(clock);
     m_rateSpin->setRange(1, 1000);
     m_rateSpin->setSuffix(tr(" Hz"));
     m_rateSpin->setMinimumWidth(kFieldWidth);
     m_rateSpin->setToolTip(tr("Step rate of the simulation: the plant steps and the controllers "
                               "on it sample at Ts = 1 / rate (tl_ts()). Changing it restarts "
                               "the run."));
-    clockForm->addRow(fieldLabel(tr("Sample rate"), clockBox), m_rateSpin);
-    clockLayout->addStretch();
-    columns->addWidget(clockBox);
+    clockForm->addRow(ui::fieldLabel(tr("Sample rate"), clock), m_rateSpin);
+    columnLayout->addWidget(clock);
 
-    auto* settingsColumn = new QWidget(this);
-    auto* settingsLayout = new QVBoxLayout(settingsColumn);
+    m_settingsSection = new LabSection(tr("Settings"), column);
+    auto* settingsScroll = new QScrollArea(m_settingsSection);
+    settingsScroll->setWidgetResizable(true);
+    settingsScroll->setFrameShape(QFrame::NoFrame);
+    settingsScroll->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    settingsScroll->viewport()->setAutoFillBackground(false);
+    m_settingsBox = new QWidget(settingsScroll);
+    m_settingsBox->setAutoFillBackground(false);
+    auto* settingsLayout = new QVBoxLayout(m_settingsBox);
     settingsLayout->setContentsMargins(0, 0, 0, 0);
-    settingsLayout->addWidget(heading(tr("Plant"), settingsColumn));
-    m_settingsBox = new QWidget(settingsColumn);
-    m_settingsForm = makeForm(m_settingsBox);
-    settingsLayout->addWidget(m_settingsBox);
-    m_applyButton = new QPushButton(tr("Apply and reset"), settingsColumn);
+    m_settingsForm = makeForm(nullptr);
+    settingsLayout->addLayout(m_settingsForm);
+    // Right under the fields it applies.
+    m_applyButton = new QPushButton(tr("Apply and reset"), m_settingsBox);
     m_applyButton->setEnabled(false);
+    m_applyButton->setToolTip(tr("The settings take effect on a reset of the run."));
+    settingsLayout->addSpacing(4);
     settingsLayout->addWidget(m_applyButton, 0, Qt::AlignLeft);
     settingsLayout->addStretch();
-    columns->addWidget(settingsColumn);
-    columns->addStretch();
-    layout->addLayout(columns);
-    // A plant written in C: its code, right under the clock and settings.
-    m_code = new BlockEditor(this);
-    layout->addWidget(m_code, 1);
-    m_stretch = new QWidget(this);
-    layout->addWidget(m_stretch, 1);
+    settingsScroll->setWidget(m_settingsBox);
+    m_settingsSection->body()->addWidget(settingsScroll, 1);
+    columnLayout->addWidget(m_settingsSection, 1);
+    m_page->addLeadingColumn(column, 3);
 
     connect(m_speedCombo, qOverload<int>(&QComboBox::currentIndexChanged), this,
             &PlantPage::applySpeed);
@@ -134,23 +130,24 @@ PlantPage::PlantPage(QWidget* parent) : QWidget(parent) {
 }
 
 void PlantPage::addStat(const QString& caption) {
-    auto* tile = new QFrame(this);
+    auto* tile = new QFrame(m_stats);
     tile->setObjectName(QStringLiteral("labStat"));
     auto* layout = new QVBoxLayout(tile);
-    layout->setContentsMargins(10, 6, 10, 6);
+    layout->setContentsMargins(12, 5, 12, 5);
     layout->setSpacing(0);
     auto* value = new QLabel(QStringLiteral("--"), tile);
     QFont font = value->font();
     if (font.pointSizeF() > 0) {
-        font.setPointSizeF(font.pointSizeF() * 1.3);
+        font.setPointSizeF(font.pointSizeF() * 1.15);
     }
+    font.setBold(true);
     value->setFont(font);
     auto* label = new QLabel(caption, tile);
-    label->setObjectName(QStringLiteral("labNote"));
+    label->setObjectName(QStringLiteral("labStatCaption"));
     layout->addWidget(value);
     layout->addWidget(label);
-    tile->setMinimumWidth(120);
-    m_stats->insertWidget(m_stats->count() - 1, tile);  // before the stretch
+    tile->setMinimumWidth(kStatWidth);
+    m_stats->layout()->addWidget(tile);
     m_statValues.append(value);
     m_statCaptions.append(label);
 }
@@ -169,17 +166,39 @@ void PlantPage::setPlant(LabPlantDevice* plant) {
                 rebuildSettings();
             }
         });
+        connect(plant, &LabPlantDevice::runningChanged, this, &PlantPage::refreshHeader);
     }
-    m_title->setText(plant ? plant->typeName() : tr("No plant"));
     CodeBlockOwner* blocks = plant ? plant->codeBlocks() : nullptr;
-    if (m_code->device() != blocks) {
-        m_code->setBlock(blocks, 0);
+    if (m_page->owner() != blocks) {
+        m_page->setBlock(blocks, 0);
     }
-    m_code->setVisible(blocks != nullptr);
-    m_stretch->setVisible(blocks == nullptr);
+    const QString world = plant ? plant->worldName() : QString();
+    m_settingsSection->setTitle(world.isEmpty() ? tr("Settings") : world);
     refreshClock();
     rebuildSettings();
     refreshLive();
+}
+
+void PlantPage::refreshHeader() {
+    LabPageHeader* header = m_page->header();
+    if (!m_plant) {
+        header->setKind(tr("Plant"));
+        header->setTitle(tr("No plant"));
+        header->setStatus(QString(), 0);
+        return;
+    }
+    CodeBlockOwner* blocks = m_plant->codeBlocks();
+    header->setKind(blocks ? tr("Plant  ·  C") : tr("Plant  ·  built into TraceView (C++)"));
+    header->setTitle(blocks ? blocks->blockName(0) : m_plant->typeName());
+    // A fault in the plant's code says more than "paused".
+    const CodeBlockOwner::Status status = blocks ? blocks->status(0) : CodeBlockOwner::Status{};
+    if (blocks && status.tone >= 2) {
+        header->setStatus(status.text, status.tone);
+    } else if (m_plant->running()) {
+        header->setStatus(tr("running"), 1);
+    } else {
+        header->setStatus(tr("paused"), 0);
+    }
 }
 
 void PlantPage::refreshClock() {
@@ -213,9 +232,7 @@ void PlantPage::rebuildSettings() {
     }
     const QVector<PlantSetting> schema = m_plant->settingsSchema();
     if (schema.isEmpty()) {
-        auto* none = new QLabel(tr("This plant has no settings."), m_settingsBox);
-        none->setObjectName(QStringLiteral("labNote"));
-        m_settingsForm->addRow(none);
+        m_settingsForm->addRow(ui::note(tr("This plant has no settings."), m_settingsBox));
         return;
     }
     for (const PlantSetting& setting : schema) {
@@ -267,7 +284,7 @@ void PlantPage::rebuildSettings() {
         }
         field->setMinimumWidth(kFieldWidth);
         field->setToolTip(setting.toolTip);
-        auto* label = fieldLabel(setting.label, m_settingsBox);
+        auto* label = ui::fieldLabel(setting.label, m_settingsBox);
         label->setToolTip(setting.toolTip);
         m_settingsForm->addRow(label, field);
     }
@@ -300,6 +317,8 @@ void PlantPage::applySettings() {
 }
 
 void PlantPage::refreshLive() {
+    refreshHeader();
+    m_page->refreshLive();  // the code's columns, and an action's line over the status
     const QLocale locale;
     if (!m_plant) {
         for (QLabel* value : std::as_const(m_statValues)) {
@@ -310,9 +329,6 @@ void PlantPage::refreshLive() {
     const QVector<QPair<QString, QString>> items = m_plant->statusItems();
     while (m_statValues.size() < 2 + items.size()) {
         addStat(QString());
-    }
-    if (m_code->isVisible()) {
-        m_code->refreshLive();
     }
     m_statValues[0]->setText(locale.toString(qlonglong(m_plant->tick())));
     m_statValues[1]->setText(tr("%1 s").arg(locale.toString(m_plant->time(), 'f', 2)));

@@ -24,8 +24,10 @@
 #include "lab/control/codecontrolleradapter.h"
 #include "lab/control/controllerhost.h"
 #include "lab/control/labdevices.h"
-#include "lab/module/blockeditor.h"
+#include "lab/module/blockpage.h"
+#include "lab/module/codewindow.h"
 #include "lab/module/labcard.h"
+#include "lab/module/labui.h"
 #include "lab/module/plantpage.h"
 #include "lab/plant/labplantdevice.h"
 #include "lab/scenes/diffdrivescene.h"
@@ -163,7 +165,7 @@ LabPanel::LabPanel(traceview::ModuleHost* host, QWidget* parent)
 
     m_pages = new QStackedWidget(m_main);
     m_plantPage = new PlantPage(m_pages);
-    m_blockEditor = new BlockEditor(m_pages);
+    m_blockPage = new BlockPage(m_pages);
     m_otherPage = new QWidget(m_pages);
     auto* otherLayout = new QVBoxLayout(m_otherPage);
     otherLayout->setContentsMargins(0, 0, 0, 0);
@@ -180,21 +182,18 @@ LabPanel::LabPanel(traceview::ModuleHost* host, QWidget* parent)
         }
     });
     m_pages->addWidget(m_plantPage);
-    m_pages->addWidget(m_blockEditor);
+    m_pages->addWidget(m_blockPage);
     m_pages->addWidget(m_otherPage);
     mainLayout->addWidget(m_pages, 1);
     layout->addWidget(m_main);
 
-    connect(m_blockEditor, &BlockEditor::removeRequested, this, [this](int index) {
+    connect(m_blockPage, &BlockPage::removeRequested, this, [this](int index) {
         if (LabControllerDevice* c = controller()) {
             c->removeFilter(index);
             pick(index > 0 ? Pick::Filter : Pick::Plant, index - 1);
         }
     });
     connect(m_plantCombo, qOverload<int>(&QComboBox::activated), this, [this] {
-        if (!m_blockEditor->maybeSave()) {
-            return;
-        }
         m_chainSignature.clear();
         rebuildChain();
         pick(Pick::Plant, 0);
@@ -223,17 +222,8 @@ QString LabPanel::lineFollowerProjectPath() {
 
 void LabPanel::applyTheme() {
     const traceview::ThemePalette& palette = traceview::ThemeManager::instance().currentTheme();
-    // Labels and notes in the secondary text color, the stat tiles on the
-    // header strip's tone, the "+" blocks dashed.
-    setStyleSheet(QStringLiteral("QLabel#labFieldLabel, QLabel#labNote, QLabel#labArrow { color: %1; }"
-                                 "QFrame#labStat { background-color: %2; border-radius: 4px; }"
-                                 "QToolButton#labAddBlock { border: 1px dashed %3; border-radius: 6px;"
-                                 " padding: 10px 14px; color: %1; background: transparent; }"
-                                 "QToolButton#labAddBlock:hover { border-color: %4; color: %5; }"
-                                 "QToolButton#labAddBlock::menu-indicator { image: none; }")
-                      .arg(palette.textSecondary.name(), palette.surfaceAlt.name(),
-                           palette.borderStrong.name(), palette.accent.name(),
-                           palette.textPrimary.name()));
+    // Notes, sections, the primary button, the "+" blocks dashed (labui.h).
+    setStyleSheet(ui::styleSheet(palette));
     const auto icon = [&palette](const char* name) {
         return traceview::loadTintedIcon(
             QStringLiteral(":/tracelab/icons/%1.svg").arg(QLatin1String(name)),
@@ -419,7 +409,9 @@ QMenu* LabPanel::blockMenu(bool controllerBlock) {
 }
 
 void LabPanel::addBlock(bool controllerBlock, const QString& templateId, const QString& path) {
-    if (!m_blockEditor->maybeSave()) {
+    // A new controller replaces the code an open window may be editing.
+    if (CodeWindow* window = CodeWindow::find(controller(), LabControllerDevice::kController);
+        controllerBlock && window && !window->maybeSave()) {
         return;
     }
     CodeBlockSpec spec;
@@ -695,11 +687,6 @@ void LabPanel::refreshCards() {
 }
 
 void LabPanel::pick(Pick what, int index) {
-    const bool sameBlock = (what == Pick::Controller && m_pick == Pick::Controller) ||
-                           (what == Pick::Filter && m_pick == Pick::Filter && index == m_pickIndex);
-    if (!sameBlock && m_pages->currentWidget() == m_blockEditor && !m_blockEditor->maybeSave()) {
-        return;
-    }
     LabControllerDevice* c = controller();
     if ((what == Pick::Filter && (!c || index < 0 || index >= c->filterCount())) ||
         (what == Pick::Controller && !c)) {
@@ -716,10 +703,10 @@ void LabPanel::pick(Pick what, int index) {
         case Pick::Filter:
         case Pick::Controller: {
             const int block = what == Pick::Controller ? LabControllerDevice::kController : index;
-            if (m_blockEditor->device() != c || m_blockEditor->block() != block) {
-                m_blockEditor->setBlock(c, block);
+            if (m_blockPage->owner() != c || m_blockPage->block() != block) {
+                m_blockPage->setBlock(c, block);
             }
-            m_pages->setCurrentWidget(m_blockEditor);
+            m_pages->setCurrentWidget(m_blockPage);
             break;
         }
         case Pick::Other: {
@@ -744,14 +731,10 @@ void LabPanel::pick(Pick what, int index) {
 
 void LabPanel::refreshLive() {
     refreshCards();
-    // A page in sight, and an editor in a window of its own (in sight too).
     if (m_pages->currentWidget() == m_plantPage) {
         m_plantPage->refreshLive();
-    } else if (m_plantPage->codeEditor()->isDetached()) {
-        m_plantPage->codeEditor()->refreshLive();
-    }
-    if (m_pages->currentWidget() == m_blockEditor || m_blockEditor->isDetached()) {
-        m_blockEditor->refreshLive();
+    } else if (m_pages->currentWidget() == m_blockPage) {
+        m_blockPage->refreshLive();
     }
 }
 

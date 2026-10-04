@@ -1097,24 +1097,368 @@
 <context>
     <name>tracelab::BlockEditor</name>
     <message>
-        <location filename="../lab/module/blockeditor.cpp" line="+98"/>
         <source>The code is open in a window of its own.</source>
-        <translation>O código está aberto em uma janela própria.</translation>
+        <translation type="vanished">O código está aberto em uma janela própria.</translation>
     </message>
     <message>
-        <location line="+3"/>
         <source>Show the window</source>
-        <translation>Mostrar a janela</translation>
+        <translation type="vanished">Mostrar a janela</translation>
+    </message>
+    <message>
+        <source>Bring it back here</source>
+        <translation type="vanished">Trazer de volta para cá</translation>
+    </message>
+    <message>
+        <source>Code</source>
+        <translation type="vanished">Código</translation>
+    </message>
+    <message>
+        <source>Where the block&apos;s code comes from: a template (the original, read-only; saving makes a copy of yours), one of your files, another file, or a new one.</source>
+        <translation type="vanished">De onde vem o código do bloco: um template (o original, somente leitura; salvar cria uma cópia sua), um dos seus arquivos, outro arquivo ou um novo.</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation type="vanished">Salvar</translation>
+    </message>
+    <message>
+        <source>Saves and compiles the code (Ctrl+S). A template is saved as a copy in your folder.</source>
+        <translation type="vanished">Salva e compila o código (Ctrl+S). Um template é salvo como cópia na sua pasta.</translation>
+    </message>
+    <message>
+        <source>Back to the original</source>
+        <translation type="vanished">Voltar ao original</translation>
+    </message>
+    <message>
+        <source>Replaces the code with the template it came from.</source>
+        <translation type="vanished">Substitui o código pelo template de onde ele veio.</translation>
+    </message>
+    <message>
+        <source>Folder</source>
+        <translation type="vanished">Pasta</translation>
+    </message>
+    <message>
+        <source>Opens the folder of the file (or your folder of blocks of this kind) in the system&apos;s file manager.</source>
+        <translation type="vanished">Abre a pasta do arquivo (ou a sua pasta de blocos deste tipo) no gerenciador de arquivos do sistema.</translation>
+    </message>
+    <message>
+        <source>VS Code</source>
+        <translation type="vanished">VS Code</translation>
+    </message>
+    <message>
+        <source>The app for .c files</source>
+        <translation type="vanished">O programa padrão para arquivos .c</translation>
+    </message>
+    <message>
+        <source>Choose a program...</source>
+        <translation type="vanished">Escolher um programa...</translation>
+    </message>
+    <message>
+        <source>VS Code (not found)</source>
+        <translation type="vanished">VS Code (não encontrado)</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation type="vanished">Remover</translation>
+    </message>
+    <message>
+        <source>Takes this filter out of the chain (the file stays).</source>
+        <translation type="vanished">Tira este filtro da cadeia (o arquivo continua).</translation>
+    </message>
+    <message>
+        <source>Side panel</source>
+        <translation type="vanished">Painel lateral</translation>
+    </message>
+    <message>
+        <source>Shows or hides the loop, the parameters and the signals beside the code.</source>
+        <translation type="vanished">Mostra ou esconde a malha, os parâmetros e os sinais ao lado do código.</translation>
+    </message>
+    <message>
+        <source>Own window</source>
+        <translation type="vanished">Janela própria</translation>
+    </message>
+    <message>
+        <source>Moves the code to a window of its own -- on another monitor, say, with the scene and the charts in sight. Closing it brings the code back.</source>
+        <translation type="vanished">Move o código para uma janela própria -- em outro monitor, por exemplo, com a cena e os gráficos à vista. Fechar a janela traz o código de volta.</translation>
+    </message>
+    <message>
+        <source>Messages</source>
+        <translation type="vanished">Mensagens</translation>
+    </message>
+    <message>
+        <source>What printf() and tl_log() write shows here.</source>
+        <translation type="vanished">O que printf() e tl_log() escrevem aparece aqui.</translation>
+    </message>
+    <message>
+        <source>Log</source>
+        <translation type="vanished">Log</translation>
+    </message>
+    <message>
+        <source>Loop</source>
+        <translation type="vanished">Malha</translation>
+    </message>
+    <message>
+        <source>Uses the plant&apos;s preview of the track (TL_PREVIEW): information a real robot may not have.</source>
+        <translation type="vanished">Usa o preview da pista enviado pela planta (TL_PREVIEW): informação que um robô real pode não ter.</translation>
+    </message>
+    <message>
+        <source>Parameters</source>
+        <translation type="vanished">Parâmetros</translation>
+    </message>
+    <message>
+        <source>Defaults from the code</source>
+        <translation type="vanished">Padrões do código</translation>
+    </message>
+    <message>
+        <source>Every parameter back to the value written in the code.</source>
+        <translation type="vanished">Todos os parâmetros de volta ao valor escrito no código.</translation>
+    </message>
+    <message>
+        <source>Signals</source>
+        <translation type="vanished">Sinais</translation>
+    </message>
+    <message>
+        <source>Double-click one to declare it at the cursor.</source>
+        <translation type="vanished">Clique duas vezes num sinal para declará-lo no cursor.</translation>
+    </message>
+    <message>
+        <source>Open in VS Code</source>
+        <translation type="vanished">Abrir no VS Code</translation>
+    </message>
+    <message>
+        <source>Open in editor</source>
+        <translation type="vanished">Abrir no editor</translation>
+    </message>
+    <message>
+        <source>Opens the file in another editor (the arrow chooses which). TraceLab watches it: saving it there compiles it here. A template is saved as a copy of yours first.</source>
+        <translation type="vanished">Abre o arquivo em outro editor (a seta escolhe qual). O TraceLab vigia o arquivo: salvar lá compila aqui. Um template é salvo antes como uma cópia sua.</translation>
+    </message>
+    <message>
+        <source>Could not write the editor configuration: %1</source>
+        <translation type="vanished">Não foi possível escrever a configuração do editor: %1</translation>
+    </message>
+    <message>
+        <source>the editor</source>
+        <translation type="vanished">o editor</translation>
+    </message>
+    <message>
+        <source>Could not open %1 in %2.</source>
+        <translation type="vanished">Não foi possível abrir %1 em %2.</translation>
+    </message>
+    <message>
+        <source>%1 opened in %2: saving it there compiles it here.</source>
+        <translation type="vanished">%1 aberto em %2: salvar lá compila aqui.</translation>
+    </message>
+    <message>
+        <source>plant</source>
+        <translation type="vanished">planta</translation>
+    </message>
+    <message>
+        <source>filter</source>
+        <translation type="vanished">filtro</translation>
+    </message>
+    <message>
+        <source>controller</source>
+        <translation type="vanished">controlador</translation>
+    </message>
+    <message>
+        <source>Unsaved code</source>
+        <translation type="vanished">Código não salvo</translation>
+    </message>
+    <message>
+        <source>The code of %1 has changes that were not saved.</source>
+        <translation type="vanished">O código de %1 tem alterações que não foram salvas.</translation>
+    </message>
+    <message>
+        <source>No block</source>
+        <translation type="vanished">Nenhum bloco</translation>
+    </message>
+    <message>
+        <source>TraceLab code</source>
+        <translation type="vanished">Código do TraceLab</translation>
+    </message>
+    <message>
+        <source>%1 -- TraceLab code</source>
+        <translation type="vanished">%1 -- Código do TraceLab</translation>
+    </message>
+    <message>
+        <source>template &quot;%1&quot; (read-only: Save makes a copy)</source>
+        <translation type="vanished">template &quot;%1&quot; (somente leitura: Salvar cria uma cópia)</translation>
+    </message>
+    <message>
+        <source>from the template &quot;%1&quot;, unchanged</source>
+        <translation type="vanished">do template &quot;%1&quot;, sem alterações</translation>
+    </message>
+    <message>
+        <source>from the template &quot;%1&quot;, modified</source>
+        <translation type="vanished">do template &quot;%1&quot;, modificado</translation>
+    </message>
+    <message>
+        <source>Replaces the code with the template &quot;%1&quot;.</source>
+        <translation type="vanished">Substitui o código pelo template &quot;%1&quot;.</translation>
+    </message>
+    <message>
+        <source>This code did not come from a template.</source>
+        <translation type="vanished">Este código não veio de um template.</translation>
+    </message>
+    <message>
+        <source>Templates</source>
+        <translation type="vanished">Templates</translation>
+    </message>
+    <message>
+        <source>Your files</source>
+        <translation type="vanished">Seus arquivos</translation>
+    </message>
+    <message>
+        <source>Open a file...</source>
+        <translation type="vanished">Abrir arquivo...</translation>
+    </message>
+    <message>
+        <source>New %1 (empty)...</source>
+        <translation type="vanished">Novo %1 (vazio)...</translation>
+    </message>
+    <message>
+        <source>Open a %1</source>
+        <translation type="vanished">Abrir %1</translation>
+    </message>
+    <message>
+        <source>C files (*.c);;All files (*)</source>
+        <translation type="vanished">Arquivos C (*.c);;Todos os arquivos (*)</translation>
+    </message>
+    <message>
+        <source>New %1</source>
+        <translation type="vanished">Novo %1</translation>
+    </message>
+    <message>
+        <source>File name (saved in %1):</source>
+        <translation type="vanished">Nome do arquivo (salvo em %1):</translation>
+    </message>
+    <message>
+        <source>Cannot write %1: %2</source>
+        <translation type="vanished">Não foi possível gravar %1: %2</translation>
+    </message>
+    <message>
+        <source>Saved %1</source>
+        <translation type="vanished">%1 salvo</translation>
+    </message>
+    <message>
+        <source>Saved as %1</source>
+        <translation type="vanished">Salvo como %1</translation>
+    </message>
+    <message>
+        <source>Discard your changes and go back to the template?</source>
+        <translation type="vanished">Descartar suas alterações e voltar ao template?</translation>
+    </message>
+    <message>
+        <source>Replace the code of %1 with the original template? Your version of the file is overwritten.</source>
+        <translation type="vanished">Substituir o código de %1 pelo template original? A sua versão do arquivo será sobrescrita.</translation>
+    </message>
+    <message>
+        <source>Stopped: %1 -- fix it and save, or reset the simulation.</source>
+        <translation type="vanished">Parado: %1 -- corrija e salve, ou reinicie a simulação.</translation>
+    </message>
+    <message>
+        <source>Line %1: %2</source>
+        <translation type="vanished">Linha %1: %2</translation>
+    </message>
+    <message>
+        <source>warning</source>
+        <translation type="vanished">aviso</translation>
+    </message>
+    <message>
+        <source>error</source>
+        <translation type="vanished">erro</translation>
+    </message>
+    <message>
+        <source>The previous version keeps running until this one compiles.</source>
+        <translation type="vanished">A versão anterior continua rodando até esta compilar.</translation>
+    </message>
+    <message>
+        <source>Compiled, no messages.</source>
+        <translation type="vanished">Compilado, sem mensagens.</translation>
+    </message>
+    <message>
+        <source>No TL_PARAM in the code.</source>
+        <translation type="vanished">Nenhum TL_PARAM no código.</translation>
+    </message>
+    <message>
+        <source>Not compiled.</source>
+        <translation type="vanished">Não compilado.</translation>
+    </message>
+    <message>
+        <source>%1, from %2 to %3 (in the code: %4)</source>
+        <translation type="vanished">%1, de %2 a %3 (no código: %4)</translation>
+    </message>
+    <message>
+        <source>%1 (in the code: %2)</source>
+        <translation type="vanished">%1 (no código: %2)</translation>
+    </message>
+    <message>
+        <source>Double-click: %1</source>
+        <translation type="vanished">Clique duplo: %1</translation>
+    </message>
+</context>
+<context>
+    <name>tracelab::BlockPage</name>
+    <message>
+        <location filename="../lab/module/blockpage.cpp" line="+87"/>
+        <source>Remove from the loop</source>
+        <translation>Remover do loop</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Takes this filter out of the chain (its file stays).</source>
+        <translation>Tira este filtro da cadeia (o arquivo continua).</translation>
     </message>
     <message>
         <location line="+2"/>
-        <source>Bring it back here</source>
-        <translation>Trazer de volta para cá</translation>
+        <source>Open the code</source>
+        <translation>Abrir código</translation>
     </message>
     <message>
-        <location line="+29"/>
+        <location line="+4"/>
+        <location line="+17"/>
+        <source>In VS Code</source>
+        <translation>No VS Code</translation>
+    </message>
+    <message>
+        <location line="-15"/>
+        <source>In a window of its own</source>
+        <translation>Em uma janela separada</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>In another program...</source>
+        <translation>Em outro programa...</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>In the app for .c files</source>
+        <translation>No programa padrão para .c</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Show in the folder</source>
+        <translation>Mostrar na pasta</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>The block&apos;s code: in VS Code (TraceLab watches the file -- saving it there compiles it here) or in a window of TraceLab&apos;s own. A template is copied to your folder before it opens elsewhere.</source>
+        <translation>O código do bloco: no VS Code (o TraceLab vigia o arquivo -- salvar lá compila aqui) ou em uma janela do próprio TraceLab. Um template é copiado para a sua pasta antes de abrir fora.</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>In VS Code (not found)</source>
+        <translation>No VS Code (não encontrado)</translation>
+    </message>
+    <message>
+        <location line="+13"/>
         <source>Code</source>
         <translation>Código</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Source</source>
+        <translation>Origem</translation>
     </message>
     <message>
         <location line="+5"/>
@@ -1122,92 +1466,14 @@
         <translation>De onde vem o código do bloco: um template (o original, somente leitura; salvar cria uma cópia sua), um dos seus arquivos, outro arquivo ou um novo.</translation>
     </message>
     <message>
-        <location line="+4"/>
-        <location line="+621"/>
-        <location line="+24"/>
-        <source>Save</source>
-        <translation>Salvar</translation>
-    </message>
-    <message>
-        <location line="-644"/>
-        <source>Saves and compiles the code (Ctrl+S). A template is saved as a copy in your folder.</source>
-        <translation>Salva e compila o código (Ctrl+S). Um template é salvo como cópia na sua pasta.</translation>
-    </message>
-    <message>
-        <location line="+3"/>
-        <location line="+672"/>
+        <location line="+8"/>
+        <location line="+391"/>
+        <location line="+13"/>
         <source>Back to the original</source>
         <translation>Voltar ao original</translation>
     </message>
     <message>
-        <location line="-671"/>
-        <source>Replaces the code with the template it came from.</source>
-        <translation>Substitui o código pelo template de onde ele veio.</translation>
-    </message>
-    <message>
-        <location line="+3"/>
-        <source>Folder</source>
-        <translation>Pasta</translation>
-    </message>
-    <message>
-        <location line="+1"/>
-        <source>Opens the folder of the file (or your folder of blocks of this kind) in the system&apos;s file manager.</source>
-        <translation>Abre a pasta do arquivo (ou a sua pasta de blocos deste tipo) no gerenciador de arquivos do sistema.</translation>
-    </message>
-    <message>
-        <location line="+6"/>
-        <location line="+16"/>
-        <location line="+285"/>
-        <source>VS Code</source>
-        <translation>VS Code</translation>
-    </message>
-    <message>
-        <location line="-300"/>
-        <source>The app for .c files</source>
-        <translation>O programa padrão para arquivos .c</translation>
-    </message>
-    <message>
-        <location line="+1"/>
-        <source>Choose a program...</source>
-        <translation>Escolher um programa...</translation>
-    </message>
-    <message>
-        <location line="+14"/>
-        <source>VS Code (not found)</source>
-        <translation>VS Code (não encontrado)</translation>
-    </message>
-    <message>
-        <location line="+2"/>
-        <source>Remove</source>
-        <translation>Remover</translation>
-    </message>
-    <message>
-        <location line="+1"/>
-        <source>Takes this filter out of the chain (the file stays).</source>
-        <translation>Tira este filtro da cadeia (o arquivo continua).</translation>
-    </message>
-    <message>
-        <location line="+3"/>
-        <source>Side panel</source>
-        <translation>Painel lateral</translation>
-    </message>
-    <message>
-        <location line="+2"/>
-        <source>Shows or hides the loop, the parameters and the signals beside the code.</source>
-        <translation>Mostra ou esconde a malha, os parâmetros e os sinais ao lado do código.</translation>
-    </message>
-    <message>
-        <location line="+4"/>
-        <source>Own window</source>
-        <translation>Janela própria</translation>
-    </message>
-    <message>
-        <location line="+2"/>
-        <source>Moves the code to a window of its own -- on another monitor, say, with the scene and the charts in sight. Closing it brings the code back.</source>
-        <translation>Move o código para uma janela própria -- em outro monitor, por exemplo, com a cena e os gráficos à vista. Fechar a janela traz o código de volta.</translation>
-    </message>
-    <message>
-        <location line="+17"/>
+        <location line="-397"/>
         <source>Messages</source>
         <translation>Mensagens</translation>
     </message>
@@ -1222,78 +1488,42 @@
         <translation>Log</translation>
     </message>
     <message>
-        <location line="+15"/>
-        <source>Loop</source>
-        <translation>Malha</translation>
-    </message>
-    <message>
         <location line="+5"/>
-        <source>Uses the plant&apos;s preview of the track (TL_PREVIEW): information a real robot may not have.</source>
-        <translation>Usa o preview da pista enviado pela planta (TL_PREVIEW): informação que um robô real pode não ter.</translation>
-    </message>
-    <message>
-        <location line="+8"/>
         <source>Parameters</source>
         <translation>Parâmetros</translation>
     </message>
     <message>
-        <location line="+8"/>
-        <source>Defaults from the code</source>
-        <translation>Padrões do código</translation>
+        <location line="+3"/>
+        <source>Defaults</source>
+        <translation>Padrões</translation>
     </message>
     <message>
-        <location line="+1"/>
+        <location line="+2"/>
         <source>Every parameter back to the value written in the code.</source>
         <translation>Todos os parâmetros de volta ao valor escrito no código.</translation>
     </message>
     <message>
-        <location line="+4"/>
+        <location line="+23"/>
         <source>Signals</source>
         <translation>Sinais</translation>
     </message>
     <message>
-        <location line="+1"/>
-        <source>Double-click one to declare it at the cursor.</source>
-        <translation>Clique duas vezes num sinal para declará-lo no cursor.</translation>
-    </message>
-    <message>
-        <location line="+171"/>
-        <source>Open in VS Code</source>
-        <translation>Abrir no VS Code</translation>
-    </message>
-    <message>
-        <location line="+1"/>
-        <location line="+48"/>
-        <source>Open in editor</source>
-        <translation>Abrir no editor</translation>
-    </message>
-    <message>
-        <location line="-46"/>
-        <source>Opens the file in another editor (the arrow chooses which). TraceLab watches it: saving it there compiles it here. A template is saved as a copy of yours first.</source>
-        <translation>Abre o arquivo em outro editor (a seta escolhe qual). O TraceLab vigia o arquivo: salvar lá compila aqui. Um template é salvo antes como uma cópia sua.</translation>
-    </message>
-    <message>
-        <location line="+23"/>
-        <source>Could not write the editor configuration: %1</source>
-        <translation>Não foi possível escrever a configuração do editor: %1</translation>
+        <location line="+5"/>
+        <source>Double-click one: its declaration goes into the open code window (or to the clipboard).</source>
+        <translation>Clique duplo em um: a declaração vai para a janela de código aberta (ou para a área de transferência).</translation>
     </message>
     <message>
         <location line="+4"/>
-        <source>the editor</source>
-        <translation>o editor</translation>
+        <source>Double-click: declare it in the code.</source>
+        <translation>Clique duplo: declara no código.</translation>
     </message>
     <message>
-        <location line="+20"/>
-        <source>Could not open %1 in %2.</source>
-        <translation>Não foi possível abrir %1 em %2.</translation>
+        <location line="+26"/>
+        <source>Copied: %1</source>
+        <translation>Copiado: %1</translation>
     </message>
     <message>
-        <location line="+4"/>
-        <source>%1 opened in %2: saving it there compiles it here.</source>
-        <translation>%1 aberto em %2: salvar lá compila aqui.</translation>
-    </message>
-    <message>
-        <location line="+11"/>
+        <location line="+44"/>
         <source>plant</source>
         <translation>planta</translation>
     </message>
@@ -1308,54 +1538,49 @@
         <translation>controlador</translation>
     </message>
     <message>
-        <location line="+37"/>
-        <source>Unsaved code</source>
-        <translation>Código não salvo</translation>
-    </message>
-    <message>
-        <location line="+1"/>
-        <source>The code of %1 has changes that were not saved.</source>
-        <translation>O código de %1 tem alterações que não foram salvas.</translation>
-    </message>
-    <message>
-        <location line="+43"/>
+        <location line="+57"/>
         <source>No block</source>
         <translation>Nenhum bloco</translation>
     </message>
     <message>
+        <location line="+13"/>
+        <source>stopped: %1</source>
+        <translation>parado: %1</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>does not compile (line %1): the previous version runs</source>
+        <translation>não compila (linha %1): a versão anterior continua rodando</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>does not compile (line %1)</source>
+        <translation>não compila (linha %1)</translation>
+    </message>
+    <message>
+        <location line="+25"/>
+        <source>The template &quot;%1&quot; as shipped (read-only: saving it makes a copy of yours).</source>
+        <translation>O template &quot;%1&quot; original (somente leitura: salvar cria uma cópia sua).</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Your file %1.</source>
+        <translation>Seu arquivo %1.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Your file %1, from the template &quot;%2&quot;, modified.</source>
+        <translation>Seu arquivo %1, do template &quot;%2&quot;, modificado.</translation>
+    </message>
+    <message>
         <location line="+2"/>
-        <source>TraceLab code</source>
-        <translation>Código do TraceLab</translation>
+        <source>Your file %1, from the template &quot;%2&quot;, unchanged.</source>
+        <translation>Seu arquivo %1, do template &quot;%2&quot;, sem alterações.</translation>
     </message>
     <message>
-        <location line="+15"/>
-        <source>%1 -- TraceLab code</source>
-        <translation>%1 -- Código do TraceLab</translation>
-    </message>
-    <message>
-        <location line="+17"/>
-        <source>template &quot;%1&quot; (read-only: Save makes a copy)</source>
-        <translation>template &quot;%1&quot; (somente leitura: Salvar cria uma cópia)</translation>
-    </message>
-    <message>
-        <location line="+1"/>
-        <source>from the template &quot;%1&quot;, unchanged</source>
-        <translation>do template &quot;%1&quot;, sem alterações</translation>
-    </message>
-    <message>
-        <location line="+1"/>
-        <source>from the template &quot;%1&quot;, modified</source>
-        <translation>do template &quot;%1&quot;, modificado</translation>
-    </message>
-    <message>
-        <location line="+12"/>
+        <location line="+7"/>
         <source>Replaces the code with the template &quot;%1&quot;.</source>
         <translation>Substitui o código pelo template &quot;%1&quot;.</translation>
-    </message>
-    <message>
-        <location line="+1"/>
-        <source>This code did not come from a template.</source>
-        <translation>Este código não veio de um template.</translation>
     </message>
     <message>
         <location line="+22"/>
@@ -1378,7 +1603,7 @@
         <translation>Novo %1 (vazio)...</translation>
     </message>
     <message>
-        <location line="+31"/>
+        <location line="+30"/>
         <source>Open a %1</source>
         <translation>Abrir %1</translation>
     </message>
@@ -1389,47 +1614,37 @@
     </message>
     <message>
         <location line="+11"/>
-        <location line="+14"/>
+        <location line="+15"/>
         <source>New %1</source>
         <translation>Novo %1</translation>
     </message>
     <message>
-        <location line="-13"/>
+        <location line="-14"/>
         <source>File name (saved in %1):</source>
         <translation>Nome do arquivo (salvo em %1):</translation>
     </message>
     <message>
-        <location line="+45"/>
-        <source>Cannot write %1: %2</source>
-        <translation>Não foi possível gravar %1: %2</translation>
+        <location line="+48"/>
+        <source>Replace the code of %1 with the original template? Your version of the file is overwritten%2.</source>
+        <translation>Substituir o código de %1 pelo template original? A sua versão do arquivo é sobrescrita%2.</translation>
     </message>
     <message>
-        <location line="+15"/>
-        <source>Saved %1</source>
-        <translation>%1 salvo</translation>
+        <location line="+3"/>
+        <source>, and the unsaved changes in its window are dropped</source>
+        <translation>, e as alterações não salvas na janela dele são descartadas</translation>
     </message>
     <message>
-        <location line="+19"/>
-        <source>Saved as %1</source>
-        <translation>Salvo como %1</translation>
+        <location line="+16"/>
+        <source>%1 is the template again.</source>
+        <translation>%1 voltou a ser o template.</translation>
     </message>
     <message>
-        <location line="+23"/>
-        <source>Discard your changes and go back to the template?</source>
-        <translation>Descartar suas alterações e voltar ao template?</translation>
-    </message>
-    <message>
-        <location line="+1"/>
-        <source>Replace the code of %1 with the original template? Your version of the file is overwritten.</source>
-        <translation>Substituir o código de %1 pelo template original? A sua versão do arquivo será sobrescrita.</translation>
-    </message>
-    <message>
-        <location line="+26"/>
+        <location line="+40"/>
         <source>Stopped: %1 -- fix it and save, or reset the simulation.</source>
         <translation>Parado: %1 -- corrija e salve, ou reinicie a simulação.</translation>
     </message>
     <message>
-        <location line="+16"/>
+        <location line="+13"/>
         <source>Line %1: %2</source>
         <translation>Linha %1: %2</translation>
     </message>
@@ -1444,7 +1659,12 @@
         <translation>erro</translation>
     </message>
     <message>
-        <location line="+11"/>
+        <location line="+5"/>
+        <source>Double-click: the line in the code window.</source>
+        <translation>Clique duplo: a linha na janela de código.</translation>
+    </message>
+    <message>
+        <location line="+6"/>
         <source>The previous version keeps running until this one compiles.</source>
         <translation>A versão anterior continua rodando até esta compilar.</translation>
     </message>
@@ -1454,7 +1674,7 @@
         <translation>Compilado, sem mensagens.</translation>
     </message>
     <message>
-        <location line="+29"/>
+        <location line="+28"/>
         <source>No TL_PARAM in the code.</source>
         <translation>Nenhum TL_PARAM no código.</translation>
     </message>
@@ -1464,7 +1684,7 @@
         <translation>Não compilado.</translation>
     </message>
     <message>
-        <location line="+65"/>
+        <location line="+61"/>
         <source>%1, from %2 to %3 (in the code: %4)</source>
         <translation>%1, de %2 a %3 (no código: %4)</translation>
     </message>
@@ -1672,6 +1892,132 @@
     </message>
 </context>
 <context>
+    <name>tracelab::CodeWindow</name>
+    <message>
+        <location filename="../lab/module/codewindow.cpp" line="+110"/>
+        <source>This block has no code to open.</source>
+        <translation>Este bloco não tem código para abrir.</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <location line="+30"/>
+        <source>Open the code</source>
+        <translation>Abrir código</translation>
+    </message>
+    <message>
+        <location line="-11"/>
+        <source>VS Code</source>
+        <translation>VS Code</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>the editor</source>
+        <translation>o editor</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Could not open %1 in %2.</source>
+        <translation>Não foi possível abrir %1 em %2.</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>%1 opened in %2: saving it there compiles it here.</source>
+        <translation>%1 aberto em %2: salvar lá compila aqui.</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>(Could not write the editor configuration: %1)</source>
+        <translation>(Não foi possível escrever a configuração do editor: %1)</translation>
+    </message>
+    <message>
+        <location line="+35"/>
+        <source>Open in VS Code</source>
+        <translation>Abrir no VS Code</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Opens this file in VS Code at the cursor&apos;s line; saving it there compiles it here.</source>
+        <translation>Abre este arquivo no VS Code na linha do cursor; salvar lá compila aqui.</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <location line="+221"/>
+        <location line="+19"/>
+        <source>Save</source>
+        <translation>Salvar</translation>
+    </message>
+    <message>
+        <location line="-239"/>
+        <source>Saves and compiles the code (Ctrl+S). A template is saved as a copy in your folder.</source>
+        <translation>Salva e compila o código (Ctrl+S). Um template é salvo como cópia na sua pasta.</translation>
+    </message>
+    <message>
+        <location line="+114"/>
+        <source>%1 -- %2 -- TraceLab code</source>
+        <translation>%1 -- %2 -- Código do TraceLab</translation>
+    </message>
+    <message>
+        <location line="+15"/>
+        <source>template &quot;%1&quot; (read-only: Save makes a copy)</source>
+        <translation>template &quot;%1&quot; (somente leitura: Salvar cria uma cópia)</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>from the template &quot;%1&quot;, modified</source>
+        <translation>do template &quot;%1&quot;, modificado</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>from the template &quot;%1&quot;, unchanged</source>
+        <translation>do template &quot;%1&quot;, sem alterações</translation>
+    </message>
+    <message>
+        <location line="+18"/>
+        <source>Stopped: %1 -- fix it and save, or reset the simulation.</source>
+        <translation>Parado: %1 -- corrija e salve, ou reinicie a simulação.</translation>
+    </message>
+    <message>
+        <location line="+14"/>
+        <source>Line %1: %2</source>
+        <translation>Linha %1: %2</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>warning</source>
+        <translation>aviso</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>error</source>
+        <translation>erro</translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <source>The previous version keeps running until this one compiles.</source>
+        <translation>A versão anterior continua rodando até esta compilar.</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Compiled, no messages.</source>
+        <translation>Compilado, sem mensagens.</translation>
+    </message>
+    <message>
+        <location line="+13"/>
+        <source>Unsaved code</source>
+        <translation>Código não salvo</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>The code of %1 has changes that were not saved.</source>
+        <translation>O código de %1 tem alterações que não foram salvas.</translation>
+    </message>
+    <message>
+        <location line="+24"/>
+        <source>Cannot write %1: %2</source>
+        <translation>Não foi possível gravar %1: %2</translation>
+    </message>
+</context>
+<context>
     <name>tracelab::EndpointTransport</name>
     <message>
         <location filename="../lab/plant/endpointtransport.cpp" line="+30"/>
@@ -1725,7 +2071,7 @@
 <context>
     <name>tracelab::LabPanel</name>
     <message>
-        <location filename="../lab/module/labpanel.cpp" line="+63"/>
+        <location filename="../lab/module/labpanel.cpp" line="+65"/>
         <source>Adds a simulated plant to this project&apos;s devices.</source>
         <translation>Adiciona uma planta simulada aos dispositivos deste projeto.</translation>
     </message>
@@ -1780,7 +2126,7 @@
         <translation>Remover do projeto</translation>
     </message>
     <message>
-        <location line="+193"/>
+        <location line="+181"/>
         <source>Templates</source>
         <translation>Templates</translation>
     </message>
@@ -1830,7 +2176,7 @@
         <translation>Arquivos C (*.c);;Todos os arquivos (*)</translation>
     </message>
     <message>
-        <location line="+197"/>
+        <location line="+199"/>
         <source>tick %1 · %2 s</source>
         <translation>tick %1 · %2 s</translation>
     </message>
@@ -1909,17 +2255,17 @@
         <translation>Substitua por um controlador em C.</translation>
     </message>
     <message>
-        <location line="+48"/>
+        <location line="+43"/>
         <source>%1 is a controller written in C++ inside TraceView: it closes the loop on this plant, but its code cannot be seen or changed here. Replace it with a controller in C (&quot;+ Controller&quot; or &quot;Add controller&quot; on the ribbon, after removing it: two controllers on one plant fight over its inputs).</source>
         <translation>%1 é um controlador escrito em C++ dentro do TraceView: ele fecha a malha nesta planta, mas o código dele não pode ser visto nem alterado aqui. Substitua por um controlador em C (&quot;+ Controlador&quot; ou &quot;Adicionar controlador&quot; na faixa de opções, depois de removê-lo: dois controladores numa planta disputam as entradas dela).</translation>
     </message>
     <message>
-        <location line="+34"/>
+        <location line="+30"/>
         <source>TraceLab: %1</source>
         <translation>TraceLab: %1</translation>
     </message>
     <message>
-        <location line="-705"/>
+        <location line="-686"/>
         <source>Add plant</source>
         <translation>Adicionar planta</translation>
     </message>
@@ -2138,7 +2484,7 @@
         <translation type="vanished">TraceLab: Seguidor de linha</translation>
     </message>
     <message>
-        <location line="+388"/>
+        <location line="+378"/>
         <source>TraceLab: Controller</source>
         <translation>TraceLab: Controlador</translation>
     </message>
@@ -2194,7 +2540,7 @@
         <translation type="vanished">Nenhum dispositivo do TraceLab neste projeto ainda. Abra o benchmark do seguidor de linha ou monte um lab: primeiro uma planta, depois um controlador e uma cena para ela.</translation>
     </message>
     <message>
-        <location line="-503"/>
+        <location line="-493"/>
         <source>Open the line-follower benchmark</source>
         <translation>Abrir o benchmark do seguidor de linha</translation>
     </message>
@@ -2216,7 +2562,7 @@
     </message>
     <message>
         <location line="+32"/>
-        <location line="+459"/>
+        <location line="+449"/>
         <source>Plant</source>
         <translation>Planta</translation>
     </message>
@@ -2329,7 +2675,7 @@
 <context>
     <name>tracelab::PlantPage</name>
     <message>
-        <location filename="../lab/module/plantpage.cpp" line="+77"/>
+        <location filename="../lab/module/plantpage.cpp" line="+68"/>
         <source>tick</source>
         <translation>tick</translation>
     </message>
@@ -2339,7 +2685,7 @@
         <translation>tempo</translation>
     </message>
     <message>
-        <location line="+7"/>
+        <location line="+9"/>
         <source>Clock</source>
         <translation>Relógio</translation>
     </message>
@@ -2389,27 +2735,58 @@
         <translation>Taxa de amostragem</translation>
     </message>
     <message>
-        <location line="+7"/>
+        <location line="+3"/>
+        <location line="+75"/>
+        <source>Settings</source>
+        <translation>Ajustes</translation>
+    </message>
+    <message>
+        <location line="-60"/>
+        <source>The settings take effect on a reset of the run.</source>
+        <translation>Os ajustes valem a partir de um reset da simulação.</translation>
+    </message>
+    <message>
+        <location line="+69"/>
         <source>Plant</source>
         <translation>Planta</translation>
     </message>
     <message>
-        <location line="+4"/>
+        <location line="-71"/>
         <source>Apply and reset</source>
         <translation>Aplicar e reiniciar</translation>
     </message>
     <message>
-        <location line="+57"/>
+        <location line="+72"/>
         <source>No plant</source>
         <translation>Nenhuma planta</translation>
     </message>
     <message>
-        <location line="+43"/>
+        <location line="+5"/>
+        <source>Plant  ·  C</source>
+        <translation>Planta  ·  C</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Plant  ·  built into TraceView (C++)</source>
+        <translation>Planta  ·  embutida no TraceView (C++)</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>running</source>
+        <translation>rodando</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>paused</source>
+        <translation>pausada</translation>
+    </message>
+    <message>
+        <location line="+35"/>
         <source>This plant has no settings.</source>
         <translation>Esta planta não tem configurações.</translation>
     </message>
     <message>
-        <location line="+102"/>
+        <location line="+99"/>
         <source>%1 s</source>
         <translation>%1 s</translation>
     </message>

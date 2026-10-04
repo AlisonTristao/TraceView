@@ -211,10 +211,12 @@ target_link_libraries(tracelab_scenes
 
 # tracelab_module: LabModule, what src/main.cpp registers.
 add_library(tracelab_module STATIC
-    module/blockeditor.cpp
-    module/blockeditor.h
+    module/blockpage.cpp
+    module/blockpage.h
     module/codeeditor.cpp
     module/codeeditor.h
+    module/codewindow.cpp
+    module/codewindow.h
     module/externaleditor.cpp
     module/externaleditor.h
     module/labcard.cpp
@@ -223,6 +225,8 @@ add_library(tracelab_module STATIC
     module/labmodule.h
     module/labpanel.cpp
     module/labpanel.h
+    module/labui.cpp
+    module/labui.h
     module/plantpage.cpp
     module/plantpage.h
 )

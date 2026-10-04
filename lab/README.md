@@ -51,10 +51,13 @@ With the lab ON and an older BTP, configure stops and says so. With
    the wheel speeds the controller uses). The plant starts on its own.
 3. The **TraceLab** tab shows the loop as a chain of cards -- plant >
    filters > controller -- with **+ Filter** / **+ Controller** where a block
-   can go. Pick a card: the plant shows its clock (Play / Pause / Reset /
-   Step, 1x, 2x, as fast as possible, lockstep, the sample rate), its
-   settings and its code; a filter or the controller shows its code, where
-   it comes from, its parameters (live) and the signals it can read. The
+   can go. Pick a card: its page has a header (what the block is, how it
+   runs, **Open the code** on the right) and columns -- for the plant its
+   clock (1x, 2x, as fast as possible, lockstep, the sample rate) and
+   settings first; for every block in C where its code comes from with the
+   compiler's messages and log, its parameters (live) and the signals it can
+   read. The code itself opens in VS Code or in a window of its own. Play /
+   Pause / Reset / Step are on the ribbon. The
    ribbon has **Add plant**, **Add controller** and **Add scene** (a Scene
    bound by name to both). With the Scene focused, P / O / R change the
    perturbation (`sim.disturb`).
@@ -139,19 +142,17 @@ How it runs (`code/`, `tracelab_code`):
   the original** restores. A saved file is compiled again at once (also when
   saved by another editor); a version that does not compile leaves the
   previous one running.
-- **Another editor**: "Open in VS Code" / "Open in editor" (the arrow picks
-  VS Code, the app for .c files or, on Windows, a program to choose) opens
-  the block's file at the cursor's line -- a template is saved as a copy
-  first -- and a save there compiles it here. It also writes, in
+- **Open the code** (the page's one button): **In VS Code**, **In a window
+  of its own** (`CodeWindow`: the editor, Save, the messages -- one window a
+  block, on another monitor if you like), in another program, or the
+  folder. Outside TraceView a template is saved as a copy first, and a save
+  there compiles it here (at the code window's cursor line when one is
+  open). It also writes, in
   `Documents/TraceLab`, `compile_flags.txt` (clangd) and
   `.vscode/c_cpp_properties.json` (VS Code's C/C++ extension; VS Code is
   opened with that folder) pointing at the runtime folder, so the editor
   knows `tracelab.h` and the `TL_*` macros; a file of these without
   TraceLab's marker is the user's and stays.
-- **Own window**: the block's editor (code, messages, parameters, signals)
-  moves to a window of its own -- another monitor, the scene in sight -- and
-  comes back when it closes; **Side panel** hides the parameters and
-  signals for a wider editor. Both are remembered (QSettings).
 - `LabControllerDevice` (`control/labdevices.h`, type `tracelab.controller`)
   is a `ControllerHost` with the filters (`SignalFilter`,
   `control/signalfilter.h`) and the controller (`CodeControllerAdapter`) in
@@ -229,9 +230,11 @@ lab/
   module/               tracelab_module
     labmodule.h/.cpp        LabModule: registers the scene widget, device types and the tab
     labpanel.h/.cpp         the TraceLab tab: the loop's cards, the picked block's page
-    plantpage.h/.cpp        a plant's clock, settings and code
-    blockeditor.h/.cpp      a block's code, source, messages, log, parameters, signals
+    plantpage.h/.cpp        a plant's page: figures, clock, settings, then its code's columns
+    blockpage.h/.cpp        a block's page: header, source, messages, log, parameters, signals
+    codewindow.h/.cpp       a block's code in a window of its own
     codeeditor.h/.cpp       the editor: line numbers, C highlighting, error marks
+    labui.h/.cpp            the tab's look: sections, page header, primary button
     externaleditor.h/.cpp   opening a block's file in VS Code or another editor
 ```
 

@@ -4,9 +4,9 @@
 // its code, parameters and signals; Save turning an edited template into a
 // file of the user's (the template untouched, the origin line on top) and
 // "Back to the original" restoring it; every configuration change reaching
-// the project through ModuleHost::updateModuleDeviceConfig(); the code in a
-// window of its own and back; what opening it in VS Code passes and the
-// editor configuration it writes. Offscreen (nothing is started); with
+// the project through ModuleHost::updateModuleDeviceConfig(); the page
+// without the code, which opens in a window of its own (CodeWindow); what
+// opening it in VS Code passes and the editor configuration it writes. Offscreen (nothing is started); with
 // TRACELAB_PANEL_SHOTS=<folder> it also saves screenshots there.
 
 #include <QAction>
@@ -15,6 +15,7 @@
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QLabel>
+#include <QListWidget>
 #include <QMenu>
 #include <QPushButton>
 #include <QStackedWidget>
@@ -26,17 +27,22 @@
 #include "dashboard/widgetregistry.h"
 #include "lab/benchmarks/linefollower/code/lftemplates.h"
 #include "lab/benchmarks/linefollower/device/lfplantdevice.h"
+#include "lab/benchmarks/linefollower/device/trackenvironment.h"
 #include "lab/code/codefiles.h"
 #include "lab/code/coderuntime.h"
 #include "lab/control/controllerhost.h"
 #include "lab/control/labdevices.h"
-#include "lab/module/blockeditor.h"
+#include "lab/plant/codeplantdevice.h"
+#include "lab/module/blockpage.h"
 #include "lab/module/codeeditor.h"
+#include "lab/module/codewindow.h"
 #include "lab/module/externaleditor.h"
 #include "lab/module/labcard.h"
 #include "lab/module/labpanel.h"
+#include "lab/module/labui.h"
 #include "lab/module/plantpage.h"
 #include "modules/appmodule.h"
+#include "traceview/thememanager.h"
 
 using namespace tracelab;
 
@@ -89,15 +95,6 @@ QToolButton* addButton(QWidget* panel, const QString& text) {
     return nullptr;
 }
 
-QToolButton* toolButton(QWidget* parent, const QString& text) {
-    for (QToolButton* button : parent->findChildren<QToolButton*>()) {
-        if (button->text() == text) {
-            return button;
-        }
-    }
-    return nullptr;
-}
-
 QList<LabCard*> cards(QWidget* panel) {
     // A rebuilt chain's cards are shown by a queued call.
     QCoreApplication::processEvents();
@@ -120,6 +117,10 @@ class TestLabPanel : public QObject {
 private slots:
     void initTestCase() {
         QStandardPaths::setTestModeEnabled(true);
+        // Screenshots in the application's look.
+        if (!qEnvironmentVariableIsEmpty("TRACELAB_PANEL_SHOTS")) {
+            traceview::ThemeManager::instance().applyCurrentTheme();
+        }
         lf::registerLineFollowerTemplates();
         // Start from an empty folder of blocks.
         for (code::BlockKind kind : {code::BlockKind::Controller, code::BlockKind::Filter}) {
@@ -159,10 +160,26 @@ private slots:
         QTRY_VERIFY(controller->host()->plantReady());
         QTRY_VERIFY(controller->host()->configured());
         QTRY_COMPARE(cards(&panel).size(), 2);
-        auto* editor = panel.findChild<BlockEditor*>();
         auto* pages = panel.findChild<QStackedWidget*>();
-        QCOMPARE(pages->currentWidget(), editor);  // the new block is picked
-        auto* code = editor->findChild<CodeEditor*>();
+        auto* editor = qobject_cast<BlockPage*>(pages->currentWidget());
+        QVERIFY(editor);  // the new block is picked
+        // The page has no code: its one button opens it, here in a window.
+        QVERIFY(!editor->findChild<CodeEditor*>());
+        QVERIFY(editor->openCodeButton()->isVisible());
+        QAction* inWindow = nullptr;
+        QStringList choices;
+        for (QAction* action : editor->openCodeButton()->menu()->actions()) {
+            choices.append(action->text());
+            if (action->text() == QLatin1String("In a window of its own")) {
+                inWindow = action;
+            }
+        }
+        QVERIFY(choices.contains(QStringLiteral("In VS Code")));
+        QVERIFY(inWindow);
+        editor->openCodeButton()->menu()->triggered(inWindow);
+        CodeWindow* window = CodeWindow::find(controller, LabControllerDevice::kController);
+        QVERIFY(window && window->isVisible());
+        auto* code = window->editor();
         QVERIFY(code->toPlainText().contains(QLatin1String("TL_IN_ARRAY(s, N);")));
         plant.run();
         QTest::qWait(400);
@@ -197,10 +214,10 @@ private slots:
         QString text = code->toPlainText();
         text.replace(QStringLiteral("TL_PARAM(base, 60,"), QStringLiteral("TL_PARAM(base, 55,"));
         code->setPlainText(text);
-        QVERIFY(editor->hasUnsavedChanges());
-        shoot(&panel, QStringLiteral("4-edited"));
-        auto* save = editor->findChild<QPushButton*>();
-        for (QPushButton* button : editor->findChildren<QPushButton*>()) {
+        QVERIFY(window->hasUnsavedChanges());
+        shoot(window, QStringLiteral("4-edited-window"));
+        auto* save = window->findChild<QPushButton*>();
+        for (QPushButton* button : window->findChildren<QPushButton*>()) {
             if (button->text() == QLatin1String("Save")) {
                 save = button;
             }
@@ -213,7 +230,7 @@ private slots:
         QCOMPARE(code::CodeLibrary::originOf(saved), QStringLiteral("linefollower/pd"));
         QVERIFY(saved.contains(QLatin1String("TL_PARAM(base, 55,")));
         QVERIFY(code::CodeLibrary::instance().isModified(saved));
-        QVERIFY(!editor->hasUnsavedChanges());
+        QVERIFY(!window->hasUnsavedChanges());
         QTRY_COMPARE(controller->module(LabControllerDevice::kController)
                          ->paramValue(QStringLiteral("base")),
                      55.0);
@@ -226,6 +243,7 @@ private slots:
         QVERIFY(code::CodeLibrary::instance()
                     .templateSource(QStringLiteral("linefollower/pd"))
                     .contains(QLatin1String("TL_PARAM(base, 60,")));
+        editor->refreshLive();
         shoot(&panel, QStringLiteral("5-saved"));
 
         // A broken save shows its line; the previous code keeps the loop.
@@ -235,6 +253,7 @@ private slots:
         QVERIFY(controller->host()->configured());
         editor->refreshLive();
         shoot(&panel, QStringLiteral("6-error"));
+        shoot(window, QStringLiteral("6-error-window"));
 
         // Back to the original: the template's code in the file again.
         for (QPushButton* button : editor->findChildren<QPushButton*>()) {
@@ -247,6 +266,8 @@ private slots:
         code->setPlainText(original);
         save->click();
         QTRY_VERIFY(!code::CodeLibrary::instance().isModified(code::CodeLibrary::readFile(path)));
+        window->close();
+        QTRY_VERIFY(!CodeWindow::find(controller, LabControllerDevice::kController));
         // No value was set by hand: base is the code's default again.
         QTRY_COMPARE(controller->module(LabControllerDevice::kController)
                          ->paramValue(QStringLiteral("base")),
@@ -277,66 +298,84 @@ private slots:
         LabControllerDevice device(
             QStringLiteral("ctl-window"),
             QJsonObject{{"controller", QJsonObject{{"template", "linefollower/pd"}}}});
-        QWidget page;
-        auto* layout = new QVBoxLayout(&page);
-        auto* editor = new BlockEditor(&page);
-        layout->addWidget(editor);
-        page.resize(1200, 700);
+        BlockPage page;
+        page.setStyleSheet(ui::styleSheet(traceview::ThemeManager::instance().currentTheme()));
+        page.resize(1366, 560);
         page.show();
-        editor->setBlock(&device, LabControllerDevice::kController);
-        auto* code = editor->findChild<CodeEditor*>();
-        QVERIFY(code);
-        QVERIFY(code->toPlainText().contains(QLatin1String("TL_PARAM(kp")));
+        page.setBlock(&device, LabControllerDevice::kController);
+        QVERIFY(!page.findChild<CodeEditor*>());
+        shoot(&page, QStringLiteral("8-page"));
 
-        // The side panel hides and shows again.
-        QToolButton* side = toolButton(editor, QStringLiteral("Side panel"));
-        QVERIFY(side && side->isChecked());
-        QLabel* params = nullptr;
-        for (QLabel* label : editor->findChildren<QLabel*>()) {
-            if (label->text() == QLatin1String("Parameters")) {
-                params = label;
+        // One window a block: opening again raises the same one.
+        CodeWindow* window = CodeWindow::open(&device, LabControllerDevice::kController);
+        QVERIFY(window && window->isWindow() && window->isVisible());
+        QCOMPARE(CodeWindow::open(&device, LabControllerDevice::kController), window);
+        QVERIFY(window->windowTitle().contains(QLatin1String("TraceLab")));
+        QVERIFY(window->editor()->toPlainText().contains(QLatin1String("TL_PARAM(kp")));
+        shoot(window, QStringLiteral("9-window"));
+
+        // A signal double-clicked on the page goes into the open code.
+        auto* signalList = page.findChild<QListWidget*>(QStringLiteral("labSignals"));
+        QVERIFY(signalList);
+        QListWidgetItem* declarable = nullptr;
+        page.refreshLive();
+        for (int i = 0; i < signalList->count(); ++i) {
+            if (!signalList->item(i)->data(Qt::UserRole).toString().isEmpty()) {
+                declarable = signalList->item(i);
+                break;
             }
         }
-        QVERIFY(params && params->isVisible());
-        side->click();
-        QVERIFY(!params->isVisible());
-        side->click();
-        QVERIFY(params->isVisible());
+        if (declarable) {
+            const QString declaration = declarable->data(Qt::UserRole).toString();
+            signalList->itemDoubleClicked(declarable);
+            QVERIFY(window->editor()->toPlainText().contains(declaration));
+            QVERIFY(window->hasUnsavedChanges());
+        }
 
-        // Own window: the same editor, in a window; the page keeps a note.
-        QToolButton* own = toolButton(editor, QStringLiteral("Own window"));
-        QVERIFY(own);
-        own->click();
-        QVERIFY(editor->isDetached());
-        QPointer<QWidget> window = editor->detachedWindow();
-        QVERIFY(window && window->isWindow() && window->isVisible());
-        QVERIFY(window->isAncestorOf(code));
-        QVERIFY(!page.isAncestorOf(code));
-        QVERIFY(window->windowTitle().contains(QLatin1String("TraceLab")));
-        QVERIFY(own->isChecked());
-        code->setPlainText(code->toPlainText() + QStringLiteral("\n/* edited */\n"));
-        QVERIFY(editor->hasUnsavedChanges());
-        editor->refreshLive();
-        shoot(window, QStringLiteral("8-own-window"));
-        shoot(&page, QStringLiteral("9-page-while-away"));
-
-        // Closing it brings the code back, edits and all.
+        // Unsaved edits: closing it asks (answered Discard here by dropping
+        // them first); then the window is gone.
+        window->reload();
+        QPointer<CodeWindow> gone = window;
         window->close();
-        QVERIFY(!editor->isDetached());
-        QVERIFY(editor->isAncestorOf(code));
-        QVERIFY(code->isVisible());
-        QVERIFY(editor->hasUnsavedChanges());
-        QVERIFY(!own->isChecked());
-        QTRY_VERIFY(window.isNull());
+        QTRY_VERIFY(gone.isNull());
+        QVERIFY(!CodeWindow::find(&device, LabControllerDevice::kController));
 
-        // An editor going away takes its window along.
-        auto away = std::make_unique<BlockEditor>();
-        away->setBlock(&device, LabControllerDevice::kController);
-        away->setDetached(true);
-        QPointer<QWidget> awayWindow = away->detachedWindow();
-        QVERIFY(awayWindow);
-        away.reset();
-        QVERIFY(awayWindow.isNull());
+        // A device going away takes its window along.
+        auto temporary = std::make_unique<LabControllerDevice>(
+            QStringLiteral("ctl-temporary"),
+            QJsonObject{{"controller", QJsonObject{{"template", "linefollower/pd"}}}});
+        QPointer<CodeWindow> orphan = CodeWindow::open(temporary.get(),
+                                                       LabControllerDevice::kController);
+        QVERIFY(orphan);
+        temporary.reset();
+        QTRY_VERIFY(orphan.isNull());
+    }
+
+    void plantPageOfCodePlant() {
+        lf::registerTrackEnvironment();
+        CodePlantDevice plant(
+            QStringLiteral("car-page"), 0x7300003u,
+            QJsonObject{{"plant", QJsonObject{{"template", "linefollower/car"}}},
+                        {"environment", QJsonObject{{"id", "linefollower.track"}}},
+                        {"autoRun", false}});
+        QVERIFY(plant.codeBlocks()->compiled(0));
+        PlantPage page;
+        page.setStyleSheet(ui::styleSheet(traceview::ThemeManager::instance().currentTheme()));
+        page.resize(1366, 560);  // what a laptop leaves below the cards
+        page.show();
+        page.setPlant(&plant);
+        page.refreshLive();
+        // The plant's code opens from the header; the page holds no editor.
+        QVERIFY(page.codePage()->openCodeButton()->isVisible());
+        QVERIFY(!page.findChild<CodeEditor*>());
+        QCOMPARE(page.codePage()->owner(), plant.codeBlocks());
+        QList<QLabel*> titles = page.findChildren<QLabel*>(QStringLiteral("labSectionTitle"));
+        QStringList titleTexts;
+        for (QLabel* title : titles) {
+            titleTexts.append(title->text());
+        }
+        QVERIFY2(titleTexts.contains(plant.worldName()), qPrintable(titleTexts.join(", ")));
+        shoot(&page, QStringLiteral("10-plant-page-code"));
     }
 
     void vsCodeArguments() {

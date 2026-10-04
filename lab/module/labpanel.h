@@ -19,7 +19,7 @@ class ModuleHost;
 
 namespace tracelab {
 
-class BlockEditor;
+class BlockPage;
 class LabCard;
 class LabControllerDevice;
 class LabPlantDevice;
@@ -28,7 +28,8 @@ class PlantPage;
 // The TraceLab tab's page. The loop of a plant drawn as a chain of cards --
 // the plant, the filters, the controller -- with a "+" where a block can be
 // added; picking a card shows its page below: the plant's clock and settings
-// (PlantPage), or a code block's editor (BlockEditor). It knows plants and
+// (PlantPage), or a code block's page (BlockPage; its code opens in VS Code
+// or a window of its own, CodeWindow). It knows plants and
 // controller devices only through LabPlantDevice and LabControllerDevice
 // (lab/control/labdevices.h): what kinds of plant exist is whatever the
 // benchmarks registered. Every change a device makes to its configuration
@@ -97,7 +98,7 @@ private:
     QWidget* m_chainScroll = nullptr;
     QStackedWidget* m_pages = nullptr;
     PlantPage* m_plantPage = nullptr;
-    BlockEditor* m_blockEditor = nullptr;
+    BlockPage* m_blockPage = nullptr;
     QWidget* m_otherPage = nullptr;
     QLabel* m_otherText = nullptr;
 
