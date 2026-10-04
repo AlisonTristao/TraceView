@@ -108,6 +108,87 @@ private slots:
         QVERIFY(std::fabs(native.last().uL - native.last().uR) > 1e-6);  // it steered
     }
 
+    // The MPCs in C against the C++ ones, closed loop through BTP in
+    // lockstep: the same model, scheduling and QP, so the inputs agree to
+    // rounding (the sums run in another order).
+    void mpcTemplatesMatchTheNativeOnes_data() {
+        QTest::addColumn<QString>("native");
+        QTest::addColumn<QString>("templateId");
+        QTest::addColumn<QJsonObject>("params");
+        QTest::newRow("qlpv taylor") << "qlpv" << "linefollower/qlpv_mpc" << QJsonObject{};
+        QTest::newRow("qlpv iterative")
+            << "qlpv-iterative" << "linefollower/qlpv_mpc" << QJsonObject{{"scheduling", 3}};
+        QTest::newRow("gpc") << "gpc" << "linefollower/gpc" << QJsonObject{};
+    }
+
+    void mpcTemplatesMatchTheNativeOnes() {
+        QFETCH(QString, native);
+        QFETCH(QString, templateId);
+        QFETCH(QJsonObject, params);
+        constexpr int kSteps = 300;
+        static quint32 source = 0x6000000u;
+        double nativeMs = 0.0;
+        double codeMs = 0.0;
+        QVector<Step> expected;
+        {
+            LinePlantDevice plant(++source, lockstep());
+            const QString plantId = QStringLiteral("native-%1").arg(source);
+            LineDeviceRegistry::instance().addPlant(plantId, &plant);
+            ControllerSettings settings;
+            settings.plantDeviceId = plantId;
+            settings.type = native.startsWith(QLatin1String("qlpv")) ? QStringLiteral("qlpv")
+                                                                     : native;
+            if (native == QLatin1String("qlpv-iterative")) {
+                settings.qlpvScheduling = QStringLiteral("iterative");
+            }
+            LineControllerDevice controller(QStringLiteral("native-%1").arg(source), settings);
+            QTRY_VERIFY_WITH_TIMEOUT(controller.host()->plantReady(), 5000);
+            QTRY_COMPARE_WITH_TIMEOUT(int(plant.mode()), 2, 5000);
+            connect(controller.host(), &ControllerHost::stepped, this,
+                    [&nativeMs](quint64, double ms) { nativeMs += ms; });
+            expected = run(plant, kSteps, this);
+            QCOMPARE(expected.size(), kSteps);
+        }
+        QVector<Step> got;
+        {
+            LinePlantDevice plant(++source, lockstep());
+            const QString plantId = QStringLiteral("code-%1").arg(source);
+            LabDeviceRegistry::instance().addPlant(plantId, &plant);
+            LabControllerDevice controller(
+                QStringLiteral("code-%1").arg(source),
+                QJsonObject{{"plantDeviceId", plantId},
+                            {"controller", QJsonObject{{"template", templateId}, {"params", params}}}});
+            QVERIFY2(controller.compiled(LabControllerDevice::kController),
+                     qPrintable(controller.messages(LabControllerDevice::kController).isEmpty()
+                                    ? QString()
+                                    : controller.messages(LabControllerDevice::kController)
+                                          .first()
+                                          .text));
+            QTRY_VERIFY_WITH_TIMEOUT(controller.host()->configured(), 5000);
+            QTRY_COMPARE_WITH_TIMEOUT(int(plant.mode()), 2, 5000);
+            connect(controller.host(), &ControllerHost::stepped, this,
+                    [&codeMs](quint64, double ms) { codeMs += ms; });
+            got = run(plant, kSteps, this);
+            QCOMPARE(got.size(), kSteps);
+            QVERIFY(controller.runtimeError(LabControllerDevice::kController).isEmpty());
+        }
+        double worst = 0.0;
+        int worstStep = 0;
+        for (int k = 0; k < kSteps; ++k) {
+            const double diff = qMax(std::fabs(expected[k].uL - got[k].uL),
+                                     std::fabs(expected[k].uR - got[k].uR));
+            if (diff > worst) {
+                worst = diff;
+                worstStep = k + 1;
+            }
+        }
+        qInfo("%s: worst |u_native - u_code| = %.3g %% (step %d); compute %.3f ms/tick native, "
+              "%.3f ms/tick in C",
+              qPrintable(templateId), worst, worstStep, nativeMs / kSteps, codeMs / kSteps);
+        QVERIFY2(worst < 1e-6, qPrintable(QStringLiteral("step %1: %2").arg(worstStep).arg(worst)));
+        QVERIFY(std::fabs(expected.last().uL - expected.last().uR) > 1e-6);  // it steered
+    }
+
     void filterReplacesAndAddsSignals() {
         CodeSignalFilter filter;
         QVERIFY(filter.load(QStringLiteral("#include <tracelab.h>\n"

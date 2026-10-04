@@ -1,5 +1,6 @@
 #include "controllerhost.h"
 
+#include <QCoreApplication>
 #include <QDateTime>
 #include <QElapsedTimer>
 #include "dashboard/perfprobe.h"
@@ -145,6 +146,26 @@ void ControllerHost::bind() {
                 break;
             }
             names = out;
+        }
+        // ctl.diag's names: each once, none of its fixed fields.
+        if (ok) {
+            static const QStringList reserved = {
+                QStringLiteral("ref_tick"), QStringLiteral("solve_ms"),
+                QStringLiteral("iterations"), QStringLiteral("pred_x"),
+                QStringLiteral("pred_y"), QStringLiteral("pred_theta")};
+            QStringList seen;
+            for (const QString& name : diagNames()) {
+                if (reserved.contains(name) || seen.contains(name)) {
+                    m_configureError =
+                        QCoreApplication::translate("ControllerHost",
+                                                    "the diagnostic %1 is declared twice or "
+                                                    "is one of ctl.diag's own fields (%2)")
+                            .arg(name, reserved.join(QStringLiteral(", ")));
+                    ok = false;
+                    break;
+                }
+                seen.append(name);
+            }
         }
         if (ok) {
             m_signalNames = names;

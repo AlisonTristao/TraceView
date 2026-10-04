@@ -6,7 +6,6 @@
 # Eigen3::Eigen comes from lab/CMakeLists.txt (shared with tracelab_sensors).
 
 add_library(tracelab_lf_controllers STATIC
-    boxqp.cpp
     boxqp.h
     gpccontroller.cpp
     gpccontroller.h
@@ -35,4 +34,4 @@ endif()
 target_compile_definitions(tracelab_lf_controllers PRIVATE $<$<CONFIG:Debug>:EIGEN_NO_DEBUG>)
 # PUBLIC: the internal headers (qlpvmpc.h, boxqp.h, ...) expose Eigen types,
 # and the tests use them; lfcontroller.h itself does not include Eigen.
-target_link_libraries(tracelab_lf_controllers PUBLIC Eigen3::Eigen)
+target_link_libraries(tracelab_lf_controllers PUBLIC Eigen3::Eigen tracelab_numeric)

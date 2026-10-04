@@ -67,6 +67,8 @@ struct CodeContext {
     QString partialLine;
     void appendLog(const QString& text);
 
+    // tl_set_iterations() of the last step.
+    int iterations = 0;
     // tl_predicted() of the last step.
     QVector<double> predictedX;
     QVector<double> predictedY;

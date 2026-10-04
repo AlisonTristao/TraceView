@@ -163,7 +163,9 @@ add_library(tracelab_code STATIC
     coderuntime.h
 )
 target_include_directories(tracelab_code PUBLIC ${CMAKE_SOURCE_DIR})
-target_link_libraries(tracelab_code PUBLIC Qt6::Core PRIVATE tracelab_tcc)
+# tracelab_numeric: the QP and dense linear algebra behind tl_qp_box() and
+# tl_mat_*().
+target_link_libraries(tracelab_code PUBLIC Qt6::Core PRIVATE tracelab_tcc tracelab_numeric)
 qt_add_resources(tracelab_code tracelab_code_runtime
     PREFIX "/tracelab/code/runtime"
     BASE ${_tl_rt}

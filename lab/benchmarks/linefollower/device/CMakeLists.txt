@@ -38,6 +38,8 @@ qt_add_resources(tracelab_lf_devices tracelab_lf_templates
     PREFIX "/tracelab/templates/linefollower"
     BASE ../code
     FILES
+        ../code/controllers/gpc.c
         ../code/controllers/pd.c
+        ../code/controllers/qlpv_mpc.c
         ../code/filters/lowpass.c
 )

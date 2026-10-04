@@ -7,6 +7,9 @@
 #include <cstring>
 #include <limits>
 
+#include <Eigen/Dense>
+
+#include "lab/numeric/boxqp.h"
 #include "libtcc.h"
 
 namespace tracelab::code {
@@ -111,6 +114,12 @@ int tl_puts(const char* text) {
     return 0;
 }
 
+void tl_set_iterations(int n) {
+    if (CodeContext* c = context()) {
+        c->iterations = n;
+    }
+}
+
 void tl_predicted(const double* x, const double* y, const double* theta, int n) {
     CodeContext* c = context();
     if (!c) {
@@ -130,6 +139,82 @@ void tl_predicted(const double* x, const double* y, const double* theta, int n) 
             c->predictedTheta.append(theta[i]);
         }
     }
+}
+
+// ---- dense linear algebra (row-major arrays) ----
+
+using RowMatrix = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
+
+// The products run on plain (column-major) Eigen matrices -- the same
+// kernels, so the same summation order, as C++ code written with Eigen
+// (the line follower's native MPC): a port to C gives the same numbers.
+void tl_mat_mul(const double* a, const double* b, double* c, int n, int k, int m) {
+    if (!a || !b || !c || n <= 0 || k <= 0 || m <= 0) {
+        return;
+    }
+    const Eigen::MatrixXd ma = Eigen::Map<const RowMatrix>(a, n, k);
+    Eigen::Map<RowMatrix> mc(c, n, m);
+    if (m == 1) {
+        const Eigen::VectorXd vb = Eigen::Map<const Eigen::VectorXd>(b, k);
+        const Eigen::VectorXd r = ma * vb;
+        mc = r;
+        return;
+    }
+    const Eigen::MatrixXd mb = Eigen::Map<const RowMatrix>(b, k, m);
+    const Eigen::MatrixXd r = ma * mb;
+    mc = r;
+}
+
+void tl_mat_mul_tn(const double* a, const double* b, double* c, int n, int k, int m) {
+    if (!a || !b || !c || n <= 0 || k <= 0 || m <= 0) {
+        return;
+    }
+    const Eigen::MatrixXd ma = Eigen::Map<const RowMatrix>(a, k, n);
+    Eigen::Map<RowMatrix> mc(c, n, m);
+    if (m == 1) {
+        const Eigen::VectorXd vb = Eigen::Map<const Eigen::VectorXd>(b, k);
+        const Eigen::VectorXd r = ma.transpose() * vb;
+        mc = r;
+        return;
+    }
+    const Eigen::MatrixXd mb = Eigen::Map<const RowMatrix>(b, k, m);
+    const Eigen::MatrixXd r = ma.transpose() * mb;
+    mc = r;
+}
+
+int tl_mat_solve(const double* a, double* b, int n, int m) {
+    if (!a || !b || n <= 0 || m <= 0) {
+        return -1;
+    }
+    const Eigen::Map<const RowMatrix> ma(a, n, n);
+    Eigen::Map<RowMatrix> mb(b, n, m);
+    const Eigen::MatrixXd dense = ma;
+    const Eigen::PartialPivLU<Eigen::MatrixXd> lu(dense);
+    const Eigen::MatrixXd x = lu.solve(Eigen::MatrixXd(mb));
+    if (!x.allFinite()) {
+        return -1;
+    }
+    mb = x;
+    return 0;
+}
+
+int tl_qp_box(const double* h, const double* g, const double* lb, const double* ub,
+              const double* x0, double* x, int n) {
+    if (!h || !g || !lb || !ub || !x || n <= 0) {
+        return -1;
+    }
+    const Eigen::MatrixXd mh = Eigen::Map<const RowMatrix>(h, n, n);
+    const Eigen::VectorXd vg = Eigen::Map<const Eigen::VectorXd>(g, n);
+    const Eigen::VectorXd vlb = Eigen::Map<const Eigen::VectorXd>(lb, n);
+    const Eigen::VectorXd vub = Eigen::Map<const Eigen::VectorXd>(ub, n);
+    Eigen::VectorXd start;
+    if (x0) {
+        start = Eigen::Map<const Eigen::VectorXd>(x0, n);
+    }
+    const numeric::BoxQpResult result =
+        numeric::solveBoxQp(mh, vg, vlb, vub, x0 ? &start : nullptr);
+    Eigen::Map<Eigen::VectorXd>(x, n) = result.x;
+    return result.iterations;
 }
 
 }  // extern "C"
@@ -255,6 +340,11 @@ void addHostSymbols(TCCState* state) {
         {"tl_nan", reinterpret_cast<const void*>(&tl_nan)},
         {"tl_log", reinterpret_cast<const void*>(&tl_log)},
         {"tl_predicted", reinterpret_cast<const void*>(&tl_predicted)},
+        {"tl_set_iterations", reinterpret_cast<const void*>(&tl_set_iterations)},
+        {"tl_mat_mul", reinterpret_cast<const void*>(&tl_mat_mul)},
+        {"tl_mat_mul_tn", reinterpret_cast<const void*>(&tl_mat_mul_tn)},
+        {"tl_mat_solve", reinterpret_cast<const void*>(&tl_mat_solve)},
+        {"tl_qp_box", reinterpret_cast<const void*>(&tl_qp_box)},
     };
     for (const Symbol& symbol : symbols) {
         tcc_add_symbol(state, symbol.name, symbol.address);

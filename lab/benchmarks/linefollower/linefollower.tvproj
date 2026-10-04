@@ -27,13 +27,13 @@
                 "description": "",
                 "id": "tracelab-lf-controller",
                 "moduleConfig": {
-                    "controller": "qlpv",
-                    "filterTau": 0,
-                    "fps": 80,
-                    "horizon": 10,
-                    "plantDeviceId": "tracelab-lf-plant"
+                    "plantDeviceId": "tracelab-lf-plant",
+                    "controller": {
+                        "template": "linefollower/qlpv_mpc"
+                    },
+                    "filters": []
                 },
-                "moduleType": "tracelab.linefollower.controller",
+                "moduleType": "tracelab.controller",
                 "name": "TraceLab: Controller",
                 "script": "",
                 "transportType": 5
@@ -59,7 +59,7 @@
                                 "bind": {
                                     "controller": {
                                         "deviceId": "tracelab-lf-controller",
-                                        "sourceId": "0x9EC2E162",
+                                        "sourceId": "0x42ABDC76",
                                         "topicId": "0x0002",
                                         "topicName": "ctl.info"
                                     },
@@ -83,7 +83,7 @@
                                         "deviceId": "tracelab-lf-controller",
                                         "fieldId": 1,
                                         "fieldName": "ref_tick",
-                                        "sourceId": "0x9EC2E162",
+                                        "sourceId": "0x42ABDC76",
                                         "topicId": "0x0001",
                                         "topicName": "ctl.diag"
                                     },
@@ -91,7 +91,7 @@
                                         "deviceId": "tracelab-lf-controller",
                                         "fieldId": 4,
                                         "fieldName": "pred_x",
-                                        "sourceId": "0x9EC2E162",
+                                        "sourceId": "0x42ABDC76",
                                         "topicId": "0x0001",
                                         "topicName": "ctl.diag"
                                     },
@@ -99,7 +99,7 @@
                                         "deviceId": "tracelab-lf-controller",
                                         "fieldId": 5,
                                         "fieldName": "pred_y",
-                                        "sourceId": "0x9EC2E162",
+                                        "sourceId": "0x42ABDC76",
                                         "topicId": "0x0001",
                                         "topicName": "ctl.diag"
                                     },
@@ -131,7 +131,7 @@
                                         "deviceId": "tracelab-lf-controller",
                                         "fieldId": 3,
                                         "fieldName": "iterations",
-                                        "sourceId": "0x9EC2E162",
+                                        "sourceId": "0x42ABDC76",
                                         "topicId": "0x0001",
                                         "topicName": "ctl.diag"
                                     },
@@ -139,7 +139,7 @@
                                         "deviceId": "tracelab-lf-controller",
                                         "fieldId": 2,
                                         "fieldName": "solve_ms",
-                                        "sourceId": "0x9EC2E162",
+                                        "sourceId": "0x42ABDC76",
                                         "topicId": "0x0001",
                                         "topicName": "ctl.diag"
                                     },
@@ -245,7 +245,7 @@
                                         "unit": "rad"
                                     }
                                 ],
-                                "sourceId": "0x9EC2E162",
+                                "sourceId": "0x42ABDC76",
                                 "topicId": "0x0001",
                                 "topicName": "ctl.diag",
                                 "view": {
@@ -367,7 +367,7 @@
                                         "unit": "ms"
                                     }
                                 ],
-                                "sourceId": "0x9EC2E162",
+                                "sourceId": "0x42ABDC76",
                                 "topicId": "0x0001",
                                 "topicName": "ctl.diag",
                                 "view": {
@@ -436,7 +436,7 @@
                                         "unit": "rad/s"
                                     }
                                 ],
-                                "sourceId": "0x9EC2E162",
+                                "sourceId": "0x42ABDC76",
                                 "topicId": "0x0001",
                                 "topicName": "ctl.diag",
                                 "view": {

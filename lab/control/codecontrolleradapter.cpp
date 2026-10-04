@@ -192,6 +192,7 @@ bool CodeControllerAdapter::compute(const ControllerInput& input, ControllerOutp
     context.predictedX.clear();
     context.predictedY.clear();
     context.predictedTheta.clear();
+    context.iterations = 0;
     if (!m_module.call("ctl_step")) {
         return false;
     }
@@ -218,7 +219,7 @@ bool CodeControllerAdapter::compute(const ControllerInput& input, ControllerOutp
     output->predictedX = context.predictedX;
     output->predictedY = context.predictedY;
     output->predictedTheta = context.predictedTheta;
-    output->iterations = 0;
+    output->iterations = context.iterations;
     return true;
 }
 

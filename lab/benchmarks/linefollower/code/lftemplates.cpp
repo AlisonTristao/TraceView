@@ -18,6 +18,14 @@ void registerLineFollowerTemplates() {
         QString description;
         const char* file;
     } templates[] = {
+        {BlockKind::Controller, "linefollower/qlpv_mpc", tr("qLPV MPC"),
+         tr("Model predictive control on the exact qLPV model of the car: tracks the "
+            "preview of the track (QP every tick)."),
+         "controllers/qlpv_mpc.c"},
+        {BlockKind::Controller, "linefollower/gpc", tr("GPC"),
+         tr("Generalized predictive control linearized at a straight heading: one gain "
+            "matrix, no QP."),
+         "controllers/gpc.c"},
         {BlockKind::Controller, "linefollower/pd", tr("PD (line sensors)"),
          tr("The classic line follower: a PD on the sensor array's centroid."),
          "controllers/pd.c"},

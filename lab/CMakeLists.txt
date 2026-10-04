@@ -75,6 +75,23 @@ if(NOT TARGET Eigen3::Eigen)
     add_library(Eigen3::Eigen ALIAS tracelab_eigen)
 endif()
 
+# tracelab_numeric: generic numerics shared by the benchmarks' controllers
+# and the code blocks' library (tracelab.h's tl_qp_box()...): the
+# box-constrained QP. Plain C++17 and Eigen, no Qt. Optimized in Debug too:
+# the MPCs run it every tick.
+add_library(tracelab_numeric STATIC
+    numeric/boxqp.cpp
+    numeric/boxqp.h
+)
+set_target_properties(tracelab_numeric PROPERTIES AUTOMOC OFF AUTOUIC OFF AUTORCC OFF)
+target_include_directories(tracelab_numeric PUBLIC ${CMAKE_SOURCE_DIR})
+target_compile_features(tracelab_numeric PUBLIC cxx_std_17)
+target_link_libraries(tracelab_numeric PUBLIC Eigen3::Eigen)
+if(NOT MSVC)
+    target_compile_options(tracelab_numeric PRIVATE $<$<CONFIG:Debug>:-O2>)
+endif()
+target_compile_definitions(tracelab_numeric PRIVATE $<$<CONFIG:Debug>:EIGEN_NO_DEBUG>)
+
 # tracelab_sensors: generic sensor emulation -- reproducible noise streams,
 # per-channel imperfections, linear (H x + D u) and nonlinear h(x, u, env)
 # observation blocks. Simulation side only, never exported to firmware.

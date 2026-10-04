@@ -189,6 +189,25 @@ void tl_log(const char *fmt, ...);
 /* Controller: the path it predicts, car frame of this tick (x lateral
    right, y forward, m; heading rad), drawn by the scene. */
 void tl_predicted(const double *x, const double *y, const double *theta, int n);
+/* Controller: the solver iterations of this step (ctl.diag's iterations
+   field, which the scene shows). */
+void tl_set_iterations(int n);
+
+/* Dense linear algebra, compiled with optimization (Eigen). Matrices are
+   row-major double arrays: element (i, j) of an r x c matrix is a[i*c + j]. */
+/* C (n x m) = A (n x k) * B (k x m) */
+void tl_mat_mul(const double *a, const double *b, double *c, int n, int k, int m);
+/* C (n x m) = A' * B, A stored k x n, B k x m */
+void tl_mat_mul_tn(const double *a, const double *b, double *c, int n, int k, int m);
+/* Solves A X = B (A n x n, B n x m) by LU with partial pivoting; X replaces
+   B. 0, or -1 when A is singular. */
+int tl_mat_solve(const double *a, double *b, int n, int m);
+/* min 1/2 x'Hx + g'x  s.t.  lb <= x <= ub  (H n x n, positive definite):
+   a primal-dual active set warm started by x0 (NULL: none), with a projected
+   gradient fallback. Writes x; returns the active-set iterations (50 when the
+   fallback ran), -1 on bad arguments. */
+int tl_qp_box(const double *h, const double *g, const double *lb, const double *ub,
+              const double *x0, double *x, int n);
 
 static inline double tl_sat(double v, double lo, double hi) {
     return v < lo ? lo : (v > hi ? hi : v);

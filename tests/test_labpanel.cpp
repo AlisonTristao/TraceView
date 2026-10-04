@@ -84,6 +84,8 @@ QToolButton* addButton(QWidget* panel, const QString& text) {
 }
 
 QList<LabCard*> cards(QWidget* panel) {
+    // A rebuilt chain's cards are shown by a queued call.
+    QCoreApplication::processEvents();
     QList<LabCard*> list;
     for (LabCard* card : panel->findChildren<LabCard*>()) {
         if (card->isVisible()) {
