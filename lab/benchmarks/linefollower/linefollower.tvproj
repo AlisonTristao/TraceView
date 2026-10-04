@@ -261,9 +261,9 @@
                                     "autoAxis": false,
                                     "decimals": 2,
                                     "grid": true,
-                                    "max": 1,
-                                    "min": -1,
-                                    "mode": "auto",
+                                    "max": 0.1,
+                                    "min": -0.1,
+                                    "mode": "fixed",
                                     "unit": "Heading [rad]"
                                 }
                             },
@@ -322,9 +322,9 @@
                                     "autoAxis": false,
                                     "decimals": 3,
                                     "grid": true,
-                                    "max": 1,
-                                    "min": -1,
-                                    "mode": "auto",
+                                    "max": 0.005,
+                                    "min": -0.005,
+                                    "mode": "fixed",
                                     "unit": "Lateral error [m]"
                                 }
                             },
@@ -383,9 +383,9 @@
                                     "autoAxis": false,
                                     "decimals": 2,
                                     "grid": true,
-                                    "max": 1,
-                                    "min": -1,
-                                    "mode": "auto",
+                                    "max": 0.1,
+                                    "min": 0.0,
+                                    "mode": "fixed",
                                     "unit": "Solve time [ms]"
                                 }
                             },
@@ -450,11 +450,11 @@
                                 },
                                 "yAxis": {
                                     "autoAxis": false,
-                                    "decimals": 1,
+                                    "decimals": 0,
                                     "grid": true,
-                                    "max": 1,
-                                    "min": -1,
-                                    "mode": "auto",
+                                    "max": 110.0,
+                                    "min": 0.0,
+                                    "mode": "fixed",
                                     "unit": "Wheel speed [rad/s]"
                                 }
                             },
