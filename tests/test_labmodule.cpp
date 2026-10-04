@@ -128,10 +128,11 @@ void TestLabModule::installRegistersSceneWidgetAndTab() {
     }
 
     QCOMPARE(host.m_labels, QStringList{"TraceLab"});
-    // Add plant, Add controller, Add scene, Play, Pause, Reset, Step.
-    QCOMPARE(host.m_actionCounts, QList<int>{7});
+    // Add plant, Add controller, Add scene | Play, Pause, Reset, Step.
+    QCOMPARE(host.m_actionCounts, QList<int>{8});
     auto* panel = dynamic_cast<tracelab::LabPanel*>(host.m_contents.front().get());
     QVERIFY(panel);
+    QVERIFY(panel->ribbonActions().at(3)->isSeparator());
     QCOMPARE(host.m_deviceTypes, (QStringList{"tracelab.linefollower.plant",
                                               "tracelab.linefollower.controller"}));
     // The benchmark is a project (File > Open Example), not a tab button.

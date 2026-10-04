@@ -1,7 +1,6 @@
 #include "audiospectrumconfigeditor.h"
 
 #include <QComboBox>
-#include <QDoubleSpinBox>
 #include <QFormLayout>
 #include <QLineEdit>
 #include <QSlider>
@@ -9,6 +8,8 @@
 #include <algorithm>
 #include <cmath>
 #include <utility>
+
+#include "theme/doublespinbox.h"
 
 namespace traceview {
 
@@ -35,7 +36,7 @@ AudioSpectrumConfigEditor::AudioSpectrumConfigEditor(QWidget* parent) : WidgetCo
         tr("Stream topic to play: blocks of samples with their rate and a block counter "
            "(BTPDevice Topics::stream()). Pick a reported topic or type its numeric id."));
 
-    m_fullScaleSpin = new QDoubleSpinBox(this);
+    m_fullScaleSpin = new DoubleSpinBox(this);
     m_fullScaleSpin->setRange(1.0, 1e9);
     m_fullScaleSpin->setDecimals(0);
     m_fullScaleSpin->setValue(2048.0);

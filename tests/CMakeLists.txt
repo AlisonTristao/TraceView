@@ -48,6 +48,9 @@ add_traceview_test(test_chartscale traceview_dashboard)
 add_traceview_test(test_chartstyle traceview_dashboard)
 # Frame styles (card/control shapes, include/traceview/framestyle.h).
 add_traceview_test(test_framestyle traceview_theme)
+# Decimal fields: both separators, adaptive arrows, commit on Enter/focus out
+# (theme/doublespinbox.h).
+add_traceview_test(test_doublespinbox traceview_theme)
 # Appearance tokens and the appearance catalog/presets (core/appearancecatalog.h).
 add_traceview_test(test_appearance traceview_ui)
 add_traceview_test(test_controldata traceview_dashboard)

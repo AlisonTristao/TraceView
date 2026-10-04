@@ -166,10 +166,14 @@ target_link_libraries(tracelab_scenes
     PRIVATE
         # The dashboard render rate (AppSettings::repaintIntervalMs()).
         traceview_preferences
+        # DoubleSpinBox (theme/doublespinbox.h), the scene parameters' fields.
+        traceview_theme
 )
 
 # tracelab_module: LabModule, what src/main.cpp registers.
 add_library(tracelab_module STATIC
+    module/labcard.cpp
+    module/labcard.h
     module/labmodule.cpp
     module/labmodule.h
     module/labpanel.cpp
@@ -183,6 +187,9 @@ target_link_libraries(tracelab_module
         Qt6::Widgets
         tracelab_scenes
         traceview_dashboard
+        # DoubleSpinBox (theme/doublespinbox.h), the theme's colors, frame
+        # style and tinted icons for the tab's cards and ribbon buttons.
+        traceview_theme
 )
 
 # Filters: the portable C filter runtime and its host-side IIR design
@@ -199,4 +206,17 @@ qt_add_resources(tracelab_module tracelab_presets
     PREFIX "/tracelab"
     BASE benchmarks/linefollower
     FILES benchmarks/linefollower/linefollower.tvproj
+)
+# The TraceLab tab's ribbon glyphs, same 16px grid as resources/icons/ribbon.
+qt_add_resources(tracelab_module tracelab_icons
+    PREFIX "/tracelab/icons"
+    BASE module/icons
+    FILES
+        module/icons/controller.svg
+        module/icons/pause.svg
+        module/icons/plant.svg
+        module/icons/play.svg
+        module/icons/reset.svg
+        module/icons/scene.svg
+        module/icons/step.svg
 )

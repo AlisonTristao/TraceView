@@ -2,6 +2,7 @@
 
 #include <QDateTime>
 #include <QElapsedTimer>
+#include "dashboard/perfprobe.h"
 #include <QTimer>
 #include <btp/profiles/loop.hpp>
 #include <btp/telemetry.hpp>
@@ -417,6 +418,10 @@ void ControllerHost::answer(quint64 tick, const QVector<double>& y) {
     }
     std::size_t written = 0;
     if (writer.finish(&written) == btp::MessageError::Ok) {
+        perf::planSentNs = perf::nowNs();
+        if (perf::stateSentNs != 0) {
+            perf::add("plan.stateTransit(plant->ctl)", perf::planSentNs - perf::stateSentNs);
+        }
         m_node->send_stream(m_peerSource, m_peerBoot, m_uAction, 1,
                             reinterpret_cast<const std::uint8_t*>(m_scratch.constData()),
                             written);

@@ -1,10 +1,11 @@
 #include "textboardconfigeditor.h"
 
 #include <QComboBox>
-#include <QDoubleSpinBox>
 #include <QFormLayout>
 #include <QLineEdit>
 #include <QPlainTextEdit>
+
+#include "theme/doublespinbox.h"
 
 namespace traceview {
 
@@ -23,7 +24,7 @@ TextBoardConfigEditor::TextBoardConfigEditor(QWidget* parent) : WidgetConfigEdit
         tr("UTF8 telemetry topic displayed by this board. Pick a reported text topic or type "
            "its numeric id."));
 
-    m_sampleTimeSpin = new QDoubleSpinBox(this);
+    m_sampleTimeSpin = new DoubleSpinBox(this);
     m_sampleTimeSpin->setRange(1.0, 3'600'000.0);
     m_sampleTimeSpin->setDecimals(0);
     m_sampleTimeSpin->setSuffix(tr(" ms"));

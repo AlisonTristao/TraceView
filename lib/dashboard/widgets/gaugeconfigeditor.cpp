@@ -3,7 +3,6 @@
 #include <QColor>
 #include <QColorDialog>
 #include <QComboBox>
-#include <QDoubleSpinBox>
 #include <QFormLayout>
 #include <QFrame>
 #include <QHBoxLayout>
@@ -15,6 +14,7 @@
 #include <QTableWidget>
 #include <QVBoxLayout>
 
+#include "theme/doublespinbox.h"
 #include "traceview/thememanager.h"
 
 namespace traceview {
@@ -61,14 +61,14 @@ GaugeConfigEditor::GaugeConfigEditor(QWidget* parent) : WidgetConfigEditor(paren
            "device has already reported (shown by name), or type a hex/decimal id by hand "
            "for one it hasn't reported yet."));
 
-    m_minSpin = new QDoubleSpinBox(this);
+    m_minSpin = new DoubleSpinBox(this);
     m_minSpin->setRange(-100'000.0, 100'000.0);
     m_minSpin->setDecimals(2);
     m_minSpin->setValue(0.0);
     m_minSpin->setToolTip(
         tr("Shared scale floor -- every ring maps its own field onto this same range."));
 
-    m_maxSpin = new QDoubleSpinBox(this);
+    m_maxSpin = new DoubleSpinBox(this);
     m_maxSpin->setRange(-100'000.0, 100'000.0);
     m_maxSpin->setDecimals(2);
     m_maxSpin->setValue(100.0);

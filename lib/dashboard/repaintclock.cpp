@@ -1,3 +1,4 @@
+#include "dashboard/perfprobe.h"
 #include "dashboard/repaintclock.h"
 
 #include <QWidget>
@@ -15,9 +16,9 @@ RepaintClock& RepaintClock::instance() {
 RepaintClock::RepaintClock() {
     m_timer.setSingleShot(true);
     m_timer.setTimerType(Qt::PreciseTimer);
-    m_timer.setInterval(AppSettings::instance().repaintIntervalMs());
+    setIntervalMs(AppSettings::instance().repaintIntervalMs());
     connect(&AppSettings::instance(), &AppSettings::dashboardPreferencesChanged, this,
-            [this] { m_timer.setInterval(AppSettings::instance().repaintIntervalMs()); });
+            [this] { setIntervalMs(AppSettings::instance().repaintIntervalMs()); });
     connect(&m_timer, &QTimer::timeout, this, &RepaintClock::tick);
 }
 
@@ -32,19 +33,28 @@ void RepaintClock::request(QWidget* widget, std::function<void()> action) {
     }
     m_pending.append({widget, std::move(action)});
     if (!m_timer.isActive()) {
-        m_timer.start();
+        // Due one interval after the last tick, not after this request: data
+        // arriving between ticks (a simulation at 80 Hz) would otherwise wait
+        // a whole interval on top of the time since the last one, and the
+        // widgets repaint at well under the rate the profile asks for.
+        const qint64 intervalNs = qint64(m_interval) * 1'000'000;
+        const qint64 sinceNs = m_sinceTick.isValid() ? m_sinceTick.nsecsElapsed() : intervalNs;
+        const qint64 waitNs = intervalNs - sinceNs;
+        m_timer.start(waitNs <= 0 ? 0 : int((waitNs + 999'999) / 1'000'000));
     }
 }
 
 int RepaintClock::intervalMs() const {
-    return m_timer.interval();
+    return m_interval;
 }
 
 void RepaintClock::setIntervalMs(int ms) {
-    m_timer.setInterval(qMax(0, ms));
+    m_interval = qMax(0, ms);
 }
 
 void RepaintClock::tick() {
+    PERF_SCOPE("clock.tick");
+    m_sinceTick.start();
     const QVector<Pending> pending = std::exchange(m_pending, {});
     for (const Pending& entry : pending) {
         if (!entry.widget) {

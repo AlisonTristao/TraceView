@@ -12,10 +12,12 @@
 #include <cmath>
 
 #include "dashboard/paintframecounter.h"
+#include "dashboard/perfprobe.h"
 #include "dashboard/widgetconfigeditor.h"
 #include "dashboard/widgetregistry.h"
 #include "lab/scenes/sceneconfigeditor.h"
 #include "lab/scenes/sceneregistry.h"
+#include "traceview/thememanager.h"
 
 namespace tracelab {
 
@@ -35,6 +37,7 @@ bool sameBinding(const SceneBinding& a, const SceneBinding& b) {
 }
 
 constexpr double kMinZoom = 0.1;
+qint64 g_perfRequestNs = 0;  // TEMP perf
 constexpr double kMaxZoom = 20.0;
 
 }  // namespace
@@ -73,6 +76,11 @@ QJsonObject sceneBindingToJson(const SceneBinding& binding) {
 
 SceneWidget::SceneWidget(QWidget* parent) : DashboardWidget(parent) {
     setFocusPolicy(Qt::ClickFocus);
+    // Every paint covers the whole widget with the theme background first
+    // (the same color the styled background under it had), so Qt paints
+    // nothing under it: no window, cell or styled background per frame. The
+    // rounded mask DashboardCell sets still leaves the corners to the cell.
+    setAttribute(Qt::WA_OpaquePaintEvent);
     m_clock.start();
     setConfig({});
 }
@@ -161,6 +169,30 @@ void SceneWidget::setConfig(const QJsonObject& config) {
 void SceneWidget::setEditModeHint(bool editMode) {
     m_editMode = editMode;
     m_dragging = false;
+}
+
+void SceneWidget::paintHeaderIcon(QPainter& painter, const QRectF& rect,
+                                  const QColor& color) const {
+    // An S of track with the robot (the scene's own triangle) heading up
+    // its end -- the same 1.5px stroke as DashboardCell's own type glyphs.
+    painter.save();
+    painter.setRenderHint(QPainter::Antialiasing);
+    painter.translate(rect.topLeft());
+    const qreal s = rect.width();
+    QPen pen(color, 1.5);
+    pen.setCapStyle(Qt::RoundCap);
+    pen.setJoinStyle(Qt::RoundJoin);
+    painter.setPen(pen);
+    painter.setBrush(Qt::NoBrush);
+    QPainterPath track(QPointF(s * 0.12, s * 0.95));
+    track.cubicTo(QPointF(s * 0.95, s * 0.95), QPointF(s * 0.05, s * 0.45),
+                  QPointF(s * 0.62, s * 0.42));
+    painter.drawPath(track);
+    painter.setPen(Qt::NoPen);
+    painter.setBrush(color);
+    painter.drawPolygon(QPolygonF({QPointF(s * 0.98, s * 0.4), QPointF(s * 0.6, s * 0.08),
+                                   QPointF(s * 0.6, s * 0.72)}));
+    painter.restore();
 }
 
 QVector<traceview::TelemetryTopicRequest> SceneWidget::topicRequests() const {
@@ -275,6 +307,9 @@ SceneView SceneWidget::view() const {
 }
 
 void SceneWidget::scheduleRepaint() {
+    if (g_perfRequestNs == 0) {
+        g_perfRequestNs = perf::nowNs();
+    }
     // A visible scene with a frame: render on the next tick, and repaint only
     // when it is back (renderFinished()).
     if (isVisible() && !m_image.isNull()) {
@@ -286,9 +321,12 @@ void SceneWidget::scheduleRepaint() {
 
 void SceneWidget::paintEvent(QPaintEvent* event) {
     Q_UNUSED(event);
+    PERF_SCOPE("scene.paint");
     traceview::notePaintFrame();
     QPainter painter(this);
+    const QColor background = traceview::ThemeManager::instance().currentTheme().background;
     if (!m_renderer) {
+        painter.fillRect(rect(), background);
         painter.setRenderHint(QPainter::Antialiasing, true);
         painter.setClipPath(contentFillPath());
         painter.fillRect(rect(), Qt::white);
@@ -299,6 +337,7 @@ void SceneWidget::paintEvent(QPaintEvent* event) {
     if (!isVisible()) {
         // grab() of a hidden widget (tests, thumbnails): paint inline.
         noteFrame();
+        painter.fillRect(rect(), background);
         painter.setRenderHint(QPainter::Antialiasing, true);
         const QMutexLocker lock(m_rendererMutex.get());
         if (m_renderer->antialiased()) {
@@ -312,6 +351,8 @@ void SceneWidget::paintEvent(QPaintEvent* event) {
     const bool fresh = !m_image.isNull() && m_image.size() == (QSizeF(size()) * dpr).toSize();
     if (!m_image.isNull()) {
         painter.drawImage(QRectF(QPointF(0, 0), QSizeF(size())), m_image);
+    } else {
+        painter.fillRect(rect(), background);
     }
     // A resize, no frame yet or data that came during the last render: render
     // the next one off-thread (new data alone goes through scheduleRepaint()).
@@ -348,6 +389,12 @@ void SceneWidget::startRender() {
     if (pixels.isEmpty()) {
         return;
     }
+    PERF_SCOPE("scene.startRender(gui)");
+    if (g_perfRequestNs != 0) {
+        perf::add("scene.wait(request->start)", perf::nowNs() - g_perfRequestNs);
+        g_perfRequestNs = 0;
+    }
+    const qint64 perfStart = perf::nowNs();
     m_rendering = true;
     m_renderAgain = false;
     std::shared_ptr<SceneRenderer> renderer = m_renderer;
@@ -355,19 +402,22 @@ void SceneWidget::startRender() {
     const SceneFrame frame = takeFrame();
     const SceneView sceneView = view();
     const QPainterPath clip = contentFillPath();
+    const QColor background = traceview::ThemeManager::instance().currentTheme().background;
     const quint64 generation = m_generation;
     QPointer<SceneWidget> self(this);
     QThreadPool::globalInstance()->start([renderer, mutex, frame, sceneView, clip, pixels, dpr,
-                                          generation, self] {
-        QImage image(pixels, QImage::Format_ARGB32_Premultiplied);
+                                          generation, self, perfStart, background] {
+        perf::add("scene.queue(start->worker)", perf::nowNs() - perfStart);
+        PERF_SCOPE("scene.render(worker)");
+        // Opaque (see the constructor): the corners carry the background,
+        // and the widget blits the frame as a plain copy.
+        QImage image(pixels, QImage::Format_RGB32);
         image.setDevicePixelRatio(dpr);
-        image.fill(Qt::transparent);
+        image.fill(background);
         {
             QPainter painter(&image);
             painter.setRenderHint(QPainter::Antialiasing, true);
             const QMutexLocker lock(mutex.get());
-            // The rounded corners baked in (transparent), so drawing the
-            // image needs no clip.
             painter.setClipPath(clip);
             renderer->update(frame);
             renderer->paint(painter, sceneView);
@@ -375,7 +425,8 @@ void SceneWidget::startRender() {
         // Back on the GUI thread; dropped if the widget is gone by then.
         QMetaObject::invokeMethod(
             QCoreApplication::instance(),
-            [self, image, generation] {
+            [self, image, generation, perfStart] {
+                perf::add("scene.latency(start->done)", perf::nowNs() - perfStart);
                 if (self) {
                     self->renderFinished(image, generation);
                 }
@@ -385,6 +436,7 @@ void SceneWidget::startRender() {
 }
 
 void SceneWidget::renderFinished(const QImage& image, quint64 generation) {
+    perf::count("scene.frame");
     m_rendering = false;
     if (generation == m_generation) {
         m_image = image;

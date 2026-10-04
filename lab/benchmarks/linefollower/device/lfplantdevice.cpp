@@ -1,3 +1,4 @@
+#include "dashboard/perfprobe.h"
 #include "lfplantdevice.h"
 
 #include <QCoreApplication>
@@ -313,15 +314,29 @@ int LinePlantDevice::planTimeoutLeftMs() const {
     return int(qMax<qint64>(1, kPlanTimeoutMs - m_waitClock.elapsed()));
 }
 
+static qint64 g_timerStartNs = 0;  // TEMP perf
+static int g_timerAskMs = -1;
 void LinePlantDevice::schedule() {
     if (!m_running) {
         return;
     }
+    struct Note {
+        QTimer* t;
+        ~Note() {
+            if (t->isActive()) {
+                g_timerStartNs = perf::nowNs();
+                g_timerAskMs = t->interval();
+                perf::count(g_timerAskMs == 0 ? "plant.timer0" : g_timerAskMs > 100 ? "plant.timerWaitPlan" : "plant.timerN");
+            }
+        }
+    } note{m_timer};
     switch (m_settings.runMode) {
         case RunMode::RealTime: {
             const double fps = m_settings.fps * m_settings.timeScale;
+            // Tick k is due once `due` reaches k (pump() checks the same):
+            // one period after the last tick, not two.
             const double due = m_ticksAtClockStart + m_clock.nsecsElapsed() * 1e-9 * fps;
-            if (double(m_tick) < due) {
+            if (double(m_tick) + 1.0 <= due) {
                 m_timer->start(waitingForPlan() ? planTimeoutLeftMs() : 0);
             } else {
                 const double waitMs = (double(m_tick) + 1.0 - due) * 1000.0 / fps;
@@ -341,13 +356,18 @@ void LinePlantDevice::schedule() {
 }
 
 void LinePlantDevice::pump() {
+    perf::count("plant.pump");
+    if (g_timerAskMs > 0 && g_timerAskMs <= 100) {
+        perf::add("plant.timerLate", perf::nowNs() - g_timerStartNs - qint64(g_timerAskMs) * 1'000'000);
+    }
+    g_timerAskMs = -1;
     if (!m_running) {
         return;
     }
     if (m_settings.runMode == RunMode::RealTime) {
         const double fps = m_settings.fps * m_settings.timeScale;
         const double due = m_ticksAtClockStart + m_clock.nsecsElapsed() * 1e-9 * fps;
-        if (double(m_tick) >= due) {
+        if (double(m_tick) + 1.0 > due) {
             schedule();
             return;
         }
@@ -369,6 +389,18 @@ void LinePlantDevice::pump() {
 }
 
 bool LinePlantDevice::tickOnce() {
+    PERF_SCOPE("plant.tick");
+    {
+        static qint64 last = 0;
+        const qint64 now = perf::nowNs();
+        if (last != 0) {
+            perf::add("plant.gap", now - last);
+            const qint64 g = (now - last) / 1'000'000;
+            perf::count(g < 3 ? "plant.gap[0,3)" : g < 8 ? "plant.gap[3,8)" : g < 11 ? "plant.gap[8,11)"
+                        : g < 14 ? "plant.gap[11,14)" : g < 20 ? "plant.gap[14,20)" : "plant.gap[20+)");
+        }
+        last = now;
+    }
     if (m_finished) {
         return false;
     }
@@ -412,6 +444,7 @@ quint64 LinePlantDevice::nextTimestampUs() {
 }
 
 void LinePlantDevice::publishTick() {
+    PERF_SCOPE("plant.publish");
     const quint64 us = nextTimestampUs();
     const StepData& data = m_plant->data();
     const SensorReadings& measured = m_plant->measured();
@@ -464,6 +497,7 @@ void LinePlantDevice::publishTick() {
     // The controller first (it gets every tick, the preview before the
     // state), then the viewer at its own rates.
     m_controller->publish(topic::kSimPreview, preview, us);
+    perf::stateSentNs = perf::nowNs();
     m_controller->publish(topic::kLoopState, state, us);
     m_controller->publish(topic::kLoopOutput, output, us);
     m_viewer->publishDue(topic::kSimPreview, preview, us);
@@ -579,6 +613,9 @@ void LinePlantDevice::onCommand(BtpProducerPort* port, quint16 actionId,
             const auto& right = params.values.value(QStringLiteral("u_r"));
             const std::size_t n = qMin(left.size(), right.size());
             m_plan.refTick = refTick;
+            if (perf::planSentNs != 0) {
+                perf::add("plan.transit(ctl->plant)", perf::nowNs() - perf::planSentNs);
+            }
             m_plan.uLeft.assign(left.begin(), left.begin() + qint64(n));
             m_plan.uRight.assign(right.begin(), right.begin() + qint64(n));
             if (m_running && refTick >= m_tick) {

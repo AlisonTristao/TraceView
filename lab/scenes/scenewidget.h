@@ -69,6 +69,8 @@ public:
 
     void setConfig(const QJsonObject& config) override;
     void setEditModeHint(bool editMode) override;
+    void paintHeaderIcon(QPainter& painter, const QRectF& rect,
+                         const QColor& color) const override;
 
     QVector<traceview::TelemetryTopicRequest> topicRequests() const override;
     void onFieldSample(const traceview::TelemetryFieldBinding& binding, quint64 timestampUs,

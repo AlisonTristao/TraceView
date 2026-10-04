@@ -828,8 +828,20 @@ void MainWindow::addRibbonTab(const QString& label, const QList<QAction*>& actio
     pageLayout->setContentsMargins(kRibbonPageMarginH, kRibbonPageMarginV, kRibbonPageMarginH,
                                    kRibbonPageMarginV);
     pageLayout->setSpacing(kRibbonGroupSpacing);
-    if (!actions.isEmpty()) {
-        pageLayout->addWidget(Ribbon::createButtonGroup(page, actions));
+    // A separator action ends one button group and starts the next.
+    QList<QAction*> group;
+    for (QAction* action : actions) {
+        if (!action->isSeparator()) {
+            group.append(action);
+            continue;
+        }
+        if (!group.isEmpty()) {
+            pageLayout->addWidget(Ribbon::createButtonGroup(page, group));
+        }
+        group.clear();
+    }
+    if (!group.isEmpty()) {
+        pageLayout->addWidget(Ribbon::createButtonGroup(page, group));
     }
     pageLayout->addStretch();
 

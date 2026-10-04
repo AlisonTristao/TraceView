@@ -1346,6 +1346,138 @@
         <source>, controller waiting for the plant</source>
         <translation>, controlador aguardando a planta</translation>
     </message>
+    <message>
+        <source>No TraceLab device in this project yet. Open the line-follower benchmark, or build a lab of your own: a plant first, then a controller and a scene for it.</source>
+        <translation>Nenhum dispositivo do TraceLab neste projeto ainda. Abra o benchmark do seguidor de linha ou monte um lab: primeiro uma planta, depois um controlador e uma cena para ela.</translation>
+    </message>
+    <message>
+        <source>Open the line-follower benchmark</source>
+        <translation>Abrir o benchmark do seguidor de linha</translation>
+    </message>
+    <message>
+        <source>Simulation</source>
+        <translation>Simulação</translation>
+    </message>
+    <message>
+        <source>tick</source>
+        <translation>tick</translation>
+    </message>
+    <message>
+        <source>time</source>
+        <translation>tempo</translation>
+    </message>
+    <message>
+        <source>covered</source>
+        <translation>percorrido</translation>
+    </message>
+    <message>
+        <source>Plant</source>
+        <translation>Planta</translation>
+    </message>
+    <message>
+        <source>Speed</source>
+        <translation>Velocidade</translation>
+    </message>
+    <message>
+        <source>Lockstep</source>
+        <translation>Passo a passo</translation>
+    </message>
+    <message>
+        <source> Hz</source>
+        <translation> Hz</translation>
+    </message>
+    <message>
+        <source>Step rate of the simulation: the plant integrates and the controllers on it sample at Ts = 1 / rate. Changing it restarts the run.</source>
+        <translation>Taxa de passos da simulação: a planta integra e os controladores ligados a ela amostram em Ts = 1 / taxa. Mudar reinicia a execução.</translation>
+    </message>
+    <message>
+        <source>Sample rate</source>
+        <translation>Taxa de amostragem</translation>
+    </message>
+    <message>
+        <source>Track seed</source>
+        <translation>Semente da pista</translation>
+    </message>
+    <message>
+        <source>Track type</source>
+        <translation>Tipo de pista</translation>
+    </message>
+    <message>
+        <source>Device</source>
+        <translation>Dispositivo</translation>
+    </message>
+    <message>
+        <source>Wheel-speed filter</source>
+        <translation>Filtro das rodas</translation>
+    </message>
+    <message>
+        <source>Lateral weight</source>
+        <translation>Peso lateral</translation>
+    </message>
+    <message>
+        <source>Frozen</source>
+        <translation>Congelado</translation>
+    </message>
+    <message>
+        <source>Warm start</source>
+        <translation>Warm start</translation>
+    </message>
+    <message>
+        <source>Taylor</source>
+        <translation>Taylor</translation>
+    </message>
+    <message>
+        <source>Iterative</source>
+        <translation>Iterativo</translation>
+    </message>
+    <message>
+        <source>Rho scheduling</source>
+        <translation>Escalonamento de rho</translation>
+    </message>
+    <message>
+        <source>Embedding</source>
+        <translation>Embedding</translation>
+    </message>
+    <message>
+        <source>Iterations</source>
+        <translation>Iterações</translation>
+    </message>
+    <message>
+        <source>Control weight</source>
+        <translation>Peso de controle</translation>
+    </message>
+    <message>
+        <source>Kp</source>
+        <translation>Kp</translation>
+    </message>
+    <message>
+        <source>Kd</source>
+        <translation>Kd</translation>
+    </message>
+    <message>
+        <source>Base speed</source>
+        <translation>Velocidade base</translation>
+    </message>
+    <message>
+        <source>%1 s</source>
+        <translation>%1 s</translation>
+    </message>
+    <message>
+        <source>%1 %</source>
+        <translation>%1 %</translation>
+    </message>
+    <message>
+        <source>Perturbation: %1 %</source>
+        <translation>Perturbação: %1 %</translation>
+    </message>
+    <message>
+        <source>connected</source>
+        <translation>conectado</translation>
+    </message>
+    <message>
+        <source>waiting for the plant</source>
+        <translation>esperando a planta</translation>
+    </message>
 </context>
 <context>
     <name>tracelab::SceneConfigEditor</name>

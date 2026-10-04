@@ -114,6 +114,8 @@ private:
 
     int value(const char* key, int fallback, int minimum, int maximum) const;
     void setValue(const char* key, int value);
+
+    mutable QString m_chartStyleId;  // null until first read
 };
 
 }  // namespace traceview

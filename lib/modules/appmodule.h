@@ -21,8 +21,11 @@ public:
     virtual WidgetRegistry& widgetRegistry() = 0;
 
     // Adds one fixed (non-closable) ribbon tab labelled `label`. Its ribbon
-    // page holds one button group built from `actions` (none: an empty page),
-    // and `content` fills the area below the ribbon while the tab is current.
+    // page holds the button groups built from `actions` (none: an empty
+    // page), a separator action (QAction::setSeparator()) closing one group
+    // and opening the next; the ribbon draws icons only, so give every
+    // action one. `content` fills the area below the ribbon while the tab is
+    // current.
     // Takes ownership of `content`; `actions` are not owned, so parent them
     // to `content` to keep them alive as long as the tab.
     virtual void addRibbonTab(const QString& label, const QList<QAction*>& actions,
