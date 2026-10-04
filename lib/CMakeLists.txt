@@ -26,6 +26,8 @@ add_library(traceview_theme STATIC
     ${CMAKE_SOURCE_DIR}/include/traceview/font.h
     theme/busyspinner.cpp
     theme/busyspinner.h
+    theme/doublespinbox.cpp
+    theme/doublespinbox.h
     theme/dialogpresenter.cpp
     theme/dialogpresenter.h
     theme/iconutils.cpp

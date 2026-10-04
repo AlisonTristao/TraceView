@@ -1,9 +1,11 @@
+#include "dashboard/perfprobe.h"
 #include "lfplantdevice.h"
 
 #include <QCoreApplication>
 #include <QDateTime>
 #include <QJsonArray>
 #include <QJsonDocument>
+#include <QLocale>
 #include <QTimer>
 #include <btp/profiles/loop.hpp>
 #include <btp/telemetry.hpp>
@@ -158,7 +160,7 @@ PlantParams PlantSettings::plantParams() const {
 }
 
 LinePlantDevice::LinePlantDevice(quint32 sourceId, const PlantSettings& settings, QObject* parent)
-    : QObject(parent), m_sourceId(sourceId), m_settings(settings) {
+    : LabPlantDevice(parent), m_sourceId(sourceId), m_settings(settings) {
     buildPlantCatalog(m_catalog);
     m_catalog.set_config_revision_auto();
     rebuildPlant();
@@ -190,6 +192,113 @@ LinePlantDevice::~LinePlantDevice() = default;
 
 double LinePlantDevice::perturbation() const {
     return m_plant->perturbation();
+}
+
+QString LinePlantDevice::typeName() const {
+    return QCoreApplication::translate("LinePlantDevice", "Line follower");
+}
+
+double LinePlantDevice::time() const {
+    return m_plant->time();
+}
+
+void LinePlantDevice::setSampleRate(int hz) {
+    hz = qBound(1, hz, 1000);
+    if (hz == m_settings.fps) {
+        return;
+    }
+    PlantSettings s = m_settings;
+    s.fps = hz;
+    setSettings(s);
+    reset();
+}
+
+QVector<PlantSetting> LinePlantDevice::settingsSchema() const {
+    const auto tr = [](const char* text) {
+        return QCoreApplication::translate("tracelab::lf::LinePlantDevice", text);
+    };
+    QVector<PlantSetting> list;
+    PlantSetting seed;
+    seed.key = QStringLiteral("seed");
+    seed.label = tr("Track seed");
+    seed.toolTip = tr("-1 draws a random track on every reset.");
+    seed.type = PlantSetting::Type::Int;
+    seed.value = int(qBound(qint64(-1), qint64(m_settings.track.seed), qint64(2147483647)));
+    seed.minimum = -1;
+    seed.maximum = 2147483647;
+    list.append(seed);
+    PlantSetting type;
+    type.key = QStringLiteral("trackType");
+    type.label = tr("Track type");
+    type.type = PlantSetting::Type::Enum;
+    type.options = {tr("Lemniscate"), tr("Circle")};
+    type.value = m_settings.track.type == TrackType::Circle ? 1 : 0;
+    list.append(type);
+    PlantSetting noise;
+    noise.key = QStringLiteral("sensorNoise");
+    noise.label = tr("Sensor noise");
+    noise.toolTip = tr("Synthetic noise on the gyro and the line sensors (the encoders always "
+                       "count whole ticks).");
+    noise.type = PlantSetting::Type::Bool;
+    noise.value = m_settings.sensorNoise;
+    list.append(noise);
+    PlantSetting horizon;
+    horizon.key = QStringLiteral("horizon");
+    horizon.label = tr("Preview points");
+    horizon.toolTip = tr("How many future track points sim.preview carries (TL_PREVIEW).");
+    horizon.type = PlantSetting::Type::Int;
+    horizon.value = m_settings.horizon;
+    horizon.minimum = 2;
+    horizon.maximum = kMaxPreview;
+    list.append(horizon);
+    PlantSetting spacing;
+    spacing.key = QStringLiteral("futureSpacing");
+    spacing.label = tr("Preview spacing");
+    spacing.unit = tr(" points");
+    spacing.toolTip = tr("Track points between two preview points (about 1 cm each).");
+    spacing.type = PlantSetting::Type::Int;
+    spacing.value = m_settings.futureSpacing;
+    spacing.minimum = 1;
+    spacing.maximum = 100;
+    list.append(spacing);
+    return list;
+}
+
+void LinePlantDevice::applySettings(const QVariantMap& values) {
+    PlantSettings s = m_settings;
+    if (values.contains(QStringLiteral("seed"))) {
+        s.track.seed = values.value(QStringLiteral("seed")).toLongLong();
+    }
+    if (values.contains(QStringLiteral("trackType"))) {
+        s.track.type = values.value(QStringLiteral("trackType")).toInt() == 1
+                           ? TrackType::Circle
+                           : TrackType::Lemniscate;
+    }
+    if (values.contains(QStringLiteral("sensorNoise"))) {
+        s.sensorNoise = values.value(QStringLiteral("sensorNoise")).toBool();
+    }
+    if (values.contains(QStringLiteral("horizon"))) {
+        s.horizon = qBound(2, values.value(QStringLiteral("horizon")).toInt(), kMaxPreview);
+    }
+    if (values.contains(QStringLiteral("futureSpacing"))) {
+        s.futureSpacing = qMax(1, values.value(QStringLiteral("futureSpacing")).toInt());
+    }
+    setSettings(s);
+    reset();
+}
+
+QVector<QPair<QString, QString>> LinePlantDevice::statusItems() const {
+    const QLocale locale;
+    QVector<QPair<QString, QString>> items;
+    items.append({QCoreApplication::translate("LinePlantDevice", "covered"),
+                  QCoreApplication::translate("LinePlantDevice", "%1 %")
+                      .arg(locale.toString(m_plant->progress().coverage(), 'f', 1))});
+    if (perturbation() != 0.0) {
+        items.append({QCoreApplication::translate("LinePlantDevice", "perturbation"),
+                      QCoreApplication::translate("LinePlantDevice", "%1 %")
+                          .arg(locale.toString(perturbation(), 'f', 1))});
+    }
+    return items;
 }
 
 void LinePlantDevice::setSettings(const PlantSettings& settings) {
@@ -313,15 +422,29 @@ int LinePlantDevice::planTimeoutLeftMs() const {
     return int(qMax<qint64>(1, kPlanTimeoutMs - m_waitClock.elapsed()));
 }
 
+static qint64 g_timerStartNs = 0;  // TEMP perf
+static int g_timerAskMs = -1;
 void LinePlantDevice::schedule() {
     if (!m_running) {
         return;
     }
+    struct Note {
+        QTimer* t;
+        ~Note() {
+            if (t->isActive()) {
+                g_timerStartNs = perf::nowNs();
+                g_timerAskMs = t->interval();
+                perf::count(g_timerAskMs == 0 ? "plant.timer0" : g_timerAskMs > 100 ? "plant.timerWaitPlan" : "plant.timerN");
+            }
+        }
+    } note{m_timer};
     switch (m_settings.runMode) {
         case RunMode::RealTime: {
             const double fps = m_settings.fps * m_settings.timeScale;
+            // Tick k is due once `due` reaches k (pump() checks the same):
+            // one period after the last tick, not two.
             const double due = m_ticksAtClockStart + m_clock.nsecsElapsed() * 1e-9 * fps;
-            if (double(m_tick) < due) {
+            if (double(m_tick) + 1.0 <= due) {
                 m_timer->start(waitingForPlan() ? planTimeoutLeftMs() : 0);
             } else {
                 const double waitMs = (double(m_tick) + 1.0 - due) * 1000.0 / fps;
@@ -341,13 +464,18 @@ void LinePlantDevice::schedule() {
 }
 
 void LinePlantDevice::pump() {
+    perf::count("plant.pump");
+    if (g_timerAskMs > 0 && g_timerAskMs <= 100) {
+        perf::add("plant.timerLate", perf::nowNs() - g_timerStartNs - qint64(g_timerAskMs) * 1'000'000);
+    }
+    g_timerAskMs = -1;
     if (!m_running) {
         return;
     }
     if (m_settings.runMode == RunMode::RealTime) {
         const double fps = m_settings.fps * m_settings.timeScale;
         const double due = m_ticksAtClockStart + m_clock.nsecsElapsed() * 1e-9 * fps;
-        if (double(m_tick) >= due) {
+        if (double(m_tick) + 1.0 > due) {
             schedule();
             return;
         }
@@ -369,6 +497,18 @@ void LinePlantDevice::pump() {
 }
 
 bool LinePlantDevice::tickOnce() {
+    PERF_SCOPE("plant.tick");
+    {
+        static qint64 last = 0;
+        const qint64 now = perf::nowNs();
+        if (last != 0) {
+            perf::add("plant.gap", now - last);
+            const qint64 g = (now - last) / 1'000'000;
+            perf::count(g < 3 ? "plant.gap[0,3)" : g < 8 ? "plant.gap[3,8)" : g < 11 ? "plant.gap[8,11)"
+                        : g < 14 ? "plant.gap[11,14)" : g < 20 ? "plant.gap[14,20)" : "plant.gap[20+)");
+        }
+        last = now;
+    }
     if (m_finished) {
         return false;
     }
@@ -412,6 +552,7 @@ quint64 LinePlantDevice::nextTimestampUs() {
 }
 
 void LinePlantDevice::publishTick() {
+    PERF_SCOPE("plant.publish");
     const quint64 us = nextTimestampUs();
     const StepData& data = m_plant->data();
     const SensorReadings& measured = m_plant->measured();
@@ -464,6 +605,7 @@ void LinePlantDevice::publishTick() {
     // The controller first (it gets every tick, the preview before the
     // state), then the viewer at its own rates.
     m_controller->publish(topic::kSimPreview, preview, us);
+    perf::stateSentNs = perf::nowNs();
     m_controller->publish(topic::kLoopState, state, us);
     m_controller->publish(topic::kLoopOutput, output, us);
     m_viewer->publishDue(topic::kSimPreview, preview, us);
@@ -579,6 +721,9 @@ void LinePlantDevice::onCommand(BtpProducerPort* port, quint16 actionId,
             const auto& right = params.values.value(QStringLiteral("u_r"));
             const std::size_t n = qMin(left.size(), right.size());
             m_plan.refTick = refTick;
+            if (perf::planSentNs != 0) {
+                perf::add("plan.transit(ctl->plant)", perf::nowNs() - perf::planSentNs);
+            }
             m_plan.uLeft.assign(left.begin(), left.begin() + qint64(n));
             m_plan.uRight.assign(right.begin(), right.begin() + qint64(n));
             if (m_running && refTick >= m_tick) {

@@ -21,8 +21,11 @@ public:
     virtual WidgetRegistry& widgetRegistry() = 0;
 
     // Adds one fixed (non-closable) ribbon tab labelled `label`. Its ribbon
-    // page holds one button group built from `actions` (none: an empty page),
-    // and `content` fills the area below the ribbon while the tab is current.
+    // page holds the button groups built from `actions` (none: an empty
+    // page), a separator action (QAction::setSeparator()) closing one group
+    // and opening the next; the ribbon draws icons only, so give every
+    // action one. `content` fills the area below the ribbon while the tab is
+    // current.
     // Takes ownership of `content`; `actions` are not owned, so parent them
     // to `content` to keep them alive as long as the tab.
     virtual void addRibbonTab(const QString& label, const QList<QAction*>& actions,
@@ -65,6 +68,23 @@ public:
         (void)name;
         (void)config;
         return QString();
+    }
+
+    // Stores `config` as the in-process device's Device::moduleConfig in the
+    // open project (it is saved with it). The live device is NOT rebuilt:
+    // this is the device telling the project what it already runs with.
+    // False when there is no such device (the default).
+    virtual bool updateModuleDeviceConfig(const QString& deviceId, const QJsonObject& config) {
+        (void)deviceId;
+        (void)config;
+        return false;
+    }
+
+    // Removes the device `deviceId` from the open project, as the Devices
+    // tab's Remove does. False when there is no such device (the default).
+    virtual bool removeModuleDevice(const QString& deviceId) {
+        (void)deviceId;
+        return false;
     }
 
     // Adds a widget of `typeId` with `config` to the dashboard and shows it.

@@ -1,3 +1,4 @@
+#include "dashboard/perfprobe.h"
 #include "lfcontrolleradapter.h"
 
 #include <QCoreApplication>
@@ -265,6 +266,7 @@ bool LineControllerAdapter::computePd(const ControllerInput& input, ControllerOu
 }
 
 bool LineControllerAdapter::compute(const ControllerInput& input, ControllerOutput* output) {
+    PERF_SCOPE("ctl.compute");
     if (m_pd) {
         return computePd(input, output);
     }

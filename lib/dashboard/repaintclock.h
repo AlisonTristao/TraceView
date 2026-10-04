@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QElapsedTimer>
 #include <QObject>
 #include <QPointer>
 #include <QTimer>
@@ -12,9 +13,10 @@ namespace traceview {
 
 // One repaint tick for every dashboard widget fed by telemetry. A widget with
 // new data calls request(this) instead of starting its own timer; on the next
-// tick (AppSettings::repaintIntervalMs()) every requested widget gets its
-// update() in the same event-loop pass, so the window is composed and flushed
-// once per frame instead of once per widget, out of phase.
+// tick (AppSettings::repaintIntervalMs() after the previous one, or at once if
+// that has already passed) every requested widget gets its update() in the
+// same event-loop pass, so the window is composed and flushed once per frame
+// instead of once per widget, out of phase.
 class RepaintClock : public QObject {
     Q_OBJECT
 
@@ -36,6 +38,8 @@ private:
     void tick();
 
     QTimer m_timer;
+    int m_interval = 0;
+    QElapsedTimer m_sinceTick;  // invalid until the first tick
     struct Pending {
         QPointer<QWidget> widget;
         std::function<void()> action;

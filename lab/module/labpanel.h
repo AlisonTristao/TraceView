@@ -1,35 +1,39 @@
 #pragma once
 
+#include <QJsonObject>
 #include <QPointer>
+#include <QSet>
 #include <QWidget>
-#include <functional>
 
 class QAction;
-class QCheckBox;
 class QComboBox;
-class QDoubleSpinBox;
+class QHBoxLayout;
 class QLabel;
-class QPushButton;
-class QSpinBox;
+class QMenu;
+class QStackedWidget;
+class QToolButton;
 
 namespace traceview {
 class ModuleHost;
 }
 
-namespace tracelab::lf {
-class LineControllerDevice;
-class LinePlantDevice;
-}  // namespace tracelab::lf
-
 namespace tracelab {
 
-// The TraceLab tab's page: the tools to build a lab in the open project (add
-// a simulated plant, a controller host bound to it and a Scene showing them;
-// the benchmarks themselves are projects, under File > Open Example) and to
-// drive its live TraceLab devices -- run, pause, reset,
-// one step, the clock (1x, 2x, as fast as possible, lockstep), the track
-// (seed and type, applied on reset), sensor noise, and the controller (qLPV
-// MPC or GPC, the wheel-speed filter and the main weights).
+class BlockPage;
+class LabCard;
+class LabControllerDevice;
+class LabPlantDevice;
+class PlantPage;
+
+// The TraceLab tab's page. The loop of a plant drawn as a chain of cards --
+// the plant, the filters, the controller -- with a "+" where a block can be
+// added; picking a card shows its page below: the plant's clock and settings
+// (PlantPage), or a code block's page (BlockPage; its code opens in VS Code
+// or a window of its own, CodeWindow). It knows plants and
+// controller devices only through LabPlantDevice and LabControllerDevice
+// (lab/control/labdevices.h): what kinds of plant exist is whatever the
+// benchmarks registered. Every change a device makes to its configuration
+// is stored in the project (ModuleHost::updateModuleDeviceConfig()).
 class LabPanel : public QWidget {
     Q_OBJECT
 
@@ -38,20 +42,21 @@ public:
     // the panel (null: the tools do nothing).
     explicit LabPanel(traceview::ModuleHost* host, QWidget* parent = nullptr);
 
-    // The ribbon's buttons (parented to this panel): Add plant, Add
-    // controller, Add scene, Play, Pause, Reset, Step.
+    // The ribbon's buttons (parented to this panel), in two groups split by
+    // a separator: Add plant, Add controller, Add scene | Play, Pause,
+    // Reset, Step.
     QList<QAction*> ribbonActions() const;
 
     // The line-follower benchmark project (File > Open Example).
     static QString lineFollowerProjectPath();
 
 public slots:
-    // A simulated line-follower plant, with the default settings.
-    void addLineFollowerPlant();
-    // A controller host bound to the plant picked in the Run box (or the
-    // only one); nothing without a plant.
+    // A plant of the first registered kind, with its default settings.
+    void addPlant();
+    // A controller device on the current plant, with the first controller
+    // template; picks it. Nothing without a plant.
     void addController();
-    // A Scene bound by name to that plant and controller.
+    // A Scene bound by name to the current plant and controller.
     void addScene();
     void play();
     void pauseSimulation();
@@ -59,16 +64,21 @@ public slots:
     void stepSimulation();
 
 private:
-    lf::LinePlantDevice* plant() const;
-    lf::LineControllerDevice* controller() const;
-    void refreshDevices();
-    void refreshFromDevices();
-    void refreshStatus();
-    void applySpeed();
-    void applyTrackAndSensors();
-    void applyController();
+    enum class Pick { Plant, Filter, Controller, Other };
 
-    QString currentPlantId() const;
+    void applyTheme();
+    void refreshDevices();
+    void rebuildChain();
+    void refreshCards();
+    void refreshLive();
+    void pick(Pick what, int index);
+    void persistDevices();
+    LabPlantDevice* plant() const;
+    LabControllerDevice* controller() const;
+    QString plantId() const;
+    QMenu* blockMenu(bool controllerBlock);
+    void addBlock(bool controllerBlock, const QString& templateId, const QString& path);
+    void addControllerDevice(const QJsonObject& config, int pickAfter);
 
     traceview::ModuleHost* m_host = nullptr;
     QAction* m_addPlantAction = nullptr;
@@ -78,27 +88,37 @@ private:
     QAction* m_pauseAction = nullptr;
     QAction* m_resetAction = nullptr;
     QAction* m_stepAction = nullptr;
+    QAction* m_groupSeparator = nullptr;
 
+    QWidget* m_emptyState = nullptr;
+    QWidget* m_main = nullptr;
     QComboBox* m_plantCombo = nullptr;
-    QComboBox* m_controllerCombo = nullptr;
-    QComboBox* m_speedCombo = nullptr;
-    QSpinBox* m_seedSpin = nullptr;
-    QComboBox* m_trackCombo = nullptr;
-    QCheckBox* m_noiseCheck = nullptr;
-    QComboBox* m_typeCombo = nullptr;
-    QDoubleSpinBox* m_filterSpin = nullptr;
-    QDoubleSpinBox* m_qLateralSpin = nullptr;
-    QComboBox* m_schedulingCombo = nullptr;
-    QComboBox* m_embeddingCombo = nullptr;
-    QSpinBox* m_iterationsSpin = nullptr;
-    QDoubleSpinBox* m_gpcLambdaSpin = nullptr;
-    QDoubleSpinBox* m_pdKpSpin = nullptr;
-    QDoubleSpinBox* m_pdKdSpin = nullptr;
-    QDoubleSpinBox* m_pdBaseSpin = nullptr;
-    QLabel* m_statusLabel = nullptr;
-    QLabel* m_emptyLabel = nullptr;
-    QWidget* m_controls = nullptr;
-    bool m_updating = false;
+    QLabel* m_plantComboLabel = nullptr;
+    QHBoxLayout* m_chain = nullptr;
+    QWidget* m_chainScroll = nullptr;
+    QStackedWidget* m_pages = nullptr;
+    PlantPage* m_plantPage = nullptr;
+    BlockPage* m_blockPage = nullptr;
+    QWidget* m_otherPage = nullptr;
+    QLabel* m_otherText = nullptr;
+
+    struct Card {
+        LabCard* card = nullptr;
+        QLabel* kind = nullptr;
+        QLabel* status = nullptr;
+        Pick pick = Pick::Plant;
+        int index = 0;
+    };
+    QVector<Card> m_cards;
+    QString m_chainSignature;
+    Pick m_pick = Pick::Plant;
+    int m_pickIndex = 0;
+    QString m_otherId;
+    // A controller device asked for and not live yet: picked (that block)
+    // when it is.
+    QString m_pendingController;
+    int m_pendingPick = 0;
+    QSet<QObject*> m_persisted;
 };
 
 }  // namespace tracelab

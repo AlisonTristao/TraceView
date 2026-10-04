@@ -1,7 +1,9 @@
 #include "controllerhost.h"
 
+#include <QCoreApplication>
 #include <QDateTime>
 #include <QElapsedTimer>
+#include "dashboard/perfprobe.h"
 #include <QTimer>
 #include <btp/profiles/loop.hpp>
 #include <btp/telemetry.hpp>
@@ -109,14 +111,106 @@ ControllerHost::~ControllerHost() = default;
 
 void ControllerHost::setAdapter(std::unique_ptr<ControllerAdapter> adapter) {
     m_adapter = std::move(adapter);
-    m_configured = false;
-    if (m_adapter && !m_measurementNames.isEmpty()) {
-        m_adapter->setSignalNames(m_measurementNames, m_inputNames);
-        QString error;
-        m_configured =
-            m_adapter->configure(m_measurementNames.size(), m_inputNames.size(), &error);
-    }
+    bind();
     sendInfo();
+}
+
+void ControllerHost::setFilters(std::vector<std::unique_ptr<SignalFilter>> filters) {
+    m_filters = std::move(filters);
+    bind();
+    sendInfo();
+}
+
+void ControllerHost::reconfigure() {
+    bind();
+    sendInfo();
+}
+
+void ControllerHost::bind() {
+    const bool wasConfigured = m_configured;
+    const QString oldError = m_configureError;
+    const QStringList oldSignals = m_signalNames;
+    m_configured = false;
+    m_configureError.clear();
+    m_signalNames.clear();
+    if (!m_measurementNames.isEmpty()) {
+        // The plant's measurements through each filter, by name.
+        QStringList names = m_measurementNames;
+        bool ok = true;
+        for (const std::unique_ptr<SignalFilter>& filter : m_filters) {
+            QStringList out;
+            QString error;
+            if (!filter->configure(names, &out, &error)) {
+                m_configureError = QStringLiteral("%1: %2").arg(filter->name(), error);
+                ok = false;
+                break;
+            }
+            names = out;
+        }
+        // ctl.diag's names: each once, none of its fixed fields.
+        if (ok) {
+            static const QStringList reserved = {
+                QStringLiteral("ref_tick"), QStringLiteral("solve_ms"),
+                QStringLiteral("iterations"), QStringLiteral("pred_x"),
+                QStringLiteral("pred_y"), QStringLiteral("pred_theta")};
+            QStringList seen;
+            for (const QString& name : diagNames()) {
+                if (reserved.contains(name) || seen.contains(name)) {
+                    m_configureError =
+                        QCoreApplication::translate("ControllerHost",
+                                                    "the diagnostic %1 is declared twice or "
+                                                    "is one of ctl.diag's own fields (%2)")
+                            .arg(name, reserved.join(QStringLiteral(", ")));
+                    ok = false;
+                    break;
+                }
+                seen.append(name);
+            }
+        }
+        if (ok) {
+            m_signalNames = names;
+            if (m_adapter) {
+                m_adapter->setSignalNames(names, m_inputNames);
+                QString error;
+                m_configured = m_adapter->configure(names.size(), m_inputNames.size(), &error);
+                if (!m_configured) {
+                    m_configureError = error.isEmpty()
+                                           ? m_adapter->name()
+                                           : QStringLiteral("%1: %2").arg(m_adapter->name(), error);
+                }
+            }
+        }
+    }
+    if (m_configured != wasConfigured || m_configureError != oldError ||
+        m_signalNames != oldSignals) {
+        emit configurationChanged();
+    }
+}
+
+QStringList ControllerHost::diagNames() const {
+    QStringList names = m_adapter ? m_adapter->diagNames() : QStringList();
+    for (const std::unique_ptr<SignalFilter>& filter : m_filters) {
+        names += filter->diagNames();
+    }
+    return names;
+}
+
+QStringList ControllerHost::diagUnits() const {
+    QStringList units;
+    if (m_adapter) {
+        units = m_adapter->diagUnits();
+        while (units.size() < m_adapter->diagNames().size()) {
+            units.append(QString());
+        }
+    }
+    for (const std::unique_ptr<SignalFilter>& filter : m_filters) {
+        QStringList filterUnits = filter->diagUnits();
+        while (filterUnits.size() < filter->diagNames().size()) {
+            filterUnits.append(QString());
+        }
+        units += filterUnits;
+    }
+    return units;
 }
 
 ControllerAdapter* ControllerHost::adapter() const {
@@ -277,12 +371,7 @@ void ControllerHost::onCatalog() {
     if (m_stateTopic == 0 || m_uAction == 0) {
         return;  // not a loop-profile plant
     }
-    if (m_adapter) {
-        m_adapter->setSignalNames(m_measurementNames, m_inputNames);
-        QString error;
-        m_configured =
-            m_adapter->configure(m_measurementNames.size(), m_inputNames.size(), &error);
-    }
+    bind();
     m_node->subscribe(m_peerSource, m_peerBoot, m_stateTopic, kSubscribeRateMillihz,
                       kSubscribeLeaseMs);
     if (m_previewTopic != 0) {
@@ -375,7 +464,11 @@ void ControllerHost::answer(quint64 tick, const QVector<double>& y) {
         return;
     }
     if (tick < m_lastTick) {
-        m_adapter->reset();  // the plant went back: sim.reset
+        // The plant went back: sim.reset.
+        for (const std::unique_ptr<SignalFilter>& filter : m_filters) {
+            filter->reset();
+        }
+        m_adapter->reset();
     }
     m_lastTick = tick;
 
@@ -388,7 +481,18 @@ void ControllerHost::answer(quint64 tick, const QVector<double>& y) {
     ControllerOutput output;
     QElapsedTimer timer;
     timer.start();
-    const bool computed = m_adapter->compute(input, &output);
+    bool computed = true;
+    for (const std::unique_ptr<SignalFilter>& filter : m_filters) {
+        QVector<double> out;
+        if (!filter->step(tick, m_sampleTime, input.y, &out)) {
+            computed = false;
+            break;
+        }
+        input.y = out;
+    }
+    m_lastMeasurements = y;
+    m_lastSignals = input.y;
+    computed = computed && m_adapter->compute(input, &output);
     const double solveMs = timer.nsecsElapsed() * 1e-6;
     // No answer (no preview of this tick yet, at the start): an empty plan
     // still answers the tick, so the plant holds its input and goes on instead
@@ -417,6 +521,10 @@ void ControllerHost::answer(quint64 tick, const QVector<double>& y) {
     }
     std::size_t written = 0;
     if (writer.finish(&written) == btp::MessageError::Ok) {
+        perf::planSentNs = perf::nowNs();
+        if (perf::stateSentNs != 0) {
+            perf::add("plan.stateTransit(plant->ctl)", perf::planSentNs - perf::stateSentNs);
+        }
         m_node->send_stream(m_peerSource, m_peerBoot, m_uAction, 1,
                             reinterpret_cast<const std::uint8_t*>(m_scratch.constData()),
                             written);
@@ -444,6 +552,13 @@ void ControllerHost::answer(quint64 tick, const QVector<double>& y) {
         for (int i = 0; i < diagCount; ++i) {
             w.put_f64(i < output.diag.size() ? output.diag[i] : qQNaN());
         }
+        for (const std::unique_ptr<SignalFilter>& filter : m_filters) {
+            const QVector<double> values = filter->diag();
+            const int count = filter->diagNames().size();
+            for (int i = 0; i < count; ++i) {
+                w.put_f64(i < values.size() ? values[i] : qQNaN());
+            }
+        }
     };
     m_viewer->publishDue(kDiagTopic, diag, m_lastTimestampUs);
     emit stepped(tick, solveMs);
@@ -452,8 +567,8 @@ void ControllerHost::answer(quint64 tick, const QVector<double>& y) {
 void ControllerHost::buildDiagCatalog() {
     m_diagCatalog.clear();
     m_diagCatalog.set_config_revision_auto();
-    const QStringList names = m_adapter ? m_adapter->diagNames() : QStringList();
-    const QStringList units = m_adapter ? m_adapter->diagUnits() : QStringList();
+    const QStringList names = diagNames();
+    const QStringList units = diagUnits();
     QVector<QByteArray> nameBytes;
     QVector<QByteArray> unitBytes;
     for (int i = 0; i < names.size(); ++i) {
@@ -480,17 +595,29 @@ void ControllerHost::buildDiagCatalog() {
 void ControllerHost::sendInfo() {
     // ctl.diag's schema follows the adapter's diagnostics: rebuilt while no
     // viewer holds it (a viewer re-reads the manifest on its next session).
-    if (m_adapter && !m_viewer->sessionActive()) {
+    if (m_adapter) {
         const btp::CatalogTopic* diag = m_diagCatalog.topic(kDiagTopic);
-        if (diag != nullptr && int(diag->field_count) != 6 + m_adapter->diagNames().size()) {
-            buildDiagCatalog();
+        QStringList published;
+        for (std::size_t f = 6; diag != nullptr && f < diag->field_count; ++f) {
+            published.append(QString::fromUtf8(m_diagCatalog.field_name(*diag, f)));
+        }
+        if (published != diagNames()) {
+            if (!m_viewer->sessionActive()) {
+                buildDiagCatalog();
+            } else {
+                emit diagSchemaChanged();
+            }
         }
     }
     if (!m_adapter) {
         return;
     }
+    QString info = m_adapter->name();
+    for (const std::unique_ptr<SignalFilter>& filter : m_filters) {
+        info += QStringLiteral(" + ") + filter->name();
+    }
     m_lastTimestampUs = qMax(nowMs() * 1000ULL, m_lastTimestampUs + 1);
-    m_viewer->sendText(kInfoTopic, m_adapter->name().toUtf8(), m_lastTimestampUs);
+    m_viewer->sendText(kInfoTopic, info.toUtf8(), m_lastTimestampUs);
 }
 
 }  // namespace tracelab

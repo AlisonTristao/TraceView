@@ -77,6 +77,12 @@ public:
     // loop), which is not a user edit. No-op if id is unknown or the flag is
     // already what's stored.
     void setDeviceConnected(const QString& id, bool connected);
+    // Stores an in-process device's own configuration (Device::moduleConfig)
+    // as it runs: persisted with the project, but neither undoable nor
+    // announced through deviceUpdated() -- the device reported it, nothing
+    // about reaching it changed, so its connection must not be rebuilt.
+    // False if id is unknown.
+    bool setDeviceModuleConfig(const QString& id, const QJsonObject& config);
     // Mirrors a live DeviceConnection's Backend::deviceIdentified into
     // device.btpVersion/btpId, same non-undoable treatment as
     // setDeviceConnected() above and for the same reason: this is the

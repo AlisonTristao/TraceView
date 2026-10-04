@@ -1,3 +1,4 @@
+#include "dashboard/perfprobe.h"
 #include "protocol/btpbackend.h"
 
 #include <QDateTime>
@@ -829,6 +830,7 @@ void BtpBackend::onConsoleLineDetected() {
 // ---------------------------------------------------------------------------
 
 void BtpBackend::feedBytes(const QByteArray& data) {
+    PERF_SCOPE("btp.feed");
     m_btpSession->feedBytes(data);
     // BtpHandshake needs the same raw bytes BtpSession sees (it only looks
     // for the plain-text CONSOLE line, see protocol/btphandshake.h);

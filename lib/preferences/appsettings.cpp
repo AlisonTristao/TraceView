@@ -52,7 +52,12 @@ int AppSettings::customRenderFps() const {
 }
 
 QString AppSettings::chartStyleId() const {
-    return QSettings().value(kChartStyleKey, QStringLiteral("dashboard")).toString();
+    // Asked by every chart on every render: read once, then kept in step by
+    // setChartStyleId(), the only writer of the key.
+    if (m_chartStyleId.isNull()) {
+        m_chartStyleId = QSettings().value(kChartStyleKey, QStringLiteral("dashboard")).toString();
+    }
+    return m_chartStyleId;
 }
 
 void AppSettings::setChartStyleId(const QString& id) {
@@ -60,6 +65,7 @@ void AppSettings::setChartStyleId(const QString& id) {
         return;
     }
     QSettings().setValue(kChartStyleKey, id);
+    m_chartStyleId = id;
     emit chartStyleChanged();
 }
 

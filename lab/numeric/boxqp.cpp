@@ -4,7 +4,7 @@
 #include <cmath>
 #include <vector>
 
-namespace tracelab::lf {
+namespace tracelab::numeric {
 
 namespace {
 
@@ -155,4 +155,4 @@ Eigen::VectorXd solveBoxQpProjected(const Eigen::MatrixXd& h, const Eigen::Vecto
     return x;
 }
 
-}  // namespace tracelab::lf
+}  // namespace tracelab::numeric

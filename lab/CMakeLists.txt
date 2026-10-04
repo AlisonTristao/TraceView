@@ -75,6 +75,23 @@ if(NOT TARGET Eigen3::Eigen)
     add_library(Eigen3::Eigen ALIAS tracelab_eigen)
 endif()
 
+# tracelab_numeric: generic numerics shared by the benchmarks' controllers
+# and the code blocks' library (tracelab.h's tl_qp_box()...): the
+# box-constrained QP. Plain C++17 and Eigen, no Qt. Optimized in Debug too:
+# the MPCs run it every tick.
+add_library(tracelab_numeric STATIC
+    numeric/boxqp.cpp
+    numeric/boxqp.h
+)
+set_target_properties(tracelab_numeric PROPERTIES AUTOMOC OFF AUTOUIC OFF AUTORCC OFF)
+target_include_directories(tracelab_numeric PUBLIC ${CMAKE_SOURCE_DIR})
+target_compile_features(tracelab_numeric PUBLIC cxx_std_17)
+target_link_libraries(tracelab_numeric PUBLIC Eigen3::Eigen)
+if(NOT MSVC)
+    target_compile_options(tracelab_numeric PRIVATE $<$<CONFIG:Debug>:-O2>)
+endif()
+target_compile_definitions(tracelab_numeric PRIVATE $<$<CONFIG:Debug>:EIGEN_NO_DEBUG>)
+
 # tracelab_sensors: generic sensor emulation -- reproducible noise streams,
 # per-channel imperfections, linear (H x + D u) and nonlinear h(x, u, env)
 # observation blocks. Simulation side only, never exported to firmware.
@@ -98,10 +115,16 @@ target_link_libraries(tracelab_sensors PUBLIC Eigen3::Eigen)
 add_library(tracelab_plant STATIC
     plant/btpproducerport.cpp
     plant/btpproducerport.h
+    plant/codeplant.cpp
+    plant/codeplant.h
+    plant/codeplantdevice.cpp
+    plant/codeplantdevice.h
     plant/endpointtransport.cpp
     plant/endpointtransport.h
+    plant/labplantdevice.h
     plant/loopbacktransport.cpp
     plant/loopbacktransport.h
+    plant/plantenvironment.h
     plant/plantmanifest.cpp
     plant/plantmanifest.h
     plant/simulatedplant.cpp
@@ -118,17 +141,30 @@ target_link_libraries(tracelab_plant
         # BtpProducerPort is a btp::NodeConfig serving a btp::Catalog.
         btp::node
         btp::catalog
+        # The plant written in C (codeplant.h, codeplantdevice.h).
+        tracelab_code
 )
+
+# tracelab_code: plant, filter and controller blocks written in C, compiled in
+# memory by libtcc (lab/code/CMakeLists.txt, lab/README.md "Code blocks").
+add_subdirectory(code)
 
 # tracelab_control: the controller host and the ways to program a controller.
 add_library(tracelab_control STATIC
+    control/codecontrolleradapter.cpp
+    control/codecontrolleradapter.h
+    control/codesignalfilter.cpp
+    control/codesignalfilter.h
     control/controlleradapter.h
     control/controllerhost.cpp
     control/controllerhost.h
     control/dllcontrolleradapter.cpp
     control/dllcontrolleradapter.h
+    control/labdevices.cpp
+    control/labdevices.h
     control/scriptcontrolleradapter.cpp
     control/scriptcontrolleradapter.h
+    control/signalfilter.h
 )
 target_include_directories(tracelab_control PUBLIC ${CMAKE_SOURCE_DIR})
 target_link_libraries(tracelab_control
@@ -141,6 +177,9 @@ target_link_libraries(tracelab_control
         # TraceView.
         btp::node
         tracelab_plant
+        # The controller and filters written in C (codecontrolleradapter.h,
+        # codesignalfilter.h).
+        tracelab_code
 )
 
 # tracelab_scenes: the SceneRenderer contract, the scene registry, the Scene
@@ -166,14 +205,30 @@ target_link_libraries(tracelab_scenes
     PRIVATE
         # The dashboard render rate (AppSettings::repaintIntervalMs()).
         traceview_preferences
+        # DoubleSpinBox (theme/doublespinbox.h), the scene parameters' fields.
+        traceview_theme
 )
 
 # tracelab_module: LabModule, what src/main.cpp registers.
 add_library(tracelab_module STATIC
+    module/blockpage.cpp
+    module/blockpage.h
+    module/codeeditor.cpp
+    module/codeeditor.h
+    module/codewindow.cpp
+    module/codewindow.h
+    module/externaleditor.cpp
+    module/externaleditor.h
+    module/labcard.cpp
+    module/labcard.h
     module/labmodule.cpp
     module/labmodule.h
     module/labpanel.cpp
     module/labpanel.h
+    module/labui.cpp
+    module/labui.h
+    module/plantpage.cpp
+    module/plantpage.h
 )
 target_include_directories(tracelab_module PUBLIC ${CMAKE_SOURCE_DIR})
 target_link_libraries(tracelab_module
@@ -183,6 +238,12 @@ target_link_libraries(tracelab_module
         Qt6::Widgets
         tracelab_scenes
         traceview_dashboard
+        # LabControllerDevice and the code blocks the tab edits.
+        tracelab_control
+        tracelab_code
+        # DoubleSpinBox (theme/doublespinbox.h), the theme's colors, frame
+        # style and tinted icons for the tab's cards and ribbon buttons.
+        traceview_theme
 )
 
 # Filters: the portable C filter runtime and its host-side IIR design
@@ -199,4 +260,19 @@ qt_add_resources(tracelab_module tracelab_presets
     PREFIX "/tracelab"
     BASE benchmarks/linefollower
     FILES benchmarks/linefollower/linefollower.tvproj
+)
+# The TraceLab tab's ribbon glyphs, same 16px grid as resources/icons/ribbon.
+qt_add_resources(tracelab_module tracelab_icons
+    PREFIX "/tracelab/icons"
+    BASE module/icons
+    FILES
+        module/icons/code.svg
+        module/icons/controller.svg
+        module/icons/filter.svg
+        module/icons/pause.svg
+        module/icons/plant.svg
+        module/icons/play.svg
+        module/icons/reset.svg
+        module/icons/scene.svg
+        module/icons/step.svg
 )

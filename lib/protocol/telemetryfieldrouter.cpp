@@ -1,3 +1,4 @@
+#include "dashboard/perfprobe.h"
 #include "protocol/telemetryfieldrouter.h"
 
 #include <QStringDecoder>
@@ -22,6 +23,7 @@ TelemetryFieldRouter::TelemetryFieldRouter(TelemetryCatalog* catalog, QObject* p
     : QObject(parent), m_catalog(catalog) {}
 
 void TelemetryFieldRouter::onTelemetrySample(const TelemetrySample& sample) {
+    PERF_SCOPE("router.sample");
     const TelemetryTopicSchema* schema =
         m_catalog ? m_catalog->lookup(sample.sourceId, sample.topicId, sample.schemaVersion)
                   : nullptr;

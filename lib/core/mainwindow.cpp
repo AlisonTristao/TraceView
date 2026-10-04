@@ -828,8 +828,20 @@ void MainWindow::addRibbonTab(const QString& label, const QList<QAction*>& actio
     pageLayout->setContentsMargins(kRibbonPageMarginH, kRibbonPageMarginV, kRibbonPageMarginH,
                                    kRibbonPageMarginV);
     pageLayout->setSpacing(kRibbonGroupSpacing);
-    if (!actions.isEmpty()) {
-        pageLayout->addWidget(Ribbon::createButtonGroup(page, actions));
+    // A separator action ends one button group and starts the next.
+    QList<QAction*> group;
+    for (QAction* action : actions) {
+        if (!action->isSeparator()) {
+            group.append(action);
+            continue;
+        }
+        if (!group.isEmpty()) {
+            pageLayout->addWidget(Ribbon::createButtonGroup(page, group));
+        }
+        group.clear();
+    }
+    if (!group.isEmpty()) {
+        pageLayout->addWidget(Ribbon::createButtonGroup(page, group));
     }
     pageLayout->addStretch();
 
@@ -886,6 +898,19 @@ QString MainWindow::addModuleDevice(const QString& typeId, const QString& name,
     device.moduleType = typeId;
     device.moduleConfig = config;
     return m_devicesGrid->addDevice(device);
+}
+
+bool MainWindow::updateModuleDeviceConfig(const QString& deviceId, const QJsonObject& config) {
+    return m_devicesGrid->setDeviceModuleConfig(deviceId, config);
+}
+
+bool MainWindow::removeModuleDevice(const QString& deviceId) {
+    const QVector<Device> devices = m_devicesGrid->devices();
+    if (findDevice(devices, deviceId) == nullptr) {
+        return false;
+    }
+    m_devicesGrid->removeDevice(deviceId);
+    return true;
 }
 
 bool MainWindow::addDashboardWidget(const QString& typeId, const QJsonObject& config) {

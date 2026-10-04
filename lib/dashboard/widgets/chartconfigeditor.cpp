@@ -4,7 +4,6 @@
 #include <QColor>
 #include <QColorDialog>
 #include <QComboBox>
-#include <QDoubleSpinBox>
 #include <QFontMetrics>
 #include <QFormLayout>
 #include <QFrame>
@@ -20,6 +19,7 @@
 #include <QVBoxLayout>
 #include <QtMath>
 
+#include "theme/doublespinbox.h"
 #include "traceview/thememanager.h"
 
 namespace traceview {
@@ -209,7 +209,7 @@ ChartConfigEditor::ChartConfigEditor(QWidget* parent) : WidgetConfigEditor(paren
     m_xAxisModeCombo->addItem(tr("Time"), "time");
 
     m_sampleTimeLabel = smallLabel(tr("Ts"), this);
-    m_sampleTimeSpin = new QDoubleSpinBox(this);
+    m_sampleTimeSpin = new DoubleSpinBox(this);
     m_sampleTimeSpin->setRange(0.001, 100'000.0);
     m_sampleTimeSpin->setDecimals(2);
     m_sampleTimeSpin->setValue(100.0);
@@ -237,14 +237,14 @@ ChartConfigEditor::ChartConfigEditor(QWidget* parent) : WidgetConfigEditor(paren
     m_yAxisModeCombo->addItem(tr("Auto"), "auto");
     m_yAxisModeCombo->addItem(tr("Fixed"), "fixed");
 
-    m_yMinSpin = new QDoubleSpinBox(this);
+    m_yMinSpin = new DoubleSpinBox(this);
     m_yMinSpin->setRange(-100'000.0, 100'000.0);
     m_yMinSpin->setDecimals(2);
     m_yMinSpin->setValue(0.0);
     m_yMinSpin->setFixedWidth(spinBoxWidthFor(m_yMinSpin->font(), "-100000.00"));
     m_yMinSpin->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
 
-    m_yMaxSpin = new QDoubleSpinBox(this);
+    m_yMaxSpin = new DoubleSpinBox(this);
     m_yMaxSpin->setRange(-100'000.0, 100'000.0);
     m_yMaxSpin->setDecimals(2);
     m_yMaxSpin->setValue(100.0);

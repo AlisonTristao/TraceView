@@ -1,7 +1,9 @@
+#include "dashboard/perfprobe.h"
 #include "chartwidgets.h"
 
 #include <QPainterPath>
 #include <QThreadPool>
+#include <QVarLengthArray>
 #include <QPointer>
 #include <QCoreApplication>
 #include <QFont>
@@ -75,6 +77,26 @@ qreal zeroBaselineY(const QRect& plotRect, double yMin, double yMax) {
     const double yRange = (yMax - yMin) != 0.0 ? (yMax - yMin) : 1.0;
     const qreal zeroT = qBound(0.0, (0.0 - yMin) / yRange, 1.0);
     return plotRect.bottom() - plotRect.height() * zeroT;
+}
+
+// drawPolyline(), as one segment per pair of points. With the pen's square
+// (default) or flat cap the raster engine draws each segment straight to
+// spans; an antialiased polyline wider than a pixel goes through the general
+// path stroker instead, 7x (smooth) to 40x (noisy series) slower. Same width,
+// antialiasing and dash pattern (it runs on from segment to segment); only
+// the joints differ by a few edge pixels (each segment's square cap instead
+// of the polyline's bevel).
+void drawPolylineAsLines(QPainter& painter, const QPolygonF& points) {
+    if (points.size() < 2) {
+        painter.drawPolyline(points);
+        return;
+    }
+    QVarLengthArray<QLineF, 1024> lines;
+    lines.reserve(points.size() - 1);
+    for (qsizetype i = 1; i < points.size(); ++i) {
+        lines.append(QLineF(points[i - 1], points[i]));
+    }
+    painter.drawLines(lines.constData(), int(lines.size()));
 }
 
 // Renders one series' buffered values into plotRect, either as the discrete
@@ -218,7 +240,7 @@ void paintLineSeries(QPainter& painter, const QRect& plotRect, int capacity,
         painter.restore();
         return;
     }
-    painter.drawPolyline(points);
+    drawPolylineAsLines(painter, points);
 }
 
 // Interpolates a line series' value (and its plot-space Y) at pixel column
@@ -1072,6 +1094,7 @@ void ChartWidgetBase::appendFieldSample(quint16 fieldId, quint64 timestampUs, do
 
 void ChartWidgetBase::onFieldSample(const traceview::TelemetryFieldBinding& binding,
                                     quint64 timestampUs, double value) {
+    PERF_SCOPE("chart.fieldSample");
     if (binding.sourceId != m_config.sourceId || binding.topicId != m_config.topicId) {
         return;
     }
@@ -1240,7 +1263,13 @@ void ChartWidgetBase::paintLegends(QPainter& painter, const ChartCartesianLayout
 
 // --- DummyLineChartWidget ------------------------------------------------
 
-DummyLineChartWidget::DummyLineChartWidget(QWidget* parent) : ChartWidgetBase(parent) {}
+DummyLineChartWidget::DummyLineChartWidget(QWidget* parent) : ChartWidgetBase(parent) {
+    // Every paint covers the whole widget with the theme background first
+    // (the same color the styled background under it had), so Qt paints
+    // nothing under it: no window, cell or styled background per frame. The
+    // rounded mask DashboardCell sets still leaves the corners to the cell.
+    setAttribute(Qt::WA_OpaquePaintEvent);
+}
 
 DummyLineChartWidget::~DummyLineChartWidget() {
     // Waits for a render in flight; a queued one then finds `alive` false.
@@ -1478,7 +1507,9 @@ void DummyLineChartWidget::paintFrame(QPainter& painter, const QRect& area,
     const ChartStyle& style = chartStyle(styleId);
     const ChartColors colors = chartColors(style, palette);
 
+    perf::Scope* ps = new perf::Scope("line.background");
     paintChartBackground(painter, fill, outline, drawOutline, palette);
+    delete ps; ps = new perf::Scope("line.values+layout");
 
     const QVector<QVector<double>> values = seriesValues();
     const SeriesAxes axes = seriesAxes(values);
@@ -1506,6 +1537,7 @@ void DummyLineChartWidget::paintFrame(QPainter& painter, const QRect& area,
         }
     }
 
+    delete ps; ps = new perf::Scope("line.axes");
     paintCartesianAxes(painter, layout, chrome, style, colors,
                        chartTimeAxisTitle(m_config.xAxisMode));
 
@@ -1519,6 +1551,7 @@ void DummyLineChartWidget::paintFrame(QPainter& painter, const QRect& area,
 
     // Clipped to the plot: a Fixed range narrower than the data, or a line
     // wider than 1px at the edge, must not spill over the axis labels.
+    delete ps; ps = new perf::Scope("line.series");
     painter.save();
     painter.setClipRect(plotRect.adjusted(-1, -1, 1, 1));
     for (int i = 0; i < m_config.series.size() && i < values.size(); ++i) {
@@ -1534,6 +1567,7 @@ void DummyLineChartWidget::paintFrame(QPainter& painter, const QRect& area,
     }
     painter.restore();
 
+    delete ps; ps = new perf::Scope("line.legend+rest");
     if (m_view.rangeMarkers) {
         paintChartRangeMarkers(painter, m_plotRect, markerX(0), markerX(1), palette);
     }
@@ -1558,17 +1592,20 @@ void DummyLineChartWidget::paintFrame(QPainter& painter, const QRect& area,
                             yMins, yMaxs, m_view.interpolation, m_config.decimals,
                             m_seriesHidden, palette);
     }
+    delete ps;
 }
 
 
 void DummyLineChartWidget::paintEvent(QPaintEvent*) {
     notePaintFrame();
+    PERF_SCOPE("chart.paint");
     QPainter painter(this);
     const qreal dpr = devicePixelRatioF();
     const bool fresh = !m_image.isNull() && m_image.size() == (QSizeF(size()) * dpr).toSize();
     if (!isVisible() || !fresh) {
         // grab() of a hidden widget, the first frame and right after a
         // resize: paint here, at once.
+        painter.fillRect(rect(), ThemeManager::instance().currentTheme().background);
         painter.setRenderHint(QPainter::Antialiasing);
         const QRect area = rect();
         const QMutexLocker<QRecursiveMutex> lock(&m_sync->mutex);
@@ -1613,10 +1650,15 @@ void DummyLineChartWidget::startRender() {
     const std::shared_ptr<RenderSync> sync = m_sync;
     DummyLineChartWidget* chart = this;
     QPointer<DummyLineChartWidget> self(this);
+    const qint64 perfStart = perf::nowNs();
     QThreadPool::globalInstance()->start([=] {
-        QImage image(pixels, QImage::Format_ARGB32_Premultiplied);
+        perf::add("chart.queue(start->worker)", perf::nowNs() - perfStart);
+        PERF_SCOPE("chart.render(worker)");
+        // Opaque (see the constructor): the corners carry the background,
+        // and the widget blits the frame as a plain copy.
+        QImage image(pixels, QImage::Format_RGB32);
         image.setDevicePixelRatio(dpr);
-        image.fill(Qt::transparent);
+        image.fill(palette.background);
         {
             const QMutexLocker<QRecursiveMutex> lock(&sync->mutex);
             if (!sync->alive) {
@@ -1648,6 +1690,7 @@ void DummyLineChartWidget::scheduleRepaint() {
 }
 
 void DummyLineChartWidget::renderFinished(const QImage& image) {
+    perf::count("chart.frame");
     m_rendering = false;
     m_image = image;
     m_blitOnly = true;

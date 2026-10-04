@@ -2,13 +2,13 @@
 
 #include <QComboBox>
 #include <QCheckBox>
-#include <QDoubleSpinBox>
 #include <QFormLayout>
 #include <QLabel>
 #include <QPushButton>
 #include <QVBoxLayout>
 
 #include "lab/scenes/sceneregistry.h"
+#include "theme/doublespinbox.h"
 
 namespace tracelab {
 
@@ -17,6 +17,7 @@ namespace {
 using traceview::CatalogTopicField;
 using traceview::CatalogTopicInfo;
 using traceview::DeviceOption;
+using traceview::DoubleSpinBox;
 
 bool isTextTopic(const CatalogTopicInfo& topic) {
     return topic.encoding.compare(QLatin1String("UTF8"), Qt::CaseInsensitive) == 0;
@@ -278,7 +279,7 @@ void SceneConfigEditor::rebuildRows() {
             m_paramsLayout->addRow(param.label, check);
             continue;
         }
-        auto* spin = new QDoubleSpinBox(this);
+        auto* spin = new DoubleSpinBox(this);
         spin->setRange(param.minimum, param.maximum);
         spin->setDecimals(param.decimals);
         if (!param.unit.isEmpty()) {

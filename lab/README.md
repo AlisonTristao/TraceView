@@ -13,9 +13,11 @@ The plant and the controller are BTP endpoints that speak the `loop` profile,
 even inside one process (a loopback transport), so either one can be swapped
 for the real robot or the firmware without the other noticing.
 
-The generic engine (`sim/`, `.tlmodel`) is still a skeleton; the
-line-follower benchmark already runs inside TraceView as two devices (see
-"Running the line follower in TraceView").
+The plant, the filters and the controller are **blocks of C code** you see,
+edit and save in the TraceLab tab, compiled in memory when saved (see "Code
+blocks"). The line-follower benchmark runs that way: its car, its qLPV MPC,
+GPC and PD are templates you start from. The `.tlmodel` engine of the first
+plan (`sim/`) is still a skeleton.
 
 ## Building against a local BTP
 
@@ -42,22 +44,33 @@ With the lab ON and an older BTP, configure stops and says so. With
    Line follower**. Each benchmark is a project of its own,
    `benchmarks/linefollower/linefollower.tvproj` (built in as a resource;
    saving asks for a file):
-   the devices "TraceLab: Line follower" and "TraceLab: Controller" and the
-   workspace "Line follower" (the Scene plus charts of heading reference vs
-   prediction, lateral error, solve time, wheel speeds true vs measured and
-   the filtered speeds the controller uses). The plant starts on its own.
-3. The **TraceLab** tab holds the tools to build a lab in any project --
-   **Add plant**, **Add controller** (bound to the plant) and **Add scene**
-   (a Scene bound by name to both) -- and to drive it: Play / Pause / Reset
-   / Step, the speed (1x, 2x, as fast as possible,
-   lockstep), track seed and type, sensor noise and the controller (qLPV MPC
-   with its rho scheduling, GPC or the PD on the line sensors, wheel-speed
-   filter, main weights). With
-   the Scene focused, P / O / R change the perturbation (`sim.disturb`).
+   the devices "TraceLab: Plant" (the template `linefollower/car` on the
+   track environment) and "TraceLab: Controller" (the template
+   `linefollower/qlpv_mpc`) and the workspace "Line follower" (the Scene plus
+   charts of heading reference vs prediction, lateral error, solve time and
+   the wheel speeds the controller uses). The plant starts on its own.
+3. The **TraceLab** tab shows the loop as a chain of cards -- plant >
+   filters > controller -- with **+ Filter** / **+ Controller** where a block
+   can go. Pick a card: its page has a header (what the block is, how it
+   runs, **Open the code** on the right) and columns -- for the plant its
+   clock (1x, 2x, as fast as possible, lockstep, the sample rate) and
+   settings first; for every block in C where its code comes from with the
+   compiler's messages and log, its parameters (live) and the signals it can
+   read. The code itself opens in VS Code or in a window of its own. Play /
+   Pause / Reset / Step are on the ribbon. The
+   ribbon has **Add plant**, **Add controller** and **Add scene** (a Scene
+   bound by name to both). With the Scene focused, P / O / R change the
+   perturbation (`sim.disturb`).
 
-Both devices can also be added by hand (Devices tab, **Add Device**).
+The devices can also be added by hand (Devices tab, **Add Device**). The C++
+plant and controller ("TraceLab: Line follower", "TraceLab: Line-follower
+controller (C++)") are still registered for older projects and as the
+reference the templates are tested against; the tab shows a C++ controller
+as a legacy card it can remove.
 
-How it is wired (`benchmarks/linefollower/device/`, `tracelab_lf_devices`):
+How the C++ devices are wired (`benchmarks/linefollower/device/`,
+`tracelab_lf_devices`) -- `CodePlantDevice` and `LabControllerDevice` (see
+"Code blocks") behave the same on the wire:
 
 - `LinePlantDevice` runs `LineFollowerPlant` on a fixed-step clock (80 Hz
   default; real time with a scale, as fast as possible, or lockstep: tick
@@ -87,6 +100,80 @@ The standalone `tracelab-linefollower` harness below is unchanged;
 `tests/test_lfdevices.cpp` checks that the loop through BTP in lockstep
 gives the same steps as that harness.
 
+## Code blocks
+
+A block is one C file (C99 as the Tiny C Compiler takes it) that includes
+[`tracelab.h`](code/include/tracelab.h). It **declares** what it reads,
+writes and lets you tune with `TL_*` macros -- each one a plain C variable
+TraceLab fills before calling the block and reads after -- and defines the
+functions of its kind:
+
+| Block | Declares | Defines |
+|---|---|---|
+| plant | `TL_INPUT`, `TL_STATE`, `TL_OUTPUT[_ARRAY]`, `TL_DISCRETE` | `plant_deriv()` writing `der(x)` (integrated by Euler/RK4 with substeps) or, with `TL_DISCRETE`, `plant_update()` writing `next(x)`; `plant_output()`; `plant_reset()` |
+| filter | `TL_IN[_ARRAY]`, `TL_OUT[_ARRAY]`, `TL_INOUT[_ARRAY]` | `filt_step()`, `filt_reset()` |
+| controller | `TL_IN[_ARRAY]`, `TL_OUT`, `TL_OUT_PLAN(u, M)`, `TL_PREVIEW(x, y, N)` | `ctl_step()`, `ctl_reset()` |
+
+All take `TL_PARAM` / `TL_PARAM_INT` / `TL_PARAM_ENUM` / `TL_PARAM_BOOL` (shown
+next to the code, changed live, kept in the project) and `TL_DIAG` (published
+every tick: `ctl.diag` for filters and controllers, `sim.states` for a
+plant). Signals are bound **by name**: a controller's `TL_IN(w_l)` reads the
+plant's `TL_OUTPUT(w_l)` -- or what a filter's `TL_INOUT(w_l)` made of it --
+and its `TL_OUT(u_l)` drives the plant's `TL_INPUT(u_l)`; a misnamed signal
+leaves the loop open with the block's card saying what exists. The library
+is the libc subset in `tracelab.h` (math, string, malloc, `printf` to the
+block's log) plus `tl_ts()`, `tl_tick()`, `tl_noise()`, `tl_disturb()`,
+`tl_predicted()` and dense algebra compiled with optimization (`tl_mat_mul`,
+`tl_mat_solve`, `tl_qp_box` -- the box QP of `numeric/boxqp.h`).
+
+How it runs (`code/`, `tracelab_code`):
+
+- libtcc (LGPL, built as `tracelab_tcc`, a shared library next to the
+  executable) compiles a block in memory in a few milliseconds. Its
+  declarations come back from their `tl__decl_*` symbols, in source order.
+- `CodeModule::call()` runs a function inside a fault guard: an invalid
+  memory access or a division by zero in the block stops it with its line
+  ("crash.c:6: invalid memory access") instead of ending TraceView; Reset
+  starts it again. tcc's fault handler is patched at configure time
+  (`code/CMakeLists.txt`) so faults anywhere else stay the process's own.
+- Blocks are files: a template a benchmark ships (read-only) or yours, in
+  `Documents/TraceLab/{plants,filters,controllers}`. Saving a template makes
+  a copy whose first line is `// tracelab: template <id>` -- what **Back to
+  the original** restores. A saved file is compiled again at once (also when
+  saved by another editor); a version that does not compile leaves the
+  previous one running.
+- **Open the code** (the page's one button): **In VS Code**, **In a window
+  of its own** (`CodeWindow`: the editor, Save, the messages -- one window a
+  block, on another monitor if you like), in another program, or the
+  folder. Outside TraceView a template is saved as a copy first, and a save
+  there compiles it here (at the code window's cursor line when one is
+  open). It also writes, in
+  `Documents/TraceLab`, `compile_flags.txt` (clangd) and
+  `.vscode/c_cpp_properties.json` (VS Code's C/C++ extension; VS Code is
+  opened with that folder) pointing at the runtime folder, so the editor
+  knows `tracelab.h` and the `TL_*` macros; a file of these without
+  TraceLab's marker is the user's and stays.
+- `LabControllerDevice` (`control/labdevices.h`, type `tracelab.controller`)
+  is a `ControllerHost` with the filters (`SignalFilter`,
+  `control/signalfilter.h`) and the controller (`CodeControllerAdapter`) in
+  C. `CodePlantDevice` (`plant/codeplantdevice.h`, type `tracelab.plant`)
+  runs a `CodePlant` on the line follower plant's clock and builds its
+  manifest from the code's declarations.
+- A plant may live in an **environment** (`plant/plantenvironment.h`):
+  native code for its world. The line follower's `linefollower.track`
+  (`benchmarks/linefollower/device/trackenvironment.h`) generates the track,
+  places the car (states `x`, `y`, `theta`), follows its progress and sends
+  the preview and the track's drawing; the car's code queries it through
+  `tracelab_track.h` (`tl_track_distance()`, `tl_track_line_half_width()`).
+
+The line follower's templates (`benchmarks/linefollower/code/`) are the C++
+benchmark ported: `tests/test_codecontroller.cpp` and `test_codeplant.cpp`
+run each one and its C++ original through BTP in lockstep and find **the
+same numbers, sample for sample**: the PD, the GPC, the qLPV MPC (taylor and
+iterative scheduling) and the car with its sensors (noise off). The qLPV MPC
+in C takes about 1 ms a tick (the C++ one 0.3 ms); 12.5 ms are available at
+80 Hz.
+
 ## Layout
 
 ```
@@ -102,13 +189,29 @@ lab/
     solver.cpp            stub: createSolver()       -> Euler, RK4, SUNDIALS
     scheduler.cpp         stub: createScheduler()
     environment.cpp       stub: createEnvironment()  -> the .tfg track
+  code/                 tracelab_code (+ tracelab_tcc): blocks of C (see Code blocks)
+    include/tracelab.h      what a block sees
+    codemodule.h/.cpp       CodeModule: compile, declarations, guarded calls, params
+    codehostapi.h/.cpp      the tl_* functions and the libc subset
+    coderuntime.h/.cpp      the folder every compile reads (headers, runtime objects)
+    codefiles.h/.cpp        CodeLibrary: templates, your files, "back to the original"
+    codeblockowner.h/.cpp   CodeBlockOwner: what the tab's block editor works on
+  numeric/              tracelab_numeric  the box QP (shared by the C++ MPC and tl_qp_box)
   plant/                tracelab_plant
+    labplantdevice.h        LabPlantDevice: a plant as the tab and controllers see it
+    codeplant.h/.cpp        CodePlant: a plant in C, ZOH, Euler/RK4
+    codeplantdevice.h/.cpp  CodePlantDevice: it as a BTP device, manifest from the code
+    plantenvironment.h      PlantEnvironment: a plant's native world
     simulatedplant.h/.cpp   SimulatedPlant: run/pause/reset/step, owns the Scheduler
     plantmanifest.h/.cpp    topic/action names, buildPlantCatalog() (empty body)
     loopbacktransport.h/.cpp  in-process traceview::Transport pair (working)
   control/              tracelab_control
     controlleradapter.h     ControllerAdapter: y[] + reference -> u[] horizon + diag
-    controllerhost.h/.cpp   ControllerHost: runs on each loop.state, sends loop.u
+    controllerhost.h/.cpp   ControllerHost: filters + adapter on each loop.state, sends loop.u
+    signalfilter.h          SignalFilter: a stage between loop.state and the controller
+    codecontrolleradapter.h/.cpp  a controller in C
+    codesignalfilter.h/.cpp       a filter in C
+    labdevices.h/.cpp       LabControllerDevice, LabDeviceRegistry, the device types
     dllcontrolleradapter.h/.cpp     stub: loopctl.h DLL (BTP >= 2.50)
     scriptcontrolleradapter.h/.cpp  stub: QJSEngine controller
   sensors/              tracelab_sensors  plain C++17 + Eigen, no Qt (see Sensors)
@@ -125,7 +228,14 @@ lab/
   benchmarks/linefollower/  the line-follower benchmark: plant, controllers, runner app (see Benchmarks)
   filters/              the portable C filter runtime and its IIR design (see Filters)
   module/               tracelab_module
-    labmodule.h/.cpp        LabModule: registers the scene widget and the ribbon tab
+    labmodule.h/.cpp        LabModule: registers the scene widget, device types and the tab
+    labpanel.h/.cpp         the TraceLab tab: the loop's cards, the picked block's page
+    plantpage.h/.cpp        a plant's page: figures, clock, settings, then its code's columns
+    blockpage.h/.cpp        a block's page: header, source, messages, log, parameters, signals
+    codewindow.h/.cpp       a block's code in a window of its own
+    codeeditor.h/.cpp       the editor: line numbers, C highlighting, error marks
+    labui.h/.cpp            the tab's look: sections, page header, primary button
+    externaleditor.h/.cpp   opening a block's file in VS Code or another editor
 ```
 
 `tools/scene_preview` shows the line-follower scene fed by a synthetic track
