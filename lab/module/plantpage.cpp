@@ -11,6 +11,8 @@
 #include <QSpinBox>
 #include <QVBoxLayout>
 
+#include "lab/code/codeblockowner.h"
+#include "lab/module/blockeditor.h"
 #include "lab/plant/labplantdevice.h"
 #include "theme/doublespinbox.h"
 
@@ -118,7 +120,11 @@ PlantPage::PlantPage(QWidget* parent) : QWidget(parent) {
     columns->addWidget(settingsColumn);
     columns->addStretch();
     layout->addLayout(columns);
-    layout->addStretch();
+    // A plant written in C: its code, right under the clock and settings.
+    m_code = new BlockEditor(this);
+    layout->addWidget(m_code, 1);
+    m_stretch = new QWidget(this);
+    layout->addWidget(m_stretch, 1);
 
     connect(m_speedCombo, qOverload<int>(&QComboBox::currentIndexChanged), this,
             &PlantPage::applySpeed);
@@ -165,6 +171,12 @@ void PlantPage::setPlant(LabPlantDevice* plant) {
         });
     }
     m_title->setText(plant ? plant->typeName() : tr("No plant"));
+    CodeBlockOwner* blocks = plant ? plant->codeBlocks() : nullptr;
+    if (m_code->device() != blocks) {
+        m_code->setBlock(blocks, 0);
+    }
+    m_code->setVisible(blocks != nullptr);
+    m_stretch->setVisible(blocks == nullptr);
     refreshClock();
     rebuildSettings();
     refreshLive();
@@ -298,6 +310,9 @@ void PlantPage::refreshLive() {
     const QVector<QPair<QString, QString>> items = m_plant->statusItems();
     while (m_statValues.size() < 2 + items.size()) {
         addStat(QString());
+    }
+    if (m_code->isVisible()) {
+        m_code->refreshLive();
     }
     m_statValues[0]->setText(locale.toString(qlonglong(m_plant->tick())));
     m_statValues[1]->setText(tr("%1 s").arg(locale.toString(m_plant->time(), 'f', 2)));

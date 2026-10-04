@@ -10,6 +10,7 @@
 #include "lab/control/codecontrolleradapter.h"
 #include "lab/control/codesignalfilter.h"
 #include "lab/control/controllerhost.h"
+#include "lab/plant/codeplantdevice.h"
 #include "lab/plant/endpointtransport.h"
 #include "lab/plant/labplantdevice.h"
 #include "lab/plant/loopbacktransport.h"
@@ -23,27 +24,6 @@ constexpr int kFindPlantIntervalMs = 500;
 constexpr int kReloadDelayMs = 150;
 
 }  // namespace
-
-CodeBlockSpec CodeBlockSpec::fromJson(const QJsonObject& json) {
-    CodeBlockSpec spec;
-    spec.path = json.value(QStringLiteral("path")).toString();
-    spec.templateId = json.value(QStringLiteral("template")).toString();
-    spec.params = json.value(QStringLiteral("params")).toObject();
-    return spec;
-}
-
-QJsonObject CodeBlockSpec::toJson() const {
-    QJsonObject json;
-    if (!path.isEmpty()) {
-        json.insert(QStringLiteral("path"), path);
-    } else if (!templateId.isEmpty()) {
-        json.insert(QStringLiteral("template"), templateId);
-    }
-    if (!params.isEmpty()) {
-        json.insert(QStringLiteral("params"), params);
-    }
-    return json;
-}
 
 quint32 labDeviceSourceId(const QString& deviceId, const char* typeId) {
     quint32 hash = 2166136261u;
@@ -59,7 +39,7 @@ quint32 labDeviceSourceId(const QString& deviceId, const char* typeId) {
 
 LabControllerDevice::LabControllerDevice(const QString& deviceId, const QJsonObject& config,
                                          QObject* parent)
-    : QObject(parent), m_deviceId(deviceId) {
+    : CodeBlockOwner(parent), m_deviceId(deviceId) {
     m_host = new ControllerHost(labDeviceSourceId(deviceId, kLabControllerDeviceType), this);
     connect(m_host, &ControllerHost::plantReadyChanged, this, &LabControllerDevice::statusChanged);
     connect(m_host, &ControllerHost::configurationChanged, this,
@@ -404,6 +384,74 @@ QString LabControllerDevice::source(int index) const {
     return block(index).source;
 }
 
+code::BlockKind LabControllerDevice::blockKind(int block) const {
+    return block == kController ? code::BlockKind::Controller : code::BlockKind::Filter;
+}
+
+QString LabControllerDevice::blockRole(int block) const {
+    if (block != kController && (block < 0 || block >= filterCount())) {
+        return QString();  // no such block (any more)
+    }
+    return block == kController
+               ? QCoreApplication::translate("LabControllerDevice", "Controller")
+               : QCoreApplication::translate("LabControllerDevice", "Filter %1 of %2")
+                     .arg(block + 1)
+                     .arg(filterCount());
+}
+
+CodeBlockOwner::Status LabControllerDevice::status(int block) const {
+    Q_UNUSED(block);
+    const auto tr = [](const char* text) {
+        return QCoreApplication::translate("LabControllerDevice", text);
+    };
+    if (!m_plant) {
+        return {2, tr("No plant linked.")};
+    }
+    if (!m_host->plantReady()) {
+        return {2, tr("Waiting for the plant...")};
+    }
+    if (!m_host->configureError().isEmpty()) {
+        return {3, m_host->configureError()};
+    }
+    if (!m_host->configured()) {
+        return {2, tr("No controller.")};
+    }
+    return {1, tr("Loop closed on %1.").arg(m_plant->typeName())};
+}
+
+QString LabControllerDevice::note(int block) const {
+    CodeControllerAdapter* adapter = block == kController ? controller() : nullptr;
+    if (adapter && adapter->usesPreview()) {
+        return QCoreApplication::translate("LabControllerDevice",
+                                           "Uses the plant's preview of the track (TL_PREVIEW): "
+                                           "information a real robot may not have.");
+    }
+    return QString();
+}
+
+QVector<SignalRow> LabControllerDevice::signalRows(int block) const {
+    Q_UNUSED(block);
+    const auto tr = [](const char* text) {
+        return QCoreApplication::translate("LabControllerDevice", text);
+    };
+    QVector<SignalRow> rows;
+    appendSignalRows(&rows, tr("From the plant (loop.state)"), m_host->measurementNames(),
+                     m_host->lastMeasurements(), QStringLiteral("TL_IN(%1);"),
+                     QStringLiteral("TL_IN_ARRAY(%1, %2);"));
+    if (filterCount() > 0) {
+        appendSignalRows(&rows, tr("After the filters (what the controller reads)"),
+                         m_host->signalNames(), m_host->lastSignals(), QStringLiteral("TL_IN(%1);"),
+                         QStringLiteral("TL_IN_ARRAY(%1, %2);"));
+    }
+    appendSignalRows(&rows, tr("Plant inputs (loop.u: the controller writes)"),
+                     m_host->inputNames(), {}, QStringLiteral("TL_OUT(%1);"),
+                     QStringLiteral("TL_OUT_PLAN(%1, %2);"), false);
+    if (rows.isEmpty()) {
+        rows.append({tr("No plant linked yet."), QString(), false});
+    }
+    return rows;
+}
+
 QStringList LabControllerDevice::takeLog(int index) {
     if (index == kController) {
         CodeControllerAdapter* adapter = controller();
@@ -611,6 +659,31 @@ void LabDeviceRegistry::addController(const QString& deviceId, LabControllerDevi
 }
 
 // ---------------------------------------------------------------------------
+
+traceview::ModuleDeviceType labPlantDeviceType() {
+    traceview::ModuleDeviceType type;
+    type.id = QString::fromLatin1(kCodePlantDeviceType);
+    type.displayName = QCoreApplication::translate("LabDevices", "TraceLab: Plant");
+    type.createTransport = [](const QString& deviceId, const QJsonObject& config,
+                              QObject* parent) -> traceview::ModuleTransport* {
+        auto* device = new CodePlantDevice(
+            deviceId, labDeviceSourceId(deviceId, kCodePlantDeviceType), config);
+        const bool autoRun = config.value(QStringLiteral("autoRun")).toBool(true);
+        auto* transport = new EndpointTransport(
+            [device, autoRun](LoopbackTransport* peer, QString*) {
+                device->attachViewer(peer);
+                if (autoRun && !device->running() && device->tick() == 0) {
+                    device->run();
+                }
+                return true;
+            },
+            parent);
+        device->setParent(transport);
+        LabDeviceRegistry::instance().addPlant(deviceId, device);
+        return transport;
+    };
+    return type;
+}
 
 traceview::ModuleDeviceType labControllerDeviceType() {
     traceview::ModuleDeviceType type;

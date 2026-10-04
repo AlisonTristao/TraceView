@@ -133,7 +133,8 @@ void TestLabModule::installRegistersSceneWidgetAndTab() {
     auto* panel = dynamic_cast<tracelab::LabPanel*>(host.m_contents.front().get());
     QVERIFY(panel);
     QVERIFY(panel->ribbonActions().at(3)->isSeparator());
-    QCOMPARE(host.m_deviceTypes, (QStringList{"tracelab.controller", "tracelab.linefollower.plant",
+    QCOMPARE(host.m_deviceTypes, (QStringList{"tracelab.plant", "tracelab.controller",
+                                              "tracelab.linefollower.plant",
                                               "tracelab.linefollower.controller"}));
     // The benchmark is a project (File > Open Example), not a tab button.
     QCOMPARE(host.m_examples,
@@ -148,9 +149,12 @@ void TestLabModule::installRegistersSceneWidgetAndTab() {
     actions[2]->trigger();  // Add scene, no plant
     QVERIFY(host.m_addedDevices.isEmpty());
     QVERIFY(host.m_addedWidgets.isEmpty());
-    actions[0]->trigger();  // Add plant
-    QCOMPARE(host.m_addedDevices, QStringList{"tracelab.linefollower.plant"});
-    QCOMPARE(host.m_addedConfigs.first().value("horizon").toInt(), 10);
+    actions[0]->trigger();  // Add plant: the line follower's car in C, on its track
+    QCOMPARE(host.m_addedDevices, QStringList{"tracelab.plant"});
+    QCOMPARE(host.m_addedConfigs.first().value("plant").toObject().value("template").toString(),
+             QString("linefollower/car"));
+    QCOMPARE(host.m_addedConfigs.first().value("environment").toObject().value("id").toString(),
+             QString("linefollower.track"));
 }
 
 void TestLabModule::modeArgumentPicksTheLab() {

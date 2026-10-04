@@ -31,6 +31,10 @@ void registerLineFollowerTemplates() {
          "controllers/pd.c"},
         {BlockKind::Filter, "linefollower/lowpass", tr("Low-pass (wheel speeds)"),
          tr("First-order low-pass on w_l and w_r, replacing them."), "filters/lowpass.c"},
+        {BlockKind::Plant, "linefollower/car", tr("Line-follower car"),
+         tr("The car of the Python simulator -- motors, kinematics, encoders, gyro and the "
+            "line sensor array -- on the track."),
+         "plants/car.c"},
     };
     for (const auto& t : templates) {
         code::CodeLibrary::instance().registerTemplate(

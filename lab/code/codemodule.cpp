@@ -87,7 +87,8 @@ int CodeModule::onBacktrace(void* opaque, void* pc, const char* file, int line,
     return 0;  // the innermost frame is enough
 }
 
-bool CodeModule::compile(const QString& source, const QString& fileName) {
+bool CodeModule::compile(const QString& source, const QString& fileName,
+                         const QVector<HostSymbol>& extraSymbols) {
     release();
     m_messages.clear();
     m_runtimeError = {};
@@ -126,6 +127,9 @@ bool CodeModule::compile(const QString& source, const QString& fileName) {
               tcc_add_file(state, helpers.constData()) == 0;
     if (ok) {
         addHostSymbols(state);
+        for (const HostSymbol& symbol : extraSymbols) {
+            tcc_add_symbol(state, symbol.name.constData(), symbol.address);
+        }
         ok = tcc_relocate(state) == 0;
     }
     if (!ok) {

@@ -15,6 +15,8 @@ class QSpinBox;
 
 namespace tracelab {
 
+class BlockEditor;
+
 
 // The page of the plant in the TraceLab tab, for any kind of plant
 // (LabPlantDevice): where the run stands (tick, time and the plant's own
@@ -32,6 +34,11 @@ public:
     }
     // The status values (the panel calls it a few times a second).
     void refreshLive();
+    // The editor of the plant's code (hidden for a plant built into
+    // TraceView).
+    BlockEditor* codeEditor() const {
+        return m_code;
+    }
 
 private:
     void rebuildSettings();
@@ -53,6 +60,8 @@ private:
     QFormLayout* m_settingsForm = nullptr;
     QPushButton* m_applyButton = nullptr;
     QVariantMap m_pending;
+    BlockEditor* m_code = nullptr;
+    QWidget* m_stretch = nullptr;
 };
 
 }  // namespace tracelab

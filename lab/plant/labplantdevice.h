@@ -10,6 +10,7 @@
 
 namespace tracelab {
 
+class CodeBlockOwner;
 class LoopbackTransport;
 
 // How a plant's clock runs (plan 4.2).
@@ -88,6 +89,17 @@ public:
 
     // What the project stores for this device (Device::moduleConfig).
     virtual QJsonObject config() const = 0;
+
+    // A plant written in C: its code as blocks the TraceLab tab edits. Null
+    // for a plant built into TraceView.
+    virtual CodeBlockOwner* codeBlocks() const {
+        return nullptr;
+    }
+    // The world it lives in ("Line-follower track"), translated; empty for
+    // none.
+    virtual QString worldName() const {
+        return QString();
+    }
 
 public slots:
     virtual void run() = 0;

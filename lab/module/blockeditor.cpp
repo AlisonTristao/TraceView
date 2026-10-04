@@ -27,11 +27,7 @@
 #include <cmath>
 
 #include "lab/code/codefiles.h"
-#include "lab/control/codecontrolleradapter.h"
-#include "lab/control/controllerhost.h"
-#include "lab/control/labdevices.h"
 #include "lab/module/codeeditor.h"
-#include "lab/plant/labplantdevice.h"
 #include "theme/doublespinbox.h"
 #include "traceview/thememanager.h"
 
@@ -59,38 +55,6 @@ QLabel* sectionTitle(const QString& text, QWidget* parent) {
     return label;
 }
 
-// "s[0]".."s[14]" as "s" with 15 elements; anything else as itself.
-struct SignalGroup {
-    QString name;
-    int first = 0;  // index in the names
-    int count = 1;
-    bool array = false;
-};
-
-QVector<SignalGroup> groupSignals(const QStringList& names) {
-    static const QRegularExpression element(QStringLiteral("^(.*)\\[(\\d+)\\]$"));
-    QVector<SignalGroup> groups;
-    for (int i = 0; i < names.size(); ++i) {
-        const QRegularExpressionMatch m = element.match(names[i]);
-        if (m.hasMatch() && !groups.isEmpty() && groups.last().array &&
-            groups.last().name == m.captured(1) &&
-            m.captured(2).toInt() == groups.last().count) {
-            ++groups.last().count;
-            continue;
-        }
-        SignalGroup group;
-        group.first = i;
-        if (m.hasMatch() && m.captured(2).toInt() == 0) {
-            group.name = m.captured(1);
-            group.array = true;
-        } else {
-            group.name = names[i];
-        }
-        groups.append(group);
-    }
-    return groups;
-}
-
 // Enough decimals to show the code's value exactly, plus two to tune it.
 int decimalsFor(const Declaration& decl) {
     int needed = 0;
@@ -104,18 +68,6 @@ int decimalsFor(const Declaration& decl) {
         needed = qMax(needed, d);
     }
     return qBound(1, needed + 2, 6);
-}
-
-QString formatValue(double value) {
-    if (std::isnan(value)) {
-        return QStringLiteral("--");
-    }
-    const QLocale locale;
-    const double magnitude = std::fabs(value);
-    if (magnitude != 0.0 && (magnitude < 1e-3 || magnitude >= 1e5)) {
-        return locale.toString(value, 'e', 2);
-    }
-    return locale.toString(value, 'f', magnitude < 10 ? 3 : 1);
 }
 
 }  // namespace
@@ -255,7 +207,7 @@ BlockEditor::BlockEditor(QWidget* parent) : QWidget(parent) {
         }
         const QString path = m_device->spec(m_block).path;
         const BlockKind kind =
-            m_block == LabControllerDevice::kController ? BlockKind::Controller : BlockKind::Filter;
+            m_device->blockKind(m_block);
         const QString folder =
             path.isEmpty() ? CodeLibrary::userDirectory(kind) : QFileInfo(path).absolutePath();
         QDesktopServices::openUrl(QUrl::fromLocalFile(folder));
@@ -305,10 +257,21 @@ void BlockEditor::applyTheme() {
 }
 
 QString BlockEditor::kindFolderLabel() const {
-    return m_block == LabControllerDevice::kController ? tr("controller") : tr("filter");
+    if (!m_device) {
+        return QString();
+    }
+    switch (m_device->blockKind(m_block)) {
+        case BlockKind::Plant:
+            return tr("plant");
+        case BlockKind::Filter:
+            return tr("filter");
+        case BlockKind::Controller:
+            break;
+    }
+    return tr("controller");
 }
 
-void BlockEditor::setBlock(LabControllerDevice* device, int block) {
+void BlockEditor::setBlock(CodeBlockOwner* device, int block) {
     if (m_device) {
         disconnect(m_device, nullptr, this, nullptr);
     }
@@ -318,11 +281,11 @@ void BlockEditor::setBlock(LabControllerDevice* device, int block) {
     m_log->clear();
     setEnabled(device != nullptr);
     if (device) {
-        connect(device, &LabControllerDevice::blocksChanged, this, &BlockEditor::onBlocksChanged);
-        connect(device, &LabControllerDevice::statusChanged, this, &BlockEditor::refreshLive);
+        connect(device, &CodeBlockOwner::blocksChanged, this, &BlockEditor::onBlocksChanged);
+        connect(device, &CodeBlockOwner::statusChanged, this, &BlockEditor::refreshLive);
         device->takeLog(block);  // what it wrote before is not news
     }
-    m_removeButton->setVisible(block != LabControllerDevice::kController);
+    m_removeButton->setVisible(device && device->canRemove(block));
     loadSourceFromDevice();
     refreshSourceCombo();
     rebuildParams();
@@ -365,8 +328,8 @@ void BlockEditor::onBlocksChanged() {
     if (!m_device) {
         return;
     }
-    // A filter removed or moved can leave this index pointing past the chain.
-    if (m_block != LabControllerDevice::kController && m_block >= m_device->filterCount()) {
+    // A block removed can leave this index pointing past the owner's.
+    if (m_device->blockRole(m_block).isEmpty()) {
         setBlock(nullptr, 0);
         return;
     }
@@ -402,9 +365,7 @@ void BlockEditor::refreshHeader() {
         templateId = CodeLibrary::originOf(text);
     }
     QStringList origin;
-    origin.append(m_block == LabControllerDevice::kController
-                      ? tr("Controller")
-                      : tr("Filter %1 of %2").arg(m_block + 1).arg(m_device->filterCount()));
+    origin.append(m_device->blockRole(m_block));
     if (!spec.path.isEmpty()) {
         origin.append(QDir::toNativeSeparators(spec.path));
     }
@@ -437,7 +398,7 @@ void BlockEditor::refreshSourceCombo() {
         return;
     }
     const BlockKind kind =
-        m_block == LabControllerDevice::kController ? BlockKind::Controller : BlockKind::Filter;
+        m_device->blockKind(m_block);
     const CodeBlockSpec spec = m_device->spec(m_block);
     int current = -1;
     const auto addHeader = [this](const QString& text) {
@@ -491,7 +452,7 @@ void BlockEditor::pickSource(int index) {
     const int type = data.value(0).toInt();
     const QString value = data.value(1).toString();
     const BlockKind kind =
-        m_block == LabControllerDevice::kController ? BlockKind::Controller : BlockKind::Filter;
+        m_device->blockKind(m_block);
     const CodeBlockSpec current = m_device->spec(m_block);
     CodeBlockSpec spec;
     switch (type) {
@@ -586,7 +547,7 @@ bool BlockEditor::save() {
     } else if (!spec.templateId.isEmpty()) {
         // A template stays as shipped: the edited code becomes a file of yours.
         const BlockKind kind =
-            m_block == LabControllerDevice::kController ? BlockKind::Controller : BlockKind::Filter;
+            m_device->blockKind(m_block);
         const QString path =
             CodeLibrary::instance().createFile(kind, spec.templateId, QString(), &error);
         const QString withOrigin = CodeLibrary::withOrigin(text, spec.templateId);
@@ -820,55 +781,7 @@ void BlockEditor::refreshSignals() {
         m_signals->clear();
         return;
     }
-    ControllerHost* host = m_device->host();
-    struct Row {
-        QString text;
-        QString declaration;
-        bool header = false;
-    };
-    QVector<Row> rows;
-    const auto addGroup = [&rows](const QString& title, const QStringList& names,
-                                  const QVector<double>& values, bool inputs) {
-        if (names.isEmpty()) {
-            return;
-        }
-        rows.append({title, QString(), true});
-        for (const SignalGroup& group : groupSignals(names)) {
-            QString value;
-            if (!inputs) {
-                QStringList parts;
-                for (int e = 0; e < group.count; ++e) {
-                    parts.append(formatValue(values.value(group.first + e, qQNaN())));
-                    if (parts.size() == 4 && group.count > 5) {
-                        parts.append(QStringLiteral("..."));
-                        break;
-                    }
-                }
-                value = parts.join(QLatin1Char(' '));
-            }
-            const QString name =
-                group.array ? QStringLiteral("%1[%2]").arg(group.name).arg(group.count) : group.name;
-            QString declaration;
-            if (inputs) {
-                declaration = QStringLiteral("TL_OUT(%1);").arg(group.name);
-            } else if (group.array) {
-                declaration = QStringLiteral("TL_IN_ARRAY(%1, %2);").arg(group.name).arg(group.count);
-            } else {
-                declaration = QStringLiteral("TL_IN(%1);").arg(group.name);
-            }
-            rows.append({QStringLiteral("  %1  %2").arg(name, -10).arg(value), declaration, false});
-        }
-    };
-    addGroup(tr("From the plant (loop.state)"), host->measurementNames(), host->lastMeasurements(),
-             false);
-    if (m_device->filterCount() > 0) {
-        addGroup(tr("After the filters (what the controller reads)"), host->signalNames(),
-                 host->lastSignals(), false);
-    }
-    addGroup(tr("Plant inputs (loop.u: the controller writes)"), host->inputNames(), {}, true);
-    if (rows.isEmpty()) {
-        rows.append({tr("No plant linked yet."), QString(), false});
-    }
+    const QVector<SignalRow> rows = m_device->signalRows(m_block);
     // Same rows: update the texts in place (keeps the selection and scroll).
     if (m_signals->count() == rows.size()) {
         for (int i = 0; i < rows.size(); ++i) {
@@ -880,7 +793,7 @@ void BlockEditor::refreshSignals() {
     }
     m_signals->clear();
     const traceview::ThemePalette& palette = traceview::ThemeManager::instance().currentTheme();
-    for (const Row& row : std::as_const(rows)) {
+    for (const SignalRow& row : rows) {
         auto* item = new QListWidgetItem(row.text, m_signals);
         item->setData(Qt::UserRole, row.declaration);
         if (row.header) {
@@ -900,29 +813,14 @@ void BlockEditor::refreshLive() {
         return;
     }
     const traceview::ThemePalette& palette = traceview::ThemeManager::instance().currentTheme();
-    ControllerHost* host = m_device->host();
-    QString binding;
-    if (!m_device->plant()) {
-        binding = QStringLiteral("<span style='color:%1'>%2</span>")
-                      .arg(palette.warning.name(), tr("No plant linked."));
-    } else if (!host->plantReady()) {
-        binding = QStringLiteral("<span style='color:%1'>%2</span>")
-                      .arg(palette.warning.name(), tr("Waiting for the plant..."));
-    } else if (!host->configureError().isEmpty()) {
-        binding = QStringLiteral("<span style='color:%1'>%2</span>")
-                      .arg(palette.danger.name(), host->configureError().toHtmlEscaped());
-    } else if (!host->configured()) {
-        binding = QStringLiteral("<span style='color:%1'>%2</span>")
-                      .arg(palette.warning.name(), tr("No controller."));
-    } else {
-        binding = QStringLiteral("<span style='color:%1'>%2</span>")
-                      .arg(palette.success.name(),
-                           tr("Loop closed on %1.").arg(m_device->plant()->typeName()));
-    }
-    m_binding->setText(binding);
-    const CodeControllerAdapter* adapter =
-        m_block == LabControllerDevice::kController ? m_device->controller() : nullptr;
-    m_previewNote->setVisible(adapter && adapter->usesPreview());
+    const CodeBlockOwner::Status status = m_device->status(m_block);
+    const QColor tones[] = {palette.textSecondary, palette.success, palette.warning, palette.danger};
+    m_binding->setText(QStringLiteral("<span style='color:%1'>%2</span>")
+                           .arg(tones[qBound(0, status.tone, 3)].name(),
+                                status.text.toHtmlEscaped()));
+    const QString note = m_device->note(m_block);
+    m_previewNote->setText(note);
+    m_previewNote->setVisible(!note.isEmpty());
 
     const QStringList lines = m_device->takeLog(m_block);
     for (const QString& line : lines) {

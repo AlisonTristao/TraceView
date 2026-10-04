@@ -3,7 +3,7 @@
 #include <QPointer>
 #include <QWidget>
 
-#include "lab/control/labdevices.h"
+#include "lab/code/codeblockowner.h"
 
 class QComboBox;
 class QFormLayout;
@@ -17,8 +17,8 @@ namespace tracelab {
 
 class CodeEditor;
 
-// The page of one code block -- a filter or the controller of a
-// LabControllerDevice -- in the TraceLab tab: its code in an editor, where it
+// The page of one code block -- a plant, a filter, a controller: a block of
+// any CodeBlockOwner -- in the TraceLab tab: its code in an editor, where it
 // comes from (a template, a file of yours, a new one), Save (Ctrl+S; a
 // template is saved as a copy in your folder first), back to the original,
 // the compiler's messages and the fault (click one: the editor goes to its
@@ -30,10 +30,9 @@ class BlockEditor : public QWidget {
 public:
     explicit BlockEditor(QWidget* parent = nullptr);
 
-    // `block`: LabControllerDevice::kController or a filter's index. Null:
-    // shows nothing.
-    void setBlock(LabControllerDevice* device, int block);
-    LabControllerDevice* device() const {
+    // `block`: the owner's numbering. Null: shows nothing.
+    void setBlock(CodeBlockOwner* device, int block);
+    CodeBlockOwner* device() const {
         return m_device;
     }
     int block() const {
@@ -69,7 +68,7 @@ private:
     void revertToOriginal();
     QString kindFolderLabel() const;
 
-    QPointer<LabControllerDevice> m_device;
+    QPointer<CodeBlockOwner> m_device;
     int m_block = 0;
     QString m_loadedSource;  // the text the editor was given
     QStringList m_paramNames;

@@ -238,6 +238,12 @@ if(TARGET tracelab_lf_devices)
     # input until reset, a saved file compiled again while running.
     add_traceview_test(test_codecontroller tracelab_lf_devices tracelab_control)
     tracelab_copy_tcc_runtime(test_codecontroller)
+    # Plants in C (lab/plant: CodePlant, CodePlantDevice) and the track
+    # environment: RK4 against the exact solution, a generic loop bound by
+    # the code's names (rebinding after a new version), and the line
+    # follower's car in C equal to the C++ plant sample for sample.
+    add_traceview_test(test_codeplant tracelab_lf_devices tracelab_control tracelab_plant)
+    tracelab_copy_tcc_runtime(test_codeplant)
 endif()
 
 # Generic telemetry value types (lib/telemetry) -- no BTP dependency at all

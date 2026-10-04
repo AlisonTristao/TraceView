@@ -115,11 +115,16 @@ target_link_libraries(tracelab_sensors PUBLIC Eigen3::Eigen)
 add_library(tracelab_plant STATIC
     plant/btpproducerport.cpp
     plant/btpproducerport.h
+    plant/codeplant.cpp
+    plant/codeplant.h
+    plant/codeplantdevice.cpp
+    plant/codeplantdevice.h
     plant/endpointtransport.cpp
     plant/endpointtransport.h
     plant/labplantdevice.h
     plant/loopbacktransport.cpp
     plant/loopbacktransport.h
+    plant/plantenvironment.h
     plant/plantmanifest.cpp
     plant/plantmanifest.h
     plant/simulatedplant.cpp
@@ -136,6 +141,8 @@ target_link_libraries(tracelab_plant
         # BtpProducerPort is a btp::NodeConfig serving a btp::Catalog.
         btp::node
         btp::catalog
+        # The plant written in C (codeplant.h, codeplantdevice.h).
+        tracelab_code
 )
 
 # tracelab_code: plant, filter and controller blocks written in C, compiled in

@@ -46,6 +46,13 @@ struct Declaration {
     }
 };
 
+// A function (or variable) of the host the compiled code may call, beyond
+// tracelab.h's: an environment's (the line follower's track...).
+struct HostSymbol {
+    QByteArray name;
+    const void* address = nullptr;
+};
+
 // A compiler message (or the runtime fault) at a line of the block's file;
 // line 0 when it has none.
 struct CodeMessage {
@@ -67,7 +74,8 @@ public:
     // Compiles `source`, shown as `fileName` in messages. On failure the
     // module holds no code and messages() says why (warnings come along
     // either way). Parameter values set before are re-applied by name.
-    bool compile(const QString& source, const QString& fileName);
+    bool compile(const QString& source, const QString& fileName,
+                 const QVector<HostSymbol>& extraSymbols = {});
     bool isCompiled() const {
         return m_state != nullptr;
     }

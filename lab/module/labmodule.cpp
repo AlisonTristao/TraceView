@@ -1,12 +1,15 @@
 #include "labmodule.h"
 
 #include <QCoreApplication>
+#include <QJsonObject>
 
 #include "core/moduledevicetype.h"
 #include "lab/benchmarks/linefollower/code/lftemplates.h"
 #include "lab/benchmarks/linefollower/device/lfdevices.h"
 #include "lab/benchmarks/linefollower/device/lfplantdevice.h"
+#include "lab/benchmarks/linefollower/device/trackenvironment.h"
 #include "lab/control/labdevices.h"
+#include "lab/plant/codeplantdevice.h"
 #include "lab/module/labpanel.h"
 #include "lab/scenes/sceneregistry.h"
 #include "lab/scenes/scenewidget.h"
@@ -31,6 +34,7 @@ void LabModule::install(traceview::ModuleHost& host) {
     registerSceneWidget(host.widgetRegistry());
     // The controller written in C: a device of its own on the Devices tab and
     // in projects, for any plant.
+    host.registerDeviceType(labPlantDeviceType());
     host.registerDeviceType(labControllerDeviceType());
     // The line-follower benchmark: its plant (and its C++ controller, for the
     // projects that still use it) as devices, the plant as a kind the tab can
@@ -38,10 +42,18 @@ void LabModule::install(traceview::ModuleHost& host) {
     for (const traceview::ModuleDeviceType& type : lf::lineFollowerDeviceTypes()) {
         host.registerDeviceType(type);
     }
+    lf::registerTrackEnvironment();
+    lf::registerLineFollowerTemplates();
+    LabDeviceRegistry::instance().registerPlantType(
+        {QString::fromLatin1(kCodePlantDeviceType),
+         QCoreApplication::translate("LabModule", "Line follower"),
+         QJsonObject{{"plant", QJsonObject{{"template", "linefollower/car"}}},
+                     {"environment", QJsonObject{{"id", QString::fromLatin1(
+                                                            lf::TrackEnvironment::kId)}}}}});
     LabDeviceRegistry::instance().registerPlantType(
         {QString::fromLatin1(lf::kPlantDeviceType),
-         QCoreApplication::translate("LabModule", "Line follower"), lf::PlantSettings().toJson()});
-    lf::registerLineFollowerTemplates();
+         QCoreApplication::translate("LabModule", "Line follower (C++)"),
+         lf::PlantSettings().toJson()});
 
     // Each benchmark is a project of its own.
     host.registerExampleProject(QCoreApplication::translate("LabModule", "TraceLab benchmarks"),

@@ -151,6 +151,8 @@ if(WIN32)
 endif()
 
 add_library(tracelab_code STATIC
+    codeblockowner.cpp
+    codeblockowner.h
     codecall.c
     codecall.h
     codefiles.cpp

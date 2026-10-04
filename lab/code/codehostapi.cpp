@@ -114,6 +114,11 @@ int tl_puts(const char* text) {
     return 0;
 }
 
+double tl_disturb(int channel) {
+    CodeContext* c = context();
+    return c && channel >= 0 && channel < c->disturbances.size() ? c->disturbances[channel] : 0.0;
+}
+
 void tl_set_iterations(int n) {
     if (CodeContext* c = context()) {
         c->iterations = n;
@@ -310,6 +315,8 @@ void addHostSymbols(TCCState* state) {
         {"fmin", reinterpret_cast<const void*>(D2(&std::fmin))},
         {"fmax", reinterpret_cast<const void*>(D2(&std::fmax))},
         {"copysign", reinterpret_cast<const void*>(D2(&std::copysign))},
+        {"ldexp", reinterpret_cast<const void*>(static_cast<double (*)(double, int)>(&std::ldexp))},
+        {"frexp", reinterpret_cast<const void*>(static_cast<double (*)(double, int*)>(&std::frexp))},
         {"isnan_tl", reinterpret_cast<const void*>(&isnan_tl)},
         {"abs", reinterpret_cast<const void*>(static_cast<int (*)(int)>(&std::abs))},
         // memory and strings (memset/memcpy/memmove: tcc's own struct copies too)
@@ -341,6 +348,7 @@ void addHostSymbols(TCCState* state) {
         {"tl_log", reinterpret_cast<const void*>(&tl_log)},
         {"tl_predicted", reinterpret_cast<const void*>(&tl_predicted)},
         {"tl_set_iterations", reinterpret_cast<const void*>(&tl_set_iterations)},
+        {"tl_disturb", reinterpret_cast<const void*>(&tl_disturb)},
         {"tl_mat_mul", reinterpret_cast<const void*>(&tl_mat_mul)},
         {"tl_mat_mul_tn", reinterpret_cast<const void*>(&tl_mat_mul_tn)},
         {"tl_mat_solve", reinterpret_cast<const void*>(&tl_mat_solve)},

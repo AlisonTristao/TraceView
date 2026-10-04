@@ -8,6 +8,7 @@
 #include <QVector>
 
 #include "core/moduledevicetype.h"
+#include "lab/code/codeblockowner.h"
 #include "lab/code/codemodule.h"
 
 class QFileSystemWatcher;
@@ -21,21 +22,6 @@ class ControllerHost;
 class LabPlantDevice;
 class LoopbackTransport;
 
-// Where a code block's source comes from: a file of the user's, or a
-// template a benchmark ships (read-only; editing it makes a file first).
-// Plus the parameter values set by hand, by name.
-struct CodeBlockSpec {
-    QString path;
-    QString templateId;
-    QJsonObject params;
-
-    bool isEmpty() const {
-        return path.isEmpty() && templateId.isEmpty();
-    }
-    static CodeBlockSpec fromJson(const QJsonObject& json);
-    QJsonObject toJson() const;
-};
-
 // The controller device of the TraceLab tab: a ControllerHost closing the
 // loop on a plant (found by its project Device id among the live plants),
 // with a chain of filters and a controller, all written in C. Its
@@ -47,7 +33,7 @@ struct CodeBlockSpec {
 // A block's file is watched: saved anywhere, it is compiled again. A version
 // that does not compile leaves the previous one running (its messages say
 // why); one that compiles replaces it between two ticks.
-class LabControllerDevice : public QObject {
+class LabControllerDevice : public CodeBlockOwner {
     Q_OBJECT
 
 public:
@@ -76,47 +62,49 @@ public:
     int filterCount() const {
         return int(m_filterSpecs.size());
     }
-    CodeBlockSpec spec(int block) const;
+    CodeBlockSpec spec(int block) const override;
     // Replaces a block's source (or, with kController, the controller) and
     // loads it. An empty spec removes the controller.
-    void setSpec(int block, const CodeBlockSpec& spec);
+    void setSpec(int block, const CodeBlockSpec& spec) override;
     void addFilter(const CodeBlockSpec& spec);
     void removeFilter(int index);
     void moveFilter(int from, int to);
     // Compiles a block again from its source (after its file changed).
-    void reload(int block);
+    void reload(int block) override;
 
     // The running code of a block (null when there is none).
-    const code::CodeModule* module(int block) const;
+    const code::CodeModule* module(int block) const override;
     CodeControllerAdapter* controller() const;
     CodeSignalFilter* filter(int index) const;
     // The messages of the block's last compile, which may be of a version
     // that did not replace the running one.
-    QVector<code::CodeMessage> messages(int block) const;
-    bool compiled(int block) const;
+    QVector<code::CodeMessage> messages(int block) const override;
+    bool compiled(int block) const override;
     // A fault of the running code, "file:line: text", or empty.
-    QString runtimeError(int block) const;
+    QString runtimeError(int block) const override;
     // The block's display name (its file's base name or its template's).
-    QString blockName(int block) const;
+    QString blockName(int block) const override;
     // Its source as compiled (the file or the template).
-    QString source(int block) const;
+    QString source(int block) const override;
 
     // The lines the block's printf()/tl_log() wrote since the last call.
-    QStringList takeLog(int block);
+    QStringList takeLog(int block) override;
 
     // A parameter of a block, live; kept in config().
-    void setParam(int block, const QString& name, double value);
+    void setParam(int block, const QString& name, double value) override;
+
+    // CodeBlockOwner
+    code::BlockKind blockKind(int block) const override;
+    QString blockRole(int block) const override;
+    bool canRemove(int block) const override {
+        return block != kController;
+    }
+    Status status(int block) const override;
+    QString note(int block) const override;
+    QVector<SignalRow> signalRows(int block) const override;
 
     // The TraceView link (ctl.diag, ctl.info).
     void attachViewer(LoopbackTransport* peer);
-
-signals:
-    // config() changed: the project should store it.
-    void configChanged();
-    // A block was (re)loaded or its messages changed.
-    void blocksChanged();
-    // The link's state (plant ready, configured, errors) changed.
-    void statusChanged();
 
 private:
     struct Block {
@@ -217,5 +205,8 @@ inline constexpr char kLabControllerDeviceType[] = "tracelab.controller";
 
 // "TraceLab: Controller": LabControllerDevice as a ModuleDeviceType.
 traceview::ModuleDeviceType labControllerDeviceType();
+// "TraceLab: Plant": a plant written in C (CodePlantDevice, type
+// "tracelab.plant") as a ModuleDeviceType; registered as a live plant.
+traceview::ModuleDeviceType labPlantDeviceType();
 
 }  // namespace tracelab

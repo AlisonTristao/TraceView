@@ -6,19 +6,25 @@
                 "description": "",
                 "id": "tracelab-lf-plant",
                 "moduleConfig": {
-                    "autoRun": true,
+                    "plant": {
+                        "template": "linefollower/car"
+                    },
+                    "environment": {
+                        "id": "linefollower.track",
+                        "seed": 1112,
+                        "trackType": "lemniscate",
+                        "horizon": 10,
+                        "futureSpacing": 5
+                    },
                     "fps": 80,
-                    "futureSpacing": 5,
-                    "horizon": 10,
                     "runMode": "realtime",
-                    "seed": 1112,
-                    "sensorNoise": false,
-                    "sensorSeed": 1,
                     "timeScale": 1,
-                    "trackType": "lemniscate"
+                    "autoRun": true,
+                    "solver": "rk4",
+                    "substeps": 4
                 },
-                "moduleType": "tracelab.linefollower.plant",
-                "name": "TraceLab: Line follower",
+                "moduleType": "tracelab.plant",
+                "name": "TraceLab: Plant",
                 "script": "",
                 "transportType": 5
             },
@@ -67,7 +73,7 @@
                                         "deviceId": "tracelab-lf-plant",
                                         "fieldId": 7,
                                         "fieldName": "coverage",
-                                        "sourceId": "0x2089EB60",
+                                        "sourceId": "0xA1B70FC4",
                                         "topicId": "0x0003",
                                         "topicName": "sim.truth"
                                     },
@@ -75,7 +81,7 @@
                                         "deviceId": "tracelab-lf-plant",
                                         "fieldId": 6,
                                         "fieldName": "next_point",
-                                        "sourceId": "0x2089EB60",
+                                        "sourceId": "0xA1B70FC4",
                                         "topicId": "0x0003",
                                         "topicName": "sim.truth"
                                     },
@@ -107,7 +113,7 @@
                                         "deviceId": "tracelab-lf-plant",
                                         "fieldId": 1,
                                         "fieldName": "tick",
-                                        "sourceId": "0x2089EB60",
+                                        "sourceId": "0xA1B70FC4",
                                         "topicId": "0x0005",
                                         "topicName": "sim.preview"
                                     },
@@ -115,7 +121,7 @@
                                         "deviceId": "tracelab-lf-plant",
                                         "fieldId": 2,
                                         "fieldName": "px",
-                                        "sourceId": "0x2089EB60",
+                                        "sourceId": "0xA1B70FC4",
                                         "topicId": "0x0005",
                                         "topicName": "sim.preview"
                                     },
@@ -123,7 +129,7 @@
                                         "deviceId": "tracelab-lf-plant",
                                         "fieldId": 3,
                                         "fieldName": "py",
-                                        "sourceId": "0x2089EB60",
+                                        "sourceId": "0xA1B70FC4",
                                         "topicId": "0x0005",
                                         "topicName": "sim.preview"
                                     },
@@ -147,7 +153,7 @@
                                         "deviceId": "tracelab-lf-plant",
                                         "fieldId": 2,
                                         "fieldName": "t",
-                                        "sourceId": "0x2089EB60",
+                                        "sourceId": "0xA1B70FC4",
                                         "topicId": "0x0003",
                                         "topicName": "sim.truth"
                                     },
@@ -155,7 +161,7 @@
                                         "deviceId": "tracelab-lf-plant",
                                         "fieldId": 5,
                                         "fieldName": "theta",
-                                        "sourceId": "0x2089EB60",
+                                        "sourceId": "0xA1B70FC4",
                                         "topicId": "0x0003",
                                         "topicName": "sim.truth"
                                     },
@@ -163,13 +169,13 @@
                                         "deviceId": "tracelab-lf-plant",
                                         "fieldId": 1,
                                         "fieldName": "tick",
-                                        "sourceId": "0x2089EB60",
+                                        "sourceId": "0xA1B70FC4",
                                         "topicId": "0x0003",
                                         "topicName": "sim.truth"
                                     },
                                     "track": {
                                         "deviceId": "tracelab-lf-plant",
-                                        "sourceId": "0x2089EB60",
+                                        "sourceId": "0xA1B70FC4",
                                         "topicId": "0x0007",
                                         "topicName": "sim.track"
                                     },
@@ -177,7 +183,7 @@
                                         "deviceId": "tracelab-lf-plant",
                                         "fieldId": 3,
                                         "fieldName": "x",
-                                        "sourceId": "0x2089EB60",
+                                        "sourceId": "0xA1B70FC4",
                                         "topicId": "0x0003",
                                         "topicName": "sim.truth"
                                     },
@@ -185,7 +191,7 @@
                                         "deviceId": "tracelab-lf-plant",
                                         "fieldId": 4,
                                         "fieldName": "y",
-                                        "sourceId": "0x2089EB60",
+                                        "sourceId": "0xA1B70FC4",
                                         "topicId": "0x0003",
                                         "topicName": "sim.truth"
                                     }
@@ -306,7 +312,7 @@
                                         "unit": "m"
                                     }
                                 ],
-                                "sourceId": "0x2089EB60",
+                                "sourceId": "0xA1B70FC4",
                                 "topicId": "0x0003",
                                 "topicName": "sim.truth",
                                 "view": {

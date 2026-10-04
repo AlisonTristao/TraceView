@@ -593,16 +593,40 @@ void LabPanel::refreshCards() {
         QString kind;
         QString status;
         switch (card.pick) {
-            case Pick::Plant:
+            case Pick::Plant: {
                 kind = tr("Plant");
-                if (p) {
-                    tone = p->running() ? LabCard::Tone::Success : LabCard::Tone::Warning;
-                    headerStatus = p->running() ? tr("running") : tr("paused");
-                    status = tr("tick %1 · %2 s")
-                                 .arg(locale.toString(qlonglong(p->tick())))
-                                 .arg(locale.toString(p->time(), 'f', 1));
+                if (!p) {
+                    break;
+                }
+                CodeBlockOwner* blocks = p->codeBlocks();
+                if (blocks) {
+                    kind = p->worldName().isEmpty()
+                               ? tr("Plant · C")
+                               : tr("Plant · C · %1").arg(p->worldName());
+                }
+                card.card->setTitle(p->typeName());
+                tone = p->running() ? LabCard::Tone::Success : LabCard::Tone::Warning;
+                headerStatus = p->running() ? tr("running") : tr("paused");
+                status = tr("tick %1 · %2 s")
+                             .arg(locale.toString(qlonglong(p->tick())))
+                             .arg(locale.toString(p->time(), 'f', 1));
+                if (blocks && !blocks->runtimeError(0).isEmpty()) {
+                    tone = LabCard::Tone::Danger;
+                    headerStatus = tr("stopped");
+                    status = blocks->runtimeError(0).section(QStringLiteral(": "), 1);
+                } else if (blocks) {
+                    for (const code::CodeMessage& m : blocks->messages(0)) {
+                        if (!m.warning) {
+                            tone = LabCard::Tone::Danger;
+                            headerStatus = tr("error");
+                            status = m.line > 0 ? tr("does not compile (line %1)").arg(m.line)
+                                                : tr("does not compile");
+                            break;
+                        }
+                    }
                 }
                 break;
+            }
             case Pick::Filter:
             case Pick::Controller: {
                 const int block =

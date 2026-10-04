@@ -67,6 +67,12 @@ struct CodeContext {
     QString partialLine;
     void appendLog(const QString& text);
 
+    // tl_disturb(i): what the simulation injects, by channel (sim.disturb).
+    QVector<double> disturbances;
+    // The environment the running block belongs to, for its own host
+    // functions (PlantEnvironment::symbols()); null without one.
+    void* environment = nullptr;
+
     // tl_set_iterations() of the last step.
     int iterations = 0;
     // tl_predicted() of the last step.

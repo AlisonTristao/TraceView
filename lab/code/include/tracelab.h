@@ -50,6 +50,7 @@ double exp(double), log(double), log10(double), log2(double), pow(double, double
 double sqrt(double), cbrt(double), hypot(double, double), fabs(double);
 double floor(double), ceil(double), round(double), trunc(double), fmod(double, double);
 double fmin(double, double), fmax(double, double), copysign(double, double);
+double ldexp(double, int), frexp(double, int *);
 int isnan_tl(double);
 #define isnan(x) isnan_tl(x)
 #define isfinite(x) (!isnan_tl((x) - (x)))
@@ -189,6 +190,10 @@ void tl_log(const char *fmt, ...);
 /* Controller: the path it predicts, car frame of this tick (x lateral
    right, y forward, m; heading rad), drawn by the scene. */
 void tl_predicted(const double *x, const double *y, const double *theta, int n);
+/* Plant: a disturbance the simulation injects (sim.disturb, the keys of the
+   scene...), by channel; 0 when none. */
+double tl_disturb(int channel);
+
 /* Controller: the solver iterations of this step (ctl.diag's iterations
    field, which the scene shows). */
 void tl_set_iterations(int n);
