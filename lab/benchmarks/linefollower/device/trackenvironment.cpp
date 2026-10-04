@@ -20,7 +20,7 @@ constexpr int kMaxTrackDocumentPoints = 2400;
 constexpr int kMaxPreview = 256;
 
 QString tr(const char* text) {
-    return QCoreApplication::translate("TrackEnvironment", text);
+    return QCoreApplication::translate("tracelab::lf::TrackEnvironment", text);
 }
 
 const TrackEnvironment* current() {
@@ -279,7 +279,8 @@ double TrackEnvironment::lineHalfWidth() const {
 
 void registerTrackEnvironment() {
     PlantEnvironmentRegistry::instance().registerEnvironment(
-        {QString::fromLatin1(TrackEnvironment::kId), tr("Line-follower track"),
+        {QString::fromLatin1(TrackEnvironment::kId),
+         QCoreApplication::translate("tracelab::lf::TrackEnvironment", "Line-follower track"),
          [] { return std::make_unique<TrackEnvironment>(); }});
 }
 

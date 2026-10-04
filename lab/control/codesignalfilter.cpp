@@ -11,7 +11,7 @@ using code::Declaration;
 namespace {
 
 QString tr(const char* text) {
-    return QCoreApplication::translate("CodeSignalFilter", text);
+    return QCoreApplication::translate("tracelab::CodeSignalFilter", text);
 }
 
 QStringList elementNames(const Declaration& decl) {

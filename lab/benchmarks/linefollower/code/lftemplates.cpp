@@ -9,7 +9,7 @@ namespace tracelab::lf {
 void registerLineFollowerTemplates() {
     using code::BlockKind;
     const auto tr = [](const char* text) {
-        return QCoreApplication::translate("LineFollowerTemplates", text);
+        return QCoreApplication::translate("tracelab::lf", text);
     };
     const struct {
         BlockKind kind;

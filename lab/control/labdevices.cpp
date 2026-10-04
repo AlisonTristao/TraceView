@@ -402,7 +402,7 @@ QString LabControllerDevice::blockRole(int block) const {
 CodeBlockOwner::Status LabControllerDevice::status(int block) const {
     Q_UNUSED(block);
     const auto tr = [](const char* text) {
-        return QCoreApplication::translate("LabControllerDevice", text);
+        return QCoreApplication::translate("tracelab::LabControllerDevice", text);
     };
     if (!m_plant) {
         return {2, tr("No plant linked.")};
@@ -432,7 +432,7 @@ QString LabControllerDevice::note(int block) const {
 QVector<SignalRow> LabControllerDevice::signalRows(int block) const {
     Q_UNUSED(block);
     const auto tr = [](const char* text) {
-        return QCoreApplication::translate("LabControllerDevice", text);
+        return QCoreApplication::translate("tracelab::LabControllerDevice", text);
     };
     QVector<SignalRow> rows;
     appendSignalRows(&rows, tr("From the plant (loop.state)"), m_host->measurementNames(),

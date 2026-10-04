@@ -55,7 +55,7 @@ constexpr int kReloadDelayMs = 150;
 constexpr std::uint32_t kNoCap = 0U;
 
 QString tr(const char* text) {
-    return QCoreApplication::translate("CodePlantDevice", text);
+    return QCoreApplication::translate("tracelab::CodePlantDevice", text);
 }
 
 QString runModeName(RunMode mode) {
@@ -147,7 +147,7 @@ public:
         return code::BlockKind::Plant;
     }
     QString blockRole(int block) const override {
-        return block == 0 ? tr("Plant") : QString();
+        return block == 0 ? CodePlantDevice::tr("Plant") : QString();
     }
     QString blockName(int) const override {
         const CodeBlockSpec& s = m_device->m_spec;
@@ -200,22 +200,22 @@ public:
     }
     Status status(int) const override {
         if (!m_device->m_plant) {
-            return {3, tr("The plant's code does not compile.")};
+            return {3, CodePlantDevice::tr("The plant's code does not compile.")};
         }
         if (!m_device->m_plant->runtimeErrorText().isEmpty()) {
-            return {3, tr("Stopped by a fault: reset the simulation once it is fixed.")};
+            return {3, CodePlantDevice::tr("Stopped by a fault: reset the simulation once it is fixed.")};
         }
         if (m_device->m_finished) {
-            return {1, tr("Run finished.")};
+            return {1, CodePlantDevice::tr("Run finished.")};
         }
-        return m_device->m_running ? Status{1, tr("Running at %1 Hz.").arg(m_device->m_fps)}
-                                   : Status{2, tr("Paused.")};
+        return m_device->m_running ? Status{1, CodePlantDevice::tr("Running at %1 Hz.").arg(m_device->m_fps)}
+                                   : Status{2, CodePlantDevice::tr("Paused.")};
     }
     QString note(int) const override {
         if (!m_device->m_environment) {
             return QString();
         }
-        return tr("Lives in: %1. Its functions are declared in the header it names; it reads the "
+        return CodePlantDevice::tr("Lives in: %1. Its functions are declared in the header it names; it reads the "
                   "states %2.")
             .arg(m_device->m_environment->name(),
                  m_device->m_environment->requiredStates().join(QStringLiteral(", ")));
@@ -224,16 +224,16 @@ public:
         QVector<SignalRow> rows;
         const CodePlant* plant = m_device->m_plant.get();
         if (!plant) {
-            rows.append({tr("Not compiled."), QString(), false});
+            rows.append({CodePlantDevice::tr("Not compiled."), QString(), false});
             return rows;
         }
-        appendSignalRows(&rows, tr("Inputs (loop.u, from the controller)"), plant->inputNames(),
+        appendSignalRows(&rows, CodePlantDevice::tr("Inputs (loop.u, from the controller)"), plant->inputNames(),
                          plant->appliedInputs(), QStringLiteral("TL_INPUT(%1, \"\", -100, 100);"),
                          QStringLiteral("TL_INPUT(%1, \"\", -100, 100);"));
-        appendSignalRows(&rows, tr("States (sim.states)"), plant->stateNames(), plant->states(),
+        appendSignalRows(&rows, CodePlantDevice::tr("States (sim.states)"), plant->stateNames(), plant->states(),
                          QStringLiteral("TL_STATE(%1, \"\", 0);"),
                          QStringLiteral("TL_STATE(%1, \"\", 0);"));
-        appendSignalRows(&rows, tr("Outputs (loop.state, what the controller reads)"),
+        appendSignalRows(&rows, CodePlantDevice::tr("Outputs (loop.state, what the controller reads)"),
                          plant->outputNames(), plant->outputs(), QStringLiteral("TL_OUTPUT(%1, \"\");"),
                          QStringLiteral("TL_OUTPUT_ARRAY(%1, %2, \"\");"));
         return rows;

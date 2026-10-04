@@ -387,9 +387,9 @@
                                 },
                                 "yAxis": {
                                     "autoAxis": false,
-                                    "decimals": 2,
+                                    "decimals": 1,
                                     "grid": true,
-                                    "max": 0.1,
+                                    "max": 2.0,
                                     "min": 0.0,
                                     "mode": "fixed",
                                     "unit": "Solve time [ms]"

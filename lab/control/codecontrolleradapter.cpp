@@ -12,7 +12,7 @@ using code::Declaration;
 namespace {
 
 QString tr(const char* text) {
-    return QCoreApplication::translate("CodeControllerAdapter", text);
+    return QCoreApplication::translate("tracelab::CodeControllerAdapter", text);
 }
 
 // The y[] positions of a scalar ("w_l") or array ("s[0]".."s[n-1]") signal;

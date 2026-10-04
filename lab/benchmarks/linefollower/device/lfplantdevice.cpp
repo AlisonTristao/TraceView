@@ -215,7 +215,7 @@ void LinePlantDevice::setSampleRate(int hz) {
 
 QVector<PlantSetting> LinePlantDevice::settingsSchema() const {
     const auto tr = [](const char* text) {
-        return QCoreApplication::translate("LinePlantDevice", text);
+        return QCoreApplication::translate("tracelab::lf::LinePlantDevice", text);
     };
     QVector<PlantSetting> list;
     PlantSetting seed;

@@ -2,8 +2,11 @@
 
 Criado: 2026-10-04
 Repositório: TraceView (pasta `lab/`)
-Estado: **esboço para discussão**. Nenhum código escrito. Complementa o
-[PLANO_TRACELAB.md](PLANO_TRACELAB.md) e muda as decisões L6 e L10 (§9).
+Estado: **implementado (B0 a B6)**; B7 (remover os nativos) adiado de
+propósito, ver §13. Complementa o [PLANO_TRACELAB.md](PLANO_TRACELAB.md) e
+muda as decisões L6 e L10 (§9). O que mudou em relação ao esboço está no
+§13; a referência de uso é o [lab/README.md](lab/README.md), seção "Code
+blocks".
 
 ---
 
@@ -177,8 +180,8 @@ void plant_output(void) {              /* uma vez por tick, depois do solver */
 
 TL_PARAM(tau, 0.02, "s", 0, 1);
 
-TL_IN(w_l);   TL_IN(w_r);
-TL_OUT(w_l);  TL_OUT(w_r);       /* mesmo nome: substitui o sinal */
+TL_INOUT(w_l);
+TL_INOUT(w_r);                   /* lê e substitui o sinal, mesmo nome */
 
 static double fl, fr;
 
@@ -186,15 +189,15 @@ void filt_reset(void) { fl = fr = 0; }
 
 void filt_step(void) {
     double a = tau > 0 ? tl_ts() / (tau + tl_ts()) : 1;
-    fl += a * (in(w_l) - fl);
-    fr += a * (in(w_r) - fr);
-    out(w_l) = fl;
-    out(w_r) = fr;
+    fl += a * (w_l - fl);
+    fr += a * (w_r - fr);
+    w_l = fl;
+    w_r = fr;
 }
 ```
 
-Quando o nome de entrada e o de saída coincidem, você usa `in(nome)` e
-`out(nome)` para separar os dois.
+`TL_INOUT` lê o sinal e devolve o valor que a variável tiver depois do passo,
+com o mesmo nome. `TL_IN` só lê; `TL_OUT` com nome novo acrescenta um sinal.
 
 ### 4.3 Controlador
 
@@ -390,3 +393,51 @@ Cada fase termina com o seguidor de linha funcionando.
 2. **Solvers:** Euler e RK4 bastam por agora, ou já entra um adaptativo?
 3. **Editor:** um `QPlainTextEdit` com destaque simples basta, ou vale usar
    um editor de verdade (QScintilla, que é GPL ou comercial)?
+
+---
+
+## 13. Como ficou (2026-10-04)
+
+O que foi implementado, e onde a implementação se afastou do esboço:
+
+| Item | Esboço | Implementado |
+|---|---|---|
+| Filtro que substitui um sinal | `in(x)` / `out(x)` | `TL_INOUT(x)`: uma variável, lida antes e devolvida depois do passo |
+| `TL_TRUTH` | estado verdadeiro para o controlador | **não implementado**: só `TL_PREVIEW` como informação privilegiada |
+| Ambiente da planta | funções `tl_track_*` | `PlantEnvironment` (`lab/plant/plantenvironment.h`); o da pista dá `tl_track_distance()` e `tl_track_line_half_width()` (`tracelab_track.h`). Os sensores (posição no chão, footprint, ADC, encoders, ruído) ficaram **no código da planta** |
+| Ruído e perturbação | `tl_noise()` | `tl_noise()`/`tl_rand()` (splitmix64, reprodutível) e `tl_disturb(canal)` para o `sim.disturb` |
+| Biblioteca numérica | `tl_mat`, `tl_qp_box` | `tl_mat_mul`, `tl_mat_mul_tn`, `tl_mat_solve`, `tl_qp_box`, avaliados com os mesmos kernels do Eigen do C++ (por isso o port dá os mesmos números) |
+| Falha no código | limite de tempo e aviso | o código para com a linha da falha, sem derrubar o TraceView (patch no handler do tcc, `lab/code/CMakeLists.txt`). Loop infinito ainda trava |
+| Tipos de dispositivo | um por benchmark | genéricos: `tracelab.plant` (`CodePlantDevice`) e `tracelab.controller` (`LabControllerDevice`); o benchmark só registra templates, o ambiente da pista e a cena |
+| Editor | QPlainTextEdit ou QScintilla | QPlainTextEdit próprio (`codeeditor.h`): números de linha, destaque C/`TL_*`, erro marcado na linha |
+| Respostas do §12 | — | uma malha por planta; Euler e RK4 (com subpassos); QPlainTextEdit |
+
+Validação (todos em `tests/`, 84 de 84 passando no build `build-lab`):
+
+- `test_codemodule`: compilação, declarações, parâmetros, falhas com linha.
+- `test_codecontroller`: PD, GPC e qLPV MPC (taylor e iterativo) em C
+  **iguais aos C++ amostra por amostra** (diferença 0 em 300–400 passos),
+  filtros, nomes errados, falha segurando a entrada, recompilação ao salvar.
+- `test_codeplant`: RK4 contra a solução exata, malha genérica sem ambiente
+  ligada pelos nomes do código, e o carro em C na pista **igual à planta
+  C++** (diferença 0 em 400 passos de malha fechada).
+- `test_labpanel`: a aba montando a malha, salvar template como cópia,
+  voltar ao original, persistência no projeto.
+
+Desempenho (Debug, a 80 Hz o orçamento é 12,5 ms): qLPV em C ~1,1 ms/tick
+(C++ 0,3), iterativo ~2,9 ms (C++ 0,5), GPC igual ao C++.
+
+Pendências:
+
+1. **B7 adiado**: a planta e os controladores C++ continuam registrados,
+   para projetos antigos e como referência dos testes de equivalência.
+2. Só testado em **Windows/MinGW**. O CMake já escolhe o alvo do tcc para
+   Linux e macOS (x86_64/arm64), mas ninguém compilou lá.
+3. `ctl.diag` com campos novos só chega ao TraceView numa nova sessão: o
+   dispositivo reinicia o link sozinho, e os gráficos ficam alguns segundos
+   sem dado.
+4. Ao sair, o build Debug dá um assert no `~MainWindow` com dispositivos
+   in-process. O problema já existia antes desta mudança e está registrado
+   como tarefa separada.
+5. As traduções novas foram feitas só em pt_BR; as outras línguas mostram o
+   texto em inglês.

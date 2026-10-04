@@ -12,7 +12,7 @@ using code::Declaration;
 namespace {
 
 QString tr(const char* text) {
-    return QCoreApplication::translate("CodePlant", text);
+    return QCoreApplication::translate("tracelab::CodePlant", text);
 }
 
 }  // namespace
