@@ -215,6 +215,8 @@ add_library(tracelab_module STATIC
     module/blockeditor.h
     module/codeeditor.cpp
     module/codeeditor.h
+    module/externaleditor.cpp
+    module/externaleditor.h
     module/labcard.cpp
     module/labcard.h
     module/labmodule.cpp

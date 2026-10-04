@@ -1097,7 +1097,22 @@
 <context>
     <name>tracelab::BlockEditor</name>
     <message>
-        <location filename="../lab/module/blockeditor.cpp" line="+94"/>
+        <location filename="../lab/module/blockeditor.cpp" line="+98"/>
+        <source>The code is open in a window of its own.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Show the window</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Bring it back here</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+29"/>
         <source>Code</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1108,24 +1123,24 @@
     </message>
     <message>
         <location line="+4"/>
-        <location line="+428"/>
+        <location line="+621"/>
         <location line="+24"/>
         <source>Save</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-451"/>
+        <location line="-644"/>
         <source>Saves and compiles the code (Ctrl+S). A template is saved as a copy in your folder.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+3"/>
-        <location line="+479"/>
+        <location line="+672"/>
         <source>Back to the original</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-478"/>
+        <location line="-671"/>
         <source>Replaces the code with the template it came from.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1140,7 +1155,29 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+3"/>
+        <location line="+6"/>
+        <location line="+16"/>
+        <location line="+285"/>
+        <source>VS Code</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-300"/>
+        <source>The app for .c files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Choose a program...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+14"/>
+        <source>VS Code (not found)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+2"/>
         <source>Remove</source>
         <translation type="unfinished">削除</translation>
     </message>
@@ -1150,7 +1187,27 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+15"/>
+        <location line="+3"/>
+        <source>Side panel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Shows or hides the loop, the parameters and the signals beside the code.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Own window</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Moves the code to a window of its own -- on another monitor, say, with the scene and the charts in sight. Closing it brings the code back.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+17"/>
         <source>Messages</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1165,7 +1222,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+14"/>
+        <location line="+15"/>
         <source>Loop</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1200,7 +1257,43 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+87"/>
+        <location line="+171"/>
+        <source>Open in VS Code</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <location line="+48"/>
+        <source>Open in editor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-46"/>
+        <source>Opens the file in another editor (the arrow chooses which). TraceLab watches it: saving it there compiles it here. A template is saved as a copy of yours first.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+23"/>
+        <source>Could not write the editor configuration: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>the editor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+20"/>
+        <source>Could not open %1 in %2.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>%1 opened in %2: saving it there compiles it here.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+11"/>
         <source>plant</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1215,7 +1308,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+34"/>
+        <location line="+37"/>
         <source>Unsaved code</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1230,7 +1323,17 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+28"/>
+        <location line="+2"/>
+        <source>TraceLab code</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+15"/>
+        <source>%1 -- TraceLab code</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+17"/>
         <source>template &quot;%1&quot; (read-only: Save makes a copy)</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1827,12 +1930,12 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+30"/>
+        <location line="+34"/>
         <source>TraceLab: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-701"/>
+        <location line="-705"/>
         <source>Add plant</source>
         <translation>プラントを追加</translation>
     </message>

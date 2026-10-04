@@ -139,6 +139,19 @@ How it runs (`code/`, `tracelab_code`):
   the original** restores. A saved file is compiled again at once (also when
   saved by another editor); a version that does not compile leaves the
   previous one running.
+- **Another editor**: "Open in VS Code" / "Open in editor" (the arrow picks
+  VS Code, the app for .c files or, on Windows, a program to choose) opens
+  the block's file at the cursor's line -- a template is saved as a copy
+  first -- and a save there compiles it here. It also writes, in
+  `Documents/TraceLab`, `compile_flags.txt` (clangd) and
+  `.vscode/c_cpp_properties.json` (VS Code's C/C++ extension; VS Code is
+  opened with that folder) pointing at the runtime folder, so the editor
+  knows `tracelab.h` and the `TL_*` macros; a file of these without
+  TraceLab's marker is the user's and stays.
+- **Own window**: the block's editor (code, messages, parameters, signals)
+  moves to a window of its own -- another monitor, the scene in sight -- and
+  comes back when it closes; **Side panel** hides the parameters and
+  signals for a wider editor. Both are remembered (QSettings).
 - `LabControllerDevice` (`control/labdevices.h`, type `tracelab.controller`)
   is a `ControllerHost` with the filters (`SignalFilter`,
   `control/signalfilter.h`) and the controller (`CodeControllerAdapter`) in
@@ -219,6 +232,7 @@ lab/
     plantpage.h/.cpp        a plant's clock, settings and code
     blockeditor.h/.cpp      a block's code, source, messages, log, parameters, signals
     codeeditor.h/.cpp       the editor: line numbers, C highlighting, error marks
+    externaleditor.h/.cpp   opening a block's file in VS Code or another editor
 ```
 
 `tools/scene_preview` shows the line-follower scene fed by a synthetic track

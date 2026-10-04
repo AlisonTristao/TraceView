@@ -38,8 +38,18 @@ public:
     // The empty block of each kind ("New").
     static QString skeletonSource(BlockKind kind);
 
+    // Documents/TraceLab, created on demand (with QStandardPaths' test mode
+    // on, a folder under the test's local data instead).
+    static QString userRoot();
     // Documents/TraceLab/controllers (filters, plants), created on demand.
     static QString userDirectory(BlockKind kind);
+    // What tells another editor where a block's headers are, in userRoot():
+    // compile_flags.txt (clangd) and .vscode/c_cpp_properties.json (VS
+    // Code's C/C++ extension, with the folder open), both pointing at the
+    // runtime folder (CodeRuntime). Rewritten when missing or out of date;
+    // a file without TraceLab's marker is the user's and stays. False, with
+    // `error`, when one cannot be written.
+    static bool writeEditorConfig(QString* error = nullptr);
     // The block files in userDirectory(kind), newest first.
     static QStringList userFiles(BlockKind kind);
 

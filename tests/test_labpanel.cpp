@@ -4,18 +4,22 @@
 // its code, parameters and signals; Save turning an edited template into a
 // file of the user's (the template untouched, the origin line on top) and
 // "Back to the original" restoring it; every configuration change reaching
-// the project through ModuleHost::updateModuleDeviceConfig(). Offscreen;
-// with TRACELAB_PANEL_SHOTS=<folder> it also saves screenshots there.
+// the project through ModuleHost::updateModuleDeviceConfig(); the code in a
+// window of its own and back; what opening it in VS Code passes and the
+// editor configuration it writes. Offscreen (nothing is started); with
+// TRACELAB_PANEL_SHOTS=<folder> it also saves screenshots there.
 
 #include <QAction>
 #include <QComboBox>
 #include <QDir>
 #include <QJsonArray>
+#include <QJsonDocument>
 #include <QLabel>
 #include <QMenu>
 #include <QPushButton>
 #include <QStackedWidget>
 #include <QToolButton>
+#include <QVBoxLayout>
 #include <QtTest>
 #include <memory>
 
@@ -23,10 +27,12 @@
 #include "lab/benchmarks/linefollower/code/lftemplates.h"
 #include "lab/benchmarks/linefollower/device/lfplantdevice.h"
 #include "lab/code/codefiles.h"
+#include "lab/code/coderuntime.h"
 #include "lab/control/controllerhost.h"
 #include "lab/control/labdevices.h"
 #include "lab/module/blockeditor.h"
 #include "lab/module/codeeditor.h"
+#include "lab/module/externaleditor.h"
 #include "lab/module/labcard.h"
 #include "lab/module/labpanel.h"
 #include "lab/module/plantpage.h"
@@ -77,6 +83,15 @@ void shoot(QWidget* widget, const QString& name) {
 QToolButton* addButton(QWidget* panel, const QString& text) {
     for (QToolButton* button : panel->findChildren<QToolButton*>(QStringLiteral("labAddBlock"))) {
         if (button->text() == text && button->isVisible()) {
+            return button;
+        }
+    }
+    return nullptr;
+}
+
+QToolButton* toolButton(QWidget* parent, const QString& text) {
+    for (QToolButton* button : parent->findChildren<QToolButton*>()) {
+        if (button->text() == text) {
             return button;
         }
     }
@@ -256,6 +271,119 @@ private slots:
         QCOMPARE(pages->currentWidget(), panel.findChild<PlantPage*>());
         shoot(&panel, QStringLiteral("7-plant-page"));
         plant.pause();
+    }
+
+    void codeInItsOwnWindow() {
+        LabControllerDevice device(
+            QStringLiteral("ctl-window"),
+            QJsonObject{{"controller", QJsonObject{{"template", "linefollower/pd"}}}});
+        QWidget page;
+        auto* layout = new QVBoxLayout(&page);
+        auto* editor = new BlockEditor(&page);
+        layout->addWidget(editor);
+        page.resize(1200, 700);
+        page.show();
+        editor->setBlock(&device, LabControllerDevice::kController);
+        auto* code = editor->findChild<CodeEditor*>();
+        QVERIFY(code);
+        QVERIFY(code->toPlainText().contains(QLatin1String("TL_PARAM(kp")));
+
+        // The side panel hides and shows again.
+        QToolButton* side = toolButton(editor, QStringLiteral("Side panel"));
+        QVERIFY(side && side->isChecked());
+        QLabel* params = nullptr;
+        for (QLabel* label : editor->findChildren<QLabel*>()) {
+            if (label->text() == QLatin1String("Parameters")) {
+                params = label;
+            }
+        }
+        QVERIFY(params && params->isVisible());
+        side->click();
+        QVERIFY(!params->isVisible());
+        side->click();
+        QVERIFY(params->isVisible());
+
+        // Own window: the same editor, in a window; the page keeps a note.
+        QToolButton* own = toolButton(editor, QStringLiteral("Own window"));
+        QVERIFY(own);
+        own->click();
+        QVERIFY(editor->isDetached());
+        QPointer<QWidget> window = editor->detachedWindow();
+        QVERIFY(window && window->isWindow() && window->isVisible());
+        QVERIFY(window->isAncestorOf(code));
+        QVERIFY(!page.isAncestorOf(code));
+        QVERIFY(window->windowTitle().contains(QLatin1String("TraceLab")));
+        QVERIFY(own->isChecked());
+        code->setPlainText(code->toPlainText() + QStringLiteral("\n/* edited */\n"));
+        QVERIFY(editor->hasUnsavedChanges());
+        editor->refreshLive();
+        shoot(window, QStringLiteral("8-own-window"));
+        shoot(&page, QStringLiteral("9-page-while-away"));
+
+        // Closing it brings the code back, edits and all.
+        window->close();
+        QVERIFY(!editor->isDetached());
+        QVERIFY(editor->isAncestorOf(code));
+        QVERIFY(code->isVisible());
+        QVERIFY(editor->hasUnsavedChanges());
+        QVERIFY(!own->isChecked());
+        QTRY_VERIFY(window.isNull());
+
+        // An editor going away takes its window along.
+        auto away = std::make_unique<BlockEditor>();
+        away->setBlock(&device, LabControllerDevice::kController);
+        away->setDetached(true);
+        QPointer<QWidget> awayWindow = away->detachedWindow();
+        QVERIFY(awayWindow);
+        away.reset();
+        QVERIFY(awayWindow.isNull());
+    }
+
+    void vsCodeArguments() {
+        const QString root = code::CodeLibrary::userRoot();
+        const QString file = root + QStringLiteral("/controllers/pd.c");
+        // The TraceLab folder as the window's folder (its configuration),
+        // the file at the line.
+        QCOMPARE(external::vsCodeArguments(file, 12, root),
+                 (QStringList{QDir::toNativeSeparators(root), QStringLiteral("--goto"),
+                              QDir::toNativeSeparators(file) + QStringLiteral(":12")}));
+        // A file elsewhere opens alone.
+        const QString elsewhere = QDir::tempPath() + QStringLiteral("/elsewhere/x.c");
+        QCOMPARE(external::vsCodeArguments(elsewhere, 0, root),
+                 QStringList{QDir::toNativeSeparators(elsewhere)});
+        // Never the user's Documents in a test.
+        QVERIFY(!root.startsWith(
+            QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation)));
+    }
+
+    void editorConfiguration() {
+        QString error;
+        QVERIFY2(code::CodeLibrary::writeEditorConfig(&error), qPrintable(error));
+        const QString root = code::CodeLibrary::userRoot();
+        const QString include = QDir::cleanPath(code::CodeRuntime::instance().directory());
+        QVERIFY(QFileInfo::exists(include + QStringLiteral("/tracelab.h")));
+        const QString flags = code::CodeLibrary::readFile(root + QStringLiteral("/compile_flags.txt"));
+        QVERIFY(flags.split(QLatin1Char('\n')).contains(QStringLiteral("-I") +
+                                                         QDir::toNativeSeparators(include)));
+        QVERIFY(flags.contains(QLatin1String("-nostdinc")));
+        const QString propertiesPath = root + QStringLiteral("/.vscode/c_cpp_properties.json");
+        const QJsonObject configuration =
+            QJsonDocument::fromJson(code::CodeLibrary::readFile(propertiesPath).toUtf8())
+                .object()
+                .value(QStringLiteral("configurations"))
+                .toArray()
+                .first()
+                .toObject();
+        QCOMPARE(configuration.value(QStringLiteral("name")).toString(), QStringLiteral("TraceLab"));
+        QCOMPARE(configuration.value(QStringLiteral("includePath")).toArray().first().toString(),
+                 include);
+        // A file of the user's stays; a missing one comes back.
+        QVERIFY(code::CodeLibrary::writeFile(propertiesPath, QStringLiteral("{}\n")));
+        QVERIFY(code::CodeLibrary::writeEditorConfig(&error));
+        QCOMPARE(code::CodeLibrary::readFile(propertiesPath), QStringLiteral("{}\n"));
+        QVERIFY(QFile::remove(propertiesPath));
+        QVERIFY(code::CodeLibrary::writeEditorConfig(&error));
+        QVERIFY(code::CodeLibrary::readFile(propertiesPath).contains(QLatin1String("TraceLab")));
     }
 };
 

@@ -3,9 +3,14 @@
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QJsonObject>
 #include <QRegularExpression>
 #include <QSaveFile>
 #include <QStandardPaths>
+
+#include "lab/code/coderuntime.h"
 
 namespace tracelab::code {
 
@@ -85,14 +90,78 @@ QString CodeLibrary::kindFolder(BlockKind kind) {
     return QStringLiteral("controllers");
 }
 
-QString CodeLibrary::userDirectory(BlockKind kind) {
-    QString documents = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
+QString CodeLibrary::userRoot() {
+    // Qt's test mode does not move Documents: tests get a folder of their
+    // own and never touch the user's blocks.
+    QString documents =
+        QStandardPaths::isTestModeEnabled()
+            ? QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation) +
+                  QStringLiteral("/documents")
+            : QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
     if (documents.isEmpty()) {
         documents = QDir::homePath();
     }
-    const QString path = documents + QStringLiteral("/TraceLab/") + kindFolder(kind);
+    const QString path = documents + QStringLiteral("/TraceLab");
     QDir().mkpath(path);
     return path;
+}
+
+QString CodeLibrary::userDirectory(BlockKind kind) {
+    const QString path = userRoot() + QLatin1Char('/') + kindFolder(kind);
+    QDir().mkpath(path);
+    return path;
+}
+
+bool CodeLibrary::writeEditorConfig(QString* error) {
+    if (!CodeRuntime::instance().ensureReady(error)) {
+        return false;
+    }
+    const QString root = userRoot();
+    const QString include = QDir::cleanPath(CodeRuntime::instance().directory());
+    // A file of ours is rewritten when out of date; one the user wrote
+    // (without the marker) is left alone.
+    const auto update = [error](const QString& path, const QString& text, const QString& marker) {
+        if (QFile::exists(path)) {
+            const QString current = readFile(path);
+            if (current == text || !current.contains(marker)) {
+                return true;
+            }
+        }
+        QDir().mkpath(QFileInfo(path).absolutePath());
+        return writeFile(path, text, error);
+    };
+    // clangd (and the editors built on it) reads compile_flags.txt from the
+    // file's folder or any parent: one argument a line.
+    const QString flags = QStringList{QStringLiteral("-xc"), QStringLiteral("-std=gnu99"),
+                                      QStringLiteral("-nostdinc"),
+                                      QStringLiteral("-I") + QDir::toNativeSeparators(include),
+                                      QStringLiteral("-D__TINYC__=1"), QStringLiteral("-Wall"),
+                                      QString()}
+                              .join(QLatin1Char('\n'));
+    if (!update(root + QStringLiteral("/compile_flags.txt"), flags,
+                QStringLiteral("tracelab-code"))) {
+        return false;
+    }
+    // VS Code's C/C++ extension, with Documents/TraceLab open as the folder.
+#if defined(Q_OS_WIN)
+    const QString mode = QStringLiteral("windows-gcc-x64");
+#elif defined(Q_OS_MACOS)
+    const QString mode = QStringLiteral("macos-clang-arm64");
+#else
+    const QString mode = QStringLiteral("linux-gcc-x64");
+#endif
+    const QJsonObject configuration{
+        {"name", "TraceLab"},
+        {"includePath", QJsonArray{include}},
+        {"defines", QJsonArray{"__TINYC__=1"}},
+        {"compilerPath", ""},  // no system headers: the block sees only these
+        {"cStandard", "gnu99"},
+        {"intelliSenseMode", mode},
+    };
+    const QJsonObject properties{{"configurations", QJsonArray{configuration}}, {"version", 4}};
+    return update(root + QStringLiteral("/.vscode/c_cpp_properties.json"),
+                  QString::fromUtf8(QJsonDocument(properties).toJson()),
+                  QStringLiteral("\"TraceLab\""));
 }
 
 QStringList CodeLibrary::userFiles(BlockKind kind) {

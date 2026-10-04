@@ -1097,7 +1097,22 @@
 <context>
     <name>tracelab::BlockEditor</name>
     <message>
-        <location filename="../lab/module/blockeditor.cpp" line="+94"/>
+        <location filename="../lab/module/blockeditor.cpp" line="+98"/>
+        <source>The code is open in a window of its own.</source>
+        <translation>O código está aberto em uma janela própria.</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Show the window</source>
+        <translation>Mostrar a janela</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Bring it back here</source>
+        <translation>Trazer de volta para cá</translation>
+    </message>
+    <message>
+        <location line="+29"/>
         <source>Code</source>
         <translation>Código</translation>
     </message>
@@ -1108,24 +1123,24 @@
     </message>
     <message>
         <location line="+4"/>
-        <location line="+428"/>
+        <location line="+621"/>
         <location line="+24"/>
         <source>Save</source>
         <translation>Salvar</translation>
     </message>
     <message>
-        <location line="-451"/>
+        <location line="-644"/>
         <source>Saves and compiles the code (Ctrl+S). A template is saved as a copy in your folder.</source>
         <translation>Salva e compila o código (Ctrl+S). Um template é salvo como cópia na sua pasta.</translation>
     </message>
     <message>
         <location line="+3"/>
-        <location line="+479"/>
+        <location line="+672"/>
         <source>Back to the original</source>
         <translation>Voltar ao original</translation>
     </message>
     <message>
-        <location line="-478"/>
+        <location line="-671"/>
         <source>Replaces the code with the template it came from.</source>
         <translation>Substitui o código pelo template de onde ele veio.</translation>
     </message>
@@ -1140,7 +1155,29 @@
         <translation>Abre a pasta do arquivo (ou a sua pasta de blocos deste tipo) no gerenciador de arquivos do sistema.</translation>
     </message>
     <message>
-        <location line="+3"/>
+        <location line="+6"/>
+        <location line="+16"/>
+        <location line="+285"/>
+        <source>VS Code</source>
+        <translation>VS Code</translation>
+    </message>
+    <message>
+        <location line="-300"/>
+        <source>The app for .c files</source>
+        <translation>O programa padrão para arquivos .c</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Choose a program...</source>
+        <translation>Escolher um programa...</translation>
+    </message>
+    <message>
+        <location line="+14"/>
+        <source>VS Code (not found)</source>
+        <translation>VS Code (não encontrado)</translation>
+    </message>
+    <message>
+        <location line="+2"/>
         <source>Remove</source>
         <translation>Remover</translation>
     </message>
@@ -1150,7 +1187,27 @@
         <translation>Tira este filtro da cadeia (o arquivo continua).</translation>
     </message>
     <message>
-        <location line="+15"/>
+        <location line="+3"/>
+        <source>Side panel</source>
+        <translation>Painel lateral</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Shows or hides the loop, the parameters and the signals beside the code.</source>
+        <translation>Mostra ou esconde a malha, os parâmetros e os sinais ao lado do código.</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Own window</source>
+        <translation>Janela própria</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Moves the code to a window of its own -- on another monitor, say, with the scene and the charts in sight. Closing it brings the code back.</source>
+        <translation>Move o código para uma janela própria -- em outro monitor, por exemplo, com a cena e os gráficos à vista. Fechar a janela traz o código de volta.</translation>
+    </message>
+    <message>
+        <location line="+17"/>
         <source>Messages</source>
         <translation>Mensagens</translation>
     </message>
@@ -1165,7 +1222,7 @@
         <translation>Log</translation>
     </message>
     <message>
-        <location line="+14"/>
+        <location line="+15"/>
         <source>Loop</source>
         <translation>Malha</translation>
     </message>
@@ -1200,7 +1257,43 @@
         <translation>Clique duas vezes num sinal para declará-lo no cursor.</translation>
     </message>
     <message>
-        <location line="+87"/>
+        <location line="+171"/>
+        <source>Open in VS Code</source>
+        <translation>Abrir no VS Code</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <location line="+48"/>
+        <source>Open in editor</source>
+        <translation>Abrir no editor</translation>
+    </message>
+    <message>
+        <location line="-46"/>
+        <source>Opens the file in another editor (the arrow chooses which). TraceLab watches it: saving it there compiles it here. A template is saved as a copy of yours first.</source>
+        <translation>Abre o arquivo em outro editor (a seta escolhe qual). O TraceLab vigia o arquivo: salvar lá compila aqui. Um template é salvo antes como uma cópia sua.</translation>
+    </message>
+    <message>
+        <location line="+23"/>
+        <source>Could not write the editor configuration: %1</source>
+        <translation>Não foi possível escrever a configuração do editor: %1</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>the editor</source>
+        <translation>o editor</translation>
+    </message>
+    <message>
+        <location line="+20"/>
+        <source>Could not open %1 in %2.</source>
+        <translation>Não foi possível abrir %1 em %2.</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>%1 opened in %2: saving it there compiles it here.</source>
+        <translation>%1 aberto em %2: salvar lá compila aqui.</translation>
+    </message>
+    <message>
+        <location line="+11"/>
         <source>plant</source>
         <translation>planta</translation>
     </message>
@@ -1215,7 +1308,7 @@
         <translation>controlador</translation>
     </message>
     <message>
-        <location line="+34"/>
+        <location line="+37"/>
         <source>Unsaved code</source>
         <translation>Código não salvo</translation>
     </message>
@@ -1230,7 +1323,17 @@
         <translation>Nenhum bloco</translation>
     </message>
     <message>
-        <location line="+28"/>
+        <location line="+2"/>
+        <source>TraceLab code</source>
+        <translation>Código do TraceLab</translation>
+    </message>
+    <message>
+        <location line="+15"/>
+        <source>%1 -- TraceLab code</source>
+        <translation>%1 -- Código do TraceLab</translation>
+    </message>
+    <message>
+        <location line="+17"/>
         <source>template &quot;%1&quot; (read-only: Save makes a copy)</source>
         <translation>template &quot;%1&quot; (somente leitura: Salvar cria uma cópia)</translation>
     </message>
@@ -1811,12 +1914,12 @@
         <translation>%1 é um controlador escrito em C++ dentro do TraceView: ele fecha a malha nesta planta, mas o código dele não pode ser visto nem alterado aqui. Substitua por um controlador em C (&quot;+ Controlador&quot; ou &quot;Adicionar controlador&quot; na faixa de opções, depois de removê-lo: dois controladores numa planta disputam as entradas dela).</translation>
     </message>
     <message>
-        <location line="+30"/>
+        <location line="+34"/>
         <source>TraceLab: %1</source>
         <translation>TraceLab: %1</translation>
     </message>
     <message>
-        <location line="-701"/>
+        <location line="-705"/>
         <source>Add plant</source>
         <translation>Adicionar planta</translation>
     </message>

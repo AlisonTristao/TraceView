@@ -744,9 +744,13 @@ void LabPanel::pick(Pick what, int index) {
 
 void LabPanel::refreshLive() {
     refreshCards();
+    // A page in sight, and an editor in a window of its own (in sight too).
     if (m_pages->currentWidget() == m_plantPage) {
         m_plantPage->refreshLive();
-    } else if (m_pages->currentWidget() == m_blockEditor) {
+    } else if (m_plantPage->codeEditor()->isDetached()) {
+        m_plantPage->codeEditor()->refreshLive();
+    }
+    if (m_pages->currentWidget() == m_blockEditor || m_blockEditor->isDetached()) {
         m_blockEditor->refreshLive();
     }
 }

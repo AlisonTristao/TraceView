@@ -11,12 +11,14 @@
 #include <QInputDialog>
 #include <QLabel>
 #include <QListWidget>
+#include <QMenu>
 #include <QLocale>
 #include <QMessageBox>
 #include <QPlainTextEdit>
 #include <QPushButton>
 #include <QRegularExpression>
 #include <QScrollArea>
+#include <QSettings>
 #include <QShortcut>
 #include <QSpinBox>
 #include <QSplitter>
@@ -28,6 +30,7 @@
 
 #include "lab/code/codefiles.h"
 #include "lab/module/codeeditor.h"
+#include "lab/module/externaleditor.h"
 #include "theme/doublespinbox.h"
 #include "traceview/thememanager.h"
 
@@ -41,8 +44,14 @@ using code::Declaration;
 namespace {
 
 constexpr int kMaxLogLines = 2000;
-constexpr int kSideWidth = 280;
+constexpr int kSideWidth = 240;
 constexpr int kFieldWidth = 120;
+constexpr int kWindowMargin = 10;
+constexpr int kWindowWidth = 1100;
+constexpr int kWindowHeight = 760;
+constexpr char kSidePanelKey[] = "TraceLab/blockSidePanel";
+constexpr char kWindowGeometryKey[] = "TraceLab/codeWindowGeometry";
+constexpr char kExternalKey[] = "TraceLab/externalEditor";
 
 // What an entry of the source combo stands for.
 enum SourceType { Header = 0, Template, File, OpenFile, NewFile };
@@ -73,9 +82,38 @@ int decimalsFor(const Declaration& decl) {
 }  // namespace
 
 BlockEditor::BlockEditor(QWidget* parent) : QWidget(parent) {
-    auto* layout = new QVBoxLayout(this);
+    auto* outer = new QVBoxLayout(this);
+    outer->setContentsMargins(0, 0, 0, 0);
+    outer->setSpacing(0);
+    // The body goes to a window of its own and back (setDetached()); the
+    // note stands in for it meanwhile.
+    m_body = new QWidget(this);
+    auto* layout = new QVBoxLayout(m_body);
     layout->setContentsMargins(0, 0, 0, 0);
     layout->setSpacing(8);
+    outer->addWidget(m_body, 1);
+    m_detachedNote = new QWidget(this);
+    auto* noteLayout = new QHBoxLayout(m_detachedNote);
+    noteLayout->setContentsMargins(0, 8, 0, 8);
+    auto* noteText = new QLabel(tr("The code is open in a window of its own."), m_detachedNote);
+    noteText->setObjectName(QStringLiteral("labNote"));
+    noteLayout->addWidget(noteText);
+    auto* showWindow = new QPushButton(tr("Show the window"), m_detachedNote);
+    noteLayout->addWidget(showWindow);
+    auto* bringBack = new QPushButton(tr("Bring it back here"), m_detachedNote);
+    noteLayout->addWidget(bringBack);
+    noteLayout->addStretch();
+    outer->addWidget(m_detachedNote);
+    outer->addStretch(0);
+    m_detachedNote->hide();
+    connect(showWindow, &QPushButton::clicked, this, [this] {
+        if (m_window) {
+            m_window->showNormal();
+            m_window->raise();
+            m_window->activateWindow();
+        }
+    });
+    connect(bringBack, &QPushButton::clicked, this, [this] { setDetached(false); });
 
     // The header: the block, where its code comes from, the actions.
     auto* header = new QHBoxLayout;
@@ -112,9 +150,43 @@ BlockEditor::BlockEditor(QWidget* parent) : QWidget(parent) {
     m_folderButton->setToolTip(tr("Opens the folder of the file (or your folder of blocks of "
                                   "this kind) in the system's file manager."));
     header->addWidget(m_folderButton);
+    m_externalButton = new QToolButton(this);
+    m_externalButton->setPopupMode(QToolButton::MenuButtonPopup);
+    auto* externalMenu = new QMenu(m_externalButton);
+    QAction* vsCodeAction = externalMenu->addAction(tr("VS Code"));
+    QAction* defaultAction = externalMenu->addAction(tr("The app for .c files"));
+    QAction* chooserAction = externalMenu->addAction(tr("Choose a program..."));
+    chooserAction->setVisible(external::hasChooser());
+    m_externalButton->setMenu(externalMenu);
+    header->addWidget(m_externalButton);
+    connect(m_externalButton, &QToolButton::clicked, this,
+            [this] { openExternally(preferredExternal()); });
+    connect(vsCodeAction, &QAction::triggered, this, [this] { openExternally(External::VsCode); });
+    connect(defaultAction, &QAction::triggered, this,
+            [this] { openExternally(External::DefaultApp); });
+    connect(chooserAction, &QAction::triggered, this,
+            [this] { openExternally(External::Chooser); });
+    connect(externalMenu, &QMenu::aboutToShow, this, [vsCodeAction] {
+        const bool found = !external::findVsCode().isEmpty();
+        vsCodeAction->setEnabled(found);
+        vsCodeAction->setText(found ? tr("VS Code") : tr("VS Code (not found)"));
+    });
     m_removeButton = new QPushButton(tr("Remove"), this);
     m_removeButton->setToolTip(tr("Takes this filter out of the chain (the file stays)."));
     header->addWidget(m_removeButton);
+    m_sideButton = new QToolButton(this);
+    m_sideButton->setText(tr("Side panel"));
+    m_sideButton->setCheckable(true);
+    m_sideButton->setToolTip(tr("Shows or hides the loop, the parameters and the signals beside "
+                                "the code."));
+    header->addWidget(m_sideButton);
+    m_windowButton = new QToolButton(this);
+    m_windowButton->setText(tr("Own window"));
+    m_windowButton->setCheckable(true);
+    m_windowButton->setToolTip(tr("Moves the code to a window of its own -- on another monitor, "
+                                  "say, with the scene and the charts in sight. Closing it brings "
+                                  "the code back."));
+    header->addWidget(m_windowButton);
     layout->addLayout(header);
 
     // The code and, under it, its messages and log; the side panel on the
@@ -141,6 +213,7 @@ BlockEditor::BlockEditor(QWidget* parent) : QWidget(parent) {
     left->setStretchFactor(1, 1);
 
     auto* sideScroll = new QScrollArea(split);
+    m_side = sideScroll;
     sideScroll->setWidgetResizable(true);
     sideScroll->setFrameShape(QFrame::NoFrame);
     sideScroll->setMinimumWidth(kSideWidth);
@@ -191,7 +264,8 @@ BlockEditor::BlockEditor(QWidget* parent) : QWidget(parent) {
     split->setStretchFactor(1, 0);
     layout->addWidget(split, 1);
 
-    auto* saveShortcut = new QShortcut(QKeySequence::Save, this);
+    // On the body, so it still works with the code in its own window.
+    auto* saveShortcut = new QShortcut(QKeySequence::Save, m_body);
     saveShortcut->setContext(Qt::WidgetWithChildrenShortcut);
     connect(saveShortcut, &QShortcut::activated, this, [this] { save(); });
     connect(m_saveButton, &QPushButton::clicked, this, [this] { save(); });
@@ -246,14 +320,162 @@ BlockEditor::BlockEditor(QWidget* parent) : QWidget(parent) {
         }
         refreshParamValues();
     });
+    connect(m_sideButton, &QToolButton::toggled, this, [this](bool on) {
+        setSidePanelVisible(on);
+        QSettings().setValue(QLatin1String(kSidePanelKey), on);
+    });
+    connect(m_windowButton, &QToolButton::toggled, this, &BlockEditor::setDetached);
     connect(&traceview::ThemeManager::instance(), &traceview::ThemeManager::themeChanged, this,
             &BlockEditor::applyTheme);
+    {
+        const QSignalBlocker blocker(m_sideButton);
+        const bool side = QSettings().value(QLatin1String(kSidePanelKey), true).toBool();
+        m_sideButton->setChecked(side);
+        setSidePanelVisible(side);
+    }
+    refreshExternalButton();
     setBlock(nullptr, 0);
 }
 
+BlockEditor::~BlockEditor() {
+    // The window has no parent (it must not stay above TraceView's): it and
+    // the body in it go with the editor.
+    delete m_window.data();
+}
+
 void BlockEditor::applyTheme() {
+    if (m_window) {
+        const traceview::ThemePalette& palette =
+            traceview::ThemeManager::instance().currentTheme();
+        m_window->setStyleSheet(
+            QStringLiteral("QLabel#labFieldLabel, QLabel#labNote { color: %1; }")
+                .arg(palette.textSecondary.name()));
+    }
     refreshMessages();
     refreshLive();
+}
+
+void BlockEditor::setSidePanelVisible(bool visible) {
+    m_side->setVisible(visible);
+}
+
+void BlockEditor::setDetached(bool detached) {
+    if (detached == isDetached()) {
+        return;
+    }
+    if (detached) {
+        auto* window = new QWidget(nullptr, Qt::Window);
+        // Closing TraceView's main window still quits with this one open.
+        window->setAttribute(Qt::WA_QuitOnClose, false);
+        auto* windowLayout = new QVBoxLayout(window);
+        windowLayout->setContentsMargins(kWindowMargin, kWindowMargin, kWindowMargin,
+                                         kWindowMargin);
+        windowLayout->addWidget(m_body);
+        m_window = window;
+        if (!window->restoreGeometry(
+                QSettings().value(QLatin1String(kWindowGeometryKey)).toByteArray())) {
+            window->resize(kWindowWidth, kWindowHeight);
+        }
+        window->installEventFilter(this);
+        applyTheme();
+        refreshHeader();
+        m_body->show();
+        m_detachedNote->show();
+        window->show();
+        window->raise();
+        window->activateWindow();
+        m_editor->setFocus();
+    } else {
+        QWidget* window = m_window;
+        m_window = nullptr;
+        window->removeEventFilter(this);
+        QSettings().setValue(QLatin1String(kWindowGeometryKey), window->saveGeometry());
+        m_detachedNote->hide();
+        static_cast<QVBoxLayout*>(layout())->insertWidget(0, m_body, 1);
+        m_body->show();
+        window->hide();
+        window->deleteLater();
+    }
+    const QSignalBlocker blocker(m_windowButton);
+    m_windowButton->setChecked(detached);
+}
+
+bool BlockEditor::eventFilter(QObject* watched, QEvent* event) {
+    if (watched == m_window && event->type() == QEvent::Close) {
+        setDetached(false);
+    }
+    return QWidget::eventFilter(watched, event);
+}
+
+BlockEditor::External BlockEditor::preferredExternal() const {
+    const QString stored = QSettings().value(QLatin1String(kExternalKey)).toString();
+    if (stored == QLatin1String("default")) {
+        return External::DefaultApp;
+    }
+    if (stored == QLatin1String("chooser") && external::hasChooser()) {
+        return External::Chooser;
+    }
+    return external::findVsCode().isEmpty() ? External::DefaultApp : External::VsCode;
+}
+
+void BlockEditor::refreshExternalButton() {
+    m_externalButton->setText(preferredExternal() == External::VsCode ? tr("Open in VS Code")
+                                                                      : tr("Open in editor"));
+    m_externalButton->setToolTip(
+        tr("Opens the file in another editor (the arrow chooses which). TraceLab watches it: "
+           "saving it there compiles it here. A template is saved as a copy of yours first."));
+}
+
+bool BlockEditor::openExternally(External how) {
+    if (!m_device) {
+        return false;
+    }
+    // A file to open: a template becomes a copy of yours, edits here are
+    // saved (or dropped) first.
+    if (m_device->spec(m_block).path.isEmpty()) {
+        if (!save()) {
+            return false;
+        }
+    } else if (!maybeSave()) {
+        return false;
+    }
+    const QString path = m_device->spec(m_block).path;
+    if (path.isEmpty()) {
+        return false;
+    }
+    QString configError;
+    if (!CodeLibrary::writeEditorConfig(&configError)) {
+        emit statusMessage(tr("Could not write the editor configuration: %1").arg(configError));
+    }
+    const int line = m_editor->textCursor().blockNumber() + 1;
+    bool opened = false;
+    QString program = tr("the editor");
+    switch (how) {
+        case External::VsCode:
+            opened = external::openInVsCode(external::findVsCode(), path, line,
+                                            CodeLibrary::userRoot());
+            program = tr("VS Code");
+            QSettings().setValue(QLatin1String(kExternalKey), QStringLiteral("vscode"));
+            break;
+        case External::DefaultApp:
+            opened = external::openWithDefaultApp(path);
+            QSettings().setValue(QLatin1String(kExternalKey), QStringLiteral("default"));
+            break;
+        case External::Chooser:
+            opened = external::openWithChooser(path);
+            QSettings().setValue(QLatin1String(kExternalKey), QStringLiteral("chooser"));
+            break;
+    }
+    refreshExternalButton();
+    if (!opened) {
+        QMessageBox::warning(m_body, tr("Open in editor"),
+                             tr("Could not open %1 in %2.")
+                                 .arg(QDir::toNativeSeparators(path), program));
+        return false;
+    }
+    emit statusMessage(tr("%1 opened in %2: saving it there compiles it here.")
+                           .arg(QFileInfo(path).fileName(), program));
+    return true;
 }
 
 QString BlockEditor::kindFolderLabel() const {
@@ -286,6 +508,9 @@ void BlockEditor::setBlock(CodeBlockOwner* device, int block) {
         device->takeLog(block);  // what it wrote before is not news
     }
     m_removeButton->setVisible(device && device->canRemove(block));
+    if (m_window && device) {
+        m_window->raise();
+    }
     loadSourceFromDevice();
     refreshSourceCombo();
     rebuildParams();
@@ -302,7 +527,7 @@ bool BlockEditor::maybeSave() {
         return true;
     }
     const auto answer = QMessageBox::question(
-        this, tr("Unsaved code"),
+        m_body, tr("Unsaved code"),
         tr("The code of %1 has changes that were not saved.").arg(m_device->blockName(m_block)),
         QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel, QMessageBox::Save);
     if (answer == QMessageBox::Cancel) {
@@ -347,6 +572,9 @@ void BlockEditor::onBlocksChanged() {
 void BlockEditor::refreshHeader() {
     if (!m_device) {
         m_title->setText(tr("No block"));
+        if (m_window) {
+            m_window->setWindowTitle(tr("TraceLab code"));
+        }
         m_origin->clear();
         m_saveButton->setEnabled(false);
         m_revertButton->setEnabled(false);
@@ -359,6 +587,9 @@ void BlockEditor::refreshHeader() {
         title += QStringLiteral(" *");
     }
     m_title->setText(title);
+    if (m_window) {
+        m_window->setWindowTitle(tr("%1 -- TraceLab code").arg(title));
+    }
     // The template it came from, and whether it still is that.
     QString templateId = spec.templateId;
     if (templateId.isEmpty()) {
@@ -470,7 +701,7 @@ void BlockEditor::pickSource(int index) {
             break;
         case OpenFile: {
             const QString path = QFileDialog::getOpenFileName(
-                this, tr("Open a %1").arg(kindFolderLabel()), CodeLibrary::userDirectory(kind),
+                m_body, tr("Open a %1").arg(kindFolderLabel()), CodeLibrary::userDirectory(kind),
                 tr("C files (*.c);;All files (*)"));
             if (path.isEmpty()) {
                 refreshSourceCombo();
@@ -482,7 +713,7 @@ void BlockEditor::pickSource(int index) {
         case NewFile: {
             bool ok = false;
             const QString name = QInputDialog::getText(
-                this, tr("New %1").arg(kindFolderLabel()),
+                m_body, tr("New %1").arg(kindFolderLabel()),
                 tr("File name (saved in %1):")
                     .arg(QDir::toNativeSeparators(CodeLibrary::userDirectory(kind))),
                 QLineEdit::Normal,
@@ -496,7 +727,7 @@ void BlockEditor::pickSource(int index) {
             QString error;
             spec.path = CodeLibrary::instance().createFile(kind, QString(), name.trimmed(), &error);
             if (spec.path.isEmpty()) {
-                QMessageBox::warning(this, tr("New %1").arg(kindFolderLabel()), error);
+                QMessageBox::warning(m_body, tr("New %1").arg(kindFolderLabel()), error);
                 refreshSourceCombo();
                 return;
             }
@@ -528,7 +759,7 @@ bool BlockEditor::save() {
     QString error;
     if (!spec.path.isEmpty()) {
         if (!CodeLibrary::writeFile(spec.path, text, &error)) {
-            QMessageBox::warning(this, tr("Save"), tr("Cannot write %1: %2")
+            QMessageBox::warning(m_body, tr("Save"), tr("Cannot write %1: %2")
                                                        .arg(QDir::toNativeSeparators(spec.path), error));
             return false;
         }
@@ -552,7 +783,7 @@ bool BlockEditor::save() {
             CodeLibrary::instance().createFile(kind, spec.templateId, QString(), &error);
         const QString withOrigin = CodeLibrary::withOrigin(text, spec.templateId);
         if (path.isEmpty() || !CodeLibrary::writeFile(path, withOrigin, &error)) {
-            QMessageBox::warning(this, tr("Save"), error);
+            QMessageBox::warning(m_body, tr("Save"), error);
             return false;
         }
         spec.path = path;
@@ -583,7 +814,7 @@ void BlockEditor::revertToOriginal() {
         return;
     }
     const auto answer = QMessageBox::question(
-        this, tr("Back to the original"),
+        m_body, tr("Back to the original"),
         spec.path.isEmpty()
             ? tr("Discard your changes and go back to the template?")
             : tr("Replace the code of %1 with the original template? Your version of the file is "
