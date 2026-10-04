@@ -133,7 +133,7 @@ void TestLabModule::installRegistersSceneWidgetAndTab() {
     auto* panel = dynamic_cast<tracelab::LabPanel*>(host.m_contents.front().get());
     QVERIFY(panel);
     QVERIFY(panel->ribbonActions().at(3)->isSeparator());
-    QCOMPARE(host.m_deviceTypes, (QStringList{"tracelab.linefollower.plant",
+    QCOMPARE(host.m_deviceTypes, (QStringList{"tracelab.controller", "tracelab.linefollower.plant",
                                               "tracelab.linefollower.controller"}));
     // The benchmark is a project (File > Open Example), not a tab button.
     QCOMPARE(host.m_examples,

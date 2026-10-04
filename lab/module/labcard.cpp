@@ -43,6 +43,32 @@ void LabCard::setStatus(Tone tone, const QString& text) {
     update(0, 0, width(), kHeaderHeight);
 }
 
+void LabCard::setTitle(const QString& title) {
+    if (title != m_title) {
+        m_title = title;
+        update(0, 0, width(), kHeaderHeight);
+    }
+}
+
+void LabCard::setSelectable(bool selectable) {
+    m_selectable = selectable;
+    setCursor(selectable ? Qt::PointingHandCursor : Qt::ArrowCursor);
+}
+
+void LabCard::setSelected(bool selected) {
+    if (selected != m_selected) {
+        m_selected = selected;
+        update();
+    }
+}
+
+void LabCard::mousePressEvent(QMouseEvent* event) {
+    if (m_selectable) {
+        emit clicked();
+    }
+    QWidget::mousePressEvent(event);
+}
+
 void LabCard::paintEvent(QPaintEvent*) {
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing);
@@ -54,7 +80,7 @@ void LabCard::paintEvent(QPaintEvent*) {
     const QPainterPath outline = traceview::frameShapePath(
         QRectF(rect()).adjusted(kInset, kInset, -kInset, -kInset), frame);
     painter.fillPath(outline, palette.surface);
-    if (frame.idleOutline && frame.borderWidth > 0.0) {
+    if (!m_selected && frame.idleOutline && frame.borderWidth > 0.0) {
         painter.setPen(QPen(palette.border, frame.borderWidth));
         painter.setBrush(Qt::NoBrush);
         painter.drawPath(outline);
@@ -109,6 +135,13 @@ void LabCard::paintEvent(QPaintEvent*) {
     painter.setPen(palette.textPrimary);
     painter.drawText(textRect, Qt::AlignVCenter | Qt::AlignLeft,
                      QFontMetrics(titleFont).elidedText(m_title, Qt::ElideRight, textRect.width()));
+
+    // Picked: the accent outline over everything, header included.
+    if (m_selected) {
+        painter.setPen(QPen(palette.accent, traceview::kFrameSelectionWidth));
+        painter.setBrush(Qt::NoBrush);
+        painter.drawPath(outline);
+    }
 }
 
 }  // namespace tracelab

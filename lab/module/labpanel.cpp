@@ -1,44 +1,49 @@
 #include "labpanel.h"
 
 #include <QAction>
-#include <QCheckBox>
 #include <QComboBox>
-#include <QFormLayout>
-#include <QFrame>
-#include <QGridLayout>
+#include <QDir>
+#include <QFileDialog>
+#include <QFileInfo>
 #include <QHBoxLayout>
-#include <QJsonObject>
+#include <QInputDialog>
+#include <QJsonArray>
 #include <QLabel>
 #include <QLocale>
+#include <QMenu>
+#include <QMessageBox>
 #include <QPushButton>
 #include <QScrollArea>
 #include <QScrollBar>
-#include <QSpinBox>
+#include <QStackedWidget>
 #include <QTimer>
+#include <QToolButton>
 #include <QVBoxLayout>
 
-#include "lab/benchmarks/linefollower/device/lfdevices.h"
+#include "lab/code/codefiles.h"
+#include "lab/control/codecontrolleradapter.h"
 #include "lab/control/controllerhost.h"
+#include "lab/control/labdevices.h"
+#include "lab/module/blockeditor.h"
 #include "lab/module/labcard.h"
+#include "lab/module/plantpage.h"
+#include "lab/plant/labplantdevice.h"
 #include "lab/scenes/diffdrivescene.h"
 #include "lab/scenes/scenewidget.h"
 #include "modules/appmodule.h"
-#include "theme/doublespinbox.h"
 #include "theme/iconutils.h"
 #include "traceview/thememanager.h"
 
 namespace tracelab {
 
+using code::BlockKind;
+using code::CodeLibrary;
+
 namespace {
 
-constexpr int kStatusIntervalMs = 250;
-// The cards page: the canvas margin and the gap between cards.
+constexpr int kLiveIntervalMs = 250;
 constexpr int kPageMargin = 16;
-constexpr int kCardSpacing = 12;
-// Every field at least this wide (Settings' kMinFieldWidth), wider when a
-// value needs it -- see LabPanel::alignCards().
-constexpr int kMinFieldWidth = 180;
-constexpr int kStatSpacing = 8;
+constexpr int kCardWidth = 200;
 constexpr int kRibbonIconSize = 16;  // core/ribbonicons.h
 // The empty state, laid out like a Settings category page.
 constexpr int kEmptyMarginH = 28;
@@ -46,115 +51,29 @@ constexpr int kEmptyMarginV = 24;
 constexpr int kEmptySpacing = 20;
 constexpr int kEmptyTextWidth = 640;
 
-// The speed choices, in combo order.
-struct Speed {
-    lf::RunMode mode;
-    double scale;
-};
-const Speed kSpeeds[] = {
-    {lf::RunMode::RealTime, 1.0},
-    {lf::RunMode::RealTime, 2.0},
-    {lf::RunMode::AsFastAsPossible, 1.0},
-    {lf::RunMode::Lockstep, 1.0},
-};
-
-// A field whose arrows keep a step picked for its quantity instead of
-// DoubleSpinBox's adaptive one.
-void setFixedStep(QDoubleSpinBox* spin, double step) {
-    spin->setStepType(QAbstractSpinBox::DefaultStepType);
-    spin->setSingleStep(step);
-}
-
-// A form inside a card, labels on the left in the secondary text color.
-QFormLayout* addForm(QBoxLayout* layout) {
-    auto* form = new QFormLayout;
-    form->setContentsMargins(0, 0, 0, 0);
-    form->setHorizontalSpacing(12);
-    form->setVerticalSpacing(8);
-    form->setLabelAlignment(Qt::AlignLeft | Qt::AlignVCenter);
-    form->setFieldGrowthPolicy(QFormLayout::FieldsStayAtSizeHint);
-    layout->addLayout(form);
-    return form;
-}
-
-void addField(QFormLayout* form, const QString& label, QWidget* field) {
-    auto* text = new QLabel(label, field->parentWidget());
-    text->setObjectName(QStringLiteral("labFieldLabel"));
-    form->addRow(text, field);
-}
-
-// A combo item under a short name, with its long form as the item tooltip.
-void addItem(QComboBox* combo, const QString& text, const QVariant& data,
-             const QString& tooltip) {
-    combo->addItem(text, data);
-    if (!tooltip.isEmpty()) {
-        combo->setItemData(combo->count() - 1, tooltip, Qt::ToolTipRole);
-    }
-}
-
-// The fields of one controller kind: a divider, the kind's name and its
-// own form, shown only while that kind is picked.
-QWidget* addFieldGroup(QBoxLayout* body, const QString& title, QFormLayout** form) {
-    auto* group = new QWidget;
-    group->setObjectName(QStringLiteral("labFieldGroup"));
-    auto* layout = new QVBoxLayout(group);
-    layout->setContentsMargins(0, 2, 0, 0);
-    layout->setSpacing(8);
-    auto* divider = new QFrame(group);
-    divider->setObjectName(QStringLiteral("sectionDivider"));
-    divider->setFixedHeight(1);
-    layout->addWidget(divider);
-    auto* heading = new QLabel(title, group);
-    heading->setObjectName(QStringLiteral("labNote"));
-    layout->addWidget(heading);
-    *form = addForm(layout);
-    body->addWidget(group);
-    return group;
-}
-
-// A number tile (value over its caption) in `row`; returns the value label.
-QLabel* addStat(QHBoxLayout* row, const QString& caption, QWidget* parent) {
-    auto* tile = new QFrame(parent);
-    tile->setObjectName(QStringLiteral("labStat"));
-    auto* layout = new QVBoxLayout(tile);
-    layout->setContentsMargins(8, 6, 8, 6);
-    layout->setSpacing(0);
-    auto* value = new QLabel(QStringLiteral("--"), tile);
-    QFont font = value->font();
-    if (font.pointSizeF() > 0) {
-        font.setPointSizeF(font.pointSizeF() * 1.3);
-    } else {
-        font.setPixelSize(qRound(font.pixelSize() * 1.3));
-    }
-    value->setFont(font);
-    auto* label = new QLabel(caption, tile);
-    label->setObjectName(QStringLiteral("labNote"));
-    layout->addWidget(value);
-    layout->addWidget(label);
-    row->addWidget(tile, 1);
-    return value;
-}
+const char kPlantIcon[] = ":/tracelab/icons/plant.svg";
+const char kFilterIcon[] = ":/tracelab/icons/filter.svg";
+const char kControllerIcon[] = ":/tracelab/icons/controller.svg";
 
 }  // namespace
 
 LabPanel::LabPanel(traceview::ModuleHost* host, QWidget* parent)
     : QWidget(parent), m_host(host) {
     m_addPlantAction = new QAction(tr("Add plant"), this);
-    m_addPlantAction->setToolTip(tr("Adds a simulated line-follower plant to this project's "
-                                    "devices."));
+    m_addPlantAction->setToolTip(tr("Adds a simulated plant to this project's devices."));
     m_addControllerAction = new QAction(tr("Add controller"), this);
-    m_addControllerAction->setToolTip(tr("Adds a controller host that closes the loop on the "
-                                         "plant picked below."));
+    m_addControllerAction->setToolTip(tr("Adds a controller written in C that closes the loop on "
+                                         "the plant shown below."));
     m_addSceneAction = new QAction(tr("Add scene"), this);
     m_addSceneAction->setToolTip(tr("Adds a Scene to the dashboard, bound to the plant and "
-                                    "controller picked below."));
+                                    "controller shown below."));
     m_groupSeparator = new QAction(this);
     m_groupSeparator->setSeparator(true);
     m_playAction = new QAction(tr("Play"), this);
     m_pauseAction = new QAction(tr("Pause"), this);
     m_resetAction = new QAction(tr("Reset"), this);
     m_stepAction = new QAction(tr("Step"), this);
-    connect(m_addPlantAction, &QAction::triggered, this, &LabPanel::addLineFollowerPlant);
+    connect(m_addPlantAction, &QAction::triggered, this, &LabPanel::addPlant);
     connect(m_addControllerAction, &QAction::triggered, this, &LabPanel::addController);
     connect(m_addSceneAction, &QAction::triggered, this, &LabPanel::addScene);
     connect(m_playAction, &QAction::triggered, this, &LabPanel::play);
@@ -166,8 +85,8 @@ LabPanel::LabPanel(traceview::ModuleHost* host, QWidget* parent)
     layout->setContentsMargins(0, 0, 0, 0);
     layout->setSpacing(0);
 
-    // No TraceLab device yet: the page reads like a Settings category (a
-    // title, what it is for, what to do), not like an empty card grid.
+    // No plant yet: the page reads like a Settings category (a title, what
+    // it is for, what to do), not like an empty chain.
     m_emptyState = new QWidget(this);
     auto* emptyLayout = new QVBoxLayout(m_emptyState);
     emptyLayout->setContentsMargins(kEmptyMarginH, kEmptyMarginV, kEmptyMarginH, kEmptyMarginV);
@@ -175,10 +94,11 @@ LabPanel::LabPanel(traceview::ModuleHost* host, QWidget* parent)
     auto* emptyTitle = new QLabel(QStringLiteral("<h2>TraceLab</h2>"), m_emptyState);
     emptyTitle->setTextFormat(Qt::RichText);
     emptyLayout->addWidget(emptyTitle);
-    auto* emptyText = new QLabel(tr("No TraceLab device in this project yet. Open the "
-                                    "line-follower benchmark, or build a lab of your own: a "
-                                    "plant first, then a controller and a scene for it."),
-                                 m_emptyState);
+    auto* emptyText = new QLabel(
+        tr("No plant in this project yet. Open the line-follower benchmark, or build a loop of "
+           "your own: a plant first, then the controller -- and filters between them, if you "
+           "want -- written in C, with the code in front of you."),
+        m_emptyState);
     emptyText->setWordWrap(true);
     emptyText->setMaximumWidth(kEmptyTextWidth);
     emptyLayout->addWidget(emptyText);
@@ -189,201 +109,106 @@ LabPanel::LabPanel(traceview::ModuleHost* host, QWidget* parent)
             m_host->openProject(lineFollowerProjectPath());
         }
     });
-    auto* addPlant = new QPushButton(m_addPlantAction->text(), m_emptyState);
-    addPlant->setToolTip(m_addPlantAction->toolTip());
-    connect(addPlant, &QPushButton::clicked, m_addPlantAction, &QAction::trigger);
+    auto* addPlantButton = new QPushButton(m_addPlantAction->text(), m_emptyState);
+    addPlantButton->setToolTip(m_addPlantAction->toolTip());
+    connect(addPlantButton, &QPushButton::clicked, m_addPlantAction, &QAction::trigger);
     emptyButtons->addWidget(openBenchmark);
-    emptyButtons->addWidget(addPlant);
+    emptyButtons->addWidget(addPlantButton);
     emptyButtons->addStretch();
     emptyLayout->addLayout(emptyButtons);
     emptyLayout->addStretch();
     layout->addWidget(m_emptyState);
 
-    // The cards, on the canvas like the Devices tab's and as many abreast as
-    // the width allows (layoutCards()).
-    m_cardsScroll = new QScrollArea(this);
-    m_cardsScroll->setFrameShape(QFrame::NoFrame);
-    m_cardsScroll->setWidgetResizable(true);
-    auto* cardsPage = new QWidget(m_cardsScroll);
-    auto* pageLayout = new QVBoxLayout(cardsPage);
-    pageLayout->setContentsMargins(kPageMargin, kPageMargin, kPageMargin, kPageMargin);
-    m_cardsGrid = new QGridLayout;
-    m_cardsGrid->setSpacing(kCardSpacing);
-    auto* gridRow = new QHBoxLayout;
-    gridRow->addLayout(m_cardsGrid);
-    gridRow->addStretch();
-    pageLayout->addLayout(gridRow);
-    pageLayout->addStretch();
-    m_cardsScroll->setWidget(cardsPage);
-    layout->addWidget(m_cardsScroll);
+    // The loop and the page of the picked block.
+    m_main = new QWidget(this);
+    auto* mainLayout = new QVBoxLayout(m_main);
+    mainLayout->setContentsMargins(kPageMargin, kPageMargin, kPageMargin, kPageMargin);
+    mainLayout->setSpacing(12);
+    auto* top = new QHBoxLayout;
+    auto* loopTitle = new QLabel(tr("Loop"), m_main);
+    QFont loopFont = loopTitle->font();
+    loopFont.setBold(true);
+    loopTitle->setFont(loopFont);
+    top->addWidget(loopTitle);
+    auto* loopNote = new QLabel(tr("plant  >  filters  >  controller  >  back to the plant (loop.u)"),
+                                m_main);
+    loopNote->setObjectName(QStringLiteral("labNote"));
+    top->addWidget(loopNote);
+    top->addStretch();
+    m_plantComboLabel = new QLabel(tr("Plant"), m_main);
+    m_plantComboLabel->setObjectName(QStringLiteral("labFieldLabel"));
+    top->addWidget(m_plantComboLabel);
+    m_plantCombo = new QComboBox(m_main);
+    m_plantCombo->setMinimumWidth(200);
+    top->addWidget(m_plantCombo);
+    mainLayout->addLayout(top);
 
-    // Simulation: where it stands, then the run settings.
-    m_simulationCard =
-        new LabCard(QStringLiteral(":/tracelab/icons/plant.svg"), tr("Simulation"), cardsPage);
-    auto* stats = new QHBoxLayout;
-    stats->setSpacing(kStatSpacing);
-    m_tickValue = addStat(stats, tr("tick"), m_simulationCard);
-    m_timeValue = addStat(stats, tr("time"), m_simulationCard);
-    m_coveredValue = addStat(stats, tr("covered"), m_simulationCard);
-    m_simulationCard->body()->addLayout(stats);
-    m_perturbationLabel = new QLabel(m_simulationCard);
-    m_perturbationLabel->setObjectName(QStringLiteral("labNote"));
-    m_perturbationLabel->hide();
-    m_simulationCard->body()->addWidget(m_perturbationLabel);
-    QFormLayout* runForm = addForm(m_simulationCard->body());
-    m_plantCombo = new QComboBox(m_simulationCard);
-    addField(runForm, tr("Plant"), m_plantCombo);
-    // Short names, so the closed field never cuts one; the long form is the
-    // item's tooltip in the open list.
-    m_speedCombo = new QComboBox(m_simulationCard);
-    addItem(m_speedCombo, tr("1x (real time)"), {}, {});
-    addItem(m_speedCombo, tr("2x"), {}, {});
-    addItem(m_speedCombo, tr("As fast as possible"), {}, {});
-    addItem(m_speedCombo, tr("Lockstep"), {}, tr("Lockstep (waits for the controller)"));
-    addField(runForm, tr("Speed"), m_speedCombo);
-    m_rateSpin = new QSpinBox(m_simulationCard);
-    m_rateSpin->setRange(1, 1000);
-    m_rateSpin->setSuffix(tr(" Hz"));
-    m_rateSpin->setToolTip(tr("Step rate of the simulation: the plant integrates and the "
-                              "controllers on it sample at Ts = 1 / rate. Changing it "
-                              "restarts the run."));
-    addField(runForm, tr("Sample rate"), m_rateSpin);
+    auto* chainScroll = new QScrollArea(m_main);
+    m_chainScroll = chainScroll;
+    chainScroll->setFrameShape(QFrame::NoFrame);
+    chainScroll->setWidgetResizable(true);
+    chainScroll->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+    chainScroll->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    auto* chainWidget = new QWidget(chainScroll);
+    m_chain = new QHBoxLayout(chainWidget);
+    m_chain->setContentsMargins(0, 2, 0, 2);
+    m_chain->setSpacing(8);
+    chainScroll->setWidget(chainWidget);
+    mainLayout->addWidget(chainScroll);
 
-    // Track and sensors: applied together, on a reset.
-    auto* trackCard = new LabCard(QStringLiteral(":/tracelab/icons/scene.svg"),
-                                  tr("Track and sensors"), cardsPage);
-    QFormLayout* trackForm = addForm(trackCard->body());
-    m_seedSpin = new QSpinBox(trackCard);
-    m_seedSpin->setRange(-1, 2147483647);
-    m_seedSpin->setToolTip(tr("-1 draws a random track on every reset."));
-    addField(trackForm, tr("Track seed"), m_seedSpin);
-    m_trackCombo = new QComboBox(trackCard);
-    m_trackCombo->addItem(tr("Lemniscate"));
-    m_trackCombo->addItem(tr("Circle"));
-    addField(trackForm, tr("Track type"), m_trackCombo);
-    m_noiseCheck = new QCheckBox(tr("Sensor noise"), trackCard);
-    m_noiseCheck->setToolTip(tr("Synthetic noise on the gyro and the line sensors (the "
-                                "encoders always count whole ticks)."));
-    trackForm->addRow(m_noiseCheck);
-    auto* applyRow = new QHBoxLayout;
-    applyRow->addStretch();
-    auto* applyTrack = new QPushButton(tr("Apply and reset"), trackCard);
-    applyRow->addWidget(applyTrack);
-    trackCard->body()->addLayout(applyRow);
+    auto* divider = new QFrame(m_main);
+    divider->setObjectName(QStringLiteral("sectionDivider"));
+    divider->setFixedHeight(1);
+    mainLayout->addWidget(divider);
 
-    // Controller: what every kind shares, then only the picked kind's own.
-    m_controllerCard = new LabCard(QStringLiteral(":/tracelab/icons/controller.svg"),
-                                   tr("Controller"), cardsPage);
-    QFormLayout* controllerForm = addForm(m_controllerCard->body());
-    m_controllerCombo = new QComboBox(m_controllerCard);
-    addField(controllerForm, tr("Device"), m_controllerCombo);
-    m_typeCombo = new QComboBox(m_controllerCard);
-    m_typeCombo->addItem(tr("qLPV MPC"), QStringLiteral("qlpv"));
-    m_typeCombo->addItem(tr("GPC"), QStringLiteral("gpc"));
-    m_typeCombo->addItem(tr("PD (line sensors)"), QStringLiteral("pd"));
-    addField(controllerForm, tr("Controller"), m_typeCombo);
-    m_filterSpin = new traceview::DoubleSpinBox(m_controllerCard);
-    m_filterSpin->setRange(0.0, 1.0);
-    m_filterSpin->setDecimals(3);
-    setFixedStep(m_filterSpin, 0.005);
-    m_filterSpin->setSuffix(tr(" s"));
-    m_filterSpin->setSpecialValueText(tr("off"));
-    m_filterSpin->setToolTip(tr("First-order low-pass on the measured wheel speeds (the C "
-                                "filter runtime); 0 turns it off."));
-    addField(controllerForm, tr("Wheel-speed filter"), m_filterSpin);
+    m_pages = new QStackedWidget(m_main);
+    m_plantPage = new PlantPage(m_pages);
+    m_blockEditor = new BlockEditor(m_pages);
+    m_otherPage = new QWidget(m_pages);
+    auto* otherLayout = new QVBoxLayout(m_otherPage);
+    otherLayout->setContentsMargins(0, 0, 0, 0);
+    m_otherText = new QLabel(m_otherPage);
+    m_otherText->setWordWrap(true);
+    m_otherText->setMaximumWidth(kEmptyTextWidth);
+    otherLayout->addWidget(m_otherText);
+    auto* removeOther = new QPushButton(tr("Remove it from the project"), m_otherPage);
+    otherLayout->addWidget(removeOther, 0, Qt::AlignLeft);
+    otherLayout->addStretch();
+    connect(removeOther, &QPushButton::clicked, this, [this] {
+        if (m_host && !m_otherId.isEmpty()) {
+            m_host->removeModuleDevice(m_otherId);
+        }
+    });
+    m_pages->addWidget(m_plantPage);
+    m_pages->addWidget(m_blockEditor);
+    m_pages->addWidget(m_otherPage);
+    mainLayout->addWidget(m_pages, 1);
+    layout->addWidget(m_main);
 
-    QFormLayout* qlpvForm = nullptr;
-    m_qlpvFields = addFieldGroup(m_controllerCard->body(), tr("qLPV MPC"), &qlpvForm);
-    m_qLateralSpin = new traceview::DoubleSpinBox(m_qlpvFields);
-    m_qLateralSpin->setRange(0.0, 1e7);
-    m_qLateralSpin->setDecimals(1);
-    addField(qlpvForm, tr("Lateral weight"), m_qLateralSpin);
-    m_schedulingCombo = new QComboBox(m_qlpvFields);
-    addItem(m_schedulingCombo, tr("Frozen"), QStringLiteral("frozen"),
-            tr("Frozen (rho of now, whole horizon)"));
-    addItem(m_schedulingCombo, tr("Warm start"), QStringLiteral("warm_start"),
-            tr("Warm start (last prediction)"));
-    addItem(m_schedulingCombo, tr("Taylor"), QStringLiteral("taylor"),
-            tr("Taylor (first order around now)"));
-    addItem(m_schedulingCombo, tr("Iterative"), QStringLiteral("iterative"),
-            tr("Iterative (re-solve until rho settles)"));
-    m_schedulingCombo->setToolTip(
-        tr("How the qLPV MPC fills the scheduling variable rho over the horizon."));
-    addField(qlpvForm, tr("Rho scheduling"), m_schedulingCombo);
-    m_embeddingCombo = new QComboBox(m_qlpvFields);
-    m_embeddingCombo->addItem(QStringLiteral("sinc"), QStringLiteral("sinc"));
-    m_embeddingCombo->addItem(QStringLiteral("sin_cos"), QStringLiteral("sin_cos"));
-    addField(qlpvForm, tr("Embedding"), m_embeddingCombo);
-    m_iterationsSpin = new QSpinBox(m_qlpvFields);
-    m_iterationsSpin->setRange(1, 50);
-    m_iterationsSpin->setToolTip(tr("Most QPs per step with the iterative scheduling."));
-    addField(qlpvForm, tr("Iterations"), m_iterationsSpin);
-
-    QFormLayout* gpcForm = nullptr;
-    m_gpcFields = addFieldGroup(m_controllerCard->body(), tr("GPC"), &gpcForm);
-    m_gpcLambdaSpin = new traceview::DoubleSpinBox(m_gpcFields);
-    m_gpcLambdaSpin->setRange(0.0, 10.0);
-    m_gpcLambdaSpin->setDecimals(5);
-    setFixedStep(m_gpcLambdaSpin, 0.0005);
-    addField(gpcForm, tr("Control weight"), m_gpcLambdaSpin);
-
-    QFormLayout* pdForm = nullptr;
-    m_pdFields = addFieldGroup(m_controllerCard->body(), tr("PD (line sensors)"), &pdForm);
-    m_pdKpSpin = new traceview::DoubleSpinBox(m_pdFields);
-    m_pdKpSpin->setRange(0.0, 1e5);
-    m_pdKpSpin->setDecimals(0);
-    setFixedStep(m_pdKpSpin, 100.0);
-    m_pdKpSpin->setSuffix(tr(" %/m"));
-    m_pdKpSpin->setToolTip(tr("Wheel speed difference per metre of line offset under the "
-                              "sensor array."));
-    addField(pdForm, tr("Kp"), m_pdKpSpin);
-    m_pdKdSpin = new traceview::DoubleSpinBox(m_pdFields);
-    m_pdKdSpin->setRange(0.0, 1e4);
-    m_pdKdSpin->setDecimals(1);
-    setFixedStep(m_pdKdSpin, 5.0);
-    m_pdKdSpin->setSuffix(tr(" %s/m"));
-    addField(pdForm, tr("Kd"), m_pdKdSpin);
-    m_pdBaseSpin = new traceview::DoubleSpinBox(m_pdFields);
-    m_pdBaseSpin->setRange(-100.0, 100.0);
-    m_pdBaseSpin->setDecimals(0);
-    setFixedStep(m_pdBaseSpin, 5.0);
-    m_pdBaseSpin->setSuffix(tr(" %"));
-    m_pdBaseSpin->setToolTip(tr("Command on both wheels before the PD correction: the speed."));
-    addField(pdForm, tr("Base speed"), m_pdBaseSpin);
-
-    m_cards = {m_simulationCard, trackCard, m_controllerCard};
-    alignCards();
-
-    connect(m_speedCombo, qOverload<int>(&QComboBox::currentIndexChanged), this,
-            &LabPanel::applySpeed);
-    connect(m_rateSpin, &QSpinBox::editingFinished, this, &LabPanel::applyRate);
-    connect(applyTrack, &QPushButton::clicked, this, &LabPanel::applyTrackAndSensors);
-    connect(m_typeCombo, qOverload<int>(&QComboBox::currentIndexChanged), this,
-            &LabPanel::showControllerFields);
-    for (QComboBox* combo : {m_typeCombo, m_schedulingCombo, m_embeddingCombo}) {
-        connect(combo, qOverload<int>(&QComboBox::currentIndexChanged), this,
-                &LabPanel::applyController);
-    }
-    connect(m_iterationsSpin, &QSpinBox::editingFinished, this, &LabPanel::applyController);
-    for (QDoubleSpinBox* spin :
-         {m_filterSpin, m_qLateralSpin, m_gpcLambdaSpin, m_pdKpSpin, m_pdKdSpin, m_pdBaseSpin}) {
-        connect(spin, &QDoubleSpinBox::editingFinished, this, &LabPanel::applyController);
-    }
-    connect(m_plantCombo, qOverload<int>(&QComboBox::currentIndexChanged), this,
-            &LabPanel::refreshFromDevices);
-    connect(m_controllerCombo, qOverload<int>(&QComboBox::currentIndexChanged), this,
-            &LabPanel::refreshFromDevices);
-    connect(&lf::LineDeviceRegistry::instance(), &lf::LineDeviceRegistry::devicesChanged, this,
+    connect(m_blockEditor, &BlockEditor::removeRequested, this, [this](int index) {
+        if (LabControllerDevice* c = controller()) {
+            c->removeFilter(index);
+            pick(index > 0 ? Pick::Filter : Pick::Plant, index - 1);
+        }
+    });
+    connect(m_plantCombo, qOverload<int>(&QComboBox::activated), this, [this] {
+        if (!m_blockEditor->maybeSave()) {
+            return;
+        }
+        m_chainSignature.clear();
+        rebuildChain();
+        pick(Pick::Plant, 0);
+    });
+    connect(&LabDeviceRegistry::instance(), &LabDeviceRegistry::devicesChanged, this,
             &LabPanel::refreshDevices);
     connect(&traceview::ThemeManager::instance(), &traceview::ThemeManager::themeChanged, this,
             &LabPanel::applyTheme);
 
-    auto* statusTimer = new QTimer(this);
-    statusTimer->setInterval(kStatusIntervalMs);
-    connect(statusTimer, &QTimer::timeout, this, &LabPanel::refreshStatus);
-    statusTimer->start();
+    auto* timer = new QTimer(this);
+    timer->setInterval(kLiveIntervalMs);
+    connect(timer, &QTimer::timeout, this, &LabPanel::refreshLive);
+    timer->start();
     applyTheme();
-    showControllerFields();
     refreshDevices();
 }
 
@@ -392,28 +217,30 @@ QList<QAction*> LabPanel::ribbonActions() const {
             m_playAction, m_pauseAction, m_resetAction, m_stepAction};
 }
 
-void LabPanel::resizeEvent(QResizeEvent* event) {
-    QWidget::resizeEvent(event);
-    layoutCards();
+QString LabPanel::lineFollowerProjectPath() {
+    return QStringLiteral(":/tracelab/linefollower.tvproj");
 }
 
 void LabPanel::applyTheme() {
     const traceview::ThemePalette& palette = traceview::ThemeManager::instance().currentTheme();
     // Labels and notes in the secondary text color, the stat tiles on the
-    // header strip's tone, and the controller's field groups see-through
-    // (a plain QWidget would otherwise paint the canvas color in the card).
-    setStyleSheet(QStringLiteral("QLabel#labFieldLabel, QLabel#labNote { color: %1; }"
+    // header strip's tone, the "+" blocks dashed.
+    setStyleSheet(QStringLiteral("QLabel#labFieldLabel, QLabel#labNote, QLabel#labArrow { color: %1; }"
                                  "QFrame#labStat { background-color: %2; border-radius: 4px; }"
-                                 "QWidget#labFieldGroup { background: transparent; }")
-                      .arg(palette.textSecondary.name(), palette.surfaceAlt.name()));
-
+                                 "QToolButton#labAddBlock { border: 1px dashed %3; border-radius: 6px;"
+                                 " padding: 10px 14px; color: %1; background: transparent; }"
+                                 "QToolButton#labAddBlock:hover { border-color: %4; color: %5; }"
+                                 "QToolButton#labAddBlock::menu-indicator { image: none; }")
+                      .arg(palette.textSecondary.name(), palette.surfaceAlt.name(),
+                           palette.borderStrong.name(), palette.accent.name(),
+                           palette.textPrimary.name()));
     const auto icon = [&palette](const char* name) {
         return traceview::loadTintedIcon(
             QStringLiteral(":/tracelab/icons/%1.svg").arg(QLatin1String(name)),
             palette.textPrimary, kRibbonIconSize);
     };
     m_addPlantAction->setIcon(icon("plant"));
-    m_addControllerAction->setIcon(icon("controller"));
+    m_addControllerAction->setIcon(icon("code"));
     m_addSceneAction->setIcon(icon("scene"));
     m_playAction->setIcon(icon("play"));
     m_pauseAction->setIcon(icon("pause"));
@@ -421,127 +248,537 @@ void LabPanel::applyTheme() {
     m_stepAction->setIcon(icon("step"));
 }
 
-void LabPanel::alignCards() {
-    // One label column and one field column across every card: the labels
-    // as wide as the widest, the fields as wide as the widest content any of
-    // them shows (device ids included, so call again when those change).
-    int labelWidth = 0;
-    const QList<QLabel*> labels = findChildren<QLabel*>(QStringLiteral("labFieldLabel"));
-    for (QLabel* label : labels) {
-        label->setMinimumWidth(0);
-        labelWidth = qMax(labelWidth, label->sizeHint().width());
-    }
-    for (QLabel* label : labels) {
-        label->setFixedWidth(labelWidth);
-    }
-    int fieldWidth = kMinFieldWidth;
-    QList<QWidget*> fields;
-    for (LabCard* card : std::as_const(m_cards)) {
-        for (QComboBox* combo : card->findChildren<QComboBox*>()) {
-            fields.append(combo);
-            combo->setMinimumWidth(0);
-            combo->setMaximumWidth(QWIDGETSIZE_MAX);
-            fieldWidth = qMax(fieldWidth, combo->sizeHint().width());
-        }
-        for (QAbstractSpinBox* spin : card->findChildren<QAbstractSpinBox*>()) {
-            fields.append(spin);
-        }
-    }
-    for (QWidget* field : std::as_const(fields)) {
-        field->setFixedWidth(fieldWidth);
-    }
-    int cardWidth = 0;
-    for (LabCard* card : std::as_const(m_cards)) {
-        card->setMinimumWidth(0);
-        card->setMaximumWidth(QWIDGETSIZE_MAX);
-        cardWidth = qMax(cardWidth, card->sizeHint().width());
-    }
-    for (LabCard* card : std::as_const(m_cards)) {
-        card->setFixedWidth(cardWidth);
-    }
-    m_columns = 0;
-    layoutCards();
-}
+// ---------------------------------------------------------------------------
+// Devices
 
-void LabPanel::layoutCards() {
-    if (m_cards.isEmpty()) {
-        return;
-    }
-    const int cardWidth = m_cards.first()->width();
-    const int available =
-        width() - 2 * kPageMargin - m_cardsScroll->verticalScrollBar()->sizeHint().width();
-    const int columns = qBound(1, (available + kCardSpacing) / (cardWidth + kCardSpacing),
-                               int(m_cards.size()));
-    if (columns == m_columns) {
-        return;
-    }
-    m_columns = columns;
-    for (LabCard* card : std::as_const(m_cards)) {
-        m_cardsGrid->removeWidget(card);
-    }
-    for (int i = 0; i < m_cards.size(); ++i) {
-        m_cardsGrid->addWidget(m_cards[i], i / columns, i % columns, Qt::AlignTop);
-    }
-}
-
-void LabPanel::showControllerFields() {
-    const QString type = m_typeCombo->currentData().toString();
-    m_qlpvFields->setVisible(type == QLatin1String("qlpv"));
-    m_gpcFields->setVisible(type == QLatin1String("gpc"));
-    m_pdFields->setVisible(type == QLatin1String("pd"));
-}
-
-QString LabPanel::lineFollowerProjectPath() {
-    return QStringLiteral(":/tracelab/linefollower.tvproj");
-}
-
-QString LabPanel::currentPlantId() const {
+QString LabPanel::plantId() const {
     const QString picked = m_plantCombo->currentData().toString();
-    if (!picked.isEmpty()) {
+    if (!picked.isEmpty() && LabDeviceRegistry::instance().plant(picked)) {
         return picked;
     }
-    const QStringList ids = lf::LineDeviceRegistry::instance().plantIds();
-    return ids.size() == 1 ? ids.first() : QString();
+    const QStringList ids = LabDeviceRegistry::instance().plantIds();
+    return ids.isEmpty() ? QString() : ids.first();
 }
 
-void LabPanel::addLineFollowerPlant() {
-    if (m_host) {
-        m_host->addModuleDevice(QString::fromLatin1(lf::kPlantDeviceType),
-                                tr("TraceLab: Line follower"), lf::PlantSettings().toJson());
+LabPlantDevice* LabPanel::plant() const {
+    return LabDeviceRegistry::instance().plant(plantId());
+}
+
+LabControllerDevice* LabPanel::controller() const {
+    LabDeviceRegistry& registry = LabDeviceRegistry::instance();
+    const QStringList ids = registry.controllersOf(plantId());
+    if (!ids.isEmpty()) {
+        return registry.controller(ids.first());
     }
+    // Not linked yet (the plant just came up): the one configured for it.
+    for (const QString& id : registry.controllerIds()) {
+        LabControllerDevice* c = registry.controller(id);
+        if (c && c->plantDeviceId() == plantId()) {
+            return c;
+        }
+    }
+    return nullptr;
+}
+
+void LabPanel::persistDevices() {
+    if (!m_host) {
+        return;
+    }
+    LabDeviceRegistry& registry = LabDeviceRegistry::instance();
+    for (const QString& id : registry.plantIds()) {
+        LabPlantDevice* p = registry.plant(id);
+        if (p && !m_persisted.contains(p)) {
+            m_persisted.insert(p);
+            connect(p, &LabPlantDevice::settingsChanged, this, [this, p] {
+                const QString deviceId = LabDeviceRegistry::instance().idOf(p);
+                if (!deviceId.isEmpty()) {
+                    m_host->updateModuleDeviceConfig(deviceId, p->config());
+                }
+            });
+            connect(p, &QObject::destroyed, this, [this, p] { m_persisted.remove(p); });
+        }
+    }
+    for (const QString& id : registry.controllerIds()) {
+        LabControllerDevice* c = registry.controller(id);
+        if (c && !m_persisted.contains(c)) {
+            m_persisted.insert(c);
+            connect(c, &LabControllerDevice::configChanged, this, [this, c] {
+                m_host->updateModuleDeviceConfig(c->deviceId(), c->config());
+            });
+            connect(c, &LabControllerDevice::blocksChanged, this, [this] { rebuildChain(); });
+            connect(c, &QObject::destroyed, this, [this, c] { m_persisted.remove(c); });
+        }
+    }
+}
+
+void LabPanel::refreshDevices() {
+    LabDeviceRegistry& registry = LabDeviceRegistry::instance();
+    persistDevices();
+    const QString current = m_plantCombo->currentData().toString();
+    {
+        const QSignalBlocker blocker(m_plantCombo);
+        m_plantCombo->clear();
+        for (const QString& id : registry.plantIds()) {
+            LabPlantDevice* p = registry.plant(id);
+            m_plantCombo->addItem(QStringLiteral("%1 (%2)").arg(p->typeName(), id), id);
+        }
+        const int index = m_plantCombo->findData(current);
+        m_plantCombo->setCurrentIndex(index >= 0 ? index : (m_plantCombo->count() > 0 ? 0 : -1));
+    }
+    const bool many = m_plantCombo->count() > 1;
+    m_plantCombo->setVisible(many);
+    m_plantComboLabel->setVisible(many);
+    const bool any = m_plantCombo->count() > 0;
+    m_emptyState->setVisible(!any);
+    m_main->setVisible(any);
+    m_addControllerAction->setEnabled(any);
+    m_addSceneAction->setEnabled(any);
+    m_addPlantAction->setEnabled(!registry.plantTypes().isEmpty());
+
+    rebuildChain();
+    // A controller device just asked for is live now: show the block.
+    if (!m_pendingController.isEmpty() && registry.controller(m_pendingController)) {
+        m_pendingController.clear();
+        if (m_pendingPick == LabControllerDevice::kController) {
+            pick(Pick::Controller, 0);
+        } else {
+            pick(Pick::Filter, m_pendingPick);
+        }
+        return;
+    }
+    // What was picked may be gone.
+    if ((m_pick == Pick::Controller && (!controller() || controller()->spec(LabControllerDevice::kController).isEmpty())) ||
+        (m_pick == Pick::Filter && (!controller() || m_pickIndex >= controller()->filterCount())) ||
+        (m_pick == Pick::Other && !registry.otherController(m_otherId).device)) {
+        pick(Pick::Plant, 0);
+    } else {
+        pick(m_pick, m_pickIndex);
+    }
+}
+
+// ---------------------------------------------------------------------------
+// The chain
+
+QMenu* LabPanel::blockMenu(bool controllerBlock) {
+    auto* menu = new QMenu(this);
+    const BlockKind kind = controllerBlock ? BlockKind::Controller : BlockKind::Filter;
+    const QVector<code::CodeTemplate> templates = CodeLibrary::instance().templates(kind);
+    if (!templates.isEmpty()) {
+        menu->addSection(tr("Templates"));
+        for (const code::CodeTemplate& t : templates) {
+            QAction* action = menu->addAction(t.name);
+            action->setToolTip(t.description);
+            const QString id = t.id;
+            connect(action, &QAction::triggered, this,
+                    [this, controllerBlock, id] { addBlock(controllerBlock, id, QString()); });
+        }
+    }
+    const QStringList files = CodeLibrary::userFiles(kind);
+    if (!files.isEmpty()) {
+        menu->addSection(tr("Your files"));
+        for (const QString& path : files) {
+            QAction* action = menu->addAction(QFileInfo(path).fileName());
+            action->setToolTip(QDir::toNativeSeparators(path));
+            connect(action, &QAction::triggered, this,
+                    [this, controllerBlock, path] { addBlock(controllerBlock, QString(), path); });
+        }
+    }
+    menu->addSeparator();
+    connect(menu->addAction(tr("New (empty)...")), &QAction::triggered, this,
+            [this, controllerBlock, kind] {
+                bool ok = false;
+                const QString name = QInputDialog::getText(
+                    this, controllerBlock ? tr("New controller") : tr("New filter"),
+                    tr("File name (saved in %1):")
+                        .arg(QDir::toNativeSeparators(CodeLibrary::userDirectory(kind))),
+                    QLineEdit::Normal,
+                    controllerBlock ? QStringLiteral("my_controller") : QStringLiteral("my_filter"),
+                    &ok);
+                if (!ok || name.trimmed().isEmpty()) {
+                    return;
+                }
+                QString error;
+                const QString path =
+                    CodeLibrary::instance().createFile(kind, QString(), name.trimmed(), &error);
+                if (path.isEmpty()) {
+                    QMessageBox::warning(this, tr("New block"), error);
+                    return;
+                }
+                addBlock(controllerBlock, QString(), path);
+            });
+    connect(menu->addAction(tr("Open a file...")), &QAction::triggered, this,
+            [this, controllerBlock, kind] {
+                const QString path = QFileDialog::getOpenFileName(
+                    this, tr("Open a block"), CodeLibrary::userDirectory(kind),
+                    tr("C files (*.c);;All files (*)"));
+                if (!path.isEmpty()) {
+                    addBlock(controllerBlock, QString(), path);
+                }
+            });
+    return menu;
+}
+
+void LabPanel::addBlock(bool controllerBlock, const QString& templateId, const QString& path) {
+    if (!m_blockEditor->maybeSave()) {
+        return;
+    }
+    CodeBlockSpec spec;
+    spec.templateId = templateId;
+    spec.path = path;
+    if (LabControllerDevice* c = controller()) {
+        if (controllerBlock) {
+            c->setSpec(LabControllerDevice::kController, spec);
+            pick(Pick::Controller, 0);
+        } else {
+            c->addFilter(spec);
+            pick(Pick::Filter, c->filterCount() - 1);
+        }
+        return;
+    }
+    QJsonObject config{{"plantDeviceId", plantId()}};
+    if (controllerBlock) {
+        config.insert(QStringLiteral("controller"), spec.toJson());
+    } else {
+        QJsonArray filters;
+        filters.append(spec.toJson());
+        config.insert(QStringLiteral("filters"), filters);
+    }
+    addControllerDevice(config, controllerBlock ? LabControllerDevice::kController : 0);
+}
+
+void LabPanel::addControllerDevice(const QJsonObject& config, int pickAfter) {
+    if (!m_host) {
+        return;
+    }
+    m_pendingController.clear();
+    const QString id = m_host->addModuleDevice(QString::fromLatin1(kLabControllerDeviceType),
+                                               tr("TraceLab: Controller"), config);
+    if (id.isEmpty()) {
+        return;
+    }
+    if (LabDeviceRegistry::instance().controller(id)) {
+        // Already live (it came up while being added).
+        rebuildChain();
+        if (pickAfter == LabControllerDevice::kController) {
+            pick(Pick::Controller, 0);
+        } else {
+            pick(Pick::Filter, pickAfter);
+        }
+        return;
+    }
+    m_pendingController = id;
+    m_pendingPick = pickAfter;
+}
+
+void LabPanel::rebuildChain() {
+    LabDeviceRegistry& registry = LabDeviceRegistry::instance();
+    LabPlantDevice* p = plant();
+    LabControllerDevice* c = controller();
+    QStringList others;
+    for (const QString& id : registry.otherControllerIds()) {
+        const LabDeviceRegistry::OtherController other = registry.otherController(id);
+        if (other.plantDeviceId.isEmpty() || other.plantDeviceId == plantId()) {
+            others.append(id);
+        }
+    }
+    // Rebuilt only when what it shows changes (not on every status tick).
+    QStringList signature{plantId(), c ? c->deviceId() : QString()};
+    if (c) {
+        signature.append(c->blockName(LabControllerDevice::kController));
+        for (int i = 0; i < c->filterCount(); ++i) {
+            signature.append(c->blockName(i));
+        }
+    }
+    signature += others;
+    const QString joined = signature.join(QLatin1Char('\n'));
+    if (joined == m_chainSignature) {
+        refreshCards();
+        return;
+    }
+    m_chainSignature = joined;
+
+    while (QLayoutItem* item = m_chain->takeAt(0)) {
+        delete item->widget();
+        delete item;
+    }
+    m_cards.clear();
+    if (!p) {
+        return;
+    }
+    const auto addArrow = [this] {
+        auto* arrow = new QLabel(QStringLiteral("→"), m_chain->parentWidget());
+        arrow->setObjectName(QStringLiteral("labArrow"));
+        QFont font = arrow->font();
+        font.setPointSizeF(font.pointSizeF() * 1.6);
+        arrow->setFont(font);
+        m_chain->addWidget(arrow);
+    };
+    const auto addCard = [this](const char* icon, const QString& title, Pick what, int index) {
+        Card card;
+        card.card = new LabCard(QString::fromLatin1(icon), title, m_chain->parentWidget());
+        card.card->setSelectable(true);
+        card.card->setFixedWidth(kCardWidth);
+        card.kind = new QLabel(card.card);
+        card.kind->setObjectName(QStringLiteral("labNote"));
+        card.status = new QLabel(card.card);
+        card.status->setWordWrap(true);
+        card.card->body()->setSpacing(2);
+        card.card->body()->addWidget(card.kind);
+        card.card->body()->addWidget(card.status);
+        card.pick = what;
+        card.index = index;
+        connect(card.card, &LabCard::clicked, this, [this, what, index] { pick(what, index); });
+        m_chain->addWidget(card.card);
+        m_cards.append(card);
+    };
+    const auto addButton = [this](const QString& text, QMenu* menu) {
+        auto* button = new QToolButton(m_chain->parentWidget());
+        button->setObjectName(QStringLiteral("labAddBlock"));
+        button->setText(text);
+        button->setMenu(menu);
+        button->setPopupMode(QToolButton::InstantPopup);
+        m_chain->addWidget(button);
+    };
+
+    addCard(kPlantIcon, p->typeName(), Pick::Plant, 0);
+    for (int i = 0; c && i < c->filterCount(); ++i) {
+        addArrow();
+        addCard(kFilterIcon, c->blockName(i), Pick::Filter, i);
+    }
+    addArrow();
+    addButton(tr("+ Filter"), blockMenu(false));
+    addArrow();
+    if (c && !c->spec(LabControllerDevice::kController).isEmpty()) {
+        addCard(kControllerIcon, c->blockName(LabControllerDevice::kController), Pick::Controller,
+                0);
+    } else {
+        addButton(tr("+ Controller"), blockMenu(true));
+    }
+    for (int i = 0; i < others.size(); ++i) {
+        const LabDeviceRegistry::OtherController other = registry.otherController(others[i]);
+        auto* gap = new QWidget(m_chain->parentWidget());
+        gap->setFixedWidth(16);
+        m_chain->addWidget(gap);
+        addCard(kControllerIcon, other.name, Pick::Other, i);
+        m_cards.last().card->setProperty("otherId", others[i]);
+    }
+    m_chain->addStretch();
+    refreshCards();
+    // As tall as the cards (a QScrollArea would otherwise take its own
+    // default height and cut them), plus a horizontal scroll bar's room.
+    // (The new cards are not shown yet: measured one by one.)
+    int height = 0;
+    for (const Card& card : std::as_const(m_cards)) {
+        height = qMax(height, card.card->sizeHint().height());
+    }
+    const QMargins margins = m_chain->contentsMargins();
+    auto* scroll = static_cast<QScrollArea*>(m_chainScroll);
+    m_chainScroll->setFixedHeight(height + margins.top() + margins.bottom() +
+                                  scroll->horizontalScrollBar()->sizeHint().height());
+}
+
+void LabPanel::refreshCards() {
+    const QLocale locale;
+    LabPlantDevice* p = plant();
+    LabControllerDevice* c = controller();
+    for (Card& card : m_cards) {
+        const bool selected = card.pick == m_pick &&
+                              (card.pick == Pick::Plant || card.pick == Pick::Controller ||
+                               (card.pick == Pick::Other
+                                    ? card.card->property("otherId").toString() == m_otherId
+                                    : card.index == m_pickIndex));
+        card.card->setSelected(selected);
+        LabCard::Tone tone = LabCard::Tone::None;
+        QString headerStatus;
+        QString kind;
+        QString status;
+        switch (card.pick) {
+            case Pick::Plant:
+                kind = tr("Plant");
+                if (p) {
+                    tone = p->running() ? LabCard::Tone::Success : LabCard::Tone::Warning;
+                    headerStatus = p->running() ? tr("running") : tr("paused");
+                    status = tr("tick %1 · %2 s")
+                                 .arg(locale.toString(qlonglong(p->tick())))
+                                 .arg(locale.toString(p->time(), 'f', 1));
+                }
+                break;
+            case Pick::Filter:
+            case Pick::Controller: {
+                const int block =
+                    card.pick == Pick::Controller ? LabControllerDevice::kController : card.index;
+                kind = card.pick == Pick::Controller ? tr("Controller · C")
+                                                     : tr("Filter %1 · C").arg(card.index + 1);
+                if (!c) {
+                    break;
+                }
+                const QString fault = c->runtimeError(block);
+                bool error = false;
+                int errorLine = 0;
+                for (const code::CodeMessage& m : c->messages(block)) {
+                    if (!m.warning) {
+                        error = true;
+                        errorLine = m.line;
+                        break;
+                    }
+                }
+                if (!fault.isEmpty()) {
+                    tone = LabCard::Tone::Danger;
+                    headerStatus = tr("stopped");
+                    status = fault.section(QStringLiteral(": "), 1);
+                } else if (error) {
+                    tone = LabCard::Tone::Danger;
+                    headerStatus = tr("error");
+                    status = errorLine > 0 ? tr("does not compile (line %1)").arg(errorLine)
+                                           : tr("does not compile");
+                    if (c->compiled(block)) {
+                        status += tr("; the previous version runs");
+                    }
+                } else if (!c->host()->configureError().isEmpty() &&
+                           c->host()->configureError().startsWith(c->blockName(block))) {
+                    tone = LabCard::Tone::Danger;
+                    headerStatus = tr("not bound");
+                    status = c->host()->configureError().section(QStringLiteral(": "), 1);
+                } else if (!c->host()->plantReady()) {
+                    tone = LabCard::Tone::Warning;
+                    headerStatus = tr("waiting");
+                    status = tr("waiting for the plant");
+                } else {
+                    tone = LabCard::Tone::Success;
+                    headerStatus = tr("running");
+                    status = tr("compiled");
+                    if (card.pick == Pick::Controller && c->controller() &&
+                        c->controller()->usesPreview()) {
+                        status += tr(" · uses the preview");
+                    }
+                }
+                break;
+            }
+            case Pick::Other:
+                kind = tr("Controller · C++ (fixed)");
+                tone = LabCard::Tone::Warning;
+                headerStatus = tr("legacy");
+                status = tr("Replace it with a controller in C.");
+                break;
+        }
+        card.card->setStatus(tone, headerStatus);
+        card.kind->setText(kind);
+        if (card.status->text() != status) {
+            card.status->setText(status);
+            card.status->setToolTip(status);
+        }
+    }
+}
+
+void LabPanel::pick(Pick what, int index) {
+    const bool sameBlock = (what == Pick::Controller && m_pick == Pick::Controller) ||
+                           (what == Pick::Filter && m_pick == Pick::Filter && index == m_pickIndex);
+    if (!sameBlock && m_pages->currentWidget() == m_blockEditor && !m_blockEditor->maybeSave()) {
+        return;
+    }
+    LabControllerDevice* c = controller();
+    if ((what == Pick::Filter && (!c || index < 0 || index >= c->filterCount())) ||
+        (what == Pick::Controller && !c)) {
+        what = Pick::Plant;
+        index = 0;
+    }
+    m_pick = what;
+    m_pickIndex = index;
+    switch (what) {
+        case Pick::Plant:
+            m_plantPage->setPlant(plant());
+            m_pages->setCurrentWidget(m_plantPage);
+            break;
+        case Pick::Filter:
+        case Pick::Controller: {
+            const int block = what == Pick::Controller ? LabControllerDevice::kController : index;
+            if (m_blockEditor->device() != c || m_blockEditor->block() != block) {
+                m_blockEditor->setBlock(c, block);
+            }
+            m_pages->setCurrentWidget(m_blockEditor);
+            break;
+        }
+        case Pick::Other: {
+            int i = 0;
+            for (const Card& card : std::as_const(m_cards)) {
+                if (card.pick == Pick::Other && i++ == index) {
+                    m_otherId = card.card->property("otherId").toString();
+                }
+            }
+            m_otherText->setText(
+                tr("%1 is a controller written in C++ inside TraceView: it closes the loop on "
+                   "this plant, but its code cannot be seen or changed here. Replace it with a "
+                   "controller in C (\"+ Controller\" or \"Add controller\" on the ribbon, "
+                   "after removing it: two controllers on one plant fight over its inputs).")
+                    .arg(LabDeviceRegistry::instance().otherController(m_otherId).name));
+            m_pages->setCurrentWidget(m_otherPage);
+            break;
+        }
+    }
+    refreshCards();
+}
+
+void LabPanel::refreshLive() {
+    refreshCards();
+    if (m_pages->currentWidget() == m_plantPage) {
+        m_plantPage->refreshLive();
+    } else if (m_pages->currentWidget() == m_blockEditor) {
+        m_blockEditor->refreshLive();
+    }
+}
+
+// ---------------------------------------------------------------------------
+// The ribbon
+
+void LabPanel::addPlant() {
+    const QVector<LabDeviceRegistry::PlantType>& types = LabDeviceRegistry::instance().plantTypes();
+    if (!m_host || types.isEmpty()) {
+        return;
+    }
+    const LabDeviceRegistry::PlantType& type = types.first();
+    m_host->addModuleDevice(type.typeId, tr("TraceLab: %1").arg(type.name), type.defaultConfig);
 }
 
 void LabPanel::addController() {
-    const QString plantId = currentPlantId();
-    if (!m_host || plantId.isEmpty()) {
+    if (!m_host || !plant()) {
         return;  // the action is disabled without a plant
     }
-    lf::ControllerSettings settings;
-    settings.plantDeviceId = plantId;
-    m_host->addModuleDevice(QString::fromLatin1(lf::kControllerDeviceType),
-                            tr("TraceLab: Controller"), settings.toJson());
+    const QVector<code::CodeTemplate> templates =
+        CodeLibrary::instance().templates(BlockKind::Controller);
+    if (LabControllerDevice* c = controller()) {
+        if (c->spec(LabControllerDevice::kController).isEmpty() && !templates.isEmpty()) {
+            addBlock(true, templates.first().id, QString());
+        } else {
+            pick(Pick::Controller, 0);
+        }
+        return;
+    }
+    if (templates.isEmpty()) {
+        QString error;
+        const QString path =
+            CodeLibrary::instance().createFile(BlockKind::Controller, QString(), QString(), &error);
+        if (!path.isEmpty()) {
+            addBlock(true, QString(), path);
+        }
+        return;
+    }
+    addBlock(true, templates.first().id, QString());
 }
 
 void LabPanel::addScene() {
-    const QString plantId = currentPlantId();
-    if (!m_host || plantId.isEmpty()) {
+    const QString plantDeviceId = plantId();
+    if (!m_host || plantDeviceId.isEmpty()) {
         return;  // the action is disabled without a plant
     }
-    // The controller bound to this plant, if any (ctl.* topics).
-    QString controllerId;
-    for (const QString& id : lf::LineDeviceRegistry::instance().controllerIds()) {
-        const lf::LineControllerDevice* c = lf::LineDeviceRegistry::instance().controller(id);
-        if (c != nullptr && (c->settings().plantDeviceId == plantId || controllerId.isEmpty())) {
-            controllerId = id;
-        }
-    }
+    LabControllerDevice* c = controller();
+    const QString controllerId = c ? c->deviceId() : QString();
     // Bound by name (docs/DASHBOARD.md "Telemetry bindings"): MainWindow
     // fills the ids from the device's catalog.
     QJsonObject bind;
     DiffDriveScene scene;
     for (const SceneInput& input : scene.inputs()) {
         const bool fromController = input.defaultTopic.startsWith(QLatin1String("ctl."));
-        const QString deviceId = fromController ? controllerId : plantId;
+        const QString deviceId = fromController ? controllerId : plantDeviceId;
         if (deviceId.isEmpty() || input.defaultTopic.isEmpty()) {
             continue;
         }
@@ -556,201 +793,29 @@ void LabPanel::addScene() {
                                            {"bind", bind}});
 }
 
-lf::LinePlantDevice* LabPanel::plant() const {
-    return lf::LineDeviceRegistry::instance().plant(m_plantCombo->currentData().toString());
-}
-
-lf::LineControllerDevice* LabPanel::controller() const {
-    return lf::LineDeviceRegistry::instance().controller(
-        m_controllerCombo->currentData().toString());
-}
-
 void LabPanel::play() {
-    if (lf::LinePlantDevice* p = plant()) {
+    if (LabPlantDevice* p = plant()) {
         p->run();
     }
 }
 
 void LabPanel::pauseSimulation() {
-    if (lf::LinePlantDevice* p = plant()) {
+    if (LabPlantDevice* p = plant()) {
         p->pause();
     }
 }
 
 void LabPanel::resetSimulation() {
-    if (lf::LinePlantDevice* p = plant()) {
+    if (LabPlantDevice* p = plant()) {
         p->reset();
     }
 }
 
 void LabPanel::stepSimulation() {
-    if (lf::LinePlantDevice* p = plant()) {
+    if (LabPlantDevice* p = plant()) {
         p->pause();
         p->step();
     }
-}
-
-void LabPanel::refreshDevices() {
-    const auto fill = [](QComboBox* combo, const QStringList& ids) {
-        const QString current = combo->currentData().toString();
-        const QSignalBlocker blocker(combo);
-        combo->clear();
-        for (const QString& id : ids) {
-            combo->addItem(id, id);
-        }
-        const int index = combo->findData(current);
-        combo->setCurrentIndex(index >= 0 ? index : (ids.isEmpty() ? -1 : 0));
-    };
-    fill(m_plantCombo, lf::LineDeviceRegistry::instance().plantIds());
-    fill(m_controllerCombo, lf::LineDeviceRegistry::instance().controllerIds());
-    const bool any = m_plantCombo->count() > 0 || m_controllerCombo->count() > 0;
-    m_emptyState->setVisible(!any);
-    m_cardsScroll->setVisible(any);
-    // The device ids may need wider fields.
-    alignCards();
-    // A controller and a scene are built around a plant.
-    const bool hasPlant = m_plantCombo->count() > 0;
-    m_addControllerAction->setEnabled(hasPlant);
-    m_addSceneAction->setEnabled(hasPlant);
-    refreshFromDevices();
-}
-
-void LabPanel::refreshFromDevices() {
-    m_updating = true;
-    if (lf::LinePlantDevice* p = plant()) {
-        const lf::PlantSettings& s = p->settings();
-        int speed = 0;
-        if (s.runMode == lf::RunMode::AsFastAsPossible) {
-            speed = 2;
-        } else if (s.runMode == lf::RunMode::Lockstep) {
-            speed = 3;
-        } else if (s.timeScale > 1.5) {
-            speed = 1;
-        }
-        m_speedCombo->setCurrentIndex(speed);
-        m_rateSpin->setValue(s.fps);
-        m_seedSpin->setValue(int(qBound<qint64>(qint64(-1), qint64(s.track.seed), qint64(2147483647))));
-        m_trackCombo->setCurrentIndex(s.track.type == lf::TrackType::Circle ? 1 : 0);
-        m_noiseCheck->setChecked(s.sensorNoise);
-    }
-    if (lf::LineControllerDevice* c = controller()) {
-        const lf::ControllerSettings& s = c->settings();
-        m_typeCombo->setCurrentIndex(qMax(0, m_typeCombo->findData(s.type)));
-        m_filterSpin->setValue(s.filterTau);
-        m_qLateralSpin->setValue(s.qLateral);
-        m_schedulingCombo->setCurrentIndex(qMax(0, m_schedulingCombo->findData(s.qlpvScheduling)));
-        m_embeddingCombo->setCurrentIndex(qMax(0, m_embeddingCombo->findData(s.qlpvEmbedding)));
-        m_iterationsSpin->setValue(s.qlpvIterations);
-        m_gpcLambdaSpin->setValue(s.gpcLambda);
-        m_pdKpSpin->setValue(s.pdKp);
-        m_pdKdSpin->setValue(s.pdKd);
-        m_pdBaseSpin->setValue(s.pdBase);
-    }
-    m_updating = false;
-    refreshStatus();
-}
-
-void LabPanel::refreshStatus() {
-    const QLocale locale;
-    lf::LinePlantDevice* p = plant();
-    if (!p) {
-        m_simulationCard->setStatus(LabCard::Tone::None, QString());
-        for (QLabel* value : {m_tickValue, m_timeValue, m_coveredValue}) {
-            value->setText(QStringLiteral("--"));
-        }
-        m_perturbationLabel->hide();
-    } else {
-        m_simulationCard->setStatus(p->running() ? LabCard::Tone::Success : LabCard::Tone::Warning,
-                                    p->running() ? tr("running") : tr("paused"));
-        m_tickValue->setText(locale.toString(qlonglong(p->tick())));
-        m_timeValue->setText(tr("%1 s").arg(locale.toString(p->plant().time(), 'f', 2)));
-        m_coveredValue->setText(
-            tr("%1 %").arg(locale.toString(p->plant().progress().coverage(), 'f', 1)));
-        const bool perturbed = p->perturbation() != 0.0;
-        if (perturbed) {
-            m_perturbationLabel->setText(
-                tr("Perturbation: %1 %").arg(locale.toString(p->perturbation(), 'f', 1)));
-        }
-        m_perturbationLabel->setVisible(perturbed);
-    }
-    if (lf::LineControllerDevice* c = controller()) {
-        const bool ready = c->host()->plantReady();
-        m_controllerCard->setStatus(ready ? LabCard::Tone::Success : LabCard::Tone::Warning,
-                                    ready ? tr("connected") : tr("waiting for the plant"));
-    } else {
-        m_controllerCard->setStatus(LabCard::Tone::None, QString());
-    }
-}
-
-void LabPanel::applySpeed() {
-    if (m_updating) {
-        return;
-    }
-    const int index = qBound(0, m_speedCombo->currentIndex(), int(std::size(kSpeeds)) - 1);
-    if (lf::LinePlantDevice* p = plant()) {
-        p->setRunMode(kSpeeds[index].mode, kSpeeds[index].scale);
-    }
-}
-
-void LabPanel::applyRate() {
-    if (m_updating) {
-        return;
-    }
-    lf::LinePlantDevice* p = plant();
-    const int fps = m_rateSpin->value();
-    if (!p || p->settings().fps == fps) {
-        return;
-    }
-    // The controllers closing the loop on this plant must sample at its Ts.
-    const QString plantId = m_plantCombo->currentData().toString();
-    for (const QString& id : lf::LineDeviceRegistry::instance().controllerIds()) {
-        lf::LineControllerDevice* c = lf::LineDeviceRegistry::instance().controller(id);
-        if (c != nullptr && c->settings().plantDeviceId == plantId) {
-            lf::ControllerSettings s = c->settings();
-            s.fps = fps;
-            c->setSettings(s);
-        }
-    }
-    lf::PlantSettings s = p->settings();
-    s.fps = fps;
-    p->setSettings(s);
-    p->reset();
-}
-
-void LabPanel::applyTrackAndSensors() {
-    lf::LinePlantDevice* p = plant();
-    if (!p) {
-        return;
-    }
-    lf::PlantSettings s = p->settings();
-    s.track.seed = m_seedSpin->value();
-    s.track.type = m_trackCombo->currentIndex() == 1 ? lf::TrackType::Circle
-                                                     : lf::TrackType::Lemniscate;
-    s.sensorNoise = m_noiseCheck->isChecked();
-    p->setSettings(s);
-    p->reset();
-}
-
-void LabPanel::applyController() {
-    if (m_updating) {
-        return;
-    }
-    lf::LineControllerDevice* c = controller();
-    if (!c) {
-        return;
-    }
-    lf::ControllerSettings s = c->settings();
-    s.type = m_typeCombo->currentData().toString();
-    s.filterTau = m_filterSpin->value();
-    s.qLateral = m_qLateralSpin->value();
-    s.qlpvScheduling = m_schedulingCombo->currentData().toString();
-    s.qlpvEmbedding = m_embeddingCombo->currentData().toString();
-    s.qlpvIterations = m_iterationsSpin->value();
-    s.gpcLambda = m_gpcLambdaSpin->value();
-    s.pdKp = m_pdKpSpin->value();
-    s.pdKd = m_pdKdSpin->value();
-    s.pdBase = m_pdBaseSpin->value();
-    c->setSettings(s);
 }
 
 }  // namespace tracelab

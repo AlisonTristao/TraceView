@@ -155,6 +155,14 @@ if(TRACEVIEW_ENABLE_LAB)
     add_traceview_test(test_scenewidget tracelab_scenes traceview_project)
     add_traceview_test(test_labmodule tracelab_module tracelab_scenes traceview_dashboard
                        traceview_transport)
+    tracelab_copy_tcc_runtime(test_labmodule)
+    # The TraceLab tab on a live line follower: the loop as plant > filters >
+    # controller cards, blocks added from the templates, a picked block's
+    # code/parameters/signals, Save making an edited template a file of the
+    # user's, back to the original, the configuration reaching the project.
+    add_traceview_test(test_labpanel tracelab_module tracelab_control tracelab_lf_devices
+                       traceview_dashboard traceview_modules)
+    tracelab_copy_tcc_runtime(test_labpanel)
     add_traceview_test(test_loopbacktransport tracelab_plant)
     # The line-follower benchmark's plant (lab/benchmarks/linefollower/plant):
     # the track generator against the Python simulator (CPython's random bit
@@ -180,6 +188,12 @@ if(TRACEVIEW_ENABLE_LAB)
     # array and the plant's true/measured outputs.
     add_traceview_test(test_sensors tracelab_sensors)
     add_traceview_test(test_lfsensors tracelab_lf_plant)
+    # Code blocks (lab/code): a C file compiled in memory by libtcc, its TL_*
+    # declarations in source order, parameters kept across recompiles, the
+    # tl_* functions and printf, compiler errors and runtime faults with their
+    # line (the process's own exceptions unaffected), the templates library.
+    add_traceview_test(test_codemodule tracelab_code)
+    tracelab_copy_tcc_runtime(test_codemodule)
 endif()
 
 if(TRACEVIEW_ENABLE_LAB AND TARGET tracelab_filters_rt)
@@ -216,6 +230,14 @@ if(TARGET tracelab_lf_devices)
     # equal to the in-process harness, and sim.disturb by command.
     add_traceview_test(test_lfdevices tracelab_lf_devices tracelab_lf_controllers
                        traceview_transport traceview_devices traceview_backend)
+    tracelab_copy_tcc_runtime(test_lfdevices)
+    # Controllers and filters in C (lab/control: CodeControllerAdapter,
+    # CodeSignalFilter, LabControllerDevice) on the line follower through BTP:
+    # the PD template equal to the C++ PD step for step, filters replacing and
+    # adding signals by name, misnamed signals reported, faults holding the
+    # input until reset, a saved file compiled again while running.
+    add_traceview_test(test_codecontroller tracelab_lf_devices tracelab_control)
+    tracelab_copy_tcc_runtime(test_codecontroller)
 endif()
 
 # Generic telemetry value types (lib/telemetry) -- no BTP dependency at all

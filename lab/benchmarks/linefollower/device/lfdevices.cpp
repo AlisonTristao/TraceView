@@ -4,6 +4,7 @@
 #include <QTimer>
 
 #include "lab/control/controllerhost.h"
+#include "lab/control/labdevices.h"
 #include "lab/plant/endpointtransport.h"
 #include "lab/plant/loopbacktransport.h"
 
@@ -186,13 +187,15 @@ QVector<traceview::ModuleDeviceType> lineFollowerDeviceTypes() {
             parent);
         device->setParent(transport);
         LineDeviceRegistry::instance().addPlant(deviceId, device);
+        // Any controller device of the TraceLab tab can close the loop on it.
+        LabDeviceRegistry::instance().addPlant(deviceId, device);
         return transport;
     };
 
     traceview::ModuleDeviceType controller;
     controller.id = QString::fromLatin1(kControllerDeviceType);
     controller.displayName =
-        QCoreApplication::translate("LineFollowerDevices", "TraceLab: Controller");
+        QCoreApplication::translate("LineFollowerDevices", "TraceLab: Line-follower controller (C++)");
     controller.createTransport = [](const QString& deviceId, const QJsonObject& config,
                                     QObject* parent) -> traceview::ModuleTransport* {
         auto* device = new LineControllerDevice(deviceId, ControllerSettings::fromJson(config));
@@ -204,6 +207,10 @@ QVector<traceview::ModuleDeviceType> lineFollowerDeviceTypes() {
             parent);
         device->setParent(transport);
         LineDeviceRegistry::instance().addController(deviceId, device);
+        LabDeviceRegistry::instance().addOtherController(
+            deviceId, device,
+            QCoreApplication::translate("LineFollowerDevices", "Line-follower controller (C++)"),
+            device->settings().plantDeviceId);
         return transport;
     };
     return {plant, controller};

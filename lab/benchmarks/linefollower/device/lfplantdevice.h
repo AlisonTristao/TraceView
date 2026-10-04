@@ -10,6 +10,7 @@
 
 #include "lab/benchmarks/linefollower/device/lfplantmanifest.h"
 #include "lab/benchmarks/linefollower/plant/linefollowerplant.h"
+#include "lab/plant/labplantdevice.h"
 
 class QTimer;
 
@@ -20,13 +21,8 @@ class LoopbackTransport;
 
 namespace tracelab::lf {
 
-// How the plant's clock runs (plan 4.2).
-enum class RunMode {
-    RealTime = 0,         // ticks at Ts / timeScale of wall time
-    AsFastAsPossible = 1, // one tick per event-loop turn, never waits
-    Lockstep = 2,         // as fast as possible, but tick k+1 waits for the
-                          // loop.u answering tick k (in REMOTE mode)
-};
+// How the plant's clock runs (lab/plant/labplantdevice.h).
+using RunMode = tracelab::RunMode;
 
 // The settings of one run, the device's Device::moduleConfig in a project:
 //   {"seed": 1112, "trackType": "lemniscate", "fps": 80, "horizon": 10,
@@ -66,7 +62,7 @@ struct PlantSettings {
 // sim.truth of tick k. Nothing is published to the controller before tick 1,
 // so the first answer is to the first step -- exactly the in-process
 // harness's order (u = 0, step, controller, step...).
-class LinePlantDevice : public QObject {
+class LinePlantDevice : public LabPlantDevice {
     Q_OBJECT
 
 public:
@@ -82,19 +78,42 @@ public:
     }
     // Takes effect on the next reset(), except the run mode and time scale.
     void setSettings(const PlantSettings& settings);
-    void setRunMode(RunMode mode, double timeScale);
+    void setRunMode(RunMode mode, double timeScale) override;
 
     // The two links. `peer` is the endpoint's end of a connected loopback
     // pair (the other end is TraceView's / the controller's); the device
     // takes it over (reparents it). A new one replaces the old.
     void attachViewer(LoopbackTransport* peer);
-    void attachController(LoopbackTransport* peer);
+    void attachController(LoopbackTransport* peer) override;
 
-    bool running() const {
+    // LabPlantDevice: the settings on the TraceLab tab's plant card are the
+    // track (seed, type), the sensor noise and the preview (points and their
+    // spacing); the status values the coverage and the perturbation.
+    QString typeName() const override;
+    bool running() const override {
         return m_running;
     }
-    long long tick() const {
+    long long tick() const override {
         return m_tick;
+    }
+    double time() const override;
+    int sampleRate() const override {
+        return m_settings.fps;
+    }
+    // Also the fps of every controller device closing the loop on it (they
+    // follow the plant's Ts on settingsChanged()).
+    void setSampleRate(int hz) override;
+    RunMode runMode() const override {
+        return m_settings.runMode;
+    }
+    double timeScale() const override {
+        return m_settings.timeScale;
+    }
+    QVector<PlantSetting> settingsSchema() const override;
+    void applySettings(const QVariantMap& values) override;
+    QVector<QPair<QString, QString>> statusItems() const override;
+    QJsonObject config() const override {
+        return m_settings.toJson();
     }
     const LineFollowerPlant& plant() const {
         return *m_plant;
@@ -109,21 +128,17 @@ public:
     }
 
 public slots:
-    void run();
-    void pause();
+    void run() override;
+    void pause() override;
     // Back to tick 0 with the current settings (a new track when the seed or
     // the type changed); keeps running or paused.
-    void reset();
+    void reset() override;
     // Exactly one tick (while paused).
-    void step();
+    void step() override;
     void setPerturbation(double percent);
 
 signals:
-    void runningChanged(bool running);
-    // After every tick (and after reset(), with tick 0).
-    void ticked(long long tick);
     void finished();
-    void settingsChanged();
 
 private:
     struct Plan {

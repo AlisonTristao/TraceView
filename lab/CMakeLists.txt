@@ -100,6 +100,7 @@ add_library(tracelab_plant STATIC
     plant/btpproducerport.h
     plant/endpointtransport.cpp
     plant/endpointtransport.h
+    plant/labplantdevice.h
     plant/loopbacktransport.cpp
     plant/loopbacktransport.h
     plant/plantmanifest.cpp
@@ -120,15 +121,26 @@ target_link_libraries(tracelab_plant
         btp::catalog
 )
 
+# tracelab_code: plant, filter and controller blocks written in C, compiled in
+# memory by libtcc (lab/code/CMakeLists.txt, lab/README.md "Code blocks").
+add_subdirectory(code)
+
 # tracelab_control: the controller host and the ways to program a controller.
 add_library(tracelab_control STATIC
+    control/codecontrolleradapter.cpp
+    control/codecontrolleradapter.h
+    control/codesignalfilter.cpp
+    control/codesignalfilter.h
     control/controlleradapter.h
     control/controllerhost.cpp
     control/controllerhost.h
     control/dllcontrolleradapter.cpp
     control/dllcontrolleradapter.h
+    control/labdevices.cpp
+    control/labdevices.h
     control/scriptcontrolleradapter.cpp
     control/scriptcontrolleradapter.h
+    control/signalfilter.h
 )
 target_include_directories(tracelab_control PUBLIC ${CMAKE_SOURCE_DIR})
 target_link_libraries(tracelab_control
@@ -141,6 +153,9 @@ target_link_libraries(tracelab_control
         # TraceView.
         btp::node
         tracelab_plant
+        # The controller and filters written in C (codecontrolleradapter.h,
+        # codesignalfilter.h).
+        tracelab_code
 )
 
 # tracelab_scenes: the SceneRenderer contract, the scene registry, the Scene
@@ -172,12 +187,18 @@ target_link_libraries(tracelab_scenes
 
 # tracelab_module: LabModule, what src/main.cpp registers.
 add_library(tracelab_module STATIC
+    module/blockeditor.cpp
+    module/blockeditor.h
+    module/codeeditor.cpp
+    module/codeeditor.h
     module/labcard.cpp
     module/labcard.h
     module/labmodule.cpp
     module/labmodule.h
     module/labpanel.cpp
     module/labpanel.h
+    module/plantpage.cpp
+    module/plantpage.h
 )
 target_include_directories(tracelab_module PUBLIC ${CMAKE_SOURCE_DIR})
 target_link_libraries(tracelab_module
@@ -187,6 +208,9 @@ target_link_libraries(tracelab_module
         Qt6::Widgets
         tracelab_scenes
         traceview_dashboard
+        # LabControllerDevice and the code blocks the tab edits.
+        tracelab_control
+        tracelab_code
         # DoubleSpinBox (theme/doublespinbox.h), the theme's colors, frame
         # style and tinted icons for the tab's cards and ribbon buttons.
         traceview_theme
@@ -212,7 +236,9 @@ qt_add_resources(tracelab_module tracelab_icons
     PREFIX "/tracelab/icons"
     BASE module/icons
     FILES
+        module/icons/code.svg
         module/icons/controller.svg
+        module/icons/filter.svg
         module/icons/pause.svg
         module/icons/plant.svg
         module/icons/play.svg

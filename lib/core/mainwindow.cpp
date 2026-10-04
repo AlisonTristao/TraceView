@@ -900,6 +900,19 @@ QString MainWindow::addModuleDevice(const QString& typeId, const QString& name,
     return m_devicesGrid->addDevice(device);
 }
 
+bool MainWindow::updateModuleDeviceConfig(const QString& deviceId, const QJsonObject& config) {
+    return m_devicesGrid->setDeviceModuleConfig(deviceId, config);
+}
+
+bool MainWindow::removeModuleDevice(const QString& deviceId) {
+    const QVector<Device> devices = m_devicesGrid->devices();
+    if (findDevice(devices, deviceId) == nullptr) {
+        return false;
+    }
+    m_devicesGrid->removeDevice(deviceId);
+    return true;
+}
+
 bool MainWindow::addDashboardWidget(const QString& typeId, const QJsonObject& config) {
     m_dashboardGrid->addItem(typeId, config);
     m_ribbon->setCurrentIndex(m_dashboardTabIndex);

@@ -4,6 +4,8 @@
 # adapter (LineControllerDevice), and the ModuleDeviceTypes that create them
 # in process (lfdevices.h).
 add_library(tracelab_lf_devices STATIC
+    ../code/lftemplates.cpp
+    ../code/lftemplates.h
     lfcontrolleradapter.cpp
     lfcontrolleradapter.h
     lfdevices.cpp
@@ -26,4 +28,16 @@ target_link_libraries(tracelab_lf_devices
         tracelab_lf_controllers
         # The wheel-speed filter: the firmware's float runtime.
         tracelab_filters_rt
+)
+
+# The line follower's code templates (lftemplates.h): the controllers, filters
+# and plant in C that the TraceLab tab opens and "back to the original"
+# restores.
+target_link_libraries(tracelab_lf_devices PUBLIC tracelab_code)
+qt_add_resources(tracelab_lf_devices tracelab_lf_templates
+    PREFIX "/tracelab/templates/linefollower"
+    BASE ../code
+    FILES
+        ../code/controllers/pd.c
+        ../code/filters/lowpass.c
 )

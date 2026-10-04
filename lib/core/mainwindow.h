@@ -120,6 +120,8 @@ private:
     bool openProject(const QString& path) override;
     void registerExampleProject(const QString& group, const QString& name,
                                 const QString& path) override;
+    bool updateModuleDeviceConfig(const QString& deviceId, const QJsonObject& config) override;
+    bool removeModuleDevice(const QString& deviceId) override;
     QString addModuleDevice(const QString& typeId, const QString& name,
                             const QJsonObject& config) override;
     bool addDashboardWidget(const QString& typeId, const QJsonObject& config) override;
