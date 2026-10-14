@@ -2,6 +2,150 @@
 <!DOCTYPE TS>
 <TS version="2.1" language="zh_CN">
 <context>
+    <name>AgentAppTools</name>
+    <message>
+        <location filename="../lib/core/agentapptools.cpp" line="+207"/>
+        <source>AI Assistant</source>
+        <translation>AI 助手</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>An AI assistant wants to %1.
+
+Allow it to connect devices and send them commands until AI assistant access is turned off or TraceView closes?</source>
+        <translation>AI 助手想要%1。
+
+是否允许它连接设备并向设备发送命令，直到关闭 AI 助手访问或退出 TraceView？</translation>
+    </message>
+    <message>
+        <location line="+276"/>
+        <source>An AI assistant created workspace &quot;%1&quot;.</source>
+        <translation>AI 助手创建了工作区“%1”。</translation>
+    </message>
+    <message>
+        <location line="+81"/>
+        <source>Delete Workspace</source>
+        <translation>删除工作区</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>An AI assistant wants to delete workspace &quot;%1&quot;. This cannot be undone.</source>
+        <translation>AI 助手想要删除工作区“%1”。此操作无法撤销。</translation>
+    </message>
+    <message>
+        <location line="+63"/>
+        <source>Add Widget (AI assistant)</source>
+        <translation>添加控件（AI 助手）</translation>
+    </message>
+    <message>
+        <location line="+53"/>
+        <source>Edit Widget (AI assistant)</source>
+        <translation>编辑控件（AI 助手）</translation>
+    </message>
+    <message>
+        <location line="+313"/>
+        <source>New Project</source>
+        <translation>新建项目</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>An AI assistant wants to start a new, empty project. Unsaved changes to the current one will be lost.</source>
+        <translation>AI 助手想要新建一个空项目。当前项目未保存的更改将丢失。</translation>
+    </message>
+    <message>
+        <location line="+14"/>
+        <source>Open Project</source>
+        <translation>打开项目</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>An AI assistant wants to open &quot;%1&quot;. Unsaved changes to the current project will be lost.</source>
+        <translation>AI 助手想要打开“%1”。当前项目未保存的更改将丢失。</translation>
+    </message>
+    <message>
+        <location line="+75"/>
+        <source>Add to Gallery</source>
+        <translation>添加到库</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>An AI assistant wants to replace the gallery dashboard &quot;%1&quot;.</source>
+        <translation>AI 助手想要替换图库中的仪表板“%1”。</translation>
+    </message>
+    <message>
+        <location line="+52"/>
+        <source>Delete Dashboard</source>
+        <translation>删除仪表盘</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>An AI assistant wants to delete the gallery dashboard &quot;%1&quot;. This cannot be undone.</source>
+        <translation>AI 助手想要删除图库中的仪表板“%1”。此操作无法撤销。</translation>
+    </message>
+    <message>
+        <location line="+50"/>
+        <source>An AI assistant saved the project to %1.</source>
+        <translation>AI 助手已将项目保存到 %1。</translation>
+    </message>
+    <message>
+        <location filename="../lib/core/agentdevicetools.cpp" line="+191"/>
+        <location line="+49"/>
+        <source>set up how a device is reached</source>
+        <translation>设置设备的连接方式</translation>
+    </message>
+    <message>
+        <location line="+69"/>
+        <source>connect a device</source>
+        <translation>连接设备</translation>
+    </message>
+    <message>
+        <location line="+153"/>
+        <location line="+40"/>
+        <source>send commands to a device</source>
+        <translation>向设备发送命令</translation>
+    </message>
+    <message>
+        <location line="+175"/>
+        <source>run a script that controls a device</source>
+        <translation>运行控制设备的脚本</translation>
+    </message>
+    <message>
+        <location line="+95"/>
+        <source>Firmware Update</source>
+        <translation>固件更新</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>An AI assistant wants to flash &quot;%1&quot; onto %2. The device restarts with the new firmware.</source>
+        <translation>AI 助手想要将“%1”刷写到 %2。设备将以新固件重启。</translation>
+    </message>
+    <message>
+        <location line="+15"/>
+        <source>Uploading firmware to %1: %2%</source>
+        <translation>正在向 %1 上传固件：%2%</translation>
+    </message>
+    <message>
+        <location filename="../lib/core/agentpreferencetools.cpp" line="+300"/>
+        <source>Delete Preset</source>
+        <translation>删除预设</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>An AI assistant wants to delete the appearance preset &quot;%1&quot;.</source>
+        <translation>AI 助手想要删除外观预设“%1”。</translation>
+    </message>
+    <message>
+        <location line="+125"/>
+        <source>Delete Palette</source>
+        <translation>删除调色板</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>An AI assistant wants to delete the palette &quot;%1&quot;.</source>
+        <translation>AI 助手想要删除调色板“%1”。</translation>
+    </message>
+</context>
+<context>
     <name>Appearance</name>
     <message>
         <location filename="../lib/theme/appearance.cpp" line="+124"/>
@@ -480,7 +624,7 @@
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="+132"/>
+        <location filename="../lib/core/mainwindow.cpp" line="+135"/>
         <source>TraceView Project (*.tvproj)</source>
         <translation>TraceView 项目 (*.tvproj)</translation>
     </message>
@@ -950,6 +1094,14 @@
         <location line="-4"/>
         <source>AppImage from GitHub Releases</source>
         <translation>来自 GitHub Releases 的 AppImage</translation>
+    </message>
+</context>
+<context>
+    <name>traceview::AgentBridgeServer</name>
+    <message>
+        <location filename="../lib/agent/agentbridgeserver.cpp" line="+96"/>
+        <source>Another TraceView window is already serving AI assistants.</source>
+        <translation>另一个 TraceView 窗口已在为 AI 助手提供服务。</translation>
     </message>
 </context>
 <context>
@@ -2265,7 +2417,7 @@ Allowed: %1</source>
 <context>
     <name>traceview::DashboardGrid</name>
     <message>
-        <location filename="../lib/dashboard/dashboardgrid.cpp" line="+554"/>
+        <location filename="../lib/dashboard/dashboardgrid.cpp" line="+615"/>
         <source>Bring to Front</source>
         <translation>置于顶层</translation>
     </message>
@@ -2342,34 +2494,6 @@ Allowed: %1</source>
         <location line="+6"/>
         <source>Audio Spectrogram</source>
         <translation>音频频谱图</translation>
-    </message>
-    <message>
-        <source>Operator</source>
-        <translation type="vanished">操作员</translation>
-    </message>
-    <message>
-        <source>Boot OK. Battery at 87%.</source>
-        <translation type="vanished">启动正常。电量 87%。</translation>
-    </message>
-    <message>
-        <source>Start the calibration routine, please.</source>
-        <translation type="vanished">请启动校准程序。</translation>
-    </message>
-    <message>
-        <source>Calibration done. Offsets saved; log attached.</source>
-        <translation type="vanished">校准完成。偏移已保存；日志已附上。</translation>
-    </message>
-    <message>
-        <source>Sending the new route map.</source>
-        <translation type="vanished">正在发送新的路线图。</translation>
-    </message>
-    <message>
-        <source>Retrying over the other link...</source>
-        <translation type="vanished">正在通过另一条链路重试...</translation>
-    </message>
-    <message>
-        <source>Chat</source>
-        <translation type="vanished">聊天</translation>
     </message>
     <message>
         <location line="+62"/>
@@ -3186,7 +3310,7 @@ Allowed: %1</source>
 <context>
     <name>traceview::MainWindow</name>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="+235"/>
+        <location filename="../lib/core/mainwindow.cpp" line="+234"/>
         <source>TraceView v%1</source>
         <translation>TraceView v%1</translation>
     </message>
@@ -3203,7 +3327,33 @@ Allowed: %1</source>
         <translation>、</translation>
     </message>
     <message>
-        <location line="+557"/>
+        <location line="+288"/>
+        <source>AI assistant access is off.</source>
+        <translation>AI 助手访问已关闭。</translation>
+    </message>
+    <message>
+        <location line="+12"/>
+        <source>AI assistant access could not start: %1</source>
+        <translation>无法启动 AI 助手访问：%1</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>AI assistant connected: %1</source>
+        <translation>AI 助手已连接：%1</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <location line="+6"/>
+        <source>unknown</source>
+        <translation>未知</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>AI assistant disconnected: %1</source>
+        <translation>AI 助手已断开：%1</translation>
+    </message>
+    <message>
+        <location line="+294"/>
         <source>Pending</source>
         <translation>待定</translation>
     </message>
@@ -3347,12 +3497,12 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+0"/>
-        <location line="+3618"/>
+        <location line="+3657"/>
         <source>Later</source>
         <translation>稍后</translation>
     </message>
     <message>
-        <location line="-3611"/>
+        <location line="-3650"/>
         <source>&amp;Access</source>
         <translation>访问(&amp;A)</translation>
     </message>
@@ -3479,18 +3629,18 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+18"/>
-        <location line="+2983"/>
+        <location line="+3022"/>
         <source>Undo</source>
         <translation>撤销</translation>
     </message>
     <message>
-        <location line="-2981"/>
-        <location line="+2981"/>
+        <location line="-3020"/>
+        <location line="+3020"/>
         <source>Redo</source>
         <translation>重做</translation>
     </message>
     <message>
-        <location line="-2938"/>
+        <location line="-2977"/>
         <source>Add Device</source>
         <translation>添加设备</translation>
     </message>
@@ -3526,12 +3676,12 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+29"/>
-        <location line="+2883"/>
+        <location line="+2922"/>
         <source>Fullscreen dashboard (F11)</source>
         <translation>全屏仪表盘(F11)</translation>
     </message>
     <message>
-        <location line="-2703"/>
+        <location line="-2742"/>
         <source>Rename Workspace</source>
         <translation>重命名工作区</translation>
     </message>
@@ -3612,17 +3762,17 @@ Drops: %2</source>
         <translation>此工作区现在有自己的外观。</translation>
     </message>
     <message>
-        <location line="+1213"/>
+        <location line="+1235"/>
         <source>%1: found at %2</source>
         <translation>%1：在 %2 找到</translation>
     </message>
     <message>
-        <location line="+322"/>
+        <location line="+331"/>
         <source>%1: trying %2</source>
         <translation>%1：正在尝试 %2</translation>
     </message>
     <message>
-        <location line="+420"/>
+        <location line="+424"/>
         <location line="+8"/>
         <location line="+5"/>
         <location line="+8"/>
@@ -3671,7 +3821,7 @@ Drops: %2</source>
         <translation>已将 &quot;%1&quot; 保存到库。</translation>
     </message>
     <message>
-        <location line="+535"/>
+        <location line="+539"/>
         <source>Update available: v%1</source>
         <translation>有可用更新: v%1</translation>
     </message>
@@ -3744,13 +3894,13 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>关闭应用</translation>
     </message>
     <message>
-        <location line="-2930"/>
-        <location line="+2731"/>
+        <location line="-2969"/>
+        <location line="+2770"/>
         <source>Devices</source>
         <translation>设备</translation>
     </message>
     <message>
-        <location line="-2656"/>
+        <location line="-2695"/>
         <source>Subscriptions</source>
         <translation>订阅</translation>
     </message>
@@ -3771,12 +3921,12 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>工作区</translation>
     </message>
     <message>
-        <location line="+19"/>
+        <location line="+9"/>
         <source>Created workspace &quot;%1&quot;.</source>
         <translation>已创建工作区“%1”。</translation>
     </message>
     <message>
-        <location line="+14"/>
+        <location line="+30"/>
         <source>Delete Workspace</source>
         <translation>删除工作区</translation>
     </message>
@@ -3786,29 +3936,29 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>删除工作区“%1”？此操作无法撤销。</translation>
     </message>
     <message>
-        <location line="+16"/>
+        <location line="+24"/>
         <source>Deleted workspace &quot;%1&quot;.</source>
         <translation>已删除工作区“%1”。</translation>
     </message>
     <message>
         <location line="+71"/>
-        <location line="+2256"/>
+        <location line="+2281"/>
         <source>Add widget</source>
         <translation>添加控件</translation>
     </message>
     <message>
-        <location line="-2253"/>
+        <location line="-2278"/>
         <source>Remove selected widget (%1)</source>
         <translation>删除所选控件(%1)</translation>
     </message>
     <message>
         <location line="+3"/>
-        <location line="+2263"/>
+        <location line="+2288"/>
         <source>Add device</source>
         <translation>添加设备</translation>
     </message>
     <message>
-        <location line="-2260"/>
+        <location line="-2285"/>
         <source>Remove selected device (%1)</source>
         <translation>删除所选设备(%1)</translation>
     </message>
@@ -3893,7 +4043,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>显示图层/属性面板</translation>
     </message>
     <message>
-        <location line="+255"/>
+        <location line="+263"/>
         <source>New Device</source>
         <translation>新设备</translation>
     </message>
@@ -3959,17 +4109,17 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>动效(&amp;O)</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="-1347"/>
+        <location filename="../lib/core/mainwindow.cpp" line="-1369"/>
         <source>Dashboard</source>
         <translation>仪表盘</translation>
     </message>
     <message>
-        <location line="+1686"/>
+        <location line="+1708"/>
         <source>%1: this BLE address now answers as a different robot (expected %2, got %3)</source>
         <translation>%1: 此 BLE 地址现在以另一台机器人身份应答 (应为 %2,实际为 %3)</translation>
     </message>
     <message>
-        <location line="+492"/>
+        <location line="+502"/>
         <source>Key &quot;%1&quot; is already used by another widget.</source>
         <translation>键“%1”已被其他控件使用。</translation>
     </message>
@@ -3984,7 +4134,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>放弃当前仪表盘并新建一个空项目?</translation>
     </message>
     <message>
-        <location line="+15"/>
+        <location line="+18"/>
         <source>Started a new project.</source>
         <translation>已新建项目。</translation>
     </message>
@@ -4027,7 +4177,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     </message>
     <message>
         <location line="+20"/>
-        <location line="+211"/>
+        <location line="+215"/>
         <source>Settings</source>
         <translation>设置</translation>
     </message>
@@ -5007,7 +5157,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
 <context>
     <name>traceview::SettingsPage</name>
     <message>
-        <location filename="../lib/core/settingspage.cpp" line="+203"/>
+        <location filename="../lib/core/settingspage.cpp" line="+206"/>
         <source>Settings</source>
         <translation>设置</translation>
     </message>
@@ -5043,19 +5193,19 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     </message>
     <message>
         <location line="-234"/>
-        <location line="+293"/>
+        <location line="+326"/>
         <source>Diagnostics</source>
         <translation>诊断</translation>
     </message>
     <message>
-        <location line="-292"/>
-        <location line="+344"/>
+        <location line="-325"/>
+        <location line="+377"/>
         <location line="+5"/>
         <source>Updates</source>
         <translation>更新</translation>
     </message>
     <message>
-        <location line="-307"/>
+        <location line="-340"/>
         <source>Project and startup preferences shared by the application.</source>
         <translation>应用程序共享的项目和启动偏好设置。</translation>
     </message>
@@ -5323,7 +5473,32 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         </translation>
     </message>
     <message>
-        <location line="+19"/>
+        <location line="+18"/>
+        <source>AI assistants</source>
+        <translation>AI 助手</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Let AI assistants such as Claude control TraceView</source>
+        <translation>允许 Claude 等 AI 助手控制 TraceView</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>An assistant connected over MCP can then create workspaces and widgets, read telemetry and take screenshots of this window. Its dashboard edits can be undone.</source>
+        <translation>通过 MCP 连接的助手可以创建工作区和控件、读取遥测数据并截取此窗口的屏幕。它对仪表板的修改可以撤销。</translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <source>To connect Claude Code, run this once in a terminal:</source>
+        <translation>要连接 Claude Code，请在终端中运行一次：</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Copy command</source>
+        <translation>复制命令</translation>
+    </message>
+    <message>
+        <location line="+11"/>
         <source>Keep enough history for investigation without letting long-running sessions use unbounded memory.</source>
         <translation>保留足够的历史记录用于排查,同时避免长时间会话无限占用内存。</translation>
     </message>

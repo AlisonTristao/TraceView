@@ -232,6 +232,8 @@ target_link_libraries(TraceView PRIVATE
     traceview_ui
     traceview_theme
     traceview_locale
+    # `TraceView --mcp` (main.cpp) runs the MCP stdio relay instead of the app.
+    traceview_agent
 )
 
 if(TRACEVIEW_ENABLE_SERIAL AND NOT ANDROID)

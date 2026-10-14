@@ -67,12 +67,14 @@ public:
     // MainWindow on every device add/remove/rename.
     void setDeviceNames(const QHash<QString, QString>& namesById);
 
+    // Picks SerialManager::writeCommand() when `connection` has one, else
+    // Backend::sendCommand() -- see the class comment above. Public for the
+    // AI assistant's send_command, which sends exactly what a button would.
+    static void sendControlCommand(DeviceConnection* connection, const QByteArray& command);
+
 private:
     void wireWidget(DashboardWidget* widget);
     DeviceConnection* deviceConnectionForWidget(DashboardWidget* widget) const;
-    // Picks SerialManager::writeCommand() when `connection` has one, else
-    // Backend::sendCommand() -- see the class comment above.
-    static void sendControlCommand(DeviceConnection* connection, const QByteArray& command);
     // Tears down `monitor`'s inbound connections and rebuilds one per distinct
     // non-empty device id in monitor->tabDeviceIds().
     void rewireMonitorInbound(SerialMonitorWidget* monitor);
