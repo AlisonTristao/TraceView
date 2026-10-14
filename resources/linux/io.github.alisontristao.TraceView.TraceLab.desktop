@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=TraceLab
+Comment=Simulation and control loop lab
+Exec=TraceView --mode lab
+Icon=io.github.alisontristao.TraceView
+Terminal=false
+Categories=Development;
+StartupWMClass=TraceView

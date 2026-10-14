@@ -16,6 +16,7 @@
 #include "dashboard/dashboarditem.h"
 #include "devices/device.h"
 #include "devices/hubpeeraccumulator.h"
+#include "modules/appmodule.h"
 #include "telemetry/telemetrybinding.h"
 #include "telemetry/telemetryhistory.h"
 #include "updater/updateinfo.h"
@@ -74,7 +75,9 @@ class WorkspaceSwitcher;
 // the workspaces but not one of WorkspaceManager's.
 inline constexpr const char* kSubscriptionsWorkspaceId = "builtin:subscriptions";
 
-class MainWindow : public QMainWindow {
+// Privately a ModuleHost: the enabled optional modules plug in through it
+// once, while the constructor runs (see docs/MODULES.md).
+class MainWindow : public QMainWindow, private ModuleHost {
     Q_OBJECT
 
     // The AI assistant tools (core/agentapptools.h) act through the same
@@ -121,6 +124,20 @@ protected:
     void closeEvent(QCloseEvent* event) override;
 
 private:
+    // ModuleHost.
+    WidgetRegistry& widgetRegistry() override;
+    void addRibbonTab(const QString& label, const QList<QAction*>& actions,
+                      QWidget* content) override;
+    bool registerDeviceType(const ModuleDeviceType& type) override;
+    bool openProject(const QString& path) override;
+    void registerExampleProject(const QString& group, const QString& name,
+                                const QString& path) override;
+    bool updateModuleDeviceConfig(const QString& deviceId, const QJsonObject& config) override;
+    bool removeModuleDevice(const QString& deviceId) override;
+    QString addModuleDevice(const QString& typeId, const QString& name,
+                            const QJsonObject& config) override;
+    bool addDashboardWidget(const QString& typeId, const QJsonObject& config) override;
+
     void buildMenus();
     // Rebuilds the Access menu's contents from UserModeManager's current
     // state -- a login prompt while in User mode, or the current username
@@ -415,6 +432,18 @@ private:
     // refreshPropertiesPanelDevices() and hubPeersFor() so the two
     // definitions of "this device's own source_id" can't drift apart.
     quint32 deviceSelfSourceId(const Device& device) const;
+    // One widget config's telemetry binding mapped onto the catalog of the
+    // device it names ("deviceId") -- see dashboard/bindingresolver.h. The
+    // catalog is the live one while that device is connected and has one,
+    // else whatever the manifest cache holds for it (its own source id or
+    // robot name, plus the source the config was last bound to). Installed
+    // as m_dashboardGrid's BindingResolver; also applied to the saved JSON
+    // of the workspaces that aren't showing.
+    QJsonObject resolveWidgetBinding(const QJsonObject& config) const;
+    // Re-runs resolveWidgetBinding() over every workspace -- the live grid
+    // and the saved JSON of the others -- and resubscribes whatever moved.
+    // Called after a project load and whenever a device's catalog changes.
+    void resolveDashboardBindings();
     // Keep m_deviceConnections (one DeviceConnection per Device::id) in sync
     // with m_devicesGrid's own list -- wired to DevicesGrid::deviceAdded/
     // deviceRemoved/deviceUpdated. onDeviceUpdated also re-points the
@@ -666,6 +695,23 @@ private:
     // "empty ribbon page as a stable key" trick as the OTA tab above.
     QWidget* m_btpMonitorTabPage = nullptr;
     BtpMonitorTab* m_btpMonitorTab = nullptr;
+    // registerExampleProject(): File > Open Example, by group.
+    struct ExampleProject {
+        QString group;
+        QString name;
+        QString path;
+    };
+    QVector<ExampleProject> m_exampleProjects;
+    QMenu* m_examplesMenu = nullptr;
+    void updateExamplesMenu();
+
+    // One fixed tab per addRibbonTab() call from an enabled module, keyed by
+    // its ribbon page like m_openLogTabs; `content` goes in m_contentStack.
+    struct ModuleTab {
+        QWidget* ribbonPage = nullptr;
+        QWidget* content = nullptr;
+    };
+    QVector<ModuleTab> m_moduleTabs;
     // The Settings window and the SettingsPage it wraps -- WA_DeleteOnClose'd
     // like m_notificationWindow, so both QPointers null out on close and the
     // next onOpenSettings() builds a fresh one.
@@ -878,6 +924,11 @@ private:
     // connection) if its deviceId changed, otherwise just updates the
     // source/topic/rate on whichever Backend it's already registered with.
     void refreshWidgetSubscription(DashboardWidget* widget);
+    // refreshWidgetSubscription() for a TelemetryConsumer: re-reads its
+    // topicRequests(), keeps the handle of every topic still on the same
+    // Backend, drops the rest and forwards the samples of each Backend it
+    // now reads from.
+    void refreshConsumerSubscriptions(DashboardWidget* widget);
     // Calls refreshWidgetSubscription() for every open chart/gauge widget,
     // plus SerialWidgetBridge::refreshTerminalWiring() -- called whenever a
     // config edit (or its undo/redo) could have changed a widget's device/
@@ -924,6 +975,15 @@ private:
         QPointer<Backend> backend;
     };
     QHash<DashboardWidget*, WidgetSubscription> m_widgetSubscriptions;
+    // The same for a widget that is a TelemetryConsumer
+    // (dashboard/telemetryconsumer.h): one reference per topic it lists, by
+    // position in its topicRequests(), plus the Backends whose samples are
+    // forwarded to it -- each once, however many of its topics it serves.
+    struct ConsumerSubscriptions {
+        QVector<WidgetSubscription> topics;
+        QList<QPointer<Backend>> connected;
+    };
+    QHash<DashboardWidget*, ConsumerSubscriptions> m_consumerSubscriptions;
 
     // Recent samples of every field some widget in some workspace plots --
     // see syncBackgroundTelemetry(). Fed by every DeviceConnection's

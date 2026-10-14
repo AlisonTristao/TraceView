@@ -61,6 +61,9 @@ private:
     QString m_initialLanguageId;
     int m_initialFrameLogCapacity = 0;
     int m_initialNotificationHistoryCapacity = 0;
+    // Ids of the modules enabled in Settings when the page opened, in
+    // registration order -- a difference needs a restart.
+    QStringList m_initialEnabledModules;
 
     QListWidget* m_categoryList = nullptr;
     QStringList m_categoryNames;

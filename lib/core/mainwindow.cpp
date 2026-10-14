@@ -1,3 +1,4 @@
+#include "dashboard/topicsampledispatcher.h"
 #include "mainwindow.h"
 
 #include <QActionGroup>
@@ -21,6 +22,7 @@
 #include <QLabel>
 #include <QLineEdit>
 #include <QMenu>
+#include <QCursor>
 #include <QMenuBar>
 #include <QMessageBox>
 #include <QMoveEvent>
@@ -57,7 +59,9 @@
 #include "blediscoveryservice.h"
 #include "bletransport.h"
 #endif
+#include "dashboard/bindingresolver.h"
 #include "dashboard/dashboardgrid.h"
+#include "dashboard/telemetryconsumer.h"
 #include "dashboard/widgetconfigeditor.h"
 #include "dashboard/widgetregistry.h"
 #include "dashboard/widgets/audiostreamwidget.h"
@@ -83,6 +87,8 @@
 #include "logs/logviewer.h"
 #include "dashboardgallerydialog.h"
 #include "manageusersdialog.h"
+#include "modules/moduleregistry.h"
+#include "core/moduledevicetype.h"
 #include "ota/otatab.h"
 #include "paneldockcontroller.h"
 #include "preferences/appsettings.h"
@@ -366,7 +372,11 @@ QVector<SerialPortOption> currentSerialPorts() {
 }  // namespace
 
 MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
-    setWindowTitle(tr("TraceView v%1").arg(kVersion));
+    // Started with --mode <id>, the app wears that module's name instead.
+    const AppModule* modeModule = ModuleRegistry::instance().modeModule();
+    const QString productName =
+        modeModule != nullptr ? modeModule->displayName() : QStringLiteral("TraceView");
+    setWindowTitle(QStringLiteral("%1 v%2").arg(productName, QString::fromLatin1(kVersion)));
     resize(1024, 640);
 #if !defined(Q_OS_ANDROID) && !defined(Q_OS_IOS)
     // Reopen at the size/place the window was closed at -- maximized on the
@@ -565,6 +575,11 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     m_devicesGrid->setBleScanToggleHandler([this](bool start) { onBleScanToggled(start); });
     m_devicesGrid->setBleDeviceListProvider([this]() { return m_bleDiscoveredDevices; });
 #endif
+    // Every config entering the dashboard is bound by name from here on --
+    // see resolveWidgetBinding(). Installed once m_devicesGrid exists, which
+    // it reads to find each config's device.
+    m_dashboardGrid->setBindingResolver(
+        [this](const QJsonObject& config) { return resolveWidgetBinding(config); });
     // Same reasoning as setPortListProvider() above: DevicesGrid can't reach
     // a Backend itself (traceview_devices doesn't depend on
     // traceview_protocol), so MainWindow supplies the gear icon's "Reported
@@ -660,6 +675,14 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     // own LogViewer, added here on demand -- see m_openLogTabs.
     contentLayout->addWidget(m_contentStack);
 
+    // Enabled optional modules plug in now: the ribbon and m_contentStack
+    // exist for their tabs, and the startup dashboard (finishStartup()) has
+    // not been loaded yet, so it can already use their widget types. The
+    // properties panel took its type list in buildPropertiesPanel(), so it
+    // is refreshed for those types.
+    ModuleRegistry::instance().installEnabled(*this);
+    m_propertiesPanel->setAvailableTypes(WidgetRegistry::instance().availableTypes());
+
     // Reparented rather than added to contentLayout: their geometry is set
     // directly by m_dockController (wired below via an event filter on
     // m_contentRow) so they overlay the canvas instead of squeezing it, and
@@ -743,6 +766,9 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     // event filter below.
     m_brandCornerMark = new BrandCornerMark(m_appShell);
     m_brandCornerMark->setForegroundColor(ThemeManager::instance().currentTheme().textPrimary);
+    if (modeModule != nullptr) {
+        m_brandCornerMark->setWordmarkText(modeModule->displayName());
+    }
     connect(&ThemeManager::instance(), &ThemeManager::themeChanged, this,
             [this](const ThemePalette& palette) {
                 m_brandCornerMark->setForegroundColor(palette.textPrimary);
@@ -837,6 +863,112 @@ void MainWindow::syncAgentBridge() {
             });
 }
 
+WidgetRegistry& MainWindow::widgetRegistry() {
+    return WidgetRegistry::instance();
+}
+
+void MainWindow::addRibbonTab(const QString& label, const QList<QAction*>& actions,
+                              QWidget* content) {
+    // Same shape as devicesPage in buildRibbon(); with no actions it is an
+    // empty page like BTP Traffic's.
+    auto* page = new QWidget(this);
+    page->setObjectName("ribbonPage");
+    page->setFixedHeight(kRibbonPageHeight);
+    auto* pageLayout = new QHBoxLayout(page);
+    pageLayout->setContentsMargins(kRibbonPageMarginH, kRibbonPageMarginV, kRibbonPageMarginH,
+                                   kRibbonPageMarginV);
+    pageLayout->setSpacing(kRibbonGroupSpacing);
+    // A separator action ends one button group and starts the next.
+    QList<QAction*> group;
+    for (QAction* action : actions) {
+        if (!action->isSeparator()) {
+            group.append(action);
+            continue;
+        }
+        if (!group.isEmpty()) {
+            pageLayout->addWidget(Ribbon::createButtonGroup(page, group));
+        }
+        group.clear();
+    }
+    if (!group.isEmpty()) {
+        pageLayout->addWidget(Ribbon::createButtonGroup(page, group));
+    }
+    pageLayout->addStretch();
+
+    m_contentStack->addWidget(content);
+    m_moduleTabs.append(ModuleTab{page, content});
+    m_ribbon->addTab(label, page);
+}
+
+bool MainWindow::registerDeviceType(const ModuleDeviceType& type) {
+    return ModuleDeviceTypeRegistry::instance().registerType(type);
+}
+
+bool MainWindow::openProject(const QString& path) {
+    if (!loadProjectFile(path)) {
+        DialogPresenter::warning(this, tr("Open Project"), ProjectStore::instance().lastError());
+        return false;
+    }
+    m_ribbon->setCurrentIndex(m_dashboardTabIndex);
+    return true;
+}
+
+void MainWindow::registerExampleProject(const QString& group, const QString& name,
+                                        const QString& path) {
+    m_exampleProjects.append({group, name, path});
+    updateExamplesMenu();
+}
+
+void MainWindow::updateExamplesMenu() {
+    if (m_examplesMenu == nullptr) {
+        return;
+    }
+    m_examplesMenu->clear();
+    m_examplesMenu->menuAction()->setVisible(!m_exampleProjects.isEmpty());
+    QString group;
+    for (const ExampleProject& example : std::as_const(m_exampleProjects)) {
+        if (example.group != group) {
+            group = example.group;
+            m_examplesMenu->addSection(group);
+        }
+        const QString path = example.path;
+        connect(m_examplesMenu->addAction(example.name), &QAction::triggered, this,
+                [this, path] { openProject(path); });
+    }
+}
+
+QString MainWindow::addModuleDevice(const QString& typeId, const QString& name,
+                                    const QJsonObject& config) {
+    if (ModuleDeviceTypeRegistry::instance().find(typeId) == nullptr) {
+        return QString();
+    }
+    Device device;
+    device.name = name;
+    device.transportType = TransportType::Module;
+    device.moduleType = typeId;
+    device.moduleConfig = config;
+    return m_devicesGrid->addDevice(device);
+}
+
+bool MainWindow::updateModuleDeviceConfig(const QString& deviceId, const QJsonObject& config) {
+    return m_devicesGrid->setDeviceModuleConfig(deviceId, config);
+}
+
+bool MainWindow::removeModuleDevice(const QString& deviceId) {
+    const QVector<Device> devices = m_devicesGrid->devices();
+    if (findDevice(devices, deviceId) == nullptr) {
+        return false;
+    }
+    m_devicesGrid->removeDevice(deviceId);
+    return true;
+}
+
+bool MainWindow::addDashboardWidget(const QString& typeId, const QJsonObject& config) {
+    m_dashboardGrid->addItem(typeId, config);
+    m_ribbon->setCurrentIndex(m_dashboardTabIndex);
+    return true;
+}
+
 MainWindow::~MainWindow() {
     // The dashboard's widgets are deleted later, as QObject children, i.e.
     // after this class's own members are gone -- so their destroyed()
@@ -849,6 +981,11 @@ MainWindow::~MainWindow() {
         disconnect(it.key(), nullptr, this, nullptr);
     }
     m_widgetSubscriptions.clear();
+    for (auto it = m_consumerSubscriptions.constBegin(); it != m_consumerSubscriptions.constEnd();
+         ++it) {
+        disconnect(it.key(), nullptr, this, nullptr);
+    }
+    m_consumerSubscriptions.clear();
 }
 
 void MainWindow::postStatus(const QString& text, int timeoutMs, StatusSeverity severity,
@@ -889,6 +1026,25 @@ void MainWindow::showStatusMessage(const QString& text, int timeoutMs) {
 }
 
 void MainWindow::wireChartWidgetToTelemetry(DashboardWidget* widget) {
+    if (auto* consumer = dynamic_cast<TelemetryConsumer*>(widget)) {
+        // Its commands go out the way a device script's do (Backend::
+        // sendCommand()), to whichever of its devices it names.
+        consumer->setCommandSender([this](const QString& deviceId, const QString& commandLine) {
+            if (DeviceConnection* target = m_deviceConnections.value(deviceId)) {
+                target->backend()->sendCommand(commandLine.toUtf8());
+            }
+        });
+        connect(widget, &QObject::destroyed, this, [this, widget] {
+            const ConsumerSubscriptions subs = m_consumerSubscriptions.take(widget);
+            for (const WidgetSubscription& sub : subs.topics) {
+                if (sub.backend) {
+                    sub.backend->removeSubscriber(sub.handle);
+                }
+            }
+        });
+        refreshConsumerSubscriptions(widget);
+        return;
+    }
     if (!dynamic_cast<ChartWidgetBase*>(widget) && !dynamic_cast<DummyGaugeWidget*>(widget) &&
         !dynamic_cast<TextBoardWidget*>(widget) && !dynamic_cast<AudioStreamWidget*>(widget)) {
         return;
@@ -931,20 +1087,37 @@ void MainWindow::refreshWidgetSubscription(DashboardWidget* widget) {
     }
 
     if (!newConnection) {
+        if (oldBackend) {
+            TopicSampleDispatcher::of(oldBackend)->remove(widget);
+        }
         sub.deviceId = request.deviceId;
         sub.handle = 0;
         sub.backend = nullptr;
         return;
     }
 
+    // Charts and gauges get the scalar samples of their own (source, topic)
+    // only, through the Backend's TopicSampleDispatcher -- re-registered on
+    // every refresh, since the topic can change on the same Backend.
+    if (oldBackend) {
+        TopicSampleDispatcher::of(oldBackend)->remove(widget);
+    }
+    if (auto* chart = dynamic_cast<ChartWidgetBase*>(widget)) {
+        TopicSampleDispatcher::of(newBackend)->add(
+            request.sourceId, request.topicId, chart,
+            [chart](const TelemetryFieldBinding& binding, quint64 timestampUs, double value) {
+                chart->onFieldSample(binding, timestampUs, value);
+            });
+    } else if (auto* gauge = dynamic_cast<DummyGaugeWidget*>(widget)) {
+        TopicSampleDispatcher::of(newBackend)->add(
+            request.sourceId, request.topicId, gauge,
+            [gauge](const TelemetryFieldBinding& binding, quint64 timestampUs, double value) {
+                gauge->onFieldSample(binding, timestampUs, value);
+            });
+    }
+
     if (oldBackend != newBackend) {
-        if (auto* chart = dynamic_cast<ChartWidgetBase*>(widget)) {
-            connect(newConnection->backend(), &Backend::fieldSample, chart,
-                    &ChartWidgetBase::onFieldSample);
-        } else if (auto* gauge = dynamic_cast<DummyGaugeWidget*>(widget)) {
-            connect(newConnection->backend(), &Backend::fieldSample, gauge,
-                    &DummyGaugeWidget::onFieldSample);
-        } else if (auto* board = dynamic_cast<TextBoardWidget*>(widget)) {
+        if (auto* board = dynamic_cast<TextBoardWidget*>(widget)) {
             connect(newConnection->backend(), &Backend::textSample, board,
                     &TextBoardWidget::onTextSample);
             connect(newConnection->backend(), &Backend::binarySample, board,
@@ -968,10 +1141,102 @@ void MainWindow::refreshWidgetSubscription(DashboardWidget* widget) {
     sub.backend = newBackend;
 }
 
+void MainWindow::refreshConsumerSubscriptions(DashboardWidget* widget) {
+    auto* consumer = dynamic_cast<TelemetryConsumer*>(widget);
+    if (!consumer) {
+        return;
+    }
+    ConsumerSubscriptions& subs = m_consumerSubscriptions[widget];
+    const QVector<TelemetryTopicRequest> requests = consumer->topicRequests();
+
+    QVector<WidgetSubscription> topics;
+    QList<QPointer<Backend>> wanted;
+    for (int i = 0; i < requests.size(); ++i) {
+        const WidgetTopicRequest request =
+            withRateOverride({requests[i].deviceId, requests[i].sourceId, requests[i].topicId,
+                              requests[i].rateMillihz});
+        DeviceConnection* connection = m_deviceConnections.value(request.deviceId);
+        Backend* backend = connection ? connection->backend() : nullptr;
+        WidgetSubscription sub;
+        sub.deviceId = request.deviceId;
+        sub.backend = backend;
+        if (backend) {
+            // Same position, same Backend: move the existing reference
+            // instead of dropping it, so an unrelated edit puts nothing on
+            // the wire.
+            const bool reuse = i < subs.topics.size() && subs.topics[i].backend == backend;
+            sub.handle =
+                backend->updateSubscriber(reuse ? subs.topics[i].handle : 0, request.sourceId,
+                                          request.topicId, request.rateMillihz);
+            if (!wanted.contains(backend)) {
+                wanted.append(backend);
+            }
+        }
+        topics.append(sub);
+    }
+    for (int i = 0; i < subs.topics.size(); ++i) {
+        const WidgetSubscription& old = subs.topics[i];
+        const bool reused = i < topics.size() && topics[i].backend == old.backend;
+        if (old.backend && !reused) {
+            old.backend->removeSubscriber(old.handle);
+        }
+    }
+
+    // Scalar samples through each Backend's TopicSampleDispatcher, for the
+    // requested topics only (once per topic, however many requests name it).
+    for (const QPointer<Backend>& backend : std::as_const(subs.connected)) {
+        if (backend) {
+            TopicSampleDispatcher::of(backend)->remove(widget);
+        }
+    }
+    QSet<QPair<Backend*, quint64>> registered;
+    for (int i = 0; i < requests.size(); ++i) {
+        Backend* backend = topics[i].backend;
+        const QPair<Backend*, quint64> topicKey{
+            backend, (quint64(requests[i].sourceId) << 16) | requests[i].topicId};
+        if (backend == nullptr || registered.contains(topicKey)) {
+            continue;
+        }
+        registered.insert(topicKey);
+        TopicSampleDispatcher::of(backend)->add(
+            requests[i].sourceId, requests[i].topicId, widget,
+            [consumer](const TelemetryFieldBinding& binding, quint64 timestampUs, double value) {
+                consumer->onFieldSample(binding, timestampUs, value);
+            });
+    }
+
+    for (const QPointer<Backend>& backend : std::as_const(subs.connected)) {
+        if (backend && !wanted.contains(backend)) {
+            disconnect(backend, nullptr, widget, nullptr);
+        }
+    }
+    for (const QPointer<Backend>& backend : std::as_const(wanted)) {
+        if (subs.connected.contains(backend)) {
+            continue;
+        }
+        connect(backend, &Backend::arraySample, widget,
+                [consumer](const TelemetryFieldBinding& binding, quint64 timestampUs,
+                           const QVector<float>& values) {
+                    consumer->onArraySample(binding, timestampUs, values);
+                });
+        connect(backend, &Backend::textSample, widget,
+                [consumer](quint32 sourceId, quint16 topicId, quint64 timestampUs,
+                           const QString& text) {
+                    consumer->onTextSample(sourceId, topicId, timestampUs, text);
+                });
+    }
+    subs.topics = topics;
+    subs.connected = wanted;
+}
+
 void MainWindow::refreshWidgetSubscriptions() {
     const QList<DashboardWidget*> widgets = m_widgetSubscriptions.keys();
     for (DashboardWidget* widget : widgets) {
         refreshWidgetSubscription(widget);
+    }
+    const QList<DashboardWidget*> consumers = m_consumerSubscriptions.keys();
+    for (DashboardWidget* widget : consumers) {
+        refreshConsumerSubscriptions(widget);
     }
     // A config edit can just as well have re-pointed a terminal widget at a
     // different device -- its inbound wiring needs the same kind of refresh
@@ -1185,6 +1450,10 @@ void MainWindow::buildMenus() {
     openAction->setShortcut(QKeySequence::Open);
     connect(openAction, &QAction::triggered, this, &MainWindow::onOpenProject);
 
+    // Projects the enabled modules ship (registerExampleProject()); hidden
+    // while there are none.
+    m_examplesMenu = fileMenu->addMenu(tr("Open E&xample"));
+    updateExamplesMenu();
     m_recentFilesMenu = fileMenu->addMenu(tr("Open &Recent"));
     updateRecentFilesMenu();
 
@@ -1493,6 +1762,7 @@ void MainWindow::applyUserMode(UserModeManager::UserMode mode) {
         // Everything past the fixed Dashboard/Devices tabs (offline logs,
         // OTA, BTP Traffic) is closed outright rather than left
         // hidden behind the now-invisible tab bar -- "View as user" included.
+        // Module tabs are not closable and stay, unreachable with the bar.
         // Walked back to front: each close shifts the indices after it.
         for (int i = m_ribbon->count() - 1; i >= 0; --i) {
             if (i != m_dashboardTabIndex && i != m_devicesTabIndex) {
@@ -2802,6 +3072,12 @@ void MainWindow::onRibbonTabChanged(int index) {
                 break;
             }
         }
+        for (const ModuleTab& tab : m_moduleTabs) {
+            if (tab.ribbonPage == currentPage) {
+                activeContent = tab.content;
+                break;
+            }
+        }
     }
     m_contentStack->setCurrentWidget(activeContent);
 
@@ -3008,6 +3284,31 @@ void MainWindow::onAddDevice() {
     // this slot doesn't reach into that flow.
     Device device;
     device.name = tr("New Device");
+    // With in-process device types registered by a module, ask which kind:
+    // a robot (the placeholder above) or one of them.
+    const QVector<ModuleDeviceType>& types = ModuleDeviceTypeRegistry::instance().types();
+    if (!types.isEmpty()) {
+        QMenu menu(this);
+        QAction* robot = menu.addAction(tr("Robot or board"));
+        menu.addSeparator();
+        QList<QPair<QAction*, ModuleDeviceType>> entries;
+        for (const ModuleDeviceType& type : types) {
+            entries.append({menu.addAction(type.displayName), type});
+        }
+        QAction* chosen = menu.exec(QCursor::pos());
+        if (chosen == nullptr) {
+            return;
+        }
+        if (chosen != robot) {
+            for (const auto& [action, type] : entries) {
+                if (action == chosen) {
+                    device.name = type.displayName;
+                    device.transportType = TransportType::Module;
+                    device.moduleType = type.id;
+                }
+            }
+        }
+    }
     m_devicesGrid->addDevice(device);
 }
 
@@ -3055,6 +3356,101 @@ quint32 MainWindow::deviceSelfSourceId(const Device& device) const {
         }
     }
     return 0;
+}
+
+QJsonObject MainWindow::resolveWidgetBinding(const QJsonObject& config) const {
+    // A widget with several bindings (a TelemetryConsumer, see
+    // dashboard/telemetryconsumer.h) keeps each under "bind", as a binding of
+    // its own with its own "deviceId" -- resolved one by one, like a widget.
+    if (config.value(QLatin1String("bind")).isObject()) {
+        QJsonObject bindings = config.value(QLatin1String("bind")).toObject();
+        for (auto it = bindings.begin(); it != bindings.end(); ++it) {
+            if (it.value().isObject()) {
+                it.value() = resolveWidgetBinding(it.value().toObject());
+            }
+        }
+        QJsonObject out = config;
+        out[QLatin1String("bind")] = bindings;
+        return out;
+    }
+    const QString deviceId = config.value(QLatin1String("deviceId")).toString();
+    if (deviceId.isEmpty() || !config.contains(QLatin1String("topicId")) || !m_devicesGrid) {
+        return config;
+    }
+    const QVector<Device> devices = m_devicesGrid->devices();
+    const Device* device = findDevice(devices, deviceId);
+    if (device == nullptr) {
+        return config;
+    }
+    const quint32 selfSourceId = deviceSelfSourceId(*device);
+
+    QVector<CatalogTopicInfo> catalog;
+    if (DeviceConnection* connection = m_deviceConnections.value(deviceId)) {
+        catalog = connection->backend()->catalogTopics();
+    }
+    if (catalog.isEmpty()) {
+        // Not connected (or no manifest yet): what the cache remembers of
+        // this device, and of the source the config was last bound to -- the
+        // latter is what lets a project saved with ids only gain its names
+        // at open, before anything connects.
+        const quint32 namedSourceId =
+            selfSourceId != 0 ? selfSourceId
+                              : ManifestClient::cachedSourceNamed(
+                                    device->robotName.isEmpty() ? device->name : device->robotName);
+        const quint32 boundSourceId =
+            quint32(config.value(QLatin1String("sourceId")).toString("0").toULongLong(nullptr, 0));
+        QVector<quint32> sourceIds;
+        for (const quint32 sourceId : {namedSourceId, boundSourceId}) {
+            if (sourceId != 0 && !sourceIds.contains(sourceId)) {
+                sourceIds.append(sourceId);
+            }
+        }
+        for (const quint32 sourceId : sourceIds) {
+            QVector<CatalogTopicInfo> cached;
+            if (BtpBackend::cachedDescription(sourceId, &cached, nullptr)) {
+                catalog += cached;
+            }
+        }
+    }
+    return resolveBindingNames(config, catalog, selfSourceId);
+}
+
+void MainWindow::resolveDashboardBindings() {
+    const bool liveChanged = m_dashboardGrid->resolveBindings();
+
+    bool savedChanged = false;
+    WorkspaceManager& workspaces = WorkspaceManager::instance();
+    const QVector<Workspace> list = workspaces.workspaces();
+    for (const Workspace& workspace : list) {
+        if (workspace.id == workspaces.activeId()) {
+            continue;  // m_dashboardGrid is the live copy of this one
+        }
+        QJsonObject dashboard = workspace.dashboard;
+        QJsonArray items = dashboard.value(QLatin1String("items")).toArray();
+        bool changed = false;
+        for (int i = 0; i < items.size(); ++i) {
+            QJsonObject item = items.at(i).toObject();
+            const QJsonObject config = item.value(QLatin1String("config")).toObject();
+            const QJsonObject resolved = resolveWidgetBinding(config);
+            if (resolved != config) {
+                item[QLatin1String("config")] = resolved;
+                items[i] = item;
+                changed = true;
+            }
+        }
+        if (changed) {
+            dashboard[QLatin1String("items")] = items;
+            workspaces.setDashboardFor(workspace.id, dashboard);
+            savedChanged = true;
+        }
+    }
+
+    if (liveChanged) {
+        refreshWidgetSubscriptions();  // background subscriptions too
+        refreshPropertiesPanel();
+    } else if (savedChanged) {
+        syncBackgroundTelemetry(BackgroundSync::Full);
+    }
 }
 
 void MainWindow::refreshPropertiesPanelDevices() {
@@ -3415,6 +3811,10 @@ void MainWindow::applyDeviceTarget(DeviceConnection* connection, const Device& r
 }
 
 void MainWindow::dialDirectTarget(DeviceConnection* connection, const Device& device) {
+    if (device.transportType == TransportType::Module) {
+        connection->connectToModule();
+        return;
+    }
     if (device.transportType == TransportType::Tcp) {
         // Same channel-B password as a hub child (Device::peerPassword) --
         // the user's own decision: one password per device covers hub, TCP
@@ -3594,7 +3994,7 @@ void MainWindow::reattachHubChildren() {
 }
 
 DeviceConnection* MainWindow::createDeviceConnection(const Device& device) {
-    auto* connection = new DeviceConnection(device.commType, device.transportType, this);
+    auto* connection = new DeviceConnection(device, this);
     connect(
         connection, &DeviceConnection::connectionStateChanged, this,
         [this, id = device.id](bool connected) { onDeviceConnectionStateChanged(id, connected); });
@@ -3657,6 +4057,13 @@ DeviceConnection* MainWindow::createDeviceConnection(const Device& device) {
     connect(backend, &Backend::catalogChanged, this, [this, id = device.id]() {
         refreshPropertiesPanelDevices();
         m_devicesGrid->notifyCatalogChanged(id);
+        // The names every widget bound to this device holds may live under
+        // other ids now (another robot, a reordered firmware), and a project
+        // saved with ids only can now learn its names. Queued: this resolves
+        // and resubscribes, which must not re-enter the backend while it is
+        // still emitting.
+        QMetaObject::invokeMethod(
+            this, [this]() { resolveDashboardBindings(); }, Qt::QueuedConnection);
     });
     // setDeviceIdentity(), not updateDevice() -- same reasoning as
     // onDeviceConnectionStateChanged()'s setDeviceConnected() call below: this
@@ -4239,6 +4646,11 @@ void MainWindow::onSaveProject() {
         onAddToGallery();
         return;
     }
+    // A module's example (a Qt resource) cannot be written: save a copy.
+    if (path.startsWith(QLatin1String(":/"))) {
+        onSaveProjectAs();
+        return;
+    }
 
     syncProjectSections();
     if (path.isEmpty()) {
@@ -4640,6 +5052,9 @@ bool MainWindow::loadProjectFile(const QString& path) {
         WorkspaceManager::instance().dashboardFor(WorkspaceManager::instance().activeId()),
         DashboardLoadBreakpoint::DeviceDefault);
     m_dashboardGrid->undoStack()->clear();
+    // The active workspace was resolved as it loaded; this covers the
+    // others' saved JSON (names filled in from the manifest cache).
+    resolveDashboardBindings();
     refreshPropertiesPanel();
     refreshLayersPanel();
     refreshWorkspaceSwitcher();

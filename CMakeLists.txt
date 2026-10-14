@@ -45,6 +45,16 @@ option(TRACEVIEW_ENABLE_TCP "Enable the TCP transport integration" ON)
 # were being written. Needs the Qt Connectivity module (Qt6::Bluetooth).
 option(TRACEVIEW_ENABLE_BLE "Enable the BLE transport integration" ON)
 
+# TraceLab (lab/, see lab/README.md and docs/MODULES.md): simulation, closed
+# loop control and animated scenes, compiled in as the optional "lab" module.
+# Desktop only: simulation on a phone is not worth its cost, so it is forced
+# OFF on Android and iOS.
+option(TRACEVIEW_ENABLE_LAB "Build the TraceLab module (lab/; never on Android or iOS)" ON)
+if(ANDROID OR IOS)
+    set(TRACEVIEW_ENABLE_LAB OFF CACHE BOOL
+        "Build the TraceLab module (lab/; never on Android or iOS)" FORCE)
+endif()
+
 if(IOS AND (TRACEVIEW_ENABLE_SERIAL OR TRACEVIEW_ENABLE_USB_HID))
     message(FATAL_ERROR
         "TRACEVIEW_ENABLE_SERIAL and TRACEVIEW_ENABLE_USB_HID must be OFF on iOS: "
@@ -182,6 +192,11 @@ endif()
 
 add_subdirectory(lib)
 
+# lab/ may link lib/ targets; no lib/ target may link a lab/ one.
+if(TRACEVIEW_ENABLE_LAB)
+    add_subdirectory(lab)
+endif()
+
 if(TRACEVIEW_BUILD_TESTS)
     enable_testing()
     add_subdirectory(tests)
@@ -234,10 +249,19 @@ target_link_libraries(TraceView PRIVATE
     traceview_locale
     # `TraceView --mcp` (main.cpp) runs the MCP stdio relay instead of the app.
     traceview_agent
+    # ModuleRegistry: main.cpp registers the optional modules and reads
+    # --mode before MainWindow is built (see docs/MODULES.md).
+    traceview_modules
 )
 
 if(TRACEVIEW_ENABLE_SERIAL AND NOT ANDROID)
     target_link_libraries(TraceView PRIVATE Qt6::SerialPort)
+endif()
+
+if(TRACEVIEW_ENABLE_LAB)
+    # main.cpp registers LabModule only when this is defined.
+    target_link_libraries(TraceView PRIVATE tracelab_module)
+    target_compile_definitions(TraceView PRIVATE TRACEVIEW_ENABLE_LAB)
 endif()
 
 set_target_properties(TraceView PROPERTIES
@@ -457,6 +481,11 @@ else()
 
     if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
         install(FILES resources/linux/io.github.alisontristao.TraceView.desktop DESTINATION share/applications)
+        if(TRACEVIEW_ENABLE_LAB)
+            # The second launcher: the same executable, started as TraceLab.
+            install(FILES resources/linux/io.github.alisontristao.TraceView.TraceLab.desktop
+                DESTINATION share/applications)
+        endif()
         install(FILES resources/linux/io.github.alisontristao.TraceView.metainfo.xml DESTINATION share/metainfo)
         install(FILES resources/icons/app_256.png
             DESTINATION share/icons/hicolor/256x256/apps RENAME io.github.alisontristao.TraceView.png)
@@ -489,6 +518,15 @@ if(WIN32)
     set(CPACK_NSIS_DISPLAY_NAME "TraceView")
     set(CPACK_NSIS_PACKAGE_NAME "TraceView ${PROJECT_VERSION}")
     set(CPACK_NSIS_ENABLE_UNINSTALL_BEFORE_INSTALL ON)
+    if(TRACEVIEW_ENABLE_LAB)
+        # A second Start Menu entry, "TraceLab": the same executable started
+        # with --mode lab (docs/MODULES.md). CPACK_PACKAGE_EXECUTABLES cannot
+        # pass arguments, so the shortcut is written into the NSIS script.
+        set(CPACK_NSIS_CREATE_ICONS_EXTRA
+            "CreateShortCut '$SMPROGRAMS\\\\$STARTMENU_FOLDER\\\\TraceLab.lnk' '$INSTDIR\\\\TraceView.exe' '--mode lab' '$INSTDIR\\\\TraceView.exe' 0")
+        set(CPACK_NSIS_DELETE_ICONS_EXTRA
+            "Delete '$SMPROGRAMS\\\\$MUI_TEMP\\\\TraceLab.lnk'")
+    endif()
     # A fixed, predictable name (rather than CPack's own default) is what
     # the self-updater (lib/updater/updatechecker.cpp) matches a GitHub
     # release asset against, by suffix -- ".exe" here, ".AppImage" on Linux.

@@ -21,6 +21,16 @@ add_traceview_test(test_dashboardgrid traceview_dashboard)
 # docs/MCP.md): argument validation, the JSON-RPC session, and the stdio relay
 # talking to a real AgentBridgeServer over a uniquely named local socket.
 add_traceview_test(test_agent traceview_agent)
+add_traceview_test(test_topicsampledispatcher traceview_dashboard)
+# Binding a widget by topic/field NAME (dashboard/bindingresolver.h): names
+# re-pointing ids against another device's catalog, ids-only projects gaining
+# names, unresolvable names falling back to ids, and the .tvproj round trip.
+add_traceview_test(test_bindingresolver traceview_dashboard traceview_project)
+# "Add all fields" in the chart editor (series by field name, automatic axes
+# per unit, Y range from the declared ranges) and the unit/range a picked
+# field prefills in the chart and gauge editors without clobbering the
+# user's own values.
+add_traceview_test(test_autochartconfig traceview_dashboard)
 # Devices panel data model/card/grid, plus its own JSON persistence (see
 # lib/devices). Only traceview_devices; no dashboard/protocol dependency.
 add_traceview_test(test_device traceview_devices)
@@ -36,12 +46,16 @@ add_traceview_test(test_hubpeeraccumulator traceview_devices)
 # "known" flag. Pure function (device.h), no MainWindow, no QWidget.
 add_traceview_test(test_hubchildpresence traceview_devices)
 add_traceview_test(test_chartdata traceview_dashboard)
+add_traceview_test(test_multisourcechart traceview_dashboard)
 # Round-number axis ticks and the chart style sheet (widgets/chartscale.h,
 # widgets/chartstyle.h) -- pure functions, no painting.
 add_traceview_test(test_chartscale traceview_dashboard)
 add_traceview_test(test_chartstyle traceview_dashboard)
 # Frame styles (card/control shapes, include/traceview/framestyle.h).
 add_traceview_test(test_framestyle traceview_theme)
+# Decimal fields: both separators, adaptive arrows, commit on Enter/focus out
+# (theme/doublespinbox.h).
+add_traceview_test(test_doublespinbox traceview_theme)
 # Appearance tokens and the appearance catalog/presets (core/appearancecatalog.h).
 add_traceview_test(test_appearance traceview_ui)
 add_traceview_test(test_controldata traceview_dashboard)
@@ -115,6 +129,10 @@ add_traceview_test(test_usbhidmanager traceview_ui)
 # intent) -- see lib/core/deviceconnection.h. traceview_ui so it can
 # construct a BtpBackend the same way DeviceConnection itself does.
 add_traceview_test(test_deviceconnection traceview_ui Qt6::Network)
+# In-process device types a module registers (core/moduledevicetype.h): the
+# registry, DeviceConnection dialing the factory's transport, and the
+# TransportType::Module device's .tvproj round trip.
+add_traceview_test(test_moduledevicetype traceview_transport traceview_devices)
 # Developer/User access mode (lib/core/usermodemanager.h): default "admin"
 # account seeding on first run, login/logout, and the account-management
 # mutators' Developer-mode gating (refusing to touch accounts, or to drop
@@ -124,6 +142,128 @@ add_traceview_test(test_deviceconnection traceview_ui Qt6::Network)
 # leaves behind the real TraceView account list.
 add_traceview_test(test_usermodemanager traceview_ui)
 add_traceview_test(test_mainwindowchrome traceview_ui)
+# Optional application modules (lib/modules, docs/MODULES.md): the registry,
+# saved enabled state and --mode on their own, then MainWindow installing the
+# enabled ones and Settings listing them.
+add_traceview_test(test_moduleregistry traceview_modules traceview_dashboard)
+add_traceview_test(test_mainwindowmodules traceview_ui traceview_modules traceview_dashboard)
+
+if(TRACEVIEW_ENABLE_LAB)
+    # TraceLab (lab/): the scene registry; the line-follower camera (a point
+    # under the car maps to the car's anchor, forward motion moves the world
+    # down, a right turn rotates it counter-clockwise, the pygame step rule)
+    # and the alignment of car-frame points through the pose of their tick;
+    # the Scene widget's config (editor and .tvproj round trip, bind by name,
+    # sample routing); LabModule's install; the loopback transport pair.
+    add_traceview_test(test_sceneregistry tracelab_scenes)
+    add_traceview_test(test_diffdrivescene tracelab_scenes)
+    # The Furuta pendulum scene: inputs bound by name, angles and trail,
+    # the mass where the angles put it, the disturbance keys, a painted frame
+    # (saved to $TRACELAB_FURUTA_SCENE_PNG when set).
+    add_traceview_test(test_furutascene tracelab_scenes)
+    add_traceview_test(test_scenewidget tracelab_scenes traceview_project)
+    add_traceview_test(test_labmodule tracelab_module tracelab_scenes traceview_dashboard
+                       traceview_transport)
+    tracelab_copy_tcc_runtime(test_labmodule)
+    # The TraceLab tab on a live line follower: the loop as plant > filters >
+    # controller cards, blocks added from the templates, a picked block's
+    # code/parameters/signals, Save making an edited template a file of the
+    # user's, back to the original, the configuration reaching the project.
+    add_traceview_test(test_labpanel tracelab_module tracelab_control tracelab_lf_devices
+                       traceview_dashboard traceview_modules)
+    tracelab_copy_tcc_runtime(test_labpanel)
+    add_traceview_test(test_loopbacktransport tracelab_plant)
+    # The line-follower benchmark's plant (lab/benchmarks/linefollower/plant):
+    # the track generator against the Python simulator (CPython's random bit
+    # for bit, the tracks of tests/data/linefollower point by point, and the
+    # saved runs/*_track.csv when line_follower_simulator is checked out at
+    # TRACELAB_LF_PYTHON_DIR); the motors' discrete equations, the world pose
+    # against the pygame track transform, the reach rule and the car-frame
+    # future points, and an open-loop replay of the saved Python runs.
+    set(TRACELAB_LF_PYTHON_DIR "${CMAKE_SOURCE_DIR}/../line_follower_simulator" CACHE PATH
+        "line_follower_simulator checkout used by the line-follower tests (skipped when missing)")
+    add_traceview_test(test_lftrackgenerator tracelab_lf_plant)
+    add_traceview_test(test_lfplant tracelab_lf_plant)
+    foreach(test test_lftrackgenerator test_lfplant)
+        target_compile_definitions(${test} PRIVATE
+            TRACELAB_LF_TESTDATA="${CMAKE_CURRENT_SOURCE_DIR}/data/linefollower"
+            TRACELAB_LF_PYTHON_DIR="${TRACELAB_LF_PYTHON_DIR}")
+    endforeach()
+    # Sensor emulation (lab/sensors): reproducible noise streams (the standard
+    # mt19937_64, own Box-Muller, one stream per sensor), the statistics of
+    # white noise, random walk and Gauss-Markov, quantization, saturation,
+    # delay, own rate, dropout and outliers, and the linear and nonlinear
+    # observation blocks; then the line follower's encoders, line sensor
+    # array and the plant's true/measured outputs.
+    add_traceview_test(test_sensors tracelab_sensors)
+    add_traceview_test(test_lfsensors tracelab_lf_plant)
+    # Code blocks (lab/code): a C file compiled in memory by libtcc, its TL_*
+    # declarations in source order, parameters kept across recompiles, the
+    # tl_* functions and printf, compiler errors and runtime faults with their
+    # line (the process's own exceptions unaffected), the templates library.
+    add_traceview_test(test_codemodule tracelab_code)
+    tracelab_copy_tcc_runtime(test_codemodule)
+endif()
+
+if(TRACEVIEW_ENABLE_LAB AND TARGET tracelab_filters_rt)
+    # TraceLab's filters (lab/filters, lab/README.md "Filters"). test_filters:
+    # the C runtime's blocks in float, as the firmware builds them (moving
+    # average, median, first-order low/high-pass, biquad, complementary,
+    # derivative, rate limiter, dead zone, chain/bank, user block, the
+    # no-allocation contract on the source file itself). test_filters_design:
+    # the Iir1-based designs against the closed-form magnitude responses, the
+    # double runtime reproducing Iir1's filtering sample by sample, the notch.
+    # test_filters_kalman: KF/EKF in float against the textbook update and the
+    # steady-state Riccati solution, the EKF on a pendulum.
+    add_traceview_test(test_filters tracelab_filters_rt)
+    target_compile_definitions(test_filters PRIVATE
+        TLF_RUNTIME_SOURCE="${CMAKE_SOURCE_DIR}/lab/filters/runtime/tlfilter.c")
+    add_traceview_test(test_filters_design tracelab_filters_design tracelab_filters_rt_f64 tracelab_iir1)
+    add_traceview_test(test_filters_kalman tracelab_filters_rt)
+endif()
+
+if(TARGET tracelab_lf_controllers)
+    # The line-follower controllers (lab/benchmarks/linefollower/controllers),
+    # the C++ port of line_follower_simulator's mpc/: the model against the
+    # kinematics it embeds, the box QP against its KKT conditions and its
+    # fallback, the turn-sign convention, input bounds, determinism, every
+    # scheduling strategy x embedding, and GPC with both heading references.
+    # Plain C++ under test, Qt Test only as the harness.
+    add_traceview_test(test_lfcontrollers tracelab_lf_controllers)
+endif()
+
+if(TARGET tracelab_lf_devices)
+    # The line follower as TraceView devices (lab/benchmarks/linefollower/
+    # device): the plant's manifest, the plant over the loopback to a real
+    # BtpBackend (TransportType::Module), a lockstep closed loop through BTP
+    # equal to the in-process harness, and sim.disturb by command.
+    add_traceview_test(test_lfdevices tracelab_lf_devices tracelab_lf_controllers
+                       traceview_transport traceview_devices traceview_backend)
+    tracelab_copy_tcc_runtime(test_lfdevices)
+    # Controllers and filters in C (lab/control: CodeControllerAdapter,
+    # CodeSignalFilter, LabControllerDevice) on the line follower through BTP:
+    # the PD template equal to the C++ PD step for step, filters replacing and
+    # adding signals by name, misnamed signals reported, faults holding the
+    # input until reset, a saved file compiled again while running.
+    add_traceview_test(test_codecontroller tracelab_lf_devices tracelab_control)
+    tracelab_copy_tcc_runtime(test_codecontroller)
+    # Plants in C (lab/plant: CodePlant, CodePlantDevice) and the track
+    # environment: RK4 against the exact solution, a generic loop bound by
+    # the code's names (rebinding after a new version), the line follower's
+    # car in C equal to the C++ plant sample for sample, and the benchmark
+    # project's devices (noise, Kalman) on the line.
+    add_traceview_test(test_codeplant tracelab_lf_devices tracelab_control tracelab_plant)
+    tracelab_copy_tcc_runtime(test_codeplant)
+    target_compile_definitions(test_codeplant PRIVATE
+        TRACELAB_LF_PROJECT="${CMAKE_SOURCE_DIR}/lab/benchmarks/linefollower/linefollower.tvproj")
+    # The Furuta pendulum benchmark (lab/benchmarks/furuta): the plant in C
+    # conserving energy, the qLPV NMPC (warm-start, iterative) and the energy
+    # swing-up + LQR swinging it up, balancing it and following the arm's
+    # step, frozen and Taylor within bounds, closed directly as the devices
+    # step them.
+    add_traceview_test(test_furuta tracelab_furuta tracelab_control tracelab_plant)
+    tracelab_copy_tcc_runtime(test_furuta)
+endif()
 
 # Generic telemetry value types (lib/telemetry) -- no BTP dependency at all
 # (traceview_telemetry links just Qt6::Core; see lib/CMakeLists.txt).

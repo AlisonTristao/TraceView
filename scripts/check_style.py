@@ -4,7 +4,7 @@ rules: .clang-format formatting (delegated to clang-format itself) plus
 heuristic naming checks (PascalCase classes, k-prefixed constants,
 m_-prefixed member variables) that clang-format doesn't enforce.
 
-Covers src/, lib/, include/, tests/ and tools/ -- everything in this
+Covers src/, lib/, lab/, include/, tests/ and tools/ -- everything in this
 repository written here. Two things are excluded because their bytes
 belong to someone else: vendored third-party code (lib/vendor), where
 reformatting would turn the next update from upstream into a merge
@@ -34,7 +34,7 @@ from _bootstrap import ensure_dependencies  # noqa: E402
 ensure_dependencies([], Path(__file__).resolve().parent / ".venv-check-style")
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-SOURCE_DIRS = ["src", "lib", "include", "tests", "tools"]
+SOURCE_DIRS = ["src", "lib", "lab", "include", "tests", "tools"]
 SOURCE_SUFFIXES = {".cpp", ".h"}
 
 # Third-party code copied in as-is. It is not ours to reformat or to hold to

@@ -1,13 +1,15 @@
 #include "audiospectrumconfigeditor.h"
 
 #include <QComboBox>
-#include <QDoubleSpinBox>
 #include <QFormLayout>
 #include <QLineEdit>
 #include <QSlider>
 #include <QtMath>
 #include <algorithm>
 #include <cmath>
+#include <utility>
+
+#include "theme/doublespinbox.h"
 
 namespace traceview {
 
@@ -34,7 +36,7 @@ AudioSpectrumConfigEditor::AudioSpectrumConfigEditor(QWidget* parent) : WidgetCo
         tr("Stream topic to play: blocks of samples with their rate and a block counter "
            "(BTPDevice Topics::stream()). Pick a reported topic or type its numeric id."));
 
-    m_fullScaleSpin = new QDoubleSpinBox(this);
+    m_fullScaleSpin = new DoubleSpinBox(this);
     m_fullScaleSpin->setRange(1.0, 1e9);
     m_fullScaleSpin->setDecimals(0);
     m_fullScaleSpin->setValue(2048.0);
@@ -65,6 +67,8 @@ AudioSpectrumConfigEditor::AudioSpectrumConfigEditor(QWidget* parent) : WidgetCo
         bool ok = false;
         const qulonglong typed = m_topicCombo->currentText().trimmed().toULongLong(&ok, 0);
         if (ok) {
+            const quint32 previousSourceId = m_sourceId;
+            const quint16 previousTopicId = m_topicId;
             m_topicId = quint16(qBound<qulonglong>(0, typed, 65535));
             m_sourceId = 0;
             const QString deviceId = m_deviceCombo->currentData().toString();
@@ -73,6 +77,9 @@ AudioSpectrumConfigEditor::AudioSpectrumConfigEditor(QWidget* parent) : WidgetCo
                     m_sourceId = device.selfSourceId;
                     break;
                 }
+            }
+            if (m_sourceId != previousSourceId || m_topicId != previousTopicId) {
+                forgetBindingNames();
             }
             adoptTopicFields();
         }
@@ -83,8 +90,13 @@ AudioSpectrumConfigEditor::AudioSpectrumConfigEditor(QWidget* parent) : WidgetCo
         QString sourceHex;
         QString topicHex;
         if (decodeTopicComboData(m_topicCombo->itemData(index), &sourceHex, &topicHex)) {
+            const quint32 previousSourceId = m_sourceId;
+            const quint16 previousTopicId = m_topicId;
             m_sourceId = quint32(sourceHex.toULongLong(nullptr, 0));
             m_topicId = quint16(topicHex.toUInt(nullptr, 0));
+            if (m_sourceId != previousSourceId || m_topicId != previousTopicId) {
+                forgetBindingNames();
+            }
             adoptTopicFields();
         }
         updateIdentityDisplay();
@@ -104,6 +116,10 @@ void AudioSpectrumConfigEditor::setConfig(const QJsonObject& config) {
     m_seqFieldId = quint16(config.value("seqFieldId").toInt(1));
     m_rateFieldId = quint16(config.value("rateFieldId").toInt(2));
     m_samplesFieldId = quint16(config.value("samplesFieldId").toInt(3));
+    m_topicName = config.value("topicName").toString();
+    m_seqFieldName = config.value("seqFieldName").toString();
+    m_rateFieldName = config.value("rateFieldName").toString();
+    m_samplesFieldName = config.value("samplesFieldName").toString();
     m_fullScaleSpin->setValue(config.value("fullScale").toDouble(2048.0));
     m_volumeSlider->setValue(qBound(0, config.value("volume").toInt(80), 100));
     updateIdentityDisplay();
@@ -118,6 +134,17 @@ QJsonObject AudioSpectrumConfigEditor::config() const {
     config["seqFieldId"] = int(m_seqFieldId);
     config["rateFieldId"] = int(m_rateFieldId);
     config["samplesFieldId"] = int(m_samplesFieldId);
+    const std::pair<const char*, const QString*> names[] = {
+        {"topicName", &m_topicName},
+        {"seqFieldName", &m_seqFieldName},
+        {"rateFieldName", &m_rateFieldName},
+        {"samplesFieldName", &m_samplesFieldName},
+    };
+    for (const auto& [key, name] : names) {
+        if (!name->isEmpty()) {
+            config[QLatin1String(key)] = *name;
+        }
+    }
     config["fullScale"] = m_fullScaleSpin->value();
     config["volume"] = m_volumeSlider->value();
     return config;
@@ -148,12 +175,22 @@ QVector<DeviceOption> AudioSpectrumConfigEditor::devicesWithStreamTopics() const
     return filtered;
 }
 
+void AudioSpectrumConfigEditor::forgetBindingNames() {
+    m_topicName.clear();
+    m_seqFieldName.clear();
+    m_rateFieldName.clear();
+    m_samplesFieldName.clear();
+}
+
 void AudioSpectrumConfigEditor::adoptTopicFields() {
     const QVector<CatalogTopicField> fields =
         resolveCatalogTopicFields(m_devices, m_deviceCombo->currentData().toString(),
                                   formatHexId(m_sourceId, 8), formatHexId(m_topicId, 4));
     for (const CatalogTopicField& field : fields) {
         if (isArrayField(field)) {
+            if (m_samplesFieldId != field.fieldId) {
+                m_samplesFieldName.clear();
+            }
             m_samplesFieldId = field.fieldId;
             // Full scale: the larger magnitude of the declared range
             // (-2048..2047 -> 2048).
@@ -168,8 +205,14 @@ void AudioSpectrumConfigEditor::adoptTopicFields() {
                 m_fullScaleSpin->setValue(scale);
             }
         } else if (field.name == QLatin1String("rate")) {
+            if (m_rateFieldId != field.fieldId) {
+                m_rateFieldName.clear();
+            }
             m_rateFieldId = field.fieldId;
         } else if (field.name == QLatin1String("seq")) {
+            if (m_seqFieldId != field.fieldId) {
+                m_seqFieldName.clear();
+            }
             m_seqFieldId = field.fieldId;
         }
     }

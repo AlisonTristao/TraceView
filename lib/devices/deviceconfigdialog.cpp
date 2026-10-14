@@ -170,6 +170,16 @@ DeviceConfigDialog::DeviceConfigDialog(const Device& initial, QWidget* parent)
     m_connectionLayout->setRowWrapPolicy(QFormLayout::WrapLongRows);
     connectionLayout->addLayout(m_connectionLayout);
     m_connectionLayout->addRow(tr("Card title:"), m_nameEdit);
+    if (m_device.transportType == TransportType::Module) {
+        // An in-process device (a module's, core/moduledevicetype.h): its
+        // type is the whole of how it is reached, so there are no links to
+        // edit -- result() keeps them as they are.
+        m_linksPanel->hide();
+        m_linksTable->hide();
+        auto* typeLabel = new QLabel(m_device.moduleType, connectionGroup);
+        typeLabel->setTextInteractionFlags(Qt::TextSelectableByMouse);
+        m_connectionLayout->addRow(tr("Built-in device:"), typeLabel);
+    }
 
     m_peerPasswordEdit = new QLineEdit(m_device.peerPassword, connectionGroup);
     m_peerPasswordEdit->setEchoMode(QLineEdit::Password);
@@ -382,6 +392,9 @@ Device DeviceConfigDialog::result() const {
     // transport fields); the rest become extraLinks. An empty table leaves a
     // default, unconfigured primary -- same "never connects" state a fresh
     // device starts in.
+    if (m_device.transportType == TransportType::Module) {
+        return device;  // no links of its own: see the constructor
+    }
     QVector<DeviceLink> links = m_linksTable->links();
     // The legacy primary slot has no enabled flag. Put the first enabled
     // link there, or leave it unconfigured when every transport is disabled.

@@ -82,6 +82,10 @@ QString chartGaugeShapeId(ChartGaugeShape shape);
 ChartGaugeShape chartGaugeShapeFromId(const QString& id);
 
 // "outside"/"topLeft"/"topRight"/"bottomLeft"/"bottomRight"/"hidden".
+// TickNumberFormat <-> its config id ("auto", "fixed", "scientific");
+// anything else reads as Auto.
+QString tickNumberFormatId(TickNumberFormat format);
+TickNumberFormat tickNumberFormatFromId(const QString& id);
 QString chartLegendPlacementId(ChartLegendPlacement placement);
 ChartLegendPlacement chartLegendPlacementFromId(const QString& id);
 
@@ -179,6 +183,9 @@ struct ValueScale {
     QVector<double> ticks;      // labeled ticks (and tick marks)
     QVector<double> gridTicks;  // gridlines -- the ticks, or equal divisions
     int decimals = 0;
+    // The label of each tick, same order as `ticks` (formatTicks()); filled
+    // by layoutCartesianChart() from the view's number format.
+    QStringList labels;
 };
 
 // Applies a style's range and tick rules to `range`.
@@ -240,6 +247,8 @@ struct ChartViewOptions {
     ChartLegendPlacement legendPlacement = ChartLegendPlacement::Outside;
     int legendOpacity = 75;  // percent, background of an in-plot legend
     int yTickCount = 0;      // 0 = the style's own rule, see valueScale()
+    // How the value axis prints its labels (chartscale.h).
+    TickNumberFormat yNumberFormat = TickNumberFormat::Auto;
     double lineWidth = 0.0;  // series stroke in px, 0 = style.lineWidth
     ChartGaugeShape gaugeShape = ChartGaugeShape::Arc;
 };
@@ -273,6 +282,7 @@ inline constexpr char Interpolation[] = "interpolation";
 inline constexpr char Legend[] = "legend";
 inline constexpr char LegendOpacity[] = "legendOpacity";
 inline constexpr char YTicks[] = "yTicks";
+inline constexpr char YFormat[] = "yFormat";
 inline constexpr char LineWidth[] = "lineWidth";
 inline constexpr char GaugeShape[] = "gaugeShape";
 }  // namespace ChartViewKey

@@ -1,0 +1,216 @@
+ANÁLISE DE DESEMPENHO DA INTERFACE DO TRACEVIEW (TraceLab, seguidor de linha)
+==============================================================================
+
+Sintoma
+-------
+A simulação do seguidor dentro do TraceView rodava a ~2 fps no build Debug, com o
+carro saindo da pista. No Release, depois das primeiras correções, roda a
+30-40 fps. A meta é 60 fps estáveis, com a simulação cravada em 80 Hz.
+
+Correções já feitas
+-------------------
+- Debug: o MPC sem otimização levava mais de 1 s por passo. A biblioteca dos
+  controladores agora compila com -O2 e EIGEN_NO_DEBUG também em Debug.
+- Divergência: a planta seguia no relógio com um comando velho quando o
+  controlador atrasava. Agora ela espera o plano do controlador em todos os
+  modos (limite de 10 s). Controlador lento = câmera lenta, não divergência.
+- Travada de 10 s no início: o controlador não respondia enquanto não tinha o
+  preview do tick, e a planta esperava até o limite. Agora ele responde com um
+  plano vazio ("mantém o comando").
+
+Medições (Release, sem janela)
+------------------------------
+  Planta + MPC conversando via BTP ........................ ~790 ticks/s (precisa 80)
+  Idem, com o backend do TraceView recebendo todos os tópicos ~270 ticks/s
+  MPC (qLPV, C++/Eigen) ................................... ~1 ms/passo (orçamento 12,5 ms)
+  Cena do seguidor, 1600x900, pista real ................. 1,3 ms/quadro
+    idem com escala 150% (HiDPI) ......................... 2,8 ms/quadro
+    idem + recorte de cantos arredondados ................ 3,1 ms/quadro
+
+  A pista tem 18.000 pontos, mas a cena recebe só 2.400 (sim.track decimado) e
+  desenha só os que estão a até 4,3 m do carro (grade espacial).
+
+Conclusão
+---------
+- O MPC já é C++, não Python, e cabe com folga. Reescrever em C não muda a
+  velocidade. C, OSQP ou acados com codegen só fazem sentido para embarcar no
+  robô (o caminho do loopctl.h).
+- A pintura do seguidor não é o gargalo.
+- O tempo vai para o resto da thread da interface:
+  a) Distribuição de amostras: o TelemetryFieldRouter quebra todo vetor de até
+     64 elementos em sinais individuais (kMaxFannedArrayElements). No seguidor
+     isso dá ~124 sinais por tick, ~10 mil por segundo. Cada sinal vai para
+     TODOS os gráficos, a cena, o histórico, o runtime de script e o detector
+     de hub, e cada um compara fonte e tópico para descartar.
+  b) Redesenho desencontrado: cada gráfico e a cena têm seu próprio timer de
+     redesenho. Com 6 widgets a 60 Hz fora de fase, a janela é recomposta e
+     copiada para a tela várias vezes por quadro.
+  c) Pintura dos gráficos: ainda não medida no app real.
+
+Plano de otimização (em ordem de impacto esperado)
+--------------------------------------------------
+1. Relógio único de redesenho
+   Um timer central marca os widgets "sujos" e pinta todos numa passada só, com
+   uma cópia para a tela por quadro, em vez de um timer por widget.
+
+2. Vetores inteiros, sem quebrar em valores soltos
+   O vetor chega inteiro (arraySample) para quem pediu o vetor. Só os
+   elementos que algum widget realmente plota viram valores soltos.
+
+3. Despacho por assinatura
+   Uma tabela (fonte, tópico) -> widgets interessados troca o "todo widget
+   recebe tudo e filtra" por uma busca em hash por amostra.
+
+4. Simulação numa thread separada (TraceLab)
+   A planta e o controlador saem da thread da interface. A simulação fica
+   cravada em 80 Hz mesmo se a tela engasgar, e a interface desenha o estado
+   mais recente. O loopback já é enfileirado (QueuedConnection), então é viável.
+   Os comandos da aba TraceLab passam a ser enviados à thread da simulação.
+
+5. Pintura dos gráficos - OPCIONAL, desligado por padrão (Configurações)
+   Decimação min/max por coluna de pixel, linhas densas sem antialiasing e
+   cache de fundo/eixos. Fica como opção nas configurações porque o resultado
+   depende da resolução e da escala da tela e pode esconder detalhe ou criar
+   artefatos.
+
+6. Widgets opacos
+   WA_OpaquePaintEvent na cena e nos gráficos, para o Qt não repintar o fundo
+   do dashboard por trás a cada quadro.
+
+Como medir
+----------
+Build Release com o medidor temporário (lib/dashboard/perfprobe.h, não vai para
+o commit). Rodar ~15 s com a simulação andando e fechar:
+
+  $env:TRACEVIEW_PERF="C:\git\TraceView\build-lab-release\perf.txt"
+  C:\git\TraceView\build-lab-release\TraceView.exe --mode lab
+
+O perf.txt mostra, a cada segundo: chart.paint, scene.paint, chart.fieldSample,
+scene.fieldSample/arraySample, router.sample, btp.feed, history.append,
+plant.tick, ctl.answer e gui.idle (tempo ocioso da interface).
+
+==============================================================================
+RESULTADOS MEDIDOS (Release, TraceView offscreen, preset do seguidor, ~9 s)
+==============================================================================
+Medidor: lib/dashboard/perfprobe.h (temporário) + build-lab-release/perf/run_perf.ps1.
+"Interface ocupada" = 100% - tempo ocioso da thread da interface.
+O fps offscreen é aproximado: o Qt pinta no ritmo do próprio offscreen,
+então a métrica mais confiável para comparar é a carga da interface.
+
+  Etapa                              fps cena  simulação         interface ocupada
+  ---------------------------------  --------  ----------------  -----------------
+  0. Início (travada de 10 s)        18,4      39 ticks/s (49%)  26% (*)
+  1. Planta sem polling (eventos)    18,5      37 ticks/s (47%)  24% (*)
+  1b. Planta não espera antes da     35,3      80 ticks/s (100%) 63%
+      1ª resposta do controlador
+  2. Relógio único de redesenho      34,5      80 ticks/s        60%
+  3. Timer de 1 ms do Windows        34,7      80 ticks/s        57%  -> revertido
+  4. Desenho rápido de linhas
+     (opcional, desligado)           34,8      80 ticks/s        58%
+     (opcional, ligado)              38,7      80 ticks/s        50%
+  5. Despacho por tópico             34,8      80 ticks/s        58%
+  6. Gráfico ignora campos que não
+     plota (sem redesenho à toa)     34,1      80 ticks/s        51%
+
+  FINAL (tudo junto)
+     desenho rápido desligado        33,1-33,6 80 ticks/s        55-65%
+     desenho rápido ligado           35,4      80 ticks/s        53%
+
+  (*) carga baixa só porque a simulação andava a metade da velocidade.
+  Variação entre rodadas iguais: cerca de 10 pontos na carga da interface.
+
+O que cada etapa mostrou
+------------------------
+- O gargalo principal NÃO era CPU: a interface ficava 74% ociosa e a simulação
+  andava a metade do tempo real. Causa: a planta esperava o 1º plano do
+  controlador, que só vem depois de ele se conectar e receber o 1º preview;
+  ela travava 10 s (o limite) e o tempo real perdido puxava tudo para baixo.
+  Correção: antes da primeira resposta do controlador a planta não espera
+  (nos modos tempo real e o mais rápido possível; o modo passo a passo
+  continua sempre esperando, para ser reproduzível).
+- Planta orientada a eventos: a chegada do plano dispara o próximo tick, em
+  vez de verificar a cada "1 ms" (no Windows o timer tem ~15,6 ms).
+- Relógio único: sem ganho medível offscreen (o ganho esperado é juntar as
+  cópias para a tela numa janela real, que o offscreen não mede). Mantido
+  porque simplifica e não custa nada.
+- Timer de 1 ms do Windows (timeBeginPeriod): sem ganho medido; revertido
+  para não mexer numa configuração global do sistema sem necessidade.
+- Pintura dos gráficos: 260 ms/s, quase tudo no desenho das séries
+  (160 ms/s, ~0,9 ms por gráfico). Com o desenho rápido, as séries custam
+  70 ms/s (-56%). Fica opcional em Configurações > Dashboard > Qualidade de
+  renderização > "Desenho rápido de linhas", desligado por padrão.
+- Despacho por tópico + ignorar campos não plotados: a decodificação e
+  distribuição BTP caiu de 120 para 48 ms/s.
+
+Não implementados (por enquanto)
+--------------------------------
+- 4. Simulação numa thread separada: a planta e o controlador custam ~45 ms/s
+  (4,5%) e a simulação já roda em 100% do tempo real. A mudança exige
+  refazer o ciclo de vida dos dispositivos (hoje filhos dos transportes) e
+  sincronizar o loopback e a aba TraceLab entre threads. Fica para quando
+  vier HIL ou um controlador pesado (acados).
+- 6. Widgets opacos: a cena e os gráficos têm cantos arredondados que
+  dependem do fundo do card atrás; marcar como opacos deixaria lixo nos
+  cantos.
+
+==============================================================================
+CENA: ANTIALIASING E PISTA EM POLILINHA
+==============================================================================
+Benchmark isolado da cena (pista real, 1600x900 em escala 150%, 8 configurações
+intercaladas, 7 rodadas de 60 quadros, melhor rodada de cada; ms por quadro):
+
+                                   recorte arredondado   sem recorte
+  antialiasing, pista antiga              4,07               3,31
+  antialiasing, polilinha                 3,37               3,49
+  sem antialiasing, pista antiga          4,28               2,16
+  sem antialiasing, polilinha             4,05               2,40
+
+- Antialiasing: desligado economiza ~1,1 ms sem recorte (-35%). Com o recorte
+  arredondado do widget não economiza nada: desenho sem antialiasing sob um
+  recorte por caminho cai no caminho lento do Qt. O DashboardCell já aplica
+  uma máscara arredondada no widget, então com o antialiasing desligado o
+  SceneWidget pula o recorte (a máscara corta os cantos, só que sem
+  suavizar). Resultado esperado no widget: ~3,4-4,1 ms -> ~2,2-2,4 ms.
+  Opção nova: parâmetro "Antialiasing" da cena (caixa de marcar no editor da
+  cena, salvo no .tvproj, ligado por padrão).
+- Pista em polilinha (uma polilinha por trecho contínuo, traço com a largura
+  da linha e pontas/junções redondas, em vez de um traço por segmento mais um
+  círculo por ponto): mesmo visual (426 de 3,2 milhões de pixels diferem, só
+  na suavização da borda), velocidade dentro do ruído. A pista custa só
+  ~0,25 ms por quadro porque só os pontos a até 4,3 m do carro são
+  desenhados. Mantida por ter menos chamadas de desenho (escala melhor com
+  zoom afastado ou pista mais densa), não pelo ganho medido.
+- Medição no app inteiro: inconclusiva nesta rodada; a máquina ficou ~3x mais
+  lenta (o mesmo gráfico foi de 1,5 para 4,4 ms), provavelmente o IntelliSense
+  do VS Code indexando. Repetir com a máquina livre.
+
+==============================================================================
+DESENHO EM THREADS (cena e gráficos de linha)
+==============================================================================
+- Cena: o SceneWidget desenha numa QImage num worker (QThreadPool), com os
+  cantos arredondados já transparentes; o paintEvent só copia a imagem. O
+  renderizador fica atrás de uma trava (o worker e a interface).
+- Gráficos de linha: o mesmo padrão. As amostras entram numa fila com trava
+  própria (a interface nunca espera um desenho); o worker esvazia a fila nos
+  buffers no começo de cada desenho. Tema, fonte, geometria e caminho de
+  recorte são copiados na interface antes de mandar o job. Mudanças raras
+  (configuração, mouse, tema, limpar) usam a trava do gráfico. Se o widget
+  for destruído, o job na fila não desenha.
+- Amostras novas disparam o desenho direto pelo RepaintClock, sem update():
+  a cópia para a tela só acontece quando chega uma imagem nova (antes, 2
+  cópias por desenho).
+- Widgets escondidos (grab(), testes) continuam desenhando na hora.
+
+Medições (offscreen):
+  na bateria (CPU travada em 1,3 GHz, tudo ~3x mais lento):
+    antes das threads      cena ~22 fps, simulação 58-76%, interface 0-1% ociosa
+    cena em thread         cena 42 fps, simulação 58%, interface 1% ociosa
+  no carregador:
+    cena + gráficos em threads   cena 40 fps, gráficos ~40 fps cada,
+                                 simulação 100%, interface 58-69% ociosa
+  O teto de ~40 fps aparece em todas as rodadas offscreen, com qualquer carga;
+  é o ritmo do próprio offscreen. O timer de 1 ms do Windows foi testado de
+  novo com a interface folgada: sem ganho (revertido).
+
+Sensores frontais (vetor "s" do loop.state, 15 valores): ~12% das amostras
+distribuídas; não removidos por enquanto (ganho pequeno perto da pintura).

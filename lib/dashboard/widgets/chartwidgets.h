@@ -2,9 +2,13 @@
 
 #include <QColor>
 #include <QElapsedTimer>
+#include <QImage>
+#include <QMutex>
+#include <QRecursiveMutex>
 #include <QRect>
 #include <QtMath>
 #include <functional>
+#include <memory>
 
 #include "dashboard/dashboardwidget.h"
 #include "dashboard/widgets/chartdata.h"
@@ -89,8 +93,9 @@ protected:
     // Parses config["view"] -- call from setConfig().
     void applyViewFromConfig(const QJsonObject& config);
 
-    // Coalesces repaints to at most one per repaint interval.
-    void scheduleRepaint();
+    // Coalesces repaints into the dashboard-wide RepaintClock tick.
+    // Virtual: a chart that renders off-thread starts its render instead.
+    virtual void scheduleRepaint();
 
     // What to draw for `targets` this frame: each value eased toward its
     // target (about 120ms) while motion is animated, straight to it while
@@ -107,12 +112,21 @@ protected:
 
     ChartViewOptions m_view;
     bool m_paused = false;
+    // Line charts render on a worker thread (DummyLineChartWidget::
+    // startRender()). Every read of the chart state there, and every change
+    // of it on the GUI thread, holds m_sync->mutex; `alive` turns false when
+    // the widget goes, so a job still queued draws nothing.
+    struct RenderSync {
+        QRecursiveMutex mutex;
+        bool alive = true;
+    };
+    std::shared_ptr<RenderSync> m_sync = std::make_shared<RenderSync>();
+    bool m_fastChartLines = false;  // AppSettings::fastChartLines(), cached
 
 private:
     QVector<double> m_eased;
     QElapsedTimer m_easeClock;
     bool m_easeRepaintPending = false;
-    bool m_repaintPending = false;
     int m_repaintIntervalMs = 33;  // initialized from AppSettings in the constructor
 };
 
@@ -154,6 +168,9 @@ public:
     const ChartConfig& config() const {
         return m_config;
     }
+    // Series `index`'s buffered values, oldest first, with the samples
+    // queued since the last repaint in.
+    QVector<double> seriesValues(int index) const;
 
 protected:
     void mouseMoveEvent(QMouseEvent* event) override;
@@ -163,6 +180,9 @@ protected:
 
     // Every series buffer's values, same order as m_config.series.
     QVector<QVector<double>> seriesValues() const;
+    // Moves the samples appendFieldSample() queued into the series buffers.
+    // Called before every read of them (seriesValues() does).
+    void drainStagedSamples() const;
 
     // One value axis request per Y axis this chart draws -- a single axis,
     // or one per unit under ChartConfig::autoAxis -- and, for every series,
@@ -184,7 +204,17 @@ protected:
 
     ChartConfig m_config;  // series colors already resolved, see refreshDataColors()
     QVector<QColor> m_ownColors;  // each series' configured color, same order
-    QVector<TelemetrySeriesBuffer> m_seriesBuffers;  // one per m_config.series, same order
+    // One per m_config.series, same order. Mutable: drainStagedSamples().
+    mutable QVector<TelemetrySeriesBuffer> m_seriesBuffers;
+    // Samples appendFieldSample() received since the last drain, behind
+    // their own lock so the GUI thread never waits for a render to queue one.
+    struct StagedSample {
+        quint16 fieldId;
+        quint64 timestampUs;
+        double value;
+    };
+    mutable QMutex m_stageMutex;
+    mutable QVector<StagedSample> m_staged;
     // Per-series "hidden via legend click" flag, same index as m_config.series
     // -- toggled by mousePressEvent() below when a click lands inside
     // m_legendHitRects, kept sized/aligned to m_config.series by setConfig()
@@ -209,6 +239,7 @@ protected:
 class DummyLineChartWidget : public ChartWidgetBase {
 public:
     explicit DummyLineChartWidget(QWidget* parent = nullptr);
+    ~DummyLineChartWidget() override;
 
     // The A/B range markers, in samples before the newest one (0 = the
     // right edge). NaN until the markers are first shown.
@@ -233,6 +264,24 @@ private:
     qreal markerX(int which) const;
     // The marker whose line or handle is under `pos`, or -1.
     int markerAt(const QPoint& pos) const;
+
+    // The whole chart into `painter` over `area` (a QImage on a worker
+    // thread, or this widget when hidden). Everything it needs from the GUI
+    // thread comes in as arguments; the caller holds m_sync->mutex.
+    void paintFrame(QPainter& painter, const QRect& area, const QPainterPath& fill,
+                    const QPainterPath& outline, bool drawOutline, const ThemePalette& palette,
+                    ChartStyleId styleId);
+    // Renders the next frame on a worker thread; paintEvent() draws the last
+    // finished one.
+    void startRender();
+    void renderFinished(const QImage& image);
+    // New samples: render on the next tick, without repainting the old frame.
+    void scheduleRepaint() override;
+
+    QImage m_image;              // the last finished frame
+    bool m_rendering = false;    // a job in flight
+    bool m_renderAgain = false;  // something changed while it ran
+    bool m_blitOnly = false;     // this repaint only shows a finished frame
 
     double m_markerAgo[2] = {qQNaN(), qQNaN()};
     int m_draggedMarker = -1;

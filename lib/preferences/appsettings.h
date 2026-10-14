@@ -21,6 +21,11 @@ public:
     RenderProfile renderProfile() const;
     int customRenderFps() const;
     int repaintIntervalMs() const;
+    // Faster line charts (off by default): a series denser than the plot is
+    // reduced to each pixel column's min and max, and drawn without
+    // antialiasing. Cheaper to paint, but how it looks depends on the
+    // screen's resolution and scale, so it is the user's call.
+    bool fastChartLines() const;
 
     // When enabled, this rate replaces every widget's own requested rate
     // (chart/text board sample time, the gauge's fixed rate) at subscribe
@@ -77,6 +82,7 @@ public:
 
     void setRenderProfile(RenderProfile profile);
     void setCustomRenderFps(int fps);
+    void setFastChartLines(bool enabled);
     void setSubscribeRateOverrideEnabled(bool enabled);
     void setSubscribeRateOverrideHz(int hz);
     void setRecentProjectsLimit(int limit);
@@ -115,6 +121,8 @@ private:
 
     int value(const char* key, int fallback, int minimum, int maximum) const;
     void setValue(const char* key, int value);
+
+    mutable QString m_chartStyleId;  // null until first read
 };
 
 }  // namespace traceview

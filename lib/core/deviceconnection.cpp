@@ -6,6 +6,7 @@
 #include "backend/backend.h"
 #include "core/applog.h"
 #include "hubtransport.h"
+#include "moduledevicetype.h"
 #include "preferences/appsettings.h"
 #include "protocol/btpbackend.h"
 #include "tcptransport.h"
@@ -88,13 +89,51 @@ BtpSessionAxes toBtpSessionAxes(TransportType type) {
             // stand-in TCP uses meanwhile, revisit together with Tcp's case
             // once the BTP dependency is bumped.
             return {BtpSession::Framing::CobsStream, btp::kSerialTransport};
+        case TransportType::Module:
+            // An in-process ModuleTransport hands over one whole frame per
+            // write (a queued signal per frame, nothing to delimit), and has
+            // no link MTU of its own: frames sized like a serial port's.
+            return {BtpSession::Framing::PreFramed, btp::kSerialTransport};
     }
     return {BtpSession::Framing::CobsStream, btp::kSerialTransport};
 }
+
+// Stands in for a module device whose type is not registered (its module is
+// off, or this build has none): never comes up, and says why on each try.
+class UnavailableModuleTransport final : public ModuleTransport {
+public:
+    UnavailableModuleTransport(const QString& typeId, QObject* parent)
+        : ModuleTransport(parent), m_typeId(typeId) {}
+    void open() override {
+        emit errorOccurred(DeviceConnection::tr("device type \"%1\" is not available "
+                                                "(is its module enabled?)")
+                               .arg(m_typeId));
+    }
+    void close() override {}
+    bool isConnected() const override {
+        return false;
+    }
+    bool write(const QByteArray&) override {
+        return false;
+    }
+
+private:
+    QString m_typeId;
+};
 }  // namespace
 
 DeviceConnection::DeviceConnection(CommType commType, TransportType transportType, QObject* parent)
     : QObject(parent), m_transportType(transportType) {
+    construct(commType, transportType, nullptr);
+}
+
+DeviceConnection::DeviceConnection(const Device& device, QObject* parent)
+    : QObject(parent), m_transportType(device.transportType) {
+    construct(device.commType, device.transportType, &device);
+}
+
+void DeviceConnection::construct(CommType commType, TransportType transportType,
+                                 const Device* device) {
     switch (transportType) {
         case TransportType::Serial:
 #ifdef TRACEVIEW_ENABLE_SERIAL
@@ -171,16 +210,37 @@ DeviceConnection::DeviceConnection(CommType commType, TransportType transportTyp
             // null sender and no-op (Qt warns, does not crash).
             break;
 #endif
+        case TransportType::Module: {
+            const QString typeId = device ? device->moduleType : QString();
+            const ModuleDeviceType* type = ModuleDeviceTypeRegistry::instance().find(typeId);
+            if (type != nullptr) {
+                m_moduleTransport = type->createTransport(device->id, device->moduleConfig, this);
+            }
+            if (m_moduleTransport == nullptr) {
+                m_moduleTransport = new UnavailableModuleTransport(typeId, this);
+            }
+            m_transport = m_moduleTransport;
+            break;
+        }
     }
 
     switch (commType) {
         case CommType::Btp: {
             const BtpSessionAxes axes = toBtpSessionAxes(transportType);
             const auto sessionStartMode =
-                (transportType == TransportType::Tcp || transportType == TransportType::Ble)
+                (transportType == TransportType::Tcp || transportType == TransportType::Ble ||
+                 transportType == TransportType::Module)
                     ? BtpBackend::SessionStartMode::DirectBtp
                     : BtpBackend::SessionStartMode::Console;
-            m_backend = new BtpBackend(axes.framing, axes.encodeProfile, sessionStartMode, this);
+            auto* btpBackend =
+                new BtpBackend(axes.framing, axes.encodeProfile, sessionStartMode, this);
+            if (transportType == TransportType::Module) {
+                // The endpoint is the peer itself and the wire never leaves
+                // the process: a direct, cleartext session, exactly what a
+                // robot's own serial port gets.
+                btpBackend->setSerialRobotPeer(true);
+            }
+            m_backend = btpBackend;
             break;
         }
     }
@@ -459,6 +519,32 @@ void DeviceConnection::connectToBle(const QString& address, const QByteArray& en
 #endif
 }
 
+void DeviceConnection::connectToModule() {
+    if (m_moduleTransport == nullptr) {
+        return;
+    }
+    const bool wasWanted = m_shouldBeConnected;
+    m_shouldBeConnected = true;
+    // Same idempotency as connectTo() -- see its comment.
+    if (wasWanted && m_transportAvailable &&
+        (m_transport->isConnected() || m_attemptInProgress)) {
+        if (AppSettings::instance().autoReconnect() && !m_retryTimer->isActive()) {
+            m_retryTimer->start();
+        }
+        return;
+    }
+    m_attemptInProgress = false;
+    if (!m_transportAvailable) {
+        setConnectionPhase(ConnectionPhase::Disconnected);
+        return;
+    }
+    setConnectionPhase(ConnectionPhase::Connecting);
+    attemptReconnect();
+    if (AppSettings::instance().autoReconnect()) {
+        m_retryTimer->start();
+    }
+}
+
 void DeviceConnection::connectVia(DeviceConnection* parentConnection, quint32 selfSourceId,
                                   quint32 peerSourceId, const QByteArray& endpointKey) {
     // The HubChannel counterpart of connectTo(), and separate from it for the
@@ -716,6 +802,8 @@ void DeviceConnection::attemptReconnect() {
 #ifdef TRACEVIEW_ENABLE_USB_HID
         m_usbHidManager->open(m_target);
 #endif
+    } else if (m_moduleTransport) {
+        m_moduleTransport->open();
     } else if (m_tcpTransport) {
         m_tcpTransport->open(m_tcpHost, m_tcpPort);
 #ifdef TRACEVIEW_ENABLE_BLE

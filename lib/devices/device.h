@@ -46,6 +46,10 @@ enum class TransportType {
     HubChannel = 2,
     Tcp = 3,
     Ble = 4,
+    // An endpoint inside this process, provided by an optional module
+    // (core/moduledevicetype.h): Device::moduleType names which kind, and
+    // DeviceConnection asks that type's factory for the Transport.
+    Module = 5,
 };
 
 inline QString transportTypeLabel(TransportType type) {
@@ -60,6 +64,8 @@ inline QString transportTypeLabel(TransportType type) {
             return QCoreApplication::translate("Device", "TCP");
         case TransportType::Ble:
             return QCoreApplication::translate("Device", "BLE");
+        case TransportType::Module:
+            return QCoreApplication::translate("Device", "Built-in");
     }
     return QString();
 }
@@ -159,6 +165,8 @@ struct DeviceLink {
     QString bleAddress;
     QString parentDeviceId;
     quint32 peerSourceId = 0;
+    // TransportType::Module: the registered device type (Device::moduleType).
+    QString moduleType;
     // Unticked in the connections table: kept, but skipped by the cycler.
     bool enabled = true;
     // "Automatic": the target is derived from Device::robotName each time the
@@ -390,6 +398,15 @@ struct Device {
     QString robotName;
     // DeviceLink::autoTarget for the primary link (the fields above).
     bool autoTarget = false;
+
+    // --- TransportType::Module only ----------------------------------------
+    // Which registered in-process device type this is (ModuleDeviceType::id,
+    // core/moduledevicetype.h) -- "not configured" when empty -- and the
+    // type's own settings, handed to its factory as they are. Both
+    // persisted; a project naming a type whose module is off still loads,
+    // the device just never connects.
+    QString moduleType;
+    QJsonObject moduleConfig;
 };
 
 // Link 0 is the device's own transport fields, 1..N its extraLinks.

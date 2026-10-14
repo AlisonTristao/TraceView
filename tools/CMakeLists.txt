@@ -1,5 +1,5 @@
 # Dev-only tools -- not part of the shipped app or the ctest suite.
-# chart_preview/chart_benchmark/text_board_preview are throwaway GUI harnesses
+# chart_preview/chart_benchmark/text_board_preview/scene_preview are throwaway GUI harnesses
 # for eyeballing a widget's design with synthetic data instead of a real
 # serial device.
 
@@ -37,6 +37,18 @@ target_link_libraries(example_preview PRIVATE
     traceview_theme
 )
 
+# scene_preview: the TraceLab line-follower scene fed by a synthetic plant;
+# --screenshot <png> renders a few seconds and saves the widget.
+set(TRACEVIEW_PREVIEW_TOOLS chart_preview chart_benchmark text_board_preview example_preview)
+if(TRACEVIEW_ENABLE_LAB)
+    add_executable(scene_preview scene_preview/main.cpp)
+    target_link_libraries(scene_preview PRIVATE
+        Qt6::Widgets
+        tracelab_scenes
+    )
+    list(APPEND TRACEVIEW_PREVIEW_TOOLS scene_preview)
+endif()
+
 if(WIN32)
     # Same reasoning as TraceView's own post-build step (see root
     # CMakeLists.txt): without deployed DLLs next to the exe, Windows' DLL
@@ -45,7 +57,7 @@ if(WIN32)
     # failing to start with STATUS_ENTRY_POINT_NOT_FOUND. Each harness gets
     # its own runtime directory so parallel post-build deployments never race
     # while copying the same Qt DLL.
-    foreach(tool chart_preview chart_benchmark text_board_preview example_preview)
+    foreach(tool ${TRACEVIEW_PREVIEW_TOOLS})
         set_target_properties(${tool} PROPERTIES
             RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/${tool}"
         )
@@ -72,5 +84,11 @@ if(WIN32)
             COMMAND "${WINDEPLOYQT_EXECUTABLE}" --no-translations "$<TARGET_FILE:example_preview>"
             COMMENT "Deploying Qt runtime DLLs next to example_preview.exe"
         )
+        if(TARGET scene_preview)
+            add_custom_command(TARGET scene_preview POST_BUILD
+                COMMAND "${WINDEPLOYQT_EXECUTABLE}" --no-translations "$<TARGET_FILE:scene_preview>"
+                COMMENT "Deploying Qt runtime DLLs next to scene_preview.exe"
+            )
+        endif()
     endif()
 endif()

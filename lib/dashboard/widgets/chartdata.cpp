@@ -142,13 +142,16 @@ QVector<TelemetrySeriesBuffer> resizeChartBuffers(const QVector<TelemetrySeriesB
     return result;
 }
 
-void appendFieldSample(QVector<TelemetrySeriesBuffer>& buffers, const ChartConfig& config,
+bool appendFieldSample(QVector<TelemetrySeriesBuffer>& buffers, const ChartConfig& config,
                        quint16 fieldId, quint64 timestampUs, double value) {
+    bool appended = false;
     for (int i = 0; i < config.series.size() && i < buffers.size(); ++i) {
         if (config.series[i].fieldId == fieldId) {
             buffers[i].append(timestampUs, value);
+            appended = true;
         }
     }
+    return appended;
 }
 
 QVector<ChartAxisGroup> chartAxisGroups(const ChartConfig& config) {

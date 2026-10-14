@@ -3,10 +3,11 @@
 #include <QCheckBox>
 #include <QComboBox>
 #include <QCoreApplication>
-#include <QDoubleSpinBox>
 #include <QFormLayout>
 #include <QLineEdit>
 #include <QSpinBox>
+
+#include "theme/doublespinbox.h"
 
 namespace traceview {
 
@@ -312,22 +313,22 @@ SliderConfigEditor::SliderConfigEditor(QWidget* parent) : WidgetConfigEditor(par
     m_labelEdit = new QLineEdit(this);
     m_labelEdit->setPlaceholderText(tr("Slider"));
 
-    m_minSpin = new QDoubleSpinBox(this);
+    m_minSpin = new DoubleSpinBox(this);
     m_minSpin->setRange(-100'000.0, 100'000.0);
     m_minSpin->setDecimals(2);
     m_minSpin->setValue(0.0);
 
-    m_maxSpin = new QDoubleSpinBox(this);
+    m_maxSpin = new DoubleSpinBox(this);
     m_maxSpin->setRange(-100'000.0, 100'000.0);
     m_maxSpin->setDecimals(2);
     m_maxSpin->setValue(100.0);
 
-    m_stepSpin = new QDoubleSpinBox(this);
+    m_stepSpin = new DoubleSpinBox(this);
     m_stepSpin->setRange(0.01, 100'000.0);
     m_stepSpin->setDecimals(2);
     m_stepSpin->setValue(1.0);
 
-    m_defaultSpin = new QDoubleSpinBox(this);
+    m_defaultSpin = new DoubleSpinBox(this);
     m_defaultSpin->setRange(-100'000.0, 100'000.0);
     m_defaultSpin->setDecimals(2);
     m_defaultSpin->setValue(50.0);

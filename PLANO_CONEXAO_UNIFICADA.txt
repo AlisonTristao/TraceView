@@ -1,0 +1,204 @@
+PLANO -- CONFIGURACAO DE CONEXAO UNIFICADA (um nome, varios links)
+====================================================================
+Criado 2026-09-25. Base: DeviceLinksTable (lib/devices/devicelinkstable.*,
+ainda nao commitado) + firmware bally_OS.
+
+PROBLEMA
+--------
+Hoje cada linha da tabela de conexoes pede o alvo "na mao", e cada
+transporte usa um nome diferente para o mesmo robo:
+
+  TCP    tcpHost        "ballyrobot.local" ou IP   (vem do ota_hostname)
+  BLE    bleAddress     "BallyRobot"               (vem do identity name)
+  Hub    peerSourceId   0x1A2B3C4D                 (nome so aparece no picker)
+  Serial portName       "COM5"  + baud             (nada liga a porta ao robo)
+  USB    usbPath        caminho hidapi             (idem)
+
+Pior: no firmware o nome do mDNS (settings ota.ota_hostname, padrao
+"ballyrobot") e o nome do robo (identity.name, usado no anuncio BLE, no
+source_info "name" do manifesto e no hub.peers) sao DOIS campos separados.
+Entao mesmo que a UI quisesse "um nome so", hoje ele nao bate entre TCP e BLE.
+
+OBJETIVO
+--------
+O usuario informa UM nome (ou escolhe o robo numa lista de descobertos) e
+marca quais links usar. Cada link resolve o proprio alvo a partir do nome:
+
+  TCP    <nome>.local (sanitizado: minusculo, espaco -> '-')
+  BLE    <nome>       (ja funciona: BleTransport::bleNameMatches)
+  Hub    procura em hub.peers de qualquer dongle conectado o peer com esse
+         nome; grava o source_id encontrado (identidade continua sendo o
+         source_id -- o nome e so pista de descoberta, igual ao BLE)
+  Serial "Automatico": testa as portas livres com HELLO + manifesto e fica
+         com a que responde source_info name == <nome>
+  USB    "Automatico": mesmo esquema do serial
+
+Baud rate, porta TCP, porta COM fixa, IP fixo: tudo vai para um "Avancado"
+recolhido. Default resolve 99% dos casos (CDC nativo do ESP32-S3 ignora baud).
+
+UI PROPOSTA (DeviceConfigDialog, secao "Conexao")
+-------------------------------------------------
+
+  Robo: [ BallyRobot            v]  [Descobrir]
+        (combo editavel: digita, ou escolhe entre os robos encontrados)
+
+  [x] USB/Serial   Automatico            v   ● encontrado em COM5
+  [x] Wi-Fi (TCP)  ballyrobot.local          ○ nao respondeu
+  [x] Bluetooth    BallyRobot                ● visto (-62 dBm)
+  [ ] Hub          Automatico (qualquer dongle) v
+  [ ] USB HID      --                        (desabilitado: robo nao tem)
+
+  > Avancado  (a tabela atual: ordem, baud, porta TCP, alvos manuais)
+
+- Cada linha = checkbox + selectbox do alvo. O primeiro item do selectbox
+  e sempre "Automatico (pelo nome)"; os outros sao os alvos concretos
+  descobertos (portas, dongles, enderecos BLE) para quem quer fixar.
+- A bolinha de status e so informativa (resultado da descoberta).
+- Ordem de tentativa padrao fixa: Serial > USB > TCP > BLE > Hub
+  (mais rapido/confiavel primeiro). Quem quiser outra ordem abre Avancado.
+- Linhas de transporte que o build nao tem (offeredTransports()) nem
+  aparecem; linhas que o ROBO nao tem aparecem desabilitadas (TAREFA 6).
+
+MODELO DE DADOS
+---------------
+Device:
+  + QString robotName   -- o nome unico. Persistido. Vazio = modo antigo.
+DeviceLink:
+  + bool autoTarget     -- true: alvo derivado de robotName na hora de
+                           conectar; os campos concretos (tcpHost, portName...)
+                           viram cache do ultimo alvo que funcionou.
+                           false: comportamento de hoje (alvo manual).
+Compatibilidade: projeto antigo nao tem os campos -> robotName vazio,
+autoTarget false -> nada muda. Nao reaproveitar ordinais nem renomear chaves.
+
+Resolucao numa funcao pura e testavel, no mesmo lugar de effectiveDevice():
+  DeviceLink resolveLink(const Device&, const DeviceLink&, const Discovery&)
+onde Discovery e um snapshot (portas + nome que cada uma reportou, peers dos
+hubs, BLE vistos). TCP/BLE nem precisam do snapshot (o proprio transporte ja
+resolve nome: mDNS / scan por nome).
+
+TAREFAS
+-------
+TAREFA 1 -- Modelo + resolucao (sem UI)
+  - robotName em Device, autoTarget em DeviceLink, JSON load/save.
+  - hostnameFromName(): sanitizacao para mDNS (a-z0-9-, max 63).
+  - resolveLink() para TCP e BLE (derivacao direta).
+  - deviceLinkSummary() mostra "TCP auto (ballyrobot.local)".
+  - Testes em tests/test_device.cpp: sanitizacao, round-trip JSON,
+    projeto antigo sem os campos.
+
+TAREFA 2 -- Hub por nome
+  - resolveLink() para HubChannel com autoTarget: varre hub.peers de todos
+    os dispositivos-pai conectados (MainWindow::hubPeersFor) procurando
+    name == robotName (mesma regra de match do BLE: trim, case-insensitive).
+  - 0 matches -> "procurando"; 2+ matches (dois robos com o mesmo nome) ->
+    NAO escolhe, mostra erro pedindo para fixar pelo Avancado.
+  - Ao achar, grava parentDeviceId + peerSourceId como cache (continua
+    valendo a regra do device.h: o que se persiste como endereco e o
+    source_id, nunca o channel).
+
+TAREFA 3a -- Nome do robo no descritor USB  [FEITO 2026-09-26, sem commit]
+  - bally_OS: USBMassStorage::set_product_name(identity.name) chamado logo
+    apos settings.load(); vira product string + CDC interface string.
+  - TraceView: SerialManager::portProductNames() (Windows: SetupAPI
+    BusReportedDeviceDesc; resto: QSerialPortInfo::description()) +
+    serialPortLabel() -> picker mostra "COM5 -- Robo2". Android ja mostrava
+    getProductName().
+  - Serial USB = MAC em hex -> source_id = ultimos 4 bytes (ainda nao usado;
+    serve para casar porta <-> robo conhecido sem abrir a porta).
+  - Pendente: teste no hardware (Windows pode cachear a descricao antiga).
+  => A sondagem abaixo vira so plano B (placas com CP210x/CH340).
+
+TAREFA 3 -- Serial/USB automatico (a parte delicada)
+  - Servico SerialProbe: para cada porta candidata abre, manda HELLO, le
+    MANIFEST source_info "name", fecha. Resultado cacheado por porta ate ela
+    sumir/reaparecer (hotplug).
+  - Candidatas: SO portas nao usadas por outro Device aberto, e de
+    preferencia VID conhecido (Espressif 0x303A, CP210x, CH340). Nunca
+    sondar porta aberta por outro Device do TraceView.
+  - Primeiro tenta o cache (portName do ultimo sucesso); so sonda as outras
+    se ele falhar.
+  - Android: mesma logica sobre as chaves "usb:VVVV:PPPP".
+  - Baud: default 921600, so no Avancado.
+  RISCO: abrir uma porta dispara reset (DTR/RTS) em algumas placas e pode
+  atrapalhar outro programa usando-a. Mitigacao: DTR/RTS desligados na
+  sondagem, e sondar so quando o usuario clica Descobrir ou quando o link
+  auto precisa conectar -- nunca em loop de fundo.
+
+TAREFA 4 -- "Descobrir" (lista de robos encontrados)
+  - Junta BLE scan + hub.peers + SerialProbe (+ mDNS browse, se o firmware
+    passar a anunciar um servico, ver TAREFA 7) em uma lista:
+        BallyRobot     Serial COM5, BLE
+        Robo2          Hub (Dongle A)
+  - Escolher um preenche robotName e ja marca os links onde ele foi visto.
+  - Isso tambem vira o fluxo de "Adicionar dispositivo" no DevicesGrid.
+
+TAREFA 5 -- Nova secao Conexao no DeviceConfigDialog
+  - Campo Robo + Descobrir + as 5 linhas de checkbox/selectbox acima.
+  - DeviceLinksTable atual vai inteira para dentro do "Avancado"; as duas
+    visoes editam o mesmo QVector<DeviceLink> (a simples so liga/desliga e
+    troca autoTarget; mexer num alvo manual no Avancado desliga o auto
+    daquela linha).
+  - Device::name (nome do card) passa a ter default = robotName se vazio.
+  - Mobile: selectboxes em coluna, sem tabela (a tabela ja e ruim no
+    celular).
+  - Traducoes nos 8 .ts.
+
+TAREFA 6 -- "So habilitar o que o dispositivo tem"
+  Fonte da informacao, em ordem de preferencia:
+   a) Firmware reporta no source_info uma entrada "links" (ex.:
+      "serial,tcp,ble,espnow") + "comm_mode" atual. Depois da primeira
+      conexao, TraceView desabilita (cinza, com tooltip) as linhas que o
+      robo nao tem. Cache junto do ManifestStore.
+   b) Enquanto nao conectou nunca: tudo habilitado (nao da para saber).
+   c) Perfis prontos opcionais no "Adicionar": "Robo BTP", "Dongle"
+      (so Serial/USB, e marcado como pai de hub), "Generico".
+  Obs.: bally_OS so sobe UM transporte por boot (comm_mode). O cycler ja
+  lida com isso (tenta o proximo link), entao deixar mais de um marcado nao
+  atrapalha -- so custa ate 10 s por link morto. Com "comm_mode" no
+  manifesto da para comecar pelo link certo.
+
+TAREFA 7 -- Firmware (bally_OS) -- PENDENCIA, repo separado
+  - Unificar nome: se ota_hostname estiver vazio/no default, usar
+    hostnameFromName(identity.name) no mdns_hostname_set. Assim
+    "BallyRobot" anuncia BLE "BallyRobot" e mDNS "ballyrobot.local".
+    (Mesma funcao de sanitizacao dos dois lados -- documentar a regra no
+    BTP para nao divergir.)
+  - source_info: + "links", + "comm_mode".
+  - Opcional: mdns_service_add("_btp", "_tcp", 44300) para o Descobrir
+    achar robos TCP sem saber o nome.
+  Sem isso, TAREFA 1 ainda funciona se o usuario setar ota_hostname igual
+  ao nome; TAREFA 6 cai no caso (b)/(c).
+
+ORDEM SUGERIDA
+--------------
+1 -> 2 -> 5 (UI ja entrega valor com TCP/BLE/Hub automaticos) -> 3 -> 4
+-> 7 -> 6. Serial automatico fica depois porque e o unico que mexe em
+hardware alheio.
+
+DECISOES EM ABERTO
+------------------
+- Sondagem automatica de porta serial e aceitavel? (alternativa: serial
+  continua escolhendo porta no selectbox, so que o selectbox mostra o nome
+  do robo em cada porta -- "COM5 -- BallyRobot" -- via Descobrir.)
+- Mudar o firmware para derivar o mDNS do identity name, ou manter
+  ota_hostname separado e so documentar "deixe igual"?
+- Manter reordenacao de links na visao simples ou so no Avancado?
+
+AJUSTES 2026-09-26 (pedido do usuario: "so o nome + marcar as conexoes")
+------------------------------------------------------------------------
+- Campo Descricao removido do DeviceConfigDialog; o card mostra no lugar
+  o source_info reportado pelo proprio dispositivo ("label: valor"), card
+  260x180.
+- RobotLinksPanel: toda linha = checkbox + combo editavel (item 0 =
+  Automatico), sempre visivel. Rotulos: Serial (USB), Wi-Fi, Bluetooth, Hub.
+  Nenhum texto visivel fala "dongle".
+- BLE por nome: cache nome->endereco na sessao (achado por scan, ou semente
+  = MAC que o link tinha a mao antes de virar Automatico). Scan aceita o
+  endereco cacheado mesmo sem nome no anuncio (Windows perde scan response);
+  sem achar nada no scan, disca o endereco cacheado. Falha loga o que viu.
+- Serial automatico: sem porta com o nome, cai na ultima porta escolhida
+  (se presente).
+- Diagnostico dos logs: BLE "Cannot find local adapter"/"discovery methods
+  not supported" = build MinGW (sem backend BLE no Windows). Usar o build
+  MSVC (build-msvc/Release/TraceView.exe).

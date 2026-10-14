@@ -96,6 +96,71 @@ QString formatTick(double value, int decimals) {
     return QString::number(value, 'f', decimals);
 }
 
+bool useScientificTicks(const QVector<double>& ticks, int decimals) {
+    double largest = 0.0;
+    for (double tick : ticks) {
+        if (std::isfinite(tick)) {
+            largest = qMax(largest, qAbs(tick));
+        }
+    }
+    if (largest == 0.0) {
+        return false;
+    }
+    return largest >= 1e5 || largest < 1e-2 || decimals > 3;
+}
+
+QStringList formatScientificTicks(const QVector<double>& ticks) {
+    double largest = 0.0;
+    for (double tick : ticks) {
+        if (std::isfinite(tick)) {
+            largest = qMax(largest, qAbs(tick));
+        }
+    }
+    QStringList labels;
+    if (largest == 0.0) {
+        for (int i = 0; i < ticks.size(); ++i) {
+            labels.append(QStringLiteral("0"));
+        }
+        return labels;
+    }
+    const int exponent = int(std::floor(std::log10(largest)));
+    const double unit = std::pow(10.0, exponent);
+    // Decimals for the mantissas: enough for the smallest gap between ticks.
+    double step = 0.0;
+    for (int i = 1; i < ticks.size(); ++i) {
+        const double gap = qAbs(ticks[i] - ticks[i - 1]);
+        if (gap > 0.0 && (step == 0.0 || gap < step)) {
+            step = gap;
+        }
+    }
+    const int decimals = qBound(1, step > 0.0 ? tickDecimals(step / unit) : 1, 4);
+    for (double tick : ticks) {
+        const double mantissa = tick / unit;
+        if (qAbs(mantissa) < 0.5 * std::pow(10.0, -decimals)) {
+            labels.append(QStringLiteral("0"));
+            continue;
+        }
+        labels.append(QString::number(mantissa, 'f', decimals) + QLatin1Char('e') +
+                      QString::number(exponent));
+    }
+    return labels;
+}
+
+QStringList formatTicks(const QVector<double>& ticks, int decimals, TickNumberFormat format) {
+    const bool scientific =
+        format == TickNumberFormat::Scientific ||
+        (format == TickNumberFormat::Auto && useScientificTicks(ticks, decimals));
+    if (scientific) {
+        return formatScientificTicks(ticks);
+    }
+    QStringList labels;
+    labels.reserve(ticks.size());
+    for (double tick : ticks) {
+        labels.append(formatTick(tick, decimals));
+    }
+    return labels;
+}
+
 int maxTicksFor(int lengthPx, int spacingPx) {
     if (spacingPx <= 0 || lengthPx <= 0) {
         return 2;

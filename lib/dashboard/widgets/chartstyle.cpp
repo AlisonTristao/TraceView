@@ -196,6 +196,28 @@ ChartGaugeShape chartGaugeShapeFromId(const QString& id) {
     return ChartGaugeShape::Arc;
 }
 
+QString tickNumberFormatId(TickNumberFormat format) {
+    switch (format) {
+        case TickNumberFormat::Fixed:
+            return QStringLiteral("fixed");
+        case TickNumberFormat::Scientific:
+            return QStringLiteral("scientific");
+        case TickNumberFormat::Auto:
+            break;
+    }
+    return QStringLiteral("auto");
+}
+
+TickNumberFormat tickNumberFormatFromId(const QString& id) {
+    if (id == QLatin1String("fixed")) {
+        return TickNumberFormat::Fixed;
+    }
+    if (id == QLatin1String("scientific")) {
+        return TickNumberFormat::Scientific;
+    }
+    return TickNumberFormat::Auto;
+}
+
 QString chartLegendPlacementId(ChartLegendPlacement placement) {
     for (const PlacementId& entry : kPlacementIds) {
         if (entry.placement == placement) {
@@ -487,6 +509,7 @@ ChartViewOptions parseChartViewOptions(const QJsonObject& view) {
                                               chartLegendOpacityChoices()));
     options.yTickCount = int(
         nearestChoice(view.value(ChartViewKey::YTicks).toDouble(0), chartYTickCountChoices()));
+    options.yNumberFormat = tickNumberFormatFromId(view.value(ChartViewKey::YFormat).toString());
     options.lineWidth =
         nearestChoice(view.value(ChartViewKey::LineWidth).toDouble(0), chartLineWidthChoices());
     options.gaugeShape =
@@ -514,6 +537,7 @@ QJsonObject chartViewOptionsToJson(const ChartViewOptions& options) {
     view[ChartViewKey::Legend] = chartLegendPlacementId(options.legendPlacement);
     view[ChartViewKey::LegendOpacity] = options.legendOpacity;
     view[ChartViewKey::YTicks] = options.yTickCount;
+    view[ChartViewKey::YFormat] = tickNumberFormatId(options.yNumberFormat);
     view[ChartViewKey::LineWidth] = options.lineWidth;
     view[ChartViewKey::GaugeShape] = chartGaugeShapeId(options.gaugeShape);
     return view;
@@ -562,6 +586,8 @@ ChartViewOptions withChartViewOption(ChartViewOptions options, const QString& id
         options.legendOpacity = int(nearestChoice(value.toDouble(), chartLegendOpacityChoices()));
     } else if (id == QLatin1String(ChartViewKey::YTicks)) {
         options.yTickCount = int(nearestChoice(value.toDouble(), chartYTickCountChoices()));
+    } else if (id == QLatin1String(ChartViewKey::YFormat)) {
+        options.yNumberFormat = tickNumberFormatFromId(value.toString());
     } else if (id == QLatin1String(ChartViewKey::LineWidth)) {
         options.lineWidth = nearestChoice(value.toDouble(), chartLineWidthChoices());
     } else if (id == QLatin1String(ChartViewKey::GaugeShape)) {
@@ -615,6 +641,12 @@ QVector<WidgetViewOption> chartViewOptionList(const ChartViewOptions& options,
     static constexpr const char* kYTicks =
         QT_TRANSLATE_NOOP("traceview::DashboardCell", "Y axis ticks:");
     static constexpr const char* kAuto = QT_TRANSLATE_NOOP("traceview::DashboardCell", "Auto");
+    static constexpr const char* kYFormat =
+        QT_TRANSLATE_NOOP("traceview::DashboardCell", "Y axis numbers:");
+    static constexpr const char* kFixed =
+        QT_TRANSLATE_NOOP("traceview::DashboardCell", "Fixed (0.0015)");
+    static constexpr const char* kScientific =
+        QT_TRANSLATE_NOOP("traceview::DashboardCell", "Scientific (1.5e-3)");
     static constexpr const char* kLegend =
         QT_TRANSLATE_NOOP("traceview::DashboardCell", "Legend:");
     static constexpr const char* kOutside =
@@ -703,6 +735,16 @@ QVector<WidgetViewOption> chartViewOptionList(const ChartViewOptions& options,
         yTicks.choices.append({numberId(count), count == 0 ? menuText(kAuto) : numberId(count)});
     }
     add(ChartViewFeature::YTickCount, yTicks);
+
+    WidgetViewOption yFormat;
+    yFormat.id = QString::fromLatin1(ChartViewKey::YFormat);
+    yFormat.label = menuText(kYFormat);
+    yFormat.kind = WidgetViewOption::Kind::Choice;
+    yFormat.value = tickNumberFormatId(options.yNumberFormat);
+    yFormat.choices = {{tickNumberFormatId(TickNumberFormat::Auto), menuText(kAuto)},
+                       {tickNumberFormatId(TickNumberFormat::Fixed), menuText(kFixed)},
+                       {tickNumberFormatId(TickNumberFormat::Scientific), menuText(kScientific)}};
+    add(ChartViewFeature::YTickLabels, yFormat);
 
     sectionOpen = true;
     WidgetViewOption legend;

@@ -12,6 +12,8 @@
 #include "widgets/controlconfigeditor.h"
 #include "widgets/controlwidgets.h"
 #include "widgets/gaugeconfigeditor.h"
+#include "widgets/multisourcechartconfigeditor.h"
+#include "widgets/multisourcechartwidget.h"
 #include "widgets/robotlogconfigeditor.h"
 #include "widgets/robotlogwidget.h"
 #include "widgets/serialmonitorconfigeditor.h"
@@ -34,6 +36,16 @@ WidgetRegistry::WidgetRegistry() {
         {"dummy_line", QCoreApplication::translate("WidgetRegistry", "Line Chart (dummy)"),
          [](QWidget* parent) -> DashboardWidget* { return new DummyLineChartWidget(parent); },
          [](QWidget* parent) -> WidgetConfigEditor* { return new ChartConfigEditor(parent); }});
+    // A line chart whose series come from several topics/devices.
+    registerType(
+        {"multi_line",
+         QCoreApplication::translate("WidgetRegistry", "Line Chart (several sources)"),
+         [](QWidget* parent) -> DashboardWidget* {
+             return new MultiSourceLineChartWidget(parent);
+         },
+         [](QWidget* parent) -> WidgetConfigEditor* {
+             return new MultiSourceChartConfigEditor(parent);
+         }});
     registerType(
         {"dummy_bar", QCoreApplication::translate("WidgetRegistry", "Bar Chart (dummy)"),
          [](QWidget* parent) -> DashboardWidget* { return new DummyBarChartWidget(parent); },

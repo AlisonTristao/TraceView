@@ -23,11 +23,114 @@ release flow.
   touches real hardware you're asked to allow that for the session. If
   TraceView is closed, the assistant can open it. See
   [docs/MCP.md](docs/MCP.md).
+- Modules can register in-process **device types** (`ModuleHost::
+  registerDeviceType()`, `lib/core/moduledevicetype.h`): they appear in
+  **Add Device** and are saved in projects as `transportType` 5 with
+  `moduleType`/`moduleConfig` only (no port, address or password fields).
+  Dashboard widgets that read several topics can send text commands to their
+  devices (`TelemetryConsumer::setCommandSender()`).
+- TraceLab: the line-follower simulation runs inside TraceView. The plant
+  ("TraceLab: Line follower") and the controller host ("TraceLab:
+  Controller", qLPV MPC or GPC, optional wheel-speed low-pass from the C
+  filter runtime) are BTP devices on an in-process loopback speaking the
+  `loop` profile (`loop.state`, `loop.u` STREAM, `sim.*`, `ctl.diag`). The
+  benchmark is a project, under **File > Open Example** (modules can ship
+  example projects: `ModuleHost::registerExampleProject()`). The TraceLab tab
+  holds the tools to build a lab (**Add plant**, **Add controller**, **Add
+  scene**) and drives Play/Pause/Reset/Step, the speed (1x, 2x, as fast
+  as possible, lockstep), the track, sensor noise and the controller. The
+  Scene's P/O/R keys send `sim.disturb` to the plant. The lab needs BTP 2.50,
+  for now from a local checkout (`-DFETCHCONTENT_SOURCE_DIR_BTP`, see
+  `lab/README.md`).
+- TraceLab: a PD controller on the front line sensor array ("PD (line
+  sensors)", Kp, Kd and base speed in the TraceLab tab), as a baseline for
+  the MPC; the qLPV MPC's rho scheduling (frozen, warm start, Taylor,
+  iterative), embedding and iteration limit are now selectable; the Scene has
+  an **Antialiasing** option.
+- Line and bar charts: **Y axis numbers** in the gear menu -- Auto (the
+  default: scientific notation when fixed digits would need many zeros or
+  decimals), Fixed or Scientific. Scientific labels share one exponent
+  (0, 0.5e-3, 1.0e-3, 1.5e-3).
+- Settings > Dashboard > **Fast line drawing** (off by default): line charts
+  denser than the plot keep each pixel column's minimum and maximum and draw
+  without antialiasing.
+
+### Changed
+
+- Line charts and the TraceLab Scene render on worker threads; the GUI
+  thread only draws the finished frame. Every telemetry widget repaints on
+  one shared tick, and charts, gauges and scenes get only the samples of
+  their own topic (one dispatch per sample instead of one call per widget).
+- TraceLab's line-follower preset uses a 10-point preview 5 track points
+  apart (was 45 x 3): the qLPV MPC solves about 35x faster and still tracks
+  the line.
+
+### Fixed
+
+- TraceLab: the simulation no longer stalls for 10 s at start (the plant
+  waited for a first controller answer that only comes after the first
+  preview) and no longer runs ticks on a stale plan when the controller is
+  late, which made the car leave the track; the controller library is
+  optimized in Debug builds too.
 
 ## [4.9.0] - 2026-09-28
 
 ### Added
 
+- Optional application modules: a module compiled into the executable can
+  add widget types and one ribbon tab once it is enabled in **Settings >
+  General > Modules** (applies after a restart; the section only appears
+  when a module is available). `--mode <id>` starts with that module
+  enabled for the session and shows its name in the window title and the
+  corner wordmark. See `docs/MODULES.md`.
+- **TraceLab** module (`lab/`, desktop only, CMake option
+  `TRACEVIEW_ENABLE_LAB`, on by default): the first optional module, with a
+  "TraceLab" ribbon tab and a second launcher, **TraceLab**, that starts
+  TraceView with `--mode lab` (Start Menu entry in the Windows installer,
+  second `.desktop` file on Linux). This release ships its structure: the
+  documented contracts of the simulation engine, the simulated plant and the
+  controller host (not functional yet), and a working **Scene** dashboard
+  widget. The Scene widget binds its inputs to telemetry by topic and field
+  name (**Bind by name** matches them against the device catalogs) and saves
+  only the scene type, the bindings and the parameters, never code. Its first
+  scene, **Line follower**, draws a differential-drive robot on a track like
+  the pygame simulator: the car fixed near the bottom right with the world
+  turning around it, the reached part of the track in gray, the reference
+  points and the predicted path aligned with the track, a minimap, a compass
+  and the fps/coverage/score readouts. Mouse wheel zooms, dragging pans and a
+  double click resets the view. See `lab/README.md`.
+- TraceLab line-follower benchmark (`lab/benchmarks/linefollower/`): a C++
+  port of the Python line-follower simulator's plant -- the random track
+  (the same seed and parameters give the same points as Python, CPython's
+  random reproduced bit for bit), the car's motors and kinematics with its
+  world pose, and the pygame reach rule, coverage and car-frame reference
+  points -- and **tracelab-linefollower**, a runner that closes the loop
+  with the C++ qLPV MPC or GPC and shows it in the Line follower scene
+  (real time, `--speed`, `--fast`, `--max-time`, `--log` CSV,
+  `--screenshot`; P/O/R perturbation keys) and prints the run's metrics. A
+  provisional in-process harness until the plant and controller speak BTP.
+- TraceLab sensor emulation (`lab/sensors/`): the plant's true state and
+  what its sensors measure are now separate. Linear (`y = H x + D u`) and
+  nonlinear (`y = h(x, u, env)`) observation blocks share one interface,
+  each channel with composable imperfections (white noise, random-walk and
+  Gauss-Markov bias, scale factor and bias, quantization, saturation,
+  delay, own sample rate, dropout, outliers), and the noise is reproducible
+  from its own seed, one stream per sensor. The line follower gets wheel
+  encoders (quantized tick counts), a gyro and a 15-sensor line array
+  (footprint coverage of the line, 12-bit ADC);
+  **tracelab-linefollower** gains `--sensor-noise on|off`, `--sensor-seed`
+  and `--controller-input true|measured`, and its `--log` CSV the true and
+  measured sensor columns. See `lab/README.md`, "Sensors".
+- TraceLab filters (`lab/filters/`): a filter chain in portable C99 meant to
+  be copied into the robot firmware (no allocation, float by default or
+  double, `math.h`/`string.h` only) -- moving average, median, first-order
+  low/high-pass, biquad cascade, complementary filter with optional gyro
+  bias estimate, filtered derivative, rate limiter, dead zone, linear and
+  extended Kalman filters (TinyEKF's predict/update formulation with a
+  Joseph-form covariance update) and user blocks -- plus a host-side design
+  library that computes Butterworth, Chebyshev I/II low/high/band-pass,
+  band-stop and notch coefficients with Iir1 (fetched at 1.9.5). See
+  `lab/README.md`, "Filters".
 - **Audio Analyzer** widget: plays a stream topic (blocks of samples with
   their rate and a block counter, as BTPDevice's `Topics::stream()` sends
   them) on the default audio output and shows it as a **Spectrum** or a
@@ -60,6 +163,16 @@ release flow.
   stream (a
   sweeping chirp over a 440 Hz tone); the chat is left out of it for now.
 
+- Chart editor: **+ Add all fields** adds one series for every numeric
+  field of the topic that is not plotted yet, named after the field and with
+  its unit and range from the device's manifest, bound by name. Fields in
+  different units turn on **Automatic axis** (one Y axis per unit); fields
+  sharing a unit and declaring a range get a Fixed Y range over their union.
+  Array fields are skipped and fields already plotted are not added twice.
+- Picking a field in a chart series or a gauge ring now fills the Unit (and
+  the chart's Y range, the gauge's Min/Max) from the manifest when they are
+  still empty or at their defaults; values you typed are kept.
+
 ### Changed
 
 - An array field longer than 64 elements no longer arrives one element at a
@@ -67,6 +180,16 @@ release flow.
   audio blocks does not flood charts, the telemetry history and device
   scripts. Shorter arrays behave as before.
 - Building now needs the Qt Multimedia module.
+- Charts, gauges, text boards and audio widgets bind to their topic and
+  fields by **name**, not only by numeric id. A dashboard built on one robot
+  now works on another that publishes the same topics (a simulated device
+  and the real one, or the widget pointed at another device), and survives a
+  firmware that declares its topics in another order: the ids are re-pointed
+  whenever the device's catalog arrives or changes. Projects saved with ids
+  only gain the names from the device's catalog (or the manifest cache) and
+  write them on the next save; a binding no catalog knows keeps its ids. The
+  new `topicName`/`fieldName` keys are additive — older TraceView versions
+  still read the ids.
 
 ## [4.8.1] - 2026-09-27
 

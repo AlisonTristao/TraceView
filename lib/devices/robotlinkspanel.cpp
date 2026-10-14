@@ -27,6 +27,8 @@ int canonicalRank(TransportType type) {
             return 3;
         case TransportType::HubChannel:
             return 4;
+        case TransportType::Module:
+            break;
     }
     return 5;
 }
@@ -42,6 +44,7 @@ QString rowLabel(TransportType type) {
         case TransportType::HubChannel:
             return RobotLinksPanel::tr("Hub");
         case TransportType::UsbHid:
+        case TransportType::Module:
             break;
     }
     return transportTypeLabel(type);
@@ -66,6 +69,7 @@ QString rowToolTip(TransportType type) {
                 "Automatic: the robot of this name behind any connected hub. Pick a hub to "
                 "only look behind that one.");
         case TransportType::UsbHid:
+        case TransportType::Module:
             break;
     }
     return QString();

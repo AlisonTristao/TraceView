@@ -20,6 +20,8 @@ TransportType transportTypeFromJson(const QJsonValue& value) {
             return TransportType::Tcp;
         case int(TransportType::Ble):
             return TransportType::Ble;
+        case int(TransportType::Module):
+            return TransportType::Module;
         default:
             return TransportType::Serial;
     }
@@ -42,6 +44,9 @@ QJsonObject linkToJson(const DeviceLink& link) {
     object["parentDeviceId"] = link.parentDeviceId;
     object["peerSourceId"] = double(link.peerSourceId);  // see deviceToJson()
     object["enabled"] = link.enabled;
+    if (!link.moduleType.isEmpty()) {
+        object["moduleType"] = link.moduleType;
+    }
     // Only when set, so a link saved before automatic links existed (and
     // every manual one since) is written exactly as before.
     if (link.autoTarget) {
@@ -62,6 +67,7 @@ DeviceLink linkFromJson(const QJsonObject& object) {
     link.parentDeviceId = object.value("parentDeviceId").toString();
     link.peerSourceId = quint32(object.value("peerSourceId").toDouble(0.0));
     link.enabled = object.value("enabled").toBool(true);
+    link.moduleType = object.value("moduleType").toString();
     link.autoTarget = object.value("auto").toBool(false);
     return link;
 }
@@ -86,6 +92,7 @@ DeviceLink deviceLinkAt(const Device& device, int index) {
     link.bleAddress = device.bleAddress;
     link.parentDeviceId = device.parentDeviceId;
     link.peerSourceId = device.peerSourceId;
+    link.moduleType = device.moduleType;
     link.enabled = true;  // the primary link is always a candidate
     link.autoTarget = device.autoTarget;
     return link;
@@ -102,6 +109,7 @@ Device deviceWithLink(const Device& device, const DeviceLink& link) {
     out.bleAddress = link.bleAddress;
     out.parentDeviceId = link.parentDeviceId;
     out.peerSourceId = link.peerSourceId;
+    out.moduleType = link.moduleType;
     out.autoTarget = link.autoTarget;
     return out;
 }
@@ -136,6 +144,8 @@ bool deviceLinkConfigured(const DeviceLink& link) {
             return !link.bleAddress.isEmpty();
         case TransportType::HubChannel:
             return !link.parentDeviceId.isEmpty() && link.peerSourceId != 0;
+        case TransportType::Module:
+            return !link.moduleType.isEmpty();
     }
     return false;
 }
@@ -144,7 +154,7 @@ bool sameLinkTarget(const DeviceLink& a, const DeviceLink& b) {
     return a.transportType == b.transportType && a.portName == b.portName &&
            a.usbPath == b.usbPath && a.tcpHost == b.tcpHost && a.tcpPort == b.tcpPort &&
            a.bleAddress == b.bleAddress && a.parentDeviceId == b.parentDeviceId &&
-           a.peerSourceId == b.peerSourceId;
+           a.peerSourceId == b.peerSourceId && a.moduleType == b.moduleType;
 }
 
 bool deviceLinkUsable(const Device& device, const DeviceLink& link) {
@@ -257,7 +267,8 @@ DeviceLink resolveLinkByName(const QString& robotName, const DeviceLink& link,
             break;
         }
         case TransportType::UsbHid:
-            break;  // no name to match a HID path against: stays as set
+        case TransportType::Module:
+            break;  // no name to match a HID path or a module type against
     }
     return out;
 }
@@ -310,12 +321,31 @@ QString deviceLinkSummary(const DeviceLink& link, const QString& robotName) {
             target = QStringLiteral("0x") +
                      QStringLiteral("%1").arg(link.peerSourceId, 8, 16, QChar('0')).toUpper();
             break;
+        case TransportType::Module:
+            target = link.moduleType;
+            break;
     }
     return target.isEmpty() ? type : type + QLatin1Char(' ') + target;
 }
 
 QJsonObject deviceToJson(const Device& device) {
     QJsonObject object;
+    if (device.transportType == TransportType::Module) {
+        // An in-process device has no port, address, password or OTA side:
+        // only what identifies it and its type's own settings are written,
+        // so a project made of module devices carries nothing link-specific.
+        object["id"] = device.id;
+        object["name"] = device.name;
+        object["commType"] = int(device.commType);
+        object["description"] = device.description;
+        object["script"] = device.script;
+        object["transportType"] = int(device.transportType);
+        object["moduleType"] = device.moduleType;
+        if (!device.moduleConfig.isEmpty()) {
+            object["moduleConfig"] = device.moduleConfig;
+        }
+        return object;
+    }
     object["id"] = device.id;
     object["name"] = device.name;
     object["commType"] = int(device.commType);
@@ -410,6 +440,9 @@ Device deviceFromJson(const QJsonObject& object, bool* ok) {
     // key in a project that did not opt in is ignored rather than honored.
     device.peerPassword =
         device.cachePeerPassword ? object.value("peerPassword").toString() : QString();
+
+    device.moduleType = object.value("moduleType").toString();
+    device.moduleConfig = object.value("moduleConfig").toObject();
 
     device.otaAddress = object.value("otaAddress").toString();
     device.cacheOtaPassword = object.value("cacheOtaPassword").toBool(false);

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QString>
+#include <QStringList>
 #include <QVector>
 
 namespace traceview {
@@ -40,6 +41,27 @@ int tickDecimals(double step);
 // A tick value formatted with `decimals` fixed digits, with "-0" folded to
 // "0" (a tick computed as -0.0000001 must not print a minus sign).
 QString formatTick(double value, int decimals);
+
+// How a value axis prints its tick labels.
+//   Auto:       fixed digits, or scientific when those would be unwieldy
+//               (see useScientificTicks()).
+//   Fixed:      always fixed digits (formatTick()).
+//   Scientific: always mantissa and exponent (formatScientificTicks()).
+enum class TickNumberFormat { Auto, Fixed, Scientific };
+
+// Whether Auto prints `ticks` (`decimals` fixed digits each) in scientific
+// notation: when the largest magnitude reaches 1e5, when every nonzero tick
+// is below 0.01, or when they would need more than 3 decimals.
+bool useScientificTicks(const QVector<double>& ticks, int decimals);
+
+// The tick labels in scientific notation with one exponent shared by all of
+// them (the largest magnitude's), so they read as one scale: 0, 0.5e-3,
+// 1.0e-3, 1.5e-3. Zero prints as "0"; the mantissas get as many decimals
+// as the step needs at that exponent (at most 4).
+QStringList formatScientificTicks(const QVector<double>& ticks);
+
+// The labels `format` gives `ticks` (decimals: the fixed digits).
+QStringList formatTicks(const QVector<double>& ticks, int decimals, TickNumberFormat format);
 
 // How many ticks fit along an axis `lengthPx` long when each tick needs
 // `spacingPx` of room (label size plus breathing space) -- clamped to

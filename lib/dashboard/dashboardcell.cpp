@@ -43,9 +43,9 @@ constexpr int kStatusDotSize = 8;
 // same "draw it, don't fake it" approach as arrowImagePath()/checkImagePath()
 // in stylesheet.cpp, just painted live instead of cached to a QSS pixmap
 // since this is a normal paintEvent, not a style sheet subcontrol. Silently
-// draws nothing for any typeId without a glyph below (headerless control
-// kinds never reach this — see wantsCellHeader()).
-void drawTypeIcon(QPainter& painter, const QRect& r, const QString& typeId, const QColor& color) {
+// draws nothing and returns false for any typeId without a glyph below
+// (headerless control kinds never reach this — see wantsCellHeader()).
+bool drawTypeIcon(QPainter& painter, const QRect& r, const QString& typeId, const QColor& color) {
     painter.save();
     painter.setRenderHint(QPainter::Antialiasing);
     painter.translate(r.topLeft());
@@ -102,9 +102,13 @@ void drawTypeIcon(QPainter& painter, const QRect& r, const QString& typeId, cons
         painter.drawRoundedRect(QRectF(s * 0.08, s * 0.1, s * 0.84, s * 0.6), s * 0.15, s * 0.15);
         painter.drawPolyline(QPolygonF(
             {QPointF(s * 0.3, s * 0.7), QPointF(s * 0.2, s * 0.92), QPointF(s * 0.48, s * 0.7)}));
+    } else {
+        painter.restore();
+        return false;
     }
 
     painter.restore();
+    return true;
 }
 
 // Header-controls glyphs (see kStatusDotSize above) -- same "draw it, don't
@@ -672,7 +676,9 @@ void DashboardCell::paintHeader(QPainter& painter, bool floating) const {
     QRect textRect = header.adjusted(kIconMargin, 0, -kIconMargin, 0);
 
     const QRect iconRect(kIconMargin, (stripHeight - kIconSize) / 2, kIconSize, kIconSize);
-    drawTypeIcon(painter, iconRect, m_typeId, headerFg);
+    if (!drawTypeIcon(painter, iconRect, m_typeId, headerFg)) {
+        m_content->paintHeaderIcon(painter, iconRect, headerFg);
+    }
     if (iconRect.width() > 0) {
         textRect.setLeft(iconRect.right() + kIconMargin);
     }

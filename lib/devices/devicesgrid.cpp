@@ -103,6 +103,15 @@ void DevicesGrid::setDeviceConnected(const QString& id, bool connected) {
     emit deviceUpdated(m_devices[idx]);
 }
 
+bool DevicesGrid::setDeviceModuleConfig(const QString& id, const QJsonObject& config) {
+    const int idx = indexOfDevice(id);
+    if (idx < 0) {
+        return false;
+    }
+    m_devices[idx].moduleConfig = config;
+    return true;
+}
+
 void DevicesGrid::setDeviceIdentity(const QString& id, const QString& btpVersion,
                                     const QString& btpId) {
     const int idx = indexOfDevice(id);

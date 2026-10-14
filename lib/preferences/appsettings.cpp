@@ -8,6 +8,7 @@ namespace traceview {
 namespace {
 constexpr char kRenderProfileKey[] = "dashboard/renderProfile";
 constexpr char kCustomRenderFpsKey[] = "dashboard/customRenderFps";
+constexpr char kFastChartLinesKey[] = "dashboard/fastChartLines";
 constexpr char kSubscribeRateOverrideEnabledKey[] = "dashboard/subscribeRateOverrideEnabled";
 constexpr char kSubscribeRateOverrideHzKey[] = "dashboard/subscribeRateOverrideHz";
 constexpr char kRecentProjectsLimitKey[] = "general/recentProjectsLimit";
@@ -52,7 +53,12 @@ int AppSettings::customRenderFps() const {
 }
 
 QString AppSettings::chartStyleId() const {
-    return QSettings().value(kChartStyleKey, QStringLiteral("dashboard")).toString();
+    // Asked by every chart on every render: read once, then kept in step by
+    // setChartStyleId(), the only writer of the key.
+    if (m_chartStyleId.isNull()) {
+        m_chartStyleId = QSettings().value(kChartStyleKey, QStringLiteral("dashboard")).toString();
+    }
+    return m_chartStyleId;
 }
 
 void AppSettings::setChartStyleId(const QString& id) {
@@ -60,6 +66,7 @@ void AppSettings::setChartStyleId(const QString& id) {
         return;
     }
     QSettings().setValue(kChartStyleKey, id);
+    m_chartStyleId = id;
     emit chartStyleChanged();
 }
 
@@ -83,6 +90,10 @@ int AppSettings::repaintIntervalMs() const {
             break;
     }
     return qMax(1, qRound(1000.0 / fps));
+}
+
+bool AppSettings::fastChartLines() const {
+    return QSettings().value(kFastChartLinesKey, false).toBool();
 }
 
 bool AppSettings::subscribeRateOverrideEnabled() const {
@@ -163,6 +174,14 @@ void AppSettings::setCustomRenderFps(int fps) {
     if (renderProfile() == RenderProfile::Custom) {
         emit dashboardPreferencesChanged();
     }
+}
+
+void AppSettings::setFastChartLines(bool enabled) {
+    if (enabled == fastChartLines()) {
+        return;
+    }
+    QSettings().setValue(kFastChartLinesKey, enabled);
+    emit dashboardPreferencesChanged();
 }
 
 void AppSettings::setSubscribeRateOverrideEnabled(bool enabled) {
