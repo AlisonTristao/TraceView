@@ -533,7 +533,8 @@ doable by an assistant too, so a feature isn't finished until it is exposed:
   an MCP tool, or extends an existing tool's arguments, in the same PR. Tools
   are registered into the `ToolRegistry` by the layer that owns the feature:
   `lib/core/agentapptools.cpp` for what MainWindow does, the module's own
-  code for a module. `lib/agent/` stays protocol-only and never learns about
+  code for a module (through `ModuleHost::agentTools()`, as TraceLab does in
+  `lab/module/labagenttools.cpp`). `lib/agent/` stays protocol-only and never learns about
   a feature.
 - **A new widget type** needs an entry in `lib/dashboard/widgetagenthelp.cpp`
   describing its config. `test_widgetregistry` fails without one.

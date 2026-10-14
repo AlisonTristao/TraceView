@@ -10,8 +10,9 @@
 #include "lab/benchmarks/linefollower/device/lfplantdevice.h"
 #include "lab/benchmarks/linefollower/device/trackenvironment.h"
 #include "lab/control/labdevices.h"
-#include "lab/plant/codeplantdevice.h"
+#include "lab/module/labagenttools.h"
 #include "lab/module/labpanel.h"
+#include "lab/plant/codeplantdevice.h"
 #include "lab/scenes/sceneregistry.h"
 #include "lab/scenes/scenewidget.h"
 
@@ -77,6 +78,11 @@ void LabModule::install(traceview::ModuleHost& host) {
     // The tab holds the tools to build a lab and drive it.
     auto* panel = new LabPanel(&host);
     host.addRibbonTab(displayName(), panel->ribbonActions(), panel);
+
+    // Everything the tab does, for AI assistants too (docs/MCP.md).
+    if (traceview::ToolRegistry* tools = host.agentTools()) {
+        registerLabAgentTools(&host, tools);
+    }
 }
 
 }  // namespace tracelab

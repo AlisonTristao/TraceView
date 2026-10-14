@@ -163,7 +163,7 @@ if(TRACEVIEW_ENABLE_LAB)
     add_traceview_test(test_furutascene tracelab_scenes)
     add_traceview_test(test_scenewidget tracelab_scenes traceview_project)
     add_traceview_test(test_labmodule tracelab_module tracelab_scenes traceview_dashboard
-                       traceview_transport)
+                       traceview_transport traceview_agent)
     tracelab_copy_tcc_runtime(test_labmodule)
     # The TraceLab tab on a live line follower: the loop as plant > filters >
     # controller cards, blocks added from the templates, a picked block's

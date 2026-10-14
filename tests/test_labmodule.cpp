@@ -1,25 +1,26 @@
 #include <QAction>
 #include <QFile>
-#include <QJsonObject>
-#include <QLabel>
-#include <QWidget>
-#include <QMenu>
 #include <QJsonArray>
 #include <QJsonDocument>
+#include <QJsonObject>
+#include <QLabel>
+#include <QMenu>
+#include <QWidget>
 #include <QtTest>
 #include <memory>
 #include <vector>
 
+#include "agent/toolregistry.h"
+#include "core/moduledevicetype.h"
 #include "dashboard/dashboardwidget.h"
 #include "dashboard/widgetconfigeditor.h"
 #include "dashboard/widgetregistry.h"
 #include "lab/module/labmodule.h"
+#include "lab/module/labpanel.h"
 #include "lab/scenes/diffdrivescene.h"
 #include "lab/scenes/sceneconfigeditor.h"
 #include "lab/scenes/sceneregistry.h"
 #include "lab/scenes/scenewidget.h"
-#include "core/moduledevicetype.h"
-#include "lab/module/labpanel.h"
 #include "modules/moduleregistry.h"
 
 using namespace traceview;
@@ -64,6 +65,11 @@ public:
         m_addedWidgetConfigs.append(config);
         return true;
     }
+    ToolRegistry* agentTools() override {
+        return &m_tools;
+    }
+
+    ToolRegistry m_tools;
 
     QStringList m_deviceTypes;
     QStringList m_opened;
@@ -96,6 +102,7 @@ private slots:
     void identity();
     void installRegistersSceneWidgetAndTab();
     void modeArgumentPicksTheLab();
+    void installRegistersAgentTools();
 };
 
 void TestLabModule::identity() {
@@ -230,6 +237,67 @@ void TestLabModule::modeArgumentPicksTheLab() {
     QVERIFY(lab);
     QCOMPARE(lab->id(), QString("lab"));
     QVERIFY(registry.isEnabled("lab"));
+}
+
+// Calls `name` on `registry` and returns its result (tools here answer at once).
+AgentToolResult callTool(ToolRegistry& registry, const QString& name,
+                         const QJsonObject& args = QJsonObject()) {
+    AgentToolResult result;
+    bool answered = false;
+    registry.call(name, args, [&](const AgentToolResult& r) {
+        result = r;
+        answered = true;
+    });
+    if (!answered) {
+        result = AgentToolResult::error("no answer");
+    }
+    return result;
+}
+
+void TestLabModule::installRegistersAgentTools() {
+    LabModule module;
+    FakeHost host;
+    module.install(host);
+
+    for (const char* name :
+         {"lab_get_state", "lab_code_reference", "lab_list_templates", "lab_add_plant",
+          "lab_add_controller", "lab_add_filter", "lab_remove_filter", "lab_get_block",
+          "lab_write_block", "lab_set_block_source", "lab_set_params", "lab_simulation", "lab_run",
+          "lab_set_clock", "lab_set_plant_settings", "lab_add_scene", "lab_open_example"}) {
+        QVERIFY2(host.m_tools.find(name), name);
+    }
+
+    // The API a block is written against, as the model reads it.
+    const AgentToolResult reference = callTool(host.m_tools, "lab_code_reference");
+    QVERIFY(!reference.isError);
+    QVERIFY(reference.content.first().toObject().value("text").toString().contains("TL_PARAM"));
+
+    const QJsonObject templates =
+        callTool(host.m_tools, "lab_list_templates", {{"kind", "controller"}}).structured;
+    bool hasFuruta = false;
+    for (const QJsonValue& t :
+         templates.value("controller").toObject().value("templates").toArray()) {
+        hasFuruta = hasFuruta || t.toObject().value("id").toString().startsWith("furuta/");
+    }
+    QVERIFY(hasFuruta);
+
+    const QJsonObject state = callTool(host.m_tools, "lab_get_state").structured;
+    QVERIFY(state.value("plantKinds").toArray().contains(QJsonValue("Furuta pendulum")));
+
+    // Adding a plant goes through the host like the tab's Add plant.
+    const AgentToolResult added =
+        callTool(host.m_tools, "lab_add_plant", {{"kind", "Furuta pendulum"}});
+    QVERIFY(!added.isError);
+    QCOMPARE(host.m_addedDevices.last(), QString("tracelab.plant"));
+    QCOMPARE(host.m_addedConfigs.last().value("plant").toObject().value("template").toString(),
+             QString("furuta/pendulum"));
+    QVERIFY(callTool(host.m_tools, "lab_add_plant", {{"kind", "Toaster"}}).isError);
+
+    // Unknown devices are refused with a message, not a crash.
+    QVERIFY(callTool(host.m_tools, "lab_get_block", {{"deviceId", "nope"}, {"block", 0}}).isError);
+    QVERIFY(
+        callTool(host.m_tools, "lab_simulation", {{"plantDeviceId", "nope"}, {"action", "play"}})
+            .isError);
 }
 
 QTEST_MAIN(TestLabModule)

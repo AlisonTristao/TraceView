@@ -137,6 +137,7 @@ private:
     QString addModuleDevice(const QString& typeId, const QString& name,
                             const QJsonObject& config) override;
     bool addDashboardWidget(const QString& typeId, const QJsonObject& config) override;
+    ToolRegistry* agentTools() override;
 
     void buildMenus();
     // Rebuilds the Access menu's contents from UserModeManager's current

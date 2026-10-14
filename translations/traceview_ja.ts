@@ -2,6 +2,150 @@
 <!DOCTYPE TS>
 <TS version="2.1" language="ja">
 <context>
+    <name>AgentAppTools</name>
+    <message>
+        <location filename="../lib/core/agentapptools.cpp" line="+207"/>
+        <source>AI Assistant</source>
+        <translation>AI アシスタント</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>An AI assistant wants to %1.
+
+Allow it to connect devices and send them commands until AI assistant access is turned off or TraceView closes?</source>
+        <translation>AI アシスタントが%1ことを求めています。
+
+AI アシスタントのアクセスをオフにするか TraceView を閉じるまで、デバイスの接続とコマンド送信を許可しますか？</translation>
+    </message>
+    <message>
+        <location line="+276"/>
+        <source>An AI assistant created workspace &quot;%1&quot;.</source>
+        <translation>AI アシスタントがワークスペース「%1」を作成しました。</translation>
+    </message>
+    <message>
+        <location line="+81"/>
+        <source>Delete Workspace</source>
+        <translation>ワークスペースを削除</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>An AI assistant wants to delete workspace &quot;%1&quot;. This cannot be undone.</source>
+        <translation>AI アシスタントがワークスペース「%1」を削除しようとしています。この操作は元に戻せません。</translation>
+    </message>
+    <message>
+        <location line="+63"/>
+        <source>Add Widget (AI assistant)</source>
+        <translation>ウィジェットを追加（AI アシスタント）</translation>
+    </message>
+    <message>
+        <location line="+53"/>
+        <source>Edit Widget (AI assistant)</source>
+        <translation>ウィジェットを編集（AI アシスタント）</translation>
+    </message>
+    <message>
+        <location line="+318"/>
+        <source>New Project</source>
+        <translation>新規プロジェクト</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>An AI assistant wants to start a new, empty project. Unsaved changes to the current one will be lost.</source>
+        <translation>AI アシスタントが新しい空のプロジェクトを開始しようとしています。現在のプロジェクトの未保存の変更は失われます。</translation>
+    </message>
+    <message>
+        <location line="+14"/>
+        <source>Open Project</source>
+        <translation>プロジェクトを開く</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>An AI assistant wants to open &quot;%1&quot;. Unsaved changes to the current project will be lost.</source>
+        <translation>AI アシスタントが「%1」を開こうとしています。現在のプロジェクトの未保存の変更は失われます。</translation>
+    </message>
+    <message>
+        <location line="+75"/>
+        <source>Add to Gallery</source>
+        <translation>ギャラリーに追加</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>An AI assistant wants to replace the gallery dashboard &quot;%1&quot;.</source>
+        <translation>AI アシスタントがギャラリーのダッシュボード「%1」を置き換えようとしています。</translation>
+    </message>
+    <message>
+        <location line="+52"/>
+        <source>Delete Dashboard</source>
+        <translation>ダッシュボードの削除</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>An AI assistant wants to delete the gallery dashboard &quot;%1&quot;. This cannot be undone.</source>
+        <translation>AI アシスタントがギャラリーのダッシュボード「%1」を削除しようとしています。この操作は元に戻せません。</translation>
+    </message>
+    <message>
+        <location line="+50"/>
+        <source>An AI assistant saved the project to %1.</source>
+        <translation>AI アシスタントがプロジェクトを %1 に保存しました。</translation>
+    </message>
+    <message>
+        <location filename="../lib/core/agentdevicetools.cpp" line="+191"/>
+        <location line="+50"/>
+        <source>set up how a device is reached</source>
+        <translation>デバイスへの接続方法を設定する</translation>
+    </message>
+    <message>
+        <location line="+70"/>
+        <source>connect a device</source>
+        <translation>デバイスを接続する</translation>
+    </message>
+    <message>
+        <location line="+151"/>
+        <location line="+41"/>
+        <source>send commands to a device</source>
+        <translation>デバイスにコマンドを送る</translation>
+    </message>
+    <message>
+        <location line="+176"/>
+        <source>run a script that controls a device</source>
+        <translation>デバイスを制御するスクリプトを実行する</translation>
+    </message>
+    <message>
+        <location line="+95"/>
+        <source>Firmware Update</source>
+        <translation>ファームウェア更新</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>An AI assistant wants to flash &quot;%1&quot; onto %2. The device restarts with the new firmware.</source>
+        <translation>AI アシスタントが「%1」を %2 に書き込もうとしています。デバイスは新しいファームウェアで再起動します。</translation>
+    </message>
+    <message>
+        <location line="+15"/>
+        <source>Uploading firmware to %1: %2%</source>
+        <translation>%1 にファームウェアを転送中: %2%</translation>
+    </message>
+    <message>
+        <location filename="../lib/core/agentpreferencetools.cpp" line="+298"/>
+        <source>Delete Preset</source>
+        <translation>プリセットを削除</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>An AI assistant wants to delete the appearance preset &quot;%1&quot;.</source>
+        <translation>AI アシスタントが外観プリセット「%1」を削除しようとしています。</translation>
+    </message>
+    <message>
+        <location line="+127"/>
+        <source>Delete Palette</source>
+        <translation>パレットを削除</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>An AI assistant wants to delete the palette &quot;%1&quot;.</source>
+        <translation>AI アシスタントがパレット「%1」を削除しようとしています。</translation>
+    </message>
+</context>
+<context>
     <name>Appearance</name>
     <message>
         <location filename="../lib/theme/appearance.cpp" line="+124"/>
@@ -647,6 +791,19 @@
     </message>
 </context>
 <context>
+    <name>LabAgentTools</name>
+    <message>
+        <location filename="../lab/module/labagenttools.cpp" line="+948"/>
+        <source>Open Example</source>
+        <translation>サンプルを開く</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>An AI assistant wants to open the TraceLab example &quot;%1&quot;. Unsaved changes to the current project will be lost.</source>
+        <translation>AI アシスタントが TraceLab のサンプル「%1」を開こうとしています。現在のプロジェクトの未保存の変更は失われます。</translation>
+    </message>
+</context>
+<context>
     <name>LabControllerDevice</name>
     <message>
         <location filename="../lab/control/labdevices.cpp" line="+257"/>
@@ -685,7 +842,7 @@
 <context>
     <name>LabModule</name>
     <message>
-        <location filename="../lab/module/labmodule.cpp" line="+25"/>
+        <location filename="../lab/module/labmodule.cpp" line="+26"/>
         <source>TraceLab</source>
         <translation>TraceLab</translation>
     </message>
@@ -700,19 +857,21 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+7"/>
+        <location filename="../lab/module/labagenttools.cpp" line="-3"/>
+        <location filename="../lab/module/labmodule.cpp" line="+7"/>
         <location line="+11"/>
         <source>Furuta pendulum</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-4"/>
+        <location filename="../lab/module/labmodule.cpp" line="-4"/>
         <location line="+3"/>
         <source>TraceLab benchmarks</source>
         <translation>TraceLab ベンチマーク</translation>
     </message>
     <message>
-        <location line="-23"/>
+        <location filename="../lab/module/labagenttools.cpp" line="+1"/>
+        <location filename="../lab/module/labmodule.cpp" line="-23"/>
         <location line="+21"/>
         <source>Line follower</source>
         <translation>ライントレーサー</translation>
@@ -791,7 +950,7 @@
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="+138"/>
+        <location filename="../lib/core/mainwindow.cpp" line="+141"/>
         <source>TraceView Project (*.tvproj)</source>
         <translation>TraceView プロジェクト (*.tvproj)</translation>
     </message>
@@ -1921,12 +2080,12 @@
     <message>
         <location line="-141"/>
         <location line="+111"/>
-        <location line="+699"/>
+        <location line="+706"/>
         <source>Plant</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-787"/>
+        <location line="-794"/>
         <location line="+88"/>
         <source>Code</source>
         <translation type="unfinished"></translation>
@@ -2046,7 +2205,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+263"/>
+        <location line="+270"/>
         <source>Templates</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2232,12 +2391,13 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+46"/>
+        <location filename="../lab/module/labagenttools.cpp" line="-549"/>
+        <location filename="../lab/module/labpanel.cpp" line="+46"/>
         <source>TraceLab: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-1239"/>
+        <location filename="../lab/module/labpanel.cpp" line="-1246"/>
         <source>Add plant</source>
         <translation>プラントを追加</translation>
     </message>
@@ -2262,12 +2422,13 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+717"/>
+        <location filename="../lab/module/labagenttools.cpp" line="+51"/>
+        <location filename="../lab/module/labpanel.cpp" line="+724"/>
         <source>TraceLab: Controller</source>
         <translation>TraceLab：コントローラー</translation>
     </message>
     <message>
-        <location line="-450"/>
+        <location filename="../lab/module/labpanel.cpp" line="-457"/>
         <source>+ Filter</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2277,7 +2438,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+625"/>
+        <location line="+632"/>
         <location line="+201"/>
         <source>Plant · C</source>
         <translation type="unfinished"></translation>
@@ -2365,26 +2526,6 @@
 </context>
 <context>
     <name>tracelab::PlantPage</name>
-    <message>
-        <source>1x (real time)</source>
-        <translation type="obsolete">1x（リアルタイム）</translation>
-    </message>
-    <message>
-        <source>2x</source>
-        <translation type="obsolete">2x</translation>
-    </message>
-    <message>
-        <source>As fast as possible</source>
-        <translation type="obsolete">できるだけ速く</translation>
-    </message>
-    <message>
-        <source> Hz</source>
-        <translation type="obsolete"> Hz</translation>
-    </message>
-    <message>
-        <source>Sample rate</source>
-        <translation type="obsolete">サンプリングレート</translation>
-    </message>
     <message>
         <location filename="../lab/module/plantpage.cpp" line="+57"/>
         <location line="+60"/>
@@ -2475,10 +2616,6 @@
         <location line="+15"/>
         <source>This plant has no settings.</source>
         <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>%1 s</source>
-        <translation type="obsolete">%1 s</translation>
     </message>
 </context>
 <context>
@@ -2932,6 +3069,14 @@
         <location line="-4"/>
         <source>AppImage from GitHub Releases</source>
         <translation>GitHub Releases の AppImage</translation>
+    </message>
+</context>
+<context>
+    <name>traceview::AgentBridgeServer</name>
+    <message>
+        <location filename="../lib/agent/agentbridgeserver.cpp" line="+95"/>
+        <source>Another TraceView window is already serving AI assistants.</source>
+        <translation>別の TraceView ウィンドウがすでに AI アシスタントに対応しています。</translation>
     </message>
 </context>
 <context>
@@ -4277,7 +4422,7 @@ Allowed: %1</source>
 <context>
     <name>traceview::DashboardGrid</name>
     <message>
-        <location filename="../lib/dashboard/dashboardgrid.cpp" line="+583"/>
+        <location filename="../lib/dashboard/dashboardgrid.cpp" line="+644"/>
         <source>Bring to Front</source>
         <translation>最前面へ移動</translation>
     </message>
@@ -5180,7 +5325,7 @@ Allowed: %1</source>
 <context>
     <name>traceview::MainWindow</name>
     <message numerus="yes">
-        <location filename="../lib/core/mainwindow.cpp" line="+392"/>
+        <location filename="../lib/core/mainwindow.cpp" line="+391"/>
         <source>This device carries %n other device(s) (%1). Remove or repoint them first.</source>
         <translation>
             <numerusform>このデバイスは他に %n 台のデバイス (%1) を中継しています。先に削除するか、参照先を変更してください。</numerusform>
@@ -5192,7 +5337,33 @@ Allowed: %1</source>
         <translation>、</translation>
     </message>
     <message>
-        <location line="+812"/>
+        <location line="+305"/>
+        <source>AI assistant access is off.</source>
+        <translation>AI アシスタントのアクセスはオフです。</translation>
+    </message>
+    <message>
+        <location line="+12"/>
+        <source>AI assistant access could not start: %1</source>
+        <translation>AI アシスタントのアクセスを開始できませんでした: %1</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>AI assistant connected: %1</source>
+        <translation>AI アシスタントが接続しました: %1</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <location line="+6"/>
+        <source>unknown</source>
+        <translation>不明</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>AI assistant disconnected: %1</source>
+        <translation>AI アシスタントが切断しました: %1</translation>
+    </message>
+    <message>
+        <location line="+537"/>
         <source>Pending</source>
         <translation>保留中</translation>
     </message>
@@ -5341,12 +5512,12 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+0"/>
-        <location line="+3764"/>
+        <location line="+3804"/>
         <source>Later</source>
         <translation>後で</translation>
     </message>
     <message>
-        <location line="-3757"/>
+        <location line="-3797"/>
         <source>&amp;Access</source>
         <translation>アクセス(&amp;A)</translation>
     </message>
@@ -5473,18 +5644,18 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+18"/>
-        <location line="+3128"/>
+        <location line="+3168"/>
         <source>Undo</source>
         <translation>元に戻す</translation>
     </message>
     <message>
-        <location line="-3126"/>
-        <location line="+3126"/>
+        <location line="-3166"/>
+        <location line="+3166"/>
         <source>Redo</source>
         <translation>やり直し</translation>
     </message>
     <message>
-        <location line="-3083"/>
+        <location line="-3123"/>
         <source>Add Device</source>
         <translation>デバイスを追加</translation>
     </message>
@@ -5520,12 +5691,12 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+29"/>
-        <location line="+3028"/>
+        <location line="+3068"/>
         <source>Fullscreen dashboard (F11)</source>
         <translation>ダッシュボードを全画面表示(F11)</translation>
     </message>
     <message>
-        <location line="-2848"/>
+        <location line="-2888"/>
         <source>Rename Workspace</source>
         <translation>ワークスペースの名前を変更</translation>
     </message>
@@ -5606,7 +5777,7 @@ Drops: %2</source>
         <translation>このワークスペースは独自の外観を持つようになりました。</translation>
     </message>
     <message>
-        <location line="+705"/>
+        <location line="+727"/>
         <source>Robot or board</source>
         <translation>ロボットまたはボード</translation>
     </message>
@@ -5616,12 +5787,12 @@ Drops: %2</source>
         <translation>%1: %2 で見つかりました</translation>
     </message>
     <message>
-        <location line="+329"/>
+        <location line="+339"/>
         <source>%1: trying %2</source>
         <translation>%1: %2 を試行中</translation>
     </message>
     <message>
-        <location line="+425"/>
+        <location line="+429"/>
         <location line="+8"/>
         <location line="+5"/>
         <location line="+8"/>
@@ -5670,7 +5841,7 @@ Drops: %2</source>
         <translation>&quot;%1&quot; をギャラリーに保存しました。</translation>
     </message>
     <message>
-        <location line="+538"/>
+        <location line="+542"/>
         <source>Update available: v%1</source>
         <translation>アップデートあり: v%1</translation>
     </message>
@@ -5743,13 +5914,13 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>アプリを閉じる</translation>
     </message>
     <message>
-        <location line="-3075"/>
-        <location line="+2876"/>
+        <location line="-3115"/>
+        <location line="+2916"/>
         <source>Devices</source>
         <translation>デバイス</translation>
     </message>
     <message>
-        <location line="-2801"/>
+        <location line="-2841"/>
         <source>Subscriptions</source>
         <translation>購読</translation>
     </message>
@@ -5770,12 +5941,12 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>ワークスペース</translation>
     </message>
     <message>
-        <location line="+19"/>
+        <location line="+9"/>
         <source>Created workspace &quot;%1&quot;.</source>
         <translation>ワークスペース「%1」を作成しました。</translation>
     </message>
     <message>
-        <location line="+14"/>
+        <location line="+30"/>
         <source>Delete Workspace</source>
         <translation>ワークスペースを削除</translation>
     </message>
@@ -5785,29 +5956,29 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>ワークスペース「%1」を削除しますか?この操作は元に戻せません。</translation>
     </message>
     <message>
-        <location line="+16"/>
+        <location line="+24"/>
         <source>Deleted workspace &quot;%1&quot;.</source>
         <translation>ワークスペース「%1」を削除しました。</translation>
     </message>
     <message>
         <location line="+71"/>
-        <location line="+2401"/>
+        <location line="+2427"/>
         <source>Add widget</source>
         <translation>ウィジェットを追加</translation>
     </message>
     <message>
-        <location line="-2398"/>
+        <location line="-2424"/>
         <source>Remove selected widget (%1)</source>
         <translation>選択したウィジェットを削除(%1)</translation>
     </message>
     <message>
         <location line="+3"/>
-        <location line="+2408"/>
+        <location line="+2434"/>
         <source>Add device</source>
         <translation>デバイスを追加</translation>
     </message>
     <message>
-        <location line="-2405"/>
+        <location line="-2431"/>
         <source>Remove selected device (%1)</source>
         <translation>選択したデバイスを削除(%1)</translation>
     </message>
@@ -5892,7 +6063,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>レイヤー/プロパティパネルを表示</translation>
     </message>
     <message>
-        <location line="+261"/>
+        <location line="+269"/>
         <source>New Device</source>
         <translation>新しいデバイス</translation>
     </message>
@@ -5958,17 +6129,17 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>モーション(&amp;O)</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="-1473"/>
+        <location filename="../lib/core/mainwindow.cpp" line="-1495"/>
         <source>Dashboard</source>
         <translation>ダッシュボード</translation>
     </message>
     <message>
-        <location line="+1823"/>
+        <location line="+1845"/>
         <source>%1: this BLE address now answers as a different robot (expected %2, got %3)</source>
         <translation>%1: この BLE アドレスは別のロボットとして応答しています (期待値 %2、実際 %3)</translation>
     </message>
     <message>
-        <location line="+492"/>
+        <location line="+503"/>
         <source>Key &quot;%1&quot; is already used by another widget.</source>
         <translation>キー「%1」は既に別のウィジェットで使用されています。</translation>
     </message>
@@ -5983,7 +6154,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>現在のダッシュボードを破棄して、新しい空のプロジェクトを開始しますか?</translation>
     </message>
     <message>
-        <location line="+15"/>
+        <location line="+18"/>
         <source>Started a new project.</source>
         <translation>新しいプロジェクトを開始しました。</translation>
     </message>
@@ -5999,8 +6170,8 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>名前を付けてプロジェクトを保存</translation>
     </message>
     <message>
-        <location line="-3727"/>
-        <location line="+3741"/>
+        <location line="-3767"/>
+        <location line="+3781"/>
         <location line="+329"/>
         <source>Open Project</source>
         <translation>プロジェクトを開く</translation>
@@ -6027,7 +6198,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     </message>
     <message>
         <location line="+20"/>
-        <location line="+214"/>
+        <location line="+218"/>
         <source>Settings</source>
         <translation>設定</translation>
     </message>
@@ -7150,7 +7321,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
 <context>
     <name>traceview::SettingsPage</name>
     <message>
-        <location filename="../lib/core/settingspage.cpp" line="+204"/>
+        <location filename="../lib/core/settingspage.cpp" line="+207"/>
         <source>Settings</source>
         <translation>設定</translation>
     </message>
@@ -7186,19 +7357,19 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     </message>
     <message>
         <location line="-270"/>
-        <location line="+329"/>
+        <location line="+362"/>
         <source>Diagnostics</source>
         <translation>診断</translation>
     </message>
     <message>
-        <location line="-328"/>
-        <location line="+380"/>
+        <location line="-361"/>
+        <location line="+413"/>
         <location line="+5"/>
         <source>Updates</source>
         <translation>アップデート</translation>
     </message>
     <message>
-        <location line="-343"/>
+        <location line="-376"/>
         <source>Project and startup preferences shared by the application.</source>
         <translation>アプリケーション全体で共有されるプロジェクトと起動の設定。</translation>
     </message>
@@ -7486,7 +7657,32 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         </translation>
     </message>
     <message>
-        <location line="+19"/>
+        <location line="+18"/>
+        <source>AI assistants</source>
+        <translation>AI アシスタント</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Let AI assistants such as Claude control TraceView</source>
+        <translation>Claude などの AI アシスタントに TraceView の操作を許可する</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>An assistant connected over MCP can then create workspaces and widgets, read telemetry and take screenshots of this window. Its dashboard edits can be undone.</source>
+        <translation>MCP で接続したアシスタントは、ワークスペースやウィジェットの作成、テレメトリの読み取り、このウィンドウのスクリーンショット撮影ができます。ダッシュボードへの変更は元に戻せます。</translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <source>To connect Claude Code, run this once in a terminal:</source>
+        <translation>Claude Code を接続するには、ターミナルで次を一度実行します:</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Copy command</source>
+        <translation>コマンドをコピー</translation>
+    </message>
+    <message>
+        <location line="+11"/>
         <source>Keep enough history for investigation without letting long-running sessions use unbounded memory.</source>
         <translation>長時間のセッションがメモリを無制限に使わないようにしつつ、調査に十分な履歴を保持します。</translation>
     </message>

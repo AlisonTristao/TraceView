@@ -8,8 +8,10 @@ namespace {
 
 // Shared by every telemetry-bound widget.
 const char kBinding[] =
-    "Binding: deviceId (from get_app_state), sourceId as hex text \"0x00000001\", topicId as "
-    "hex text \"0x0101\" (both from list_signals).";
+    "Binding: deviceId (from get_app_state) plus topicName, and in each series fieldName "
+    "(names from list_signals) -- the names are the binding, TraceView fills sourceId/topicId/"
+    "fieldId from the device's catalog. sourceId (hex text \"0x00000001\"), topicId (\"0x0101\") "
+    "and fieldId can be given instead when there are no names.";
 
 }  // namespace
 
@@ -24,6 +26,18 @@ QString widgetAgentHelp(const QString& typeId) {
              "unit, decimals, grid bool, autoAxis bool}. Name the Y axis \"Quantity [unit]\" "
              "through yAxis.unit.")
              .arg(QLatin1String(kBinding))},
+        {"multi_line",
+         QStringLiteral(
+             "Line chart whose series come from different topics or devices (a plant's true "
+             "value next to a controller's estimate). bind: {\"s0\": {deviceId, topicName, "
+             "fieldName}, \"s1\": ...}, one binding per series in order; series: [{name, "
+             "color, style, unit}]; xAxis and yAxis as dummy_line (no history is replayed: "
+             "it plots what arrives from then on).")},
+        {"scene",
+         QStringLiteral(
+             "TraceLab's animated scene of a simulated plant (only with the TraceLab module). "
+             "Prefer lab_add_scene, which binds it. config: {scene: scene type (lab_get_state "
+             "sceneTypes), bind: {inputName: {deviceId, topicName, fieldName}}, params}.")},
         {"dummy_bar",
          QString::fromLatin1("Bar chart: latest value of each field as a bar. Same config as "
                              "dummy_line (%1 series, xAxis, yAxis).")

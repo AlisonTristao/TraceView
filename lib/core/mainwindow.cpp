@@ -680,6 +680,8 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     // not been loaded yet, so it can already use their widget types. The
     // properties panel took its type list in buildPropertiesPanel(), so it
     // is refreshed for those types.
+    // Before the modules: they register their AI assistant tools in it.
+    m_agentTools = new ToolRegistry(this);
     ModuleRegistry::instance().installEnabled(*this);
     m_propertiesPanel->setAvailableTypes(WidgetRegistry::instance().availableTypes());
 
@@ -794,7 +796,6 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
             &MainWindow::reconcileHubChildPresence);
     m_hubPeerReconcileTimer->start();
 
-    m_agentTools = new ToolRegistry(this);
     AgentAppTools::registerTools(this, m_agentTools);
     m_agentBridgeForced =
         QCoreApplication::arguments().contains(QString::fromLatin1(kAgentBridgeArgument));
@@ -961,6 +962,10 @@ bool MainWindow::removeModuleDevice(const QString& deviceId) {
     }
     m_devicesGrid->removeDevice(deviceId);
     return true;
+}
+
+ToolRegistry* MainWindow::agentTools() {
+    return m_agentTools;
 }
 
 bool MainWindow::addDashboardWidget(const QString& typeId, const QJsonObject& config) {

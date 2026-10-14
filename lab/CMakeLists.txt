@@ -221,6 +221,8 @@ add_library(tracelab_module STATIC
     module/codewindow.h
     module/externaleditor.cpp
     module/externaleditor.h
+    module/labagenttools.cpp
+    module/labagenttools.h
     module/loopdiagram.cpp
     module/loopdiagram.h
     module/labmodule.cpp
@@ -248,6 +250,8 @@ target_link_libraries(tracelab_module
         # DoubleSpinBox (theme/doublespinbox.h), the theme's colors, frame
         # style and tinted icons for the tab's cards and ribbon buttons.
         traceview_theme
+        # The lab's AI assistant tools (module/labagenttools.cpp).
+        traceview_agent
 )
 
 # Filters: the portable C filter runtime and its host-side IIR design

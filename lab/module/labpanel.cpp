@@ -601,7 +601,10 @@ LabPlantDevice* LabPanel::plant() const {
 }
 
 QString LabPanel::plantBenchmark() const {
-    LabPlantDevice* p = plant();
+    return benchmarkOf(plant());
+}
+
+QString LabPanel::benchmarkOf(LabPlantDevice* p) {
     if (!p) {
         return QString();
     }
@@ -618,7 +621,11 @@ QString LabPanel::plantBenchmark() const {
 }
 
 QString LabPanel::sceneType() const {
-    const QString benchmark = plantBenchmark();
+    return sceneTypeOf(plant());
+}
+
+QString LabPanel::sceneTypeOf(LabPlantDevice* p) {
+    const QString benchmark = benchmarkOf(p);
     return SceneRegistry::instance().contains(benchmark) ? benchmark
                                                          : QString::fromLatin1(DiffDriveScene::kTypeId);
 }
@@ -1372,18 +1379,25 @@ void LabPanel::addScene() {
         return;  // the action is disabled without a plant
     }
     LabControllerDevice* c = controller();
-    const QString controllerId = c ? c->deviceId() : QString();
+    const QJsonObject config = sceneWidgetConfig(plantDeviceId, c ? c->deviceId() : QString());
+    if (!config.isEmpty()) {
+        m_host->addDashboardWidget(QString::fromLatin1(kSceneWidgetTypeId), config);
+    }
+}
+
+QJsonObject LabPanel::sceneWidgetConfig(const QString& plantDeviceId,
+                                        const QString& controllerDeviceId) {
     // Bound by name (docs/DASHBOARD.md "Telemetry bindings"): MainWindow
     // fills the ids from the device's catalog.
     QJsonObject bind;
-    const QString type = sceneType();
+    const QString type = sceneTypeOf(LabDeviceRegistry::instance().plant(plantDeviceId));
     const std::unique_ptr<SceneRenderer> scene = SceneRegistry::instance().create(type);
     if (!scene) {
-        return;
+        return QJsonObject();
     }
     for (const SceneInput& input : scene->inputs()) {
         const bool fromController = input.defaultTopic.startsWith(QLatin1String("ctl."));
-        const QString deviceId = fromController ? controllerId : plantDeviceId;
+        const QString deviceId = fromController ? controllerDeviceId : plantDeviceId;
         if (deviceId.isEmpty() || input.defaultTopic.isEmpty()) {
             continue;
         }
@@ -1393,8 +1407,7 @@ void LabPanel::addScene() {
         }
         bind.insert(input.name, entry);
     }
-    m_host->addDashboardWidget(QString::fromLatin1(kSceneWidgetTypeId),
-                               QJsonObject{{"scene", type}, {"bind", bind}});
+    return QJsonObject{{"scene", type}, {"bind", bind}};
 }
 
 void LabPanel::play() {

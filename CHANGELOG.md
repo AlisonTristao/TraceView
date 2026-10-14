@@ -13,11 +13,14 @@ release flow.
   Turn on **Settings > Connections > AI assistants** and register
   `TraceView --mcp` with the client (the section shows the exact Claude Code
   command for this installation, Windows, AppImage or Flatpak, with a copy
-  button). An assistant can do what the UI does, through 62 tools:
+  button). An assistant can do what the UI does, through 79 tools:
   workspaces and widgets, layouts, projects and the gallery, devices and
   their links, commands and terminal, robot logs, device scripts, OTA,
-  appearance, palettes, language, settings, and the notification, app log
-  and BTP traffic trails. It checks its own work with screenshots and
+  appearance, palettes, language, settings, the notification, app log and
+  BTP traffic trails, and all of TraceLab: building a loop from plants,
+  controllers and filters, writing their C blocks with the compiler's
+  messages coming back, tuning parameters live, running the simulation for
+  a span of time and reading the result. It checks its own work with screenshots and
   telemetry reads. Its dashboard and device edits are undoable like yours.
   Anything that can't be undone asks you first, and the first time it
   touches real hardware you're asked to allow that for the session. If

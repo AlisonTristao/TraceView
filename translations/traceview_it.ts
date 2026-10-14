@@ -2,6 +2,150 @@
 <!DOCTYPE TS>
 <TS version="2.1" language="it">
 <context>
+    <name>AgentAppTools</name>
+    <message>
+        <location filename="../lib/core/agentapptools.cpp" line="+207"/>
+        <source>AI Assistant</source>
+        <translation>Assistente IA</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>An AI assistant wants to %1.
+
+Allow it to connect devices and send them commands until AI assistant access is turned off or TraceView closes?</source>
+        <translation>Un assistente IA vuole %1.
+
+Consentirgli di collegare dispositivi e inviare loro comandi finché l’accesso degli assistenti IA non viene disattivato o TraceView non viene chiuso?</translation>
+    </message>
+    <message>
+        <location line="+276"/>
+        <source>An AI assistant created workspace &quot;%1&quot;.</source>
+        <translation>Un assistente IA ha creato l'area di lavoro &quot;%1&quot;.</translation>
+    </message>
+    <message>
+        <location line="+81"/>
+        <source>Delete Workspace</source>
+        <translation>Elimina Spazio di Lavoro</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>An AI assistant wants to delete workspace &quot;%1&quot;. This cannot be undone.</source>
+        <translation>Un assistente IA vuole eliminare l'area di lavoro &quot;%1&quot;. L'operazione non può essere annullata.</translation>
+    </message>
+    <message>
+        <location line="+63"/>
+        <source>Add Widget (AI assistant)</source>
+        <translation>Aggiungi widget (assistente IA)</translation>
+    </message>
+    <message>
+        <location line="+53"/>
+        <source>Edit Widget (AI assistant)</source>
+        <translation>Modifica widget (assistente IA)</translation>
+    </message>
+    <message>
+        <location line="+318"/>
+        <source>New Project</source>
+        <translation>Nuovo progetto</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>An AI assistant wants to start a new, empty project. Unsaved changes to the current one will be lost.</source>
+        <translation>Un assistente IA vuole iniziare un progetto nuovo e vuoto. Le modifiche non salvate a quello attuale andranno perse.</translation>
+    </message>
+    <message>
+        <location line="+14"/>
+        <source>Open Project</source>
+        <translation>Apri progetto</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>An AI assistant wants to open &quot;%1&quot;. Unsaved changes to the current project will be lost.</source>
+        <translation>Un assistente IA vuole aprire &quot;%1&quot;. Le modifiche non salvate al progetto attuale andranno perse.</translation>
+    </message>
+    <message>
+        <location line="+75"/>
+        <source>Add to Gallery</source>
+        <translation>Aggiungi alla Galleria</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>An AI assistant wants to replace the gallery dashboard &quot;%1&quot;.</source>
+        <translation>Un assistente IA vuole sostituire la dashboard &quot;%1&quot; della galleria.</translation>
+    </message>
+    <message>
+        <location line="+52"/>
+        <source>Delete Dashboard</source>
+        <translation>Elimina Dashboard</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>An AI assistant wants to delete the gallery dashboard &quot;%1&quot;. This cannot be undone.</source>
+        <translation>Un assistente IA vuole eliminare la dashboard &quot;%1&quot; della galleria. L’operazione non può essere annullata.</translation>
+    </message>
+    <message>
+        <location line="+50"/>
+        <source>An AI assistant saved the project to %1.</source>
+        <translation>Un assistente IA ha salvato il progetto in %1.</translation>
+    </message>
+    <message>
+        <location filename="../lib/core/agentdevicetools.cpp" line="+191"/>
+        <location line="+50"/>
+        <source>set up how a device is reached</source>
+        <translation>configurare come raggiungere un dispositivo</translation>
+    </message>
+    <message>
+        <location line="+70"/>
+        <source>connect a device</source>
+        <translation>collegare un dispositivo</translation>
+    </message>
+    <message>
+        <location line="+151"/>
+        <location line="+41"/>
+        <source>send commands to a device</source>
+        <translation>inviare comandi a un dispositivo</translation>
+    </message>
+    <message>
+        <location line="+176"/>
+        <source>run a script that controls a device</source>
+        <translation>eseguire uno script che controlla un dispositivo</translation>
+    </message>
+    <message>
+        <location line="+95"/>
+        <source>Firmware Update</source>
+        <translation>Aggiornamento firmware</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>An AI assistant wants to flash &quot;%1&quot; onto %2. The device restarts with the new firmware.</source>
+        <translation>Un assistente IA vuole scrivere &quot;%1&quot; su %2. Il dispositivo si riavvia con il nuovo firmware.</translation>
+    </message>
+    <message>
+        <location line="+15"/>
+        <source>Uploading firmware to %1: %2%</source>
+        <translation>Caricamento firmware su %1: %2%</translation>
+    </message>
+    <message>
+        <location filename="../lib/core/agentpreferencetools.cpp" line="+298"/>
+        <source>Delete Preset</source>
+        <translation>Elimina preimpostazione</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>An AI assistant wants to delete the appearance preset &quot;%1&quot;.</source>
+        <translation>Un assistente IA vuole eliminare il preset di aspetto &quot;%1&quot;.</translation>
+    </message>
+    <message>
+        <location line="+127"/>
+        <source>Delete Palette</source>
+        <translation>Elimina tavolozza</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>An AI assistant wants to delete the palette &quot;%1&quot;.</source>
+        <translation>Un assistente IA vuole eliminare la tavolozza &quot;%1&quot;.</translation>
+    </message>
+</context>
+<context>
     <name>Appearance</name>
     <message>
         <location filename="../lib/theme/appearance.cpp" line="+124"/>
@@ -647,6 +791,19 @@
     </message>
 </context>
 <context>
+    <name>LabAgentTools</name>
+    <message>
+        <location filename="../lab/module/labagenttools.cpp" line="+948"/>
+        <source>Open Example</source>
+        <translation>Apri esempio</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>An AI assistant wants to open the TraceLab example &quot;%1&quot;. Unsaved changes to the current project will be lost.</source>
+        <translation>Un assistente IA vuole aprire l’esempio TraceLab &quot;%1&quot;. Le modifiche non salvate al progetto attuale andranno perse.</translation>
+    </message>
+</context>
+<context>
     <name>LabControllerDevice</name>
     <message>
         <location filename="../lab/control/labdevices.cpp" line="+257"/>
@@ -685,7 +842,7 @@
 <context>
     <name>LabModule</name>
     <message>
-        <location filename="../lab/module/labmodule.cpp" line="+25"/>
+        <location filename="../lab/module/labmodule.cpp" line="+26"/>
         <source>TraceLab</source>
         <translation>TraceLab</translation>
     </message>
@@ -700,19 +857,21 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+7"/>
+        <location filename="../lab/module/labagenttools.cpp" line="-3"/>
+        <location filename="../lab/module/labmodule.cpp" line="+7"/>
         <location line="+11"/>
         <source>Furuta pendulum</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-4"/>
+        <location filename="../lab/module/labmodule.cpp" line="-4"/>
         <location line="+3"/>
         <source>TraceLab benchmarks</source>
         <translation>Benchmark di TraceLab</translation>
     </message>
     <message>
-        <location line="-23"/>
+        <location filename="../lab/module/labagenttools.cpp" line="+1"/>
+        <location filename="../lab/module/labmodule.cpp" line="-23"/>
         <location line="+21"/>
         <source>Line follower</source>
         <translation>Inseguitore di linea</translation>
@@ -791,7 +950,7 @@
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="+138"/>
+        <location filename="../lib/core/mainwindow.cpp" line="+141"/>
         <source>TraceView Project (*.tvproj)</source>
         <translation>Progetto TraceView (*.tvproj)</translation>
     </message>
@@ -1921,12 +2080,12 @@
     <message>
         <location line="-141"/>
         <location line="+111"/>
-        <location line="+699"/>
+        <location line="+706"/>
         <source>Plant</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-787"/>
+        <location line="-794"/>
         <location line="+88"/>
         <source>Code</source>
         <translation type="unfinished"></translation>
@@ -2046,7 +2205,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+263"/>
+        <location line="+270"/>
         <source>Templates</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2232,12 +2391,13 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+46"/>
+        <location filename="../lab/module/labagenttools.cpp" line="-549"/>
+        <location filename="../lab/module/labpanel.cpp" line="+46"/>
         <source>TraceLab: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-1239"/>
+        <location filename="../lab/module/labpanel.cpp" line="-1246"/>
         <source>Add plant</source>
         <translation>Aggiungi impianto</translation>
     </message>
@@ -2262,12 +2422,13 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+717"/>
+        <location filename="../lab/module/labagenttools.cpp" line="+51"/>
+        <location filename="../lab/module/labpanel.cpp" line="+724"/>
         <source>TraceLab: Controller</source>
         <translation>TraceLab: Controllore</translation>
     </message>
     <message>
-        <location line="-450"/>
+        <location filename="../lab/module/labpanel.cpp" line="-457"/>
         <source>+ Filter</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2277,7 +2438,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+625"/>
+        <location line="+632"/>
         <location line="+201"/>
         <source>Plant · C</source>
         <translation type="unfinished"></translation>
@@ -2365,26 +2526,6 @@
 </context>
 <context>
     <name>tracelab::PlantPage</name>
-    <message>
-        <source>1x (real time)</source>
-        <translation type="obsolete">1x (tempo reale)</translation>
-    </message>
-    <message>
-        <source>2x</source>
-        <translation type="obsolete">2x</translation>
-    </message>
-    <message>
-        <source>As fast as possible</source>
-        <translation type="obsolete">Il più veloce possibile</translation>
-    </message>
-    <message>
-        <source> Hz</source>
-        <translation type="obsolete"> Hz</translation>
-    </message>
-    <message>
-        <source>Sample rate</source>
-        <translation type="obsolete">Frequenza di campionamento</translation>
-    </message>
     <message>
         <location filename="../lab/module/plantpage.cpp" line="+57"/>
         <location line="+60"/>
@@ -2475,10 +2616,6 @@
         <location line="+15"/>
         <source>This plant has no settings.</source>
         <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>%1 s</source>
-        <translation type="obsolete">%1 s</translation>
     </message>
 </context>
 <context>
@@ -2932,6 +3069,14 @@
         <location line="-4"/>
         <source>AppImage from GitHub Releases</source>
         <translation>AppImage da GitHub Releases</translation>
+    </message>
+</context>
+<context>
+    <name>traceview::AgentBridgeServer</name>
+    <message>
+        <location filename="../lib/agent/agentbridgeserver.cpp" line="+95"/>
+        <source>Another TraceView window is already serving AI assistants.</source>
+        <translation>Un'altra finestra di TraceView sta già servendo gli assistenti IA.</translation>
     </message>
 </context>
 <context>
@@ -4277,7 +4422,7 @@ Consentiti: %1</translation>
 <context>
     <name>traceview::DashboardGrid</name>
     <message>
-        <location filename="../lib/dashboard/dashboardgrid.cpp" line="+583"/>
+        <location filename="../lib/dashboard/dashboardgrid.cpp" line="+644"/>
         <source>Bring to Front</source>
         <translation>Porta in primo piano</translation>
     </message>
@@ -5180,7 +5325,7 @@ Consentiti: %1</translation>
 <context>
     <name>traceview::MainWindow</name>
     <message numerus="yes">
-        <location filename="../lib/core/mainwindow.cpp" line="+392"/>
+        <location filename="../lib/core/mainwindow.cpp" line="+391"/>
         <source>This device carries %n other device(s) (%1). Remove or repoint them first.</source>
         <translation>
             <numerusform>Questo dispositivo ne trasporta %n altro (%1). Rimuovilo o riassegnalo prima.</numerusform>
@@ -5193,7 +5338,33 @@ Consentiti: %1</translation>
         <translation>, </translation>
     </message>
     <message>
-        <location line="+812"/>
+        <location line="+305"/>
+        <source>AI assistant access is off.</source>
+        <translation>L'accesso degli assistenti IA è disattivato.</translation>
+    </message>
+    <message>
+        <location line="+12"/>
+        <source>AI assistant access could not start: %1</source>
+        <translation>Impossibile avviare l'accesso degli assistenti IA: %1</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>AI assistant connected: %1</source>
+        <translation>Assistente IA connesso: %1</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <location line="+6"/>
+        <source>unknown</source>
+        <translation>sconosciuto</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>AI assistant disconnected: %1</source>
+        <translation>Assistente IA disconnesso: %1</translation>
+    </message>
+    <message>
+        <location line="+537"/>
         <source>Pending</source>
         <translation>In attesa</translation>
     </message>
@@ -5342,12 +5513,12 @@ Perdite: %2</translation>
     </message>
     <message>
         <location line="+0"/>
-        <location line="+3764"/>
+        <location line="+3804"/>
         <source>Later</source>
         <translation>Più tardi</translation>
     </message>
     <message>
-        <location line="-3757"/>
+        <location line="-3797"/>
         <source>&amp;Access</source>
         <translation>&amp;Accesso</translation>
     </message>
@@ -5474,18 +5645,18 @@ Perdite: %2</translation>
     </message>
     <message>
         <location line="+18"/>
-        <location line="+3128"/>
+        <location line="+3168"/>
         <source>Undo</source>
         <translation>Annulla</translation>
     </message>
     <message>
-        <location line="-3126"/>
-        <location line="+3126"/>
+        <location line="-3166"/>
+        <location line="+3166"/>
         <source>Redo</source>
         <translation>Ripeti</translation>
     </message>
     <message>
-        <location line="-3083"/>
+        <location line="-3123"/>
         <source>Add Device</source>
         <translation>Aggiungi dispositivo</translation>
     </message>
@@ -5521,12 +5692,12 @@ Perdite: %2</translation>
     </message>
     <message>
         <location line="+29"/>
-        <location line="+3028"/>
+        <location line="+3068"/>
         <source>Fullscreen dashboard (F11)</source>
         <translation>Dashboard a schermo intero (F11)</translation>
     </message>
     <message>
-        <location line="-2848"/>
+        <location line="-2888"/>
         <source>Rename Workspace</source>
         <translation>Rinomina Spazio di Lavoro</translation>
     </message>
@@ -5607,7 +5778,7 @@ Perdite: %2</translation>
         <translation>Questa area di lavoro ora ha un aspetto proprio.</translation>
     </message>
     <message>
-        <location line="+705"/>
+        <location line="+727"/>
         <source>Robot or board</source>
         <translation>Robot o scheda</translation>
     </message>
@@ -5617,12 +5788,12 @@ Perdite: %2</translation>
         <translation>%1: trovato su %2</translation>
     </message>
     <message>
-        <location line="+329"/>
+        <location line="+339"/>
         <source>%1: trying %2</source>
         <translation>%1: provo %2</translation>
     </message>
     <message>
-        <location line="+425"/>
+        <location line="+429"/>
         <location line="+8"/>
         <location line="+5"/>
         <location line="+8"/>
@@ -5671,7 +5842,7 @@ Perdite: %2</translation>
         <translation>&quot;%1&quot; salvato nella galleria.</translation>
     </message>
     <message>
-        <location line="+538"/>
+        <location line="+542"/>
         <source>Update available: v%1</source>
         <translation>Aggiornamento disponibile: v%1</translation>
     </message>
@@ -5744,13 +5915,13 @@ Scegli Più tardi per continuare a lavorare -- le modifiche verranno applicate l
         <translation>Chiudi app</translation>
     </message>
     <message>
-        <location line="-3075"/>
-        <location line="+2876"/>
+        <location line="-3115"/>
+        <location line="+2916"/>
         <source>Devices</source>
         <translation>Dispositivi</translation>
     </message>
     <message>
-        <location line="-2801"/>
+        <location line="-2841"/>
         <source>Subscriptions</source>
         <translation>Sottoscrizioni</translation>
     </message>
@@ -5771,12 +5942,12 @@ Scegli Più tardi per continuare a lavorare -- le modifiche verranno applicate l
         <translation>Spazio di Lavoro</translation>
     </message>
     <message>
-        <location line="+19"/>
+        <location line="+9"/>
         <source>Created workspace &quot;%1&quot;.</source>
         <translation>Spazio di lavoro «%1» creato.</translation>
     </message>
     <message>
-        <location line="+14"/>
+        <location line="+30"/>
         <source>Delete Workspace</source>
         <translation>Elimina Spazio di Lavoro</translation>
     </message>
@@ -5786,29 +5957,29 @@ Scegli Più tardi per continuare a lavorare -- le modifiche verranno applicate l
         <translation>Eliminare lo spazio di lavoro «%1»? Questa azione non può essere annullata.</translation>
     </message>
     <message>
-        <location line="+16"/>
+        <location line="+24"/>
         <source>Deleted workspace &quot;%1&quot;.</source>
         <translation>Spazio di lavoro «%1» eliminato.</translation>
     </message>
     <message>
         <location line="+71"/>
-        <location line="+2401"/>
+        <location line="+2427"/>
         <source>Add widget</source>
         <translation>Aggiungi widget</translation>
     </message>
     <message>
-        <location line="-2398"/>
+        <location line="-2424"/>
         <source>Remove selected widget (%1)</source>
         <translation>Rimuovi widget selezionato (%1)</translation>
     </message>
     <message>
         <location line="+3"/>
-        <location line="+2408"/>
+        <location line="+2434"/>
         <source>Add device</source>
         <translation>Aggiungi dispositivo</translation>
     </message>
     <message>
-        <location line="-2405"/>
+        <location line="-2431"/>
         <source>Remove selected device (%1)</source>
         <translation>Rimuovi dispositivo selezionato (%1)</translation>
     </message>
@@ -5893,7 +6064,7 @@ Scegli Più tardi per continuare a lavorare -- le modifiche verranno applicate l
         <translation>Mostra i pannelli Livelli/Proprietà</translation>
     </message>
     <message>
-        <location line="+261"/>
+        <location line="+269"/>
         <source>New Device</source>
         <translation>Nuovo Dispositivo</translation>
     </message>
@@ -5959,17 +6130,17 @@ Scegli Più tardi per continuare a lavorare -- le modifiche verranno applicate l
         <translation>M&amp;ovimento</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="-1473"/>
+        <location filename="../lib/core/mainwindow.cpp" line="-1495"/>
         <source>Dashboard</source>
         <translation>Dashboard</translation>
     </message>
     <message>
-        <location line="+1823"/>
+        <location line="+1845"/>
         <source>%1: this BLE address now answers as a different robot (expected %2, got %3)</source>
         <translation>%1: questo indirizzo BLE ora risponde come un robot diverso (atteso %2, ricevuto %3)</translation>
     </message>
     <message>
-        <location line="+492"/>
+        <location line="+503"/>
         <source>Key &quot;%1&quot; is already used by another widget.</source>
         <translation>La chiave «%1» è già utilizzata da un altro widget.</translation>
     </message>
@@ -5984,7 +6155,7 @@ Scegli Più tardi per continuare a lavorare -- le modifiche verranno applicate l
         <translation>Scartare la dashboard attuale e iniziare un nuovo progetto vuoto?</translation>
     </message>
     <message>
-        <location line="+15"/>
+        <location line="+18"/>
         <source>Started a new project.</source>
         <translation>Nuovo progetto avviato.</translation>
     </message>
@@ -6000,8 +6171,8 @@ Scegli Più tardi per continuare a lavorare -- le modifiche verranno applicate l
         <translation>Salva progetto come</translation>
     </message>
     <message>
-        <location line="-3727"/>
-        <location line="+3741"/>
+        <location line="-3767"/>
+        <location line="+3781"/>
         <location line="+329"/>
         <source>Open Project</source>
         <translation>Apri progetto</translation>
@@ -6028,7 +6199,7 @@ Scegli Più tardi per continuare a lavorare -- le modifiche verranno applicate l
     </message>
     <message>
         <location line="+20"/>
-        <location line="+214"/>
+        <location line="+218"/>
         <source>Settings</source>
         <translation>Impostazioni</translation>
     </message>
@@ -7151,7 +7322,7 @@ Scegli Più tardi per continuare a lavorare -- le modifiche verranno applicate l
 <context>
     <name>traceview::SettingsPage</name>
     <message>
-        <location filename="../lib/core/settingspage.cpp" line="+204"/>
+        <location filename="../lib/core/settingspage.cpp" line="+207"/>
         <source>Settings</source>
         <translation>Impostazioni</translation>
     </message>
@@ -7187,19 +7358,19 @@ Scegli Più tardi per continuare a lavorare -- le modifiche verranno applicate l
     </message>
     <message>
         <location line="-270"/>
-        <location line="+329"/>
+        <location line="+362"/>
         <source>Diagnostics</source>
         <translation>Diagnostica</translation>
     </message>
     <message>
-        <location line="-328"/>
-        <location line="+380"/>
+        <location line="-361"/>
+        <location line="+413"/>
         <location line="+5"/>
         <source>Updates</source>
         <translation>Aggiornamenti</translation>
     </message>
     <message>
-        <location line="-343"/>
+        <location line="-376"/>
         <source>Project and startup preferences shared by the application.</source>
         <translation>Preferenze di progetto e avvio condivise dall&apos;applicazione.</translation>
     </message>
@@ -7488,7 +7659,32 @@ Scegli Più tardi per continuare a lavorare -- le modifiche verranno applicate l
         </translation>
     </message>
     <message>
-        <location line="+19"/>
+        <location line="+18"/>
+        <source>AI assistants</source>
+        <translation>Assistenti IA</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Let AI assistants such as Claude control TraceView</source>
+        <translation>Consenti ad assistenti IA come Claude di controllare TraceView</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>An assistant connected over MCP can then create workspaces and widgets, read telemetry and take screenshots of this window. Its dashboard edits can be undone.</source>
+        <translation>Un assistente connesso tramite MCP potrà creare aree di lavoro e widget, leggere la telemetria e catturare schermate di questa finestra. Le sue modifiche alla dashboard si possono annullare.</translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <source>To connect Claude Code, run this once in a terminal:</source>
+        <translation>Per collegare Claude Code, esegui questo comando una volta in un terminale:</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Copy command</source>
+        <translation>Copia comando</translation>
+    </message>
+    <message>
+        <location line="+11"/>
         <source>Keep enough history for investigation without letting long-running sessions use unbounded memory.</source>
         <translation>Conserva abbastanza cronologia per le indagini senza che le sessioni lunghe usino memoria illimitata.</translation>
     </message>

@@ -107,7 +107,9 @@ bool touchesLinks(const QJsonObject& changes) {
 QString settingsHelp() {
     return QStringLiteral(
         "Device settings, the same JSON as the project file: name, description, transportType "
-        "(0 serial, 1 USB HID, 2 hub channel = a robot reached through a dongle, 3 TCP, 4 BLE), "
+        "(0 serial, 1 USB HID, 2 hub channel = a robot reached through a dongle, 3 TCP, 4 BLE, "
+        "5 an in-process module device with moduleType + moduleConfig, such as TraceLab's "
+        "plant and controller -- for those prefer the lab_* tools), "
         "portName + baudRate + lineTerminator (0 none, 1 LF, 2 CR, 3 CRLF) for serial, usbPath "
         "for USB HID, tcpHost + tcpPort for TCP, bleAddress (advertised name or address) for "
         "BLE, parentDeviceId + peerSourceId for a hub channel, robotName + autoTarget to find "

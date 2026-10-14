@@ -96,6 +96,13 @@ TraceView (the running window)      lib/agent/agentbridgeserver.cpp
 | Appearance | `get_appearance`, `set_appearance`, `apply_appearance_preset`, `save_appearance_preset`, `delete_appearance_preset`¹, `pin_workspace_appearance`, `create_palette`, `update_palette`, `delete_palette`¹, `set_language`, `set_font` |
 | Settings | `get_settings`, `update_settings` (everything in the Settings window except appearance) |
 | Diagnostics | `read_notifications`, `read_app_log`, `read_btp_traffic` |
+| TraceLab³ | `lab_get_state` (plants, controllers, filters, clocks, compile state), `lab_code_reference` (the full `tracelab.h`), `lab_list_templates`, `lab_add_plant`, `lab_add_controller`, `lab_add_filter`, `lab_remove_filter`, `lab_get_block` (source, compiler messages, faults, log, declarations, live signals), `lab_write_block` (write C and compile, messages back), `lab_set_block_source`, `lab_set_params`, `lab_simulation` (play/pause/reset/step), `lab_run` (run N simulated seconds, then report), `lab_set_clock`, `lab_set_plant_settings`, `lab_add_scene`, `lab_open_example`¹ |
+
+³ Only while the TraceLab module is enabled; it registers them itself
+(`lab/module/labagenttools.cpp`, through `ModuleHost::agentTools()`). The
+simulated plant and controller are ordinary devices too, so the telemetry
+and dashboard tools work on them, and a dashboard built on a simulation
+moves to the real robot by name.
 
 ¹ Asks the user in a dialog every time: these can't be undone, or replace
 unsaved work, or flash firmware.
@@ -108,6 +115,12 @@ closes.
 Not exposed on purpose: logging in to Developer mode and managing users
 (an assistant must not be able to elevate itself), and turning assistant
 access itself on or off.
+
+A typical TraceLab session: `lab_add_plant` → `lab_add_controller` with a
+template → `lab_code_reference` and `lab_get_block` → `lab_write_block`
+until `accepted` is true → `lab_add_scene` and charts by topic/field name →
+`lab_run` → `read_signal` for overshoot, settling, error → tune with
+`lab_set_params` → run again.
 
 Widget positions go over the wire in grid cells: columns across the canvas
 width and rows per page (one viewport height) of each layout (`large`,

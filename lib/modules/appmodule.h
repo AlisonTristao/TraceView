@@ -9,6 +9,7 @@ class QWidget;
 
 namespace traceview {
 
+class ToolRegistry;
 class WidgetRegistry;
 struct ModuleDeviceType;
 
@@ -93,6 +94,13 @@ public:
         (void)typeId;
         (void)config;
         return false;
+    }
+
+    // Where the module registers the tools AI assistants drive it with over
+    // MCP (agent/toolregistry.h, docs/MCP.md): every action of the module's
+    // UI should have one. Null when the host has no assistant support.
+    virtual ToolRegistry* agentTools() {
+        return nullptr;
     }
 
 protected:

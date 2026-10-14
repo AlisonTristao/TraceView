@@ -67,6 +67,16 @@ public:
     static QString lineFollowerProjectPath();
     static QString furutaProjectPath();
 
+    // The benchmark a plant comes from ("linefollower", "furuta"): the first
+    // segment of its template's id, or of its file's origin line.
+    static QString benchmarkOf(LabPlantDevice* plant);
+    // The scene that animates `plant` (a SceneRegistry type id).
+    static QString sceneTypeOf(LabPlantDevice* plant);
+    // A Scene widget's config bound by name to the plant and controller
+    // (empty without a scene type for it) -- what Add scene places.
+    static QJsonObject sceneWidgetConfig(const QString& plantDeviceId,
+                                         const QString& controllerDeviceId);
+
     void showCategory(Category category);
     Category currentCategory() const;
     // The block the Code, Parameters and Signals pages show (null: none).
@@ -141,8 +151,6 @@ private:
     LabPlantDevice* plant() const;
     LabControllerDevice* controller() const;
     QString plantId() const;
-    // The benchmark the current plant comes from ("linefollower", "furuta"):
-    // the first segment of its template's id, or of its file's origin line.
     QString plantBenchmark() const;
     // The scene that animates the current plant (a SceneRegistry type id).
     QString sceneType() const;
