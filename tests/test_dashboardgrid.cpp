@@ -15,6 +15,7 @@
 using traceview::DashboardBreakpoint;
 using traceview::DashboardCell;
 using traceview::DashboardGrid;
+using traceview::DashboardItem;
 using traceview::DashboardLayerEntry;
 using traceview::DashboardWidget;
 using traceview::ThemeManager;
@@ -97,6 +98,10 @@ private slots:
     void rubberBandSelectsAndDragsMultipleItemsRigidly();
     void groupAndUngroupAreUndoable();
     void removeSelectedRemovesWholeMultiSelectionWithUndo();
+    void insertItemKeepsGivenFieldsAndFillsMissingLayouts();
+    void insertItemRejectsUnknownTypeAndTakenKey();
+    void itemAddressedEditsAreUndoableAndLeaveSelectionAlone();
+    void setItemGeometryRejectsOffCanvas();
 };
 
 void TestDashboardGrid::addItemPushesUndoableCommand() {
@@ -978,6 +983,102 @@ void TestDashboardGrid::removeSelectedRemovesWholeMultiSelectionWithUndo() {
 }
 
 }  // namespace
+
+void TestDashboardGrid::insertItemKeepsGivenFieldsAndFillsMissingLayouts() {
+    DashboardGrid grid;
+    DashboardItem item;
+    item.id = "ignored";
+    item.typeId = "dummy_gauge";
+    item.name = "Speed";
+    item.key = "speed";
+    item.config = QJsonObject{{"min", 0}, {"max", 10}};
+    item.geometry(DashboardBreakpoint::Large) = {0.5, 0.25, 0.25, 0.5};
+
+    const QString id = grid.insertItem(item);
+    QVERIFY(!id.isEmpty());
+    QVERIFY(id != "ignored");
+    QCOMPARE(grid.undoStack()->count(), 1);
+    QVERIFY(grid.selectedItemId().isEmpty());
+    const DashboardItem* added = grid.findItem(id);
+    QVERIFY(added);
+    QCOMPARE(added->name, QString("Speed"));
+    QCOMPARE(added->key, QString("speed"));
+    QCOMPARE(added->config.value("max").toInt(), 10);
+    QCOMPARE(added->geometry(DashboardBreakpoint::Large).x, 0.5);
+    // Small had no size given, so it got that layout's default footprint.
+    QVERIFY(added->geometry(DashboardBreakpoint::Small).width > 0.0);
+    QVERIFY(added->geometry(DashboardBreakpoint::Small).height > 0.0);
+}
+
+void TestDashboardGrid::insertItemRejectsUnknownTypeAndTakenKey() {
+    DashboardGrid grid;
+    DashboardItem item;
+    item.typeId = "does_not_exist";
+    QString error;
+    QVERIFY(grid.insertItem(item, &error).isEmpty());
+    QVERIFY(!error.isEmpty());
+
+    item.typeId = "dummy_line";
+    item.key = "k";
+    QVERIFY(!grid.insertItem(item).isEmpty());
+    error.clear();
+    QVERIFY(grid.insertItem(item, &error).isEmpty());
+    QVERIFY(!error.isEmpty());
+    QCOMPARE(grid.items().size(), 1);
+}
+
+void TestDashboardGrid::itemAddressedEditsAreUndoableAndLeaveSelectionAlone() {
+    DashboardGrid grid;
+    grid.addItem("dummy_line");
+    const QString selected = grid.selectedItemId();
+    DashboardItem item;
+    item.typeId = "dummy_line";
+    const QString id = grid.insertItem(item);
+    grid.undoStack()->clear();
+
+    QVERIFY(grid.renameItem(id, "Renamed"));
+    QVERIFY(grid.setItemKey(id, "key"));
+    QVERIFY(!grid.setItemKey(selected, "key"));
+    QVERIFY(grid.setItemConfig(id, QJsonObject{{"topicId", "0x0101"}}));
+    QVERIFY(grid.changeItemType(id, "dummy_bar"));
+    QVERIFY(!grid.changeItemType(id, "does_not_exist"));
+    QVERIFY(!grid.renameItem("missing", "x"));
+    QCOMPARE(grid.selectedItemId(), selected);
+    QCOMPARE(grid.undoStack()->count(), 4);
+    QCOMPARE(grid.findItem(id)->typeId, QString("dummy_bar"));
+
+    while (grid.undoStack()->canUndo()) {
+        grid.undoStack()->undo();
+    }
+    QCOMPARE(grid.findItem(id)->name, QString());
+    QCOMPARE(grid.findItem(id)->key, QString());
+    QCOMPARE(grid.findItem(id)->typeId, QString("dummy_line"));
+
+    QCOMPARE(grid.removeItems({id, selected, "missing"}), 2);
+    QVERIFY(grid.items().isEmpty());
+    grid.undoStack()->undo();
+    QCOMPARE(grid.items().size(), 2);
+}
+
+void TestDashboardGrid::setItemGeometryRejectsOffCanvas() {
+    DashboardGrid grid;
+    DashboardItem item;
+    item.typeId = "dummy_line";
+    const QString id = grid.insertItem(item);
+    grid.undoStack()->clear();
+
+    QString error;
+    QVERIFY(
+        !grid.setItemGeometry(id, DashboardBreakpoint::Large, QRectF(0.8, 0, 0.4, 0.5), &error));
+    QVERIFY(!error.isEmpty());
+    QVERIFY(!grid.setItemGeometry(id, DashboardBreakpoint::Large, QRectF(0, 0, 0, 0.5)));
+    QCOMPARE(grid.undoStack()->count(), 0);
+
+    QVERIFY(grid.setItemGeometry(id, DashboardBreakpoint::Large, QRectF(0.5, 0.5, 0.5, 0.5)));
+    QCOMPARE(grid.findItem(id)->geometry(DashboardBreakpoint::Large).x, 0.5);
+    QCOMPARE(grid.undoStack()->count(), 1);
+    QCOMPARE(DashboardGrid::gridColumns(DashboardBreakpoint::Large), 60);
+}
 
 QTEST_MAIN(TestDashboardGrid)
 #include "test_dashboardgrid.moc"

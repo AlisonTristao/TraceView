@@ -333,20 +333,40 @@ QJsonObject DashboardGrid::selectedItemConfig() const {
 }
 
 void DashboardGrid::addItem(const QString& typeId) {
+    DashboardItem item;
+    item.typeId = typeId;
+    const QString id = insertItem(item);
+    // Selected right away so the properties panel comes up already showing
+    // it — type/name/key are picked there now, not in an upfront dialog.
+    if (!id.isEmpty()) {
+        selectItem(id);
+    }
+}
+
+QString DashboardGrid::insertItem(DashboardItem item, QString* error) {
     // wantsCellHeader() is only known once an instance exists, so a
     // throwaway probe (same WidgetRegistry::create() createCell() below
     // will use for real) decides which default footprint applies -- keeps
     // "which kinds are compact" defined in exactly one place (DashboardWidget::
     // wantsCellHeader()) instead of a second typeId list here that could
     // drift out of sync with widgets/controlwidgets.h.
-    bool headerless = false;
-    if (DashboardWidget* probe = WidgetRegistry::instance().create(typeId, nullptr)) {
-        headerless = !probe->wantsCellHeader();
-        delete probe;
+    DashboardWidget* probe = WidgetRegistry::instance().create(item.typeId, nullptr);
+    if (!probe) {
+        if (error) {
+            *error = QStringLiteral("Unknown widget type \"%1\".").arg(item.typeId);
+        }
+        return QString();
     }
-    DashboardItem item;
+    const bool headerless = !probe->wantsCellHeader();
+    delete probe;
+    if (!isKeyAvailable(item.key, QString())) {
+        if (error) {
+            *error = QStringLiteral("Another widget already uses the key \"%1\".").arg(item.key);
+        }
+        return QString();
+    }
+
     item.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
-    item.typeId = typeId;
     // Each screen-size layout gets its own default footprint (in that
     // breakpoint's own cells -- a phone's default is full width, a
     // notebook's a quarter) placed in that layout's first free spot, so a
@@ -354,6 +374,10 @@ void DashboardGrid::addItem(const QString& typeId) {
     // something in the others.
     for (int i = 0; i < kDashboardBreakpointCount; ++i) {
         const DashboardBreakpoint breakpoint = DashboardBreakpoint(i);
+        DashboardItem::Geometry& geometry = item.geometry(breakpoint);
+        if (geometry.width > 0.0 && geometry.height > 0.0) {
+            continue;
+        }
         const GridSpec& spec = gridSpec(breakpoint);
         const double width =
             (headerless ? spec.defaultHeaderlessColumns : spec.defaultColumns) /
@@ -366,38 +390,128 @@ void DashboardGrid::addItem(const QString& typeId) {
             x = 0.0;
             y = 0.0;
         }
-        item.geometry(breakpoint) = {x, y, width, height};
+        geometry = {x, y, width, height};
     }
 
     m_undoStack->push(new AddWidgetCommand(this, item));
-    // Selected right away so the properties panel comes up already showing
-    // it — type/name/key are picked there now, not in an upfront dialog.
-    selectItem(item.id);
+    return item.id;
 }
 
-void DashboardGrid::removeSelected() {
-    if (m_selectedItemIds.isEmpty()) {
-        return;
+bool DashboardGrid::renameItem(const QString& itemId, const QString& name) {
+    const DashboardItem* item = itemById(itemId);
+    if (!item) {
+        return false;
     }
-    if (m_selectedItemIds.size() == 1) {
-        if (const DashboardItem* item = itemById(*m_selectedItemIds.constBegin())) {
-            m_undoStack->push(new RemoveWidgetCommand(this, *item));
-        }
-        return;
+    if (item->name != name) {
+        m_undoStack->push(new RenameWidgetCommand(this, itemId, item->name, name));
     }
+    return true;
+}
 
-    // Collected in model order (not selection-set order) so undo reinserts
-    // them in a stable, predictable sequence -- same reasoning as why a
-    // single removed item is simply appended back on undo.
+bool DashboardGrid::setItemKey(const QString& itemId, const QString& key) {
+    const DashboardItem* item = itemById(itemId);
+    if (!item) {
+        return false;
+    }
+    if (item->key == key) {
+        return true;
+    }
+    if (!isKeyAvailable(key, itemId)) {
+        return false;
+    }
+    m_undoStack->push(new SetItemKeyCommand(this, itemId, item->key, key));
+    return true;
+}
+
+bool DashboardGrid::setItemConfig(const QString& itemId, const QJsonObject& newConfig) {
+    const DashboardItem* item = itemById(itemId);
+    if (!item) {
+        return false;
+    }
+    QJsonObject config = newConfig;
+    if (!config.contains(QLatin1String("view")) && item->config.contains(QLatin1String("view"))) {
+        config[QLatin1String("view")] = item->config.value(QLatin1String("view"));
+    }
+    // Compared as stored: an editor that left out a name the resolver fills
+    // straight back in has not changed anything.
+    if (item->config != resolvedConfig(config)) {
+        m_undoStack->push(new SetItemConfigCommand(this, itemId, item->config, config));
+    }
+    return true;
+}
+
+bool DashboardGrid::changeItemType(const QString& itemId, const QString& typeId) {
+    const DashboardItem* item = itemById(itemId);
+    if (!item || WidgetRegistry::instance().displayName(typeId).isEmpty()) {
+        return false;
+    }
+    if (item->typeId != typeId) {
+        m_undoStack->push(new ChangeWidgetTypeCommand(this, itemId, item->typeId, typeId));
+    }
+    return true;
+}
+
+bool DashboardGrid::setItemGeometry(const QString& itemId, DashboardBreakpoint breakpoint,
+                                    const QRectF& geometry, QString* error) {
+    const DashboardItem* item = itemById(itemId);
+    if (!item) {
+        if (error) {
+            *error = QStringLiteral("Unknown widget \"%1\".").arg(itemId);
+        }
+        return false;
+    }
+    DashboardItem candidate = *item;
+    candidate.geometry(breakpoint) = {geometry.x(), geometry.y(), geometry.width(),
+                                      geometry.height()};
+    if (geometry.width() <= 0.0 || geometry.height() <= 0.0 ||
+        !isPlacementValidIn(candidate, breakpoint)) {
+        if (error) {
+            *error = QStringLiteral("The %1 layout has no room for that position and size.")
+                         .arg(breakpointToString(breakpoint));
+        }
+        return false;
+    }
+    const DashboardItem::Geometry& from = item->geometry(breakpoint);
+    const QRectF fromRect(from.x, from.y, from.width, from.height);
+    if (fromRect != geometry) {
+        m_undoStack->push(new ResizeWidgetCommand(this, itemId, fromRect, geometry, breakpoint));
+    }
+    return true;
+}
+
+int DashboardGrid::removeItems(const QStringList& itemIds) {
+    // Collected in model order (not argument order) so undo reinserts them
+    // in a stable, predictable sequence -- same reasoning as why a single
+    // removed item is simply appended back on undo.
     QVector<DashboardItem> items;
     for (const DashboardItem& item : m_items) {
-        if (m_selectedItemIds.contains(item.id)) {
+        if (itemIds.contains(item.id)) {
             items.append(item);
         }
     }
-    if (!items.isEmpty()) {
+    if (items.size() == 1) {
+        m_undoStack->push(new RemoveWidgetCommand(this, items.first()));
+    } else if (!items.isEmpty()) {
         m_undoStack->push(new RemoveWidgetsCommand(this, items));
     }
+    return items.size();
+}
+
+QPixmap DashboardGrid::grabItem(const QString& itemId) {
+    DashboardCell* cell = m_cells.value(itemId);
+    return cell ? cell->grab() : QPixmap();
+}
+
+int DashboardGrid::gridColumns(DashboardBreakpoint breakpoint) {
+    return gridSpec(breakpoint).columns;
+}
+
+int DashboardGrid::gridRowsPerPage(DashboardBreakpoint breakpoint) {
+    return gridSpec(breakpoint).rowsPerPage;
+}
+
+void DashboardGrid::removeSelected() {
+    removeItems(QStringList(m_selectedItemIds.cbegin(), m_selectedItemIds.cend()));
 }
 
 void DashboardGrid::copySelected() const {
@@ -488,72 +602,19 @@ void DashboardGrid::removeItem(const QString& itemId) {
 }
 
 void DashboardGrid::changeSelectedType(const QString& newTypeId) {
-    const QString id = selectedItemId();
-    if (id.isEmpty()) {
-        return;
-    }
-    const DashboardItem* item = itemById(id);
-    if (!item || item->typeId == newTypeId ||
-        WidgetRegistry::instance().displayName(newTypeId).isEmpty()) {
-        return;
-    }
-
-    m_undoStack->push(new ChangeWidgetTypeCommand(this, id, item->typeId, newTypeId));
+    changeItemType(selectedItemId(), newTypeId);
 }
 
 void DashboardGrid::renameSelected(const QString& newName) {
-    const QString id = selectedItemId();
-    if (id.isEmpty()) {
-        return;
-    }
-    const DashboardItem* item = itemById(id);
-    if (!item || item->name == newName) {
-        return;
-    }
-
-    m_undoStack->push(new RenameWidgetCommand(this, id, item->name, newName));
+    renameItem(selectedItemId(), newName);
 }
 
 bool DashboardGrid::setSelectedKey(const QString& newKey) {
-    const QString id = selectedItemId();
-    if (id.isEmpty()) {
-        return false;
-    }
-    const DashboardItem* item = itemById(id);
-    if (!item) {
-        return false;
-    }
-    if (item->key == newKey) {
-        return true;
-    }
-    if (!isKeyAvailable(newKey, id)) {
-        return false;
-    }
-
-    m_undoStack->push(new SetItemKeyCommand(this, id, item->key, newKey));
-    return true;
+    return setItemKey(selectedItemId(), newKey);
 }
 
 void DashboardGrid::changeSelectedConfig(const QJsonObject& newConfig) {
-    const QString id = selectedItemId();
-    if (id.isEmpty()) {
-        return;
-    }
-    const DashboardItem* item = itemById(id);
-    if (!item) {
-        return;
-    }
-    QJsonObject config = newConfig;
-    if (!config.contains(QLatin1String("view")) && item->config.contains(QLatin1String("view"))) {
-        config[QLatin1String("view")] = item->config.value(QLatin1String("view"));
-    }
-    // Compared as stored: an editor that left out a name the resolver fills
-    // straight back in has not changed anything.
-    if (item->config == resolvedConfig(config)) {
-        return;
-    }
-
-    m_undoStack->push(new SetItemConfigCommand(this, id, item->config, config));
+    setItemConfig(selectedItemId(), newConfig);
 }
 
 void DashboardGrid::handleViewConfigChanged(const QString& itemId, const QJsonObject& view) {

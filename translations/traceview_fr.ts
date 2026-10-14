@@ -2,6 +2,150 @@
 <!DOCTYPE TS>
 <TS version="2.1" language="fr">
 <context>
+    <name>AgentAppTools</name>
+    <message>
+        <location filename="../lib/core/agentapptools.cpp" line="+207"/>
+        <source>AI Assistant</source>
+        <translation>Assistant IA</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>An AI assistant wants to %1.
+
+Allow it to connect devices and send them commands until AI assistant access is turned off or TraceView closes?</source>
+        <translation>Un assistant IA veut %1.
+
+L’autoriser à connecter des appareils et à leur envoyer des commandes jusqu’à ce que l’accès des assistants IA soit désactivé ou que TraceView soit fermé ?</translation>
+    </message>
+    <message>
+        <location line="+276"/>
+        <source>An AI assistant created workspace &quot;%1&quot;.</source>
+        <translation>Un assistant IA a créé l'espace de travail « %1 ».</translation>
+    </message>
+    <message>
+        <location line="+81"/>
+        <source>Delete Workspace</source>
+        <translation>Supprimer l&apos;espace de travail</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>An AI assistant wants to delete workspace &quot;%1&quot;. This cannot be undone.</source>
+        <translation>Un assistant IA veut supprimer l'espace de travail « %1 ». Cette action est irréversible.</translation>
+    </message>
+    <message>
+        <location line="+63"/>
+        <source>Add Widget (AI assistant)</source>
+        <translation>Ajouter un widget (assistant IA)</translation>
+    </message>
+    <message>
+        <location line="+53"/>
+        <source>Edit Widget (AI assistant)</source>
+        <translation>Modifier le widget (assistant IA)</translation>
+    </message>
+    <message>
+        <location line="+318"/>
+        <source>New Project</source>
+        <translation>Nouveau projet</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>An AI assistant wants to start a new, empty project. Unsaved changes to the current one will be lost.</source>
+        <translation>Un assistant IA veut créer un projet vide. Les modifications non enregistrées du projet actuel seront perdues.</translation>
+    </message>
+    <message>
+        <location line="+14"/>
+        <source>Open Project</source>
+        <translation>Ouvrir un projet</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>An AI assistant wants to open &quot;%1&quot;. Unsaved changes to the current project will be lost.</source>
+        <translation>Un assistant IA veut ouvrir « %1 ». Les modifications non enregistrées du projet actuel seront perdues.</translation>
+    </message>
+    <message>
+        <location line="+75"/>
+        <source>Add to Gallery</source>
+        <translation>Ajouter à la galerie</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>An AI assistant wants to replace the gallery dashboard &quot;%1&quot;.</source>
+        <translation>Un assistant IA veut remplacer le tableau de bord « %1 » de la galerie.</translation>
+    </message>
+    <message>
+        <location line="+52"/>
+        <source>Delete Dashboard</source>
+        <translation>Supprimer le dashboard</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>An AI assistant wants to delete the gallery dashboard &quot;%1&quot;. This cannot be undone.</source>
+        <translation>Un assistant IA veut supprimer le tableau de bord « %1 » de la galerie. Cette action est irréversible.</translation>
+    </message>
+    <message>
+        <location line="+50"/>
+        <source>An AI assistant saved the project to %1.</source>
+        <translation>Un assistant IA a enregistré le projet dans %1.</translation>
+    </message>
+    <message>
+        <location filename="../lib/core/agentdevicetools.cpp" line="+191"/>
+        <location line="+50"/>
+        <source>set up how a device is reached</source>
+        <translation>configurer la façon de joindre un appareil</translation>
+    </message>
+    <message>
+        <location line="+70"/>
+        <source>connect a device</source>
+        <translation>connecter un appareil</translation>
+    </message>
+    <message>
+        <location line="+151"/>
+        <location line="+41"/>
+        <source>send commands to a device</source>
+        <translation>envoyer des commandes à un appareil</translation>
+    </message>
+    <message>
+        <location line="+176"/>
+        <source>run a script that controls a device</source>
+        <translation>exécuter un script qui pilote un appareil</translation>
+    </message>
+    <message>
+        <location line="+95"/>
+        <source>Firmware Update</source>
+        <translation>Mise à jour du firmware</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>An AI assistant wants to flash &quot;%1&quot; onto %2. The device restarts with the new firmware.</source>
+        <translation>Un assistant IA veut flasher « %1 » sur %2. L’appareil redémarre avec le nouveau firmware.</translation>
+    </message>
+    <message>
+        <location line="+15"/>
+        <source>Uploading firmware to %1: %2%</source>
+        <translation>Envoi du firmware vers %1 : %2%</translation>
+    </message>
+    <message>
+        <location filename="../lib/core/agentpreferencetools.cpp" line="+298"/>
+        <source>Delete Preset</source>
+        <translation>Supprimer le préréglage</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>An AI assistant wants to delete the appearance preset &quot;%1&quot;.</source>
+        <translation>Un assistant IA veut supprimer le préréglage d’apparence « %1 ».</translation>
+    </message>
+    <message>
+        <location line="+127"/>
+        <source>Delete Palette</source>
+        <translation>Supprimer la palette</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>An AI assistant wants to delete the palette &quot;%1&quot;.</source>
+        <translation>Un assistant IA veut supprimer la palette « %1 ».</translation>
+    </message>
+</context>
+<context>
     <name>Appearance</name>
     <message>
         <location filename="../lib/theme/appearance.cpp" line="+124"/>
@@ -145,14 +289,14 @@
 <context>
     <name>ChartWidgets</name>
     <message>
-        <location filename="../lib/dashboard/widgets/chartwidgets.cpp" line="+38"/>
+        <location filename="../lib/dashboard/widgets/chartwidgets.cpp" line="+47"/>
         <source>Field %1</source>
         <translation>Champ %1</translation>
     </message>
     <message>
         <location line="+9"/>
-        <location line="+507"/>
-        <location line="+231"/>
+        <location line="+580"/>
+        <location line="+232"/>
         <source>--</source>
         <translation>--</translation>
     </message>
@@ -163,12 +307,12 @@
     </message>
     <message>
         <location line="+6"/>
-        <location line="+305"/>
+        <location line="+362"/>
         <source>%1  %2</source>
         <translation>%1  %2</translation>
     </message>
     <message>
-        <location line="+133"/>
+        <location line="+145"/>
         <source>A-B %1 s</source>
         <translation>A-B %1 s</translation>
     </message>
@@ -233,12 +377,12 @@
         <translation>en pause</translation>
     </message>
     <message>
-        <location line="-739"/>
+        <location line="-809"/>
         <source>%1: %2</source>
         <translation>%1: %2</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/chartpainting.cpp" line="+879"/>
+        <location filename="../lib/dashboard/widgets/chartpainting.cpp" line="+898"/>
         <source>Time (s)</source>
         <translation>Temps (s)</translation>
     </message>
@@ -251,7 +395,7 @@
 <context>
     <name>ControlConfigEditor</name>
     <message>
-        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="+24"/>
+        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="+25"/>
         <source>Default</source>
         <translation>Par défaut</translation>
     </message>
@@ -289,6 +433,14 @@
         <location line="+1"/>
         <source>On release</source>
         <translation>Au relâchement</translation>
+    </message>
+</context>
+<context>
+    <name>ControllerHost</name>
+    <message>
+        <location filename="../lab/control/controllerhost.cpp" line="+160"/>
+        <source>the diagnostic %1 is declared twice or is one of ctl.diag&apos;s own fields (%2)</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -390,7 +542,7 @@
 <context>
     <name>Device</name>
     <message>
-        <location filename="../lib/devices/device.h" line="+54"/>
+        <location filename="../lib/devices/device.h" line="+58"/>
         <source>Serial</source>
         <translation>Série</translation>
     </message>
@@ -415,7 +567,12 @@
         <translation>BLE</translation>
     </message>
     <message>
-        <location filename="../lib/devices/device.cpp" line="+292"/>
+        <location line="+2"/>
+        <source>Built-in</source>
+        <translation>Intégré</translation>
+    </message>
+    <message>
+        <location filename="../lib/devices/device.cpp" line="+303"/>
         <source>auto</source>
         <translation>auto</translation>
     </message>
@@ -444,6 +601,69 @@
         <location filename="../lib/theme/dialogpresenter.cpp" line="+90"/>
         <source>Back</source>
         <translation>Retour</translation>
+    </message>
+</context>
+<context>
+    <name>DiffDriveScene</name>
+    <message>
+        <location filename="../lab/scenes/diffdrivescene.cpp" line="+131"/>
+        <source>Scale</source>
+        <translation>Échelle</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Wheel distance</source>
+        <translation>Écartement des roues</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Sensor distance</source>
+        <translation>Distance des capteurs</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Sensor count</source>
+        <translation>Nombre de capteurs</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Sensor spacing</source>
+        <translation>Espacement des capteurs</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Line radius</source>
+        <translation>Rayon de la ligne</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Render radius</source>
+        <translation>Rayon d&apos;affichage</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Perturbation step</source>
+        <translation>Pas de perturbation</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Antialiasing</source>
+        <translation>Anticrénelage</translation>
+    </message>
+    <message>
+        <location line="+281"/>
+        <source>covered: %1%</source>
+        <translation>couvert : %1 %</translation>
+    </message>
+    <message>
+        <location line="-1"/>
+        <source>score: %1</source>
+        <translation>score : %1</translation>
+    </message>
+    <message>
+        <location filename="../lab/scenes/sceneregistry.cpp" line="+51"/>
+        <source>Line follower</source>
+        <translation>Suiveur de ligne</translation>
     </message>
 </context>
 <context>
@@ -478,9 +698,259 @@
     </message>
 </context>
 <context>
+    <name>FurutaScene</name>
+    <message>
+        <location filename="../lab/scenes/furutascene.cpp" line="+555"/>
+        <source>Arm length (L1)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Pendulum length (l2)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>View azimuth</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>View elevation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Torque at full arrow</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Perturbation step</source>
+        <translation type="unfinished">Pas de perturbation</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Angles and labels</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Torque arrow</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Predicted path</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Trail of the mass</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Antialiasing</source>
+        <translation type="unfinished">Anticrénelage</translation>
+    </message>
+    <message>
+        <location line="+389"/>
+        <source>   (ref %1)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>disturbance = %1 N·m</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>solve %1 ms</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source> · QPs %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Waiting for theta1 and theta2 (sim.truth)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>drag: orbit · wheel: zoom · double click: figure view · P / O / R: disturbance</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../lab/scenes/sceneregistry.cpp" line="+3"/>
+        <source>Furuta pendulum</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>LabAgentTools</name>
+    <message>
+        <location filename="../lab/module/labagenttools.cpp" line="+948"/>
+        <source>Open Example</source>
+        <translation>Ouvrir un exemple</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>An AI assistant wants to open the TraceLab example &quot;%1&quot;. Unsaved changes to the current project will be lost.</source>
+        <translation>Un assistant IA veut ouvrir l’exemple TraceLab « %1 ». Les modifications non enregistrées du projet actuel seront perdues.</translation>
+    </message>
+</context>
+<context>
+    <name>LabControllerDevice</name>
+    <message>
+        <location filename="../lab/control/labdevices.cpp" line="+257"/>
+        <source>file not found: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+139"/>
+        <source>Controller</source>
+        <translation type="unfinished">Contrôleur</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Filter %1 of %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+28"/>
+        <source>Uses the plant&apos;s preview of the track (TL_PREVIEW): information a real robot may not have.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>LabDevices</name>
+    <message>
+        <location line="+241"/>
+        <source>TraceLab: Plant</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+25"/>
+        <source>TraceLab: Controller</source>
+        <translation type="unfinished">TraceLab : Contrôleur</translation>
+    </message>
+</context>
+<context>
+    <name>LabModule</name>
+    <message>
+        <location filename="../lab/module/labmodule.cpp" line="+26"/>
+        <source>TraceLab</source>
+        <translation>TraceLab</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Simulates a plant, closes the loop with your controller and animates it.</source>
+        <translation>Simule un procédé, ferme la boucle avec votre contrôleur et l&apos;anime.</translation>
+    </message>
+    <message>
+        <location line="+27"/>
+        <source>Line follower (C++)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../lab/module/labagenttools.cpp" line="-3"/>
+        <location filename="../lab/module/labmodule.cpp" line="+7"/>
+        <location line="+11"/>
+        <source>Furuta pendulum</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../lab/module/labmodule.cpp" line="-4"/>
+        <location line="+3"/>
+        <source>TraceLab benchmarks</source>
+        <translation>Bancs d&apos;essai TraceLab</translation>
+    </message>
+    <message>
+        <location filename="../lab/module/labagenttools.cpp" line="+1"/>
+        <location filename="../lab/module/labmodule.cpp" line="-23"/>
+        <location line="+21"/>
+        <source>Line follower</source>
+        <translation>Suiveur de ligne</translation>
+    </message>
+</context>
+<context>
+    <name>LineControllerAdapter</name>
+    <message>
+        <location filename="../lab/benchmarks/linefollower/device/lfcontrolleradapter.cpp" line="+138"/>
+        <source>PD (line sensors)</source>
+        <translation>PD (capteurs de ligne)</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>no controller</source>
+        <translation>aucun contrôleur</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source> + low-pass %1 s</source>
+        <translation> + passe-bas %1 s</translation>
+    </message>
+    <message>
+        <location line="+28"/>
+        <source>the plant does not publish s[] and take u_l, u_r</source>
+        <translation>le système ne publie pas s[] et ne reçoit pas u_l, u_r</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>the plant does not publish w_l, w_r and take u_l, u_r</source>
+        <translation>l&apos;installation ne publie pas w_l, w_r et ne reçoit pas u_l, u_r</translation>
+    </message>
+</context>
+<context>
+    <name>LineFollowerDevices</name>
+    <message>
+        <location filename="../lab/benchmarks/linefollower/device/lfdevices.cpp" line="+174"/>
+        <source>TraceLab: Line follower</source>
+        <translation>TraceLab : Suiveur de ligne</translation>
+    </message>
+    <message>
+        <location line="+24"/>
+        <source>TraceLab: Line-follower controller (C++)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+14"/>
+        <source>Line-follower controller (C++)</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>LinePlantDevice</name>
+    <message>
+        <location filename="../lab/benchmarks/linefollower/device/lfplantdevice.cpp" line="+198"/>
+        <source>Line follower</source>
+        <translation type="unfinished">Suiveur de ligne</translation>
+    </message>
+    <message>
+        <location line="+95"/>
+        <source>covered</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <location line="+4"/>
+        <source>%1 %</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-1"/>
+        <source>perturbation</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>MainWindow</name>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="+133"/>
+        <location filename="../lib/core/mainwindow.cpp" line="+141"/>
         <source>TraceView Project (*.tvproj)</source>
         <translation>Projet TraceView (*.tvproj)</translation>
     </message>
@@ -735,6 +1205,14 @@
     </message>
 </context>
 <context>
+    <name>SceneWidget</name>
+    <message>
+        <location filename="../lab/scenes/scenewidget.cpp" line="+550"/>
+        <source>Scene</source>
+        <translation>Scène</translation>
+    </message>
+</context>
+<context>
     <name>ThemeManager</name>
     <message>
         <location filename="../lib/theme/palettes.cpp" line="+12"/>
@@ -808,12 +1286,17 @@
 <context>
     <name>WidgetRegistry</name>
     <message>
-        <location filename="../lib/dashboard/widgetregistry.cpp" line="+34"/>
+        <location filename="../lib/dashboard/widgetregistry.cpp" line="+36"/>
         <source>Line Chart (dummy)</source>
         <translation>Graphique en ligne (factice)</translation>
     </message>
     <message>
-        <location line="+4"/>
+        <location line="+6"/>
+        <source>Line Chart (several sources)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+8"/>
         <source>Bar Chart (dummy)</source>
         <translation>Graphique à barres (factice)</translation>
     </message>
@@ -869,6 +1352,1642 @@
         <location filename="../lib/project/workspacemanager.cpp" line="+203"/>
         <source>Default</source>
         <translation>Par défaut</translation>
+    </message>
+</context>
+<context>
+    <name>tracelab::BlockPage</name>
+    <message>
+        <location filename="../lab/module/blockpage.cpp" line="+136"/>
+        <source>Remove from the loop</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Takes this filter out of the chain (its file stays).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-30"/>
+        <source>Open the code</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <location line="+17"/>
+        <source>In VS Code</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-15"/>
+        <source>In a window of its own</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>In another program...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>In the app for .c files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Show in the folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>The block&apos;s code: in VS Code (TraceLab watches the file -- saving it there compiles it here) or in a window of TraceLab&apos;s own. A template is copied to your folder before it opens elsewhere.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>In VS Code (not found)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-40"/>
+        <source>Code</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <source>Source</source>
+        <translation type="unfinished">Source</translation>
+    </message>
+    <message>
+        <location line="-3"/>
+        <source>Where the block&apos;s code comes from: a template (the original, read-only; saving makes a copy of yours), one of your files, another file, or a new one.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+37"/>
+        <location line="+386"/>
+        <location line="+13"/>
+        <source>Back to the original</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-389"/>
+        <source>Compiler and log</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Messages</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>What printf() and tl_log() write shows here.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Log</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Parameters</source>
+        <translation type="unfinished">Paramètres</translation>
+    </message>
+    <message>
+        <location line="+15"/>
+        <source>Defaults</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Every parameter back to the value written in the code.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>They change the running code at once and are kept in the project; Defaults brings back the values written in the code.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>Signals</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Double-click one: its declaration goes into the open code window (or to the clipboard).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Double-click: declare it in the code.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+31"/>
+        <source>Copied: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+35"/>
+        <source>plant</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>filter</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>controller</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+60"/>
+        <source>stopped: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>does not compile (line %1): the previous version runs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>does not compile (line %1)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+25"/>
+        <source>The template &quot;%1&quot; as shipped (read-only: saving it makes a copy of yours).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Your file %1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Your file %1, from the template &quot;%2&quot;, modified.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Your file %1, from the template &quot;%2&quot;, unchanged.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Replaces the code with the template &quot;%1&quot;.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+22"/>
+        <source>Templates</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+14"/>
+        <source>Your files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+13"/>
+        <source>Open a file...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>New %1 (empty)...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+30"/>
+        <source>Open a %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>C files (*.c);;All files (*)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <location line="+15"/>
+        <source>New %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-14"/>
+        <source>File name (saved in %1):</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+48"/>
+        <source>Replace the code of %1 with the original template? Your version of the file is overwritten%2.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>, and the unsaved changes in its window are dropped</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+16"/>
+        <source>%1 is the template again.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+40"/>
+        <source>Stopped: %1 -- fix it and save, or reset the simulation.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+13"/>
+        <source>Line %1: %2</source>
+        <translation type="unfinished">Ligne %1 : %2</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>warning</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>error</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Double-click: the line in the code window.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>The previous version keeps running until this one compiles.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Compiled, no messages.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+28"/>
+        <source>No TL_PARAM in the code.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Not compiled.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+61"/>
+        <source>%1, from %2 to %3 (in the code: %4)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>%1 (in the code: %2)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+55"/>
+        <source>Double-click: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>tracelab::CodeControllerAdapter</name>
+    <message>
+        <location filename="../lab/control/codecontrolleradapter.cpp" line="+71"/>
+        <source>controller (code)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+22"/>
+        <source>no code loaded</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>the code has no ctl_step()</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>%1 is not a signal of the plant (it has: %2)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>the plant&apos;s input %1 is not written (TL_OUT(%1))</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>%1 is not an input of the plant (it takes: %2)</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>tracelab::CodePlant</name>
+    <message>
+        <location filename="../lab/plant/codeplant.cpp" line="+36"/>
+        <source>a TL_DISCRETE plant needs plant_update() (writing next(x))</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>a continuous plant needs plant_deriv() (writing der(x)); add TL_DISCRETE for plant_update()</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>the plant has no TL_OUTPUT: nothing for a controller to read</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>tracelab::CodePlantDevice</name>
+    <message>
+        <location filename="../lab/plant/codeplantdevice.cpp" line="+150"/>
+        <source>Plant</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+53"/>
+        <source>The plant&apos;s code does not compile.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Stopped by a fault: reset the simulation once it is fixed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Run finished.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Running at %1 Hz.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Paused.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Lives in: %1. Its functions are declared in the header it names; it reads the states %2.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>Not compiled.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Inputs (loop.u, from the controller)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>States (sim.states)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Outputs (loop.state, what the controller reads)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+111"/>
+        <source>no plant code</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>file not found: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+24"/>
+        <source>%1 needs the states %2 (TL_STATE)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+150"/>
+        <source>Plant (C)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+60"/>
+        <source>Solver</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>How plant_deriv() is integrated over each sample period.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Euler</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Runge-Kutta 4</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Steps per sample</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Solver steps in each sample period (the input is held over all of them).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+35"/>
+        <source>perturbation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>%1 %</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>tracelab::CodeSignalFilter</name>
+    <message>
+        <location filename="../lab/control/codesignalfilter.cpp" line="+51"/>
+        <source>filter (code)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+15"/>
+        <source>no code loaded</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>the code has no filt_step()</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+15"/>
+        <source>%1 is not a signal here (there are: %2)</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>tracelab::CodeWindow</name>
+    <message>
+        <location filename="../lab/module/codewindow.cpp" line="+110"/>
+        <source>This block has no code to open.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <location line="+30"/>
+        <source>Open the code</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-11"/>
+        <source>VS Code</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>the editor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Could not open %1 in %2.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>%1 opened in %2: saving it there compiles it here.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>(Could not write the editor configuration: %1)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+35"/>
+        <source>Open in VS Code</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Opens this file in VS Code at the cursor&apos;s line; saving it there compiles it here.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <location line="+221"/>
+        <location line="+19"/>
+        <source>Save</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-239"/>
+        <source>Saves and compiles the code (Ctrl+S). A template is saved as a copy in your folder.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+114"/>
+        <source>%1 -- %2 -- TraceLab code</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+15"/>
+        <source>template &quot;%1&quot; (read-only: Save makes a copy)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>from the template &quot;%1&quot;, modified</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>from the template &quot;%1&quot;, unchanged</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+18"/>
+        <source>Stopped: %1 -- fix it and save, or reset the simulation.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+14"/>
+        <source>Line %1: %2</source>
+        <translation type="unfinished">Ligne %1 : %2</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>warning</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>error</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <source>The previous version keeps running until this one compiles.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Compiled, no messages.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+13"/>
+        <source>Unsaved code</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>The code of %1 has changes that were not saved.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+24"/>
+        <source>Cannot write %1: %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>tracelab::EndpointTransport</name>
+    <message>
+        <location filename="../lab/plant/endpointtransport.cpp" line="+30"/>
+        <source>the built-in device did not start</source>
+        <translation>l&apos;appareil intégré n&apos;a pas démarré</translation>
+    </message>
+</context>
+<context>
+    <name>tracelab::LabControllerDevice</name>
+    <message>
+        <location filename="../lab/control/labdevices.cpp" line="-283"/>
+        <source>No plant linked.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Waiting for the plant...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>No controller.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Loop closed on %1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+19"/>
+        <source>From the plant (loop.state)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>After the filters (what the controller reads)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Plant inputs (loop.u: the controller writes)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>No plant linked yet.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>tracelab::LabPanel</name>
+    <message>
+        <location filename="../lab/module/labpanel.cpp" line="+96"/>
+        <source>Adds a simulated plant to this project&apos;s devices.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>Play</source>
+        <translation>Lecture</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Pause</source>
+        <translation>Pause</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Reset</source>
+        <translation>Réinitialiser</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Step</source>
+        <translation>Pas</translation>
+    </message>
+    <message>
+        <location line="+31"/>
+        <source>No plant in this project yet. Open a benchmark (the line follower or the Furuta pendulum), or build a loop of your own: a plant first, then the controller -- and filters between them, if you want -- written in C, with the code in front of you.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Open the line-follower benchmark</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Open the Furuta pendulum benchmark</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+168"/>
+        <source>Loop</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-141"/>
+        <location line="+111"/>
+        <location line="+706"/>
+        <source>Plant</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-794"/>
+        <location line="+88"/>
+        <source>Code</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-87"/>
+        <source>The code in C of a block of the loop: where it comes from, what the compiler said and what it wrote. It opens in VS Code or in a window of its own; saving it compiles it and the loop runs the new version.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <location line="+83"/>
+        <source>Parameters</source>
+        <translation type="unfinished">Paramètres</translation>
+    </message>
+    <message>
+        <location line="-82"/>
+        <source>The TL_PARAM values of a block, tuned while the loop runs.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <location line="+79"/>
+        <source>Signals</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-78"/>
+        <source>What a block can read -- the plant&apos;s outputs, the other blocks&apos; results -- with their values now.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+77"/>
+        <location line="+26"/>
+        <source>Overview</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-26"/>
+        <source>Simulation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <location line="+175"/>
+        <source>Scenes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-149"/>
+        <source>The loop of the plant, in order: the plant, the filters, the controller -- whose command goes back to the plant (loop.u). Click a block to see it; a &quot;+&quot; adds one.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+55"/>
+        <source>Point at a line: who writes it, who reads it. Click a block to open it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>Controller in C++</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Remove it from the project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+24"/>
+        <source>Block</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>The block of the loop this page shows (the same on Code, Parameters and Signals).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Add a block</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Filter</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Controller (replaces this one)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Controller</source>
+        <translation type="unfinished">Contrôleur</translation>
+    </message>
+    <message>
+        <location line="+22"/>
+        <source>No block in C in this loop yet: the plant is built into TraceView. Add a controller written in C and it shows here.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+20"/>
+        <source>A scene animates the plant on the dashboard as it runs, bound by the signals&apos; names to this plant and its controller (it can be bound to others in its settings).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>On the dashboard</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Add the scene to the dashboard</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+270"/>
+        <source>Templates</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Other benchmarks</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Your files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>New (empty)...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>New controller</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>New filter</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>File name (saved in %1):</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+12"/>
+        <source>New block</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Open a file...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Open a block</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>C files (*.c);;All files (*)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+95"/>
+        <source>%1 is a controller written in C++ inside TraceView: it closes the loop on this plant, but its code cannot be seen or changed here. Replace it with a controller in C -- after removing it: two controllers on one plant fight over its inputs.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+23"/>
+        <source>Plant  ·  %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Filter %1  ·  %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Controller  ·  %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+98"/>
+        <source>tick %1 · %2 s</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <location line="+37"/>
+        <source>stopped</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-31"/>
+        <location line="+35"/>
+        <source>error</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-34"/>
+        <location line="+35"/>
+        <source>does not compile (line %1)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-34"/>
+        <location line="+35"/>
+        <source>does not compile</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-23"/>
+        <location line="+215"/>
+        <source>Controller · C</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-214"/>
+        <location line="+182"/>
+        <source>Filter %1 · C</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-158"/>
+        <source>; the previous version runs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>not bound</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>waiting</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>waiting for the plant</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>compiled</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source> · uses the preview</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Controller · C++ (fixed)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>legacy</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Replace it with a controller in C.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+120"/>
+        <source>Plant · C++</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+61"/>
+        <source>No controller</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Click to add one</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+30"/>
+        <source>The scene &quot;%1&quot;, bound to this plant and its controller.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>The scene &quot;%1&quot;, bound to this plant (no controller on it yet: what the scene reads from one stays unbound).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../lab/module/labagenttools.cpp" line="-549"/>
+        <location filename="../lab/module/labpanel.cpp" line="+46"/>
+        <source>TraceLab: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../lab/module/labpanel.cpp" line="-1246"/>
+        <source>Add plant</source>
+        <translation>Ajouter un système</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Add controller</source>
+        <translation>Ajouter un contrôleur</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Adds a controller written in C that closes the loop on the plant of this tab.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Add scene</source>
+        <translation>Ajouter une scène</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Adds a Scene to the dashboard, bound to the plant and controller of this tab.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../lab/module/labagenttools.cpp" line="+51"/>
+        <location filename="../lab/module/labpanel.cpp" line="+724"/>
+        <source>TraceLab: Controller</source>
+        <translation>TraceLab : Contrôleur</translation>
+    </message>
+    <message>
+        <location filename="../lab/module/labpanel.cpp" line="-457"/>
+        <source>+ Filter</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>+ Controller</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+632"/>
+        <location line="+201"/>
+        <source>Plant · C</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-200"/>
+        <source>Plant · C · %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <location line="+64"/>
+        <source>running</source>
+        <translation>en cours</translation>
+    </message>
+    <message>
+        <location line="-64"/>
+        <source>paused</source>
+        <translation>en pause</translation>
+    </message>
+</context>
+<context>
+    <name>tracelab::LoopDiagram</name>
+    <message>
+        <location filename="../lab/module/loopdiagram.cpp" line="+346"/>
+        <source>  (nothing writes it)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+163"/>
+        <source>plant output</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>made by a filter</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>plant input (command)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>changed by a filter</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>passes by</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>not read</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+38"/>
+        <source>Written by: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <location line="+1"/>
+        <source>nobody</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Read by: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>From the plant: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>What the controller reads: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>tracelab::PlantPage</name>
+    <message>
+        <location filename="../lab/module/plantpage.cpp" line="+57"/>
+        <location line="+60"/>
+        <source>Settings</source>
+        <translation type="unfinished">Paramètres</translation>
+    </message>
+    <message>
+        <location line="-49"/>
+        <source>The settings take effect on a reset of the run.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-31"/>
+        <source>Plant</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>The plant</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Kind</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Device</source>
+        <translation type="unfinished">Appareil</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Status</source>
+        <translation type="unfinished">État</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Go to its code</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>The plant&apos;s code on the Code page: where it comes from, the compiler&apos;s messages, the buttons that open it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+15"/>
+        <source>Apply and reset</source>
+        <translation type="unfinished">Appliquer et réinitialiser</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>They take effect together, on a reset of the run.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+35"/>
+        <source>%1, written in C: its code is on the Code page, its parameters on Parameters. Here, what it is and the settings of its world.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>%1, built into TraceView (C++): its code cannot be seen or changed, only the settings below.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>%1  ·  C</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>%1  ·  built into TraceView (C++)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+21"/>
+        <source>running</source>
+        <translation type="unfinished">en cours</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>paused</source>
+        <translation type="unfinished">en pause</translation>
+    </message>
+    <message>
+        <location line="+15"/>
+        <source>This plant has no settings.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>tracelab::SceneConfigEditor</name>
+    <message>
+        <location filename="../lab/scenes/sceneconfigeditor.cpp" line="+131"/>
+        <source>Bind by name</source>
+        <translation>Lier par nom</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Binds every unbound input to the reported field of the same name</source>
+        <translation>Lie chaque entrée non liée au champ signalé du même nom</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Scene</source>
+        <translation>Scène</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Inputs</source>
+        <translation>Entrées</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Parameters</source>
+        <translation>Paramètres</translation>
+    </message>
+    <message>
+        <location line="+172"/>
+        <source>(Unbound)</source>
+        <translation>(Non liée)</translation>
+    </message>
+    <message>
+        <location line="+27"/>
+        <source>%1 (offline)</source>
+        <translation>%1 (hors ligne)</translation>
+    </message>
+</context>
+<context>
+    <name>tracelab::SceneWidget</name>
+    <message>
+        <location filename="../lab/scenes/scenewidget.cpp" line="-216"/>
+        <source>Unknown scene &quot;%1&quot;</source>
+        <translation>Scène inconnue « %1 »</translation>
+    </message>
+</context>
+<context>
+    <name>tracelab::SimulationPage</name>
+    <message>
+        <location filename="../lab/module/simulationpage.cpp" line="+40"/>
+        <source>Simulation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>How the run goes: start, pause or step it, and how fast its clock ticks. The plant steps and the blocks on it sample at the sample rate.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Run</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>tick</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>time</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+14"/>
+        <source>Clock</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>1x (real time)</source>
+        <translation type="unfinished">1x (temps réel)</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>2x</source>
+        <translation type="unfinished">2x</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>As fast as possible</source>
+        <translation type="unfinished">Aussi vite que possible</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Lockstep</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Lockstep: every tick waits for the controller&apos;s answer, so the run does not depend on how fast it computes.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Speed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source> Hz</source>
+        <translation type="unfinished"> Hz</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Step rate of the simulation: the plant steps and the controllers on it sample at Ts = 1 / rate (tl_ts()). Changing it restarts the run.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Sample rate</source>
+        <translation type="unfinished">Fréquence d&apos;échantillonnage</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Lockstep waits for the controller every tick: the run does not depend on how fast it computes. A new sample rate restarts the run.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+94"/>
+        <source>running</source>
+        <translation type="unfinished">en cours</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>paused</source>
+        <translation type="unfinished">en pause</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>%1 s</source>
+        <translation type="unfinished">%1 s</translation>
+    </message>
+</context>
+<context>
+    <name>tracelab::furuta</name>
+    <message>
+        <location filename="../lab/benchmarks/furuta/code/furutatemplates.cpp" line="+21"/>
+        <source>qLPV NMPC (Furuta)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Swing-up and balance by model predictive control on the exact qLPV model of the pendulum: frozen, warm-start, Taylor or iterative scheduling (QP every tick).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Energy swing-up + LQR</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>The classic one: pumps the pendulum&apos;s energy up, then balances it with an LQR.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Furuta pendulum</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>A rotary arm and a pendulum at its tip, Euler-Lagrange model, torque input, encoders and a disturbance on the pendulum&apos;s joint.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>tracelab::lf</name>
+    <message>
+        <location filename="../lab/benchmarks/linefollower/code/lftemplates.cpp" line="+21"/>
+        <source>qLPV MPC</source>
+        <translation type="unfinished">MPC qLPV</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Model predictive control on the exact qLPV model of the car: tracks the preview of the track (QP every tick).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>GPC</source>
+        <translation type="unfinished">GPC</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Generalized predictive control linearized at a straight heading: one gain matrix, no QP.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>PD (line sensors)</source>
+        <translation type="unfinished">PD (capteurs de ligne)</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>The classic line follower: a PD on the sensor array&apos;s centroid.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Low-pass (wheel speeds)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>First-order low-pass on w_l and w_r, replacing them.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Kalman (speed and turn rate)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Extended Kalman filter on the encoders, the gyro and the accelerometer: estimates v, omega and the sensors&apos; biases (v_est, omega_est).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Line-follower car</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>The car of the Python simulator -- motors, kinematics, encoders, gyro and the line sensor array -- on the track.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>tracelab::lf::LinePlantDevice</name>
+    <message>
+        <location filename="../lab/benchmarks/linefollower/device/lfplantdevice.cpp" line="-74"/>
+        <source>Track seed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>-1 draws a random track on every reset.</source>
+        <translation type="unfinished">-1 tire une piste aléatoire à chaque réinitialisation.</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>Track type</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Lemniscate</source>
+        <translation type="unfinished">Lemniscate</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Circle</source>
+        <translation type="unfinished">Cercle</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Sensor noise</source>
+        <translation type="unfinished">Bruit des capteurs</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Synthetic noise on the gyro and the line sensors (the encoders always count whole ticks).</source>
+        <translation type="unfinished">Bruit synthétique sur le gyroscope et les capteurs de ligne (les codeurs comptent toujours des impulsions entières).</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Preview points</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>How many future track points sim.preview carries (TL_PREVIEW).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>Preview spacing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source> points</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Track points between two preview points (about 1 cm each).</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>tracelab::lf::TrackEnvironment</name>
+    <message>
+        <location filename="../lab/benchmarks/linefollower/device/trackenvironment.cpp" line="+55"/>
+        <location line="+228"/>
+        <source>Line-follower track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-210"/>
+        <source>Track seed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>-1 draws a random track on every reset.</source>
+        <translation type="unfinished">-1 tire une piste aléatoire à chaque réinitialisation.</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>Track type</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Lemniscate</source>
+        <translation type="unfinished">Lemniscate</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Circle</source>
+        <translation type="unfinished">Cercle</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Preview points</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>How many future track points sim.preview carries (TL_PREVIEW).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>Preview spacing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source> points</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Track points between two preview points (about 1 cm each).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+168"/>
+        <source>covered</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>%1 %</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -950,6 +3069,14 @@
         <location line="-4"/>
         <source>AppImage from GitHub Releases</source>
         <translation>AppImage depuis GitHub Releases</translation>
+    </message>
+</context>
+<context>
+    <name>traceview::AgentBridgeServer</name>
+    <message>
+        <location filename="../lib/agent/agentbridgeserver.cpp" line="+95"/>
+        <source>Another TraceView window is already serving AI assistants.</source>
+        <translation>Une autre fenêtre TraceView sert déjà les assistants IA.</translation>
     </message>
 </context>
 <context>
@@ -1142,7 +3269,7 @@
 <context>
     <name>traceview::AudioSpectrumConfigEditor</name>
     <message>
-        <location filename="../lib/dashboard/widgets/audiospectrumconfigeditor.cpp" line="+29"/>
+        <location filename="../lib/dashboard/widgets/audiospectrumconfigeditor.cpp" line="+30"/>
         <source>(auto)</source>
         <translation>(auto)</translation>
     </message>
@@ -1339,7 +3466,7 @@
 <context>
     <name>traceview::BtpBackend</name>
     <message>
-        <location filename="../lib/protocol/btpbackend.cpp" line="+346"/>
+        <location filename="../lib/protocol/btpbackend.cpp" line="+347"/>
         <source>Robot 0x%1 is online but its catalog has not arrived — check the hub (hub -manifest)</source>
         <translation>Le robot 0x%1 est en ligne mais son catalogue n&apos;est pas arrivé — vérifiez le hub (hub -manifest)</translation>
     </message>
@@ -1404,7 +3531,7 @@
         <translation>appareil revenu à la console (BTP/1 CONSOLE)</translation>
     </message>
     <message>
-        <location line="+246"/>
+        <location line="+247"/>
         <source>Dropped an unsealed frame on a sealed direct session (check the robot&apos;s channel-B password)</source>
         <translation>Trame non scellée rejetée sur une session directe scellée (vérifiez le mot de passe du canal B du robot)</translation>
     </message>
@@ -1429,7 +3556,7 @@
         <translation>entrée du terminal non envoyée : échec du scellement</translation>
     </message>
     <message>
-        <location line="-523"/>
+        <location line="-524"/>
         <source>BTP handshake failed: %1</source>
         <translation>Échec de la négociation BTP : %1</translation>
     </message>
@@ -1956,7 +4083,7 @@ Autorisés : %1</translation>
 <context>
     <name>traceview::DashboardCell</name>
     <message>
-        <location filename="../lib/dashboard/widgets/chartstyle.cpp" line="+296"/>
+        <location filename="../lib/dashboard/widgets/chartstyle.cpp" line="+318"/>
         <source>Sample rate</source>
         <translation>Fréquence d&apos;échantillonnage</translation>
     </message>
@@ -2006,7 +4133,7 @@ Autorisés : %1</translation>
         <translation>Valeur efficace</translation>
     </message>
     <message>
-        <location line="+139"/>
+        <location line="+143"/>
         <source>Style:</source>
         <translation>Style :</translation>
     </message>
@@ -2109,6 +4236,21 @@ Autorisés : %1</translation>
         <location line="+1"/>
         <source>Auto</source>
         <translation>Auto</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Y axis numbers:</source>
+        <translation>Nombres de l’axe Y :</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Fixed (0.0015)</source>
+        <translation>Fixe (0.0015)</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Scientific (1.5e-3)</source>
+        <translation>Scientifique (1.5e-3)</translation>
     </message>
     <message>
         <location line="+2"/>
@@ -2280,7 +4422,7 @@ Autorisés : %1</translation>
 <context>
     <name>traceview::DashboardGrid</name>
     <message>
-        <location filename="../lib/dashboard/dashboardgrid.cpp" line="+582"/>
+        <location filename="../lib/dashboard/dashboardgrid.cpp" line="+644"/>
         <source>Bring to Front</source>
         <translation>Mettre au premier plan</translation>
     </message>
@@ -2435,7 +4577,7 @@ Autorisés : %1</translation>
         <translation>Connexion</translation>
     </message>
     <message>
-        <location line="+81"/>
+        <location line="+91"/>
         <source>None</source>
         <translation>Aucun</translation>
     </message>
@@ -2465,12 +4607,17 @@ Autorisés : %1</translation>
         <translation>ID de cet appareil :</translation>
     </message>
     <message>
-        <location line="-54"/>
+        <location line="-64"/>
         <source>Card title:</source>
         <translation>Titre de la carte :</translation>
     </message>
     <message>
-        <location line="+5"/>
+        <location line="+9"/>
+        <source>Built-in device:</source>
+        <translation>Appareil intégré :</translation>
+    </message>
+    <message>
+        <location line="+6"/>
         <source>The robot&apos;s channel-B password. One per device: every TCP, BLE and hub connection above uses it.</source>
         <translation>Le mot de passe du canal B du robot. Un par appareil : toutes les connexions TCP, BLE et hub ci-dessus l&apos;utilisent.</translation>
     </message>
@@ -2509,12 +4656,12 @@ Autorisés : %1</translation>
     </message>
     <message>
         <location line="+3"/>
-        <location line="+281"/>
+        <location line="+284"/>
         <source>e.g. robot1.local</source>
         <translation>ex. : robot1.local</translation>
     </message>
     <message>
-        <location line="-279"/>
+        <location line="-282"/>
         <source>Hostname or IP the OTA tab uses for this device&apos;s firmware upload. Left blank, the device is listed there but nothing can be polled or uploaded.</source>
         <translation>Nom d&apos;hôte ou IP utilisé par l&apos;onglet OTA pour téléverser le micrologiciel de cet appareil. Laissé vide, l&apos;appareil y est listé mais rien ne peut être interrogé ni téléversé.</translation>
     </message>
@@ -2540,25 +4687,25 @@ Autorisés : %1</translation>
     </message>
     <message>
         <location line="+24"/>
-        <location line="+242"/>
+        <location line="+245"/>
         <source>Connected</source>
         <translation>Connecté</translation>
     </message>
     <message>
-        <location line="-242"/>
-        <location line="+242"/>
+        <location line="-245"/>
+        <location line="+245"/>
         <source>Disconnected</source>
         <translation>Déconnecté</translation>
     </message>
     <message>
-        <location line="-239"/>
+        <location line="-242"/>
         <location line="+3"/>
-        <location line="+155"/>
+        <location line="+158"/>
         <source>(not connected yet)</source>
         <translation>(pas encore connecté)</translation>
     </message>
     <message>
-        <location line="-145"/>
+        <location line="-148"/>
         <source>Status:</source>
         <translation>Statut :</translation>
     </message>
@@ -2593,7 +4740,7 @@ Autorisés : %1</translation>
         <translation>Appliquer les réglages ci-dessus et (re)connecter maintenant, sans fermer cette boîte de dialogue.</translation>
     </message>
     <message>
-        <location line="+114"/>
+        <location line="+117"/>
         <source>%1 (last connection)</source>
         <translation>%1 (dernière connexion)</translation>
     </message>
@@ -2619,7 +4766,7 @@ Autorisés : %1</translation>
         <translation>l&apos;appareil signale : %1</translation>
     </message>
     <message>
-        <location line="-241"/>
+        <location line="-244"/>
         <source>Reported by device</source>
         <translation>Signalé par l&apos;appareil</translation>
     </message>
@@ -2627,7 +4774,12 @@ Autorisés : %1</translation>
 <context>
     <name>traceview::DeviceConnection</name>
     <message>
-        <location filename="../lib/core/deviceconnection.cpp" line="+196"/>
+        <location filename="../lib/core/deviceconnection.cpp" line="+108"/>
+        <source>device type &quot;%1&quot; is not available (is its module enabled?)</source>
+        <translation>type d&apos;appareil « %1 » indisponible (son module est-il activé ?)</translation>
+    </message>
+    <message>
+        <location line="+148"/>
         <source>transport rejected %1 bytes</source>
         <translation>le transport a rejeté %1 octets</translation>
     </message>
@@ -3172,13 +5324,8 @@ Autorisés : %1</translation>
 </context>
 <context>
     <name>traceview::MainWindow</name>
-    <message>
-        <location filename="../lib/core/mainwindow.cpp" line="+235"/>
-        <source>TraceView v%1</source>
-        <translation>TraceView v%1</translation>
-    </message>
     <message numerus="yes">
-        <location line="+153"/>
+        <location filename="../lib/core/mainwindow.cpp" line="+391"/>
         <source>This device carries %n other device(s) (%1). Remove or repoint them first.</source>
         <translation>
             <numerusform>Cet appareil en transporte %n autre (%1). Supprimez-le ou réorientez-le d&apos;abord.</numerusform>
@@ -3191,7 +5338,33 @@ Autorisés : %1</translation>
         <translation>, </translation>
     </message>
     <message>
-        <location line="+562"/>
+        <location line="+305"/>
+        <source>AI assistant access is off.</source>
+        <translation>L'accès des assistants IA est désactivé.</translation>
+    </message>
+    <message>
+        <location line="+12"/>
+        <source>AI assistant access could not start: %1</source>
+        <translation>Impossible de démarrer l'accès des assistants IA : %1</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>AI assistant connected: %1</source>
+        <translation>Assistant IA connecté : %1</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <location line="+6"/>
+        <source>unknown</source>
+        <translation>inconnu</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>AI assistant disconnected: %1</source>
+        <translation>Assistant IA déconnecté : %1</translation>
+    </message>
+    <message>
+        <location line="+537"/>
         <source>Pending</source>
         <translation>En attente</translation>
     </message>
@@ -3249,7 +5422,12 @@ Pertes : %2</translation>
         <translation>&amp;Ouvrir un projet...</translation>
     </message>
     <message>
-        <location line="+4"/>
+        <location line="+6"/>
+        <source>Open E&amp;xample</source>
+        <translation>Ouvrir un e&amp;xemple</translation>
+    </message>
+    <message>
+        <location line="+2"/>
         <source>Open &amp;Recent</source>
         <translation>Ouvrir &amp;récent</translation>
     </message>
@@ -3335,12 +5513,12 @@ Pertes : %2</translation>
     </message>
     <message>
         <location line="+0"/>
-        <location line="+3709"/>
+        <location line="+3804"/>
         <source>Later</source>
         <translation>Plus tard</translation>
     </message>
     <message>
-        <location line="-3702"/>
+        <location line="-3797"/>
         <source>&amp;Access</source>
         <translation>&amp;Accès</translation>
     </message>
@@ -3416,7 +5594,7 @@ Pertes : %2</translation>
         <translation>&amp;Passer en mode Développeur...</translation>
     </message>
     <message>
-        <location line="+192"/>
+        <location line="+193"/>
         <source>Add</source>
         <translation>Ajouter</translation>
     </message>
@@ -3467,18 +5645,18 @@ Pertes : %2</translation>
     </message>
     <message>
         <location line="+18"/>
-        <location line="+3074"/>
+        <location line="+3168"/>
         <source>Undo</source>
         <translation>Annuler</translation>
     </message>
     <message>
-        <location line="-3072"/>
-        <location line="+3072"/>
+        <location line="-3166"/>
+        <location line="+3166"/>
         <source>Redo</source>
         <translation>Rétablir</translation>
     </message>
     <message>
-        <location line="-3029"/>
+        <location line="-3123"/>
         <source>Add Device</source>
         <translation>Ajouter un appareil</translation>
     </message>
@@ -3514,12 +5692,12 @@ Pertes : %2</translation>
     </message>
     <message>
         <location line="+29"/>
-        <location line="+2974"/>
+        <location line="+3068"/>
         <source>Fullscreen dashboard (F11)</source>
         <translation>Tableau de bord en plein écran (F11)</translation>
     </message>
     <message>
-        <location line="-2794"/>
+        <location line="-2888"/>
         <source>Rename Workspace</source>
         <translation>Renommer l&apos;espace de travail</translation>
     </message>
@@ -3600,17 +5778,22 @@ Pertes : %2</translation>
         <translation>Cet espace de travail a désormais sa propre apparence.</translation>
     </message>
     <message>
-        <location line="+1294"/>
+        <location line="+727"/>
+        <source>Robot or board</source>
+        <translation>Robot ou carte</translation>
+    </message>
+    <message>
+        <location line="+638"/>
         <source>%1: found at %2</source>
         <translation>%1 : trouvé sur %2</translation>
     </message>
     <message>
-        <location line="+329"/>
+        <location line="+339"/>
         <source>%1: trying %2</source>
         <translation>%1 : essai de %2</translation>
     </message>
     <message>
-        <location line="+420"/>
+        <location line="+429"/>
         <location line="+8"/>
         <location line="+5"/>
         <location line="+8"/>
@@ -3659,7 +5842,7 @@ Pertes : %2</translation>
         <translation>&quot;%1&quot; enregistré dans la galerie.</translation>
     </message>
     <message>
-        <location line="+538"/>
+        <location line="+542"/>
         <source>Update available: v%1</source>
         <translation>Mise à jour disponible : v%1</translation>
     </message>
@@ -3732,13 +5915,13 @@ Choisissez Plus tard pour continuer à travailler -- les modifications s&apos;ap
         <translation>Fermer l&apos;app</translation>
     </message>
     <message>
-        <location line="-3021"/>
-        <location line="+2822"/>
+        <location line="-3115"/>
+        <location line="+2916"/>
         <source>Devices</source>
         <translation>Appareils</translation>
     </message>
     <message>
-        <location line="-2747"/>
+        <location line="-2841"/>
         <source>Subscriptions</source>
         <translation>Abonnements</translation>
     </message>
@@ -3759,12 +5942,12 @@ Choisissez Plus tard pour continuer à travailler -- les modifications s&apos;ap
         <translation>Espace de travail</translation>
     </message>
     <message>
-        <location line="+19"/>
+        <location line="+9"/>
         <source>Created workspace &quot;%1&quot;.</source>
         <translation>Espace de travail « %1 » créé.</translation>
     </message>
     <message>
-        <location line="+14"/>
+        <location line="+30"/>
         <source>Delete Workspace</source>
         <translation>Supprimer l&apos;espace de travail</translation>
     </message>
@@ -3774,29 +5957,29 @@ Choisissez Plus tard pour continuer à travailler -- les modifications s&apos;ap
         <translation>Supprimer l&apos;espace de travail « %1 » ? Cette action est irréversible.</translation>
     </message>
     <message>
-        <location line="+16"/>
+        <location line="+24"/>
         <source>Deleted workspace &quot;%1&quot;.</source>
         <translation>Espace de travail « %1 » supprimé.</translation>
     </message>
     <message>
         <location line="+71"/>
-        <location line="+2347"/>
+        <location line="+2427"/>
         <source>Add widget</source>
         <translation>Ajouter un widget</translation>
     </message>
     <message>
-        <location line="-2344"/>
+        <location line="-2424"/>
         <source>Remove selected widget (%1)</source>
         <translation>Supprimer le widget sélectionné (%1)</translation>
     </message>
     <message>
         <location line="+3"/>
-        <location line="+2354"/>
+        <location line="+2434"/>
         <source>Add device</source>
         <translation>Ajouter un appareil</translation>
     </message>
     <message>
-        <location line="-2351"/>
+        <location line="-2431"/>
         <source>Remove selected device (%1)</source>
         <translation>Supprimer l&apos;appareil sélectionné (%1)</translation>
     </message>
@@ -3881,12 +6064,12 @@ Choisissez Plus tard pour continuer à travailler -- les modifications s&apos;ap
         <translation>Afficher les panneaux Calques/Propriétés</translation>
     </message>
     <message>
-        <location line="+255"/>
+        <location line="+269"/>
         <source>New Device</source>
         <translation>Nouvel appareil</translation>
     </message>
     <message>
-        <location line="+365"/>
+        <location line="+404"/>
         <source>%1: robot is responding again</source>
         <translation>%1 : le robot répond à nouveau</translation>
     </message>
@@ -3947,17 +6130,17 @@ Choisissez Plus tard pour continuer à travailler -- les modifications s&apos;ap
         <translation>M&amp;ouvement</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="-1428"/>
+        <location filename="../lib/core/mainwindow.cpp" line="-1495"/>
         <source>Dashboard</source>
         <translation>Dashboard</translation>
     </message>
     <message>
-        <location line="+1774"/>
+        <location line="+1845"/>
         <source>%1: this BLE address now answers as a different robot (expected %2, got %3)</source>
         <translation>%1 : cette adresse BLE répond maintenant comme un autre robot (attendu %2, reçu %3)</translation>
     </message>
     <message>
-        <location line="+492"/>
+        <location line="+503"/>
         <source>Key &quot;%1&quot; is already used by another widget.</source>
         <translation>La clé « %1 » est déjà utilisée par un autre widget.</translation>
     </message>
@@ -3972,12 +6155,12 @@ Choisissez Plus tard pour continuer à travailler -- les modifications s&apos;ap
         <translation>Abandonner le tableau de bord actuel et démarrer un nouveau projet vide ?</translation>
     </message>
     <message>
-        <location line="+15"/>
+        <location line="+18"/>
         <source>Started a new project.</source>
         <translation>Nouveau projet démarré.</translation>
     </message>
     <message>
-        <location line="+26"/>
+        <location line="+31"/>
         <location line="+16"/>
         <source>Save Project</source>
         <translation>Enregistrer le projet</translation>
@@ -3988,7 +6171,8 @@ Choisissez Plus tard pour continuer à travailler -- les modifications s&apos;ap
         <translation>Enregistrer le projet sous</translation>
     </message>
     <message>
-        <location line="+14"/>
+        <location line="-3767"/>
+        <location line="+3781"/>
         <location line="+329"/>
         <source>Open Project</source>
         <translation>Ouvrir un projet</translation>
@@ -4015,7 +6199,7 @@ Choisissez Plus tard pour continuer à travailler -- les modifications s&apos;ap
     </message>
     <message>
         <location line="+20"/>
-        <location line="+214"/>
+        <location line="+218"/>
         <source>Settings</source>
         <translation>Paramètres</translation>
     </message>
@@ -4249,6 +6433,149 @@ Choisissez Plus tard pour continuer à travailler -- les modifications s&apos;ap
         <location line="+0"/>
         <source>New password for &quot;%1&quot;:</source>
         <translation>Nouveau mot de passe pour « %1 » :</translation>
+    </message>
+</context>
+<context>
+    <name>traceview::MultiSourceChartConfigEditor</name>
+    <message>
+        <location filename="../lib/dashboard/widgets/multisourcechartconfigeditor.cpp" line="+32"/>
+        <source>Solid</source>
+        <translation type="unfinished">Continu</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Dashed</source>
+        <translation type="unfinished">Tirets</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Dotted</source>
+        <translation type="unfinished">Pointillés</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Dash-dot</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+20"/>
+        <source>Series (each from its own device and topic)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>+ Add series</source>
+        <translation type="unfinished">+ Ajouter une série</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Axes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source> samples</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Keep</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source> ms</source>
+        <translation type="unfinished"> ms</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>The period of one sample: the rate asked of every topic.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Sample period</source>
+        <translation type="unfinished">Période d&apos;échantillonnage</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Auto</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Fixed</source>
+        <translation type="unfinished">Fixe</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Y axis</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Min</source>
+        <translation type="unfinished">Min</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Max</source>
+        <translation type="unfinished">Max</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>e.g. Speed [m/s]</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Unit</source>
+        <translation type="unfinished">Unité</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Decimals</source>
+        <translation type="unfinished">Décimales</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>One axis per unit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+111"/>
+        <source>Device</source>
+        <translation type="unfinished">Appareil</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Topic</source>
+        <translation type="unfinished">Sujet</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Field</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Name</source>
+        <translation type="unfinished">Nom</translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <source>The series&apos; color</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Remove</source>
+        <translation type="unfinished">Supprimer</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Line</source>
+        <translation type="unfinished">Ligne</translation>
     </message>
 </context>
 <context>
@@ -4736,7 +7063,7 @@ Choisissez Plus tard pour continuer à travailler -- les modifications s&apos;ap
 <context>
     <name>traceview::RobotLinksPanel</name>
     <message>
-        <location filename="../lib/devices/robotlinkspanel.cpp" line="+37"/>
+        <location filename="../lib/devices/robotlinkspanel.cpp" line="+39"/>
         <source>Serial (USB)</source>
         <translation>Série (USB)</translation>
     </message>
@@ -4756,7 +7083,7 @@ Choisissez Plus tard pour continuer à travailler -- les modifications s&apos;ap
         <translation>Concentrateur</translation>
     </message>
     <message>
-        <location line="+10"/>
+        <location line="+11"/>
         <source>Automatic: the USB port whose device reports the robot&apos;s name (or, if none does, the port last picked here). Pick or type a port to always use that one.</source>
         <translation>Automatique : le port USB dont l&apos;appareil annonce le nom du robot (ou, si aucun ne le fait, le dernier port choisi ici). Choisissez ou saisissez un port pour toujours utiliser celui-ci.</translation>
     </message>
@@ -4776,7 +7103,7 @@ Choisissez Plus tard pour continuer à travailler -- les modifications s&apos;ap
         <translation>Automatique : le robot portant ce nom derrière n&apos;importe quel hub connecté. Choisissez un hub pour ne chercher que derrière celui-ci.</translation>
     </message>
     <message>
-        <location line="+45"/>
+        <location line="+46"/>
         <source>Name:</source>
         <translation>Nom :</translation>
     </message>
@@ -4995,7 +7322,7 @@ Choisissez Plus tard pour continuer à travailler -- les modifications s&apos;ap
 <context>
     <name>traceview::SettingsPage</name>
     <message>
-        <location filename="../lib/core/settingspage.cpp" line="+203"/>
+        <location filename="../lib/core/settingspage.cpp" line="+207"/>
         <source>Settings</source>
         <translation>Paramètres</translation>
     </message>
@@ -5007,43 +7334,43 @@ Choisissez Plus tard pour continuer à travailler -- les modifications s&apos;ap
     </message>
     <message>
         <location line="-44"/>
-        <location line="+68"/>
+        <location line="+96"/>
         <source>Appearance</source>
         <translation>Apparence</translation>
     </message>
     <message>
-        <location line="-68"/>
-        <location line="+156"/>
+        <location line="-96"/>
+        <location line="+184"/>
         <source>Dashboard</source>
         <translation>Dashboard</translation>
     </message>
     <message>
-        <location line="-155"/>
-        <location line="+207"/>
+        <location line="-183"/>
+        <location line="+243"/>
         <source>Terminal</source>
         <translation>Terminal</translation>
     </message>
     <message>
-        <location line="-207"/>
-        <location line="+234"/>
+        <location line="-243"/>
+        <location line="+270"/>
         <source>Connections</source>
         <translation>Connexions</translation>
     </message>
     <message>
-        <location line="-234"/>
-        <location line="+293"/>
+        <location line="-270"/>
+        <location line="+362"/>
         <source>Diagnostics</source>
         <translation>Diagnostic</translation>
     </message>
     <message>
-        <location line="-292"/>
-        <location line="+344"/>
+        <location line="-361"/>
+        <location line="+413"/>
         <location line="+5"/>
         <source>Updates</source>
         <translation>Mises à jour</translation>
     </message>
     <message>
-        <location line="-307"/>
+        <location line="-376"/>
         <source>Project and startup preferences shared by the application.</source>
         <translation>Préférences de projet et de démarrage partagées par l&apos;application.</translation>
     </message>
@@ -5078,7 +7405,7 @@ Choisissez Plus tard pour continuer à travailler -- les modifications s&apos;ap
         <translation>Connecter les appareils configurés à l&apos;ouverture d&apos;un projet</translation>
     </message>
     <message>
-        <location line="+11"/>
+        <location line="+39"/>
         <source>Application appearance</source>
         <translation>Apparence de l&apos;application</translation>
     </message>
@@ -5169,7 +7496,17 @@ Choisissez Plus tard pour continuer à travailler -- les modifications s&apos;ap
         <translation>Personnalisée</translation>
     </message>
     <message>
-        <location line="-96"/>
+        <location line="-125"/>
+        <source>Modules</source>
+        <translation>Modules</translation>
+    </message>
+    <message>
+        <location line="+20"/>
+        <source>Turning a module on or off takes effect after a restart.</source>
+        <translation>Activer ou désactiver un module prend effet après un redémarrage.</translation>
+    </message>
+    <message>
+        <location line="+9"/>
         <source>Appearance changes apply immediately. Changing the language is saved for the next start.</source>
         <translation>Les changements d&apos;apparence s&apos;appliquent immédiatement. Le changement de langue est enregistré pour le prochain démarrage.</translation>
     </message>
@@ -5194,7 +7531,17 @@ Choisissez Plus tard pour continuer à travailler -- les modifications s&apos;ap
         <translation>Fréquence personnalisée</translation>
     </message>
     <message>
-        <location line="+11"/>
+        <location line="+10"/>
+        <source>Fast line drawing</source>
+        <translation>Tracé rapide des lignes</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Line charts denser than the plot keep only each pixel column&apos;s minimum and maximum, drawn without antialiasing. Lighter on the CPU; the result depends on the screen&apos;s resolution and scale.</source>
+        <translation>Les graphiques en ligne plus denses que la zone de tracé ne gardent que le minimum et le maximum de chaque colonne de pixels, dessinés sans anticrénelage. Plus léger pour le processeur ; le résultat dépend de la résolution et de l&apos;échelle de l&apos;écran.</translation>
+    </message>
+    <message>
+        <location line="+6"/>
         <source>Telemetry subscribe rate</source>
         <translation>Fréquence d&apos;abonnement de la télémétrie</translation>
     </message>
@@ -5312,7 +7659,32 @@ Choisissez Plus tard pour continuer à travailler -- les modifications s&apos;ap
         </translation>
     </message>
     <message>
-        <location line="+19"/>
+        <location line="+18"/>
+        <source>AI assistants</source>
+        <translation>Assistants IA</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Let AI assistants such as Claude control TraceView</source>
+        <translation>Autoriser les assistants IA comme Claude à piloter TraceView</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>An assistant connected over MCP can then create workspaces and widgets, read telemetry and take screenshots of this window. Its dashboard edits can be undone.</source>
+        <translation>Un assistant connecté via MCP pourra créer des espaces de travail et des widgets, lire la télémétrie et faire des captures de cette fenêtre. Ses modifications du tableau de bord peuvent être annulées.</translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <source>To connect Claude Code, run this once in a terminal:</source>
+        <translation>Pour connecter Claude Code, exécutez ceci une fois dans un terminal :</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Copy command</source>
+        <translation>Copier la commande</translation>
+    </message>
+    <message>
+        <location line="+11"/>
         <source>Keep enough history for investigation without letting long-running sessions use unbounded memory.</source>
         <translation>Conservez assez d&apos;historique pour enquêter sans laisser les longues sessions utiliser une mémoire illimitée.</translation>
     </message>
@@ -5412,14 +7784,14 @@ Choisissez Plus tard pour continuer à travailler -- les modifications s&apos;ap
         <translation>Redémarrer maintenant</translation>
     </message>
     <message>
-        <location line="+134"/>
-        <source>Close and reopen TraceView to apply language or diagnostics history changes, or they will apply the next time you open it.</source>
-        <translation>Fermez et rouvrez TraceView pour appliquer les changements de langue ou d&apos;historique de diagnostic, sinon ils s&apos;appliqueront à la prochaine ouverture.</translation>
+        <location line="+141"/>
+        <source>Close and reopen TraceView to apply language, diagnostics history or module changes, or they will apply the next time you open it.</source>
+        <translation>Fermez et rouvrez TraceView pour appliquer les modifications de langue, d&apos;historique de diagnostic ou de modules, sinon elles s&apos;appliqueront à la prochaine ouverture.</translation>
     </message>
     <message>
         <location line="+4"/>
-        <source>Restart TraceView to apply language or diagnostics history changes.</source>
-        <translation>Redémarrez TraceView pour appliquer les changements de langue ou d&apos;historique de diagnostic.</translation>
+        <source>Restart TraceView to apply language, diagnostics history or module changes.</source>
+        <translation>Redémarrez TraceView pour appliquer les modifications de langue, d&apos;historique de diagnostic ou de modules.</translation>
     </message>
     <message>
         <location line="+4"/>
@@ -5567,7 +7939,7 @@ Choisissez Plus tard pour continuer à travailler -- les modifications s&apos;ap
 <context>
     <name>traceview::TextBoardConfigEditor</name>
     <message>
-        <location filename="../lib/dashboard/widgets/textboardconfigeditor.cpp" line="+17"/>
+        <location filename="../lib/dashboard/widgets/textboardconfigeditor.cpp" line="+18"/>
         <source>(auto)</source>
         <translation>(auto)</translation>
     </message>

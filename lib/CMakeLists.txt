@@ -349,6 +349,8 @@ add_library(traceview_dashboard STATIC
     dashboard/widgets/controlconfigeditor.h
     dashboard/widgetregistry.cpp
     dashboard/widgetregistry.h
+    dashboard/widgetagenthelp.cpp
+    dashboard/widgetagenthelp.h
     dashboard/dashboardcell.cpp
     dashboard/dashboardcell.h
     dashboard/dashboardcommands.cpp
@@ -745,12 +747,48 @@ endif()
 configure_file(core/usermodedefaults.h.in
                ${CMAKE_CURRENT_BINARY_DIR}/usermodedefaults.h @ONLY)
 
+# traceview_agent: the MCP server AI assistants drive TraceView through (see
+# docs/MCP.md) -- the tool registry, the MCP session, the local-socket bridge
+# inside the app and the `TraceView --mcp` stdio relay. QtCore + QtNetwork
+# (QLocalServer/QLocalSocket) only: the tools themselves are registered by
+# the layers that own each feature (core/agentapptools.cpp for MainWindow's).
+add_library(traceview_agent STATIC
+    agent/agentbridgeserver.cpp
+    agent/agentbridgeserver.h
+    agent/agenttool.cpp
+    agent/agenttool.h
+    agent/devicefeedbuffer.cpp
+    agent/devicefeedbuffer.h
+    agent/mcpsession.cpp
+    agent/mcpsession.h
+    agent/mcpstdiorelay.cpp
+    agent/mcpstdiorelay.h
+    agent/toolregistry.cpp
+    agent/toolregistry.h
+)
+
+target_include_directories(traceview_agent PUBLIC
+    ${CMAKE_SOURCE_DIR}/include
+    ${CMAKE_SOURCE_DIR}/lib
+    # traceview/version.h, for the relay's serverInfo.
+    ${CMAKE_BINARY_DIR}/generated
+)
+
+target_link_libraries(traceview_agent PUBLIC
+    Qt6::Core
+    Qt6::Network
+)
+
 # traceview_ui: MainWindow/Ribbon/AboutDialog — application chrome and
 # coordination. Depends on the dashboard/project/theme layers to wire them
 # together; nothing else is allowed to depend on traceview_ui.
 add_library(traceview_ui STATIC
     core/aboutdialog.cpp
     core/aboutdialog.h
+    core/agentapptools.cpp
+    core/agentapptools.h
+    core/agentdevicetools.cpp
+    core/agentpreferencetools.cpp
     core/shortcutsdialog.cpp
     core/shortcutsdialog.h
     core/donatedialog.cpp
@@ -859,6 +897,9 @@ target_link_libraries(traceview_ui
         # action). Compiled once in traceview_transport above already; this is
         # the same target under a different consumer.
         traceview_applog
+        # MainWindow owns the ToolRegistry/AgentBridgeServer and registers
+        # its own tools (core/agentapptools.cpp).
+        traceview_agent
 )
 
 if(TRACEVIEW_ENABLE_SERIAL AND NOT ANDROID)

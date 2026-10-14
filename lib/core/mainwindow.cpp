@@ -48,6 +48,9 @@
 #include <algorithm>
 
 #include "aboutdialog.h"
+#include "agent/agentbridgeserver.h"
+#include "agent/toolregistry.h"
+#include "agentapptools.h"
 #include "applog.h"
 #include "backend/backend.h"
 #ifdef TRACEVIEW_ENABLE_BLE
@@ -132,7 +135,6 @@ namespace {
 const QString kProjectFileFilter =
     QCoreApplication::translate("MainWindow", "TraceView Project (*.tvproj)");
 constexpr const char* kRecentFilesSettingsKey = "recentFiles/paths";
-constexpr const char* kSubscriptionsWorkspaceId = "builtin:subscriptions";
 // IconLibrary ids for workspace buttons (WorkspaceSwitcher/WorkspaceDock):
 // what a workspace shows until the user picks its own icon, and the fixed
 // one of the built-in Subscriptions entry.
@@ -772,6 +774,13 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
             &MainWindow::reconcileHubChildPresence);
     m_hubPeerReconcileTimer->start();
 
+    m_agentTools = new ToolRegistry(this);
+    AgentAppTools::registerTools(this, m_agentTools);
+    m_agentBridgeForced =
+        QCoreApplication::arguments().contains(QString::fromLatin1(kAgentBridgeArgument));
+    connect(&AppSettings::instance(), &AppSettings::agentPreferencesChanged, this,
+            &MainWindow::syncAgentBridge);
+
     // Building the startup dashboard blocks the event loop, so a cover goes
     // up first and the load only starts once that cover has been painted
     // (plus a beat for the frame to reach the screen) -- otherwise the
@@ -791,6 +800,47 @@ void MainWindow::finishStartup() {
     openStartupDashboard();
     delete m_startupOverlay;
     m_startupOverlay = nullptr;
+    // Only now: a tool call before this would edit the placeholder dashboard
+    // the startup one is about to replace.
+    syncAgentBridge();
+}
+
+void MainWindow::syncAgentBridge() {
+    if (m_startupOverlay) {
+        return;  // finishStartup() calls back once the dashboard is up
+    }
+    const bool wanted = m_agentBridgeForced || AppSettings::instance().agentBridgeEnabled();
+    if (!wanted) {
+        if (m_agentBridge) {
+            delete m_agentBridge;
+            m_agentBridge = nullptr;
+            m_agentHardwareAllowed = false;
+            postStatus(tr("AI assistant access is off."), 3000);
+        }
+        return;
+    }
+    if (m_agentBridge) {
+        return;
+    }
+    m_agentBridge = new AgentBridgeServer(m_agentTools, this);
+    QString error;
+    if (!m_agentBridge->start(&error)) {
+        delete m_agentBridge;
+        m_agentBridge = nullptr;
+        postStatus(tr("AI assistant access could not start: %1").arg(error), 6000,
+                   StatusSeverity::Warning);
+        return;
+    }
+    connect(m_agentBridge, &AgentBridgeServer::clientConnected, this, [this](const QString& name) {
+        postStatus(tr("AI assistant connected: %1").arg(name.isEmpty() ? tr("unknown") : name),
+                   4000, StatusSeverity::Success);
+    });
+    connect(m_agentBridge, &AgentBridgeServer::clientDisconnected, this,
+            [this](const QString& name) {
+                postStatus(
+                    tr("AI assistant disconnected: %1").arg(name.isEmpty() ? tr("unknown") : name),
+                    3000);
+            });
 }
 
 MainWindow::~MainWindow() {
@@ -2280,9 +2330,18 @@ void MainWindow::onNewWorkspaceRequested() {
         return;
     }
 
+    const QString newId = createWorkspace(name.trimmed());
+    // Straight on to its icon -- in compact chrome the icon is all the dock
+    // shows. Cancelling keeps the default glyph; it can be changed later.
+    pickWorkspaceIcon(newId);
+    postStatus(tr("Created workspace \"%1\".").arg(WorkspaceManager::instance().nameFor(newId)),
+               3000, StatusSeverity::Success);
+}
+
+QString MainWindow::createWorkspace(const QString& name) {
     WorkspaceManager& workspaces = WorkspaceManager::instance();
     workspaces.setDashboardFor(workspaces.activeId(), m_dashboardGrid->toJson());
-    const QString newId = workspaces.createWorkspace(name.trimmed());
+    const QString newId = workspaces.createWorkspace(name);
     m_subscriptionsWorkspaceActive = false;
     m_ribbon->setCurrentIndex(m_dashboardTabIndex);
     onRibbonTabChanged(m_dashboardTabIndex);
@@ -2291,10 +2350,7 @@ void MainWindow::onNewWorkspaceRequested() {
     refreshPropertiesPanel();
     refreshLayersPanel();
     refreshWorkspaceSwitcher();
-    // Straight on to its icon -- in compact chrome the icon is all the dock
-    // shows. Cancelling keeps the default glyph; it can be changed later.
-    pickWorkspaceIcon(newId);
-    postStatus(tr("Created workspace \"%1\".").arg(name.trimmed()), 3000, StatusSeverity::Success);
+    return newId;
 }
 
 void MainWindow::onWorkspaceDeleteRequested(const QString& id) {
@@ -2313,7 +2369,15 @@ void MainWindow::onWorkspaceDeleteRequested(const QString& id) {
             QMessageBox::Yes | QMessageBox::No, QMessageBox::No) != QMessageBox::Yes) {
         return;
     }
+    deleteWorkspace(id);
+}
 
+void MainWindow::deleteWorkspace(const QString& id) {
+    WorkspaceManager& workspaces = WorkspaceManager::instance();
+    const QString name = workspaces.nameFor(id);
+    if (name.isEmpty() || workspaces.workspaces().size() <= 1) {
+        return;
+    }
     const bool wasActive = id == workspaces.activeId();
     workspaces.removeWorkspace(id);
     if (wasActive) {
@@ -2933,6 +2997,14 @@ void MainWindow::onAddWidget() {
         return;
     }
     m_dashboardGrid->addItem(types.first().typeId);
+}
+
+QVector<SerialPortOption> MainWindow::serialPortOptions() {
+#ifdef TRACEVIEW_ENABLE_SERIAL
+    return currentSerialPorts();
+#else
+    return {};
+#endif
 }
 
 void MainWindow::onAddDevice() {
@@ -3808,6 +3880,16 @@ DeviceConnection* MainWindow::createDeviceConnection(const Device& device) {
                     runtime->handleTerminal(QString::fromUtf8(data));
                 }
             });
+    // Kept for an AI assistant to read back what the robot answered.
+    connect(
+        backend, &Backend::terminalDataReceived, this,
+        [this, id = device.id](const QByteArray& data) { m_agentFeed.appendTerminal(id, data); });
+    connect(backend, &Backend::logReceived, this,
+            [this, id = device.id](quint64 timestampUs, quint32, quint32, quint32, quint8 severity,
+                                   const QString& message) {
+                m_agentFeed.appendLog(
+                    id, {QDateTime::currentDateTime(), timestampUs, severity, message});
+            });
     return connection;
 }
 
@@ -4056,6 +4138,7 @@ void MainWindow::onDeviceRemoved(const QString& id) {
     m_hubPeerNames.remove(id);
     m_hubChildOfflineTicks.remove(id);
     m_deviceLinkCyclers.remove(id);
+    m_agentFeed.forget(id);
     dropLinkProbes(id);
     m_deviceLinkSignatures.remove(id);
     m_autoResolvedLinks.remove(id);
@@ -4218,7 +4301,10 @@ void MainWindow::onNewProject() {
             QMessageBox::Yes | QMessageBox::No, QMessageBox::No) != QMessageBox::Yes) {
         return;
     }
+    startNewProject();
+}
 
+void MainWindow::startNewProject() {
     ProjectStore::instance().reset();
     WorkspaceManager::instance().reset();
     applyWorkspaceAppearance();  // a fresh workspace follows the app-wide look
@@ -4655,6 +4741,10 @@ bool MainWindow::loadProjectFile(const QString& path) {
     refreshLayersPanel();
     refreshWorkspaceSwitcher();
     return true;
+}
+
+QStringList MainWindow::recentProjectFiles() {
+    return QSettings().value(kRecentFilesSettingsKey).toStringList();
 }
 
 void MainWindow::addRecentFile(const QString& path) {

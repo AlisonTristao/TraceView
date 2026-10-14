@@ -26,6 +26,10 @@ add_traceview_test(test_bindingresolver traceview_dashboard traceview_project)
 # field prefills in the chart and gauge editors without clobbering the
 # user's own values.
 add_traceview_test(test_autochartconfig traceview_dashboard)
+# The MCP server AI assistants drive TraceView through (lib/agent, see
+# docs/MCP.md): argument validation, the JSON-RPC session, and the stdio relay
+# talking to a real AgentBridgeServer over a uniquely named local socket.
+add_traceview_test(test_agent traceview_agent)
 # Devices panel data model/card/grid, plus its own JSON persistence (see
 # lib/devices). Only traceview_devices; no dashboard/protocol dependency.
 add_traceview_test(test_device traceview_devices)

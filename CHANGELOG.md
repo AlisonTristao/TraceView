@@ -7,6 +7,23 @@ release flow.
 
 ## [Unreleased]
 
+### Added
+
+- **AI assistants (MCP)**: Claude and other MCP clients can drive TraceView.
+  Turn on **Settings > Connections > AI assistants** and register
+  `TraceView --mcp` with the client (the section shows the exact Claude Code
+  command for this installation, Windows, AppImage or Flatpak, with a copy
+  button). An assistant can do what the UI does, through 62 tools:
+  workspaces and widgets, layouts, projects and the gallery, devices and
+  their links, commands and terminal, robot logs, device scripts, OTA,
+  appearance, palettes, language, settings, and the notification, app log
+  and BTP traffic trails. It checks its own work with screenshots and
+  telemetry reads. Its dashboard and device edits are undoable like yours.
+  Anything that can't be undone asks you first, and the first time it
+  touches real hardware you're asked to allow that for the session. If
+  TraceView is closed, the assistant can open it. See
+  [docs/MCP.md](docs/MCP.md).
+
 ## [4.9.0] - 2026-09-28
 
 ### Added
