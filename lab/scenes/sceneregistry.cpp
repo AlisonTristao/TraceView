@@ -3,6 +3,7 @@
 #include <QCoreApplication>
 
 #include "lab/scenes/diffdrivescene.h"
+#include "lab/scenes/furutascene.h"
 
 namespace tracelab {
 
@@ -49,6 +50,9 @@ void registerBuiltinScenes(SceneRegistry& registry) {
     registry.registerType({QString::fromLatin1(DiffDriveScene::kTypeId),
                            QCoreApplication::translate("DiffDriveScene", "Line follower"),
                            [] { return std::make_unique<DiffDriveScene>(); }});
+    registry.registerType({QString::fromLatin1(FurutaScene::kTypeId),
+                           QCoreApplication::translate("FurutaScene", "Furuta pendulum"),
+                           [] { return std::make_unique<FurutaScene>(); }});
 }
 
 }  // namespace tracelab

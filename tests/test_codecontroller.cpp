@@ -3,7 +3,9 @@
 // through BTP: the PD template step for step equal to the C++ PD, a filter
 // replacing and adding signals by name, the errors a misnamed signal gives,
 // a fault holding the plant's input until reset, and a saved file compiled
-// again while running (a broken version leaving the old one in charge).
+// again while running (a broken version leaving the old one in charge), and
+// the Kalman template estimating the car's speed and turn rate from its
+// noisy encoders, gyro and accelerometer better than any of them alone.
 
 #include <QTemporaryDir>
 #include <QtTest>
@@ -16,6 +18,7 @@
 #include "lab/control/codesignalfilter.h"
 #include "lab/control/controllerhost.h"
 #include "lab/control/labdevices.h"
+#include "lab/plant/codeplant.h"
 
 using namespace tracelab;
 using namespace tracelab::lf;
@@ -40,6 +43,22 @@ QVector<Step> run(LinePlantDevice& plant, int steps, QObject* context) {
     QTest::qWaitFor([&] { return got.size() >= steps; }, 60000);
     QObject::disconnect(&plant, &LinePlantDevice::ticked, context, nullptr);
     return got;
+}
+
+// The track, as far as the car's line sensors care: no line anywhere.
+double noTrackDistance(double, double) {
+    return 1.0;
+}
+double noTrackHalfWidth() {
+    return 0.01;
+}
+
+double rms(const QVector<double>& errors) {
+    double sum = 0.0;
+    for (double e : errors) {
+        sum += e * e;
+    }
+    return errors.isEmpty() ? 0.0 : std::sqrt(sum / errors.size());
 }
 
 PlantSettings lockstep() {
@@ -187,6 +206,78 @@ private slots:
               qPrintable(templateId), worst, worstStep, nativeMs / kSteps, codeMs / kSteps);
         QVERIFY2(worst < 1e-6, qPrintable(QStringLiteral("step %1: %2").arg(worstStep).arg(worst)));
         QVERIFY(std::fabs(expected.last().uL - expected.last().uR) > 1e-6);  // it steered
+    }
+
+    // The car in C with its noise on, driven open loop, and the Kalman
+    // template on its outputs, step by step in this thread (no clock, no
+    // BTP): its estimates against the plant's true values.
+    void kalmanTracksTheCar() {
+        CodePlant plant;
+        QVERIFY2(plant.load(code::CodeLibrary::instance().templateSource(
+                                QStringLiteral("linefollower/car")),
+                            QStringLiteral("car.c"),
+                            {{"tl_track_distance", reinterpret_cast<const void*>(&noTrackDistance)},
+                             {"tl_track_line_half_width",
+                              reinterpret_cast<const void*>(&noTrackHalfWidth)}}),
+                 qPrintable(plant.errorText()));
+        QVERIFY(plant.module().setParamValue(QStringLiteral("noise"), 1));
+        QVERIFY(plant.reset());
+
+        CodeSignalFilter kalman;
+        QVERIFY(kalman.load(code::CodeLibrary::instance().templateSource(
+                                QStringLiteral("linefollower/kalman")),
+                            QStringLiteral("kalman.c")));
+        QStringList out;
+        QString error;
+        QVERIFY2(kalman.configure(plant.outputNames(), &out, &error), qPrintable(error));
+        QVERIFY(out.contains(QStringLiteral("v_est")) && out.contains(QStringLiteral("omega_est")));
+
+        const auto index = [](const QStringList& names, const char* name) {
+            const int i = names.indexOf(QLatin1String(name));
+            Q_ASSERT(i >= 0);
+            return i;
+        };
+        const QStringList outputs = plant.outputNames();
+        const QStringList diags = plant.diagNames();
+        const QStringList kalmanDiags = kalman.diagNames();
+        const double ts = plant.sampleTime();
+        const double r = 0.04, L = 0.15;  // the car's defaults
+        QVector<double> vKalman, vWheels, wKalman, wWheels, wGyro, biasError;
+        constexpr int kSteps = 2400;  // 30 s at 80 Hz
+        for (int k = 1; k <= kSteps; ++k) {
+            const double t = k * ts;
+            const double uL = 45 + 35 * std::sin(2 * M_PI * 0.4 * t);
+            const double uR = 45 + 35 * std::sin(2 * M_PI * 0.27 * t + 1.0);
+            QVERIFY(plant.step({uL, uR}));
+            QVector<double> filtered;
+            QVERIFY(kalman.step(quint64(k), ts, plant.outputs(), &filtered));
+            if (t < 3.0) {
+                continue;  // settling
+            }
+            const QVector<double> y = plant.outputs();
+            const QVector<double> truth = plant.diags();
+            const QVector<double> estimate = kalman.diag();
+            const double speed = truth[index(diags, "speed")];
+            const double omega = truth[index(diags, "omega")];
+            const double wl = y[index(outputs, "w_l")], wr = y[index(outputs, "w_r")];
+            vKalman.append(estimate[index(kalmanDiags, "v_kf")] - speed);
+            vWheels.append(r * (wl + wr) / 2 - speed);
+            wKalman.append(estimate[index(kalmanDiags, "omega_kf")] - omega);
+            wWheels.append(r * (wl - wr) / L - omega);
+            wGyro.append(y[index(outputs, "gyro")] - omega);
+            biasError.append(estimate[index(kalmanDiags, "gyro_bias_kf")] -
+                             truth[index(diags, "gyro_bias_true")]);
+        }
+        qInfo("v: kalman %.4f, wheels %.4f m/s rms", rms(vKalman), rms(vWheels));
+        qInfo("omega: kalman %.4f, wheels %.4f, gyro %.4f rad/s rms", rms(wKalman), rms(wWheels),
+              rms(wGyro));
+        qInfo("gyro bias: error %.4f rad/s rms", rms(biasError));
+        QVERIFY(rms(vKalman) < 0.7 * rms(vWheels));
+        // The turn rate changes fast here: the gain over the best sensor is
+        // the fusion of the two (their noises put it near 0.019) and the
+        // gyro's bias taken out.
+        QVERIFY(rms(wKalman) < 0.9 * qMin(rms(wWheels), rms(wGyro)));
+        QVERIFY(rms(biasError) < 0.01);
     }
 
     void filterReplacesAndAddsSignals() {

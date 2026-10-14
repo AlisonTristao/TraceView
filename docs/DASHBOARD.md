@@ -248,6 +248,15 @@ lives in its own module under
   `widgets/gaugeconfigeditor.h`/`.cpp` — since it only ever shows one
   live value: which frame slot it reads (format + index, byte type if
   the frame is raw bytes), a fixed min/max range, unit, and decimals.
+- **Line chart (several sources)** — `multi_line`,
+  `widgets/multisourcechartwidget.h`/`.cpp`: a `dummy_line` whose series each
+  read their own device, topic and field -- a simulated plant's true value
+  next to a filter's estimate published by its controller, say. Every
+  series' binding sits under `"bind"` (keys `s0`, `s1`... in series order),
+  so it is a `TelemetryConsumer` (see "Telemetry bindings"); the rest of its
+  config is a line chart's. Its editor, `widgets/multisourcechartconfigeditor.h`,
+  picks a device, topic and field per series. Unlike a `dummy_line` it gets
+  no retained history when built: it plots what arrives from then on.
   No history/axis settings and no threshold-triggered actions —
   deliberately left out, it only ever reflects the current value.
   How every chart looks (Dashboard, Engineering or Scientific style, axis
@@ -507,7 +516,8 @@ from a simulated device to the real one.
 
 A widget with several bindings keeps each one under `"bind"`, keyed by its
 own input name, every entry a binding of its own in the keys above, with its
-own `deviceId` (TraceLab's Scene widget, [lab/scenes/scenewidget.h](../lab/scenes/scenewidget.h)):
+own `deviceId` (TraceLab's Scene widget, [lab/scenes/scenewidget.h](../lab/scenes/scenewidget.h),
+and the line chart of several sources, `multi_line`):
 `resolveWidgetBinding()` resolves the entries one by one. Such a widget is
 not one MainWindow knows by type, so it implements `TelemetryConsumer`
 ([telemetryconsumer.h](../lib/dashboard/telemetryconsumer.h)):

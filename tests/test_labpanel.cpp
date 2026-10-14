@@ -1,7 +1,8 @@
-// The TraceLab tab (lab/module/labpanel.h) on a live line follower: the loop
-// drawn as plant > filters > controller cards; "+ Filter" and "+ Controller"
-// adding blocks from the templates through the host; picking a block showing
-// its code, parameters and signals; Save turning an edited template into a
+// The TraceLab tab (lab/module/labpanel.h) on a live line follower: its menu
+// of pages as Settings'; the loop drawn on Overview as a block diagram
+// (plant > filters > controller, the signals between them); "+ Filter" and "+ Controller" adding blocks from the
+// templates through the host; picking a block showing it on the Code page
+// (and the same block on Parameters and Signals); Save turning an edited template into a
 // file of the user's (the template untouched, the origin line on top) and
 // "Back to the original" restoring it; every configuration change reaching
 // the project through ModuleHost::updateModuleDeviceConfig(); the page
@@ -12,6 +13,7 @@
 #include <QAction>
 #include <QComboBox>
 #include <QDir>
+#include <QGroupBox>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QLabel>
@@ -25,6 +27,7 @@
 #include <memory>
 
 #include "dashboard/widgetregistry.h"
+#include "lab/benchmarks/furuta/code/furutatemplates.h"
 #include "lab/benchmarks/linefollower/code/lftemplates.h"
 #include "lab/benchmarks/linefollower/device/lfplantdevice.h"
 #include "lab/benchmarks/linefollower/device/trackenvironment.h"
@@ -37,9 +40,9 @@
 #include "lab/module/codeeditor.h"
 #include "lab/module/codewindow.h"
 #include "lab/module/externaleditor.h"
-#include "lab/module/labcard.h"
 #include "lab/module/labpanel.h"
 #include "lab/module/labui.h"
+#include "lab/module/loopdiagram.h"
 #include "lab/module/plantpage.h"
 #include "modules/appmodule.h"
 #include "traceview/thememanager.h"
@@ -86,27 +89,38 @@ void shoot(QWidget* widget, const QString& name) {
     widget->grab().save(folder + QLatin1Char('/') + name + QStringLiteral(".png"));
 }
 
+// The chain is rebuilt with new widgets (the old ones deleted at once), so
+// what is there is current, shown or not (Overview may not be the page).
 QToolButton* addButton(QWidget* panel, const QString& text) {
     for (QToolButton* button : panel->findChildren<QToolButton*>(QStringLiteral("labAddBlock"))) {
-        if (button->text() == text && button->isVisible()) {
+        if (button->text() == text) {
             return button;
         }
     }
     return nullptr;
 }
 
-QList<LabCard*> cards(QWidget* panel) {
-    // A rebuilt chain's cards are shown by a queued call.
+// The loop's diagram on Overview, and its blocks (the plant first; the
+// controller, or the place for one, last).
+LoopDiagram* diagram(QWidget* panel) {
     QCoreApplication::processEvents();
-    QList<LabCard*> list;
-    for (LabCard* card : panel->findChildren<LabCard*>()) {
-        if (card->isVisible()) {
-            list.append(card);
-        }
-    }
-    std::sort(list.begin(), list.end(),
-              [](LabCard* a, LabCard* b) { return a->mapToGlobal(QPoint()).x() < b->mapToGlobal(QPoint()).x(); });
-    return list;
+    return panel->findChild<LoopDiagram*>();
+}
+
+QVector<LoopDiagram::Block> blocks(QWidget* panel) {
+    return diagram(panel)->model().blocks;
+}
+
+void clickBlock(QWidget* panel, int index) {
+    LoopDiagram* d = diagram(panel);
+    QTest::mouseClick(d, Qt::LeftButton, {}, d->blockRect(index).center().toPoint());
+}
+
+// The BlockPage on the page shown (Code, Parameters or Signals).
+BlockPage* shownBlockPage(QWidget* panel) {
+    auto* pages = panel->findChild<QStackedWidget*>();
+    return pages && pages->currentWidget() ? pages->currentWidget()->findChild<BlockPage*>()
+                                           : nullptr;
 }
 
 }  // namespace
@@ -139,7 +153,14 @@ private slots:
         settings.autoRun = false;
         lf::LinePlantDevice plant(0x7000001u, settings);
         LabDeviceRegistry::instance().addPlant(QStringLiteral("plant"), &plant);
-        QTRY_COMPARE(cards(&panel).size(), 1);  // the plant
+        // The plant, and the place for a controller.
+        QTRY_COMPARE(blocks(&panel).size(), 2);
+        QCOMPARE(blocks(&panel).last().kind, LoopDiagram::Block::NoController);
+        QCOMPARE(panel.currentCategory(), LabPanel::Category::Overview);
+        // The menu: Settings' list down the left, one row a page.
+        auto* menu = panel.findChild<QListWidget*>(QStringLiteral("labMenu"));
+        QVERIFY(menu && menu->isVisible());
+        QCOMPARE(menu->count(), 7);
         QVERIFY(addButton(&panel, QStringLiteral("+ Filter")));
         QToolButton* addController = addButton(&panel, QStringLiteral("+ Controller"));
         QVERIFY(addController);
@@ -159,10 +180,15 @@ private slots:
         QCOMPARE(controller->plantDeviceId(), QStringLiteral("plant"));
         QTRY_VERIFY(controller->host()->plantReady());
         QTRY_VERIFY(controller->host()->configured());
-        QTRY_COMPARE(cards(&panel).size(), 2);
-        auto* pages = panel.findChild<QStackedWidget*>();
-        auto* editor = qobject_cast<BlockPage*>(pages->currentWidget());
-        QVERIFY(editor);  // the new block is picked
+        QTRY_COMPARE(blocks(&panel).last().kind, LoopDiagram::Block::Controller);
+        QCOMPARE(blocks(&panel).size(), 2);
+        // The new block is picked, on the Code page.
+        QCOMPARE(panel.currentCategory(), LabPanel::Category::Code);
+        QCOMPARE(panel.currentBlockOwner(), static_cast<CodeBlockOwner*>(controller));
+        QCOMPARE(panel.currentBlock(), int(LabControllerDevice::kController));
+        BlockPage* editor = shownBlockPage(&panel);
+        QVERIFY(editor);
+        QCOMPARE(editor->owner(), static_cast<CodeBlockOwner*>(controller));
         // The page has no code: its one button opens it, here in a window.
         QVERIFY(!editor->findChild<CodeEditor*>());
         QVERIFY(editor->openCodeButton()->isVisible());
@@ -197,8 +223,29 @@ private slots:
         QVERIFY(lowpass);
         lowpass->trigger();
         QCOMPARE(controller->filterCount(), 1);
-        QTRY_COMPARE(cards(&panel).size(), 3);
+        QTRY_COMPARE(blocks(&panel).size(), 3);
+        // The diagram reads the blocks' declarations: the low-pass replaces
+        // the wheel speeds (TL_INOUT), which the plant gives.
+        {
+            const LoopDiagram::Block filter = blocks(&panel)[1];
+            QCOMPARE(filter.kind, LoopDiagram::Block::Filter);
+            QVERIFY(filter.reads.contains(QStringLiteral("w_l")));
+            QVERIFY(filter.writes.contains(QStringLiteral("w_l")));
+            QVERIFY(blocks(&panel).first().writes.contains(QStringLiteral("w_l")));
+            QVERIFY(!blocks(&panel).last().writes.isEmpty());  // the controller's commands
+        }
         QCOMPARE(editor->block(), 0);
+        // The same block on Parameters and Signals.
+        panel.showCategory(LabPanel::Category::Parameters);
+        QVERIFY(shownBlockPage(&panel) && shownBlockPage(&panel) != editor);
+        QCOMPARE(shownBlockPage(&panel)->owner(), static_cast<CodeBlockOwner*>(controller));
+        QCOMPARE(shownBlockPage(&panel)->block(), 0);
+        shoot(&panel, QStringLiteral("3-parameters"));
+        panel.showCategory(LabPanel::Category::Signals);
+        QCOMPARE(shownBlockPage(&panel)->block(), 0);
+        shownBlockPage(&panel)->refreshLive();
+        shoot(&panel, QStringLiteral("3-signals"));
+        panel.showCategory(LabPanel::Category::Overview);
         QVERIFY(host.m_configs.value(QStringLiteral("ctl1"))
                     .value(QStringLiteral("filters"))
                     .toArray()
@@ -209,7 +256,8 @@ private slots:
 
         // Back to the controller; edit the template and save: a file of the
         // user's, starting with the origin line, now the block's source.
-        cards(&panel).last()->clicked();
+        clickBlock(&panel, blocks(&panel).size() - 1);
+        QCOMPARE(panel.currentCategory(), LabPanel::Category::Code);
         QCOMPARE(editor->block(), int(LabControllerDevice::kController));
         QString text = code->toPlainText();
         text.replace(QStringLiteral("TL_PARAM(base, 60,"), QStringLiteral("TL_PARAM(base, 55,"));
@@ -288,10 +336,61 @@ private slots:
                  1800.0);
 
         // The plant's card: its settings as it describes them.
-        cards(&panel).first()->clicked();
-        QCOMPARE(pages->currentWidget(), panel.findChild<PlantPage*>());
+        panel.showCategory(LabPanel::Category::Overview);
+        clickBlock(&panel, 0);
+        QCOMPARE(panel.currentCategory(), LabPanel::Category::Plant);
         shoot(&panel, QStringLiteral("7-plant-page"));
+        panel.showCategory(LabPanel::Category::Simulation);
+        shoot(&panel, QStringLiteral("7-simulation-page"));
+        panel.showCategory(LabPanel::Category::Scenes);
+        shoot(&panel, QStringLiteral("7-scenes-page"));
+        // A phone's width: the menu down to its glyphs.
+        panel.resize(420, 800);
+        QTRY_VERIFY(menu->width() < 100);
+        QVERIFY(menu->item(0)->text().isEmpty());
+        shoot(&panel, QStringLiteral("7-compact"));
         plant.pause();
+    }
+
+    // A plant in C: the diagram takes its outputs and inputs from its code,
+    // with their units; the controller's TL_IN and TL_OUT are its ports.
+    void diagramOfACodePlant() {
+        furuta::registerFurutaTemplates();
+        Host host;
+        LabPanel panel(&host);
+        panel.resize(1500, 900);
+        panel.show();
+        CodePlantDevice plant(QStringLiteral("furuta-plant"), 0x7300009u,
+                              QJsonObject{{"plant", QJsonObject{{"template", "furuta/pendulum"}}},
+                                          {"autoRun", false}});
+        QVERIFY(plant.codeBlocks()->compiled(0));
+        LabDeviceRegistry::instance().addPlant(QStringLiteral("furuta-plant"), &plant);
+        host.addModuleDevice(
+            QString::fromLatin1(kLabControllerDeviceType), QStringLiteral("controller"),
+            QJsonObject{{"plantDeviceId", "furuta-plant"},
+                        {"controller", QJsonObject{{"template", "furuta/energy_lqr"}}}});
+        QTRY_COMPARE(blocks(&panel).last().kind, LoopDiagram::Block::Controller);
+        panel.showCategory(LabPanel::Category::Overview);
+        const LoopDiagram::Model model = diagram(&panel)->model();
+        QStringList outputs;
+        QString commandUnit;
+        for (const LoopDiagram::Signal& signal : model.signalList) {
+            if (signal.kind == LoopDiagram::Signal::Measurement) {
+                outputs.append(signal.name + QLatin1Char('/') + signal.unit);
+            } else if (signal.kind == LoopDiagram::Signal::Command && signal.name == "u") {
+                commandUnit = signal.unit;
+            }
+        }
+        QCOMPARE(outputs, (QStringList{"th1/rad", "th2/rad", "w1/rad/s", "w2/rad/s"}));
+        QCOMPARE(commandUnit, QStringLiteral("N m"));
+        QCOMPARE(model.blocks.first().reads, QStringList{QStringLiteral("u")});
+        QVERIFY(model.blocks.last().reads.contains(QStringLiteral("th2")));
+        QCOMPARE(model.blocks.last().writes, QStringList{QStringLiteral("u")});
+        // Its blocks open their pages: the controller its code.
+        clickBlock(&panel, model.blocks.size() - 1);
+        QCOMPARE(panel.currentCategory(), LabPanel::Category::Code);
+        panel.showCategory(LabPanel::Category::Overview);
+        shoot(&panel, QStringLiteral("11-furuta-diagram"));
     }
 
     void codeInItsOwnWindow() {
@@ -365,14 +464,22 @@ private slots:
         page.show();
         page.setPlant(&plant);
         page.refreshLive();
-        // The plant's code opens from the header; the page holds no editor.
-        QVERIFY(page.codePage()->openCodeButton()->isVisible());
+        // The plant's code is on the Code page: a button goes there; the
+        // page holds no editor.
+        QPushButton* goToCode = nullptr;
+        for (QPushButton* button : page.findChildren<QPushButton*>()) {
+            if (button->text() == QLatin1String("Go to its code")) {
+                goToCode = button;
+            }
+        }
+        QVERIFY(goToCode && goToCode->isVisible());
+        QSignalSpy codeRequested(&page, &PlantPage::codeRequested);
+        goToCode->click();
+        QCOMPARE(codeRequested.count(), 1);
         QVERIFY(!page.findChild<CodeEditor*>());
-        QCOMPARE(page.codePage()->owner(), plant.codeBlocks());
-        QList<QLabel*> titles = page.findChildren<QLabel*>(QStringLiteral("labSectionTitle"));
         QStringList titleTexts;
-        for (QLabel* title : titles) {
-            titleTexts.append(title->text());
+        for (QGroupBox* section : page.findChildren<QGroupBox*>()) {
+            titleTexts.append(section->title());
         }
         QVERIFY2(titleTexts.contains(plant.worldName()), qPrintable(titleTexts.join(", ")));
         shoot(&page, QStringLiteral("10-plant-page-code"));

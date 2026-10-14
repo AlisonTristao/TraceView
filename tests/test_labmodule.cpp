@@ -3,6 +3,9 @@
 #include <QJsonObject>
 #include <QLabel>
 #include <QWidget>
+#include <QMenu>
+#include <QJsonArray>
+#include <QJsonDocument>
 #include <QtTest>
 #include <memory>
 #include <vector>
@@ -138,9 +141,55 @@ void TestLabModule::installRegistersSceneWidgetAndTab() {
                                               "tracelab.linefollower.controller"}));
     // The benchmark is a project (File > Open Example), not a tab button.
     QCOMPARE(host.m_examples,
-             QStringList{"TraceLab benchmarks/Line follower=" +
-                         tracelab::LabPanel::lineFollowerProjectPath()});
+             (QStringList{"TraceLab benchmarks/Line follower=" +
+                              tracelab::LabPanel::lineFollowerProjectPath(),
+                          "TraceLab benchmarks/Furuta pendulum=" +
+                              tracelab::LabPanel::furutaProjectPath()}));
     QVERIFY(QFile::exists(tracelab::LabPanel::lineFollowerProjectPath()));
+    QVERIFY(QFile::exists(tracelab::LabPanel::furutaProjectPath()));
+    // The line follower: the car's noise on, the Kalman filter on the
+    // controller, and a workspace of charts of several sources bound by name
+    // to what the blocks publish.
+    {
+        QFile file(tracelab::LabPanel::lineFollowerProjectPath());
+        QVERIFY(file.open(QIODevice::ReadOnly));
+        const QJsonObject project = QJsonDocument::fromJson(file.readAll()).object();
+        const QJsonArray devices =
+            project.value("devices").toObject().value("devices").toArray();
+        QStringList filters;
+        double noise = 0;
+        for (const QJsonValue& device : devices) {
+            const QJsonObject config = device.toObject().value("moduleConfig").toObject();
+            for (const QJsonValue& filter : config.value("filters").toArray()) {
+                filters.append(filter.toObject().value("template").toString());
+            }
+            noise = qMax(noise, config.value("plant").toObject().value("params").toObject()
+                                    .value("noise").toDouble());
+        }
+        QCOMPARE(filters, QStringList{QStringLiteral("linefollower/kalman")});
+        QCOMPARE(noise, 1.0);
+        QStringList fields;
+        const QJsonArray workspaces = project.value("workspaces").toObject().value("list").toArray();
+        QCOMPARE(workspaces.size(), 2);
+        QCOMPARE(workspaces.at(1).toObject().value("name").toString(),
+                 QStringLiteral("Kalman filter"));
+        for (const QJsonValue& item :
+             workspaces.at(1).toObject().value("dashboard").toObject().value("items").toArray()) {
+            if (item.toObject().value("type").toString() != QLatin1String("multi_line")) {
+                continue;
+            }
+            const QJsonObject bind = item.toObject().value("config").toObject().value("bind").toObject();
+            for (const QJsonValue& binding : bind) {
+                fields.append(binding.toObject().value("topicName").toString() + '.' +
+                              binding.toObject().value("fieldName").toString());
+            }
+        }
+        for (const char* expected : {"sim.states.speed", "ctl.diag.v_kf", "sim.states.omega",
+                                     "ctl.diag.omega_kf", "loop.state.gyro",
+                                     "sim.states.gyro_bias_true", "ctl.diag.gyro_bias_kf"}) {
+            QVERIFY2(fields.contains(QLatin1String(expected)), expected);
+        }
+    }
     QVERIFY(host.m_opened.isEmpty());
 
     // The build tools: a plant first; a controller or a scene needs one.
@@ -155,6 +204,23 @@ void TestLabModule::installRegistersSceneWidgetAndTab() {
              QString("linefollower/car"));
     QCOMPARE(host.m_addedConfigs.first().value("environment").toObject().value("id").toString(),
              QString("linefollower.track"));
+    // Its menu has every kind of plant; the Furuta pendulum's has no
+    // environment.
+    QMenu* plants = actions[0]->menu();
+    QVERIFY(plants);
+    emit plants->aboutToShow();
+    QAction* furuta = nullptr;
+    for (QAction* action : plants->actions()) {
+        if (action->text() == QLatin1String("Furuta pendulum")) {
+            furuta = action;
+        }
+    }
+    QVERIFY(furuta);
+    furuta->trigger();
+    QCOMPARE(host.m_addedDevices.size(), 2);
+    QCOMPARE(host.m_addedConfigs.last().value("plant").toObject().value("template").toString(),
+             QString("furuta/pendulum"));
+    QVERIFY(!host.m_addedConfigs.last().contains("environment"));
 }
 
 void TestLabModule::modeArgumentPicksTheLab() {

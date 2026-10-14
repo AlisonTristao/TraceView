@@ -6,23 +6,20 @@
 
 #include "lab/plant/labplantdevice.h"
 
-class QComboBox;
 class QFormLayout;
 class QLabel;
 class QPushButton;
-class QSpinBox;
 
 namespace tracelab {
 
-class BlockPage;
 class LabSection;
+class LabStatusLine;
 
-// The page of the plant in the TraceLab tab, for any kind of plant
-// (LabPlantDevice). The header: the plant, whether it runs, where the run
-// stands (tick, time and the plant's own figures) and, for a plant written
-// in C, "Open the code". Below, a column with the clock (speed, sample
-// rate) and the settings as the plant describes them (applied together on
-// a reset), then -- for a plant in C -- the columns of its code (BlockPage).
+// The Plant page of the TraceLab tab, for any kind of plant
+// (LabPlantDevice): what the plant is -- its kind, how it stands, where its
+// code is -- and the settings of its world as the plant describes them
+// (applied together on a reset). Its code has a page of its own (Code); the
+// clock and the run, another (SimulationPage).
 class PlantPage : public QWidget {
     Q_OBJECT
 
@@ -33,31 +30,24 @@ public:
     LabPlantDevice* plant() const {
         return m_plant;
     }
-    // The figures, status and code columns (the panel calls it a few times
-    // a second).
+    // How it stands (the panel calls it a few times a second).
     void refreshLive();
-    // The plant's code columns (no block for a plant built into TraceView).
-    BlockPage* codePage() const {
-        return m_page;
-    }
+
+signals:
+    // "Go to the code": the plant's block on the Code page.
+    void codeRequested();
 
 private:
     void rebuildSettings();
-    void refreshClock();
-    void refreshHeader();
-    void applySpeed();
-    void applyRate();
     void applySettings();
-    void addStat(const QString& caption);
 
     QPointer<LabPlantDevice> m_plant;
     bool m_updating = false;
-    BlockPage* m_page = nullptr;
-    QWidget* m_stats = nullptr;
-    QVector<QLabel*> m_statValues;
-    QVector<QLabel*> m_statCaptions;
-    QComboBox* m_speedCombo = nullptr;
-    QSpinBox* m_rateSpin = nullptr;
+    QLabel* m_description = nullptr;
+    QLabel* m_kind = nullptr;
+    QLabel* m_device = nullptr;
+    LabStatusLine* m_status = nullptr;
+    QPushButton* m_codeButton = nullptr;
     LabSection* m_settingsSection = nullptr;
     QWidget* m_settingsBox = nullptr;
     QFormLayout* m_settingsForm = nullptr;

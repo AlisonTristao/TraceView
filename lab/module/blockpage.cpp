@@ -20,7 +20,6 @@
 #include <QPlainTextEdit>
 #include <QPushButton>
 #include <QRegularExpression>
-#include <QScrollArea>
 #include <QSpinBox>
 #include <QTabBar>
 #include <QTabWidget>
@@ -47,11 +46,11 @@ using code::Declaration;
 namespace {
 
 constexpr int kMaxLogLines = 2000;
-constexpr int kFieldWidth = 120;
+constexpr int kFieldWidth = 180;  // a Settings field's
 constexpr int kFlashMs = 6000;
-constexpr int kCodeMinWidth = 280;
-constexpr int kParamsMinWidth = 240;
-constexpr int kSignalsMinWidth = 260;
+constexpr int kSourceWidth = 260;
+constexpr int kSectionSpacing = 20;  // a Settings page's
+constexpr int kListMinHeight = 260;
 
 // What an entry of the source combo stands for.
 enum SourceType { Header = 0, Template, File, OpenFile, NewFile };
@@ -76,18 +75,36 @@ int decimalsFor(const Declaration& decl) {
 
 }  // namespace
 
-BlockPage::BlockPage(QWidget* parent) : QWidget(parent) {
+BlockPage::BlockPage(int parts, QWidget* parent) : QWidget(parent), m_parts(parts) {
     auto* layout = new QVBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
-    layout->setSpacing(14);
+    layout->setSpacing(kSectionSpacing);
 
-    // The header: what the block is; its actions on the right, the primary
-    // one last.
-    m_header = new LabPageHeader(this);
-    m_removeButton = new QPushButton(tr("Remove from the loop"), m_header);
-    m_removeButton->setToolTip(tr("Takes this filter out of the chain (its file stays)."));
-    m_header->addAction(m_removeButton);
-    m_openButton = new QPushButton(tr("Open the code"), m_header);
+    // How the block stands, over its sections.
+    m_status = new LabStatusLine(this);
+    layout->addWidget(m_status);
+
+    // Where the code comes from, and the buttons that open it.
+    m_codeSection = new LabSection(tr("Code"), this);
+    auto* sourceForm = new QFormLayout;
+    sourceForm->setContentsMargins(0, 0, 0, 0);
+    sourceForm->setHorizontalSpacing(12);
+    sourceForm->setFieldGrowthPolicy(QFormLayout::FieldsStayAtSizeHint);
+    m_sourceCombo = new QComboBox(m_codeSection);
+    m_sourceCombo->setMinimumWidth(kSourceWidth);
+    m_sourceCombo->setSizeAdjustPolicy(QComboBox::AdjustToMinimumContentsLengthWithIcon);
+    m_sourceCombo->setToolTip(tr("Where the block's code comes from: a template (the original, "
+                                 "read-only; saving makes a copy of yours), one of your files, "
+                                 "another file, or a new one."));
+    sourceForm->addRow(ui::fieldLabel(tr("Source"), m_codeSection), m_sourceCombo);
+    m_codeSection->body()->addLayout(sourceForm);
+    m_origin = ui::note(QString(), m_codeSection);
+    m_origin->setTextInteractionFlags(Qt::TextSelectableByMouse);
+    m_codeSection->body()->addWidget(m_origin);
+    // The primary action first, the one that takes the block away last.
+    auto* actions = new QHBoxLayout;
+    actions->setSpacing(8);
+    m_openButton = new QPushButton(tr("Open the code"), m_codeSection);
     m_openButton->setProperty("labMenu", true);
     ui::makePrimary(m_openButton);
     auto* openMenu = new QMenu(m_openButton);
@@ -112,35 +129,19 @@ BlockPage::BlockPage(QWidget* parent) : QWidget(parent) {
     });
     connect(openMenu, &QMenu::triggered, this,
             [this](QAction* action) { openExternally(action->data().toInt()); });
-    m_header->addAction(m_openButton);
-    layout->addWidget(m_header);
-
-    // The columns.
-    m_columns = new QHBoxLayout;
-    m_columns->setSpacing(12);
-    layout->addLayout(m_columns, 1);
-
-    // Where the code comes from, and what the compiler and the code said.
-    m_codeSection = new LabSection(tr("Code"), this);
-    m_codeSection->setMinimumWidth(kCodeMinWidth);
-    auto* sourceRow = new QHBoxLayout;
-    sourceRow->setSpacing(8);
-    sourceRow->addWidget(ui::fieldLabel(tr("Source"), m_codeSection));
-    m_sourceCombo = new QComboBox(m_codeSection);
-    m_sourceCombo->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-    m_sourceCombo->setMinimumContentsLength(14);
-    m_sourceCombo->setSizeAdjustPolicy(QComboBox::AdjustToMinimumContentsLengthWithIcon);
-    m_sourceCombo->setToolTip(tr("Where the block's code comes from: a template (the original, "
-                                 "read-only; saving makes a copy of yours), one of your files, "
-                                 "another file, or a new one."));
-    sourceRow->addWidget(m_sourceCombo, 1);
-    m_codeSection->body()->addLayout(sourceRow);
-    m_origin = ui::note(QString(), m_codeSection);
-    m_origin->setTextInteractionFlags(Qt::TextSelectableByMouse);
-    m_codeSection->body()->addWidget(m_origin);
+    actions->addWidget(m_openButton);
     m_revertButton = new QPushButton(tr("Back to the original"), m_codeSection);
-    m_codeSection->body()->addWidget(m_revertButton, 0, Qt::AlignLeft);
-    auto* tabs = new QTabWidget(m_codeSection);
+    actions->addWidget(m_revertButton);
+    actions->addStretch();
+    m_removeButton = new QPushButton(tr("Remove from the loop"), m_codeSection);
+    m_removeButton->setToolTip(tr("Takes this filter out of the chain (its file stays)."));
+    actions->addWidget(m_removeButton);
+    m_codeSection->body()->addLayout(actions);
+    layout->addWidget(m_codeSection);
+
+    // What the compiler and the code said.
+    m_compileSection = new LabSection(tr("Compiler and log"), this);
+    auto* tabs = new QTabWidget(m_compileSection);
     tabs->setDocumentMode(true);
     tabs->tabBar()->setDrawBase(false);
     m_messages = new QListWidget(tabs);
@@ -152,49 +153,54 @@ BlockPage::BlockPage(QWidget* parent) : QWidget(parent) {
     m_log->setFont(QFontDatabase::systemFont(QFontDatabase::FixedFont));
     m_log->setPlaceholderText(tr("What printf() and tl_log() write shows here."));
     tabs->addTab(m_log, tr("Log"));
-    m_codeSection->body()->addWidget(tabs, 1);
-    m_columns->addWidget(m_codeSection, 4);
+    tabs->setMinimumHeight(kListMinHeight);
+    m_compileSection->body()->addWidget(tabs, 1);
+    layout->addWidget(m_compileSection, 1);
 
     // The parameters, live.
     m_paramsSection = new LabSection(tr("Parameters"), this);
-    m_paramsSection->setMinimumWidth(kParamsMinWidth);
-    m_defaultsButton = new QToolButton(m_paramsSection);
-    m_defaultsButton->setText(tr("Defaults"));
-    m_defaultsButton->setAutoRaise(true);
-    m_defaultsButton->setToolTip(tr("Every parameter back to the value written in the code."));
-    m_paramsSection->titleRow()->addWidget(m_defaultsButton);
-    auto* paramsScroll = new QScrollArea(m_paramsSection);
-    paramsScroll->setWidgetResizable(true);
-    paramsScroll->setFrameShape(QFrame::NoFrame);
-    paramsScroll->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    paramsScroll->viewport()->setAutoFillBackground(false);
-    m_paramsBox = new QWidget(paramsScroll);
-    m_paramsBox->setAutoFillBackground(false);
+    m_paramsBox = new QWidget(m_paramsSection);
     auto* paramsLayout = new QVBoxLayout(m_paramsBox);
     paramsLayout->setContentsMargins(0, 0, 0, 0);
     m_paramsForm = new QFormLayout;
     m_paramsForm->setContentsMargins(0, 0, 0, 0);
-    m_paramsForm->setHorizontalSpacing(12);
-    m_paramsForm->setVerticalSpacing(6);
+    m_paramsForm->setHorizontalSpacing(18);
+    m_paramsForm->setVerticalSpacing(8);
     m_paramsForm->setFieldGrowthPolicy(QFormLayout::FieldsStayAtSizeHint);
     paramsLayout->addLayout(m_paramsForm);
-    paramsLayout->addStretch();
-    paramsScroll->setWidget(m_paramsBox);
-    m_paramsSection->body()->addWidget(paramsScroll, 1);
-    m_columns->addWidget(m_paramsSection, 3);
+    m_paramsSection->body()->addWidget(m_paramsBox);
+    // Under the fields it resets.
+    auto* defaultsRow = new QHBoxLayout;
+    defaultsRow->setSpacing(12);
+    m_defaultsButton = new QToolButton(m_paramsSection);
+    m_defaultsButton->setText(tr("Defaults"));
+    m_defaultsButton->setToolTip(tr("Every parameter back to the value written in the code."));
+    defaultsRow->addWidget(m_defaultsButton);
+    defaultsRow->addWidget(
+        ui::note(tr("They change the running code at once and are kept in the project; "
+                    "Defaults brings back the values written in the code."),
+                 m_paramsSection),
+        1);
+    m_paramsSection->body()->addLayout(defaultsRow);
+    layout->addWidget(m_paramsSection);
 
     // The signals it can read, with their values.
     m_signalsSection = new LabSection(tr("Signals"), this);
-    m_signalsSection->setMinimumWidth(kSignalsMinWidth);
     m_signals = new QListWidget(m_signalsSection);
     m_signals->setObjectName(QStringLiteral("labSignals"));
     m_signals->setFont(QFontDatabase::systemFont(QFontDatabase::FixedFont));
+    m_signals->setMinimumHeight(kListMinHeight);
     m_signals->setToolTip(tr("Double-click one: its declaration goes into the open code window "
                              "(or to the clipboard)."));
     m_signalsSection->body()->addWidget(m_signals, 1);
     m_signalsSection->body()->addWidget(
         ui::note(tr("Double-click: declare it in the code."), m_signalsSection));
-    m_columns->addWidget(m_signalsSection, 4);
+    layout->addWidget(m_signalsSection, 1);
+
+    // Only a part with a list grows; the others keep to the top.
+    if (!has(CodePart) && !has(SignalsPart)) {
+        layout->addStretch(1);
+    }
 
     connect(m_removeButton, &QPushButton::clicked, this, [this] {
         if (CodeWindow::closeFrom(m_owner, m_block)) {
@@ -242,19 +248,10 @@ void BlockPage::applyTheme() {
     refreshLive();
 }
 
-void BlockPage::setAutoHeader(bool automatic) {
-    m_autoHeader = automatic;
-    refreshHeader();
-}
-
-void BlockPage::addLeadingColumn(QWidget* column, int stretch) {
-    m_columns->insertWidget(m_leadingColumns++, column, stretch);
-}
-
 void BlockPage::flash(const QString& text) {
     m_flash = text;
     m_flashUntil = QDateTime::currentMSecsSinceEpoch() + kFlashMs;
-    refreshHeader();
+    refreshStatus();
 }
 
 QString BlockPage::kindLabel() const {
@@ -284,13 +281,15 @@ void BlockPage::setBlock(CodeBlockOwner* owner, int block) {
     if (owner) {
         connect(owner, &CodeBlockOwner::blocksChanged, this, &BlockPage::onBlocksChanged);
         connect(owner, &CodeBlockOwner::statusChanged, this, &BlockPage::refreshLive);
-        owner->takeLog(block);  // what it wrote before is not news
+        if (has(CodePart)) {
+            owner->takeLog(block);  // what it wrote before is not news
+        }
     }
-    for (QWidget* section : {static_cast<QWidget*>(m_codeSection),
-                             static_cast<QWidget*>(m_paramsSection),
-                             static_cast<QWidget*>(m_signalsSection)}) {
-        section->setVisible(owner != nullptr);
-    }
+    m_status->setVisible(owner && has(CodePart));
+    m_codeSection->setVisible(owner && has(CodePart));
+    m_compileSection->setVisible(owner && has(CodePart));
+    m_paramsSection->setVisible(owner && has(ParametersPart));
+    m_signalsSection->setVisible(owner && has(SignalsPart));
     m_openButton->setVisible(owner != nullptr);
     m_removeButton->setVisible(owner && owner->canRemove(block));
     refreshSourceCombo();
@@ -316,35 +315,23 @@ void BlockPage::onBlocksChanged() {
     refreshLive();
 }
 
-void BlockPage::refreshHeader() {
-    const bool flashing = QDateTime::currentMSecsSinceEpoch() < m_flashUntil;
-    if (!m_autoHeader) {
-        if (flashing) {
-            m_header->setStatus(m_flash, 0);
-        }
+void BlockPage::refreshStatus() {
+    if (!m_owner || !has(CodePart)) {
         return;
     }
-    if (!m_owner) {
-        m_header->setKind(QString());
-        m_header->setTitle(tr("No block"));
-        m_header->setStatus(QString(), 0);
-        return;
-    }
-    m_header->setKind(m_owner->blockRole(m_block) + QStringLiteral("  ·  C"));
-    m_header->setTitle(m_owner->blockName(m_block));
-    if (flashing) {
-        m_header->setStatus(m_flash, 0);
+    if (QDateTime::currentMSecsSinceEpoch() < m_flashUntil) {
+        m_status->setStatus(m_flash, 0);
         return;
     }
     // What is wrong with the code comes before how the loop runs.
     const QString fault = m_owner->runtimeError(m_block);
     if (!fault.isEmpty()) {
-        m_header->setStatus(tr("stopped: %1").arg(fault), 3);
+        m_status->setStatus(tr("stopped: %1").arg(fault), 3);
         return;
     }
     for (const code::CodeMessage& message : m_owner->messages(m_block)) {
         if (!message.warning) {
-            m_header->setStatus(
+            m_status->setStatus(
                 m_owner->compiled(m_block)
                     ? tr("does not compile (line %1): the previous version runs").arg(message.line)
                     : tr("does not compile (line %1)").arg(message.line),
@@ -353,7 +340,7 @@ void BlockPage::refreshHeader() {
         }
     }
     const CodeBlockOwner::Status status = m_owner->status(m_block);
-    m_header->setStatus(status.text, status.tone);
+    m_status->setStatus(status.text, status.tone);
 }
 
 void BlockPage::refreshOrigin() {
@@ -775,21 +762,27 @@ void BlockPage::refreshSignals() {
 }
 
 void BlockPage::refreshLive() {
-    refreshHeader();
+    refreshStatus();
     if (!m_owner) {
         m_signals->clear();
         return;
     }
-    const QStringList lines = m_owner->takeLog(m_block);
-    for (const QString& line : lines) {
-        m_log->appendPlainText(line);
+    if (has(CodePart)) {
+        const QStringList lines = m_owner->takeLog(m_block);
+        for (const QString& line : lines) {
+            m_log->appendPlainText(line);
+        }
+        // A new fault shows in the messages.
+        if (m_owner->runtimeError(m_block) != m_fault) {
+            refreshMessages();
+        }
     }
-    // A new fault shows in the messages.
-    if (m_owner->runtimeError(m_block) != m_fault) {
-        refreshMessages();
+    if (has(SignalsPart)) {
+        refreshSignals();
     }
-    refreshSignals();
-    refreshParamValues();
+    if (has(ParametersPart)) {
+        refreshParamValues();
+    }
 }
 
 }  // namespace tracelab

@@ -2,6 +2,7 @@
 #include <memory>
 
 #include "lab/scenes/diffdrivescene.h"
+#include "lab/scenes/furutascene.h"
 #include "lab/scenes/sceneregistry.h"
 
 using namespace tracelab;
@@ -79,7 +80,8 @@ void TestSceneRegistry::builtinScenesIncludeTheLineFollower() {
     registerBuiltinScenes(registry);
     registerBuiltinScenes(registry);  // idempotent
 
-    QCOMPARE(registry.types().size(), 1);
+    QCOMPARE(registry.types().size(), 2);
+    QVERIFY(registry.create(FurutaScene::kTypeId));
     const std::unique_ptr<SceneRenderer> scene = registry.create(DiffDriveScene::kTypeId);
     QVERIFY(scene);
 

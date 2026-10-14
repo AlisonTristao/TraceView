@@ -233,11 +233,23 @@ void SceneConfigEditor::rebuildRows() {
     m_inputs = scene ? scene->inputs() : QList<SceneInput>();
     m_params = scene ? scene->params() : QList<SceneParam>();
 
-    while (m_inputsLayout->rowCount() > 0) {
-        m_inputsLayout->removeRow(0);
-    }
-    while (m_paramsLayout->rowCount() > 0) {
-        m_paramsLayout->removeRow(0);
+    // The old rows go later, not now: this runs inside a field's own signal
+    // too (a check box toggled -> configChanged -> the properties panel's
+    // setConfig()), and deleting the sender there crashes once it returns.
+    for (QFormLayout* layout : {m_inputsLayout, m_paramsLayout}) {
+        while (layout->rowCount() > 0) {
+            const QFormLayout::TakeRowResult row = layout->takeRow(0);
+            for (QLayoutItem* item : {row.labelItem, row.fieldItem}) {
+                if (!item) {
+                    continue;
+                }
+                if (QWidget* widget = item->widget()) {
+                    widget->hide();
+                    widget->deleteLater();
+                }
+                delete item;
+            }
+        }
     }
     m_bindingCombos.clear();
     m_paramSpins.clear();

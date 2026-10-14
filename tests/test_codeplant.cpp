@@ -3,10 +3,13 @@
 // integrated by RK4 against its exact solution, a discrete one, inputs held
 // within their bounds; a plant device with no environment closing the loop
 // with a controller in C through BTP, bound by the names its code declares,
-// and rebinding when a new version of the plant declares other outputs; and
+// and rebinding when a new version of the plant declares other outputs;
 // the line follower's car in C on the track equal to the C++ plant, sample
-// for sample, under the same controller.
+// for sample, under the same controller; and the benchmark project's own
+// devices (noise on, the Kalman filter beside the MPC) on the line.
 
+#include <QJsonArray>
+#include <QJsonDocument>
 #include <QTemporaryDir>
 #include <QtTest>
 #include <cmath>
@@ -15,6 +18,7 @@
 #include "lab/benchmarks/linefollower/device/lfplantdevice.h"
 #include "lab/benchmarks/linefollower/device/trackenvironment.h"
 #include "lab/code/codefiles.h"
+#include "lab/control/codesignalfilter.h"
 #include "lab/control/controllerhost.h"
 #include "lab/control/labdevices.h"
 #include "lab/plant/codeplant.h"
@@ -139,6 +143,8 @@ private slots:
         constexpr int kSteps = 400;
         struct Sample {
             double uL, uR, x, y, theta;
+            // The car in C only: its accelerometer and the true v, omega.
+            double accelX = 0, accelY = 0, speed = 0, omega = 0;
         };
         static quint32 source = 0x7200000u;
         const auto runLoop = [&](LabPlantDevice& plant, const QString& plantId,
@@ -193,9 +199,16 @@ private slots:
                                 : code.codeBlocks()->messages(0).first().text));
         const QVector<Sample> got = runLoop(code, QStringLiteral("car-code"), [&] {
             const CodePlant* p = code.plant();
+            const auto output = [p](const char* name) {
+                return p->outputs().value(p->outputNames().indexOf(QLatin1String(name)), qQNaN());
+            };
+            const auto diag = [p](const char* name) {
+                return p->diags().value(p->diagNames().indexOf(QLatin1String(name)), qQNaN());
+            };
             return Sample{code.appliedInput()[0], code.appliedInput()[1],
                           p->state(QStringLiteral("x")), p->state(QStringLiteral("y")),
-                          p->state(QStringLiteral("theta"))};
+                          p->state(QStringLiteral("theta")), output("accel_x"),
+                          output("accel_y"), diag("speed"), diag("omega")};
         });
         QCOMPARE(got.size(), kSteps);
         double worst = 0.0;
@@ -213,6 +226,116 @@ private slots:
         qInfo("car in C vs C++ plant: worst difference %.3g (step %d)", worst, worstStep);
         QVERIFY2(worst < 1e-9, qPrintable(QStringLiteral("step %1: %2").arg(worstStep).arg(worst)));
         QVERIFY(std::fabs(got.last().x - got.first().x) > 0.1);  // it went somewhere
+
+        // The accelerometer (noise off): along the car the speed's change
+        // over the step, across it v * omega.
+        const double ts = code.sampleTime();
+        double worstAccel = 0.0;
+        for (int k = 1; k < kSteps; ++k) {
+            worstAccel = qMax(worstAccel, std::fabs(got[k].accelX -
+                                                    (got[k].speed - got[k - 1].speed) / ts));
+            worstAccel = qMax(worstAccel, std::fabs(got[k].accelY - got[k].speed * got[k].omega));
+        }
+        QVERIFY2(worstAccel < 1e-9, qPrintable(QString::number(worstAccel)));
+        QVERIFY(std::isfinite(got.last().accelY));
+    }
+
+    void benchmarkProjectFollowsTheLine_data() {
+        QTest::addColumn<bool>("noiseOff");
+        QTest::newRow("as shipped") << false;
+        QTest::newRow("noise off") << true;
+    }
+
+    // The benchmark project's own devices (the car with its sensors' noise,
+    // the qLPV MPC and the Kalman filter beside it) in lockstep: on the line
+    // the whole time, and the filter's speed close to the car's.
+    void benchmarkProjectFollowsTheLine() {
+        QFETCH(bool, noiseOff);
+        QFile file(QStringLiteral(TRACELAB_LF_PROJECT));
+        QVERIFY(file.open(QIODevice::ReadOnly));
+        QJsonObject plantConfig, controllerConfig;
+        QString plantId, controllerId;
+        const QJsonArray devices = QJsonDocument::fromJson(file.readAll())
+                                       .object().value("devices").toObject().value("devices")
+                                       .toArray();
+        for (const QJsonValue& value : devices) {
+            const QJsonObject device = value.toObject();
+            if (device.value("moduleType").toString() == QLatin1String("tracelab.plant")) {
+                plantId = device.value("id").toString();
+                plantConfig = device.value("moduleConfig").toObject();
+            } else if (device.value("moduleType").toString() ==
+                       QLatin1String("tracelab.controller")) {
+                controllerId = device.value("id").toString();
+                controllerConfig = device.value("moduleConfig").toObject();
+            }
+        }
+        QVERIFY(!plantId.isEmpty() && !controllerId.isEmpty());
+        QCOMPARE(controllerConfig.value("plantDeviceId").toString(), plantId);
+        QCOMPARE(controllerConfig.value("filters").toArray().size(), 1);
+        QJsonObject spec = plantConfig.value("plant").toObject();
+        QCOMPARE(spec.value("params").toObject().value("noise").toInt(), 1);
+        if (noiseOff) {
+            spec.insert("params", QJsonObject{{"noise", 0}});
+            plantConfig.insert("plant", spec);
+        }
+        plantConfig.insert("runMode", "lockstep");
+        plantConfig.insert("autoRun", false);
+        plantId += noiseOff ? QStringLiteral("-quiet") : QStringLiteral("-noisy");
+        controllerConfig.insert("plantDeviceId", plantId);
+
+        CodePlantDevice plant(plantId, noiseOff ? 0x7300001u : 0x7300002u, plantConfig);
+        QVERIFY(plant.codeBlocks()->compiled(0));
+        auto* track = dynamic_cast<lf::TrackEnvironment*>(plant.environment());
+        QVERIFY(track);
+        LabDeviceRegistry::instance().addPlant(plantId, &plant);
+        LabControllerDevice controller(controllerId + plantId, controllerConfig);
+        QVERIFY(controller.compiled(0));
+        QTRY_VERIFY_WITH_TIMEOUT(controller.host()->configured(), 5000);
+        QTRY_COMPARE_WITH_TIMEOUT(int(plant.mode()), 2, 5000);  // REMOTE, armed
+
+        constexpr long long kTicks = 1600;  // 20 s at 80 Hz
+        const CodePlant* car = plant.plant();
+        const int speedIndex = car->diagNames().indexOf(QLatin1String("speed"));
+        const int omegaIndex = car->diagNames().indexOf(QLatin1String("omega"));
+        const int gyroIndex = car->outputNames().indexOf(QLatin1String("gyro"));
+        const int vIndex = controller.filter(0)->diagNames().indexOf(QLatin1String("v_kf"));
+        QVERIFY(speedIndex >= 0 && omegaIndex >= 0 && gyroIndex >= 0 && vIndex >= 0);
+        double worstLateral = 0.0, speedError = 0.0, gyroError = 0.0;
+        double lastSpeed = 0.0;
+        int samples = 0;
+        connect(&plant, &LabPlantDevice::ticked, &controller, [&](long long tick) {
+            const double speed = car->diags().value(speedIndex);
+            if (tick > 80) {  // after the start
+                worstLateral = qMax(worstLateral, track->distance(car->state(QStringLiteral("x")),
+                                                                  car->state(QStringLiteral("y"))));
+                // The controller answers tick k after the plant says it
+                // ticked: the filter's estimate is still the last tick's.
+                const double v = controller.filter(0)->diag().value(vIndex);
+                speedError += (v - lastSpeed) * (v - lastSpeed);
+                const double gyro = car->outputs().value(gyroIndex) - car->diags().value(omegaIndex);
+                gyroError += gyro * gyro;
+                ++samples;
+            }
+            lastSpeed = speed;
+            if (tick >= kTicks) {
+                plant.pause();
+            }
+        });
+        plant.run();
+        QTRY_VERIFY_WITH_TIMEOUT(plant.tick() >= kTicks, 120000);
+        plant.pause();
+        speedError = std::sqrt(speedError / qMax(1, samples));
+        gyroError = std::sqrt(gyroError / qMax(1, samples));
+        qInfo("worst lateral %.4f m (half width %.4f), Kalman speed %.4f m/s rms, gyro noise "
+              "%.4f rad/s rms",
+              worstLateral, track->lineHalfWidth(), speedError, gyroError);
+        QVERIFY2(worstLateral < track->lineHalfWidth(), qPrintable(QString::number(worstLateral)));
+        QVERIFY2(speedError < 0.005, qPrintable(QString::number(speedError)));
+        if (noiseOff) {
+            QCOMPARE(gyroError, 0.0);
+        } else {
+            QVERIFY2(gyroError > 0.01, qPrintable(QString::number(gyroError)));
+        }
     }
 };
 

@@ -4,6 +4,7 @@
 #include <QJsonObject>
 
 #include "core/moduledevicetype.h"
+#include "lab/benchmarks/furuta/code/furutatemplates.h"
 #include "lab/benchmarks/linefollower/code/lftemplates.h"
 #include "lab/benchmarks/linefollower/device/lfdevices.h"
 #include "lab/benchmarks/linefollower/device/lfplantdevice.h"
@@ -54,11 +55,24 @@ void LabModule::install(traceview::ModuleHost& host) {
         {QString::fromLatin1(lf::kPlantDeviceType),
          QCoreApplication::translate("LabModule", "Line follower (C++)"),
          lf::PlantSettings().toJson()});
+    // The Furuta pendulum: a plant in C with no environment (its world is
+    // its two angles), its controllers in C, its scene.
+    furuta::registerFurutaTemplates();
+    LabDeviceRegistry::instance().registerPlantType(
+        {QString::fromLatin1(kCodePlantDeviceType),
+         QCoreApplication::translate("LabModule", "Furuta pendulum"),
+         QJsonObject{{"plant", QJsonObject{{"template", "furuta/pendulum"}}},
+                     {"fps", 50},
+                     {"solver", "rk4"},
+                     {"substeps", 4}}});
 
     // Each benchmark is a project of its own.
     host.registerExampleProject(QCoreApplication::translate("LabModule", "TraceLab benchmarks"),
                                 QCoreApplication::translate("LabModule", "Line follower"),
                                 LabPanel::lineFollowerProjectPath());
+    host.registerExampleProject(QCoreApplication::translate("LabModule", "TraceLab benchmarks"),
+                                QCoreApplication::translate("LabModule", "Furuta pendulum"),
+                                LabPanel::furutaProjectPath());
 
     // The tab holds the tools to build a lab and drive it.
     auto* panel = new LabPanel(&host);

@@ -21,12 +21,22 @@
  *               floor(angle / (2 pi / ticks)) and the speed is the count's
  *               change over Ts -- whole ticks only
  *     gyro      the yaw rate (+ white noise and a random-walk bias)
+ *     accel_x   the accelerometer at the axle, along the car: the change of
+ *               the speed over the last step, dv/dt
+ *     accel_y   across the car: the centripetal acceleration v * omega, > 0
+ *               when turning right (the sign of omega). Both with white
+ *               noise and a random-walk bias of their own, like the gyro;
+ *               their true values are the diagnostics accel_x_true and
+ *               accel_y_true (speed and omega are the true v and omega,
+ *               gyro_bias_true the gyro's bias)
  *     s[]       the line sensor array: N sensors `line_spacing` apart,
  *               `line_distance` ahead of the axle, s[0] the leftmost. Each
  *               sees a disc of `footprint` on the floor and reads the
  *               fraction of it the line covers, 0..1; then a 12-bit ADC.
  * With noise off this is the C++ plant of TraceLab's line-follower
- * benchmark, sample for sample.
+ * benchmark, sample for sample (which has no accelerometer). The
+ * accelerometer's noise is drawn after every other sensor's, so the gyro and
+ * the line sensors read the same noise with it as without it.
  */
 
 TL_DISCRETE;
@@ -51,6 +61,8 @@ TL_PARAM_BOOL(noise, 0);
 TL_PARAM(gyro_white, 0.02, "rad/s", 0, 10);
 TL_PARAM(gyro_walk, 0.002, "rad/s/sqrt(s)", 0, 10);
 TL_PARAM(line_white, 0.02, "", 0, 1);
+TL_PARAM(accel_white, 0.05, "m/s^2", 0, 100);
+TL_PARAM(accel_walk, 0.005, "m/s^2/sqrt(s)", 0, 100);
 
 #define N 15                                  /* line sensors */
 
@@ -67,13 +79,20 @@ TL_OUTPUT(w_l, "rad/s");
 TL_OUTPUT(w_r, "rad/s");
 TL_OUTPUT(gyro, "rad/s");
 TL_OUTPUT_ARRAY(s, N, "");
+TL_OUTPUT(accel_x, "m/s^2");                  /* after s[]: the fields before keep their place */
+TL_OUTPUT(accel_y, "m/s^2");
 
 TL_DIAG(speed, "m/s");
 TL_DIAG(omega, "rad/s");
+TL_DIAG(accel_x_true, "m/s^2");
+TL_DIAG(accel_y_true, "m/s^2");
+TL_DIAG(gyro_bias_true, "rad/s");             /* the gyro's random-walk bias */
 
 static double angle[2];                       /* encoders */
 static long long count[2];
 static double gyro_bias;
+static double accel_bias[2];
+static double last_speed;                     /* the accelerometer's dv */
 
 static double w1(void) {
     return (2 * M_PI * wheel_rpm) / (60 * 100);
@@ -83,7 +102,11 @@ void plant_reset(void) {
     angle[0] = angle[1] = 0;
     count[0] = count[1] = 0;
     gyro_bias = 0;
+    accel_bias[0] = accel_bias[1] = 0;
+    last_speed = 0;
     speed = omega = 0;
+    accel_x_true = accel_y_true = 0;
+    gyro_bias_true = 0;
 }
 
 void plant_update(void) {
@@ -147,6 +170,7 @@ void plant_output(void) {
         gyro_bias += gyro_walk * sqrt(tl_ts()) * tl_noise(1.0);
         gyro = yaw + gyro_bias + gyro_white * tl_noise(1.0);
     }
+    gyro_bias_true = gyro_bias;
 
     /* Line sensors: where each one is on the floor, how much line it sees. */
     double c = cos(theta), sn = sin(theta);
@@ -162,5 +186,21 @@ void plant_output(void) {
             v = lsb * round(v / lsb);
         }
         s[i] = v;
+    }
+
+    /* Accelerometer: along the car, the speed's change over the step;
+     * across it, the centripetal v * omega. Its noise last (see above). */
+    double v_now = (motor_l + motor_r) * (w1() * wheel_radius / 2);
+    accel_x_true = (v_now - last_speed) / tl_ts();
+    accel_y_true = v_now * yaw;
+    last_speed = v_now;
+    accel_x = accel_x_true;
+    accel_y = accel_y_true;
+    if (noise) {
+        for (int i = 0; i < 2; i++) {
+            accel_bias[i] += accel_walk * sqrt(tl_ts()) * tl_noise(1.0);
+        }
+        accel_x += accel_bias[0] + accel_white * tl_noise(1.0);
+        accel_y += accel_bias[1] + accel_white * tl_noise(1.0);
     }
 }

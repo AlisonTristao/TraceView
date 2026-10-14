@@ -15,9 +15,10 @@ for the real robot or the firmware without the other noticing.
 
 The plant, the filters and the controller are **blocks of C code** you see,
 edit and save in the TraceLab tab, compiled in memory when saved (see "Code
-blocks"). The line-follower benchmark runs that way: its car, its qLPV MPC,
-GPC and PD are templates you start from. The `.tlmodel` engine of the first
-plan (`sim/`) is still a skeleton.
+blocks"). The benchmarks run that way: the line follower's car, qLPV MPC,
+GPC and PD, and the Furuta pendulum's plant, qLPV NMPC and energy swing-up
++ LQR are templates you start from. The `.tlmodel` engine of the first plan
+(`sim/`) is still a skeleton.
 
 ## Building against a local BTP
 
@@ -45,19 +46,28 @@ With the lab ON and an older BTP, configure stops and says so. With
    `benchmarks/linefollower/linefollower.tvproj` (built in as a resource;
    saving asks for a file):
    the devices "TraceLab: Plant" (the template `linefollower/car` on the
-   track environment) and "TraceLab: Controller" (the template
-   `linefollower/qlpv_mpc`) and the workspace "Line follower" (the Scene plus
-   charts of heading reference vs prediction, lateral error, solve time and
-   the wheel speeds the controller uses). The plant starts on its own.
-3. The **TraceLab** tab shows the loop as a chain of cards -- plant >
-   filters > controller -- with **+ Filter** / **+ Controller** where a block
-   can go. Pick a card: its page has a header (what the block is, how it
-   runs, **Open the code** on the right) and columns -- for the plant its
-   clock (1x, 2x, as fast as possible, lockstep, the sample rate) and
-   settings first; for every block in C where its code comes from with the
-   compiler's messages and log, its parameters (live) and the signals it can
-   read. The code itself opens in VS Code or in a window of its own. Play /
-   Pause / Reset / Step are on the ribbon. The
+   track environment, its sensors' noise on) and "TraceLab: Controller" (the
+   template `linefollower/qlpv_mpc`, the filter `linefollower/kalman` beside
+   it), the workspace "Line follower" (the Scene plus charts of heading
+   reference vs prediction, lateral error, solve time and the wheel speeds
+   the controller uses) and the workspace "Kalman filter" (the Scene plus
+   the true speed, turn rate and gyro bias against the filter's estimates).
+   The plant starts on its own.
+3. The **TraceLab** tab is laid out like Settings: a menu down the left,
+   one page at a time on the right. **Overview** draws the loop as a block
+   diagram -- plant > filters > controller, each signal a lane between
+   them, read on a block's left edge, written on its right, the commands
+   coming back underneath to the plant -- with **+ Filter** /
+   **+ Controller** under it; a block opens its page.
+   **Simulation** drives the run (Play / Pause / Step / Reset, tick, time,
+   the plant's figures) and its clock (1x, 2x, as fast as possible,
+   lockstep, the sample rate). **Plant** says what the plant is and holds
+   its settings. **Code**, **Parameters** and **Signals** show one block in
+   C, picked on top of the page (the same on the three): where its code
+   comes from with **Open the code**, the compiler's messages and log; its
+   parameters (live); the signals it can read. The code itself opens in VS
+   Code or in a window of its own. **Scenes** puts the plant's Scene on the
+   dashboard. Play / Pause / Reset / Step are on the ribbon too. The
    ribbon has **Add plant**, **Add controller** and **Add scene** (a Scene
    bound by name to both). With the Scene focused, P / O / R change the
    perturbation (`sim.disturb`).
@@ -65,8 +75,8 @@ With the lab ON and an older BTP, configure stops and says so. With
 The devices can also be added by hand (Devices tab, **Add Device**). The C++
 plant and controller ("TraceLab: Line follower", "TraceLab: Line-follower
 controller (C++)") are still registered for older projects and as the
-reference the templates are tested against; the tab shows a C++ controller
-as a legacy card it can remove.
+reference the templates are tested against; Overview shows a C++ controller
+in a section under the loop that removes it.
 
 How the C++ devices are wired (`benchmarks/linefollower/device/`,
 `tracelab_lf_devices`) -- `CodePlantDevice` and `LabControllerDevice` (see
@@ -99,6 +109,22 @@ How the C++ devices are wired (`benchmarks/linefollower/device/`,
 The standalone `tracelab-linefollower` harness below is unchanged;
 `tests/test_lfdevices.cpp` checks that the loop through BTP in lockstep
 gives the same steps as that harness.
+
+## Running the Furuta pendulum
+
+**File > Open Example > TraceLab benchmarks > Furuta pendulum** opens
+`benchmarks/furuta/furuta.tvproj`: the devices "TraceLab: Plant" (the
+template `furuta/pendulum`, 50 Hz, RK4 with 4 steps per sample, real time)
+and "TraceLab: Controller" (`furuta/qlpv_mpc`), and the workspace "Furuta
+pendulum": the Scene and the charts of the angles (theta2 wrapped), the
+torque, the pendulum's energy and the solve time. The plant starts hanging
+down and the controller swings it up; the arm's reference steps to pi at
+11 s and a pulse pushes the pendulum at 20 s (the paper's scenario). In the
+Scene, drag to orbit, the wheel zooms, a double click goes back to the
+figure's view; P / O / R change the disturbance on the pendulum's joint.
+The TraceLab tab's empty page has a button for it too; **Add plant** (its
+menu) adds a Furuta pendulum to any project, **+ Controller** lists its
+controllers first and **Add scene** adds its scene.
 
 ## Code blocks
 
@@ -170,7 +196,12 @@ The line follower's templates (`benchmarks/linefollower/code/`) are the C++
 benchmark ported: `tests/test_codecontroller.cpp` and `test_codeplant.cpp`
 run each one and its C++ original through BTP in lockstep and find **the
 same numbers, sample for sample**: the PD, the GPC, the qLPV MPC (taylor and
-iterative scheduling) and the car with its sensors (noise off). The qLPV MPC
+iterative scheduling) and the car with its sensors (noise off). The car in C
+also has an accelerometer the C++ plant lacks -- `accel_x` (dv/dt along the
+car) and `accel_y` (v * omega across it), with white noise and a random-walk
+bias like the gyro's, their true values in the diagnostics `accel_x_true` and
+`accel_y_true` -- drawn after the other sensors' noise, so they read the same
+numbers either way. The qLPV MPC
 in C takes about 1 ms a tick (the C++ one 0.3 ms); 12.5 ms are available at
 80 Hz.
 
@@ -225,16 +256,20 @@ lab/
     sceneconfigeditor.h/.cpp  its properties: type, bindings by name, params
     diffdrivecamera.h/.cpp  the line follower's world -> screen math
     diffdrivescene.h/.cpp   DiffDriveScene, "Line follower"
+    furutascene.h/.cpp      FurutaScene, "Furuta pendulum"
   benchmarks/linefollower/  the line-follower benchmark: plant, controllers, runner app (see Benchmarks)
+  benchmarks/furuta/        the Furuta pendulum: plant and controllers in C, project (see Benchmarks)
   filters/              the portable C filter runtime and its IIR design (see Filters)
   module/               tracelab_module
     labmodule.h/.cpp        LabModule: registers the scene widget, device types and the tab
-    labpanel.h/.cpp         the TraceLab tab: the loop's cards, the picked block's page
-    plantpage.h/.cpp        a plant's page: figures, clock, settings, then its code's columns
-    blockpage.h/.cpp        a block's page: header, source, messages, log, parameters, signals
+    labpanel.h/.cpp         the TraceLab tab: Settings-like menu and pages
+    loopdiagram.h/.cpp      Overview's static block diagram: blocks, signal lanes, commands back
+    simulationpage.h/.cpp   the Simulation page: run status, figures, run buttons, clock
+    plantpage.h/.cpp        the Plant page: what the plant is, its settings
+    blockpage.h/.cpp        a block in parts: code (source, messages, log), parameters, signals
     codewindow.h/.cpp       a block's code in a window of its own
     codeeditor.h/.cpp       the editor: line numbers, C highlighting, error marks
-    labui.h/.cpp            the tab's look: sections, page header, primary button
+    labui.h/.cpp            the tab's look: category pages, sections, status line, primary button
     externaleditor.h/.cpp   opening a block's file in VS Code or another editor
 ```
 
@@ -253,6 +288,26 @@ one. The one change TraceLab needed in `lib/` is generic:
 `TelemetryConsumer` ([lib/dashboard/telemetryconsumer.h](../lib/dashboard/telemetryconsumer.h)),
 how a widget MainWindow does not know by type gets its telemetry, and the
 `"bind"` map in `MainWindow::resolveWidgetBinding()`.
+
+### The Kalman filter in the line-follower benchmark
+
+The line-follower benchmark (`benchmarks/linefollower/linefollower.tvproj`)
+runs the car with its sensors' noise on and the template
+`linefollower/kalman` as a filter on the controller: an extended Kalman filter on the state [v, omega,
+gyro bias, accelerometer bias], the accelerometer along the car as the input
+of its prediction, corrected by the encoders, the gyro and the centripetal
+`accel_y` (v * omega), one measurement at a time. It only reads the sensors:
+it adds `v_est` and `omega_est` for a controller that wants them and
+publishes `v_kf`, `omega_kf`, `gyro_bias_kf`, `accel_bias_kf` and `v_sigma`
+in `ctl.diag`; the qLPV MPC drives on the track's preview, so the noise
+does not move it. The project's second workspace, **Kalman filter**, has the
+scene and line charts of several sources (`multi_line`, docs/DASHBOARD.md):
+the true speed, turn rate and gyro bias from the plant's `sim.states` next to
+the estimates from the controller's `ctl.diag` (and the raw gyro).
+`tests/test_codecontroller.cpp` runs the car and the filter step by step and
+checks the estimates beat the sensors they come from;
+`tests/test_codeplant.cpp` runs the project's own devices in lockstep, with
+the noise as shipped and off, and checks the car stays on the line.
 
 ## Benchmarks
 
@@ -327,6 +382,94 @@ stops; the mouse wheel zooms. At the end (100 % coverage, `--max-time`, Esc or
 closing the window) it prints runner.py's metrics: lateral error RMS and max,
 mean speed, solve times, QPs. Use a Release build for the qLPV MPC: in Debug,
 Eigen makes it several times slower than real time.
+
+### Furuta pendulum (`benchmarks/furuta/`)
+
+The benchmark of "Fast qLPV NMPC using CHRONOS: Parameter Trajectory
+Estimation and Application to the Furuta Pendulum" (Tristao, Sanches,
+Medero, Morato), ported from `simulacao_furuta` (`my_furuta_mpc_step.m`,
+`config.ini`). It is code only: three templates (`tracelab_furuta`,
+`code/`), the project and the scene; the generic devices run it.
+
+```
+benchmarks/furuta/
+  code/plants/pendulum.c          furuta/pendulum     the plant
+  code/controllers/qlpv_mpc.c     furuta/qlpv_mpc     qLPV NMPC (the paper's)
+  code/controllers/energy_lqr.c   furuta/energy_lqr   energy swing-up + LQR
+  code/furutatemplates.h          registerFurutaTemplates()
+  furuta.tvproj                   the example project
+```
+
+**Plant.** Euler-Lagrange, rigid links, torque input, no electrical
+dynamics: `M(q) q'' = b u - F q' - N(q, q') q' - d(q)`, q = (theta1,
+theta2), theta2 = 0 upright, the paper's M, N, F and d with m2 = 0.09 kg,
+L1 = 0.085 m, l2 = 0.13 m, I1 = 0.005, I2 = 5.07e-4 kg m^2, mu1 = mu2 =
+0.001 N m s/rad. Input `u` (N m, +-0.6), states `theta1`, `theta2`,
+`dtheta1`, `dtheta2` (sim.truth), outputs `th1`, `th2`, `w1`, `w2` (exact,
+or encoders with `encoder_ticks`, plus noise), diagnostics `theta2_w`
+(wrapped), `tau_d`, `energy` (sim.states). A torque `tau_d` on the
+pendulum's joint: `sim.disturb` (% of `disturb_max`) plus a pulse at
+`kick_time`. With no friction and no input it keeps its total energy to
+1e-6 (test_furuta).
+
+**qLPV NMPC.** The Euler model at the plant's Ts embedded exactly with
+eight scheduling parameters (sinc(theta2) keeps gravity linear and
+regular upright; the rates are saturated at `w_max` before f_rho), Np = 40,
+Q = diag(10, 100, 5, 1), R_du = 100, |u| <= 0.6: a box QP per estimate of
+the scheduling trajectory -- `frozen`, `warm_start` (default), `taylor`
+(the paper's eq. 13 with the analytic Jacobian, saturated to the scheduling
+set) or `iterative` (up to 5 QPs, |dP|_inf < 1e-3). theta2 is taken modulo
+2 pi, so it goes up by the nearest side. The QP is solved by a projected
+Newton (Bertsekas) written in the template: on this problem the
+active-set prediction of `tl_qp_box` cycles in about one sample in ten and
+falls back to its slow projected gradient (still selectable, `qp_solver`).
+The arm's reference is `theta1_ref` plus `step` from `step_time` on.
+Predicted angles go to `pred_x` (theta1) and `pred_y` (theta2) for the
+scene; `theta1_r`, `theta2_w`, `cost`, `qps`, `qp_iterations`, `rho_error`
+(|f_rho(prediction) - P|_inf) and `rho_norm` (|P_k|_2) to ctl.diag.
+
+**Energy swing-up + LQR.** Astrom-Furuta energy pumping (`k_energy`,
+`u_swing`, the arm kept near its reference) and, within `catch_angle` of
+the top, a discrete LQR of the model linearized there (Riccati iterated in
+Joseph form in the template, again when a parameter changes).
+
+Closed loop from hanging down, the paper's scenario (tests/test_furuta.cpp,
+25 s at 50 Hz, Release build on Windows):
+
+| Controller | Upright (|theta2| < 0.05) from | Solve time, mean / max |
+|---|---|---|
+| qLPV NMPC, warm start | 9.0 s | 0.23 / 2.3 ms |
+| qLPV NMPC, iterative | 6.2 s | 0.37 / 4.7 ms |
+| qLPV NMPC, frozen | never (as in the paper) | |
+| qLPV NMPC, taylor | not within 25 s | |
+| energy swing-up + LQR | 3.6 s | < 0.1 ms |
+
+The NMPCs that get up follow the arm's step to pi with the pendulum
+upright. The paper's Taylor completes the swing-up after longer
+oscillations; this port's does not, so the test only asks it to run within
+bounds.
+
+**Scene** (`scenes/furutascene.h`, type `furuta`). The paper's figure
+(`pendulo_furuta.drawio`) in line art on white, with its proportions: base
+with its chamfered top, collar, shaft, motor, the arm turning by theta1,
+and the x-y-z axes in the corner. The joint is built like a real one,
+along the arm's axis: a bearing housing at the arm's end (turning with
+theta1 only), a short shaft out of it and the pendulum's hub on that shaft
+(turning with theta2), the rod leaving the hub radially. The
+parts are solids: where two overlap on screen, a ray cast against both
+(capped cylinders, the sphere) decides which is in front, and the lines
+drawn over them are hidden where a part covers them. The figure's
+annotations are options, off by default: "Angles and labels" (the dashed
+references, the theta1 / theta2 arcs, L1, l2, m2) and "Torque arrow" (u
+around the shaft, its width and colour following |u|, its direction u's
+sign). An orthographic camera (azimuth -45 deg, elevation 45 deg, as the
+figure) that the mouse orbits, fitted to everything the mass can reach. It
+reads `sim.truth` theta1/theta2/tick/t, `loop.output` u, `sim.states`
+tau_d, `ctl.diag` theta1_r/pred_x/pred_y/iterations/solve_ms and `ctl.info`,
+and draws the controller's predicted path of the mass and a short trail.
+tests/test_furutascene.cpp checks the bindings, the trail, where the mass
+lands for given angles and the keys, and paints a frame (saved to
+`$TRACELAB_FURUTA_SCENE_PNG` when set).
 
 ## Sensors
 

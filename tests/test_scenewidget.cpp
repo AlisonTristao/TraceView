@@ -1,3 +1,4 @@
+#include <QCheckBox>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QSignalSpy>
@@ -7,6 +8,7 @@
 #include "dashboard/dashboardgrid.h"
 #include "dashboard/widgetregistry.h"
 #include "lab/scenes/diffdrivescene.h"
+#include "lab/scenes/furutascene.h"
 #include "lab/scenes/sceneconfigeditor.h"
 #include "lab/scenes/sceneregistry.h"
 #include "lab/scenes/scenewidget.h"
@@ -97,6 +99,7 @@ class TestSceneWidget : public QObject {
 private slots:
     void initTestCase();
     void editorRoundTripKeepsTypeBindingsAndParams();
+    void editorSurvivesItsOwnToggle();
     void widgetAppliesConfig();
     void projectRoundTripStoresNoCode();
     void bindByNameMatchesTheCatalog();
@@ -127,6 +130,38 @@ void TestSceneWidget::editorRoundTripKeepsTypeBindingsAndParams() {
     editor.setAvailableDevices(plantDevice());
     QCOMPARE(editor.config(), sceneConfig());
     QCOMPARE(changed.count(), 0);
+}
+
+// The properties panel answers configChanged() by setting the config back,
+// synchronously: a toggle's check box is rebuilt inside its own click and
+// must not be deleted under it (this crashed in QCheckBox::checkStateSet).
+void TestSceneWidget::editorSurvivesItsOwnToggle() {
+    SceneConfigEditor editor;
+    QJsonObject config = sceneConfig();
+    config["scene"] = QString::fromLatin1(FurutaScene::kTypeId);
+    editor.setConfig(config);
+    connect(&editor, &traceview::WidgetConfigEditor::configChanged, &editor,
+            [&editor] { editor.setConfig(editor.config()); });
+    editor.show();
+    QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);  // the first rows
+    const QList<QCheckBox*> boxes = editor.findChildren<QCheckBox*>();
+    QVERIFY(!boxes.isEmpty());
+    int before = 0;
+    for (QCheckBox* box : boxes) {
+        before += box->isChecked() ? 1 : 0;
+    }
+    QCheckBox* first = boxes.first();
+    const bool was = first->isChecked();
+    first->click();  // nextCheckState() -> checkStateSet(), where it crashed
+    QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
+    // The rebuilt rows carry the toggled value.
+    int after = 0;
+    const QList<QCheckBox*> rebuilt = editor.findChildren<QCheckBox*>();
+    QCOMPARE(rebuilt.size(), boxes.size());
+    for (QCheckBox* box : rebuilt) {
+        after += box->isChecked() ? 1 : 0;
+    }
+    QCOMPARE(after, before + (was ? -1 : 1));
 }
 
 void TestSceneWidget::widgetAppliesConfig() {

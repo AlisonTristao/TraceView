@@ -31,6 +31,10 @@ void registerLineFollowerTemplates() {
          "controllers/pd.c"},
         {BlockKind::Filter, "linefollower/lowpass", tr("Low-pass (wheel speeds)"),
          tr("First-order low-pass on w_l and w_r, replacing them."), "filters/lowpass.c"},
+        {BlockKind::Filter, "linefollower/kalman", tr("Kalman (speed and turn rate)"),
+         tr("Extended Kalman filter on the encoders, the gyro and the accelerometer: "
+            "estimates v, omega and the sensors' biases (v_est, omega_est)."),
+         "filters/kalman.c"},
         {BlockKind::Plant, "linefollower/car", tr("Line-follower car"),
          tr("The car of the Python simulator -- motors, kinematics, encoders, gyro and the "
             "line sensor array -- on the track."),

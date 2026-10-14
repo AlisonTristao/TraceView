@@ -163,7 +163,9 @@ public:
 
     static LabDeviceRegistry& instance();
 
-    // Ignored when the type id is taken.
+    // A kind of plant: a device type with its default configuration (one
+    // device type, tracelab.plant, serves every plant in C). Ignored when
+    // one with the same type id and name is there.
     void registerPlantType(const PlantType& type);
     const QVector<PlantType>& plantTypes() const {
         return m_plantTypes;

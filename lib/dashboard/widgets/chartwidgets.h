@@ -168,6 +168,9 @@ public:
     const ChartConfig& config() const {
         return m_config;
     }
+    // Series `index`'s buffered values, oldest first, with the samples
+    // queued since the last repaint in.
+    QVector<double> seriesValues(int index) const;
 
 protected:
     void mouseMoveEvent(QMouseEvent* event) override;

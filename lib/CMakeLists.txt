@@ -354,6 +354,10 @@ add_library(traceview_dashboard STATIC
     dashboard/widgets/chatconfigeditor.h
     dashboard/widgets/chatwidget.cpp
     dashboard/widgets/chatwidget.h
+    dashboard/widgets/multisourcechartconfigeditor.cpp
+    dashboard/widgets/multisourcechartconfigeditor.h
+    dashboard/widgets/multisourcechartwidget.cpp
+    dashboard/widgets/multisourcechartwidget.h
     dashboard/widgets/robotlogconfigeditor.cpp
     dashboard/widgets/robotlogconfigeditor.h
     dashboard/widgets/robotlogmodel.cpp

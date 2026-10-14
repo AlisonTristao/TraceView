@@ -1101,6 +1101,13 @@ void ChartWidgetBase::onFieldSample(const traceview::TelemetryFieldBinding& bind
     appendFieldSample(binding.fieldId, timestampUs, value);
 }
 
+QVector<double> ChartWidgetBase::seriesValues(int index) const {
+    drainStagedSamples();
+    const QMutexLocker<QRecursiveMutex> lock(&m_sync->mutex);
+    return index >= 0 && index < m_seriesBuffers.size() ? m_seriesBuffers[index].values()
+                                                        : QVector<double>();
+}
+
 void ChartWidgetBase::seedFromHistory(const FieldHistoryLookup& lookup) {
     const QMutexLocker<QRecursiveMutex> lock(&m_sync->mutex);
     {

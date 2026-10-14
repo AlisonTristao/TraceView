@@ -42,6 +42,7 @@ add_traceview_test(test_hubpeeraccumulator traceview_devices)
 # "known" flag. Pure function (device.h), no MainWindow, no QWidget.
 add_traceview_test(test_hubchildpresence traceview_devices)
 add_traceview_test(test_chartdata traceview_dashboard)
+add_traceview_test(test_multisourcechart traceview_dashboard)
 # Round-number axis ticks and the chart style sheet (widgets/chartscale.h,
 # widgets/chartstyle.h) -- pure functions, no painting.
 add_traceview_test(test_chartscale traceview_dashboard)
@@ -152,6 +153,10 @@ if(TRACEVIEW_ENABLE_LAB)
     # sample routing); LabModule's install; the loopback transport pair.
     add_traceview_test(test_sceneregistry tracelab_scenes)
     add_traceview_test(test_diffdrivescene tracelab_scenes)
+    # The Furuta pendulum scene: inputs bound by name, angles and trail,
+    # the mass where the angles put it, the disturbance keys, a painted frame
+    # (saved to $TRACELAB_FURUTA_SCENE_PNG when set).
+    add_traceview_test(test_furutascene tracelab_scenes)
     add_traceview_test(test_scenewidget tracelab_scenes traceview_project)
     add_traceview_test(test_labmodule tracelab_module tracelab_scenes traceview_dashboard
                        traceview_transport)
@@ -240,10 +245,20 @@ if(TARGET tracelab_lf_devices)
     tracelab_copy_tcc_runtime(test_codecontroller)
     # Plants in C (lab/plant: CodePlant, CodePlantDevice) and the track
     # environment: RK4 against the exact solution, a generic loop bound by
-    # the code's names (rebinding after a new version), and the line
-    # follower's car in C equal to the C++ plant sample for sample.
+    # the code's names (rebinding after a new version), the line follower's
+    # car in C equal to the C++ plant sample for sample, and the benchmark
+    # project's devices (noise, Kalman) on the line.
     add_traceview_test(test_codeplant tracelab_lf_devices tracelab_control tracelab_plant)
     tracelab_copy_tcc_runtime(test_codeplant)
+    target_compile_definitions(test_codeplant PRIVATE
+        TRACELAB_LF_PROJECT="${CMAKE_SOURCE_DIR}/lab/benchmarks/linefollower/linefollower.tvproj")
+    # The Furuta pendulum benchmark (lab/benchmarks/furuta): the plant in C
+    # conserving energy, the qLPV NMPC (warm-start, iterative) and the energy
+    # swing-up + LQR swinging it up, balancing it and following the arm's
+    # step, frozen and Taylor within bounds, closed directly as the devices
+    # step them.
+    add_traceview_test(test_furuta tracelab_furuta tracelab_control tracelab_plant)
+    tracelab_copy_tcc_runtime(test_furuta)
 endif()
 
 # Generic telemetry value types (lib/telemetry) -- no BTP dependency at all

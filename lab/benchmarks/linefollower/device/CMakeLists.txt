@@ -43,6 +43,7 @@ qt_add_resources(tracelab_lf_devices tracelab_lf_templates
         ../code/controllers/gpc.c
         ../code/controllers/pd.c
         ../code/controllers/qlpv_mpc.c
+        ../code/filters/kalman.c
         ../code/filters/lowpass.c
         ../code/plants/car.c
 )

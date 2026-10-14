@@ -189,6 +189,8 @@ add_library(tracelab_scenes STATIC
     scenes/diffdrivecamera.h
     scenes/diffdrivescene.cpp
     scenes/diffdrivescene.h
+    scenes/furutascene.cpp
+    scenes/furutascene.h
     scenes/sceneconfigeditor.cpp
     scenes/sceneconfigeditor.h
     scenes/scenerenderer.h
@@ -219,8 +221,8 @@ add_library(tracelab_module STATIC
     module/codewindow.h
     module/externaleditor.cpp
     module/externaleditor.h
-    module/labcard.cpp
-    module/labcard.h
+    module/loopdiagram.cpp
+    module/loopdiagram.h
     module/labmodule.cpp
     module/labmodule.h
     module/labpanel.cpp
@@ -229,6 +231,8 @@ add_library(tracelab_module STATIC
     module/labui.h
     module/plantpage.cpp
     module/plantpage.h
+    module/simulationpage.cpp
+    module/simulationpage.h
 )
 target_include_directories(tracelab_module PUBLIC ${CMAKE_SOURCE_DIR})
 target_link_libraries(tracelab_module
@@ -253,13 +257,22 @@ add_subdirectory(filters)
 # Benchmarks: a plant, its controllers, their BTP devices and a runner app per
 # benchmark (lab/README.md, "Benchmarks").
 add_subdirectory(benchmarks/linefollower)
+add_subdirectory(benchmarks/furuta)
 
 # The line follower's devices and preset project in the TraceLab tab.
 target_link_libraries(tracelab_module PRIVATE tracelab_lf_devices traceview_transport)
 qt_add_resources(tracelab_module tracelab_presets
     PREFIX "/tracelab"
     BASE benchmarks/linefollower
-    FILES benchmarks/linefollower/linefollower.tvproj
+    FILES
+        benchmarks/linefollower/linefollower.tvproj
+)
+# The Furuta pendulum's templates and preset project.
+target_link_libraries(tracelab_module PRIVATE tracelab_furuta)
+qt_add_resources(tracelab_module tracelab_furuta_presets
+    PREFIX "/tracelab"
+    BASE benchmarks/furuta
+    FILES benchmarks/furuta/furuta.tvproj
 )
 # The TraceLab tab's ribbon glyphs, same 16px grid as resources/icons/ribbon.
 qt_add_resources(tracelab_module tracelab_icons
@@ -269,10 +282,14 @@ qt_add_resources(tracelab_module tracelab_icons
         module/icons/code.svg
         module/icons/controller.svg
         module/icons/filter.svg
+        module/icons/overview.svg
+        module/icons/parameters.svg
         module/icons/pause.svg
         module/icons/plant.svg
         module/icons/play.svg
         module/icons/reset.svg
         module/icons/scene.svg
+        module/icons/signals.svg
+        module/icons/simulation.svg
         module/icons/step.svg
 )

@@ -7,7 +7,10 @@
                 "id": "tracelab-lf-plant",
                 "moduleConfig": {
                     "plant": {
-                        "template": "linefollower/car"
+                        "template": "linefollower/car",
+                        "params": {
+                            "noise": 1
+                        }
                     },
                     "environment": {
                         "id": "linefollower.track",
@@ -37,7 +40,11 @@
                     "controller": {
                         "template": "linefollower/qlpv_mpc"
                     },
-                    "filters": []
+                    "filters": [
+                        {
+                            "template": "linefollower/kalman"
+                        }
+                    ]
                 },
                 "moduleType": "tracelab.controller",
                 "name": "TraceLab: Controller",
@@ -495,6 +502,441 @@
                 },
                 "id": "tracelab-lf-workspace",
                 "name": "Line follower"
+            },
+            {
+                "dashboard": {
+                    "breakpoint": "large",
+                    "canvasHeightMultiplier": {
+                        "medium": 0,
+                        "small": 3.0
+                    },
+                    "items": [
+                        {
+                            "config": {
+                                "bind": {
+                                    "controller": {
+                                        "deviceId": "tracelab-lf-controller",
+                                        "sourceId": "0x42ABDC76",
+                                        "topicId": "0x0002",
+                                        "topicName": "ctl.info"
+                                    },
+                                    "coverage": {
+                                        "deviceId": "tracelab-lf-plant",
+                                        "fieldId": 7,
+                                        "fieldName": "coverage",
+                                        "sourceId": "0xA1B70FC4",
+                                        "topicId": "0x0003",
+                                        "topicName": "sim.truth"
+                                    },
+                                    "next_point": {
+                                        "deviceId": "tracelab-lf-plant",
+                                        "fieldId": 6,
+                                        "fieldName": "next_point",
+                                        "sourceId": "0xA1B70FC4",
+                                        "topicId": "0x0003",
+                                        "topicName": "sim.truth"
+                                    },
+                                    "pred_tick": {
+                                        "deviceId": "tracelab-lf-controller",
+                                        "fieldId": 1,
+                                        "fieldName": "ref_tick",
+                                        "sourceId": "0x42ABDC76",
+                                        "topicId": "0x0001",
+                                        "topicName": "ctl.diag"
+                                    },
+                                    "pred_x": {
+                                        "deviceId": "tracelab-lf-controller",
+                                        "fieldId": 4,
+                                        "fieldName": "pred_x",
+                                        "sourceId": "0x42ABDC76",
+                                        "topicId": "0x0001",
+                                        "topicName": "ctl.diag"
+                                    },
+                                    "pred_y": {
+                                        "deviceId": "tracelab-lf-controller",
+                                        "fieldId": 5,
+                                        "fieldName": "pred_y",
+                                        "sourceId": "0x42ABDC76",
+                                        "topicId": "0x0001",
+                                        "topicName": "ctl.diag"
+                                    },
+                                    "preview_tick": {
+                                        "deviceId": "tracelab-lf-plant",
+                                        "fieldId": 1,
+                                        "fieldName": "tick",
+                                        "sourceId": "0xA1B70FC4",
+                                        "topicId": "0x0005",
+                                        "topicName": "sim.preview"
+                                    },
+                                    "preview_x": {
+                                        "deviceId": "tracelab-lf-plant",
+                                        "fieldId": 2,
+                                        "fieldName": "px",
+                                        "sourceId": "0xA1B70FC4",
+                                        "topicId": "0x0005",
+                                        "topicName": "sim.preview"
+                                    },
+                                    "preview_y": {
+                                        "deviceId": "tracelab-lf-plant",
+                                        "fieldId": 3,
+                                        "fieldName": "py",
+                                        "sourceId": "0xA1B70FC4",
+                                        "topicId": "0x0005",
+                                        "topicName": "sim.preview"
+                                    },
+                                    "qps": {
+                                        "deviceId": "tracelab-lf-controller",
+                                        "fieldId": 3,
+                                        "fieldName": "iterations",
+                                        "sourceId": "0x42ABDC76",
+                                        "topicId": "0x0001",
+                                        "topicName": "ctl.diag"
+                                    },
+                                    "solve_ms": {
+                                        "deviceId": "tracelab-lf-controller",
+                                        "fieldId": 2,
+                                        "fieldName": "solve_ms",
+                                        "sourceId": "0x42ABDC76",
+                                        "topicId": "0x0001",
+                                        "topicName": "ctl.diag"
+                                    },
+                                    "t": {
+                                        "deviceId": "tracelab-lf-plant",
+                                        "fieldId": 2,
+                                        "fieldName": "t",
+                                        "sourceId": "0xA1B70FC4",
+                                        "topicId": "0x0003",
+                                        "topicName": "sim.truth"
+                                    },
+                                    "theta": {
+                                        "deviceId": "tracelab-lf-plant",
+                                        "fieldId": 5,
+                                        "fieldName": "theta",
+                                        "sourceId": "0xA1B70FC4",
+                                        "topicId": "0x0003",
+                                        "topicName": "sim.truth"
+                                    },
+                                    "tick": {
+                                        "deviceId": "tracelab-lf-plant",
+                                        "fieldId": 1,
+                                        "fieldName": "tick",
+                                        "sourceId": "0xA1B70FC4",
+                                        "topicId": "0x0003",
+                                        "topicName": "sim.truth"
+                                    },
+                                    "track": {
+                                        "deviceId": "tracelab-lf-plant",
+                                        "sourceId": "0xA1B70FC4",
+                                        "topicId": "0x0007",
+                                        "topicName": "sim.track"
+                                    },
+                                    "x": {
+                                        "deviceId": "tracelab-lf-plant",
+                                        "fieldId": 3,
+                                        "fieldName": "x",
+                                        "sourceId": "0xA1B70FC4",
+                                        "topicId": "0x0003",
+                                        "topicName": "sim.truth"
+                                    },
+                                    "y": {
+                                        "deviceId": "tracelab-lf-plant",
+                                        "fieldId": 4,
+                                        "fieldName": "y",
+                                        "sourceId": "0xA1B70FC4",
+                                        "topicId": "0x0003",
+                                        "topicName": "sim.truth"
+                                    }
+                                },
+                                "params": {
+                                    "perturbation_step": 5,
+                                    "render_radius_m": 4,
+                                    "scale_px_per_m": 300,
+                                    "wheel_distance_m": 0.15
+                                },
+                                "scene": "diffdrive"
+                            },
+                            "groupId": "",
+                            "id": "tracelab-lfk-scene",
+                            "key": "",
+                            "layouts": {
+                                "large": {
+                                    "height": 1,
+                                    "width": 0.6,
+                                    "x": 0,
+                                    "y": 0
+                                },
+                                "medium": {
+                                    "height": 1,
+                                    "width": 0.6041666666666666,
+                                    "x": 0,
+                                    "y": 0
+                                },
+                                "small": {
+                                    "height": 1,
+                                    "width": 1,
+                                    "x": 0,
+                                    "y": 0
+                                }
+                            },
+                            "name": "Line follower",
+                            "type": "scene"
+                        },
+                        {
+                            "config": {
+                                "series": [
+                                    {
+                                        "name": "true",
+                                        "color": "#1f77b4",
+                                        "style": "solid",
+                                        "unit": "m/s"
+                                    },
+                                    {
+                                        "name": "Kalman",
+                                        "color": "#d62728",
+                                        "style": "dashed",
+                                        "unit": "m/s"
+                                    }
+                                ],
+                                "bind": {
+                                    "s0": {
+                                        "deviceId": "tracelab-lf-plant",
+                                        "sourceId": "0xA1B70FC4",
+                                        "topicId": "0x0000",
+                                        "fieldId": 0,
+                                        "topicName": "sim.states",
+                                        "fieldName": "speed"
+                                    },
+                                    "s1": {
+                                        "deviceId": "tracelab-lf-controller",
+                                        "sourceId": "0x42ABDC76",
+                                        "topicId": "0x0000",
+                                        "fieldId": 0,
+                                        "topicName": "ctl.diag",
+                                        "fieldName": "v_kf"
+                                    }
+                                },
+                                "xAxis": {
+                                    "mode": "samples",
+                                    "limit": 800,
+                                    "sampleTimeMs": 12.5
+                                },
+                                "yAxis": {
+                                    "mode": "fixed",
+                                    "min": 0.0,
+                                    "max": 1.2,
+                                    "unit": "Speed [m/s]",
+                                    "decimals": 2,
+                                    "grid": true,
+                                    "autoAxis": false
+                                },
+                                "view": {
+                                    "legend": "topLeft",
+                                    "yTicks": 5
+                                }
+                            },
+                            "groupId": "",
+                            "id": "tracelab-lfk-speed",
+                            "key": "",
+                            "name": "Speed: true vs Kalman",
+                            "type": "multi_line",
+                            "layouts": {
+                                "large": {
+                                    "x": 0.6,
+                                    "y": 0.0,
+                                    "width": 0.4,
+                                    "height": 0.3333333333333333
+                                },
+                                "medium": {
+                                    "x": 0.6041666666666666,
+                                    "y": 0.0,
+                                    "width": 0.3958333333333333,
+                                    "height": 0.3333333333333333
+                                },
+                                "small": {
+                                    "x": 0,
+                                    "y": 1.0,
+                                    "width": 1,
+                                    "height": 0.5
+                                }
+                            }
+                        },
+                        {
+                            "config": {
+                                "series": [
+                                    {
+                                        "name": "gyro",
+                                        "color": "#8c8c8c",
+                                        "style": "dotted",
+                                        "unit": "rad/s"
+                                    },
+                                    {
+                                        "name": "true",
+                                        "color": "#1f77b4",
+                                        "style": "solid",
+                                        "unit": "rad/s"
+                                    },
+                                    {
+                                        "name": "Kalman",
+                                        "color": "#d62728",
+                                        "style": "dashed",
+                                        "unit": "rad/s"
+                                    }
+                                ],
+                                "bind": {
+                                    "s0": {
+                                        "deviceId": "tracelab-lf-plant",
+                                        "sourceId": "0xA1B70FC4",
+                                        "topicId": "0x0000",
+                                        "fieldId": 0,
+                                        "topicName": "loop.state",
+                                        "fieldName": "gyro"
+                                    },
+                                    "s1": {
+                                        "deviceId": "tracelab-lf-plant",
+                                        "sourceId": "0xA1B70FC4",
+                                        "topicId": "0x0000",
+                                        "fieldId": 0,
+                                        "topicName": "sim.states",
+                                        "fieldName": "omega"
+                                    },
+                                    "s2": {
+                                        "deviceId": "tracelab-lf-controller",
+                                        "sourceId": "0x42ABDC76",
+                                        "topicId": "0x0000",
+                                        "fieldId": 0,
+                                        "topicName": "ctl.diag",
+                                        "fieldName": "omega_kf"
+                                    }
+                                },
+                                "xAxis": {
+                                    "mode": "samples",
+                                    "limit": 800,
+                                    "sampleTimeMs": 12.5
+                                },
+                                "yAxis": {
+                                    "mode": "fixed",
+                                    "min": -6.0,
+                                    "max": 6.0,
+                                    "unit": "Turn rate [rad/s]",
+                                    "decimals": 1,
+                                    "grid": true,
+                                    "autoAxis": false
+                                },
+                                "view": {
+                                    "legend": "topLeft",
+                                    "yTicks": 5
+                                }
+                            },
+                            "groupId": "",
+                            "id": "tracelab-lfk-omega",
+                            "key": "",
+                            "name": "Turn rate: true, gyro and Kalman",
+                            "type": "multi_line",
+                            "layouts": {
+                                "large": {
+                                    "x": 0.6,
+                                    "y": 0.3333333333333333,
+                                    "width": 0.4,
+                                    "height": 0.3333333333333333
+                                },
+                                "medium": {
+                                    "x": 0.6041666666666666,
+                                    "y": 0.3333333333333333,
+                                    "width": 0.3958333333333333,
+                                    "height": 0.3333333333333333
+                                },
+                                "small": {
+                                    "x": 0,
+                                    "y": 1.5,
+                                    "width": 1,
+                                    "height": 0.5
+                                }
+                            }
+                        },
+                        {
+                            "config": {
+                                "series": [
+                                    {
+                                        "name": "true",
+                                        "color": "#1f77b4",
+                                        "style": "solid",
+                                        "unit": "rad/s"
+                                    },
+                                    {
+                                        "name": "Kalman",
+                                        "color": "#d62728",
+                                        "style": "dashed",
+                                        "unit": "rad/s"
+                                    }
+                                ],
+                                "bind": {
+                                    "s0": {
+                                        "deviceId": "tracelab-lf-plant",
+                                        "sourceId": "0xA1B70FC4",
+                                        "topicId": "0x0000",
+                                        "fieldId": 0,
+                                        "topicName": "sim.states",
+                                        "fieldName": "gyro_bias_true"
+                                    },
+                                    "s1": {
+                                        "deviceId": "tracelab-lf-controller",
+                                        "sourceId": "0x42ABDC76",
+                                        "topicId": "0x0000",
+                                        "fieldId": 0,
+                                        "topicName": "ctl.diag",
+                                        "fieldName": "gyro_bias_kf"
+                                    }
+                                },
+                                "xAxis": {
+                                    "mode": "samples",
+                                    "limit": 800,
+                                    "sampleTimeMs": 12.5
+                                },
+                                "yAxis": {
+                                    "mode": "fixed",
+                                    "min": -0.03,
+                                    "max": 0.03,
+                                    "unit": "Gyro bias [rad/s]",
+                                    "decimals": 3,
+                                    "grid": true,
+                                    "autoAxis": false
+                                },
+                                "view": {
+                                    "legend": "topLeft",
+                                    "yTicks": 5
+                                }
+                            },
+                            "groupId": "",
+                            "id": "tracelab-lfk-bias",
+                            "key": "",
+                            "name": "Gyro bias: true vs Kalman",
+                            "type": "multi_line",
+                            "layouts": {
+                                "large": {
+                                    "x": 0.6,
+                                    "y": 0.6666666666666666,
+                                    "width": 0.4,
+                                    "height": 0.3333333333333333
+                                },
+                                "medium": {
+                                    "x": 0.6041666666666666,
+                                    "y": 0.6666666666666666,
+                                    "width": 0.3958333333333333,
+                                    "height": 0.3333333333333333
+                                },
+                                "small": {
+                                    "x": 0,
+                                    "y": 2.0,
+                                    "width": 1,
+                                    "height": 0.5
+                                }
+                            }
+                        }
+                    ],
+                    "verticalUnit": "page"
+                },
+                "id": "tracelab-lf-kalman-workspace",
+                "name": "Kalman filter"
             }
         ]
     }

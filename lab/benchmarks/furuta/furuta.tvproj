@@ -1,0 +1,455 @@
+{
+    "devices": {
+        "devices": [
+            {
+                "commType": 0,
+                "description": "",
+                "id": "tracelab-furuta-plant",
+                "moduleConfig": {
+                    "plant": {
+                        "template": "furuta/pendulum"
+                    },
+                    "fps": 50,
+                    "runMode": "realtime",
+                    "timeScale": 1,
+                    "autoRun": true,
+                    "solver": "rk4",
+                    "substeps": 4
+                },
+                "moduleType": "tracelab.plant",
+                "name": "TraceLab: Plant",
+                "script": "",
+                "transportType": 5
+            },
+            {
+                "commType": 0,
+                "description": "",
+                "id": "tracelab-furuta-controller",
+                "moduleConfig": {
+                    "plantDeviceId": "tracelab-furuta-plant",
+                    "controller": {
+                        "template": "furuta/qlpv_mpc"
+                    },
+                    "filters": []
+                },
+                "moduleType": "tracelab.controller",
+                "name": "TraceLab: Controller",
+                "script": "",
+                "transportType": 5
+            }
+        ]
+    },
+    "traceview": {
+        "formatVersion": 1
+    },
+    "workspaces": {
+        "activeId": "tracelab-furuta-workspace",
+        "list": [
+            {
+                "dashboard": {
+                    "breakpoint": "large",
+                    "canvasHeightMultiplier": {
+                        "medium": 0,
+                        "small": 3.5
+                    },
+                    "items": [
+                        {
+                            "config": {
+                                "bind": {
+                                    "theta1": {
+                                        "deviceId": "tracelab-furuta-plant",
+                                        "sourceId": "0xB7F47CCD",
+                                        "topicId": "0x0003",
+                                        "topicName": "sim.truth",
+                                        "fieldId": 3,
+                                        "fieldName": "theta1"
+                                    },
+                                    "theta2": {
+                                        "deviceId": "tracelab-furuta-plant",
+                                        "sourceId": "0xB7F47CCD",
+                                        "topicId": "0x0003",
+                                        "topicName": "sim.truth",
+                                        "fieldId": 4,
+                                        "fieldName": "theta2"
+                                    },
+                                    "tick": {
+                                        "deviceId": "tracelab-furuta-plant",
+                                        "sourceId": "0xB7F47CCD",
+                                        "topicId": "0x0003",
+                                        "topicName": "sim.truth",
+                                        "fieldId": 1,
+                                        "fieldName": "tick"
+                                    },
+                                    "t": {
+                                        "deviceId": "tracelab-furuta-plant",
+                                        "sourceId": "0xB7F47CCD",
+                                        "topicId": "0x0003",
+                                        "topicName": "sim.truth",
+                                        "fieldId": 2,
+                                        "fieldName": "t"
+                                    },
+                                    "u": {
+                                        "deviceId": "tracelab-furuta-plant",
+                                        "sourceId": "0xB7F47CCD",
+                                        "topicId": "0x0002",
+                                        "topicName": "loop.output",
+                                        "fieldId": 3,
+                                        "fieldName": "u"
+                                    },
+                                    "disturbance": {
+                                        "deviceId": "tracelab-furuta-plant",
+                                        "sourceId": "0xB7F47CCD",
+                                        "topicId": "0x0004",
+                                        "topicName": "sim.states",
+                                        "fieldId": 7,
+                                        "fieldName": "tau_d"
+                                    },
+                                    "theta1_ref": {
+                                        "deviceId": "tracelab-furuta-controller",
+                                        "sourceId": "0xAB2C09DD",
+                                        "topicId": "0x0001",
+                                        "topicName": "ctl.diag",
+                                        "fieldId": 7,
+                                        "fieldName": "theta1_r"
+                                    },
+                                    "pred_theta1": {
+                                        "deviceId": "tracelab-furuta-controller",
+                                        "sourceId": "0xAB2C09DD",
+                                        "topicId": "0x0001",
+                                        "topicName": "ctl.diag",
+                                        "fieldId": 4,
+                                        "fieldName": "pred_x"
+                                    },
+                                    "pred_theta2": {
+                                        "deviceId": "tracelab-furuta-controller",
+                                        "sourceId": "0xAB2C09DD",
+                                        "topicId": "0x0001",
+                                        "topicName": "ctl.diag",
+                                        "fieldId": 5,
+                                        "fieldName": "pred_y"
+                                    },
+                                    "qps": {
+                                        "deviceId": "tracelab-furuta-controller",
+                                        "sourceId": "0xAB2C09DD",
+                                        "topicId": "0x0001",
+                                        "topicName": "ctl.diag",
+                                        "fieldId": 3,
+                                        "fieldName": "iterations"
+                                    },
+                                    "solve_ms": {
+                                        "deviceId": "tracelab-furuta-controller",
+                                        "sourceId": "0xAB2C09DD",
+                                        "topicId": "0x0001",
+                                        "topicName": "ctl.diag",
+                                        "fieldId": 2,
+                                        "fieldName": "solve_ms"
+                                    },
+                                    "controller": {
+                                        "deviceId": "tracelab-furuta-controller",
+                                        "sourceId": "0xAB2C09DD",
+                                        "topicId": "0x0002",
+                                        "topicName": "ctl.info"
+                                    }
+                                },
+                                "params": {
+                                    "arm_length_m": 0.085,
+                                    "pendulum_length_m": 0.13,
+                                    "azimuth_deg": -45,
+                                    "elevation_deg": 45,
+                                    "torque_max": 0.6,
+                                    "perturbation_step": 20,
+                                    "labels": 0,
+                                    "torque_arrow": 0,
+                                    "prediction": 1,
+                                    "trail": 0,
+                                    "antialiasing": 1
+                                },
+                                "scene": "furuta"
+                            },
+                            "groupId": "",
+                            "id": "tracelab-furuta-scene",
+                            "key": "",
+                            "layouts": {
+                                "large": {
+                                    "height": 1,
+                                    "width": 0.6,
+                                    "x": 0,
+                                    "y": 0
+                                },
+                                "medium": {
+                                    "height": 1,
+                                    "width": 0.6,
+                                    "x": 0,
+                                    "y": 0
+                                },
+                                "small": {
+                                    "height": 1,
+                                    "width": 1,
+                                    "x": 0,
+                                    "y": 0
+                                }
+                            },
+                            "name": "Furuta pendulum",
+                            "type": "scene"
+                        },
+                        {
+                            "config": {
+                                "deviceId": "tracelab-furuta-plant",
+                                "series": [
+                                    {
+                                        "color": "#1f77b4",
+                                        "fieldId": 2,
+                                        "fieldName": "theta1",
+                                        "name": "theta1 (arm)",
+                                        "style": "solid",
+                                        "unit": "rad"
+                                    },
+                                    {
+                                        "color": "#d62728",
+                                        "fieldId": 6,
+                                        "fieldName": "theta2_w",
+                                        "name": "theta2 (pendulum)",
+                                        "style": "solid",
+                                        "unit": "rad"
+                                    }
+                                ],
+                                "sourceId": "0xB7F47CCD",
+                                "topicId": "0x0004",
+                                "topicName": "sim.states",
+                                "view": {
+                                    "legend": "topLeft",
+                                    "yTicks": 5
+                                },
+                                "xAxis": {
+                                    "limit": 500,
+                                    "mode": "samples",
+                                    "sampleTimeMs": 20
+                                },
+                                "yAxis": {
+                                    "autoAxis": false,
+                                    "decimals": 1,
+                                    "grid": true,
+                                    "max": 4,
+                                    "min": -4,
+                                    "mode": "fixed",
+                                    "unit": "Angle [rad]"
+                                }
+                            },
+                            "groupId": "",
+                            "id": "tracelab-furuta-angles",
+                            "key": "",
+                            "layouts": {
+                                "large": {
+                                    "height": 0.25,
+                                    "width": 0.4,
+                                    "x": 0.6,
+                                    "y": 0
+                                },
+                                "medium": {
+                                    "height": 0.25,
+                                    "width": 0.4,
+                                    "x": 0.6,
+                                    "y": 0
+                                },
+                                "small": {
+                                    "height": 0.5,
+                                    "width": 1,
+                                    "x": 0,
+                                    "y": 1
+                                }
+                            },
+                            "name": "Arm and pendulum angles",
+                            "type": "dummy_line"
+                        },
+                        {
+                            "config": {
+                                "deviceId": "tracelab-furuta-plant",
+                                "series": [
+                                    {
+                                        "color": "#1f77b4",
+                                        "fieldId": 3,
+                                        "fieldName": "u",
+                                        "name": "u",
+                                        "style": "solid",
+                                        "unit": "N m"
+                                    }
+                                ],
+                                "sourceId": "0xB7F47CCD",
+                                "topicId": "0x0002",
+                                "topicName": "loop.output",
+                                "view": {
+                                    "legend": "topLeft",
+                                    "yTicks": 5
+                                },
+                                "xAxis": {
+                                    "limit": 500,
+                                    "mode": "samples",
+                                    "sampleTimeMs": 20
+                                },
+                                "yAxis": {
+                                    "autoAxis": false,
+                                    "decimals": 2,
+                                    "grid": true,
+                                    "max": 0.7,
+                                    "min": -0.7,
+                                    "mode": "fixed",
+                                    "unit": "Torque [N m]"
+                                }
+                            },
+                            "groupId": "",
+                            "id": "tracelab-furuta-torque",
+                            "key": "",
+                            "layouts": {
+                                "large": {
+                                    "height": 0.25,
+                                    "width": 0.4,
+                                    "x": 0.6,
+                                    "y": 0.25
+                                },
+                                "medium": {
+                                    "height": 0.25,
+                                    "width": 0.4,
+                                    "x": 0.6,
+                                    "y": 0.25
+                                },
+                                "small": {
+                                    "height": 0.5,
+                                    "width": 1,
+                                    "x": 0,
+                                    "y": 1.5
+                                }
+                            },
+                            "name": "Torque",
+                            "type": "dummy_line"
+                        },
+                        {
+                            "config": {
+                                "deviceId": "tracelab-furuta-plant",
+                                "series": [
+                                    {
+                                        "color": "#2ca02c",
+                                        "fieldId": 8,
+                                        "fieldName": "energy",
+                                        "name": "energy",
+                                        "style": "solid",
+                                        "unit": "J"
+                                    }
+                                ],
+                                "sourceId": "0xB7F47CCD",
+                                "topicId": "0x0004",
+                                "topicName": "sim.states",
+                                "view": {
+                                    "legend": "topLeft",
+                                    "yTicks": 5
+                                },
+                                "xAxis": {
+                                    "limit": 500,
+                                    "mode": "samples",
+                                    "sampleTimeMs": 20
+                                },
+                                "yAxis": {
+                                    "autoAxis": false,
+                                    "decimals": 2,
+                                    "grid": true,
+                                    "max": 0.05,
+                                    "min": -0.25,
+                                    "mode": "fixed",
+                                    "unit": "Energy [J]"
+                                }
+                            },
+                            "groupId": "",
+                            "id": "tracelab-furuta-energy",
+                            "key": "",
+                            "layouts": {
+                                "large": {
+                                    "height": 0.25,
+                                    "width": 0.4,
+                                    "x": 0.6,
+                                    "y": 0.5
+                                },
+                                "medium": {
+                                    "height": 0.25,
+                                    "width": 0.4,
+                                    "x": 0.6,
+                                    "y": 0.5
+                                },
+                                "small": {
+                                    "height": 0.5,
+                                    "width": 1,
+                                    "x": 0,
+                                    "y": 2
+                                }
+                            },
+                            "name": "Pendulum energy (0 upright)",
+                            "type": "dummy_line"
+                        },
+                        {
+                            "config": {
+                                "deviceId": "tracelab-furuta-controller",
+                                "series": [
+                                    {
+                                        "color": "#1f77b4",
+                                        "fieldId": 2,
+                                        "fieldName": "solve_ms",
+                                        "name": "solve",
+                                        "style": "solid",
+                                        "unit": "ms"
+                                    }
+                                ],
+                                "sourceId": "0xAB2C09DD",
+                                "topicId": "0x0001",
+                                "topicName": "ctl.diag",
+                                "view": {
+                                    "legend": "topLeft",
+                                    "yTicks": 5
+                                },
+                                "xAxis": {
+                                    "limit": 500,
+                                    "mode": "samples",
+                                    "sampleTimeMs": 20
+                                },
+                                "yAxis": {
+                                    "autoAxis": false,
+                                    "decimals": 1,
+                                    "grid": true,
+                                    "max": 5,
+                                    "min": 0,
+                                    "mode": "fixed",
+                                    "unit": "Solve time [ms]"
+                                }
+                            },
+                            "groupId": "",
+                            "id": "tracelab-furuta-solve",
+                            "key": "",
+                            "layouts": {
+                                "large": {
+                                    "height": 0.25,
+                                    "width": 0.4,
+                                    "x": 0.6,
+                                    "y": 0.75
+                                },
+                                "medium": {
+                                    "height": 0.25,
+                                    "width": 0.4,
+                                    "x": 0.6,
+                                    "y": 0.75
+                                },
+                                "small": {
+                                    "height": 0.5,
+                                    "width": 1,
+                                    "x": 0,
+                                    "y": 2.5
+                                }
+                            },
+                            "name": "Controller solve time",
+                            "type": "dummy_line"
+                        }
+                    ],
+                    "verticalUnit": "page"
+                },
+                "id": "tracelab-furuta-workspace",
+                "name": "Furuta pendulum"
+            }
+        ]
+    }
+}

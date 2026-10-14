@@ -546,7 +546,7 @@ LabDeviceRegistry& LabDeviceRegistry::instance() {
 
 void LabDeviceRegistry::registerPlantType(const PlantType& type) {
     for (const PlantType& known : std::as_const(m_plantTypes)) {
-        if (known.typeId == type.typeId) {
+        if (known.typeId == type.typeId && known.name == type.name) {
             return;
         }
     }
