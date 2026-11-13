@@ -46,15 +46,16 @@ signals:
 
 private:
     void downloadChecksums();
-    void downloadAsset();
-    void verifyAndFinish();
+    // Streams the asset straight to its file (QSaveFile) while hashing it,
+    // instead of holding a whole APK/AppImage in memory; the file only
+    // appears under its final name once the hash matched.
+    void downloadAsset(const QString& expectedHash);
+    static QString targetDirectory();
 
     QNetworkAccessManager* m_manager;
     QUrl m_assetUrl;
     QString m_assetName;
     QUrl m_checksumsUrl;
-    QByteArray m_assetData;
-    QByteArray m_checksumsData;
 };
 
 }  // namespace traceview
