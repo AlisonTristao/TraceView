@@ -52,6 +52,12 @@ constexpr int kLeaseTimerIntervalMs = 1000;
 // round-trip time.
 constexpr qint64 kSubscribePendingTimeoutMs = 1500;
 
+// An UNSUBSCRIBE_RESULT that never arrives must not leave its sequence in
+// m_pendingUnsubscribes until the session ends: the local state was already
+// released when the request went out, so the entry is only bookkeeping and
+// is forgotten once a reply can no longer plausibly arrive.
+constexpr qint64 kUnsubscribePendingTimeoutMs = 10000;
+
 // A ByteView over a QByteArray, for the btp::messages decoders.
 const std::uint8_t* asBytes(const QByteArray& data) {
     return reinterpret_cast<const std::uint8_t*>(data.constData());
@@ -238,7 +244,8 @@ void SubscriptionManager::sendUnsubscribe(const TopicState& topic) {
 
     const quint32 sequence = nextSequence();
     sendControl(kControlUnsubscribe, payload, sequence);
-    m_pendingUnsubscribes.insert(sequence, makeKey(topic.sourceId, topic.topicId));
+    m_pendingUnsubscribes.insert(
+        sequence, {makeKey(topic.sourceId, topic.topicId), QDateTime::currentMSecsSinceEpoch()});
 }
 
 void SubscriptionManager::sendControl(quint16 objectId, const QByteArray& payload,
@@ -425,7 +432,7 @@ void SubscriptionManager::handleUnsubscribeResult(const BtpFrame& frame) {
     if (pending == m_pendingUnsubscribes.end()) {
         return;
     }
-    const quint64 key = pending.value();
+    const quint64 key = pending.value().key;
     m_pendingUnsubscribes.erase(pending);
     // The local state was already released when the UNSUBSCRIBE went out
     // (removing a subscription that is already gone is defined as
@@ -498,6 +505,16 @@ QVector<StatusTopicRecord> SubscriptionManager::topicStatuses() const {
 }
 
 void SubscriptionManager::renewDueSubscriptions(qint64 nowMs) {
+    for (auto it = m_pendingUnsubscribes.begin(); it != m_pendingUnsubscribes.end();) {
+        if (nowMs - it.value().sentAtMs >= kUnsubscribePendingTimeoutMs) {
+            const quint64 key = it.value().key;
+            it = m_pendingUnsubscribes.erase(it);
+            dropTopicIfIdle(key);
+        } else {
+            ++it;
+        }
+    }
+
     const QList<quint64> keys = m_topics.keys();
     for (quint64 key : keys) {
         const auto it = m_topics.find(key);
@@ -624,7 +641,7 @@ void SubscriptionManager::onPeerRebooted(quint32 sourceId) {
         }
     }
     for (const quint32 seq : m_pendingUnsubscribes.keys()) {
-        if (affected.contains(m_pendingUnsubscribes.value(seq))) {
+        if (affected.contains(m_pendingUnsubscribes.value(seq).key)) {
             m_pendingUnsubscribes.remove(seq);
         }
     }

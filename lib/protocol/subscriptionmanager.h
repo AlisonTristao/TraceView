@@ -236,7 +236,11 @@ private:
     QHash<quint64, Subscriber> m_subscribers;       // handle -> consumer
     QHash<quint64, TopicState> m_topics;            // (source, topic) key -> wire state
     QHash<quint32, quint64> m_pendingSubscribes;    // request sequence -> topic key
-    QHash<quint32, quint64> m_pendingUnsubscribes;  // request sequence -> topic key
+    struct PendingUnsubscribe {
+        quint64 key = 0;      // topic key
+        qint64 sentAtMs = 0;  // for expiry when the UNSUBSCRIBE_RESULT is lost
+    };
+    QHash<quint32, PendingUnsubscribe> m_pendingUnsubscribes;  // request sequence -> pending
 
     StatusReport m_lastStatus;
     QHash<quint64, StatusTopicRecord> m_topicStatuses;
