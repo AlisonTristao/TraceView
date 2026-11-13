@@ -56,9 +56,10 @@ class SceneWidget : public DashboardWidget, public TelemetryConsumer {
     Q_OBJECT
 
 public:
-    // Asked of every topic: as fast as it goes (the topic's own maximum
-    // clamps it), so the pose history has every tick.
-    static constexpr quint32 kRequestedRateMillihz = 1'000'000;
+    // Asked of every topic: 60 Hz, the dashboard's default frame rate. A
+    // scene draws the latest pose; asking for more only loads the link (and
+    // every other widget reading the same topic) with samples never drawn.
+    static constexpr quint32 kRequestedRateMillihz = 60'000;
     // Records kept while the widget is not painted (a hidden tab).
     static constexpr int kMaxPendingRecords = 1024;
 
