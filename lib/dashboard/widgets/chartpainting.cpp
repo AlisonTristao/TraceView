@@ -23,6 +23,8 @@ constexpr int kStackedAxisGap = 10;
 constexpr int kInsetLegendMargin = 6;
 constexpr int kInsetLegendPadding = 6;
 constexpr int kInsetLegendRowGap = 2;
+// Between two info rows.
+constexpr int kInfoRowGap = 2;
 
 QColor axisLabelColor(const ChartValueAxis& axis, const ChartColors& colors) {
     return axis.labelColor.isValid() ? axis.labelColor : colors.tickLabel;
@@ -209,6 +211,14 @@ QFont chartTickFont(const QFont& base, const ChartStyle& style) {
     }
 #else
     Q_UNUSED(style);
+#endif
+    return font;
+}
+
+QFont chartTabularFont(const QFont& base) {
+    QFont font = base;
+#if QT_VERSION >= QT_VERSION_CHECK(6, 7, 0)
+    font.setFeature(QFont::Tag("tnum"), 1);
 #endif
     return font;
 }
@@ -433,8 +443,17 @@ ChartCartesianLayout layoutCartesianChart(const QPainter& painter, const QRect& 
     // while the labeled sides look roomy.
     const int labelOverhang = chrome.yTickLabels ? tickFm.height() / 2 : 0;
     const int xBand = xAxisBandHeight(fm, tickFm, effective, style);
+    // Info rows sit close together (one block), then the usual padding.
+    layout.infoRowPitch = layout.legendRowHeight + kInfoRowGap;
+    const int infoBlock =
+        chrome.infoRows > 0
+            ? chrome.infoRows * layout.infoRowPitch - kInfoRowGap + chartOuterPadding()
+            : 0;
     const int topMargin =
-        chartOuterPadding() + (chrome.topLegendRow ? rowSpace : labelOverhang + kChartAxisLabelGap);
+        chartOuterPadding() + infoBlock +
+        (chrome.topLegendRow ? rowSpace : (infoBlock > 0 ? 0 : labelOverhang + kChartAxisLabelGap));
+    layout.infoRowTop = area.top() + chartOuterPadding();
+    layout.topLegendTop = layout.infoRowTop + infoBlock;
     const int bottomMargin = chartOuterPadding() + (chrome.bottomLegendRow ? rowSpace : 0) +
                              (xBand > 0 || chrome.bottomLegendRow ? xBand : labelOverhang);
     layout.bottomLegendTop = area.bottom() - chartOuterPadding() - layout.legendRowHeight + 1;
@@ -522,7 +541,7 @@ QVector<qreal> chartXGridPixels(const ChartCartesianLayout& layout) {
 void paintCartesianAxes(QPainter& painter, const ChartCartesianLayout& layout,
                         const CartesianChrome& chrome, const ChartStyle& style,
                         const ChartColors& colors, const QString& xTitle,
-                        const QVector<qreal>& categoryXs) {
+                        const QVector<qreal>& categoryXs, QVector<QRect>* labelRects) {
     const QRect& plot = layout.plotRect;
     if (plot.width() <= 0 || plot.height() <= 0) {
         return;
@@ -606,6 +625,7 @@ void paintCartesianAxes(QPainter& painter, const ChartCartesianLayout& layout,
                 }
                 painter.drawText(rect, Qt::AlignCenter, text);
                 previousRight = rect.right();
+                occupied.append(rect);
             }
             painter.setFont(baseFont);
         }
@@ -621,6 +641,238 @@ void paintCartesianAxes(QPainter& painter, const ChartCartesianLayout& layout,
     } else if (!categoryXs.isEmpty() && style.frame != ChartFrame::Ruler) {
         paintXTickMarks(painter, plot, categoryXs, style, colors);
     }
+    if (labelRects) {
+        *labelRects += occupied;
+    }
+}
+
+void paintChartPixelGrid(QPainter& painter, const QRect& plotRect,
+                         const QVector<ChartPixelTick>& xTicks,
+                         const QVector<ChartPixelTick>& yTicks, const ChartStyle& style,
+                         const ChartColors& colors) {
+    painter.setPen(QPen(colors.grid, 1, style.gridPenStyle));
+    painter.setBrush(Qt::NoBrush);
+    const QRectF plot(plotRect);
+    for (const ChartPixelTick& tick : xTicks) {
+        if (tick.pos > plot.left() + 0.5 && tick.pos < plot.right() - 0.5) {
+            const qreal x = crispCoord(tick.pos);
+            painter.drawLine(QPointF(x, crispCoord(plot.top())),
+                             QPointF(x, crispCoord(plot.bottom())));
+        }
+    }
+    for (const ChartPixelTick& tick : yTicks) {
+        if (tick.pos > plot.top() + 0.5 && tick.pos < plot.bottom() - 0.5) {
+            const qreal y = crispCoord(tick.pos);
+            painter.drawLine(QPointF(crispCoord(plot.left()), y),
+                             QPointF(crispCoord(plot.right()), y));
+        }
+    }
+}
+
+void paintChartPixelXTicks(QPainter& painter, const ChartCartesianLayout& layout,
+                           const CartesianChrome& chrome, const QVector<ChartPixelTick>& ticks,
+                           const ChartStyle& style, const ChartColors& colors,
+                           QVector<QRect>* occupied) {
+    const QRect& plot = layout.plotRect;
+    if (plot.width() <= 0 || plot.height() <= 0) {
+        return;
+    }
+    if (style.frame != ChartFrame::Ruler) {
+        QVector<qreal> xs;
+        for (const ChartPixelTick& tick : ticks) {
+            xs.append(tick.pos);
+        }
+        paintXTickMarks(painter, plot, xs, style, colors);
+    }
+    if (!chrome.xTickLabels) {
+        return;
+    }
+    const QFont baseFont = painter.font();
+    painter.setFont(layout.tickFont);
+    painter.setPen(colors.tickLabel);
+    const QFontMetrics tickFm(layout.tickFont);
+    const int labelTop = plot.bottom() + style.tickLabelOffset;
+    int previousRight = std::numeric_limits<int>::min() / 2;
+    for (const ChartPixelTick& tick : ticks) {
+        const int width = tickFm.horizontalAdvance(tick.label);
+        QRect rect(qRound(tick.pos) - width / 2, labelTop, width, tickFm.height());
+        if (rect.right() > layout.area.right() - 2) {
+            rect.moveRight(layout.area.right() - 2);
+        }
+        if (rect.left() < layout.area.left() + 2) {
+            rect.moveLeft(layout.area.left() + 2);
+        }
+        bool collides = rect.left() < previousRight + kChartAxisLabelGap;
+        for (int i = 0; occupied && i < occupied->size() && !collides; ++i) {
+            collides = occupied->at(i).intersects(rect);
+        }
+        if (collides) {
+            continue;
+        }
+        painter.drawText(rect, Qt::AlignCenter, tick.label);
+        previousRight = rect.right();
+        if (occupied) {
+            occupied->append(rect);
+        }
+    }
+    painter.setFont(baseFont);
+}
+
+void paintChartPixelYTicks(QPainter& painter, const ChartCartesianLayout& layout,
+                           const CartesianChrome& chrome, const QVector<ChartPixelTick>& ticks,
+                           const ChartStyle& style, const ChartColors& colors,
+                           QVector<QRect>* occupied) {
+    const QRect& plot = layout.plotRect;
+    if (plot.width() <= 0 || plot.height() <= 0 || layout.yAxes.isEmpty()) {
+        return;
+    }
+    const ChartValueAxis& axis = layout.yAxes.first();
+    const qreal spineX = crispCoord(axis.spineX);
+    if (style.frame != ChartFrame::Ruler || chrome.showGrid) {
+        painter.setPen(QPen(colors.frame, style.frameWidth));
+        const bool mirror = style.frame == ChartFrame::Box && style.mirrorTicks;
+        const qreal rightX = crispCoord(plot.right());
+        for (const ChartPixelTick& tick : ticks) {
+            const qreal y = plotCrispY(plot, tick.pos);
+            painter.drawLine(QPointF(spineX, y), QPointF(spineX - style.tickLength, y));
+            if (mirror) {
+                painter.drawLine(QPointF(rightX, y), QPointF(rightX - style.tickLength, y));
+            }
+        }
+    }
+    if (!chrome.yTickLabels) {
+        return;
+    }
+    const QFont baseFont = painter.font();
+    painter.setFont(layout.tickFont);
+    painter.setPen(axisLabelColor(axis, colors));
+    const QFontMetrics tickFm(layout.tickFont);
+    const int labelRight = axis.spineX - yLabelOffset(style);
+    QRect previous;
+    for (const ChartPixelTick& tick : ticks) {
+        const int width = qMax(axis.labelWidth, tickFm.horizontalAdvance(tick.label));
+        const QRect rect(labelRight - width, qRound(tick.pos) - tickFm.height() / 2, width,
+                         tickFm.height());
+        bool collides = !previous.isNull() && previous.adjusted(0, -1, 0, 1).intersects(rect);
+        for (int i = 0; occupied && i < occupied->size() && !collides; ++i) {
+            collides = occupied->at(i).intersects(rect);
+        }
+        if (collides) {
+            continue;
+        }
+        painter.drawText(rect, Qt::AlignRight | Qt::AlignVCenter, tick.label);
+        previous = rect;
+        if (occupied) {
+            occupied->append(rect);
+        }
+    }
+    painter.setFont(baseFont);
+}
+
+int chartInfoLeadWidth(const QFontMetrics& fm, const QString& text) {
+    return kLegendDotSize + kChartSwatchTextGap + fm.horizontalAdvance(text) + 1;
+}
+
+void paintChartInfoRow(QPainter& painter, const ChartCartesianLayout& layout, int row,
+                       const QVector<ChartInfoField>& left, const QString& right,
+                       const ChartColors& colors, const ChartInfoLead& lead) {
+    const QFont baseFont = painter.font();
+    const QFont font = chartTabularFont(baseFont);
+    painter.setFont(font);
+    const QFontMetrics fm(font);
+    const QString separator = QStringLiteral("  ·  ");
+    const int top = layout.infoRowTop + row * layout.infoRowPitch;
+    const int height = layout.legendRowHeight;
+    const int leftEdge = layout.area.left() + chartOuterPadding();
+    const int rightEdge = layout.area.right() - chartOuterPadding();
+
+    int x = leftEdge;
+    if (lead.width > 0) {
+        if (lead.swatch.isValid()) {
+            painter.setPen(Qt::NoPen);
+            painter.setBrush(lead.swatch);
+            painter.drawEllipse(QRectF(x, top + (height - kLegendDotSize) / 2.0, kLegendDotSize,
+                                       kLegendDotSize));
+            painter.setBrush(Qt::NoBrush);
+        }
+        painter.setPen(colors.legendText);
+        const int textX = x + kLegendDotSize + kChartSwatchTextGap;
+        painter.drawText(QRect(textX, top, lead.width - (textX - x), height),
+                         Qt::AlignLeft | Qt::AlignVCenter,
+                         fm.elidedText(lead.text, Qt::ElideRight, lead.width - (textX - x)));
+        x += lead.width + kChartLegendItemGap;
+    }
+    painter.setPen(colors.legendText);
+    for (int i = 0; i < left.size(); ++i) {
+        const ChartInfoField& field = left[i];
+        if (i > 0) {
+            painter.drawText(QRect(x, top, fm.horizontalAdvance(separator), height),
+                             Qt::AlignLeft | Qt::AlignVCenter, separator);
+            x += fm.horizontalAdvance(separator);
+        }
+        const int at = field.format.indexOf(QLatin1String("%1"));
+        const QString prefix = at < 0 ? field.format : field.format.left(at);
+        const QString suffix = at < 0 ? QString() : field.format.mid(at + 2);
+        const int slot = at < 0 ? 0
+                                : qMax(fm.horizontalAdvance(field.widestValue),
+                                       fm.horizontalAdvance(field.value));
+        painter.drawText(QRect(x, top, fm.horizontalAdvance(prefix) + 1, height),
+                         Qt::AlignLeft | Qt::AlignVCenter, prefix);
+        x += fm.horizontalAdvance(prefix);
+        if (at >= 0) {
+            painter.drawText(QRect(x, top, slot, height), Qt::AlignRight | Qt::AlignVCenter,
+                             field.value);
+            x += slot;
+        }
+        painter.drawText(QRect(x, top, fm.horizontalAdvance(suffix) + 1, height),
+                         Qt::AlignLeft | Qt::AlignVCenter, suffix);
+        x += fm.horizontalAdvance(suffix);
+    }
+
+    const int room = rightEdge - x - kChartLegendItemGap;
+    if (!right.isEmpty() && room > 0) {
+        painter.drawText(QRect(rightEdge - room + 1, top, room, height),
+                         Qt::AlignRight | Qt::AlignVCenter,
+                         fm.elidedText(right, Qt::ElideRight, room));
+    }
+    painter.setFont(baseFont);
+}
+
+void paintChartRangeMarkers(QPainter& painter, const QRect& plotRect, qreal xA, qreal xB,
+                            const ThemePalette& palette) {
+    QColor band = palette.accent;
+    band.setAlphaF(0.08f);
+    painter.fillRect(QRectF(QPointF(qMin(xA, xB), plotRect.top()),
+                            QPointF(qMax(xA, xB), plotRect.bottom())),
+                     band);
+    const QFontMetrics fm(painter.font());
+    const int handle = fm.height() + 2;
+    for (int which = 0; which < 2; ++which) {
+        const qreal x = crispCoord(which == 0 ? xA : xB);
+        painter.setPen(QPen(palette.accent, 1, Qt::DashLine));
+        painter.drawLine(QPointF(x, plotRect.top()), QPointF(x, plotRect.bottom()));
+        const QRectF tab(x - handle / 2.0, plotRect.top(), handle, handle);
+        painter.setPen(Qt::NoPen);
+        painter.setBrush(palette.accent);
+        painter.drawRoundedRect(tab, 3, 3);
+        painter.setBrush(Qt::NoBrush);
+        painter.setPen(palette.surface);
+        painter.drawText(tab, Qt::AlignCenter,
+                         which == 0 ? QStringLiteral("A") : QStringLiteral("B"));
+    }
+}
+
+int chartRangeMarkerAt(const QRect& plotRect, qreal xA, qreal xB, const QPoint& pos) {
+    constexpr int kGrab = 6;
+    if (plotRect.isEmpty() || pos.y() < plotRect.top() - kGrab || pos.y() > plotRect.bottom()) {
+        return -1;
+    }
+    const qreal da = qAbs(pos.x() - xA);
+    const qreal db = qAbs(pos.x() - xB);
+    if (qMin(da, db) > kGrab) {
+        return -1;
+    }
+    return da <= db ? 0 : 1;
 }
 
 QString chartTimeAxisTitle(ChartXAxisMode mode) {

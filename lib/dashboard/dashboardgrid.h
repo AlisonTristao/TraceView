@@ -3,17 +3,21 @@
 #include <QHash>
 #include <QJsonObject>
 #include <QMap>
+#include <QPixmap>
 #include <QPoint>
 #include <QPointF>
 #include <QRect>
+#include <QRectF>
 #include <QSet>
 #include <QSize>
 #include <QSizeF>
 #include <QString>
+#include <QStringList>
 #include <QUndoStack>
 #include <QVector>
 #include <QWidget>
 #include <array>
+#include <functional>
 #include <optional>
 
 #include "dashboardcell.h"
@@ -140,6 +144,24 @@ public:
     // applySetConfig()).
     void setDeviceConnected(const QString& deviceId, bool connected);
 
+    // Maps one item config's telemetry binding onto what its device
+    // currently reports -- names to ids, and names filled in from ids for a
+    // binding saved before names existed (see dashboard/bindingresolver.h).
+    // Once set, every config entering the grid goes through it: a load
+    // (fromJson()), an insert/paste, and every config edit including its
+    // undo/redo -- so the stored config, what the widget is given and what
+    // toJson() saves always agree. MainWindow installs one that looks up the
+    // config's "deviceId"; without one (tests, by default) configs are kept
+    // exactly as given.
+    using BindingResolver = std::function<QJsonObject(const QJsonObject&)>;
+    void setBindingResolver(BindingResolver resolver);
+    // Runs the resolver again over every item -- for when a device's catalog
+    // changed (it connected, or announced a new manifest revision). Not an
+    // edit: nothing goes on the undo stack, since it records where the
+    // binding's names live now rather than anything the user changed.
+    // Widgets whose config changed get it re-applied; returns whether any did.
+    bool resolveBindings();
+
     // Replaces the current selection with just `itemId` (or clears it, for
     // an empty string) -- expanded to the item's whole group if it belongs
     // to one (see expandGroups()). Kept as a single-item Replace call with
@@ -228,6 +250,46 @@ public:
     void groupSelected();
     // Clears the group membership of every selected item that has one.
     void ungroupSelected();
+
+    // Item-addressed edits for callers not driven by the selection -- the AI
+    // assistant tools (core/agentapptools.cpp). Each pushes the same undo
+    // command as its *Selected() twin above, and leaves the selection alone.
+    // Their `error` texts are for the assistant, so they aren't translated.
+    const QVector<DashboardItem>& items() const {
+        return m_items;
+    }
+    const DashboardItem* findItem(const QString& itemId) const {
+        return itemById(itemId);
+    }
+    // Adds `item` under a fresh id. A breakpoint whose geometry has no size
+    // gets that layout's default footprint in its first free spot (what
+    // addItem() does for all three). Returns the new id, or an empty string
+    // with `error` set when the type is unknown or the key is taken.
+    QString insertItem(DashboardItem item, QString* error = nullptr);
+    // False when `itemId` is unknown (or, for the key, already used by
+    // another item); true for an accepted value, including an unchanged one.
+    bool renameItem(const QString& itemId, const QString& name);
+    bool setItemKey(const QString& itemId, const QString& key);
+    // Same "view" preservation as changeSelectedConfig().
+    bool setItemConfig(const QString& itemId, const QJsonObject& config);
+    bool changeItemType(const QString& itemId, const QString& typeId);
+    // `geometry` in the same units as DashboardItem::Geometry. False with
+    // `error` set when it has no size or leaves that layout's canvas.
+    bool setItemGeometry(const QString& itemId, DashboardBreakpoint breakpoint,
+                         const QRectF& geometry, QString* error = nullptr);
+    // One undo step; unknown ids are skipped. Returns how many were removed.
+    int removeItems(const QStringList& itemIds);
+    // The item's cell (header and content) as rendered now; null if unknown.
+    QPixmap grabItem(const QString& itemId);
+    // The snapping grid of each layout: columns across the canvas width and
+    // rows per page (viewport) height.
+    static int gridColumns(DashboardBreakpoint breakpoint);
+    static int gridRowsPerPage(DashboardBreakpoint breakpoint);
+    // How many viewport heights ("pages") `breakpoint`'s canvas spans: 1.0
+    // for Large and for an ungrown Small/Medium, otherwise its
+    // canvasHeightMultiplier(). Item y/height are measured in these (see
+    // DashboardItem::Geometry).
+    double canvasPages(DashboardBreakpoint breakpoint) const;
 
     QUndoStack* undoStack() const {
         return m_undoStack;
@@ -374,11 +436,6 @@ private:
     // key is always available — it just means "no key set").
     bool isKeyAvailable(const QString& key, const QString& excludeId) const;
 
-    // How many viewport heights ("pages") `breakpoint`'s canvas spans: 1.0
-    // for Large and for an ungrown Small/Medium, otherwise its
-    // canvasHeightMultiplier(). Item y/height are measured in these (see
-    // DashboardItem::Geometry).
-    double canvasPages(DashboardBreakpoint breakpoint) const;
     // Snap rows across the whole canvas -- rows per page times canvasPages(),
     // so growing the canvas adds rows below rather than stretching them.
     int totalRows(DashboardBreakpoint breakpoint) const;
@@ -464,6 +521,10 @@ private:
     QPoint m_rubberBandOrigin;
     bool m_rubberBandAdditive = false;
     bool m_rubberBandPending = false;
+
+    // `config` through m_bindingResolver, or unchanged when none is set.
+    QJsonObject resolvedConfig(const QJsonObject& config) const;
+    BindingResolver m_bindingResolver;
 
     QUndoStack* m_undoStack;
 };

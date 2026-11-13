@@ -2,6 +2,150 @@
 <!DOCTYPE TS>
 <TS version="2.1" language="es">
 <context>
+    <name>AgentAppTools</name>
+    <message>
+        <location filename="../lib/core/agentapptools.cpp" line="+207"/>
+        <source>AI Assistant</source>
+        <translation>Asistente de IA</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>An AI assistant wants to %1.
+
+Allow it to connect devices and send them commands until AI assistant access is turned off or TraceView closes?</source>
+        <translation>Un asistente de IA quiere %1.
+
+¿Permitir que conecte dispositivos y les envíe comandos hasta que se desactive el acceso de asistentes de IA o se cierre TraceView?</translation>
+    </message>
+    <message>
+        <location line="+276"/>
+        <source>An AI assistant created workspace &quot;%1&quot;.</source>
+        <translation>Un asistente de IA creó el espacio de trabajo &quot;%1&quot;.</translation>
+    </message>
+    <message>
+        <location line="+81"/>
+        <source>Delete Workspace</source>
+        <translation>Eliminar Espacio de Trabajo</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>An AI assistant wants to delete workspace &quot;%1&quot;. This cannot be undone.</source>
+        <translation>Un asistente de IA quiere eliminar el espacio de trabajo &quot;%1&quot;. Esto no se puede deshacer.</translation>
+    </message>
+    <message>
+        <location line="+63"/>
+        <source>Add Widget (AI assistant)</source>
+        <translation>Añadir widget (asistente de IA)</translation>
+    </message>
+    <message>
+        <location line="+53"/>
+        <source>Edit Widget (AI assistant)</source>
+        <translation>Editar widget (asistente de IA)</translation>
+    </message>
+    <message>
+        <location line="+318"/>
+        <source>New Project</source>
+        <translation>Nuevo proyecto</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>An AI assistant wants to start a new, empty project. Unsaved changes to the current one will be lost.</source>
+        <translation>Un asistente de IA quiere empezar un proyecto nuevo y vacío. Se perderán los cambios no guardados del actual.</translation>
+    </message>
+    <message>
+        <location line="+14"/>
+        <source>Open Project</source>
+        <translation>Abrir proyecto</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>An AI assistant wants to open &quot;%1&quot;. Unsaved changes to the current project will be lost.</source>
+        <translation>Un asistente de IA quiere abrir &quot;%1&quot;. Se perderán los cambios no guardados del proyecto actual.</translation>
+    </message>
+    <message>
+        <location line="+75"/>
+        <source>Add to Gallery</source>
+        <translation>Añadir a la Galería</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>An AI assistant wants to replace the gallery dashboard &quot;%1&quot;.</source>
+        <translation>Un asistente de IA quiere reemplazar el panel &quot;%1&quot; de la galería.</translation>
+    </message>
+    <message>
+        <location line="+52"/>
+        <source>Delete Dashboard</source>
+        <translation>Eliminar Dashboard</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>An AI assistant wants to delete the gallery dashboard &quot;%1&quot;. This cannot be undone.</source>
+        <translation>Un asistente de IA quiere eliminar el panel &quot;%1&quot; de la galería. Esto no se puede deshacer.</translation>
+    </message>
+    <message>
+        <location line="+50"/>
+        <source>An AI assistant saved the project to %1.</source>
+        <translation>Un asistente de IA guardó el proyecto en %1.</translation>
+    </message>
+    <message>
+        <location filename="../lib/core/agentdevicetools.cpp" line="+189"/>
+        <location line="+50"/>
+        <source>set up how a device is reached</source>
+        <translation>configurar cómo se accede a un dispositivo</translation>
+    </message>
+    <message>
+        <location line="+70"/>
+        <source>connect a device</source>
+        <translation>conectar un dispositivo</translation>
+    </message>
+    <message>
+        <location line="+151"/>
+        <location line="+41"/>
+        <source>send commands to a device</source>
+        <translation>enviar comandos a un dispositivo</translation>
+    </message>
+    <message>
+        <location line="+176"/>
+        <source>run a script that controls a device</source>
+        <translation>ejecutar un script que controla un dispositivo</translation>
+    </message>
+    <message>
+        <location line="+95"/>
+        <source>Firmware Update</source>
+        <translation>Actualización de firmware</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>An AI assistant wants to flash &quot;%1&quot; onto %2. The device restarts with the new firmware.</source>
+        <translation>Un asistente de IA quiere grabar &quot;%1&quot; en %2. El dispositivo se reinicia con el nuevo firmware.</translation>
+    </message>
+    <message>
+        <location line="+15"/>
+        <source>Uploading firmware to %1: %2%</source>
+        <translation>Subiendo firmware a %1: %2%</translation>
+    </message>
+    <message>
+        <location filename="../lib/core/agentpreferencetools.cpp" line="+298"/>
+        <source>Delete Preset</source>
+        <translation>Eliminar ajuste</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>An AI assistant wants to delete the appearance preset &quot;%1&quot;.</source>
+        <translation>Un asistente de IA quiere eliminar el ajuste de apariencia &quot;%1&quot;.</translation>
+    </message>
+    <message>
+        <location line="+127"/>
+        <source>Delete Palette</source>
+        <translation>Eliminar paleta</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>An AI assistant wants to delete the palette &quot;%1&quot;.</source>
+        <translation>Un asistente de IA quiere eliminar la paleta &quot;%1&quot;.</translation>
+    </message>
+</context>
+<context>
     <name>Appearance</name>
     <message>
         <location filename="../lib/theme/appearance.cpp" line="+124"/>
@@ -127,7 +271,7 @@
 <context>
     <name>ChartStyle</name>
     <message>
-        <location filename="../lib/dashboard/widgets/chartstyle.cpp" line="+125"/>
+        <location filename="../lib/dashboard/widgets/chartstyle.cpp" line="+127"/>
         <source>Engineering</source>
         <translation>Ingeniería</translation>
     </message>
@@ -151,18 +295,10 @@
     </message>
     <message>
         <location line="+9"/>
-        <location line="+494"/>
+        <location line="+507"/>
         <location line="+231"/>
         <source>--</source>
         <translation>--</translation>
-    </message>
-    <message>
-        <source>t</source>
-        <translation type="vanished">t</translation>
-    </message>
-    <message>
-        <source>k</source>
-        <translation type="vanished">k</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -176,12 +312,77 @@
         <translation>%1  %2</translation>
     </message>
     <message>
-        <location line="-659"/>
+        <location line="+133"/>
+        <source>A-B %1 s</source>
+        <translation>A-B %1 s</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>A-B %1 samples</source>
+        <translation>A-B %1 muestras</translation>
+    </message>
+    <message>
+        <location line="+35"/>
+        <source>min %1</source>
+        <translation>mín %1</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>max %1</source>
+        <translation>máx %1</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>p-p %1</source>
+        <translation>p-p %1</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>peak %1</source>
+        <translation>pico %1</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>mean %1</source>
+        <translation>media %1</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>median %1</source>
+        <translation>mediana %1</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>rms %1</source>
+        <translation>rms %1</translation>
+    </message>
+    <message>
+        <location line="-59"/>
+        <source>%1 Hz</source>
+        <translation>%1 Hz</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>%1 samples</source>
+        <translation>%1 muestras</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>%1 s</source>
+        <translation>%1 s</translation>
+    </message>
+    <message>
+        <location line="-47"/>
+        <source>paused</source>
+        <translation>en pausa</translation>
+    </message>
+    <message>
+        <location line="-739"/>
         <source>%1: %2</source>
         <translation>%1: %2</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/chartpainting.cpp" line="+617"/>
+        <location filename="../lib/dashboard/widgets/chartpainting.cpp" line="+879"/>
         <source>Time (s)</source>
         <translation>Tiempo (s)</translation>
     </message>
@@ -390,6 +591,69 @@
     </message>
 </context>
 <context>
+    <name>DiffDriveScene</name>
+    <message>
+        <location filename="../lib/dashboard/scenes/diffdrivescene.cpp" line="+131"/>
+        <source>Scale</source>
+        <translation>Escala</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Wheel distance</source>
+        <translation>Distancia entre ruedas</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Sensor distance</source>
+        <translation>Distancia de los sensores</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Sensor count</source>
+        <translation>Número de sensores</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Sensor spacing</source>
+        <translation>Separación de los sensores</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Line radius</source>
+        <translation>Radio de la línea</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Render radius</source>
+        <translation>Radio de dibujo</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Perturbation step</source>
+        <translation>Paso de perturbación</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Antialiasing</source>
+        <translation>Antialiasing</translation>
+    </message>
+    <message>
+        <location line="+281"/>
+        <source>covered: %1%</source>
+        <translation>cubierto: %1%</translation>
+    </message>
+    <message>
+        <location line="-1"/>
+        <source>score: %1</source>
+        <translation>puntuación: %1</translation>
+    </message>
+    <message>
+        <location filename="../lib/dashboard/scenes/sceneregistry.cpp" line="+51"/>
+        <source>Line follower</source>
+        <translation>Seguidor de línea</translation>
+    </message>
+</context>
+<context>
     <name>FontManager</name>
     <message>
         <location filename="../lib/theme/fontmanager.cpp" line="+24"/>
@@ -421,9 +685,52 @@
     </message>
 </context>
 <context>
+    <name>FurutaScene</name>
+    <message>
+        <location filename="../lib/dashboard/scenes/furutascene.cpp" line="+536"/>
+        <source>Arm length (L1)</source>
+        <translation>Longitud del brazo (L1)</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Pendulum length (l2)</source>
+        <translation>Longitud del péndulo (l2)</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>View azimuth</source>
+        <translation>Azimut de la vista</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>View elevation</source>
+        <translation>Elevación de la vista</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Angles and labels</source>
+        <translation>Ángulos y etiquetas</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Trail of the mass</source>
+        <translation>Rastro de la masa</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Antialiasing</source>
+        <translation>Suavizado</translation>
+    </message>
+    <message>
+        <location filename="../lib/dashboard/scenes/sceneregistry.cpp" line="+3"/>
+        <source>Furuta pendulum</source>
+        <translation>Péndulo de Furuta</translation>
+    </message>
+</context>
+<context>
     <name>MainWindow</name>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="+131"/>
+        <location filename="../lib/core/mainwindow.cpp" line="+138"/>
         <source>TraceView Project (*.tvproj)</source>
         <translation>Proyecto TraceView (*.tvproj)</translation>
     </message>
@@ -439,7 +746,7 @@
 <context>
     <name>QObject</name>
     <message>
-        <location filename="../lib/core/debugchartswindow.cpp" line="+29"/>
+        <location filename="../lib/core/debugchartswindow.cpp" line="+32"/>
         <source>Debug -- synthetic chart data</source>
         <translation>Depuración -- datos de gráfico sintéticos</translation>
     </message>
@@ -678,6 +985,14 @@
     </message>
 </context>
 <context>
+    <name>SceneWidget</name>
+    <message>
+        <location filename="../lib/dashboard/scenes/scenewidget.cpp" line="+534"/>
+        <source>Scene</source>
+        <translation>Escena</translation>
+    </message>
+</context>
+<context>
     <name>ThemeManager</name>
     <message>
         <location filename="../lib/theme/palettes.cpp" line="+12"/>
@@ -728,7 +1043,7 @@
 <context>
     <name>WidgetConfigEditor</name>
     <message>
-        <location filename="../lib/dashboard/widgetconfigeditor.cpp" line="+12"/>
+        <location filename="../lib/dashboard/widgetconfigeditor.cpp" line="+13"/>
         <source>(No device)</source>
         <translation>(Ningún dispositivo)</translation>
     </message>
@@ -743,7 +1058,7 @@
         <translation>(tema sin nombre)</translation>
     </message>
     <message>
-        <location line="+103"/>
+        <location line="+119"/>
         <source>Field %1</source>
         <translation>Campo %1</translation>
     </message>
@@ -751,7 +1066,7 @@
 <context>
     <name>WidgetRegistry</name>
     <message>
-        <location filename="../lib/dashboard/widgetregistry.cpp" line="+32"/>
+        <location filename="../lib/dashboard/widgetregistry.cpp" line="+36"/>
         <source>Line Chart (dummy)</source>
         <translation>Gráfico de líneas (ficticio)</translation>
     </message>
@@ -781,7 +1096,12 @@
         <translation>Tablero de Texto</translation>
     </message>
     <message>
-        <location line="+5"/>
+        <location line="+8"/>
+        <source>Audio Analyzer</source>
+        <translation>Analizador de audio</translation>
+    </message>
+    <message>
+        <location line="+10"/>
         <source>Chat</source>
         <translation>Chat</translation>
     </message>
@@ -891,6 +1211,14 @@
     </message>
 </context>
 <context>
+    <name>traceview::AgentBridgeServer</name>
+    <message>
+        <location filename="../lib/agent/agentbridgeserver.cpp" line="+95"/>
+        <source>Another TraceView window is already serving AI assistants.</source>
+        <translation>Otra ventana de TraceView ya está atendiendo a asistentes de IA.</translation>
+    </message>
+</context>
+<context>
     <name>traceview::AndroidUsbSerialTransport</name>
     <message>
         <location filename="../lib/core/androidusbserialtransport.cpp" line="+194"/>
@@ -906,6 +1234,291 @@
         <location line="+8"/>
         <source>1200 baud resets the ESP32-S3 into its bootloader; using 115200</source>
         <translation>1200 baudios reinicia el ESP32-S3 en su bootloader; usando 115200</translation>
+    </message>
+</context>
+<context>
+    <name>traceview::AudioAnalyzerWidget</name>
+    <message>
+        <location filename="../lib/dashboard/widgets/audioanalyzerwidget.cpp" line="+120"/>
+        <source>View:</source>
+        <translation>Vista:</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Spectrum</source>
+        <translation>Espectro</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Spectrogram</source>
+        <translation>Espectrograma</translation>
+    </message>
+    <message>
+        <location line="+61"/>
+        <source>Peak hold</source>
+        <translation>Retención de pico</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Level scale:</source>
+        <translation>Escala de nivel:</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <location line="+56"/>
+        <location line="+528"/>
+        <source>dBFS</source>
+        <translation>dBFS</translation>
+    </message>
+    <message>
+        <location line="-583"/>
+        <source>Linear amplitude</source>
+        <translation>Amplitud lineal</translation>
+    </message>
+    <message>
+        <location line="+52"/>
+        <source>Amplitude (FS)</source>
+        <translation>Amplitud (FE)</translation>
+    </message>
+    <message>
+        <location line="+33"/>
+        <location line="+523"/>
+        <source>Frequency (Hz)</source>
+        <translation>Frecuencia (Hz)</translation>
+    </message>
+    <message>
+        <location line="-464"/>
+        <location line="+27"/>
+        <location line="+550"/>
+        <source>%1 dB</source>
+        <translation>%1 dB</translation>
+    </message>
+    <message>
+        <location line="-576"/>
+        <location line="+573"/>
+        <source>%1 Hz</source>
+        <translation>%1 Hz</translation>
+    </message>
+    <message>
+        <location line="-560"/>
+        <source>History:</source>
+        <translation>Historial:</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <location line="+256"/>
+        <location line="+299"/>
+        <source>%1 s</source>
+        <translation>%1 s</translation>
+    </message>
+    <message>
+        <location line="-550"/>
+        <source>Level floor:</source>
+        <translation>Nivel mínimo:</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>Colors:</source>
+        <translation>Colores:</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Inferno</source>
+        <translation>Inferno</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Viridis</source>
+        <translation>Viridis</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Theme accent</source>
+        <translation>Acento del tema</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Show color scale</source>
+        <translation>Mostrar escala de colores</translation>
+    </message>
+    <message>
+        <location line="+226"/>
+        <source>%1 samples</source>
+        <translation>%1 muestras</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>A-B %1 s</source>
+        <translation>A-B %1 s</translation>
+    </message>
+    <message>
+        <location line="+31"/>
+        <source>min %1</source>
+        <translation>mín %1</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>max %1</source>
+        <translation>máx %1</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>p-p %1</source>
+        <translation>p-p %1</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>peak %1 dBFS</source>
+        <translation>pico %1 dBFS</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>mean %1</source>
+        <translation>media %1</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>median %1</source>
+        <translation>mediana %1</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>rms %1 dBFS</source>
+        <translation>rms %1 dBFS</translation>
+    </message>
+</context>
+<context>
+    <name>traceview::AudioPlayback</name>
+    <message>
+        <location filename="../lib/dashboard/widgets/audioplayback.cpp" line="+91"/>
+        <source>No audio output device</source>
+        <translation>No hay dispositivo de salida de audio</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>The audio output reports no usable format</source>
+        <translation>La salida de audio no ofrece ningún formato utilizable</translation>
+    </message>
+    <message>
+        <location line="+12"/>
+        <source>The audio output could not start</source>
+        <translation>No se pudo iniciar la salida de audio</translation>
+    </message>
+</context>
+<context>
+    <name>traceview::AudioSpectrumConfigEditor</name>
+    <message>
+        <location filename="../lib/dashboard/widgets/audiospectrumconfigeditor.cpp" line="+29"/>
+        <source>(auto)</source>
+        <translation>(automático)</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Stream topic to play: blocks of samples with their rate and a block counter (BTPDevice Topics::stream()). Pick a reported topic or type its numeric id.</source>
+        <translation>Tópico de stream a reproducir: bloques de muestras con su frecuencia y un contador de bloques (Topics::stream() de BTPDevice). Elija un tópico informado o escriba su id numérico.</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>Sample value that counts as full scale (0 dBFS). Filled from the field&apos;s declared range when a topic is picked.</source>
+        <translation>Valor de muestra que cuenta como fondo de escala (0 dBFS). Se toma del rango declarado del campo al elegir un tópico.</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>Device</source>
+        <translation>Dispositivo</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Source</source>
+        <translation>Origen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Stream topic</source>
+        <translation>Tópico de stream</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Full scale</source>
+        <translation>Fondo de escala</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Volume</source>
+        <translation>Volumen</translation>
+    </message>
+</context>
+<context>
+    <name>traceview::AudioStreamWidget</name>
+    <message>
+        <location filename="../lib/dashboard/widgets/audiostreamwidget.cpp" line="+170"/>
+        <source>Play audio</source>
+        <translation>Reproducir audio</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>FFT size:</source>
+        <translation>Tamaño de la FFT:</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>%1 points</source>
+        <translation>%1 puntos</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Frequency axis:</source>
+        <translation>Eje de frecuencia:</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Logarithmic</source>
+        <translation>Logarítmico</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Linear</source>
+        <translation>Lineal</translation>
+    </message>
+    <message>
+        <location line="+62"/>
+        <source>muted</source>
+        <translation>silenciado</translation>
+    </message>
+    <message>
+        <location line="+180"/>
+        <source>Pick a stream topic in the properties</source>
+        <translation>Elija un tópico de stream en las propiedades</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Waiting for audio...</source>
+        <translation>Esperando audio...</translation>
+    </message>
+    <message>
+        <location line="+28"/>
+        <source>%1 kHz</source>
+        <translation>%1 kHz</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>peak %1 Hz</source>
+        <translation>pico %1 Hz</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>%1 dBFS</source>
+        <translation>%1 dBFS</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>lost %1</source>
+        <translation>perdidos %1</translation>
+    </message>
+    <message>
+        <location line="-3"/>
+        <source>paused</source>
+        <translation>en pausa</translation>
     </message>
 </context>
 <context>
@@ -997,7 +1610,7 @@
         <translation>El robot 0x%1 está en línea, pero su catálogo no ha llegado — revise el hub (hub -manifest)</translation>
     </message>
     <message>
-        <location line="+91"/>
+        <location line="+93"/>
         <source>Robot 0x%1 rebooted — catalog and subscriptions refreshed</source>
         <translation>El robot 0x%1 se reinició — catálogo y suscripciones actualizados</translation>
     </message>
@@ -1217,7 +1830,7 @@
 <context>
     <name>traceview::ChartConfigEditor</name>
     <message>
-        <location filename="../lib/dashboard/widgets/chartconfigeditor.cpp" line="+162"/>
+        <location filename="../lib/dashboard/widgets/chartconfigeditor.cpp" line="+201"/>
         <source>0x0101</source>
         <translation>0x0101</translation>
     </message>
@@ -1268,12 +1881,12 @@
     </message>
     <message>
         <location line="+9"/>
-        <location line="+423"/>
+        <location line="+455"/>
         <source> pts</source>
         <translation> pts</translation>
     </message>
     <message>
-        <location line="-419"/>
+        <location line="-451"/>
         <source>How much history the chart keeps before older data scrolls off — in samples or seconds, matching X Axis.</source>
         <translation>Cuánto historial conserva el gráfico antes de que los datos más antiguos desaparezcan — en muestras o segundos, según el Eje X.</translation>
     </message>
@@ -1403,17 +2016,27 @@
         <translation>+ Añadir serie</translation>
     </message>
     <message>
-        <location line="+192"/>
+        <location line="+8"/>
+        <source>+ Add all fields</source>
+        <translation>+ Añadir todos los campos</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Add one series for every numeric field of the topic above that isn&apos;t plotted yet, named after the field and with its unit and range from the device&apos;s manifest. Fields in different units get one Y axis per unit; fields sharing a unit and declaring a range get that range.</source>
+        <translation>Añade una serie por cada campo numérico del tema de arriba que aún no se grafica, con el nombre del campo y su unidad y rango del manifiesto del dispositivo. Los campos con unidades distintas obtienen un eje Y por unidad; los que comparten unidad y declaran un rango usan ese rango.</translation>
+    </message>
+    <message>
+        <location line="+209"/>
         <source>Series %1</source>
         <translation>Serie %1</translation>
     </message>
     <message>
-        <location line="+33"/>
+        <location line="+34"/>
         <source>Which field of the bound topic this series plots -- pick one the device has already reported (shown by name), or type a numeric id by hand for one it hasn&apos;t reported yet.</source>
         <translation>Qué campo del tema vinculado traza esta serie: elija uno que el dispositivo ya haya informado (mostrado por nombre) o escriba a mano un id numérico para uno que aún no haya informado.</translation>
     </message>
     <message>
-        <location line="+33"/>
+        <location line="+35"/>
         <source>Series Color</source>
         <translation>Color de la serie</translation>
     </message>
@@ -1456,6 +2079,11 @@
         <location line="+26"/>
         <source> s</source>
         <translation> s</translation>
+    </message>
+    <message>
+        <location line="+41"/>
+        <source>Field %1</source>
+        <translation>Campo %1</translation>
     </message>
 </context>
 <context>
@@ -1594,7 +2222,57 @@ Permitidos: %1</translation>
 <context>
     <name>traceview::DashboardCell</name>
     <message>
-        <location filename="../lib/dashboard/widgets/chartstyle.cpp" line="+381"/>
+        <location filename="../lib/dashboard/widgets/chartstyle.cpp" line="+296"/>
+        <source>Sample rate</source>
+        <translation>Frecuencia de muestreo</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Samples in window</source>
+        <translation>Muestras en la ventana</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Window span</source>
+        <translation>Duración de la ventana</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Minimum</source>
+        <translation>Mínimo</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Maximum</source>
+        <translation>Máximo</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Peak to peak</source>
+        <translation>Pico a pico</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Peak (|x| max)</source>
+        <translation>Pico (|x| máx)</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Mean</source>
+        <translation>Media</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Median</source>
+        <translation>Mediana</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>RMS</source>
+        <translation>RMS</translation>
+    </message>
+    <message>
+        <location line="+139"/>
         <source>Style:</source>
         <translation>Estilo:</translation>
     </message>
@@ -1637,6 +2315,26 @@ Permitidos: %1</translation>
         <location line="+2"/>
         <source>Show grid point values</source>
         <translation>Mostrar valores de los puntos de la cuadrícula</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Show info row</source>
+        <translation>Mostrar fila de info</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Info row values</source>
+        <translation>Valores de la fila de info</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Range markers (A/B)</source>
+        <translation>Marcadores de rango (A/B)</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Fill area under the line</source>
+        <translation>Rellenar el área bajo la línea</translation>
     </message>
     <message>
         <location line="+2"/>
@@ -1848,7 +2546,7 @@ Permitidos: %1</translation>
 <context>
     <name>traceview::DashboardGrid</name>
     <message>
-        <location filename="../lib/dashboard/dashboardgrid.cpp" line="+554"/>
+        <location filename="../lib/dashboard/dashboardgrid.cpp" line="+643"/>
         <source>Bring to Front</source>
         <translation>Traer al frente</translation>
     </message>
@@ -1871,7 +2569,7 @@ Permitidos: %1</translation>
 <context>
     <name>traceview::DebugChartsWindow</name>
     <message>
-        <location filename="../lib/core/debugchartswindow.cpp" line="+198"/>
+        <location filename="../lib/core/debugchartswindow.cpp" line="+233"/>
         <location line="+4"/>
         <source>Modo estresse: desligado (50ms/tick)</source>
         <translation>Modo estrés: desactivado (50ms/tick)</translation>
@@ -1917,45 +2615,17 @@ Permitidos: %1</translation>
         <translation>Control deslizante</translation>
     </message>
     <message>
+        <location line="+7"/>
+        <source>Audio Spectrum</source>
+        <translation>Espectro de audio</translation>
+    </message>
+    <message>
         <location line="+6"/>
-        <location line="+3"/>
-        <location line="+6"/>
-        <location line="+2"/>
-        <source>Operator</source>
-        <translation>Operador</translation>
+        <source>Audio Spectrogram</source>
+        <translation>Espectrograma de audio</translation>
     </message>
     <message>
-        <location line="-10"/>
-        <source>Boot OK. Battery at 87%.</source>
-        <translation>Arranque OK. Batería al 87%.</translation>
-    </message>
-    <message>
-        <location line="+2"/>
-        <source>Start the calibration routine, please.</source>
-        <translation>Inicia la rutina de calibración, por favor.</translation>
-    </message>
-    <message>
-        <location line="+3"/>
-        <source>Calibration done. Offsets saved; log attached.</source>
-        <translation>Calibración completada. Offsets guardados; registro adjunto.</translation>
-    </message>
-    <message>
-        <location line="+3"/>
-        <source>Sending the new route map.</source>
-        <translation>Enviando el nuevo mapa de ruta.</translation>
-    </message>
-    <message>
-        <location line="+2"/>
-        <source>Retrying over the other link...</source>
-        <translation>Reintentando por el otro enlace...</translation>
-    </message>
-    <message>
-        <location line="+2"/>
-        <source>Chat</source>
-        <translation>Chat</translation>
-    </message>
-    <message>
-        <location line="+56"/>
+        <location line="+62"/>
         <source> -- %1 fps</source>
         <translation> -- %1 fps</translation>
     </message>
@@ -2059,14 +2729,6 @@ Permitidos: %1</translation>
         <location line="+16"/>
         <source>This device&apos;s ID:</source>
         <translation>ID de este dispositivo:</translation>
-    </message>
-    <message>
-        <source>Advanced</source>
-        <translation type="vanished">Avanzado</translation>
-    </message>
-    <message>
-        <source>Every link as a table: the order they are tried in, baud rate, TCP port, and targets typed by hand.</source>
-        <translation type="vanished">Todas las conexiones en una tabla: el orden en que se prueban, la velocidad en baudios, el puerto TCP y los destinos escritos a mano.</translation>
     </message>
     <message>
         <location line="-54"/>
@@ -2652,17 +3314,17 @@ Permitidos: %1</translation>
         <translation>+ Añadir anillo</translation>
     </message>
     <message>
-        <location line="+140"/>
+        <location line="+159"/>
         <source>Ring %1</source>
         <translation>Anillo %1</translation>
     </message>
     <message>
-        <location line="+12"/>
+        <location line="+13"/>
         <source>Which field of the bound topic this ring plots -- pick one the device has already reported (shown by name), or type a numeric id by hand for one it hasn&apos;t reported yet.</source>
         <translation>Qué campo del tema vinculado traza este anillo: elija uno que el dispositivo ya haya informado (mostrado por nombre) o escriba a mano un id numérico para uno que aún no haya informado.</translation>
     </message>
     <message>
-        <location line="+30"/>
+        <location line="+33"/>
         <source>Ring Color</source>
         <translation>Color del anillo</translation>
     </message>
@@ -2776,13 +3438,8 @@ Permitidos: %1</translation>
 </context>
 <context>
     <name>traceview::MainWindow</name>
-    <message>
-        <location filename="../lib/core/mainwindow.cpp" line="+227"/>
-        <source>TraceView v%1</source>
-        <translation>TraceView v%1</translation>
-    </message>
     <message numerus="yes">
-        <location line="+153"/>
+        <location filename="../lib/core/mainwindow.cpp" line="+387"/>
         <source>This device carries %n other device(s) (%1). Remove or repoint them first.</source>
         <translation>
             <numerusform>Este dispositivo transporta %n dispositivo más (%1). Elimínelo o rediríjalo primero.</numerusform>
@@ -2795,7 +3452,33 @@ Permitidos: %1</translation>
         <translation>, </translation>
     </message>
     <message>
-        <location line="+552"/>
+        <location line="+293"/>
+        <source>AI assistant access is off.</source>
+        <translation>El acceso de asistentes de IA está desactivado.</translation>
+    </message>
+    <message>
+        <location line="+12"/>
+        <source>AI assistant access could not start: %1</source>
+        <translation>No se pudo iniciar el acceso de asistentes de IA: %1</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>AI assistant connected: %1</source>
+        <translation>Asistente de IA conectado: %1</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <location line="+6"/>
+        <source>unknown</source>
+        <translation>desconocido</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>AI assistant disconnected: %1</source>
+        <translation>Asistente de IA desconectado: %1</translation>
+    </message>
+    <message>
+        <location line="+410"/>
         <source>Pending</source>
         <translation>Pendiente</translation>
     </message>
@@ -2913,10 +3596,6 @@ Pérdidas: %2</translation>
         <translation>&amp;Restablecer Posiciones de Paneles</translation>
     </message>
     <message>
-        <source>&amp;Theme</source>
-        <translation type="vanished">&amp;Tema</translation>
-    </message>
-    <message>
         <location line="+10"/>
         <source>&amp;Font</source>
         <translation>&amp;Fuente</translation>
@@ -2943,12 +3622,12 @@ Pérdidas: %2</translation>
     </message>
     <message>
         <location line="+0"/>
-        <location line="+3618"/>
+        <location line="+3763"/>
         <source>Later</source>
         <translation>Más tarde</translation>
     </message>
     <message>
-        <location line="-3611"/>
+        <location line="-3756"/>
         <source>&amp;Access</source>
         <translation>&amp;Acceso</translation>
     </message>
@@ -3075,18 +3754,18 @@ Pérdidas: %2</translation>
     </message>
     <message>
         <location line="+18"/>
-        <location line="+2983"/>
+        <location line="+3128"/>
         <source>Undo</source>
         <translation>Deshacer</translation>
     </message>
     <message>
-        <location line="-2981"/>
-        <location line="+2981"/>
+        <location line="-3126"/>
+        <location line="+3126"/>
         <source>Redo</source>
         <translation>Rehacer</translation>
     </message>
     <message>
-        <location line="-2938"/>
+        <location line="-3083"/>
         <source>Add Device</source>
         <translation>Añadir Dispositivo</translation>
     </message>
@@ -3122,12 +3801,12 @@ Pérdidas: %2</translation>
     </message>
     <message>
         <location line="+29"/>
-        <location line="+2883"/>
+        <location line="+3028"/>
         <source>Fullscreen dashboard (F11)</source>
         <translation>Panel en pantalla completa (F11)</translation>
     </message>
     <message>
-        <location line="-2703"/>
+        <location line="-2848"/>
         <source>Rename Workspace</source>
         <translation>Renombrar Espacio de Trabajo</translation>
     </message>
@@ -3190,7 +3869,7 @@ Pérdidas: %2</translation>
     <message>
         <location line="+4"/>
         <source>Saved appearance preset &quot;%1&quot;.</source>
-        <translation>Ajuste de apariencia "%1" guardado.</translation>
+        <translation>Ajuste de apariencia &quot;%1&quot; guardado.</translation>
     </message>
     <message>
         <location line="+8"/>
@@ -3200,7 +3879,7 @@ Pérdidas: %2</translation>
     <message>
         <location line="+20"/>
         <source>Delete the palette &quot;%1&quot;?</source>
-        <translation>¿Eliminar la paleta "%1"?</translation>
+        <translation>¿Eliminar la paleta &quot;%1&quot;?</translation>
     </message>
     <message>
         <location line="+45"/>
@@ -3208,17 +3887,17 @@ Pérdidas: %2</translation>
         <translation>Este espacio de trabajo ahora tiene su propia apariencia.</translation>
     </message>
     <message>
-        <location line="+1213"/>
+        <location line="+1330"/>
         <source>%1: found at %2</source>
         <translation>%1: encontrado en %2</translation>
     </message>
     <message>
-        <location line="+322"/>
+        <location line="+339"/>
         <source>%1: trying %2</source>
         <translation>%1: probando %2</translation>
     </message>
     <message>
-        <location line="+420"/>
+        <location line="+424"/>
         <location line="+8"/>
         <location line="+5"/>
         <location line="+8"/>
@@ -3267,7 +3946,7 @@ Pérdidas: %2</translation>
         <translation>&quot;%1&quot; guardado en la galería.</translation>
     </message>
     <message>
-        <location line="+535"/>
+        <location line="+542"/>
         <source>Update available: v%1</source>
         <translation>Actualización disponible: v%1</translation>
     </message>
@@ -3340,13 +4019,13 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
         <translation>Cerrar app</translation>
     </message>
     <message>
-        <location line="-2930"/>
-        <location line="+2731"/>
+        <location line="-3075"/>
+        <location line="+2876"/>
         <source>Devices</source>
         <translation>Dispositivos</translation>
     </message>
     <message>
-        <location line="-2656"/>
+        <location line="-2801"/>
         <source>Subscriptions</source>
         <translation>Suscripciones</translation>
     </message>
@@ -3362,17 +4041,22 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
         <translation>Nombre:</translation>
     </message>
     <message>
-        <location line="+1"/>
+        <location line="-2073"/>
+        <source>TraceView v%1</source>
+        <translation>TraceView v%1</translation>
+    </message>
+    <message>
+        <location line="+2074"/>
         <source>Workspace</source>
         <translation>Espacio de Trabajo</translation>
     </message>
     <message>
-        <location line="+19"/>
+        <location line="+9"/>
         <source>Created workspace &quot;%1&quot;.</source>
         <translation>Espacio de trabajo «%1» creado.</translation>
     </message>
     <message>
-        <location line="+14"/>
+        <location line="+30"/>
         <source>Delete Workspace</source>
         <translation>Eliminar Espacio de Trabajo</translation>
     </message>
@@ -3382,29 +4066,29 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
         <translation>¿Eliminar el espacio de trabajo «%1»? Esta acción no se puede deshacer.</translation>
     </message>
     <message>
-        <location line="+16"/>
+        <location line="+24"/>
         <source>Deleted workspace &quot;%1&quot;.</source>
         <translation>Espacio de trabajo «%1» eliminado.</translation>
     </message>
     <message>
         <location line="+71"/>
-        <location line="+2256"/>
+        <location line="+2387"/>
         <source>Add widget</source>
         <translation>Añadir widget</translation>
     </message>
     <message>
-        <location line="-2253"/>
+        <location line="-2384"/>
         <source>Remove selected widget (%1)</source>
         <translation>Eliminar widget seleccionado (%1)</translation>
     </message>
     <message>
         <location line="+3"/>
-        <location line="+2263"/>
+        <location line="+2394"/>
         <source>Add device</source>
         <translation>Añadir dispositivo</translation>
     </message>
     <message>
-        <location line="-2260"/>
+        <location line="-2391"/>
         <source>Remove selected device (%1)</source>
         <translation>Eliminar dispositivo seleccionado (%1)</translation>
     </message>
@@ -3489,12 +4173,12 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
         <translation>Mostrar los paneles Capas/Propiedades</translation>
     </message>
     <message>
-        <location line="+255"/>
+        <location line="+263"/>
         <source>New Device</source>
         <translation>Nuevo Dispositivo</translation>
     </message>
     <message>
-        <location line="+284"/>
+        <location line="+379"/>
         <source>%1: robot is responding again</source>
         <translation>%1: el robot vuelve a responder</translation>
     </message>
@@ -3555,17 +4239,17 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
         <translation>M&amp;ovimiento</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="-1347"/>
+        <location filename="../lib/core/mainwindow.cpp" line="-1464"/>
         <source>Dashboard</source>
         <translation>Dashboard</translation>
     </message>
     <message>
-        <location line="+1686"/>
+        <location line="+1810"/>
         <source>%1: this BLE address now answers as a different robot (expected %2, got %3)</source>
         <translation>%1: esta dirección BLE ahora responde como otro robot (se esperaba %2, se obtuvo %3)</translation>
     </message>
     <message>
-        <location line="+492"/>
+        <location line="+503"/>
         <source>Key &quot;%1&quot; is already used by another widget.</source>
         <translation>La clave «%1» ya está en uso por otro widget.</translation>
     </message>
@@ -3580,7 +4264,7 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
         <translation>¿Descartar el panel actual y comenzar un nuevo proyecto vacío?</translation>
     </message>
     <message>
-        <location line="+15"/>
+        <location line="+18"/>
         <source>Started a new project.</source>
         <translation>Se inició un nuevo proyecto.</translation>
     </message>
@@ -3623,7 +4307,7 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
     </message>
     <message>
         <location line="+20"/>
-        <location line="+211"/>
+        <location line="+218"/>
         <source>Settings</source>
         <translation>Configuración</translation>
     </message>
@@ -4531,14 +5215,6 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
 <context>
     <name>traceview::RobotLogWidget</name>
     <message>
-        <source>Clear</source>
-        <translation type="vanished">Limpiar</translation>
-    </message>
-    <message>
-        <source>Clear this log</source>
-        <translation type="vanished">Limpiar este registro</translation>
-    </message>
-    <message>
         <location filename="../lib/dashboard/widgets/robotlogwidget.cpp" line="+181"/>
         <source>(no device)</source>
         <translation>(sin dispositivo)</translation>
@@ -4547,6 +5223,52 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
         <location line="+3"/>
         <source>(unnamed device)</source>
         <translation>(dispositivo sin nombre)</translation>
+    </message>
+</context>
+<context>
+    <name>traceview::SceneConfigEditor</name>
+    <message>
+        <location filename="../lib/dashboard/scenes/sceneconfigeditor.cpp" line="+149"/>
+        <source>Bind by name</source>
+        <translation>Vincular por nombre</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Binds every unbound input to the reported field of the same name</source>
+        <translation>Vincula cada entrada sin vincular al campo informado con el mismo nombre</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Scene</source>
+        <translation>Escena</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Inputs</source>
+        <translation>Entradas</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Parameters</source>
+        <translation>Parámetros</translation>
+    </message>
+    <message>
+        <location line="+172"/>
+        <source>(Unbound)</source>
+        <translation>(Sin vincular)</translation>
+    </message>
+    <message>
+        <location line="+27"/>
+        <source>%1 (offline)</source>
+        <translation>%1 (sin conexión)</translation>
+    </message>
+</context>
+<context>
+    <name>traceview::SceneWidget</name>
+    <message>
+        <location filename="../lib/dashboard/scenes/scenewidget.cpp" line="-206"/>
+        <source>Unknown scene &quot;%1&quot;</source>
+        <translation>Escena desconocida &quot;%1&quot;</translation>
     </message>
 </context>
 <context>
@@ -4598,14 +5320,6 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
 <context>
     <name>traceview::SerialMonitorWidget</name>
     <message>
-        <source>Clear</source>
-        <translation type="vanished">Limpiar</translation>
-    </message>
-    <message>
-        <source>Clear this terminal</source>
-        <translation type="vanished">Limpiar este terminal</translation>
-    </message>
-    <message>
         <location filename="../lib/dashboard/widgets/serialmonitorwidget.cpp" line="+167"/>
         <source>(no device)</source>
         <translation>(sin dispositivo)</translation>
@@ -4619,7 +5333,7 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
 <context>
     <name>traceview::SettingsPage</name>
     <message>
-        <location filename="../lib/core/settingspage.cpp" line="+203"/>
+        <location filename="../lib/core/settingspage.cpp" line="+206"/>
         <source>Settings</source>
         <translation>Configuración</translation>
     </message>
@@ -4655,19 +5369,19 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
     </message>
     <message>
         <location line="-234"/>
-        <location line="+293"/>
+        <location line="+326"/>
         <source>Diagnostics</source>
         <translation>Diagnóstico</translation>
     </message>
     <message>
-        <location line="-292"/>
-        <location line="+344"/>
+        <location line="-325"/>
+        <location line="+377"/>
         <location line="+5"/>
         <source>Updates</source>
         <translation>Actualizaciones</translation>
     </message>
     <message>
-        <location line="-307"/>
+        <location line="-340"/>
         <source>Project and startup preferences shared by the application.</source>
         <translation>Preferencias de proyecto e inicio compartidas por la aplicación.</translation>
     </message>
@@ -4702,25 +5416,9 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
         <translation>Conectar los dispositivos configurados al abrir un proyecto</translation>
     </message>
     <message>
-        <source>Theme and typeface changes apply immediately. Changing the language is saved for the next start.</source>
-        <translation type="vanished">Los cambios de tema y tipografía se aplican al instante. El cambio de idioma se guarda para el próximo inicio.</translation>
-    </message>
-    <message>
         <location line="+11"/>
         <source>Application appearance</source>
         <translation>Apariencia de la aplicación</translation>
-    </message>
-    <message>
-        <source>Theme</source>
-        <translation type="vanished">Tema</translation>
-    </message>
-    <message>
-        <source>Palette, chart style and typeface changes apply immediately. Changing the language is saved for the next start.</source>
-        <translation type="vanished">Los cambios de paleta, estilo de gráficos y fuente se aplican al instante. El cambio de idioma se guarda para el próximo inicio.</translation>
-    </message>
-    <message>
-        <source>Palette, frame, chart style and typeface changes apply immediately. Changing the language is saved for the next start.</source>
-        <translation type="vanished">Los cambios de paleta, marco, estilo de gráficos y fuente se aplican al instante. El cambio de idioma se guarda para el próximo inicio.</translation>
     </message>
     <message>
         <location filename="../lib/core/appearancecatalog.cpp" line="-77"/>
@@ -4952,7 +5650,32 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
         </translation>
     </message>
     <message>
-        <location line="+19"/>
+        <location line="+18"/>
+        <source>AI assistants</source>
+        <translation>Asistentes de IA</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Let AI assistants such as Claude control TraceView</source>
+        <translation>Permitir que asistentes de IA como Claude controlen TraceView</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>An assistant connected over MCP can then create workspaces and widgets, read telemetry and take screenshots of this window. Its dashboard edits can be undone.</source>
+        <translation>Un asistente conectado por MCP podrá crear espacios de trabajo y widgets, leer telemetría y tomar capturas de esta ventana. Sus cambios en el panel se pueden deshacer.</translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <source>To connect Claude Code, run this once in a terminal:</source>
+        <translation>Para conectar Claude Code, ejecuta esto una vez en una terminal:</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Copy command</source>
+        <translation>Copiar comando</translation>
+    </message>
+    <message>
+        <location line="+11"/>
         <source>Keep enough history for investigation without letting long-running sessions use unbounded memory.</source>
         <translation>Conserve historial suficiente para investigar sin que las sesiones largas usen memoria ilimitada.</translation>
     </message>

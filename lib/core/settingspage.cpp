@@ -1,33 +1,36 @@
 #include "core/settingspage.h"
 
 #include <QCheckBox>
+#include <QClipboard>
 #include <QComboBox>
+#include <QCoreApplication>
 #include <QDateTime>
 #include <QDesktopServices>
+#include <QDir>
 #include <QFormLayout>
 #include <QGroupBox>
+#include <QGuiApplication>
 #include <QHBoxLayout>
 #include <QIcon>
 #include <QLabel>
 #include <QListWidget>
 #include <QListWidgetItem>
-#include <QMouseEvent>
 #include <QLocale>
+#include <QMouseEvent>
 #include <QPixmap>
 #include <QPushButton>
 #include <QResizeEvent>
 #include <QScrollArea>
+#include <QSignalBlocker>
 #include <QSpinBox>
 #include <QStackedWidget>
 #include <QUrl>
 #include <QVBoxLayout>
-
 #include <utility>
 
-#include "core/applog.h"
-#include <QSignalBlocker>
-
+#include "agent/agentbridgeserver.h"
 #include "appearancecatalog.h"
+#include "core/applog.h"
 #include "dashboard/widgets/chartstyle.h"
 #include "preferences/appsettings.h"
 #include "protocol/manifeststore.h"
@@ -525,6 +528,39 @@ SettingsPage::SettingsPage(QWidget* parent) : QWidget(parent) {
         ManifestStore::instance().clear();
         refreshClearManifests();
     });
+
+#if !defined(Q_OS_ANDROID) && !defined(Q_OS_IOS)
+    // MCP clients launch `TraceView --mcp` as a local process, which only
+    // exists on desktop.
+    QGroupBox* agentSection = addSection(connectionsPage, tr("AI assistants"));
+    auto* agentBridge =
+        new QCheckBox(tr("Let AI assistants such as Claude control TraceView"), agentSection);
+    agentBridge->setChecked(settings.agentBridgeEnabled());
+    agentBridge->setToolTip(
+        tr("An assistant connected over MCP can then create workspaces and widgets, read "
+           "telemetry and take screenshots of this window. Its dashboard edits can be undone."));
+    addCheckBoxRow(formFor(agentSection), agentBridge);
+    QStringList commandParts;
+    for (const QString& part : mcpServerCommand()) {
+        commandParts.append(part.contains(QLatin1Char(' ')) ? QStringLiteral("\"%1\"").arg(part)
+                                                            : part);
+    }
+    const QString registerCommand =
+        QStringLiteral("claude mcp add traceview -- ") + commandParts.join(QLatin1Char(' '));
+    auto* agentNote =
+        new QLabel(tr("To connect Claude Code, run this once in a terminal:"), agentSection);
+    agentNote->setWordWrap(true);
+    formFor(agentSection)->addRow(agentNote);
+    auto* commandLabel = new QLabel(registerCommand, agentSection);
+    commandLabel->setWordWrap(true);
+    commandLabel->setTextInteractionFlags(Qt::TextSelectableByMouse);
+    formFor(agentSection)->addRow(commandLabel);
+    auto* copyCommand = new QPushButton(tr("Copy command"), agentSection);
+    formFor(agentSection)->addRow(QString(), copyCommand);
+    connect(agentBridge, &QCheckBox::toggled, &settings, &AppSettings::setAgentBridgeEnabled);
+    connect(copyCommand, &QPushButton::clicked, this,
+            [registerCommand] { QGuiApplication::clipboard()->setText(registerCommand); });
+#endif
     qobject_cast<QVBoxLayout*>(connectionsPage->layout())->addStretch();
     addPage(connectionsPage);
 

@@ -57,6 +57,11 @@ public:
     // switched on only while actively chasing a connection problem.
     bool verboseSerialLogging() const;
 
+    // Whether AI assistants (Claude and other MCP clients, via `TraceView
+    // --mcp`) may drive this app -- see docs/MCP.md. Off by default: turning
+    // it on is the user's consent to being driven.
+    bool agentBridgeEnabled() const;
+
     int frameLogCapacity() const;
     int notificationHistoryCapacity() const;
 
@@ -85,6 +90,7 @@ public:
     void setManifestCacheEnabled(bool enabled);
     void setManifestCacheSkipOnHello(bool skip);
     void setVerboseSerialLogging(bool enabled);
+    void setAgentBridgeEnabled(bool enabled);
     void setFrameLogCapacity(int entries);
     void setNotificationHistoryCapacity(int entries);
 
@@ -99,6 +105,7 @@ signals:
     void terminalPreferencesChanged();
     void connectionPreferencesChanged();
     void updatePreferencesChanged();
+    void agentPreferencesChanged();
     // Its own signal rather than dashboardPreferencesChanged(): charts only
     // need a repaint, not the resubscribe that one triggers.
     void chartStyleChanged();

@@ -48,15 +48,22 @@
 #include <algorithm>
 
 #include "aboutdialog.h"
+#include "agent/agentbridgeserver.h"
+#include "agent/toolregistry.h"
+#include "agentapptools.h"
 #include "applog.h"
 #include "backend/backend.h"
 #ifdef TRACEVIEW_ENABLE_BLE
 #include "blediscoveryservice.h"
 #include "bletransport.h"
 #endif
+#include "dashboard/bindingresolver.h"
 #include "dashboard/dashboardgrid.h"
+#include "dashboard/telemetryconsumer.h"
+#include "dashboard/topicsampledispatcher.h"
 #include "dashboard/widgetconfigeditor.h"
 #include "dashboard/widgetregistry.h"
+#include "dashboard/widgets/audiostreamwidget.h"
 #include "dashboard/widgets/chartwidgets.h"
 #include "dashboard/widgets/textboardwidget.h"
 #include "debugchartswindow.h"
@@ -130,7 +137,6 @@ namespace {
 const QString kProjectFileFilter =
     QCoreApplication::translate("MainWindow", "TraceView Project (*.tvproj)");
 constexpr const char* kRecentFilesSettingsKey = "recentFiles/paths";
-constexpr const char* kSubscriptionsWorkspaceId = "builtin:subscriptions";
 // IconLibrary ids for workspace buttons (WorkspaceSwitcher/WorkspaceDock):
 // what a workspace shows until the user picks its own icon, and the fixed
 // one of the built-in Subscriptions entry.
@@ -179,6 +185,9 @@ constexpr bool kUsesCompactChrome =
 // only ever shows the newest value), so it requests a modest fixed rate
 // instead of inventing a config field for it.
 constexpr quint32 kGaugeRequestedRateMillihz = 5000;  // 5 Hz
+// What an Audio Spectrum widget asks for. A stream topic is not sampled --
+// the device sends every block while subscribed -- so this is nominal.
+constexpr quint32 kStreamRequestedRateMillihz = 1000;  // 1 Hz
 // Fallback for a chart whose configured sample time is unusable (<= 0).
 constexpr quint32 kDefaultRequestedRateMillihz = 10000;  // 10 Hz
 
@@ -242,6 +251,11 @@ WidgetTopicRequest widgetTopicRequest(DashboardWidget* widget, DashboardGrid* gr
         const TextBoardConfig& config = board->config();
         request = {deviceId, config.sourceId, config.topicId,
                    requestedRateMillihzFor(config.sampleTimeMs)};
+    } else if (auto* audio = dynamic_cast<AudioStreamWidget*>(widget)) {
+        // A stream has no rate to ask for: the device sends every block
+        // while the subscription lasts.
+        const AudioSpectrumConfig& config = audio->config();
+        request = {deviceId, config.sourceId, config.topicId, kStreamRequestedRateMillihz};
     } else {
         return {};
     }
@@ -554,6 +568,11 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     m_devicesGrid->setBleScanToggleHandler([this](bool start) { onBleScanToggled(start); });
     m_devicesGrid->setBleDeviceListProvider([this]() { return m_bleDiscoveredDevices; });
 #endif
+    // Every config entering the dashboard is bound by name from here on --
+    // see resolveWidgetBinding(). Installed once m_devicesGrid exists, which
+    // it reads to find each config's device.
+    m_dashboardGrid->setBindingResolver(
+        [this](const QJsonObject& config) { return resolveWidgetBinding(config); });
     // Same reasoning as setPortListProvider() above: DevicesGrid can't reach
     // a Backend itself (traceview_devices doesn't depend on
     // traceview_protocol), so MainWindow supplies the gear icon's "Reported
@@ -757,6 +776,13 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
             &MainWindow::reconcileHubChildPresence);
     m_hubPeerReconcileTimer->start();
 
+    m_agentTools = new ToolRegistry(this);
+    AgentAppTools::registerTools(this, m_agentTools);
+    m_agentBridgeForced =
+        QCoreApplication::arguments().contains(QString::fromLatin1(kAgentBridgeArgument));
+    connect(&AppSettings::instance(), &AppSettings::agentPreferencesChanged, this,
+            &MainWindow::syncAgentBridge);
+
     // Building the startup dashboard blocks the event loop, so a cover goes
     // up first and the load only starts once that cover has been painted
     // (plus a beat for the frame to reach the screen) -- otherwise the
@@ -776,6 +802,47 @@ void MainWindow::finishStartup() {
     openStartupDashboard();
     delete m_startupOverlay;
     m_startupOverlay = nullptr;
+    // Only now: a tool call before this would edit the placeholder dashboard
+    // the startup one is about to replace.
+    syncAgentBridge();
+}
+
+void MainWindow::syncAgentBridge() {
+    if (m_startupOverlay) {
+        return;  // finishStartup() calls back once the dashboard is up
+    }
+    const bool wanted = m_agentBridgeForced || AppSettings::instance().agentBridgeEnabled();
+    if (!wanted) {
+        if (m_agentBridge) {
+            delete m_agentBridge;
+            m_agentBridge = nullptr;
+            m_agentHardwareAllowed = false;
+            postStatus(tr("AI assistant access is off."), 3000);
+        }
+        return;
+    }
+    if (m_agentBridge) {
+        return;
+    }
+    m_agentBridge = new AgentBridgeServer(m_agentTools, this);
+    QString error;
+    if (!m_agentBridge->start(&error)) {
+        delete m_agentBridge;
+        m_agentBridge = nullptr;
+        postStatus(tr("AI assistant access could not start: %1").arg(error), 6000,
+                   StatusSeverity::Warning);
+        return;
+    }
+    connect(m_agentBridge, &AgentBridgeServer::clientConnected, this, [this](const QString& name) {
+        postStatus(tr("AI assistant connected: %1").arg(name.isEmpty() ? tr("unknown") : name),
+                   4000, StatusSeverity::Success);
+    });
+    connect(m_agentBridge, &AgentBridgeServer::clientDisconnected, this,
+            [this](const QString& name) {
+                postStatus(
+                    tr("AI assistant disconnected: %1").arg(name.isEmpty() ? tr("unknown") : name),
+                    3000);
+            });
 }
 
 MainWindow::~MainWindow() {
@@ -790,6 +857,11 @@ MainWindow::~MainWindow() {
         disconnect(it.key(), nullptr, this, nullptr);
     }
     m_widgetSubscriptions.clear();
+    for (auto it = m_consumerSubscriptions.constBegin(); it != m_consumerSubscriptions.constEnd();
+         ++it) {
+        disconnect(it.key(), nullptr, this, nullptr);
+    }
+    m_consumerSubscriptions.clear();
 }
 
 void MainWindow::postStatus(const QString& text, int timeoutMs, StatusSeverity severity,
@@ -830,8 +902,27 @@ void MainWindow::showStatusMessage(const QString& text, int timeoutMs) {
 }
 
 void MainWindow::wireChartWidgetToTelemetry(DashboardWidget* widget) {
+    if (auto* consumer = dynamic_cast<TelemetryConsumer*>(widget)) {
+        // Its commands go out the way a device script's do (Backend::
+        // sendCommand()), to whichever of its devices it names.
+        consumer->setCommandSender([this](const QString& deviceId, const QString& commandLine) {
+            if (DeviceConnection* target = m_deviceConnections.value(deviceId)) {
+                target->backend()->sendCommand(commandLine.toUtf8());
+            }
+        });
+        connect(widget, &QObject::destroyed, this, [this, widget] {
+            const ConsumerSubscriptions subs = m_consumerSubscriptions.take(widget);
+            for (const WidgetSubscription& sub : subs.topics) {
+                if (sub.backend) {
+                    sub.backend->removeSubscriber(sub.handle);
+                }
+            }
+        });
+        refreshConsumerSubscriptions(widget);
+        return;
+    }
     if (!dynamic_cast<ChartWidgetBase*>(widget) && !dynamic_cast<DummyGaugeWidget*>(widget) &&
-        !dynamic_cast<TextBoardWidget*>(widget)) {
+        !dynamic_cast<TextBoardWidget*>(widget) && !dynamic_cast<AudioStreamWidget*>(widget)) {
         return;
     }
 
@@ -890,6 +981,11 @@ void MainWindow::refreshWidgetSubscription(DashboardWidget* widget) {
                     &TextBoardWidget::onTextSample);
             connect(newConnection->backend(), &Backend::binarySample, board,
                     &TextBoardWidget::onBinarySample);
+        } else if (auto* audio = dynamic_cast<AudioStreamWidget*>(widget)) {
+            connect(newConnection->backend(), &Backend::fieldSample, audio,
+                    &AudioStreamWidget::onFieldSample);
+            connect(newConnection->backend(), &Backend::arraySample, audio,
+                    &AudioStreamWidget::onArraySample);
         }
     }
 
@@ -904,10 +1000,102 @@ void MainWindow::refreshWidgetSubscription(DashboardWidget* widget) {
     sub.backend = newBackend;
 }
 
+void MainWindow::refreshConsumerSubscriptions(DashboardWidget* widget) {
+    auto* consumer = dynamic_cast<TelemetryConsumer*>(widget);
+    if (!consumer) {
+        return;
+    }
+    ConsumerSubscriptions& subs = m_consumerSubscriptions[widget];
+    const QVector<TelemetryTopicRequest> requests = consumer->topicRequests();
+
+    QVector<WidgetSubscription> topics;
+    QList<QPointer<Backend>> wanted;
+    for (int i = 0; i < requests.size(); ++i) {
+        const WidgetTopicRequest request =
+            withRateOverride({requests[i].deviceId, requests[i].sourceId, requests[i].topicId,
+                              requests[i].rateMillihz});
+        DeviceConnection* connection = m_deviceConnections.value(request.deviceId);
+        Backend* backend = connection ? connection->backend() : nullptr;
+        WidgetSubscription sub;
+        sub.deviceId = request.deviceId;
+        sub.backend = backend;
+        if (backend) {
+            // Same position, same Backend: move the existing reference
+            // instead of dropping it, so an unrelated edit puts nothing on
+            // the wire.
+            const bool reuse = i < subs.topics.size() && subs.topics[i].backend == backend;
+            sub.handle =
+                backend->updateSubscriber(reuse ? subs.topics[i].handle : 0, request.sourceId,
+                                          request.topicId, request.rateMillihz);
+            if (!wanted.contains(backend)) {
+                wanted.append(backend);
+            }
+        }
+        topics.append(sub);
+    }
+    for (int i = 0; i < subs.topics.size(); ++i) {
+        const WidgetSubscription& old = subs.topics[i];
+        const bool reused = i < topics.size() && topics[i].backend == old.backend;
+        if (old.backend && !reused) {
+            old.backend->removeSubscriber(old.handle);
+        }
+    }
+
+    // Scalar samples through each Backend's TopicSampleDispatcher, for the
+    // requested topics only (once per topic, however many requests name it).
+    for (const QPointer<Backend>& backend : std::as_const(subs.connected)) {
+        if (backend) {
+            TopicSampleDispatcher::of(backend)->remove(widget);
+        }
+    }
+    QSet<QPair<Backend*, quint64>> registered;
+    for (int i = 0; i < requests.size(); ++i) {
+        Backend* backend = topics[i].backend;
+        const QPair<Backend*, quint64> topicKey{
+            backend, (quint64(requests[i].sourceId) << 16) | requests[i].topicId};
+        if (backend == nullptr || registered.contains(topicKey)) {
+            continue;
+        }
+        registered.insert(topicKey);
+        TopicSampleDispatcher::of(backend)->add(
+            requests[i].sourceId, requests[i].topicId, widget,
+            [consumer](const TelemetryFieldBinding& binding, quint64 timestampUs, double value) {
+                consumer->onFieldSample(binding, timestampUs, value);
+            });
+    }
+
+    for (const QPointer<Backend>& backend : std::as_const(subs.connected)) {
+        if (backend && !wanted.contains(backend)) {
+            disconnect(backend, nullptr, widget, nullptr);
+        }
+    }
+    for (const QPointer<Backend>& backend : std::as_const(wanted)) {
+        if (subs.connected.contains(backend)) {
+            continue;
+        }
+        connect(backend, &Backend::arraySample, widget,
+                [consumer](const TelemetryFieldBinding& binding, quint64 timestampUs,
+                           const QVector<float>& values) {
+                    consumer->onArraySample(binding, timestampUs, values);
+                });
+        connect(backend, &Backend::textSample, widget,
+                [consumer](quint32 sourceId, quint16 topicId, quint64 timestampUs,
+                           const QString& text) {
+                    consumer->onTextSample(sourceId, topicId, timestampUs, text);
+                });
+    }
+    subs.topics = topics;
+    subs.connected = wanted;
+}
+
 void MainWindow::refreshWidgetSubscriptions() {
     const QList<DashboardWidget*> widgets = m_widgetSubscriptions.keys();
     for (DashboardWidget* widget : widgets) {
         refreshWidgetSubscription(widget);
+    }
+    const QList<DashboardWidget*> consumers = m_consumerSubscriptions.keys();
+    for (DashboardWidget* widget : consumers) {
+        refreshConsumerSubscriptions(widget);
     }
     // A config edit can just as well have re-pointed a terminal widget at a
     // different device -- its inbound wiring needs the same kind of refresh
@@ -2260,9 +2448,18 @@ void MainWindow::onNewWorkspaceRequested() {
         return;
     }
 
+    const QString newId = createWorkspace(name.trimmed());
+    // Straight on to its icon -- in compact chrome the icon is all the dock
+    // shows. Cancelling keeps the default glyph; it can be changed later.
+    pickWorkspaceIcon(newId);
+    postStatus(tr("Created workspace \"%1\".").arg(WorkspaceManager::instance().nameFor(newId)),
+               3000, StatusSeverity::Success);
+}
+
+QString MainWindow::createWorkspace(const QString& name) {
     WorkspaceManager& workspaces = WorkspaceManager::instance();
     workspaces.setDashboardFor(workspaces.activeId(), m_dashboardGrid->toJson());
-    const QString newId = workspaces.createWorkspace(name.trimmed());
+    const QString newId = workspaces.createWorkspace(name);
     m_subscriptionsWorkspaceActive = false;
     m_ribbon->setCurrentIndex(m_dashboardTabIndex);
     onRibbonTabChanged(m_dashboardTabIndex);
@@ -2271,10 +2468,7 @@ void MainWindow::onNewWorkspaceRequested() {
     refreshPropertiesPanel();
     refreshLayersPanel();
     refreshWorkspaceSwitcher();
-    // Straight on to its icon -- in compact chrome the icon is all the dock
-    // shows. Cancelling keeps the default glyph; it can be changed later.
-    pickWorkspaceIcon(newId);
-    postStatus(tr("Created workspace \"%1\".").arg(name.trimmed()), 3000, StatusSeverity::Success);
+    return newId;
 }
 
 void MainWindow::onWorkspaceDeleteRequested(const QString& id) {
@@ -2293,7 +2487,15 @@ void MainWindow::onWorkspaceDeleteRequested(const QString& id) {
             QMessageBox::Yes | QMessageBox::No, QMessageBox::No) != QMessageBox::Yes) {
         return;
     }
+    deleteWorkspace(id);
+}
 
+void MainWindow::deleteWorkspace(const QString& id) {
+    WorkspaceManager& workspaces = WorkspaceManager::instance();
+    const QString name = workspaces.nameFor(id);
+    if (name.isEmpty() || workspaces.workspaces().size() <= 1) {
+        return;
+    }
     const bool wasActive = id == workspaces.activeId();
     workspaces.removeWorkspace(id);
     if (wasActive) {
@@ -2915,6 +3117,14 @@ void MainWindow::onAddWidget() {
     m_dashboardGrid->addItem(types.first().typeId);
 }
 
+QVector<SerialPortOption> MainWindow::serialPortOptions() {
+#ifdef TRACEVIEW_ENABLE_SERIAL
+    return currentSerialPorts();
+#else
+    return {};
+#endif
+}
+
 void MainWindow::onAddDevice() {
     // Drops in a placeholder mock device -- no picker dialog, same shape as
     // onAddWidget() above. DevicesGrid owns opening DeviceConfigDialog
@@ -2969,6 +3179,101 @@ quint32 MainWindow::deviceSelfSourceId(const Device& device) const {
         }
     }
     return 0;
+}
+
+QJsonObject MainWindow::resolveWidgetBinding(const QJsonObject& config) const {
+    // A widget with several bindings (a TelemetryConsumer, see
+    // dashboard/telemetryconsumer.h) keeps each under "bind", as a binding of
+    // its own with its own "deviceId" -- resolved one by one, like a widget.
+    if (config.value(QLatin1String("bind")).isObject()) {
+        QJsonObject bindings = config.value(QLatin1String("bind")).toObject();
+        for (auto it = bindings.begin(); it != bindings.end(); ++it) {
+            if (it.value().isObject()) {
+                it.value() = resolveWidgetBinding(it.value().toObject());
+            }
+        }
+        QJsonObject out = config;
+        out[QLatin1String("bind")] = bindings;
+        return out;
+    }
+    const QString deviceId = config.value(QLatin1String("deviceId")).toString();
+    if (deviceId.isEmpty() || !config.contains(QLatin1String("topicId")) || !m_devicesGrid) {
+        return config;
+    }
+    const QVector<Device> devices = m_devicesGrid->devices();
+    const Device* device = findDevice(devices, deviceId);
+    if (device == nullptr) {
+        return config;
+    }
+    const quint32 selfSourceId = deviceSelfSourceId(*device);
+
+    QVector<CatalogTopicInfo> catalog;
+    if (DeviceConnection* connection = m_deviceConnections.value(deviceId)) {
+        catalog = connection->backend()->catalogTopics();
+    }
+    if (catalog.isEmpty()) {
+        // Not connected (or no manifest yet): what the cache remembers of
+        // this device, and of the source the config was last bound to -- the
+        // latter is what lets a project saved with ids only gain its names
+        // at open, before anything connects.
+        const quint32 namedSourceId =
+            selfSourceId != 0 ? selfSourceId
+                              : ManifestClient::cachedSourceNamed(
+                                    device->robotName.isEmpty() ? device->name : device->robotName);
+        const quint32 boundSourceId =
+            quint32(config.value(QLatin1String("sourceId")).toString("0").toULongLong(nullptr, 0));
+        QVector<quint32> sourceIds;
+        for (const quint32 sourceId : {namedSourceId, boundSourceId}) {
+            if (sourceId != 0 && !sourceIds.contains(sourceId)) {
+                sourceIds.append(sourceId);
+            }
+        }
+        for (const quint32 sourceId : sourceIds) {
+            QVector<CatalogTopicInfo> cached;
+            if (BtpBackend::cachedDescription(sourceId, &cached, nullptr)) {
+                catalog += cached;
+            }
+        }
+    }
+    return resolveBindingNames(config, catalog, selfSourceId);
+}
+
+void MainWindow::resolveDashboardBindings() {
+    const bool liveChanged = m_dashboardGrid->resolveBindings();
+
+    bool savedChanged = false;
+    WorkspaceManager& workspaces = WorkspaceManager::instance();
+    const QVector<Workspace> list = workspaces.workspaces();
+    for (const Workspace& workspace : list) {
+        if (workspace.id == workspaces.activeId()) {
+            continue;  // m_dashboardGrid is the live copy of this one
+        }
+        QJsonObject dashboard = workspace.dashboard;
+        QJsonArray items = dashboard.value(QLatin1String("items")).toArray();
+        bool changed = false;
+        for (int i = 0; i < items.size(); ++i) {
+            QJsonObject item = items.at(i).toObject();
+            const QJsonObject config = item.value(QLatin1String("config")).toObject();
+            const QJsonObject resolved = resolveWidgetBinding(config);
+            if (resolved != config) {
+                item[QLatin1String("config")] = resolved;
+                items[i] = item;
+                changed = true;
+            }
+        }
+        if (changed) {
+            dashboard[QLatin1String("items")] = items;
+            workspaces.setDashboardFor(workspace.id, dashboard);
+            savedChanged = true;
+        }
+    }
+
+    if (liveChanged) {
+        refreshWidgetSubscriptions();  // background subscriptions too
+        refreshPropertiesPanel();
+    } else if (savedChanged) {
+        syncBackgroundTelemetry(BackgroundSync::Full);
+    }
 }
 
 void MainWindow::refreshPropertiesPanelDevices() {
@@ -3571,6 +3876,13 @@ DeviceConnection* MainWindow::createDeviceConnection(const Device& device) {
     connect(backend, &Backend::catalogChanged, this, [this, id = device.id]() {
         refreshPropertiesPanelDevices();
         m_devicesGrid->notifyCatalogChanged(id);
+        // The names every widget bound to this device holds may live under
+        // other ids now (another robot, a reordered firmware), and a project
+        // saved with ids only can now learn its names. Queued: this resolves
+        // and resubscribes, which must not re-enter the backend while it is
+        // still emitting.
+        QMetaObject::invokeMethod(
+            this, [this]() { resolveDashboardBindings(); }, Qt::QueuedConnection);
     });
     // setDeviceIdentity(), not updateDevice() -- same reasoning as
     // onDeviceConnectionStateChanged()'s setDeviceConnected() call below: this
@@ -3699,6 +4011,16 @@ DeviceConnection* MainWindow::createDeviceConnection(const Device& device) {
                 if (DiagramScriptRuntime* runtime = m_scriptRuntimes.value(id)) {
                     runtime->handleTerminal(QString::fromUtf8(data));
                 }
+            });
+    // Kept for an AI assistant to read back what the robot answered.
+    connect(
+        backend, &Backend::terminalDataReceived, this,
+        [this, id = device.id](const QByteArray& data) { m_agentFeed.appendTerminal(id, data); });
+    connect(backend, &Backend::logReceived, this,
+            [this, id = device.id](quint64 timestampUs, quint32, quint32, quint32, quint8 severity,
+                                   const QString& message) {
+                m_agentFeed.appendLog(
+                    id, {QDateTime::currentDateTime(), timestampUs, severity, message});
             });
     return connection;
 }
@@ -3948,6 +4270,7 @@ void MainWindow::onDeviceRemoved(const QString& id) {
     m_hubPeerNames.remove(id);
     m_hubChildOfflineTicks.remove(id);
     m_deviceLinkCyclers.remove(id);
+    m_agentFeed.forget(id);
     dropLinkProbes(id);
     m_deviceLinkSignatures.remove(id);
     m_autoResolvedLinks.remove(id);
@@ -4110,7 +4433,10 @@ void MainWindow::onNewProject() {
             QMessageBox::Yes | QMessageBox::No, QMessageBox::No) != QMessageBox::Yes) {
         return;
     }
+    startNewProject();
+}
 
+void MainWindow::startNewProject() {
     ProjectStore::instance().reset();
     WorkspaceManager::instance().reset();
     applyWorkspaceAppearance();  // a fresh workspace follows the app-wide look
@@ -4540,10 +4866,17 @@ bool MainWindow::loadProjectFile(const QString& path) {
         WorkspaceManager::instance().dashboardFor(WorkspaceManager::instance().activeId()),
         DashboardLoadBreakpoint::DeviceDefault);
     m_dashboardGrid->undoStack()->clear();
+    // The active workspace was resolved as it loaded; this covers the
+    // others' saved JSON (names filled in from the manifest cache).
+    resolveDashboardBindings();
     refreshPropertiesPanel();
     refreshLayersPanel();
     refreshWorkspaceSwitcher();
     return true;
+}
+
+QStringList MainWindow::recentProjectFiles() {
+    return QSettings().value(kRecentFilesSettingsKey).toStringList();
 }
 
 void MainWindow::addRecentFile(const QString& path) {

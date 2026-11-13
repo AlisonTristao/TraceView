@@ -43,9 +43,9 @@ constexpr int kStatusDotSize = 8;
 // same "draw it, don't fake it" approach as arrowImagePath()/checkImagePath()
 // in stylesheet.cpp, just painted live instead of cached to a QSS pixmap
 // since this is a normal paintEvent, not a style sheet subcontrol. Silently
-// draws nothing for any typeId without a glyph below (headerless control
-// kinds never reach this — see wantsCellHeader()).
-void drawTypeIcon(QPainter& painter, const QRect& r, const QString& typeId, const QColor& color) {
+// draws nothing and returns false for any typeId without a glyph below
+// (headerless control kinds never reach this — see wantsCellHeader()).
+bool drawTypeIcon(QPainter& painter, const QRect& r, const QString& typeId, const QColor& color) {
     painter.save();
     painter.setRenderHint(QPainter::Antialiasing);
     painter.translate(r.topLeft());
@@ -102,9 +102,13 @@ void drawTypeIcon(QPainter& painter, const QRect& r, const QString& typeId, cons
         painter.drawRoundedRect(QRectF(s * 0.08, s * 0.1, s * 0.84, s * 0.6), s * 0.15, s * 0.15);
         painter.drawPolyline(QPolygonF(
             {QPointF(s * 0.3, s * 0.7), QPointF(s * 0.2, s * 0.92), QPointF(s * 0.48, s * 0.7)}));
+    } else {
+        painter.restore();
+        return false;
     }
 
     painter.restore();
+    return true;
 }
 
 // Header-controls glyphs (see kStatusDotSize above) -- same "draw it, don't
@@ -450,6 +454,7 @@ void DashboardCell::showSettingsMenu() {
     StickyMenu menu(this);
     QHash<QString, QAction*> toggles;
     QHash<QString, QComboBox*> combos;
+    QHash<QString, QVector<QAction*>> multiChoices;
 
     // Re-reads every control from the widget after each change, since the
     // menu stays open across changes.
@@ -462,6 +467,11 @@ void DashboardCell::showSettingsMenu() {
             if (QComboBox* combo = combos.value(option.id)) {
                 const QSignalBlocker blocker(combo);
                 combo->setCurrentIndex(qMax(0, combo->findData(option.value.toString())));
+            }
+            const QStringList checked = option.value.toStringList();
+            for (QAction* action : multiChoices.value(option.id)) {
+                const QSignalBlocker blocker(action);
+                action->setChecked(checked.contains(action->data().toString()));
             }
         }
     };
@@ -484,6 +494,33 @@ void DashboardCell::showSettingsMenu() {
             const QString id = option.id;
             connect(action, &QAction::toggled, this, [apply, id](bool on) { apply(id, on); });
             toggles.insert(option.id, action);
+            continue;
+        }
+        if (option.kind == WidgetViewOption::Kind::MultiChoice) {
+            // A sticky submenu: several choices can be flipped in one visit.
+            auto* submenu = new StickyMenu(option.label, &menu);
+            menu.addMenu(submenu);
+            const QString id = option.id;
+            QVector<QAction*> actions;
+            for (const auto& choice : option.choices) {
+                QAction* action = submenu->addAction(choice.second);
+                action->setCheckable(true);
+                action->setData(choice.first);
+                action->setChecked(option.value.toStringList().contains(choice.first));
+                actions.append(action);
+            }
+            for (QAction* action : actions) {
+                connect(action, &QAction::toggled, this, [apply, actions, id](bool) {
+                    QStringList checked;
+                    for (QAction* each : actions) {
+                        if (each->isChecked()) {
+                            checked << each->data().toString();
+                        }
+                    }
+                    apply(id, checked);
+                });
+            }
+            multiChoices.insert(option.id, actions);
             continue;
         }
 
@@ -639,7 +676,9 @@ void DashboardCell::paintHeader(QPainter& painter, bool floating) const {
     QRect textRect = header.adjusted(kIconMargin, 0, -kIconMargin, 0);
 
     const QRect iconRect(kIconMargin, (stripHeight - kIconSize) / 2, kIconSize, kIconSize);
-    drawTypeIcon(painter, iconRect, m_typeId, headerFg);
+    if (!drawTypeIcon(painter, iconRect, m_typeId, headerFg)) {
+        m_content->paintHeaderIcon(painter, iconRect, headerFg);
+    }
     if (iconRect.width() > 0) {
         textRect.setLeft(iconRect.right() + kIconMargin);
     }

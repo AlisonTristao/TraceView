@@ -328,6 +328,25 @@ lives in its own module under
   before its manifest arrives. `MainWindow` manages its topic subscription
   exactly like a chart/gauge; `TelemetryFieldRouter::textSample` carries the
   validated complete document to `TextBoardWidget::onTextSample()`.
+- **Scene** (`scene`) — `scenes/scenewidget.h`/`.cpp`. An animated drawing
+  of a physical system, fed by telemetry: one `SceneRenderer`
+  (`scenes/scenerenderer.h`) per kind, listed in `SceneRegistry` —
+  `furuta` (Furuta pendulum: only `theta1` and `theta2`, drawn over a soft
+  sky and a lit floor with the parts' shadows)
+  and `diffdrive` (line follower: track, car pose, minimap and compass). Each
+  renderer declares its inputs (scalar, array or text, with a default
+  topic/field name) and numeric params; the config is
+  `{"scene", "bind", "params"}`, one binding per input under `"bind"` (see
+  "Telemetry bindings"). **Bind by name** takes an input's default
+  topic/field, else the field named like the input — when several topics
+  report it, the topic another input already reads (so `theta1` and `theta2`
+  come from the same one), else the first. Frames are rendered off the GUI
+  thread on the dashboard's repaint tick (`RepaintClock`); in run mode the
+  wheel zooms, dragging pans, a double click resets the view, and keys go to
+  the scene (the line follower sends commands back to its device). Its
+  editor,
+  `scenes/sceneconfigeditor.h`, picks the scene kind, binds each input and
+  sets the params.
 - **Controls** — `widgets/controlwidgets.h`/`.cpp`, one class per kind, each
   placed and adjusted individually (not a multi-button panel — drop as many
   as needed and size each on its own). No cell header (`wantsCellHeader()`
@@ -451,6 +470,106 @@ changes, and the JSON it produces round-trips through
 undo/redo — with no further wiring needed. What that JSON means (parsing
 it into an actual data binding) is up to whatever later consumes it; the
 editor's only job is capturing the settings.
+
+## Telemetry bindings
+
+A telemetry widget (chart, gauge, text board, audio) binds to one topic of
+one device, and a chart or gauge to some of that topic's fields. The config
+JSON carries the binding twice — the names the firmware declares, and the
+numeric ids they currently have:
+
+```json
+{
+  "deviceId": "3f0c...",
+  "sourceId": "0x1A2B3C4D", "topicId": "0x0105", "topicName": "imu",
+  "series": [ { "name": "Accel X", "fieldId": 4, "fieldName": "ax" } ]
+}
+```
+
+| Key | Where | Meaning |
+|---|---|---|
+| `deviceId` | top level | The project's `Device` entry (Devices tab) the widget reads from — stable across renames and links. |
+| `topicName` | top level, next to `topicId` | The topic's declared name (BTP's TELEMETRY.md, section 3). |
+| `fieldName` | each `series` entry (and a pre-multi-ring gauge's top-level `fieldId`) | The field's declared name. |
+| `<x>FieldName` | top level, next to `<x>FieldId` | Same, for the audio widget's `seqFieldId`/`rateFieldId`/`samplesFieldId`. |
+
+The **names are the binding**; `sourceId` (derived from the device's MAC),
+`topicId` and `fieldId` (handed out by the firmware in declaration order)
+are only where those names currently live. They are still written, so older
+TraceView versions — which only read ids — keep working, and they are what
+a widget falls back to when a name doesn't resolve.
+
+`resolveBindingNames()`
+([lib/dashboard/bindingresolver.h](../lib/dashboard/bindingresolver.h))
+maps a config onto the catalog of its device: the topic is found by name
+(on the config's current source first, then the device's own, then the only
+source publishing it — ambiguous otherwise) and the ids are re-pointed at
+it, each field id from its field name. A name the catalog doesn't have keeps
+its id; a topic name it doesn't have leaves the whole binding on its ids. A
+config without names (a project saved before they existed) is looked up by
+its ids instead and gains the names, so the next save writes them; one the
+catalog doesn't know keeps its ids and nothing is dropped.
+
+`MainWindow::resolveWidgetBinding()` supplies the catalog — the device's
+live `Backend::catalogTopics()` while it has one, else the manifest cache
+for its own source id, its robot name, or the source the config was last
+bound to — and is installed as `DashboardGrid::setBindingResolver()`. Every
+config entering the grid goes through it (load, insert/paste, each config
+edit and its undo/redo), and `MainWindow::resolveDashboardBindings()` runs it
+again over every workspace after a project load and whenever a device's
+catalog changes (it connects, or announces a new manifest revision). That
+re-run is not an edit: nothing lands on the undo stack. The config editors
+carry the names through untouched and drop one only when the user re-points
+the id it names; the resolver then names the new id from the catalog. Moving
+a widget to another device keeps its names — that is how a dashboard moves
+from a simulated device to the real one.
+
+A widget with several bindings keeps each one under `"bind"`, keyed by its
+own input name, every entry a binding of its own in the keys above, with its
+own `deviceId` (the Scene widget, [scenes/scenewidget.h](../lib/dashboard/scenes/scenewidget.h)):
+`resolveWidgetBinding()` resolves the entries one by one. Such a widget is
+not one MainWindow knows by type, so it implements `TelemetryConsumer`
+([telemetryconsumer.h](../lib/dashboard/telemetryconsumer.h)):
+`MainWindow::refreshConsumerSubscriptions()` subscribes every topic its
+`topicRequests()` lists (one reference per topic, kept across edits that do
+not move it) and forwards the `fieldSample`/`arraySample`/`textSample` of
+each Backend it reads from — the scalar samples through the Backend's
+`TopicSampleDispatcher`, which hands each sample only to the widgets reading
+its topic.
+
+### Configuring from the manifest
+
+A device manifest declares, per field, a name, a unit, an optional range
+(min/max, NaN when unbounded), enum labels and an array size. The chart and
+gauge editors use the unit and range so a widget does not have to be set up
+field by field:
+
+- **+ Add all fields** (chart editor, next to **+ Add series**): adds one
+  series for every numeric field (integer, float, bool, enum) of the bound
+  topic that no series plots yet. Each series is named after the field, bound
+  by `fieldName` and carries the field's `unit`/`min`/`max`; the topic's
+  `topicName` is written too. Array fields and fields of an unknown type are
+  skipped — a line or bar chart plots one number per sample — and a field
+  already plotted, matched by name (or by id for a series with no name yet), is
+  not added twice. Then the axes follow: more than one distinct unit among the
+  series turns **Automatic axis** on (one Y axis per unit); one shared unit
+  fills the Y axis **Unit**, and when every series also declares a range the Y
+  axis becomes **Fixed** over the union of the ranges. A Y axis the user has
+  already set (non-empty unit, Fixed mode or a range other than 0..100) is left
+  alone.
+- **Picking one field** in a chart series row or a gauge ring fills what is
+  still untouched from the manifest: the chart's Y axis **Unit** while it is
+  empty (and the series share one unit), its **Range** while it sits at Auto
+  and 0..100 (the mode stays Auto, which already honours declared ranges), the
+  gauge's **Unit** while empty and its **Min/Max** while at 0..100. Anything
+  the user typed stays, and a field the catalog does not know fills nothing.
+  The Audio Analyzer already did the same for its full scale.
+
+An array field (a fixed-size set of readings) cannot be shown element by
+element yet: a chart series binds to a field id and ignores the element index
+of the sample, so a bar chart cannot give each element its own bar without
+carrying the index through the series config, the telemetry history key and
+the widget subscriptions.
 
 ## Project file
 

@@ -81,7 +81,7 @@ qreal zeroBaselineY(const QRect& plotRect, double yMin, double yMax) {
 void paintLineSeries(QPainter& painter, const QRect& plotRect, int capacity,
                      const ChartSeriesConfig& seriesConfig, const QVector<double>& values,
                      double yMin, double yMax, ChartLineInterpolation interpolation,
-                     qreal lineWidth) {
+                     qreal lineWidth, bool fillArea) {
     if (values.isEmpty() || plotRect.width() <= 0 || plotRect.height() <= 0) {
         return;
     }
@@ -143,6 +143,19 @@ void paintLineSeries(QPainter& painter, const QRect& plotRect, int capacity,
             points.append(QPointF(p.x(), points.last().y()));
         }
         points.append(p);
+    }
+    if (fillArea && points.size() > 1) {
+        // Down to the plot's bottom edge, under the line itself; light
+        // enough that overlapping series still read through each other.
+        QPolygonF area = points;
+        area.append(QPointF(points.last().x(), plotRect.bottom()));
+        area.append(QPointF(points.first().x(), plotRect.bottom()));
+        QColor tint = seriesConfig.color;
+        tint.setAlphaF(0.2f);
+        painter.setPen(Qt::NoPen);
+        painter.setBrush(tint);
+        painter.drawPolygon(area);
+        painter.setBrush(Qt::NoBrush);
     }
     painter.setPen(QPen(seriesConfig.color, lineWidth, chartPenStyle(seriesConfig.style)));
     painter.drawPolyline(points);
@@ -1097,7 +1110,7 @@ void ChartWidgetBase::paintLegends(QPainter& painter, const ChartCartesianLayout
     const QVector<ChartLegendColumn> columns = chartLegendColumns(
         fm, left, rightBound, m_config.series.size(), {names, latest}, style);
 
-    const int topY = area.top() + chartOuterPadding();
+    const int topY = layout.topLegendTop;
     const int bottomY = layout.bottomLegendTop;
 
     const int hitBottom = (withValues ? bottomY : topY) + rowHeight;
@@ -1124,8 +1137,220 @@ ChartViewFeatures DummyLineChartWidget::viewFeatures() const {
            ChartViewFeature::YAxisTitle | ChartViewFeature::YTickLabels |
            ChartViewFeature::YTickCount | ChartViewFeature::Legend |
            ChartViewFeature::LastValue | ChartViewFeature::GridPoints |
-           ChartViewFeature::HoverCrosshair | ChartViewFeature::LineWidth |
+           ChartViewFeature::HoverCrosshair | ChartViewFeature::InfoRow |
+           ChartViewFeature::InfoItems | ChartViewFeature::RangeMarkers |
+           ChartViewFeature::FillArea | ChartViewFeature::LineWidth |
            ChartViewFeature::Interpolation;
+}
+
+int DummyLineChartWidget::infoRowCount() const {
+    if (!m_view.showInfoRow) {
+        return 0;
+    }
+    int windowItems = 0;
+    int statistics = 0;
+    for (const QString& item : m_view.infoItems) {
+        (isChartInfoStatistic(item) ? statistics : windowItems) += 1;
+    }
+    int shownSeries = 0;
+    for (int i = 0; i < m_config.series.size(); ++i) {
+        shownSeries += i < m_seriesHidden.size() && m_seriesHidden[i] ? 0 : 1;
+    }
+    return (windowItems > 0 ? 1 : 0) + (statistics > 0 ? shownSeries : 0);
+}
+
+qreal DummyLineChartWidget::markerX(int which) const {
+    return m_plotRect.right() - xStepFor(m_plotRect, m_capacity) * m_markerAgo[which];
+}
+
+int DummyLineChartWidget::markerAt(const QPoint& pos) const {
+    if (!m_view.rangeMarkers || qIsNaN(m_markerAgo[0])) {
+        return -1;
+    }
+    return chartRangeMarkerAt(m_plotRect, markerX(0), markerX(1), pos);
+}
+
+void DummyLineChartWidget::paintInfoRows(QPainter& painter, const ChartCartesianLayout& layout,
+                                         const QVector<QVector<double>>& values,
+                                         const ChartColors& colors) const {
+    const QString right =
+        m_paused ? QCoreApplication::translate("ChartWidgets", "paused") : QString();
+    const bool markers = m_view.rangeMarkers && !qIsNaN(m_markerAgo[0]);
+    const double agoLo = markers ? qMin(m_markerAgo[0], m_markerAgo[1]) : 0.0;
+    const double agoHi = markers ? qMax(m_markerAgo[0], m_markerAgo[1]) : 0.0;
+    const bool timeAxis = m_config.xAxisMode == ChartXAxisMode::Time;
+    const double xUnit = timeAxis ? m_config.sampleTimeMs / 1000.0 : 1.0;
+    int row = 0;
+
+    QStringList windowItems;
+    QStringList statistics;
+    for (const QString& item : m_view.infoItems) {
+        (isChartInfoStatistic(item) ? statistics : windowItems) << item;
+    }
+
+    // Window readouts, measured on the fullest series: its arrival rate,
+    // how full the window is and the time it spans -- and the A..B span.
+    if (!windowItems.isEmpty()) {
+        const TelemetrySeriesBuffer* fullest = nullptr;
+        for (const TelemetrySeriesBuffer& buffer : m_seriesBuffers) {
+            if (fullest == nullptr || buffer.samples().size() > fullest->samples().size()) {
+                fullest = &buffer;
+            }
+        }
+        const int capacity = chartBufferCapacity(m_config);
+        const int count = fullest != nullptr ? fullest->samples().size() : 0;
+        double rate = 0.0;
+        double span = 0.0;
+        if (count >= 2) {
+            span = (fullest->samples().last().timestampUs -
+                    fullest->samples().first().timestampUs) /
+                   1e6;
+            rate = span > 0.0 ? (count - 1) / span : 0.0;
+        }
+        // Fixed formats and slots as wide as the widest value, so the row
+        // doesn't shift as the numbers change.
+        const QString capacityText = QString::number(capacity);
+        QVector<ChartInfoField> fields;
+        if (windowItems.contains(QLatin1String("rate"))) {
+            fields.append({QCoreApplication::translate("ChartWidgets", "%1 Hz"),
+                           QString::number(rate, 'f', 1), QStringLiteral("0000.0")});
+        }
+        if (windowItems.contains(QLatin1String("samples"))) {
+            fields.append({QCoreApplication::translate("ChartWidgets", "%1 samples"),
+                           QStringLiteral("%1/%2").arg(count).arg(capacity),
+                           QString(capacityText.size() * 2 + 1, QLatin1Char('0'))});
+        }
+        if (windowItems.contains(QLatin1String("span"))) {
+            fields.append({QCoreApplication::translate("ChartWidgets", "%1 s"),
+                           QString::number(span, 'f', 1), QStringLiteral("0000.0")});
+        }
+        if (markers) {
+            const double range = (agoHi - agoLo) * xUnit;
+            if (timeAxis) {
+                fields.append({QCoreApplication::translate("ChartWidgets", "A-B %1 s"),
+                               QString::number(range, 'f', 2), QStringLiteral("0000.00")});
+            } else {
+                fields.append({QCoreApplication::translate("ChartWidgets", "A-B %1 samples"),
+                               QString::number(qRound(range)),
+                               QString(capacityText.size(), QLatin1Char('0'))});
+            }
+        }
+        paintChartInfoRow(painter, layout, row++, fields, right, colors);
+    }
+    if (statistics.isEmpty()) {
+        return;
+    }
+
+    // One row per shown series. Every column is as wide as the widest value
+    // any Y axis allows, so the rows line up and stay put.
+    const QFontMetrics fm(chartTabularFont(painter.font()));
+    int leadWidth = 0;
+    for (const ChartSeriesConfig& series : m_config.series) {
+        leadWidth = qMax(leadWidth,
+                         chartInfoLeadWidth(fm, seriesDisplayName(series.name, series.fieldId)));
+    }
+    double reach = 0.0;  // peak to peak can span twice the largest |value|
+    for (const ChartValueAxis& axis : layout.yAxes) {
+        reach = qMax(reach, 2.0 * qMax(qAbs(axis.scale.lo), qAbs(axis.scale.hi)));
+    }
+    const int decimals = qMax(0, m_config.decimals);
+    const int integerDigits = QString::number(qint64(std::floor(reach))).size();
+    QString widest = QStringLiteral("-") + QString(integerDigits, QLatin1Char('0'));
+    if (decimals > 0) {
+        widest += QStringLiteral(".") + QString(decimals, QLatin1Char('0'));
+    }
+
+    struct StatisticFormat {
+        const char* id;
+        const char* format;
+    };
+    static const StatisticFormat kFormats[] = {
+        {"min", QT_TRANSLATE_NOOP("ChartWidgets", "min %1")},
+        {"max", QT_TRANSLATE_NOOP("ChartWidgets", "max %1")},
+        {"p2p", QT_TRANSLATE_NOOP("ChartWidgets", "p-p %1")},
+        {"peak", QT_TRANSLATE_NOOP("ChartWidgets", "peak %1")},
+        {"mean", QT_TRANSLATE_NOOP("ChartWidgets", "mean %1")},
+        {"median", QT_TRANSLATE_NOOP("ChartWidgets", "median %1")},
+        {"rms", QT_TRANSLATE_NOOP("ChartWidgets", "rms %1")},
+    };
+    for (int i = 0; i < m_config.series.size() && i < values.size(); ++i) {
+        if (i < m_seriesHidden.size() && m_seriesHidden[i]) {
+            continue;
+        }
+        const QVector<double>& series = values[i];
+        const int newest = series.size() - 1;
+        // Sample k sits (newest - k) samples before the newest one.
+        const int first = markers ? newest - int(std::floor(agoHi)) : 0;
+        const int last = markers ? newest - int(std::ceil(agoLo)) : newest;
+        const SeriesStatistics stats = seriesStatistics(series, first, last);
+        QVector<ChartInfoField> fields;
+        for (const StatisticFormat& format : kFormats) {
+            const QString id = QLatin1String(format.id);
+            if (!statistics.contains(id)) {
+                continue;
+            }
+            double value = stats.rms;
+            if (id == QLatin1String("min")) {
+                value = stats.min;
+            } else if (id == QLatin1String("max")) {
+                value = stats.max;
+            } else if (id == QLatin1String("p2p")) {
+                value = stats.peakToPeak();
+            } else if (id == QLatin1String("peak")) {
+                value = stats.peak;
+            } else if (id == QLatin1String("mean")) {
+                value = stats.mean;
+            } else if (id == QLatin1String("median")) {
+                value = stats.median;
+            }
+            fields.append({QCoreApplication::translate("ChartWidgets", format.format),
+                           stats.count > 0 ? QString::number(value, 'f', decimals)
+                                           : QStringLiteral("--"),
+                           widest});
+        }
+        const ChartSeriesConfig& config = m_config.series[i];
+        paintChartInfoRow(painter, layout, row, fields, row == 0 ? right : QString(), colors,
+                          {config.color, seriesDisplayName(config.name, config.fieldId),
+                           leadWidth});
+        ++row;
+    }
+}
+
+void DummyLineChartWidget::mousePressEvent(QMouseEvent* event) {
+    m_draggedMarker = event->button() == Qt::LeftButton ? markerAt(event->pos()) : -1;
+    if (m_draggedMarker >= 0) {
+        event->accept();
+        return;
+    }
+    ChartWidgetBase::mousePressEvent(event);
+}
+
+void DummyLineChartWidget::mouseMoveEvent(QMouseEvent* event) {
+    if (m_draggedMarker >= 0) {
+        const qreal step = xStepFor(m_plotRect, m_capacity);
+        if (step > 0.0) {
+            m_markerAgo[m_draggedMarker] = qBound(
+                0.0, (m_plotRect.right() - event->pos().x()) / step, double(m_capacity - 1));
+            update();
+        }
+        event->accept();
+        return;
+    }
+    if (markerAt(event->pos()) >= 0) {
+        setCursor(Qt::SizeHorCursor);
+    } else {
+        unsetCursor();
+    }
+    ChartWidgetBase::mouseMoveEvent(event);
+}
+
+void DummyLineChartWidget::mouseReleaseEvent(QMouseEvent* event) {
+    if (m_draggedMarker >= 0) {
+        m_draggedMarker = -1;
+        event->accept();
+        return;
+    }
+    ChartWidgetBase::mouseReleaseEvent(event);
 }
 
 void DummyLineChartWidget::paintEvent(QPaintEvent*) {
@@ -1140,7 +1365,8 @@ void DummyLineChartWidget::paintEvent(QPaintEvent*) {
 
     const QVector<QVector<double>> values = seriesValues();
     const SeriesAxes axes = seriesAxes(values);
-    const CartesianChrome chrome = cartesianChrome(m_view, m_config, kLineYGridDivisions);
+    CartesianChrome chrome = cartesianChrome(m_view, m_config, kLineYGridDivisions);
+    chrome.infoRows = infoRowCount();
     const bool xLabeled = chrome.xTickLabels;
     const ChartConfig& config = m_config;
     const ChartCartesianLayout layout = layoutCartesianChart(
@@ -1150,6 +1376,18 @@ void DummyLineChartWidget::paintEvent(QPaintEvent*) {
         });
     const QRect& plotRect = layout.plotRect;
     const int capacity = chartBufferCapacity(m_config);
+    m_plotRect = plotRect;
+    m_capacity = capacity;
+    if (m_view.rangeMarkers) {
+        // First shown: A at a quarter of the window, B at three quarters.
+        if (qIsNaN(m_markerAgo[0])) {
+            m_markerAgo[0] = 0.75 * (capacity - 1);
+            m_markerAgo[1] = 0.25 * (capacity - 1);
+        }
+        for (double& ago : m_markerAgo) {
+            ago = qBound(0.0, ago, double(qMax(0, capacity - 1)));
+        }
+    }
 
     paintCartesianAxes(painter, layout, chrome, style, colors,
                        chartTimeAxisTitle(m_config.xAxisMode));
@@ -1174,9 +1412,14 @@ void DummyLineChartWidget::paintEvent(QPaintEvent*) {
             continue;
         }
         paintLineSeries(painter, plotRect, capacity, m_config.series[i], values[i], yMins[i],
-                        yMaxs[i], m_view.interpolation, effectiveLineWidth(m_view, style));
+                        yMaxs[i], m_view.interpolation, effectiveLineWidth(m_view, style),
+                        m_view.fillArea);
     }
     painter.restore();
+
+    if (m_view.rangeMarkers) {
+        paintChartRangeMarkers(painter, m_plotRect, markerX(0), markerX(1), palette);
+    }
 
     // Gated on showGrid too -- the markers are dots at the gridline
     // crossings, so they lose their reference entirely once the gridlines
@@ -1189,6 +1432,9 @@ void DummyLineChartWidget::paintEvent(QPaintEvent*) {
     // Before the crosshair: an in-plot legend sits over the lines, and the
     // hover balloon over everything.
     paintLegends(painter, layout, values, m_view.showLastValueRow, style, colors, palette);
+    if (chrome.infoRows > 0) {
+        paintInfoRows(painter, layout, values, colors);
+    }
 
     if (m_view.showHoverCrosshair && m_hasHoverPos) {
         paintHoverCrosshair(painter, plotRect, capacity, m_hoverPos, m_config.series, values,

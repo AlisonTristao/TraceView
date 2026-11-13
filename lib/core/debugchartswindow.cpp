@@ -1,18 +1,21 @@
 #include "debugchartswindow.h"
 
+#include <QElapsedTimer>
 #include <QGridLayout>
 #include <QHBoxLayout>
 #include <QJsonArray>
 #include <QJsonObject>
 #include <QPushButton>
+#include <QRandomGenerator>
 #include <QTimer>
 #include <QVBoxLayout>
 #include <QtMath>
+#include <cmath>
 
 #include "dashboard/dashboardcell.h"
 #include "dashboard/paintframecounter.h"
+#include "dashboard/widgets/audioanalyzerwidget.h"
 #include "dashboard/widgets/chartwidgets.h"
-#include "dashboard/widgets/chatwidget.h"
 #include "dashboard/widgets/controlwidgets.h"
 #include "dashboard/widgets/serialmonitorwidget.h"
 
@@ -51,6 +54,16 @@ constexpr int kTickIntervalMs = 50;
 // (chartwidgets.cpp), not this timer.
 constexpr int kStressTickIntervalMs = 0;
 
+// The synthetic audio stream (tickAudio()): a BTPDevice-style stream topic
+// -- block counter, rate, samples as ids 1..3 -- at 16 kHz in blocks of 512
+// int16-range samples. Paced by its own clock, not by the chart tick, so
+// stress mode doesn't speed the sound up.
+constexpr quint16 kAudioTopicId = 4;
+constexpr double kAudioRate = 16000.0;
+constexpr int kAudioBlock = 512;
+constexpr double kAudioFullScale = 2048.0;
+constexpr int kAudioTickMs = 20;
+
 QJsonObject seriesJson(const QString& name, int fieldId, const QString& color,
                        const QString& style) {
     QJsonObject series;
@@ -88,6 +101,13 @@ QJsonObject lineChartConfig() {
     series.append(seriesJson("Pressure", kPressureFieldId, "#F97316", "dashed"));
     series.append(seriesJson("Humidity", kHumidityFieldId, "#22C55E", "cross"));
     config["series"] = series;
+    // The optional info row (with a few statistics), range markers and
+    // filled area on, so they can be seen here.
+    config["view"] = QJsonObject{
+        {"info", true},
+        {"infoItems", QJsonArray{"rate", "samples", "span", "min", "max", "p2p", "rms"}},
+        {"markers", true},
+        {"fillArea", true}};
     return config;
 }
 
@@ -136,6 +156,24 @@ QJsonObject gaugeConfig() {
     series.append(seriesJson("Load", kGaugeFieldId2, "#F97316", "solid"));
     series.append(seriesJson("Temp", kGaugeFieldId3, "#22C55E", "solid"));
     config["series"] = series;
+    return config;
+}
+
+// Both audio widgets read the same stream. Sound starts off (Play audio in
+// the gear menu turns it on), so opening this window stays silent.
+QJsonObject audioConfig(const QString& mode) {
+    QJsonObject config;
+    config["sourceId"] = "0";
+    config["topicId"] = QString::number(kAudioTopicId);
+    config["fullScale"] = kAudioFullScale;
+    // The spectrogram also shows its signal statistics between the markers.
+    config["view"] = QJsonObject{
+        {"mode", mode},
+        {"play", false},
+        {"fft", "2048"},
+        {"history", "10"},
+        {"infoItems", QJsonArray{"rate", "span", "min", "max", "p2p", "peak", "rms"}},
+        {"markers", true}};
     return config;
 }
 
@@ -212,7 +250,7 @@ DashboardCell* wrapInCell(const QString& itemId, const QString& typeId, const QS
 DebugChartsWindow::DebugChartsWindow(QWidget* parent) : QDialog(parent) {
     setWindowTitle(baseWindowTitle());
     setAttribute(Qt::WA_DeleteOnClose);
-    resize(980, 640);
+    resize(1280, 680);
 
     auto* rootLayout = new QVBoxLayout(this);
 
@@ -282,28 +320,23 @@ DebugChartsWindow::DebugChartsWindow(QWidget* parent) : QDialog(parent) {
             &SerialMonitorWidget::appendData);
     layout->addWidget(wrapInCell("debug-slider", "slider", tr("Slider"), slider, this), 2, 2);
 
-    // Chat (widgets/chatwidget.h) down the right edge, seeded with a short
-    // conversation covering all three delivery states. Visual only: what the
-    // user types here goes nowhere yet (see ChatWidget::send()).
-    auto* chat = new ChatWidget();
-    chat->setConfig(QJsonObject{{"userName", tr("Operator")}});
-    chat->appendMessage(QStringLiteral("robot_01"), tr("Boot OK. Battery at 87%."), QString(),
-                        ChatWidget::MessageStatus::Sent);
-    chat->appendMessage(tr("Operator"), tr("Start the calibration routine, please."), QString(),
-                        ChatWidget::MessageStatus::Sent);
-    chat->appendMessage(QStringLiteral("robot_01"),
-                        tr("Calibration done. Offsets saved; log attached."),
-                        QStringLiteral("calibration_2026-09-24.csv"),
-                        ChatWidget::MessageStatus::Sent);
-    chat->appendMessage(tr("Operator"), tr("Sending the new route map."),
-                        QStringLiteral("route_map.json"), ChatWidget::MessageStatus::Failed);
-    chat->appendMessage(tr("Operator"), tr("Retrying over the other link..."), QString(),
-                        ChatWidget::MessageStatus::Sending);
-    layout->addWidget(wrapInCell("debug-chat", "chat", tr("Chat"), chat, this), 0, 3, 3, 1);
+    // The audio widgets down the right edge (the chat that sat here is left
+    // out for now, to give them the room): the spectrum on top, the
+    // spectrogram over the two rows below.
+    m_audioSpectrum = new AudioAnalyzerWidget();
+    m_audioSpectrum->setConfig(audioConfig(QStringLiteral("spectrum")));
+    layout->addWidget(wrapInCell("debug-audio-spectrum", "audio_spectrum", tr("Audio Spectrum"),
+                                 m_audioSpectrum, this),
+                      0, 3);
+    m_audioSpectrogram = new AudioAnalyzerWidget();
+    m_audioSpectrogram->setConfig(audioConfig(QStringLiteral("spectrogram")));
+    layout->addWidget(wrapInCell("debug-audio-spectrogram", "audio_spectrum",
+                                 tr("Audio Spectrogram"), m_audioSpectrogram, this),
+                      1, 3, 2, 1);
     layout->setColumnStretch(0, 3);
     layout->setColumnStretch(1, 3);
     layout->setColumnStretch(2, 3);
-    layout->setColumnStretch(3, 2);
+    layout->setColumnStretch(3, 4);
 
     // Rows would otherwise split available height evenly -- way more than a
     // single small control (push button/toggle/slider) needs, and much more
@@ -326,6 +359,11 @@ DebugChartsWindow::DebugChartsWindow(QWidget* parent) : QDialog(parent) {
     m_tickTimer = new QTimer(this);
     connect(m_tickTimer, &QTimer::timeout, this, &DebugChartsWindow::tick);
     m_tickTimer->start(kTickIntervalMs);
+
+    m_audioClock.start();
+    auto* audioTimer = new QTimer(this);
+    connect(audioTimer, &QTimer::timeout, this, &DebugChartsWindow::tickAudio);
+    audioTimer->start(kAudioTickMs);
 
     // Samples the shared repaint counter (paintframecounter.h) once a second
     // and diffs it against the previous sample -- that delta is the chart
@@ -398,6 +436,44 @@ void DebugChartsWindow::tick() {
         const QStringList& lines = debugTerminalLines();
         const QString& line = lines.at((m_tick / kTerminalLinePeriodTicks) % lines.size());
         m_serialMonitor->appendData((line + QStringLiteral("\r\n")).toUtf8());
+    }
+}
+
+void DebugChartsWindow::tickAudio() {
+    // Every block the clock says is due: a log chirp sweeping 200 Hz ->
+    // 4 kHz and back every 8 s, a steady 440 Hz tone and a little noise --
+    // a line to follow on the spectrum and a curve on the spectrogram.
+    TelemetryFieldBinding binding;
+    binding.sourceId = 0;
+    binding.topicId = kAudioTopicId;
+    const qint64 due = qint64(m_audioClock.elapsed() * kAudioRate / 1000.0);
+    QRandomGenerator* random = QRandomGenerator::global();
+    while (m_audioSamples + kAudioBlock <= due) {
+        QVector<float> block(kAudioBlock);
+        for (int i = 0; i < kAudioBlock; ++i) {
+            const double seconds = (m_audioSamples + i) / kAudioRate;
+            const double sweep = std::fmod(seconds, 8.0) / 4.0;  // 0..2
+            const double position = sweep <= 1.0 ? sweep : 2.0 - sweep;
+            const double chirpHz = 200.0 * std::pow(20.0, position);
+            m_chirpPhase += 2.0 * M_PI * chirpHz / kAudioRate;
+            const double tone = std::sin(2.0 * M_PI * 440.0 * seconds);
+            const double noise = random->generateDouble() * 2.0 - 1.0;
+            block[i] = float(kAudioFullScale *
+                             (0.45 * std::sin(m_chirpPhase) + 0.15 * tone + 0.02 * noise));
+        }
+        m_chirpPhase = std::fmod(m_chirpPhase, 2.0 * M_PI);
+        m_audioSamples += kAudioBlock;
+        for (AudioStreamWidget* widget :
+             {static_cast<AudioStreamWidget*>(m_audioSpectrum),
+              static_cast<AudioStreamWidget*>(m_audioSpectrogram)}) {
+            binding.fieldId = 1;
+            widget->onFieldSample(binding, 0, double(m_audioSeq));
+            binding.fieldId = 2;
+            widget->onFieldSample(binding, 0, kAudioRate);
+            binding.fieldId = 3;
+            widget->onArraySample(binding, 0, block);
+        }
+        ++m_audioSeq;
     }
 }
 

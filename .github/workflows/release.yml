@@ -49,7 +49,7 @@ jobs:
           host: windows
           target: desktop
           arch: win64_msvc2022_64
-          modules: qtconnectivity qtserialport
+          modules: qtconnectivity qtserialport qtmultimedia
           cache: true
 
       - name: Set up MSVC (x64)
@@ -189,7 +189,7 @@ jobs:
         # package download.
         run: |
           python3 -m aqt install-qt linux android "${{ env.QT_VERSION }}" android_arm64_v8a \
-            --modules qtconnectivity --outputdir "${{ env.QT_INSTALL_DIR }}"
+            --modules qtconnectivity qtmultimedia --outputdir "${{ env.QT_INSTALL_DIR }}"
 
       - name: Install Android SDK command-line tools
         # Downloaded directly rather than via a third-party setup action --
@@ -392,7 +392,7 @@ jobs:
       - name: Install Qt (macOS)
         run: |
           python -m aqt install-qt mac desktop "${{ env.QT_VERSION }}" clang_64 \
-            --modules qtserialport qtconnectivity --outputdir "${{ github.workspace }}/qt"
+            --modules qtserialport qtconnectivity qtmultimedia --outputdir "${{ github.workspace }}/qt"
 
       - name: Configure (Release)
         run: cmake --preset macos-release
@@ -469,6 +469,7 @@ jobs:
             qt6-declarative-dev \
             libqt6svg6-dev \
             libqt6serialport6-dev \
+            qt6-multimedia-dev \
             qt6-connectivity-dev \
             qt6-tools-dev \
             qt6-l10n-tools \

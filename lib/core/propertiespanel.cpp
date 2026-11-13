@@ -44,6 +44,16 @@ PropertiesPanel::PropertiesPanel(QWidget* parent) : DockablePanel(parent) {
     m_configScrollArea->setWidgetResizable(true);
     m_configScrollArea->setFrameShape(QFrame::NoFrame);
     m_configScrollArea->setWidget(m_configContainer);
+    // Let the panel's own fill show through the scrolled content: setWidget()
+    // turns autoFillBackground on, and the app style sheet's panel rules (see
+    // stylesheet.cpp's "QWidget#propertiesPanel .QWidget") don't reach a
+    // scroll area's content widget, which otherwise keeps painting the
+    // generic QWidget rule's canvas color.
+    m_configContainer->setAutoFillBackground(false);
+    m_configScrollArea->viewport()->setAutoFillBackground(false);
+    m_configContainer->setObjectName("propertiesConfigContainer");
+    m_configContainer->setStyleSheet(
+        "QWidget#propertiesConfigContainer { background-color: transparent; }");
 
     m_content = new QWidget(this);
     auto* contentLayout = new QVBoxLayout(m_content);

@@ -15,6 +15,7 @@ maintainer, to keep `main` always in a releasable state.
 | `lib/dashboard/`, `lib/devices/`, `lib/project/` | Widgets, device models, workspace persistence and undoable edits. |
 | `lib/diagram/` | Per-device JavaScript runtime/editor and the shelved diagram canvas. |
 | `lib/ota/`, `lib/updater/`, `lib/diagnostics/` | Firmware upload, application updates and diagnostics. |
+| `lib/agent/` | MCP server for AI assistants: tool registry, MCP session, local bridge and the `--mcp` stdio relay. |
 | `tests/`, `tools/` | CTest suites and standalone visual/benchmark tools. |
 | `resources/`, `translations/` | Assets and translation catalogs. |
 | `docs/`, `scripts/`, `.github/workflows/` | Technical documentation, contributor scripts and CI. |
@@ -36,8 +37,8 @@ Common requirements:
 
 - CMake 3.21 or newer and Ninja;
 - a C and C++ compiler with C++17 support;
-- Qt 6 with Widgets, Network, SerialPort, Qml, LinguistTools and, while tests are
-  enabled, Test;
+- Qt 6 with Widgets, Network, SerialPort, Qml, Multimedia, LinguistTools and, while
+  tests are enabled, Test;
 - Python 3.9 or newer only for the contributor scripts under `scripts/` (see "Project
   scripts" below).
 
@@ -95,7 +96,7 @@ Install the compiler, Qt development modules and the native hidapi backends:
 ```sh
 sudo apt update
 sudo apt install git cmake ninja-build build-essential pkg-config python3 \
-    qt6-base-dev qt6-declarative-dev qt6-svg-dev qt6-serialport-dev qt6-tools-dev qt6-l10n-tools qt6-wayland \
+    qt6-base-dev qt6-declarative-dev qt6-svg-dev qt6-serialport-dev qt6-multimedia-dev qt6-tools-dev qt6-l10n-tools qt6-wayland \
     libudev-dev libusb-1.0-0-dev
 
 cmake --preset linux-ninja
@@ -520,3 +521,46 @@ in the PR description, which layer it touches:
 
 This isn't enforced by tooling, just a convention to keep changes reviewable
 and to prevent transport/protocol assumptions from leaking into UI code.
+
+## Exposing features to AI assistants
+
+AI assistants such as Claude drive TraceView through its MCP server (see
+[docs/MCP.md](docs/MCP.md)). Anything a user can do in the UI should be
+doable by an assistant too, so a feature isn't finished until it is exposed:
+
+- **A new user-facing action** (create, edit, run, read something) registers
+  an MCP tool, or extends an existing tool's arguments, in the same PR. Tools
+  are registered into the `ToolRegistry` by the layer that owns the feature:
+  `lib/core/agentapptools.cpp` for what MainWindow does, the module's own
+  code for a module. `lib/agent/` stays protocol-only and never learns about
+  a feature.
+- **A new widget type** needs an entry in `lib/dashboard/widgetagenthelp.cpp`
+  describing its config. `test_widgetregistry` fails without one.
+- **A changed config, file format or behavior** updates the tool descriptions
+  and `widgetAgentHelp()` text that describe it, the same way you would
+  update the UI.
+
+Writing a tool:
+
+- **Name**: `snake_case` verb + noun (`add_widget`, `run_simulation`), unique
+  in the registry. Declare arguments with `AgentSchema`. The registry rejects
+  missing, unknown and mistyped arguments before the handler runs.
+- **Description**: written for the model. Say what the tool does, what it
+  returns, and which other tool provides the ids it needs. Tool text and
+  error results are model-facing English, so they aren't wrapped in `tr()`.
+  Anything the user sees (status bar, dialogs) is, as usual.
+- **Same path as the UI**: call the operation the menu or panel calls, so the
+  UI refreshes the same way. Edits go through the existing `QUndoCommand`s,
+  grouped with `beginMacro()` into one undo step per call.
+- **Useful results**: return what the model needs to check its work and
+  continue: the created object with its id, compiler errors, metrics, or a
+  `screenshot`. Use `AgentToolResult::error()` for a failure the model can
+  fix; it reads the message and retries.
+- **Safety**: set `readOnly` or `destructive` truthfully. Anything that can't
+  be undone, or that touches real hardware (sending commands to a robot,
+  OTA, connecting a device), asks the user in a dialog first.
+- **Long work** (a simulation, a compile): the handler may reply later. Keep
+  the `AgentToolReply` and call it exactly once when done, without blocking
+  the GUI thread.
+- List the tool in docs/MCP.md and cover its logic in a test. Handlers stay
+  thin enough that the part worth testing lives in the feature's own code.

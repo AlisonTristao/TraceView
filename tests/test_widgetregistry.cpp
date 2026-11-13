@@ -2,6 +2,7 @@
 #include <memory>
 
 #include "dashboard/dashboardwidget.h"
+#include "dashboard/widgetagenthelp.h"
 #include "dashboard/widgetregistry.h"
 
 using traceview::DashboardWidget;
@@ -17,6 +18,7 @@ private slots:
     void createReturnsNullptrForUnknownType();
     void displayNameEmptyForUnknownType();
     void registerTypeIsNoOpForDuplicateId();
+    void everyTypeIsDocumentedForAssistants();
 };
 
 void TestWidgetRegistry::knownBuiltinTypesAreRegistered() {
@@ -29,6 +31,16 @@ void TestWidgetRegistry::knownBuiltinTypesAreRegistered() {
         std::unique_ptr<DashboardWidget> widget(registry.create(typeId, nullptr));
         QVERIFY2(widget != nullptr, qPrintable(typeId));
     }
+}
+
+// AI assistants build widget configs from widgetAgentHelp() alone (the
+// list_widget_types tool) -- a type registered without an entry there is a
+// type they can place but cannot configure.
+void TestWidgetRegistry::everyTypeIsDocumentedForAssistants() {
+    for (const traceview::WidgetTypeInfo& info : WidgetRegistry::instance().availableTypes()) {
+        QVERIFY2(!traceview::widgetAgentHelp(info.typeId).isEmpty(), qPrintable(info.typeId));
+    }
+    QVERIFY(traceview::widgetAgentHelp("does_not_exist").isEmpty());
 }
 
 void TestWidgetRegistry::createReturnsNullptrForUnknownType() {

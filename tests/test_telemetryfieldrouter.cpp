@@ -42,6 +42,7 @@ private slots:
     void utf8TopicPublishesWholeText();
     void invalidUtf8IsRejected();
     void opaqueBytesTopicPublishesRawBody();
+    void arraysArriveWholeAndLongOnesAreNotFannedOut();
 };
 
 void TestTelemetryFieldRouter::twoSubscribersBothReceiveTheSameField() {
@@ -226,6 +227,100 @@ void TestTelemetryFieldRouter::opaqueBytesTopicPublishesRawBody() {
     QCOMPARE(delivered, QByteArray::fromHex("0202040173"));
     QCOMPARE(deliveredTimestamp, quint64(123456));
     QCOMPARE(router.diagnostics().samplesDecoded, quint64(1));
+    QCOMPARE(router.diagnostics().decodeErrors, quint64(0));
+}
+
+// A BTPDevice stream topic: seq (u32), rate (u32), samples (i16[<=N]).
+traceview::TelemetryTopicSchema streamSchema() {
+    traceview::TelemetryTopicSchema schema;
+    schema.sourceId = kSourceId;
+    schema.topicId = 0x0101;
+    schema.schemaVersion = 1;
+    schema.name = QStringLiteral("audio.pcm");
+    schema.encoding = traceview::TelemetryEncoding::PackedLe;
+    traceview::TelemetryFieldSchema seq;
+    seq.fieldId = 1;
+    seq.order = 0;
+    seq.type = traceview::TelemetryFieldType::UInt32;
+    traceview::TelemetryFieldSchema rate;
+    rate.fieldId = 2;
+    rate.order = 1;
+    rate.type = traceview::TelemetryFieldType::UInt32;
+    traceview::TelemetryFieldSchema samples;
+    samples.fieldId = 3;
+    samples.order = 2;
+    samples.type = traceview::TelemetryFieldType::Int16;
+    samples.elementCount = 0;
+    samples.maxElementCount = 1024;
+    schema.fields = {seq, rate, samples};
+    return schema;
+}
+
+// PACKED_LE body: seq, rate, then `count` samples 0, -1, 2, -3, ...
+QByteArray streamBody(quint32 seq, quint32 rate, int count) {
+    QByteArray body;
+    auto put = [&body](quint64 value, int bytes) {
+        for (int i = 0; i < bytes; ++i) {
+            body.append(char((value >> (8 * i)) & 0xFF));
+        }
+    };
+    put(seq, 4);
+    put(rate, 4);
+    put(quint64(count), 2);
+    for (int i = 0; i < count; ++i) {
+        const qint16 sample = qint16(i % 2 == 0 ? i : -i);
+        put(quint16(sample), 2);
+    }
+    return body;
+}
+
+void TestTelemetryFieldRouter::arraysArriveWholeAndLongOnesAreNotFannedOut() {
+    TelemetryCatalog catalog;
+    catalog.registerSchema(streamSchema());
+    TelemetryFieldRouter router(&catalog);
+
+    QVector<quint16> order;  // field ids, in emission order
+    int sampleElements = 0;
+    QVector<float> array;
+    connect(&router, &TelemetryFieldRouter::fieldSample, &router,
+            [&](const TelemetryFieldBinding& binding, quint64, double) {
+                if (binding.fieldId == 3) {
+                    ++sampleElements;
+                } else {
+                    order.append(binding.fieldId);
+                }
+            });
+    connect(&router, &TelemetryFieldRouter::arraySample, &router,
+            [&](const TelemetryFieldBinding& binding, quint64 timestampUs,
+                const QVector<float>& values) {
+                QCOMPARE(binding.fieldId, quint16(3));
+                QCOMPARE(timestampUs, quint64(777));
+                order.append(binding.fieldId);
+                array = values;
+            });
+
+    TelemetrySample sample;
+    sample.sourceId = kSourceId;
+    sample.topicId = 0x0101;
+    sample.schemaVersion = 1;
+    sample.timestampUs = 777;
+
+    // Short: every element fanned out too, and the array whole after the scalars.
+    sample.payload = streamBody(5, 48000, 4);
+    router.onTelemetrySample(sample);
+    QCOMPARE(order, (QVector<quint16>{1, 2, 3}));
+    QCOMPARE(sampleElements, 4);
+    QCOMPARE(array, (QVector<float>{0, -1, 2, -3}));
+
+    // Long (a real audio block): whole only.
+    order.clear();
+    sampleElements = 0;
+    sample.payload = streamBody(6, 83333, 1000);
+    router.onTelemetrySample(sample);
+    QCOMPARE(order, (QVector<quint16>{1, 2, 3}));
+    QCOMPARE(sampleElements, 0);
+    QCOMPARE(array.size(), 1000);
+    QCOMPARE(array[999], -999.0f);
     QCOMPARE(router.diagnostics().decodeErrors, quint64(0));
 }
 

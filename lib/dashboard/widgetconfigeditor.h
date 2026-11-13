@@ -102,6 +102,14 @@ QVector<CatalogTopicField> resolveCatalogTopicFields(const QVector<DeviceOption>
                                                      const QString& sourceIdText,
                                                      const QString& topicIdText);
 
+// Whether `field` is one number per sample -- an integer, float, bool or
+// enum, not an array (fixed or variable length) -- which is what a chart
+// series or gauge ring plots. False for arrays and for a type this build does
+// not know. Text and opaque topics declare no fields at all, so they never
+// get here. Shared by the editors that offer "every field" or prefill from a
+// picked one.
+bool isPlottableScalarField(const CatalogTopicField& field);
+
 // Repopulates `combo` (an editable QComboBox) with one entry per field of
 // `fields` -- label combines the field's readable name with its numeric
 // fieldId, itemData is the plain fieldId. Unlike populateDeviceCombo() this
@@ -112,6 +120,14 @@ QVector<CatalogTopicField> resolveCatalogTopicFields(const QVector<DeviceOption>
 // property (see chartconfigeditor.cpp/gaugeconfigeditor.cpp's
 // addSeriesRow()), never parsed back out of the displayed text.
 void populateFieldCombo(QComboBox* combo, const QVector<CatalogTopicField>& fields);
+
+// Re-points a series row's field combo (populateFieldCombo() above) at
+// `fieldId`, by hand -- typed or picked. The combo carries the field's NAME
+// too, in its "fieldName" property: the authoritative half of the binding
+// (see dashboard/bindingresolver.h), written back as the series' "fieldName".
+// A different id drops it, since it named the old field; DashboardGrid's
+// resolver names the new one from the catalog once the edit lands.
+void setBoundFieldId(QComboBox* combo, int fieldId);
 
 // Base class for a widget type's type-specific settings, shown in the
 // PropertiesPanel below the common Type/Name/Key fields (see

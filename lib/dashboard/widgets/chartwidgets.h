@@ -210,9 +210,35 @@ class DummyLineChartWidget : public ChartWidgetBase {
 public:
     explicit DummyLineChartWidget(QWidget* parent = nullptr);
 
+    // The A/B range markers, in samples before the newest one (0 = the
+    // right edge). NaN until the markers are first shown.
+    double rangeMarker(int which) const {
+        return m_markerAgo[which];
+    }
+
 protected:
     ChartViewFeatures viewFeatures() const override;
     void paintEvent(QPaintEvent* event) override;
+    void mousePressEvent(QMouseEvent* event) override;
+    void mouseMoveEvent(QMouseEvent* event) override;
+    void mouseReleaseEvent(QMouseEvent* event) override;
+
+private:
+    // Info rows the view asks for: one for the window readouts (rate,
+    // samples, span) when any is picked, one per shown series when any
+    // statistic is.
+    int infoRowCount() const;
+    void paintInfoRows(QPainter& painter, const ChartCartesianLayout& layout,
+                       const QVector<QVector<double>>& values, const ChartColors& colors) const;
+    qreal markerX(int which) const;
+    // The marker whose line or handle is under `pos`, or -1.
+    int markerAt(const QPoint& pos) const;
+
+    double m_markerAgo[2] = {qQNaN(), qQNaN()};
+    int m_draggedMarker = -1;
+    // From the last paint, for hit-testing and dragging the markers.
+    QRect m_plotRect;
+    int m_capacity = 1;
 };
 
 // Fixed-bar snapshot chart: one bar per configured series (not per sample --

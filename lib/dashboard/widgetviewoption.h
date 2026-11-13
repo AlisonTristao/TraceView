@@ -14,14 +14,16 @@ namespace traceview {
 // DashboardCell free of every widget kind's types, and lets a new chart kind
 // get a gear menu just by listing its options (see docs/CHART_STYLE.md).
 struct WidgetViewOption {
-    enum class Kind { Toggle, Choice };
+    // MultiChoice: a submenu of checkable choices, any number of them on.
+    enum class Kind { Toggle, Choice, MultiChoice };
 
     QString id;     // stable key, also the widget's config["view"] JSON key
     QString label;  // already translated
     Kind kind = Kind::Toggle;
-    // Current value: a bool for Toggle, the selected choice's id for Choice.
+    // Current value: a bool for Toggle, the selected choice's id for Choice,
+    // the checked choices' ids (QStringList) for MultiChoice.
     QVariant value;
-    // (id, translated label) pairs, Choice only, in menu order.
+    // (id, translated label) pairs, Choice/MultiChoice only, in menu order.
     QVector<QPair<QString, QString>> choices;
     // Draws a separator above this option -- groups related options.
     bool startsSection = false;

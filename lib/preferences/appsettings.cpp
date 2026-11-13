@@ -21,6 +21,7 @@ constexpr char kReconnectIntervalSecondsKey[] = "connections/reconnectIntervalSe
 constexpr char kManifestCacheEnabledKey[] = "connections/manifestCacheEnabled";
 constexpr char kManifestCacheSkipOnHelloKey[] = "connections/manifestCacheSkipOnHello";
 constexpr char kVerboseSerialLoggingKey[] = "connections/verboseSerialLogging";
+constexpr char kAgentBridgeEnabledKey[] = "connections/agentBridgeEnabled";
 constexpr char kFrameLogCapacityKey[] = "diagnostics/frameLogCapacity";
 constexpr char kNotificationHistoryCapacityKey[] = "diagnostics/notificationHistoryCapacity";
 constexpr char kUpdateAutoCheckEnabledKey[] = "updates/autoCheckEnabled";
@@ -224,6 +225,18 @@ void AppSettings::setManifestCacheSkipOnHello(bool skip) {
 void AppSettings::setReconnectIntervalSeconds(int seconds) {
     setValue(kReconnectIntervalSecondsKey, qBound(1, seconds, 60));
     emit connectionPreferencesChanged();
+}
+
+bool AppSettings::agentBridgeEnabled() const {
+    return QSettings().value(kAgentBridgeEnabledKey, false).toBool();
+}
+
+void AppSettings::setAgentBridgeEnabled(bool enabled) {
+    if (enabled == agentBridgeEnabled()) {
+        return;
+    }
+    QSettings().setValue(kAgentBridgeEnabledKey, enabled);
+    emit agentPreferencesChanged();
 }
 
 void AppSettings::setVerboseSerialLogging(bool enabled) {

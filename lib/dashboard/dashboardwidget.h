@@ -12,6 +12,8 @@
 #include "traceview/framestyle.h"
 #include "dashboard/widgetviewoption.h"
 
+class QPainter;
+
 namespace traceview {
 
 // Base class for anything that can be placed on the dashboard grid: chart,
@@ -85,6 +87,18 @@ public:
 
     virtual HeaderControls headerControls() const {
         return {};
+    }
+
+    // Draws this kind's glyph into `rect` of the cell header, in `color`.
+    // DashboardCell draws the glyphs of the kinds built into the app itself
+    // and only falls back to this for the rest -- how a kind a module
+    // registers (docs/MODULES.md) gets one without the dashboard knowing its
+    // type id. Draws nothing by default.
+    virtual void paintHeaderIcon(QPainter& painter, const QRectF& rect,
+                                 const QColor& color) const {
+        Q_UNUSED(painter);
+        Q_UNUSED(rect);
+        Q_UNUSED(color);
     }
 
     // Pause state the header's play/pause button toggles: while paused, a

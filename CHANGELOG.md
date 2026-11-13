@@ -7,6 +7,109 @@ release flow.
 
 ## [Unreleased]
 
+## [4.10.0] - 2026-11-13
+
+### Added
+
+- **Scene** widget: an animated drawing of a physical system, fed by the
+  telemetry of your devices. Two scenes come built in: the **Furuta
+  pendulum**, which only needs `theta1` and `theta2` and binds them by name
+  from whichever topic reports them, drawn over a soft sky and a lit floor
+  with the parts' shadows; and the **line follower** (track, car, minimap and
+  compass). The wheel zooms, dragging pans and a double click resets the
+  view.
+- **AI assistants (MCP)**: Claude and other MCP clients can drive TraceView.
+  Turn on **Settings > Connections > AI assistants** and register
+  `TraceView --mcp` with the client (the section shows the exact Claude Code
+  command for this installation, Windows, AppImage or Flatpak, with a copy
+  button). An assistant can do what the UI does, through 62 tools:
+  workspaces and widgets, layouts, projects and the gallery, devices and
+  their links, commands and terminal, robot logs, device scripts, OTA,
+  appearance, palettes, language, settings, and the notification, app log
+  and BTP traffic trails. It checks its own work with screenshots and
+  telemetry reads. Its dashboard and device edits are undoable like yours.
+  Anything that can't be undone asks you first, and the first time it
+  touches real hardware you're asked to allow that for the session. If
+  TraceView is closed, the assistant can open it. See
+  [docs/MCP.md](docs/MCP.md).
+- Chart editor: **+ Add all fields** adds one series for every numeric
+  field of the topic that is not plotted yet, named after the field and with
+  its unit and range from the device's manifest, bound by name. Fields in
+  different units turn on **Automatic axis** (one Y axis per unit); fields
+  sharing a unit and declaring a range get a Fixed Y range over their union.
+  Array fields are skipped and fields already plotted are not added twice.
+- Picking a field in a chart series or a gauge ring now fills the Unit (and
+  the chart's Y range, the gauge's Min/Max) from the manifest when they are
+  still empty or at their defaults; values you typed are kept.
+
+### Changed
+
+- Charts, gauges, text boards and audio widgets bind to their topic and
+  fields by **name**, not only by numeric id. A dashboard built on one robot
+  now works on another that publishes the same topics (a simulated device
+  and the real one, or the widget pointed at another device), and survives a
+  firmware that declares its topics in another order: the ids are re-pointed
+  whenever the device's catalog arrives or changes. Projects saved with ids
+  only gain the names from the device's catalog (or the manifest cache) and
+  write them on the next save; a binding no catalog knows keeps its ids. The
+  new `topicName`/`fieldName` keys are additive — older TraceView versions
+  still read the ids.
+- The Layers and Properties panels have their own fill and an outline all
+  the way round, so they stand apart from the canvas on any edge or
+  floating. A dragged panel now docks only when dropped right at an edge
+  (12 px instead of 40), so moving a floating panel near the top no longer
+  docks it, and holding **Ctrl** while dragging never docks.
+
+### Fixed
+
+- Fragmented messages (an audio stream's blocks, for instance) were dropped
+  for seconds after two messages lost their last fragments: reassembly now
+  has eight slots instead of two.
+
+## [4.9.0] - 2026-09-28
+
+### Added
+
+- **Audio Analyzer** widget: plays a stream topic (blocks of samples with
+  their rate and a block counter, as BTPDevice's `Topics::stream()` sends
+  them) on the default audio output and shows it as a **Spectrum** or a
+  **Spectrogram** ("View:" in the gear menu; switching is instant, both
+  keep running). The topic, full scale and volume are in the properties;
+  sound on/off, FFT size and log/linear frequency axis in the gear menu.
+  Lost blocks are played as silence and counted on screen. Laid out like
+  the line chart, with the same gear options (style, axis titles and
+  values, hover crosshair, info row).
+  - Spectrum: the live FFT with peak hold, in dBFS or linear amplitude (a
+    full-scale sine is 1.0), optional filled area, Y ticks and line width.
+  - Spectrogram: a scrolling time x frequency picture colored by level,
+    newest on the right. History (5 to 60 s), level floor and color map
+    (Inferno, Viridis, theme accent); a color scale right of the plot reads
+    the colors back as dBFS.
+- Line chart: two new gear options, **Show info row** (sample rate, window
+  fill and span above the legend) and **Fill area under the line**. Both
+  are off for existing charts; the audio widgets offer the same toggles, on
+  by default. Info row numbers sit in fixed-width slots, so the row no
+  longer shifts as values change.
+- Line chart info row: pick what it shows from **Info row values** in the
+  gear menu: sample rate, samples in window and window span, and per series
+  minimum, maximum, peak to peak, peak, mean, median and RMS (one aligned
+  row per series). **Range markers (A/B)** add two draggable lines; the
+  statistics are then taken between them instead of over the whole window.
+  The Audio Analyzer offers the values too, as statistics of the audio
+  signal (levels in full-scale units, peak and RMS in dBFS), and in its
+  spectrogram view the markers over its time axis.
+- The Debug window shows the Audio Analyzer in both views on a synthetic
+  stream (a
+  sweeping chirp over a 440 Hz tone); the chat is left out of it for now.
+
+### Changed
+
+- An array field longer than 64 elements no longer arrives one element at a
+  time: it comes whole (the new `Backend::arraySample()`), so a stream of
+  audio blocks does not flood charts, the telemetry history and device
+  scripts. Shorter arrays behave as before.
+- Building now needs the Qt Multimedia module.
+
 ## [4.8.1] - 2026-09-27
 
 ### Fixed

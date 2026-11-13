@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QObject>
+#include <QVector>
 #include <QtGlobal>
 
 #include "protocol/telemetrycatalog.h"
@@ -23,6 +24,13 @@ class TelemetryFieldRouter : public QObject {
     Q_OBJECT
 
 public:
+    // An array field longer than this is not fanned out into per-element
+    // fieldSample()s: a stream block (audio: ~1000 samples, ~80 blocks/s)
+    // would otherwise flood every chart, the telemetry history and the
+    // device scripts with tens of thousands of signals per second. Such a
+    // field only arrives whole, through arraySample().
+    static constexpr int kMaxFannedArrayElements = 64;
+
     struct Diagnostics {
         quint64 samplesDecoded = 0;
         quint64 schemaUnknown = 0;  // no (source, topic, schema_version) match
@@ -44,6 +52,12 @@ public slots:
 signals:
     void fieldSample(const traceview::TelemetryFieldBinding& binding, quint64 timestampUs,
                      double value);
+    // Every array field of a PACKED_LE/TLV_LE sample, whole, in engineering
+    // units -- after the fieldSample()s of the fields that precede it in the
+    // same sample, so a consumer can pair it with those scalars (a stream's
+    // seq and rate). `binding.elementIndex` is 0.
+    void arraySample(const traceview::TelemetryFieldBinding& binding, quint64 timestampUs,
+                     const QVector<float>& values);
     // Whole-body UTF8 telemetry (telemetry.md section 12.2). Text topics do
     // not have field identities: the stable binding is (source, topic), and
     // the body after schema_version is the complete replacement document.
