@@ -7,6 +7,14 @@ release flow.
 
 ## [Unreleased]
 
+## [4.10.1] - 2026-11-13
+
+### Fixed
+
+- The release build did not start on macOS (GitHub retired the macOS 14
+  runners), so 4.10.0 was never published. This release carries the same
+  changes.
+
 ## [4.10.0] - 2026-11-13
 
 ### Added
