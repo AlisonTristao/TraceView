@@ -339,6 +339,13 @@ private:
     std::vector<std::uint8_t> m_reassembledOut;
 
     Diagnostics m_diagnostics;
+
+    // Send-side scratch, reused across frames instead of a zeroed 4 KB
+    // vector (plus a COBS one) allocated for every frame sent. Only read
+    // before the bytes are copied into the emitted QByteArray, so a send
+    // re-entered from a bytesToWrite slot cannot see them half-written.
+    std::vector<std::uint8_t> m_sendFrameScratch;
+    std::vector<std::uint8_t> m_sendCobsScratch;
 };
 
 }  // namespace traceview
