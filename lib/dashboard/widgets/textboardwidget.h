@@ -5,6 +5,7 @@
 #include <QRectF>
 #include <QSize>
 #include <QString>
+#include <QImage>
 #include <QStringList>
 #include <QVector>
 
@@ -103,6 +104,7 @@ private:
     // layout. Whitespace inside a binary row is ignored, allowing both
     // "0101" and "0 1 0 1" producers.
     QStringList binaryMatrixRows() const;
+    QStringList scanBinaryMatrixRows() const;  // uncached; reads m_layoutLines
 
     // Installs a decoded OPAQUE_BYTES grid as the board's live content,
     // replacing any previous one (samples.size() must equal rows*cols,
@@ -118,9 +120,9 @@ private:
     // source/topic in setConfig) -- paintEvent() checks this before falling
     // back to the text/binaryMatrixRows() path.
     bool m_hasGrayMatrix = false;
-    int m_grayRows = 0;
-    int m_grayCols = 0;
-    QVector<quint8> m_graySamples;
+    // The decoded grid as an 8-bit grayscale image, built once per sample so
+    // a repaint is a single scaled drawImage rather than rows*cols rects.
+    QImage m_grayImage;
 
     // Info strip state (see onBinarySample()/paintEvent()): the fragment
     // count of the most recent OPAQUE_BYTES sample, and a jitter estimate
@@ -140,6 +142,14 @@ private:
     // result so a repaint that changed neither the text nor the widget size
     // (theme change, partial expose) reuses it.
     mutable QString m_fittedForText;
+
+    // layoutLines()/binaryMatrixRows() results for the current m_text; every
+    // m_text change goes through textChanged(), which drops them.
+    void textChanged();
+    mutable bool m_layoutValid = false;
+    mutable QStringList m_layoutLines;
+    mutable QStringList m_binaryRows;
+    mutable QImage m_binaryImage;  // m_binaryRows as black-on-white pixels
     mutable QSize m_fittedForSize;
     mutable int m_fittedPixelSize = 0;
 };
