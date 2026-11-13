@@ -93,6 +93,7 @@ private slots:
     void idsOnlyBindingGainsNames();
     void unresolvableNamesFallBackToIds();
     void resolveBindingsRepointsLiveItemsOffTheUndoStack();
+    void declaredRangeFollowsTheCatalog();
 };
 
 void TestBindingResolver::persistenceRoundTripKeepsNamesAndIds() {
@@ -300,6 +301,69 @@ void TestBindingResolver::resolveBindingsRepointsLiveItemsOffTheUndoStack() {
     QVERIFY(!itemConfig(grid).contains("xAxis"));
     QCOMPARE(itemConfig(grid).value("topicId").toString(), QString("0x0105"));
     QCOMPARE(seriesFieldId(itemConfig(grid), 1), 3);
+}
+
+void TestBindingResolver::declaredRangeFollowsTheCatalog() {
+    const auto catalogWith = [](double axMin, double axMax, double gzMin, double gzMax) {
+        CatalogTopicInfo imu = topic(kSavedSource, 0x0101, "imu", {{1, "ax"}, {2, "gz"}});
+        imu.fields[0].unit = "g";
+        imu.fields[0].minValue = axMin;
+        imu.fields[0].maxValue = axMax;
+        imu.fields[1].unit = "g";
+        imu.fields[1].minValue = gzMin;
+        imu.fields[1].maxValue = gzMax;
+        return QVector<CatalogTopicInfo>{imu};
+    };
+    const auto seriesAt = [](const QJsonObject& config, int index) {
+        return config.value("series").toArray().at(index).toObject();
+    };
+
+    // A chart made before the device declared any range gains it.
+    QVector<CatalogTopicInfo> catalog = catalogWith(-2.0, 2.0, -4.0, 8.0);
+    QJsonObject config = resolveBindingNames(namedChartConfig(), catalog, kSavedSource);
+    QCOMPARE(seriesAt(config, 0).value("unit").toString(), QString("g"));
+    QCOMPARE(seriesAt(config, 0).value("min").toDouble(), -2.0);
+    QCOMPARE(seriesAt(config, 1).value("max").toDouble(), 8.0);
+    QVERIFY(!config.contains("yAxis"));
+
+    // The range the editor preset from the declaration follows it...
+    config["yAxis"] = QJsonObject{{"mode", "fixed"}, {"min", -4.0}, {"max", 8.0}};
+    catalog = catalogWith(-2.0, 2.0, -16.0, 16.0);
+    DashboardGrid grid;
+    grid.setBindingResolver([&catalog](const QJsonObject& in) {
+        return resolveBindingNames(in, catalog, kSavedSource);
+    });
+    catalog = catalogWith(-2.0, 2.0, -4.0, 8.0);
+    grid.fromJson(dashboardWith(config));
+    QVERIFY(!grid.resolveBindings());
+    catalog = catalogWith(-2.0, 2.0, -16.0, 16.0);
+    QVERIFY(grid.resolveBindings());
+    QVERIFY(!grid.resolveBindings());  // idempotent
+    QJsonObject live = itemConfig(grid);
+    QCOMPARE(seriesAt(live, 1).value("min").toDouble(), -16.0);
+    QCOMPARE(live.value("yAxis").toObject().value("min").toDouble(), -16.0);
+    QCOMPARE(live.value("yAxis").toObject().value("max").toDouble(), 16.0);
+    auto* chart = dynamic_cast<ChartWidgetBase*>(grid.keyedWidgets().value("chart"));
+    QVERIFY(chart);
+    QCOMPARE(chart->config().series[1].declaredMax, 16.0);
+    QCOMPARE(chart->config().yMax, 16.0);
+
+    // ...a range the user typed does not.
+    config["yAxis"] = QJsonObject{{"mode", "fixed"}, {"min", -1.0}, {"max", 1.0}};
+    const QJsonObject typed = resolveBindingNames(config, catalog, kSavedSource);
+    QCOMPARE(seriesAt(typed, 1).value("max").toDouble(), 16.0);
+    QCOMPARE(typed.value("yAxis").toObject().value("max").toDouble(), 1.0);
+
+    // A range the device stops declaring goes away; a gauge's single range
+    // (top-level min/max) is never a series' business.
+    catalog = catalogWith(-2.0, 2.0, qQNaN(), qQNaN());
+    const QJsonObject undeclared = resolveBindingNames(config, catalog, kSavedSource);
+    QVERIFY(!seriesAt(undeclared, 1).contains("min"));
+    QVERIFY(!seriesAt(undeclared, 1).contains("max"));
+    QJsonObject gauge = namedChartConfig();
+    gauge["min"] = 0.0;
+    gauge["max"] = 100.0;
+    QCOMPARE(resolveBindingNames(gauge, catalog, kSavedSource), gauge);
 }
 
 }  // namespace
