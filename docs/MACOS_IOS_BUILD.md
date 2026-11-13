@@ -1,7 +1,7 @@
 # macOS and iOS builds
 
 TraceView builds for macOS and iOS from the same sources as the other
-platforms. Both need a Mac with Xcode. CI builds both on `macos-14` runners
+platforms. Both need a Mac with Xcode. CI builds both on `macos-15` runners
 (`.github/workflows/build.yml`) and releases only macOS
 (`.github/workflows/release.yml`).
 

@@ -367,7 +367,7 @@ jobs:
   # an unsigned iOS app installs nowhere.
   macos-package:
     name: macOS package (.dmg, arm64)
-    runs-on: macos-14
+    runs-on: macos-15
     timeout-minutes: 45
 
     env:
@@ -420,7 +420,7 @@ jobs:
   macos-smoke:
     name: macOS .dmg smoke
     needs: macos-package
-    runs-on: macos-14
+    runs-on: macos-15
     timeout-minutes: 15
 
     steps:

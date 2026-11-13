@@ -250,8 +250,8 @@ jobs:
   # macdeployqt. qtserialport/qtconnectivity/qtmultimedia are addon modules there.
   # ============================================================
   macos:
-    name: macOS 14 (Apple Clang, arm64)
-    runs-on: macos-14
+    name: macOS 15 (Apple Clang, arm64)
+    runs-on: macos-15
     timeout-minutes: 45
 
     env:
@@ -303,7 +303,7 @@ jobs:
   # ============================================================
   ios:
     name: iOS (arm64, build only, unsigned)
-    runs-on: macos-14
+    runs-on: macos-15
     timeout-minutes: 60
 
     env:
