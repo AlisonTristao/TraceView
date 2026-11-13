@@ -2,6 +2,8 @@
 
 #include "preferences/appsettings.h"
 
+#include <utility>
+
 namespace traceview {
 
 FrameLog::FrameLog(QObject* parent)
@@ -10,7 +12,7 @@ FrameLog::FrameLog(QObject* parent)
 void FrameLog::append(FrameLogEntry entry) {
     entry.seq = m_nextSeq++;
     entry.wallClock = QDateTime::currentDateTime();
-    m_entries.append(entry);
+    m_entries.append(std::move(entry));
 
     bool droppedOldest = false;
     if (m_entries.size() > m_capacity) {
