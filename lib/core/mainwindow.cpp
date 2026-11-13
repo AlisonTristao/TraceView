@@ -48,6 +48,10 @@
 #include <QVBoxLayout>
 #include <algorithm>
 
+#if defined(Q_OS_WIN)
+#include <QtCore/qt_windows.h>
+#endif
+
 #include "aboutdialog.h"
 #include "agent/agentbridgeserver.h"
 #include "agent/toolregistry.h"
@@ -3069,13 +3073,38 @@ void MainWindow::moveEvent(QMoveEvent* event) {
     // maximize or fullscreen transition also emits moveEvent, with a delta
     // that jumps the window to the screen corner -- following that dragged
     // floating panels off-screen, and the transition back doesn't produce a
-    // symmetric delta to undo it (onFullscreenToggled() restores via
-    // restoreGeometry(), not by moving). A window can't be dragged while
+    // symmetric delta to undo it (onFullscreenToggled() restores the window
+    // state, not by moving). A window can't be dragged while
     // maximized or fullscreen anyway, so nothing legitimate is lost here.
     if (m_floatingPanelsPositioned && windowState() == Qt::WindowNoState) {
         m_dockController->trackWindowMoved(event->pos() - event->oldPos());
     }
 }
+
+#if defined(Q_OS_WIN)
+// Windows-only workaround, part 2 of 3 -- see onFullscreenToggled(). While a
+// maximized window is leaving fullscreen, Qt asks Windows to place it at its
+// small "normal" rectangle before maximizing it; that request is rewritten
+// here to the maximized rectangle, so the window never shows up small.
+bool MainWindow::nativeEvent(const QByteArray& eventType, void* message, qintptr* result) {
+    if (m_leavingFullscreenToMaximized) {
+        const MSG* msg = static_cast<const MSG*>(message);
+        if (msg->message == WM_WINDOWPOSCHANGING) {
+            // Set by Windows on the maximize itself, which must go through
+            // untouched. Not in the SDK headers.
+            constexpr UINT kSwpStateChanged = 0x8000;
+            auto* pos = reinterpret_cast<WINDOWPOS*>(msg->lParam);
+            if (!(pos->flags & (SWP_NOSIZE | kSwpStateChanged))) {
+                pos->x = m_maximizedFrame.x();
+                pos->y = m_maximizedFrame.y();
+                pos->cx = m_maximizedFrame.width();
+                pos->cy = m_maximizedFrame.height();
+            }
+        }
+    }
+    return QMainWindow::nativeEvent(eventType, message, result);
+}
+#endif
 
 void MainWindow::closeEvent(QCloseEvent* event) {
     if (!confirmDiscardChanges(tr("Close"))) {
@@ -5141,6 +5170,25 @@ void MainWindow::onFullscreenToggled(bool checked) {
         // Capture before hiding chrome or entering fullscreen.
         m_preFullscreenGeometry = saveGeometry();
         m_wasMaximized = isMaximized();
+#if defined(Q_OS_WIN)
+        // Windows-only workaround, part 1 of 3 (see the exit branch below):
+        // remember where the maximized window sits, and the rectangle
+        // Windows would restore it to, while both can still be read.
+        m_maximizedFrame = QRect();
+        if (m_wasMaximized) {
+            const HWND hwnd = reinterpret_cast<HWND>(winId());
+            RECT frame = {};
+            WINDOWPLACEMENT placement = {};
+            placement.length = sizeof(placement);
+            if (GetWindowRect(hwnd, &frame) && GetWindowPlacement(hwnd, &placement)) {
+                const RECT& normal = placement.rcNormalPosition;
+                m_maximizedFrame = QRect(QPoint(frame.left, frame.top),
+                                         QPoint(frame.right - 1, frame.bottom - 1));
+                m_restoreFrame = QRect(QPoint(normal.left, normal.top),
+                                       QPoint(normal.right - 1, normal.bottom - 1));
+            }
+        }
+#endif
         // menuBar()->hide() used to be unconditional here; now routed through
         // updateChromeVisibility() so it ANDs with compactChromeActive()
         // instead of fighting it (see that function's own comment) -- reads
@@ -5155,12 +5203,44 @@ void MainWindow::onFullscreenToggled(bool checked) {
         // is why it was down in the first place (Android, or a Developer-
         // mode preview left running through the fullscreen toggle).
         updateChromeVisibility();
-        // A single setWindowState() call transitions straight from
-        // WindowFullScreen to the target state, so the Windows backend never
-        // passes through the intermediate "normal" bounds that caused the
-        // maximize flash.
+#if defined(Q_OS_WIN)
+        // WORKAROUND, Windows only. Fullscreen is not a real window state on
+        // Windows: Qt fakes it by stripping the frame and stretching the
+        // window over the monitor. Leaving it for a maximized window, Qt's
+        // Windows backend (QWindowsWindow::setWindowState_sys) first puts the
+        // window back at its small "normal" rectangle and only then maximizes
+        // it -- inside this one setWindowState() call, whatever order the
+        // calls here are made in. The window was visibly small for a moment
+        // and Windows animated it growing back.
+        //
+        // So for the duration of the call, nativeEvent() swaps that small
+        // rectangle for the maximized one captured on the way in (part 2),
+        // and afterwards Windows is handed back the real restore rectangle,
+        // which the swap had overwritten (part 3).
+        //
+        // No restoreGeometry() here either: Qt already restores the right
+        // geometry on its own, and calling it on top moved the window a
+        // second time -- for a maximized window, into a "maximized" state
+        // with the normal size.
+        const bool toMaximized = m_wasMaximized && m_maximizedFrame.isValid();
+        m_leavingFullscreenToMaximized = toMaximized;
+        setWindowState(m_wasMaximized ? Qt::WindowMaximized : Qt::WindowNoState);
+        m_leavingFullscreenToMaximized = false;
+        if (toMaximized) {
+            const HWND hwnd = reinterpret_cast<HWND>(winId());
+            WINDOWPLACEMENT placement = {};
+            placement.length = sizeof(placement);
+            if (GetWindowPlacement(hwnd, &placement)) {
+                placement.rcNormalPosition = {m_restoreFrame.left(), m_restoreFrame.top(),
+                                              m_restoreFrame.right() + 1,
+                                              m_restoreFrame.bottom() + 1};
+                SetWindowPlacement(hwnd, &placement);
+            }
+        }
+#else
         setWindowState(m_wasMaximized ? Qt::WindowMaximized : Qt::WindowNoState);
         restoreGeometry(m_preFullscreenGeometry);
+#endif
         m_fullscreenButton->setToolTip(tr("Fullscreen dashboard (F11)"));
     }
     setUpdatesEnabled(true);
