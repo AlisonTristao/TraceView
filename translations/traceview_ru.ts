@@ -73,7 +73,7 @@ Allow it to connect devices and send them commands until AI assistant access is 
         <translation>ИИ-ассистент хочет заменить панель «%1» в галерее.</translation>
     </message>
     <message>
-        <location line="+52"/>
+        <location line="+53"/>
         <source>Delete Dashboard</source>
         <translation>Удалить дашборд</translation>
     </message>
@@ -83,7 +83,7 @@ Allow it to connect devices and send them commands until AI assistant access is 
         <translation>ИИ-ассистент хочет удалить панель «%1» из галереи. Это действие нельзя отменить.</translation>
     </message>
     <message>
-        <location line="+50"/>
+        <location line="+51"/>
         <source>An AI assistant saved the project to %1.</source>
         <translation>ИИ-ассистент сохранил проект в %1.</translation>
     </message>
@@ -295,7 +295,7 @@ Allow it to connect devices and send them commands until AI assistant access is 
     </message>
     <message>
         <location line="+9"/>
-        <location line="+507"/>
+        <location line="+558"/>
         <location line="+231"/>
         <source>--</source>
         <translation>--</translation>
@@ -307,7 +307,7 @@ Allow it to connect devices and send them commands until AI assistant access is 
     </message>
     <message>
         <location line="+6"/>
-        <location line="+305"/>
+        <location line="+304"/>
         <source>%1  %2</source>
         <translation>%1  %2</translation>
     </message>
@@ -377,7 +377,7 @@ Allow it to connect devices and send them commands until AI assistant access is 
         <translation>пауза</translation>
     </message>
     <message>
-        <location line="-739"/>
+        <location line="-738"/>
         <source>%1: %2</source>
         <translation>%1: %2</translation>
     </message>
@@ -687,7 +687,7 @@ Allow it to connect devices and send them commands until AI assistant access is 
 <context>
     <name>FurutaScene</name>
     <message>
-        <location filename="../lib/dashboard/scenes/furutascene.cpp" line="+536"/>
+        <location filename="../lib/dashboard/scenes/furutascene.cpp" line="+529"/>
         <source>Arm length (L1)</source>
         <translation>Длина плеча (L1)</translation>
     </message>
@@ -730,7 +730,7 @@ Allow it to connect devices and send them commands until AI assistant access is 
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="+138"/>
+        <location filename="../lib/core/mainwindow.cpp" line="+139"/>
         <source>TraceView Project (*.tvproj)</source>
         <translation>Проект TraceView (*.tvproj)</translation>
     </message>
@@ -776,7 +776,7 @@ Allow it to connect devices and send them commands until AI assistant access is 
         <translation>Изменить значок</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/textboardwidget.cpp" line="+243"/>
+        <location filename="../lib/dashboard/widgets/textboardwidget.cpp" line="+231"/>
         <source>%1 packet(s)</source>
         <translation>Пакетов: %1</translation>
     </message>
@@ -987,7 +987,7 @@ Allow it to connect devices and send them commands until AI assistant access is 
 <context>
     <name>SceneWidget</name>
     <message>
-        <location filename="../lib/dashboard/scenes/scenewidget.cpp" line="+534"/>
+        <location filename="../lib/dashboard/scenes/scenewidget.cpp" line="+545"/>
         <source>Scene</source>
         <translation>Сцена</translation>
     </message>
@@ -1703,7 +1703,7 @@ Allow it to connect devices and send them commands until AI assistant access is 
 <context>
     <name>traceview::BtpMonitorTab</name>
     <message>
-        <location filename="../lib/diagnostics/btpmonitortab.cpp" line="+245"/>
+        <location filename="../lib/diagnostics/btpmonitortab.cpp" line="+243"/>
         <location line="+85"/>
         <source>Pause</source>
         <translation>Пауза</translation>
@@ -3123,14 +3123,14 @@ Allowed: %1</source>
 <context>
     <name>traceview::DiagramScriptRuntime</name>
     <message>
-        <location filename="../lib/diagram/diagramscriptruntime.cpp" line="+41"/>
-        <location line="+84"/>
+        <location filename="../lib/diagram/diagramscriptruntime.cpp" line="+43"/>
+        <location line="+99"/>
         <source>Line %1: %2</source>
         <translation>Строка %1: %2</translation>
     </message>
     <message>
-        <location line="-81"/>
-        <location line="+84"/>
+        <location line="-96"/>
+        <location line="+99"/>
         <source>Error: %1</source>
         <translation>Ошибка: %1</translation>
     </message>
@@ -3161,7 +3161,7 @@ Allowed: %1</source>
 <context>
     <name>traceview::FrameTableModel</name>
     <message>
-        <location filename="../lib/diagnostics/btpmonitortab.cpp" line="-357"/>
+        <location filename="../lib/diagnostics/btpmonitortab.cpp" line="-354"/>
         <source>decode error</source>
         <translation>ошибка декодирования</translation>
     </message>
@@ -3453,7 +3453,7 @@ Allowed: %1</source>
         <translation>, </translation>
     </message>
     <message>
-        <location line="+293"/>
+        <location line="+295"/>
         <source>AI assistant access is off.</source>
         <translation>Доступ ИИ-ассистентов выключен.</translation>
     </message>
@@ -3479,7 +3479,7 @@ Allowed: %1</source>
         <translation>ИИ-ассистент отключён: %1</translation>
     </message>
     <message>
-        <location line="+410"/>
+        <location line="+413"/>
         <source>Pending</source>
         <translation>Ожидание</translation>
     </message>
@@ -3623,12 +3623,12 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+0"/>
-        <location line="+3763"/>
+        <location line="+3864"/>
         <source>Later</source>
         <translation>Позже</translation>
     </message>
     <message>
-        <location line="-3756"/>
+        <location line="-3857"/>
         <source>&amp;Access</source>
         <translation>Доступ (&amp;A)</translation>
     </message>
@@ -3755,18 +3755,18 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+18"/>
-        <location line="+3128"/>
+        <location line="+3229"/>
         <source>Undo</source>
         <translation>Отменить</translation>
     </message>
     <message>
-        <location line="-3126"/>
-        <location line="+3126"/>
+        <location line="-3227"/>
+        <location line="+3227"/>
         <source>Redo</source>
         <translation>Повторить</translation>
     </message>
     <message>
-        <location line="-3083"/>
+        <location line="-3184"/>
         <source>Add Device</source>
         <translation>Добавить устройство</translation>
     </message>
@@ -3802,12 +3802,12 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+29"/>
-        <location line="+3028"/>
+        <location line="+3129"/>
         <source>Fullscreen dashboard (F11)</source>
         <translation>Панель в полноэкранном режиме (F11)</translation>
     </message>
     <message>
-        <location line="-2848"/>
+        <location line="-2949"/>
         <source>Rename Workspace</source>
         <translation>Переименовать рабочее пространство</translation>
     </message>
@@ -3817,7 +3817,7 @@ Drops: %2</source>
         <translation>Рабочее пространство «%1» переименовано в «%2».</translation>
     </message>
     <message>
-        <location line="+32"/>
+        <location line="+35"/>
         <source>Appearance &amp;Presets</source>
         <translation>&amp;Наборы оформления</translation>
     </message>
@@ -3888,7 +3888,12 @@ Drops: %2</source>
         <translation>Теперь у этой рабочей области своё оформление.</translation>
     </message>
     <message>
-        <location line="+1330"/>
+        <location line="+653"/>
+        <source>Close</source>
+        <translation>Закрыть</translation>
+    </message>
+    <message>
+        <location line="+695"/>
         <source>%1: found at %2</source>
         <translation>%1: найден на %2</translation>
     </message>
@@ -3898,16 +3903,21 @@ Drops: %2</source>
         <translation>%1: пробую %2</translation>
     </message>
     <message>
-        <location line="+424"/>
+        <location line="+408"/>
+        <source>The current project has unsaved changes. Save them first?</source>
+        <translation>В текущем проекте есть несохранённые изменения. Сохранить их сначала?</translation>
+    </message>
+    <message>
+        <location line="+89"/>
         <location line="+8"/>
         <location line="+5"/>
         <location line="+8"/>
-        <location line="+11"/>
+        <location line="+12"/>
         <source>Add to Gallery</source>
         <translation>Добавить в галерею</translation>
     </message>
     <message>
-        <location line="-32"/>
+        <location line="-33"/>
         <source>Dashboard name:</source>
         <translation>Имя дашборда:</translation>
     </message>
@@ -3917,7 +3927,7 @@ Drops: %2</source>
         <translation>В галерее уже есть дашборд &quot;%1&quot;. Заменить его?</translation>
     </message>
     <message>
-        <location line="+15"/>
+        <location line="+16"/>
         <source>Added &quot;%1&quot; to the gallery -- it now opens at startup.</source>
         <translation>&quot;%1&quot; добавлен в галерею -- теперь он открывается при запуске.</translation>
     </message>
@@ -3947,7 +3957,7 @@ Drops: %2</source>
         <translation>&quot;%1&quot; сохранён в галерее.</translation>
     </message>
     <message>
-        <location line="+542"/>
+        <location line="+548"/>
         <source>Update available: v%1</source>
         <translation>Доступно обновление: v%1</translation>
     </message>
@@ -4020,34 +4030,34 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>Закрыть приложение</translation>
     </message>
     <message>
-        <location line="-3075"/>
-        <location line="+2876"/>
+        <location line="-3176"/>
+        <location line="+2977"/>
         <source>Devices</source>
         <translation>Устройства</translation>
     </message>
     <message>
-        <location line="-2801"/>
+        <location line="-2902"/>
         <source>Subscriptions</source>
         <translation>Подписки</translation>
     </message>
     <message>
-        <location line="+266"/>
+        <location line="+269"/>
         <source>New Workspace</source>
         <translation>Новое рабочее пространство</translation>
     </message>
     <message>
-        <location line="-236"/>
-        <location line="+236"/>
+        <location line="-239"/>
+        <location line="+239"/>
         <source>Name:</source>
         <translation>Имя:</translation>
     </message>
     <message>
-        <location line="-2073"/>
+        <location line="-2081"/>
         <source>TraceView v%1</source>
         <translation>TraceView v%1</translation>
     </message>
     <message>
-        <location line="+2074"/>
+        <location line="+2082"/>
         <source>Workspace</source>
         <translation>Рабочее пространство</translation>
     </message>
@@ -4073,23 +4083,23 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     </message>
     <message>
         <location line="+71"/>
-        <location line="+2387"/>
+        <location line="+2485"/>
         <source>Add widget</source>
         <translation>Добавить виджет</translation>
     </message>
     <message>
-        <location line="-2384"/>
+        <location line="-2482"/>
         <source>Remove selected widget (%1)</source>
         <translation>Удалить выбранный виджет (%1)</translation>
     </message>
     <message>
         <location line="+3"/>
-        <location line="+2394"/>
+        <location line="+2492"/>
         <source>Add device</source>
         <translation>Добавить устройство</translation>
     </message>
     <message>
-        <location line="-2391"/>
+        <location line="-2489"/>
         <source>Remove selected device (%1)</source>
         <translation>Удалить выбранное устройство (%1)</translation>
     </message>
@@ -4174,12 +4184,12 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>Показать панели Слои/Свойства</translation>
     </message>
     <message>
-        <location line="+263"/>
+        <location line="+267"/>
         <source>New Device</source>
         <translation>Новое устройство</translation>
     </message>
     <message>
-        <location line="+379"/>
+        <location line="+381"/>
         <source>%1: robot is responding again</source>
         <translation>%1: робот снова отвечает</translation>
     </message>
@@ -4240,38 +4250,33 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>&amp;Движение</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="-1464"/>
+        <location filename="../lib/core/mainwindow.cpp" line="-1473"/>
         <source>Dashboard</source>
         <translation>Dashboard</translation>
     </message>
     <message>
-        <location line="+1810"/>
+        <location line="+1831"/>
         <source>%1: this BLE address now answers as a different robot (expected %2, got %3)</source>
         <translation>%1: этот BLE-адрес теперь отвечает как другой робот (ожидался %2, получен %3)</translation>
     </message>
     <message>
-        <location line="+503"/>
+        <location line="+518"/>
         <source>Key &quot;%1&quot; is already used by another widget.</source>
         <translation>Ключ «%1» уже используется другим виджетом.</translation>
     </message>
     <message>
-        <location line="+15"/>
+        <location line="+14"/>
         <source>New Project</source>
         <translation>Новый проект</translation>
     </message>
     <message>
-        <location line="+1"/>
-        <source>Discard the current dashboard and start a new, empty project?</source>
-        <translation>Отменить текущую панель и начать новый пустой проект?</translation>
-    </message>
-    <message>
-        <location line="+18"/>
+        <location line="+76"/>
         <source>Started a new project.</source>
         <translation>Начат новый проект.</translation>
     </message>
     <message>
         <location line="+26"/>
-        <location line="+16"/>
+        <location line="+17"/>
         <source>Save Project</source>
         <translation>Сохранить проект</translation>
     </message>
@@ -4281,13 +4286,14 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>Сохранить проект как</translation>
     </message>
     <message>
-        <location line="+14"/>
-        <location line="+329"/>
+        <location line="+15"/>
+        <location line="+331"/>
+        <location line="+4"/>
         <source>Open Project</source>
         <translation>Открыть проект</translation>
     </message>
     <message>
-        <location line="-243"/>
+        <location line="-248"/>
         <source>Open Log File</source>
         <translation>Открыть файл журнала</translation>
     </message>
@@ -4308,7 +4314,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     </message>
     <message>
         <location line="+20"/>
-        <location line="+218"/>
+        <location line="+224"/>
         <source>Settings</source>
         <translation>Настройки</translation>
     </message>
@@ -6099,7 +6105,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
 <context>
     <name>traceview::UpdateDownloader</name>
     <message>
-        <location filename="../lib/updater/updatedownloader.cpp" line="+34"/>
+        <location filename="../lib/updater/updatedownloader.cpp" line="+36"/>
         <source>Updates are managed by Flatpak. Use &apos;flatpak update&apos;.</source>
         <translation>Обновлениями управляет Flatpak. Используйте &apos;flatpak update&apos;.</translation>
     </message>
@@ -6109,22 +6115,24 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>Не удалось скачать SHA256SUMS.txt: %1</translation>
     </message>
     <message>
-        <location line="+14"/>
+        <location line="+59"/>
         <source>Couldn&apos;t download %1: %2</source>
         <translation>Не удалось скачать %1: %2</translation>
     </message>
     <message>
-        <location line="+22"/>
+        <location line="-53"/>
         <source>%1 is not listed in SHA256SUMS.txt.</source>
         <translation>%1 отсутствует в SHA256SUMS.txt.</translation>
     </message>
     <message>
-        <location line="+7"/>
+        <location line="+65"/>
         <source>Checksum mismatch for %1 -- the download may be corrupted.</source>
         <translation>Контрольная сумма %1 не совпадает -- загрузка может быть повреждена.</translation>
     </message>
     <message>
-        <location line="+20"/>
+        <location line="-38"/>
+        <location line="+32"/>
+        <location line="+11"/>
         <source>Couldn&apos;t write %1</source>
         <translation>Не удалось записать %1</translation>
     </message>
@@ -6137,7 +6145,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>Не удалось открыть HID-устройство: %1</translation>
     </message>
     <message>
-        <location line="+72"/>
+        <location line="+76"/>
         <source>HID device disconnected</source>
         <translation>HID-устройство отключено</translation>
     </message>
