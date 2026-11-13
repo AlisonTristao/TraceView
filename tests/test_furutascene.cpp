@@ -1,8 +1,8 @@
 // The Furuta pendulum scene (dashboard/scenes/furutascene.h): its only inputs,
 // theta1 and theta2, bound by field name; the angles and trail taken from the
 // records; the mass drawn where the angles put it (upright above the pivot,
-// hanging below it, moving with theta1); the machine's body centred in the
-// view; no key actions; and a full frame painted over the sky and the floor.
+// hanging below it, moving with theta1) and inside the view; no key
+// actions; and a full frame painted over the sky and the floor.
 // With TRACELAB_FURUTA_SCENE_PNG set, the frame is also saved there to look
 // at.
 
@@ -94,22 +94,13 @@ private slots:
         QVERIFY((massAt(1.0, 0.0) - up).manhattanLength() > 20);
     }
 
-    void machineCentredInTheView() {
-        // Upright and hanging, the pendulum's pivot (on the arm, beside the
-        // body) stays near the middle: the body is centred, not the room the
-        // pendulum sweeps.
+    void massInsideTheView() {
         FurutaScene scene;
         for (const double theta2 : {0.0, M_PI}) {
             SceneFrame frame;
             frame.records.append(angles(0.0, theta2));
             scene.update(frame);
-            const QPointF pivot = scene.pivotOnScreen(view());
-            QVERIFY2(std::fabs(pivot.y() - 0.5 * view().size.height()) <
-                         0.15 * view().size.height(),
-                     qPrintable(QString::number(pivot.y())));
-            // And the mass stays inside the view.
-            const QPointF mass = scene.massOnScreen(view());
-            QVERIFY(QRectF(QPointF(0, 0), view().size).contains(mass));
+            QVERIFY(QRectF(QPointF(0, 0), view().size).contains(scene.massOnScreen(view())));
         }
     }
 
@@ -209,7 +200,7 @@ private slots:
             }
             sheet.end();
             QVERIFY(sweep.save(QString(png).replace(QLatin1String(".png"), QLatin1String("_sweep.png"))));
-            const QPoint base(int(big.size.width() / 2), int(big.size.height() * 0.5));
+            const QPoint base(int(big.size.width() / 2), int(big.size.height() * 0.62));
             QVERIFY(large.copy(QRect(base - QPoint(450, 450), QSize(900, 900)))
                         .save(QString(png).replace(QLatin1String(".png"), QLatin1String("_base.png"))));
         }

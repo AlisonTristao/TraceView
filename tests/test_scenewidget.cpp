@@ -104,6 +104,7 @@ private slots:
     void projectRoundTripStoresNoCode();
     void bindByNameMatchesTheCatalog();
     void furutaAnglesBindFromOneTopic();
+    void undeclaredInputsAreNotSubscribed();
     void samplesReachTheScene();
     void topicRequestsAreOnePerTopic();
     void keysEmitTheAction();
@@ -284,6 +285,26 @@ void TestSceneWidget::furutaAnglesBindFromOneTopic() {
     const QJsonObject follow = autoBindSceneInputs(scene.inputs(), kept, {robot});
     QCOMPARE(follow.value("theta2").toObject().value("topicName").toString(), QString("sensores"));
     QCOMPARE(follow.value("theta2").toObject().value("fieldId").toInt(), 2);
+}
+
+void TestSceneWidget::undeclaredInputsAreNotSubscribed() {
+    // A project saved when the Furuta scene also read u and t (topic 0x0101):
+    // only the angles (topic 0x0102) are subscribed now.
+    const auto binding = [](const char* topicId, const char* topicName, int fieldId,
+                            const char* fieldName) {
+        return QJsonObject{{"deviceId", "furuta"}, {"sourceId", "0x1A2B3C4D"},
+                           {"topicId", topicId},   {"topicName", topicName},
+                           {"fieldId", fieldId},   {"fieldName", fieldName}};
+    };
+    const QJsonObject bind{{"theta1", binding("0x0102", "sensores", 1, "theta1")},
+                           {"theta2", binding("0x0102", "sensores", 2, "theta2")},
+                           {"u", binding("0x0101", "controle", 6, "u")},
+                           {"t", binding("0x0101", "controle", 1, "t")}};
+    SceneWidget widget;
+    widget.setConfig({{"scene", QString::fromLatin1(FurutaScene::kTypeId)}, {"bind", bind}});
+    const QVector<traceview::TelemetryTopicRequest> requests = widget.topicRequests();
+    QCOMPARE(requests.size(), 1);
+    QCOMPARE(requests.first().topicId, quint16(0x0102));
 }
 
 void TestSceneWidget::samplesReachTheScene() {

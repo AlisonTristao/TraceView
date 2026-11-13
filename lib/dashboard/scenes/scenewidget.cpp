@@ -4,6 +4,7 @@
 #include <QPainterPath>
 #include <QThreadPool>
 #include <QPointer>
+#include <QSet>
 #include <QCoreApplication>
 #include <QKeyEvent>
 #include <QMouseEvent>
@@ -107,10 +108,20 @@ void SceneWidget::setConfig(const QJsonObject& config) {
         m_documents.clear();
     }
 
+    // Only the inputs the scene declares: an entry for one it no longer has
+    // (a project saved by an older version) is not subscribed.
+    QSet<QString> declared;
+    if (m_renderer) {
+        for (const SceneInput& input : m_renderer->inputs()) {
+            declared.insert(input.name);
+        }
+    }
     QHash<QString, SceneBinding> bindings;
     const QJsonObject bind = config.value(QLatin1String("bind")).toObject();
     for (auto it = bind.constBegin(); it != bind.constEnd(); ++it) {
-        bindings.insert(it.key(), parseSceneBinding(it.value().toObject()));
+        if (declared.contains(it.key())) {
+            bindings.insert(it.key(), parseSceneBinding(it.value().toObject()));
+        }
     }
     // An input bound elsewhere now drops what it showed.
     for (auto it = m_bindings.constBegin(); it != m_bindings.constEnd(); ++it) {

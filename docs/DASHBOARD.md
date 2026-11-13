@@ -332,7 +332,7 @@ lives in its own module under
   of a physical system, fed by telemetry: one `SceneRenderer`
   (`scenes/scenerenderer.h`) per kind, listed in `SceneRegistry` —
   `furuta` (Furuta pendulum: only `theta1` and `theta2`, drawn over a soft
-  sky and a lit floor with the parts' shadows, the machine's body centred)
+  sky and a lit floor with the parts' shadows)
   and `diffdrive` (line follower: track, car pose, minimap and compass). Each
   renderer declares its inputs (scalar, array or text, with a default
   topic/field name) and numeric params; the config is

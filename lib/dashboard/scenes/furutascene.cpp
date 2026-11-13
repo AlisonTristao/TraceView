@@ -597,19 +597,14 @@ Camera makeCamera(const SceneView& view, const Geometry& geo, double azimuthDeg,
     camera.right = {-std::sin(a), std::cos(a), 0.0};
     camera.up = {-std::sin(e) * std::cos(a), -std::sin(e) * std::sin(a), std::cos(e)};
 
-    // The body of the machine (the base's axis, halfway up to the motor's
-    // top) sits at the widget's centre, and the scale fits, around it, all
-    // the mechanism can reach: the base and the mass anywhere on its sphere
-    // around the arm's circle. Centring the reachable box instead would leave
-    // the machine low, under the empty room the upright pendulum needs.
+    // Fit what the mechanism can reach on screen: the base and the mass
+    // anywhere on its sphere around the arm's circle.
     camera.scale = 1.0;
     camera.origin = QPointF(0, 0);
-    const QPointF anchor = camera.project({0, 0, 0.5 * geo.motorTop});
-    double halfWidth = 1e-9, halfHeight = 1e-9;
+    QRectF box;
     const auto extend = [&](const V3& p) {
-        const QPointF q = camera.project(p) - anchor;
-        halfWidth = std::max(halfWidth, std::fabs(q.x()));
-        halfHeight = std::max(halfHeight, std::fabs(q.y()));
+        const QPointF q = camera.project(p);
+        box = box.isNull() ? QRectF(q, QSizeF(1e-9, 1e-9)) : box.united(QRectF(q, QSizeF(1e-9, 1e-9)));
     };
     for (int i = 0; i < 16; ++i) {
         const double t1 = 2.0 * M_PI * i / 16;
@@ -626,9 +621,12 @@ Camera makeCamera(const SceneView& view, const Geometry& geo, double azimuthDeg,
         }
     }
     const double w = view.size.width(), h = view.size.height();
-    const double fit = std::min(0.47 * w / halfWidth, 0.45 * h / halfHeight);
+    const double fit = std::min(0.94 * w / std::max(box.width(), 1e-9),
+                                0.86 * h / std::max(box.height(), 1e-9));
     camera.scale = fit * view.zoom;
-    camera.origin = QPointF(0.5 * w, 0.5 * h) - camera.scale * anchor;
+    // That box's centre at the widget's centre, a little below.
+    const QPointF centre = fit * box.center();
+    camera.origin = QPointF(0.5 * w - centre.x(), 0.53 * h - centre.y());
     return camera;
 }
 
