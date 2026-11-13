@@ -96,13 +96,12 @@ struct Camera {
 // on top of it with the arm leaving its side, the pendulum's joint, the rod
 // and the mass.
 //
-// The joint is built like a real one, along the arm's axis: the arm ends in
-// a bearing housing (it turns with theta1 only); a short shaft comes out of
-// the housing's outer face; on it sits the pendulum's hub, which turns with
-// theta2 and holds the rod, radially, in the plane of the pendulum (at the
-// distance L from the motor's axis). The parts only touch, face to face or
-// the rod on the hub's skin, never through each other, so which one is in
-// front is the same everywhere they overlap on screen.
+// The joint, along the arm's axis: the arm runs straight to the pendulum's
+// hub, which turns with theta2 and holds the rod, radially, in the plane of
+// the pendulum (at the distance L from the motor's axis). The parts only
+// touch, face to face or the rod on the hub's skin, never through each
+// other, so which one is in front is the same everywhere they overlap on
+// screen.
 struct Geometry {
     double L = 0.085, l = 0.13;
     double baseRadius = 0.0, baseHeight = 0.0;
@@ -111,8 +110,6 @@ struct Geometry {
     double shaftRadius = 0.0, shaftTop = 0.0;
     double motorRadius = 0.0, motorTop = 0.0;
     double armZ = 0.0, armRadius = 0.0;
-    double housingRadius = 0.0, housingFrom = 0.0, housingTo = 0.0;  // along the arm
-    double jointShaftRadius = 0.0;
     double hubRadius = 0.0, hubHalf = 0.0;
     double rodRadius = 0.0, massRadius = 0.0;
 
@@ -129,10 +126,6 @@ struct Geometry {
         motorTop = shaftTop + 0.22 * L;
         armZ = shaftTop + 0.06 * L;
         armRadius = 0.033 * L;
-        housingRadius = 0.085 * L;
-        housingFrom = 0.80 * L;
-        housingTo = 0.925 * L;
-        jointShaftRadius = 0.028 * L;
         hubRadius = 0.065 * L;
         hubHalf = 0.05 * L;
         rodRadius = 0.03 * L;
@@ -745,16 +738,10 @@ void FurutaScene::paint(QPainter& painter, const SceneView& view) {
     vertical(geo.collarTop, geo.shaftTop, geo.shaftRadius);
     vertical(geo.shaftTop, geo.motorTop, geo.motorRadius);
     const V3 armAxis{0, 0, geo.armZ};
-    // The arm, from the motor's side to the bearing housing; the housing;
-    // the shaft out of it; the pendulum's hub on the shaft; the rod from the
-    // hub's skin to the mass.
-    const auto onArm = [&](double distance) { return armAxis + distance * dir; };
-    solids.push_back(makeCylinder(camera, onArm(0.9 * geo.motorRadius), onArm(geo.housingFrom),
-                                  geo.armRadius));
-    solids.push_back(makeCylinder(camera, onArm(geo.housingFrom), onArm(geo.housingTo),
-                                  geo.housingRadius));
-    solids.push_back(makeCylinder(camera, onArm(geo.housingTo), pivot - geo.hubHalf * dir,
-                                  geo.jointShaftRadius));
+    // The arm, from the motor's side straight to the pendulum's hub; the hub;
+    // the rod from the hub's skin to the mass.
+    solids.push_back(makeCylinder(camera, armAxis + 0.9 * geo.motorRadius * dir,
+                                  pivot - geo.hubHalf * dir, geo.armRadius));
     solids.push_back(makeCylinder(camera, pivot - geo.hubHalf * dir, pivot + geo.hubHalf * dir,
                                   geo.hubRadius));
     const double rodRoot =
