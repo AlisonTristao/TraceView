@@ -270,6 +270,29 @@ private:
     QString createWorkspace(const QString& name);
     void deleteWorkspace(const QString& id);
     // The dialog-free half of onNewProject().
+    // Unsaved-changes tracking. There is no single dirty flag to hook (the
+    // dashboard undo stack is cleared on every workspace switch, and
+    // appearance/workspace edits are not undoable), so the project is
+    // compared as serialized JSON against what was last loaded or saved.
+    QByteArray projectSnapshot();
+    void markProjectClean();
+    bool hasUnsavedChanges();
+    // Asks Save / Discard / Cancel when there are unsaved changes. True when
+    // the caller may go on (nothing to lose, saved, or discarded).
+    bool confirmDiscardChanges(const QString& title);
+    QByteArray m_savedProjectSnapshot;
+    // Re-baselines the snapshot on scope exit when the project was clean on
+    // entry -- for app-driven rewrites of the project JSON (binding
+    // resolution, workspace switch) that are not user edits.
+    class KeepCleanGuard {
+    public:
+        explicit KeepCleanGuard(MainWindow* window);
+        ~KeepCleanGuard();
+
+    private:
+        MainWindow* m_window;
+        bool m_wasClean;
+    };
     void startNewProject();
     // Every serial port the OS lists, as the device config dialog offers
     // them; empty in a build without the serial transport.
