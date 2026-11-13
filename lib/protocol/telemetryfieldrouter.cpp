@@ -32,7 +32,6 @@ void TelemetryFieldRouter::onTelemetrySample(const TelemetrySample& sample) {
         // this happening silently forever.
         ++m_diagnostics.schemaUnknown;
         emit unknownSchema(sample.sourceId, sample.topicId, sample.schemaVersion);
-        emit diagnosticsChanged();
         return;
     }
 
@@ -49,19 +48,16 @@ void TelemetryFieldRouter::onTelemetrySample(const TelemetrySample& sample) {
         btp::ByteView body{};
         if (reader.body(&body) != btp::MessageError::Ok) {
             ++m_diagnostics.decodeErrors;
-            emit diagnosticsChanged();
             return;
         }
         QStringDecoder decoder(QStringDecoder::Utf8);
         const QString text = decoder.decode(QByteArrayView(body.data, qsizetype(body.size)));
         if (decoder.hasError()) {
             ++m_diagnostics.decodeErrors;
-            emit diagnosticsChanged();
             return;
         }
         ++m_diagnostics.samplesDecoded;
         emit textSample(sample.sourceId, sample.topicId, sample.timestampUs, text);
-        emit diagnosticsChanged();
         return;
     }
 
@@ -75,14 +71,12 @@ void TelemetryFieldRouter::onTelemetrySample(const TelemetrySample& sample) {
         btp::ByteView body{};
         if (reader.body(&body) != btp::MessageError::Ok) {
             ++m_diagnostics.decodeErrors;
-            emit diagnosticsChanged();
             return;
         }
         ++m_diagnostics.samplesDecoded;
         const QByteArray bytes(reinterpret_cast<const char*>(body.data), qsizetype(body.size));
         emit binarySample(sample.sourceId, sample.topicId, sample.timestampUs,
                           sample.fragmentCount, bytes, sample.schemaVersion);
-        emit diagnosticsChanged();
         return;
     }
 
@@ -95,7 +89,6 @@ void TelemetryFieldRouter::onTelemetrySample(const TelemetrySample& sample) {
         // JSON_UTF8 / CSV_UTF8 are not consumed by the UI; reject rather
         // than guess (each has different validation rules).
         ++m_diagnostics.decodeErrors;
-        emit diagnosticsChanged();
         return;
     }
 
@@ -106,7 +99,6 @@ void TelemetryFieldRouter::onTelemetrySample(const TelemetrySample& sample) {
         btp::SampleReader reader(data, size, specs.data(), specCount, encoding, kBodyOnly);
         if (reader.finish() != btp::MessageError::Ok) {
             ++m_diagnostics.decodeErrors;
-            emit diagnosticsChanged();
             return;
         }
     }
@@ -143,7 +135,6 @@ void TelemetryFieldRouter::onTelemetrySample(const TelemetrySample& sample) {
             emit arraySample(binding, sample.timestampUs, values);
         }
     }
-    emit diagnosticsChanged();
 }
 
 }  // namespace traceview

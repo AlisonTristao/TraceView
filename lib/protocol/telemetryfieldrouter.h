@@ -72,7 +72,6 @@ signals:
     // Forward the declared schema version; consumers must not infer it from length.
     void binarySample(quint32 sourceId, quint16 topicId, quint64 timestampUs,
                       quint8 fragmentCount, const QByteArray& body, quint16 schemaVersion = 1);
-    void diagnosticsChanged();
     // A TELEMETRY sample arrived for (sourceId, topicId, schemaVersion) with
     // no matching catalog entry -- topico 16 PASSO 9: "rejeitar amostra com
     // schema_version desconhecida e solicitar atualizacao" instead of

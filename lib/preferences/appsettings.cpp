@@ -1,5 +1,6 @@
 #include "preferences/appsettings.h"
 
+#include <QMutexLocker>
 #include <QSettings>
 #include <QtMath>
 
@@ -52,14 +53,14 @@ int AppSettings::customRenderFps() const {
 }
 
 QString AppSettings::chartStyleId() const {
-    return QSettings().value(kChartStyleKey, QStringLiteral("dashboard")).toString();
+    return stored(kChartStyleKey, QStringLiteral("dashboard")).toString();
 }
 
 void AppSettings::setChartStyleId(const QString& id) {
     if (id == chartStyleId()) {
         return;
     }
-    QSettings().setValue(kChartStyleKey, id);
+    store(kChartStyleKey, id);
     emit chartStyleChanged();
 }
 
@@ -86,7 +87,7 @@ int AppSettings::repaintIntervalMs() const {
 }
 
 bool AppSettings::subscribeRateOverrideEnabled() const {
-    return QSettings().value(kSubscribeRateOverrideEnabledKey, false).toBool();
+    return stored(kSubscribeRateOverrideEnabledKey, false).toBool();
 }
 
 int AppSettings::subscribeRateOverrideHz() const {
@@ -98,7 +99,7 @@ int AppSettings::recentProjectsLimit() const {
 }
 
 bool AppSettings::autoConnectOnProjectOpen() const {
-    return QSettings().value(kAutoConnectOnProjectOpenKey, true).toBool();
+    return stored(kAutoConnectOnProjectOpenKey, true).toBool();
 }
 
 int AppSettings::terminalScrollbackLines() const {
@@ -106,19 +107,19 @@ int AppSettings::terminalScrollbackLines() const {
 }
 
 bool AppSettings::terminalWordWrap() const {
-    return QSettings().value(kTerminalWordWrapKey, true).toBool();
+    return stored(kTerminalWordWrapKey, true).toBool();
 }
 
 bool AppSettings::terminalAutoScroll() const {
-    return QSettings().value(kTerminalAutoScrollKey, true).toBool();
+    return stored(kTerminalAutoScrollKey, true).toBool();
 }
 
 bool AppSettings::terminalCursorBlink() const {
-    return QSettings().value(kTerminalCursorBlinkKey, true).toBool();
+    return stored(kTerminalCursorBlinkKey, true).toBool();
 }
 
 bool AppSettings::autoReconnect() const {
-    return QSettings().value(kAutoReconnectKey, true).toBool();
+    return stored(kAutoReconnectKey, true).toBool();
 }
 
 int AppSettings::reconnectIntervalSeconds() const {
@@ -126,15 +127,15 @@ int AppSettings::reconnectIntervalSeconds() const {
 }
 
 bool AppSettings::manifestCacheEnabled() const {
-    return QSettings().value(kManifestCacheEnabledKey, true).toBool();
+    return stored(kManifestCacheEnabledKey, true).toBool();
 }
 
 bool AppSettings::manifestCacheSkipOnHello() const {
-    return QSettings().value(kManifestCacheSkipOnHelloKey, false).toBool();
+    return stored(kManifestCacheSkipOnHelloKey, false).toBool();
 }
 
 bool AppSettings::verboseSerialLogging() const {
-    return QSettings().value(kVerboseSerialLoggingKey, false).toBool();
+    return stored(kVerboseSerialLoggingKey, false).toBool();
 }
 
 int AppSettings::frameLogCapacity() const {
@@ -146,11 +147,11 @@ int AppSettings::notificationHistoryCapacity() const {
 }
 
 bool AppSettings::updateAutoCheckEnabled() const {
-    return QSettings().value(kUpdateAutoCheckEnabledKey, true).toBool();
+    return stored(kUpdateAutoCheckEnabledKey, true).toBool();
 }
 
 qint64 AppSettings::updateLastCheckEpochMs() const {
-    return QSettings().value(kUpdateLastCheckEpochMsKey, 0).toLongLong();
+    return stored(kUpdateLastCheckEpochMsKey, 0).toLongLong();
 }
 
 void AppSettings::setRenderProfile(RenderProfile profile) {
@@ -166,7 +167,7 @@ void AppSettings::setCustomRenderFps(int fps) {
 }
 
 void AppSettings::setSubscribeRateOverrideEnabled(bool enabled) {
-    QSettings().setValue(kSubscribeRateOverrideEnabledKey, enabled);
+    store(kSubscribeRateOverrideEnabledKey, enabled);
     emit dashboardPreferencesChanged();
 }
 
@@ -183,7 +184,7 @@ void AppSettings::setRecentProjectsLimit(int limit) {
 }
 
 void AppSettings::setAutoConnectOnProjectOpen(bool enabled) {
-    QSettings().setValue(kAutoConnectOnProjectOpenKey, enabled);
+    store(kAutoConnectOnProjectOpenKey, enabled);
     emit generalPreferencesChanged();
 }
 
@@ -193,32 +194,32 @@ void AppSettings::setTerminalScrollbackLines(int lines) {
 }
 
 void AppSettings::setTerminalWordWrap(bool enabled) {
-    QSettings().setValue(kTerminalWordWrapKey, enabled);
+    store(kTerminalWordWrapKey, enabled);
     emit terminalPreferencesChanged();
 }
 
 void AppSettings::setTerminalAutoScroll(bool enabled) {
-    QSettings().setValue(kTerminalAutoScrollKey, enabled);
+    store(kTerminalAutoScrollKey, enabled);
     emit terminalPreferencesChanged();
 }
 
 void AppSettings::setTerminalCursorBlink(bool enabled) {
-    QSettings().setValue(kTerminalCursorBlinkKey, enabled);
+    store(kTerminalCursorBlinkKey, enabled);
     emit terminalPreferencesChanged();
 }
 
 void AppSettings::setAutoReconnect(bool enabled) {
-    QSettings().setValue(kAutoReconnectKey, enabled);
+    store(kAutoReconnectKey, enabled);
     emit connectionPreferencesChanged();
 }
 
 void AppSettings::setManifestCacheEnabled(bool enabled) {
-    QSettings().setValue(kManifestCacheEnabledKey, enabled);
+    store(kManifestCacheEnabledKey, enabled);
     emit connectionPreferencesChanged();
 }
 
 void AppSettings::setManifestCacheSkipOnHello(bool skip) {
-    QSettings().setValue(kManifestCacheSkipOnHelloKey, skip);
+    store(kManifestCacheSkipOnHelloKey, skip);
     emit connectionPreferencesChanged();
 }
 
@@ -228,19 +229,19 @@ void AppSettings::setReconnectIntervalSeconds(int seconds) {
 }
 
 bool AppSettings::agentBridgeEnabled() const {
-    return QSettings().value(kAgentBridgeEnabledKey, false).toBool();
+    return stored(kAgentBridgeEnabledKey, false).toBool();
 }
 
 void AppSettings::setAgentBridgeEnabled(bool enabled) {
     if (enabled == agentBridgeEnabled()) {
         return;
     }
-    QSettings().setValue(kAgentBridgeEnabledKey, enabled);
+    store(kAgentBridgeEnabledKey, enabled);
     emit agentPreferencesChanged();
 }
 
 void AppSettings::setVerboseSerialLogging(bool enabled) {
-    QSettings().setValue(kVerboseSerialLoggingKey, enabled);
+    store(kVerboseSerialLoggingKey, enabled);
     emit connectionPreferencesChanged();
 }
 
@@ -253,20 +254,43 @@ void AppSettings::setNotificationHistoryCapacity(int entries) {
 }
 
 void AppSettings::setUpdateAutoCheckEnabled(bool enabled) {
-    QSettings().setValue(kUpdateAutoCheckEnabledKey, enabled);
+    store(kUpdateAutoCheckEnabledKey, enabled);
     emit updatePreferencesChanged();
 }
 
 void AppSettings::setUpdateLastCheckEpochMs(qint64 epochMs) {
-    QSettings().setValue(kUpdateLastCheckEpochMsKey, epochMs);
+    store(kUpdateLastCheckEpochMsKey, epochMs);
 }
 
 int AppSettings::value(const char* key, int fallback, int minimum, int maximum) const {
-    return qBound(minimum, QSettings().value(key, fallback).toInt(), maximum);
+    return qBound(minimum, stored(key, fallback).toInt(), maximum);
 }
 
 void AppSettings::setValue(const char* key, int settingValue) {
-    QSettings().setValue(key, settingValue);
+    store(key, settingValue);
+}
+
+QVariant AppSettings::stored(const char* key, const QVariant& fallback) const {
+    const QByteArray cacheKey(key);
+    {
+        const QMutexLocker lock(&m_cacheMutex);
+        const auto it = m_cache.constFind(cacheKey);
+        if (it != m_cache.constEnd()) {
+            return it.value().isValid() ? it.value() : fallback;
+        }
+    }
+    // An absent key is cached as an invalid QVariant, so the fallback (which
+    // differs per call site only in theory) is still applied on every read.
+    const QVariant fromDisk = QSettings().value(QLatin1String(key));
+    const QMutexLocker lock(&m_cacheMutex);
+    m_cache.insert(cacheKey, fromDisk);
+    return fromDisk.isValid() ? fromDisk : fallback;
+}
+
+void AppSettings::store(const char* key, const QVariant& settingValue) {
+    QSettings().setValue(QLatin1String(key), settingValue);
+    const QMutexLocker lock(&m_cacheMutex);
+    m_cache.insert(QByteArray(key), settingValue);
 }
 
 }  // namespace traceview

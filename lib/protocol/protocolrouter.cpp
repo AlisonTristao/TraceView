@@ -53,7 +53,6 @@ void ProtocolRouter::onFrameReceived(const BtpFrame& frame) {
             ++m_diagnostics.unknownTypeDropped;
             break;
     }
-    emit diagnosticsChanged();
 }
 
 }  // namespace traceview

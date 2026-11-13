@@ -220,8 +220,17 @@ void ThemeManager::persistCustomThemes() const {
 
 void ThemeManager::applyCurrentTheme() {
     if (auto* app = qApp) {
-        app->setStyleSheet(scaleStyleSheetRadii(buildStyleSheet(currentTheme()),
-                                                currentFrameStyle().controlRadiusScale));
+        // qApp->setStyleSheet() re-polishes every widget in the app, one of
+        // the most expensive calls in Qt Widgets. Most appearance options
+        // (data colours, density, card header, canvas, motion) do not change
+        // the sheet at all, and a preset applies several options in a row --
+        // only an actually different sheet is worth that cost. Listeners
+        // still get themeChanged() and repaint themselves.
+        const QString sheet = scaleStyleSheetRadii(buildStyleSheet(currentTheme()),
+                                                   currentFrameStyle().controlRadiusScale);
+        if (sheet != app->styleSheet()) {
+            app->setStyleSheet(sheet);
+        }
     }
     emit themeChanged(currentTheme());
 }

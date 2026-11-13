@@ -4,6 +4,7 @@
 #include <QHash>
 #include <QObject>
 #include <QPointer>
+#include <QSet>
 #include <QString>
 #include <QStringList>
 
@@ -76,6 +77,11 @@ private:
     QLocalServer* m_server = nullptr;
     QHash<QLocalSocket*, McpSession*> m_sessions;
     QHash<QLocalSocket*, QByteArray> m_buffers;
+    // Sockets whose onReadyRead() is on the stack. A tool that opens a modal
+    // dialog (confirm / allowHardware) spins a nested event loop, and a
+    // readyRead arriving there must only append its bytes: the outer call
+    // keeps consuming lines in arrival order.
+    QSet<QLocalSocket*> m_dispatching;
 };
 
 }  // namespace traceview

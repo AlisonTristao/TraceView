@@ -70,6 +70,51 @@ qreal zeroBaselineY(const QRect& plotRect, double yMin, double yMax) {
     return plotRect.bottom() - plotRect.height() * zeroT;
 }
 
+// When a series packs more than two samples into each pixel column (a long
+// time axis at a high rate), drawing every sample only overdraws the same
+// pixels: 60k points over 400 px is 150 per column. Keeps, per column, the
+// first, lowest, highest and last sample in their original order (the "M4"
+// reduction) -- the polyline through them covers exactly the pixels the full
+// one would, at most four points per column. Empty when not that dense.
+QVector<int> denseColumnSamples(const QVector<double>& values, const QRect& plotRect,
+                                qreal step) {
+    QVector<int> kept;
+    if (step <= 0.0 || step >= 0.5 || values.size() < 8) {
+        return kept;
+    }
+    kept.reserve(plotRect.width() * 4 + 4);
+    const int last = values.size() - 1;
+    auto columnOf = [&](int i) {
+        return qFloor(plotRect.right() - step * (last - i));
+    };
+    int i = 0;
+    while (i <= last) {
+        const int column = columnOf(i);
+        const int first = i;
+        int low = i;
+        int high = i;
+        // NaN never compares, so a gap sample is still kept as first/last.
+        while (i <= last && columnOf(i) == column) {
+            if (values[i] < values[low]) {
+                low = i;
+            }
+            if (values[i] > values[high]) {
+                high = i;
+            }
+            ++i;
+        }
+        const int end = i - 1;
+        const int a = qMin(low, high);
+        const int b = qMax(low, high);
+        for (const int index : {first, a, b, end}) {
+            if (kept.isEmpty() || kept.last() != index) {
+                kept.append(index);
+            }
+        }
+    }
+    return kept;
+}
+
 // Renders one series' buffered values into plotRect, either as the discrete
 // per-sample glyphs a Cross/Asterisk ChartSeriesStyle always draws (unaffected
 // by `interpolation` -- those series declare themselves point-only regardless
@@ -94,12 +139,18 @@ void paintLineSeries(QPainter& painter, const QRect& plotRect, int capacity,
         const qreal y = plotRect.bottom() - plotRect.height() * t;
         return QPointF(x, y);
     };
+    // Every drawing loop below walks sampleCount samples through sampleAt():
+    // all of them, or the per-column reduction when they are denser than the
+    // pixels they land on.
+    const QVector<int> dense = denseColumnSamples(values, plotRect, step);
+    const int sampleCount = dense.isEmpty() ? int(values.size()) : int(dense.size());
+    auto sampleAt = [&](int k) { return dense.isEmpty() ? k : dense[k]; };
 
     if (isChartMarkerStyle(seriesConfig.style)) {
         painter.setPen(QPen(seriesConfig.color, lineWidth));
         constexpr qreal kMarkerSize = 4.0;
-        for (int i = 0; i < values.size(); ++i) {
-            paintChartMarker(painter, pointAt(i), seriesConfig.style, kMarkerSize);
+        for (int k = 0; k < sampleCount; ++k) {
+            paintChartMarker(painter, pointAt(sampleAt(k)), seriesConfig.style, kMarkerSize);
         }
         return;
     }
@@ -111,8 +162,8 @@ void paintLineSeries(QPainter& painter, const QRect& plotRect, int capacity,
         // hot path.
         painter.setBrush(seriesConfig.color);
         constexpr qreal kDotRadius = 2.5;
-        for (int i = 0; i < values.size(); ++i) {
-            const QPointF p = pointAt(i);
+        for (int k = 0; k < sampleCount; ++k) {
+            const QPointF p = pointAt(sampleAt(k));
             painter.drawLine(QPointF(p.x(), baselineY), p);
             painter.drawEllipse(p, kDotRadius, kDotRadius);
         }
@@ -123,8 +174,8 @@ void paintLineSeries(QPainter& painter, const QRect& plotRect, int capacity,
         painter.setPen(Qt::NoPen);
         painter.setBrush(seriesConfig.color);
         constexpr qreal kDotRadius = 2.5;
-        for (int i = 0; i < values.size(); ++i) {
-            painter.drawEllipse(pointAt(i), kDotRadius, kDotRadius);
+        for (int k = 0; k < sampleCount; ++k) {
+            painter.drawEllipse(pointAt(sampleAt(k)), kDotRadius, kDotRadius);
         }
         return;
     }
@@ -135,11 +186,11 @@ void paintLineSeries(QPainter& painter, const QRect& plotRect, int capacity,
     // than a QPainterPath for a 100+ point series repainted every frame (see
     // tools/chart_benchmark).
     QPolygonF points;
-    points.reserve(interpolation == ChartLineInterpolation::ZeroOrderHold ? values.size() * 2 - 1
-                                                                          : values.size());
-    for (int i = 0; i < values.size(); ++i) {
-        const QPointF p = pointAt(i);
-        if (i > 0 && interpolation == ChartLineInterpolation::ZeroOrderHold) {
+    points.reserve(interpolation == ChartLineInterpolation::ZeroOrderHold ? sampleCount * 2 - 1
+                                                                          : sampleCount);
+    for (int k = 0; k < sampleCount; ++k) {
+        const QPointF p = pointAt(sampleAt(k));
+        if (k > 0 && interpolation == ChartLineInterpolation::ZeroOrderHold) {
             points.append(QPointF(p.x(), points.last().y()));
         }
         points.append(p);
@@ -850,12 +901,11 @@ QVector<double> StyledChartWidget::easedValues(const QVector<double>& targets, d
             settled = false;
         }
     }
-    if (!settled && !m_easeRepaintPending) {
-        m_easeRepaintPending = true;
-        QTimer::singleShot(16, this, [this] {
-            m_easeRepaintPending = false;
-            update();
-        });
+    if (!settled) {
+        // Same pending flag and interval as data repaints: the next eased
+        // frame rides along with the render profile's frame instead of
+        // running its own 60 Hz loop next to it.
+        scheduleRepaint();
     }
     return m_eased;
 }
@@ -1282,7 +1332,8 @@ void DummyLineChartWidget::paintInfoRows(QPainter& painter, const ChartCartesian
         // Sample k sits (newest - k) samples before the newest one.
         const int first = markers ? newest - int(std::floor(agoHi)) : 0;
         const int last = markers ? newest - int(std::ceil(agoLo)) : newest;
-        const SeriesStatistics stats = seriesStatistics(series, first, last);
+        const SeriesStatistics stats =
+            seriesStatistics(series, first, last, statistics.contains(QLatin1String("median")));
         QVector<ChartInfoField> fields;
         for (const StatisticFormat& format : kFormats) {
             const QString id = QLatin1String(format.id);

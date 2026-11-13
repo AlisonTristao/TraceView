@@ -270,6 +270,29 @@ private:
     QString createWorkspace(const QString& name);
     void deleteWorkspace(const QString& id);
     // The dialog-free half of onNewProject().
+    // Unsaved-changes tracking. There is no single dirty flag to hook (the
+    // dashboard undo stack is cleared on every workspace switch, and
+    // appearance/workspace edits are not undoable), so the project is
+    // compared as serialized JSON against what was last loaded or saved.
+    QByteArray projectSnapshot();
+    void markProjectClean();
+    bool hasUnsavedChanges();
+    // Asks Save / Discard / Cancel when there are unsaved changes. True when
+    // the caller may go on (nothing to lose, saved, or discarded).
+    bool confirmDiscardChanges(const QString& title);
+    QByteArray m_savedProjectSnapshot;
+    // Re-baselines the snapshot on scope exit when the project was clean on
+    // entry -- for app-driven rewrites of the project JSON (binding
+    // resolution, workspace switch) that are not user edits.
+    class KeepCleanGuard {
+    public:
+        explicit KeepCleanGuard(MainWindow* window);
+        ~KeepCleanGuard();
+
+    private:
+        MainWindow* m_window;
+        bool m_wasClean;
+    };
     void startNewProject();
     // Every serial port the OS lists, as the device config dialog offers
     // them; empty in a build without the serial transport.
@@ -472,6 +495,9 @@ private:
     void onDeviceAdded(const Device& device);
     void onDeviceRemoved(const QString& id);
     void onDeviceUpdated(const Device& device);
+    void onDeviceLiveStateChanged(const Device& device);
+    // Shared body of the two above; `userEdit` = false for live state.
+    void applyDeviceChange(const Device& device, bool userEdit);
     // Mirrors a DeviceConnection's real state back into DevicesGrid's own
     // Device::connected (DeviceCard's status dot reads that field).
     void onDeviceConnectionStateChanged(const QString& deviceId, bool connected);
@@ -575,9 +601,8 @@ private:
     // Script icon on a device's card (DeviceCard::scriptRequested) -- opens
     // that device's DiagramScriptRuntime script editor
     // (DiagramBlockConfigDialog). The canvas/diagram tab this used to live
-    // under is shelved for now (lib/diagram/diagrampage.h and friends are
-    // unused but kept for later); the runtime and its live telemetry/
-    // terminal wiring are not -- see m_scriptRuntimes below.
+    // under was removed (it is in git history before 4.10.1); the runtime
+    // and its live telemetry/terminal wiring remain -- see m_scriptRuntimes.
     void onDeviceScriptRequested(const QString& deviceId);
     // Status-bar history button / View menu -- shows (or raises) the non-modal
     // window listing every status-bar message posted this session.

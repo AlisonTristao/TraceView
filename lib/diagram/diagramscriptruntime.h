@@ -116,6 +116,9 @@ signals:
 
 private:
     void callIfDefined(const QString& functionName, const QJSValueList& args);
+    // The script's global `functionName`, or undefined when there is no
+    // script (and so no engine) at all.
+    QJSValue callbackNamed(const QString& functionName) const;
     // Shared by callIfDefined() (looked up by name) and the timer callbacks
     // (already held as a QJSValue) -- calling and reporting a callback error
     // is otherwise identical either way.
@@ -127,7 +130,7 @@ private:
     // the QJSEngine they close over is discarded, and from the destructor.
     void clearAllTimers();
 
-    QJSEngine* m_engine;
+    QJSEngine* m_engine = nullptr;  // created by setScript() for a non-empty script only
     QStringList m_logHistory;
     QHash<int, QTimer*> m_timers;
     int m_nextTimerId = 1;

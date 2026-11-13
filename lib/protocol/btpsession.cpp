@@ -66,9 +66,12 @@ bool BtpSession::emitFramed(const std::uint8_t* frame, std::size_t frameSize) {
     if (btp::cobs_max_encoded_size(frameSize, &cobsCapacity) != btp::CobsError::Ok) {
         return false;
     }
-    std::vector<std::uint8_t> cobsBlock(cobsCapacity);
+    if (m_sendCobsScratch.size() < cobsCapacity) {
+        m_sendCobsScratch.resize(cobsCapacity);
+    }
+    std::uint8_t* cobsBlock = m_sendCobsScratch.data();
     std::size_t cobsBytes = 0;
-    if (btp::cobs_encode(frame, frameSize, cobsBlock.data(), cobsBlock.size(), &cobsBytes) !=
+    if (btp::cobs_encode(frame, frameSize, cobsBlock, cobsCapacity, &cobsBytes) !=
         btp::CobsError::Ok) {
         return false;
     }
@@ -76,7 +79,7 @@ bool BtpSession::emitFramed(const std::uint8_t* frame, std::size_t frameSize) {
     QByteArray packet;
     packet.reserve(int(cobsBytes) + 2);
     packet.append('\0');
-    packet.append(reinterpret_cast<const char*>(cobsBlock.data()), int(cobsBytes));
+    packet.append(reinterpret_cast<const char*>(cobsBlock), int(cobsBytes));
     packet.append('\0');
     emit bytesToWrite(packet);
     return true;
@@ -86,15 +89,17 @@ bool BtpSession::sendFrame(const btp::Frame& frame) {
     // Axis (b): the encode profile decides the ceiling, so it also decides
     // how big the encode buffer has to be. btp::encode() enforces that
     // ceiling itself and writes nothing when the payload exceeds it.
-    std::vector<std::uint8_t> encoded(m_encodeProfile.max_frame_size);
+    if (m_sendFrameScratch.size() < m_encodeProfile.max_frame_size) {
+        m_sendFrameScratch.resize(m_encodeProfile.max_frame_size);
+    }
     std::size_t frameBytes = 0;
-    if (btp::encode(frame, m_encodeProfile, encoded.data(), encoded.size(), &frameBytes) !=
-        btp::Error::Ok) {
+    if (btp::encode(frame, m_encodeProfile, m_sendFrameScratch.data(),
+                    m_encodeProfile.max_frame_size, &frameBytes) != btp::Error::Ok) {
         return false;
     }
     // Axis (a) is applied entirely separately, and knows nothing about which
     // profile produced these octets.
-    if (!emitFramed(encoded.data(), frameBytes)) {
+    if (!emitFramed(m_sendFrameScratch.data(), frameBytes)) {
         return false;
     }
     emit frameSent(BtpFrame::fromHeaderAndPayload(frame.header, frame.payload));
@@ -219,8 +224,6 @@ void BtpSession::feedBytes(const QByteArray& data) {
     // than requiring this transport-agnostic class to own a QTimer.
     m_receiver.expire(static_cast<std::uint64_t>(QDateTime::currentMSecsSinceEpoch()));
 
-    bool diagnosticsDirty = false;
-
     if (m_framing == Framing::PreFramed) {
         // No COBS to decode -- the transport below already handed us exactly
         // one bounded chunk, which is either a complete BTP frame or nothing
@@ -239,7 +242,6 @@ void BtpSession::feedBytes(const QByteArray& data) {
             btp::decode(reinterpret_cast<const std::uint8_t*>(data.constData()),
                         static_cast<std::size_t>(data.size()), btp::kSerialTransport, &decoded);
         if (error == btp::Error::Ok) {
-            diagnosticsDirty = true;
             // btp::decode() only accepts an input whose size is exactly
             // 40 + payload_size, so `data` IS the frame octets, with nothing
             // to trim -- forward it as is, without a copy or a re-encode.
@@ -251,11 +253,7 @@ void BtpSession::feedBytes(const QByteArray& data) {
             } else {
                 ++m_diagnostics.frameErrors;
             }
-            diagnosticsDirty = true;
             emit frameRejected(QString::fromLatin1(btp::error_string(error)));
-        }
-        if (diagnosticsDirty) {
-            emit diagnosticsChanged();
         }
         return;
     }
@@ -267,7 +265,6 @@ void BtpSession::feedBytes(const QByteArray& data) {
             case btp::SerialDecodeEvent::None:
                 break;
             case btp::SerialDecodeEvent::Frame:
-                diagnosticsDirty = true;
                 // btp::SerialDecoder hands back a DecodedFrame (header +
                 // payload view + crc32), never the whole frame as one span.
                 // The frame octets do exist though, contiguously: decode()
@@ -292,7 +289,6 @@ void BtpSession::feedBytes(const QByteArray& data) {
                 break;
             case btp::SerialDecodeEvent::CobsError:
                 ++m_diagnostics.cobsErrors;
-                diagnosticsDirty = true;
                 emit frameRejected(QStringLiteral("COBS decode error"));
                 break;
             case btp::SerialDecodeEvent::FrameError:
@@ -301,12 +297,10 @@ void BtpSession::feedBytes(const QByteArray& data) {
                 } else {
                     ++m_diagnostics.frameErrors;
                 }
-                diagnosticsDirty = true;
                 emit frameRejected(QString::fromLatin1(btp::error_string(result.frame_error)));
                 break;
             case btp::SerialDecodeEvent::Overflow:
                 ++m_diagnostics.overflowDrops;
-                diagnosticsDirty = true;
                 emit frameRejected(
                     QStringLiteral("serial candidate exceeded the COBS block limit"));
                 break;
@@ -317,9 +311,6 @@ void BtpSession::feedBytes(const QByteArray& data) {
                 emit frameRejected(QStringLiteral("invalid decoder configuration"));
                 break;
         }
-    }
-    if (diagnosticsDirty) {
-        emit diagnosticsChanged();
     }
 }
 

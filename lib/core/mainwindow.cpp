@@ -8,6 +8,7 @@
 #include <QColor>
 #include <QCoreApplication>
 #include <QDateTime>
+#include <QElapsedTimer>
 #include <QDialog>
 #include <QDesktopServices>
 #include <QEvent>
@@ -528,6 +529,8 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
                     8000, StatusSeverity::Warning);
             });
     connect(m_devicesGrid, &DevicesGrid::deviceUpdated, this, &MainWindow::onDeviceUpdated);
+    connect(m_devicesGrid, &DevicesGrid::deviceLiveStateChanged, this,
+            &MainWindow::onDeviceLiveStateChanged);
     connect(m_devicesGrid, &DevicesGrid::configDialogActiveChanged, this,
             [this](const QString& deviceId, bool active) {
                 if (DeviceConnection* connection = m_deviceConnections.value(deviceId)) {
@@ -1210,7 +1213,10 @@ void MainWindow::onWidgetDataCleared(DashboardWidget* widget) {
 }
 
 void MainWindow::updateSubscriptionsWorkspace() {
-    if (!m_subscriptionsTable) {
+    // Every backend's catalog/subscription/status change lands here; while
+    // the table is hidden there is nothing to rebuild. switchToWorkspace()
+    // rebuilds it as it is shown.
+    if (!m_subscriptionsTable || !m_subscriptionsWorkspaceActive) {
         return;
     }
     const int scrollPosition = m_subscriptionsTable->verticalScrollBar()->value();
@@ -2218,6 +2224,9 @@ void MainWindow::renameWorkspace(const QString& id) {
 }
 
 void MainWindow::switchToWorkspace(const QString& id) {
+    // Showing a workspace may renormalize its stored JSON (an older layout
+    // rebuilt by the current grid); that alone must not count as unsaved.
+    const KeepCleanGuard keepClean(this);
     WorkspaceManager& workspaces = WorkspaceManager::instance();
     m_subscriptionsWorkspaceActive = id == QLatin1String(kSubscriptionsWorkspaceId);
     m_ribbon->setCurrentIndex(m_dashboardTabIndex);
@@ -3069,6 +3078,10 @@ void MainWindow::moveEvent(QMoveEvent* event) {
 }
 
 void MainWindow::closeEvent(QCloseEvent* event) {
+    if (!confirmDiscardChanges(tr("Close"))) {
+        event->ignore();
+        return;
+    }
     // Full screen is left out: the window reopens as it was before it.
     QSettings().setValue(kWindowGeometrySettingsKey,
                          isFullScreen() ? m_preFullscreenGeometry : saveGeometry());
@@ -3239,6 +3252,8 @@ QJsonObject MainWindow::resolveWidgetBinding(const QJsonObject& config) const {
 }
 
 void MainWindow::resolveDashboardBindings() {
+    // Filling in names from a newly arrived catalog is not a user edit.
+    const KeepCleanGuard keepClean(this);
     const bool liveChanged = m_dashboardGrid->resolveBindings();
 
     bool savedChanged = false;
@@ -3661,7 +3676,19 @@ LinkDirectory MainWindow::linkDirectory(TransportType forType) {
     LinkDirectory directory;
     if (forType == TransportType::Serial) {
 #ifdef TRACEVIEW_ENABLE_SERIAL
-        directory.ports = currentSerialPorts();
+        // Several auto devices and link probes ask within the same 1 s tick,
+        // and a port enumeration (SetupAPI + registry on Windows) is slow
+        // enough to stutter the UI. One list serves them all for a short
+        // while; the config dialog's picker still enumerates fresh
+        // (serialPortOptions()).
+        static QVector<SerialPortOption> cachedPorts;
+        static QElapsedTimer cachedAt;
+        constexpr qint64 kPortListMaxAgeMs = 1500;
+        if (!cachedAt.isValid() || cachedAt.elapsed() > kPortListMaxAgeMs) {
+            cachedPorts = currentSerialPorts();
+            cachedAt.start();
+        }
+        directory.ports = cachedPorts;
 #endif
         return directory;
     }
@@ -4294,13 +4321,24 @@ void MainWindow::onDeviceRemoved(const QString& id) {
 }
 
 void MainWindow::onDeviceUpdated(const Device& edited) {
+    applyDeviceChange(edited, /*userEdit=*/true);
+}
+
+void MainWindow::onDeviceLiveStateChanged(const Device& device) {
+    // Same re-apply as an edit (in particular reattachHubChildren(): a hub
+    // child must be re-pointed the moment its parent comes up or goes down,
+    // see test_hubtransport), minus lifting the config dialog's pause.
+    applyDeviceChange(device, /*userEdit=*/false);
+}
+
+void MainWindow::applyDeviceChange(const Device& edited, bool userEdit) {
     DeviceConnection* connection = m_deviceConnections.value(edited.id);
     if (!connection) {
         return;
     }
-    // This also runs on every connect/disconnect (setDeviceConnected() emits
-    // deviceUpdated()). Only an actual edit of HOW to reach the device starts
-    // over from the primary link -- anything else keeps the link in use.
+    // This also runs on every connect/disconnect (onDeviceLiveStateChanged).
+    // Only an actual edit of HOW to reach the device starts over from the
+    // primary link -- anything else keeps the link in use.
     Device stored = edited;
     const QByteArray signature = deviceLinksSignature(edited);
     if (m_deviceLinkSignatures.value(edited.id) != signature) {
@@ -4319,8 +4357,12 @@ void MainWindow::onDeviceUpdated(const Device& edited) {
     }
     connection->setLineTerminator(device.lineTerminator);
     // OK / Connect in the config dialog: the user asked for THESE settings
-    // now, so lift the while-editing pause before dialing them.
-    connection->setReconnectPaused(false);
+    // now, so lift the while-editing pause before dialing them. A live
+    // connect/disconnect must not: a link flapping while the dialog is open
+    // would otherwise undo the pause the dialog itself put in place.
+    if (userEdit) {
+        connection->setReconnectPaused(false);
+    }
     applyDeviceTarget(connection, device);
     reattachHubChildren();
     refreshDeviceStatusLabel();
@@ -4427,13 +4469,68 @@ void MainWindow::onPanelConfigChangeRequested(const QJsonObject& config) {
 }
 
 void MainWindow::onNewProject() {
-    if (DialogPresenter::question(
-            this, tr("New Project"),
-            tr("Discard the current dashboard and start a new, empty project?"),
-            QMessageBox::Yes | QMessageBox::No, QMessageBox::No) != QMessageBox::Yes) {
+    if (!confirmDiscardChanges(tr("New Project"))) {
         return;
     }
     startNewProject();
+}
+
+QByteArray MainWindow::projectSnapshot() {
+    syncProjectSections();
+    const ProjectStore& store = ProjectStore::instance();
+    // Left out: what the app changes on its own without the user editing
+    // anything -- which workspace is showing and the breakpoint picked from
+    // the window size.
+    QJsonObject workspaces = store.section("workspaces");
+    workspaces.remove(QLatin1String("activeId"));
+    QJsonArray list = workspaces.value(QLatin1String("list")).toArray();
+    for (int i = 0; i < list.size(); ++i) {
+        QJsonObject entry = list.at(i).toObject();
+        QJsonObject dashboard = entry.value(QLatin1String("dashboard")).toObject();
+        dashboard.remove(QLatin1String("breakpoint"));
+        entry[QLatin1String("dashboard")] = dashboard;
+        list[i] = entry;
+    }
+    workspaces[QLatin1String("list")] = list;
+    return QJsonDocument(
+               QJsonObject{{"workspaces", workspaces}, {"devices", store.section("devices")}})
+        .toJson(QJsonDocument::Compact);
+}
+
+MainWindow::KeepCleanGuard::KeepCleanGuard(MainWindow* window)
+    : m_window(window),
+      m_wasClean(!window->m_savedProjectSnapshot.isEmpty() && !window->hasUnsavedChanges()) {}
+
+MainWindow::KeepCleanGuard::~KeepCleanGuard() {
+    if (m_wasClean) {
+        m_window->markProjectClean();
+    }
+}
+
+void MainWindow::markProjectClean() {
+    m_savedProjectSnapshot = projectSnapshot();
+}
+
+bool MainWindow::hasUnsavedChanges() {
+    return projectSnapshot() != m_savedProjectSnapshot;
+}
+
+bool MainWindow::confirmDiscardChanges(const QString& title) {
+    if (!hasUnsavedChanges()) {
+        return true;
+    }
+    const auto answer = DialogPresenter::question(
+        this, title, tr("The current project has unsaved changes. Save them first?"),
+        QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel, QMessageBox::Save);
+    if (answer == QMessageBox::Discard) {
+        return true;
+    }
+    if (answer != QMessageBox::Save) {
+        return false;
+    }
+    onSaveProject();
+    // Save As cancelled, or the write failed: keep the project open.
+    return !hasUnsavedChanges();
 }
 
 void MainWindow::startNewProject() {
@@ -4447,6 +4544,7 @@ void MainWindow::startNewProject() {
     refreshPropertiesPanel();
     refreshLayersPanel();
     refreshWorkspaceSwitcher();
+    markProjectClean();
     postStatus(tr("Started a new project."), 3000);
 }
 
@@ -4476,6 +4574,7 @@ void MainWindow::onSaveProject() {
         DialogPresenter::warning(this, tr("Save Project"), ProjectStore::instance().lastError());
         return;
     }
+    markProjectClean();
     addRecentFile(path);
 }
 
@@ -4492,6 +4591,7 @@ void MainWindow::onSaveProjectAs() {
         DialogPresenter::warning(this, tr("Save Project"), ProjectStore::instance().lastError());
         return;
     }
+    markProjectClean();
     addRecentFile(path);
 }
 
@@ -4533,6 +4633,7 @@ void MainWindow::onAddToGallery() {
         DialogPresenter::warning(this, tr("Add to Gallery"), ProjectStore::instance().lastError());
         return;
     }
+    markProjectClean();
 
     // The first entry ever added takes over from the built-in example
     // straight away; after that, changing the default is an explicit choice.
@@ -4825,6 +4926,11 @@ void MainWindow::refreshOtaTabDevices() {
 }
 
 void MainWindow::openRecentFile(const QString& path) {
+    // Every user-facing open (Open..., recent list, gallery) lands here; the
+    // agent tools call loadProjectFile() directly and never prompt.
+    if (!confirmDiscardChanges(tr("Open Project"))) {
+        return;
+    }
     if (!loadProjectFile(path)) {
         DialogPresenter::warning(this, tr("Open Project"), ProjectStore::instance().lastError());
         return;
@@ -4872,6 +4978,7 @@ bool MainWindow::loadProjectFile(const QString& path) {
     refreshPropertiesPanel();
     refreshLayersPanel();
     refreshWorkspaceSwitcher();
+    markProjectClean();
     return true;
 }
 

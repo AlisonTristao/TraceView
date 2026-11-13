@@ -6,6 +6,7 @@
 #include <QPainter>
 #include <QStringList>
 
+#include <cstring>
 #include <utility>
 
 #include "traceview/thememanager.h"
@@ -24,6 +25,10 @@ constexpr int kInfoStripHeight = 18;
 // the whole document", the operator resizes the cell to make it legible.
 constexpr int kMinFontPixelSize = 3;
 constexpr int kMaxFontPixelSize = 72;
+// appendText() keeps only the tail past this: a producer streaming text into
+// the board forever would otherwise grow m_text (and every layout pass over
+// it) without bound.
+constexpr int kMaxTextChars = 64 * 1024;
 
 quint32 parseSourceId(const QJsonObject& json) {
     return quint32(json.value("sourceId").toString("0").toULongLong(nullptr, 0));
@@ -175,63 +180,46 @@ QRectF matrixRect(int rowCount, int columnCount, const QRectF& bounds) {
                   matrixSize.width(), matrixSize.height());
 }
 
-void drawBinaryMatrix(QPainter& painter, const QStringList& rows, const QRectF& bounds) {
-    const int rowCount = rows.size();
-    const int columnCount = rows.first().size();
-    const QRectF matrix = matrixRect(rowCount, columnCount, bounds);
+// Draws a rows x cols raster (one image pixel per cell) scaled into the
+// largest centred square-celled rect in `bounds`. Nearest-neighbour scaling
+// (no SmoothPixmapTransform) keeps the cells crisp.
+void drawMatrixImage(QPainter& painter, const QImage& image, const QRectF& bounds) {
+    if (image.isNull()) {
+        return;
+    }
+    const QRectF matrix = matrixRect(image.height(), image.width(), bounds);
     if (matrix.isEmpty()) {
         return;
     }
-
-    const qreal cellWidth = matrix.width() / columnCount;
-    const qreal cellHeight = matrix.height() / rowCount;
-
-    // Start with the zero colour in one pass. Drawing cells from accumulated
-    // boundaries below avoids gaps from rounding when the cells are fractional
-    // pixels wide.
-    painter.fillRect(matrix, Qt::white);
-    painter.setPen(Qt::NoPen);
-    painter.setBrush(Qt::black);
-    for (int row = 0; row < rowCount; ++row) {
-        for (int column = 0; column < columnCount; ++column) {
-            if (rows.at(row).at(column) != QLatin1Char('1')) {
-                continue;
-            }
-            const qreal left = matrix.left() + column * cellWidth;
-            const qreal top = matrix.top() + row * cellHeight;
-            const qreal right = matrix.left() + (column + 1) * cellWidth;
-            const qreal bottom = matrix.top() + (row + 1) * cellHeight;
-            painter.drawRect(QRectF(left, top, right - left, bottom - top));
-        }
-    }
+    painter.setRenderHint(QPainter::SmoothPixmapTransform, false);
+    painter.drawImage(matrix, image);
 }
 
-// Same raster layout as drawBinaryMatrix, but each cell gets its own
-// grayscale fill instead of a shared black/white brush -- used for decoded
-// OPAQUE_BYTES samples (see decodeMatrix()), which carry a per-cell level
-// rather than a '0'/'1' character.
-void drawGrayMatrix(QPainter& painter, int rowCount, int columnCount,
-                    const QVector<quint8>& samples, const QRectF& bounds) {
-    const QRectF matrix = matrixRect(rowCount, columnCount, bounds);
-    if (matrix.isEmpty()) {
-        return;
+QImage grayImage(int rows, int cols, const QVector<quint8>& samples) {
+    if (rows <= 0 || cols <= 0 || samples.size() != rows * cols) {
+        return {};
     }
+    QImage image(cols, rows, QImage::Format_Grayscale8);
+    for (int row = 0; row < rows; ++row) {
+        std::memcpy(image.scanLine(row), samples.constData() + row * cols, size_t(cols));
+    }
+    return image;
+}
 
-    const qreal cellWidth = matrix.width() / columnCount;
-    const qreal cellHeight = matrix.height() / rowCount;
-
-    painter.setPen(Qt::NoPen);
-    for (int row = 0; row < rowCount; ++row) {
-        for (int column = 0; column < columnCount; ++column) {
-            const quint8 level = samples.at(row * columnCount + column);
-            painter.setBrush(QColor(level, level, level));
-            const qreal left = matrix.left() + column * cellWidth;
-            const qreal top = matrix.top() + row * cellHeight;
-            const qreal right = matrix.left() + (column + 1) * cellWidth;
-            const qreal bottom = matrix.top() + (row + 1) * cellHeight;
-            painter.drawRect(QRectF(left, top, right - left, bottom - top));
+QImage binaryImage(const QStringList& rows) {
+    if (rows.isEmpty()) {
+        return {};
+    }
+    const int cols = rows.first().size();
+    QImage image(cols, rows.size(), QImage::Format_Grayscale8);
+    for (int row = 0; row < rows.size(); ++row) {
+        uchar* line = image.scanLine(row);
+        const QString& bits = rows.at(row);
+        for (int column = 0; column < cols; ++column) {
+            line[column] = bits.at(column) == QLatin1Char('1') ? 0 : 255;
         }
     }
+    return image;
 }
 
 // Text for the strip drawn above a decoded gray matrix (see paintEvent()).
@@ -280,6 +268,7 @@ void TextBoardWidget::setConfig(const QJsonObject& config) {
     // matching sample (and after constructing/loading a fresh widget).
     if (!m_hasLiveText) {
         m_text = m_config.initialText;
+        textChanged();
     }
     if (bindingChanged) {
         m_hasGrayMatrix = false;
@@ -292,6 +281,7 @@ void TextBoardWidget::setText(const QString& text) {
         return;
     }
     m_text = text;
+    textChanged();
     m_hasLiveText = true;
     m_hasGrayMatrix = false;
     update();
@@ -302,6 +292,17 @@ void TextBoardWidget::appendText(const QString& text) {
         return;
     }
     m_text += text;
+    if (m_text.size() > kMaxTextChars) {
+        // Drop whole lines from the front where possible, so the board does
+        // not start mid-line.
+        int cut = m_text.size() - kMaxTextChars;
+        const int newline = m_text.indexOf(QLatin1Char('\n'), cut);
+        if (newline >= 0 && newline + 1 < m_text.size()) {
+            cut = newline + 1;
+        }
+        m_text.remove(0, cut);
+    }
+    textChanged();
     m_hasLiveText = true;
     m_hasGrayMatrix = false;
     update();
@@ -312,15 +313,14 @@ void TextBoardWidget::clearText() {
         return;
     }
     m_text.clear();
+    textChanged();
     m_hasLiveText = true;
     m_hasGrayMatrix = false;
     update();
 }
 
 void TextBoardWidget::setGrayMatrix(int rows, int cols, QVector<quint8> samples) {
-    m_grayRows = rows;
-    m_grayCols = cols;
-    m_graySamples = std::move(samples);
+    m_grayImage = grayImage(rows, cols, samples);
     m_hasGrayMatrix = true;
     update();
 }
@@ -364,18 +364,35 @@ void TextBoardWidget::onBinarySample(quint32 sourceId, quint16 topicId, quint64 
     setGrayMatrix(decoded.rows, decoded.cols, decoded.samples);
 }
 
+void TextBoardWidget::textChanged() {
+    m_layoutValid = false;
+}
+
 QStringList TextBoardWidget::layoutLines() const {
-    if (m_text.isEmpty()) {
-        return QStringList{QString()};
+    if (!m_layoutValid) {
+        if (m_text.isEmpty()) {
+            m_layoutLines = QStringList{QString()};
+        } else {
+            QString body = m_text;
+            if (body.endsWith(QLatin1Char('\n'))) {
+                body.chop(1);
+            }
+            m_layoutLines = body.split(QLatin1Char('\n'));
+        }
+        m_layoutValid = true;
+        // Derived from the lines just split, so refreshed with them.
+        m_binaryRows = scanBinaryMatrixRows();
+        m_binaryImage = binaryImage(m_binaryRows);
     }
-    QString body = m_text;
-    if (body.endsWith(QLatin1Char('\n'))) {
-        body.chop(1);
-    }
-    return body.split(QLatin1Char('\n'));
+    return m_layoutLines;
 }
 
 QStringList TextBoardWidget::binaryMatrixRows() const {
+    layoutLines();
+    return m_binaryRows;
+}
+
+QStringList TextBoardWidget::scanBinaryMatrixRows() const {
     QStringList best;
     QStringList current;
     int currentWidth = 0;
@@ -388,7 +405,7 @@ QStringList TextBoardWidget::binaryMatrixRows() const {
         currentWidth = 0;
     };
 
-    for (const QString& line : layoutLines()) {
+    for (const QString& line : m_layoutLines) {
         const QString bits = binaryBitsInLine(line);
         if (bits.isEmpty()) {
             finishCurrent();
@@ -466,14 +483,13 @@ void TextBoardWidget::paintEvent(QPaintEvent* event) {
 
         painter.setRenderHint(QPainter::Antialiasing, false);
         const QRectF matrixBounds(0, kInfoStripHeight, width(), height() - kInfoStripHeight);
-        drawGrayMatrix(painter, m_grayRows, m_grayCols, m_graySamples, matrixBounds);
+        drawMatrixImage(painter, m_grayImage, matrixBounds);
         return;
     }
 
-    const QStringList matrixRows = binaryMatrixRows();
-    if (!matrixRows.isEmpty()) {
+    if (!binaryMatrixRows().isEmpty()) {
         painter.setRenderHint(QPainter::Antialiasing, false);
-        drawBinaryMatrix(painter, matrixRows, QRectF(QPointF(0, 0), size()));
+        drawMatrixImage(painter, m_binaryImage, QRectF(QPointF(0, 0), size()));
         return;
     }
 

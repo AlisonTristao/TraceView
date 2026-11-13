@@ -4,6 +4,7 @@
 #include <QString>
 #include <QVector>
 #include <atomic>
+#include <mutex>
 
 #include "transport.h"
 
@@ -83,6 +84,10 @@ private:
     void readLoop();
 
     hid_device* m_handle = nullptr;
+    // Guards m_handle between write() (UI thread) and the hid_close() at the
+    // end of readLoop() (reader thread): an unplug mid-write would otherwise
+    // let the reader close the handle while hid_write() is still using it.
+    std::mutex m_handleMutex;
     QString m_path;
     QThread* m_thread = nullptr;
     // Set before the thread is asked to stop; readLoop() polls it between

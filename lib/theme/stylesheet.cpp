@@ -1,6 +1,7 @@
 #include "stylesheet.h"
 
 #include <QDir>
+#include <QFileInfo>
 #include <QPainter>
 #include <QPixmap>
 #include <QPolygon>
@@ -29,6 +30,16 @@ QString cssColor(const QColor& c) {
 // themed triangle is written to a temp file each time the stylesheet is
 // (re)built and referenced by that path.
 QString arrowImagePath(const QColor& color, const QString& fileTag, bool pointingDown) {
+    // Named by colour: a given name always holds the same image, so it is
+    // written once (not on every restyle), two running instances never
+    // fight over one file, and a palette change yields a new url() that
+    // Qt's pixmap cache cannot serve stale.
+    const QString path = QDir(QDir::tempPath())
+                             .filePath(QString("traceview_%1_arrow_%2.png")
+                                           .arg(fileTag, color.name(QColor::HexArgb).mid(1)));
+    if (QFileInfo::exists(path)) {
+        return path;
+    }
     constexpr int kSize = 10;
     QPixmap pixmap(kSize, kSize);
     pixmap.fill(Qt::transparent);
@@ -44,8 +55,6 @@ QString arrowImagePath(const QColor& color, const QString& fileTag, bool pointin
     painter.drawPolygon(triangle);
     painter.end();
 
-    const QString path =
-        QDir(QDir::tempPath()).filePath(QString("traceview_%1_arrow.png").arg(fileTag));
     pixmap.save(path, "PNG");
     return path;
 }
@@ -54,6 +63,12 @@ QString arrowImagePath(const QColor& color, const QString& fileTag, bool pointin
 // pixmap subcontrol, so the checkmark has to be handed to Qt as an actual
 // image rather than drawn via QSS borders.
 QString checkImagePath(const QColor& color) {
+    const QString path = QDir(QDir::tempPath())
+                             .filePath(QString("traceview_check_%1.png")
+                                           .arg(color.name(QColor::HexArgb).mid(1)));
+    if (QFileInfo::exists(path)) {
+        return path;
+    }
     constexpr int kSize = 10;
     QPixmap pixmap(kSize, kSize);
     pixmap.fill(Qt::transparent);
@@ -67,7 +82,6 @@ QString checkImagePath(const QColor& color) {
     painter.drawPolyline(QPolygon({QPoint(1, 5), QPoint(4, 8), QPoint(9, 2)}));
     painter.end();
 
-    const QString path = QDir(QDir::tempPath()).filePath("traceview_check.png");
     pixmap.save(path, "PNG");
     return path;
 }
