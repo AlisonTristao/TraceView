@@ -92,30 +92,44 @@ ChartConfig parseChartConfig(const QJsonObject& json) {
     return config;
 }
 
-SeriesStatistics seriesStatistics(const QVector<double>& values, int first, int last) {
+SeriesStatistics seriesStatistics(const QVector<double>& values, int first, int last,
+                                  bool withMedian) {
     SeriesStatistics stats;
     first = qMax(0, first);
     last = qMin(int(values.size()) - 1, last);
     if (first > last) {
         return stats;
     }
-    QVector<double> sorted(values.cbegin() + first, values.cbegin() + last + 1);
-    std::sort(sorted.begin(), sorted.end());
-    stats.count = sorted.size();
-    stats.min = sorted.first();
-    stats.max = sorted.last();
+    // One pass for everything but the median: this runs per series on every
+    // repaint while the info row is shown, so no copy or sort unless the
+    // median is actually on screen.
+    stats.count = last - first + 1;
+    stats.min = values[first];
+    stats.max = values[first];
     double sum = 0.0;
     double sumSq = 0.0;
-    for (double value : sorted) {
+    for (int i = first; i <= last; ++i) {
+        const double value = values[i];
+        stats.min = qMin(stats.min, value);
+        stats.max = qMax(stats.max, value);
         sum += value;
         sumSq += value * value;
     }
     stats.mean = sum / stats.count;
     stats.rms = std::sqrt(sumSq / stats.count);
     stats.peak = qMax(qAbs(stats.min), qAbs(stats.max));
-    const int middle = stats.count / 2;
-    stats.median = stats.count % 2 != 0 ? sorted[middle]
-                                        : (sorted[middle - 1] + sorted[middle]) / 2.0;
+    if (withMedian) {
+        QVector<double> scratch(values.cbegin() + first, values.cbegin() + last + 1);
+        const int middle = stats.count / 2;
+        std::nth_element(scratch.begin(), scratch.begin() + middle, scratch.end());
+        stats.median = scratch[middle];
+        if (stats.count % 2 == 0) {
+            // The lower middle is the largest value left of `middle` after
+            // nth_element's partition.
+            const double lower = *std::max_element(scratch.cbegin(), scratch.cbegin() + middle);
+            stats.median = (lower + stats.median) / 2.0;
+        }
+    }
     return stats;
 }
 

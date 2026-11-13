@@ -145,7 +145,10 @@ struct SeriesStatistics {
         return max - min;
     }
 };
-SeriesStatistics seriesStatistics(const QVector<double>& values, int first, int last);
+// Statistics over values[first..last] (clamped). `withMedian` = false skips
+// the only O(n) copy + selection, leaving median at 0.
+SeriesStatistics seriesStatistics(const QVector<double>& values, int first, int last,
+                                  bool withMedian = true);
 
 // Re-derives one buffer per config.series (in order) from `previous`,
 // carrying over history for a series still at the same row position --

@@ -85,6 +85,7 @@ private slots:
 
     void statisticsOverTheWholeSeries();
     void statisticsOverASpanAndAnEmptyOne();
+    void medianOfUnsortedDataAndSkippedMedian();
 };
 
 void TestChartData::parsesDefaultsFromEmptyConfig() {
@@ -375,6 +376,26 @@ void TestChartData::statisticsOverASpanAndAnEmptyOne() {
     QCOMPARE(seriesStatistics(values, -5, 99).count, 5);
     QCOMPARE(seriesStatistics(values, 7, 9).count, 0);
     QCOMPARE(seriesStatistics({}, 0, 0).count, 0);
+}
+
+void TestChartData::medianOfUnsortedDataAndSkippedMedian() {
+    // Even count, scrambled: sorted is 1 2 4 7 8 9 -> (4 + 7) / 2.
+    const QVector<double> even = {9.0, 1.0, 7.0, 4.0, 8.0, 2.0};
+    QCOMPARE(seriesStatistics(even, 0, even.size() - 1).median, 5.5);
+    // Odd count with duplicates: sorted is 3 3 5 6 6 6 9 -> 6.
+    const QVector<double> odd = {6.0, 3.0, 9.0, 6.0, 3.0, 5.0, 6.0};
+    QCOMPARE(seriesStatistics(odd, 0, odd.size() - 1).median, 6.0);
+    // The input is left untouched (the median works on a copy).
+    QCOMPARE(even.first(), 9.0);
+
+    // Without the median everything else is still computed.
+    const SeriesStatistics noMedian =
+        seriesStatistics(even, 0, even.size() - 1, /*withMedian=*/false);
+    QCOMPARE(noMedian.count, 6);
+    QCOMPARE(noMedian.min, 1.0);
+    QCOMPARE(noMedian.max, 9.0);
+    QCOMPARE(noMedian.mean, 31.0 / 6.0);
+    QCOMPARE(noMedian.median, 0.0);
 }
 
 }  // namespace

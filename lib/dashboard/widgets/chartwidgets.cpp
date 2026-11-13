@@ -850,12 +850,11 @@ QVector<double> StyledChartWidget::easedValues(const QVector<double>& targets, d
             settled = false;
         }
     }
-    if (!settled && !m_easeRepaintPending) {
-        m_easeRepaintPending = true;
-        QTimer::singleShot(16, this, [this] {
-            m_easeRepaintPending = false;
-            update();
-        });
+    if (!settled) {
+        // Same pending flag and interval as data repaints: the next eased
+        // frame rides along with the render profile's frame instead of
+        // running its own 60 Hz loop next to it.
+        scheduleRepaint();
     }
     return m_eased;
 }
@@ -1282,7 +1281,8 @@ void DummyLineChartWidget::paintInfoRows(QPainter& painter, const ChartCartesian
         // Sample k sits (newest - k) samples before the newest one.
         const int first = markers ? newest - int(std::floor(agoHi)) : 0;
         const int last = markers ? newest - int(std::ceil(agoLo)) : newest;
-        const SeriesStatistics stats = seriesStatistics(series, first, last);
+        const SeriesStatistics stats =
+            seriesStatistics(series, first, last, statistics.contains(QLatin1String("median")));
         QVector<ChartInfoField> fields;
         for (const StatisticFormat& format : kFormats) {
             const QString id = QLatin1String(format.id);

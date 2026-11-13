@@ -111,7 +111,6 @@ protected:
 private:
     QVector<double> m_eased;
     QElapsedTimer m_easeClock;
-    bool m_easeRepaintPending = false;
     bool m_repaintPending = false;
     int m_repaintIntervalMs = 33;  // initialized from AppSettings in the constructor
 };
