@@ -528,6 +528,8 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
                     8000, StatusSeverity::Warning);
             });
     connect(m_devicesGrid, &DevicesGrid::deviceUpdated, this, &MainWindow::onDeviceUpdated);
+    connect(m_devicesGrid, &DevicesGrid::deviceLiveStateChanged, this,
+            &MainWindow::onDeviceLiveStateChanged);
     connect(m_devicesGrid, &DevicesGrid::configDialogActiveChanged, this,
             [this](const QString& deviceId, bool active) {
                 if (DeviceConnection* connection = m_deviceConnections.value(deviceId)) {
@@ -4294,13 +4296,24 @@ void MainWindow::onDeviceRemoved(const QString& id) {
 }
 
 void MainWindow::onDeviceUpdated(const Device& edited) {
+    applyDeviceChange(edited, /*userEdit=*/true);
+}
+
+void MainWindow::onDeviceLiveStateChanged(const Device& device) {
+    // Same re-apply as an edit (in particular reattachHubChildren(): a hub
+    // child must be re-pointed the moment its parent comes up or goes down,
+    // see test_hubtransport), minus lifting the config dialog's pause.
+    applyDeviceChange(device, /*userEdit=*/false);
+}
+
+void MainWindow::applyDeviceChange(const Device& edited, bool userEdit) {
     DeviceConnection* connection = m_deviceConnections.value(edited.id);
     if (!connection) {
         return;
     }
-    // This also runs on every connect/disconnect (setDeviceConnected() emits
-    // deviceUpdated()). Only an actual edit of HOW to reach the device starts
-    // over from the primary link -- anything else keeps the link in use.
+    // This also runs on every connect/disconnect (onDeviceLiveStateChanged).
+    // Only an actual edit of HOW to reach the device starts over from the
+    // primary link -- anything else keeps the link in use.
     Device stored = edited;
     const QByteArray signature = deviceLinksSignature(edited);
     if (m_deviceLinkSignatures.value(edited.id) != signature) {
@@ -4319,8 +4332,12 @@ void MainWindow::onDeviceUpdated(const Device& edited) {
     }
     connection->setLineTerminator(device.lineTerminator);
     // OK / Connect in the config dialog: the user asked for THESE settings
-    // now, so lift the while-editing pause before dialing them.
-    connection->setReconnectPaused(false);
+    // now, so lift the while-editing pause before dialing them. A live
+    // connect/disconnect must not: a link flapping while the dialog is open
+    // would otherwise undo the pause the dialog itself put in place.
+    if (userEdit) {
+        connection->setReconnectPaused(false);
+    }
     applyDeviceTarget(connection, device);
     reattachHubChildren();
     refreshDeviceStatusLabel();

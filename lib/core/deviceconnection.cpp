@@ -304,8 +304,8 @@ bool DeviceConnection::isConnected() const {
 void DeviceConnection::connectTo(const QString& target, qint32 baudRate) {
     const bool targetChanged = target != m_target || baudRate != m_baudRate;
     // Same target, already wanted, already up or on its way up: nothing to
-    // do. MainWindow calls this on every deviceUpdated, which DevicesGrid
-    // also emits for live state (connected, HELLO identity) -- from inside
+    // do. MainWindow calls this on every deviceUpdated and on every
+    // deviceLiveStateChanged (connected, HELLO identity) -- from inside
     // this very connection's own signals. Falling through would knock the
     // phase back to Connecting mid-handshake, and in Connecting both the
     // Ready promotion and a later drop are ignored.

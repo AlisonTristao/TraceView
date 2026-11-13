@@ -472,6 +472,9 @@ private:
     void onDeviceAdded(const Device& device);
     void onDeviceRemoved(const QString& id);
     void onDeviceUpdated(const Device& device);
+    void onDeviceLiveStateChanged(const Device& device);
+    // Shared body of the two above; `userEdit` = false for live state.
+    void applyDeviceChange(const Device& device, bool userEdit);
     // Mirrors a DeviceConnection's real state back into DevicesGrid's own
     // Device::connected (DeviceCard's status dot reads that field).
     void onDeviceConnectionStateChanged(const QString& deviceId, bool connected);

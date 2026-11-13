@@ -75,7 +75,8 @@ public:
     // going through the undo stack -- called by MainWindow whenever a
     // connection actually opens/closes (including its own ambient retry
     // loop), which is not a user edit. No-op if id is unknown or the flag is
-    // already what's stored.
+    // already what's stored. Emits deviceLiveStateChanged(), not
+    // deviceUpdated().
     void setDeviceConnected(const QString& id, bool connected);
     // Mirrors a live DeviceConnection's Backend::deviceIdentified into
     // device.btpVersion/btpId, same non-undoable treatment as
@@ -96,8 +97,8 @@ public:
     // T31). Unlike setDeviceIdentity() above, blePeerUuid IS persisted
     // (deviceToJson()), so this is the one "handshake reporting what the
     // device is" setter that must actually stick across sessions -- it still
-    // bypasses the undo stack (not a user edit) but does emit
-    // deviceUpdated(), same as setDeviceIdentity(). No-op if id is unknown, if
+    // bypasses the undo stack (not a user edit) and emits
+    // deviceLiveStateChanged(), same as setDeviceIdentity(). No-op if id is unknown, if
     // a peer id is already known and unchanged, or if `peerUuid` is empty
     // (nothing to learn yet). Never overwrites an already-known identity with
     // a different one -- see MainWindow's caller for the mismatch warning
@@ -242,7 +243,7 @@ public:
 signals:
     void selectionChanged();
     // Fired from applyInsertDevice()/applyRemoveDeviceById()/
-    // applyUpdateDevice()/setDeviceConnected() -- i.e. on every actual
+    // applyUpdateDevice() -- i.e. on every actual
     // mutation, regardless of whether it came from a fresh call, an
     // undo, or a redo -- so a connection owner (MainWindow) can create/
     // destroy/re-point the matching DeviceConnection without polling
@@ -250,6 +251,13 @@ signals:
     void deviceAdded(const Device& device);
     void deviceRemoved(const QString& id);
     void deviceUpdated(const Device& device);
+    // Live state the app observed rather than the user edited: connected/
+    // disconnected (setDeviceConnected) and the handshake identity
+    // (setDeviceIdentity). Kept apart from deviceUpdated so a listener can
+    // tell "the user changed HOW to reach this device" from "it just came
+    // up / went down" -- e.g. only an edit may lift the config dialog's
+    // reconnect pause.
+    void deviceLiveStateChanged(const Device& device);
     // True while `deviceId`'s config dialog is open, false once it closes
     // (however it closed). Lets the connection owner hold off automatic
     // reconnects with the OLD settings while the user is still editing them.
