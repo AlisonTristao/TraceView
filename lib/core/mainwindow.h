@@ -601,9 +601,8 @@ private:
     // Script icon on a device's card (DeviceCard::scriptRequested) -- opens
     // that device's DiagramScriptRuntime script editor
     // (DiagramBlockConfigDialog). The canvas/diagram tab this used to live
-    // under is shelved for now (lib/diagram/diagrampage.h and friends are
-    // unused but kept for later); the runtime and its live telemetry/
-    // terminal wiring are not -- see m_scriptRuntimes below.
+    // under was removed (it is in git history before 4.10.1); the runtime
+    // and its live telemetry/terminal wiring remain -- see m_scriptRuntimes.
     void onDeviceScriptRequested(const QString& deviceId);
     // Status-bar history button / View menu -- shows (or raises) the non-modal
     // window listing every status-bar message posted this session.
