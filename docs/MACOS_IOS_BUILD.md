@@ -1,7 +1,7 @@
 # macOS and iOS builds
 
 TraceView builds for macOS and iOS from the same sources as the other
-platforms. Both need a Mac with Xcode. CI builds both on `macos-14` runners
+platforms. Both need a Mac with Xcode. CI builds both on `macos-15` runners
 (`.github/workflows/build.yml`) and releases only macOS
 (`.github/workflows/release.yml`).
 
@@ -33,9 +33,9 @@ it with the Qt online installer or [aqtinstall](https://github.com/miurahr/aqtin
 ```sh
 pip install aqtinstall==3.3.0
 # macOS (also the host kit for iOS)
-aqt install-qt mac desktop 6.9.2 clang_64 --modules qtserialport qtconnectivity --outputdir ~/Qt
+aqt install-qt mac desktop 6.9.2 clang_64 --modules qtserialport qtconnectivity qtmultimedia --outputdir ~/Qt
 # iOS
-aqt install-qt mac ios 6.9.2 ios --modules qtconnectivity --outputdir ~/Qt
+aqt install-qt mac ios 6.9.2 ios --modules qtconnectivity qtmultimedia --outputdir ~/Qt
 ```
 
 `qtconnectivity` provides Qt Bluetooth (BLE), which is on by default since

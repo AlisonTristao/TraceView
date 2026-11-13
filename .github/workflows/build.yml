@@ -247,11 +247,11 @@ jobs:
   # macOS (Apple Silicon)
   # Qt from aqtinstall rather than Homebrew: the same pinned 6.9.2 the
   # Android jobs use, and the same kit release.yml packages with
-  # macdeployqt. qtserialport/qtconnectivity are addon modules there.
+  # macdeployqt. qtserialport/qtconnectivity/qtmultimedia are addon modules there.
   # ============================================================
   macos:
-    name: macOS 14 (Apple Clang, arm64)
-    runs-on: macos-14
+    name: macOS 15 (Apple Clang, arm64)
+    runs-on: macos-15
     timeout-minutes: 45
 
     env:
@@ -277,7 +277,7 @@ jobs:
       - name: Install Qt (macOS)
         run: |
           python -m aqt install-qt mac desktop "${{ env.QT_VERSION }}" clang_64 \
-            --modules qtserialport qtconnectivity --outputdir "${{ github.workspace }}/qt"
+            --modules qtserialport qtconnectivity qtmultimedia --outputdir "${{ github.workspace }}/qt"
 
       - name: Configure
         run: cmake --preset macos
@@ -303,7 +303,7 @@ jobs:
   # ============================================================
   ios:
     name: iOS (arm64, build only, unsigned)
-    runs-on: macos-14
+    runs-on: macos-15
     timeout-minutes: 60
 
     env:
@@ -332,7 +332,7 @@ jobs:
       - name: Install Qt (iOS)
         run: |
           python -m aqt install-qt mac ios "${{ env.QT_VERSION }}" ios \
-            --modules qtconnectivity --outputdir "${{ github.workspace }}/qt"
+            --modules qtconnectivity qtmultimedia --outputdir "${{ github.workspace }}/qt"
 
       - name: Configure
         run: cmake --preset ios
@@ -388,7 +388,7 @@ jobs:
       - name: Install Qt (Android arm64-v8a)
         run: |
           python3 -m aqt install-qt linux android "${{ env.QT_VERSION }}" android_arm64_v8a \
-            --modules qtconnectivity --outputdir "${{ env.QT_INSTALL_DIR }}"
+            --modules qtconnectivity qtmultimedia --outputdir "${{ env.QT_INSTALL_DIR }}"
 
       - name: Install Android SDK command-line tools
         run: |
