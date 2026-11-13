@@ -8,6 +8,7 @@
 #include <QColor>
 #include <QCoreApplication>
 #include <QDateTime>
+#include <QElapsedTimer>
 #include <QDialog>
 #include <QDesktopServices>
 #include <QEvent>
@@ -1212,7 +1213,10 @@ void MainWindow::onWidgetDataCleared(DashboardWidget* widget) {
 }
 
 void MainWindow::updateSubscriptionsWorkspace() {
-    if (!m_subscriptionsTable) {
+    // Every backend's catalog/subscription/status change lands here; while
+    // the table is hidden there is nothing to rebuild. switchToWorkspace()
+    // rebuilds it as it is shown.
+    if (!m_subscriptionsTable || !m_subscriptionsWorkspaceActive) {
         return;
     }
     const int scrollPosition = m_subscriptionsTable->verticalScrollBar()->value();
@@ -3672,7 +3676,19 @@ LinkDirectory MainWindow::linkDirectory(TransportType forType) {
     LinkDirectory directory;
     if (forType == TransportType::Serial) {
 #ifdef TRACEVIEW_ENABLE_SERIAL
-        directory.ports = currentSerialPorts();
+        // Several auto devices and link probes ask within the same 1 s tick,
+        // and a port enumeration (SetupAPI + registry on Windows) is slow
+        // enough to stutter the UI. One list serves them all for a short
+        // while; the config dialog's picker still enumerates fresh
+        // (serialPortOptions()).
+        static QVector<SerialPortOption> cachedPorts;
+        static QElapsedTimer cachedAt;
+        constexpr qint64 kPortListMaxAgeMs = 1500;
+        if (!cachedAt.isValid() || cachedAt.elapsed() > kPortListMaxAgeMs) {
+            cachedPorts = currentSerialPorts();
+            cachedAt.start();
+        }
+        directory.ports = cachedPorts;
 #endif
         return directory;
     }
