@@ -156,8 +156,9 @@ private:
     void onCornerResizeFinished(DockablePanel* panel, QPoint globalPos);
 
     // nullopt when globalPos isn't close enough to a dockable edge (outside
-    // contentRow entirely, or over the canvas but not near its border) --
-    // dropping there leaves the panel floating exactly where it was released.
+    // contentRow entirely, or over the canvas but not near its border) or
+    // Ctrl is held -- dropping there leaves the panel floating exactly where
+    // it was released.
     std::optional<DockEdge> edgeForGlobalPos(QPoint globalPos) const;
     // Geometry (in contentRow-local coordinates) `panel` would occupy if
     // docked to `edge` right now, accounting for any other panel already

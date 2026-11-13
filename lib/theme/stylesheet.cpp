@@ -96,27 +96,36 @@ QWidget[dashboardCell="true"] {
    from the generic QWidget rule above, so any part of the panel not
    covered by its own child widgets (e.g. the empty stretch next to the pin
    button in its top bar) reads as the canvas showing through rather than
-   as part of the panel -- @surface@ (already used for the ribbon/status
-   bar's chrome, elsewhere in this file) plus a border on the canvas-facing
-   edge give the whole panel a fill and outline that's visibly its own. */
-QWidget#layersPanel {
-    background-color: @surface@;
-    border-right: 1px solid @border@;
+   as part of the panel. @surfaceAlt@ is the tone furthest from the canvas,
+   and the outline runs all the way round in @borderStrong@ (a panel can sit
+   on any edge or float, so no single side is "the canvas-facing one"). */
+QWidget#layersPanel, QWidget#propertiesPanel {
+    background-color: @surfaceAlt@;
+    border: 1px solid @borderStrong@;
 }
-QWidget#propertiesPanel {
-    background-color: @surface@;
-    border-left: 1px solid @border@;
+/* The plain containers inside a panel (its content/toolbar wrappers, the
+   scroll area and what it scrolls) would each repaint the canvas's
+   @background@ from the generic QWidget rule and hide the panel's own fill,
+   so they get the panel's tone themselves. ".QWidget" matches the exact
+   class only, so inputs keep their own fill. */
+QWidget#layersPanel .QWidget, QWidget#propertiesPanel .QWidget,
+QWidget#propertiesPanel QScrollArea {
+    background-color: @surfaceAlt@;
+}
+/* The layer list fills its whole panel: with its own fill and frame it
+   would be the panel's color, and a second outline inside the first. */
+QWidget#layersPanel QListWidget {
+    background-color: @surfaceAlt@;
+    border: none;
 }
 
 /* DockablePanelHeader is the strip a panel gets dragged/docked by (see
-   dockablepanelheader.h) -- a plain bottom border on its own wouldn't read
-   against the panel's own @surface@ fill, so it gets the same @surfaceAlt@
-   tone already used for the ribbon/menu bar's chrome (see kRibbonTopMargin's
-   comment) to read as a distinct, grabbable bar rather than blending into
-   the rest of the panel. */
+   dockablepanelheader.h) -- darker than the panel body and closed off by a
+   strong line, so it reads as a title bar you can grab rather than blending
+   into the rest of the panel. */
 QWidget#dockablePanelHeader {
-    background-color: @surfaceAlt@;
-    border-bottom: 1px solid @border@;
+    background-color: @surface@;
+    border-bottom: 1px solid @borderStrong@;
 }
 
 /* PanelDockController's resize grips (edge strip while docked, corner
