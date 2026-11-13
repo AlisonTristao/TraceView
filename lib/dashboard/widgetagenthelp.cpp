@@ -8,8 +8,10 @@ namespace {
 
 // Shared by every telemetry-bound widget.
 const char kBinding[] =
-    "Binding: deviceId (from get_app_state), sourceId as hex text \"0x00000001\", topicId as "
-    "hex text \"0x0101\" (both from list_signals).";
+    "Binding: deviceId (from get_app_state) plus topicName, and in each series fieldName "
+    "(names from list_signals) -- the names are the binding, TraceView fills sourceId/topicId/"
+    "fieldId from the device's catalog. sourceId (hex text \"0x00000001\"), topicId (\"0x0101\") "
+    "and fieldId can be given instead when there are no names.";
 
 }  // namespace
 
@@ -24,6 +26,15 @@ QString widgetAgentHelp(const QString& typeId) {
              "unit, decimals, grid bool, autoAxis bool}. Name the Y axis \"Quantity [unit]\" "
              "through yAxis.unit.")
              .arg(QLatin1String(kBinding))},
+        {"scene",
+         QStringLiteral(
+             "Animated drawing of a physical system, fed by telemetry. config: {scene: "
+             "\"furuta\" (Furuta pendulum) or \"diffdrive\" (line follower), bind: {inputName: "
+             "{deviceId, topicName, fieldName}}, params: {name: number}}. Furuta inputs: theta1, "
+             "theta2 [rad] (default topic sim.truth), optional u (loop.output), disturbance "
+             "(sim.states/tau_d), theta1_ref, pred_theta1/pred_theta2 arrays, qps, solve_ms "
+             "(ctl.diag). An input whose default topic/field the device publishes binds by "
+             "itself; inputs left unbound are omitted.")},
         {"dummy_bar",
          QString::fromLatin1("Bar chart: latest value of each field as a bar. Same config as "
                              "dummy_line (%1 series, xAxis, yAxis).")

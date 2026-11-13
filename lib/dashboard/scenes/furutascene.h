@@ -1,0 +1,89 @@
+#pragma once
+
+#include <QHash>
+#include <QPointF>
+#include <QString>
+#include <QVector>
+#include <QtMath>
+
+#include "dashboard/scenes/scenerenderer.h"
+
+namespace traceview {
+
+// "Furuta pendulum": the rotary inverted pendulum drawn like the paper's
+// figure (pendulo_furuta.drawio) -- base, motor, shaft, the arm turning by
+// theta1 and the pendulum swinging by theta2 at its tip, in line art on
+// white, with the angles' arcs, the torque u around the shaft and the axes.
+// An orthographic camera looks at it from an azimuth and an elevation; drag
+// to orbit, the wheel zooms, a double click goes back to the figure's view.
+//
+// It reads theta1 and theta2 (sim.truth), the torque (loop.output u), the
+// arm reference and the controller's predicted angles (ctl.diag theta1_r,
+// pred_x = theta1, pred_y = theta2 over the horizon) and the disturbance
+// (sim.states tau_d). P / O / R change sim.disturb.
+//
+// Conventions (the plant's): theta1 turns counterclockwise seen from above,
+// from the x axis; theta2 = 0 is upright and > 0 tilts the pendulum toward
+// increasing theta1.
+class FurutaScene final : public SceneRenderer {
+public:
+    static constexpr char kTypeId[] = "furuta";
+    // Ticks of the mass's trail kept.
+    static constexpr int kTrailLength = 60;
+
+    FurutaScene();
+
+    QList<SceneInput> inputs() const override;
+    QList<SceneParam> params() const override;
+    void setParam(const QString& name, const QVariant& value) override;
+    double param(const QString& name) const;
+
+    void update(const SceneFrame& frame) override;
+    void paint(QPainter& painter, const SceneView& view) override;
+    bool antialiased() const override;
+    void document(const QString& input, const QByteArray& body) override;
+    std::optional<SceneAction> keyAction(int key) override;
+
+    // What a frame is drawn from, for the tests.
+    double theta1() const {
+        return m_theta1;
+    }
+    double theta2() const {
+        return m_theta2;
+    }
+    bool hasAngles() const {
+        return m_hasAngles;
+    }
+    int trailSize() const {
+        return m_trail.size();
+    }
+    // The screen positions of the pendulum's mass and of its pivot (the arm's
+    // tip) for `view`.
+    QPointF massOnScreen(const SceneView& view) const;
+    QPointF pivotOnScreen(const SceneView& view) const;
+
+private:
+    QHash<QString, double> m_params;
+
+    bool m_hasAngles = false;
+    double m_theta1 = 0.0;
+    double m_theta2 = M_PI;
+    qint64 m_tick = -1;
+    double m_time = qQNaN();
+    double m_torque = qQNaN();
+    double m_reference = qQNaN();
+    double m_disturbance = qQNaN();
+    double m_solveMs = qQNaN();
+    double m_qps = qQNaN();
+    QVector<double> m_predTheta1;
+    QVector<double> m_predTheta2;
+    struct TrailPoint {
+        double theta1;
+        double theta2;
+    };
+    QVector<TrailPoint> m_trail;
+    QString m_controller;
+    double m_perturbation = 0.0;
+};
+
+}  // namespace traceview

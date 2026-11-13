@@ -890,6 +890,11 @@ private:
     // connection) if its deviceId changed, otherwise just updates the
     // source/topic/rate on whichever Backend it's already registered with.
     void refreshWidgetSubscription(DashboardWidget* widget);
+    // refreshWidgetSubscription() for a TelemetryConsumer: re-reads its
+    // topicRequests(), keeps the handle of every topic still on the same
+    // Backend, drops the rest and forwards the samples of each Backend it
+    // now reads from.
+    void refreshConsumerSubscriptions(DashboardWidget* widget);
     // Calls refreshWidgetSubscription() for every open chart/gauge widget,
     // plus SerialWidgetBridge::refreshTerminalWiring() -- called whenever a
     // config edit (or its undo/redo) could have changed a widget's device/
@@ -936,6 +941,15 @@ private:
         QPointer<Backend> backend;
     };
     QHash<DashboardWidget*, WidgetSubscription> m_widgetSubscriptions;
+    // The same for a widget that is a TelemetryConsumer
+    // (dashboard/telemetryconsumer.h): one reference per topic it lists, by
+    // position in its topicRequests(), plus the Backends whose samples are
+    // forwarded to it -- each once, however many of its topics it serves.
+    struct ConsumerSubscriptions {
+        QVector<WidgetSubscription> topics;
+        QList<QPointer<Backend>> connected;
+    };
+    QHash<DashboardWidget*, ConsumerSubscriptions> m_consumerSubscriptions;
 
     // Recent samples of every field some widget in some workspace plots --
     // see syncBackgroundTelemetry(). Fed by every DeviceConnection's

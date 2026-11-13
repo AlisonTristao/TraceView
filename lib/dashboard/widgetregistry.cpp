@@ -18,6 +18,8 @@
 #include "widgets/serialmonitorwidget.h"
 #include "widgets/textboardconfigeditor.h"
 #include "widgets/textboardwidget.h"
+#include "scenes/sceneregistry.h"
+#include "scenes/scenewidget.h"
 
 namespace traceview {
 
@@ -68,6 +70,11 @@ WidgetRegistry::WidgetRegistry() {
          [](QWidget* parent) -> WidgetConfigEditor* {
              return new AudioSpectrumConfigEditor(parent);
          }});
+    // An animated drawing of a physical system (the Furuta pendulum, the
+    // line follower) fed by the telemetry its inputs are bound to; the scene
+    // kinds live in SceneRegistry.
+    registerBuiltinScenes(SceneRegistry::instance());
+    registerSceneWidget(*this);
     registerType({"chat", QCoreApplication::translate("WidgetRegistry", "Chat"),
                   [](QWidget* parent) -> DashboardWidget* { return new ChatWidget(parent); },
                   [](QWidget* parent) -> WidgetConfigEditor* {

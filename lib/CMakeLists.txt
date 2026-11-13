@@ -26,6 +26,8 @@ add_library(traceview_theme STATIC
     ${CMAKE_SOURCE_DIR}/include/traceview/font.h
     theme/busyspinner.cpp
     theme/busyspinner.h
+    theme/doublespinbox.cpp
+    theme/doublespinbox.h
     theme/dialogpresenter.cpp
     theme/dialogpresenter.h
     theme/iconutils.cpp
@@ -292,6 +294,24 @@ add_library(traceview_dashboard STATIC
     dashboard/dashboarditem.cpp
     dashboard/dashboarditem.h
     dashboard/dashboardwidget.h
+    dashboard/repaintclock.cpp
+    dashboard/repaintclock.h
+    dashboard/scenes/diffdrivecamera.cpp
+    dashboard/scenes/diffdrivecamera.h
+    dashboard/scenes/diffdrivescene.cpp
+    dashboard/scenes/diffdrivescene.h
+    dashboard/scenes/furutascene.cpp
+    dashboard/scenes/furutascene.h
+    dashboard/scenes/sceneconfigeditor.cpp
+    dashboard/scenes/sceneconfigeditor.h
+    dashboard/scenes/sceneregistry.cpp
+    dashboard/scenes/sceneregistry.h
+    dashboard/scenes/scenerenderer.h
+    dashboard/scenes/scenewidget.cpp
+    dashboard/scenes/scenewidget.h
+    dashboard/topicsampledispatcher.cpp
+    dashboard/topicsampledispatcher.h
+    dashboard/telemetryconsumer.h
     dashboard/widgetviewoption.h
     dashboard/widgetconfigeditor.cpp
     dashboard/widgetconfigeditor.h

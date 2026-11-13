@@ -328,6 +328,22 @@ lives in its own module under
   before its manifest arrives. `MainWindow` manages its topic subscription
   exactly like a chart/gauge; `TelemetryFieldRouter::textSample` carries the
   validated complete document to `TextBoardWidget::onTextSample()`.
+- **Scene** (`scene`) — `scenes/scenewidget.h`/`.cpp`. An animated drawing
+  of a physical system, fed by telemetry: one `SceneRenderer`
+  (`scenes/scenerenderer.h`) per kind, listed in `SceneRegistry` —
+  `furuta` (Furuta pendulum: arm and pendulum angles, trail, input torque,
+  the controller's predicted trajectory when published) and `diffdrive`
+  (line follower: track, car pose, minimap and compass). Each renderer
+  declares its inputs (scalar, array or text, with a default topic/field
+  name) and numeric params; the config is `{"scene", "bind", "params"}`, one
+  binding per input under `"bind"` (see "Telemetry bindings"), so an input
+  whose default topic/field the device publishes binds by itself. Frames are
+  rendered off the GUI thread on the dashboard's repaint tick
+  (`RepaintClock`); in run mode the wheel zooms, dragging pans, a double
+  click resets the view, and keys go to the scene (the Furuta scene sends a
+  disturbance command back to the device). Its editor,
+  `scenes/sceneconfigeditor.h`, picks the scene kind, binds each input and
+  sets the params.
 - **Controls** — `widgets/controlwidgets.h`/`.cpp`, one class per kind, each
   placed and adjusted individually (not a multi-button panel — drop as many
   as needed and size each on its own). No cell header (`wantsCellHeader()`
@@ -504,6 +520,19 @@ carry the names through untouched and drop one only when the user re-points
 the id it names; the resolver then names the new id from the catalog. Moving
 a widget to another device keeps its names — that is how a dashboard moves
 from a simulated device to the real one.
+
+A widget with several bindings keeps each one under `"bind"`, keyed by its
+own input name, every entry a binding of its own in the keys above, with its
+own `deviceId` (the Scene widget, [scenes/scenewidget.h](../lib/dashboard/scenes/scenewidget.h)):
+`resolveWidgetBinding()` resolves the entries one by one. Such a widget is
+not one MainWindow knows by type, so it implements `TelemetryConsumer`
+([telemetryconsumer.h](../lib/dashboard/telemetryconsumer.h)):
+`MainWindow::refreshConsumerSubscriptions()` subscribes every topic its
+`topicRequests()` lists (one reference per topic, kept across edits that do
+not move it) and forwards the `fieldSample`/`arraySample`/`textSample` of
+each Backend it reads from — the scalar samples through the Backend's
+`TopicSampleDispatcher`, which hands each sample only to the widgets reading
+its topic.
 
 ### Configuring from the manifest
 

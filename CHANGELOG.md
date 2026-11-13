@@ -9,6 +9,14 @@ release flow.
 
 ### Added
 
+- **Scene** widget: an animated drawing of a physical system, fed by the
+  telemetry of your devices. Two scenes come built in: the **Furuta
+  pendulum** (arm and pendulum, trail, input torque and, when the controller
+  publishes it, its predicted trajectory and solve time) and the **line
+  follower** (track, car, minimap and compass). Each input binds by topic and
+  field name, so a device that publishes the expected names (`sim.truth`
+  `theta1`/`theta2` for the pendulum) needs no setup. The wheel zooms,
+  dragging pans and a double click resets the view.
 - **AI assistants (MCP)**: Claude and other MCP clients can drive TraceView.
   Turn on **Settings > Connections > AI assistants** and register
   `TraceView --mcp` with the client (the section shows the exact Claude Code
@@ -23,6 +31,28 @@ release flow.
   touches real hardware you're asked to allow that for the session. If
   TraceView is closed, the assistant can open it. See
   [docs/MCP.md](docs/MCP.md).
+- Chart editor: **+ Add all fields** adds one series for every numeric
+  field of the topic that is not plotted yet, named after the field and with
+  its unit and range from the device's manifest, bound by name. Fields in
+  different units turn on **Automatic axis** (one Y axis per unit); fields
+  sharing a unit and declaring a range get a Fixed Y range over their union.
+  Array fields are skipped and fields already plotted are not added twice.
+- Picking a field in a chart series or a gauge ring now fills the Unit (and
+  the chart's Y range, the gauge's Min/Max) from the manifest when they are
+  still empty or at their defaults; values you typed are kept.
+
+### Changed
+
+- Charts, gauges, text boards and audio widgets bind to their topic and
+  fields by **name**, not only by numeric id. A dashboard built on one robot
+  now works on another that publishes the same topics (a simulated device
+  and the real one, or the widget pointed at another device), and survives a
+  firmware that declares its topics in another order: the ids are re-pointed
+  whenever the device's catalog arrives or changes. Projects saved with ids
+  only gain the names from the device's catalog (or the manifest cache) and
+  write them on the next save; a binding no catalog knows keeps its ids. The
+  new `topicName`/`fieldName` keys are additive — older TraceView versions
+  still read the ids.
 
 ## [4.9.0] - 2026-09-28
 
@@ -60,16 +90,6 @@ release flow.
   stream (a
   sweeping chirp over a 440 Hz tone); the chat is left out of it for now.
 
-- Chart editor: **+ Add all fields** adds one series for every numeric
-  field of the topic that is not plotted yet, named after the field and with
-  its unit and range from the device's manifest, bound by name. Fields in
-  different units turn on **Automatic axis** (one Y axis per unit); fields
-  sharing a unit and declaring a range get a Fixed Y range over their union.
-  Array fields are skipped and fields already plotted are not added twice.
-- Picking a field in a chart series or a gauge ring now fills the Unit (and
-  the chart's Y range, the gauge's Min/Max) from the manifest when they are
-  still empty or at their defaults; values you typed are kept.
-
 ### Changed
 
 - An array field longer than 64 elements no longer arrives one element at a
@@ -77,16 +97,6 @@ release flow.
   audio blocks does not flood charts, the telemetry history and device
   scripts. Shorter arrays behave as before.
 - Building now needs the Qt Multimedia module.
-- Charts, gauges, text boards and audio widgets bind to their topic and
-  fields by **name**, not only by numeric id. A dashboard built on one robot
-  now works on another that publishes the same topics (a simulated device
-  and the real one, or the widget pointed at another device), and survives a
-  firmware that declares its topics in another order: the ids are re-pointed
-  whenever the device's catalog arrives or changes. Projects saved with ids
-  only gain the names from the device's catalog (or the manifest cache) and
-  write them on the next save; a binding no catalog knows keeps its ids. The
-  new `topicName`/`fieldName` keys are additive — older TraceView versions
-  still read the ids.
 
 ## [4.8.1] - 2026-09-27
 
