@@ -194,8 +194,8 @@ public slots:
     // already-bounded BTP frame candidate (UsbHidManager::dataReceived's own
     // contract: one already de-padded HID report per emission), decoded as a
     // whole. Emits frameBytesReceived() once per decoded physical frame and
-    // frameReceived() zero or more times, plus frameRejected()/
-    // diagnosticsChanged() on any decode/reassembly failure.
+    // frameReceived() zero or more times, plus frameRejected()
+    // on any decode/reassembly failure.
     void feedBytes(const QByteArray& data);
 
     // Resets the incremental COBS decoder to WaitingDelimiter, discarding
@@ -247,7 +247,6 @@ signals:
     // parsing is attempted (PLANO_GERAL.txt decision 1).
     void frameRejected(const QString& reason);
     void bytesToWrite(const QByteArray& data);
-    void diagnosticsChanged();
 
 private:
     // One slot per fragmented message in flight. A message whose last

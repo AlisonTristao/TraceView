@@ -219,8 +219,6 @@ void BtpSession::feedBytes(const QByteArray& data) {
     // than requiring this transport-agnostic class to own a QTimer.
     m_receiver.expire(static_cast<std::uint64_t>(QDateTime::currentMSecsSinceEpoch()));
 
-    bool diagnosticsDirty = false;
-
     if (m_framing == Framing::PreFramed) {
         // No COBS to decode -- the transport below already handed us exactly
         // one bounded chunk, which is either a complete BTP frame or nothing
@@ -239,7 +237,6 @@ void BtpSession::feedBytes(const QByteArray& data) {
             btp::decode(reinterpret_cast<const std::uint8_t*>(data.constData()),
                         static_cast<std::size_t>(data.size()), btp::kSerialTransport, &decoded);
         if (error == btp::Error::Ok) {
-            diagnosticsDirty = true;
             // btp::decode() only accepts an input whose size is exactly
             // 40 + payload_size, so `data` IS the frame octets, with nothing
             // to trim -- forward it as is, without a copy or a re-encode.
@@ -251,11 +248,7 @@ void BtpSession::feedBytes(const QByteArray& data) {
             } else {
                 ++m_diagnostics.frameErrors;
             }
-            diagnosticsDirty = true;
             emit frameRejected(QString::fromLatin1(btp::error_string(error)));
-        }
-        if (diagnosticsDirty) {
-            emit diagnosticsChanged();
         }
         return;
     }
@@ -267,7 +260,6 @@ void BtpSession::feedBytes(const QByteArray& data) {
             case btp::SerialDecodeEvent::None:
                 break;
             case btp::SerialDecodeEvent::Frame:
-                diagnosticsDirty = true;
                 // btp::SerialDecoder hands back a DecodedFrame (header +
                 // payload view + crc32), never the whole frame as one span.
                 // The frame octets do exist though, contiguously: decode()
@@ -292,7 +284,6 @@ void BtpSession::feedBytes(const QByteArray& data) {
                 break;
             case btp::SerialDecodeEvent::CobsError:
                 ++m_diagnostics.cobsErrors;
-                diagnosticsDirty = true;
                 emit frameRejected(QStringLiteral("COBS decode error"));
                 break;
             case btp::SerialDecodeEvent::FrameError:
@@ -301,12 +292,10 @@ void BtpSession::feedBytes(const QByteArray& data) {
                 } else {
                     ++m_diagnostics.frameErrors;
                 }
-                diagnosticsDirty = true;
                 emit frameRejected(QString::fromLatin1(btp::error_string(result.frame_error)));
                 break;
             case btp::SerialDecodeEvent::Overflow:
                 ++m_diagnostics.overflowDrops;
-                diagnosticsDirty = true;
                 emit frameRejected(
                     QStringLiteral("serial candidate exceeded the COBS block limit"));
                 break;
@@ -317,9 +306,6 @@ void BtpSession::feedBytes(const QByteArray& data) {
                 emit frameRejected(QStringLiteral("invalid decoder configuration"));
                 break;
         }
-    }
-    if (diagnosticsDirty) {
-        emit diagnosticsChanged();
     }
 }
 

@@ -53,7 +53,6 @@ signals:
     void commandFrameReceived(const traceview::BtpFrame& frame);
     void terminalFrameReceived(const traceview::BtpFrame& frame);
     void controlFrameReceived(const traceview::BtpFrame& frame);
-    void diagnosticsChanged();
 
 private:
     Diagnostics m_diagnostics;
