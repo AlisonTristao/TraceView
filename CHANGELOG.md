@@ -7,6 +7,52 @@ release flow.
 
 ## [Unreleased]
 
+### Added
+
+- **Scene** widget: an animated drawing of a physical system, fed by the
+  telemetry of your devices. Two scenes come built in: the **Furuta
+  pendulum**, which only needs `theta1` and `theta2` and binds them by name
+  from whichever topic reports them, drawn over a soft sky and a lit floor
+  with the parts' shadows; and the **line follower** (track, car, minimap and
+  compass). The wheel zooms, dragging pans and a double click resets the
+  view.
+- **AI assistants (MCP)**: Claude and other MCP clients can drive TraceView.
+  Turn on **Settings > Connections > AI assistants** and register
+  `TraceView --mcp` with the client (the section shows the exact Claude Code
+  command for this installation, Windows, AppImage or Flatpak, with a copy
+  button). An assistant can do what the UI does, through 62 tools:
+  workspaces and widgets, layouts, projects and the gallery, devices and
+  their links, commands and terminal, robot logs, device scripts, OTA,
+  appearance, palettes, language, settings, and the notification, app log
+  and BTP traffic trails. It checks its own work with screenshots and
+  telemetry reads. Its dashboard and device edits are undoable like yours.
+  Anything that can't be undone asks you first, and the first time it
+  touches real hardware you're asked to allow that for the session. If
+  TraceView is closed, the assistant can open it. See
+  [docs/MCP.md](docs/MCP.md).
+- Chart editor: **+ Add all fields** adds one series for every numeric
+  field of the topic that is not plotted yet, named after the field and with
+  its unit and range from the device's manifest, bound by name. Fields in
+  different units turn on **Automatic axis** (one Y axis per unit); fields
+  sharing a unit and declaring a range get a Fixed Y range over their union.
+  Array fields are skipped and fields already plotted are not added twice.
+- Picking a field in a chart series or a gauge ring now fills the Unit (and
+  the chart's Y range, the gauge's Min/Max) from the manifest when they are
+  still empty or at their defaults; values you typed are kept.
+
+### Changed
+
+- Charts, gauges, text boards and audio widgets bind to their topic and
+  fields by **name**, not only by numeric id. A dashboard built on one robot
+  now works on another that publishes the same topics (a simulated device
+  and the real one, or the widget pointed at another device), and survives a
+  firmware that declares its topics in another order: the ids are re-pointed
+  whenever the device's catalog arrives or changes. Projects saved with ids
+  only gain the names from the device's catalog (or the manifest cache) and
+  write them on the next save; a binding no catalog knows keeps its ids. The
+  new `topicName`/`fieldName` keys are additive — older TraceView versions
+  still read the ids.
+
 ## [4.9.0] - 2026-09-28
 
 ### Added

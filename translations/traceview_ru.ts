@@ -2,6 +2,150 @@
 <!DOCTYPE TS>
 <TS version="2.1" language="ru">
 <context>
+    <name>AgentAppTools</name>
+    <message>
+        <location filename="../lib/core/agentapptools.cpp" line="+207"/>
+        <source>AI Assistant</source>
+        <translation>ИИ-ассистент</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>An AI assistant wants to %1.
+
+Allow it to connect devices and send them commands until AI assistant access is turned off or TraceView closes?</source>
+        <translation>ИИ-ассистент хочет %1.
+
+Разрешить ему подключать устройства и отправлять им команды, пока доступ ИИ-ассистентов не будет выключен или TraceView не закроется?</translation>
+    </message>
+    <message>
+        <location line="+276"/>
+        <source>An AI assistant created workspace &quot;%1&quot;.</source>
+        <translation>ИИ-ассистент создал рабочее пространство «%1».</translation>
+    </message>
+    <message>
+        <location line="+81"/>
+        <source>Delete Workspace</source>
+        <translation>Удалить рабочее пространство</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>An AI assistant wants to delete workspace &quot;%1&quot;. This cannot be undone.</source>
+        <translation>ИИ-ассистент хочет удалить рабочее пространство «%1». Это действие нельзя отменить.</translation>
+    </message>
+    <message>
+        <location line="+63"/>
+        <source>Add Widget (AI assistant)</source>
+        <translation>Добавить виджет (ИИ-ассистент)</translation>
+    </message>
+    <message>
+        <location line="+53"/>
+        <source>Edit Widget (AI assistant)</source>
+        <translation>Изменить виджет (ИИ-ассистент)</translation>
+    </message>
+    <message>
+        <location line="+318"/>
+        <source>New Project</source>
+        <translation>Новый проект</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>An AI assistant wants to start a new, empty project. Unsaved changes to the current one will be lost.</source>
+        <translation>ИИ-ассистент хочет создать новый пустой проект. Несохранённые изменения текущего будут потеряны.</translation>
+    </message>
+    <message>
+        <location line="+14"/>
+        <source>Open Project</source>
+        <translation>Открыть проект</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>An AI assistant wants to open &quot;%1&quot;. Unsaved changes to the current project will be lost.</source>
+        <translation>ИИ-ассистент хочет открыть «%1». Несохранённые изменения текущего проекта будут потеряны.</translation>
+    </message>
+    <message>
+        <location line="+75"/>
+        <source>Add to Gallery</source>
+        <translation>Добавить в галерею</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>An AI assistant wants to replace the gallery dashboard &quot;%1&quot;.</source>
+        <translation>ИИ-ассистент хочет заменить панель «%1» в галерее.</translation>
+    </message>
+    <message>
+        <location line="+52"/>
+        <source>Delete Dashboard</source>
+        <translation>Удалить дашборд</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>An AI assistant wants to delete the gallery dashboard &quot;%1&quot;. This cannot be undone.</source>
+        <translation>ИИ-ассистент хочет удалить панель «%1» из галереи. Это действие нельзя отменить.</translation>
+    </message>
+    <message>
+        <location line="+50"/>
+        <source>An AI assistant saved the project to %1.</source>
+        <translation>ИИ-ассистент сохранил проект в %1.</translation>
+    </message>
+    <message>
+        <location filename="../lib/core/agentdevicetools.cpp" line="+189"/>
+        <location line="+50"/>
+        <source>set up how a device is reached</source>
+        <translation>настроить подключение к устройству</translation>
+    </message>
+    <message>
+        <location line="+70"/>
+        <source>connect a device</source>
+        <translation>подключить устройство</translation>
+    </message>
+    <message>
+        <location line="+151"/>
+        <location line="+41"/>
+        <source>send commands to a device</source>
+        <translation>отправить команды устройству</translation>
+    </message>
+    <message>
+        <location line="+176"/>
+        <source>run a script that controls a device</source>
+        <translation>запустить скрипт, управляющий устройством</translation>
+    </message>
+    <message>
+        <location line="+95"/>
+        <source>Firmware Update</source>
+        <translation>Обновление прошивки</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>An AI assistant wants to flash &quot;%1&quot; onto %2. The device restarts with the new firmware.</source>
+        <translation>ИИ-ассистент хочет записать «%1» на %2. Устройство перезапустится с новой прошивкой.</translation>
+    </message>
+    <message>
+        <location line="+15"/>
+        <source>Uploading firmware to %1: %2%</source>
+        <translation>Загрузка прошивки на %1: %2%</translation>
+    </message>
+    <message>
+        <location filename="../lib/core/agentpreferencetools.cpp" line="+298"/>
+        <source>Delete Preset</source>
+        <translation>Удалить набор</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>An AI assistant wants to delete the appearance preset &quot;%1&quot;.</source>
+        <translation>ИИ-ассистент хочет удалить пресет оформления «%1».</translation>
+    </message>
+    <message>
+        <location line="+127"/>
+        <source>Delete Palette</source>
+        <translation>Удалить палитру</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>An AI assistant wants to delete the palette &quot;%1&quot;.</source>
+        <translation>ИИ-ассистент хочет удалить палитру «%1».</translation>
+    </message>
+</context>
+<context>
     <name>Appearance</name>
     <message>
         <location filename="../lib/theme/appearance.cpp" line="+124"/>
@@ -447,6 +591,69 @@
     </message>
 </context>
 <context>
+    <name>DiffDriveScene</name>
+    <message>
+        <location filename="../lib/dashboard/scenes/diffdrivescene.cpp" line="+131"/>
+        <source>Scale</source>
+        <translation>Масштаб</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Wheel distance</source>
+        <translation>Колёсная база</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Sensor distance</source>
+        <translation>Расстояние до датчиков</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Sensor count</source>
+        <translation>Число датчиков</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Sensor spacing</source>
+        <translation>Шаг датчиков</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Line radius</source>
+        <translation>Радиус линии</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Render radius</source>
+        <translation>Радиус отрисовки</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Perturbation step</source>
+        <translation>Шаг возмущения</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Antialiasing</source>
+        <translation>Сглаживание</translation>
+    </message>
+    <message>
+        <location line="+281"/>
+        <source>covered: %1%</source>
+        <translation>пройдено: %1%</translation>
+    </message>
+    <message>
+        <location line="-1"/>
+        <source>score: %1</source>
+        <translation>счёт: %1</translation>
+    </message>
+    <message>
+        <location filename="../lib/dashboard/scenes/sceneregistry.cpp" line="+51"/>
+        <source>Line follower</source>
+        <translation>Следование по линии</translation>
+    </message>
+</context>
+<context>
     <name>FontManager</name>
     <message>
         <location filename="../lib/theme/fontmanager.cpp" line="+24"/>
@@ -478,9 +685,52 @@
     </message>
 </context>
 <context>
+    <name>FurutaScene</name>
+    <message>
+        <location filename="../lib/dashboard/scenes/furutascene.cpp" line="+536"/>
+        <source>Arm length (L1)</source>
+        <translation>Длина плеча (L1)</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Pendulum length (l2)</source>
+        <translation>Длина маятника (l2)</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>View azimuth</source>
+        <translation>Азимут вида</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>View elevation</source>
+        <translation>Возвышение вида</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Angles and labels</source>
+        <translation>Углы и подписи</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Trail of the mass</source>
+        <translation>След массы</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Antialiasing</source>
+        <translation>Сглаживание</translation>
+    </message>
+    <message>
+        <location filename="../lib/dashboard/scenes/sceneregistry.cpp" line="+3"/>
+        <source>Furuta pendulum</source>
+        <translation>Маятник Фуруты</translation>
+    </message>
+</context>
+<context>
     <name>MainWindow</name>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="+132"/>
+        <location filename="../lib/core/mainwindow.cpp" line="+138"/>
         <source>TraceView Project (*.tvproj)</source>
         <translation>Проект TraceView (*.tvproj)</translation>
     </message>
@@ -735,6 +985,14 @@
     </message>
 </context>
 <context>
+    <name>SceneWidget</name>
+    <message>
+        <location filename="../lib/dashboard/scenes/scenewidget.cpp" line="+534"/>
+        <source>Scene</source>
+        <translation>Сцена</translation>
+    </message>
+</context>
+<context>
     <name>ThemeManager</name>
     <message>
         <location filename="../lib/theme/palettes.cpp" line="+12"/>
@@ -785,7 +1043,7 @@
 <context>
     <name>WidgetConfigEditor</name>
     <message>
-        <location filename="../lib/dashboard/widgetconfigeditor.cpp" line="+12"/>
+        <location filename="../lib/dashboard/widgetconfigeditor.cpp" line="+13"/>
         <source>(No device)</source>
         <translation>(Нет устройства)</translation>
     </message>
@@ -800,7 +1058,7 @@
         <translation>(тема без имени)</translation>
     </message>
     <message>
-        <location line="+103"/>
+        <location line="+119"/>
         <source>Field %1</source>
         <translation>Поле %1</translation>
     </message>
@@ -808,7 +1066,7 @@
 <context>
     <name>WidgetRegistry</name>
     <message>
-        <location filename="../lib/dashboard/widgetregistry.cpp" line="+34"/>
+        <location filename="../lib/dashboard/widgetregistry.cpp" line="+36"/>
         <source>Line Chart (dummy)</source>
         <translation>Линейный график (заглушка)</translation>
     </message>
@@ -843,7 +1101,7 @@
         <translation>Аудиоанализатор</translation>
     </message>
     <message>
-        <location line="+5"/>
+        <location line="+10"/>
         <source>Chat</source>
         <translation>Чат</translation>
     </message>
@@ -950,6 +1208,14 @@
         <location line="-4"/>
         <source>AppImage from GitHub Releases</source>
         <translation>AppImage из GitHub Releases</translation>
+    </message>
+</context>
+<context>
+    <name>traceview::AgentBridgeServer</name>
+    <message>
+        <location filename="../lib/agent/agentbridgeserver.cpp" line="+95"/>
+        <source>Another TraceView window is already serving AI assistants.</source>
+        <translation>Другое окно TraceView уже обслуживает ИИ-ассистентов.</translation>
     </message>
 </context>
 <context>
@@ -1142,7 +1408,7 @@
 <context>
     <name>traceview::AudioSpectrumConfigEditor</name>
     <message>
-        <location filename="../lib/dashboard/widgets/audiospectrumconfigeditor.cpp" line="+28"/>
+        <location filename="../lib/dashboard/widgets/audiospectrumconfigeditor.cpp" line="+29"/>
         <source>(auto)</source>
         <translation>(авто)</translation>
     </message>
@@ -1564,7 +1830,7 @@
 <context>
     <name>traceview::ChartConfigEditor</name>
     <message>
-        <location filename="../lib/dashboard/widgets/chartconfigeditor.cpp" line="+162"/>
+        <location filename="../lib/dashboard/widgets/chartconfigeditor.cpp" line="+201"/>
         <source>0x0101</source>
         <translation>0x0101</translation>
     </message>
@@ -1615,12 +1881,12 @@
     </message>
     <message>
         <location line="+9"/>
-        <location line="+423"/>
+        <location line="+455"/>
         <source> pts</source>
         <translation> pts</translation>
     </message>
     <message>
-        <location line="-419"/>
+        <location line="-451"/>
         <source>How much history the chart keeps before older data scrolls off — in samples or seconds, matching X Axis.</source>
         <translation>Сколько истории хранит график, прежде чем старые данные прокручиваются за пределы — в отсчётах или секундах, в соответствии с осью X.</translation>
     </message>
@@ -1750,17 +2016,27 @@
         <translation>+ Добавить серию</translation>
     </message>
     <message>
-        <location line="+192"/>
+        <location line="+8"/>
+        <source>+ Add all fields</source>
+        <translation>+ Добавить все поля</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Add one series for every numeric field of the topic above that isn&apos;t plotted yet, named after the field and with its unit and range from the device&apos;s manifest. Fields in different units get one Y axis per unit; fields sharing a unit and declaring a range get that range.</source>
+        <translation>Добавляет серию для каждого числового поля указанного выше топика, которое ещё не отображается, с именем поля, а также единицей измерения и диапазоном из манифеста устройства. Поля с разными единицами получают отдельную ось Y для каждой единицы; поля с общей единицей и заданным диапазоном используют этот диапазон.</translation>
+    </message>
+    <message>
+        <location line="+209"/>
         <source>Series %1</source>
         <translation>Серия %1</translation>
     </message>
     <message>
-        <location line="+33"/>
+        <location line="+34"/>
         <source>Which field of the bound topic this series plots -- pick one the device has already reported (shown by name), or type a numeric id by hand for one it hasn&apos;t reported yet.</source>
         <translation>Какое поле привязанной темы строит эта серия -- выберите то, о котором устройство уже сообщило (показано по имени), либо введите числовой id вручную для ещё не сообщённого.</translation>
     </message>
     <message>
-        <location line="+33"/>
+        <location line="+35"/>
         <source>Series Color</source>
         <translation>Цвет серии</translation>
     </message>
@@ -1803,6 +2079,11 @@
         <location line="+26"/>
         <source> s</source>
         <translation> s</translation>
+    </message>
+    <message>
+        <location line="+41"/>
+        <source>Field %1</source>
+        <translation>Поле %1</translation>
     </message>
 </context>
 <context>
@@ -2265,7 +2546,7 @@ Allowed: %1</source>
 <context>
     <name>traceview::DashboardGrid</name>
     <message>
-        <location filename="../lib/dashboard/dashboardgrid.cpp" line="+554"/>
+        <location filename="../lib/dashboard/dashboardgrid.cpp" line="+643"/>
         <source>Bring to Front</source>
         <translation>На передний план</translation>
     </message>
@@ -2342,34 +2623,6 @@ Allowed: %1</source>
         <location line="+6"/>
         <source>Audio Spectrogram</source>
         <translation>Аудиоспектрограмма</translation>
-    </message>
-    <message>
-        <source>Operator</source>
-        <translation type="vanished">Оператор</translation>
-    </message>
-    <message>
-        <source>Boot OK. Battery at 87%.</source>
-        <translation type="vanished">Загрузка OK. Батарея 87%.</translation>
-    </message>
-    <message>
-        <source>Start the calibration routine, please.</source>
-        <translation type="vanished">Запусти калибровку, пожалуйста.</translation>
-    </message>
-    <message>
-        <source>Calibration done. Offsets saved; log attached.</source>
-        <translation type="vanished">Калибровка завершена. Смещения сохранены; лог приложен.</translation>
-    </message>
-    <message>
-        <source>Sending the new route map.</source>
-        <translation type="vanished">Отправляю новую карту маршрута.</translation>
-    </message>
-    <message>
-        <source>Retrying over the other link...</source>
-        <translation type="vanished">Повторяю через другой канал...</translation>
-    </message>
-    <message>
-        <source>Chat</source>
-        <translation type="vanished">Чат</translation>
     </message>
     <message>
         <location line="+62"/>
@@ -3061,17 +3314,17 @@ Allowed: %1</source>
         <translation>+ Добавить кольцо</translation>
     </message>
     <message>
-        <location line="+140"/>
+        <location line="+159"/>
         <source>Ring %1</source>
         <translation>Кольцо %1</translation>
     </message>
     <message>
-        <location line="+12"/>
+        <location line="+13"/>
         <source>Which field of the bound topic this ring plots -- pick one the device has already reported (shown by name), or type a numeric id by hand for one it hasn&apos;t reported yet.</source>
         <translation>Какое поле привязанной темы строит это кольцо -- выберите то, о котором устройство уже сообщило (показано по имени), либо введите числовой id вручную для ещё не сообщённого.</translation>
     </message>
     <message>
-        <location line="+30"/>
+        <location line="+33"/>
         <source>Ring Color</source>
         <translation>Цвет кольца</translation>
     </message>
@@ -3185,13 +3438,8 @@ Allowed: %1</source>
 </context>
 <context>
     <name>traceview::MainWindow</name>
-    <message>
-        <location filename="../lib/core/mainwindow.cpp" line="+235"/>
-        <source>TraceView v%1</source>
-        <translation>TraceView v%1</translation>
-    </message>
     <message numerus="yes">
-        <location line="+153"/>
+        <location filename="../lib/core/mainwindow.cpp" line="+387"/>
         <source>This device carries %n other device(s) (%1). Remove or repoint them first.</source>
         <translation>
             <numerusform>Это устройство несёт ещё %n устройство (%1). Сначала удалите или перенаправьте его.</numerusform>
@@ -3205,7 +3453,33 @@ Allowed: %1</source>
         <translation>, </translation>
     </message>
     <message>
-        <location line="+557"/>
+        <location line="+293"/>
+        <source>AI assistant access is off.</source>
+        <translation>Доступ ИИ-ассистентов выключен.</translation>
+    </message>
+    <message>
+        <location line="+12"/>
+        <source>AI assistant access could not start: %1</source>
+        <translation>Не удалось включить доступ ИИ-ассистентов: %1</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>AI assistant connected: %1</source>
+        <translation>ИИ-ассистент подключён: %1</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <location line="+6"/>
+        <source>unknown</source>
+        <translation>неизвестно</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>AI assistant disconnected: %1</source>
+        <translation>ИИ-ассистент отключён: %1</translation>
+    </message>
+    <message>
+        <location line="+410"/>
         <source>Pending</source>
         <translation>Ожидание</translation>
     </message>
@@ -3349,12 +3623,12 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+0"/>
-        <location line="+3618"/>
+        <location line="+3763"/>
         <source>Later</source>
         <translation>Позже</translation>
     </message>
     <message>
-        <location line="-3611"/>
+        <location line="-3756"/>
         <source>&amp;Access</source>
         <translation>Доступ (&amp;A)</translation>
     </message>
@@ -3481,18 +3755,18 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+18"/>
-        <location line="+2983"/>
+        <location line="+3128"/>
         <source>Undo</source>
         <translation>Отменить</translation>
     </message>
     <message>
-        <location line="-2981"/>
-        <location line="+2981"/>
+        <location line="-3126"/>
+        <location line="+3126"/>
         <source>Redo</source>
         <translation>Повторить</translation>
     </message>
     <message>
-        <location line="-2938"/>
+        <location line="-3083"/>
         <source>Add Device</source>
         <translation>Добавить устройство</translation>
     </message>
@@ -3528,12 +3802,12 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+29"/>
-        <location line="+2883"/>
+        <location line="+3028"/>
         <source>Fullscreen dashboard (F11)</source>
         <translation>Панель в полноэкранном режиме (F11)</translation>
     </message>
     <message>
-        <location line="-2703"/>
+        <location line="-2848"/>
         <source>Rename Workspace</source>
         <translation>Переименовать рабочее пространство</translation>
     </message>
@@ -3614,17 +3888,17 @@ Drops: %2</source>
         <translation>Теперь у этой рабочей области своё оформление.</translation>
     </message>
     <message>
-        <location line="+1213"/>
+        <location line="+1330"/>
         <source>%1: found at %2</source>
         <translation>%1: найден на %2</translation>
     </message>
     <message>
-        <location line="+322"/>
+        <location line="+339"/>
         <source>%1: trying %2</source>
         <translation>%1: пробую %2</translation>
     </message>
     <message>
-        <location line="+420"/>
+        <location line="+424"/>
         <location line="+8"/>
         <location line="+5"/>
         <location line="+8"/>
@@ -3673,7 +3947,7 @@ Drops: %2</source>
         <translation>&quot;%1&quot; сохранён в галерее.</translation>
     </message>
     <message>
-        <location line="+535"/>
+        <location line="+542"/>
         <source>Update available: v%1</source>
         <translation>Доступно обновление: v%1</translation>
     </message>
@@ -3746,13 +4020,13 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>Закрыть приложение</translation>
     </message>
     <message>
-        <location line="-2930"/>
-        <location line="+2731"/>
+        <location line="-3075"/>
+        <location line="+2876"/>
         <source>Devices</source>
         <translation>Устройства</translation>
     </message>
     <message>
-        <location line="-2656"/>
+        <location line="-2801"/>
         <source>Subscriptions</source>
         <translation>Подписки</translation>
     </message>
@@ -3768,17 +4042,22 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>Имя:</translation>
     </message>
     <message>
-        <location line="+1"/>
+        <location line="-2073"/>
+        <source>TraceView v%1</source>
+        <translation>TraceView v%1</translation>
+    </message>
+    <message>
+        <location line="+2074"/>
         <source>Workspace</source>
         <translation>Рабочее пространство</translation>
     </message>
     <message>
-        <location line="+19"/>
+        <location line="+9"/>
         <source>Created workspace &quot;%1&quot;.</source>
         <translation>Рабочее пространство «%1» создано.</translation>
     </message>
     <message>
-        <location line="+14"/>
+        <location line="+30"/>
         <source>Delete Workspace</source>
         <translation>Удалить рабочее пространство</translation>
     </message>
@@ -3788,29 +4067,29 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>Удалить рабочее пространство «%1»? Это действие нельзя отменить.</translation>
     </message>
     <message>
-        <location line="+16"/>
+        <location line="+24"/>
         <source>Deleted workspace &quot;%1&quot;.</source>
         <translation>Рабочее пространство «%1» удалено.</translation>
     </message>
     <message>
         <location line="+71"/>
-        <location line="+2256"/>
+        <location line="+2387"/>
         <source>Add widget</source>
         <translation>Добавить виджет</translation>
     </message>
     <message>
-        <location line="-2253"/>
+        <location line="-2384"/>
         <source>Remove selected widget (%1)</source>
         <translation>Удалить выбранный виджет (%1)</translation>
     </message>
     <message>
         <location line="+3"/>
-        <location line="+2263"/>
+        <location line="+2394"/>
         <source>Add device</source>
         <translation>Добавить устройство</translation>
     </message>
     <message>
-        <location line="-2260"/>
+        <location line="-2391"/>
         <source>Remove selected device (%1)</source>
         <translation>Удалить выбранное устройство (%1)</translation>
     </message>
@@ -3895,12 +4174,12 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>Показать панели Слои/Свойства</translation>
     </message>
     <message>
-        <location line="+255"/>
+        <location line="+263"/>
         <source>New Device</source>
         <translation>Новое устройство</translation>
     </message>
     <message>
-        <location line="+284"/>
+        <location line="+379"/>
         <source>%1: robot is responding again</source>
         <translation>%1: робот снова отвечает</translation>
     </message>
@@ -3961,17 +4240,17 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>&amp;Движение</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="-1347"/>
+        <location filename="../lib/core/mainwindow.cpp" line="-1464"/>
         <source>Dashboard</source>
         <translation>Dashboard</translation>
     </message>
     <message>
-        <location line="+1686"/>
+        <location line="+1810"/>
         <source>%1: this BLE address now answers as a different robot (expected %2, got %3)</source>
         <translation>%1: этот BLE-адрес теперь отвечает как другой робот (ожидался %2, получен %3)</translation>
     </message>
     <message>
-        <location line="+492"/>
+        <location line="+503"/>
         <source>Key &quot;%1&quot; is already used by another widget.</source>
         <translation>Ключ «%1» уже используется другим виджетом.</translation>
     </message>
@@ -3986,7 +4265,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>Отменить текущую панель и начать новый пустой проект?</translation>
     </message>
     <message>
-        <location line="+15"/>
+        <location line="+18"/>
         <source>Started a new project.</source>
         <translation>Начат новый проект.</translation>
     </message>
@@ -4029,7 +4308,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     </message>
     <message>
         <location line="+20"/>
-        <location line="+211"/>
+        <location line="+218"/>
         <source>Settings</source>
         <translation>Настройки</translation>
     </message>
@@ -4948,6 +5227,52 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     </message>
 </context>
 <context>
+    <name>traceview::SceneConfigEditor</name>
+    <message>
+        <location filename="../lib/dashboard/scenes/sceneconfigeditor.cpp" line="+149"/>
+        <source>Bind by name</source>
+        <translation>Связать по имени</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Binds every unbound input to the reported field of the same name</source>
+        <translation>Связывает каждый несвязанный вход с полем того же имени, о котором сообщает устройство</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Scene</source>
+        <translation>Сцена</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Inputs</source>
+        <translation>Входы</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Parameters</source>
+        <translation>Параметры</translation>
+    </message>
+    <message>
+        <location line="+172"/>
+        <source>(Unbound)</source>
+        <translation>(Не связано)</translation>
+    </message>
+    <message>
+        <location line="+27"/>
+        <source>%1 (offline)</source>
+        <translation>%1 (не в сети)</translation>
+    </message>
+</context>
+<context>
+    <name>traceview::SceneWidget</name>
+    <message>
+        <location filename="../lib/dashboard/scenes/scenewidget.cpp" line="-206"/>
+        <source>Unknown scene &quot;%1&quot;</source>
+        <translation>Неизвестная сцена «%1»</translation>
+    </message>
+</context>
+<context>
     <name>traceview::SerialManager</name>
     <message>
         <location filename="../lib/core/serialmanager.cpp" line="+119"/>
@@ -5009,7 +5334,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
 <context>
     <name>traceview::SettingsPage</name>
     <message>
-        <location filename="../lib/core/settingspage.cpp" line="+203"/>
+        <location filename="../lib/core/settingspage.cpp" line="+206"/>
         <source>Settings</source>
         <translation>Настройки</translation>
     </message>
@@ -5045,19 +5370,19 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     </message>
     <message>
         <location line="-234"/>
-        <location line="+293"/>
+        <location line="+326"/>
         <source>Diagnostics</source>
         <translation>Диагностика</translation>
     </message>
     <message>
-        <location line="-292"/>
-        <location line="+344"/>
+        <location line="-325"/>
+        <location line="+377"/>
         <location line="+5"/>
         <source>Updates</source>
         <translation>Обновления</translation>
     </message>
     <message>
-        <location line="-307"/>
+        <location line="-340"/>
         <source>Project and startup preferences shared by the application.</source>
         <translation>Настройки проекта и запуска, общие для приложения.</translation>
     </message>
@@ -5327,7 +5652,32 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         </translation>
     </message>
     <message>
-        <location line="+19"/>
+        <location line="+18"/>
+        <source>AI assistants</source>
+        <translation>ИИ-ассистенты</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Let AI assistants such as Claude control TraceView</source>
+        <translation>Разрешить ИИ-ассистентам, например Claude, управлять TraceView</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>An assistant connected over MCP can then create workspaces and widgets, read telemetry and take screenshots of this window. Its dashboard edits can be undone.</source>
+        <translation>Ассистент, подключённый по MCP, сможет создавать рабочие пространства и виджеты, читать телеметрию и делать снимки этого окна. Его правки панели можно отменить.</translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <source>To connect Claude Code, run this once in a terminal:</source>
+        <translation>Чтобы подключить Claude Code, выполните один раз в терминале:</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Copy command</source>
+        <translation>Копировать команду</translation>
+    </message>
+    <message>
+        <location line="+11"/>
         <source>Keep enough history for investigation without letting long-running sessions use unbounded memory.</source>
         <translation>Храните достаточно истории для анализа, не позволяя длинным сессиям занимать неограниченную память.</translation>
     </message>

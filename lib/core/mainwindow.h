@@ -7,8 +7,10 @@
 #include <QPointer>
 #include <QSize>
 #include <QString>
+#include <QStringList>
 #include <QVector>
 
+#include "agent/devicefeedbuffer.h"
 #include "backend/statusseverity.h"
 #include "core/usermodemanager.h"
 #include "dashboard/dashboarditem.h"
@@ -35,6 +37,7 @@ class QUndoGroup;
 
 namespace traceview {
 
+class AgentBridgeServer;
 class Backend;
 #ifdef TRACEVIEW_ENABLE_BLE
 class BleDiscoveryService;
@@ -64,10 +67,19 @@ class UpdateDownloader;
 class WorkspaceDock;
 class BrandCornerMark;
 class StartupLoadingOverlay;
+class ToolRegistry;
 class WorkspaceSwitcher;
+
+// WorkspaceSwitcher's id for the built-in Subscriptions view: listed among
+// the workspaces but not one of WorkspaceManager's.
+inline constexpr const char* kSubscriptionsWorkspaceId = "builtin:subscriptions";
 
 class MainWindow : public QMainWindow {
     Q_OBJECT
+
+    // The AI assistant tools (core/agentapptools.h) act through the same
+    // private operations the menus and panels use.
+    friend class AgentAppTools;
 
 public:
     explicit MainWindow(QWidget* parent = nullptr);
@@ -252,6 +264,21 @@ private:
     void onWorkspaceSelected(const QString& id);
     void onWorkspaceDeleteRequested(const QString& id);
     void onNewWorkspaceRequested();
+    // The dialog-free halves of the two above: adds a workspace named `name`
+    // (disambiguated), switches to it and returns its id; deletes `id`
+    // without asking (no-op for the last one or the built-in Subscriptions).
+    QString createWorkspace(const QString& name);
+    void deleteWorkspace(const QString& id);
+    // The dialog-free half of onNewProject().
+    void startNewProject();
+    // Every serial port the OS lists, as the device config dialog offers
+    // them; empty in a build without the serial transport.
+    static QVector<SerialPortOption> serialPortOptions();
+    // File > Open Recent's list, newest first.
+    static QStringList recentProjectFiles();
+    // Starts or stops m_agentBridge to match Settings > Connections > AI
+    // assistants, or keeps it on for a run started with --agent-bridge.
+    void syncAgentBridge();
     // Opens IconPickerDialog for `id` and stores the pick in WorkspaceManager.
     // Returns false when the user cancelled.
     bool pickWorkspaceIcon(const QString& id);
@@ -388,6 +415,18 @@ private:
     // refreshPropertiesPanelDevices() and hubPeersFor() so the two
     // definitions of "this device's own source_id" can't drift apart.
     quint32 deviceSelfSourceId(const Device& device) const;
+    // One widget config's telemetry binding mapped onto the catalog of the
+    // device it names ("deviceId") -- see dashboard/bindingresolver.h. The
+    // catalog is the live one while that device is connected and has one,
+    // else whatever the manifest cache holds for it (its own source id or
+    // robot name, plus the source the config was last bound to). Installed
+    // as m_dashboardGrid's BindingResolver; also applied to the saved JSON
+    // of the workspaces that aren't showing.
+    QJsonObject resolveWidgetBinding(const QJsonObject& config) const;
+    // Re-runs resolveWidgetBinding() over every workspace -- the live grid
+    // and the saved JSON of the others -- and resubscribes whatever moved.
+    // Called after a project load and whenever a device's catalog changes.
+    void resolveDashboardBindings();
     // Keep m_deviceConnections (one DeviceConnection per Device::id) in sync
     // with m_devicesGrid's own list -- wired to DevicesGrid::deviceAdded/
     // deviceRemoved/deviceUpdated. onDeviceUpdated also re-points the
@@ -851,6 +890,11 @@ private:
     // connection) if its deviceId changed, otherwise just updates the
     // source/topic/rate on whichever Backend it's already registered with.
     void refreshWidgetSubscription(DashboardWidget* widget);
+    // refreshWidgetSubscription() for a TelemetryConsumer: re-reads its
+    // topicRequests(), keeps the handle of every topic still on the same
+    // Backend, drops the rest and forwards the samples of each Backend it
+    // now reads from.
+    void refreshConsumerSubscriptions(DashboardWidget* widget);
     // Calls refreshWidgetSubscription() for every open chart/gauge widget,
     // plus SerialWidgetBridge::refreshTerminalWiring() -- called whenever a
     // config edit (or its undo/redo) could have changed a widget's device/
@@ -897,11 +941,35 @@ private:
         QPointer<Backend> backend;
     };
     QHash<DashboardWidget*, WidgetSubscription> m_widgetSubscriptions;
+    // The same for a widget that is a TelemetryConsumer
+    // (dashboard/telemetryconsumer.h): one reference per topic it lists, by
+    // position in its topicRequests(), plus the Backends whose samples are
+    // forwarded to it -- each once, however many of its topics it serves.
+    struct ConsumerSubscriptions {
+        QVector<WidgetSubscription> topics;
+        QList<QPointer<Backend>> connected;
+    };
+    QHash<DashboardWidget*, ConsumerSubscriptions> m_consumerSubscriptions;
 
     // Recent samples of every field some widget in some workspace plots --
     // see syncBackgroundTelemetry(). Fed by every DeviceConnection's
     // Backend::fieldSample (createDeviceConnection()).
     TelemetryHistory m_telemetryHistory;
+
+    // What AI assistants can do here (core/agentapptools.cpp) and the local
+    // socket they reach it through (see docs/MCP.md). The bridge only exists
+    // while it's on; m_agentBridgeForced is a run started with --agent-bridge.
+    ToolRegistry* m_agentTools = nullptr;
+    AgentBridgeServer* m_agentBridge = nullptr;
+    bool m_agentBridgeForced = false;
+    // Whether the user agreed, while the bridge has been on, to an assistant
+    // connecting devices and sending them commands (AgentAppTools::
+    // allowHardware()). Cleared when the bridge stops.
+    bool m_agentHardwareAllowed = false;
+    // Each device's recent terminal output and log lines, for an assistant
+    // to read a robot's answers (read_terminal/read_device_log).
+    DeviceFeedBuffer m_agentFeed;
+
     // One subscription reference held for a dashboard item of a workspace
     // that isn't showing, keyed by "<workspaceId>/<itemId>". `backend` is a
     // QPointer because a device rebuild or removal deletes the Backend the

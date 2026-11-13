@@ -17,6 +17,31 @@ add_traceview_test(test_workspacemanager traceview_project)
 add_traceview_test(test_dashboarditem traceview_dashboard)
 add_traceview_test(test_widgetregistry traceview_dashboard)
 add_traceview_test(test_dashboardgrid traceview_dashboard)
+# Binding a widget by topic/field NAME (dashboard/bindingresolver.h): names
+# re-pointing ids against another device's catalog, ids-only projects gaining
+# names, unresolvable names falling back to ids, and the .tvproj round trip.
+add_traceview_test(test_bindingresolver traceview_dashboard traceview_project)
+# "Add all fields" in the chart editor (series by field name, automatic axes
+# per unit, Y range from the declared ranges) and the unit/range a picked
+# field prefills in the chart and gauge editors without clobbering the
+# user's own values.
+add_traceview_test(test_autochartconfig traceview_dashboard)
+# The MCP server AI assistants drive TraceView through (lib/agent, see
+# docs/MCP.md): argument validation, the JSON-RPC session, and the stdio relay
+# talking to a real AgentBridgeServer over a uniquely named local socket.
+add_traceview_test(test_agent traceview_agent)
+# The scalar-sample dispatcher (one connection per Backend, a hash lookup per
+# sample) and the shared repaint tick of the telemetry-fed widgets.
+add_traceview_test(test_topicsampledispatcher traceview_dashboard)
+# The Scene widget (dashboard/scenes): the scene registry, the line-follower
+# scene's camera and drawing, the Furuta pendulum scene (inputs bound by name,
+# angles and trail, the disturbance keys, a painted frame -- saved to
+# $TRACELAB_FURUTA_SCENE_PNG when set) and the widget's config (editor and
+# .tvproj round trip, bind by name, sample routing).
+add_traceview_test(test_sceneregistry traceview_dashboard)
+add_traceview_test(test_diffdrivescene traceview_dashboard)
+add_traceview_test(test_furutascene traceview_dashboard)
+add_traceview_test(test_scenewidget traceview_dashboard traceview_project)
 # Devices panel data model/card/grid, plus its own JSON persistence (see
 # lib/devices). Only traceview_devices; no dashboard/protocol dependency.
 add_traceview_test(test_device traceview_devices)
@@ -38,6 +63,9 @@ add_traceview_test(test_chartscale traceview_dashboard)
 add_traceview_test(test_chartstyle traceview_dashboard)
 # Frame styles (card/control shapes, include/traceview/framestyle.h).
 add_traceview_test(test_framestyle traceview_theme)
+# Decimal fields: both separators, adaptive arrows, commit on Enter/focus out
+# (theme/doublespinbox.h).
+add_traceview_test(test_doublespinbox traceview_theme)
 # Appearance tokens and the appearance catalog/presets (core/appearancecatalog.h).
 add_traceview_test(test_appearance traceview_ui)
 add_traceview_test(test_controldata traceview_dashboard)

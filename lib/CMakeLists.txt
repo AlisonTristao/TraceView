@@ -26,6 +26,8 @@ add_library(traceview_theme STATIC
     ${CMAKE_SOURCE_DIR}/include/traceview/font.h
     theme/busyspinner.cpp
     theme/busyspinner.h
+    theme/doublespinbox.cpp
+    theme/doublespinbox.h
     theme/dialogpresenter.cpp
     theme/dialogpresenter.h
     theme/iconutils.cpp
@@ -287,9 +289,29 @@ target_link_libraries(traceview_project PUBLIC
 # traceview_dashboard: the editable widget grid (items, cells, undo
 # commands, widget registry). Depends on traceview_theme for painting.
 add_library(traceview_dashboard STATIC
+    dashboard/bindingresolver.cpp
+    dashboard/bindingresolver.h
     dashboard/dashboarditem.cpp
     dashboard/dashboarditem.h
     dashboard/dashboardwidget.h
+    dashboard/repaintclock.cpp
+    dashboard/repaintclock.h
+    dashboard/scenes/diffdrivecamera.cpp
+    dashboard/scenes/diffdrivecamera.h
+    dashboard/scenes/diffdrivescene.cpp
+    dashboard/scenes/diffdrivescene.h
+    dashboard/scenes/furutascene.cpp
+    dashboard/scenes/furutascene.h
+    dashboard/scenes/sceneconfigeditor.cpp
+    dashboard/scenes/sceneconfigeditor.h
+    dashboard/scenes/sceneregistry.cpp
+    dashboard/scenes/sceneregistry.h
+    dashboard/scenes/scenerenderer.h
+    dashboard/scenes/scenewidget.cpp
+    dashboard/scenes/scenewidget.h
+    dashboard/topicsampledispatcher.cpp
+    dashboard/topicsampledispatcher.h
+    dashboard/telemetryconsumer.h
     dashboard/widgetviewoption.h
     dashboard/widgetconfigeditor.cpp
     dashboard/widgetconfigeditor.h
@@ -347,6 +369,8 @@ add_library(traceview_dashboard STATIC
     dashboard/widgets/controlconfigeditor.h
     dashboard/widgetregistry.cpp
     dashboard/widgetregistry.h
+    dashboard/widgetagenthelp.cpp
+    dashboard/widgetagenthelp.h
     dashboard/dashboardcell.cpp
     dashboard/dashboardcell.h
     dashboard/dashboardcommands.cpp
@@ -743,12 +767,48 @@ endif()
 configure_file(core/usermodedefaults.h.in
                ${CMAKE_CURRENT_BINARY_DIR}/usermodedefaults.h @ONLY)
 
+# traceview_agent: the MCP server AI assistants drive TraceView through (see
+# docs/MCP.md) -- the tool registry, the MCP session, the local-socket bridge
+# inside the app and the `TraceView --mcp` stdio relay. QtCore + QtNetwork
+# (QLocalServer/QLocalSocket) only: the tools themselves are registered by
+# the layers that own each feature (core/agentapptools.cpp for MainWindow's).
+add_library(traceview_agent STATIC
+    agent/agentbridgeserver.cpp
+    agent/agentbridgeserver.h
+    agent/agenttool.cpp
+    agent/agenttool.h
+    agent/devicefeedbuffer.cpp
+    agent/devicefeedbuffer.h
+    agent/mcpsession.cpp
+    agent/mcpsession.h
+    agent/mcpstdiorelay.cpp
+    agent/mcpstdiorelay.h
+    agent/toolregistry.cpp
+    agent/toolregistry.h
+)
+
+target_include_directories(traceview_agent PUBLIC
+    ${CMAKE_SOURCE_DIR}/include
+    ${CMAKE_SOURCE_DIR}/lib
+    # traceview/version.h, for the relay's serverInfo.
+    ${CMAKE_BINARY_DIR}/generated
+)
+
+target_link_libraries(traceview_agent PUBLIC
+    Qt6::Core
+    Qt6::Network
+)
+
 # traceview_ui: MainWindow/Ribbon/AboutDialog — application chrome and
 # coordination. Depends on the dashboard/project/theme layers to wire them
 # together; nothing else is allowed to depend on traceview_ui.
 add_library(traceview_ui STATIC
     core/aboutdialog.cpp
     core/aboutdialog.h
+    core/agentapptools.cpp
+    core/agentapptools.h
+    core/agentdevicetools.cpp
+    core/agentpreferencetools.cpp
     core/shortcutsdialog.cpp
     core/shortcutsdialog.h
     core/donatedialog.cpp
@@ -857,6 +917,9 @@ target_link_libraries(traceview_ui
         # action). Compiled once in traceview_transport above already; this is
         # the same target under a different consumer.
         traceview_applog
+        # MainWindow owns the ToolRegistry/AgentBridgeServer and registers
+        # its own tools (core/agentapptools.cpp).
+        traceview_agent
 )
 
 if(TRACEVIEW_ENABLE_SERIAL AND NOT ANDROID)

@@ -17,8 +17,11 @@ namespace traceview {
 namespace {
 constexpr const char* kSettingsPrefix = "panelDock/";
 // How close the cursor needs to be to contentRow's border, in pixels, before
-// a drag snaps to that edge instead of leaving the panel floating.
-constexpr int kEdgeSnapThresholdPx = 40;
+// a drag snaps to that edge instead of leaving the panel floating. Kept well
+// under the header's own height: a panel is dragged by its header, which is
+// its top strip, so with a wider band just moving a floating panel up near
+// the top of the canvas docked it there.
+constexpr int kEdgeSnapThresholdPx = 12;
 constexpr int kDefaultFloatingHeight = 400;
 // Never let a panel (docked or floating) shrink below this on its resizable
 // axis/axes.
@@ -400,6 +403,11 @@ bool PanelDockController::eventFilter(QObject* watched, QEvent* event) {
 }
 
 std::optional<DockEdge> PanelDockController::edgeForGlobalPos(QPoint globalPos) const {
+    // Ctrl held: never dock, so a panel can be left floating right against
+    // an edge.
+    if (QGuiApplication::keyboardModifiers() & Qt::ControlModifier) {
+        return std::nullopt;
+    }
     const QPoint local = m_contentRow->mapFromGlobal(globalPos);
     if (!m_contentRow->rect().contains(local)) {
         return std::nullopt;

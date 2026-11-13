@@ -2,6 +2,7 @@
 
 #include <QComboBox>
 #include <QCoreApplication>
+#include <QStringList>
 
 namespace traceview {
 
@@ -130,6 +131,22 @@ QVector<CatalogTopicField> resolveCatalogTopicFields(const QVector<DeviceOption>
     return {};
 }
 
+bool isPlottableScalarField(const CatalogTopicField& field) {
+    if (field.type.contains(QLatin1Char('['))) {
+        return false;
+    }
+    static const QStringList kScalarTypePrefixes = {
+        QStringLiteral("uint"), QStringLiteral("int"),  QStringLiteral("float"),
+        QStringLiteral("bool"), QStringLiteral("enum"),
+    };
+    for (const QString& prefix : kScalarTypePrefixes) {
+        if (field.type.startsWith(prefix)) {
+            return true;
+        }
+    }
+    return false;
+}
+
 void populateFieldCombo(QComboBox* combo, const QVector<CatalogTopicField>& fields) {
     const QString previousText = combo->currentText();
 
@@ -143,6 +160,13 @@ void populateFieldCombo(QComboBox* combo, const QVector<CatalogTopicField>& fiel
     }
 
     combo->setCurrentText(previousText);
+}
+
+void setBoundFieldId(QComboBox* combo, int fieldId) {
+    if (combo->property("fieldId").toInt() != fieldId) {
+        combo->setProperty("fieldName", QString());
+    }
+    combo->setProperty("fieldId", fieldId);
 }
 
 }  // namespace traceview

@@ -10,7 +10,9 @@ namespace traceview {
 
 LayersPanel::LayersPanel(QWidget* parent) : DockablePanel(parent) {
     setObjectName("layersPanel");
-    mainLayout()->setContentsMargins(0, 0, 0, 0);
+    // 1px, not 0: leaves the panel's own outline (see stylesheet.cpp's
+    // "QWidget#layersPanel" rule) uncovered by the header and the list.
+    mainLayout()->setContentsMargins(1, 1, 1, 1);
 
     m_list = new QListWidget(this);
     bodyLayout()->addWidget(m_list);

@@ -45,6 +45,25 @@ private:
     // to sensible defaults). Safe to call both while setConfig() is
     // rebuilding the whole table and from the "+ Add series" button.
     void addSeriesRow(const QJsonObject& series);
+    // "+ Add all fields": appends one series, bound by field name, for every
+    // plottable scalar field of the bound topic that no series plots yet
+    // (named after the field, with its catalog unit/range), then
+    // applyAxisDefaults(true). Does nothing when the catalog has no such
+    // field left to add.
+    void addAllFields();
+    // Fills the axis settings the user hasn't touched from the series' catalog
+    // metadata (unit, declared min/max): the Y axis Unit while it is empty and
+    // every series shares one unit, and the Range while it still sits at its
+    // untouched Auto/0..100 and every series declares a range (the union of
+    // them). `presetFixedRange` also switches the Y axis to Fixed to show that
+    // range -- "Add all fields" does, picking a single field leaves the mode
+    // alone (Auto already honours declared ranges). More than one distinct unit
+    // among the series turns "Automatic axis" on instead, when
+    // `presetFixedRange` asks for it. Never overwrites a value the user set.
+    void applyAxisDefaults(bool presetFixedRange);
+    // Enables "+ Add all fields" only while the bound topic has a plottable
+    // field in the catalog.
+    void updateAddAllEnabled();
     // Sample Time only makes sense when X Axis is "Time"; Y Min/Max only
     // when Y Axis is "Fixed". Also relabels the X axis Limit field's unit
     // ("pts"/"s") to match the current X Axis mode — it stays visible in
@@ -73,6 +92,9 @@ private:
     // handler all need to resolve a field's catalog unit, pulled into one
     // place instead of each repeating the same four-argument call.
     QVector<CatalogTopicField> currentTopicFields() const;
+    // The topic was re-pointed by the user: drops m_topicName and every
+    // row's field name, which named the previous topic's ids.
+    void forgetBindingNames();
 
     bool m_updating = false;
 
@@ -85,6 +107,14 @@ private:
     // fields below *show* is derived from these, never the other way around.
     quint32 m_sourceId = 0;
     quint16 m_topicId = 0;
+    // The topic's name -- the authoritative half of the binding (see
+    // dashboard/bindingresolver.h), carried through untouched and only
+    // cleared when the user re-points the topic itself (DashboardGrid's
+    // resolver then names it again from the new ids, if the catalog knows
+    // them). Each series row carries its field's name the same way, in its
+    // field combo's "fieldName" property. A device change keeps both: that
+    // is how a chart moves to another device publishing the same topics.
+    QString m_topicName;
 
     QFormLayout* m_formLayout = nullptr;
     QComboBox* m_deviceCombo = nullptr;
@@ -123,6 +153,7 @@ private:
     QCheckBox* m_gridCheck = nullptr;
     QTableWidget* m_seriesTable = nullptr;
     QPushButton* m_addSeriesButton = nullptr;
+    QPushButton* m_addAllFieldsButton = nullptr;
 };
 
 }  // namespace traceview

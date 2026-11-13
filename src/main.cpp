@@ -3,11 +3,14 @@
 #include <QIcon>
 #include <QPointer>
 #include <QStyleFactory>
+#include <cstring>
 
 #if defined(Q_OS_ANDROID)
 #include <QJniObject>
 #endif
 
+#include "agent/agentbridgeserver.h"
+#include "agent/mcpstdiorelay.h"
 #include "core/applog.h"
 #include "core/mainwindow.h"
 #include "core/touchscroll.h"
@@ -29,6 +32,14 @@ QIcon loadAppIcon() {
 }  // namespace
 
 int main(int argc, char* argv[]) {
+    // An MCP client launched us as its stdio server: relay to the running app
+    // (see agent/mcpstdiorelay.h) -- no window, no log file, no QApplication.
+    for (int i = 1; i < argc; ++i) {
+        if (std::strcmp(argv[i], traceview::kMcpRelayArgument) == 0) {
+            return traceview::runMcpStdioRelay(argc, argv);
+        }
+    }
+
     // Fusion draws every widget itself instead of asking the native theme
     // to -- this app already paints its whole look on top via ThemeManager's
     // QSS (theme/stylesheet.cpp), and anything that QSS doesn't cover (e.g.
