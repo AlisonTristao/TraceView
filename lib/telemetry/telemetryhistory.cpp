@@ -5,7 +5,9 @@ namespace traceview {
 void TelemetryHistory::setRetention(const QHash<TelemetryHistoryKey, int>& capacities) {
     QHash<TelemetryHistoryKey, TelemetrySeriesBuffer> kept;
     kept.reserve(capacities.size());
+    m_retainedFields.clear();
     for (auto it = capacities.constBegin(); it != capacities.constEnd(); ++it) {
+        m_retainedFields.insert(fieldKey(it.key().sourceId, it.key().topicId, it.key().fieldId));
         TelemetrySeriesBuffer buffer = m_buffers.value(it.key());
         buffer.setCapacity(qMax(1, it.value()));
         kept.insert(it.key(), buffer);
@@ -15,6 +17,9 @@ void TelemetryHistory::setRetention(const QHash<TelemetryHistoryKey, int>& capac
 
 void TelemetryHistory::append(const QString& deviceId, const TelemetryFieldBinding& binding,
                               quint64 timestampUs, double value) {
+    if (!m_retainedFields.contains(fieldKey(binding.sourceId, binding.topicId, binding.fieldId))) {
+        return;
+    }
     const auto it =
         m_buffers.find({deviceId, binding.sourceId, binding.topicId, binding.fieldId});
     if (it != m_buffers.end()) {

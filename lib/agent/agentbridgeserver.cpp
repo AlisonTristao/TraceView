@@ -134,6 +134,7 @@ void AgentBridgeServer::onNewConnection() {
     while (QLocalSocket* socket = m_server->nextPendingConnection()) {
         auto* session = new McpSession(m_registry, socket);
         m_sessions.insert(socket, session);
+        m_buffers.insert(socket, QByteArray());
         connect(session, &McpSession::send, socket, [socket](const QByteArray& message) {
             socket->write(message);
             socket->write("\n");
@@ -147,6 +148,7 @@ void AgentBridgeServer::onNewConnection() {
         connect(socket, &QLocalSocket::disconnected, this, [this, socket] {
             McpSession* gone = m_sessions.take(socket);
             m_buffers.remove(socket);
+            m_dispatching.remove(socket);
             const QString name = gone ? gone->clientName() : QString();
             socket->deleteLater();
             emit clientDisconnected(name);
@@ -155,29 +157,36 @@ void AgentBridgeServer::onNewConnection() {
 }
 
 void AgentBridgeServer::onReadyRead(QLocalSocket* socket) {
-    // Taken out of the hash while dispatching: a tool may stop() the server
-    // (and so drop this socket's entry) from inside receive().
-    QByteArray buffer = m_buffers.take(socket) + socket->readAll();
-    int newline;
-    while ((newline = buffer.indexOf('\n')) >= 0) {
-        const QByteArray line = buffer.left(newline).trimmed();
-        buffer.remove(0, newline + 1);
+    if (!m_sessions.contains(socket)) {
+        return;
+    }
+    m_buffers[socket] += socket->readAll();
+    if (m_dispatching.contains(socket)) {
+        return;  // nested inside a tool's modal dialog; the outer loop drains it
+    }
+    m_dispatching.insert(socket);
+    for (;;) {
+        // Looked up again every pass: a tool may stop() the server or the
+        // client may disconnect from inside receive(), dropping the entry.
+        auto it = m_buffers.find(socket);
         McpSession* session = m_sessions.value(socket);
-        if (!session) {
-            return;
+        if (it == m_buffers.end() || !session) {
+            break;
         }
+        const int newline = it->indexOf('\n');
+        if (newline < 0) {
+            if (it->size() > kMaxMessageBytes) {
+                socket->disconnectFromServer();
+            }
+            break;
+        }
+        const QByteArray line = it->left(newline).trimmed();
+        it->remove(0, newline + 1);
         if (!line.isEmpty()) {
             session->receive(line);
         }
     }
-    if (!m_sessions.contains(socket)) {
-        return;
-    }
-    if (buffer.size() > kMaxMessageBytes) {
-        socket->disconnectFromServer();
-        return;
-    }
-    m_buffers.insert(socket, buffer);
+    m_dispatching.remove(socket);
 }
 
 }  // namespace traceview

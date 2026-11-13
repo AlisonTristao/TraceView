@@ -134,6 +134,10 @@ bool UsbHidManager::write(const QByteArray& data) {
         std::memcpy(buffer + 2, data.constData(), static_cast<std::size_t>(data.size()));
     }
 
+    const std::lock_guard<std::mutex> lock(m_handleMutex);
+    if (!m_handle || !isConnected()) {
+        return false;  // the reader closed the handle after the check above
+    }
     const int written = hid_write(m_handle, buffer, sizeof(buffer));
     return written == static_cast<int>(sizeof(buffer));
 }
@@ -168,8 +172,11 @@ void UsbHidManager::readLoop() {
     // avoids that race entirely (see UsbHidManager class comment / session
     // notes on hidapi pitfalls).
     m_connected.store(false);
-    hid_close(m_handle);
-    m_handle = nullptr;
+    {
+        const std::lock_guard<std::mutex> lock(m_handleMutex);
+        hid_close(m_handle);
+        m_handle = nullptr;
+    }
     emit connectionStateChanged(false);
 }
 

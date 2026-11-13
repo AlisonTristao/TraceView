@@ -60,6 +60,44 @@ QJsonObject lineChartConfig(int xAxisLimit) {
     return config;
 }
 
+// A long history at a high rate (60 s at 1 kHz) on an auto Y axis with the
+// info row showing statistics -- the case where per-frame cost scales with
+// buffered samples rather than with the widget's size.
+QJsonObject largeHistoryConfig(int samples, const QJsonArray& infoItems) {
+    QJsonObject config;
+    config["sourceId"] = "0";
+    config["topicId"] = "4";
+    QJsonObject xAxis;
+    xAxis["mode"] = "samples";
+    xAxis["limit"] = samples;
+    config["xAxis"] = xAxis;
+    QJsonObject yAxis;
+    yAxis["mode"] = "auto";
+    yAxis["grid"] = true;
+    config["yAxis"] = yAxis;
+    QJsonArray series;
+    series.append(seriesJson("Current", 1, "#3B82F6", "solid"));
+    series.append(seriesJson("Speed", 2, "#F97316", "solid"));
+    config["series"] = series;
+    QJsonObject view;
+    view["info"] = !infoItems.isEmpty();
+    view["infoItems"] = infoItems;
+    config["view"] = view;
+    return config;
+}
+
+DummyLineChartWidget* largeHistoryChart(int samples, const QJsonArray& infoItems) {
+    auto* chart = new DummyLineChartWidget();
+    chart->setConfig(largeHistoryConfig(samples, infoItems));
+    chart->resize(400, 250);  // about a phone-width cell
+    for (int i = 0; i < samples; ++i) {
+        const quint64 t = quint64(i) * 1000;
+        chart->appendFieldSample(1, t, 10.0 * qSin(i * 0.01) + 0.5 * qSin(i * 1.7));
+        chart->appendFieldSample(2, t, 300.0 + 50.0 * qSin(i * 0.002));
+    }
+    return chart;
+}
+
 QJsonObject barChartConfig() {
     QJsonObject config;
     config["sourceId"] = "0";
@@ -180,6 +218,20 @@ int main(int argc, char** argv) {
     const double combinedMs = lineMs + barMs + gaugeMs;
     printf("-----------------------------------------------------------------------------\n");
     report("All 3 combined, same thread", combinedMs);
+
+    // Long-history cases: fewer iterations, each frame is much heavier.
+    constexpr int kHeavyIterations = 100;
+    constexpr int kLongSamples = 60000;
+    printf("\nLong history (2 series x %d samples, auto Y, 400x250, %d iterations)\n",
+           kLongSamples, kHeavyIterations);
+    printf("-----------------------------------------------------------------------------\n");
+    report("No info row", benchmarkPaint(largeHistoryChart(kLongSamples, {}), kHeavyIterations));
+    report("Info: min max mean rms",
+           benchmarkPaint(largeHistoryChart(kLongSamples, {"min", "max", "mean", "rms"}),
+                          kHeavyIterations));
+    report("Info: + median",
+           benchmarkPaint(largeHistoryChart(kLongSamples, {"min", "max", "mean", "rms", "median"}),
+                          kHeavyIterations));
 
     return 0;
 }

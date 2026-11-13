@@ -194,8 +194,8 @@ public slots:
     // already-bounded BTP frame candidate (UsbHidManager::dataReceived's own
     // contract: one already de-padded HID report per emission), decoded as a
     // whole. Emits frameBytesReceived() once per decoded physical frame and
-    // frameReceived() zero or more times, plus frameRejected()/
-    // diagnosticsChanged() on any decode/reassembly failure.
+    // frameReceived() zero or more times, plus frameRejected()
+    // on any decode/reassembly failure.
     void feedBytes(const QByteArray& data);
 
     // Resets the incremental COBS decoder to WaitingDelimiter, discarding
@@ -247,7 +247,6 @@ signals:
     // parsing is attempted (PLANO_GERAL.txt decision 1).
     void frameRejected(const QString& reason);
     void bytesToWrite(const QByteArray& data);
-    void diagnosticsChanged();
 
 private:
     // One slot per fragmented message in flight. A message whose last
@@ -340,6 +339,13 @@ private:
     std::vector<std::uint8_t> m_reassembledOut;
 
     Diagnostics m_diagnostics;
+
+    // Send-side scratch, reused across frames instead of a zeroed 4 KB
+    // vector (plus a COBS one) allocated for every frame sent. Only read
+    // before the bytes are copied into the emitted QByteArray, so a send
+    // re-entered from a bytesToWrite slot cannot see them half-written.
+    std::vector<std::uint8_t> m_sendFrameScratch;
+    std::vector<std::uint8_t> m_sendCobsScratch;
 };
 
 }  // namespace traceview

@@ -1,7 +1,11 @@
 #pragma once
 
+#include <QByteArray>
+#include <QHash>
+#include <QMutex>
 #include <QObject>
 #include <QString>
+#include <QVariant>
 
 namespace traceview {
 
@@ -115,6 +119,17 @@ private:
 
     int value(const char* key, int fallback, int minimum, int maximum) const;
     void setValue(const char* key, int value);
+
+    // Every getter goes through stored(): the first read of a key hits
+    // QSettings (registry / INI), later ones come from m_cache. Hot paths read
+    // these per paint or per serial chunk (chart style, verbose logging), and
+    // a fresh QSettings each time is far from free. Only this class writes
+    // these keys, so store() keeps the cache exact.
+    QVariant stored(const char* key, const QVariant& fallback) const;
+    void store(const char* key, const QVariant& value);
+
+    mutable QMutex m_cacheMutex;  // the Android serial transport may read off the UI thread
+    mutable QHash<QByteArray, QVariant> m_cache;
 };
 
 }  // namespace traceview

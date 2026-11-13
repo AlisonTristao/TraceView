@@ -75,7 +75,11 @@ private:
 
     FrameLog* m_log;
     QVector<FrameLogEntry> m_all;
-    QVector<int> m_visible;  // indices into m_all
+    // Absolute positions in the log: m_all.at(m_visible[row] - m_base). When
+    // the full log drops its oldest entry only m_base moves, instead of
+    // decrementing every visible index (O(capacity) per frame at up to 50k).
+    QVector<qint64> m_visible;
+    qint64 m_base = 0;
     bool m_telemetryHidden = false;
     QString m_deviceFilter;
     QString m_textFilter;

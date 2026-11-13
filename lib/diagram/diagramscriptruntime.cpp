@@ -10,14 +10,10 @@ namespace {
 constexpr int kMaxLogHistory = 200;
 }  // namespace
 
-DiagramScriptRuntime::DiagramScriptRuntime(QObject* parent) : QObject(parent) {
-    m_engine = new QJSEngine(this);
-    // Exposed to the script as `device` -- has a parent (this QObject), so
-    // QJSEngine does not take C++ ownership of it (see newQObject()'s own
-    // ownership rule), leaving it owned normally by whoever owns this
-    // DiagramScriptRuntime.
-    m_engine->globalObject().setProperty("device", m_engine->newQObject(this));
-}
+// No engine until setScript() gets a non-empty script: every device owns a
+// runtime, and most never get a script, so an idle device should cost
+// nothing per sample.
+DiagramScriptRuntime::DiagramScriptRuntime(QObject* parent) : QObject(parent) {}
 
 DiagramScriptRuntime::~DiagramScriptRuntime() {
     clearAllTimers();
@@ -29,12 +25,18 @@ bool DiagramScriptRuntime::setScript(const QString& source) {
     // dead engine.
     clearAllTimers();
     delete m_engine;
-    m_engine = new QJSEngine(this);
-    m_engine->globalObject().setProperty("device", m_engine->newQObject(this));
+    m_engine = nullptr;
 
     if (source.trimmed().isEmpty()) {
         return true;
     }
+
+    m_engine = new QJSEngine(this);
+    // Exposed to the script as `device` -- has a parent (this QObject), so
+    // QJSEngine does not take C++ ownership of it (see newQObject()'s own
+    // ownership rule), leaving it owned normally by whoever owns this
+    // DiagramScriptRuntime.
+    m_engine->globalObject().setProperty("device", m_engine->newQObject(this));
 
     const QJSValue result = m_engine->evaluate(source);
     if (result.isError()) {
@@ -50,13 +52,20 @@ bool DiagramScriptRuntime::setScript(const QString& source) {
 
 void DiagramScriptRuntime::handleTelemetry(quint16 topicId, quint16 fieldId, quint16 elementIndex,
                                            double value, quint64 timestampUs) {
+    // Looked up before building the sample: this runs for every telemetry
+    // element, and a script without onTelemetry should not pay for a JS
+    // object it would never see.
+    const QJSValue callback = callbackNamed(QStringLiteral("onTelemetry"));
+    if (!callback.isCallable()) {
+        return;
+    }
     QJSValue sample = m_engine->newObject();
     sample.setProperty("topicId", topicId);
     sample.setProperty("fieldId", fieldId);
     sample.setProperty("elementIndex", elementIndex);
     sample.setProperty("value", value);
     sample.setProperty("timestampUs", double(timestampUs));
-    callIfDefined("onTelemetry", {sample});
+    invokeCallback(callback, {sample});
 }
 
 void DiagramScriptRuntime::handleTerminal(const QString& text) {
@@ -72,6 +81,10 @@ void DiagramScriptRuntime::handleStatus(const QString& text, traceview::StatusSe
 }
 
 void DiagramScriptRuntime::handleDeviceInfo(const QVector<traceview::DeviceInfoRecord>& info) {
+    const QJSValue callback = callbackNamed(QStringLiteral("onDeviceInfo"));
+    if (!callback.isCallable()) {
+        return;
+    }
     QJSValue array = m_engine->newArray(info.size());
     for (int i = 0; i < info.size(); ++i) {
         QJSValue entry = m_engine->newObject();
@@ -80,7 +93,7 @@ void DiagramScriptRuntime::handleDeviceInfo(const QVector<traceview::DeviceInfoR
         entry.setProperty("value", info[i].value);
         array.setProperty(i, entry);
     }
-    callIfDefined("onDeviceInfo", {array});
+    invokeCallback(callback, {array});
 }
 
 void DiagramScriptRuntime::log(const QString& text) {
@@ -112,8 +125,12 @@ void DiagramScriptRuntime::clearTimeout(int id) {
     stopTimer(id);
 }
 
+QJSValue DiagramScriptRuntime::callbackNamed(const QString& functionName) const {
+    return m_engine ? m_engine->globalObject().property(functionName) : QJSValue();
+}
+
 void DiagramScriptRuntime::callIfDefined(const QString& functionName, const QJSValueList& args) {
-    invokeCallback(m_engine->globalObject().property(functionName), args);
+    invokeCallback(callbackNamed(functionName), args);
 }
 
 void DiagramScriptRuntime::invokeCallback(QJSValue callback, const QJSValueList& args) {

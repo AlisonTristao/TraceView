@@ -137,6 +137,10 @@ void SerialTerminalWidget::appendData(const QByteArray& data) {
     // at the boundary.
     const QString text = m_utf8Decoder(data);
 
+    // One edit block for the whole chunk: a burst of N lines would otherwise
+    // run N document layout passes (one per commitLine()).
+    QTextCursor editBlock(document());
+    editBlock.beginEditBlock();
     for (const QChar ch : text) {
         const ushort code = ch.unicode();
 
@@ -195,6 +199,7 @@ void SerialTerminalWidget::appendData(const QByteArray& data) {
     }
 
     renderCurrentLineAndCursor();
+    editBlock.endEditBlock();
     QScrollBar* scrollBar = verticalScrollBar();
     if (m_autoScroll) {
         scrollBar->setValue(scrollBar->maximum());
@@ -440,7 +445,8 @@ void SerialTerminalWidget::commitLine() {
     insertLineRuns(cursor, m_currentLine, m_linePens);
     cursor.movePosition(QTextCursor::EndOfBlock);
     cursor.insertText(QStringLiteral("\n"));
-    setTextCursor(cursor);
+    // No setTextCursor() here: renderCurrentLineAndCursor() places the caret
+    // once, at the end of the whole appendData() chunk.
     m_currentLine.clear();
     m_linePens.clear();
     m_cursorCol = 0;

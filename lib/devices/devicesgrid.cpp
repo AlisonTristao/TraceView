@@ -100,7 +100,7 @@ void DevicesGrid::setDeviceConnected(const QString& id, bool connected) {
     }
     m_devices[idx].connected = connected;
     refreshCard(idx);
-    emit deviceUpdated(m_devices[idx]);
+    emit deviceLiveStateChanged(m_devices[idx]);
 }
 
 void DevicesGrid::setDeviceIdentity(const QString& id, const QString& btpVersion,
@@ -112,7 +112,7 @@ void DevicesGrid::setDeviceIdentity(const QString& id, const QString& btpVersion
     m_devices[idx].btpVersion = btpVersion;
     m_devices[idx].btpId = btpId;
     refreshCard(idx);
-    emit deviceUpdated(m_devices[idx]);
+    emit deviceLiveStateChanged(m_devices[idx]);
 }
 
 void DevicesGrid::setDeviceActiveLink(const QString& id, int activeLink) {
@@ -131,7 +131,7 @@ void DevicesGrid::setDeviceBlePeerUuid(const QString& id, const QString& peerUui
     }
     m_devices[idx].blePeerUuid = peerUuid;
     refreshCard(idx);
-    emit deviceUpdated(m_devices[idx]);
+    emit deviceLiveStateChanged(m_devices[idx]);
 }
 
 void DevicesGrid::setDevicePeerState(const QString& id, bool peerOnline, bool peerPresenceKnown,
@@ -379,18 +379,19 @@ void DevicesGrid::handleConfigRequested(const QString& deviceId) {
     // reported BTP version/ID and catalog -- so clicking Connect above
     // shows its result in place instead of requiring OK-then-reopen to see
     // it.
-    connect(this, &DevicesGrid::deviceUpdated, &dialog,
-            [this, &dialog, deviceId](const Device& device) {
-                if (device.id != deviceId) {
-                    return;
-                }
-                dialog.setConnectionStatus(device.connected);
-                dialog.setReportedIdentity(device.btpVersion, device.btpId);
-                dialog.setReportedInfo(device.reportedInfo);
-                if (m_topicCatalogProvider) {
-                    dialog.setCatalogTopics(m_topicCatalogProvider(deviceId));
-                }
-            });
+    const auto mirrorIntoDialog = [this, &dialog, deviceId](const Device& device) {
+        if (device.id != deviceId) {
+            return;
+        }
+        dialog.setConnectionStatus(device.connected);
+        dialog.setReportedIdentity(device.btpVersion, device.btpId);
+        dialog.setReportedInfo(device.reportedInfo);
+        if (m_topicCatalogProvider) {
+            dialog.setCatalogTopics(m_topicCatalogProvider(deviceId));
+        }
+    };
+    connect(this, &DevicesGrid::deviceUpdated, &dialog, mirrorIntoDialog);
+    connect(this, &DevicesGrid::deviceLiveStateChanged, &dialog, mirrorIntoDialog);
     // source_info arrives asynchronously after the handshake (its MANIFEST_DATA
     // comes over the wire later), and setDeviceReportedInfo() deliberately does
     // not emit deviceUpdated -- so this dedicated signal is what refreshes an

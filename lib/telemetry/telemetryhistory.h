@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QHash>
+#include <QSet>
 #include <QString>
 #include <QtGlobal>
 
@@ -62,6 +63,13 @@ public:
 
 private:
     QHash<TelemetryHistoryKey, TelemetrySeriesBuffer> m_buffers;
+    // (sourceId, topicId, fieldId) of every retained key, any device:
+    // append() runs for every sample of every device, and most are not
+    // retained -- this integer check rejects them before the QString hash.
+    QSet<quint64> m_retainedFields;
+    static quint64 fieldKey(quint32 sourceId, quint16 topicId, quint16 fieldId) {
+        return (quint64(sourceId) << 32) | (quint64(topicId) << 16) | quint64(fieldId);
+    }
 };
 
 }  // namespace traceview

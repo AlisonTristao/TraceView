@@ -150,6 +150,7 @@ FrameTableModel::FrameTableModel(FrameLog* log, QObject* parent)
         beginResetModel();
         m_all.clear();
         m_visible.clear();
+        m_base = 0;
         endResetModel();
     });
 }
@@ -166,7 +167,7 @@ const FrameLogEntry* FrameTableModel::entryForRow(int row) const {
     if (row < 0 || row >= m_visible.size()) {
         return nullptr;
     }
-    return &m_all.at(m_visible.at(row));
+    return &m_all.at(int(m_visible.at(row) - m_base));
 }
 
 QVariant FrameTableModel::data(const QModelIndex& index, int role) const {
@@ -261,6 +262,7 @@ bool FrameTableModel::rowPasses(const FrameLogEntry& e) const {
 void FrameTableModel::rebuildVisible() {
     beginResetModel();
     m_visible.clear();
+    m_base = 0;
     for (int i = 0; i < m_all.size(); ++i) {
         if (rowPasses(m_all.at(i))) {
             m_visible.append(i);
@@ -291,17 +293,13 @@ void FrameTableModel::onEntryAdded(const FrameLogEntry& entry, bool droppedOldes
 
     if (droppedOldest && !m_all.isEmpty()) {
         m_all.removeFirst();
-        if (!m_visible.isEmpty() && m_visible.first() == 0) {
+        if (!m_visible.isEmpty() && m_visible.first() == m_base) {
             beginRemoveRows({}, 0, 0);
             m_visible.removeFirst();
-            for (int& idx : m_visible) {
-                --idx;
-            }
+            ++m_base;
             endRemoveRows();
         } else {
-            for (int& idx : m_visible) {
-                --idx;
-            }
+            ++m_base;
         }
     }
 
@@ -309,7 +307,7 @@ void FrameTableModel::onEntryAdded(const FrameLogEntry& entry, bool droppedOldes
     if (rowPasses(entry)) {
         const int newRow = m_visible.size();
         beginInsertRows({}, newRow, newRow);
-        m_visible.append(m_all.size() - 1);
+        m_visible.append(m_base + m_all.size() - 1);
         endInsertRows();
     }
 }

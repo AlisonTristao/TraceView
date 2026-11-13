@@ -1101,6 +1101,7 @@ void AgentAppTools::registerProjectTools(MainWindow* window, ToolRegistry* regis
             reply(AgentToolResult::error(ProjectStore::instance().lastError()));
             return;
         }
+        window->markProjectClean();
         if (args.value("makeDefault").toBool() ||
             !DashboardGallery::contains(DashboardGallery::defaultName())) {
             DashboardGallery::setDefaultName(name);
@@ -1190,6 +1191,7 @@ void AgentAppTools::registerProjectTools(MainWindow* window, ToolRegistry* regis
             reply(AgentToolResult::error(store.lastError()));
             return;
         }
+        window->markProjectClean();
         window->addRecentFile(path);
         window->postStatus(
             QCoreApplication::translate("AgentAppTools", "An AI assistant saved the project to %1.")

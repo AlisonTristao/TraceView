@@ -73,7 +73,7 @@ Allow it to connect devices and send them commands until AI assistant access is 
         <translation>Un asistente de IA quiere reemplazar el panel &quot;%1&quot; de la galería.</translation>
     </message>
     <message>
-        <location line="+52"/>
+        <location line="+53"/>
         <source>Delete Dashboard</source>
         <translation>Eliminar Dashboard</translation>
     </message>
@@ -83,7 +83,7 @@ Allow it to connect devices and send them commands until AI assistant access is 
         <translation>Un asistente de IA quiere eliminar el panel &quot;%1&quot; de la galería. Esto no se puede deshacer.</translation>
     </message>
     <message>
-        <location line="+50"/>
+        <location line="+51"/>
         <source>An AI assistant saved the project to %1.</source>
         <translation>Un asistente de IA guardó el proyecto en %1.</translation>
     </message>
@@ -295,7 +295,7 @@ Allow it to connect devices and send them commands until AI assistant access is 
     </message>
     <message>
         <location line="+9"/>
-        <location line="+507"/>
+        <location line="+558"/>
         <location line="+231"/>
         <source>--</source>
         <translation>--</translation>
@@ -307,7 +307,7 @@ Allow it to connect devices and send them commands until AI assistant access is 
     </message>
     <message>
         <location line="+6"/>
-        <location line="+305"/>
+        <location line="+304"/>
         <source>%1  %2</source>
         <translation>%1  %2</translation>
     </message>
@@ -377,7 +377,7 @@ Allow it to connect devices and send them commands until AI assistant access is 
         <translation>en pausa</translation>
     </message>
     <message>
-        <location line="-739"/>
+        <location line="-738"/>
         <source>%1: %2</source>
         <translation>%1: %2</translation>
     </message>
@@ -687,7 +687,7 @@ Allow it to connect devices and send them commands until AI assistant access is 
 <context>
     <name>FurutaScene</name>
     <message>
-        <location filename="../lib/dashboard/scenes/furutascene.cpp" line="+536"/>
+        <location filename="../lib/dashboard/scenes/furutascene.cpp" line="+529"/>
         <source>Arm length (L1)</source>
         <translation>Longitud del brazo (L1)</translation>
     </message>
@@ -730,7 +730,7 @@ Allow it to connect devices and send them commands until AI assistant access is 
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="+138"/>
+        <location filename="../lib/core/mainwindow.cpp" line="+139"/>
         <source>TraceView Project (*.tvproj)</source>
         <translation>Proyecto TraceView (*.tvproj)</translation>
     </message>
@@ -776,7 +776,7 @@ Allow it to connect devices and send them commands until AI assistant access is 
         <translation>Cambiar icono</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/textboardwidget.cpp" line="+243"/>
+        <location filename="../lib/dashboard/widgets/textboardwidget.cpp" line="+231"/>
         <source>%1 packet(s)</source>
         <translation>%1 paquete(s)</translation>
     </message>
@@ -987,7 +987,7 @@ Allow it to connect devices and send them commands until AI assistant access is 
 <context>
     <name>SceneWidget</name>
     <message>
-        <location filename="../lib/dashboard/scenes/scenewidget.cpp" line="+534"/>
+        <location filename="../lib/dashboard/scenes/scenewidget.cpp" line="+545"/>
         <source>Scene</source>
         <translation>Escena</translation>
     </message>
@@ -1703,7 +1703,7 @@ Allow it to connect devices and send them commands until AI assistant access is 
 <context>
     <name>traceview::BtpMonitorTab</name>
     <message>
-        <location filename="../lib/diagnostics/btpmonitortab.cpp" line="+245"/>
+        <location filename="../lib/diagnostics/btpmonitortab.cpp" line="+243"/>
         <location line="+85"/>
         <source>Pause</source>
         <translation>Pausar</translation>
@@ -3123,14 +3123,14 @@ Permitidos: %1</translation>
 <context>
     <name>traceview::DiagramScriptRuntime</name>
     <message>
-        <location filename="../lib/diagram/diagramscriptruntime.cpp" line="+41"/>
-        <location line="+84"/>
+        <location filename="../lib/diagram/diagramscriptruntime.cpp" line="+43"/>
+        <location line="+99"/>
         <source>Line %1: %2</source>
         <translation>Línea %1: %2</translation>
     </message>
     <message>
-        <location line="-81"/>
-        <location line="+84"/>
+        <location line="-96"/>
+        <location line="+99"/>
         <source>Error: %1</source>
         <translation>Error: %1</translation>
     </message>
@@ -3161,7 +3161,7 @@ Permitidos: %1</translation>
 <context>
     <name>traceview::FrameTableModel</name>
     <message>
-        <location filename="../lib/diagnostics/btpmonitortab.cpp" line="-357"/>
+        <location filename="../lib/diagnostics/btpmonitortab.cpp" line="-354"/>
         <source>decode error</source>
         <translation>error de decodificación</translation>
     </message>
@@ -3452,7 +3452,7 @@ Permitidos: %1</translation>
         <translation>, </translation>
     </message>
     <message>
-        <location line="+293"/>
+        <location line="+295"/>
         <source>AI assistant access is off.</source>
         <translation>El acceso de asistentes de IA está desactivado.</translation>
     </message>
@@ -3478,7 +3478,7 @@ Permitidos: %1</translation>
         <translation>Asistente de IA desconectado: %1</translation>
     </message>
     <message>
-        <location line="+410"/>
+        <location line="+413"/>
         <source>Pending</source>
         <translation>Pendiente</translation>
     </message>
@@ -3622,12 +3622,12 @@ Pérdidas: %2</translation>
     </message>
     <message>
         <location line="+0"/>
-        <location line="+3763"/>
+        <location line="+3864"/>
         <source>Later</source>
         <translation>Más tarde</translation>
     </message>
     <message>
-        <location line="-3756"/>
+        <location line="-3857"/>
         <source>&amp;Access</source>
         <translation>&amp;Acceso</translation>
     </message>
@@ -3754,18 +3754,18 @@ Pérdidas: %2</translation>
     </message>
     <message>
         <location line="+18"/>
-        <location line="+3128"/>
+        <location line="+3229"/>
         <source>Undo</source>
         <translation>Deshacer</translation>
     </message>
     <message>
-        <location line="-3126"/>
-        <location line="+3126"/>
+        <location line="-3227"/>
+        <location line="+3227"/>
         <source>Redo</source>
         <translation>Rehacer</translation>
     </message>
     <message>
-        <location line="-3083"/>
+        <location line="-3184"/>
         <source>Add Device</source>
         <translation>Añadir Dispositivo</translation>
     </message>
@@ -3801,12 +3801,12 @@ Pérdidas: %2</translation>
     </message>
     <message>
         <location line="+29"/>
-        <location line="+3028"/>
+        <location line="+3129"/>
         <source>Fullscreen dashboard (F11)</source>
         <translation>Panel en pantalla completa (F11)</translation>
     </message>
     <message>
-        <location line="-2848"/>
+        <location line="-2949"/>
         <source>Rename Workspace</source>
         <translation>Renombrar Espacio de Trabajo</translation>
     </message>
@@ -3816,7 +3816,7 @@ Pérdidas: %2</translation>
         <translation>Espacio de trabajo &quot;%1&quot; renombrado a &quot;%2&quot;.</translation>
     </message>
     <message>
-        <location line="+32"/>
+        <location line="+35"/>
         <source>Appearance &amp;Presets</source>
         <translation>&amp;Ajustes de apariencia</translation>
     </message>
@@ -3887,7 +3887,12 @@ Pérdidas: %2</translation>
         <translation>Este espacio de trabajo ahora tiene su propia apariencia.</translation>
     </message>
     <message>
-        <location line="+1330"/>
+        <location line="+653"/>
+        <source>Close</source>
+        <translation>Cerrar</translation>
+    </message>
+    <message>
+        <location line="+695"/>
         <source>%1: found at %2</source>
         <translation>%1: encontrado en %2</translation>
     </message>
@@ -3897,16 +3902,21 @@ Pérdidas: %2</translation>
         <translation>%1: probando %2</translation>
     </message>
     <message>
-        <location line="+424"/>
+        <location line="+408"/>
+        <source>The current project has unsaved changes. Save them first?</source>
+        <translation>El proyecto actual tiene cambios sin guardar. ¿Desea guardarlos primero?</translation>
+    </message>
+    <message>
+        <location line="+89"/>
         <location line="+8"/>
         <location line="+5"/>
         <location line="+8"/>
-        <location line="+11"/>
+        <location line="+12"/>
         <source>Add to Gallery</source>
         <translation>Añadir a la Galería</translation>
     </message>
     <message>
-        <location line="-32"/>
+        <location line="-33"/>
         <source>Dashboard name:</source>
         <translation>Nombre del dashboard:</translation>
     </message>
@@ -3916,7 +3926,7 @@ Pérdidas: %2</translation>
         <translation>La galería ya tiene un dashboard llamado &quot;%1&quot;. ¿Reemplazarlo?</translation>
     </message>
     <message>
-        <location line="+15"/>
+        <location line="+16"/>
         <source>Added &quot;%1&quot; to the gallery -- it now opens at startup.</source>
         <translation>&quot;%1&quot; añadido a la galería -- ahora se abre al iniciar.</translation>
     </message>
@@ -3946,7 +3956,7 @@ Pérdidas: %2</translation>
         <translation>&quot;%1&quot; guardado en la galería.</translation>
     </message>
     <message>
-        <location line="+542"/>
+        <location line="+548"/>
         <source>Update available: v%1</source>
         <translation>Actualización disponible: v%1</translation>
     </message>
@@ -4019,34 +4029,34 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
         <translation>Cerrar app</translation>
     </message>
     <message>
-        <location line="-3075"/>
-        <location line="+2876"/>
+        <location line="-3176"/>
+        <location line="+2977"/>
         <source>Devices</source>
         <translation>Dispositivos</translation>
     </message>
     <message>
-        <location line="-2801"/>
+        <location line="-2902"/>
         <source>Subscriptions</source>
         <translation>Suscripciones</translation>
     </message>
     <message>
-        <location line="+266"/>
+        <location line="+269"/>
         <source>New Workspace</source>
         <translation>Nuevo Espacio de Trabajo</translation>
     </message>
     <message>
-        <location line="-236"/>
-        <location line="+236"/>
+        <location line="-239"/>
+        <location line="+239"/>
         <source>Name:</source>
         <translation>Nombre:</translation>
     </message>
     <message>
-        <location line="-2073"/>
+        <location line="-2081"/>
         <source>TraceView v%1</source>
         <translation>TraceView v%1</translation>
     </message>
     <message>
-        <location line="+2074"/>
+        <location line="+2082"/>
         <source>Workspace</source>
         <translation>Espacio de Trabajo</translation>
     </message>
@@ -4072,23 +4082,23 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
     </message>
     <message>
         <location line="+71"/>
-        <location line="+2387"/>
+        <location line="+2485"/>
         <source>Add widget</source>
         <translation>Añadir widget</translation>
     </message>
     <message>
-        <location line="-2384"/>
+        <location line="-2482"/>
         <source>Remove selected widget (%1)</source>
         <translation>Eliminar widget seleccionado (%1)</translation>
     </message>
     <message>
         <location line="+3"/>
-        <location line="+2394"/>
+        <location line="+2492"/>
         <source>Add device</source>
         <translation>Añadir dispositivo</translation>
     </message>
     <message>
-        <location line="-2391"/>
+        <location line="-2489"/>
         <source>Remove selected device (%1)</source>
         <translation>Eliminar dispositivo seleccionado (%1)</translation>
     </message>
@@ -4173,12 +4183,12 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
         <translation>Mostrar los paneles Capas/Propiedades</translation>
     </message>
     <message>
-        <location line="+263"/>
+        <location line="+267"/>
         <source>New Device</source>
         <translation>Nuevo Dispositivo</translation>
     </message>
     <message>
-        <location line="+379"/>
+        <location line="+381"/>
         <source>%1: robot is responding again</source>
         <translation>%1: el robot vuelve a responder</translation>
     </message>
@@ -4239,38 +4249,33 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
         <translation>M&amp;ovimiento</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="-1464"/>
+        <location filename="../lib/core/mainwindow.cpp" line="-1473"/>
         <source>Dashboard</source>
         <translation>Dashboard</translation>
     </message>
     <message>
-        <location line="+1810"/>
+        <location line="+1831"/>
         <source>%1: this BLE address now answers as a different robot (expected %2, got %3)</source>
         <translation>%1: esta dirección BLE ahora responde como otro robot (se esperaba %2, se obtuvo %3)</translation>
     </message>
     <message>
-        <location line="+503"/>
+        <location line="+518"/>
         <source>Key &quot;%1&quot; is already used by another widget.</source>
         <translation>La clave «%1» ya está en uso por otro widget.</translation>
     </message>
     <message>
-        <location line="+15"/>
+        <location line="+14"/>
         <source>New Project</source>
         <translation>Nuevo proyecto</translation>
     </message>
     <message>
-        <location line="+1"/>
-        <source>Discard the current dashboard and start a new, empty project?</source>
-        <translation>¿Descartar el panel actual y comenzar un nuevo proyecto vacío?</translation>
-    </message>
-    <message>
-        <location line="+18"/>
+        <location line="+76"/>
         <source>Started a new project.</source>
         <translation>Se inició un nuevo proyecto.</translation>
     </message>
     <message>
         <location line="+26"/>
-        <location line="+16"/>
+        <location line="+17"/>
         <source>Save Project</source>
         <translation>Guardar proyecto</translation>
     </message>
@@ -4280,13 +4285,14 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
         <translation>Guardar proyecto como</translation>
     </message>
     <message>
-        <location line="+14"/>
-        <location line="+329"/>
+        <location line="+15"/>
+        <location line="+331"/>
+        <location line="+4"/>
         <source>Open Project</source>
         <translation>Abrir proyecto</translation>
     </message>
     <message>
-        <location line="-243"/>
+        <location line="-248"/>
         <source>Open Log File</source>
         <translation>Abrir archivo de registro</translation>
     </message>
@@ -4307,7 +4313,7 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
     </message>
     <message>
         <location line="+20"/>
-        <location line="+218"/>
+        <location line="+224"/>
         <source>Settings</source>
         <translation>Configuración</translation>
     </message>
@@ -6097,7 +6103,7 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
 <context>
     <name>traceview::UpdateDownloader</name>
     <message>
-        <location filename="../lib/updater/updatedownloader.cpp" line="+34"/>
+        <location filename="../lib/updater/updatedownloader.cpp" line="+36"/>
         <source>Updates are managed by Flatpak. Use &apos;flatpak update&apos;.</source>
         <translation>Las actualizaciones las gestiona Flatpak. Use &apos;flatpak update&apos;.</translation>
     </message>
@@ -6107,22 +6113,24 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
         <translation>No se pudo descargar SHA256SUMS.txt: %1</translation>
     </message>
     <message>
-        <location line="+14"/>
+        <location line="+59"/>
         <source>Couldn&apos;t download %1: %2</source>
         <translation>No se pudo descargar %1: %2</translation>
     </message>
     <message>
-        <location line="+22"/>
+        <location line="-53"/>
         <source>%1 is not listed in SHA256SUMS.txt.</source>
         <translation>%1 no figura en SHA256SUMS.txt.</translation>
     </message>
     <message>
-        <location line="+7"/>
+        <location line="+65"/>
         <source>Checksum mismatch for %1 -- the download may be corrupted.</source>
         <translation>La suma de verificación de %1 no coincide -- la descarga puede estar dañada.</translation>
     </message>
     <message>
-        <location line="+20"/>
+        <location line="-38"/>
+        <location line="+32"/>
+        <location line="+11"/>
         <source>Couldn&apos;t write %1</source>
         <translation>No se pudo escribir %1</translation>
     </message>
@@ -6135,7 +6143,7 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
         <translation>No se pudo abrir el dispositivo HID: %1</translation>
     </message>
     <message>
-        <location line="+72"/>
+        <location line="+76"/>
         <source>HID device disconnected</source>
         <translation>Dispositivo HID desconectado</translation>
     </message>

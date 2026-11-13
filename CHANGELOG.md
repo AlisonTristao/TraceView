@@ -7,6 +7,51 @@ release flow.
 
 ## [Unreleased]
 
+## [4.11.0] - 2026-11-13
+
+### Added
+
+- Closing TraceView, opening another project (Open, the recent list or the
+  gallery) or starting a new one now asks **Save / Discard / Cancel** when
+  the current project has unsaved changes, instead of dropping them
+  silently. Switching workspaces or a device's catalog arriving does not
+  count as a change. Projects saved or opened by an AI assistant never ask.
+
+### Changed
+
+- Line charts with a long history stay fast: when there are more samples
+  than pixels, each pixel column draws only its first, lowest, highest and
+  last sample, so the line looks the same. A 60 s axis at 1 kHz on a
+  phone-width chart went from over a second per frame to a few
+  milliseconds.
+- Gauges and bars animate at the render profile's frame rate instead of a
+  fixed 60 Hz, and the chart info row no longer sorts the whole history
+  every frame (the median is only computed when shown).
+- Changing an appearance option (data colours, density, card header,
+  canvas, motion) or applying a preset no longer restyles every widget of
+  the app when the style sheet itself did not change.
+- Less work per sample and per frame: settings are no longer re-read from
+  disk on every paint or serial read, devices without a script cost
+  nothing per sample, serial ports are listed once per second instead of
+  once per device, the hidden Subscriptions view is not rebuilt on every
+  status, the BTP monitor stays responsive with a full log, text boards
+  draw images in one pass and the serial terminal lays out a burst of
+  lines once.
+- Updates are written to disk while they download instead of being held
+  in memory, and only kept once their checksum matches.
+
+### Fixed
+
+- With a device's settings dialog open, a connection that dropped and came
+  back could start reconnecting with the old settings while you were still
+  editing them.
+- Unplugging a USB HID device in the middle of a write could crash
+  TraceView.
+- AI assistant requests could be lost or run out of order while TraceView
+  was asking you to confirm one of them.
+- Unsubscribe requests whose reply was lost were kept for the whole
+  session.
+
 ## [4.10.1] - 2026-11-13
 
 ### Fixed

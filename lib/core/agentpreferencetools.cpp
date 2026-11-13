@@ -578,9 +578,27 @@ void AgentAppTools::registerDiagnosticsTools(MainWindow* window, ToolRegistry* r
             reply(AgentToolResult::error(QStringLiteral("The log file can't be read.")));
             return;
         }
-        const QStringList lines = QString::fromUtf8(file.readAll()).split('\n');
         const int max =
             qMax(1, args.contains("maxLines") ? args.value("maxLines").toInt() : kDefaultLogLines);
+        // Read from the end, growing the window until it holds enough lines,
+        // instead of loading (and splitting) a whole session's log.
+        const qint64 size = file.size();
+        qint64 window = 64 * 1024;
+        QByteArray tail;
+        qint64 start = 0;
+        for (;;) {
+            start = qMax<qint64>(0, size - window);
+            file.seek(start);
+            tail = file.read(size - start);
+            if (start == 0 || tail.count('\n') > max) {
+                break;
+            }
+            window *= 4;
+        }
+        QStringList lines = QString::fromUtf8(tail).split('\n');
+        if (start > 0 && !lines.isEmpty()) {
+            lines.removeFirst();  // most likely cut mid-line by the window
+        }
         reply(AgentToolResult::text(lines.mid(qMax(0, int(lines.size()) - max)).join('\n')));
     };
     registry->registerTool(appLog);
