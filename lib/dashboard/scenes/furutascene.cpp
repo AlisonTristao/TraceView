@@ -614,8 +614,13 @@ Camera makeCamera(const SceneView& view, const Geometry& geo, double azimuthDeg,
         }
     }
     const double w = view.size.width(), h = view.size.height();
-    const double fit = std::min(0.94 * w / std::max(box.width(), 1e-9),
-                                0.86 * h / std::max(box.height(), 1e-9));
+    // The box holds every pose, most of which never happen at once (the
+    // mass at the far side of its sphere, toward or away from the camera):
+    // fitting it exactly leaves the machine small, so it is drawn larger and
+    // only those extremes may leave the view.
+    constexpr double kFill = 1.3;
+    const double fit = kFill * std::min(0.94 * w / std::max(box.width(), 1e-9),
+                                        0.86 * h / std::max(box.height(), 1e-9));
     camera.scale = fit * view.zoom;
     // That box's centre at the widget's centre, a little below.
     const QPointF centre = fit * box.center();
@@ -646,24 +651,12 @@ void drawFloorDisc(QPainter& painter, const Camera& camera, double x, double y, 
     painter.restore();
 }
 
-// A soft shadow of a rod of radius `r` from a to b, both on the floor.
-void drawFloorStroke(QPainter& painter, const Camera& camera, const V3& a, const V3& b, double r,
-                     const QColor& color) {
-    const QPointF pa = camera.project({a.x, a.y, 0.0});
-    const QPointF pb = camera.project({b.x, b.y, 0.0});
-    const double width = std::max(2.0 * r * camera.scale, 1.0);
-    for (const double spread : {2.2, 1.0}) {
-        QColor c = color;
-        c.setAlphaF(color.alphaF() * (spread > 1.0 ? 0.45 : 1.0));
-        painter.setPen(QPen(c, spread * width, Qt::SolidLine, Qt::RoundCap));
-        painter.drawLine(pa, pb);
-    }
-}
-
-// The sky, the lit floor around the machine and the shadows of the arm, the
-// pendulum and its mass cast straight down, under everything else.
+// The sky, the lit floor around the machine and the soft shadows of the
+// base and of the mass cast straight down, under everything else. The arm
+// and the rod cast none: a line on the floor behind the base showed above
+// it, next to the motor, like a stray stroke on the machine.
 void drawBackdrop(QPainter& painter, const Camera& camera, const Geometry& geo,
-                  const QRectF& area, const V3& pivot, const V3& mass) {
+                  const QRectF& area, const V3& mass) {
     QLinearGradient sky(area.topLeft(), area.bottomLeft());
     sky.setColorAt(0.0, kSkyTop);
     sky.setColorAt(1.0, kSkyBottom);
@@ -682,10 +675,8 @@ void drawBackdrop(QPainter& painter, const Camera& camera, const Geometry& geo,
     };
     QColor clear = kShadow;
     clear.setAlpha(0);
-    // Where the base stands, and the arm, the rod and the mass above it.
+    // Where the base stands, and under the mass.
     drawFloorDisc(painter, camera, 0.0, 0.0, 1.35 * geo.baseRadius, shadow(0.30), clear);
-    drawFloorStroke(painter, camera, V3{0, 0, 0}, pivot, geo.armRadius, shadow(0.10));
-    drawFloorStroke(painter, camera, pivot, mass, geo.rodRadius, shadow(0.10));
     drawFloorDisc(painter, camera, mass.x, mass.y, 1.8 * geo.massRadius, shadow(0.22), clear);
 }
 
@@ -724,7 +715,7 @@ void FurutaScene::paint(QPainter& painter, const SceneView& view) {
     const V3 pivot = geo.pivot(th1);
     const V3 along = geo.pendulumDirection(th1, th2);
     const V3 mass = geo.mass(th1, th2);
-    drawBackdrop(painter, camera, geo, area, pivot, mass);
+    drawBackdrop(painter, camera, geo, area, mass);
 
     // The solid parts, painted far to near where they overlap.
     std::vector<Solid> solids;
