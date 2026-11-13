@@ -687,7 +687,7 @@ AI アシスタントのアクセスをオフにするか TraceView を閉じる
 <context>
     <name>FurutaScene</name>
     <message>
-        <location filename="../lib/dashboard/scenes/furutascene.cpp" line="+555"/>
+        <location filename="../lib/dashboard/scenes/furutascene.cpp" line="+536"/>
         <source>Arm length (L1)</source>
         <translation>アームの長さ (L1)</translation>
     </message>
@@ -707,29 +707,9 @@ AI アシスタントのアクセスをオフにするか TraceView を閉じる
         <translation>視点の仰角</translation>
     </message>
     <message>
-        <location line="+2"/>
-        <source>Torque at full arrow</source>
-        <translation>矢印最大時のトルク</translation>
-    </message>
-    <message>
-        <location line="+2"/>
-        <source>Perturbation step</source>
-        <translation>外乱のステップ</translation>
-    </message>
-    <message>
-        <location line="+5"/>
+        <location line="+4"/>
         <source>Angles and labels</source>
         <translation>角度とラベル</translation>
-    </message>
-    <message>
-        <location line="+2"/>
-        <source>Torque arrow</source>
-        <translation>トルクの矢印</translation>
-    </message>
-    <message>
-        <location line="+2"/>
-        <source>Predicted path</source>
-        <translation>予測軌道</translation>
     </message>
     <message>
         <location line="+2"/>
@@ -740,36 +720,6 @@ AI アシスタントのアクセスをオフにするか TraceView を閉じる
         <location line="+2"/>
         <source>Antialiasing</source>
         <translation>アンチエイリアス</translation>
-    </message>
-    <message>
-        <location line="+389"/>
-        <source>   (ref %1)</source>
-        <translation>   (目標 %1)</translation>
-    </message>
-    <message>
-        <location line="+9"/>
-        <source>disturbance = %1 N·m</source>
-        <translation>外乱 = %1 N·m</translation>
-    </message>
-    <message>
-        <location line="+8"/>
-        <source>solve %1 ms</source>
-        <translation>求解 %1 ms</translation>
-    </message>
-    <message>
-        <location line="+2"/>
-        <source> · QPs %1</source>
-        <translation> · QP %1</translation>
-    </message>
-    <message>
-        <location line="+5"/>
-        <source>Waiting for theta1 and theta2 (sim.truth)</source>
-        <translation>theta1 と theta2 を待機中 (sim.truth)</translation>
-    </message>
-    <message>
-        <location line="+7"/>
-        <source>drag: orbit · wheel: zoom · double click: figure view · P / O / R: disturbance</source>
-        <translation>ドラッグ: 回転 · ホイール: ズーム · ダブルクリック: 初期視点 · P / O / R: 外乱</translation>
     </message>
     <message>
         <location filename="../lib/dashboard/scenes/sceneregistry.cpp" line="+3"/>
@@ -5277,7 +5227,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
 <context>
     <name>traceview::SceneConfigEditor</name>
     <message>
-        <location filename="../lib/dashboard/scenes/sceneconfigeditor.cpp" line="+131"/>
+        <location filename="../lib/dashboard/scenes/sceneconfigeditor.cpp" line="+149"/>
         <source>Bind by name</source>
         <translation>名前でバインド</translation>
     </message>

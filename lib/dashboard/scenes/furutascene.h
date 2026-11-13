@@ -12,15 +12,13 @@ namespace traceview {
 
 // "Furuta pendulum": the rotary inverted pendulum drawn like the paper's
 // figure (pendulo_furuta.drawio) -- base, motor, shaft, the arm turning by
-// theta1 and the pendulum swinging by theta2 at its tip, in line art on
-// white, with the angles' arcs, the torque u around the shaft and the axes.
+// theta1 and the pendulum swinging by theta2 at its tip, in line art over a
+// soft sky and a lit floor with the parts' shadows cast on it, with the axes.
 // An orthographic camera looks at it from an azimuth and an elevation; drag
 // to orbit, the wheel zooms, a double click goes back to the figure's view.
 //
-// It reads theta1 and theta2 (sim.truth), the torque (loop.output u), the
-// arm reference and the controller's predicted angles (ctl.diag theta1_r,
-// pred_x = theta1, pred_y = theta2 over the horizon) and the disturbance
-// (sim.states tau_d). P / O / R change sim.disturb.
+// It reads theta1 and theta2 only, bound by name to whichever topic of the
+// device reports them.
 //
 // Conventions (the plant's): theta1 turns counterclockwise seen from above,
 // from the x axis; theta2 = 0 is upright and > 0 tilts the pendulum toward
@@ -41,8 +39,6 @@ public:
     void update(const SceneFrame& frame) override;
     void paint(QPainter& painter, const SceneView& view) override;
     bool antialiased() const override;
-    void document(const QString& input, const QByteArray& body) override;
-    std::optional<SceneAction> keyAction(int key) override;
 
     // What a frame is drawn from, for the tests.
     double theta1() const {
@@ -68,22 +64,11 @@ private:
     bool m_hasAngles = false;
     double m_theta1 = 0.0;
     double m_theta2 = M_PI;
-    qint64 m_tick = -1;
-    double m_time = qQNaN();
-    double m_torque = qQNaN();
-    double m_reference = qQNaN();
-    double m_disturbance = qQNaN();
-    double m_solveMs = qQNaN();
-    double m_qps = qQNaN();
-    QVector<double> m_predTheta1;
-    QVector<double> m_predTheta2;
     struct TrailPoint {
         double theta1;
         double theta2;
     };
     QVector<TrailPoint> m_trail;
-    QString m_controller;
-    double m_perturbation = 0.0;
 };
 
 }  // namespace traceview

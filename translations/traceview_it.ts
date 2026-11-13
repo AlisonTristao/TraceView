@@ -687,7 +687,7 @@ Consentirgli di collegare dispositivi e inviare loro comandi finché l’accesso
 <context>
     <name>FurutaScene</name>
     <message>
-        <location filename="../lib/dashboard/scenes/furutascene.cpp" line="+555"/>
+        <location filename="../lib/dashboard/scenes/furutascene.cpp" line="+536"/>
         <source>Arm length (L1)</source>
         <translation>Lunghezza del braccio (L1)</translation>
     </message>
@@ -707,29 +707,9 @@ Consentirgli di collegare dispositivi e inviare loro comandi finché l’accesso
         <translation>Elevazione della vista</translation>
     </message>
     <message>
-        <location line="+2"/>
-        <source>Torque at full arrow</source>
-        <translation>Coppia a freccia piena</translation>
-    </message>
-    <message>
-        <location line="+2"/>
-        <source>Perturbation step</source>
-        <translation>Passo della perturbazione</translation>
-    </message>
-    <message>
-        <location line="+5"/>
+        <location line="+4"/>
         <source>Angles and labels</source>
         <translation>Angoli ed etichette</translation>
-    </message>
-    <message>
-        <location line="+2"/>
-        <source>Torque arrow</source>
-        <translation>Freccia della coppia</translation>
-    </message>
-    <message>
-        <location line="+2"/>
-        <source>Predicted path</source>
-        <translation>Traiettoria prevista</translation>
     </message>
     <message>
         <location line="+2"/>
@@ -740,36 +720,6 @@ Consentirgli di collegare dispositivi e inviare loro comandi finché l’accesso
         <location line="+2"/>
         <source>Antialiasing</source>
         <translation>Antialiasing</translation>
-    </message>
-    <message>
-        <location line="+389"/>
-        <source>   (ref %1)</source>
-        <translation>   (rif %1)</translation>
-    </message>
-    <message>
-        <location line="+9"/>
-        <source>disturbance = %1 N·m</source>
-        <translation>perturbazione = %1 N·m</translation>
-    </message>
-    <message>
-        <location line="+8"/>
-        <source>solve %1 ms</source>
-        <translation>soluzione %1 ms</translation>
-    </message>
-    <message>
-        <location line="+2"/>
-        <source> · QPs %1</source>
-        <translation> · QP %1</translation>
-    </message>
-    <message>
-        <location line="+5"/>
-        <source>Waiting for theta1 and theta2 (sim.truth)</source>
-        <translation>In attesa di theta1 e theta2 (sim.truth)</translation>
-    </message>
-    <message>
-        <location line="+7"/>
-        <source>drag: orbit · wheel: zoom · double click: figure view · P / O / R: disturbance</source>
-        <translation>trascina: orbita · rotellina: zoom · doppio clic: vista della figura · P / O / R: perturbazione</translation>
     </message>
     <message>
         <location filename="../lib/dashboard/scenes/sceneregistry.cpp" line="+3"/>
@@ -5278,7 +5228,7 @@ Scegli Più tardi per continuare a lavorare -- le modifiche verranno applicate l
 <context>
     <name>traceview::SceneConfigEditor</name>
     <message>
-        <location filename="../lib/dashboard/scenes/sceneconfigeditor.cpp" line="+131"/>
+        <location filename="../lib/dashboard/scenes/sceneconfigeditor.cpp" line="+149"/>
         <source>Bind by name</source>
         <translation>Collega per nome</translation>
     </message>

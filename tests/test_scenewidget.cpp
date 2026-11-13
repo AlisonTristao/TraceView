@@ -103,6 +103,7 @@ private slots:
     void widgetAppliesConfig();
     void projectRoundTripStoresNoCode();
     void bindByNameMatchesTheCatalog();
+    void furutaAnglesBindFromOneTopic();
     void samplesReachTheScene();
     void topicRequestsAreOnePerTopic();
     void keysEmitTheAction();
@@ -243,6 +244,46 @@ void TestSceneWidget::bindByNameMatchesTheCatalog() {
     // Nothing reported for these.
     QVERIFY(!bind.contains("pred_x"));
     QVERIFY(!bind.contains("next_point"));
+}
+
+void TestSceneWidget::furutaAnglesBindFromOneTopic() {
+    // A real robot reporting theta1/theta2 in two topics: both angles come
+    // from the same one -- the first reported, or the one an angle already
+    // reads.
+    CatalogTopicInfo control;
+    control.sourceId = kSource;
+    control.topicId = 0x0101;
+    control.name = "controle";
+    control.encoding = "PACKED_LE";
+    control.fields = {field(1, "t"), field(2, "theta1"), field(3, "theta2"), field(6, "u")};
+    CatalogTopicInfo sensors;
+    sensors.sourceId = kSource;
+    sensors.topicId = 0x0102;
+    sensors.name = "sensores";
+    sensors.encoding = "PACKED_LE";
+    sensors.fields = {field(1, "theta1"), field(2, "theta2"), field(3, "theta2_topo")};
+    DeviceOption robot;
+    robot.id = "furuta";
+    robot.name = "furuta";
+    robot.catalogTopics = {control, sensors};
+    robot.selfSourceId = kSource;
+
+    FurutaScene scene;
+    const QJsonObject bind = autoBindSceneInputs(scene.inputs(), {}, {robot});
+    QCOMPARE(bind.size(), 2);
+    QCOMPARE(bind.value("theta1").toObject().value("topicName").toString(), QString("controle"));
+    QCOMPARE(bind.value("theta2").toObject().value("topicName").toString(), QString("controle"));
+    QCOMPARE(bind.value("theta2").toObject().value("fieldId").toInt(), 3);
+
+    const QJsonObject kept{{"theta1", QJsonObject{{"deviceId", "furuta"},
+                                                   {"sourceId", "0x1A2B3C4D"},
+                                                   {"topicId", "0x0102"},
+                                                   {"topicName", "sensores"},
+                                                   {"fieldId", 1},
+                                                   {"fieldName", "theta1"}}}};
+    const QJsonObject follow = autoBindSceneInputs(scene.inputs(), kept, {robot});
+    QCOMPARE(follow.value("theta2").toObject().value("topicName").toString(), QString("sensores"));
+    QCOMPARE(follow.value("theta2").toObject().value("fieldId").toInt(), 2);
 }
 
 void TestSceneWidget::samplesReachTheScene() {

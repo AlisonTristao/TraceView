@@ -687,7 +687,7 @@ Allow it to connect devices and send them commands until AI assistant access is 
 <context>
     <name>FurutaScene</name>
     <message>
-        <location filename="../lib/dashboard/scenes/furutascene.cpp" line="+555"/>
+        <location filename="../lib/dashboard/scenes/furutascene.cpp" line="+536"/>
         <source>Arm length (L1)</source>
         <translation>摆臂长度 (L1)</translation>
     </message>
@@ -707,29 +707,9 @@ Allow it to connect devices and send them commands until AI assistant access is 
         <translation>视角仰角</translation>
     </message>
     <message>
-        <location line="+2"/>
-        <source>Torque at full arrow</source>
-        <translation>满箭头对应扭矩</translation>
-    </message>
-    <message>
-        <location line="+2"/>
-        <source>Perturbation step</source>
-        <translation>扰动步长</translation>
-    </message>
-    <message>
-        <location line="+5"/>
+        <location line="+4"/>
         <source>Angles and labels</source>
         <translation>角度和标签</translation>
-    </message>
-    <message>
-        <location line="+2"/>
-        <source>Torque arrow</source>
-        <translation>扭矩箭头</translation>
-    </message>
-    <message>
-        <location line="+2"/>
-        <source>Predicted path</source>
-        <translation>预测轨迹</translation>
     </message>
     <message>
         <location line="+2"/>
@@ -740,36 +720,6 @@ Allow it to connect devices and send them commands until AI assistant access is 
         <location line="+2"/>
         <source>Antialiasing</source>
         <translation>抗锯齿</translation>
-    </message>
-    <message>
-        <location line="+389"/>
-        <source>   (ref %1)</source>
-        <translation>   (参考 %1)</translation>
-    </message>
-    <message>
-        <location line="+9"/>
-        <source>disturbance = %1 N·m</source>
-        <translation>扰动 = %1 N·m</translation>
-    </message>
-    <message>
-        <location line="+8"/>
-        <source>solve %1 ms</source>
-        <translation>求解 %1 ms</translation>
-    </message>
-    <message>
-        <location line="+2"/>
-        <source> · QPs %1</source>
-        <translation> · QP %1</translation>
-    </message>
-    <message>
-        <location line="+5"/>
-        <source>Waiting for theta1 and theta2 (sim.truth)</source>
-        <translation>等待 theta1 和 theta2 (sim.truth)</translation>
-    </message>
-    <message>
-        <location line="+7"/>
-        <source>drag: orbit · wheel: zoom · double click: figure view · P / O / R: disturbance</source>
-        <translation>拖动: 环绕 · 滚轮: 缩放 · 双击: 初始视角 · P / O / R: 扰动</translation>
     </message>
     <message>
         <location filename="../lib/dashboard/scenes/sceneregistry.cpp" line="+3"/>
@@ -5277,7 +5227,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
 <context>
     <name>traceview::SceneConfigEditor</name>
     <message>
-        <location filename="../lib/dashboard/scenes/sceneconfigeditor.cpp" line="+131"/>
+        <location filename="../lib/dashboard/scenes/sceneconfigeditor.cpp" line="+149"/>
         <source>Bind by name</source>
         <translation>按名称绑定</translation>
     </message>

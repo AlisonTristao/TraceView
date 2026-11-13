@@ -1,5 +1,6 @@
 #include "furutascene.h"
 
+#include <QBrush>
 #include <QCoreApplication>
 #include <QFont>
 #include <QFontMetricsF>
@@ -21,22 +22,19 @@ const QString kPendulumLength = QStringLiteral("pendulum_length_m");
 const QString kAzimuth = QStringLiteral("azimuth_deg");
 const QString kElevation = QStringLiteral("elevation_deg");
 const QString kLabels = QStringLiteral("labels");
-const QString kTorqueArrow = QStringLiteral("torque_arrow");
-const QString kPrediction = QStringLiteral("prediction");
 const QString kTrail = QStringLiteral("trail");
-const QString kTorqueMax = QStringLiteral("torque_max");
-const QString kPerturbationStep = QStringLiteral("perturbation_step");
 const QString kAntialiasing = QStringLiteral("antialiasing");
 
 const QColor kPaper(255, 255, 255);
 const QColor kInk(0, 0, 0);
 const QColor kGuide(85, 85, 85);
-const QColor kHud(51, 51, 51);
-const QColor kHint(150, 150, 150);
-const QColor kTorque(200, 30, 30);
-const QColor kPredictionColor(0, 120, 255);
 const QColor kTrailColor(120, 120, 120);
-const QColor kReference(220, 120, 0);
+// The backdrop: a soft sky, a lit patch of floor under the machine and the
+// shadows of its parts cast straight down onto it.
+const QColor kSkyTop(252, 253, 255);
+const QColor kSkyBottom(221, 227, 235);
+const QColor kStage(255, 255, 255);
+const QColor kShadow(40, 50, 70);
 
 // Degrees per pixel of drag.
 constexpr double kOrbitPerPixel = 0.4;
@@ -520,31 +518,14 @@ FurutaScene::FurutaScene() {
 }
 
 QList<SceneInput> FurutaScene::inputs() const {
+    // Only the two angles: no default topic, so "Bind by name" takes the
+    // fields called theta1 and theta2, wherever the device reports them.
     using Kind = SceneInput::Kind;
-    const QString truth = QStringLiteral("sim.truth");
-    const QString diag = QStringLiteral("ctl.diag");
     return {
-        {QStringLiteral("theta1"), QStringLiteral("rad"), Kind::Scalar, truth,
+        {QStringLiteral("theta1"), QStringLiteral("rad"), Kind::Scalar, QString(),
          QStringLiteral("theta1")},
-        {QStringLiteral("theta2"), QStringLiteral("rad"), Kind::Scalar, truth,
+        {QStringLiteral("theta2"), QStringLiteral("rad"), Kind::Scalar, QString(),
          QStringLiteral("theta2")},
-        {QStringLiteral("tick"), QString(), Kind::Scalar, truth, QStringLiteral("tick"), true},
-        {QStringLiteral("t"), QStringLiteral("s"), Kind::Scalar, truth, QStringLiteral("t"), true},
-        {QStringLiteral("u"), QStringLiteral("N m"), Kind::Scalar, QStringLiteral("loop.output"),
-         QStringLiteral("u"), true},
-        {QStringLiteral("disturbance"), QStringLiteral("N m"), Kind::Scalar,
-         QStringLiteral("sim.states"), QStringLiteral("tau_d"), true},
-        {QStringLiteral("theta1_ref"), QStringLiteral("rad"), Kind::Scalar, diag,
-         QStringLiteral("theta1_r"), true},
-        {QStringLiteral("pred_theta1"), QStringLiteral("rad"), Kind::Array, diag,
-         QStringLiteral("pred_x"), true},
-        {QStringLiteral("pred_theta2"), QStringLiteral("rad"), Kind::Array, diag,
-         QStringLiteral("pred_y"), true},
-        {QStringLiteral("qps"), QString(), Kind::Scalar, diag, QStringLiteral("iterations"), true},
-        {QStringLiteral("solve_ms"), QStringLiteral("ms"), Kind::Scalar, diag,
-         QStringLiteral("solve_ms"), true},
-        {QStringLiteral("controller"), QString(), Kind::Text, QStringLiteral("ctl.info"), QString(),
-         true},
     };
 }
 
@@ -560,18 +541,9 @@ QList<SceneParam> FurutaScene::params() const {
          360.0, 0},
         {kElevation, QCoreApplication::translate("FurutaScene", "View elevation"), deg, 45.0, -10.0,
          89.0, 0},
-        {kTorqueMax, QCoreApplication::translate("FurutaScene", "Torque at full arrow"),
-         QStringLiteral("N m"), 0.6, 0.001, 100.0, 3},
-        {kPerturbationStep, QCoreApplication::translate("FurutaScene", "Perturbation step"),
-         QStringLiteral("%"), 20.0, 0.1, 100.0, 1},
-        // Toggles. Off by default, the figure's annotations: the angles'
-        // arcs with their references and the lengths' labels, and the torque
-        // as an arrow around the shaft. On: the controller's predicted path.
+        // Toggles, off by default: the figure's annotations (the angles' arcs
+        // and the lengths' labels) and the mass's recent path.
         {kLabels, QCoreApplication::translate("FurutaScene", "Angles and labels"), QString(), 0.0,
-         0.0, 1.0, 0, true},
-        {kTorqueArrow, QCoreApplication::translate("FurutaScene", "Torque arrow"), QString(), 0.0,
-         0.0, 1.0, 0, true},
-        {kPrediction, QCoreApplication::translate("FurutaScene", "Predicted path"), QString(), 1.0,
          0.0, 1.0, 0, true},
         {kTrail, QCoreApplication::translate("FurutaScene", "Trail of the mass"), QString(), 0.0,
          0.0, 1.0, 0, true},
@@ -599,18 +571,9 @@ bool FurutaScene::antialiased() const {
 void FurutaScene::update(const SceneFrame& frame) {
     const QString theta1 = QStringLiteral("theta1");
     const QString theta2 = QStringLiteral("theta2");
-    const QString tick = QStringLiteral("tick");
     for (const SceneRecord& record : frame.records) {
         if (!record.values.contains(theta1) || !record.values.contains(theta2)) {
             continue;
-        }
-        if (record.values.contains(tick)) {
-            const qint64 k = qint64(record.values.value(tick));
-            // A tick going back is a sim.reset: the trail no longer applies.
-            if (k < m_tick) {
-                m_trail.clear();
-            }
-            m_tick = k;
         }
         m_theta1 = record.values.value(theta1);
         m_theta2 = record.values.value(theta2);
@@ -620,47 +583,6 @@ void FurutaScene::update(const SceneFrame& frame) {
             m_trail.remove(0, m_trail.size() - kTrailLength);
         }
     }
-    const auto newest = [&frame](const char* name, double* out) {
-        const QString key = QLatin1String(name);
-        if (frame.values.contains(key)) {
-            *out = frame.values.value(key);
-        }
-    };
-    newest("t", &m_time);
-    newest("u", &m_torque);
-    newest("disturbance", &m_disturbance);
-    newest("theta1_ref", &m_reference);
-    newest("solve_ms", &m_solveMs);
-    newest("qps", &m_qps);
-    if (frame.arrays.contains(QStringLiteral("pred_theta1")) &&
-        frame.arrays.contains(QStringLiteral("pred_theta2"))) {
-        m_predTheta1 = frame.arrays.value(QStringLiteral("pred_theta1"));
-        m_predTheta2 = frame.arrays.value(QStringLiteral("pred_theta2"));
-    }
-}
-
-void FurutaScene::document(const QString& input, const QByteArray& body) {
-    if (input == QLatin1String("controller")) {
-        m_controller = QString::fromUtf8(body).trimmed();
-    }
-}
-
-std::optional<SceneAction> FurutaScene::keyAction(int key) {
-    const double step = param(kPerturbationStep);
-    switch (key) {
-        case Qt::Key_P:
-            m_perturbation = qMin(100.0, m_perturbation + step);
-            break;
-        case Qt::Key_O:
-            m_perturbation = qMax(-100.0, m_perturbation - step);
-            break;
-        case Qt::Key_R:
-            m_perturbation = 0.0;
-            break;
-        default:
-            return std::nullopt;
-    }
-    return SceneAction{QStringLiteral("sim.disturb"), m_perturbation};
 }
 
 namespace {
@@ -675,14 +597,19 @@ Camera makeCamera(const SceneView& view, const Geometry& geo, double azimuthDeg,
     camera.right = {-std::sin(a), std::cos(a), 0.0};
     camera.up = {-std::sin(e) * std::cos(a), -std::sin(e) * std::sin(a), std::cos(e)};
 
-    // Fit what the mechanism can reach on screen: the base and the mass
-    // anywhere on its sphere around the arm's circle.
+    // The body of the machine (the base's axis, halfway up to the motor's
+    // top) sits at the widget's centre, and the scale fits, around it, all
+    // the mechanism can reach: the base and the mass anywhere on its sphere
+    // around the arm's circle. Centring the reachable box instead would leave
+    // the machine low, under the empty room the upright pendulum needs.
     camera.scale = 1.0;
     camera.origin = QPointF(0, 0);
-    QRectF box;
+    const QPointF anchor = camera.project({0, 0, 0.5 * geo.motorTop});
+    double halfWidth = 1e-9, halfHeight = 1e-9;
     const auto extend = [&](const V3& p) {
-        const QPointF q = camera.project(p);
-        box = box.isNull() ? QRectF(q, QSizeF(1e-9, 1e-9)) : box.united(QRectF(q, QSizeF(1e-9, 1e-9)));
+        const QPointF q = camera.project(p) - anchor;
+        halfWidth = std::max(halfWidth, std::fabs(q.x()));
+        halfHeight = std::max(halfHeight, std::fabs(q.y()));
     };
     for (int i = 0; i < 16; ++i) {
         const double t1 = 2.0 * M_PI * i / 16;
@@ -699,14 +626,76 @@ Camera makeCamera(const SceneView& view, const Geometry& geo, double azimuthDeg,
         }
     }
     const double w = view.size.width(), h = view.size.height();
-    const double fit = std::min(0.94 * w / std::max(box.width(), 1e-9),
-                                0.86 * h / std::max(box.height(), 1e-9));
+    const double fit = std::min(0.47 * w / halfWidth, 0.45 * h / halfHeight);
     camera.scale = fit * view.zoom;
-    // That box's centre at the widget's centre (a little below: the readout
-    // is above).
-    const QPointF centre = fit * box.center();
-    camera.origin = QPointF(0.5 * w - centre.x(), 0.53 * h - centre.y());
+    camera.origin = QPointF(0.5 * w, 0.5 * h) - camera.scale * anchor;
     return camera;
+}
+
+// A disc of radius `r` on the floor (z = 0) around (x, y), filled with a
+// radial gradient from `inner` at its centre to `outer` at its rim: a
+// horizontal circle projects to an axis-aligned ellipse, flattened by the
+// view's elevation.
+void drawFloorDisc(QPainter& painter, const Camera& camera, double x, double y, double r,
+                   const QColor& inner, const QColor& outer) {
+    const double radius = r * camera.scale;
+    const double flatten = std::max(std::fabs(camera.toViewer.z), 0.05);
+    if (radius < 0.5) {
+        return;
+    }
+    QRadialGradient gradient(QPointF(0, 0), radius);
+    gradient.setColorAt(0.0, inner);
+    gradient.setColorAt(1.0, outer);
+    painter.save();
+    painter.translate(camera.project({x, y, 0.0}));
+    painter.scale(1.0, flatten);
+    painter.setPen(Qt::NoPen);
+    painter.setBrush(gradient);
+    painter.drawEllipse(QPointF(0, 0), radius, radius);
+    painter.restore();
+}
+
+// A soft shadow of a rod of radius `r` from a to b, both on the floor.
+void drawFloorStroke(QPainter& painter, const Camera& camera, const V3& a, const V3& b, double r,
+                     const QColor& color) {
+    const QPointF pa = camera.project({a.x, a.y, 0.0});
+    const QPointF pb = camera.project({b.x, b.y, 0.0});
+    const double width = std::max(2.0 * r * camera.scale, 1.0);
+    for (const double spread : {2.2, 1.0}) {
+        QColor c = color;
+        c.setAlphaF(color.alphaF() * (spread > 1.0 ? 0.45 : 1.0));
+        painter.setPen(QPen(c, spread * width, Qt::SolidLine, Qt::RoundCap));
+        painter.drawLine(pa, pb);
+    }
+}
+
+// The sky, the lit floor around the machine and the shadows of the arm, the
+// pendulum and its mass cast straight down, under everything else.
+void drawBackdrop(QPainter& painter, const Camera& camera, const Geometry& geo,
+                  const QRectF& area, const V3& pivot, const V3& mass) {
+    QLinearGradient sky(area.topLeft(), area.bottomLeft());
+    sky.setColorAt(0.0, kSkyTop);
+    sky.setColorAt(1.0, kSkyBottom);
+    painter.fillRect(area, sky);
+
+    QColor stageRim = kStage;
+    stageRim.setAlpha(0);
+    QColor stageCentre = kStage;
+    stageCentre.setAlpha(235);
+    drawFloorDisc(painter, camera, 0.0, 0.0, 1.25 * (geo.L + geo.l), stageCentre, stageRim);
+
+    const auto shadow = [](double alpha) {
+        QColor c = kShadow;
+        c.setAlphaF(alpha);
+        return c;
+    };
+    QColor clear = kShadow;
+    clear.setAlpha(0);
+    // Where the base stands, and the arm, the rod and the mass above it.
+    drawFloorDisc(painter, camera, 0.0, 0.0, 1.35 * geo.baseRadius, shadow(0.30), clear);
+    drawFloorStroke(painter, camera, V3{0, 0, 0}, pivot, geo.armRadius, shadow(0.10));
+    drawFloorStroke(painter, camera, pivot, mass, geo.rodRadius, shadow(0.10));
+    drawFloorDisc(painter, camera, mass.x, mass.y, 1.8 * geo.massRadius, shadow(0.22), clear);
 }
 
 }  // namespace
@@ -728,7 +717,6 @@ void FurutaScene::paint(QPainter& painter, const SceneView& view) {
     painter.setRenderHint(QPainter::Antialiasing, antialiasing);
     painter.setRenderHint(QPainter::TextAntialiasing, antialiasing);
     const QRectF area(QPointF(0, 0), view.size);
-    painter.fillRect(area, kPaper);
 
     const Geometry geo(param(kArmLength), param(kPendulumLength));
     const Camera camera = makeCamera(view, geo, param(kAzimuth), param(kElevation));
@@ -745,6 +733,7 @@ void FurutaScene::paint(QPainter& painter, const SceneView& view) {
     const V3 pivot = geo.pivot(th1);
     const V3 along = geo.pendulumDirection(th1, th2);
     const V3 mass = geo.mass(th1, th2);
+    drawBackdrop(painter, camera, geo, area, pivot, mass);
 
     // The solid parts, painted far to near where they overlap.
     std::vector<Solid> solids;
@@ -791,51 +780,6 @@ void FurutaScene::paint(QPainter& painter, const SceneView& view) {
                          QPen(color, pen, Qt::SolidLine, Qt::RoundCap), tolerance);
         }
     }
-    const int predicted = int(qMin(m_predTheta1.size(), m_predTheta2.size()));
-    if (param(kPrediction) != 0.0 && predicted > 1) {
-        painter.setPen(Qt::NoPen);
-        for (int j = 0; j < predicted; ++j) {
-            if (!std::isfinite(m_predTheta1[j]) || !std::isfinite(m_predTheta2[j])) {
-                continue;
-            }
-            const V3 p = geo.mass(m_predTheta1[j], m_predTheta2[j]);
-            if (!visible(camera, solids, p, tolerance)) {
-                continue;
-            }
-            QColor dot = kPredictionColor;
-            dot.setAlphaF(0.75 * (1.0 - double(j) / predicted) + 0.15);
-            painter.setBrush(dot);
-            painter.drawEllipse(camera.project(p), 1.6 * pen, 1.6 * pen);
-        }
-    }
-
-    // The torque around the shaft, between the collar and the motor: its
-    // width and colour follow |u|, it turns the way u turns the arm.
-    if (param(kTorqueArrow) != 0.0) {
-        const double level = std::isfinite(m_torque)
-                                 ? qBound(0.0, std::fabs(m_torque) / param(kTorqueMax), 1.0)
-                                 : 0.0;
-        const double sign = std::isfinite(m_torque) && m_torque < 0.0 ? -1.0 : 1.0;
-        const double r = 0.22 * geo.L;
-        const double z = geo.collarTop + 0.1 * geo.L;
-        const double viewAngle = std::atan2(camera.toViewer.y, camera.toViewer.x);
-        QVector<V3> ring;
-        for (int i = 0; i <= 40; ++i) {
-            const double a = viewAngle + sign * (M_PI + qDegreesToRadians(-150.0 + 300.0 * i / 40.0));
-            ring.append({r * std::cos(a), r * std::sin(a), z});
-        }
-        const QColor color = level > 0.0 ? QColor::fromRgbF(kTorque.redF() * level,
-                                                             kTorque.greenF() * level,
-                                                             kTorque.blueF() * level)
-                                         : kInk;
-        drawArc(painter, camera, solids, ring, color, pen * (1.0 + 2.0 * level),
-                7.0 * pen * (1.0 + 0.5 * level), tolerance);
-        if (labels) {
-            const QPointF left = camera.project({0, 0, z}) -
-                                 QPointF(r * camera.scale + 1.1 * text, -0.3 * text);
-            drawSymbol(painter, left, QStringLiteral("u"), QString(), text, kInk);
-        }
-    }
 
     if (labels) {
         // theta1: from the x axis (dashed) to the arm, in the arm's plane.
@@ -860,15 +804,6 @@ void FurutaScene::paint(QPainter& painter, const SceneView& view) {
                    camera.project(armAxis + V3{1.1 * r1 * std::cos(mid1), 1.1 * r1 * std::sin(mid1), 0}) +
                        QPointF(0.1 * text, 1.0 * text),
                    QStringLiteral("θ"), QStringLiteral("1"), text, kInk);
-        // The arm's reference, where it differs from the axis.
-        if (std::isfinite(m_reference) && std::fabs(wrapAngle(m_reference)) > 1e-6) {
-            const V3 ref = geo.armDirection(m_reference);
-            QPen refPen(kReference, pen, Qt::DashLine);
-            refPen.setDashPattern({2, 3});
-            drawOccluded(painter, camera, solids,
-                         {armAxis + geo.motorRadius * ref, armAxis + 1.3 * geo.L * ref}, refPen,
-                         tolerance);
-        }
 
         // theta2: from the vertical (dashed) to the pendulum, in its plane.
         drawOccluded(painter, camera, solids, {pivot, pivot + V3{0, 0, 0.85 * geo.l}}, dashed,
@@ -940,68 +875,6 @@ void FurutaScene::paint(QPainter& painter, const SceneView& view) {
                        QString::fromLatin1(axis.name), QString(), 0.85 * text, kInk);
         }
     }
-
-    // The readout, top left.
-    QFont font = painter.font();
-    font.setFamily(QStringLiteral("Segoe UI"));
-    font.setStyleHint(QFont::SansSerif);
-    font.setItalic(false);
-    font.setPixelSize(qMax(10, qRound(0.55 * text)));
-    painter.setFont(font);
-    const QFontMetricsF metrics(font);
-    double y = 0.8 * text;
-    const auto line = [&](const QString& value, const QColor& color) {
-        painter.setPen(color);
-        painter.drawText(QPointF(0.6 * text, y + metrics.ascent()), value);
-        y += metrics.height() * 1.15;
-    };
-    const auto number = [](double value, int decimals) {
-        return QString::number(value, 'f', decimals);
-    };
-    if (std::isfinite(m_time)) {
-        line(QStringLiteral("t = %1 s").arg(number(m_time, 2)), kHud);
-    }
-    if (m_hasAngles) {
-        QString first = QStringLiteral("θ1 = %1 rad").arg(number(th1, 3));
-        if (std::isfinite(m_reference)) {
-            first += QCoreApplication::translate("FurutaScene", "   (ref %1)").arg(number(m_reference, 3));
-        }
-        line(first, kHud);
-        line(QStringLiteral("θ2 = %1 rad").arg(number(wrapAngle(th2), 3)), kHud);
-    }
-    if (std::isfinite(m_torque)) {
-        line(QStringLiteral("u = %1 N·m").arg(number(m_torque, 3)), kHud);
-    }
-    if (std::isfinite(m_disturbance) && std::fabs(m_disturbance) > 1e-12) {
-        line(QCoreApplication::translate("FurutaScene", "disturbance = %1 N·m")
-                 .arg(number(m_disturbance, 3)),
-             kTorque);
-    }
-    if (!m_controller.isEmpty()) {
-        line(m_controller, kHud);
-    }
-    if (std::isfinite(m_solveMs)) {
-        QString solve = QCoreApplication::translate("FurutaScene", "solve %1 ms").arg(number(m_solveMs, 2));
-        if (std::isfinite(m_qps) && m_qps > 0) {
-            solve += QCoreApplication::translate("FurutaScene", " · QPs %1").arg(int(m_qps));
-        }
-        line(solve, kHud);
-    }
-    if (!m_hasAngles) {
-        line(QCoreApplication::translate("FurutaScene", "Waiting for theta1 and theta2 (sim.truth)"),
-             kHint);
-    }
-
-    // How to drive it, bottom right.
-    font.setPixelSize(qMax(9, qRound(0.38 * text)));
-    painter.setFont(font);
-    const QString hint = QCoreApplication::translate(
-        "FurutaScene", "drag: orbit · wheel: zoom · double click: figure view · P / O / R: disturbance");
-    const QFontMetricsF hintMetrics(font);
-    painter.setPen(kHint);
-    painter.drawText(QPointF(view.size.width() - hintMetrics.horizontalAdvance(hint) - 0.5 * text,
-                             h - 0.5 * text),
-                     hint);
 }
 
 }  // namespace traceview

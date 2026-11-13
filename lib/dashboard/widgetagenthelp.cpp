@@ -30,11 +30,10 @@ QString widgetAgentHelp(const QString& typeId) {
          QStringLiteral(
              "Animated drawing of a physical system, fed by telemetry. config: {scene: "
              "\"furuta\" (Furuta pendulum) or \"diffdrive\" (line follower), bind: {inputName: "
-             "{deviceId, topicName, fieldName}}, params: {name: number}}. Furuta inputs: theta1, "
-             "theta2 [rad] (default topic sim.truth), optional u (loop.output), disturbance "
-             "(sim.states/tau_d), theta1_ref, pred_theta1/pred_theta2 arrays, qps, solve_ms "
-             "(ctl.diag). An input whose default topic/field the device publishes binds by "
-             "itself; inputs left unbound are omitted.")},
+             "{deviceId, topicName, fieldName}}, params: {name: number}}. Furuta inputs: theta1 "
+             "and theta2 [rad] only, bound to the fields of those names (both from the same "
+             "topic when several report them). An input whose default topic/field the device "
+             "publishes binds by itself; inputs left unbound are omitted.")},
         {"dummy_bar",
          QString::fromLatin1("Bar chart: latest value of each field as a bar. Same config as "
                              "dummy_line (%1 series, xAxis, yAxis).")

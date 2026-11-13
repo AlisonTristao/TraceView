@@ -331,17 +331,20 @@ lives in its own module under
 - **Scene** (`scene`) — `scenes/scenewidget.h`/`.cpp`. An animated drawing
   of a physical system, fed by telemetry: one `SceneRenderer`
   (`scenes/scenerenderer.h`) per kind, listed in `SceneRegistry` —
-  `furuta` (Furuta pendulum: arm and pendulum angles, trail, input torque,
-  the controller's predicted trajectory when published) and `diffdrive`
-  (line follower: track, car pose, minimap and compass). Each renderer
-  declares its inputs (scalar, array or text, with a default topic/field
-  name) and numeric params; the config is `{"scene", "bind", "params"}`, one
-  binding per input under `"bind"` (see "Telemetry bindings"), so an input
-  whose default topic/field the device publishes binds by itself. Frames are
-  rendered off the GUI thread on the dashboard's repaint tick
-  (`RepaintClock`); in run mode the wheel zooms, dragging pans, a double
-  click resets the view, and keys go to the scene (the Furuta scene sends a
-  disturbance command back to the device). Its editor,
+  `furuta` (Furuta pendulum: only `theta1` and `theta2`, drawn over a soft
+  sky and a lit floor with the parts' shadows, the machine's body centred)
+  and `diffdrive` (line follower: track, car pose, minimap and compass). Each
+  renderer declares its inputs (scalar, array or text, with a default
+  topic/field name) and numeric params; the config is
+  `{"scene", "bind", "params"}`, one binding per input under `"bind"` (see
+  "Telemetry bindings"). **Bind by name** takes an input's default
+  topic/field, else the field named like the input — when several topics
+  report it, the topic another input already reads (so `theta1` and `theta2`
+  come from the same one), else the first. Frames are rendered off the GUI
+  thread on the dashboard's repaint tick (`RepaintClock`); in run mode the
+  wheel zooms, dragging pans, a double click resets the view, and keys go to
+  the scene (the line follower sends commands back to its device). Its
+  editor,
   `scenes/sceneconfigeditor.h`, picks the scene kind, binds each input and
   sets the params.
 - **Controls** — `widgets/controlwidgets.h`/`.cpp`, one class per kind, each

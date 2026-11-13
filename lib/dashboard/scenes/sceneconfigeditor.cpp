@@ -1,5 +1,7 @@
 #include "sceneconfigeditor.h"
 
+#include <algorithm>
+
 #include <QComboBox>
 #include <QCheckBox>
 #include <QFormLayout>
@@ -115,8 +117,24 @@ QJsonObject autoBindSceneInputs(const QList<SceneInput>& inputs, const QJsonObje
         }
         if (!preferred.isEmpty()) {
             out[input.name] = preferred;
-        } else if (byInputName.size() == 1) {
-            out[input.name] = byInputName.first();
+        } else if (!byInputName.isEmpty()) {
+            // Several topics report the name: keep the inputs together on a
+            // topic one of them already reads, else take the first reported.
+            QJsonObject chosen = byInputName.first();
+            for (const QJsonObject& candidate : byInputName) {
+                const auto sameTopic = [&candidate](const QJsonValue& bound) {
+                    const QJsonObject b = bound.toObject();
+                    return b.value(QLatin1String("deviceId")) ==
+                               candidate.value(QLatin1String("deviceId")) &&
+                           b.value(QLatin1String("topicName")) ==
+                               candidate.value(QLatin1String("topicName"));
+                };
+                if (std::any_of(out.begin(), out.end(), sameTopic)) {
+                    chosen = candidate;
+                    break;
+                }
+            }
+            out[input.name] = chosen;
         }
     }
     return out;

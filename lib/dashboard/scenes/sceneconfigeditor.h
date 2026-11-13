@@ -16,8 +16,10 @@ namespace traceview {
 
 // `bind` (a Scene widget's "bind", see scenewidget.h) with every input that
 // has no entry yet bound by name against the catalogs of `devices`: first the
-// input's defaultTopic/defaultField, else -- when exactly one is reported --
-// a field named like the input itself in any topic. The kind has to match:
+// input's defaultTopic/defaultField, else a field named like the input
+// itself in any topic -- when several topics report one, the topic another
+// input is already bound to (so theta1 and theta2 come from the same topic),
+// else the first reported. The kind has to match:
 // a Scalar input takes a numeric field, an Array input an array field, a Text
 // input a UTF8 topic. Inputs already bound are left as they are.
 QJsonObject autoBindSceneInputs(const QList<SceneInput>& inputs, const QJsonObject& bind,

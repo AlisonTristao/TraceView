@@ -11,12 +11,11 @@ release flow.
 
 - **Scene** widget: an animated drawing of a physical system, fed by the
   telemetry of your devices. Two scenes come built in: the **Furuta
-  pendulum** (arm and pendulum, trail, input torque and, when the controller
-  publishes it, its predicted trajectory and solve time) and the **line
-  follower** (track, car, minimap and compass). Each input binds by topic and
-  field name, so a device that publishes the expected names (`sim.truth`
-  `theta1`/`theta2` for the pendulum) needs no setup. The wheel zooms,
-  dragging pans and a double click resets the view.
+  pendulum**, which only needs `theta1` and `theta2` and binds them by name
+  from whichever topic reports them, drawn over a soft sky and a lit floor
+  with the parts' shadows; and the **line follower** (track, car, minimap and
+  compass). The wheel zooms, dragging pans and a double click resets the
+  view.
 - **AI assistants (MCP)**: Claude and other MCP clients can drive TraceView.
   Turn on **Settings > Connections > AI assistants** and register
   `TraceView --mcp` with the client (the section shows the exact Claude Code
