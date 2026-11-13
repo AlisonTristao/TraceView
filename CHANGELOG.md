@@ -7,6 +7,18 @@ release flow.
 
 ## [Unreleased]
 
+## [4.11.1] - 2026-11-13
+
+### Fixed
+
+- Android: the on-screen keyboard no longer drops and slides back up every
+  time a character is deleted. Qt's text fields asked for the keyboard
+  again on each key release, which replayed the whole "open keyboard"
+  sequence; keyboards that send Backspace as a real key (seen on Xiaomi
+  phones) hit that on every delete.
+- Windows: leaving fullscreen with a maximized window no longer shows the
+  window small for a moment before it fills the screen again.
+
 ## [4.11.0] - 2026-11-13
 
 ### Added

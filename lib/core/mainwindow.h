@@ -5,6 +5,7 @@
 #include <QJsonObject>
 #include <QMainWindow>
 #include <QPointer>
+#include <QRect>
 #include <QSize>
 #include <QString>
 #include <QStringList>
@@ -119,6 +120,10 @@ protected:
     void resizeEvent(QResizeEvent* event) override;
     // Saves the window geometry restored by the constructor.
     void closeEvent(QCloseEvent* event) override;
+#if defined(Q_OS_WIN)
+    // Windows-only workaround, see onFullscreenToggled().
+    bool nativeEvent(const QByteArray& eventType, void* message, qintptr* result) override;
+#endif
 
 private:
     void buildMenus();
@@ -1113,6 +1118,14 @@ private:
     QToolButton* m_fullscreenButton = nullptr;
     bool m_wasMaximized = false;
     QByteArray m_preFullscreenGeometry;
+#if defined(Q_OS_WIN)
+    // Windows-only workaround state, see onFullscreenToggled(): the window's
+    // outer rectangle while maximized and its "restore" rectangle, both in
+    // native pixels, captured on the way into fullscreen.
+    QRect m_maximizedFrame;
+    QRect m_restoreFrame;
+    bool m_leavingFullscreenToMaximized = false;
+#endif
 
     // Self-update (see lib/updater). Both created once in the constructor and
     // reused for every check/download -- unlike m_settingsWindow, there is

@@ -1,6 +1,8 @@
 #include <QApplication>
 #include <QDialog>
+#include <QEvent>
 #include <QIcon>
+#include <QInputMethod>
 #include <QPointer>
 #include <QStyleFactory>
 #include <cstring>
@@ -20,6 +22,31 @@
 #include "traceview/version.h"
 
 namespace {
+
+// QLineEdit, QTextEdit and QPlainTextEdit ask for the input panel again on
+// every key *release* (keyReleaseEvent -> handleSoftwareInputPanel ->
+// QInputMethod::show()). On Android that re-runs Qt's whole "show keyboard"
+// sequence, which takes over the IME insets animation and plays the show
+// animation again -- so an already open keyboard drops and slides back up.
+// Letters never get there (a soft keyboard commits them as text, with no key
+// event), but a keyboard that sends Backspace as a real key does, on every
+// delete. With the panel already up there is nothing to ask for, so auto-SIP
+// is switched off for the duration of that one event.
+class Application : public QApplication {
+public:
+    using QApplication::QApplication;
+
+    bool notify(QObject* receiver, QEvent* event) override {
+        if (event->type() != QEvent::KeyRelease || !autoSipEnabled() ||
+            !QGuiApplication::inputMethod()->isVisible()) {
+            return QApplication::notify(receiver, event);
+        }
+        setAutoSipEnabled(false);
+        const bool handled = QApplication::notify(receiver, event);
+        setAutoSipEnabled(true);
+        return handled;
+    }
+};
 
 QIcon loadAppIcon() {
     QIcon icon;
@@ -52,7 +79,7 @@ int main(int argc, char* argv[]) {
     // everywhere instead of silently drifting.
     QApplication::setStyle(QStyleFactory::create("Fusion"));
 
-    QApplication app(argc, argv);
+    Application app(argc, argv);
     QApplication::setApplicationName("TraceView");
 #if defined(Q_OS_LINUX)
     QApplication::setDesktopFileName("io.github.alisontristao.TraceView");
