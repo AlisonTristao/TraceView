@@ -7,6 +7,8 @@ release flow.
 
 ## [Unreleased]
 
+## [4.10.0] - 2026-11-13
+
 ### Added
 
 - **Scene** widget: an animated drawing of a physical system, fed by the
@@ -52,6 +54,17 @@ release flow.
   write them on the next save; a binding no catalog knows keeps its ids. The
   new `topicName`/`fieldName` keys are additive — older TraceView versions
   still read the ids.
+- The Layers and Properties panels have their own fill and an outline all
+  the way round, so they stand apart from the canvas on any edge or
+  floating. A dragged panel now docks only when dropped right at an edge
+  (12 px instead of 40), so moving a floating panel near the top no longer
+  docks it, and holding **Ctrl** while dragging never docks.
+
+### Fixed
+
+- Fragmented messages (an audio stream's blocks, for instance) were dropped
+  for seconds after two messages lost their last fragments: reassembly now
+  has eight slots instead of two.
 
 ## [4.9.0] - 2026-09-28
 
