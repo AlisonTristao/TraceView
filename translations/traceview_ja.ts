@@ -73,7 +73,7 @@ AI アシスタントのアクセスをオフにするか TraceView を閉じる
         <translation>AI アシスタントがギャラリーのダッシュボード「%1」を置き換えようとしています。</translation>
     </message>
     <message>
-        <location line="+52"/>
+        <location line="+53"/>
         <source>Delete Dashboard</source>
         <translation>ダッシュボードの削除</translation>
     </message>
@@ -83,7 +83,7 @@ AI アシスタントのアクセスをオフにするか TraceView を閉じる
         <translation>AI アシスタントがギャラリーのダッシュボード「%1」を削除しようとしています。この操作は元に戻せません。</translation>
     </message>
     <message>
-        <location line="+50"/>
+        <location line="+51"/>
         <source>An AI assistant saved the project to %1.</source>
         <translation>AI アシスタントがプロジェクトを %1 に保存しました。</translation>
     </message>
@@ -295,7 +295,7 @@ AI アシスタントのアクセスをオフにするか TraceView を閉じる
     </message>
     <message>
         <location line="+9"/>
-        <location line="+507"/>
+        <location line="+558"/>
         <location line="+231"/>
         <source>--</source>
         <translation>--</translation>
@@ -307,7 +307,7 @@ AI アシスタントのアクセスをオフにするか TraceView を閉じる
     </message>
     <message>
         <location line="+6"/>
-        <location line="+305"/>
+        <location line="+304"/>
         <source>%1  %2</source>
         <translation>%1  %2</translation>
     </message>
@@ -377,7 +377,7 @@ AI アシスタントのアクセスをオフにするか TraceView を閉じる
         <translation>一時停止中</translation>
     </message>
     <message>
-        <location line="-739"/>
+        <location line="-738"/>
         <source>%1: %2</source>
         <translation>%1: %2</translation>
     </message>
@@ -687,7 +687,7 @@ AI アシスタントのアクセスをオフにするか TraceView を閉じる
 <context>
     <name>FurutaScene</name>
     <message>
-        <location filename="../lib/dashboard/scenes/furutascene.cpp" line="+536"/>
+        <location filename="../lib/dashboard/scenes/furutascene.cpp" line="+529"/>
         <source>Arm length (L1)</source>
         <translation>アームの長さ (L1)</translation>
     </message>
@@ -730,7 +730,7 @@ AI アシスタントのアクセスをオフにするか TraceView を閉じる
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="+138"/>
+        <location filename="../lib/core/mainwindow.cpp" line="+139"/>
         <source>TraceView Project (*.tvproj)</source>
         <translation>TraceView プロジェクト (*.tvproj)</translation>
     </message>
@@ -776,7 +776,7 @@ AI アシスタントのアクセスをオフにするか TraceView を閉じる
         <translation>アイコンを変更</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/textboardwidget.cpp" line="+243"/>
+        <location filename="../lib/dashboard/widgets/textboardwidget.cpp" line="+231"/>
         <source>%1 packet(s)</source>
         <translation>%1 パケット</translation>
     </message>
@@ -987,7 +987,7 @@ AI アシスタントのアクセスをオフにするか TraceView を閉じる
 <context>
     <name>SceneWidget</name>
     <message>
-        <location filename="../lib/dashboard/scenes/scenewidget.cpp" line="+534"/>
+        <location filename="../lib/dashboard/scenes/scenewidget.cpp" line="+545"/>
         <source>Scene</source>
         <translation>シーン</translation>
     </message>
@@ -1703,7 +1703,7 @@ AI アシスタントのアクセスをオフにするか TraceView を閉じる
 <context>
     <name>traceview::BtpMonitorTab</name>
     <message>
-        <location filename="../lib/diagnostics/btpmonitortab.cpp" line="+245"/>
+        <location filename="../lib/diagnostics/btpmonitortab.cpp" line="+243"/>
         <location line="+85"/>
         <source>Pause</source>
         <translation>一時停止</translation>
@@ -3123,14 +3123,14 @@ Allowed: %1</source>
 <context>
     <name>traceview::DiagramScriptRuntime</name>
     <message>
-        <location filename="../lib/diagram/diagramscriptruntime.cpp" line="+41"/>
-        <location line="+84"/>
+        <location filename="../lib/diagram/diagramscriptruntime.cpp" line="+43"/>
+        <location line="+99"/>
         <source>Line %1: %2</source>
         <translation>%1 行目: %2</translation>
     </message>
     <message>
-        <location line="-81"/>
-        <location line="+84"/>
+        <location line="-96"/>
+        <location line="+99"/>
         <source>Error: %1</source>
         <translation>エラー: %1</translation>
     </message>
@@ -3161,7 +3161,7 @@ Allowed: %1</source>
 <context>
     <name>traceview::FrameTableModel</name>
     <message>
-        <location filename="../lib/diagnostics/btpmonitortab.cpp" line="-357"/>
+        <location filename="../lib/diagnostics/btpmonitortab.cpp" line="-354"/>
         <source>decode error</source>
         <translation>デコードエラー</translation>
     </message>
@@ -3451,7 +3451,7 @@ Allowed: %1</source>
         <translation>、</translation>
     </message>
     <message>
-        <location line="+293"/>
+        <location line="+295"/>
         <source>AI assistant access is off.</source>
         <translation>AI アシスタントのアクセスはオフです。</translation>
     </message>
@@ -3477,7 +3477,7 @@ Allowed: %1</source>
         <translation>AI アシスタントが切断しました: %1</translation>
     </message>
     <message>
-        <location line="+410"/>
+        <location line="+413"/>
         <source>Pending</source>
         <translation>保留中</translation>
     </message>
@@ -3621,12 +3621,12 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+0"/>
-        <location line="+3763"/>
+        <location line="+3864"/>
         <source>Later</source>
         <translation>後で</translation>
     </message>
     <message>
-        <location line="-3756"/>
+        <location line="-3857"/>
         <source>&amp;Access</source>
         <translation>アクセス(&amp;A)</translation>
     </message>
@@ -3753,18 +3753,18 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+18"/>
-        <location line="+3128"/>
+        <location line="+3229"/>
         <source>Undo</source>
         <translation>元に戻す</translation>
     </message>
     <message>
-        <location line="-3126"/>
-        <location line="+3126"/>
+        <location line="-3227"/>
+        <location line="+3227"/>
         <source>Redo</source>
         <translation>やり直し</translation>
     </message>
     <message>
-        <location line="-3083"/>
+        <location line="-3184"/>
         <source>Add Device</source>
         <translation>デバイスを追加</translation>
     </message>
@@ -3800,12 +3800,12 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+29"/>
-        <location line="+3028"/>
+        <location line="+3129"/>
         <source>Fullscreen dashboard (F11)</source>
         <translation>ダッシュボードを全画面表示(F11)</translation>
     </message>
     <message>
-        <location line="-2848"/>
+        <location line="-2949"/>
         <source>Rename Workspace</source>
         <translation>ワークスペースの名前を変更</translation>
     </message>
@@ -3815,7 +3815,7 @@ Drops: %2</source>
         <translation>ワークスペース「%1」の名前を「%2」に変更しました。</translation>
     </message>
     <message>
-        <location line="+32"/>
+        <location line="+35"/>
         <source>Appearance &amp;Presets</source>
         <translation>外観プリセット(&amp;P)</translation>
     </message>
@@ -3886,7 +3886,12 @@ Drops: %2</source>
         <translation>このワークスペースは独自の外観を持つようになりました。</translation>
     </message>
     <message>
-        <location line="+1330"/>
+        <location line="+653"/>
+        <source>Close</source>
+        <translation>閉じる</translation>
+    </message>
+    <message>
+        <location line="+695"/>
         <source>%1: found at %2</source>
         <translation>%1: %2 で見つかりました</translation>
     </message>
@@ -3896,16 +3901,21 @@ Drops: %2</source>
         <translation>%1: %2 を試行中</translation>
     </message>
     <message>
-        <location line="+424"/>
+        <location line="+408"/>
+        <source>The current project has unsaved changes. Save them first?</source>
+        <translation>現在のプロジェクトには未保存の変更があります。先に保存しますか？</translation>
+    </message>
+    <message>
+        <location line="+89"/>
         <location line="+8"/>
         <location line="+5"/>
         <location line="+8"/>
-        <location line="+11"/>
+        <location line="+12"/>
         <source>Add to Gallery</source>
         <translation>ギャラリーに追加</translation>
     </message>
     <message>
-        <location line="-32"/>
+        <location line="-33"/>
         <source>Dashboard name:</source>
         <translation>ダッシュボード名:</translation>
     </message>
@@ -3915,7 +3925,7 @@ Drops: %2</source>
         <translation>ギャラリーには既に &quot;%1&quot; という名前のダッシュボードがあります。置き換えますか?</translation>
     </message>
     <message>
-        <location line="+15"/>
+        <location line="+16"/>
         <source>Added &quot;%1&quot; to the gallery -- it now opens at startup.</source>
         <translation>&quot;%1&quot; をギャラリーに追加しました -- 起動時に開くようになりました。</translation>
     </message>
@@ -3945,7 +3955,7 @@ Drops: %2</source>
         <translation>&quot;%1&quot; をギャラリーに保存しました。</translation>
     </message>
     <message>
-        <location line="+542"/>
+        <location line="+548"/>
         <source>Update available: v%1</source>
         <translation>アップデートあり: v%1</translation>
     </message>
@@ -4018,34 +4028,34 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>アプリを閉じる</translation>
     </message>
     <message>
-        <location line="-3075"/>
-        <location line="+2876"/>
+        <location line="-3176"/>
+        <location line="+2977"/>
         <source>Devices</source>
         <translation>デバイス</translation>
     </message>
     <message>
-        <location line="-2801"/>
+        <location line="-2902"/>
         <source>Subscriptions</source>
         <translation>購読</translation>
     </message>
     <message>
-        <location line="+266"/>
+        <location line="+269"/>
         <source>New Workspace</source>
         <translation>新しいワークスペース</translation>
     </message>
     <message>
-        <location line="-236"/>
-        <location line="+236"/>
+        <location line="-239"/>
+        <location line="+239"/>
         <source>Name:</source>
         <translation>名前:</translation>
     </message>
     <message>
-        <location line="-2073"/>
+        <location line="-2081"/>
         <source>TraceView v%1</source>
         <translation>TraceView v%1</translation>
     </message>
     <message>
-        <location line="+2074"/>
+        <location line="+2082"/>
         <source>Workspace</source>
         <translation>ワークスペース</translation>
     </message>
@@ -4071,23 +4081,23 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     </message>
     <message>
         <location line="+71"/>
-        <location line="+2387"/>
+        <location line="+2485"/>
         <source>Add widget</source>
         <translation>ウィジェットを追加</translation>
     </message>
     <message>
-        <location line="-2384"/>
+        <location line="-2482"/>
         <source>Remove selected widget (%1)</source>
         <translation>選択したウィジェットを削除(%1)</translation>
     </message>
     <message>
         <location line="+3"/>
-        <location line="+2394"/>
+        <location line="+2492"/>
         <source>Add device</source>
         <translation>デバイスを追加</translation>
     </message>
     <message>
-        <location line="-2391"/>
+        <location line="-2489"/>
         <source>Remove selected device (%1)</source>
         <translation>選択したデバイスを削除(%1)</translation>
     </message>
@@ -4172,12 +4182,12 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>レイヤー/プロパティパネルを表示</translation>
     </message>
     <message>
-        <location line="+263"/>
+        <location line="+267"/>
         <source>New Device</source>
         <translation>新しいデバイス</translation>
     </message>
     <message>
-        <location line="+379"/>
+        <location line="+381"/>
         <source>%1: robot is responding again</source>
         <translation>%1: ロボットが再び応答しています</translation>
     </message>
@@ -4238,38 +4248,33 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>モーション(&amp;O)</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="-1464"/>
+        <location filename="../lib/core/mainwindow.cpp" line="-1473"/>
         <source>Dashboard</source>
         <translation>ダッシュボード</translation>
     </message>
     <message>
-        <location line="+1810"/>
+        <location line="+1831"/>
         <source>%1: this BLE address now answers as a different robot (expected %2, got %3)</source>
         <translation>%1: この BLE アドレスは別のロボットとして応答しています (期待値 %2、実際 %3)</translation>
     </message>
     <message>
-        <location line="+503"/>
+        <location line="+518"/>
         <source>Key &quot;%1&quot; is already used by another widget.</source>
         <translation>キー「%1」は既に別のウィジェットで使用されています。</translation>
     </message>
     <message>
-        <location line="+15"/>
+        <location line="+14"/>
         <source>New Project</source>
         <translation>新規プロジェクト</translation>
     </message>
     <message>
-        <location line="+1"/>
-        <source>Discard the current dashboard and start a new, empty project?</source>
-        <translation>現在のダッシュボードを破棄して、新しい空のプロジェクトを開始しますか?</translation>
-    </message>
-    <message>
-        <location line="+18"/>
+        <location line="+76"/>
         <source>Started a new project.</source>
         <translation>新しいプロジェクトを開始しました。</translation>
     </message>
     <message>
         <location line="+26"/>
-        <location line="+16"/>
+        <location line="+17"/>
         <source>Save Project</source>
         <translation>プロジェクトを保存</translation>
     </message>
@@ -4279,13 +4284,14 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>名前を付けてプロジェクトを保存</translation>
     </message>
     <message>
-        <location line="+14"/>
-        <location line="+329"/>
+        <location line="+15"/>
+        <location line="+331"/>
+        <location line="+4"/>
         <source>Open Project</source>
         <translation>プロジェクトを開く</translation>
     </message>
     <message>
-        <location line="-243"/>
+        <location line="-248"/>
         <source>Open Log File</source>
         <translation>ログファイルを開く</translation>
     </message>
@@ -4306,7 +4312,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     </message>
     <message>
         <location line="+20"/>
-        <location line="+218"/>
+        <location line="+224"/>
         <source>Settings</source>
         <translation>設定</translation>
     </message>
@@ -6095,7 +6101,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
 <context>
     <name>traceview::UpdateDownloader</name>
     <message>
-        <location filename="../lib/updater/updatedownloader.cpp" line="+34"/>
+        <location filename="../lib/updater/updatedownloader.cpp" line="+36"/>
         <source>Updates are managed by Flatpak. Use &apos;flatpak update&apos;.</source>
         <translation>アップデートは Flatpak で管理されています。&apos;flatpak update&apos; を使用してください。</translation>
     </message>
@@ -6105,22 +6111,24 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>SHA256SUMS.txt をダウンロードできませんでした: %1</translation>
     </message>
     <message>
-        <location line="+14"/>
+        <location line="+59"/>
         <source>Couldn&apos;t download %1: %2</source>
         <translation>%1 をダウンロードできませんでした: %2</translation>
     </message>
     <message>
-        <location line="+22"/>
+        <location line="-53"/>
         <source>%1 is not listed in SHA256SUMS.txt.</source>
         <translation>%1 は SHA256SUMS.txt に記載されていません。</translation>
     </message>
     <message>
-        <location line="+7"/>
+        <location line="+65"/>
         <source>Checksum mismatch for %1 -- the download may be corrupted.</source>
         <translation>%1 のチェックサムが一致しません -- ダウンロードが破損している可能性があります。</translation>
     </message>
     <message>
-        <location line="+20"/>
+        <location line="-38"/>
+        <location line="+32"/>
+        <location line="+11"/>
         <source>Couldn&apos;t write %1</source>
         <translation>%1 を書き込めませんでした</translation>
     </message>
@@ -6133,7 +6141,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>HID デバイスを開けませんでした: %1</translation>
     </message>
     <message>
-        <location line="+72"/>
+        <location line="+76"/>
         <source>HID device disconnected</source>
         <translation>HID デバイスが切断されました</translation>
     </message>
