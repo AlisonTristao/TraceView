@@ -7,6 +7,36 @@ release flow.
 
 ## [Unreleased]
 
+## [4.12.0] - 2026-11-14
+
+### Added
+
+- Furuta pendulum scene: **Background** and **Shadows** toggles in its
+  settings. Turned off, the machine is drawn on plain white with no
+  shadows under the base and the mass. Both are on by default, so existing
+  projects look the same.
+
+### Changed
+
+- Furuta pendulum scene: the machine is centred in the widget. The view
+  used to centre the reach of every pose, which left the pendulum at rest
+  (hanging) well below the middle.
+- Picking a value in a chart's **Info row values** (min, max, p-p, mean…)
+  now turns the info row on. With the row off the pick showed nothing,
+  which looked like the statistics were broken.
+- Line charts with several Y axes put zero on the same height on every
+  axis that shows it, so two lines sitting at 0 are no longer drawn at
+  different heights.
+
+### Fixed
+
+- Edit shortcuts (undo/redo, copy/paste, ordering, grouping, add/remove)
+  work whether the layers panel is hidden, docked or floating as its own
+  window.
+- Android: the on-screen keyboard no longer flickers on Backspace after
+  leaving a password field. Qt kept reporting the keyboard as hidden while
+  it was still on screen, so the earlier fix stopped applying.
+
 ## [4.11.2] - 2026-11-14
 
 ### Fixed

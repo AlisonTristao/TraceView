@@ -722,6 +722,16 @@ AI アシスタントのアクセスをオフにするか TraceView を閉じる
         <translation>アンチエイリアス</translation>
     </message>
     <message>
+        <location line="+4"/>
+        <source>Background</source>
+        <translation>背景</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Shadows</source>
+        <translation>影</translation>
+    </message>
+    <message>
         <location filename="../lib/dashboard/scenes/sceneregistry.cpp" line="+3"/>
         <source>Furuta pendulum</source>
         <translation>フルタ振り子</translation>

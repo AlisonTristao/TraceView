@@ -20,6 +20,12 @@ on:
 permissions:
   contents: write
 
+# One release run at a time: several tags pushed together used to race each
+# other on the gh-pages push and on the "retire older releases" step below.
+concurrency:
+  group: release
+  cancel-in-progress: false
+
 jobs:
 
   # ============================================================
@@ -592,7 +598,23 @@ jobs:
           name: linux-flatpak-repo
           path: flatpak-repo
 
+      # Runs for different tags finish in no particular order (and an old tag
+      # can be re-run by hand), so only the newest tag on the remote may
+      # overwrite the single Flatpak repository on gh-pages.
+      - name: Check whether this is the newest tag
+        id: newest
+        run: |
+          set -euo pipefail
+          newest="$(git ls-remote --tags --refs origin 'v*.*.*' | sed 's#.*refs/tags/##' | sort -V | tail -n 1)"
+          echo "Newest tag on the remote: ${newest}; this run: ${GITHUB_REF_NAME}"
+          if [ "${newest}" = "${GITHUB_REF_NAME}" ]; then
+            echo "is_newest=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "is_newest=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Update the GitHub Pages Flatpak repository
+        if: steps.newest.outputs.is_newest == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -662,16 +684,22 @@ jobs:
       # delete` without --cleanup-tag removes only the Release and its
       # assets; the git tag itself is left alone, so `vX.Y.Z` still resolves
       # to the exact commit it always did. A different MINOR or MAJOR (a
-      # real new version, not a fix cycle) is never touched.
+      # real new version, not a fix cycle) is never touched. Only releases
+      # with a LOWER version are retired: the run for an older tag can finish
+      # after a newer one (several tags pushed together, or a manual re-run)
+      # and must not delete the release that superseded it.
       - name: Retire older releases in this minor line
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           current="${{ github.ref_name }}"
           minor="${current%.*}"
-          gh release list --repo "${{ github.repository }}" --json tagName --jq '.[].tagName' |
+          gh release list --repo "${{ github.repository }}" --limit 200 --json tagName --jq '.[].tagName' |
           while read -r tag; do
-            if [ "$tag" != "$current" ] && [ "${tag%.*}" = "$minor" ]; then
+            [ "$tag" != "$current" ] || continue
+            [ "${tag%.*}" = "$minor" ] || continue
+            lowest="$(printf '%s\n%s\n' "$tag" "$current" | sort -V | head -n 1)"
+            if [ "$lowest" = "$tag" ]; then
               echo "Deleting superseded release $tag (its tag stays in git history)"
               gh release delete "$tag" --repo "${{ github.repository }}" --yes
             fi

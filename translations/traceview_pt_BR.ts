@@ -722,6 +722,16 @@ Permitir que ele conecte dispositivos e envie comandos a eles até que o acesso 
         <translation>Antisserrilhamento</translation>
     </message>
     <message>
+        <location line="+4"/>
+        <source>Background</source>
+        <translation>Fundo</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Shadows</source>
+        <translation>Sombras</translation>
+    </message>
+    <message>
         <location filename="../lib/dashboard/scenes/sceneregistry.cpp" line="+3"/>
         <source>Furuta pendulum</source>
         <translation>Pêndulo de Furuta</translation>

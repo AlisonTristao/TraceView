@@ -722,6 +722,16 @@ Consentirgli di collegare dispositivi e inviare loro comandi finché l’accesso
         <translation>Antialiasing</translation>
     </message>
     <message>
+        <location line="+4"/>
+        <source>Background</source>
+        <translation>Sfondo</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Shadows</source>
+        <translation>Ombre</translation>
+    </message>
+    <message>
         <location filename="../lib/dashboard/scenes/sceneregistry.cpp" line="+3"/>
         <source>Furuta pendulum</source>
         <translation>Pendolo di Furuta</translation>

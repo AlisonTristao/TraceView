@@ -24,6 +24,8 @@ const QString kElevation = QStringLiteral("elevation_deg");
 const QString kLabels = QStringLiteral("labels");
 const QString kTrail = QStringLiteral("trail");
 const QString kAntialiasing = QStringLiteral("antialiasing");
+const QString kBackdrop = QStringLiteral("backdrop");
+const QString kShadows = QStringLiteral("shadows");
 
 const QColor kPaper(255, 255, 255);
 const QColor kInk(0, 0, 0);
@@ -542,6 +544,12 @@ QList<SceneParam> FurutaScene::params() const {
          0.0, 1.0, 0, true},
         {kAntialiasing, QCoreApplication::translate("FurutaScene", "Antialiasing"), QString(), 1.0,
          0.0, 1.0, 0, true},
+        // On by default: the grey sky with the lit floor, and the shadows
+        // cast on it. Off, the machine stands on plain white.
+        {kBackdrop, QCoreApplication::translate("FurutaScene", "Background"), QString(), 1.0, 0.0,
+         1.0, 0, true},
+        {kShadows, QCoreApplication::translate("FurutaScene", "Shadows"), QString(), 1.0, 0.0, 1.0,
+         0, true},
     };
 }
 
@@ -594,14 +602,24 @@ Camera makeCamera(const SceneView& view, const Geometry& geo, double azimuthDeg,
     // anywhere on its sphere around the arm's circle.
     camera.scale = 1.0;
     camera.origin = QPointF(0, 0);
-    QRectF box;
-    const auto extend = [&](const V3& p) {
+    QRectF box;   // every pose: sets the scale
+    QRectF body;  // the machine at rest, pendulum hanging: sets the centre
+    const auto grow = [&](QRectF& r, const V3& p) {
         const QPointF q = camera.project(p);
-        box = box.isNull() ? QRectF(q, QSizeF(1e-9, 1e-9)) : box.united(QRectF(q, QSizeF(1e-9, 1e-9)));
+        r = r.isNull() ? QRectF(q, QSizeF(1e-9, 1e-9)) : r.united(QRectF(q, QSizeF(1e-9, 1e-9)));
+    };
+    const auto extend = [&](const V3& p) {
+        grow(box, p);
     };
     for (int i = 0; i < 16; ++i) {
         const double t1 = 2.0 * M_PI * i / 16;
-        extend(geo.baseRadius * V3{std::cos(t1), std::sin(t1), 0.0});
+        const V3 ring{std::cos(t1), std::sin(t1), 0.0};
+        extend(geo.baseRadius * ring);
+        grow(body, geo.baseRadius * ring);
+        grow(body, V3{0, 0, geo.motorTop} + geo.motorRadius * ring);
+        grow(body, geo.pivot(t1) + V3{0, 0, geo.hubRadius});
+        grow(body, geo.pivot(t1) - V3{0, 0, geo.hubRadius});
+        grow(body, geo.mass(t1, M_PI) - V3{0, 0, geo.massRadius});
         for (int j = 0; j <= 8; ++j) {
             const double t2 = M_PI * j / 8;
             for (double side : {-1.0, 1.0}) {
@@ -622,9 +640,11 @@ Camera makeCamera(const SceneView& view, const Geometry& geo, double azimuthDeg,
     const double fit = kFill * std::min(0.94 * w / std::max(box.width(), 1e-9),
                                         0.86 * h / std::max(box.height(), 1e-9));
     camera.scale = fit * view.zoom;
-    // That box's centre at the widget's centre, a little below.
-    const QPointF centre = fit * box.center();
-    camera.origin = QPointF(0.5 * w - centre.x(), 0.53 * h - centre.y());
+    // The machine at rest (base, motor, the arm's circle and the pendulum
+    // hanging under it) at the widget's centre. The reach box's centre sat at the pivot's height, so the
+    // pendulum at rest, hanging, was drawn well below the middle.
+    const QPointF centre = fit * body.center();
+    camera.origin = QPointF(0.5 * w - centre.x(), 0.5 * h - centre.y());
     return camera;
 }
 
@@ -656,17 +676,24 @@ void drawFloorDisc(QPainter& painter, const Camera& camera, double x, double y, 
 // and the rod cast none: a line on the floor behind the base showed above
 // it, next to the motor, like a stray stroke on the machine.
 void drawBackdrop(QPainter& painter, const Camera& camera, const Geometry& geo,
-                  const QRectF& area, const V3& mass) {
-    QLinearGradient sky(area.topLeft(), area.bottomLeft());
-    sky.setColorAt(0.0, kSkyTop);
-    sky.setColorAt(1.0, kSkyBottom);
-    painter.fillRect(area, sky);
+                  const QRectF& area, const V3& mass, bool backdrop, bool shadows) {
+    if (backdrop) {
+        QLinearGradient sky(area.topLeft(), area.bottomLeft());
+        sky.setColorAt(0.0, kSkyTop);
+        sky.setColorAt(1.0, kSkyBottom);
+        painter.fillRect(area, sky);
 
-    QColor stageRim = kStage;
-    stageRim.setAlpha(0);
-    QColor stageCentre = kStage;
-    stageCentre.setAlpha(235);
-    drawFloorDisc(painter, camera, 0.0, 0.0, 1.25 * (geo.L + geo.l), stageCentre, stageRim);
+        QColor stageRim = kStage;
+        stageRim.setAlpha(0);
+        QColor stageCentre = kStage;
+        stageCentre.setAlpha(235);
+        drawFloorDisc(painter, camera, 0.0, 0.0, 1.25 * (geo.L + geo.l), stageCentre, stageRim);
+    } else {
+        painter.fillRect(area, kPaper);
+    }
+    if (!shadows) {
+        return;
+    }
 
     const auto shadow = [](double alpha) {
         QColor c = kShadow;
@@ -715,7 +742,8 @@ void FurutaScene::paint(QPainter& painter, const SceneView& view) {
     const V3 pivot = geo.pivot(th1);
     const V3 along = geo.pendulumDirection(th1, th2);
     const V3 mass = geo.mass(th1, th2);
-    drawBackdrop(painter, camera, geo, area, mass);
+    drawBackdrop(painter, camera, geo, area, mass, param(kBackdrop) != 0.0,
+                 param(kShadows) != 0.0);
 
     // The solid parts, painted far to near where they overlap.
     std::vector<Solid> solids;

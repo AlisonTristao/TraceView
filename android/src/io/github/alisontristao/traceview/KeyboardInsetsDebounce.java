@@ -200,6 +200,14 @@ public final class KeyboardInsetsDebounce {
         final Method setVisibility = inputDelegate.getClass().getDeclaredMethod(
                 "setKeyboardVisibility_internal", boolean.class, long.class);
         setVisibility.setAccessible(true);
+        // Set by Qt's hideSoftwareKeyboard() and cleared only when the
+        // visibility actually changes. A hide that never closes the keyboard
+        // (leaving a password field: the IME swaps keyboards and stays up)
+        // leaves it set, and QInputMethod::isVisible() then reports "hidden"
+        // for a keyboard that is on screen. Cleared below on every insets
+        // pass that shows the IME visible.
+        final Field hidingField = field(inputDelegate.getClass(),
+                                        "m_isKeyboardHidingAnimationOngoing");
         final Object delegate = inputDelegate;
 
         final View decor = activity.getWindow().getDecorView();
@@ -220,6 +228,14 @@ public final class KeyboardInsetsDebounce {
             if (insets.isVisible(WindowInsets.Type.ime())) {
                 handler.removeCallbacks(confirmHidden);
                 apply(delegate, visibleField, setVisibility, true);
+                try {
+                    if (visibleField.getBoolean(delegate) && hidingField.getBoolean(delegate)) {
+                        trace("stale hiding flag cleared");
+                        hidingField.setBoolean(delegate, false);
+                    }
+                } catch (Throwable e) {
+                    Log.w(TAG, "keyboard hiding flag not cleared", e);
+                }
             } else {
                 handler.removeCallbacks(confirmHidden);
                 handler.postDelayed(confirmHidden, HIDE_DELAY_MS);

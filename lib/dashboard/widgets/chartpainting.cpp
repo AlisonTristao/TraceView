@@ -461,11 +461,20 @@ ChartCartesianLayout layoutCartesianChart(const QPainter& painter, const QRect& 
 
     const int maxYTicks = maxTicksFor(plotHeight, tickFm.height() * kYTickSpacingLines);
     int leftMargin = chartOuterPadding();
+    QVector<AxisRange> yRanges;
+    QVector<int> yDecimals;
+    for (const ChartAxisRequest& request : yAxes) {
+        yRanges.append(request.range);
+        yDecimals.append(request.configDecimals);
+    }
+    // Resolved together so stacked axes agree on where zero is.
+    const QVector<ValueScale> yScales = valueScales(yRanges, style, maxYTicks,
+                                                    chrome.gridDivisions, yDecimals,
+                                                    chrome.yTickCount);
     for (int i = 0; i < yAxes.size(); ++i) {
         const ChartAxisRequest& request = yAxes[i];
         ChartValueAxis axis;
-        axis.scale = valueScale(request.range, style, maxYTicks, chrome.gridDivisions,
-                                request.configDecimals, chrome.yTickCount);
+        axis.scale = yScales[i];
         axis.title = request.title;
         axis.labelColor = request.labelColor;
         axis.primary = (i == 0);

@@ -42,10 +42,55 @@ private slots:
     void scientificAddsMarginWithoutSnapping();
     void declaredAndFixedRangesAreNeverWidened();
     void dataRangePrefersDeclaredRanges();
+    void stackedAxesShareTheZeroRow();
     void timeAxisRunsFromOldestToNow();
     void optionListOnlyOffersSupportedFeatures();
     void infoItemsAndMarkersRoundTrip();
 };
+
+// Where zero sits on an axis, as a fraction of its height from the bottom.
+static double zeroFraction(const ValueScale& scale) {
+    return -scale.lo / (scale.hi - scale.lo);
+}
+
+void TestChartStyle::stackedAxesShareTheZeroRow() {
+    const QVector<AxisRange> ranges = {
+        {-1.0, 1.0, AxisRange::Source::Data},      // symmetric
+        {-3.0, 250.0, AxisRange::Source::Data},    // mostly positive
+        {0.0, 40.0, AxisRange::Source::Declared},  // zero on the bottom edge
+        {20.0, 25.0, AxisRange::Source::Data},     // no zero: left alone
+    };
+    for (ChartStyleId id : traceview::allChartStyles()) {
+        const auto& style = chartStyle(id);
+        const QVector<ValueScale> scales =
+            traceview::valueScales(ranges, style, 7, 2, {1, 1, 1, 1});
+        QCOMPARE(scales.size(), ranges.size());
+        const double zeroAt = zeroFraction(scales[0]);
+        for (int i = 0; i < 3; ++i) {
+            QVERIFY(qAbs(zeroFraction(scales[i]) - zeroAt) < 1e-9);
+            // Aligning only ever widens: the data still fits.
+            QVERIFY(scales[i].lo <= ranges[i].lo);
+            QVERIFY(scales[i].hi >= ranges[i].hi);
+        }
+        const ValueScale alone = valueScale(ranges[3], style, 7, 2, 1);
+        QCOMPARE(scales[3].lo, alone.lo);
+        QCOMPARE(scales[3].hi, alone.hi);
+
+        if (style.ticks == ChartTickPlacement::Nice) {
+            // Every tick row is shared, not just zero.
+            QCOMPARE(scales[1].ticks.size(), scales[0].ticks.size());
+            QCOMPARE(scales[2].ticks.size(), scales[0].ticks.size());
+            QVERIFY(scales[0].ticks.contains(0.0));
+        }
+    }
+
+    // A single axis is exactly valueScale().
+    const auto& engineering = chartStyle(ChartStyleId::Engineering);
+    const ValueScale one = traceview::valueScales({ranges[1]}, engineering, 7, 2, {1}).first();
+    const ValueScale same = valueScale(ranges[1], engineering, 7, 2, 1);
+    QCOMPARE(one.lo, same.lo);
+    QCOMPARE(one.hi, same.hi);
+}
 
 void TestChartStyle::styleIdsRoundTrip() {
     for (ChartStyleId id : traceview::allChartStyles()) {
@@ -312,6 +357,9 @@ void TestChartStyle::infoItemsAndMarkersRoundTrip() {
         QStringList({QStringLiteral("rms"), QStringLiteral("bogus"), QStringLiteral("min")}));
     options = withChartViewOption(options, QStringLiteral("markers"), true);
     QCOMPARE(options.infoItems, QStringList({QStringLiteral("min"), QStringLiteral("rms")}));
+    // Picking values turns the row on (off by default, it would hide them).
+    QVERIFY(!defaults.showInfoRow);
+    QVERIFY(options.showInfoRow);
 
     const ChartViewOptions back = parseChartViewOptions(chartViewOptionsToJson(options));
     QCOMPARE(back.infoItems, options.infoItems);
