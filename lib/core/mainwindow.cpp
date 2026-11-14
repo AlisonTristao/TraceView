@@ -2556,6 +2556,16 @@ void MainWindow::buildLayersPanel() {
 
     m_layersPanel->setToolbar(toolbar);
 
+    // A shortcut only fires while a widget its action sits on is visible in
+    // the active window. These buttons are the actions' only home, and the
+    // panel is hidden outside editing (so Ctrl+Z never worked on the Devices
+    // tab) and is a window of its own while floating (so nothing here worked
+    // from the dashboard). On the main window they work wherever the panel
+    // is; each action's own enabled state still gates it.
+    addActions({m_addWidgetAction, m_removeAction, m_copyAction, m_pasteAction,
+                m_bringToFrontAction, m_bringForwardAction, m_sendBackwardAction,
+                m_sendToBackAction, m_groupAction, m_ungroupAction, m_undoAction, m_redoAction});
+
     // Only relevant while editing is enabled -- matches m_propertiesPanel
     // (see buildPropertiesPanel() below).
     m_layersPanel->hide();
