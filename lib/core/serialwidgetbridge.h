@@ -24,10 +24,10 @@ class SerialMonitorWidget;
 // the properties panel.
 //
 // PushButtonWidget/ToggleSwitchWidget/SliderWidget's sendRequested() (a
-// fully-formed outbound command) goes through that device's
-// SerialManager::writeCommand() when one exists (appends the configured line
-// terminator, docs/PROTOCOL.md "Outbound: control commands") -- raw text with
-// no protocol envelope, bypassing Backend entirely. A device with no
+// fully-formed outbound command) goes, on a serial device, into its terminal
+// through Backend::sendTerminalIn() with the port's line terminator appended
+// -- exactly what typing it in the serial monitor does. (It used to be written
+// raw to the port, which a BTP session just discards.) A device with no
 // SerialManager (USB HID, or a hub channel) instead goes through
 // Backend::sendCommand() -- a real COMMAND_REQUEST for a hub-channel device
 // (see protocol/commandclient.h), a silent no-op for USB HID. A widget with
@@ -67,8 +67,9 @@ public:
     // MainWindow on every device add/remove/rename.
     void setDeviceNames(const QHash<QString, QString>& namesById);
 
-    // Picks SerialManager::writeCommand() when `connection` has one, else
-    // Backend::sendCommand() -- see the class comment above. Public for the
+    // The device's terminal (Backend::sendTerminalIn() plus the line
+    // terminator) on a serial device, else Backend::sendCommand() -- see the
+    // class comment above. Public for the
     // AI assistant's send_command, which sends exactly what a button would.
     static void sendControlCommand(DeviceConnection* connection, const QByteArray& command);
 
