@@ -31,15 +31,21 @@ DeviceConnection* SerialWidgetBridge::deviceConnectionForWidget(DashboardWidget*
 
 void SerialWidgetBridge::sendControlCommand(DeviceConnection* connection,
                                             const QByteArray& command) {
+    Backend* backend = connection->backend();
+    if (!backend) {
+        return;
+    }
 #ifdef TRACEVIEW_ENABLE_SERIAL
+    // A serial port always carries a BTP session, so raw text written to the
+    // port lands in the middle of the frame stream and the device drops it.
+    // The line goes in through the terminal instead, as if typed in the
+    // serial monitor, with the port's line terminator.
     if (SerialTransport* serial = connection->serialTransport()) {
-        serial->writeCommand(command);
+        backend->sendTerminalIn(command + lineTerminatorBytes(serial->lineTerminator()));
         return;
     }
 #endif
-    if (Backend* backend = connection->backend()) {
-        backend->sendCommand(command);
-    }
+    backend->sendCommand(command);
 }
 
 void SerialWidgetBridge::wireWidget(DashboardWidget* widget) {
