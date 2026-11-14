@@ -196,6 +196,19 @@ struct ValueScale {
 ValueScale valueScale(const AxisRange& range, const ChartStyle& style, int maxTicks,
                       int gridDivisions, int configDecimals, int tickCount = 0);
 
+// valueScale() for every Y axis of one chart (`configDecimals` per axis),
+// with zero on the same pixel row on every axis that shows it -- two lines
+// sitting at "0" must not be drawn at different heights. Axes whose range
+// doesn't include zero keep their own scale, as does a lone one that does.
+//   Nice:      the aligned axes share the tick rows too -- the same number
+//              of steps below and above zero, each with its own nice step.
+//   Divisions: each aligned axis is stretched so zero falls on the same
+//              fraction of the plot height.
+// Aligning may widen a Declared range (never narrow it).
+QVector<ValueScale> valueScales(const QVector<AxisRange>& ranges, const ChartStyle& style,
+                                int maxTicks, int gridDivisions,
+                                const QVector<int>& configDecimals, int tickCount = 0);
+
 // Scale for a line chart's X axis, which runs from the oldest sample slot
 // to "now" at 0: [-(capacity-1), 0] samples, or the same span in seconds in
 // Time mode. Divisions without labels reproduces the original unlabeled

@@ -5,6 +5,7 @@
 #include <QJsonArray>
 #include <QtMath>
 #include <cmath>
+#include <utility>
 
 namespace traceview {
 
@@ -376,6 +377,186 @@ ValueScale valueScale(const AxisRange& range, const ChartStyle& style, int maxTi
     return scale;
 }
 
+namespace {
+
+// How far an axis reaches each side of zero, both >= 0.
+struct ZeroSpan {
+    double below = 0.0;
+    double above = 0.0;
+};
+
+// Smallest 1/2/2.5/5 x 10^n step that is >= `value`.
+double niceStepAtLeast(double value) {
+    if (!(value > 0.0) || !std::isfinite(value)) {
+        return 1.0;
+    }
+    const double magnitude = std::pow(10.0, std::floor(std::log10(value)));
+    for (double multiplier : {1.0, 2.0, 2.5, 5.0}) {
+        if (multiplier * magnitude >= value * (1.0 - 1e-9)) {
+            return multiplier * magnitude;
+        }
+    }
+    return 10.0 * magnitude;
+}
+
+// What a Nice axis must cover each side of zero. Unlike valueScale(), the
+// margin is only added on a side the data actually reaches: an all-positive
+// series keeps zero on the bottom edge instead of gaining a negative tick.
+ZeroSpan niceZeroSpan(const AxisRange& range, const ChartStyle& style) {
+    double lo = range.lo;
+    double hi = range.hi;
+    if (range.source == AxisRange::Source::Empty || !std::isfinite(lo) || !std::isfinite(hi)) {
+        return {0.0, 1.0};
+    }
+    if (hi < lo) {
+        std::swap(lo, hi);
+    }
+    const bool reachesBelow = lo < 0.0;
+    const bool reachesAbove = hi > 0.0;
+    if (range.source == AxisRange::Source::Data) {
+        if (qFuzzyCompare(lo, hi)) {
+            lo -= 1.0;
+            hi += 1.0;
+        }
+        const double pad = (hi - lo) * style.rangeMargin;
+        lo -= pad;
+        hi += pad;
+    }
+    if (!reachesBelow && !reachesAbove) {
+        return {1.0, 1.0};  // a flat line at zero
+    }
+    return {reachesBelow ? -lo : 0.0, reachesAbove ? hi : 0.0};
+}
+
+// Nice ticks shared by every axis: the same number of steps below and above
+// zero on all of them, each axis with its own nice step -- so zero AND every
+// other tick (and the primary axis' gridlines) line up across the axes.
+QVector<ValueScale> alignedNiceScales(const QVector<ZeroSpan>& spans, int maxTicks,
+                                      int tickCount) {
+    bool anyBelow = false;
+    bool anyAbove = false;
+    for (const ZeroSpan& span : spans) {
+        anyBelow = anyBelow || span.below > 0.0;
+        anyAbove = anyAbove || span.above > 0.0;
+    }
+    int maxDivisions = qMax(1, (tickCount >= 2 ? tickCount : maxTicks) - 1);
+    if (anyBelow && anyAbove) {
+        maxDivisions = qMax(2, maxDivisions);
+    }
+    // An explicit tick count is honored exactly; otherwise fewer divisions
+    // are allowed when they waste less of the plot, down to half the budget.
+    const int minDivisions =
+        tickCount >= 2 ? maxDivisions : qMin(maxDivisions, qMax(2, (maxDivisions + 1) / 2));
+
+    int bestBelow = 0;
+    int bestAbove = maxDivisions;
+    double bestFill = -1.0;
+    for (int divisions = maxDivisions; divisions >= minDivisions; --divisions) {
+        const int firstBelow = !anyBelow ? 0 : (anyAbove ? 1 : divisions);
+        const int lastBelow = !anyBelow ? 0 : (anyAbove ? divisions - 1 : divisions);
+        for (int below = firstBelow; below <= lastBelow; ++below) {
+            const int above = divisions - below;
+            // The axis that uses the least of its range decides the score.
+            double fill = 1.0;
+            for (const ZeroSpan& span : spans) {
+                const double need = qMax(below > 0 ? span.below / below : 0.0,
+                                         above > 0 ? span.above / above : 0.0);
+                const double step = niceStepAtLeast(need);
+                fill = qMin(fill, (span.below + span.above) / (divisions * step));
+            }
+            if (fill > bestFill + 1e-9) {
+                bestFill = fill;
+                bestBelow = below;
+                bestAbove = above;
+            }
+        }
+    }
+
+    QVector<ValueScale> scales;
+    scales.reserve(spans.size());
+    for (const ZeroSpan& span : spans) {
+        const double step = niceStepAtLeast(qMax(bestBelow > 0 ? span.below / bestBelow : 0.0,
+                                                 bestAbove > 0 ? span.above / bestAbove : 0.0));
+        ValueScale scale;
+        scale.lo = bestBelow > 0 ? -bestBelow * step : 0.0;
+        scale.hi = bestAbove > 0 ? bestAbove * step : 0.0;
+        for (int i = -bestBelow; i <= bestAbove; ++i) {
+            scale.ticks.append(i == 0 ? 0.0 : i * step);
+        }
+        scale.gridTicks = scale.ticks;
+        scale.decimals = tickDecimals(step);
+        scales.append(scale);
+    }
+    return scales;
+}
+
+}  // namespace
+
+QVector<ValueScale> valueScales(const QVector<AxisRange>& ranges, const ChartStyle& style,
+                                int maxTicks, int gridDivisions,
+                                const QVector<int>& configDecimals, int tickCount) {
+    const auto decimalsOf = [&configDecimals](int i) {
+        return i < configDecimals.size() ? configDecimals[i] : 0;
+    };
+    QVector<ValueScale> scales;
+    scales.reserve(ranges.size());
+    QVector<int> zeroAxes;  // axes whose own scale shows zero
+    for (int i = 0; i < ranges.size(); ++i) {
+        scales.append(
+            valueScale(ranges[i], style, maxTicks, gridDivisions, decimalsOf(i), tickCount));
+        if (scales[i].lo <= 0.0 && scales[i].hi >= 0.0) {
+            zeroAxes.append(i);
+        }
+    }
+    if (zeroAxes.size() < 2) {
+        return scales;
+    }
+
+    if (style.ticks == ChartTickPlacement::Nice) {
+        QVector<ZeroSpan> spans;
+        for (int i : zeroAxes) {
+            spans.append(niceZeroSpan(ranges[i], style));
+        }
+        const QVector<ValueScale> aligned = alignedNiceScales(spans, maxTicks, tickCount);
+        for (int k = 0; k < zeroAxes.size(); ++k) {
+            scales[zeroAxes[k]] = aligned[k];
+        }
+        return scales;
+    }
+
+    // Divisions: stretch each axis so zero lands on the same fraction of the
+    // plot height -- the smallest shared fraction that still fits every
+    // axis' own range.
+    double maxBelowShare = 0.0;
+    double maxAboveShare = 0.0;
+    for (int i : zeroAxes) {
+        const double span = scales[i].hi - scales[i].lo;
+        if (span <= 0.0) {
+            continue;
+        }
+        maxBelowShare = qMax(maxBelowShare, -scales[i].lo / span);
+        maxAboveShare = qMax(maxAboveShare, scales[i].hi / span);
+    }
+    if (maxBelowShare + maxAboveShare <= 0.0) {
+        return scales;
+    }
+    const double zeroAt = maxBelowShare / (maxBelowShare + maxAboveShare);
+    for (int i : zeroAxes) {
+        const double below = -scales[i].lo;
+        const double above = scales[i].hi;
+        const double span = qMax(zeroAt > 0.0 ? below / zeroAt : 0.0,
+                                 zeroAt < 1.0 ? above / (1.0 - zeroAt) : 0.0);
+        if (span <= 0.0) {
+            continue;
+        }
+        const AxisRange stretched{-zeroAt * span, (1.0 - zeroAt) * span,
+                                  AxisRange::Source::Fixed};
+        scales[i] =
+            valueScale(stretched, style, maxTicks, gridDivisions, decimalsOf(i), tickCount);
+    }
+    return scales;
+}
+
 // Pixel spacing and line-count bounds of the unlabeled Divisions X grid --
 // the values the line chart always used, so the Dashboard style is
 // unchanged.
@@ -549,6 +730,11 @@ ChartViewOptions withChartViewOption(ChartViewOptions options, const QString& id
             if (picked.contains(item)) {
                 options.infoItems << item;
             }
+        }
+        // Picking a value means wanting to see it: with the row off, the
+        // pick showed nothing and looked broken.
+        if (!options.infoItems.isEmpty()) {
+            options.showInfoRow = true;
         }
     } else if (id == QLatin1String(ChartViewKey::RangeMarkers)) {
         options.rangeMarkers = value.toBool();
