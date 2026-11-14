@@ -722,6 +722,16 @@ L’autoriser à connecter des appareils et à leur envoyer des commandes jusqu�
         <translation>Anticrénelage</translation>
     </message>
     <message>
+        <location line="+4"/>
+        <source>Background</source>
+        <translation>Arrière-plan</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Shadows</source>
+        <translation>Ombres</translation>
+    </message>
+    <message>
         <location filename="../lib/dashboard/scenes/sceneregistry.cpp" line="+3"/>
         <source>Furuta pendulum</source>
         <translation>Pendule de Furuta</translation>

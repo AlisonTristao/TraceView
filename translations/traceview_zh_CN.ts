@@ -722,6 +722,16 @@ Allow it to connect devices and send them commands until AI assistant access is 
         <translation>抗锯齿</translation>
     </message>
     <message>
+        <location line="+4"/>
+        <source>Background</source>
+        <translation>背景</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Shadows</source>
+        <translation>阴影</translation>
+    </message>
+    <message>
         <location filename="../lib/dashboard/scenes/sceneregistry.cpp" line="+3"/>
         <source>Furuta pendulum</source>
         <translation>古田摆</translation>
