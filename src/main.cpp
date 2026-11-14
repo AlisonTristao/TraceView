@@ -2,7 +2,6 @@
 #include <QDialog>
 #include <QEvent>
 #include <QIcon>
-#include <QInputMethod>
 #include <QPointer>
 #include <QStyleFactory>
 #include <cstring>
@@ -30,15 +29,22 @@ namespace {
 // animation again -- so an already open keyboard drops and slides back up.
 // Letters never get there (a soft keyboard commits them as text, with no key
 // event), but a keyboard that sends Backspace as a real key does, on every
-// delete. With the panel already up there is nothing to ask for, so auto-SIP
-// is switched off for the duration of that one event.
+// delete. A key release never has a reason to open the panel -- it comes
+// either from the panel itself, already up, or from a hardware keyboard --
+// so auto-SIP is switched off for the duration of that one event.
+//
+// This deliberately does not ask QInputMethod::isVisible() whether the panel
+// is up: on Android that answer sticks at "hidden" after any hide request
+// that does not end up closing the keyboard (QtInputDelegate's
+// m_isKeyboardHidingAnimationOngoing is only cleared by a visibility
+// *change*) -- e.g. leaving a password field, where the IME swaps its secure
+// keyboard for the normal one without ever going away.
 class Application : public QApplication {
 public:
     using QApplication::QApplication;
 
     bool notify(QObject* receiver, QEvent* event) override {
-        if (event->type() != QEvent::KeyRelease || !autoSipEnabled() ||
-            !QGuiApplication::inputMethod()->isVisible()) {
+        if (event->type() != QEvent::KeyRelease || !autoSipEnabled()) {
             return QApplication::notify(receiver, event);
         }
         setAutoSipEnabled(false);
