@@ -7,6 +7,8 @@ release flow.
 
 ## [Unreleased]
 
+## [4.12.0] - 2026-11-14
+
 ### Added
 
 - Furuta pendulum scene: **Background** and **Shadows** toggles in its
