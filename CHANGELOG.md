@@ -7,6 +7,15 @@ release flow.
 
 ## [Unreleased]
 
+## [4.11.2] - 2026-11-14
+
+### Fixed
+
+- Buttons, switches and sliders send their commands to serial devices
+  again. The command was written raw to the serial port, where the BTP
+  session discarded it; it now goes through the device's terminal, exactly
+  as if typed in the serial monitor.
+
 ## [4.11.1] - 2026-11-13
 
 ### Fixed
