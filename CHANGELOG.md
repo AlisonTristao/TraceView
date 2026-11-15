@@ -7,6 +7,8 @@ release flow.
 
 ## [Unreleased]
 
+## [4.14.0] - 2026-11-15
+
 ### Changed
 
 - Self-update downloads first and asks after: when a new version is found
