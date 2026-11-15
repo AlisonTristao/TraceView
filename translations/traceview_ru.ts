@@ -6142,6 +6142,14 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <source>Update Now</source>
         <translation>Обновить сейчас</translation>
     </message>
+    <message>
+        <source>A new update has been downloaded and is ready to install.</source>
+        <translation>Новое обновление загружено и готово к установке.</translation>
+    </message>
+    <message>
+        <source>Install Now</source>
+        <translation>Установить сейчас</translation>
+    </message>
 </context>
 <context>
     <name>traceview::UpdateChecker</name>

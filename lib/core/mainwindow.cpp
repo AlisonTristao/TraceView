@@ -8,6 +8,7 @@
 #include <QColor>
 #include <QCoreApplication>
 #include <QDateTime>
+#include <QDebug>
 #include <QElapsedTimer>
 #include <QDialog>
 #include <QDesktopServices>
@@ -5408,16 +5409,68 @@ void MainWindow::checkForUpdates(bool manual) {
     m_updateChecker->checkForUpdates();
 }
 
+namespace {
+
+// Whether startUpdateDownload() could fetch and install `info` without
+// having to send the user to the release page instead -- the same checks it
+// makes, minus the dialogs, so onUpdateAvailable() knows whether a silent
+// background download is worth starting.
+bool updateIsAutoInstallable(const UpdateInfo& info) {
+#if defined(TRACEVIEW_FLATPAK_BUILD)
+    return false;
+#endif
+    // Q_OS_LINUX is defined on Android too, which has no AppImage.
+#if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
+    if (qEnvironmentVariableIsEmpty("APPIMAGE")) {
+        return false;
+    }
+#endif
+    return info.assetUrl.isValid() && info.checksumsUrl.isValid();
+}
+
+}  // namespace
+
 void MainWindow::onUpdateAvailable(const UpdateInfo& info) {
     AppSettings& settings = AppSettings::instance();
     settings.setUpdateLastCheckEpochMs(QDateTime::currentMSecsSinceEpoch());
     if (m_settingsPage) {
         m_settingsPage->setUpdateStatusText(tr("Update available: v%1").arg(info.version));
     }
+    if (m_updateDownloadInFlight) {
+        // A download (background or user-started) already ends in the
+        // dialog or the installer -- a second check mustn't start another.
+        return;
+    }
 
-    UpdateAvailableDialog dialog(info, this);
+    // Download first, ask after: on a phone the download is the slow part,
+    // and asking up front left the user waiting on it after "Update Now".
+    // The dialog shows up once the file is here and verified, so "Install
+    // Now" installs at once. Anything that can't install by itself still
+    // gets the old ask-first dialog straight away.
+    if (updateIsAutoInstallable(info)) {
+        m_pendingUpdate = info;
+        m_updateDownloadInBackground = true;
+        m_updateDownloadInFlight = true;
+        if (m_updateCheckWasManual) {
+            postStatus(tr("Downloading TraceView %1...").arg(info.version), 4000);
+        }
+        m_updateDownloader->download(info.assetUrl, info.assetName, info.checksumsUrl);
+        return;
+    }
+    showUpdateAvailableDialog(info, QString());
+}
+
+void MainWindow::showUpdateAvailableDialog(const UpdateInfo& info, const QString& downloadedFile) {
+    const bool downloaded = !downloadedFile.isEmpty();
+    UpdateAvailableDialog dialog(info, downloaded, this);
     connect(&dialog, &UpdateAvailableDialog::updateRequested, this,
-            [this, info] { startUpdateDownload(info); });
+            [this, info, downloadedFile, downloaded] {
+                if (downloaded) {
+                    installDownloadedUpdate(downloadedFile);
+                } else {
+                    startUpdateDownload(info);
+                }
+            });
     DialogPresenter::exec(dialog, DialogPresenter::Style::Card);
 }
 
@@ -5466,10 +5519,23 @@ void MainWindow::startUpdateDownload(const UpdateInfo& info) {
         return;
     }
     postStatus(tr("Downloading TraceView %1...").arg(info.version), 4000);
+    m_pendingUpdate = info;
+    m_updateDownloadInBackground = false;
+    m_updateDownloadInFlight = true;
     m_updateDownloader->download(info.assetUrl, info.assetName, info.checksumsUrl);
 }
 
 void MainWindow::onUpdateDownloadFinished(const QString& filePath) {
+    m_updateDownloadInFlight = false;
+    if (m_updateDownloadInBackground) {
+        m_updateDownloadInBackground = false;
+        showUpdateAvailableDialog(m_pendingUpdate, filePath);
+        return;
+    }
+    installDownloadedUpdate(filePath);
+}
+
+void MainWindow::installDownloadedUpdate(const QString& filePath) {
     QString reason;
     if (UpdateInstaller::install(filePath, &reason)) {
 #if defined(Q_OS_ANDROID)
@@ -5509,6 +5575,16 @@ void MainWindow::restartApplication() {
 }
 
 void MainWindow::onUpdateDownloadFailed(const QString& reason) {
+    m_updateDownloadInFlight = false;
+    if (m_updateDownloadInBackground) {
+        // Nobody asked for this download yet, so no error popup: fall back
+        // to the ask-first dialog, whose "Update Now" retries in the
+        // foreground and reports a failure that time.
+        m_updateDownloadInBackground = false;
+        qWarning() << "Background update download failed:" << reason;
+        showUpdateAvailableDialog(m_pendingUpdate, QString());
+        return;
+    }
     DialogPresenter::warning(this, tr("Update"), reason);
 }
 

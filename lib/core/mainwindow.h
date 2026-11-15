@@ -676,6 +676,12 @@ private:
     // SHA256SUMS.txt to verify it against), opens the release page instead.
     void startUpdateDownload(const UpdateInfo& info);
     void onUpdateDownloadFinished(const QString& filePath);
+    // Hands a verified download to UpdateInstaller (quits on desktop; on
+    // Android the system installer takes over).
+    void installDownloadedUpdate(const QString& filePath);
+    // Later / Update Now card. With `downloadedFile` set the update is
+    // already here and the button installs it; empty, it starts the download.
+    void showUpdateAvailableDialog(const UpdateInfo& info, const QString& downloadedFile);
     void onUpdateDownloadFailed(const QString& reason);
     // Relaunches TraceView to apply a restart-only setting (language,
     // diagnostics history). On Android, which can't relaunch an app from
@@ -1149,6 +1155,12 @@ private:
     // UpdateChecker signal handlers, since the signal itself carries no
     // record of which call triggered it.
     bool m_updateCheckWasManual = false;
+    // The release being downloaded (or last downloaded). Background = the
+    // download was started on its own by onUpdateAvailable() and ends in the
+    // "ready to install" dialog instead of installing straight away.
+    UpdateInfo m_pendingUpdate;
+    bool m_updateDownloadInFlight = false;
+    bool m_updateDownloadInBackground = false;
 };
 
 }  // namespace traceview

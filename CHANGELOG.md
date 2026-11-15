@@ -7,6 +7,18 @@ release flow.
 
 ## [Unreleased]
 
+## [4.14.0] - 2026-11-15
+
+### Changed
+
+- Self-update downloads first and asks after: when a new version is found
+  the installer/APK is fetched and checksum-verified in the background, and
+  the dialog only appears once it's ready, with **Install Now** installing
+  straight away (no wait after clicking, which was noticeable on a phone).
+  A download kept from an earlier "Later" is reused if its hash still
+  matches, and older downloaded versions are deleted. If the background
+  download fails, the old ask-first dialog is shown instead.
+
 ## [4.13.0] - 2026-11-15
 
 ### Added

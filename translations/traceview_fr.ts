@@ -6140,6 +6140,14 @@ Choisissez Plus tard pour continuer à travailler -- les modifications s&apos;ap
         <source>Update Now</source>
         <translation>Mettre à jour maintenant</translation>
     </message>
+    <message>
+        <source>A new update has been downloaded and is ready to install.</source>
+        <translation>Une nouvelle mise à jour a été téléchargée et est prête à être installée.</translation>
+    </message>
+    <message>
+        <source>Install Now</source>
+        <translation>Installer maintenant</translation>
+    </message>
 </context>
 <context>
     <name>traceview::UpdateChecker</name>

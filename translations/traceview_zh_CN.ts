@@ -6138,6 +6138,14 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <source>Update Now</source>
         <translation>立即更新</translation>
     </message>
+    <message>
+        <source>A new update has been downloaded and is ready to install.</source>
+        <translation>新的更新已下载，可以安装。</translation>
+    </message>
+    <message>
+        <source>Install Now</source>
+        <translation>立即安装</translation>
+    </message>
 </context>
 <context>
     <name>traceview::UpdateChecker</name>
