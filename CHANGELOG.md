@@ -7,6 +7,8 @@ release flow.
 
 ## [Unreleased]
 
+## [4.13.0] - 2026-11-15
+
 ### Added
 
 - Grid precision per workspace: with the padlock open, a **1×/2×/4×**
