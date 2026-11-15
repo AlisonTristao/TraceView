@@ -77,6 +77,31 @@ void UpdateDownloader::downloadAsset(const QString& expectedHash) {
     const QString dir = targetDirectory();
     QDir().mkpath(dir);
     const QString filePath = dir + QStringLiteral("/") + m_assetName;
+
+    // Only one update is ever kept: drop leftovers of older releases (an APK
+    // is tens of MB of the phone's app storage).
+    for (const QString& name : QDir(dir).entryList(QDir::Files)) {
+        if (name != m_assetName) {
+            QFile::remove(dir + QStringLiteral("/") + name);
+        }
+    }
+    // Already downloaded on an earlier launch (the user picked "Later")?
+    // Reuse it if it still matches the published hash, instead of pulling
+    // the whole asset over mobile data again.
+    {
+        QFile existing(filePath);
+        if (existing.open(QIODevice::ReadOnly)) {
+            QCryptographicHash existingHash(QCryptographicHash::Sha256);
+            const bool read = existingHash.addData(&existing);
+            existing.close();
+            if (read && QString::fromLatin1(existingHash.result().toHex())
+                                .compare(expectedHash, Qt::CaseInsensitive) == 0) {
+                emit finished(filePath);
+                return;
+            }
+        }
+    }
+
     auto* file = new QSaveFile(filePath, this);
     if (!file->open(QIODevice::WriteOnly)) {
         delete file;

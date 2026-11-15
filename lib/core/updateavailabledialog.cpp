@@ -9,15 +9,18 @@
 
 namespace traceview {
 
-UpdateAvailableDialog::UpdateAvailableDialog(const UpdateInfo& info, QWidget* parent)
+UpdateAvailableDialog::UpdateAvailableDialog(const UpdateInfo& info, bool downloaded,
+                                             QWidget* parent)
     : QDialog(parent) {
     setWindowTitle(tr("Update Available"));
 
     auto* titleLabel = new QLabel(tr("<b>Update available</b>"), this);
     titleLabel->setTextFormat(Qt::RichText);
 
-    auto* questionLabel =
-        new QLabel(tr("A new update is available. Do you want to update?"), this);
+    auto* questionLabel = new QLabel(
+        downloaded ? tr("A new update has been downloaded and is ready to install.")
+                   : tr("A new update is available. Do you want to update?"),
+        this);
     questionLabel->setWordWrap(true);
 
     auto* versionsLabel = new QLabel(
@@ -29,7 +32,7 @@ UpdateAvailableDialog::UpdateAvailableDialog(const UpdateInfo& info, QWidget* pa
     // box vertically once it's wider than a phone card, and these two
     // should stay side by side, sharing the width.
     auto* laterButton = new QPushButton(tr("Later"), this);
-    auto* updateButton = new QPushButton(tr("Update Now"), this);
+    auto* updateButton = new QPushButton(downloaded ? tr("Install Now") : tr("Update Now"), this);
     updateButton->setDefault(true);
     auto* buttonRow = new QHBoxLayout;
     buttonRow->addWidget(laterButton, 1);
