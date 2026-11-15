@@ -7,6 +7,43 @@ release flow.
 
 ## [Unreleased]
 
+### Added
+
+- Grid precision per workspace: with the padlock open, a **1×/2×/4×**
+  button next to the canvas controls splits each grid cell into 2 or 4
+  snap lines for finer placement. Only whole multiples are offered, and
+  switching asks first and never moves a widget; a widget only lines up
+  with the new grid once you drag or resize it. Saved in the project
+  (existing workspaces open at 1×). The MCP server gets
+  `set_grid_precision`, and `get_workspace` reports it.
+- Status messages show as small translucent cards stacked over the
+  dashboard's bottom-right corner (they fade in, stay for their timeout
+  and fade out; a repeat refreshes the newest card with a count) instead
+  of text in the status row, which grew with each long message and pushed
+  the row's widgets around. The robot's own warnings and errors from its
+  log show as cards too.
+
+### Changed
+
+- Chart value read-outs (the hover balloon and the inset legend with
+  values) put the values in their own left-aligned column, with room kept
+  for the minus sign, so a value crossing zero no longer shifts its digits
+  or resizes the box.
+
+### Fixed
+
+- Buttons, switches and sliders now reach a robot on its own serial port:
+  they send a COMMAND request, as on TCP, BLE and hub channels, instead of
+  typing into the terminal. No command could leave before on any link —
+  the request didn't fit the 16-byte buffer it was encoded in (now 600).
+- A command sent while another is still running (a stop pressed during a
+  homing) goes out instead of being dropped: up to 4 can be outstanding.
+- A command's result goes to the device's log panel, not its terminal,
+  where it landed in the middle of the robot's prompt and garbled what was
+  being typed.
+- A command that timed out or failed showed two cards with almost the
+  same text; it shows one.
+
 ## [4.12.0] - 2026-11-14
 
 ### Added

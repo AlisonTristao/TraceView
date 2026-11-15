@@ -18,7 +18,7 @@ Allow it to connect devices and send them commands until AI assistant access is 
 AI アシスタントのアクセスをオフにするか TraceView を閉じるまで、デバイスの接続とコマンド送信を許可しますか？</translation>
     </message>
     <message>
-        <location line="+276"/>
+        <location line="+280"/>
         <source>An AI assistant created workspace &quot;%1&quot;.</source>
         <translation>AI アシスタントがワークスペース「%1」を作成しました。</translation>
     </message>
@@ -43,7 +43,7 @@ AI アシスタントのアクセスをオフにするか TraceView を閉じる
         <translation>ウィジェットを編集（AI アシスタント）</translation>
     </message>
     <message>
-        <location line="+318"/>
+        <location line="+339"/>
         <source>New Project</source>
         <translation>新規プロジェクト</translation>
     </message>
@@ -99,7 +99,7 @@ AI アシスタントのアクセスをオフにするか TraceView を閉じる
         <translation>デバイスを接続する</translation>
     </message>
     <message>
-        <location line="+151"/>
+        <location line="+152"/>
         <location line="+41"/>
         <source>send commands to a device</source>
         <translation>デバイスにコマンドを送る</translation>
@@ -271,7 +271,7 @@ AI アシスタントのアクセスをオフにするか TraceView を閉じる
 <context>
     <name>ChartStyle</name>
     <message>
-        <location filename="../lib/dashboard/widgets/chartstyle.cpp" line="+127"/>
+        <location filename="../lib/dashboard/widgets/chartstyle.cpp" line="+128"/>
         <source>Engineering</source>
         <translation>エンジニアリング</translation>
     </message>
@@ -382,7 +382,7 @@ AI アシスタントのアクセスをオフにするか TraceView を閉じる
         <translation>%1: %2</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/chartpainting.cpp" line="+879"/>
+        <location filename="../lib/dashboard/widgets/chartpainting.cpp" line="+888"/>
         <source>Time (s)</source>
         <translation>時間 (s)</translation>
     </message>
@@ -687,7 +687,7 @@ AI アシスタントのアクセスをオフにするか TraceView を閉じる
 <context>
     <name>FurutaScene</name>
     <message>
-        <location filename="../lib/dashboard/scenes/furutascene.cpp" line="+529"/>
+        <location filename="../lib/dashboard/scenes/furutascene.cpp" line="+531"/>
         <source>Arm length (L1)</source>
         <translation>アームの長さ (L1)</translation>
     </message>
@@ -740,7 +740,7 @@ AI アシスタントのアクセスをオフにするか TraceView を閉じる
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="+139"/>
+        <location filename="../lib/core/mainwindow.cpp" line="+143"/>
         <source>TraceView Project (*.tvproj)</source>
         <translation>TraceView プロジェクト (*.tvproj)</translation>
     </message>
@@ -2232,7 +2232,7 @@ Allowed: %1</source>
 <context>
     <name>traceview::DashboardCell</name>
     <message>
-        <location filename="../lib/dashboard/widgets/chartstyle.cpp" line="+296"/>
+        <location filename="../lib/dashboard/widgets/chartstyle.cpp" line="+476"/>
         <source>Sample rate</source>
         <translation>サンプリングレート</translation>
     </message>
@@ -2282,7 +2282,7 @@ Allowed: %1</source>
         <translation>実効値</translation>
     </message>
     <message>
-        <location line="+139"/>
+        <location line="+144"/>
         <source>Style:</source>
         <translation>スタイル:</translation>
     </message>
@@ -2556,7 +2556,7 @@ Allowed: %1</source>
 <context>
     <name>traceview::DashboardGrid</name>
     <message>
-        <location filename="../lib/dashboard/dashboardgrid.cpp" line="+643"/>
+        <location filename="../lib/dashboard/dashboardgrid.cpp" line="+681"/>
         <source>Bring to Front</source>
         <translation>最前面へ移動</translation>
     </message>
@@ -3631,12 +3631,12 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+0"/>
-        <location line="+3864"/>
+        <location line="+4021"/>
         <source>Later</source>
         <translation>後で</translation>
     </message>
     <message>
-        <location line="-3857"/>
+        <location line="-4014"/>
         <source>&amp;Access</source>
         <translation>アクセス(&amp;A)</translation>
     </message>
@@ -3763,18 +3763,18 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+18"/>
-        <location line="+3229"/>
+        <location line="+3335"/>
         <source>Undo</source>
         <translation>元に戻す</translation>
     </message>
     <message>
-        <location line="-3227"/>
-        <location line="+3227"/>
+        <location line="-3333"/>
+        <location line="+3333"/>
         <source>Redo</source>
         <translation>やり直し</translation>
     </message>
     <message>
-        <location line="-3184"/>
+        <location line="-3290"/>
         <source>Add Device</source>
         <translation>デバイスを追加</translation>
     </message>
@@ -3809,13 +3809,23 @@ Drops: %2</source>
         <translation>キャンバスを拡大</translation>
     </message>
     <message>
-        <location line="+29"/>
-        <location line="+3129"/>
+        <location line="+23"/>
+        <source>Grid 1× (standard)</source>
+        <translation>グリッド 1×（標準）</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Grid %1×</source>
+        <translation>グリッド %1×</translation>
+    </message>
+    <message>
+        <location line="+36"/>
+        <location line="+3256"/>
         <source>Fullscreen dashboard (F11)</source>
         <translation>ダッシュボードを全画面表示(F11)</translation>
     </message>
     <message>
-        <location line="-2949"/>
+        <location line="-3075"/>
         <source>Rename Workspace</source>
         <translation>ワークスペースの名前を変更</translation>
     </message>
@@ -3896,7 +3906,36 @@ Drops: %2</source>
         <translation>このワークスペースは独自の外観を持つようになりました。</translation>
     </message>
     <message>
-        <location line="+653"/>
+        <location line="+281"/>
+        <source>Grid precision: %1×</source>
+        <translation>グリッドの精度: %1×</translation>
+    </message>
+    <message>
+        <location line="+15"/>
+        <source>Widgets snap to a finer grid from now on. Nothing on the canvas moves.</source>
+        <translation>今後、ウィジェットはより細かいグリッドに吸着します。キャンバス上のものは動きません。</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Widgets snap to a coarser grid from now on. Nothing on the canvas moves, but a widget placed between the new lines jumps to the nearest one the next time you drag or resize it.</source>
+        <translation>今後、ウィジェットはより粗いグリッドに吸着します。キャンバス上のものは動きませんが、新しい線の間にあるウィジェットは次にドラッグまたはサイズ変更したときに最も近い線へ移動します。</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Grid Precision</source>
+        <translation>グリッドの精度</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Change this workspace&apos;s grid from %1× to %2×?
+
+%3</source>
+        <translation>このワークスペースのグリッドを %1× から %2× に変更しますか？
+
+%3</translation>
+    </message>
+    <message>
+        <location line="+426"/>
         <source>Close</source>
         <translation>閉じる</translation>
     </message>
@@ -3965,7 +4004,7 @@ Drops: %2</source>
         <translation>&quot;%1&quot; をギャラリーに保存しました。</translation>
     </message>
     <message>
-        <location line="+548"/>
+        <location line="+599"/>
         <source>Update available: v%1</source>
         <translation>アップデートあり: v%1</translation>
     </message>
@@ -4038,13 +4077,13 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>アプリを閉じる</translation>
     </message>
     <message>
-        <location line="-3176"/>
-        <location line="+2977"/>
+        <location line="-3302"/>
+        <location line="+3052"/>
         <source>Devices</source>
         <translation>デバイス</translation>
     </message>
     <message>
-        <location line="-2902"/>
+        <location line="-2977"/>
         <source>Subscriptions</source>
         <translation>購読</translation>
     </message>
@@ -4060,12 +4099,12 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>名前:</translation>
     </message>
     <message>
-        <location line="-2081"/>
+        <location line="-2112"/>
         <source>TraceView v%1</source>
         <translation>TraceView v%1</translation>
     </message>
     <message>
-        <location line="+2082"/>
+        <location line="+2113"/>
         <source>Workspace</source>
         <translation>ワークスペース</translation>
     </message>
@@ -4090,24 +4129,24 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>ワークスペース「%1」を削除しました。</translation>
     </message>
     <message>
-        <location line="+71"/>
-        <location line="+2485"/>
+        <location line="+81"/>
+        <location line="+2550"/>
         <source>Add widget</source>
         <translation>ウィジェットを追加</translation>
     </message>
     <message>
-        <location line="-2482"/>
+        <location line="-2547"/>
         <source>Remove selected widget (%1)</source>
         <translation>選択したウィジェットを削除(%1)</translation>
     </message>
     <message>
         <location line="+3"/>
-        <location line="+2492"/>
+        <location line="+2557"/>
         <source>Add device</source>
         <translation>デバイスを追加</translation>
     </message>
     <message>
-        <location line="-2489"/>
+        <location line="-2554"/>
         <source>Remove selected device (%1)</source>
         <translation>選択したデバイスを削除(%1)</translation>
     </message>
@@ -4172,7 +4211,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>画面サイズ: 大</translation>
     </message>
     <message>
-        <location line="+212"/>
+        <location line="+252"/>
         <source>Disable editing — lock the dashboard layout</source>
         <translation>編集を無効化 — ダッシュボードのレイアウトをロック</translation>
     </message>
@@ -4192,7 +4231,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>レイヤー/プロパティパネルを表示</translation>
     </message>
     <message>
-        <location line="+267"/>
+        <location line="+292"/>
         <source>New Device</source>
         <translation>新しいデバイス</translation>
     </message>
@@ -4258,12 +4297,12 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>モーション(&amp;O)</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="-1473"/>
+        <location filename="../lib/core/mainwindow.cpp" line="-1548"/>
         <source>Dashboard</source>
         <translation>ダッシュボード</translation>
     </message>
     <message>
-        <location line="+1831"/>
+        <location line="+1906"/>
         <source>%1: this BLE address now answers as a different robot (expected %2, got %3)</source>
         <translation>%1: この BLE アドレスは別のロボットとして応答しています (期待値 %2、実際 %3)</translation>
     </message>
@@ -4482,7 +4521,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>キーボードショートカット</translation>
     </message>
     <message>
-        <location line="+36"/>
+        <location line="+55"/>
         <source>Exit fullscreen (F11 / Esc)</source>
         <translation>全画面表示を終了(F11 / Esc)</translation>
     </message>

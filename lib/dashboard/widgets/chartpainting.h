@@ -98,17 +98,29 @@ void paintChartLegendRow(QPainter& painter, int y, int rowHeight,
                          const ChartStyle& style, const ChartColors& colors,
                          const ThemePalette& palette);
 
+// Left indent for a value in a column of values: a value without a leading
+// '-' is drawn one minus-sign width in, so the digits stay put (and the
+// column keeps its width) as a value crosses zero. The sign's room is always
+// reserved, never drawn.
+qreal chartValueSignIndent(const QFontMetricsF& fm, const QString& value);
+
+// Width of a left-aligned value column holding `values`, sign room included.
+qreal chartValueColumnWidth(const QFontMetricsF& fm, const QStringList& values);
+
 // A boxed legend inside the plot, in `placement`'s corner (one of the four
 // corner placements): one row per entry, on palette.surface at
 // `opacityPercent` so it stays readable over the series, outlined in the
 // frame color at the same opacity. Rows that don't fit the plot height are
 // left out. Returns one clickable rect per entry, empty for a row left out.
+// With `values` (one per entry), each row is "name  value" with the values
+// in their own left-aligned column (see chartValueSignIndent()).
 QVector<QRect> paintChartInsetLegend(QPainter& painter, const QRect& plotRect,
                                      ChartLegendPlacement placement,
                                      const QVector<ChartLegendEntry>& entries,
                                      const QStringList& texts, int opacityPercent,
                                      const ChartStyle& style, const ChartColors& colors,
-                                     const ThemePalette& palette);
+                                     const ThemePalette& palette,
+                                     const QStringList& values = {});
 
 // --- Cartesian axes -----------------------------------------------------
 

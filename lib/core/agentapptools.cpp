@@ -448,11 +448,15 @@ void AgentAppTools::registerWorkspaceTools(MainWindow* window, ToolRegistry* reg
                 }
             }
         }
+        const int gridPrecision =
+            active ? window->m_dashboardGrid->gridPrecision()
+                   : qMax(1, workspaces.dashboardFor(id).value("gridPrecision").toInt(1));
         reply(AgentToolResult::json(QJsonObject{
             {"id", id},
             {"name", name},
             {"active", active},
             {"grid", gridJson(active ? window->m_dashboardGrid : nullptr)},
+            {"gridPrecision", gridPrecision},
             {"widgets", widgets},
         }));
     };
@@ -921,6 +925,26 @@ void AgentAppTools::registerDashboardViewTools(MainWindow* window, ToolRegistry*
                                                 {"pages", grid->canvasPages(breakpoint)}}));
     };
     registry->registerTool(canvas);
+
+    AgentTool precision;
+    precision.name = "set_grid_precision";
+    precision.title = "Set grid precision";
+    precision.description =
+        "Sets how finely the active workspace's grid snaps widgets when dragging/resizing: 1 "
+        "(standard), 2 or 4 snap lines per grid cell. Saved with the workspace. Never moves a "
+        "widget. Widget positions over MCP stay in base cells (get_workspace's grid), so a "
+        "finer precision just allows fractional col/row values like 2.5 or 2.25.";
+    precision.inputSchema = AgentSchema().integer("precision", "1, 2 or 4.", true).toJson();
+    precision.handler = [window](const QJsonObject& args, const AgentToolReply& reply) {
+        const int value = args.value("precision").toInt();
+        if (!window->m_dashboardGrid->setGridPrecision(value)) {
+            reply(AgentToolResult::error(QStringLiteral("Precision must be 1, 2 or 4.")));
+            return;
+        }
+        reply(AgentToolResult::json(
+            QJsonObject{{"gridPrecision", window->m_dashboardGrid->gridPrecision()}}));
+    };
+    registry->registerTool(precision);
 
     AgentTool show;
     show.name = "show_view";

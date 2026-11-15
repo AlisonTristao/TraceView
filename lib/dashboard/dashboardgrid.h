@@ -281,10 +281,27 @@ public:
     int removeItems(const QStringList& itemIds);
     // The item's cell (header and content) as rendered now; null if unknown.
     QPixmap grabItem(const QString& itemId);
-    // The snapping grid of each layout: columns across the canvas width and
-    // rows per page (viewport) height.
+    // The base grid of each layout: columns across the canvas width and rows
+    // per page (viewport) height, at precision 1. Minimum and default widget
+    // sizes are measured in these cells whatever the precision.
     static int gridColumns(DashboardBreakpoint breakpoint);
     static int gridRowsPerPage(DashboardBreakpoint breakpoint);
+
+    // How many snap lines each base cell is split into (1, 2 or 4) for
+    // dragging/resizing and the edit-mode dots. Only whole multiples, so every
+    // line of a coarser setting is also a line of a finer one. Changing it
+    // never moves an item: positions are canvas fractions, and fromJson()
+    // lines items up with the finest precision (kMaxGridPrecision), so what
+    // was placed on any setting stays put on every other. An item only snaps
+    // to the new lines once it is dragged or resized. Saved per workspace
+    // (toJson()); a workspace without it loads at 1, the grid it always had.
+    static const QVector<int>& gridPrecisionOptions();
+    static bool isValidGridPrecision(int precision);
+    int gridPrecision() const {
+        return m_gridPrecision;
+    }
+    // False (nothing changed) for a value not in gridPrecisionOptions().
+    bool setGridPrecision(int precision);
     // How many viewport heights ("pages") `breakpoint`'s canvas spans: 1.0
     // for Large and for an ungrown Small/Medium, otherwise its
     // canvasHeightMultiplier(). Item y/height are measured in these (see
@@ -354,6 +371,8 @@ signals:
     // project last saved. MainWindow uses this to keep the screen-size
     // button's icon/menu in sync regardless of which of those caused it.
     void breakpointChanged(DashboardBreakpoint breakpoint);
+    // setGridPrecision() changed it, or a fromJson() load set a different one.
+    void gridPrecisionChanged(int precision);
 
 protected:
     void resizeEvent(QResizeEvent* event) override;
@@ -501,6 +520,11 @@ private:
     // entry (0.0) means "off" -- same meaning the old QHash's missing-entry
     // default carried.
     std::array<double, kDashboardBreakpointCount> m_canvasHeightMultiplier{};
+    // See setGridPrecision().
+    int m_gridPrecision = 1;
+    // Snap lines across the width / per page at the current precision.
+    int snapColumns(DashboardBreakpoint breakpoint) const;
+    int snapRowsPerPage(DashboardBreakpoint breakpoint) const;
     // deviceId -> last-known connected state, pushed by setDeviceConnected().
     // A device with no entry (never reported) counts as disconnected.
     QHash<QString, bool> m_deviceConnectionStates;

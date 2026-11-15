@@ -85,6 +85,15 @@ const GridSpec& gridSpec(DashboardBreakpoint breakpoint) {
 double snapToGrid(double value, int cells) {
     return std::round(value * cells) / cells;
 }
+// Snap-line multipliers offered for a workspace (see
+// DashboardGrid::setGridPrecision()). Each divides the next, so a finer
+// setting keeps every line of a coarser one.
+constexpr int kMaxGridPrecision = 4;
+// Closest the edit-mode dots get, in pixels: past this a fine precision
+// paints only every second (fourth...) line's dot, so a 4x grid on a large
+// canvas stays a hint of the snap points instead of a gray wash. Snapping
+// still uses every line.
+constexpr double kMinGridDotSpacing = 6.0;
 // Radius of the small dots painted at each grid node in edit mode (see
 // paintEvent()) — deliberately subtle, just a hint of the snap points.
 // Kept small relative to the grid density above so denser dots don't read
@@ -510,6 +519,35 @@ int DashboardGrid::gridRowsPerPage(DashboardBreakpoint breakpoint) {
     return gridSpec(breakpoint).rowsPerPage;
 }
 
+const QVector<int>& DashboardGrid::gridPrecisionOptions() {
+    static const QVector<int> options = {1, 2, kMaxGridPrecision};
+    return options;
+}
+
+bool DashboardGrid::isValidGridPrecision(int precision) {
+    return gridPrecisionOptions().contains(precision);
+}
+
+bool DashboardGrid::setGridPrecision(int precision) {
+    if (!isValidGridPrecision(precision)) {
+        return false;
+    }
+    if (precision != m_gridPrecision) {
+        m_gridPrecision = precision;
+        update();
+        emit gridPrecisionChanged(m_gridPrecision);
+    }
+    return true;
+}
+
+int DashboardGrid::snapColumns(DashboardBreakpoint breakpoint) const {
+    return gridSpec(breakpoint).columns * m_gridPrecision;
+}
+
+int DashboardGrid::snapRowsPerPage(DashboardBreakpoint breakpoint) const {
+    return gridSpec(breakpoint).rowsPerPage * m_gridPrecision;
+}
+
 void DashboardGrid::removeSelected() {
     removeItems(QStringList(m_selectedItemIds.cbegin(), m_selectedItemIds.cend()));
 }
@@ -921,6 +959,7 @@ QJsonObject DashboardGrid::toJson() const {
     }
     object["canvasHeightMultiplier"] = canvasHeightMultiplier;
     object["verticalUnit"] = QString::fromLatin1(kVerticalUnitPage);
+    object["gridPrecision"] = m_gridPrecision;
     return object;
 }
 
@@ -940,6 +979,9 @@ void DashboardGrid::fromJson(const QJsonObject& object) {
     }
 
     m_breakpoint = breakpointFromString(object.value("breakpoint").toString());
+    const int previousPrecision = m_gridPrecision;
+    const int savedPrecision = object.value("gridPrecision").toInt(1);
+    m_gridPrecision = isValidGridPrecision(savedPrecision) ? savedPrecision : 1;
     m_canvasHeightMultiplier.fill(0.0);
     const QJsonObject canvasHeightMultiplier = object.value("canvasHeightMultiplier").toObject();
     for (int i = 0; i < kDashboardBreakpointCount; ++i) {
@@ -972,26 +1014,31 @@ void DashboardGrid::fromJson(const QJsonObject& object) {
     // Lines every item up with its breakpoint's grid. Layouts saved against
     // an older, coarser mobile grid (or rescaled by the conversion above)
     // otherwise sit between grid lines for good -- moves by at most half a
-    // cell, and is a no-op for anything already on the grid.
+    // cell, and is a no-op for anything already on the grid. Always against
+    // the finest precision, never the workspace's own: an item placed at 4x
+    // and then saved at 1x must not jump to a 1x line on the next load.
     for (int i = 0; i < kDashboardBreakpointCount; ++i) {
         const DashboardBreakpoint breakpoint = DashboardBreakpoint(i);
         const GridSpec& spec = gridSpec(breakpoint);
+        const int columns = spec.columns * kMaxGridPrecision;
+        const int rows = spec.rowsPerPage * kMaxGridPrecision;
         const double pages = canvasPages(breakpoint);
         for (DashboardItem& item : m_items) {
             DashboardItem::Geometry& geometry = item.geometry(breakpoint);
-            geometry.width =
-                qBound(1.0 / spec.columns, snapToGrid(geometry.width, spec.columns), 1.0);
-            geometry.height = qBound(1.0 / spec.rowsPerPage,
-                                     snapToGrid(geometry.height, spec.rowsPerPage), pages);
-            geometry.x = qBound(0.0, snapToGrid(geometry.x, spec.columns), 1.0 - geometry.width);
-            geometry.y =
-                qBound(0.0, snapToGrid(geometry.y, spec.rowsPerPage), pages - geometry.height);
+            geometry.width = qBound(1.0 / spec.columns, snapToGrid(geometry.width, columns), 1.0);
+            geometry.height =
+                qBound(1.0 / spec.rowsPerPage, snapToGrid(geometry.height, rows), pages);
+            geometry.x = qBound(0.0, snapToGrid(geometry.x, columns), 1.0 - geometry.width);
+            geometry.y = qBound(0.0, snapToGrid(geometry.y, rows), pages - geometry.height);
         }
     }
     updateGeometry();
     relayout();
     emit itemsChanged();
     emit breakpointChanged(m_breakpoint);
+    if (m_gridPrecision != previousPrecision) {
+        emit gridPrecisionChanged(m_gridPrecision);
+    }
 }
 
 QSize DashboardGrid::sizeHint() const {
@@ -1127,17 +1174,39 @@ void DashboardGrid::paintEvent(QPaintEvent*) {
     // cutting off mid-dot.
     painter.setRenderHint(QPainter::Antialiasing);
     painter.setPen(Qt::NoPen);
-    const int columns = gridSpec(m_breakpoint).columns;
-    const int rows = totalRows();
+    // At the workspace's precision, but thinned to every 2nd/4th line (still
+    // whole base cells, so the dots never drift off the snap lines) wherever
+    // they'd crowd closer than kMinGridDotSpacing.
+    const int precision = m_gridPrecision;
+    const int baseColumns = gridSpec(m_breakpoint).columns;
+    const int baseRows = totalRows();
+    int columnDivisions = precision;
+    while (columnDivisions > 1 &&
+           area.width() / double(baseColumns * columnDivisions) < kMinGridDotSpacing) {
+        columnDivisions /= 2;
+    }
+    int rowDivisions = precision;
+    while (rowDivisions > 1 &&
+           area.height() / double(baseRows * rowDivisions) < kMinGridDotSpacing) {
+        rowDivisions /= 2;
+    }
+    const int columns = baseColumns * columnDivisions;
+    const int rows = baseRows * rowDivisions;
+    // Fade measured in base cells, so the fading rim keeps the same width
+    // whatever the precision.
+    const int fadeColumns = kGridEdgeFadeCells * columnDivisions;
+    const int fadeRows = kGridEdgeFadeCells * rowDivisions;
     for (int c = 0; c <= columns; ++c) {
         const int x = area.left() + qRound(c * area.width() / double(columns));
-        const int edgeDistanceX = qMin(c, columns - c);
+        const double edgeDistanceX = qMin(c, columns - c) / double(fadeColumns);
         for (int r = 0; r <= rows; ++r) {
             const int y = area.top() + qRound(r * area.height() / double(rows));
-            const int edgeDistance = qMin(edgeDistanceX, qMin(r, rows - r));
+            const double edgeFraction = qMin(edgeDistanceX, qMin(r, rows - r) / double(fadeRows));
             QColor dotColor = palette.textDisabled;
-            if (edgeDistance < kGridEdgeFadeCells) {
-                dotColor.setAlphaF(dotColor.alphaF() * (edgeDistance + 1) /
+            if (edgeFraction < 1.0) {
+                // Same steps as before at precision 1: 1/3, 2/3, then full.
+                const double cells = edgeFraction * kGridEdgeFadeCells;
+                dotColor.setAlphaF(dotColor.alphaF() * (cells + 1.0) /
                                    double(kGridEdgeFadeCells + 1));
             }
             painter.setBrush(dotColor);
@@ -1480,7 +1549,6 @@ void DashboardGrid::handleDragMoved(const QString& itemId, const QPoint& globalP
     }
 
     const QRect area = usableRect();
-    const GridSpec& spec = gridSpec(m_breakpoint);
     const double pages = canvasPages(m_breakpoint);
     const QPoint deltaPx = globalPos - m_drag->startGlobalPos;
     // Snaps where the dragged item lands, not how far it moved: a delta of
@@ -1489,11 +1557,12 @@ void DashboardGrid::handleDragMoved(const QString& itemId, const QPoint& globalP
     // The rest of a multi/group drag follows by the same delta.
     const DashboardItem::Geometry& primary =
         m_drag->originals.value(itemId).geometry(m_breakpoint);
+    const int columns = snapColumns(m_breakpoint);
+    const int rows = snapRowsPerPage(m_breakpoint);
     double deltaX =
-        snapToGrid(primary.x + deltaPx.x() / double(area.width()), spec.columns) - primary.x;
-    double deltaY = snapToGrid(primary.y + deltaPx.y() / (area.height() / pages),
-                               spec.rowsPerPage) -
-                    primary.y;
+        snapToGrid(primary.x + deltaPx.x() / double(area.width()), columns) - primary.x;
+    double deltaY =
+        snapToGrid(primary.y + deltaPx.y() / (area.height() / pages), rows) - primary.y;
 
     // Clamp the delta itself (not each member's candidate independently) so
     // a multi/group drag stays rigid: every member keeps its exact pre-drag
@@ -1647,27 +1716,29 @@ void DashboardGrid::handleResizeMoved(const QString& itemId, const QPoint& globa
 
     // The moving edge snaps to the nearest grid line (same reasoning as
     // handleDragMoved()); the opposite edge stays exactly where it was.
+    // Lines at the workspace's precision; the minimums above stay in base
+    // cells so a finer grid doesn't let a chart shrink below its header.
+    const int columns = snapColumns(m_breakpoint);
+    const int rows = snapRowsPerPage(m_breakpoint);
     if (resizesRight) {
-        const double rightEdge =
-            snapToGrid(original.x + original.width + rawDeltaX, spec.columns);
+        const double rightEdge = snapToGrid(original.x + original.width + rawDeltaX, columns);
         candidateGeometry.width = qBound(minWidth, rightEdge - original.x,
                                          qMax(minWidth, 1.0 - candidateGeometry.x));
     } else if (resizesLeft) {
         const double rightEdge = original.x + original.width;
-        const double leftEdge = snapToGrid(original.x + rawDeltaX, spec.columns);
+        const double leftEdge = snapToGrid(original.x + rawDeltaX, columns);
         candidateGeometry.width =
             qBound(minWidth, rightEdge - leftEdge, qMax(minWidth, rightEdge));
         candidateGeometry.x = rightEdge - candidateGeometry.width;
     }
 
     if (resizesBottom) {
-        const double bottomEdge =
-            snapToGrid(original.y + original.height + rawDeltaY, spec.rowsPerPage);
+        const double bottomEdge = snapToGrid(original.y + original.height + rawDeltaY, rows);
         candidateGeometry.height = qBound(minHeight, bottomEdge - original.y,
                                           qMax(minHeight, pages - candidateGeometry.y));
     } else if (resizesTop) {
         const double bottomEdge = original.y + original.height;
-        const double topEdge = snapToGrid(original.y + rawDeltaY, spec.rowsPerPage);
+        const double topEdge = snapToGrid(original.y + rawDeltaY, rows);
         candidateGeometry.height =
             qBound(minHeight, bottomEdge - topEdge, qMax(minHeight, bottomEdge));
         candidateGeometry.y = bottomEdge - candidateGeometry.height;

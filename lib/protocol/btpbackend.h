@@ -237,6 +237,11 @@ public:
     // (RobotSerialLink), so no key is used and commands go out unsealed even
     // with a password configured for the device. Call before the port opens.
     void setSerialRobotPeer(bool robot);
+    // What setSerialRobotPeer() last set: a robot's own serial port, where
+    // control commands go out as COMMAND_REQUEST (SerialWidgetBridge).
+    bool isSerialRobotPeer() const {
+        return m_cleartextDirectLink;
+    }
 
     // Declares, to the DONGLE this backend is connected to, that a child
     // device with `childSourceId` speaks to the robot `peerSourceId`. Called
@@ -352,11 +357,16 @@ private:
     // is dropped by m_node alone, harmlessly: BtpSession's own, separately-
     // sized reassembly is what actually delivers it). No catalog/
     // subscriptions/served-commands: those axes are never enabled here.
+    // ScratchBytes is where node.command() encodes a COMMAND_REQUEST: 20 bytes
+    // of prefix plus the shell line (512 at most on the robots), so 600. At 16
+    // no request ever fitted and every command failed to encode.
+    // MaxCommands: requests outstanding at once (CommandClient), so a stop
+    // pressed while a homing is still running goes out too.
     using BackendNode =
         btp::StaticNode</*Slots=*/2, /*SlotBytes=*/4096, /*SealBytes=*/1024,
-                        /*ScratchBytes=*/16, /*CatalogTopics=*/1, /*CatalogFields=*/1,
+                        /*ScratchBytes=*/600, /*CatalogTopics=*/1, /*CatalogFields=*/1,
                         /*CatalogStringBytes=*/16, /*MaxSubscriptions=*/1,
-                        /*MaxCommands=*/2, /*CommandBytes=*/16,
+                        /*MaxCommands=*/4, /*CommandBytes=*/16,
                         /*CatalogSourceInfo=*/0>;
     static constexpr std::uint64_t kNodeReassemblyTimeoutMs = 4000U;
     // How long connect() waits for HELLO_RESULT -- matches the old

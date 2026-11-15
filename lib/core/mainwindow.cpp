@@ -131,6 +131,8 @@
 #include "paletteeditordialog.h"
 #include "workspacedock.h"
 #include "brandcornermark.h"
+#include "notificationtoasts.h"
+#include "protocol/logseverity.h"
 #include "workspaceswitcher.h"
 
 namespace traceview {
@@ -762,6 +764,9 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
             [this](const ThemePalette& palette) {
                 m_brandCornerMark->setForegroundColor(palette.textPrimary);
             });
+    // Above the brand mark too; embedded dialogs, created later, still cover
+    // it. Placed over m_contentRow by positionNotificationToasts().
+    m_notificationToasts = new NotificationToasts(m_appShell);
     m_appShell->installEventFilter(this);
     // The ribbon's bottom edge moves when its tab row is shown/hidden.
     m_ribbon->installEventFilter(this);
@@ -873,7 +878,12 @@ MainWindow::~MainWindow() {
 
 void MainWindow::postStatus(const QString& text, int timeoutMs, StatusSeverity severity,
                             const QString& source) {
-    showStatusMessage(text, timeoutMs);
+    if (m_notificationToasts) {
+        positionNotificationToasts();
+        m_notificationToasts->post(text, timeoutMs, severity, source);
+    } else {
+        showStatusMessage(text, timeoutMs);  // before the constructor built the overlay
+    }
     m_notificationLog->append({QDateTime::currentDateTime(), text, severity, source});
 
     // Every status-bar message funnels through here regardless of which
@@ -2013,6 +2023,36 @@ Ribbon* MainWindow::buildRibbon() {
         applyBreakpointViewport();
     });
 
+    // Grid precision -- how finely the active workspace's grid snaps (see
+    // DashboardGrid::setGridPrecision()). A menu of whole multiples only, so
+    // switching never moves a widget; behind the padlock like the canvas
+    // +/- buttons (see updateCanvasHeightButtons()).
+    m_gridPrecisionButton = new QToolButton(dashboardPage);
+    m_gridPrecisionButton->setObjectName("gridPrecisionButton");
+    m_gridPrecisionButton->setAutoRaise(true);
+    m_gridPrecisionButton->setPopupMode(QToolButton::InstantPopup);
+    m_gridPrecisionButton->setToolButtonStyle(Qt::ToolButtonTextOnly);
+    m_gridPrecisionButton->setStyleSheet(
+        "QToolButton#gridPrecisionButton::menu-indicator { image: none; width: 0px; }");
+    m_gridPrecisionButton->setFixedSize(kRibbonButtonSize, kRibbonButtonSize);
+    m_gridPrecisionMenu = new QMenu(m_gridPrecisionButton);
+    auto* gridPrecisionGroup = new QActionGroup(this);
+    gridPrecisionGroup->setExclusive(true);
+    for (int precision : DashboardGrid::gridPrecisionOptions()) {
+        auto* action = m_gridPrecisionMenu->addAction(
+            precision == 1 ? tr("Grid 1× (standard)") : tr("Grid %1×").arg(precision));
+        action->setCheckable(true);
+        action->setData(precision);
+        gridPrecisionGroup->addAction(action);
+        connect(action, &QAction::triggered, this,
+                [this, precision]() { onGridPrecisionSelected(precision); });
+    }
+    m_gridPrecisionButton->setMenu(m_gridPrecisionMenu);
+    // Also fires when a workspace switch or project load brings in another
+    // precision, so the button always shows the workspace on screen.
+    connect(m_dashboardGrid, &DashboardGrid::gridPrecisionChanged, this,
+            [this](int) { updateGridPrecisionButton(); });
+
     // Top-right lock toggle: turns the Dashboard tab's canvas into the old
     // Layout tab's editable mode in place, instead of that being a separate
     // tab. See onEditModeToggled() for what flipping it actually does.
@@ -2087,6 +2127,7 @@ Ribbon* MainWindow::buildRibbon() {
     dashboardLayout->addWidget(m_deviceStatusLabel);
     dashboardLayout->addStretch();
     dashboardLayout->addWidget(m_togglePanelsButton);
+    dashboardLayout->addWidget(m_gridPrecisionButton);
     dashboardLayout->addWidget(m_canvasShrinkButton);
     dashboardLayout->addWidget(m_canvasGrowButton);
     dashboardLayout->addWidget(m_editModeButton);
@@ -2701,6 +2742,46 @@ void MainWindow::updateCanvasHeightButtons() {
     m_canvasGrowButton->setIcon(makePlusIcon(palette.textPrimary));
     m_canvasShrinkButton->setVisible(canvasHeightAdjustable);
     m_canvasGrowButton->setVisible(canvasHeightAdjustable);
+    updateGridPrecisionButton();
+}
+
+void MainWindow::updateGridPrecisionButton() {
+    if (!m_gridPrecisionButton) {
+        return;
+    }
+    const int precision = m_dashboardGrid->gridPrecision();
+    m_gridPrecisionButton->setText(QStringLiteral("%1×").arg(precision));
+    m_gridPrecisionButton->setToolTip(tr("Grid precision: %1×").arg(precision));
+    for (QAction* action : m_gridPrecisionMenu->actions()) {
+        action->setChecked(action->data().toInt() == precision);
+    }
+    // Same padlock gate as the canvas +/- buttons, on every layout.
+    m_gridPrecisionButton->setVisible(editingActive());
+}
+
+void MainWindow::onGridPrecisionSelected(int precision) {
+    const int current = m_dashboardGrid->gridPrecision();
+    if (precision == current) {
+        return;
+    }
+    const QString detail =
+        precision > current
+            ? tr("Widgets snap to a finer grid from now on. Nothing on the canvas moves.")
+            : tr("Widgets snap to a coarser grid from now on. Nothing on the canvas moves, "
+                 "but a widget placed between the new lines jumps to the nearest one the "
+                 "next time you drag or resize it.");
+    if (DialogPresenter::question(
+            this, tr("Grid Precision"),
+            tr("Change this workspace's grid from %1× to %2×?\n\n%3")
+                .arg(current)
+                .arg(precision)
+                .arg(detail),
+            QMessageBox::Yes | QMessageBox::No, QMessageBox::Yes) == QMessageBox::Yes) {
+        m_dashboardGrid->setGridPrecision(precision);
+    }
+    // Re-checks the current entry when the change was declined (the menu
+    // already ticked the one clicked).
+    updateGridPrecisionButton();
 }
 
 void MainWindow::syncBreakpointChrome() {
@@ -3035,9 +3116,11 @@ void MainWindow::updatePanelVisibility() {
 bool MainWindow::eventFilter(QObject* watched, QEvent* event) {
     if (watched == m_contentRow && event->type() == QEvent::Resize) {
         positionOverlayPanels();
+        positionNotificationToasts();
     } else if ((watched == m_appShell || watched == m_ribbon) &&
                (event->type() == QEvent::Resize || event->type() == QEvent::Move)) {
         positionBrandCornerMark();
+        positionNotificationToasts();
     } else if (watched == m_dashboardScrollArea->viewport() && event->type() == QEvent::Resize) {
         // Re-derives the canvas-height-multiplier pixel math, which reads
         // this viewport's current height -- see applyBreakpointViewport().
@@ -3062,6 +3145,14 @@ void MainWindow::positionBrandCornerMark() {
     const int ribbonBottom = m_ribbon->mapTo(m_appShell, QPoint(0, m_ribbon->height())).y();
     m_brandCornerMark->reposition(kBrandCornerMarkHeight, m_appShell->width() * 2 / 5,
                                   ribbonBottom);
+}
+
+void MainWindow::positionNotificationToasts() {
+    if (!m_notificationToasts || !m_contentRow) {
+        return;
+    }
+    m_notificationToasts->setArea(
+        QRect(m_contentRow->mapTo(m_appShell, QPoint(0, 0)), m_contentRow->size()));
 }
 
 void MainWindow::showEvent(QShowEvent* event) {
@@ -3903,6 +3994,40 @@ DeviceConnection* MainWindow::createDeviceConnection(const Device& device) {
         [this, name = device.name](const QString& text, int timeoutMs, StatusSeverity severity) {
             postStatus(text, timeoutMs, severity, name);
         });
+    // The robot's own LOG records as cards too (they stay in the log panel and
+    // the notification history is left to status messages). DEBG is too
+    // chatty for that, and CMDO is a command's output, whose result already
+    // has a card of its own. Lines with timestamp and sequence 0 are not the
+    // robot's: they are CommandClient's own (a command timing out or failing,
+    // see BtpBackend), which already post their card through statusMessage --
+    // carding them here too showed every such event twice.
+    connect(backend, &Backend::logReceived, this,
+            [this, name = device.name](quint64 timestampUs, quint32, quint32, quint32 sequence,
+                                       quint8 severity, const QString& message) {
+                if (!m_notificationToasts || (timestampUs == 0 && sequence == 0)) {
+                    return;
+                }
+                StatusSeverity cardSeverity = StatusSeverity::Info;
+                int timeoutMs = 6000;
+                switch (LogSeverity(severity)) {
+                    case LogSeverity::Error:
+                        cardSeverity = StatusSeverity::Error;
+                        timeoutMs = 10000;
+                        break;
+                    case LogSeverity::Warn:
+                        cardSeverity = StatusSeverity::Warning;
+                        timeoutMs = 8000;
+                        break;
+                    case LogSeverity::Info:
+                    case LogSeverity::None:
+                        break;
+                    case LogSeverity::Debug:
+                    case LogSeverity::Command:
+                        return;
+                }
+                positionNotificationToasts();
+                m_notificationToasts->post(message.trimmed(), timeoutMs, cardSeverity, name);
+            });
     // This device's script runtime's onStatus() -- the same statusMessage
     // signal the status bar uses, so a script sees session established/
     // failed, subscription rejections, and sendCommand() results (CommandClient

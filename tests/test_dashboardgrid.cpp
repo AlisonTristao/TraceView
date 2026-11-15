@@ -87,6 +87,9 @@ private slots:
     void toJsonFromJsonRoundTripsCanvasHeightMultiplier();
     void fromJsonSnapsOffGridItemsToTheirGrid();
     void dragMovesAndSnapsToNearestGridCell();
+    void gridPrecisionRoundTripsAndRejectsNonMultiples();
+    void dragSnapsToFinerLinesAtHigherPrecision();
+    void loweringPrecisionNeverMovesWidgets();
     void dragOntoAnotherItemIsNowAllowed();
     void resizeChangesGeometryWithUndo();
     void resizeClampsToMinimumSize();
@@ -475,8 +478,10 @@ void TestDashboardGrid::fromJsonSnapsOffGridItemsToTheirGrid() {
     const QJsonObject loaded =
         grid.toJson().value("items").toArray().at(0).toObject().value("layouts").toObject();
     const QJsonObject snapped = loaded.value("small").toObject();
-    QCOMPARE(snapped.value("x").toDouble(), 2.0 / 24.0);
-    QCOMPARE(snapped.value("y").toDouble(), 13.0 / 40.0);
+    // To the finest precision's lines (quarter cells), whatever precision the
+    // workspace uses -- see DashboardGrid::setGridPrecision().
+    QCOMPARE(snapped.value("x").toDouble(), 2.5 / 24.0);
+    QCOMPARE(snapped.value("y").toDouble(), 13.25 / 40.0);
     QCOMPARE(snapped.value("width").toDouble(), 11.0 / 24.0);
     QCOMPARE(snapped.value("height").toDouble(), 8.0 / 40.0);
     // Already on its own grid -- untouched.
@@ -522,6 +527,96 @@ void TestDashboardGrid::dragMovesAndSnapsToNearestGridCell() {
     grid.undoStack()->redo();
     item = grid.toJson().value("items").toArray().first().toObject();
     QCOMPARE(largeGeometry(item).value("x").toDouble(), 3.0 / 60.0);
+}
+
+void TestDashboardGrid::gridPrecisionRoundTripsAndRejectsNonMultiples() {
+    DashboardGrid grid;
+    QCOMPARE(grid.gridPrecision(), 1);
+    QSignalSpy spy(&grid, &DashboardGrid::gridPrecisionChanged);
+
+    QVERIFY(!grid.setGridPrecision(3));
+    QVERIFY(!grid.setGridPrecision(0));
+    QVERIFY(!grid.setGridPrecision(8));
+    QCOMPARE(grid.gridPrecision(), 1);
+    QCOMPARE(spy.count(), 0);
+
+    QVERIFY(grid.setGridPrecision(4));
+    QCOMPARE(spy.count(), 1);
+    QVERIFY(grid.setGridPrecision(4));  // unchanged: accepted, no signal
+    QCOMPARE(spy.count(), 1);
+
+    const QJsonObject json = grid.toJson();
+    QCOMPARE(json.value("gridPrecision").toInt(), 4);
+
+    DashboardGrid loaded;
+    QSignalSpy loadedSpy(&loaded, &DashboardGrid::gridPrecisionChanged);
+    loaded.fromJson(json);
+    QCOMPARE(loaded.gridPrecision(), 4);
+    QCOMPARE(loadedSpy.count(), 1);
+
+    // A workspace saved before the setting existed, or with a bad value,
+    // loads at the standard grid.
+    QJsonObject legacy = json;
+    legacy.remove("gridPrecision");
+    loaded.fromJson(legacy);
+    QCOMPARE(loaded.gridPrecision(), 1);
+    legacy["gridPrecision"] = 3;
+    loaded.fromJson(legacy);
+    QCOMPARE(loaded.gridPrecision(), 1);
+}
+
+void TestDashboardGrid::dragSnapsToFinerLinesAtHigherPrecision() {
+    DashboardGrid grid;
+    // Same 8px-per-cell setup as dragMovesAndSnapsToNearestGridCell: at 2x a
+    // snap line every 4px.
+    grid.resize(496, 336);
+    grid.setEditMode(true);
+    grid.setGridPrecision(2);
+    grid.show();
+    QVERIFY(QTest::qWaitForWindowExposed(&grid));
+
+    grid.addItem("dummy_line");
+    auto* cell = grid.findChild<DashboardCell*>();
+    QVERIFY(cell != nullptr);
+
+    const QPoint headerPoint(80, 10);
+    const QPoint dragged = headerPoint + QPoint(27, 13);  // 6.75 / 3.25 half-cells
+    QTest::mousePress(cell, Qt::LeftButton, Qt::NoModifier, headerPoint);
+    QTest::mouseMove(cell, dragged);
+    QTest::mouseRelease(cell, Qt::LeftButton, Qt::NoModifier, dragged);
+
+    const QJsonObject item = grid.toJson().value("items").toArray().first().toObject();
+    QCOMPARE(largeGeometry(item).value("x").toDouble(), 3.5 / 60.0);
+    QCOMPARE(largeGeometry(item).value("y").toDouble(), 1.5 / 40.0);
+}
+
+void TestDashboardGrid::loweringPrecisionNeverMovesWidgets() {
+    DashboardGrid grid;
+    grid.setGridPrecision(4);
+    grid.addItem("dummy_line");
+    QJsonObject json = grid.toJson();
+    QJsonArray items = json.value("items").toArray();
+    QJsonObject item = items.at(0).toObject();
+    QJsonObject layouts = item.value("layouts").toObject();
+    QJsonObject large = layouts.value("large").toObject();
+    // On a quarter-cell line, as a 4x drag leaves it.
+    large["x"] = 3.25 / 60.0;
+    large["y"] = 2.75 / 40.0;
+    layouts["large"] = large;
+    item["layouts"] = layouts;
+    items[0] = item;
+    json["items"] = items;
+    grid.fromJson(json);
+
+    // Back to 1x, saved and reopened: the widget stays exactly where it was.
+    QVERIFY(grid.setGridPrecision(1));
+    DashboardGrid reopened;
+    reopened.fromJson(grid.toJson());
+    QCOMPARE(reopened.gridPrecision(), 1);
+    const QJsonObject after =
+        largeGeometry(reopened.toJson().value("items").toArray().first().toObject());
+    QCOMPARE(after.value("x").toDouble(), 3.25 / 60.0);
+    QCOMPARE(after.value("y").toDouble(), 2.75 / 40.0);
 }
 
 void TestDashboardGrid::dragOntoAnotherItemIsNowAllowed() {
