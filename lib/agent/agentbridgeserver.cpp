@@ -4,7 +4,9 @@
 #include <QDir>
 #include <QLocalServer>
 #include <QLocalSocket>
+#if QT_CONFIG(process)
 #include <QProcess>
+#endif
 #include <QRegularExpression>
 
 #include "agent/mcpsession.h"
@@ -47,12 +49,19 @@ QString launchAgentBridgeApp() {
             "TraceView runs as a Flatpak, which can't be started from here. Ask the user to "
             "open TraceView and turn on Settings > Connections > AI assistants.");
     }
+#if QT_CONFIG(process)
     const QString appImage = qEnvironmentVariable("APPIMAGE");
     const QString program = appImage.isEmpty() ? QCoreApplication::applicationFilePath() : appImage;
     if (!QProcess::startDetached(program, {QString::fromLatin1(kAgentBridgeArgument)})) {
         return QStringLiteral("Could not start TraceView (%1).").arg(program);
     }
     return QString();
+#else
+    // iOS (Qt's "process" feature is off there) can't spawn processes at all.
+    return QStringLiteral(
+        "TraceView can't be started from here. Ask the user to open TraceView and turn on "
+        "Settings > Connections > AI assistants.");
+#endif
 }
 
 AgentBridgeServer::AgentBridgeServer(ToolRegistry* registry, QObject* parent)

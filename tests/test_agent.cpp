@@ -73,9 +73,12 @@ QString firstText(const QJsonObject& result) {
     return result.value("content").toArray().first().toObject().value("text").toString();
 }
 
+// Short on purpose: on macOS QLocalServer puts the socket in $TMPDIR
+// (/var/folders/xx/<28 chars>/T/, ~49 chars) and sun_path holds only 104
+// bytes, so a full UUID made listen() fail there.
 QString uniqueSocketName() {
-    return QStringLiteral("traceview-mcp-test-") +
-           QUuid::createUuid().toString(QUuid::WithoutBraces);
+    return QStringLiteral("tvmcp-") +
+           QUuid::createUuid().toString(QUuid::Id128).left(12);
 }
 
 }  // namespace
