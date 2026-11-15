@@ -67,6 +67,7 @@ class UpdateChecker;
 class UpdateDownloader;
 class WorkspaceDock;
 class BrandCornerMark;
+class NotificationToasts;
 class StartupLoadingOverlay;
 class ToolRegistry;
 class WorkspaceSwitcher;
@@ -336,6 +337,8 @@ private:
     void positionOverlayPanels();
     // Keeps m_brandCornerMark flush with m_appShell's top-right corner.
     void positionBrandCornerMark();
+    // Gives m_notificationToasts m_contentRow's rectangle inside m_appShell.
+    void positionNotificationToasts();
     void updateRibbonIcons();
 
     void onRibbonTabChanged(int index);
@@ -615,8 +618,8 @@ private:
     // View menu / F1 -- the read-only reference of every keyboard shortcut,
     // built from the QActions here plus the terminal's own fixed chords.
     void onShowKeyboardShortcuts();
-    // The single choke point every status-bar message goes through: shows it on
-    // the status bar for `timeoutMs` AND records it in m_notificationLog with
+    // The single choke point every status message goes through: shows it as a
+    // card in m_notificationToasts for `timeoutMs` AND records it in m_notificationLog with
     // `severity`/`source` so the history window can replay it. `source` is a
     // device name for anything a Backend emitted, empty for app-level messages.
     void postStatus(const QString& text, int timeoutMs,
@@ -834,6 +837,9 @@ private:
     // User-mode-only wordmark overlaid on m_appShell's top-right corner --
     // see brandcornermark.h; shown/hidden by updateChromeVisibility().
     BrandCornerMark* m_brandCornerMark = nullptr;
+    // Status messages as translucent cards over the dashboard's bottom-right
+    // corner (see notificationtoasts.h) -- postStatus() feeds it.
+    NotificationToasts* m_notificationToasts = nullptr;
     // Covers the window until the startup dashboard is built; null after.
     StartupLoadingOverlay* m_startupOverlay = nullptr;
     QAction* m_addWidgetAction = nullptr;
@@ -1114,6 +1120,13 @@ private:
     // shrinkCanvasHeight() directly.
     QToolButton* m_canvasShrinkButton = nullptr;
     QToolButton* m_canvasGrowButton = nullptr;
+    // Grid precision (1x/2x/4x snap lines per cell) for the active workspace
+    // -- shown only while editingActive(), like the canvas +/- buttons. See
+    // onGridPrecisionSelected() and DashboardGrid::setGridPrecision().
+    QToolButton* m_gridPrecisionButton = nullptr;
+    QMenu* m_gridPrecisionMenu = nullptr;
+    void onGridPrecisionSelected(int precision);
+    void updateGridPrecisionButton();
     QToolButton* m_editModeButton = nullptr;
     QToolButton* m_fullscreenButton = nullptr;
     bool m_wasMaximized = false;

@@ -8,6 +8,7 @@
 #include "dashboard/widgets/robotlogwidget.h"
 #include "dashboard/widgets/serialmonitorwidget.h"
 #include "deviceconnection.h"
+#include "protocol/btpbackend.h"
 #ifdef TRACEVIEW_ENABLE_SERIAL
 #include "serialtransport.h"
 #endif
@@ -37,12 +38,18 @@ void SerialWidgetBridge::sendControlCommand(DeviceConnection* connection,
     }
 #ifdef TRACEVIEW_ENABLE_SERIAL
     // A serial port always carries a BTP session, so raw text written to the
-    // port lands in the middle of the frame stream and the device drops it.
-    // The line goes in through the terminal instead, as if typed in the
-    // serial monitor, with the port's line terminator.
+    // port would land in the middle of the frame stream and be dropped. A
+    // robot's own port is a direct session like TCP/BLE: the command goes as
+    // a COMMAND_REQUEST, which the robot runs in its shell and answers with a
+    // result (CommandClient logs both in the device's log panel). A dongle's
+    // port is its own console: the line goes in through the terminal, as if
+    // typed in the serial monitor, with the port's line terminator.
     if (SerialTransport* serial = connection->serialTransport()) {
-        backend->sendTerminalIn(command + lineTerminatorBytes(serial->lineTerminator()));
-        return;
+        const auto* btpBackend = qobject_cast<BtpBackend*>(backend);
+        if (!btpBackend || !btpBackend->isSerialRobotPeer()) {
+            backend->sendTerminalIn(command + lineTerminatorBytes(serial->lineTerminator()));
+            return;
+        }
     }
 #endif
     backend->sendCommand(command);

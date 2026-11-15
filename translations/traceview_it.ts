@@ -18,7 +18,7 @@ Allow it to connect devices and send them commands until AI assistant access is 
 Consentirgli di collegare dispositivi e inviare loro comandi finché l’accesso degli assistenti IA non viene disattivato o TraceView non viene chiuso?</translation>
     </message>
     <message>
-        <location line="+276"/>
+        <location line="+280"/>
         <source>An AI assistant created workspace &quot;%1&quot;.</source>
         <translation>Un assistente IA ha creato l&apos;area di lavoro &quot;%1&quot;.</translation>
     </message>
@@ -43,7 +43,7 @@ Consentirgli di collegare dispositivi e inviare loro comandi finché l’accesso
         <translation>Modifica widget (assistente IA)</translation>
     </message>
     <message>
-        <location line="+318"/>
+        <location line="+339"/>
         <source>New Project</source>
         <translation>Nuovo progetto</translation>
     </message>
@@ -99,7 +99,7 @@ Consentirgli di collegare dispositivi e inviare loro comandi finché l’accesso
         <translation>collegare un dispositivo</translation>
     </message>
     <message>
-        <location line="+151"/>
+        <location line="+152"/>
         <location line="+41"/>
         <source>send commands to a device</source>
         <translation>inviare comandi a un dispositivo</translation>
@@ -271,7 +271,7 @@ Consentirgli di collegare dispositivi e inviare loro comandi finché l’accesso
 <context>
     <name>ChartStyle</name>
     <message>
-        <location filename="../lib/dashboard/widgets/chartstyle.cpp" line="+127"/>
+        <location filename="../lib/dashboard/widgets/chartstyle.cpp" line="+128"/>
         <source>Engineering</source>
         <translation>Ingegneria</translation>
     </message>
@@ -382,7 +382,7 @@ Consentirgli di collegare dispositivi e inviare loro comandi finché l’accesso
         <translation>%1: %2</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/chartpainting.cpp" line="+879"/>
+        <location filename="../lib/dashboard/widgets/chartpainting.cpp" line="+888"/>
         <source>Time (s)</source>
         <translation>Tempo (s)</translation>
     </message>
@@ -687,7 +687,7 @@ Consentirgli di collegare dispositivi e inviare loro comandi finché l’accesso
 <context>
     <name>FurutaScene</name>
     <message>
-        <location filename="../lib/dashboard/scenes/furutascene.cpp" line="+529"/>
+        <location filename="../lib/dashboard/scenes/furutascene.cpp" line="+531"/>
         <source>Arm length (L1)</source>
         <translation>Lunghezza del braccio (L1)</translation>
     </message>
@@ -740,7 +740,7 @@ Consentirgli di collegare dispositivi e inviare loro comandi finché l’accesso
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="+139"/>
+        <location filename="../lib/core/mainwindow.cpp" line="+143"/>
         <source>TraceView Project (*.tvproj)</source>
         <translation>Progetto TraceView (*.tvproj)</translation>
     </message>
@@ -2232,7 +2232,7 @@ Consentiti: %1</translation>
 <context>
     <name>traceview::DashboardCell</name>
     <message>
-        <location filename="../lib/dashboard/widgets/chartstyle.cpp" line="+296"/>
+        <location filename="../lib/dashboard/widgets/chartstyle.cpp" line="+476"/>
         <source>Sample rate</source>
         <translation>Frequenza di campionamento</translation>
     </message>
@@ -2282,7 +2282,7 @@ Consentiti: %1</translation>
         <translation>RMS</translation>
     </message>
     <message>
-        <location line="+139"/>
+        <location line="+144"/>
         <source>Style:</source>
         <translation>Stile:</translation>
     </message>
@@ -2556,7 +2556,7 @@ Consentiti: %1</translation>
 <context>
     <name>traceview::DashboardGrid</name>
     <message>
-        <location filename="../lib/dashboard/dashboardgrid.cpp" line="+643"/>
+        <location filename="../lib/dashboard/dashboardgrid.cpp" line="+681"/>
         <source>Bring to Front</source>
         <translation>Porta in primo piano</translation>
     </message>
@@ -3632,12 +3632,12 @@ Perdite: %2</translation>
     </message>
     <message>
         <location line="+0"/>
-        <location line="+3864"/>
+        <location line="+4021"/>
         <source>Later</source>
         <translation>Più tardi</translation>
     </message>
     <message>
-        <location line="-3857"/>
+        <location line="-4014"/>
         <source>&amp;Access</source>
         <translation>&amp;Accesso</translation>
     </message>
@@ -3764,18 +3764,18 @@ Perdite: %2</translation>
     </message>
     <message>
         <location line="+18"/>
-        <location line="+3229"/>
+        <location line="+3335"/>
         <source>Undo</source>
         <translation>Annulla</translation>
     </message>
     <message>
-        <location line="-3227"/>
-        <location line="+3227"/>
+        <location line="-3333"/>
+        <location line="+3333"/>
         <source>Redo</source>
         <translation>Ripeti</translation>
     </message>
     <message>
-        <location line="-3184"/>
+        <location line="-3290"/>
         <source>Add Device</source>
         <translation>Aggiungi dispositivo</translation>
     </message>
@@ -3810,13 +3810,23 @@ Perdite: %2</translation>
         <translation>Ingrandisci l&apos;area di lavoro</translation>
     </message>
     <message>
-        <location line="+29"/>
-        <location line="+3129"/>
+        <location line="+23"/>
+        <source>Grid 1× (standard)</source>
+        <translation>Griglia 1× (standard)</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Grid %1×</source>
+        <translation>Griglia %1×</translation>
+    </message>
+    <message>
+        <location line="+36"/>
+        <location line="+3256"/>
         <source>Fullscreen dashboard (F11)</source>
         <translation>Dashboard a schermo intero (F11)</translation>
     </message>
     <message>
-        <location line="-2949"/>
+        <location line="-3075"/>
         <source>Rename Workspace</source>
         <translation>Rinomina Spazio di Lavoro</translation>
     </message>
@@ -3897,7 +3907,36 @@ Perdite: %2</translation>
         <translation>Questa area di lavoro ora ha un aspetto proprio.</translation>
     </message>
     <message>
-        <location line="+653"/>
+        <location line="+281"/>
+        <source>Grid precision: %1×</source>
+        <translation>Precisione della griglia: %1×</translation>
+    </message>
+    <message>
+        <location line="+15"/>
+        <source>Widgets snap to a finer grid from now on. Nothing on the canvas moves.</source>
+        <translation>Da ora i widget si agganciano a una griglia più fitta. Nulla si sposta sull’area di lavoro.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Widgets snap to a coarser grid from now on. Nothing on the canvas moves, but a widget placed between the new lines jumps to the nearest one the next time you drag or resize it.</source>
+        <translation>Da ora i widget si agganciano a una griglia più larga. Nulla si sposta sull’area di lavoro, ma un widget posto tra le nuove linee salta alla più vicina la prossima volta che lo trascini o ridimensioni.</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Grid Precision</source>
+        <translation>Precisione della griglia</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Change this workspace&apos;s grid from %1× to %2×?
+
+%3</source>
+        <translation>Cambiare la griglia di questo spazio di lavoro da %1× a %2×?
+
+%3</translation>
+    </message>
+    <message>
+        <location line="+426"/>
         <source>Close</source>
         <translation>Chiudi</translation>
     </message>
@@ -3966,7 +4005,7 @@ Perdite: %2</translation>
         <translation>&quot;%1&quot; salvato nella galleria.</translation>
     </message>
     <message>
-        <location line="+548"/>
+        <location line="+599"/>
         <source>Update available: v%1</source>
         <translation>Aggiornamento disponibile: v%1</translation>
     </message>
@@ -4039,13 +4078,13 @@ Scegli Più tardi per continuare a lavorare -- le modifiche verranno applicate l
         <translation>Chiudi app</translation>
     </message>
     <message>
-        <location line="-3176"/>
-        <location line="+2977"/>
+        <location line="-3302"/>
+        <location line="+3052"/>
         <source>Devices</source>
         <translation>Dispositivi</translation>
     </message>
     <message>
-        <location line="-2902"/>
+        <location line="-2977"/>
         <source>Subscriptions</source>
         <translation>Sottoscrizioni</translation>
     </message>
@@ -4061,12 +4100,12 @@ Scegli Più tardi per continuare a lavorare -- le modifiche verranno applicate l
         <translation>Nome:</translation>
     </message>
     <message>
-        <location line="-2081"/>
+        <location line="-2112"/>
         <source>TraceView v%1</source>
         <translation>TraceView v%1</translation>
     </message>
     <message>
-        <location line="+2082"/>
+        <location line="+2113"/>
         <source>Workspace</source>
         <translation>Spazio di Lavoro</translation>
     </message>
@@ -4091,24 +4130,24 @@ Scegli Più tardi per continuare a lavorare -- le modifiche verranno applicate l
         <translation>Spazio di lavoro «%1» eliminato.</translation>
     </message>
     <message>
-        <location line="+71"/>
-        <location line="+2485"/>
+        <location line="+81"/>
+        <location line="+2550"/>
         <source>Add widget</source>
         <translation>Aggiungi widget</translation>
     </message>
     <message>
-        <location line="-2482"/>
+        <location line="-2547"/>
         <source>Remove selected widget (%1)</source>
         <translation>Rimuovi widget selezionato (%1)</translation>
     </message>
     <message>
         <location line="+3"/>
-        <location line="+2492"/>
+        <location line="+2557"/>
         <source>Add device</source>
         <translation>Aggiungi dispositivo</translation>
     </message>
     <message>
-        <location line="-2489"/>
+        <location line="-2554"/>
         <source>Remove selected device (%1)</source>
         <translation>Rimuovi dispositivo selezionato (%1)</translation>
     </message>
@@ -4173,7 +4212,7 @@ Scegli Più tardi per continuare a lavorare -- le modifiche verranno applicate l
         <translation>Dimensione schermo: Grande</translation>
     </message>
     <message>
-        <location line="+212"/>
+        <location line="+252"/>
         <source>Disable editing — lock the dashboard layout</source>
         <translation>Disattiva modifica — blocca il layout del dashboard</translation>
     </message>
@@ -4193,7 +4232,7 @@ Scegli Più tardi per continuare a lavorare -- le modifiche verranno applicate l
         <translation>Mostra i pannelli Livelli/Proprietà</translation>
     </message>
     <message>
-        <location line="+267"/>
+        <location line="+292"/>
         <source>New Device</source>
         <translation>Nuovo Dispositivo</translation>
     </message>
@@ -4259,12 +4298,12 @@ Scegli Più tardi per continuare a lavorare -- le modifiche verranno applicate l
         <translation>M&amp;ovimento</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="-1473"/>
+        <location filename="../lib/core/mainwindow.cpp" line="-1548"/>
         <source>Dashboard</source>
         <translation>Dashboard</translation>
     </message>
     <message>
-        <location line="+1831"/>
+        <location line="+1906"/>
         <source>%1: this BLE address now answers as a different robot (expected %2, got %3)</source>
         <translation>%1: questo indirizzo BLE ora risponde come un robot diverso (atteso %2, ricevuto %3)</translation>
     </message>
@@ -4483,7 +4522,7 @@ Scegli Più tardi per continuare a lavorare -- le modifiche verranno applicate l
         <translation>Scorciatoie da tastiera</translation>
     </message>
     <message>
-        <location line="+36"/>
+        <location line="+55"/>
         <source>Exit fullscreen (F11 / Esc)</source>
         <translation>Esci da schermo intero (F11 / Esc)</translation>
     </message>

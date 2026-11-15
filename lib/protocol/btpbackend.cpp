@@ -298,6 +298,15 @@ BtpBackend::BtpBackend(BtpSession::Framing framing, const btp::TransportLimits& 
     // target -- see CommandClient's own header comment.
     m_commandClient = new CommandClient(*m_node, this);
     connect(m_commandClient, &CommandClient::statusMessage, this, &Backend::statusMessage);
+    // A command and its result, into this device's log panel (not its
+    // terminal -- see CommandClient). Robot-side identity, timestamp and
+    // sequence 0: the line is TraceView's own, not a LOG frame from the robot.
+    connect(m_commandClient, &CommandClient::logLine, this,
+            [this](quint8 severity, const QString& text) {
+                const quint32 robot = m_peerSourceId != 0 ? m_peerSourceId : m_sessionPeerSourceId;
+                emit logReceived(0, robot, m_telemetryCatalog->sourceBootId(robot), 0, severity,
+                                 text);
+            });
     // The parent half of the hub: tells the dongle which robot each child
     // device is for. Inert on a child backend, which never calls into it.
     m_hubBinder = new HubBinder(m_btpSession, m_protocolRouter, this);

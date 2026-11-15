@@ -851,6 +851,8 @@ add_library(traceview_ui STATIC
     core/paletteeditordialog.h
     core/brandcornermark.cpp
     core/brandcornermark.h
+    core/notificationtoasts.cpp
+    core/notificationtoasts.h
     core/startuploadingoverlay.cpp
     core/startuploadingoverlay.h
     vendor/qrcodegen/qrcodegen.cpp

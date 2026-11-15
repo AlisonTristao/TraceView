@@ -18,7 +18,7 @@ Allow it to connect devices and send them commands until AI assistant access is 
 Ihm erlauben, Geräte zu verbinden und ihnen Befehle zu senden, bis der Zugriff für KI-Assistenten ausgeschaltet oder TraceView geschlossen wird?</translation>
     </message>
     <message>
-        <location line="+276"/>
+        <location line="+280"/>
         <source>An AI assistant created workspace &quot;%1&quot;.</source>
         <translation>Ein KI-Assistent hat den Arbeitsbereich „%1“ erstellt.</translation>
     </message>
@@ -43,7 +43,7 @@ Ihm erlauben, Geräte zu verbinden und ihnen Befehle zu senden, bis der Zugriff 
         <translation>Widget bearbeiten (KI-Assistent)</translation>
     </message>
     <message>
-        <location line="+318"/>
+        <location line="+339"/>
         <source>New Project</source>
         <translation>Neues Projekt</translation>
     </message>
@@ -99,7 +99,7 @@ Ihm erlauben, Geräte zu verbinden und ihnen Befehle zu senden, bis der Zugriff 
         <translation>ein Gerät verbinden</translation>
     </message>
     <message>
-        <location line="+151"/>
+        <location line="+152"/>
         <location line="+41"/>
         <source>send commands to a device</source>
         <translation>Befehle an ein Gerät senden</translation>
@@ -271,7 +271,7 @@ Ihm erlauben, Geräte zu verbinden und ihnen Befehle zu senden, bis der Zugriff 
 <context>
     <name>ChartStyle</name>
     <message>
-        <location filename="../lib/dashboard/widgets/chartstyle.cpp" line="+127"/>
+        <location filename="../lib/dashboard/widgets/chartstyle.cpp" line="+128"/>
         <source>Engineering</source>
         <translation>Technik</translation>
     </message>
@@ -382,7 +382,7 @@ Ihm erlauben, Geräte zu verbinden und ihnen Befehle zu senden, bis der Zugriff 
         <translation>%1: %2</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/chartpainting.cpp" line="+879"/>
+        <location filename="../lib/dashboard/widgets/chartpainting.cpp" line="+888"/>
         <source>Time (s)</source>
         <translation>Zeit (s)</translation>
     </message>
@@ -687,7 +687,7 @@ Ihm erlauben, Geräte zu verbinden und ihnen Befehle zu senden, bis der Zugriff 
 <context>
     <name>FurutaScene</name>
     <message>
-        <location filename="../lib/dashboard/scenes/furutascene.cpp" line="+529"/>
+        <location filename="../lib/dashboard/scenes/furutascene.cpp" line="+531"/>
         <source>Arm length (L1)</source>
         <translation>Armlänge (L1)</translation>
     </message>
@@ -740,7 +740,7 @@ Ihm erlauben, Geräte zu verbinden und ihnen Befehle zu senden, bis der Zugriff 
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="+139"/>
+        <location filename="../lib/core/mainwindow.cpp" line="+143"/>
         <source>TraceView Project (*.tvproj)</source>
         <translation>TraceView-Projekt (*.tvproj)</translation>
     </message>
@@ -2232,7 +2232,7 @@ Erlaubt: %1</translation>
 <context>
     <name>traceview::DashboardCell</name>
     <message>
-        <location filename="../lib/dashboard/widgets/chartstyle.cpp" line="+296"/>
+        <location filename="../lib/dashboard/widgets/chartstyle.cpp" line="+476"/>
         <source>Sample rate</source>
         <translation>Abtastrate</translation>
     </message>
@@ -2282,7 +2282,7 @@ Erlaubt: %1</translation>
         <translation>Effektivwert</translation>
     </message>
     <message>
-        <location line="+139"/>
+        <location line="+144"/>
         <source>Style:</source>
         <translation>Stil:</translation>
     </message>
@@ -2556,7 +2556,7 @@ Erlaubt: %1</translation>
 <context>
     <name>traceview::DashboardGrid</name>
     <message>
-        <location filename="../lib/dashboard/dashboardgrid.cpp" line="+643"/>
+        <location filename="../lib/dashboard/dashboardgrid.cpp" line="+681"/>
         <source>Bring to Front</source>
         <translation>In den Vordergrund</translation>
     </message>
@@ -3632,12 +3632,12 @@ Verluste: %2</translation>
     </message>
     <message>
         <location line="+0"/>
-        <location line="+3864"/>
+        <location line="+4021"/>
         <source>Later</source>
         <translation>Später</translation>
     </message>
     <message>
-        <location line="-3857"/>
+        <location line="-4014"/>
         <source>&amp;Access</source>
         <translation>&amp;Zugang</translation>
     </message>
@@ -3764,18 +3764,18 @@ Verluste: %2</translation>
     </message>
     <message>
         <location line="+18"/>
-        <location line="+3229"/>
+        <location line="+3335"/>
         <source>Undo</source>
         <translation>Rückgängig</translation>
     </message>
     <message>
-        <location line="-3227"/>
-        <location line="+3227"/>
+        <location line="-3333"/>
+        <location line="+3333"/>
         <source>Redo</source>
         <translation>Wiederholen</translation>
     </message>
     <message>
-        <location line="-3184"/>
+        <location line="-3290"/>
         <source>Add Device</source>
         <translation>Gerät hinzufügen</translation>
     </message>
@@ -3810,13 +3810,23 @@ Verluste: %2</translation>
         <translation>Arbeitsfläche vergrößern</translation>
     </message>
     <message>
-        <location line="+29"/>
-        <location line="+3129"/>
+        <location line="+23"/>
+        <source>Grid 1× (standard)</source>
+        <translation>Raster 1× (Standard)</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Grid %1×</source>
+        <translation>Raster %1×</translation>
+    </message>
+    <message>
+        <location line="+36"/>
+        <location line="+3256"/>
         <source>Fullscreen dashboard (F11)</source>
         <translation>Dashboard im Vollbildmodus (F11)</translation>
     </message>
     <message>
-        <location line="-2949"/>
+        <location line="-3075"/>
         <source>Rename Workspace</source>
         <translation>Arbeitsbereich umbenennen</translation>
     </message>
@@ -3897,7 +3907,36 @@ Verluste: %2</translation>
         <translation>Dieser Arbeitsbereich hat jetzt eine eigene Darstellung.</translation>
     </message>
     <message>
-        <location line="+653"/>
+        <location line="+281"/>
+        <source>Grid precision: %1×</source>
+        <translation>Rasterpräzision: %1×</translation>
+    </message>
+    <message>
+        <location line="+15"/>
+        <source>Widgets snap to a finer grid from now on. Nothing on the canvas moves.</source>
+        <translation>Widgets rasten ab jetzt an einem feineren Raster ein. Auf der Arbeitsfläche verschiebt sich nichts.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Widgets snap to a coarser grid from now on. Nothing on the canvas moves, but a widget placed between the new lines jumps to the nearest one the next time you drag or resize it.</source>
+        <translation>Widgets rasten ab jetzt an einem gröberen Raster ein. Auf der Arbeitsfläche verschiebt sich nichts, aber ein Widget zwischen den neuen Linien springt beim nächsten Verschieben oder Größeändern auf die nächstgelegene.</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Grid Precision</source>
+        <translation>Rasterpräzision</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Change this workspace&apos;s grid from %1× to %2×?
+
+%3</source>
+        <translation>Raster dieses Arbeitsbereichs von %1× auf %2× ändern?
+
+%3</translation>
+    </message>
+    <message>
+        <location line="+426"/>
         <source>Close</source>
         <translation>Schließen</translation>
     </message>
@@ -3966,7 +4005,7 @@ Verluste: %2</translation>
         <translation>&quot;%1&quot; in der Galerie gespeichert.</translation>
     </message>
     <message>
-        <location line="+548"/>
+        <location line="+599"/>
         <source>Update available: v%1</source>
         <translation>Update verfügbar: v%1</translation>
     </message>
@@ -4039,13 +4078,13 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
         <translation>App schließen</translation>
     </message>
     <message>
-        <location line="-3176"/>
-        <location line="+2977"/>
+        <location line="-3302"/>
+        <location line="+3052"/>
         <source>Devices</source>
         <translation>Geräte</translation>
     </message>
     <message>
-        <location line="-2902"/>
+        <location line="-2977"/>
         <source>Subscriptions</source>
         <translation>Abonnements</translation>
     </message>
@@ -4061,12 +4100,12 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
         <translation>Name:</translation>
     </message>
     <message>
-        <location line="-2081"/>
+        <location line="-2112"/>
         <source>TraceView v%1</source>
         <translation>TraceView v%1</translation>
     </message>
     <message>
-        <location line="+2082"/>
+        <location line="+2113"/>
         <source>Workspace</source>
         <translation>Arbeitsbereich</translation>
     </message>
@@ -4091,24 +4130,24 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
         <translation>Arbeitsbereich „%1“ gelöscht.</translation>
     </message>
     <message>
-        <location line="+71"/>
-        <location line="+2485"/>
+        <location line="+81"/>
+        <location line="+2550"/>
         <source>Add widget</source>
         <translation>Widget hinzufügen</translation>
     </message>
     <message>
-        <location line="-2482"/>
+        <location line="-2547"/>
         <source>Remove selected widget (%1)</source>
         <translation>Ausgewähltes Widget entfernen (%1)</translation>
     </message>
     <message>
         <location line="+3"/>
-        <location line="+2492"/>
+        <location line="+2557"/>
         <source>Add device</source>
         <translation>Gerät hinzufügen</translation>
     </message>
     <message>
-        <location line="-2489"/>
+        <location line="-2554"/>
         <source>Remove selected device (%1)</source>
         <translation>Ausgewähltes Gerät entfernen (%1)</translation>
     </message>
@@ -4173,7 +4212,7 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
         <translation>Bildschirmgröße: Groß</translation>
     </message>
     <message>
-        <location line="+212"/>
+        <location line="+252"/>
         <source>Disable editing — lock the dashboard layout</source>
         <translation>Bearbeitung deaktivieren — Dashboard-Layout sperren</translation>
     </message>
@@ -4193,7 +4232,7 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
         <translation>Ebenen-/Eigenschaften-Panels anzeigen</translation>
     </message>
     <message>
-        <location line="+267"/>
+        <location line="+292"/>
         <source>New Device</source>
         <translation>Neues Gerät</translation>
     </message>
@@ -4259,12 +4298,12 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
         <translation>&amp;Bewegung</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="-1473"/>
+        <location filename="../lib/core/mainwindow.cpp" line="-1548"/>
         <source>Dashboard</source>
         <translation>Dashboard</translation>
     </message>
     <message>
-        <location line="+1831"/>
+        <location line="+1906"/>
         <source>%1: this BLE address now answers as a different robot (expected %2, got %3)</source>
         <translation>%1: diese BLE-Adresse antwortet jetzt als anderer Roboter (erwartet %2, erhalten %3)</translation>
     </message>
@@ -4483,7 +4522,7 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
         <translation>Tastenkürzel</translation>
     </message>
     <message>
-        <location line="+36"/>
+        <location line="+55"/>
         <source>Exit fullscreen (F11 / Esc)</source>
         <translation>Vollbild verlassen (F11 / Esc)</translation>
     </message>

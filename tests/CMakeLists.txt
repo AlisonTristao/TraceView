@@ -148,6 +148,8 @@ add_traceview_test(test_deviceconnection traceview_ui Qt6::Network)
 # leaves behind the real TraceView account list.
 add_traceview_test(test_usermodemanager traceview_ui)
 add_traceview_test(test_mainwindowchrome traceview_ui)
+# Status messages as floating translucent cards over the dashboard.
+add_traceview_test(test_notificationtoasts traceview_ui)
 
 # Generic telemetry value types (lib/telemetry) -- no BTP dependency at all
 # (traceview_telemetry links just Qt6::Core; see lib/CMakeLists.txt).
@@ -173,6 +175,10 @@ add_traceview_test(test_btphandshake traceview_protocol)
 # CONTROL/SESSION_CLOSE wire payload, one-shot behavior, and producer
 # sequence continuity with TERMINAL_IN.
 add_traceview_test(test_sessionclose traceview_protocol btp::codec)
+# Control commands to a robot on its own serial port: COMMAND_REQUEST out
+# (a full 512-byte line fits), the result back into the serial monitor, and
+# a second command while the first is still pending.
+add_traceview_test(test_serialrobotcommand traceview_protocol btp::codec btp::messages)
 add_traceview_test(test_telemetryfieldrouter traceview_protocol)
 # topico 17 (assinaturas e controle de taxa): the STATUS v1/v2 payload parser
 # and the reference-counted SUBSCRIBE/UNSUBSCRIBE aggregation, both pure

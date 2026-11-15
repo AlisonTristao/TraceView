@@ -479,19 +479,27 @@ void paintHoverCrosshair(QPainter& painter, const QRect& plotRect, int capacity,
     constexpr int kBalloonGap = 14;  // clear of the cursor hotspot
     constexpr int kSwatchTextGap = 5;
 
-    QStringList lines;
-    int textWidth = 0;
+    // Two columns: "name:" labels, then the values left-aligned on one edge,
+    // each with the minus sign's room kept so a value crossing zero neither
+    // shifts its digits nor resizes the balloon.
+    const QFontMetricsF fmf(painter.font());
+    QStringList names;
+    QStringList values;
+    qreal nameWidth = 0.0;
     for (const HoverRow& row : rows) {
-        // "%1: %2" fixes name-before-value order -- a translator wanting to
-        // swap that order for a given language would need to reorder these
-        // placeholders; not attempted for this pass.
-        const QString text =
+        // The "%1: %2" label with an empty value, so each language keeps its
+        // own name/colon spacing (e.g. French "nom :").
+        const QString name =
             QCoreApplication::translate("ChartWidgets", "%1: %2")
-                .arg(seriesDisplayName(row.series->name, row.series->fieldId),
-                     QString::number(row.value, 'f', decimals));
-        lines << text;
-        textWidth = qMax(textWidth, fm.horizontalAdvance(text));
+                .arg(seriesDisplayName(row.series->name, row.series->fieldId), QString())
+                .trimmed();
+        names << name;
+        values << QString::number(row.value, 'f', decimals);
+        nameWidth = qMax(nameWidth, fmf.horizontalAdvance(name));
     }
+    const qreal valueGap = fmf.horizontalAdvance(QLatin1Char(' '));
+    const qreal valueLeft = nameWidth + valueGap;
+    const int textWidth = qCeil(valueLeft + chartValueColumnWidth(fmf, values)) + 1;
 
     const int balloonWidth = kBalloonPadding * 2 + kSwatch + kSwatchTextGap + textWidth;
     const int balloonHeight = kBalloonPadding * 2 + rowHeight * rows.size();
@@ -529,9 +537,12 @@ void paintHoverCrosshair(QPainter& painter, const QRect& plotRect, int capacity,
                                   y + (rowHeight - kSwatch) / 2, kSwatch, kSwatch));
 
         painter.setPen(palette.textPrimary);
-        const QRect textRect(balloonRect.left() + kBalloonPadding + kSwatch + kSwatchTextGap, y,
-                             textWidth, rowHeight);
-        painter.drawText(textRect, Qt::AlignLeft | Qt::AlignVCenter, lines[i]);
+        const int textLeft = balloonRect.left() + kBalloonPadding + kSwatch + kSwatchTextGap;
+        painter.drawText(QRectF(textLeft, y, nameWidth + 1, rowHeight),
+                         Qt::AlignLeft | Qt::AlignVCenter, names[i]);
+        const qreal valueX = textLeft + valueLeft + chartValueSignIndent(fmf, values[i]);
+        painter.drawText(QRectF(valueX, y, textLeft + textWidth - valueX, rowHeight),
+                         Qt::AlignLeft | Qt::AlignVCenter, values[i]);
     }
 }
 
@@ -1139,18 +1150,11 @@ void ChartWidgetBase::paintLegends(QPainter& painter, const ChartCartesianLayout
     }
 
     if (placement != ChartLegendPlacement::Outside) {
-        QStringList texts = names;
-        if (withValues) {
-            for (int i = 0; i < texts.size(); ++i) {
-                // "%1  %2" fixes name-before-value order, same as the gauge
-                // legend.
-                texts[i] = QCoreApplication::translate("ChartWidgets", "%1  %2")
-                               .arg(names[i], latest[i]);
-            }
-        }
-        m_legendHitRects =
-            paintChartInsetLegend(painter, layout.plotRect, placement, entries, texts,
-                                  m_view.legendOpacity, style, colors, palette);
+        // Names and values in two columns, the values left-aligned with the
+        // minus sign's room kept (see chartValueSignIndent()).
+        m_legendHitRects = paintChartInsetLegend(
+            painter, layout.plotRect, placement, entries, names, m_view.legendOpacity, style,
+            colors, palette, withValues ? latest : QStringList());
         return;
     }
 

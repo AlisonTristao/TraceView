@@ -437,8 +437,9 @@ void AgentAppTools::registerDeviceIoTools(MainWindow* window, ToolRegistry* regi
     command.name = "send_command";
     command.title = "Send command";
     command.description =
-        "Sends a text command to a device exactly as a dashboard button would (serial: the "
-        "line plus its terminator; hub channel: a COMMAND request). Real hardware: the first "
+        "Sends a text command to a device exactly as a dashboard button would (a COMMAND "
+        "request to the robot; on a dongle's serial port, the line plus its terminator into "
+        "the dongle's terminal). Real hardware: the first "
         "time the user is asked to allow it. Returns the terminal output and log lines that "
         "arrived within waitMs (default 1000).";
     command.inputSchema = AgentSchema()

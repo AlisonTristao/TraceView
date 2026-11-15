@@ -24,14 +24,15 @@ class SerialMonitorWidget;
 // the properties panel.
 //
 // PushButtonWidget/ToggleSwitchWidget/SliderWidget's sendRequested() (a
-// fully-formed outbound command) goes, on a serial device, into its terminal
-// through Backend::sendTerminalIn() with the port's line terminator appended
-// -- exactly what typing it in the serial monitor does. (It used to be written
-// raw to the port, which a BTP session just discards.) A device with no
-// SerialManager (USB HID, or a hub channel) instead goes through
-// Backend::sendCommand() -- a real COMMAND_REQUEST for a hub-channel device
-// (see protocol/commandclient.h), a silent no-op for USB HID. A widget with
-// no device configured just goes nowhere.
+// fully-formed outbound command) goes through Backend::sendCommand() -- a
+// real COMMAND_REQUEST (see protocol/commandclient.h) for a robot reached
+// directly (its own serial port, TCP, BLE) or through a hub channel, a silent
+// no-op for USB HID. The one exception is a dongle's serial port, which is the
+// dongle's own console: there it goes into the terminal through
+// Backend::sendTerminalIn() with the port's line terminator appended --
+// exactly what typing it in the serial monitor does. (It used to be written
+// raw to the port, which a BTP session just discards.) A widget with no
+// device configured just goes nowhere.
 //
 // SerialMonitorWidget is different: it has one terminal *tab* per device, so
 // its outbound signal is terminalInput(deviceId, bytes) -- the active tab's
@@ -67,9 +68,9 @@ public:
     // MainWindow on every device add/remove/rename.
     void setDeviceNames(const QHash<QString, QString>& namesById);
 
-    // The device's terminal (Backend::sendTerminalIn() plus the line
-    // terminator) on a serial device, else Backend::sendCommand() -- see the
-    // class comment above. Public for the
+    // Backend::sendCommand(), or the terminal (Backend::sendTerminalIn() plus
+    // the line terminator) on a dongle's serial port -- see the class comment
+    // above. Public for the
     // AI assistant's send_command, which sends exactly what a button would.
     static void sendControlCommand(DeviceConnection* connection, const QByteArray& command);
 

@@ -18,7 +18,7 @@ Allow it to connect devices and send them commands until AI assistant access is 
 是否允许它连接设备并向设备发送命令，直到关闭 AI 助手访问或退出 TraceView？</translation>
     </message>
     <message>
-        <location line="+276"/>
+        <location line="+280"/>
         <source>An AI assistant created workspace &quot;%1&quot;.</source>
         <translation>AI 助手创建了工作区“%1”。</translation>
     </message>
@@ -43,7 +43,7 @@ Allow it to connect devices and send them commands until AI assistant access is 
         <translation>编辑控件（AI 助手）</translation>
     </message>
     <message>
-        <location line="+318"/>
+        <location line="+339"/>
         <source>New Project</source>
         <translation>新建项目</translation>
     </message>
@@ -99,7 +99,7 @@ Allow it to connect devices and send them commands until AI assistant access is 
         <translation>连接设备</translation>
     </message>
     <message>
-        <location line="+151"/>
+        <location line="+152"/>
         <location line="+41"/>
         <source>send commands to a device</source>
         <translation>向设备发送命令</translation>
@@ -271,7 +271,7 @@ Allow it to connect devices and send them commands until AI assistant access is 
 <context>
     <name>ChartStyle</name>
     <message>
-        <location filename="../lib/dashboard/widgets/chartstyle.cpp" line="+127"/>
+        <location filename="../lib/dashboard/widgets/chartstyle.cpp" line="+128"/>
         <source>Engineering</source>
         <translation>工程</translation>
     </message>
@@ -382,7 +382,7 @@ Allow it to connect devices and send them commands until AI assistant access is 
         <translation>%1: %2</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/chartpainting.cpp" line="+879"/>
+        <location filename="../lib/dashboard/widgets/chartpainting.cpp" line="+888"/>
         <source>Time (s)</source>
         <translation>时间 (s)</translation>
     </message>
@@ -687,7 +687,7 @@ Allow it to connect devices and send them commands until AI assistant access is 
 <context>
     <name>FurutaScene</name>
     <message>
-        <location filename="../lib/dashboard/scenes/furutascene.cpp" line="+529"/>
+        <location filename="../lib/dashboard/scenes/furutascene.cpp" line="+531"/>
         <source>Arm length (L1)</source>
         <translation>摆臂长度 (L1)</translation>
     </message>
@@ -740,7 +740,7 @@ Allow it to connect devices and send them commands until AI assistant access is 
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="+139"/>
+        <location filename="../lib/core/mainwindow.cpp" line="+143"/>
         <source>TraceView Project (*.tvproj)</source>
         <translation>TraceView 项目 (*.tvproj)</translation>
     </message>
@@ -2232,7 +2232,7 @@ Allowed: %1</source>
 <context>
     <name>traceview::DashboardCell</name>
     <message>
-        <location filename="../lib/dashboard/widgets/chartstyle.cpp" line="+296"/>
+        <location filename="../lib/dashboard/widgets/chartstyle.cpp" line="+476"/>
         <source>Sample rate</source>
         <translation>采样率</translation>
     </message>
@@ -2282,7 +2282,7 @@ Allowed: %1</source>
         <translation>有效值</translation>
     </message>
     <message>
-        <location line="+139"/>
+        <location line="+144"/>
         <source>Style:</source>
         <translation>样式:</translation>
     </message>
@@ -2556,7 +2556,7 @@ Allowed: %1</source>
 <context>
     <name>traceview::DashboardGrid</name>
     <message>
-        <location filename="../lib/dashboard/dashboardgrid.cpp" line="+643"/>
+        <location filename="../lib/dashboard/dashboardgrid.cpp" line="+681"/>
         <source>Bring to Front</source>
         <translation>置于顶层</translation>
     </message>
@@ -3631,12 +3631,12 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+0"/>
-        <location line="+3864"/>
+        <location line="+4021"/>
         <source>Later</source>
         <translation>稍后</translation>
     </message>
     <message>
-        <location line="-3857"/>
+        <location line="-4014"/>
         <source>&amp;Access</source>
         <translation>访问(&amp;A)</translation>
     </message>
@@ -3763,18 +3763,18 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+18"/>
-        <location line="+3229"/>
+        <location line="+3335"/>
         <source>Undo</source>
         <translation>撤销</translation>
     </message>
     <message>
-        <location line="-3227"/>
-        <location line="+3227"/>
+        <location line="-3333"/>
+        <location line="+3333"/>
         <source>Redo</source>
         <translation>重做</translation>
     </message>
     <message>
-        <location line="-3184"/>
+        <location line="-3290"/>
         <source>Add Device</source>
         <translation>添加设备</translation>
     </message>
@@ -3809,13 +3809,23 @@ Drops: %2</source>
         <translation>放大画布</translation>
     </message>
     <message>
-        <location line="+29"/>
-        <location line="+3129"/>
+        <location line="+23"/>
+        <source>Grid 1× (standard)</source>
+        <translation>网格 1×（标准）</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Grid %1×</source>
+        <translation>网格 %1×</translation>
+    </message>
+    <message>
+        <location line="+36"/>
+        <location line="+3256"/>
         <source>Fullscreen dashboard (F11)</source>
         <translation>全屏仪表盘(F11)</translation>
     </message>
     <message>
-        <location line="-2949"/>
+        <location line="-3075"/>
         <source>Rename Workspace</source>
         <translation>重命名工作区</translation>
     </message>
@@ -3896,7 +3906,36 @@ Drops: %2</source>
         <translation>此工作区现在有自己的外观。</translation>
     </message>
     <message>
-        <location line="+653"/>
+        <location line="+281"/>
+        <source>Grid precision: %1×</source>
+        <translation>网格精度：%1×</translation>
+    </message>
+    <message>
+        <location line="+15"/>
+        <source>Widgets snap to a finer grid from now on. Nothing on the canvas moves.</source>
+        <translation>从现在起，小部件吸附到更细的网格。画布上的内容不会移动。</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Widgets snap to a coarser grid from now on. Nothing on the canvas moves, but a widget placed between the new lines jumps to the nearest one the next time you drag or resize it.</source>
+        <translation>从现在起，小部件吸附到更粗的网格。画布上的内容不会移动，但位于新网格线之间的小部件在下次拖动或调整大小时会跳到最近的网格线。</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Grid Precision</source>
+        <translation>网格精度</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Change this workspace&apos;s grid from %1× to %2×?
+
+%3</source>
+        <translation>将此工作区的网格从 %1× 改为 %2×？
+
+%3</translation>
+    </message>
+    <message>
+        <location line="+426"/>
         <source>Close</source>
         <translation>关闭</translation>
     </message>
@@ -3965,7 +4004,7 @@ Drops: %2</source>
         <translation>已将 &quot;%1&quot; 保存到库。</translation>
     </message>
     <message>
-        <location line="+548"/>
+        <location line="+599"/>
         <source>Update available: v%1</source>
         <translation>有可用更新: v%1</translation>
     </message>
@@ -4038,13 +4077,13 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>关闭应用</translation>
     </message>
     <message>
-        <location line="-3176"/>
-        <location line="+2977"/>
+        <location line="-3302"/>
+        <location line="+3052"/>
         <source>Devices</source>
         <translation>设备</translation>
     </message>
     <message>
-        <location line="-2902"/>
+        <location line="-2977"/>
         <source>Subscriptions</source>
         <translation>订阅</translation>
     </message>
@@ -4060,12 +4099,12 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>名称:</translation>
     </message>
     <message>
-        <location line="-2081"/>
+        <location line="-2112"/>
         <source>TraceView v%1</source>
         <translation>TraceView v%1</translation>
     </message>
     <message>
-        <location line="+2082"/>
+        <location line="+2113"/>
         <source>Workspace</source>
         <translation>工作区</translation>
     </message>
@@ -4090,24 +4129,24 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>已删除工作区“%1”。</translation>
     </message>
     <message>
-        <location line="+71"/>
-        <location line="+2485"/>
+        <location line="+81"/>
+        <location line="+2550"/>
         <source>Add widget</source>
         <translation>添加控件</translation>
     </message>
     <message>
-        <location line="-2482"/>
+        <location line="-2547"/>
         <source>Remove selected widget (%1)</source>
         <translation>删除所选控件(%1)</translation>
     </message>
     <message>
         <location line="+3"/>
-        <location line="+2492"/>
+        <location line="+2557"/>
         <source>Add device</source>
         <translation>添加设备</translation>
     </message>
     <message>
-        <location line="-2489"/>
+        <location line="-2554"/>
         <source>Remove selected device (%1)</source>
         <translation>删除所选设备(%1)</translation>
     </message>
@@ -4172,7 +4211,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>屏幕尺寸: 大</translation>
     </message>
     <message>
-        <location line="+212"/>
+        <location line="+252"/>
         <source>Disable editing — lock the dashboard layout</source>
         <translation>禁用编辑 — 锁定仪表盘布局</translation>
     </message>
@@ -4192,7 +4231,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>显示图层/属性面板</translation>
     </message>
     <message>
-        <location line="+267"/>
+        <location line="+292"/>
         <source>New Device</source>
         <translation>新设备</translation>
     </message>
@@ -4258,12 +4297,12 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>动效(&amp;O)</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="-1473"/>
+        <location filename="../lib/core/mainwindow.cpp" line="-1548"/>
         <source>Dashboard</source>
         <translation>仪表盘</translation>
     </message>
     <message>
-        <location line="+1831"/>
+        <location line="+1906"/>
         <source>%1: this BLE address now answers as a different robot (expected %2, got %3)</source>
         <translation>%1: 此 BLE 地址现在以另一台机器人身份应答 (应为 %2,实际为 %3)</translation>
     </message>
@@ -4482,7 +4521,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>键盘快捷键</translation>
     </message>
     <message>
-        <location line="+36"/>
+        <location line="+55"/>
         <source>Exit fullscreen (F11 / Esc)</source>
         <translation>退出全屏(F11 / Esc)</translation>
     </message>

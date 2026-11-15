@@ -18,7 +18,7 @@ Allow it to connect devices and send them commands until AI assistant access is 
 L’autoriser à connecter des appareils et à leur envoyer des commandes jusqu’à ce que l’accès des assistants IA soit désactivé ou que TraceView soit fermé ?</translation>
     </message>
     <message>
-        <location line="+276"/>
+        <location line="+280"/>
         <source>An AI assistant created workspace &quot;%1&quot;.</source>
         <translation>Un assistant IA a créé l&apos;espace de travail « %1 ».</translation>
     </message>
@@ -43,7 +43,7 @@ L’autoriser à connecter des appareils et à leur envoyer des commandes jusqu�
         <translation>Modifier le widget (assistant IA)</translation>
     </message>
     <message>
-        <location line="+318"/>
+        <location line="+339"/>
         <source>New Project</source>
         <translation>Nouveau projet</translation>
     </message>
@@ -99,7 +99,7 @@ L’autoriser à connecter des appareils et à leur envoyer des commandes jusqu�
         <translation>connecter un appareil</translation>
     </message>
     <message>
-        <location line="+151"/>
+        <location line="+152"/>
         <location line="+41"/>
         <source>send commands to a device</source>
         <translation>envoyer des commandes à un appareil</translation>
@@ -271,7 +271,7 @@ L’autoriser à connecter des appareils et à leur envoyer des commandes jusqu�
 <context>
     <name>ChartStyle</name>
     <message>
-        <location filename="../lib/dashboard/widgets/chartstyle.cpp" line="+127"/>
+        <location filename="../lib/dashboard/widgets/chartstyle.cpp" line="+128"/>
         <source>Engineering</source>
         <translation>Ingénierie</translation>
     </message>
@@ -382,7 +382,7 @@ L’autoriser à connecter des appareils et à leur envoyer des commandes jusqu�
         <translation>%1: %2</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/chartpainting.cpp" line="+879"/>
+        <location filename="../lib/dashboard/widgets/chartpainting.cpp" line="+888"/>
         <source>Time (s)</source>
         <translation>Temps (s)</translation>
     </message>
@@ -687,7 +687,7 @@ L’autoriser à connecter des appareils et à leur envoyer des commandes jusqu�
 <context>
     <name>FurutaScene</name>
     <message>
-        <location filename="../lib/dashboard/scenes/furutascene.cpp" line="+529"/>
+        <location filename="../lib/dashboard/scenes/furutascene.cpp" line="+531"/>
         <source>Arm length (L1)</source>
         <translation>Longueur du bras (L1)</translation>
     </message>
@@ -740,7 +740,7 @@ L’autoriser à connecter des appareils et à leur envoyer des commandes jusqu�
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="+139"/>
+        <location filename="../lib/core/mainwindow.cpp" line="+143"/>
         <source>TraceView Project (*.tvproj)</source>
         <translation>Projet TraceView (*.tvproj)</translation>
     </message>
@@ -2232,7 +2232,7 @@ Autorisés : %1</translation>
 <context>
     <name>traceview::DashboardCell</name>
     <message>
-        <location filename="../lib/dashboard/widgets/chartstyle.cpp" line="+296"/>
+        <location filename="../lib/dashboard/widgets/chartstyle.cpp" line="+476"/>
         <source>Sample rate</source>
         <translation>Fréquence d&apos;échantillonnage</translation>
     </message>
@@ -2282,7 +2282,7 @@ Autorisés : %1</translation>
         <translation>Valeur efficace</translation>
     </message>
     <message>
-        <location line="+139"/>
+        <location line="+144"/>
         <source>Style:</source>
         <translation>Style :</translation>
     </message>
@@ -2556,7 +2556,7 @@ Autorisés : %1</translation>
 <context>
     <name>traceview::DashboardGrid</name>
     <message>
-        <location filename="../lib/dashboard/dashboardgrid.cpp" line="+643"/>
+        <location filename="../lib/dashboard/dashboardgrid.cpp" line="+681"/>
         <source>Bring to Front</source>
         <translation>Mettre au premier plan</translation>
     </message>
@@ -3632,12 +3632,12 @@ Pertes : %2</translation>
     </message>
     <message>
         <location line="+0"/>
-        <location line="+3864"/>
+        <location line="+4021"/>
         <source>Later</source>
         <translation>Plus tard</translation>
     </message>
     <message>
-        <location line="-3857"/>
+        <location line="-4014"/>
         <source>&amp;Access</source>
         <translation>&amp;Accès</translation>
     </message>
@@ -3764,18 +3764,18 @@ Pertes : %2</translation>
     </message>
     <message>
         <location line="+18"/>
-        <location line="+3229"/>
+        <location line="+3335"/>
         <source>Undo</source>
         <translation>Annuler</translation>
     </message>
     <message>
-        <location line="-3227"/>
-        <location line="+3227"/>
+        <location line="-3333"/>
+        <location line="+3333"/>
         <source>Redo</source>
         <translation>Rétablir</translation>
     </message>
     <message>
-        <location line="-3184"/>
+        <location line="-3290"/>
         <source>Add Device</source>
         <translation>Ajouter un appareil</translation>
     </message>
@@ -3810,13 +3810,23 @@ Pertes : %2</translation>
         <translation>Agrandir le canevas</translation>
     </message>
     <message>
-        <location line="+29"/>
-        <location line="+3129"/>
+        <location line="+23"/>
+        <source>Grid 1× (standard)</source>
+        <translation>Grille 1× (standard)</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Grid %1×</source>
+        <translation>Grille %1×</translation>
+    </message>
+    <message>
+        <location line="+36"/>
+        <location line="+3256"/>
         <source>Fullscreen dashboard (F11)</source>
         <translation>Tableau de bord en plein écran (F11)</translation>
     </message>
     <message>
-        <location line="-2949"/>
+        <location line="-3075"/>
         <source>Rename Workspace</source>
         <translation>Renommer l&apos;espace de travail</translation>
     </message>
@@ -3897,7 +3907,36 @@ Pertes : %2</translation>
         <translation>Cet espace de travail a désormais sa propre apparence.</translation>
     </message>
     <message>
-        <location line="+653"/>
+        <location line="+281"/>
+        <source>Grid precision: %1×</source>
+        <translation>Précision de la grille : %1×</translation>
+    </message>
+    <message>
+        <location line="+15"/>
+        <source>Widgets snap to a finer grid from now on. Nothing on the canvas moves.</source>
+        <translation>Les widgets s’alignent désormais sur une grille plus fine. Rien ne bouge sur le canevas.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Widgets snap to a coarser grid from now on. Nothing on the canvas moves, but a widget placed between the new lines jumps to the nearest one the next time you drag or resize it.</source>
+        <translation>Les widgets s’alignent désormais sur une grille plus large. Rien ne bouge sur le canevas, mais un widget placé entre les nouvelles lignes saute à la plus proche la prochaine fois que vous le déplacez ou le redimensionnez.</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Grid Precision</source>
+        <translation>Précision de la grille</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Change this workspace&apos;s grid from %1× to %2×?
+
+%3</source>
+        <translation>Passer la grille de cet espace de travail de %1× à %2× ?
+
+%3</translation>
+    </message>
+    <message>
+        <location line="+426"/>
         <source>Close</source>
         <translation>Fermer</translation>
     </message>
@@ -3914,7 +3953,7 @@ Pertes : %2</translation>
     <message>
         <location line="+408"/>
         <source>The current project has unsaved changes. Save them first?</source>
-        <translation>Le projet actuel contient des modifications non enregistrées. Les enregistrer d'abord ?</translation>
+        <translation>Le projet actuel contient des modifications non enregistrées. Les enregistrer d&apos;abord ?</translation>
     </message>
     <message>
         <location line="+89"/>
@@ -3966,7 +4005,7 @@ Pertes : %2</translation>
         <translation>&quot;%1&quot; enregistré dans la galerie.</translation>
     </message>
     <message>
-        <location line="+548"/>
+        <location line="+599"/>
         <source>Update available: v%1</source>
         <translation>Mise à jour disponible : v%1</translation>
     </message>
@@ -4039,13 +4078,13 @@ Choisissez Plus tard pour continuer à travailler -- les modifications s&apos;ap
         <translation>Fermer l&apos;app</translation>
     </message>
     <message>
-        <location line="-3176"/>
-        <location line="+2977"/>
+        <location line="-3302"/>
+        <location line="+3052"/>
         <source>Devices</source>
         <translation>Appareils</translation>
     </message>
     <message>
-        <location line="-2902"/>
+        <location line="-2977"/>
         <source>Subscriptions</source>
         <translation>Abonnements</translation>
     </message>
@@ -4061,12 +4100,12 @@ Choisissez Plus tard pour continuer à travailler -- les modifications s&apos;ap
         <translation>Nom :</translation>
     </message>
     <message>
-        <location line="-2081"/>
+        <location line="-2112"/>
         <source>TraceView v%1</source>
         <translation>TraceView v%1</translation>
     </message>
     <message>
-        <location line="+2082"/>
+        <location line="+2113"/>
         <source>Workspace</source>
         <translation>Espace de travail</translation>
     </message>
@@ -4091,24 +4130,24 @@ Choisissez Plus tard pour continuer à travailler -- les modifications s&apos;ap
         <translation>Espace de travail « %1 » supprimé.</translation>
     </message>
     <message>
-        <location line="+71"/>
-        <location line="+2485"/>
+        <location line="+81"/>
+        <location line="+2550"/>
         <source>Add widget</source>
         <translation>Ajouter un widget</translation>
     </message>
     <message>
-        <location line="-2482"/>
+        <location line="-2547"/>
         <source>Remove selected widget (%1)</source>
         <translation>Supprimer le widget sélectionné (%1)</translation>
     </message>
     <message>
         <location line="+3"/>
-        <location line="+2492"/>
+        <location line="+2557"/>
         <source>Add device</source>
         <translation>Ajouter un appareil</translation>
     </message>
     <message>
-        <location line="-2489"/>
+        <location line="-2554"/>
         <source>Remove selected device (%1)</source>
         <translation>Supprimer l&apos;appareil sélectionné (%1)</translation>
     </message>
@@ -4173,7 +4212,7 @@ Choisissez Plus tard pour continuer à travailler -- les modifications s&apos;ap
         <translation>Taille d&apos;écran : Grand</translation>
     </message>
     <message>
-        <location line="+212"/>
+        <location line="+252"/>
         <source>Disable editing — lock the dashboard layout</source>
         <translation>Désactiver l&apos;édition — verrouiller la disposition du dashboard</translation>
     </message>
@@ -4193,7 +4232,7 @@ Choisissez Plus tard pour continuer à travailler -- les modifications s&apos;ap
         <translation>Afficher les panneaux Calques/Propriétés</translation>
     </message>
     <message>
-        <location line="+267"/>
+        <location line="+292"/>
         <source>New Device</source>
         <translation>Nouvel appareil</translation>
     </message>
@@ -4259,12 +4298,12 @@ Choisissez Plus tard pour continuer à travailler -- les modifications s&apos;ap
         <translation>M&amp;ouvement</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="-1473"/>
+        <location filename="../lib/core/mainwindow.cpp" line="-1548"/>
         <source>Dashboard</source>
         <translation>Dashboard</translation>
     </message>
     <message>
-        <location line="+1831"/>
+        <location line="+1906"/>
         <source>%1: this BLE address now answers as a different robot (expected %2, got %3)</source>
         <translation>%1 : cette adresse BLE répond maintenant comme un autre robot (attendu %2, reçu %3)</translation>
     </message>
@@ -4483,7 +4522,7 @@ Choisissez Plus tard pour continuer à travailler -- les modifications s&apos;ap
         <translation>Raccourcis clavier</translation>
     </message>
     <message>
-        <location line="+36"/>
+        <location line="+55"/>
         <source>Exit fullscreen (F11 / Esc)</source>
         <translation>Quitter le plein écran (F11 / Échap)</translation>
     </message>

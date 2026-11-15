@@ -342,12 +342,24 @@ void paintChartLegendRow(QPainter& painter, int y, int rowHeight,
     painter.setOpacity(1.0);
 }
 
+qreal chartValueSignIndent(const QFontMetricsF& fm, const QString& value) {
+    return value.startsWith(QLatin1Char('-')) ? 0.0 : fm.horizontalAdvance(QLatin1Char('-'));
+}
+
+qreal chartValueColumnWidth(const QFontMetricsF& fm, const QStringList& values) {
+    qreal width = 0.0;
+    for (const QString& value : values) {
+        width = qMax(width, chartValueSignIndent(fm, value) + fm.horizontalAdvance(value));
+    }
+    return width;
+}
+
 QVector<QRect> paintChartInsetLegend(QPainter& painter, const QRect& plotRect,
                                      ChartLegendPlacement placement,
                                      const QVector<ChartLegendEntry>& entries,
                                      const QStringList& texts, int opacityPercent,
                                      const ChartStyle& style, const ChartColors& colors,
-                                     const ThemePalette& palette) {
+                                     const ThemePalette& palette, const QStringList& values) {
     QVector<QRect> hitRects(entries.size());
     const QFontMetrics fm(painter.font());
     const int rowHeight = chartLegendRowHeight(fm);
@@ -368,6 +380,13 @@ QVector<QRect> paintChartInsetLegend(QPainter& painter, const QRect& plotRect,
     for (int i = 0; i < rowCount; ++i) {
         textWidthF = qMax(textWidthF, fmf.horizontalAdvance(texts[i]));
     }
+    // With values: the names above are one column, the values a second one
+    // after a two-space gap.
+    const bool withValues = values.size() >= rowCount;
+    const qreal nameWidthF = textWidthF;
+    const qreal valueGapF = withValues ? fmf.horizontalAdvance(QStringLiteral("  ")) : 0.0;
+    const qreal valueWidthF = withValues ? chartValueColumnWidth(fmf, values.mid(0, rowCount)) : 0.0;
+    textWidthF = nameWidthF + valueGapF + valueWidthF;
     const int textWidth = qCeil(textWidthF) + 2;
     const int maxBoxWidth = plotRect.width() - 2 * kInsetLegendMargin;
     const int boxWidth = qMin(maxBoxWidth, 2 * kInsetLegendPadding + swatchWidth +
@@ -402,12 +421,25 @@ QVector<QRect> paintChartInsetLegend(QPainter& painter, const QRect& plotRect,
     const int textRoom = columnWidth - swatchWidth - kChartSwatchTextGap;
     for (int i = 0; i < rowCount; ++i) {
         const int rowY = y + kInsetLegendPadding + i * (rowHeight + kInsetLegendRowGap);
-        // Elided only when the plot is too narrow for the box.
-        const QString text = fmf.horizontalAdvance(texts[i]) <= textRoom
+        // Elided only when the plot is too narrow for the box -- the name
+        // gives way first, the value column keeps its room.
+        const qreal nameRoom = withValues ? qMax<qreal>(0.0, textRoom - valueGapF - valueWidthF)
+                                          : qreal(textRoom);
+        const QString text = fmf.horizontalAdvance(texts[i]) <= nameRoom
                                  ? texts[i]
-                                 : fmf.elidedText(texts[i], Qt::ElideRight, textRoom);
+                                 : fmf.elidedText(texts[i], Qt::ElideRight, nameRoom);
         paintChartLegendRow(painter, rowY, rowHeight, {{x + kInsetLegendPadding, columnWidth}},
                             {entries[i]}, {text}, style, colors, palette);
+        if (withValues) {
+            const qreal valueX = x + kInsetLegendPadding + swatchWidth + kChartSwatchTextGap +
+                                 qMin(nameWidthF, nameRoom) + valueGapF +
+                                 chartValueSignIndent(fmf, values[i]);
+            painter.setOpacity(entries[i].hidden ? 0.4 : 1.0);
+            painter.setPen(colors.legendText);
+            painter.drawText(QRectF(valueX, rowY, x + boxWidth - valueX, rowHeight),
+                             Qt::AlignLeft | Qt::AlignVCenter, values[i]);
+            painter.setOpacity(1.0);
+        }
         hitRects[i] = QRect(x, rowY, boxWidth, rowHeight);
     }
     return hitRects;
