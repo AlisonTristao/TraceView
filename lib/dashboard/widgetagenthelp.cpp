@@ -59,8 +59,13 @@ QString widgetAgentHelp(const QString& typeId) {
         {"robot_log", QStringLiteral("Table of the robots' log records, one tab per device. tabs: "
                                      "[{deviceId}].")},
         {"chat",
-         QStringLiteral("Chat-style message board (visual only). userName, ownMessagesOnRight "
-                        "bool.")},
+         QStringLiteral(
+             "Chat through a radio device. userName, ownMessagesOnRight bool, deviceId, "
+             "topicName (UTF8 event-log topic, default \"chat\"; also give topicId \"0x0000\" so "
+             "TraceView resolves it), sendCommand (default \"chat -send\"). A message is sent as "
+             "\"<sendCommand> <token>, <userName>, <text>\" (commas and backslashes "
+             "escaped for TinyShell); each topic sample holds lines \"id<TAB>IN|SENT|FAIL|ERR<TAB>token<TAB>author"
+             "<TAB>text\". Without deviceId it is visual only.")},
         {"push_button",
          QStringLiteral(
              "Button that sends a text command to a device. deviceId, label, variant "

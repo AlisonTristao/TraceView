@@ -80,6 +80,10 @@ add_traceview_test(test_serialterminalwidget traceview_dashboard)
 # device-tagged outbound signal -- all widget-level, no transport.
 add_traceview_test(test_serialmonitorwidget traceview_dashboard)
 add_traceview_test(test_textboardwidget traceview_dashboard)
+# The Chat widget's device protocol: TinyShell argument escaping, the
+# event-log line parser and its seen-id tracker, and the widget driven by
+# them (widgets/chatprotocol.h, widgets/chatwidget.h).
+add_traceview_test(test_chatprotocol traceview_dashboard)
 # The Audio Spectrum widget's signal side: FFT scaling, the jitter buffer's
 # target/underrun/overflow rules and resampling (widgets/audiostream.h), and
 # the widget decoding a stream topic -- with playback off, no sound card.

@@ -307,10 +307,26 @@ lives in its own module under
   sent) bottom-right, painted by a `QStyledItemDelegate` over a
   `QListWidget`. Below it a compose row: a paperclip (one attachment per
   message, limited to `ChatWidget::allowedAttachmentSuffixes()` and
-  `kMaxAttachmentBytes`), a text field and a send button. Visual only for
-  now — no transport: `send()` marks the message Sending and a timer flips
-  it to Sent; `setMessageStatus()` is the hook a backend will drive. Config
-  is `{ "userName": … }` plus `"ownMessagesOnRight"` (default true), edited by ChatConfigEditor; name defaults to "You".
+  `kMaxAttachmentBytes`), a text field and a send button. Config is
+  `{ "userName": … }` plus `"ownMessagesOnRight"` (default true), edited by
+  ChatConfigEditor; name defaults to "You". Without a `"deviceId"` it is
+  visual only: `send()` marks the message Sending and a timer flips it to
+  Sent. With one it chats through that device's radio (paperclip hidden):
+  `"sendCommand"` (default `chat -send`) and `"topicName"` (default `chat`,
+  a UTF8 topic, bound by name like any text topic — see "Telemetry
+  bindings"). Sending picks a per-widget token K and emits
+  `ChatWidget::sendRequested()`, which `core/serialwidgetbridge.cpp`
+  delivers like a Push Button's command:
+  `<sendCommand> K, <userName>, <text>`, with `\` doubled and `,` written
+  `\,` (TinyShell's argument escaping, `widgets/chatprotocol.h`). A device
+  that isn't connected fails the message at once; no SENT/FAIL within 60 s
+  fails it too. Receiving goes through `TelemetryConsumer` (~200 ms): each
+  sample is the device's recent event log, up to 8 lines
+  `id\tkind\ttoken\tauthor\ttext`; only ids above the last one handled
+  count (a first id more than 8 below it reads as a reboot and resets).
+  `IN` is someone else's message, `SENT`/`FAIL` set message K's status
+  (FAIL's text is its tooltip), `ERR` is a muted system line; other kinds
+  are ignored.
 - **Text Board** (`text_board`) — `widgets/textboardwidget.h`/`.cpp`. A
   fixed-pitch, read-only surface for one whole `UTF8` telemetry topic. Every
   sample replaces the previous document, so a formatted status table appears

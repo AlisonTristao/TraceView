@@ -341,6 +341,8 @@ add_library(traceview_dashboard STATIC
     dashboard/widgets/gaugeconfigeditor.h
     dashboard/widgets/chatconfigeditor.cpp
     dashboard/widgets/chatconfigeditor.h
+    dashboard/widgets/chatprotocol.cpp
+    dashboard/widgets/chatprotocol.h
     dashboard/widgets/chatwidget.cpp
     dashboard/widgets/chatwidget.h
     dashboard/widgets/robotlogconfigeditor.cpp

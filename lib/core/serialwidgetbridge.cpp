@@ -4,6 +4,7 @@
 
 #include "backend/backend.h"
 #include "dashboard/dashboardgrid.h"
+#include "dashboard/widgets/chatwidget.h"
 #include "dashboard/widgets/controlwidgets.h"
 #include "dashboard/widgets/robotlogwidget.h"
 #include "dashboard/widgets/serialmonitorwidget.h"
@@ -76,6 +77,19 @@ void SerialWidgetBridge::wireWidget(DashboardWidget* widget) {
                     if (DeviceConnection* connection = deviceConnectionForWidget(slider)) {
                         sendControlCommand(connection, command);
                     }
+                });
+    } else if (auto* chat = qobject_cast<ChatWidget*>(widget)) {
+        // Same path as a Push Button's command; unlike a button, a chat
+        // message has a status to show, so a device that can't take it now
+        // fails the message at once instead of dropping it silently.
+        connect(chat, &ChatWidget::sendRequested, this,
+                [this, chat](const QByteArray& command, quint32 token) {
+                    DeviceConnection* connection = deviceConnectionForWidget(chat);
+                    if (!connection || !connection->isConnected() || !connection->backend()) {
+                        chat->markSendFailed(token, tr("Device not connected"));
+                        return;
+                    }
+                    sendControlCommand(connection, command);
                 });
     } else if (auto* monitor = qobject_cast<SerialMonitorWidget*>(widget)) {
         connect(monitor, &SerialMonitorWidget::terminalInput, this,
