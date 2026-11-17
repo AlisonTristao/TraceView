@@ -194,8 +194,10 @@ The Qt plugin bundles libraries, plugins and translations; see its
 The legacy manual Qt bundling script has been replaced by linuxdeploy.
 OpenSSL is included explicitly because Qt loads its TLS backend dynamically.
 
-Release packaging uses Ubuntu 22.04 for its older glibc baseline. Targets
-still need compatible glibc and the desktop graphics stack, but no system Qt.
+Release packaging and the Ubuntu smoke test use Ubuntu 24.04. The build needs
+`qt6-serialport-dev`, which is unavailable in the Ubuntu 22.04 repositories.
+Targets need a compatible glibc and desktop graphics stack, but no system Qt.
+Ubuntu 22.04 compatibility is not provided by this build.
 Use `--appimage-extract-and-run` where FUSE is unavailable.
 
 The release workflow gates publication on headless startup smoke tests in

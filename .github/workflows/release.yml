@@ -94,7 +94,8 @@ jobs:
   # ============================================================
   linux-package:
     name: Linux package (.AppImage)
-    runs-on: ubuntu-22.04
+    # Qt SerialPort development packages are available in the Noble repositories.
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
 
     steps:
@@ -153,7 +154,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        image: [ubuntu:22.04, fedora:44, 'archlinux:base-devel', 'linuxmintd/mint22.3-amd64:latest']
+        image: [ubuntu:24.04, fedora:44, 'archlinux:base-devel', 'linuxmintd/mint22.3-amd64:latest']
     container:
       image: ${{ matrix.image }}
     steps:
