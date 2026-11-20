@@ -263,7 +263,8 @@ void DeviceCard::paintEvent(QPaintEvent*) {
     // mousePressEvent()).
     const DeviceLinkState linkState = deviceLinkState(m_device);
     const QColor dotColor = (linkState == DeviceLinkState::Live)      ? palette.success
-                            : (linkState == DeviceLinkState::Offline) ? palette.danger
+                            : (linkState == DeviceLinkState::Offline ||
+                               linkState == DeviceLinkState::KeyRejected) ? palette.danger
                                                                      : palette.warning;
     const QRect dotRect = statusDotRect();
     painter.setPen(Qt::NoPen);
@@ -356,7 +357,9 @@ void DeviceCard::paintEvent(QPaintEvent*) {
                    ? tr("v%1").arg(m_device.btpVersion)
                    : tr("v%1 \xC2\xB7 ID %2").arg(m_device.btpVersion, m_device.btpId));
     // Name the amber state in words, not just a dot colour (topico 35 D.2).
-    if (linkState == DeviceLinkState::TransportOnly) {
+    if (linkState == DeviceLinkState::KeyRejected) {
+        reportedLine = tr("wrong password: can't read the device");
+    } else if (linkState == DeviceLinkState::TransportOnly) {
         reportedLine = tr("port open, waiting for BTP session");
     } else if (inUse.transportType == TransportType::HubChannel &&
                linkState == DeviceLinkState::PeerStale) {
@@ -372,8 +375,12 @@ void DeviceCard::paintEvent(QPaintEvent*) {
     }
     // Nothing live: what the last connection reported, dimmed and said so.
     const bool fromCache = m_device.reportedInfo.isEmpty() && !m_cachedInfo.isEmpty();
-    if (fromCache && reportedLine.isEmpty()) {
-        reportedLine = tr("saved from the last connection");
+    if (fromCache && linkState != DeviceLinkState::KeyRejected) {
+        // Said even beside a session line: info that is not live must never
+        // read as the device's current state.
+        const QString saved = tr("saved from the last connection");
+        reportedLine =
+            reportedLine.isEmpty() ? saved : saved + QString::fromUtf8(" \xC2\xB7 ") + reportedLine;
     }
     const int reportedHeight = reportedLine.isEmpty() ? 0 : kBodyLineHeight + 4;
 

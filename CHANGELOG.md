@@ -21,6 +21,20 @@ release flow.
 - `Backend::runCommand()`: a command whose output comes back to the caller
   instead of the log panel.
 
+### Fixed
+
+- A device whose password is wrong or missing no longer looks connected:
+  the HELLO passes in the clear, but every sealed message after it was
+  dropped in silence, so the card showed a green dot (and the session
+  later timed out, looking like random disconnects). Now the card turns
+  red with "wrong password: can't read the device" and the status bar
+  says whether no password is set or it does not match
+  (`Backend::keyRejected`, `Device::keyRejected`).
+- Information on a device card that comes from the manifest cache is
+  always marked "saved from the last connection", also while a session
+  is up; it used to read as the device's current state (an old firmware
+  version shown as if it were running).
+
 ### Changed
 
 - **OTA tab speaks the TraceKit recovery only** (the bally_OS OTAUpdater

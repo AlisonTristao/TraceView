@@ -78,6 +78,8 @@ public:
     // already what's stored. Emits deviceLiveStateChanged(), not
     // deviceUpdated().
     void setDeviceConnected(const QString& id, bool connected);
+    // Device::keyRejected, live state like setDeviceConnected().
+    void setDeviceKeyRejected(const QString& id, bool rejected);
     // Mirrors a live DeviceConnection's Backend::deviceIdentified into
     // device.btpVersion/btpId, same non-undoable treatment as
     // setDeviceConnected() above and for the same reason: this is the

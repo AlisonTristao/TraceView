@@ -353,6 +353,11 @@ public:
     void runCommand(const QString& commandLine, CommandResultFn done) override;
 
 private:
+    // Once per link: the device's sealed frames don't open with our key.
+    void reportKeyRejected(const QString& why);
+    bool m_keyRejected = false;
+
+private:
     // Type of m_node -- see the class comment for what it does and does not
     // manage. Sized for m_node's own SHADOW reassembly (HELLO_RESULT /
     // COMMAND_RESULT are small; anything bigger that lands here -- a big

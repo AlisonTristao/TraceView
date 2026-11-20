@@ -103,6 +103,16 @@ void DevicesGrid::setDeviceConnected(const QString& id, bool connected) {
     emit deviceLiveStateChanged(m_devices[idx]);
 }
 
+void DevicesGrid::setDeviceKeyRejected(const QString& id, bool rejected) {
+    const int idx = indexOfDevice(id);
+    if (idx < 0 || m_devices[idx].keyRejected == rejected) {
+        return;
+    }
+    m_devices[idx].keyRejected = rejected;
+    refreshCard(idx);
+    emit deviceLiveStateChanged(m_devices[idx]);
+}
+
 void DevicesGrid::setDeviceIdentity(const QString& id, const QString& btpVersion,
                                     const QString& btpId) {
     const int idx = indexOfDevice(id);

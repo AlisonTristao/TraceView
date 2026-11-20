@@ -178,6 +178,10 @@ signals:
     // section shows -- live-mirrored the same way `Device::connected` is, not
     // user-editable and not persisted (see devices/deviceconfigdialog.h).
     void deviceIdentified(const QString& btpVersion, const QString& btpId);
+    // True when the session's sealed messages stop opening with the
+    // configured key (wrong or missing password), false once one opens
+    // again or the link restarts.
+    void keyRejected(bool rejected);
     // The device's MANIFEST_DATA source_info block (BTP's docs/commands.md
     // section 3.12) -- firmware version, chip, running partition, a configured
     // name/description. Shown read-only in DeviceConfigDialog's "Reported by

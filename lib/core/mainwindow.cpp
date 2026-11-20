@@ -4108,6 +4108,9 @@ DeviceConnection* MainWindow::createDeviceConnection(const Device& device) {
     // onDeviceConnectionStateChanged()'s setDeviceConnected() call below: this
     // is the handshake reporting live state, not a user edit, so it must not
     // land on m_devicesGrid's undo stack.
+    connect(connection, &DeviceConnection::keyRejected, this, [this, id = device.id](bool rejected) {
+        m_devicesGrid->setDeviceKeyRejected(id, rejected);
+    });
     connect(connection, &DeviceConnection::deviceIdentified, this,
             [this, id = device.id](const QString& btpVersion, const QString& btpId) {
                 m_devicesGrid->setDeviceIdentity(id, btpVersion, btpId);

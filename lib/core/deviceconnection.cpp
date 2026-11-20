@@ -235,6 +235,7 @@ DeviceConnection::DeviceConnection(CommType commType, TransportType transportTyp
     });
     connect(m_transport, &Transport::errorOccurred, this, &DeviceConnection::errorOccurred);
     connect(m_backend, &Backend::deviceIdentified, this, &DeviceConnection::deviceIdentified);
+    connect(m_backend, &Backend::keyRejected, this, &DeviceConnection::keyRejected);
         connect(m_backend, &Backend::deviceIdentified, this,
             [this](const QString&, const QString&) {
                 if (m_shouldBeConnected && m_connectionPhase == ConnectionPhase::NegotiatingBtp) {

@@ -187,6 +187,10 @@ struct Device {
     // exists. Empty portName means "not configured yet," so this stays
     // false regardless of connection attempts.
     bool connected = false;
+    // Live, not persisted: the session is up but this device's sealed
+    // messages do not open with the password set here (wrong, or none). Set
+    // by Backend::keyRejected through DevicesGrid::setDeviceKeyRejected.
+    bool keyRejected = false;
     CommType commType = CommType::Btp;
     QString description;
     // JavaScript run live for this device by its own DiagramScriptRuntime
@@ -563,6 +567,8 @@ enum class DeviceLinkState {
     TransportOnly,  // Serial/UsbHid: link open, but no BTP session yet
     Live,           // BTP session established (Serial/UsbHid), or a hub child
                     // whose robot's frames are actually reaching this TraceView
+    KeyRejected,    // session up, but the device's sealed messages do not open:
+                    // the password is wrong or missing, nothing it sends is read
     PeerStale,      // hub child: the cable to the dongle is up, but the robot's
                     // presence is not confirmed -- either nothing has arrived
                     // from it yet (just connected / nothing subscribed) or its
@@ -576,6 +582,9 @@ inline DeviceLinkState deviceLinkState(const Device& stored) {
     const Device device = effectiveDevice(stored);
     if (!device.connected) {
         return DeviceLinkState::Offline;
+    }
+    if (stored.keyRejected) {
+        return DeviceLinkState::KeyRejected;
     }
     if (device.transportType == TransportType::HubChannel) {
         // No ENTER/HELLO on this transport, so `connected` only means the
