@@ -1424,8 +1424,8 @@ Permitir que ele conecte dispositivos e envie comandos a eles até que o acesso 
     </message>
     <message>
         <location line="+6"/>
-        <source>Stream topic to play: blocks of samples with their rate and a block counter (BTPDevice Topics::stream()). Pick a reported topic or type its numeric id.</source>
-        <translation>Tópico stream a tocar: blocos de amostras com a taxa e um contador de blocos (Topics::stream() da BTPDevice). Escolha um tópico informado ou digite o id numérico.</translation>
+        <source>Stream topic to play: blocks of samples with their rate and a block counter (TraceKit Topics::stream()). Pick a reported topic or type its numeric id.</source>
+        <translation>Tópico stream a tocar: blocos de amostras com a taxa e um contador de blocos (Topics::stream() da TraceKit). Escolha um tópico informado ou digite o id numérico.</translation>
     </message>
     <message>
         <location line="+8"/>

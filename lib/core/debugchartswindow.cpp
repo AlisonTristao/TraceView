@@ -54,7 +54,7 @@ constexpr int kTickIntervalMs = 50;
 // (chartwidgets.cpp), not this timer.
 constexpr int kStressTickIntervalMs = 0;
 
-// The synthetic audio stream (tickAudio()): a BTPDevice-style stream topic
+// The synthetic audio stream (tickAudio()): a TraceKit-style stream topic
 // -- block counter, rate, samples as ids 1..3 -- at 16 kHz in blocks of 512
 // int16-range samples. Paced by its own clock, not by the chart tick, so
 // stress mode doesn't speed the sound up.

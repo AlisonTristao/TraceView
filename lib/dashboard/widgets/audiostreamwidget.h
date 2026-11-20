@@ -20,7 +20,7 @@ class AudioPlayback;
 struct AudioSpectrumConfig {
     quint32 sourceId = 0;
     quint16 topicId = 0;
-    // A BTPDevice stream topic's fields (Topics::stream(): seq, rate,
+    // A TraceKit stream topic's fields (Topics::stream(): seq, rate,
     // samples, ids 1..3). The config editor fills them from the catalogue.
     quint16 seqFieldId = 1;
     quint16 rateFieldId = 2;

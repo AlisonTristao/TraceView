@@ -1424,8 +1424,8 @@ Allow it to connect devices and send them commands until AI assistant access is 
     </message>
     <message>
         <location line="+6"/>
-        <source>Stream topic to play: blocks of samples with their rate and a block counter (BTPDevice Topics::stream()). Pick a reported topic or type its numeric id.</source>
-        <translation>要播放的流主题：带采样率和块计数器的采样块（BTPDevice 的 Topics::stream()）。选择已上报的主题或输入其数字 ID。</translation>
+        <source>Stream topic to play: blocks of samples with their rate and a block counter (TraceKit Topics::stream()). Pick a reported topic or type its numeric id.</source>
+        <translation>要播放的流主题：带采样率和块计数器的采样块（TraceKit 的 Topics::stream()）。选择已上报的主题或输入其数字 ID。</translation>
     </message>
     <message>
         <location line="+8"/>

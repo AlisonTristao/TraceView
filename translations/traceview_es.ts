@@ -1424,8 +1424,8 @@ Allow it to connect devices and send them commands until AI assistant access is 
     </message>
     <message>
         <location line="+6"/>
-        <source>Stream topic to play: blocks of samples with their rate and a block counter (BTPDevice Topics::stream()). Pick a reported topic or type its numeric id.</source>
-        <translation>Tópico de stream a reproducir: bloques de muestras con su frecuencia y un contador de bloques (Topics::stream() de BTPDevice). Elija un tópico informado o escriba su id numérico.</translation>
+        <source>Stream topic to play: blocks of samples with their rate and a block counter (TraceKit Topics::stream()). Pick a reported topic or type its numeric id.</source>
+        <translation>Tópico de stream a reproducir: bloques de muestras con su frecuencia y un contador de bloques (Topics::stream() de TraceKit). Elija un tópico informado o escriba su id numérico.</translation>
     </message>
     <message>
         <location line="+8"/>

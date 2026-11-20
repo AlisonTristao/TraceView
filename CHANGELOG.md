@@ -7,6 +7,34 @@ release flow.
 
 ## [Unreleased]
 
+### Added
+
+- **TraceKit panel**: a TraceKit device's card has a tools icon (next to
+  the script icon) that opens its settings, Wi-Fi networks and actions.
+  The settings editor is built from what the device declares (`cfg -json`:
+  type, range, unit, help), so every device shows its own; Apply sends
+  `cfg -set`. Wi-Fi lists the known networks (names only) and adds or
+  removes them. Actions: set the clock, status, keep awake, reboot,
+  recovery, USB bootloader, factory reset.
+- A TraceKit device's clock is set from this computer on every connection
+  (`btp -time_sync`), unless it already has the time from SNTP.
+- `Backend::runCommand()`: a command whose output comes back to the caller
+  instead of the log panel.
+
+### Changed
+
+- **OTA tab speaks the TraceKit recovery only** (the bally_OS OTAUpdater
+  protocol is gone). Uploads and "To app" are signed with HMAC-SHA256 over
+  a fresh nonce with key E, derived from the device's own password: there
+  is no separate OTA password any more (`Device::otaPassword` and
+  `cacheOtaPassword` were removed). **Upload…** on a device that is
+  running its application and connected sends `btp -recovery` first and
+  uploads when the recovery answers. The address is found by itself (the
+  device's `ota_endpoint`, or its TCP host); the table shows the state, the
+  application and recovery versions, and why the device is in the
+  recovery. Images that are not ESP application images, or larger than the
+  partition, are refused before sending.
+
 ## [4.14.0] - 2026-11-15
 
 ### Changed

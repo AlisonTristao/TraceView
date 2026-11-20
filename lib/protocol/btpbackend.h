@@ -349,6 +349,9 @@ public slots:
     void sendCommand(const QByteArray& text) override;
     void onPeerPresence(bool online, quint32 bootId) override;
 
+public:
+    void runCommand(const QString& commandLine, CommandResultFn done) override;
+
 private:
     // Type of m_node -- see the class comment for what it does and does not
     // manage. Sized for m_node's own SHADOW reassembly (HELLO_RESULT /

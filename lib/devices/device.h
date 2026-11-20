@@ -347,26 +347,16 @@ struct Device {
     // every open is friction with no security bought.
     bool cachePeerPassword = false;
 
-    // --- OTA firmware upload (see lib/ota) -------------------------------
-    // A separate Wi-Fi/HTTP side channel bally_OS serves from its DEBUG
-    // state (OTAUpdater), independent of whichever transport above this
-    // device actually connects through -- a device can be configured for
-    // Serial/USB/Hub *and* have an OTA address, since OTA doesn't run over
-    // BTP at all.
+    // --- Firmware update (see lib/ota) -----------------------------------
+    // The TraceKit recovery is reached over Wi-Fi/HTTP, independent of the
+    // transport above. Its uploads are signed with key E from peerPassword
+    // (the same password as the BTP session), so there is no OTA password.
 
-    // mDNS hostname ("robot1.local") or bare IP the OTA tab targets for this
-    // device's GET /status and POST /update. Empty means "not configured for
-    // OTA" -- the OTA tab still lists the device, just with nothing to poll.
-    // Not a secret, so unlike peerSourceId this is always persisted.
+    // mDNS hostname ("robot1.local") or bare IP of the recovery, when it
+    // differs from what the device tells by itself. Usually empty:
+    // otaAddressFor() (ota/otaclient.h) then uses the "ota_endpoint" the
+    // device reported, or its TCP host. Not a secret, always persisted.
     QString otaAddress;
-
-    // Password for this device's X-OTA-Password header. Live session input,
-    // not configuration -- see cacheOtaPassword for whether it is persisted.
-    QString otaPassword;
-
-    // Whether otaPassword goes into the saved project. Same opt-in-only
-    // convention as cachePeerPassword above, and for the same reason.
-    bool cacheOtaPassword = false;
 
     // --- Several ways to connect ------------------------------------------
     // Alternatives to the primary link above (its transportType/portName/...

@@ -1424,8 +1424,8 @@ AI アシスタントのアクセスをオフにするか TraceView を閉じる
     </message>
     <message>
         <location line="+6"/>
-        <source>Stream topic to play: blocks of samples with their rate and a block counter (BTPDevice Topics::stream()). Pick a reported topic or type its numeric id.</source>
-        <translation>再生するストリームトピック：サンプルレートとブロックカウンタ付きのサンプルブロック（BTPDevice の Topics::stream()）。報告済みのトピックを選ぶか、数値 ID を入力してください。</translation>
+        <source>Stream topic to play: blocks of samples with their rate and a block counter (TraceKit Topics::stream()). Pick a reported topic or type its numeric id.</source>
+        <translation>再生するストリームトピック：サンプルレートとブロックカウンタ付きのサンプルブロック（TraceKit の Topics::stream()）。報告済みのトピックを選ぶか、数値 ID を入力してください。</translation>
     </message>
     <message>
         <location line="+8"/>

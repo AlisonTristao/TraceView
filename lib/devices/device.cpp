@@ -354,10 +354,6 @@ QJsonObject deviceToJson(const Device& device) {
     }
     // Not a secret, so unlike peerPassword this is always written.
     object["otaAddress"] = device.otaAddress;
-    object["cacheOtaPassword"] = device.cacheOtaPassword;
-    if (device.cacheOtaPassword && !device.otaPassword.isEmpty()) {
-        object["otaPassword"] = device.otaPassword;
-    }
     // Only written when there is something to write, so a single-link device
     // saves exactly as it did before extraLinks existed. activeLink is live
     // state and never saved.
@@ -412,9 +408,6 @@ Device deviceFromJson(const QJsonObject& object, bool* ok) {
         device.cachePeerPassword ? object.value("peerPassword").toString() : QString();
 
     device.otaAddress = object.value("otaAddress").toString();
-    device.cacheOtaPassword = object.value("cacheOtaPassword").toBool(false);
-    device.otaPassword =
-        device.cacheOtaPassword ? object.value("otaPassword").toString() : QString();
 
     const QJsonArray links = object.value("extraLinks").toArray();
     for (const QJsonValue& value : links) {

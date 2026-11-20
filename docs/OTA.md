@@ -1,107 +1,112 @@
 # OTA Update tab
 
-Pushing a firmware binary to a robot over Wi-Fi, from inside TraceView,
-instead of plugging a cable in and running `pio run -t upload`.
+Sending a new firmware to a device over Wi-Fi, from inside TraceView, instead
+of plugging a cable in and running `pio run -t upload`.
 
-This is the one part of the app that does **not** speak BTP. bally_OS's
-`lib/OTAUpdater` exposes a plain HTTP server on the robot — `GET /status`
-and `POST /update` — over a separate Wi-Fi link from the
-Serial/USB-HID/hub transport everything else here talks over. That
-separation is deliberate on the firmware side: a robot that is mid-flash
-has no business also trying to hold a telemetry session together, and a
-firmware image is far too large to fragment through a radio datagram.
+The devices are [TraceKit](https://github.com/AlisonTristao/TraceKit)
+devices. A TraceKit firmware lives in the `factory` partition, next to a small
+**recovery** firmware in `ota_0`. The recovery is what receives the upload: the
+application itself never writes its own partition. The device restarts into it
+on `btp -recovery`, after crashing three times in a row, or when the
+application is missing; it joins the same Wi-Fi as the application, answers at
+the same `<name>.local`, and goes back to the application by itself after a
+good upload (or after 10 minutes without one).
 
-Open it with **File → Upload Firmware (OTA)…**. Unlike log tabs, there is
-never more than one: the action re-focuses the existing tab if it is
-already open (`MainWindow::onOpenOtaTab`).
+This is the one part of the app that does **not** speak BTP: the recovery is a
+plain HTTP server (`GET /status`, `POST /update`, `POST /reboot`). A firmware
+image is far too large to fragment through a radio datagram, and a device in
+the middle of a flash has no business holding a telemetry session.
+
+Open it with **File → Upload Firmware (OTA)…**. There is never more than one:
+the action re-focuses the existing tab (`MainWindow::onOpenOtaTab`).
 
 ## The table
 
-One row per `Device` in the project — every device, not just the ones with
-an address, so a device missing its OTA config is visible as missing rather
-than absent.
+One row per `Device` in the project.
 
 | Column | What it is |
 |---|---|
 | Name | `Device::name`. |
-| OTA Address | `Device::otaAddress` — a bare IP, a hostname, or an mDNS `*.local` name. Edited in Device Settings, not here. |
-| OTA Online | Reachability, polled while this tab is visible. Hover it for *why* when it is offline. |
-| Firmware | What the robot reports it is currently running. Blanked when unreachable — this column answers "what is on the device", and an unreachable device has no answer. |
-| Password | `X-OTA-Password` for the upload. Typed here; only saved into the project if "Remember" is ticked. |
-| Upload | Opens a file picker, then swaps in place for a progress bar. |
+| Address | Where the recovery answers: `otaAddressFor()` ([otaclient.h](../lib/ota/otaclient.h)). |
+| State | **In recovery**, **Running the app** (connected, the recovery is not up), **Offline**, or **Writing…** while an upload is being written. Hover for why it is in the recovery, or why it is unreachable. |
+| Application | In the recovery: the application in the app partition (`project version`). Running: the `fw_version` the application reported. |
+| Recovery | The recovery's own version; hover for the chip and the largest image it takes. |
+| (actions) | **Upload…** and **To app** (leave the recovery without uploading). |
 
-The status poll runs at 1 Hz, and **only while the tab is the visible one**
-(`OtaTab::setActive`, driven from `MainWindow::onRibbonTabChanged`) — a
-background tab must not keep generating HTTP traffic against every robot in
-the project.
+### The address
 
-That interval is deliberately shorter than the 4-second timeout a single
-status request is allowed. A tick landing while a row's request is still
-running is skipped rather than restarting it
-(`OtaClient::statusRequestInFlight`), so a device slower than the poll
-interval still resolves. Restarting instead is exactly the bug this
-replaced: every attempt was cancelled by the next tick and the row sat on
-"Checking…" forever — worst for the case most worth reporting, a host that
-is up but slow to answer.
+Nobody has to type it. `otaAddressFor()` takes, in order:
 
-## Passwords
+1. `Device::otaAddress`, when the user set one in Device Settings (a proxy, a
+   fixed IP);
+2. the `ota_endpoint` the device announced in its manifest (`source_info`) —
+   TraceKit announces `<name>.local`;
+3. the TCP host the device is connected through.
 
-Three-state on purpose:
+The status poll runs at 1 Hz and only while the tab is visible
+(`OtaTab::setActive`), plus while an upload waits for its device to reach the
+recovery. A tick landing while a row's request is still running is skipped
+rather than restarting it (`OtaClient::statusRequestInFlight`), so a device
+slower than the poll interval still resolves — restarting instead left slow
+rows on "Checking…" forever.
 
-- **Typed, not remembered** — kept in `OtaTab`'s session map, survives a
-  device-list rebuild (keyed by `Device::id`, not row), dies with the app.
-- **Remembered** — ticking "Remember" emits `passwordCacheChanged`, which
-  `MainWindow` turns into a real `DevicesGrid::updateDevice()`, so it lands
-  on the undo stack and in `.tvproj` like any other edit. `OtaTab` has no
-  undo stack of its own; this is the single point where it commits a
-  project mutation.
-- **Empty** — fine. The robot only checks the header if it has a password
-  configured.
+## Uploading
 
-A successful upload with "Remember" already ticked re-emits, so a password
-corrected *after* ticking the box is the one that gets saved.
+**Upload…** works from both states:
+
+- **In recovery:** the image goes straight up.
+- **Running the app, connected:** after a confirmation, TraceView sends
+  `btp -recovery` over the open session (`OtaTab::recoveryRequested`), waits up
+  to 90 s for the recovery to answer, and uploads then. One click from the old
+  firmware to the new one.
+
+Not connected and not in the recovery, there is nothing to restart it with:
+the tab says so.
+
+Before sending, `OtaClient` checks that the file starts with the ESP image
+magic byte (`0xE9`, so a merged or bootloader `.bin` is refused here, not by
+the device) and that it fits the partition (`max_size` in `/status`). Uploads
+get no transfer timeout; the progress bar shows they are still moving. The
+recovery's reply ("OK. Rebooting into sensor 1.3.0.") goes to the status bar;
+a refusal opens a warning with the device's own reason.
+
+## Authentication
+
+Every POST is signed with **key E**, the AES key TraceView already derives for
+the device's BTP session from its password (`Device::peerPassword`,
+PBKDF2 in `protocol/keyderivation.h`). There is no separate OTA password.
+
+```
+nonce      = GET /status -> "nonce"            (16 octets, new after every attempt)
+message    = "btp-ota-1" || nonce || action || sha256(image)     ('U' update, 'B' reboot)
+X-OTA-Auth = hex(HMAC-SHA256(key_E, message))
+```
+
+The password never leaves this machine, and a captured request cannot be
+replayed. When the device has no password stored, the tab asks for it once and
+keeps it in memory for the session. A recovery built with
+`CONFIG_TRACEKIT_RECOVERY_INSECURE` (development only) reports `"auth":"none"`
+and is not asked for one.
+
+[otaauth.h](../lib/ota/otaauth.h) implements it; `tests/test_otaauth.cpp`
+checks it against the same golden vectors as TraceKit's firmware, its Python
+tool and its web page, and `tests/test_otaclient.cpp` runs whole uploads
+against a fake recovery.
 
 ## mDNS
 
 A `*.local` address is resolved by `MdnsResolver`
-([lib/ota/mdnsresolver.h](../lib/ota/mdnsresolver.h)) — our own multicast
-query on 224.0.0.251:5353 — before either request type touches
-`QNetworkAccessManager`. Qt would otherwise hand the name to the OS
-resolver, and on Windows without Bonjour installed that path simply fails,
-which is the single most common reason `ballyrobot.local` "doesn't work".
+([mdnsresolver.h](../lib/ota/mdnsresolver.h)) — our own multicast query on
+224.0.0.251:5353 — before `QNetworkAccessManager` sees it. Qt would otherwise
+hand the name to the OS resolver, and on Windows without Bonjour that path
+simply fails.
 
-The socket binds with `ShareAddress | ReuseAddressHint`: the point is to
-coexist with a real responder already on 5353 (Bonjour, or another instance
-of this app), not to fight it for the port.
-
-If our own query gets no answer within 3 seconds, the request falls back to
-the plain hostname and lets `QNetworkAccessManager` try `getaddrinfo()`
-exactly as it would have before this resolver existed — covering a network
-that filters multicast, or a firewall rule specific to this socket. Only if
-*that* also fails does the row report unreachable, and the reason lands in
-the status cell's tooltip: "Host not found" and "Connection refused" are
-very different problems, and "Offline" alone distinguishes neither.
-
-Resolved addresses are cached for 60 seconds, so a 1 Hz poll does not
-re-query the network on every tick, while a robot picking up a new DHCP
-lease is still noticed well within a working session.
-
-## Uploading
-
-`POST /update` with the file as the **raw body** — no multipart, matching
-`OTAUpdater::handle_update_post`. Uploads get no transfer timeout: a
-firmware image legitimately takes longer than a status check, and the
-progress bar already shows it is still moving.
-
-The robot sends a readable body with both success (200, "OK. Reset the
-robot…") and its own deliberate failures — 401 wrong password, 400 empty
-body, 500 no OTA partition or write failed — so that text is what the user
-is shown. A transport-level failure has no body, and falls back to
-`QNetworkReply::errorString()`.
+If our query gets no answer within 3 seconds, the request falls back to the
+plain hostname for `getaddrinfo()`. Resolved addresses are cached for 60
+seconds.
 
 ## Related
 
-- [DEVICES.md](DEVICES.md) — where `otaAddress`/`otaPassword` are edited,
-  and the BTP transports this side channel sits alongside.
-- [ECOSYSTEM.md](ECOSYSTEM.md) — why the protocol/transport boundary is kept
-  out of UI code across the Bally repositories.
+- [DEVICES.md](DEVICES.md): the device model and the BTP transports this side
+  channel sits alongside.
+- TraceKit's `docs/PLANO.md`, section 4.14: the recovery itself.

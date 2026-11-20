@@ -1065,6 +1065,10 @@ void BtpBackend::sendCommand(const QByteArray& text) {
     m_commandClient->send(QString::fromUtf8(text));
 }
 
+void BtpBackend::runCommand(const QString& commandLine, CommandResultFn done) {
+    m_commandClient->query(commandLine, std::move(done));
+}
+
 void BtpBackend::onSessionFrameReceived(const BtpFrame& frame) {
     if ((frame.flags & btp::kFlagEncrypted) == 0U) {
         if (sealsDirectSession() && !isSessionHandshakeResponse(frame)) {

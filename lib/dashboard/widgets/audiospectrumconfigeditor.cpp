@@ -33,7 +33,7 @@ AudioSpectrumConfigEditor::AudioSpectrumConfigEditor(QWidget* parent) : WidgetCo
     m_topicCombo->lineEdit()->setPlaceholderText(QStringLiteral("0x0101"));
     m_topicCombo->setToolTip(
         tr("Stream topic to play: blocks of samples with their rate and a block counter "
-           "(BTPDevice Topics::stream()). Pick a reported topic or type its numeric id."));
+           "(TraceKit Topics::stream()). Pick a reported topic or type its numeric id."));
 
     m_fullScaleSpin = new QDoubleSpinBox(this);
     m_fullScaleSpin->setRange(1.0, 1e9);

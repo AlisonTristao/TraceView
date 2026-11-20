@@ -1,20 +1,21 @@
 #include "ota/otatab.h"
 
 #include <QAbstractItemView>
-#include <QCheckBox>
 #include <QColor>
+#include <QDateTime>
 #include <QFileDialog>
+#include <QFileInfo>
 #include <QHBoxLayout>
 #include <QHeaderView>
 #include <QLineEdit>
 #include <QProgressBar>
 #include <QPushButton>
+#include <QSet>
 #include <QStackedWidget>
 #include <QTableWidget>
 #include <QTimer>
 #include <QVBoxLayout>
 
-#include "ota/otaclient.h"
 #include "theme/dialogpresenter.h"
 
 namespace traceview {
@@ -22,38 +23,45 @@ namespace traceview {
 namespace {
 constexpr int kNameColumn = 0;
 constexpr int kAddressColumn = 1;
-constexpr int kStatusColumn = 2;
-constexpr int kFirmwareColumn = 3;
-constexpr int kPasswordColumn = 4;
-constexpr int kUploadColumn = 5;
+constexpr int kStateColumn = 2;
+constexpr int kAppColumn = 3;
+constexpr int kRecoveryColumn = 4;
+constexpr int kActionColumn = 5;
 constexpr int kColumnCount = 6;
 
-// The firmware value arrives asynchronously, after the initial
-// resizeColumnsToContents() pass has only seen an em dash in this column.
-// Reserve enough room for a typical build/version identifier while keeping
-// the section interactive so the user can still resize it.
-constexpr int kFirmwareColumnWidth = 240;
+// Versions arrive after the first resizeColumnsToContents() pass, which only
+// saw an em dash: reserve room for a typical "project 1.2.3".
+constexpr int kAppColumnWidth = 200;
 
-// 1 Hz -- there's no manual refresh affordance, so this is the only thing
-// that keeps the OTA Online column current; OtaTab::setActive(true)
-// additionally fires one poll immediately so switching to the tab doesn't
-// sit on stale "Checking..." text for a full second first.
-//
-// Deliberately shorter than OtaClient's own kStatusTimeoutMs (4s): a tick
-// that lands while a row's request is still running is skipped by
-// OtaClient::statusRequestInFlight() rather than restarting it, so the fast
-// interval only costs anything for rows that answer quickly.
+// 1 Hz, shorter than OtaClient's 4 s status timeout on purpose: a tick that
+// lands while a row's request is still running is skipped (coalesced), so
+// the fast interval only costs anything for rows that answer quickly.
 constexpr int kPollIntervalMs = 1000;
 
-// Fixed footprint for the Upload cell's button/progress bar -- both live in
-// the same QStackedWidget (see RowWidgets::uploadStack) and swap back and
-// forth as an upload starts/finishes. QStackedWidget's own sizeHint() is
-// just whichever page is currently showing, not the max of all of them, so
-// without an explicit fixed size the column visibly resizes every time the
-// cell swaps pages. Sized for the progress bar's "Uploading... 100%" text,
-// the widest content either page ever shows.
-constexpr int kUploadCellWidth = 120;
-constexpr int kUploadCellHeight = 24;
+// The Action cell holds the upload button/progress bar (swapped in one
+// QStackedWidget, fixed size so the column does not jump) and "To app".
+constexpr int kUploadCellWidth = 130;
+constexpr int kCellHeight = 24;
+
+const QString kDash = QStringLiteral("\xE2\x80\x94");
+
+QString reportedValue(const Device& device, const char* key) {
+    for (const DeviceInfoRecord& entry : device.reportedInfo) {
+        if (entry.key == QLatin1String(key)) {
+            return entry.value;
+        }
+    }
+    return QString();
+}
+
+QString reasonText(const QString& reason) {
+    if (reason == QLatin1String("command")) return OtaTab::tr("asked for (btp -recovery)");
+    if (reason == QLatin1String("crash_loop")) return OtaTab::tr("the application kept crashing");
+    if (reason.startsWith(QLatin1String("factory_reset"))) return OtaTab::tr("factory reset");
+    return reason.isEmpty() || reason == QLatin1String("none")
+               ? OtaTab::tr("no valid application, or the boot chose it")
+               : reason;
+}
 }  // namespace
 
 OtaTab::OtaTab(QWidget* parent) : QWidget(parent) {
@@ -61,6 +69,7 @@ OtaTab::OtaTab(QWidget* parent) : QWidget(parent) {
     connect(m_client, &OtaClient::statusChecked, this, &OtaTab::onStatusChecked);
     connect(m_client, &OtaClient::uploadProgress, this, &OtaTab::onUploadProgress);
     connect(m_client, &OtaClient::uploadFinished, this, &OtaTab::onUploadFinished);
+    connect(m_client, &OtaClient::rebootFinished, this, &OtaTab::onRebootFinished);
 
     m_pollTimer = new QTimer(this);
     m_pollTimer->setInterval(kPollIntervalMs);
@@ -68,25 +77,13 @@ OtaTab::OtaTab(QWidget* parent) : QWidget(parent) {
 
     m_table = new QTableWidget(this);
     m_table->setColumnCount(kColumnCount);
-    m_table->setHorizontalHeaderLabels({tr("Name"), tr("OTA Address"), tr("OTA Online"),
-                                        tr("Firmware"), tr("Password"), tr("Upload")});
-    // Name (the most variable-length field) absorbs whatever space the
-    // fixed-width Upload column doesn't need, instead of Upload itself
-    // stretching to fill leftover space -- setStretchLastSection(true)
-    // (the default convention elsewhere in this app, see LogViewer) would
-    // do exactly that here since Upload is the last column, which is the
-    // other half of why that cell's width used to wander.
+    m_table->setHorizontalHeaderLabels(
+        {tr("Name"), tr("Address"), tr("State"), tr("Application"), tr("Recovery"), QString()});
+    // Name absorbs the spare width; the fixed Action column must not.
     m_table->horizontalHeader()->setStretchLastSection(false);
     m_table->horizontalHeader()->setSectionResizeMode(kNameColumn, QHeaderView::Stretch);
-    m_table->horizontalHeader()->setSectionResizeMode(kUploadColumn, QHeaderView::Fixed);
-    m_table->horizontalHeader()->resizeSection(kUploadColumn, kUploadCellWidth + 12);
     m_table->verticalHeader()->setVisible(false);
     m_table->setEditTriggers(QAbstractItemView::NoEditTriggers);
-    // A row is selected by clicking its Name/Address/Status cells (the
-    // Password/Upload cells are cell widgets, so a click there is consumed
-    // by the QLineEdit/QPushButton instead -- same as clicking a DeviceCard's
-    // gear button doesn't also select the card). Drives the shared Remove
-    // Device action via selectedDeviceId()/selectionChanged().
     m_table->setSelectionMode(QAbstractItemView::SingleSelection);
     m_table->setSelectionBehavior(QAbstractItemView::SelectRows);
     connect(m_table, &QTableWidget::itemSelectionChanged, this, &OtaTab::selectionChanged);
@@ -97,37 +94,39 @@ OtaTab::OtaTab(QWidget* parent) : QWidget(parent) {
     layout->addWidget(m_table);
 }
 
+void OtaTab::setKeyProvider(std::function<QByteArray(const QString&)> provider) {
+    m_keyProvider = std::move(provider);
+}
+
 QString OtaTab::selectedDeviceId() const {
     const QList<QTableWidgetItem*> selected = m_table->selectedItems();
-    if (selected.isEmpty())
-        return QString();
+    if (selected.isEmpty()) return QString();
     const int row = selected.first()->row();
-    if (row < 0 || row >= m_devices.size())
-        return QString();
+    if (row < 0 || row >= m_devices.size()) return QString();
     return m_devices.at(row).id;
 }
 
+const Device* OtaTab::deviceById(const QString& deviceId) const {
+    const int row = m_rowByDeviceId.value(deviceId, -1);
+    return row >= 0 && row < m_devices.size() ? &m_devices.at(row) : nullptr;
+}
+
 void OtaTab::setDevices(const QVector<Device>& devices) {
-    // Rebuilt from scratch below, so the table's own selection is lost even
-    // when the selected device is still present -- re-applied at the end by
-    // row, once the new rows exist.
     const QString previouslySelectedId = selectedDeviceId();
 
-    // Carry session-only state forward for ids that survive the rebuild;
-    // drop it for ids that don't (a removed device has nothing left to
-    // remember it by).
-    QHash<QString, QString> survivingPasswords;
-    QHash<QString, bool> survivingUploads;
-    for (const Device& device : devices) {
-        if (m_sessionPasswords.contains(device.id)) {
-            survivingPasswords.insert(device.id, m_sessionPasswords.value(device.id));
+    // Session state survives for ids still present; a removed device has
+    // nothing left to remember it by.
+    QSet<QString> ids;
+    for (const Device& device : devices) ids.insert(device.id);
+    auto keepPresent = [&ids](auto& hash) {
+        for (auto it = hash.begin(); it != hash.end();) {
+            it = ids.contains(it.key()) ? std::next(it) : hash.erase(it);
         }
-        if (m_uploading.value(device.id, false)) {
-            survivingUploads.insert(device.id, true);
-        }
-    }
-    m_sessionPasswords = survivingPasswords;
-    m_uploading = survivingUploads;
+    };
+    keepPresent(m_sessionPasswords);
+    keepPresent(m_inRecovery);
+    keepPresent(m_uploading);
+    keepPresent(m_waiting);
 
     m_devices = devices;
     m_rowByDeviceId.clear();
@@ -136,231 +135,331 @@ void OtaTab::setDevices(const QVector<Device>& devices) {
 
     for (int row = 0; row < devices.size(); ++row) {
         const Device& device = devices.at(row);
-        m_rowByDeviceId.insert(device.id, row);
+        const QString deviceId = device.id;
+        m_rowByDeviceId.insert(deviceId, row);
+        const QString address = otaAddressFor(device);
 
         m_table->setItem(row, kNameColumn, new QTableWidgetItem(device.name));
-        m_table->setItem(row, kAddressColumn,
-                         new QTableWidgetItem(device.otaAddress.isEmpty() ? tr("(not configured)")
-                                                                          : device.otaAddress));
-
-        auto* statusItem = new QTableWidgetItem(
-            device.otaAddress.isEmpty() ? tr("\xE2\x80\x94") : tr("Checking\xE2\x80\xA6"));
-        m_table->setItem(row, kStatusColumn, statusItem);
-
-        // The firmware string the robot reports from GET /status
-        // (OTAUpdater.cpp's handle_status_get). Worth its own column
-        // because it is the one field that says *what* is on the device
-        // right now -- without it, deciding whether a .bin is worth
-        // uploading means flashing it and seeing.
-        m_table->setItem(row, kFirmwareColumn, new QTableWidgetItem(tr("\xE2\x80\x94")));
+        auto* addressItem = new QTableWidgetItem(address.isEmpty() ? tr("(none)") : address);
+        addressItem->setToolTip(
+            address.isEmpty()
+                ? tr("Connect the device over TCP (or once, so it reports its address), or set "
+                     "its OTA address in Device Settings.")
+                : device.otaAddress.trimmed().isEmpty()
+                      ? tr("From the device itself (its TCP host or the address it reported).")
+                      : tr("Set in Device Settings."));
+        m_table->setItem(row, kAddressColumn, addressItem);
+        m_table->setItem(row, kStateColumn,
+                         new QTableWidgetItem(address.isEmpty() ? kDash : tr("Checking\xE2\x80\xA6")));
+        m_table->setItem(row, kAppColumn, new QTableWidgetItem(kDash));
+        m_table->setItem(row, kRecoveryColumn, new QTableWidgetItem(kDash));
 
         RowWidgets widgets;
-
-        auto* passwordContainer = new QWidget(m_table);
-        auto* passwordLayout = new QHBoxLayout(passwordContainer);
-        passwordLayout->setContentsMargins(4, 0, 4, 0);
-        widgets.passwordEdit = new QLineEdit(passwordContainer);
-        widgets.passwordEdit->setEchoMode(QLineEdit::Password);
-        widgets.passwordEdit->setPlaceholderText(tr("OTA password"));
-        const QString initialPassword =
-            device.cacheOtaPassword ? device.otaPassword : m_sessionPasswords.value(device.id);
-        widgets.passwordEdit->setText(initialPassword);
-        widgets.rememberCheck = new QCheckBox(tr("Remember"), passwordContainer);
-        widgets.rememberCheck->setChecked(device.cacheOtaPassword);
-        widgets.rememberCheck->setToolTip(tr("Save this password in the project file."));
-        passwordLayout->addWidget(widgets.passwordEdit, /*stretch=*/1);
-        passwordLayout->addWidget(widgets.rememberCheck);
-        m_table->setCellWidget(row, kPasswordColumn, passwordContainer);
-
-        const QString deviceId = device.id;
-        connect(
-            widgets.passwordEdit, &QLineEdit::textEdited, this,
-            [this, deviceId](const QString& text) { m_sessionPasswords.insert(deviceId, text); });
-        connect(widgets.rememberCheck, &QCheckBox::toggled, this, [this, deviceId](bool checked) {
-            const RowWidgets& rowWidgets = m_rowWidgets.value(deviceId);
-            if (rowWidgets.passwordEdit == nullptr)
-                return;
-            emit passwordCacheChanged(deviceId, rowWidgets.passwordEdit->text(), checked);
-        });
-
-        auto* uploadContainer = new QWidget(m_table);
-        auto* uploadLayout = new QHBoxLayout(uploadContainer);
-        uploadLayout->setContentsMargins(4, 0, 4, 0);
-        widgets.uploadStack = new QStackedWidget(uploadContainer);
-        // Fixed, not just sized-to-content: QStackedWidget::sizeHint() is
-        // whichever page is current, not the max of every page, so leaving
-        // this to size itself makes the whole column visibly jump every
-        // time an upload starts/finishes and the stack swaps pages.
-        widgets.uploadStack->setFixedSize(kUploadCellWidth, kUploadCellHeight);
+        auto* container = new QWidget(m_table);
+        auto* containerLayout = new QHBoxLayout(container);
+        containerLayout->setContentsMargins(4, 0, 4, 0);
+        widgets.uploadStack = new QStackedWidget(container);
+        widgets.uploadStack->setFixedSize(kUploadCellWidth, kCellHeight);
         widgets.uploadButton = new QPushButton(tr("Upload\xE2\x80\xA6"), widgets.uploadStack);
-        widgets.uploadButton->setEnabled(!device.otaAddress.isEmpty());
-        if (device.otaAddress.isEmpty()) {
-            widgets.uploadButton->setToolTip(
-                tr("Set this device's OTA address in Device Settings first."));
-        }
+        widgets.uploadButton->setEnabled(!address.isEmpty());
+        widgets.uploadButton->setToolTip(
+            tr("Send a firmware .bin. If the device is running its application and connected, "
+               "it is restarted into the recovery first."));
         widgets.progressBar = new QProgressBar(widgets.uploadStack);
         widgets.progressBar->setRange(0, 100);
-        widgets.progressBar->setValue(0);
-        widgets.progressBar->setFormat(tr("Uploading\xE2\x80\xA6 %p%"));
         widgets.uploadStack->addWidget(widgets.uploadButton);
         widgets.uploadStack->addWidget(widgets.progressBar);
         widgets.uploadStack->setCurrentWidget(widgets.uploadButton);
-        uploadLayout->addWidget(widgets.uploadStack);
-        m_table->setCellWidget(row, kUploadColumn, uploadContainer);
+        widgets.toAppButton = new QPushButton(tr("To app"), container);
+        widgets.toAppButton->setFixedHeight(kCellHeight);
+        widgets.toAppButton->setToolTip(tr("Leave the recovery for the application already there."));
+        widgets.toAppButton->setEnabled(false);
+        containerLayout->addWidget(widgets.uploadStack);
+        containerLayout->addWidget(widgets.toAppButton);
+        m_table->setCellWidget(row, kActionColumn, container);
 
         connect(widgets.uploadButton, &QPushButton::clicked, this,
                 [this, deviceId]() { startUpload(deviceId); });
+        connect(widgets.toAppButton, &QPushButton::clicked, this,
+                [this, deviceId]() { rebootToApp(deviceId); });
+        m_rowWidgets.insert(deviceId, widgets);
 
-        m_rowWidgets.insert(device.id, widgets);
-
-        if (m_uploading.value(device.id, false)) {
+        if (m_uploading.value(deviceId, false) || m_waiting.contains(deviceId)) {
             widgets.uploadStack->setCurrentWidget(widgets.progressBar);
-            widgets.uploadButton->setEnabled(false);
-            widgets.passwordEdit->setEnabled(false);
+            if (m_waiting.contains(deviceId)) {
+                widgets.progressBar->setRange(0, 0);
+                widgets.progressBar->setFormat(tr("Restarting\xE2\x80\xA6"));
+            }
+        }
+        if (m_inRecovery.contains(deviceId)) {
+            onStatusChecked(deviceId, true, m_inRecovery.value(deviceId), QString());
         }
     }
 
     if (!previouslySelectedId.isEmpty()) {
         const int row = m_rowByDeviceId.value(previouslySelectedId, -1);
-        if (row >= 0) {
-            m_table->selectRow(row);
-        }
+        if (row >= 0) m_table->selectRow(row);
     }
-
     m_table->resizeColumnsToContents();
-    // At this point Firmware still contains only an em dash; its actual
-    // version is filled by onStatusChecked() after the HTTP response arrives.
-    m_table->horizontalHeader()->resizeSection(kFirmwareColumn, kFirmwareColumnWidth);
-    // resizeColumnsToContents() above can override a Fixed section's width
-    // with its own content-based measurement (Qt doesn't exempt Fixed
-    // sections from that call) -- reassert it so the Upload column stays
-    // exactly kUploadCellWidth regardless.
-    m_table->horizontalHeader()->resizeSection(kUploadColumn, kUploadCellWidth + 12);
+    m_table->horizontalHeader()->resizeSection(kAppColumn, kAppColumnWidth);
+}
+
+void OtaTab::updateDevice(const Device& device) {
+    const int row = m_rowByDeviceId.value(device.id, -1);
+    if (row < 0) return;
+    m_devices[row] = device;
+    const QString address = otaAddressFor(device);
+    if (QTableWidgetItem* item = m_table->item(row, kAddressColumn)) {
+        item->setText(address.isEmpty() ? tr("(none)") : address);
+    }
+    const RowWidgets& widgets = m_rowWidgets.value(device.id);
+    if (widgets.uploadButton != nullptr) widgets.uploadButton->setEnabled(!address.isEmpty());
 }
 
 void OtaTab::setActive(bool active) {
     if (active) {
         refreshNow();
         m_pollTimer->start();
-    } else {
-        m_pollTimer->stop();
+    } else if (m_waiting.isEmpty()) {
+        m_pollTimer->stop();  // an upload waiting for its recovery keeps polling
     }
 }
 
 void OtaTab::refreshNow() {
     for (const Device& device : m_devices) {
-        if (device.otaAddress.isEmpty() || m_uploading.value(device.id, false)) {
+        if (m_uploading.value(device.id, false) || m_client->statusRequestInFlight(device.id)) {
             continue;
         }
-        // A row whose previous request hasn't answered yet is left alone.
-        // OtaClient coalesces this anyway; checking here as well keeps the
-        // "one poll, one request" reading of this loop honest.
-        if (m_client->statusRequestInFlight(device.id)) {
-            continue;
+        const QString address = otaAddressFor(device);
+        if (!address.isEmpty()) {
+            m_client->checkStatus(device.id, address);
         }
-        m_client->checkStatus(device.id, device.otaAddress);
+    }
+    if (m_waiting.isEmpty() && !isVisible()) {
+        m_pollTimer->stop();
     }
 }
 
-void OtaTab::onStatusChecked(const QString& deviceId, bool reachable, bool otaReady,
-                             const QString& firmwareVersion, const QString& errorMessage) {
+void OtaTab::onStatusChecked(const QString& deviceId, bool reachable, const RecoveryStatus& status,
+                             const QString& errorMessage) {
     const int row = m_rowByDeviceId.value(deviceId, -1);
-    if (row < 0)
-        return;  // device removed since the request was sent
+    const Device* device = deviceById(deviceId);
+    if (row < 0 || device == nullptr) return;  // removed since the request went out
 
-    if (QTableWidgetItem* firmwareItem = m_table->item(row, kFirmwareColumn)) {
-        // Blanked back to the em dash when unreachable rather than left
-        // showing the last version seen: this column answers "what is on
-        // the device", and a device nothing can reach right now has no
-        // answer to that.
-        firmwareItem->setText(reachable && !firmwareVersion.isEmpty() ? firmwareVersion
-                                                                      : tr("\xE2\x80\x94"));
-    }
-
-    QTableWidgetItem* item = m_table->item(row, kStatusColumn);
-    if (item == nullptr)
-        return;
-
-    if (!reachable) {
-        item->setText(tr("Offline"));
-        item->setForeground(QColor(Qt::gray));
-        // "Offline" alone doesn't say why -- a name that failed to resolve
-        // ("Host not found", the common case for a *.local mDNS name on
-        // Windows without Bonjour/iTunes installed) looks identical to a
-        // robot that's simply not in OTA mode yet unless this is visible
-        // somewhere. Hover the cell to see it.
-        item->setToolTip(errorMessage.isEmpty() ? tr("Not reachable") : errorMessage);
-    } else if (!otaReady) {
-        item->setText(tr("Online (busy)"));
-        item->setForeground(QColor(Qt::darkYellow));
-        item->setToolTip(tr("A firmware write is already in progress on the robot."));
+    if (reachable) {
+        m_inRecovery.insert(deviceId, status);
     } else {
-        item->setText(tr("Online"));
-        item->setForeground(QColor(Qt::darkGreen));
-        item->setToolTip(QString());
+        m_inRecovery.remove(deviceId);
     }
+
+    // An upload waiting for this device: go as soon as the recovery answers.
+    if (m_waiting.contains(deviceId)) {
+        if (reachable && status.otaReady) {
+            const Waiting waiting = m_waiting.take(deviceId);
+            beginUpload(deviceId, waiting.filePath, waiting.keyE);
+        } else if (QDateTime::currentMSecsSinceEpoch() > m_waiting.value(deviceId).deadlineMs) {
+            m_waiting.remove(deviceId);
+            finishRow(deviceId);
+            DialogPresenter::warning(
+                this, tr("Firmware Upload"),
+                tr("%1 did not answer as a recovery in %2 s. Is it on a Wi-Fi network this "
+                   "computer can reach? Without a known network, the recovery raises its own "
+                   "(\"btp-<name>\").")
+                    .arg(device->name)
+                    .arg(kRecoveryWaitMs / 1000));
+        }
+    }
+
+    QTableWidgetItem* state = m_table->item(row, kStateColumn);
+    QTableWidgetItem* app = m_table->item(row, kAppColumn);
+    QTableWidgetItem* recovery = m_table->item(row, kRecoveryColumn);
+    const RowWidgets& widgets = m_rowWidgets.value(deviceId);
+    if (state == nullptr || app == nullptr || recovery == nullptr) return;
+
+    if (reachable) {
+        state->setText(status.otaReady ? tr("In recovery") : tr("Writing\xE2\x80\xA6"));
+        state->setForeground(QColor(Qt::darkGreen));
+        QString tip = tr("Why: %1").arg(reasonText(status.reason));
+        if (!status.ownNetwork.isEmpty()) {
+            tip += QLatin1Char('\n') + tr("Own network: %1").arg(status.ownNetwork);
+        }
+        state->setToolTip(tip);
+        app->setText(status.appValid ? QStringLiteral("%1 %2").arg(status.appProject, status.appVersion)
+                                     : tr("(none)"));
+        app->setToolTip(QString());
+        recovery->setText(status.recoveryVersion);
+        recovery->setToolTip(tr("%1, up to %2 KB").arg(status.chip).arg(status.maxSize / 1024));
+        if (widgets.toAppButton != nullptr) {
+            widgets.toAppButton->setEnabled(status.appValid && !m_uploading.value(deviceId, false));
+        }
+        return;
+    }
+
+    // Not a recovery: either the application is running (connected, or the
+    // connection refused -- nothing listens on port 80 in the application)
+    // or the device is out of reach.
+    if (device->connected) {
+        state->setText(tr("Running the app"));
+        state->setForeground(QColor(Qt::darkBlue));
+        state->setToolTip(tr("Upload restarts it into the recovery first."));
+    } else {
+        state->setText(tr("Offline"));
+        state->setForeground(QColor(Qt::gray));
+        state->setToolTip(errorMessage.isEmpty() ? tr("Not reachable") : errorMessage);
+    }
+    const QString running = reportedValue(*device, "fw_version");
+    app->setText(device->connected && !running.isEmpty() ? running : kDash);
+    app->setToolTip(device->connected ? tr("Reported by the running application.") : QString());
+    recovery->setText(kDash);
+    recovery->setToolTip(QString());
+    if (widgets.toAppButton != nullptr) widgets.toAppButton->setEnabled(false);
 }
 
-void OtaTab::onUploadProgress(const QString& deviceId, qint64 sent, qint64 total) {
-    const RowWidgets& widgets = m_rowWidgets.value(deviceId);
-    if (widgets.progressBar == nullptr)
-        return;
-
-    if (total > 0) {
-        widgets.progressBar->setRange(0, 100);
-        widgets.progressBar->setValue(static_cast<int>((sent * 100) / total));
-    } else {
-        widgets.progressBar->setRange(0, 0);  // indeterminate until the server reports a total
+QByteArray OtaTab::keyFor(const Device& device, bool* cancelled) {
+    *cancelled = false;
+    QString password = device.peerPassword;
+    if (password.isEmpty()) password = m_sessionPasswords.value(device.id);
+    if (password.isEmpty()) {
+        bool ok = false;
+        password = DialogPresenter::getText(
+            this, tr("Firmware Upload"),
+            tr("Password E of %1 (the one its key was provisioned with). It stays on this "
+               "computer: the upload is signed with it.")
+                .arg(device.name),
+            QLineEdit::Password, QString(), &ok);
+        if (!ok || password.isEmpty()) {
+            *cancelled = true;
+            return QByteArray();
+        }
+        m_sessionPasswords.insert(device.id, password);
     }
-}
-
-void OtaTab::onUploadFinished(const QString& deviceId, bool success, const QString& message) {
-    m_uploading.remove(deviceId);
-
-    const RowWidgets& widgets = m_rowWidgets.value(deviceId);
-    if (widgets.uploadButton == nullptr)
-        return;
-
-    widgets.uploadButton->setEnabled(true);
-    widgets.passwordEdit->setEnabled(true);
-    widgets.uploadButton->setToolTip(message);
-    widgets.uploadStack->setCurrentWidget(widgets.uploadButton);
-
-    if (success && widgets.rememberCheck->isChecked()) {
-        emit passwordCacheChanged(deviceId, widgets.passwordEdit->text(), true);
-    }
-
-    if (!success) {
-        DialogPresenter::warning(this, tr("Firmware Upload"), message);
-    }
+    return m_keyProvider ? m_keyProvider(password) : QByteArray();
 }
 
 void OtaTab::startUpload(const QString& deviceId) {
-    const int row = m_rowByDeviceId.value(deviceId, -1);
-    if (row < 0)
-        return;
-    const Device& device = m_devices.at(row);
+    const Device* device = deviceById(deviceId);
+    if (device == nullptr) return;
+    const QString address = otaAddressFor(*device);
+    const bool inRecovery = m_inRecovery.contains(deviceId);
 
-    if (device.otaAddress.isEmpty()) {
-        DialogPresenter::warning(this, tr("Firmware Upload"),
-                                 tr("Set this device's OTA address in Device Settings first."));
+    if (!inRecovery && !device->connected) {
+        DialogPresenter::warning(
+            this, tr("Firmware Upload"),
+            tr("%1 is not in the recovery, and TraceView is not connected to it to restart it "
+               "there. Connect it, or send \"btp -recovery\" from its terminal.")
+                .arg(device->name));
         return;
     }
 
     const QString filePath = QFileDialog::getOpenFileName(
         this, tr("Select Firmware"), QString(), tr("Firmware Binary (*.bin);;All Files (*)"));
-    if (filePath.isEmpty())
-        return;
+    if (filePath.isEmpty()) return;
 
-    RowWidgets& widgets = m_rowWidgets[deviceId];
-    widgets.uploadButton->setEnabled(false);
-    widgets.passwordEdit->setEnabled(false);
+    // A DEVELOPMENT recovery (auth "none") needs no password.
+    QByteArray keyE;
+    if (!inRecovery || m_inRecovery.value(deviceId).authRequired) {
+        bool cancelled = false;
+        keyE = keyFor(*device, &cancelled);
+        if (cancelled) return;
+    }
+
+    if (inRecovery) {
+        beginUpload(deviceId, filePath, keyE);
+        return;
+    }
+
+    if (!DialogPresenter::confirm(
+            this, tr("Firmware Upload"),
+            tr("%1 will restart into its recovery and receive %2. Then it starts the new "
+               "firmware by itself.")
+                .arg(device->name, QFileInfo(filePath).fileName()),
+            tr("Restart and upload"), tr("Cancel"))) {
+        return;
+    }
+    m_waiting.insert(deviceId,
+                     {filePath, keyE, QDateTime::currentMSecsSinceEpoch() + kRecoveryWaitMs});
+    const RowWidgets& widgets = m_rowWidgets.value(deviceId);
+    widgets.progressBar->setRange(0, 0);
+    widgets.progressBar->setFormat(tr("Restarting\xE2\x80\xA6"));
+    widgets.uploadStack->setCurrentWidget(widgets.progressBar);
+    widgets.toAppButton->setEnabled(false);
+    emit recoveryRequested(deviceId);
+    m_pollTimer->start();
+}
+
+void OtaTab::beginUpload(const QString& deviceId, const QString& filePath, const QByteArray& keyE) {
+    const Device* device = deviceById(deviceId);
+    if (device == nullptr) return;
+    const RowWidgets& widgets = m_rowWidgets.value(deviceId);
     widgets.progressBar->setRange(0, 100);
     widgets.progressBar->setValue(0);
+    widgets.progressBar->setFormat(tr("Uploading\xE2\x80\xA6 %p%"));
     widgets.uploadStack->setCurrentWidget(widgets.progressBar);
-
+    widgets.toAppButton->setEnabled(false);
     m_uploading.insert(deviceId, true);
-    m_client->uploadFirmware(deviceId, device.otaAddress, widgets.passwordEdit->text(), filePath);
+    m_client->uploadFirmware(deviceId, otaAddressFor(*device), keyE, filePath);
+}
+
+void OtaTab::rebootToApp(const QString& deviceId) {
+    const Device* device = deviceById(deviceId);
+    if (device == nullptr || !m_inRecovery.contains(deviceId)) return;
+    QByteArray keyE;
+    if (m_inRecovery.value(deviceId).authRequired) {
+        bool cancelled = false;
+        keyE = keyFor(*device, &cancelled);
+        if (cancelled) return;
+    }
+    m_uploading.insert(deviceId, true);
+    m_rowWidgets.value(deviceId).toAppButton->setEnabled(false);
+    m_client->rebootToApp(deviceId, otaAddressFor(*device), keyE);
+}
+
+void OtaTab::onUploadProgress(const QString& deviceId, qint64 sent, qint64 total) {
+    const RowWidgets& widgets = m_rowWidgets.value(deviceId);
+    if (widgets.progressBar == nullptr) return;
+    if (total > 0) {
+        widgets.progressBar->setRange(0, 100);
+        widgets.progressBar->setValue(static_cast<int>((sent * 100) / total));
+    } else {
+        widgets.progressBar->setRange(0, 0);
+    }
+}
+
+void OtaTab::finishRow(const QString& deviceId) {
+    m_uploading.remove(deviceId);
+    const RowWidgets& widgets = m_rowWidgets.value(deviceId);
+    if (widgets.uploadStack == nullptr) return;
+    widgets.uploadStack->setCurrentWidget(widgets.uploadButton);
+}
+
+void OtaTab::onUploadFinished(const QString& deviceId, bool success, const QString& message) {
+    finishRow(deviceId);
+    const Device* device = deviceById(deviceId);
+    const QString name = device != nullptr ? device->name : deviceId;
+    if (success) {
+        // The recovery restarts into the new application now: it stops
+        // answering, and the row turns back to "Running the app" once the
+        // connection comes back.
+        m_inRecovery.remove(deviceId);
+        emit statusMessage(tr("%1: %2").arg(name, message));
+        return;
+    }
+    if (message.contains(QLatin1String("wrong password"), Qt::CaseInsensitive)) {
+        m_sessionPasswords.remove(deviceId);  // ask again next time
+    }
+    DialogPresenter::warning(this, tr("Firmware Upload"), tr("%1: %2").arg(name, message));
+}
+
+void OtaTab::onRebootFinished(const QString& deviceId, bool success, const QString& message) {
+    finishRow(deviceId);
+    const Device* device = deviceById(deviceId);
+    const QString name = device != nullptr ? device->name : deviceId;
+    if (success) {
+        m_inRecovery.remove(deviceId);
+        emit statusMessage(tr("%1: %2").arg(name, message));
+    } else {
+        DialogPresenter::warning(this, tr("Firmware Upload"), tr("%1: %2").arg(name, message));
+    }
 }
 
 }  // namespace traceview

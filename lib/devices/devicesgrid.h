@@ -278,6 +278,9 @@ signals:
     // (traceview_devices doesn't depend on traceview_diagram/Qt6::Qml),
     // MainWindow does.
     void scriptRequested(const QString& deviceId);
+    // Bubbled from DeviceCard::toolsRequested: MainWindow opens the device's
+    // TraceKitDialog, which needs its live connection.
+    void toolsRequested(const QString& deviceId);
     // A removeDevice() that was refused because other devices ride this one
     // (see removeDevice()). Carries the blocked device and the names of what
     // depends on it, so the explanation can say which ones rather than just

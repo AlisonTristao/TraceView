@@ -5,6 +5,7 @@
 #include <QString>
 #include <QVector>
 #include <QtGlobal>
+#include <functional>
 
 #include "backend/statusseverity.h"
 #include "telemetry/catalogtopicinfo.h"
@@ -91,6 +92,19 @@ public slots:
     // device (see core/serialwidgetbridge.cpp).
     virtual void sendCommand(const QByteArray& text) = 0;
 
+public:
+    // A command whose OUTPUT the caller needs (a TraceKit device's
+    // "cfg -json 0", "btp -wifi_json"): `done` runs exactly once, with the
+    // shell output or with ok=false and why; nothing reaches the status bar
+    // or the log panel. The default answers "not supported" at once. Not a
+    // slot: moc cannot carry the callback.
+    using CommandResultFn = std::function<void(bool ok, const QString& output)>;
+    virtual void runCommand(const QString& commandLine, CommandResultFn done) {
+        Q_UNUSED(commandLine);
+        done(false, QStringLiteral("this connection does not run commands"));
+    }
+
+public slots:
     // The dongle's own hub.peers view of this backend's robot, mirrored in by
     // MainWindow while a hub child is connected: `online` is whether the
     // dongle has heard STATUS from that robot recently, `bootId` the boot it

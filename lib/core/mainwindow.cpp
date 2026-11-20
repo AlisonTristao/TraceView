@@ -76,6 +76,7 @@
 #include "deviceconnection.h"
 #include "devicepreviewframe.h"
 #include "devices/devicesgrid.h"
+#include "devices/tracekitdialog.h"
 #include "diagnostics/btpmonitortab.h"
 #include "diagnostics/framelog.h"
 #include "diagnostics/notificationhistorywindow.h"
@@ -548,6 +549,33 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
             &MainWindow::onDeviceConnectToggleRequested);
     connect(m_devicesGrid, &DevicesGrid::scriptRequested, this,
             &MainWindow::onDeviceScriptRequested);
+    connect(m_devicesGrid, &DevicesGrid::toolsRequested, this,
+            &MainWindow::onDeviceToolsRequested);
+    // A TraceKit device's panel follows its connection, and its clock is set
+    // from this computer once per connection (btp -time_sync applies it only
+    // when the device has no time from the internet).
+    connect(m_devicesGrid, &DevicesGrid::deviceLiveStateChanged, this, [this](const Device& device) {
+        if (TraceKitDialog* dialog = m_traceKitDialogs.value(device.id)) {
+            dialog->setConnected(device.connected);
+        }
+        if (!device.connected) {
+            m_traceKitClockSynced.remove(device.id);
+        }
+    });
+    connect(m_devicesGrid, &DevicesGrid::deviceReportedInfoChanged, this, [this](const QString& id) {
+        for (const Device& device : m_devicesGrid->devices()) {
+            if (device.id != id || !device.connected || !isTraceKitDevice(device.reportedInfo) ||
+                m_traceKitClockSynced.contains(id)) {
+                continue;
+            }
+            if (DeviceConnection* target = m_deviceConnections.value(id)) {
+                m_traceKitClockSynced.insert(id);
+                target->backend()->runCommand(
+                    QStringLiteral("btp -time_sync %1").arg(QDateTime::currentSecsSinceEpoch()),
+                    [](bool, const QString&) {});
+            }
+        }
+    });
     // DevicesGrid can't enumerate ports itself (traceview_devices doesn't
     // depend on QSerialPort, see lib/CMakeLists.txt) -- MainWindow supplies
     // the live list DeviceConfigDialog's port combo offers.
@@ -4920,7 +4948,24 @@ void MainWindow::onOpenOtaTab() {
 
     m_otaTab = new OtaTab(this);
     m_otaTab->setDevices(m_devicesGrid->devices());
-    connect(m_otaTab, &OtaTab::passwordCacheChanged, this, &MainWindow::onOtaPasswordCacheChanged);
+    m_otaTab->setKeyProvider([this](const QString& password) { return channelKeyFor(password); });
+    // One-click update: the tab asks, the device's own session carries it.
+    connect(m_otaTab, &OtaTab::recoveryRequested, this, [this](const QString& deviceId) {
+        if (DeviceConnection* target = m_deviceConnections.value(deviceId)) {
+            target->backend()->sendCommand(QByteArrayLiteral("btp -recovery"));
+        }
+    });
+    connect(m_otaTab, &OtaTab::statusMessage, this,
+            [this](const QString& text) { postStatus(text, 8000); });
+    // Connected/disconnected and the reported "ota_endpoint" change what the
+    // tab can do with a row; neither is an edit, so they come separately.
+    connect(m_devicesGrid, &DevicesGrid::deviceLiveStateChanged, m_otaTab, &OtaTab::updateDevice);
+    connect(m_devicesGrid, &DevicesGrid::deviceReportedInfoChanged, m_otaTab,
+            [this](const QString& id) {
+                for (const Device& device : m_devicesGrid->devices()) {
+                    if (device.id == id) m_otaTab->updateDevice(device);
+                }
+            });
     // Same actions the Devices tab's page uses (buildRibbon()) -- adding a
     // device works identically regardless of which tab is visible, and
     // "remove" is dispatched by onRemoveDeviceRequested() to whichever tab's
@@ -5069,18 +5114,36 @@ void MainWindow::onShowNotificationHistory() {
     DialogPresenter::show(m_notificationWindow, DialogPresenter::Style::Page);
 }
 
-void MainWindow::onOtaPasswordCacheChanged(const QString& deviceId, const QString& password,
-                                           bool cache) {
+void MainWindow::onDeviceToolsRequested(const QString& deviceId) {
+    if (TraceKitDialog* open = m_traceKitDialogs.value(deviceId)) {
+        open->raise();
+        open->activateWindow();
+        return;
+    }
     const QVector<Device> devices = m_devicesGrid->devices();
-    for (const Device& existing : devices) {
-        if (existing.id != deviceId) {
+    for (const Device& device : devices) {
+        if (device.id != deviceId) {
             continue;
         }
-        Device updated = existing;
-        updated.otaPassword = password;
-        updated.cacheOtaPassword = cache;
-        m_devicesGrid->updateDevice(updated);
-        break;
+        auto* dialog = new TraceKitDialog(
+            device,
+            [this, deviceId](const QString& line, TraceKitDialog::ResultFn done) {
+                DeviceConnection* target = m_deviceConnections.value(deviceId);
+                if (target == nullptr || !target->isConnected()) {
+                    done(false, tr("not connected"));
+                    return;
+                }
+                target->backend()->runCommand(line, std::move(done));
+            },
+            this);
+        dialog->setAttribute(Qt::WA_DeleteOnClose);
+        m_traceKitDialogs.insert(deviceId, dialog);
+        connect(dialog, &QObject::destroyed, this,
+                [this, deviceId]() { m_traceKitDialogs.remove(deviceId); });
+        DeviceConnection* connection = m_deviceConnections.value(deviceId);
+        dialog->setConnected(connection != nullptr && connection->isConnected());
+        dialog->show();
+        return;
     }
 }
 
