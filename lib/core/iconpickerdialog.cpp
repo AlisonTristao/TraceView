@@ -9,6 +9,7 @@
 #include <QPushButton>
 #include <QVBoxLayout>
 
+#include "theme/dialogchrome.h"
 #include "theme/iconlibrary.h"
 #include "traceview/thememanager.h"
 
@@ -81,7 +82,8 @@ IconPickerDialog::IconPickerDialog(const QString& currentId, QWidget* parent) : 
     setWindowTitle(tr("Choose Icon"));
     resize(560, 480);
 
-    auto* layout = new QVBoxLayout(this);
+    QVBoxLayout* layout = DialogChrome::setupRootLayout(this);
+    layout->addWidget(new DialogHeader(tr("Choose Icon"), QString(), this));
 
     m_search = new QLineEdit(this);
     m_search->setPlaceholderText(tr("Search icons (English names and tags)"));
@@ -101,11 +103,11 @@ IconPickerDialog::IconPickerDialog(const QString& currentId, QWidget* parent) : 
     m_view->setModel(m_model);
     layout->addWidget(m_view, /*stretch=*/1);
 
-    m_selectedLabel = new QLabel(this);
+    m_selectedLabel = DialogChrome::hintLabel(QString(), this);
     layout->addWidget(m_selectedLabel);
 
     m_buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, this);
-    layout->addWidget(m_buttons);
+    layout->addLayout(DialogChrome::footer(m_buttons));
 
     connect(m_search, &QLineEdit::textChanged, this, &IconPickerDialog::onFilterChanged);
     connect(m_view->selectionModel(), &QItemSelectionModel::selectionChanged, this,

@@ -9,6 +9,7 @@
 #include <QVBoxLayout>
 #include <QtGlobal>
 
+#include "theme/dialogchrome.h"
 #include "traceview/version.h"
 
 namespace traceview {
@@ -24,8 +25,8 @@ AboutDialog::AboutDialog(QWidget* parent) : QDialog(parent) {
     setWindowTitle(tr("About TraceView"));
     setMinimumWidth(320);
 
-    auto* titleLabel = new QLabel(QStringLiteral("<b>TraceView</b>"), this);
-    titleLabel->setTextFormat(Qt::RichText);
+    auto* header = new DialogHeader(QStringLiteral("TraceView"),
+                                    QStringLiteral("v%1").arg(QLatin1String(kVersion)), this);
 
     const auto addRow = [this](QFormLayout* form, const QString& label, const QString& value) {
         auto* valueLabel = new QLabel(value, this);
@@ -55,12 +56,11 @@ AboutDialog::AboutDialog(QWidget* parent) : QDialog(parent) {
     auto* buttons = new QDialogButtonBox(QDialogButtonBox::Ok, this);
     connect(buttons, &QDialogButtonBox::accepted, this, &QDialog::accept);
 
-    auto* layout = new QVBoxLayout(this);
-    layout->addWidget(titleLabel);
-    layout->addSpacing(4);
+    QVBoxLayout* layout = DialogChrome::setupRootLayout(this);
+    layout->addWidget(header);
     layout->addLayout(form);
-    layout->addSpacing(8);
-    layout->addWidget(buttons);
+    layout->addStretch(1);
+    layout->addLayout(DialogChrome::footer(buttons));
 }
 
 // Best guess from how this binary is running -- each official channel

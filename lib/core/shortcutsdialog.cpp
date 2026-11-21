@@ -6,6 +6,8 @@
 #include <QTreeWidget>
 #include <QVBoxLayout>
 
+#include "theme/dialogchrome.h"
+
 namespace traceview {
 
 ShortcutsDialog::ShortcutsDialog(const QVector<Section>& sections, QWidget* parent)
@@ -46,9 +48,12 @@ ShortcutsDialog::ShortcutsDialog(const QVector<Section>& sections, QWidget* pare
     auto* buttons = new QDialogButtonBox(QDialogButtonBox::Close, this);
     connect(buttons, &QDialogButtonBox::rejected, this, &QDialog::reject);
 
-    auto* layout = new QVBoxLayout(this);
-    layout->addWidget(tree);
-    layout->addWidget(buttons);
+    auto* titleHeader = new DialogHeader(tr("Keyboard Shortcuts"), QString(), this);
+
+    QVBoxLayout* layout = DialogChrome::setupRootLayout(this);
+    layout->addWidget(titleHeader);
+    layout->addWidget(tree, 1);
+    layout->addLayout(DialogChrome::footer(buttons));
 }
 
 }  // namespace traceview

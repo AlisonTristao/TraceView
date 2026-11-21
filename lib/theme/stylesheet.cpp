@@ -88,6 +88,11 @@ QString checkImagePath(const QColor& color) {
 
 }  // namespace
 
+// Left padding of an icon-only side-list row: (52 - 18) / 2 minus the few
+// pixels Qt's item view already leaves before a decoration. Measured with
+// an offscreen grab of the compact TraceKit panel.
+constexpr int kNavCompactItemPadding = 14;
+
 QString buildStyleSheet(const ThemePalette& p) {
     QString qss = R"(
 QWidget {
@@ -275,20 +280,45 @@ QPushButton:disabled {
     outline: none;
 }
 
-QPushButton[variant="success"] {
+/* Variants (DialogChrome::setButtonVariant): "primary" is the one main
+   action of a page, "danger" a destructive one. Filled, and -- like every
+   button -- static on hover/press. The pseudo-states are listed so these
+   win over the plain QPushButton:hover rule above (same specificity, later
+   rule wins only when the selector matches as well). */
+QPushButton[variant="primary"], QPushButton[variant="primary"]:hover,
+QPushButton[variant="primary"]:pressed {
+    background-color: @accent@;
+    color: @background@;
+    border-color: @accent@;
+    font-weight: 600;
+    selection-background-color: @accent@;
+    selection-color: @background@;
+}
+QPushButton[variant="success"], QPushButton[variant="success"]:hover,
+QPushButton[variant="success"]:pressed {
     background-color: @success@;
     color: @background@;
     border-color: @success@;
 }
-QPushButton[variant="warning"] {
+QPushButton[variant="warning"], QPushButton[variant="warning"]:hover,
+QPushButton[variant="warning"]:pressed {
     background-color: @warning@;
     color: @background@;
     border-color: @warning@;
 }
-QPushButton[variant="danger"] {
+QPushButton[variant="danger"], QPushButton[variant="danger"]:hover,
+QPushButton[variant="danger"]:pressed {
     background-color: @danger@;
     color: @background@;
     border-color: @danger@;
+    selection-background-color: @danger@;
+    selection-color: @background@;
+}
+QPushButton[variant="primary"]:disabled, QPushButton[variant="success"]:disabled,
+QPushButton[variant="warning"]:disabled, QPushButton[variant="danger"]:disabled {
+    background-color: @surfaceAlt@;
+    color: @textDisabled@;
+    border-color: @border@;
 }
 
 /* Headerless dashboard controls (push button/toggle/slider, see
@@ -575,7 +605,121 @@ QAbstractScrollArea::corner {
     border: none;
 }
 )";
+    // Second literal: MSVC caps a single string literal at ~16 KB (C2026).
+    qss += R"(
+/* Text areas, trees and plain list views had no rule and fell back to the
+   native look (no border on some platforms, a different fill). Same frame
+   as the inputs and tables. QComboBox's popup keeps its own rule above
+   (more specific). */
+QPlainTextEdit, QTextEdit {
+    background-color: @surface@;
+    color: @textPrimary@;
+    border: 1px solid @border@;
+    border-radius: 4px;
+}
+QTreeView, QListView {
+    background-color: @surface@;
+    color: @textPrimary@;
+    border: 1px solid @border@;
+    outline: none;
+}
+QTreeView::item:selected, QListView::item:selected {
+    background-color: @accent@;
+    color: @background@;
+}
+QProgressBar {
+    background-color: @surfaceAlt@;
+    border: none;
+    border-radius: 3px;
+    text-align: center;
+}
+QProgressBar::chunk {
+    background-color: @accent@;
+    border-radius: 3px;
+}
 
+/* Dialog chrome -- the widgets of theme/dialogchrome.h, by object name.
+   Font sizes are not set here: DialogChrome scales them in code with
+   scaledFont() (a pt size in QSS breaks Android's pixel-sized fonts). */
+QLabel#dialogTitle {
+    color: @textPrimary@;
+}
+QLabel#dialogSubtitle, QLabel#dialogHint, QLabel#dialogCardTitle {
+    color: @textSecondary@;
+}
+QListWidget#dialogNav {
+    background: transparent;
+    border: none;
+    outline: none;
+}
+QListWidget#dialogNav::item {
+    color: @textSecondary@;
+    border-radius: 6px;
+    padding: 4px 8px;
+    margin: 1px 0;
+}
+/* Icon-only rows (phone width): the side padding above is for icon +
+   label; here the left padding puts the 18px icon in the middle of the
+   52px list (DialogChrome::kNavCompactWidth), the right one is dropped. */
+QListWidget#dialogNav[compact="true"]::item {
+    padding: 4px 0 4px @navCompactPad@px;
+}
+QListWidget#dialogNav::item:hover {
+    background-color: @surfaceAlt@;
+    color: @textPrimary@;
+}
+QListWidget#dialogNav::item:selected {
+    background-color: @accentTint@;
+    color: @textPrimary@;
+    font-weight: 600;
+}
+QLabel#statusBadge {
+    border-radius: 10px;
+    padding: 3px 10px;
+    font-weight: 600;
+    background-color: @neutralTint@;
+    color: @textSecondary@;
+}
+QLabel#statusBadge[tone="accent"] {
+    background-color: @accentTint@;
+    color: @accent@;
+}
+QLabel#statusBadge[tone="success"] {
+    background-color: @successTint@;
+    color: @success@;
+}
+QLabel#statusBadge[tone="warning"] {
+    background-color: @warningTint@;
+    color: @warning@;
+}
+QLabel#statusBadge[tone="danger"] {
+    background-color: @dangerTint@;
+    color: @danger@;
+}
+QFrame#dialogCard {
+    background-color: @surface@;
+    border: 1px solid @border@;
+    border-radius: 10px;
+}
+/* Plain containers inside a card take the card's fill instead of the
+   generic QWidget background (".QWidget" = that exact class only). */
+QFrame#dialogCard .QWidget {
+    background-color: @surface@;
+}
+)";
+
+    // Translucent tints for the selected side-list row and the badges.
+    // Before the plain tokens: "@accentTint@" must not be eaten as "@accent@".
+    const auto tint = [](QColor c) {
+        c.setAlphaF(0.16);
+        return cssColor(c);
+    };
+    qss.replace("@accentTint@", tint(p.accent));
+    qss.replace("@successTint@", tint(p.success));
+    qss.replace("@warningTint@", tint(p.warning));
+    qss.replace("@dangerTint@", tint(p.danger));
+    qss.replace("@neutralTint@", tint(p.textSecondary));
+    qss.replace("@navCompactPad@", QString::number(kNavCompactItemPadding));
     qss.replace("@background@", cssColor(p.background));
     qss.replace("@surfaceAlt@", cssColor(p.surfaceAlt));
     qss.replace("@surface@", cssColor(p.surface));

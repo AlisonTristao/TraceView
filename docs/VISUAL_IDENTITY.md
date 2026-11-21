@@ -97,6 +97,11 @@ fills, masks and outlines hold for every frame style.
 
 - **4px** for QSS-driven controls (buttons, inputs, combo boxes, checkboxes)
   — already the de facto value across `stylesheet.cpp`, kept as-is.
+- **Dialog chrome** (`theme/dialogchrome.h`, "Dialog chrome" in
+  `stylesheet.cpp`): 6px for side-list rows, 10px for cards, status badges
+  and the presenter's Card overlay. These are in the app sheet too, so the
+  frame style scales them like the controls. How dialogs are built:
+  "Dialogs" in `CONTRIBUTING.md`.
 - **6px** for large custom-painted containers: `DashboardCell`'s outer
   border and the flat background rect drawn by `paintBackground()` in
   `chartwidgets.cpp` (line chart/bar chart/gauge). Larger than the control

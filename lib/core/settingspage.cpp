@@ -4,6 +4,7 @@
 #include <QClipboard>
 #include <QComboBox>
 #include <QCoreApplication>
+#include <QDialogButtonBox>
 #include <QDateTime>
 #include <QDesktopServices>
 #include <QDir>
@@ -38,7 +39,7 @@
 #include "dashboard/widgets/chartstyle.h"
 #include "preferences/appsettings.h"
 #include "protocol/manifeststore.h"
-#include "theme/iconutils.h"
+#include "theme/dialogchrome.h"
 #include "traceview/fontmanager.h"
 #include "traceview/languagemanager.h"
 #include "traceview/thememanager.h"
@@ -47,17 +48,10 @@ namespace traceview {
 
 namespace {
 
-// The category glyphs down the left of the page, loaded from
-// resources/icons/settings/ (same flat style as core/ribbonicons.cpp) and
-// tinted to the active theme's colour at load time -- see theme/iconutils.h.
-constexpr int kCategoryIconSize = 18;
+// The category list is a NavSidebar (theme/dialogchrome.h), same as the
+// TraceKit panel's: Lucide glyphs, tinted from the palette, icon-only in
+// compact mode.
 constexpr int kCategoryCount = 7;
-constexpr int kFullCategoryListWidth = 186;
-// Icon (18px) + the item padding below (10px each side) + a little room so
-// a touch target isn't flush against the icon -- comfortable to tap without
-// needing the label text compact mode hides.
-constexpr int kCompactCategoryListWidth = 56;
-constexpr int kCategoryRowHeight = 36;
 // Same threshold as MainWindow's own kSmallBreakpointMaxViewportWidth
 // (mainwindow.cpp) -- this page has no access to that constant or to
 // DashboardGrid's breakpoint machinery (it's a standalone widget, not part
@@ -66,17 +60,17 @@ constexpr int kCategoryRowHeight = 36;
 // sidebar plus a side-by-side QFormLayout leaves the actual settings
 // values too cramped to read or tap accurately.
 constexpr int kCompactLayoutMaxWidth = 700;
-// Outer/page margins and sidebar gap, desktop vs compact. On a phone every
+// Root margins come from DialogChrome::kMargins on desktop; on a phone every
 // pixel of horizontal margin is taken straight out of the combo/spin box
 // width, so compact mode trims them hard.
-constexpr int kFullRootMargin = 18;
 constexpr int kCompactRootMargin = 8;
-constexpr int kFullBodySpacing = 18;
 constexpr int kCompactBodySpacing = 8;
-constexpr int kFullPageMarginH = 28;
-constexpr int kFullPageMarginV = 24;
-constexpr int kCompactPageMarginH = 10;
-constexpr int kCompactPageMarginV = 12;
+// Inside each page's scroll area: a little room from the side list and the
+// scrollbar, not a second full dialog margin.
+constexpr int kFullPageMarginH = 8;
+constexpr int kFullPageMarginV = 4;
+constexpr int kCompactPageMarginH = 4;
+constexpr int kCompactPageMarginV = 4;
 // Every combo/spin box shares one fixed width, taken from the Appearance
 // page's combos (clamped to this range) so fields don't vary page to page.
 constexpr int kMinFieldWidth = 180;
@@ -85,47 +79,13 @@ constexpr int kMaxFieldWidth = 260;
 // horizontal space a field row loses beyond the page's own margins.
 constexpr int kFieldRowChrome = 40;
 
-QPixmap categoryPixmapFor(int index, const QColor& color) {
-    static const char* const kCategorySvgs[kCategoryCount] = {
-        ":/icons/settings/general.svg",     ":/icons/settings/appearance.svg",
-        ":/icons/settings/dashboard.svg",   ":/icons/settings/terminal.svg",
-        ":/icons/settings/connections.svg", ":/icons/settings/diagnostics.svg",
-        ":/icons/settings/updates.svg",
-    };
-    const int clampedIndex = qBound(0, index, kCategoryCount - 1);
-    return loadTintedIcon(kCategorySvgs[clampedIndex], color, kCategoryIconSize)
-        .pixmap(kCategoryIconSize, kCategoryIconSize);
-}
-
-// Row order matches categoryNames / the QStackedWidget page order below. Each
-// row carries two glyphs: `normal` for an idle row, `selected` for the one the
-// accent fill sits behind (a QListWidget won't recolour a plain pixmap icon
-// the way it does the row's text).
-void applyCategoryIcons(QListWidget* list, const QColor& normal, const QColor& selected) {
-    const int rows = qMin(list->count(), kCategoryCount);
-    for (int i = 0; i < rows; ++i) {
-        QIcon icon;
-        icon.addPixmap(categoryPixmapFor(i, normal), QIcon::Normal);
-        icon.addPixmap(categoryPixmapFor(i, selected), QIcon::Selected);
-        list->item(i)->setIcon(icon);
-    }
-}
-
 QWidget* createCategoryPage(QWidget* parent, const QString& title, const QString& description) {
     auto* page = new QWidget(parent);
     auto* layout = new QVBoxLayout(page);
     layout->setContentsMargins(kFullPageMarginH, kFullPageMarginV, kFullPageMarginH,
                                kFullPageMarginV);
-    layout->setSpacing(20);
-
-    auto* titleLabel = new QLabel(QString("<h2>%1</h2>").arg(title.toHtmlEscaped()), page);
-    titleLabel->setTextFormat(Qt::RichText);
-    layout->addWidget(titleLabel);
-
-    auto* descriptionLabel = new QLabel(description, page);
-    descriptionLabel->setWordWrap(true);
-    descriptionLabel->setObjectName("settingsDescription");
-    layout->addWidget(descriptionLabel);
+    layout->setSpacing(DialogChrome::kSectionSpacing);
+    layout->addWidget(new DialogHeader(title, description, page, DialogHeader::Level::Page));
     return page;
 }
 
@@ -201,69 +161,27 @@ SettingsPage::SettingsPage(QWidget* parent) : QWidget(parent) {
     m_initialFrameLogCapacity = settings.frameLogCapacity();
     m_initialNotificationHistoryCapacity = settings.notificationHistoryCapacity();
 
-    auto* rootLayout = new QVBoxLayout(this);
+    QVBoxLayout* rootLayout = DialogChrome::setupRootLayout(this);
     m_rootLayout = rootLayout;
-    rootLayout->setContentsMargins(kFullRootMargin, kFullRootMargin, kFullRootMargin,
-                                   kFullRootMargin);
-    rootLayout->setSpacing(12);
 
-    auto* header = new QLabel(tr("Settings"), this);
-    m_titleLabel = header;
-    header->setObjectName("settingsTitle");
-    QFont headerFont = scaledFont(header->font(), 1.6);
-    headerFont.setBold(true);
-    header->setFont(headerFont);
-    rootLayout->addWidget(header);
+    m_header = new DialogHeader(tr("Settings"), QString(), this);
+    rootLayout->addWidget(m_header);
 
     auto* body = new QHBoxLayout;
     m_bodyLayout = body;
-    body->setSpacing(kFullBodySpacing);
-    auto* categories = new QListWidget(this);
-    categories->setFixedWidth(kFullCategoryListWidth);
+    body->setSpacing(DialogChrome::kBodySpacing);
+    auto* categories = new NavSidebar(this);
     m_categoryList = categories;
-    // This is a fixed-width nav strip, never meant to scroll sideways --
-    // but Qt's own content-width calculation for icon-only rows (compact
-    // mode, applyCompactLayout() below) can land a hair over
-    // kCompactCategoryListWidth, which otherwise shows a needless
-    // horizontal scrollbar under it.
-    categories->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    // Never taller than its rows either (fitCategoryListHeight()), so no
-    // vertical scrollbar -- the page scrolls instead on a short screen.
-    categories->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    categories->setIconSize(QSize(kCategoryIconSize, kCategoryIconSize));
-    // The app-wide QListWidget::item rule only reserves 4px around the label;
-    // with an icon in front of it that leaves the glyph hard against the
-    // frame and the text crowding it. Widen the padding (and space the rows)
-    // just for this navigation list.
-    categories->setStyleSheet(QStringLiteral("QListWidget::item { padding: 7px 10px; }"));
-    categories->setSpacing(3);
-    // The frame should hug the category rows, not run down to the bottom of
-    // the page with an empty strip under the last icon: a fixed height of
-    // exactly the rows (fitCategoryListHeight()), added AlignTop below. On a
-    // window too short for it, the page itself scrolls (DialogPresenter's
-    // Page on a phone).
-    const QStringList categoryNames = {tr("General"),     tr("Appearance"),  tr("Dashboard"),
-                                       tr("Terminal"),    tr("Connections"), tr("Diagnostics"),
-                                       tr("Updates")};
-    m_categoryNames = categoryNames;
-    for (const QString& name : categoryNames) {
-        auto* item = new QListWidgetItem(name, categories);
-        item->setSizeHint(QSize(-1, kCategoryRowHeight));
-    }
-    fitCategoryListHeight();
-
-    const auto refreshCategoryIcons = [categories] {
-        const ThemePalette& theme = ThemeManager::instance().currentTheme();
-        applyCategoryIcons(categories, theme.textSecondary, theme.background);
-    };
-    refreshCategoryIcons();
-    // The Appearance page's own theme combo can swap the palette while this
-    // tab is open, so keep the glyphs in step (the switcher/ribbon do the same).
-    connect(&ThemeManager::instance(), &ThemeManager::themeChanged, this,
-            [refreshCategoryIcons](const ThemePalette&) { refreshCategoryIcons(); });
-    // AlignTop: a box layout centers a widget shorter than its row, which
-    // left the list floating mid-page on a phone.
-    body->addWidget(categories, 0, Qt::AlignTop);
+    // Row order matches the QStackedWidget page order below.
+    categories->addPage(tr("General"), QStringLiteral("lucide:settings"));
+    categories->addPage(tr("Appearance"), QStringLiteral("lucide:palette"));
+    categories->addPage(tr("Dashboard"), QStringLiteral("lucide:layout-dashboard"));
+    categories->addPage(tr("Terminal"), QStringLiteral("lucide:terminal"));
+    categories->addPage(tr("Connections"), QStringLiteral("lucide:cable"));
+    categories->addPage(tr("Diagnostics"), QStringLiteral("lucide:activity"));
+    categories->addPage(tr("Updates"), QStringLiteral("lucide:refresh-cw"));
+    Q_ASSERT(categories->count() == kCategoryCount);
+    body->addWidget(categories);
 
     auto* pages = new QStackedWidget(this);
     body->addWidget(pages, 1);
@@ -732,9 +650,9 @@ SettingsPage::SettingsPage(QWidget* parent) : QWidget(parent) {
     connect(categories, &QListWidget::currentRowChanged, pages, &QStackedWidget::setCurrentIndex);
     categories->setCurrentRow(0);
 
+    // Footer: the restart notice and its button, then Close.
     auto* restartRow = new QHBoxLayout;
-    m_restartNotice = new QLabel(this);
-    m_restartNotice->setWordWrap(true);
+    m_restartNotice = DialogChrome::hintLabel(QString(), this);
     restartRow->addWidget(m_restartNotice, 1);
 #if defined(Q_OS_ANDROID) || defined(Q_OS_IOS)
     // Android/iOS can't relaunch the app (see MainWindow::restartApplication).
@@ -743,6 +661,8 @@ SettingsPage::SettingsPage(QWidget* parent) : QWidget(parent) {
     m_restartButton = new QPushButton(tr("Restart now"), this);
 #endif
     restartRow->addWidget(m_restartButton);
+    m_buttonBox = new QDialogButtonBox(QDialogButtonBox::Close, this);
+    restartRow->addWidget(m_buttonBox);
     rootLayout->addLayout(restartRow);
     connect(m_restartButton, &QPushButton::clicked, this, &SettingsPage::restartRequested);
     refreshRestartNotice();
@@ -764,18 +684,10 @@ void SettingsPage::resizeEvent(QResizeEvent* event) {
     }
 }
 
-void SettingsPage::showEvent(QShowEvent* event) {
-    QWidget::showEvent(event);
-    // Measured again once actually on screen: on a phone DialogPresenter
-    // reparents the window into its overlay first, which re-polishes the
-    // list (frame included) after the constructor's measurement.
-    fitCategoryListHeight();
-}
-
 void SettingsPage::applyFieldWidth() {
     int width = m_fieldWidth;
     if (m_compactLayout) {
-        const int available = this->width() - 2 * kCompactRootMargin - kCompactCategoryListWidth -
+        const int available = this->width() - 2 * kCompactRootMargin - DialogChrome::kNavCompactWidth -
                               kCompactBodySpacing - 2 * kCompactPageMarginH - kFieldRowChrome;
         width = qBound(1, available, m_fieldWidth);
     }
@@ -784,47 +696,11 @@ void SettingsPage::applyFieldWidth() {
     }
 }
 
-void SettingsPage::fitCategoryListHeight() {
-    if (m_categoryList == nullptr) {
-        return;
-    }
-    // Picks up the app stylesheet's frame/border before measuring it.
-    m_categoryList->ensurePolished();
-    // QListView lays rows out with `spacing` before the first row and after
-    // every row, so n rows take n * (height + spacing) + spacing -- the
-    // estimate. The rows' real laid-out bottom wins when it's lower: on
-    // Android the estimate came up a few pixels short, which put a
-    // scrollbar on a list that had room for every row.
-    const int rows = m_categoryList->count();
-    const int spacing = m_categoryList->spacing();
-    int contentHeight = rows * (kCategoryRowHeight + spacing) + spacing;
-    if (rows > 0) {
-        m_categoryList->doItemsLayout();
-        m_categoryList->scrollToTop();
-        const QRect lastRow = m_categoryList->visualItemRect(m_categoryList->item(rows - 1));
-        if (lastRow.isValid()) {
-            contentHeight = qMax(contentHeight, lastRow.bottom() + 1 + spacing);
-        }
-    }
-    const QMargins margins = m_categoryList->contentsMargins();
-    m_categoryList->setFixedHeight(contentHeight + margins.top() + margins.bottom() +
-                                   2 * m_categoryList->frameWidth());
-}
-
 void SettingsPage::applyCompactLayout(bool compact) {
     m_compactLayout = compact;
-    if (m_categoryList != nullptr) {
-        m_categoryList->setFixedWidth(compact ? kCompactCategoryListWidth : kFullCategoryListWidth);
-        // Icon-only when compact -- the full label doesn't fit a sidebar
-        // this narrow. Tooltip always carries the name either way, so it's
-        // still discoverable on a long-press/hover.
-        const int rows = qMin(m_categoryList->count(), m_categoryNames.size());
-        for (int i = 0; i < rows; ++i) {
-            QListWidgetItem* item = m_categoryList->item(i);
-            item->setText(compact ? QString() : m_categoryNames.at(i));
-            item->setToolTip(m_categoryNames.at(i));
-        }
-    }
+    // Icon-only when compact -- the full label doesn't fit a sidebar this
+    // narrow. The tooltip carries the name either way.
+    if (m_categoryList != nullptr) m_categoryList->setCompact(compact);
     // WrapAllRows stacks each row's label above its field instead of beside
     // it, the same fix deviceconfigdialog.cpp already applies unconditionally
     // for its own (always-narrow) form -- here it's conditional because this
@@ -838,19 +714,20 @@ void SettingsPage::applyCompactLayout(bool compact) {
         form->setVerticalSpacing(compact ? 8 : 12);
     }
 
-    const int rootMargin = compact ? kCompactRootMargin : kFullRootMargin;
     if (m_rootLayout != nullptr) {
-        m_rootLayout->setContentsMargins(rootMargin, rootMargin, rootMargin, rootMargin);
+        m_rootLayout->setContentsMargins(compact ? QMargins(kCompactRootMargin, kCompactRootMargin,
+                                                            kCompactRootMargin, kCompactRootMargin)
+                                                 : DialogChrome::kMargins);
     }
     if (m_bodyLayout != nullptr) {
-        m_bodyLayout->setSpacing(compact ? kCompactBodySpacing : kFullBodySpacing);
+        m_bodyLayout->setSpacing(compact ? kCompactBodySpacing : DialogChrome::kBodySpacing);
     }
     const int pageMarginH = compact ? kCompactPageMarginH : kFullPageMarginH;
     const int pageMarginV = compact ? kCompactPageMarginV : kFullPageMarginV;
     for (QVBoxLayout* pageLayout : std::as_const(m_pageLayouts)) {
         if (pageLayout != nullptr) {
             pageLayout->setContentsMargins(pageMarginH, pageMarginV, pageMarginH, pageMarginV);
-            pageLayout->setSpacing(compact ? 12 : 20);
+            pageLayout->setSpacing(compact ? 8 : DialogChrome::kSectionSpacing);
         }
     }
     applyFieldWidth();
@@ -863,7 +740,7 @@ void SettingsPage::setUpdateStatusText(const QString& text) {
 }
 
 void SettingsPage::setTitleVisible(bool visible) {
-    m_titleLabel->setVisible(visible);
+    m_header->setVisible(visible);
 }
 
 void SettingsPage::refreshRestartNotice() {

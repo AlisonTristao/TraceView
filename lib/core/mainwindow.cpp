@@ -11,6 +11,7 @@
 #include <QDebug>
 #include <QElapsedTimer>
 #include <QDialog>
+#include <QDialogButtonBox>
 #include <QDesktopServices>
 #include <QEvent>
 #include <QFileDialog>
@@ -5078,6 +5079,8 @@ void MainWindow::onOpenSettings() {
                 &MainWindow::restartApplication);
         connect(m_settingsPage, &SettingsPage::checkForUpdatesRequested, this,
                 [this] { checkForUpdates(/*manual=*/true); });
+        connect(m_settingsPage->buttonBox(), &QDialogButtonBox::rejected, m_settingsWindow,
+                &QDialog::reject);
     }
     // Embedded, the Page top bar already reads "<- Settings" -- the page's
     // own big heading would just repeat it.
@@ -5180,7 +5183,10 @@ void MainWindow::onDeviceToolsRequested(const QString& deviceId) {
                 [this, deviceId]() { m_traceKitDialogs.remove(deviceId); });
         DeviceConnection* connection = m_deviceConnections.value(deviceId);
         dialog->setConnected(connection != nullptr && connection->isConnected());
-        dialog->show();
+        // Through the presenter like every other dialog: on a phone (or a
+        // compact preview) it opens inside the app instead of as a stray
+        // top-level window.
+        DialogPresenter::show(dialog, DialogPresenter::Style::Page);
         return;
     }
 }
