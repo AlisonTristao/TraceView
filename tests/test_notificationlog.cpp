@@ -18,6 +18,9 @@ private slots:
     void appendKeepsOrderAndEmits();
     void ringDropsOldestPastCapacity();
     void clearEmitsOnlyWhenNonEmpty();
+    void unreadCountsAndWorstSeverity();
+    void removeDismissesOneById();
+    void popUpRules();
 };
 
 void TestNotificationLog::appendKeepsOrderAndEmits() {
@@ -59,6 +62,69 @@ void TestNotificationLog::clearEmitsOnlyWhenNonEmpty() {
     log.clear();
     QCOMPARE(spy.count(), 1);
     QVERIFY(log.entries().isEmpty());
+}
+
+void TestNotificationLog::unreadCountsAndWorstSeverity() {
+    NotificationLog log;
+    QSignalSpy spy(&log, &NotificationLog::unreadChanged);
+    QCOMPARE(log.unreadCount(), 0);
+
+    log.append(entry(QStringLiteral("a"), StatusSeverity::Success));
+    log.append(entry(QStringLiteral("b"), StatusSeverity::Warning));
+    log.append(entry(QStringLiteral("c"), StatusSeverity::Info));
+    QCOMPARE(log.unreadCount(), 3);
+    // The worst one wins, whatever came after it.
+    QCOMPARE(log.unreadWorstSeverity(), StatusSeverity::Warning);
+    QCOMPARE(spy.count(), 3);
+
+    log.markAllRead();
+    QCOMPARE(log.unreadCount(), 0);
+    QCOMPARE(log.unreadWorstSeverity(), StatusSeverity::Info);
+    QCOMPARE(log.entries().size(), 3);  // read, not gone
+    log.markAllRead();
+    QCOMPARE(spy.count(), 4);  // a second markAllRead() with nothing unread is silent
+
+    log.append(entry(QStringLiteral("d"), StatusSeverity::Error));
+    QCOMPARE(log.unreadWorstSeverity(), StatusSeverity::Error);
+    log.clear();
+    QCOMPARE(log.unreadCount(), 0);
+}
+
+void TestNotificationLog::removeDismissesOneById() {
+    NotificationLog log;
+    log.append(entry(QStringLiteral("first")));
+    log.append(entry(QStringLiteral("second")));
+    log.append(entry(QStringLiteral("third")));
+    const quint64 first = log.entries().at(0).id;
+    const quint64 second = log.entries().at(1).id;
+    QVERIFY(first != 0);
+    QVERIFY(first != second);
+
+    QSignalSpy spy(&log, &NotificationLog::removed);
+    QVERIFY(log.remove(second));
+    QCOMPARE(spy.count(), 1);
+    QCOMPARE(spy.at(0).at(0).toULongLong(), second);
+    QCOMPARE(log.entries().size(), 2);
+    QCOMPARE(log.entries().at(1).text, QStringLiteral("third"));
+    QVERIFY(!log.remove(second));  // already gone
+    QCOMPARE(spy.count(), 1);
+}
+
+void TestNotificationLog::popUpRules() {
+    const auto pops = [](StatusSeverity severity, bool bellOnly, bool errorPopups, bool panelOpen) {
+        return notificationPopsUp(severity, bellOnly, errorPopups, panelOpen);
+    };
+    // "Every notification": everything pops up...
+    QVERIFY(pops(StatusSeverity::Info, false, false, false));
+    QVERIFY(pops(StatusSeverity::Error, false, false, false));
+    // ...unless the panel is open: it shows up there instead.
+    QVERIFY(!pops(StatusSeverity::Error, false, true, true));
+    // "Only the bell" (the default) with errors on: only errors pop up.
+    QVERIFY(!pops(StatusSeverity::Info, true, true, false));
+    QVERIFY(!pops(StatusSeverity::Warning, true, true, false));
+    QVERIFY(pops(StatusSeverity::Error, true, true, false));
+    // ...and with errors off, nothing does.
+    QVERIFY(!pops(StatusSeverity::Error, true, false, false));
 }
 
 }  // namespace

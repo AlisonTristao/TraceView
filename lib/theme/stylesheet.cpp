@@ -118,7 +118,7 @@ QWidget[dashboardCell="true"] {
    as part of the panel. @surfaceAlt@ is the tone furthest from the canvas,
    and the outline runs all the way round in @borderStrong@ (a panel can sit
    on any edge or float, so no single side is "the canvas-facing one"). */
-QWidget#layersPanel, QWidget#propertiesPanel {
+QWidget#layersPanel, QWidget#propertiesPanel, QWidget#notificationPanel {
     background-color: @surfaceAlt@;
     border: 1px solid @borderStrong@;
 }
@@ -128,13 +128,20 @@ QWidget#layersPanel, QWidget#propertiesPanel {
    so they get the panel's tone themselves. ".QWidget" matches the exact
    class only, so inputs keep their own fill. */
 QWidget#layersPanel .QWidget, QWidget#propertiesPanel .QWidget,
-QWidget#propertiesPanel QScrollArea {
+QWidget#propertiesPanel QScrollArea, QWidget#notificationPanel .QWidget,
+QWidget#notificationPanel QWidget#notificationList {
     background-color: @surfaceAlt@;
 }
 /* The layer list fills its whole panel: with its own fill and frame it
    would be the panel's color, and a second outline inside the first. */
 QWidget#layersPanel QListWidget {
     background-color: @surfaceAlt@;
+    border: none;
+}
+/* The notification cards paint themselves (NotificationCardDelegate): the
+   list under them is just the panel/page showing through. */
+QListWidget#notificationCards {
+    background: transparent;
     border: none;
 }
 

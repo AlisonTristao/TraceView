@@ -7,6 +7,32 @@ release flow.
 
 ## [Unreleased]
 
+### Added
+
+- **Notification bell**: a bell at the right of the status bar (next to the
+  options button on a phone) with a count of unread notifications, in the
+  colour of the worst of them.
+  - It opens a **notification panel** that lists every notification of the
+    session as cards. You can filter it by severity, dismiss one card with
+    its X, or clear them all.
+  - The panel docks to any edge or floats, like the Layers/Properties
+    panels.
+  - **Pinned**, the panel stays open, including across restarts. A pinned
+    panel either floats over the dashboard or sits beside it, shrinking
+    the dashboard so nothing is hidden under it.
+  - Unpinned, it closes on a click elsewhere.
+- **Pop-up modes**: notifications no longer have to cover the dashboard.
+  - *Only the bell* is the new default: notifications go behind the bell,
+    and only errors still pop up (this can be switched off too).
+  - *Every notification* is the old behaviour.
+  - Set it in the panel's menu or in Settings › Diagnostics.
+  - A pop-up card now has an X, and clicking it opens the panel.
+- The robots' LOG records (Info, Warn, Error) now land in the notification
+  history too.
+- MCP: `clear_notifications`; `read_notifications` reports the unread
+  count; `open_view` takes `notification_panel`. The pop-up and pin settings
+  are readable and writable through the settings tools.
+
 ### Changed
 
 - **Every dialog now shares the TraceKit panel's look**:

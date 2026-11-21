@@ -24,6 +24,7 @@
 
 class QAction;
 class QDialog;
+class QHBoxLayout;
 class QEvent;
 class QLabel;
 class QMenu;
@@ -70,6 +71,8 @@ class UpdateDownloader;
 class WorkspaceDock;
 class BrandCornerMark;
 class NotificationToasts;
+class NotificationBell;
+class NotificationPanel;
 class StartupLoadingOverlay;
 class ToolRegistry;
 class WorkspaceSwitcher;
@@ -341,6 +344,13 @@ private:
     void positionBrandCornerMark();
     // Gives m_notificationToasts m_contentRow's rectangle inside m_appShell.
     void positionNotificationToasts();
+    // The bell's panel: open/close it (on a phone: the Page dialog instead).
+    // Opening marks everything read.
+    void setNotificationPanelOpen(bool open);
+    // Pinned + "beside the dashboard": shrinks the canvas by the panel's
+    // strip at its docked edge, so nothing sits under it; clears that margin
+    // in every other case.
+    void applyNotificationPush();
     void updateRibbonIcons();
 
     void onRibbonTabChanged(int index);
@@ -633,6 +643,11 @@ private:
     void postStatus(const QString& text, int timeoutMs,
                     traceview::StatusSeverity severity = traceview::StatusSeverity::Info,
                     const QString& source = QString());
+    // What postStatus() and the robot's LOG records share: into the log (the
+    // bell), and a card over the dashboard only when notificationPopsUp()
+    // says so for the current pop-up preferences.
+    void notify(const QString& text, int timeoutMs, traceview::StatusSeverity severity,
+                const QString& source);
     // Replaces statusBar()->showMessage(text, timeoutMs) now that m_statusRow
     // is a plain QWidget, not a QStatusBar: sets m_statusMessageLabel's text
     // and (re)starts m_statusMessageTimer to clear it after timeoutMs (0 =
@@ -851,6 +866,15 @@ private:
     // Status messages as translucent cards over the dashboard's bottom-right
     // corner (see notificationtoasts.h) -- postStatus() feeds it.
     NotificationToasts* m_notificationToasts = nullptr;
+    // The bell (status row, or next to the options button in compact chrome)
+    // and its panel (docked/floating on desktop, see notificationpanel.h).
+    NotificationBell* m_notificationBell = nullptr;
+    NotificationPanel* m_notificationPanel = nullptr;
+    bool m_notificationPanelOpen = false;
+    // Compact chrome: the bell opens this Page instead of the panel.
+    QPointer<QDialog> m_notificationPage;
+    // m_contentRow's own layout, whose margins make room for a pushed panel.
+    QHBoxLayout* m_contentLayout = nullptr;
     // Covers the window until the startup dashboard is built; null after.
     StartupLoadingOverlay* m_startupOverlay = nullptr;
     QAction* m_addWidgetAction = nullptr;

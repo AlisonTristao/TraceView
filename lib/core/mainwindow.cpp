@@ -113,6 +113,7 @@
 #include "settingspage.h"
 #include "shortcutsdialog.h"
 #include "touchscroll.h"
+#include "theme/dialogchrome.h"
 #include "theme/dialogpresenter.h"
 #include "theme/iconlibrary.h"
 #include "traceview/fontmanager.h"
@@ -135,6 +136,9 @@
 #include "paletteeditordialog.h"
 #include "workspacedock.h"
 #include "brandcornermark.h"
+#include "notificationbell.h"
+#include "notificationlistview.h"
+#include "notificationpanel.h"
 #include "notificationtoasts.h"
 #include "protocol/logseverity.h"
 #include "workspaceswitcher.h"
@@ -509,6 +513,7 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     // not just the canvas.
     m_contentRow = new QWidget(this);
     auto* contentLayout = new QHBoxLayout(m_contentRow);
+    m_contentLayout = contentLayout;
     contentLayout->setContentsMargins(0, 0, 0, 0);
     contentLayout->setSpacing(0);
 
@@ -722,6 +727,28 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     m_dockController = new PanelDockController(m_contentRow, this, this);
     m_dockController->registerPanel(m_layersPanel, "layers", DockEdge::Left);
     m_dockController->registerPanel(m_propertiesPanel, "properties", DockEdge::Right);
+    // The bell's panel: same docking as the two above, but its visibility is
+    // its own (the bell), never the edit-mode gate -- see updatePanelVisibility().
+    m_notificationPanel = new NotificationPanel(m_notificationLog, m_contentRow);
+    m_notificationPanel->hide();
+    m_notificationPanel->setPinned(AppSettings::instance().notificationPanelPinned());
+    m_dockController->registerPanel(m_notificationPanel, "notifications", DockEdge::Right);
+    connect(m_notificationPanel, &NotificationPanel::dismissRequested, this,
+            [this] { setNotificationPanelOpen(false); });
+    connect(m_notificationPanel->listView(), &NotificationListView::closeRequested, this,
+            [this] { setNotificationPanelOpen(false); });
+    connect(m_notificationPanel->listView(), &NotificationListView::historyRequested, this,
+            &MainWindow::onShowNotificationHistory);
+    connect(m_notificationPanel->listView(), &NotificationListView::pinToggled, this,
+            [](bool pinned) { AppSettings::instance().setNotificationPanelPinned(pinned); });
+    connect(&AppSettings::instance(), &AppSettings::notificationPreferencesChanged, this, [this] {
+        m_notificationPanel->setPinned(AppSettings::instance().notificationPanelPinned());
+        applyNotificationPush();
+    });
+    // Whatever arrives while the panel is open is seen right away.
+    connect(m_notificationLog, &NotificationLog::entryAdded, this, [this] {
+        if (m_notificationPanelOpen) m_notificationLog->markAllRead();
+    });
     m_dockController->restoreState();
     connect(m_dockController, &PanelDockController::dragFinished, this,
             &MainWindow::updatePanelVisibility);
@@ -779,6 +806,23 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     buildWorkspaceSwitcher();
     m_statusRow->layout()->addWidget(m_screenSizeButton);
 
+    // The bell sits just left of the workspace switcher: the corner the
+    // pop-up cards come from, and m_statusRow survives fullscreen.
+    m_notificationBell = new NotificationBell(m_notificationLog, m_statusRow);
+    m_notificationPanel->setToggleButton(m_notificationBell);
+    connect(m_notificationBell, &QToolButton::toggled, this, &MainWindow::setNotificationPanelOpen);
+    {
+        auto* statusRowLayout = qobject_cast<QHBoxLayout*>(m_statusRow->layout());
+        statusRowLayout->insertWidget(statusRowLayout->indexOf(m_workspaceSwitcher), m_notificationBell);
+    }
+    // A panel pinned last time comes back open -- once the chrome (phone or
+    // desktop) is settled, and never as a Page on a phone.
+    QTimer::singleShot(0, this, [this] {
+        if (AppSettings::instance().notificationPanelPinned() && !compactChromeActive()) {
+            setNotificationPanelOpen(true);
+        }
+    });
+
     // The native QStatusBar this row replaced showed one of these in its
     // bottom-right corner by default (sizeGripEnabled() defaults to true,
     // and nothing here ever turned it off) -- added last so it lands at the
@@ -798,6 +842,9 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     // Above the brand mark too; embedded dialogs, created later, still cover
     // it. Placed over m_contentRow by positionNotificationToasts().
     m_notificationToasts = new NotificationToasts(m_appShell);
+    // A card is a way into the panel: every notification is there.
+    connect(m_notificationToasts, &NotificationToasts::cardClicked, this,
+            [this] { setNotificationPanelOpen(true); });
     m_appShell->installEventFilter(this);
     // The ribbon's bottom edge moves when its tab row is shown/hidden.
     m_ribbon->installEventFilter(this);
@@ -907,15 +954,27 @@ MainWindow::~MainWindow() {
     m_consumerSubscriptions.clear();
 }
 
-void MainWindow::postStatus(const QString& text, int timeoutMs, StatusSeverity severity,
-                            const QString& source) {
+void MainWindow::notify(const QString& text, int timeoutMs, StatusSeverity severity,
+                        const QString& source) {
+    m_notificationLog->append({QDateTime::currentDateTime(), text, severity, source});
+    const AppSettings& settings = AppSettings::instance();
+    const bool popsUp = notificationPopsUp(
+        severity, settings.notificationPopups() == AppSettings::NotificationPopups::BellOnly,
+        settings.notificationErrorPopups(), m_notificationPanelOpen);
+    if (!popsUp) {
+        return;
+    }
     if (m_notificationToasts) {
         positionNotificationToasts();
         m_notificationToasts->post(text, timeoutMs, severity, source);
     } else {
         showStatusMessage(text, timeoutMs);  // before the constructor built the overlay
     }
-    m_notificationLog->append({QDateTime::currentDateTime(), text, severity, source});
+}
+
+void MainWindow::postStatus(const QString& text, int timeoutMs, StatusSeverity severity,
+                            const QString& source) {
+    notify(text, timeoutMs, severity, source);
 
     // Every status-bar message funnels through here regardless of which
     // device/subsystem raised it (session established/failed, subscription
@@ -2913,6 +2972,26 @@ void MainWindow::updateChromeVisibility() {
             restoreScreenSizeButtonToStatusRow();
         }
     }
+    // The bell follows the options button too (m_statusRow is hidden), back
+    // to just left of the workspace switcher otherwise.
+    if (m_notificationBell) {
+        QWidget* bellRow = compact ? optionsRow : m_statusRow;
+        if (m_notificationBell->parentWidget() != bellRow) {
+            m_notificationBell->parentWidget()->layout()->removeWidget(m_notificationBell);
+            auto* rowLayout = qobject_cast<QHBoxLayout*>(bellRow->layout());
+            if (compact) {
+                rowLayout->addWidget(m_notificationBell);
+            } else {
+                rowLayout->insertWidget(rowLayout->indexOf(m_workspaceSwitcher), m_notificationBell);
+            }
+        }
+        // Switching between phone and desktop chrome (a Developer preview)
+        // with it open: close it rather than carry the Page into the
+        // desktop or the docked panel into a phone.
+        if (m_notificationPanelOpen && compact != bool(m_notificationPage)) {
+            setNotificationPanelOpen(false);
+        }
+    }
     // Keep manual size selection available while previewing the User interface.
     m_screenSizeButton->setVisible(isDeveloper);
     m_chromeTopBar->setVisible(compact && optionsRow == m_chromeTopBar);
@@ -3142,6 +3221,89 @@ void MainWindow::updatePanelVisibility() {
     if (showLayers) {
         m_layersPanel->raise();
     }
+    // The bell's panel is the bell's alone, on every tab; on a phone it is a
+    // Page dialog instead (setNotificationPanelOpen()).
+    const bool showNotifications = m_notificationPanelOpen && !compactChromeActive();
+    m_notificationPanel->setVisible(showNotifications);
+    if (showNotifications) {
+        m_notificationPanel->raise();
+    }
+    // Hidden panels give their edge slot up (PanelDockController), so who is
+    // where depends on who is showing; positionOverlayPanels() also applies
+    // the push margin.
+    positionOverlayPanels();
+}
+
+void MainWindow::setNotificationPanelOpen(bool open) {
+    m_notificationPanelOpen = open;
+    if (m_notificationBell) {
+        const QSignalBlocker blocker(m_notificationBell);
+        m_notificationBell->setChecked(open);
+    }
+    if (open) {
+        m_notificationLog->markAllRead();
+        // Every card on screen is in the panel now.
+        if (m_notificationToasts) m_notificationToasts->clear();
+    }
+    if (compactChromeActive()) {
+        if (open && !m_notificationPage) {
+            auto* page = new QDialog(this);
+            page->setAttribute(Qt::WA_DeleteOnClose);
+            page->setWindowTitle(tr("Notifications"));
+            QVBoxLayout* layout = DialogChrome::setupRootLayout(page);
+            auto* view = new NotificationListView(m_notificationLog, /*showPin=*/false, page);
+            layout->addWidget(view, 1);
+            connect(view, &NotificationListView::closeRequested, page, &QDialog::reject);
+            connect(view, &NotificationListView::historyRequested, this,
+                    &MainWindow::onShowNotificationHistory);
+            connect(page, &QDialog::finished, this, [this] { setNotificationPanelOpen(false); });
+            m_notificationPage = page;
+            DialogPresenter::show(page, DialogPresenter::Style::Page);
+        } else if (!open && m_notificationPage) {
+            m_notificationPage->reject();
+        }
+        return;
+    }
+    if (!open && m_notificationPanel->isVisible() && m_notificationPanel->isPinned()) {
+        // Closing a pinned panel (its X, the bell) unpins it: otherwise it
+        // would come back open on the next start.
+        AppSettings::instance().setNotificationPanelPinned(false);
+    }
+    updatePanelVisibility();
+}
+
+void MainWindow::applyNotificationPush() {
+    if (!m_contentLayout || !m_notificationPanel) {
+        return;
+    }
+    QMargins margins;
+    const bool push = m_notificationPanel->isVisible() && m_notificationPanel->isPinned() &&
+                      AppSettings::instance().notificationPinStyle() ==
+                          AppSettings::NotificationPinStyle::Push;
+    if (push) {
+        // The panel's own geometry, not a thickness: another panel sharing
+        // the edge may sit outside it.
+        const QRect panel = m_notificationPanel->geometry();
+        switch (m_dockController->edgeOf(m_notificationPanel)) {
+            case DockEdge::Left:
+                margins.setLeft(panel.right() + 1);
+                break;
+            case DockEdge::Right:
+                margins.setRight(m_contentRow->width() - panel.left());
+                break;
+            case DockEdge::Top:
+                margins.setTop(panel.bottom() + 1);
+                break;
+            case DockEdge::Bottom:
+                margins.setBottom(m_contentRow->height() - panel.top());
+                break;
+            case DockEdge::Floating:
+                break;
+        }
+    }
+    if (m_contentLayout->contentsMargins() != margins) {
+        m_contentLayout->setContentsMargins(margins);
+    }
 }
 
 bool MainWindow::eventFilter(QObject* watched, QEvent* event) {
@@ -3162,6 +3324,7 @@ bool MainWindow::eventFilter(QObject* watched, QEvent* event) {
 
 void MainWindow::positionOverlayPanels() {
     m_dockController->relayout();
+    applyNotificationPush();
 }
 
 void MainWindow::positionBrandCornerMark() {
@@ -4025,8 +4188,9 @@ DeviceConnection* MainWindow::createDeviceConnection(const Device& device) {
         [this, name = device.name](const QString& text, int timeoutMs, StatusSeverity severity) {
             postStatus(text, timeoutMs, severity, name);
         });
-    // The robot's own LOG records as cards too (they stay in the log panel and
-    // the notification history is left to status messages). DEBG is too
+    // The robot's own LOG records are notifications too: behind the bell, and
+    // a card when the pop-up preferences say so (notify()). They are not
+    // written to the app log -- the device's log panel has them. DEBG is too
     // chatty for that, and CMDO is a command's output, whose result already
     // has a card of its own. Lines with timestamp and sequence 0 are not the
     // robot's: they are CommandClient's own (a command timing out or failing,
@@ -4035,7 +4199,7 @@ DeviceConnection* MainWindow::createDeviceConnection(const Device& device) {
     connect(backend, &Backend::logReceived, this,
             [this, name = device.name](quint64 timestampUs, quint32, quint32, quint32 sequence,
                                        quint8 severity, const QString& message) {
-                if (!m_notificationToasts || (timestampUs == 0 && sequence == 0)) {
+                if (timestampUs == 0 && sequence == 0) {
                     return;
                 }
                 StatusSeverity cardSeverity = StatusSeverity::Info;
@@ -4056,8 +4220,7 @@ DeviceConnection* MainWindow::createDeviceConnection(const Device& device) {
                     case LogSeverity::Command:
                         return;
                 }
-                positionNotificationToasts();
-                m_notificationToasts->post(message.trimmed(), timeoutMs, cardSeverity, name);
+                notify(message.trimmed(), timeoutMs, cardSeverity, name);
             });
     // This device's script runtime's onStatus() -- the same statusMessage
     // signal the status bar uses, so a script sees session established/

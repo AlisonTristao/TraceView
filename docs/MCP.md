@@ -108,7 +108,7 @@ TraceView (the running window)      lib/agent/agentbridgeserver.cpp
 | Firmware | `ota_status`, `ota_upload`¹ |
 | Appearance | `get_appearance`, `set_appearance`, `apply_appearance_preset`, `save_appearance_preset`, `delete_appearance_preset`¹, `pin_workspace_appearance`, `create_palette`, `update_palette`, `delete_palette`¹, `set_language`, `set_font` |
 | Settings | `get_settings`, `update_settings` (everything in the Settings window except appearance) |
-| Diagnostics | `read_notifications`, `read_app_log`, `read_btp_traffic` |
+| Diagnostics | `read_notifications`, `clear_notifications`, `read_app_log`, `read_btp_traffic` |
 
 ¹ Asks the user in a dialog every time: these can't be undone, or replace
 unsaved work, or flash firmware.

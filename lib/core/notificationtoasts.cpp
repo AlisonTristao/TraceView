@@ -3,11 +3,14 @@
 #include <algorithm>
 
 #include <QFontMetrics>
+#include <QMouseEvent>
 #include <QPainter>
+#include <QRegion>
 #include <QPainterPath>
 #include <QTimer>
 #include <QtMath>
 
+#include "theme/iconlibrary.h"
 #include "traceview/thememanager.h"
 
 namespace traceview {
@@ -24,6 +27,7 @@ constexpr int kMaxWidth = 380;
 constexpr int kMaxTextLines = 4;
 constexpr int kCardAlpha = 205;      // of 255: the dashboard shows through
 constexpr int kTickMs = 33;
+constexpr int kClose = 12;           // the X at the top right
 
 QColor severityColor(StatusSeverity severity, const ThemePalette& palette) {
     switch (severity) {
@@ -42,8 +46,8 @@ QColor severityColor(StatusSeverity severity, const ThemePalette& palette) {
 }  // namespace
 
 NotificationToasts::NotificationToasts(QWidget* parent) : QWidget(parent) {
-    setAttribute(Qt::WA_TransparentForMouseEvents);
     setAttribute(Qt::WA_TranslucentBackground);
+    setCursor(Qt::PointingHandCursor);
     setAttribute(Qt::WA_NoSystemBackground);
     setFocusPolicy(Qt::NoFocus);
     m_clock.start();
@@ -86,6 +90,12 @@ void NotificationToasts::post(const QString& text, int timeoutMs, StatusSeverity
     relayout();
 }
 
+void NotificationToasts::clear() {
+    m_cards.clear();
+    m_timer->stop();
+    relayout();
+}
+
 void NotificationToasts::setArea(const QRect& area) {
     m_area = area;
     relayout();
@@ -123,7 +133,7 @@ QString NotificationToasts::cardText(const Card& card) const {
 
 int NotificationToasts::cardHeight(const Card& card, int width) const {
     const QFontMetrics metrics(font());
-    const int textWidth = width - kStripe - 2 * kPadH;
+    const int textWidth = width - kStripe - 2 * kPadH - kClose;
     const QRect bounds = metrics.boundingRect(QRect(0, 0, textWidth, 10000),
                                               Qt::TextWordWrap | Qt::AlignLeft, cardText(card));
     const int lines = qMin(kMaxTextLines, qMax(1, qCeil(qreal(bounds.height()) /
@@ -145,9 +155,50 @@ void NotificationToasts::relayout() {
     height = qMin(height, m_area.height() - 2 * kMargin);
     setGeometry(m_area.right() - kMargin - width + 1, m_area.bottom() - kMargin - height + 1,
                 width, height);
+    // Only the cards take the mouse; the gaps between them stay the canvas's.
+    QRegion region;
+    for (const QRect& rect : cardRects()) region += rect;
+    setMask(region);
     show();
     raise();
     update();
+}
+
+QVector<QRect> NotificationToasts::cardRects() const {
+    QVector<QRect> rects(m_cards.size());
+    const int width = this->width();
+    int bottom = height();
+    for (int i = int(m_cards.size()) - 1; i >= 0; --i) {
+        const int h = cardHeight(m_cards.at(i), width);
+        rects[i] = QRect(0, bottom - h, width, h);
+        bottom -= h + kSpacing;
+    }
+    return rects;
+}
+
+QRect NotificationToasts::closeRect(const QRect& card) {
+    return QRect(card.right() - kPadH / 2 - kClose, card.top() + kPadV, kClose, kClose);
+}
+
+void NotificationToasts::mouseReleaseEvent(QMouseEvent* event) {
+    if (event->button() != Qt::LeftButton) {
+        QWidget::mouseReleaseEvent(event);
+        return;
+    }
+    const QPoint pos = event->position().toPoint();
+    const QVector<QRect> rects = cardRects();
+    for (int i = 0; i < rects.size(); ++i) {
+        if (!rects.at(i).contains(pos)) continue;
+        if (closeRect(rects.at(i)).adjusted(-6, -6, 6, 6).contains(pos)) {
+            m_cards.removeAt(i);
+            if (m_cards.isEmpty()) m_timer->stop();
+            relayout();
+        } else {
+            clear();
+            emit cardClicked();
+        }
+        return;
+    }
 }
 
 qreal NotificationToasts::opacityOf(const Card& card, qint64 nowMs) const {
@@ -193,7 +244,11 @@ void NotificationToasts::paintEvent(QPaintEvent* event) {
         painter.restore();
 
         painter.setPen(palette.textPrimary);
-        const QRectF textRect = rect.adjusted(kStripe + kPadH, kPadV, -kPadH, -kPadV);
+        IconLibrary::instance()
+            .icon(QStringLiteral("lucide:x"), palette.textSecondary, kClose)
+            .paint(&painter, closeRect(rect.toAlignedRect()));
+        painter.setPen(palette.textPrimary);
+        const QRectF textRect = rect.adjusted(kStripe + kPadH, kPadV, -kPadH - kClose, -kPadV);
         const QFontMetrics metrics(font());
         QString text = cardText(card);
         // Cap long messages at kMaxTextLines, with an ellipsis on the last.

@@ -134,6 +134,11 @@ void PanelDockController::registerPanel(DockablePanel* panel, const QString& set
             [this, panel](QPoint globalPos) { onCornerResizeFinished(panel, globalPos); });
 }
 
+DockEdge PanelDockController::edgeOf(DockablePanel* panel) const {
+    const auto it = m_states.constFind(panel);
+    return it == m_states.constEnd() ? DockEdge::Floating : it->edge;
+}
+
 void PanelDockController::relayout() {
     for (DockablePanel* panel : m_dockOrder) {
         const PanelState state = m_states.value(panel);
@@ -439,14 +444,16 @@ QRect PanelDockController::geometryForEdge(DockEdge edge, DockablePanel* panel) 
     const int thickness = m_states.value(panel).thickness;
 
     // Panels registered earlier sit closer to the edge; a later one sharing
-    // the same edge stacks further out, extending away from it.
+    // the same edge stacks further out, extending away from it. A hidden one
+    // gives its slot up (the notification panel opens on the right edge
+    // while the properties panel is hidden outside edit mode).
     int offset = 0;
     for (DockablePanel* other : m_dockOrder) {
         if (other == panel) {
             break;
         }
         const PanelState otherState = m_states.value(other);
-        if (otherState.edge == edge) {
+        if (otherState.edge == edge && !other->isHidden()) {
             offset += otherState.thickness;
         }
     }

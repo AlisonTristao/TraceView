@@ -21,6 +21,9 @@ struct NotificationEntry {
     QString text;
     StatusSeverity severity = StatusSeverity::Info;
     QString source;
+    // Unique within a run, assigned by NotificationLog::append(); lets the
+    // panel dismiss one entry without relying on its row.
+    quint64 id = 0;
 };
 
 }  // namespace traceview
