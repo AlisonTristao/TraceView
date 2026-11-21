@@ -7,6 +7,24 @@ release flow.
 
 ## [Unreleased]
 
+### Changed
+
+- **Every dialog now shares the TraceKit panel's look**:
+  - a header with title, description and status badge;
+  - a side list of pages with Lucide icons (Settings included);
+  - cards, and one footer with the standard buttons on the right.
+  - Main actions are filled in the accent colour, and destructive ones
+    (delete, erase, factory reset) in the danger colour.
+  - Dialog corners now follow the frame style (Square and Chamfered make
+    them square too).
+  - The TraceKit panel opens inside the app on phones like the other
+    dialogs, and Settings has a Close button.
+  - Text areas, trees and progress bars get the theme's frame instead of
+    the native look.
+
+  For contributors: the parts are in `lib/theme/dialogchrome.h`, and
+  `CONTRIBUTING.md` ("Dialogs") says how to build a new dialog with them.
+
 ## [4.15.1] - 2026-11-21
 
 ### Fixed

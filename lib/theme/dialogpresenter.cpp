@@ -22,6 +22,8 @@
 #include <QWheelEvent>
 #include <utility>
 
+#include "theme/dialogchrome.h"
+#include "theme/iconlibrary.h"
 #include "traceview/fontmanager.h"
 #include "traceview/thememanager.h"
 
@@ -34,7 +36,8 @@ bool s_embedded = false;
 
 // Card geometry. kCardInset is the gap between the card's rounded outline
 // and its scroll area -- enough that the scroll area's square corners stay
-// inside the kCardRadius arc.
+// inside the kCardRadius arc. The radius is scaled by the frame style like
+// every QSS radius (Square/Chamfered: square card).
 constexpr int kScreenMargin = 16;
 constexpr int kCardInset = 6;
 constexpr int kCardTitleSpacing = 4;
@@ -42,6 +45,7 @@ constexpr qreal kCardRadius = 10.0;
 constexpr int kBackdropAlpha = 140;
 // Page top bar.
 constexpr int kHeaderPadding = 8;
+constexpr int kBackIconSize = 22;
 
 class DialogOverlay;
 // Live overlays, oldest first -- the last one is the topmost, the one the
@@ -78,18 +82,20 @@ public:
             m_contentMargins = dialog->layout()->contentsMargins();
         }
 
+        // Same title treatment as a page heading (DialogHeader::Level::Page).
         m_title = new QLabel(dialog->windowTitle(), this);
+        m_title->setObjectName(QStringLiteral("dialogTitle"));
         m_title->setWordWrap(true);
-        QFont titleFont = m_title->font();
-        titleFont.setBold(true);
+        QFont titleFont = scaledFont(m_title->font(), DialogChrome::kPageTitleScale);
+        titleFont.setWeight(QFont::DemiBold);
         m_title->setFont(titleFont);
 
         if (m_style == DialogPresenter::Style::Page) {
             m_backButton = new QToolButton(this);
-            m_backButton->setText(QString(QChar(0x2190)));  // leftwards arrow
             m_backButton->setToolTip(QCoreApplication::translate("DialogPresenter", "Back"));
             m_backButton->setAutoRaise(true);
-            m_backButton->setFont(scaledFont(m_backButton->font(), 1.4));
+            m_backButton->setIconSize(QSize(kBackIconSize, kBackIconSize));
+            refreshBackIcon();
             connect(m_backButton, &QToolButton::clicked, dialog, &QDialog::reject);
         }
 
@@ -136,8 +142,10 @@ public:
         if (releaseOnFinish) {
             connect(dialog, &QDialog::finished, this, &DialogOverlay::release);
         }
-        connect(&ThemeManager::instance(), &ThemeManager::themeChanged, this,
-                [this] { update(); });
+        connect(&ThemeManager::instance(), &ThemeManager::themeChanged, this, [this] {
+            refreshBackIcon();
+            update();
+        });
 
         setGeometry(host->rect());
         raise();
@@ -243,8 +251,9 @@ protected:
         painter.setRenderHint(QPainter::Antialiasing);
         painter.setPen(palette.border);
         painter.setBrush(palette.background);
-        painter.drawRoundedRect(QRectF(m_cardRect).adjusted(0.5, 0.5, -0.5, -0.5), kCardRadius,
-                                kCardRadius);
+        const qreal radius =
+            kCardRadius * ThemeManager::instance().currentFrameStyle().controlRadiusScale;
+        painter.drawRoundedRect(QRectF(m_cardRect).adjusted(0.5, 0.5, -0.5, -0.5), radius, radius);
     }
 
     // The backdrop is modal: taps on it must not fall through to the host.
@@ -261,6 +270,13 @@ private:
         s_overlays.removeOne(this);
         hide();
         deleteLater();
+    }
+
+    void refreshBackIcon() {
+        if (m_backButton == nullptr) return;
+        const ThemePalette& palette = ThemeManager::instance().currentTheme();
+        m_backButton->setIcon(IconLibrary::instance().icon(QStringLiteral("lucide:arrow-left"),
+                                                           palette.textPrimary, kBackIconSize));
     }
 
     int contentHeightFor(int width) const {

@@ -4,6 +4,7 @@
 #include <QComboBox>
 #include <QDialogButtonBox>
 #include <QFont>
+#include <QFontDatabase>
 #include <QFormLayout>
 #include <QGroupBox>
 #include <QHBoxLayout>
@@ -20,6 +21,7 @@
 
 #include "devices/devicelinkstable.h"
 #include "devices/robotlinkspanel.h"
+#include "theme/dialogchrome.h"
 
 namespace traceview {
 
@@ -255,10 +257,9 @@ DeviceConfigDialog::DeviceConfigDialog(const Device& initial, QWidget* parent)
     otaAddressRow->addWidget(m_useReportedOtaButton);
     otaLayout->addRow(tr("Address:"), otaAddressRow);
 
-    auto* otaNote = new QLabel(
+    QLabel* otaNote = DialogChrome::hintLabel(
         tr("Uploads are signed with the device's password, the same one its connection uses."),
         otaGroup);
-    otaNote->setWordWrap(true);
     otaLayout->addRow(QString(), otaNote);
 
     // Read-only: this is the last HELLO_RESULT the device sent, not
@@ -307,20 +308,18 @@ DeviceConfigDialog::DeviceConfigDialog(const Device& initial, QWidget* parent)
     auto* catalogGroup = new QGroupBox(tr("Reported catalog"), this);
     m_catalogList = new QPlainTextEdit(catalogGroup);
     m_catalogList->setReadOnly(true);
-    QFont catalogFont(QStringLiteral("Monospace"));
-    catalogFont.setStyleHint(QFont::Monospace);
-    m_catalogList->setFont(catalogFont);
+    m_catalogList->setFont(QFontDatabase::systemFont(QFontDatabase::FixedFont));
     auto* catalogLayout = new QVBoxLayout(catalogGroup);
     catalogLayout->addWidget(m_catalogList);
     setCatalogTopics({});
 
     auto* buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, this);
-    // ActionRole, not Ok/Apply -- this must not close the dialog. It lets the
-    // port/baud/etc. above be applied and a (re)connect attempted right
-    // away, with "Reported by device"/"Reported catalog" refreshing in place
-    // as the result comes back, instead of requiring OK-then-reopen for
+    // A footer page action, not Ok/Apply -- this must not close the dialog. It
+    // lets the port/baud/etc. above be applied and a (re)connect attempted
+    // right away, with "Reported by device"/"Reported catalog" refreshing in
+    // place as the result comes back, instead of requiring OK-then-reopen for
     // every port guess.
-    QPushButton* connectButton = buttons->addButton(tr("Connect"), QDialogButtonBox::ActionRole);
+    auto* connectButton = new QPushButton(tr("Connect"), this);
     connectButton->setToolTip(
         tr("Apply the settings above and (re)connect now, without closing this dialog."));
     connect(connectButton, &QPushButton::clicked, this, &DeviceConfigDialog::applyRequested);
@@ -348,14 +347,16 @@ DeviceConfigDialog::DeviceConfigDialog(const Device& initial, QWidget* parent)
     columns->addLayout(leftColumn, /*stretch=*/1);
     columns->addLayout(rightColumn, /*stretch=*/1);
 
-    auto* layout = new QVBoxLayout(this);
+    auto* header = new DialogHeader(windowTitle(), m_device.name, this);
+
+    QVBoxLayout* layout = DialogChrome::setupRootLayout(this);
     auto* scroll = new QScrollArea(this);
     scroll->setWidgetResizable(true);
     scroll->setFrameShape(QFrame::NoFrame);
     scroll->setWidget(content);
+    layout->addWidget(header);
     layout->addWidget(scroll, 1);
-    layout->addSpacing(8);
-    layout->addWidget(buttons);
+    layout->addLayout(DialogChrome::footer(buttons, {connectButton}));
 
     // The connections table's combos are bounded to a fixed content length
     // (DeviceLinksTable's boundedCombo()), so no port label, BLE name or peer

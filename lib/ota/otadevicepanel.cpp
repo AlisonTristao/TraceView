@@ -28,8 +28,10 @@
 
 #include <algorithm>
 
+#include "theme/dialogchrome.h"
 #include "theme/dialogpresenter.h"
 #include "theme/iconlibrary.h"
+#include "traceview/framestyle.h"
 #include "traceview/thememanager.h"
 
 namespace traceview {
@@ -100,12 +102,6 @@ QLabel* valueLabel(QWidget* parent) {
     label->setObjectName(QStringLiteral("otaValue"));
     label->setTextInteractionFlags(Qt::TextSelectableByMouse);
     label->setWordWrap(true);
-    return label;
-}
-
-QLabel* cardTitle(const QString& text, QWidget* parent) {
-    auto* label = new QLabel(text.toUpper(), parent);
-    label->setObjectName(QStringLiteral("otaCardTitle"));
     return label;
 }
 
@@ -286,22 +282,15 @@ void OtaDevicePanel::buildUi() {
     content->setObjectName(QStringLiteral("otaContent"));
 
     // Installed: what the device runs now, and its recovery.
-    m_deviceCard = new QFrame(content);
-    m_deviceCard->setObjectName(QStringLiteral("otaCard"));
-    m_stateBadge = new QLabel(m_deviceCard);
-    m_stateBadge->setObjectName(QStringLiteral("otaBadge"));
-    m_stateHint = new QLabel(m_deviceCard);
-    m_stateHint->setObjectName(QStringLiteral("otaHint"));
-    m_stateHint->setWordWrap(true);
+    auto* deviceCard = new DialogCard(tr("Installed"), content);
+    m_deviceCard = deviceCard;
+    m_stateBadge = new StatusBadge(m_deviceCard);
+    deviceCard->addTitleWidget(m_stateBadge);
+    m_stateHint = DialogChrome::hintLabel(QString(), m_deviceCard);
     m_appValue = valueLabel(m_deviceCard);
     m_builtValue = valueLabel(m_deviceCard);
     m_recoveryValue = valueLabel(m_deviceCard);
     m_addressValue = valueLabel(m_deviceCard);
-
-    auto* badgeRow = new QHBoxLayout();
-    badgeRow->addWidget(cardTitle(tr("Installed"), m_deviceCard));
-    badgeRow->addStretch(1);
-    badgeRow->addWidget(m_stateBadge);
 
     auto* grid = new QGridLayout();
     grid->setHorizontalSpacing(18);
@@ -316,16 +305,12 @@ void OtaDevicePanel::buildUi() {
     grid->addWidget(keyLabel(tr("Address"), m_deviceCard), 3, 0);
     grid->addWidget(m_addressValue, 3, 1);
 
-    auto* deviceLayout = new QVBoxLayout(m_deviceCard);
-    deviceLayout->setContentsMargins(16, 14, 16, 14);
-    deviceLayout->setSpacing(10);
-    deviceLayout->addLayout(badgeRow);
-    deviceLayout->addLayout(grid);
-    deviceLayout->addWidget(m_stateHint);
+    deviceCard->body()->addLayout(grid);
+    deviceCard->body()->addWidget(m_stateHint);
 
     // New firmware: the drop zone, then what the picked file is.
-    m_fileCard = new QFrame(content);
-    m_fileCard->setObjectName(QStringLiteral("otaCard"));
+    auto* fileCard = new DialogCard(tr("New firmware"), content);
+    m_fileCard = fileCard;
 
     m_dropZone = new QFrame(m_fileCard);
     m_dropZone->setObjectName(QStringLiteral("otaDrop"));
@@ -334,10 +319,8 @@ void OtaDevicePanel::buildUi() {
     m_dropZone->installEventFilter(this);
     m_dropIcon = new QLabel(m_dropZone);
     m_dropIcon->setAlignment(Qt::AlignCenter);
-    m_dropText = new QLabel(m_dropZone);
-    m_dropText->setObjectName(QStringLiteral("otaHint"));
+    m_dropText = DialogChrome::hintLabel(QString(), m_dropZone);
     m_dropText->setAlignment(Qt::AlignCenter);
-    m_dropText->setWordWrap(true);
     m_chooseButton = new QPushButton(tr("Choose file\xE2\x80\xA6"), m_dropZone);
     m_chooseButton->setCursor(Qt::PointingHandCursor);
     connect(m_chooseButton, &QPushButton::clicked, this, &OtaDevicePanel::chooseFile);
@@ -347,9 +330,7 @@ void OtaDevicePanel::buildUi() {
     m_fileName = new QLabel(m_fileDetails);
     m_fileName->setObjectName(QStringLiteral("otaFileName"));
     m_fileName->setTextInteractionFlags(Qt::TextSelectableByMouse);
-    m_fileMeta = new QLabel(m_fileDetails);
-    m_fileMeta->setObjectName(QStringLiteral("otaHint"));
-    m_fileMeta->setWordWrap(true);
+    m_fileMeta = DialogChrome::hintLabel(QString(), m_fileDetails);
     auto* detailsLayout = new QVBoxLayout(m_fileDetails);
     detailsLayout->setContentsMargins(0, 0, 0, 0);
     detailsLayout->setSpacing(2);
@@ -367,39 +348,31 @@ void OtaDevicePanel::buildUi() {
     m_fileCheck = new QLabel(m_fileCard);
     m_fileCheck->setWordWrap(true);
     m_fitBar = new QProgressBar(m_fileCard);
-    m_fitBar->setObjectName(QStringLiteral("otaFit"));
     m_fitBar->setTextVisible(false);
     m_fitBar->setFixedHeight(6);
-    m_fitText = new QLabel(m_fileCard);
-    m_fitText->setObjectName(QStringLiteral("otaHint"));
+    m_fitText = DialogChrome::hintLabel(QString(), m_fileCard);
+    m_fitText->setWordWrap(false);
 
-    auto* fileLayout = new QVBoxLayout(m_fileCard);
-    fileLayout->setContentsMargins(16, 14, 16, 14);
-    fileLayout->setSpacing(10);
-    fileLayout->addWidget(cardTitle(tr("New firmware"), m_fileCard));
+    QVBoxLayout* fileLayout = fileCard->body();
     fileLayout->addWidget(m_dropZone);
     fileLayout->addWidget(m_fileCheck);
     fileLayout->addWidget(m_fitBar);
     fileLayout->addWidget(m_fitText);
 
     // Install: the three steps, the bar, the buttons.
-    auto* installCard = new QFrame(content);
-    installCard->setObjectName(QStringLiteral("otaCard"));
+    auto* installCard = new DialogCard(tr("Install"), content);
     m_steps = new OtaStepIndicator(installCard);
     m_steps->setLabels({tr("Restart into the recovery"), tr("Send the image"), tr("Start the new firmware")});
     m_progress = new QProgressBar(installCard);
-    m_progress->setObjectName(QStringLiteral("otaProgress"));
     m_progress->setTextVisible(false);
     m_progress->setFixedHeight(8);
-    m_progressText = new QLabel(installCard);
-    m_progressText->setWordWrap(true);
-    m_progressText->setObjectName(QStringLiteral("otaHint"));
+    m_progressText = DialogChrome::hintLabel(QString(), installCard);
 
     m_toAppButton = new QPushButton(tr("Back to the application"), installCard);
     m_toAppButton->setToolTip(tr("Leave the recovery for the application already installed."));
     connect(m_toAppButton, &QPushButton::clicked, this, &OtaDevicePanel::backToApp);
     m_installButton = new QPushButton(installCard);
-    m_installButton->setObjectName(QStringLiteral("otaPrimary"));
+    DialogChrome::setButtonVariant(m_installButton, "primary");
     m_installButton->setCursor(Qt::PointingHandCursor);
     connect(m_installButton, &QPushButton::clicked, this, &OtaDevicePanel::install);
 
@@ -408,10 +381,7 @@ void OtaDevicePanel::buildUi() {
     buttons->addWidget(m_toAppButton);
     buttons->addWidget(m_installButton);
 
-    auto* installLayout = new QVBoxLayout(installCard);
-    installLayout->setContentsMargins(16, 14, 16, 14);
-    installLayout->setSpacing(10);
-    installLayout->addWidget(cardTitle(tr("Install"), installCard));
+    QVBoxLayout* installLayout = installCard->body();
     installLayout->addWidget(m_steps);
     installLayout->addWidget(m_progress);
     installLayout->addLayout(buttons);
@@ -438,56 +408,29 @@ void OtaDevicePanel::buildUi() {
 
 void OtaDevicePanel::applyTheme() {
     const ThemePalette& p = ThemeManager::instance().currentTheme();
+    // Cards, captions, hints, the badge, the primary button and the bars come
+    // from the app stylesheet (theme/dialogchrome.h); only what is this
+    // page's own stays here. Through scaleStyleSheetRadii like the app sheet,
+    // so the drop zone follows the frame style too.
     const QString sheet = QStringLiteral(R"(
 QScrollArea#otaScroll, QWidget#otaContent, QWidget#otaSteps, QWidget#otaFileDetails { background: transparent; }
-QFrame#otaCard {
-    background-color: %1;
-    border: 1px solid %2;
-    border-radius: 10px;
-}
-QLabel#otaCardTitle { color: %3; font-size: 8pt; font-weight: 600; }
-QLabel#otaKey { color: %3; }
-QLabel#otaValue { color: %4; }
-QLabel#otaHint { color: %3; }
-QLabel#otaFileName { color: %4; font-weight: 600; }
+QLabel#otaKey { color: %1; }
+QLabel#otaValue, QLabel#otaFileName { color: %2; }
+QLabel#otaFileName { font-weight: 600; }
 QFrame#otaDrop {
-    background-color: %5;
-    border: 2px dashed %6;
+    background-color: %3;
+    border: 2px dashed %4;
     border-radius: 8px;
     min-height: 44px;
 }
 QFrame#otaDrop[dragOver="true"] {
-    background-color: %7;
-    border-color: %8;
-}
-QPushButton#otaPrimary, QPushButton#otaPrimary:hover, QPushButton#otaPrimary:pressed {
-    background-color: %8;
-    border: 1px solid %8;
-    color: %9;
-    font-weight: 600;
-    padding: 5px 14px;
-}
-QPushButton#otaPrimary:hover { background-color: %10; border-color: %10; }
-QPushButton#otaPrimary:disabled {
     background-color: %5;
-    border-color: %2;
-    color: %11;
-}
-QProgressBar#otaProgress, QProgressBar#otaFit {
-    background-color: %5;
-    border: none;
-    border-radius: 3px;
-}
-QProgressBar#otaProgress::chunk, QProgressBar#otaFit::chunk {
-    background-color: %8;
-    border-radius: 3px;
+    border-color: %6;
 }
 )")
-                              .arg(p.surface.name(), p.border.name(), p.textSecondary.name(),
-                                   p.textPrimary.name(), p.surfaceAlt.name(), p.textDisabled.name(),
-                                   rgba(p.accent, 0.10), p.accent.name(), p.background.name())
-                              .arg(p.accentHover.name(), p.textDisabled.name());
-    setStyleSheet(sheet);
+                              .arg(p.textSecondary.name(), p.textPrimary.name(), p.surfaceAlt.name(),
+                                   p.textDisabled.name(), rgba(p.accent, 0.10), p.accent.name());
+    setStyleSheet(scaleStyleSheetRadii(sheet, ThemeManager::instance().currentFrameStyle().controlRadiusScale));
     m_dropIcon->setPixmap(IconLibrary::instance()
                               .icon(QStringLiteral("lucide:file-up"), p.textSecondary, 28)
                               .pixmap(28, 28));
@@ -802,42 +745,35 @@ void OtaDevicePanel::refreshView() {
 }
 
 void OtaDevicePanel::refreshDeviceCard() {
-    const ThemePalette& p = ThemeManager::instance().currentTheme();
     const QString address = otaAddressFor(m_device);
 
     QString badge;
-    QColor color;
+    StatusBadge::Tone tone = StatusBadge::Tone::Neutral;
     QString hint;
     if (m_recovery) {
         badge = m_recovery->otaReady ? tr("In the recovery") : tr("Receiving a firmware");
-        color = p.warning;
+        tone = StatusBadge::Tone::Warning;
         hint = reasonText(m_recovery->reason);
         if (!m_recovery->ownNetwork.isEmpty()) {
             hint += QLatin1Char(' ') + tr("On its own Wi-Fi network: %1.").arg(m_recovery->ownNetwork);
         }
     } else if (m_device.connected) {
         badge = tr("Running");
-        color = p.success;
+        tone = StatusBadge::Tone::Success;
         hint = tr("Install restarts it into the recovery, sends the image and starts it.");
     } else if (address.isEmpty()) {
         badge = tr("No address");
-        color = p.textSecondary;
         hint = tr("Connect it once over Wi-Fi so it reports where its recovery answers, or set "
                   "the OTA address in Device Settings.");
     } else if (!m_checkedOnce) {
         badge = tr("Checking\xE2\x80\xA6");
-        color = p.textSecondary;
     } else {
         badge = tr("Offline");
-        color = p.textSecondary;
         hint = tr("Not connected and no recovery answers at %1%2. Connect it to install a "
                   "firmware.")
                    .arg(address, m_lastError.isEmpty() ? QString() : QStringLiteral(" (%1)").arg(m_lastError));
     }
-    m_stateBadge->setText(QStringLiteral("●  ") + badge);
-    m_stateBadge->setStyleSheet(QStringLiteral("QLabel { background-color: %1; color: %2; border-radius: 10px; "
-                                               "padding: 3px 10px; font-weight: 600; }")
-                                    .arg(rgba(color, 0.16), color.name()));
+    m_stateBadge->setStatus(badge, tone);
     m_stateHint->setText(hint);
     m_stateHint->setVisible(!hint.isEmpty());
 

@@ -1,7 +1,7 @@
 #include "diagramblockconfigdialog.h"
 
 #include <QDialogButtonBox>
-#include <QHBoxLayout>
+#include <QFontDatabase>
 #include <QLabel>
 #include <QMenu>
 #include <QPlainTextEdit>
@@ -12,20 +12,14 @@
 #include <QWidgetAction>
 
 #include "diagramscriptruntime.h"
+#include "theme/dialogchrome.h"
+#include "theme/iconlibrary.h"
 #include "traceview/thememanager.h"
 
 namespace traceview {
 
 namespace {
-// Applies a visible border to `edit` in `color` -- QPlainTextEdit gets no
-// border from this app's global stylesheet (theme/stylesheet.cpp only
-// covers QLineEdit/QComboBox/QSpinBox), so without this the script editor
-// and the log view are both a flat white/surface rectangle with nothing
-// showing where one ends and the other begins.
-void applyPaneBorder(QPlainTextEdit* edit, const QColor& color) {
-    edit->setStyleSheet(
-        QString("QPlainTextEdit { border: 1px solid %1; border-radius: 4px; }").arg(color.name()));
-}
+constexpr int kChevronSize = 14;
 
 QWidget* buildHelpMenuContent(QWidget* parent) {
     auto* label = new QLabel(
@@ -76,8 +70,6 @@ DiagramBlockConfigDialog::DiagramBlockConfigDialog(const QString& blockLabel,
     setWindowTitle(tr("Configure %1").arg(blockLabel));
     resize(560, 520);
 
-    auto* layout = new QVBoxLayout(this);
-
     // A dropdown instead of a permanent hint label -- keeps the dialog's
     // fixed real estate for what actually changes (the code and its output),
     // with the API reference a click away rather than always taking up
@@ -88,58 +80,54 @@ DiagramBlockConfigDialog::DiagramBlockConfigDialog(const QString& blockLabel,
     helpMenu->addAction(helpAction);
 
     auto* helpButton = new QToolButton(this);
-    // "▾" (small down triangle) baked into the label instead of relying
-    // on QToolButton's native menu-indicator glyph: that indicator is a
-    // separate subcontrol the app-wide stylesheet (theme/stylesheet.cpp)
-    // doesn't position, and every attempt to fix its placement with
-    // ::menu-indicator rules still left it a couple pixels off-center
-    // vertically. Baked into the text, it's just another character on the
-    // same baseline -- centers itself for free.
-    helpButton->setText(tr("Help ▾"));
-    helpButton->setToolButtonStyle(Qt::ToolButtonTextOnly);
+    // A Lucide chevron as the button's icon instead of QToolButton's native
+    // menu-indicator glyph: that indicator is a separate subcontrol the
+    // app-wide stylesheet (theme/stylesheet.cpp) doesn't position, and every
+    // attempt to fix its placement with ::menu-indicator rules still left it
+    // a couple pixels off-center vertically. Right-to-left puts the icon
+    // after the text.
+    helpButton->setText(tr("Help"));
+    helpButton->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+    helpButton->setLayoutDirection(Qt::RightToLeft);
+    helpButton->setIconSize(QSize(kChevronSize, kChevronSize));
     helpButton->setPopupMode(QToolButton::InstantPopup);
     helpButton->setMenu(helpMenu);
-    // Suppresses the native indicator now that the triangle lives in the
-    // text -- otherwise the button would show two.
+    // Suppresses the native indicator now that the chevron is the icon --
+    // otherwise the button would show two.
     helpButton->setStyleSheet("QToolButton::menu-indicator { image: none; width: 0px; }");
 
-    auto* toolbar = new QHBoxLayout();
-    toolbar->addStretch();
-    toolbar->addWidget(helpButton);
-    layout->addLayout(toolbar);
+    // The help dropdown sits at the right end of the header.
+    auto* header = new DialogHeader(windowTitle(), QString(), this);
+    header->addTrailingWidget(helpButton);
 
     auto* splitter = new QSplitter(Qt::Vertical, this);
 
     m_scriptEdit = new QPlainTextEdit(splitter);
     m_scriptEdit->setPlaceholderText(tr("// Script for this block"));
     m_scriptEdit->setPlainText(initialScript);
-    auto scriptFont = m_scriptEdit->font();
-    scriptFont.setFamily("Consolas");
-    m_scriptEdit->setFont(scriptFont);
+    const QFont monoFont = QFontDatabase::systemFont(QFontDatabase::FixedFont);
+    m_scriptEdit->setFont(monoFont);
     splitter->addWidget(m_scriptEdit);
 
     m_logView = new QPlainTextEdit(splitter);
     m_logView->setReadOnly(true);
     m_logView->setPlaceholderText(tr("No log output yet"));
-    auto logFont = m_logView->font();
-    logFont.setFamily("Consolas");
-    m_logView->setFont(logFont);
+    m_logView->setFont(monoFont);
     m_logView->setPlainText(runtime->recentLog().join('\n'));
     m_logView->moveCursor(QTextCursor::End);
     splitter->addWidget(m_logView);
 
     splitter->setStretchFactor(0, 3);
     splitter->setStretchFactor(1, 1);
-    layout->addWidget(splitter, /*stretch=*/1);
 
-    const auto refreshBorders = [this] {
-        const QColor border = ThemeManager::instance().currentTheme().border;
-        applyPaneBorder(m_scriptEdit, border);
-        applyPaneBorder(m_logView, border);
+    const auto refreshIcons = [helpButton] {
+        helpButton->setIcon(IconLibrary::instance().icon(
+            QStringLiteral("lucide:chevron-down"),
+            ThemeManager::instance().currentTheme().textSecondary, kChevronSize));
     };
-    refreshBorders();
+    refreshIcons();
     connect(&ThemeManager::instance(), &ThemeManager::themeChanged, this,
-            [refreshBorders](const ThemePalette&) { refreshBorders(); });
+            [refreshIcons](const ThemePalette&) { refreshIcons(); });
 
     connect(m_runtime, &DiagramScriptRuntime::logMessage, m_logView, &QPlainTextEdit::appendPlainText);
     connect(m_runtime, &DiagramScriptRuntime::errorOccurred, this, [this](const QString& text) {
@@ -149,7 +137,11 @@ DiagramBlockConfigDialog::DiagramBlockConfigDialog(const QString& blockLabel,
     auto* buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, this);
     connect(buttons, &QDialogButtonBox::accepted, this, &DiagramBlockConfigDialog::onAccept);
     connect(buttons, &QDialogButtonBox::rejected, this, &QDialog::reject);
-    layout->addWidget(buttons);
+
+    QVBoxLayout* layout = DialogChrome::setupRootLayout(this);
+    layout->addWidget(header);
+    layout->addWidget(splitter, /*stretch=*/1);
+    layout->addLayout(DialogChrome::footer(buttons));
 }
 
 QString DiagramBlockConfigDialog::script() const {

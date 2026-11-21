@@ -30,6 +30,8 @@ add_library(traceview_theme STATIC
     theme/doublespinbox.h
     theme/dialogpresenter.cpp
     theme/dialogpresenter.h
+    theme/dialogchrome.cpp
+    theme/dialogchrome.h
     theme/iconutils.cpp
     theme/iconutils.h
     theme/iconlibrary.cpp
@@ -545,8 +547,8 @@ target_link_libraries(traceview_ota
         traceview_devices
         traceview_mdns
     PRIVATE
-        # DialogPresenter (theme/dialogpresenter.h) only -- OtaTab's upload
-        # warnings go through it like every other dialog in the app.
+        # DialogPresenter (OtaTab's upload warnings go through it like every
+        # other dialog) and DialogChrome (the Firmware page's cards/badge).
         traceview_theme
 )
 

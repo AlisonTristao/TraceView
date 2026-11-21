@@ -13,6 +13,7 @@
 
 #include "project/dashboardgallery.h"
 #include "project/projectstore.h"
+#include "theme/dialogchrome.h"
 #include "theme/dialogpresenter.h"
 
 namespace traceview {
@@ -27,11 +28,11 @@ DashboardGalleryDialog::DashboardGalleryDialog(QWidget* parent) : QDialog(parent
     setWindowTitle(tr("Dashboard Gallery"));
     setMinimumSize(360, 320);
 
-    auto* hint =
-        new QLabel(tr("Dashboards kept inside TraceView. The default one opens every time the app "
-                      "starts; with none chosen, the built-in example opens."),
-                   this);
-    hint->setWordWrap(true);
+    auto* header = new DialogHeader(
+        windowTitle(),
+        tr("Dashboards kept inside TraceView. The default one opens every time the app "
+           "starts; with none chosen, the built-in example opens."),
+        this);
 
     m_list = new QListWidget(this);
     connect(m_list, &QListWidget::currentRowChanged, this, &DashboardGalleryDialog::updateButtons);
@@ -49,26 +50,25 @@ DashboardGalleryDialog::DashboardGalleryDialog(QWidget* parent) : QDialog(parent
     connect(m_removeButton, &QPushButton::clicked, this, &DashboardGalleryDialog::onRemoveClicked);
     connect(m_exportButton, &QPushButton::clicked, this, &DashboardGalleryDialog::onExportClicked);
 
+    DialogChrome::setButtonVariant(m_openButton, "primary");
+    DialogChrome::setButtonVariant(m_removeButton, "danger");
+
     // Two rows rather than one: five buttons side by side don't fit a phone.
-    auto* primaryRow = new QHBoxLayout();
-    primaryRow->addWidget(m_openButton);
-    primaryRow->addWidget(m_defaultButton);
-    primaryRow->addStretch();
-    auto* secondaryRow = new QHBoxLayout();
-    secondaryRow->addWidget(m_renameButton);
-    secondaryRow->addWidget(m_removeButton);
-    secondaryRow->addWidget(m_exportButton);
-    secondaryRow->addStretch();
+    // The row under the list acts on the selection; the footer manages it.
+    auto* actionRow = new QHBoxLayout();
+    actionRow->addWidget(m_openButton);
+    actionRow->addWidget(m_defaultButton);
+    actionRow->addWidget(m_exportButton);
+    actionRow->addStretch();
 
     auto* closeButtons = new QDialogButtonBox(QDialogButtonBox::Close, this);
     connect(closeButtons, &QDialogButtonBox::rejected, this, &QDialog::reject);
 
-    auto* layout = new QVBoxLayout(this);
-    layout->addWidget(hint);
-    layout->addWidget(m_list);
-    layout->addLayout(primaryRow);
-    layout->addLayout(secondaryRow);
-    layout->addWidget(closeButtons);
+    QVBoxLayout* layout = DialogChrome::setupRootLayout(this);
+    layout->addWidget(header);
+    layout->addWidget(m_list, 1);
+    layout->addLayout(actionRow);
+    layout->addLayout(DialogChrome::footer(closeButtons, {m_renameButton, m_removeButton}));
 
     // Start on whatever is open right now, so its row is the one acted on.
     refreshList(DashboardGallery::nameForPath(ProjectStore::instance().currentPath()));

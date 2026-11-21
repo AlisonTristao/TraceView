@@ -13,6 +13,7 @@
 #include <QScrollArea>
 #include <QVBoxLayout>
 
+#include "theme/dialogchrome.h"
 #include "traceview/appearance.h"
 #include "traceview/thememanager.h"
 
@@ -84,7 +85,7 @@ QIcon swatchIcon(const QColor& color) {
     pixmap.fill(Qt::transparent);
     QPainter painter(&pixmap);
     painter.setRenderHint(QPainter::Antialiasing);
-    painter.setPen(QPen(QColor(128, 128, 128), 1));
+    painter.setPen(QPen(ThemeManager::instance().currentTheme().borderStrong, 1));
     painter.setBrush(color);
     painter.drawRoundedRect(QRectF(0.5, 0.5, 17, 17), 3, 3);
     return QIcon(pixmap);
@@ -139,8 +140,7 @@ PaletteEditorDialog::PaletteEditorDialog(const ThemePalette& palette, bool isNew
     }
     contentLayout->addWidget(seriesBox);
 
-    m_contrastLabel = new QLabel(content);
-    m_contrastLabel->setWordWrap(true);
+    m_contrastLabel = DialogChrome::hintLabel(QString(), content);
     contentLayout->addWidget(m_contrastLabel);
     contentLayout->addStretch();
 
@@ -153,9 +153,12 @@ PaletteEditorDialog::PaletteEditorDialog(const ThemePalette& palette, bool isNew
     connect(buttons, &QDialogButtonBox::accepted, this, &PaletteEditorDialog::accept);
     connect(buttons, &QDialogButtonBox::rejected, this, &PaletteEditorDialog::reject);
 
-    auto* layout = new QVBoxLayout(this);
+    auto* header = new DialogHeader(windowTitle(), QString(), this);
+
+    QVBoxLayout* layout = DialogChrome::setupRootLayout(this);
+    layout->addWidget(header);
     layout->addWidget(scroll, 1);
-    layout->addWidget(buttons);
+    layout->addLayout(DialogChrome::footer(buttons));
     resize(420, 640);
 
     refreshButtons();
