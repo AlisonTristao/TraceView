@@ -6742,11 +6742,12 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
     </message>
     <message>
         <location line="-120"/>
+        <location line="+202"/>
         <source>Reload</source>
         <translation>Recargar</translation>
     </message>
     <message>
-        <location line="+2"/>
+        <location line="-200"/>
         <source>Apply</source>
         <translation>Aplicar</translation>
     </message>
@@ -6815,8 +6816,14 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
     </message>
     <message>
         <location line="+2"/>
+        <location line="+128"/>
         <source>Remove</source>
         <translation>Eliminar</translation>
+    </message>
+    <message>
+        <location line="-125"/>
+        <source>Read the list from the device again (btp -wifi_json).</source>
+        <translation>Leer de nuevo la lista del dispositivo (btp -wifi_json).</translation>
     </message>
     <message>
         <location line="+2"/>
@@ -6824,7 +6831,17 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
         <translation>Reiniciar para usarlas</translation>
     </message>
     <message>
-        <location line="+9"/>
+        <location line="+6"/>
+        <source>%1 knows no Wi-Fi network. After this reboot it joins none: a device that only talks over Wi-Fi can then be reached only over USB.</source>
+        <translation>%1 no conoce ninguna red Wi-Fi. Tras este reinicio no se unirá a ninguna: un dispositivo que solo se comunica por Wi-Fi solo podrá alcanzarse por USB.</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Reboot anyway</source>
+        <translation>Reiniciar de todos modos</translation>
+    </message>
+    <message>
+        <location line="+13"/>
         <source>Passwords are sent to the device over the encrypted session and never read back. Changes take effect after a reboot; the recovery uses the same networks.</source>
         <translation>Las contraseñas se envían al dispositivo por la sesión cifrada y nunca se vuelven a leer. Los cambios se aplican tras un reinicio; el recovery usa las mismas redes.</translation>
     </message>
@@ -6877,16 +6894,32 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
     </message>
     <message>
         <location line="+15"/>
+        <location line="+26"/>
         <source>Remove a network</source>
         <translation>Eliminar una red</translation>
     </message>
     <message>
-        <location line="+1"/>
+        <location line="-25"/>
         <source>Pick a network from the list (the one in the firmware cannot be removed from here).</source>
         <translation>Elija una red de la lista (la del firmware no se puede eliminar desde aquí).</translation>
     </message>
     <message>
-        <location line="+27"/>
+        <location line="+16"/>
+        <source>Remove %1 from %2? The list has it %3 times, and all of them go.</source>
+        <translation>¿Eliminar %1 de %2? La lista la tiene %3 veces y se eliminarán todas.</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Remove %1 from %2?</source>
+        <translation>¿Eliminar %1 de %2?</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>It is the only network: after the next reboot the device joins no Wi-Fi, and one that only talks over Wi-Fi can then be reached only over USB.</source>
+        <translation>Es la única red: tras el próximo reinicio el dispositivo no se unirá a ningún Wi-Fi, y uno que solo se comunica por Wi-Fi solo podrá alcanzarse por USB.</translation>
+    </message>
+    <message>
+        <location line="+29"/>
         <source>Set the clock</source>
         <translation>Ajustar el reloj</translation>
     </message>
@@ -6916,7 +6949,8 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
         <translation>Un sensor en suspensión se mantiene activo para una sesión o una actualización.</translation>
     </message>
     <message>
-        <location line="+2"/>
+        <location line="-153"/>
+        <location line="+155"/>
         <source>Reboot</source>
         <translation>Reiniciar</translation>
     </message>
@@ -6971,7 +7005,9 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
         <translation>Borrar</translation>
     </message>
     <message>
-        <location line="+0"/>
+        <location line="-162"/>
+        <location line="+113"/>
+        <location line="+49"/>
         <source>Cancel</source>
         <translation>Cancelar</translation>
     </message>

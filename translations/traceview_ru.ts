@@ -6745,11 +6745,12 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     </message>
     <message>
         <location line="-120"/>
+        <location line="+202"/>
         <source>Reload</source>
         <translation>Перечитать</translation>
     </message>
     <message>
-        <location line="+2"/>
+        <location line="-200"/>
         <source>Apply</source>
         <translation>Применить</translation>
     </message>
@@ -6819,8 +6820,14 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     </message>
     <message>
         <location line="+2"/>
+        <location line="+128"/>
         <source>Remove</source>
         <translation>Удалить</translation>
+    </message>
+    <message>
+        <location line="-125"/>
+        <source>Read the list from the device again (btp -wifi_json).</source>
+        <translation>Заново прочитать список с устройства (btp -wifi_json).</translation>
     </message>
     <message>
         <location line="+2"/>
@@ -6828,7 +6835,17 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>Перезагрузите, чтобы применить</translation>
     </message>
     <message>
-        <location line="+9"/>
+        <location line="+6"/>
+        <source>%1 knows no Wi-Fi network. After this reboot it joins none: a device that only talks over Wi-Fi can then be reached only over USB.</source>
+        <translation>%1 не знает ни одной сети Wi-Fi. После этой перезагрузки оно не подключится ни к одной: устройство, которое работает только через Wi-Fi, будет доступно только по USB.</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Reboot anyway</source>
+        <translation>Всё равно перезагрузить</translation>
+    </message>
+    <message>
+        <location line="+13"/>
         <source>Passwords are sent to the device over the encrypted session and never read back. Changes take effect after a reboot; the recovery uses the same networks.</source>
         <translation>Пароли отправляются на устройство по зашифрованной сессии и никогда не считываются обратно. Изменения вступают в силу после перезагрузки; режим восстановления использует те же сети.</translation>
     </message>
@@ -6881,16 +6898,32 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     </message>
     <message>
         <location line="+15"/>
+        <location line="+26"/>
         <source>Remove a network</source>
         <translation>Удалить сеть</translation>
     </message>
     <message>
-        <location line="+1"/>
+        <location line="-25"/>
         <source>Pick a network from the list (the one in the firmware cannot be removed from here).</source>
         <translation>Выберите сеть из списка (сеть из прошивки отсюда удалить нельзя).</translation>
     </message>
     <message>
-        <location line="+27"/>
+        <location line="+16"/>
+        <source>Remove %1 from %2? The list has it %3 times, and all of them go.</source>
+        <translation>Удалить %1 из %2? В списке она встречается %3 раз(а), будут удалены все.</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Remove %1 from %2?</source>
+        <translation>Удалить %1 из %2?</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>It is the only network: after the next reboot the device joins no Wi-Fi, and one that only talks over Wi-Fi can then be reached only over USB.</source>
+        <translation>Это единственная сеть: после следующей перезагрузки устройство не подключится ни к одному Wi-Fi, а устройство, работающее только через Wi-Fi, будет доступно только по USB.</translation>
+    </message>
+    <message>
+        <location line="+29"/>
         <source>Set the clock</source>
         <translation>Установить часы</translation>
     </message>
@@ -6920,7 +6953,8 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>Спящий датчик остаётся активным на время сессии или обновления.</translation>
     </message>
     <message>
-        <location line="+2"/>
+        <location line="-153"/>
+        <location line="+155"/>
         <source>Reboot</source>
         <translation>Перезагрузить</translation>
     </message>
@@ -6975,7 +7009,9 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>Стереть</translation>
     </message>
     <message>
-        <location line="+0"/>
+        <location line="-162"/>
+        <location line="+113"/>
+        <location line="+49"/>
         <source>Cancel</source>
         <translation>Отмена</translation>
     </message>
