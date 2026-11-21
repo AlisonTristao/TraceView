@@ -43,7 +43,7 @@ constexpr int kPollIntervalMs = 1000;
 constexpr int kUploadCellWidth = 130;
 constexpr int kCellHeight = 24;
 
-const QString kDash = QStringLiteral("\xE2\x80\x94");
+const QString kDash = QStringLiteral("—");
 
 QString reportedValue(const Device& device, const char* key) {
     for (const DeviceInfoRecord& entry : device.reportedInfo) {
