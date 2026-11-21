@@ -214,14 +214,6 @@ private:
     // Redraw the catalog list / info label from live data, else the cache.
     void renderCatalog();
     void renderReportedInfo();
-    // The OTA tab (lib/ota/otatab.h) can also edit otaPassword/
-    // cacheOtaPassword -- from its own per-row password field, committed via
-    // OtaTab::passwordCacheChanged() -- but a device is configured here
-    // first, before it ever has a row in that tab to type into, so this
-    // dialog offers the same field too. Same opt-in-only "save in project
-    // file" convention as the Hub group's Robot password below.
-    QLineEdit* m_otaPasswordEdit = nullptr;
-    QCheckBox* m_cacheOtaPasswordCheck = nullptr;
 
     // Read-only: populated from m_device.btpVersion/btpId (the last
     // HELLO_RESULT), never written back to the device in result().

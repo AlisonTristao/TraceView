@@ -1065,6 +1065,10 @@ void BtpBackend::sendCommand(const QByteArray& text) {
     m_commandClient->send(QString::fromUtf8(text));
 }
 
+void BtpBackend::runCommand(const QString& commandLine, CommandResultFn done) {
+    m_commandClient->query(commandLine, std::move(done));
+}
+
 void BtpBackend::onSessionFrameReceived(const BtpFrame& frame) {
     if ((frame.flags & btp::kFlagEncrypted) == 0U) {
         if (sealsDirectSession() && !isSessionHandshakeResponse(frame)) {
@@ -1113,6 +1117,7 @@ void BtpBackend::onSessionFrameReceived(const BtpFrame& frame) {
         return;
     }
     if (m_endpointKey.isEmpty()) {
+        reportKeyRejected(tr("the device encrypts its messages, and no password is set for it"));
         return;  // sealed frame, no key configured -- fail closed, never forward ciphertext
     }
 
@@ -1130,7 +1135,12 @@ void BtpBackend::onSessionFrameReceived(const BtpFrame& frame) {
     const std::optional<QByteArray> plaintext =
         ChannelSeal::open(m_endpointKey, header, frame.payload);
     if (!plaintext.has_value()) {
+        reportKeyRejected(tr("its messages do not open with the password set (wrong password?)"));
         return;  // tag mismatch / wrong cipher / wrong key -- never deliver unauthenticated bytes
+    }
+    if (m_keyRejected) {
+        m_keyRejected = false;
+        emit keyRejected(false);
     }
     // A frame from the robot that just passed AEAD authentication: proof, at
     // this end, that the robot is alive and reachable right now. This is the
@@ -1144,7 +1154,20 @@ void BtpBackend::onSessionFrameReceived(const BtpFrame& frame) {
     m_protocolRouter->onFrameReceived(opened);
 }
 
+void BtpBackend::reportKeyRejected(const QString& why) {
+    if (m_keyRejected) {
+        return;  // once per link: every frame of the session fails the same way
+    }
+    m_keyRejected = true;
+    emit statusMessage(tr("Can't read the device: %1").arg(why), 10000, StatusSeverity::Error);
+    emit keyRejected(true);
+}
+
 void BtpBackend::onTransportConnectionChanged(bool connected) {
+    if (m_keyRejected) {
+        m_keyRejected = false;
+        emit keyRejected(false);
+    }
     if (connected) {
         m_sessionClosing = false;
         m_unsealedDowngradeReported = false;

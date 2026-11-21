@@ -48,8 +48,8 @@ without changing the window size or moving the dialog buttons off screen.
   `baudRate`/`lineTerminator` (Serial; on Android `portName` is a
   `usb:VVVV:PPPP[:serial]` key rather than an OS port name), `usbPath` (UsbHid) or
   `parentDeviceId`/`peerSourceId` (HubChannel) it selects — the real
-  transport config a `DeviceConnection` opens with — plus `otaAddress`/
-  `otaPassword`/`cacheOtaPassword` (the OTA side channel, see
+  transport config a `DeviceConnection` opens with — plus `otaAddress`
+  (the recovery's address when it differs from what the device reports, see
   [OTA.md](OTA.md)) — plus `btpVersion`/
   `btpId` — the BTP envelope version and the dongle's own `source_id`, both
   taken straight from the last `HELLO_RESULT` (`protocol/btphandshake.h`'s

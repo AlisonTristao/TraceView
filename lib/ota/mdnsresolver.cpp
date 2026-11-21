@@ -2,6 +2,7 @@
 
 #include <QDateTime>
 #include <QNetworkDatagram>
+#include <QNetworkInterface>
 #include <QTimer>
 #include <QUdpSocket>
 
@@ -11,9 +12,27 @@ namespace {
 constexpr quint16 kMdnsPort = 5353;
 constexpr int kTimeoutMs = 3000;
 constexpr int kTimeoutTickMs = 250;
+// Multicast over Wi-Fi drops packets (and a robot's responder may miss the
+// first query): ask again at these points of the timeout, as RFC 6762 5.2
+// has a querier do, instead of waiting for the caller's next attempt.
+constexpr int kResendIntervalMs = 750;
+constexpr int kResends = 2;
 
 QHostAddress mdnsGroup() {
     return QHostAddress(QStringLiteral("224.0.0.251"));
+}
+
+// Up, running, multicast-capable, not loopback, with an IPv4 address.
+bool usableInterface(const QNetworkInterface& iface) {
+    const auto flags = iface.flags();
+    if (!flags.testFlag(QNetworkInterface::IsUp) || !flags.testFlag(QNetworkInterface::IsRunning) ||
+        !flags.testFlag(QNetworkInterface::CanMulticast) || flags.testFlag(QNetworkInterface::IsLoopBack)) {
+        return false;
+    }
+    for (const QNetworkAddressEntry& entry : iface.addressEntries()) {
+        if (entry.ip().protocol() == QAbstractSocket::IPv4Protocol) return true;
+    }
+    return false;
 }
 }  // namespace
 
@@ -155,8 +174,19 @@ void MdnsResolver::ensureSocket() {
     // other mDNS query tool.
     m_socket->bind(QHostAddress::AnyIPv4, kMdnsPort,
                    QUdpSocket::ShareAddress | QUdpSocket::ReuseAddressHint);
-    m_socket->joinMulticastGroup(mdnsGroup());
     connect(m_socket, &QUdpSocket::readyRead, this, &MdnsResolver::onReadyRead);
+}
+
+QList<QNetworkInterface> MdnsResolver::refreshInterfaces() {
+    QList<QNetworkInterface> usable;
+    for (const QNetworkInterface& iface : QNetworkInterface::allInterfaces()) {
+        if (!usableInterface(iface)) continue;
+        usable.append(iface);
+        if (!m_joined.contains(iface.name()) && m_socket->joinMulticastGroup(mdnsGroup(), iface)) {
+            m_joined.insert(iface.name());
+        }
+    }
+    return usable;
 }
 
 void MdnsResolver::resolve(const QString& requestId, const QString& hostname) {
@@ -164,12 +194,29 @@ void MdnsResolver::resolve(const QString& requestId, const QString& hostname) {
 
     PendingQuery query;
     query.hostnameLower = hostname.toLower();
-    query.deadlineMs = QDateTime::currentMSecsSinceEpoch() + kTimeoutMs;
+    const qint64 now = QDateTime::currentMSecsSinceEpoch();
+    query.deadlineMs = now + kTimeoutMs;
+    query.resendMs = now + kResendIntervalMs;
+    query.resendsLeft = kResends;
     m_pending.insert(requestId, query);
-
-    m_socket->writeDatagram(mdns_detail::buildQuery(hostname), mdnsGroup(), kMdnsPort);
+    sendQuery(query.hostnameLower);
     if (!m_timeoutTimer->isActive()) {
         m_timeoutTimer->start();
+    }
+}
+
+void MdnsResolver::sendQuery(const QString& hostname) {
+    // Once per interface: the OS alone would send it out of the lowest
+    // metric adapter only, often a VPN with nobody on it (see the header).
+    const QByteArray datagram = mdns_detail::buildQuery(hostname);
+    const QList<QNetworkInterface> interfaces = refreshInterfaces();
+    for (const QNetworkInterface& iface : interfaces) {
+        m_socket->setMulticastInterface(iface);
+        m_socket->writeDatagram(datagram, mdnsGroup(), kMdnsPort);
+    }
+    if (interfaces.isEmpty()) {
+        if (m_joined.isEmpty()) m_socket->joinMulticastGroup(mdnsGroup());
+        m_socket->writeDatagram(datagram, mdnsGroup(), kMdnsPort);
     }
 }
 
@@ -203,6 +250,11 @@ void MdnsResolver::onTimeoutTick() {
             emit resolveFailed(it.key());
             it = m_pending.erase(it);
         } else {
+            if (it->resendsLeft > 0 && now >= it->resendMs) {
+                --it->resendsLeft;
+                it->resendMs = now + kResendIntervalMs;
+                sendQuery(it->hostnameLower);
+            }
             ++it;
         }
     }

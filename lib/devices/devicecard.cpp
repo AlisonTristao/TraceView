@@ -5,6 +5,7 @@
 #include <QPainter>
 #include <QPainterPath>
 
+#include "devices/tracekitdialog.h"
 #include "traceview/framestyle.h"
 #include "traceview/thememanager.h"
 
@@ -147,6 +148,26 @@ void drawScriptIcon(QPainter& painter, const QRect& r, const QColor& color) {
 
     painter.restore();
 }
+// Three slider tracks with their knobs: the TraceKit panel (settings,
+// Wi-Fi, actions) -- same procedural style as the gear and script icons.
+void drawToolsIcon(QPainter& painter, const QRect& r, const QColor& color) {
+    painter.save();
+    painter.setRenderHint(QPainter::Antialiasing);
+    painter.translate(r.topLeft());
+    const qreal s = r.width();
+    QPen pen(color, s * 0.10);
+    pen.setCapStyle(Qt::RoundCap);
+    painter.setPen(pen);
+    const qreal knobs[3] = {0.32, 0.68, 0.45};
+    for (int i = 0; i < 3; ++i) {
+        const qreal y = s * (0.22 + 0.28 * i);
+        painter.drawLine(QPointF(s * 0.12, y), QPointF(s * 0.88, y));
+        painter.setBrush(color);
+        painter.drawEllipse(QPointF(s * knobs[i], y), s * 0.09, s * 0.09);
+        painter.setBrush(Qt::NoBrush);
+    }
+    painter.restore();
+}
 }  // namespace
 
 DeviceCard::DeviceCard(QWidget* parent) : QWidget(parent) {
@@ -186,6 +207,15 @@ QRect DeviceCard::gearButtonRect() const {
 QRect DeviceCard::scriptButtonRect() const {
     const QRect gear = gearButtonRect();
     return QRect(gear.left() - kIconMargin - kIconSize, gear.top(), kIconSize, kIconSize);
+}
+
+QRect DeviceCard::toolsButtonRect() const {
+    const QRect script = scriptButtonRect();
+    return QRect(script.left() - kIconMargin - kIconSize, script.top(), kIconSize, kIconSize);
+}
+
+bool DeviceCard::hasTools() const {
+    return isTraceKitDevice(m_device.reportedInfo) || isTraceKitDevice(m_cachedInfo);
 }
 
 QRect DeviceCard::statusDotRect() const {
@@ -233,7 +263,8 @@ void DeviceCard::paintEvent(QPaintEvent*) {
     // mousePressEvent()).
     const DeviceLinkState linkState = deviceLinkState(m_device);
     const QColor dotColor = (linkState == DeviceLinkState::Live)      ? palette.success
-                            : (linkState == DeviceLinkState::Offline) ? palette.danger
+                            : (linkState == DeviceLinkState::Offline ||
+                               linkState == DeviceLinkState::KeyRejected) ? palette.danger
                                                                      : palette.warning;
     const QRect dotRect = statusDotRect();
     painter.setPen(Qt::NoPen);
@@ -244,7 +275,10 @@ void DeviceCard::paintEvent(QPaintEvent*) {
     // Wider than kIconMargin (unlike the gap the other header elements use)
     // -- the script icon sits close enough to a long, elided title that the
     // default margin read as crowded.
-    textRect.setRight(scriptButtonRect().left() - kIconMargin * 2);
+    textRect.setRight((hasTools() ? toolsButtonRect() : scriptButtonRect()).left() - kIconMargin * 2);
+    if (hasTools()) {
+        drawToolsIcon(painter, toolsButtonRect(), headerFg);
+    }
     drawScriptIcon(painter, scriptButtonRect(), headerFg);
     drawGearIcon(painter, gearButtonRect(), headerFg);
 
@@ -323,7 +357,9 @@ void DeviceCard::paintEvent(QPaintEvent*) {
                    ? tr("v%1").arg(m_device.btpVersion)
                    : tr("v%1 \xC2\xB7 ID %2").arg(m_device.btpVersion, m_device.btpId));
     // Name the amber state in words, not just a dot colour (topico 35 D.2).
-    if (linkState == DeviceLinkState::TransportOnly) {
+    if (linkState == DeviceLinkState::KeyRejected) {
+        reportedLine = tr("wrong password: can't read the device");
+    } else if (linkState == DeviceLinkState::TransportOnly) {
         reportedLine = tr("port open, waiting for BTP session");
     } else if (inUse.transportType == TransportType::HubChannel &&
                linkState == DeviceLinkState::PeerStale) {
@@ -339,8 +375,12 @@ void DeviceCard::paintEvent(QPaintEvent*) {
     }
     // Nothing live: what the last connection reported, dimmed and said so.
     const bool fromCache = m_device.reportedInfo.isEmpty() && !m_cachedInfo.isEmpty();
-    if (fromCache && reportedLine.isEmpty()) {
-        reportedLine = tr("saved from the last connection");
+    if (fromCache && linkState != DeviceLinkState::KeyRejected) {
+        // Said even beside a session line: info that is not live must never
+        // read as the device's current state.
+        const QString saved = tr("saved from the last connection");
+        reportedLine =
+            reportedLine.isEmpty() ? saved : saved + QString::fromUtf8(" \xC2\xB7 ") + reportedLine;
     }
     const int reportedHeight = reportedLine.isEmpty() ? 0 : kBodyLineHeight + 4;
 
@@ -401,6 +441,11 @@ void DeviceCard::mousePressEvent(QMouseEvent* event) {
     }
     if (scriptButtonRect().contains(event->position().toPoint())) {
         emit scriptRequested(m_device.id);
+        event->accept();
+        return;
+    }
+    if (hasTools() && toolsButtonRect().contains(event->position().toPoint())) {
+        emit toolsRequested(m_device.id);
         event->accept();
         return;
     }

@@ -421,6 +421,8 @@ add_library(traceview_devices STATIC
     devices/robotlinkspanel.cpp
     devices/robotlinkspanel.h
     devices/devicelinkstable.h
+    devices/tracekitdialog.cpp
+    devices/tracekitdialog.h
 )
 
 target_include_directories(traceview_devices PUBLIC
@@ -498,12 +500,12 @@ target_link_libraries(traceview_diagnostics
 )
 
 # traceview_ota: the OTA Update tab's content -- OtaClient (a
-# QNetworkAccessManager wrapper talking to bally_OS's OTAUpdater HTTP side
-# channel: GET /status, POST /update) and OtaTab, the table of devices it
-# drives. Depends on traceview_devices for Device (otaAddress/otaPassword/
-# cacheOtaPassword) and directly on Qt6::Network -- the first library in
-# this app that actually uses it for network access rather than just
-# QPasswordDigestor (see traceview_protocol's own link comment above).
+# QNetworkAccessManager wrapper talking to the TraceKit recovery: GET /status,
+# POST /update and /reboot, signed with key E by ota/otaauth.*) and OtaTab,
+# the table of devices it drives. Depends on traceview_devices for Device
+# (otaAddress, reportedInfo, tcpHost) and directly on Qt6::Network. Key E
+# itself comes from the caller (OtaTab::setKeyProvider), so this library does
+# not link the protocol one.
 # traceview_mdns: the one-shot *.local resolver (ota/mdnsresolver.*), on its
 # own so the TCP transport can resolve a robot's mDNS name without linking
 # the whole OTA tab (Widgets, devices, theme). Windows has no mDNS resolver
@@ -521,8 +523,12 @@ target_include_directories(traceview_mdns PUBLIC
 target_link_libraries(traceview_mdns PUBLIC Qt6::Network)
 
 add_library(traceview_ota STATIC
+    ota/otaauth.cpp
+    ota/otaauth.h
     ota/otaclient.cpp
     ota/otaclient.h
+    ota/otadevicepanel.cpp
+    ota/otadevicepanel.h
     ota/otatab.cpp
     ota/otatab.h
 )

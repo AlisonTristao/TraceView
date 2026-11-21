@@ -7,11 +7,15 @@
 #include <QDateTime>
 #include <QDesktopServices>
 #include <QDir>
+#include <QFontDatabase>
 #include <QFormLayout>
 #include <QGroupBox>
 #include <QGuiApplication>
 #include <QHBoxLayout>
 #include <QIcon>
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QJsonObject>
 #include <QLabel>
 #include <QListWidget>
 #include <QListWidgetItem>
@@ -540,26 +544,56 @@ SettingsPage::SettingsPage(QWidget* parent) : QWidget(parent) {
         tr("An assistant connected over MCP can then create workspaces and widgets, read "
            "telemetry and take screenshots of this window. Its dashboard edits can be undone."));
     addCheckBoxRow(formFor(agentSection), agentBridge);
+    connect(agentBridge, &QCheckBox::toggled, &settings, &AppSettings::setAgentBridgeEnabled);
+
+    // Two registrations cover every Claude on the computer: Claude Code's
+    // user scope (~/.claude.json) is shared by the terminal, the IDE
+    // extensions and the desktop app's Code tab; the desktop app's chat reads
+    // its own claude_desktop_config.json, which no `claude mcp` command edits.
+    const QStringList serverCommand = mcpServerCommand();
     QStringList commandParts;
-    for (const QString& part : mcpServerCommand()) {
+    for (const QString& part : serverCommand) {
         commandParts.append(part.contains(QLatin1Char(' ')) ? QStringLiteral("\"%1\"").arg(part)
                                                             : part);
     }
-    const QString registerCommand =
-        QStringLiteral("claude mcp add traceview -- ") + commandParts.join(QLatin1Char(' '));
-    auto* agentNote =
-        new QLabel(tr("To connect Claude Code, run this once in a terminal:"), agentSection);
-    agentNote->setWordWrap(true);
-    formFor(agentSection)->addRow(agentNote);
-    auto* commandLabel = new QLabel(registerCommand, agentSection);
-    commandLabel->setWordWrap(true);
-    commandLabel->setTextInteractionFlags(Qt::TextSelectableByMouse);
-    formFor(agentSection)->addRow(commandLabel);
-    auto* copyCommand = new QPushButton(tr("Copy command"), agentSection);
-    formFor(agentSection)->addRow(QString(), copyCommand);
-    connect(agentBridge, &QCheckBox::toggled, &settings, &AppSettings::setAgentBridgeEnabled);
-    connect(copyCommand, &QPushButton::clicked, this,
-            [registerCommand] { QGuiApplication::clipboard()->setText(registerCommand); });
+    const QString registerCommand = QStringLiteral("claude mcp add --scope user traceview -- ") +
+                                    commandParts.join(QLatin1Char(' '));
+    QJsonObject desktopServer;
+    desktopServer.insert(QStringLiteral("command"), serverCommand.value(0));
+    desktopServer.insert(QStringLiteral("args"), QJsonArray::fromStringList(serverCommand.mid(1)));
+    const QString desktopEntry =
+        QString::fromUtf8(
+            QJsonDocument(QJsonObject{{QStringLiteral("traceview"), desktopServer}})
+                .toJson(QJsonDocument::Indented))
+            .trimmed();
+
+    const auto addRegistration = [this, agentSection](const QString& title, const QString& text,
+                                                      const QString& note) {
+        auto* titleLabel = new QLabel(title, agentSection);
+        titleLabel->setWordWrap(true);
+        formFor(agentSection)->addRow(titleLabel);
+        auto* textLabel = new QLabel(text, agentSection);
+        textLabel->setTextFormat(Qt::PlainText);
+        textLabel->setFont(QFontDatabase::systemFont(QFontDatabase::FixedFont));
+        textLabel->setWordWrap(true);
+        textLabel->setTextInteractionFlags(Qt::TextSelectableByMouse);
+        formFor(agentSection)->addRow(textLabel);
+        auto* copy = new QPushButton(tr("Copy"), agentSection);
+        formFor(agentSection)->addRow(QString(), copy);
+        auto* noteLabel = new QLabel(note, agentSection);
+        noteLabel->setWordWrap(true);
+        formFor(agentSection)->addRow(noteLabel);
+        connect(copy, &QPushButton::clicked, this,
+                [text] { QGuiApplication::clipboard()->setText(text); });
+    };
+    addRegistration(
+        tr("Claude Code: run this once in a terminal."), registerCommand,
+        tr("Registers TraceView for every folder (--scope user), so Claude Code in the terminal, "
+           "the VS Code extension and the Code tab of the Claude desktop app all see it."));
+    addRegistration(
+        tr("Claude desktop app (chat): add this to claude_desktop_config.json."), desktopEntry,
+        tr("Paste it inside the file's \"mcpServers\" object (Claude desktop app: Settings > "
+           "Developer > Edit Config), then restart the app."));
 #endif
     qobject_cast<QVBoxLayout*>(connectionsPage->layout())->addStretch();
     addPage(connectionsPage);

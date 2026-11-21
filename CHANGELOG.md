@@ -7,6 +7,79 @@ release flow.
 
 ## [Unreleased]
 
+## [4.15.0] - 2026-11-21
+
+### Added
+
+- **Compressed firmware uploads**: when the TraceKit recovery lists
+  `"deflate"` in its `/status` `encodings`, the image goes as a zlib stream
+  (`X-OTA-Encoding: deflate`, `X-OTA-Size`), about a third less to send.
+  The hash and the signature stay over the image itself. Older recoveries
+  get the image as before.
+- **Firmware page in the TraceKit panel**: the OTA flow for that one device
+  -- what is installed, a `.bin` to drop or pick (its project, version and
+  chip read from the image and checked against the device), and one
+  Install that restarts it into the recovery, sends and starts the new
+  firmware, with the three steps and their progress. The panel itself now
+  has a header (name, firmware, connection) and a side list of pages; the
+  Firmware page works while the device is disconnected.
+- **TraceKit panel**: a TraceKit device's card has a tools icon (next to
+  the script icon) that opens its settings, Wi-Fi networks and actions.
+  The settings editor is built from what the device declares (`cfg -json`:
+  type, range, unit, help), so every device shows its own; Apply sends
+  `cfg -set`. Wi-Fi lists the known networks (names only) and adds or
+  removes them. Actions: set the clock, status, keep awake, reboot,
+  recovery, USB bootloader, factory reset.
+- A TraceKit device's clock is set from this computer on every connection
+  (`btp -time_sync`), unless it already has the time from SNTP.
+- `Backend::runCommand()`: a command whose output comes back to the caller
+  instead of the log panel.
+
+### Fixed
+
+- **`.local` names are found on PCs with a VPN**: the mDNS query went out of
+  the interface with the lowest route metric only, which with Tailscale,
+  ZeroTier or Hyper-V installed is that adapter, where no robot answers --
+  so a TCP device or an OTA address named `<robot>.local` was "not found on
+  the network" while the robot sat on the Wi-Fi. The query now goes out of
+  every up, multicast-capable interface, and is repeated twice within its
+  3 s (multicast over Wi-Fi drops packets).
+- Em dashes in the OTA tab and the reboot mark of TraceKit settings showed
+  as boxes: UTF-8 bytes escaped inside `QStringLiteral`, which takes each
+  `\xNN` as one character.
+- A device whose password is wrong or missing no longer looks connected:
+  the HELLO passes in the clear, but every sealed message after it was
+  dropped in silence, so the card showed a green dot (and the session
+  later timed out, looking like random disconnects). Now the card turns
+  red with "wrong password: can't read the device" and the status bar
+  says whether no password is set or it does not match
+  (`Backend::keyRejected`, `Device::keyRejected`).
+- Information on a device card that comes from the manifest cache is
+  always marked "saved from the last connection", also while a session
+  is up; it used to read as the device's current state (an old firmware
+  version shown as if it were running).
+
+### Changed
+
+- **OTA tab speaks the TraceKit recovery only** (the bally_OS OTAUpdater
+  protocol is gone). Uploads and "To app" are signed with HMAC-SHA256 over
+  a fresh nonce with key E, derived from the device's own password: there
+  is no separate OTA password any more (`Device::otaPassword` and
+  `cacheOtaPassword` were removed). **Upload…** on a device that is
+  running its application and connected sends `btp -recovery` first and
+  uploads when the recovery answers. The address is found by itself (the
+  device's `ota_endpoint`, or its TCP host); the table shows the state, the
+  application and recovery versions, and why the device is in the
+  recovery. Images that are not ESP application images, or larger than the
+  partition, are refused before sending.
+- **AI assistants setup covers every Claude on the computer**: Settings >
+  Connections > AI assistants now shows two registrations, each with a Copy
+  button and a note under it. The Claude Code command adds `--scope user`,
+  so the terminal, the VS Code extension and the desktop app's Code tab all
+  see TraceView from any folder (it used to register for the current folder
+  only); the Claude desktop app's chat gets the `claude_desktop_config.json`
+  entry, built from this computer's TraceView path.
+
 ## [4.14.0] - 2026-11-15
 
 ### Changed

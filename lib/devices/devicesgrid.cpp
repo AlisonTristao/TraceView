@@ -103,6 +103,16 @@ void DevicesGrid::setDeviceConnected(const QString& id, bool connected) {
     emit deviceLiveStateChanged(m_devices[idx]);
 }
 
+void DevicesGrid::setDeviceKeyRejected(const QString& id, bool rejected) {
+    const int idx = indexOfDevice(id);
+    if (idx < 0 || m_devices[idx].keyRejected == rejected) {
+        return;
+    }
+    m_devices[idx].keyRejected = rejected;
+    refreshCard(idx);
+    emit deviceLiveStateChanged(m_devices[idx]);
+}
+
 void DevicesGrid::setDeviceIdentity(const QString& id, const QString& btpVersion,
                                     const QString& btpId) {
     const int idx = indexOfDevice(id);
@@ -207,6 +217,7 @@ void DevicesGrid::applyInsertDevice(const Device& device, int index) {
     connect(card, &DeviceCard::selectRequested, this, &DevicesGrid::handleCardSelectRequested);
     connect(card, &DeviceCard::connectToggleRequested, this, &DevicesGrid::connectToggleRequested);
     connect(card, &DeviceCard::scriptRequested, this, &DevicesGrid::scriptRequested);
+    connect(card, &DeviceCard::toolsRequested, this, &DevicesGrid::toolsRequested);
     card->show();
     m_cards.insert(clampedIndex, card);
     refreshCard(clampedIndex);

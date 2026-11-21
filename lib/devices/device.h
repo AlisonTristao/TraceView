@@ -187,6 +187,10 @@ struct Device {
     // exists. Empty portName means "not configured yet," so this stays
     // false regardless of connection attempts.
     bool connected = false;
+    // Live, not persisted: the session is up but this device's sealed
+    // messages do not open with the password set here (wrong, or none). Set
+    // by Backend::keyRejected through DevicesGrid::setDeviceKeyRejected.
+    bool keyRejected = false;
     CommType commType = CommType::Btp;
     QString description;
     // JavaScript run live for this device by its own DiagramScriptRuntime
@@ -347,26 +351,16 @@ struct Device {
     // every open is friction with no security bought.
     bool cachePeerPassword = false;
 
-    // --- OTA firmware upload (see lib/ota) -------------------------------
-    // A separate Wi-Fi/HTTP side channel bally_OS serves from its DEBUG
-    // state (OTAUpdater), independent of whichever transport above this
-    // device actually connects through -- a device can be configured for
-    // Serial/USB/Hub *and* have an OTA address, since OTA doesn't run over
-    // BTP at all.
+    // --- Firmware update (see lib/ota) -----------------------------------
+    // The TraceKit recovery is reached over Wi-Fi/HTTP, independent of the
+    // transport above. Its uploads are signed with key E from peerPassword
+    // (the same password as the BTP session), so there is no OTA password.
 
-    // mDNS hostname ("robot1.local") or bare IP the OTA tab targets for this
-    // device's GET /status and POST /update. Empty means "not configured for
-    // OTA" -- the OTA tab still lists the device, just with nothing to poll.
-    // Not a secret, so unlike peerSourceId this is always persisted.
+    // mDNS hostname ("robot1.local") or bare IP of the recovery, when it
+    // differs from what the device tells by itself. Usually empty:
+    // otaAddressFor() (ota/otaclient.h) then uses the "ota_endpoint" the
+    // device reported, or its TCP host. Not a secret, always persisted.
     QString otaAddress;
-
-    // Password for this device's X-OTA-Password header. Live session input,
-    // not configuration -- see cacheOtaPassword for whether it is persisted.
-    QString otaPassword;
-
-    // Whether otaPassword goes into the saved project. Same opt-in-only
-    // convention as cachePeerPassword above, and for the same reason.
-    bool cacheOtaPassword = false;
 
     // --- Several ways to connect ------------------------------------------
     // Alternatives to the primary link above (its transportType/portName/...
@@ -573,6 +567,8 @@ enum class DeviceLinkState {
     TransportOnly,  // Serial/UsbHid: link open, but no BTP session yet
     Live,           // BTP session established (Serial/UsbHid), or a hub child
                     // whose robot's frames are actually reaching this TraceView
+    KeyRejected,    // session up, but the device's sealed messages do not open:
+                    // the password is wrong or missing, nothing it sends is read
     PeerStale,      // hub child: the cable to the dongle is up, but the robot's
                     // presence is not confirmed -- either nothing has arrived
                     // from it yet (just connected / nothing subscribed) or its
@@ -586,6 +582,9 @@ inline DeviceLinkState deviceLinkState(const Device& stored) {
     const Device device = effectiveDevice(stored);
     if (!device.connected) {
         return DeviceLinkState::Offline;
+    }
+    if (stored.keyRejected) {
+        return DeviceLinkState::KeyRejected;
     }
     if (device.transportType == TransportType::HubChannel) {
         // No ENTER/HELLO on this transport, so `connected` only means the

@@ -61,6 +61,10 @@ signals:
     // this device's DiagramScriptRuntime script editor (see MainWindow,
     // which owns that runtime; this card knows nothing about it).
     void scriptRequested(const QString& deviceId);
+    // Emitted on a click on the TraceKit icon, left of the script icon --
+    // shown only for a device whose manifest says it runs TraceKit. Opens
+    // its TraceKitDialog (settings, Wi-Fi, actions).
+    void toolsRequested(const QString& deviceId);
     // Emitted on a plain click anywhere on the card except the gear button.
     // DevicesGrid owns turning this into an actual selection change.
     void selectRequested(const QString& deviceId);
@@ -81,6 +85,9 @@ private:
     QRect gearButtonRect() const;
     // Immediately left of the gear, same size -- the script icon.
     QRect scriptButtonRect() const;
+    // Left of the script icon, same size; only while hasTools().
+    QRect toolsButtonRect() const;
+    bool hasTools() const;
     // Fixed geometry (doesn't depend on paint-time text layout) so both
     // paintEvent() and mousePressEvent() share one source of truth.
     QRect statusDotRect() const;

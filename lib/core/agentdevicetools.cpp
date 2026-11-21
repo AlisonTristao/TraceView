@@ -51,9 +51,6 @@ Device withLiveState(Device merged, const Device& stored, const QJsonObject& cha
     if (!changes.contains("peerPassword")) {
         merged.peerPassword = stored.peerPassword;
     }
-    if (!changes.contains("otaPassword")) {
-        merged.otaPassword = stored.otaPassword;
-    }
     return merged;
 }
 
@@ -63,7 +60,6 @@ QJsonObject deviceJson(const Device& device, DeviceConnection* connection,
                        const QStringList& children) {
     QJsonObject settings = deviceToJson(device);
     settings.remove("peerPassword");
-    settings.remove("otaPassword");
     QJsonArray reported;
     for (const DeviceInfoRecord& record : device.reportedInfo) {
         reported.append(
@@ -73,7 +69,6 @@ QJsonObject deviceJson(const Device& device, DeviceConnection* connection,
         {"id", device.id},
         {"settings", settings},
         {"peerPasswordSet", !device.peerPassword.isEmpty()},
-        {"otaPasswordSet", !device.otaPassword.isEmpty()},
         {"connected", connection && connection->isConnected()},
         {"connecting", connection && connection->wantsConnection() && !connection->isConnected()},
         {"transport", transportTypeLabel(device.transportType)},
@@ -111,9 +106,9 @@ QString settingsHelp() {
         "portName + baudRate + lineTerminator (0 none, 1 LF, 2 CR, 3 CRLF) for serial, usbPath "
         "for USB HID, tcpHost + tcpPort for TCP, bleAddress (advertised name or address) for "
         "BLE, parentDeviceId + peerSourceId for a hub channel, robotName + autoTarget to find "
-        "the link by the robot's name, otaAddress + otaPassword for firmware updates, "
-        "peerPassword for a hub channel's key (cacheOtaPassword/cachePeerPassword keep them in "
-        "the project), extraLinks (alternative links with the same transport fields, tried in "
+        "the link by the robot's name, otaAddress (only when the recovery is not at the address "
+        "the device reports or its TCP host), peerPassword for the device's key (password E; "
+        "cachePeerPassword keeps it in the project), extraLinks (alternative links with the same transport fields, tried in "
         "order). list_ports gives the values to use.");
 }
 
@@ -207,7 +202,6 @@ void AgentAppTools::registerDeviceTools(MainWindow* window, ToolRegistry* regist
         }
         device.id.clear();
         device.peerPassword = changes.value("peerPassword").toString();
-        device.otaPassword = changes.value("otaPassword").toString();
         const QString id = window->m_devicesGrid->addDevice(device);
         const QVector<Device> devices = window->m_devicesGrid->devices();
         reply(AgentToolResult::json(
@@ -700,8 +694,9 @@ void AgentAppTools::registerOtaTools(MainWindow* window, ToolRegistry* registry)
     status.title = "OTA status";
     status.readOnly = true;
     status.description =
-        "Asks a device's OTA (Wi-Fi firmware update) side channel whether it is reachable and "
-        "ready, and which firmware it runs. Uses the device's otaAddress setting.";
+        "Asks a device's TraceKit recovery (Wi-Fi firmware update) whether it answers: it does "
+        "only after `btp -recovery` (send_command), a crash loop or a failed update. Reports the "
+        "application and recovery versions and why it is in the recovery.";
     status.inputSchema =
         AgentSchema().string("deviceId", "Device id (get_app_state).", true).toJson();
     status.handler = [window](const QJsonObject& args, const AgentToolReply& reply) {
@@ -712,23 +707,32 @@ void AgentAppTools::registerOtaTools(MainWindow* window, ToolRegistry* registry)
             reply(AgentToolResult::error(QStringLiteral("Unknown device \"%1\".").arg(id)));
             return;
         }
-        if (device->otaAddress.isEmpty()) {
-            reply(AgentToolResult::error(
-                QStringLiteral("The device has no otaAddress; set it with update_device.")));
+        const QString address = otaAddressFor(*device);
+        if (address.isEmpty()) {
+            reply(AgentToolResult::error(QStringLiteral(
+                "No address for the device: connect it over TCP, or set otaAddress.")));
             return;
         }
         auto* client = new OtaClient(window);
         auto done = std::make_shared<bool>(false);
-        QObject::connect(client, &OtaClient::statusChecked, client,
-                         [client, done, reply](const QString&, bool reachable, bool otaReady,
-                                               const QString& firmware, const QString& error) {
-                             *done = true;
-                             reply(AgentToolResult::json(QJsonObject{{"reachable", reachable},
-                                                                     {"otaReady", otaReady},
-                                                                     {"firmwareVersion", firmware},
-                                                                     {"error", error}}));
-                             client->deleteLater();
-                         });
+        QObject::connect(
+            client, &OtaClient::statusChecked, client,
+            [client, done, reply](const QString&, bool reachable, const RecoveryStatus& status,
+                                  const QString& error) {
+                *done = true;
+                reply(AgentToolResult::json(QJsonObject{
+                    {"inRecovery", reachable},
+                    {"otaReady", status.otaReady},
+                    {"reason", status.reason},
+                    {"application", status.appValid ? status.appProject + QLatin1Char(' ') +
+                                                          status.appVersion
+                                                    : QString()},
+                    {"recoveryVersion", status.recoveryVersion},
+                    {"chip", status.chip},
+                    {"maxSize", status.maxSize},
+                    {"error", error}}));
+                client->deleteLater();
+            });
         QTimer::singleShot(kOtaStatusTimeoutMs, client, [client, done, reply] {
             if (!*done) {
                 *done = true;
@@ -736,7 +740,7 @@ void AgentAppTools::registerOtaTools(MainWindow* window, ToolRegistry* registry)
                 client->deleteLater();
             }
         });
-        client->checkStatus(id, device->otaAddress);
+        client->checkStatus(id, address);
     };
     registry->registerTool(status);
 
@@ -745,9 +749,10 @@ void AgentAppTools::registerOtaTools(MainWindow* window, ToolRegistry* registry)
     upload.title = "OTA upload";
     upload.destructive = true;
     upload.description =
-        "Flashes a firmware .bin onto a device over Wi-Fi (its otaAddress/otaPassword). The "
-        "user confirms every upload in a dialog. Returns when the upload finishes, with the "
-        "device's answer; progress shows in TraceView's status bar.";
+        "Flashes a firmware .bin onto a device in its TraceKit recovery (ota_status says "
+        "inRecovery; send `btp -recovery` first otherwise), signed with the device's password "
+        "(peerPassword). The user confirms every upload in a dialog. Returns when the upload "
+        "finishes, with the device's answer; the device then starts the new firmware.";
     upload.inputSchema = AgentSchema()
                              .string("deviceId", "Device id (get_app_state).", true)
                              .string("firmwarePath", "Absolute path of the firmware .bin.", true)
@@ -761,9 +766,10 @@ void AgentAppTools::registerOtaTools(MainWindow* window, ToolRegistry* registry)
             reply(AgentToolResult::error(QStringLiteral("Unknown device \"%1\".").arg(id)));
             return;
         }
-        if (device->otaAddress.isEmpty()) {
-            reply(AgentToolResult::error(
-                QStringLiteral("The device has no otaAddress; set it with update_device.")));
+        const QString address = otaAddressFor(*device);
+        if (address.isEmpty()) {
+            reply(AgentToolResult::error(QStringLiteral(
+                "No address for the device: connect it over TCP, or set otaAddress.")));
             return;
         }
         if (!QFileInfo(path).isFile()) {
@@ -807,7 +813,10 @@ void AgentAppTools::registerOtaTools(MainWindow* window, ToolRegistry* registry)
                 client->deleteLater();
             }
         });
-        client->uploadFirmware(id, device->otaAddress, device->otaPassword, path);
+        const QByteArray keyE = device->peerPassword.isEmpty()
+                                    ? QByteArray()
+                                    : window->channelKeyFor(device->peerPassword);
+        client->uploadFirmware(id, address, keyE, path);
     };
     registry->registerTool(upload);
 }

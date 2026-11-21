@@ -3,7 +3,10 @@
 #include <QByteArray>
 #include <QHash>
 #include <QHostAddress>
+#include <QList>
+#include <QNetworkInterface>
 #include <QObject>
+#include <QSet>
 #include <QString>
 
 class QUdpSocket;
@@ -43,6 +46,11 @@ QHash<QString, QHostAddress> parseAAnswers(const QByteArray& message);
 // the multicast wire protocol ourselves (RFC 6762 section 5: query
 // 224.0.0.251:5353, listen on the same group/port for the answer) works
 // regardless of what's installed on the machine.
+//
+// The query goes out of EVERY up, multicast-capable IPv4 interface, not the
+// one the OS would pick: that one is the lowest route metric, and on a PC
+// with a VPN or overlay (Tailscale, ZeroTier, Hyper-V's switch) it is that
+// adapter, where no robot will ever answer -- the robot is on the Wi-Fi.
 class MdnsResolver : public QObject {
     Q_OBJECT
 
@@ -70,15 +78,22 @@ private:
     struct PendingQuery {
         QString hostnameLower;
         qint64 deadlineMs = 0;
+        qint64 resendMs = 0;  // next repeat of the query (0: no more)
+        int resendsLeft = 0;
     };
 
     void ensureSocket();
+    // Joins the group on interfaces not joined yet (an adapter that came up
+    // since the last query) and returns every interface to send on.
+    QList<QNetworkInterface> refreshInterfaces();
+    void sendQuery(const QString& hostnameLower);
     void onReadyRead();
     void onTimeoutTick();
 
     QUdpSocket* m_socket = nullptr;
     QTimer* m_timeoutTimer;
     QHash<QString, PendingQuery> m_pending;  // requestId -> query
+    QSet<QString> m_joined;                  // QNetworkInterface::name() of the joined ones
 };
 
 }  // namespace traceview

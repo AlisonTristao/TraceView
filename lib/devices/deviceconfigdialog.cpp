@@ -233,8 +233,8 @@ DeviceConfigDialog::DeviceConfigDialog(const Device& initial, QWidget* parent)
     m_otaAddressEdit = new QLineEdit(m_device.otaAddress, otaGroup);
     m_otaAddressEdit->setPlaceholderText(tr("e.g. robot1.local"));
     m_otaAddressEdit->setToolTip(
-        tr("Hostname or IP the OTA tab uses for this device's firmware upload. "
-           "Left blank, the device is listed there but nothing can be polled or uploaded."));
+        tr("Hostname or IP of the device's recovery, for firmware uploads. Usually left "
+           "blank: the OTA tab then uses the address the device reports, or its TCP host."));
     // The device announces its own OTA hostname in the source_info block (key
     // "ota_endpoint", commands.md 3.12). This offers it as a one-click fill --
     // never a silent overwrite, since the field is persisted config and the
@@ -255,18 +255,11 @@ DeviceConfigDialog::DeviceConfigDialog(const Device& initial, QWidget* parent)
     otaAddressRow->addWidget(m_useReportedOtaButton);
     otaLayout->addRow(tr("Address:"), otaAddressRow);
 
-    m_otaPasswordEdit = new QLineEdit(m_device.otaPassword, otaGroup);
-    m_otaPasswordEdit->setEchoMode(QLineEdit::Password);
-    m_otaPasswordEdit->setToolTip(tr("Password for this device's X-OTA-Password header."));
-    otaLayout->addRow(tr("Password:"), m_otaPasswordEdit);
-
-    // Off by default, same reasoning as the Hub group's cache checkbox above:
-    // a project file is something people mail to each other and commit.
-    m_cacheOtaPasswordCheck = new QCheckBox(tr("Save this password in the project file"), otaGroup);
-    m_cacheOtaPasswordCheck->setChecked(m_device.cacheOtaPassword);
-    m_cacheOtaPasswordCheck->setToolTip(
-        tr("Anyone who opens the project file can read a saved password."));
-    otaLayout->addRow(QString(), m_cacheOtaPasswordCheck);
+    auto* otaNote = new QLabel(
+        tr("Uploads are signed with the device's password, the same one its connection uses."),
+        otaGroup);
+    otaNote->setWordWrap(true);
+    otaLayout->addRow(QString(), otaNote);
 
     // Read-only: this is the last HELLO_RESULT the device sent, not
     // something a user should be able to type over (see Device::btpVersion/
@@ -398,8 +391,6 @@ Device DeviceConfigDialog::result() const {
     device.cachePeerPassword = m_cachePasswordCheck->isChecked();
     device.peerPassword = m_peerPasswordEdit->text();
     device.otaAddress = m_otaAddressEdit->text().trimmed();
-    device.otaPassword = m_otaPasswordEdit->text();
-    device.cacheOtaPassword = m_cacheOtaPasswordCheck->isChecked();
     // btpVersion/btpId deliberately left as whatever m_device already held --
     // "Reported by device" is read-only (see the fields' own declarations).
     return device;

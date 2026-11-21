@@ -62,6 +62,15 @@ public slots:
     // MANIFEST_DATA from it in this process -- or every slot busy).
     void send(const QString& commandLine);
 
+public:
+    // The output of a command, for code rather than for the user: `done`
+    // runs exactly once -- with ok and the shell output, or with !ok and why
+    // (not configured, no key, no slot, timed out, the command failed) --
+    // and nothing reaches the status bar or the log panel. A TraceKit
+    // device's "cfg -json 3" or "btp -wifi_json" are read this way.
+    using ResultFn = std::function<void(bool ok, const QString& output)>;
+    void query(const QString& commandLine, ResultFn done);
+
 signals:
     void statusMessage(const QString& text, int timeoutMs,
                        traceview::StatusSeverity severity = traceview::StatusSeverity::Info);
@@ -83,7 +92,11 @@ private:
     quint32 m_targetSourceId = 0;
     std::function<bool()> m_hasEndpointKey;
 
+    // local_id of the request, or 0 with `why` filled.
+    std::uint32_t issue(const QString& commandLine, QString* why);
+
     QHash<std::uint32_t, QString> m_pending;  // local_id -> command line
+    QHash<std::uint32_t, ResultFn> m_queries;  // local_id -> query() callback
 };
 
 }  // namespace traceview

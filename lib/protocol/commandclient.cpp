@@ -49,20 +49,19 @@ void CommandClient::configure(quint32 targetSourceId, TelemetryCatalog* catalog,
     m_hasEndpointKey = std::move(hasEndpointKey);
 }
 
-void CommandClient::send(const QString& commandLine) {
+std::uint32_t CommandClient::issue(const QString& commandLine, QString* why) {
     if (commandLine.isEmpty() || m_targetSourceId == 0) {
-        return;
+        *why = tr("not connected to a device that takes commands");
+        return 0U;
     }
     if (!m_hasEndpointKey || !m_hasEndpointKey()) {
-        emit statusMessage(tr("command not sent: endpoint key not configured"), 5000,
-                           StatusSeverity::Warning);
-        return;
+        *why = tr("command not sent: endpoint key not configured");
+        return 0U;
     }
     const quint32 targetBootId = m_catalog ? m_catalog->sourceBootId(m_targetSourceId) : 0;
     if (targetBootId == 0) {
-        emit statusMessage(tr("command not sent: robot manifest not received yet"), 5000,
-                           StatusSeverity::Warning);
-        return;
+        *why = tr("command not sent: robot manifest not received yet");
+        return 0U;
     }
 
     const QByteArray commandBytes = commandLine.toUtf8();
@@ -73,23 +72,63 @@ void CommandClient::send(const QString& commandLine) {
     if (localId == 0U) {
         // Every slot taken by commands still waiting for their result, or a
         // request that does not fit the node's buffers.
-        emit statusMessage(m_pending.isEmpty()
-                               ? tr("command not sent: could not encode or seal request")
-                               : tr("command not sent: %n command(s) still waiting for a result",
-                                    nullptr, int(m_pending.size())),
-                           5000, StatusSeverity::Error);
+        const int waiting = int(m_pending.size() + m_queries.size());
+        *why = waiting == 0
+                   ? tr("command not sent: could not encode or seal request")
+                   : tr("command not sent: %n command(s) still waiting for a result", nullptr,
+                        waiting);
+    }
+    return localId;
+}
+
+void CommandClient::send(const QString& commandLine) {
+    if (commandLine.isEmpty() || m_targetSourceId == 0) {
+        return;
+    }
+    QString why;
+    const std::uint32_t localId = issue(commandLine, &why);
+    if (localId == 0U) {
+        emit statusMessage(why, 5000,
+                           why.contains(QLatin1String("waiting")) ||
+                                   why.contains(QLatin1String("encode"))
+                               ? StatusSeverity::Error
+                               : StatusSeverity::Warning);
         return;
     }
     m_pending.insert(localId, commandLine);
     emit logLine(kCommand, QStringLiteral("> ") + commandLine);
 }
 
+void CommandClient::query(const QString& commandLine, ResultFn done) {
+    QString why;
+    const std::uint32_t localId = issue(commandLine, &why);
+    if (localId == 0U) {
+        done(false, why);
+        return;
+    }
+    m_queries.insert(localId, std::move(done));
+}
+
 void CommandClient::notifyOutcome() {
-    if (m_pending.isEmpty()) {
+    if (m_pending.isEmpty() && m_queries.isEmpty()) {
         return;
     }
     const btp::CommandOutcome& outcome = m_node.command_outcome();
-    if (outcome.event == btp::CommandEvent::None || !m_pending.contains(outcome.local_id)) {
+    if (outcome.event == btp::CommandEvent::None) {
+        return;
+    }
+    if (m_queries.contains(outcome.local_id)) {
+        const ResultFn done = m_queries.take(outcome.local_id);
+        if (outcome.event == btp::CommandEvent::TimedOut) {
+            done(false, tr("no result within 5 s"));
+            return;
+        }
+        const QString message = QString::fromUtf8(
+            reinterpret_cast<const char*>(outcome.message.data), int(outcome.message.size));
+        done(outcome.status == kResultStatusSuccess, message);
+        return;
+    }
+    if (!m_pending.contains(outcome.local_id)) {
         return;
     }
     const QString command = m_pending.take(outcome.local_id);

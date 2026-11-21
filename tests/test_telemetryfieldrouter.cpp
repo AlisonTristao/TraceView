@@ -230,7 +230,7 @@ void TestTelemetryFieldRouter::opaqueBytesTopicPublishesRawBody() {
     QCOMPARE(router.diagnostics().decodeErrors, quint64(0));
 }
 
-// A BTPDevice stream topic: seq (u32), rate (u32), samples (i16[<=N]).
+// A TraceKit stream topic: seq (u32), rate (u32), samples (i16[<=N]).
 traceview::TelemetryTopicSchema streamSchema() {
     traceview::TelemetryTopicSchema schema;
     schema.sourceId = kSourceId;

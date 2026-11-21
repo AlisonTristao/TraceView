@@ -5,6 +5,7 @@
 #include <QJsonObject>
 #include <QMainWindow>
 #include <QPointer>
+#include <QSet>
 #include <QRect>
 #include <QSize>
 #include <QString>
@@ -58,6 +59,7 @@ class LogViewer;
 class NotificationHistoryWindow;
 class NotificationLog;
 class OtaTab;
+class TraceKitDialog;
 class PanelDockController;
 class PropertiesPanel;
 class Ribbon;
@@ -526,6 +528,12 @@ private:
     // Same fan-out as refreshPropertiesPanelDevices() above, for the OTA
     // tab's device list -- a no-op if m_otaTab hasn't been opened yet.
     void refreshOtaTabDevices();
+    // Opens (or raises) the device's TraceKitDialog -- DeviceCard's tools
+    // icon, shown for TraceKit devices only.
+    void onDeviceToolsRequested(const QString& deviceId);
+    QHash<QString, QPointer<traceview::TraceKitDialog>> m_traceKitDialogs;
+    // Devices whose clock was already set on this connection.
+    QSet<QString> m_traceKitClockSynced;
     // Lazily starts watching `parentDeviceId`'s hub.peers topic (resolved by
     // name from its own catalog, never a hardcoded topic/field id -- see
     // m_hubPeerWatches) the first time it is asked for, then returns
@@ -633,9 +641,6 @@ private:
     // each time, so an earlier message's timer can't outlive it and clear a
     // newer one early. postStatus() is the sole caller.
     void showStatusMessage(const QString& text, int timeoutMs);
-    // Forwards OtaTab::passwordCacheChanged into an actual Device mutation --
-    // OtaTab has no undo stack of its own to push this onto.
-    void onOtaPasswordCacheChanged(const QString& deviceId, const QString& password, bool cache);
     void openRecentFile(const QString& path);
     // The load + refresh sequence behind openRecentFile(), without its error
     // dialog or recent-files bookkeeping. False (ProjectStore::lastError()
