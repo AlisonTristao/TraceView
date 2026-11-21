@@ -7,6 +7,8 @@ release flow.
 
 ## [Unreleased]
 
+## [4.16.0] - 2026-11-21
+
 ### Added
 
 - **MCP: the rest of the app for AI assistants** (16 new tools, see
