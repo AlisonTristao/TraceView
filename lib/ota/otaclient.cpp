@@ -1,6 +1,7 @@
 #include "ota/otaclient.h"
 
 #include <QCryptographicHash>
+#include <QJsonArray>
 #include <QDateTime>
 #include <QFile>
 #include <QFileInfo>
@@ -42,6 +43,7 @@ RecoveryStatus parseStatus(const QJsonObject& body) {
     status.maxSize = static_cast<qint64>(body.value("max_size").toDouble());
     status.nonce = QByteArray::fromHex(body.value("nonce").toString().toLatin1());
     status.ownNetwork = body.value("ap").toString();
+    status.acceptsDeflate = body.value("encodings").toArray().contains(QJsonValue(QStringLiteral("deflate")));
     return status;
 }
 
@@ -216,6 +218,13 @@ void OtaClient::uploadFirmware(const QString& deviceId, const QString& address,
              });
 }
 
+QByteArray OtaClient::deflateImage(const QByteArray& image) {
+    // qCompress is a zlib stream behind 4 bytes of big-endian length.
+    const QByteArray compressed = qCompress(image, 9);
+    if (compressed.size() <= 4 || compressed.size() - 4 >= image.size()) return QByteArray();
+    return compressed.mid(4);
+}
+
 void OtaClient::sendUpload(const QString& deviceId, const QString& host, const QByteArray& keyE,
                            const QByteArray& image) {
     // A fresh nonce first: the recovery changes it after every signed request.
@@ -255,7 +264,17 @@ void OtaClient::sendUpload(const QString& deviceId, const QString& host, const Q
                 request.setRawHeader("X-OTA-Auth", mac);
             }
 
-            QNetworkReply* reply = m_manager->post(request, image);
+            // Compressed when the recovery inflates it: about a third less to
+            // send. The hash and the signature above stay over the image.
+            QByteArray body = status.acceptsDeflate ? deflateImage(image) : QByteArray();
+            if (!body.isEmpty()) {
+                request.setRawHeader("X-OTA-Encoding", "deflate");
+                request.setRawHeader("X-OTA-Size", QByteArray::number(image.size()));
+            } else {
+                body = image;
+            }
+
+            QNetworkReply* reply = m_manager->post(request, body);
             m_uploadReplies.insert(deviceId, reply);
             connect(reply, &QNetworkReply::uploadProgress, this,
                     [this, deviceId](qint64 sent, qint64 total) {

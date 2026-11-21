@@ -1,4 +1,5 @@
 #include <QCryptographicHash>
+#include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QSignalSpy>
@@ -39,6 +40,7 @@ public:
     QByteArray nonce = QByteArray::fromHex("a0a1a2a3a4a5a6a7a8a9aaabacadaeaf");
     QString auth = QStringLiteral("hmac-sha256");
     qint64 maxSize = 1 << 20;
+    bool deflate = false;  // announce "encodings": ["deflate"], as a current recovery does
     QVector<Request> requests;
 
     FakeRecovery() {
@@ -96,6 +98,7 @@ private:
                                      {"app", QJsonObject{{"valid", true},
                                                          {"project", "sensor"},
                                                          {"version", "1.2.0"}}},
+                                     {"encodings", deflate ? QJsonArray{"deflate"} : QJsonArray{}},
                                  })
                        .toJson(QJsonDocument::Compact);
         } else if (request.path == "/update") {
@@ -142,6 +145,8 @@ private slots:
     void anImageWithoutTheMagicIsRefusedBeforeSending();
     void anImageLargerThanThePartitionIsRefused();
     void rebootIsSignedWithZeroDigest();
+    void uploadIsCompressedWhenTheRecoveryInflates();
+    void anIncompressibleImageIsSentAsIs();
 };
 
 void TestOtaClient::emptyAddressReportsUnreachableWithAReason() {
@@ -234,6 +239,7 @@ void TestOtaClient::statusParsesTheRecovery() {
     QCOMPARE(status.appVersion, QStringLiteral("1.2.0"));
     QVERIFY(status.authRequired);
     QCOMPARE(status.nonce, recovery.nonce);
+    QVERIFY(!status.acceptsDeflate);  // an older recovery: no "encodings"
 }
 
 void TestOtaClient::uploadIsSignedOverAFreshNonce() {
@@ -255,6 +261,7 @@ void TestOtaClient::uploadIsSignedOverAFreshNonce() {
     QCOMPARE(post.method, QByteArray("POST"));
     QCOMPARE(post.path, QByteArray("/update"));
     QCOMPARE(post.body, image);
+    QVERIFY(!post.headers.contains("x-ota-encoding"));  // this recovery does not inflate
     const QByteArray digest = QCryptographicHash::hash(image, QCryptographicHash::Sha256);
     QCOMPARE(post.headers.value("x-ota-sha256"), digest.toHex());
     QCOMPARE(post.headers.value("x-ota-auth"),
@@ -297,6 +304,59 @@ void TestOtaClient::rebootIsSignedWithZeroDigest() {
     QCOMPARE(recovery.requests[1].path, QByteArray("/reboot"));
     QCOMPARE(recovery.requests[1].headers.value("x-ota-auth"),
              traceview::ota::authMac(testKey(), recovery.nonce, 'B', QByteArray(32, '\0')));
+}
+
+// What the recovery does with the body: zlib inflate (qUncompress wants the
+// 4-byte big-endian length qCompress puts in front).
+QByteArray inflate(const QByteArray& zlib, qint64 size) {
+    QByteArray framed(4, '\0');
+    qToBigEndian(static_cast<quint32>(size), framed.data());
+    return qUncompress(framed + zlib);
+}
+
+void TestOtaClient::uploadIsCompressedWhenTheRecoveryInflates() {
+    FakeRecovery recovery;
+    recovery.deflate = true;
+    OtaClient client;
+    QSignalSpy spy(&client, &OtaClient::uploadFinished);
+    QTemporaryFile file;
+    QByteArray image = QByteArray(1, char(0xE9));
+    for (int i = 0; i < 2000; ++i) image += "segment " + QByteArray::number(i % 37) + ';';
+    client.uploadFirmware(QStringLiteral("dev-1"), recovery.address(), testKey(), writeImage(file, image));
+    QVERIFY(spy.wait(kStatusSettleMs));
+    QCOMPARE(spy.at(0).at(1).toBool(), true);
+
+    QCOMPARE(recovery.requests.size(), 2);
+    const FakeRecovery::Request& post = recovery.requests[1];
+    QCOMPARE(post.headers.value("x-ota-encoding"), QByteArray("deflate"));
+    QCOMPARE(post.headers.value("x-ota-size"), QByteArray::number(image.size()));
+    QVERIFY(post.body.size() < image.size() / 2);
+    QCOMPARE(inflate(post.body, image.size()), image);
+    // Signed over the image, not over what went on the wire.
+    const QByteArray digest = QCryptographicHash::hash(image, QCryptographicHash::Sha256);
+    QCOMPARE(post.headers.value("x-ota-sha256"), digest.toHex());
+    QCOMPARE(post.headers.value("x-ota-auth"), traceview::ota::authMac(testKey(), recovery.nonce, 'U', digest));
+}
+
+void TestOtaClient::anIncompressibleImageIsSentAsIs() {
+    FakeRecovery recovery;
+    recovery.deflate = true;
+    OtaClient client;
+    QSignalSpy spy(&client, &OtaClient::uploadFinished);
+    QTemporaryFile file;
+    QByteArray image = QByteArray(1, char(0xE9));
+    quint32 x = 12345;
+    for (int i = 0; i < 4000; ++i) {
+        x = x * 1664525U + 1013904223U;
+        image += static_cast<char>(x >> 24);
+    }
+    client.uploadFirmware(QStringLiteral("dev-1"), recovery.address(), testKey(), writeImage(file, image));
+    QVERIFY(spy.wait(kStatusSettleMs));
+    QCOMPARE(spy.at(0).at(1).toBool(), true);
+    QCOMPARE(recovery.requests.size(), 2);
+    const FakeRecovery::Request& post = recovery.requests[1];
+    QVERIFY(!post.headers.contains("x-ota-encoding"));
+    QCOMPARE(post.body, image);
 }
 
 QTEST_MAIN(TestOtaClient)

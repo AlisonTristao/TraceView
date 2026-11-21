@@ -35,6 +35,9 @@ struct RecoveryStatus {
     qint64 maxSize = 0;        // the app partition's size: the largest image accepted
     QByteArray nonce;          // 16 octets, for the next signed request
     QString ownNetwork;        // the recovery's own Wi-Fi ("btp-<name>"), when it raised one
+    // "encodings" has "deflate": /update takes the image as a zlib stream
+    // (X-OTA-Encoding/X-OTA-Size). False on a recovery older than that.
+    bool acceptsDeflate = false;
 };
 
 // The address the OTA tab talks to for `device`: its own otaAddress when the
@@ -80,7 +83,10 @@ public:
 
     // Sends the application image at `filePath`: checks it is an ESP image
     // that fits the partition, fetches a fresh nonce, and POSTs it signed
-    // with `keyE` (unused by a recovery that does not require auth). Emits
+    // with `keyE` (unused by a recovery that does not require auth) --
+    // compressed when that recovery accepts deflate, in which case
+    // uploadProgress counts compressed bytes. The signature is over the
+    // image itself either way. Emits
     // uploadProgress as it goes and exactly one uploadFinished() at the end.
     // On success the recovery restarts into the new application by itself.
     void uploadFirmware(const QString& deviceId, const QString& address, const QByteArray& keyE,
@@ -89,6 +95,11 @@ public:
     // POST /reboot: leave the recovery for the application already in the
     // app partition. Exactly one rebootFinished().
     void rebootToApp(const QString& deviceId, const QString& address, const QByteArray& keyE);
+
+    // The body sent for `image` to a recovery that accepts deflate: the
+    // image as a zlib stream (RFC 1950, HTTP's "deflate"). Empty when
+    // compressing does not make it smaller.
+    static QByteArray deflateImage(const QByteArray& image);
 
     // Every image this client sends must start with this byte (the ESP
     // application image magic) -- anything else is refused before upload.

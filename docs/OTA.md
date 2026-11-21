@@ -88,6 +88,13 @@ keeps it in memory for the session. A recovery built with
 `CONFIG_TRACEKIT_RECOVERY_INSECURE` (development only) reports `"auth":"none"`
 and is not asked for one.
 
+When the recovery lists `"deflate"` in its `/status` `encodings`, the image
+goes compressed: a zlib stream (RFC 1950) with `X-OTA-Encoding: deflate` and
+`X-OTA-Size` (the image's own size); the recovery inflates it while it writes.
+TraceKit images shrink to about 64%. The hash in `X-OTA-SHA256` and the
+signature stay over the image itself. A recovery without `encodings` gets the
+image as is.
+
 [otaauth.h](../lib/ota/otaauth.h) implements it; `tests/test_otaauth.cpp`
 checks it against the same golden vectors as TraceKit's firmware, its Python
 tool and its web page, and `tests/test_otaclient.cpp` runs whole uploads
