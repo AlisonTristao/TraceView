@@ -113,6 +113,8 @@ private:
     void putChar(QChar c);
     void commitLine();
     void renderCurrentLineAndCursor();
+    void renderCurrentLine();  // the current line into the document
+    void placeCaret();         // the widget's caret at m_cursorCol
     void insertLineRuns(QTextCursor& cursor, const QString& line, const QVector<Pen>& pens);
     QTextCharFormat charFormatForPen(const Pen& pen) const;
     void applySgr(const QString& params);

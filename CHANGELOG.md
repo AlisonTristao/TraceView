@@ -7,6 +7,8 @@ release flow.
 
 ## [Unreleased]
 
+## [4.16.0] - 2026-11-21
+
 ### Added
 
 - **MCP: the rest of the app for AI assistants** (16 new tools, see
@@ -71,6 +73,10 @@ release flow.
 
 ### Fixed
 
+- **TraceView could crash on a robot's terminal reply** (typing `BTP` in
+  the terminal did it): since 4.11.0 the terminal moved its cursor while a
+  chunk of output was still being written, before the text layout had
+  caught up. The cursor now moves once the chunk is written.
 - **A command answered "no result within 5 s" at once and its real result
   was lost**: the node keeps its last command outcome until the next one,
   and its local id is a slot that a later command reuses -- an old timeout
