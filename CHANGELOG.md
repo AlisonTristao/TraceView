@@ -9,6 +9,18 @@ release flow.
 
 ### Added
 
+- **Compressed firmware uploads**: when the TraceKit recovery lists
+  `"deflate"` in its `/status` `encodings`, the image goes as a zlib stream
+  (`X-OTA-Encoding: deflate`, `X-OTA-Size`), about a third less to send.
+  The hash and the signature stay over the image itself. Older recoveries
+  get the image as before.
+- **Firmware page in the TraceKit panel**: the OTA flow for that one device
+  -- what is installed, a `.bin` to drop or pick (its project, version and
+  chip read from the image and checked against the device), and one
+  Install that restarts it into the recovery, sends and starts the new
+  firmware, with the three steps and their progress. The panel itself now
+  has a header (name, firmware, connection) and a side list of pages; the
+  Firmware page works while the device is disconnected.
 - **TraceKit panel**: a TraceKit device's card has a tools icon (next to
   the script icon) that opens its settings, Wi-Fi networks and actions.
   The settings editor is built from what the device declares (`cfg -json`:
@@ -23,6 +35,16 @@ release flow.
 
 ### Fixed
 
+- **`.local` names are found on PCs with a VPN**: the mDNS query went out of
+  the interface with the lowest route metric only, which with Tailscale,
+  ZeroTier or Hyper-V installed is that adapter, where no robot answers --
+  so a TCP device or an OTA address named `<robot>.local` was "not found on
+  the network" while the robot sat on the Wi-Fi. The query now goes out of
+  every up, multicast-capable interface, and is repeated twice within its
+  3 s (multicast over Wi-Fi drops packets).
+- Em dashes in the OTA tab and the reboot mark of TraceKit settings showed
+  as boxes: UTF-8 bytes escaped inside `QStringLiteral`, which takes each
+  `\xNN` as one character.
 - A device whose password is wrong or missing no longer looks connected:
   the HELLO passes in the clear, but every sealed message after it was
   dropped in silence, so the card showed a green dot (and the session
@@ -48,6 +70,13 @@ release flow.
   application and recovery versions, and why the device is in the
   recovery. Images that are not ESP application images, or larger than the
   partition, are refused before sending.
+- **AI assistants setup covers every Claude on the computer**: Settings >
+  Connections > AI assistants now shows two registrations, each with a Copy
+  button and a note under it. The Claude Code command adds `--scope user`,
+  so the terminal, the VS Code extension and the desktop app's Code tab all
+  see TraceView from any folder (it used to register for the current folder
+  only); the Claude desktop app's chat gets the `claude_desktop_config.json`
+  entry, built from this computer's TraceView path.
 
 ## [4.14.0] - 2026-11-15
 
