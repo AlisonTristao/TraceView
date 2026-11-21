@@ -11,16 +11,26 @@ go on the same undo stack as yours.
 
 1. In TraceView, turn on **Settings > Connections > AI assistants**. It is
    off by default; turning it on is what allows an assistant in.
-2. Register TraceView as an MCP server once. For Claude Code, the Settings
-   section shows the exact command, with a **Copy command** button:
+2. Register TraceView as an MCP server once. The Settings section shows both
+   registrations below with this computer's exact paths, each with a
+   **Copy** button. Together they cover every Claude on the computer.
+
+   **Claude Code** (terminal, VS Code / JetBrains extensions, and the Code tab
+   of the Claude desktop app) -- run once in a terminal:
 
    ```sh
-   claude mcp add traceview -- "C:\Program Files\TraceView\TraceView.exe" --mcp
+   claude mcp add --scope user traceview -- "C:\Program Files\TraceView\TraceView.exe" --mcp
    ```
 
-   Any MCP client that launches stdio servers works the same way: the
-   command is the TraceView executable with `--mcp`. For Claude Desktop, add
-   it to `claude_desktop_config.json`:
+   `--scope user` registers it for every folder. Without it, `claude mcp add`
+   uses the `local` scope, which only applies to the folder you ran it in.
+   A folder-scoped entry with the same name wins over the user one, so remove
+   old ones with `claude mcp remove traceview` from that folder if a project
+   keeps launching a different build.
+
+   **Claude desktop app (chat)** reads its own `claude_desktop_config.json`
+   (Settings > Developer > Edit Config), which `claude mcp` doesn't touch.
+   Add the entry inside its `mcpServers` object and restart the app:
 
    ```json
    {
@@ -33,6 +43,9 @@ go on the same undo stack as yours.
    }
    ```
 
+   Any other MCP client that launches stdio servers works the same way: the
+   command is the TraceView executable with `--mcp`.
+
 The status bar shows when an assistant connects or disconnects.
 
 If TraceView is closed when the assistant starts, the assistant sees a single
@@ -44,8 +57,8 @@ On Linux the command depends on how TraceView is installed, and the Settings
 section always shows the right one:
 
 - **AppImage**: the `.AppImage` file itself, e.g.
-  `claude mcp add traceview -- ~/Apps/TraceView-4.9.0-linux-x64.AppImage --mcp`.
-- **Flatpak**: `claude mcp add traceview -- flatpak run io.github.alisontristao.TraceView --mcp`.
+  `claude mcp add --scope user traceview -- ~/Apps/TraceView-4.9.0-linux-x64.AppImage --mcp`.
+- **Flatpak**: `claude mcp add --scope user traceview -- flatpak run io.github.alisontristao.TraceView --mcp`.
   The sandbox can't start a TraceView that outlives it, so `start_traceview`
   only asks the user to open TraceView.
 - **Built from source / distribution package**: the `TraceView` binary.
