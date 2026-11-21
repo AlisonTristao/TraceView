@@ -4,8 +4,11 @@
 #include <QDir>
 #include <QLocalServer>
 #include <QLocalSocket>
-#include <QProcess>
 #include <QRegularExpression>
+#include <QtGlobal>
+#if !defined(Q_OS_IOS)
+#include <QProcess>  // none on iOS, see launchAgentBridgeApp()
+#endif
 
 #include "agent/mcpsession.h"
 #include "agent/toolregistry.h"
@@ -47,12 +50,19 @@ QString launchAgentBridgeApp() {
             "TraceView runs as a Flatpak, which can't be started from here. Ask the user to "
             "open TraceView and turn on Settings > Connections > AI assistants.");
     }
+#if defined(Q_OS_IOS)
+    // No QProcess, and an app cannot start another copy of itself.
+    return QStringLiteral(
+        "TraceView can't be started from here on this platform. Ask the user to open TraceView "
+        "and turn on Settings > Connections > AI assistants.");
+#else
     const QString appImage = qEnvironmentVariable("APPIMAGE");
     const QString program = appImage.isEmpty() ? QCoreApplication::applicationFilePath() : appImage;
     if (!QProcess::startDetached(program, {QString::fromLatin1(kAgentBridgeArgument)})) {
         return QStringLiteral("Could not start TraceView (%1).").arg(program);
     }
     return QString();
+#endif
 }
 
 AgentBridgeServer::AgentBridgeServer(ToolRegistry* registry, QObject* parent)
