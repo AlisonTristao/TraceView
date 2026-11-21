@@ -4,7 +4,7 @@
 <context>
     <name>AgentAppTools</name>
     <message>
-        <location filename="../lib/core/agentapptools.cpp" line="+207"/>
+        <location filename="../lib/core/agentapptools.cpp" line="+222"/>
         <source>AI Assistant</source>
         <translation>Asistente de IA</translation>
     </message>
@@ -83,12 +83,22 @@ Allow it to connect devices and send them commands until AI assistant access is 
         <translation>Un asistente de IA quiere eliminar el panel &quot;%1&quot; de la galería. Esto no se puede deshacer.</translation>
     </message>
     <message>
-        <location line="+51"/>
+        <location line="+80"/>
+        <source>Export Dashboard</source>
+        <translation>Exportar Dashboard</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>An AI assistant wants to overwrite &quot;%1&quot; with a gallery dashboard.</source>
+        <translation>Un asistente de IA quiere sobrescribir &quot;%1&quot; con un panel de la galería.</translation>
+    </message>
+    <message>
+        <location line="+67"/>
         <source>An AI assistant saved the project to %1.</source>
         <translation>Un asistente de IA guardó el proyecto en %1.</translation>
     </message>
     <message>
-        <location filename="../lib/core/agentdevicetools.cpp" line="+184"/>
+        <location filename="../lib/core/agentdevicetools.cpp" line="+188"/>
         <location line="+49"/>
         <source>set up how a device is reached</source>
         <translation>configurar cómo se accede a un dispositivo</translation>
@@ -101,11 +111,13 @@ Allow it to connect devices and send them commands until AI assistant access is 
     <message>
         <location line="+152"/>
         <location line="+41"/>
+        <location line="+351"/>
+        <location line="+59"/>
         <source>send commands to a device</source>
         <translation>enviar comandos a un dispositivo</translation>
     </message>
     <message>
-        <location line="+176"/>
+        <location line="-234"/>
         <source>run a script that controls a device</source>
         <translation>ejecutar un script que controla un dispositivo</translation>
     </message>
@@ -125,7 +137,27 @@ Allow it to connect devices and send them commands until AI assistant access is 
         <translation>Subiendo firmware a %1: %2%</translation>
     </message>
     <message>
-        <location filename="../lib/core/agentpreferencetools.cpp" line="+298"/>
+        <location line="+338"/>
+        <source>Remove a network</source>
+        <translation>Eliminar una red</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>An AI assistant wants to remove the Wi-Fi network &quot;%1&quot; from %2.</source>
+        <translation>Un asistente de IA quiere eliminar la red Wi-Fi &quot;%1&quot; de %2.</translation>
+    </message>
+    <message>
+        <location line="+57"/>
+        <source>Factory reset</source>
+        <translation>Restablecimiento de fábrica</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>An AI assistant wants to erase the application and the files of %1. It then waits in the recovery for a new firmware.</source>
+        <translation>Un asistente de IA quiere borrar la aplicación y los archivos de %1. Después espera en la recuperación un firmware nuevo.</translation>
+    </message>
+    <message>
+        <location filename="../lib/core/agentpreferencetools.cpp" line="+307"/>
         <source>Delete Preset</source>
         <translation>Eliminar ajuste</translation>
     </message>
@@ -143,6 +175,16 @@ Allow it to connect devices and send them commands until AI assistant access is 
         <location line="+1"/>
         <source>An AI assistant wants to delete the palette &quot;%1&quot;.</source>
         <translation>Un asistente de IA quiere eliminar la paleta &quot;%1&quot;.</translation>
+    </message>
+    <message>
+        <location line="+301"/>
+        <source>Export Captured Frames</source>
+        <translation>Exportar Tramas Capturadas</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>An AI assistant wants to overwrite &quot;%1&quot; with the captured BTP frames.</source>
+        <translation>Un asistente de IA quiere sobrescribir &quot;%1&quot; con las tramas BTP capturadas.</translation>
     </message>
 </context>
 <context>
@@ -739,7 +781,7 @@ Allow it to connect devices and send them commands until AI assistant access is 
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="+148"/>
+        <location filename="../lib/core/mainwindow.cpp" line="+149"/>
         <source>TraceView Project (*.tvproj)</source>
         <translation>Proyecto TraceView (*.tvproj)</translation>
     </message>
@@ -1222,7 +1264,7 @@ Allow it to connect devices and send them commands until AI assistant access is 
 <context>
     <name>traceview::AgentBridgeServer</name>
     <message>
-        <location filename="../lib/agent/agentbridgeserver.cpp" line="+95"/>
+        <location filename="../lib/agent/agentbridgeserver.cpp" line="+105"/>
         <source>Another TraceView window is already serving AI assistants.</source>
         <translation>Otra ventana de TraceView ya está atendiendo a asistentes de IA.</translation>
     </message>
@@ -2208,7 +2250,7 @@ Permitidos: %1</translation>
 <context>
     <name>traceview::CommandClient</name>
     <message>
-        <location filename="../lib/protocol/commandclient.cpp" line="+54"/>
+        <location filename="../lib/protocol/commandclient.cpp" line="+58"/>
         <source>not connected to a device that takes commands</source>
         <translation>no conectado a un dispositivo que acepte comandos</translation>
     </message>
@@ -2236,7 +2278,7 @@ Permitidos: %1</translation>
         </translation>
     </message>
     <message>
-        <location line="+45"/>
+        <location line="+63"/>
         <source>no result within 5 s</source>
         <translation>sin resultado en 5 s</translation>
     </message>
@@ -3676,12 +3718,12 @@ Pérdidas: %2</translation>
     </message>
     <message>
         <location line="+0"/>
-        <location line="+4197"/>
+        <location line="+4201"/>
         <source>Later</source>
         <translation>Más tarde</translation>
     </message>
     <message>
-        <location line="-4190"/>
+        <location line="-4194"/>
         <source>&amp;Access</source>
         <translation>&amp;Acceso</translation>
     </message>
@@ -3808,18 +3850,18 @@ Pérdidas: %2</translation>
     </message>
     <message>
         <location line="+18"/>
-        <location line="+3446"/>
+        <location line="+3450"/>
         <source>Undo</source>
         <translation>Deshacer</translation>
     </message>
     <message>
-        <location line="-3444"/>
-        <location line="+3444"/>
+        <location line="-3448"/>
+        <location line="+3448"/>
         <source>Redo</source>
         <translation>Rehacer</translation>
     </message>
     <message>
-        <location line="-3401"/>
+        <location line="-3405"/>
         <source>Add Device</source>
         <translation>Añadir Dispositivo</translation>
     </message>
@@ -3865,12 +3907,12 @@ Pérdidas: %2</translation>
     </message>
     <message>
         <location line="+36"/>
-        <location line="+3367"/>
+        <location line="+3371"/>
         <source>Fullscreen dashboard (F11)</source>
         <translation>Panel en pantalla completa (F11)</translation>
     </message>
     <message>
-        <location line="-3186"/>
+        <location line="-3190"/>
         <source>Rename Workspace</source>
         <translation>Renombrar Espacio de Trabajo</translation>
     </message>
@@ -3990,7 +4032,7 @@ Pérdidas: %2</translation>
         <translation>%1: encontrado en %2</translation>
     </message>
     <message>
-        <location line="+376"/>
+        <location line="+377"/>
         <source>%1: trying %2</source>
         <translation>%1: probando %2</translation>
     </message>
@@ -4049,7 +4091,7 @@ Pérdidas: %2</translation>
         <translation>&quot;%1&quot; guardado en la galería.</translation>
     </message>
     <message>
-        <location line="+288"/>
+        <location line="+291"/>
         <source>not connected</source>
         <translation>no conectado</translation>
     </message>
@@ -4133,13 +4175,13 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
         <translation>Cerrar app</translation>
     </message>
     <message>
-        <location line="-3478"/>
-        <location line="+3163"/>
+        <location line="-3482"/>
+        <location line="+3167"/>
         <source>Devices</source>
         <translation>Dispositivos</translation>
     </message>
     <message>
-        <location line="-3088"/>
+        <location line="-3092"/>
         <source>Subscriptions</source>
         <translation>Suscripciones</translation>
     </message>
@@ -4186,23 +4228,23 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
     </message>
     <message>
         <location line="+81"/>
-        <location line="+2661"/>
+        <location line="+2665"/>
         <source>Add widget</source>
         <translation>Añadir widget</translation>
     </message>
     <message>
-        <location line="-2658"/>
+        <location line="-2662"/>
         <source>Remove selected widget (%1)</source>
         <translation>Eliminar widget seleccionado (%1)</translation>
     </message>
     <message>
         <location line="+3"/>
-        <location line="+2668"/>
+        <location line="+2672"/>
         <source>Add device</source>
         <translation>Añadir dispositivo</translation>
     </message>
     <message>
-        <location line="-2665"/>
+        <location line="-2669"/>
         <source>Remove selected device (%1)</source>
         <translation>Eliminar dispositivo seleccionado (%1)</translation>
     </message>
@@ -4358,7 +4400,7 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
         <translation>Dashboard</translation>
     </message>
     <message>
-        <location line="+1953"/>
+        <location line="+1954"/>
         <source>%1: this BLE address now answers as a different robot (expected %2, got %3)</source>
         <translation>%1: esta dirección BLE ahora responde como otro robot (se esperaba %2, se obtuvo %3)</translation>
     </message>
@@ -4390,13 +4432,13 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
     </message>
     <message>
         <location line="+15"/>
-        <location line="+395"/>
+        <location line="+398"/>
         <location line="+4"/>
         <source>Open Project</source>
         <translation>Abrir proyecto</translation>
     </message>
     <message>
-        <location line="-312"/>
+        <location line="-315"/>
         <source>Open Log File</source>
         <translation>Abrir archivo de registro</translation>
     </message>
@@ -4406,7 +4448,7 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
         <translation>Registro BTP (*.blog)</translation>
     </message>
     <message>
-        <location line="+110"/>
+        <location line="+113"/>
         <source>OTA Update</source>
         <translation>Actualización OTA</translation>
     </message>
@@ -5973,19 +6015,19 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
     </message>
     <message>
         <location line="-234"/>
-        <location line="+356"/>
+        <location line="+375"/>
         <source>Diagnostics</source>
         <translation>Diagnóstico</translation>
     </message>
     <message>
-        <location line="-355"/>
-        <location line="+407"/>
+        <location line="-374"/>
+        <location line="+426"/>
         <location line="+5"/>
         <source>Updates</source>
         <translation>Actualizaciones</translation>
     </message>
     <message>
-        <location line="-370"/>
+        <location line="-389"/>
         <source>Project and startup preferences shared by the application.</source>
         <translation>Preferencias de proyecto e inicio compartidas por la aplicación.</translation>
     </message>
@@ -6269,7 +6311,17 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
         <translation>Un asistente conectado por MCP podrá crear espacios de trabajo y widgets, leer telemetría y tomar capturas de esta ventana. Sus cambios en el panel se pueden deshacer.</translation>
     </message>
     <message>
-        <location line="+37"/>
+        <location line="+6"/>
+        <source>Allow everything without asking</source>
+        <translation>Permitir todo sin preguntar</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>The assistant can then connect devices, send them commands, flash firmware, delete things and overwrite files without a confirmation each time. Only for assistants you trust.</source>
+        <translation>El asistente podrá conectar dispositivos, enviarles comandos, grabar firmware, borrar cosas y sobrescribir archivos sin pedir confirmación cada vez. Solo para asistentes de confianza.</translation>
+    </message>
+    <message>
+        <location line="+47"/>
         <source>Copy</source>
         <translation>Copiar</translation>
     </message>

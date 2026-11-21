@@ -4,7 +4,7 @@
 <context>
     <name>AgentAppTools</name>
     <message>
-        <location filename="../lib/core/agentapptools.cpp" line="+207"/>
+        <location filename="../lib/core/agentapptools.cpp" line="+222"/>
         <source>AI Assistant</source>
         <translation>ИИ-ассистент</translation>
     </message>
@@ -83,12 +83,22 @@ Allow it to connect devices and send them commands until AI assistant access is 
         <translation>ИИ-ассистент хочет удалить панель «%1» из галереи. Это действие нельзя отменить.</translation>
     </message>
     <message>
-        <location line="+51"/>
+        <location line="+80"/>
+        <source>Export Dashboard</source>
+        <translation>Экспорт дашборда</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>An AI assistant wants to overwrite &quot;%1&quot; with a gallery dashboard.</source>
+        <translation>ИИ-ассистент хочет перезаписать «%1» панелью из галереи.</translation>
+    </message>
+    <message>
+        <location line="+67"/>
         <source>An AI assistant saved the project to %1.</source>
         <translation>ИИ-ассистент сохранил проект в %1.</translation>
     </message>
     <message>
-        <location filename="../lib/core/agentdevicetools.cpp" line="+184"/>
+        <location filename="../lib/core/agentdevicetools.cpp" line="+188"/>
         <location line="+49"/>
         <source>set up how a device is reached</source>
         <translation>настроить подключение к устройству</translation>
@@ -101,11 +111,13 @@ Allow it to connect devices and send them commands until AI assistant access is 
     <message>
         <location line="+152"/>
         <location line="+41"/>
+        <location line="+351"/>
+        <location line="+59"/>
         <source>send commands to a device</source>
         <translation>отправить команды устройству</translation>
     </message>
     <message>
-        <location line="+176"/>
+        <location line="-234"/>
         <source>run a script that controls a device</source>
         <translation>запустить скрипт, управляющий устройством</translation>
     </message>
@@ -125,7 +137,27 @@ Allow it to connect devices and send them commands until AI assistant access is 
         <translation>Загрузка прошивки на %1: %2%</translation>
     </message>
     <message>
-        <location filename="../lib/core/agentpreferencetools.cpp" line="+298"/>
+        <location line="+338"/>
+        <source>Remove a network</source>
+        <translation>Удалить сеть</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>An AI assistant wants to remove the Wi-Fi network &quot;%1&quot; from %2.</source>
+        <translation>ИИ-ассистент хочет удалить сеть Wi-Fi «%1» с устройства %2.</translation>
+    </message>
+    <message>
+        <location line="+57"/>
+        <source>Factory reset</source>
+        <translation>Сброс к заводским</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>An AI assistant wants to erase the application and the files of %1. It then waits in the recovery for a new firmware.</source>
+        <translation>ИИ-ассистент хочет стереть приложение и файлы %1. Затем устройство ждёт новую прошивку в режиме восстановления.</translation>
+    </message>
+    <message>
+        <location filename="../lib/core/agentpreferencetools.cpp" line="+307"/>
         <source>Delete Preset</source>
         <translation>Удалить набор</translation>
     </message>
@@ -143,6 +175,16 @@ Allow it to connect devices and send them commands until AI assistant access is 
         <location line="+1"/>
         <source>An AI assistant wants to delete the palette &quot;%1&quot;.</source>
         <translation>ИИ-ассистент хочет удалить палитру «%1».</translation>
+    </message>
+    <message>
+        <location line="+301"/>
+        <source>Export Captured Frames</source>
+        <translation>Экспорт захваченных фреймов</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>An AI assistant wants to overwrite &quot;%1&quot; with the captured BTP frames.</source>
+        <translation>ИИ-ассистент хочет перезаписать «%1» захваченными фреймами BTP.</translation>
     </message>
 </context>
 <context>
@@ -739,7 +781,7 @@ Allow it to connect devices and send them commands until AI assistant access is 
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="+148"/>
+        <location filename="../lib/core/mainwindow.cpp" line="+149"/>
         <source>TraceView Project (*.tvproj)</source>
         <translation>Проект TraceView (*.tvproj)</translation>
     </message>
@@ -1222,7 +1264,7 @@ Allow it to connect devices and send them commands until AI assistant access is 
 <context>
     <name>traceview::AgentBridgeServer</name>
     <message>
-        <location filename="../lib/agent/agentbridgeserver.cpp" line="+95"/>
+        <location filename="../lib/agent/agentbridgeserver.cpp" line="+105"/>
         <source>Another TraceView window is already serving AI assistants.</source>
         <translation>Другое окно TraceView уже обслуживает ИИ-ассистентов.</translation>
     </message>
@@ -2208,7 +2250,7 @@ Allowed: %1</source>
 <context>
     <name>traceview::CommandClient</name>
     <message>
-        <location filename="../lib/protocol/commandclient.cpp" line="+54"/>
+        <location filename="../lib/protocol/commandclient.cpp" line="+58"/>
         <source>not connected to a device that takes commands</source>
         <translation>нет подключения к устройству, принимающему команды</translation>
     </message>
@@ -2237,7 +2279,7 @@ Allowed: %1</source>
         </translation>
     </message>
     <message>
-        <location line="+45"/>
+        <location line="+63"/>
         <source>no result within 5 s</source>
         <translation>нет результата за 5 s</translation>
     </message>
@@ -3678,12 +3720,12 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+0"/>
-        <location line="+4197"/>
+        <location line="+4201"/>
         <source>Later</source>
         <translation>Позже</translation>
     </message>
     <message>
-        <location line="-4190"/>
+        <location line="-4194"/>
         <source>&amp;Access</source>
         <translation>Доступ (&amp;A)</translation>
     </message>
@@ -3810,18 +3852,18 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+18"/>
-        <location line="+3446"/>
+        <location line="+3450"/>
         <source>Undo</source>
         <translation>Отменить</translation>
     </message>
     <message>
-        <location line="-3444"/>
-        <location line="+3444"/>
+        <location line="-3448"/>
+        <location line="+3448"/>
         <source>Redo</source>
         <translation>Повторить</translation>
     </message>
     <message>
-        <location line="-3401"/>
+        <location line="-3405"/>
         <source>Add Device</source>
         <translation>Добавить устройство</translation>
     </message>
@@ -3867,12 +3909,12 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+36"/>
-        <location line="+3367"/>
+        <location line="+3371"/>
         <source>Fullscreen dashboard (F11)</source>
         <translation>Панель в полноэкранном режиме (F11)</translation>
     </message>
     <message>
-        <location line="-3186"/>
+        <location line="-3190"/>
         <source>Rename Workspace</source>
         <translation>Переименовать рабочее пространство</translation>
     </message>
@@ -3992,7 +4034,7 @@ Drops: %2</source>
         <translation>%1: найден на %2</translation>
     </message>
     <message>
-        <location line="+376"/>
+        <location line="+377"/>
         <source>%1: trying %2</source>
         <translation>%1: пробую %2</translation>
     </message>
@@ -4051,7 +4093,7 @@ Drops: %2</source>
         <translation>&quot;%1&quot; сохранён в галерее.</translation>
     </message>
     <message>
-        <location line="+288"/>
+        <location line="+291"/>
         <source>not connected</source>
         <translation>не подключено</translation>
     </message>
@@ -4135,13 +4177,13 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>Закрыть приложение</translation>
     </message>
     <message>
-        <location line="-3478"/>
-        <location line="+3163"/>
+        <location line="-3482"/>
+        <location line="+3167"/>
         <source>Devices</source>
         <translation>Устройства</translation>
     </message>
     <message>
-        <location line="-3088"/>
+        <location line="-3092"/>
         <source>Subscriptions</source>
         <translation>Подписки</translation>
     </message>
@@ -4188,23 +4230,23 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     </message>
     <message>
         <location line="+81"/>
-        <location line="+2661"/>
+        <location line="+2665"/>
         <source>Add widget</source>
         <translation>Добавить виджет</translation>
     </message>
     <message>
-        <location line="-2658"/>
+        <location line="-2662"/>
         <source>Remove selected widget (%1)</source>
         <translation>Удалить выбранный виджет (%1)</translation>
     </message>
     <message>
         <location line="+3"/>
-        <location line="+2668"/>
+        <location line="+2672"/>
         <source>Add device</source>
         <translation>Добавить устройство</translation>
     </message>
     <message>
-        <location line="-2665"/>
+        <location line="-2669"/>
         <source>Remove selected device (%1)</source>
         <translation>Удалить выбранное устройство (%1)</translation>
     </message>
@@ -4360,7 +4402,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>Dashboard</translation>
     </message>
     <message>
-        <location line="+1953"/>
+        <location line="+1954"/>
         <source>%1: this BLE address now answers as a different robot (expected %2, got %3)</source>
         <translation>%1: этот BLE-адрес теперь отвечает как другой робот (ожидался %2, получен %3)</translation>
     </message>
@@ -4392,13 +4434,13 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     </message>
     <message>
         <location line="+15"/>
-        <location line="+395"/>
+        <location line="+398"/>
         <location line="+4"/>
         <source>Open Project</source>
         <translation>Открыть проект</translation>
     </message>
     <message>
-        <location line="-312"/>
+        <location line="-315"/>
         <source>Open Log File</source>
         <translation>Открыть файл журнала</translation>
     </message>
@@ -4408,7 +4450,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>Журнал BTP (*.blog)</translation>
     </message>
     <message>
-        <location line="+110"/>
+        <location line="+113"/>
         <source>OTA Update</source>
         <translation>Обновление OTA</translation>
     </message>
@@ -5975,19 +6017,19 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     </message>
     <message>
         <location line="-234"/>
-        <location line="+356"/>
+        <location line="+375"/>
         <source>Diagnostics</source>
         <translation>Диагностика</translation>
     </message>
     <message>
-        <location line="-355"/>
-        <location line="+407"/>
+        <location line="-374"/>
+        <location line="+426"/>
         <location line="+5"/>
         <source>Updates</source>
         <translation>Обновления</translation>
     </message>
     <message>
-        <location line="-370"/>
+        <location line="-389"/>
         <source>Project and startup preferences shared by the application.</source>
         <translation>Настройки проекта и запуска, общие для приложения.</translation>
     </message>
@@ -6272,7 +6314,17 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>Ассистент, подключённый по MCP, сможет создавать рабочие пространства и виджеты, читать телеметрию и делать снимки этого окна. Его правки панели можно отменить.</translation>
     </message>
     <message>
-        <location line="+37"/>
+        <location line="+6"/>
+        <source>Allow everything without asking</source>
+        <translation>Разрешать всё без вопросов</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>The assistant can then connect devices, send them commands, flash firmware, delete things and overwrite files without a confirmation each time. Only for assistants you trust.</source>
+        <translation>Ассистент сможет подключать устройства, отправлять им команды, прошивать firmware, удалять данные и перезаписывать файлы без подтверждения каждый раз. Только для ассистентов, которым вы доверяете.</translation>
+    </message>
+    <message>
+        <location line="+47"/>
         <source>Copy</source>
         <translation>Копировать</translation>
     </message>
