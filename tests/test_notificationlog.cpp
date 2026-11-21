@@ -20,6 +20,8 @@ private slots:
     void clearEmitsOnlyWhenNonEmpty();
     void unreadCountsAndWorstSeverity();
     void removeDismissesOneById();
+    void removeOlderThanKeepsUnreadRight();
+    void maxAgeDeletesExpiredEntries();
     void popUpRules();
 };
 
@@ -108,6 +110,53 @@ void TestNotificationLog::removeDismissesOneById() {
     QCOMPARE(log.entries().at(1).text, QStringLiteral("third"));
     QVERIFY(!log.remove(second));  // already gone
     QCOMPARE(spy.count(), 1);
+}
+
+void TestNotificationLog::removeOlderThanKeepsUnreadRight() {
+    const QDateTime now = QDateTime::currentDateTime();
+    NotificationLog log;
+    log.append({now.addSecs(-100), QStringLiteral("old error"), StatusSeverity::Error, QString()});
+    log.markAllRead();
+    log.append({now.addSecs(-50), QStringLiteral("old warning"), StatusSeverity::Warning, QString()});
+    log.append({now, QStringLiteral("new"), StatusSeverity::Info, QString()});
+    QCOMPARE(log.unreadCount(), 2);
+    QCOMPARE(log.unreadWorstSeverity(), StatusSeverity::Warning);
+
+    QSignalSpy removedSpy(&log, &NotificationLog::removed);
+    QSignalSpy unreadSpy(&log, &NotificationLog::unreadChanged);
+    QCOMPARE(log.removeOlderThan(now.addSecs(-10)), 2);
+    QCOMPARE(removedSpy.count(), 2);
+    QCOMPARE(log.entries().size(), 1);
+    QCOMPARE(log.entries().first().text, QStringLiteral("new"));
+    // The unread warning went with it: the badge no longer counts it.
+    QCOMPARE(log.unreadCount(), 1);
+    QCOMPARE(log.unreadWorstSeverity(), StatusSeverity::Info);
+    QCOMPARE(unreadSpy.count(), 1);  // the read error leaves the badge alone
+    QCOMPARE(log.removeOlderThan(now.addSecs(-10)), 0);
+}
+
+void TestNotificationLog::maxAgeDeletesExpiredEntries() {
+    const QDateTime now = QDateTime::currentDateTime();
+    NotificationLog log;
+    log.setMaxAgeSeconds(0);
+    log.append({now.addSecs(-120), QStringLiteral("stale"), StatusSeverity::Info, QString()});
+    log.append({now, QStringLiteral("fresh"), StatusSeverity::Info, QString()});
+    QCOMPARE(log.entries().size(), 2);  // off: nothing expires
+
+    log.setMaxAgeSeconds(60);
+    QCOMPARE(log.maxAgeSeconds(), 60);
+    QCOMPARE(log.entries().size(), 1);  // turning it on sweeps at once
+    QCOMPARE(log.entries().first().text, QStringLiteral("fresh"));
+
+    // After that the once-a-second timer sweeps what ages out.
+    log.setMaxAgeSeconds(1);
+    log.append(entry(QStringLiteral("newest")));
+    QTRY_VERIFY_WITH_TIMEOUT(log.entries().isEmpty(), 4000);
+
+    log.setMaxAgeSeconds(0);
+    log.append(entry(QStringLiteral("kept")));
+    QTest::qWait(1500);
+    QCOMPARE(log.entries().size(), 1);  // off again: it stays
 }
 
 void TestNotificationLog::popUpRules() {

@@ -157,7 +157,7 @@ AI アシスタントのアクセスをオフにするか TraceView を閉じる
         <translation>AI アシスタントが %1 のアプリケーションとファイルを消去しようとしています。その後、新しいファームウェアを待ってリカバリーで待機します。</translation>
     </message>
     <message>
-        <location filename="../lib/core/agentpreferencetools.cpp" line="+349"/>
+        <location filename="../lib/core/agentpreferencetools.cpp" line="+354"/>
         <source>Delete Preset</source>
         <translation>プリセットを削除</translation>
     </message>
@@ -4774,12 +4774,12 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     </message>
     <message>
         <location line="+5"/>
-        <location line="+179"/>
+        <location line="+217"/>
         <source>Keep the panel open</source>
         <translation>パネルを開いたままにする</translation>
     </message>
     <message>
-        <location line="-171"/>
+        <location line="-209"/>
         <source>Clear every notification</source>
         <translation>すべての通知を消去</translation>
     </message>
@@ -4824,12 +4824,36 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>ダッシュボードの横（縮小します）</translation>
     </message>
     <message>
-        <location line="+2"/>
+        <location line="+3"/>
+        <source>Delete automatically</source>
+        <translation>自動削除</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Never</source>
+        <translation>しない</translation>
+    </message>
+    <message numerus="yes">
+        <location line="+1"/>
+        <source>After %n min</source>
+        <translation>
+            <numerusform>%n 分後</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location line="+1"/>
+        <source>After %n s</source>
+        <translation>
+            <numerusform>%n 秒後</numerusform>
+        </translation>
+    </message>
+    <message>
+        <location line="+18"/>
         <source>Full history…</source>
         <translation>全履歴…</translation>
     </message>
     <message>
-        <location line="+36"/>
+        <location line="+50"/>
         <source>Close</source>
         <translation>閉じる</translation>
     </message>
@@ -6137,13 +6161,13 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     </message>
     <message>
         <location line="-357"/>
-        <location line="+441"/>
+        <location line="+453"/>
         <location line="+5"/>
         <source>Updates</source>
         <translation>アップデート</translation>
     </message>
     <message>
-        <location line="-421"/>
+        <location line="-433"/>
         <source>Project and startup preferences shared by the application.</source>
         <translation>アプリケーション全体で共有されるプロジェクトと起動の設定。</translation>
     </message>
@@ -6506,7 +6530,22 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>固定したパネル</translation>
     </message>
     <message>
-        <location line="+20"/>
+        <location line="+4"/>
+        <source> s</source>
+        <translation> 秒</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Each notification is deleted this many seconds after it arrived.</source>
+        <translation>各通知は届いてからこの秒数が経つと削除されます。</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Delete automatically after</source>
+        <translation>自動削除までの時間</translation>
+    </message>
+    <message>
+        <location line="+24"/>
         <source>In-memory history</source>
         <translation>メモリ内の履歴</translation>
     </message>
@@ -6581,7 +6620,8 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>最終確認</translation>
     </message>
     <message>
-        <location line="+6"/>
+        <location line="-92"/>
+        <location line="+98"/>
         <source>Never</source>
         <translation>なし</translation>
     </message>

@@ -214,6 +214,11 @@ QVector<SettingSpec> settingSpecs() {
          }},
         boolSetting("notificationPanelPinned", "The notification panel stays open",
                     &AppSettings::notificationPanelPinned, &AppSettings::setNotificationPanelPinned),
+        intSetting("notificationAutoDeleteSeconds",
+                   "Each notification is deleted this many seconds after it arrived (0 keeps them)",
+                   0, AppSettings::kMaxNotificationAutoDeleteSeconds,
+                   &AppSettings::notificationAutoDeleteSeconds,
+                   &AppSettings::setNotificationAutoDeleteSeconds),
         boolSetting("updateAutoCheckEnabled", "Check for TraceView updates at startup",
                     &AppSettings::updateAutoCheckEnabled, &AppSettings::setUpdateAutoCheckEnabled),
     };

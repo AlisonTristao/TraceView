@@ -7,6 +7,19 @@ release flow.
 
 ## [Unreleased]
 
+### Added
+
+- **Delete notifications automatically**: each notification can go a set
+  time after it arrived. The bell panel's menu has Never, 10 s, 30 s, 1 min
+  and 5 min; Settings › Diagnostics takes any number of seconds (up to a
+  day). Off by default. The unread count drops with what is deleted. For
+  AI assistants: the `notificationAutoDeleteSeconds` setting.
+
+### Fixed
+
+- CI: the macOS release job retries `hdiutil` when it fails with "Resource
+  busy" (it stopped v4.16.0's first release run).
+
 ## [4.16.0] - 2026-11-21
 
 ### Added

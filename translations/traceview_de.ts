@@ -157,7 +157,7 @@ Ihm erlauben, Geräte zu verbinden und ihnen Befehle zu senden, bis der Zugriff 
         <translation>Ein KI-Assistent möchte die Anwendung und die Dateien von %1 löschen. Danach wartet es in der Recovery auf eine neue Firmware.</translation>
     </message>
     <message>
-        <location filename="../lib/core/agentpreferencetools.cpp" line="+349"/>
+        <location filename="../lib/core/agentpreferencetools.cpp" line="+354"/>
         <source>Delete Preset</source>
         <translation>Vorlage löschen</translation>
     </message>
@@ -4777,12 +4777,12 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
     </message>
     <message>
         <location line="+5"/>
-        <location line="+179"/>
+        <location line="+217"/>
         <source>Keep the panel open</source>
         <translation>Bereich geöffnet lassen</translation>
     </message>
     <message>
-        <location line="-171"/>
+        <location line="-209"/>
         <source>Clear every notification</source>
         <translation>Alle Benachrichtigungen löschen</translation>
     </message>
@@ -4827,12 +4827,38 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
         <translation>Neben dem Dashboard (verkleinert es)</translation>
     </message>
     <message>
-        <location line="+2"/>
+        <location line="+3"/>
+        <source>Delete automatically</source>
+        <translation>Automatisch löschen</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Never</source>
+        <translation>Nie</translation>
+    </message>
+    <message numerus="yes">
+        <location line="+1"/>
+        <source>After %n min</source>
+        <translation>
+            <numerusform>Nach %n Min.</numerusform>
+            <numerusform>Nach %n Min.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location line="+1"/>
+        <source>After %n s</source>
+        <translation>
+            <numerusform>Nach %n s</numerusform>
+            <numerusform>Nach %n s</numerusform>
+        </translation>
+    </message>
+    <message>
+        <location line="+18"/>
         <source>Full history…</source>
         <translation>Vollständiger Verlauf…</translation>
     </message>
     <message>
-        <location line="+36"/>
+        <location line="+50"/>
         <source>Close</source>
         <translation>Schließen</translation>
     </message>
@@ -6140,13 +6166,13 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
     </message>
     <message>
         <location line="-357"/>
-        <location line="+441"/>
+        <location line="+453"/>
         <location line="+5"/>
         <source>Updates</source>
         <translation>Updates</translation>
     </message>
     <message>
-        <location line="-421"/>
+        <location line="-433"/>
         <source>Project and startup preferences shared by the application.</source>
         <translation>Projekt- und Starteinstellungen der Anwendung.</translation>
     </message>
@@ -6510,7 +6536,22 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
         <translation>Angehefteter Bereich</translation>
     </message>
     <message>
-        <location line="+20"/>
+        <location line="+4"/>
+        <source> s</source>
+        <translation> s</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Each notification is deleted this many seconds after it arrived.</source>
+        <translation>Jede Benachrichtigung wird so viele Sekunden nach ihrem Eintreffen gelöscht.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Delete automatically after</source>
+        <translation>Automatisch löschen nach</translation>
+    </message>
+    <message>
+        <location line="+24"/>
         <source>In-memory history</source>
         <translation>Verlauf im Speicher</translation>
     </message>
@@ -6585,7 +6626,8 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
         <translation>Zuletzt geprüft</translation>
     </message>
     <message>
-        <location line="+6"/>
+        <location line="-92"/>
+        <location line="+98"/>
         <source>Never</source>
         <translation>Nie</translation>
     </message>

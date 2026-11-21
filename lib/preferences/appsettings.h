@@ -89,6 +89,10 @@ public:
     NotificationPinStyle notificationPinStyle() const;
     // The panel stays open (and comes back open on the next start).
     bool notificationPanelPinned() const;
+    // Each notification is deleted this many seconds after it arrived
+    // (0..kMaxNotificationAutoDeleteSeconds); 0, the default, keeps them.
+    static constexpr int kMaxNotificationAutoDeleteSeconds = 86400;
+    int notificationAutoDeleteSeconds() const;
 
     bool updateAutoCheckEnabled() const;
     qint64 updateLastCheckEpochMs() const;
@@ -123,6 +127,7 @@ public:
     void setNotificationErrorPopups(bool enabled);
     void setNotificationPinStyle(NotificationPinStyle style);
     void setNotificationPanelPinned(bool pinned);
+    void setNotificationAutoDeleteSeconds(int seconds);
 
     void setUpdateAutoCheckEnabled(bool enabled);
     void setUpdateLastCheckEpochMs(qint64 epochMs);

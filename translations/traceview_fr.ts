@@ -157,7 +157,7 @@ L’autoriser à connecter des appareils et à leur envoyer des commandes jusqu�
         <translation>Un assistant IA veut effacer l’application et les fichiers de %1. Il attend ensuite en récupération un nouveau micrologiciel.</translation>
     </message>
     <message>
-        <location filename="../lib/core/agentpreferencetools.cpp" line="+349"/>
+        <location filename="../lib/core/agentpreferencetools.cpp" line="+354"/>
         <source>Delete Preset</source>
         <translation>Supprimer le préréglage</translation>
     </message>
@@ -4777,12 +4777,12 @@ Choisissez Plus tard pour continuer à travailler -- les modifications s&apos;ap
     </message>
     <message>
         <location line="+5"/>
-        <location line="+179"/>
+        <location line="+217"/>
         <source>Keep the panel open</source>
         <translation>Garder le panneau ouvert</translation>
     </message>
     <message>
-        <location line="-171"/>
+        <location line="-209"/>
         <source>Clear every notification</source>
         <translation>Effacer toutes les notifications</translation>
     </message>
@@ -4827,12 +4827,38 @@ Choisissez Plus tard pour continuer à travailler -- les modifications s&apos;ap
         <translation>À côté du tableau de bord (le réduit)</translation>
     </message>
     <message>
-        <location line="+2"/>
+        <location line="+3"/>
+        <source>Delete automatically</source>
+        <translation>Supprimer automatiquement</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Never</source>
+        <translation>Jamais</translation>
+    </message>
+    <message numerus="yes">
+        <location line="+1"/>
+        <source>After %n min</source>
+        <translation>
+            <numerusform>Après %n min</numerusform>
+            <numerusform>Après %n min</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location line="+1"/>
+        <source>After %n s</source>
+        <translation>
+            <numerusform>Après %n s</numerusform>
+            <numerusform>Après %n s</numerusform>
+        </translation>
+    </message>
+    <message>
+        <location line="+18"/>
         <source>Full history…</source>
         <translation>Historique complet…</translation>
     </message>
     <message>
-        <location line="+36"/>
+        <location line="+50"/>
         <source>Close</source>
         <translation>Fermer</translation>
     </message>
@@ -6140,13 +6166,13 @@ Choisissez Plus tard pour continuer à travailler -- les modifications s&apos;ap
     </message>
     <message>
         <location line="-357"/>
-        <location line="+441"/>
+        <location line="+453"/>
         <location line="+5"/>
         <source>Updates</source>
         <translation>Mises à jour</translation>
     </message>
     <message>
-        <location line="-421"/>
+        <location line="-433"/>
         <source>Project and startup preferences shared by the application.</source>
         <translation>Préférences de projet et de démarrage partagées par l&apos;application.</translation>
     </message>
@@ -6510,7 +6536,22 @@ Choisissez Plus tard pour continuer à travailler -- les modifications s&apos;ap
         <translation>Panneau épinglé</translation>
     </message>
     <message>
-        <location line="+20"/>
+        <location line="+4"/>
+        <source> s</source>
+        <translation> s</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Each notification is deleted this many seconds after it arrived.</source>
+        <translation>Chaque notification est supprimée ce nombre de secondes après son arrivée.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Delete automatically after</source>
+        <translation>Supprimer automatiquement après</translation>
+    </message>
+    <message>
+        <location line="+24"/>
         <source>In-memory history</source>
         <translation>Historique en mémoire</translation>
     </message>
@@ -6585,7 +6626,8 @@ Choisissez Plus tard pour continuer à travailler -- les modifications s&apos;ap
         <translation>Dernière vérification</translation>
     </message>
     <message>
-        <location line="+6"/>
+        <location line="-92"/>
+        <location line="+98"/>
         <source>Never</source>
         <translation>Jamais</translation>
     </message>

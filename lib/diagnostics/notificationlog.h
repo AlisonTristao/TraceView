@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QObject>
+#include <QTimer>
 #include <QVector>
 
 #include "diagnostics/notificationentry.h"
@@ -37,6 +38,16 @@ public:
     void clear();
     // Dismisses one entry (the panel's X). False when it is no longer here.
     bool remove(quint64 id);
+    // Drops every entry stamped before `cutoff`; returns how many went.
+    int removeOlderThan(const QDateTime& cutoff);
+
+    // Auto-delete: each entry goes `seconds` after it arrived (checked once a
+    // second). 0 keeps them until cleared. Starts from
+    // AppSettings::notificationAutoDeleteSeconds and follows it.
+    void setMaxAgeSeconds(int seconds);
+    int maxAgeSeconds() const {
+        return m_maxAgeSeconds;
+    }
 
     int unreadCount() const {
         return m_unreadCount;
@@ -57,8 +68,14 @@ signals:
     void unreadChanged();
 
 private:
+    // Removes m_entries[index], keeping the unread count and worst severity
+    // right (the unread entries are always the newest m_unreadCount ones).
+    void removeAt(int index);
+
     QVector<NotificationEntry> m_entries;
     int m_capacity = kCapacity;
+    int m_maxAgeSeconds = 0;
+    QTimer m_expiryTimer;
     quint64 m_nextId = 1;
     int m_unreadCount = 0;
     StatusSeverity m_unreadWorst = StatusSeverity::Info;

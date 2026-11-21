@@ -552,10 +552,20 @@ SettingsPage::SettingsPage(QWidget* parent) : QWidget(parent) {
     pinStyle->addItem(tr("Over the dashboard"), int(AppSettings::NotificationPinStyle::Overlay));
     pinStyle->addItem(tr("Beside the dashboard (shrinks it)"), int(AppSettings::NotificationPinStyle::Push));
     formFor(notificationSection)->addRow(tr("Pinned panel"), pinStyle);
-    const auto syncNotificationFields = [popups, errorPopups, pinStyle, &settings] {
+    auto* autoDelete = new QSpinBox(notificationSection);
+    autoDelete->setRange(0, AppSettings::kMaxNotificationAutoDeleteSeconds);
+    autoDelete->setSingleStep(5);
+    autoDelete->setSuffix(tr(" s"));
+    autoDelete->setSpecialValueText(tr("Never"));
+    autoDelete->setKeyboardTracking(false);  // not on every digit typed
+    autoDelete->setToolTip(tr("Each notification is deleted this many seconds after it arrived."));
+    formFor(notificationSection)->addRow(tr("Delete automatically after"), autoDelete);
+    const auto syncNotificationFields = [popups, errorPopups, pinStyle, autoDelete, &settings] {
         const QSignalBlocker b1(popups);
         const QSignalBlocker b2(errorPopups);
         const QSignalBlocker b3(pinStyle);
+        const QSignalBlocker b4(autoDelete);
+        autoDelete->setValue(settings.notificationAutoDeleteSeconds());
         popups->setCurrentIndex(popups->findData(int(settings.notificationPopups())));
         errorPopups->setChecked(settings.notificationErrorPopups());
         errorPopups->setEnabled(settings.notificationPopups() == AppSettings::NotificationPopups::BellOnly);
@@ -570,6 +580,8 @@ SettingsPage::SettingsPage(QWidget* parent) : QWidget(parent) {
     connect(pinStyle, &QComboBox::currentIndexChanged, this, [pinStyle, &settings](int) {
         settings.setNotificationPinStyle(AppSettings::NotificationPinStyle(pinStyle->currentData().toInt()));
     });
+    connect(autoDelete, qOverload<int>(&QSpinBox::valueChanged), &settings,
+            &AppSettings::setNotificationAutoDeleteSeconds);
 
     QGroupBox* diagnosticsSection = addSection(diagnosticsPage, tr("In-memory history"));
     auto* frameHistory = new QSpinBox(diagnosticsSection);
