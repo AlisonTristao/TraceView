@@ -467,12 +467,29 @@ QWidget* TraceKitDialog::buildWifiTab() {
     connect(add, &QPushButton::clicked, this, &TraceKitDialog::addWifi);
     auto* remove = new QPushButton(tr("Remove"), page);
     connect(remove, &QPushButton::clicked, this, &TraceKitDialog::removeWifi);
+    auto* reload = new QPushButton(tr("Reload"), page);
+    reload->setToolTip(tr("Read the list from the device again (btp -wifi_json)."));
+    connect(reload, &QPushButton::clicked, this, &TraceKitDialog::reloadWifi);
     auto* reboot = new QPushButton(tr("Reboot to use them"), page);
-    connect(reboot, &QPushButton::clicked, this, [this]() { action(QStringLiteral("btp -reboot")); });
+    connect(reboot, &QPushButton::clicked, this, [this]() {
+        // With no network left, a device that only talks over Wi-Fi does not
+        // come back after this reboot: say so first.
+        if (m_wifiList->count() == 0 &&
+            !DialogPresenter::confirm(this, tr("Reboot"),
+                                      tr("%1 knows no Wi-Fi network. After this reboot it joins none: a "
+                                         "device that only talks over Wi-Fi can then be reached only "
+                                         "over USB.")
+                                          .arg(m_device.name),
+                                      tr("Reboot anyway"), tr("Cancel"))) {
+            return;
+        }
+        action(QStringLiteral("btp -reboot"));
+    });
 
     auto* buttons = new QHBoxLayout();
     buttons->addWidget(add);
     buttons->addWidget(remove);
+    buttons->addWidget(reload);
     buttons->addStretch(1);
     buttons->addWidget(reboot);
 
@@ -553,6 +570,30 @@ void TraceKitDialog::removeWifi() {
         DialogPresenter::information(this, tr("Remove a network"),
                                      tr("Pick a network from the list (the one in the firmware "
                                         "cannot be removed from here)."));
+        return;
+    }
+    // btp -wifi_remove takes out every entry with that name, and the list can
+    // hold the same name twice (added twice, or written so in the file):
+    // count what goes and what stays before asking.
+    int sameName = 0;
+    int remaining = 0;
+    for (int row = 0; row < m_wifiList->count(); ++row) {
+        if (m_wifiList->item(row)->data(Qt::UserRole).toString() == ssid) {
+            ++sameName;
+        } else {
+            ++remaining;  // other names, and the one in the firmware
+        }
+    }
+    QString question = sameName > 1 ? tr("Remove %1 from %2? The list has it %3 times, and all of them go.")
+                                          .arg(ssid, m_device.name)
+                                          .arg(sameName)
+                                    : tr("Remove %1 from %2?").arg(ssid, m_device.name);
+    if (remaining == 0) {
+        question += QStringLiteral("\n\n") +
+                    tr("It is the only network: after the next reboot the device joins no Wi-Fi, and one that "
+                       "only talks over Wi-Fi can then be reached only over USB.");
+    }
+    if (!DialogPresenter::confirm(this, tr("Remove a network"), question, tr("Remove"), tr("Cancel"))) {
         return;
     }
     QPointer<TraceKitDialog> self(this);
