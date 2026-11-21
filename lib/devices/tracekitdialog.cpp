@@ -5,6 +5,7 @@
 #include <QDialogButtonBox>
 #include <QDoubleSpinBox>
 #include <QDoubleValidator>
+#include <QFontMetrics>
 #include <QFormLayout>
 #include <QHBoxLayout>
 #include <QHeaderView>
@@ -17,14 +18,17 @@
 #include <QPointer>
 #include <QPushButton>
 #include <QSpinBox>
-#include <QTabWidget>
+#include <QStackedWidget>
 #include <QTableWidget>
 #include <QVBoxLayout>
 
+#include <algorithm>
 #include <cmath>
 #include <limits>
 
 #include "theme/dialogpresenter.h"
+#include "theme/iconlibrary.h"
+#include "traceview/thememanager.h"
 
 namespace traceview {
 
@@ -65,29 +69,181 @@ bool isTraceKitDevice(const QVector<DeviceInfoRecord>& info) {
 TraceKitDialog::TraceKitDialog(const Device& device, Runner runner, QWidget* parent)
     : QDialog(parent), m_device(device), m_runner(std::move(runner)) {
     setWindowTitle(tr("%1 — TraceKit").arg(device.name));
-    resize(720, 520);
+    resize(880, 720);
 
-    m_tabs = new QTabWidget(this);
-    m_tabs->addTab(buildSettingsTab(), tr("Settings"));
-    m_tabs->addTab(buildWifiTab(), tr("Wi-Fi"));
-    m_tabs->addTab(buildActionsTab(), tr("Actions"));
+    // Header: name, what it runs, and whether it is connected.
+    auto* header = new QWidget(this);
+    header->setObjectName(QStringLiteral("tracekitHeader"));
+    m_title = new QLabel(header);
+    m_title->setObjectName(QStringLiteral("tracekitTitle"));
+    m_subtitle = new QLabel(header);
+    m_subtitle->setObjectName(QStringLiteral("tracekitSubtitle"));
+    m_linkBadge = new QLabel(header);
+    auto* titles = new QVBoxLayout();
+    titles->setSpacing(2);
+    titles->addWidget(m_title);
+    titles->addWidget(m_subtitle);
+    auto* headerLayout = new QHBoxLayout(header);
+    headerLayout->setContentsMargins(4, 0, 4, 4);
+    headerLayout->addLayout(titles, 1);
+    headerLayout->addWidget(m_linkBadge, 0, Qt::AlignTop);
+
+    // Side list + pages.
+    m_nav = new QListWidget(this);
+    m_nav->setObjectName(QStringLiteral("tracekitNav"));
+    m_nav->setFixedWidth(176);
+    m_nav->setIconSize(QSize(18, 18));
+    m_nav->setFrameShape(QFrame::NoFrame);
+    m_nav->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    m_pages = new QStackedWidget(this);
+
+    QWidget* settings = buildSettingsTab();
+    QWidget* wifi = buildWifiTab();
+    QWidget* actions = buildActionsTab();
+    m_connectionPages = {settings, wifi, actions};
+    m_pages->addWidget(settings);
+    addNavItem(tr("Settings"), QStringLiteral("lucide:sliders-horizontal"));
+    m_pages->addWidget(wifi);
+    addNavItem(tr("Wi-Fi"), QStringLiteral("lucide:wifi"));
+    m_pages->addWidget(actions);
+    addNavItem(tr("Actions"), QStringLiteral("lucide:zap"));
+    connect(m_nav, &QListWidget::currentRowChanged, m_pages, &QStackedWidget::setCurrentIndex);
+    m_nav->setCurrentRow(0);
+
+    auto* body = new QHBoxLayout();
+    body->setSpacing(14);
+    body->addWidget(m_nav);
+    body->addWidget(m_pages, 1);
 
     auto* buttons = new QDialogButtonBox(QDialogButtonBox::Close, this);
     connect(buttons, &QDialogButtonBox::rejected, this, &QDialog::reject);
 
     auto* layout = new QVBoxLayout(this);
-    layout->addWidget(m_tabs);
+    layout->setContentsMargins(16, 14, 16, 12);
+    layout->setSpacing(10);
+    layout->addWidget(header);
+    layout->addLayout(body, 1);
     layout->addWidget(buttons);
+
+    applyTheme();
+    connect(&ThemeManager::instance(), &ThemeManager::themeChanged, this,
+            [this](const ThemePalette&) { applyTheme(); });
+}
+
+void TraceKitDialog::addNavItem(const QString& title, const QString& iconId, int row) {
+    auto* item = new QListWidgetItem(title);
+    item->setSizeHint(QSize(0, 36));
+    if (row < 0) {
+        m_nav->addItem(item);
+        m_navIcons.append(iconId);
+    } else {
+        m_nav->insertItem(row, item);
+        m_navIcons.insert(row, iconId);
+    }
+    refreshNavIcons();
+}
+
+int TraceKitDialog::addPage(QWidget* page, const QString& title, const QString& iconId) {
+    // Before Actions, the last of the built-in ones.
+    const int index = m_pages->count() - 1;
+    const int current = m_nav->currentRow();
+    m_pages->insertWidget(index, page);
+    addNavItem(title, iconId, index);
+    if (current >= index) m_nav->setCurrentRow(current + 1);
+    return index;
+}
+
+void TraceKitDialog::showPage(int index) {
+    if (index >= 0 && index < m_nav->count()) m_nav->setCurrentRow(index);
+}
+
+void TraceKitDialog::refreshNavIcons() {
+    const ThemePalette& palette = ThemeManager::instance().currentTheme();
+    for (int row = 0; row < m_nav->count() && row < m_navIcons.size(); ++row) {
+        m_nav->item(row)->setIcon(
+            IconLibrary::instance().icon(m_navIcons.at(row), palette.textSecondary, palette.accent, 18));
+    }
+}
+
+void TraceKitDialog::applyTheme() {
+    const ThemePalette& p = ThemeManager::instance().currentTheme();
+    setStyleSheet(QStringLiteral(R"(
+QLabel#tracekitTitle { font-size: 15pt; font-weight: 600; color: %1; }
+QLabel#tracekitSubtitle { color: %2; }
+QListWidget#tracekitNav { background: transparent; border: none; outline: none; }
+QListWidget#tracekitNav::item {
+    color: %2; border-radius: 6px; padding: 4px 8px; margin: 1px 0;
+}
+QListWidget#tracekitNav::item:hover { background-color: %3; color: %1; }
+QListWidget#tracekitNav::item:selected {
+    background-color: %4; color: %1; font-weight: 600;
+}
+QLabel#tracekitState { color: %2; }
+)")
+                      .arg(p.textPrimary.name(), p.textSecondary.name(), p.surfaceAlt.name(),
+                           QStringLiteral("rgba(%1, %2, %3, 0.16)")
+                               .arg(p.accent.red())
+                               .arg(p.accent.green())
+                               .arg(p.accent.blue())));
+    refreshNavIcons();
+    sizeActionButtons();
+    refreshHeader();
+}
+
+void TraceKitDialog::sizeActionButtons() {
+    // Same rule as the Firmware page's buttons: one size, the longest text's.
+    const QFontMetrics metrics(font());
+    int width = 0;
+    for (const QPushButton* button : m_actionButtons) {
+        width = std::max(width, metrics.horizontalAdvance(button->text()));
+    }
+    const QSize size(width + 40, metrics.height() + 16);
+    for (QPushButton* button : m_actionButtons) button->setFixedSize(size);
+}
+
+void TraceKitDialog::setDevice(const Device& device) {
+    m_device = device;
+    refreshHeader();
+}
+
+void TraceKitDialog::refreshHeader() {
+    if (m_title == nullptr) return;
+    const ThemePalette& p = ThemeManager::instance().currentTheme();
+    m_title->setText(m_device.name);
+    auto info = [this](const char* key) {
+        for (const DeviceInfoRecord& entry : m_device.reportedInfo) {
+            if (entry.key == QLatin1String(key)) return entry.value;
+        }
+        return QString();
+    };
+    QStringList parts;
+    if (!info("fw_version").isEmpty()) parts << tr("Firmware %1").arg(info("fw_version"));
+    if (!info("chip").isEmpty()) parts << info("chip");
+    if (!info("tracekit").isEmpty()) parts << tr("TraceKit %1").arg(info("tracekit"));
+    m_subtitle->setText(parts.isEmpty() ? tr("TraceKit device") : parts.join(QStringLiteral("  ·  ")));
+    m_subtitle->setVisible(true);
+
+    const bool connected = m_connected || m_device.connected;
+    const QColor color = connected ? p.success : p.textSecondary;
+    m_linkBadge->setText(QStringLiteral("●  ") + (connected ? tr("Connected") : tr("Not connected")));
+    m_linkBadge->setStyleSheet(
+        QStringLiteral("QLabel { background-color: rgba(%1, %2, %3, 0.16); color: %4; border-radius: 10px; "
+                       "padding: 3px 10px; font-weight: 600; }")
+            .arg(color.red())
+            .arg(color.green())
+            .arg(color.blue())
+            .arg(color.name()));
 }
 
 void TraceKitDialog::setConnected(bool connected) {
     const bool reconnected = connected && !m_connected;
     m_connected = connected;
-    m_tabs->setEnabled(connected);
+    for (QWidget* page : m_connectionPages) page->setEnabled(connected);
     if (!connected) {
         m_settingsState->setText(tr("Not connected: connect the device to change it."));
         m_wifiState->setText(m_settingsState->text());
     }
+    refreshHeader();
     if (reconnected) reloadAll();
 }
 
@@ -96,6 +252,7 @@ void TraceKitDialog::setConnected(bool connected) {
 QWidget* TraceKitDialog::buildSettingsTab() {
     auto* page = new QWidget(this);
     m_settingsState = new QLabel(page);
+    m_settingsState->setObjectName(QStringLiteral("tracekitState"));
     m_settingsState->setWordWrap(true);
 
     m_settingsTable = new QTableWidget(0, kColumnCount, page);
@@ -120,6 +277,7 @@ QWidget* TraceKitDialog::buildSettingsTab() {
     row->addWidget(m_applyButton);
 
     auto* layout = new QVBoxLayout(page);
+    layout->setContentsMargins(0, 0, 0, 0);
     layout->addLayout(row);
     layout->addWidget(m_settingsTable);
     return page;
@@ -177,7 +335,7 @@ void TraceKitDialog::addSettingRow(const QJsonObject& decl) {
     const QString help = decl.value("help").toString();
     const bool reboot = decl.value("reboot").toBool();
 
-    auto* nameItem = new QTableWidgetItem(reboot ? name + QStringLiteral(" \xE2\x86\xBB") : name);
+    auto* nameItem = new QTableWidgetItem(reboot ? name + QStringLiteral(" ↻") : name);
     QString tip = help;
     if (reboot) tip += (tip.isEmpty() ? QString() : QStringLiteral("\n")) + tr("Takes effect after a reboot.");
     nameItem->setToolTip(tip);
@@ -301,6 +459,7 @@ void TraceKitDialog::resetSetting(int row) {
 QWidget* TraceKitDialog::buildWifiTab() {
     auto* page = new QWidget(this);
     m_wifiState = new QLabel(page);
+    m_wifiState->setObjectName(QStringLiteral("tracekitState"));
     m_wifiState->setWordWrap(true);
     m_wifiList = new QListWidget(page);
 
@@ -324,6 +483,7 @@ QWidget* TraceKitDialog::buildWifiTab() {
     note->setWordWrap(true);
 
     auto* layout = new QVBoxLayout(page);
+    layout->setContentsMargins(0, 0, 0, 0);
     layout->addWidget(m_wifiState);
     layout->addWidget(m_wifiList);
     layout->addLayout(buttons);
@@ -411,6 +571,7 @@ QWidget* TraceKitDialog::buildActionsTab() {
 
     auto addAction = [this, page, form](const QString& label, const QString& help, auto onClick) {
         auto* button = new QPushButton(label, page);
+        m_actionButtons.append(button);
         connect(button, &QPushButton::clicked, this, onClick);
         auto* text = new QLabel(help, page);
         text->setWordWrap(true);
@@ -429,7 +590,7 @@ QWidget* TraceKitDialog::buildActionsTab() {
     addAction(tr("Keep awake 10 min"), tr("A sleeping sensor stays up for a session or an update."),
               [this]() { action(QStringLiteral("btp -awake 10")); });
     addAction(tr("Reboot"), tr("Restarts the application."), [this]() { action(QStringLiteral("btp -reboot")); });
-    addAction(tr("Recovery"), tr("Restarts into the recovery, waiting for a firmware (OTA tab)."),
+    addAction(tr("Recovery"), tr("Restarts into the recovery, waiting for a firmware (Firmware page)."),
               [this]() { action(QStringLiteral("btp -recovery")); });
     addAction(tr("USB bootloader"),
               tr("ROM download mode for 30 s: flash over the cable without the BOOT button."),
@@ -450,6 +611,7 @@ QWidget* TraceKitDialog::buildActionsTab() {
     m_log->setMaximumBlockCount(500);
 
     auto* layout = new QVBoxLayout(page);
+    layout->setContentsMargins(0, 0, 0, 0);
     layout->addLayout(form);
     layout->addWidget(m_log, 1);
     return page;

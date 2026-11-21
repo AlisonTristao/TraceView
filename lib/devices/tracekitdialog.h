@@ -11,10 +11,10 @@
 
 class QLabel;
 class QListWidget;
+class QStackedWidget;
 class QPlainTextEdit;
 class QPushButton;
 class QTableWidget;
-class QTabWidget;
 class QWidget;
 
 namespace traceview {
@@ -36,6 +36,10 @@ bool isTraceKitDevice(const QVector<DeviceInfoRecord>& info);
 //   Actions   clock, reboot, recovery, USB bootloader, keep awake, factory
 //             reset, each one command.
 //
+// MainWindow adds pages that need more than this library has (addPage): the
+// Firmware page (OtaDevicePanel, traceview_ota) is one, and works whether or
+// not the device is connected -- unlike the three above, which go grey.
+//
 // It never talks to a connection itself: `Runner` sends a command line and
 // hands back its output (MainWindow wires it to Backend::runCommand), so
 // this stays in traceview_devices without the protocol layer.
@@ -48,9 +52,17 @@ public:
 
     TraceKitDialog(const Device& device, Runner runner, QWidget* parent = nullptr);
 
-    // Reloads everything when the device (re)connects; greys out the tabs
-    // while it is not.
+    // Reloads everything when the device (re)connects; greys out the pages
+    // that need the connection while it is not.
     void setConnected(bool connected);
+
+    // Live state for the header (connection, firmware version).
+    void setDevice(const Device& device);
+
+    // A page of the caller's, in the side list before Actions; it stays
+    // enabled when the device is disconnected. Returns its index.
+    int addPage(QWidget* page, const QString& title, const QString& iconId);
+    void showPage(int index);
 
 private:
     struct Setting {
@@ -59,9 +71,14 @@ private:
         QString loaded;         // the value text it had when read
     };
 
+    void addNavItem(const QString& title, const QString& iconId, int row = -1);
+    void refreshHeader();
+    void applyTheme();
+    void refreshNavIcons();
     QWidget* buildSettingsTab();
     QWidget* buildWifiTab();
     QWidget* buildActionsTab();
+    void sizeActionButtons();
 
     void reloadAll();
     void loadSetting(int index);
@@ -82,7 +99,13 @@ private:
     bool m_connected = false;
     int m_generation = 0;  // bumped on every reload: late answers of an old one are dropped
 
-    QTabWidget* m_tabs = nullptr;
+    QListWidget* m_nav = nullptr;
+    QStackedWidget* m_pages = nullptr;
+    QVector<QWidget*> m_connectionPages;  // greyed out while disconnected
+    QStringList m_navIcons;               // lucide id per nav row
+    QLabel* m_title = nullptr;
+    QLabel* m_subtitle = nullptr;
+    QLabel* m_linkBadge = nullptr;
     QLabel* m_settingsState = nullptr;
     QTableWidget* m_settingsTable = nullptr;
     QPushButton* m_applyButton = nullptr;
@@ -90,6 +113,7 @@ private:
     QLabel* m_wifiState = nullptr;
     QListWidget* m_wifiList = nullptr;
     QPlainTextEdit* m_log = nullptr;
+    QVector<QPushButton*> m_actionButtons;  // one size for all (sizeActionButtons)
 };
 
 }  // namespace traceview

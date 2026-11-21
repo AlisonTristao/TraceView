@@ -93,6 +93,7 @@
 #include "logs/logviewer.h"
 #include "dashboardgallerydialog.h"
 #include "manageusersdialog.h"
+#include "ota/otadevicepanel.h"
 #include "ota/otatab.h"
 #include "paneldockcontroller.h"
 #include "preferences/appsettings.h"
@@ -5140,6 +5141,35 @@ void MainWindow::onDeviceToolsRequested(const QString& deviceId) {
             },
             this);
         dialog->setAttribute(Qt::WA_DeleteOnClose);
+
+        // Firmware: the OTA tab's flow for this one device, inside its panel.
+        auto* firmware = new OtaDevicePanel(device, dialog);
+        firmware->setKeyProvider([this](const QString& password) { return channelKeyFor(password); });
+        connect(firmware, &OtaDevicePanel::recoveryRequested, this, [this](const QString& id) {
+            if (DeviceConnection* target = m_deviceConnections.value(id)) {
+                target->backend()->sendCommand(QByteArrayLiteral("btp -recovery"));
+            }
+        });
+        connect(firmware, &OtaDevicePanel::statusMessage, this,
+                [this](const QString& text) { postStatus(text, 8000); });
+        auto pushDevice = [this, deviceId, dialog = QPointer<TraceKitDialog>(dialog),
+                           firmware = QPointer<OtaDevicePanel>(firmware)]() {
+            for (const Device& current : m_devicesGrid->devices()) {
+                if (current.id != deviceId) continue;
+                if (dialog) dialog->setDevice(current);
+                if (firmware) firmware->setDevice(current);
+            }
+        };
+        connect(m_devicesGrid, &DevicesGrid::deviceLiveStateChanged, dialog,
+                [pushDevice, deviceId](const Device& changed) {
+                    if (changed.id == deviceId) pushDevice();
+                });
+        connect(m_devicesGrid, &DevicesGrid::deviceReportedInfoChanged, dialog,
+                [pushDevice, deviceId](const QString& id) {
+                    if (id == deviceId) pushDevice();
+                });
+        dialog->addPage(firmware, tr("Firmware"), QStringLiteral("lucide:hard-drive-upload"));
+
         m_traceKitDialogs.insert(deviceId, dialog);
         connect(dialog, &QObject::destroyed, this,
                 [this, deviceId]() { m_traceKitDialogs.remove(deviceId); });

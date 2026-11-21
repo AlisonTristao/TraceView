@@ -527,6 +527,8 @@ add_library(traceview_ota STATIC
     ota/otaauth.h
     ota/otaclient.cpp
     ota/otaclient.h
+    ota/otadevicepanel.cpp
+    ota/otadevicepanel.h
     ota/otatab.cpp
     ota/otatab.h
 )
