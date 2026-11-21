@@ -7,6 +7,8 @@ release flow.
 
 ## [Unreleased]
 
+## [4.15.0] - 2026-11-21
+
 ### Added
 
 - **Compressed firmware uploads**: when the TraceKit recovery lists
