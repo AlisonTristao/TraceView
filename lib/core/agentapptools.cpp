@@ -967,11 +967,12 @@ void AgentAppTools::registerDashboardViewTools(MainWindow* window, ToolRegistry*
     show.description =
         "Brings a part of TraceView to the front for the user (and for a following window "
         "screenshot): the dashboard, the devices page, the subscriptions view, the OTA page, "
-        "the BTP traffic monitor, the notification history or the settings.";
+        "the BTP traffic monitor, the notification history, the bell's notification panel "
+        "or the settings.";
     show.inputSchema = AgentSchema()
                            .string("view", "What to show.", true,
                                    {"dashboard", "devices", "subscriptions", "ota", "btp_monitor",
-                                    "notifications", "settings"})
+                                    "notifications", "notification_panel", "settings"})
                            .toJson();
     show.handler = [window](const QJsonObject& args, const AgentToolReply& reply) {
         const QString view = args.value("view").toString();
@@ -998,6 +999,8 @@ void AgentAppTools::registerDashboardViewTools(MainWindow* window, ToolRegistry*
                 window->onOpenBtpMonitor();
             } else if (view == QLatin1String("notifications")) {
                 window->onShowNotificationHistory();
+            } else if (view == QLatin1String("notification_panel")) {
+                window->setNotificationPanelOpen(true);
             } else {
                 window->onOpenSettings();
             }

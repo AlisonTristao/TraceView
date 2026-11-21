@@ -109,7 +109,7 @@ TraceView (the running window)      lib/agent/agentbridgeserver.cpp
 | TraceKit panel | `tracekit_get_settings`², `tracekit_set_settings`², `tracekit_reset_setting`² (what the device declares with `cfg -json`), `tracekit_wifi_list`², `tracekit_wifi_add`² (the password goes to the device only, never to the terminal or log), `tracekit_wifi_remove`¹², `tracekit_action`² (set_clock, status, keep_awake, reboot, recovery, usb_bootloader, factory_reset¹) |
 | Appearance | `get_appearance`, `set_appearance`, `apply_appearance_preset`, `save_appearance_preset`, `delete_appearance_preset`¹, `pin_workspace_appearance`, `create_palette`, `update_palette`, `delete_palette`¹, `set_language`, `set_font` |
 | Settings | `get_settings`, `update_settings` (everything in the Settings window except appearance), `clear_manifest_cache`, `check_for_updates` (installing stays the user's choice) |
-| Diagnostics | `read_notifications`, `read_app_log`, `read_btp_traffic`, `export_btp_traffic`³ (JSON Lines or CSV, full payloads), `set_btp_monitor_paused`, `open_log_file` (a recorded `.blog` in its own tab) |
+| Diagnostics | `read_notifications`, `clear_notifications`, `read_app_log`, `read_btp_traffic`, `export_btp_traffic`³ (JSON Lines or CSV, full payloads), `set_btp_monitor_paused`, `open_log_file` (a recorded `.blog` in its own tab) |
 
 ¹ Asks the user in a dialog every time: these can't be undone, or replace
 unsaved work, or flash firmware.

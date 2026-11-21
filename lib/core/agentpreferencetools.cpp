@@ -172,6 +172,48 @@ QVector<SettingSpec> settingSpecs() {
         intSetting("notificationHistoryCapacity", "Notifications the history keeps", 50, 10000,
                    &AppSettings::notificationHistoryCapacity,
                    &AppSettings::setNotificationHistoryCapacity),
+        {"notificationPopups",
+         "Which notifications pop up as cards over the dashboard: all, or bellOnly (only the "
+         "bell's counter, see notificationErrorPopups)",
+         [] {
+             return QJsonValue(AppSettings::instance().notificationPopups() ==
+                                       AppSettings::NotificationPopups::All
+                                   ? QStringLiteral("all")
+                                   : QStringLiteral("bellOnly"));
+         },
+         [](const QJsonValue& value) {
+             const QString text = value.toString();
+             if (text != QLatin1String("all") && text != QLatin1String("bellOnly")) {
+                 return QStringLiteral("expects \"all\" or \"bellOnly\"");
+             }
+             AppSettings::instance().setNotificationPopups(text == QLatin1String("all")
+                                                               ? AppSettings::NotificationPopups::All
+                                                               : AppSettings::NotificationPopups::BellOnly);
+             return QString();
+         }},
+        boolSetting("notificationErrorPopups", "In bellOnly mode, errors still pop up as cards",
+                    &AppSettings::notificationErrorPopups, &AppSettings::setNotificationErrorPopups),
+        {"notificationPinStyle",
+         "A pinned notification panel either floats over the dashboard (overlay) or shrinks "
+         "the dashboard beside it (push)",
+         [] {
+             return QJsonValue(AppSettings::instance().notificationPinStyle() ==
+                                       AppSettings::NotificationPinStyle::Overlay
+                                   ? QStringLiteral("overlay")
+                                   : QStringLiteral("push"));
+         },
+         [](const QJsonValue& value) {
+             const QString text = value.toString();
+             if (text != QLatin1String("overlay") && text != QLatin1String("push")) {
+                 return QStringLiteral("expects \"overlay\" or \"push\"");
+             }
+             AppSettings::instance().setNotificationPinStyle(
+                 text == QLatin1String("overlay") ? AppSettings::NotificationPinStyle::Overlay
+                                                  : AppSettings::NotificationPinStyle::Push);
+             return QString();
+         }},
+        boolSetting("notificationPanelPinned", "The notification panel stays open",
+                    &AppSettings::notificationPanelPinned, &AppSettings::setNotificationPanelPinned),
         boolSetting("updateAutoCheckEnabled", "Check for TraceView updates at startup",
                     &AppSettings::updateAutoCheckEnabled, &AppSettings::setUpdateAutoCheckEnabled),
     };
@@ -611,8 +653,9 @@ void AgentAppTools::registerDiagnosticsTools(MainWindow* window, ToolRegistry* r
     notifications.title = "Read notifications";
     notifications.readOnly = true;
     notifications.description =
-        "The latest status-bar notifications (connections, sessions, subscriptions, errors), "
-        "oldest first, with severity and the device they came from.";
+        "The latest notifications behind the bell (connections, sessions, subscriptions, "
+        "errors, the robots' LOG records), oldest first, with severity and the device they "
+        "came from, plus how many the user has not seen yet.";
     notifications.inputSchema =
         AgentSchema().integer("max", "How many of the latest (default 50).").toJson();
     notifications.handler = [window](const QJsonObject& args, const AgentToolReply& reply) {
@@ -626,9 +669,25 @@ void AgentAppTools::registerDiagnosticsTools(MainWindow* window, ToolRegistry* r
                                     {"source", entry.source},
                                     {"text", entry.text}});
         }
-        reply(AgentToolResult::json(QJsonObject{{"notifications", list}}));
+        reply(AgentToolResult::json(
+            QJsonObject{{"notifications", list}, {"unread", window->m_notificationLog->unreadCount()}}));
     };
     registry->registerTool(notifications);
+
+    AgentTool clearNotifications;
+    clearNotifications.name = "clear_notifications";
+    clearNotifications.title = "Clear notifications";
+    clearNotifications.destructive = true;
+    clearNotifications.description =
+        "Empties the notifications behind the bell (its panel and the history window), like the "
+        "panel's Clear button.";
+    clearNotifications.inputSchema = AgentSchema().toJson();
+    clearNotifications.handler = [window](const QJsonObject&, const AgentToolReply& reply) {
+        const int count = int(window->m_notificationLog->entries().size());
+        window->m_notificationLog->clear();
+        reply(AgentToolResult::json(QJsonObject{{"cleared", count}}));
+    };
+    registry->registerTool(clearNotifications);
 
     AgentTool appLog;
     appLog.name = "read_app_log";

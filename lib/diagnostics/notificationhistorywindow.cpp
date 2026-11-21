@@ -128,6 +128,8 @@ NotificationHistoryWindow::NotificationHistoryWindow(NotificationLog* log, QWidg
                 m_table->scrollToBottom();
             });
     connect(m_log, &NotificationLog::cleared, this, [this] { m_table->setRowCount(0); });
+    // One entry dismissed from the bell's panel: rare enough to just redraw.
+    connect(m_log, &NotificationLog::removed, this, [this](quint64) { rebuild(); });
     connect(&ThemeManager::instance(), &ThemeManager::themeChanged, this,
             [this](const ThemePalette&) { rebuild(); });
 

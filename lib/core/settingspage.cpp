@@ -539,6 +539,38 @@ SettingsPage::SettingsPage(QWidget* parent) : QWidget(parent) {
         createCategoryPage(pages, tr("Diagnostics"),
                            tr("Keep enough history for investigation without letting long-running "
                               "sessions use unbounded memory."));
+    // The bell's options -- the same three its panel's menu changes, kept in
+    // step with it both ways.
+    QGroupBox* notificationSection = addSection(diagnosticsPage, tr("Notifications"));
+    auto* popups = new QComboBox(notificationSection);
+    popups->addItem(tr("Every notification"), int(AppSettings::NotificationPopups::All));
+    popups->addItem(tr("Only the bell"), int(AppSettings::NotificationPopups::BellOnly));
+    formFor(notificationSection)->addRow(tr("Pop-ups over the dashboard"), popups);
+    auto* errorPopups = new QCheckBox(tr("Errors still pop up"), notificationSection);
+    addCheckBoxRow(formFor(notificationSection), errorPopups);
+    auto* pinStyle = new QComboBox(notificationSection);
+    pinStyle->addItem(tr("Over the dashboard"), int(AppSettings::NotificationPinStyle::Overlay));
+    pinStyle->addItem(tr("Beside the dashboard (shrinks it)"), int(AppSettings::NotificationPinStyle::Push));
+    formFor(notificationSection)->addRow(tr("Pinned panel"), pinStyle);
+    const auto syncNotificationFields = [popups, errorPopups, pinStyle, &settings] {
+        const QSignalBlocker b1(popups);
+        const QSignalBlocker b2(errorPopups);
+        const QSignalBlocker b3(pinStyle);
+        popups->setCurrentIndex(popups->findData(int(settings.notificationPopups())));
+        errorPopups->setChecked(settings.notificationErrorPopups());
+        errorPopups->setEnabled(settings.notificationPopups() == AppSettings::NotificationPopups::BellOnly);
+        pinStyle->setCurrentIndex(pinStyle->findData(int(settings.notificationPinStyle())));
+    };
+    syncNotificationFields();
+    connect(&settings, &AppSettings::notificationPreferencesChanged, this, syncNotificationFields);
+    connect(popups, &QComboBox::currentIndexChanged, this, [popups, &settings](int) {
+        settings.setNotificationPopups(AppSettings::NotificationPopups(popups->currentData().toInt()));
+    });
+    connect(errorPopups, &QCheckBox::toggled, &settings, &AppSettings::setNotificationErrorPopups);
+    connect(pinStyle, &QComboBox::currentIndexChanged, this, [pinStyle, &settings](int) {
+        settings.setNotificationPinStyle(AppSettings::NotificationPinStyle(pinStyle->currentData().toInt()));
+    });
+
     QGroupBox* diagnosticsSection = addSection(diagnosticsPage, tr("In-memory history"));
     auto* frameHistory = new QSpinBox(diagnosticsSection);
     frameHistory->setRange(100, 50000);

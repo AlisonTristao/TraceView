@@ -862,6 +862,12 @@ add_library(traceview_ui STATIC
     core/brandcornermark.h
     core/notificationtoasts.cpp
     core/notificationtoasts.h
+    core/notificationbell.cpp
+    core/notificationbell.h
+    core/notificationlistview.cpp
+    core/notificationlistview.h
+    core/notificationpanel.cpp
+    core/notificationpanel.h
     core/startuploadingoverlay.cpp
     core/startuploadingoverlay.h
     vendor/qrcodegen/qrcodegen.cpp
