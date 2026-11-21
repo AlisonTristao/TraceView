@@ -198,8 +198,13 @@ void SerialTerminalWidget::appendData(const QByteArray& data) {
         }
     }
 
-    renderCurrentLineAndCursor();
+    renderCurrentLine();
     editBlock.endEditBlock();
+    // The caret moves only after the edit block closes: setTextCursor()
+    // asks the layout where the caret's block is, and inside the block the
+    // plain-text layout hasn't caught up with this chunk's edits yet --
+    // a robot's reply to "BTP" crashed in QTextLine there.
+    placeCaret();
     QScrollBar* scrollBar = verticalScrollBar();
     if (m_autoScroll) {
         scrollBar->setValue(scrollBar->maximum());
@@ -453,6 +458,11 @@ void SerialTerminalWidget::commitLine() {
 }
 
 void SerialTerminalWidget::renderCurrentLineAndCursor() {
+    renderCurrentLine();
+    placeCaret();
+}
+
+void SerialTerminalWidget::renderCurrentLine() {
     // Selects the whole logical block (paragraph), not QTextCursor::
     // LineUnderCursor's *visual* line -- a long redrawn command line can
     // word-wrap into several visual lines at narrow widget widths, and
@@ -461,7 +471,9 @@ void SerialTerminalWidget::renderCurrentLineAndCursor() {
     lineCursor.movePosition(QTextCursor::StartOfBlock);
     lineCursor.movePosition(QTextCursor::EndOfBlock, QTextCursor::KeepAnchor);
     insertLineRuns(lineCursor, m_currentLine, m_linePens);
+}
 
+void SerialTerminalWidget::placeCaret() {
     QTextCursor caret(document()->lastBlock());
     caret.movePosition(QTextCursor::StartOfBlock);
     const int column = qBound(0, m_cursorCol, m_currentLine.size());

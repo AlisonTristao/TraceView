@@ -9,6 +9,7 @@
 #include <QVBoxLayout>
 
 #include "core/usermodemanager.h"
+#include "theme/dialogchrome.h"
 #include "theme/dialogpresenter.h"
 
 namespace traceview {
@@ -27,19 +28,18 @@ ManageUsersDialog::ManageUsersDialog(QWidget* parent) : QDialog(parent) {
     connect(changePasswordButton, &QPushButton::clicked, this,
             &ManageUsersDialog::onChangePasswordClicked);
 
-    auto* buttonRow = new QHBoxLayout();
-    buttonRow->addWidget(addButton);
-    buttonRow->addWidget(removeButton);
-    buttonRow->addWidget(changePasswordButton);
-    buttonRow->addStretch();
+    DialogChrome::setButtonVariant(removeButton, "danger");
 
     auto* closeButtons = new QDialogButtonBox(QDialogButtonBox::Close, this);
     connect(closeButtons, &QDialogButtonBox::rejected, this, &QDialog::accept);
 
-    auto* layout = new QVBoxLayout(this);
-    layout->addWidget(m_list);
-    layout->addLayout(buttonRow);
-    layout->addWidget(closeButtons);
+    auto* header = new DialogHeader(tr("Manage Developer Users"), QString(), this);
+
+    QVBoxLayout* layout = DialogChrome::setupRootLayout(this);
+    layout->addWidget(header);
+    layout->addWidget(m_list, 1);
+    layout->addLayout(
+        DialogChrome::footer(closeButtons, {addButton, removeButton, changePasswordButton}));
 
     // Every mutation (add/remove/change password) applies immediately
     // through UserModeManager -- there's no separate save step, so the list

@@ -18,6 +18,8 @@ class QTimer;
 
 namespace traceview {
 
+class StatusBadge;
+
 class OtaStepIndicator;
 
 // What the first bytes of an ESP application image say about it: the chip
@@ -132,7 +134,7 @@ private:
 
     // Widgets.
     QFrame* m_deviceCard = nullptr;
-    QLabel* m_stateBadge = nullptr;
+    StatusBadge* m_stateBadge = nullptr;
     QLabel* m_stateHint = nullptr;
     QLabel* m_appValue = nullptr;
     QLabel* m_builtValue = nullptr;

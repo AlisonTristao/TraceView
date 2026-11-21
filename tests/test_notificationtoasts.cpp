@@ -57,7 +57,9 @@ void TestNotificationToasts::staysOutOfTheMouseAndInTheCorner() {
     toasts.post(QStringLiteral("A long message that has to wrap onto more than one line in the "
                                "card, since it is longer than the card is wide."),
                 5000, StatusSeverity::Warning, QStringLiteral("furuta"));
-    QVERIFY(toasts.testAttribute(Qt::WA_TransparentForMouseEvents));
+    // Only the cards take the mouse: the widget is masked to them.
+    QVERIFY(!toasts.mask().isEmpty());
+    QVERIFY(toasts.mask().boundingRect().size() == toasts.size());
     QVERIFY(toasts.isVisible());
     QVERIFY(area.contains(toasts.geometry()));
     QVERIFY(toasts.width() <= 380);

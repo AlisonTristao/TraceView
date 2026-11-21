@@ -101,6 +101,15 @@ public:
     explicit BtpMonitorTab(FrameLog* log, PasswordProvider passwordProvider,
                            QWidget* parent = nullptr);
 
+    // The Pause button: a paused view stops following the log (the log
+    // itself keeps capturing).
+    void setPaused(bool paused);
+    bool isPaused() const;
+
+    // What Export writes: JSON Lines, or CSV when `path` ends in .csv.
+    static bool exportFrames(const QVector<FrameLogEntry>& entries, const QString& path,
+                             QString* error = nullptr);
+
 private:
     void onSelectionChanged();
     void onDecryptClicked();

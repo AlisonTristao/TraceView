@@ -9,7 +9,6 @@
 #include <QLabel>
 #include <QLineEdit>
 #include <QListWidget>
-#include <QMessageBox>
 #include <QPainter>
 #include <QScrollBar>
 #include <QStyledItemDelegate>
@@ -18,6 +17,7 @@
 #include <QVBoxLayout>
 
 #include "traceview/fontmanager.h"
+#include "theme/dialogpresenter.h"
 #include "theme/iconlibrary.h"
 #include "traceview/thememanager.h"
 
@@ -353,15 +353,15 @@ void ChatWidget::pickAttachment() {
     // so check the pick again here.
     const QFileInfo info(path);
     if (!allowedAttachmentSuffixes().contains(info.suffix().toLower())) {
-        QMessageBox::warning(this, tr("Attach a file"),
-                             tr("This file type can't be sent.\nAllowed: %1")
-                                 .arg(allowedAttachmentSuffixes().join(QStringLiteral(", "))));
+        DialogPresenter::warning(this, tr("Attach a file"),
+                                 tr("This file type can't be sent.\nAllowed: %1")
+                                     .arg(allowedAttachmentSuffixes().join(QStringLiteral(", "))));
         return;
     }
     if (info.size() > kMaxAttachmentBytes) {
-        QMessageBox::warning(this, tr("Attach a file"),
-                             tr("This file is too large (limit %1 MB).")
-                                 .arg(kMaxAttachmentBytes / (1024 * 1024)));
+        DialogPresenter::warning(this, tr("Attach a file"),
+                                 tr("This file is too large (limit %1 MB).")
+                                     .arg(kMaxAttachmentBytes / (1024 * 1024)));
         return;
     }
     setPendingAttachment(path);

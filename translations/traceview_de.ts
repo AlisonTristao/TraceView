@@ -4,7 +4,7 @@
 <context>
     <name>AgentAppTools</name>
     <message>
-        <location filename="../lib/core/agentapptools.cpp" line="+207"/>
+        <location filename="../lib/core/agentapptools.cpp" line="+222"/>
         <source>AI Assistant</source>
         <translation>KI-Assistent</translation>
     </message>
@@ -43,7 +43,7 @@ Ihm erlauben, Geräte zu verbinden und ihnen Befehle zu senden, bis der Zugriff 
         <translation>Widget bearbeiten (KI-Assistent)</translation>
     </message>
     <message>
-        <location line="+338"/>
+        <location line="+341"/>
         <source>New Project</source>
         <translation>Neues Projekt</translation>
     </message>
@@ -83,12 +83,22 @@ Ihm erlauben, Geräte zu verbinden und ihnen Befehle zu senden, bis der Zugriff 
         <translation>Ein KI-Assistent möchte das Galerie-Dashboard „%1“ löschen. Dies kann nicht rückgängig gemacht werden.</translation>
     </message>
     <message>
-        <location line="+51"/>
+        <location line="+80"/>
+        <source>Export Dashboard</source>
+        <translation>Dashboard exportieren</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>An AI assistant wants to overwrite &quot;%1&quot; with a gallery dashboard.</source>
+        <translation>Ein KI-Assistent möchte „%1“ mit einem Galerie-Dashboard überschreiben.</translation>
+    </message>
+    <message>
+        <location line="+67"/>
         <source>An AI assistant saved the project to %1.</source>
         <translation>Ein KI-Assistent hat das Projekt unter %1 gespeichert.</translation>
     </message>
     <message>
-        <location filename="../lib/core/agentdevicetools.cpp" line="+184"/>
+        <location filename="../lib/core/agentdevicetools.cpp" line="+188"/>
         <location line="+49"/>
         <source>set up how a device is reached</source>
         <translation>einrichten, wie ein Gerät erreicht wird</translation>
@@ -101,11 +111,13 @@ Ihm erlauben, Geräte zu verbinden und ihnen Befehle zu senden, bis der Zugriff 
     <message>
         <location line="+152"/>
         <location line="+41"/>
+        <location line="+351"/>
+        <location line="+59"/>
         <source>send commands to a device</source>
         <translation>Befehle an ein Gerät senden</translation>
     </message>
     <message>
-        <location line="+176"/>
+        <location line="-234"/>
         <source>run a script that controls a device</source>
         <translation>ein Skript ausführen, das ein Gerät steuert</translation>
     </message>
@@ -125,7 +137,27 @@ Ihm erlauben, Geräte zu verbinden und ihnen Befehle zu senden, bis der Zugriff 
         <translation>Firmware wird auf %1 übertragen: %2%</translation>
     </message>
     <message>
-        <location filename="../lib/core/agentpreferencetools.cpp" line="+298"/>
+        <location line="+338"/>
+        <source>Remove a network</source>
+        <translation>Netz entfernen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>An AI assistant wants to remove the Wi-Fi network &quot;%1&quot; from %2.</source>
+        <translation>Ein KI-Assistent möchte das WLAN „%1“ von %2 entfernen.</translation>
+    </message>
+    <message>
+        <location line="+57"/>
+        <source>Factory reset</source>
+        <translation>Werksreset</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>An AI assistant wants to erase the application and the files of %1. It then waits in the recovery for a new firmware.</source>
+        <translation>Ein KI-Assistent möchte die Anwendung und die Dateien von %1 löschen. Danach wartet es in der Recovery auf eine neue Firmware.</translation>
+    </message>
+    <message>
+        <location filename="../lib/core/agentpreferencetools.cpp" line="+349"/>
         <source>Delete Preset</source>
         <translation>Vorlage löschen</translation>
     </message>
@@ -143,6 +175,16 @@ Ihm erlauben, Geräte zu verbinden und ihnen Befehle zu senden, bis der Zugriff 
         <location line="+1"/>
         <source>An AI assistant wants to delete the palette &quot;%1&quot;.</source>
         <translation>Ein KI-Assistent möchte die Palette „%1“ löschen.</translation>
+    </message>
+    <message>
+        <location line="+318"/>
+        <source>Export Captured Frames</source>
+        <translation>Erfasste Frames exportieren</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>An AI assistant wants to overwrite &quot;%1&quot; with the captured BTP frames.</source>
+        <translation>Ein KI-Assistent möchte „%1“ mit den erfassten BTP-Frames überschreiben.</translation>
     </message>
 </context>
 <context>
@@ -584,7 +626,7 @@ Ihm erlauben, Geräte zu verbinden und ihnen Befehle zu senden, bis der Zugriff 
 <context>
     <name>DialogPresenter</name>
     <message>
-        <location filename="../lib/theme/dialogpresenter.cpp" line="+90"/>
+        <location filename="../lib/theme/dialogpresenter.cpp" line="+95"/>
         <source>Back</source>
         <translation>Zurück</translation>
     </message>
@@ -739,7 +781,7 @@ Ihm erlauben, Geräte zu verbinden und ihnen Befehle zu senden, bis der Zugriff 
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="+148"/>
+        <location filename="../lib/core/mainwindow.cpp" line="+154"/>
         <source>TraceView Project (*.tvproj)</source>
         <translation>TraceView-Projekt (*.tvproj)</translation>
     </message>
@@ -770,7 +812,7 @@ Ihm erlauben, Geräte zu verbinden und ihnen Befehle zu senden, bis der Zugriff 
         <translation>Arbeitsbereich löschen</translation>
     </message>
     <message>
-        <location filename="../lib/devices/deviceconfigdialog.cpp" line="+64"/>
+        <location filename="../lib/devices/deviceconfigdialog.cpp" line="+66"/>
         <source>(unnamed topic)</source>
         <translation>(unbenanntes Thema)</translation>
     </message>
@@ -894,7 +936,7 @@ Ihm erlauben, Geräte zu verbinden und ihnen Befehle zu senden, bis der Zugriff 
 </translation>
     </message>
     <message>
-        <location filename="../lib/diagnostics/notificationhistorywindow.cpp" line="+29"/>
+        <location filename="../lib/diagnostics/notificationhistorywindow.cpp" line="+31"/>
         <location line="+8"/>
         <source>Info</source>
         <translation>Info</translation>
@@ -915,7 +957,7 @@ Ihm erlauben, Geräte zu verbinden und ihnen Befehle zu senden, bis der Zugriff 
         <translation>Fehler</translation>
     </message>
     <message>
-        <location filename="../lib/diagram/diagramblockconfigdialog.cpp" line="+32"/>
+        <location filename="../lib/diagram/diagramblockconfigdialog.cpp" line="+26"/>
         <source>&lt;b&gt;JavaScript&lt;/b&gt;, run live against this device&apos;s real traffic.&lt;br&gt;&lt;br&gt;&lt;b&gt;Define to react to traffic:&lt;/b&gt;&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;onTelemetry(sample)&lt;/code&gt; -- called for a telemetry value already subscribed elsewhere (e.g. a Dashboard chart). &lt;code&gt;sample&lt;/code&gt; has &lt;code&gt;topicId&lt;/code&gt;, &lt;code&gt;fieldId&lt;/code&gt;, &lt;code&gt;elementIndex&lt;/code&gt;, &lt;code&gt;value&lt;/code&gt;, &lt;code&gt;timestampUs&lt;/code&gt;.&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;onTerminal(text)&lt;/code&gt; -- called for each chunk of text this device&apos;s console/serial channel sends back.&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;onConnectionChange(connected)&lt;/code&gt; -- called when this device connects or disconnects.&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;onStatus(text, severity)&lt;/code&gt; -- called for a one-off status update (session established/failed, a subscription rejected, a sendCommand() result, ...) -- the same text the status bar shows. &lt;code&gt;severity&lt;/code&gt; is one of &lt;code&gt;&quot;info&quot;&lt;/code&gt;, &lt;code&gt;&quot;success&quot;&lt;/code&gt;, &lt;code&gt;&quot;warning&quot;&lt;/code&gt;, &lt;code&gt;&quot;error&quot;&lt;/code&gt;.&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;onDeviceInfo(info)&lt;/code&gt; -- called when this device reports its info block (firmware version, chip, partition, ...). &lt;code&gt;info&lt;/code&gt; is an array of &lt;code&gt;{key, label, value}&lt;/code&gt;.&lt;br&gt;&lt;br&gt;&lt;b&gt;Call any time:&lt;/b&gt;&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;device.log(text)&lt;/code&gt; -- write to the output pane.&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;device.sendCommand(text)&lt;/code&gt; -- send a command to this device.&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;device.sendTerminal(text)&lt;/code&gt; -- send text over its console channel.&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;device.setInterval(fn, ms)&lt;/code&gt; / &lt;code&gt;device.clearInterval(id)&lt;/code&gt; -- run &lt;code&gt;fn&lt;/code&gt; every &lt;code&gt;ms&lt;/code&gt; milliseconds until cancelled.&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;device.setTimeout(fn, ms)&lt;/code&gt; / &lt;code&gt;device.clearTimeout(id)&lt;/code&gt; -- run &lt;code&gt;fn&lt;/code&gt; once, &lt;code&gt;ms&lt;/code&gt; milliseconds from now.</source>
         <translation>&lt;b&gt;JavaScript&lt;/b&gt;, live auf dem echten Datenverkehr dieses Geräts ausgeführt.&lt;br&gt;&lt;br&gt;&lt;b&gt;Definieren, um auf Datenverkehr zu reagieren:&lt;/b&gt;&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;onTelemetry(sample)&lt;/code&gt; -- wird für einen Telemetriewert aufgerufen, der bereits anderswo abonniert ist (z. B. ein Dashboard-Diagramm). &lt;code&gt;sample&lt;/code&gt; enthält &lt;code&gt;topicId&lt;/code&gt;, &lt;code&gt;fieldId&lt;/code&gt;, &lt;code&gt;elementIndex&lt;/code&gt;, &lt;code&gt;value&lt;/code&gt;, &lt;code&gt;timestampUs&lt;/code&gt;.&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;onTerminal(text)&lt;/code&gt; -- wird für jeden Textblock aufgerufen, den der Konsolen-/Seriellkanal dieses Geräts zurücksendet.&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;onConnectionChange(connected)&lt;/code&gt; -- wird aufgerufen, wenn dieses Gerät sich verbindet oder trennt.&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;onStatus(text, severity)&lt;/code&gt; -- wird für eine einmalige Statusmeldung aufgerufen (Sitzung aufgebaut/fehlgeschlagen, Abonnement abgelehnt, ein sendCommand()-Ergebnis, ...) -- derselbe Text, den die Statusleiste zeigt. &lt;code&gt;severity&lt;/code&gt; ist einer von &lt;code&gt;&quot;info&quot;&lt;/code&gt;, &lt;code&gt;&quot;success&quot;&lt;/code&gt;, &lt;code&gt;&quot;warning&quot;&lt;/code&gt;, &lt;code&gt;&quot;error&quot;&lt;/code&gt;.&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;onDeviceInfo(info)&lt;/code&gt; -- wird aufgerufen, wenn dieses Gerät seinen Infoblock meldet (Firmware-Version, Chip, Partition, ...). &lt;code&gt;info&lt;/code&gt; ist ein Array aus &lt;code&gt;{key, label, value}&lt;/code&gt;.&lt;br&gt;&lt;br&gt;&lt;b&gt;Jederzeit aufrufbar:&lt;/b&gt;&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;device.log(text)&lt;/code&gt; -- schreibt in den Ausgabebereich.&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;device.sendCommand(text)&lt;/code&gt; -- sendet einen Befehl an dieses Gerät.&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;device.sendTerminal(text)&lt;/code&gt; -- sendet Text über seinen Konsolenkanal.&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;device.setInterval(fn, ms)&lt;/code&gt; / &lt;code&gt;device.clearInterval(id)&lt;/code&gt; -- führt &lt;code&gt;fn&lt;/code&gt; alle &lt;code&gt;ms&lt;/code&gt; Millisekunden aus, bis es abgebrochen wird.&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;device.setTimeout(fn, ms)&lt;/code&gt; / &lt;code&gt;device.clearTimeout(id)&lt;/code&gt; -- führt &lt;code&gt;fn&lt;/code&gt; einmal aus, in &lt;code&gt;ms&lt;/code&gt; Millisekunden.</translation>
     </message>
@@ -1141,7 +1183,7 @@ Ihm erlauben, Geräte zu verbinden und ihnen Befehle zu senden, bis der Zugriff 
 <context>
     <name>traceview::AboutDialog</name>
     <message>
-        <location filename="../lib/core/aboutdialog.cpp" line="+24"/>
+        <location filename="../lib/core/aboutdialog.cpp" line="+25"/>
         <source>About TraceView</source>
         <translation>Über TraceView</translation>
     </message>
@@ -1181,7 +1223,7 @@ Ihm erlauben, Geräte zu verbinden und ihnen Befehle zu senden, bis der Zugriff 
         <translation>Lizenz:</translation>
     </message>
     <message>
-        <location line="+18"/>
+        <location line="+17"/>
         <source>Flatpak (alisontristao.github.io/TraceView)</source>
         <translation>Flatpak (alisontristao.github.io/TraceView)</translation>
     </message>
@@ -1222,7 +1264,7 @@ Ihm erlauben, Geräte zu verbinden und ihnen Befehle zu senden, bis der Zugriff 
 <context>
     <name>traceview::AgentBridgeServer</name>
     <message>
-        <location filename="../lib/agent/agentbridgeserver.cpp" line="+95"/>
+        <location filename="../lib/agent/agentbridgeserver.cpp" line="+105"/>
         <source>Another TraceView window is already serving AI assistants.</source>
         <translation>Ein anderes TraceView-Fenster bedient bereits KI-Assistenten.</translation>
     </message>
@@ -2208,7 +2250,7 @@ Erlaubt: %1</translation>
 <context>
     <name>traceview::CommandClient</name>
     <message>
-        <location filename="../lib/protocol/commandclient.cpp" line="+54"/>
+        <location filename="../lib/protocol/commandclient.cpp" line="+58"/>
         <source>not connected to a device that takes commands</source>
         <translation>nicht mit einem Gerät verbunden, das Befehle annimmt</translation>
     </message>
@@ -2236,7 +2278,7 @@ Erlaubt: %1</translation>
         </translation>
     </message>
     <message>
-        <location line="+45"/>
+        <location line="+63"/>
         <source>no result within 5 s</source>
         <translation>kein Ergebnis innerhalb von 5 s</translation>
     </message>
@@ -2512,17 +2554,17 @@ Erlaubt: %1</translation>
 <context>
     <name>traceview::DashboardGalleryDialog</name>
     <message>
-        <location filename="../lib/core/dashboardgallerydialog.cpp" line="+27"/>
+        <location filename="../lib/core/dashboardgallerydialog.cpp" line="+28"/>
         <source>Dashboard Gallery</source>
         <translation>Dashboard-Galerie</translation>
     </message>
     <message>
-        <location line="+4"/>
+        <location line="+5"/>
         <source>Dashboards kept inside TraceView. The default one opens every time the app starts; with none chosen, the built-in example opens.</source>
         <translation>In TraceView gespeicherte Dashboards. Das Standard-Dashboard wird bei jedem App-Start geöffnet; ist keines gewählt, wird das integrierte Beispiel geöffnet.</translation>
     </message>
     <message>
-        <location line="+9"/>
+        <location line="+8"/>
         <source>Open</source>
         <translation>Öffnen</translation>
     </message>
@@ -2547,7 +2589,7 @@ Erlaubt: %1</translation>
         <translation>Exportieren...</translation>
     </message>
     <message>
-        <location line="+39"/>
+        <location line="+38"/>
         <source>%1 (default)</source>
         <translation>%1 (Standard)</translation>
     </message>
@@ -2829,12 +2871,12 @@ Erlaubt: %1</translation>
     </message>
     <message>
         <location line="+3"/>
-        <location line="+272"/>
+        <location line="+271"/>
         <source>e.g. robot1.local</source>
         <translation>z. B. robot1.local</translation>
     </message>
     <message>
-        <location line="-262"/>
+        <location line="-261"/>
         <source>Use reported</source>
         <translation>Gemeldete übernehmen</translation>
     </message>
@@ -2859,7 +2901,7 @@ Erlaubt: %1</translation>
         <translation>Uploads werden mit dem Passwort des Geräts signiert, demselben, das seine Verbindung verwendet.</translation>
     </message>
     <message>
-        <location line="+18"/>
+        <location line="+17"/>
         <location line="+240"/>
         <source>Connected</source>
         <translation>Verbunden</translation>
@@ -2903,7 +2945,7 @@ Erlaubt: %1</translation>
         <translation>Gemeldeter Katalog</translation>
     </message>
     <message>
-        <location line="+16"/>
+        <location line="+14"/>
         <source>Connect</source>
         <translation>Verbinden</translation>
     </message>
@@ -2913,7 +2955,7 @@ Erlaubt: %1</translation>
         <translation>Die obigen Einstellungen anwenden und jetzt (neu) verbinden, ohne diesen Dialog zu schließen.</translation>
     </message>
     <message>
-        <location line="+112"/>
+        <location line="+114"/>
         <source>%1 (last connection)</source>
         <translation>%1 (letzte Verbindung)</translation>
     </message>
@@ -3154,22 +3196,22 @@ Erlaubt: %1</translation>
         <translation>%1 konfigurieren</translation>
     </message>
     <message>
-        <location line="+22"/>
-        <source>Help ▾</source>
-        <translation>Hilfe ▾</translation>
+        <location line="+19"/>
+        <source>Help</source>
+        <translation>Hilfe</translation>
     </message>
     <message>
-        <location line="+16"/>
+        <location line="+17"/>
         <source>// Script for this block</source>
         <translation>// Skript für diesen Block</translation>
     </message>
     <message>
-        <location line="+9"/>
+        <location line="+8"/>
         <source>No log output yet</source>
         <translation>Noch keine Log-Ausgabe</translation>
     </message>
     <message>
-        <location line="+23"/>
+        <location line="+20"/>
         <source>Error: %1</source>
         <translation>Fehler: %1</translation>
     </message>
@@ -3192,17 +3234,18 @@ Erlaubt: %1</translation>
 <context>
     <name>traceview::DonateDialog</name>
     <message>
-        <location filename="../lib/core/donatedialog.cpp" line="+128"/>
+        <location filename="../lib/core/donatedialog.cpp" line="+129"/>
+        <location line="+7"/>
         <source>Support TraceView</source>
         <translation>TraceView unterstützen</translation>
     </message>
     <message>
-        <location line="+7"/>
+        <location line="+1"/>
         <source>If TraceView has helped you, a little coffee via Pix is always welcome.</source>
         <translation>Wenn dir TraceView geholfen hat, ist ein kleiner Kaffee per Pix immer willkommen.</translation>
     </message>
     <message>
-        <location line="+7"/>
+        <location line="+5"/>
         <source>Pix key (phone): %1</source>
         <translation>Pix-Schlüssel (Telefon): %1</translation>
     </message>
@@ -3404,12 +3447,13 @@ Erlaubt: %1</translation>
 <context>
     <name>traceview::IconPickerDialog</name>
     <message>
-        <location filename="../lib/core/iconpickerdialog.cpp" line="+81"/>
+        <location filename="../lib/core/iconpickerdialog.cpp" line="+82"/>
+        <location line="+4"/>
         <source>Choose Icon</source>
         <translation>Symbol auswählen</translation>
     </message>
     <message>
-        <location line="+6"/>
+        <location line="+3"/>
         <source>Search icons (English names and tags)</source>
         <translation>Symbole suchen (englische Namen und Schlagwörter)</translation>
     </message>
@@ -3460,17 +3504,18 @@ Erlaubt: %1</translation>
 <context>
     <name>traceview::LoginDialog</name>
     <message>
-        <location filename="../lib/core/logindialog.cpp" line="+17"/>
+        <location filename="../lib/core/logindialog.cpp" line="+20"/>
+        <location line="+3"/>
         <source>Enter Developer Mode</source>
         <translation>Entwicklermodus aktivieren</translation>
     </message>
     <message>
-        <location line="+3"/>
+        <location line="+1"/>
         <source>Enter your developer username and password.</source>
         <translation>Geben Sie Ihren Entwickler-Benutzernamen und Ihr Passwort ein.</translation>
     </message>
     <message>
-        <location line="+8"/>
+        <location line="+7"/>
         <source>Username:</source>
         <translation>Benutzername:</translation>
     </message>
@@ -3480,7 +3525,7 @@ Erlaubt: %1</translation>
         <translation>Passwort:</translation>
     </message>
     <message>
-        <location line="+8"/>
+        <location line="+15"/>
         <source>Log In</source>
         <translation>Anmelden</translation>
     </message>
@@ -3493,7 +3538,7 @@ Erlaubt: %1</translation>
 <context>
     <name>traceview::MainWindow</name>
     <message numerus="yes">
-        <location filename="../lib/core/mainwindow.cpp" line="+387"/>
+        <location filename="../lib/core/mainwindow.cpp" line="+388"/>
         <source>This device carries %n other device(s) (%1). Remove or repoint them first.</source>
         <translation>
             <numerusform>Dieses Gerät trägt %n weiteres Gerät (%1). Entfernen oder umleiten Sie es zuerst.</numerusform>
@@ -3506,7 +3551,7 @@ Erlaubt: %1</translation>
         <translation>, </translation>
     </message>
     <message>
-        <location line="+325"/>
+        <location line="+367"/>
         <source>AI assistant access is off.</source>
         <translation>Der Zugriff für KI-Assistenten ist aus.</translation>
     </message>
@@ -3532,7 +3577,7 @@ Erlaubt: %1</translation>
         <translation>KI-Assistent getrennt: %1</translation>
     </message>
     <message>
-        <location line="+418"/>
+        <location line="+430"/>
         <source>Pending</source>
         <translation>Ausstehend</translation>
     </message>
@@ -3676,12 +3721,12 @@ Verluste: %2</translation>
     </message>
     <message>
         <location line="+0"/>
-        <location line="+4197"/>
+        <location line="+4310"/>
         <source>Later</source>
         <translation>Später</translation>
     </message>
     <message>
-        <location line="-4190"/>
+        <location line="-4303"/>
         <source>&amp;Access</source>
         <translation>&amp;Zugang</translation>
     </message>
@@ -3808,18 +3853,18 @@ Verluste: %2</translation>
     </message>
     <message>
         <location line="+18"/>
-        <location line="+3446"/>
+        <location line="+3559"/>
         <source>Undo</source>
         <translation>Rückgängig</translation>
     </message>
     <message>
-        <location line="-3444"/>
-        <location line="+3444"/>
+        <location line="-3557"/>
+        <location line="+3557"/>
         <source>Redo</source>
         <translation>Wiederholen</translation>
     </message>
     <message>
-        <location line="-3401"/>
+        <location line="-3514"/>
         <source>Add Device</source>
         <translation>Gerät hinzufügen</translation>
     </message>
@@ -3865,12 +3910,12 @@ Verluste: %2</translation>
     </message>
     <message>
         <location line="+36"/>
-        <location line="+3367"/>
+        <location line="+3480"/>
         <source>Fullscreen dashboard (F11)</source>
         <translation>Dashboard im Vollbildmodus (F11)</translation>
     </message>
     <message>
-        <location line="-3186"/>
+        <location line="-3299"/>
         <source>Rename Workspace</source>
         <translation>Arbeitsbereich umbenennen</translation>
     </message>
@@ -3980,7 +4025,12 @@ Verluste: %2</translation>
 %3</translation>
     </message>
     <message>
-        <location line="+436"/>
+        <location line="+387"/>
+        <source>Notifications</source>
+        <translation>Benachrichtigungen</translation>
+    </message>
+    <message>
+        <location line="+153"/>
         <source>Close</source>
         <translation>Schließen</translation>
     </message>
@@ -3990,7 +4040,7 @@ Verluste: %2</translation>
         <translation>%1: gefunden unter %2</translation>
     </message>
     <message>
-        <location line="+376"/>
+        <location line="+377"/>
         <source>%1: trying %2</source>
         <translation>%1: versuche %2</translation>
     </message>
@@ -4049,7 +4099,7 @@ Verluste: %2</translation>
         <translation>&quot;%1&quot; in der Galerie gespeichert.</translation>
     </message>
     <message>
-        <location line="+288"/>
+        <location line="+293"/>
         <source>not connected</source>
         <translation>nicht verbunden</translation>
     </message>
@@ -4059,7 +4109,7 @@ Verluste: %2</translation>
         <translation>Firmware</translation>
     </message>
     <message>
-        <location line="+362"/>
+        <location line="+365"/>
         <source>Update available: v%1</source>
         <translation>Update verfügbar: v%1</translation>
     </message>
@@ -4133,13 +4183,13 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
         <translation>App schließen</translation>
     </message>
     <message>
-        <location line="-3478"/>
-        <location line="+3163"/>
+        <location line="-3591"/>
+        <location line="+3276"/>
         <source>Devices</source>
         <translation>Geräte</translation>
     </message>
     <message>
-        <location line="-3088"/>
+        <location line="-3201"/>
         <source>Subscriptions</source>
         <translation>Abonnements</translation>
     </message>
@@ -4155,12 +4205,12 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
         <translation>Name:</translation>
     </message>
     <message>
-        <location line="-2147"/>
+        <location line="-2202"/>
         <source>TraceView v%1</source>
         <translation>TraceView v%1</translation>
     </message>
     <message>
-        <location line="+2148"/>
+        <location line="+2203"/>
         <source>Workspace</source>
         <translation>Arbeitsbereich</translation>
     </message>
@@ -4186,23 +4236,23 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
     </message>
     <message>
         <location line="+81"/>
-        <location line="+2661"/>
+        <location line="+2774"/>
         <source>Add widget</source>
         <translation>Widget hinzufügen</translation>
     </message>
     <message>
-        <location line="-2658"/>
+        <location line="-2771"/>
         <source>Remove selected widget (%1)</source>
         <translation>Ausgewähltes Widget entfernen (%1)</translation>
     </message>
     <message>
         <location line="+3"/>
-        <location line="+2668"/>
+        <location line="+2781"/>
         <source>Add device</source>
         <translation>Gerät hinzufügen</translation>
     </message>
     <message>
-        <location line="-2665"/>
+        <location line="-2778"/>
         <source>Remove selected device (%1)</source>
         <translation>Ausgewähltes Gerät entfernen (%1)</translation>
     </message>
@@ -4267,7 +4317,7 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
         <translation>Bildschirmgröße: Groß</translation>
     </message>
     <message>
-        <location line="+252"/>
+        <location line="+272"/>
         <source>Disable editing — lock the dashboard layout</source>
         <translation>Bearbeitung deaktivieren — Dashboard-Layout sperren</translation>
     </message>
@@ -4287,7 +4337,7 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
         <translation>Ebenen-/Eigenschaften-Panels anzeigen</translation>
     </message>
     <message>
-        <location line="+302"/>
+        <location line="+386"/>
         <source>New Device</source>
         <translation>Neues Gerät</translation>
     </message>
@@ -4353,12 +4403,12 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
         <translation>&amp;Bewegung</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="-1558"/>
+        <location filename="../lib/core/mainwindow.cpp" line="-1662"/>
         <source>Dashboard</source>
         <translation>Dashboard</translation>
     </message>
     <message>
-        <location line="+1953"/>
+        <location line="+2058"/>
         <source>%1: this BLE address now answers as a different robot (expected %2, got %3)</source>
         <translation>%1: diese BLE-Adresse antwortet jetzt als anderer Roboter (erwartet %2, erhalten %3)</translation>
     </message>
@@ -4390,13 +4440,13 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
     </message>
     <message>
         <location line="+15"/>
-        <location line="+395"/>
+        <location line="+403"/>
         <location line="+4"/>
         <source>Open Project</source>
         <translation>Projekt öffnen</translation>
     </message>
     <message>
-        <location line="-312"/>
+        <location line="-320"/>
         <source>Open Log File</source>
         <translation>Protokolldatei öffnen</translation>
     </message>
@@ -4406,7 +4456,7 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
         <translation>BTP-Protokoll (*.blog)</translation>
     </message>
     <message>
-        <location line="+110"/>
+        <location line="+113"/>
         <source>OTA Update</source>
         <translation>OTA-Update</translation>
     </message>
@@ -4417,7 +4467,7 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
     </message>
     <message>
         <location line="+20"/>
-        <location line="+271"/>
+        <location line="+276"/>
         <source>Settings</source>
         <translation>Einstellungen</translation>
     </message>
@@ -4585,12 +4635,13 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
 <context>
     <name>traceview::ManageUsersDialog</name>
     <message>
-        <location filename="../lib/core/manageusersdialog.cpp" line="+17"/>
+        <location filename="../lib/core/manageusersdialog.cpp" line="+18"/>
+        <location line="+18"/>
         <source>Manage Developer Users</source>
         <translation>Entwickler-Benutzer verwalten</translation>
     </message>
     <message>
-        <location line="+5"/>
+        <location line="-13"/>
         <source>Add...</source>
         <translation>Hinzufügen...</translation>
     </message>
@@ -4605,7 +4656,7 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
         <translation>Passwort ändern...</translation>
     </message>
     <message>
-        <location line="+36"/>
+        <location line="+35"/>
         <location line="+5"/>
         <location line="+6"/>
         <source>Add User</source>
@@ -4654,6 +4705,22 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
     </message>
 </context>
 <context>
+    <name>traceview::NotificationBell</name>
+    <message numerus="yes">
+        <location filename="../lib/core/notificationbell.cpp" line="+38"/>
+        <source>Notifications: %n unread</source>
+        <translation>
+            <numerusform>Benachrichtigungen: %n ungelesen</numerusform>
+            <numerusform>Benachrichtigungen: %n ungelesen</numerusform>
+        </translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Notifications</source>
+        <translation>Benachrichtigungen</translation>
+    </message>
+</context>
+<context>
     <name>traceview::NotificationHistoryWindow</name>
     <message>
         <location filename="../lib/diagnostics/notificationhistorywindow.cpp" line="+23"/>
@@ -4661,7 +4728,7 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
         <translation>Benachrichtigungsverlauf</translation>
     </message>
     <message>
-        <location line="+7"/>
+        <location line="+8"/>
         <source>Severity:</source>
         <translation>Schweregrad:</translation>
     </message>
@@ -4699,6 +4766,100 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
         <location line="+0"/>
         <source>Message</source>
         <translation>Nachricht</translation>
+    </message>
+</context>
+<context>
+    <name>traceview::NotificationListView</name>
+    <message>
+        <location filename="../lib/core/notificationlistview.cpp" line="+184"/>
+        <source>Notifications</source>
+        <translation>Benachrichtigungen</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <location line="+179"/>
+        <source>Keep the panel open</source>
+        <translation>Bereich geöffnet lassen</translation>
+    </message>
+    <message>
+        <location line="-171"/>
+        <source>Clear every notification</source>
+        <translation>Alle Benachrichtigungen löschen</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Notification options</source>
+        <translation>Benachrichtigungsoptionen</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Pop-ups over the dashboard</source>
+        <translation>Pop-ups über dem Dashboard</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Every notification</source>
+        <translation>Jede Benachrichtigung</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Only the bell</source>
+        <translation>Nur die Glocke</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Errors still pop up</source>
+        <translation>Fehler erscheinen trotzdem</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Pinned panel</source>
+        <translation>Angehefteter Bereich</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Over the dashboard</source>
+        <translation>Über dem Dashboard</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Beside the dashboard (shrinks it)</source>
+        <translation>Neben dem Dashboard (verkleinert es)</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Full history…</source>
+        <translation>Vollständiger Verlauf…</translation>
+    </message>
+    <message>
+        <location line="+36"/>
+        <source>Close</source>
+        <translation>Schließen</translation>
+    </message>
+    <message>
+        <location line="+13"/>
+        <source>All notifications</source>
+        <translation>Alle Benachrichtigungen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Warnings and errors</source>
+        <translation>Warnungen und Fehler</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Errors</source>
+        <translation>Fehler</translation>
+    </message>
+    <message>
+        <location line="+16"/>
+        <source>No notifications.</source>
+        <translation>Keine Benachrichtigungen.</translation>
+    </message>
+    <message>
+        <location line="+85"/>
+        <source>Pinned: the panel stays open</source>
+        <translation>Angeheftet: Der Bereich bleibt geöffnet</translation>
     </message>
 </context>
 <context>
@@ -4758,7 +4919,7 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
 <context>
     <name>traceview::OtaDevicePanel</name>
     <message>
-        <location filename="../lib/ota/otadevicepanel.cpp" line="+76"/>
+        <location filename="../lib/ota/otadevicepanel.cpp" line="+78"/>
         <source>Asked for (btp -recovery).</source>
         <translation>Angefordert (btp -recovery).</translation>
     </message>
@@ -4778,7 +4939,7 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
         <translation>Keine gültige Anwendung, oder der Bootvorgang hat sie gewählt.</translation>
     </message>
     <message>
-        <location line="+38"/>
+        <location line="+32"/>
         <source>Cannot read the file: %1</source>
         <translation>Datei kann nicht gelesen werden: %1</translation>
     </message>
@@ -4788,12 +4949,12 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
         <translation>Kein ESP-Anwendungsimage (es muss mit 0xE9 beginnen). Verwenden Sie die Anwendungs-.bin aus build/, nicht die zusammengeführte.</translation>
     </message>
     <message>
-        <location line="+178"/>
+        <location line="+165"/>
         <source>Installed</source>
         <translation>Installiert</translation>
     </message>
     <message>
-        <location line="+8"/>
+        <location line="+14"/>
         <source>Firmware</source>
         <translation>Firmware</translation>
     </message>
@@ -4813,19 +4974,19 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
         <translation>Adresse</translation>
     </message>
     <message>
-        <location line="+25"/>
-        <location line="+166"/>
-        <location line="+372"/>
+        <location line="+19"/>
+        <location line="+126"/>
+        <location line="+365"/>
         <source>Choose file…</source>
         <translation>Datei auswählen…</translation>
     </message>
     <message>
-        <location line="-500"/>
+        <location line="-503"/>
         <source>New firmware</source>
         <translation>Neue Firmware</translation>
     </message>
     <message>
-        <location line="+10"/>
+        <location line="+53"/>
         <source>Restart into the recovery</source>
         <translation>In die Recovery neu starten</translation>
     </message>
@@ -4840,37 +5001,37 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
         <translation>Neue Firmware starten</translation>
     </message>
     <message>
-        <location line="+9"/>
-        <location line="+109"/>
+        <location line="+6"/>
+        <location line="+79"/>
         <source>Back to the application</source>
         <translation>Zurück zur Anwendung</translation>
     </message>
     <message>
-        <location line="-108"/>
+        <location line="-78"/>
         <source>Leave the recovery for the application already installed.</source>
         <translation>Recovery verlassen und die bereits installierte Anwendung starten.</translation>
     </message>
     <message>
-        <location line="+15"/>
-        <location line="+93"/>
-        <location line="+508"/>
+        <location line="-9"/>
+        <location line="+87"/>
+        <location line="+501"/>
         <source>Install</source>
         <translation>Installieren</translation>
     </message>
     <message>
-        <location line="-508"/>
-        <location line="+372"/>
+        <location line="-501"/>
+        <location line="+365"/>
         <source>Change…</source>
         <translation>Ändern…</translation>
     </message>
     <message>
-        <location line="-371"/>
-        <location line="+507"/>
+        <location line="-364"/>
+        <location line="+500"/>
         <source>Restart and install</source>
         <translation>Neu starten und installieren</translation>
     </message>
     <message>
-        <location line="-475"/>
+        <location line="-468"/>
         <source>%1 did not answer as a recovery in %2 s. Is it on a Wi-Fi network this computer reaches? Without a known network the recovery raises its own (&quot;btp-&lt;name&gt;&quot;).</source>
         <translation>%1 hat in %2 s nicht als Recovery geantwortet. Ist es in einem WLAN-Netz, das dieser Computer erreicht? Ohne bekanntes Netz öffnet die Recovery ein eigenes (&quot;btp-&lt;name&gt;&quot;).</translation>
     </message>
@@ -4942,7 +5103,7 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
         <translation>Recovery wird verlassen…</translation>
     </message>
     <message>
-        <location line="+50"/>
+        <location line="+49"/>
         <source>In the recovery</source>
         <translation>In der Recovery</translation>
     </message>
@@ -4972,7 +5133,7 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
         <translation>Keine Adresse</translation>
     </message>
     <message>
-        <location line="+2"/>
+        <location line="+1"/>
         <source>Connect it once over Wi-Fi so it reports where its recovery answers, or set the OTA address in Device Settings.</source>
         <translation>Verbinden Sie es einmal über WLAN, damit es meldet, wo seine Recovery antwortet, oder legen Sie die OTA-Adresse in den Geräteeinstellungen fest.</translation>
     </message>
@@ -4982,17 +5143,17 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
         <translation>Wird geprüft…</translation>
     </message>
     <message>
-        <location line="+3"/>
+        <location line="+2"/>
         <source>Offline</source>
         <translation>Offline</translation>
     </message>
     <message>
-        <location line="+2"/>
+        <location line="+1"/>
         <source>Not connected and no recovery answers at %1%2. Connect it to install a firmware.</source>
         <translation>Nicht verbunden, und unter %1%2 antwortet keine Recovery. Verbinden Sie es, um eine Firmware zu installieren.</translation>
     </message>
     <message>
-        <location line="+17"/>
+        <location line="+14"/>
         <source>none: waiting for a firmware</source>
         <translation>keine: wartet auf eine Firmware</translation>
     </message>
@@ -5334,7 +5495,7 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
 <context>
     <name>traceview::PaletteEditorDialog</name>
     <message>
-        <location filename="../lib/core/paletteeditordialog.cpp" line="+32"/>
+        <location filename="../lib/core/paletteeditordialog.cpp" line="+33"/>
         <source>Surfaces</source>
         <translation>Flächen</translation>
     </message>
@@ -5445,7 +5606,7 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
         <translation>Reihe %1</translation>
     </message>
     <message>
-        <location line="+51"/>
+        <location line="+53"/>
         <source>Choose Color</source>
         <translation>Farbe wählen</translation>
     </message>
@@ -5937,55 +6098,55 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
 <context>
     <name>traceview::SettingsPage</name>
     <message>
-        <location filename="../lib/core/settingspage.cpp" line="+210"/>
+        <location filename="../lib/core/settingspage.cpp" line="+167"/>
         <source>Settings</source>
         <translation>Einstellungen</translation>
     </message>
     <message>
-        <location line="+35"/>
-        <location line="+44"/>
+        <location line="+9"/>
+        <location line="+31"/>
         <source>General</source>
         <translation>Allgemein</translation>
     </message>
     <message>
-        <location line="-44"/>
-        <location line="+68"/>
+        <location line="-30"/>
+        <location line="+54"/>
         <source>Appearance</source>
         <translation>Darstellung</translation>
     </message>
     <message>
-        <location line="-68"/>
-        <location line="+156"/>
+        <location line="-53"/>
+        <location line="+141"/>
         <source>Dashboard</source>
         <translation>Dashboard</translation>
     </message>
     <message>
-        <location line="-155"/>
-        <location line="+207"/>
+        <location line="-140"/>
+        <location line="+192"/>
         <source>Terminal</source>
         <translation>Terminal</translation>
     </message>
     <message>
-        <location line="-207"/>
-        <location line="+234"/>
+        <location line="-191"/>
+        <location line="+218"/>
         <source>Connections</source>
         <translation>Verbindungen</translation>
     </message>
     <message>
-        <location line="-234"/>
-        <location line="+356"/>
+        <location line="-217"/>
+        <location line="+358"/>
         <source>Diagnostics</source>
         <translation>Diagnose</translation>
     </message>
     <message>
-        <location line="-355"/>
-        <location line="+407"/>
+        <location line="-357"/>
+        <location line="+441"/>
         <location line="+5"/>
         <source>Updates</source>
         <translation>Updates</translation>
     </message>
     <message>
-        <location line="-370"/>
+        <location line="-421"/>
         <source>Project and startup preferences shared by the application.</source>
         <translation>Projekt- und Starteinstellungen der Anwendung.</translation>
     </message>
@@ -6269,7 +6430,17 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
         <translation>Ein über MCP verbundener Assistent kann dann Arbeitsbereiche und Widgets anlegen, Telemetrie lesen und Bildschirmfotos dieses Fensters machen. Seine Änderungen am Dashboard lassen sich rückgängig machen.</translation>
     </message>
     <message>
-        <location line="+37"/>
+        <location line="+6"/>
+        <source>Allow everything without asking</source>
+        <translation>Alles ohne Nachfrage erlauben</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>The assistant can then connect devices, send them commands, flash firmware, delete things and overwrite files without a confirmation each time. Only for assistants you trust.</source>
+        <translation>Der Assistent kann dann Geräte verbinden, ihnen Befehle senden, Firmware flashen, Dinge löschen und Dateien überschreiben, ohne jedes Mal nachzufragen. Nur für Assistenten, denen Sie vertrauen.</translation>
+    </message>
+    <message>
+        <location line="+47"/>
         <source>Copy</source>
         <translation>Kopieren</translation>
     </message>
@@ -6299,7 +6470,47 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
         <translation>Genug Verlauf für Analysen behalten, ohne dass lange Sitzungen unbegrenzt Speicher belegen.</translation>
     </message>
     <message>
+        <location line="+4"/>
+        <source>Notifications</source>
+        <translation>Benachrichtigungen</translation>
+    </message>
+    <message>
         <location line="+2"/>
+        <source>Every notification</source>
+        <translation>Jede Benachrichtigung</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Only the bell</source>
+        <translation>Nur die Glocke</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Pop-ups over the dashboard</source>
+        <translation>Pop-ups über dem Dashboard</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Errors still pop up</source>
+        <translation>Fehler erscheinen trotzdem</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Over the dashboard</source>
+        <translation>Über dem Dashboard</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Beside the dashboard (shrinks it)</source>
+        <translation>Neben dem Dashboard (verkleinert es)</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Pinned panel</source>
+        <translation>Angehefteter Bereich</translation>
+    </message>
+    <message>
+        <location line="+20"/>
         <source>In-memory history</source>
         <translation>Verlauf im Speicher</translation>
     </message>
@@ -6394,7 +6605,7 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
         <translation>Jetzt neu starten</translation>
     </message>
     <message>
-        <location line="+134"/>
+        <location line="+93"/>
         <source>Close and reopen TraceView to apply language or diagnostics history changes, or they will apply the next time you open it.</source>
         <translation>Schließen und öffnen Sie TraceView erneut, um Sprach- oder Diagnoseverlaufsänderungen zu übernehmen, sonst gelten sie beim nächsten Öffnen.</translation>
     </message>
@@ -6412,12 +6623,13 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
 <context>
     <name>traceview::ShortcutsDialog</name>
     <message>
-        <location filename="../lib/core/shortcutsdialog.cpp" line="+13"/>
+        <location filename="../lib/core/shortcutsdialog.cpp" line="+15"/>
+        <location line="+36"/>
         <source>Keyboard Shortcuts</source>
         <translation>Tastenkürzel</translation>
     </message>
     <message>
-        <location line="+5"/>
+        <location line="-31"/>
         <source>Action</source>
         <translation>Aktion</translation>
     </message>
@@ -6675,12 +6887,12 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
 <context>
     <name>traceview::TraceKitDialog</name>
     <message>
-        <location filename="../lib/devices/tracekitdialog.cpp" line="+71"/>
+        <location filename="../lib/devices/tracekitdialog.cpp" line="+74"/>
         <source>%1 — TraceKit</source>
         <translation>%1 — TraceKit</translation>
     </message>
     <message>
-        <location line="+34"/>
+        <location line="+15"/>
         <source>Settings</source>
         <translation>Einstellungen</translation>
     </message>
@@ -6695,7 +6907,7 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
         <translation>Aktionen</translation>
     </message>
     <message>
-        <location line="+111"/>
+        <location line="+69"/>
         <source>Firmware %1</source>
         <translation>Firmware %1</translation>
     </message>
@@ -6710,7 +6922,7 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
         <translation>TraceKit-Gerät</translation>
     </message>
     <message>
-        <location line="+5"/>
+        <location line="+3"/>
         <source>Connected</source>
         <translation>Verbunden</translation>
     </message>
@@ -6720,12 +6932,12 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
         <translation>Nicht verbunden</translation>
     </message>
     <message>
-        <location line="+15"/>
+        <location line="+9"/>
         <source>Not connected: connect the device to change it.</source>
         <translation>Nicht verbunden: Verbinden Sie das Gerät, um es zu ändern.</translation>
     </message>
     <message>
-        <location line="+16"/>
+        <location line="+14"/>
         <source>Setting</source>
         <translation>Einstellung</translation>
     </message>
@@ -6736,23 +6948,23 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
     </message>
     <message>
         <location line="+0"/>
-        <location line="+129"/>
+        <location line="+130"/>
         <source>Default</source>
         <translation>Standard</translation>
     </message>
     <message>
-        <location line="-120"/>
-        <location line="+202"/>
+        <location line="-121"/>
+        <location line="+201"/>
         <source>Reload</source>
         <translation>Neu laden</translation>
     </message>
     <message>
-        <location line="-200"/>
+        <location line="-199"/>
         <source>Apply</source>
         <translation>Anwenden</translation>
     </message>
     <message>
-        <location line="+1"/>
+        <location line="+2"/>
         <source>Saves every changed value on the device (cfg -set).</source>
         <translation>Speichert jeden geänderten Wert auf dem Gerät (cfg -set).</translation>
     </message>
@@ -6810,18 +7022,18 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
         <translation>Nichts geändert.</translation>
     </message>
     <message>
-        <location line="+48"/>
+        <location line="+46"/>
         <source>Add…</source>
         <translation>Hinzufügen…</translation>
     </message>
     <message>
         <location line="+2"/>
-        <location line="+128"/>
+        <location line="+127"/>
         <source>Remove</source>
         <translation>Entfernen</translation>
     </message>
     <message>
-        <location line="-125"/>
+        <location line="-124"/>
         <source>Read the list from the device again (btp -wifi_json).</source>
         <translation>Liste erneut vom Gerät lesen (btp -wifi_json).</translation>
     </message>
@@ -6846,7 +7058,7 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
         <translation>Passwörter werden über die verschlüsselte Sitzung an das Gerät gesendet und nie zurückgelesen. Änderungen wirken nach einem Neustart; die Recovery verwendet dieselben Netze.</translation>
     </message>
     <message>
-        <location line="+17"/>
+        <location line="+16"/>
         <source>Reading the networks…</source>
         <translation>Netze werden gelesen…</translation>
     </message>
@@ -6919,7 +7131,7 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
         <translation>Es ist das einzige Netzwerk: Nach dem nächsten Neustart verbindet sich das Gerät mit keinem WLAN, und ein Gerät, das nur über WLAN kommuniziert, ist dann nur noch über USB erreichbar.</translation>
     </message>
     <message>
-        <location line="+29"/>
+        <location line="+28"/>
         <source>Set the clock</source>
         <translation>Uhr stellen</translation>
     </message>
@@ -6949,8 +7161,8 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
         <translation>Ein schlafender Sensor bleibt für eine Sitzung oder ein Update wach.</translation>
     </message>
     <message>
-        <location line="-153"/>
-        <location line="+155"/>
+        <location line="-151"/>
+        <location line="+153"/>
         <source>Reboot</source>
         <translation>Neustart</translation>
     </message>
@@ -7005,14 +7217,14 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
         <translation>Löschen</translation>
     </message>
     <message>
-        <location line="-162"/>
-        <location line="+113"/>
-        <location line="+49"/>
+        <location line="-160"/>
+        <location line="+112"/>
+        <location line="+48"/>
         <source>Cancel</source>
         <translation>Abbrechen</translation>
     </message>
     <message>
-        <location line="+22"/>
+        <location line="+23"/>
         <source>ok</source>
         <translation>ok</translation>
     </message>
@@ -7025,22 +7237,18 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
 <context>
     <name>traceview::UpdateAvailableDialog</name>
     <message>
-        <location filename="../lib/core/updateavailabledialog.cpp" line="+15"/>
+        <location filename="../lib/core/updateavailabledialog.cpp" line="+16"/>
+        <location line="+3"/>
         <source>Update Available</source>
         <translation>Update verfügbar</translation>
     </message>
     <message>
         <location line="+2"/>
-        <source>&lt;b&gt;Update available&lt;/b&gt;</source>
-        <translation>&lt;b&gt;Update verfügbar&lt;/b&gt;</translation>
-    </message>
-    <message>
-        <location line="+5"/>
         <source>A new update is available. Do you want to update?</source>
         <translation>Ein neues Update ist verfügbar. Möchtest du aktualisieren?</translation>
     </message>
     <message>
-        <location line="+5"/>
+        <location line="+4"/>
         <source>New version: v%1&lt;br&gt;Your version: v%2</source>
         <translation>Neue Version: v%1&lt;br&gt;Ihre Version: v%2</translation>
     </message>
@@ -7055,12 +7263,12 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
         <translation>Jetzt aktualisieren</translation>
     </message>
     <message>
-        <location line="-14"/>
+        <location line="-13"/>
         <source>A new update has been downloaded and is ready to install.</source>
         <translation>Ein neues Update wurde heruntergeladen und ist bereit zur Installation.</translation>
     </message>
     <message>
-        <location line="+14"/>
+        <location line="+13"/>
         <source>Install Now</source>
         <translation>Jetzt installieren</translation>
     </message>

@@ -14,10 +14,14 @@ class QListWidget;
 class QStackedWidget;
 class QPlainTextEdit;
 class QPushButton;
+class QResizeEvent;
 class QTableWidget;
 class QWidget;
 
 namespace traceview {
+
+class DialogHeader;
+class NavSidebar;
 
 // True when the device's manifest says it runs TraceKit (source_info key
 // "tracekit", its version) -- the devices this dialog and the card's tools
@@ -64,6 +68,10 @@ public:
     int addPage(QWidget* page, const QString& title, const QString& iconId);
     void showPage(int index);
 
+protected:
+    // Icon-only side list on a phone-narrow width (same threshold as Settings).
+    void resizeEvent(QResizeEvent* event) override;
+
 private:
     struct Setting {
         QJsonObject decl;       // as `cfg -json` describes it
@@ -71,10 +79,7 @@ private:
         QString loaded;         // the value text it had when read
     };
 
-    void addNavItem(const QString& title, const QString& iconId, int row = -1);
     void refreshHeader();
-    void applyTheme();
-    void refreshNavIcons();
     QWidget* buildSettingsTab();
     QWidget* buildWifiTab();
     QWidget* buildActionsTab();
@@ -99,13 +104,10 @@ private:
     bool m_connected = false;
     int m_generation = 0;  // bumped on every reload: late answers of an old one are dropped
 
-    QListWidget* m_nav = nullptr;
+    NavSidebar* m_nav = nullptr;
     QStackedWidget* m_pages = nullptr;
     QVector<QWidget*> m_connectionPages;  // greyed out while disconnected
-    QStringList m_navIcons;               // lucide id per nav row
-    QLabel* m_title = nullptr;
-    QLabel* m_subtitle = nullptr;
-    QLabel* m_linkBadge = nullptr;
+    DialogHeader* m_header = nullptr;
     QLabel* m_settingsState = nullptr;
     QTableWidget* m_settingsTable = nullptr;
     QPushButton* m_applyButton = nullptr;

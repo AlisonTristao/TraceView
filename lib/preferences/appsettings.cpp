@@ -23,8 +23,13 @@ constexpr char kManifestCacheEnabledKey[] = "connections/manifestCacheEnabled";
 constexpr char kManifestCacheSkipOnHelloKey[] = "connections/manifestCacheSkipOnHello";
 constexpr char kVerboseSerialLoggingKey[] = "connections/verboseSerialLogging";
 constexpr char kAgentBridgeEnabledKey[] = "connections/agentBridgeEnabled";
+constexpr char kAgentAutoApproveKey[] = "connections/agentAutoApprove";
 constexpr char kFrameLogCapacityKey[] = "diagnostics/frameLogCapacity";
 constexpr char kNotificationHistoryCapacityKey[] = "diagnostics/notificationHistoryCapacity";
+constexpr char kNotificationPopupsKey[] = "notifications/popups";
+constexpr char kNotificationErrorPopupsKey[] = "notifications/errorPopups";
+constexpr char kNotificationPinStyleKey[] = "notifications/pinStyle";
+constexpr char kNotificationPanelPinnedKey[] = "notifications/panelPinned";
 constexpr char kUpdateAutoCheckEnabledKey[] = "updates/autoCheckEnabled";
 constexpr char kUpdateLastCheckEpochMsKey[] = "updates/lastCheckEpochMs";
 constexpr char kChartStyleKey[] = "appearance/chartStyle";
@@ -146,6 +151,25 @@ int AppSettings::notificationHistoryCapacity() const {
     return value(kNotificationHistoryCapacityKey, 500, 100, 10000);
 }
 
+AppSettings::NotificationPopups AppSettings::notificationPopups() const {
+    return NotificationPopups(value(kNotificationPopupsKey, int(NotificationPopups::BellOnly),
+                                    int(NotificationPopups::All), int(NotificationPopups::BellOnly)));
+}
+
+bool AppSettings::notificationErrorPopups() const {
+    return stored(kNotificationErrorPopupsKey, true).toBool();
+}
+
+AppSettings::NotificationPinStyle AppSettings::notificationPinStyle() const {
+    return NotificationPinStyle(value(kNotificationPinStyleKey, int(NotificationPinStyle::Push),
+                                      int(NotificationPinStyle::Overlay),
+                                      int(NotificationPinStyle::Push)));
+}
+
+bool AppSettings::notificationPanelPinned() const {
+    return stored(kNotificationPanelPinnedKey, false).toBool();
+}
+
 bool AppSettings::updateAutoCheckEnabled() const {
     return stored(kUpdateAutoCheckEnabledKey, true).toBool();
 }
@@ -240,6 +264,18 @@ void AppSettings::setAgentBridgeEnabled(bool enabled) {
     emit agentPreferencesChanged();
 }
 
+bool AppSettings::agentAutoApprove() const {
+    return stored(kAgentAutoApproveKey, false).toBool();
+}
+
+void AppSettings::setAgentAutoApprove(bool enabled) {
+    if (enabled == agentAutoApprove()) {
+        return;
+    }
+    store(kAgentAutoApproveKey, enabled);
+    emit agentPreferencesChanged();
+}
+
 void AppSettings::setVerboseSerialLogging(bool enabled) {
     store(kVerboseSerialLoggingKey, enabled);
     emit connectionPreferencesChanged();
@@ -251,6 +287,30 @@ void AppSettings::setFrameLogCapacity(int entries) {
 
 void AppSettings::setNotificationHistoryCapacity(int entries) {
     setValue(kNotificationHistoryCapacityKey, qBound(100, entries, 10000));
+}
+
+void AppSettings::setNotificationPopups(NotificationPopups popups) {
+    if (popups == notificationPopups()) return;
+    store(kNotificationPopupsKey, int(popups));
+    emit notificationPreferencesChanged();
+}
+
+void AppSettings::setNotificationErrorPopups(bool enabled) {
+    if (enabled == notificationErrorPopups()) return;
+    store(kNotificationErrorPopupsKey, enabled);
+    emit notificationPreferencesChanged();
+}
+
+void AppSettings::setNotificationPinStyle(NotificationPinStyle style) {
+    if (style == notificationPinStyle()) return;
+    store(kNotificationPinStyleKey, int(style));
+    emit notificationPreferencesChanged();
+}
+
+void AppSettings::setNotificationPanelPinned(bool pinned) {
+    if (pinned == notificationPanelPinned()) return;
+    store(kNotificationPanelPinnedKey, pinned);
+    emit notificationPreferencesChanged();
 }
 
 void AppSettings::setUpdateAutoCheckEnabled(bool enabled) {

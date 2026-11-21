@@ -19,6 +19,14 @@ public:
     // Stored as an int in QSettings: append new profiles at the end so a
     // saved value keeps meaning the same profile.
     enum class RenderProfile { Low, Medium, High, Custom, ExtraHigh };
+    // Which notifications float over the dashboard as cards; every one of
+    // them lands behind the bell either way (NotificationPanel). Stored as
+    // an int: append only.
+    enum class NotificationPopups { All, BellOnly };
+    // A pinned notification panel docked to an edge either floats over the
+    // dashboard like the other panels (Overlay) or takes its strip away
+    // from the canvas, which then shrinks so nothing is hidden (Push).
+    enum class NotificationPinStyle { Overlay, Push };
 
     static AppSettings& instance();
 
@@ -65,9 +73,22 @@ public:
     // --mcp`) may drive this app -- see docs/MCP.md. Off by default: turning
     // it on is the user's consent to being driven.
     bool agentBridgeEnabled() const;
+    // Whether an AI assistant's hardware access and destructive actions go
+    // through without asking. Deliberately not in the update_settings tool's
+    // list: only the user can grant it, never the assistant itself.
+    bool agentAutoApprove() const;
 
     int frameLogCapacity() const;
     int notificationHistoryCapacity() const;
+
+    // Default BellOnly with errors still popping up: the dashboard stays
+    // clear, and only what needs attention interrupts it.
+    NotificationPopups notificationPopups() const;
+    // In BellOnly mode, whether Error notifications still pop up as cards.
+    bool notificationErrorPopups() const;
+    NotificationPinStyle notificationPinStyle() const;
+    // The panel stays open (and comes back open on the next start).
+    bool notificationPanelPinned() const;
 
     bool updateAutoCheckEnabled() const;
     qint64 updateLastCheckEpochMs() const;
@@ -95,8 +116,13 @@ public:
     void setManifestCacheSkipOnHello(bool skip);
     void setVerboseSerialLogging(bool enabled);
     void setAgentBridgeEnabled(bool enabled);
+    void setAgentAutoApprove(bool enabled);
     void setFrameLogCapacity(int entries);
     void setNotificationHistoryCapacity(int entries);
+    void setNotificationPopups(NotificationPopups popups);
+    void setNotificationErrorPopups(bool enabled);
+    void setNotificationPinStyle(NotificationPinStyle style);
+    void setNotificationPanelPinned(bool pinned);
 
     void setUpdateAutoCheckEnabled(bool enabled);
     void setUpdateLastCheckEpochMs(qint64 epochMs);
@@ -113,6 +139,7 @@ signals:
     // Its own signal rather than dashboardPreferencesChanged(): charts only
     // need a repaint, not the resubscribe that one triggers.
     void chartStyleChanged();
+    void notificationPreferencesChanged();
 
 private:
     AppSettings();

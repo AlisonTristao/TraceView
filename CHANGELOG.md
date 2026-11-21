@@ -7,6 +7,91 @@ release flow.
 
 ## [Unreleased]
 
+## [4.16.0] - 2026-11-21
+
+### Added
+
+- **MCP: the rest of the app for AI assistants** (16 new tools, see
+  `docs/MCP.md`). `ota_reboot_to_app` takes a device out of the TraceKit
+  recovery without flashing (the OTA page's "To app"). The TraceKit panel:
+  `tracekit_get_settings` / `tracekit_set_settings` / `tracekit_reset_setting`
+  (built from what the device declares), `tracekit_wifi_list` / `_add` /
+  `_remove` (the Wi-Fi password goes to the device only, never to the
+  terminal or log) and `tracekit_action` (set the clock, status, keep awake,
+  reboot, recovery, USB bootloader, factory reset). The gallery's Rename and
+  Export (`rename_gallery_dashboard`, `export_gallery_dashboard`),
+  `clear_recent_projects`, `clear_manifest_cache`, `check_for_updates`,
+  `export_btp_traffic` and `set_btp_monitor_paused` (the BTP monitor's
+  Export and Pause) and `open_log_file` (File > Open Log Offline). Removing a
+  network, a factory reset and writing over an existing file ask the user.
+- **Allow an AI assistant everything without asking**: Settings >
+  Connections > AI assistants has "Allow everything without asking", and
+  each confirmation has a "Yes to All" button that ticks it. Hardware
+  access, deletions, firmware uploads and overwriting files then go through
+  without a dialog. The assistant can't turn it on itself.
+- **Notification bell**: a bell at the right of the status bar (next to the
+  options button on a phone) with a count of unread notifications, in the
+  colour of the worst of them.
+  - It opens a **notification panel** that lists every notification of the
+    session as cards. You can filter it by severity, dismiss one card with
+    its X, or clear them all.
+  - The panel docks to any edge or floats, like the Layers/Properties
+    panels.
+  - **Pinned**, the panel stays open, including across restarts. A pinned
+    panel either floats over the dashboard or sits beside it, shrinking
+    the dashboard so nothing is hidden under it.
+  - Unpinned, it closes on a click elsewhere.
+- **Pop-up modes**: notifications no longer have to cover the dashboard.
+  - *Only the bell* is the new default: notifications go behind the bell,
+    and only errors still pop up (this can be switched off too).
+  - *Every notification* is the old behaviour.
+  - Set it in the panel's menu or in Settings › Diagnostics.
+  - A pop-up card now has an X, and clicking it opens the panel.
+- The robots' LOG records (Info, Warn, Error) now land in the notification
+  history too.
+- MCP: `clear_notifications`; `read_notifications` reports the unread
+  count; `open_view` takes `notification_panel`. The pop-up and pin settings
+  are readable and writable through the settings tools.
+
+### Changed
+
+- **Every dialog now shares the TraceKit panel's look**:
+  - a header with title, description and status badge;
+  - a side list of pages with Lucide icons (Settings included);
+  - cards, and one footer with the standard buttons on the right.
+  - Main actions are filled in the accent colour, and destructive ones
+    (delete, erase, factory reset) in the danger colour.
+  - Dialog corners now follow the frame style (Square and Chamfered make
+    them square too).
+  - The TraceKit panel opens inside the app on phones like the other
+    dialogs, and Settings has a Close button.
+  - Text areas, trees and progress bars get the theme's frame instead of
+    the native look.
+
+  For contributors: the parts are in `lib/theme/dialogchrome.h`, and
+  `CONTRIBUTING.md` ("Dialogs") says how to build a new dialog with them.
+
+### Fixed
+
+- **TraceView could crash on a robot's terminal reply** (typing `BTP` in
+  the terminal did it): since 4.11.0 the terminal moved its cursor while a
+  chunk of output was still being written, before the text layout had
+  caught up. The cursor now moves once the chunk is written.
+- **A command answered "no result within 5 s" at once and its real result
+  was lost**: the node keeps its last command outcome until the next one,
+  and its local id is a slot that a later command reuses -- an old timeout
+  for that slot settled the new command within milliseconds. Now a tick
+  only reports a timeout for a command that has been out for about 5 s, and
+  a result counts only when it has just been received.
+- **Garbled text from robots**: a robot's shell and ESP-IDF colour their
+  output with ANSI sequences, and command results reached the status bar,
+  the notification history, the TraceKit panel and robot log cards (and an
+  AI assistant's log) with them, as garbage such as `[33m`. They are plain
+  text now; the serial terminal and the robot log still show the colours.
+- CI: the AI assistant relay tests failed on macOS (the test socket name
+  was longer than a macOS socket path allows), and the iOS build failed on
+  `QProcess`, which iOS does not have.
+
 ## [4.15.1] - 2026-11-21
 
 ### Fixed

@@ -2,10 +2,13 @@
 // robot's answers, device scripts, subscriptions and OTA (see agentapptools.h).
 
 #include <QCoreApplication>
+#include <QDateTime>
 #include <QFileInfo>
 #include <QJsonArray>
+#include <QJsonDocument>
 #include <QPointer>
 #include <QTimer>
+#include <functional>
 #include <memory>
 
 #include "agent/toolregistry.h"
@@ -16,6 +19,7 @@
 #include "core/serialwidgetbridge.h"
 #include "dashboard/widgetconfigeditor.h"
 #include "devices/devicesgrid.h"
+#include "devices/tracekitdialog.h"
 #include "diagram/diagramscriptruntime.h"
 #include "ota/otaclient.h"
 
@@ -819,6 +823,411 @@ void AgentAppTools::registerOtaTools(MainWindow* window, ToolRegistry* registry)
         client->uploadFirmware(id, address, keyE, path);
     };
     registry->registerTool(upload);
+
+    AgentTool toApp;
+    toApp.name = "ota_reboot_to_app";
+    toApp.title = "Leave the recovery";
+    toApp.description =
+        "Restarts a device that is in its TraceKit recovery back into the application already "
+        "installed, without flashing anything (the OTA page's \"To app\"). Use it after "
+        "`btp -recovery` when no upload follows. Signed with the device's password "
+        "(peerPassword). Real hardware: the first time the user is asked to allow it.";
+    toApp.inputSchema =
+        AgentSchema().string("deviceId", "Device id (get_app_state).", true).toJson();
+    toApp.handler = [window](const QJsonObject& args, const AgentToolReply& reply) {
+        const QString id = args.value("deviceId").toString();
+        const QVector<Device> devices = window->m_devicesGrid->devices();
+        const Device* device = findDevice(devices, id);
+        if (!device) {
+            reply(AgentToolResult::error(QStringLiteral("Unknown device \"%1\".").arg(id)));
+            return;
+        }
+        const QString address = otaAddressFor(*device);
+        if (address.isEmpty()) {
+            reply(AgentToolResult::error(QStringLiteral(
+                "No address for the device: connect it over TCP, or set otaAddress.")));
+            return;
+        }
+        if (!allowHardware(window, QCoreApplication::translate("AgentAppTools",
+                                                               "send commands to a device"))) {
+            reply(AgentToolResult::error(QStringLiteral("The user declined.")));
+            return;
+        }
+        auto* client = new OtaClient(window);
+        auto done = std::make_shared<bool>(false);
+        QObject::connect(
+            client, &OtaClient::rebootFinished, client,
+            [client, done, reply](const QString&, bool success, const QString& message) {
+                *done = true;
+                reply(success ? AgentToolResult::text(
+                                    message.isEmpty()
+                                        ? QStringLiteral("The device is starting its application.")
+                                        : message)
+                              : AgentToolResult::error(message));
+                client->deleteLater();
+            });
+        QTimer::singleShot(kOtaStatusTimeoutMs, client, [client, done, reply] {
+            if (!*done) {
+                *done = true;
+                reply(AgentToolResult::error(QStringLiteral("No answer from the device.")));
+                client->deleteLater();
+            }
+        });
+        const QByteArray keyE = device->peerPassword.isEmpty()
+                                    ? QByteArray()
+                                    : window->channelKeyFor(device->peerPassword);
+        client->rebootToApp(id, address, keyE);
+    };
+    registry->registerTool(toApp);
+}
+
+void AgentAppTools::registerTraceKitTools(MainWindow* window, ToolRegistry* registry) {
+    // The TraceKit panel's shell: checks the device is a connected TraceKit
+    // one and asks once for hardware access, then runs `line` and hands
+    // `done` the output -- the same Backend::runCommand() the panel uses, so
+    // nothing reaches the terminal or the log panel (a Wi-Fi password
+    // included).
+    using Done = std::function<void(bool ok, const QString& output)>;
+    const auto run = [window](const QString& id, const QString& line, const AgentToolReply& reply,
+                              Done done) {
+        const QVector<Device> devices = window->m_devicesGrid->devices();
+        const Device* device = findDevice(devices, id);
+        if (!device) {
+            reply(AgentToolResult::error(QStringLiteral("Unknown device \"%1\".").arg(id)));
+            return;
+        }
+        if (!isTraceKitDevice(device->reportedInfo)) {
+            reply(AgentToolResult::error(
+                QStringLiteral("%1 doesn't run TraceKit (or hasn't said so yet: connect it).")
+                    .arg(device->name)));
+            return;
+        }
+        DeviceConnection* connection = window->m_deviceConnections.value(id);
+        if (!connection || !connection->isConnected() || !connection->backend()) {
+            reply(AgentToolResult::error(QStringLiteral("The device isn't connected.")));
+            return;
+        }
+        if (!allowHardware(window, QCoreApplication::translate("AgentAppTools",
+                                                               "send commands to a device"))) {
+            reply(AgentToolResult::error(QStringLiteral("The user declined.")));
+            return;
+        }
+        connection->backend()->runCommand(line, std::move(done));
+    };
+    // The device's answer may carry a prompt or blank lines around the JSON.
+    const auto jsonIn = [](const QString& output) {
+        const int start = output.indexOf(QLatin1Char('{'));
+        const int end = output.lastIndexOf(QLatin1Char('}'));
+        if (start < 0 || end <= start) return QJsonObject();
+        return QJsonDocument::fromJson(output.mid(start, end - start + 1).toUtf8()).object();
+    };
+    const auto valueText = [](const QJsonValue& value) {
+        if (value.isBool()) return value.toBool() ? QStringLiteral("true") : QStringLiteral("false");
+        if (value.isDouble()) return QString::number(value.toDouble(), 'g', 9);
+        return value.toString();
+    };
+
+    AgentTool getSettings;
+    getSettings.name = "tracekit_get_settings";
+    getSettings.title = "TraceKit settings";
+    getSettings.readOnly = true;
+    getSettings.description =
+        "Reads every setting a TraceKit device declares (`cfg -json`), as the TraceKit panel's "
+        "Settings page shows them: name, type (bool, u8/u16/u32/i32, f32, text), value, "
+        "default, min/max, unit, help, and reboot (true when it only takes effect after a "
+        "reboot). Values live on the device.";
+    getSettings.inputSchema =
+        AgentSchema().string("deviceId", "Device id (get_app_state).", true).toJson();
+    getSettings.handler = [run, jsonIn](const QJsonObject& args, const AgentToolReply& reply) {
+        const QString id = args.value("deviceId").toString();
+        auto settings = std::make_shared<QJsonArray>();
+        // One `cfg -json <i>` per setting, in turn. The step holds itself
+        // only weakly; each pending command holds it strongly, so it goes
+        // away once the last answer has been handled.
+        auto next = std::make_shared<std::function<void(int)>>();
+        std::weak_ptr<std::function<void(int)>> weakNext = next;
+        *next = [run, jsonIn, id, reply, settings, weakNext](int index) {
+            auto self = weakNext.lock();
+            run(id, QStringLiteral("cfg -json %1").arg(index), reply,
+                [jsonIn, reply, settings, self, index](bool ok, const QString& output) {
+                    if (!ok) {
+                        reply(AgentToolResult::error(
+                            QStringLiteral("Could not read the settings: %1").arg(output.trimmed())));
+                        return;
+                    }
+                    QJsonObject decl = jsonIn(output);
+                    const int count = decl.value("count").toInt(-1);
+                    if (count < 0) {
+                        reply(AgentToolResult::error(QStringLiteral(
+                            "The device did not describe its settings (TraceKit too old?).")));
+                        return;
+                    }
+                    if (count > 0) {
+                        decl.remove("count");
+                        settings->append(decl);
+                    }
+                    if (index + 1 < count) {
+                        (*self)(index + 1);
+                        return;
+                    }
+                    reply(AgentToolResult::json(QJsonObject{{"settings", *settings}}));
+                });
+        };
+        (*next)(0);
+    };
+    registry->registerTool(getSettings);
+
+    AgentTool setSettings;
+    setSettings.name = "tracekit_set_settings";
+    setSettings.title = "Set TraceKit settings";
+    setSettings.description =
+        "Changes settings on a TraceKit device (`cfg -set`, what the panel's Apply sends), one "
+        "after the other: values maps setting names (tracekit_get_settings) to new values. "
+        "The device checks each against its declared range. Settings marked reboot take "
+        "effect after tracekit_action reboot. Returns the device's answer to each.";
+    setSettings.inputSchema = AgentSchema()
+                                  .string("deviceId", "Device id (get_app_state).", true)
+                                  .object("values", "Setting name -> new value.", true)
+                                  .toJson();
+    setSettings.handler = [run, valueText](const QJsonObject& args,
+                                           const AgentToolReply& reply) {
+        const QString id = args.value("deviceId").toString();
+        const QJsonObject values = args.value("values").toObject();
+        if (values.isEmpty()) {
+            reply(AgentToolResult::error(QStringLiteral("values is empty.")));
+            return;
+        }
+        auto pending = std::make_shared<QStringList>(values.keys());
+        auto results = std::make_shared<QJsonObject>();
+        // One `cfg -set` at a time; held the same way as in tracekit_get_settings.
+        auto next = std::make_shared<std::function<void()>>();
+        std::weak_ptr<std::function<void()>> weakNext = next;
+        *next = [run, valueText, id, values, reply, pending, results, weakNext] {
+            auto self = weakNext.lock();
+            while (!pending->isEmpty()) {
+                const QString name = pending->takeFirst();
+                if (name.contains(QLatin1Char(',')) || name.contains(QLatin1Char(' '))) {
+                    results->insert(name, QStringLiteral("not a setting name"));
+                    continue;
+                }
+                const QString text = valueText(values.value(name));
+                run(id, QStringLiteral("cfg -set %1, %2").arg(name, text), reply,
+                    [name, results, self](bool ok, const QString& output) {
+                        const QString answer = output.trimmed();
+                        results->insert(
+                            name, answer.isEmpty()
+                                      ? (ok ? QStringLiteral("ok") : QStringLiteral("failed"))
+                                      : answer);
+                        (*self)();
+                    });
+                return;
+            }
+            reply(AgentToolResult::json(QJsonObject{{"results", *results}}));
+        };
+        (*next)();
+    };
+    registry->registerTool(setSettings);
+
+    AgentTool resetSetting;
+    resetSetting.name = "tracekit_reset_setting";
+    resetSetting.title = "Reset TraceKit setting";
+    resetSetting.description =
+        "Puts one setting of a TraceKit device back to its default (`cfg -reset`).";
+    resetSetting.inputSchema =
+        AgentSchema()
+            .string("deviceId", "Device id (get_app_state).", true)
+            .string("name", "Setting name (tracekit_get_settings).", true)
+            .toJson();
+    resetSetting.handler = [run](const QJsonObject& args, const AgentToolReply& reply) {
+        const QString name = args.value("name").toString().trimmed();
+        if (name.isEmpty() || name.contains(QLatin1Char(' '))) {
+            reply(AgentToolResult::error(QStringLiteral("Not a setting name.")));
+            return;
+        }
+        run(args.value("deviceId").toString(), QStringLiteral("cfg -reset %1").arg(name), reply,
+            [reply](bool ok, const QString& output) {
+                reply(ok ? AgentToolResult::text(output.trimmed())
+                         : AgentToolResult::error(output.trimmed()));
+            });
+    };
+    registry->registerTool(resetSetting);
+
+    AgentTool wifiList;
+    wifiList.name = "tracekit_wifi_list";
+    wifiList.title = "TraceKit Wi-Fi networks";
+    wifiList.readOnly = true;
+    wifiList.description =
+        "The Wi-Fi networks a TraceKit device knows, in the order it tries them (names only; "
+        "passwords are never read back). source \"config\" is the one built into the firmware, "
+        "which can't be removed. max is how many it can keep.";
+    wifiList.inputSchema =
+        AgentSchema().string("deviceId", "Device id (get_app_state).", true).toJson();
+    wifiList.handler = [run, jsonIn](const QJsonObject& args, const AgentToolReply& reply) {
+        run(args.value("deviceId").toString(), QStringLiteral("btp -wifi_json"), reply,
+            [reply, jsonIn](bool ok, const QString& output) {
+                const QJsonObject answer = jsonIn(output);
+                if (!ok || !answer.contains("networks")) {
+                    reply(AgentToolResult::error(
+                        QStringLiteral("Could not read the networks: %1").arg(output.trimmed())));
+                    return;
+                }
+                reply(AgentToolResult::json(answer));
+            });
+    };
+    registry->registerTool(wifiList);
+
+    AgentTool wifiAdd;
+    wifiAdd.name = "tracekit_wifi_add";
+    wifiAdd.title = "Add TraceKit Wi-Fi network";
+    wifiAdd.description =
+        "Adds a Wi-Fi network to a TraceKit device (it takes effect after a reboot; the "
+        "recovery uses the same networks). The password goes straight to the device and is "
+        "not shown in the terminal or the log. Empty password: an open network.";
+    wifiAdd.inputSchema = AgentSchema()
+                              .string("deviceId", "Device id (get_app_state).", true)
+                              .string("ssid", "Network name (no commas).", true)
+                              .string("password", "Network password; empty for an open one.")
+                              .toJson();
+    wifiAdd.handler = [run](const QJsonObject& args, const AgentToolReply& reply) {
+        const QString ssid = args.value("ssid").toString().trimmed();
+        const QString password = args.value("password").toString();
+        if (ssid.isEmpty() || ssid.contains(QLatin1Char(','))) {
+            reply(AgentToolResult::error(
+                QStringLiteral("A network name is needed, and it can't contain a comma.")));
+            return;
+        }
+        if (password.contains(QLatin1Char(','))) {
+            reply(AgentToolResult::error(QStringLiteral("A password with a comma can't be sent.")));
+            return;
+        }
+        run(args.value("deviceId").toString(),
+            QStringLiteral("btp -wifi_add %1, %2").arg(ssid, password), reply,
+            [reply](bool ok, const QString& output) {
+                reply(ok ? AgentToolResult::text(output.trimmed())
+                         : AgentToolResult::error(output.trimmed()));
+            });
+    };
+    registry->registerTool(wifiAdd);
+
+    AgentTool wifiRemove;
+    wifiRemove.name = "tracekit_wifi_remove";
+    wifiRemove.title = "Remove TraceKit Wi-Fi network";
+    wifiRemove.destructive = true;
+    wifiRemove.description =
+        "Removes a Wi-Fi network from a TraceKit device after the user confirms: every entry "
+        "with that name goes (the firmware's built-in one stays). A device left without "
+        "networks only works over a cable.";
+    wifiRemove.inputSchema = AgentSchema()
+                                 .string("deviceId", "Device id (get_app_state).", true)
+                                 .string("ssid", "Network name (tracekit_wifi_list).", true)
+                                 .toJson();
+    wifiRemove.handler = [window, run](const QJsonObject& args, const AgentToolReply& reply) {
+        const QString id = args.value("deviceId").toString();
+        const QString ssid = args.value("ssid").toString().trimmed();
+        if (ssid.isEmpty() || ssid.contains(QLatin1Char(','))) {
+            reply(AgentToolResult::error(QStringLiteral("Not a network name.")));
+            return;
+        }
+        const QVector<Device> devices = window->m_devicesGrid->devices();
+        const Device* device = findDevice(devices, id);
+        if (!device) {
+            reply(AgentToolResult::error(QStringLiteral("Unknown device \"%1\".").arg(id)));
+            return;
+        }
+        if (!confirm(window, QCoreApplication::translate("AgentAppTools", "Remove a network"),
+                     QCoreApplication::translate(
+                         "AgentAppTools",
+                         "An AI assistant wants to remove the Wi-Fi network \"%1\" from %2.")
+                         .arg(ssid, device->name))) {
+            reply(AgentToolResult::error(QStringLiteral("The user declined.")));
+            return;
+        }
+        run(id, QStringLiteral("btp -wifi_remove %1").arg(ssid), reply,
+            [reply](bool ok, const QString& output) {
+                reply(ok ? AgentToolResult::text(output.trimmed())
+                         : AgentToolResult::error(output.trimmed()));
+            });
+    };
+    registry->registerTool(wifiRemove);
+
+    AgentTool action;
+    action.name = "tracekit_action";
+    action.title = "TraceKit action";
+    action.description =
+        "One of the TraceKit panel's actions: set_clock (from this computer, unless the device "
+        "already has internet time), status (link, memory, time, power and sleep), keep_awake "
+        "(a sleeping sensor stays up 10 min), reboot (restarts the application), recovery "
+        "(restarts into the recovery to wait for a firmware: ota_upload, or "
+        "ota_reboot_to_app to go back), usb_bootloader (ROM download mode for 30 s), "
+        "factory_reset (erases the application and files, keeps key, Wi-Fi and settings; the "
+        "user confirms). Returns the device's answer.";
+    action.inputSchema =
+        AgentSchema()
+            .string("deviceId", "Device id (get_app_state).", true)
+            .string("action", "What to do.", true,
+                    {"set_clock", "status", "keep_awake", "reboot", "recovery", "usb_bootloader",
+                     "factory_reset"})
+            .toJson();
+    action.handler = [window, run](const QJsonObject& args, const AgentToolReply& reply) {
+        const QString id = args.value("deviceId").toString();
+        const QString what = args.value("action").toString();
+        QStringList lines;
+        if (what == QLatin1String("set_clock")) {
+            lines << QStringLiteral("btp -time_sync %1").arg(QDateTime::currentSecsSinceEpoch());
+        } else if (what == QLatin1String("status")) {
+            lines << QStringLiteral("btp -status") << QStringLiteral("btp -time")
+                  << QStringLiteral("btp -power") << QStringLiteral("btp -sleep");
+        } else if (what == QLatin1String("keep_awake")) {
+            lines << QStringLiteral("btp -awake 10");
+        } else if (what == QLatin1String("reboot")) {
+            lines << QStringLiteral("btp -reboot");
+        } else if (what == QLatin1String("recovery")) {
+            lines << QStringLiteral("btp -recovery");
+        } else if (what == QLatin1String("usb_bootloader")) {
+            lines << QStringLiteral("btp -bootloader");
+        } else if (what == QLatin1String("factory_reset")) {
+            const QVector<Device> devices = window->m_devicesGrid->devices();
+            const Device* device = findDevice(devices, id);
+            if (!device) {
+                reply(AgentToolResult::error(QStringLiteral("Unknown device \"%1\".").arg(id)));
+                return;
+            }
+            if (!confirm(window, QCoreApplication::translate("AgentAppTools", "Factory reset"),
+                         QCoreApplication::translate(
+                             "AgentAppTools",
+                             "An AI assistant wants to erase the application and the files of "
+                             "%1. It then waits in the recovery for a new firmware.")
+                             .arg(device->name))) {
+                reply(AgentToolResult::error(QStringLiteral("The user declined.")));
+                return;
+            }
+            lines << QStringLiteral("btp -factory_reset yes");
+        } else {
+            reply(AgentToolResult::error(QStringLiteral("Unknown action \"%1\".").arg(what)));
+            return;
+        }
+        auto outputs = std::make_shared<QStringList>();
+        // The lines in turn; held the same way as in tracekit_get_settings.
+        auto next = std::make_shared<std::function<void()>>();
+        std::weak_ptr<std::function<void()>> weakNext = next;
+        *next = [run, id, reply, lines, outputs, weakNext] {
+            if (outputs->size() == lines.size()) {
+                reply(AgentToolResult::text(outputs->join(QLatin1Char('\n'))));
+                return;
+            }
+            auto self = weakNext.lock();
+            const QString line = lines.at(outputs->size());
+            run(id, line, reply, [line, outputs, self](bool ok, const QString& output) {
+                const QString answer = output.trimmed();
+                outputs->append(QStringLiteral("> %1\n%2").arg(
+                    line, answer.isEmpty() ? (ok ? QStringLiteral("ok") : QStringLiteral("failed"))
+                                           : answer));
+                (*self)();
+            });
+        };
+        (*next)();
+    };
+    registry->registerTool(action);
 }
 
 }  // namespace traceview

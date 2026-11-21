@@ -197,6 +197,9 @@ add_traceview_test(test_logfilereader traceview_protocol)
 # allowed 4 seconds to answer (against TEST-NET-1, RFC 5737, unroutable), and
 # a signed upload/reboot against a fake recovery on a local QTcpServer.
 add_traceview_test(test_otaclient traceview_ota)
+# Robot text made fit to show as plain text (backend/plaintext.h): ANSI
+# colours from TinyShell and ESP-IDF removed, cut sequences too.
+add_traceview_test(test_plaintext traceview_backend)
 # The upload signature (lib/ota/otaauth.*) against TraceKit's golden vectors.
 add_traceview_test(test_otaauth traceview_ota)
 add_traceview_test(test_mdnsresolver traceview_ota)

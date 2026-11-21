@@ -12,6 +12,7 @@
 #include <QVBoxLayout>
 #include <QWidget>
 
+#include "theme/dialogchrome.h"
 #include "vendor/qrcodegen/qrcodegen.hpp"
 
 namespace traceview {
@@ -131,10 +132,9 @@ DonateDialog::DonateDialog(QWidget* parent) : QDialog(parent) {
     const qrcodegen::QrCode qr = qrcodegen::QrCode::encodeText(
         buildPixPayload().toLatin1().constData(), qrcodegen::QrCode::Ecc::MEDIUM);
 
-    auto* phraseLabel = new QLabel(
+    auto* header = new DialogHeader(
+        tr("Support TraceView"),
         tr("If TraceView has helped you, a little coffee via Pix is always welcome."), this);
-    phraseLabel->setWordWrap(true);
-    phraseLabel->setAlignment(Qt::AlignHCenter);
 
     auto* qrView = new QrCodeView(renderQrCode(qr), this);
 
@@ -144,8 +144,8 @@ DonateDialog::DonateDialog(QWidget* parent) : QDialog(parent) {
     pixKeyLabel->setTextInteractionFlags(Qt::TextSelectableByMouse);
 
     auto* separator = new QFrame(this);
-    separator->setFrameShape(QFrame::HLine);
-    separator->setFrameShadow(QFrame::Sunken);
+    separator->setObjectName(QStringLiteral("sectionDivider"));
+    separator->setFixedHeight(1);
 
     auto* internationalLabel = new QLabel(
         tr("Outside Brazil? An international donation option isn't set up yet, but it's on "
@@ -156,17 +156,13 @@ DonateDialog::DonateDialog(QWidget* parent) : QDialog(parent) {
     auto* buttons = new QDialogButtonBox(QDialogButtonBox::Ok, this);
     connect(buttons, &QDialogButtonBox::accepted, this, &QDialog::accept);
 
-    auto* layout = new QVBoxLayout(this);
-    layout->addWidget(phraseLabel);
-    layout->addSpacing(8);
+    QVBoxLayout* layout = DialogChrome::setupRootLayout(this);
+    layout->addWidget(header);
     layout->addWidget(qrView);
     layout->addWidget(pixKeyLabel);
-    layout->addSpacing(8);
     layout->addWidget(separator);
-    layout->addSpacing(4);
     layout->addWidget(internationalLabel);
-    layout->addSpacing(8);
-    layout->addWidget(buttons);
+    layout->addLayout(DialogChrome::footer(buttons));
 }
 
 }  // namespace traceview

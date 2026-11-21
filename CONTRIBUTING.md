@@ -361,6 +361,84 @@ up tag history, since nothing depends on it today.)
 For repository-wide mechanical formatting, record the formatting commit in
 `.git-blame-ignore-revs`. Keep semantic edits out of that commit.
 
+## Dialogs
+
+Every window TraceView opens is built from the same parts, so they all look
+like one app. The parts live in
+[`lib/theme/dialogchrome.h`](lib/theme/dialogchrome.h). The TraceKit panel
+(`lib/devices/tracekitdialog.cpp`) and Settings (`lib/core/settingspage.cpp`)
+are the reference implementations. All colours and shapes come from the app
+stylesheet (`lib/theme/stylesheet.cpp`, "Dialog chrome"). That way every
+dialog follows the palette and the frame style: Square and Chamfered make
+them square too.
+
+### Skeleton
+
+```cpp
+MyDialog::MyDialog(QWidget* parent) : QDialog(parent) {
+    setWindowTitle(tr("Thing"));                 // the presenter's top bar on a phone
+
+    auto* header = new DialogHeader(tr("Thing"), tr("What it is, one line"), this);
+    header->badge()->setStatus(tr("Connected"), StatusBadge::Tone::Success);  // optional
+
+    // ... content ...
+
+    auto* buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, this);
+    connect(buttons, &QDialogButtonBox::accepted, this, &QDialog::accept);
+    connect(buttons, &QDialogButtonBox::rejected, this, &QDialog::reject);
+
+    QVBoxLayout* layout = DialogChrome::setupRootLayout(this);  // standard margins/spacing
+    layout->addWidget(header);
+    layout->addWidget(content, 1);
+    layout->addLayout(DialogChrome::footer(buttons, {addButton, removeButton}));
+}
+```
+
+Open it with `DialogPresenter::exec(dialog, Style::Card)` for short dialogs
+(messages, prompts, About) or `Style::Page` for big ones. Use
+`DialogPresenter::show` for non-modal ones. Never call `dialog.exec()` or
+`dialog->show()` directly, and never use `QMessageBox`/`QInputDialog`: use
+`DialogPresenter::question/information/warning/confirm/getText` instead. On
+Android and in the compact preview, the presenter is what puts the dialog
+inside the app instead of in a stray window.
+
+### Parts
+
+| Need | Use |
+|---|---|
+| Title + one-line description at the top | `DialogHeader` (hides its title while embedded: the presenter's top bar shows it) |
+| Connection or state pill | `DialogHeader::badge()` or a standalone `StatusBadge` |
+| Several pages | `NavSidebar` (Lucide icon ids, `setCompact(true)` on phone width) + `QStackedWidget`; each page starts with `DialogHeader(..., DialogHeader::Level::Page)` if it needs a title |
+| Group of related content | `DialogCard` (caption + surface panel); `QGroupBox` + `QFormLayout` for plain forms |
+| Secondary text, status lines | `DialogChrome::hintLabel()` |
+| Main action of a page | `DialogChrome::setButtonVariant(button, "primary")`. Use one per page at most |
+| Destructive action (delete, erase, reset) | `setButtonVariant(button, "danger")` |
+| Bottom row | `DialogChrome::footer(buttonBox, {page actions...})`: page actions on the left, standard buttons on the right |
+
+### Rules
+
+- **No local stylesheets for chrome.** Never call `setStyleSheet()` to colour a
+  title, badge, card or button. If a dialog needs a look the parts don't
+  have, add it to the "Dialog chrome" block of `stylesheet.cpp` (keyed by
+  object name or a dynamic property) and to `dialogchrome.h`, so the next
+  dialog gets it too. A widget-specific rule that really is one of a kind
+  (the Firmware page's drop zone) may stay local. Pass it through
+  `scaleStyleSheetRadii()` so it follows the frame style.
+- **Colours come from the palette.** Use `ThemeManager::instance().currentTheme()`
+  tokens (`danger`, `success`, `textSecondary`...), never hex values.
+- **Font sizes go through `scaledFont()`**, never `font-size: Npt` in QSS
+  (Android fonts are pixel-sized). For headings use `DialogHeader`, not
+  `<h2>`/`<b>` rich text.
+- **Monospace** text uses `QFontDatabase::systemFont(QFontDatabase::FixedFont)`,
+  not a family name like `"Consolas"` or `"Monospace"`.
+- **Icons** in dialog chrome are Lucide ids (`"lucide:wifi"`) through
+  `IconLibrary`. Don't use emoji or Unicode glyphs as icons.
+- **Spacing** uses the `DialogChrome::k*` constants. Don't use new magic
+  numbers for margins.
+- **Footer**: every dialog has one. Use `QDialogButtonBox` with standard
+  buttons (Close for tool windows, Ok/Cancel or Save/Cancel for editors), so
+  each platform orders them its own way.
+
 ## Translations
 
 TraceView ships eight catalogs under `translations/` (`pt_BR`, `es`, `fr`,

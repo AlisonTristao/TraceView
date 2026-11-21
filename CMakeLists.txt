@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.21)
 
 project(TraceView
-    VERSION 4.15.1
+    VERSION 4.16.0
     DESCRIPTION "Real-time telemetry dashboard for ESP32/ESP-NOW robots"
     LANGUAGES CXX
 )
@@ -272,6 +272,11 @@ if(APPLE)
             # iPhone and iPad.
             XCODE_ATTRIBUTE_TARGETED_DEVICE_FAMILY "1,2"
         )
+        # Qt for iOS is static and links every multimedia plugin it has; the
+        # FFmpeg one needs FFmpeg's own libraries, which the iOS kit does not
+        # ship (undefined av_* symbols at link time). The native Darwin
+        # backend (AVFoundation) is all the Audio Spectrum widget needs here.
+        qt_import_plugins(TraceView EXCLUDE Qt6::QFFmpegMediaPlugin)
     else()
         # The plist's LSMinimumSystemVersion. Qt 6.9 itself needs macOS 12+,
         # which is also what the macos-* presets pin.

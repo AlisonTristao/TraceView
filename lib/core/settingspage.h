@@ -6,15 +6,18 @@
 #include <QWidget>
 
 class QLabel;
+class QDialogButtonBox;
 class QPushButton;
 class QListWidget;
 class QFormLayout;
 class QHBoxLayout;
 class QVBoxLayout;
 class QResizeEvent;
-class QShowEvent;
 
 namespace traceview {
+
+class DialogHeader;
+class NavSidebar;
 
 class SettingsPage final : public QWidget {
     Q_OBJECT
@@ -31,6 +34,8 @@ public:
     // Shows/hides the page's own "Settings" heading -- redundant when the
     // window hosting it already titles it (embedded Page dialog top bar).
     void setTitleVisible(bool visible);
+    // The footer's Close button (rejected() closes the hosting window).
+    QDialogButtonBox* buttonBox() const { return m_buttonBox; }
 
 signals:
     void clearRecentProjectsRequested();
@@ -39,7 +44,6 @@ signals:
 
 protected:
     void resizeEvent(QResizeEvent* event) override;
-    void showEvent(QShowEvent* event) override;
 
 private:
     void refreshRestartNotice();
@@ -50,11 +54,8 @@ private:
     // Sets every combo/spin box to m_fieldWidth, capped in compact mode to
     // what the current width can actually fit.
     void applyFieldWidth();
-    // Sizes the category list to exactly its rows' height so its frame ends
-    // under the last icon instead of running to the bottom of the page.
-    void fitCategoryListHeight();
-
-    QLabel* m_titleLabel = nullptr;
+    DialogHeader* m_header = nullptr;
+    QDialogButtonBox* m_buttonBox = nullptr;
     QLabel* m_restartNotice = nullptr;
     QPushButton* m_restartButton = nullptr;
     QLabel* m_updateStatusLabel = nullptr;
@@ -62,8 +63,7 @@ private:
     int m_initialFrameLogCapacity = 0;
     int m_initialNotificationHistoryCapacity = 0;
 
-    QListWidget* m_categoryList = nullptr;
-    QStringList m_categoryNames;
+    NavSidebar* m_categoryList = nullptr;
     QList<QFormLayout*> m_formLayouts;
     // Margins/spacing that applyCompactLayout() trims on narrow screens.
     QVBoxLayout* m_rootLayout = nullptr;

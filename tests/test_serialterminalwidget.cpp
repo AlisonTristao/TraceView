@@ -41,6 +41,7 @@ private slots:
     void appendDataFastPathBackspaceErasesLastChar();
     void appendDataFullRedrawOverwritesLineAndRepositionsCursor();
     void appendDataNewlineCommitsLineAndStartsFresh();
+    void appendDataRandomChunksDoNotCrash();
     void appendDataExpandsTabsAtTerminalStops();
     void appendDataSplitsMultibyteUtf8AcrossCallsWithoutMojibake();
     void clearTerminalResetsDocumentAndLineState();
@@ -243,6 +244,37 @@ void TestSerialTerminalWidget::appendDataNewlineCommitsLineAndStartsFresh() {
     widget.appendData(QByteArrayLiteral("dongle> "));
 
     QCOMPARE(widget.toPlainText(), QStringLiteral("dongle> info\nchip=esp32s3\ndongle> "));
+}
+
+// Random chunks of text, control bytes and escapes, with and without a
+// visible widget and a scrollback limit. Placing the caret inside
+// appendData()'s edit block crashed here (and on a robot's "BTP" reply).
+void TestSerialTerminalWidget::appendDataRandomChunksDoNotCrash() {
+    QRandomGenerator rng(1234);
+    const QList<QByteArray> pieces = {
+        "\r\n", "\n", "\r", "\b", "\t", "\x1b[33m", "\x1b[0m", "\x1b[1;32m", "\x1b[K", "\x1b[2K",
+        "\x1b[2J", "\x1b[H", "tracekit> ", "btp ", "-option", " some help text ",
+        QByteArray(300, 'x'), "\xc3\xa9", "\xc3", "\xa9", "\x1b[", "5D", "\x07"};
+    for (int run = 0; run < 40; ++run) {
+        SerialTerminalWidget widget;
+        widget.resize(100 + int(rng.bounded(500)), 100 + int(rng.bounded(300)));
+        if (rng.bounded(2)) {
+            widget.show();
+            QVERIFY(QTest::qWaitForWindowExposed(&widget));
+        }
+        widget.document()->setMaximumBlockCount(rng.bounded(3) ? 5 + int(rng.bounded(50)) : 0);
+        for (int c = 0; c < 60; ++c) {
+            QByteArray chunk;
+            const int n = 1 + int(rng.bounded(80));
+            for (int k = 0; k < n; ++k) {
+                chunk += pieces.at(int(rng.bounded(pieces.size())));
+            }
+            widget.appendData(chunk);
+            if (rng.bounded(3) == 0) {
+                QCoreApplication::processEvents();
+            }
+        }
+    }
 }
 
 void TestSerialTerminalWidget::appendDataExpandsTabsAtTerminalStops() {

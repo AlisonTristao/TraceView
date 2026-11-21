@@ -3,6 +3,7 @@
 #include <QApplication>
 #include <QClipboard>
 #include <QComboBox>
+#include <QDialogButtonBox>
 #include <QHBoxLayout>
 #include <QHeaderView>
 #include <QLabel>
@@ -12,6 +13,7 @@
 
 #include "diagnostics/notificationentry.h"
 #include "diagnostics/notificationlog.h"
+#include "theme/dialogchrome.h"
 #include "traceview/thememanager.h"
 
 namespace traceview {
@@ -59,7 +61,8 @@ NotificationHistoryWindow::NotificationHistoryWindow(NotificationLog* log, QWidg
     setAttribute(Qt::WA_DeleteOnClose);
     resize(760, 440);
 
-    auto* layout = new QVBoxLayout(this);
+    QVBoxLayout* layout = DialogChrome::setupRootLayout(this);
+    layout->addWidget(new DialogHeader(windowTitle(), QString(), this));
 
     auto* controls = new QHBoxLayout;
     controls->addWidget(new QLabel(tr("Severity:"), this));
@@ -78,8 +81,8 @@ NotificationHistoryWindow::NotificationHistoryWindow(NotificationLog* log, QWidg
 
     auto* copyButton = new QPushButton(tr("Copy"), this);
     auto* clearButton = new QPushButton(tr("Clear"), this);
-    controls->addWidget(copyButton);
-    controls->addWidget(clearButton);
+    // Clearing drops the whole history; there is no undo.
+    DialogChrome::setButtonVariant(clearButton, "danger");
     layout->addLayout(controls);
 
     m_table = new QTableWidget(this);
@@ -91,7 +94,11 @@ NotificationHistoryWindow::NotificationHistoryWindow(NotificationLog* log, QWidg
     m_table->setEditTriggers(QAbstractItemView::NoEditTriggers);
     m_table->setSelectionBehavior(QAbstractItemView::SelectRows);
     m_table->setWordWrap(false);
-    layout->addWidget(m_table);
+    layout->addWidget(m_table, 1);
+
+    auto* buttons = new QDialogButtonBox(QDialogButtonBox::Close, this);
+    connect(buttons, &QDialogButtonBox::rejected, this, &QDialog::reject);
+    layout->addLayout(DialogChrome::footer(buttons, {copyButton, clearButton}));
 
     connect(m_severityFilter, &QComboBox::currentIndexChanged, this,
             &NotificationHistoryWindow::rebuild);
@@ -121,6 +128,8 @@ NotificationHistoryWindow::NotificationHistoryWindow(NotificationLog* log, QWidg
                 m_table->scrollToBottom();
             });
     connect(m_log, &NotificationLog::cleared, this, [this] { m_table->setRowCount(0); });
+    // One entry dismissed from the bell's panel: rare enough to just redraw.
+    connect(m_log, &NotificationLog::removed, this, [this](quint64) { rebuild(); });
     connect(&ThemeManager::instance(), &ThemeManager::themeChanged, this,
             [this](const ThemePalette&) { rebuild(); });
 

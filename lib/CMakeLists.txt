@@ -30,6 +30,8 @@ add_library(traceview_theme STATIC
     theme/doublespinbox.h
     theme/dialogpresenter.cpp
     theme/dialogpresenter.h
+    theme/dialogchrome.cpp
+    theme/dialogchrome.h
     theme/iconutils.cpp
     theme/iconutils.h
     theme/iconlibrary.cpp
@@ -160,6 +162,7 @@ target_link_libraries(traceview_telemetry PUBLIC
 # traceview_telemetry, never on traceview_protocol/BTP.
 add_library(traceview_backend STATIC
     backend/backend.h
+    backend/plaintext.h
     backend/statusseverity.h
 )
 
@@ -545,8 +548,8 @@ target_link_libraries(traceview_ota
         traceview_devices
         traceview_mdns
     PRIVATE
-        # DialogPresenter (theme/dialogpresenter.h) only -- OtaTab's upload
-        # warnings go through it like every other dialog in the app.
+        # DialogPresenter (OtaTab's upload warnings go through it like every
+        # other dialog) and DialogChrome (the Firmware page's cards/badge).
         traceview_theme
 )
 
@@ -859,6 +862,12 @@ add_library(traceview_ui STATIC
     core/brandcornermark.h
     core/notificationtoasts.cpp
     core/notificationtoasts.h
+    core/notificationbell.cpp
+    core/notificationbell.h
+    core/notificationlistview.cpp
+    core/notificationlistview.h
+    core/notificationpanel.cpp
+    core/notificationpanel.h
     core/startuploadingoverlay.cpp
     core/startuploadingoverlay.h
     vendor/qrcodegen/qrcodegen.cpp

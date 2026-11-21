@@ -107,6 +107,9 @@ public:
     // the result via saveState() same as a drag would.
     void resetToDefaults();
 
+    // Where `panel` sits now (Floating included); Floating for an unknown one.
+    DockEdge edgeOf(DockablePanel* panel) const;
+
     // True while a header-initiated move or a grip-initiated resize is in
     // progress -- MainWindow uses this to avoid hiding a panel (via
     // updatePanelVisibility()) out from under an in-progress gesture.

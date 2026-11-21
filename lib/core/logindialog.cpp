@@ -10,6 +10,9 @@
 #include <QVBoxLayout>
 
 #include "core/usermodemanager.h"
+#include "theme/dialogchrome.h"
+#include "traceview/theme.h"
+#include "traceview/thememanager.h"
 
 namespace traceview {
 
@@ -17,8 +20,8 @@ LoginDialog::LoginDialog(QWidget* parent) : QDialog(parent) {
     setWindowTitle(tr("Enter Developer Mode"));
     setMinimumWidth(320);
 
-    auto* titleLabel = new QLabel(tr("Enter your developer username and password."), this);
-    titleLabel->setWordWrap(true);
+    auto* header = new DialogHeader(tr("Enter Developer Mode"),
+                                    tr("Enter your developer username and password."), this);
 
     m_usernameEdit = new QLineEdit(this);
     m_passwordEdit = new QLineEdit(this);
@@ -29,20 +32,27 @@ LoginDialog::LoginDialog(QWidget* parent) : QDialog(parent) {
     form->addRow(tr("Password:"), m_passwordEdit);
 
     m_errorLabel = new QLabel(this);
-    m_errorLabel->setStyleSheet("color: #d9534f;");
     m_errorLabel->setWordWrap(true);
     m_errorLabel->setVisible(false);
+    // A state color, not chrome: the palette's danger token, re-applied when
+    // the theme changes. (The app stylesheet sets every widget's text color,
+    // so a QPalette change alone would be overridden.)
+    const auto applyErrorColor = [this](const ThemePalette& palette) {
+        m_errorLabel->setStyleSheet(QStringLiteral("color: %1;").arg(palette.danger.name()));
+    };
+    applyErrorColor(ThemeManager::instance().currentTheme());
+    connect(&ThemeManager::instance(), &ThemeManager::themeChanged, this, applyErrorColor);
 
     auto* buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, this);
     buttons->button(QDialogButtonBox::Ok)->setText(tr("Log In"));
     connect(buttons, &QDialogButtonBox::accepted, this, &LoginDialog::attemptSubmit);
     connect(buttons, &QDialogButtonBox::rejected, this, &QDialog::reject);
 
-    auto* layout = new QVBoxLayout(this);
-    layout->addWidget(titleLabel);
+    QVBoxLayout* layout = DialogChrome::setupRootLayout(this);
+    layout->addWidget(header);
     layout->addLayout(form);
     layout->addWidget(m_errorLabel);
-    layout->addWidget(buttons);
+    layout->addLayout(DialogChrome::footer(buttons));
 
     connect(m_passwordEdit, &QLineEdit::returnPressed, this, &LoginDialog::attemptSubmit);
 }

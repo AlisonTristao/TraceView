@@ -73,9 +73,11 @@ QString firstText(const QJsonObject& result) {
     return result.value("content").toArray().first().toObject().value("text").toString();
 }
 
+// Short on purpose: on Unix a bare name becomes a socket file in the temp
+// directory, and a socket path is limited (104 bytes on macOS, whose $TMPDIR
+// alone is ~50) -- a full UUID made listen() fail there and only there.
 QString uniqueSocketName() {
-    return QStringLiteral("traceview-mcp-test-") +
-           QUuid::createUuid().toString(QUuid::WithoutBraces);
+    return QStringLiteral("tv-mcp-") + QUuid::createUuid().toString(QUuid::Id128).left(12);
 }
 
 }  // namespace
