@@ -157,7 +157,7 @@ Allow it to connect devices and send them commands until AI assistant access is 
         <translation>ИИ-ассистент хочет стереть приложение и файлы %1. Затем устройство ждёт новую прошивку в режиме восстановления.</translation>
     </message>
     <message>
-        <location filename="../lib/core/agentpreferencetools.cpp" line="+349"/>
+        <location filename="../lib/core/agentpreferencetools.cpp" line="+354"/>
         <source>Delete Preset</source>
         <translation>Удалить набор</translation>
     </message>
@@ -4780,12 +4780,12 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     </message>
     <message>
         <location line="+5"/>
-        <location line="+179"/>
+        <location line="+217"/>
         <source>Keep the panel open</source>
         <translation>Не закрывать панель</translation>
     </message>
     <message>
-        <location line="-171"/>
+        <location line="-209"/>
         <source>Clear every notification</source>
         <translation>Очистить все уведомления</translation>
     </message>
@@ -4830,12 +4830,40 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>Рядом с панелью (уменьшает её)</translation>
     </message>
     <message>
-        <location line="+2"/>
+        <location line="+3"/>
+        <source>Delete automatically</source>
+        <translation>Удалять автоматически</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Never</source>
+        <translation>Никогда</translation>
+    </message>
+    <message numerus="yes">
+        <location line="+1"/>
+        <source>After %n min</source>
+        <translation>
+            <numerusform>Через %n мин</numerusform>
+            <numerusform>Через %n мин</numerusform>
+            <numerusform>Через %n мин</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location line="+1"/>
+        <source>After %n s</source>
+        <translation>
+            <numerusform>Через %n с</numerusform>
+            <numerusform>Через %n с</numerusform>
+            <numerusform>Через %n с</numerusform>
+        </translation>
+    </message>
+    <message>
+        <location line="+18"/>
         <source>Full history…</source>
         <translation>Полная история…</translation>
     </message>
     <message>
-        <location line="+36"/>
+        <location line="+50"/>
         <source>Close</source>
         <translation>Закрыть</translation>
     </message>
@@ -6143,13 +6171,13 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     </message>
     <message>
         <location line="-357"/>
-        <location line="+441"/>
+        <location line="+453"/>
         <location line="+5"/>
         <source>Updates</source>
         <translation>Обновления</translation>
     </message>
     <message>
-        <location line="-421"/>
+        <location line="-433"/>
         <source>Project and startup preferences shared by the application.</source>
         <translation>Настройки проекта и запуска, общие для приложения.</translation>
     </message>
@@ -6514,7 +6542,22 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>Закреплённая панель</translation>
     </message>
     <message>
-        <location line="+20"/>
+        <location line="+4"/>
+        <source> s</source>
+        <translation> с</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Each notification is deleted this many seconds after it arrived.</source>
+        <translation>Каждое уведомление удаляется через указанное число секунд после поступления.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Delete automatically after</source>
+        <translation>Удалять автоматически через</translation>
+    </message>
+    <message>
+        <location line="+24"/>
         <source>In-memory history</source>
         <translation>История в памяти</translation>
     </message>
@@ -6589,7 +6632,8 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>Последняя проверка</translation>
     </message>
     <message>
-        <location line="+6"/>
+        <location line="-92"/>
+        <location line="+98"/>
         <source>Never</source>
         <translation>Никогда</translation>
     </message>
