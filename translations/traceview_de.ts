@@ -6742,11 +6742,12 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
     </message>
     <message>
         <location line="-120"/>
+        <location line="+202"/>
         <source>Reload</source>
         <translation>Neu laden</translation>
     </message>
     <message>
-        <location line="+2"/>
+        <location line="-200"/>
         <source>Apply</source>
         <translation>Anwenden</translation>
     </message>
@@ -6815,8 +6816,14 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
     </message>
     <message>
         <location line="+2"/>
+        <location line="+128"/>
         <source>Remove</source>
         <translation>Entfernen</translation>
+    </message>
+    <message>
+        <location line="-125"/>
+        <source>Read the list from the device again (btp -wifi_json).</source>
+        <translation>Liste erneut vom Gerät lesen (btp -wifi_json).</translation>
     </message>
     <message>
         <location line="+2"/>
@@ -6824,7 +6831,17 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
         <translation>Zum Übernehmen neu starten</translation>
     </message>
     <message>
-        <location line="+9"/>
+        <location line="+6"/>
+        <source>%1 knows no Wi-Fi network. After this reboot it joins none: a device that only talks over Wi-Fi can then be reached only over USB.</source>
+        <translation>%1 kennt kein WLAN. Nach diesem Neustart verbindet es sich mit keinem: Ein Gerät, das nur über WLAN kommuniziert, ist dann nur noch über USB erreichbar.</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Reboot anyway</source>
+        <translation>Trotzdem neu starten</translation>
+    </message>
+    <message>
+        <location line="+13"/>
         <source>Passwords are sent to the device over the encrypted session and never read back. Changes take effect after a reboot; the recovery uses the same networks.</source>
         <translation>Passwörter werden über die verschlüsselte Sitzung an das Gerät gesendet und nie zurückgelesen. Änderungen wirken nach einem Neustart; die Recovery verwendet dieselben Netze.</translation>
     </message>
@@ -6877,16 +6894,32 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
     </message>
     <message>
         <location line="+15"/>
+        <location line="+26"/>
         <source>Remove a network</source>
         <translation>Netz entfernen</translation>
     </message>
     <message>
-        <location line="+1"/>
+        <location line="-25"/>
         <source>Pick a network from the list (the one in the firmware cannot be removed from here).</source>
         <translation>Wählen Sie ein Netz aus der Liste (das in der Firmware kann hier nicht entfernt werden).</translation>
     </message>
     <message>
-        <location line="+27"/>
+        <location line="+16"/>
+        <source>Remove %1 from %2? The list has it %3 times, and all of them go.</source>
+        <translation>%1 von %2 entfernen? Die Liste enthält es %3-mal, und alle Einträge werden entfernt.</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Remove %1 from %2?</source>
+        <translation>%1 von %2 entfernen?</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>It is the only network: after the next reboot the device joins no Wi-Fi, and one that only talks over Wi-Fi can then be reached only over USB.</source>
+        <translation>Es ist das einzige Netzwerk: Nach dem nächsten Neustart verbindet sich das Gerät mit keinem WLAN, und ein Gerät, das nur über WLAN kommuniziert, ist dann nur noch über USB erreichbar.</translation>
+    </message>
+    <message>
+        <location line="+29"/>
         <source>Set the clock</source>
         <translation>Uhr stellen</translation>
     </message>
@@ -6916,7 +6949,8 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
         <translation>Ein schlafender Sensor bleibt für eine Sitzung oder ein Update wach.</translation>
     </message>
     <message>
-        <location line="+2"/>
+        <location line="-153"/>
+        <location line="+155"/>
         <source>Reboot</source>
         <translation>Neustart</translation>
     </message>
@@ -6971,7 +7005,9 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
         <translation>Löschen</translation>
     </message>
     <message>
-        <location line="+0"/>
+        <location line="-162"/>
+        <location line="+113"/>
+        <location line="+49"/>
         <source>Cancel</source>
         <translation>Abbrechen</translation>
     </message>

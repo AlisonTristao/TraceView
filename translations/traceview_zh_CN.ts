@@ -6739,11 +6739,12 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     </message>
     <message>
         <location line="-120"/>
+        <location line="+202"/>
         <source>Reload</source>
         <translation>重新加载</translation>
     </message>
     <message>
-        <location line="+2"/>
+        <location line="-200"/>
         <source>Apply</source>
         <translation>应用</translation>
     </message>
@@ -6811,8 +6812,14 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     </message>
     <message>
         <location line="+2"/>
+        <location line="+128"/>
         <source>Remove</source>
         <translation>移除</translation>
+    </message>
+    <message>
+        <location line="-125"/>
+        <source>Read the list from the device again (btp -wifi_json).</source>
+        <translation>重新从设备读取列表 (btp -wifi_json)。</translation>
     </message>
     <message>
         <location line="+2"/>
@@ -6820,7 +6827,17 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>重启以使用它们</translation>
     </message>
     <message>
-        <location line="+9"/>
+        <location line="+6"/>
+        <source>%1 knows no Wi-Fi network. After this reboot it joins none: a device that only talks over Wi-Fi can then be reached only over USB.</source>
+        <translation>%1 没有任何已知的 Wi-Fi 网络。此次重启后它不会连接任何网络：只通过 Wi-Fi 通信的设备之后只能通过 USB 访问。</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Reboot anyway</source>
+        <translation>仍然重启</translation>
+    </message>
+    <message>
+        <location line="+13"/>
         <source>Passwords are sent to the device over the encrypted session and never read back. Changes take effect after a reboot; the recovery uses the same networks.</source>
         <translation>密码通过加密会话发送到设备，且不会被读回。更改在重启后生效；恢复模式使用相同的网络。</translation>
     </message>
@@ -6873,16 +6890,32 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     </message>
     <message>
         <location line="+15"/>
+        <location line="+26"/>
         <source>Remove a network</source>
         <translation>移除网络</translation>
     </message>
     <message>
-        <location line="+1"/>
+        <location line="-25"/>
         <source>Pick a network from the list (the one in the firmware cannot be removed from here).</source>
         <translation>请从列表中选择一个网络（固件内置的网络无法从此处移除）。</translation>
     </message>
     <message>
-        <location line="+27"/>
+        <location line="+16"/>
+        <source>Remove %1 from %2? The list has it %3 times, and all of them go.</source>
+        <translation>要从 %2 中删除 %1 吗？列表中有 %3 个同名条目，将全部删除。</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Remove %1 from %2?</source>
+        <translation>要从 %2 中删除 %1 吗？</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>It is the only network: after the next reboot the device joins no Wi-Fi, and one that only talks over Wi-Fi can then be reached only over USB.</source>
+        <translation>这是唯一的网络：下次重启后设备将不会连接任何 Wi-Fi，只通过 Wi-Fi 通信的设备之后只能通过 USB 访问。</translation>
+    </message>
+    <message>
+        <location line="+29"/>
         <source>Set the clock</source>
         <translation>设置时钟</translation>
     </message>
@@ -6912,7 +6945,8 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>让休眠的传感器在一次会话或更新期间保持唤醒。</translation>
     </message>
     <message>
-        <location line="+2"/>
+        <location line="-153"/>
+        <location line="+155"/>
         <source>Reboot</source>
         <translation>重启</translation>
     </message>
@@ -6967,7 +7001,9 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>擦除</translation>
     </message>
     <message>
-        <location line="+0"/>
+        <location line="-162"/>
+        <location line="+113"/>
+        <location line="+49"/>
         <source>Cancel</source>
         <translation>取消</translation>
     </message>

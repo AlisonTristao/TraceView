@@ -6742,11 +6742,12 @@ Scegli Più tardi per continuare a lavorare -- le modifiche verranno applicate l
     </message>
     <message>
         <location line="-120"/>
+        <location line="+202"/>
         <source>Reload</source>
         <translation>Ricarica</translation>
     </message>
     <message>
-        <location line="+2"/>
+        <location line="-200"/>
         <source>Apply</source>
         <translation>Applica</translation>
     </message>
@@ -6815,8 +6816,14 @@ Scegli Più tardi per continuare a lavorare -- le modifiche verranno applicate l
     </message>
     <message>
         <location line="+2"/>
+        <location line="+128"/>
         <source>Remove</source>
         <translation>Rimuovi</translation>
+    </message>
+    <message>
+        <location line="-125"/>
+        <source>Read the list from the device again (btp -wifi_json).</source>
+        <translation>Rileggi l&apos;elenco dal dispositivo (btp -wifi_json).</translation>
     </message>
     <message>
         <location line="+2"/>
@@ -6824,7 +6831,17 @@ Scegli Più tardi per continuare a lavorare -- le modifiche verranno applicate l
         <translation>Riavvia per usarle</translation>
     </message>
     <message>
-        <location line="+9"/>
+        <location line="+6"/>
+        <source>%1 knows no Wi-Fi network. After this reboot it joins none: a device that only talks over Wi-Fi can then be reached only over USB.</source>
+        <translation>%1 non conosce alcuna rete Wi-Fi. Dopo questo riavvio non si collegherà a nessuna: un dispositivo che comunica solo via Wi-Fi sarà raggiungibile solo tramite USB.</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Reboot anyway</source>
+        <translation>Riavvia comunque</translation>
+    </message>
+    <message>
+        <location line="+13"/>
         <source>Passwords are sent to the device over the encrypted session and never read back. Changes take effect after a reboot; the recovery uses the same networks.</source>
         <translation>Le password vengono inviate al dispositivo tramite la sessione cifrata e non vengono mai rilette. Le modifiche hanno effetto dopo un riavvio; il recovery usa le stesse reti.</translation>
     </message>
@@ -6877,16 +6894,32 @@ Scegli Più tardi per continuare a lavorare -- le modifiche verranno applicate l
     </message>
     <message>
         <location line="+15"/>
+        <location line="+26"/>
         <source>Remove a network</source>
         <translation>Rimuovi una rete</translation>
     </message>
     <message>
-        <location line="+1"/>
+        <location line="-25"/>
         <source>Pick a network from the list (the one in the firmware cannot be removed from here).</source>
         <translation>Scegli una rete dall&apos;elenco (quella nel firmware non può essere rimossa da qui).</translation>
     </message>
     <message>
-        <location line="+27"/>
+        <location line="+16"/>
+        <source>Remove %1 from %2? The list has it %3 times, and all of them go.</source>
+        <translation>Rimuovere %1 da %2? L&apos;elenco la contiene %3 volte e verranno rimosse tutte.</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Remove %1 from %2?</source>
+        <translation>Rimuovere %1 da %2?</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>It is the only network: after the next reboot the device joins no Wi-Fi, and one that only talks over Wi-Fi can then be reached only over USB.</source>
+        <translation>È l&apos;unica rete: dopo il prossimo riavvio il dispositivo non si collegherà a nessun Wi-Fi, e uno che comunica solo via Wi-Fi sarà raggiungibile solo tramite USB.</translation>
+    </message>
+    <message>
+        <location line="+29"/>
         <source>Set the clock</source>
         <translation>Imposta l&apos;orologio</translation>
     </message>
@@ -6916,7 +6949,8 @@ Scegli Più tardi per continuare a lavorare -- le modifiche verranno applicate l
         <translation>Un sensore in sospensione resta attivo per una sessione o un aggiornamento.</translation>
     </message>
     <message>
-        <location line="+2"/>
+        <location line="-153"/>
+        <location line="+155"/>
         <source>Reboot</source>
         <translation>Riavvia</translation>
     </message>
@@ -6971,7 +7005,9 @@ Scegli Più tardi per continuare a lavorare -- le modifiche verranno applicate l
         <translation>Cancella</translation>
     </message>
     <message>
-        <location line="+0"/>
+        <location line="-162"/>
+        <location line="+113"/>
+        <location line="+49"/>
         <source>Cancel</source>
         <translation>Annulla</translation>
     </message>

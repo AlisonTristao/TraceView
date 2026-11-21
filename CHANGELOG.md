@@ -7,6 +7,21 @@ release flow.
 
 ## [Unreleased]
 
+## [4.15.1] - 2026-11-21
+
+### Fixed
+
+- **Removing a Wi-Fi network in the TraceKit panel could take all of the
+  device's networks**: `btp -wifi_remove` goes by name, so with the same
+  name listed twice, removing one removed both -- and with nothing left, a
+  device that only talks over Wi-Fi came back after its next reboot on no
+  network at all. Remove now asks first, says how many entries with that
+  name go, and warns when it is the last network; "Reboot to use them"
+  warns too when the list is empty. (TraceKit itself no longer writes a
+  second entry for a name already in the file: adding it again replaces
+  its password.)
+- The Wi-Fi page of the TraceKit panel has a **Reload** button.
+
 ## [4.15.0] - 2026-11-21
 
 ### Added

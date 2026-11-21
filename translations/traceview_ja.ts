@@ -6739,11 +6739,12 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     </message>
     <message>
         <location line="-120"/>
+        <location line="+202"/>
         <source>Reload</source>
         <translation>再読み込み</translation>
     </message>
     <message>
-        <location line="+2"/>
+        <location line="-200"/>
         <source>Apply</source>
         <translation>適用</translation>
     </message>
@@ -6811,8 +6812,14 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     </message>
     <message>
         <location line="+2"/>
+        <location line="+128"/>
         <source>Remove</source>
         <translation>削除</translation>
+    </message>
+    <message>
+        <location line="-125"/>
+        <source>Read the list from the device again (btp -wifi_json).</source>
+        <translation>デバイスから一覧を再読み込みします (btp -wifi_json)。</translation>
     </message>
     <message>
         <location line="+2"/>
@@ -6820,7 +6827,17 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>再起動して適用</translation>
     </message>
     <message>
-        <location line="+9"/>
+        <location line="+6"/>
+        <source>%1 knows no Wi-Fi network. After this reboot it joins none: a device that only talks over Wi-Fi can then be reached only over USB.</source>
+        <translation>%1 は Wi-Fi ネットワークを 1 つも知りません。この再起動後はどのネットワークにも接続しません。Wi-Fi でしか通信しないデバイスは USB 経由でしか接続できなくなります。</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Reboot anyway</source>
+        <translation>それでも再起動</translation>
+    </message>
+    <message>
+        <location line="+13"/>
         <source>Passwords are sent to the device over the encrypted session and never read back. Changes take effect after a reboot; the recovery uses the same networks.</source>
         <translation>パスワードは暗号化されたセッションでデバイスに送信され、読み出されることはありません。変更は再起動後に有効になります。リカバリーも同じネットワークを使います。</translation>
     </message>
@@ -6873,16 +6890,32 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     </message>
     <message>
         <location line="+15"/>
+        <location line="+26"/>
         <source>Remove a network</source>
         <translation>ネットワークを削除</translation>
     </message>
     <message>
-        <location line="+1"/>
+        <location line="-25"/>
         <source>Pick a network from the list (the one in the firmware cannot be removed from here).</source>
         <translation>一覧からネットワークを選んでください (ファームウェア内のものはここから削除できません)。</translation>
     </message>
     <message>
-        <location line="+27"/>
+        <location line="+16"/>
+        <source>Remove %1 from %2? The list has it %3 times, and all of them go.</source>
+        <translation>%2 から %1 を削除しますか? 一覧には %3 件あり、すべて削除されます。</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Remove %1 from %2?</source>
+        <translation>%2 から %1 を削除しますか?</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>It is the only network: after the next reboot the device joins no Wi-Fi, and one that only talks over Wi-Fi can then be reached only over USB.</source>
+        <translation>これが唯一のネットワークです。次の再起動後、デバイスはどの Wi-Fi にも接続しません。Wi-Fi でしか通信しないデバイスは USB 経由でしか接続できなくなります。</translation>
+    </message>
+    <message>
+        <location line="+29"/>
         <source>Set the clock</source>
         <translation>時刻を設定</translation>
     </message>
@@ -6912,7 +6945,8 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>スリープ中のセンサーをセッションや更新のあいだ起こしておきます。</translation>
     </message>
     <message>
-        <location line="+2"/>
+        <location line="-153"/>
+        <location line="+155"/>
         <source>Reboot</source>
         <translation>再起動</translation>
     </message>
@@ -6967,7 +7001,9 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>消去</translation>
     </message>
     <message>
-        <location line="+0"/>
+        <location line="-162"/>
+        <location line="+113"/>
+        <location line="+49"/>
         <source>Cancel</source>
         <translation>キャンセル</translation>
     </message>
