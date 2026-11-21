@@ -7,6 +7,23 @@ release flow.
 
 ## [Unreleased]
 
+### Fixed
+
+- **A command answered "no result within 5 s" at once and its real result
+  was lost**: the node keeps its last command outcome until the next one,
+  and its local id is a slot that a later command reuses -- an old timeout
+  for that slot settled the new command within milliseconds. Now a tick
+  only reports a timeout for a command that has been out for about 5 s, and
+  a result counts only when it has just been received.
+- **Garbled text from robots**: a robot's shell and ESP-IDF colour their
+  output with ANSI sequences, and command results reached the status bar,
+  the notification history, the TraceKit panel and robot log cards (and an
+  AI assistant's log) with them, as garbage such as `[33m`. They are plain
+  text now; the serial terminal and the robot log still show the colours.
+- CI: the AI assistant relay tests failed on macOS (the test socket name
+  was longer than a macOS socket path allows), and the iOS build failed on
+  `QProcess`, which iOS does not have.
+
 ## [4.15.1] - 2026-11-21
 
 ### Fixed
