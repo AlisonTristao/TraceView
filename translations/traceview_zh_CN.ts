@@ -43,7 +43,7 @@ Allow it to connect devices and send them commands until AI assistant access is 
         <translation>编辑控件（AI 助手）</translation>
     </message>
     <message>
-        <location line="+339"/>
+        <location line="+338"/>
         <source>New Project</source>
         <translation>新建项目</translation>
     </message>
@@ -88,8 +88,8 @@ Allow it to connect devices and send them commands until AI assistant access is 
         <translation>AI 助手已将项目保存到 %1。</translation>
     </message>
     <message>
-        <location filename="../lib/core/agentdevicetools.cpp" line="+189"/>
-        <location line="+50"/>
+        <location filename="../lib/core/agentdevicetools.cpp" line="+184"/>
+        <location line="+49"/>
         <source>set up how a device is reached</source>
         <translation>设置设备的连接方式</translation>
     </message>
@@ -110,7 +110,7 @@ Allow it to connect devices and send them commands until AI assistant access is 
         <translation>运行控制设备的脚本</translation>
     </message>
     <message>
-        <location line="+95"/>
+        <location line="+107"/>
         <source>Firmware Update</source>
         <translation>固件更新</translation>
     </message>
@@ -295,7 +295,7 @@ Allow it to connect devices and send them commands until AI assistant access is 
     </message>
     <message>
         <location line="+9"/>
-        <location line="+558"/>
+        <location line="+569"/>
         <location line="+231"/>
         <source>--</source>
         <translation>--</translation>
@@ -307,12 +307,11 @@ Allow it to connect devices and send them commands until AI assistant access is 
     </message>
     <message>
         <location line="+6"/>
-        <location line="+304"/>
         <source>%1  %2</source>
         <translation>%1  %2</translation>
     </message>
     <message>
-        <location line="+133"/>
+        <location line="+430"/>
         <source>A-B %1 s</source>
         <translation>A-B %1 s</translation>
     </message>
@@ -382,7 +381,7 @@ Allow it to connect devices and send them commands until AI assistant access is 
         <translation>%1: %2</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/chartpainting.cpp" line="+888"/>
+        <location filename="../lib/dashboard/widgets/chartpainting.cpp" line="+920"/>
         <source>Time (s)</source>
         <translation>时间 (s)</translation>
     </message>
@@ -740,7 +739,7 @@ Allow it to connect devices and send them commands until AI assistant access is 
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="+143"/>
+        <location filename="../lib/core/mainwindow.cpp" line="+148"/>
         <source>TraceView Project (*.tvproj)</source>
         <translation>TraceView 项目 (*.tvproj)</translation>
     </message>
@@ -1615,7 +1614,7 @@ Allow it to connect devices and send them commands until AI assistant access is 
 <context>
     <name>traceview::BtpBackend</name>
     <message>
-        <location filename="../lib/protocol/btpbackend.cpp" line="+346"/>
+        <location filename="../lib/protocol/btpbackend.cpp" line="+355"/>
         <source>Robot 0x%1 is online but its catalog has not arrived — check the hub (hub -manifest)</source>
         <translation>机器人 0x%1 在线，但其目录尚未到达 — 请检查集线器（hub -manifest）</translation>
     </message>
@@ -1680,7 +1679,7 @@ Allow it to connect devices and send them commands until AI assistant access is 
         <translation>设备已返回控制台（BTP/1 CONSOLE）</translation>
     </message>
     <message>
-        <location line="+246"/>
+        <location line="+250"/>
         <source>Dropped an unsealed frame on a sealed direct session (check the robot&apos;s channel-B password)</source>
         <translation>在已加密的直连会话中丢弃了一个未加密的帧（请检查机器人的 B 通道密码）</translation>
     </message>
@@ -1690,7 +1689,22 @@ Allow it to connect devices and send them commands until AI assistant access is 
         <translation>在已加密的集线器通道上丢弃了一个未加密的帧 (请检查机器人的 B 通道密码)</translation>
     </message>
     <message>
-        <location line="+126"/>
+        <location line="+18"/>
+        <source>the device encrypts its messages, and no password is set for it</source>
+        <translation>设备会加密其消息，但未为其设置密码</translation>
+    </message>
+    <message>
+        <location line="+18"/>
+        <source>its messages do not open with the password set (wrong password?)</source>
+        <translation>无法用已设置的密码解开其消息（密码错误？）</translation>
+    </message>
+    <message>
+        <location line="+24"/>
+        <source>Can&apos;t read the device: %1</source>
+        <translation>无法读取设备：%1</translation>
+    </message>
+    <message>
+        <location line="+85"/>
         <source>transport rejected an outbound BTP frame: %1</source>
         <translation>传输层拒绝了一个外发 BTP 帧: %1</translation>
     </message>
@@ -1705,7 +1719,7 @@ Allow it to connect devices and send them commands until AI assistant access is 
         <translation>终端输入未发送: 加密封装失败</translation>
     </message>
     <message>
-        <location line="-523"/>
+        <location line="-546"/>
         <source>BTP handshake failed: %1</source>
         <translation>BTP 握手失败:%1</translation>
     </message>
@@ -2194,32 +2208,59 @@ Allowed: %1</source>
 <context>
     <name>traceview::CommandClient</name>
     <message>
-        <location filename="../lib/protocol/commandclient.cpp" line="+33"/>
+        <location filename="../lib/protocol/commandclient.cpp" line="+54"/>
+        <source>not connected to a device that takes commands</source>
+        <translation>未连接到可接收命令的设备</translation>
+    </message>
+    <message>
+        <location line="+4"/>
         <source>command not sent: endpoint key not configured</source>
         <translation>命令未发送: 端点密钥未配置</translation>
     </message>
     <message>
-        <location line="+6"/>
+        <location line="+5"/>
         <source>command not sent: robot manifest not received yet</source>
         <translation>命令未发送: 尚未收到机器人清单</translation>
     </message>
     <message>
-        <location line="+11"/>
+        <location line="+14"/>
         <source>command not sent: could not encode or seal request</source>
         <translation>命令未发送: 无法编码或加密请求</translation>
     </message>
-    <message>
-        <location line="+18"/>
-        <source>command timed out waiting for a result</source>
-        <translation>等待命令结果超时</translation>
+    <message numerus="yes">
+        <location line="+1"/>
+        <source>command not sent: %n command(s) still waiting for a result</source>
+        <translation>
+            <numerusform>命令未发送：仍有 %n 条命令在等待结果</numerusform>
+        </translation>
     </message>
     <message>
-        <location line="+10"/>
+        <location line="+45"/>
+        <source>no result within 5 s</source>
+        <translation>5 s 内无结果</translation>
+    </message>
+    <message>
+        <location line="+16"/>
+        <source>%1: no result within 5 s (it may still be running)</source>
+        <translation>%1：5 s 内无结果（可能仍在运行）</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>%1: no result within 5 s; it may still be running</source>
+        <translation>%1：5 s 内无结果；可能仍在运行</translation>
+    </message>
+    <message>
+        <location line="+9"/>
         <source>command failed (status 0x%1, error 0x%2): %3</source>
         <translation>命令失败 (状态 0x%1,错误 0x%2): %3</translation>
     </message>
     <message>
-        <location line="+7"/>
+        <location line="+8"/>
+        <source>%1 failed (status 0x%2)</source>
+        <translation>%1 失败（状态 0x%2）</translation>
+    </message>
+    <message>
+        <location line="+5"/>
         <source>command result: (empty)</source>
         <translation>命令结果: (空)</translation>
     </message>
@@ -2643,7 +2684,7 @@ Allowed: %1</source>
 <context>
     <name>traceview::DeviceCard</name>
     <message>
-        <location filename="../lib/devices/devicecard.cpp" line="+268"/>
+        <location filename="../lib/devices/devicecard.cpp" line="+302"/>
         <source>%1 dBm</source>
         <translation>%1 dBm</translation>
     </message>
@@ -2664,6 +2705,11 @@ Allowed: %1</source>
     </message>
     <message>
         <location line="+3"/>
+        <source>wrong password: can&apos;t read the device</source>
+        <translation>密码错误：无法读取设备</translation>
+    </message>
+    <message>
+        <location line="+2"/>
         <source>port open, waiting for BTP session</source>
         <translation>端口已打开,等待 BTP 会话</translation>
     </message>
@@ -2683,12 +2729,12 @@ Allowed: %1</source>
         <translation>通过 %1</translation>
     </message>
     <message>
-        <location line="+7"/>
+        <location line="+9"/>
         <source>saved from the last connection</source>
         <translation>上次连接时保存</translation>
     </message>
     <message>
-        <location line="+20"/>
+        <location line="+22"/>
         <source>%1: %2</source>
         <translation>%1：%2</translation>
     </message>
@@ -2752,24 +2798,21 @@ Allowed: %1</source>
     </message>
     <message>
         <location line="+3"/>
-        <location line="+81"/>
         <source>Password:</source>
         <translation>密码：</translation>
     </message>
     <message>
-        <location line="-73"/>
-        <location line="+77"/>
+        <location line="+8"/>
         <source>Save this password in the project file</source>
         <translation>将此密码保存到项目文件中</translation>
     </message>
     <message>
-        <location line="-74"/>
-        <location line="+77"/>
+        <location line="+3"/>
         <source>Anyone who opens the project file can read a saved password.</source>
         <translation>任何打开项目文件的人都可以读取已保存的密码。</translation>
     </message>
     <message>
-        <location line="-61"/>
+        <location line="+16"/>
         <source>Line terminator appended to control-widget commands sent over serial. Doesn&apos;t affect its serial terminal&apos;s raw keystrokes.</source>
         <translation>通过串口发送控制组件命令时附加的行结束符。不影响其串口终端的原始按键。</translation>
     </message>
@@ -2785,17 +2828,12 @@ Allowed: %1</source>
     </message>
     <message>
         <location line="+3"/>
-        <location line="+281"/>
+        <location line="+272"/>
         <source>e.g. robot1.local</source>
         <translation>例如 robot1.local</translation>
     </message>
     <message>
-        <location line="-279"/>
-        <source>Hostname or IP the OTA tab uses for this device&apos;s firmware upload. Left blank, the device is listed there but nothing can be polled or uploaded.</source>
-        <translation>OTA 选项卡上传此设备固件所用的主机名或 IP。留空时设备仍会列出，但无法轮询或上传。</translation>
-    </message>
-    <message>
-        <location line="+8"/>
+        <location line="-262"/>
         <source>Use reported</source>
         <translation>使用上报值</translation>
     </message>
@@ -2810,31 +2848,36 @@ Allowed: %1</source>
         <translation>地址：</translation>
     </message>
     <message>
-        <location line="+4"/>
-        <source>Password for this device&apos;s X-OTA-Password header.</source>
-        <translation>此设备 X-OTA-Password 标头的密码。</translation>
+        <location line="-20"/>
+        <source>Hostname or IP of the device&apos;s recovery, for firmware uploads. Usually left blank: the OTA tab then uses the address the device reports, or its TCP host.</source>
+        <translation>设备恢复模式的主机名或 IP，用于上传固件。通常留空：OTA 标签页会使用设备上报的地址，或其 TCP 主机。</translation>
     </message>
     <message>
-        <location line="+24"/>
-        <location line="+242"/>
+        <location line="+23"/>
+        <source>Uploads are signed with the device&apos;s password, the same one its connection uses.</source>
+        <translation>上传使用设备的密码签名，即其连接所用的同一密码。</translation>
+    </message>
+    <message>
+        <location line="+18"/>
+        <location line="+240"/>
         <source>Connected</source>
         <translation>已连接</translation>
     </message>
     <message>
-        <location line="-242"/>
-        <location line="+242"/>
+        <location line="-240"/>
+        <location line="+240"/>
         <source>Disconnected</source>
         <translation>已断开</translation>
     </message>
     <message>
-        <location line="-239"/>
+        <location line="-237"/>
         <location line="+3"/>
-        <location line="+155"/>
+        <location line="+153"/>
         <source>(not connected yet)</source>
         <translation>(尚未连接)</translation>
     </message>
     <message>
-        <location line="-145"/>
+        <location line="-143"/>
         <source>Status:</source>
         <translation>状态：</translation>
     </message>
@@ -2869,7 +2912,7 @@ Allowed: %1</source>
         <translation>应用以上设置并立即（重新）连接，而不关闭此对话框。</translation>
     </message>
     <message>
-        <location line="+114"/>
+        <location line="+112"/>
         <source>%1 (last connection)</source>
         <translation>%1（上次连接）</translation>
     </message>
@@ -2895,7 +2938,7 @@ Allowed: %1</source>
         <translation>设备上报: %1</translation>
     </message>
     <message>
-        <location line="-241"/>
+        <location line="-239"/>
         <source>Reported by device</source>
         <translation>设备报告</translation>
     </message>
@@ -3461,7 +3504,7 @@ Allowed: %1</source>
         <translation>、</translation>
     </message>
     <message>
-        <location line="+295"/>
+        <location line="+325"/>
         <source>AI assistant access is off.</source>
         <translation>AI 助手访问已关闭。</translation>
     </message>
@@ -3487,7 +3530,7 @@ Allowed: %1</source>
         <translation>AI 助手已断开：%1</translation>
     </message>
     <message>
-        <location line="+413"/>
+        <location line="+418"/>
         <source>Pending</source>
         <translation>待定</translation>
     </message>
@@ -3631,12 +3674,12 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+0"/>
-        <location line="+4021"/>
+        <location line="+4197"/>
         <source>Later</source>
         <translation>稍后</translation>
     </message>
     <message>
-        <location line="-4014"/>
+        <location line="-4190"/>
         <source>&amp;Access</source>
         <translation>访问(&amp;A)</translation>
     </message>
@@ -3763,18 +3806,18 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+18"/>
-        <location line="+3335"/>
+        <location line="+3446"/>
         <source>Undo</source>
         <translation>撤销</translation>
     </message>
     <message>
-        <location line="-3333"/>
-        <location line="+3333"/>
+        <location line="-3444"/>
+        <location line="+3444"/>
         <source>Redo</source>
         <translation>重做</translation>
     </message>
     <message>
-        <location line="-3290"/>
+        <location line="-3401"/>
         <source>Add Device</source>
         <translation>添加设备</translation>
     </message>
@@ -3820,12 +3863,12 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+36"/>
-        <location line="+3256"/>
+        <location line="+3367"/>
         <source>Fullscreen dashboard (F11)</source>
         <translation>全屏仪表盘(F11)</translation>
     </message>
     <message>
-        <location line="-3075"/>
+        <location line="-3186"/>
         <source>Rename Workspace</source>
         <translation>重命名工作区</translation>
     </message>
@@ -3935,7 +3978,7 @@ Drops: %2</source>
 %3</translation>
     </message>
     <message>
-        <location line="+426"/>
+        <location line="+436"/>
         <source>Close</source>
         <translation>关闭</translation>
     </message>
@@ -3945,7 +3988,7 @@ Drops: %2</source>
         <translation>%1：在 %2 找到</translation>
     </message>
     <message>
-        <location line="+339"/>
+        <location line="+376"/>
         <source>%1: trying %2</source>
         <translation>%1：正在尝试 %2</translation>
     </message>
@@ -4004,12 +4047,22 @@ Drops: %2</source>
         <translation>已将 &quot;%1&quot; 保存到库。</translation>
     </message>
     <message>
-        <location line="+599"/>
+        <location line="+288"/>
+        <source>not connected</source>
+        <translation>未连接</translation>
+    </message>
+    <message>
+        <location line="+34"/>
+        <source>Firmware</source>
+        <translation>固件</translation>
+    </message>
+    <message>
+        <location line="+362"/>
         <source>Update available: v%1</source>
         <translation>有可用更新: v%1</translation>
     </message>
     <message>
-        <location line="+12"/>
+        <location line="+43"/>
         <source>Up to date (v%1)</source>
         <translation>已是最新 (v%1)</translation>
     </message>
@@ -4027,13 +4080,13 @@ Drops: %2</source>
         <location line="+8"/>
         <location line="+9"/>
         <location line="+8"/>
-        <location line="+23"/>
-        <location line="+27"/>
+        <location line="+36"/>
+        <location line="+37"/>
         <source>Update</source>
         <translation>更新</translation>
     </message>
     <message>
-        <location line="-66"/>
+        <location line="-89"/>
         <source>Automatic installation requires running an AppImage. Download the AppImage from the release page.</source>
         <translation>自动安装需要运行 AppImage。请从发布页面下载 AppImage。</translation>
     </message>
@@ -4048,12 +4101,13 @@ Drops: %2</source>
         <translation>此版本没有用于校验下载的 SHA256SUMS.txt,因此无法自动安装。将改为打开发布页面。</translation>
     </message>
     <message>
-        <location line="+5"/>
+        <location line="-61"/>
+        <location line="+66"/>
         <source>Downloading TraceView %1...</source>
         <translation>正在下载 TraceView %1...</translation>
     </message>
     <message>
-        <location line="+10"/>
+        <location line="+23"/>
         <source>Confirm the installation in the Android installer.</source>
         <translation>请在 Android 安装程序中确认安装。</translation>
     </message>
@@ -4077,13 +4131,13 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>关闭应用</translation>
     </message>
     <message>
-        <location line="-3302"/>
-        <location line="+3052"/>
+        <location line="-3478"/>
+        <location line="+3163"/>
         <source>Devices</source>
         <translation>设备</translation>
     </message>
     <message>
-        <location line="-2977"/>
+        <location line="-3088"/>
         <source>Subscriptions</source>
         <translation>订阅</translation>
     </message>
@@ -4099,12 +4153,12 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>名称:</translation>
     </message>
     <message>
-        <location line="-2112"/>
+        <location line="-2147"/>
         <source>TraceView v%1</source>
         <translation>TraceView v%1</translation>
     </message>
     <message>
-        <location line="+2113"/>
+        <location line="+2148"/>
         <source>Workspace</source>
         <translation>工作区</translation>
     </message>
@@ -4130,23 +4184,23 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     </message>
     <message>
         <location line="+81"/>
-        <location line="+2550"/>
+        <location line="+2661"/>
         <source>Add widget</source>
         <translation>添加控件</translation>
     </message>
     <message>
-        <location line="-2547"/>
+        <location line="-2658"/>
         <source>Remove selected widget (%1)</source>
         <translation>删除所选控件(%1)</translation>
     </message>
     <message>
         <location line="+3"/>
-        <location line="+2557"/>
+        <location line="+2668"/>
         <source>Add device</source>
         <translation>添加设备</translation>
     </message>
     <message>
-        <location line="-2554"/>
+        <location line="-2665"/>
         <source>Remove selected device (%1)</source>
         <translation>删除所选设备(%1)</translation>
     </message>
@@ -4231,7 +4285,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>显示图层/属性面板</translation>
     </message>
     <message>
-        <location line="+292"/>
+        <location line="+302"/>
         <source>New Device</source>
         <translation>新设备</translation>
     </message>
@@ -4297,12 +4351,12 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>动效(&amp;O)</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="-1548"/>
+        <location filename="../lib/core/mainwindow.cpp" line="-1558"/>
         <source>Dashboard</source>
         <translation>仪表盘</translation>
     </message>
     <message>
-        <location line="+1906"/>
+        <location line="+1953"/>
         <source>%1: this BLE address now answers as a different robot (expected %2, got %3)</source>
         <translation>%1: 此 BLE 地址现在以另一台机器人身份应答 (应为 %2,实际为 %3)</translation>
     </message>
@@ -4334,13 +4388,13 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     </message>
     <message>
         <location line="+15"/>
-        <location line="+331"/>
+        <location line="+395"/>
         <location line="+4"/>
         <source>Open Project</source>
         <translation>打开项目</translation>
     </message>
     <message>
-        <location line="-248"/>
+        <location line="-312"/>
         <source>Open Log File</source>
         <translation>打开日志文件</translation>
     </message>
@@ -4350,7 +4404,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>BTP 日志 (*.blog)</translation>
     </message>
     <message>
-        <location line="+93"/>
+        <location line="+110"/>
         <source>OTA Update</source>
         <translation>OTA 更新</translation>
     </message>
@@ -4361,7 +4415,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     </message>
     <message>
         <location line="+20"/>
-        <location line="+224"/>
+        <location line="+271"/>
         <source>Settings</source>
         <translation>设置</translation>
     </message>
@@ -4648,130 +4702,624 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
 <context>
     <name>traceview::OtaClient</name>
     <message>
-        <location filename="../lib/ota/otaclient.cpp" line="+79"/>
-        <location line="+62"/>
-        <source>No OTA address configured for this device.</source>
-        <translation>此设备未配置 OTA 地址。</translation>
+        <location filename="../lib/ota/otaclient.cpp" line="+156"/>
+        <source>Something answered at this address, but not a TraceKit recovery.</source>
+        <translation>此地址有应答，但不是 TraceKit 恢复模式。</translation>
     </message>
     <message>
-        <location line="+26"/>
+        <location line="+20"/>
+        <source>No address for this device: connect it over TCP, or set its OTA address in Device Settings.</source>
+        <translation>此设备没有地址：请通过 TCP 连接它，或在设备设置中设置其 OTA 地址。</translation>
+    </message>
+    <message>
+        <location line="+20"/>
+        <location line="+110"/>
+        <source>No address for this device.</source>
+        <translation>此设备没有地址。</translation>
+    </message>
+    <message>
+        <location line="-103"/>
         <source>Couldn&apos;t open %1</source>
         <translation>无法打开 %1</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>%1 is not an ESP application image (use the firmware.bin of the build, not the merged or bootloader one).</source>
+        <translation>%1 不是 ESP 应用映像（请使用构建产物中的 firmware.bin，而不是合并版或 bootloader 映像）。</translation>
+    </message>
+    <message>
+        <location line="+32"/>
+        <source>The recovery is already writing another upload.</source>
+        <translation>恢复模式正在写入另一个上传。</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>The image has %1 KB; the app partition holds %2 KB.</source>
+        <translation>映像大小为 %1 KB；应用分区可容纳 %2 KB。</translation>
+    </message>
+    <message>
+        <location line="+15"/>
+        <source>No device password to sign the upload with.</source>
+        <translation>没有用于签名上传的设备密码。</translation>
+    </message>
+    <message>
+        <location line="+32"/>
+        <source>The device refused the signature: wrong password (the device&apos;s password E). %1</source>
+        <translation>设备拒绝了签名：密码错误（设备的密码 E）。%1</translation>
+    </message>
+    <message>
+        <location line="+35"/>
+        <source>No device password to sign with.</source>
+        <translation>没有用于签名的设备密码。</translation>
+    </message>
+</context>
+<context>
+    <name>traceview::OtaDevicePanel</name>
+    <message>
+        <location filename="../lib/ota/otadevicepanel.cpp" line="+76"/>
+        <source>Asked for (btp -recovery).</source>
+        <translation>应请求进入（btp -recovery）。</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>The application kept crashing.</source>
+        <translation>应用反复崩溃。</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>After a factory reset.</source>
+        <translation>恢复出厂设置之后。</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>No valid application, or the boot chose it.</source>
+        <translation>没有有效的应用，或由启动过程选择。</translation>
+    </message>
+    <message>
+        <location line="+38"/>
+        <source>Cannot read the file: %1</source>
+        <translation>无法读取文件：%1</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Not an ESP application image (it must start with 0xE9). Use the application .bin from build/, not the merged one.</source>
+        <translation>不是 ESP 应用映像（必须以 0xE9 开头）。请使用 build/ 中的应用 .bin，而不是合并版。</translation>
+    </message>
+    <message>
+        <location line="+178"/>
+        <source>Installed</source>
+        <translation>已安装</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>Firmware</source>
+        <translation>固件</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Built</source>
+        <translation>构建</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Recovery</source>
+        <translation>恢复模式</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Address</source>
+        <translation>地址</translation>
+    </message>
+    <message>
+        <location line="+25"/>
+        <location line="+166"/>
+        <location line="+372"/>
+        <source>Choose file…</source>
+        <translation>选择文件…</translation>
+    </message>
+    <message>
+        <location line="-500"/>
+        <source>New firmware</source>
+        <translation>新固件</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>Restart into the recovery</source>
+        <translation>重启进入恢复模式</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Send the image</source>
+        <translation>发送映像</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Start the new firmware</source>
+        <translation>启动新固件</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <location line="+109"/>
+        <source>Back to the application</source>
+        <translation>返回应用</translation>
+    </message>
+    <message>
+        <location line="-108"/>
+        <source>Leave the recovery for the application already installed.</source>
+        <translation>退出恢复模式，回到已安装的应用。</translation>
+    </message>
+    <message>
+        <location line="+15"/>
+        <location line="+93"/>
+        <location line="+508"/>
+        <source>Install</source>
+        <translation>安装</translation>
+    </message>
+    <message>
+        <location line="-508"/>
+        <location line="+372"/>
+        <source>Change…</source>
+        <translation>更改…</translation>
+    </message>
+    <message>
+        <location line="-371"/>
+        <location line="+507"/>
+        <source>Restart and install</source>
+        <translation>重启并安装</translation>
+    </message>
+    <message>
+        <location line="-475"/>
+        <source>%1 did not answer as a recovery in %2 s. Is it on a Wi-Fi network this computer reaches? Without a known network the recovery raises its own (&quot;btp-&lt;name&gt;&quot;).</source>
+        <translation>%1 在 %2 s 内未以恢复模式应答。它是否在这台电脑可访问的 Wi-Fi 网络上？没有已知网络时，恢复模式会创建自己的网络（&quot;btp-&lt;name&gt;&quot;）。</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>It came back running %1, not %2: the new firmware did not start and the device went back to the previous one.</source>
+        <translation>设备恢复后运行的是 %1，而不是 %2：新固件未能启动，设备已回到之前的固件。</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>The recovery accepted the image and started it. Connect the device to see it running.</source>
+        <translation>恢复模式已接受映像并启动了它。连接设备即可看到其运行。</translation>
+    </message>
+    <message>
+        <location line="+41"/>
+        <source>%1 is running %2.</source>
+        <translation>%1 正在运行 %2。</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>%1: running %2</source>
+        <translation>%1：正在运行 %2</translation>
+    </message>
+    <message>
+        <location line="+21"/>
+        <location line="+14"/>
+        <source>%1: %2</source>
+        <translation>%1: %2</translation>
+    </message>
+    <message>
+        <location line="+48"/>
+        <source>Select Firmware</source>
+        <translation>选择固件</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Firmware Binary (*.bin);;All Files (*)</source>
+        <translation>固件二进制文件 (*.bin);;所有文件 (*)</translation>
+    </message>
+    <message>
+        <location line="+20"/>
+        <location line="+21"/>
+        <source>Install Firmware</source>
+        <translation>安装固件</translation>
+    </message>
+    <message>
+        <location line="-20"/>
+        <source>Password of %1 (the one its key was provisioned with). It stays on this computer: the upload is signed with it.</source>
+        <translation>%1 的密码（配置其密钥时所用的密码）。它只保存在这台电脑上：用于签名上传。</translation>
+    </message>
+    <message>
+        <location line="+21"/>
+        <source>This image was built for %1, and %2 is an %3. Install it anyway?</source>
+        <translation>此映像是为 %1 构建的，而 %2 是 %3。仍要安装吗？</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Install anyway</source>
+        <translation>仍然安装</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Cancel</source>
+        <translation>取消</translation>
+    </message>
+    <message>
+        <location line="+38"/>
+        <source>Leaving the recovery…</source>
+        <translation>正在退出恢复模式…</translation>
+    </message>
+    <message>
+        <location line="+50"/>
+        <source>In the recovery</source>
+        <translation>处于恢复模式</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Receiving a firmware</source>
+        <translation>正在接收固件</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>On its own Wi-Fi network: %1.</source>
+        <translation>在自己的 Wi-Fi 网络上：%1。</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Running</source>
+        <translation>运行中</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Install restarts it into the recovery, sends the image and starts it.</source>
+        <translation>安装会将其重启进入恢复模式，发送映像并启动它。</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>No address</source>
+        <translation>无地址</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Connect it once over Wi-Fi so it reports where its recovery answers, or set the OTA address in Device Settings.</source>
+        <translation>通过 Wi-Fi 连接一次，让它上报恢复模式的应答地址，或在设备设置中设置 OTA 地址。</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Checking…</source>
+        <translation>正在检查…</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Offline</source>
+        <translation>离线</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Not connected and no recovery answers at %1%2. Connect it to install a firmware.</source>
+        <translation>未连接，且 %1%2 处没有恢复模式应答。请连接设备以安装固件。</translation>
+    </message>
+    <message>
+        <location line="+17"/>
+        <source>none: waiting for a firmware</source>
+        <translation>无：等待固件</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>%1 · %2 · application up to %3</source>
+        <translation>%1 · %2 · 应用最大 %3</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>%1 · ESP-IDF %2</source>
+        <translation>%1 · ESP-IDF %2</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>details once it is in the recovery</source>
+        <translation>进入恢复模式后显示详情</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>%1 · details once it is in the recovery</source>
+        <translation>%1 · 进入恢复模式后显示详情</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>From the device itself (the address it reported, or its TCP host).</source>
+        <translation>来自设备本身（其上报的地址或其 TCP 主机）。</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Set in Device Settings.</source>
+        <translation>在设备设置中设置。</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>Drop the application .bin here, or click to choose it</source>
+        <translation>将应用 .bin 拖放到此处，或点击选择</translation>
+    </message>
+    <message>
+        <location line="+14"/>
+        <source>built %1</source>
+        <translation>构建于 %1</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>saved %1</source>
+        <translation>保存于 %1</translation>
+    </message>
+    <message>
+        <location line="+14"/>
+        <source>&lt;b&gt;%1&lt;/b&gt; %2</source>
+        <translation>&lt;b&gt;%1&lt;/b&gt; %2</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>ESP application image</source>
+        <translation>ESP 应用映像</translation>
+    </message>
+    <message>
+        <location line="+13"/>
+        <source>built for %1, the device is an %2</source>
+        <translation>为 %1 构建，设备是 %2</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>a different project from the installed %1</source>
+        <translation>与已安装的 %1 不是同一项目</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>the same version as installed</source>
+        <translation>与已安装的版本相同</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>replaces %1</source>
+        <translation>替换 %1</translation>
+    </message>
+    <message>
+        <location line="+12"/>
+        <source>Too large: %1 for a partition of %2.</source>
+        <translation>过大：%1，分区只有 %2。</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>%1% of the application partition (%2).</source>
+        <translation>占应用分区的 %1%（%2）。</translation>
+    </message>
+    <message>
+        <location line="+20"/>
+        <source>Restarting %1 and waiting for its recovery to answer… (%2 s)</source>
+        <translation>正在重启 %1 并等待其恢复模式应答…（%2 s）</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>Sending…</source>
+        <translation>发送中…</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Sending… %1% of %2 (compressed from %3)</source>
+        <translation>发送中… %2 的 %1%（压缩自 %3）</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Sending… %1% of %2</source>
+        <translation>发送中… %2 的 %1%</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Image accepted. Starting the new firmware and waiting for it to connect…</source>
+        <translation>映像已接受。正在启动新固件并等待其连接…</translation>
+    </message>
+    <message>
+        <location line="+30"/>
+        <source>Choose a firmware image first.</source>
+        <translation>请先选择固件映像。</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Connect the device, or put it in the recovery.</source>
+        <translation>请连接设备，或使其进入恢复模式。</translation>
     </message>
 </context>
 <context>
     <name>traceview::OtaTab</name>
     <message>
-        <location filename="../lib/ota/otatab.cpp" line="+71"/>
+        <location filename="../lib/ota/otatab.cpp" line="+81"/>
         <source>Name</source>
         <translation>名称</translation>
     </message>
     <message>
-        <location line="+0"/>
-        <source>OTA Address</source>
-        <translation>OTA 地址</translation>
-    </message>
-    <message>
-        <location line="+0"/>
-        <source>OTA Online</source>
-        <translation>OTA 在线</translation>
-    </message>
-    <message>
-        <location line="+1"/>
-        <source>Firmware</source>
-        <translation>固件</translation>
-    </message>
-    <message>
-        <location line="+0"/>
-        <source>Password</source>
-        <translation>密码</translation>
-    </message>
-    <message>
-        <location line="+0"/>
-        <source>Upload</source>
-        <translation>上传</translation>
-    </message>
-    <message>
-        <location line="+71"/>
-        <source>(not configured)</source>
-        <translation>(未配置)</translation>
-    </message>
-    <message>
-        <location line="+4"/>
-        <location line="+8"/>
-        <location line="+122"/>
-        <source>—</source>
-        <translation>—</translation>
-    </message>
-    <message>
-        <location line="-130"/>
+        <location line="+72"/>
         <source>Checking…</source>
         <translation>正在检查…</translation>
     </message>
     <message>
-        <location line="+17"/>
-        <source>OTA password</source>
-        <translation>OTA 密码</translation>
-    </message>
-    <message>
-        <location line="+4"/>
-        <source>Remember</source>
-        <translation>记住</translation>
-    </message>
-    <message>
-        <location line="+2"/>
-        <source>Save this password in the project file.</source>
-        <translation>将此密码保存到项目文件中。</translation>
-    </message>
-    <message>
-        <location line="+25"/>
+        <location line="+10"/>
         <source>Upload…</source>
         <translation>上传…</translation>
     </message>
     <message>
-        <location line="+4"/>
-        <location line="+147"/>
-        <source>Set this device&apos;s OTA address in Device Settings first.</source>
-        <translation>请先在“设备设置”中设置此设备的 OTA 地址。</translation>
-    </message>
-    <message>
-        <location line="-142"/>
+        <location line="+233"/>
         <source>Uploading… %p%</source>
         <translation>上传中… %p%</translation>
     </message>
     <message>
-        <location line="+81"/>
+        <location line="-90"/>
         <source>Offline</source>
         <translation>离线</translation>
     </message>
     <message>
+        <location line="-248"/>
+        <source>asked for (btp -recovery)</source>
+        <translation>应请求进入（btp -recovery）</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>the application kept crashing</source>
+        <translation>应用反复崩溃</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>factory reset</source>
+        <translation>恢复出厂设置</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>no valid application, or the boot chose it</source>
+        <translation>没有有效的应用，或由启动过程选择</translation>
+    </message>
+    <message>
+        <location line="+19"/>
+        <source>Address</source>
+        <translation>地址</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>State</source>
+        <translation>状态</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Application</source>
+        <translation>应用</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Recovery</source>
+        <translation>恢复模式</translation>
+    </message>
+    <message>
+        <location line="+62"/>
+        <location line="+70"/>
+        <location line="+75"/>
+        <source>(none)</source>
+        <translation>（无）</translation>
+    </message>
+    <message>
+        <location line="-142"/>
+        <source>Connect the device over TCP (or once, so it reports its address), or set its OTA address in Device Settings.</source>
+        <translation>通过 TCP 连接设备（或连接一次，让它上报地址），或在设备设置中设置其 OTA 地址。</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>From the device itself (its TCP host or the address it reported).</source>
+        <translation>来自设备本身（其 TCP 主机或其上报的地址）。</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Set in Device Settings.</source>
+        <translation>在设备设置中设置。</translation>
+    </message>
+    <message>
+        <location line="+16"/>
+        <source>Send a firmware .bin. If the device is running its application and connected, it is restarted into the recovery first.</source>
+        <translation>发送固件 .bin。如果设备正在运行应用且已连接，会先将其重启进入恢复模式。</translation>
+    </message>
+    <message>
         <location line="+7"/>
+        <source>To app</source>
+        <translation>进入应用</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Leave the recovery for the application already there.</source>
+        <translation>退出恢复模式，回到现有的应用。</translation>
+    </message>
+    <message>
+        <location line="+16"/>
+        <location line="+192"/>
+        <source>Restarting…</source>
+        <translation>正在重启…</translation>
+    </message>
+    <message>
+        <location line="-118"/>
+        <source>%1 did not answer as a recovery in %2 s. Is it on a Wi-Fi network this computer can reach? Without a known network, the recovery raises its own (&quot;btp-&lt;name&gt;&quot;).</source>
+        <translation>%1 在 %2 s 内未以恢复模式应答。它是否在这台电脑可访问的 Wi-Fi 网络上？没有已知网络时，恢复模式会创建自己的网络（&quot;btp-&lt;name&gt;&quot;）。</translation>
+    </message>
+    <message>
+        <location line="+15"/>
+        <source>In recovery</source>
+        <translation>处于恢复模式</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Writing…</source>
+        <translation>写入中…</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Why: %1</source>
+        <translation>原因：%1</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Own network: %1</source>
+        <translation>自有网络：%1</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>%1, up to %2 KB</source>
+        <translation>%1，最大 %2 KB</translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <source>Running the app</source>
+        <translation>正在运行应用</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Upload restarts it into the recovery first.</source>
+        <translation>上传会先将其重启进入恢复模式。</translation>
+    </message>
+    <message>
+        <location line="+4"/>
         <source>Not reachable</source>
         <translation>无法访问</translation>
     </message>
     <message>
-        <location line="+2"/>
-        <source>Online (busy)</source>
-        <translation>在线（忙碌）</translation>
+        <location line="+65"/>
+        <source>%1 will restart into its recovery and receive %2. Then it starts the new firmware by itself.</source>
+        <translation>%1 将重启进入恢复模式并接收 %2。随后会自行启动新固件。</translation>
     </message>
     <message>
-        <location line="+2"/>
-        <source>A firmware write is already in progress on the robot.</source>
-        <translation>机器人上已有固件写入正在进行中。</translation>
+        <location line="+3"/>
+        <source>Restart and upload</source>
+        <translation>重启并上传</translation>
     </message>
     <message>
-        <location line="+2"/>
-        <source>Online</source>
-        <translation>在线</translation>
+        <location line="+0"/>
+        <source>Cancel</source>
+        <translation>取消</translation>
     </message>
     <message>
-        <location line="+36"/>
+        <location line="+68"/>
+        <location line="+6"/>
+        <location line="+9"/>
+        <location line="+2"/>
+        <source>%1: %2</source>
+        <translation>%1: %2</translation>
+    </message>
+    <message>
+        <location line="-197"/>
+        <location line="+61"/>
+        <location line="+22"/>
+        <location line="+25"/>
+        <location line="+78"/>
         <location line="+11"/>
         <source>Firmware Upload</source>
         <translation>固件上传</translation>
     </message>
     <message>
-        <location line="+6"/>
+        <location line="-149"/>
+        <source>Reported by the running application.</source>
+        <translation>由正在运行的应用上报。</translation>
+    </message>
+    <message>
+        <location line="+14"/>
+        <source>Password E of %1 (the one its key was provisioned with). It stays on this computer: the upload is signed with it.</source>
+        <translation>%1 的密码 E（配置其密钥时所用的密码）。它只保存在这台电脑上：用于签名上传。</translation>
+    </message>
+    <message>
+        <location line="+22"/>
+        <source>%1 is not in the recovery, and TraceView is not connected to it to restart it there. Connect it, or send &quot;btp -recovery&quot; from its terminal.</source>
+        <translation>%1 不在恢复模式，且 TraceView 未连接到它，无法将其重启进入恢复模式。请连接它，或从其终端发送 &quot;btp -recovery&quot;。</translation>
+    </message>
+    <message>
+        <location line="+7"/>
         <source>Select Firmware</source>
         <translation>选择固件</translation>
     </message>
@@ -5387,7 +5935,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
 <context>
     <name>traceview::SettingsPage</name>
     <message>
-        <location filename="../lib/core/settingspage.cpp" line="+206"/>
+        <location filename="../lib/core/settingspage.cpp" line="+210"/>
         <source>Settings</source>
         <translation>设置</translation>
     </message>
@@ -5423,19 +5971,19 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     </message>
     <message>
         <location line="-234"/>
-        <location line="+326"/>
+        <location line="+356"/>
         <source>Diagnostics</source>
         <translation>诊断</translation>
     </message>
     <message>
-        <location line="-325"/>
-        <location line="+377"/>
+        <location line="-355"/>
+        <location line="+407"/>
         <location line="+5"/>
         <source>Updates</source>
         <translation>更新</translation>
     </message>
     <message>
-        <location line="-340"/>
+        <location line="-370"/>
         <source>Project and startup preferences shared by the application.</source>
         <translation>应用程序共享的项目和启动偏好设置。</translation>
     </message>
@@ -5718,17 +6266,32 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>通过 MCP 连接的助手可以创建工作区和控件、读取遥测数据并截取此窗口的屏幕。它对仪表板的修改可以撤销。</translation>
     </message>
     <message>
-        <location line="+11"/>
-        <source>To connect Claude Code, run this once in a terminal:</source>
-        <translation>要连接 Claude Code，请在终端中运行一次：</translation>
+        <location line="+37"/>
+        <source>Copy</source>
+        <translation>复制</translation>
     </message>
     <message>
-        <location line="+7"/>
-        <source>Copy command</source>
-        <translation>复制命令</translation>
+        <location line="+9"/>
+        <source>Claude Code: run this once in a terminal.</source>
+        <translation>Claude Code：在终端中运行一次此命令。</translation>
     </message>
     <message>
-        <location line="+11"/>
+        <location line="+1"/>
+        <source>Registers TraceView for every folder (--scope user), so Claude Code in the terminal, the VS Code extension and the Code tab of the Claude desktop app all see it.</source>
+        <translation>为所有文件夹注册 TraceView（--scope user），这样终端中的 Claude Code、VS Code 扩展和 Claude 桌面应用的 Code 标签页都能看到它。</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Claude desktop app (chat): add this to claude_desktop_config.json.</source>
+        <translation>Claude 桌面应用（聊天）：将此内容添加到 claude_desktop_config.json。</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Paste it inside the file&apos;s &quot;mcpServers&quot; object (Claude desktop app: Settings &gt; Developer &gt; Edit Config), then restart the app.</source>
+        <translation>将其粘贴到文件的 &quot;mcpServers&quot; 对象中（Claude 桌面应用：Settings &gt; Developer &gt; Edit Config），然后重启该应用。</translation>
+    </message>
+    <message>
+        <location line="+8"/>
         <source>Keep enough history for investigation without letting long-running sessions use unbounded memory.</source>
         <translation>保留足够的历史记录用于排查,同时避免长时间会话无限占用内存。</translation>
     </message>
@@ -6107,9 +6670,322 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     </message>
 </context>
 <context>
+    <name>traceview::TraceKitDialog</name>
+    <message>
+        <location filename="../lib/devices/tracekitdialog.cpp" line="+71"/>
+        <source>%1 — TraceKit</source>
+        <translation>%1 — TraceKit</translation>
+    </message>
+    <message>
+        <location line="+34"/>
+        <source>Settings</source>
+        <translation>设置</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Wi-Fi</source>
+        <translation>Wi-Fi</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Actions</source>
+        <translation>操作</translation>
+    </message>
+    <message>
+        <location line="+111"/>
+        <source>Firmware %1</source>
+        <translation>固件 %1</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>TraceKit %1</source>
+        <translation>TraceKit %1</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>TraceKit device</source>
+        <translation>TraceKit 设备</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Connected</source>
+        <translation>已连接</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Not connected</source>
+        <translation>未连接</translation>
+    </message>
+    <message>
+        <location line="+15"/>
+        <source>Not connected: connect the device to change it.</source>
+        <translation>未连接：请连接设备后再更改。</translation>
+    </message>
+    <message>
+        <location line="+16"/>
+        <source>Setting</source>
+        <translation>设置项</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Value</source>
+        <translation>值</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <location line="+129"/>
+        <source>Default</source>
+        <translation>默认</translation>
+    </message>
+    <message>
+        <location line="-120"/>
+        <source>Reload</source>
+        <translation>重新加载</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Apply</source>
+        <translation>应用</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Saves every changed value on the device (cfg -set).</source>
+        <translation>将所有已更改的值保存到设备上（cfg -set）。</translation>
+    </message>
+    <message>
+        <location line="+19"/>
+        <source>Reading the settings…</source>
+        <translation>正在读取设置…</translation>
+    </message>
+    <message>
+        <location line="+13"/>
+        <source>Could not read the settings: %1</source>
+        <translation>无法读取设置：%1</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>The device did not describe its settings (TraceKit too old?).</source>
+        <translation>设备未描述其设置（TraceKit 版本过旧？）。</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>This device declares no settings.</source>
+        <translation>此设备未声明任何设置。</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Reading the settings… %1 of %2</source>
+        <translation>正在读取设置… 第 %1 / %2 项</translation>
+    </message>
+    <message numerus="yes">
+        <location line="+4"/>
+        <source>%n setting(s), saved on the device.</source>
+        <translation>
+            <numerusform>%n 项设置，保存在设备上。</numerusform>
+        </translation>
+    </message>
+    <message>
+        <location line="+16"/>
+        <source>Takes effect after a reboot.</source>
+        <translation>重启后生效。</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>Range %1 to %2</source>
+        <translation>范围 %1 至 %2</translation>
+    </message>
+    <message>
+        <location line="+41"/>
+        <source>Back to the default, now (cfg -reset).</source>
+        <translation>立即恢复为默认值（cfg -reset）。</translation>
+    </message>
+    <message>
+        <location line="+29"/>
+        <source>Nothing changed.</source>
+        <translation>没有更改。</translation>
+    </message>
+    <message>
+        <location line="+48"/>
+        <source>Add…</source>
+        <translation>添加…</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Remove</source>
+        <translation>移除</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Reboot to use them</source>
+        <translation>重启以使用它们</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>Passwords are sent to the device over the encrypted session and never read back. Changes take effect after a reboot; the recovery uses the same networks.</source>
+        <translation>密码通过加密会话发送到设备，且不会被读回。更改在重启后生效；恢复模式使用相同的网络。</translation>
+    </message>
+    <message>
+        <location line="+17"/>
+        <source>Reading the networks…</source>
+        <translation>正在读取网络…</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Could not read the networks: %1</source>
+        <translation>无法读取网络：%1</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>  (in the firmware)</source>
+        <translation>  （固件内置）</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>No networks: the device only works over a cable.</source>
+        <translation>没有网络：设备只能通过线缆工作。</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>%1 of %2 networks; tried in this order.</source>
+        <translation>%1 / %2 个网络；按此顺序尝试。</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <location line="+5"/>
+        <location line="+3"/>
+        <source>Add a network</source>
+        <translation>添加网络</translation>
+    </message>
+    <message>
+        <location line="-8"/>
+        <source>Network name (SSID):</source>
+        <translation>网络名称 (SSID)：</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>A name with a comma cannot be added from here.</source>
+        <translation>无法从此处添加含逗号的名称。</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Password of %1 (empty: open network):</source>
+        <translation>%1 的密码（留空：开放网络）：</translation>
+    </message>
+    <message>
+        <location line="+15"/>
+        <source>Remove a network</source>
+        <translation>移除网络</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Pick a network from the list (the one in the firmware cannot be removed from here).</source>
+        <translation>请从列表中选择一个网络（固件内置的网络无法从此处移除）。</translation>
+    </message>
+    <message>
+        <location line="+27"/>
+        <source>Set the clock</source>
+        <translation>设置时钟</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>From this computer, unless the device already has the time from the internet.</source>
+        <translation>使用这台电脑的时间，除非设备已从互联网获取时间。</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Status</source>
+        <translation>状态</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Link, memory, time, power and sleep.</source>
+        <translation>链路、内存、时间、电源和休眠。</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Keep awake 10 min</source>
+        <translation>保持唤醒 10 分钟</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>A sleeping sensor stays up for a session or an update.</source>
+        <translation>让休眠的传感器在一次会话或更新期间保持唤醒。</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Reboot</source>
+        <translation>重启</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Restarts the application.</source>
+        <translation>重启应用。</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Recovery</source>
+        <translation>恢复模式</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Restarts into the recovery, waiting for a firmware (Firmware page).</source>
+        <translation>重启进入恢复模式，等待固件（固件页面）。</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>USB bootloader</source>
+        <translation>USB 引导程序</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>ROM download mode for 30 s: flash over the cable without the BOOT button.</source>
+        <translation>ROM 下载模式 30 s：无需按 BOOT 键即可通过线缆烧录。</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Factory reset…</source>
+        <translation>恢复出厂设置…</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Erases the application and the files; keeps key, Wi-Fi and settings.</source>
+        <translation>擦除应用和文件；保留密钥、Wi-Fi 和设置。</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Factory reset</source>
+        <translation>恢复出厂设置</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Erase the application and the files of %1? It then waits in the recovery for a new firmware.</source>
+        <translation>擦除 %1 的应用和文件？之后它会在恢复模式中等待新固件。</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Erase</source>
+        <translation>擦除</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Cancel</source>
+        <translation>取消</translation>
+    </message>
+    <message>
+        <location line="+22"/>
+        <source>ok</source>
+        <translation>成功</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>failed</source>
+        <translation>失败</translation>
+    </message>
+</context>
+<context>
     <name>traceview::UpdateAvailableDialog</name>
     <message>
-        <location filename="../lib/core/updateavailabledialog.cpp" line="+14"/>
+        <location filename="../lib/core/updateavailabledialog.cpp" line="+15"/>
         <source>Update Available</source>
         <translation>有可用更新</translation>
     </message>
@@ -6119,12 +6995,12 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>&lt;b&gt;有可用更新&lt;/b&gt;</translation>
     </message>
     <message>
-        <location line="+4"/>
+        <location line="+5"/>
         <source>A new update is available. Do you want to update?</source>
         <translation>有新的更新可用。是否立即更新？</translation>
     </message>
     <message>
-        <location line="+4"/>
+        <location line="+5"/>
         <source>New version: v%1&lt;br&gt;Your version: v%2</source>
         <translation>新版本：v%1&lt;br&gt;您的版本：v%2</translation>
     </message>
@@ -6139,10 +7015,12 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>立即更新</translation>
     </message>
     <message>
+        <location line="-14"/>
         <source>A new update has been downloaded and is ready to install.</source>
         <translation>新的更新已下载，可以安装。</translation>
     </message>
     <message>
+        <location line="+14"/>
         <source>Install Now</source>
         <translation>立即安装</translation>
     </message>
@@ -6168,17 +7046,17 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>无法下载 SHA256SUMS.txt: %1</translation>
     </message>
     <message>
-        <location line="+59"/>
+        <location line="+84"/>
         <source>Couldn&apos;t download %1: %2</source>
         <translation>无法下载 %1: %2</translation>
     </message>
     <message>
-        <location line="-53"/>
+        <location line="-78"/>
         <source>%1 is not listed in SHA256SUMS.txt.</source>
         <translation>%1 未列在 SHA256SUMS.txt 中。</translation>
     </message>
     <message>
-        <location line="+65"/>
+        <location line="+90"/>
         <source>Checksum mismatch for %1 -- the download may be corrupted.</source>
         <translation>%1 的校验和不匹配 -- 下载可能已损坏。</translation>
     </message>

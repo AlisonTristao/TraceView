@@ -43,7 +43,7 @@ Allow it to connect devices and send them commands until AI assistant access is 
         <translation>Изменить виджет (ИИ-ассистент)</translation>
     </message>
     <message>
-        <location line="+339"/>
+        <location line="+338"/>
         <source>New Project</source>
         <translation>Новый проект</translation>
     </message>
@@ -88,8 +88,8 @@ Allow it to connect devices and send them commands until AI assistant access is 
         <translation>ИИ-ассистент сохранил проект в %1.</translation>
     </message>
     <message>
-        <location filename="../lib/core/agentdevicetools.cpp" line="+189"/>
-        <location line="+50"/>
+        <location filename="../lib/core/agentdevicetools.cpp" line="+184"/>
+        <location line="+49"/>
         <source>set up how a device is reached</source>
         <translation>настроить подключение к устройству</translation>
     </message>
@@ -110,7 +110,7 @@ Allow it to connect devices and send them commands until AI assistant access is 
         <translation>запустить скрипт, управляющий устройством</translation>
     </message>
     <message>
-        <location line="+95"/>
+        <location line="+107"/>
         <source>Firmware Update</source>
         <translation>Обновление прошивки</translation>
     </message>
@@ -295,7 +295,7 @@ Allow it to connect devices and send them commands until AI assistant access is 
     </message>
     <message>
         <location line="+9"/>
-        <location line="+558"/>
+        <location line="+569"/>
         <location line="+231"/>
         <source>--</source>
         <translation>--</translation>
@@ -307,12 +307,11 @@ Allow it to connect devices and send them commands until AI assistant access is 
     </message>
     <message>
         <location line="+6"/>
-        <location line="+304"/>
         <source>%1  %2</source>
         <translation>%1  %2</translation>
     </message>
     <message>
-        <location line="+133"/>
+        <location line="+430"/>
         <source>A-B %1 s</source>
         <translation>A-B %1 с</translation>
     </message>
@@ -382,7 +381,7 @@ Allow it to connect devices and send them commands until AI assistant access is 
         <translation>%1: %2</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/chartpainting.cpp" line="+888"/>
+        <location filename="../lib/dashboard/widgets/chartpainting.cpp" line="+920"/>
         <source>Time (s)</source>
         <translation>Время (с)</translation>
     </message>
@@ -740,7 +739,7 @@ Allow it to connect devices and send them commands until AI assistant access is 
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="+143"/>
+        <location filename="../lib/core/mainwindow.cpp" line="+148"/>
         <source>TraceView Project (*.tvproj)</source>
         <translation>Проект TraceView (*.tvproj)</translation>
     </message>
@@ -1615,7 +1614,7 @@ Allow it to connect devices and send them commands until AI assistant access is 
 <context>
     <name>traceview::BtpBackend</name>
     <message>
-        <location filename="../lib/protocol/btpbackend.cpp" line="+346"/>
+        <location filename="../lib/protocol/btpbackend.cpp" line="+355"/>
         <source>Robot 0x%1 is online but its catalog has not arrived — check the hub (hub -manifest)</source>
         <translation>Робот 0x%1 в сети, но его каталог не пришёл — проверьте хаб (hub -manifest)</translation>
     </message>
@@ -1680,7 +1679,7 @@ Allow it to connect devices and send them commands until AI assistant access is 
         <translation>устройство вернулось в консоль (BTP/1 CONSOLE)</translation>
     </message>
     <message>
-        <location line="+246"/>
+        <location line="+250"/>
         <source>Dropped an unsealed frame on a sealed direct session (check the robot&apos;s channel-B password)</source>
         <translation>Отброшен незапечатанный фрейм в запечатанном прямом сеансе (проверьте пароль канала B робота)</translation>
     </message>
@@ -1690,7 +1689,22 @@ Allow it to connect devices and send them commands until AI assistant access is 
         <translation>Отброшен незапечатанный фрейм в запечатанном канале хаба (проверьте пароль канала B робота)</translation>
     </message>
     <message>
-        <location line="+126"/>
+        <location line="+18"/>
+        <source>the device encrypts its messages, and no password is set for it</source>
+        <translation>устройство шифрует свои сообщения, а пароль для него не задан</translation>
+    </message>
+    <message>
+        <location line="+18"/>
+        <source>its messages do not open with the password set (wrong password?)</source>
+        <translation>его сообщения не расшифровываются заданным паролем (неверный пароль?)</translation>
+    </message>
+    <message>
+        <location line="+24"/>
+        <source>Can&apos;t read the device: %1</source>
+        <translation>Не удаётся прочитать устройство: %1</translation>
+    </message>
+    <message>
+        <location line="+85"/>
         <source>transport rejected an outbound BTP frame: %1</source>
         <translation>транспорт отклонил исходящий фрейм BTP: %1</translation>
     </message>
@@ -1705,7 +1719,7 @@ Allow it to connect devices and send them commands until AI assistant access is 
         <translation>ввод терминала не отправлен: не удалось запечатать</translation>
     </message>
     <message>
-        <location line="-523"/>
+        <location line="-546"/>
         <source>BTP handshake failed: %1</source>
         <translation>Ошибка установления соединения BTP: %1</translation>
     </message>
@@ -2194,32 +2208,61 @@ Allowed: %1</source>
 <context>
     <name>traceview::CommandClient</name>
     <message>
-        <location filename="../lib/protocol/commandclient.cpp" line="+33"/>
+        <location filename="../lib/protocol/commandclient.cpp" line="+54"/>
+        <source>not connected to a device that takes commands</source>
+        <translation>нет подключения к устройству, принимающему команды</translation>
+    </message>
+    <message>
+        <location line="+4"/>
         <source>command not sent: endpoint key not configured</source>
         <translation>команда не отправлена: ключ конечной точки не настроен</translation>
     </message>
     <message>
-        <location line="+6"/>
+        <location line="+5"/>
         <source>command not sent: robot manifest not received yet</source>
         <translation>команда не отправлена: манифест робота ещё не получен</translation>
     </message>
     <message>
-        <location line="+11"/>
+        <location line="+14"/>
         <source>command not sent: could not encode or seal request</source>
         <translation>команда не отправлена: не удалось закодировать или запечатать запрос</translation>
     </message>
-    <message>
-        <location line="+18"/>
-        <source>command timed out waiting for a result</source>
-        <translation>истекло время ожидания результата команды</translation>
+    <message numerus="yes">
+        <location line="+1"/>
+        <source>command not sent: %n command(s) still waiting for a result</source>
+        <translation>
+            <numerusform>команда не отправлена: %n команда ещё ждёт результата</numerusform>
+            <numerusform>команда не отправлена: %n команды ещё ждут результата</numerusform>
+            <numerusform>команда не отправлена: %n команд ещё ждут результата</numerusform>
+        </translation>
     </message>
     <message>
-        <location line="+10"/>
+        <location line="+45"/>
+        <source>no result within 5 s</source>
+        <translation>нет результата за 5 s</translation>
+    </message>
+    <message>
+        <location line="+16"/>
+        <source>%1: no result within 5 s (it may still be running)</source>
+        <translation>%1: нет результата за 5 s (возможно, ещё выполняется)</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>%1: no result within 5 s; it may still be running</source>
+        <translation>%1: нет результата за 5 s; возможно, ещё выполняется</translation>
+    </message>
+    <message>
+        <location line="+9"/>
         <source>command failed (status 0x%1, error 0x%2): %3</source>
         <translation>команда не выполнена (статус 0x%1, ошибка 0x%2): %3</translation>
     </message>
     <message>
-        <location line="+7"/>
+        <location line="+8"/>
+        <source>%1 failed (status 0x%2)</source>
+        <translation>%1: ошибка (статус 0x%2)</translation>
+    </message>
+    <message>
+        <location line="+5"/>
         <source>command result: (empty)</source>
         <translation>результат команды: (пусто)</translation>
     </message>
@@ -2643,7 +2686,7 @@ Allowed: %1</source>
 <context>
     <name>traceview::DeviceCard</name>
     <message>
-        <location filename="../lib/devices/devicecard.cpp" line="+268"/>
+        <location filename="../lib/devices/devicecard.cpp" line="+302"/>
         <source>%1 dBm</source>
         <translation>%1 dBm</translation>
     </message>
@@ -2664,6 +2707,11 @@ Allowed: %1</source>
     </message>
     <message>
         <location line="+3"/>
+        <source>wrong password: can&apos;t read the device</source>
+        <translation>неверный пароль: не удаётся прочитать устройство</translation>
+    </message>
+    <message>
+        <location line="+2"/>
         <source>port open, waiting for BTP session</source>
         <translation>порт открыт, ожидание сессии BTP</translation>
     </message>
@@ -2683,12 +2731,12 @@ Allowed: %1</source>
         <translation>через %1</translation>
     </message>
     <message>
-        <location line="+7"/>
+        <location line="+9"/>
         <source>saved from the last connection</source>
         <translation>сохранено при последнем подключении</translation>
     </message>
     <message>
-        <location line="+20"/>
+        <location line="+22"/>
         <source>%1: %2</source>
         <translation>%1: %2</translation>
     </message>
@@ -2752,24 +2800,21 @@ Allowed: %1</source>
     </message>
     <message>
         <location line="+3"/>
-        <location line="+81"/>
         <source>Password:</source>
         <translation>Пароль:</translation>
     </message>
     <message>
-        <location line="-73"/>
-        <location line="+77"/>
+        <location line="+8"/>
         <source>Save this password in the project file</source>
         <translation>Сохранить этот пароль в файле проекта</translation>
     </message>
     <message>
-        <location line="-74"/>
-        <location line="+77"/>
+        <location line="+3"/>
         <source>Anyone who opens the project file can read a saved password.</source>
         <translation>Любой, кто откроет файл проекта, сможет прочитать сохранённый пароль.</translation>
     </message>
     <message>
-        <location line="-61"/>
+        <location line="+16"/>
         <source>Line terminator appended to control-widget commands sent over serial. Doesn&apos;t affect its serial terminal&apos;s raw keystrokes.</source>
         <translation>Символ конца строки, добавляемый к командам виджетов управления, отправляемым через последовательный порт. Не влияет на нажатия клавиш в его последовательном терминале.</translation>
     </message>
@@ -2785,17 +2830,12 @@ Allowed: %1</source>
     </message>
     <message>
         <location line="+3"/>
-        <location line="+281"/>
+        <location line="+272"/>
         <source>e.g. robot1.local</source>
         <translation>напр. robot1.local</translation>
     </message>
     <message>
-        <location line="-279"/>
-        <source>Hostname or IP the OTA tab uses for this device&apos;s firmware upload. Left blank, the device is listed there but nothing can be polled or uploaded.</source>
-        <translation>Имя хоста или IP, который вкладка OTA использует для загрузки прошивки этого устройства. Если пусто, устройство там перечислено, но опрашивать и загружать нечего.</translation>
-    </message>
-    <message>
-        <location line="+8"/>
+        <location line="-262"/>
         <source>Use reported</source>
         <translation>Взять сообщённый</translation>
     </message>
@@ -2810,31 +2850,36 @@ Allowed: %1</source>
         <translation>Адрес:</translation>
     </message>
     <message>
-        <location line="+4"/>
-        <source>Password for this device&apos;s X-OTA-Password header.</source>
-        <translation>Пароль для заголовка X-OTA-Password этого устройства.</translation>
+        <location line="-20"/>
+        <source>Hostname or IP of the device&apos;s recovery, for firmware uploads. Usually left blank: the OTA tab then uses the address the device reports, or its TCP host.</source>
+        <translation>Имя хоста или IP режима восстановления устройства для загрузки прошивки. Обычно оставляют пустым: тогда вкладка OTA использует адрес, который сообщает устройство, или его TCP-хост.</translation>
     </message>
     <message>
-        <location line="+24"/>
-        <location line="+242"/>
+        <location line="+23"/>
+        <source>Uploads are signed with the device&apos;s password, the same one its connection uses.</source>
+        <translation>Загрузки подписываются паролем устройства — тем же, что использует его подключение.</translation>
+    </message>
+    <message>
+        <location line="+18"/>
+        <location line="+240"/>
         <source>Connected</source>
         <translation>Подключено</translation>
     </message>
     <message>
-        <location line="-242"/>
-        <location line="+242"/>
+        <location line="-240"/>
+        <location line="+240"/>
         <source>Disconnected</source>
         <translation>Отключено</translation>
     </message>
     <message>
-        <location line="-239"/>
+        <location line="-237"/>
         <location line="+3"/>
-        <location line="+155"/>
+        <location line="+153"/>
         <source>(not connected yet)</source>
         <translation>(ещё не подключено)</translation>
     </message>
     <message>
-        <location line="-145"/>
+        <location line="-143"/>
         <source>Status:</source>
         <translation>Состояние:</translation>
     </message>
@@ -2869,7 +2914,7 @@ Allowed: %1</source>
         <translation>Применить настройки выше и (пере)подключиться сейчас, не закрывая это окно.</translation>
     </message>
     <message>
-        <location line="+114"/>
+        <location line="+112"/>
         <source>%1 (last connection)</source>
         <translation>%1 (последнее подключение)</translation>
     </message>
@@ -2895,7 +2940,7 @@ Allowed: %1</source>
         <translation>устройство сообщает: %1</translation>
     </message>
     <message>
-        <location line="-241"/>
+        <location line="-239"/>
         <source>Reported by device</source>
         <translation>Сообщено устройством</translation>
     </message>
@@ -3463,7 +3508,7 @@ Allowed: %1</source>
         <translation>, </translation>
     </message>
     <message>
-        <location line="+295"/>
+        <location line="+325"/>
         <source>AI assistant access is off.</source>
         <translation>Доступ ИИ-ассистентов выключен.</translation>
     </message>
@@ -3489,7 +3534,7 @@ Allowed: %1</source>
         <translation>ИИ-ассистент отключён: %1</translation>
     </message>
     <message>
-        <location line="+413"/>
+        <location line="+418"/>
         <source>Pending</source>
         <translation>Ожидание</translation>
     </message>
@@ -3633,12 +3678,12 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+0"/>
-        <location line="+4021"/>
+        <location line="+4197"/>
         <source>Later</source>
         <translation>Позже</translation>
     </message>
     <message>
-        <location line="-4014"/>
+        <location line="-4190"/>
         <source>&amp;Access</source>
         <translation>Доступ (&amp;A)</translation>
     </message>
@@ -3765,18 +3810,18 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+18"/>
-        <location line="+3335"/>
+        <location line="+3446"/>
         <source>Undo</source>
         <translation>Отменить</translation>
     </message>
     <message>
-        <location line="-3333"/>
-        <location line="+3333"/>
+        <location line="-3444"/>
+        <location line="+3444"/>
         <source>Redo</source>
         <translation>Повторить</translation>
     </message>
     <message>
-        <location line="-3290"/>
+        <location line="-3401"/>
         <source>Add Device</source>
         <translation>Добавить устройство</translation>
     </message>
@@ -3822,12 +3867,12 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+36"/>
-        <location line="+3256"/>
+        <location line="+3367"/>
         <source>Fullscreen dashboard (F11)</source>
         <translation>Панель в полноэкранном режиме (F11)</translation>
     </message>
     <message>
-        <location line="-3075"/>
+        <location line="-3186"/>
         <source>Rename Workspace</source>
         <translation>Переименовать рабочее пространство</translation>
     </message>
@@ -3937,7 +3982,7 @@ Drops: %2</source>
 %3</translation>
     </message>
     <message>
-        <location line="+426"/>
+        <location line="+436"/>
         <source>Close</source>
         <translation>Закрыть</translation>
     </message>
@@ -3947,7 +3992,7 @@ Drops: %2</source>
         <translation>%1: найден на %2</translation>
     </message>
     <message>
-        <location line="+339"/>
+        <location line="+376"/>
         <source>%1: trying %2</source>
         <translation>%1: пробую %2</translation>
     </message>
@@ -4006,12 +4051,22 @@ Drops: %2</source>
         <translation>&quot;%1&quot; сохранён в галерее.</translation>
     </message>
     <message>
-        <location line="+599"/>
+        <location line="+288"/>
+        <source>not connected</source>
+        <translation>не подключено</translation>
+    </message>
+    <message>
+        <location line="+34"/>
+        <source>Firmware</source>
+        <translation>Прошивка</translation>
+    </message>
+    <message>
+        <location line="+362"/>
         <source>Update available: v%1</source>
         <translation>Доступно обновление: v%1</translation>
     </message>
     <message>
-        <location line="+12"/>
+        <location line="+43"/>
         <source>Up to date (v%1)</source>
         <translation>Актуальная версия (v%1)</translation>
     </message>
@@ -4029,13 +4084,13 @@ Drops: %2</source>
         <location line="+8"/>
         <location line="+9"/>
         <location line="+8"/>
-        <location line="+23"/>
-        <location line="+27"/>
+        <location line="+36"/>
+        <location line="+37"/>
         <source>Update</source>
         <translation>Обновить</translation>
     </message>
     <message>
-        <location line="-66"/>
+        <location line="-89"/>
         <source>Automatic installation requires running an AppImage. Download the AppImage from the release page.</source>
         <translation>Для автоматической установки нужно запускать AppImage. Скачайте AppImage со страницы релиза.</translation>
     </message>
@@ -4050,12 +4105,13 @@ Drops: %2</source>
         <translation>В этом релизе нет SHA256SUMS.txt для проверки загрузки, поэтому его нельзя установить автоматически. Открываю страницу релиза.</translation>
     </message>
     <message>
-        <location line="+5"/>
+        <location line="-61"/>
+        <location line="+66"/>
         <source>Downloading TraceView %1...</source>
         <translation>Загрузка TraceView %1...</translation>
     </message>
     <message>
-        <location line="+10"/>
+        <location line="+23"/>
         <source>Confirm the installation in the Android installer.</source>
         <translation>Подтвердите установку в установщике Android.</translation>
     </message>
@@ -4079,13 +4135,13 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>Закрыть приложение</translation>
     </message>
     <message>
-        <location line="-3302"/>
-        <location line="+3052"/>
+        <location line="-3478"/>
+        <location line="+3163"/>
         <source>Devices</source>
         <translation>Устройства</translation>
     </message>
     <message>
-        <location line="-2977"/>
+        <location line="-3088"/>
         <source>Subscriptions</source>
         <translation>Подписки</translation>
     </message>
@@ -4101,12 +4157,12 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>Имя:</translation>
     </message>
     <message>
-        <location line="-2112"/>
+        <location line="-2147"/>
         <source>TraceView v%1</source>
         <translation>TraceView v%1</translation>
     </message>
     <message>
-        <location line="+2113"/>
+        <location line="+2148"/>
         <source>Workspace</source>
         <translation>Рабочее пространство</translation>
     </message>
@@ -4132,23 +4188,23 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     </message>
     <message>
         <location line="+81"/>
-        <location line="+2550"/>
+        <location line="+2661"/>
         <source>Add widget</source>
         <translation>Добавить виджет</translation>
     </message>
     <message>
-        <location line="-2547"/>
+        <location line="-2658"/>
         <source>Remove selected widget (%1)</source>
         <translation>Удалить выбранный виджет (%1)</translation>
     </message>
     <message>
         <location line="+3"/>
-        <location line="+2557"/>
+        <location line="+2668"/>
         <source>Add device</source>
         <translation>Добавить устройство</translation>
     </message>
     <message>
-        <location line="-2554"/>
+        <location line="-2665"/>
         <source>Remove selected device (%1)</source>
         <translation>Удалить выбранное устройство (%1)</translation>
     </message>
@@ -4233,7 +4289,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>Показать панели Слои/Свойства</translation>
     </message>
     <message>
-        <location line="+292"/>
+        <location line="+302"/>
         <source>New Device</source>
         <translation>Новое устройство</translation>
     </message>
@@ -4299,12 +4355,12 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>&amp;Движение</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="-1548"/>
+        <location filename="../lib/core/mainwindow.cpp" line="-1558"/>
         <source>Dashboard</source>
         <translation>Dashboard</translation>
     </message>
     <message>
-        <location line="+1906"/>
+        <location line="+1953"/>
         <source>%1: this BLE address now answers as a different robot (expected %2, got %3)</source>
         <translation>%1: этот BLE-адрес теперь отвечает как другой робот (ожидался %2, получен %3)</translation>
     </message>
@@ -4336,13 +4392,13 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     </message>
     <message>
         <location line="+15"/>
-        <location line="+331"/>
+        <location line="+395"/>
         <location line="+4"/>
         <source>Open Project</source>
         <translation>Открыть проект</translation>
     </message>
     <message>
-        <location line="-248"/>
+        <location line="-312"/>
         <source>Open Log File</source>
         <translation>Открыть файл журнала</translation>
     </message>
@@ -4352,7 +4408,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>Журнал BTP (*.blog)</translation>
     </message>
     <message>
-        <location line="+93"/>
+        <location line="+110"/>
         <source>OTA Update</source>
         <translation>Обновление OTA</translation>
     </message>
@@ -4363,7 +4419,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     </message>
     <message>
         <location line="+20"/>
-        <location line="+224"/>
+        <location line="+271"/>
         <source>Settings</source>
         <translation>Настройки</translation>
     </message>
@@ -4650,130 +4706,624 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
 <context>
     <name>traceview::OtaClient</name>
     <message>
-        <location filename="../lib/ota/otaclient.cpp" line="+79"/>
-        <location line="+62"/>
-        <source>No OTA address configured for this device.</source>
-        <translation>Для этого устройства не настроен OTA-адрес.</translation>
+        <location filename="../lib/ota/otaclient.cpp" line="+156"/>
+        <source>Something answered at this address, but not a TraceKit recovery.</source>
+        <translation>По этому адресу кто-то ответил, но это не режим восстановления TraceKit.</translation>
     </message>
     <message>
-        <location line="+26"/>
+        <location line="+20"/>
+        <source>No address for this device: connect it over TCP, or set its OTA address in Device Settings.</source>
+        <translation>Нет адреса для этого устройства: подключите его по TCP или задайте адрес OTA в настройках устройства.</translation>
+    </message>
+    <message>
+        <location line="+20"/>
+        <location line="+110"/>
+        <source>No address for this device.</source>
+        <translation>Нет адреса для этого устройства.</translation>
+    </message>
+    <message>
+        <location line="-103"/>
         <source>Couldn&apos;t open %1</source>
         <translation>Не удалось открыть %1</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>%1 is not an ESP application image (use the firmware.bin of the build, not the merged or bootloader one).</source>
+        <translation>%1 не является образом приложения ESP (используйте firmware.bin из сборки, а не объединённый образ или загрузчик).</translation>
+    </message>
+    <message>
+        <location line="+32"/>
+        <source>The recovery is already writing another upload.</source>
+        <translation>Режим восстановления уже записывает другую загрузку.</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>The image has %1 KB; the app partition holds %2 KB.</source>
+        <translation>Размер образа %1 KB; раздел приложения вмещает %2 KB.</translation>
+    </message>
+    <message>
+        <location line="+15"/>
+        <source>No device password to sign the upload with.</source>
+        <translation>Нет пароля устройства для подписи загрузки.</translation>
+    </message>
+    <message>
+        <location line="+32"/>
+        <source>The device refused the signature: wrong password (the device&apos;s password E). %1</source>
+        <translation>Устройство отклонило подпись: неверный пароль (пароль E устройства). %1</translation>
+    </message>
+    <message>
+        <location line="+35"/>
+        <source>No device password to sign with.</source>
+        <translation>Нет пароля устройства для подписи.</translation>
+    </message>
+</context>
+<context>
+    <name>traceview::OtaDevicePanel</name>
+    <message>
+        <location filename="../lib/ota/otadevicepanel.cpp" line="+76"/>
+        <source>Asked for (btp -recovery).</source>
+        <translation>По запросу (btp -recovery).</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>The application kept crashing.</source>
+        <translation>Приложение постоянно падало.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>After a factory reset.</source>
+        <translation>После сброса к заводским настройкам.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>No valid application, or the boot chose it.</source>
+        <translation>Нет рабочего приложения, или так выбрал загрузчик.</translation>
+    </message>
+    <message>
+        <location line="+38"/>
+        <source>Cannot read the file: %1</source>
+        <translation>Не удаётся прочитать файл: %1</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Not an ESP application image (it must start with 0xE9). Use the application .bin from build/, not the merged one.</source>
+        <translation>Это не образ приложения ESP (он должен начинаться с 0xE9). Используйте .bin приложения из build/, а не объединённый.</translation>
+    </message>
+    <message>
+        <location line="+178"/>
+        <source>Installed</source>
+        <translation>Установлено</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>Firmware</source>
+        <translation>Прошивка</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Built</source>
+        <translation>Собрано</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Recovery</source>
+        <translation>Восстановление</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Address</source>
+        <translation>Адрес</translation>
+    </message>
+    <message>
+        <location line="+25"/>
+        <location line="+166"/>
+        <location line="+372"/>
+        <source>Choose file…</source>
+        <translation>Выбрать файл…</translation>
+    </message>
+    <message>
+        <location line="-500"/>
+        <source>New firmware</source>
+        <translation>Новая прошивка</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>Restart into the recovery</source>
+        <translation>Перезапуск в режим восстановления</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Send the image</source>
+        <translation>Отправка образа</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Start the new firmware</source>
+        <translation>Запуск новой прошивки</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <location line="+109"/>
+        <source>Back to the application</source>
+        <translation>Вернуться в приложение</translation>
+    </message>
+    <message>
+        <location line="-108"/>
+        <source>Leave the recovery for the application already installed.</source>
+        <translation>Выйти из режима восстановления в уже установленное приложение.</translation>
+    </message>
+    <message>
+        <location line="+15"/>
+        <location line="+93"/>
+        <location line="+508"/>
+        <source>Install</source>
+        <translation>Установить</translation>
+    </message>
+    <message>
+        <location line="-508"/>
+        <location line="+372"/>
+        <source>Change…</source>
+        <translation>Изменить…</translation>
+    </message>
+    <message>
+        <location line="-371"/>
+        <location line="+507"/>
+        <source>Restart and install</source>
+        <translation>Перезапустить и установить</translation>
+    </message>
+    <message>
+        <location line="-475"/>
+        <source>%1 did not answer as a recovery in %2 s. Is it on a Wi-Fi network this computer reaches? Without a known network the recovery raises its own (&quot;btp-&lt;name&gt;&quot;).</source>
+        <translation>%1 не ответил как режим восстановления за %2 s. Он в сети Wi-Fi, доступной этому компьютеру? Без известной сети режим восстановления поднимает свою («btp-&lt;name&gt;»).</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>It came back running %1, not %2: the new firmware did not start and the device went back to the previous one.</source>
+        <translation>Устройство вернулось с %1, а не %2: новая прошивка не запустилась, и устройство вернулось к предыдущей.</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>The recovery accepted the image and started it. Connect the device to see it running.</source>
+        <translation>Режим восстановления принял образ и запустил его. Подключите устройство, чтобы увидеть его в работе.</translation>
+    </message>
+    <message>
+        <location line="+41"/>
+        <source>%1 is running %2.</source>
+        <translation>%1 работает на %2.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>%1: running %2</source>
+        <translation>%1: работает %2</translation>
+    </message>
+    <message>
+        <location line="+21"/>
+        <location line="+14"/>
+        <source>%1: %2</source>
+        <translation>%1: %2</translation>
+    </message>
+    <message>
+        <location line="+48"/>
+        <source>Select Firmware</source>
+        <translation>Выбрать прошивку</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Firmware Binary (*.bin);;All Files (*)</source>
+        <translation>Двоичный файл прошивки (*.bin);;Все файлы (*)</translation>
+    </message>
+    <message>
+        <location line="+20"/>
+        <location line="+21"/>
+        <source>Install Firmware</source>
+        <translation>Установить прошивку</translation>
+    </message>
+    <message>
+        <location line="-20"/>
+        <source>Password of %1 (the one its key was provisioned with). It stays on this computer: the upload is signed with it.</source>
+        <translation>Пароль %1 (тот, с которым был создан его ключ). Он остаётся на этом компьютере: им подписывается загрузка.</translation>
+    </message>
+    <message>
+        <location line="+21"/>
+        <source>This image was built for %1, and %2 is an %3. Install it anyway?</source>
+        <translation>Этот образ собран для %1, а %2 — это %3. Всё равно установить?</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Install anyway</source>
+        <translation>Всё равно установить</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Cancel</source>
+        <translation>Отмена</translation>
+    </message>
+    <message>
+        <location line="+38"/>
+        <source>Leaving the recovery…</source>
+        <translation>Выход из режима восстановления…</translation>
+    </message>
+    <message>
+        <location line="+50"/>
+        <source>In the recovery</source>
+        <translation>В режиме восстановления</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Receiving a firmware</source>
+        <translation>Принимает прошивку</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>On its own Wi-Fi network: %1.</source>
+        <translation>В собственной сети Wi-Fi: %1.</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Running</source>
+        <translation>Работает</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Install restarts it into the recovery, sends the image and starts it.</source>
+        <translation>«Установить» перезапускает его в режим восстановления, отправляет образ и запускает его.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>No address</source>
+        <translation>Нет адреса</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Connect it once over Wi-Fi so it reports where its recovery answers, or set the OTA address in Device Settings.</source>
+        <translation>Подключите его один раз по Wi-Fi, чтобы он сообщил, где отвечает режим восстановления, или задайте адрес OTA в настройках устройства.</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Checking…</source>
+        <translation>Проверка…</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Offline</source>
+        <translation>Не в сети</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Not connected and no recovery answers at %1%2. Connect it to install a firmware.</source>
+        <translation>Не подключено, и режим восстановления не отвечает по адресу %1%2. Подключите устройство, чтобы установить прошивку.</translation>
+    </message>
+    <message>
+        <location line="+17"/>
+        <source>none: waiting for a firmware</source>
+        <translation>нет: ожидает прошивку</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>%1 · %2 · application up to %3</source>
+        <translation>%1 · %2 · приложение до %3</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>%1 · ESP-IDF %2</source>
+        <translation>%1 · ESP-IDF %2</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>details once it is in the recovery</source>
+        <translation>подробности — в режиме восстановления</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>%1 · details once it is in the recovery</source>
+        <translation>%1 · подробности — в режиме восстановления</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>From the device itself (the address it reported, or its TCP host).</source>
+        <translation>От самого устройства (адрес, который оно сообщило, или его TCP-хост).</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Set in Device Settings.</source>
+        <translation>Задано в настройках устройства.</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>Drop the application .bin here, or click to choose it</source>
+        <translation>Перетащите сюда .bin приложения или нажмите, чтобы выбрать</translation>
+    </message>
+    <message>
+        <location line="+14"/>
+        <source>built %1</source>
+        <translation>собрано %1</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>saved %1</source>
+        <translation>сохранено %1</translation>
+    </message>
+    <message>
+        <location line="+14"/>
+        <source>&lt;b&gt;%1&lt;/b&gt; %2</source>
+        <translation>&lt;b&gt;%1&lt;/b&gt; %2</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>ESP application image</source>
+        <translation>Образ приложения ESP</translation>
+    </message>
+    <message>
+        <location line="+13"/>
+        <source>built for %1, the device is an %2</source>
+        <translation>собрано для %1, а устройство — %2</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>a different project from the installed %1</source>
+        <translation>другой проект, чем установленный %1</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>the same version as installed</source>
+        <translation>та же версия, что установлена</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>replaces %1</source>
+        <translation>заменяет %1</translation>
+    </message>
+    <message>
+        <location line="+12"/>
+        <source>Too large: %1 for a partition of %2.</source>
+        <translation>Слишком большой: %1 для раздела %2.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>%1% of the application partition (%2).</source>
+        <translation>%1% раздела приложения (%2).</translation>
+    </message>
+    <message>
+        <location line="+20"/>
+        <source>Restarting %1 and waiting for its recovery to answer… (%2 s)</source>
+        <translation>Перезапуск %1 и ожидание ответа режима восстановления… (%2 s)</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>Sending…</source>
+        <translation>Отправка…</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Sending… %1% of %2 (compressed from %3)</source>
+        <translation>Отправка… %1% из %2 (сжато из %3)</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Sending… %1% of %2</source>
+        <translation>Отправка… %1% из %2</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Image accepted. Starting the new firmware and waiting for it to connect…</source>
+        <translation>Образ принят. Запуск новой прошивки и ожидание подключения…</translation>
+    </message>
+    <message>
+        <location line="+30"/>
+        <source>Choose a firmware image first.</source>
+        <translation>Сначала выберите образ прошивки.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Connect the device, or put it in the recovery.</source>
+        <translation>Подключите устройство или переведите его в режим восстановления.</translation>
     </message>
 </context>
 <context>
     <name>traceview::OtaTab</name>
     <message>
-        <location filename="../lib/ota/otatab.cpp" line="+71"/>
+        <location filename="../lib/ota/otatab.cpp" line="+81"/>
         <source>Name</source>
         <translation>Имя</translation>
     </message>
     <message>
-        <location line="+0"/>
-        <source>OTA Address</source>
-        <translation>Адрес OTA</translation>
-    </message>
-    <message>
-        <location line="+0"/>
-        <source>OTA Online</source>
-        <translation>OTA в сети</translation>
-    </message>
-    <message>
-        <location line="+1"/>
-        <source>Firmware</source>
-        <translation>Прошивка</translation>
-    </message>
-    <message>
-        <location line="+0"/>
-        <source>Password</source>
-        <translation>Пароль</translation>
-    </message>
-    <message>
-        <location line="+0"/>
-        <source>Upload</source>
-        <translation>Загрузить</translation>
-    </message>
-    <message>
-        <location line="+71"/>
-        <source>(not configured)</source>
-        <translation>(не настроено)</translation>
-    </message>
-    <message>
-        <location line="+4"/>
-        <location line="+8"/>
-        <location line="+122"/>
-        <source>—</source>
-        <translation>—</translation>
-    </message>
-    <message>
-        <location line="-130"/>
+        <location line="+72"/>
         <source>Checking…</source>
         <translation>Проверка…</translation>
     </message>
     <message>
-        <location line="+17"/>
-        <source>OTA password</source>
-        <translation>Пароль OTA</translation>
-    </message>
-    <message>
-        <location line="+4"/>
-        <source>Remember</source>
-        <translation>Запомнить</translation>
-    </message>
-    <message>
-        <location line="+2"/>
-        <source>Save this password in the project file.</source>
-        <translation>Сохранить этот пароль в файле проекта.</translation>
-    </message>
-    <message>
-        <location line="+25"/>
+        <location line="+10"/>
         <source>Upload…</source>
         <translation>Загрузить…</translation>
     </message>
     <message>
-        <location line="+4"/>
-        <location line="+147"/>
-        <source>Set this device&apos;s OTA address in Device Settings first.</source>
-        <translation>Сначала задайте OTA-адрес этого устройства в его настройках.</translation>
-    </message>
-    <message>
-        <location line="-142"/>
+        <location line="+233"/>
         <source>Uploading… %p%</source>
         <translation>Загрузка… %p%</translation>
     </message>
     <message>
-        <location line="+81"/>
+        <location line="-90"/>
         <source>Offline</source>
         <translation>Не в сети</translation>
     </message>
     <message>
+        <location line="-248"/>
+        <source>asked for (btp -recovery)</source>
+        <translation>по запросу (btp -recovery)</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>the application kept crashing</source>
+        <translation>приложение постоянно падало</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>factory reset</source>
+        <translation>сброс к заводским настройкам</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>no valid application, or the boot chose it</source>
+        <translation>нет рабочего приложения, или так выбрал загрузчик</translation>
+    </message>
+    <message>
+        <location line="+19"/>
+        <source>Address</source>
+        <translation>Адрес</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>State</source>
+        <translation>Состояние</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Application</source>
+        <translation>Приложение</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Recovery</source>
+        <translation>Восстановление</translation>
+    </message>
+    <message>
+        <location line="+62"/>
+        <location line="+70"/>
+        <location line="+75"/>
+        <source>(none)</source>
+        <translation>(нет)</translation>
+    </message>
+    <message>
+        <location line="-142"/>
+        <source>Connect the device over TCP (or once, so it reports its address), or set its OTA address in Device Settings.</source>
+        <translation>Подключите устройство по TCP (или один раз, чтобы оно сообщило свой адрес) или задайте адрес OTA в настройках устройства.</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>From the device itself (its TCP host or the address it reported).</source>
+        <translation>От самого устройства (его TCP-хост или адрес, который оно сообщило).</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Set in Device Settings.</source>
+        <translation>Задано в настройках устройства.</translation>
+    </message>
+    <message>
+        <location line="+16"/>
+        <source>Send a firmware .bin. If the device is running its application and connected, it is restarted into the recovery first.</source>
+        <translation>Отправить .bin прошивки. Если на устройстве работает приложение и оно подключено, сначала оно перезапускается в режим восстановления.</translation>
+    </message>
+    <message>
         <location line="+7"/>
+        <source>To app</source>
+        <translation>В приложение</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Leave the recovery for the application already there.</source>
+        <translation>Выйти из режима восстановления в уже имеющееся приложение.</translation>
+    </message>
+    <message>
+        <location line="+16"/>
+        <location line="+192"/>
+        <source>Restarting…</source>
+        <translation>Перезапуск…</translation>
+    </message>
+    <message>
+        <location line="-118"/>
+        <source>%1 did not answer as a recovery in %2 s. Is it on a Wi-Fi network this computer can reach? Without a known network, the recovery raises its own (&quot;btp-&lt;name&gt;&quot;).</source>
+        <translation>%1 не ответил как режим восстановления за %2 s. Он в сети Wi-Fi, доступной этому компьютеру? Без известной сети режим восстановления поднимает свою («btp-&lt;name&gt;»).</translation>
+    </message>
+    <message>
+        <location line="+15"/>
+        <source>In recovery</source>
+        <translation>В режиме восстановления</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Writing…</source>
+        <translation>Запись…</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Why: %1</source>
+        <translation>Причина: %1</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Own network: %1</source>
+        <translation>Своя сеть: %1</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>%1, up to %2 KB</source>
+        <translation>%1, до %2 KB</translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <source>Running the app</source>
+        <translation>Работает приложение</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Upload restarts it into the recovery first.</source>
+        <translation>Загрузка сначала перезапускает его в режим восстановления.</translation>
+    </message>
+    <message>
+        <location line="+4"/>
         <source>Not reachable</source>
         <translation>Недоступно</translation>
     </message>
     <message>
-        <location line="+2"/>
-        <source>Online (busy)</source>
-        <translation>В сети (занято)</translation>
+        <location line="+65"/>
+        <source>%1 will restart into its recovery and receive %2. Then it starts the new firmware by itself.</source>
+        <translation>%1 перезапустится в режим восстановления и получит %2. Затем сам запустит новую прошивку.</translation>
     </message>
     <message>
-        <location line="+2"/>
-        <source>A firmware write is already in progress on the robot.</source>
-        <translation>На роботе уже идёт запись прошивки.</translation>
+        <location line="+3"/>
+        <source>Restart and upload</source>
+        <translation>Перезапустить и загрузить</translation>
     </message>
     <message>
-        <location line="+2"/>
-        <source>Online</source>
-        <translation>В сети</translation>
+        <location line="+0"/>
+        <source>Cancel</source>
+        <translation>Отмена</translation>
     </message>
     <message>
-        <location line="+36"/>
+        <location line="+68"/>
+        <location line="+6"/>
+        <location line="+9"/>
+        <location line="+2"/>
+        <source>%1: %2</source>
+        <translation>%1: %2</translation>
+    </message>
+    <message>
+        <location line="-197"/>
+        <location line="+61"/>
+        <location line="+22"/>
+        <location line="+25"/>
+        <location line="+78"/>
         <location line="+11"/>
         <source>Firmware Upload</source>
         <translation>Загрузка прошивки</translation>
     </message>
     <message>
-        <location line="+6"/>
+        <location line="-149"/>
+        <source>Reported by the running application.</source>
+        <translation>Сообщено работающим приложением.</translation>
+    </message>
+    <message>
+        <location line="+14"/>
+        <source>Password E of %1 (the one its key was provisioned with). It stays on this computer: the upload is signed with it.</source>
+        <translation>Пароль E для %1 (тот, с которым был создан его ключ). Он остаётся на этом компьютере: им подписывается загрузка.</translation>
+    </message>
+    <message>
+        <location line="+22"/>
+        <source>%1 is not in the recovery, and TraceView is not connected to it to restart it there. Connect it, or send &quot;btp -recovery&quot; from its terminal.</source>
+        <translation>%1 не в режиме восстановления, и TraceView не подключён к нему, чтобы перезапустить его туда. Подключите его или отправьте «btp -recovery» из его терминала.</translation>
+    </message>
+    <message>
+        <location line="+7"/>
         <source>Select Firmware</source>
         <translation>Выбрать прошивку</translation>
     </message>
@@ -5389,7 +5939,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
 <context>
     <name>traceview::SettingsPage</name>
     <message>
-        <location filename="../lib/core/settingspage.cpp" line="+206"/>
+        <location filename="../lib/core/settingspage.cpp" line="+210"/>
         <source>Settings</source>
         <translation>Настройки</translation>
     </message>
@@ -5425,19 +5975,19 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     </message>
     <message>
         <location line="-234"/>
-        <location line="+326"/>
+        <location line="+356"/>
         <source>Diagnostics</source>
         <translation>Диагностика</translation>
     </message>
     <message>
-        <location line="-325"/>
-        <location line="+377"/>
+        <location line="-355"/>
+        <location line="+407"/>
         <location line="+5"/>
         <source>Updates</source>
         <translation>Обновления</translation>
     </message>
     <message>
-        <location line="-340"/>
+        <location line="-370"/>
         <source>Project and startup preferences shared by the application.</source>
         <translation>Настройки проекта и запуска, общие для приложения.</translation>
     </message>
@@ -5722,17 +6272,32 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>Ассистент, подключённый по MCP, сможет создавать рабочие пространства и виджеты, читать телеметрию и делать снимки этого окна. Его правки панели можно отменить.</translation>
     </message>
     <message>
-        <location line="+11"/>
-        <source>To connect Claude Code, run this once in a terminal:</source>
-        <translation>Чтобы подключить Claude Code, выполните один раз в терминале:</translation>
+        <location line="+37"/>
+        <source>Copy</source>
+        <translation>Копировать</translation>
     </message>
     <message>
-        <location line="+7"/>
-        <source>Copy command</source>
-        <translation>Копировать команду</translation>
+        <location line="+9"/>
+        <source>Claude Code: run this once in a terminal.</source>
+        <translation>Claude Code: выполните это один раз в терминале.</translation>
     </message>
     <message>
-        <location line="+11"/>
+        <location line="+1"/>
+        <source>Registers TraceView for every folder (--scope user), so Claude Code in the terminal, the VS Code extension and the Code tab of the Claude desktop app all see it.</source>
+        <translation>Регистрирует TraceView для всех папок (--scope user), поэтому его видят Claude Code в терминале, расширение VS Code и вкладка Code в настольном приложении Claude.</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Claude desktop app (chat): add this to claude_desktop_config.json.</source>
+        <translation>Настольное приложение Claude (чат): добавьте это в claude_desktop_config.json.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Paste it inside the file&apos;s &quot;mcpServers&quot; object (Claude desktop app: Settings &gt; Developer &gt; Edit Config), then restart the app.</source>
+        <translation>Вставьте это внутрь объекта &quot;mcpServers&quot; файла (настольное приложение Claude: Settings &gt; Developer &gt; Edit Config), затем перезапустите приложение.</translation>
+    </message>
+    <message>
+        <location line="+8"/>
         <source>Keep enough history for investigation without letting long-running sessions use unbounded memory.</source>
         <translation>Храните достаточно истории для анализа, не позволяя длинным сессиям занимать неограниченную память.</translation>
     </message>
@@ -6111,9 +6676,324 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     </message>
 </context>
 <context>
+    <name>traceview::TraceKitDialog</name>
+    <message>
+        <location filename="../lib/devices/tracekitdialog.cpp" line="+71"/>
+        <source>%1 — TraceKit</source>
+        <translation>%1 — TraceKit</translation>
+    </message>
+    <message>
+        <location line="+34"/>
+        <source>Settings</source>
+        <translation>Настройки</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Wi-Fi</source>
+        <translation>Wi-Fi</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Actions</source>
+        <translation>Действия</translation>
+    </message>
+    <message>
+        <location line="+111"/>
+        <source>Firmware %1</source>
+        <translation>Прошивка %1</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>TraceKit %1</source>
+        <translation>TraceKit %1</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>TraceKit device</source>
+        <translation>Устройство TraceKit</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Connected</source>
+        <translation>Подключено</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Not connected</source>
+        <translation>Не подключено</translation>
+    </message>
+    <message>
+        <location line="+15"/>
+        <source>Not connected: connect the device to change it.</source>
+        <translation>Не подключено: подключите устройство, чтобы изменить это.</translation>
+    </message>
+    <message>
+        <location line="+16"/>
+        <source>Setting</source>
+        <translation>Параметр</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Value</source>
+        <translation>Значение</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <location line="+129"/>
+        <source>Default</source>
+        <translation>По умолчанию</translation>
+    </message>
+    <message>
+        <location line="-120"/>
+        <source>Reload</source>
+        <translation>Перечитать</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Apply</source>
+        <translation>Применить</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Saves every changed value on the device (cfg -set).</source>
+        <translation>Сохраняет все изменённые значения на устройстве (cfg -set).</translation>
+    </message>
+    <message>
+        <location line="+19"/>
+        <source>Reading the settings…</source>
+        <translation>Чтение настроек…</translation>
+    </message>
+    <message>
+        <location line="+13"/>
+        <source>Could not read the settings: %1</source>
+        <translation>Не удалось прочитать настройки: %1</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>The device did not describe its settings (TraceKit too old?).</source>
+        <translation>Устройство не описало свои настройки (слишком старый TraceKit?).</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>This device declares no settings.</source>
+        <translation>Это устройство не объявляет настроек.</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Reading the settings… %1 of %2</source>
+        <translation>Чтение настроек… %1 из %2</translation>
+    </message>
+    <message numerus="yes">
+        <location line="+4"/>
+        <source>%n setting(s), saved on the device.</source>
+        <translation>
+            <numerusform>%n параметр, сохраняется на устройстве.</numerusform>
+            <numerusform>%n параметра, сохраняются на устройстве.</numerusform>
+            <numerusform>%n параметров, сохраняются на устройстве.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <location line="+16"/>
+        <source>Takes effect after a reboot.</source>
+        <translation>Вступает в силу после перезагрузки.</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>Range %1 to %2</source>
+        <translation>Диапазон от %1 до %2</translation>
+    </message>
+    <message>
+        <location line="+41"/>
+        <source>Back to the default, now (cfg -reset).</source>
+        <translation>Вернуть значение по умолчанию сейчас (cfg -reset).</translation>
+    </message>
+    <message>
+        <location line="+29"/>
+        <source>Nothing changed.</source>
+        <translation>Ничего не изменено.</translation>
+    </message>
+    <message>
+        <location line="+48"/>
+        <source>Add…</source>
+        <translation>Добавить…</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Remove</source>
+        <translation>Удалить</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Reboot to use them</source>
+        <translation>Перезагрузите, чтобы применить</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>Passwords are sent to the device over the encrypted session and never read back. Changes take effect after a reboot; the recovery uses the same networks.</source>
+        <translation>Пароли отправляются на устройство по зашифрованной сессии и никогда не считываются обратно. Изменения вступают в силу после перезагрузки; режим восстановления использует те же сети.</translation>
+    </message>
+    <message>
+        <location line="+17"/>
+        <source>Reading the networks…</source>
+        <translation>Чтение сетей…</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Could not read the networks: %1</source>
+        <translation>Не удалось прочитать сети: %1</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>  (in the firmware)</source>
+        <translation>  (в прошивке)</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>No networks: the device only works over a cable.</source>
+        <translation>Нет сетей: устройство работает только по кабелю.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>%1 of %2 networks; tried in this order.</source>
+        <translation>%1 из %2 сетей; пробуются в этом порядке.</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <location line="+5"/>
+        <location line="+3"/>
+        <source>Add a network</source>
+        <translation>Добавить сеть</translation>
+    </message>
+    <message>
+        <location line="-8"/>
+        <source>Network name (SSID):</source>
+        <translation>Имя сети (SSID):</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>A name with a comma cannot be added from here.</source>
+        <translation>Имя с запятой нельзя добавить отсюда.</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Password of %1 (empty: open network):</source>
+        <translation>Пароль %1 (пусто — открытая сеть):</translation>
+    </message>
+    <message>
+        <location line="+15"/>
+        <source>Remove a network</source>
+        <translation>Удалить сеть</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Pick a network from the list (the one in the firmware cannot be removed from here).</source>
+        <translation>Выберите сеть из списка (сеть из прошивки отсюда удалить нельзя).</translation>
+    </message>
+    <message>
+        <location line="+27"/>
+        <source>Set the clock</source>
+        <translation>Установить часы</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>From this computer, unless the device already has the time from the internet.</source>
+        <translation>С этого компьютера, если устройство ещё не получило время из интернета.</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Status</source>
+        <translation>Состояние</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Link, memory, time, power and sleep.</source>
+        <translation>Связь, память, время, питание и сон.</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Keep awake 10 min</source>
+        <translation>Не спать 10 мин</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>A sleeping sensor stays up for a session or an update.</source>
+        <translation>Спящий датчик остаётся активным на время сессии или обновления.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Reboot</source>
+        <translation>Перезагрузить</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Restarts the application.</source>
+        <translation>Перезапускает приложение.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Recovery</source>
+        <translation>Восстановление</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Restarts into the recovery, waiting for a firmware (Firmware page).</source>
+        <translation>Перезапускает в режим восстановления, ожидающий прошивку (страница «Прошивка»).</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>USB bootloader</source>
+        <translation>USB-загрузчик</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>ROM download mode for 30 s: flash over the cable without the BOOT button.</source>
+        <translation>Режим загрузки ROM на 30 s: прошивка по кабелю без кнопки BOOT.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Factory reset…</source>
+        <translation>Сброс к заводским…</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Erases the application and the files; keeps key, Wi-Fi and settings.</source>
+        <translation>Стирает приложение и файлы; сохраняет ключ, Wi-Fi и настройки.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Factory reset</source>
+        <translation>Сброс к заводским</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Erase the application and the files of %1? It then waits in the recovery for a new firmware.</source>
+        <translation>Стереть приложение и файлы %1? Затем устройство будет ждать новую прошивку в режиме восстановления.</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Erase</source>
+        <translation>Стереть</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Cancel</source>
+        <translation>Отмена</translation>
+    </message>
+    <message>
+        <location line="+22"/>
+        <source>ok</source>
+        <translation>ok</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>failed</source>
+        <translation>ошибка</translation>
+    </message>
+</context>
+<context>
     <name>traceview::UpdateAvailableDialog</name>
     <message>
-        <location filename="../lib/core/updateavailabledialog.cpp" line="+14"/>
+        <location filename="../lib/core/updateavailabledialog.cpp" line="+15"/>
         <source>Update Available</source>
         <translation>Доступно обновление</translation>
     </message>
@@ -6123,12 +7003,12 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>&lt;b&gt;Доступно обновление&lt;/b&gt;</translation>
     </message>
     <message>
-        <location line="+4"/>
+        <location line="+5"/>
         <source>A new update is available. Do you want to update?</source>
         <translation>Доступно новое обновление. Обновить?</translation>
     </message>
     <message>
-        <location line="+4"/>
+        <location line="+5"/>
         <source>New version: v%1&lt;br&gt;Your version: v%2</source>
         <translation>Новая версия: v%1&lt;br&gt;Ваша версия: v%2</translation>
     </message>
@@ -6143,10 +7023,12 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>Обновить сейчас</translation>
     </message>
     <message>
+        <location line="-14"/>
         <source>A new update has been downloaded and is ready to install.</source>
         <translation>Новое обновление загружено и готово к установке.</translation>
     </message>
     <message>
+        <location line="+14"/>
         <source>Install Now</source>
         <translation>Установить сейчас</translation>
     </message>
@@ -6172,17 +7054,17 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>Не удалось скачать SHA256SUMS.txt: %1</translation>
     </message>
     <message>
-        <location line="+59"/>
+        <location line="+84"/>
         <source>Couldn&apos;t download %1: %2</source>
         <translation>Не удалось скачать %1: %2</translation>
     </message>
     <message>
-        <location line="-53"/>
+        <location line="-78"/>
         <source>%1 is not listed in SHA256SUMS.txt.</source>
         <translation>%1 отсутствует в SHA256SUMS.txt.</translation>
     </message>
     <message>
-        <location line="+65"/>
+        <location line="+90"/>
         <source>Checksum mismatch for %1 -- the download may be corrupted.</source>
         <translation>Контрольная сумма %1 не совпадает -- загрузка может быть повреждена.</translation>
     </message>

@@ -43,7 +43,7 @@ Ihm erlauben, Geräte zu verbinden und ihnen Befehle zu senden, bis der Zugriff 
         <translation>Widget bearbeiten (KI-Assistent)</translation>
     </message>
     <message>
-        <location line="+339"/>
+        <location line="+338"/>
         <source>New Project</source>
         <translation>Neues Projekt</translation>
     </message>
@@ -88,8 +88,8 @@ Ihm erlauben, Geräte zu verbinden und ihnen Befehle zu senden, bis der Zugriff 
         <translation>Ein KI-Assistent hat das Projekt unter %1 gespeichert.</translation>
     </message>
     <message>
-        <location filename="../lib/core/agentdevicetools.cpp" line="+189"/>
-        <location line="+50"/>
+        <location filename="../lib/core/agentdevicetools.cpp" line="+184"/>
+        <location line="+49"/>
         <source>set up how a device is reached</source>
         <translation>einrichten, wie ein Gerät erreicht wird</translation>
     </message>
@@ -110,7 +110,7 @@ Ihm erlauben, Geräte zu verbinden und ihnen Befehle zu senden, bis der Zugriff 
         <translation>ein Skript ausführen, das ein Gerät steuert</translation>
     </message>
     <message>
-        <location line="+95"/>
+        <location line="+107"/>
         <source>Firmware Update</source>
         <translation>Firmware-Update</translation>
     </message>
@@ -295,7 +295,7 @@ Ihm erlauben, Geräte zu verbinden und ihnen Befehle zu senden, bis der Zugriff 
     </message>
     <message>
         <location line="+9"/>
-        <location line="+558"/>
+        <location line="+569"/>
         <location line="+231"/>
         <source>--</source>
         <translation>--</translation>
@@ -307,12 +307,11 @@ Ihm erlauben, Geräte zu verbinden und ihnen Befehle zu senden, bis der Zugriff 
     </message>
     <message>
         <location line="+6"/>
-        <location line="+304"/>
         <source>%1  %2</source>
         <translation>%1  %2</translation>
     </message>
     <message>
-        <location line="+133"/>
+        <location line="+430"/>
         <source>A-B %1 s</source>
         <translation>A-B %1 s</translation>
     </message>
@@ -382,7 +381,7 @@ Ihm erlauben, Geräte zu verbinden und ihnen Befehle zu senden, bis der Zugriff 
         <translation>%1: %2</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/chartpainting.cpp" line="+888"/>
+        <location filename="../lib/dashboard/widgets/chartpainting.cpp" line="+920"/>
         <source>Time (s)</source>
         <translation>Zeit (s)</translation>
     </message>
@@ -740,7 +739,7 @@ Ihm erlauben, Geräte zu verbinden und ihnen Befehle zu senden, bis der Zugriff 
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="+143"/>
+        <location filename="../lib/core/mainwindow.cpp" line="+148"/>
         <source>TraceView Project (*.tvproj)</source>
         <translation>TraceView-Projekt (*.tvproj)</translation>
     </message>
@@ -1615,7 +1614,7 @@ Ihm erlauben, Geräte zu verbinden und ihnen Befehle zu senden, bis der Zugriff 
 <context>
     <name>traceview::BtpBackend</name>
     <message>
-        <location filename="../lib/protocol/btpbackend.cpp" line="+346"/>
+        <location filename="../lib/protocol/btpbackend.cpp" line="+355"/>
         <source>Robot 0x%1 is online but its catalog has not arrived — check the hub (hub -manifest)</source>
         <translation>Roboter 0x%1 ist online, aber sein Katalog ist nicht angekommen — prüfen Sie den Hub (hub -manifest)</translation>
     </message>
@@ -1680,7 +1679,7 @@ Ihm erlauben, Geräte zu verbinden und ihnen Befehle zu senden, bis der Zugriff 
         <translation>Gerät ist zur Konsole zurückgekehrt (BTP/1 CONSOLE)</translation>
     </message>
     <message>
-        <location line="+246"/>
+        <location line="+250"/>
         <source>Dropped an unsealed frame on a sealed direct session (check the robot&apos;s channel-B password)</source>
         <translation>Unversiegelter Frame in einer versiegelten Direktsitzung verworfen (prüfen Sie das Kanal-B-Passwort des Roboters)</translation>
     </message>
@@ -1690,7 +1689,22 @@ Ihm erlauben, Geräte zu verbinden und ihnen Befehle zu senden, bis der Zugriff 
         <translation>Unversiegelter Frame auf einem versiegelten Hub-Kanal verworfen (prüfen Sie das Kanal-B-Passwort des Roboters)</translation>
     </message>
     <message>
-        <location line="+126"/>
+        <location line="+18"/>
+        <source>the device encrypts its messages, and no password is set for it</source>
+        <translation>das Gerät verschlüsselt seine Nachrichten, aber dafür ist kein Passwort festgelegt</translation>
+    </message>
+    <message>
+        <location line="+18"/>
+        <source>its messages do not open with the password set (wrong password?)</source>
+        <translation>seine Nachrichten lassen sich mit dem festgelegten Passwort nicht öffnen (falsches Passwort?)</translation>
+    </message>
+    <message>
+        <location line="+24"/>
+        <source>Can&apos;t read the device: %1</source>
+        <translation>Gerät kann nicht gelesen werden: %1</translation>
+    </message>
+    <message>
+        <location line="+85"/>
         <source>transport rejected an outbound BTP frame: %1</source>
         <translation>der Transport hat einen ausgehenden BTP-Frame abgelehnt: %1</translation>
     </message>
@@ -1705,7 +1719,7 @@ Ihm erlauben, Geräte zu verbinden und ihnen Befehle zu senden, bis der Zugriff 
         <translation>Terminaleingabe nicht gesendet: Versiegeln fehlgeschlagen</translation>
     </message>
     <message>
-        <location line="-523"/>
+        <location line="-546"/>
         <source>BTP handshake failed: %1</source>
         <translation>BTP-Handshake fehlgeschlagen: %1</translation>
     </message>
@@ -2194,32 +2208,60 @@ Erlaubt: %1</translation>
 <context>
     <name>traceview::CommandClient</name>
     <message>
-        <location filename="../lib/protocol/commandclient.cpp" line="+33"/>
+        <location filename="../lib/protocol/commandclient.cpp" line="+54"/>
+        <source>not connected to a device that takes commands</source>
+        <translation>nicht mit einem Gerät verbunden, das Befehle annimmt</translation>
+    </message>
+    <message>
+        <location line="+4"/>
         <source>command not sent: endpoint key not configured</source>
         <translation>Befehl nicht gesendet: Endpunktschlüssel nicht konfiguriert</translation>
     </message>
     <message>
-        <location line="+6"/>
+        <location line="+5"/>
         <source>command not sent: robot manifest not received yet</source>
         <translation>Befehl nicht gesendet: Roboter-Manifest noch nicht empfangen</translation>
     </message>
     <message>
-        <location line="+11"/>
+        <location line="+14"/>
         <source>command not sent: could not encode or seal request</source>
         <translation>Befehl nicht gesendet: Anfrage konnte nicht kodiert oder versiegelt werden</translation>
     </message>
-    <message>
-        <location line="+18"/>
-        <source>command timed out waiting for a result</source>
-        <translation>Zeitüberschreitung beim Warten auf das Befehlsergebnis</translation>
+    <message numerus="yes">
+        <location line="+1"/>
+        <source>command not sent: %n command(s) still waiting for a result</source>
+        <translation>
+            <numerusform>Befehl nicht gesendet: %n Befehl wartet noch auf ein Ergebnis</numerusform>
+            <numerusform>Befehl nicht gesendet: %n Befehle warten noch auf ein Ergebnis</numerusform>
+        </translation>
     </message>
     <message>
-        <location line="+10"/>
+        <location line="+45"/>
+        <source>no result within 5 s</source>
+        <translation>kein Ergebnis innerhalb von 5 s</translation>
+    </message>
+    <message>
+        <location line="+16"/>
+        <source>%1: no result within 5 s (it may still be running)</source>
+        <translation>%1: kein Ergebnis innerhalb von 5 s (läuft eventuell noch)</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>%1: no result within 5 s; it may still be running</source>
+        <translation>%1: kein Ergebnis innerhalb von 5 s; läuft eventuell noch</translation>
+    </message>
+    <message>
+        <location line="+9"/>
         <source>command failed (status 0x%1, error 0x%2): %3</source>
         <translation>Befehl fehlgeschlagen (Status 0x%1, Fehler 0x%2): %3</translation>
     </message>
     <message>
-        <location line="+7"/>
+        <location line="+8"/>
+        <source>%1 failed (status 0x%2)</source>
+        <translation>%1 fehlgeschlagen (Status 0x%2)</translation>
+    </message>
+    <message>
+        <location line="+5"/>
         <source>command result: (empty)</source>
         <translation>Befehlsergebnis: (leer)</translation>
     </message>
@@ -2643,7 +2685,7 @@ Erlaubt: %1</translation>
 <context>
     <name>traceview::DeviceCard</name>
     <message>
-        <location filename="../lib/devices/devicecard.cpp" line="+268"/>
+        <location filename="../lib/devices/devicecard.cpp" line="+302"/>
         <source>%1 dBm</source>
         <translation>%1 dBm</translation>
     </message>
@@ -2664,6 +2706,11 @@ Erlaubt: %1</translation>
     </message>
     <message>
         <location line="+3"/>
+        <source>wrong password: can&apos;t read the device</source>
+        <translation>falsches Passwort: Gerät kann nicht gelesen werden</translation>
+    </message>
+    <message>
+        <location line="+2"/>
         <source>port open, waiting for BTP session</source>
         <translation>Port offen, warte auf BTP-Sitzung</translation>
     </message>
@@ -2683,12 +2730,12 @@ Erlaubt: %1</translation>
         <translation>über %1</translation>
     </message>
     <message>
-        <location line="+7"/>
+        <location line="+9"/>
         <source>saved from the last connection</source>
         <translation>von der letzten Verbindung gespeichert</translation>
     </message>
     <message>
-        <location line="+20"/>
+        <location line="+22"/>
         <source>%1: %2</source>
         <translation>%1: %2</translation>
     </message>
@@ -2752,24 +2799,21 @@ Erlaubt: %1</translation>
     </message>
     <message>
         <location line="+3"/>
-        <location line="+81"/>
         <source>Password:</source>
         <translation>Passwort:</translation>
     </message>
     <message>
-        <location line="-73"/>
-        <location line="+77"/>
+        <location line="+8"/>
         <source>Save this password in the project file</source>
         <translation>Dieses Passwort in der Projektdatei speichern</translation>
     </message>
     <message>
-        <location line="-74"/>
-        <location line="+77"/>
+        <location line="+3"/>
         <source>Anyone who opens the project file can read a saved password.</source>
         <translation>Wer die Projektdatei öffnet, kann ein gespeichertes Passwort lesen.</translation>
     </message>
     <message>
-        <location line="-61"/>
+        <location line="+16"/>
         <source>Line terminator appended to control-widget commands sent over serial. Doesn&apos;t affect its serial terminal&apos;s raw keystrokes.</source>
         <translation>Zeilenabschluss, der an Befehle von Steuer-Widgets über die serielle Schnittstelle angehängt wird. Betrifft nicht die direkten Tastenanschläge seines seriellen Terminals.</translation>
     </message>
@@ -2785,17 +2829,12 @@ Erlaubt: %1</translation>
     </message>
     <message>
         <location line="+3"/>
-        <location line="+281"/>
+        <location line="+272"/>
         <source>e.g. robot1.local</source>
         <translation>z. B. robot1.local</translation>
     </message>
     <message>
-        <location line="-279"/>
-        <source>Hostname or IP the OTA tab uses for this device&apos;s firmware upload. Left blank, the device is listed there but nothing can be polled or uploaded.</source>
-        <translation>Hostname oder IP, die der OTA-Tab für den Firmware-Upload dieses Geräts verwendet. Leer gelassen wird das Gerät dort aufgeführt, aber nichts kann abgefragt oder hochgeladen werden.</translation>
-    </message>
-    <message>
-        <location line="+8"/>
+        <location line="-262"/>
         <source>Use reported</source>
         <translation>Gemeldete übernehmen</translation>
     </message>
@@ -2810,31 +2849,36 @@ Erlaubt: %1</translation>
         <translation>Adresse:</translation>
     </message>
     <message>
-        <location line="+4"/>
-        <source>Password for this device&apos;s X-OTA-Password header.</source>
-        <translation>Passwort für den X-OTA-Password-Header dieses Geräts.</translation>
+        <location line="-20"/>
+        <source>Hostname or IP of the device&apos;s recovery, for firmware uploads. Usually left blank: the OTA tab then uses the address the device reports, or its TCP host.</source>
+        <translation>Hostname oder IP der Recovery des Geräts, für Firmware-Uploads. Meist leer gelassen: Der OTA-Tab verwendet dann die Adresse, die das Gerät meldet, oder seinen TCP-Host.</translation>
     </message>
     <message>
-        <location line="+24"/>
-        <location line="+242"/>
+        <location line="+23"/>
+        <source>Uploads are signed with the device&apos;s password, the same one its connection uses.</source>
+        <translation>Uploads werden mit dem Passwort des Geräts signiert, demselben, das seine Verbindung verwendet.</translation>
+    </message>
+    <message>
+        <location line="+18"/>
+        <location line="+240"/>
         <source>Connected</source>
         <translation>Verbunden</translation>
     </message>
     <message>
-        <location line="-242"/>
-        <location line="+242"/>
+        <location line="-240"/>
+        <location line="+240"/>
         <source>Disconnected</source>
         <translation>Getrennt</translation>
     </message>
     <message>
-        <location line="-239"/>
+        <location line="-237"/>
         <location line="+3"/>
-        <location line="+155"/>
+        <location line="+153"/>
         <source>(not connected yet)</source>
         <translation>(noch nicht verbunden)</translation>
     </message>
     <message>
-        <location line="-145"/>
+        <location line="-143"/>
         <source>Status:</source>
         <translation>Status:</translation>
     </message>
@@ -2869,7 +2913,7 @@ Erlaubt: %1</translation>
         <translation>Die obigen Einstellungen anwenden und jetzt (neu) verbinden, ohne diesen Dialog zu schließen.</translation>
     </message>
     <message>
-        <location line="+114"/>
+        <location line="+112"/>
         <source>%1 (last connection)</source>
         <translation>%1 (letzte Verbindung)</translation>
     </message>
@@ -2895,7 +2939,7 @@ Erlaubt: %1</translation>
         <translation>Gerät meldet: %1</translation>
     </message>
     <message>
-        <location line="-241"/>
+        <location line="-239"/>
         <source>Reported by device</source>
         <translation>Vom Gerät gemeldet</translation>
     </message>
@@ -3462,7 +3506,7 @@ Erlaubt: %1</translation>
         <translation>, </translation>
     </message>
     <message>
-        <location line="+295"/>
+        <location line="+325"/>
         <source>AI assistant access is off.</source>
         <translation>Der Zugriff für KI-Assistenten ist aus.</translation>
     </message>
@@ -3488,7 +3532,7 @@ Erlaubt: %1</translation>
         <translation>KI-Assistent getrennt: %1</translation>
     </message>
     <message>
-        <location line="+413"/>
+        <location line="+418"/>
         <source>Pending</source>
         <translation>Ausstehend</translation>
     </message>
@@ -3632,12 +3676,12 @@ Verluste: %2</translation>
     </message>
     <message>
         <location line="+0"/>
-        <location line="+4021"/>
+        <location line="+4197"/>
         <source>Later</source>
         <translation>Später</translation>
     </message>
     <message>
-        <location line="-4014"/>
+        <location line="-4190"/>
         <source>&amp;Access</source>
         <translation>&amp;Zugang</translation>
     </message>
@@ -3764,18 +3808,18 @@ Verluste: %2</translation>
     </message>
     <message>
         <location line="+18"/>
-        <location line="+3335"/>
+        <location line="+3446"/>
         <source>Undo</source>
         <translation>Rückgängig</translation>
     </message>
     <message>
-        <location line="-3333"/>
-        <location line="+3333"/>
+        <location line="-3444"/>
+        <location line="+3444"/>
         <source>Redo</source>
         <translation>Wiederholen</translation>
     </message>
     <message>
-        <location line="-3290"/>
+        <location line="-3401"/>
         <source>Add Device</source>
         <translation>Gerät hinzufügen</translation>
     </message>
@@ -3821,12 +3865,12 @@ Verluste: %2</translation>
     </message>
     <message>
         <location line="+36"/>
-        <location line="+3256"/>
+        <location line="+3367"/>
         <source>Fullscreen dashboard (F11)</source>
         <translation>Dashboard im Vollbildmodus (F11)</translation>
     </message>
     <message>
-        <location line="-3075"/>
+        <location line="-3186"/>
         <source>Rename Workspace</source>
         <translation>Arbeitsbereich umbenennen</translation>
     </message>
@@ -3936,7 +3980,7 @@ Verluste: %2</translation>
 %3</translation>
     </message>
     <message>
-        <location line="+426"/>
+        <location line="+436"/>
         <source>Close</source>
         <translation>Schließen</translation>
     </message>
@@ -3946,7 +3990,7 @@ Verluste: %2</translation>
         <translation>%1: gefunden unter %2</translation>
     </message>
     <message>
-        <location line="+339"/>
+        <location line="+376"/>
         <source>%1: trying %2</source>
         <translation>%1: versuche %2</translation>
     </message>
@@ -4005,12 +4049,22 @@ Verluste: %2</translation>
         <translation>&quot;%1&quot; in der Galerie gespeichert.</translation>
     </message>
     <message>
-        <location line="+599"/>
+        <location line="+288"/>
+        <source>not connected</source>
+        <translation>nicht verbunden</translation>
+    </message>
+    <message>
+        <location line="+34"/>
+        <source>Firmware</source>
+        <translation>Firmware</translation>
+    </message>
+    <message>
+        <location line="+362"/>
         <source>Update available: v%1</source>
         <translation>Update verfügbar: v%1</translation>
     </message>
     <message>
-        <location line="+12"/>
+        <location line="+43"/>
         <source>Up to date (v%1)</source>
         <translation>Aktuell (v%1)</translation>
     </message>
@@ -4028,13 +4082,13 @@ Verluste: %2</translation>
         <location line="+8"/>
         <location line="+9"/>
         <location line="+8"/>
-        <location line="+23"/>
-        <location line="+27"/>
+        <location line="+36"/>
+        <location line="+37"/>
         <source>Update</source>
         <translation>Aktualisieren</translation>
     </message>
     <message>
-        <location line="-66"/>
+        <location line="-89"/>
         <source>Automatic installation requires running an AppImage. Download the AppImage from the release page.</source>
         <translation>Die automatische Installation setzt voraus, dass ein AppImage ausgeführt wird. Laden Sie das AppImage von der Release-Seite herunter.</translation>
     </message>
@@ -4049,12 +4103,13 @@ Verluste: %2</translation>
         <translation>Dieses Release hat keine SHA256SUMS.txt zur Überprüfung des Downloads und kann daher nicht automatisch installiert werden. Stattdessen wird die Release-Seite geöffnet.</translation>
     </message>
     <message>
-        <location line="+5"/>
+        <location line="-61"/>
+        <location line="+66"/>
         <source>Downloading TraceView %1...</source>
         <translation>TraceView %1 wird heruntergeladen...</translation>
     </message>
     <message>
-        <location line="+10"/>
+        <location line="+23"/>
         <source>Confirm the installation in the Android installer.</source>
         <translation>Bestätigen Sie die Installation im Android-Installer.</translation>
     </message>
@@ -4078,13 +4133,13 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
         <translation>App schließen</translation>
     </message>
     <message>
-        <location line="-3302"/>
-        <location line="+3052"/>
+        <location line="-3478"/>
+        <location line="+3163"/>
         <source>Devices</source>
         <translation>Geräte</translation>
     </message>
     <message>
-        <location line="-2977"/>
+        <location line="-3088"/>
         <source>Subscriptions</source>
         <translation>Abonnements</translation>
     </message>
@@ -4100,12 +4155,12 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
         <translation>Name:</translation>
     </message>
     <message>
-        <location line="-2112"/>
+        <location line="-2147"/>
         <source>TraceView v%1</source>
         <translation>TraceView v%1</translation>
     </message>
     <message>
-        <location line="+2113"/>
+        <location line="+2148"/>
         <source>Workspace</source>
         <translation>Arbeitsbereich</translation>
     </message>
@@ -4131,23 +4186,23 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
     </message>
     <message>
         <location line="+81"/>
-        <location line="+2550"/>
+        <location line="+2661"/>
         <source>Add widget</source>
         <translation>Widget hinzufügen</translation>
     </message>
     <message>
-        <location line="-2547"/>
+        <location line="-2658"/>
         <source>Remove selected widget (%1)</source>
         <translation>Ausgewähltes Widget entfernen (%1)</translation>
     </message>
     <message>
         <location line="+3"/>
-        <location line="+2557"/>
+        <location line="+2668"/>
         <source>Add device</source>
         <translation>Gerät hinzufügen</translation>
     </message>
     <message>
-        <location line="-2554"/>
+        <location line="-2665"/>
         <source>Remove selected device (%1)</source>
         <translation>Ausgewähltes Gerät entfernen (%1)</translation>
     </message>
@@ -4232,7 +4287,7 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
         <translation>Ebenen-/Eigenschaften-Panels anzeigen</translation>
     </message>
     <message>
-        <location line="+292"/>
+        <location line="+302"/>
         <source>New Device</source>
         <translation>Neues Gerät</translation>
     </message>
@@ -4298,12 +4353,12 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
         <translation>&amp;Bewegung</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="-1548"/>
+        <location filename="../lib/core/mainwindow.cpp" line="-1558"/>
         <source>Dashboard</source>
         <translation>Dashboard</translation>
     </message>
     <message>
-        <location line="+1906"/>
+        <location line="+1953"/>
         <source>%1: this BLE address now answers as a different robot (expected %2, got %3)</source>
         <translation>%1: diese BLE-Adresse antwortet jetzt als anderer Roboter (erwartet %2, erhalten %3)</translation>
     </message>
@@ -4335,13 +4390,13 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
     </message>
     <message>
         <location line="+15"/>
-        <location line="+331"/>
+        <location line="+395"/>
         <location line="+4"/>
         <source>Open Project</source>
         <translation>Projekt öffnen</translation>
     </message>
     <message>
-        <location line="-248"/>
+        <location line="-312"/>
         <source>Open Log File</source>
         <translation>Protokolldatei öffnen</translation>
     </message>
@@ -4351,7 +4406,7 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
         <translation>BTP-Protokoll (*.blog)</translation>
     </message>
     <message>
-        <location line="+93"/>
+        <location line="+110"/>
         <source>OTA Update</source>
         <translation>OTA-Update</translation>
     </message>
@@ -4362,7 +4417,7 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
     </message>
     <message>
         <location line="+20"/>
-        <location line="+224"/>
+        <location line="+271"/>
         <source>Settings</source>
         <translation>Einstellungen</translation>
     </message>
@@ -4649,130 +4704,624 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
 <context>
     <name>traceview::OtaClient</name>
     <message>
-        <location filename="../lib/ota/otaclient.cpp" line="+79"/>
-        <location line="+62"/>
-        <source>No OTA address configured for this device.</source>
-        <translation>Für dieses Gerät ist keine OTA-Adresse konfiguriert.</translation>
+        <location filename="../lib/ota/otaclient.cpp" line="+156"/>
+        <source>Something answered at this address, but not a TraceKit recovery.</source>
+        <translation>An dieser Adresse hat etwas geantwortet, aber keine TraceKit-Recovery.</translation>
     </message>
     <message>
-        <location line="+26"/>
+        <location line="+20"/>
+        <source>No address for this device: connect it over TCP, or set its OTA address in Device Settings.</source>
+        <translation>Keine Adresse für dieses Gerät: Verbinden Sie es über TCP oder legen Sie seine OTA-Adresse in den Geräteeinstellungen fest.</translation>
+    </message>
+    <message>
+        <location line="+20"/>
+        <location line="+110"/>
+        <source>No address for this device.</source>
+        <translation>Keine Adresse für dieses Gerät.</translation>
+    </message>
+    <message>
+        <location line="-103"/>
         <source>Couldn&apos;t open %1</source>
         <translation>%1 konnte nicht geöffnet werden</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>%1 is not an ESP application image (use the firmware.bin of the build, not the merged or bootloader one).</source>
+        <translation>%1 ist kein ESP-Anwendungsimage (verwenden Sie die firmware.bin des Builds, nicht die zusammengeführte oder die des Bootloaders).</translation>
+    </message>
+    <message>
+        <location line="+32"/>
+        <source>The recovery is already writing another upload.</source>
+        <translation>Die Recovery schreibt bereits einen anderen Upload.</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>The image has %1 KB; the app partition holds %2 KB.</source>
+        <translation>Das Image hat %1 KB; die App-Partition fasst %2 KB.</translation>
+    </message>
+    <message>
+        <location line="+15"/>
+        <source>No device password to sign the upload with.</source>
+        <translation>Kein Gerätepasswort, um den Upload zu signieren.</translation>
+    </message>
+    <message>
+        <location line="+32"/>
+        <source>The device refused the signature: wrong password (the device&apos;s password E). %1</source>
+        <translation>Das Gerät hat die Signatur abgelehnt: falsches Passwort (Passwort E des Geräts). %1</translation>
+    </message>
+    <message>
+        <location line="+35"/>
+        <source>No device password to sign with.</source>
+        <translation>Kein Gerätepasswort zum Signieren.</translation>
+    </message>
+</context>
+<context>
+    <name>traceview::OtaDevicePanel</name>
+    <message>
+        <location filename="../lib/ota/otadevicepanel.cpp" line="+76"/>
+        <source>Asked for (btp -recovery).</source>
+        <translation>Angefordert (btp -recovery).</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>The application kept crashing.</source>
+        <translation>Die Anwendung ist wiederholt abgestürzt.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>After a factory reset.</source>
+        <translation>Nach einem Werksreset.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>No valid application, or the boot chose it.</source>
+        <translation>Keine gültige Anwendung, oder der Bootvorgang hat sie gewählt.</translation>
+    </message>
+    <message>
+        <location line="+38"/>
+        <source>Cannot read the file: %1</source>
+        <translation>Datei kann nicht gelesen werden: %1</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Not an ESP application image (it must start with 0xE9). Use the application .bin from build/, not the merged one.</source>
+        <translation>Kein ESP-Anwendungsimage (es muss mit 0xE9 beginnen). Verwenden Sie die Anwendungs-.bin aus build/, nicht die zusammengeführte.</translation>
+    </message>
+    <message>
+        <location line="+178"/>
+        <source>Installed</source>
+        <translation>Installiert</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>Firmware</source>
+        <translation>Firmware</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Built</source>
+        <translation>Erstellt</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Recovery</source>
+        <translation>Recovery</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Address</source>
+        <translation>Adresse</translation>
+    </message>
+    <message>
+        <location line="+25"/>
+        <location line="+166"/>
+        <location line="+372"/>
+        <source>Choose file…</source>
+        <translation>Datei auswählen…</translation>
+    </message>
+    <message>
+        <location line="-500"/>
+        <source>New firmware</source>
+        <translation>Neue Firmware</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>Restart into the recovery</source>
+        <translation>In die Recovery neu starten</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Send the image</source>
+        <translation>Image senden</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Start the new firmware</source>
+        <translation>Neue Firmware starten</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <location line="+109"/>
+        <source>Back to the application</source>
+        <translation>Zurück zur Anwendung</translation>
+    </message>
+    <message>
+        <location line="-108"/>
+        <source>Leave the recovery for the application already installed.</source>
+        <translation>Recovery verlassen und die bereits installierte Anwendung starten.</translation>
+    </message>
+    <message>
+        <location line="+15"/>
+        <location line="+93"/>
+        <location line="+508"/>
+        <source>Install</source>
+        <translation>Installieren</translation>
+    </message>
+    <message>
+        <location line="-508"/>
+        <location line="+372"/>
+        <source>Change…</source>
+        <translation>Ändern…</translation>
+    </message>
+    <message>
+        <location line="-371"/>
+        <location line="+507"/>
+        <source>Restart and install</source>
+        <translation>Neu starten und installieren</translation>
+    </message>
+    <message>
+        <location line="-475"/>
+        <source>%1 did not answer as a recovery in %2 s. Is it on a Wi-Fi network this computer reaches? Without a known network the recovery raises its own (&quot;btp-&lt;name&gt;&quot;).</source>
+        <translation>%1 hat in %2 s nicht als Recovery geantwortet. Ist es in einem WLAN-Netz, das dieser Computer erreicht? Ohne bekanntes Netz öffnet die Recovery ein eigenes (&quot;btp-&lt;name&gt;&quot;).</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>It came back running %1, not %2: the new firmware did not start and the device went back to the previous one.</source>
+        <translation>Es läuft wieder mit %1, nicht %2: Die neue Firmware ist nicht gestartet und das Gerät ist zur vorherigen zurückgekehrt.</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>The recovery accepted the image and started it. Connect the device to see it running.</source>
+        <translation>Die Recovery hat das Image angenommen und gestartet. Verbinden Sie das Gerät, um es laufen zu sehen.</translation>
+    </message>
+    <message>
+        <location line="+41"/>
+        <source>%1 is running %2.</source>
+        <translation>%1 läuft mit %2.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>%1: running %2</source>
+        <translation>%1: läuft mit %2</translation>
+    </message>
+    <message>
+        <location line="+21"/>
+        <location line="+14"/>
+        <source>%1: %2</source>
+        <translation>%1: %2</translation>
+    </message>
+    <message>
+        <location line="+48"/>
+        <source>Select Firmware</source>
+        <translation>Firmware auswählen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Firmware Binary (*.bin);;All Files (*)</source>
+        <translation>Firmware-Binärdatei (*.bin);;Alle Dateien (*)</translation>
+    </message>
+    <message>
+        <location line="+20"/>
+        <location line="+21"/>
+        <source>Install Firmware</source>
+        <translation>Firmware installieren</translation>
+    </message>
+    <message>
+        <location line="-20"/>
+        <source>Password of %1 (the one its key was provisioned with). It stays on this computer: the upload is signed with it.</source>
+        <translation>Passwort von %1 (das, mit dem sein Schlüssel eingerichtet wurde). Es bleibt auf diesem Computer: Der Upload wird damit signiert.</translation>
+    </message>
+    <message>
+        <location line="+21"/>
+        <source>This image was built for %1, and %2 is an %3. Install it anyway?</source>
+        <translation>Dieses Image wurde für %1 erstellt, und %2 ist ein %3. Trotzdem installieren?</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Install anyway</source>
+        <translation>Trotzdem installieren</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Cancel</source>
+        <translation>Abbrechen</translation>
+    </message>
+    <message>
+        <location line="+38"/>
+        <source>Leaving the recovery…</source>
+        <translation>Recovery wird verlassen…</translation>
+    </message>
+    <message>
+        <location line="+50"/>
+        <source>In the recovery</source>
+        <translation>In der Recovery</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Receiving a firmware</source>
+        <translation>Empfängt eine Firmware</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>On its own Wi-Fi network: %1.</source>
+        <translation>Im eigenen WLAN-Netz: %1.</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Running</source>
+        <translation>Läuft</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Install restarts it into the recovery, sends the image and starts it.</source>
+        <translation>Installieren startet es in die Recovery neu, sendet das Image und startet es.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>No address</source>
+        <translation>Keine Adresse</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Connect it once over Wi-Fi so it reports where its recovery answers, or set the OTA address in Device Settings.</source>
+        <translation>Verbinden Sie es einmal über WLAN, damit es meldet, wo seine Recovery antwortet, oder legen Sie die OTA-Adresse in den Geräteeinstellungen fest.</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Checking…</source>
+        <translation>Wird geprüft…</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Offline</source>
+        <translation>Offline</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Not connected and no recovery answers at %1%2. Connect it to install a firmware.</source>
+        <translation>Nicht verbunden, und unter %1%2 antwortet keine Recovery. Verbinden Sie es, um eine Firmware zu installieren.</translation>
+    </message>
+    <message>
+        <location line="+17"/>
+        <source>none: waiting for a firmware</source>
+        <translation>keine: wartet auf eine Firmware</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>%1 · %2 · application up to %3</source>
+        <translation>%1 · %2 · Anwendung bis %3</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>%1 · ESP-IDF %2</source>
+        <translation>%1 · ESP-IDF %2</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>details once it is in the recovery</source>
+        <translation>Details, sobald es in der Recovery ist</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>%1 · details once it is in the recovery</source>
+        <translation>%1 · Details, sobald es in der Recovery ist</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>From the device itself (the address it reported, or its TCP host).</source>
+        <translation>Vom Gerät selbst (die gemeldete Adresse oder sein TCP-Host).</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Set in Device Settings.</source>
+        <translation>In den Geräteeinstellungen festgelegt.</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>Drop the application .bin here, or click to choose it</source>
+        <translation>Anwendungs-.bin hier ablegen oder klicken, um sie auszuwählen</translation>
+    </message>
+    <message>
+        <location line="+14"/>
+        <source>built %1</source>
+        <translation>erstellt %1</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>saved %1</source>
+        <translation>gespeichert %1</translation>
+    </message>
+    <message>
+        <location line="+14"/>
+        <source>&lt;b&gt;%1&lt;/b&gt; %2</source>
+        <translation>&lt;b&gt;%1&lt;/b&gt; %2</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>ESP application image</source>
+        <translation>ESP-Anwendungsimage</translation>
+    </message>
+    <message>
+        <location line="+13"/>
+        <source>built for %1, the device is an %2</source>
+        <translation>für %1 erstellt, das Gerät ist ein %2</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>a different project from the installed %1</source>
+        <translation>ein anderes Projekt als das installierte %1</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>the same version as installed</source>
+        <translation>dieselbe Version wie installiert</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>replaces %1</source>
+        <translation>ersetzt %1</translation>
+    </message>
+    <message>
+        <location line="+12"/>
+        <source>Too large: %1 for a partition of %2.</source>
+        <translation>Zu groß: %1 für eine Partition von %2.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>%1% of the application partition (%2).</source>
+        <translation>%1% der Anwendungspartition (%2).</translation>
+    </message>
+    <message>
+        <location line="+20"/>
+        <source>Restarting %1 and waiting for its recovery to answer… (%2 s)</source>
+        <translation>%1 wird neu gestartet, warte auf Antwort seiner Recovery… (%2 s)</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>Sending…</source>
+        <translation>Senden…</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Sending… %1% of %2 (compressed from %3)</source>
+        <translation>Senden… %1% von %2 (komprimiert von %3)</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Sending… %1% of %2</source>
+        <translation>Senden… %1% von %2</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Image accepted. Starting the new firmware and waiting for it to connect…</source>
+        <translation>Image angenommen. Neue Firmware wird gestartet, warte auf Verbindung…</translation>
+    </message>
+    <message>
+        <location line="+30"/>
+        <source>Choose a firmware image first.</source>
+        <translation>Wählen Sie zuerst ein Firmware-Image.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Connect the device, or put it in the recovery.</source>
+        <translation>Verbinden Sie das Gerät oder versetzen Sie es in die Recovery.</translation>
     </message>
 </context>
 <context>
     <name>traceview::OtaTab</name>
     <message>
-        <location filename="../lib/ota/otatab.cpp" line="+71"/>
+        <location filename="../lib/ota/otatab.cpp" line="+81"/>
         <source>Name</source>
         <translation>Name</translation>
     </message>
     <message>
-        <location line="+0"/>
-        <source>OTA Address</source>
-        <translation>OTA-Adresse</translation>
-    </message>
-    <message>
-        <location line="+0"/>
-        <source>OTA Online</source>
-        <translation>OTA online</translation>
-    </message>
-    <message>
-        <location line="+1"/>
-        <source>Firmware</source>
-        <translation>Firmware</translation>
-    </message>
-    <message>
-        <location line="+0"/>
-        <source>Password</source>
-        <translation>Passwort</translation>
-    </message>
-    <message>
-        <location line="+0"/>
-        <source>Upload</source>
-        <translation>Hochladen</translation>
-    </message>
-    <message>
-        <location line="+71"/>
-        <source>(not configured)</source>
-        <translation>(nicht konfiguriert)</translation>
-    </message>
-    <message>
-        <location line="+4"/>
-        <location line="+8"/>
-        <location line="+122"/>
-        <source>—</source>
-        <translation>—</translation>
-    </message>
-    <message>
-        <location line="-130"/>
+        <location line="+72"/>
         <source>Checking…</source>
         <translation>Wird geprüft…</translation>
     </message>
     <message>
-        <location line="+17"/>
-        <source>OTA password</source>
-        <translation>OTA-Passwort</translation>
-    </message>
-    <message>
-        <location line="+4"/>
-        <source>Remember</source>
-        <translation>Merken</translation>
-    </message>
-    <message>
-        <location line="+2"/>
-        <source>Save this password in the project file.</source>
-        <translation>Dieses Passwort in der Projektdatei speichern.</translation>
-    </message>
-    <message>
-        <location line="+25"/>
+        <location line="+10"/>
         <source>Upload…</source>
         <translation>Hochladen…</translation>
     </message>
     <message>
-        <location line="+4"/>
-        <location line="+147"/>
-        <source>Set this device&apos;s OTA address in Device Settings first.</source>
-        <translation>Legen Sie zuerst die OTA-Adresse dieses Geräts in den Geräteeinstellungen fest.</translation>
-    </message>
-    <message>
-        <location line="-142"/>
+        <location line="+233"/>
         <source>Uploading… %p%</source>
         <translation>Hochladen… %p%</translation>
     </message>
     <message>
-        <location line="+81"/>
+        <location line="-90"/>
         <source>Offline</source>
         <translation>Offline</translation>
     </message>
     <message>
+        <location line="-248"/>
+        <source>asked for (btp -recovery)</source>
+        <translation>angefordert (btp -recovery)</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>the application kept crashing</source>
+        <translation>die Anwendung ist wiederholt abgestürzt</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>factory reset</source>
+        <translation>Werksreset</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>no valid application, or the boot chose it</source>
+        <translation>keine gültige Anwendung, oder der Bootvorgang hat sie gewählt</translation>
+    </message>
+    <message>
+        <location line="+19"/>
+        <source>Address</source>
+        <translation>Adresse</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>State</source>
+        <translation>Zustand</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Application</source>
+        <translation>Anwendung</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Recovery</source>
+        <translation>Recovery</translation>
+    </message>
+    <message>
+        <location line="+62"/>
+        <location line="+70"/>
+        <location line="+75"/>
+        <source>(none)</source>
+        <translation>(keine)</translation>
+    </message>
+    <message>
+        <location line="-142"/>
+        <source>Connect the device over TCP (or once, so it reports its address), or set its OTA address in Device Settings.</source>
+        <translation>Verbinden Sie das Gerät über TCP (oder einmal, damit es seine Adresse meldet), oder legen Sie seine OTA-Adresse in den Geräteeinstellungen fest.</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>From the device itself (its TCP host or the address it reported).</source>
+        <translation>Vom Gerät selbst (sein TCP-Host oder die gemeldete Adresse).</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Set in Device Settings.</source>
+        <translation>In den Geräteeinstellungen festgelegt.</translation>
+    </message>
+    <message>
+        <location line="+16"/>
+        <source>Send a firmware .bin. If the device is running its application and connected, it is restarted into the recovery first.</source>
+        <translation>Eine Firmware-.bin senden. Läuft das Gerät mit seiner Anwendung und ist verbunden, wird es zuerst in die Recovery neu gestartet.</translation>
+    </message>
+    <message>
         <location line="+7"/>
+        <source>To app</source>
+        <translation>Zur App</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Leave the recovery for the application already there.</source>
+        <translation>Recovery verlassen und die vorhandene Anwendung starten.</translation>
+    </message>
+    <message>
+        <location line="+16"/>
+        <location line="+192"/>
+        <source>Restarting…</source>
+        <translation>Neustart…</translation>
+    </message>
+    <message>
+        <location line="-118"/>
+        <source>%1 did not answer as a recovery in %2 s. Is it on a Wi-Fi network this computer can reach? Without a known network, the recovery raises its own (&quot;btp-&lt;name&gt;&quot;).</source>
+        <translation>%1 hat in %2 s nicht als Recovery geantwortet. Ist es in einem WLAN-Netz, das dieser Computer erreichen kann? Ohne bekanntes Netz öffnet die Recovery ein eigenes (&quot;btp-&lt;name&gt;&quot;).</translation>
+    </message>
+    <message>
+        <location line="+15"/>
+        <source>In recovery</source>
+        <translation>In der Recovery</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Writing…</source>
+        <translation>Schreiben…</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Why: %1</source>
+        <translation>Grund: %1</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Own network: %1</source>
+        <translation>Eigenes Netz: %1</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>%1, up to %2 KB</source>
+        <translation>%1, bis %2 KB</translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <source>Running the app</source>
+        <translation>App läuft</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Upload restarts it into the recovery first.</source>
+        <translation>Hochladen startet es zuerst in die Recovery neu.</translation>
+    </message>
+    <message>
+        <location line="+4"/>
         <source>Not reachable</source>
         <translation>Nicht erreichbar</translation>
     </message>
     <message>
-        <location line="+2"/>
-        <source>Online (busy)</source>
-        <translation>Online (beschäftigt)</translation>
+        <location line="+65"/>
+        <source>%1 will restart into its recovery and receive %2. Then it starts the new firmware by itself.</source>
+        <translation>%1 startet in seine Recovery neu und empfängt %2. Danach startet es die neue Firmware selbst.</translation>
     </message>
     <message>
-        <location line="+2"/>
-        <source>A firmware write is already in progress on the robot.</source>
-        <translation>Auf dem Roboter läuft bereits ein Firmware-Schreibvorgang.</translation>
+        <location line="+3"/>
+        <source>Restart and upload</source>
+        <translation>Neu starten und hochladen</translation>
     </message>
     <message>
-        <location line="+2"/>
-        <source>Online</source>
-        <translation>Online</translation>
+        <location line="+0"/>
+        <source>Cancel</source>
+        <translation>Abbrechen</translation>
     </message>
     <message>
-        <location line="+36"/>
+        <location line="+68"/>
+        <location line="+6"/>
+        <location line="+9"/>
+        <location line="+2"/>
+        <source>%1: %2</source>
+        <translation>%1: %2</translation>
+    </message>
+    <message>
+        <location line="-197"/>
+        <location line="+61"/>
+        <location line="+22"/>
+        <location line="+25"/>
+        <location line="+78"/>
         <location line="+11"/>
         <source>Firmware Upload</source>
         <translation>Firmware-Upload</translation>
     </message>
     <message>
-        <location line="+6"/>
+        <location line="-149"/>
+        <source>Reported by the running application.</source>
+        <translation>Von der laufenden Anwendung gemeldet.</translation>
+    </message>
+    <message>
+        <location line="+14"/>
+        <source>Password E of %1 (the one its key was provisioned with). It stays on this computer: the upload is signed with it.</source>
+        <translation>Passwort E von %1 (das, mit dem sein Schlüssel eingerichtet wurde). Es bleibt auf diesem Computer: Der Upload wird damit signiert.</translation>
+    </message>
+    <message>
+        <location line="+22"/>
+        <source>%1 is not in the recovery, and TraceView is not connected to it to restart it there. Connect it, or send &quot;btp -recovery&quot; from its terminal.</source>
+        <translation>%1 ist nicht in der Recovery, und TraceView ist nicht damit verbunden, um es dorthin neu zu starten. Verbinden Sie es oder senden Sie &quot;btp -recovery&quot; von seinem Terminal.</translation>
+    </message>
+    <message>
+        <location line="+7"/>
         <source>Select Firmware</source>
         <translation>Firmware auswählen</translation>
     </message>
@@ -5388,7 +5937,7 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
 <context>
     <name>traceview::SettingsPage</name>
     <message>
-        <location filename="../lib/core/settingspage.cpp" line="+206"/>
+        <location filename="../lib/core/settingspage.cpp" line="+210"/>
         <source>Settings</source>
         <translation>Einstellungen</translation>
     </message>
@@ -5424,19 +5973,19 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
     </message>
     <message>
         <location line="-234"/>
-        <location line="+326"/>
+        <location line="+356"/>
         <source>Diagnostics</source>
         <translation>Diagnose</translation>
     </message>
     <message>
-        <location line="-325"/>
-        <location line="+377"/>
+        <location line="-355"/>
+        <location line="+407"/>
         <location line="+5"/>
         <source>Updates</source>
         <translation>Updates</translation>
     </message>
     <message>
-        <location line="-340"/>
+        <location line="-370"/>
         <source>Project and startup preferences shared by the application.</source>
         <translation>Projekt- und Starteinstellungen der Anwendung.</translation>
     </message>
@@ -5720,17 +6269,32 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
         <translation>Ein über MCP verbundener Assistent kann dann Arbeitsbereiche und Widgets anlegen, Telemetrie lesen und Bildschirmfotos dieses Fensters machen. Seine Änderungen am Dashboard lassen sich rückgängig machen.</translation>
     </message>
     <message>
-        <location line="+11"/>
-        <source>To connect Claude Code, run this once in a terminal:</source>
-        <translation>Um Claude Code zu verbinden, führen Sie dies einmal in einem Terminal aus:</translation>
+        <location line="+37"/>
+        <source>Copy</source>
+        <translation>Kopieren</translation>
     </message>
     <message>
-        <location line="+7"/>
-        <source>Copy command</source>
-        <translation>Befehl kopieren</translation>
+        <location line="+9"/>
+        <source>Claude Code: run this once in a terminal.</source>
+        <translation>Claude Code: Führen Sie dies einmal in einem Terminal aus.</translation>
     </message>
     <message>
-        <location line="+11"/>
+        <location line="+1"/>
+        <source>Registers TraceView for every folder (--scope user), so Claude Code in the terminal, the VS Code extension and the Code tab of the Claude desktop app all see it.</source>
+        <translation>Registriert TraceView für jeden Ordner (--scope user), sodass Claude Code im Terminal, die VS-Code-Erweiterung und der Code-Tab der Claude-Desktop-App es sehen.</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Claude desktop app (chat): add this to claude_desktop_config.json.</source>
+        <translation>Claude-Desktop-App (Chat): Fügen Sie dies zu claude_desktop_config.json hinzu.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Paste it inside the file&apos;s &quot;mcpServers&quot; object (Claude desktop app: Settings &gt; Developer &gt; Edit Config), then restart the app.</source>
+        <translation>Fügen Sie es in das Objekt &quot;mcpServers&quot; der Datei ein (Claude-Desktop-App: Settings &gt; Developer &gt; Edit Config) und starten Sie die App dann neu.</translation>
+    </message>
+    <message>
+        <location line="+8"/>
         <source>Keep enough history for investigation without letting long-running sessions use unbounded memory.</source>
         <translation>Genug Verlauf für Analysen behalten, ohne dass lange Sitzungen unbegrenzt Speicher belegen.</translation>
     </message>
@@ -6109,9 +6673,323 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
     </message>
 </context>
 <context>
+    <name>traceview::TraceKitDialog</name>
+    <message>
+        <location filename="../lib/devices/tracekitdialog.cpp" line="+71"/>
+        <source>%1 — TraceKit</source>
+        <translation>%1 — TraceKit</translation>
+    </message>
+    <message>
+        <location line="+34"/>
+        <source>Settings</source>
+        <translation>Einstellungen</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Wi-Fi</source>
+        <translation>WLAN</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Actions</source>
+        <translation>Aktionen</translation>
+    </message>
+    <message>
+        <location line="+111"/>
+        <source>Firmware %1</source>
+        <translation>Firmware %1</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>TraceKit %1</source>
+        <translation>TraceKit %1</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>TraceKit device</source>
+        <translation>TraceKit-Gerät</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Connected</source>
+        <translation>Verbunden</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Not connected</source>
+        <translation>Nicht verbunden</translation>
+    </message>
+    <message>
+        <location line="+15"/>
+        <source>Not connected: connect the device to change it.</source>
+        <translation>Nicht verbunden: Verbinden Sie das Gerät, um es zu ändern.</translation>
+    </message>
+    <message>
+        <location line="+16"/>
+        <source>Setting</source>
+        <translation>Einstellung</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Value</source>
+        <translation>Wert</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <location line="+129"/>
+        <source>Default</source>
+        <translation>Standard</translation>
+    </message>
+    <message>
+        <location line="-120"/>
+        <source>Reload</source>
+        <translation>Neu laden</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Apply</source>
+        <translation>Anwenden</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Saves every changed value on the device (cfg -set).</source>
+        <translation>Speichert jeden geänderten Wert auf dem Gerät (cfg -set).</translation>
+    </message>
+    <message>
+        <location line="+19"/>
+        <source>Reading the settings…</source>
+        <translation>Einstellungen werden gelesen…</translation>
+    </message>
+    <message>
+        <location line="+13"/>
+        <source>Could not read the settings: %1</source>
+        <translation>Einstellungen konnten nicht gelesen werden: %1</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>The device did not describe its settings (TraceKit too old?).</source>
+        <translation>Das Gerät hat seine Einstellungen nicht beschrieben (TraceKit zu alt?).</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>This device declares no settings.</source>
+        <translation>Dieses Gerät deklariert keine Einstellungen.</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Reading the settings… %1 of %2</source>
+        <translation>Einstellungen werden gelesen… %1 von %2</translation>
+    </message>
+    <message numerus="yes">
+        <location line="+4"/>
+        <source>%n setting(s), saved on the device.</source>
+        <translation>
+            <numerusform>%n Einstellung, auf dem Gerät gespeichert.</numerusform>
+            <numerusform>%n Einstellungen, auf dem Gerät gespeichert.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <location line="+16"/>
+        <source>Takes effect after a reboot.</source>
+        <translation>Wirkt nach einem Neustart.</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>Range %1 to %2</source>
+        <translation>Bereich %1 bis %2</translation>
+    </message>
+    <message>
+        <location line="+41"/>
+        <source>Back to the default, now (cfg -reset).</source>
+        <translation>Jetzt auf den Standard zurücksetzen (cfg -reset).</translation>
+    </message>
+    <message>
+        <location line="+29"/>
+        <source>Nothing changed.</source>
+        <translation>Nichts geändert.</translation>
+    </message>
+    <message>
+        <location line="+48"/>
+        <source>Add…</source>
+        <translation>Hinzufügen…</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Remove</source>
+        <translation>Entfernen</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Reboot to use them</source>
+        <translation>Zum Übernehmen neu starten</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>Passwords are sent to the device over the encrypted session and never read back. Changes take effect after a reboot; the recovery uses the same networks.</source>
+        <translation>Passwörter werden über die verschlüsselte Sitzung an das Gerät gesendet und nie zurückgelesen. Änderungen wirken nach einem Neustart; die Recovery verwendet dieselben Netze.</translation>
+    </message>
+    <message>
+        <location line="+17"/>
+        <source>Reading the networks…</source>
+        <translation>Netze werden gelesen…</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Could not read the networks: %1</source>
+        <translation>Netze konnten nicht gelesen werden: %1</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>  (in the firmware)</source>
+        <translation>  (in der Firmware)</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>No networks: the device only works over a cable.</source>
+        <translation>Keine Netze: Das Gerät funktioniert nur über Kabel.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>%1 of %2 networks; tried in this order.</source>
+        <translation>%1 von %2 Netzen; in dieser Reihenfolge versucht.</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <location line="+5"/>
+        <location line="+3"/>
+        <source>Add a network</source>
+        <translation>Netz hinzufügen</translation>
+    </message>
+    <message>
+        <location line="-8"/>
+        <source>Network name (SSID):</source>
+        <translation>Netzname (SSID):</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>A name with a comma cannot be added from here.</source>
+        <translation>Ein Name mit Komma kann hier nicht hinzugefügt werden.</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Password of %1 (empty: open network):</source>
+        <translation>Passwort von %1 (leer: offenes Netz):</translation>
+    </message>
+    <message>
+        <location line="+15"/>
+        <source>Remove a network</source>
+        <translation>Netz entfernen</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Pick a network from the list (the one in the firmware cannot be removed from here).</source>
+        <translation>Wählen Sie ein Netz aus der Liste (das in der Firmware kann hier nicht entfernt werden).</translation>
+    </message>
+    <message>
+        <location line="+27"/>
+        <source>Set the clock</source>
+        <translation>Uhr stellen</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>From this computer, unless the device already has the time from the internet.</source>
+        <translation>Von diesem Computer, sofern das Gerät die Zeit nicht schon aus dem Internet hat.</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Status</source>
+        <translation>Status</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Link, memory, time, power and sleep.</source>
+        <translation>Verbindung, Speicher, Zeit, Energie und Schlaf.</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Keep awake 10 min</source>
+        <translation>10 min wach halten</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>A sleeping sensor stays up for a session or an update.</source>
+        <translation>Ein schlafender Sensor bleibt für eine Sitzung oder ein Update wach.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Reboot</source>
+        <translation>Neustart</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Restarts the application.</source>
+        <translation>Startet die Anwendung neu.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Recovery</source>
+        <translation>Recovery</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Restarts into the recovery, waiting for a firmware (Firmware page).</source>
+        <translation>Startet in die Recovery neu und wartet auf eine Firmware (Seite Firmware).</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>USB bootloader</source>
+        <translation>USB-Bootloader</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>ROM download mode for 30 s: flash over the cable without the BOOT button.</source>
+        <translation>ROM-Download-Modus für 30 s: über das Kabel flashen ohne BOOT-Taste.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Factory reset…</source>
+        <translation>Werksreset…</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Erases the application and the files; keeps key, Wi-Fi and settings.</source>
+        <translation>Löscht die Anwendung und die Dateien; behält Schlüssel, WLAN und Einstellungen.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Factory reset</source>
+        <translation>Werksreset</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Erase the application and the files of %1? It then waits in the recovery for a new firmware.</source>
+        <translation>Anwendung und Dateien von %1 löschen? Es wartet dann in der Recovery auf eine neue Firmware.</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Erase</source>
+        <translation>Löschen</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Cancel</source>
+        <translation>Abbrechen</translation>
+    </message>
+    <message>
+        <location line="+22"/>
+        <source>ok</source>
+        <translation>ok</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>failed</source>
+        <translation>fehlgeschlagen</translation>
+    </message>
+</context>
+<context>
     <name>traceview::UpdateAvailableDialog</name>
     <message>
-        <location filename="../lib/core/updateavailabledialog.cpp" line="+14"/>
+        <location filename="../lib/core/updateavailabledialog.cpp" line="+15"/>
         <source>Update Available</source>
         <translation>Update verfügbar</translation>
     </message>
@@ -6121,12 +6999,12 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
         <translation>&lt;b&gt;Update verfügbar&lt;/b&gt;</translation>
     </message>
     <message>
-        <location line="+4"/>
+        <location line="+5"/>
         <source>A new update is available. Do you want to update?</source>
         <translation>Ein neues Update ist verfügbar. Möchtest du aktualisieren?</translation>
     </message>
     <message>
-        <location line="+4"/>
+        <location line="+5"/>
         <source>New version: v%1&lt;br&gt;Your version: v%2</source>
         <translation>Neue Version: v%1&lt;br&gt;Ihre Version: v%2</translation>
     </message>
@@ -6141,10 +7019,12 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
         <translation>Jetzt aktualisieren</translation>
     </message>
     <message>
+        <location line="-14"/>
         <source>A new update has been downloaded and is ready to install.</source>
         <translation>Ein neues Update wurde heruntergeladen und ist bereit zur Installation.</translation>
     </message>
     <message>
+        <location line="+14"/>
         <source>Install Now</source>
         <translation>Jetzt installieren</translation>
     </message>
@@ -6170,17 +7050,17 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
         <translation>SHA256SUMS.txt konnte nicht heruntergeladen werden: %1</translation>
     </message>
     <message>
-        <location line="+59"/>
+        <location line="+84"/>
         <source>Couldn&apos;t download %1: %2</source>
         <translation>%1 konnte nicht heruntergeladen werden: %2</translation>
     </message>
     <message>
-        <location line="-53"/>
+        <location line="-78"/>
         <source>%1 is not listed in SHA256SUMS.txt.</source>
         <translation>%1 ist nicht in SHA256SUMS.txt aufgeführt.</translation>
     </message>
     <message>
-        <location line="+65"/>
+        <location line="+90"/>
         <source>Checksum mismatch for %1 -- the download may be corrupted.</source>
         <translation>Prüfsumme für %1 stimmt nicht -- der Download ist möglicherweise beschädigt.</translation>
     </message>
