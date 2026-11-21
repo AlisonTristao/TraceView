@@ -58,6 +58,7 @@
 #include "agent/toolregistry.h"
 #include "agentapptools.h"
 #include "applog.h"
+#include "backend/plaintext.h"
 #include "backend/backend.h"
 #ifdef TRACEVIEW_ENABLE_BLE
 #include "blediscoveryservice.h"
@@ -4056,7 +4057,8 @@ DeviceConnection* MainWindow::createDeviceConnection(const Device& device) {
                         return;
                 }
                 positionNotificationToasts();
-                m_notificationToasts->post(message.trimmed(), timeoutMs, cardSeverity, name);
+                // A robot log line may carry ESP-IDF's colours: a card shows plain text.
+                m_notificationToasts->post(plainText(message).trimmed(), timeoutMs, cardSeverity, name);
             });
     // This device's script runtime's onStatus() -- the same statusMessage
     // signal the status bar uses, so a script sees session established/
@@ -4244,7 +4246,7 @@ DeviceConnection* MainWindow::createDeviceConnection(const Device& device) {
             [this, id = device.id](quint64 timestampUs, quint32, quint32, quint32, quint8 severity,
                                    const QString& message) {
                 m_agentFeed.appendLog(
-                    id, {QDateTime::currentDateTime(), timestampUs, severity, message});
+                    id, {QDateTime::currentDateTime(), timestampUs, severity, plainText(message)});
             });
     return connection;
 }

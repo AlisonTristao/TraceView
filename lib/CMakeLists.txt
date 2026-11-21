@@ -160,6 +160,7 @@ target_link_libraries(traceview_telemetry PUBLIC
 # traceview_telemetry, never on traceview_protocol/BTP.
 add_library(traceview_backend STATIC
     backend/backend.h
+    backend/plaintext.h
     backend/statusseverity.h
 )
 

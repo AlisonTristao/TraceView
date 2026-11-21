@@ -1,7 +1,9 @@
 #include "protocol/commandclient.h"
 
+#include <QDateTime>
 #include <QRegularExpression>
 
+#include "backend/plaintext.h"
 #include "protocol/logseverity.h"
 #include "protocol/telemetrycatalog.h"
 
@@ -16,14 +18,16 @@ constexpr quint16 kShellActionId = 0x0001;
 constexpr quint16 kShellActionVersion = 0x0001;
 constexpr quint8 kResultStatusSuccess = 0x00;
 
-// Shell output as log lines: ANSI colour/cursor sequences removed (including
-// one cut short where the robot truncated its result message), "! " shell
-// prefixes kept, blank lines dropped.
+// A robot's shell colours its output with ANSI sequences (TinyShell), and a
+// COMMAND_RESULT carries that output as is: made plain (backend/plaintext.h)
+// before it reaches anything that shows it as text -- the log, the status
+// bar, the notification history and runCommand()'s callers (the TraceKit
+// panel).
+//
+// Shell output as log lines: plain text, "! " shell prefixes kept, blank
+// lines dropped.
 QStringList logLines(const QString& text) {
-    static const QRegularExpression ansi(QStringLiteral("\\x1B(\\[[0-9;?]*[A-Za-z]?)?"));
-    QString clean = text;
-    clean.remove(ansi);
-    clean.remove(QLatin1Char('\r'));
+    const QString clean = plainText(text);
     QStringList lines;
     for (const QString& line : clean.split(QLatin1Char('\n'))) {
         if (!line.trimmed().isEmpty()) {
@@ -96,6 +100,7 @@ void CommandClient::send(const QString& commandLine) {
         return;
     }
     m_pending.insert(localId, commandLine);
+    m_sentMs.insert(localId, QDateTime::currentMSecsSinceEpoch());
     emit logLine(kCommand, QStringLiteral("> ") + commandLine);
 }
 
@@ -107,9 +112,10 @@ void CommandClient::query(const QString& commandLine, ResultFn done) {
         return;
     }
     m_queries.insert(localId, std::move(done));
+    m_sentMs.insert(localId, QDateTime::currentMSecsSinceEpoch());
 }
 
-void CommandClient::notifyOutcome() {
+void CommandClient::notifyOutcome(OutcomeSource source) {
     if (m_pending.isEmpty() && m_queries.isEmpty()) {
         return;
     }
@@ -117,14 +123,30 @@ void CommandClient::notifyOutcome() {
     if (outcome.event == btp::CommandEvent::None) {
         return;
     }
+    // The node keeps its last outcome until the next one (see the header):
+    // only a fresh one may settle a request. A Completed is fresh when a
+    // COMMAND_RESULT was just received; on a tick the only new outcome there
+    // can be is a TimedOut, and only for a request out for about the node's
+    // timeout -- an old TimedOut whose slot a new request reuses is not.
+    if (source == OutcomeSource::Tick) {
+        if (outcome.event != btp::CommandEvent::TimedOut) {
+            return;
+        }
+        constexpr qint64 kFreshTimeoutMs = qint64(btp::kCommandTimeoutMs) - 250;
+        const qint64 sent = m_sentMs.value(outcome.local_id, -1);
+        if (sent < 0 || QDateTime::currentMSecsSinceEpoch() - sent < kFreshTimeoutMs) {
+            return;
+        }
+    }
+    m_sentMs.remove(outcome.local_id);
     if (m_queries.contains(outcome.local_id)) {
         const ResultFn done = m_queries.take(outcome.local_id);
         if (outcome.event == btp::CommandEvent::TimedOut) {
             done(false, tr("no result within 5 s"));
             return;
         }
-        const QString message = QString::fromUtf8(
-            reinterpret_cast<const char*>(outcome.message.data), int(outcome.message.size));
+        const QString message = plainText(QString::fromUtf8(
+            reinterpret_cast<const char*>(outcome.message.data), int(outcome.message.size)));
         done(outcome.status == kResultStatusSuccess, message);
         return;
     }
@@ -144,8 +166,8 @@ void CommandClient::notifyOutcome() {
 
     // Completed -- outcome.status/error_code/message are it, whatever the
     // action decided (Success is not implied by arriving at all).
-    const QString message = QString::fromUtf8(
-        reinterpret_cast<const char*>(outcome.message.data), int(outcome.message.size));
+    const QString message = plainText(QString::fromUtf8(
+        reinterpret_cast<const char*>(outcome.message.data), int(outcome.message.size)));
     if (outcome.status != kResultStatusSuccess) {
         emit statusMessage(tr("command failed (status 0x%1, error 0x%2): %3")
                                .arg(outcome.status, 2, 16, QChar('0'))

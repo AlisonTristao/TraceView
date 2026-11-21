@@ -634,7 +634,7 @@ void BtpBackend::onRawFrameForNode(quint32 /*sourceId*/, const QByteArray& raw) 
             }
             break;
         case btp::NodeRx::CommandHandled:
-            m_commandClient->notifyOutcome();
+            m_commandClient->notifyOutcome(CommandClient::OutcomeSource::Received);
             break;
         case btp::NodeRx::ManifestRejected:
             m_manifestClient->onManifestRejected(m_node->manifest_outcome());
@@ -670,7 +670,7 @@ void BtpBackend::onNodeTick() {
     // The one outcome tick() alone can also produce with no NodeRx to carry
     // it: a command timing out with no COMMAND_RESULT ever arriving. A no-op
     // unless m_commandClient actually has one outstanding.
-    m_commandClient->notifyOutcome();
+    m_commandClient->notifyOutcome(CommandClient::OutcomeSource::Tick);
 }
 
 void BtpBackend::onNodeTimedOut() {

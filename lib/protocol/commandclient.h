@@ -37,10 +37,20 @@ class TelemetryCatalog;
 // dropped here.
 //
 // notifyOutcome() is the one entry point BtpBackend calls, from two places:
-// right after node.receive() delivers NodeRx::CommandHandled, and after
-// every node.tick() (the only way a TimedOut outcome -- which tick() alone
-// produces, with no NodeRx of its own -- is ever noticed). Either call is a
-// no-op unless the outcome correlates to one of OUR outstanding local_ids.
+// right after node.receive() delivers NodeRx::CommandHandled (Received), and
+// after every node.tick() (Tick: the only way a TimedOut outcome -- which
+// tick() alone produces, with no NodeRx of its own -- is ever noticed).
+// Either call is a no-op unless the outcome correlates to one of OUR
+// outstanding local_ids.
+//
+// node.command_outcome() is the LAST outcome, kept until the next one, not
+// a queue that empties when read: after every tick it is the same old one
+// again. Its local_id is a slot that a later request reuses, so taken at
+// face value an old "TimedOut 3" answered a brand-new command 3 within
+// milliseconds ("no result within 5 s" at once) and that command's real
+// result was then dropped as unknown. So a Tick only ever reports a TimedOut,
+// and only for a request that has been out for close to the node's timeout;
+// a Completed counts only when it has just been Received.
 class CommandClient : public QObject {
     Q_OBJECT
 
@@ -83,7 +93,8 @@ signals:
 public:
     // See the class comment. Reads node.command_outcome() itself; safe to
     // call unconditionally.
-    void notifyOutcome();
+    enum class OutcomeSource { Received, Tick };
+    void notifyOutcome(OutcomeSource source);
 
 private:
     btp::Node& m_node;
@@ -97,6 +108,7 @@ private:
 
     QHash<std::uint32_t, QString> m_pending;  // local_id -> command line
     QHash<std::uint32_t, ResultFn> m_queries;  // local_id -> query() callback
+    QHash<std::uint32_t, qint64> m_sentMs;     // local_id -> when it went out (both kinds)
 };
 
 }  // namespace traceview
