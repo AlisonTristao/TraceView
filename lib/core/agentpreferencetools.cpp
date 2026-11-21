@@ -3,10 +3,14 @@
 // (notifications, app log, BTP traffic). See agentapptools.h.
 
 #include <QCoreApplication>
+#include <QDir>
 #include <QFile>
+#include <QFileInfo>
 #include <QJsonArray>
+#include <QTimer>
 #include <QUuid>
 #include <functional>
+#include <memory>
 
 #include "agent/toolregistry.h"
 #include "core/agentapptools.h"
@@ -14,10 +18,14 @@
 #include "core/applog.h"
 #include "core/mainwindow.h"
 #include "dashboard/widgetconfigeditor.h"
+#include "diagnostics/btpmonitortab.h"
 #include "diagnostics/framelog.h"
 #include "diagnostics/notificationlog.h"
 #include "preferences/appsettings.h"
 #include "project/workspacemanager.h"
+#include "protocol/manifeststore.h"
+#include "updater/updatechecker.h"
+#include "updater/updateinfo.h"
 #include "traceview/appearance.h"
 #include "traceview/fontmanager.h"
 #include "traceview/languagemanager.h"
@@ -28,6 +36,7 @@ namespace traceview {
 namespace {
 
 constexpr int kDefaultEntries = 50;
+constexpr int kUpdateCheckTimeoutMs = 20000;
 constexpr int kDefaultLogLines = 200;
 constexpr int kMaxPayloadBytesShown = 64;
 
@@ -536,6 +545,64 @@ void AgentAppTools::registerSettingsTools(MainWindow* window, ToolRegistry* regi
         reply(AgentToolResult::json(QJsonObject{{"applied", applied}}));
     };
     registry->registerTool(update);
+
+    AgentTool clearManifests;
+    clearManifests.name = "clear_manifest_cache";
+    clearManifests.title = "Clear manifest cache";
+    clearManifests.description =
+        "Forgets every remembered device manifest (Settings > Connections: Clear cache), so "
+        "each device is asked for its manifest again on its next connection.";
+    clearManifests.inputSchema = AgentSchema().toJson();
+    clearManifests.handler = [](const QJsonObject&, const AgentToolReply& reply) {
+        const int stored = ManifestStore::instance().count();
+        ManifestStore::instance().clear();
+        reply(AgentToolResult::json(QJsonObject{{"cleared", stored}}));
+    };
+    registry->registerTool(clearManifests);
+
+    AgentTool checkUpdates;
+    checkUpdates.name = "check_for_updates";
+    checkUpdates.title = "Check for updates";
+    checkUpdates.readOnly = true;
+    checkUpdates.description =
+        "Checks for a newer TraceView release now (Settings > Updates: Check now). Reports the "
+        "running and latest version. When one is available TraceView then offers it to the "
+        "user as usual; installing is always the user's choice.";
+    checkUpdates.inputSchema = AgentSchema().toJson();
+    checkUpdates.handler = [window](const QJsonObject&, const AgentToolReply& reply) {
+        UpdateChecker* checker = window->m_updateChecker;
+        // Single-use receiver: whichever answer comes first replies and
+        // drops the other connections with it.
+        auto* receiver = new QObject(window);
+        const QString running = QCoreApplication::applicationVersion();
+        auto done = std::make_shared<bool>(false);
+        const auto finish = [receiver, reply, done](const AgentToolResult& result) {
+            if (*done) return;
+            *done = true;
+            reply(result);
+            receiver->deleteLater();
+        };
+        QObject::connect(checker, &UpdateChecker::updateAvailable, receiver,
+                         [finish, running](const UpdateInfo& info) {
+                             finish(AgentToolResult::json(QJsonObject{{"running", running},
+                                                                      {"latest", info.version},
+                                                                      {"updateAvailable", true}}));
+                         });
+        QObject::connect(checker, &UpdateChecker::upToDate, receiver, [finish, running] {
+            finish(AgentToolResult::json(QJsonObject{
+                {"running", running}, {"latest", running}, {"updateAvailable", false}}));
+        });
+        QObject::connect(checker, &UpdateChecker::checkFailed, receiver,
+                         [finish](const QString& reason) {
+                             finish(AgentToolResult::error(
+                                 QStringLiteral("The check failed: %1").arg(reason)));
+                         });
+        QTimer::singleShot(kUpdateCheckTimeoutMs, receiver, [finish] {
+            finish(AgentToolResult::error(QStringLiteral("No answer from the update server.")));
+        });
+        window->checkForUpdates(/*manual=*/true);
+    };
+    registry->registerTool(checkUpdates);
 }
 
 void AgentAppTools::registerDiagnosticsTools(MainWindow* window, ToolRegistry* registry) {
@@ -646,6 +713,92 @@ void AgentAppTools::registerDiagnosticsTools(MainWindow* window, ToolRegistry* r
         reply(AgentToolResult::json(QJsonObject{{"frames", list}}));
     };
     registry->registerTool(traffic);
+
+    AgentTool exportTraffic;
+    exportTraffic.name = "export_btp_traffic";
+    exportTraffic.title = "Export BTP traffic";
+    exportTraffic.description =
+        "Writes every captured BTP frame to a file, as the BTP monitor's Export does: JSON "
+        "Lines, or CSV when the path ends in .csv. Full payloads, unlike read_btp_traffic. "
+        "Overwriting an existing file asks the user first.";
+    exportTraffic.inputSchema =
+        AgentSchema()
+            .string("path", "Absolute path of the .jsonl or .csv file to write.", true)
+            .string("deviceId", "Only this device's frames.")
+            .toJson();
+    exportTraffic.handler = [window](const QJsonObject& args, const AgentToolReply& reply) {
+        const QString path = args.value("path").toString();
+        const QString only = args.value("deviceId").toString();
+        if (path.isEmpty() || QFileInfo(path).isRelative()) {
+            reply(AgentToolResult::error(QStringLiteral("path must be absolute.")));
+            return;
+        }
+        if (QFileInfo::exists(path) &&
+            !confirm(window, QCoreApplication::translate("AgentAppTools", "Export Captured Frames"),
+                     QCoreApplication::translate(
+                         "AgentAppTools",
+                         "An AI assistant wants to overwrite \"%1\" with the captured BTP "
+                         "frames.")
+                         .arg(QDir::toNativeSeparators(path)))) {
+            reply(AgentToolResult::error(QStringLiteral("The user declined.")));
+            return;
+        }
+        QVector<FrameLogEntry> entries;
+        for (const FrameLogEntry& entry : window->m_frameLog->entries()) {
+            if (only.isEmpty() || entry.deviceId == only) {
+                entries.append(entry);
+            }
+        }
+        QString error;
+        if (!BtpMonitorTab::exportFrames(entries, path, &error)) {
+            reply(AgentToolResult::error(
+                QStringLiteral("Couldn't write \"%1\": %2").arg(path, error)));
+            return;
+        }
+        reply(AgentToolResult::json(
+            QJsonObject{{"path", path}, {"frames", int(entries.size())}}));
+    };
+    registry->registerTool(exportTraffic);
+
+    AgentTool pauseMonitor;
+    pauseMonitor.name = "set_btp_monitor_paused";
+    pauseMonitor.title = "Pause BTP monitor";
+    pauseMonitor.description =
+        "Pauses or resumes the BTP monitor's view (its Pause button), so the user can look at "
+        "frames without the table scrolling. Capture goes on either way; resuming catches up. "
+        "The monitor must be open: show_view btp_monitor.";
+    pauseMonitor.inputSchema =
+        AgentSchema().boolean("paused", "true pauses, false resumes.", true).toJson();
+    pauseMonitor.handler = [window](const QJsonObject& args, const AgentToolReply& reply) {
+        if (!window->m_btpMonitorTab) {
+            reply(AgentToolResult::error(
+                QStringLiteral("The BTP monitor isn't open; show_view btp_monitor opens it.")));
+            return;
+        }
+        window->m_btpMonitorTab->setPaused(args.value("paused").toBool());
+        reply(AgentToolResult::json(QJsonObject{{"paused", window->m_btpMonitorTab->isPaused()}}));
+    };
+    registry->registerTool(pauseMonitor);
+
+    AgentTool openLog;
+    openLog.name = "open_log_file";
+    openLog.title = "Open log file";
+    openLog.description =
+        "Opens a recorded BTP log (.blog) in its own tab for the user to browse (File > Open "
+        "Log Offline). Take a window screenshot to see it.";
+    openLog.inputSchema =
+        AgentSchema().string("path", "Absolute path of the .blog file.", true).toJson();
+    openLog.handler = [window](const QJsonObject& args, const AgentToolReply& reply) {
+        const QString path = args.value("path").toString();
+        if (!QFileInfo(path).isFile()) {
+            reply(AgentToolResult::error(QStringLiteral("No file at %1.").arg(path)));
+            return;
+        }
+        window->openLogFile(path);
+        reply(AgentToolResult::text(
+            QStringLiteral("Opened %1 in a new tab.").arg(QFileInfo(path).fileName())));
+    };
+    registry->registerTool(openLog);
 }
 
 }  // namespace traceview

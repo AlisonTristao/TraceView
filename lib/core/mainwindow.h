@@ -589,6 +589,9 @@ private:
     void onAddToGallery();
     void onOpenGallery();
     void onOpenLogFile();
+    // What onOpenLogFile() does once it has a path: the .blog in its own
+    // closable LogViewer tab, brought to the front. Also the open_log_file tool.
+    void openLogFile(const QString& path);
     // RibbonTabBar's "x" click (forwarded through Ribbon::tabCloseRequested)
     // on one of m_openLogTabs -- removes that tab and deletes its LogViewer.
     void onLogTabCloseRequested(int index);

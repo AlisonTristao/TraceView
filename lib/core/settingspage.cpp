@@ -546,6 +546,25 @@ SettingsPage::SettingsPage(QWidget* parent) : QWidget(parent) {
     addCheckBoxRow(formFor(agentSection), agentBridge);
     connect(agentBridge, &QCheckBox::toggled, &settings, &AppSettings::setAgentBridgeEnabled);
 
+    auto* agentAutoApprove =
+        new QCheckBox(tr("Allow everything without asking"), agentSection);
+    agentAutoApprove->setChecked(settings.agentAutoApprove());
+    agentAutoApprove->setToolTip(
+        tr("The assistant can then connect devices, send them commands, flash firmware, "
+           "delete things and overwrite files without a confirmation each time. Only for "
+           "assistants you trust."));
+    agentAutoApprove->setEnabled(agentBridge->isChecked());
+    addCheckBoxRow(formFor(agentSection), agentAutoApprove);
+    connect(agentAutoApprove, &QCheckBox::toggled, &settings,
+            &AppSettings::setAgentAutoApprove);
+    connect(agentBridge, &QCheckBox::toggled, agentAutoApprove, &QWidget::setEnabled);
+    // "Yes to All" in a confirmation turns it on from outside this page.
+    connect(&settings, &AppSettings::agentPreferencesChanged, agentAutoApprove,
+            [agentAutoApprove, &settings] {
+                const QSignalBlocker block(agentAutoApprove);
+                agentAutoApprove->setChecked(settings.agentAutoApprove());
+            });
+
     // Two registrations cover every Claude on the computer: Claude Code's
     // user scope (~/.claude.json) is shared by the terminal, the IDE
     // extensions and the desktop app's Code tab; the desktop app's chat reads

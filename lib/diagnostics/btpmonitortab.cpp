@@ -557,10 +557,23 @@ void BtpMonitorTab::onExportClicked() {
     if (path.isEmpty()) {
         return;
     }
+    exportFrames(m_log->entries(), path);
+}
 
+void BtpMonitorTab::setPaused(bool paused) {
+    m_pauseButton->setChecked(paused);  // toggled() pauses the model and relabels the button
+}
+
+bool BtpMonitorTab::isPaused() const {
+    return m_pauseButton->isChecked();
+}
+
+bool BtpMonitorTab::exportFrames(const QVector<FrameLogEntry>& entries, const QString& path,
+                                 QString* error) {
     QSaveFile file(path);
     if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
-        return;
+        if (error) *error = file.errorString();
+        return false;
     }
 
     const bool csv = path.endsWith(QStringLiteral(".csv"), Qt::CaseInsensitive);
@@ -574,7 +587,7 @@ void BtpMonitorTab::onExportClicked() {
         return QStringLiteral("\"%1\"").arg(escaped);
     };
 
-    for (const FrameLogEntry& e : m_log->entries()) {
+    for (const FrameLogEntry& e : entries) {
         const QString time = e.wallClock.toString(Qt::ISODateWithMs);
         const QString dir = e.decodeError
                                 ? QStringLiteral("error")
@@ -620,7 +633,11 @@ void BtpMonitorTab::onExportClicked() {
             file.write("\n");
         }
     }
-    file.commit();
+    if (!file.commit()) {
+        if (error) *error = file.errorString();
+        return false;
+    }
+    return true;
 }
 
 }  // namespace traceview

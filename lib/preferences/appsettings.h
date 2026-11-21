@@ -65,6 +65,10 @@ public:
     // --mcp`) may drive this app -- see docs/MCP.md. Off by default: turning
     // it on is the user's consent to being driven.
     bool agentBridgeEnabled() const;
+    // Whether an AI assistant's hardware access and destructive actions go
+    // through without asking. Deliberately not in the update_settings tool's
+    // list: only the user can grant it, never the assistant itself.
+    bool agentAutoApprove() const;
 
     int frameLogCapacity() const;
     int notificationHistoryCapacity() const;
@@ -95,6 +99,7 @@ public:
     void setManifestCacheSkipOnHello(bool skip);
     void setVerboseSerialLogging(bool enabled);
     void setAgentBridgeEnabled(bool enabled);
+    void setAgentAutoApprove(bool enabled);
     void setFrameLogCapacity(int entries);
     void setNotificationHistoryCapacity(int entries);
 

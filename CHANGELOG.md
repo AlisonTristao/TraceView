@@ -7,6 +7,27 @@ release flow.
 
 ## [Unreleased]
 
+### Added
+
+- **MCP: the rest of the app for AI assistants** (16 new tools, see
+  `docs/MCP.md`). `ota_reboot_to_app` takes a device out of the TraceKit
+  recovery without flashing (the OTA page's "To app"). The TraceKit panel:
+  `tracekit_get_settings` / `tracekit_set_settings` / `tracekit_reset_setting`
+  (built from what the device declares), `tracekit_wifi_list` / `_add` /
+  `_remove` (the Wi-Fi password goes to the device only, never to the
+  terminal or log) and `tracekit_action` (set the clock, status, keep awake,
+  reboot, recovery, USB bootloader, factory reset). The gallery's Rename and
+  Export (`rename_gallery_dashboard`, `export_gallery_dashboard`),
+  `clear_recent_projects`, `clear_manifest_cache`, `check_for_updates`,
+  `export_btp_traffic` and `set_btp_monitor_paused` (the BTP monitor's
+  Export and Pause) and `open_log_file` (File > Open Log Offline). Removing a
+  network, a factory reset and writing over an existing file ask the user.
+- **Allow an AI assistant everything without asking**: Settings >
+  Connections > AI assistants has "Allow everything without asking", and
+  each confirmation has a "Yes to All" button that ticks it. Hardware
+  access, deletions, firmware uploads and overwriting files then go through
+  without a dialog. The assistant can't turn it on itself.
+
 ### Fixed
 
 - **A command answered "no result within 5 s" at once and its real result

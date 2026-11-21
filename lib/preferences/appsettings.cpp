@@ -23,6 +23,7 @@ constexpr char kManifestCacheEnabledKey[] = "connections/manifestCacheEnabled";
 constexpr char kManifestCacheSkipOnHelloKey[] = "connections/manifestCacheSkipOnHello";
 constexpr char kVerboseSerialLoggingKey[] = "connections/verboseSerialLogging";
 constexpr char kAgentBridgeEnabledKey[] = "connections/agentBridgeEnabled";
+constexpr char kAgentAutoApproveKey[] = "connections/agentAutoApprove";
 constexpr char kFrameLogCapacityKey[] = "diagnostics/frameLogCapacity";
 constexpr char kNotificationHistoryCapacityKey[] = "diagnostics/notificationHistoryCapacity";
 constexpr char kUpdateAutoCheckEnabledKey[] = "updates/autoCheckEnabled";
@@ -237,6 +238,18 @@ void AppSettings::setAgentBridgeEnabled(bool enabled) {
         return;
     }
     store(kAgentBridgeEnabledKey, enabled);
+    emit agentPreferencesChanged();
+}
+
+bool AppSettings::agentAutoApprove() const {
+    return stored(kAgentAutoApproveKey, false).toBool();
+}
+
+void AppSettings::setAgentAutoApprove(bool enabled) {
+    if (enabled == agentAutoApprove()) {
+        return;
+    }
+    store(kAgentAutoApproveKey, enabled);
     emit agentPreferencesChanged();
 }
 

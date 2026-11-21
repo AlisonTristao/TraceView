@@ -3,6 +3,7 @@
 #include <QBuffer>
 #include <QCoreApplication>
 #include <QDir>
+#include <QFile>
 #include <QFileInfo>
 #include <QJsonArray>
 #include <QMessageBox>
@@ -23,6 +24,7 @@
 #include "dashboard/widgetconfigeditor.h"
 #include "dashboard/widgetregistry.h"
 #include "devices/devicesgrid.h"
+#include "preferences/appsettings.h"
 #include "project/dashboardgallery.h"
 #include "project/projectstore.h"
 #include "project/workspacemanager.h"
@@ -189,18 +191,31 @@ void AgentAppTools::registerTools(MainWindow* window, ToolRegistry* registry) {
     registerDeviceTools(window, registry);
     registerDeviceIoTools(window, registry);
     registerOtaTools(window, registry);
+    registerTraceKitTools(window, registry);
     registerAppearanceTools(window, registry);
     registerSettingsTools(window, registry);
     registerDiagnosticsTools(window, registry);
 }
 
 bool AgentAppTools::confirm(MainWindow* window, const QString& title, const QString& text) {
-    return DialogPresenter::question(window, title, text, QMessageBox::Yes | QMessageBox::No,
-                                     QMessageBox::No) == QMessageBox::Yes;
+    AppSettings& settings = AppSettings::instance();
+    if (settings.agentAutoApprove()) {
+        return true;
+    }
+    // "Yes to All" is the user granting every later request too -- the same
+    // switch as Settings > Connections > AI assistants.
+    const auto answer = DialogPresenter::question(
+        window, title, text, QMessageBox::Yes | QMessageBox::YesToAll | QMessageBox::No,
+        QMessageBox::No);
+    if (answer == QMessageBox::YesToAll) {
+        settings.setAgentAutoApprove(true);
+        return true;
+    }
+    return answer == QMessageBox::Yes;
 }
 
 bool AgentAppTools::allowHardware(MainWindow* window, const QString& what) {
-    if (window->m_agentHardwareAllowed) {
+    if (window->m_agentHardwareAllowed || AppSettings::instance().agentAutoApprove()) {
         return true;
     }
     window->m_agentHardwareAllowed = confirm(
@@ -1183,6 +1198,103 @@ void AgentAppTools::registerProjectTools(MainWindow* window, ToolRegistry* regis
         reply(AgentToolResult::text(QStringLiteral("Deleted \"%1\".").arg(name)));
     };
     registry->registerTool(removeGallery);
+
+    AgentTool renameGallery;
+    renameGallery.name = "rename_gallery_dashboard";
+    renameGallery.title = "Rename gallery dashboard";
+    renameGallery.description =
+        "Renames a dashboard in the gallery (the built-in example can't be renamed). The "
+        "gallery's default follows the rename, and a project open from that entry keeps "
+        "saving to it.";
+    renameGallery.inputSchema = AgentSchema()
+                                    .string("name", "Current gallery name.", true)
+                                    .string("newName", "New name.", true)
+                                    .toJson();
+    renameGallery.handler = [](const QJsonObject& args, const AgentToolReply& reply) {
+        const QString oldName = args.value("name").toString();
+        const QString newName = args.value("newName").toString().trimmed();
+        if (!DashboardGallery::contains(oldName)) {
+            reply(
+                AgentToolResult::error(QStringLiteral("The gallery has no \"%1\".").arg(oldName)));
+            return;
+        }
+        if (newName == oldName) {
+            reply(AgentToolResult::text(QStringLiteral("Nothing to rename.")));
+            return;
+        }
+        const QString oldPath = DashboardGallery::pathFor(oldName);
+        QString error;
+        if (!DashboardGallery::rename(oldName, newName, &error)) {
+            reply(AgentToolResult::error(error));
+            return;
+        }
+        // As the gallery dialog does: Save keeps writing to the renamed file.
+        if (ProjectStore::instance().currentPath() == oldPath) {
+            ProjectStore::instance().setCurrentPath(DashboardGallery::pathFor(newName));
+        }
+        reply(AgentToolResult::text(
+            QStringLiteral("Renamed \"%1\" to \"%2\".").arg(oldName, newName)));
+    };
+    registry->registerTool(renameGallery);
+
+    AgentTool exportGallery;
+    exportGallery.name = "export_gallery_dashboard";
+    exportGallery.title = "Export gallery dashboard";
+    exportGallery.description =
+        "Copies a gallery dashboard out as a .tvproj file (the gallery's Export). An empty name "
+        "exports the built-in example. Overwriting an existing file asks the user first.";
+    exportGallery.inputSchema =
+        AgentSchema()
+            .string("name", "Gallery name; empty for the built-in example.")
+            .string("path", "Absolute path of the .tvproj file to write.", true)
+            .toJson();
+    exportGallery.handler = [window](const QJsonObject& args, const AgentToolReply& reply) {
+        const QString name = args.value("name").toString();
+        const QString target = args.value("path").toString();
+        if (!name.isEmpty() && !DashboardGallery::contains(name)) {
+            reply(AgentToolResult::error(QStringLiteral("The gallery has no \"%1\".").arg(name)));
+            return;
+        }
+        if (target.isEmpty() || QFileInfo(target).isRelative()) {
+            reply(AgentToolResult::error(QStringLiteral("path must be absolute.")));
+            return;
+        }
+        const QString source =
+            name.isEmpty() ? DashboardGallery::kBuiltInExamplePath : DashboardGallery::pathFor(name);
+        if (QFileInfo::exists(target)) {
+            if (!confirm(window, QCoreApplication::translate("AgentAppTools", "Export Dashboard"),
+                         QCoreApplication::translate(
+                             "AgentAppTools",
+                             "An AI assistant wants to overwrite \"%1\" with a gallery "
+                             "dashboard.")
+                             .arg(QDir::toNativeSeparators(target)))) {
+                reply(AgentToolResult::error(QStringLiteral("The user declined.")));
+                return;
+            }
+            QFile::remove(target);  // QFile::copy() never overwrites
+        }
+        if (!QFile::copy(source, target)) {
+            reply(AgentToolResult::error(QStringLiteral("Couldn't write \"%1\".").arg(target)));
+            return;
+        }
+        // A copy out of the Qt resource system comes out read-only.
+        QFile::setPermissions(target, QFile::permissions(target) | QFileDevice::WriteOwner |
+                                          QFileDevice::WriteUser);
+        reply(AgentToolResult::text(QStringLiteral("Wrote %1.").arg(target)));
+    };
+    registry->registerTool(exportGallery);
+
+    AgentTool clearRecent;
+    clearRecent.name = "clear_recent_projects";
+    clearRecent.title = "Clear recent projects";
+    clearRecent.description =
+        "Empties File > Open Recent (the files themselves stay where they are).";
+    clearRecent.inputSchema = AgentSchema().toJson();
+    clearRecent.handler = [window](const QJsonObject&, const AgentToolReply& reply) {
+        window->onClearRecentFiles();
+        reply(AgentToolResult::text(QStringLiteral("Recent projects cleared.")));
+    };
+    registry->registerTool(clearRecent);
 
     AgentTool save;
     save.name = "save_project";

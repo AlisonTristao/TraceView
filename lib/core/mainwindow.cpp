@@ -4887,7 +4887,10 @@ void MainWindow::onOpenLogFile() {
     if (path.isEmpty()) {
         return;
     }
+    openLogFile(path);
+}
 
+void MainWindow::openLogFile(const QString& path) {
     auto* viewer = new LogViewer(this);
     viewer->openFile(path);
     m_contentStack->addWidget(viewer);

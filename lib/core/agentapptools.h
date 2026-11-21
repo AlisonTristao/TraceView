@@ -35,6 +35,7 @@ private:
     static void registerDeviceTools(MainWindow* window, ToolRegistry* registry);
     static void registerDeviceIoTools(MainWindow* window, ToolRegistry* registry);
     static void registerOtaTools(MainWindow* window, ToolRegistry* registry);
+    static void registerTraceKitTools(MainWindow* window, ToolRegistry* registry);
     static void registerAppearanceTools(MainWindow* window, ToolRegistry* registry);
     static void registerSettingsTools(MainWindow* window, ToolRegistry* registry);
     static void registerDiagnosticsTools(MainWindow* window, ToolRegistry* registry);
