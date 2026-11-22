@@ -23,6 +23,8 @@ release flow.
 
 ### Changed
 
+- **Light theme by default**: a fresh install (or one whose saved theme was
+  deleted) starts in the Light theme instead of Dark.
 - **Scientific controls**: the checkbox is bigger (26 px) and reads as a
   form row -- box, name, dotted leader, state. The slider is a printed
   ruler with a triangle pointing at the value.

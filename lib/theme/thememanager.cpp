@@ -12,7 +12,7 @@ namespace traceview {
 
 namespace {
 constexpr const char* kSettingsKey = "appearance/theme";
-constexpr const char* kDefaultThemeId = "dark";
+constexpr const char* kDefaultThemeId = "light";
 constexpr const char* kFrameSettingsKey = "appearance/frameStyle";
 constexpr const char* kCustomPalettesKey = "appearance/customPalettes";
 constexpr const char* kDataColorsKey = "appearance/dataColors";
