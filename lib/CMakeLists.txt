@@ -366,6 +366,10 @@ add_library(traceview_dashboard STATIC
     dashboard/widgets/terminaltabbar.h
     dashboard/widgets/controldata.cpp
     dashboard/widgets/controldata.h
+    dashboard/widgets/controlpainting.cpp
+    dashboard/widgets/controlpainting.h
+    dashboard/widgets/controlstyle.cpp
+    dashboard/widgets/controlstyle.h
     dashboard/widgets/controlwidgets.cpp
     dashboard/widgets/controlwidgets.h
     dashboard/widgets/controlconfigeditor.cpp

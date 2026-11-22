@@ -9,6 +9,23 @@ release flow.
 
 ### Added
 
+- **Control styles**: buttons, switches and sliders now come in five looks,
+  picked app-wide from View › Control Style (also Settings › Appearance) or
+  per control in its properties. Dashboard is the original look; Engineering
+  is a bench instrument (0/I rocker, ruler with ticks, recessed readout);
+  Scientific is thin outlines, a checkbox and a pointer slider; Panel is a
+  physical panel (arcade button, lever switch, fader, 7-segment readout);
+  Retro is a phosphor terminal (`[ start ]`, off/on cells, a bar of
+  blocks). The push button's color ("Default", "Success", "Warning",
+  "Danger") and the switch's on/off texts are now shown. Two new presets
+  use them: Console (Panel) and Terminal (Retro); HUD now uses Retro. See
+  `docs/CONTROL_STYLE.md`.
+- **LED widget**: an indicator lamp bound to a telemetry field. It lights
+  while the value is non-zero, zero, above or below a threshold, in a color
+  of your choice, or shows the field as an RGB color (0xRRGGBB). It can
+  blink and show a text for each state, and it follows the control style.
+  For AI assistants: widget type `led`.
+
 - **Delete notifications automatically**: each notification can go a set
   time after it arrived. The bell panel's menu has Never, 10 s, 30 s, 1 min
   and 5 min; Settings › Diagnostics takes any number of seconds (up to a

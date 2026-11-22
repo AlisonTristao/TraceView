@@ -95,6 +95,10 @@ WidgetRegistry::WidgetRegistry() {
         {"slider", QCoreApplication::translate("WidgetRegistry", "Slider"),
          [](QWidget* parent) -> DashboardWidget* { return new SliderWidget(parent); },
          [](QWidget* parent) -> WidgetConfigEditor* { return new SliderConfigEditor(parent); }});
+    registerType(
+        {"led", QCoreApplication::translate("WidgetRegistry", "LED"),
+         [](QWidget* parent) -> DashboardWidget* { return new LedWidget(parent); },
+         [](QWidget* parent) -> WidgetConfigEditor* { return new LedConfigEditor(parent); }});
 }
 
 void WidgetRegistry::registerType(const WidgetTypeInfo& info) {

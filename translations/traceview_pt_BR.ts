@@ -280,29 +280,39 @@ Permitir que ele conecte dispositivos e envie comandos a eles até que o acesso 
         <translation>Animado</translation>
     </message>
     <message>
-        <location filename="../lib/core/appearancecatalog.cpp" line="+232"/>
+        <location filename="../lib/core/appearancecatalog.cpp" line="+251"/>
         <source>TraceView</source>
         <translation>TraceView</translation>
     </message>
     <message>
-        <location line="+2"/>
+        <location line="+3"/>
         <source>Lab</source>
         <translation>Laboratório</translation>
     </message>
     <message>
-        <location line="+2"/>
+        <location line="+3"/>
         <source>Paper</source>
         <translation>Artigo</translation>
     </message>
     <message>
-        <location line="+2"/>
+        <location line="+3"/>
         <source>HUD</source>
         <translation>HUD</translation>
     </message>
     <message>
-        <location line="+2"/>
+        <location line="+3"/>
         <source>Synthwave</source>
         <translation>Synthwave</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Console</source>
+        <translation>Console</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Terminal</source>
+        <translation>Terminal</translation>
     </message>
     <message>
         <location line="+3"/>
@@ -436,7 +446,7 @@ Permitir que ele conecte dispositivos e envie comandos a eles até que o acesso 
 <context>
     <name>ControlConfigEditor</name>
     <message>
-        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="+24"/>
+        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="+31"/>
         <source>Default</source>
         <translation>Padrão</translation>
     </message>
@@ -466,7 +476,17 @@ Permitir que ele conecte dispositivos e envie comandos a eles até que o acesso 
         <translation>Pulso (comando único)</translation>
     </message>
     <message>
+        <location line="+7"/>
+        <source>App default</source>
+        <translation>Padrão do aplicativo</translation>
+    </message>
+    <message>
         <location line="+5"/>
+        <source>How this control is drawn. App default follows View &gt; Control Style.</source>
+        <translation>Como este controle é desenhado. Padrão do aplicativo segue Exibir &gt; Estilo dos controles.</translation>
+    </message>
+    <message>
+        <location line="+25"/>
         <source>Continuous (while dragging)</source>
         <translation>Contínuo (durante o arraste)</translation>
     </message>
@@ -474,6 +494,74 @@ Permitir que ele conecte dispositivos e envie comandos a eles até que o acesso 
         <location line="+1"/>
         <source>On release</source>
         <translation>Ao soltar</translation>
+    </message>
+    <message>
+        <location line="+421"/>
+        <source>Red</source>
+        <translation>Vermelho</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Orange</source>
+        <translation>Laranja</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Yellow</source>
+        <translation>Amarelo</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Green</source>
+        <translation>Verde</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Cyan</source>
+        <translation>Ciano</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Blue</source>
+        <translation>Azul</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Purple</source>
+        <translation>Roxo</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>White</source>
+        <translation>Branco</translation>
+    </message>
+</context>
+<context>
+    <name>ControlStyle</name>
+    <message>
+        <location filename="../lib/dashboard/widgets/controlstyle.cpp" line="+35"/>
+        <source>Engineering</source>
+        <translation>Engenharia</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Scientific</source>
+        <translation>Científico</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Panel</source>
+        <translation>Painel físico</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Retro</source>
+        <translation>Retrô</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Dashboard</source>
+        <translation>Painel</translation>
     </message>
 </context>
 <context>
@@ -1170,6 +1258,11 @@ Permitir que ele conecte dispositivos e envie comandos a eles até que o acesso 
         <location line="+6"/>
         <source>Slider</source>
         <translation>Controle Deslizante</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>LED</source>
+        <translation>LED</translation>
     </message>
 </context>
 <context>
@@ -3464,6 +3557,165 @@ Permitidos: %1</translation>
     </message>
 </context>
 <context>
+    <name>traceview::LedConfigEditor</name>
+    <message>
+        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="+14"/>
+        <source>(auto)</source>
+        <translation>(automático)</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>Which field of the topic drives the LED -- pick one the device has reported, or type its numeric id.</source>
+        <translation>Qual campo do tópico aciona o LED -- escolha um que o dispositivo já informou, ou digite o id numérico.</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Status</source>
+        <translation>Status</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>One color</source>
+        <translation>Uma cor</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>RGB from the field (0xRRGGBB)</source>
+        <translation>RGB do campo (0xRRGGBB)</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Value is not zero</source>
+        <translation>Valor diferente de zero</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Value is zero</source>
+        <translation>Valor é zero</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Value is above</source>
+        <translation>Valor acima do limiar</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Value is below</source>
+        <translation>Valor abaixo do limiar</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>Blink while lit</source>
+        <translation>Piscar enquanto aceso</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <location line="+11"/>
+        <source> ms</source>
+        <translation> ms</translation>
+    </message>
+    <message>
+        <location line="-7"/>
+        <source>Shown while lit</source>
+        <translation>Mostrado quando aceso</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Shown while off</source>
+        <translation>Mostrado quando apagado</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Requested update period.</source>
+        <translation>Período de atualização solicitado.</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Device</source>
+        <translation>Dispositivo</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Source</source>
+        <translation>Origem</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Topic</source>
+        <translation>Tópico</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Field</source>
+        <translation>Campo</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Label</source>
+        <translation>Rótulo</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Style</source>
+        <translation>Estilo</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Color mode</source>
+        <translation>Modo de cor</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Lit when</source>
+        <translation>Aceso quando</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Threshold</source>
+        <translation>Limiar</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Color</source>
+        <translation>Cor</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Blink period</source>
+        <translation>Período de piscar</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>On text</source>
+        <translation>Texto ligado</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Off text</source>
+        <translation>Texto desligado</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Sample period</source>
+        <translation>Período de amostragem</translation>
+    </message>
+    <message>
+        <location line="+79"/>
+        <source>LED color</source>
+        <translation>Cor do LED</translation>
+    </message>
+    <message>
+        <location line="+144"/>
+        <source>Palette (success)</source>
+        <translation>Paleta (sucesso)</translation>
+    </message>
+    <message>
+        <location line="+15"/>
+        <source>Custom...</source>
+        <translation>Personalizada...</translation>
+    </message>
+</context>
+<context>
     <name>traceview::LogViewer</name>
     <message>
         <location filename="../lib/logs/logviewer.cpp" line="+47"/>
@@ -4363,7 +4615,7 @@ Escolha Mais tarde para continuar usando -- as alterações serão aplicadas na 
         <translation>(sem nome)</translation>
     </message>
     <message>
-        <location filename="../lib/core/appearancecatalog.cpp" line="-149"/>
+        <location filename="../lib/core/appearancecatalog.cpp" line="-176"/>
         <source>&amp;Palette</source>
         <translation>&amp;Paleta</translation>
     </message>
@@ -4378,7 +4630,12 @@ Escolha Mais tarde para continuar usando -- as alterações serão aplicadas na 
         <translation>&amp;Estilo dos gráficos</translation>
     </message>
     <message>
-        <location line="+13"/>
+        <location line="+14"/>
+        <source>Contro&amp;l Style</source>
+        <translation>Estilo dos co&amp;ntroles</translation>
+    </message>
+    <message>
+        <location line="+14"/>
         <source>&amp;Data Colors</source>
         <translation>&amp;Cores dos dados</translation>
     </message>
@@ -5700,7 +5957,7 @@ Escolha Mais tarde para continuar usando -- as alterações serão aplicadas na 
 <context>
     <name>traceview::PushButtonConfigEditor</name>
     <message>
-        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="+7"/>
+        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="-743"/>
         <source>Which device this button&apos;s commands are sent to.</source>
         <translation>Para qual dispositivo os comandos deste botão são enviados.</translation>
     </message>
@@ -5710,7 +5967,7 @@ Escolha Mais tarde para continuar usando -- as alterações serão aplicadas na 
         <translation>Botão</translation>
     </message>
     <message>
-        <location line="+8"/>
+        <location line="+10"/>
         <source>Momentary sends the press command on press and the release command on release. Pulse sends only the press command, once per click.</source>
         <translation>Momentâneo envia o comando de pressionar ao pressionar e o comando de soltar ao soltar. Pulso envia apenas o comando de pressionar, uma vez por clique.</translation>
     </message>
@@ -5773,6 +6030,11 @@ Escolha Mais tarde para continuar usando -- as alterações serão aplicadas na 
     </message>
     <message>
         <location line="+1"/>
+        <source>Color</source>
+        <translation>Cor</translation>
+    </message>
+    <message>
+        <location line="+1"/>
         <source>Mode</source>
         <translation>Modo</translation>
     </message>
@@ -5810,8 +6072,8 @@ Escolha Mais tarde para continuar usando -- as alterações serão aplicadas na 
 <context>
     <name>traceview::PushButtonWidget</name>
     <message>
-        <location filename="../lib/dashboard/widgets/controlwidgets.cpp" line="+92"/>
-        <location line="+22"/>
+        <location filename="../lib/dashboard/widgets/controlwidgets.cpp" line="+174"/>
+        <location line="+24"/>
         <source>Push Button</source>
         <translation>Botão</translation>
     </message>
@@ -6212,7 +6474,7 @@ Escolha Mais tarde para continuar usando -- as alterações serão aplicadas na 
         <translation>Aparência do aplicativo</translation>
     </message>
     <message>
-        <location filename="../lib/core/appearancecatalog.cpp" line="-77"/>
+        <location filename="../lib/core/appearancecatalog.cpp" line="-92"/>
         <source>Palette</source>
         <translation>Paleta</translation>
     </message>
@@ -6227,7 +6489,12 @@ Escolha Mais tarde para continuar usando -- as alterações serão aplicadas na 
         <translation>Estilo dos gráficos</translation>
     </message>
     <message>
-        <location line="+13"/>
+        <location line="+14"/>
+        <source>Control style</source>
+        <translation>Estilo dos controles</translation>
+    </message>
+    <message>
+        <location line="+14"/>
         <source>Data colors</source>
         <translation>Cores dos dados</translation>
     </message>
@@ -6684,7 +6951,7 @@ Escolha Mais tarde para continuar usando -- as alterações serão aplicadas na 
 <context>
     <name>traceview::SliderConfigEditor</name>
     <message>
-        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="+190"/>
+        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="+199"/>
         <source>Which device this slider&apos;s commands are sent to.</source>
         <translation>Para qual dispositivo os comandos deste controle deslizante são enviados.</translation>
     </message>
@@ -6694,7 +6961,7 @@ Escolha Mais tarde para continuar usando -- as alterações serão aplicadas na 
         <translation>Controle Deslizante</translation>
     </message>
     <message>
-        <location line="+23"/>
+        <location line="+25"/>
         <source>V, %, ...</source>
         <translation>V, %, ...</translation>
     </message>
@@ -6737,6 +7004,11 @@ Escolha Mais tarde para continuar usando -- as alterações serão aplicadas na 
         <location line="+1"/>
         <source>Label</source>
         <translation>Rótulo</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Style</source>
+        <translation>Estilo</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -6856,7 +7128,7 @@ Escolha Mais tarde para continuar usando -- as alterações serão aplicadas na 
 <context>
     <name>traceview::ToggleSwitchConfigEditor</name>
     <message>
-        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="-150"/>
+        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="-159"/>
         <source>Which device this toggle&apos;s commands are sent to.</source>
         <translation>Para qual dispositivo os comandos desta chave são enviados.</translation>
     </message>
@@ -6866,7 +7138,7 @@ Escolha Mais tarde para continuar usando -- as alterações serão aplicadas na 
         <translation>Interruptor</translation>
     </message>
     <message>
-        <location line="+3"/>
+        <location line="+5"/>
         <source>ON</source>
         <translation>LIGADO</translation>
     </message>
@@ -6907,6 +7179,11 @@ Escolha Mais tarde para continuar usando -- as alterações serão aplicadas na 
     </message>
     <message>
         <location line="+1"/>
+        <source>Style</source>
+        <translation>Estilo</translation>
+    </message>
+    <message>
+        <location line="+1"/>
         <source>On text</source>
         <translation>Texto ligado</translation>
     </message>
@@ -6924,6 +7201,19 @@ Escolha Mais tarde para continuar usando -- as alterações serão aplicadas na 
         <location line="+1"/>
         <source>Off command</source>
         <translation>Comando desligado</translation>
+    </message>
+</context>
+<context>
+    <name>traceview::ToggleSwitchWidget</name>
+    <message>
+        <location filename="../lib/dashboard/widgets/controlwidgets.cpp" line="+168"/>
+        <source>off</source>
+        <translation>desligado</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>on</source>
+        <translation>ligado</translation>
     </message>
 </context>
 <context>

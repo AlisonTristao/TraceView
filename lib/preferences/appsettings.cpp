@@ -34,6 +34,7 @@ constexpr char kNotificationAutoDeleteSecondsKey[] = "notifications/autoDeleteSe
 constexpr char kUpdateAutoCheckEnabledKey[] = "updates/autoCheckEnabled";
 constexpr char kUpdateLastCheckEpochMsKey[] = "updates/lastCheckEpochMs";
 constexpr char kChartStyleKey[] = "appearance/chartStyle";
+constexpr char kControlStyleKey[] = "appearance/controlStyle";
 
 constexpr int kLowFps = 30;
 constexpr int kMediumFps = 60;
@@ -68,6 +69,18 @@ void AppSettings::setChartStyleId(const QString& id) {
     }
     store(kChartStyleKey, id);
     emit chartStyleChanged();
+}
+
+QString AppSettings::controlStyleId() const {
+    return stored(kControlStyleKey, QStringLiteral("dashboard")).toString();
+}
+
+void AppSettings::setControlStyleId(const QString& id) {
+    if (id == controlStyleId()) {
+        return;
+    }
+    store(kControlStyleKey, id);
+    emit controlStyleChanged();
 }
 
 int AppSettings::repaintIntervalMs() const {

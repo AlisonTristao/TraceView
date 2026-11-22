@@ -8,6 +8,7 @@
 #include <QUuid>
 
 #include "dashboard/widgets/chartstyle.h"
+#include "dashboard/widgets/controlstyle.h"
 #include "preferences/appsettings.h"
 #include "traceview/thememanager.h"
 
@@ -72,11 +73,12 @@ void storeUserPresets(const QJsonArray& presets) {
 }
 
 AppearanceSnapshot snapshot(const char* palette, const char* frame, const char* chartStyle,
-                            const char* dataColors, const char* density,
+                            const char* controlStyle, const char* dataColors, const char* density,
                             const char* cardHeader, const char* canvas) {
     return {{QStringLiteral("palette"), QString::fromLatin1(palette)},
             {QStringLiteral("frame"), QString::fromLatin1(frame)},
             {QStringLiteral("chartStyle"), QString::fromLatin1(chartStyle)},
+            {QStringLiteral("controlStyle"), QString::fromLatin1(controlStyle)},
             {QStringLiteral("dataColors"), QString::fromLatin1(dataColors)},
             {QStringLiteral("density"), QString::fromLatin1(density)},
             {QStringLiteral("cardHeader"), QString::fromLatin1(cardHeader)},
@@ -129,6 +131,19 @@ QVector<AppearanceOption> appearanceOptions() {
         AppSettings::instance().setChartStyleId(chartStyleIdString(chartStyleFromId(id)));
     };
     options.append(chart);
+
+    AppearanceOption control;
+    control.key = QStringLiteral("controlStyle");
+    control.menuTitle = menuTitle(QT_TRANSLATE_NOOP("traceview::MainWindow", "Contro&l Style"));
+    control.label = rowLabel(QT_TRANSLATE_NOOP("traceview::SettingsPage", "Control style"));
+    control.choices = choicesOf(&allControlStyles, controlStyleIdString, controlStyleDisplayName);
+    control.current = []() {
+        return controlStyleIdString(controlStyleFromId(AppSettings::instance().controlStyleId()));
+    };
+    control.apply = [](const QString& id) {
+        AppSettings::instance().setControlStyleId(controlStyleIdString(controlStyleFromId(id)));
+    };
+    options.append(control);
 
     AppearanceOption dataColors;
     dataColors.key = QStringLiteral("dataColors");
@@ -221,7 +236,8 @@ void connectAppearanceChanged(QObject* context, const std::function<void()>& onC
     QObject::connect(&ThemeManager::instance(), &ThemeManager::appearanceChanged, context,
                      onChange);
     QObject::connect(&ThemeManager::instance(), &ThemeManager::themesChanged, context, onChange);
-    QObject::connect(&AppSettings::instance(), &AppSettings::chartStyleChanged, context,
+    QObject::connect(&AppSettings::instance(), &AppSettings::chartStyleChanged, context, onChange);
+    QObject::connect(&AppSettings::instance(), &AppSettings::controlStyleChanged, context,
                      onChange);
     presetListeners().append({QPointer<QObject>(context), onChange});
 }
@@ -230,18 +246,28 @@ QVector<AppearancePreset> appearancePresets() {
     auto name = [](const char* text) { return QCoreApplication::translate("Appearance", text); };
     QVector<AppearancePreset> presets = {
         {QStringLiteral("builtin:traceview"), name(QT_TRANSLATE_NOOP("Appearance", "TraceView")),
-         snapshot("dark", "rounded", "dashboard", "custom", "normal", "filled", "plain")},
+         snapshot("dark", "rounded", "dashboard", "dashboard", "custom", "normal", "filled",
+                  "plain")},
         {QStringLiteral("builtin:lab"), name(QT_TRANSLATE_NOOP("Appearance", "Lab")),
-         snapshot("light", "square", "engineering", "matlab", "normal", "line", "grid")},
+         snapshot("light", "square", "engineering", "engineering", "matlab", "normal", "line",
+                  "grid")},
         {QStringLiteral("builtin:paper"), name(QT_TRANSLATE_NOOP("Appearance", "Paper")),
-         snapshot("light", "borderless", "scientific", "tableau", "comfortable", "line", "plain")},
+         snapshot("light", "borderless", "scientific", "scientific", "tableau", "comfortable",
+                  "line", "plain")},
         {QStringLiteral("builtin:hud"), name(QT_TRANSLATE_NOOP("Appearance", "HUD")),
-         snapshot("matrix", "chamfered", "engineering", "palette", "compact", "line", "grid")},
+         snapshot("matrix", "chamfered", "engineering", "retro", "palette", "compact", "line",
+                  "grid")},
         {QStringLiteral("builtin:synthwave"), name(QT_TRANSLATE_NOOP("Appearance", "Synthwave")),
-         snapshot("synthwave", "chamfered", "dashboard", "palette", "normal", "filled",
+         snapshot("synthwave", "chamfered", "dashboard", "dashboard", "palette", "normal", "filled",
                   "gradient")},
+        {QStringLiteral("builtin:console"), name(QT_TRANSLATE_NOOP("Appearance", "Console")),
+         snapshot("black", "square", "engineering", "panel", "palette", "normal", "line", "plain")},
+        {QStringLiteral("builtin:terminal"), name(QT_TRANSLATE_NOOP("Appearance", "Terminal")),
+         snapshot("amber", "chamfered", "engineering", "retro", "palette", "compact", "line",
+                  "grid")},
         {QStringLiteral("builtin:accessible"), name(QT_TRANSLATE_NOOP("Appearance", "Accessible")),
-         snapshot("light", "rounded", "scientific", "okabeIto", "comfortable", "filled", "plain")},
+         snapshot("light", "rounded", "scientific", "dashboard", "okabeIto", "comfortable",
+                  "filled", "plain")},
     };
     for (const QJsonValue& value : storedUserPresets()) {
         const QJsonObject object = value.toObject();
