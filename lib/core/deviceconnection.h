@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QByteArray>
+#include <QElapsedTimer>
 #include <QObject>
 #include <QPointer>
 #include <QString>
@@ -69,6 +70,17 @@ public:
                               TransportType transportType = TransportType::Serial,
                               QObject* parent = nullptr);
     ~DeviceConnection() override;
+
+    // How long to hold off before the next attempt, given how many attempts
+    // in a row have already failed to bring the link up. The first
+    // kFastReconnectAttempts follow the retry tick as before (a robot being
+    // rebooted comes back within seconds); after that the wait doubles from
+    // `tickMs` up to kMaxReconnectBackoffMs, so a device left switched off
+    // overnight costs a few attempts an hour instead of ~700 (each with an
+    // mDNS lookup and an error posted to the notification log).
+    static constexpr int kFastReconnectAttempts = 5;
+    static constexpr int kMaxReconnectBackoffMs = 60000;
+    static int reconnectBackoffMs(int failedAttempts, int tickMs);
 
     // Non-null only when transportType == TransportType::Serial; nullptr
     // otherwise. Concretely a SerialManager on desktop or an
@@ -269,6 +281,13 @@ private:
     quint32 m_hubSelfSourceId = 0;
     QByteArray m_hubEndpointKey;
     ConnectionPhase m_connectionPhase = ConnectionPhase::Disconnected;
+    // Attempts started since the link was last up (or since a new target /
+    // an explicit connect), and the monotonic time before which the retry
+    // tick skips starting another -- see reconnectBackoffMs().
+    void resetReconnectBackoff();
+    int m_attemptsSinceUp = 0;
+    qint64 m_nextAttemptMs = 0;
+    QElapsedTimer m_backoffClock;
 };
 
 }  // namespace traceview

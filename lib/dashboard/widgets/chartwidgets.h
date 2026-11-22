@@ -71,6 +71,13 @@ public:
     // (AppSettings::chartStyleId()) while its gear menu says "App default".
     ChartStyleId effectiveStyle() const;
 
+    bool printedOnCanvas() const override;
+    void setFigure(int number, const QString& title) override;
+    int figureNumber() const {
+        return m_figureNumber;
+    }
+    void setEditModeHint(bool editMode) override;
+
     // Caps how often scheduleRepaint() triggers an actual repaint,
     // independent of how fast samples arrive (topico 14 PASSO 12: ingestion
     // rate stays separate from repaint rate). 33ms (~30Hz) by default, from
@@ -85,6 +92,18 @@ protected:
     // Which gear-menu options this chart kind offers (the style select is
     // always there).
     virtual ChartViewFeatures viewFeatures() const = 0;
+
+    // Whether this kind can be printed on the canvas (ChartStyle::printed).
+    // The audio views keep their card.
+    virtual bool printable() const {
+        return true;
+    }
+
+    // The card behind the chart -- or, printed, none in Run mode and a
+    // "Fig. N -- title." caption along the bottom (in edit mode too, so the
+    // plot doesn't jump between modes). Returns the rect left for the chart.
+    QRect paintChartCard(QPainter& painter, const ChartStyle& style, const ChartColors& colors,
+                         const ThemePalette& palette);
 
     // Parses config["view"] -- call from setConfig().
     void applyViewFromConfig(const QJsonObject& config);
@@ -109,6 +128,12 @@ protected:
     bool m_paused = false;
 
 private:
+    // Printed in Run mode: no stylesheet background either.
+    void syncPrintedBackground();
+
+    int m_figureNumber = 0;
+    QString m_figureTitle;
+    bool m_editMode = false;
     QVector<double> m_eased;
     QElapsedTimer m_easeClock;
     bool m_repaintPending = false;

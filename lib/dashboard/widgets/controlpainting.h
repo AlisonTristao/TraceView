@@ -24,6 +24,8 @@ namespace traceview {
 // Fonts and colors of a control's text.
 QFont controlTextFont(const ControlStyle& style, const QFont& base);
 QFont controlTitleFont(const ControlStyle& style, const QFont& base);
+// `base` in a serif face (Georgia, Times New Roman, Noto/DejaVu Serif).
+QFont serifFont(const QFont& base);
 QColor controlTitleColor(const ControlStyle& style, const ControlColors& colors);
 QColor controlStateTextColor(const ControlStyle& style, const ControlColors& colors);
 
@@ -35,6 +37,10 @@ void paintControlButton(QPainter& painter, const QRectF& rect, const ControlStyl
 // A switch at its natural size, `t` 0 (off) .. 1 (on) -- fractional while
 // it animates. `offText`/`onText` are used by looks with text cells.
 QSizeF controlSwitchSize(const ControlStyle& style);
+// The same, for a look whose size depends on its texts (Cells grow to fit
+// the longer of `offText`/`onText` in `font`'s size).
+QSizeF controlSwitchSize(const ControlStyle& style, const QFont& font, const QString& offText,
+                         const QString& onText);
 void paintControlSwitch(QPainter& painter, const QRectF& rect, const ControlStyle& style,
                         const ControlColors& colors, const QFont& font, qreal t, bool enabled,
                         const QString& offText, const QString& onText);

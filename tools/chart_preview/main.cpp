@@ -266,7 +266,11 @@ int writeSnapshots(const QString& dir) {
                                  {w.gauge, QSize(280, 280), {}},
                                  {w.gauge, QSize(280, 280), QStringLiteral("meter")},
                                  {w.gauge, QSize(280, 280), QStringLiteral("display")},
-                                 {w.gauge, QSize(280, 280), QStringLiteral("segments")}};
+                                 {w.gauge, QSize(280, 280), QStringLiteral("segments")},
+                                 {w.gauge, QSize(280, 280), QStringLiteral("dial")},
+                                 {w.gauge, QSize(280, 280), QStringLiteral("vu")},
+                                 {w.gauge, QSize(280, 280), QStringLiteral("edgewise")},
+                                 {w.gauge, QSize(280, 280), QStringLiteral("counter")}};
     constexpr int kGap = 16;
     constexpr int kLabelHeight = 28;
     constexpr int kCellHeight = 280;
@@ -491,17 +495,19 @@ int writePresetSnapshots(const QString& dir) {
 
     // Band 1 (rows 0-20): the wide chart, a ring, a meter over its display.
     place("line", "dummy_line", "Line chart", lineChartConfig(), 0, 0, 30, 20);
-    place("ring", "dummy_gauge", "Ring", withGaugeShape(gaugeConfig(), "arc", 3), 30, 0, 14, 20);
+    place("dial", "dummy_gauge", "Analog dial", withGaugeShape(gaugeConfig(), "dial", 1), 30, 0,
+          14, 20);
     place("meter", "dummy_gauge", "Analog meter", withGaugeShape(gaugeConfig(), "meter", 1), 44,
           0, 16, 13);
-    place("display", "dummy_gauge", "Display", withGaugeShape(gaugeConfig(), "display", 1), 44,
-          13, 16, 7);
+    place("counter", "dummy_gauge", "Analog counter", withGaugeShape(gaugeConfig(), "counter", 1),
+          44, 13, 16, 7);
     // Band 2 (rows 20-32): bar-shaped widgets.
     place("segments", "dummy_gauge", "LED bar", withGaugeShape(gaugeConfig(), "segments", 3), 0,
           20, 18, 12);
-    place("bar", "dummy_bar", "Bars", barChartConfig(), 18, 20, 14, 12);
-    place("half", "dummy_gauge", "Half circle", withGaugeShape(gaugeConfig(), "halfCircle", 1),
-          32, 20, 14, 12);
+    place("edgewise", "dummy_gauge", "Analog edgewise",
+          withGaugeShape(gaugeConfig(), "edgewise", 3), 18, 20, 14, 12);
+    place("vu", "dummy_gauge", "Analog VU", withGaugeShape(gaugeConfig(), "vu", 2), 32, 20, 14,
+          12);
     place("serial", "serial_monitor", "Serial monitor", QJsonObject(), 46, 20, 14, 12);
     // Band 3 (rows 32-40): controls, two rows of 4 cells each.
     place("start", "push_button", "Start", QJsonObject{{"label", "Start"}, {"variant", "success"}},
@@ -534,10 +540,8 @@ int writePresetSnapshots(const QString& dir) {
           32, 5, 8);
     place("led-rgb", "led", "Status", led("Status", 3, {{"colorMode", "rgb"}, {"onLabel", "RGB"}}),
           54, 32, 6, 8);
-    // Overlays, last so they stack on top: each inside a free zone.
+    // An overlay, last so it stacks on top, inside the line chart's free zone.
     place("tare", "push_button", "Tare", QJsonObject{{"label", "Tare"}}, 4, 4, 6, 3);
-    place("led-beat", "led", "Heartbeat", led(QString(), 5, {{"color", "#22C55E"}}), 41.4, 16.2,
-          2.5, 3.6);
     QJsonObject dashboard;
     dashboard["items"] = items;
     dashboard["breakpoint"] = "large";
@@ -552,6 +556,8 @@ int writePresetSnapshots(const QString& dir) {
         grid.resize(1280, 720);
         grid.fromJson(dashboard);
         grid.setEditMode(false);
+        // Figure numbers (printed charts) arrive on the next event loop pass.
+        QCoreApplication::processEvents();
         qint64 tick = 0;
         for (DashboardCell* cell : grid.findChildren<DashboardCell*>()) {
             DashboardWidget* content = cell->content();
@@ -719,6 +725,8 @@ int renderProject(const QString& path, const QString& dir, const QString& preset
         grid.resize(1280, 720);
         grid.fromJson(dashboard);
         grid.setEditMode(false);
+        // Figure numbers (printed charts) arrive on the next event loop pass.
+        QCoreApplication::processEvents();
 
         QHash<QString, QJsonObject> configs;
         QVector<LayoutReviewItem> review;
@@ -761,6 +769,107 @@ int renderProject(const QString& path, const QString& dir, const QString& preset
 
 }  // namespace
 
+// --paper-sheet <dir>: the Scientific look "printed on the page" -- charts
+// without a card and with a "Fig. N" caption, hatched bars, protractor
+// gauges, the checkbox form rows and the ruler sliders -- under the Paper
+// preset and under the default (dark) one: <dir>/paper-<preset>.png.
+int writePaperSheet(const QString& dir) {
+    const AppearanceSnapshot original = currentAppearance();
+    QJsonArray items;
+    auto place = [&items](const QString& id, const QString& type, const QString& name,
+                          QJsonObject config, double col, double row, double cols, double rows) {
+        items.append(gridItem(id, type, name, config, col / 60.0, row / 40.0, cols / 60.0,
+                              rows / 40.0));
+    };
+    auto scientificChart = [](QJsonObject config) {
+        QJsonObject view = config["view"].toObject();
+        view["style"] = "scientific";
+        config["view"] = view;
+        return config;
+    };
+    auto control = [](QJsonObject config) {
+        config["style"] = "scientific";
+        return config;
+    };
+    place("line", "dummy_line", QString::fromUtf8("Pendulum angle \xce\xb8 (rad)"),
+          scientificChart(lineChartConfig()), 0, 0, 32, 22);
+    place("bars", "dummy_bar", "Motor current (A)", scientificChart(barChartConfig()), 32, 0, 28,
+          22);
+    place("battery", "dummy_gauge", "Battery (%)",
+          scientificChart(withGaugeShape(gaugeConfig(), "halfCircle", 1)), 0, 22, 16, 18);
+    place("speed", "dummy_gauge", "Wheel speed",
+          scientificChart(withGaugeShape(gaugeConfig(), "arc", 2)), 16, 22, 14, 18);
+    place("motors", "toggle_switch", "Motors",
+          control({{"label", "Motors"}, {"onLabel", "on"}, {"offLabel", "off"},
+                   {"defaultState", true}}),
+          31, 23, 14, 4);
+    place("recovery", "toggle_switch", "Recovery",
+          control({{"label", "Recovery"}, {"onLabel", "active"}, {"offLabel", "idle"}}), 31,
+          27, 14, 4);
+    place("log", "toggle_switch", "Log",
+          control({{"label", "Log"}, {"onLabel", "recording"}, {"offLabel", "stopped"},
+                   {"defaultState", true}}),
+          31, 31, 14, 4);
+    place("kp", "slider", "Kp",
+          control({{"label", "Gain Kp"}, {"min", 0}, {"max", 5}, {"step", 0.01},
+                   {"defaultValue", 2.92}}),
+          46, 23, 14, 6);
+    place("ki", "slider", "Ki",
+          control({{"label", "Gain Ki"}, {"min", 0}, {"max", 1}, {"step", 0.01},
+                   {"defaultValue", 0.35}}),
+          46, 29, 14, 6);
+    place("start", "push_button", "Start", control({{"label", "Start"}}), 31, 35, 7, 5);
+    place("stop", "push_button", "Stop", control({{"label", "Stop"}, {"variant", "danger"}}),
+          38, 35, 7, 5);
+    place("save", "push_button", "Save", control({{"label", "Save"}}), 46, 35, 14, 5);
+    QJsonObject dashboard;
+    dashboard["items"] = items;
+    dashboard["breakpoint"] = "large";
+
+    for (const QString& presetId : {QStringLiteral("paper"), QStringLiteral("traceview")}) {
+        for (const AppearancePreset& preset : appearancePresets()) {
+            if (preset.id.section(QLatin1Char(':'), 1) == presetId) {
+                applyAppearance(preset.values);
+            }
+        }
+        DashboardGrid grid;
+        grid.resize(1280, 720);
+        grid.fromJson(dashboard);
+        grid.setEditMode(false);
+        QCoreApplication::processEvents();
+        for (DashboardCell* cell : grid.findChildren<DashboardCell*>()) {
+            DashboardWidget* content = cell->content();
+            for (qint64 tick = 1; tick <= 200; ++tick) {
+                const double t = double(tick);
+                const quint64 us = quint64(tick) * 50000;
+                if (auto* chart = dynamic_cast<ChartWidgetBase*>(content)) {
+                    chart->appendFieldSample(1, us, 50.0 + 40.0 * qSin(t * 0.05));
+                    chart->appendFieldSample(2, us, 50.0 + 30.0 * qSin(t * 0.05 + 1.5));
+                    chart->appendFieldSample(3, us, 50.0 + 20.0 * qSin(t * 0.03 + 3.0));
+                    chart->appendFieldSample(4, us, 50.0 + 45.0 * qSin(t * 0.1));
+                    chart->appendFieldSample(5, us, 50.0 + 45.0 * qSin(t * 0.2));
+                } else if (auto* gauge = dynamic_cast<DummyGaugeWidget*>(content)) {
+                    gauge->appendFieldSample(kGaugeFieldId, us, 50.0 + 40.0 * qSin(t * 0.05));
+                    gauge->appendFieldSample(kGaugeFieldId2, us, 50.0 + 30.0 * qSin(t * 0.05 + 1.5));
+                }
+            }
+        }
+        const QString path = QDir(dir).filePath(QStringLiteral("paper-%1.png").arg(presetId));
+        QImage image(grid.size(), QImage::Format_ARGB32);
+        image.fill(ThemeManager::instance().currentTheme().background);
+        QPainter painter(&image);
+        painter.drawPixmap(0, 0, grid.grab());
+        painter.end();
+        if (!image.save(path)) {
+            std::fprintf(stderr, "could not write %s\n", qPrintable(path));
+            return 1;
+        }
+        std::printf("%s\n", qPrintable(path));
+    }
+    applyAppearance(original);
+    return 0;
+}
+
 int main(int argc, char** argv) {
     QApplication app(argc, argv);
     // Its own settings store: the appearance choices the snapshots switch
@@ -775,6 +884,11 @@ int main(int argc, char** argv) {
     if (renderArg >= 0 && renderArg + 2 < args.size()) {
         return renderProject(args[renderArg + 1], args[renderArg + 2],
                              renderArg + 3 < args.size() ? args[renderArg + 3] : QString());
+    }
+    const int paperArg = int(args.indexOf(QStringLiteral("--paper-sheet")));
+    if (paperArg >= 0) {
+        return writePaperSheet(paperArg + 1 < args.size() ? args[paperArg + 1]
+                                                          : QStringLiteral("."));
     }
     const int snapshotArg = int(args.indexOf(QStringLiteral("--snapshot")));
     if (snapshotArg >= 0) {

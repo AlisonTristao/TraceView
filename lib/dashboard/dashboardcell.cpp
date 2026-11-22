@@ -204,7 +204,10 @@ protected:
         // rather than cards (see "Control panel fill" in
         // docs/VISUAL_IDENTITY.md), and an idle outline would fight that.
         // The frame style may drop the idle outline entirely (Borderless).
-        if (m_content->wantsCellHeader() && frame.idleOutline && frame.borderWidth > 0.0) {
+        // A widget printed on the canvas (see DashboardCell::syncPrinted())
+        // has no card to outline either.
+        if (m_content->wantsCellHeader() && frame.idleOutline && frame.borderWidth > 0.0 &&
+            !property("printed").toBool()) {
             painter.setPen(QPen(palette.border, frame.borderWidth));
             painter.setBrush(Qt::NoBrush);
             painter.drawPath(outline);
@@ -301,6 +304,8 @@ void DashboardCell::setEditMode(bool enabled) {
         return;
     }
     m_editMode = enabled;
+    m_printed = !m_editMode && m_content->printedOnCanvas();
+    m_borderOverlay->setProperty("printed", m_printed);
     // The content widget spans the full cell below the header, which
     // includes the resize grip's corner. Without this, clicks/hover on the
     // grip land on the content widget instead of us, so drag/resize misses
@@ -365,7 +370,24 @@ int DashboardCell::headerStripHeight() const {
                                         : 0;
 }
 
+void DashboardCell::syncPrinted() {
+    const bool printed = !m_editMode && m_content->printedOnCanvas();
+    if (printed == m_printed) {
+        return;
+    }
+    m_printed = printed;
+    m_borderOverlay->setProperty("printed", printed);
+    layoutChildren();
+    update();
+    m_borderOverlay->update();
+}
+
 int DashboardCell::headerHeight() const {
+    // Printed on the canvas (a Scientific chart in Run): no strip on top,
+    // the header floats in on hover like the "On hover" card header.
+    if (m_printed) {
+        return 0;
+    }
     if (!m_editMode && ThemeManager::instance().cardHeader() == CardHeaderId::Hover) {
         return 0;
     }
@@ -478,6 +500,7 @@ void DashboardCell::showSettingsMenu() {
     auto apply = [this, &resync](const QString& id, const QVariant& value) {
         const QJsonObject view = m_content->viewConfigWith(id, value);
         m_content->setViewConfig(view);
+        syncPrinted();
         emit viewConfigChanged(m_itemId, view);
         resync();
     };
@@ -755,7 +778,8 @@ void DashboardCell::paintEvent(QPaintEvent*) {
     // the cell unfilled lets it sit over a chart as an overlay without a
     // canvas-colored box around it (docs/LAYOUT.md).
     const bool bareControl = !m_editMode && m_content && !m_content->wantsCellHeader();
-    if (!bareControl) {
+    // Same for a widget printed on the canvas (syncPrinted()).
+    if (!bareControl && !m_printed) {
         painter.fillPath(silhouette, palette.background);
     }
 

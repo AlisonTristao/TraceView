@@ -3,6 +3,7 @@
 #include <QAbstractButton>
 #include <QAbstractSlider>
 #include <QElapsedTimer>
+#include <QMargins>
 #include <QVariantAnimation>
 
 #include "dashboard/dashboardwidget.h"
@@ -11,6 +12,8 @@
 #include "dashboard/widgets/controlstyle.h"
 
 class QTimer;
+class QHBoxLayout;
+class QVBoxLayout;
 
 namespace traceview {
 
@@ -42,6 +45,13 @@ public:
     const ControlColors& controlColors() const {
         return m_colors;
     }
+
+    // The margin between the cell edge and the control's content: none
+    // without a plate -- the grid's gutter is the only space between two
+    // widgets -- and a fixed one inside a plate (Panel), so the screws have
+    // room. Never depends on edit/Run mode, so nothing moves between them.
+    // See "Spacing" in docs/LAYOUT.md.
+    QMargins contentMargins() const;
 
 protected:
     // The styled background, then the style's screws (Panel) over it --
@@ -78,6 +88,11 @@ public:
         return m_text;
     }
     void setLook(const ControlStyle& style, const ControlColors& colors);
+    // Left (default) or centered.
+    void setAlignment(Qt::Alignment alignment);
+    // The width `text` takes in this role's font -- to reserve room for the
+    // longest of several texts so swapping them doesn't move anything.
+    int textWidth(const QString& text) const;
 
     QSize sizeHint() const override;
     QSize minimumSizeHint() const override;
@@ -88,8 +103,10 @@ protected:
 private:
     QFont roleFont() const;
     QString shownText() const;
+    QString shownText(const QString& text) const;
 
     Role m_role;
+    Qt::Alignment m_alignment = Qt::AlignLeft;
     QString m_text;
     ControlStyle m_style;
     ControlColors m_colors;
@@ -190,6 +207,8 @@ private:
 // so tweaking e.g. the command text in the properties panel doesn't snap a
 // user-flipped switch back to its configured default. sendRequested() fires
 // the matching command whenever the user (not setConfig()) changes state.
+class ControlLeader;
+
 class ToggleSwitchWidget : public StyledControlWidget {
     Q_OBJECT
 
@@ -208,9 +227,15 @@ protected:
 private:
     void updateStateText();
 
+    QVBoxLayout* m_layout = nullptr;
+    QHBoxLayout* m_row = nullptr;
     ControlText* m_title = nullptr;
     ToggleSwitch* m_switch = nullptr;
+    ControlLeader* m_leader = nullptr;
     ControlText* m_state = nullptr;
+    // The checkbox look: the title moves into the row, after the box, as on
+    // a printed form.
+    bool m_formRow = false;
     ToggleCommandConfig m_config;
     bool m_configInitialized = false;
 };
@@ -292,6 +317,7 @@ private:
     void sendCommandFor(double value);
     QString formatValue(double value) const;
 
+    QVBoxLayout* m_layout = nullptr;
     ControlText* m_title = nullptr;
     ControlSlider* m_slider = nullptr;
     ControlReadout* m_readout = nullptr;
@@ -353,10 +379,14 @@ public:
 
 protected:
     void applyControlStyle() override;
+    void resizeEvent(QResizeEvent* event) override;
 
 private:
     void setValue(double value);
     void updateLamp();
+    void fitLamp();
+
+    QVBoxLayout* m_layout = nullptr;
 
     LedConfig m_config;
     QString m_deviceId;

@@ -17,6 +17,7 @@ constexpr int kTimeoutTickMs = 250;
 // has a querier do, instead of waiting for the caller's next attempt.
 constexpr int kResendIntervalMs = 750;
 constexpr int kResends = 2;
+constexpr qint64 kInterfaceRefreshMs = 30000;
 
 QHostAddress mdnsGroup() {
     return QHostAddress(QStringLiteral("224.0.0.251"));
@@ -178,6 +179,13 @@ void MdnsResolver::ensureSocket() {
 }
 
 QList<QNetworkInterface> MdnsResolver::refreshInterfaces() {
+    // Re-read now and then so an adapter that comes up later (Wi-Fi joining,
+    // a USB-Ethernet plugged in) is still picked up.
+    const qint64 now = QDateTime::currentMSecsSinceEpoch();
+    if (m_interfacesFetchedMs >= 0 && now - m_interfacesFetchedMs < kInterfaceRefreshMs) {
+        return m_interfaces;
+    }
+    m_interfacesFetchedMs = now;
     QList<QNetworkInterface> usable;
     for (const QNetworkInterface& iface : QNetworkInterface::allInterfaces()) {
         if (!usableInterface(iface)) continue;
@@ -186,6 +194,7 @@ QList<QNetworkInterface> MdnsResolver::refreshInterfaces() {
             m_joined.insert(iface.name());
         }
     }
+    m_interfaces = usable;
     return usable;
 }
 

@@ -274,6 +274,7 @@ DeviceConnection::DeviceConnection(CommType commType, TransportType transportTyp
         }
     });
 
+    m_backoffClock.start();
     m_retryTimer = new QTimer(this);
     m_retryTimer->setInterval(AppSettings::instance().reconnectIntervalSeconds() * 1000);
     connect(m_retryTimer, &QTimer::timeout, this, &DeviceConnection::attemptReconnect);
@@ -317,10 +318,14 @@ void DeviceConnection::connectTo(const QString& target, qint32 baudRate) {
         }
         return;
     }
+    const bool wasWanted = m_shouldBeConnected;
     m_target = target;
     m_baudRate = baudRate;
     m_shouldBeConnected = !target.isEmpty();
     m_attemptInProgress = false;
+    if (targetChanged || !wasWanted) {
+        resetReconnectBackoff();
+    }
 
     if (!m_shouldBeConnected) {
         qCInfo(lcConnection) << "target cleared, intent now offline";
@@ -385,6 +390,9 @@ void DeviceConnection::connectToTcp(const QString& host, quint16 port,
         return;
     }
     m_attemptInProgress = false;
+    if (targetChanged || !wasWanted) {
+        resetReconnectBackoff();
+    }
     if (!m_transportAvailable) {
         setConnectionPhase(ConnectionPhase::Disconnected);
         return;
@@ -439,6 +447,9 @@ void DeviceConnection::connectToBle(const QString& address, const QByteArray& en
         return;
     }
     m_attemptInProgress = false;
+    if (targetChanged || !wasWanted) {
+        resetReconnectBackoff();
+    }
     if (!m_transportAvailable) {
         setConnectionPhase(ConnectionPhase::Disconnected);
         return;
@@ -555,6 +566,7 @@ void DeviceConnection::setAvailable(bool available) {
 
     if (m_shouldBeConnected && !m_transport->isConnected()) {
         setConnectionPhase(ConnectionPhase::Connecting);
+        resetReconnectBackoff();  // the port just (re)appeared: try it now
         attemptReconnect();
         if (AppSettings::instance().autoReconnect()) {
             m_retryTimer->start();
@@ -571,6 +583,9 @@ void DeviceConnection::setConnectionPhase(ConnectionPhase phase) {
 }
 
 void DeviceConnection::reportConnected(bool connected) {
+    if (connected) {
+        resetReconnectBackoff();
+    }
     if (m_reportedConnected != connected) {
         m_reportedConnected = connected;
         emit connectionStateChanged(connected);
@@ -657,6 +672,20 @@ void DeviceConnection::setLineTerminator(int terminator) {
 #endif
 }
 
+int DeviceConnection::reconnectBackoffMs(int failedAttempts, int tickMs) {
+    if (failedAttempts < kFastReconnectAttempts) {
+        return 0;
+    }
+    const int doublings = qMin(failedAttempts - kFastReconnectAttempts + 1, 16);
+    const qint64 wait = qint64(qMax(tickMs, 1)) << doublings;
+    return int(qMin<qint64>(wait, kMaxReconnectBackoffMs));
+}
+
+void DeviceConnection::resetReconnectBackoff() {
+    m_attemptsSinceUp = 0;
+    m_nextAttemptMs = 0;
+}
+
 void DeviceConnection::attemptReconnect() {
     if (!m_shouldBeConnected || !m_transportAvailable || m_reconnectPaused) {
         return;
@@ -692,6 +721,12 @@ void DeviceConnection::attemptReconnect() {
     if (m_attemptInProgress) {
         return;
     }
+    const qint64 now = m_backoffClock.elapsed();
+    if (now < m_nextAttemptMs) {
+        return;  // backing off after repeated failures -- see reconnectBackoffMs()
+    }
+    ++m_attemptsSinceUp;
+    m_nextAttemptMs = now + reconnectBackoffMs(m_attemptsSinceUp, m_retryTimer->interval());
     QString attemptTarget = m_target;
     if (m_tcpTransport) {
         attemptTarget = QString("%1:%2").arg(m_tcpHost).arg(m_tcpPort);

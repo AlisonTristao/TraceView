@@ -7,6 +7,50 @@ release flow.
 
 ## [Unreleased]
 
+### Added
+
+- **Analog gauges**: four new gauge shapes (gear menu, Shape) in the style
+  of the analog meter, each in a dark metal bezel with screws. Analog dial is
+  a round manometer-like gauge with a chrome ring. Analog VU meter is a
+  backlit VU meter per series, side by side. Analog edgewise meter is a tall
+  strip meter per series. Analog counter is mechanical digit drums, like an
+  odometer.
+- **Scientific charts printed on the page**: in Run mode a Scientific chart
+  has no card and gets a caption underneath, "Fig. 2 -- Motor current.",
+  numbered in reading order across the dashboard; its header appears on
+  hover. Bars are hatched, a different hatch per series, and the ring and
+  half-circle gauges are drawn as a protractor with a single-line needle.
+
+### Changed
+
+- **Light theme by default**: a fresh install (or one whose saved theme was
+  deleted) starts in the Light theme instead of Dark.
+- **Scientific controls**: the checkbox is bigger (26 px) and reads as a
+  form row -- box, name, dotted leader, state. The slider is a printed
+  ruler with a triangle pointing at the value.
+- **Analog meter fills its card**: the bezel is now the whole widget, with
+  the reading under the face inside it, instead of a framed meter floating
+  inside the card.
+- **Panel style without screws**: the screws stay on the analog gauges and
+  leave the Panel charts and controls, which no longer sit on a plate.
+- **Presets use Normal density**: HUD, Terminal (were Compact), Paper and
+  Accessible (were Comfortable).
+- **Even spacing between widgets**: the grid's gutter is now the only space
+  between two widgets. Push buttons, switches, sliders and LEDs no longer
+  add their own margin, so controls placed side by side sit as close as two
+  charts, and a Panel plate keeps fixed margins that don't change between
+  edit and Run mode. A switch no longer drifts sideways when its cell is
+  resized or jumps when its on/off text changes width. Panel's lever switch
+  and fader are a little shorter, so they fit a standard row of controls.
+- **Stricter layout review** (`check_layout`): it now flags any two
+  neighbors whose edges almost line up, in a row or a column, and any empty
+  area between widgets. See "Spacing" in `docs/LAYOUT.md`.
+
+### Fixed
+
+- Retro switch: the on/off cells grow to fit their texts instead of cutting
+  them ("desarm...").
+
 ## [4.17.0] - 2026-11-21
 
 ### Added

@@ -9,6 +9,7 @@
 #include "dashboard/dashboardgrid.h"
 #include "dashboard/dashboarditem.h"
 #include "dashboard/dashboardwidget.h"
+#include "dashboard/widgets/chartwidgets.h"
 #include "traceview/framestyle.h"
 #include "traceview/thememanager.h"
 
@@ -98,6 +99,7 @@ private slots:
     void zOrderActionsReorderStackAndAreUndoable();
     void selectionDoesNotChangePersistedZOrder();
     void ctrlClickTogglesSelectionAndWholeGroupAsUnit();
+    void printedChartsAreNumberedInReadingOrder();
     void rubberBandSelectsAndDragsMultipleItemsRigidly();
     void groupAndUngroupAreUndoable();
     void removeSelectedRemovesWholeMultiSelectionWithUndo();
@@ -1176,4 +1178,37 @@ void TestDashboardGrid::setItemGeometryRejectsOffCanvas() {
 }
 
 QTEST_MAIN(TestDashboardGrid)
+void TestDashboardGrid::printedChartsAreNumberedInReadingOrder() {
+    // Four charts in a 2 x 2 grid, listed out of order; all but "c" (lower
+    // left) in the Scientific style, which prints them as figures.
+    auto chart = [](const QString& id, double x, double y, bool scientific) {
+        QJsonObject config;
+        if (scientific) {
+            config["view"] = QJsonObject{{"style", "scientific"}};
+        }
+        return QJsonObject{{"id", id},      {"type", "dummy_line"}, {"name", id},
+                           {"config", config}, {"x", x},           {"y", y},
+                           {"width", 0.5},  {"height", 0.5}};
+    };
+    DashboardGrid grid;
+    grid.resize(1280, 720);
+    grid.fromJson(QJsonObject{{"items", QJsonArray{chart("d", 0.5, 0.5, true),
+                                                   chart("b", 0.5, 0.0, true),
+                                                   chart("c", 0.0, 0.5, false),
+                                                   chart("a", 0.0, 0.0, true)}}});
+    QCoreApplication::processEvents();
+
+    QHash<QString, int> figures;
+    for (DashboardCell* cell : grid.findChildren<DashboardCell*>()) {
+        auto* content = dynamic_cast<traceview::StyledChartWidget*>(cell->content());
+        QVERIFY(content);
+        QCOMPARE(content->printedOnCanvas(), cell->itemId() != QLatin1String("c"));
+        figures.insert(cell->itemId(), content->figureNumber());
+    }
+    QCOMPARE(figures.value("a"), 1);
+    QCOMPARE(figures.value("b"), 2);
+    QCOMPARE(figures.value("c"), 0);
+    QCOMPARE(figures.value("d"), 3);
+}
+
 #include "test_dashboardgrid.moc"

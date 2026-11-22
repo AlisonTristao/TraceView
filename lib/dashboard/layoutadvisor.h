@@ -2,6 +2,7 @@
 
 #include <QJsonObject>
 #include <QRectF>
+#include <QSize>
 #include <QSizeF>
 #include <QString>
 #include <QVector>
@@ -58,7 +59,9 @@ struct LayoutIssue {
     enum class Severity { Info, Warning, Problem };
     Severity severity = Severity::Warning;
     QString widgetId;
-    QString kind;  // "tooSmall", "tooLarge", "aspect", "covers", "alignment", "offCanvas"
+    // "tooSmall", "tooLarge", "aspect", "covers", "alignment", "emptyArea",
+    // "offCanvas"
+    QString kind;
     QString message;
     // A better rect for the widget, in canvas pixels; null when there's
     // nothing concrete to suggest.
@@ -76,12 +79,16 @@ struct LayoutReview {
     QVector<OverlaySpot> overlaySpots;
 };
 
-// Reviews `items` on a canvas of `canvasSize` pixels: sizes and aspect
-// against each kind's hints, overlaps (fine only for an overlay-capable
-// widget inside a free zone of one that accepts it), controls in a row
-// that almost but not quite line up, and widgets past the canvas. Also
-// lists the free overlay spots still uncovered.
-LayoutReview reviewLayout(const QVector<LayoutReviewItem>& items, const QSizeF& canvasSize);
+// Reviews `items` on a canvas of `canvasSize` pixels laid out on a grid of
+// `gridCells` columns x rows (the Large layout's 60 x 40 by default):
+// sizes and aspect against each kind's hints, overlaps (fine only for an
+// overlay-capable widget inside a free zone of one that accepts it),
+// neighbors whose edges almost but not quite line up, empty areas between
+// widgets (the grid's gutter already separates touching widgets, so any
+// gap is wasted room), and widgets past the canvas. Also lists the free
+// overlay spots still uncovered. The rules are docs/LAYOUT.md's.
+LayoutReview reviewLayout(const QVector<LayoutReviewItem>& items, const QSizeF& canvasSize,
+                          const QSize& gridCells = QSize(60, 40));
 
 QString layoutSeverityString(LayoutIssue::Severity severity);
 

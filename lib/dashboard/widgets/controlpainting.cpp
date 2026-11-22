@@ -169,6 +169,10 @@ QFont controlTextFont(const ControlStyle& style, const QFont& base) {
     return base;
 }
 
+QFont serifFont(const QFont& base) {
+    return serif(base);
+}
+
 QFont controlTitleFont(const ControlStyle& style, const QFont& base) {
     QFont font = style.monoText ? fixedPitch(base) : base;
     if (style.serifItalicTitle) {
@@ -328,15 +332,28 @@ QSizeF controlSwitchSize(const ControlStyle& style) {
         case ControlSwitchLook::Rocker:
             return {64.0, 26.0};
         case ControlSwitchLook::Checkbox:
-            return {18.0, 18.0};
+            return {26.0, 26.0};
         case ControlSwitchLook::Lever:
-            return {64.0, 44.0};
+            return {58.0, 36.0};
         case ControlSwitchLook::Cells:
             return {84.0, 24.0};
         case ControlSwitchLook::Pill:
             break;
     }
     return {44.0, 24.0};
+}
+
+QSizeF controlSwitchSize(const ControlStyle& style, const QFont& font, const QString& offText,
+                         const QString& onText) {
+    QSizeF size = controlSwitchSize(style);
+    if (style.switchLook == ControlSwitchLook::Cells) {
+        const QFontMetricsF metrics(fixedPitch(font));
+        const qreal text = qMax(metrics.horizontalAdvance(controlStyledText(style, offText)),
+                                metrics.horizontalAdvance(controlStyledText(style, onText)));
+        const qreal cell = qMax(40.0, qCeil(text) + 14.0);
+        size.setWidth(2.0 * cell + 4.0);
+    }
+    return size;
 }
 
 void paintControlSwitch(QPainter& painter, const QRectF& rect, const ControlStyle& style,
@@ -390,7 +407,7 @@ void paintControlSwitch(QPainter& painter, const QRectF& rect, const ControlStyl
             painter.setBrush(withAlpha(colors.text, t));
             painter.drawRect(r);
             if (t > 0.0) {
-                QPen check(withAlpha(colors.background, t), 2.0);
+                QPen check(withAlpha(colors.background, t), qMax(2.0, r.width() * 0.1));
                 check.setCapStyle(Qt::RoundCap);
                 check.setJoinStyle(Qt::RoundJoin);
                 painter.setPen(check);
@@ -403,26 +420,26 @@ void paintControlSwitch(QPainter& painter, const QRectF& rect, const ControlStyl
             break;
         }
         case ControlSwitchLook::Lever: {
-            const QRectF plate(r.left() + 1.0, r.top(), 40.0, r.height());
+            const QRectF plate(r.left() + 1.0, r.top(), 34.0, r.height());
             painter.setPen(QPen(kPlateEdge, 1.0));
             painter.setBrush(mixControlColor(colors.surface, Qt::black, 0.35));
             painter.drawRoundedRect(plate, 4.0, 4.0);
             const QPointF nut = plate.center();
             painter.setPen(QPen(kMetalEdge, 1.0));
             painter.setBrush(kMetal);
-            painter.drawEllipse(nut, 9.0, 9.0);
+            painter.drawEllipse(nut, 7.5, 7.5);
             painter.setPen(Qt::NoPen);
             painter.setBrush(kMetalDark);
-            painter.drawEllipse(nut, 4.0, 4.0);
-            const QPointF tip(nut.x(), nut.y() + (1.0 - 2.0 * t) * 14.0);
-            QPen lever(kMetalLight, 5.0);
+            painter.drawEllipse(nut, 3.5, 3.5);
+            const QPointF tip(nut.x(), nut.y() + (1.0 - 2.0 * t) * 11.0);
+            QPen lever(kMetalLight, 4.5);
             lever.setCapStyle(Qt::RoundCap);
             painter.setPen(lever);
             painter.drawLine(nut, tip);
             painter.setPen(QPen(kMetalBallEdge, 1.0));
             painter.setBrush(kMetalBall);
-            painter.drawEllipse(tip, 4.5, 4.5);
-            paintLensLed(painter, QPointF(plate.right() + 13.0, nut.y()), 6.0, colors.success, on);
+            painter.drawEllipse(tip, 4.0, 4.0);
+            paintLensLed(painter, QPointF(plate.right() + 12.0, nut.y()), 5.5, colors.success, on);
             break;
         }
         case ControlSwitchLook::Cells: {
@@ -459,9 +476,9 @@ qreal controlSliderHeight(const ControlStyle& style) {
         case ControlSliderLook::Ruler:
             return 40.0;
         case ControlSliderLook::Line:
-            return 30.0;
+            return 42.0;
         case ControlSliderLook::Fader:
-            return 46.0;
+            return 38.0;
         case ControlSliderLook::Track:
         case ControlSliderLook::Blocks:
             break;
@@ -482,11 +499,11 @@ ControlSliderTrack controlSliderTrack(const QRectF& rect, const ControlStyle& st
             break;
         case ControlSliderLook::Line:
             inset = 6.0;
-            track.y = rect.center().y() + 5.0;
+            track.y = rect.top() + 12.0;
             break;
         case ControlSliderLook::Fader:
             inset = 8.0;
-            track.y = rect.center().y() + 6.0;
+            track.y = rect.top() + 26.0;
             break;
         case ControlSliderLook::Blocks:
             inset = 0.0;
@@ -560,37 +577,53 @@ void paintControlSlider(QPainter& painter, const QRectF& rect, const ControlStyl
             break;
         }
         case ControlSliderLook::Line: {
+            // A ruler printed on the page: ticks up from the line, a solid
+            // triangle under it pointing at the value, min/mid/max below.
             painter.setPen(QPen(colors.text, style.lineWidth));
             painter.drawLine(QPointF(track.left, y), QPointF(track.right, y));
-            painter.drawLine(QPointF(track.left, y - 4.0), QPointF(track.left, y + 4.0));
-            painter.drawLine(QPointF(track.right, y - 4.0), QPointF(track.right, y + 4.0));
-            painter.setPen(QPen(colors.accent, 1.5));
-            painter.drawLine(QPointF(x, y - 9.0), QPointF(x, y + 9.0));
+            for (int i = 0; i <= 10; ++i) {
+                const qreal tx = track.left + width * i / 10.0;
+                painter.drawLine(QPointF(tx, y), QPointF(tx, y - (i % 5 ? 5.0 : 9.0)));
+            }
+            if (scaleLabels.size() == 3) {
+                QFont scaleFont = controlTextFont(style, font);
+                scaleFont.setPixelSize(qMax(9, QFontInfo(font).pixelSize() - 2));
+                painter.setFont(scaleFont);
+                painter.setPen(colors.textSecondary);
+                const QFontMetricsF metrics(scaleFont);
+                const qreal xs[3] = {track.left, track.left + width / 2.0, track.right};
+                for (int i = 0; i < 3; ++i) {
+                    const qreal w = metrics.horizontalAdvance(scaleLabels[i]) + 2.0;
+                    const qreal left = qBound(rect.left(), xs[i] - w / 2.0, rect.right() - w);
+                    painter.drawText(QRectF(left, y + 15.0, w, metrics.height()),
+                                     Qt::AlignCenter, scaleLabels[i]);
+                }
+            }
             painter.setPen(Qt::NoPen);
-            painter.setBrush(colors.accent);
+            painter.setBrush(down ? colors.accent : colors.text);
             const qreal half = down ? 6.0 : 5.0;
             painter.drawPolygon(QPolygonF(
-                {QPointF(x - half, y - 15.0), QPointF(x + half, y - 15.0), QPointF(x, y - 9.0)}));
+                {QPointF(x, y + 2.0), QPointF(x - half, y + 13.0), QPointF(x + half, y + 13.0)}));
             break;
         }
         case ControlSliderLook::Fader: {
             painter.setPen(QPen(withAlpha(colors.textSecondary, 0.7), 1.0));
             for (int i = 0; i <= 10; ++i) {
                 const qreal tx = track.left + width * i / 10.0;
-                painter.drawLine(QPointF(tx, y - 22.0), QPointF(tx, y - (i % 5 ? 18.0 : 15.0)));
+                painter.drawLine(QPointF(tx, y - 18.0), QPointF(tx, y - (i % 5 ? 14.0 : 12.0)));
             }
             painter.setPen(QPen(kSlotEdge, 1.0));
             painter.setBrush(kSlot);
             painter.drawRoundedRect(QRectF(track.left, y - 3.0, width, 6.0), 3.0, 3.0);
-            const QRectF cap(x - 7.0, y - 12.0, 14.0, 24.0);
+            const QRectF cap(x - 7.0, y - 10.0, 14.0, 20.0);
             painter.setPen(QPen(kMetalEdge, 1.0));
             painter.setBrush(down ? mixControlColor(kFaderCap, Qt::white, 0.2) : kFaderCap);
             painter.drawRoundedRect(cap, 2.0, 2.0);
             painter.setPen(QPen(kFaderGroove, 1.0));
-            painter.drawLine(QPointF(x - 4.0, y - 8.0), QPointF(x - 4.0, y + 8.0));
-            painter.drawLine(QPointF(x + 4.0, y - 8.0), QPointF(x + 4.0, y + 8.0));
+            painter.drawLine(QPointF(x - 4.0, y - 6.0), QPointF(x - 4.0, y + 6.0));
+            painter.drawLine(QPointF(x + 4.0, y - 6.0), QPointF(x + 4.0, y + 6.0));
             painter.setPen(QPen(Qt::white, 2.0));
-            painter.drawLine(QPointF(x, y - 10.0), QPointF(x, y + 10.0));
+            painter.drawLine(QPointF(x, y - 8.0), QPointF(x, y + 8.0));
             break;
         }
         case ControlSliderLook::Blocks: {

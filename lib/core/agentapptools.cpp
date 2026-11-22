@@ -874,8 +874,10 @@ void AgentAppTools::registerDashboardViewTools(MainWindow* window, ToolRegistry*
         "Reviews the active workspace's layout against each widget's layout hints "
         "(list_widget_types): widgets too small or with empty room past their maximum (a "
         "giant button), a wrong aspect, overlaps (only small controls and LEDs may sit on a "
-        "widget, inside its free zones), controls in a row that almost line up, widgets past "
-        "the canvas. Each issue comes with a suggested layout in cells when there is one, and "
+        "widget, inside its free zones), neighbors whose edges almost line up, empty areas "
+        "between widgets (the grid already leaves a gutter between touching widgets, so "
+        "widgets should touch), widgets past the canvas. Each issue comes with a suggested "
+        "layout in cells when there is one, and "
         "the free overlay spots still unused are listed. Run it after placing widgets and fix "
         "until it reports no problems.";
     check.inputSchema =
@@ -899,7 +901,10 @@ void AgentAppTools::registerDashboardViewTools(MainWindow* window, ToolRegistry*
                                  g.width * canvas.width(), g.height * canvas.height())});
             names.insert(item.id, item.name);
         }
-        const LayoutReview review = reviewLayout(items, canvas);
+        const LayoutReview review =
+            reviewLayout(items, canvas,
+                         QSize(DashboardGrid::gridColumns(breakpoint),
+                               DashboardGrid::gridRowsPerPage(breakpoint)));
         QJsonArray issues;
         int problems = 0;
         for (const LayoutIssue& issue : review.issues) {
@@ -908,7 +913,9 @@ void AgentAppTools::registerDashboardViewTools(MainWindow* window, ToolRegistry*
                              {"severity", layoutSeverityString(issue.severity)},
                              {"kind", issue.kind},
                              {"message", issue.message}};
-            if (!issue.suggestedRect.isNull()) {
+            if (issue.widgetId.isEmpty() && !issue.suggestedRect.isNull()) {
+                json["area"] = pixelsToCells(issue.suggestedRect, cell);  // emptyArea
+            } else if (!issue.suggestedRect.isNull()) {
                 json["suggestedLayout"] = QJsonObject{
                     {breakpointToString(breakpoint), pixelsToCells(issue.suggestedRect, cell)}};
             }

@@ -10,13 +10,16 @@
 #include <QLinearGradient>
 #include <QPainter>
 #include <QRubberBand>
+#include <QTimer>
 #include <QUuid>
+#include <algorithm>
 #include <cmath>
 #include <limits>
 
 #include "dashboardcell.h"
 #include "dashboardcommands.h"
 #include "dashboardwidget.h"
+#include "preferences/appsettings.h"
 #include "traceview/thememanager.h"
 #include "widgetregistry.h"
 
@@ -128,6 +131,9 @@ DashboardGrid::DashboardGrid(QWidget* parent) : QWidget(parent), m_undoStack(new
                 relayout();
                 update();
             });
+    // The app-wide chart style may turn charts printed (or back).
+    connect(&AppSettings::instance(), &AppSettings::chartStyleChanged, this,
+            &DashboardGrid::scheduleFigureNumbers);
 }
 
 void DashboardGrid::setEditMode(bool enabled) {
@@ -634,6 +640,7 @@ void DashboardGrid::removeItem(const QString& itemId) {
             break;
         }
     }
+    scheduleFigureNumbers();
     updateGeometry();
     update();
     emit itemsChanged();
@@ -836,6 +843,7 @@ void DashboardGrid::applyRename(const QString& itemId, const QString& name) {
     if (DashboardCell* cell = m_cells.value(itemId)) {
         cell->setTitle(displayNameFor(*item));
     }
+    scheduleFigureNumbers();
 }
 
 void DashboardGrid::applySetKey(const QString& itemId, const QString& key) {
@@ -853,6 +861,7 @@ void DashboardGrid::applySetConfig(const QString& itemId, const QJsonObject& req
             if (DashboardWidget* content = cell->content()) {
                 content->setConfig(config);
             }
+            scheduleFigureNumbers();
             // The edit may have changed which device this widget targets --
             // re-derive the dot from that device's last-known state rather
             // than leaving it showing the previous device's.
@@ -1357,6 +1366,7 @@ void DashboardGrid::relayout() {
             cell->setGeometry(itemRect(item));
         }
     }
+    scheduleFigureNumbers();
     // The slot-guide outline (see paintEvent()) sits in the gutter just
     // outside each cell's own rect, so moving/resizing a cell doesn't touch
     // any pixel Qt would think to repaint on its own — force it explicitly
@@ -1371,7 +1381,43 @@ void DashboardGrid::relayoutItem(const QString& itemId) {
             cell->setGeometry(itemRect(*item));
         }
     }
+    scheduleFigureNumbers();
     update();
+}
+
+void DashboardGrid::scheduleFigureNumbers() {
+    if (m_figuresPending) {
+        return;
+    }
+    m_figuresPending = true;
+    QTimer::singleShot(0, this, &DashboardGrid::numberFigures);
+}
+
+void DashboardGrid::numberFigures() {
+    m_figuresPending = false;
+    QVector<const DashboardItem*> order;
+    for (const DashboardItem& item : m_items) {
+        order.append(&item);
+    }
+    std::stable_sort(order.begin(), order.end(),
+                     [this](const DashboardItem* a, const DashboardItem* b) {
+                         const DashboardItem::Geometry& ga = a->geometry(m_breakpoint);
+                         const DashboardItem::Geometry& gb = b->geometry(m_breakpoint);
+                         if (qAbs(ga.y - gb.y) > kEpsilon) {
+                             return ga.y < gb.y;
+                         }
+                         return ga.x < gb.x;
+                     });
+    int figure = 0;
+    for (const DashboardItem* item : order) {
+        DashboardCell* cell = m_cells.value(item->id);
+        if (!cell || !cell->content()) {
+            continue;
+        }
+        DashboardWidget* content = cell->content();
+        content->setFigure(content->printedOnCanvas() ? ++figure : 0, displayNameFor(*item));
+        cell->syncPrinted();
+    }
 }
 
 void DashboardGrid::clearItems() {
@@ -1508,6 +1554,7 @@ DashboardCell* DashboardGrid::createCell(const DashboardItem& item) {
             &DashboardGrid::handleViewConfigChanged);
 
     m_cells.insert(item.id, cell);
+    scheduleFigureNumbers();
     emit widgetCreated(content);
     return cell;
 }

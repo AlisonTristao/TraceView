@@ -29,7 +29,8 @@ namespace traceview {
 //                  ticks, the range snapped tight to the outer ticks.
 //   Scientific  -- a publication look: open left/bottom spines, ticks
 //                  pointing outward, round-number ticks with a small data
-//                  margin, dotted grid.
+//                  margin, dotted grid; printed on the page with a
+//                  "Fig. N" caption, hatched bars, protractor gauges.
 //   Panel       -- an oscilloscope on a hardware panel: dark screen, a
 //                  10 x 8 graticule, glowing traces, screws in the corners.
 //   Retro       -- a phosphor terminal: everything in the accent color,
@@ -84,7 +85,25 @@ enum class ChartLegendPlacement { Outside, TopLeft, TopRight, BottomLeft, Bottom
 //   Display    -- a 7-segment-like display per series, unlit 8s behind.
 //   Segments   -- one LED bar per series, green/yellow/red by zone (or the
 //                 series color, in styles without zones).
-enum class ChartGaugeShape { Arc, HalfCircle, Bar, Number, Meter, Display, Segments };
+// The analog instruments, each in a dark metal bezel with screws filling
+// the card (Meter above is one of them):
+//   Dial       -- a round panel gauge (manometer): chrome ring, 270 degrees.
+//   Vu         -- a backlit VU meter per series, side by side.
+//   Edgewise   -- a vertical strip meter per series, side by side.
+//   Counter    -- mechanical digit drums per series, like an odometer.
+enum class ChartGaugeShape {
+    Arc,
+    HalfCircle,
+    Bar,
+    Number,
+    Meter,
+    Display,
+    Segments,
+    Dial,
+    Vu,
+    Edgewise,
+    Counter
+};
 
 QString chartGaugeShapeId(ChartGaugeShape shape);
 ChartGaugeShape chartGaugeShapeFromId(const QString& id);
@@ -145,6 +164,19 @@ struct ChartStyle {
     bool segmentZones = true;
     // How much textPrimary is mixed into surface for a gauge's empty track.
     double gaugeTrackStrength = 0.07;
+
+    // Scientific: a figure printed on the page rather than a card.
+    // In Run mode the chart drops its card (fill, outline, header strip --
+    // the header floats in on hover) and draws a "Fig. N -- title." caption
+    // under itself; the dashboard numbers the printed charts in reading
+    // order (DashboardWidget::setFigure()).
+    bool printed = false;
+    // Bars filled with a hatch in the series color, a different hatch per
+    // series, instead of a solid block.
+    bool barHatch = false;
+    // Ring/half-circle gauges drawn as a printed protractor: one thin arc,
+    // ticks, a shaded end band and a single-line needle per series.
+    bool inkGauge = false;
 
     // Series
     qreal lineWidth = 2.0;
