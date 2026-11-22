@@ -7,6 +7,8 @@ release flow.
 
 ## [Unreleased]
 
+## [4.17.1] - 2026-11-22
+
 ### Added
 
 - **Analog gauges**: four new gauge shapes (gear menu, Shape) in the style
