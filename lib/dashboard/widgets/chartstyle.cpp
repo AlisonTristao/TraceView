@@ -68,6 +68,55 @@ ChartStyle makeScientificStyle() {
     return style;
 }
 
+ChartStyle makePanelStyle() {
+    ChartStyle style;
+    style.id = ChartStyleId::Panel;
+    style.frame = ChartFrame::Box;
+    style.ticks = ChartTickPlacement::Divisions;
+    style.tickDirection = ChartTickDirection::Inward;
+    style.tickLength = 4;
+    style.tickLabelOffset = 5;
+    style.frameStrength = 0.35;
+    style.gridStrength = 0.22;
+    style.plotScreen = true;
+    style.graticule = true;
+    style.monoText = true;
+    style.screws = true;
+    style.glowWidth = 4.0;
+    style.lineWidth = 1.5;
+    style.barWidthFraction = 0.6;
+    style.barOutline = true;
+    style.legendSwatch = ChartLegendSwatch::LineSample;
+    style.tabularFigures = true;
+    style.defaultScaleLabels = true;
+    return style;
+}
+
+ChartStyle makeRetroStyle() {
+    ChartStyle style;
+    style.id = ChartStyleId::Retro;
+    style.frame = ChartFrame::Spines;
+    style.ticks = ChartTickPlacement::Nice;
+    style.tickDirection = ChartTickDirection::Outward;
+    style.tickLength = 3;
+    style.tickLabelOffset = 6;
+    style.frameStrength = 0.7;
+    style.gridPenStyle = Qt::DotLine;
+    style.gridStrength = 0.35;
+    style.accentChrome = true;
+    style.monoText = true;
+    style.glowWidth = 4.0;
+    style.lineWidth = 1.5;
+    style.barWidthFraction = 0.7;
+    style.barCells = true;
+    style.segmentZones = false;
+    style.legendSwatch = ChartLegendSwatch::LineSample;
+    style.tabularFigures = true;
+    style.defaultXTickLabels = true;
+    style.defaultScaleLabels = true;
+    return style;
+}
+
 QColor mixColor(const QColor& over, const QColor& under, double strength) {
     const double t = qBound(0.0, strength, 1.0);
     return QColor::fromRgbF(float(over.redF() * t + under.redF() * (1.0 - t)),
@@ -106,6 +155,10 @@ QString chartStyleIdString(ChartStyleId id) {
             return QStringLiteral("engineering");
         case ChartStyleId::Scientific:
             return QStringLiteral("scientific");
+        case ChartStyleId::Panel:
+            return QStringLiteral("panel");
+        case ChartStyleId::Retro:
+            return QStringLiteral("retro");
         case ChartStyleId::Dashboard:
             break;
     }
@@ -113,11 +166,10 @@ QString chartStyleIdString(ChartStyleId id) {
 }
 
 ChartStyleId chartStyleFromId(const QString& id) {
-    if (id == QLatin1String("engineering")) {
-        return ChartStyleId::Engineering;
-    }
-    if (id == QLatin1String("scientific")) {
-        return ChartStyleId::Scientific;
+    for (ChartStyleId style : allChartStyles()) {
+        if (chartStyleIdString(style) == id) {
+            return style;
+        }
     }
     return ChartStyleId::Dashboard;
 }
@@ -128,6 +180,10 @@ QString chartStyleDisplayName(ChartStyleId id) {
             return QCoreApplication::translate("ChartStyle", "Engineering");
         case ChartStyleId::Scientific:
             return QCoreApplication::translate("ChartStyle", "Scientific");
+        case ChartStyleId::Panel:
+            return QCoreApplication::translate("ChartStyle", "Panel");
+        case ChartStyleId::Retro:
+            return QCoreApplication::translate("ChartStyle", "Retro");
         case ChartStyleId::Dashboard:
             break;
     }
@@ -135,7 +191,8 @@ QString chartStyleDisplayName(ChartStyleId id) {
 }
 
 QVector<ChartStyleId> allChartStyles() {
-    return {ChartStyleId::Dashboard, ChartStyleId::Engineering, ChartStyleId::Scientific};
+    return {ChartStyleId::Dashboard, ChartStyleId::Engineering, ChartStyleId::Scientific,
+            ChartStyleId::Panel, ChartStyleId::Retro};
 }
 
 namespace {
@@ -181,6 +238,12 @@ QString chartGaugeShapeId(ChartGaugeShape shape) {
             return QStringLiteral("bar");
         case ChartGaugeShape::Number:
             return QStringLiteral("number");
+        case ChartGaugeShape::Meter:
+            return QStringLiteral("meter");
+        case ChartGaugeShape::Display:
+            return QStringLiteral("display");
+        case ChartGaugeShape::Segments:
+            return QStringLiteral("segments");
         case ChartGaugeShape::Arc:
             break;
     }
@@ -188,8 +251,10 @@ QString chartGaugeShapeId(ChartGaugeShape shape) {
 }
 
 ChartGaugeShape chartGaugeShapeFromId(const QString& id) {
-    for (ChartGaugeShape shape : {ChartGaugeShape::Arc, ChartGaugeShape::HalfCircle,
-                                  ChartGaugeShape::Bar, ChartGaugeShape::Number}) {
+    for (ChartGaugeShape shape :
+         {ChartGaugeShape::Arc, ChartGaugeShape::HalfCircle, ChartGaugeShape::Bar,
+          ChartGaugeShape::Number, ChartGaugeShape::Meter, ChartGaugeShape::Display,
+          ChartGaugeShape::Segments}) {
         if (chartGaugeShapeId(shape) == id) {
             return shape;
         }
@@ -237,7 +302,13 @@ const ChartStyle& chartStyle(ChartStyleId id) {
     static const ChartStyle dashboard = makeDashboardStyle();
     static const ChartStyle engineering = makeEngineeringStyle();
     static const ChartStyle scientific = makeScientificStyle();
+    static const ChartStyle panel = makePanelStyle();
+    static const ChartStyle retro = makeRetroStyle();
     switch (id) {
+        case ChartStyleId::Panel:
+            return panel;
+        case ChartStyleId::Retro:
+            return retro;
         case ChartStyleId::Engineering:
             return engineering;
         case ChartStyleId::Scientific:
@@ -252,10 +323,24 @@ ChartColors chartColors(const ChartStyle& style, const ThemePalette& palette) {
     ChartColors colors;
     colors.frame = strengthColor(style.frameStrength, palette);
     colors.grid = strengthColor(style.gridStrength, palette);
-    const QColor text = style.strongLabels ? palette.textPrimary : palette.textSecondary;
+    QColor text = style.strongLabels ? palette.textPrimary : palette.textSecondary;
+    if (style.accentChrome) {
+        // Phosphor: one ink, the accent, at the same strengths.
+        colors.frame = mixColor(palette.accent, palette.surface, qMax(0.0, style.frameStrength));
+        colors.grid = mixColor(palette.accent, palette.surface, qMax(0.0, style.gridStrength));
+        text = palette.accent;
+    }
+    // A screen is near-black whatever the palette, faintly tinted toward
+    // the success color its graticule is drawn in.
+    colors.screen = mixColor(palette.success, QColor(0x04, 0x06, 0x05), 0.06);
+    if (style.plotScreen) {
+        colors.grid = mixColor(palette.success, colors.screen, qMax(0.0, style.gridStrength));
+    }
     colors.tickLabel = text;
     colors.axisTitle = text;
     colors.legendText = text;
+    colors.gaugeTrack = mixColor(style.accentChrome ? palette.accent : palette.textPrimary,
+                                 palette.surface, style.gaugeTrackStrength);
     return colors;
 }
 
@@ -828,6 +913,12 @@ QVector<WidgetViewOption> chartViewOptionList(const ChartViewOptions& options,
     static constexpr const char* kShapeBar = QT_TRANSLATE_NOOP("traceview::DashboardCell", "Bar");
     static constexpr const char* kShapeNumber =
         QT_TRANSLATE_NOOP("traceview::DashboardCell", "Number");
+    static constexpr const char* kShapeMeter =
+        QT_TRANSLATE_NOOP("traceview::DashboardCell", "Analog meter");
+    static constexpr const char* kShapeDisplay =
+        QT_TRANSLATE_NOOP("traceview::DashboardCell", "Digital display");
+    static constexpr const char* kShapeSegments =
+        QT_TRANSLATE_NOOP("traceview::DashboardCell", "LED bar");
 
     QVector<WidgetViewOption> list;
 
@@ -854,6 +945,9 @@ QVector<WidgetViewOption> chartViewOptionList(const ChartViewOptions& options,
             {chartGaugeShapeId(ChartGaugeShape::HalfCircle), menuText(kShapeHalf)},
             {chartGaugeShapeId(ChartGaugeShape::Bar), menuText(kShapeBar)},
             {chartGaugeShapeId(ChartGaugeShape::Number), menuText(kShapeNumber)},
+            {chartGaugeShapeId(ChartGaugeShape::Meter), menuText(kShapeMeter)},
+            {chartGaugeShapeId(ChartGaugeShape::Display), menuText(kShapeDisplay)},
+            {chartGaugeShapeId(ChartGaugeShape::Segments), menuText(kShapeSegments)},
         };
         list.append(shape);
     }

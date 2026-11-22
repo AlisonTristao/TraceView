@@ -4,7 +4,7 @@
 <context>
     <name>AgentAppTools</name>
     <message>
-        <location filename="../lib/core/agentapptools.cpp" line="+222"/>
+        <location filename="../lib/core/agentapptools.cpp" line="+257"/>
         <source>AI Assistant</source>
         <translation>AI 助手</translation>
     </message>
@@ -33,7 +33,7 @@ Allow it to connect devices and send them commands until AI assistant access is 
         <translation>AI 助手想要删除工作区“%1”。此操作无法撤销。</translation>
     </message>
     <message>
-        <location line="+63"/>
+        <location line="+71"/>
         <source>Add Widget (AI assistant)</source>
         <translation>添加控件（AI 助手）</translation>
     </message>
@@ -43,7 +43,7 @@ Allow it to connect devices and send them commands until AI assistant access is 
         <translation>编辑控件（AI 助手）</translation>
     </message>
     <message>
-        <location line="+341"/>
+        <location line="+407"/>
         <source>New Project</source>
         <translation>新建项目</translation>
     </message>
@@ -280,29 +280,39 @@ Allow it to connect devices and send them commands until AI assistant access is 
         <translation>动画</translation>
     </message>
     <message>
-        <location filename="../lib/core/appearancecatalog.cpp" line="+232"/>
+        <location filename="../lib/core/appearancecatalog.cpp" line="+248"/>
         <source>TraceView</source>
         <translation>TraceView</translation>
     </message>
     <message>
-        <location line="+2"/>
+        <location line="+3"/>
         <source>Lab</source>
         <translation>实验室</translation>
     </message>
     <message>
-        <location line="+2"/>
+        <location line="+3"/>
         <source>Paper</source>
         <translation>论文</translation>
     </message>
     <message>
-        <location line="+2"/>
+        <location line="+3"/>
         <source>HUD</source>
         <translation>HUD</translation>
     </message>
     <message>
-        <location line="+2"/>
+        <location line="+3"/>
         <source>Synthwave</source>
         <translation>Synthwave</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Console</source>
+        <translation>控制台</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Terminal</source>
+        <translation>终端</translation>
     </message>
     <message>
         <location line="+3"/>
@@ -313,7 +323,7 @@ Allow it to connect devices and send them commands until AI assistant access is 
 <context>
     <name>ChartStyle</name>
     <message>
-        <location filename="../lib/dashboard/widgets/chartstyle.cpp" line="+128"/>
+        <location filename="../lib/dashboard/widgets/chartstyle.cpp" line="+180"/>
         <source>Engineering</source>
         <translation>工程</translation>
     </message>
@@ -321,6 +331,16 @@ Allow it to connect devices and send them commands until AI assistant access is 
         <location line="+2"/>
         <source>Scientific</source>
         <translation>科学</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Panel</source>
+        <translation>实体面板</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Retro</source>
+        <translation>复古</translation>
     </message>
     <message>
         <location line="+4"/>
@@ -331,13 +351,13 @@ Allow it to connect devices and send them commands until AI assistant access is 
 <context>
     <name>ChartWidgets</name>
     <message>
-        <location filename="../lib/dashboard/widgets/chartwidgets.cpp" line="+38"/>
+        <location filename="../lib/dashboard/widgets/chartwidgets.cpp" line="+42"/>
         <source>Field %1</source>
         <translation>字段 %1</translation>
     </message>
     <message>
         <location line="+9"/>
-        <location line="+569"/>
+        <location line="+592"/>
         <location line="+231"/>
         <source>--</source>
         <translation>--</translation>
@@ -349,11 +369,12 @@ Allow it to connect devices and send them commands until AI assistant access is 
     </message>
     <message>
         <location line="+6"/>
+        <location line="+1218"/>
         <source>%1  %2</source>
         <translation>%1  %2</translation>
     </message>
     <message>
-        <location line="+430"/>
+        <location line="-788"/>
         <source>A-B %1 s</source>
         <translation>A-B %1 s</translation>
     </message>
@@ -418,12 +439,12 @@ Allow it to connect devices and send them commands until AI assistant access is 
         <translation>已暂停</translation>
     </message>
     <message>
-        <location line="-738"/>
+        <location line="-753"/>
         <source>%1: %2</source>
         <translation>%1: %2</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/chartpainting.cpp" line="+920"/>
+        <location filename="../lib/dashboard/widgets/chartpainting.cpp" line="+970"/>
         <source>Time (s)</source>
         <translation>时间 (s)</translation>
     </message>
@@ -436,7 +457,7 @@ Allow it to connect devices and send them commands until AI assistant access is 
 <context>
     <name>ControlConfigEditor</name>
     <message>
-        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="+24"/>
+        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="+31"/>
         <source>Default</source>
         <translation>默认</translation>
     </message>
@@ -466,7 +487,17 @@ Allow it to connect devices and send them commands until AI assistant access is 
         <translation>脉冲(单条命令)</translation>
     </message>
     <message>
+        <location line="+7"/>
+        <source>App default</source>
+        <translation>应用默认</translation>
+    </message>
+    <message>
         <location line="+5"/>
+        <source>How this control is drawn. App default follows View &gt; Control Style.</source>
+        <translation>此控件的绘制方式。“应用默认”跟随 视图 &gt; 控件样式。</translation>
+    </message>
+    <message>
+        <location line="+25"/>
         <source>Continuous (while dragging)</source>
         <translation>连续(拖动时)</translation>
     </message>
@@ -474,6 +505,74 @@ Allow it to connect devices and send them commands until AI assistant access is 
         <location line="+1"/>
         <source>On release</source>
         <translation>释放时</translation>
+    </message>
+    <message>
+        <location line="+421"/>
+        <source>Red</source>
+        <translation>红色</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Orange</source>
+        <translation>橙色</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Yellow</source>
+        <translation>黄色</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Green</source>
+        <translation>绿色</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Cyan</source>
+        <translation>青色</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Blue</source>
+        <translation>蓝色</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Purple</source>
+        <translation>紫色</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>White</source>
+        <translation>白色</translation>
+    </message>
+</context>
+<context>
+    <name>ControlStyle</name>
+    <message>
+        <location filename="../lib/dashboard/widgets/controlstyle.cpp" line="+35"/>
+        <source>Engineering</source>
+        <translation>工程</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Scientific</source>
+        <translation>科学</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Panel</source>
+        <translation>实体面板</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Retro</source>
+        <translation>复古</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Dashboard</source>
+        <translation>仪表盘</translation>
     </message>
 </context>
 <context>
@@ -634,7 +733,7 @@ Allow it to connect devices and send them commands until AI assistant access is 
 <context>
     <name>DiffDriveScene</name>
     <message>
-        <location filename="../lib/dashboard/scenes/diffdrivescene.cpp" line="+131"/>
+        <location filename="../lib/dashboard/scenes/diffdrivescene.cpp" line="+129"/>
         <source>Scale</source>
         <translation>比例</translation>
     </message>
@@ -728,7 +827,7 @@ Allow it to connect devices and send them commands until AI assistant access is 
 <context>
     <name>FurutaScene</name>
     <message>
-        <location filename="../lib/dashboard/scenes/furutascene.cpp" line="+531"/>
+        <location filename="../lib/dashboard/scenes/furutascene.cpp" line="+526"/>
         <source>Arm length (L1)</source>
         <translation>摆臂长度 (L1)</translation>
     </message>
@@ -1038,7 +1137,7 @@ Allow it to connect devices and send them commands until AI assistant access is 
 <context>
     <name>SceneWidget</name>
     <message>
-        <location filename="../lib/dashboard/scenes/scenewidget.cpp" line="+545"/>
+        <location filename="../lib/dashboard/scenes/scenewidget.cpp" line="+580"/>
         <source>Scene</source>
         <translation>场景</translation>
     </message>
@@ -1170,6 +1269,11 @@ Allow it to connect devices and send them commands until AI assistant access is 
         <location line="+6"/>
         <source>Slider</source>
         <translation>滑块</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>LED</source>
+        <translation>LED</translation>
     </message>
 </context>
 <context>
@@ -2315,7 +2419,7 @@ Allowed: %1</source>
 <context>
     <name>traceview::DashboardCell</name>
     <message>
-        <location filename="../lib/dashboard/widgets/chartstyle.cpp" line="+476"/>
+        <location filename="../lib/dashboard/widgets/chartstyle.cpp" line="+505"/>
         <source>Sample rate</source>
         <translation>采样率</translation>
     </message>
@@ -2548,6 +2652,21 @@ Allowed: %1</source>
         <location line="+2"/>
         <source>Number</source>
         <translation>数字</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Analog meter</source>
+        <translation>指针表</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Digital display</source>
+        <translation>数字显示</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>LED bar</source>
+        <translation>LED 条</translation>
     </message>
 </context>
 <context>
@@ -3463,6 +3582,165 @@ Allowed: %1</source>
     </message>
 </context>
 <context>
+    <name>traceview::LedConfigEditor</name>
+    <message>
+        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="+14"/>
+        <source>(auto)</source>
+        <translation>(自动)</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>Which field of the topic drives the LED -- pick one the device has reported, or type its numeric id.</source>
+        <translation>驱动 LED 的主题字段 -- 选择设备已报告的字段，或输入其数字 ID。</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Status</source>
+        <translation>状态</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>One color</source>
+        <translation>单色</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>RGB from the field (0xRRGGBB)</source>
+        <translation>字段中的 RGB (0xRRGGBB)</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Value is not zero</source>
+        <translation>值不为零</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Value is zero</source>
+        <translation>值为零</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Value is above</source>
+        <translation>值高于阈值</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Value is below</source>
+        <translation>值低于阈值</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>Blink while lit</source>
+        <translation>点亮时闪烁</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <location line="+11"/>
+        <source> ms</source>
+        <translation> ms</translation>
+    </message>
+    <message>
+        <location line="-7"/>
+        <source>Shown while lit</source>
+        <translation>点亮时显示</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Shown while off</source>
+        <translation>熄灭时显示</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Requested update period.</source>
+        <translation>请求的更新周期。</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Device</source>
+        <translation>设备</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Source</source>
+        <translation>来源</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Topic</source>
+        <translation>主题</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Field</source>
+        <translation>字段</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Label</source>
+        <translation>标签</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Style</source>
+        <translation>样式</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Color mode</source>
+        <translation>颜色模式</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Lit when</source>
+        <translation>点亮条件</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Threshold</source>
+        <translation>阈值</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Color</source>
+        <translation>颜色</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Blink period</source>
+        <translation>闪烁周期</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>On text</source>
+        <translation>开启文本</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Off text</source>
+        <translation>关闭文本</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Sample period</source>
+        <translation>采样周期</translation>
+    </message>
+    <message>
+        <location line="+79"/>
+        <source>LED color</source>
+        <translation>LED 颜色</translation>
+    </message>
+    <message>
+        <location line="+144"/>
+        <source>Palette (success)</source>
+        <translation>调色板（成功）</translation>
+    </message>
+    <message>
+        <location line="+15"/>
+        <source>Custom...</source>
+        <translation>自定义...</translation>
+    </message>
+</context>
+<context>
     <name>traceview::LogViewer</name>
     <message>
         <location filename="../lib/logs/logviewer.cpp" line="+47"/>
@@ -4361,7 +4639,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>(未命名)</translation>
     </message>
     <message>
-        <location filename="../lib/core/appearancecatalog.cpp" line="-149"/>
+        <location filename="../lib/core/appearancecatalog.cpp" line="-172"/>
         <source>&amp;Palette</source>
         <translation>调色板(&amp;P)</translation>
     </message>
@@ -4374,6 +4652,11 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <location line="+9"/>
         <source>&amp;Chart Style</source>
         <translation>图表样式(&amp;C)</translation>
+    </message>
+    <message>
+        <location line="+13"/>
+        <source>Contro&amp;l Style</source>
+        <translation>控件样式(&amp;L)</translation>
     </message>
     <message>
         <location line="+13"/>
@@ -5695,7 +5978,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
 <context>
     <name>traceview::PushButtonConfigEditor</name>
     <message>
-        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="+7"/>
+        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="-743"/>
         <source>Which device this button&apos;s commands are sent to.</source>
         <translation>此按钮的命令发送到哪个设备。</translation>
     </message>
@@ -5705,7 +5988,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>按钮</translation>
     </message>
     <message>
-        <location line="+8"/>
+        <location line="+10"/>
         <source>Momentary sends the press command on press and the release command on release. Pulse sends only the press command, once per click.</source>
         <translation>瞬时模式在按下时发送按下命令,释放时发送释放命令。脉冲模式仅在每次点击时发送一次按下命令。</translation>
     </message>
@@ -5768,6 +6051,11 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     </message>
     <message>
         <location line="+1"/>
+        <source>Color</source>
+        <translation>颜色</translation>
+    </message>
+    <message>
+        <location line="+1"/>
         <source>Mode</source>
         <translation>模式</translation>
     </message>
@@ -5805,8 +6093,8 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
 <context>
     <name>traceview::PushButtonWidget</name>
     <message>
-        <location filename="../lib/dashboard/widgets/controlwidgets.cpp" line="+92"/>
-        <location line="+22"/>
+        <location filename="../lib/dashboard/widgets/controlwidgets.cpp" line="+208"/>
+        <location line="+33"/>
         <source>Push Button</source>
         <translation>按钮</translation>
     </message>
@@ -6207,7 +6495,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>应用程序外观</translation>
     </message>
     <message>
-        <location filename="../lib/core/appearancecatalog.cpp" line="-77"/>
+        <location filename="../lib/core/appearancecatalog.cpp" line="-90"/>
         <source>Palette</source>
         <translation>调色板</translation>
     </message>
@@ -6220,6 +6508,11 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <location line="+9"/>
         <source>Chart style</source>
         <translation>图表样式</translation>
+    </message>
+    <message>
+        <location line="+13"/>
+        <source>Control style</source>
+        <translation>控件样式</translation>
     </message>
     <message>
         <location line="+13"/>
@@ -6678,7 +6971,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
 <context>
     <name>traceview::SliderConfigEditor</name>
     <message>
-        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="+190"/>
+        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="+199"/>
         <source>Which device this slider&apos;s commands are sent to.</source>
         <translation>此滑块的命令发送到哪个设备。</translation>
     </message>
@@ -6688,7 +6981,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>滑块</translation>
     </message>
     <message>
-        <location line="+23"/>
+        <location line="+25"/>
         <source>V, %, ...</source>
         <translation>V, %, ...</translation>
     </message>
@@ -6731,6 +7024,11 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <location line="+1"/>
         <source>Label</source>
         <translation>标签</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Style</source>
+        <translation>样式</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -6850,7 +7148,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
 <context>
     <name>traceview::ToggleSwitchConfigEditor</name>
     <message>
-        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="-150"/>
+        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="-159"/>
         <source>Which device this toggle&apos;s commands are sent to.</source>
         <translation>此开关的命令发送到哪个设备。</translation>
     </message>
@@ -6860,7 +7158,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>开关</translation>
     </message>
     <message>
-        <location line="+3"/>
+        <location line="+5"/>
         <source>ON</source>
         <translation>开</translation>
     </message>
@@ -6901,6 +7199,11 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     </message>
     <message>
         <location line="+1"/>
+        <source>Style</source>
+        <translation>样式</translation>
+    </message>
+    <message>
+        <location line="+1"/>
         <source>On text</source>
         <translation>开启文本</translation>
     </message>
@@ -6918,6 +7221,19 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <location line="+1"/>
         <source>Off command</source>
         <translation>关闭命令</translation>
+    </message>
+</context>
+<context>
+    <name>traceview::ToggleSwitchWidget</name>
+    <message>
+        <location filename="../lib/dashboard/widgets/controlwidgets.cpp" line="+167"/>
+        <source>off</source>
+        <translation>关</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>on</source>
+        <translation>开</translation>
     </message>
 </context>
 <context>

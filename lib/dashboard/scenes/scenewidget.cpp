@@ -82,6 +82,13 @@ SceneWidget::SceneWidget(QWidget* parent) : DashboardWidget(parent) {
     setAttribute(Qt::WA_OpaquePaintEvent);
     m_clock.start();
     setConfig({});
+    // The drawing takes its colors from the palette (SceneView::colors):
+    // a new theme needs a new frame.
+    connect(&traceview::ThemeManager::instance(), &traceview::ThemeManager::themeChanged, this,
+            [this] {
+                scheduleRepaint();
+                update();
+            });
 }
 
 SceneWidget::~SceneWidget() = default;
@@ -306,12 +313,40 @@ SceneRenderer* SceneWidget::renderer() const {
     return m_renderer.get();
 }
 
+namespace {
+
+QColor mixScene(const QColor& a, const QColor& b, double t) {
+    return QColor::fromRgbF(float(a.redF() + (b.redF() - a.redF()) * t),
+                            float(a.greenF() + (b.greenF() - a.greenF()) * t),
+                            float(a.blueF() + (b.blueF() - a.blueF()) * t));
+}
+
+// The scene drawn on the widget's own surface: ink in the text color,
+// guides and trails between the two, the backdrop a soft gradient of the
+// surface toward the text color. Shadows stay dark on every theme.
+traceview::SceneColors sceneColorsFor(const traceview::ThemePalette& palette) {
+    traceview::SceneColors colors;
+    colors.paper = palette.surface;
+    colors.ink = palette.textPrimary;
+    colors.guide = mixScene(palette.surface, palette.textPrimary, 0.65);
+    colors.trail = mixScene(palette.surface, palette.textPrimary, 0.5);
+    colors.skyTop = mixScene(palette.surface, palette.textPrimary, 0.01);
+    colors.skyBottom = mixScene(palette.surface, palette.textPrimary, 0.1);
+    colors.stage = palette.surface;
+    colors.shadow = mixScene(palette.background, QColor(0, 0, 0), 0.6);
+    colors.accent = palette.accent;
+    return colors;
+}
+
+}  // namespace
+
 SceneView SceneWidget::view() const {
     SceneView view;
     view.size = QSizeF(size());
     view.zoom = m_zoom;
     view.pan = m_pan;
     view.renderFps = m_frameTimesMs.size();
+    view.colors = sceneColorsFor(traceview::ThemeManager::instance().currentTheme());
     return view;
 }
 
@@ -334,8 +369,8 @@ void SceneWidget::paintEvent(QPaintEvent* event) {
         painter.fillRect(rect(), background);
         painter.setRenderHint(QPainter::Antialiasing, true);
         painter.setClipPath(contentFillPath());
-        painter.fillRect(rect(), Qt::white);
-        painter.setPen(Qt::black);
+        painter.fillRect(rect(), traceview::ThemeManager::instance().currentTheme().surface);
+        painter.setPen(traceview::ThemeManager::instance().currentTheme().textPrimary);
         painter.drawText(rect(), Qt::AlignCenter, tr("Unknown scene \"%1\"").arg(m_sceneType));
         return;
     }

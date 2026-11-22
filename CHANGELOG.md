@@ -9,6 +9,47 @@ release flow.
 
 ### Added
 
+- **Control styles**: buttons, switches and sliders now come in five looks,
+  picked app-wide from View › Control Style (also Settings › Appearance) or
+  per control in its properties. Dashboard is the original look; Engineering
+  is a bench instrument (0/I rocker, ruler with ticks, recessed readout);
+  Scientific is thin outlines, a checkbox and a pointer slider; Panel is a
+  physical panel (arcade button, lever switch, fader, 7-segment readout);
+  Retro is a phosphor terminal (`[ start ]`, off/on cells, a bar of
+  blocks). Panel controls sit on a plate with screws. The push button's
+  color ("Default", "Success", "Warning", "Danger") and the switch's on/off
+  texts are now shown. Two new presets use them: Console (Panel) and
+  Terminal (Retro); HUD now uses Retro. See `docs/CONTROL_STYLE.md`.
+- **Panel and Retro chart styles**, matching the control styles. Panel
+  turns the plot into an oscilloscope screen (dark, 10 x 8 graticule,
+  glowing traces) and puts screws in the corners; Retro draws everything in
+  the accent color with a dotted grid and bars made of cells. The Console
+  and Terminal presets use them.
+- **New gauge shapes** (gear menu, Shape): Analog meter (dial with needle
+  and red zone, in a bezel with screws), Digital display (7-segment-style,
+  one per series) and LED bar (green/yellow/red segments). The empty track
+  of rings and bars is lighter in every style, so the value stands out.
+- **Layout advice for AI assistants**: `list_widget_types` now gives each
+  widget kind's layout hints (min/ideal/max size in pixels and cells, aspect
+  range, whether it may sit on another widget and where another may sit on
+  it), and the new `check_layout` tool reviews the active dashboard: widgets
+  too small or past their maximum, wrong aspect, overlaps that hide data,
+  controls that almost line up, widgets past the canvas. Each issue comes
+  with a suggested layout. See `docs/LAYOUT.md`.
+- **Controls over charts**: a push button, switch, slider or LED can sit on
+  a chart or gauge's free corner without a box around it, since controls
+  without a plate are now transparent in Run mode. Push buttons stop
+  growing at 224x64 px and stay centered in a larger cell.
+- **LED widget**: an indicator lamp bound to a telemetry field. It lights
+  while the value is non-zero, zero, above or below a threshold, in a color
+  of your choice, or shows the field as an RGB color (0xRRGGBB). It can
+  blink and show a text for each state, and it follows the control style.
+  For AI assistants: widget type `led`.
+- **Scenes follow the theme**: the Furuta pendulum and the line follower
+  draw in the palette's colors (light lines on a dark theme, amber on
+  Terminal, the old black on white on a light one) instead of always on a
+  white page, and redraw when the theme changes. The Furuta backdrop (sky,
+  floor, shadows) follows too.
 - **Delete notifications automatically**: each notification can go a set
   time after it arrived. The bell panel's menu has Never, 10 s, 30 s, 1 min
   and 5 min; Settings › Diagnostics takes any number of seconds (up to a
@@ -19,6 +60,15 @@ release flow.
 
 - CI: the macOS release job retries `hdiutil` when it fails with "Resource
   busy" (it stopped v4.16.0's first release run).
+
+### Internal
+
+- `tools/chart_preview --render-project <file.tvproj> <dir> [preset]`
+  renders every workspace of a saved project to PNG with synthetic data, in
+  any built-in appearance preset, and prints each workspace's layout review.
+  The `--snapshot` sheets now include every chart and control style, the new
+  gauge shapes and a full dashboard with controls and LEDs, laid out after
+  `docs/LAYOUT.md`.
 
 ## [4.16.0] - 2026-11-21
 

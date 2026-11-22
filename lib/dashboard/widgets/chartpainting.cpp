@@ -1,5 +1,8 @@
 #include "chartpainting.h"
 
+#include "dashboard/widgets/controlpainting.h"
+
+#include <QFontDatabase>
 #include <QCoreApplication>
 #include <QPainter>
 #include <QtMath>
@@ -203,8 +206,24 @@ void paintChartBackground(QPainter& painter, const DashboardWidget& widget,
     painter.drawPath(widget.roundedPath(strokeRect));
 }
 
+void paintChartScrews(QPainter& painter, const QWidget& widget, const ChartStyle& style) {
+    if (style.screws) {
+        paintPanelScrews(painter, QRectF(widget.rect()), 7.0, 3.4);
+    }
+}
+
 QFont chartTickFont(const QFont& base, const ChartStyle& style) {
     QFont font = base;
+    if (style.monoText) {
+        QFont mono = QFontDatabase::systemFont(QFontDatabase::FixedFont);
+        if (base.pixelSize() > 0) {
+            mono.setPixelSize(base.pixelSize());
+        } else {
+            mono.setPointSizeF(base.pointSizeF());
+        }
+        mono.setWeight(base.weight());
+        font = mono;
+    }
 #if QT_VERSION >= QT_VERSION_CHECK(6, 7, 0)
     if (style.tabularFigures) {
         font.setFeature(QFont::Tag("tnum"), 1);
@@ -590,9 +609,40 @@ void paintCartesianAxes(QPainter& painter, const ChartCartesianLayout& layout,
     painter.setBrush(Qt::NoBrush);
     const QFont baseFont = painter.font();
 
+    // 0. Screen (Panel): the plot as a dark oscilloscope screen.
+    if (style.plotScreen) {
+        painter.fillRect(plot, colors.screen);
+    }
+
     // 1. Grid -- under everything else. Only the primary axis' rows: every
     // axis maps into the same plot height, so more rows would only add noise.
-    if (chrome.showGrid) {
+    // A graticule (Panel) is the fixed 10 x 8 oscilloscope grid instead,
+    // with minor ticks along its center cross.
+    if (chrome.showGrid && style.graticule) {
+        QColor center = colors.grid;
+        center.setAlphaF(1.0f);
+        for (int i = 1; i < 10; ++i) {
+            const qreal x = crispCoord(plot.left() + plot.width() * i / 10.0);
+            painter.setPen(QPen(colors.grid, i == 5 ? 1.0 : 0.6));
+            painter.drawLine(QPointF(x, plot.top()), QPointF(x, plot.bottom()));
+        }
+        for (int i = 1; i < 8; ++i) {
+            const qreal y = crispCoord(plot.top() + plot.height() * i / 8.0);
+            painter.setPen(QPen(colors.grid, i == 4 ? 1.0 : 0.6));
+            painter.drawLine(QPointF(plot.left(), y), QPointF(plot.right(), y));
+        }
+        painter.setPen(QPen(center, 0.8));
+        const qreal cx = plot.left() + plot.width() / 2.0;
+        const qreal cy = plot.top() + plot.height() / 2.0;
+        for (int i = 1; i < 50; ++i) {
+            const qreal x = plot.left() + plot.width() * i / 50.0;
+            painter.drawLine(QPointF(x, cy - 2.0), QPointF(x, cy + 2.0));
+        }
+        for (int i = 1; i < 40; ++i) {
+            const qreal y = plot.top() + plot.height() * i / 40.0;
+            painter.drawLine(QPointF(cx - 2.0, y), QPointF(cx + 2.0, y));
+        }
+    } else if (chrome.showGrid) {
         painter.setPen(QPen(colors.grid, 1, style.gridPenStyle));
         if (!layout.yAxes.isEmpty()) {
             const ChartValueAxis& primary = layout.yAxes.first();

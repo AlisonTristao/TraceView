@@ -103,6 +103,11 @@ public:
     // at "App default" draws in it. Kept as the plain id string so this
     // library stays independent of the dashboard one.
     QString chartStyleId() const;
+    // The app-wide control style (View > Control Style): "dashboard",
+    // "engineering", "scientific", "panel" or "retro", see ControlStyleId in
+    // dashboard/widgets/controlstyle.h. Every control whose own Style is left
+    // at "App default" draws in it.
+    QString controlStyleId() const;
 
     void setRenderProfile(RenderProfile profile);
     void setCustomRenderFps(int fps);
@@ -133,6 +138,7 @@ public:
     void setUpdateLastCheckEpochMs(qint64 epochMs);
 
     void setChartStyleId(const QString& id);
+    void setControlStyleId(const QString& id);
 
 signals:
     void dashboardPreferencesChanged();
@@ -144,6 +150,7 @@ signals:
     // Its own signal rather than dashboardPreferencesChanged(): charts only
     // need a repaint, not the resubscribe that one triggers.
     void chartStyleChanged();
+    void controlStyleChanged();
     void notificationPreferencesChanged();
 
 private:

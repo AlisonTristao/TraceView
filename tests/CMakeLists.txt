@@ -69,6 +69,12 @@ add_traceview_test(test_doublespinbox traceview_theme)
 # Appearance tokens and the appearance catalog/presets (core/appearancecatalog.h).
 add_traceview_test(test_appearance traceview_ui)
 add_traceview_test(test_controldata traceview_dashboard)
+# The control style sheet, the LED widget and a paint smoke test of every
+# control in every style (widgets/controlstyle.h, controlwidgets.h).
+add_traceview_test(test_controlstyle traceview_dashboard)
+# Layout hints and the layout review behind check_layout
+# (dashboard/layoutadvisor.h).
+add_traceview_test(test_layoutadvisor traceview_dashboard)
 # topico 19: the dumb-terminal line model (\r/\b/\n handling) and keystroke
 # forwarding are exercised directly with QTest -- CONTRIBUTING.md's "nothing
 # UI-chrome-level" gap did not previously include any single-widget test,

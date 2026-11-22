@@ -30,8 +30,12 @@ namespace traceview {
 //   Scientific  -- a publication look: open left/bottom spines, ticks
 //                  pointing outward, round-number ticks with a small data
 //                  margin, dotted grid.
+//   Panel       -- an oscilloscope on a hardware panel: dark screen, a
+//                  10 x 8 graticule, glowing traces, screws in the corners.
+//   Retro       -- a phosphor terminal: everything in the accent color,
+//                  dotted grid, fixed-pitch digits, bars made of cells.
 
-enum class ChartStyleId { Dashboard, Engineering, Scientific };
+enum class ChartStyleId { Dashboard, Engineering, Scientific, Panel, Retro };
 
 // "dashboard"/"engineering"/"scientific" -- the config["view"]["style"]
 // JSON value and the gear menu choice id. FromId() falls back to Dashboard
@@ -76,7 +80,11 @@ enum class ChartLegendPlacement { Outside, TopLeft, TopRight, BottomLeft, Bottom
 //   HalfCircle -- a 180 degree speedometer, flat side down.
 //   Bar        -- one horizontal bar per series.
 //   Number     -- just the value(s), large.
-enum class ChartGaugeShape { Arc, HalfCircle, Bar, Number };
+//   Meter      -- an analog panel meter: light dial, needle, red zone.
+//   Display    -- a 7-segment-like display per series, unlit 8s behind.
+//   Segments   -- one LED bar per series, green/yellow/red by zone (or the
+//                 series color, in styles without zones).
+enum class ChartGaugeShape { Arc, HalfCircle, Bar, Number, Meter, Display, Segments };
 
 QString chartGaugeShapeId(ChartGaugeShape shape);
 ChartGaugeShape chartGaugeShapeFromId(const QString& id);
@@ -116,6 +124,28 @@ struct ChartStyle {
     // the softer textSecondary.
     bool strongLabels = false;
 
+    // Panel/Retro chrome.
+    // A dark "screen" filled behind the plot, its grid tinted with the
+    // palette's success color, like an oscilloscope.
+    bool plotScreen = false;
+    // A fixed 10 x 8 graticule with minor ticks on the center cross,
+    // instead of gridlines at the ticks.
+    bool graticule = false;
+    // Frame, grid and labels in the palette's accent instead of text tones.
+    bool accentChrome = false;
+    // Tick labels and gauge values in a fixed-pitch face.
+    bool monoText = false;
+    // Slotted screws in the widget's four corners.
+    bool screws = false;
+    // > 0: each line is first drawn this much wider, faint, as a glow.
+    qreal glowWidth = 0.0;
+    // Bars drawn as a stack of cells instead of one block.
+    bool barCells = false;
+    // Gauge Segments: green/yellow/red by zone instead of the series color.
+    bool segmentZones = true;
+    // How much textPrimary is mixed into surface for a gauge's empty track.
+    double gaugeTrackStrength = 0.07;
+
     // Series
     qreal lineWidth = 2.0;
     double barWidthFraction = 0.7;  // of each bar's slot
@@ -146,6 +176,8 @@ struct ChartColors {
     QColor axisTitle;  // X/Y axis titles
     QColor grid;
     QColor legendText;
+    QColor screen;      // plot fill when style.plotScreen
+    QColor gaugeTrack;  // a gauge's empty arc/bar
 };
 
 ChartColors chartColors(const ChartStyle& style, const ThemePalette& palette);

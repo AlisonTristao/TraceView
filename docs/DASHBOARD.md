@@ -373,6 +373,12 @@ lives in its own module under
     state. `toggled(bool)` fires on each flip.
   - **Slider** (`slider`) — a bounded value control with a live value
     readout beside it. `valueChanged(int)` fires while dragging.
+  - **LED** (`led`) — an indicator lamp bound to one telemetry field: lit
+    while the value meets a condition, or showing it as a `0xRRGGBB` color.
+
+  All four draw in a control style (Dashboard, Engineering, Scientific,
+  Panel, Retro): the app-wide one from View → Control Style, or their own
+  "Style" in the properties panel. See [CONTROL_STYLE.md](CONTROL_STYLE.md).
 
   All three have a config editor — `widgets/controlconfigeditor.h`/`.cpp`
   (`PushButtonConfigEditor`/`ToggleSwitchConfigEditor`/`SliderConfigEditor`)

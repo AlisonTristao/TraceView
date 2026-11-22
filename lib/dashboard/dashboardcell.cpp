@@ -751,7 +751,13 @@ void DashboardCell::paintEvent(QPaintEvent*) {
     // backdrop in the four corner notches, which reads as a small square
     // around an otherwise rounded widget while editing the layout.
     const QPainterPath silhouette = currentFramePath(QRectF(rect()));
-    painter.fillPath(silhouette, palette.background);
+    // A headerless control in Run paints its own look (or nothing): leaving
+    // the cell unfilled lets it sit over a chart as an overlay without a
+    // canvas-colored box around it (docs/LAYOUT.md).
+    const bool bareControl = !m_editMode && m_content && !m_content->wantsCellHeader();
+    if (!bareControl) {
+        painter.fillPath(silhouette, palette.background);
+    }
 
     if (headerHeight() > 0) {
         paintHeader(painter, /*floating=*/false);

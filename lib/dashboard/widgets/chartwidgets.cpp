@@ -1,5 +1,9 @@
 #include "chartwidgets.h"
 
+#include <QFontDatabase>
+
+#include "dashboard/widgets/controlpainting.h"
+
 #include <QCoreApplication>
 #include <QFont>
 #include <QFontMetrics>
@@ -126,7 +130,7 @@ QVector<int> denseColumnSamples(const QVector<double>& values, const QRect& plot
 void paintLineSeries(QPainter& painter, const QRect& plotRect, int capacity,
                      const ChartSeriesConfig& seriesConfig, const QVector<double>& values,
                      double yMin, double yMax, ChartLineInterpolation interpolation,
-                     qreal lineWidth, bool fillArea) {
+                     qreal lineWidth, bool fillArea, qreal glowWidth) {
     if (values.isEmpty() || plotRect.width() <= 0 || plotRect.height() <= 0) {
         return;
     }
@@ -207,6 +211,14 @@ void paintLineSeries(QPainter& painter, const QRect& plotRect, int capacity,
         painter.setBrush(tint);
         painter.drawPolygon(area);
         painter.setBrush(Qt::NoBrush);
+    }
+    if (glowWidth > 0.0) {
+        // The style's glow (Panel/Retro): a wide faint stroke under the line.
+        QColor glow = seriesConfig.color;
+        glow.setAlphaF(0.2f);
+        painter.setPen(QPen(glow, lineWidth + glowWidth, Qt::SolidLine, Qt::RoundCap,
+                            Qt::RoundJoin));
+        painter.drawPolyline(points);
     }
     painter.setPen(QPen(seriesConfig.color, lineWidth, chartPenStyle(seriesConfig.style)));
     painter.drawPolyline(points);
@@ -607,7 +619,22 @@ void paintBarSnapshot(QPainter& painter, const ChartCartesianLayout& layout, con
                 painter.setPen(Qt::NoPen);
             }
             painter.setBrush(color);
-            painter.drawRect(QRectF(x, qMin(barTop, zeroY), barWidth, qAbs(barTop - zeroY)));
+            const QRectF bar(x, qMin(barTop, zeroY), barWidth, qAbs(barTop - zeroY));
+            if (style.barCells) {
+                // Retro: the bar as a stack of cells from the baseline, the
+                // last one cut to the value so the height stays exact.
+                constexpr qreal kCellHeight = 8.0;
+                constexpr qreal kCellGap = 2.0;
+                painter.setPen(Qt::NoPen);
+                const bool up = barTop <= zeroY;
+                for (qreal done = 0.0; done < bar.height(); done += kCellHeight + kCellGap) {
+                    const qreal h = qMin(kCellHeight, bar.height() - done);
+                    const qreal top = up ? zeroY - done - h : zeroY + done;
+                    painter.drawRect(QRectF(x, top, barWidth, h));
+                }
+            } else {
+                painter.drawRect(bar);
+            }
         }
 
         if (showValues) {
@@ -1417,6 +1444,7 @@ void DummyLineChartWidget::paintEvent(QPaintEvent*) {
     const ChartColors colors = chartColors(style, palette);
 
     paintChartBackground(painter, *this, palette);
+    paintChartScrews(painter, *this, style);
 
     const QVector<QVector<double>> values = seriesValues();
     const SeriesAxes axes = seriesAxes(values);
@@ -1468,7 +1496,7 @@ void DummyLineChartWidget::paintEvent(QPaintEvent*) {
         }
         paintLineSeries(painter, plotRect, capacity, m_config.series[i], values[i], yMins[i],
                         yMaxs[i], m_view.interpolation, effectiveLineWidth(m_view, style),
-                        m_view.fillArea);
+                        m_view.fillArea, style.glowWidth);
     }
     painter.restore();
 
@@ -1517,6 +1545,7 @@ void DummyBarChartWidget::paintEvent(QPaintEvent*) {
     const ChartColors colors = chartColors(style, palette);
 
     paintChartBackground(painter, *this, palette);
+    paintChartScrews(painter, *this, style);
 
     const QVector<QVector<double>> values = seriesValues();
     const SeriesAxes axes = seriesAxes(values);
@@ -1717,7 +1746,7 @@ void paintGaugeDial(QPainter& painter, const QRect& area, const GaugePaint& g,
 
         // Flat caps, not round -- a round cap left a little rounded blob
         // sticking out past the arc's true end.
-        painter.setPen(QPen(g.palette.surfaceAlt, penWidth, Qt::SolidLine, Qt::FlatCap));
+        painter.setPen(QPen(g.colors.gaugeTrack, penWidth, Qt::SolidLine, Qt::FlatCap));
         painter.drawArc(ringRect, qtAngle(sweep.startDeg), qtAngle(sweep.spanDeg));
 
         paintGaugeTicks(painter, center, ringRadius, penWidth, scale, /*withMinors=*/i == 0,
@@ -1759,10 +1788,51 @@ void paintGaugeDial(QPainter& painter, const QRect& area, const GaugePaint& g,
     }
 }
 
+// Where an LED bar turns yellow and red (Segments, with zones).
+constexpr double kSegmentWarnFraction = 0.65;
+constexpr double kSegmentAlarmFraction = 0.85;
+
+// A row of LED segments filling `track` up to `fraction`: green, yellow and
+// red by zone when the style has zones, else all in `color`. Unlit
+// segments stay faintly visible, like a real LED bar.
+void paintGaugeSegments(QPainter& painter, const QRectF& track, double fraction,
+                        const QColor& color, const GaugePaint& g) {
+    constexpr double kGap = 2.0;
+    const int count = qBound(6, int(track.width() / 9.0), 40);
+    const double width = (track.width() - (count - 1) * kGap) / count;
+    const int lit = qRound(qBound(0.0, fraction, 1.0) * count);
+    painter.save();
+    painter.setPen(Qt::NoPen);
+    for (int k = 0; k < count; ++k) {
+        const double at = (k + 0.5) / count;
+        QColor segment = color;
+        if (g.style.segmentZones) {
+            segment = at >= kSegmentAlarmFraction  ? g.palette.danger
+                      : at >= kSegmentWarnFraction ? g.palette.warning
+                                                   : g.palette.success;
+        }
+        const bool on = k < lit;
+        if (!on) {
+            segment.setAlphaF(0.14f);
+        }
+        const QRectF cell(track.left() + k * (width + kGap), track.top(), width, track.height());
+        if (on) {
+            QColor glow = segment;
+            glow.setAlphaF(0.15f);
+            painter.setBrush(glow);
+            painter.drawRoundedRect(cell.adjusted(-1.5, -2.0, 1.5, 2.0), 2.5, 2.5);
+        }
+        painter.setBrush(segment);
+        painter.drawRoundedRect(cell, 1.5, 1.5);
+    }
+    painter.restore();
+}
+
 // One horizontal bar per series: name on the left, value on the right, a
 // track with the value fill between them, and (with scale values on) a
 // shared scale under the last bar.
-void paintGaugeBars(QPainter& painter, const QRect& area, const GaugePaint& g) {
+void paintGaugeBars(QPainter& painter, const QRect& area, const GaugePaint& g,
+                    bool segmented = false) {
     const int padding = chartOuterPadding();
     const int count = g.config.series.size();
     if (count == 0) {
@@ -1806,9 +1876,15 @@ void paintGaugeBars(QPainter& painter, const QRect& area, const GaugePaint& g) {
         const double rowCenter = blockTop + rowHeight * (i + 0.5);
         const QRectF track = track0.translated(0, rowCenter - barThickness / 2.0);
         const QPainterPath trackPath = frameShapePath(track, trackFrame);
-        painter.fillPath(trackPath, g.palette.surfaceAlt);
         const double value = i < g.shown.size() ? g.shown[i] : qQNaN();
-        if (!qIsNaN(value)) {
+        if (segmented) {
+            paintGaugeSegments(painter, track,
+                               qIsNaN(value) ? 0.0 : gaugeFraction(g.config, value),
+                               g.config.series[i].color, g);
+        } else {
+            painter.fillPath(trackPath, g.colors.gaugeTrack);
+        }
+        if (!segmented && !qIsNaN(value)) {
             const QRectF fill(track.left(), track.top(),
                               track.width() * gaugeFraction(g.config, value), track.height());
             painter.save();
@@ -1915,6 +1991,197 @@ void paintGaugeNumbers(QPainter& painter, const QRect& area, const GaugePaint& g
     painter.setFont(baseFont);
 }
 
+// --- Meter: an analog panel meter -------------------------------------------
+//
+// Hardware, like the Panel control look (controlpainting.h): a dark bezel
+// with screws, a light dial face, black scale, a red zone at the top of the
+// range and a needle per series (in its color, the first one dark red).
+// The colors are fixed: a real meter's dial doesn't change with the room.
+const QColor kMeterBezel(0x1c, 0x1c, 0x1c);
+const QColor kMeterBezelEdge(0x44, 0x44, 0x44);
+const QColor kMeterFace(0xf1, 0xef, 0xe8);
+const QColor kMeterInk(0x22, 0x22, 0x22);
+const QColor kMeterRed(0xd2, 0x3b, 0x2e);
+const QColor kMeterNeedle(0xb9, 0x1c, 0x1c);
+constexpr double kMeterSweepDeg = 100.0;  // centered on straight up
+constexpr double kMeterRedFrom = 0.8;
+
+void paintGaugeMeter(QPainter& painter, const QRect& area, const GaugePaint& g) {
+    const int padding = chartOuterPadding();
+    const QRect inner = area.adjusted(padding, padding, -padding, -padding);
+    const QFontMetrics fm(painter.font());
+    const int captionHeight = fm.height() + 4;
+    // The meter keeps a 4:3 body, as large as fits above the caption.
+    const double bodyW = qMin<double>(inner.width(), (inner.height() - captionHeight) * 4.0 / 3.0);
+    const double bodyH = bodyW * 3.0 / 4.0;
+    if (bodyW < 40.0) {
+        return;
+    }
+    const QRectF body(inner.center().x() - bodyW / 2.0, inner.top(), bodyW, bodyH);
+    painter.save();
+    painter.setRenderHint(QPainter::Antialiasing);
+    painter.setPen(QPen(kMeterBezelEdge, 1.0));
+    painter.setBrush(kMeterBezel);
+    painter.drawRoundedRect(body, 8.0, 8.0);
+    const qreal screwInset = qMax(5.0, bodyW * 0.045);
+    paintPanelScrews(painter, body, screwInset, qMax(2.2, bodyW * 0.02));
+
+    const QRectF face = body.adjusted(bodyW * 0.1, bodyH * 0.12, -bodyW * 0.1, -bodyH * 0.12);
+    painter.setPen(Qt::NoPen);
+    painter.setBrush(kMeterFace);
+    painter.drawRoundedRect(face, 4.0, 4.0);
+
+    // The pivot sits low in the face; the scale arc is centered above it.
+    const QPointF pivot(face.center().x(), face.bottom() - face.height() * 0.12);
+    const double radius = qMin(face.height() * 0.78, face.width() * 0.62);
+    const GaugeSweep sweep{90.0 + kMeterSweepDeg / 2.0, -kMeterSweepDeg};
+    const QRectF arcRect(pivot.x() - radius, pivot.y() - radius, radius * 2.0, radius * 2.0);
+    painter.setBrush(Qt::NoBrush);
+    painter.setPen(QPen(kMeterInk, 1.0));
+    painter.drawArc(arcRect, qtAngle(sweep.startDeg), qtAngle(sweep.spanDeg));
+    const double redRadius = radius - 4.0;
+    painter.setPen(QPen(kMeterRed, qMax(3.0, radius * 0.06), Qt::SolidLine, Qt::FlatCap));
+    painter.drawArc(QRectF(pivot.x() - redRadius, pivot.y() - redRadius, redRadius * 2.0,
+                           redRadius * 2.0),
+                    qtAngle(sweep.startDeg + sweep.spanDeg * kMeterRedFrom),
+                    qtAngle(sweep.spanDeg * (1.0 - kMeterRedFrom)));
+
+    const GaugeScale scale = gaugeScale(g.config, g.style, true);
+    QFont scaleFont = chartTickFont(painter.font(), g.style);
+    scaleFont.setPointSizeF(qMax(6.0, scaleFont.pointSizeF() * qBound(0.7, radius / 70.0, 1.2)));
+    painter.setFont(scaleFont);
+    for (int i = 0; i <= 50; ++i) {
+        const double f = i / 50.0;
+        const double len = i % 10 == 0 ? radius * 0.14 : i % 5 == 0 ? radius * 0.1 : radius * 0.06;
+        painter.setPen(QPen(kMeterInk, i % 10 == 0 ? 1.3 : 0.8));
+        paintGaugeRadialTick(painter, pivot, f, radius - len, radius, sweep);
+    }
+    painter.setPen(kMeterInk);
+    const QFontMetricsF scaleFm(scaleFont);
+    for (int t = 0; t < scale.majors.size() && t < scale.labels.size(); ++t) {
+        const QPointF at = pointOnGaugeArc(pivot, radius * 0.7, scale.majors[t], sweep);
+        const double w = scaleFm.horizontalAdvance(scale.labels[t]) + 2.0;
+        painter.drawText(QRectF(at.x() - w / 2.0, at.y() - scaleFm.height() / 2.0, w,
+                                scaleFm.height()),
+                         Qt::AlignCenter, scale.labels[t]);
+    }
+    if (!g.config.unit.isEmpty()) {
+        painter.drawText(QRectF(face.left(), pivot.y() - radius * 0.42, face.width(),
+                                scaleFm.height()),
+                         Qt::AlignCenter, g.config.unit);
+    }
+
+    // Needles, last series first so the first one ends on top.
+    for (int i = g.config.series.size() - 1; i >= 0; --i) {
+        const double value = i < g.shown.size() ? g.shown[i] : qQNaN();
+        if (qIsNaN(value)) {
+            continue;
+        }
+        const QColor color = i == 0 ? kMeterNeedle : g.config.series[i].color;
+        painter.setPen(QPen(color, qMax(1.5, radius * 0.025), Qt::SolidLine, Qt::RoundCap));
+        painter.drawLine(pivot,
+                         pointOnGaugeArc(pivot, radius - 3.0, gaugeFraction(g.config, value),
+                                         sweep));
+    }
+    painter.setPen(Qt::NoPen);
+    painter.setBrush(kMeterInk);
+    painter.drawEllipse(pivot, radius * 0.07, radius * 0.07);
+    painter.setBrush(QColor(0x88, 0x88, 0x88));
+    painter.drawEllipse(pivot, radius * 0.025, radius * 0.025);
+    painter.restore();
+
+    // Caption: name and reading of the first series.
+    painter.setPen(g.colors.legendText);
+    const GaugeSeriesConfig& series = g.config.series.value(0);
+    const QString caption =
+        g.config.series.isEmpty()
+            ? QString()
+            : QCoreApplication::translate("ChartWidgets", "%1  %2")
+                  .arg(seriesDisplayName(series.name, series.fieldId),
+                       gaugeValueText(g.config, g.values.value(0, qQNaN())));
+    painter.drawText(QRectF(inner.left(), body.bottom() + 2.0, inner.width(), captionHeight),
+                     Qt::AlignHCenter | Qt::AlignTop,
+                     fm.elidedText(caption, Qt::ElideRight, inner.width()));
+}
+
+// --- Display: one 7-segment-like readout per series --------------------------
+//
+// A black display with the value in the series color over unlit "8"s, the
+// same display the Panel slider readout uses (controlpainting.h), name
+// above it.
+const QColor kDisplayFace(0x05, 0x05, 0x05);
+const QColor kDisplayEdge(0x33, 0x33, 0x33);
+
+QString unlitDisplayDigits(const QString& text) {
+    QString ghost = text;
+    for (QChar& ch : ghost) {
+        if (ch.isDigit() || ch == QLatin1Char('-')) {
+            ch = QLatin1Char('8');
+        }
+    }
+    return ghost;
+}
+
+void paintGaugeDisplays(QPainter& painter, const QRect& area, const GaugePaint& g) {
+    const int padding = chartOuterPadding();
+    const int count = g.config.series.size();
+    if (count == 0) {
+        return;
+    }
+    const QRect inner = area.adjusted(padding, padding, -padding, -padding);
+    const QFont baseFont = painter.font();
+    const QFontMetrics fm(baseFont);
+    const double rowHeight = inner.height() / double(count);
+    const double nameHeight = fm.height() + 2.0;
+    // Digits sized for the widest value the range can print.
+    QString widest = gaugeValueText(g.config, g.config.max);
+    const QString low = gaugeValueText(g.config, g.config.min);
+    if (low.size() > widest.size()) {
+        widest = low;
+    }
+    QFont digits = QFontDatabase::systemFont(QFontDatabase::FixedFont);
+    digits.setBold(true);
+    constexpr double kReference = 20.0;
+    digits.setPointSizeF(kReference);
+    const QFontMetricsF reference(digits);
+    painter.save();
+    painter.setRenderHint(QPainter::Antialiasing);
+    for (int i = 0; i < count; ++i) {
+        const QRectF row(inner.left(), inner.top() + rowHeight * i, inner.width(), rowHeight);
+        const GaugeSeriesConfig& series = g.config.series[i];
+        painter.setFont(baseFont);
+        painter.setPen(g.colors.legendText);
+        painter.drawText(QRectF(row.left(), row.top(), row.width(), nameHeight),
+                         Qt::AlignLeft | Qt::AlignVCenter,
+                         fm.elidedText(seriesDisplayName(series.name, series.fieldId),
+                                       Qt::ElideRight, int(row.width())));
+        const QRectF box = QRectF(row.left(), row.top() + nameHeight, row.width(),
+                                  row.height() - nameHeight - 4.0);
+        if (box.height() < 10.0) {
+            continue;
+        }
+        painter.setPen(QPen(kDisplayEdge, 1.0));
+        painter.setBrush(kDisplayFace);
+        painter.drawRoundedRect(box.adjusted(0.5, 0.5, -0.5, -0.5), 3.0, 3.0);
+        const double fit =
+            qMin((box.width() - 16.0) / qMax(1.0, reference.horizontalAdvance(widest)),
+                 (box.height() - 6.0) / qMax(1.0, reference.height()));
+        digits.setPointSizeF(qBound(6.0, kReference * fit, 160.0));
+        painter.setFont(digits);
+        const QRectF textRect = box.adjusted(8.0, 0.0, -8.0, 0.0);
+        QColor ink = series.color;
+        QColor ghost = ink;
+        ghost.setAlphaF(0.1f);
+        const QString text = gaugeValueText(g.config, g.values.value(i, qQNaN()));
+        painter.setPen(ghost);
+        painter.drawText(textRect, Qt::AlignRight | Qt::AlignVCenter, unlitDisplayDigits(widest));
+        painter.setPen(ink);
+        painter.drawText(textRect, Qt::AlignRight | Qt::AlignVCenter, text);
+    }
+    painter.restore();
+    painter.setFont(baseFont);
+}
+
 }  // namespace
 
 void DummyGaugeWidget::paintEvent(QPaintEvent*) {
@@ -1926,6 +2193,7 @@ void DummyGaugeWidget::paintEvent(QPaintEvent*) {
     const ChartColors colors = chartColors(style, palette);
 
     paintChartBackground(painter, *this, palette);
+    paintChartScrews(painter, *this, style);
 
     const QVector<double> shown = easedValues(m_values, qAbs(m_config.max - m_config.min));
     const GaugePaint g{m_config, m_values, shown, m_view, style, colors, palette};
@@ -1938,6 +2206,15 @@ void DummyGaugeWidget::paintEvent(QPaintEvent*) {
             break;
         case ChartGaugeShape::Number:
             paintGaugeNumbers(painter, rect(), g);
+            break;
+        case ChartGaugeShape::Meter:
+            paintGaugeMeter(painter, rect(), g);
+            break;
+        case ChartGaugeShape::Display:
+            paintGaugeDisplays(painter, rect(), g);
+            break;
+        case ChartGaugeShape::Segments:
+            paintGaugeBars(painter, rect(), g, /*segmented=*/true);
             break;
         case ChartGaugeShape::Arc:
             paintGaugeDial(painter, rect(), g, kRingSweep);
