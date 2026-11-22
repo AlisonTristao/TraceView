@@ -27,6 +27,10 @@ namespace {
 // wedge between them (reported live 2026-08-09).
 constexpr int kControlInset = 8;
 
+// The largest a push button grows (the layout hints' maximum, minus the
+// inset): past this a bigger cell only adds room around it.
+constexpr QSize kMaxButtonSize(224, 64);
+
 // Matches kSelectionAnimMs (dashboardcell.cpp) / the ~150ms discrete-state
 // transition convention in docs/VISUAL_IDENTITY.md's Motion section.
 constexpr int kSwitchAnimMs = 150;
@@ -72,16 +76,24 @@ void StyledControlWidget::setEditModeHint(bool editMode) {
 
 void StyledControlWidget::updatePanelFill() {
     const bool fill = m_editMode || m_style.screws;
+    // Without a plate, nothing at all behind the control in Run: a control
+    // placed over a chart (an overlay, docs/LAYOUT.md) must not punch a
+    // canvas-colored box into it. In edit mode the opaque fill stays, so the
+    // grid lines don't show through.
+    setAttribute(Qt::WA_StyledBackground, fill || m_editMode);
     if (property("dashboardControlPanel").toBool() != fill) {
         setControlPanelFill(this, fill);
     }
+    update();
 }
 
 void StyledControlWidget::paintEvent(QPaintEvent*) {
     QPainter painter(this);
-    QStyleOption option;
-    option.initFrom(this);
-    style()->drawPrimitive(QStyle::PE_Widget, &option, &painter, this);
+    if (testAttribute(Qt::WA_StyledBackground)) {
+        QStyleOption option;
+        option.initFrom(this);
+        style()->drawPrimitive(QStyle::PE_Widget, &option, &painter, this);
+    }
     if (m_style.screws) {
         paintPanelScrews(painter, QRectF(rect()), 6.5, 3.0);
     }
@@ -196,9 +208,9 @@ PushButtonWidget::PushButtonWidget(QWidget* parent) : StyledControlWidget(parent
     m_button->setText(tr("Push Button"));
     m_button->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
-    auto* layout = new QVBoxLayout(this);
-    layout->setContentsMargins(kControlInset, kControlInset, kControlInset, kControlInset);
-    layout->addWidget(m_button);
+    // Placed by resizeEvent(): the whole cell minus the inset, capped and
+    // centered -- a key stretched over a big cell reads as a colored slab,
+    // not a button (see docs/LAYOUT.md for the sizes).
 
     m_repeatTimer = new QTimer(this);
     connect(m_repeatTimer, &QTimer::timeout, this, [this]() { sendCommand(m_config.onPress); });
@@ -213,6 +225,15 @@ PushButtonWidget::PushButtonWidget(QWidget* parent) : StyledControlWidget(parent
     connect(m_button, &QAbstractButton::released, this, &PushButtonWidget::onButtonReleased);
 
     refreshControlStyle();
+}
+
+void PushButtonWidget::resizeEvent(QResizeEvent* event) {
+    StyledControlWidget::resizeEvent(event);
+    const QRect area =
+        rect().adjusted(kControlInset, kControlInset, -kControlInset, -kControlInset);
+    QRect button(QPoint(0, 0), area.size().boundedTo(kMaxButtonSize));
+    button.moveCenter(area.center());
+    m_button->setGeometry(button);
 }
 
 void PushButtonWidget::setConfig(const QJsonObject& config) {

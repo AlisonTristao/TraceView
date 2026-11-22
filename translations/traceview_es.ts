@@ -4,7 +4,7 @@
 <context>
     <name>AgentAppTools</name>
     <message>
-        <location filename="../lib/core/agentapptools.cpp" line="+222"/>
+        <location filename="../lib/core/agentapptools.cpp" line="+257"/>
         <source>AI Assistant</source>
         <translation>Asistente de IA</translation>
     </message>
@@ -33,7 +33,7 @@ Allow it to connect devices and send them commands until AI assistant access is 
         <translation>Un asistente de IA quiere eliminar el espacio de trabajo &quot;%1&quot;. Esto no se puede deshacer.</translation>
     </message>
     <message>
-        <location line="+63"/>
+        <location line="+71"/>
         <source>Add Widget (AI assistant)</source>
         <translation>Añadir widget (asistente de IA)</translation>
     </message>
@@ -43,7 +43,7 @@ Allow it to connect devices and send them commands until AI assistant access is 
         <translation>Editar widget (asistente de IA)</translation>
     </message>
     <message>
-        <location line="+341"/>
+        <location line="+407"/>
         <source>New Project</source>
         <translation>Nuevo proyecto</translation>
     </message>
@@ -733,7 +733,7 @@ Allow it to connect devices and send them commands until AI assistant access is 
 <context>
     <name>DiffDriveScene</name>
     <message>
-        <location filename="../lib/dashboard/scenes/diffdrivescene.cpp" line="+131"/>
+        <location filename="../lib/dashboard/scenes/diffdrivescene.cpp" line="+129"/>
         <source>Scale</source>
         <translation>Escala</translation>
     </message>
@@ -827,7 +827,7 @@ Allow it to connect devices and send them commands until AI assistant access is 
 <context>
     <name>FurutaScene</name>
     <message>
-        <location filename="../lib/dashboard/scenes/furutascene.cpp" line="+531"/>
+        <location filename="../lib/dashboard/scenes/furutascene.cpp" line="+526"/>
         <source>Arm length (L1)</source>
         <translation>Longitud del brazo (L1)</translation>
     </message>
@@ -1137,7 +1137,7 @@ Allow it to connect devices and send them commands until AI assistant access is 
 <context>
     <name>SceneWidget</name>
     <message>
-        <location filename="../lib/dashboard/scenes/scenewidget.cpp" line="+545"/>
+        <location filename="../lib/dashboard/scenes/scenewidget.cpp" line="+580"/>
         <source>Scene</source>
         <translation>Escena</translation>
     </message>
@@ -6098,8 +6098,8 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
 <context>
     <name>traceview::PushButtonWidget</name>
     <message>
-        <location filename="../lib/dashboard/widgets/controlwidgets.cpp" line="+184"/>
-        <location line="+24"/>
+        <location filename="../lib/dashboard/widgets/controlwidgets.cpp" line="+208"/>
+        <location line="+33"/>
         <source>Push Button</source>
         <translation>Botón pulsador</translation>
     </message>

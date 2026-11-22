@@ -7,6 +7,10 @@
 
 #include <QApplication>
 #include <QDir>
+#include <QHash>
+#include <QJsonDocument>
+#include <QFileInfo>
+#include <QFile>
 #include <QGridLayout>
 #include <QJsonArray>
 #include <QJsonObject>
@@ -25,6 +29,9 @@
 #include "core/appearancecatalog.h"
 #include "dashboard/dashboardcell.h"
 #include "dashboard/dashboardgrid.h"
+#include "dashboard/layoutadvisor.h"
+#include "dashboard/widgets/textboardwidget.h"
+#include "dashboard/telemetryconsumer.h"
 #include "dashboard/widgets/serialmonitorwidget.h"
 #include "dashboard/widgets/chartwidgets.h"
 #include "dashboard/widgets/controlwidgets.h"
@@ -456,36 +463,21 @@ int writePresetSnapshots(const QString& dir) {
     const AppearanceSnapshot original = currentAppearance();
 
     QJsonArray items;
-    // Charts and gauges on top, the controls and LEDs along the bottom, so
-    // every preset shows its control style next to its chart style.
-    items.append(gridItem("line", "dummy_line", "Line chart", lineChartConfig(), 0.0, 0.0, 0.5,
-                          0.42));
-    items.append(gridItem("bar", "dummy_bar", "Bars", barChartConfig(), 0.5, 0.0, 0.25, 0.42));
-    items.append(gridItem("meter", "dummy_gauge", "Analog meter",
-                          withGaugeShape(gaugeConfig(), "meter", 1), 0.75, 0.0, 0.25, 0.42));
-    items.append(gridItem("segments", "dummy_gauge", "LED bar",
-                          withGaugeShape(gaugeConfig(), "segments", 3), 0.0, 0.42, 0.3, 0.3));
-    items.append(gridItem("display", "dummy_gauge", "Display",
-                          withGaugeShape(gaugeConfig(), "display", 1), 0.3, 0.42, 0.2, 0.3));
-    items.append(gridItem("ring", "dummy_gauge", "Ring", withGaugeShape(gaugeConfig(), "arc", 3),
-                          0.5, 0.42, 0.25, 0.3));
-    items.append(gridItem("half", "dummy_gauge", "Half circle",
-                          withGaugeShape(gaugeConfig(), "halfCircle", 1), 0.75, 0.42, 0.25, 0.3));
-    items.append(gridItem("start", "push_button", "Start",
-                          QJsonObject{{"label", "Start"}, {"variant", "success"}}, 0.0, 0.72,
-                          0.125, 0.28));
-    items.append(gridItem("stop", "push_button", "Stop",
-                          QJsonObject{{"label", "Stop"}, {"variant", "danger"}}, 0.125, 0.72, 0.125,
-                          0.28));
-    items.append(gridItem("auto", "toggle_switch", "Auto mode",
-                          QJsonObject{{"label", "Auto mode"},
-                                      {"onLabel", "Auto"},
-                                      {"offLabel", "Manual"},
-                                      {"defaultState", true}},
-                          0.25, 0.72, 0.2, 0.28));
-    items.append(gridItem("setpoint", "slider", "Setpoint",
-                          QJsonObject{{"label", "Setpoint"}, {"unit", "%"}, {"defaultValue", 62}},
-                          0.45, 0.72, 0.3, 0.28));
+    // Laid out in grid cells (60 x 40 on the Large layout) after the layout
+    // hints of docs/LAYOUT.md, and checked by reviewLayout() below: three
+    // bands -- wide charts and round gauges, then bar-shaped widgets, then a
+    // strip of controls at one shared height -- plus two overlays in free
+    // zones (a button in the line chart's upper left, an LED in the ring's
+    // free corner).
+    auto cells = [](double col, double row, double cols, double rows) {
+        return QRectF(col / 60.0, row / 40.0, cols / 60.0, rows / 40.0);
+    };
+    auto place = [&items, &cells](const QString& id, const QString& type, const QString& name,
+                                  const QJsonObject& config, double col, double row, double cols,
+                                  double rows) {
+        const QRectF r = cells(col, row, cols, rows);
+        items.append(gridItem(id, type, name, config, r.x(), r.y(), r.width(), r.height()));
+    };
     const QJsonObject ledBinding{{"sourceId", "0x00000001"}, {"topicId", "0x0001"}};
     auto led = [&ledBinding](const QString& label, int fieldId, const QJsonObject& extra) {
         QJsonObject config = ledBinding;
@@ -496,16 +488,56 @@ int writePresetSnapshots(const QString& dir) {
         }
         return config;
     };
-    items.append(gridItem("led-net", "led", "Network",
-                          led("Network", 1, {{"onLabel", "Online"}, {"offLabel", "Offline"}}),
-                          0.75, 0.72, 0.0833, 0.28));
-    items.append(gridItem("led-alarm", "led", "Alarm",
-                          led("Alarm", 2,
-                              {{"color", "#EF4444"}, {"onLabel", "Alarm"}, {"offLabel", "OK"}}),
-                          0.8333, 0.72, 0.0833, 0.28));
-    items.append(gridItem("led-rgb", "led", "Status",
-                          led("Status", 3, {{"colorMode", "rgb"}, {"onLabel", "RGB"}}), 0.9166,
-                          0.72, 0.0834, 0.28));
+
+    // Band 1 (rows 0-20): the wide chart, a ring, a meter over its display.
+    place("line", "dummy_line", "Line chart", lineChartConfig(), 0, 0, 30, 20);
+    place("ring", "dummy_gauge", "Ring", withGaugeShape(gaugeConfig(), "arc", 3), 30, 0, 14, 20);
+    place("meter", "dummy_gauge", "Analog meter", withGaugeShape(gaugeConfig(), "meter", 1), 44,
+          0, 16, 13);
+    place("display", "dummy_gauge", "Display", withGaugeShape(gaugeConfig(), "display", 1), 44,
+          13, 16, 7);
+    // Band 2 (rows 20-32): bar-shaped widgets.
+    place("segments", "dummy_gauge", "LED bar", withGaugeShape(gaugeConfig(), "segments", 3), 0,
+          20, 18, 12);
+    place("bar", "dummy_bar", "Bars", barChartConfig(), 18, 20, 14, 12);
+    place("half", "dummy_gauge", "Half circle", withGaugeShape(gaugeConfig(), "halfCircle", 1),
+          32, 20, 14, 12);
+    place("serial", "serial_monitor", "Serial monitor", QJsonObject(), 46, 20, 14, 12);
+    // Band 3 (rows 32-40): controls, two rows of 4 cells each.
+    place("start", "push_button", "Start", QJsonObject{{"label", "Start"}, {"variant", "success"}},
+          0, 32, 7, 4);
+    place("stop", "push_button", "Stop", QJsonObject{{"label", "Stop"}, {"variant", "danger"}}, 7,
+          32, 7, 4);
+    place("home", "push_button", "Home", QJsonObject{{"label", "Home"}}, 0, 36, 7, 4);
+    place("reset", "push_button", "Reset", QJsonObject{{"label", "Reset"}, {"variant", "warning"}},
+          7, 36, 7, 4);
+    place("auto", "toggle_switch", "Auto mode",
+          QJsonObject{{"label", "Auto mode"},
+                      {"onLabel", "Auto"},
+                      {"offLabel", "Manual"},
+                      {"defaultState", true}},
+          14, 32, 9, 4);
+    place("lights", "toggle_switch", "Lights",
+          QJsonObject{{"label", "Lights"}, {"onLabel", "On"}, {"offLabel", "Off"}}, 14, 36, 9, 4);
+    place("setpoint", "slider", "Setpoint",
+          QJsonObject{{"label", "Setpoint"}, {"unit", "%"}, {"defaultValue", 62}}, 23, 32, 16, 4);
+    place("gain", "slider", "Gain",
+          QJsonObject{{"label", "Gain"}, {"min", 0}, {"max", 10}, {"step", 0.5},
+                      {"defaultValue", 4}},
+          23, 36, 16, 4);
+    place("led-net", "led", "Network",
+          led("Network", 1, {{"onLabel", "Online"}, {"offLabel", "Offline"}}), 39, 32, 5, 8);
+    place("led-motor", "led", "Motor", led("Motor", 4, {{"onLabel", "Run"}, {"offLabel", "Stop"}}),
+          44, 32, 5, 8);
+    place("led-alarm", "led", "Alarm",
+          led("Alarm", 2, {{"color", "#EF4444"}, {"onLabel", "Alarm"}, {"offLabel", "OK"}}), 49,
+          32, 5, 8);
+    place("led-rgb", "led", "Status", led("Status", 3, {{"colorMode", "rgb"}, {"onLabel", "RGB"}}),
+          54, 32, 6, 8);
+    // Overlays, last so they stack on top: each inside a free zone.
+    place("tare", "push_button", "Tare", QJsonObject{{"label", "Tare"}}, 4, 4, 6, 3);
+    place("led-beat", "led", "Heartbeat", led(QString(), 5, {{"color", "#22C55E"}}), 41.4, 16.2,
+          2.5, 3.6);
     QJsonObject dashboard;
     dashboard["items"] = items;
     dashboard["breakpoint"] = "large";
@@ -544,6 +576,8 @@ int writePresetSnapshots(const QString& dir) {
                         lamp->onFieldSample({1, 1, 1, 0}, us, 1.0);
                         lamp->onFieldSample({1, 1, 2, 0}, us, 0.0);
                         lamp->onFieldSample({1, 1, 3, 0}, us, double(0x00B4FF));
+                        lamp->onFieldSample({1, 1, 4, 0}, us, 1.0);
+                        lamp->onFieldSample({1, 1, 5, 0}, us, 1.0);
                     }
                 } else if (auto* serial = dynamic_cast<SerialMonitorWidget*>(content)) {
                     if (tick == 1) {
@@ -552,6 +586,23 @@ int writePresetSnapshots(const QString& dir) {
                     }
                 }
             }
+        }
+        if (preset.id == appearancePresets().first().id) {
+            QVector<LayoutReviewItem> review;
+            const QSizeF canvas(grid.width(), grid.height());
+            for (const DashboardItem& item : grid.items()) {
+                const DashboardItem::Geometry& g = item.geometry(DashboardBreakpoint::Large);
+                review.append({item.id, item.name, item.typeId, item.config,
+                               QRectF(g.x * canvas.width(), g.y * canvas.height(),
+                                      g.width * canvas.width(), g.height * canvas.height())});
+            }
+            const LayoutReview result = reviewLayout(review, canvas);
+            for (const LayoutIssue& issue : result.issues) {
+                std::printf("layout %s: %s\n", qPrintable(layoutSeverityString(issue.severity)),
+                            qPrintable(issue.message));
+            }
+            std::printf("layout: %d issue(s), %d free overlay spot(s)\n",
+                        int(result.issues.size()), int(result.overlaySpots.size()));
         }
         const QString id = preset.id.section(QLatin1Char(':'), 1);
         const QString path = QDir(dir).filePath(QStringLiteral("preset-%1.png").arg(id));
@@ -572,6 +623,142 @@ int writePresetSnapshots(const QString& dir) {
     return 0;
 }
 
+// --render-project <file.tvproj> <dir> [preset]: renders every workspace of
+// a saved project (Large layout, Run mode, 1280x720) to
+// <dir>/<project>-<n>.png with synthetic data on every bound field, in the
+// given built-in appearance preset ("traceview", "console"...; the app-wide
+// default otherwise), and prints each workspace's layout review
+// (dashboard/layoutadvisor.h). For checking a real dashboard's layout
+// without its devices.
+QString renderMatrixText() {
+    QString text = QStringLiteral("FRAME 24x24\n");
+    for (int r = 0; r < 24; ++r) {
+        for (int c = 0; c < 24; ++c) {
+            const double dx = c - 11.5;
+            const double dy = r - 11.5;
+            const bool line = qAbs(c - 9 - r / 6) < 2;
+            text += (line || dx * dx + dy * dy < 12) ? QLatin1Char('1') : QLatin1Char('0');
+        }
+        text += QLatin1Char('\n');
+    }
+    return text;
+}
+
+void feedRenderWidget(DashboardWidget* content, const QJsonObject& config) {
+    QVector<int> fields;
+    for (const QJsonValue& series : config.value("series").toArray()) {
+        fields.append(series.toObject().value("fieldId").toInt());
+    }
+    const quint32 sourceId =
+        quint32(config.value("sourceId").toString().toULongLong(nullptr, 0));
+    const quint16 topicId = quint16(config.value("topicId").toString().toUInt(nullptr, 0));
+    for (qint64 tick = 1; tick <= 200; ++tick) {
+        const double t = double(tick);
+        const quint64 us = quint64(tick) * 50000;
+        for (int i = 0; i < fields.size(); ++i) {
+            const double v = 50.0 + 35.0 * qSin(t * 0.05 + i * 1.3) + 8.0 * qSin(t * 0.23 + i);
+            if (auto* chart = dynamic_cast<ChartWidgetBase*>(content)) {
+                chart->appendFieldSample(quint16(fields[i]), us, v);
+            } else if (auto* gauge = dynamic_cast<DummyGaugeWidget*>(content)) {
+                gauge->appendFieldSample(quint16(fields[i]), us, v);
+            }
+        }
+        if (auto* consumer = dynamic_cast<TelemetryConsumer*>(content)) {
+            const QJsonObject bind = config.value("bind").toObject();
+            int k = 0;
+            for (auto it = bind.begin(); it != bind.end(); ++it, ++k) {
+                const QJsonObject b = it.value().toObject();
+                consumer->onFieldSample(
+                    {quint32(b.value("sourceId").toString().toULongLong(nullptr, 0)),
+                     quint16(b.value("topicId").toString().toUInt(nullptr, 0)),
+                     quint16(b.value("fieldId").toInt()), 0},
+                    us, k == 0 ? 0.6 * qSin(t * 0.04) : 3.1 + 0.15 * qSin(t * 0.09));
+            }
+            if (config.contains("fieldId")) {
+                consumer->onFieldSample({sourceId, topicId,
+                                         quint16(config.value("fieldId").toInt()), 0},
+                                        us, 1.0);
+            }
+        }
+    }
+    if (auto* board = dynamic_cast<TextBoardWidget*>(content)) {
+        const QString name = config.value("topicName").toString();
+        board->setText(name.contains(QLatin1String("matrix"), Qt::CaseInsensitive)
+                           ? renderMatrixText()
+                           : QStringLiteral("uptime     01:12:44\nheap free  142 kB\n"
+                                            "battery    7.62 V\ntemp       41.3 C\n"
+                                            "imu        ok\ncamera     ok\nlink       usb"));
+    } else if (auto* serial = dynamic_cast<SerialMonitorWidget*>(content)) {
+        serial->appendData(QByteArrayLiteral("boot ok\r\n> status\r\nmode RUN\r\n"
+                                             "battery 7.6 V\r\n> "));
+    }
+}
+
+int renderProject(const QString& path, const QString& dir, const QString& presetId) {
+    QFile file(path);
+    if (!file.open(QIODevice::ReadOnly)) {
+        std::fprintf(stderr, "could not read %s\n", qPrintable(path));
+        return 1;
+    }
+    const QJsonObject project = QJsonDocument::fromJson(file.readAll()).object();
+    if (!presetId.isEmpty()) {
+        for (const AppearancePreset& preset : appearancePresets()) {
+            if (preset.id.section(QLatin1Char(':'), 1) == presetId) {
+                applyAppearance(preset.values);
+            }
+        }
+    }
+    QDir().mkpath(dir);
+    const QString base = QFileInfo(path).completeBaseName();
+    const QJsonArray workspaces = project.value("workspaces").toObject().value("list").toArray();
+    for (int w = 0; w < workspaces.size(); ++w) {
+        const QJsonObject workspace = workspaces[w].toObject();
+        QJsonObject dashboard = workspace.value("dashboard").toObject();
+        dashboard["breakpoint"] = "large";
+        DashboardGrid grid;
+        grid.resize(1280, 720);
+        grid.fromJson(dashboard);
+        grid.setEditMode(false);
+
+        QHash<QString, QJsonObject> configs;
+        QVector<LayoutReviewItem> review;
+        const QSizeF canvas(grid.width(), grid.height());
+        for (const DashboardItem& item : grid.items()) {
+            configs.insert(item.id, item.config);
+            const DashboardItem::Geometry& g = item.geometry(DashboardBreakpoint::Large);
+            review.append({item.id, item.name, item.typeId, item.config,
+                           QRectF(g.x * canvas.width(), g.y * canvas.height(),
+                                  g.width * canvas.width(), g.height * canvas.height())});
+        }
+        for (DashboardCell* cell : grid.findChildren<DashboardCell*>()) {
+            feedRenderWidget(cell->content(), configs.value(cell->itemId()));
+        }
+        QCoreApplication::processEvents();
+
+        const QString name = workspace.value("name").toString();
+        const LayoutReview result = reviewLayout(review, canvas);
+        std::printf("== %s / %s: %d issue(s), %d free overlay spot(s)\n", qPrintable(base),
+                    qPrintable(name), int(result.issues.size()),
+                    int(result.overlaySpots.size()));
+        for (const LayoutIssue& issue : result.issues) {
+            std::printf("   %s: %s\n", qPrintable(layoutSeverityString(issue.severity)),
+                        qPrintable(issue.message));
+        }
+        QImage image(grid.size(), QImage::Format_ARGB32);
+        image.fill(ThemeManager::instance().currentTheme().background);
+        QPainter painter(&image);
+        painter.drawPixmap(0, 0, grid.grab());
+        painter.end();
+        const QString out = QDir(dir).filePath(QStringLiteral("%1-%2.png").arg(base).arg(w + 1));
+        if (!image.save(out)) {
+            std::fprintf(stderr, "could not write %s\n", qPrintable(out));
+            return 1;
+        }
+        std::printf("   %s\n", qPrintable(out));
+    }
+    return 0;
+}
+
 }  // namespace
 
 int main(int argc, char** argv) {
@@ -584,6 +771,11 @@ int main(int argc, char** argv) {
     ThemeManager::instance().applyCurrentTheme();
 
     const QStringList args = app.arguments();
+    const int renderArg = int(args.indexOf(QStringLiteral("--render-project")));
+    if (renderArg >= 0 && renderArg + 2 < args.size()) {
+        return renderProject(args[renderArg + 1], args[renderArg + 2],
+                             renderArg + 3 < args.size() ? args[renderArg + 3] : QString());
+    }
     const int snapshotArg = int(args.indexOf(QStringLiteral("--snapshot")));
     if (snapshotArg >= 0) {
         const QString dir =

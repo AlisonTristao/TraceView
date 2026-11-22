@@ -139,6 +139,7 @@ signals:
 
 protected:
     void applyControlStyle() override;
+    void resizeEvent(QResizeEvent* event) override;
 
 private:
     void onButtonPressed();

@@ -4,7 +4,7 @@
 <context>
     <name>AgentAppTools</name>
     <message>
-        <location filename="../lib/core/agentapptools.cpp" line="+222"/>
+        <location filename="../lib/core/agentapptools.cpp" line="+257"/>
         <source>AI Assistant</source>
         <translation>AI アシスタント</translation>
     </message>
@@ -33,7 +33,7 @@ AI アシスタントのアクセスをオフにするか TraceView を閉じる
         <translation>AI アシスタントがワークスペース「%1」を削除しようとしています。この操作は元に戻せません。</translation>
     </message>
     <message>
-        <location line="+63"/>
+        <location line="+71"/>
         <source>Add Widget (AI assistant)</source>
         <translation>ウィジェットを追加（AI アシスタント）</translation>
     </message>
@@ -43,7 +43,7 @@ AI アシスタントのアクセスをオフにするか TraceView を閉じる
         <translation>ウィジェットを編集（AI アシスタント）</translation>
     </message>
     <message>
-        <location line="+341"/>
+        <location line="+407"/>
         <source>New Project</source>
         <translation>新規プロジェクト</translation>
     </message>
@@ -733,7 +733,7 @@ AI アシスタントのアクセスをオフにするか TraceView を閉じる
 <context>
     <name>DiffDriveScene</name>
     <message>
-        <location filename="../lib/dashboard/scenes/diffdrivescene.cpp" line="+131"/>
+        <location filename="../lib/dashboard/scenes/diffdrivescene.cpp" line="+129"/>
         <source>Scale</source>
         <translation>スケール</translation>
     </message>
@@ -827,7 +827,7 @@ AI アシスタントのアクセスをオフにするか TraceView を閉じる
 <context>
     <name>FurutaScene</name>
     <message>
-        <location filename="../lib/dashboard/scenes/furutascene.cpp" line="+531"/>
+        <location filename="../lib/dashboard/scenes/furutascene.cpp" line="+526"/>
         <source>Arm length (L1)</source>
         <translation>アームの長さ (L1)</translation>
     </message>
@@ -1137,7 +1137,7 @@ AI アシスタントのアクセスをオフにするか TraceView を閉じる
 <context>
     <name>SceneWidget</name>
     <message>
-        <location filename="../lib/dashboard/scenes/scenewidget.cpp" line="+545"/>
+        <location filename="../lib/dashboard/scenes/scenewidget.cpp" line="+580"/>
         <source>Scene</source>
         <translation>シーン</translation>
     </message>
@@ -6093,8 +6093,8 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
 <context>
     <name>traceview::PushButtonWidget</name>
     <message>
-        <location filename="../lib/dashboard/widgets/controlwidgets.cpp" line="+184"/>
-        <location line="+24"/>
+        <location filename="../lib/dashboard/widgets/controlwidgets.cpp" line="+208"/>
+        <location line="+33"/>
         <source>Push Button</source>
         <translation>プッシュボタン</translation>
     </message>

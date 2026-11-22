@@ -376,6 +376,8 @@ add_library(traceview_dashboard STATIC
     dashboard/widgets/controlconfigeditor.h
     dashboard/widgetregistry.cpp
     dashboard/widgetregistry.h
+    dashboard/layoutadvisor.cpp
+    dashboard/layoutadvisor.h
     dashboard/widgetagenthelp.cpp
     dashboard/widgetagenthelp.h
     dashboard/dashboardcell.cpp
