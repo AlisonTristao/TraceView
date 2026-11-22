@@ -18,7 +18,7 @@ a style.
 
 ![The same sheet in the dark theme](images/chart-styles-dark.png)
 
-## The three styles
+## The five styles
 
 Picked app-wide from **View → Chart Style** (also Settings → Appearance),
 stored in `AppSettings::chartStyleId()` (`QSettings` key
@@ -45,6 +45,24 @@ existed. Picking a style there pins that one chart to it.
 | Legend swatch | Dot | Line sample in the series' dash | Line sample in the series' dash |
 | Digits | Proportional | Tabular (`tnum`) | Tabular (`tnum`) |
 | Axis toggles for a saved view that names only the style | Y title, Y values | All | All |
+
+Two more styles match the Panel and Retro control styles
+([CONTROL_STYLE.md](CONTROL_STYLE.md)), so a whole dashboard can share one
+look:
+
+| | Panel | Retro |
+|---|---|---|
+| Idea | An oscilloscope on a hardware panel | A phosphor terminal |
+| Frame, ticks | `Box`, `Divisions`, inward ticks | `Spines`, `Nice`, outward ticks |
+| Plot | Dark screen (`plotScreen`), fixed 10 x 8 graticule with minor ticks on the center cross (`graticule`), tinted with `palette.success` | Dotted grid |
+| Chrome color | Text tones | Everything in `palette.accent` (`accentChrome`) |
+| Series line | 1.5 px over a 4 px faint glow (`glowWidth`) | same |
+| Bars | 60% of slot, outlined | Stacks of 8 px cells (`barCells`) |
+| Digits | Fixed pitch (`monoText`) | Fixed pitch |
+| Extras | Screws in the four corners (`screws`) | LED bar segments in the series color (`segmentZones` off) |
+
+Every style draws a gauge's empty track at 7% text over surface
+(`gaugeTrackStrength`), lighter than the values on it.
 
 The table is the `makeDashboardStyle()` / `makeEngineeringStyle()` /
 `makeScientificStyle()` functions in `chartstyle.cpp`. Change a value there
@@ -197,7 +215,7 @@ toggle. It is stored in the widget's config under `"view"`:
 
 | Option id | Menu label | Offered by |
 |---|---|---|
-| `style` | Style: App default, Dashboard, Engineering, Scientific | every chart |
+| `style` | Style: App default, Dashboard, Engineering, Scientific, Panel, Retro | every chart |
 | `xAxisTitle` | Show X axis title | line, audio |
 | `xTickLabels` | Show X axis values | line, audio |
 | `yAxisTitle` | Show Y axis title | line, bar, audio |
@@ -215,7 +233,7 @@ toggle. It is stored in the widget's config under `"view"`:
 | `fillArea` | Fill area under the line | line, audio (spectrum) |
 | `lineWidth` | Line width: Auto, 0.5 to 4 px | line, audio (spectrum) |
 | `interpolation` | Interpolation: | line |
-| `gaugeShape` | Shape: Ring (270°), Half circle, Bar, Number | gauge |
+| `gaugeShape` | Shape: Ring (270°), Half circle, Bar, Number, Analog meter, Digital display, LED bar | gauge |
 
 "audio" is the Audio Analyzer (`AudioAnalyzerWidget`), whose `mode` option
 ("View:", first in its menu) switches between `spectrum` and
@@ -314,3 +332,19 @@ chart_preview.exe --snapshot out
 ```
 
 The screenshots at the top of this page come from that command.
+
+## Gauge shapes
+
+| Shape | Id | What it draws |
+|---|---|---|
+| Ring (270°) | `arc` | One arc per series, nested; one series gets a large centered value. |
+| Half circle | `halfCircle` | The same, 180°, flat side down. |
+| Bar | `bar` | One horizontal bar per series, name and value beside it. |
+| Number | `number` | Just the value(s), as large as fits. |
+| Analog meter | `meter` | A panel meter: bezel with screws, light dial, 100° scale, red zone over the top 20%, a needle per series. Fixed hardware colors, like the Panel controls. |
+| Digital display | `display` | One black display per series, the value in its color over unlit "8"s. |
+| LED bar | `segments` | The Bar layout with LED segments: green, yellow from 65%, red from 85% (or the series color when the style has no zones). |
+
+`paintGaugeMeter()`, `paintGaugeDisplays()` and `paintGaugeSegments()` in
+`chartwidgets.cpp`. The screws come from `paintPanelScrews()`
+(`controlpainting.h`), shared with the Panel controls.

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <QColor>
+
 #include "dashboard/widgetconfigeditor.h"
 
 class QCheckBox;
@@ -43,6 +45,7 @@ private:
 
     QComboBox* m_deviceCombo = nullptr;
     QLineEdit* m_labelEdit = nullptr;
+    QComboBox* m_styleCombo = nullptr;
     QComboBox* m_variantCombo = nullptr;
     QComboBox* m_modeCombo = nullptr;
     QLineEdit* m_onPressEdit = nullptr;
@@ -76,6 +79,7 @@ private:
 
     QComboBox* m_deviceCombo = nullptr;
     QLineEdit* m_labelEdit = nullptr;
+    QComboBox* m_styleCombo = nullptr;
     QLineEdit* m_onLabelEdit = nullptr;
     QLineEdit* m_offLabelEdit = nullptr;
     QCheckBox* m_defaultOnCheck = nullptr;
@@ -109,6 +113,7 @@ private:
 
     QComboBox* m_deviceCombo = nullptr;
     QLineEdit* m_labelEdit = nullptr;
+    QComboBox* m_styleCombo = nullptr;
     QDoubleSpinBox* m_minSpin = nullptr;
     QDoubleSpinBox* m_maxSpin = nullptr;
     QDoubleSpinBox* m_stepSpin = nullptr;
@@ -118,6 +123,54 @@ private:
     QComboBox* m_sendModeCombo = nullptr;
     QSpinBox* m_throttleSpin = nullptr;
     QLineEdit* m_commandTemplateEdit = nullptr;
+};
+
+// Settings for LedWidget (controlwidgets.h): the telemetry field it shows
+// (Device, Topic, Field -- bound by name like every telemetry widget, see
+// dashboard/bindingresolver.h), when it lights and in which color, blinking,
+// the state texts and the control style.
+class LedConfigEditor : public WidgetConfigEditor {
+    Q_OBJECT
+
+public:
+    explicit LedConfigEditor(QWidget* parent = nullptr);
+
+    void setConfig(const QJsonObject& config) override;
+    QJsonObject config() const override;
+    void setAvailableDevices(const QVector<DeviceOption>& devices) override;
+
+private:
+    void updateRowsVisibility();
+    void updateIdentityDisplay();
+    void refreshFieldOptions();
+    void updateColorCombo();
+    void emitChanged();
+
+    bool m_updating = false;
+    QVector<DeviceOption> m_devices;
+    quint32 m_sourceId = 0;
+    quint16 m_topicId = 0;
+    // Carried through untouched and cleared only when the user re-points
+    // the topic/field -- same contract as TextBoardConfigEditor's.
+    QString m_topicName;
+    QColor m_color;  // invalid = the theme's success color
+
+    QFormLayout* m_formLayout = nullptr;
+    QComboBox* m_deviceCombo = nullptr;
+    QLineEdit* m_sourceIdEdit = nullptr;
+    QComboBox* m_topicCombo = nullptr;
+    QComboBox* m_fieldCombo = nullptr;
+    QLineEdit* m_labelEdit = nullptr;
+    QComboBox* m_styleCombo = nullptr;
+    QComboBox* m_colorModeCombo = nullptr;
+    QComboBox* m_conditionCombo = nullptr;
+    QDoubleSpinBox* m_thresholdSpin = nullptr;
+    QComboBox* m_colorCombo = nullptr;
+    QCheckBox* m_blinkCheck = nullptr;
+    QSpinBox* m_blinkSpin = nullptr;
+    QLineEdit* m_onLabelEdit = nullptr;
+    QLineEdit* m_offLabelEdit = nullptr;
+    QDoubleSpinBox* m_sampleTimeSpin = nullptr;
 };
 
 }  // namespace traceview

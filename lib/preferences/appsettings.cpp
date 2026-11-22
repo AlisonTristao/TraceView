@@ -30,9 +30,11 @@ constexpr char kNotificationPopupsKey[] = "notifications/popups";
 constexpr char kNotificationErrorPopupsKey[] = "notifications/errorPopups";
 constexpr char kNotificationPinStyleKey[] = "notifications/pinStyle";
 constexpr char kNotificationPanelPinnedKey[] = "notifications/panelPinned";
+constexpr char kNotificationAutoDeleteSecondsKey[] = "notifications/autoDeleteSeconds";
 constexpr char kUpdateAutoCheckEnabledKey[] = "updates/autoCheckEnabled";
 constexpr char kUpdateLastCheckEpochMsKey[] = "updates/lastCheckEpochMs";
 constexpr char kChartStyleKey[] = "appearance/chartStyle";
+constexpr char kControlStyleKey[] = "appearance/controlStyle";
 
 constexpr int kLowFps = 30;
 constexpr int kMediumFps = 60;
@@ -67,6 +69,18 @@ void AppSettings::setChartStyleId(const QString& id) {
     }
     store(kChartStyleKey, id);
     emit chartStyleChanged();
+}
+
+QString AppSettings::controlStyleId() const {
+    return stored(kControlStyleKey, QStringLiteral("dashboard")).toString();
+}
+
+void AppSettings::setControlStyleId(const QString& id) {
+    if (id == controlStyleId()) {
+        return;
+    }
+    store(kControlStyleKey, id);
+    emit controlStyleChanged();
 }
 
 int AppSettings::repaintIntervalMs() const {
@@ -168,6 +182,10 @@ AppSettings::NotificationPinStyle AppSettings::notificationPinStyle() const {
 
 bool AppSettings::notificationPanelPinned() const {
     return stored(kNotificationPanelPinnedKey, false).toBool();
+}
+
+int AppSettings::notificationAutoDeleteSeconds() const {
+    return value(kNotificationAutoDeleteSecondsKey, 0, 0, kMaxNotificationAutoDeleteSeconds);
 }
 
 bool AppSettings::updateAutoCheckEnabled() const {
@@ -310,6 +328,13 @@ void AppSettings::setNotificationPinStyle(NotificationPinStyle style) {
 void AppSettings::setNotificationPanelPinned(bool pinned) {
     if (pinned == notificationPanelPinned()) return;
     store(kNotificationPanelPinnedKey, pinned);
+    emit notificationPreferencesChanged();
+}
+
+void AppSettings::setNotificationAutoDeleteSeconds(int seconds) {
+    seconds = qBound(0, seconds, kMaxNotificationAutoDeleteSeconds);
+    if (seconds == notificationAutoDeleteSeconds()) return;
+    store(kNotificationAutoDeleteSecondsKey, seconds);
     emit notificationPreferencesChanged();
 }
 

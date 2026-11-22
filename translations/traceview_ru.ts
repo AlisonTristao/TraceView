@@ -4,7 +4,7 @@
 <context>
     <name>AgentAppTools</name>
     <message>
-        <location filename="../lib/core/agentapptools.cpp" line="+222"/>
+        <location filename="../lib/core/agentapptools.cpp" line="+257"/>
         <source>AI Assistant</source>
         <translation>ИИ-ассистент</translation>
     </message>
@@ -33,7 +33,7 @@ Allow it to connect devices and send them commands until AI assistant access is 
         <translation>ИИ-ассистент хочет удалить рабочее пространство «%1». Это действие нельзя отменить.</translation>
     </message>
     <message>
-        <location line="+63"/>
+        <location line="+71"/>
         <source>Add Widget (AI assistant)</source>
         <translation>Добавить виджет (ИИ-ассистент)</translation>
     </message>
@@ -43,7 +43,7 @@ Allow it to connect devices and send them commands until AI assistant access is 
         <translation>Изменить виджет (ИИ-ассистент)</translation>
     </message>
     <message>
-        <location line="+341"/>
+        <location line="+407"/>
         <source>New Project</source>
         <translation>Новый проект</translation>
     </message>
@@ -157,7 +157,7 @@ Allow it to connect devices and send them commands until AI assistant access is 
         <translation>ИИ-ассистент хочет стереть приложение и файлы %1. Затем устройство ждёт новую прошивку в режиме восстановления.</translation>
     </message>
     <message>
-        <location filename="../lib/core/agentpreferencetools.cpp" line="+349"/>
+        <location filename="../lib/core/agentpreferencetools.cpp" line="+354"/>
         <source>Delete Preset</source>
         <translation>Удалить набор</translation>
     </message>
@@ -280,29 +280,39 @@ Allow it to connect devices and send them commands until AI assistant access is 
         <translation>С анимацией</translation>
     </message>
     <message>
-        <location filename="../lib/core/appearancecatalog.cpp" line="+232"/>
+        <location filename="../lib/core/appearancecatalog.cpp" line="+248"/>
         <source>TraceView</source>
         <translation>TraceView</translation>
     </message>
     <message>
-        <location line="+2"/>
+        <location line="+3"/>
         <source>Lab</source>
         <translation>Лаборатория</translation>
     </message>
     <message>
-        <location line="+2"/>
+        <location line="+3"/>
         <source>Paper</source>
         <translation>Статья</translation>
     </message>
     <message>
-        <location line="+2"/>
+        <location line="+3"/>
         <source>HUD</source>
         <translation>HUD</translation>
     </message>
     <message>
-        <location line="+2"/>
+        <location line="+3"/>
         <source>Synthwave</source>
         <translation>Synthwave</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Console</source>
+        <translation>Консоль</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Terminal</source>
+        <translation>Терминал</translation>
     </message>
     <message>
         <location line="+3"/>
@@ -313,7 +323,7 @@ Allow it to connect devices and send them commands until AI assistant access is 
 <context>
     <name>ChartStyle</name>
     <message>
-        <location filename="../lib/dashboard/widgets/chartstyle.cpp" line="+128"/>
+        <location filename="../lib/dashboard/widgets/chartstyle.cpp" line="+180"/>
         <source>Engineering</source>
         <translation>Инженерный</translation>
     </message>
@@ -321,6 +331,16 @@ Allow it to connect devices and send them commands until AI assistant access is 
         <location line="+2"/>
         <source>Scientific</source>
         <translation>Научный</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Panel</source>
+        <translation>Пульт управления</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Retro</source>
+        <translation>Ретро</translation>
     </message>
     <message>
         <location line="+4"/>
@@ -331,13 +351,13 @@ Allow it to connect devices and send them commands until AI assistant access is 
 <context>
     <name>ChartWidgets</name>
     <message>
-        <location filename="../lib/dashboard/widgets/chartwidgets.cpp" line="+38"/>
+        <location filename="../lib/dashboard/widgets/chartwidgets.cpp" line="+42"/>
         <source>Field %1</source>
         <translation>Поле %1</translation>
     </message>
     <message>
         <location line="+9"/>
-        <location line="+569"/>
+        <location line="+592"/>
         <location line="+231"/>
         <source>--</source>
         <translation>--</translation>
@@ -349,11 +369,12 @@ Allow it to connect devices and send them commands until AI assistant access is 
     </message>
     <message>
         <location line="+6"/>
+        <location line="+1218"/>
         <source>%1  %2</source>
         <translation>%1  %2</translation>
     </message>
     <message>
-        <location line="+430"/>
+        <location line="-788"/>
         <source>A-B %1 s</source>
         <translation>A-B %1 с</translation>
     </message>
@@ -418,12 +439,12 @@ Allow it to connect devices and send them commands until AI assistant access is 
         <translation>пауза</translation>
     </message>
     <message>
-        <location line="-738"/>
+        <location line="-753"/>
         <source>%1: %2</source>
         <translation>%1: %2</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/chartpainting.cpp" line="+920"/>
+        <location filename="../lib/dashboard/widgets/chartpainting.cpp" line="+970"/>
         <source>Time (s)</source>
         <translation>Время (с)</translation>
     </message>
@@ -436,7 +457,7 @@ Allow it to connect devices and send them commands until AI assistant access is 
 <context>
     <name>ControlConfigEditor</name>
     <message>
-        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="+24"/>
+        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="+31"/>
         <source>Default</source>
         <translation>По умолчанию</translation>
     </message>
@@ -466,7 +487,17 @@ Allow it to connect devices and send them commands until AI assistant access is 
         <translation>Импульс (одна команда)</translation>
     </message>
     <message>
+        <location line="+7"/>
+        <source>App default</source>
+        <translation>Как в приложении</translation>
+    </message>
+    <message>
         <location line="+5"/>
+        <source>How this control is drawn. App default follows View &gt; Control Style.</source>
+        <translation>Как рисуется этот элемент. «Как в приложении» следует Вид &gt; Стиль элементов управления.</translation>
+    </message>
+    <message>
+        <location line="+25"/>
         <source>Continuous (while dragging)</source>
         <translation>Непрерывный (во время перетаскивания)</translation>
     </message>
@@ -474,6 +505,74 @@ Allow it to connect devices and send them commands until AI assistant access is 
         <location line="+1"/>
         <source>On release</source>
         <translation>При отпускании</translation>
+    </message>
+    <message>
+        <location line="+421"/>
+        <source>Red</source>
+        <translation>Красный</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Orange</source>
+        <translation>Оранжевый</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Yellow</source>
+        <translation>Жёлтый</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Green</source>
+        <translation>Зелёный</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Cyan</source>
+        <translation>Голубой</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Blue</source>
+        <translation>Синий</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Purple</source>
+        <translation>Фиолетовый</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>White</source>
+        <translation>Белый</translation>
+    </message>
+</context>
+<context>
+    <name>ControlStyle</name>
+    <message>
+        <location filename="../lib/dashboard/widgets/controlstyle.cpp" line="+35"/>
+        <source>Engineering</source>
+        <translation>Инженерный</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Scientific</source>
+        <translation>Научный</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Panel</source>
+        <translation>Пульт управления</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Retro</source>
+        <translation>Ретро</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Dashboard</source>
+        <translation>Панель</translation>
     </message>
 </context>
 <context>
@@ -634,7 +733,7 @@ Allow it to connect devices and send them commands until AI assistant access is 
 <context>
     <name>DiffDriveScene</name>
     <message>
-        <location filename="../lib/dashboard/scenes/diffdrivescene.cpp" line="+131"/>
+        <location filename="../lib/dashboard/scenes/diffdrivescene.cpp" line="+129"/>
         <source>Scale</source>
         <translation>Масштаб</translation>
     </message>
@@ -728,7 +827,7 @@ Allow it to connect devices and send them commands until AI assistant access is 
 <context>
     <name>FurutaScene</name>
     <message>
-        <location filename="../lib/dashboard/scenes/furutascene.cpp" line="+531"/>
+        <location filename="../lib/dashboard/scenes/furutascene.cpp" line="+526"/>
         <source>Arm length (L1)</source>
         <translation>Длина плеча (L1)</translation>
     </message>
@@ -1038,7 +1137,7 @@ Allow it to connect devices and send them commands until AI assistant access is 
 <context>
     <name>SceneWidget</name>
     <message>
-        <location filename="../lib/dashboard/scenes/scenewidget.cpp" line="+545"/>
+        <location filename="../lib/dashboard/scenes/scenewidget.cpp" line="+580"/>
         <source>Scene</source>
         <translation>Сцена</translation>
     </message>
@@ -1170,6 +1269,11 @@ Allow it to connect devices and send them commands until AI assistant access is 
         <location line="+6"/>
         <source>Slider</source>
         <translation>Ползунок</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>LED</source>
+        <translation>Светодиод</translation>
     </message>
 </context>
 <context>
@@ -2317,7 +2421,7 @@ Allowed: %1</source>
 <context>
     <name>traceview::DashboardCell</name>
     <message>
-        <location filename="../lib/dashboard/widgets/chartstyle.cpp" line="+476"/>
+        <location filename="../lib/dashboard/widgets/chartstyle.cpp" line="+505"/>
         <source>Sample rate</source>
         <translation>Частота выборки</translation>
     </message>
@@ -2550,6 +2654,21 @@ Allowed: %1</source>
         <location line="+2"/>
         <source>Number</source>
         <translation>Число</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Analog meter</source>
+        <translation>Стрелочный прибор</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Digital display</source>
+        <translation>Цифровой индикатор</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>LED bar</source>
+        <translation>Светодиодная шкала</translation>
     </message>
 </context>
 <context>
@@ -3465,6 +3584,165 @@ Allowed: %1</source>
     </message>
 </context>
 <context>
+    <name>traceview::LedConfigEditor</name>
+    <message>
+        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="+14"/>
+        <source>(auto)</source>
+        <translation>(авто)</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>Which field of the topic drives the LED -- pick one the device has reported, or type its numeric id.</source>
+        <translation>Какое поле топика управляет светодиодом -- выберите поле, о котором сообщило устройство, или введите его числовой id.</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Status</source>
+        <translation>Состояния</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>One color</source>
+        <translation>Один цвет</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>RGB from the field (0xRRGGBB)</source>
+        <translation>RGB из поля (0xRRGGBB)</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Value is not zero</source>
+        <translation>Значение не равно нулю</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Value is zero</source>
+        <translation>Значение равно нулю</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Value is above</source>
+        <translation>Значение выше порога</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Value is below</source>
+        <translation>Значение ниже порога</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>Blink while lit</source>
+        <translation>Мигать, когда горит</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <location line="+11"/>
+        <source> ms</source>
+        <translation> ms</translation>
+    </message>
+    <message>
+        <location line="-7"/>
+        <source>Shown while lit</source>
+        <translation>Показывается, когда горит</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Shown while off</source>
+        <translation>Показывается, когда не горит</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Requested update period.</source>
+        <translation>Запрошенный период обновления.</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Device</source>
+        <translation>Устройство</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Source</source>
+        <translation>Источник</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Topic</source>
+        <translation>Топик</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Field</source>
+        <translation>Поле</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Label</source>
+        <translation>Подпись</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Style</source>
+        <translation>Стиль</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Color mode</source>
+        <translation>Режим цвета</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Lit when</source>
+        <translation>Горит, когда</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Threshold</source>
+        <translation>Порог</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Color</source>
+        <translation>Цвет</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Blink period</source>
+        <translation>Период мигания</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>On text</source>
+        <translation>Текст «Вкл»</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Off text</source>
+        <translation>Текст «Выкл»</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Sample period</source>
+        <translation>Период выборки</translation>
+    </message>
+    <message>
+        <location line="+79"/>
+        <source>LED color</source>
+        <translation>Цвет светодиода</translation>
+    </message>
+    <message>
+        <location line="+144"/>
+        <source>Palette (success)</source>
+        <translation>Палитра (успех)</translation>
+    </message>
+    <message>
+        <location line="+15"/>
+        <source>Custom...</source>
+        <translation>Другой...</translation>
+    </message>
+</context>
+<context>
     <name>traceview::LogViewer</name>
     <message>
         <location filename="../lib/logs/logviewer.cpp" line="+47"/>
@@ -4365,7 +4643,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>(без имени)</translation>
     </message>
     <message>
-        <location filename="../lib/core/appearancecatalog.cpp" line="-149"/>
+        <location filename="../lib/core/appearancecatalog.cpp" line="-172"/>
         <source>&amp;Palette</source>
         <translation>&amp;Палитра</translation>
     </message>
@@ -4378,6 +4656,11 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <location line="+9"/>
         <source>&amp;Chart Style</source>
         <translation>&amp;Стиль графиков</translation>
+    </message>
+    <message>
+        <location line="+13"/>
+        <source>Contro&amp;l Style</source>
+        <translation>Стиль &amp;элементов управления</translation>
     </message>
     <message>
         <location line="+13"/>
@@ -4780,12 +5063,12 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     </message>
     <message>
         <location line="+5"/>
-        <location line="+179"/>
+        <location line="+217"/>
         <source>Keep the panel open</source>
         <translation>Не закрывать панель</translation>
     </message>
     <message>
-        <location line="-171"/>
+        <location line="-209"/>
         <source>Clear every notification</source>
         <translation>Очистить все уведомления</translation>
     </message>
@@ -4830,12 +5113,40 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>Рядом с панелью (уменьшает её)</translation>
     </message>
     <message>
-        <location line="+2"/>
+        <location line="+3"/>
+        <source>Delete automatically</source>
+        <translation>Удалять автоматически</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Never</source>
+        <translation>Никогда</translation>
+    </message>
+    <message numerus="yes">
+        <location line="+1"/>
+        <source>After %n min</source>
+        <translation>
+            <numerusform>Через %n мин</numerusform>
+            <numerusform>Через %n мин</numerusform>
+            <numerusform>Через %n мин</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location line="+1"/>
+        <source>After %n s</source>
+        <translation>
+            <numerusform>Через %n с</numerusform>
+            <numerusform>Через %n с</numerusform>
+            <numerusform>Через %n с</numerusform>
+        </translation>
+    </message>
+    <message>
+        <location line="+18"/>
         <source>Full history…</source>
         <translation>Полная история…</translation>
     </message>
     <message>
-        <location line="+36"/>
+        <location line="+50"/>
         <source>Close</source>
         <translation>Закрыть</translation>
     </message>
@@ -5677,7 +5988,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
 <context>
     <name>traceview::PushButtonConfigEditor</name>
     <message>
-        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="+7"/>
+        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="-743"/>
         <source>Which device this button&apos;s commands are sent to.</source>
         <translation>На какое устройство отправляются команды этой кнопки.</translation>
     </message>
@@ -5687,7 +5998,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>Кнопка</translation>
     </message>
     <message>
-        <location line="+8"/>
+        <location line="+10"/>
         <source>Momentary sends the press command on press and the release command on release. Pulse sends only the press command, once per click.</source>
         <translation>Кратковременный отправляет команду нажатия при нажатии и команду отпускания при отпускании. Импульс отправляет только команду нажатия, один раз за клик.</translation>
     </message>
@@ -5750,6 +6061,11 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     </message>
     <message>
         <location line="+1"/>
+        <source>Color</source>
+        <translation>Цвет</translation>
+    </message>
+    <message>
+        <location line="+1"/>
         <source>Mode</source>
         <translation>Режим</translation>
     </message>
@@ -5787,8 +6103,8 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
 <context>
     <name>traceview::PushButtonWidget</name>
     <message>
-        <location filename="../lib/dashboard/widgets/controlwidgets.cpp" line="+92"/>
-        <location line="+22"/>
+        <location filename="../lib/dashboard/widgets/controlwidgets.cpp" line="+208"/>
+        <location line="+33"/>
         <source>Push Button</source>
         <translation>Кнопка</translation>
     </message>
@@ -6143,13 +6459,13 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     </message>
     <message>
         <location line="-357"/>
-        <location line="+441"/>
+        <location line="+453"/>
         <location line="+5"/>
         <source>Updates</source>
         <translation>Обновления</translation>
     </message>
     <message>
-        <location line="-421"/>
+        <location line="-433"/>
         <source>Project and startup preferences shared by the application.</source>
         <translation>Настройки проекта и запуска, общие для приложения.</translation>
     </message>
@@ -6189,7 +6505,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>Внешний вид приложения</translation>
     </message>
     <message>
-        <location filename="../lib/core/appearancecatalog.cpp" line="-77"/>
+        <location filename="../lib/core/appearancecatalog.cpp" line="-90"/>
         <source>Palette</source>
         <translation>Палитра</translation>
     </message>
@@ -6202,6 +6518,11 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <location line="+9"/>
         <source>Chart style</source>
         <translation>Стиль графиков</translation>
+    </message>
+    <message>
+        <location line="+13"/>
+        <source>Control style</source>
+        <translation>Стиль элементов управления</translation>
     </message>
     <message>
         <location line="+13"/>
@@ -6514,7 +6835,22 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>Закреплённая панель</translation>
     </message>
     <message>
-        <location line="+20"/>
+        <location line="+4"/>
+        <source> s</source>
+        <translation> с</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Each notification is deleted this many seconds after it arrived.</source>
+        <translation>Каждое уведомление удаляется через указанное число секунд после поступления.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Delete automatically after</source>
+        <translation>Удалять автоматически через</translation>
+    </message>
+    <message>
+        <location line="+24"/>
         <source>In-memory history</source>
         <translation>История в памяти</translation>
     </message>
@@ -6589,7 +6925,8 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>Последняя проверка</translation>
     </message>
     <message>
-        <location line="+6"/>
+        <location line="-92"/>
+        <location line="+98"/>
         <source>Never</source>
         <translation>Никогда</translation>
     </message>
@@ -6646,7 +6983,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
 <context>
     <name>traceview::SliderConfigEditor</name>
     <message>
-        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="+190"/>
+        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="+199"/>
         <source>Which device this slider&apos;s commands are sent to.</source>
         <translation>На какое устройство отправляются команды этого ползунка.</translation>
     </message>
@@ -6656,7 +6993,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>Ползунок</translation>
     </message>
     <message>
-        <location line="+23"/>
+        <location line="+25"/>
         <source>V, %, ...</source>
         <translation>V, %, ...</translation>
     </message>
@@ -6699,6 +7036,11 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <location line="+1"/>
         <source>Label</source>
         <translation>Подпись</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Style</source>
+        <translation>Стиль</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -6818,7 +7160,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
 <context>
     <name>traceview::ToggleSwitchConfigEditor</name>
     <message>
-        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="-150"/>
+        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="-159"/>
         <source>Which device this toggle&apos;s commands are sent to.</source>
         <translation>На какое устройство отправляются команды этого переключателя.</translation>
     </message>
@@ -6828,7 +7170,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>Переключатель</translation>
     </message>
     <message>
-        <location line="+3"/>
+        <location line="+5"/>
         <source>ON</source>
         <translation>ВКЛ</translation>
     </message>
@@ -6869,6 +7211,11 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     </message>
     <message>
         <location line="+1"/>
+        <source>Style</source>
+        <translation>Стиль</translation>
+    </message>
+    <message>
+        <location line="+1"/>
         <source>On text</source>
         <translation>Текст «Вкл»</translation>
     </message>
@@ -6886,6 +7233,19 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <location line="+1"/>
         <source>Off command</source>
         <translation>Команда «Выкл»</translation>
+    </message>
+</context>
+<context>
+    <name>traceview::ToggleSwitchWidget</name>
+    <message>
+        <location filename="../lib/dashboard/widgets/controlwidgets.cpp" line="+167"/>
+        <source>off</source>
+        <translation>выкл</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>on</source>
+        <translation>вкл</translation>
     </message>
 </context>
 <context>

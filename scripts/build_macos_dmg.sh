@@ -45,5 +45,17 @@ ln -s /Applications "$staging/Applications"
 
 dmg="$build_dir/TraceView-$version-macos-arm64.dmg"
 rm -f "$dmg"
-hdiutil create -volname "TraceView $version" -srcfolder "$staging" -ov -format UDZO "$dmg"
-echo "Wrote $dmg"
+# hdiutil on GitHub's macOS runners now and then fails with "create failed -
+# Resource busy" (a disk image service still holding the last one); it
+# goes through on a later try. v4.16.0's release run died on it.
+for attempt in 1 2 3 4 5; do
+    if hdiutil create -volname "TraceView $version" -srcfolder "$staging" -ov -format UDZO "$dmg"; then
+        echo "Wrote $dmg"
+        exit 0
+    fi
+    echo "hdiutil create failed (attempt $attempt of 5); retrying" >&2
+    rm -f "$dmg"
+    sleep $((attempt * 10))
+done
+echo "hdiutil create kept failing" >&2
+exit 1

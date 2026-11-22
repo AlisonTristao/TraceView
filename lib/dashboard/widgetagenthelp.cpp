@@ -66,16 +66,29 @@ QString widgetAgentHelp(const QString& typeId) {
              "Button that sends a text command to a device. deviceId, label, variant "
              "default|success|warning|danger, mode momentary|pulse, onPress, onRelease "
              "(command text), repeatWhileHeld bool, repeatIntervalMs, longPress: {enabled, "
-             "thresholdMs, command}, debounceMs, confirmBeforeSend bool.")},
+             "thresholdMs, command}, debounceMs, confirmBeforeSend bool. style "
+             "app|dashboard|engineering|scientific|panel|retro (app = View > Control Style).")},
         {"toggle_switch",
-         QStringLiteral("On/off switch that sends a command on each change. deviceId, label, "
-                        "onLabel, offLabel, defaultState bool, onCommand, offCommand, "
-                        "confirmBeforeToggle bool.")},
+         QStringLiteral(
+             "On/off switch that sends a command on each change. deviceId, label, "
+             "onLabel, offLabel, defaultState bool, onCommand, offCommand, "
+             "confirmBeforeToggle bool. style app|dashboard|engineering|scientific|panel|retro "
+             "(app = View > Control Style).")},
         {"slider",
          QStringLiteral(
              "Slider that sends its value to a device. deviceId, label, min, max, step, "
              "defaultValue, unit, showValue bool, sendMode continuous|onRelease, throttleMs, "
-             "commandTemplate (command text, {value} replaced by the slider value).")},
+             "commandTemplate (command text, {value} replaced by the slider value). style "
+             "app|dashboard|engineering|scientific|panel|retro (app = View > Control Style).")},
+        {"led", QString::fromLatin1(
+                    "Indicator lamp driven by one telemetry field. %1 fieldName/fieldId at the top "
+                    "level (no series). label, colorMode fixed|rgb (rgb: the field is a packed "
+                    "0xRRGGBB color, 0 = off), condition nonzero|zero|above|below with threshold "
+                    "(fixed mode), color \"#rrggbb\" (omit for the theme's success color), blink "
+                    "bool, blinkMs, onLabel, offLabel (state text under the lamp), sampleTimeMs."
+                    " style app|dashboard|engineering|scientific|panel|retro (app = View > Control "
+                    "Style).")
+                    .arg(QLatin1String(kBinding))},
     };
     return kHelp.value(typeId);
 }

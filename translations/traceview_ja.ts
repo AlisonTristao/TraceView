@@ -4,7 +4,7 @@
 <context>
     <name>AgentAppTools</name>
     <message>
-        <location filename="../lib/core/agentapptools.cpp" line="+222"/>
+        <location filename="../lib/core/agentapptools.cpp" line="+257"/>
         <source>AI Assistant</source>
         <translation>AI アシスタント</translation>
     </message>
@@ -33,7 +33,7 @@ AI アシスタントのアクセスをオフにするか TraceView を閉じる
         <translation>AI アシスタントがワークスペース「%1」を削除しようとしています。この操作は元に戻せません。</translation>
     </message>
     <message>
-        <location line="+63"/>
+        <location line="+71"/>
         <source>Add Widget (AI assistant)</source>
         <translation>ウィジェットを追加（AI アシスタント）</translation>
     </message>
@@ -43,7 +43,7 @@ AI アシスタントのアクセスをオフにするか TraceView を閉じる
         <translation>ウィジェットを編集（AI アシスタント）</translation>
     </message>
     <message>
-        <location line="+341"/>
+        <location line="+407"/>
         <source>New Project</source>
         <translation>新規プロジェクト</translation>
     </message>
@@ -157,7 +157,7 @@ AI アシスタントのアクセスをオフにするか TraceView を閉じる
         <translation>AI アシスタントが %1 のアプリケーションとファイルを消去しようとしています。その後、新しいファームウェアを待ってリカバリーで待機します。</translation>
     </message>
     <message>
-        <location filename="../lib/core/agentpreferencetools.cpp" line="+349"/>
+        <location filename="../lib/core/agentpreferencetools.cpp" line="+354"/>
         <source>Delete Preset</source>
         <translation>プリセットを削除</translation>
     </message>
@@ -280,29 +280,39 @@ AI アシスタントのアクセスをオフにするか TraceView を閉じる
         <translation>アニメーション</translation>
     </message>
     <message>
-        <location filename="../lib/core/appearancecatalog.cpp" line="+232"/>
+        <location filename="../lib/core/appearancecatalog.cpp" line="+248"/>
         <source>TraceView</source>
         <translation>TraceView</translation>
     </message>
     <message>
-        <location line="+2"/>
+        <location line="+3"/>
         <source>Lab</source>
         <translation>ラボ</translation>
     </message>
     <message>
-        <location line="+2"/>
+        <location line="+3"/>
         <source>Paper</source>
         <translation>論文</translation>
     </message>
     <message>
-        <location line="+2"/>
+        <location line="+3"/>
         <source>HUD</source>
         <translation>HUD</translation>
     </message>
     <message>
-        <location line="+2"/>
+        <location line="+3"/>
         <source>Synthwave</source>
         <translation>Synthwave</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Console</source>
+        <translation>コンソール</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Terminal</source>
+        <translation>ターミナル</translation>
     </message>
     <message>
         <location line="+3"/>
@@ -313,7 +323,7 @@ AI アシスタントのアクセスをオフにするか TraceView を閉じる
 <context>
     <name>ChartStyle</name>
     <message>
-        <location filename="../lib/dashboard/widgets/chartstyle.cpp" line="+128"/>
+        <location filename="../lib/dashboard/widgets/chartstyle.cpp" line="+180"/>
         <source>Engineering</source>
         <translation>エンジニアリング</translation>
     </message>
@@ -321,6 +331,16 @@ AI アシスタントのアクセスをオフにするか TraceView を閉じる
         <location line="+2"/>
         <source>Scientific</source>
         <translation>サイエンス</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Panel</source>
+        <translation>操作パネル</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Retro</source>
+        <translation>レトロ</translation>
     </message>
     <message>
         <location line="+4"/>
@@ -331,13 +351,13 @@ AI アシスタントのアクセスをオフにするか TraceView を閉じる
 <context>
     <name>ChartWidgets</name>
     <message>
-        <location filename="../lib/dashboard/widgets/chartwidgets.cpp" line="+38"/>
+        <location filename="../lib/dashboard/widgets/chartwidgets.cpp" line="+42"/>
         <source>Field %1</source>
         <translation>フィールド %1</translation>
     </message>
     <message>
         <location line="+9"/>
-        <location line="+569"/>
+        <location line="+592"/>
         <location line="+231"/>
         <source>--</source>
         <translation>--</translation>
@@ -349,11 +369,12 @@ AI アシスタントのアクセスをオフにするか TraceView を閉じる
     </message>
     <message>
         <location line="+6"/>
+        <location line="+1218"/>
         <source>%1  %2</source>
         <translation>%1  %2</translation>
     </message>
     <message>
-        <location line="+430"/>
+        <location line="-788"/>
         <source>A-B %1 s</source>
         <translation>A-B %1 s</translation>
     </message>
@@ -418,12 +439,12 @@ AI アシスタントのアクセスをオフにするか TraceView を閉じる
         <translation>一時停止中</translation>
     </message>
     <message>
-        <location line="-738"/>
+        <location line="-753"/>
         <source>%1: %2</source>
         <translation>%1: %2</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/chartpainting.cpp" line="+920"/>
+        <location filename="../lib/dashboard/widgets/chartpainting.cpp" line="+970"/>
         <source>Time (s)</source>
         <translation>時間 (s)</translation>
     </message>
@@ -436,7 +457,7 @@ AI アシスタントのアクセスをオフにするか TraceView を閉じる
 <context>
     <name>ControlConfigEditor</name>
     <message>
-        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="+24"/>
+        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="+31"/>
         <source>Default</source>
         <translation>デフォルト</translation>
     </message>
@@ -466,7 +487,17 @@ AI アシスタントのアクセスをオフにするか TraceView を閉じる
         <translation>パルス(単一コマンド)</translation>
     </message>
     <message>
+        <location line="+7"/>
+        <source>App default</source>
+        <translation>アプリの既定</translation>
+    </message>
+    <message>
         <location line="+5"/>
+        <source>How this control is drawn. App default follows View &gt; Control Style.</source>
+        <translation>このコントロールの描画方法。「アプリの既定」は 表示 &gt; コントロールのスタイル に従います。</translation>
+    </message>
+    <message>
+        <location line="+25"/>
         <source>Continuous (while dragging)</source>
         <translation>連続(ドラッグ中)</translation>
     </message>
@@ -474,6 +505,74 @@ AI アシスタントのアクセスをオフにするか TraceView を閉じる
         <location line="+1"/>
         <source>On release</source>
         <translation>離したとき</translation>
+    </message>
+    <message>
+        <location line="+421"/>
+        <source>Red</source>
+        <translation>赤</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Orange</source>
+        <translation>オレンジ</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Yellow</source>
+        <translation>黄</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Green</source>
+        <translation>緑</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Cyan</source>
+        <translation>シアン</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Blue</source>
+        <translation>青</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Purple</source>
+        <translation>紫</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>White</source>
+        <translation>白</translation>
+    </message>
+</context>
+<context>
+    <name>ControlStyle</name>
+    <message>
+        <location filename="../lib/dashboard/widgets/controlstyle.cpp" line="+35"/>
+        <source>Engineering</source>
+        <translation>エンジニアリング</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Scientific</source>
+        <translation>サイエンス</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Panel</source>
+        <translation>操作パネル</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Retro</source>
+        <translation>レトロ</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Dashboard</source>
+        <translation>ダッシュボード</translation>
     </message>
 </context>
 <context>
@@ -634,7 +733,7 @@ AI アシスタントのアクセスをオフにするか TraceView を閉じる
 <context>
     <name>DiffDriveScene</name>
     <message>
-        <location filename="../lib/dashboard/scenes/diffdrivescene.cpp" line="+131"/>
+        <location filename="../lib/dashboard/scenes/diffdrivescene.cpp" line="+129"/>
         <source>Scale</source>
         <translation>スケール</translation>
     </message>
@@ -728,7 +827,7 @@ AI アシスタントのアクセスをオフにするか TraceView を閉じる
 <context>
     <name>FurutaScene</name>
     <message>
-        <location filename="../lib/dashboard/scenes/furutascene.cpp" line="+531"/>
+        <location filename="../lib/dashboard/scenes/furutascene.cpp" line="+526"/>
         <source>Arm length (L1)</source>
         <translation>アームの長さ (L1)</translation>
     </message>
@@ -1038,7 +1137,7 @@ AI アシスタントのアクセスをオフにするか TraceView を閉じる
 <context>
     <name>SceneWidget</name>
     <message>
-        <location filename="../lib/dashboard/scenes/scenewidget.cpp" line="+545"/>
+        <location filename="../lib/dashboard/scenes/scenewidget.cpp" line="+580"/>
         <source>Scene</source>
         <translation>シーン</translation>
     </message>
@@ -1170,6 +1269,11 @@ AI アシスタントのアクセスをオフにするか TraceView を閉じる
         <location line="+6"/>
         <source>Slider</source>
         <translation>スライダー</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>LED</source>
+        <translation>LED</translation>
     </message>
 </context>
 <context>
@@ -2315,7 +2419,7 @@ Allowed: %1</source>
 <context>
     <name>traceview::DashboardCell</name>
     <message>
-        <location filename="../lib/dashboard/widgets/chartstyle.cpp" line="+476"/>
+        <location filename="../lib/dashboard/widgets/chartstyle.cpp" line="+505"/>
         <source>Sample rate</source>
         <translation>サンプリングレート</translation>
     </message>
@@ -2548,6 +2652,21 @@ Allowed: %1</source>
         <location line="+2"/>
         <source>Number</source>
         <translation>数値</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Analog meter</source>
+        <translation>アナログメーター</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Digital display</source>
+        <translation>デジタル表示</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>LED bar</source>
+        <translation>LED バー</translation>
     </message>
 </context>
 <context>
@@ -3463,6 +3582,165 @@ Allowed: %1</source>
     </message>
 </context>
 <context>
+    <name>traceview::LedConfigEditor</name>
+    <message>
+        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="+14"/>
+        <source>(auto)</source>
+        <translation>(自動)</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>Which field of the topic drives the LED -- pick one the device has reported, or type its numeric id.</source>
+        <translation>LED を駆動するトピックのフィールド -- デバイスが報告したものを選ぶか、数値 ID を入力します。</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Status</source>
+        <translation>ステータス</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>One color</source>
+        <translation>単色</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>RGB from the field (0xRRGGBB)</source>
+        <translation>フィールドの RGB (0xRRGGBB)</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Value is not zero</source>
+        <translation>値がゼロでない</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Value is zero</source>
+        <translation>値がゼロ</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Value is above</source>
+        <translation>値がしきい値より上</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Value is below</source>
+        <translation>値がしきい値より下</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>Blink while lit</source>
+        <translation>点灯中は点滅</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <location line="+11"/>
+        <source> ms</source>
+        <translation> ms</translation>
+    </message>
+    <message>
+        <location line="-7"/>
+        <source>Shown while lit</source>
+        <translation>点灯中に表示</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Shown while off</source>
+        <translation>消灯中に表示</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Requested update period.</source>
+        <translation>要求する更新周期。</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Device</source>
+        <translation>デバイス</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Source</source>
+        <translation>ソース</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Topic</source>
+        <translation>トピック</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Field</source>
+        <translation>フィールド</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Label</source>
+        <translation>ラベル</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Style</source>
+        <translation>スタイル</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Color mode</source>
+        <translation>色モード</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Lit when</source>
+        <translation>点灯条件</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Threshold</source>
+        <translation>しきい値</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Color</source>
+        <translation>色</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Blink period</source>
+        <translation>点滅周期</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>On text</source>
+        <translation>ON 時のテキスト</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Off text</source>
+        <translation>OFF 時のテキスト</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Sample period</source>
+        <translation>サンプル周期</translation>
+    </message>
+    <message>
+        <location line="+79"/>
+        <source>LED color</source>
+        <translation>LED の色</translation>
+    </message>
+    <message>
+        <location line="+144"/>
+        <source>Palette (success)</source>
+        <translation>パレット (成功)</translation>
+    </message>
+    <message>
+        <location line="+15"/>
+        <source>Custom...</source>
+        <translation>カスタム...</translation>
+    </message>
+</context>
+<context>
     <name>traceview::LogViewer</name>
     <message>
         <location filename="../lib/logs/logviewer.cpp" line="+47"/>
@@ -4361,7 +4639,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>(名前なし)</translation>
     </message>
     <message>
-        <location filename="../lib/core/appearancecatalog.cpp" line="-149"/>
+        <location filename="../lib/core/appearancecatalog.cpp" line="-172"/>
         <source>&amp;Palette</source>
         <translation>パレット(&amp;P)</translation>
     </message>
@@ -4374,6 +4652,11 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <location line="+9"/>
         <source>&amp;Chart Style</source>
         <translation>グラフのスタイル(&amp;C)</translation>
+    </message>
+    <message>
+        <location line="+13"/>
+        <source>Contro&amp;l Style</source>
+        <translation>コントロールのスタイル(&amp;L)</translation>
     </message>
     <message>
         <location line="+13"/>
@@ -4774,12 +5057,12 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     </message>
     <message>
         <location line="+5"/>
-        <location line="+179"/>
+        <location line="+217"/>
         <source>Keep the panel open</source>
         <translation>パネルを開いたままにする</translation>
     </message>
     <message>
-        <location line="-171"/>
+        <location line="-209"/>
         <source>Clear every notification</source>
         <translation>すべての通知を消去</translation>
     </message>
@@ -4824,12 +5107,36 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>ダッシュボードの横（縮小します）</translation>
     </message>
     <message>
-        <location line="+2"/>
+        <location line="+3"/>
+        <source>Delete automatically</source>
+        <translation>自動削除</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Never</source>
+        <translation>しない</translation>
+    </message>
+    <message numerus="yes">
+        <location line="+1"/>
+        <source>After %n min</source>
+        <translation>
+            <numerusform>%n 分後</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location line="+1"/>
+        <source>After %n s</source>
+        <translation>
+            <numerusform>%n 秒後</numerusform>
+        </translation>
+    </message>
+    <message>
+        <location line="+18"/>
         <source>Full history…</source>
         <translation>全履歴…</translation>
     </message>
     <message>
-        <location line="+36"/>
+        <location line="+50"/>
         <source>Close</source>
         <translation>閉じる</translation>
     </message>
@@ -5671,7 +5978,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
 <context>
     <name>traceview::PushButtonConfigEditor</name>
     <message>
-        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="+7"/>
+        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="-743"/>
         <source>Which device this button&apos;s commands are sent to.</source>
         <translation>このボタンのコマンドの送信先デバイス。</translation>
     </message>
@@ -5681,7 +5988,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>ボタン</translation>
     </message>
     <message>
-        <location line="+8"/>
+        <location line="+10"/>
         <source>Momentary sends the press command on press and the release command on release. Pulse sends only the press command, once per click.</source>
         <translation>瞬間動作は押した時に押下コマンドを、離した時に解放コマンドを送信します。パルスはクリックごとに押下コマンドのみを1回送信します。</translation>
     </message>
@@ -5744,6 +6051,11 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     </message>
     <message>
         <location line="+1"/>
+        <source>Color</source>
+        <translation>色</translation>
+    </message>
+    <message>
+        <location line="+1"/>
         <source>Mode</source>
         <translation>モード</translation>
     </message>
@@ -5781,8 +6093,8 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
 <context>
     <name>traceview::PushButtonWidget</name>
     <message>
-        <location filename="../lib/dashboard/widgets/controlwidgets.cpp" line="+92"/>
-        <location line="+22"/>
+        <location filename="../lib/dashboard/widgets/controlwidgets.cpp" line="+208"/>
+        <location line="+33"/>
         <source>Push Button</source>
         <translation>プッシュボタン</translation>
     </message>
@@ -6137,13 +6449,13 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     </message>
     <message>
         <location line="-357"/>
-        <location line="+441"/>
+        <location line="+453"/>
         <location line="+5"/>
         <source>Updates</source>
         <translation>アップデート</translation>
     </message>
     <message>
-        <location line="-421"/>
+        <location line="-433"/>
         <source>Project and startup preferences shared by the application.</source>
         <translation>アプリケーション全体で共有されるプロジェクトと起動の設定。</translation>
     </message>
@@ -6183,7 +6495,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>アプリケーションの外観</translation>
     </message>
     <message>
-        <location filename="../lib/core/appearancecatalog.cpp" line="-77"/>
+        <location filename="../lib/core/appearancecatalog.cpp" line="-90"/>
         <source>Palette</source>
         <translation>パレット</translation>
     </message>
@@ -6196,6 +6508,11 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <location line="+9"/>
         <source>Chart style</source>
         <translation>グラフのスタイル</translation>
+    </message>
+    <message>
+        <location line="+13"/>
+        <source>Control style</source>
+        <translation>コントロールのスタイル</translation>
     </message>
     <message>
         <location line="+13"/>
@@ -6506,7 +6823,22 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>固定したパネル</translation>
     </message>
     <message>
-        <location line="+20"/>
+        <location line="+4"/>
+        <source> s</source>
+        <translation> 秒</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Each notification is deleted this many seconds after it arrived.</source>
+        <translation>各通知は届いてからこの秒数が経つと削除されます。</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Delete automatically after</source>
+        <translation>自動削除までの時間</translation>
+    </message>
+    <message>
+        <location line="+24"/>
         <source>In-memory history</source>
         <translation>メモリ内の履歴</translation>
     </message>
@@ -6581,7 +6913,8 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>最終確認</translation>
     </message>
     <message>
-        <location line="+6"/>
+        <location line="-92"/>
+        <location line="+98"/>
         <source>Never</source>
         <translation>なし</translation>
     </message>
@@ -6638,7 +6971,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
 <context>
     <name>traceview::SliderConfigEditor</name>
     <message>
-        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="+190"/>
+        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="+199"/>
         <source>Which device this slider&apos;s commands are sent to.</source>
         <translation>このスライダーのコマンドの送信先デバイス。</translation>
     </message>
@@ -6648,7 +6981,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>スライダー</translation>
     </message>
     <message>
-        <location line="+23"/>
+        <location line="+25"/>
         <source>V, %, ...</source>
         <translation>V, %, ...</translation>
     </message>
@@ -6691,6 +7024,11 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <location line="+1"/>
         <source>Label</source>
         <translation>ラベル</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Style</source>
+        <translation>スタイル</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -6810,7 +7148,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
 <context>
     <name>traceview::ToggleSwitchConfigEditor</name>
     <message>
-        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="-150"/>
+        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="-159"/>
         <source>Which device this toggle&apos;s commands are sent to.</source>
         <translation>このトグルのコマンドの送信先デバイス。</translation>
     </message>
@@ -6820,7 +7158,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>トグル</translation>
     </message>
     <message>
-        <location line="+3"/>
+        <location line="+5"/>
         <source>ON</source>
         <translation>ON</translation>
     </message>
@@ -6861,6 +7199,11 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     </message>
     <message>
         <location line="+1"/>
+        <source>Style</source>
+        <translation>スタイル</translation>
+    </message>
+    <message>
+        <location line="+1"/>
         <source>On text</source>
         <translation>ON 時のテキスト</translation>
     </message>
@@ -6878,6 +7221,19 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <location line="+1"/>
         <source>Off command</source>
         <translation>OFF コマンド</translation>
+    </message>
+</context>
+<context>
+    <name>traceview::ToggleSwitchWidget</name>
+    <message>
+        <location filename="../lib/dashboard/widgets/controlwidgets.cpp" line="+167"/>
+        <source>off</source>
+        <translation>オフ</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>on</source>
+        <translation>オン</translation>
     </message>
 </context>
 <context>

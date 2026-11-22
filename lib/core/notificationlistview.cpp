@@ -211,6 +211,30 @@ NotificationListView::NotificationListView(NotificationLog* log, bool showPin, Q
     auto* pinGroup = new QActionGroup(menu);
     QAction* pinOverlay = menu->addAction(tr("Over the dashboard"));
     QAction* pinPush = menu->addAction(tr("Beside the dashboard (shrinks it)"));
+    // Auto-delete: presets here; Settings > Diagnostics takes any number of
+    // seconds, and a value set there shows as its own checked entry.
+    menu->addSection(tr("Delete automatically"));
+    auto* ageGroup = new QActionGroup(menu);
+    const auto ageLabel = [this](int seconds) {
+        if (seconds <= 0) return tr("Never");
+        if (seconds % 60 == 0) return tr("After %n min", nullptr, seconds / 60);
+        return tr("After %n s", nullptr, seconds);
+    };
+    QList<QAction*> ageActions;
+    for (const int seconds : {0, 10, 30, 60, 300}) {
+        QAction* action = menu->addAction(ageLabel(seconds));
+        action->setData(seconds);
+        ageActions.append(action);
+    }
+    QAction* ageCustom = menu->addAction(QString());
+    ageActions.append(ageCustom);
+    for (QAction* action : ageActions) {
+        action->setCheckable(true);
+        ageGroup->addAction(action);
+        connect(action, &QAction::triggered, this, [action] {
+            AppSettings::instance().setNotificationAutoDeleteSeconds(action->data().toInt());
+        });
+    }
     menu->addSeparator();
     QAction* history = menu->addAction(tr("Full history\xE2\x80\xA6"));
     for (QAction* action : {popupAll, popupBell, errorPopups, pinOverlay, pinPush}) action->setCheckable(true);
@@ -230,6 +254,20 @@ NotificationListView::NotificationListView(NotificationLog* log, bool showPin, Q
         const bool push = settings.notificationPinStyle() == AppSettings::NotificationPinStyle::Push;
         pinPush->setChecked(push);
         pinOverlay->setChecked(!push);
+        const int age = settings.notificationAutoDeleteSeconds();
+        bool preset = false;
+        for (QAction* action : ageActions) {
+            if (action != ageCustom && action->data().toInt() == age) {
+                action->setChecked(true);
+                preset = true;
+            }
+        }
+        ageCustom->setVisible(!preset);
+        if (!preset) {
+            ageCustom->setText(ageLabel(age));
+            ageCustom->setData(age);
+            ageCustom->setChecked(true);
+        }
     });
     connect(popupAll, &QAction::triggered, this, [] {
         AppSettings::instance().setNotificationPopups(AppSettings::NotificationPopups::All);

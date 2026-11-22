@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QByteArray>
+#include <QColor>
 #include <QHash>
 #include <QList>
 #include <QPointF>
@@ -72,6 +73,22 @@ struct SceneFrame {
     QHash<QString, QVector<double>> arrays;
 };
 
+// The colors a scene draws with, taken from the app's palette by the widget
+// (on the GUI thread) and handed to paint() with the view, so a scene follows
+// the theme -- dark ink on a light page, light lines on a dark one. The
+// defaults are the original black-on-white drawing.
+struct SceneColors {
+    QColor paper = QColor(255, 255, 255);  // background and solid fills
+    QColor ink = QColor(0, 0, 0);          // outlines, labels, arrows
+    QColor guide = QColor(85, 85, 85);     // dashed guides
+    QColor trail = QColor(120, 120, 120);  // motion trails
+    QColor skyTop = QColor(252, 253, 255);  // backdrop gradient
+    QColor skyBottom = QColor(221, 227, 235);
+    QColor stage = QColor(255, 255, 255);  // lit floor under the machine
+    QColor shadow = QColor(40, 50, 70);    // cast shadows (drawn faint)
+    QColor accent = QColor(46, 111, 224);
+};
+
 // The camera the widget owns: the pixel size of the drawing area, and the
 // user's zoom (mouse wheel, 1 = the scene's own scale) and pan (drag, in
 // pixels). Each scene maps its world into this with its own projection.
@@ -81,6 +98,7 @@ struct SceneView {
     QPointF pan;
     // Frames the widget painted over the last second.
     double renderFps = 0.0;
+    SceneColors colors;
 };
 
 // An action a key asks for, sent to the bound plant (sim.disturb...).

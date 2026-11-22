@@ -100,7 +100,7 @@ TraceView (the running window)      lib/agent/agentbridgeserver.cpp
 | State | `get_app_state` (version, project, workspaces, devices, layout), `screenshot` (dashboard, window or one widget) |
 | Telemetry | `list_signals` (each device's topics and fields), `read_signal` (recent samples and stats of a plotted field), `get_subscriptions` (requested/granted rates, what the device publishes) |
 | Workspaces | `get_workspace`, `create_workspace`, `switch_workspace`, `update_workspace`, `delete_workspace`¹ |
-| Widgets | `list_widget_types` (config shape of each type), `add_widget`, `update_widget`, `remove_widgets`, `arrange_widget` (stacking), `group_widgets`, `ungroup_widgets`, `select_widget` |
+| Widgets | `list_widget_types` (config shape and layout hints of each type), `add_widget`, `update_widget`, `remove_widgets`, `arrange_widget` (stacking), `group_widgets`, `ungroup_widgets`, `select_widget`, `check_layout` (reviews sizes, overlaps and alignment, suggests fixes; see [LAYOUT.md](LAYOUT.md)) |
 | Dashboard view | `set_layout` (large/medium/small), `resize_canvas`, `set_grid_precision` (1×/2×/4× snap lines per cell), `set_edit_mode`, `show_view` (dashboard, devices, subscriptions, OTA, BTP monitor, notifications, settings), `undo`/`redo` (dashboard or device history) |
 | Project | `list_projects` (open file, recent, gallery), `save_project`, `new_project`¹, `open_project`¹, `clear_recent_projects`, `open_gallery_dashboard`¹, `save_to_gallery`, `set_gallery_default`, `rename_gallery_dashboard`, `export_gallery_dashboard`³, `delete_gallery_dashboard`¹ |
 | Devices | `get_device`, `add_device`², `update_device`², `remove_device`, `connect_device`², `list_ports` (serial, USB HID, hub robots, BLE scan) |

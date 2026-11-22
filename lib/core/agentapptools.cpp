@@ -20,6 +20,7 @@
 #include "core/mainwindow.h"
 #include "core/ribbon.h"
 #include "dashboard/dashboardgrid.h"
+#include "dashboard/layoutadvisor.h"
 #include "dashboard/widgetagenthelp.h"
 #include "dashboard/widgetconfigeditor.h"
 #include "dashboard/widgetregistry.h"
@@ -94,6 +95,40 @@ QJsonObject widgetToJson(const DashboardItem& item) {
         {"id", item.id},           {"type", item.typeId},   {"name", item.name},
         {"key", item.key},         {"config", item.config}, {"layouts", layouts},
         {"groupId", item.groupId},
+    };
+}
+
+// The canvas size, in pixels, one page of `breakpoint` is laid out in:
+// the grid's own while it shows that layout, else a typical screen for it
+// (a laptop window, a tablet, a phone).
+QSizeF layoutCanvasSize(const DashboardGrid* grid, DashboardBreakpoint breakpoint) {
+    if (grid && grid->currentBreakpoint() == breakpoint && grid->width() > 0 &&
+        grid->height() > 0) {
+        const double pages = qMax(1.0, grid->canvasPages(breakpoint));
+        return QSizeF(grid->width(), grid->height() / pages);
+    }
+    switch (breakpoint) {
+        case DashboardBreakpoint::Small:
+            return QSizeF(390, 760);
+        case DashboardBreakpoint::Medium:
+            return QSizeF(820, 1100);
+        case DashboardBreakpoint::Large:
+            break;
+    }
+    return QSizeF(1280, 720);
+}
+
+QSizeF layoutCellSize(const QSizeF& canvas, DashboardBreakpoint breakpoint) {
+    return QSizeF(canvas.width() / DashboardGrid::gridColumns(breakpoint),
+                  canvas.height() / DashboardGrid::gridRowsPerPage(breakpoint));
+}
+
+QJsonObject pixelsToCells(const QRectF& rect, const QSizeF& cell) {
+    return QJsonObject{
+        {"col", round2(rect.x() / cell.width())},
+        {"row", round2(rect.y() / cell.height())},
+        {"cols", round2(rect.width() / cell.width())},
+        {"rows", round2(rect.height() / cell.height())},
     };
 }
 
@@ -607,14 +642,22 @@ void AgentAppTools::registerWidgetTools(MainWindow* window, ToolRegistry* regist
     types.title = "List widget types";
     types.readOnly = true;
     types.description =
-        "Every widget type add_widget can place, with what it shows and the exact shape of "
-        "its config.";
-    types.handler = [](const QJsonObject&, const AgentToolReply& reply) {
+        "Every widget type add_widget can place, with what it shows, the exact shape of its "
+        "config and its layout hints: min/ideal/max size (pixels, and cells of the current "
+        "layout), aspect range, whether it may sit on another widget (canOverlay) or take "
+        "one on top inside its freeZones (fractions of its rect), and areas to keep clear. "
+        "Gauge hints are for the default ring; other shapes differ, check_layout knows them.";
+    types.handler = [window](const QJsonObject&, const AgentToolReply& reply) {
+        const DashboardGrid* grid = window->m_dashboardGrid;
+        const DashboardBreakpoint breakpoint = grid->currentBreakpoint();
+        const QSizeF cell = layoutCellSize(layoutCanvasSize(grid, breakpoint), breakpoint);
         QJsonArray list;
         for (const WidgetTypeInfo& info : WidgetRegistry::instance().availableTypes()) {
-            list.append(QJsonObject{{"type", info.typeId},
-                                    {"name", info.displayName},
-                                    {"config", widgetAgentHelp(info.typeId)}});
+            list.append(QJsonObject{
+                {"type", info.typeId},
+                {"name", info.displayName},
+                {"config", widgetAgentHelp(info.typeId)},
+                {"layout", widgetLayoutHintsJson(widgetLayoutHints(info.typeId, {}), cell)}});
         }
         reply(AgentToolResult::json(QJsonObject{{"types", list}}));
     };
@@ -822,6 +865,72 @@ void AgentAppTools::registerDashboardViewTools(MainWindow* window, ToolRegistry*
                                                               : QStringLiteral("Edit mode off.")));
     };
     registry->registerTool(editMode);
+
+    AgentTool check;
+    check.name = "check_layout";
+    check.title = "Check layout";
+    check.readOnly = true;
+    check.description =
+        "Reviews the active workspace's layout against each widget's layout hints "
+        "(list_widget_types): widgets too small or with empty room past their maximum (a "
+        "giant button), a wrong aspect, overlaps (only small controls and LEDs may sit on a "
+        "widget, inside its free zones), controls in a row that almost line up, widgets past "
+        "the canvas. Each issue comes with a suggested layout in cells when there is one, and "
+        "the free overlay spots still unused are listed. Run it after placing widgets and fix "
+        "until it reports no problems.";
+    check.inputSchema =
+        AgentSchema()
+            .string("layout", "Screen-size layout to check; defaults to the one showing.", false,
+                    {"large", "medium", "small"})
+            .toJson();
+    check.handler = [window](const QJsonObject& args, const AgentToolReply& reply) {
+        const DashboardGrid* grid = window->m_dashboardGrid;
+        const DashboardBreakpoint breakpoint =
+            args.contains("layout") ? breakpointFromString(args.value("layout").toString())
+                                    : grid->currentBreakpoint();
+        const QSizeF canvas = layoutCanvasSize(grid, breakpoint);
+        const QSizeF cell = layoutCellSize(canvas, breakpoint);
+        QVector<LayoutReviewItem> items;
+        QHash<QString, QString> names;
+        for (const DashboardItem& item : grid->items()) {
+            const DashboardItem::Geometry& g = item.geometry(breakpoint);
+            items.append({item.id, item.name, item.typeId, item.config,
+                          QRectF(g.x * canvas.width(), g.y * canvas.height(),
+                                 g.width * canvas.width(), g.height * canvas.height())});
+            names.insert(item.id, item.name);
+        }
+        const LayoutReview review = reviewLayout(items, canvas);
+        QJsonArray issues;
+        int problems = 0;
+        for (const LayoutIssue& issue : review.issues) {
+            QJsonObject json{{"widgetId", issue.widgetId},
+                             {"widget", names.value(issue.widgetId)},
+                             {"severity", layoutSeverityString(issue.severity)},
+                             {"kind", issue.kind},
+                             {"message", issue.message}};
+            if (!issue.suggestedRect.isNull()) {
+                json["suggestedLayout"] = QJsonObject{
+                    {breakpointToString(breakpoint), pixelsToCells(issue.suggestedRect, cell)}};
+            }
+            problems += issue.severity == LayoutIssue::Severity::Problem ? 1 : 0;
+            issues.append(json);
+        }
+        QJsonArray spots;
+        for (const OverlaySpot& spot : review.overlaySpots) {
+            spots.append(QJsonObject{{"onWidgetId", spot.widgetId},
+                                     {"onWidget", names.value(spot.widgetId)},
+                                     {"cells", pixelsToCells(spot.rect, cell)}});
+        }
+        reply(AgentToolResult::json(QJsonObject{
+            {"layout", breakpointToString(breakpoint)},
+            {"canvasPx", QJsonObject{{"width", qRound(canvas.width())},
+                                     {"height", qRound(canvas.height())}}},
+            {"problems", problems},
+            {"issues", issues},
+            {"overlaySpots", spots},
+        }));
+    };
+    registry->registerTool(check);
 
     AgentTool arrange;
     arrange.name = "arrange_widget";

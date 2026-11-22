@@ -14,7 +14,8 @@ and each one is a token table rather than literals in paint code:
 |---|---|---|---|
 | Palette | `ThemeManager` | `ThemePalette` ([THEMING.md](THEMING.md)) | built-in templates + custom palettes |
 | Frame | `ThemeManager` | `traceview/framestyle.h` (below) | Rounded, Square, Borderless, Chamfered |
-| Chart style | `AppSettings` | `widgets/chartstyle.h` ([CHART_STYLE.md](CHART_STYLE.md)) | Dashboard, Engineering, Scientific |
+| Chart style | `AppSettings` | `widgets/chartstyle.h` ([CHART_STYLE.md](CHART_STYLE.md)) | Dashboard, Engineering, Scientific, Panel, Retro |
+| Control style | `AppSettings` | `widgets/controlstyle.h` ([CONTROL_STYLE.md](CONTROL_STYLE.md)) | Dashboard, Engineering, Scientific, Panel, Retro |
 | Data colors | `ThemeManager` | `traceview/appearance.h` | Per series, Palette, MATLAB, Tableau, Color-blind safe (Okabe-Ito), Monochrome |
 | Density | `ThemeManager` | `traceview/appearance.h` | Compact, Normal, Comfortable |
 | Card header | `ThemeManager` | `traceview/appearance.h` | Filled, Line, On hover |
@@ -45,9 +46,9 @@ and each one is a token table rather than literals in paint code:
   selection outline snap. It is not part of presets or workspace pins,
   because it is an accessibility preference that belongs to the person
   rather than to a look.
-- **Presets** apply palette, frame, chart style, data colors, density, card
-  header and canvas together. The built-in ones are TraceView, Lab, Paper,
-  HUD, Synthwave and Accessible. **Save Current Appearance as Preset...**
+- **Presets** apply palette, frame, chart style, control style, data
+  colors, density, card header and canvas together. The built-in ones are
+  TraceView, Lab, Paper, HUD, Synthwave, Console, Terminal and Accessible. **Save Current Appearance as Preset...**
   adds user presets (QSettings `appearance/userPresets`).
 - **Per-workspace appearance**: **View → Workspace Appearance → Pin...**
   stores the current appearance in the workspace (project file, workspace
@@ -185,7 +186,7 @@ noted here so nobody "fixes" it back down without knowing why.
 
 ## Control panel fill
 
-Headerless controls (push button/toggle switch/slider, `controlwidgets.cpp`)
+Headerless controls (push button/toggle switch/slider/LED, `controlwidgets.cpp`)
 no longer use `DashboardWidget`'s default opaque fill (`palette.background`,
 same token as the canvas behind the whole grid). Reported live 2026-08-09:
 with `DashboardCell`'s border now rounded, a fill indistinguishable from the

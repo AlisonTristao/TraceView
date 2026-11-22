@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QByteArray>
+#include <QColor>
 #include <QJsonObject>
 #include <QString>
 
@@ -20,6 +21,9 @@ struct PushButtonCommandConfig {
     // on a control this small) -- PushButtonWidget falls back to a generic
     // default when this is empty, same as before this field was wired up.
     QString label;
+    // The button's color: "default" (accent), "success", "warning" or
+    // "danger" -- see controlToneFromId() (controlstyle.h).
+    QString variant = QStringLiteral("default");
     PushButtonMode mode = PushButtonMode::Momentary;
     QString onPress;
     QString onRelease;
@@ -42,6 +46,11 @@ struct ToggleCommandConfig {
     // here -- an unlabeled switch is a normal, common state, not a
     // misconfiguration.
     QString label;
+    // Text shown beside the switch for each state ("Running"/"Stopped");
+    // nothing is shown while both are empty. Looks with text cells
+    // (ControlSwitchLook::Cells) print them inside the switch instead.
+    QString onLabel;
+    QString offLabel;
     QString onCommand;
     QString offCommand;
     bool defaultState = false;
@@ -84,5 +93,51 @@ int sliderValueToIndex(const SliderCommandConfig& config, double value);
 // encodes the result as UTF-8. Returns an empty QByteArray if
 // `commandTemplate` is empty (nothing to send).
 QByteArray buildSliderCommand(const SliderCommandConfig& config, double value);
+
+// An LED bound to one telemetry field (LedWidget, controlwidgets.h).
+//   Fixed -- the LED lights in `color` while `condition` holds.
+//   Rgb   -- the field is a packed 0xRRGGBB color the LED shows; black (0)
+//            is off.
+enum class LedColorMode { Fixed, Rgb };
+
+// When a Fixed LED is lit, comparing the field's value with `threshold`
+// where it applies.
+enum class LedCondition { NonZero, Zero, Above, Below };
+
+struct LedConfig {
+    QString label;
+    quint32 sourceId = 0;
+    quint16 topicId = 0;
+    quint16 fieldId = 0;
+    LedColorMode colorMode = LedColorMode::Fixed;
+    LedCondition condition = LedCondition::NonZero;
+    double threshold = 0.5;
+    // Invalid (the default) means the palette's success color.
+    QColor color;
+    // Blink while lit, toggling every `blinkMs`.
+    bool blink = false;
+    int blinkMs = 500;
+    // State text under the LED; nothing is shown while both are empty.
+    QString onLabel;
+    QString offLabel;
+    double sampleTimeMs = 100.0;
+};
+
+// Parses a LedConfigEditor JSON config; missing fields fall back to the
+// defaults above. Ids are hex text ("0x0101") or numbers, as in every
+// telemetry widget config.
+LedConfig parseLedConfig(const QJsonObject& json);
+
+// "fixed"/"rgb" and "nonzero"/"zero"/"above"/"below" -- the JSON values.
+QString ledColorModeId(LedColorMode mode);
+LedColorMode ledColorModeFromId(const QString& id);
+QString ledConditionId(LedCondition condition);
+LedCondition ledConditionFromId(const QString& id);
+
+// Whether the LED is lit for a field value.
+bool ledIsOn(const LedConfig& config, double value);
+// The color an Rgb LED shows for a field value: the low 24 bits as
+// 0xRRGGBB (negative and non-finite values read as black).
+QColor ledRgbColor(double value);
 
 }  // namespace traceview
