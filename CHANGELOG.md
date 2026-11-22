@@ -7,6 +7,8 @@ release flow.
 
 ## [Unreleased]
 
+## [4.17.0] - 2026-11-21
+
 ### Added
 
 - **Control styles**: buttons, switches and sliders now come in five looks,
