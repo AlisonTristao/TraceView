@@ -45,6 +45,9 @@ void paintChartBackground(QPainter& painter, const DashboardWidget& widget,
 // `base` with equal-width digits when the style asks for them, so a column
 // of tick labels (and a changing value) doesn't shimmer as digits change.
 QFont chartTickFont(const QFont& base, const ChartStyle& style);
+
+// The style's screws (Panel) in the widget's corners, over its background.
+void paintChartScrews(QPainter& painter, const QWidget& widget, const ChartStyle& style);
 // `base` with equal-width digits whatever the style (Qt 6.7+; older Qt
 // keeps the font's own digits).
 QFont chartTabularFont(const QFont& base);

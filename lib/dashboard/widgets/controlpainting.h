@@ -64,6 +64,12 @@ void paintControlReadout(QPainter& painter, const QRectF& rect, const ControlSty
                          const ControlColors& colors, const QFont& font, const QString& text,
                          bool enabled);
 
+// A slotted panel screw of head radius `radius` -- the Panel look's
+// signature, also used by the Panel chart style (chartpainting.h).
+void paintPanelScrew(QPainter& painter, const QPointF& center, qreal radius);
+// One screw in each corner of `rect`, `inset` from its edges.
+void paintPanelScrews(QPainter& painter, const QRectF& rect, qreal inset = 6.0, qreal radius = 3.0);
+
 // An LED of lamp radius `radius` centred on `center`. Halos and bezels
 // reach out to about 1.6 x radius.
 inline constexpr qreal kControlLedReach = 1.6;

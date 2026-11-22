@@ -16,10 +16,19 @@ release flow.
   Scientific is thin outlines, a checkbox and a pointer slider; Panel is a
   physical panel (arcade button, lever switch, fader, 7-segment readout);
   Retro is a phosphor terminal (`[ start ]`, off/on cells, a bar of
-  blocks). The push button's color ("Default", "Success", "Warning",
+  blocks), with screws in Panel. The push button's color ("Default", "Success", "Warning",
   "Danger") and the switch's on/off texts are now shown. Two new presets
   use them: Console (Panel) and Terminal (Retro); HUD now uses Retro. See
   `docs/CONTROL_STYLE.md`.
+- **Panel and Retro chart styles**, matching the control styles. Panel
+  turns the plot into an oscilloscope screen (dark, 10 x 8 graticule,
+  glowing traces) and puts screws in the corners; Retro draws everything in
+  the accent color with a dotted grid and bars made of cells. The Console
+  and Terminal presets use them.
+- **New gauge shapes** (gear menu, Shape): Analog meter (dial with needle
+  and red zone, in a bezel with screws), Digital display (7-segment-style,
+  one per series) and LED bar (green/yellow/red segments). The empty track
+  of rings and bars is lighter in every style, so the value stands out.
 - **LED widget**: an indicator lamp bound to a telemetry field. It lights
   while the value is non-zero, zero, above or below a threshold, in a color
   of your choice, or shows the field as an RGB color (0xRRGGBB). It can

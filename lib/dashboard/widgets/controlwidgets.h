@@ -44,13 +44,22 @@ public:
     }
 
 protected:
+    // The styled background, then the style's screws (Panel) over it --
+    // under the control itself, which keeps clear of the corners.
+    void paintEvent(QPaintEvent* event) override;
+
     // Reads the "style" key of a control config; refreshes when it changed.
     void setStyleChoice(const QJsonObject& config);
     void refreshControlStyle();
     virtual void applyControlStyle() {}
 
 private:
+    // The surface "plate" behind the control: shown while arranging, and
+    // always in a style with screws (Panel) -- screws need a plate to sit in.
+    void updatePanelFill();
+
     ControlStyleChoice m_choice;
+    bool m_editMode = false;
     ControlStyle m_style;
     ControlColors m_colors;
 };

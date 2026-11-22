@@ -14,7 +14,7 @@ and each one is a token table rather than literals in paint code:
 |---|---|---|---|
 | Palette | `ThemeManager` | `ThemePalette` ([THEMING.md](THEMING.md)) | built-in templates + custom palettes |
 | Frame | `ThemeManager` | `traceview/framestyle.h` (below) | Rounded, Square, Borderless, Chamfered |
-| Chart style | `AppSettings` | `widgets/chartstyle.h` ([CHART_STYLE.md](CHART_STYLE.md)) | Dashboard, Engineering, Scientific |
+| Chart style | `AppSettings` | `widgets/chartstyle.h` ([CHART_STYLE.md](CHART_STYLE.md)) | Dashboard, Engineering, Scientific, Panel, Retro |
 | Control style | `AppSettings` | `widgets/controlstyle.h` ([CONTROL_STYLE.md](CONTROL_STYLE.md)) | Dashboard, Engineering, Scientific, Panel, Retro |
 | Data colors | `ThemeManager` | `traceview/appearance.h` | Per series, Palette, MATLAB, Tableau, Color-blind safe (Okabe-Ito), Monochrome |
 | Density | `ThemeManager` | `traceview/appearance.h` | Compact, Normal, Comfortable |

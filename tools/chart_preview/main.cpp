@@ -1,4 +1,4 @@
-// Standalone visual harness for the chart widgets -- NOT a Qt Test. It
+﻿// Standalone visual harness for the chart widgets -- NOT a Qt Test. It
 // injects synthetic samples straight into appendFieldSample() on a timer so
 // the line/bar/gauge designs can be eyeballed without a serial device or
 // the BtpSession/ProtocolRouter/TelemetryFieldRouter plumbing (see
@@ -27,6 +27,7 @@
 #include "dashboard/dashboardgrid.h"
 #include "dashboard/widgets/serialmonitorwidget.h"
 #include "dashboard/widgets/chartwidgets.h"
+#include "dashboard/widgets/controlwidgets.h"
 #include "traceview/thememanager.h"
 
 using namespace traceview;
@@ -250,11 +251,15 @@ int writeSnapshots(const QString& dir) {
     struct Cell {
         DashboardWidget* widget;
         QSize size;
+        QString gaugeShape;  // empty: the row's own view
     };
-    const QVector<Cell> cells = {{w.lineChart, QSize(560, 280)},
-                                 {w.autoAxisChart, QSize(560, 280)},
-                                 {w.barChart, QSize(320, 280)},
-                                 {w.gauge, QSize(280, 280)}};
+    const QVector<Cell> cells = {{w.lineChart, QSize(560, 280), {}},
+                                 {w.autoAxisChart, QSize(560, 280), {}},
+                                 {w.barChart, QSize(320, 280), {}},
+                                 {w.gauge, QSize(280, 280), {}},
+                                 {w.gauge, QSize(280, 280), QStringLiteral("meter")},
+                                 {w.gauge, QSize(280, 280), QStringLiteral("display")},
+                                 {w.gauge, QSize(280, 280), QStringLiteral("segments")}};
     constexpr int kGap = 16;
     constexpr int kLabelHeight = 28;
     constexpr int kCellHeight = 280;
@@ -308,7 +313,11 @@ int writeSnapshots(const QString& dir) {
                              Qt::AlignLeft | Qt::AlignVCenter, row.label);
             int x = kGap;
             for (const Cell& cell : cells) {
-                cell.widget->setViewConfig(row.view);
+                QJsonObject view = row.view;
+                if (!cell.gaugeShape.isEmpty()) {
+                    view["gaugeShape"] = cell.gaugeShape;
+                }
+                cell.widget->setViewConfig(view);
                 cell.widget->resize(cell.size);
                 painter.drawPixmap(x, y + kLabelHeight, cell.widget->grab());
                 x += cell.size.width() + kGap;
@@ -447,19 +456,56 @@ int writePresetSnapshots(const QString& dir) {
     const AppearanceSnapshot original = currentAppearance();
 
     QJsonArray items;
+    // Charts and gauges on top, the controls and LEDs along the bottom, so
+    // every preset shows its control style next to its chart style.
     items.append(gridItem("line", "dummy_line", "Line chart", lineChartConfig(), 0.0, 0.0, 0.5,
-                          0.5));
-    items.append(gridItem("bar", "dummy_bar", "Bars", barChartConfig(), 0.5, 0.0, 0.25, 0.5));
+                          0.42));
+    items.append(gridItem("bar", "dummy_bar", "Bars", barChartConfig(), 0.5, 0.0, 0.25, 0.42));
+    items.append(gridItem("meter", "dummy_gauge", "Analog meter",
+                          withGaugeShape(gaugeConfig(), "meter", 1), 0.75, 0.0, 0.25, 0.42));
+    items.append(gridItem("segments", "dummy_gauge", "LED bar",
+                          withGaugeShape(gaugeConfig(), "segments", 3), 0.0, 0.42, 0.3, 0.3));
+    items.append(gridItem("display", "dummy_gauge", "Display",
+                          withGaugeShape(gaugeConfig(), "display", 1), 0.3, 0.42, 0.2, 0.3));
+    items.append(gridItem("ring", "dummy_gauge", "Ring", withGaugeShape(gaugeConfig(), "arc", 3),
+                          0.5, 0.42, 0.25, 0.3));
     items.append(gridItem("half", "dummy_gauge", "Half circle",
-                          withGaugeShape(gaugeConfig(), "halfCircle", 1), 0.75, 0.0, 0.25, 0.5));
-    items.append(gridItem("bars", "dummy_gauge", "Bar gauge",
-                          withGaugeShape(gaugeConfig(), "bar", 3), 0.0, 0.5, 0.3, 0.5));
-    items.append(gridItem("number", "dummy_gauge", "Number",
-                          withGaugeShape(gaugeConfig(), "number", 1), 0.3, 0.5, 0.2, 0.5));
-    items.append(gridItem("ring", "dummy_gauge", "Ring",
-                          withGaugeShape(gaugeConfig(), "arc", 3), 0.5, 0.5, 0.25, 0.5));
-    items.append(gridItem("serial", "serial_monitor", "Serial monitor", QJsonObject(), 0.75, 0.5,
-                          0.25, 0.5));
+                          withGaugeShape(gaugeConfig(), "halfCircle", 1), 0.75, 0.42, 0.25, 0.3));
+    items.append(gridItem("start", "push_button", "Start",
+                          QJsonObject{{"label", "Start"}, {"variant", "success"}}, 0.0, 0.72,
+                          0.125, 0.28));
+    items.append(gridItem("stop", "push_button", "Stop",
+                          QJsonObject{{"label", "Stop"}, {"variant", "danger"}}, 0.125, 0.72, 0.125,
+                          0.28));
+    items.append(gridItem("auto", "toggle_switch", "Auto mode",
+                          QJsonObject{{"label", "Auto mode"},
+                                      {"onLabel", "Auto"},
+                                      {"offLabel", "Manual"},
+                                      {"defaultState", true}},
+                          0.25, 0.72, 0.2, 0.28));
+    items.append(gridItem("setpoint", "slider", "Setpoint",
+                          QJsonObject{{"label", "Setpoint"}, {"unit", "%"}, {"defaultValue", 62}},
+                          0.45, 0.72, 0.3, 0.28));
+    const QJsonObject ledBinding{{"sourceId", "0x00000001"}, {"topicId", "0x0001"}};
+    auto led = [&ledBinding](const QString& label, int fieldId, const QJsonObject& extra) {
+        QJsonObject config = ledBinding;
+        config["label"] = label;
+        config["fieldId"] = fieldId;
+        for (auto it = extra.begin(); it != extra.end(); ++it) {
+            config[it.key()] = it.value();
+        }
+        return config;
+    };
+    items.append(gridItem("led-net", "led", "Network",
+                          led("Network", 1, {{"onLabel", "Online"}, {"offLabel", "Offline"}}),
+                          0.75, 0.72, 0.0833, 0.28));
+    items.append(gridItem("led-alarm", "led", "Alarm",
+                          led("Alarm", 2,
+                              {{"color", "#EF4444"}, {"onLabel", "Alarm"}, {"offLabel", "OK"}}),
+                          0.8333, 0.72, 0.0833, 0.28));
+    items.append(gridItem("led-rgb", "led", "Status",
+                          led("Status", 3, {{"colorMode", "rgb"}, {"onLabel", "RGB"}}), 0.9166,
+                          0.72, 0.0834, 0.28));
     QJsonObject dashboard;
     dashboard["items"] = items;
     dashboard["breakpoint"] = "large";
@@ -493,6 +539,12 @@ int writePresetSnapshots(const QString& dir) {
                     gauge->appendFieldSample(kGaugeFieldId, us, v0);
                     gauge->appendFieldSample(kGaugeFieldId2, us, v1);
                     gauge->appendFieldSample(kGaugeFieldId3, us, v2);
+                } else if (auto* lamp = dynamic_cast<LedWidget*>(content)) {
+                    if (tick == 200) {
+                        lamp->onFieldSample({1, 1, 1, 0}, us, 1.0);
+                        lamp->onFieldSample({1, 1, 2, 0}, us, 0.0);
+                        lamp->onFieldSample({1, 1, 3, 0}, us, double(0x00B4FF));
+                    }
                 } else if (auto* serial = dynamic_cast<SerialMonitorWidget*>(content)) {
                     if (tick == 1) {
                         serial->appendData(

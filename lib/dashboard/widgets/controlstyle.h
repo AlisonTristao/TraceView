@@ -104,6 +104,7 @@ struct ControlStyle {
     bool accentTitles = false;       // titles in accent instead of textSecondary
     bool accentReadout = false;      // slider value in accent
     bool brightTitles = false;       // titles in textPrimary
+    bool screws = false;             // panel screws in the four corners
 };
 
 ControlStyle controlStyleFor(ControlStyleId id);

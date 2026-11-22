@@ -280,7 +280,7 @@ AI アシスタントのアクセスをオフにするか TraceView を閉じる
         <translation>アニメーション</translation>
     </message>
     <message>
-        <location filename="../lib/core/appearancecatalog.cpp" line="+251"/>
+        <location filename="../lib/core/appearancecatalog.cpp" line="+248"/>
         <source>TraceView</source>
         <translation>TraceView</translation>
     </message>
@@ -310,7 +310,7 @@ AI アシスタントのアクセスをオフにするか TraceView を閉じる
         <translation>コンソール</translation>
     </message>
     <message>
-        <location line="+3"/>
+        <location line="+2"/>
         <source>Terminal</source>
         <translation>ターミナル</translation>
     </message>
@@ -323,7 +323,7 @@ AI アシスタントのアクセスをオフにするか TraceView を閉じる
 <context>
     <name>ChartStyle</name>
     <message>
-        <location filename="../lib/dashboard/widgets/chartstyle.cpp" line="+128"/>
+        <location filename="../lib/dashboard/widgets/chartstyle.cpp" line="+180"/>
         <source>Engineering</source>
         <translation>エンジニアリング</translation>
     </message>
@@ -331,6 +331,16 @@ AI アシスタントのアクセスをオフにするか TraceView を閉じる
         <location line="+2"/>
         <source>Scientific</source>
         <translation>サイエンス</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Panel</source>
+        <translation>操作パネル</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Retro</source>
+        <translation>レトロ</translation>
     </message>
     <message>
         <location line="+4"/>
@@ -341,13 +351,13 @@ AI アシスタントのアクセスをオフにするか TraceView を閉じる
 <context>
     <name>ChartWidgets</name>
     <message>
-        <location filename="../lib/dashboard/widgets/chartwidgets.cpp" line="+38"/>
+        <location filename="../lib/dashboard/widgets/chartwidgets.cpp" line="+42"/>
         <source>Field %1</source>
         <translation>フィールド %1</translation>
     </message>
     <message>
         <location line="+9"/>
-        <location line="+569"/>
+        <location line="+592"/>
         <location line="+231"/>
         <source>--</source>
         <translation>--</translation>
@@ -359,11 +369,12 @@ AI アシスタントのアクセスをオフにするか TraceView を閉じる
     </message>
     <message>
         <location line="+6"/>
+        <location line="+1218"/>
         <source>%1  %2</source>
         <translation>%1  %2</translation>
     </message>
     <message>
-        <location line="+430"/>
+        <location line="-788"/>
         <source>A-B %1 s</source>
         <translation>A-B %1 s</translation>
     </message>
@@ -428,12 +439,12 @@ AI アシスタントのアクセスをオフにするか TraceView を閉じる
         <translation>一時停止中</translation>
     </message>
     <message>
-        <location line="-738"/>
+        <location line="-753"/>
         <source>%1: %2</source>
         <translation>%1: %2</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/chartpainting.cpp" line="+920"/>
+        <location filename="../lib/dashboard/widgets/chartpainting.cpp" line="+970"/>
         <source>Time (s)</source>
         <translation>時間 (s)</translation>
     </message>
@@ -1260,7 +1271,7 @@ AI アシスタントのアクセスをオフにするか TraceView を閉じる
         <translation>スライダー</translation>
     </message>
     <message>
-        <location line="+3"/>
+        <location line="+4"/>
         <source>LED</source>
         <translation>LED</translation>
     </message>
@@ -2408,7 +2419,7 @@ Allowed: %1</source>
 <context>
     <name>traceview::DashboardCell</name>
     <message>
-        <location filename="../lib/dashboard/widgets/chartstyle.cpp" line="+476"/>
+        <location filename="../lib/dashboard/widgets/chartstyle.cpp" line="+505"/>
         <source>Sample rate</source>
         <translation>サンプリングレート</translation>
     </message>
@@ -2641,6 +2652,21 @@ Allowed: %1</source>
         <location line="+2"/>
         <source>Number</source>
         <translation>数値</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Analog meter</source>
+        <translation>アナログメーター</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Digital display</source>
+        <translation>デジタル表示</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>LED bar</source>
+        <translation>LED バー</translation>
     </message>
 </context>
 <context>
@@ -4613,7 +4639,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>(名前なし)</translation>
     </message>
     <message>
-        <location filename="../lib/core/appearancecatalog.cpp" line="-176"/>
+        <location filename="../lib/core/appearancecatalog.cpp" line="-172"/>
         <source>&amp;Palette</source>
         <translation>パレット(&amp;P)</translation>
     </message>
@@ -4628,12 +4654,12 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>グラフのスタイル(&amp;C)</translation>
     </message>
     <message>
-        <location line="+14"/>
+        <location line="+13"/>
         <source>Contro&amp;l Style</source>
         <translation>コントロールのスタイル(&amp;L)</translation>
     </message>
     <message>
-        <location line="+14"/>
+        <location line="+13"/>
         <source>&amp;Data Colors</source>
         <translation>データの色(&amp;D)</translation>
     </message>
@@ -6067,7 +6093,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
 <context>
     <name>traceview::PushButtonWidget</name>
     <message>
-        <location filename="../lib/dashboard/widgets/controlwidgets.cpp" line="+174"/>
+        <location filename="../lib/dashboard/widgets/controlwidgets.cpp" line="+184"/>
         <location line="+24"/>
         <source>Push Button</source>
         <translation>プッシュボタン</translation>
@@ -6469,7 +6495,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>アプリケーションの外観</translation>
     </message>
     <message>
-        <location filename="../lib/core/appearancecatalog.cpp" line="-92"/>
+        <location filename="../lib/core/appearancecatalog.cpp" line="-90"/>
         <source>Palette</source>
         <translation>パレット</translation>
     </message>
@@ -6484,12 +6510,12 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>グラフのスタイル</translation>
     </message>
     <message>
-        <location line="+14"/>
+        <location line="+13"/>
         <source>Control style</source>
         <translation>コントロールのスタイル</translation>
     </message>
     <message>
-        <location line="+14"/>
+        <location line="+13"/>
         <source>Data colors</source>
         <translation>データの色</translation>
     </message>
@@ -7200,7 +7226,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
 <context>
     <name>traceview::ToggleSwitchWidget</name>
     <message>
-        <location filename="../lib/dashboard/widgets/controlwidgets.cpp" line="+168"/>
+        <location filename="../lib/dashboard/widgets/controlwidgets.cpp" line="+167"/>
         <source>off</source>
         <translation>オフ</translation>
     </message>

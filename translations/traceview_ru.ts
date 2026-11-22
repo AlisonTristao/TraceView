@@ -280,7 +280,7 @@ Allow it to connect devices and send them commands until AI assistant access is 
         <translation>С анимацией</translation>
     </message>
     <message>
-        <location filename="../lib/core/appearancecatalog.cpp" line="+251"/>
+        <location filename="../lib/core/appearancecatalog.cpp" line="+248"/>
         <source>TraceView</source>
         <translation>TraceView</translation>
     </message>
@@ -310,7 +310,7 @@ Allow it to connect devices and send them commands until AI assistant access is 
         <translation>Консоль</translation>
     </message>
     <message>
-        <location line="+3"/>
+        <location line="+2"/>
         <source>Terminal</source>
         <translation>Терминал</translation>
     </message>
@@ -323,7 +323,7 @@ Allow it to connect devices and send them commands until AI assistant access is 
 <context>
     <name>ChartStyle</name>
     <message>
-        <location filename="../lib/dashboard/widgets/chartstyle.cpp" line="+128"/>
+        <location filename="../lib/dashboard/widgets/chartstyle.cpp" line="+180"/>
         <source>Engineering</source>
         <translation>Инженерный</translation>
     </message>
@@ -331,6 +331,16 @@ Allow it to connect devices and send them commands until AI assistant access is 
         <location line="+2"/>
         <source>Scientific</source>
         <translation>Научный</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Panel</source>
+        <translation>Пульт управления</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Retro</source>
+        <translation>Ретро</translation>
     </message>
     <message>
         <location line="+4"/>
@@ -341,13 +351,13 @@ Allow it to connect devices and send them commands until AI assistant access is 
 <context>
     <name>ChartWidgets</name>
     <message>
-        <location filename="../lib/dashboard/widgets/chartwidgets.cpp" line="+38"/>
+        <location filename="../lib/dashboard/widgets/chartwidgets.cpp" line="+42"/>
         <source>Field %1</source>
         <translation>Поле %1</translation>
     </message>
     <message>
         <location line="+9"/>
-        <location line="+569"/>
+        <location line="+592"/>
         <location line="+231"/>
         <source>--</source>
         <translation>--</translation>
@@ -359,11 +369,12 @@ Allow it to connect devices and send them commands until AI assistant access is 
     </message>
     <message>
         <location line="+6"/>
+        <location line="+1218"/>
         <source>%1  %2</source>
         <translation>%1  %2</translation>
     </message>
     <message>
-        <location line="+430"/>
+        <location line="-788"/>
         <source>A-B %1 s</source>
         <translation>A-B %1 с</translation>
     </message>
@@ -428,12 +439,12 @@ Allow it to connect devices and send them commands until AI assistant access is 
         <translation>пауза</translation>
     </message>
     <message>
-        <location line="-738"/>
+        <location line="-753"/>
         <source>%1: %2</source>
         <translation>%1: %2</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/chartpainting.cpp" line="+920"/>
+        <location filename="../lib/dashboard/widgets/chartpainting.cpp" line="+970"/>
         <source>Time (s)</source>
         <translation>Время (с)</translation>
     </message>
@@ -1260,7 +1271,7 @@ Allow it to connect devices and send them commands until AI assistant access is 
         <translation>Ползунок</translation>
     </message>
     <message>
-        <location line="+3"/>
+        <location line="+4"/>
         <source>LED</source>
         <translation>Светодиод</translation>
     </message>
@@ -2410,7 +2421,7 @@ Allowed: %1</source>
 <context>
     <name>traceview::DashboardCell</name>
     <message>
-        <location filename="../lib/dashboard/widgets/chartstyle.cpp" line="+476"/>
+        <location filename="../lib/dashboard/widgets/chartstyle.cpp" line="+505"/>
         <source>Sample rate</source>
         <translation>Частота выборки</translation>
     </message>
@@ -2643,6 +2654,21 @@ Allowed: %1</source>
         <location line="+2"/>
         <source>Number</source>
         <translation>Число</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Analog meter</source>
+        <translation>Стрелочный прибор</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Digital display</source>
+        <translation>Цифровой индикатор</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>LED bar</source>
+        <translation>Светодиодная шкала</translation>
     </message>
 </context>
 <context>
@@ -4617,7 +4643,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>(без имени)</translation>
     </message>
     <message>
-        <location filename="../lib/core/appearancecatalog.cpp" line="-176"/>
+        <location filename="../lib/core/appearancecatalog.cpp" line="-172"/>
         <source>&amp;Palette</source>
         <translation>&amp;Палитра</translation>
     </message>
@@ -4632,12 +4658,12 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>&amp;Стиль графиков</translation>
     </message>
     <message>
-        <location line="+14"/>
+        <location line="+13"/>
         <source>Contro&amp;l Style</source>
         <translation>Стиль &amp;элементов управления</translation>
     </message>
     <message>
-        <location line="+14"/>
+        <location line="+13"/>
         <source>&amp;Data Colors</source>
         <translation>&amp;Цвета данных</translation>
     </message>
@@ -6077,7 +6103,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
 <context>
     <name>traceview::PushButtonWidget</name>
     <message>
-        <location filename="../lib/dashboard/widgets/controlwidgets.cpp" line="+174"/>
+        <location filename="../lib/dashboard/widgets/controlwidgets.cpp" line="+184"/>
         <location line="+24"/>
         <source>Push Button</source>
         <translation>Кнопка</translation>
@@ -6479,7 +6505,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>Внешний вид приложения</translation>
     </message>
     <message>
-        <location filename="../lib/core/appearancecatalog.cpp" line="-92"/>
+        <location filename="../lib/core/appearancecatalog.cpp" line="-90"/>
         <source>Palette</source>
         <translation>Палитра</translation>
     </message>
@@ -6494,12 +6520,12 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>Стиль графиков</translation>
     </message>
     <message>
-        <location line="+14"/>
+        <location line="+13"/>
         <source>Control style</source>
         <translation>Стиль элементов управления</translation>
     </message>
     <message>
-        <location line="+14"/>
+        <location line="+13"/>
         <source>Data colors</source>
         <translation>Цвета данных</translation>
     </message>
@@ -7212,7 +7238,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
 <context>
     <name>traceview::ToggleSwitchWidget</name>
     <message>
-        <location filename="../lib/dashboard/widgets/controlwidgets.cpp" line="+168"/>
+        <location filename="../lib/dashboard/widgets/controlwidgets.cpp" line="+167"/>
         <source>off</source>
         <translation>выкл</translation>
     </message>

@@ -7,6 +7,7 @@
 #include <QPainterPath>
 #include <QPolygonF>
 #include <QRadialGradient>
+#include <cmath>
 
 namespace traceview {
 
@@ -125,6 +126,38 @@ QString unlitDigits(const QString& text) {
 }
 
 }  // namespace
+
+void paintPanelScrew(QPainter& painter, const QPointF& center, qreal radius) {
+    painter.save();
+    painter.setRenderHint(QPainter::Antialiasing);
+    // A fixed slot angle per position, so a row of screws doesn't look
+    // stamped from one template -- the way real ones never line up.
+    const qreal angle = std::fmod(center.x() * 7.0 + center.y() * 13.0, 180.0);
+    QRadialGradient head(QPointF(center.x() - radius * 0.35, center.y() - radius * 0.35),
+                         radius * 1.4);
+    head.setColorAt(0.0, kMetalLight);
+    head.setColorAt(1.0, kMetalEdge);
+    painter.setPen(QPen(kMetalDark, 0.8));
+    painter.setBrush(head);
+    painter.drawEllipse(center, radius, radius);
+    painter.translate(center);
+    painter.rotate(angle);
+    painter.setPen(QPen(kMetalDark, qMax(0.8, radius * 0.32), Qt::SolidLine, Qt::FlatCap));
+    painter.drawLine(QPointF(-radius * 0.7, 0), QPointF(radius * 0.7, 0));
+    painter.restore();
+}
+
+void paintPanelScrews(QPainter& painter, const QRectF& rect, qreal inset, qreal radius) {
+    if (rect.width() < 4 * inset || rect.height() < 4 * inset) {
+        return;
+    }
+    for (const QPointF& corner : {QPointF(rect.left() + inset, rect.top() + inset),
+                                  QPointF(rect.right() - inset, rect.top() + inset),
+                                  QPointF(rect.left() + inset, rect.bottom() - inset),
+                                  QPointF(rect.right() - inset, rect.bottom() - inset)}) {
+        paintPanelScrew(painter, corner, radius);
+    }
+}
 
 QFont controlTextFont(const ControlStyle& style, const QFont& base) {
     if (style.monoText) {

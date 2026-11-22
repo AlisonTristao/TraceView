@@ -8,6 +8,7 @@
 #include <QPainter>
 #include <QSignalBlocker>
 #include <QStyle>
+#include <QStyleOption>
 #include <QTimer>
 #include <QVBoxLayout>
 #include <QtMath>
@@ -65,7 +66,25 @@ StyledControlWidget::StyledControlWidget(QWidget* parent) : DashboardWidget(pare
 }
 
 void StyledControlWidget::setEditModeHint(bool editMode) {
-    setControlPanelFill(this, editMode);
+    m_editMode = editMode;
+    updatePanelFill();
+}
+
+void StyledControlWidget::updatePanelFill() {
+    const bool fill = m_editMode || m_style.screws;
+    if (property("dashboardControlPanel").toBool() != fill) {
+        setControlPanelFill(this, fill);
+    }
+}
+
+void StyledControlWidget::paintEvent(QPaintEvent*) {
+    QPainter painter(this);
+    QStyleOption option;
+    option.initFrom(this);
+    style()->drawPrimitive(QStyle::PE_Widget, &option, &painter, this);
+    if (m_style.screws) {
+        paintPanelScrews(painter, QRectF(rect()), 6.5, 3.0);
+    }
 }
 
 void StyledControlWidget::setStyleChoice(const QJsonObject& config) {
@@ -81,12 +100,16 @@ void StyledControlWidget::refreshControlStyle() {
     m_style =
         controlStyleFor(effectiveControlStyle(m_choice, AppSettings::instance().controlStyleId()));
     m_colors = traceview::controlColors(ThemeManager::instance().currentTheme());
+    updatePanelFill();
     applyControlStyle();
     update();
 }
 
 ControlText::ControlText(Role role, QWidget* parent) : QWidget(parent), m_role(role) {
     setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
+    // Painted parts only: the app stylesheet's QWidget background rule would
+    // otherwise lay a canvas-colored strip over the control's plate.
+    setStyleSheet(QStringLiteral("background: transparent;"));
     setAttribute(Qt::WA_TransparentForMouseEvents);
 }
 
@@ -448,6 +471,9 @@ void ControlSlider::paintEvent(QPaintEvent*) {
 
 ControlReadout::ControlReadout(QWidget* parent) : QWidget(parent) {
     setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+    // Painted parts only: the app stylesheet's QWidget background rule would
+    // otherwise lay a canvas-colored strip over the control's plate.
+    setStyleSheet(QStringLiteral("background: transparent;"));
     setAttribute(Qt::WA_TransparentForMouseEvents);
 }
 
@@ -615,6 +641,9 @@ void SliderWidget::sendCommandFor(double value) {
 
 LedLamp::LedLamp(QWidget* parent) : QWidget(parent) {
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    // Painted parts only: the app stylesheet's QWidget background rule would
+    // otherwise lay a canvas-colored strip over the control's plate.
+    setStyleSheet(QStringLiteral("background: transparent;"));
     setAttribute(Qt::WA_TransparentForMouseEvents);
 }
 

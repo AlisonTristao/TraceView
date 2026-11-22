@@ -1,8 +1,11 @@
 #include <QImage>
+#include <QJsonArray>
 #include <QJsonObject>
 #include <QSet>
 #include <QtTest>
 
+#include "dashboard/widgets/chartstyle.h"
+#include "dashboard/widgets/chartwidgets.h"
 #include "dashboard/widgets/controldata.h"
 #include "dashboard/widgets/controlpainting.h"
 #include "dashboard/widgets/controlstyle.h"
@@ -28,6 +31,9 @@ private slots:
     void ledWidgetReadsOnlyItsField();
     void ledWidgetRequestsItsTopic();
     void everyControlPaintsInEveryStyle();
+    void chartStylesMatchTheControlStyles();
+    void gaugeShapesRoundTrip();
+    void everyGaugeShapePaintsInEveryChartStyle();
 };
 
 void TestControlStyle::idsRoundTripWithDashboardFallback() {
@@ -253,6 +259,71 @@ void TestControlStyle::everyControlPaintsInEveryStyle() {
                 widget->resize(size);
                 const QImage image = widget->grab().toImage();
                 QVERIFY2(!image.isNull(), qPrintable(styleId));
+            }
+        }
+    }
+}
+
+// The chart styles carry the same five ids as the control styles, so one
+// id can set a whole dashboard's look.
+void TestControlStyle::chartStylesMatchTheControlStyles() {
+    QCOMPARE(allChartStyles().size(), allControlStyles().size());
+    for (ControlStyleId id : allControlStyles()) {
+        const QString text = controlStyleIdString(id);
+        QCOMPARE(chartStyleIdString(chartStyleFromId(text)), text);
+    }
+    QVERIFY(chartStyle(ChartStyleId::Panel).screws);
+    QVERIFY(chartStyle(ChartStyleId::Panel).plotScreen);
+    QVERIFY(chartStyle(ChartStyleId::Retro).accentChrome);
+    QVERIFY(chartStyle(ChartStyleId::Retro).barCells);
+    QVERIFY(controlStyleFor(ControlStyleId::Panel).screws);
+    QVERIFY(!chartStyle(ChartStyleId::Dashboard).screws);
+}
+
+void TestControlStyle::gaugeShapesRoundTrip() {
+    const QList<ChartGaugeShape> shapes = {ChartGaugeShape::Arc,     ChartGaugeShape::HalfCircle,
+                                           ChartGaugeShape::Bar,     ChartGaugeShape::Number,
+                                           ChartGaugeShape::Meter,   ChartGaugeShape::Display,
+                                           ChartGaugeShape::Segments};
+    QSet<QString> ids;
+    for (ChartGaugeShape shape : shapes) {
+        ids.insert(chartGaugeShapeId(shape));
+        QCOMPARE(chartGaugeShapeFromId(chartGaugeShapeId(shape)), shape);
+    }
+    QCOMPARE(ids.size(), shapes.size());
+    QCOMPARE(chartGaugeShapeFromId("bogus"), ChartGaugeShape::Arc);
+}
+
+// Smoke test: every gauge shape, one and three series, in every chart
+// style, at a normal and a tiny size.
+void TestControlStyle::everyGaugeShapePaintsInEveryChartStyle() {
+    QJsonArray series;
+    for (int i = 1; i <= 3; ++i) {
+        series.append(
+            QJsonObject{{"fieldId", i}, {"name", QString("S%1").arg(i)}, {"color", "#3b82f6"}});
+    }
+    for (const QString& shape :
+         {QString("arc"), QString("halfCircle"), QString("bar"), QString("number"),
+          QString("meter"), QString("display"), QString("segments")}) {
+        for (ChartStyleId style : allChartStyles()) {
+            for (int count : {1, 3}) {
+                QJsonArray rings = series;
+                while (rings.size() > count) {
+                    rings.removeLast();
+                }
+                DummyGaugeWidget gauge;
+                gauge.setConfig({{"min", 0},
+                                 {"max", 100},
+                                 {"unit", "%"},
+                                 {"series", rings},
+                                 {"view", QJsonObject{{"style", chartStyleIdString(style)},
+                                                      {"gaugeShape", shape}}}});
+                gauge.appendFieldSample(1, 0, 42.0);
+                gauge.appendFieldSample(2, 0, 90.0);
+                for (const QSize& size : {QSize(280, 280), QSize(30, 20)}) {
+                    gauge.resize(size);
+                    QVERIFY2(!gauge.grab().toImage().isNull(), qPrintable(shape));
+                }
             }
         }
     }

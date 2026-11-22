@@ -280,7 +280,7 @@ L’autoriser à connecter des appareils et à leur envoyer des commandes jusqu�
         <translation>Animé</translation>
     </message>
     <message>
-        <location filename="../lib/core/appearancecatalog.cpp" line="+251"/>
+        <location filename="../lib/core/appearancecatalog.cpp" line="+248"/>
         <source>TraceView</source>
         <translation>TraceView</translation>
     </message>
@@ -310,7 +310,7 @@ L’autoriser à connecter des appareils et à leur envoyer des commandes jusqu�
         <translation>Console</translation>
     </message>
     <message>
-        <location line="+3"/>
+        <location line="+2"/>
         <source>Terminal</source>
         <translation>Terminal</translation>
     </message>
@@ -323,7 +323,7 @@ L’autoriser à connecter des appareils et à leur envoyer des commandes jusqu�
 <context>
     <name>ChartStyle</name>
     <message>
-        <location filename="../lib/dashboard/widgets/chartstyle.cpp" line="+128"/>
+        <location filename="../lib/dashboard/widgets/chartstyle.cpp" line="+180"/>
         <source>Engineering</source>
         <translation>Ingénierie</translation>
     </message>
@@ -331,6 +331,16 @@ L’autoriser à connecter des appareils et à leur envoyer des commandes jusqu�
         <location line="+2"/>
         <source>Scientific</source>
         <translation>Scientifique</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Panel</source>
+        <translation>Pupitre</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Retro</source>
+        <translation>Rétro</translation>
     </message>
     <message>
         <location line="+4"/>
@@ -341,13 +351,13 @@ L’autoriser à connecter des appareils et à leur envoyer des commandes jusqu�
 <context>
     <name>ChartWidgets</name>
     <message>
-        <location filename="../lib/dashboard/widgets/chartwidgets.cpp" line="+38"/>
+        <location filename="../lib/dashboard/widgets/chartwidgets.cpp" line="+42"/>
         <source>Field %1</source>
         <translation>Champ %1</translation>
     </message>
     <message>
         <location line="+9"/>
-        <location line="+569"/>
+        <location line="+592"/>
         <location line="+231"/>
         <source>--</source>
         <translation>--</translation>
@@ -359,11 +369,12 @@ L’autoriser à connecter des appareils et à leur envoyer des commandes jusqu�
     </message>
     <message>
         <location line="+6"/>
+        <location line="+1218"/>
         <source>%1  %2</source>
         <translation>%1  %2</translation>
     </message>
     <message>
-        <location line="+430"/>
+        <location line="-788"/>
         <source>A-B %1 s</source>
         <translation>A-B %1 s</translation>
     </message>
@@ -428,12 +439,12 @@ L’autoriser à connecter des appareils et à leur envoyer des commandes jusqu�
         <translation>en pause</translation>
     </message>
     <message>
-        <location line="-738"/>
+        <location line="-753"/>
         <source>%1: %2</source>
         <translation>%1: %2</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/chartpainting.cpp" line="+920"/>
+        <location filename="../lib/dashboard/widgets/chartpainting.cpp" line="+970"/>
         <source>Time (s)</source>
         <translation>Temps (s)</translation>
     </message>
@@ -1260,7 +1271,7 @@ L’autoriser à connecter des appareils et à leur envoyer des commandes jusqu�
         <translation>Curseur</translation>
     </message>
     <message>
-        <location line="+3"/>
+        <location line="+4"/>
         <source>LED</source>
         <translation>LED</translation>
     </message>
@@ -2409,7 +2420,7 @@ Autorisés : %1</translation>
 <context>
     <name>traceview::DashboardCell</name>
     <message>
-        <location filename="../lib/dashboard/widgets/chartstyle.cpp" line="+476"/>
+        <location filename="../lib/dashboard/widgets/chartstyle.cpp" line="+505"/>
         <source>Sample rate</source>
         <translation>Fréquence d&apos;échantillonnage</translation>
     </message>
@@ -2642,6 +2653,21 @@ Autorisés : %1</translation>
         <location line="+2"/>
         <source>Number</source>
         <translation>Nombre</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Analog meter</source>
+        <translation>Galvanomètre</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Digital display</source>
+        <translation>Afficheur numérique</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>LED bar</source>
+        <translation>Barre de LED</translation>
     </message>
 </context>
 <context>
@@ -4615,7 +4641,7 @@ Choisissez Plus tard pour continuer à travailler -- les modifications s&apos;ap
         <translation>(sans nom)</translation>
     </message>
     <message>
-        <location filename="../lib/core/appearancecatalog.cpp" line="-176"/>
+        <location filename="../lib/core/appearancecatalog.cpp" line="-172"/>
         <source>&amp;Palette</source>
         <translation>&amp;Palette</translation>
     </message>
@@ -4630,12 +4656,12 @@ Choisissez Plus tard pour continuer à travailler -- les modifications s&apos;ap
         <translation>Style des &amp;graphiques</translation>
     </message>
     <message>
-        <location line="+14"/>
+        <location line="+13"/>
         <source>Contro&amp;l Style</source>
         <translation>Style des co&amp;ntrôles</translation>
     </message>
     <message>
-        <location line="+14"/>
+        <location line="+13"/>
         <source>&amp;Data Colors</source>
         <translation>&amp;Couleurs des données</translation>
     </message>
@@ -6072,7 +6098,7 @@ Choisissez Plus tard pour continuer à travailler -- les modifications s&apos;ap
 <context>
     <name>traceview::PushButtonWidget</name>
     <message>
-        <location filename="../lib/dashboard/widgets/controlwidgets.cpp" line="+174"/>
+        <location filename="../lib/dashboard/widgets/controlwidgets.cpp" line="+184"/>
         <location line="+24"/>
         <source>Push Button</source>
         <translation>Bouton-poussoir</translation>
@@ -6474,7 +6500,7 @@ Choisissez Plus tard pour continuer à travailler -- les modifications s&apos;ap
         <translation>Apparence de l&apos;application</translation>
     </message>
     <message>
-        <location filename="../lib/core/appearancecatalog.cpp" line="-92"/>
+        <location filename="../lib/core/appearancecatalog.cpp" line="-90"/>
         <source>Palette</source>
         <translation>Palette</translation>
     </message>
@@ -6489,12 +6515,12 @@ Choisissez Plus tard pour continuer à travailler -- les modifications s&apos;ap
         <translation>Style des graphiques</translation>
     </message>
     <message>
-        <location line="+14"/>
+        <location line="+13"/>
         <source>Control style</source>
         <translation>Style des contrôles</translation>
     </message>
     <message>
-        <location line="+14"/>
+        <location line="+13"/>
         <source>Data colors</source>
         <translation>Couleurs des données</translation>
     </message>
@@ -7206,7 +7232,7 @@ Choisissez Plus tard pour continuer à travailler -- les modifications s&apos;ap
 <context>
     <name>traceview::ToggleSwitchWidget</name>
     <message>
-        <location filename="../lib/dashboard/widgets/controlwidgets.cpp" line="+168"/>
+        <location filename="../lib/dashboard/widgets/controlwidgets.cpp" line="+167"/>
         <source>off</source>
         <translation>arrêt</translation>
     </message>

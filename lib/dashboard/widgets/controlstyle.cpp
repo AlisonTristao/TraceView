@@ -85,6 +85,7 @@ ControlStyle controlStyleFor(ControlStyleId id) {
             style.cornerRadius = 3.0;
             style.titleLetterSpacing = 6.0;
             style.accentReadout = true;
+            style.screws = true;
             break;
         case ControlStyleId::Retro:
             style.button = ControlButtonLook::Bracket;

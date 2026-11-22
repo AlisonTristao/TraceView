@@ -7,7 +7,8 @@ They draw it through one shared set of **paint building blocks**,
 [lib/dashboard/widgets/controlpainting.h](../lib/dashboard/widgets/controlpainting.h).
 This is the controls' counterpart of the chart style sheet
 ([CHART_STYLE.md](CHART_STYLE.md)): two controls in the same style look like
-one family, and every style works with every palette.
+one family, and every style works with every palette. The chart styles have
+the same five names, so a dashboard in Panel or Retro matches throughout.
 
 ## The five styles
 
@@ -29,6 +30,7 @@ control to it.
 | Value box (`readout`) | `Plain`, medium weight | `Boxed`: recessed box | `Plain` | `Display`: black, unlit `8`s behind | `Plain`, in accent |
 | Corners | 8 px round | 2 px round | square | 3 px round | 6 px chamfer |
 | Text | Proportional | Fixed pitch | Serif, italic titles | Spaced titles | Fixed pitch, lower case, `> ` titles, accent |
+| Screws (`screws`) | - | - | - | In the four corners (`paintPanelScrews()`) | - |
 
 The table is `controlStyleFor()` in `controlstyle.cpp`. Change a value
 there and every control follows.

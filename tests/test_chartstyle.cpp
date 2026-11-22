@@ -326,7 +326,8 @@ void TestChartStyle::optionListOnlyOffersSupportedFeatures() {
     QCOMPARE(gauge.size(), 2);
     QCOMPARE(gauge[0].id, QString("style"));
     QCOMPARE(gauge[0].kind, WidgetViewOption::Kind::Choice);
-    QCOMPARE(gauge[0].choices.size(), 4);  // App default + the three styles
+    // App default + every style.
+    QCOMPARE(gauge[0].choices.size(), 1 + traceview::allChartStyles().size());
     QCOMPARE(gauge[0].choices.first().first, QString("app"));
     QCOMPARE(gauge[0].value.toString(), QString("app"));
     QCOMPARE(gauge[1].id, QString("scaleLabels"));
