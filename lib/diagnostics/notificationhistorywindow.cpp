@@ -119,21 +119,72 @@ NotificationHistoryWindow::NotificationHistoryWindow(NotificationLog* log, QWidg
         QApplication::clipboard()->setText(text);
     });
 
-    connect(m_log, &NotificationLog::entryAdded, this,
-            [this](const NotificationEntry& entry, bool) {
-                if (!passesFilter(entry)) {
-                    return;
-                }
-                appendRow(entry);
-                m_table->scrollToBottom();
-            });
+    connect(m_log, &NotificationLog::entryAdded, this, &NotificationHistoryWindow::onEntryAdded);
     connect(m_log, &NotificationLog::cleared, this, [this] { m_table->setRowCount(0); });
-    // One entry dismissed from the bell's panel: rare enough to just redraw.
-    connect(m_log, &NotificationLog::removed, this, [this](quint64) { rebuild(); });
+    connect(m_log, &NotificationLog::removed, this, &NotificationHistoryWindow::onEntryRemoved);
     connect(&ThemeManager::instance(), &ThemeManager::themeChanged, this,
-            [this](const ThemePalette&) { rebuild(); });
+            [this](const ThemePalette&) {
+                if (isVisible()) {
+                    rebuild();
+                } else {
+                    m_stale = true;
+                }
+            });
 
     rebuild();
+}
+
+void NotificationHistoryWindow::showEvent(QShowEvent* event) {
+    QDialog::showEvent(event);
+    if (m_stale) {
+        rebuild();
+    }
+}
+
+void NotificationHistoryWindow::onEntryAdded(const NotificationEntry& entry, bool droppedOldest) {
+    if (!isVisible()) {
+        m_stale = true;
+        return;
+    }
+    if (droppedOldest) {
+        trimToLog();
+    }
+    if (!passesFilter(entry)) {
+        return;
+    }
+    appendRow(entry);
+    m_table->scrollToBottom();
+}
+
+void NotificationHistoryWindow::onEntryRemoved(quint64 id) {
+    if (!isVisible()) {
+        m_stale = true;
+        return;
+    }
+    for (int row = 0; row < m_table->rowCount(); ++row) {
+        if (m_table->item(row, kTimeColumn)->data(Qt::UserRole).toULongLong() == id) {
+            m_table->removeRow(row);
+            return;
+        }
+    }
+}
+
+void NotificationHistoryWindow::trimToLog() {
+    // Ids grow with every append, so everything older than the log's oldest
+    // entry is gone from it -- and sits at the top of the table.
+    if (m_log == nullptr || m_log->entries().isEmpty()) {
+        m_table->setRowCount(0);
+        return;
+    }
+    const quint64 oldestKept = m_log->entries().constFirst().id;
+    int stale = 0;
+    while (stale < m_table->rowCount() &&
+           m_table->item(stale, kTimeColumn)->data(Qt::UserRole).toULongLong() < oldestKept) {
+        ++stale;
+    }
+    for (int i = 0; i < stale; ++i) {
+        m_table->removeRow(0);
+    }
 }
 
 bool NotificationHistoryWindow::passesFilter(const NotificationEntry& entry) const {
@@ -148,8 +199,9 @@ void NotificationHistoryWindow::appendRow(const NotificationEntry& entry) {
     const int row = m_table->rowCount();
     m_table->insertRow(row);
 
-    m_table->setItem(row, kTimeColumn,
-                     new QTableWidgetItem(entry.timestamp.toString(QStringLiteral("HH:mm:ss"))));
+    auto* timeItem = new QTableWidgetItem(entry.timestamp.toString(QStringLiteral("HH:mm:ss")));
+    timeItem->setData(Qt::UserRole, QVariant::fromValue<qulonglong>(entry.id));
+    m_table->setItem(row, kTimeColumn, timeItem);
 
     auto* severityItem = new QTableWidgetItem(severityLabel(entry.severity));
     severityItem->setForeground(severityColor(entry.severity));
@@ -160,6 +212,7 @@ void NotificationHistoryWindow::appendRow(const NotificationEntry& entry) {
 }
 
 void NotificationHistoryWindow::rebuild() {
+    m_stale = false;
     m_table->setRowCount(0);
     if (m_log == nullptr) {
         return;

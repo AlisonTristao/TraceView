@@ -24,13 +24,12 @@ control to it.
 |---|---|---|---|---|---|
 | Idea | The original TraceView look | Bench instrument | Publication | Physical panel | Phosphor terminal |
 | Button (`button`) | `Filled`: rounded block in the tone color | `Striped`: raised key, tone stripe on the left | `Outline`: hairline, filled only while pressed | `Arcade`: round cap in a bezel, label beside it | `Bracket`: chamfered outline, `[ label ]`, inverted while pressed |
-| Switch (`switchLook`) | `Pill`: sliding thumb | `Rocker`: `0` / `I` halves | `Checkbox`: square with a check mark | `Lever`: metal lever on a nut, pilot LED | `Cells`: `off` / `on` text cells |
-| Slider (`slider`) | `Track`: filled track, round thumb | `Ruler`: ticks, min/mid/max labels, square cap | `Line`: hairline, end ticks, pointer | `Fader`: dark slot, scale, grooved metal cap | `Blocks`: a row of cells |
+| Switch (`switchLook`) | `Pill`: sliding thumb | `Rocker`: `0` / `I` halves | `Checkbox`: a 26 px box on a form row -- box, name, dotted leader, state | `Lever`: metal lever on a nut, pilot LED | `Cells`: `off` / `on` text cells |
+| Slider (`slider`) | `Track`: filled track, round thumb | `Ruler`: ticks, min/mid/max labels, square cap | `Line`: a printed ruler -- ticks up from the line, a solid triangle under it, min/mid/max below | `Fader`: dark slot, scale, grooved metal cap | `Blocks`: a row of cells |
 | LED (`led`) | `Dot`: flat dot, soft halo | `Bezel`: lamp in a metal ring | `Ring`: outline, filled when lit | `Lens`: halo, bezel, body, core, highlight | `Pixel`: square, square glow |
 | Value box (`readout`) | `Plain`, medium weight | `Boxed`: recessed box | `Plain` | `Display`: black, unlit `8`s behind | `Plain`, in accent |
 | Corners | 8 px round | 2 px round | square | 3 px round | 6 px chamfer |
 | Text | Proportional | Fixed pitch | Serif, italic titles | Spaced titles | Fixed pitch, lower case, `> ` titles, accent |
-| Screws (`screws`) | - | - | - | In the four corners (`paintPanelScrews()`) | - |
 
 The table is `controlStyleFor()` in `controlstyle.cpp`. Change a value
 there and every control follows.
@@ -51,6 +50,8 @@ fixed metal and black-plastic colors (`kBezelOuter`... in
 
 Titles and state texts are `ControlText` widgets, painted rather than
 `QLabel`s so the app stylesheet can't override the style's font and color.
+How a control places them in its cell, and why it has no margin of its own,
+is in [LAYOUT.md](LAYOUT.md) "Spacing".
 
 ## The LED
 

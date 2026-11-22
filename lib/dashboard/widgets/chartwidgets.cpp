@@ -1,6 +1,9 @@
 #include "chartwidgets.h"
 
 #include <QFontDatabase>
+#include <QRadialGradient>
+#include <QLinearGradient>
+#include <QConicalGradient>
 
 #include "dashboard/widgets/controlpainting.h"
 
@@ -619,6 +622,14 @@ void paintBarSnapshot(QPainter& painter, const ChartCartesianLayout& layout, con
                 painter.setPen(Qt::NoPen);
             }
             painter.setBrush(color);
+            if (style.barHatch) {
+                // Scientific: hatched in the series color, the hatch
+                // changing from one series to the next, as in print.
+                static const Qt::BrushStyle kHatches[] = {
+                    Qt::BDiagPattern, Qt::FDiagPattern, Qt::DiagCrossPattern, Qt::CrossPattern};
+                painter.setPen(QPen(color, 1.0));
+                painter.setBrush(QBrush(color, kHatches[series % 4]));
+            }
             const QRectF bar(x, qMin(barTop, zeroY), barWidth, qAbs(barTop - zeroY));
             if (style.barCells) {
                 // Retro: the bar as a stack of cells from the baseline, the
@@ -910,6 +921,84 @@ StyledChartWidget::StyledChartWidget(QWidget* parent) : DashboardWidget(parent) 
                 refreshDataColors();
                 update();
             });
+}
+
+bool StyledChartWidget::printedOnCanvas() const {
+    return printable() && chartStyle(effectiveStyle()).printed;
+}
+
+void StyledChartWidget::setFigure(int number, const QString& title) {
+    syncPrintedBackground();
+    if (number == m_figureNumber && title == m_figureTitle) {
+        return;
+    }
+    m_figureNumber = number;
+    m_figureTitle = title;
+    update();
+}
+
+void StyledChartWidget::setEditModeHint(bool editMode) {
+    m_editMode = editMode;
+    syncPrintedBackground();
+    update();
+}
+
+void StyledChartWidget::syncPrintedBackground() {
+    setAttribute(Qt::WA_StyledBackground, !(printedOnCanvas() && !m_editMode));
+}
+
+QRect StyledChartWidget::paintChartCard(QPainter& painter, const ChartStyle& style,
+                                        const ChartColors& colors, const ThemePalette& palette) {
+    const bool printed = printedOnCanvas();
+    if (!printed || m_editMode) {
+        paintChartBackground(painter, *this, palette);
+    }
+    paintChartScrews(painter, *this, style);
+    if (!printed || (m_figureNumber <= 0 && m_figureTitle.isEmpty())) {
+        return rect();
+    }
+
+    // The caption, as under a figure in a paper: "Fig. 2 -- Motor current."
+    painter.save();
+    const QFont plain = serifFont(painter.font());
+    QFont bold = plain;
+    bold.setBold(true);
+    const QFontMetrics plainMetrics(plain);
+    const QFontMetrics boldMetrics(bold);
+    const int padding = chartOuterPadding();
+    const int height = plainMetrics.height();
+    const QRect caption(padding, rect().bottom() - padding / 2 - height, width() - 2 * padding,
+                        height);
+    QString label;
+    if (m_figureNumber > 0) {
+        label = QCoreApplication::translate("ChartWidgets", "Fig. %1").arg(m_figureNumber);
+    }
+    QString text = m_figureTitle.trimmed();
+    if (!text.isEmpty()) {
+        if (!text.endsWith(QLatin1Char('.')) && !text.endsWith(QLatin1Char('?')) &&
+            !text.endsWith(QLatin1Char('!'))) {
+            text += QLatin1Char('.');
+        }
+        if (!label.isEmpty()) {
+            text = QStringLiteral(" \u2014 ") + text;
+        }
+    }
+    int x = caption.left();
+    painter.setPen(palette.textPrimary);
+    if (!label.isEmpty()) {
+        painter.setFont(bold);
+        painter.drawText(QRect(x, caption.top(), caption.width(), height),
+                         Qt::AlignLeft | Qt::AlignVCenter, label);
+        x += boldMetrics.horizontalAdvance(label);
+    }
+    painter.setFont(plain);
+    painter.setPen(colors.legendText);
+    const int room = caption.right() - x;
+    painter.drawText(QRect(x, caption.top(), qMax(0, room), height),
+                     Qt::AlignLeft | Qt::AlignVCenter,
+                     plainMetrics.elidedText(text, Qt::ElideRight, qMax(0, room)));
+    painter.restore();
+    return rect().adjusted(0, 0, 0, -(height + padding / 2 + 2));
 }
 
 // Easing time constant: ~95% of the way in 3 tau (about 120ms).
@@ -1443,8 +1532,7 @@ void DummyLineChartWidget::paintEvent(QPaintEvent*) {
     const ChartStyle& style = chartStyle(effectiveStyle());
     const ChartColors colors = chartColors(style, palette);
 
-    paintChartBackground(painter, *this, palette);
-    paintChartScrews(painter, *this, style);
+    const QRect area = paintChartCard(painter, style, colors, palette);
 
     const QVector<QVector<double>> values = seriesValues();
     const SeriesAxes axes = seriesAxes(values);
@@ -1453,7 +1541,7 @@ void DummyLineChartWidget::paintEvent(QPaintEvent*) {
     const bool xLabeled = chrome.xTickLabels;
     const ChartConfig& config = m_config;
     const ChartCartesianLayout layout = layoutCartesianChart(
-        painter, rect(), axes.requests, chrome, style,
+        painter, area, axes.requests, chrome, style,
         [&config, &style, xLabeled](int plotWidth, int maxTicks) {
             return timeAxisScale(config, style, xLabeled, plotWidth, maxTicks);
         });
@@ -1544,8 +1632,7 @@ void DummyBarChartWidget::paintEvent(QPaintEvent*) {
     const ChartStyle& style = chartStyle(effectiveStyle());
     const ChartColors colors = chartColors(style, palette);
 
-    paintChartBackground(painter, *this, palette);
-    paintChartScrews(painter, *this, style);
+    const QRect area = paintChartCard(painter, style, colors, palette);
 
     const QVector<QVector<double>> values = seriesValues();
     const SeriesAxes axes = seriesAxes(values);
@@ -1556,7 +1643,7 @@ void DummyBarChartWidget::paintEvent(QPaintEvent*) {
     // The bottom row carries each bar's value label, not a legend row.
     chrome.bottomLegendRow = m_view.showLastValueRow;
     const ChartCartesianLayout layout =
-        layoutCartesianChart(painter, rect(), axes.requests, chrome, style);
+        layoutCartesianChart(painter, area, axes.requests, chrome, style);
 
     const BarSlots bars = barSlots(layout.plotRect, m_config.series.size(), m_seriesHidden);
     QVector<qreal> barCenters;
@@ -1686,6 +1773,40 @@ QFont gaugeValueFont(const QFont& base, const ChartStyle& style, qreal scale) {
 }
 
 // Ring (270 degrees) and HalfCircle (180): one arc per series, nested.
+// Scientific (ChartStyle::inkGauge): the gauge as a printed protractor --
+// one thin arc with its ticks, a faint band over the top 20% and a
+// single-line needle per series (the first in ink, the others in their
+// series color), all on the one arc.
+void paintGaugeInk(QPainter& painter, const QPointF& center, double radius,
+                   const GaugeScale& scale, const GaugeSweep& sweep, const GaugePaint& g) {
+    painter.save();
+    painter.setBrush(Qt::NoBrush);
+    const QRectF arc(center.x() - radius, center.y() - radius, radius * 2.0, radius * 2.0);
+    QColor band = g.colors.frame;
+    band.setAlphaF(0.22f);
+    painter.setPen(QPen(band, 5.0, Qt::SolidLine, Qt::FlatCap));
+    painter.drawArc(arc.adjusted(3.5, 3.5, -3.5, -3.5),
+                    qtAngle(sweep.startDeg + sweep.spanDeg * 0.8), qtAngle(sweep.spanDeg * 0.2));
+    painter.setPen(QPen(g.colors.frame, 1.2, Qt::SolidLine, Qt::FlatCap));
+    painter.drawArc(arc, qtAngle(sweep.startDeg), qtAngle(sweep.spanDeg));
+    paintGaugeTicks(painter, center, radius, 0.0, scale, /*withMinors=*/true, g.colors.frame,
+                    sweep);
+    for (int i = g.config.series.size() - 1; i >= 0; --i) {
+        const double value = i < g.shown.size() ? g.shown[i] : qQNaN();
+        if (qIsNaN(value)) {
+            continue;
+        }
+        const QColor ink = i == 0 ? g.palette.textPrimary : g.config.series[i].color;
+        painter.setPen(QPen(ink, 1.4, Qt::SolidLine, Qt::RoundCap));
+        paintGaugeRadialTick(painter, center, gaugeFraction(g.config, value), 0.0, radius - 6.0,
+                             sweep);
+    }
+    painter.setPen(Qt::NoPen);
+    painter.setBrush(g.palette.textPrimary);
+    painter.drawEllipse(center, 3.0, 3.0);
+    painter.restore();
+}
+
 void paintGaugeDial(QPainter& painter, const QRect& area, const GaugePaint& g,
                     const GaugeSweep& sweep) {
     const int padding = chartOuterPadding();
@@ -1730,9 +1851,20 @@ void paintGaugeDial(QPainter& painter, const QRect& area, const GaugePaint& g,
     }
     const double pitch = gaugeRingPitch(outerRadius, qMax(1, seriesCount));
 
+    if (g.style.inkGauge) {
+        paintGaugeInk(painter, center, outerRadius, scale, sweep, g);
+        if (!scale.labels.isEmpty()) {
+            painter.setFont(tickFont);
+            paintGaugeScaleLabels(painter, center, outerRadius, scale, g.colors.tickLabel, sweep);
+            painter.setFont(baseFont);
+        }
+    }
+
     // Innermost-first in z-order (i == 0 painted first) so an outer ring's
     // pointer/ticks never get buried under an inner one drawn on top of it.
-    for (int i = 0; i < seriesCount; ++i) {
+    // A printed protractor (inkGauge, above) has no rings.
+    const int rings = g.style.inkGauge ? 0 : seriesCount;
+    for (int i = 0; i < rings; ++i) {
         const double ringRadius = outerRadius - i * pitch;
         if (ringRadius < kGaugeMinInnerRadius / 2.0) {
             break;  // out of room -- further rings would invert/overlap
@@ -1773,11 +1905,17 @@ void paintGaugeDial(QPainter& painter, const QRect& area, const GaugePaint& g,
         const QString text = gaugeValueText(g.config, g.values.value(0, qQNaN()));
         // Inside the ring for the full dial; tucked inside the arch, just
         // above the flat side, for the half circle.
+        // A protractor's needle starts at the center: its full-circle
+        // reading moves down, out of the needle's way.
         const QRectF textRect =
-            half ? QRectF(center.x() - outerRadius, center.y() - outerRadius * 0.6,
+            half ? QRectF(center.x() - outerRadius,
+                          center.y() - outerRadius * 0.6 - (g.style.inkGauge ? 10.0 : 0.0),
                           outerRadius * 2.0, outerRadius * 0.6)
-                 : QRectF(center.x() - outerRadius, center.y() - outerRadius, outerRadius * 2.0,
-                          outerRadius * 2.0);
+            : g.style.inkGauge
+                ? QRectF(center.x() - outerRadius, center.y() + outerRadius * 0.2,
+                         outerRadius * 2.0, outerRadius * 0.5)
+                : QRectF(center.x() - outerRadius, center.y() - outerRadius, outerRadius * 2.0,
+                         outerRadius * 2.0);
         painter.drawText(textRect, half ? (Qt::AlignHCenter | Qt::AlignBottom) : Qt::AlignCenter,
                          text);
         painter.setFont(baseFont);
@@ -1991,117 +2129,470 @@ void paintGaugeNumbers(QPainter& painter, const QRect& area, const GaugePaint& g
     painter.setFont(baseFont);
 }
 
-// --- Meter: an analog panel meter -------------------------------------------
+// --- Analog instruments ------------------------------------------------------
 //
-// Hardware, like the Panel control look (controlpainting.h): a dark bezel
-// with screws, a light dial face, black scale, a red zone at the top of the
-// range and a needle per series (in its color, the first one dark red).
-// The colors are fixed: a real meter's dial doesn't change with the room.
-const QColor kMeterBezel(0x1c, 0x1c, 0x1c);
-const QColor kMeterBezelEdge(0x44, 0x44, 0x44);
+// The analog gauge shapes (Meter, Dial, VU, Edgewise, Counter) are panel
+// hardware: a dark metal bezel with screws that fills the card, and a dial
+// face, needle and red zone in fixed colors -- a real instrument's face
+// doesn't change with the room. They share paintInstrumentBezel() and the
+// constants below; only the face differs.
+const QColor kMeterBezelEdge(0x48, 0x48, 0x48);
 const QColor kMeterFace(0xf1, 0xef, 0xe8);
 const QColor kMeterInk(0x22, 0x22, 0x22);
 const QColor kMeterRed(0xd2, 0x3b, 0x2e);
 const QColor kMeterNeedle(0xb9, 0x1c, 0x1c);
+const QColor kCaption(0xc8, 0xc8, 0xc8);
+const QColor kVuFaceTop(0xf8, 0xe6, 0xa8);
+const QColor kVuFaceBottom(0xe9, 0xc2, 0x63);
+const QColor kDrum(0x16, 0x16, 0x16);
+const QColor kDrumLight(0x34, 0x34, 0x34);
 constexpr double kMeterSweepDeg = 100.0;  // centered on straight up
-constexpr double kMeterRedFrom = 0.8;
+constexpr double kRedFrom = 0.8;          // the red zone: the top 20% of the range
+constexpr double kVuRedFrom = 0.75;
 
-void paintGaugeMeter(QPainter& painter, const QRect& area, const GaugePaint& g) {
-    const int padding = chartOuterPadding();
-    const QRect inner = area.adjusted(padding, padding, -padding, -padding);
-    const QFontMetrics fm(painter.font());
-    const int captionHeight = fm.height() + 4;
-    // The meter keeps a 4:3 body, as large as fits above the caption.
-    const double bodyW = qMin<double>(inner.width(), (inner.height() - captionHeight) * 4.0 / 3.0);
-    const double bodyH = bodyW * 3.0 / 4.0;
-    if (bodyW < 40.0) {
-        return;
-    }
-    const QRectF body(inner.center().x() - bodyW / 2.0, inner.top(), bodyW, bodyH);
-    painter.save();
-    painter.setRenderHint(QPainter::Antialiasing);
+// The dark metal frame of every analog shape, filling `body`: a top-lit
+// gradient, a highlight along the top edge and a screw in each corner.
+// Returns the face area inside the frame.
+QRectF paintInstrumentBezel(QPainter& painter, const QRectF& body) {
+    const qreal side = qMin(body.width(), body.height());
+    const qreal frame = qBound(6.0, side * 0.075, 16.0);
+    const qreal radius = qMin(10.0, frame);
+    QLinearGradient metal(body.topLeft(), body.bottomLeft());
+    metal.setColorAt(0.0, QColor(0x3e, 0x3e, 0x3e));
+    metal.setColorAt(0.45, QColor(0x24, 0x24, 0x24));
+    metal.setColorAt(1.0, QColor(0x13, 0x13, 0x13));
     painter.setPen(QPen(kMeterBezelEdge, 1.0));
-    painter.setBrush(kMeterBezel);
-    painter.drawRoundedRect(body, 8.0, 8.0);
-    const qreal screwInset = qMax(5.0, bodyW * 0.045);
-    paintPanelScrews(painter, body, screwInset, qMax(2.2, bodyW * 0.02));
+    painter.setBrush(metal);
+    painter.drawRoundedRect(body.adjusted(0.5, 0.5, -0.5, -0.5), radius, radius);
+    painter.setPen(QPen(QColor(255, 255, 255, 46), 1.0));
+    painter.drawLine(QPointF(body.left() + radius, body.top() + 1.5),
+                     QPointF(body.right() - radius, body.top() + 1.5));
+    paintPanelScrews(painter, body, frame * 0.5 + 0.5, qMax(2.0, frame * 0.27));
+    return body.adjusted(frame, frame, -frame, -frame);
+}
 
-    const QRectF face = body.adjusted(bodyW * 0.1, bodyH * 0.12, -bodyW * 0.1, -bodyH * 0.12);
-    painter.setPen(Qt::NoPen);
-    painter.setBrush(kMeterFace);
-    painter.drawRoundedRect(face, 4.0, 4.0);
+// A face's own scale font: the tick font, sized for a dial of `radius`.
+QFont faceFont(const QFont& base, const ChartStyle& style, double radius) {
+    QFont font = chartTickFont(base, style);
+    font.setPointSizeF(qBound(6.0, font.pointSizeF() * radius / 75.0, 13.0));
+    return font;
+}
 
-    // The pivot sits low in the face; the scale arc is centered above it.
-    const QPointF pivot(face.center().x(), face.bottom() - face.height() * 0.12);
-    const double radius = qMin(face.height() * 0.78, face.width() * 0.62);
-    const GaugeSweep sweep{90.0 + kMeterSweepDeg / 2.0, -kMeterSweepDeg};
+// Name and reading of series `i`, for a caption.
+QString instrumentCaption(const GaugePaint& g, int i) {
+    if (i >= g.config.series.size()) {
+        return QString();
+    }
+    const GaugeSeriesConfig& series = g.config.series[i];
+    return QCoreApplication::translate("ChartWidgets", "%1  %2")
+        .arg(seriesDisplayName(series.name, series.fieldId),
+             gaugeValueText(g.config, g.values.value(i, qQNaN())));
+}
+
+// An arc scale on a face: ticks every 2% (longer every 10%), labels at
+// the scale's majors, the red zone from `redFrom`, all in kMeterInk.
+void paintArcScale(QPainter& painter, const QPointF& pivot, double radius, const GaugeSweep& sweep,
+                   const GaugePaint& g, double redFrom) {
     const QRectF arcRect(pivot.x() - radius, pivot.y() - radius, radius * 2.0, radius * 2.0);
     painter.setBrush(Qt::NoBrush);
     painter.setPen(QPen(kMeterInk, 1.0));
     painter.drawArc(arcRect, qtAngle(sweep.startDeg), qtAngle(sweep.spanDeg));
-    const double redRadius = radius - 4.0;
+    const double redRadius = radius - radius * 0.05;
     painter.setPen(QPen(kMeterRed, qMax(3.0, radius * 0.06), Qt::SolidLine, Qt::FlatCap));
-    painter.drawArc(QRectF(pivot.x() - redRadius, pivot.y() - redRadius, redRadius * 2.0,
-                           redRadius * 2.0),
-                    qtAngle(sweep.startDeg + sweep.spanDeg * kMeterRedFrom),
-                    qtAngle(sweep.spanDeg * (1.0 - kMeterRedFrom)));
-
-    const GaugeScale scale = gaugeScale(g.config, g.style, true);
-    QFont scaleFont = chartTickFont(painter.font(), g.style);
-    scaleFont.setPointSizeF(qMax(6.0, scaleFont.pointSizeF() * qBound(0.7, radius / 70.0, 1.2)));
-    painter.setFont(scaleFont);
+    painter.drawArc(
+        QRectF(pivot.x() - redRadius, pivot.y() - redRadius, redRadius * 2.0, redRadius * 2.0),
+        qtAngle(sweep.startDeg + sweep.spanDeg * redFrom),
+        qtAngle(sweep.spanDeg * (1.0 - redFrom)));
     for (int i = 0; i <= 50; ++i) {
-        const double f = i / 50.0;
         const double len = i % 10 == 0 ? radius * 0.14 : i % 5 == 0 ? radius * 0.1 : radius * 0.06;
         painter.setPen(QPen(kMeterInk, i % 10 == 0 ? 1.3 : 0.8));
-        paintGaugeRadialTick(painter, pivot, f, radius - len, radius, sweep);
+        paintGaugeRadialTick(painter, pivot, i / 50.0, radius - len, radius, sweep);
     }
+    const GaugeScale scale = gaugeScale(g.config, g.style, true);
+    const QFont font = faceFont(painter.font(), g.style, radius);
+    painter.save();
+    painter.setFont(font);
     painter.setPen(kMeterInk);
-    const QFontMetricsF scaleFm(scaleFont);
+    const QFontMetricsF fm(font);
     for (int t = 0; t < scale.majors.size() && t < scale.labels.size(); ++t) {
         const QPointF at = pointOnGaugeArc(pivot, radius * 0.7, scale.majors[t], sweep);
-        const double w = scaleFm.horizontalAdvance(scale.labels[t]) + 2.0;
-        painter.drawText(QRectF(at.x() - w / 2.0, at.y() - scaleFm.height() / 2.0, w,
-                                scaleFm.height()),
+        const double w = fm.horizontalAdvance(scale.labels[t]) + 2.0;
+        painter.drawText(QRectF(at.x() - w / 2.0, at.y() - fm.height() / 2.0, w, fm.height()),
                          Qt::AlignCenter, scale.labels[t]);
     }
-    if (!g.config.unit.isEmpty()) {
-        painter.drawText(QRectF(face.left(), pivot.y() - radius * 0.42, face.width(),
-                                scaleFm.height()),
-                         Qt::AlignCenter, g.config.unit);
-    }
+    painter.restore();
+}
 
-    // Needles, last series first so the first one ends on top.
+// The needles over a scale: one per series with a value, the first dark
+// red, the others in their series color; last series first so the first
+// one ends on top.
+void paintNeedles(QPainter& painter, const QPointF& pivot, double length, double tail,
+                  const GaugeSweep& sweep, const GaugePaint& g, double width) {
     for (int i = g.config.series.size() - 1; i >= 0; --i) {
         const double value = i < g.shown.size() ? g.shown[i] : qQNaN();
         if (qIsNaN(value)) {
             continue;
         }
+        const double f = gaugeFraction(g.config, value);
         const QColor color = i == 0 ? kMeterNeedle : g.config.series[i].color;
-        painter.setPen(QPen(color, qMax(1.5, radius * 0.025), Qt::SolidLine, Qt::RoundCap));
-        painter.drawLine(pivot,
-                         pointOnGaugeArc(pivot, radius - 3.0, gaugeFraction(g.config, value),
-                                         sweep));
+        painter.setPen(QPen(color, width, Qt::SolidLine, Qt::RoundCap));
+        painter.drawLine(pointOnGaugeArc(pivot, -tail, f, sweep),
+                         pointOnGaugeArc(pivot, length, f, sweep));
     }
+}
+
+void paintCaption(QPainter& painter, const QRectF& rect, const QString& text) {
+    painter.save();
+    painter.setPen(kCaption);
+    const QFontMetricsF fm(painter.font());
+    painter.drawText(rect, Qt::AlignCenter, fm.elidedText(text, Qt::ElideRight, rect.width()));
+    painter.restore();
+}
+
+// --- Meter: an analog panel meter -------------------------------------------
+//
+// The bezel fills the card; inside it a light face with a 100 degree scale,
+// a red zone and a needle per series, and the first series' name and
+// reading under the face, on the bezel.
+void paintGaugeMeter(QPainter& painter, const QRect& area, const GaugePaint& g) {
+    const QRectF body = QRectF(area).adjusted(4, 4, -4, -4);
+    if (body.width() < 60.0 || body.height() < 50.0) {
+        return;
+    }
+    painter.save();
+    painter.setRenderHint(QPainter::Antialiasing);
+    QRectF face = paintInstrumentBezel(painter, body);
+    const QFontMetricsF fm(painter.font());
+    const QRectF caption(face.left(), face.bottom() - fm.height() - 2.0, face.width(),
+                         fm.height() + 2.0);
+    face.setBottom(caption.top() - 4.0);
+    painter.setPen(Qt::NoPen);
+    painter.setBrush(kMeterFace);
+    painter.drawRoundedRect(face, 3.0, 3.0);
+
+    painter.save();
+    painter.setClipRect(face);
+    const QPointF pivot(face.center().x(), face.bottom() - face.height() * 0.1);
+    const double radius = qMin(face.height() * 0.8, face.width() * 0.6);
+    const GaugeSweep sweep{90.0 + kMeterSweepDeg / 2.0, -kMeterSweepDeg};
+    paintArcScale(painter, pivot, radius, sweep, g, kRedFrom);
+    if (!g.config.unit.isEmpty()) {
+        painter.setFont(faceFont(painter.font(), g.style, radius));
+        painter.setPen(kMeterInk);
+        painter.drawText(QRectF(face.left(), pivot.y() - radius * 0.45, face.width(),
+                                QFontMetricsF(painter.font()).height()),
+                         Qt::AlignCenter, g.config.unit);
+    }
+    paintNeedles(painter, pivot, radius - 3.0, 0.0, sweep, g, qMax(1.5, radius * 0.025));
     painter.setPen(Qt::NoPen);
     painter.setBrush(kMeterInk);
     painter.drawEllipse(pivot, radius * 0.07, radius * 0.07);
-    painter.setBrush(QColor(0x88, 0x88, 0x88));
-    painter.drawEllipse(pivot, radius * 0.025, radius * 0.025);
     painter.restore();
 
-    // Caption: name and reading of the first series.
-    painter.setPen(g.colors.legendText);
-    const GaugeSeriesConfig& series = g.config.series.value(0);
-    const QString caption =
-        g.config.series.isEmpty()
-            ? QString()
-            : QCoreApplication::translate("ChartWidgets", "%1  %2")
-                  .arg(seriesDisplayName(series.name, series.fieldId),
-                       gaugeValueText(g.config, g.values.value(0, qQNaN())));
-    painter.drawText(QRectF(inner.left(), body.bottom() + 2.0, inner.width(), captionHeight),
-                     Qt::AlignHCenter | Qt::AlignTop,
-                     fm.elidedText(caption, Qt::ElideRight, inner.width()));
+    paintCaption(painter, caption, instrumentCaption(g, 0));
+    painter.restore();
+}
+
+// --- Dial: a round panel gauge, like a manometer -----------------------------
+//
+// A square bezel with a chrome ring and a round light face: a 270 degree
+// scale from the bottom left to the bottom right, a red zone, a needle per
+// series with a counterweight tail, and the first series' reading in a
+// small window low on the face.
+void paintGaugeRoundDial(QPainter& painter, const QRect& area, const GaugePaint& g) {
+    const QRectF inner = QRectF(area).adjusted(4, 4, -4, -4);
+    const double side = qMin(inner.width(), inner.height());
+    if (side < 60.0) {
+        return;
+    }
+    // Square, centered: a round dial in a square plate.
+    QRectF body(0, 0, inner.width(), inner.height());
+    if (inner.width() > inner.height() * 1.15) {
+        body.setWidth(inner.height() * 1.15);
+    } else if (inner.height() > inner.width() * 1.15) {
+        body.setHeight(inner.width() * 1.15);
+    }
+    body.moveCenter(inner.center());
+    painter.save();
+    painter.setRenderHint(QPainter::Antialiasing);
+    const QRectF face = paintInstrumentBezel(painter, body);
+    const QPointF c = face.center();
+    const double ring = qMin(face.width(), face.height()) / 2.0 - 1.0;
+
+    QConicalGradient chrome(c, 45.0);
+    chrome.setColorAt(0.0, QColor(0xe8, 0xe8, 0xe8));
+    chrome.setColorAt(0.25, QColor(0x8a, 0x8a, 0x8a));
+    chrome.setColorAt(0.5, QColor(0xd8, 0xd8, 0xd8));
+    chrome.setColorAt(0.75, QColor(0x70, 0x70, 0x70));
+    chrome.setColorAt(1.0, QColor(0xe8, 0xe8, 0xe8));
+    painter.setPen(QPen(QColor(0x2a, 0x2a, 0x2a), 1.0));
+    painter.setBrush(chrome);
+    painter.drawEllipse(c, ring, ring);
+    const double faceRadius = ring * 0.9;
+    painter.setBrush(kMeterFace);
+    painter.drawEllipse(c, faceRadius, faceRadius);
+
+    const GaugeSweep sweep{225.0, -270.0};
+    const double radius = faceRadius * 0.86;
+    paintArcScale(painter, c, radius, sweep, g, kRedFrom);
+
+    const QFont font = faceFont(painter.font(), g.style, radius);
+    painter.setFont(font);
+    const QFontMetricsF fm(font);
+    painter.setPen(kMeterInk);
+    if (!g.config.unit.isEmpty()) {
+        painter.drawText(QRectF(c.x() - radius, c.y() - radius * 0.42, radius * 2.0, fm.height()),
+                         Qt::AlignCenter, g.config.unit);
+    }
+    // The reading, in a small window low on the face.
+    const QString text = gaugeValueText(g.config, g.values.value(0, qQNaN()));
+    const double windowW = fm.horizontalAdvance(text) + 10.0;
+    const QRectF window(c.x() - windowW / 2.0, c.y() + radius * 0.42, windowW, fm.height() + 4.0);
+    painter.setPen(QPen(QColor(0x9a, 0x9a, 0x9a), 1.0));
+    painter.setBrush(QColor(0xff, 0xff, 0xff));
+    painter.drawRoundedRect(window, 2.0, 2.0);
+    painter.setPen(kMeterInk);
+    painter.drawText(window, Qt::AlignCenter, text);
+
+    paintNeedles(painter, c, radius * 0.92, radius * 0.18, sweep, g, qMax(1.6, radius * 0.03));
+    QRadialGradient cap(QPointF(c.x() - radius * 0.03, c.y() - radius * 0.03), radius * 0.1);
+    cap.setColorAt(0.0, QColor(0x6a, 0x6a, 0x6a));
+    cap.setColorAt(1.0, QColor(0x14, 0x14, 0x14));
+    painter.setPen(Qt::NoPen);
+    painter.setBrush(cap);
+    painter.drawEllipse(c, radius * 0.08, radius * 0.08);
+    painter.restore();
+}
+
+// --- VU: a backlit VU meter per series, side by side ------------------------
+//
+// Each one its own bezel: a warm amber face, a scale whose pivot sits below
+// the window (so only the top of the swing shows), the red zone over the
+// top quarter, "VU" on the face and the series name under it.
+void paintGaugeVu(QPainter& painter, const QRect& area, const GaugePaint& g) {
+    const int count = qBound(1, int(g.config.series.size()), 4);
+    const QRectF inner = QRectF(area).adjusted(4, 4, -4, -4);
+    constexpr double kGap = 6.0;
+    const double width = (inner.width() - kGap * (count - 1)) / count;
+    if (width < 60.0 || inner.height() < 50.0) {
+        return;
+    }
+    painter.save();
+    painter.setRenderHint(QPainter::Antialiasing);
+    const QFontMetricsF captionFm(painter.font());
+    // A VU meter is wider than tall: past that the extra height is left
+    // around it, centered, instead of stretching the face into a slot.
+    const double height = qMin(inner.height(), width * 0.9);
+    const double top = inner.top() + (inner.height() - height) / 2.0;
+    for (int i = 0; i < count; ++i) {
+        const QRectF body(inner.left() + i * (width + kGap), top, width, height);
+        QRectF face = paintInstrumentBezel(painter, body);
+        const QRectF caption(face.left(), face.bottom() - captionFm.height() - 2.0, face.width(),
+                             captionFm.height() + 2.0);
+        face.setBottom(caption.top() - 4.0);
+        QLinearGradient glow(face.topLeft(), face.bottomLeft());
+        glow.setColorAt(0.0, kVuFaceTop);
+        glow.setColorAt(1.0, kVuFaceBottom);
+        painter.setPen(Qt::NoPen);
+        painter.setBrush(glow);
+        painter.drawRoundedRect(face, 3.0, 3.0);
+
+        painter.save();
+        painter.setClipRect(face);
+        const double radius = qMin(face.height() * 1.1, face.width() * 0.7);
+        const QPointF pivot(face.center().x(), face.top() + face.height() * 0.18 + radius);
+        const GaugeSweep sweep{90.0 + 45.0, -90.0};
+        paintArcScale(painter, pivot, radius * 0.92, sweep, g, kVuRedFrom);
+        QFont vu = faceFont(painter.font(), g.style, radius);
+        vu.setItalic(true);
+        vu.setBold(true);
+        painter.setFont(vu);
+        painter.setPen(kMeterInk);
+        painter.drawText(QRectF(face.left(), face.bottom() - face.height() * 0.38, face.width(),
+                                face.height() * 0.3),
+                         Qt::AlignCenter, QStringLiteral("VU"));
+        const double value = i < g.shown.size() ? g.shown[i] : qQNaN();
+        if (!qIsNaN(value)) {
+            painter.setPen(QPen(kMeterInk, qMax(1.2, radius * 0.012), Qt::SolidLine, Qt::RoundCap));
+            painter.drawLine(pivot, pointOnGaugeArc(pivot, radius * 0.95,
+                                                    gaugeFraction(g.config, value), sweep));
+        }
+        painter.restore();
+        paintCaption(painter, caption, instrumentCaption(g, i));
+    }
+    painter.restore();
+}
+
+// --- Edgewise: a vertical strip meter per series, side by side ---------------
+//
+// A tall narrow face with a scale down its right side, the red zone along
+// the top of it, and a pointer that slides up and down; the series name and
+// reading under each, on the bezel.
+void paintGaugeEdgewise(QPainter& painter, const QRect& area, const GaugePaint& g) {
+    const int count = qBound(1, int(g.config.series.size()), 6);
+    const QRectF inner = QRectF(area).adjusted(4, 4, -4, -4);
+    constexpr double kGap = 6.0;
+    const double width = (inner.width() - kGap * (count - 1)) / count;
+    if (width < 44.0 || inner.height() < 90.0) {
+        return;
+    }
+    painter.save();
+    painter.setRenderHint(QPainter::Antialiasing);
+    const QFontMetricsF captionFm(painter.font());
+    const GaugeScale scale = gaugeScale(g.config, g.style, true);
+    for (int i = 0; i < count; ++i) {
+        const QRectF body(inner.left() + i * (width + kGap), inner.top(), width, inner.height());
+        QRectF face = paintInstrumentBezel(painter, body);
+        const QRectF caption(face.left() - 4.0, face.bottom() - captionFm.height() - 2.0,
+                             face.width() + 8.0, captionFm.height() + 2.0);
+        face.setBottom(caption.top() - 4.0);
+        painter.setPen(Qt::NoPen);
+        painter.setBrush(kMeterFace);
+        painter.drawRoundedRect(face, 3.0, 3.0);
+
+        const double top = face.top() + 10.0;
+        const double bottom = face.bottom() - 10.0;
+        const double lineX = face.left() + face.width() * 0.62;
+        const auto yAt = [&](double f) { return bottom - (bottom - top) * f; };
+        painter.setPen(QPen(kMeterRed, qMax(3.0, face.width() * 0.06), Qt::SolidLine, Qt::FlatCap));
+        painter.drawLine(QPointF(lineX + 3.0, yAt(1.0)), QPointF(lineX + 3.0, yAt(kRedFrom)));
+        painter.setPen(QPen(kMeterInk, 1.0));
+        painter.drawLine(QPointF(lineX, top), QPointF(lineX, bottom));
+        for (int k = 0; k <= 50; ++k) {
+            const double y = yAt(k / 50.0);
+            const double len = k % 10 == 0 ? 8.0 : k % 5 == 0 ? 5.5 : 3.0;
+            painter.setPen(QPen(kMeterInk, k % 10 == 0 ? 1.2 : 0.7));
+            painter.drawLine(QPointF(lineX - len, y), QPointF(lineX, y));
+        }
+        QFont font = chartTickFont(painter.font(), g.style);
+        font.setPointSizeF(qBound(6.0, font.pointSizeF() * face.width() / 70.0, 10.0));
+        painter.save();
+        painter.setFont(font);
+        painter.setPen(kMeterInk);
+        const QFontMetricsF fm(font);
+        for (int t = 0; t < scale.majors.size() && t < scale.labels.size(); ++t) {
+            const double y = yAt(scale.majors[t]);
+            painter.drawText(QRectF(face.left() + 2.0, y - fm.height() / 2.0,
+                                    lineX - 10.0 - face.left() - 2.0, fm.height()),
+                             Qt::AlignRight | Qt::AlignVCenter, scale.labels[t]);
+        }
+        painter.restore();
+
+        const double value = i < g.shown.size() ? g.shown[i] : qQNaN();
+        if (!qIsNaN(value)) {
+            const double y = yAt(gaugeFraction(g.config, value));
+            const QColor color = i == 0 ? kMeterNeedle : g.config.series[i].color;
+            painter.setPen(QPen(color, 2.0, Qt::SolidLine, Qt::RoundCap));
+            painter.drawLine(QPointF(face.left() + 4.0, y), QPointF(lineX + 6.0, y));
+            painter.setPen(Qt::NoPen);
+            painter.setBrush(color);
+            painter.drawPolygon(
+                QPolygonF({QPointF(lineX + 6.0, y), QPointF(face.right() - 3.0, y - 5.0),
+                           QPointF(face.right() - 3.0, y + 5.0)}));
+        }
+        paintCaption(painter, caption, instrumentCaption(g, i));
+    }
+    painter.restore();
+}
+
+// --- Counter: a mechanical counter per series --------------------------------
+//
+// Digit drums behind a window in the bezel, white on black, the decimals
+// black on white as on an odometer, a row per series with its name on the
+// bezel to the left and the unit to the right.
+void paintGaugeCounter(QPainter& painter, const QRect& area, const GaugePaint& g) {
+    const int count = g.config.series.size();
+    const QRectF body = QRectF(area).adjusted(4, 4, -4, -4);
+    if (count == 0 || body.width() < 80.0 || body.height() < 40.0) {
+        return;
+    }
+    painter.save();
+    painter.setRenderHint(QPainter::Antialiasing);
+    const QFont baseFont = painter.font();
+    const QRectF face = paintInstrumentBezel(painter, body);
+    // The widest reading the range prints sets the number of drums.
+    const auto digitsOf = [&g](double value) {
+        return QString::number(qAbs(value), 'f', qMax(0, g.config.decimals));
+    };
+    QString widest = digitsOf(g.config.max);
+    if (digitsOf(g.config.min).size() > widest.size()) {
+        widest = digitsOf(g.config.min);
+    }
+    const bool negative = g.config.min < 0.0;
+    const int drums = int(widest.size()) - (g.config.decimals > 0 ? 1 : 0) + (negative ? 1 : 0);
+    const double rowHeight = face.height() / count;
+    const QFontMetricsF labelFm(painter.font());
+    double nameWidth = 0.0;
+    for (const GaugeSeriesConfig& series : g.config.series) {
+        nameWidth = qMax(nameWidth,
+                         labelFm.horizontalAdvance(seriesDisplayName(series.name, series.fieldId)));
+    }
+    const double unitWidth =
+        g.config.unit.isEmpty() ? 0.0 : labelFm.horizontalAdvance(g.config.unit) + 8.0;
+    for (int i = 0; i < count; ++i) {
+        const QRectF row(face.left(), face.top() + rowHeight * i, face.width(), rowHeight);
+        const double drumH = qMin(row.height() * 0.78, 64.0);
+        double drumW = drumH * 0.66;
+        const double room = row.width() - nameWidth - unitWidth - 16.0;
+        if (drumW * drums > room) {
+            drumW = qMax(8.0, room / drums);
+        }
+        const double windowW = drumW * drums + 6.0;
+        const QRectF window(row.right() - unitWidth - windowW, row.center().y() - drumH / 2.0 - 3.0,
+                            windowW, drumH + 6.0);
+        painter.setPen(QPen(QColor(0x0a, 0x0a, 0x0a), 1.0));
+        painter.setBrush(QColor(0x08, 0x08, 0x08));
+        painter.drawRoundedRect(window, 2.0, 2.0);
+
+        const double value = g.values.value(i, qQNaN());
+        QString text = qIsNaN(value)
+                           ? QString(drums, QLatin1Char('-'))
+                           : QString::number(qAbs(value), 'f', qMax(0, g.config.decimals));
+        const int intDigits =
+            int(widest.indexOf(QLatin1Char('.')) < 0 ? widest.size()
+                                                     : widest.indexOf(QLatin1Char('.')));
+        QString whole = text.section(QLatin1Char('.'), 0, 0);
+        const QString fraction = text.section(QLatin1Char('.'), 1);
+        whole = whole.rightJustified(intDigits, QLatin1Char('0'));
+        QString shown = (negative ? QString(value < 0.0 ? QStringLiteral("-") : QStringLiteral(" "))
+                                  : QString()) +
+                        whole + fraction;
+        shown = shown.right(drums).rightJustified(drums, QLatin1Char('0'));
+        const int fractionDrums = g.config.decimals > 0 ? g.config.decimals : 0;
+
+        QFont digit = QFontDatabase::systemFont(QFontDatabase::FixedFont);
+        digit.setBold(true);
+        digit.setPixelSize(qMax(8, int(drumH * 0.62)));
+        for (int d = 0; d < drums; ++d) {
+            const QRectF drum(window.left() + 3.0 + d * drumW + 0.5, window.top() + 3.0,
+                              drumW - 1.0, drumH);
+            const bool decimal = d >= drums - fractionDrums;
+            QLinearGradient shade(drum.topLeft(), drum.bottomLeft());
+            const QColor base = decimal ? QColor(0xee, 0xee, 0xee) : kDrumLight;
+            const QColor edge = decimal ? QColor(0x9a, 0x9a, 0x9a) : kDrum;
+            shade.setColorAt(0.0, edge);
+            shade.setColorAt(0.5, base);
+            shade.setColorAt(1.0, edge);
+            painter.setPen(Qt::NoPen);
+            painter.setBrush(shade);
+            painter.drawRect(drum);
+            painter.setFont(digit);
+            painter.setPen(decimal ? kMeterInk : QColor(0xf2, 0xf2, 0xf2));
+            painter.drawText(drum, Qt::AlignCenter, shown.mid(d, 1));
+        }
+        painter.setFont(baseFont);
+        const GaugeSeriesConfig& series = g.config.series[i];
+        painter.setPen(kCaption);
+        painter.drawText(QRectF(row.left() + 4.0, row.top(), nameWidth + 4.0, row.height()),
+                         Qt::AlignLeft | Qt::AlignVCenter,
+                         seriesDisplayName(series.name, series.fieldId));
+        if (unitWidth > 0.0) {
+            painter.drawText(
+                QRectF(row.right() - unitWidth + 4.0, row.top(), unitWidth, row.height()),
+                Qt::AlignLeft | Qt::AlignVCenter, g.config.unit);
+        }
+    }
+    painter.restore();
 }
 
 // --- Display: one 7-segment-like readout per series --------------------------
@@ -2192,32 +2683,43 @@ void DummyGaugeWidget::paintEvent(QPaintEvent*) {
     const ChartStyle& style = chartStyle(effectiveStyle());
     const ChartColors colors = chartColors(style, palette);
 
-    paintChartBackground(painter, *this, palette);
-    paintChartScrews(painter, *this, style);
+    const QRect area = paintChartCard(painter, style, colors, palette);
 
     const QVector<double> shown = easedValues(m_values, qAbs(m_config.max - m_config.min));
     const GaugePaint g{m_config, m_values, shown, m_view, style, colors, palette};
     switch (m_view.gaugeShape) {
         case ChartGaugeShape::HalfCircle:
-            paintGaugeDial(painter, rect(), g, kHalfSweep);
+            paintGaugeDial(painter, area, g, kHalfSweep);
             break;
         case ChartGaugeShape::Bar:
-            paintGaugeBars(painter, rect(), g);
+            paintGaugeBars(painter, area, g);
             break;
         case ChartGaugeShape::Number:
-            paintGaugeNumbers(painter, rect(), g);
+            paintGaugeNumbers(painter, area, g);
             break;
         case ChartGaugeShape::Meter:
-            paintGaugeMeter(painter, rect(), g);
+            paintGaugeMeter(painter, area, g);
             break;
         case ChartGaugeShape::Display:
-            paintGaugeDisplays(painter, rect(), g);
+            paintGaugeDisplays(painter, area, g);
             break;
         case ChartGaugeShape::Segments:
-            paintGaugeBars(painter, rect(), g, /*segmented=*/true);
+            paintGaugeBars(painter, area, g, /*segmented=*/true);
+            break;
+        case ChartGaugeShape::Dial:
+            paintGaugeRoundDial(painter, area, g);
+            break;
+        case ChartGaugeShape::Vu:
+            paintGaugeVu(painter, area, g);
+            break;
+        case ChartGaugeShape::Edgewise:
+            paintGaugeEdgewise(painter, area, g);
+            break;
+        case ChartGaugeShape::Counter:
+            paintGaugeCounter(painter, area, g);
             break;
         case ChartGaugeShape::Arc:
-            paintGaugeDial(painter, rect(), g, kRingSweep);
+            paintGaugeDial(painter, area, g, kRingSweep);
             break;
     }
 }

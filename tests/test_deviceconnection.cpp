@@ -35,11 +35,31 @@ private slots:
     void connectToTcpWithZeroPortStaysDisconnected();
     void connectToTcpReachesNegotiatingBtpAgainstALocalServer();
     void connectToTcpSessionRecoversWhenHelloResultNeverArrives();
+    void reconnectBackoffKeepsPaceThenDoublesUpToACap();
 #ifdef TRACEVIEW_ENABLE_BLE
     void bleTransportBuildsNeitherSerialNorUsbHidManager();
     void connectToBleWithEmptyAddressStaysDisconnected();
 #endif
 };
+
+void TestDeviceConnection::reconnectBackoffKeepsPaceThenDoublesUpToACap() {
+    constexpr int tick = 6000;
+    // The first attempts follow the retry tick: no extra wait.
+    for (int n = 1; n < DeviceConnection::kFastReconnectAttempts; ++n) {
+        QCOMPARE(DeviceConnection::reconnectBackoffMs(n, tick), 0);
+    }
+    const int fast = DeviceConnection::kFastReconnectAttempts;
+    QCOMPARE(DeviceConnection::reconnectBackoffMs(fast, tick), 2 * tick);
+    QCOMPARE(DeviceConnection::reconnectBackoffMs(fast + 1, tick), 4 * tick);
+    QCOMPARE(DeviceConnection::reconnectBackoffMs(fast + 2, tick), 8 * tick);
+    // Capped, and no overflow however long it has been failing.
+    QCOMPARE(DeviceConnection::reconnectBackoffMs(fast + 3, tick),
+             DeviceConnection::kMaxReconnectBackoffMs);
+    QCOMPARE(DeviceConnection::reconnectBackoffMs(100000, tick),
+             DeviceConnection::kMaxReconnectBackoffMs);
+    // A zero/odd tick still backs off instead of retrying flat out.
+    QVERIFY(DeviceConnection::reconnectBackoffMs(fast + 3, 0) > 0);
+}
 
 void TestDeviceConnection::startsDisconnectedWithABackend() {
     DeviceConnection connection(CommType::Btp);

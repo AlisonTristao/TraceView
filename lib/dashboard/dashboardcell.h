@@ -65,6 +65,10 @@ public:
 
     void setTitle(const QString& title);
     void setEditMode(bool enabled);
+    // Re-reads DashboardWidget::printedOnCanvas(): a printed widget in Run
+    // mode has no card (fill, outline) and only a hover header. Called by
+    // DashboardGrid after anything that may change a widget's style.
+    void syncPrinted();
     void setSelected(bool selected);
     bool isSelected() const {
         return m_selected;
@@ -156,6 +160,7 @@ private:
     QWidget* m_borderOverlay = nullptr;
     QWidget* m_hoverHeader = nullptr;  // see headerHeight()
     bool m_editMode = false;
+    bool m_printed = false;  // see syncPrinted()
     bool m_selected = false;
     bool m_resizable = true;
     bool m_dragInvalid = false;

@@ -413,6 +413,11 @@ private:
     // (ThemeManager::canvas()).
     void paintCanvas(QPainter& painter) const;
     void relayoutItem(const QString& itemId);
+    // Numbers the widgets printed on the canvas (DashboardWidget::
+    // setFigure()) in reading order -- top to bottom, then left to right --
+    // on the next event loop pass, so a burst of changes renumbers once.
+    void scheduleFigureNumbers();
+    void numberFigures();
     void clearItems();
     void removeItem(const QString& itemId);
 
@@ -511,6 +516,7 @@ private:
     void handleViewConfigChanged(const QString& itemId, const QJsonObject& view);
 
     bool m_editMode = false;
+    bool m_figuresPending = false;  // see scheduleFigureNumbers()
     // Which screen-size layout is currently shown/editable -- see
     // setBreakpoint(). Large by default, matching the geometry every
     // existing/legacy dashboard already has.
