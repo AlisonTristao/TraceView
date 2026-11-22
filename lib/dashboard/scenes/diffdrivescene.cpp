@@ -32,16 +32,14 @@ constexpr double kFloorDotClearance = 0.667;
 // Without a track, the minimap shows +-50 m around the origin (pygame's).
 constexpr double kDefaultMinimapHalfExtent = 50.0;
 
-const QColor kBackground(255, 255, 255);
-const QColor kTrack(0, 0, 0);
-const QColor kTrackReached(100, 100, 100);
-const QColor kFloorDot(50, 50, 50);
+// Background, track, floor dots, text and compass come from the app's
+// palette (SceneView::colors); the car, its sensors and the controller's
+// lines keep their own signal colors.
 const QColor kCar(0, 0, 200);
 const QColor kSensor(150, 150, 150);
 const QColor kReference(200, 0, 0);
 const QColor kPrediction(0, 120, 255);
 const QColor kHud(0, 200, 0);
-const QColor kInfo(0, 0, 0);
 const QColor kCompassPointer(255, 0, 0);
 const QColor kCompassNorth(200, 0, 0);
 
@@ -385,7 +383,7 @@ void DiffDriveScene::paint(QPainter& painter, const SceneView& view) {
     const bool antialiasing = antialiased();
     painter.setRenderHint(QPainter::Antialiasing, antialiasing);
     painter.setRenderHint(QPainter::TextAntialiasing, antialiasing);
-    painter.fillRect(QRectF(QPointF(0, 0), view.size), kBackground);
+    painter.fillRect(QRectF(QPointF(0, 0), view.size), view.colors.paper);
 
     paintTrack(painter, view);
     paintFloorDots(painter, view);
@@ -412,13 +410,13 @@ void DiffDriveScene::paint(QPainter& painter, const SceneView& view) {
     };
     if (!qIsNaN(m_qps) || !qIsNaN(m_solveMs)) {
         if (!m_controller.isEmpty()) {
-            line(m_controller, kInfo);
+            line(m_controller, view.colors.ink);
         }
         if (!qIsNaN(m_qps)) {
-            line(QStringLiteral("QPs: %1").arg(qRound(m_qps)), kInfo);
+            line(QStringLiteral("QPs: %1").arg(qRound(m_qps)), view.colors.ink);
         }
         if (!qIsNaN(m_solveMs)) {
-            line(QStringLiteral("solve: %1 ms").arg(m_solveMs, 0, 'f', 2), kInfo);
+            line(QStringLiteral("solve: %1 ms").arg(m_solveMs, 0, 'f', 2), view.colors.ink);
         }
     }
     line(QStringLiteral("fps: %1").arg(view.renderFps, 0, 'f', 1), kHud);
@@ -477,8 +475,8 @@ void DiffDriveScene::paintTrack(QPainter& painter, const SceneView& view) const 
         }
         flush();
     };
-    strokeRuns(true, kTrackReached);
-    strokeRuns(false, kTrack);
+    strokeRuns(true, view.colors.trail);
+    strokeRuns(false, view.colors.ink);
 }
 
 
@@ -486,7 +484,7 @@ void DiffDriveScene::paintFloorDots(QPainter& painter, const SceneView& view) co
     const DiffDrivePose current = pose();
     const double radius = param(kRenderRadius);
     painter.setPen(Qt::NoPen);
-    painter.setBrush(kFloorDot);
+    painter.setBrush(view.colors.guide);
     for (qint64 ix = qint64(std::ceil(current.x - radius));
          ix <= qint64(std::floor(current.x + radius)); ++ix) {
         for (qint64 iy = qint64(std::ceil(current.y - radius));
@@ -527,7 +525,7 @@ void DiffDriveScene::paintMinimap(QPainter& painter, const SceneView& view) cons
 
     painter.save();
     painter.setPen(Qt::NoPen);
-    painter.setBrush(kBackground);
+    painter.setBrush(view.colors.paper);
     painter.drawRect(rect.adjusted(1, 1, -1, -1));
     painter.setClipRect(rect);
 
@@ -542,7 +540,7 @@ void DiffDriveScene::paintMinimap(QPainter& painter, const SceneView& view) cons
     }
     const auto toMap = [&](const QPointF& p) { return center + (p - origin) * factor; };
 
-    painter.setBrush(kTrack);
+    painter.setBrush(view.colors.ink);
     const int step = qMax(1, qRound(param(kScale) / 10.0));
     for (int i = 0; i < m_track.size(); i += step) {
         painter.drawEllipse(toMap(m_track[i]), 1.0, 1.0);
@@ -565,7 +563,7 @@ void DiffDriveScene::paintCompass(QPainter& painter, const SceneView& view) cons
 
     painter.save();
     painter.setBrush(Qt::NoBrush);
-    painter.setPen(QPen(Qt::black, 2.0));
+    painter.setPen(QPen(view.colors.ink, 2.0));
     painter.drawEllipse(center, radius, radius);
     QPolygonF star;
     for (int i = 0; i < 8; ++i) {
@@ -590,9 +588,9 @@ void DiffDriveScene::paintCompass(QPainter& painter, const SceneView& view) cons
         QPointF direction;
         QColor color;
     } labels[] = {{"N", {0, -1}, kCompassNorth},
-                  {"E", {1, 0}, Qt::black},
-                  {"S", {0, 1}, Qt::black},
-                  {"W", {-1, 0}, Qt::black}};
+                  {"E", {1, 0}, view.colors.ink},
+                  {"S", {0, 1}, view.colors.ink},
+                  {"W", {-1, 0}, view.colors.ink}};
     for (const auto& label : labels) {
         const QString text = QString::fromLatin1(label.label);
         const QPointF at = center + label.direction * offset;

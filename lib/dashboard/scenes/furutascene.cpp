@@ -27,16 +27,11 @@ const QString kAntialiasing = QStringLiteral("antialiasing");
 const QString kBackdrop = QStringLiteral("backdrop");
 const QString kShadows = QStringLiteral("shadows");
 
-const QColor kPaper(255, 255, 255);
-const QColor kInk(0, 0, 0);
-const QColor kGuide(85, 85, 85);
-const QColor kTrailColor(120, 120, 120);
-// The backdrop: a soft sky, a lit patch of floor under the machine and the
-// shadows of its parts cast straight down onto it.
-const QColor kSkyTop(252, 253, 255);
-const QColor kSkyBottom(221, 227, 235);
-const QColor kStage(255, 255, 255);
-const QColor kShadow(40, 50, 70);
+// The colors of the frame being painted (SceneView::colors, from the app's
+// palette), set by FurutaScene::paint() on the thread that paints it and
+// read by the drawing helpers below. thread_local: frames render on the
+// thread pool, one renderer at a time per widget but several widgets at once.
+thread_local SceneColors tColors;
 
 // Degrees per pixel of drag.
 constexpr double kOrbitPerPixel = 0.4;
@@ -440,8 +435,8 @@ void drawArc(QPainter& painter, const Camera& camera, const std::vector<Solid>& 
 }
 
 void drawSolid(QPainter& painter, const Camera& camera, const Solid& s, double penWidth) {
-    painter.setPen(QPen(kInk, penWidth, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
-    painter.setBrush(kPaper);
+    painter.setPen(QPen(tColors.ink, penWidth, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
+    painter.setBrush(tColors.paper);
     if (!s.sphere) {
         painter.drawPolygon(s.outline);
         const V3 axis = s.b - s.a;
@@ -450,7 +445,7 @@ void drawSolid(QPainter& painter, const Camera& camera, const Solid& s, double p
             // A chamfer seen from above: its slope shows both edges.
             painter.setBrush(Qt::NoBrush);
             painter.drawPolygon(circleOnScreen(camera, s.a, axis, s.r));
-            painter.setBrush(kPaper);
+            painter.setBrush(tColors.paper);
             painter.drawPolygon(circleOnScreen(camera, s.b, axis, s.r2));
             return;
         }
@@ -479,9 +474,9 @@ void drawSolid(QPainter& painter, const Camera& camera, const Solid& s, double p
         }
     }
     painter.setBrush(Qt::NoBrush);
-    painter.setPen(QPen(QColor(60, 60, 60), penWidth * 0.8));
+    painter.setPen(QPen(tColors.guide, penWidth * 0.8));
     painter.drawPath(near);
-    painter.setPen(QPen(QColor(90, 90, 90), penWidth * 0.8, Qt::SolidLine, Qt::RoundCap));
+    painter.setPen(QPen(tColors.trail, penWidth * 0.8, Qt::SolidLine, Qt::RoundCap));
     const QRectF box(c.x() - 0.62 * radius, c.y() - 0.62 * radius, 1.24 * radius, 1.24 * radius);
     painter.drawArc(box, 95 * 16, 60 * 16);
 }
@@ -679,28 +674,28 @@ void drawBackdrop(QPainter& painter, const Camera& camera, const Geometry& geo,
                   const QRectF& area, const V3& mass, bool backdrop, bool shadows) {
     if (backdrop) {
         QLinearGradient sky(area.topLeft(), area.bottomLeft());
-        sky.setColorAt(0.0, kSkyTop);
-        sky.setColorAt(1.0, kSkyBottom);
+        sky.setColorAt(0.0, tColors.skyTop);
+        sky.setColorAt(1.0, tColors.skyBottom);
         painter.fillRect(area, sky);
 
-        QColor stageRim = kStage;
+        QColor stageRim = tColors.stage;
         stageRim.setAlpha(0);
-        QColor stageCentre = kStage;
+        QColor stageCentre = tColors.stage;
         stageCentre.setAlpha(235);
         drawFloorDisc(painter, camera, 0.0, 0.0, 1.25 * (geo.L + geo.l), stageCentre, stageRim);
     } else {
-        painter.fillRect(area, kPaper);
+        painter.fillRect(area, tColors.paper);
     }
     if (!shadows) {
         return;
     }
 
     const auto shadow = [](double alpha) {
-        QColor c = kShadow;
+        QColor c = tColors.shadow;
         c.setAlphaF(alpha);
         return c;
     };
-    QColor clear = kShadow;
+    QColor clear = tColors.shadow;
     clear.setAlpha(0);
     // Where the base stands, and under the mass.
     drawFloorDisc(painter, camera, 0.0, 0.0, 1.35 * geo.baseRadius, shadow(0.30), clear);
@@ -722,6 +717,7 @@ QPointF FurutaScene::pivotOnScreen(const SceneView& view) const {
 }
 
 void FurutaScene::paint(QPainter& painter, const SceneView& view) {
+    tColors = view.colors;
     const bool antialiasing = antialiased();
     painter.setRenderHint(QPainter::Antialiasing, antialiasing);
     painter.setRenderHint(QPainter::TextAntialiasing, antialiasing);
@@ -776,7 +772,7 @@ void FurutaScene::paint(QPainter& painter, const SceneView& view) {
     // solids leave them in view.
     if (param(kTrail) != 0.0 && m_trail.size() > 1) {
         for (int i = 1; i < m_trail.size(); ++i) {
-            QColor color = kTrailColor;
+            QColor color = tColors.trail;
             color.setAlphaF(0.6 * i / m_trail.size());
             drawOccluded(painter, camera, solids,
                          {geo.mass(m_trail[i - 1].theta1, m_trail[i - 1].theta2),
@@ -787,7 +783,7 @@ void FurutaScene::paint(QPainter& painter, const SceneView& view) {
 
     if (labels) {
         // theta1: from the x axis (dashed) to the arm, in the arm's plane.
-        QPen dashed(kGuide, pen, Qt::DashLine);
+        QPen dashed(tColors.guide, pen, Qt::DashLine);
         dashed.setDashPattern({5, 4});
         drawOccluded(painter, camera, solids,
                      {armAxis + V3{geo.motorRadius, 0, 0}, armAxis + V3{1.45 * geo.L, 0, 0}},
@@ -800,14 +796,14 @@ void FurutaScene::paint(QPainter& painter, const SceneView& view) {
                 const double a = a1 * i / 30.0;
                 arc.append(armAxis + V3{r1 * std::cos(a), r1 * std::sin(a), 0});
             }
-            drawArc(painter, camera, solids, arc, kInk, pen, 6.0 * pen, tolerance);
+            drawArc(painter, camera, solids, arc, tColors.ink, pen, 6.0 * pen, tolerance);
         }
         // The label below the middle of the arc (of a small one, past it).
         const double mid1 = std::fabs(a1) > 0.6 ? 0.5 * a1 : (a1 >= 0 ? -0.35 : 0.35);
         drawSymbol(painter,
                    camera.project(armAxis + V3{1.1 * r1 * std::cos(mid1), 1.1 * r1 * std::sin(mid1), 0}) +
                        QPointF(0.1 * text, 1.0 * text),
-                   QStringLiteral("θ"), QStringLiteral("1"), text, kInk);
+                   QStringLiteral("θ"), QStringLiteral("1"), text, tColors.ink);
 
         // theta2: from the vertical (dashed) to the pendulum, in its plane.
         drawOccluded(painter, camera, solids, {pivot, pivot + V3{0, 0, 0.85 * geo.l}}, dashed,
@@ -821,13 +817,13 @@ void FurutaScene::paint(QPainter& painter, const SceneView& view) {
                 const double a = a2 * i / 30.0;
                 arc.append(pivot + r2 * (std::sin(a) * tangent + V3{0, 0, std::cos(a)}));
             }
-            drawArc(painter, camera, solids, arc, kInk, pen, 6.0 * pen, tolerance);
+            drawArc(painter, camera, solids, arc, tColors.ink, pen, 6.0 * pen, tolerance);
         }
         const double mid2 = 0.5 * a2;
         const QPointF at2 =
             camera.project(pivot + 1.15 * r2 * (std::sin(mid2) * tangent + V3{0, 0, std::cos(mid2)}));
         drawSymbol(painter, at2 + QPointF(-1.3 * text, 0.0), QStringLiteral("θ"),
-                   QStringLiteral("2"), text, kInk);
+                   QStringLiteral("2"), text, tColors.ink);
 
         // L1 beside the arm, l2 beside the pendulum, m2 by the mass.
         const auto above = [&](const V3& from, const V3& to, double offset) {
@@ -841,7 +837,7 @@ void FurutaScene::paint(QPainter& painter, const SceneView& view) {
             return 0.5 * (a + b) + offset * normal;
         };
         drawSymbol(painter, above(armAxis, pivot, 0.9 * text) - QPointF(0.5 * text, 0),
-                   QStringLiteral("L"), QStringLiteral("1"), text, kInk);
+                   QStringLiteral("L"), QStringLiteral("1"), text, tColors.ink);
         const QPointF rodA = camera.project(pivot), rodB = camera.project(mass);
         QPointF rodNormal(-(rodB - rodA).y(), (rodB - rodA).x());
         const double rodLength = std::hypot(rodNormal.x(), rodNormal.y());
@@ -852,11 +848,11 @@ void FurutaScene::paint(QPainter& painter, const SceneView& view) {
             rodNormal = -rodNormal;  // right of the rod
         }
         drawSymbol(painter, 0.5 * (rodA + rodB) + 0.9 * text * rodNormal + QPointF(0, 0.3 * text),
-                   QStringLiteral("l"), QStringLiteral("2"), text, kInk);
+                   QStringLiteral("l"), QStringLiteral("2"), text, tColors.ink);
         const QPointF massAt = camera.project(mass);
         const double massPx = geo.massRadius * camera.scale;
         drawSymbol(painter, massAt + QPointF(massPx + 0.2 * text, -0.4 * massPx), QStringLiteral("m"),
-                   QStringLiteral("2"), text, kInk);
+                   QStringLiteral("2"), text, tColors.ink);
     }
 
     // The axes, bottom left, turning with the view.
@@ -870,13 +866,13 @@ void FurutaScene::paint(QPainter& painter, const SceneView& view) {
         for (const auto& axis : axes) {
             const QPointF d(dot(axis.axis, camera.right), -dot(axis.axis, camera.up));
             const QPointF tip = origin + length * d;
-            painter.setPen(QPen(kInk, pen));
+            painter.setPen(QPen(tColors.ink, pen));
             painter.drawLine(origin, tip);
-            drawArrowHead(painter, tip, d, 5.0 * pen, kInk);
+            drawArrowHead(painter, tip, d, 5.0 * pen, tColors.ink);
             const double n = std::hypot(d.x(), d.y());
             const QPointF label = n > 0.2 ? tip + (0.55 * text / n) * d : tip;
             drawSymbol(painter, label + QPointF(-0.25 * text, 0.35 * text),
-                       QString::fromLatin1(axis.name), QString(), 0.85 * text, kInk);
+                       QString::fromLatin1(axis.name), QString(), 0.85 * text, tColors.ink);
         }
     }
 }
