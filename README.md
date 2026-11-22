@@ -1,19 +1,23 @@
 # TraceView
 
 Real-time telemetry dashboard for ESP32/ESP-NOW robots, built with C++17
-and Qt 6 Widgets for Windows and Linux.
+and Qt 6 Widgets for Windows, Linux, macOS and Android.
 
 ![TraceView screenshot](docs/images/example.png)
 
 ## What it does
 
-TraceView connects to BTP-compatible devices over serial or USB HID,
-including robots reached through a Bally dongle acting as an ESP-NOW hub.
+TraceView connects to BTP-compatible devices over serial, USB HID, BLE or
+TCP, including robots reached through a Bally dongle acting as an ESP-NOW hub.
 A `.tvproj` workspace stores device configuration and dashboard layouts.
 
-- **Live dashboards** with charts, gauges, text boards and controls.
-  Telemetry bindings select fields from the device's advertised catalog;
-  widgets can be arranged, resized and configured per project.
+- **Live dashboards** with charts, gauges, analog instruments, LEDs,
+  text boards and controls. Telemetry bindings select fields from the
+  device's advertised catalog; widgets can be arranged, resized and
+  configured per project.
+- **Looks to choose from**: themes, chart and control styles (Dashboard,
+  Engineering, Scientific, Panel, Retro), frames, densities and data colors,
+  bundled into appearance presets and pinnable per workspace.
 - **Multiple devices** with independent connections, dashboard tabs and
   terminal routing. Hub children share a physical connection while keeping
   their own protocol sessions and recovery state.
@@ -27,6 +31,21 @@ A `.tvproj` workspace stores device configuration and dashboard layouts.
   serial monitor, BTP traffic inspection and notification history.
 - **Application preferences** for rendering, terminals, connections,
   diagnostics, themes, fonts and translated UI text.
+- **Driven by AI assistants** such as Claude through an MCP server: an
+  agent can read signals, build and lay out dashboards (with layout hints
+  and a layout review) and operate devices. See [MCP](docs/MCP.md).
+
+## Looks
+
+Appearance presets on example dashboards: Console and Lab (top), Paper,
+with Scientific charts printed on the page, and Synthwave (bottom).
+
+| | |
+|---|---|
+| ![Console preset](docs/images/look-console.png) | ![Lab preset](docs/images/look-lab.png) |
+| ![Paper preset](docs/images/look-paper.png) | ![Synthwave preset](docs/images/look-synthwave.png) |
+
+Every chart kind in every style is in [Chart styles](docs/CHART_STYLE.md).
 
 ## How it works
 
@@ -128,9 +147,15 @@ published with `SHA256SUMS.txt`.
 | [Devices and hubs](docs/DEVICES.md) | Device model, connections and hub/child contract. |
 | [Protocol](docs/PROTOCOL.md) | TraceView's BTP integration and wire-format references. |
 | [Dashboard](docs/DASHBOARD.md) | Layout model, widget editing and persistence. |
+| [Layout](docs/LAYOUT.md) | Widget size hints, spacing and the layout review. |
+| [Chart styles](docs/CHART_STYLE.md) | Chart styles, gauge shapes and printed figures. |
+| [Control styles](docs/CONTROL_STYLE.md) | Buttons, switches, sliders and LEDs in each style. |
+| [Visual identity](docs/VISUAL_IDENTITY.md) | Colors, corners, borders and type across the app. |
+| [MCP](docs/MCP.md) | The tools AI assistants use to drive TraceView. |
 | [OTA](docs/OTA.md) | Firmware upload, status polling, credentials and mDNS. |
 | [Ecosystem](docs/ECOSYSTEM.md) | Boundaries between TraceView, BTP and Bally firmware. |
 | [Theming](docs/THEMING.md) | Theme implementation and extension points. |
+| [Android build](docs/ANDROID_BUILD.md) | Android toolchain and packaging. |
 | [macOS and iOS builds](docs/MACOS_IOS_BUILD.md) | Apple toolchains, packaging, signing, and why iOS has no serial or USB HID. |
 | [Changelog](CHANGELOG.md) | Changes by release. |
 
