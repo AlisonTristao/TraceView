@@ -62,6 +62,23 @@ public:
         Q_UNUSED(editMode);
     }
 
+    // Whether this widget, as styled right now, is printed straight on the
+    // canvas instead of sitting on a card (the Scientific chart style,
+    // ChartStyle::printed). In Run mode DashboardCell then paints no fill or
+    // outline and floats the header in on hover only. DashboardGrid numbers
+    // the printed widgets in reading order -- see setFigure().
+    virtual bool printedOnCanvas() const {
+        return false;
+    }
+
+    // The figure number (from 1; 0 when not printed) and the cell's title,
+    // for a printed widget's "Fig. N -- title." caption. DashboardGrid calls
+    // it on every widget after anything that may renumber them.
+    virtual void setFigure(int number, const QString& title) {
+        Q_UNUSED(number);
+        Q_UNUSED(title);
+    }
+
     // Called by DashboardGrid with this item's DashboardItem::config: once
     // right after construction (fresh insert, load from disk, or a type
     // change), and again every time the user edits it in the

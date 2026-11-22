@@ -59,7 +59,7 @@ look:
 | Series line | 1.5 px over a 4 px faint glow (`glowWidth`) | same |
 | Bars | 60% of slot, outlined | Stacks of 8 px cells (`barCells`) |
 | Digits | Fixed pitch (`monoText`) | Fixed pitch |
-| Extras | Screws in the four corners (`screws`) | LED bar segments in the series color (`segmentZones` off) |
+| Extras | - | LED bar segments in the series color (`segmentZones` off) |
 
 Every style draws a gauge's empty track at 7% text over surface
 (`gaugeTrackStrength`), lighter than the values on it.
@@ -233,7 +233,7 @@ toggle. It is stored in the widget's config under `"view"`:
 | `fillArea` | Fill area under the line | line, audio (spectrum) |
 | `lineWidth` | Line width: Auto, 0.5 to 4 px | line, audio (spectrum) |
 | `interpolation` | Interpolation: | line |
-| `gaugeShape` | Shape: Ring (270°), Half circle, Bar, Number, Analog meter, Digital display, LED bar | gauge |
+| `gaugeShape` | Shape: Ring (270°), Half circle, Bar, Number, Analog meter, Digital display, LED bar, Analog dial, Analog VU meter, Analog edgewise meter, Analog counter | gauge |
 
 "audio" is the Audio Analyzer (`AudioAnalyzerWidget`), whose `mode` option
 ("View:", first in its menu) switches between `spectrum` and
@@ -333,6 +333,34 @@ chart_preview.exe --snapshot out
 
 The screenshots at the top of this page come from that command.
 
+## Printed figures (Scientific)
+
+The Scientific style draws a chart as a figure printed on the page, not a
+card (`ChartStyle::printed`):
+
+- In Run mode the chart has no card: `StyledChartWidget::paintChartCard()`
+  skips the fill and the widget drops its stylesheet background, and
+  `DashboardCell` paints no fill or outline and no header strip. The header
+  floats in over the chart on hover, as with the "On hover" card header, so
+  the gear menu stays one move away. Edit mode keeps the card.
+- Under the chart, a caption as under a figure in a paper:
+  **Fig. 2** -- Motor current. The text is the cell's title, in a serif face.
+  The caption is there in edit mode too, so the plot doesn't jump.
+  `DashboardGrid::numberFigures()` numbers the printed widgets of a
+  dashboard in reading order (top to bottom, then left to right) through
+  `DashboardWidget::setFigure()`, again after every move, resize, rename,
+  style or config change.
+- Bars are hatched in the series color, with a different hatch per series
+  (`barHatch`).
+- The ring and half-circle gauges are a printed protractor (`inkGauge`):
+  one thin arc with its ticks, a faint band over the top 20% and a
+  single-line needle per series (the first in ink, the others in their
+  series color).
+
+The audio views keep their card (`StyledChartWidget::printable()`).
+`chart_preview --paper-sheet <dir>` renders a sheet of printed charts and
+Scientific controls under the Paper and TraceView presets.
+
 ## Gauge shapes
 
 | Shape | Id | What it draws |
@@ -341,10 +369,21 @@ The screenshots at the top of this page come from that command.
 | Half circle | `halfCircle` | The same, 180°, flat side down. |
 | Bar | `bar` | One horizontal bar per series, name and value beside it. |
 | Number | `number` | Just the value(s), as large as fits. |
-| Analog meter | `meter` | A panel meter: bezel with screws, light dial, 100° scale, red zone over the top 20%, a needle per series. Fixed hardware colors, like the Panel controls. |
+| Analog meter | `meter` | A panel meter: light face, 100° scale, red zone over the top 20%, a needle per series, the first series' name and reading under the face. |
+| Analog dial | `dial` | A round gauge like a manometer: chrome ring, 270° scale, red zone, needles with a counterweight tail, the reading in a window low on the face. Square. |
+| Analog VU meter | `vu` | One backlit amber VU meter per series, side by side, kept wider than tall; the pivot sits below the window. |
+| Analog edgewise meter | `edgewise` | One tall strip meter per series, side by side: scale down the right, red zone along its top, a sliding pointer. |
+| Analog counter | `counter` | Mechanical digit drums, a row per series; the decimals black on white, as on an odometer. |
 | Digital display | `display` | One black display per series, the value in its color over unlit "8"s. |
 | LED bar | `segments` | The Bar layout with LED segments: green, yellow from 65%, red from 85% (or the series color when the style has no zones). |
 
 `paintGaugeMeter()`, `paintGaugeDisplays()` and `paintGaugeSegments()` in
-`chartwidgets.cpp`. The screws come from `paintPanelScrews()`
+`chartwidgets.cpp`.
+
+The five **analog** shapes (meter, dial, VU, edgewise, counter) are one
+family: panel hardware in a dark metal bezel with a screw in each corner,
+drawn by `paintInstrumentBezel()` to fill the whole card -- the bezel *is*
+the widget, not a panel inside it. Their faces, needles and red zones use
+fixed colors (the `kMeter*` constants), like a real instrument, whatever the
+palette and chart style. The screws come from `paintPanelScrews()`
 (`controlpainting.h`), shared with the Panel controls.

@@ -43,6 +43,26 @@ WidgetLayoutHints gaugeHints(const QString& shape) {
         h.keepClear = {QRectF(0.2, 0.12, 0.6, 0.88)};
         return h;
     }
+    if (shape == QLatin1String("dial")) {
+        return hints({170, 190}, {280, 300}, {0, 0}, 0.75, 1.35,
+                     "Analog dial: a round gauge on a square plate; square cells, the plate "
+                     "fills the card.");
+    }
+    if (shape == QLatin1String("vu")) {
+        return hints({170, 140}, {360, 220}, {0, 0}, 1.1, 5.0,
+                     "Analog VU meter: one backlit meter per series side by side, each about "
+                     "4:3; give it more width per series.");
+    }
+    if (shape == QLatin1String("edgewise")) {
+        return hints({90, 200}, {200, 300}, {0, 0}, 0.3, 2.5,
+                     "Analog edgewise meter: one tall strip per series side by side, about "
+                     "70 px wide each; tall cells.");
+    }
+    if (shape == QLatin1String("counter")) {
+        return hints({180, 90}, {300, 140}, {0, 0}, 1.5, 7.0,
+                     "Analog counter: digit drums, a row per series of about 60 px; wide and "
+                     "short.");
+    }
     if (shape == QLatin1String("meter")) {
         return hints({180, 170}, {300, 270}, {0, 0}, 0.95, 1.6,
                      "Analog meter: a 4:3 panel meter with its caption under it. Keep overlays "
@@ -104,11 +124,6 @@ QString px(double value) {
     return QString::number(qRound(value));
 }
 
-bool isControl(const QString& typeId) {
-    return typeId == QLatin1String("push_button") || typeId == QLatin1String("toggle_switch") ||
-           typeId == QLatin1String("slider") || typeId == QLatin1String("led");
-}
-
 QJsonObject sizeJson(const QSizeF& size, const QSizeF& cellSize) {
     QJsonObject json{{"widthPx", qRound(size.width())}, {"heightPx", qRound(size.height())}};
     if (cellSize.width() > 0 && cellSize.height() > 0) {
@@ -137,9 +152,9 @@ WidgetLayoutHints widgetLayoutHints(const QString& typeId, const QJsonObject& co
                             "zone.");
     }
     if (typeId == QLatin1String("toggle_switch")) {
-        return controlHints({96, 48}, {150, 72}, {260, 110}, 1.2, 4.0,
-                            "Toggle switch: the switch keeps its own size and is centered, with "
-                            "its title above; more room only adds empty space.");
+        return controlHints({96, 64}, {150, 72}, {640, 110}, 1.2, 9.0,
+                            "Toggle switch: title over the switch, left-aligned, so it can share "
+                            "a column with sliders; more height only adds empty space.");
     }
     if (typeId == QLatin1String("slider")) {
         return controlHints({160, 44}, {300, 72}, {640, 100}, 2.5, 12.0,
@@ -187,7 +202,7 @@ WidgetLayoutHints widgetLayoutHints(const QString& typeId, const QJsonObject& co
     }
     if (typeId == QLatin1String("serial_monitor") || typeId == QLatin1String("robot_log") ||
         typeId == QLatin1String("chat")) {
-        return hints({280, 180}, {480, 320}, {0, 0}, 0.6, 5.0,
+        return hints({280, 150}, {480, 320}, {0, 0}, 0.6, 5.0,
                      "Text panel: needs room for several lines; tall or wide both work.");
     }
     return hints({120, 90}, {280, 220}, {0, 0}, 0.0, 0.0, "Any size.");
@@ -228,7 +243,8 @@ QString layoutSeverityString(LayoutIssue::Severity severity) {
     return QStringLiteral("warning");
 }
 
-LayoutReview reviewLayout(const QVector<LayoutReviewItem>& items, const QSizeF& canvasSize) {
+LayoutReview reviewLayout(const QVector<LayoutReviewItem>& items, const QSizeF& canvasSize,
+                          const QSize& gridCells) {
     LayoutReview review;
     // Slack before a size counts as off: grid snapping moves edges a few px.
     constexpr qreal kSlack = 4.0;
@@ -353,36 +369,156 @@ LayoutReview reviewLayout(const QVector<LayoutReviewItem>& items, const QSizeF& 
         }
     }
 
-    // Controls side by side: tops and heights should match exactly.
-    constexpr qreal kAlmost = 14.0;
+    // Neighbors line up exactly or clearly not at all: side by side, the
+    // same top and bottom; stacked, the same left and right. Off by less
+    // than about a grid cell reads as a mistake. Overlays (a widget on
+    // another) are left out: they sit inside their host on purpose.
+    const double cellW = gridCells.width() > 0 && canvasSize.width() > 0
+                             ? canvasSize.width() / gridCells.width()
+                             : 21.0;
+    const double cellH = gridCells.height() > 0 && canvasSize.height() > 0
+                             ? canvasSize.height() / gridCells.height()
+                             : 18.0;
+    const auto overlapsAnother = [&items](int index) {
+        for (int k = 0; k < items.size(); ++k) {
+            if (k == index) {
+                continue;
+            }
+            const QRectF inter = items[index].rect.intersected(items[k].rect);
+            if (inter.width() > 4.0 && inter.height() > 4.0) {
+                return true;
+            }
+        }
+        return false;
+    };
+    QVector<bool> overlay(items.size(), false);
+    for (int i = 0; i < items.size(); ++i) {
+        overlay[i] = overlapsAnother(i);
+    }
+    const auto almost = [](qreal delta, double cell) {
+        return delta > 1.5 && delta <= 1.25 * cell;
+    };
     for (int j = 0; j < items.size(); ++j) {
-        if (!isControl(items[j].typeId)) {
+        if (overlay[j]) {
             continue;
         }
         for (int i = 0; i < j; ++i) {
-            if (!isControl(items[i].typeId)) {
+            if (overlay[i]) {
                 continue;
             }
             const QRectF& a = items[i].rect;
             const QRectF& b = items[j].rect;
             const qreal overlapY = qMin(a.bottom(), b.bottom()) - qMax(a.top(), b.top());
-            const bool sameRow =
-                overlapY > 0.5 * qMin(a.height(), b.height()) && a.intersected(b).isEmpty();
-            if (!sameRow) {
-                continue;
+            const qreal overlapX = qMin(a.right(), b.right()) - qMax(a.left(), b.left());
+            QRectF fixed = b;
+            QString what;
+            qreal off = 0.0;
+            // Only peers: neighbors of about the same height share a row, of
+            // about the same width a column. A column of three next to a
+            // column of five never lines up row by row, on purpose.
+            const bool rowPeers = qAbs(a.height() - b.height()) <= 1.25 * cellH;
+            const bool columnPeers = qAbs(a.width() - b.width()) <= 1.25 * cellW;
+            if (rowPeers && overlapY > 0.5 * qMin(a.height(), b.height())) {
+                const qreal top = qAbs(a.top() - b.top());
+                const qreal bottom = qAbs(a.bottom() - b.bottom());
+                if (almost(top, cellH)) {
+                    fixed.setTop(a.top());
+                    off = qMax(off, top);
+                }
+                if (almost(bottom, cellH)) {
+                    fixed.setBottom(a.bottom());
+                    off = qMax(off, bottom);
+                }
+                what = QStringLiteral("top and bottom");
+            } else if (columnPeers && overlapX > 0.5 * qMin(a.width(), b.width())) {
+                const qreal left = qAbs(a.left() - b.left());
+                const qreal right = qAbs(a.right() - b.right());
+                if (almost(left, cellW)) {
+                    fixed.setLeft(a.left());
+                    off = qMax(off, left);
+                }
+                if (almost(right, cellW)) {
+                    fixed.setRight(a.right());
+                    off = qMax(off, right);
+                }
+                what = QStringLiteral("left and right edges");
             }
-            const qreal topDelta = qAbs(a.top() - b.top());
-            const qreal heightDelta = qAbs(a.height() - b.height());
-            if ((topDelta > 1.5 && topDelta <= kAlmost) ||
-                (heightDelta > 1.5 && heightDelta <= kAlmost)) {
+            if (off > 0.0) {
                 review.issues.append(
                     {LayoutIssue::Severity::Warning, items[j].id, "alignment",
                      QStringLiteral("%1 almost lines up with %2 (%3 px off); give them the same "
-                                    "top and height.")
-                         .arg(label(items[j]), label(items[i]), px(qMax(topDelta, heightDelta))),
-                     QRectF(b.left(), a.top(), b.width(), a.height())});
+                                    "%4.")
+                         .arg(label(items[j]), label(items[i]), px(off), what),
+                     fixed});
                 break;
             }
+        }
+    }
+
+    // Empty areas: grid cells no widget covers. Touching widgets already
+    // get the grid's gutter between them, so a gap is room nothing uses.
+    if (gridCells.width() > 0 && gridCells.height() > 0 && !items.isEmpty()) {
+        const int cols = gridCells.width();
+        const int rows = gridCells.height();
+        QVector<bool> covered(cols * rows, false);
+        for (int r = 0; r < rows; ++r) {
+            for (int c = 0; c < cols; ++c) {
+                const QPointF centre((c + 0.5) * cellW, (r + 0.5) * cellH);
+                for (const LayoutReviewItem& item : items) {
+                    if (item.rect.contains(centre)) {
+                        covered[r * cols + c] = true;
+                        break;
+                    }
+                }
+            }
+        }
+        QVector<bool> seen(cols * rows, false);
+        for (int start = 0; start < cols * rows; ++start) {
+            if (covered[start] || seen[start]) {
+                continue;
+            }
+            // Flood fill one empty region (4-neighbors).
+            QVector<int> stack{start};
+            seen[start] = true;
+            int count = 0;
+            int minC = cols, maxC = -1, minR = rows, maxR = -1;
+            while (!stack.isEmpty()) {
+                const int cell = stack.takeLast();
+                const int c = cell % cols;
+                const int r = cell / cols;
+                ++count;
+                minC = qMin(minC, c);
+                maxC = qMax(maxC, c);
+                minR = qMin(minR, r);
+                maxR = qMax(maxR, r);
+                const int next[4][2] = {{c - 1, r}, {c + 1, r}, {c, r - 1}, {c, r + 1}};
+                for (const auto& n : next) {
+                    if (n[0] < 0 || n[0] >= cols || n[1] < 0 || n[1] >= rows) {
+                        continue;
+                    }
+                    const int index = n[1] * cols + n[0];
+                    if (!covered[index] && !seen[index]) {
+                        seen[index] = true;
+                        stack.append(index);
+                    }
+                }
+            }
+            if (count < 2) {
+                continue;
+            }
+            const QRectF area(minC * cellW, minR * cellH, (maxC - minC + 1) * cellW,
+                              (maxR - minR + 1) * cellH);
+            review.issues.append(
+                {LayoutIssue::Severity::Warning, QString(), "emptyArea",
+                 QStringLiteral("Columns %1-%2, rows %3-%4 are empty (%5 cells). The grid "
+                                "already leaves a gutter between touching widgets, so grow a "
+                                "neighbor into this room or move widgets to close it.")
+                     .arg(minC)
+                     .arg(maxC + 1)
+                     .arg(minR)
+                     .arg(maxR + 1)
+                     .arg(count),
+                 area});
         }
     }
 

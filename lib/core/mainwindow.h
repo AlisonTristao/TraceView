@@ -768,6 +768,9 @@ private:
     QHash<QString, DeviceConnection*> m_deviceConnections;
     // One per device -- see tickDeviceLinkCycles().
     QHash<QString, DeviceLinkCycler> m_deviceLinkCyclers;
+    // Device id -> the last connection error posted for it, so a retry that
+    // fails the same way again is not re-posted -- see createDeviceConnection().
+    QHash<QString, QString> m_lastLinkError;
     // Device id -> link index -> the probe dialing it -- see
     // updateLinkProbes(). `target` is the resolved link it dials, so an
     // automatic link that resolves elsewhere gets a fresh probe.

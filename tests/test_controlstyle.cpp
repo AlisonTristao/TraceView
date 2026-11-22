@@ -272,19 +272,21 @@ void TestControlStyle::chartStylesMatchTheControlStyles() {
         const QString text = controlStyleIdString(id);
         QCOMPARE(chartStyleIdString(chartStyleFromId(text)), text);
     }
-    QVERIFY(chartStyle(ChartStyleId::Panel).screws);
+    // Screws are the analog gauges' (their bezel), not a whole style's.
+    QVERIFY(!chartStyle(ChartStyleId::Panel).screws);
     QVERIFY(chartStyle(ChartStyleId::Panel).plotScreen);
     QVERIFY(chartStyle(ChartStyleId::Retro).accentChrome);
     QVERIFY(chartStyle(ChartStyleId::Retro).barCells);
-    QVERIFY(controlStyleFor(ControlStyleId::Panel).screws);
+    QVERIFY(!controlStyleFor(ControlStyleId::Panel).screws);
     QVERIFY(!chartStyle(ChartStyleId::Dashboard).screws);
 }
 
 void TestControlStyle::gaugeShapesRoundTrip() {
-    const QList<ChartGaugeShape> shapes = {ChartGaugeShape::Arc,     ChartGaugeShape::HalfCircle,
-                                           ChartGaugeShape::Bar,     ChartGaugeShape::Number,
-                                           ChartGaugeShape::Meter,   ChartGaugeShape::Display,
-                                           ChartGaugeShape::Segments};
+    const QList<ChartGaugeShape> shapes = {
+        ChartGaugeShape::Arc,      ChartGaugeShape::HalfCircle, ChartGaugeShape::Bar,
+        ChartGaugeShape::Number,   ChartGaugeShape::Meter,      ChartGaugeShape::Display,
+        ChartGaugeShape::Segments, ChartGaugeShape::Dial,       ChartGaugeShape::Vu,
+        ChartGaugeShape::Edgewise, ChartGaugeShape::Counter};
     QSet<QString> ids;
     for (ChartGaugeShape shape : shapes) {
         ids.insert(chartGaugeShapeId(shape));
@@ -304,7 +306,8 @@ void TestControlStyle::everyGaugeShapePaintsInEveryChartStyle() {
     }
     for (const QString& shape :
          {QString("arc"), QString("halfCircle"), QString("bar"), QString("number"),
-          QString("meter"), QString("display"), QString("segments")}) {
+          QString("meter"), QString("display"), QString("segments"), QString("dial"), QString("vu"),
+          QString("edgewise"), QString("counter")}) {
         for (ChartStyleId style : allChartStyles()) {
             for (int count : {1, 3}) {
                 QJsonArray rings = series;

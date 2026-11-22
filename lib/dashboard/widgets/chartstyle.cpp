@@ -65,6 +65,9 @@ ChartStyle makeScientificStyle() {
     style.defaultXAxisTitle = true;
     style.defaultXTickLabels = true;
     style.defaultScaleLabels = true;
+    style.printed = true;
+    style.barHatch = true;
+    style.inkGauge = true;
     return style;
 }
 
@@ -81,7 +84,6 @@ ChartStyle makePanelStyle() {
     style.plotScreen = true;
     style.graticule = true;
     style.monoText = true;
-    style.screws = true;
     style.glowWidth = 4.0;
     style.lineWidth = 1.5;
     style.barWidthFraction = 0.6;
@@ -244,6 +246,14 @@ QString chartGaugeShapeId(ChartGaugeShape shape) {
             return QStringLiteral("display");
         case ChartGaugeShape::Segments:
             return QStringLiteral("segments");
+        case ChartGaugeShape::Dial:
+            return QStringLiteral("dial");
+        case ChartGaugeShape::Vu:
+            return QStringLiteral("vu");
+        case ChartGaugeShape::Edgewise:
+            return QStringLiteral("edgewise");
+        case ChartGaugeShape::Counter:
+            return QStringLiteral("counter");
         case ChartGaugeShape::Arc:
             break;
     }
@@ -254,7 +264,8 @@ ChartGaugeShape chartGaugeShapeFromId(const QString& id) {
     for (ChartGaugeShape shape :
          {ChartGaugeShape::Arc, ChartGaugeShape::HalfCircle, ChartGaugeShape::Bar,
           ChartGaugeShape::Number, ChartGaugeShape::Meter, ChartGaugeShape::Display,
-          ChartGaugeShape::Segments}) {
+          ChartGaugeShape::Segments, ChartGaugeShape::Dial, ChartGaugeShape::Vu,
+          ChartGaugeShape::Edgewise, ChartGaugeShape::Counter}) {
         if (chartGaugeShapeId(shape) == id) {
             return shape;
         }
@@ -919,6 +930,14 @@ QVector<WidgetViewOption> chartViewOptionList(const ChartViewOptions& options,
         QT_TRANSLATE_NOOP("traceview::DashboardCell", "Digital display");
     static constexpr const char* kShapeSegments =
         QT_TRANSLATE_NOOP("traceview::DashboardCell", "LED bar");
+    static constexpr const char* kShapeDial =
+        QT_TRANSLATE_NOOP("traceview::DashboardCell", "Analog dial");
+    static constexpr const char* kShapeVu =
+        QT_TRANSLATE_NOOP("traceview::DashboardCell", "Analog VU meter");
+    static constexpr const char* kShapeEdgewise =
+        QT_TRANSLATE_NOOP("traceview::DashboardCell", "Analog edgewise meter");
+    static constexpr const char* kShapeCounter =
+        QT_TRANSLATE_NOOP("traceview::DashboardCell", "Analog counter");
 
     QVector<WidgetViewOption> list;
 
@@ -948,6 +967,10 @@ QVector<WidgetViewOption> chartViewOptionList(const ChartViewOptions& options,
             {chartGaugeShapeId(ChartGaugeShape::Meter), menuText(kShapeMeter)},
             {chartGaugeShapeId(ChartGaugeShape::Display), menuText(kShapeDisplay)},
             {chartGaugeShapeId(ChartGaugeShape::Segments), menuText(kShapeSegments)},
+            {chartGaugeShapeId(ChartGaugeShape::Dial), menuText(kShapeDial)},
+            {chartGaugeShapeId(ChartGaugeShape::Vu), menuText(kShapeVu)},
+            {chartGaugeShapeId(ChartGaugeShape::Edgewise), menuText(kShapeEdgewise)},
+            {chartGaugeShapeId(ChartGaugeShape::Counter), menuText(kShapeCounter)},
         };
         list.append(shape);
     }

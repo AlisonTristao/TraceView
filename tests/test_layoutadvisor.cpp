@@ -20,6 +20,8 @@ private slots:
     void controlOverDataIsAProblem();
     void chartsMayNotOverlap();
     void almostAlignedControlsAreFlagged();
+    void stackedWidgetsShareEdges();
+    void emptyAreasAreFlagged();
     void unusedFreeZonesAreListed();
     void offCanvasIsAProblem();
 };
@@ -145,7 +147,36 @@ void TestLayoutAdvisor::almostAlignedControlsAreFlagged() {
     const LayoutReview aligned = reviewLayout({item("a", "push_button", QRectF(0, 600, 130, 54)),
                                                item("b", "push_button", QRectF(140, 600, 130, 54))},
                                               kCanvas);
-    QVERIFY(aligned.issues.isEmpty());
+    QVERIFY(!hasIssue(aligned, "b", "alignment"));
+}
+
+void TestLayoutAdvisor::stackedWidgetsShareEdges() {
+    // A chart over another whose right edge is 10 px short.
+    const LayoutReview review = reviewLayout({item("a", "dummy_line", QRectF(0, 0, 640, 360)),
+                                              item("b", "dummy_line", QRectF(0, 360, 630, 360))},
+                                             kCanvas);
+    QVERIFY(hasIssue(review, "b", "alignment"));
+    for (const LayoutIssue& issue : review.issues) {
+        if (issue.kind == QLatin1String("alignment")) {
+            QCOMPARE(issue.suggestedRect.right(), 640.0);
+        }
+    }
+}
+
+void TestLayoutAdvisor::emptyAreasAreFlagged() {
+    // Two charts filling the canvas but for a 2-column gap between them.
+    const double cell = 1280.0 / 60.0;
+    const LayoutReview gap =
+        reviewLayout({item("a", "dummy_line", QRectF(0, 0, 29 * cell, 720)),
+                      item("b", "dummy_line", QRectF(31 * cell, 0, 29 * cell, 720))},
+                     kCanvas);
+    QVERIFY(hasIssue(gap, QString(), "emptyArea"));
+
+    const LayoutReview tiled =
+        reviewLayout({item("a", "dummy_line", QRectF(0, 0, 30 * cell, 720)),
+                      item("b", "dummy_line", QRectF(30 * cell, 0, 30 * cell, 720))},
+                     kCanvas);
+    QVERIFY(!hasIssue(tiled, QString(), "emptyArea"));
 }
 
 void TestLayoutAdvisor::unusedFreeZonesAreListed() {

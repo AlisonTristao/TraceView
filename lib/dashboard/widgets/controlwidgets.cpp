@@ -20,16 +20,19 @@
 namespace traceview {
 
 namespace {
-// Push button inset from the cell edge. Small enough to still read as
-// "fills the cell", large enough that the button's own corner never touches
-// the DashboardWidget mask's corner (its shape follows the frame style,
-// traceview/framestyle.h) -- two different curves on one corner left a
-// wedge between them (reported live 2026-08-09).
-constexpr int kControlInset = 8;
+// The content margins inside a plate (a style with screws, Panel): wide at
+// the sides, clear of the screws in the corners, and narrow at the top and
+// bottom so a plate holds the same rows of controls as a plain cell.
+// Without a plate there are none -- see StyledControlWidget::contentMargins().
+constexpr int kPlateSideInset = 14;
+constexpr int kPlateEdgeInset = 5;
 
-// The largest a push button grows (the layout hints' maximum, minus the
-// inset): past this a bigger cell only adds room around it.
-constexpr QSize kMaxButtonSize(224, 64);
+// Space between a control's title, body and state text.
+constexpr int kControlSpacing = 6;
+
+// The largest a push button grows (the layout hints' maximum minus the
+// grid gutter): past this a bigger cell only adds room right and below.
+constexpr QSize kMaxButtonSize(232, 72);
 
 // Matches kSelectionAnimMs (dashboardcell.cpp) / the ~150ms discrete-state
 // transition convention in docs/VISUAL_IDENTITY.md's Motion section.
@@ -67,6 +70,12 @@ StyledControlWidget::StyledControlWidget(QWidget* parent) : DashboardWidget(pare
             [this] { refreshControlStyle(); });
     connect(&ThemeManager::instance(), &ThemeManager::appearanceChanged, this,
             [this] { refreshControlStyle(); });
+}
+
+QMargins StyledControlWidget::contentMargins() const {
+    return m_style.screws
+               ? QMargins(kPlateSideInset, kPlateEdgeInset, kPlateSideInset, kPlateEdgeInset)
+               : QMargins();
 }
 
 void StyledControlWidget::setEditModeHint(bool editMode) {
@@ -147,8 +156,21 @@ QFont ControlText::roleFont() const {
 }
 
 QString ControlText::shownText() const {
-    return m_role == Role::Title ? controlStyledTitle(m_style, m_text)
-                                 : controlStyledText(m_style, m_text);
+    return shownText(m_text);
+}
+
+QString ControlText::shownText(const QString& text) const {
+    return m_role == Role::Title ? controlStyledTitle(m_style, text)
+                                 : controlStyledText(m_style, text);
+}
+
+void ControlText::setAlignment(Qt::Alignment alignment) {
+    m_alignment = alignment;
+    update();
+}
+
+int ControlText::textWidth(const QString& text) const {
+    return qCeil(QFontMetricsF(roleFont()).horizontalAdvance(shownText(text))) + 4;
 }
 
 QSize ControlText::sizeHint() const {
@@ -167,7 +189,7 @@ void ControlText::paintEvent(QPaintEvent*) {
     painter.setPen(m_role == Role::Title ? controlTitleColor(m_style, m_colors)
                                          : controlStateTextColor(m_style, m_colors));
     const QFontMetricsF metrics(textFont);
-    painter.drawText(rect(), Qt::AlignCenter,
+    painter.drawText(rect(), m_alignment | Qt::AlignVCenter,
                      metrics.elidedText(shownText(), Qt::ElideRight, width()));
 }
 
@@ -229,8 +251,9 @@ PushButtonWidget::PushButtonWidget(QWidget* parent) : StyledControlWidget(parent
 
 void PushButtonWidget::resizeEvent(QResizeEvent* event) {
     StyledControlWidget::resizeEvent(event);
-    const QRect area =
-        rect().adjusted(kControlInset, kControlInset, -kControlInset, -kControlInset);
+    const QRect area = rect().marginsRemoved(contentMargins());
+    // The button is the whole control: it fills the cell up to its
+    // maximum and stays centered in any room past that.
     QRect button(QPoint(0, 0), area.size().boundedTo(kMaxButtonSize));
     button.moveCenter(area.center());
     m_button->setGeometry(button);
@@ -299,19 +322,19 @@ ToggleSwitch::ToggleSwitch(QWidget* parent) : QAbstractButton(parent) {
 
 void ToggleSwitch::setLook(const ControlStyle& style, const ControlColors& colors,
                            const QString& offText, const QString& onText) {
-    const bool resized = controlSwitchSize(style) != controlSwitchSize(m_style);
+    const QSizeF before = controlSwitchSize(m_style, font(), m_offText, m_onText);
     m_style = style;
     m_colors = colors;
     m_offText = offText;
     m_onText = onText;
-    if (resized) {
+    if (controlSwitchSize(m_style, font(), m_offText, m_onText) != before) {
         updateGeometry();
     }
     update();
 }
 
 QSize ToggleSwitch::sizeHint() const {
-    return controlSwitchSize(m_style).toSize();
+    return controlSwitchSize(m_style, font(), m_offText, m_onText).toSize();
 }
 
 void ToggleSwitch::onToggled(bool checked) {
@@ -336,17 +359,55 @@ void ToggleSwitch::paintEvent(QPaintEvent*) {
                         ? m_slideAnim.currentValue().toReal()
                         : (isChecked() ? 1.0 : 0.0);
     QPainter painter(this);
-    const QSizeF natural = controlSwitchSize(m_style);
+    const QSizeF natural = controlSwitchSize(m_style, font(), m_offText, m_onText);
     const QRectF body(
         QPointF((width() - natural.width()) / 2.0, (height() - natural.height()) / 2.0), natural);
     paintControlSwitch(painter, body, m_style, m_colors, font(), t, isEnabled(), m_offText,
                        m_onText);
 }
 
+// The dotted leader between a checkbox's name and its state text, as on a
+// printed form (the Scientific checkbox, see ToggleSwitchWidget).
+class ControlLeader final : public QWidget {
+public:
+    explicit ControlLeader(QWidget* parent) : QWidget(parent) {
+        setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+        setMaximumWidth(120);
+        setAttribute(Qt::WA_TransparentForMouseEvents);
+    }
+    void setColor(const QColor& color) {
+        m_color = color;
+        update();
+    }
+    QSize sizeHint() const override {
+        return {28, 10};
+    }
+    QSize minimumSizeHint() const override {
+        return {16, 4};
+    }
+
+protected:
+    void paintEvent(QPaintEvent*) override {
+        QPainter painter(this);
+        painter.setRenderHint(QPainter::Antialiasing);
+        QPen pen(m_color, 1.0);
+        pen.setDashPattern({1.0, 3.0});
+        painter.setPen(pen);
+        // Near the text baseline, not the middle of the row.
+        const qreal y = qRound(height() * 0.62) + 0.5;
+        painter.drawLine(QPointF(3.0, y), QPointF(width() - 3.0, y));
+    }
+
+private:
+    QColor m_color;
+};
+
 // No cell header -- but an optional title of its own, since the switch
-// doesn't say what it controls. The switch stays at its natural size and is
-// centered in whatever space the cell has: stretched edge to edge it would
-// just be a big colored rectangle again.
+// doesn't say what it controls. Title over the switch at its natural size
+// and its state text, as one block: left-aligned, so a wider cell never
+// moves the switch sideways, and centered vertically (docs/LAYOUT.md
+// "Spacing"). The state text has the width of the longer of its two texts,
+// so flipping the switch doesn't shift anything either.
 ToggleSwitchWidget::ToggleSwitchWidget(QWidget* parent) : StyledControlWidget(parent) {
     m_title = new ControlText(ControlText::Role::Title, this);
     // Hidden (not just empty) so an untitled switch doesn't reserve a blank
@@ -358,19 +419,22 @@ ToggleSwitchWidget::ToggleSwitchWidget(QWidget* parent) : StyledControlWidget(pa
     m_state->setVisible(false);
     m_state->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
 
-    auto* row = new QHBoxLayout();
-    row->setSpacing(10);
-    row->addStretch(1);
-    row->addWidget(m_switch);
-    row->addWidget(m_state);
-    row->addStretch(1);
+    m_leader = new ControlLeader(this);
+    m_leader->setVisible(false);
 
-    auto* layout = new QVBoxLayout(this);
-    layout->setContentsMargins(8, 6, 8, 0);
-    layout->addWidget(m_title);
-    layout->addStretch(1);
-    layout->addLayout(row);
-    layout->addStretch(1);
+    m_row = new QHBoxLayout();
+    m_row->setSpacing(10);
+    m_row->addWidget(m_switch);
+    m_row->addWidget(m_leader, 1);
+    m_row->addWidget(m_state);
+    m_row->addStretch(1);
+
+    m_layout = new QVBoxLayout(this);
+    m_layout->setSpacing(kControlSpacing);
+    m_layout->addStretch(1);
+    m_layout->addWidget(m_title);
+    m_layout->addLayout(m_row);
+    m_layout->addStretch(1);
 
     connect(m_switch, &QAbstractButton::toggled, this, [this](bool checked) {
         updateStateText();
@@ -403,8 +467,22 @@ void ToggleSwitchWidget::setConfig(const QJsonObject& config) {
 
 void ToggleSwitchWidget::applyControlStyle() {
     const ControlStyle& style = controlStyle();
+    m_layout->setContentsMargins(contentMargins());
     m_title->setLook(style, controlColors());
     m_state->setLook(style, controlColors());
+    m_leader->setColor(controlColors().textSecondary);
+    // The checkbox reads as a printed form row: box, name, leader, state.
+    const bool form = style.switchLook == ControlSwitchLook::Checkbox;
+    if (form != m_formRow) {
+        m_formRow = form;
+        m_layout->removeWidget(m_title);
+        m_row->removeWidget(m_title);
+        if (form) {
+            m_row->insertWidget(1, m_title);
+        } else {
+            m_layout->insertWidget(1, m_title);
+        }
+    }
     const QString offText = m_config.offLabel.isEmpty() ? tr("off") : m_config.offLabel;
     const QString onText = m_config.onLabel.isEmpty() ? tr("on") : m_config.onLabel;
     m_switch->setLook(style, controlColors(), offText, onText);
@@ -416,7 +494,10 @@ void ToggleSwitchWidget::updateStateText() {
     const bool cells = controlStyle().switchLook == ControlSwitchLook::Cells;
     const bool hasText = !m_config.onLabel.isEmpty() || !m_config.offLabel.isEmpty();
     m_state->setText(m_switch->isChecked() ? m_config.onLabel : m_config.offLabel);
+    m_state->setFixedWidth(
+        qMax(m_state->textWidth(m_config.onLabel), m_state->textWidth(m_config.offLabel)));
     m_state->setVisible(hasText && !cells);
+    m_leader->setVisible(m_formRow && hasText && !m_config.label.isEmpty());
 }
 
 ControlSlider::ControlSlider(QWidget* parent) : QAbstractSlider(parent) {
@@ -554,12 +635,14 @@ SliderWidget::SliderWidget(QWidget* parent) : StyledControlWidget(parent) {
     sliderRow->addWidget(m_slider, 1);
     sliderRow->addWidget(m_readout);
 
-    auto* layout = new QVBoxLayout(this);
-    layout->setContentsMargins(12, 6, 12, 0);
-    layout->addWidget(m_title);
-    layout->addStretch(1);
-    layout->addLayout(sliderRow);
-    layout->addStretch(1);
+    // Title over the slider and its readout, as one block centered
+    // vertically like the other controls (docs/LAYOUT.md "Spacing").
+    m_layout = new QVBoxLayout(this);
+    m_layout->setSpacing(kControlSpacing);
+    m_layout->addStretch(1);
+    m_layout->addWidget(m_title);
+    m_layout->addLayout(sliderRow);
+    m_layout->addStretch(1);
 
     connect(m_slider, &QAbstractSlider::valueChanged, this, &SliderWidget::onSliderValueChanged);
     connect(m_slider, &QAbstractSlider::sliderReleased, this, &SliderWidget::onSliderReleased);
@@ -599,6 +682,7 @@ void SliderWidget::setConfig(const QJsonObject& config) {
 }
 
 void SliderWidget::applyControlStyle() {
+    m_layout->setContentsMargins(contentMargins());
     m_title->setLook(controlStyle(), controlColors());
     m_readout->setLook(controlStyle(), controlColors());
     m_slider->setLook(
@@ -708,12 +792,17 @@ LedWidget::LedWidget(QWidget* parent) : StyledControlWidget(parent) {
     m_state = new ControlText(ControlText::Role::State, this);
     m_state->setVisible(false);
 
-    auto* layout = new QVBoxLayout(this);
-    layout->setContentsMargins(6, 6, 6, 6);
-    layout->setSpacing(4);
-    layout->addWidget(m_title);
-    layout->addWidget(m_lamp, 1);
-    layout->addWidget(m_state);
+    // A column: title, lamp, state text, centered in the cell; the lamp is
+    // sized from the room left (fitLamp()).
+    m_title->setAlignment(Qt::AlignHCenter);
+    m_state->setAlignment(Qt::AlignHCenter);
+    m_layout = new QVBoxLayout(this);
+    m_layout->setSpacing(kControlSpacing);
+    m_layout->addStretch(1);
+    m_layout->addWidget(m_title);
+    m_layout->addWidget(m_lamp);
+    m_layout->addWidget(m_state);
+    m_layout->addStretch(1);
 
     m_blinkTimer = new QTimer(this);
     connect(m_blinkTimer, &QTimer::timeout, this, [this] {
@@ -740,10 +829,36 @@ void LedWidget::setConfig(const QJsonObject& config) {
 }
 
 void LedWidget::applyControlStyle() {
+    m_layout->setContentsMargins(contentMargins());
     m_title->setLook(controlStyle(), controlColors());
     m_state->setLook(controlStyle(), controlColors());
     m_lamp->setLook(controlStyle(), controlColors());
     updateLamp();
+    fitLamp();
+}
+
+void LedWidget::resizeEvent(QResizeEvent* event) {
+    StyledControlWidget::resizeEvent(event);
+    fitLamp();
+}
+
+void LedWidget::fitLamp() {
+    // The lamp takes the height left under the title and over the state
+    // text, as a square, up to its largest size.
+    const QMargins margins = contentMargins();
+    int room = height() - margins.top() - margins.bottom();
+    for (QWidget* text : {static_cast<QWidget*>(m_title), static_cast<QWidget*>(m_state)}) {
+        if (!text->isHidden()) {
+            room -= text->sizeHint().height() + kControlSpacing;
+        }
+    }
+    const int maxSide = qCeil(2.0 * kMaxLedRadius * kControlLedReach);
+    const int minSide = qCeil(2.0 * kMinLedRadius * kControlLedReach);
+    const int side =
+        qBound(minSide, qMin(room, width() - margins.left() - margins.right()), maxSide);
+    if (m_lamp->height() != side || m_lamp->minimumHeight() != side) {
+        m_lamp->setFixedHeight(side);
+    }
 }
 
 QColor LedWidget::currentColor() const {

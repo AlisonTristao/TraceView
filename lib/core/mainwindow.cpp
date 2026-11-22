@@ -4168,7 +4168,12 @@ DeviceConnection* MainWindow::createDeviceConnection(const Device& device) {
     auto* connection = new DeviceConnection(device.commType, device.transportType, this);
     connect(
         connection, &DeviceConnection::connectionStateChanged, this,
-        [this, id = device.id](bool connected) { onDeviceConnectionStateChanged(id, connected); });
+        [this, id = device.id](bool connected) {
+            if (connected) {
+                m_lastLinkError.remove(id);  // the next failure is news again
+            }
+            onDeviceConnectionStateChanged(id, connected);
+        });
     // This device's script runtime's onConnectionChange(), same lookup-by-id
     // pattern as the fieldSample/terminalDataReceived hooks below.
     connect(connection, &DeviceConnection::connectionStateChanged, this,
@@ -4322,7 +4327,15 @@ DeviceConnection* MainWindow::createDeviceConnection(const Device& device) {
     // isn't in the dialout/uucp group) left Connect looking like a no-op.
     connect(connection, &DeviceConnection::errorOccurred, this,
             [this, connection, id = device.id, name = device.name](const QString& text) {
-                postStatus(text, 6000, StatusSeverity::Warning, name);
+                // A device left switched off fails the same way on every
+                // retry, all night long: say it once, not once per attempt
+                // (each one a notification, a toast and a log line). Cleared
+                // when the link comes up, so the next drop is reported.
+                const auto last = m_lastLinkError.constFind(id);
+                if (last == m_lastLinkError.constEnd() || *last != text) {
+                    m_lastLinkError.insert(id, text);
+                    postStatus(text, 6000, StatusSeverity::Warning, name);
+                }
                 // The link being tried failed: the cycle moves on without
                 // waiting out the rest of its window. Not while switching
                 // links, nor from a connection already replaced -- closing
@@ -4660,6 +4673,7 @@ void MainWindow::onDeviceRemoved(const QString& id) {
     m_hubPeerNames.remove(id);
     m_hubChildOfflineTicks.remove(id);
     m_deviceLinkCyclers.remove(id);
+    m_lastLinkError.remove(id);
     m_agentFeed.forget(id);
     dropLinkProbes(id);
     m_deviceLinkSignatures.remove(id);
@@ -4752,6 +4766,7 @@ void MainWindow::onDeviceConnectToggleRequested(const QString& deviceId) {
         return;
     }
     m_deviceLinkCyclers[deviceId].restart(0, QDateTime::currentMSecsSinceEpoch());
+    m_lastLinkError.remove(deviceId);  // a Connect the user asked for reports its failure
     if (device->activeLink != 0) {
         switchDeviceLink(deviceId, 0);  // dials it too
         return;

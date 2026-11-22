@@ -92,6 +92,10 @@ public slots:
                        const QVector<float>& values);
 
 protected:
+    bool printable() const override {
+        return false;
+    }
+
     // --- Hooks ------------------------------------------------------------
     // `count` new samples are in the history (never called while paused).
     virtual void samplesAppended(int count) {

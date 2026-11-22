@@ -94,6 +94,12 @@ private:
     QTimer* m_timeoutTimer;
     QHash<QString, PendingQuery> m_pending;  // requestId -> query
     QSet<QString> m_joined;                  // QNetworkInterface::name() of the joined ones
+    // refreshInterfaces()'s last answer and when it was taken: enumerating
+    // the adapters is a slow system call on Windows (GetAdaptersAddresses),
+    // and a query is sent up to three times per lookup, every few seconds
+    // for a robot that stays offline -- all on the UI thread.
+    QList<QNetworkInterface> m_interfaces;
+    qint64 m_interfacesFetchedMs = -1;
 };
 
 }  // namespace traceview
