@@ -55,6 +55,11 @@ const std::pair<CardHeaderId, const char*> kCardHeaderIds[] = {
     {CardHeaderId::Filled, "filled"},
     {CardHeaderId::Line, "line"},
     {CardHeaderId::Hover, "hover"},
+    {CardHeaderId::Hidden, "hidden"},
+};
+const std::pair<CardBackgroundId, const char*> kCardBackgroundIds[] = {
+    {CardBackgroundId::Filled, "filled"},
+    {CardBackgroundId::None, "none"},
 };
 const std::pair<CanvasId, const char*> kCanvasIds[] = {
     {CanvasId::Plain, "plain"},
@@ -231,6 +236,8 @@ QString cardHeaderDisplayName(CardHeaderId id) {
             return QCoreApplication::translate("Appearance", "Line");
         case CardHeaderId::Hover:
             return QCoreApplication::translate("Appearance", "On hover");
+        case CardHeaderId::Hidden:
+            return QCoreApplication::translate("Appearance", "On right-click");
         case CardHeaderId::Filled:
             break;
     }
@@ -239,6 +246,30 @@ QString cardHeaderDisplayName(CardHeaderId id) {
 
 QVector<CardHeaderId> allCardHeaders() {
     return allIn(kCardHeaderIds);
+}
+
+// --- Card background ------------------------------------------------------
+
+QString cardBackgroundIdString(CardBackgroundId id) {
+    return idOf(kCardBackgroundIds, id);
+}
+
+CardBackgroundId cardBackgroundFromId(const QString& id) {
+    return fromIdIn(kCardBackgroundIds, id);
+}
+
+QString cardBackgroundDisplayName(CardBackgroundId id) {
+    switch (id) {
+        case CardBackgroundId::None:
+            return QCoreApplication::translate("Appearance", "None");
+        case CardBackgroundId::Filled:
+            break;
+    }
+    return QCoreApplication::translate("Appearance", "Filled");
+}
+
+QVector<CardBackgroundId> allCardBackgrounds() {
+    return allIn(kCardBackgroundIds);
 }
 
 // --- Canvas ---------------------------------------------------------------

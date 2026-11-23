@@ -2,6 +2,7 @@
 
 #include <QAction>
 #include <QComboBox>
+#include <QContextMenuEvent>
 #include <QFontMetrics>
 #include <QHBoxLayout>
 #include <QHash>
@@ -286,9 +287,14 @@ DashboardCell::DashboardCell(const QString& itemId, const QString& typeId, const
     // repaint.
     connect(&ThemeManager::instance(), &ThemeManager::themeChanged, this,
             [this](const ThemePalette&) {
+                syncPrinted();
+                m_hoverHeader->hide();
                 layoutChildren();
                 update();
             });
+    // A cell created in Run mode under the "None" card background starts
+    // without its card.
+    syncPrinted();
 }
 
 void DashboardCell::setTitle(const QString& title) {
@@ -305,13 +311,15 @@ void DashboardCell::setEditMode(bool enabled) {
     }
     m_editMode = enabled;
     m_printed = !m_editMode && m_content->printedOnCanvas();
-    m_borderOverlay->setProperty("printed", m_printed);
+    m_bare = !m_editMode && ThemeManager::instance().cardBackground() == CardBackgroundId::None;
+    m_borderOverlay->setProperty("printed", cardless());
     // The content widget spans the full cell below the header, which
     // includes the resize grip's corner. Without this, clicks/hover on the
     // grip land on the content widget instead of us, so drag/resize misses
     // the mouse press (and hover cursor feedback) entirely.
     m_content->setAttribute(Qt::WA_TransparentForMouseEvents, enabled);
     m_content->setEditModeHint(enabled);
+    m_content->setBareCard(m_bare);
     if (!enabled) {
         m_selected = false;
         startSelectionAnimation(QAbstractAnimation::Backward);
@@ -372,11 +380,15 @@ int DashboardCell::headerStripHeight() const {
 
 void DashboardCell::syncPrinted() {
     const bool printed = !m_editMode && m_content->printedOnCanvas();
-    if (printed == m_printed) {
+    const bool bare =
+        !m_editMode && ThemeManager::instance().cardBackground() == CardBackgroundId::None;
+    if (printed == m_printed && bare == m_bare) {
         return;
     }
     m_printed = printed;
-    m_borderOverlay->setProperty("printed", printed);
+    m_bare = bare;
+    m_borderOverlay->setProperty("printed", cardless());
+    m_content->setBareCard(bare);
     layoutChildren();
     update();
     m_borderOverlay->update();
@@ -384,14 +396,20 @@ void DashboardCell::syncPrinted() {
 
 int DashboardCell::headerHeight() const {
     // Printed on the canvas (a Scientific chart in Run): no strip on top,
-    // the header floats in on hover like the "On hover" card header.
+    // the header floats in on hover like the "On hover" card header (or on
+    // right-click, under "On right-click").
     if (m_printed) {
         return 0;
     }
-    if (!m_editMode && ThemeManager::instance().cardHeader() == CardHeaderId::Hover) {
+    const CardHeaderId style = ThemeManager::instance().cardHeader();
+    if (!m_editMode && (style == CardHeaderId::Hover || style == CardHeaderId::Hidden)) {
         return 0;
     }
     return headerStripHeight();
+}
+
+bool DashboardCell::headerOnRightClick() const {
+    return ThemeManager::instance().cardHeader() == CardHeaderId::Hidden;
 }
 
 QRect DashboardCell::headerRect() const {
@@ -681,7 +699,11 @@ void DashboardCell::paintHeader(QPainter& painter, bool floating) const {
     painter.save();
     painter.setClipPath(currentFramePath(QRectF(rect())));
     if (line) {
-        painter.fillRect(header, palette.surface);
+        // Without a card (the "None" background) the title sits on the
+        // canvas too, over the separator only.
+        if (!m_bare) {
+            painter.fillRect(header, palette.surface);
+        }
         painter.setPen(QPen(m_selected ? palette.accent : palette.border, m_selected ? 2 : 1));
         const qreal y = header.bottom() + (m_selected ? 0.0 : 0.5);
         painter.drawLine(QPointF(header.left(), y), QPointF(header.right() + 1, y));
@@ -778,8 +800,9 @@ void DashboardCell::paintEvent(QPaintEvent*) {
     // the cell unfilled lets it sit over a chart as an overlay without a
     // canvas-colored box around it (docs/LAYOUT.md).
     const bool bareControl = !m_editMode && m_content && !m_content->wantsCellHeader();
-    // Same for a widget printed on the canvas (syncPrinted()).
-    if (!bareControl && !m_printed) {
+    // Same for a widget printed on the canvas or under the "None" card
+    // background (syncPrinted()).
+    if (!bareControl && !cardless()) {
         painter.fillPath(silhouette, palette.background);
     }
 
@@ -909,13 +932,35 @@ void DashboardCell::mouseReleaseEvent(QMouseEvent* event) {
 void DashboardCell::enterEvent(QEnterEvent* event) {
     // "On hover" card header: the strip floats in over the content while the
     // mouse is over the card (Run mode only -- edit mode always reserves it).
-    if (!m_editMode && headerHeight() == 0 && headerStripHeight() > 0) {
+    // "On right-click" waits for contextMenuEvent() instead.
+    if (!m_editMode && headerHeight() == 0 && headerStripHeight() > 0 &&
+        !headerOnRightClick()) {
         m_hoverHeader->setGeometry(headerRect());
         m_hoverHeader->show();
         m_hoverHeader->raise();
         m_borderOverlay->raise();
     }
     QWidget::enterEvent(event);
+}
+
+void DashboardCell::contextMenuEvent(QContextMenuEvent* event) {
+    // "On right-click" card header: a right-click anywhere on the card that
+    // the content didn't take for its own menu (a text field's, say) toggles
+    // the floating strip; leaving the card hides it again, like on hover.
+    if (!m_editMode && headerHeight() == 0 && headerStripHeight() > 0 &&
+        headerOnRightClick()) {
+        if (m_hoverHeader->isVisible()) {
+            m_hoverHeader->hide();
+        } else {
+            m_hoverHeader->setGeometry(headerRect());
+            m_hoverHeader->show();
+            m_hoverHeader->raise();
+            m_borderOverlay->raise();
+        }
+        event->accept();
+        return;
+    }
+    QWidget::contextMenuEvent(event);
 }
 
 void DashboardCell::leaveEvent(QEvent* event) {

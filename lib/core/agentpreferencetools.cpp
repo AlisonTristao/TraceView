@@ -254,7 +254,7 @@ void AgentAppTools::registerAppearanceTools(MainWindow* window, ToolRegistry* re
     get.readOnly = true;
     get.description =
         "TraceView's look: every appearance option (palette, frame, chartStyle, dataColors, "
-        "density, cardHeader, canvas, motion) with its current value and choices, the presets, "
+        "density, cardHeader, cardBackground, canvas, motion) with its current value and choices, the presets, "
         "whether the active workspace pins its own look, the current palette's colors, and the "
         "language and font with their choices.";
     get.handler = [window](const QJsonObject&, const AgentToolReply& reply) {

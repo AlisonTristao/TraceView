@@ -9,6 +9,7 @@
 
 #include "dashboard/dashboardwidget.h"
 
+class QContextMenuEvent;
 class QEnterEvent;
 
 namespace traceview {
@@ -66,8 +67,11 @@ public:
     void setTitle(const QString& title);
     void setEditMode(bool enabled);
     // Re-reads DashboardWidget::printedOnCanvas(): a printed widget in Run
-    // mode has no card (fill, outline) and only a hover header. Called by
-    // DashboardGrid after anything that may change a widget's style.
+    // mode has no card (fill, outline) and only a floating header (on hover,
+    // or on right-click under the "On right-click" card header). Called by
+    // DashboardGrid after anything that may change a widget's style. Also
+    // re-reads the "None" card background (CardBackgroundId), which takes
+    // the card away from every widget in Run mode.
     void syncPrinted();
     void setSelected(bool selected);
     bool isSelected() const {
@@ -117,6 +121,7 @@ protected:
     void mouseMoveEvent(QMouseEvent* event) override;
     void mouseReleaseEvent(QMouseEvent* event) override;
     void enterEvent(QEnterEvent* event) override;
+    void contextMenuEvent(QContextMenuEvent* event) override;
     void leaveEvent(QEvent* event) override;
 
 private:
@@ -126,9 +131,17 @@ private:
     // DashboardWidget::wantsCellHeader()), from the current density.
     int headerStripHeight() const;
     // Space the strip takes above the content: headerStripHeight(), except
-    // 0 in Run mode under the "On hover" card header style, where the strip
-    // floats over the content instead (m_hoverHeader).
+    // 0 in Run mode under the "On hover"/"On right-click" card header styles
+    // (and for a printed widget), where the strip floats over the content
+    // instead (m_hoverHeader).
     int headerHeight() const;
+    // The floating strip comes in on right-click instead of on hover
+    // (CardHeaderId::Hidden).
+    bool headerOnRightClick() const;
+    // No card in Run mode: printed, or the "None" card background.
+    bool cardless() const {
+        return m_printed || m_bare;
+    }
     // Where the strip is drawn, whether it reserves space or floats.
     QRect headerRect() const;
     // Draws the strip -- type glyph, connection dot, title, buttons -- in
@@ -161,6 +174,7 @@ private:
     QWidget* m_hoverHeader = nullptr;  // see headerHeight()
     bool m_editMode = false;
     bool m_printed = false;  // see syncPrinted()
+    bool m_bare = false;     // "None" card background in Run, see syncPrinted()
     bool m_selected = false;
     bool m_resizable = true;
     bool m_dragInvalid = false;
