@@ -5,6 +5,7 @@
 #include <QJsonObject>
 #include <QPainterPath>
 #include <QString>
+#include <QStyle>
 #include <QVariant>
 #include <QVector>
 #include <QWidget>
@@ -69,6 +70,26 @@ public:
     // the printed widgets in reading order -- see setFigure().
     virtual bool printedOnCanvas() const {
         return false;
+    }
+
+    // Whether DashboardCell has taken this widget's card away: the "None"
+    // card background (traceview/appearance.h), in Run mode only. The
+    // widget then paints no fill and no idle outline of its own -- only its
+    // content, straight on the canvas, like a Scientific chart. Widgets that
+    // paint their own card check bareCard() (see paintChartBackground());
+    // composite ones (serial monitor, log, chat) lose the stylesheet
+    // background through bareCardChanged() and the [bareCard="true"] rule in
+    // stylesheet.cpp.
+    void setBareCard(bool bare) {
+        if (bare == m_bareCard) {
+            return;
+        }
+        m_bareCard = bare;
+        setProperty("bareCard", bare);
+        bareCardChanged();
+    }
+    bool bareCard() const {
+        return m_bareCard;
     }
 
     // The figure number (from 1; 0 when not printed) and the cell's title,
@@ -194,7 +215,30 @@ public:
         return roundedPath(QRectF(rect()));
     }
 
+protected:
+    // Called after setBareCard() changed the state. The default drops the
+    // canvas-coloured stylesheet box and re-polishes the whole subtree, so
+    // [bareCard="true"] descendant rules reach the child views. Widgets that
+    // manage WA_StyledBackground themselves override it.
+    virtual void bareCardChanged() {
+        setAttribute(Qt::WA_StyledBackground, !m_bareCard);
+        repolishTree();
+        update();
+    }
+    void repolishTree() {
+        QStyle* s = style();
+        s->unpolish(this);
+        s->polish(this);
+        const QList<QWidget*> children = findChildren<QWidget*>();
+        for (QWidget* child : children) {
+            child->style()->unpolish(child);
+            child->style()->polish(child);
+            child->update();
+        }
+    }
+
 private:
+    bool m_bareCard = false;
     bool m_roundTopLeft = true;
     bool m_roundTopRight = true;
     bool m_roundBottomLeft = true;

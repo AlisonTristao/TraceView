@@ -56,6 +56,10 @@ public:
         return m_cardHeader;
     }
     void setCardHeader(const QString& id);
+    CardBackgroundId cardBackground() const {
+        return m_cardBackground;
+    }
+    void setCardBackground(const QString& id);
 
     CanvasId canvas() const {
         return m_canvas;
@@ -101,6 +105,7 @@ private:
     DataColorsId m_dataColors = DataColorsId::Custom;
     DensityId m_density = DensityId::Normal;
     CardHeaderId m_cardHeader = CardHeaderId::Filled;
+    CardBackgroundId m_cardBackground = CardBackgroundId::Filled;
     CanvasId m_canvas = CanvasId::Plain;
     MotionId m_motion = MotionId::Animated;
 

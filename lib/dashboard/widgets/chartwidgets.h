@@ -127,8 +127,10 @@ protected:
     ChartViewOptions m_view;
     bool m_paused = false;
 
+    void bareCardChanged() override;
+
 private:
-    // Printed in Run mode: no stylesheet background either.
+    // Printed (or bare card) in Run mode: no stylesheet background either.
     void syncPrintedBackground();
 
     int m_figureNumber = 0;

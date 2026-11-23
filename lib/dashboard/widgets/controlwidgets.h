@@ -62,6 +62,9 @@ protected:
     void setStyleChoice(const QJsonObject& config);
     void refreshControlStyle();
     virtual void applyControlStyle() {}
+    void bareCardChanged() override {
+        updatePanelFill();
+    }
 
 private:
     // The surface "plate" behind the control: shown while arranging, and

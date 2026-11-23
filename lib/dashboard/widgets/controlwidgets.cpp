@@ -84,7 +84,8 @@ void StyledControlWidget::setEditModeHint(bool editMode) {
 }
 
 void StyledControlWidget::updatePanelFill() {
-    const bool fill = m_editMode || m_style.screws;
+    // A "None" card background drops the Panel plate as well.
+    const bool fill = m_editMode || (m_style.screws && !bareCard());
     // Without a plate, nothing at all behind the control in Run: a control
     // placed over a chart (an overlay, docs/LAYOUT.md) must not punch a
     // canvas-colored box into it. In edit mode the opaque fill stays, so the
@@ -103,7 +104,7 @@ void StyledControlWidget::paintEvent(QPaintEvent*) {
         option.initFrom(this);
         style()->drawPrimitive(QStyle::PE_Widget, &option, &painter, this);
     }
-    if (m_style.screws) {
+    if (m_style.screws && !bareCard()) {
         paintPanelScrews(painter, QRectF(rect()), 6.5, 3.0);
     }
 }

@@ -464,8 +464,10 @@ void TextBoardWidget::paintEvent(QPaintEvent* event) {
     painter.setRenderHint(QPainter::TextAntialiasing, true);
 
     const ThemePalette& palette = ThemeManager::instance().currentTheme();
-    painter.fillPath(contentFillPath(), palette.surface);
-    if (ThemeManager::instance().currentFrameStyle().idleOutline) {
+    if (!bareCard()) {
+        painter.fillPath(contentFillPath(), palette.surface);
+    }
+    if (!bareCard() && ThemeManager::instance().currentFrameStyle().idleOutline) {
         painter.setPen(QPen(palette.border, 1));
         painter.setBrush(Qt::NoBrush);
         painter.drawPath(roundedPath(QRectF(rect()).adjusted(0.5, 0.5, -0.5, -0.5)));

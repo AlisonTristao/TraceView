@@ -65,12 +65,28 @@ const Density& density(DensityId id);
 //   Line    -- the title on the card's own fill, over a thin separator.
 //   Hover   -- no strip in Run mode; it slides in over the card on mouse
 //              hover. Touch screens, which have no hover, get Line instead.
-enum class CardHeaderId { Filled, Line, Hover };
+//   Hidden  -- no strip in Run mode; a right-click on the card shows it
+//              over the content (and another one hides it). Touch screens,
+//              which have no right-click, get Line instead.
+enum class CardHeaderId { Filled, Line, Hover, Hidden };
 
 QString cardHeaderIdString(CardHeaderId id);
 CardHeaderId cardHeaderFromId(const QString& id);
 QString cardHeaderDisplayName(CardHeaderId id);
 QVector<CardHeaderId> allCardHeaders();
+
+// --- Card background ------------------------------------------------------
+
+//   Filled  -- every widget sits on its card (fill + idle outline).
+//   None    -- in Run mode no widget has a card: no fill, no outline, the
+//              content drawn straight on the canvas, the way a Scientific
+//              chart is printed. Layout mode keeps the card for arranging.
+enum class CardBackgroundId { Filled, None };
+
+QString cardBackgroundIdString(CardBackgroundId id);
+CardBackgroundId cardBackgroundFromId(const QString& id);
+QString cardBackgroundDisplayName(CardBackgroundId id);
+QVector<CardBackgroundId> allCardBackgrounds();
 
 // --- Canvas ---------------------------------------------------------------
 
