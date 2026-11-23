@@ -7,6 +7,20 @@ release flow.
 
 ## [Unreleased]
 
+## [4.18.0] - 2026-11-23
+
+### Added
+
+- **Card background**: a new appearance option (Appearance menu, Settings,
+  MCP `set_appearance` key `cardBackground`). "None" drops every widget's
+  card in Run mode -- no fill, no outline, the content drawn straight on the
+  canvas like a printed Scientific chart, including the serial monitor, log
+  and chat views. Layout mode keeps the card for arranging; the built-in
+  presets bring it back.
+- **Card header "On right-click"**: no title strip in Run mode; a
+  right-click on the card shows it over the content and another hides it.
+  Touch screens get Line instead.
+
 ## [4.17.1] - 2026-11-22
 
 ### Added
