@@ -82,6 +82,8 @@ AppearanceSnapshot snapshot(const char* palette, const char* frame, const char* 
             {QStringLiteral("dataColors"), QString::fromLatin1(dataColors)},
             {QStringLiteral("density"), QString::fromLatin1(density)},
             {QStringLiteral("cardHeader"), QString::fromLatin1(cardHeader)},
+            // No built-in preset drops the card; applying one brings it back.
+            {QStringLiteral("cardBackground"), QStringLiteral("filled")},
             {QStringLiteral("canvas"), QString::fromLatin1(canvas)}};
 }
 
@@ -172,6 +174,17 @@ QVector<AppearanceOption> appearanceOptions() {
     header.current = [&theme]() { return cardHeaderIdString(theme.cardHeaderChoice()); };
     header.apply = [&theme](const QString& id) { theme.setCardHeader(id); };
     options.append(header);
+
+    AppearanceOption background;
+    background.key = QStringLiteral("cardBackground");
+    background.menuTitle =
+        menuTitle(QT_TRANSLATE_NOOP("traceview::MainWindow", "Card &Background"));
+    background.label = rowLabel(QT_TRANSLATE_NOOP("traceview::SettingsPage", "Card background"));
+    background.choices =
+        choicesOf(&allCardBackgrounds, cardBackgroundIdString, cardBackgroundDisplayName);
+    background.current = [&theme]() { return cardBackgroundIdString(theme.cardBackground()); };
+    background.apply = [&theme](const QString& id) { theme.setCardBackground(id); };
+    options.append(background);
 
     AppearanceOption canvas;
     canvas.key = QStringLiteral("canvas");

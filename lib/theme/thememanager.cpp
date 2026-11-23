@@ -18,6 +18,7 @@ constexpr const char* kCustomPalettesKey = "appearance/customPalettes";
 constexpr const char* kDataColorsKey = "appearance/dataColors";
 constexpr const char* kDensityKey = "appearance/density";
 constexpr const char* kCardHeaderKey = "appearance/cardHeader";
+constexpr const char* kCardBackgroundKey = "appearance/cardBackground";
 constexpr const char* kCanvasKey = "appearance/canvas";
 constexpr const char* kMotionKey = "appearance/motion";
 }  // namespace
@@ -55,6 +56,7 @@ ThemeManager::ThemeManager() {
     m_dataColors = dataColorsFromId(settings.value(kDataColorsKey).toString());
     m_density = densityFromId(settings.value(kDensityKey).toString());
     m_cardHeader = cardHeaderFromId(settings.value(kCardHeaderKey).toString());
+    m_cardBackground = cardBackgroundFromId(settings.value(kCardBackgroundKey).toString());
     m_canvas = canvasFromId(settings.value(kCanvasKey).toString());
     m_motion = motionFromId(settings.value(kMotionKey).toString());
 }
@@ -138,7 +140,7 @@ void ThemeManager::setDensity(const QString& id) {
 
 CardHeaderId ThemeManager::cardHeader() const {
 #if defined(Q_OS_ANDROID) || defined(Q_OS_IOS)
-    if (m_cardHeader == CardHeaderId::Hover) {
+    if (m_cardHeader == CardHeaderId::Hover || m_cardHeader == CardHeaderId::Hidden) {
         return CardHeaderId::Line;
     }
 #endif
@@ -150,6 +152,14 @@ void ThemeManager::setCardHeader(const QString& id) {
     if (value != m_cardHeader) {
         m_cardHeader = value;
         commitAppearance(kCardHeaderKey, cardHeaderIdString(value));
+    }
+}
+
+void ThemeManager::setCardBackground(const QString& id) {
+    const CardBackgroundId value = cardBackgroundFromId(id);
+    if (value != m_cardBackground) {
+        m_cardBackground = value;
+        commitAppearance(kCardBackgroundKey, cardBackgroundIdString(value));
     }
 }
 

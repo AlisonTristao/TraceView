@@ -37,6 +37,9 @@ void TestAppearance::idsRoundTripWithDefaults() {
     for (CardHeaderId id : allCardHeaders()) {
         QCOMPARE(cardHeaderFromId(cardHeaderIdString(id)), id);
     }
+    for (CardBackgroundId id : allCardBackgrounds()) {
+        QCOMPARE(cardBackgroundFromId(cardBackgroundIdString(id)), id);
+    }
     for (CanvasId id : allCanvases()) {
         QCOMPARE(canvasFromId(canvasIdString(id)), id);
     }
@@ -47,6 +50,7 @@ void TestAppearance::idsRoundTripWithDefaults() {
     QCOMPARE(dataColorsFromId(QString()), DataColorsId::Custom);
     QCOMPARE(densityFromId("bogus"), DensityId::Normal);
     QCOMPARE(cardHeaderFromId(QString()), CardHeaderId::Filled);
+    QCOMPARE(cardBackgroundFromId(QString()), CardBackgroundId::Filled);
     QCOMPARE(canvasFromId(QString()), CanvasId::Plain);
     QCOMPARE(motionFromId(QString()), MotionId::Animated);
 }

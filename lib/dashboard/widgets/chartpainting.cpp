@@ -191,6 +191,9 @@ void paintXTickMarks(QPainter& painter, const QRect& plot, const QVector<qreal>&
 
 void paintChartBackground(QPainter& painter, const DashboardWidget& widget,
                           const ThemePalette& palette) {
+    if (widget.bareCard()) {
+        return;  // "None" card background: content straight on the canvas
+    }
     painter.fillPath(widget.contentFillPath(), palette.surface);
     if (!ThemeManager::instance().currentFrameStyle().idleOutline) {
         return;  // Borderless frame: the fill alone marks the widget

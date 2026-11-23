@@ -944,7 +944,12 @@ void StyledChartWidget::setEditModeHint(bool editMode) {
 }
 
 void StyledChartWidget::syncPrintedBackground() {
-    setAttribute(Qt::WA_StyledBackground, !(printedOnCanvas() && !m_editMode));
+    setAttribute(Qt::WA_StyledBackground, !(bareCard() || (printedOnCanvas() && !m_editMode)));
+}
+
+void StyledChartWidget::bareCardChanged() {
+    syncPrintedBackground();
+    update();
 }
 
 QRect StyledChartWidget::paintChartCard(QPainter& painter, const ChartStyle& style,

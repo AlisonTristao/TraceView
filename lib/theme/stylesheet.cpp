@@ -634,6 +634,16 @@ QTreeView::item:selected, QListView::item:selected {
     background-color: @accent@;
     color: @background@;
 }
+/* "None" card background (DashboardWidget::setBareCard()): a composite
+   dashboard widget (serial monitor, log, chat) drops its views' fill and
+   frame too, so its text sits straight on the canvas. */
+QWidget[bareCard="true"] .QWidget, QWidget[bareCard="true"] QStackedWidget,
+QWidget[bareCard="true"] QPlainTextEdit, QWidget[bareCard="true"] QTextEdit,
+QWidget[bareCard="true"] QListView, QWidget[bareCard="true"] QTreeView,
+QWidget[bareCard="true"] QTableView {
+    background: transparent;
+    border: none;
+}
 QProgressBar {
     background-color: @surfaceAlt@;
     border: none;
