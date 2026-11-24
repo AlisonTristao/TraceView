@@ -28,4 +28,10 @@ namespace traceview {
 // generation counters.
 void withBluetoothPermission(QObject* context, std::function<void(bool granted)> onResult);
 
+// Whether Bluetooth may be used right now WITHOUT asking: true once the user
+// has allowed it (and always where there is nothing to ask, see above).
+// For scans the user did not start themselves, which must never pop the
+// prompt up on their own (the Home page's nearby-robots list).
+bool bluetoothPermissionGranted();
+
 }  // namespace traceview

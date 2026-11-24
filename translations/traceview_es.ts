@@ -4,12 +4,12 @@
 <context>
     <name>AgentAppTools</name>
     <message>
-        <location filename="../lib/core/agentapptools.cpp" line="+257" />
+        <location filename="../lib/core/agentapptools.cpp" line="+257"/>
         <source>AI Assistant</source>
         <translation>Asistente de IA</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>An AI assistant wants to %1.
 
 Allow it to connect devices and send them commands until AI assistant access is turned off or TraceView closes?</source>
@@ -18,304 +18,315 @@ Allow it to connect devices and send them commands until AI assistant access is 
 ¿Permitir que conecte dispositivos y les envíe comandos hasta que se desactive el acceso de asistentes de IA o se cierre TraceView?</translation>
     </message>
     <message>
-        <location line="+280" />
-        <source>An AI assistant created workspace "%1".</source>
-        <translation>Un asistente de IA creó el espacio de trabajo "%1".</translation>
+        <location line="+280"/>
+        <source>An AI assistant created workspace &quot;%1&quot;.</source>
+        <translation>Un asistente de IA creó el espacio de trabajo &quot;%1&quot;.</translation>
     </message>
     <message>
-        <location line="+81" />
+        <location line="+81"/>
         <source>Delete Workspace</source>
         <translation>Eliminar Espacio de Trabajo</translation>
     </message>
     <message>
-        <location line="+1" />
-        <source>An AI assistant wants to delete workspace "%1". This cannot be undone.</source>
-        <translation>Un asistente de IA quiere eliminar el espacio de trabajo "%1". Esto no se puede deshacer.</translation>
+        <location line="+1"/>
+        <source>An AI assistant wants to delete workspace &quot;%1&quot;. This cannot be undone.</source>
+        <translation>Un asistente de IA quiere eliminar el espacio de trabajo &quot;%1&quot;. Esto no se puede deshacer.</translation>
     </message>
     <message>
-        <location line="+71" />
+        <location line="+71"/>
         <source>Add Widget (AI assistant)</source>
         <translation>Añadir widget (asistente de IA)</translation>
     </message>
     <message>
-        <location line="+53" />
+        <location line="+53"/>
         <source>Edit Widget (AI assistant)</source>
         <translation>Editar widget (asistente de IA)</translation>
     </message>
     <message>
-        <location line="+414" />
+        <location line="+414"/>
         <source>New Project</source>
         <translation>Nuevo proyecto</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>An AI assistant wants to start a new, empty project. Unsaved changes to the current one will be lost.</source>
         <translation>Un asistente de IA quiere empezar un proyecto nuevo y vacío. Se perderán los cambios no guardados del actual.</translation>
     </message>
     <message>
-        <location line="+14" />
+        <location line="+14"/>
         <source>Open Project</source>
         <translation>Abrir proyecto</translation>
     </message>
     <message>
-        <location line="+1" />
-        <source>An AI assistant wants to open "%1". Unsaved changes to the current project will be lost.</source>
-        <translation>Un asistente de IA quiere abrir "%1". Se perderán los cambios no guardados del proyecto actual.</translation>
+        <location line="+1"/>
+        <source>An AI assistant wants to open &quot;%1&quot;. Unsaved changes to the current project will be lost.</source>
+        <translation>Un asistente de IA quiere abrir &quot;%1&quot;. Se perderán los cambios no guardados del proyecto actual.</translation>
     </message>
     <message>
-        <location line="+75" />
+        <location line="+75"/>
         <source>Add to Gallery</source>
         <translation>Añadir a la Galería</translation>
     </message>
     <message>
-        <location line="+1" />
-        <source>An AI assistant wants to replace the gallery dashboard "%1".</source>
-        <translation>Un asistente de IA quiere reemplazar el panel "%1" de la galería.</translation>
+        <location line="+1"/>
+        <source>An AI assistant wants to replace the gallery dashboard &quot;%1&quot;.</source>
+        <translation>Un asistente de IA quiere reemplazar el panel &quot;%1&quot; de la galería.</translation>
     </message>
     <message>
-        <location line="+53" />
+        <location line="+53"/>
         <source>Delete Dashboard</source>
         <translation>Eliminar Dashboard</translation>
     </message>
     <message>
-        <location line="+1" />
-        <source>An AI assistant wants to delete the gallery dashboard "%1". This cannot be undone.</source>
-        <translation>Un asistente de IA quiere eliminar el panel "%1" de la galería. Esto no se puede deshacer.</translation>
+        <location line="+1"/>
+        <source>An AI assistant wants to delete the gallery dashboard &quot;%1&quot;. This cannot be undone.</source>
+        <translation>Un asistente de IA quiere eliminar el panel &quot;%1&quot; de la galería. Esto no se puede deshacer.</translation>
     </message>
     <message>
-        <location line="+80" />
+        <location line="+80"/>
         <source>Export Dashboard</source>
         <translation>Exportar Dashboard</translation>
     </message>
     <message>
-        <location line="+1" />
-        <source>An AI assistant wants to overwrite "%1" with a gallery dashboard.</source>
-        <translation>Un asistente de IA quiere sobrescribir "%1" con un panel de la galería.</translation>
+        <location line="+1"/>
+        <source>An AI assistant wants to overwrite &quot;%1&quot; with a gallery dashboard.</source>
+        <translation>Un asistente de IA quiere sobrescribir &quot;%1&quot; con un panel de la galería.</translation>
     </message>
     <message>
-        <location line="+67" />
+        <location line="+67"/>
         <source>An AI assistant saved the project to %1.</source>
         <translation>Un asistente de IA guardó el proyecto en %1.</translation>
     </message>
     <message>
-        <location filename="../lib/core/agentdevicetools.cpp" line="+188" />
-        <location line="+49" />
+        <location filename="../lib/core/agentdevicetools.cpp" line="+188"/>
+        <location line="+49"/>
         <source>set up how a device is reached</source>
         <translation>configurar cómo se accede a un dispositivo</translation>
     </message>
     <message>
-        <location line="+70" />
+        <location line="+70"/>
         <source>connect a device</source>
         <translation>conectar un dispositivo</translation>
     </message>
     <message>
-        <location line="+152" />
-        <location line="+41" />
-        <location line="+351" />
-        <location line="+59" />
+        <location line="+152"/>
+        <location line="+41"/>
+        <location line="+351"/>
+        <location line="+59"/>
         <source>send commands to a device</source>
         <translation>enviar comandos a un dispositivo</translation>
     </message>
     <message>
-        <location line="-234" />
+        <location line="-234"/>
         <source>run a script that controls a device</source>
         <translation>ejecutar un script que controla un dispositivo</translation>
     </message>
     <message>
-        <location line="+107" />
+        <location line="+107"/>
         <source>Firmware Update</source>
         <translation>Actualización de firmware</translation>
     </message>
     <message>
-        <location line="+1" />
-        <source>An AI assistant wants to flash "%1" onto %2. The device restarts with the new firmware.</source>
-        <translation>Un asistente de IA quiere grabar "%1" en %2. El dispositivo se reinicia con el nuevo firmware.</translation>
+        <location line="+1"/>
+        <source>An AI assistant wants to flash &quot;%1&quot; onto %2. The device restarts with the new firmware.</source>
+        <translation>Un asistente de IA quiere grabar &quot;%1&quot; en %2. El dispositivo se reinicia con el nuevo firmware.</translation>
     </message>
     <message>
-        <location line="+15" />
+        <location line="+15"/>
         <source>Uploading firmware to %1: %2%</source>
         <translation>Subiendo firmware a %1: %2%</translation>
     </message>
     <message>
-        <location line="+338" />
+        <location line="+338"/>
         <source>Remove a network</source>
         <translation>Eliminar una red</translation>
     </message>
     <message>
-        <location line="+1" />
-        <source>An AI assistant wants to remove the Wi-Fi network "%1" from %2.</source>
-        <translation>Un asistente de IA quiere eliminar la red Wi-Fi "%1" de %2.</translation>
+        <location line="+1"/>
+        <source>An AI assistant wants to remove the Wi-Fi network &quot;%1&quot; from %2.</source>
+        <translation>Un asistente de IA quiere eliminar la red Wi-Fi &quot;%1&quot; de %2.</translation>
     </message>
     <message>
-        <location line="+57" />
+        <location line="+57"/>
         <source>Factory reset</source>
         <translation>Restablecimiento de fábrica</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>An AI assistant wants to erase the application and the files of %1. It then waits in the recovery for a new firmware.</source>
         <translation>Un asistente de IA quiere borrar la aplicación y los archivos de %1. Después espera en la recuperación un firmware nuevo.</translation>
     </message>
     <message>
-        <location filename="../lib/core/agentpreferencetools.cpp" line="+354" />
+        <location filename="../lib/core/agentpreferencetools.cpp" line="+354"/>
         <source>Delete Preset</source>
         <translation>Eliminar ajuste</translation>
     </message>
     <message>
-        <location line="+1" />
-        <source>An AI assistant wants to delete the appearance preset "%1".</source>
-        <translation>Un asistente de IA quiere eliminar el ajuste de apariencia "%1".</translation>
+        <location line="+1"/>
+        <source>An AI assistant wants to delete the appearance preset &quot;%1&quot;.</source>
+        <translation>Un asistente de IA quiere eliminar el ajuste de apariencia &quot;%1&quot;.</translation>
     </message>
     <message>
-        <location line="+127" />
+        <location line="+127"/>
         <source>Delete Palette</source>
         <translation>Eliminar paleta</translation>
     </message>
     <message>
-        <location line="+1" />
-        <source>An AI assistant wants to delete the palette "%1".</source>
-        <translation>Un asistente de IA quiere eliminar la paleta "%1".</translation>
+        <location line="+1"/>
+        <source>An AI assistant wants to delete the palette &quot;%1&quot;.</source>
+        <translation>Un asistente de IA quiere eliminar la paleta &quot;%1&quot;.</translation>
     </message>
     <message>
-        <location line="+318" />
+        <location line="+318"/>
         <source>Export Captured Frames</source>
         <translation>Exportar Tramas Capturadas</translation>
     </message>
     <message>
-        <location line="+1" />
-        <source>An AI assistant wants to overwrite "%1" with the captured BTP frames.</source>
-        <translation>Un asistente de IA quiere sobrescribir "%1" con las tramas BTP capturadas.</translation>
+        <location line="+1"/>
+        <source>An AI assistant wants to overwrite &quot;%1&quot; with the captured BTP frames.</source>
+        <translation>Un asistente de IA quiere sobrescribir &quot;%1&quot; con las tramas BTP capturadas.</translation>
     </message>
 </context>
 <context>
     <name>Appearance</name>
     <message>
-        <location filename="../lib/theme/appearance.cpp" line="+124" />
+        <location filename="../lib/theme/appearance.cpp" line="+129"/>
         <source>Palette colors</source>
         <translation>Colores de la paleta</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>MATLAB</source>
         <translation>MATLAB</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Tableau</source>
         <translation>Tableau</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Color-blind safe</source>
         <translation>Apta para daltónicos</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Monochrome</source>
         <translation>Monocromo</translation>
     </message>
     <message>
-        <location line="+4" />
+        <location line="+4"/>
         <source>Per series (as configured)</source>
         <translation>Por serie (como está configurado)</translation>
     </message>
     <message>
-        <location line="+54" />
+        <location line="+54"/>
         <source>Compact</source>
         <translation>Compacta</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Comfortable</source>
         <translation>Amplia</translation>
     </message>
     <message>
-        <location line="+4" />
+        <location line="+4"/>
         <source>Normal</source>
         <translation>Normal</translation>
     </message>
     <message>
-        <location line="+35" />
+        <location line="+35"/>
         <source>Line</source>
         <translation>Línea</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>On hover</source>
         <translation>Al pasar el ratón</translation>
     </message>
     <message>
-        <location line="+4" />
+        <location line="+2"/>
+        <source>On right-click</source>
+        <translation>Con clic derecho</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <location line="+24"/>
         <source>Filled</source>
         <translation>Relleno</translation>
     </message>
     <message>
-        <location line="+20" />
+        <location line="-4"/>
+        <source>None</source>
+        <translation>Ninguno</translation>
+    </message>
+    <message>
+        <location line="+24"/>
         <source>Dots</source>
         <translation>Puntos</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Grid</source>
         <translation>Cuadrícula</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Gradient</source>
         <translation>Degradado</translation>
     </message>
     <message>
-        <location line="+4" />
+        <location line="+4"/>
         <source>Plain</source>
         <translation>Liso</translation>
     </message>
     <message>
-        <location line="+18" />
+        <location line="+18"/>
         <source>Reduced</source>
         <translation>Reducido</translation>
     </message>
     <message>
-        <location line="+0" />
+        <location line="+0"/>
         <source>Animated</source>
         <translation>Animado</translation>
     </message>
     <message>
-        <location filename="../lib/core/appearancecatalog.cpp" line="+248" />
+        <location filename="../lib/core/appearancecatalog.cpp" line="+261"/>
         <source>TraceView</source>
         <translation>TraceView</translation>
     </message>
     <message>
-        <location line="+3" />
+        <location line="+3"/>
         <source>Lab</source>
         <translation>Laboratorio</translation>
     </message>
     <message>
-        <location line="+3" />
+        <location line="+3"/>
         <source>Paper</source>
         <translation>Artículo</translation>
     </message>
     <message>
-        <location line="+3" />
+        <location line="+3"/>
         <source>HUD</source>
         <translation>HUD</translation>
     </message>
     <message>
-        <location line="+3" />
+        <location line="+3"/>
         <source>Synthwave</source>
         <translation>Synthwave</translation>
     </message>
     <message>
-        <location line="+3" />
+        <location line="+3"/>
         <source>Console</source>
         <translation>Consola</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Terminal</source>
         <translation>Terminal</translation>
     </message>
     <message>
-        <location line="+3" />
+        <location line="+3"/>
         <source>Accessible</source>
         <translation>Accesible</translation>
     </message>
@@ -323,27 +334,27 @@ Allow it to connect devices and send them commands until AI assistant access is 
 <context>
     <name>ChartStyle</name>
     <message>
-        <location filename="../lib/dashboard/widgets/chartstyle.cpp" line="+182" />
+        <location filename="../lib/dashboard/widgets/chartstyle.cpp" line="+182"/>
         <source>Engineering</source>
         <translation>Ingeniería</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Scientific</source>
         <translation>Científico</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Panel</source>
         <translation>Panel físico</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Retro</source>
         <translation>Retro</translation>
     </message>
     <message>
-        <location line="+4" />
+        <location line="+4"/>
         <source>Dashboard</source>
         <translation>Panel</translation>
     </message>
@@ -351,110 +362,110 @@ Allow it to connect devices and send them commands until AI assistant access is 
 <context>
     <name>ChartWidgets</name>
     <message>
-        <location filename="../lib/dashboard/widgets/chartwidgets.cpp" line="+45" />
+        <location filename="../lib/dashboard/widgets/chartwidgets.cpp" line="+45"/>
         <source>Field %1</source>
         <translation>Campo %1</translation>
     </message>
     <message>
-        <location line="+9" />
-        <location line="+600" />
-        <location line="+231" />
+        <location line="+9"/>
+        <location line="+600"/>
+        <location line="+231"/>
         <source>--</source>
         <translation>--</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>%1%2</source>
         <translation>%1%2</translation>
     </message>
     <message>
-        <location line="+6" />
-        <location line="+1295" />
+        <location line="+6"/>
+        <location line="+1300"/>
         <source>%1  %2</source>
         <translation>%1  %2</translation>
     </message>
     <message>
-        <location line="-1213" />
+        <location line="-1213"/>
         <source>Fig. %1</source>
         <translation>Fig. %1</translation>
     </message>
     <message>
-        <location line="+426" />
+        <location line="+426"/>
         <source>A-B %1 s</source>
         <translation>A-B %1 s</translation>
     </message>
     <message>
-        <location line="+3" />
+        <location line="+3"/>
         <source>A-B %1 samples</source>
         <translation>A-B %1 muestras</translation>
     </message>
     <message>
-        <location line="+35" />
+        <location line="+35"/>
         <source>min %1</source>
         <translation>mín %1</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>max %1</source>
         <translation>máx %1</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>p-p %1</source>
         <translation>p-p %1</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>peak %1</source>
         <translation>pico %1</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>mean %1</source>
         <translation>media %1</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>median %1</source>
         <translation>mediana %1</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>rms %1</source>
         <translation>rms %1</translation>
     </message>
     <message>
-        <location line="-59" />
+        <location line="-59"/>
         <source>%1 Hz</source>
         <translation>%1 Hz</translation>
     </message>
     <message>
-        <location line="+4" />
+        <location line="+4"/>
         <source>%1 samples</source>
         <translation>%1 muestras</translation>
     </message>
     <message>
-        <location line="+5" />
+        <location line="+5"/>
         <source>%1 s</source>
         <translation>%1 s</translation>
     </message>
     <message>
-        <location line="-47" />
+        <location line="-47"/>
         <source>paused</source>
         <translation>en pausa</translation>
     </message>
     <message>
-        <location line="-839" />
+        <location line="-844"/>
         <source>%1: %2</source>
         <translation>%1: %2</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/chartpainting.cpp" line="+970" />
+        <location filename="../lib/dashboard/widgets/chartpainting.cpp" line="+973"/>
         <source>Time (s)</source>
         <translation>Tiempo (s)</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Samples</source>
         <translation>Muestras</translation>
     </message>
@@ -462,92 +473,92 @@ Allow it to connect devices and send them commands until AI assistant access is 
 <context>
     <name>ControlConfigEditor</name>
     <message>
-        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="+31" />
+        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="+31"/>
         <source>Default</source>
         <translation>Predeterminado</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Success</source>
         <translation>Éxito</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Warning</source>
         <translation>Advertencia</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Danger</source>
         <translation>Peligro</translation>
     </message>
     <message>
-        <location line="+19" />
+        <location line="+19"/>
         <source>Momentary (press + release)</source>
         <translation>Momentáneo (pulsar + soltar)</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Pulse (single command)</source>
         <translation>Pulso (comando único)</translation>
     </message>
     <message>
-        <location line="+7" />
+        <location line="+7"/>
         <source>App default</source>
         <translation>Predeterminado de la app</translation>
     </message>
     <message>
-        <location line="+5" />
+        <location line="+5"/>
         <source>How this control is drawn. App default follows View &gt; Control Style.</source>
         <translation>Cómo se dibuja este control. Predeterminado de la app sigue Ver &gt; Estilo de controles.</translation>
     </message>
     <message>
-        <location line="+25" />
+        <location line="+25"/>
         <source>Continuous (while dragging)</source>
         <translation>Continuo (mientras se arrastra)</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>On release</source>
         <translation>Al soltar</translation>
     </message>
     <message>
-        <location line="+421" />
+        <location line="+421"/>
         <source>Red</source>
         <translation>Rojo</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Orange</source>
         <translation>Naranja</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Yellow</source>
         <translation>Amarillo</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Green</source>
         <translation>Verde</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Cyan</source>
         <translation>Cian</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Blue</source>
         <translation>Azul</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Purple</source>
         <translation>Morado</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>White</source>
         <translation>Blanco</translation>
     </message>
@@ -555,27 +566,27 @@ Allow it to connect devices and send them commands until AI assistant access is 
 <context>
     <name>ControlStyle</name>
     <message>
-        <location filename="../lib/dashboard/widgets/controlstyle.cpp" line="+35" />
+        <location filename="../lib/dashboard/widgets/controlstyle.cpp" line="+35"/>
         <source>Engineering</source>
         <translation>Ingeniería</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Scientific</source>
         <translation>Científico</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Panel</source>
         <translation>Panel físico</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Retro</source>
         <translation>Retro</translation>
     </message>
     <message>
-        <location line="+4" />
+        <location line="+4"/>
         <source>Dashboard</source>
         <translation>Panel</translation>
     </message>
@@ -583,57 +594,57 @@ Allow it to connect devices and send them commands until AI assistant access is 
 <context>
     <name>DashboardCommands</name>
     <message>
-        <location filename="../lib/dashboard/dashboardcommands.cpp" line="+14" />
+        <location filename="../lib/dashboard/dashboardcommands.cpp" line="+14"/>
         <source>Add Widget</source>
         <translation>Añadir widget</translation>
     </message>
     <message>
-        <location line="+13" />
+        <location line="+13"/>
         <source>Remove Widget</source>
         <translation>Eliminar widget</translation>
     </message>
     <message>
-        <location line="+14" />
+        <location line="+14"/>
         <source>Remove Widgets</source>
         <translation>Eliminar widgets</translation>
     </message>
     <message>
-        <location line="+23" />
+        <location line="+23"/>
         <source>Move Widget</source>
         <translation>Mover widget</translation>
     </message>
     <message>
-        <location line="+21" />
+        <location line="+21"/>
         <source>Resize Widget</source>
         <translation>Redimensionar widget</translation>
     </message>
     <message>
-        <location line="+17" />
+        <location line="+17"/>
         <source>Rename Widget</source>
         <translation>Renombrar widget</translation>
     </message>
     <message>
-        <location line="+16" />
+        <location line="+16"/>
         <source>Set Widget Key</source>
         <translation>Definir clave del widget</translation>
     </message>
     <message>
-        <location line="+17" />
+        <location line="+17"/>
         <source>Set Widget Config</source>
         <translation>Definir configuración del widget</translation>
     </message>
     <message>
-        <location line="+16" />
+        <location line="+16"/>
         <source>Change Widget Type</source>
         <translation>Cambiar tipo de widget</translation>
     </message>
     <message>
-        <location line="+33" />
+        <location line="+33"/>
         <source>Group Widgets</source>
         <translation>Agrupar widgets</translation>
     </message>
     <message>
-        <location line="+19" />
+        <location line="+19"/>
         <source>Ungroup Widgets</source>
         <translation>Desagrupar widgets</translation>
     </message>
@@ -641,70 +652,70 @@ Allow it to connect devices and send them commands until AI assistant access is 
 <context>
     <name>DashboardGallery</name>
     <message>
-        <location filename="../lib/project/dashboardgallery.cpp" line="+92" />
-        <source>The name can't be empty.</source>
+        <location filename="../lib/project/dashboardgallery.cpp" line="+92"/>
+        <source>The name can&apos;t be empty.</source>
         <translation>El nombre no puede estar vacío.</translation>
     </message>
     <message>
-        <location line="+3" />
-        <source>The name can't start or end with a space or a dot.</source>
+        <location line="+3"/>
+        <source>The name can&apos;t start or end with a space or a dot.</source>
         <translation>El nombre no puede empezar ni terminar con un espacio o un punto.</translation>
     </message>
     <message>
-        <location line="+6" />
-        <source>The name can't contain any of these characters: \ / : * ? " &lt; &gt; |</source>
-        <translation>El nombre no puede contener ninguno de estos caracteres: \ / : * ? " &lt; &gt; |</translation>
+        <location line="+6"/>
+        <source>The name can&apos;t contain any of these characters: \ / : * ? &quot; &lt; &gt; |</source>
+        <translation>El nombre no puede contener ninguno de estos caracteres: \ / : * ? &quot; &lt; &gt; |</translation>
     </message>
     <message>
-        <location line="+6" />
+        <location line="+6"/>
         <source>The name is too long (100 characters at most).</source>
         <translation>El nombre es demasiado largo (100 caracteres como máximo).</translation>
     </message>
     <message>
-        <location line="+17" />
+        <location line="+17"/>
         <source>A dashboard with that name already exists.</source>
         <translation>Ya existe un dashboard con ese nombre.</translation>
     </message>
     <message>
-        <location line="+8" />
-        <source>Couldn't rename the dashboard file.</source>
+        <location line="+8"/>
+        <source>Couldn&apos;t rename the dashboard file.</source>
         <translation>No se pudo renombrar el archivo del dashboard.</translation>
     </message>
     <message>
-        <location line="+14" />
-        <source>Couldn't delete the dashboard file.</source>
+        <location line="+14"/>
+        <source>Couldn&apos;t delete the dashboard file.</source>
         <translation>No se pudo eliminar el archivo del dashboard.</translation>
     </message>
 </context>
 <context>
     <name>Device</name>
     <message>
-        <location filename="../lib/devices/device.h" line="+54" />
+        <location filename="../lib/devices/device.h" line="+54"/>
         <source>Serial</source>
         <translation>Serie</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>USB</source>
         <translation>USB</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Hub</source>
         <translation>Concentrador</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>TCP</source>
         <translation>TCP</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>BLE</source>
         <translation>BLE</translation>
     </message>
     <message>
-        <location filename="../lib/devices/device.cpp" line="+292" />
+        <location filename="../lib/devices/device.cpp" line="+292"/>
         <source>auto</source>
         <translation>auto</translation>
     </message>
@@ -712,17 +723,17 @@ Allow it to connect devices and send them commands until AI assistant access is 
 <context>
     <name>DeviceCommands</name>
     <message>
-        <location filename="../lib/devices/devicecommands.cpp" line="+13" />
+        <location filename="../lib/devices/devicecommands.cpp" line="+13"/>
         <source>Add Device</source>
         <translation>Añadir dispositivo</translation>
     </message>
     <message>
-        <location line="+14" />
+        <location line="+14"/>
         <source>Remove Device</source>
         <translation>Eliminar dispositivo</translation>
     </message>
     <message>
-        <location line="+15" />
+        <location line="+15"/>
         <source>Edit Device</source>
         <translation>Editar dispositivo</translation>
     </message>
@@ -730,7 +741,7 @@ Allow it to connect devices and send them commands until AI assistant access is 
 <context>
     <name>DialogPresenter</name>
     <message>
-        <location filename="../lib/theme/dialogpresenter.cpp" line="+95" />
+        <location filename="../lib/theme/dialogpresenter.cpp" line="+95"/>
         <source>Back</source>
         <translation>Atrás</translation>
     </message>
@@ -738,62 +749,62 @@ Allow it to connect devices and send them commands until AI assistant access is 
 <context>
     <name>DiffDriveScene</name>
     <message>
-        <location filename="../lib/dashboard/scenes/diffdrivescene.cpp" line="+129" />
+        <location filename="../lib/dashboard/scenes/diffdrivescene.cpp" line="+129"/>
         <source>Scale</source>
         <translation>Escala</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Wheel distance</source>
         <translation>Distancia entre ruedas</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Sensor distance</source>
         <translation>Distancia de los sensores</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Sensor count</source>
         <translation>Número de sensores</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Sensor spacing</source>
         <translation>Separación de los sensores</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Line radius</source>
         <translation>Radio de la línea</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Render radius</source>
         <translation>Radio de dibujo</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Perturbation step</source>
         <translation>Paso de perturbación</translation>
     </message>
     <message>
-        <location line="+3" />
+        <location line="+3"/>
         <source>Antialiasing</source>
         <translation>Antialiasing</translation>
     </message>
     <message>
-        <location line="+281" />
+        <location line="+281"/>
         <source>covered: %1%</source>
         <translation>cubierto: %1%</translation>
     </message>
     <message>
-        <location line="-1" />
+        <location line="-1"/>
         <source>score: %1</source>
         <translation>puntuación: %1</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/scenes/sceneregistry.cpp" line="+51" />
+        <location filename="../lib/dashboard/scenes/sceneregistry.cpp" line="+51"/>
         <source>Line follower</source>
         <translation>Seguidor de línea</translation>
     </message>
@@ -801,7 +812,7 @@ Allow it to connect devices and send them commands until AI assistant access is 
 <context>
     <name>FontManager</name>
     <message>
-        <location filename="../lib/theme/fontmanager.cpp" line="+24" />
+        <location filename="../lib/theme/fontmanager.cpp" line="+24"/>
         <source>System Default</source>
         <translation>Predeterminado del Sistema</translation>
     </message>
@@ -809,22 +820,22 @@ Allow it to connect devices and send them commands until AI assistant access is 
 <context>
     <name>FrameStyle</name>
     <message>
-        <location filename="../lib/theme/framestyle.cpp" line="+103" />
+        <location filename="../lib/theme/framestyle.cpp" line="+103"/>
         <source>Square</source>
         <translation>Recto</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Borderless</source>
         <translation>Sin borde</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Chamfered</source>
         <translation>Biselado</translation>
     </message>
     <message>
-        <location line="+4" />
+        <location line="+4"/>
         <source>Rounded</source>
         <translation>Redondeado</translation>
     </message>
@@ -832,52 +843,52 @@ Allow it to connect devices and send them commands until AI assistant access is 
 <context>
     <name>FurutaScene</name>
     <message>
-        <location filename="../lib/dashboard/scenes/furutascene.cpp" line="+526" />
+        <location filename="../lib/dashboard/scenes/furutascene.cpp" line="+526"/>
         <source>Arm length (L1)</source>
         <translation>Longitud del brazo (L1)</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Pendulum length (l2)</source>
         <translation>Longitud del péndulo (l2)</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>View azimuth</source>
         <translation>Azimut de la vista</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>View elevation</source>
         <translation>Elevación de la vista</translation>
     </message>
     <message>
-        <location line="+4" />
+        <location line="+4"/>
         <source>Angles and labels</source>
         <translation>Ángulos y etiquetas</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Trail of the mass</source>
         <translation>Rastro de la masa</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Antialiasing</source>
         <translation>Suavizado</translation>
     </message>
     <message>
-        <location line="+4" />
+        <location line="+4"/>
         <source>Background</source>
         <translation>Fondo</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Shadows</source>
         <translation>Sombras</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/scenes/sceneregistry.cpp" line="+3" />
+        <location filename="../lib/dashboard/scenes/sceneregistry.cpp" line="+3"/>
         <source>Furuta pendulum</source>
         <translation>Péndulo de Furuta</translation>
     </message>
@@ -885,7 +896,7 @@ Allow it to connect devices and send them commands until AI assistant access is 
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="+154" />
+        <location filename="../lib/core/mainwindow.cpp" line="+156"/>
         <source>TraceView Project (*.tvproj)</source>
         <translation>Proyecto TraceView (*.tvproj)</translation>
     </message>
@@ -893,7 +904,7 @@ Allow it to connect devices and send them commands until AI assistant access is 
 <context>
     <name>ProjectStore</name>
     <message>
-        <location filename="../lib/project/projectstore.cpp" line="+31" />
+        <location filename="../lib/project/projectstore.cpp" line="+31"/>
         <source>No project path set yet — use Save Project to choose a file first.</source>
         <translation>Aún no se ha definido una ruta de proyecto — use Guardar proyecto para elegir un archivo primero.</translation>
     </message>
@@ -901,137 +912,137 @@ Allow it to connect devices and send them commands until AI assistant access is 
 <context>
     <name>QObject</name>
     <message>
-        <location filename="../lib/core/debugchartswindow.cpp" line="+32" />
+        <location filename="../lib/core/debugchartswindow.cpp" line="+32"/>
         <source>Debug -- synthetic chart data</source>
         <translation>Depuración -- datos de gráfico sintéticos</translation>
     </message>
     <message>
-        <location filename="../lib/core/workspaceswitcher.cpp" line="+87" />
+        <location filename="../lib/core/workspaceswitcher.cpp" line="+87"/>
         <source>Rename workspace</source>
         <translation>Renombrar espacio de trabajo</translation>
     </message>
     <message>
-        <location line="+8" />
+        <location line="+8"/>
         <source>Delete workspace</source>
         <translation>Eliminar espacio de trabajo</translation>
     </message>
     <message>
-        <location filename="../lib/devices/deviceconfigdialog.cpp" line="+66" />
+        <location filename="../lib/devices/deviceconfigdialog.cpp" line="+66"/>
         <source>(unnamed topic)</source>
         <translation>(tema sin nombre)</translation>
     </message>
     <message>
-        <location line="+19" />
+        <location line="+19"/>
         <source>(unnamed)</source>
         <translation>(sin nombre)</translation>
     </message>
     <message>
-        <location filename="../lib/core/workspaceswitcher.cpp" line="-25" />
+        <location filename="../lib/core/workspaceswitcher.cpp" line="-25"/>
         <source>Change icon</source>
         <translation>Cambiar icono</translation>
     </message>
     <message>
-        <location filename="../lib/dashboard/widgets/textboardwidget.cpp" line="+231" />
+        <location filename="../lib/dashboard/widgets/textboardwidget.cpp" line="+231"/>
         <source>%1 packet(s)</source>
         <translation>%1 paquete(s)</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>   jitter %1%2 ms</source>
         <translation>   jitter %1%2 ms</translation>
     </message>
     <message>
-        <location line="+4" />
+        <location line="+4"/>
         <source>   jitter --</source>
         <translation>   jitter --</translation>
     </message>
     <message>
-        <location filename="../lib/diagnostics/btpmonitortab.cpp" line="+94" />
+        <location filename="../lib/diagnostics/btpmonitortab.cpp" line="+94"/>
         <source>Decode failure: %1</source>
         <translation>Fallo de decodificación: %1</translation>
     </message>
     <message>
-        <location line="+4" />
+        <location line="+4"/>
         <source>type          %1 (0x%2)
 </source>
         <translation>type          %1 (0x%2)
 </translation>
     </message>
     <message>
-        <location line="+3" />
+        <location line="+3"/>
         <source>direction     %1
 </source>
         <translation>direction     %1
 </translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>TX (sent)</source>
         <translation>TX (enviado)</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>RX (received)</source>
         <translation>RX (recibido)</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>flags         0x%1  %2
 </source>
         <translation>flags         0x%1  %2
 </translation>
     </message>
     <message>
-        <location line="+4" />
+        <location line="+4"/>
         <source>cipher        %1
 </source>
         <translation>cipher        %1
 </translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>source_id     %1
 </source>
         <translation>source_id     %1
 </translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>boot_id       %1
 </source>
         <translation>boot_id       %1
 </translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>sequence      %1
 </source>
         <translation>sequence      %1
 </translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>timestamp_us  %1
 </source>
         <translation>timestamp_us  %1
 </translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>object_id     %1
 </source>
         <translation>object_id     %1
 </translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>fragment      %1 / %2
 </source>
         <translation>fragment      %1 / %2
 </translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>payload       %1 octet(s)
 
 </source>
@@ -1040,109 +1051,109 @@ Allow it to connect devices and send them commands until AI assistant access is 
 </translation>
     </message>
     <message>
-        <location filename="../lib/diagnostics/notificationhistorywindow.cpp" line="+31" />
-        <location line="+8" />
+        <location filename="../lib/diagnostics/notificationhistorywindow.cpp" line="+31"/>
+        <location line="+8"/>
         <source>Info</source>
         <translation>Info</translation>
     </message>
     <message>
-        <location line="-6" />
+        <location line="-6"/>
         <source>Success</source>
         <translation>Éxito</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Warning</source>
         <translation>Advertencia</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Error</source>
         <translation>Error</translation>
     </message>
     <message>
-        <location filename="../lib/diagram/diagramblockconfigdialog.cpp" line="+26" />
-        <source>&lt;b&gt;JavaScript&lt;/b&gt;, run live against this device's real traffic.&lt;br&gt;&lt;br&gt;&lt;b&gt;Define to react to traffic:&lt;/b&gt;&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;onTelemetry(sample)&lt;/code&gt; -- called for a telemetry value already subscribed elsewhere (e.g. a Dashboard chart). &lt;code&gt;sample&lt;/code&gt; has &lt;code&gt;topicId&lt;/code&gt;, &lt;code&gt;fieldId&lt;/code&gt;, &lt;code&gt;elementIndex&lt;/code&gt;, &lt;code&gt;value&lt;/code&gt;, &lt;code&gt;timestampUs&lt;/code&gt;.&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;onTerminal(text)&lt;/code&gt; -- called for each chunk of text this device's console/serial channel sends back.&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;onConnectionChange(connected)&lt;/code&gt; -- called when this device connects or disconnects.&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;onStatus(text, severity)&lt;/code&gt; -- called for a one-off status update (session established/failed, a subscription rejected, a sendCommand() result, ...) -- the same text the status bar shows. &lt;code&gt;severity&lt;/code&gt; is one of &lt;code&gt;"info"&lt;/code&gt;, &lt;code&gt;"success"&lt;/code&gt;, &lt;code&gt;"warning"&lt;/code&gt;, &lt;code&gt;"error"&lt;/code&gt;.&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;onDeviceInfo(info)&lt;/code&gt; -- called when this device reports its info block (firmware version, chip, partition, ...). &lt;code&gt;info&lt;/code&gt; is an array of &lt;code&gt;{key, label, value}&lt;/code&gt;.&lt;br&gt;&lt;br&gt;&lt;b&gt;Call any time:&lt;/b&gt;&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;device.log(text)&lt;/code&gt; -- write to the output pane.&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;device.sendCommand(text)&lt;/code&gt; -- send a command to this device.&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;device.sendTerminal(text)&lt;/code&gt; -- send text over its console channel.&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;device.setInterval(fn, ms)&lt;/code&gt; / &lt;code&gt;device.clearInterval(id)&lt;/code&gt; -- run &lt;code&gt;fn&lt;/code&gt; every &lt;code&gt;ms&lt;/code&gt; milliseconds until cancelled.&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;device.setTimeout(fn, ms)&lt;/code&gt; / &lt;code&gt;device.clearTimeout(id)&lt;/code&gt; -- run &lt;code&gt;fn&lt;/code&gt; once, &lt;code&gt;ms&lt;/code&gt; milliseconds from now.</source>
-        <translation>&lt;b&gt;JavaScript&lt;/b&gt;, ejecutado en vivo sobre el tráfico real de este dispositivo.&lt;br&gt;&lt;br&gt;&lt;b&gt;Defina para reaccionar al tráfico:&lt;/b&gt;&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;onTelemetry(sample)&lt;/code&gt; -- se llama para un valor de telemetría ya suscrito en otro lugar (p. ej., un gráfico del Dashboard). &lt;code&gt;sample&lt;/code&gt; tiene &lt;code&gt;topicId&lt;/code&gt;, &lt;code&gt;fieldId&lt;/code&gt;, &lt;code&gt;elementIndex&lt;/code&gt;, &lt;code&gt;value&lt;/code&gt;, &lt;code&gt;timestampUs&lt;/code&gt;.&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;onTerminal(text)&lt;/code&gt; -- se llama por cada fragmento de texto que devuelve el canal de consola/serie de este dispositivo.&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;onConnectionChange(connected)&lt;/code&gt; -- se llama cuando este dispositivo se conecta o desconecta.&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;onStatus(text, severity)&lt;/code&gt; -- se llama para una actualización de estado puntual (sesión establecida/fallida, una suscripción rechazada, un resultado de sendCommand(), ...) -- el mismo texto que muestra la barra de estado. &lt;code&gt;severity&lt;/code&gt; es uno de &lt;code&gt;"info"&lt;/code&gt;, &lt;code&gt;"success"&lt;/code&gt;, &lt;code&gt;"warning"&lt;/code&gt;, &lt;code&gt;"error"&lt;/code&gt;.&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;onDeviceInfo(info)&lt;/code&gt; -- se llama cuando este dispositivo informa su bloque de información (versión de firmware, chip, partición, ...). &lt;code&gt;info&lt;/code&gt; es un array de &lt;code&gt;{key, label, value}&lt;/code&gt;.&lt;br&gt;&lt;br&gt;&lt;b&gt;Llame en cualquier momento:&lt;/b&gt;&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;device.log(text)&lt;/code&gt; -- escribe en el panel de salida.&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;device.sendCommand(text)&lt;/code&gt; -- envía un comando a este dispositivo.&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;device.sendTerminal(text)&lt;/code&gt; -- envía texto por su canal de consola.&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;device.setInterval(fn, ms)&lt;/code&gt; / &lt;code&gt;device.clearInterval(id)&lt;/code&gt; -- ejecuta &lt;code&gt;fn&lt;/code&gt; cada &lt;code&gt;ms&lt;/code&gt; milisegundos hasta cancelarlo.&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;device.setTimeout(fn, ms)&lt;/code&gt; / &lt;code&gt;device.clearTimeout(id)&lt;/code&gt; -- ejecuta &lt;code&gt;fn&lt;/code&gt; una vez, dentro de &lt;code&gt;ms&lt;/code&gt; milisegundos.</translation>
+        <location filename="../lib/diagram/diagramblockconfigdialog.cpp" line="+26"/>
+        <source>&lt;b&gt;JavaScript&lt;/b&gt;, run live against this device&apos;s real traffic.&lt;br&gt;&lt;br&gt;&lt;b&gt;Define to react to traffic:&lt;/b&gt;&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;onTelemetry(sample)&lt;/code&gt; -- called for a telemetry value already subscribed elsewhere (e.g. a Dashboard chart). &lt;code&gt;sample&lt;/code&gt; has &lt;code&gt;topicId&lt;/code&gt;, &lt;code&gt;fieldId&lt;/code&gt;, &lt;code&gt;elementIndex&lt;/code&gt;, &lt;code&gt;value&lt;/code&gt;, &lt;code&gt;timestampUs&lt;/code&gt;.&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;onTerminal(text)&lt;/code&gt; -- called for each chunk of text this device&apos;s console/serial channel sends back.&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;onConnectionChange(connected)&lt;/code&gt; -- called when this device connects or disconnects.&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;onStatus(text, severity)&lt;/code&gt; -- called for a one-off status update (session established/failed, a subscription rejected, a sendCommand() result, ...) -- the same text the status bar shows. &lt;code&gt;severity&lt;/code&gt; is one of &lt;code&gt;&quot;info&quot;&lt;/code&gt;, &lt;code&gt;&quot;success&quot;&lt;/code&gt;, &lt;code&gt;&quot;warning&quot;&lt;/code&gt;, &lt;code&gt;&quot;error&quot;&lt;/code&gt;.&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;onDeviceInfo(info)&lt;/code&gt; -- called when this device reports its info block (firmware version, chip, partition, ...). &lt;code&gt;info&lt;/code&gt; is an array of &lt;code&gt;{key, label, value}&lt;/code&gt;.&lt;br&gt;&lt;br&gt;&lt;b&gt;Call any time:&lt;/b&gt;&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;device.log(text)&lt;/code&gt; -- write to the output pane.&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;device.sendCommand(text)&lt;/code&gt; -- send a command to this device.&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;device.sendTerminal(text)&lt;/code&gt; -- send text over its console channel.&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;device.setInterval(fn, ms)&lt;/code&gt; / &lt;code&gt;device.clearInterval(id)&lt;/code&gt; -- run &lt;code&gt;fn&lt;/code&gt; every &lt;code&gt;ms&lt;/code&gt; milliseconds until cancelled.&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;device.setTimeout(fn, ms)&lt;/code&gt; / &lt;code&gt;device.clearTimeout(id)&lt;/code&gt; -- run &lt;code&gt;fn&lt;/code&gt; once, &lt;code&gt;ms&lt;/code&gt; milliseconds from now.</source>
+        <translation>&lt;b&gt;JavaScript&lt;/b&gt;, ejecutado en vivo sobre el tráfico real de este dispositivo.&lt;br&gt;&lt;br&gt;&lt;b&gt;Defina para reaccionar al tráfico:&lt;/b&gt;&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;onTelemetry(sample)&lt;/code&gt; -- se llama para un valor de telemetría ya suscrito en otro lugar (p. ej., un gráfico del Dashboard). &lt;code&gt;sample&lt;/code&gt; tiene &lt;code&gt;topicId&lt;/code&gt;, &lt;code&gt;fieldId&lt;/code&gt;, &lt;code&gt;elementIndex&lt;/code&gt;, &lt;code&gt;value&lt;/code&gt;, &lt;code&gt;timestampUs&lt;/code&gt;.&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;onTerminal(text)&lt;/code&gt; -- se llama por cada fragmento de texto que devuelve el canal de consola/serie de este dispositivo.&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;onConnectionChange(connected)&lt;/code&gt; -- se llama cuando este dispositivo se conecta o desconecta.&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;onStatus(text, severity)&lt;/code&gt; -- se llama para una actualización de estado puntual (sesión establecida/fallida, una suscripción rechazada, un resultado de sendCommand(), ...) -- el mismo texto que muestra la barra de estado. &lt;code&gt;severity&lt;/code&gt; es uno de &lt;code&gt;&quot;info&quot;&lt;/code&gt;, &lt;code&gt;&quot;success&quot;&lt;/code&gt;, &lt;code&gt;&quot;warning&quot;&lt;/code&gt;, &lt;code&gt;&quot;error&quot;&lt;/code&gt;.&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;onDeviceInfo(info)&lt;/code&gt; -- se llama cuando este dispositivo informa su bloque de información (versión de firmware, chip, partición, ...). &lt;code&gt;info&lt;/code&gt; es un array de &lt;code&gt;{key, label, value}&lt;/code&gt;.&lt;br&gt;&lt;br&gt;&lt;b&gt;Llame en cualquier momento:&lt;/b&gt;&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;device.log(text)&lt;/code&gt; -- escribe en el panel de salida.&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;device.sendCommand(text)&lt;/code&gt; -- envía un comando a este dispositivo.&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;device.sendTerminal(text)&lt;/code&gt; -- envía texto por su canal de consola.&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;device.setInterval(fn, ms)&lt;/code&gt; / &lt;code&gt;device.clearInterval(id)&lt;/code&gt; -- ejecuta &lt;code&gt;fn&lt;/code&gt; cada &lt;code&gt;ms&lt;/code&gt; milisegundos hasta cancelarlo.&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;code&gt;device.setTimeout(fn, ms)&lt;/code&gt; / &lt;code&gt;device.clearTimeout(id)&lt;/code&gt; -- ejecuta &lt;code&gt;fn&lt;/code&gt; una vez, dentro de &lt;code&gt;ms&lt;/code&gt; milisegundos.</translation>
     </message>
     <message>
-        <location filename="../lib/updater/updatechecker.cpp" line="+52" />
+        <location filename="../lib/updater/updatechecker.cpp" line="+52"/>
         <source>No published releases found.</source>
         <translation>No se encontraron versiones publicadas.</translation>
     </message>
     <message>
-        <location line="+6" />
-        <source>Couldn't parse the latest release's version.</source>
+        <location line="+6"/>
+        <source>Couldn&apos;t parse the latest release&apos;s version.</source>
         <translation>No se pudo interpretar la versión de la última publicación.</translation>
     </message>
     <message>
-        <location filename="../lib/updater/updateinstaller.cpp" line="+24" />
-        <source>Updates are managed by Flatpak. Use 'flatpak update'.</source>
-        <translation>Las actualizaciones las gestiona Flatpak. Use 'flatpak update'.</translation>
+        <location filename="../lib/updater/updateinstaller.cpp" line="+24"/>
+        <source>Updates are managed by Flatpak. Use &apos;flatpak update&apos;.</source>
+        <translation>Las actualizaciones las gestiona Flatpak. Use &apos;flatpak update&apos;.</translation>
     </message>
     <message>
-        <location line="+21" />
-        <location line="+72" />
-        <location line="+108" />
+        <location line="+21"/>
+        <location line="+72"/>
+        <location line="+108"/>
         <source>Downloaded installer not found: %1</source>
         <translation>No se encontró el instalador descargado: %1</translation>
     </message>
     <message>
-        <location line="-175" />
-        <location line="+30" />
-        <source>Couldn't start the Android package installer.</source>
+        <location line="-175"/>
+        <location line="+30"/>
+        <source>Couldn&apos;t start the Android package installer.</source>
         <translation>No se pudo abrir el instalador de paquetes de Android.</translation>
     </message>
     <message>
-        <location line="-16" />
-        <source>Couldn't share the downloaded APK with the package installer.</source>
+        <location line="-16"/>
+        <source>Couldn&apos;t share the downloaded APK with the package installer.</source>
         <translation>No se pudo compartir el APK descargado con el instalador de paquetes.</translation>
     </message>
     <message>
-        <location line="+63" />
-        <source>Couldn't write the update script.</source>
+        <location line="+63"/>
+        <source>Couldn&apos;t write the update script.</source>
         <translation>No se pudo escribir el script de actualización.</translation>
     </message>
     <message>
-        <location line="+25" />
+        <location line="+25"/>
         <source>Automatic installation requires running an AppImage. Download the AppImage from the release page.</source>
         <translation>La instalación automática requiere ejecutar un AppImage. Descargue el AppImage desde la página de la versión.</translation>
     </message>
     <message>
-        <location line="+7" />
+        <location line="+7"/>
         <source>The AppImage and its directory must be writable. Download the update and replace it manually.</source>
         <translation>El AppImage y su carpeta deben tener permiso de escritura. Descargue la actualización y reemplácelo manualmente.</translation>
     </message>
     <message>
-        <location line="+6" />
-        <source>Couldn't open the downloaded AppImage.</source>
+        <location line="+6"/>
+        <source>Couldn&apos;t open the downloaded AppImage.</source>
         <translation>No se pudo abrir el AppImage descargado.</translation>
     </message>
     <message>
-        <location line="+6" />
+        <location line="+6"/>
         <source>The downloaded file is not a supported AppImage.</source>
         <translation>El archivo descargado no es un AppImage compatible.</translation>
     </message>
     <message>
-        <location line="+35" />
+        <location line="+35"/>
         <source>The update was installed, but relaunch failed. Close TraceView and open the AppImage again.</source>
         <translation>La actualización se instaló, pero no se pudo reiniciar. Cierre TraceView y abra el AppImage de nuevo.</translation>
     </message>
     <message>
-        <location line="+22" />
-        <source>Couldn't open the downloaded disk image: %1</source>
+        <location line="+22"/>
+        <source>Couldn&apos;t open the downloaded disk image: %1</source>
         <translation>No se pudo abrir la imagen de disco descargada: %1</translation>
     </message>
     <message>
-        <location line="+10" />
-        <source>Automatic install isn't supported on this platform.</source>
+        <location line="+10"/>
+        <source>Automatic install isn&apos;t supported on this platform.</source>
         <translation>La instalación automática no es compatible con esta plataforma.</translation>
     </message>
 </context>
 <context>
     <name>SceneWidget</name>
     <message>
-        <location filename="../lib/dashboard/scenes/scenewidget.cpp" line="+580" />
+        <location filename="../lib/dashboard/scenes/scenewidget.cpp" line="+580"/>
         <source>Scene</source>
         <translation>Escena</translation>
     </message>
@@ -1150,47 +1161,47 @@ Allow it to connect devices and send them commands until AI assistant access is 
 <context>
     <name>ThemeManager</name>
     <message>
-        <location filename="../lib/theme/palettes.cpp" line="+12" />
+        <location filename="../lib/theme/palettes.cpp" line="+12"/>
         <source>Dark</source>
         <translation>Oscuro</translation>
     </message>
     <message>
-        <location line="+29" />
+        <location line="+29"/>
         <source>Light</source>
         <translation>Claro</translation>
     </message>
     <message>
-        <location line="+33" />
+        <location line="+33"/>
         <source>Wood</source>
         <translation>Madera</translation>
     </message>
     <message>
-        <location line="+29" />
+        <location line="+29"/>
         <source>Black</source>
         <translation>Negro</translation>
     </message>
     <message>
-        <location line="+31" />
+        <location line="+31"/>
         <source>Matrix</source>
         <translation>Matrix</translation>
     </message>
     <message>
-        <location line="+31" />
+        <location line="+31"/>
         <source>Synthwave</source>
         <translation>Synthwave</translation>
     </message>
     <message>
-        <location line="+32" />
+        <location line="+32"/>
         <source>Amber</source>
         <translation>Ámbar</translation>
     </message>
     <message>
-        <location line="+31" />
+        <location line="+31"/>
         <source>Arctic</source>
         <translation>Ártico</translation>
     </message>
     <message>
-        <location line="+29" />
+        <location line="+29"/>
         <source>Sakura</source>
         <translation>Sakura</translation>
     </message>
@@ -1198,22 +1209,22 @@ Allow it to connect devices and send them commands until AI assistant access is 
 <context>
     <name>WidgetConfigEditor</name>
     <message>
-        <location filename="../lib/dashboard/widgetconfigeditor.cpp" line="+13" />
+        <location filename="../lib/dashboard/widgetconfigeditor.cpp" line="+13"/>
         <source>(No device)</source>
         <translation>(Ningún dispositivo)</translation>
     </message>
     <message>
-        <location line="+3" />
+        <location line="+3"/>
         <source>(Unnamed device)</source>
         <translation>(Dispositivo sin nombre)</translation>
     </message>
     <message>
-        <location line="+22" />
+        <location line="+22"/>
         <source>(unnamed topic)</source>
         <translation>(tema sin nombre)</translation>
     </message>
     <message>
-        <location line="+119" />
+        <location line="+119"/>
         <source>Field %1</source>
         <translation>Campo %1</translation>
     </message>
@@ -1221,62 +1232,62 @@ Allow it to connect devices and send them commands until AI assistant access is 
 <context>
     <name>WidgetRegistry</name>
     <message>
-        <location filename="../lib/dashboard/widgetregistry.cpp" line="+36" />
+        <location filename="../lib/dashboard/widgetregistry.cpp" line="+36"/>
         <source>Line Chart (dummy)</source>
         <translation>Gráfico de líneas (ficticio)</translation>
     </message>
     <message>
-        <location line="+4" />
+        <location line="+4"/>
         <source>Bar Chart (dummy)</source>
         <translation>Gráfico de barras (ficticio)</translation>
     </message>
     <message>
-        <location line="+4" />
+        <location line="+4"/>
         <source>Gauge (dummy)</source>
         <translation>Medidor (ficticio)</translation>
     </message>
     <message>
-        <location line="+4" />
+        <location line="+4"/>
         <source>Serial Monitor</source>
         <translation>Monitor serie</translation>
     </message>
     <message>
-        <location line="+6" />
+        <location line="+6"/>
         <source>Robot Log</source>
         <translation>Registro del Robot</translation>
     </message>
     <message>
-        <location line="+6" />
+        <location line="+6"/>
         <source>Text Board</source>
         <translation>Tablero de Texto</translation>
     </message>
     <message>
-        <location line="+8" />
+        <location line="+8"/>
         <source>Audio Analyzer</source>
         <translation>Analizador de audio</translation>
     </message>
     <message>
-        <location line="+10" />
+        <location line="+10"/>
         <source>Chat</source>
         <translation>Chat</translation>
     </message>
     <message>
-        <location line="+5" />
+        <location line="+5"/>
         <source>Push Button</source>
         <translation>Botón pulsador</translation>
     </message>
     <message>
-        <location line="+6" />
+        <location line="+6"/>
         <source>Toggle Switch</source>
         <translation>Interruptor</translation>
     </message>
     <message>
-        <location line="+6" />
+        <location line="+6"/>
         <source>Slider</source>
         <translation>Control deslizante</translation>
     </message>
     <message>
-        <location line="+4" />
+        <location line="+4"/>
         <source>LED</source>
         <translation>LED</translation>
     </message>
@@ -1284,7 +1295,7 @@ Allow it to connect devices and send them commands until AI assistant access is 
 <context>
     <name>WorkspaceManager</name>
     <message>
-        <location filename="../lib/project/workspacemanager.cpp" line="+203" />
+        <location filename="../lib/project/workspacemanager.cpp" line="+203"/>
         <source>Default</source>
         <translation>Predeterminado</translation>
     </message>
@@ -1292,80 +1303,80 @@ Allow it to connect devices and send them commands until AI assistant access is 
 <context>
     <name>traceview::AboutDialog</name>
     <message>
-        <location filename="../lib/core/aboutdialog.cpp" line="+25" />
+        <location filename="../lib/core/aboutdialog.cpp" line="+25"/>
         <source>About TraceView</source>
         <translation>Acerca de TraceView</translation>
     </message>
     <message>
-        <location line="+16" />
+        <location line="+16"/>
         <source>Version:</source>
         <translation>Versión:</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Platform:</source>
         <translation>Plataforma:</translation>
     </message>
     <message>
-        <location line="+3" />
+        <location line="+3"/>
         <source>Installed from:</source>
         <translation>Instalado desde:</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Qt:</source>
         <translation>Qt:</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Developer:</source>
         <translation>Desarrollador:</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Contact:</source>
         <translation>Contacto:</translation>
     </message>
     <message>
-        <location line="+5" />
+        <location line="+5"/>
         <source>License:</source>
         <translation>Licencia:</translation>
     </message>
     <message>
-        <location line="+17" />
+        <location line="+17"/>
         <source>Flatpak (alisontristao.github.io/TraceView)</source>
         <translation>Flatpak (alisontristao.github.io/TraceView)</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>APK from GitHub Releases</source>
         <translation>APK de GitHub Releases</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>iOS build (sideloaded)</source>
         <translation>Compilación iOS (sideload)</translation>
     </message>
     <message>
-        <location line="+5" />
+        <location line="+5"/>
         <source>macOS disk image from GitHub Releases</source>
         <translation>Imagen de disco de macOS de GitHub Releases</translation>
     </message>
     <message>
-        <location line="+7" />
+        <location line="+7"/>
         <source>Windows installer from GitHub Releases</source>
         <translation>Instalador de Windows de GitHub Releases</translation>
     </message>
     <message>
-        <location line="-5" />
-        <location line="+7" />
-        <location line="+5" />
-        <location line="+2" />
+        <location line="-5"/>
+        <location line="+7"/>
+        <location line="+5"/>
+        <location line="+2"/>
         <source>Local build</source>
         <translation>Compilación local</translation>
     </message>
     <message>
-        <location line="-4" />
+        <location line="-4"/>
         <source>AppImage from GitHub Releases</source>
         <translation>AppImage de GitHub Releases</translation>
     </message>
@@ -1373,7 +1384,7 @@ Allow it to connect devices and send them commands until AI assistant access is 
 <context>
     <name>traceview::AgentBridgeServer</name>
     <message>
-        <location filename="../lib/agent/agentbridgeserver.cpp" line="+105" />
+        <location filename="../lib/agent/agentbridgeserver.cpp" line="+105"/>
         <source>Another TraceView window is already serving AI assistants.</source>
         <translation>Otra ventana de TraceView ya está atendiendo a asistentes de IA.</translation>
     </message>
@@ -1381,17 +1392,17 @@ Allow it to connect devices and send them commands until AI assistant access is 
 <context>
     <name>traceview::AndroidUsbSerialTransport</name>
     <message>
-        <location filename="../lib/core/androidusbserialtransport.cpp" line="+194" />
+        <location filename="../lib/core/androidusbserialtransport.cpp" line="+194"/>
         <source>USB serial is not available on this device</source>
         <translation>El puerto serie USB no está disponible en este dispositivo</translation>
     </message>
     <message>
-        <location line="+7" />
+        <location line="+7"/>
         <source>USB permission was denied for %1; unplug and replug it to be asked again</source>
         <translation>Se denegó el permiso USB para %1; desconéctalo y vuelve a conectarlo para que se pregunte de nuevo</translation>
     </message>
     <message>
-        <location line="+8" />
+        <location line="+8"/>
         <source>1200 baud resets the ESP32-S3 into its bootloader; using 115200</source>
         <translation>1200 baudios reinicia el ESP32-S3 en su bootloader; usando 115200</translation>
     </message>
@@ -1399,150 +1410,150 @@ Allow it to connect devices and send them commands until AI assistant access is 
 <context>
     <name>traceview::AudioAnalyzerWidget</name>
     <message>
-        <location filename="../lib/dashboard/widgets/audioanalyzerwidget.cpp" line="+120" />
+        <location filename="../lib/dashboard/widgets/audioanalyzerwidget.cpp" line="+120"/>
         <source>View:</source>
         <translation>Vista:</translation>
     </message>
     <message>
-        <location line="+4" />
+        <location line="+4"/>
         <source>Spectrum</source>
         <translation>Espectro</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Spectrogram</source>
         <translation>Espectrograma</translation>
     </message>
     <message>
-        <location line="+61" />
+        <location line="+61"/>
         <source>Peak hold</source>
         <translation>Retención de pico</translation>
     </message>
     <message>
-        <location line="+5" />
+        <location line="+5"/>
         <source>Level scale:</source>
         <translation>Escala de nivel:</translation>
     </message>
     <message>
-        <location line="+3" />
-        <location line="+56" />
-        <location line="+528" />
+        <location line="+3"/>
+        <location line="+56"/>
+        <location line="+528"/>
         <source>dBFS</source>
         <translation>dBFS</translation>
     </message>
     <message>
-        <location line="-583" />
+        <location line="-583"/>
         <source>Linear amplitude</source>
         <translation>Amplitud lineal</translation>
     </message>
     <message>
-        <location line="+52" />
+        <location line="+52"/>
         <source>Amplitude (FS)</source>
         <translation>Amplitud (FE)</translation>
     </message>
     <message>
-        <location line="+33" />
-        <location line="+523" />
+        <location line="+33"/>
+        <location line="+523"/>
         <source>Frequency (Hz)</source>
         <translation>Frecuencia (Hz)</translation>
     </message>
     <message>
-        <location line="-464" />
-        <location line="+27" />
-        <location line="+550" />
+        <location line="-464"/>
+        <location line="+27"/>
+        <location line="+550"/>
         <source>%1 dB</source>
         <translation>%1 dB</translation>
     </message>
     <message>
-        <location line="-576" />
-        <location line="+573" />
+        <location line="-576"/>
+        <location line="+573"/>
         <source>%1 Hz</source>
         <translation>%1 Hz</translation>
     </message>
     <message>
-        <location line="-560" />
+        <location line="-560"/>
         <source>History:</source>
         <translation>Historial:</translation>
     </message>
     <message>
-        <location line="+4" />
-        <location line="+256" />
-        <location line="+299" />
+        <location line="+4"/>
+        <location line="+256"/>
+        <location line="+299"/>
         <source>%1 s</source>
         <translation>%1 s</translation>
     </message>
     <message>
-        <location line="-550" />
+        <location line="-550"/>
         <source>Level floor:</source>
         <translation>Nivel mínimo:</translation>
     </message>
     <message>
-        <location line="+9" />
+        <location line="+9"/>
         <source>Colors:</source>
         <translation>Colores:</translation>
     </message>
     <message>
-        <location line="+5" />
+        <location line="+5"/>
         <source>Inferno</source>
         <translation>Inferno</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Viridis</source>
         <translation>Viridis</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Theme accent</source>
         <translation>Acento del tema</translation>
     </message>
     <message>
-        <location line="+4" />
+        <location line="+4"/>
         <source>Show color scale</source>
         <translation>Mostrar escala de colores</translation>
     </message>
     <message>
-        <location line="+226" />
+        <location line="+226"/>
         <source>%1 samples</source>
         <translation>%1 muestras</translation>
     </message>
     <message>
-        <location line="+9" />
+        <location line="+9"/>
         <source>A-B %1 s</source>
         <translation>A-B %1 s</translation>
     </message>
     <message>
-        <location line="+31" />
+        <location line="+31"/>
         <source>min %1</source>
         <translation>mín %1</translation>
     </message>
     <message>
-        <location line="+3" />
+        <location line="+3"/>
         <source>max %1</source>
         <translation>máx %1</translation>
     </message>
     <message>
-        <location line="+3" />
+        <location line="+3"/>
         <source>p-p %1</source>
         <translation>p-p %1</translation>
     </message>
     <message>
-        <location line="+3" />
+        <location line="+3"/>
         <source>peak %1 dBFS</source>
         <translation>pico %1 dBFS</translation>
     </message>
     <message>
-        <location line="+4" />
+        <location line="+4"/>
         <source>mean %1</source>
         <translation>media %1</translation>
     </message>
     <message>
-        <location line="+3" />
+        <location line="+3"/>
         <source>median %1</source>
         <translation>mediana %1</translation>
     </message>
     <message>
-        <location line="+3" />
+        <location line="+3"/>
         <source>rms %1 dBFS</source>
         <translation>rms %1 dBFS</translation>
     </message>
@@ -1550,17 +1561,17 @@ Allow it to connect devices and send them commands until AI assistant access is 
 <context>
     <name>traceview::AudioPlayback</name>
     <message>
-        <location filename="../lib/dashboard/widgets/audioplayback.cpp" line="+91" />
+        <location filename="../lib/dashboard/widgets/audioplayback.cpp" line="+91"/>
         <source>No audio output device</source>
         <translation>No hay dispositivo de salida de audio</translation>
     </message>
     <message>
-        <location line="+10" />
+        <location line="+10"/>
         <source>The audio output reports no usable format</source>
         <translation>La salida de audio no ofrece ningún formato utilizable</translation>
     </message>
     <message>
-        <location line="+12" />
+        <location line="+12"/>
         <source>The audio output could not start</source>
         <translation>No se pudo iniciar la salida de audio</translation>
     </message>
@@ -1568,42 +1579,42 @@ Allow it to connect devices and send them commands until AI assistant access is 
 <context>
     <name>traceview::AudioSpectrumConfigEditor</name>
     <message>
-        <location filename="../lib/dashboard/widgets/audiospectrumconfigeditor.cpp" line="+29" />
+        <location filename="../lib/dashboard/widgets/audiospectrumconfigeditor.cpp" line="+29"/>
         <source>(auto)</source>
         <translation>(automático)</translation>
     </message>
     <message>
-        <location line="+6" />
+        <location line="+6"/>
         <source>Stream topic to play: blocks of samples with their rate and a block counter (TraceKit Topics::stream()). Pick a reported topic or type its numeric id.</source>
         <translation>Tópico de stream a reproducir: bloques de muestras con su frecuencia y un contador de bloques (Topics::stream() de TraceKit). Elija un tópico informado o escriba su id numérico.</translation>
     </message>
     <message>
-        <location line="+8" />
-        <source>Sample value that counts as full scale (0 dBFS). Filled from the field's declared range when a topic is picked.</source>
+        <location line="+8"/>
+        <source>Sample value that counts as full scale (0 dBFS). Filled from the field&apos;s declared range when a topic is picked.</source>
         <translation>Valor de muestra que cuenta como fondo de escala (0 dBFS). Se toma del rango declarado del campo al elegir un tópico.</translation>
     </message>
     <message>
-        <location line="+10" />
+        <location line="+10"/>
         <source>Device</source>
         <translation>Dispositivo</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Source</source>
         <translation>Origen</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Stream topic</source>
         <translation>Tópico de stream</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Full scale</source>
         <translation>Fondo de escala</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Volume</source>
         <translation>Volumen</translation>
     </message>
@@ -1611,72 +1622,72 @@ Allow it to connect devices and send them commands until AI assistant access is 
 <context>
     <name>traceview::AudioStreamWidget</name>
     <message>
-        <location filename="../lib/dashboard/widgets/audiostreamwidget.cpp" line="+170" />
+        <location filename="../lib/dashboard/widgets/audiostreamwidget.cpp" line="+170"/>
         <source>Play audio</source>
         <translation>Reproducir audio</translation>
     </message>
     <message>
-        <location line="+7" />
+        <location line="+7"/>
         <source>FFT size:</source>
         <translation>Tamaño de la FFT:</translation>
     </message>
     <message>
-        <location line="+4" />
+        <location line="+4"/>
         <source>%1 points</source>
         <translation>%1 puntos</translation>
     </message>
     <message>
-        <location line="+7" />
+        <location line="+7"/>
         <source>Frequency axis:</source>
         <translation>Eje de frecuencia:</translation>
     </message>
     <message>
-        <location line="+3" />
+        <location line="+3"/>
         <source>Logarithmic</source>
         <translation>Logarítmico</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Linear</source>
         <translation>Lineal</translation>
     </message>
     <message>
-        <location line="+62" />
+        <location line="+62"/>
         <source>muted</source>
         <translation>silenciado</translation>
     </message>
     <message>
-        <location line="+180" />
+        <location line="+180"/>
         <source>Pick a stream topic in the properties</source>
         <translation>Elija un tópico de stream en las propiedades</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Waiting for audio...</source>
         <translation>Esperando audio...</translation>
     </message>
     <message>
-        <location line="+28" />
+        <location line="+28"/>
         <source>%1 kHz</source>
         <translation>%1 kHz</translation>
     </message>
     <message>
-        <location line="+4" />
+        <location line="+4"/>
         <source>peak %1 Hz</source>
         <translation>pico %1 Hz</translation>
     </message>
     <message>
-        <location line="+3" />
+        <location line="+3"/>
         <source>%1 dBFS</source>
         <translation>%1 dBFS</translation>
     </message>
     <message>
-        <location line="+8" />
+        <location line="+8"/>
         <source>lost %1</source>
         <translation>perdidos %1</translation>
     </message>
     <message>
-        <location line="-3" />
+        <location line="-3"/>
         <source>paused</source>
         <translation>en pausa</translation>
     </message>
@@ -1684,12 +1695,12 @@ Allow it to connect devices and send them commands until AI assistant access is 
 <context>
     <name>traceview::BleDiscoveryService</name>
     <message>
-        <location filename="../lib/core/blediscoveryservice.cpp" line="+45" />
+        <location filename="../lib/core/blediscoveryservice.cpp" line="+45"/>
         <source>Bluetooth permission denied. Allow TraceView to use Bluetooth in the system settings.</source>
         <translation>Permiso de Bluetooth denegado. Permita que TraceView use Bluetooth en la configuración del sistema.</translation>
     </message>
     <message>
-        <location line="+99" />
+        <location line="+99"/>
         <source>BLE discovery failed</source>
         <translation>Falló la búsqueda BLE</translation>
     </message>
@@ -1697,67 +1708,67 @@ Allow it to connect devices and send them commands until AI assistant access is 
 <context>
     <name>traceview::BleTransport</name>
     <message>
-        <location filename="../lib/core/bletransport.cpp" line="+99" />
+        <location filename="../lib/core/bletransport.cpp" line="+99"/>
         <source>Bluetooth permission denied. Allow TraceView to use Bluetooth in the system settings.</source>
         <translation>Permiso de Bluetooth denegado. Permita que TraceView use Bluetooth en la configuración del sistema.</translation>
     </message>
     <message>
-        <location line="+53" />
+        <location line="+53"/>
         <source>BLE scan failed: %1</source>
         <translation>Falló la búsqueda BLE: %1</translation>
     </message>
     <message>
-        <location line="+23" />
-        <source>no BTP robot named "%1" found nearby (no BTP robot advertising at all)</source>
-        <translation>no se encontró ningún robot BTP llamado "%1" cerca (ningún robot BTP se está anunciando)</translation>
+        <location line="+23"/>
+        <source>no BTP robot named &quot;%1&quot; found nearby (no BTP robot advertising at all)</source>
+        <translation>no se encontró ningún robot BTP llamado &quot;%1&quot; cerca (ningún robot BTP se está anunciando)</translation>
     </message>
     <message>
-        <location line="+3" />
-        <source>no BTP robot named "%1" found nearby (seen: %2)</source>
-        <translation>no se encontró ningún robot BTP llamado "%1" cerca (vistos: %2)</translation>
+        <location line="+3"/>
+        <source>no BTP robot named &quot;%1&quot; found nearby (seen: %2)</source>
+        <translation>no se encontró ningún robot BTP llamado &quot;%1&quot; cerca (vistos: %2)</translation>
     </message>
     <message>
-        <location line="+13" />
-        <source>%1 BLE robots are named "%2" (%3) -- give each robot its own name, or pick one by address</source>
-        <translation>%1 robots BLE se llaman "%2" (%3) -- dé a cada robot su propio nombre, o elija uno por su dirección</translation>
+        <location line="+13"/>
+        <source>%1 BLE robots are named &quot;%2&quot; (%3) -- give each robot its own name, or pick one by address</source>
+        <translation>%1 robots BLE se llaman &quot;%2&quot; (%3) -- dé a cada robot su propio nombre, o elija uno por su dirección</translation>
     </message>
     <message>
-        <location line="+38" />
+        <location line="+38"/>
         <source>failed to create a BLE controller</source>
         <translation>no se pudo crear un controlador BLE</translation>
     </message>
     <message>
-        <location line="+64" />
+        <location line="+64"/>
         <source>BLE peripheral disconnected before HELLO</source>
         <translation>el periférico BLE se desconectó antes del HELLO</translation>
     </message>
     <message>
-        <location line="+16" />
+        <location line="+16"/>
         <source>peripheral does not advertise the BTP service</source>
         <translation>el periférico no anuncia el servicio BTP</translation>
     </message>
     <message>
-        <location line="+5" />
+        <location line="+5"/>
         <source>failed to create BTP service object</source>
         <translation>no se pudo crear el objeto del servicio BTP</translation>
     </message>
     <message>
-        <location line="+25" />
+        <location line="+25"/>
         <source>BTP service is missing its RX/TX characteristics</source>
         <translation>al servicio BTP le faltan las características RX/TX</translation>
     </message>
     <message>
-        <location line="+7" />
+        <location line="+7"/>
         <source>TX characteristic has no notification descriptor</source>
         <translation>la característica TX no tiene descriptor de notificación</translation>
     </message>
     <message>
-        <location line="+13" />
+        <location line="+13"/>
         <source>BLE service error</source>
         <translation>Error del servicio BLE</translation>
     </message>
     <message>
-        <location line="+47" />
+        <location line="+47"/>
         <source>BLE connection timed out</source>
         <translation>Tiempo de conexión BLE agotado</translation>
     </message>
@@ -1765,112 +1776,112 @@ Allow it to connect devices and send them commands until AI assistant access is 
 <context>
     <name>traceview::BtpBackend</name>
     <message>
-        <location filename="../lib/protocol/btpbackend.cpp" line="+355" />
+        <location filename="../lib/protocol/btpbackend.cpp" line="+355"/>
         <source>Robot 0x%1 is online but its catalog has not arrived — check the hub (hub -manifest)</source>
         <translation>El robot 0x%1 está en línea, pero su catálogo no ha llegado — revise el hub (hub -manifest)</translation>
     </message>
     <message>
-        <location line="+93" />
+        <location line="+93"/>
         <source>Robot 0x%1 rebooted — catalog and subscriptions refreshed</source>
         <translation>El robot 0x%1 se reinició — catálogo y suscripciones actualizados</translation>
     </message>
     <message>
-        <location line="+10" />
+        <location line="+10"/>
         <source>config rev %1</source>
         <translation>config rev %1</translation>
     </message>
     <message>
-        <location line="+23" />
+        <location line="+23"/>
         <source>%1 limited to %2 (requested %3)</source>
         <translation>%1 limitado a %2 (solicitado %3)</translation>
     </message>
     <message>
-        <location line="+10" />
+        <location line="+10"/>
         <source>SUBSCRIBE rejected for %1 (status 0x%2, error 0x%3)</source>
         <translation>SUBSCRIBE rechazado para %1 (estado 0x%2, error 0x%3)</translation>
     </message>
     <message>
-        <location line="+134" />
+        <location line="+134"/>
         <source>HELLO rejected</source>
         <translation>HELLO rechazado</translation>
     </message>
     <message>
-        <location line="+53" />
+        <location line="+53"/>
         <source>session watchdog: no traffic from the peer</source>
         <translation>watchdog de sesión: sin tráfico del otro extremo</translation>
     </message>
     <message>
-        <location line="+11" />
+        <location line="+11"/>
         <source>no HELLO_RESULT after %1 attempts of %2 ms</source>
         <translation>ningún HELLO_RESULT tras %1 intentos de %2 ms</translation>
     </message>
     <message>
-        <location line="+40" />
+        <location line="+40"/>
         <source>failed to encode or send HELLO</source>
         <translation>no se pudo codificar o enviar el HELLO</translation>
     </message>
     <message>
-        <location line="+19" />
+        <location line="+19"/>
         <source>HELLO_RESULT selected an unadvertised version %1</source>
         <translation>HELLO_RESULT seleccionó una versión no anunciada: %1</translation>
     </message>
     <message>
-        <location line="+4" />
+        <location line="+4"/>
         <source>BTP session established (HELLO_RESULT=SUCCESS)</source>
         <translation>Sesión BTP establecida (HELLO_RESULT=SUCCESS)</translation>
     </message>
     <message>
-        <location line="+60" />
+        <location line="+60"/>
         <source>BTP/%1</source>
         <translation>BTP/%1</translation>
     </message>
     <message>
-        <location line="+21" />
+        <location line="+21"/>
         <source>device returned to console (BTP/1 CONSOLE)</source>
         <translation>el dispositivo volvió a la consola (BTP/1 CONSOLE)</translation>
     </message>
     <message>
-        <location line="+250" />
-        <source>Dropped an unsealed frame on a sealed direct session (check the robot's channel-B password)</source>
+        <location line="+250"/>
+        <source>Dropped an unsealed frame on a sealed direct session (check the robot&apos;s channel-B password)</source>
         <translation>Se descartó una trama sin sellar en una sesión directa sellada (revise la contraseña del canal B del robot)</translation>
     </message>
     <message>
-        <location line="+19" />
-        <source>Dropped an unsealed frame on a sealed hub channel (check the robot's channel-B password)</source>
+        <location line="+19"/>
+        <source>Dropped an unsealed frame on a sealed hub channel (check the robot&apos;s channel-B password)</source>
         <translation>Se descartó una trama no sellada en un canal de hub sellado (revise la contraseña del canal B del robot)</translation>
     </message>
     <message>
-        <location line="+18" />
+        <location line="+18"/>
         <source>the device encrypts its messages, and no password is set for it</source>
         <translation>el dispositivo cifra sus mensajes y no tiene contraseña configurada</translation>
     </message>
     <message>
-        <location line="+18" />
+        <location line="+18"/>
         <source>its messages do not open with the password set (wrong password?)</source>
         <translation>sus mensajes no se abren con la contraseña configurada (¿contraseña incorrecta?)</translation>
     </message>
     <message>
-        <location line="+24" />
-        <source>Can't read the device: %1</source>
+        <location line="+24"/>
+        <source>Can&apos;t read the device: %1</source>
         <translation>No se puede leer el dispositivo: %1</translation>
     </message>
     <message>
-        <location line="+85" />
+        <location line="+85"/>
         <source>transport rejected an outbound BTP frame: %1</source>
         <translation>el transporte rechazó una trama BTP saliente: %1</translation>
     </message>
     <message>
-        <location line="+84" />
+        <location line="+84"/>
         <source>terminal input not sent: endpoint key not configured</source>
         <translation>entrada de terminal no enviada: clave del endpoint no configurada</translation>
     </message>
     <message>
-        <location line="+34" />
+        <location line="+34"/>
         <source>terminal input not sent: failed to seal</source>
         <translation>entrada de terminal no enviada: no se pudo sellar</translation>
     </message>
     <message>
-        <location line="-546" />
+        <location line="-546"/>
         <source>BTP handshake failed: %1</source>
         <translation>Fallo en el protocolo de enlace BTP: %1</translation>
     </message>
@@ -1878,93 +1889,93 @@ Allow it to connect devices and send them commands until AI assistant access is 
 <context>
     <name>traceview::BtpMonitorTab</name>
     <message>
-        <location filename="../lib/diagnostics/btpmonitortab.cpp" line="+243" />
-        <location line="+85" />
+        <location filename="../lib/diagnostics/btpmonitortab.cpp" line="+243"/>
+        <location line="+85"/>
         <source>Pause</source>
         <translation>Pausar</translation>
     </message>
     <message>
-        <location line="-81" />
+        <location line="-81"/>
         <source>Clear</source>
         <translation>Limpiar</translation>
     </message>
     <message>
-        <location line="+3" />
+        <location line="+3"/>
         <source>Hide TELEMETRY</source>
         <translation>Ocultar TELEMETRY</translation>
     </message>
     <message>
-        <location line="+3" />
+        <location line="+3"/>
         <source>Device:</source>
         <translation>Dispositivo:</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>All</source>
         <translation>Todos</translation>
     </message>
     <message>
-        <location line="+4" />
+        <location line="+4"/>
         <source>Filter (type, id, hex)…</source>
         <translation>Filtrar (tipo, id, hex)…</translation>
     </message>
     <message>
-        <location line="+4" />
+        <location line="+4"/>
         <source>Export…</source>
         <translation>Exportar…</translation>
     </message>
     <message>
-        <location line="+29" />
+        <location line="+29"/>
         <source>Decrypt (channel B / key E)</source>
         <translation>Descifrar (canal B / clave E)</translation>
     </message>
     <message>
-        <location line="+6" />
+        <location line="+6"/>
         <source>robot channel-B password</source>
         <translation>contraseña del canal B del robot</translation>
     </message>
     <message>
-        <location line="+3" />
+        <location line="+3"/>
         <source>Show</source>
         <translation>Mostrar</translation>
     </message>
     <message>
-        <location line="+5" />
+        <location line="+5"/>
         <source>Decrypt selected frame</source>
         <translation>Descifrar trama seleccionada</translation>
     </message>
     <message>
-        <location line="+22" />
+        <location line="+22"/>
         <source>Resume</source>
         <translation>Reanudar</translation>
     </message>
     <message>
-        <location line="+32" />
+        <location line="+32"/>
         <source>Select a frame to inspect it.</source>
         <translation>Seleccione una trama para inspeccionarla.</translation>
     </message>
     <message>
-        <location line="+21" />
+        <location line="+21"/>
         <source>This frame is not sealed (ENCRYPTED flag not set) — the payload above is already in the clear.</source>
         <translation>Esta trama no está sellada (flag ENCRYPTED sin activar) — el payload de arriba ya está en claro.</translation>
     </message>
     <message>
-        <location line="+23" />
+        <location line="+23"/>
         <source>Enter a password first.</source>
         <translation>Introduzca primero una contraseña.</translation>
     </message>
     <message>
-        <location line="+5" />
+        <location line="+5"/>
         <source>This frame is not sealed; nothing to decrypt.</source>
         <translation>Esta trama no está sellada; no hay nada que descifrar.</translation>
     </message>
     <message>
-        <location line="+6" />
+        <location line="+6"/>
         <source>Could not derive a key from that password.</source>
         <translation>No se pudo derivar una clave de esa contraseña.</translation>
     </message>
     <message>
-        <location line="+7" />
+        <location line="+7"/>
         <source>verify tag  %1
 
 </source>
@@ -1973,7 +1984,7 @@ Allow it to connect devices and send them commands until AI assistant access is 
 </translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>OK — %1 octet(s) of plaintext:
 
 </source>
@@ -1982,22 +1993,22 @@ Allow it to connect devices and send them commands until AI assistant access is 
 </translation>
     </message>
     <message>
-        <location line="+4" />
+        <location line="+4"/>
         <source>as text: </source>
         <translation>como texto:</translation>
     </message>
     <message>
-        <location line="+3" />
-        <source>Authentication failed — wrong password, or this is not channel-B (key E) traffic. Compare the verify tag above with the robot's key file.</source>
+        <location line="+3"/>
+        <source>Authentication failed — wrong password, or this is not channel-B (key E) traffic. Compare the verify tag above with the robot&apos;s key file.</source>
         <translation>Falló la autenticación — contraseña incorrecta, o esto no es tráfico del canal B (clave E). Compare la verify tag de arriba con el archivo de clave del robot.</translation>
     </message>
     <message>
-        <location line="+8" />
+        <location line="+8"/>
         <source>Export Captured Frames</source>
         <translation>Exportar Tramas Capturadas</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>JSON Lines (*.jsonl);;CSV (*.csv)</source>
         <translation>JSON Lines (*.jsonl);;CSV (*.csv)</translation>
     </message>
@@ -2005,258 +2016,258 @@ Allow it to connect devices and send them commands until AI assistant access is 
 <context>
     <name>traceview::ChartConfigEditor</name>
     <message>
-        <location filename="../lib/dashboard/widgets/chartconfigeditor.cpp" line="+201" />
+        <location filename="../lib/dashboard/widgets/chartconfigeditor.cpp" line="+201"/>
         <source>0x0101</source>
         <translation>0x0101</translation>
     </message>
     <message>
-        <location line="-13" />
+        <location line="-13"/>
         <source>Which device this chart reads from -- must match the sourceId below.</source>
         <translation>De qué dispositivo lee este gráfico: debe coincidir con el sourceId de abajo.</translation>
     </message>
     <message>
-        <location line="+4" />
+        <location line="+4"/>
         <source>(auto)</source>
         <translation>(auto)</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>BTP source_id this chart reads from -- derived from the Topic field below, shown by device name when known.</source>
         <translation>source_id BTP del que lee este gráfico: derivado del campo Tema de abajo, mostrado por nombre de dispositivo cuando se conoce.</translation>
     </message>
     <message>
-        <location line="+9" />
-        <source>BTP topic_id (TELEMETRY.md) this chart's series bind fields of -- pick one the device has already reported (shown by name), or type a hex/decimal id by hand for one it hasn't reported yet.</source>
+        <location line="+9"/>
+        <source>BTP topic_id (TELEMETRY.md) this chart&apos;s series bind fields of -- pick one the device has already reported (shown by name), or type a hex/decimal id by hand for one it hasn&apos;t reported yet.</source>
         <translation>topic_id BTP (TELEMETRY.md) a cuyos campos se vinculan las series de este gráfico: elija uno que el dispositivo ya haya informado (mostrado por nombre) o escriba a mano un id hex/decimal para uno que aún no haya informado.</translation>
     </message>
     <message>
-        <location line="+5" />
+        <location line="+5"/>
         <source>Samples</source>
         <translation>Muestras</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Time</source>
         <translation>Tiempo</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Ts</source>
         <translation>Ts</translation>
     </message>
     <message>
-        <location line="+5" />
+        <location line="+5"/>
         <source> ms</source>
         <translation> ms</translation>
     </message>
     <message>
-        <location line="+4" />
+        <location line="+4"/>
         <source>Time between samples (Ts), not the time a frame arrives — elapsed time for N samples is Ts * N.</source>
         <translation>Tiempo entre muestras (Ts), no el momento en que llega un marco — el tiempo transcurrido para N muestras es Ts * N.</translation>
     </message>
     <message>
-        <location line="+9" />
-        <location line="+455" />
+        <location line="+9"/>
+        <location line="+455"/>
         <source> pts</source>
         <translation> pts</translation>
     </message>
     <message>
-        <location line="-451" />
+        <location line="-451"/>
         <source>How much history the chart keeps before older data scrolls off — in samples or seconds, matching X Axis.</source>
         <translation>Cuánto historial conserva el gráfico antes de que los datos más antiguos desaparezcan — en muestras o segundos, según el Eje X.</translation>
     </message>
     <message>
-        <location line="+4" />
+        <location line="+4"/>
         <source>Auto</source>
         <translation>Automático</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Fixed</source>
         <translation>Fijo</translation>
     </message>
     <message>
-        <location line="+17" />
+        <location line="+17"/>
         <source>V, °C, %...</source>
         <translation>V, °C, %...</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Unit label shown alongside the Y axis.</source>
         <translation>Etiqueta de unidad mostrada junto al eje Y.</translation>
     </message>
     <message>
-        <location line="+4" />
-        <source>Group series by the unit their bound field reports (from the device's catalog) and draw one auto-ranged Y axis per distinct unit instead of the single Y Axis/Range/Unit above -- useful when a topic mixes fields of different units.</source>
+        <location line="+4"/>
+        <source>Group series by the unit their bound field reports (from the device&apos;s catalog) and draw one auto-ranged Y axis per distinct unit instead of the single Y Axis/Range/Unit above -- useful when a topic mixes fields of different units.</source>
         <translation>Agrupa las series por la unidad que informa su campo vinculado (del catálogo del dispositivo) y dibuja un eje Y con escala automática por cada unidad distinta en lugar del Eje Y/Rango/Unidad únicos de arriba -- útil cuando un tema mezcla campos de unidades diferentes.</translation>
     </message>
     <message>
-        <location line="+8" />
+        <location line="+8"/>
         <source>Decimal places shown for axis, legend, and tooltip values -- fixed instead of variable, so labels keep the same width as values change.</source>
         <translation>Decimales mostrados en los valores de eje, leyenda y tooltip -- fijos en vez de variables, para que las etiquetas mantengan el mismo ancho al cambiar los valores.</translation>
     </message>
     <message>
-        <location line="+5" />
+        <location line="+5"/>
         <source>Show the min/mid/max gridlines across the plot.</source>
         <translation>Muestra las líneas de cuadrícula de mín/medio/máx en todo el gráfico.</translation>
     </message>
     <message>
-        <location line="+15" />
+        <location line="+15"/>
         <source>Min</source>
         <translation>Mín</translation>
     </message>
     <message>
-        <location line="+3" />
+        <location line="+3"/>
         <source>Max</source>
         <translation>Máx</translation>
     </message>
     <message>
-        <location line="+13" />
+        <location line="+13"/>
         <source>Device</source>
         <translation>Dispositivo</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Source</source>
         <translation>Fuente</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Topic</source>
         <translation>Tema</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>X Axis</source>
         <translation>Eje X</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Limit</source>
         <translation>Límite</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Y Axis</source>
         <translation>Eje Y</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Range</source>
         <translation>Rango</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Unit</source>
         <translation>Unidad</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Automatic axis</source>
         <translation>Eje automático</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Decimals</source>
         <translation>Decimales</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Grid</source>
         <translation>Cuadrícula</translation>
     </message>
     <message>
-        <location line="+9" />
+        <location line="+9"/>
         <source>Name</source>
         <translation>Nombre</translation>
     </message>
     <message>
-        <location line="+0" />
+        <location line="+0"/>
         <source>Field ID</source>
         <translation>ID de campo</translation>
     </message>
     <message>
-        <location line="+0" />
+        <location line="+0"/>
         <source>Color</source>
         <translation>Color</translation>
     </message>
     <message>
-        <location line="+0" />
+        <location line="+0"/>
         <source>Style</source>
         <translation>Estilo</translation>
     </message>
     <message>
-        <location line="+19" />
+        <location line="+19"/>
         <source>+ Add series</source>
         <translation>+ Añadir serie</translation>
     </message>
     <message>
-        <location line="+8" />
+        <location line="+8"/>
         <source>+ Add all fields</source>
         <translation>+ Añadir todos los campos</translation>
     </message>
     <message>
-        <location line="+4" />
-        <source>Add one series for every numeric field of the topic above that isn't plotted yet, named after the field and with its unit and range from the device's manifest. Fields in different units get one Y axis per unit; fields sharing a unit and declaring a range get that range.</source>
+        <location line="+4"/>
+        <source>Add one series for every numeric field of the topic above that isn&apos;t plotted yet, named after the field and with its unit and range from the device&apos;s manifest. Fields in different units get one Y axis per unit; fields sharing a unit and declaring a range get that range.</source>
         <translation>Añade una serie por cada campo numérico del tema de arriba que aún no se grafica, con el nombre del campo y su unidad y rango del manifiesto del dispositivo. Los campos con unidades distintas obtienen un eje Y por unidad; los que comparten unidad y declaran un rango usan ese rango.</translation>
     </message>
     <message>
-        <location line="+209" />
+        <location line="+209"/>
         <source>Series %1</source>
         <translation>Serie %1</translation>
     </message>
     <message>
-        <location line="+34" />
-        <source>Which field of the bound topic this series plots -- pick one the device has already reported (shown by name), or type a numeric id by hand for one it hasn't reported yet.</source>
+        <location line="+34"/>
+        <source>Which field of the bound topic this series plots -- pick one the device has already reported (shown by name), or type a numeric id by hand for one it hasn&apos;t reported yet.</source>
         <translation>Qué campo del tema vinculado traza esta serie: elija uno que el dispositivo ya haya informado (mostrado por nombre) o escriba a mano un id numérico para uno que aún no haya informado.</translation>
     </message>
     <message>
-        <location line="+35" />
+        <location line="+35"/>
         <source>Series Color</source>
         <translation>Color de la serie</translation>
     </message>
     <message>
-        <location line="+12" />
+        <location line="+12"/>
         <source>Solid</source>
         <translation>Sólido</translation>
     </message>
     <message>
-        <location line="+0" />
+        <location line="+0"/>
         <source>Dashed</source>
         <translation>Discontinuo</translation>
     </message>
     <message>
-        <location line="+0" />
+        <location line="+0"/>
         <source>Dotted</source>
         <translation>Punteado</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Dash-Dot</source>
         <translation>Raya-punto</translation>
     </message>
     <message>
-        <location line="+0" />
+        <location line="+0"/>
         <source>Cross</source>
         <translation>Cruz</translation>
     </message>
     <message>
-        <location line="+0" />
+        <location line="+0"/>
         <source>Asterisk</source>
         <translation>Asterisco</translation>
     </message>
     <message>
-        <location line="+13" />
+        <location line="+13"/>
         <source>Remove series</source>
         <translation>Eliminar serie</translation>
     </message>
     <message>
-        <location line="+26" />
+        <location line="+26"/>
         <source> s</source>
         <translation> s</translation>
     </message>
     <message>
-        <location line="+41" />
+        <location line="+41"/>
         <source>Field %1</source>
         <translation>Campo %1</translation>
     </message>
@@ -2264,17 +2275,17 @@ Allow it to connect devices and send them commands until AI assistant access is 
 <context>
     <name>traceview::ChatConfigEditor</name>
     <message>
-        <location filename="../lib/dashboard/widgets/chatconfigeditor.cpp" line="+11" />
+        <location filename="../lib/dashboard/widgets/chatconfigeditor.cpp" line="+11"/>
         <source>You</source>
         <translation>Tú</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Show my messages on the right</source>
         <translation>Mostrar mis mensajes a la derecha</translation>
     </message>
     <message>
-        <location line="+6" />
+        <location line="+6"/>
         <source>User name</source>
         <translation>Nombre de usuario</translation>
     </message>
@@ -2282,63 +2293,63 @@ Allow it to connect devices and send them commands until AI assistant access is 
 <context>
     <name>traceview::ChatWidget</name>
     <message>
-        <location filename="../lib/dashboard/widgets/chatwidget.cpp" line="+45" />
+        <location filename="../lib/dashboard/widgets/chatwidget.cpp" line="+45"/>
         <source>Sending...</source>
         <translation>Enviando...</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Sent</source>
         <translation>Enviado</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Not sent</source>
         <translation>No enviado</translation>
     </message>
     <message>
-        <location line="+161" />
-        <location line="+81" />
+        <location line="+161"/>
+        <location line="+81"/>
         <source>You</source>
         <translation>Tú</translation>
     </message>
     <message>
-        <location line="-65" />
+        <location line="-65"/>
         <source>Remove attachment</source>
         <translation>Quitar adjunto</translation>
     </message>
     <message>
-        <location line="+12" />
-        <location line="+109" />
-        <location line="+9" />
-        <location line="+6" />
+        <location line="+12"/>
+        <location line="+109"/>
+        <location line="+9"/>
+        <location line="+6"/>
         <source>Attach a file</source>
         <translation>Adjuntar un archivo</translation>
     </message>
     <message>
-        <location line="-120" />
+        <location line="-120"/>
         <source>Write a message...</source>
         <translation>Escribe un mensaje...</translation>
     </message>
     <message>
-        <location line="+3" />
+        <location line="+3"/>
         <source>Send</source>
         <translation>Enviar</translation>
     </message>
     <message>
-        <location line="+101" />
+        <location line="+101"/>
         <source>Supported files (%1)</source>
         <translation>Archivos compatibles (%1)</translation>
     </message>
     <message>
-        <location line="+11" />
-        <source>This file type can't be sent.
+        <location line="+11"/>
+        <source>This file type can&apos;t be sent.
 Allowed: %1</source>
         <translation>Este tipo de archivo no se puede enviar.
 Permitidos: %1</translation>
     </message>
     <message>
-        <location line="+6" />
+        <location line="+6"/>
         <source>This file is too large (limit %1 MB).</source>
         <translation>Este archivo es demasiado grande (límite %1 MB).</translation>
     </message>
@@ -2346,12 +2357,12 @@ Permitidos: %1</translation>
 <context>
     <name>traceview::ClockSync</name>
     <message>
-        <location filename="../lib/protocol/clocksync.cpp" line="+179" />
+        <location filename="../lib/protocol/clocksync.cpp" line="+179"/>
         <source>clock sync failed: %1 [RTT %2ms]</source>
         <translation>falló la sincronización del reloj: %1 [RTT %2ms]</translation>
     </message>
     <message>
-        <location line="+30" />
+        <location line="+30"/>
         <source>clock corrected (%1) [RTT %2ms]</source>
         <translation>reloj corregido (%1) [RTT %2ms]</translation>
     </message>
@@ -2359,27 +2370,27 @@ Permitidos: %1</translation>
 <context>
     <name>traceview::CommandClient</name>
     <message>
-        <location filename="../lib/protocol/commandclient.cpp" line="+58" />
+        <location filename="../lib/protocol/commandclient.cpp" line="+58"/>
         <source>not connected to a device that takes commands</source>
         <translation>no conectado a un dispositivo que acepte comandos</translation>
     </message>
     <message>
-        <location line="+4" />
+        <location line="+4"/>
         <source>command not sent: endpoint key not configured</source>
         <translation>comando no enviado: clave del endpoint no configurada</translation>
     </message>
     <message>
-        <location line="+5" />
+        <location line="+5"/>
         <source>command not sent: robot manifest not received yet</source>
         <translation>comando no enviado: aún no se recibió el manifiesto del robot</translation>
     </message>
     <message>
-        <location line="+14" />
+        <location line="+14"/>
         <source>command not sent: could not encode or seal request</source>
         <translation>comando no enviado: no se pudo codificar o sellar la solicitud</translation>
     </message>
     <message numerus="yes">
-        <location line="+1" />
+        <location line="+1"/>
         <source>command not sent: %n command(s) still waiting for a result</source>
         <translation>
             <numerusform>comando no enviado: %n comando sigue esperando un resultado</numerusform>
@@ -2387,37 +2398,37 @@ Permitidos: %1</translation>
         </translation>
     </message>
     <message>
-        <location line="+63" />
+        <location line="+63"/>
         <source>no result within 5 s</source>
         <translation>sin resultado en 5 s</translation>
     </message>
     <message>
-        <location line="+16" />
+        <location line="+16"/>
         <source>%1: no result within 5 s (it may still be running)</source>
         <translation>%1: sin resultado en 5 s (puede seguir ejecutándose)</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>%1: no result within 5 s; it may still be running</source>
         <translation>%1: sin resultado en 5 s; puede seguir ejecutándose</translation>
     </message>
     <message>
-        <location line="+9" />
+        <location line="+9"/>
         <source>command failed (status 0x%1, error 0x%2): %3</source>
         <translation>el comando falló (estado 0x%1, error 0x%2): %3</translation>
     </message>
     <message>
-        <location line="+8" />
+        <location line="+8"/>
         <source>%1 failed (status 0x%2)</source>
         <translation>%1 falló (estado 0x%2)</translation>
     </message>
     <message>
-        <location line="+5" />
+        <location line="+5"/>
         <source>command result: (empty)</source>
         <translation>resultado del comando: (vacío)</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>command result: %1</source>
         <translation>resultado del comando: %1</translation>
     </message>
@@ -2425,272 +2436,272 @@ Permitidos: %1</translation>
 <context>
     <name>traceview::DashboardCell</name>
     <message>
-        <location filename="../lib/dashboard/widgets/chartstyle.cpp" line="+514" />
+        <location filename="../lib/dashboard/widgets/chartstyle.cpp" line="+514"/>
         <source>Sample rate</source>
         <translation>Frecuencia de muestreo</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Samples in window</source>
         <translation>Muestras en la ventana</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Window span</source>
         <translation>Duración de la ventana</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Minimum</source>
         <translation>Mínimo</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Maximum</source>
         <translation>Máximo</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Peak to peak</source>
         <translation>Pico a pico</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Peak (|x| max)</source>
         <translation>Pico (|x| máx)</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Mean</source>
         <translation>Media</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Median</source>
         <translation>Mediana</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>RMS</source>
         <translation>RMS</translation>
     </message>
     <message>
-        <location line="+144" />
+        <location line="+144"/>
         <source>Style:</source>
         <translation>Estilo:</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>App default</source>
         <translation>Predeterminado de la aplicación</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Show X axis title</source>
         <translation>Mostrar título del eje X</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Show X axis values</source>
         <translation>Mostrar valores del eje X</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Show Y axis title</source>
         <translation>Mostrar título del eje Y</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Show Y axis values</source>
         <translation>Mostrar valores del eje Y</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Show scale values</source>
         <translation>Mostrar valores de la escala</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Show last value</source>
         <translation>Mostrar último valor</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Show grid point values</source>
         <translation>Mostrar valores de los puntos de la cuadrícula</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Show info row</source>
         <translation>Mostrar fila de info</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Info row values</source>
         <translation>Valores de la fila de info</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Range markers (A/B)</source>
         <translation>Marcadores de rango (A/B)</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Fill area under the line</source>
         <translation>Rellenar el área bajo la línea</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Show hover crosshair</source>
         <translation>Mostrar retícula al pasar el cursor</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Interpolation:</source>
         <translation>Interpolación:</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Linear</source>
         <translation>Lineal</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>ZOH (step)</source>
         <translation>ZOH (escalón)</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Stem</source>
         <translation>Tallo</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>None (points)</source>
         <translation>Ninguna (puntos)</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Y axis ticks:</source>
         <translation>Marcas del eje Y:</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Auto</source>
         <translation>Automático</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Legend:</source>
         <translation>Leyenda:</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Outside the plot</source>
         <translation>Fuera del gráfico</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Top left</source>
         <translation>Arriba a la izquierda</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Top right</source>
         <translation>Arriba a la derecha</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Bottom left</source>
         <translation>Abajo a la izquierda</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Bottom right</source>
         <translation>Abajo a la derecha</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Hidden</source>
         <translation>Oculta</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Legend background:</source>
         <translation>Fondo de la leyenda:</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>%1%</source>
         <translation>%1%</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Line width:</source>
         <translation>Grosor de línea:</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>%1 px</source>
         <translation>%1 px</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Shape:</source>
         <translation>Forma:</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Ring (270°)</source>
         <translation>Anillo (270°)</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Half circle</source>
         <translation>Semicírculo</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Bar</source>
         <translation>Barra</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Number</source>
         <translation>Número</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Analog meter</source>
         <translation>Medidor analógico</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Digital display</source>
         <translation>Pantalla digital</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>LED bar</source>
         <translation>Barra de LED</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Analog dial</source>
         <translation>Esfera analógica</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Analog VU meter</source>
         <translation>Vúmetro analógico</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Analog edgewise meter</source>
         <translation>Medidor de perfil analógico</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Analog counter</source>
         <translation>Contador analógico</translation>
     </message>
@@ -2698,108 +2709,108 @@ Permitidos: %1</translation>
 <context>
     <name>traceview::DashboardGalleryDialog</name>
     <message>
-        <location filename="../lib/core/dashboardgallerydialog.cpp" line="+28" />
+        <location filename="../lib/core/dashboardgallerydialog.cpp" line="+28"/>
         <source>Dashboard Gallery</source>
         <translation>Galería de Dashboards</translation>
     </message>
     <message>
-        <location line="+5" />
+        <location line="+5"/>
         <source>Dashboards kept inside TraceView. The default one opens every time the app starts; with none chosen, the built-in example opens.</source>
         <translation>Dashboards guardados dentro de TraceView. El predeterminado se abre cada vez que se inicia la app; si no hay ninguno elegido, se abre el ejemplo integrado.</translation>
     </message>
     <message>
-        <location line="+8" />
+        <location line="+8"/>
         <source>Open</source>
         <translation>Abrir</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Set as Default</source>
         <translation>Establecer como Predeterminado</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Rename...</source>
         <translation>Renombrar...</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Delete</source>
         <translation>Eliminar</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Export...</source>
         <translation>Exportar...</translation>
     </message>
     <message>
-        <location line="+38" />
+        <location line="+38"/>
         <source>%1 (default)</source>
         <translation>%1 (predeterminado)</translation>
     </message>
     <message>
-        <location line="+12" />
+        <location line="+12"/>
         <source>Built-in example</source>
         <translation>Ejemplo integrado</translation>
     </message>
     <message>
-        <location line="+60" />
-        <location line="+9" />
+        <location line="+60"/>
+        <location line="+9"/>
         <source>Rename Dashboard</source>
         <translation>Renombrar Dashboard</translation>
     </message>
     <message>
-        <location line="-9" />
+        <location line="-9"/>
         <source>New name:</source>
         <translation>Nuevo nombre:</translation>
     </message>
     <message>
-        <location line="+25" />
-        <location line="+8" />
+        <location line="+25"/>
+        <location line="+8"/>
         <source>Delete Dashboard</source>
         <translation>Eliminar Dashboard</translation>
     </message>
     <message>
-        <location line="-7" />
-        <source>Delete "%1" from the gallery? This can't be undone.</source>
-        <translation>¿Eliminar "%1" de la galería? Esto no se puede deshacer.</translation>
+        <location line="-7"/>
+        <source>Delete &quot;%1&quot; from the gallery? This can&apos;t be undone.</source>
+        <translation>¿Eliminar &quot;%1&quot; de la galería? Esto no se puede deshacer.</translation>
     </message>
     <message>
-        <location line="+26" />
-        <location line="+10" />
+        <location line="+26"/>
+        <location line="+10"/>
         <source>Export Dashboard</source>
         <translation>Exportar Dashboard</translation>
     </message>
     <message>
-        <location line="-9" />
+        <location line="-9"/>
         <source>TraceView Project (*.tvproj)</source>
         <translation>Proyecto TraceView (*.tvproj)</translation>
     </message>
     <message>
-        <location line="+10" />
-        <source>Couldn't write "%1".</source>
-        <translation>No se pudo escribir "%1".</translation>
+        <location line="+10"/>
+        <source>Couldn&apos;t write &quot;%1&quot;.</source>
+        <translation>No se pudo escribir &quot;%1&quot;.</translation>
     </message>
 </context>
 <context>
     <name>traceview::DashboardGrid</name>
     <message>
-        <location filename="../lib/dashboard/dashboardgrid.cpp" line="+688" />
+        <location filename="../lib/dashboard/dashboardgrid.cpp" line="+688"/>
         <source>Bring to Front</source>
         <translation>Traer al frente</translation>
     </message>
     <message>
-        <location line="+16" />
+        <location line="+16"/>
         <source>Bring Forward</source>
         <translation>Avanzar</translation>
     </message>
     <message>
-        <location line="+16" />
+        <location line="+16"/>
         <source>Send Backward</source>
         <translation>Retroceder</translation>
     </message>
     <message>
-        <location line="+12" />
+        <location line="+12"/>
         <source>Send to Back</source>
         <translation>Enviar al fondo</translation>
     </message>
@@ -2807,63 +2818,63 @@ Permitidos: %1</translation>
 <context>
     <name>traceview::DebugChartsWindow</name>
     <message>
-        <location filename="../lib/core/debugchartswindow.cpp" line="+233" />
-        <location line="+4" />
+        <location filename="../lib/core/debugchartswindow.cpp" line="+233"/>
+        <location line="+4"/>
         <source>Modo estresse: desligado (50ms/tick)</source>
         <translation>Modo estrés: desactivado (50ms/tick)</translation>
     </message>
     <message>
-        <location line="-1" />
+        <location line="-1"/>
         <source>Modo estresse: ligado (atualizacao maxima)</source>
         <translation>Modo estrés: activado (actualización máxima)</translation>
     </message>
     <message>
-        <location line="+13" />
+        <location line="+13"/>
         <source>Line Chart</source>
         <translation>Gráfico de líneas</translation>
     </message>
     <message>
-        <location line="+5" />
+        <location line="+5"/>
         <source>Bar Chart</source>
         <translation>Gráfico de barras</translation>
     </message>
     <message>
-        <location line="+5" />
+        <location line="+5"/>
         <source>Gauge</source>
         <translation>Medidor</translation>
     </message>
     <message>
-        <location line="+4" />
+        <location line="+4"/>
         <source>Serial Monitor</source>
         <translation>Monitor serie</translation>
     </message>
     <message>
-        <location line="+13" />
+        <location line="+13"/>
         <source>Push Button</source>
         <translation>Botón pulsador</translation>
     </message>
     <message>
-        <location line="+7" />
+        <location line="+7"/>
         <source>Toggle Switch</source>
         <translation>Interruptor</translation>
     </message>
     <message>
-        <location line="+6" />
+        <location line="+6"/>
         <source>Slider</source>
         <translation>Control deslizante</translation>
     </message>
     <message>
-        <location line="+7" />
+        <location line="+7"/>
         <source>Audio Spectrum</source>
         <translation>Espectro de audio</translation>
     </message>
     <message>
-        <location line="+6" />
+        <location line="+6"/>
         <source>Audio Spectrogram</source>
         <translation>Espectrograma de audio</translation>
     </message>
     <message>
-        <location line="+62" />
+        <location line="+62"/>
         <source> -- %1 fps</source>
         <translation> -- %1 fps</translation>
     </message>
@@ -2871,57 +2882,57 @@ Permitidos: %1</translation>
 <context>
     <name>traceview::DeviceCard</name>
     <message>
-        <location filename="../lib/devices/devicecard.cpp" line="+302" />
+        <location filename="../lib/devices/devicecard.cpp" line="+302"/>
         <source>%1 dBm</source>
         <translation>%1 dBm</translation>
     </message>
     <message>
-        <location line="+53" />
+        <location line="+53"/>
         <source>ID %1</source>
         <translation>ID %1</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>v%1</source>
         <translation>v%1</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>v%1 · ID %2</source>
         <translation>v%1 · ID %2</translation>
     </message>
     <message>
-        <location line="+3" />
-        <source>wrong password: can't read the device</source>
+        <location line="+3"/>
+        <source>wrong password: can&apos;t read the device</source>
         <translation>contraseña incorrecta: no se puede leer el dispositivo</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>port open, waiting for BTP session</source>
         <translation>puerto abierto, esperando sesión BTP</translation>
     </message>
     <message>
-        <location line="+4" />
+        <location line="+4"/>
         <source>hub link up, no data from robot</source>
         <translation>enlace del hub activo, sin datos del robot</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>hub link up, locating robot…</source>
         <translation>enlace del hub activo, buscando el robot…</translation>
     </message>
     <message>
-        <location line="+4" />
+        <location line="+4"/>
         <source>via %1</source>
         <translation>vía %1</translation>
     </message>
     <message>
-        <location line="+9" />
+        <location line="+9"/>
         <source>saved from the last connection</source>
         <translation>guardado de la última conexión</translation>
     </message>
     <message>
-        <location line="+22" />
+        <location line="+22"/>
         <source>%1: %2</source>
         <translation>%1: %2</translation>
     </message>
@@ -2929,203 +2940,203 @@ Permitidos: %1</translation>
 <context>
     <name>traceview::DeviceConfigDialog</name>
     <message>
-        <location filename="../lib/devices/deviceconfigdialog.cpp" line="+16" />
+        <location filename="../lib/devices/deviceconfigdialog.cpp" line="+16"/>
         <source>Device Settings</source>
         <translation>Configuración del Dispositivo</translation>
     </message>
     <message>
-        <location line="+8" />
-        <source>Shown as this device's title -- on its card in the Devices panel, and anywhere else it's picked from a list.</source>
+        <location line="+8"/>
+        <source>Shown as this device&apos;s title -- on its card in the Devices panel, and anywhere else it&apos;s picked from a list.</source>
         <translation>Se muestra como título de este dispositivo: en su tarjeta del panel Dispositivos y en cualquier otro lugar donde se elija de una lista.</translation>
     </message>
     <message>
-        <location line="+12" />
+        <location line="+12"/>
         <source>Connection</source>
         <translation>Conexión</translation>
     </message>
     <message>
-        <location line="+81" />
+        <location line="+81"/>
         <source>None</source>
         <translation>Ninguno</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>LF (\n)</source>
         <translation>LF (\n)</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>CR (\r)</source>
         <translation>CR (\r)</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>CRLF (\r\n)</source>
         <translation>CRLF (\r\n)</translation>
     </message>
     <message>
-        <location line="+7" />
+        <location line="+7"/>
         <source>Terminator:</source>
         <translation>Terminador:</translation>
     </message>
     <message>
-        <location line="+16" />
-        <source>This device's ID:</source>
+        <location line="+16"/>
+        <source>This device&apos;s ID:</source>
         <translation>ID de este dispositivo:</translation>
     </message>
     <message>
-        <location line="-54" />
+        <location line="-54"/>
         <source>Card title:</source>
         <translation>Título de la tarjeta:</translation>
     </message>
     <message>
-        <location line="+5" />
-        <source>The robot's channel-B password. One per device: every TCP, BLE and hub connection above uses it.</source>
+        <location line="+5"/>
+        <source>The robot&apos;s channel-B password. One per device: every TCP, BLE and hub connection above uses it.</source>
         <translation>La contraseña del canal B del robot. Una por dispositivo: todas las conexiones TCP, BLE y de hub de arriba la usan.</translation>
     </message>
     <message>
-        <location line="+3" />
+        <location line="+3"/>
         <source>Password:</source>
         <translation>Contraseña:</translation>
     </message>
     <message>
-        <location line="+8" />
+        <location line="+8"/>
         <source>Save this password in the project file</source>
         <translation>Guardar esta contraseña en el archivo del proyecto</translation>
     </message>
     <message>
-        <location line="+3" />
+        <location line="+3"/>
         <source>Anyone who opens the project file can read a saved password.</source>
         <translation>Cualquiera que abra el archivo del proyecto puede leer una contraseña guardada.</translation>
     </message>
     <message>
-        <location line="+16" />
-        <source>Line terminator appended to control-widget commands sent over serial. Doesn't affect its serial terminal's raw keystrokes.</source>
+        <location line="+16"/>
+        <source>Line terminator appended to control-widget commands sent over serial. Doesn&apos;t affect its serial terminal&apos;s raw keystrokes.</source>
         <translation>Terminador de línea añadido a los comandos de los widgets de control enviados por serie. No afecta a las teclas que envía su terminal serie.</translation>
     </message>
     <message>
-        <location line="+15" />
-        <source>This device's own source_id. Pass it as the first argument to the hub's "hub -bind" command, with the robot's id as the second, so the hub knows which robot this device's SUBSCRIBE/COMMAND traffic is for.</source>
-        <translation>El source_id propio de este dispositivo. Páselo como primer argumento del comando "hub -bind" del hub, con el id del robot como segundo, para que el hub sepa a qué robot va el tráfico SUBSCRIBE/COMMAND de este dispositivo.</translation>
+        <location line="+15"/>
+        <source>This device&apos;s own source_id. Pass it as the first argument to the hub&apos;s &quot;hub -bind&quot; command, with the robot&apos;s id as the second, so the hub knows which robot this device&apos;s SUBSCRIBE/COMMAND traffic is for.</source>
+        <translation>El source_id propio de este dispositivo. Páselo como primer argumento del comando &quot;hub -bind&quot; del hub, con el id del robot como segundo, para que el hub sepa a qué robot va el tráfico SUBSCRIBE/COMMAND de este dispositivo.</translation>
     </message>
     <message>
-        <location line="+9" />
+        <location line="+9"/>
         <source>OTA</source>
         <translation>OTA</translation>
     </message>
     <message>
-        <location line="+3" />
-        <location line="+271" />
+        <location line="+3"/>
+        <location line="+271"/>
         <source>e.g. robot1.local</source>
         <translation>p. ej. robot1.local</translation>
     </message>
     <message>
-        <location line="-261" />
+        <location line="-261"/>
         <source>Use reported</source>
         <translation>Usar el informado</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Fill in the address the device reported for itself.</source>
         <translation>Rellenar con la dirección que el dispositivo informó de sí mismo.</translation>
     </message>
     <message>
-        <location line="+11" />
+        <location line="+11"/>
         <source>Address:</source>
         <translation>Dirección:</translation>
     </message>
     <message>
-        <location line="-20" />
-        <source>Hostname or IP of the device's recovery, for firmware uploads. Usually left blank: the OTA tab then uses the address the device reports, or its TCP host.</source>
+        <location line="-20"/>
+        <source>Hostname or IP of the device&apos;s recovery, for firmware uploads. Usually left blank: the OTA tab then uses the address the device reports, or its TCP host.</source>
         <translation>Hostname o IP del recovery del dispositivo, para subir firmware. Normalmente se deja en blanco: la pestaña OTA usa entonces la dirección que informa el dispositivo, o su host TCP.</translation>
     </message>
     <message>
-        <location line="+23" />
-        <source>Uploads are signed with the device's password, the same one its connection uses.</source>
+        <location line="+23"/>
+        <source>Uploads are signed with the device&apos;s password, the same one its connection uses.</source>
         <translation>Las subidas se firman con la contraseña del dispositivo, la misma que usa su conexión.</translation>
     </message>
     <message>
-        <location line="+17" />
-        <location line="+240" />
+        <location line="+17"/>
+        <location line="+240"/>
         <source>Connected</source>
         <translation>Conectado</translation>
     </message>
     <message>
-        <location line="-240" />
-        <location line="+240" />
+        <location line="-240"/>
+        <location line="+240"/>
         <source>Disconnected</source>
         <translation>Desconectado</translation>
     </message>
     <message>
-        <location line="-237" />
-        <location line="+3" />
-        <location line="+153" />
+        <location line="-237"/>
+        <location line="+3"/>
+        <location line="+153"/>
         <source>(not connected yet)</source>
         <translation>(aún no conectado)</translation>
     </message>
     <message>
-        <location line="-143" />
+        <location line="-143"/>
         <source>Status:</source>
         <translation>Estado:</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Version:</source>
         <translation>Versión:</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>ID:</source>
         <translation>ID:</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Info:</source>
         <translation>Info:</translation>
     </message>
     <message>
-        <location line="+11" />
+        <location line="+11"/>
         <source>Reported catalog</source>
         <translation>Catálogo informado</translation>
     </message>
     <message>
-        <location line="+14" />
+        <location line="+14"/>
         <source>Connect</source>
         <translation>Conectar</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Apply the settings above and (re)connect now, without closing this dialog.</source>
         <translation>Aplicar la configuración anterior y (re)conectar ahora, sin cerrar este diálogo.</translation>
     </message>
     <message>
-        <location line="+114" />
+        <location line="+114"/>
         <source>%1 (last connection)</source>
         <translation>%1 (última conexión)</translation>
     </message>
     <message>
-        <location line="+9" />
+        <location line="+9"/>
         <source>(no topics reported yet)</source>
         <translation>(aún no se ha informado ningún tema)</translation>
     </message>
     <message>
-        <location line="+6" />
-        <location line="+28" />
+        <location line="+6"/>
+        <location line="+28"/>
         <source>(saved from the last connection)</source>
         <translation>(guardado de la última conexión)</translation>
     </message>
     <message>
-        <location line="+14" />
+        <location line="+14"/>
         <source>(nothing reported yet)</source>
         <translation>(aún no se ha informado nada)</translation>
     </message>
     <message>
-        <location line="+16" />
+        <location line="+16"/>
         <source>device reports: %1</source>
         <translation>el dispositivo informa: %1</translation>
     </message>
     <message>
-        <location line="-239" />
+        <location line="-239"/>
         <source>Reported by device</source>
         <translation>Reportado por el dispositivo</translation>
     </message>
@@ -3133,7 +3144,7 @@ Permitidos: %1</translation>
 <context>
     <name>traceview::DeviceConnection</name>
     <message>
-        <location filename="../lib/core/deviceconnection.cpp" line="+196" />
+        <location filename="../lib/core/deviceconnection.cpp" line="+196"/>
         <source>transport rejected %1 bytes</source>
         <translation>el transporte rechazó %1 bytes</translation>
     </message>
@@ -3141,193 +3152,193 @@ Permitidos: %1</translation>
 <context>
     <name>traceview::DeviceLinksTable</name>
     <message>
-        <location filename="../lib/devices/devicelinkstable.cpp" line="+91" />
+        <location filename="../lib/devices/devicelinkstable.cpp" line="+91"/>
         <source>On</source>
         <translation>Activo</translation>
     </message>
     <message>
-        <location line="+0" />
+        <location line="+0"/>
         <source>Type</source>
         <translation>Tipo</translation>
     </message>
     <message>
-        <location line="+0" />
+        <location line="+0"/>
         <source>Target</source>
         <translation>Destino</translation>
     </message>
     <message>
-        <location line="+0" />
+        <location line="+0"/>
         <source>Option</source>
         <translation>Opción</translation>
     </message>
     <message>
-        <location line="+10" />
+        <location line="+10"/>
         <source>Every way to reach this device. Row 1 is tried first; when the connection in use stops working, TraceView tries the next enabled row, and starts over after the last.</source>
         <translation>Todas las formas de llegar a este dispositivo. La fila 1 se prueba primero; cuando la conexión en uso deja de funcionar, TraceView prueba la siguiente fila activa, y vuelve a empezar después de la última.</translation>
     </message>
     <message>
-        <location line="+14" />
+        <location line="+14"/>
         <source>Add</source>
         <translation>Añadir</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Remove</source>
         <translation>Quitar</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Up</source>
         <translation>Subir</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Down</source>
         <translation>Bajar</translation>
     </message>
     <message>
-        <location line="+12" />
+        <location line="+12"/>
         <source>Ports</source>
         <translation>Puertos</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Refresh the serial port list</source>
         <translation>Actualizar la lista de puertos serie</translation>
     </message>
     <message>
-        <location line="+8" />
+        <location line="+8"/>
         <source>USB</source>
         <translation>USB</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Refresh the USB HID device list</source>
         <translation>Actualizar la lista de dispositivos USB HID</translation>
     </message>
     <message>
-        <location line="+8" />
-        <location line="+4" />
+        <location line="+8"/>
+        <location line="+4"/>
         <source>Scan BLE</source>
         <translation>Buscar BLE</translation>
     </message>
     <message>
-        <location line="-2" />
+        <location line="-2"/>
         <source>Scan for nearby BTP-capable BLE robots.</source>
         <translation>Buscar robots BLE compatibles con BTP cercanos.</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Stop scan</source>
         <translation>Detener búsqueda</translation>
     </message>
     <message>
-        <location line="+104" />
+        <location line="+104"/>
         <source>Unticked: kept, but skipped when looking for a working connection.</source>
         <translation>Desmarcada: se conserva, pero se omite al buscar una conexión que funcione.</translation>
     </message>
     <message>
-        <location line="+33" />
+        <location line="+33"/>
         <source>port, e.g. COM5</source>
         <translation>puerto, p. ej. COM5</translation>
     </message>
     <message>
-        <location line="+12" />
-        <source>Baud rate (type a custom value if yours isn't listed)</source>
+        <location line="+12"/>
+        <source>Baud rate (type a custom value if yours isn&apos;t listed)</source>
         <translation>Velocidad en baudios (escriba un valor propio si el suyo no aparece)</translation>
     </message>
     <message>
-        <location line="+23" />
+        <location line="+23"/>
         <source>host or IP, e.g. 192.168.4.1</source>
         <translation>host o IP, p. ej. 192.168.4.1</translation>
     </message>
     <message>
-        <location line="+10" />
+        <location line="+10"/>
         <source>TCP server port</source>
         <translation>Puerto del servidor TCP</translation>
     </message>
     <message>
-        <location line="+8" />
+        <location line="+8"/>
         <source>robot name, e.g. BallyRobot</source>
         <translation>nombre del robot, p. ej. BallyRobot</translation>
     </message>
     <message>
-        <location line="+2" />
-        <source>The name the robot advertises, like a hostname: TraceView scans for it on every connection, so it keeps working if the robot's address changes. A MAC address is also accepted. Scan to pick a robot nearby.</source>
+        <location line="+2"/>
+        <source>The name the robot advertises, like a hostname: TraceView scans for it on every connection, so it keeps working if the robot&apos;s address changes. A MAC address is also accepted. Scan to pick a robot nearby.</source>
         <translation>El nombre que anuncia el robot, como un nombre de host: TraceView lo busca en cada conexión, así que sigue funcionando si cambia la dirección del robot. También se acepta una dirección MAC. Busque para elegir un robot cercano.</translation>
     </message>
     <message>
-        <location line="+12" />
+        <location line="+12"/>
         <source>The hub whose connection carries this one.</source>
         <translation>El hub cuya conexión transporta esta.</translation>
     </message>
     <message>
-        <location line="+9" />
+        <location line="+9"/>
         <source>robot name or id</source>
         <translation>nombre o id del robot</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>The robot behind the hub. Pick one the hub has heard (listed by name), or type its name or its BTP source_id (hex or decimal). What is saved is the source_id -- its permanent address, not the channel number the hub shows.</source>
         <translation>El robot detrás del hub. Elija uno que el hub haya oído (listado por nombre), o escriba su nombre o su source_id BTP (hex o decimal). Lo que se guarda es el source_id -- su dirección permanente, no el número de canal que muestra el hub.</translation>
     </message>
     <message>
-        <location line="+19" />
+        <location line="+19"/>
         <source>Automatic (robot name)</source>
         <translation>Automático (nombre del robot)</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Found by the robot name above each time it connects. To use a specific target instead, pick one in the list above the table.</source>
         <translation>Se encuentra por el nombre del robot de arriba en cada conexión. Para usar un destino concreto, elija uno en la lista sobre la tabla.</translation>
     </message>
     <message>
-        <location line="+56" />
+        <location line="+56"/>
         <source>%1 (%2)</source>
         <translation>%1 (%2)</translation>
     </message>
     <message>
-        <location line="+6" />
+        <location line="+6"/>
         <source>(any hub)</source>
         <translation>(cualquier hub)</translation>
     </message>
     <message>
-        <location line="+0" />
+        <location line="+0"/>
         <source>(choose the hub)</source>
         <translation>(elija el hub)</translation>
     </message>
     <message>
-        <location line="+6" />
+        <location line="+6"/>
         <source>%1 (unavailable)</source>
         <translation>%1 (no disponible)</translation>
     </message>
     <message>
-        <location line="+30" />
+        <location line="+30"/>
         <source>online</source>
         <translation>en línea</translation>
     </message>
     <message>
-        <location line="+0" />
+        <location line="+0"/>
         <source>offline %1s</source>
         <translation>desconectado hace %1 s</translation>
     </message>
     <message>
-        <location line="+3" />
+        <location line="+3"/>
         <source>%1 (ch %2, %3)</source>
         <translation>%1 (canal %2, %3)</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>%1 (%2, %3)</source>
         <translation>%1 (%2, %3)</translation>
     </message>
     <message>
-        <location line="+3" />
+        <location line="+3"/>
         <source>channel %1</source>
         <translation>canal %1</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>channel %1, %2</source>
         <translation>canal %1, %2</translation>
     </message>
@@ -3335,27 +3346,27 @@ Permitidos: %1</translation>
 <context>
     <name>traceview::DiagramBlockConfigDialog</name>
     <message>
-        <location filename="../lib/diagram/diagramblockconfigdialog.cpp" line="+44" />
+        <location filename="../lib/diagram/diagramblockconfigdialog.cpp" line="+44"/>
         <source>Configure %1</source>
         <translation>Configurar %1</translation>
     </message>
     <message>
-        <location line="+19" />
+        <location line="+19"/>
         <source>Help</source>
         <translation>Ayuda</translation>
     </message>
     <message>
-        <location line="+17" />
+        <location line="+17"/>
         <source>// Script for this block</source>
         <translation>// Script de este bloque</translation>
     </message>
     <message>
-        <location line="+8" />
+        <location line="+8"/>
         <source>No log output yet</source>
         <translation>Aún no hay salida de registro</translation>
     </message>
     <message>
-        <location line="+20" />
+        <location line="+20"/>
         <source>Error: %1</source>
         <translation>Error: %1</translation>
     </message>
@@ -3363,14 +3374,14 @@ Permitidos: %1</translation>
 <context>
     <name>traceview::DiagramScriptRuntime</name>
     <message>
-        <location filename="../lib/diagram/diagramscriptruntime.cpp" line="+43" />
-        <location line="+99" />
+        <location filename="../lib/diagram/diagramscriptruntime.cpp" line="+43"/>
+        <location line="+99"/>
         <source>Line %1: %2</source>
         <translation>Línea %1: %2</translation>
     </message>
     <message>
-        <location line="-96" />
-        <location line="+99" />
+        <location line="-96"/>
+        <location line="+99"/>
         <source>Error: %1</source>
         <translation>Error: %1</translation>
     </message>
@@ -3378,76 +3389,76 @@ Permitidos: %1</translation>
 <context>
     <name>traceview::DonateDialog</name>
     <message>
-        <location filename="../lib/core/donatedialog.cpp" line="+129" />
-        <location line="+7" />
+        <location filename="../lib/core/donatedialog.cpp" line="+129"/>
+        <location line="+7"/>
         <source>Support TraceView</source>
         <translation>Apoya a TraceView</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>If TraceView has helped you, a little coffee via Pix is always welcome.</source>
         <translation>Si TraceView te ha ayudado, un cafecito vía Pix siempre es bienvenido.</translation>
     </message>
     <message>
-        <location line="+5" />
+        <location line="+5"/>
         <source>Pix key (phone): %1</source>
         <translation>Clave Pix (teléfono): %1</translation>
     </message>
     <message>
-        <location line="+9" />
-        <source>Outside Brazil? An international donation option isn't set up yet, but it's on the way. Thanks for considering supporting the project either way!</source>
+        <location line="+9"/>
+        <source>Outside Brazil? An international donation option isn&apos;t set up yet, but it&apos;s on the way. Thanks for considering supporting the project either way!</source>
         <translation>¿Fuera de Brasil? Todavía no hay una opción de donación internacional, pero está en camino. ¡Gracias de todos modos por considerar apoyar el proyecto!</translation>
     </message>
 </context>
 <context>
     <name>traceview::FrameTableModel</name>
     <message>
-        <location filename="../lib/diagnostics/btpmonitortab.cpp" line="-354" />
+        <location filename="../lib/diagnostics/btpmonitortab.cpp" line="-354"/>
         <source>decode error</source>
         <translation>error de decodificación</translation>
     </message>
     <message>
-        <location line="+24" />
+        <location line="+24"/>
         <source>Time</source>
         <translation>Hora</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Dir</source>
         <translation>Dir</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Device</source>
         <translation>Dispositivo</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Type</source>
         <translation>Tipo</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Object</source>
         <translation>Objeto</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Seq</source>
         <translation>Sec</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Flags</source>
         <translation>Flags</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Len</source>
         <translation>Long</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Payload</source>
         <translation>Payload</translation>
     </message>
@@ -3455,135 +3466,352 @@ Permitidos: %1</translation>
 <context>
     <name>traceview::GaugeConfigEditor</name>
     <message>
-        <location filename="../lib/dashboard/widgets/gaugeconfigeditor.cpp" line="+58" />
+        <location filename="../lib/dashboard/widgets/gaugeconfigeditor.cpp" line="+58"/>
         <source>0x0101</source>
         <translation>0x0101</translation>
     </message>
     <message>
-        <location line="-13" />
+        <location line="-13"/>
         <source>Which device this gauge reads from -- must match the sourceId below.</source>
         <translation>De qué dispositivo lee este medidor: debe coincidir con el sourceId de abajo.</translation>
     </message>
     <message>
-        <location line="+4" />
+        <location line="+4"/>
         <source>(auto)</source>
         <translation>(auto)</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>BTP source_id this gauge reads from -- derived from the Topic field below, shown by device name when known.</source>
         <translation>source_id BTP del que lee este medidor: derivado del campo Tema de abajo, mostrado por nombre de dispositivo cuando se conoce.</translation>
     </message>
     <message>
-        <location line="+9" />
-        <source>BTP topic_id (TELEMETRY.md) this gauge's rings bind fields of -- pick one the device has already reported (shown by name), or type a hex/decimal id by hand for one it hasn't reported yet.</source>
+        <location line="+9"/>
+        <source>BTP topic_id (TELEMETRY.md) this gauge&apos;s rings bind fields of -- pick one the device has already reported (shown by name), or type a hex/decimal id by hand for one it hasn&apos;t reported yet.</source>
         <translation>topic_id BTP (TELEMETRY.md) a cuyos campos se vinculan los anillos de este medidor: elija uno que el dispositivo ya haya informado (mostrado por nombre) o escriba a mano un id hex/decimal para uno que aún no haya informado.</translation>
     </message>
     <message>
-        <location line="+9" />
+        <location line="+9"/>
         <source>Shared scale floor -- every ring maps its own field onto this same range.</source>
         <translation>Piso de escala compartido -- cada anillo mapea su propio campo en este mismo rango.</translation>
     </message>
     <message>
-        <location line="+7" />
+        <location line="+7"/>
         <source>Shared scale ceiling -- every ring maps its own field onto this same range.</source>
         <translation>Techo de escala compartido -- cada anillo mapea su propio campo en este mismo rango.</translation>
     </message>
     <message>
-        <location line="+3" />
+        <location line="+3"/>
         <source>V, °C, %...</source>
         <translation>V, °C, %...</translation>
     </message>
     <message>
-        <location line="+5" />
-        <source>Decimal places shown for each ring's current value.</source>
+        <location line="+5"/>
+        <source>Decimal places shown for each ring&apos;s current value.</source>
         <translation>Decimales mostrados para el valor actual de cada anillo.</translation>
     </message>
     <message>
-        <location line="+5" />
+        <location line="+5"/>
         <source>Device</source>
         <translation>Dispositivo</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Source</source>
         <translation>Fuente</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Topic</source>
         <translation>Tema</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Min</source>
         <translation>Mín</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Max</source>
         <translation>Máx</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Unit</source>
         <translation>Unidad</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Decimals</source>
         <translation>Decimales</translation>
     </message>
     <message>
-        <location line="+10" />
+        <location line="+10"/>
         <source>Name</source>
         <translation>Nombre</translation>
     </message>
     <message>
-        <location line="+0" />
+        <location line="+0"/>
         <source>Field ID</source>
         <translation>ID de campo</translation>
     </message>
     <message>
-        <location line="+0" />
+        <location line="+0"/>
         <source>Color</source>
         <translation>Color</translation>
     </message>
     <message>
-        <location line="+11" />
+        <location line="+11"/>
         <source>+ Add ring</source>
         <translation>+ Añadir anillo</translation>
     </message>
     <message>
-        <location line="+159" />
+        <location line="+159"/>
         <source>Ring %1</source>
         <translation>Anillo %1</translation>
     </message>
     <message>
-        <location line="+13" />
-        <source>Which field of the bound topic this ring plots -- pick one the device has already reported (shown by name), or type a numeric id by hand for one it hasn't reported yet.</source>
+        <location line="+13"/>
+        <source>Which field of the bound topic this ring plots -- pick one the device has already reported (shown by name), or type a numeric id by hand for one it hasn&apos;t reported yet.</source>
         <translation>Qué campo del tema vinculado traza este anillo: elija uno que el dispositivo ya haya informado (mostrado por nombre) o escriba a mano un id numérico para uno que aún no haya informado.</translation>
     </message>
     <message>
-        <location line="+33" />
+        <location line="+33"/>
         <source>Ring Color</source>
         <translation>Color del anillo</translation>
     </message>
     <message>
-        <location line="+11" />
+        <location line="+11"/>
         <source>Remove ring</source>
         <translation>Eliminar anillo</translation>
     </message>
 </context>
 <context>
+    <name>traceview::HomePage</name>
+    <message>
+        <location filename="../lib/core/homepage.cpp" line="+100"/>
+        <source>The deep scan found nothing new.</source>
+        <translation>El escaneo profundo no encontró nada nuevo.</translation>
+    </message>
+    <message numerus="yes">
+        <location line="+1"/>
+        <source>The deep scan found %n robot(s).</source>
+        <translation>
+            <numerusform>El escaneo profundo encontró %n robot.</numerusform>
+            <numerusform>El escaneo profundo encontró %n robots.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <location line="+158"/>
+        <source>Welcome to TraceView</source>
+        <translation>Bienvenido a TraceView</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Version %1 · Pick up your dashboard or connect a robot.</source>
+        <translation>Versión %1 · Abre tu dashboard o conecta un robot.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Continue where you left off</source>
+        <translation>Continuar donde lo dejaste</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Open dashboard</source>
+        <translation>Abrir dashboard</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Projects</source>
+        <translation>Proyectos</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Recent</source>
+        <translation>Recientes</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Gallery</source>
+        <translation>Galería</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>New project</source>
+        <translation>Nuevo proyecto</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Open project...</source>
+        <translation>Abrir proyecto...</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Open log...</source>
+        <translation>Abrir registro...</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Manage gallery...</source>
+        <translation>Gestionar galería...</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Nearby robots</source>
+        <translation>Robots cercanos</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Scan Bluetooth</source>
+        <translation>Buscar Bluetooth</translation>
+    </message>
+    <message>
+        <location line="+37"/>
+        <source>Untitled project</source>
+        <translation>Proyecto sin título</translation>
+    </message>
+    <message numerus="yes">
+        <location line="+2"/>
+        <source>%n workspace(s)</source>
+        <translation>
+            <numerusform>%n espacio de trabajo</numerusform>
+            <numerusform>%n espacios de trabajo</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location line="+1"/>
+        <source>%n device(s)</source>
+        <translation>
+            <numerusform>%n dispositivo</numerusform>
+            <numerusform>%n dispositivos</numerusform>
+        </translation>
+    </message>
+    <message>
+        <location line="+27"/>
+        <source>No recent projects yet.</source>
+        <translation>Aún no hay proyectos recientes.</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>%1 (opens at startup)</source>
+        <translation>%1 (se abre al iniciar)</translation>
+    </message>
+    <message>
+        <location line="+90"/>
+        <source>Connected</source>
+        <translation>Conectado</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Disconnect</source>
+        <translation>Desconectar</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Connecting</source>
+        <translation>Conectando</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Searching</source>
+        <translation>Buscando</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Stop</source>
+        <translation>Detener</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Nearby</source>
+        <translation>Cerca</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Offline</source>
+        <translation>Sin conexión</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Connect</source>
+        <translation>Conectar</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>In this project</source>
+        <translation>En este proyecto</translation>
+    </message>
+    <message>
+        <location line="+14"/>
+        <source>Dongle</source>
+        <translation>Dongle</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Unnamed robot</source>
+        <translation>Robot sin nombre</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Add</source>
+        <translation>Añadir</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Add it to this project and connect</source>
+        <translation>Añadirlo a este proyecto y conectar</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>New</source>
+        <translation>Nuevo</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>No robots found yet. Plug one in over USB, or put it on the same Wi-Fi as this computer.</source>
+        <translation>Aún no se encontraron robots. Conecta uno por USB o ponlo en la misma Wi-Fi que este equipo.</translation>
+    </message>
+    <message>
+        <location line="+15"/>
+        <source>Cancel scan</source>
+        <translation>Cancelar escaneo</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Deep scan</source>
+        <translation>Escaneo profundo</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>Watching USB and Wi-Fi (mDNS).</source>
+        <translation>Vigilando USB y Wi-Fi (mDNS).</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Scanning Bluetooth...</source>
+        <translation>Buscando por Bluetooth...</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Deep scan: opening USB serial ports and trying the local network (%1 of %2)...</source>
+        <translation>Escaneo profundo: abriendo puertos serie USB y probando la red local (%1 de %2)...</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>Deep scan opens every unidentified USB serial port and tries port 44300 on your local network. Opening a port can restart a board that is plugged in.</source>
+        <translation>El escaneo profundo abre cada puerto serie USB no identificado y prueba el puerto 44300 en tu red local. Abrir un puerto puede reiniciar una placa conectada.</translation>
+    </message>
+</context>
+<context>
     <name>traceview::HubBinder</name>
     <message>
-        <location filename="../lib/protocol/hubbinder.cpp" line="+149" />
+        <location filename="../lib/protocol/hubbinder.cpp" line="+149"/>
         <source>could not send hub binding for device 0x%1</source>
         <translation>no se pudo enviar el enlace del hub para el dispositivo 0x%1</translation>
     </message>
     <message>
-        <location line="+44" />
+        <location line="+44"/>
         <source>hub rejected the binding for device 0x%1: %2</source>
         <translation>el hub rechazó el enlace del dispositivo 0x%1: %2</translation>
     </message>
@@ -3591,18 +3819,18 @@ Permitidos: %1</translation>
 <context>
     <name>traceview::IconPickerDialog</name>
     <message>
-        <location filename="../lib/core/iconpickerdialog.cpp" line="+82" />
-        <location line="+4" />
+        <location filename="../lib/core/iconpickerdialog.cpp" line="+82"/>
+        <location line="+4"/>
         <source>Choose Icon</source>
         <translation>Elegir icono</translation>
     </message>
     <message>
-        <location line="+3" />
+        <location line="+3"/>
         <source>Search icons (English names and tags)</source>
         <translation>Buscar iconos (nombres y etiquetas en inglés)</translation>
     </message>
     <message>
-        <location line="+59" />
+        <location line="+59"/>
         <source>No icon selected</source>
         <translation>Ningún icono seleccionado</translation>
     </message>
@@ -3610,158 +3838,158 @@ Permitidos: %1</translation>
 <context>
     <name>traceview::LedConfigEditor</name>
     <message>
-        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="+14" />
+        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="+14"/>
         <source>(auto)</source>
         <translation>(automático)</translation>
     </message>
     <message>
-        <location line="+9" />
+        <location line="+9"/>
         <source>Which field of the topic drives the LED -- pick one the device has reported, or type its numeric id.</source>
         <translation>Qué campo del tema controla el LED: elija uno que el dispositivo haya informado o escriba su id numérico.</translation>
     </message>
     <message>
-        <location line="+4" />
+        <location line="+4"/>
         <source>Status</source>
         <translation>Estado</translation>
     </message>
     <message>
-        <location line="+5" />
+        <location line="+5"/>
         <source>One color</source>
         <translation>Un color</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>RGB from the field (0xRRGGBB)</source>
         <translation>RGB del campo (0xRRGGBB)</translation>
     </message>
     <message>
-        <location line="+4" />
+        <location line="+4"/>
         <source>Value is not zero</source>
         <translation>El valor no es cero</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Value is zero</source>
         <translation>El valor es cero</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Value is above</source>
         <translation>El valor supera el umbral</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Value is below</source>
         <translation>El valor está bajo el umbral</translation>
     </message>
     <message>
-        <location line="+9" />
+        <location line="+9"/>
         <source>Blink while lit</source>
         <translation>Parpadear mientras está encendido</translation>
     </message>
     <message>
-        <location line="+3" />
-        <location line="+11" />
+        <location line="+3"/>
+        <location line="+11"/>
         <source> ms</source>
         <translation> ms</translation>
     </message>
     <message>
-        <location line="-7" />
+        <location line="-7"/>
         <source>Shown while lit</source>
         <translation>Se muestra encendido</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Shown while off</source>
         <translation>Se muestra apagado</translation>
     </message>
     <message>
-        <location line="+7" />
+        <location line="+7"/>
         <source>Requested update period.</source>
         <translation>Periodo de actualización solicitado.</translation>
     </message>
     <message>
-        <location line="+5" />
+        <location line="+5"/>
         <source>Device</source>
         <translation>Dispositivo</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Source</source>
         <translation>Origen</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Topic</source>
         <translation>Tema</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Field</source>
         <translation>Campo</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Label</source>
         <translation>Etiqueta</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Style</source>
         <translation>Estilo</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Color mode</source>
         <translation>Modo de color</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Lit when</source>
         <translation>Encendido cuando</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Threshold</source>
         <translation>Umbral</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Color</source>
         <translation>Color</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Blink period</source>
         <translation>Periodo de parpadeo</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>On text</source>
         <translation>Texto de encendido</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Off text</source>
         <translation>Texto de apagado</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Sample period</source>
         <translation>Periodo de muestreo</translation>
     </message>
     <message>
-        <location line="+79" />
+        <location line="+79"/>
         <source>LED color</source>
         <translation>Color del LED</translation>
     </message>
     <message>
-        <location line="+144" />
+        <location line="+144"/>
         <source>Palette (success)</source>
         <translation>Paleta (éxito)</translation>
     </message>
     <message>
-        <location line="+15" />
+        <location line="+15"/>
         <source>Custom...</source>
         <translation>Personalizado...</translation>
     </message>
@@ -3769,37 +3997,37 @@ Permitidos: %1</translation>
 <context>
     <name>traceview::LogViewer</name>
     <message>
-        <location filename="../lib/logs/logviewer.cpp" line="+47" />
+        <location filename="../lib/logs/logviewer.cpp" line="+47"/>
         <source>Timestamp (µs)</source>
         <translation>Marca de tiempo (µs)</translation>
     </message>
     <message>
-        <location line="+0" />
+        <location line="+0"/>
         <source>Severity</source>
         <translation>Gravedad</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Source ID</source>
         <translation>ID de origen</translation>
     </message>
     <message>
-        <location line="+0" />
+        <location line="+0"/>
         <source>Boot ID</source>
         <translation>ID de arranque</translation>
     </message>
     <message>
-        <location line="+0" />
+        <location line="+0"/>
         <source>Sequence</source>
         <translation>Secuencia</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Message</source>
         <translation>Mensaje</translation>
     </message>
     <message>
-        <location line="+47" />
+        <location line="+47"/>
         <source>Open Log File</source>
         <translation>Abrir archivo de registro</translation>
     </message>
@@ -3807,33 +4035,33 @@ Permitidos: %1</translation>
 <context>
     <name>traceview::LoginDialog</name>
     <message>
-        <location filename="../lib/core/logindialog.cpp" line="+20" />
-        <location line="+3" />
+        <location filename="../lib/core/logindialog.cpp" line="+20"/>
+        <location line="+3"/>
         <source>Enter Developer Mode</source>
         <translation>Entrar en Modo Desarrollador</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Enter your developer username and password.</source>
         <translation>Introduzca su usuario y contraseña de desarrollador.</translation>
     </message>
     <message>
-        <location line="+7" />
+        <location line="+7"/>
         <source>Username:</source>
         <translation>Usuario:</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Password:</source>
         <translation>Contraseña:</translation>
     </message>
     <message>
-        <location line="+15" />
+        <location line="+15"/>
         <source>Log In</source>
         <translation>Iniciar sesión</translation>
     </message>
     <message>
-        <location line="+18" />
+        <location line="+18"/>
         <source>Incorrect username or password.</source>
         <translation>Usuario o contraseña incorrectos.</translation>
     </message>
@@ -3841,7 +4069,7 @@ Permitidos: %1</translation>
 <context>
     <name>traceview::MainWindow</name>
     <message numerus="yes">
-        <location filename="../lib/core/mainwindow.cpp" line="+388" />
+        <location filename="../lib/core/mainwindow.cpp" line="+388"/>
         <source>This device carries %n other device(s) (%1). Remove or repoint them first.</source>
         <translation>
             <numerusform>Este dispositivo transporta %n dispositivo más (%1). Elimínelo o rediríjalo primero.</numerusform>
@@ -3849,58 +4077,58 @@ Permitidos: %1</translation>
         </translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>, </source>
         <translation>, </translation>
     </message>
     <message>
-        <location line="+367" />
+        <location line="+373"/>
         <source>AI assistant access is off.</source>
         <translation>El acceso de asistentes de IA está desactivado.</translation>
     </message>
     <message>
-        <location line="+12" />
+        <location line="+12"/>
         <source>AI assistant access could not start: %1</source>
         <translation>No se pudo iniciar el acceso de asistentes de IA: %1</translation>
     </message>
     <message>
-        <location line="+5" />
+        <location line="+5"/>
         <source>AI assistant connected: %1</source>
         <translation>Asistente de IA conectado: %1</translation>
     </message>
     <message>
-        <location line="+0" />
-        <location line="+6" />
+        <location line="+0"/>
+        <location line="+6"/>
         <source>unknown</source>
         <translation>desconocido</translation>
     </message>
     <message>
-        <location line="+0" />
+        <location line="+0"/>
         <source>AI assistant disconnected: %1</source>
         <translation>Asistente de IA desconectado: %1</translation>
     </message>
     <message>
-        <location line="+430" />
+        <location line="+430"/>
         <source>Pending</source>
         <translation>Pendiente</translation>
     </message>
     <message>
-        <location line="+0" />
+        <location line="+0"/>
         <source>Not granted</source>
         <translation>No concedido</translation>
     </message>
     <message>
-        <location line="+23" />
+        <location line="+23"/>
         <source>%1: %2</source>
         <translation>%1: %2</translation>
     </message>
     <message>
-        <location line="+0" />
+        <location line="+0"/>
         <source>Unknown topic</source>
         <translation>Tema desconocido</translation>
     </message>
     <message>
-        <location line="+3" />
+        <location line="+3"/>
         <source>%1
 Requested: %2
 Widgets: %3</source>
@@ -3909,7 +4137,7 @@ Solicitado: %2
 Widgets: %3</translation>
     </message>
     <message>
-        <location line="+4" />
+        <location line="+4"/>
         <source>
 Bytes: %1
 Drops: %2</source>
@@ -3918,409 +4146,415 @@ Bytes: %1
 Pérdidas: %2</translation>
     </message>
     <message>
-        <location line="+8" />
+        <location line="+8"/>
         <source>No subscriptions</source>
         <translation>Sin suscripciones</translation>
     </message>
     <message>
-        <location line="+10" />
+        <location line="+10"/>
         <source>&amp;File</source>
         <translation>&amp;Archivo</translation>
     </message>
     <message>
-        <location line="+3" />
+        <location line="+3"/>
         <source>&amp;New Project</source>
         <translation>&amp;Nuevo proyecto</translation>
     </message>
     <message>
-        <location line="+4" />
+        <location line="+4"/>
         <source>&amp;Open Project...</source>
         <translation>&amp;Abrir proyecto...</translation>
     </message>
     <message>
-        <location line="+4" />
+        <location line="+4"/>
         <source>Open &amp;Recent</source>
         <translation>Abrir &amp;reciente</translation>
     </message>
     <message>
-        <location line="+5" />
+        <location line="+5"/>
         <source>&amp;Save Project</source>
         <translation>&amp;Guardar proyecto</translation>
     </message>
     <message>
-        <location line="+4" />
+        <location line="+4"/>
         <source>Save Project &amp;As...</source>
         <translation>Guardar proyecto &amp;como...</translation>
     </message>
     <message>
-        <location line="+6" />
+        <location line="+6"/>
         <source>Add to &amp;Gallery...</source>
         <translation>Añadir a la &amp;Galería...</translation>
     </message>
     <message>
-        <location line="+3" />
+        <location line="+3"/>
         <source>Dashboard Gall&amp;ery...</source>
         <translation>Gal&amp;ería de Dashboards...</translation>
     </message>
     <message>
-        <location line="+5" />
+        <location line="+5"/>
         <source>Open &amp;Log Offline...</source>
         <translation>Abrir ®istro sin conexión...</translation>
     </message>
     <message>
-        <location line="+5" />
+        <location line="+5"/>
         <source>Upload &amp;Firmware (OTA)...</source>
         <translation>Subir &amp;firmware (OTA)...</translation>
     </message>
     <message>
-        <location line="+5" />
+        <location line="+5"/>
         <source>BTP Traffic &amp;Monitor...</source>
         <translation>&amp;Monitor de Tráfico BTP...</translation>
     </message>
     <message>
-        <location line="+5" />
+        <location line="+5"/>
         <source>&amp;View</source>
         <translation>&amp;Ver</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>&amp;Keyboard Shortcuts...</source>
         <translation>Atajos de &amp;Teclado...</translation>
     </message>
     <message>
-        <location line="+4" />
+        <location line="+4"/>
         <source>Open &amp;Log Folder</source>
         <translation>Abrir Carpeta de &amp;Registros</translation>
     </message>
     <message>
-        <location line="+4" />
+        <location line="+4"/>
         <source>&amp;Reset Panel Positions</source>
         <translation>&amp;Restablecer Posiciones de Paneles</translation>
     </message>
     <message>
-        <location line="+10" />
+        <location line="+10"/>
         <source>&amp;Font</source>
         <translation>&amp;Fuente</translation>
     </message>
     <message>
-        <location line="+20" />
+        <location line="+20"/>
         <source>&amp;Language</source>
         <translation>&amp;Idioma</translation>
     </message>
     <message>
-        <location line="+24" />
+        <location line="+24"/>
         <source>Restart Required</source>
         <translation>Reinicio necesario</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>The application needs to restart to apply the new language. Restart now?</source>
         <translation>La aplicación debe reiniciarse para aplicar el nuevo idioma. ¿Reiniciar ahora?</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Restart Now</source>
         <translation>Reiniciar ahora</translation>
     </message>
     <message>
-        <location line="+0" />
-        <location line="+4310" />
+        <location line="+0"/>
+        <location line="+4555"/>
         <source>Later</source>
         <translation>Más tarde</translation>
     </message>
     <message>
-        <location line="-4303" />
+        <location line="-4548"/>
         <source>&amp;Access</source>
         <translation>&amp;Acceso</translation>
     </message>
     <message>
-        <location line="+9" />
-        <location line="+3" />
+        <location line="+9"/>
+        <location line="+3"/>
         <source>&amp;Settings</source>
         <translation>&amp;Configuración</translation>
     </message>
     <message>
-        <location line="+8" />
+        <location line="+8"/>
         <source>&amp;Notifications</source>
         <translation>&amp;Notificaciones</translation>
     </message>
     <message>
-        <location line="+12" />
+        <location line="+12"/>
         <source>&amp;Debug</source>
         <translation>&amp;Depuración</translation>
     </message>
     <message>
-        <location line="+7" />
+        <location line="+7"/>
         <source>Keyboard Diagnostics</source>
         <translation>Diagnóstico del teclado</translation>
     </message>
     <message>
-        <location line="+10" />
+        <location line="+10"/>
         <source>Copy Keyboard Log</source>
         <translation>Copiar registro del teclado</translation>
     </message>
     <message>
-        <location line="+6" />
+        <location line="+6"/>
         <source>&amp;About</source>
         <translation>A&amp;cerca de</translation>
     </message>
     <message>
-        <location line="+3" />
+        <location line="+3"/>
         <source>Dona&amp;te</source>
         <translation>Do&amp;nar</translation>
     </message>
     <message>
-        <location line="+25" />
+        <location line="+25"/>
         <source>More options</source>
         <translation>Más opciones</translation>
     </message>
     <message>
-        <location line="+33" />
+        <location line="+33"/>
         <source>Connected as: %1</source>
         <translation>Conectado como: %1</translation>
     </message>
     <message>
-        <location line="+9" />
+        <location line="+9"/>
         <source>Using the default admin password -- change it in Manage Users</source>
         <translation>Usando la contraseña de admin por defecto -- cámbiela en Gestionar Usuarios</translation>
     </message>
     <message>
-        <location line="+5" />
+        <location line="+5"/>
         <source>View as user</source>
         <translation>Ver como usuario</translation>
     </message>
     <message>
-        <location line="+11" />
+        <location line="+11"/>
         <source>&amp;Manage Users...</source>
         <translation>&amp;Gestionar Usuarios...</translation>
     </message>
     <message>
-        <location line="+6" />
+        <location line="+6"/>
         <source>&amp;Exit Developer Mode</source>
         <translation>&amp;Salir del Modo Desarrollador</translation>
     </message>
     <message>
-        <location line="+16" />
+        <location line="+16"/>
         <source>&amp;Enter Developer Mode...</source>
         <translation>&amp;Entrar en Modo Desarrollador...</translation>
     </message>
     <message>
-        <location line="+192" />
+        <location line="+196"/>
         <source>Add</source>
         <translation>Añadir</translation>
     </message>
     <message>
-        <location line="+5" />
+        <location line="+5"/>
         <source>Remove</source>
         <translation>Eliminar</translation>
     </message>
     <message>
-        <location line="+5" />
+        <location line="+5"/>
         <source>Copy</source>
         <translation>Copiar</translation>
     </message>
     <message>
-        <location line="+5" />
+        <location line="+5"/>
         <source>Paste</source>
         <translation>Pegar</translation>
     </message>
     <message>
-        <location line="+10" />
+        <location line="+10"/>
         <source>To Front</source>
         <translation>Al frente</translation>
     </message>
     <message>
-        <location line="+6" />
+        <location line="+6"/>
         <source>Forward</source>
         <translation>Avanzar</translation>
     </message>
     <message>
-        <location line="+6" />
+        <location line="+6"/>
         <source>Backward</source>
         <translation>Retroceder</translation>
     </message>
     <message>
-        <location line="+6" />
+        <location line="+6"/>
         <source>To Back</source>
         <translation>Al fondo</translation>
     </message>
     <message>
-        <location line="+6" />
+        <location line="+6"/>
         <source>Group</source>
         <translation>Agrupar</translation>
     </message>
     <message>
-        <location line="+5" />
+        <location line="+5"/>
         <source>Ungroup</source>
         <translation>Desagrupar</translation>
     </message>
     <message>
-        <location line="+18" />
-        <location line="+3559" />
+        <location line="+18"/>
+        <location line="+3800"/>
         <source>Undo</source>
         <translation>Deshacer</translation>
     </message>
     <message>
-        <location line="-3557" />
-        <location line="+3557" />
+        <location line="-3798"/>
+        <location line="+3798"/>
         <source>Redo</source>
         <translation>Rehacer</translation>
     </message>
     <message>
-        <location line="-3514" />
+        <location line="-3755"/>
         <source>Add Device</source>
         <translation>Añadir Dispositivo</translation>
     </message>
     <message>
-        <location line="+9" />
+        <location line="+9"/>
         <source>Remove Device</source>
         <translation>Eliminar Dispositivo</translation>
     </message>
     <message>
-        <location line="+56" />
+        <location line="+56"/>
         <source>Small</source>
         <translation>Pequeño</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Medium</source>
         <translation>Mediano</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Large</source>
         <translation>Grande</translation>
     </message>
     <message>
-        <location line="+28" />
+        <location line="+28"/>
         <source>Shrink the canvas</source>
         <translation>Reducir el lienzo</translation>
     </message>
     <message>
-        <location line="+10" />
+        <location line="+10"/>
         <source>Grow the canvas</source>
         <translation>Ampliar el lienzo</translation>
     </message>
     <message>
-        <location line="+23" />
+        <location line="+23"/>
         <source>Grid 1× (standard)</source>
         <translation>Cuadrícula 1× (estándar)</translation>
     </message>
     <message>
-        <location line="+0" />
+        <location line="+0"/>
         <source>Grid %1×</source>
         <translation>Cuadrícula %1×</translation>
     </message>
     <message>
-        <location line="+36" />
-        <location line="+3480" />
+        <location line="+36"/>
+        <location line="+3721"/>
         <source>Fullscreen dashboard (F11)</source>
         <translation>Panel en pantalla completa (F11)</translation>
     </message>
     <message>
-        <location line="-3299" />
+        <location line="-3633"/>
+        <location line="+500"/>
+        <source>Home</source>
+        <translation>Inicio</translation>
+    </message>
+    <message>
+        <location line="-393"/>
         <source>Rename Workspace</source>
         <translation>Renombrar Espacio de Trabajo</translation>
     </message>
     <message>
-        <location line="+7" />
-        <source>Renamed workspace "%1" to "%2".</source>
-        <translation>Espacio de trabajo "%1" renombrado a "%2".</translation>
+        <location line="+7"/>
+        <source>Renamed workspace &quot;%1&quot; to &quot;%2&quot;.</source>
+        <translation>Espacio de trabajo &quot;%1&quot; renombrado a &quot;%2&quot;.</translation>
     </message>
     <message>
-        <location line="+35" />
+        <location line="+35"/>
         <source>Appearance &amp;Presets</source>
         <translation>&amp;Ajustes de apariencia</translation>
     </message>
     <message>
-        <location line="+22" />
+        <location line="+22"/>
         <source>Save Current Appearance as Preset...</source>
         <translation>Guardar apariencia actual como ajuste...</translation>
     </message>
     <message>
-        <location line="+3" />
+        <location line="+3"/>
         <source>Delete Preset</source>
         <translation>Eliminar ajuste</translation>
     </message>
     <message>
-        <location line="+35" />
+        <location line="+35"/>
         <source>New Palette...</source>
         <translation>Nueva paleta...</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Edit Palette...</source>
         <translation>Editar paleta...</translation>
     </message>
     <message>
-        <location line="+2" />
-        <location line="+62" />
+        <location line="+2"/>
+        <location line="+62"/>
         <source>Delete Palette</source>
         <translation>Eliminar paleta</translation>
     </message>
     <message>
-        <location line="-56" />
+        <location line="-56"/>
         <source>&amp;Workspace Appearance</source>
         <translation>Apariencia del &amp;espacio</translation>
     </message>
     <message>
-        <location line="+3" />
+        <location line="+3"/>
         <source>Pin Current Appearance to This Workspace</source>
         <translation>Fijar la apariencia actual en este espacio de trabajo</translation>
     </message>
     <message>
-        <location line="+21" />
+        <location line="+21"/>
         <source>Save Appearance Preset</source>
         <translation>Guardar ajuste de apariencia</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Preset name:</source>
         <translation>Nombre del ajuste:</translation>
     </message>
     <message>
-        <location line="+4" />
-        <source>Saved appearance preset "%1".</source>
-        <translation>Ajuste de apariencia "%1" guardado.</translation>
+        <location line="+4"/>
+        <source>Saved appearance preset &quot;%1&quot;.</source>
+        <translation>Ajuste de apariencia &quot;%1&quot; guardado.</translation>
     </message>
     <message>
-        <location line="+8" />
+        <location line="+8"/>
         <source>%1 (custom)</source>
         <translation>%1 (personalizada)</translation>
     </message>
     <message>
-        <location line="+20" />
-        <source>Delete the palette "%1"?</source>
-        <translation>¿Eliminar la paleta "%1"?</translation>
+        <location line="+20"/>
+        <source>Delete the palette &quot;%1&quot;?</source>
+        <translation>¿Eliminar la paleta &quot;%1&quot;?</translation>
     </message>
     <message>
-        <location line="+45" />
+        <location line="+45"/>
         <source>This workspace now keeps its own appearance.</source>
         <translation>Este espacio de trabajo ahora tiene su propia apariencia.</translation>
     </message>
     <message>
-        <location line="+281" />
+        <location line="+286"/>
         <source>Grid precision: %1×</source>
         <translation>Precisión de la cuadrícula: %1×</translation>
     </message>
     <message>
-        <location line="+15" />
+        <location line="+15"/>
         <source>Widgets snap to a finer grid from now on. Nothing on the canvas moves.</source>
         <translation>Los widgets se ajustan a una cuadrícula más fina a partir de ahora. Nada se mueve en el lienzo.</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Widgets snap to a coarser grid from now on. Nothing on the canvas moves, but a widget placed between the new lines jumps to the nearest one the next time you drag or resize it.</source>
         <translation>Los widgets se ajustan a una cuadrícula más gruesa a partir de ahora. Nada se mueve en el lienzo, pero un widget situado entre las nuevas líneas salta a la más cercana la próxima vez que lo arrastres o cambies su tamaño.</translation>
     </message>
     <message>
-        <location line="+4" />
+        <location line="+4"/>
         <source>Grid Precision</source>
         <translation>Precisión de la cuadrícula</translation>
     </message>
     <message>
-        <location line="+1" />
-        <source>Change this workspace's grid from %1× to %2×?
+        <location line="+1"/>
+        <source>Change this workspace&apos;s grid from %1× to %2×?
 
 %3</source>
         <translation>¿Cambiar la cuadrícula de este espacio de trabajo de %1× a %2×?
@@ -4328,151 +4562,171 @@ Pérdidas: %2</translation>
 %3</translation>
     </message>
     <message>
-        <location line="+387" />
+        <location line="+390"/>
         <source>Notifications</source>
         <translation>Notificaciones</translation>
     </message>
     <message>
-        <location line="+153" />
+        <location line="+153"/>
         <source>Close</source>
         <translation>Cerrar</translation>
     </message>
     <message>
-        <location line="+695" />
+        <location line="+696"/>
         <source>%1: found at %2</source>
         <translation>%1: encontrado en %2</translation>
     </message>
     <message>
-        <location line="+377" />
+        <location line="+390"/>
         <source>%1: trying %2</source>
         <translation>%1: probando %2</translation>
     </message>
     <message>
-        <location line="+408" />
+        <location line="+417"/>
         <source>The current project has unsaved changes. Save them first?</source>
         <translation>El proyecto actual tiene cambios sin guardar. ¿Desea guardarlos primero?</translation>
     </message>
     <message>
-        <location line="+89" />
-        <location line="+8" />
-        <location line="+5" />
-        <location line="+8" />
-        <location line="+12" />
+        <location line="+89"/>
+        <location line="+8"/>
+        <location line="+5"/>
+        <location line="+8"/>
+        <location line="+12"/>
         <source>Add to Gallery</source>
         <translation>Añadir a la Galería</translation>
     </message>
     <message>
-        <location line="-33" />
+        <location line="-33"/>
         <source>Dashboard name:</source>
         <translation>Nombre del dashboard:</translation>
     </message>
     <message>
-        <location line="+14" />
-        <source>The gallery already has a dashboard named "%1". Replace it?</source>
-        <translation>La galería ya tiene un dashboard llamado "%1". ¿Reemplazarlo?</translation>
+        <location line="+14"/>
+        <source>The gallery already has a dashboard named &quot;%1&quot;. Replace it?</source>
+        <translation>La galería ya tiene un dashboard llamado &quot;%1&quot;. ¿Reemplazarlo?</translation>
     </message>
     <message>
-        <location line="+16" />
-        <source>Added "%1" to the gallery -- it now opens at startup.</source>
-        <translation>"%1" añadido a la galería -- ahora se abre al iniciar.</translation>
+        <location line="+16"/>
+        <source>Added &quot;%1&quot; to the gallery -- it now opens at startup.</source>
+        <translation>&quot;%1&quot; añadido a la galería -- ahora se abre al iniciar.</translation>
     </message>
     <message>
-        <location line="+4" />
-        <source>Open "%1" every time TraceView starts, instead of "%2"?</source>
-        <translation>¿Abrir "%1" cada vez que se inicie TraceView, en lugar de "%2"?</translation>
+        <location line="+4"/>
+        <source>Open &quot;%1&quot; every time TraceView starts, instead of &quot;%2&quot;?</source>
+        <translation>¿Abrir &quot;%1&quot; cada vez que se inicie TraceView, en lugar de &quot;%2&quot;?</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Set as Default</source>
         <translation>Establecer como Predeterminado</translation>
     </message>
     <message>
-        <location line="+0" />
+        <location line="+0"/>
         <source>Not Now</source>
         <translation>Ahora No</translation>
     </message>
     <message>
-        <location line="+2" />
-        <source>"%1" now opens at startup.</source>
-        <translation>"%1" ahora se abre al iniciar.</translation>
+        <location line="+2"/>
+        <source>&quot;%1&quot; now opens at startup.</source>
+        <translation>&quot;%1&quot; ahora se abre al iniciar.</translation>
     </message>
     <message>
-        <location line="+2" />
-        <source>Saved "%1" to the gallery.</source>
-        <translation>"%1" guardado en la galería.</translation>
+        <location line="+2"/>
+        <source>Saved &quot;%1&quot; to the gallery.</source>
+        <translation>&quot;%1&quot; guardado en la galería.</translation>
     </message>
     <message>
-        <location line="+293" />
+        <location line="+137"/>
+        <source>Example dashboard</source>
+        <translation>Dashboard de ejemplo</translation>
+    </message>
+    <message>
+        <location line="+62"/>
+        <source>Dongle</source>
+        <translation>Dongle</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Robot</source>
+        <translation>Robot</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>Added &quot;%1&quot; to the project.</source>
+        <translation>Se añadió &quot;%1&quot; al proyecto.</translation>
+    </message>
+    <message>
+        <location line="+280"/>
         <source>not connected</source>
         <translation>no conectado</translation>
     </message>
     <message>
-        <location line="+34" />
+        <location line="+34"/>
         <source>Firmware</source>
         <translation>Firmware</translation>
     </message>
     <message>
-        <location line="+365" />
+        <location line="+365"/>
         <source>Update available: v%1</source>
         <translation>Actualización disponible: v%1</translation>
     </message>
     <message>
-        <location line="+43" />
+        <location line="+43"/>
         <source>Up to date (v%1)</source>
         <translation>Actualizado (v%1)</translation>
     </message>
     <message>
-        <location line="+3" />
+        <location line="+3"/>
         <source>TraceView is up to date.</source>
         <translation>TraceView está actualizado.</translation>
     </message>
     <message>
-        <location line="+7" />
+        <location line="+7"/>
         <source>Update check failed: %1</source>
         <translation>Falló la búsqueda de actualizaciones: %1</translation>
     </message>
     <message>
-        <location line="+8" />
-        <location line="+9" />
-        <location line="+8" />
-        <location line="+36" />
-        <location line="+37" />
+        <location line="+8"/>
+        <location line="+9"/>
+        <location line="+8"/>
+        <location line="+36"/>
+        <location line="+37"/>
         <source>Update</source>
         <translation>Actualizar</translation>
     </message>
     <message>
-        <location line="-89" />
+        <location line="-89"/>
         <source>Automatic installation requires running an AppImage. Download the AppImage from the release page.</source>
         <translation>La instalación automática requiere ejecutar un AppImage. Descargue el AppImage desde la página de la versión.</translation>
     </message>
     <message>
-        <location line="+9" />
+        <location line="+9"/>
         <source>This release has no download for this platform. Opening the release page instead.</source>
         <translation>Esta versión no tiene descarga para esta plataforma. Abriendo la página de la versión.</translation>
     </message>
     <message>
-        <location line="+8" />
-        <source>This release has no SHA256SUMS.txt to verify the download against, so it can't be installed automatically. Opening the release page instead.</source>
+        <location line="+8"/>
+        <source>This release has no SHA256SUMS.txt to verify the download against, so it can&apos;t be installed automatically. Opening the release page instead.</source>
         <translation>Esta versión no tiene SHA256SUMS.txt para verificar la descarga, así que no puede instalarse automáticamente. Abriendo la página de la versión.</translation>
     </message>
     <message>
-        <location line="-61" />
-        <location line="+66" />
+        <location line="-61"/>
+        <location line="+66"/>
         <source>Downloading TraceView %1...</source>
         <translation>Descargando TraceView %1...</translation>
     </message>
     <message>
-        <location line="+23" />
+        <location line="+23"/>
         <source>Confirm the installation in the Android installer.</source>
         <translation>Confirma la instalación en el instalador de Android.</translation>
     </message>
     <message>
-        <location line="+18" />
+        <location line="+18"/>
         <source>Close TraceView</source>
         <translation>Cerrar TraceView</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>TraceView needs to be closed and opened again to apply these changes. After closing, open it again from your apps.
 
 Choose Later to keep working -- the changes will apply the next time you open TraceView.</source>
@@ -4481,461 +4735,466 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
 Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima vez que abras TraceView.</translation>
     </message>
     <message>
-        <location line="+4" />
+        <location line="+4"/>
         <source>Close App</source>
         <translation>Cerrar app</translation>
     </message>
     <message>
-        <location line="-3591" />
-        <location line="+3276" />
+        <location line="-3818"/>
+        <location line="+3503"/>
         <source>Devices</source>
         <translation>Dispositivos</translation>
     </message>
     <message>
-        <location line="-3201" />
+        <location line="-3428"/>
         <source>Subscriptions</source>
         <translation>Suscripciones</translation>
     </message>
     <message>
-        <location line="+269" />
+        <location line="+269"/>
         <source>New Workspace</source>
         <translation>Nuevo Espacio de Trabajo</translation>
     </message>
     <message>
-        <location line="-239" />
-        <location line="+239" />
+        <location line="-239"/>
+        <location line="+239"/>
         <source>Name:</source>
         <translation>Nombre:</translation>
     </message>
     <message>
-        <location line="-2202" />
+        <location line="-2226"/>
         <source>TraceView v%1</source>
         <translation>TraceView v%1</translation>
     </message>
     <message>
-        <location line="+2203" />
+        <location line="+2227"/>
         <source>Workspace</source>
         <translation>Espacio de Trabajo</translation>
     </message>
     <message>
-        <location line="+9" />
-        <source>Created workspace "%1".</source>
+        <location line="+9"/>
+        <source>Created workspace &quot;%1&quot;.</source>
         <translation>Espacio de trabajo «%1» creado.</translation>
     </message>
     <message>
-        <location line="+30" />
+        <location line="+30"/>
         <source>Delete Workspace</source>
         <translation>Eliminar Espacio de Trabajo</translation>
     </message>
     <message>
-        <location line="+1" />
-        <source>Delete workspace "%1"? This cannot be undone.</source>
+        <location line="+1"/>
+        <source>Delete workspace &quot;%1&quot;? This cannot be undone.</source>
         <translation>¿Eliminar el espacio de trabajo «%1»? Esta acción no se puede deshacer.</translation>
     </message>
     <message>
-        <location line="+24" />
-        <source>Deleted workspace "%1".</source>
+        <location line="+24"/>
+        <source>Deleted workspace &quot;%1&quot;.</source>
         <translation>Espacio de trabajo «%1» eliminado.</translation>
     </message>
     <message>
-        <location line="+81" />
-        <location line="+2774" />
+        <location line="+81"/>
+        <location line="+3001"/>
         <source>Add widget</source>
         <translation>Añadir widget</translation>
     </message>
     <message>
-        <location line="-2771" />
+        <location line="-2998"/>
         <source>Remove selected widget (%1)</source>
         <translation>Eliminar widget seleccionado (%1)</translation>
     </message>
     <message>
-        <location line="+3" />
-        <location line="+2781" />
+        <location line="+8"/>
+        <location line="+3003"/>
         <source>Add device</source>
         <translation>Añadir dispositivo</translation>
     </message>
     <message>
-        <location line="-2778" />
+        <location line="-3000"/>
         <source>Remove selected device (%1)</source>
         <translation>Eliminar dispositivo seleccionado (%1)</translation>
     </message>
     <message>
-        <location line="+3" />
+        <location line="+3"/>
         <source>Open a .blog log file</source>
         <translation>Abrir un archivo de registro .blog</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Copy selected widget (%1)</source>
         <translation>Copiar widget seleccionado (%1)</translation>
     </message>
     <message>
-        <location line="+4" />
+        <location line="+4"/>
         <source>Paste as a new widget (%1)</source>
         <translation>Pegar como nuevo widget (%1)</translation>
     </message>
     <message>
-        <location line="+3" />
+        <location line="+3"/>
         <source>Bring to front</source>
         <translation>Traer al frente</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Bring forward</source>
         <translation>Avanzar</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Send backward</source>
         <translation>Retroceder</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Send to back</source>
         <translation>Enviar al fondo</translation>
     </message>
     <message>
-        <location line="+3" />
-        <source>Group — lock the selected widgets' positions together</source>
+        <location line="+3"/>
+        <source>Group — lock the selected widgets&apos; positions together</source>
         <translation>Agrupar — bloquea las posiciones de los widgets seleccionados entre sí</translation>
     </message>
     <message>
-        <location line="+3" />
+        <location line="+3"/>
         <source>Ungroup — let the selected widgets move independently again</source>
         <translation>Desagrupar — permite que los widgets seleccionados se muevan de forma independiente de nuevo</translation>
     </message>
     <message>
-        <location line="+28" />
+        <location line="+28"/>
         <source>Screen size: Small</source>
         <translation>Tamaño de pantalla: Pequeño</translation>
     </message>
     <message>
-        <location line="+4" />
+        <location line="+4"/>
         <source>Screen size: Medium</source>
         <translation>Tamaño de pantalla: Mediano</translation>
     </message>
     <message>
-        <location line="+4" />
+        <location line="+4"/>
         <source>Screen size: Large</source>
         <translation>Tamaño de pantalla: Grande</translation>
     </message>
     <message>
-        <location line="+272" />
+        <location line="+272"/>
         <source>Disable editing — lock the dashboard layout</source>
         <translation>Desactivar edición — bloquear el diseño del dashboard</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Enable editing — rearrange the dashboard layout</source>
         <translation>Activar edición — reorganizar el diseño del dashboard</translation>
     </message>
     <message>
-        <location line="+7" />
+        <location line="+7"/>
         <source>Hide the Layers/Properties panels</source>
         <translation>Ocultar los paneles Capas/Propiedades</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Show the Layers/Properties panels</source>
         <translation>Mostrar los paneles Capas/Propiedades</translation>
     </message>
     <message>
-        <location line="+386" />
+        <location line="+389"/>
         <source>New Device</source>
         <translation>Nuevo Dispositivo</translation>
     </message>
     <message>
-        <location line="+381" />
+        <location line="+381"/>
         <source>%1: robot is responding again</source>
         <translation>%1: el robot vuelve a responder</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>%1: robot stopped responding (hub link still up)</source>
         <translation>%1: el robot dejó de responder (el enlace del hub sigue activo)</translation>
     </message>
     <message>
-        <location line="+40" />
+        <location line="+41"/>
         <source>No devices configured</source>
         <translation>No hay dispositivos configurados</translation>
     </message>
     <message>
-        <location line="-42" />
-        <location line="+55" />
+        <location line="-43"/>
+        <location line="+56"/>
         <source>(unnamed)</source>
         <translation>(sin nombre)</translation>
     </message>
     <message>
-        <location filename="../lib/core/appearancecatalog.cpp" line="-172" />
+        <location filename="../lib/core/appearancecatalog.cpp" line="-183"/>
         <source>&amp;Palette</source>
         <translation>&amp;Paleta</translation>
     </message>
     <message>
-        <location line="+19" />
+        <location line="+19"/>
         <source>Fra&amp;me</source>
         <translation>&amp;Marco</translation>
     </message>
     <message>
-        <location line="+9" />
+        <location line="+9"/>
         <source>&amp;Chart Style</source>
         <translation>&amp;Estilo de gráficos</translation>
     </message>
     <message>
-        <location line="+13" />
+        <location line="+13"/>
         <source>Contro&amp;l Style</source>
         <translation>Estilo de co&amp;ntroles</translation>
     </message>
     <message>
-        <location line="+13" />
+        <location line="+13"/>
         <source>&amp;Data Colors</source>
         <translation>&amp;Colores de datos</translation>
     </message>
     <message>
-        <location line="+9" />
+        <location line="+9"/>
         <source>&amp;Density</source>
         <translation>&amp;Densidad</translation>
     </message>
     <message>
-        <location line="+9" />
+        <location line="+9"/>
         <source>Card &amp;Header</source>
         <translation>Ca&amp;becera de tarjeta</translation>
     </message>
     <message>
-        <location line="+10" />
+        <location line="+11"/>
+        <source>Card &amp;Background</source>
+        <translation>&amp;Fondo de la tarjeta</translation>
+    </message>
+    <message>
+        <location line="+10"/>
         <source>Can&amp;vas</source>
         <translation>Fondo del lien&amp;zo</translation>
     </message>
     <message>
-        <location line="+9" />
+        <location line="+9"/>
         <source>M&amp;otion</source>
         <translation>M&amp;ovimiento</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="-1662" />
+        <location filename="../lib/core/mainwindow.cpp" line="-1671"/>
         <source>Dashboard</source>
         <translation>Dashboard</translation>
     </message>
     <message>
-        <location line="+2058" />
+        <location line="+2072"/>
         <source>%1: this BLE address now answers as a different robot (expected %2, got %3)</source>
         <translation>%1: esta dirección BLE ahora responde como otro robot (se esperaba %2, se obtuvo %3)</translation>
     </message>
     <message>
-        <location line="+518" />
-        <source>Key "%1" is already used by another widget.</source>
+        <location line="+535"/>
+        <source>Key &quot;%1&quot; is already used by another widget.</source>
         <translation>La clave «%1» ya está en uso por otro widget.</translation>
     </message>
     <message>
-        <location line="+14" />
+        <location line="+14"/>
         <source>New Project</source>
         <translation>Nuevo proyecto</translation>
     </message>
     <message>
-        <location line="+76" />
+        <location line="+76"/>
         <source>Started a new project.</source>
         <translation>Se inició un nuevo proyecto.</translation>
     </message>
     <message>
-        <location line="+26" />
-        <location line="+17" />
+        <location line="+26"/>
+        <location line="+17"/>
         <source>Save Project</source>
         <translation>Guardar proyecto</translation>
     </message>
     <message>
-        <location line="-6" />
+        <location line="-6"/>
         <source>Save Project As</source>
         <translation>Guardar proyecto como</translation>
     </message>
     <message>
-        <location line="+15" />
-        <location line="+403" />
-        <location line="+4" />
+        <location line="+15"/>
+        <location line="+599"/>
+        <location line="+4"/>
         <source>Open Project</source>
         <translation>Abrir proyecto</translation>
     </message>
     <message>
-        <location line="-320" />
+        <location line="-320"/>
         <source>Open Log File</source>
         <translation>Abrir archivo de registro</translation>
     </message>
     <message>
-        <location line="+0" />
+        <location line="+0"/>
         <source>BTP Log (*.blog)</source>
         <translation>Registro BTP (*.blog)</translation>
     </message>
     <message>
-        <location line="+113" />
+        <location line="+113"/>
         <source>OTA Update</source>
         <translation>Actualización OTA</translation>
     </message>
     <message>
-        <location line="+47" />
+        <location line="+47"/>
         <source>BTP Traffic</source>
         <translation>Tráfico BTP</translation>
     </message>
     <message>
-        <location line="+20" />
-        <location line="+276" />
+        <location line="+20"/>
+        <location line="+276"/>
         <source>Settings</source>
         <translation>Configuración</translation>
     </message>
     <message>
-        <location line="-58" />
+        <location line="-58"/>
         <source>(No Recent Projects)</source>
         <translation>(Sin proyectos recientes)</translation>
     </message>
     <message>
-        <location line="+12" />
+        <location line="+12"/>
         <source>Clear Recent Projects</source>
         <translation>Borrar proyectos recientes</translation>
     </message>
     <message>
-        <location line="+38" />
+        <location line="+38"/>
         <source>Project</source>
         <translation>Proyecto</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>New project</source>
         <translation>Nuevo proyecto</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Open project</source>
         <translation>Abrir proyecto</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Save project</source>
         <translation>Guardar proyecto</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Save project as</source>
         <translation>Guardar proyecto como</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Open log offline</source>
         <translation>Abrir registro sin conexión</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Upload firmware (OTA)</source>
         <translation>Cargar firmware (OTA)</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>BTP traffic monitor</source>
         <translation>Monitor de tráfico BTP</translation>
     </message>
     <message>
-        <location line="+4" />
+        <location line="+4"/>
         <source>Layout &amp; widgets</source>
         <translation>Diseño y widgets</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Remove selected</source>
         <translation>Eliminar seleccionados</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Copy widget</source>
         <translation>Copiar widget</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Paste widget</source>
         <translation>Pegar widget</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Bring forward / to front</source>
         <translation>Traer adelante / al frente</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Send backward / to back</source>
         <translation>Enviar atrás / al fondo</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Group / ungroup</source>
         <translation>Agrupar / desagrupar</translation>
     </message>
     <message>
-        <location line="+6" />
+        <location line="+6"/>
         <source>Remove device</source>
         <translation>Eliminar dispositivo</translation>
     </message>
     <message>
-        <location line="+3" />
+        <location line="+3"/>
         <source>Serial monitor terminal</source>
         <translation>Terminal del monitor serie</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Switch device tab</source>
         <translation>Cambiar pestaña de dispositivo</translation>
     </message>
     <message>
-        <location line="+3" />
+        <location line="+3"/>
         <source>Copy selection</source>
         <translation>Copiar selección</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Send interrupt (SIGINT)</source>
         <translation>Enviar interrupción (SIGINT)</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>%1 (nothing selected)</source>
         <translation>%1 (nada seleccionado)</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Paste into terminal</source>
         <translation>Pegar en el terminal</translation>
     </message>
     <message>
-        <location line="+4" />
+        <location line="+4"/>
         <source>Navigation &amp; view</source>
         <translation>Navegación y vista</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Run / Layout / Devices tab</source>
         <translation>Pestaña Ejecutar / Diseño / Dispositivos</translation>
     </message>
     <message>
-        <location line="+4" />
+        <location line="+4"/>
         <source>Next / previous workspace</source>
         <translation>Espacio de trabajo siguiente / anterior</translation>
     </message>
     <message>
-        <location line="+3" />
+        <location line="+3"/>
         <source>Fullscreen dashboard</source>
         <translation>Dashboard a pantalla completa</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Exit fullscreen</source>
         <translation>Salir de pantalla completa</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Notification history</source>
         <translation>Historial de notificaciones</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Keyboard shortcuts</source>
         <translation>Atajos de teclado</translation>
     </message>
     <message>
-        <location line="+55" />
+        <location line="+55"/>
         <source>Exit fullscreen (F11 / Esc)</source>
         <translation>Salir de pantalla completa (F11 / Esc)</translation>
     </message>
@@ -4943,79 +5202,79 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
 <context>
     <name>traceview::ManageUsersDialog</name>
     <message>
-        <location filename="../lib/core/manageusersdialog.cpp" line="+18" />
-        <location line="+18" />
+        <location filename="../lib/core/manageusersdialog.cpp" line="+18"/>
+        <location line="+18"/>
         <source>Manage Developer Users</source>
         <translation>Gestionar Usuarios Desarrolladores</translation>
     </message>
     <message>
-        <location line="-13" />
+        <location line="-13"/>
         <source>Add...</source>
         <translation>Añadir...</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Remove</source>
         <translation>Eliminar</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Change Password...</source>
         <translation>Cambiar Contraseña...</translation>
     </message>
     <message>
-        <location line="+35" />
-        <location line="+5" />
-        <location line="+6" />
+        <location line="+35"/>
+        <location line="+5"/>
+        <location line="+6"/>
         <source>Add User</source>
         <translation>Añadir Usuario</translation>
     </message>
     <message>
-        <location line="-11" />
+        <location line="-11"/>
         <source>Username:</source>
         <translation>Usuario:</translation>
     </message>
     <message>
-        <location line="+5" />
+        <location line="+5"/>
         <source>Password:</source>
         <translation>Contraseña:</translation>
     </message>
     <message>
-        <location line="+7" />
-        <source>Couldn't add that user — the username may already be taken.</source>
+        <location line="+7"/>
+        <source>Couldn&apos;t add that user — the username may already be taken.</source>
         <translation>No se pudo añadir el usuario — puede que el nombre ya esté en uso.</translation>
     </message>
     <message>
-        <location line="+10" />
-        <location line="+6" />
+        <location line="+10"/>
+        <location line="+6"/>
         <source>Remove User</source>
         <translation>Eliminar Usuario</translation>
     </message>
     <message>
-        <location line="-5" />
-        <source>Remove developer account "%1"?</source>
-        <translation>¿Eliminar la cuenta de desarrollador "%1"?</translation>
+        <location line="-5"/>
+        <source>Remove developer account &quot;%1&quot;?</source>
+        <translation>¿Eliminar la cuenta de desarrollador &quot;%1&quot;?</translation>
     </message>
     <message>
-        <location line="+6" />
-        <source>Couldn't remove the last remaining developer account.</source>
+        <location line="+6"/>
+        <source>Couldn&apos;t remove the last remaining developer account.</source>
         <translation>No se puede eliminar la última cuenta de desarrollador.</translation>
     </message>
     <message>
-        <location line="+12" />
+        <location line="+12"/>
         <source>Change Password</source>
         <translation>Cambiar Contraseña</translation>
     </message>
     <message>
-        <location line="+0" />
-        <source>New password for "%1":</source>
-        <translation>Nueva contraseña para "%1":</translation>
+        <location line="+0"/>
+        <source>New password for &quot;%1&quot;:</source>
+        <translation>Nueva contraseña para &quot;%1&quot;:</translation>
     </message>
 </context>
 <context>
     <name>traceview::NotificationBell</name>
     <message numerus="yes">
-        <location filename="../lib/core/notificationbell.cpp" line="+38" />
+        <location filename="../lib/core/notificationbell.cpp" line="+38"/>
         <source>Notifications: %n unread</source>
         <translation>
             <numerusform>Notificaciones: %n sin leer</numerusform>
@@ -5023,7 +5282,7 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
         </translation>
     </message>
     <message>
-        <location line="+0" />
+        <location line="+0"/>
         <source>Notifications</source>
         <translation>Notificaciones</translation>
     </message>
@@ -5031,47 +5290,47 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
 <context>
     <name>traceview::NotificationHistoryWindow</name>
     <message>
-        <location filename="../lib/diagnostics/notificationhistorywindow.cpp" line="+23" />
+        <location filename="../lib/diagnostics/notificationhistorywindow.cpp" line="+23"/>
         <source>Notification History</source>
         <translation>Historial de Notificaciones</translation>
     </message>
     <message>
-        <location line="+8" />
+        <location line="+8"/>
         <source>Severity:</source>
         <translation>Gravedad:</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>All</source>
         <translation>Todas</translation>
     </message>
     <message>
-        <location line="+12" />
+        <location line="+12"/>
         <source>Copy</source>
         <translation>Copiar</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Clear</source>
         <translation>Limpiar</translation>
     </message>
     <message>
-        <location line="+8" />
+        <location line="+8"/>
         <source>Time</source>
         <translation>Hora</translation>
     </message>
     <message>
-        <location line="+0" />
+        <location line="+0"/>
         <source>Severity</source>
         <translation>Gravedad</translation>
     </message>
     <message>
-        <location line="+0" />
+        <location line="+0"/>
         <source>Source</source>
         <translation>Origen</translation>
     </message>
     <message>
-        <location line="+0" />
+        <location line="+0"/>
         <source>Message</source>
         <translation>Mensaje</translation>
     </message>
@@ -5079,73 +5338,73 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
 <context>
     <name>traceview::NotificationListView</name>
     <message>
-        <location filename="../lib/core/notificationlistview.cpp" line="+184" />
+        <location filename="../lib/core/notificationlistview.cpp" line="+184"/>
         <source>Notifications</source>
         <translation>Notificaciones</translation>
     </message>
     <message>
-        <location line="+5" />
-        <location line="+217" />
+        <location line="+5"/>
+        <location line="+217"/>
         <source>Keep the panel open</source>
         <translation>Mantener el panel abierto</translation>
     </message>
     <message>
-        <location line="-209" />
+        <location line="-209"/>
         <source>Clear every notification</source>
         <translation>Borrar todas las notificaciones</translation>
     </message>
     <message>
-        <location line="+3" />
+        <location line="+3"/>
         <source>Notification options</source>
         <translation>Opciones de notificación</translation>
     </message>
     <message>
-        <location line="+5" />
+        <location line="+5"/>
         <source>Pop-ups over the dashboard</source>
         <translation>Ventanas emergentes sobre el dashboard</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Every notification</source>
         <translation>Todas las notificaciones</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Only the bell</source>
         <translation>Solo la campana</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Errors still pop up</source>
         <translation>Los errores siguen apareciendo</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Pinned panel</source>
         <translation>Panel fijado</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Over the dashboard</source>
         <translation>Sobre el dashboard</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Beside the dashboard (shrinks it)</source>
         <translation>Junto al dashboard (lo reduce)</translation>
     </message>
     <message>
-        <location line="+3" />
+        <location line="+3"/>
         <source>Delete automatically</source>
         <translation>Eliminar automáticamente</translation>
     </message>
     <message>
-        <location line="+3" />
+        <location line="+3"/>
         <source>Never</source>
         <translation>Nunca</translation>
     </message>
     <message numerus="yes">
-        <location line="+1" />
+        <location line="+1"/>
         <source>After %n min</source>
         <translation>
             <numerusform>Tras %n min</numerusform>
@@ -5153,7 +5412,7 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
         </translation>
     </message>
     <message numerus="yes">
-        <location line="+1" />
+        <location line="+1"/>
         <source>After %n s</source>
         <translation>
             <numerusform>Tras %n s</numerusform>
@@ -5161,37 +5420,37 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
         </translation>
     </message>
     <message>
-        <location line="+18" />
+        <location line="+18"/>
         <source>Full history…</source>
         <translation>Historial completo…</translation>
     </message>
     <message>
-        <location line="+50" />
+        <location line="+50"/>
         <source>Close</source>
         <translation>Cerrar</translation>
     </message>
     <message>
-        <location line="+13" />
+        <location line="+13"/>
         <source>All notifications</source>
         <translation>Todas las notificaciones</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Warnings and errors</source>
         <translation>Advertencias y errores</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Errors</source>
         <translation>Errores</translation>
     </message>
     <message>
-        <location line="+16" />
+        <location line="+16"/>
         <source>No notifications.</source>
         <translation>No hay notificaciones.</translation>
     </message>
     <message>
-        <location line="+85" />
+        <location line="+85"/>
         <source>Pinned: the panel stays open</source>
         <translation>Fijado: el panel queda abierto</translation>
     </message>
@@ -5199,53 +5458,53 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
 <context>
     <name>traceview::OtaClient</name>
     <message>
-        <location filename="../lib/ota/otaclient.cpp" line="+156" />
+        <location filename="../lib/ota/otaclient.cpp" line="+156"/>
         <source>Something answered at this address, but not a TraceKit recovery.</source>
         <translation>Algo respondió en esta dirección, pero no es un recovery de TraceKit.</translation>
     </message>
     <message>
-        <location line="+20" />
+        <location line="+20"/>
         <source>No address for this device: connect it over TCP, or set its OTA address in Device Settings.</source>
         <translation>No hay dirección para este dispositivo: conéctelo por TCP o configure su dirección OTA en Configuración del Dispositivo.</translation>
     </message>
     <message>
-        <location line="+20" />
-        <location line="+110" />
+        <location line="+20"/>
+        <location line="+110"/>
         <source>No address for this device.</source>
         <translation>No hay dirección para este dispositivo.</translation>
     </message>
     <message>
-        <location line="-103" />
-        <source>Couldn't open %1</source>
+        <location line="-103"/>
+        <source>Couldn&apos;t open %1</source>
         <translation>No se pudo abrir %1</translation>
     </message>
     <message>
-        <location line="+6" />
+        <location line="+6"/>
         <source>%1 is not an ESP application image (use the firmware.bin of the build, not the merged or bootloader one).</source>
         <translation>%1 no es una imagen de aplicación ESP (use el firmware.bin de la compilación, no el merged ni el del bootloader).</translation>
     </message>
     <message>
-        <location line="+32" />
+        <location line="+32"/>
         <source>The recovery is already writing another upload.</source>
         <translation>El recovery ya está escribiendo otra subida.</translation>
     </message>
     <message>
-        <location line="+5" />
+        <location line="+5"/>
         <source>The image has %1 KB; the app partition holds %2 KB.</source>
         <translation>La imagen tiene %1 KB; la partición de la aplicación admite %2 KB.</translation>
     </message>
     <message>
-        <location line="+15" />
+        <location line="+15"/>
         <source>No device password to sign the upload with.</source>
         <translation>No hay contraseña del dispositivo para firmar la subida.</translation>
     </message>
     <message>
-        <location line="+32" />
-        <source>The device refused the signature: wrong password (the device's password E). %1</source>
+        <location line="+32"/>
+        <source>The device refused the signature: wrong password (the device&apos;s password E). %1</source>
         <translation>El dispositivo rechazó la firma: contraseña incorrecta (la contraseña E del dispositivo). %1</translation>
     </message>
     <message>
-        <location line="+35" />
+        <location line="+35"/>
         <source>No device password to sign with.</source>
         <translation>No hay contraseña del dispositivo para firmar.</translation>
     </message>
@@ -5253,361 +5512,361 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
 <context>
     <name>traceview::OtaDevicePanel</name>
     <message>
-        <location filename="../lib/ota/otadevicepanel.cpp" line="+78" />
+        <location filename="../lib/ota/otadevicepanel.cpp" line="+78"/>
         <source>Asked for (btp -recovery).</source>
         <translation>Solicitado (btp -recovery).</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>The application kept crashing.</source>
         <translation>La aplicación se bloqueaba una y otra vez.</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>After a factory reset.</source>
         <translation>Tras un restablecimiento de fábrica.</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>No valid application, or the boot chose it.</source>
         <translation>No hay aplicación válida, o el arranque lo eligió.</translation>
     </message>
     <message>
-        <location line="+32" />
+        <location line="+32"/>
         <source>Cannot read the file: %1</source>
         <translation>No se puede leer el archivo: %1</translation>
     </message>
     <message>
-        <location line="+6" />
+        <location line="+6"/>
         <source>Not an ESP application image (it must start with 0xE9). Use the application .bin from build/, not the merged one.</source>
         <translation>No es una imagen de aplicación ESP (debe empezar por 0xE9). Use el .bin de la aplicación de build/, no el merged.</translation>
     </message>
     <message>
-        <location line="+165" />
+        <location line="+165"/>
         <source>Installed</source>
         <translation>Instalado</translation>
     </message>
     <message>
-        <location line="+14" />
+        <location line="+14"/>
         <source>Firmware</source>
         <translation>Firmware</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Built</source>
         <translation>Compilado</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Recovery</source>
         <translation>Recovery</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Address</source>
         <translation>Dirección</translation>
     </message>
     <message>
-        <location line="+19" />
-        <location line="+126" />
-        <location line="+365" />
+        <location line="+19"/>
+        <location line="+126"/>
+        <location line="+365"/>
         <source>Choose file…</source>
         <translation>Elegir archivo…</translation>
     </message>
     <message>
-        <location line="-503" />
+        <location line="-503"/>
         <source>New firmware</source>
         <translation>Nuevo firmware</translation>
     </message>
     <message>
-        <location line="+53" />
+        <location line="+53"/>
         <source>Restart into the recovery</source>
         <translation>Reiniciar en el recovery</translation>
     </message>
     <message>
-        <location line="+0" />
+        <location line="+0"/>
         <source>Send the image</source>
         <translation>Enviar la imagen</translation>
     </message>
     <message>
-        <location line="+0" />
+        <location line="+0"/>
         <source>Start the new firmware</source>
         <translation>Iniciar el nuevo firmware</translation>
     </message>
     <message>
-        <location line="+6" />
-        <location line="+79" />
+        <location line="+6"/>
+        <location line="+79"/>
         <source>Back to the application</source>
         <translation>Volver a la aplicación</translation>
     </message>
     <message>
-        <location line="-78" />
+        <location line="-78"/>
         <source>Leave the recovery for the application already installed.</source>
         <translation>Salir del recovery a la aplicación ya instalada.</translation>
     </message>
     <message>
-        <location line="-9" />
-        <location line="+87" />
-        <location line="+501" />
+        <location line="-9"/>
+        <location line="+87"/>
+        <location line="+501"/>
         <source>Install</source>
         <translation>Instalar</translation>
     </message>
     <message>
-        <location line="-501" />
-        <location line="+365" />
+        <location line="-501"/>
+        <location line="+365"/>
         <source>Change…</source>
         <translation>Cambiar…</translation>
     </message>
     <message>
-        <location line="-364" />
-        <location line="+500" />
+        <location line="-364"/>
+        <location line="+500"/>
         <source>Restart and install</source>
         <translation>Reiniciar e instalar</translation>
     </message>
     <message>
-        <location line="-468" />
-        <source>%1 did not answer as a recovery in %2 s. Is it on a Wi-Fi network this computer reaches? Without a known network the recovery raises its own ("btp-&lt;name&gt;").</source>
-        <translation>%1 no respondió como recovery en %2 s. ¿Está en una red Wi-Fi a la que llega este ordenador? Sin una red conocida, el recovery levanta la suya propia ("btp-&lt;name&gt;").</translation>
+        <location line="-468"/>
+        <source>%1 did not answer as a recovery in %2 s. Is it on a Wi-Fi network this computer reaches? Without a known network the recovery raises its own (&quot;btp-&lt;name&gt;&quot;).</source>
+        <translation>%1 no respondió como recovery en %2 s. ¿Está en una red Wi-Fi a la que llega este ordenador? Sin una red conocida, el recovery levanta la suya propia (&quot;btp-&lt;name&gt;&quot;).</translation>
     </message>
     <message>
-        <location line="+9" />
+        <location line="+9"/>
         <source>It came back running %1, not %2: the new firmware did not start and the device went back to the previous one.</source>
         <translation>Volvió ejecutando %1, no %2: el nuevo firmware no arrancó y el dispositivo volvió al anterior.</translation>
     </message>
     <message>
-        <location line="+4" />
+        <location line="+4"/>
         <source>The recovery accepted the image and started it. Connect the device to see it running.</source>
         <translation>El recovery aceptó la imagen y la inició. Conecte el dispositivo para verlo en ejecución.</translation>
     </message>
     <message>
-        <location line="+41" />
+        <location line="+41"/>
         <source>%1 is running %2.</source>
         <translation>%1 está ejecutando %2.</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>%1: running %2</source>
         <translation>%1: ejecutando %2</translation>
     </message>
     <message>
-        <location line="+21" />
-        <location line="+14" />
+        <location line="+21"/>
+        <location line="+14"/>
         <source>%1: %2</source>
         <translation>%1: %2</translation>
     </message>
     <message>
-        <location line="+48" />
+        <location line="+48"/>
         <source>Select Firmware</source>
         <translation>Seleccionar firmware</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Firmware Binary (*.bin);;All Files (*)</source>
         <translation>Binario de firmware (*.bin);;Todos los archivos (*)</translation>
     </message>
     <message>
-        <location line="+20" />
-        <location line="+21" />
+        <location line="+20"/>
+        <location line="+21"/>
         <source>Install Firmware</source>
         <translation>Instalar firmware</translation>
     </message>
     <message>
-        <location line="-20" />
+        <location line="-20"/>
         <source>Password of %1 (the one its key was provisioned with). It stays on this computer: the upload is signed with it.</source>
         <translation>Contraseña de %1 (con la que se aprovisionó su clave). Se queda en este ordenador: la subida se firma con ella.</translation>
     </message>
     <message>
-        <location line="+21" />
+        <location line="+21"/>
         <source>This image was built for %1, and %2 is an %3. Install it anyway?</source>
         <translation>Esta imagen se compiló para %1, y %2 es un %3. ¿Instalarla de todos modos?</translation>
     </message>
     <message>
-        <location line="+3" />
+        <location line="+3"/>
         <source>Install anyway</source>
         <translation>Instalar de todos modos</translation>
     </message>
     <message>
-        <location line="+0" />
+        <location line="+0"/>
         <source>Cancel</source>
         <translation>Cancelar</translation>
     </message>
     <message>
-        <location line="+38" />
+        <location line="+38"/>
         <source>Leaving the recovery…</source>
         <translation>Saliendo del recovery…</translation>
     </message>
     <message>
-        <location line="+49" />
+        <location line="+49"/>
         <source>In the recovery</source>
         <translation>En el recovery</translation>
     </message>
     <message>
-        <location line="+0" />
+        <location line="+0"/>
         <source>Receiving a firmware</source>
         <translation>Recibiendo un firmware</translation>
     </message>
     <message>
-        <location line="+4" />
+        <location line="+4"/>
         <source>On its own Wi-Fi network: %1.</source>
         <translation>En su propia red Wi-Fi: %1.</translation>
     </message>
     <message>
-        <location line="+3" />
+        <location line="+3"/>
         <source>Running</source>
         <translation>En ejecución</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Install restarts it into the recovery, sends the image and starts it.</source>
         <translation>Instalar lo reinicia en el recovery, envía la imagen y la inicia.</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>No address</source>
         <translation>Sin dirección</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Connect it once over Wi-Fi so it reports where its recovery answers, or set the OTA address in Device Settings.</source>
         <translation>Conéctelo una vez por Wi-Fi para que informe dónde responde su recovery, o configure la dirección OTA en Configuración del Dispositivo.</translation>
     </message>
     <message>
-        <location line="+3" />
+        <location line="+3"/>
         <source>Checking…</source>
         <translation>Comprobando…</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Offline</source>
         <translation>Sin conexión</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Not connected and no recovery answers at %1%2. Connect it to install a firmware.</source>
         <translation>No conectado y ningún recovery responde en %1%2. Conéctelo para instalar un firmware.</translation>
     </message>
     <message>
-        <location line="+14" />
+        <location line="+14"/>
         <source>none: waiting for a firmware</source>
         <translation>ninguna: esperando un firmware</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>%1 · %2 · application up to %3</source>
         <translation>%1 · %2 · aplicación de hasta %3</translation>
     </message>
     <message>
-        <location line="+10" />
+        <location line="+10"/>
         <source>%1 · ESP-IDF %2</source>
         <translation>%1 · ESP-IDF %2</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>details once it is in the recovery</source>
         <translation>detalles cuando esté en el recovery</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>%1 · details once it is in the recovery</source>
         <translation>%1 · detalles cuando esté en el recovery</translation>
     </message>
     <message>
-        <location line="+4" />
+        <location line="+4"/>
         <source>From the device itself (the address it reported, or its TCP host).</source>
         <translation>Del propio dispositivo (la dirección que informó, o su host TCP).</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Set in Device Settings.</source>
         <translation>Configurada en Configuración del Dispositivo.</translation>
     </message>
     <message>
-        <location line="+8" />
+        <location line="+8"/>
         <source>Drop the application .bin here, or click to choose it</source>
         <translation>Suelte aquí el .bin de la aplicación, o haga clic para elegirlo</translation>
     </message>
     <message>
-        <location line="+14" />
+        <location line="+14"/>
         <source>built %1</source>
         <translation>compilado %1</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>saved %1</source>
         <translation>guardado %1</translation>
     </message>
     <message>
-        <location line="+14" />
+        <location line="+14"/>
         <source>&lt;b&gt;%1&lt;/b&gt; %2</source>
         <translation>&lt;b&gt;%1&lt;/b&gt; %2</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>ESP application image</source>
         <translation>Imagen de aplicación ESP</translation>
     </message>
     <message>
-        <location line="+13" />
+        <location line="+13"/>
         <source>built for %1, the device is an %2</source>
         <translation>compilado para %1, el dispositivo es un %2</translation>
     </message>
     <message>
-        <location line="+4" />
+        <location line="+4"/>
         <source>a different project from the installed %1</source>
         <translation>un proyecto distinto del %1 instalado</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>the same version as installed</source>
         <translation>la misma versión que la instalada</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>replaces %1</source>
         <translation>reemplaza a %1</translation>
     </message>
     <message>
-        <location line="+12" />
+        <location line="+12"/>
         <source>Too large: %1 for a partition of %2.</source>
         <translation>Demasiado grande: %1 para una partición de %2.</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>%1% of the application partition (%2).</source>
         <translation>%1% de la partición de la aplicación (%2).</translation>
     </message>
     <message>
-        <location line="+20" />
+        <location line="+20"/>
         <source>Restarting %1 and waiting for its recovery to answer… (%2 s)</source>
         <translation>Reiniciando %1 y esperando a que responda su recovery… (%2 s)</translation>
     </message>
     <message>
-        <location line="+10" />
+        <location line="+10"/>
         <source>Sending…</source>
         <translation>Enviando…</translation>
     </message>
     <message>
-        <location line="+6" />
+        <location line="+6"/>
         <source>Sending… %1% of %2 (compressed from %3)</source>
         <translation>Enviando… %1% de %2 (comprimido desde %3)</translation>
     </message>
     <message>
-        <location line="+3" />
+        <location line="+3"/>
         <source>Sending… %1% of %2</source>
         <translation>Enviando… %1% de %2</translation>
     </message>
     <message>
-        <location line="+7" />
+        <location line="+7"/>
         <source>Image accepted. Starting the new firmware and waiting for it to connect…</source>
         <translation>Imagen aceptada. Iniciando el nuevo firmware y esperando a que se conecte…</translation>
     </message>
     <message>
-        <location line="+30" />
+        <location line="+30"/>
         <source>Choose a firmware image first.</source>
         <translation>Elija primero una imagen de firmware.</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Connect the device, or put it in the recovery.</source>
         <translation>Conecte el dispositivo, o póngalo en el recovery.</translation>
     </message>
@@ -5615,213 +5874,213 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
 <context>
     <name>traceview::OtaTab</name>
     <message>
-        <location filename="../lib/ota/otatab.cpp" line="+81" />
+        <location filename="../lib/ota/otatab.cpp" line="+81"/>
         <source>Name</source>
         <translation>Nombre</translation>
     </message>
     <message>
-        <location line="+72" />
+        <location line="+72"/>
         <source>Checking…</source>
         <translation>Comprobando…</translation>
     </message>
     <message>
-        <location line="+10" />
+        <location line="+10"/>
         <source>Upload…</source>
         <translation>Subir…</translation>
     </message>
     <message>
-        <location line="+233" />
+        <location line="+233"/>
         <source>Uploading… %p%</source>
         <translation>Subiendo… %p%</translation>
     </message>
     <message>
-        <location line="-90" />
+        <location line="-90"/>
         <source>Offline</source>
         <translation>Sin conexión</translation>
     </message>
     <message>
-        <location line="-248" />
+        <location line="-248"/>
         <source>asked for (btp -recovery)</source>
         <translation>solicitado (btp -recovery)</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>the application kept crashing</source>
         <translation>la aplicación se bloqueaba una y otra vez</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>factory reset</source>
         <translation>restablecimiento de fábrica</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>no valid application, or the boot chose it</source>
         <translation>no hay aplicación válida, o el arranque lo eligió</translation>
     </message>
     <message>
-        <location line="+19" />
+        <location line="+19"/>
         <source>Address</source>
         <translation>Dirección</translation>
     </message>
     <message>
-        <location line="+0" />
+        <location line="+0"/>
         <source>State</source>
         <translation>Estado</translation>
     </message>
     <message>
-        <location line="+0" />
+        <location line="+0"/>
         <source>Application</source>
         <translation>Aplicación</translation>
     </message>
     <message>
-        <location line="+0" />
+        <location line="+0"/>
         <source>Recovery</source>
         <translation>Recovery</translation>
     </message>
     <message>
-        <location line="+62" />
-        <location line="+70" />
-        <location line="+75" />
+        <location line="+62"/>
+        <location line="+70"/>
+        <location line="+75"/>
         <source>(none)</source>
         <translation>(ninguno)</translation>
     </message>
     <message>
-        <location line="-142" />
+        <location line="-142"/>
         <source>Connect the device over TCP (or once, so it reports its address), or set its OTA address in Device Settings.</source>
         <translation>Conecte el dispositivo por TCP (o una vez, para que informe su dirección), o configure su dirección OTA en Configuración del Dispositivo.</translation>
     </message>
     <message>
-        <location line="+3" />
+        <location line="+3"/>
         <source>From the device itself (its TCP host or the address it reported).</source>
         <translation>Del propio dispositivo (su host TCP o la dirección que informó).</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Set in Device Settings.</source>
         <translation>Configurada en Configuración del Dispositivo.</translation>
     </message>
     <message>
-        <location line="+16" />
+        <location line="+16"/>
         <source>Send a firmware .bin. If the device is running its application and connected, it is restarted into the recovery first.</source>
         <translation>Envíe un .bin de firmware. Si el dispositivo está ejecutando su aplicación y conectado, primero se reinicia en el recovery.</translation>
     </message>
     <message>
-        <location line="+7" />
+        <location line="+7"/>
         <source>To app</source>
         <translation>A la app</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Leave the recovery for the application already there.</source>
         <translation>Salir del recovery a la aplicación ya presente.</translation>
     </message>
     <message>
-        <location line="+16" />
-        <location line="+192" />
+        <location line="+16"/>
+        <location line="+192"/>
         <source>Restarting…</source>
         <translation>Reiniciando…</translation>
     </message>
     <message>
-        <location line="-118" />
-        <source>%1 did not answer as a recovery in %2 s. Is it on a Wi-Fi network this computer can reach? Without a known network, the recovery raises its own ("btp-&lt;name&gt;").</source>
-        <translation>%1 no respondió como recovery en %2 s. ¿Está en una red Wi-Fi a la que puede llegar este ordenador? Sin una red conocida, el recovery levanta la suya propia ("btp-&lt;name&gt;").</translation>
+        <location line="-118"/>
+        <source>%1 did not answer as a recovery in %2 s. Is it on a Wi-Fi network this computer can reach? Without a known network, the recovery raises its own (&quot;btp-&lt;name&gt;&quot;).</source>
+        <translation>%1 no respondió como recovery en %2 s. ¿Está en una red Wi-Fi a la que puede llegar este ordenador? Sin una red conocida, el recovery levanta la suya propia (&quot;btp-&lt;name&gt;&quot;).</translation>
     </message>
     <message>
-        <location line="+15" />
+        <location line="+15"/>
         <source>In recovery</source>
         <translation>En recovery</translation>
     </message>
     <message>
-        <location line="+0" />
+        <location line="+0"/>
         <source>Writing…</source>
         <translation>Escribiendo…</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Why: %1</source>
         <translation>Motivo: %1</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Own network: %1</source>
         <translation>Red propia: %1</translation>
     </message>
     <message>
-        <location line="+7" />
+        <location line="+7"/>
         <source>%1, up to %2 KB</source>
         <translation>%1, hasta %2 KB</translation>
     </message>
     <message>
-        <location line="+11" />
+        <location line="+11"/>
         <source>Running the app</source>
         <translation>Ejecutando la app</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Upload restarts it into the recovery first.</source>
         <translation>Subir lo reinicia primero en el recovery.</translation>
     </message>
     <message>
-        <location line="+4" />
+        <location line="+4"/>
         <source>Not reachable</source>
         <translation>No accesible</translation>
     </message>
     <message>
-        <location line="+65" />
+        <location line="+65"/>
         <source>%1 will restart into its recovery and receive %2. Then it starts the new firmware by itself.</source>
         <translation>%1 se reiniciará en su recovery y recibirá %2. Después iniciará el nuevo firmware por sí mismo.</translation>
     </message>
     <message>
-        <location line="+3" />
+        <location line="+3"/>
         <source>Restart and upload</source>
         <translation>Reiniciar y subir</translation>
     </message>
     <message>
-        <location line="+0" />
+        <location line="+0"/>
         <source>Cancel</source>
         <translation>Cancelar</translation>
     </message>
     <message>
-        <location line="+68" />
-        <location line="+6" />
-        <location line="+9" />
-        <location line="+2" />
+        <location line="+68"/>
+        <location line="+6"/>
+        <location line="+9"/>
+        <location line="+2"/>
         <source>%1: %2</source>
         <translation>%1: %2</translation>
     </message>
     <message>
-        <location line="-197" />
-        <location line="+61" />
-        <location line="+22" />
-        <location line="+25" />
-        <location line="+78" />
-        <location line="+11" />
+        <location line="-197"/>
+        <location line="+61"/>
+        <location line="+22"/>
+        <location line="+25"/>
+        <location line="+78"/>
+        <location line="+11"/>
         <source>Firmware Upload</source>
         <translation>Subida de firmware</translation>
     </message>
     <message>
-        <location line="-149" />
+        <location line="-149"/>
         <source>Reported by the running application.</source>
         <translation>Informado por la aplicación en ejecución.</translation>
     </message>
     <message>
-        <location line="+14" />
+        <location line="+14"/>
         <source>Password E of %1 (the one its key was provisioned with). It stays on this computer: the upload is signed with it.</source>
         <translation>Contraseña E de %1 (con la que se aprovisionó su clave). Se queda en este ordenador: la subida se firma con ella.</translation>
     </message>
     <message>
-        <location line="+22" />
-        <source>%1 is not in the recovery, and TraceView is not connected to it to restart it there. Connect it, or send "btp -recovery" from its terminal.</source>
-        <translation>%1 no está en el recovery, y TraceView no está conectado a él para reiniciarlo allí. Conéctelo, o envíe "btp -recovery" desde su terminal.</translation>
+        <location line="+22"/>
+        <source>%1 is not in the recovery, and TraceView is not connected to it to restart it there. Connect it, or send &quot;btp -recovery&quot; from its terminal.</source>
+        <translation>%1 no está en el recovery, y TraceView no está conectado a él para reiniciarlo allí. Conéctelo, o envíe &quot;btp -recovery&quot; desde su terminal.</translation>
     </message>
     <message>
-        <location line="+7" />
+        <location line="+7"/>
         <source>Select Firmware</source>
         <translation>Seleccionar firmware</translation>
     </message>
     <message>
-        <location line="+0" />
+        <location line="+0"/>
         <source>Firmware Binary (*.bin);;All Files (*)</source>
         <translation>Binario de firmware (*.bin);;Todos los archivos (*)</translation>
     </message>
@@ -5829,148 +6088,148 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
 <context>
     <name>traceview::PaletteEditorDialog</name>
     <message>
-        <location filename="../lib/core/paletteeditordialog.cpp" line="+33" />
+        <location filename="../lib/core/paletteeditordialog.cpp" line="+33"/>
         <source>Surfaces</source>
         <translation>Superficies</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Background</source>
         <translation>Fondo</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Cards and panels</source>
         <translation>Tarjetas y paneles</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Headers and inputs</source>
         <translation>Cabeceras y campos</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Borders</source>
         <translation>Bordes</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Strong borders</source>
         <translation>Bordes fuertes</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Text</source>
         <translation>Texto</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Primary text</source>
         <translation>Texto principal</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Secondary text</source>
         <translation>Texto secundario</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Disabled text</source>
         <translation>Texto deshabilitado</translation>
     </message>
     <message>
-        <location line="+1" />
-        <location line="+1" />
+        <location line="+1"/>
+        <location line="+1"/>
         <source>Accent</source>
         <translation>Acento</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Accent (hover)</source>
         <translation>Acento (hover)</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Accent (pressed)</source>
         <translation>Acento (pulsado)</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Status</source>
         <translation>Estado</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Success</source>
         <translation>Éxito</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Warning</source>
         <translation>Advertencia</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Danger</source>
         <translation>Peligro</translation>
     </message>
     <message>
-        <location line="+48" />
+        <location line="+48"/>
         <source>New Palette</source>
         <translation>Nueva paleta</translation>
     </message>
     <message>
-        <location line="+0" />
+        <location line="+0"/>
         <source>Edit Palette</source>
         <translation>Editar paleta</translation>
     </message>
     <message>
-        <location line="+10" />
+        <location line="+10"/>
         <source>Name</source>
         <translation>Nombre</translation>
     </message>
     <message>
-        <location line="+23" />
+        <location line="+23"/>
         <source>Data series</source>
         <translation>Series de datos</translation>
     </message>
     <message>
-        <location line="+3" />
+        <location line="+3"/>
         <source>Series %1</source>
         <translation>Serie %1</translation>
     </message>
     <message>
-        <location line="+53" />
+        <location line="+53"/>
         <source>Choose Color</source>
         <translation>Elegir color</translation>
     </message>
     <message>
-        <location line="+27" />
+        <location line="+27"/>
         <source>Primary text on background</source>
         <translation>Texto principal sobre el fondo</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Primary text on cards</source>
         <translation>Texto principal sobre las tarjetas</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Secondary text on cards</source>
         <translation>Texto secundario sobre las tarjetas</translation>
     </message>
     <message>
-        <location line="+6" />
+        <location line="+6"/>
         <source>%1: %2:1 (at least 4.5:1 recommended)</source>
         <translation>%1: %2:1 (se recomienda al menos 4,5:1)</translation>
     </message>
     <message>
-        <location line="+6" />
+        <location line="+6"/>
         <source>Text contrast is good.</source>
         <translation>El contraste del texto es bueno.</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Low contrast, text may be hard to read:
 %1</source>
         <translation>Contraste bajo, el texto puede ser difícil de leer:
@@ -5980,27 +6239,27 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
 <context>
     <name>traceview::PropertiesPanel</name>
     <message>
-        <location filename="../lib/core/propertiespanel.cpp" line="+21" />
+        <location filename="../lib/core/propertiespanel.cpp" line="+21"/>
         <source>(none)</source>
         <translation>(ninguno)</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Optional, must be unique — the handle future data updates will target this widget by.</source>
         <translation>Opcional, debe ser único — es el identificador que usarán las futuras actualizaciones de datos para dirigirse a este widget.</translation>
     </message>
     <message>
-        <location line="+4" />
+        <location line="+4"/>
         <source>Type</source>
         <translation>Tipo</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Name</source>
         <translation>Nombre</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Key</source>
         <translation>Clave</translation>
     </message>
@@ -6008,114 +6267,114 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
 <context>
     <name>traceview::PushButtonConfigEditor</name>
     <message>
-        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="-743" />
-        <source>Which device this button's commands are sent to.</source>
+        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="-743"/>
+        <source>Which device this button&apos;s commands are sent to.</source>
         <translation>A qué dispositivo se envían los comandos de este botón.</translation>
     </message>
     <message>
-        <location line="+3" />
+        <location line="+3"/>
         <source>Button</source>
         <translation>Botón</translation>
     </message>
     <message>
-        <location line="+10" />
+        <location line="+10"/>
         <source>Momentary sends the press command on press and the release command on release. Pulse sends only the press command, once per click.</source>
         <translation>Momentáneo envía el comando de pulsación al pulsar y el comando de liberación al soltar. Pulso envía solo el comando de pulsación, una vez por clic.</translation>
     </message>
     <message>
-        <location line="+4" />
+        <location line="+4"/>
         <source>Command sent on press</source>
         <translation>Comando enviado al pulsar</translation>
     </message>
     <message>
-        <location line="+3" />
+        <location line="+3"/>
         <source>Command sent on release</source>
         <translation>Comando enviado al soltar</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Repeat while held</source>
         <translation>Repetir mientras se mantiene pulsado</translation>
     </message>
     <message>
-        <location line="+4" />
-        <location line="+7" />
-        <location line="+8" />
+        <location line="+4"/>
+        <location line="+7"/>
+        <location line="+8"/>
         <source> ms</source>
         <translation> ms</translation>
     </message>
     <message>
-        <location line="-12" />
+        <location line="-12"/>
         <source>Long-press action</source>
         <translation>Acción de pulsación larga</translation>
     </message>
     <message>
-        <location line="+8" />
+        <location line="+8"/>
         <source>Command sent once held past the threshold</source>
         <translation>Comando enviado al mantener pulsado más allá del umbral</translation>
     </message>
     <message>
-        <location line="+7" />
+        <location line="+7"/>
         <source>Minimum time between triggers — extra presses inside this window are ignored.</source>
         <translation>Tiempo mínimo entre activaciones — las pulsaciones adicionales dentro de esta ventana se ignoran.</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Confirm before sending</source>
         <translation>Confirmar antes de enviar</translation>
     </message>
     <message>
-        <location line="+5" />
+        <location line="+5"/>
         <source>Device</source>
         <translation>Dispositivo</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Label</source>
         <translation>Etiqueta</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Style</source>
         <translation>Estilo</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Color</source>
         <translation>Color</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Mode</source>
         <translation>Modo</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>On press</source>
         <translation>Al pulsar</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>On release</source>
         <translation>Al soltar</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Repeat interval</source>
         <translation>Intervalo de repetición</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Long-press time</source>
         <translation>Tiempo de pulsación larga</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Long-press command</source>
         <translation>Comando de pulsación larga</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Debounce</source>
         <translation>Antirrebote</translation>
     </message>
@@ -6123,8 +6382,8 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
 <context>
     <name>traceview::PushButtonWidget</name>
     <message>
-        <location filename="../lib/dashboard/widgets/controlwidgets.cpp" line="+230" />
-        <location line="+34" />
+        <location filename="../lib/dashboard/widgets/controlwidgets.cpp" line="+231"/>
+        <location line="+34"/>
         <source>Push Button</source>
         <translation>Botón pulsador</translation>
     </message>
@@ -6132,115 +6391,115 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
 <context>
     <name>traceview::RobotLinksPanel</name>
     <message>
-        <location filename="../lib/devices/robotlinkspanel.cpp" line="+37" />
+        <location filename="../lib/devices/robotlinkspanel.cpp" line="+37"/>
         <source>Serial (USB)</source>
         <translation>Serie (USB)</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Wi-Fi</source>
         <translation>Wi-Fi</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Bluetooth</source>
         <translation>Bluetooth</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Hub</source>
         <translation>Concentrador</translation>
     </message>
     <message>
-        <location line="+10" />
-        <source>Automatic: the USB port whose device reports the robot's name (or, if none does, the port last picked here). Pick or type a port to always use that one.</source>
+        <location line="+10"/>
+        <source>Automatic: the USB port whose device reports the robot&apos;s name (or, if none does, the port last picked here). Pick or type a port to always use that one.</source>
         <translation>Automático: el puerto USB cuyo dispositivo informa el nombre del robot (o, si ninguno lo hace, el último puerto elegido aquí). Elija o escriba un puerto para usar siempre ese.</translation>
     </message>
     <message>
-        <location line="+4" />
+        <location line="+4"/>
         <source>Automatic: &lt;robot name&gt;.local, found over mDNS. Type a host or IP to use that instead (e.g. 192.168.4.1).</source>
         <translation>Automático: &lt;nombre del robot&gt;.local, encontrado por mDNS. Escriba un host o IP para usarlo en su lugar (p. ej. 192.168.4.1).</translation>
     </message>
     <message>
-        <location line="+4" />
-        <source>Automatic: the Bluetooth robot advertising the robot's name. Pick or type an address to always use that one.</source>
+        <location line="+4"/>
+        <source>Automatic: the Bluetooth robot advertising the robot&apos;s name. Pick or type an address to always use that one.</source>
         <translation>Automático: el robot Bluetooth que anuncia el nombre del robot. Elija o escriba una dirección para usar siempre esa.</translation>
     </message>
     <message>
-        <location line="+4" />
+        <location line="+4"/>
         <source>Automatic: the robot of this name behind any connected hub. Pick a hub to only look behind that one.</source>
         <translation>Automático: el robot con este nombre detrás de cualquier hub conectado. Elija un hub para buscar solo detrás de ese.</translation>
     </message>
     <message>
-        <location line="+45" />
+        <location line="+45"/>
         <source>Name:</source>
         <translation>Nombre:</translation>
     </message>
     <message>
-        <location line="+6" />
+        <location line="+6"/>
         <source>robot name, e.g. BallyRobot</source>
         <translation>nombre del robot, p. ej. BallyRobot</translation>
     </message>
     <message>
-        <location line="+3" />
-        <source>The name the robot is configured with ("settings -set identity name ..."). Every link set to Automatic finds the robot by it: the USB port that reports it, &lt;name&gt;.local over Wi-Fi, the Bluetooth device advertising it, the robot of that name behind a hub.</source>
-        <translation>El nombre configurado en el robot ("settings -set identity name ..."). Toda conexión en Automático encuentra el robot por él: el puerto USB que lo informa, &lt;nombre&gt;.local por Wi-Fi, el dispositivo Bluetooth que lo anuncia, el robot con ese nombre detrás de un hub.</translation>
+        <location line="+3"/>
+        <source>The name the robot is configured with (&quot;settings -set identity name ...&quot;). Every link set to Automatic finds the robot by it: the USB port that reports it, &lt;name&gt;.local over Wi-Fi, the Bluetooth device advertising it, the robot of that name behind a hub.</source>
+        <translation>El nombre configurado en el robot (&quot;settings -set identity name ...&quot;). Toda conexión en Automático encuentra el robot por él: el puerto USB que lo informa, &lt;nombre&gt;.local por Wi-Fi, el dispositivo Bluetooth que lo anuncia, el robot con ese nombre detrás de un hub.</translation>
     </message>
     <message>
-        <location line="+14" />
-        <location line="+6" />
+        <location line="+14"/>
+        <location line="+6"/>
         <source>Search</source>
         <translation>Buscar</translation>
     </message>
     <message>
-        <location line="-3" />
+        <location line="-3"/>
         <source>Look for robots nearby: refreshes the serial ports and scans for Bluetooth robots. Names found are offered in the Robot list.</source>
         <translation>Buscar robots cercanos: actualiza los puertos serie y busca robots Bluetooth. Los nombres encontrados se ofrecen en la lista de robots.</translation>
     </message>
     <message>
-        <location line="+3" />
+        <location line="+3"/>
         <source>Stop</source>
         <translation>Detener</translation>
     </message>
     <message>
-        <location line="+35" />
+        <location line="+35"/>
         <source>Ticked: the robot can be reached this way.</source>
         <translation>Marcado: se puede llegar al robot por esta vía.</translation>
     </message>
     <message>
-        <location line="+82" />
-        <location line="+11" />
+        <location line="+82"/>
+        <location line="+11"/>
         <source>Automatic (%1)</source>
         <translation>Automático (%1)</translation>
     </message>
     <message>
-        <location line="-10" />
-        <location line="+9" />
+        <location line="-10"/>
+        <location line="+9"/>
         <source>Automatic (by robot name)</source>
         <translation>Automático (por el nombre del robot)</translation>
     </message>
     <message>
-        <location line="+5" />
+        <location line="+5"/>
         <source>%1 (%2)</source>
         <translation>%1 (%2)</translation>
     </message>
     <message>
-        <location line="+6" />
+        <location line="+6"/>
         <source>Automatic (&lt;robot name&gt;.local)</source>
         <translation>Automático (&lt;nombre del robot&gt;.local)</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Automatic (%1.local)</source>
         <translation>Automático (%1.local)</translation>
     </message>
     <message>
-        <location line="+6" />
+        <location line="+6"/>
         <source>Automatic (any hub)</source>
         <translation>Automático (cualquier hub)</translation>
     </message>
     <message>
-        <location line="+0" />
+        <location line="+0"/>
         <source>(choose the hub)</source>
         <translation>(elija el hub)</translation>
     </message>
@@ -6248,37 +6507,37 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
 <context>
     <name>traceview::RobotLogConfigEditor</name>
     <message>
-        <location filename="../lib/dashboard/widgets/robotlogconfigeditor.cpp" line="+17" />
+        <location filename="../lib/dashboard/widgets/robotlogconfigeditor.cpp" line="+17"/>
         <source>Tabs — one log per device</source>
         <translation>Pestañas — un registro por dispositivo</translation>
     </message>
     <message>
-        <location line="+9" />
+        <location line="+9"/>
         <source>Add tab</source>
         <translation>Añadir pestaña</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Add another log tab for a device.</source>
         <translation>Añadir otra pestaña de registro para un dispositivo.</translation>
     </message>
     <message>
-        <location line="+95" />
-        <source>Device this tab's log reads from.</source>
+        <location line="+95"/>
+        <source>Device this tab&apos;s log reads from.</source>
         <translation>Dispositivo del que lee el registro de esta pestaña.</translation>
     </message>
     <message>
-        <location line="+6" />
+        <location line="+6"/>
         <source>Move tab left</source>
         <translation>Mover pestaña a la izquierda</translation>
     </message>
     <message>
-        <location line="+16" />
+        <location line="+16"/>
         <source>Move tab right</source>
         <translation>Mover pestaña a la derecha</translation>
     </message>
     <message>
-        <location line="+16" />
+        <location line="+16"/>
         <source>Remove this tab</source>
         <translation>Eliminar esta pestaña</translation>
     </message>
@@ -6286,32 +6545,32 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
 <context>
     <name>traceview::RobotLogModel</name>
     <message>
-        <location filename="../lib/dashboard/widgets/robotlogmodel.cpp" line="+93" />
+        <location filename="../lib/dashboard/widgets/robotlogmodel.cpp" line="+93"/>
         <source>Timestamp (µs)</source>
         <translation>Marca de tiempo (µs)</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Severity</source>
         <translation>Gravedad</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Source ID</source>
         <translation>Source ID</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Boot ID</source>
         <translation>Boot ID</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Sequence</source>
         <translation>Secuencia</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Message</source>
         <translation>Mensaje</translation>
     </message>
@@ -6319,12 +6578,12 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
 <context>
     <name>traceview::RobotLogWidget</name>
     <message>
-        <location filename="../lib/dashboard/widgets/robotlogwidget.cpp" line="+181" />
+        <location filename="../lib/dashboard/widgets/robotlogwidget.cpp" line="+181"/>
         <source>(no device)</source>
         <translation>(sin dispositivo)</translation>
     </message>
     <message>
-        <location line="+3" />
+        <location line="+3"/>
         <source>(unnamed device)</source>
         <translation>(dispositivo sin nombre)</translation>
     </message>
@@ -6332,37 +6591,37 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
 <context>
     <name>traceview::SceneConfigEditor</name>
     <message>
-        <location filename="../lib/dashboard/scenes/sceneconfigeditor.cpp" line="+149" />
+        <location filename="../lib/dashboard/scenes/sceneconfigeditor.cpp" line="+149"/>
         <source>Bind by name</source>
         <translation>Vincular por nombre</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Binds every unbound input to the reported field of the same name</source>
         <translation>Vincula cada entrada sin vincular al campo informado con el mismo nombre</translation>
     </message>
     <message>
-        <location line="+4" />
+        <location line="+4"/>
         <source>Scene</source>
         <translation>Escena</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Inputs</source>
         <translation>Entradas</translation>
     </message>
     <message>
-        <location line="+7" />
+        <location line="+7"/>
         <source>Parameters</source>
         <translation>Parámetros</translation>
     </message>
     <message>
-        <location line="+172" />
+        <location line="+172"/>
         <source>(Unbound)</source>
         <translation>(Sin vincular)</translation>
     </message>
     <message>
-        <location line="+27" />
+        <location line="+27"/>
         <source>%1 (offline)</source>
         <translation>%1 (sin conexión)</translation>
     </message>
@@ -6370,15 +6629,15 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
 <context>
     <name>traceview::SceneWidget</name>
     <message>
-        <location filename="../lib/dashboard/scenes/scenewidget.cpp" line="-206" />
-        <source>Unknown scene "%1"</source>
-        <translation>Escena desconocida "%1"</translation>
+        <location filename="../lib/dashboard/scenes/scenewidget.cpp" line="-206"/>
+        <source>Unknown scene &quot;%1&quot;</source>
+        <translation>Escena desconocida &quot;%1&quot;</translation>
     </message>
 </context>
 <context>
     <name>traceview::SerialManager</name>
     <message>
-        <location filename="../lib/core/serialmanager.cpp" line="+119" />
+        <location filename="../lib/core/serialmanager.cpp" line="+119"/>
         <source>1200 baud resets the ESP32-S3 into its bootloader; using 115200</source>
         <translation>1200 baudios reinicia el ESP32-S3 en su bootloader; usando 115200</translation>
     </message>
@@ -6386,37 +6645,37 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
 <context>
     <name>traceview::SerialMonitorConfigEditor</name>
     <message>
-        <location filename="../lib/dashboard/widgets/serialmonitorconfigeditor.cpp" line="+17" />
+        <location filename="../lib/dashboard/widgets/serialmonitorconfigeditor.cpp" line="+17"/>
         <source>Tabs — one terminal per device</source>
         <translation>Pestañas — un terminal por dispositivo</translation>
     </message>
     <message>
-        <location line="+9" />
+        <location line="+9"/>
         <source>Add tab</source>
         <translation>Añadir pestaña</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Add another terminal tab for a device.</source>
         <translation>Añadir otra pestaña de terminal para un dispositivo.</translation>
     </message>
     <message>
-        <location line="+102" />
-        <source>Device this tab's terminal talks to.</source>
+        <location line="+102"/>
+        <source>Device this tab&apos;s terminal talks to.</source>
         <translation>Dispositivo con el que se comunica el terminal de esta pestaña.</translation>
     </message>
     <message>
-        <location line="+6" />
+        <location line="+6"/>
         <source>Move tab left</source>
         <translation>Mover pestaña a la izquierda</translation>
     </message>
     <message>
-        <location line="+16" />
+        <location line="+16"/>
         <source>Move tab right</source>
         <translation>Mover pestaña a la derecha</translation>
     </message>
     <message>
-        <location line="+16" />
+        <location line="+16"/>
         <source>Remove this tab</source>
         <translation>Eliminar esta pestaña</translation>
     </message>
@@ -6424,12 +6683,12 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
 <context>
     <name>traceview::SerialMonitorWidget</name>
     <message>
-        <location filename="../lib/dashboard/widgets/serialmonitorwidget.cpp" line="+167" />
+        <location filename="../lib/dashboard/widgets/serialmonitorwidget.cpp" line="+167"/>
         <source>(no device)</source>
         <translation>(sin dispositivo)</translation>
     </message>
     <message>
-        <location line="+3" />
+        <location line="+3"/>
         <source>(unnamed device)</source>
         <translation>(dispositivo sin nombre)</translation>
     </message>
@@ -6437,321 +6696,326 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
 <context>
     <name>traceview::SettingsPage</name>
     <message>
-        <location filename="../lib/core/settingspage.cpp" line="+167" />
+        <location filename="../lib/core/settingspage.cpp" line="+167"/>
         <source>Settings</source>
         <translation>Configuración</translation>
     </message>
     <message>
-        <location line="+9" />
-        <location line="+31" />
+        <location line="+9"/>
+        <location line="+31"/>
         <source>General</source>
         <translation>General</translation>
     </message>
     <message>
-        <location line="-30" />
-        <location line="+54" />
+        <location line="-30"/>
+        <location line="+54"/>
         <source>Appearance</source>
         <translation>Apariencia</translation>
     </message>
     <message>
-        <location line="-53" />
-        <location line="+141" />
+        <location line="-53"/>
+        <location line="+141"/>
         <source>Dashboard</source>
         <translation>Dashboard</translation>
     </message>
     <message>
-        <location line="-140" />
-        <location line="+192" />
+        <location line="-140"/>
+        <location line="+192"/>
         <source>Terminal</source>
         <translation>Terminal</translation>
     </message>
     <message>
-        <location line="-191" />
-        <location line="+218" />
+        <location line="-191"/>
+        <location line="+218"/>
         <source>Connections</source>
         <translation>Conexiones</translation>
     </message>
     <message>
-        <location line="-217" />
-        <location line="+358" />
+        <location line="-217"/>
+        <location line="+358"/>
         <source>Diagnostics</source>
         <translation>Diagnóstico</translation>
     </message>
     <message>
-        <location line="-357" />
-        <location line="+453" />
-        <location line="+5" />
+        <location line="-357"/>
+        <location line="+453"/>
+        <location line="+5"/>
         <source>Updates</source>
         <translation>Actualizaciones</translation>
     </message>
     <message>
-        <location line="-433" />
+        <location line="-433"/>
         <source>Project and startup preferences shared by the application.</source>
         <translation>Preferencias de proyecto e inicio compartidas por la aplicación.</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Recent projects</source>
         <translation>Proyectos recientes</translation>
     </message>
     <message>
-        <location line="+4" />
+        <location line="+4"/>
         <source> projects</source>
         <translation> proyectos</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Remember</source>
         <translation>Recordar</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Clear recent projects</source>
         <translation>Borrar proyectos recientes</translation>
     </message>
     <message>
-        <location line="+7" />
+        <location line="+7"/>
         <source>Project startup</source>
         <translation>Inicio del proyecto</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Connect configured devices when a project opens</source>
         <translation>Conectar los dispositivos configurados al abrir un proyecto</translation>
     </message>
     <message>
-        <location line="+11" />
+        <location line="+11"/>
         <source>Application appearance</source>
         <translation>Apariencia de la aplicación</translation>
     </message>
     <message>
-        <location filename="../lib/core/appearancecatalog.cpp" line="-90" />
+        <location filename="../lib/core/appearancecatalog.cpp" line="-101"/>
         <source>Palette</source>
         <translation>Paleta</translation>
     </message>
     <message>
-        <location line="+19" />
+        <location line="+19"/>
         <source>Frame</source>
         <translation>Marco</translation>
     </message>
     <message>
-        <location line="+9" />
+        <location line="+9"/>
         <source>Chart style</source>
         <translation>Estilo de gráficos</translation>
     </message>
     <message>
-        <location line="+13" />
+        <location line="+13"/>
         <source>Control style</source>
         <translation>Estilo de controles</translation>
     </message>
     <message>
-        <location line="+13" />
+        <location line="+13"/>
         <source>Data colors</source>
         <translation>Colores de datos</translation>
     </message>
     <message>
-        <location line="+9" />
+        <location line="+9"/>
         <source>Density</source>
         <translation>Densidad</translation>
     </message>
     <message>
-        <location line="+9" />
+        <location line="+9"/>
         <source>Card header</source>
         <translation>Cabecera de tarjeta</translation>
     </message>
     <message>
-        <location line="+10" />
+        <location line="+11"/>
+        <source>Card background</source>
+        <translation>Fondo de la tarjeta</translation>
+    </message>
+    <message>
+        <location line="+10"/>
         <source>Canvas</source>
         <translation>Fondo del lienzo</translation>
     </message>
     <message>
-        <location line="+9" />
+        <location line="+9"/>
         <source>Motion</source>
         <translation>Movimiento</translation>
     </message>
     <message>
-        <location filename="../lib/core/settingspage.cpp" line="+63" />
+        <location filename="../lib/core/settingspage.cpp" line="+63"/>
         <source>Interface font</source>
         <translation>Fuente de la interfaz</translation>
     </message>
     <message>
-        <location line="+13" />
+        <location line="+13"/>
         <source>Language</source>
         <translation>Idioma</translation>
     </message>
     <message>
-        <location line="+10" />
+        <location line="+10"/>
         <source>Rendering caps redraws only; telemetry samples continue to be recorded at their requested rate.</source>
         <translation>La calidad de renderizado solo limita los redibujados; las muestras de telemetría se siguen registrando a la tasa solicitada.</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Rendering quality</source>
         <translation>Calidad de renderizado</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Low (30 FPS)</source>
         <translation>Baja (30 FPS)</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Medium (60 FPS)</source>
         <translation>Media (60 FPS)</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>High (120 FPS)</source>
         <translation>Alta (120 FPS)</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Extra High (240 FPS)</source>
         <translation>Muy alta (240 FPS)</translation>
     </message>
     <message>
-        <location line="-85" />
-        <location line="+86" />
+        <location line="-85"/>
+        <location line="+86"/>
         <source>Custom</source>
         <translation>Personalizada</translation>
     </message>
     <message>
-        <location line="-96" />
+        <location line="-96"/>
         <source>Appearance changes apply immediately. Changing the language is saved for the next start.</source>
         <translation>Los cambios de apariencia se aplican al instante. El cambio de idioma se guarda para el próximo inicio.</translation>
     </message>
     <message>
-        <location line="+20" />
+        <location line="+20"/>
         <source>Preset</source>
         <translation>Ajuste</translation>
     </message>
     <message>
-        <location line="+78" />
+        <location line="+78"/>
         <source>Profile</source>
         <translation>Perfil</translation>
     </message>
     <message>
-        <location line="+4" />
+        <location line="+4"/>
         <source> FPS</source>
         <translation> FPS</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Custom rate</source>
         <translation>Tasa personalizada</translation>
     </message>
     <message>
-        <location line="+11" />
+        <location line="+11"/>
         <source>Telemetry subscribe rate</source>
         <translation>Tasa de suscripción de telemetría</translation>
     </message>
     <message>
-        <location line="+2" />
-        <source>Override every widget's requested rate</source>
+        <location line="+2"/>
+        <source>Override every widget&apos;s requested rate</source>
         <translation>Sobrescribir la tasa solicitada por cada widget</translation>
     </message>
     <message>
-        <location line="+6" />
+        <location line="+6"/>
         <source> Hz</source>
         <translation> Hz</translation>
     </message>
     <message>
-        <location line="+3" />
-        <source>Applied to every chart, gauge and text board on this dashboard, in place of each widget's own sample time. Each topic still clamps it to its own max/min rate.</source>
+        <location line="+3"/>
+        <source>Applied to every chart, gauge and text board on this dashboard, in place of each widget&apos;s own sample time. Each topic still clamps it to its own max/min rate.</source>
         <translation>Se aplica a todos los gráficos, indicadores y tableros de texto de este dashboard, en lugar del tiempo de muestreo de cada widget. Cada tema la sigue limitando a su propio máximo/mínimo.</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Rate</source>
         <translation>Tasa</translation>
     </message>
     <message>
-        <location line="+12" />
+        <location line="+12"/>
         <source>These controls are applied to all open serial terminal widgets immediately.</source>
         <translation>Estos controles se aplican de inmediato a todos los terminales serie abiertos.</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Terminal display</source>
         <translation>Visualización del terminal</translation>
     </message>
     <message>
-        <location line="+5" />
+        <location line="+5"/>
         <source> lines</source>
         <translation> líneas</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Scrollback limit</source>
         <translation>Límite de historial</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Wrap long lines</source>
         <translation>Ajustar líneas largas</translation>
     </message>
     <message>
-        <location line="+3" />
+        <location line="+3"/>
         <source>Follow new output</source>
         <translation>Seguir la salida nueva</translation>
     </message>
     <message>
-        <location line="+3" />
+        <location line="+3"/>
         <source>Blink remote cursor</source>
         <translation>Parpadeo del cursor remoto</translation>
     </message>
     <message>
-        <location line="+13" />
+        <location line="+13"/>
         <source>Controls how TraceView restores and retries device connections.</source>
         <translation>Controla cómo TraceView restaura y reintenta las conexiones de dispositivos.</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Reconnect</source>
         <translation>Reconexión</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Retry disconnected devices automatically</source>
         <translation>Reintentar automáticamente los dispositivos desconectados</translation>
     </message>
     <message>
-        <location line="+6" />
+        <location line="+6"/>
         <source> seconds</source>
         <translation> segundos</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Retry interval</source>
         <translation>Intervalo de reintento</translation>
     </message>
     <message>
-        <location line="+5" />
+        <location line="+5"/>
         <source>Manifest cache</source>
         <translation>Caché de manifiestos</translation>
     </message>
     <message>
-        <location line="+2" />
-        <source>Remember each device's manifest between sessions</source>
+        <location line="+2"/>
+        <source>Remember each device&apos;s manifest between sessions</source>
         <translation>Recordar el manifiesto de cada dispositivo entre sesiones</translation>
     </message>
     <message>
-        <location line="+3" />
-        <source>A reconnect then only asks whether the device's catalog changed, and the topics of a known device are listed even while it is offline.</source>
+        <location line="+3"/>
+        <source>A reconnect then only asks whether the device&apos;s catalog changed, and the topics of a known device are listed even while it is offline.</source>
         <translation>Así una reconexión solo pregunta si el catálogo del dispositivo cambió, y los temas de un dispositivo conocido se muestran aunque esté desconectado.</translation>
     </message>
     <message>
-        <location line="+4" />
+        <location line="+4"/>
         <source>Trust the cache without asking when the device reports the same revision (TCP/BLE)</source>
         <translation>Confiar en la caché sin preguntar cuando el dispositivo informa la misma revisión (TCP/BLE)</translation>
     </message>
     <message>
-        <location line="+7" />
-        <source>Not recommended: the question it skips is tiny, and it is what keeps the device's reported information (firmware version and the like) up to date.</source>
+        <location line="+7"/>
+        <source>Not recommended: the question it skips is tiny, and it is what keeps the device&apos;s reported information (firmware version and the like) up to date.</source>
         <translation>No recomendado: la pregunta que se omite es mínima, y es la que mantiene al día la información que informa el dispositivo (versión de firmware y similares).</translation>
     </message>
     <message numerus="yes">
-        <location line="+9" />
+        <location line="+9"/>
         <source>Clear cache (%n device(s))</source>
         <translation>
             <numerusform>Vaciar caché (%n dispositivo)</numerusform>
@@ -6759,223 +7023,223 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
         </translation>
     </message>
     <message>
-        <location line="+18" />
+        <location line="+18"/>
         <source>AI assistants</source>
         <translation>Asistentes de IA</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Let AI assistants such as Claude control TraceView</source>
         <translation>Permitir que asistentes de IA como Claude controlen TraceView</translation>
     </message>
     <message>
-        <location line="+3" />
+        <location line="+3"/>
         <source>An assistant connected over MCP can then create workspaces and widgets, read telemetry and take screenshots of this window. Its dashboard edits can be undone.</source>
         <translation>Un asistente conectado por MCP podrá crear espacios de trabajo y widgets, leer telemetría y tomar capturas de esta ventana. Sus cambios en el panel se pueden deshacer.</translation>
     </message>
     <message>
-        <location line="+6" />
+        <location line="+6"/>
         <source>Allow everything without asking</source>
         <translation>Permitir todo sin preguntar</translation>
     </message>
     <message>
-        <location line="+3" />
+        <location line="+3"/>
         <source>The assistant can then connect devices, send them commands, flash firmware, delete things and overwrite files without a confirmation each time. Only for assistants you trust.</source>
         <translation>El asistente podrá conectar dispositivos, enviarles comandos, grabar firmware, borrar cosas y sobrescribir archivos sin pedir confirmación cada vez. Solo para asistentes de confianza.</translation>
     </message>
     <message>
-        <location line="+47" />
+        <location line="+47"/>
         <source>Copy</source>
         <translation>Copiar</translation>
     </message>
     <message>
-        <location line="+9" />
+        <location line="+9"/>
         <source>Claude Code: run this once in a terminal.</source>
         <translation>Claude Code: ejecute esto una vez en un terminal.</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Registers TraceView for every folder (--scope user), so Claude Code in the terminal, the VS Code extension and the Code tab of the Claude desktop app all see it.</source>
         <translation>Registra TraceView para todas las carpetas (--scope user), de modo que Claude Code en el terminal, la extensión de VS Code y la pestaña Code de la app de escritorio de Claude lo vean.</translation>
     </message>
     <message>
-        <location line="+3" />
+        <location line="+3"/>
         <source>Claude desktop app (chat): add this to claude_desktop_config.json.</source>
         <translation>App de escritorio de Claude (chat): añada esto a claude_desktop_config.json.</translation>
     </message>
     <message>
-        <location line="+1" />
-        <source>Paste it inside the file's "mcpServers" object (Claude desktop app: Settings &gt; Developer &gt; Edit Config), then restart the app.</source>
-        <translation>Péguelo dentro del objeto "mcpServers" del archivo (app de escritorio de Claude: Settings &gt; Developer &gt; Edit Config) y reinicie la app.</translation>
+        <location line="+1"/>
+        <source>Paste it inside the file&apos;s &quot;mcpServers&quot; object (Claude desktop app: Settings &gt; Developer &gt; Edit Config), then restart the app.</source>
+        <translation>Péguelo dentro del objeto &quot;mcpServers&quot; del archivo (app de escritorio de Claude: Settings &gt; Developer &gt; Edit Config) y reinicie la app.</translation>
     </message>
     <message>
-        <location line="+8" />
+        <location line="+8"/>
         <source>Keep enough history for investigation without letting long-running sessions use unbounded memory.</source>
         <translation>Conserve historial suficiente para investigar sin que las sesiones largas usen memoria ilimitada.</translation>
     </message>
     <message>
-        <location line="+4" />
+        <location line="+4"/>
         <source>Notifications</source>
         <translation>Notificaciones</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Every notification</source>
         <translation>Todas las notificaciones</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Only the bell</source>
         <translation>Solo la campana</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Pop-ups over the dashboard</source>
         <translation>Ventanas emergentes sobre el dashboard</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Errors still pop up</source>
         <translation>Los errores siguen apareciendo</translation>
     </message>
     <message>
-        <location line="+3" />
+        <location line="+3"/>
         <source>Over the dashboard</source>
         <translation>Sobre el dashboard</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Beside the dashboard (shrinks it)</source>
         <translation>Junto al dashboard (lo reduce)</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Pinned panel</source>
         <translation>Panel fijado</translation>
     </message>
     <message>
-        <location line="+4" />
+        <location line="+4"/>
         <source> s</source>
         <translation> s</translation>
     </message>
     <message>
-        <location line="+3" />
+        <location line="+3"/>
         <source>Each notification is deleted this many seconds after it arrived.</source>
         <translation>Cada notificación se elimina esta cantidad de segundos después de llegar.</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Delete automatically after</source>
         <translation>Eliminar automáticamente tras</translation>
     </message>
     <message>
-        <location line="+24" />
+        <location line="+24"/>
         <source>In-memory history</source>
         <translation>Historial en memoria</translation>
     </message>
     <message>
-        <location line="+5" />
+        <location line="+5"/>
         <source> frames</source>
         <translation> tramas</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>BTP traffic history</source>
         <translation>Historial de tráfico BTP</translation>
     </message>
     <message>
-        <location line="+5" />
+        <location line="+5"/>
         <source> messages</source>
         <translation> mensajes</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Notification history</source>
         <translation>Historial de notificaciones</translation>
     </message>
     <message>
-        <location line="+11" />
+        <location line="+11"/>
         <source>Log file</source>
         <translation>Archivo de registro</translation>
     </message>
     <message>
-        <location line="+5" />
+        <location line="+5"/>
         <source>Current session</source>
         <translation>Sesión actual</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Log raw serial bytes (verbose)</source>
         <translation>Registrar bytes serie en bruto (detallado)</translation>
     </message>
     <message>
-        <location line="+3" />
-        <source>Every byte written to and read from a serial device is logged as hex. Leave off unless you're actively investigating a connection problem -- a device streaming telemetry fills the log fast.</source>
+        <location line="+3"/>
+        <source>Every byte written to and read from a serial device is logged as hex. Leave off unless you&apos;re actively investigating a connection problem -- a device streaming telemetry fills the log fast.</source>
         <translation>Cada byte escrito y leído de un dispositivo serie se registra en hex. Déjelo desactivado salvo que esté investigando un problema de conexión -- un dispositivo que transmite telemetría llena el registro rápidamente.</translation>
     </message>
     <message>
-        <location line="+6" />
+        <location line="+6"/>
         <source>Open log folder</source>
         <translation>Abrir carpeta de registros</translation>
     </message>
     <message>
-        <location line="+11" />
-        <source>This installation is managed by Flatpak. Use your system's software manager or 'flatpak update' to update TraceView.</source>
-        <translation>Esta instalación la gestiona Flatpak. Use el gestor de software del sistema o 'flatpak update' para actualizar TraceView.</translation>
+        <location line="+11"/>
+        <source>This installation is managed by Flatpak. Use your system&apos;s software manager or &apos;flatpak update&apos; to update TraceView.</source>
+        <translation>Esta instalación la gestiona Flatpak. Use el gestor de software del sistema o &apos;flatpak update&apos; para actualizar TraceView.</translation>
     </message>
     <message>
-        <location line="+5" />
+        <location line="+5"/>
         <source>TraceView can check GitHub for a newer release. Nothing is downloaded or installed without your confirmation.</source>
         <translation>TraceView puede consultar GitHub en busca de una versión más reciente. No se descarga ni instala nada sin su confirmación.</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Automatic checks</source>
         <translation>Comprobaciones automáticas</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Check for updates on startup</source>
         <translation>Buscar actualizaciones al iniciar</translation>
     </message>
     <message>
-        <location line="+6" />
+        <location line="+6"/>
         <source>Last checked</source>
         <translation>Última comprobación</translation>
     </message>
     <message>
-        <location line="-92" />
-        <location line="+98" />
+        <location line="-92"/>
+        <location line="+98"/>
         <source>Never</source>
         <translation>Nunca</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Check now</source>
         <translation>Comprobar ahora</translation>
     </message>
     <message>
-        <location line="+45" />
+        <location line="+45"/>
         <source>Close app</source>
         <translation>Cerrar app</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Restart now</source>
         <translation>Reiniciar ahora</translation>
     </message>
     <message>
-        <location line="+93" />
+        <location line="+93"/>
         <source>Close and reopen TraceView to apply language or diagnostics history changes, or they will apply the next time you open it.</source>
         <translation>Cierra y vuelve a abrir TraceView para aplicar los cambios de idioma o del historial de diagnóstico, o se aplicarán la próxima vez que lo abras.</translation>
     </message>
     <message>
-        <location line="+4" />
+        <location line="+4"/>
         <source>Restart TraceView to apply language or diagnostics history changes.</source>
         <translation>Reinicie TraceView para aplicar los cambios de idioma o del historial de diagnóstico.</translation>
     </message>
     <message>
-        <location line="+4" />
+        <location line="+4"/>
         <source>Changes apply immediately unless noted otherwise.</source>
         <translation>Los cambios se aplican al instante salvo que se indique lo contrario.</translation>
     </message>
@@ -6983,18 +7247,18 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
 <context>
     <name>traceview::ShortcutsDialog</name>
     <message>
-        <location filename="../lib/core/shortcutsdialog.cpp" line="+15" />
-        <location line="+36" />
+        <location filename="../lib/core/shortcutsdialog.cpp" line="+15"/>
+        <location line="+36"/>
         <source>Keyboard Shortcuts</source>
         <translation>Atajos de Teclado</translation>
     </message>
     <message>
-        <location line="-31" />
+        <location line="-31"/>
         <source>Action</source>
         <translation>Acción</translation>
     </message>
     <message>
-        <location line="+0" />
+        <location line="+0"/>
         <source>Shortcut</source>
         <translation>Atajo</translation>
     </message>
@@ -7002,102 +7266,102 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
 <context>
     <name>traceview::SliderConfigEditor</name>
     <message>
-        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="+199" />
-        <source>Which device this slider's commands are sent to.</source>
+        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="+199"/>
+        <source>Which device this slider&apos;s commands are sent to.</source>
         <translation>A qué dispositivo se envían los comandos de este deslizador.</translation>
     </message>
     <message>
-        <location line="+3" />
+        <location line="+3"/>
         <source>Slider</source>
         <translation>Control deslizante</translation>
     </message>
     <message>
-        <location line="+25" />
+        <location line="+25"/>
         <source>V, %, ...</source>
         <translation>V, %, ...</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Show current value</source>
         <translation>Mostrar valor actual</translation>
     </message>
     <message>
-        <location line="+6" />
+        <location line="+6"/>
         <source>Continuous sends the command on every step while dragging, throttled below. On release sends it once, when the handle is let go.</source>
         <translation>Continuo envía el comando en cada paso mientras se arrastra, limitado abajo. Al soltar lo envía una sola vez, cuando se suelta la manija.</translation>
     </message>
     <message>
-        <location line="+5" />
+        <location line="+5"/>
         <source> ms</source>
         <translation> ms</translation>
     </message>
     <message>
-        <location line="+3" />
-        <source>Minimum time between sends while dragging, so every pixel of motion isn't its own message.</source>
+        <location line="+3"/>
+        <source>Minimum time between sends while dragging, so every pixel of motion isn&apos;t its own message.</source>
         <translation>Tiempo mínimo entre envíos mientras se arrastra, para que no cada píxel de movimiento sea su propio mensaje.</translation>
     </message>
     <message>
-        <location line="+4" />
+        <location line="+4"/>
         <source>SET {value}</source>
         <translation>SET {value}</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Command sent on change — {value} is replaced with the current slider value.</source>
         <translation>Comando enviado al cambiar — {value} se reemplaza con el valor actual del control deslizante.</translation>
     </message>
     <message>
-        <location line="+5" />
+        <location line="+5"/>
         <source>Device</source>
         <translation>Dispositivo</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Label</source>
         <translation>Etiqueta</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Style</source>
         <translation>Estilo</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Min</source>
         <translation>Mín</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Max</source>
         <translation>Máx</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Step</source>
         <translation>Paso</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Default</source>
         <translation>Predeterminado</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Unit</source>
         <translation>Unidad</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Send</source>
         <translation>Enviar</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Throttle</source>
         <translation>Limitación</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Command</source>
         <translation>Comando</translation>
     </message>
@@ -7105,7 +7369,7 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
 <context>
     <name>traceview::StartupLoadingOverlay</name>
     <message>
-        <location filename="../lib/core/startuploadingoverlay.cpp" line="+74" />
+        <location filename="../lib/core/startuploadingoverlay.cpp" line="+74"/>
         <source>Loading dashboard...</source>
         <translation>Cargando panel...</translation>
     </message>
@@ -7113,12 +7377,12 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
 <context>
     <name>traceview::TcpTransport</name>
     <message>
-        <location filename="../lib/core/tcptransport.cpp" line="+108" />
+        <location filename="../lib/core/tcptransport.cpp" line="+108"/>
         <source>TCP connection timed out</source>
         <translation>Tiempo de conexión TCP agotado</translation>
     </message>
     <message>
-        <location line="+51" />
+        <location line="+51"/>
         <source>Could not find %1 on the network (mDNS)</source>
         <translation>No se encontró %1 en la red (mDNS)</translation>
     </message>
@@ -7126,52 +7390,52 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
 <context>
     <name>traceview::TextBoardConfigEditor</name>
     <message>
-        <location filename="../lib/dashboard/widgets/textboardconfigeditor.cpp" line="+17" />
+        <location filename="../lib/dashboard/widgets/textboardconfigeditor.cpp" line="+17"/>
         <source>(auto)</source>
         <translation>(auto)</translation>
     </message>
     <message>
-        <location line="+6" />
+        <location line="+6"/>
         <source>UTF8 telemetry topic displayed by this board. Pick a reported text topic or type its numeric id.</source>
         <translation>Tema de telemetría UTF8 que muestra este tablero. Elija un tema de texto informado o escriba su id numérico.</translation>
     </message>
     <message>
-        <location line="+6" />
+        <location line="+6"/>
         <source> ms</source>
         <translation> ms</translation>
     </message>
     <message>
-        <location line="+3" />
+        <location line="+3"/>
         <source>Requested update period. 3000 ms is approximately 0.33 Hz.</source>
         <translation>Periodo de actualización solicitado. 3000 ms equivalen aproximadamente a 0,33 Hz.</translation>
     </message>
     <message>
-        <location line="+3" />
+        <location line="+3"/>
         <source>Text shown until the first sample arrives</source>
         <translation>Texto mostrado hasta que llegue la primera muestra</translation>
     </message>
     <message>
-        <location line="+6" />
+        <location line="+6"/>
         <source>Device</source>
         <translation>Dispositivo</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Source</source>
         <translation>Origen</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Text topic</source>
         <translation>Tema de texto</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Sample period</source>
         <translation>Periodo de muestreo</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Initial text</source>
         <translation>Texto inicial</translation>
     </message>
@@ -7179,77 +7443,77 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
 <context>
     <name>traceview::ToggleSwitchConfigEditor</name>
     <message>
-        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="-159" />
-        <source>Which device this toggle's commands are sent to.</source>
+        <location filename="../lib/dashboard/widgets/controlconfigeditor.cpp" line="-159"/>
+        <source>Which device this toggle&apos;s commands are sent to.</source>
         <translation>A qué dispositivo se envían los comandos de este interruptor.</translation>
     </message>
     <message>
-        <location line="+3" />
+        <location line="+3"/>
         <source>Toggle</source>
         <translation>Interruptor</translation>
     </message>
     <message>
-        <location line="+5" />
+        <location line="+5"/>
         <source>ON</source>
         <translation>ENCENDIDO</translation>
     </message>
     <message>
-        <location line="+3" />
+        <location line="+3"/>
         <source>OFF</source>
         <translation>APAGADO</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Starts ON</source>
         <translation>Comienza encendido</translation>
     </message>
     <message>
-        <location line="+3" />
+        <location line="+3"/>
         <source>Command sent when turned ON</source>
         <translation>Comando enviado al encender</translation>
     </message>
     <message>
-        <location line="+3" />
+        <location line="+3"/>
         <source>Command sent when turned OFF</source>
         <translation>Comando enviado al apagar</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Confirm before toggling</source>
         <translation>Confirmar antes de alternar</translation>
     </message>
     <message>
-        <location line="+5" />
+        <location line="+5"/>
         <source>Device</source>
         <translation>Dispositivo</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Label</source>
         <translation>Etiqueta</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Style</source>
         <translation>Estilo</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>On text</source>
         <translation>Texto de encendido</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Off text</source>
         <translation>Texto de apagado</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>On command</source>
         <translation>Comando de encendido</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Off command</source>
         <translation>Comando de apagado</translation>
     </message>
@@ -7257,12 +7521,12 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
 <context>
     <name>traceview::ToggleSwitchWidget</name>
     <message>
-        <location filename="../lib/dashboard/widgets/controlwidgets.cpp" line="+222" />
+        <location filename="../lib/dashboard/widgets/controlwidgets.cpp" line="+222"/>
         <source>off</source>
         <translation>apagado</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>on</source>
         <translation>encendido</translation>
     </message>
@@ -7270,114 +7534,114 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
 <context>
     <name>traceview::TraceKitDialog</name>
     <message>
-        <location filename="../lib/devices/tracekitdialog.cpp" line="+74" />
+        <location filename="../lib/devices/tracekitdialog.cpp" line="+74"/>
         <source>%1 — TraceKit</source>
         <translation>%1 — TraceKit</translation>
     </message>
     <message>
-        <location line="+15" />
+        <location line="+15"/>
         <source>Settings</source>
         <translation>Configuración</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Wi-Fi</source>
         <translation>Wi-Fi</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Actions</source>
         <translation>Acciones</translation>
     </message>
     <message>
-        <location line="+69" />
+        <location line="+69"/>
         <source>Firmware %1</source>
         <translation>Firmware %1</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>TraceKit %1</source>
         <translation>TraceKit %1</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>TraceKit device</source>
         <translation>Dispositivo TraceKit</translation>
     </message>
     <message>
-        <location line="+3" />
+        <location line="+3"/>
         <source>Connected</source>
         <translation>Conectado</translation>
     </message>
     <message>
-        <location line="+0" />
+        <location line="+0"/>
         <source>Not connected</source>
         <translation>No conectado</translation>
     </message>
     <message>
-        <location line="+9" />
+        <location line="+9"/>
         <source>Not connected: connect the device to change it.</source>
         <translation>No conectado: conecte el dispositivo para cambiarlo.</translation>
     </message>
     <message>
-        <location line="+14" />
+        <location line="+14"/>
         <source>Setting</source>
         <translation>Ajuste</translation>
     </message>
     <message>
-        <location line="+0" />
+        <location line="+0"/>
         <source>Value</source>
         <translation>Valor</translation>
     </message>
     <message>
-        <location line="+0" />
-        <location line="+130" />
+        <location line="+0"/>
+        <location line="+130"/>
         <source>Default</source>
         <translation>Predeterminado</translation>
     </message>
     <message>
-        <location line="-121" />
-        <location line="+201" />
+        <location line="-121"/>
+        <location line="+201"/>
         <source>Reload</source>
         <translation>Recargar</translation>
     </message>
     <message>
-        <location line="-199" />
+        <location line="-199"/>
         <source>Apply</source>
         <translation>Aplicar</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Saves every changed value on the device (cfg -set).</source>
         <translation>Guarda en el dispositivo cada valor modificado (cfg -set).</translation>
     </message>
     <message>
-        <location line="+19" />
+        <location line="+19"/>
         <source>Reading the settings…</source>
         <translation>Leyendo la configuración…</translation>
     </message>
     <message>
-        <location line="+13" />
+        <location line="+13"/>
         <source>Could not read the settings: %1</source>
         <translation>No se pudo leer la configuración: %1</translation>
     </message>
     <message>
-        <location line="+7" />
+        <location line="+7"/>
         <source>The device did not describe its settings (TraceKit too old?).</source>
         <translation>El dispositivo no describió su configuración (¿TraceKit demasiado antiguo?).</translation>
     </message>
     <message>
-        <location line="+4" />
+        <location line="+4"/>
         <source>This device declares no settings.</source>
         <translation>Este dispositivo no declara ajustes.</translation>
     </message>
     <message>
-        <location line="+6" />
+        <location line="+6"/>
         <source>Reading the settings… %1 of %2</source>
         <translation>Leyendo la configuración… %1 de %2</translation>
     </message>
     <message numerus="yes">
-        <location line="+4" />
+        <location line="+4"/>
         <source>%n setting(s), saved on the device.</source>
         <translation>
             <numerusform>%n ajuste, guardado en el dispositivo.</numerusform>
@@ -7385,234 +7649,234 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
         </translation>
     </message>
     <message>
-        <location line="+16" />
+        <location line="+16"/>
         <source>Takes effect after a reboot.</source>
         <translation>Se aplica tras un reinicio.</translation>
     </message>
     <message>
-        <location line="+8" />
+        <location line="+8"/>
         <source>Range %1 to %2</source>
         <translation>Rango de %1 a %2</translation>
     </message>
     <message>
-        <location line="+41" />
+        <location line="+41"/>
         <source>Back to the default, now (cfg -reset).</source>
         <translation>Volver al valor predeterminado, ahora (cfg -reset).</translation>
     </message>
     <message>
-        <location line="+29" />
+        <location line="+29"/>
         <source>Nothing changed.</source>
         <translation>No ha cambiado nada.</translation>
     </message>
     <message>
-        <location line="+46" />
+        <location line="+46"/>
         <source>Add…</source>
         <translation>Añadir…</translation>
     </message>
     <message>
-        <location line="+2" />
-        <location line="+127" />
+        <location line="+2"/>
+        <location line="+127"/>
         <source>Remove</source>
         <translation>Eliminar</translation>
     </message>
     <message>
-        <location line="-124" />
+        <location line="-124"/>
         <source>Read the list from the device again (btp -wifi_json).</source>
         <translation>Leer de nuevo la lista del dispositivo (btp -wifi_json).</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Reboot to use them</source>
         <translation>Reiniciar para usarlas</translation>
     </message>
     <message>
-        <location line="+6" />
+        <location line="+6"/>
         <source>%1 knows no Wi-Fi network. After this reboot it joins none: a device that only talks over Wi-Fi can then be reached only over USB.</source>
         <translation>%1 no conoce ninguna red Wi-Fi. Tras este reinicio no se unirá a ninguna: un dispositivo que solo se comunica por Wi-Fi solo podrá alcanzarse por USB.</translation>
     </message>
     <message>
-        <location line="+4" />
+        <location line="+4"/>
         <source>Reboot anyway</source>
         <translation>Reiniciar de todos modos</translation>
     </message>
     <message>
-        <location line="+13" />
+        <location line="+13"/>
         <source>Passwords are sent to the device over the encrypted session and never read back. Changes take effect after a reboot; the recovery uses the same networks.</source>
         <translation>Las contraseñas se envían al dispositivo por la sesión cifrada y nunca se vuelven a leer. Los cambios se aplican tras un reinicio; el recovery usa las mismas redes.</translation>
     </message>
     <message>
-        <location line="+16" />
+        <location line="+16"/>
         <source>Reading the networks…</source>
         <translation>Leyendo las redes…</translation>
     </message>
     <message>
-        <location line="+7" />
+        <location line="+7"/>
         <source>Could not read the networks: %1</source>
         <translation>No se pudieron leer las redes: %1</translation>
     </message>
     <message>
-        <location line="+8" />
+        <location line="+8"/>
         <source>  (in the firmware)</source>
         <translation>  (en el firmware)</translation>
     </message>
     <message>
-        <location line="+8" />
+        <location line="+8"/>
         <source>No networks: the device only works over a cable.</source>
         <translation>Sin redes: el dispositivo solo funciona por cable.</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>%1 of %2 networks; tried in this order.</source>
         <translation>%1 de %2 redes; se prueban en este orden.</translation>
     </message>
     <message>
-        <location line="+9" />
-        <location line="+5" />
-        <location line="+3" />
+        <location line="+9"/>
+        <location line="+5"/>
+        <location line="+3"/>
         <source>Add a network</source>
         <translation>Añadir una red</translation>
     </message>
     <message>
-        <location line="-8" />
+        <location line="-8"/>
         <source>Network name (SSID):</source>
         <translation>Nombre de la red (SSID):</translation>
     </message>
     <message>
-        <location line="+5" />
+        <location line="+5"/>
         <source>A name with a comma cannot be added from here.</source>
         <translation>Un nombre con coma no se puede añadir desde aquí.</translation>
     </message>
     <message>
-        <location line="+4" />
+        <location line="+4"/>
         <source>Password of %1 (empty: open network):</source>
         <translation>Contraseña de %1 (vacía: red abierta):</translation>
     </message>
     <message>
-        <location line="+15" />
-        <location line="+26" />
+        <location line="+15"/>
+        <location line="+26"/>
         <source>Remove a network</source>
         <translation>Eliminar una red</translation>
     </message>
     <message>
-        <location line="-25" />
+        <location line="-25"/>
         <source>Pick a network from the list (the one in the firmware cannot be removed from here).</source>
         <translation>Elija una red de la lista (la del firmware no se puede eliminar desde aquí).</translation>
     </message>
     <message>
-        <location line="+16" />
+        <location line="+16"/>
         <source>Remove %1 from %2? The list has it %3 times, and all of them go.</source>
         <translation>¿Eliminar %1 de %2? La lista la tiene %3 veces y se eliminarán todas.</translation>
     </message>
     <message>
-        <location line="+3" />
+        <location line="+3"/>
         <source>Remove %1 from %2?</source>
         <translation>¿Eliminar %1 de %2?</translation>
     </message>
     <message>
-        <location line="+3" />
+        <location line="+3"/>
         <source>It is the only network: after the next reboot the device joins no Wi-Fi, and one that only talks over Wi-Fi can then be reached only over USB.</source>
         <translation>Es la única red: tras el próximo reinicio el dispositivo no se unirá a ningún Wi-Fi, y uno que solo se comunica por Wi-Fi solo podrá alcanzarse por USB.</translation>
     </message>
     <message>
-        <location line="+28" />
+        <location line="+28"/>
         <source>Set the clock</source>
         <translation>Ajustar el reloj</translation>
     </message>
     <message>
-        <location line="+0" />
+        <location line="+0"/>
         <source>From this computer, unless the device already has the time from the internet.</source>
         <translation>Desde este ordenador, salvo que el dispositivo ya tenga la hora de internet.</translation>
     </message>
     <message>
-        <location line="+4" />
+        <location line="+4"/>
         <source>Status</source>
         <translation>Estado</translation>
     </message>
     <message>
-        <location line="+0" />
+        <location line="+0"/>
         <source>Link, memory, time, power and sleep.</source>
         <translation>Enlace, memoria, hora, energía y suspensión.</translation>
     </message>
     <message>
-        <location line="+5" />
+        <location line="+5"/>
         <source>Keep awake 10 min</source>
         <translation>Mantener despierto 10 min</translation>
     </message>
     <message>
-        <location line="+0" />
+        <location line="+0"/>
         <source>A sleeping sensor stays up for a session or an update.</source>
         <translation>Un sensor en suspensión se mantiene activo para una sesión o una actualización.</translation>
     </message>
     <message>
-        <location line="-151" />
-        <location line="+153" />
+        <location line="-151"/>
+        <location line="+153"/>
         <source>Reboot</source>
         <translation>Reiniciar</translation>
     </message>
     <message>
-        <location line="+0" />
+        <location line="+0"/>
         <source>Restarts the application.</source>
         <translation>Reinicia la aplicación.</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Recovery</source>
         <translation>Recovery</translation>
     </message>
     <message>
-        <location line="+0" />
+        <location line="+0"/>
         <source>Restarts into the recovery, waiting for a firmware (Firmware page).</source>
         <translation>Reinicia en el recovery, a la espera de un firmware (página Firmware).</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>USB bootloader</source>
         <translation>Bootloader USB</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>ROM download mode for 30 s: flash over the cable without the BOOT button.</source>
         <translation>Modo de descarga de la ROM durante 30 s: grabe por cable sin el botón BOOT.</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Factory reset…</source>
         <translation>Restablecimiento de fábrica…</translation>
     </message>
     <message>
-        <location line="+0" />
+        <location line="+0"/>
         <source>Erases the application and the files; keeps key, Wi-Fi and settings.</source>
         <translation>Borra la aplicación y los archivos; conserva la clave, el Wi-Fi y la configuración.</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Factory reset</source>
         <translation>Restablecimiento de fábrica</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Erase the application and the files of %1? It then waits in the recovery for a new firmware.</source>
         <translation>¿Borrar la aplicación y los archivos de %1? Después esperará en el recovery un nuevo firmware.</translation>
     </message>
     <message>
-        <location line="+3" />
+        <location line="+3"/>
         <source>Erase</source>
         <translation>Borrar</translation>
     </message>
     <message>
-        <location line="-160" />
-        <location line="+112" />
-        <location line="+48" />
+        <location line="-160"/>
+        <location line="+112"/>
+        <location line="+48"/>
         <source>Cancel</source>
         <translation>Cancelar</translation>
     </message>
     <message>
-        <location line="+23" />
+        <location line="+23"/>
         <source>ok</source>
         <translation>ok</translation>
     </message>
     <message>
-        <location line="+0" />
+        <location line="+0"/>
         <source>failed</source>
         <translation>falló</translation>
     </message>
@@ -7620,38 +7884,38 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
 <context>
     <name>traceview::UpdateAvailableDialog</name>
     <message>
-        <location filename="../lib/core/updateavailabledialog.cpp" line="+16" />
-        <location line="+3" />
+        <location filename="../lib/core/updateavailabledialog.cpp" line="+16"/>
+        <location line="+3"/>
         <source>Update Available</source>
         <translation>Actualización Disponible</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>A new update is available. Do you want to update?</source>
         <translation>Hay una nueva actualización disponible. ¿Deseas actualizar?</translation>
     </message>
     <message>
-        <location line="+4" />
+        <location line="+4"/>
         <source>New version: v%1&lt;br&gt;Your version: v%2</source>
         <translation>Nueva versión: v%1&lt;br&gt;Tu versión: v%2</translation>
     </message>
     <message>
-        <location line="+7" />
+        <location line="+7"/>
         <source>Later</source>
         <translation>Más tarde</translation>
     </message>
     <message>
-        <location line="+1" />
+        <location line="+1"/>
         <source>Update Now</source>
         <translation>Actualizar Ahora</translation>
     </message>
     <message>
-        <location line="-13" />
+        <location line="-13"/>
         <source>A new update has been downloaded and is ready to install.</source>
         <translation>Se ha descargado una nueva actualización y está lista para instalar.</translation>
     </message>
     <message>
-        <location line="+13" />
+        <location line="+13"/>
         <source>Install Now</source>
         <translation>Instalar ahora</translation>
     </message>
@@ -7659,55 +7923,55 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
 <context>
     <name>traceview::UpdateChecker</name>
     <message>
-        <location filename="../lib/updater/updatechecker.cpp" line="+44" />
-        <source>Updates are managed by Flatpak. Use 'flatpak update'.</source>
-        <translation>Las actualizaciones las gestiona Flatpak. Use 'flatpak update'.</translation>
+        <location filename="../lib/updater/updatechecker.cpp" line="+44"/>
+        <source>Updates are managed by Flatpak. Use &apos;flatpak update&apos;.</source>
+        <translation>Las actualizaciones las gestiona Flatpak. Use &apos;flatpak update&apos;.</translation>
     </message>
 </context>
 <context>
     <name>traceview::UpdateDownloader</name>
     <message>
-        <location filename="../lib/updater/updatedownloader.cpp" line="+36" />
-        <source>Updates are managed by Flatpak. Use 'flatpak update'.</source>
-        <translation>Las actualizaciones las gestiona Flatpak. Use 'flatpak update'.</translation>
+        <location filename="../lib/updater/updatedownloader.cpp" line="+36"/>
+        <source>Updates are managed by Flatpak. Use &apos;flatpak update&apos;.</source>
+        <translation>Las actualizaciones las gestiona Flatpak. Use &apos;flatpak update&apos;.</translation>
     </message>
     <message>
-        <location line="+14" />
-        <source>Couldn't download SHA256SUMS.txt: %1</source>
+        <location line="+14"/>
+        <source>Couldn&apos;t download SHA256SUMS.txt: %1</source>
         <translation>No se pudo descargar SHA256SUMS.txt: %1</translation>
     </message>
     <message>
-        <location line="+84" />
-        <source>Couldn't download %1: %2</source>
+        <location line="+84"/>
+        <source>Couldn&apos;t download %1: %2</source>
         <translation>No se pudo descargar %1: %2</translation>
     </message>
     <message>
-        <location line="-78" />
+        <location line="-78"/>
         <source>%1 is not listed in SHA256SUMS.txt.</source>
         <translation>%1 no figura en SHA256SUMS.txt.</translation>
     </message>
     <message>
-        <location line="+90" />
+        <location line="+90"/>
         <source>Checksum mismatch for %1 -- the download may be corrupted.</source>
         <translation>La suma de verificación de %1 no coincide -- la descarga puede estar dañada.</translation>
     </message>
     <message>
-        <location line="-38" />
-        <location line="+32" />
-        <location line="+11" />
-        <source>Couldn't write %1</source>
+        <location line="-38"/>
+        <location line="+32"/>
+        <location line="+11"/>
+        <source>Couldn&apos;t write %1</source>
         <translation>No se pudo escribir %1</translation>
     </message>
 </context>
 <context>
     <name>traceview::UsbHidManager</name>
     <message>
-        <location filename="../lib/core/usbhidmanager.cpp" line="+75" />
+        <location filename="../lib/core/usbhidmanager.cpp" line="+75"/>
         <source>Could not open HID device: %1</source>
         <translation>No se pudo abrir el dispositivo HID: %1</translation>
     </message>
     <message>
-        <location line="+76" />
+        <location line="+76"/>
         <source>HID device disconnected</source>
         <translation>Dispositivo HID desconectado</translation>
     </message>
@@ -7715,22 +7979,22 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
 <context>
     <name>traceview::WorkspaceDock</name>
     <message>
-        <location filename="../lib/core/workspacedock.cpp" line="+178" />
+        <location filename="../lib/core/workspacedock.cpp" line="+178"/>
         <source>New Workspace…</source>
         <translation>Nuevo Espacio de Trabajo…</translation>
     </message>
     <message>
-        <location line="+19" />
+        <location line="+19"/>
         <source>Rename…</source>
         <translation>Renombrar…</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="+2"/>
         <source>Change Icon…</source>
         <translation>Cambiar icono…</translation>
     </message>
     <message>
-        <location line="+3" />
+        <location line="+3"/>
         <source>Delete Workspace</source>
         <translation>Eliminar Espacio de Trabajo</translation>
     </message>
@@ -7738,7 +8002,7 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
 <context>
     <name>traceview::WorkspaceSwitcher</name>
     <message>
-        <location filename="../lib/core/workspaceswitcher.cpp" line="+192" />
+        <location filename="../lib/core/workspaceswitcher.cpp" line="+192"/>
         <source>New Workspace…</source>
         <translation>Nuevo Espacio de Trabajo…</translation>
     </message>

@@ -22,8 +22,10 @@ constexpr qint64 kInterfaceRefreshMs = 30000;
 QHostAddress mdnsGroup() {
     return QHostAddress(QStringLiteral("224.0.0.251"));
 }
+}  // namespace
 
-// Up, running, multicast-capable, not loopback, with an IPv4 address.
+namespace mdns_detail {
+
 bool usableInterface(const QNetworkInterface& iface) {
     const auto flags = iface.flags();
     if (!flags.testFlag(QNetworkInterface::IsUp) || !flags.testFlag(QNetworkInterface::IsRunning) ||
@@ -35,11 +37,39 @@ bool usableInterface(const QNetworkInterface& iface) {
     }
     return false;
 }
-}  // namespace
-
-namespace mdns_detail {
 
 namespace {
+
+constexpr quint16 kTypeA = 1;
+constexpr quint16 kTypePtr = 12;
+constexpr quint16 kTypeTxt = 16;
+constexpr quint16 kTypeSrv = 33;
+
+quint16 readU16(const QByteArray& message, int offset) {
+    return quint16((quint8(message.at(offset)) << 8) | quint8(message.at(offset + 1)));
+}
+
+// One question for `name`, type `qtype`, class IN.
+QByteArray buildQuestion(const QString& name, quint16 qtype) {
+    QByteArray packet(12, char(0));
+    // Header: ID=0 (mDNS doesn't use it to correlate -- RFC 6762 18.1),
+    // flags=0 (standard query), QDCOUNT=1, ANCOUNT/NSCOUNT/ARCOUNT=0.
+    packet[5] = char(1);  // QDCOUNT high/low byte -- byte[4] stays 0
+
+    const QStringList labels = name.split(QLatin1Char('.'), Qt::SkipEmptyParts);
+    for (const QString& label : labels) {
+        const QByteArray bytes = label.toLatin1().left(63);  // DNS label length limit
+        packet.append(char(bytes.size()));
+        packet.append(bytes);
+    }
+    packet.append(char(0));  // root label terminating QNAME
+
+    packet.append(char(qtype >> 8));
+    packet.append(char(qtype & 0xFF));
+    packet.append(char(0));
+    packet.append(char(1));  // QCLASS = IN
+    return packet;
+}
 
 // Reads a DNS name starting at `offset` (RFC 1035 4.1.4: a sequence of
 // length-prefixed labels, terminated either by a zero-length label or by a
@@ -84,24 +114,108 @@ QString readName(const QByteArray& message, int& offset) {
 }  // namespace
 
 QByteArray buildQuery(const QString& hostname) {
-    QByteArray packet(12, char(0));
-    // Header: ID=0 (mDNS doesn't use it to correlate -- RFC 6762 18.1),
-    // flags=0 (standard query), QDCOUNT=1, ANCOUNT/NSCOUNT/ARCOUNT=0.
-    packet[5] = char(1);  // QDCOUNT high/low byte -- byte[4] stays 0
+    return buildQuestion(hostname, kTypeA);
+}
 
-    const QStringList labels = hostname.split(QLatin1Char('.'), Qt::SkipEmptyParts);
-    for (const QString& label : labels) {
-        const QByteArray bytes = label.toLatin1().left(63);  // DNS label length limit
-        packet.append(char(bytes.size()));
-        packet.append(bytes);
+QByteArray buildPtrQuery(const QString& serviceType) {
+    return buildQuestion(serviceType, kTypePtr);
+}
+
+QVector<ServiceRecord> parseServiceRecords(const QByteArray& message, const QString& serviceType) {
+    QVector<ServiceRecord> out;
+    if (message.size() < 12) {
+        return out;
     }
-    packet.append(char(0));  // root label terminating QNAME
+    const QString type = serviceType.toLower();
+    const QString instanceSuffix = QLatin1Char('.') + type;
+    const int qdcount = readU16(message, 4);
+    const int recordCount = readU16(message, 6) + readU16(message, 8) + readU16(message, 10);
+    if (recordCount <= 0) {
+        return out;
+    }
 
-    packet.append(char(0));
-    packet.append(char(1));  // QTYPE = A
-    packet.append(char(0));
-    packet.append(char(1));  // QCLASS = IN
-    return packet;
+    int offset = 12;
+    for (int i = 0; i < qdcount && offset < message.size(); ++i) {
+        readName(message, offset);
+        offset += 4;  // QTYPE(2) + QCLASS(2)
+    }
+
+    QStringList instances;  // in the order first seen
+    struct Srv {
+        QString host;
+        quint16 port = 0;
+    };
+    QHash<QString, Srv> srvs;
+    QHash<QString, QString> txtNames;
+    QHash<QString, QHostAddress> addresses;
+    const auto noteInstance = [&](const QString& name) {
+        if (name.endsWith(instanceSuffix) && !instances.contains(name)) {
+            instances.append(name);
+        }
+    };
+
+    for (int i = 0; i < recordCount && offset < message.size(); ++i) {
+        const QString name = readName(message, offset);
+        if (offset + 10 > message.size()) {
+            break;  // TYPE(2)+CLASS(2)+TTL(4)+RDLENGTH(2)
+        }
+        const quint16 rrType = readU16(message, offset);
+        offset += 8;  // TYPE(2) + CLASS(2) + TTL(4)
+        const quint16 rdlength = readU16(message, offset);
+        offset += 2;
+        if (offset + rdlength > message.size()) {
+            break;
+        }
+        const int rdata = offset;
+        offset += rdlength;
+
+        if (rrType == kTypePtr && name == type) {
+            int cursor = rdata;
+            noteInstance(readName(message, cursor));
+        } else if (rrType == kTypeSrv && rdlength > 6) {
+            // PRIORITY(2) WEIGHT(2) PORT(2) TARGET
+            int cursor = rdata + 6;
+            srvs.insert(name, {readName(message, cursor), readU16(message, rdata + 4)});
+            noteInstance(name);
+        } else if (rrType == kTypeTxt) {
+            // A run of <length><key=value> strings (RFC 6763 section 6).
+            int cursor = rdata;
+            while (cursor < rdata + rdlength) {
+                const int length = quint8(message.at(cursor));
+                ++cursor;
+                if (cursor + length > rdata + rdlength) {
+                    break;
+                }
+                const QString entry = QString::fromUtf8(message.constData() + cursor, length);
+                cursor += length;
+                if (entry.startsWith(QLatin1String("name="), Qt::CaseInsensitive)) {
+                    txtNames.insert(name, entry.mid(5));
+                }
+            }
+        } else if (rrType == kTypeA && rdlength == 4) {
+            // Widened before shifting -- see parseAAnswers().
+            const quint32 ip = (quint32(quint8(message.at(rdata))) << 24) |
+                               (quint32(quint8(message.at(rdata + 1))) << 16) |
+                               (quint32(quint8(message.at(rdata + 2))) << 8) |
+                               quint32(quint8(message.at(rdata + 3)));
+            addresses.insert(name, QHostAddress(ip));
+        }
+    }
+
+    for (const QString& instance : instances) {
+        const auto srv = srvs.constFind(instance);
+        if (srv == srvs.constEnd()) {
+            continue;
+        }
+        ServiceRecord record;
+        record.instance = instance;
+        record.host = srv->host;
+        record.port = srv->port;
+        record.txtName = txtNames.value(instance);
+        record.address = addresses.value(srv->host);
+        out.append(record);
+    }
+    return out;
 }
 
 QHash<QString, QHostAddress> parseAAnswers(const QByteArray& message) {
@@ -188,7 +302,7 @@ QList<QNetworkInterface> MdnsResolver::refreshInterfaces() {
     m_interfacesFetchedMs = now;
     QList<QNetworkInterface> usable;
     for (const QNetworkInterface& iface : QNetworkInterface::allInterfaces()) {
-        if (!usableInterface(iface)) continue;
+        if (!mdns_detail::usableInterface(iface)) continue;
         usable.append(iface);
         if (!m_joined.contains(iface.name()) && m_socket->joinMulticastGroup(mdnsGroup(), iface)) {
             m_joined.insert(iface.name());

@@ -713,6 +713,19 @@ QLabel#statusBadge[tone="danger"] {
     background-color: @dangerTint@;
     color: @danger@;
 }
+/* Home page lists (core/homepage.cpp): recent projects and gallery entries
+   are rows, not framed buttons. */
+QPushButton#homeLink {
+    border: none;
+    background: transparent;
+    text-align: left;
+    padding: 6px 8px;
+    border-radius: 6px;
+    color: @textPrimary@;
+}
+QPushButton#homeLink:hover {
+    background-color: @surfaceAlt@;
+}
 QFrame#dialogCard {
     background-color: @surface@;
     border: 1px solid @border@;

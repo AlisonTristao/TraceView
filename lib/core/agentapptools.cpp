@@ -1082,12 +1082,14 @@ void AgentAppTools::registerDashboardViewTools(MainWindow* window, ToolRegistry*
     show.title = "Show view";
     show.description =
         "Brings a part of TraceView to the front for the user (and for a following window "
-        "screenshot): the dashboard, the devices page, the subscriptions view, the OTA page, "
+        "screenshot): the Home page (open project, recent projects, nearby robots), the "
+        "dashboard, the devices page, the subscriptions view, the OTA page, "
         "the BTP traffic monitor, the notification history, the bell's notification panel "
         "or the settings.";
     show.inputSchema = AgentSchema()
                            .string("view", "What to show.", true,
-                                   {"dashboard", "devices", "subscriptions", "ota", "btp_monitor",
+                                   {"home", "dashboard", "devices", "subscriptions", "ota",
+                                    "btp_monitor",
                                     "notifications", "notification_panel", "settings"})
                            .toJson();
     show.handler = [window](const QJsonObject& args, const AgentToolReply& reply) {
@@ -1100,7 +1102,9 @@ void AgentAppTools::registerDashboardViewTools(MainWindow* window, ToolRegistry*
         // that would hold the reply until the user closes them.
         reply(AgentToolResult::text(QStringLiteral("Showing %1.").arg(view)));
         QTimer::singleShot(0, window, [window, view] {
-            if (view == QLatin1String("dashboard")) {
+            if (view == QLatin1String("home")) {
+                window->showHomeTab();
+            } else if (view == QLatin1String("dashboard")) {
                 window->switchToWorkspace(WorkspaceManager::instance().activeId());
                 window->m_ribbon->setCurrentIndex(window->m_dashboardTabIndex);
                 window->onRibbonTabChanged(window->m_dashboardTabIndex);

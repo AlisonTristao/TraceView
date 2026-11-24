@@ -7,6 +7,36 @@ release flow.
 
 ## [Unreleased]
 
+### Added
+
+- **Home tab**: the app now opens on a Home page instead of straight on the
+  dashboard. It shows the open project ("Continue where you left off") and,
+  in Developer mode, recent projects, the dashboard gallery and New/Open
+  buttons. The startup dashboard is still loaded behind it, and if its robot
+  connects within the first seconds the app goes to the dashboard by itself.
+  A house button on the Dashboard row leads back (the only way in User mode,
+  which has no tab row).
+- **Nearby robots**: a list on the Home page of the project's robots with
+  their state and a Connect button, plus robots found around the computer
+  that the project doesn't have yet (Add, in Developer mode). Finding them
+  touches no robot: USB ports by the name a robot gives its USB device,
+  Wi-Fi by browsing mDNS for `_btp._tcp` (which bally_OS already
+  advertises), and one short Bluetooth scan when permission is already
+  granted. It runs only while the Home page is showing.
+- **Deep scan** (Developer mode, button only): opens every unidentified USB
+  serial port and tries TCP port 44300 on the computer's /24 networks,
+  saying HELLO to whatever answers. Opening a port can restart an ESP32, so
+  it never runs by itself.
+
+### Fixed
+
+- The canvas snap grid (1×/2×/4× precision) only showed with the padlock
+  open; in Run mode the Dots/Grid canvas pattern was a separate fixed 24 px
+  texture. Dots and Grid now draw the snap grid itself in both modes, so it
+  stays the same grid and follows the precision setting.
+- The 4.18.0 card background and right-click header options were missing
+  their translations.
+
 ## [4.18.0] - 2026-11-23
 
 ### Added

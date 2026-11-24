@@ -76,7 +76,15 @@ void withBluetoothPermission(QObject* context, std::function<void(bool granted)>
     });
 }
 
+bool bluetoothPermissionGranted() {
+    return qApp->checkPermission(centralPermission()) == Qt::PermissionStatus::Granted;
+}
+
 #else
+
+bool bluetoothPermissionGranted() {
+    return true;
+}
 
 void withBluetoothPermission(QObject* context, std::function<void(bool granted)> onResult) {
     Q_UNUSED(context);
