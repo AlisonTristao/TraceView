@@ -726,6 +726,61 @@ QPushButton#homeLink {
 QPushButton#homeLink:hover {
     background-color: @surfaceAlt@;
 }
+/* Home page header: a card with the brand and three number tiles. */
+QFrame#homeHero {
+    background-color: @surface@;
+    border: 1px solid @border@;
+    border-left: 4px solid @accent@;
+    border-radius: 10px;
+}
+QFrame#homeHero .QWidget {
+    background-color: @surface@;
+}
+QFrame#homeTile {
+    background-color: @accentTint@;
+    border: none;
+    border-radius: 8px;
+}
+QLabel#homeTileValue {
+    color: @accent@;
+    font-weight: 600;
+    background: transparent;
+}
+QLabel#homeTileValue[tone="success"] {
+    color: @success@;
+}
+/* Workspace shortcuts under the dashboard picture. */
+QPushButton#homeChip {
+    background-color: @surfaceAlt@;
+    border: 1px solid @border@;
+    border-radius: 8px;
+    padding: 6px 10px;
+    text-align: left;
+    color: @textPrimary@;
+}
+QPushButton#homeChip:hover {
+    border-color: @accent@;
+}
+/* Robots: a hover-lit row with a round avatar tinted by state. */
+QFrame#homeRobotRow {
+    border-radius: 8px;
+}
+QFrame#homeRobotRow:hover {
+    background-color: @surfaceAlt@;
+}
+QLabel#homeAvatar {
+    border-radius: 17px;
+    background-color: @neutralTint@;
+}
+QLabel#homeAvatar[tone="accent"] {
+    background-color: @accentTint@;
+}
+QLabel#homeAvatar[tone="success"] {
+    background-color: @successTint@;
+}
+QLabel#homeAvatar[tone="warning"] {
+    background-color: @warningTint@;
+}
 QFrame#dialogCard {
     background-color: @surface@;
     border: 1px solid @border@;

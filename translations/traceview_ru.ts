@@ -43,7 +43,7 @@ Allow it to connect devices and send them commands until AI assistant access is 
         <translation>Изменить виджет (ИИ-ассистент)</translation>
     </message>
     <message>
-        <location line="+414"/>
+        <location line="+418"/>
         <source>New Project</source>
         <translation>Новый проект</translation>
     </message>
@@ -2796,7 +2796,7 @@ Allowed: %1</source>
 <context>
     <name>traceview::DashboardGrid</name>
     <message>
-        <location filename="../lib/dashboard/dashboardgrid.cpp" line="+688"/>
+        <location filename="../lib/dashboard/dashboardgrid.cpp" line="+685"/>
         <source>Bring to Front</source>
         <translation>На передний план</translation>
     </message>
@@ -3590,7 +3590,7 @@ Allowed: %1</source>
 <context>
     <name>traceview::HomePage</name>
     <message>
-        <location filename="../lib/core/homepage.cpp" line="+100"/>
+        <location filename="../lib/core/homepage.cpp" line="+240"/>
         <source>The deep scan found nothing new.</source>
         <translation>Глубокий поиск не нашёл ничего нового.</translation>
     </message>
@@ -3604,7 +3604,7 @@ Allowed: %1</source>
         </translation>
     </message>
     <message>
-        <location line="+158"/>
+        <location line="+207"/>
         <source>Welcome to TraceView</source>
         <translation>Добро пожаловать в TraceView</translation>
     </message>
@@ -3612,6 +3612,22 @@ Allowed: %1</source>
         <location line="+1"/>
         <source>Version %1 · Pick up your dashboard or connect a robot.</source>
         <translation>Версия %1 · Откройте панель или подключите робота.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Robots connected</source>
+        <translation>Роботов подключено</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <location line="+4"/>
+        <source>Workspaces</source>
+        <translation>Рабочие области</translation>
+    </message>
+    <message>
+        <location line="-3"/>
+        <source>Widgets</source>
+        <translation>Виджеты</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -3624,7 +3640,7 @@ Allowed: %1</source>
         <translation>Открыть панель</translation>
     </message>
     <message>
-        <location line="+1"/>
+        <location line="+2"/>
         <source>Projects</source>
         <translation>Проекты</translation>
     </message>
@@ -3669,18 +3685,9 @@ Allowed: %1</source>
         <translation>Поиск Bluetooth</translation>
     </message>
     <message>
-        <location line="+37"/>
+        <location line="+82"/>
         <source>Untitled project</source>
         <translation>Проект без названия</translation>
-    </message>
-    <message numerus="yes">
-        <location line="+2"/>
-        <source>%n workspace(s)</source>
-        <translation>
-            <numerusform>%n рабочая область</numerusform>
-            <numerusform>%n рабочие области</numerusform>
-            <numerusform>%n рабочих областей</numerusform>
-        </translation>
     </message>
     <message numerus="yes">
         <location line="+1"/>
@@ -3691,8 +3698,17 @@ Allowed: %1</source>
             <numerusform>%n устройств</numerusform>
         </translation>
     </message>
+    <message numerus="yes">
+        <location line="+13"/>
+        <source>%n widget(s)</source>
+        <translation>
+            <numerusform>%n виджет</numerusform>
+            <numerusform>%n виджета</numerusform>
+            <numerusform>%n виджетов</numerusform>
+        </translation>
+    </message>
     <message>
-        <location line="+27"/>
+        <location line="+41"/>
         <source>No recent projects yet.</source>
         <translation>Недавних проектов пока нет.</translation>
     </message>
@@ -3702,7 +3718,7 @@ Allowed: %1</source>
         <translation>%1 (открывается при запуске)</translation>
     </message>
     <message>
-        <location line="+90"/>
+        <location line="+122"/>
         <source>Connected</source>
         <translation>Подключено</translation>
     </message>
@@ -3767,7 +3783,7 @@ Allowed: %1</source>
         <translation>Добавить в этот проект и подключить</translation>
     </message>
     <message>
-        <location line="+5"/>
+        <location line="+7"/>
         <source>New</source>
         <translation>Новый</translation>
     </message>
@@ -4087,7 +4103,7 @@ Allowed: %1</source>
         <translation>, </translation>
     </message>
     <message>
-        <location line="+373"/>
+        <location line="+381"/>
         <source>AI assistant access is off.</source>
         <translation>Доступ ИИ-ассистентов выключен.</translation>
     </message>
@@ -4257,12 +4273,12 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+0"/>
-        <location line="+4555"/>
+        <location line="+4575"/>
         <source>Later</source>
         <translation>Позже</translation>
     </message>
     <message>
-        <location line="-4548"/>
+        <location line="-4568"/>
         <source>&amp;Access</source>
         <translation>Доступ (&amp;A)</translation>
     </message>
@@ -4389,18 +4405,18 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+18"/>
-        <location line="+3800"/>
+        <location line="+3820"/>
         <source>Undo</source>
         <translation>Отменить</translation>
     </message>
     <message>
-        <location line="-3798"/>
-        <location line="+3798"/>
+        <location line="-3818"/>
+        <location line="+3818"/>
         <source>Redo</source>
         <translation>Повторить</translation>
     </message>
     <message>
-        <location line="-3755"/>
+        <location line="-3775"/>
         <source>Add Device</source>
         <translation>Добавить устройство</translation>
     </message>
@@ -4446,12 +4462,12 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+36"/>
-        <location line="+3721"/>
+        <location line="+3741"/>
         <source>Fullscreen dashboard (F11)</source>
         <translation>Панель в полноэкранном режиме (F11)</translation>
     </message>
     <message>
-        <location line="-3633"/>
+        <location line="-3652"/>
         <location line="+500"/>
         <source>Home</source>
         <translation>Главная</translation>
@@ -4641,12 +4657,12 @@ Drops: %2</source>
         <translation>&quot;%1&quot; сохранён в галерее.</translation>
     </message>
     <message>
-        <location line="+137"/>
+        <location line="+141"/>
         <source>Example dashboard</source>
         <translation>Пример панели</translation>
     </message>
     <message>
-        <location line="+62"/>
+        <location line="+77"/>
         <source>Dongle</source>
         <translation>Донгл</translation>
     </message>
@@ -4745,13 +4761,13 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>Закрыть приложение</translation>
     </message>
     <message>
-        <location line="-3818"/>
-        <location line="+3503"/>
+        <location line="-3837"/>
+        <location line="+3522"/>
         <source>Devices</source>
         <translation>Устройства</translation>
     </message>
     <message>
-        <location line="-3428"/>
+        <location line="-3447"/>
         <source>Subscriptions</source>
         <translation>Подписки</translation>
     </message>
@@ -4767,12 +4783,12 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>Имя:</translation>
     </message>
     <message>
-        <location line="-2226"/>
+        <location line="-2235"/>
         <source>TraceView v%1</source>
         <translation>TraceView v%1</translation>
     </message>
     <message>
-        <location line="+2227"/>
+        <location line="+2236"/>
         <source>Workspace</source>
         <translation>Рабочее пространство</translation>
     </message>
@@ -4798,23 +4814,23 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     </message>
     <message>
         <location line="+81"/>
-        <location line="+3001"/>
+        <location line="+3020"/>
         <source>Add widget</source>
         <translation>Добавить виджет</translation>
     </message>
     <message>
-        <location line="-2998"/>
+        <location line="-3017"/>
         <source>Remove selected widget (%1)</source>
         <translation>Удалить выбранный виджет (%1)</translation>
     </message>
     <message>
         <location line="+8"/>
-        <location line="+3003"/>
+        <location line="+3022"/>
         <source>Add device</source>
         <translation>Добавить устройство</translation>
     </message>
     <message>
-        <location line="-3000"/>
+        <location line="-3019"/>
         <source>Remove selected device (%1)</source>
         <translation>Удалить выбранное устройство (%1)</translation>
     </message>
@@ -5012,7 +5028,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     </message>
     <message>
         <location line="+15"/>
-        <location line="+599"/>
+        <location line="+618"/>
         <location line="+4"/>
         <source>Open Project</source>
         <translation>Открыть проект</translation>

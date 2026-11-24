@@ -901,6 +901,14 @@ void MainWindow::finishStartup() {
     // the user straight there (see onDeviceConnectionStateChanged()).
     showHomeTab();
     m_homeAutoLeaveUntilMs = QDateTime::currentMSecsSinceEpoch() + 15000;
+    // The dashboard was only just built: picture it again once its widgets
+    // have been laid out and painted (it renders while hidden).
+    QTimer::singleShot(600, this, [this] {
+        if (m_homePage != nullptr && m_dashboardScrollArea != nullptr &&
+            m_ribbon->currentIndex() == m_homeTabIndex) {
+            m_homePage->setDashboardPreview(m_dashboardScrollArea->viewport()->grab());
+        }
+    });
     // Only now: a tool call before this would edit the placeholder dashboard
     // the startup one is about to replace.
     syncAgentBridge();
@@ -5135,6 +5143,10 @@ void MainWindow::buildHomePage() {
     m_contentStack->addWidget(m_homePage);
     m_homePage->setDeveloperMode(developerUiActive());
     connect(m_homePage, &HomePage::openDashboardRequested, this, &MainWindow::showDashboardTab);
+    connect(m_homePage, &HomePage::openWorkspaceRequested, this, [this](const QString& id) {
+        showDashboardTab();
+        switchToWorkspace(id);
+    });
     connect(m_homePage, &HomePage::newProjectRequested, this, [this] {
         onNewProject();
         showDashboardTab();
@@ -5214,7 +5226,15 @@ void MainWindow::refreshHomePage() {
         summary.title = QFileInfo(path).completeBaseName();
     }
     summary.path = path;
-    summary.workspaces = WorkspaceManager::instance().workspaces().size();
+    const QString activeId = WorkspaceManager::instance().activeId();
+    for (const Workspace& workspace : WorkspaceManager::instance().workspaces()) {
+        // Same count get_app_state reports: the live grid for the active
+        // workspace, the saved layout for the others.
+        const int widgets = workspace.id == activeId
+                                ? m_dashboardGrid->items().size()
+                                : workspace.dashboard.value("items").toArray().size();
+        summary.workspaces.append({workspace.id, workspace.name, workspace.icon, widgets});
+    }
     summary.devices = devices.size();
     m_homePage->setProjectSummary(summary);
     m_homePage->setRecentProjects(QSettings().value(kRecentFilesSettingsKey).toStringList());
@@ -5224,6 +5244,13 @@ void MainWindow::refreshHomePage() {
 void MainWindow::showHomeTab() {
     if (m_homeTabIndex < 0) {
         return;
+    }
+    // The "Continue" card shows the dashboard as it was just left: grabbed
+    // while it is still laid out (it is the page being switched away from,
+    // or, at startup, the one loaded under the cover).
+    if (m_homePage != nullptr && m_dashboardScrollArea != nullptr &&
+        m_contentStack->currentWidget() == m_dashboardScrollArea) {
+        m_homePage->setDashboardPreview(m_dashboardScrollArea->viewport()->grab());
     }
     m_ribbon->setCurrentIndex(m_homeTabIndex);
     onRibbonTabChanged(m_homeTabIndex);

@@ -43,7 +43,7 @@ Ihm erlauben, Geräte zu verbinden und ihnen Befehle zu senden, bis der Zugriff 
         <translation>Widget bearbeiten (KI-Assistent)</translation>
     </message>
     <message>
-        <location line="+414"/>
+        <location line="+418"/>
         <source>New Project</source>
         <translation>Neues Projekt</translation>
     </message>
@@ -2795,7 +2795,7 @@ Erlaubt: %1</translation>
 <context>
     <name>traceview::DashboardGrid</name>
     <message>
-        <location filename="../lib/dashboard/dashboardgrid.cpp" line="+688"/>
+        <location filename="../lib/dashboard/dashboardgrid.cpp" line="+685"/>
         <source>Bring to Front</source>
         <translation>In den Vordergrund</translation>
     </message>
@@ -3589,7 +3589,7 @@ Erlaubt: %1</translation>
 <context>
     <name>traceview::HomePage</name>
     <message>
-        <location filename="../lib/core/homepage.cpp" line="+100"/>
+        <location filename="../lib/core/homepage.cpp" line="+240"/>
         <source>The deep scan found nothing new.</source>
         <translation>Der Tiefenscan hat nichts Neues gefunden.</translation>
     </message>
@@ -3602,7 +3602,7 @@ Erlaubt: %1</translation>
         </translation>
     </message>
     <message>
-        <location line="+158"/>
+        <location line="+207"/>
         <source>Welcome to TraceView</source>
         <translation>Willkommen bei TraceView</translation>
     </message>
@@ -3610,6 +3610,22 @@ Erlaubt: %1</translation>
         <location line="+1"/>
         <source>Version %1 · Pick up your dashboard or connect a robot.</source>
         <translation>Version %1 · Öffnen Sie Ihr Dashboard oder verbinden Sie einen Roboter.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Robots connected</source>
+        <translation>Verbundene Roboter</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <location line="+4"/>
+        <source>Workspaces</source>
+        <translation>Arbeitsbereiche</translation>
+    </message>
+    <message>
+        <location line="-3"/>
+        <source>Widgets</source>
+        <translation>Widgets</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -3622,7 +3638,7 @@ Erlaubt: %1</translation>
         <translation>Dashboard öffnen</translation>
     </message>
     <message>
-        <location line="+1"/>
+        <location line="+2"/>
         <source>Projects</source>
         <translation>Projekte</translation>
     </message>
@@ -3667,17 +3683,9 @@ Erlaubt: %1</translation>
         <translation>Bluetooth durchsuchen</translation>
     </message>
     <message>
-        <location line="+37"/>
+        <location line="+82"/>
         <source>Untitled project</source>
         <translation>Unbenanntes Projekt</translation>
-    </message>
-    <message numerus="yes">
-        <location line="+2"/>
-        <source>%n workspace(s)</source>
-        <translation>
-            <numerusform>%n Arbeitsbereich</numerusform>
-            <numerusform>%n Arbeitsbereiche</numerusform>
-        </translation>
     </message>
     <message numerus="yes">
         <location line="+1"/>
@@ -3687,8 +3695,16 @@ Erlaubt: %1</translation>
             <numerusform>%n Geräte</numerusform>
         </translation>
     </message>
+    <message numerus="yes">
+        <location line="+13"/>
+        <source>%n widget(s)</source>
+        <translation>
+            <numerusform>%n Widget</numerusform>
+            <numerusform>%n Widgets</numerusform>
+        </translation>
+    </message>
     <message>
-        <location line="+27"/>
+        <location line="+41"/>
         <source>No recent projects yet.</source>
         <translation>Noch keine zuletzt verwendeten Projekte.</translation>
     </message>
@@ -3698,7 +3714,7 @@ Erlaubt: %1</translation>
         <translation>%1 (öffnet beim Start)</translation>
     </message>
     <message>
-        <location line="+90"/>
+        <location line="+122"/>
         <source>Connected</source>
         <translation>Verbunden</translation>
     </message>
@@ -3763,7 +3779,7 @@ Erlaubt: %1</translation>
         <translation>Zu diesem Projekt hinzufügen und verbinden</translation>
     </message>
     <message>
-        <location line="+5"/>
+        <location line="+7"/>
         <source>New</source>
         <translation>Neu</translation>
     </message>
@@ -4082,7 +4098,7 @@ Erlaubt: %1</translation>
         <translation>, </translation>
     </message>
     <message>
-        <location line="+373"/>
+        <location line="+381"/>
         <source>AI assistant access is off.</source>
         <translation>Der Zugriff für KI-Assistenten ist aus.</translation>
     </message>
@@ -4252,12 +4268,12 @@ Verluste: %2</translation>
     </message>
     <message>
         <location line="+0"/>
-        <location line="+4555"/>
+        <location line="+4575"/>
         <source>Later</source>
         <translation>Später</translation>
     </message>
     <message>
-        <location line="-4548"/>
+        <location line="-4568"/>
         <source>&amp;Access</source>
         <translation>&amp;Zugang</translation>
     </message>
@@ -4384,18 +4400,18 @@ Verluste: %2</translation>
     </message>
     <message>
         <location line="+18"/>
-        <location line="+3800"/>
+        <location line="+3820"/>
         <source>Undo</source>
         <translation>Rückgängig</translation>
     </message>
     <message>
-        <location line="-3798"/>
-        <location line="+3798"/>
+        <location line="-3818"/>
+        <location line="+3818"/>
         <source>Redo</source>
         <translation>Wiederholen</translation>
     </message>
     <message>
-        <location line="-3755"/>
+        <location line="-3775"/>
         <source>Add Device</source>
         <translation>Gerät hinzufügen</translation>
     </message>
@@ -4441,12 +4457,12 @@ Verluste: %2</translation>
     </message>
     <message>
         <location line="+36"/>
-        <location line="+3721"/>
+        <location line="+3741"/>
         <source>Fullscreen dashboard (F11)</source>
         <translation>Dashboard im Vollbildmodus (F11)</translation>
     </message>
     <message>
-        <location line="-3633"/>
+        <location line="-3652"/>
         <location line="+500"/>
         <source>Home</source>
         <translation>Start</translation>
@@ -4636,12 +4652,12 @@ Verluste: %2</translation>
         <translation>&quot;%1&quot; in der Galerie gespeichert.</translation>
     </message>
     <message>
-        <location line="+137"/>
+        <location line="+141"/>
         <source>Example dashboard</source>
         <translation>Beispiel-Dashboard</translation>
     </message>
     <message>
-        <location line="+62"/>
+        <location line="+77"/>
         <source>Dongle</source>
         <translation>Dongle</translation>
     </message>
@@ -4740,13 +4756,13 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
         <translation>App schließen</translation>
     </message>
     <message>
-        <location line="-3818"/>
-        <location line="+3503"/>
+        <location line="-3837"/>
+        <location line="+3522"/>
         <source>Devices</source>
         <translation>Geräte</translation>
     </message>
     <message>
-        <location line="-3428"/>
+        <location line="-3447"/>
         <source>Subscriptions</source>
         <translation>Abonnements</translation>
     </message>
@@ -4762,12 +4778,12 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
         <translation>Name:</translation>
     </message>
     <message>
-        <location line="-2226"/>
+        <location line="-2235"/>
         <source>TraceView v%1</source>
         <translation>TraceView v%1</translation>
     </message>
     <message>
-        <location line="+2227"/>
+        <location line="+2236"/>
         <source>Workspace</source>
         <translation>Arbeitsbereich</translation>
     </message>
@@ -4793,23 +4809,23 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
     </message>
     <message>
         <location line="+81"/>
-        <location line="+3001"/>
+        <location line="+3020"/>
         <source>Add widget</source>
         <translation>Widget hinzufügen</translation>
     </message>
     <message>
-        <location line="-2998"/>
+        <location line="-3017"/>
         <source>Remove selected widget (%1)</source>
         <translation>Ausgewähltes Widget entfernen (%1)</translation>
     </message>
     <message>
         <location line="+8"/>
-        <location line="+3003"/>
+        <location line="+3022"/>
         <source>Add device</source>
         <translation>Gerät hinzufügen</translation>
     </message>
     <message>
-        <location line="-3000"/>
+        <location line="-3019"/>
         <source>Remove selected device (%1)</source>
         <translation>Ausgewähltes Gerät entfernen (%1)</translation>
     </message>
@@ -5007,7 +5023,7 @@ Wählen Sie Später, um weiterzuarbeiten -- die Änderungen werden beim nächste
     </message>
     <message>
         <location line="+15"/>
-        <location line="+599"/>
+        <location line="+618"/>
         <location line="+4"/>
         <source>Open Project</source>
         <translation>Projekt öffnen</translation>

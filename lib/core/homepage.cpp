@@ -1,15 +1,20 @@
 #include "core/homepage.h"
 
 #include <QBoxLayout>
-#include <QDateTime>
 #include <QDir>
 #include <QEvent>
+#include <QFile>
 #include <QFileInfo>
+#include <QGridLayout>
 #include <QLabel>
+#include <QPainter>
+#include <QPainterPath>
 #include <QProgressBar>
 #include <QPushButton>
 #include <QScrollArea>
 #include <QSet>
+#include <QStyle>
+#include <QSvgRenderer>
 
 #include "core/touchscroll.h"
 #include "theme/dialogchrome.h"
@@ -21,13 +26,23 @@
 namespace traceview {
 
 namespace {
-// Below this width the two columns stack (phones, narrow windows).
-constexpr int kTwoColumnMinWidth = 760;
-constexpr int kMaxContentWidth = 1100;
+// Two columns from this viewport width on; below it one (tablets, phones).
+constexpr int kTwoColumnMinWidth = 980;
+// Below this width button rows stack one per line and the header stacks.
+constexpr int kCompactMaxWidth = 620;
+constexpr int kMaxContentWidth = 1160;
 constexpr int kMaxRecent = 5;
-constexpr int kLinkIconSize = 16;
+constexpr int kLinkIconSize = 14;
+constexpr int kAvatarSize = 34;
+constexpr int kAvatarIconSize = 18;
+constexpr int kButtonIconSize = 16;
+constexpr int kRowIconSize = 16;
 
-QString linkIconsTooltip(const NearbyRobot& robot) {
+constexpr char kWordmarkResource[] = ":/branding/wordmark.svg";
+// The SVG's own light text color -- swapped for the theme's text color.
+constexpr char kWordmarkLightColor[] = "#F5F7FA";
+
+QString linkSummary(const NearbyRobot& robot) {
     QStringList where;
     if (!robot.serialPort.isEmpty()) {
         where << robot.serialPort;
@@ -65,7 +80,8 @@ bool sameRobot(const HomeDevice& device, const NearbyRobot& robot) {
         return true;
     }
     return (!device.serialPort.isEmpty() && device.serialPort == robot.serialPort) ||
-           (!device.tcpHost.isEmpty() && device.tcpHost.compare(robot.tcpHost, Qt::CaseInsensitive) == 0) ||
+           (!device.tcpHost.isEmpty() &&
+            device.tcpHost.compare(robot.tcpHost, Qt::CaseInsensitive) == 0) ||
            (!device.bleAddress.isEmpty() && device.bleAddress == robot.bleAddress);
 }
 
@@ -80,13 +96,137 @@ void clearLayout(QLayout* layout) {
         delete item;
     }
 }
+
+// Puts `widgets` into `grid` `columns` to a row, equal widths.
+void reflow(QGridLayout* grid, const QList<QWidget*>& widgets, int columns) {
+    for (QWidget* widget : widgets) {
+        grid->removeWidget(widget);
+    }
+    for (int c = 0; c < 4; ++c) {
+        grid->setColumnStretch(c, 0);
+    }
+    QList<QWidget*> shown;
+    for (QWidget* widget : widgets) {
+        if (!(widget->isHidden() && widget->property("homeSkip").toBool())) {
+            shown.append(widget);
+        }
+    }
+    // A lone button takes the whole row.
+    columns = qMax(1, qMin(columns, int(shown.size())));
+    for (int index = 0; index < shown.size(); ++index) {
+        grid->addWidget(shown[index], index / columns, index % columns);
+    }
+    for (int c = 0; c < columns; ++c) {
+        grid->setColumnStretch(c, 1);
+    }
+}
+
+void repolish(QWidget* widget) {
+    widget->style()->unpolish(widget);
+    widget->style()->polish(widget);
+}
 }  // namespace
+
+// The TraceView wordmark, recolored to the theme's text color.
+class HomeWordmark : public QWidget {
+public:
+    explicit HomeWordmark(QWidget* parent) : QWidget(parent) {
+        QFile file(kWordmarkResource);
+        if (file.open(QIODevice::ReadOnly)) {
+            m_template = file.readAll();
+        }
+        m_renderer = new QSvgRenderer(this);
+        setColor(ThemeManager::instance().currentTheme().textPrimary);
+    }
+    void setColor(const QColor& color) {
+        QByteArray svg = m_template;
+        svg.replace(kWordmarkLightColor, color.name(QColor::HexRgb).toUtf8());
+        m_renderer->load(svg);
+        update();
+    }
+    void setDisplayHeight(int height) {
+        const QSizeF box = m_renderer->isValid() ? m_renderer->viewBoxF().size() : QSizeF(520, 200);
+        setFixedSize(qRound(height * box.width() / box.height()), height);
+    }
+
+protected:
+    void paintEvent(QPaintEvent*) override {
+        if (!m_renderer->isValid()) {
+            return;
+        }
+        QPainter painter(this);
+        painter.setRenderHint(QPainter::Antialiasing);
+        m_renderer->render(&painter, QRectF(rect()));
+    }
+
+private:
+    QByteArray m_template;
+    QSvgRenderer* m_renderer = nullptr;
+};
+
+// The dashboard's picture in the "Continue" card: cropped to fill, rounded,
+// clickable. A placeholder glyph while there is no picture yet.
+class HomePreview : public QWidget {
+public:
+    explicit HomePreview(QWidget* parent) : QWidget(parent) {
+        setCursor(Qt::PointingHandCursor);
+        setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+        setFixedHeight(170);
+    }
+    std::function<void()> onClicked;
+    void setPixmap(const QPixmap& pixmap) {
+        m_pixmap = pixmap;
+        update();
+    }
+
+protected:
+    void mouseReleaseEvent(QMouseEvent*) override {
+        if (onClicked) {
+            onClicked();
+        }
+    }
+    void paintEvent(QPaintEvent*) override {
+        const ThemePalette& palette = ThemeManager::instance().currentTheme();
+        QPainter painter(this);
+        painter.setRenderHint(QPainter::Antialiasing);
+        painter.setRenderHint(QPainter::SmoothPixmapTransform);
+        const QRectF box = QRectF(rect()).adjusted(0.5, 0.5, -0.5, -0.5);
+        QPainterPath clip;
+        clip.addRoundedRect(box, 8, 8);
+        painter.fillPath(clip, palette.surfaceAlt);
+        if (!m_pixmap.isNull()) {
+            painter.save();
+            painter.setClipPath(clip);
+            // Cover: fill the box, keeping the top-left of the dashboard
+            // (where its first widgets are) in view.
+            const QSizeF scaled = QSizeF(m_pixmap.size() / m_pixmap.devicePixelRatio())
+                                      .scaled(box.size(), Qt::KeepAspectRatioByExpanding);
+            painter.drawPixmap(QRectF(box.topLeft(), scaled), m_pixmap,
+                               QRectF(QPointF(0, 0), m_pixmap.size()));
+            painter.restore();
+        } else {
+            const int glyph = 40;
+            const QIcon icon = IconLibrary::instance().icon(QStringLiteral("lucide:layout-dashboard"),
+                                                            palette.textDisabled, glyph);
+            icon.paint(&painter, QRect(rect().center() - QPoint(glyph / 2, glyph / 2),
+                                       QSize(glyph, glyph)));
+        }
+        QPen pen(palette.border);
+        pen.setWidthF(1.0);
+        painter.setPen(pen);
+        painter.drawPath(clip);
+    }
+
+private:
+    QPixmap m_pixmap;
+};
 
 HomePage::HomePage(NearbyRobotsService* nearby, QWidget* parent)
     : QWidget(parent), m_nearby(nearby) {
     setObjectName(QStringLiteral("homePage"));
     buildUi();
     retranslate();
+    refreshIcons();
 
     connect(m_nearby, &NearbyRobotsService::robotsChanged, this, [this] { refreshRobots(); });
     connect(m_nearby, &NearbyRobotsService::bluetoothScanningChanged, this,
@@ -102,7 +242,13 @@ HomePage::HomePage(NearbyRobotsService* nearby, QWidget* parent)
         refreshScanControls();
     });
     connect(&ThemeManager::instance(), &ThemeManager::themeChanged, this,
-            [this](const ThemePalette&) { refreshRobots(/*force=*/true); });
+            [this](const ThemePalette& palette) {
+                m_wordmark->setColor(palette.textPrimary);
+                refreshIcons();
+                refreshProjectCard();
+                refreshProjectsCard();
+                refreshRobots(/*force=*/true);
+            });
 }
 
 void HomePage::buildUi() {
@@ -120,60 +266,107 @@ void HomePage::buildUi() {
     canvas->setObjectName(QStringLiteral("homeCanvas"));
     m_scroll->setWidget(canvas);
     auto* canvasLayout = new QHBoxLayout(canvas);
-    canvasLayout->setContentsMargins(16, 20, 16, 20);
+    canvasLayout->setContentsMargins(16, 16, 16, 20);
 
     // Centered, never wider than kMaxContentWidth on a big monitor.
     auto* content = new QWidget(canvas);
     content->setMaximumWidth(kMaxContentWidth);
-    canvasLayout->addStretch();
+    content->setMinimumWidth(0);
+    canvasLayout->addStretch(1);
     canvasLayout->addWidget(content, 100);
-    canvasLayout->addStretch();
+    canvasLayout->addStretch(1);
 
     auto* layout = new QVBoxLayout(content);
     layout->setContentsMargins(0, 0, 0, 0);
     layout->setSpacing(DialogChrome::kBodySpacing);
 
-    m_title = new QLabel(content);
+    // --- Header -------------------------------------------------------------
+    m_hero = new QFrame(content);
+    m_hero->setObjectName(QStringLiteral("homeHero"));
+    m_heroLayout = new QBoxLayout(QBoxLayout::LeftToRight, m_hero);
+    m_heroLayout->setContentsMargins(20, 16, 20, 16);
+    m_heroLayout->setSpacing(18);
+
+    auto* brand = new QVBoxLayout();
+    brand->setSpacing(4);
+    m_wordmark = new HomeWordmark(m_hero);
+    m_wordmark->setDisplayHeight(52);
+    m_title = new QLabel(m_hero);
     m_title->setObjectName(QStringLiteral("dialogTitle"));
-    m_title->setFont(scaledFont(font(), DialogChrome::kTitleScale));
-    m_subtitle = new QLabel(content);
+    m_title->setFont(scaledFont(font(), DialogChrome::kPageTitleScale));
+    m_title->setWordWrap(true);
+    m_subtitle = new QLabel(m_hero);
     m_subtitle->setObjectName(QStringLiteral("dialogSubtitle"));
     m_subtitle->setWordWrap(true);
-    layout->addWidget(m_title);
-    layout->addWidget(m_subtitle);
+    brand->addWidget(m_wordmark);
+    brand->addWidget(m_title);
+    brand->addWidget(m_subtitle);
+    m_heroLayout->addLayout(brand, 1);
+
+    auto* stats = new QHBoxLayout();
+    stats->setSpacing(10);
+    for (int i = 0; i < 3; ++i) {
+        auto* tile = new QFrame(m_hero);
+        tile->setObjectName(QStringLiteral("homeTile"));
+        auto* tileLayout = new QVBoxLayout(tile);
+        tileLayout->setContentsMargins(14, 10, 14, 10);
+        tileLayout->setSpacing(0);
+        m_statValue[i] = new QLabel(QStringLiteral("0"), tile);
+        m_statValue[i]->setObjectName(QStringLiteral("homeTileValue"));
+        m_statValue[i]->setFont(scaledFont(font(), 1.7));
+        m_statCaption[i] = new QLabel(tile);
+        m_statCaption[i]->setObjectName(QStringLiteral("dialogHint"));
+        m_statCaption[i]->setWordWrap(true);
+        tileLayout->addWidget(m_statValue[i]);
+        tileLayout->addWidget(m_statCaption[i]);
+        stats->addWidget(tile, 1);
+    }
+    m_heroLayout->addLayout(stats, 1);
+    layout->addWidget(m_hero);
 
     m_columns = new QBoxLayout(QBoxLayout::LeftToRight);
     m_columns->setSpacing(DialogChrome::kBodySpacing);
     layout->addLayout(m_columns);
     layout->addStretch();
 
-    auto* left = new QVBoxLayout();
-    left->setSpacing(DialogChrome::kSectionSpacing);
-    auto* right = new QVBoxLayout();
-    right->setSpacing(DialogChrome::kSectionSpacing);
-    m_columns->addLayout(left, 3);
-    m_columns->addLayout(right, 2);
-    m_leftColumn = left;
-    m_rightColumn = right;
+    m_leftColumn = new QVBoxLayout();
+    m_leftColumn->setSpacing(DialogChrome::kSectionSpacing);
+    m_rightColumn = new QVBoxLayout();
+    m_rightColumn->setSpacing(DialogChrome::kSectionSpacing);
+    m_columns->addLayout(m_leftColumn, 3);
+    m_columns->addLayout(m_rightColumn, 2);
 
     // --- Continue -----------------------------------------------------------
     m_projectCard = new DialogCard(QString(), content);
+    m_preview = new HomePreview(m_projectCard);
+    m_preview->onClicked = [this] { emit openDashboardRequested(); };
+    m_projectCard->body()->addWidget(m_preview);
+
     m_projectName = new QLabel(m_projectCard);
     m_projectName->setFont(scaledFont(font(), DialogChrome::kPageTitleScale));
     m_projectName->setWordWrap(true);
     m_projectDetail = DialogChrome::hintLabel(QString(), m_projectCard);
     m_openDashboardButton = new QPushButton(m_projectCard);
+    m_openDashboardButton->setIconSize(QSize(kButtonIconSize, kButtonIconSize));
     DialogChrome::setButtonVariant(m_openDashboardButton, "primary");
     connect(m_openDashboardButton, &QPushButton::clicked, this, &HomePage::openDashboardRequested);
-    auto* continueRow = new QHBoxLayout();
+    m_continueRow = new QBoxLayout(QBoxLayout::LeftToRight);
+    m_continueRow->setSpacing(10);
     auto* continueText = new QVBoxLayout();
     continueText->setSpacing(2);
     continueText->addWidget(m_projectName);
     continueText->addWidget(m_projectDetail);
-    continueRow->addLayout(continueText, 1);
-    continueRow->addWidget(m_openDashboardButton, 0, Qt::AlignVCenter);
-    m_projectCard->body()->addLayout(continueRow);
-    left->addWidget(m_projectCard);
+    m_continueRow->addLayout(continueText, 1);
+    m_continueRow->addWidget(m_openDashboardButton, 0, Qt::AlignVCenter);
+    m_projectCard->body()->addLayout(m_continueRow);
+
+    m_workspacesCaption = DialogChrome::hintLabel(QString(), m_projectCard);
+    m_projectCard->body()->addWidget(m_workspacesCaption);
+    m_workspaceGrid = new QGridLayout();
+    m_workspaceGrid->setHorizontalSpacing(8);
+    m_workspaceGrid->setVerticalSpacing(8);
+    m_projectCard->body()->addLayout(m_workspaceGrid);
+    m_leftColumn->addWidget(m_projectCard);
 
     // --- Projects (Developer) ----------------------------------------------
     m_projectsCard = new DialogCard(QString(), content);
@@ -192,40 +385,37 @@ void HomePage::buildUi() {
     m_openButton = new QPushButton(m_projectsCard);
     m_openLogButton = new QPushButton(m_projectsCard);
     m_manageGalleryButton = new QPushButton(m_projectsCard);
+    for (QPushButton* button : {m_newButton, m_openButton, m_openLogButton, m_manageGalleryButton}) {
+        button->setIconSize(QSize(kButtonIconSize, kButtonIconSize));
+    }
     connect(m_newButton, &QPushButton::clicked, this, &HomePage::newProjectRequested);
     connect(m_openButton, &QPushButton::clicked, this, &HomePage::openProjectRequested);
     connect(m_openLogButton, &QPushButton::clicked, this, &HomePage::openLogRequested);
     connect(m_manageGalleryButton, &QPushButton::clicked, this,
             &HomePage::manageGalleryRequested);
-    // Two rows of two: four buttons side by side don't fit a phone.
-    auto* projectButtons = new QVBoxLayout();
-    projectButtons->setSpacing(6);
-    auto* projectButtonsTop = new QHBoxLayout();
-    projectButtonsTop->addWidget(m_newButton);
-    projectButtonsTop->addWidget(m_openButton);
-    projectButtonsTop->addStretch();
-    auto* projectButtonsBottom = new QHBoxLayout();
-    projectButtonsBottom->addWidget(m_openLogButton);
-    projectButtonsBottom->addWidget(m_manageGalleryButton);
-    projectButtonsBottom->addStretch();
-    projectButtons->addLayout(projectButtonsTop);
-    projectButtons->addLayout(projectButtonsBottom);
-    m_projectsCard->body()->addLayout(projectButtons);
-    left->addWidget(m_projectsCard);
-    left->addStretch();
+    m_projectButtons = new QGridLayout();
+    m_projectButtons->setHorizontalSpacing(8);
+    m_projectButtons->setVerticalSpacing(6);
+    m_projectsCard->body()->addLayout(m_projectButtons);
+    m_leftColumn->addWidget(m_projectsCard);
+    m_leftColumn->addStretch();
 
     // --- Nearby robots ------------------------------------------------------
     m_robotsCard = new DialogCard(QString(), content);
-    m_robotsStatus = DialogChrome::hintLabel(QString(), m_robotsCard);
     m_robotsList = new QVBoxLayout();
-    m_robotsList->setSpacing(0);
+    m_robotsList->setSpacing(2);
     m_robotsCard->body()->addLayout(m_robotsList);
+    m_robotsStatus = DialogChrome::hintLabel(QString(), m_robotsCard);
     m_robotsCard->body()->addWidget(m_robotsStatus);
 
     m_bluetoothButton = new QPushButton(m_robotsCard);
     m_bluetoothButton->setVisible(NearbyRobotsService::bluetoothAvailable());
+    m_bluetoothButton->setProperty("homeSkip", true);
+    m_bluetoothButton->setIconSize(QSize(kButtonIconSize, kButtonIconSize));
     connect(m_bluetoothButton, &QPushButton::clicked, this, [this] { m_nearby->scanBluetooth(); });
     m_deepScanButton = new QPushButton(m_robotsCard);
+    m_deepScanButton->setProperty("homeSkip", true);
+    m_deepScanButton->setIconSize(QSize(kButtonIconSize, kButtonIconSize));
     connect(m_deepScanButton, &QPushButton::clicked, this, [this] {
         if (m_nearby->deepScanRunning()) {
             m_nearby->cancelDeepScan();
@@ -237,11 +427,10 @@ void HomePage::buildUi() {
         }
         refreshScanControls();
     });
-    auto* scanButtons = new QHBoxLayout();
-    scanButtons->addWidget(m_bluetoothButton);
-    scanButtons->addWidget(m_deepScanButton);
-    scanButtons->addStretch();
-    m_robotsCard->body()->addLayout(scanButtons);
+    m_scanButtons = new QGridLayout();
+    m_scanButtons->setHorizontalSpacing(8);
+    m_scanButtons->setVerticalSpacing(6);
+    m_robotsCard->body()->addLayout(m_scanButtons);
     m_deepScanProgress = new QProgressBar(m_robotsCard);
     m_deepScanProgress->setTextVisible(false);
     m_deepScanProgress->setFixedHeight(6);
@@ -249,8 +438,8 @@ void HomePage::buildUi() {
     m_robotsCard->body()->addWidget(m_deepScanProgress);
     m_deepScanHint = DialogChrome::hintLabel(QString(), m_robotsCard);
     m_robotsCard->body()->addWidget(m_deepScanHint);
-    right->addWidget(m_robotsCard);
-    right->addStretch();
+    m_rightColumn->addWidget(m_robotsCard);
+    m_rightColumn->addStretch();
 
     m_projectsCard->setVisible(m_developer);
 }
@@ -258,8 +447,12 @@ void HomePage::buildUi() {
 void HomePage::retranslate() {
     m_title->setText(tr("Welcome to TraceView"));
     m_subtitle->setText(tr("Version %1 · Pick up your dashboard or connect a robot.").arg(kVersion));
+    m_statCaption[0]->setText(tr("Robots connected"));
+    m_statCaption[1]->setText(tr("Workspaces"));
+    m_statCaption[2]->setText(tr("Widgets"));
     m_projectCard->setTitle(tr("Continue where you left off"));
     m_openDashboardButton->setText(tr("Open dashboard"));
+    m_workspacesCaption->setText(tr("Workspaces"));
     m_projectsCard->setTitle(tr("Projects"));
     m_recentCaption->setText(tr("Recent"));
     m_galleryCaption->setText(tr("Gallery"));
@@ -269,11 +462,26 @@ void HomePage::retranslate() {
     m_manageGalleryButton->setText(tr("Manage gallery..."));
     m_robotsCard->setTitle(tr("Nearby robots"));
     m_bluetoothButton->setText(tr("Scan Bluetooth"));
-    m_deepScanHint->setToolTip(QString());
+    refreshStats();
     refreshProjectCard();
     refreshProjectsCard();
     refreshRobots(/*force=*/true);
     refreshScanControls();
+}
+
+void HomePage::refreshIcons() {
+    const ThemePalette& palette = ThemeManager::instance().currentTheme();
+    const auto icon = [&palette](const char* id, const QColor& color) {
+        return IconLibrary::instance().icon(QString::fromLatin1(id), color, kButtonIconSize);
+    };
+    // White on the filled accent of a "primary" button, like its label.
+    m_openDashboardButton->setIcon(icon("lucide:layout-dashboard", Qt::white));
+    m_newButton->setIcon(icon("lucide:file-plus", palette.textPrimary));
+    m_openButton->setIcon(icon("lucide:folder-open", palette.textPrimary));
+    m_openLogButton->setIcon(icon("lucide:scroll-text", palette.textPrimary));
+    m_manageGalleryButton->setIcon(icon("lucide:images", palette.textPrimary));
+    m_bluetoothButton->setIcon(icon("lucide:bluetooth", palette.textPrimary));
+    m_deepScanButton->setIcon(icon("lucide:radar", palette.textPrimary));
 }
 
 void HomePage::setDeveloperMode(bool developer) {
@@ -286,42 +494,96 @@ void HomePage::setDeveloperMode(bool developer) {
 void HomePage::setProjectSummary(const HomeProjectSummary& summary) {
     m_project = summary;
     refreshProjectCard();
+    refreshStats();
+}
+
+void HomePage::setDashboardPreview(const QPixmap& preview) {
+    m_preview->setPixmap(preview);
 }
 
 void HomePage::setDevices(const QVector<HomeDevice>& devices) {
     m_devices = devices;
+    refreshStats();
     refreshRobots();
 }
 
 void HomePage::setRecentProjects(const QStringList& paths) {
+    if (paths.mid(0, kMaxRecent) == m_recent) {
+        return;
+    }
     m_recent = paths.mid(0, kMaxRecent);
     refreshProjectsCard();
 }
 
 void HomePage::setGallery(const QStringList& names, const QString& defaultName) {
+    if (names == m_gallery && defaultName == m_galleryDefault) {
+        return;
+    }
     m_gallery = names;
     m_galleryDefault = defaultName;
     refreshProjectsCard();
 }
 
-void HomePage::refreshProjectCard() {
-    m_projectName->setText(m_project.title.isEmpty() ? tr("Untitled project") : m_project.title);
-    QStringList parts;
-    parts << tr("%n workspace(s)", nullptr, m_project.workspaces);
-    parts << tr("%n device(s)", nullptr, m_project.devices);
-    QString detail = parts.join(QStringLiteral(" · "));
-    if (m_developer && !m_project.path.isEmpty() && !m_project.path.startsWith(QLatin1Char(':'))) {
-        detail += QLatin1Char('\n') + QDir::toNativeSeparators(m_project.path);
+void HomePage::refreshStats() {
+    int connected = 0;
+    for (const HomeDevice& device : std::as_const(m_devices)) {
+        if (device.connected) {
+            ++connected;
+        }
     }
-    m_projectDetail->setText(detail);
+    int widgets = 0;
+    for (const HomeWorkspace& workspace : std::as_const(m_project.workspaces)) {
+        widgets += workspace.widgets;
+    }
+    m_statValue[0]->setText(QStringLiteral("%1/%2").arg(connected).arg(m_devices.size()));
+    m_statValue[1]->setText(QString::number(m_project.workspaces.size()));
+    m_statValue[2]->setText(QString::number(widgets));
+    m_statValue[0]->setProperty("tone", connected > 0 ? "success" : "");
+    repolish(m_statValue[0]);
 }
 
-QPushButton* HomePage::linkButton(const QString& text, const QString& tooltip) {
+void HomePage::refreshProjectCard() {
+    m_projectName->setText(m_project.title.isEmpty() ? tr("Untitled project") : m_project.title);
+    QString detail = tr("%n device(s)", nullptr, m_project.devices);
+    if (m_developer && !m_project.path.isEmpty() && !m_project.path.startsWith(QLatin1Char(':'))) {
+        detail += QStringLiteral(" · ") + QDir::toNativeSeparators(m_project.path);
+    }
+    m_projectDetail->setText(detail);
+
+    clearLayout(m_workspaceGrid);
+    const ThemePalette& palette = ThemeManager::instance().currentTheme();
+    QList<QWidget*> chips;
+    for (const HomeWorkspace& workspace : std::as_const(m_project.workspaces)) {
+        auto* chip = new QPushButton(workspace.name);
+        chip->setObjectName(QStringLiteral("homeChip"));
+        chip->setCursor(Qt::PointingHandCursor);
+        chip->setToolTip(tr("%n widget(s)", nullptr, workspace.widgets));
+        const QString iconId = IconLibrary::instance().contains(workspace.icon)
+                                   ? workspace.icon
+                                   : QStringLiteral("lucide:layout-dashboard");
+        chip->setIcon(IconLibrary::instance().icon(iconId, palette.accent, kRowIconSize));
+        chip->setIconSize(QSize(kRowIconSize, kRowIconSize));
+        connect(chip, &QPushButton::clicked, this,
+                [this, id = workspace.id] { emit openWorkspaceRequested(id); });
+        chips.append(chip);
+    }
+    reflow(m_workspaceGrid, chips, m_compact ? 2 : 3);
+    m_workspacesCaption->setVisible(m_project.workspaces.size() > 1);
+    for (QWidget* chip : std::as_const(chips)) {
+        chip->setVisible(m_project.workspaces.size() > 1);
+    }
+}
+
+QPushButton* HomePage::listRow(const QString& iconId, const QString& text,
+                               const QString& tooltip) {
+    const ThemePalette& palette = ThemeManager::instance().currentTheme();
     auto* button = new QPushButton(text);
     // A list row, not a framed button (stylesheet.cpp, "QPushButton#homeLink").
     button->setObjectName(QStringLiteral("homeLink"));
     button->setCursor(Qt::PointingHandCursor);
     button->setToolTip(tooltip);
+    button->setIcon(IconLibrary::instance().icon(iconId, palette.textSecondary, kRowIconSize));
+    button->setIconSize(QSize(kRowIconSize, kRowIconSize));
     return button;
 }
 
@@ -329,8 +591,9 @@ void HomePage::refreshProjectsCard() {
     clearLayout(m_recentList);
     clearLayout(m_galleryList);
     for (const QString& path : std::as_const(m_recent)) {
-        QPushButton* button = linkButton(QFileInfo(path).completeBaseName(),
-                                         QDir::toNativeSeparators(path));
+        QPushButton* button = listRow(QStringLiteral("lucide:file"),
+                                      QFileInfo(path).completeBaseName(),
+                                      QDir::toNativeSeparators(path));
         connect(button, &QPushButton::clicked, this, [this, path] { emit openPathRequested(path); });
         m_recentList->addWidget(button);
     }
@@ -340,7 +603,7 @@ void HomePage::refreshProjectsCard() {
     for (const QString& name : std::as_const(m_gallery)) {
         const QString text =
             name == m_galleryDefault ? tr("%1 (opens at startup)").arg(name) : name;
-        QPushButton* button = linkButton(text, QString());
+        QPushButton* button = listRow(QStringLiteral("lucide:layout-dashboard"), text, QString());
         connect(button, &QPushButton::clicked, this,
                 [this, name] { emit openGalleryRequested(name); });
         m_galleryList->addWidget(button);
@@ -349,42 +612,74 @@ void HomePage::refreshProjectsCard() {
 }
 
 QWidget* HomePage::robotRow(const QString& title, const QString& detail,
-                            const QStringList& linkIcons, const QString& badgeText, int badgeTone,
-                            QPushButton* action) {
-    auto* row = new QWidget();
-    auto* layout = new QHBoxLayout(row);
-    layout->setContentsMargins(0, 6, 0, 6);
-    layout->setSpacing(10);
-
+                            const QString& avatarIcon, const QStringList& linkIcons,
+                            const QString& badgeText, int badgeTone, QPushButton* action) {
     const ThemePalette& palette = ThemeManager::instance().currentTheme();
-    auto* icons = new QHBoxLayout();
-    icons->setSpacing(2);
-    const QStringList ids = linkIcons.isEmpty() ? QStringList{QStringLiteral("lucide:bot")} : linkIcons;
-    for (const QString& id : ids) {
-        auto* icon = new QLabel(row);
-        icon->setPixmap(IconLibrary::instance()
-                            .icon(id, linkIcons.isEmpty() ? palette.textDisabled : palette.textSecondary,
-                                  kLinkIconSize)
-                            .pixmap(kLinkIconSize, kLinkIconSize));
-        icons->addWidget(icon);
-    }
-    layout->addLayout(icons);
+    auto* row = new QFrame();
+    row->setObjectName(QStringLiteral("homeRobotRow"));
+    row->setAttribute(Qt::WA_Hover);
+    auto* layout = new QHBoxLayout(row);
+    layout->setContentsMargins(8, 8, 8, 8);
+    layout->setSpacing(12);
 
+    // A round avatar tinted by state (stylesheet.cpp, "QLabel#homeAvatar").
+    const auto tone = StatusBadge::Tone(badgeTone);
+    auto* avatar = new QLabel(row);
+    avatar->setObjectName(QStringLiteral("homeAvatar"));
+    avatar->setFixedSize(kAvatarSize, kAvatarSize);
+    avatar->setAlignment(Qt::AlignCenter);
+    QColor glyph = palette.textSecondary;
+    const char* toneName = "neutral";
+    if (tone == StatusBadge::Tone::Success) {
+        glyph = palette.success;
+        toneName = "success";
+    } else if (tone == StatusBadge::Tone::Warning) {
+        glyph = palette.warning;
+        toneName = "warning";
+    } else if (tone == StatusBadge::Tone::Accent) {
+        glyph = palette.accent;
+        toneName = "accent";
+    }
+    avatar->setProperty("tone", toneName);
+    avatar->setPixmap(IconLibrary::instance()
+                          .icon(avatarIcon, glyph, kAvatarIconSize)
+                          .pixmap(kAvatarIconSize, kAvatarIconSize));
+    layout->addWidget(avatar, 0, Qt::AlignTop);
+
+    // Name, where it is, then the state -- stacked, so the row stays narrow
+    // enough for a phone with the action button beside it.
     auto* text = new QVBoxLayout();
-    text->setSpacing(0);
+    text->setSpacing(2);
     auto* name = new QLabel(title, row);
     name->setWordWrap(true);
+    QFont nameFont = name->font();
+    nameFont.setWeight(QFont::DemiBold);
+    name->setFont(nameFont);
     text->addWidget(name);
-    if (!detail.isEmpty()) {
-        text->addWidget(DialogChrome::hintLabel(detail, row));
+    if (!detail.isEmpty() || !linkIcons.isEmpty()) {
+        auto* where = new QHBoxLayout();
+        where->setSpacing(4);
+        for (const QString& id : linkIcons) {
+            auto* icon = new QLabel(row);
+            icon->setPixmap(IconLibrary::instance()
+                                .icon(id, palette.textSecondary, kLinkIconSize)
+                                .pixmap(kLinkIconSize, kLinkIconSize));
+            where->addWidget(icon);
+        }
+        QLabel* detailLabel = DialogChrome::hintLabel(detail, row);
+        where->addWidget(detailLabel, 1);
+        text->addLayout(where);
+    }
+    if (!badgeText.isEmpty()) {
+        auto* badge = new StatusBadge(row);
+        badge->setStatus(badgeText, tone);
+        auto* badgeRow = new QHBoxLayout();
+        badgeRow->addWidget(badge);
+        badgeRow->addStretch();
+        text->addLayout(badgeRow);
     }
     layout->addLayout(text, 1);
 
-    if (!badgeText.isEmpty()) {
-        auto* badge = new StatusBadge(row);
-        badge->setStatus(badgeText, StatusBadge::Tone(badgeTone));
-        layout->addWidget(badge, 0, Qt::AlignVCenter);
-    }
     if (action != nullptr) {
         action->setParent(row);
         layout->addWidget(action, 0, Qt::AlignVCenter);
@@ -447,10 +742,10 @@ void HomePage::refreshRobots(bool force) {
         }
         connect(action, &QPushButton::clicked, this,
                 [this, id = device.id] { emit connectToggleRequested(id); });
-        const QString detail = seen != nullptr ? linkIconsTooltip(*seen) : tr("In this project");
-        m_robotsList->addWidget(robotRow(device.name, detail,
-                                         seen != nullptr ? linkIconIds(*seen) : QStringList(), badge,
-                                         int(tone), action));
+        const QString detail = seen != nullptr ? linkSummary(*seen) : tr("In this project");
+        m_robotsList->addWidget(robotRow(device.name, detail, QStringLiteral("lucide:bot"),
+                                         seen != nullptr ? linkIconIds(*seen) : QStringList(),
+                                         badge, int(tone), action));
     }
 
     int newCount = 0;
@@ -472,9 +767,11 @@ void HomePage::refreshRobots(bool force) {
             connect(action, &QPushButton::clicked, this,
                     [this, robot] { emit addRobotRequested(robot); });
         }
-        m_robotsList->addWidget(robotRow(title, linkIconsTooltip(robot), linkIconIds(robot),
-                                         robot.dongle ? QString() : tr("New"),
-                                         int(StatusBadge::Tone::Accent), action));
+        m_robotsList->addWidget(robotRow(
+            title, linkSummary(robot),
+            robot.dongle ? QStringLiteral("lucide:usb") : QStringLiteral("lucide:bot"),
+            linkIconIds(robot), robot.dongle ? QString() : tr("New"),
+            int(StatusBadge::Tone::Accent), action));
     }
 
     if (m_devices.isEmpty() && newCount == 0) {
@@ -520,29 +817,51 @@ void HomePage::refreshScanControls() {
             tr("Deep scan opens every unidentified USB serial port and tries port 44300 on "
                "your local network. Opening a port can restart a board that is plugged in."));
     }
+    reflow(m_scanButtons, {m_bluetoothButton, m_deepScanButton}, m_compact ? 1 : 2);
 }
 
-void HomePage::updateColumns() {
-    const bool wide = m_scroll->viewport()->width() >= kTwoColumnMinWidth;
-    if (m_wide == wide) {
-        return;
-    }
-    m_wide = wide;
-    m_columns->setDirection(wide ? QBoxLayout::LeftToRight : QBoxLayout::TopToBottom);
-    // One column (a phone): the robots come right after "Continue", before
-    // the project lists -- connecting is what a phone is mostly used for.
-    if (wide) {
+void HomePage::applyWidth() {
+    const int width = m_scroll->viewport()->width();
+    const bool wide = width >= kTwoColumnMinWidth;
+    const bool compact = width < kCompactMaxWidth;
+
+    if (int(wide) != m_wideState) {
+        m_wideState = int(wide);
+        m_columns->setDirection(wide ? QBoxLayout::LeftToRight : QBoxLayout::TopToBottom);
+        // One column (tablet, phone): the robots come right after
+        // "Continue", before the project lists -- connecting is what a
+        // phone is mostly used for.
         m_leftColumn->removeWidget(m_robotsCard);
-        m_rightColumn->insertWidget(0, m_robotsCard);
-    } else {
         m_rightColumn->removeWidget(m_robotsCard);
-        m_leftColumn->insertWidget(1, m_robotsCard);
+        if (wide) {
+            m_rightColumn->insertWidget(0, m_robotsCard);
+        } else {
+            m_leftColumn->insertWidget(1, m_robotsCard);
+        }
+    }
+
+    if (compact != m_compact || m_projectButtons->isEmpty()) {
+        m_compact = compact;
+        // Header: brand over the numbers on a phone.
+        m_heroLayout->setDirection(compact ? QBoxLayout::TopToBottom : QBoxLayout::LeftToRight);
+        m_wordmark->setDisplayHeight(compact ? 40 : 52);
+        for (QLabel* value : m_statValue) {
+            value->setFont(scaledFont(font(), compact ? 1.35 : 1.7));
+        }
+        // "Continue": the button under the name, full width.
+        m_continueRow->setDirection(compact ? QBoxLayout::TopToBottom : QBoxLayout::LeftToRight);
+        m_preview->setFixedHeight(compact ? 130 : 170);
+        reflow(m_projectButtons,
+               {m_newButton, m_openButton, m_openLogButton, m_manageGalleryButton},
+               compact ? 1 : 2);
+        refreshProjectCard();
+        refreshScanControls();
     }
 }
 
 void HomePage::showEvent(QShowEvent* event) {
     QWidget::showEvent(event);
-    updateColumns();
+    applyWidth();
     m_nearby->setActive(true);
 }
 
@@ -553,7 +872,7 @@ void HomePage::hideEvent(QHideEvent* event) {
 
 void HomePage::resizeEvent(QResizeEvent* event) {
     QWidget::resizeEvent(event);
-    updateColumns();
+    applyWidth();
 }
 
 void HomePage::changeEvent(QEvent* event) {
@@ -561,8 +880,11 @@ void HomePage::changeEvent(QEvent* event) {
     if (event->type() == QEvent::LanguageChange) {
         retranslate();
     } else if (event->type() == QEvent::FontChange) {
-        m_title->setFont(scaledFont(font(), DialogChrome::kTitleScale));
+        m_title->setFont(scaledFont(font(), DialogChrome::kPageTitleScale));
         m_projectName->setFont(scaledFont(font(), DialogChrome::kPageTitleScale));
+        for (QLabel* value : m_statValue) {
+            value->setFont(scaledFont(font(), m_compact ? 1.35 : 1.7));
+        }
     }
 }
 
