@@ -74,6 +74,15 @@ jobs:
       - name: Build (Release)
         run: cmake --build --preset windows-msvc-release
 
+      # Crash-report symbols: the PDB is not in the installer; it is shipped
+      # as its own artifact / release asset so stacks can be symbolicated.
+      - name: Upload Windows symbols (PDB)
+        uses: actions/upload-artifact@v4
+        with:
+          name: traceview-${{ github.ref_name }}-windows-symbols
+          path: build/windows-msvc-release/**/TraceView.pdb
+          if-no-files-found: error
+
       - name: Package (CPack / NSIS)
         run: |
           $version = "$env:GITHUB_REF_NAME".TrimStart('v')
@@ -497,10 +506,26 @@ jobs:
         run: sudo ln -sf /usr/lib/qt6/libexec/lupdate-pro /usr/lib/qt6/libexec/lprodump
 
       - name: Configure (Release)
-        run: cmake --preset linux-ninja-release
+        run: cmake --preset linux-ninja-release -DTRACEVIEW_SPLIT_DEBUG=ON
 
       - name: Build (Release)
         run: cmake --build --preset linux-ninja-release
+
+      # Split the symbols out before the AppImage script installs the binary:
+      # the shipped TraceView is stripped but keeps a debuglink to the .debug.
+      - name: Split debug symbols
+        run: |
+          cd build/linux-ninja-release
+          objcopy --only-keep-debug TraceView TraceView.debug
+          strip --strip-debug --strip-unneeded TraceView
+          objcopy --add-gnu-debuglink=TraceView.debug TraceView
+
+      - name: Upload Linux symbols (.debug)
+        uses: actions/upload-artifact@v4
+        with:
+          name: traceview-${{ github.ref_name }}-linux-symbols
+          path: build/linux-ninja-release/TraceView.debug
+          if-no-files-found: error
 
       - name: Package (AppImage)
         run: bash scripts/build_linux_appimage.sh build/linux-ninja-release "${GITHUB_REF_NAME#v}"
@@ -655,7 +680,13 @@ jobs:
         # release that already exists -- replace its assets instead of
         # failing on "a release with the same tag name already exists".
         run: |
+          # Symbols travel as separate assets (never inside the installers).
+          v="${{ github.ref_name }}"; v="${v#v}"
+          (cd packages/traceview-*-windows-symbols && zip -j "$OLDPWD/TraceView-$v-windows-symbols.zip" $(find . -name TraceView.pdb))
+          cp packages/traceview-*-linux-symbols/TraceView.debug "TraceView-$v-linux-symbols.debug"
           assets=(
+            TraceView-$v-windows-symbols.zip
+            TraceView-$v-linux-symbols.debug
             packages/windows-package/TraceView-*-windows-x64.exe
             packages/linux-package/TraceView-*-linux-x64.AppImage
             packages/linux-flatpak-package/TraceView-*-linux-x64.flatpak
