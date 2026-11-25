@@ -191,6 +191,10 @@ struct Device {
     // messages do not open with the password set here (wrong, or none). Set
     // by Backend::keyRejected through DevicesGrid::setDeviceKeyRejected.
     bool keyRejected = false;
+    // Live, not persisted: a TCP device that refused the connection but
+    // answered as TraceKit's recovery firmware at this address (it is up, out
+    // of the app). Set through DevicesGrid::setDeviceRecovery; empty otherwise.
+    QString recoveryAddress;
     CommType commType = CommType::Btp;
     QString description;
     // JavaScript run live for this device by its own DiagramScriptRuntime

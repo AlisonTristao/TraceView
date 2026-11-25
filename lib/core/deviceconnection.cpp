@@ -150,6 +150,8 @@ DeviceConnection::DeviceConnection(CommType commType, TransportType transportTyp
             // lambda a few lines below would then discard that transition
             // silently (connected but m_connectionPhase never advances).
             m_tcpTransport->setReconnectEnabled(false);
+            connect(m_tcpTransport, &TcpTransport::recoveryChanged, this,
+                    &DeviceConnection::recoveryChanged);
             m_transport = m_tcpTransport;
             break;
         case TransportType::Ble:

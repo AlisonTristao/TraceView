@@ -223,6 +223,9 @@ signals:
     void deviceIdentified(const QString& btpVersion, const QString& btpId);
     // Mirrors Backend::keyRejected.
     void keyRejected(bool rejected);
+    // Mirrors TcpTransport::recoveryChanged (TCP only): the address where
+    // TraceKit's recovery firmware answered, empty when not seen.
+    void recoveryChanged(const QString& address);
     // Mirrors Backend::deviceInfoReported (the device's MANIFEST_DATA
     // source_info block, BTP's docs/commands.md section 3.12).
     void deviceInfoReported(const QVector<traceview::DeviceInfoRecord>& info);

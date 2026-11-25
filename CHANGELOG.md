@@ -7,6 +7,12 @@ release flow.
 
 ## [Unreleased]
 
+### Added
+
+- A TCP device whose connection is refused is asked for its `/status`; when
+  TraceKit's recovery firmware answers, its card in Devices shows an amber dot
+  and "in recovery mode at <address>" instead of a plain offline state.
+
 ### Fixed
 
 - The canvas snap grid (1×/2×/4× precision) only showed with the padlock

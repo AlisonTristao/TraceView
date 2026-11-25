@@ -934,14 +934,6 @@ Allow it to connect devices and send them commands until AI assistant access is 
         <translation>Depuración -- datos de gráfico sintéticos</translation>
     </message>
     <message>
-        <source>Rename workspace</source>
-        <translation type="vanished">Renombrar espacio de trabajo</translation>
-    </message>
-    <message>
-        <source>Delete workspace</source>
-        <translation type="vanished">Eliminar espacio de trabajo</translation>
-    </message>
-    <message>
         <location filename="../lib/devices/deviceconfigdialog.cpp" line="+66"/>
         <source>(unnamed topic)</source>
         <translation>(tema sin nombre)</translation>
@@ -950,10 +942,6 @@ Allow it to connect devices and send them commands until AI assistant access is 
         <location line="+19"/>
         <source>(unnamed)</source>
         <translation>(sin nombre)</translation>
-    </message>
-    <message>
-        <source>Change icon</source>
-        <translation type="vanished">Cambiar icono</translation>
     </message>
     <message>
         <location filename="../lib/dashboard/widgets/textboardwidget.cpp" line="+231"/>
@@ -3038,7 +3026,7 @@ Permitidos: %1</translation>
 <context>
     <name>traceview::DeviceCard</name>
     <message>
-        <location filename="../lib/devices/devicecard.cpp" line="+302"/>
+        <location filename="../lib/devices/devicecard.cpp" line="+306"/>
         <source>%1 dBm</source>
         <translation>%1 dBm</translation>
     </message>
@@ -3059,6 +3047,11 @@ Permitidos: %1</translation>
     </message>
     <message>
         <location line="+3"/>
+        <source>in recovery mode at %1</source>
+        <translation>en modo recovery en %1</translation>
+    </message>
+    <message>
+        <location line="+2"/>
         <source>wrong password: can&apos;t read the device</source>
         <translation>contraseña incorrecta: no se puede leer el dispositivo</translation>
     </message>
@@ -3300,7 +3293,7 @@ Permitidos: %1</translation>
 <context>
     <name>traceview::DeviceConnection</name>
     <message>
-        <location filename="../lib/core/deviceconnection.cpp" line="+196"/>
+        <location filename="../lib/core/deviceconnection.cpp" line="+198"/>
         <source>transport rejected %1 bytes</source>
         <translation>el transporte rechazó %1 bytes</translation>
     </message>
@@ -3559,10 +3552,6 @@ Permitidos: %1</translation>
         <location line="+5"/>
         <source>Pix key: %1</source>
         <translation>Clave Pix: %1</translation>
-    </message>
-    <message>
-        <source>Pix key (phone): %1</source>
-        <translation type="vanished">Clave Pix (teléfono): %1</translation>
     </message>
     <message>
         <location line="+9"/>
@@ -3868,10 +3857,6 @@ Permitidos: %1</translation>
         <location line="-60"/>
         <source>No recent projects yet.</source>
         <translation>Aún no hay proyectos recientes.</translation>
-    </message>
-    <message>
-        <source>%1 (opens at startup)</source>
-        <translation type="vanished">%1 (se abre al iniciar)</translation>
     </message>
     <message numerus="yes">
         <location line="+21"/>
@@ -4485,12 +4470,12 @@ Pérdidas: %2</translation>
     </message>
     <message>
         <location line="+0"/>
-        <location line="+4709"/>
+        <location line="+4713"/>
         <source>Later</source>
         <translation>Más tarde</translation>
     </message>
     <message>
-        <location line="-4702"/>
+        <location line="-4706"/>
         <source>&amp;Access</source>
         <translation>&amp;Acceso</translation>
     </message>
@@ -4504,10 +4489,6 @@ Pérdidas: %2</translation>
         <location line="+8"/>
         <source>&amp;Notifications</source>
         <translation>&amp;Notificaciones</translation>
-    </message>
-    <message>
-        <source>&amp;Debug</source>
-        <translation type="vanished">&amp;Depuración</translation>
     </message>
     <message>
         <location line="+64"/>
@@ -4548,10 +4529,6 @@ Pérdidas: %2</translation>
         <location line="+2"/>
         <source>Dona&amp;te</source>
         <translation>Do&amp;nar</translation>
-    </message>
-    <message>
-        <source>Report a &amp;Bug</source>
-        <translation type="vanished">Informar de un &amp;error</translation>
     </message>
     <message>
         <location line="+64"/>
@@ -4640,18 +4617,18 @@ Pérdidas: %2</translation>
     </message>
     <message>
         <location line="+18"/>
-        <location line="+3900"/>
+        <location line="+3904"/>
         <source>Undo</source>
         <translation>Deshacer</translation>
     </message>
     <message>
-        <location line="-3898"/>
-        <location line="+3898"/>
+        <location line="-3902"/>
+        <location line="+3902"/>
         <source>Redo</source>
         <translation>Rehacer</translation>
     </message>
     <message>
-        <location line="-3855"/>
+        <location line="-3859"/>
         <source>Add Device</source>
         <translation>Añadir Dispositivo</translation>
     </message>
@@ -4697,12 +4674,12 @@ Pérdidas: %2</translation>
     </message>
     <message>
         <location line="+36"/>
-        <location line="+3821"/>
+        <location line="+3825"/>
         <source>Fullscreen dashboard (F11)</source>
         <translation>Panel en pantalla completa (F11)</translation>
     </message>
     <message>
-        <location line="-3732"/>
+        <location line="-3736"/>
         <location line="+520"/>
         <source>Home</source>
         <translation>Inicio</translation>
@@ -4833,7 +4810,7 @@ Pérdidas: %2</translation>
         <translation>%1: encontrado en %2</translation>
     </message>
     <message>
-        <location line="+390"/>
+        <location line="+394"/>
         <source>%1: trying %2</source>
         <translation>%1: probando %2</translation>
     </message>
@@ -5024,13 +5001,13 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
         <translation>Cerrar app</translation>
     </message>
     <message>
-        <location line="-3921"/>
-        <location line="+3602"/>
+        <location line="-3925"/>
+        <location line="+3606"/>
         <source>Devices</source>
         <translation>Dispositivos</translation>
     </message>
     <message>
-        <location line="-3506"/>
+        <location line="-3510"/>
         <source>Subscriptions</source>
         <translation>Suscripciones</translation>
     </message>
@@ -5102,23 +5079,23 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
     </message>
     <message>
         <location line="+81"/>
-        <location line="+3080"/>
+        <location line="+3084"/>
         <source>Add widget</source>
         <translation>Añadir widget</translation>
     </message>
     <message>
-        <location line="-3077"/>
+        <location line="-3081"/>
         <source>Remove selected widget (%1)</source>
         <translation>Eliminar widget seleccionado (%1)</translation>
     </message>
     <message>
         <location line="+8"/>
-        <location line="+3082"/>
+        <location line="+3086"/>
         <source>Add device</source>
         <translation>Añadir dispositivo</translation>
     </message>
     <message>
-        <location line="-3079"/>
+        <location line="-3083"/>
         <source>Remove selected device (%1)</source>
         <translation>Eliminar dispositivo seleccionado (%1)</translation>
     </message>
@@ -5284,7 +5261,7 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
         <translation>Dashboard</translation>
     </message>
     <message>
-        <location line="+2085"/>
+        <location line="+2089"/>
         <source>%1: this BLE address now answers as a different robot (expected %2, got %3)</source>
         <translation>%1: esta dirección BLE ahora responde como otro robot (se esperaba %2, se obtuvo %3)</translation>
     </message>
@@ -7699,12 +7676,12 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
 <context>
     <name>traceview::TcpTransport</name>
     <message>
-        <location filename="../lib/core/tcptransport.cpp" line="+108"/>
+        <location filename="../lib/core/tcptransport.cpp" line="+160"/>
         <source>TCP connection timed out</source>
         <translation>Tiempo de conexión TCP agotado</translation>
     </message>
     <message>
-        <location line="+51"/>
+        <location line="+53"/>
         <source>Could not find %1 on the network (mDNS)</source>
         <translation>No se encontró %1 en la red (mDNS)</translation>
     </message>
@@ -8299,25 +8276,6 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
     </message>
 </context>
 <context>
-    <name>traceview::WorkspaceDock</name>
-    <message>
-        <source>New Workspace…</source>
-        <translation type="vanished">Nuevo Espacio de Trabajo…</translation>
-    </message>
-    <message>
-        <source>Rename…</source>
-        <translation type="vanished">Renombrar…</translation>
-    </message>
-    <message>
-        <source>Change Icon…</source>
-        <translation type="vanished">Cambiar icono…</translation>
-    </message>
-    <message>
-        <source>Delete Workspace</source>
-        <translation type="vanished">Eliminar Espacio de Trabajo</translation>
-    </message>
-</context>
-<context>
     <name>traceview::WorkspaceStrip</name>
     <message>
         <location filename="../lib/core/workspacestrip.cpp" line="+204"/>
@@ -8338,13 +8296,6 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
         <location line="+3"/>
         <source>Delete Workspace</source>
         <translation>Eliminar espacio de trabajo</translation>
-    </message>
-</context>
-<context>
-    <name>traceview::WorkspaceSwitcher</name>
-    <message>
-        <source>New Workspace…</source>
-        <translation type="vanished">Nuevo Espacio de Trabajo…</translation>
     </message>
 </context>
 </TS>

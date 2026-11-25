@@ -4378,6 +4378,10 @@ DeviceConnection* MainWindow::createDeviceConnection(const Device& device) {
     connect(connection, &DeviceConnection::keyRejected, this, [this, id = device.id](bool rejected) {
         m_devicesGrid->setDeviceKeyRejected(id, rejected);
     });
+    connect(connection, &DeviceConnection::recoveryChanged, this,
+            [this, id = device.id](const QString& address) {
+                m_devicesGrid->setDeviceRecovery(id, address);
+            });
     connect(connection, &DeviceConnection::deviceIdentified, this,
             [this, id = device.id](const QString& btpVersion, const QString& btpId) {
                 m_devicesGrid->setDeviceIdentity(id, btpVersion, btpId);

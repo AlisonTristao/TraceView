@@ -1,7 +1,13 @@
 #include "tcptransport.h"
 
 #include <QAbstractSocket>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QNetworkAccessManager>
+#include <QNetworkReply>
+#include <QNetworkRequest>
 #include <QTcpSocket>
+#include <QUrl>
 
 #include "core/applog.h"
 #include "ota/mdnsresolver.h"
@@ -47,6 +53,7 @@ void TcpTransport::close() {
     m_retryTimer.stop();
     m_connectTimer.stop();
     ++m_dialSequence;  // a lookup still in flight must not dial after close()
+    setRecoveryAddress(QString());
     if (m_socket->state() == QAbstractSocket::UnconnectedState) {
         return;
     }
@@ -73,6 +80,7 @@ void TcpTransport::onConnected() {
     m_connectTimer.stop();
     m_retryTimer.stop();
     m_retryDelayMs = m_initialRetryDelayMs;
+    setRecoveryAddress(QString());
     emit connectionStateChanged(true);
 }
 
@@ -98,7 +106,51 @@ void TcpTransport::onDisconnected() {
 void TcpTransport::onSocketError() {
     const QString message = m_socket->errorString();
     qCWarning(lcConnection) << "TCP error on" << m_host << m_port << ":" << message;
+    if (m_socket->error() == QAbstractSocket::ConnectionRefusedError) {
+        probeRecovery();
+    }
     emit errorOccurred(message);
+}
+
+void TcpTransport::probeRecovery() {
+    if (m_probeInFlight || m_lastAddress.isEmpty()) {
+        return;
+    }
+    if (m_probe == nullptr) {
+        m_probe = new QNetworkAccessManager(this);
+    }
+    QUrl url;
+    url.setScheme(QStringLiteral("http"));
+    url.setHost(m_lastAddress);
+    url.setPath(QStringLiteral("/status"));
+    QNetworkRequest request(url);
+    request.setTransferTimeout(2000);
+    m_probeInFlight = true;
+    QNetworkReply* reply = m_probe->get(request);
+    const QString address = m_lastAddress;
+    connect(reply, &QNetworkReply::finished, this, [this, reply, address]() {
+        reply->deleteLater();
+        m_probeInFlight = false;
+        if (m_closing || isConnected()) {
+            return;
+        }
+        const QJsonObject status = QJsonDocument::fromJson(reply->readAll()).object();
+        const bool inRecovery = reply->error() == QNetworkReply::NoError &&
+                                status.value(QStringLiteral("mode")).toString() ==
+                                    QLatin1String("recovery");
+        if (inRecovery) {
+            qCWarning(lcConnection) << m_host << "is in TraceKit recovery at" << address;
+        }
+        setRecoveryAddress(inRecovery ? address : QString());
+    });
+}
+
+void TcpTransport::setRecoveryAddress(const QString& address) {
+    if (m_recoveryAddress == address) {
+        return;
+    }
+    m_recoveryAddress = address;
+    emit recoveryChanged(address);
 }
 
 void TcpTransport::onConnectTimeout() {
@@ -131,6 +183,7 @@ void TcpTransport::dial() {
     // A new attempt supersedes any lookup still in flight for an older one.
     const QString requestId = QString::number(++m_dialSequence);
     if (!MdnsResolver::isMdnsHostname(m_host)) {
+        m_lastAddress = m_host;
         m_socket->connectToHost(m_host, m_port);
         return;
     }
@@ -148,6 +201,7 @@ void TcpTransport::onMdnsResolved(const QString& requestId, const QHostAddress& 
         return;
     }
     qCInfo(lcConnection) << m_host << "resolved to" << address.toString();
+    m_lastAddress = address.toString();
     m_socket->connectToHost(address, m_port);
 }
 

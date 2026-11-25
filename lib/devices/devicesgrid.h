@@ -80,6 +80,8 @@ public:
     void setDeviceConnected(const QString& id, bool connected);
     // Device::keyRejected, live state like setDeviceConnected().
     void setDeviceKeyRejected(const QString& id, bool rejected);
+    // Device::recoveryAddress, live state like setDeviceKeyRejected().
+    void setDeviceRecovery(const QString& id, const QString& address);
     // Mirrors a live DeviceConnection's Backend::deviceIdentified into
     // device.btpVersion/btpId, same non-undoable treatment as
     // setDeviceConnected() above and for the same reason: this is the
