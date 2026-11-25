@@ -4432,11 +4432,12 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+4"/>
+        <location line="+111"/>
         <source>Open &amp;Log Folder</source>
         <translation>Открыть папку журналов (&amp;L)</translation>
     </message>
     <message>
-        <location line="+4"/>
+        <location line="-107"/>
         <source>&amp;Reset Panel Positions</source>
         <translation>Сбросить положение панелей (&amp;R)</translation>
     </message>
@@ -4467,12 +4468,12 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+0"/>
-        <location line="+4672"/>
+        <location line="+4706"/>
         <source>Later</source>
         <translation>Позже</translation>
     </message>
     <message>
-        <location line="-4665"/>
+        <location line="-4699"/>
         <source>&amp;Access</source>
         <translation>Доступ (&amp;A)</translation>
     </message>
@@ -4488,13 +4489,11 @@ Drops: %2</source>
         <translation>Уведомления (&amp;N)</translation>
     </message>
     <message>
-        <location line="+12"/>
         <source>&amp;Debug</source>
-        <translation>Отладка (&amp;D)</translation>
+        <translation type="vanished">Отладка (&amp;D)</translation>
     </message>
     <message>
-        <location line="+6"/>
-        <location line="+3"/>
+        <location line="+64"/>
         <source>Force Crash</source>
         <translation>Принудительный сбой</translation>
     </message>
@@ -4514,37 +4513,36 @@ Drops: %2</source>
         <translation>Отмена</translation>
     </message>
     <message>
-        <location line="+9"/>
+        <location line="-24"/>
         <source>Keyboard Diagnostics</source>
         <translation>Диагностика клавиатуры</translation>
     </message>
     <message>
-        <location line="+10"/>
+        <location line="+9"/>
         <source>Copy Keyboard Log</source>
         <translation>Копировать журнал клавиатуры</translation>
     </message>
     <message>
-        <location line="+6"/>
+        <location line="-24"/>
         <source>&amp;About</source>
         <translation>О программе (&amp;A)</translation>
     </message>
     <message>
-        <location line="+3"/>
+        <location line="+2"/>
         <source>Dona&amp;te</source>
         <translation>Поддержать (&amp;P)</translation>
     </message>
     <message>
-        <location line="+4"/>
         <source>Report a &amp;Bug</source>
-        <translation>Сообщить об &amp;ошибке</translation>
+        <translation type="vanished">Сообщить об &amp;ошибке</translation>
     </message>
     <message>
-        <location line="+29"/>
+        <location line="+64"/>
         <source>More options</source>
         <translation>Другие параметры</translation>
     </message>
     <message>
-        <location line="+35"/>
+        <location line="+31"/>
         <source>Connected as: %1</source>
         <translation>Подключён как: %1</translation>
     </message>
@@ -4574,7 +4572,7 @@ Drops: %2</source>
         <translation>Войти в режим разработчика (&amp;E)...</translation>
     </message>
     <message>
-        <location line="+198"/>
+        <location line="+217"/>
         <source>Add</source>
         <translation>Добавить</translation>
     </message>
@@ -4625,18 +4623,18 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+18"/>
-        <location line="+3887"/>
+        <location line="+3897"/>
         <source>Undo</source>
         <translation>Отменить</translation>
     </message>
     <message>
-        <location line="-3885"/>
-        <location line="+3885"/>
+        <location line="-3895"/>
+        <location line="+3895"/>
         <source>Redo</source>
         <translation>Повторить</translation>
     </message>
     <message>
-        <location line="-3842"/>
+        <location line="-3852"/>
         <source>Add Device</source>
         <translation>Добавить устройство</translation>
     </message>
@@ -4682,12 +4680,12 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+36"/>
-        <location line="+3808"/>
+        <location line="+3818"/>
         <source>Fullscreen dashboard (F11)</source>
         <translation>Панель в полноэкранном режиме (F11)</translation>
     </message>
     <message>
-        <location line="-3719"/>
+        <location line="-3729"/>
         <location line="+500"/>
         <source>Home</source>
         <translation>Главная</translation>
@@ -4803,12 +4801,12 @@ Drops: %2</source>
 %3</translation>
     </message>
     <message>
-        <location line="+390"/>
+        <location line="+395"/>
         <source>Notifications</source>
         <translation>Уведомления</translation>
     </message>
     <message>
-        <location line="+153"/>
+        <location line="+158"/>
         <source>Close</source>
         <translation>Закрыть</translation>
     </message>
@@ -5009,13 +5007,13 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>Закрыть приложение</translation>
     </message>
     <message>
-        <location line="-3908"/>
-        <location line="+3589"/>
+        <location line="-3918"/>
+        <location line="+3599"/>
         <source>Devices</source>
         <translation>Устройства</translation>
     </message>
     <message>
-        <location line="-3514"/>
+        <location line="-3524"/>
         <source>Subscriptions</source>
         <translation>Подписки</translation>
     </message>
@@ -5031,12 +5029,37 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>Имя:</translation>
     </message>
     <message>
-        <location line="-2253"/>
+        <location line="-2277"/>
         <source>TraceView v%1</source>
         <translation>TraceView v%1</translation>
     </message>
     <message>
-        <location line="+2254"/>
+        <location line="+1186"/>
+        <source>&amp;Help</source>
+        <translation>&amp;Справка</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Report a &amp;Bug...</source>
+        <translation>Сообщить об &amp;ошибке...</translation>
+    </message>
+    <message>
+        <location line="+16"/>
+        <source>&amp;Developer Tools</source>
+        <translation>Инструменты &amp;разработчика</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>&amp;Debug Window</source>
+        <translation>Окно &amp;отладки</translation>
+    </message>
+    <message>
+        <location line="+22"/>
+        <source>Force Crash...</source>
+        <translation>Вызвать сбой...</translation>
+    </message>
+    <message>
+        <location line="+1045"/>
         <source>Workspace</source>
         <translation>Рабочее пространство</translation>
     </message>
@@ -5062,23 +5085,23 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     </message>
     <message>
         <location line="+81"/>
-        <location line="+3087"/>
+        <location line="+3097"/>
         <source>Add widget</source>
         <translation>Добавить виджет</translation>
     </message>
     <message>
-        <location line="-3084"/>
+        <location line="-3094"/>
         <source>Remove selected widget (%1)</source>
         <translation>Удалить выбранный виджет (%1)</translation>
     </message>
     <message>
         <location line="+8"/>
-        <location line="+3089"/>
+        <location line="+3099"/>
         <source>Add device</source>
         <translation>Добавить устройство</translation>
     </message>
     <message>
-        <location line="-3086"/>
+        <location line="-3096"/>
         <source>Remove selected device (%1)</source>
         <translation>Удалить выбранное устройство (%1)</translation>
     </message>
@@ -5163,7 +5186,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>Показать панели Слои/Свойства</translation>
     </message>
     <message>
-        <location line="+389"/>
+        <location line="+399"/>
         <source>New Device</source>
         <translation>Новое устройство</translation>
     </message>
@@ -5239,12 +5262,12 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>&amp;Движение</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="-1671"/>
+        <location filename="../lib/core/mainwindow.cpp" line="-1681"/>
         <source>Dashboard</source>
         <translation>Dashboard</translation>
     </message>
     <message>
-        <location line="+2072"/>
+        <location line="+2082"/>
         <source>%1: this BLE address now answers as a different robot (expected %2, got %3)</source>
         <translation>%1: этот BLE-адрес теперь отвечает как другой робот (ожидался %2, получен %3)</translation>
     </message>

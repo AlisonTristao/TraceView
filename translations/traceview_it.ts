@@ -4425,11 +4425,12 @@ Perdite: %2</translation>
     </message>
     <message>
         <location line="+4"/>
+        <location line="+111"/>
         <source>Open &amp;Log Folder</source>
         <translation>Apri Cartella dei &amp;Log</translation>
     </message>
     <message>
-        <location line="+4"/>
+        <location line="-107"/>
         <source>&amp;Reset Panel Positions</source>
         <translation>&amp;Ripristina Posizione dei Pannelli</translation>
     </message>
@@ -4460,12 +4461,12 @@ Perdite: %2</translation>
     </message>
     <message>
         <location line="+0"/>
-        <location line="+4672"/>
+        <location line="+4706"/>
         <source>Later</source>
         <translation>Più tardi</translation>
     </message>
     <message>
-        <location line="-4665"/>
+        <location line="-4699"/>
         <source>&amp;Access</source>
         <translation>&amp;Accesso</translation>
     </message>
@@ -4481,13 +4482,11 @@ Perdite: %2</translation>
         <translation>&amp;Notifiche</translation>
     </message>
     <message>
-        <location line="+12"/>
         <source>&amp;Debug</source>
-        <translation>&amp;Debug</translation>
+        <translation type="vanished">&amp;Debug</translation>
     </message>
     <message>
-        <location line="+6"/>
-        <location line="+3"/>
+        <location line="+64"/>
         <source>Force Crash</source>
         <translation>Forza crash</translation>
     </message>
@@ -4507,37 +4506,36 @@ Perdite: %2</translation>
         <translation>Annulla</translation>
     </message>
     <message>
-        <location line="+9"/>
+        <location line="-24"/>
         <source>Keyboard Diagnostics</source>
         <translation>Diagnostica tastiera</translation>
     </message>
     <message>
-        <location line="+10"/>
+        <location line="+9"/>
         <source>Copy Keyboard Log</source>
         <translation>Copia log tastiera</translation>
     </message>
     <message>
-        <location line="+6"/>
+        <location line="-24"/>
         <source>&amp;About</source>
         <translation>&amp;Informazioni</translation>
     </message>
     <message>
-        <location line="+3"/>
+        <location line="+2"/>
         <source>Dona&amp;te</source>
         <translation>Don&amp;a</translation>
     </message>
     <message>
-        <location line="+4"/>
         <source>Report a &amp;Bug</source>
-        <translation>Segnala un &amp;bug</translation>
+        <translation type="vanished">Segnala un &amp;bug</translation>
     </message>
     <message>
-        <location line="+29"/>
+        <location line="+64"/>
         <source>More options</source>
         <translation>Altre opzioni</translation>
     </message>
     <message>
-        <location line="+35"/>
+        <location line="+31"/>
         <source>Connected as: %1</source>
         <translation>Connesso come: %1</translation>
     </message>
@@ -4567,7 +4565,7 @@ Perdite: %2</translation>
         <translation>&amp;Entra in Modalità Sviluppatore...</translation>
     </message>
     <message>
-        <location line="+198"/>
+        <location line="+217"/>
         <source>Add</source>
         <translation>Aggiungi</translation>
     </message>
@@ -4618,18 +4616,18 @@ Perdite: %2</translation>
     </message>
     <message>
         <location line="+18"/>
-        <location line="+3887"/>
+        <location line="+3897"/>
         <source>Undo</source>
         <translation>Annulla</translation>
     </message>
     <message>
-        <location line="-3885"/>
-        <location line="+3885"/>
+        <location line="-3895"/>
+        <location line="+3895"/>
         <source>Redo</source>
         <translation>Ripeti</translation>
     </message>
     <message>
-        <location line="-3842"/>
+        <location line="-3852"/>
         <source>Add Device</source>
         <translation>Aggiungi dispositivo</translation>
     </message>
@@ -4675,12 +4673,12 @@ Perdite: %2</translation>
     </message>
     <message>
         <location line="+36"/>
-        <location line="+3808"/>
+        <location line="+3818"/>
         <source>Fullscreen dashboard (F11)</source>
         <translation>Dashboard a schermo intero (F11)</translation>
     </message>
     <message>
-        <location line="-3719"/>
+        <location line="-3729"/>
         <location line="+500"/>
         <source>Home</source>
         <translation>Home</translation>
@@ -4796,12 +4794,12 @@ Perdite: %2</translation>
 %3</translation>
     </message>
     <message>
-        <location line="+390"/>
+        <location line="+395"/>
         <source>Notifications</source>
         <translation>Notifiche</translation>
     </message>
     <message>
-        <location line="+153"/>
+        <location line="+158"/>
         <source>Close</source>
         <translation>Chiudi</translation>
     </message>
@@ -5002,13 +5000,13 @@ Scegli Più tardi per continuare a lavorare -- le modifiche verranno applicate l
         <translation>Chiudi app</translation>
     </message>
     <message>
-        <location line="-3908"/>
-        <location line="+3589"/>
+        <location line="-3918"/>
+        <location line="+3599"/>
         <source>Devices</source>
         <translation>Dispositivi</translation>
     </message>
     <message>
-        <location line="-3514"/>
+        <location line="-3524"/>
         <source>Subscriptions</source>
         <translation>Sottoscrizioni</translation>
     </message>
@@ -5024,12 +5022,37 @@ Scegli Più tardi per continuare a lavorare -- le modifiche verranno applicate l
         <translation>Nome:</translation>
     </message>
     <message>
-        <location line="-2253"/>
+        <location line="-2277"/>
         <source>TraceView v%1</source>
         <translation>TraceView v%1</translation>
     </message>
     <message>
-        <location line="+2254"/>
+        <location line="+1186"/>
+        <source>&amp;Help</source>
+        <translation>&amp;Aiuto</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Report a &amp;Bug...</source>
+        <translation>Segnala un &amp;bug...</translation>
+    </message>
+    <message>
+        <location line="+16"/>
+        <source>&amp;Developer Tools</source>
+        <translation>Strumenti per &amp;sviluppatori</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>&amp;Debug Window</source>
+        <translation>Finestra di &amp;debug</translation>
+    </message>
+    <message>
+        <location line="+22"/>
+        <source>Force Crash...</source>
+        <translation>Forza un arresto anomalo...</translation>
+    </message>
+    <message>
+        <location line="+1045"/>
         <source>Workspace</source>
         <translation>Spazio di Lavoro</translation>
     </message>
@@ -5055,23 +5078,23 @@ Scegli Più tardi per continuare a lavorare -- le modifiche verranno applicate l
     </message>
     <message>
         <location line="+81"/>
-        <location line="+3087"/>
+        <location line="+3097"/>
         <source>Add widget</source>
         <translation>Aggiungi widget</translation>
     </message>
     <message>
-        <location line="-3084"/>
+        <location line="-3094"/>
         <source>Remove selected widget (%1)</source>
         <translation>Rimuovi widget selezionato (%1)</translation>
     </message>
     <message>
         <location line="+8"/>
-        <location line="+3089"/>
+        <location line="+3099"/>
         <source>Add device</source>
         <translation>Aggiungi dispositivo</translation>
     </message>
     <message>
-        <location line="-3086"/>
+        <location line="-3096"/>
         <source>Remove selected device (%1)</source>
         <translation>Rimuovi dispositivo selezionato (%1)</translation>
     </message>
@@ -5156,7 +5179,7 @@ Scegli Più tardi per continuare a lavorare -- le modifiche verranno applicate l
         <translation>Mostra i pannelli Livelli/Proprietà</translation>
     </message>
     <message>
-        <location line="+389"/>
+        <location line="+399"/>
         <source>New Device</source>
         <translation>Nuovo Dispositivo</translation>
     </message>
@@ -5232,12 +5255,12 @@ Scegli Più tardi per continuare a lavorare -- le modifiche verranno applicate l
         <translation>M&amp;ovimento</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="-1671"/>
+        <location filename="../lib/core/mainwindow.cpp" line="-1681"/>
         <source>Dashboard</source>
         <translation>Dashboard</translation>
     </message>
     <message>
-        <location line="+2072"/>
+        <location line="+2082"/>
         <source>%1: this BLE address now answers as a different robot (expected %2, got %3)</source>
         <translation>%1: questo indirizzo BLE ora risponde come un robot diverso (atteso %2, ricevuto %3)</translation>
     </message>
