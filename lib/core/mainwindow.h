@@ -163,6 +163,11 @@ private:
     // border back and forth across a threshold doesn't thrash setBreakpoint()
     // (and the relayout() it triggers) once every pixel.
     void applyAutoBreakpoint();
+    // A project opened while the Dashboard was hidden (the app starts on
+    // Home) couldn't measure it, so its device-default breakpoint waits for
+    // the Dashboard's first real size. Runs in both modes, once per pending
+    // load; a no-op while nothing is pending or the canvas is still hidden.
+    void applyPendingDeviceBreakpoint();
     // The detection itself, minus the User-mode gate and without applying
     // anything: picks Small/Medium/Large from the viewport's width with a
     // +/-hysteresisPx dead band around each threshold measured against
@@ -868,6 +873,8 @@ private:
     // since-repositioned floating panel back every time the window is
     // reshown (e.g. after minimizing).
     bool m_floatingPanelsPositioned = false;
+    // See applyPendingDeviceBreakpoint().
+    bool m_deviceBreakpointPending = false;
     Ribbon* m_ribbon = nullptr;
     WorkspaceSwitcher* m_workspaceSwitcher = nullptr;
     // Takes m_statusRow's place in compact chrome (see

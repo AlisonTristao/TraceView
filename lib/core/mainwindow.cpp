@@ -1843,7 +1843,17 @@ void MainWindow::applyUserMode(UserModeManager::UserMode mode) {
     syncBreakpointChrome();
 }
 
+void MainWindow::applyPendingDeviceBreakpoint() {
+    if (!m_deviceBreakpointPending || !m_dashboardScrollArea->isVisible() ||
+        m_dashboardScrollArea->viewport()->width() <= 0) {
+        return;
+    }
+    m_deviceBreakpointPending = false;
+    m_dashboardGrid->setBreakpoint(detectBreakpoint(m_dashboardGrid->currentBreakpoint(), 0));
+}
+
 void MainWindow::applyAutoBreakpoint() {
+    applyPendingDeviceBreakpoint();
     if (UserModeManager::instance().mode() != UserModeManager::UserMode::User) {
         return;
     }
@@ -1857,8 +1867,11 @@ DashboardBreakpoint MainWindow::detectBreakpoint(DashboardBreakpoint current,
     // laid out yet and its viewport can report 0 width (or something else
     // meaningless) -- keep `current` instead of snapping to Small on nothing;
     // resizeEvent() re-runs auto-detection once real geometry exists.
+    // Same while the canvas is hidden behind another tab (the app opens on
+    // Home): a hidden page's layout never runs, so its viewport keeps a tiny
+    // placeholder width that would read as a phone screen.
     const int availableWidth = m_dashboardScrollArea->viewport()->width();
-    if (availableWidth <= 0) {
+    if (availableWidth <= 0 || !m_dashboardScrollArea->isVisible()) {
         return current;
     }
 
@@ -1913,6 +1926,11 @@ void MainWindow::loadDashboardJson(const QJsonObject& json, DashboardLoadBreakpo
     DashboardBreakpoint target = policy == DashboardLoadBreakpoint::DeviceDefault
                                      ? detectBreakpoint(current, 0)
                                      : current;
+    if (policy == DashboardLoadBreakpoint::DeviceDefault) {
+        // Hidden canvas: detectBreakpoint() kept `current`; measure for real
+        // once the Dashboard is shown (applyPendingDeviceBreakpoint()).
+        m_deviceBreakpointPending = !m_dashboardScrollArea->isVisible();
+    }
     if (UserModeManager::instance().mode() == UserModeManager::UserMode::User) {
         target = detectBreakpoint(target, kBreakpointHysteresisPx);
     }
@@ -3178,6 +3196,11 @@ void MainWindow::onRibbonTabChanged(int index) {
 
     if (index == m_dashboardTabIndex) {
         refreshDeviceStatusLabel();
+        // The canvas only gets its real size once this tab's layout runs,
+        // after the show events this switch posts.
+        if (m_deviceBreakpointPending) {
+            QTimer::singleShot(0, this, &MainWindow::applyPendingDeviceBreakpoint);
+        }
     }
 
     // Swaps the whole content area between the canvas, the Devices grid and
@@ -3417,6 +3440,11 @@ void MainWindow::positionNotificationToasts() {
 
 void MainWindow::showEvent(QShowEvent* event) {
     QMainWindow::showEvent(event);
+    // Starting straight on the Dashboard: it has a real size once this first
+    // show's layout pass is done.
+    if (m_deviceBreakpointPending) {
+        QTimer::singleShot(0, this, &MainWindow::applyPendingDeviceBreakpoint);
+    }
     if (!m_floatingPanelsPositioned) {
         m_floatingPanelsPositioned = true;
         m_dockController->applyFloatingPositions();
