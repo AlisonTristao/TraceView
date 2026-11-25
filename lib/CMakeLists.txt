@@ -624,6 +624,44 @@ target_link_libraries(traceview_updater PUBLIC
     Qt6::Network
 )
 
+# traceview_crash: app lifecycle around crashes -- SessionMarker (did the last
+# run quit cleanly?), CrashReport + CrashReportDialog (shown on the NEXT launch,
+# never inside the crash), the startup SplashScreen, and the native
+# CrashHandler. The handler is one header with one .cpp per platform, picked
+# here instead of #ifdef blocks in a single file; Android/iOS get the stub.
+add_library(traceview_crash STATIC
+    crash/sessionmarker.cpp
+    crash/sessionmarker.h
+    crash/crashreport.cpp
+    crash/crashreport.h
+    crash/crashreportdialog.cpp
+    crash/crashreportdialog.h
+    crash/splashscreen.cpp
+    crash/splashscreen.h
+    crash/crashhandler.h
+)
+
+if(ANDROID OR IOS)
+    target_sources(traceview_crash PRIVATE crash/crashhandler_stub.cpp)
+elseif(WIN32)
+    target_sources(traceview_crash PRIVATE crash/crashhandler_win.cpp)
+    target_link_libraries(traceview_crash PRIVATE dbghelp)
+else()
+    target_sources(traceview_crash PRIVATE crash/crashhandler_posix.cpp)
+endif()
+
+target_include_directories(traceview_crash PUBLIC
+    ${CMAKE_SOURCE_DIR}/include
+    ${CMAKE_SOURCE_DIR}/lib
+    ${CMAKE_BINARY_DIR}/generated
+)
+
+target_link_libraries(traceview_crash PUBLIC
+    Qt6::Widgets
+    traceview_theme
+    traceview_applog
+)
+
 # traceview_transport: the transport/connection layer -- Transport (the
 # common bytes-in/bytes-out interface), SerialManager, UsbHidManager,
 # HubTransport (the third Transport, multiplexed over a parent device's
@@ -917,6 +955,9 @@ target_link_libraries(traceview_ui
         traceview_locale
         traceview_preferences
         traceview_updater
+        # Help -> Report a bug, Debug -> Force crash, and the updater's
+        # SessionMarker::markUpdating() call.
+        traceview_crash
         # Transport/DeviceConnection/SerialManager/UsbHidManager/HubTransport
         # (see traceview_transport's own comment above) -- MainWindow owns one
         # DeviceConnection per Device and SerialWidgetBridge wires

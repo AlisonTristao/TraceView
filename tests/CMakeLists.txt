@@ -220,6 +220,15 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND NOT TRACEVIEW_FLATPAK_BUILD)
     add_traceview_test(test_updateinstaller traceview_updater)
 endif()
 add_traceview_test(test_updatedownloader traceview_updater)
+# Crash reporting: marker lifecycle (crashed vs clean vs update-quit) and the
+# report text/folder built from a fake log.
+add_traceview_test(test_sessionmarker traceview_crash)
+add_traceview_test(test_crashreport traceview_crash)
+# Re-runs itself as a child that crashes, then checks stack.txt (and the
+# minidump on Windows) were written.
+add_traceview_test(test_crashhandler traceview_crash)
+# With a PDB next to it, so an MSVC run also exercises symbol resolution.
+target_link_options(test_crashhandler PRIVATE $<$<CXX_COMPILER_ID:MSVC>:/DEBUG>)
 
 # Compile the Flatpak policy separately so ordinary Windows/Linux CI also
 # exercises the managed-update guards without needing a Flatpak runtime.
