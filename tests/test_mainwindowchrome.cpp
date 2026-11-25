@@ -43,6 +43,8 @@ void TestMainWindowChrome::userPreviewKeepsManualSizes() {
     auto* grid = window.findChild<DashboardGrid*>();
     auto* options = window.findChild<QToolButton*>("optionsButton");
     auto* deviceStatus = window.findChild<QLabel*>("deviceStatusLabel");
+    auto* homeButton = window.findChild<QToolButton*>("homeButton");
+    QVERIFY(homeButton);
     QVERIFY(tabs);
     QVERIFY(selector);
     QVERIFY(grid);
@@ -78,10 +80,23 @@ void TestMainWindowChrome::userPreviewKeepsManualSizes() {
         return nullptr;
     };
     QVERIFY(previewAction());
-    tabs->setCurrentIndex(1);
+    // Found by label: Home comes first, then Dashboard and Devices.
+    const auto tabIndex = [tabs](const QString& text) {
+        for (int i = 0; i < tabs->count(); ++i) {
+            if (tabs->tabText(i) == text) {
+                return i;
+            }
+        }
+        return -1;
+    };
+    const int dashboardTab = tabIndex(QStringLiteral("Dashboard"));
+    const int devicesTab = tabIndex(QStringLiteral("Devices"));
+    QVERIFY(dashboardTab >= 0);
+    QVERIFY(devicesTab >= 0);
+    tabs->setCurrentIndex(devicesTab);
     previewAction()->trigger();
     QTRY_VERIFY(!tabs->isVisible());
-    QCOMPARE(tabs->currentIndex(), 0);
+    QCOMPARE(tabs->currentIndex(), dashboardTab);
     QVERIFY(selector->isVisible());
     QVERIFY(previewAction()->isChecked());
     QCOMPARE(manager.mode(), UserModeManager::UserMode::Developer);
@@ -94,8 +109,10 @@ void TestMainWindowChrome::userPreviewKeepsManualSizes() {
         QVERIFY(!tabs->isVisible());
         QVERIFY(selector->isVisible());
         QCOMPARE(options->parentWidget(), deviceStatus->parentWidget());
+        // Options first, then the Home button, then the device strip.
         QCOMPARE(options->parentWidget()->layout()->indexOf(options), 0);
-        QCOMPARE(options->parentWidget()->layout()->indexOf(deviceStatus), 1);
+        QCOMPARE(options->parentWidget()->layout()->indexOf(homeButton), 1);
+        QCOMPARE(options->parentWidget()->layout()->indexOf(deviceStatus), 2);
         QCOMPARE(options->isVisible(), i < 2);
         // Phone/Tablet preview = compact chrome: the dock replaces the
         // status row, and the size selector moves up beside the options

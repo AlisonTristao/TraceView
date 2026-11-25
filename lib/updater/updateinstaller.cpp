@@ -86,27 +86,28 @@ bool UpdateInstaller::install(const QString& downloadedFilePath, QString* reason
 
 namespace {
 
-// Waits for `pid` (this process, already about to quit) to exit, runs the
-// NSIS installer completely silently (/S -- CPACK_NSIS_ENABLE_UNINSTALL_
-// BEFORE_INSTALL means it uninstalls the current version itself first, also
-// silently), and relaunches TraceView from the same path it was already
-// running from. /S skips the directory-picker page entirely, so an
-// upgrade-in-place always lands back in whatever directory the previous
-// install already registered -- the same one this running copy's own
-// applicationFilePath() points at.
+// Waits for `pid` (this process, already about to quit) to exit, then
+// starts the NSIS installer with /UPDATE and exits. /UPDATE is the "update
+// mode" of our own template (packaging/nsis/NSIS.template.in): it skips
+// every wizard page but the progress one, titled "Updating TraceView",
+// uninstalls the current version silently first
+// (CPACK_NSIS_ENABLE_UNINSTALL_BEFORE_INSTALL), reinstalls into the
+// directory the previous install registered -- the same one this running
+// copy's applicationFilePath() points at -- and relaunches TraceView itself
+// when done (de-elevated, through explorer.exe). So this script neither
+// waits for the installer nor starts the app.
 //
 // One prompt is unavoidable here: the installer's RequestExecutionLevel is
 // admin (it installs to Program Files), so Windows shows its own UAC
-// consent dialog no matter how this process is launched. /S only removes
-// the installer's own wizard pages, not that OS-level gate.
-QString buildApplyScript(qint64 pid, const QString& installerPath, const QString& exePath) {
+// consent dialog no matter how this process is launched. /UPDATE only
+// removes the installer's own wizard pages, not that OS-level gate.
+QString buildApplyScript(qint64 pid, const QString& installerPath) {
     return QStringLiteral(
                "while (Get-Process -Id %1 -ErrorAction SilentlyContinue) { "
                "Start-Sleep -Milliseconds 300 }\n"
-               "Start-Process -FilePath '%2' -ArgumentList '/S' -Wait\n"
-               "Start-Process -FilePath '%3'\n")
+               "Start-Process -FilePath '%2' -ArgumentList '/UPDATE'\n")
         .arg(pid)
-        .arg(QDir::toNativeSeparators(installerPath), QDir::toNativeSeparators(exePath));
+        .arg(QDir::toNativeSeparators(installerPath));
 }
 
 }  // namespace
@@ -128,15 +129,14 @@ bool UpdateInstaller::install(const QString& downloadedFilePath, QString* reason
         }
         return false;
     }
-    script.write(buildApplyScript(QCoreApplication::applicationPid(), downloadedFilePath,
-                                   QCoreApplication::applicationFilePath())
-                     .toUtf8());
+    script.write(buildApplyScript(QCoreApplication::applicationPid(), downloadedFilePath).toUtf8());
     script.close();
 
     return QProcess::startDetached(
         QStringLiteral("powershell.exe"),
-        {QStringLiteral("-NoProfile"), QStringLiteral("-ExecutionPolicy"), QStringLiteral("Bypass"),
-         QStringLiteral("-File"), scriptPath});
+        {QStringLiteral("-NoProfile"), QStringLiteral("-WindowStyle"), QStringLiteral("Hidden"),
+         QStringLiteral("-ExecutionPolicy"), QStringLiteral("Bypass"), QStringLiteral("-File"),
+         scriptPath});
 }
 
 #elif defined(Q_OS_LINUX)

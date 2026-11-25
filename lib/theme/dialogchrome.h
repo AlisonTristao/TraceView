@@ -142,6 +142,8 @@ public:
     explicit DialogCard(const QString& title = QString(), QWidget* parent = nullptr);
 
     QVBoxLayout* body() const { return m_body; }
+    // For a card that outlives a language change.
+    void setTitle(const QString& title);
     // Right end of the caption row (a badge, a small button).
     void addTitleWidget(QWidget* widget);
 

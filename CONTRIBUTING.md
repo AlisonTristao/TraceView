@@ -439,6 +439,30 @@ inside the app instead of in a stray window.
   buttons (Close for tool windows, Ok/Cancel or Save/Cancel for editors), so
   each platform orders them its own way.
 
+## Crash reports
+
+`lib/crash/` keeps a "session-<pid>.running" marker while each instance runs. If it is
+still there on the next launch, the previous run crashed and TraceView shows
+the crash report dialog then (never inside the crash itself). The native
+handler (`crashhandler.h`, one `.cpp` per platform) writes its files to
+`<log dir>/crash/<run timestamp>/`: `stack.txt` everywhere it can capture a
+stack, plus `minidump.dmp` on Windows. Android and iOS use the stub (no stack,
+the dialog still shows the log).
+
+To test it, turn on Developer mode and use **Debug → Force crash**, then start
+TraceView again: the dialog should open with the stack under "Technical
+details".
+
+Rules for the platform files:
+
+- **Inside the handler: no Qt, no malloc/new, no locks**, no printf or
+  iostreams. Only async-signal-safe calls (POSIX) or plain Win32 calls on
+  static buffers (Windows). Paths, buffers and the alternate stack are
+  prepared in `install()`.
+- Release builds need their symbols for a readable stack: keep the PDBs
+  (Windows) and the `.debug` files (Linux) as CI artifacts for every release,
+  and load them next to `minidump.dmp` or use them to symbolise `stack.txt`.
+
 ## Translations
 
 TraceView ships eight catalogs under `translations/` (`pt_BR`, `es`, `fr`,
