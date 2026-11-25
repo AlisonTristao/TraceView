@@ -206,7 +206,7 @@ qt_add_executable(TraceView
     resources/icons/ui.qrc
     # Lucide (ISC), the user-pickable icon set -- see lib/theme/iconlibrary.h.
     resources/icons/lucide/lucide.qrc
-    # Wordmark shown in User mode -- see lib/core/brandcornermark.h.
+    # TraceView wordmark (Home page header, startup loading overlay).
     resources/branding/branding.qrc
     # The built-in example dashboard the app starts on until the gallery has
     # a default of its own -- see lib/project/dashboardgallery.h.
