@@ -1,6 +1,6 @@
 #pragma once
 
-#include <QPixmap>
+#include <QRectF>
 #include <QString>
 #include <QStringList>
 #include <QVector>
@@ -29,6 +29,16 @@ struct HomeWorkspace {
     QString name;
     QString icon;  // Lucide id, empty for the default
     int widgets = 0;
+};
+
+// One widget of the active workspace, as the "Continue" card draws it: where
+// it sits (fractions of the dashboard, 0..1 both ways), which Lucide icon
+// stands for its type, and a tone (0..3) for its colour -- charts,
+// controls, text, scenes.
+struct HomePreviewBlock {
+    QRectF rect;
+    QString icon;
+    int tone = 0;
 };
 
 // What the Home page shows of the open project (MainWindow fills it in).
@@ -74,8 +84,10 @@ public:
 
     void setDeveloperMode(bool developer);
     void setProjectSummary(const HomeProjectSummary& summary);
-    // What the dashboard last looked like; a null pixmap shows a placeholder.
-    void setDashboardPreview(const QPixmap& preview);
+    // The active workspace's layout, drawn as a small map in the "Continue"
+    // card. `aspect` is the dashboard's width / height; no blocks shows a
+    // placeholder.
+    void setDashboardLayout(const QVector<HomePreviewBlock>& blocks, double aspect);
     void setDevices(const QVector<HomeDevice>& devices);
     void setRecentProjects(const QStringList& paths);
     void setGallery(const QStringList& names, const QString& defaultName);

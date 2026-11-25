@@ -384,6 +384,48 @@ QVector<SerialPortOption> currentSerialPorts() {
 #endif
 }
 #endif
+
+// The Lucide icon the Home page's dashboard map draws on a widget's block.
+QString homePreviewIcon(const DashboardItem& item) {
+    static const QHash<QString, QString> icons = {
+        {QStringLiteral("dummy_line"), QStringLiteral("chart-line")},
+        {QStringLiteral("dummy_bar"), QStringLiteral("chart-column")},
+        {QStringLiteral("dummy_gauge"), QStringLiteral("gauge")},
+        {QStringLiteral("audio_spectrum"), QStringLiteral("audio-lines")},
+        {QStringLiteral("serial_monitor"), QStringLiteral("terminal")},
+        {QStringLiteral("robot_log"), QStringLiteral("scroll-text")},
+        {QStringLiteral("text_board"), QStringLiteral("type")},
+        {QStringLiteral("chat"), QStringLiteral("message-square")},
+        {QStringLiteral("push_button"), QStringLiteral("mouse-pointer-click")},
+        {QStringLiteral("toggle_switch"), QStringLiteral("toggle-right")},
+        {QStringLiteral("slider"), QStringLiteral("sliders-horizontal")},
+        {QStringLiteral("led"), QStringLiteral("lightbulb")},
+        {QStringLiteral("scene"), QStringLiteral("rotate-3d")},
+    };
+    return QStringLiteral("lucide:") + icons.value(item.typeId, QStringLiteral("layout-dashboard"));
+}
+
+// Which colour the map gives a widget type (see HomePreviewBlock::tone):
+// charts, controls, text and logs, scenes.
+int homePreviewTone(const QString& typeId) {
+    static const QSet<QString> controls = {QStringLiteral("push_button"),
+                                           QStringLiteral("toggle_switch"),
+                                           QStringLiteral("slider"), QStringLiteral("led")};
+    static const QSet<QString> text = {QStringLiteral("serial_monitor"),
+                                       QStringLiteral("robot_log"),
+                                       QStringLiteral("text_board"), QStringLiteral("chat")};
+    if (controls.contains(typeId)) {
+        return 1;
+    }
+    if (text.contains(typeId)) {
+        return 2;
+    }
+    if (typeId == QLatin1String("scene")) {
+        return 3;
+    }
+    return 0;
+}
+
 }  // namespace
 
 MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
@@ -901,13 +943,6 @@ void MainWindow::finishStartup() {
     // the user straight there (see onDeviceConnectionStateChanged()).
     showHomeTab();
     m_homeAutoLeaveUntilMs = QDateTime::currentMSecsSinceEpoch() + 15000;
-    // The dashboard was only just built: picture it again once its widgets
-    // have been laid out and painted (it renders while hidden).
-    QTimer::singleShot(600, this, [this] {
-        if (m_ribbon->currentIndex() == m_homeTabIndex) {
-            updateHomeDashboardPreview();
-        }
-    });
     // Only now: a tool call before this would edit the placeholder dashboard
     // the startup one is about to replace.
     syncAgentBridge();
@@ -5238,37 +5273,49 @@ void MainWindow::refreshHomePage() {
     m_homePage->setProjectSummary(summary);
     m_homePage->setRecentProjects(QSettings().value(kRecentFilesSettingsKey).toStringList());
     m_homePage->setGallery(DashboardGallery::names(), DashboardGallery::defaultName());
+    updateHomeDashboardPreview();
 }
 
 void MainWindow::updateHomeDashboardPreview() {
-    if (m_homePage == nullptr || m_dashboardScrollArea == nullptr) {
+    if (m_homePage == nullptr || m_dashboardGrid == nullptr) {
         return;
     }
-    // A hidden page of the content stack keeps whatever size it last had
-    // (only the current page is laid out) -- at startup that can be next
-    // to nothing, and the picture came out as a few pixels blown up. Give
-    // it the stack's size first; grab() then delivers the pending resize, so
-    // the scroll area lays its viewport and the grid out before painting.
-    if (m_dashboardScrollArea->size() != m_contentStack->size()) {
-        m_dashboardScrollArea->resize(m_contentStack->size());
+    // Drawn from the active workspace's geometry, not grabbed from the
+    // screen: the dashboard is usually hidden here (Home is on top), and a
+    // picture of it came out tiny or cropped.
+    const DashboardBreakpoint breakpoint = m_dashboardGrid->currentBreakpoint();
+    QVector<HomePreviewBlock> blocks;
+    double pages = 1.0;
+    for (const DashboardItem& item : m_dashboardGrid->items()) {
+        const DashboardItem::Geometry& g = item.geometry(breakpoint);
+        if (g.width <= 0.0 || g.height <= 0.0) {
+            continue;
+        }
+        pages = qMax(pages, g.y + g.height);
+        blocks.append({QRectF(g.x, g.y, g.width, g.height), homePreviewIcon(item), 0});
+        blocks.last().tone = homePreviewTone(item.typeId);
     }
-    m_dashboardScrollArea->grab(QRect(0, 0, 1, 1));
-    const QRect area = m_dashboardScrollArea->viewport()->geometry();
-    if (area.width() < 200 || area.height() < 120) {
-        return;  // keep the placeholder rather than a smudge
+    // y/height are in pages (a Small/Medium canvas can grow downwards):
+    // squeeze every page into the picture.
+    for (HomePreviewBlock& block : blocks) {
+        block.rect = QRectF(block.rect.x(), block.rect.y() / pages, block.rect.width(),
+                            block.rect.height() / pages);
     }
-    m_homePage->setDashboardPreview(m_dashboardScrollArea->grab(area));
+    double aspect = 16.0 / 9.0;
+    if (breakpoint == DashboardBreakpoint::Small) {
+        aspect = 360.0 / 700.0;
+    } else if (breakpoint == DashboardBreakpoint::Medium) {
+        aspect = 800.0 / 1280.0;
+    } else if (m_contentStack != nullptr && m_contentStack->width() > 200 &&
+               m_contentStack->height() > 120) {
+        aspect = double(m_contentStack->width()) / m_contentStack->height();
+    }
+    m_homePage->setDashboardLayout(blocks, aspect / pages);
 }
 
 void MainWindow::showHomeTab() {
     if (m_homeTabIndex < 0) {
         return;
-    }
-    // The "Continue" card shows the dashboard as it was just left: grabbed
-    // while it is still laid out (it is the page being switched away from,
-    // or, at startup, the one loaded under the cover).
-    if (m_contentStack->currentWidget() == m_dashboardScrollArea) {
-        updateHomeDashboardPreview();
     }
     m_ribbon->setCurrentIndex(m_homeTabIndex);
     onRibbonTabChanged(m_homeTabIndex);
