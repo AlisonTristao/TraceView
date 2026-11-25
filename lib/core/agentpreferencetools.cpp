@@ -40,7 +40,7 @@ constexpr int kUpdateCheckTimeoutMs = 20000;
 constexpr int kDefaultLogLines = 200;
 constexpr int kMaxPayloadBytesShown = 64;
 
-QJsonObject appearanceJson(bool subscriptionsShown) {
+QJsonObject appearanceJson() {
     QJsonArray options;
     for (const AppearanceOption& option : appearanceOptions()) {
         QJsonArray choices;
@@ -70,7 +70,7 @@ QJsonObject appearanceJson(bool subscriptionsShown) {
         {"options", options},
         {"presets", presets},
         {"workspacePinned",
-         !subscriptionsShown && !WorkspaceManager::instance().appearanceFor(active).isEmpty()},
+         !WorkspaceManager::instance().appearanceFor(active).isEmpty()},
         {"currentPalette", paletteToJson(ThemeManager::instance().currentTheme())},
         {"language", LanguageManager::instance().currentLanguage().id},
         {"languages", languages},
@@ -257,8 +257,8 @@ void AgentAppTools::registerAppearanceTools(MainWindow* window, ToolRegistry* re
         "density, cardHeader, cardBackground, canvas, motion) with its current value and choices, the presets, "
         "whether the active workspace pins its own look, the current palette's colors, and the "
         "language and font with their choices.";
-    get.handler = [window](const QJsonObject&, const AgentToolReply& reply) {
-        reply(AgentToolResult::json(appearanceJson(window->m_subscriptionsWorkspaceActive)));
+    get.handler = [](const QJsonObject&, const AgentToolReply& reply) {
+        reply(AgentToolResult::json(appearanceJson()));
     };
     registry->registerTool(get);
 
@@ -270,7 +270,7 @@ void AgentAppTools::registerAppearanceTools(MainWindow* window, ToolRegistry* re
         "get_appearance, e.g. {\"palette\": \"dark\", \"chartStyle\": \"scientific\"}. Applies "
         "live. If the active workspace pins its look, the change goes to that workspace only.";
     set.inputSchema = AgentSchema().object("values", "Option key -> choice id.", true).toJson();
-    set.handler = [window](const QJsonObject& args, const AgentToolReply& reply) {
+    set.handler = [](const QJsonObject& args, const AgentToolReply& reply) {
         const QJsonObject values = args.value("values").toObject();
         const QVector<AppearanceOption> options = appearanceOptions();
         for (auto it = values.constBegin(); it != values.constEnd(); ++it) {
@@ -300,7 +300,7 @@ void AgentAppTools::registerAppearanceTools(MainWindow* window, ToolRegistry* re
                 option.apply(values.value(option.key).toString());
             }
         }
-        reply(AgentToolResult::json(appearanceJson(window->m_subscriptionsWorkspaceActive)));
+        reply(AgentToolResult::json(appearanceJson()));
     };
     registry->registerTool(set);
 

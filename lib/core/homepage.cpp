@@ -1082,6 +1082,9 @@ void HomePage::showEvent(QShowEvent* event) {
     QWidget::showEvent(event);
     applyWidth();
     m_nearby->setActive(true);
+    // The window skips refreshing a hidden Home, so whatever changed while it
+    // was away (a robot connected on the Devices tab) is fetched now.
+    emit shown();
 }
 
 void HomePage::hideEvent(QHideEvent* event) {
