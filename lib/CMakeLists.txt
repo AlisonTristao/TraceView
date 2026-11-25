@@ -908,8 +908,6 @@ add_library(traceview_ui STATIC
     core/appearancecatalog.h
     core/paletteeditordialog.cpp
     core/paletteeditordialog.h
-    core/brandcornermark.cpp
-    core/brandcornermark.h
     core/notificationtoasts.cpp
     core/notificationtoasts.h
     core/notificationbell.cpp

@@ -14,6 +14,20 @@ release flow.
   texture. Dots and Grid now draw the snap grid itself in both modes, so it
   stays the same grid and follows the precision setting.
 
+## [5.0.3] - 2026-11-25
+
+### Removed
+
+- The TraceView wordmark pinned to the window's top-right corner in User
+  mode. It cluttered the top of the window; the Home page header and the
+  startup screen still show the wordmark.
+
+### Fixed
+
+- Release builds no longer fail when Chocolatey is briefly down while
+  installing NSIS (what held 5.0.2 back): the install is retried and falls
+  back to NSIS's own installer.
+
 ## [5.0.2] - 2026-11-25
 
 ### Changed

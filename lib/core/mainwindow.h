@@ -72,7 +72,6 @@ class SettingsPage;
 class UpdateChecker;
 class UpdateDownloader;
 class WorkspaceDock;
-class BrandCornerMark;
 class NotificationToasts;
 class NotificationBell;
 class NotificationPanel;
@@ -348,8 +347,6 @@ private:
     // whenever m_contentRow resizes (see eventFilter) since the panels are
     // positioned directly rather than managed by a layout.
     void positionOverlayPanels();
-    // Keeps m_brandCornerMark flush with m_appShell's top-right corner.
-    void positionBrandCornerMark();
     // Gives m_notificationToasts m_contentRow's rectangle inside m_appShell.
     void positionNotificationToasts();
     // The bell's panel: open/close it (on a phone: the Page dialog instead).
@@ -882,9 +879,6 @@ private:
     // navigation. Fed the same entries as m_workspaceSwitcher by
     // refreshWorkspaceSwitcher().
     WorkspaceDock* m_workspaceDock = nullptr;
-    // User-mode-only wordmark overlaid on m_appShell's top-right corner --
-    // see brandcornermark.h; shown/hidden by updateChromeVisibility().
-    BrandCornerMark* m_brandCornerMark = nullptr;
     // Status messages as translucent cards over the dashboard's bottom-right
     // corner (see notificationtoasts.h) -- postStatus() feeds it.
     NotificationToasts* m_notificationToasts = nullptr;

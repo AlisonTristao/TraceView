@@ -141,7 +141,6 @@
 #include "iconpickerdialog.h"
 #include "paletteeditordialog.h"
 #include "workspacedock.h"
-#include "brandcornermark.h"
 #include "notificationbell.h"
 #include "notificationlistview.h"
 #include "notificationpanel.h"
@@ -838,17 +837,8 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     m_statusRow->layout()->addWidget(new QSizeGrip(m_statusRow));
 
     // Created after everything else in m_appShell so it stacks above the
-    // ribbon row and the dashboard it overhangs; embedded dialogs, created
-    // later still, stack above it in turn. Kept flush with the corner by the
-    // event filter below.
-    m_brandCornerMark = new BrandCornerMark(m_appShell);
-    m_brandCornerMark->setForegroundColor(ThemeManager::instance().currentTheme().textPrimary);
-    connect(&ThemeManager::instance(), &ThemeManager::themeChanged, this,
-            [this](const ThemePalette& palette) {
-                m_brandCornerMark->setForegroundColor(palette.textPrimary);
-            });
-    // Above the brand mark too; embedded dialogs, created later, still cover
-    // it. Placed over m_contentRow by positionNotificationToasts().
+    // ribbon row and the dashboard; embedded dialogs, created later, still
+    // cover it. Placed over m_contentRow by positionNotificationToasts().
     m_notificationToasts = new NotificationToasts(m_appShell);
     // A card is a way into the panel: every notification is there.
     connect(m_notificationToasts, &NotificationToasts::cardClicked, this,
@@ -3082,12 +3072,6 @@ void MainWindow::updateChromeVisibility() {
     // Keep manual size selection available while previewing the User interface.
     m_screenSizeButton->setVisible(isDeveloper);
     m_chromeTopBar->setVisible(compact && optionsRow == m_chromeTopBar);
-
-    // User mode's branding (Developer's "View as user" preview included).
-    if (m_brandCornerMark) {
-        m_brandCornerMark->setVisible(!developerUiActive());
-        positionBrandCornerMark();
-    }
 }
 
 void MainWindow::removeRibbonTab(int index) {
@@ -3407,7 +3391,6 @@ bool MainWindow::eventFilter(QObject* watched, QEvent* event) {
         positionNotificationToasts();
     } else if ((watched == m_appShell || watched == m_ribbon) &&
                (event->type() == QEvent::Resize || event->type() == QEvent::Move)) {
-        positionBrandCornerMark();
         positionNotificationToasts();
     } else if (watched == m_dashboardScrollArea->viewport() && event->type() == QEvent::Resize) {
         // Re-derives the canvas-height-multiplier pixel math, which reads
@@ -3420,20 +3403,6 @@ bool MainWindow::eventFilter(QObject* watched, QEvent* event) {
 void MainWindow::positionOverlayPanels() {
     m_dockController->relayout();
     applyNotificationPush();
-}
-
-void MainWindow::positionBrandCornerMark() {
-    if (!m_brandCornerMark) {
-        return;
-    }
-    // Taller than the ribbon row (kRibbonPageHeight) so the wordmark stays
-    // legible; capped to a share of the width so a phone-sized window keeps
-    // most of its top row. Its middle trace runs along the ribbon's bottom
-    // edge -- the border between the top row and the dashboard.
-    constexpr int kBrandCornerMarkHeight = 51;
-    const int ribbonBottom = m_ribbon->mapTo(m_appShell, QPoint(0, m_ribbon->height())).y();
-    m_brandCornerMark->reposition(kBrandCornerMarkHeight, m_appShell->width() * 2 / 5,
-                                  ribbonBottom);
 }
 
 void MainWindow::positionNotificationToasts() {
