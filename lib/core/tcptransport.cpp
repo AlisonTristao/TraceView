@@ -133,8 +133,10 @@ void TcpTransport::probeRecovery() {
         if (m_closing || isConnected()) {
             return;
         }
-        const QJsonObject status = QJsonDocument::fromJson(reply->readAll()).object();
-        const bool inRecovery = reply->error() == QNetworkReply::NoError &&
+        const bool answered = reply->error() == QNetworkReply::NoError;
+        const QJsonObject status =
+            answered ? QJsonDocument::fromJson(reply->readAll()).object() : QJsonObject();
+        const bool inRecovery = answered &&
                                 status.value(QStringLiteral("mode")).toString() ==
                                     QLatin1String("recovery");
         if (inRecovery) {
@@ -203,7 +205,7 @@ void TcpTransport::onMdnsResolved(const QString& requestId, const QHostAddress& 
     }
     qCInfo(lcConnection) << m_host << "resolved to" << address.toString();
     m_lastAddress = address.toString();
-    m_fallbackHost = m_lastAddress;  // for when mDNS goes quiet later
+    m_learnedHost = m_lastAddress;  // for when mDNS goes quiet later
     emit hostResolved(m_lastAddress);
     m_socket->connectToHost(address, m_port);
 }
@@ -213,12 +215,13 @@ void TcpTransport::onMdnsResolveFailed(const QString& requestId) {
         return;
     }
     qCWarning(lcConnection) << "mDNS lookup failed for" << m_host;
-    if (!m_fallbackHost.isEmpty() && m_socket->state() == QAbstractSocket::UnconnectedState) {
+    const QString fallback = effectiveFallbackHost();
+    if (!fallback.isEmpty() && m_socket->state() == QAbstractSocket::UnconnectedState) {
         // The address it last answered with (or the one set by hand): a
         // refusal or timeout there still gets the recovery probe.
-        qCInfo(lcConnection) << "trying the fallback address" << m_fallbackHost;
-        m_lastAddress = m_fallbackHost;
-        m_socket->connectToHost(m_fallbackHost, m_port);
+        qCInfo(lcConnection) << "trying the fallback address" << fallback;
+        m_lastAddress = fallback;
+        m_socket->connectToHost(fallback, m_port);
         return;
     }
     emit errorOccurred(tr("Could not find %1 on the network (mDNS)").arg(m_host));

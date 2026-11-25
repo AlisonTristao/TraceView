@@ -67,6 +67,11 @@ public:
     void setFallbackHost(const QString& host) {
         m_fallbackHost = host.trimmed();
     }
+    // What a fallback dial would use: the configured one, else the address
+    // mDNS last answered with in this session.
+    QString effectiveFallbackHost() const {
+        return m_fallbackHost.isEmpty() ? m_learnedHost : m_fallbackHost;
+    }
 
 signals:
     // A refused or timed-out connection is probed with GET http://<address>/status: when
@@ -114,6 +119,7 @@ private:
     bool m_probeInFlight = false;
     QString m_recoveryAddress;
     QString m_fallbackHost;
+    QString m_learnedHost;
     bool m_closing = false;
     bool m_reconnectEnabled = true;
     int m_initialRetryDelayMs = 250;

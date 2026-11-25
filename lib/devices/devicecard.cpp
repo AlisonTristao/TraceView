@@ -381,7 +381,9 @@ void DeviceCard::paintEvent(QPaintEvent*) {
     }
     // Nothing live: what the last connection reported, dimmed and said so.
     const bool fromCache = m_device.reportedInfo.isEmpty() && !m_cachedInfo.isEmpty();
-    if (fromCache && linkState != DeviceLinkState::KeyRejected) {
+    // Not in recovery either: that line is the news, and the note would push
+    // it off the card.
+    if (fromCache && linkState != DeviceLinkState::KeyRejected && !inRecovery) {
         // Said even beside a session line: info that is not live must never
         // read as the device's current state.
         const QString saved = tr("saved from the last connection");
