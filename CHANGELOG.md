@@ -7,6 +7,15 @@ release flow.
 
 ## [Unreleased]
 
+### Fixed
+
+- The canvas snap grid (1×/2×/4× precision) only showed with the padlock
+  open; in Run mode the Dots/Grid canvas pattern was a separate fixed 24 px
+  texture. Dots and Grid now draw the snap grid itself in both modes, so it
+  stays the same grid and follows the precision setting.
+
+## [5.0.0] - 2026-11-25
+
 ### Added
 
 - **Home tab**: the app now opens on a Home page instead of straight on the
@@ -27,15 +36,40 @@ release flow.
   serial port and tries TCP port 44300 on the computer's /24 networks,
   saying HELLO to whatever answers. Opening a port can restart an ESP32, so
   it never runs by itself.
+- **Crash report**: when TraceView crashes, the next launch opens
+  "TraceView closed unexpectedly" with the version, the system, the last
+  200 lines of that run's log and, on Windows, Linux and macOS, the stack
+  trace. You can describe what you were doing, copy the report, save it to
+  a folder (report, log and minidump) or open a GitHub issue page with the
+  report on the clipboard. Nothing is sent automatically. It also says when
+  the crash came right after an update. Several TraceView windows can be
+  open at once without one taking another for a crash.
+- **Report a Bug** (menu bar and the phone's options menu): the same dialog
+  for the current run, without a crash.
+- **Startup splash**: a small loading card while TraceView starts, so the
+  app doesn't look gone while it loads -- including right after an update,
+  when it reads "Updated from vX to vY".
+- **Update progress window (Windows)**: the self-update no longer installs
+  invisibly. After the UAC prompt the installer shows only its progress
+  page, "Updating TraceView", keeps the previous install folder and opens
+  TraceView again (not elevated) when it's done. A normal install is
+  unchanged. This applies from the next update on: updating from 4.x to
+  5.0.0 still runs the previous silent path.
+- **Force Crash** (Developer mode): crashes on purpose to test the crash
+  report.
+
+### Changed
+
+- Releases also publish the debug symbols
+  (`TraceView-<version>-windows-symbols.zip` with the PDB,
+  `TraceView-<version>-linux-symbols.debug`) as separate assets, so crash
+  stacks from release builds can be read. They are not inside the installer
+  or the AppImage.
 
 ### Fixed
 
-- The canvas snap grid (1×/2×/4× precision) only showed with the padlock
-  open; in Run mode the Dots/Grid canvas pattern was a separate fixed 24 px
-  texture. Dots and Grid now draw the snap grid itself in both modes, so it
-  stays the same grid and follows the precision setting.
-- The 4.18.0 card background and right-click header options were missing
-  their translations.
+- The 4.18.0 card background and right-click header options, and some AI
+  assistant confirmation texts, were missing their translations.
 
 ## [4.18.0] - 2026-11-23
 
