@@ -1139,6 +1139,15 @@ void AgentAppTools::registerProjectTools(MainWindow* window, ToolRegistry* regis
         "(projects kept inside TraceView; the default one opens at startup).";
     list.handler = [](const QJsonObject&, const AgentToolReply& reply) {
         const QString path = ProjectStore::instance().currentPath();
+        // Name -> Lucide id, for the entries that have one (their own, else
+        // their first workspace's).
+        QJsonObject galleryIcons;
+        for (const QString& name : DashboardGallery::names()) {
+            const QString icon = DashboardGallery::info(name).icon;
+            if (!icon.isEmpty()) {
+                galleryIcons[name] = icon;
+            }
+        }
         reply(AgentToolResult::json(QJsonObject{
             {"current", DashboardGallery::isBuiltInExample(path)
                             ? QStringLiteral("(built-in example)")
@@ -1146,6 +1155,7 @@ void AgentAppTools::registerProjectTools(MainWindow* window, ToolRegistry* regis
             {"currentGalleryName", DashboardGallery::nameForPath(path)},
             {"recent", QJsonArray::fromStringList(MainWindow::recentProjectFiles())},
             {"gallery", QJsonArray::fromStringList(DashboardGallery::names())},
+            {"galleryIcons", galleryIcons},
             {"galleryDefault", DashboardGallery::defaultName()},
         }));
     };
@@ -1235,10 +1245,13 @@ void AgentAppTools::registerProjectTools(MainWindow* window, ToolRegistry* regis
     addGallery.title = "Save to gallery";
     addGallery.description =
         "Saves the open project into the dashboard gallery under a name (replacing an entry of "
-        "that name asks the user first). makeDefault opens it at every startup.";
+        "that name asks the user first). makeDefault opens it at every startup; icon is the Lucide "
+        "id (lucide:rocket) its gallery card shows.";
     addGallery.inputSchema = AgentSchema()
                                  .string("name", "Gallery name (must work as a file name).", true)
                                  .boolean("makeDefault", "Open it at startup.")
+                                 .string("icon",
+                                         "Lucide icon id for the gallery card, e.g. lucide:rocket.")
                                  .toJson();
     addGallery.handler = [window](const QJsonObject& args, const AgentToolReply& reply) {
         const QString name = args.value("name").toString().trimmed();
@@ -1264,6 +1277,12 @@ void AgentAppTools::registerProjectTools(MainWindow* window, ToolRegistry* regis
             return;
         }
         window->markProjectClean();
+        const QString icon = args.value("icon").toString().trimmed();
+        if (!icon.isEmpty() && !DashboardGallery::setIcon(name, icon, &error)) {
+            reply(AgentToolResult::error(
+                QStringLiteral("Saved, but the icon wasn't set: %1").arg(error)));
+            return;
+        }
         if (args.value("makeDefault").toBool() ||
             !DashboardGallery::contains(DashboardGallery::defaultName())) {
             DashboardGallery::setDefaultName(name);

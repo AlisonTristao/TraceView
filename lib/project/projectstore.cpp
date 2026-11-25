@@ -24,6 +24,10 @@ void ProjectStore::setSection(const QString& key, const QJsonObject& value) {
     m_root[key] = value;
 }
 
+void ProjectStore::removeSection(const QString& key) {
+    m_root.remove(key);
+}
+
 bool ProjectStore::save() {
     if (m_currentPath.isEmpty()) {
         // ProjectStore is not a QObject, so tr() isn't available here; use

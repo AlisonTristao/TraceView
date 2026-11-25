@@ -5200,6 +5200,75 @@ void MainWindow::buildHomePage() {
     connect(m_homePage, &HomePage::openPathRequested, this, openPath);
     connect(m_homePage, &HomePage::openGalleryRequested, this,
             [openPath](const QString& name) { openPath(DashboardGallery::pathFor(name)); });
+    // The gallery cards' "..." menu (Developer mode).
+    connect(m_homePage, &HomePage::changeGalleryIconRequested, this,
+            [this](const QString& name) {
+                const GalleryEntryInfo info = DashboardGallery::info(name);
+                IconPickerDialog picker(info.iconIsCustom ? info.icon : QString(), this);
+                if (DialogPresenter::exec(picker, DialogPresenter::Style::Page) !=
+                    QDialog::Accepted) {
+                    return;
+                }
+                QString error;
+                if (!DashboardGallery::setIcon(name, picker.selectedId(), &error)) {
+                    DialogPresenter::warning(this, tr("Change Icon"), error);
+                    return;
+                }
+                refreshHomePage();
+            });
+    connect(m_homePage, &HomePage::resetGalleryIconRequested, this, [this](const QString& name) {
+        QString error;
+        if (!DashboardGallery::setIcon(name, QString(), &error)) {
+            DialogPresenter::warning(this, tr("Change Icon"), error);
+            return;
+        }
+        refreshHomePage();
+    });
+    connect(m_homePage, &HomePage::renameGalleryRequested, this, [this](const QString& oldName) {
+        bool ok = false;
+        const QString newName =
+            DialogPresenter::getText(this, tr("Rename Dashboard"), tr("New name:"),
+                                     QLineEdit::Normal, oldName, &ok)
+                .trimmed();
+        if (!ok || newName == oldName) {
+            return;
+        }
+        const QString oldPath = DashboardGallery::pathFor(oldName);
+        QString error;
+        if (!DashboardGallery::rename(oldName, newName, &error)) {
+            DialogPresenter::warning(this, tr("Rename Dashboard"), error);
+            return;
+        }
+        // Keep Save writing to the renamed file, not recreating the old one.
+        if (ProjectStore::instance().currentPath() == oldPath) {
+            ProjectStore::instance().setCurrentPath(DashboardGallery::pathFor(newName));
+        }
+        refreshHomePage();
+    });
+    connect(m_homePage, &HomePage::setDefaultGalleryRequested, this, [this](const QString& name) {
+        DashboardGallery::setDefaultName(name);
+        refreshHomePage();
+    });
+    connect(m_homePage, &HomePage::deleteGalleryRequested, this, [this](const QString& name) {
+        if (DialogPresenter::question(
+                this, tr("Delete Dashboard"),
+                tr("Delete \"%1\" from the gallery? This can't be undone.").arg(name)) !=
+            QMessageBox::Yes) {
+            return;
+        }
+        const QString path = DashboardGallery::pathFor(name);
+        QString error;
+        if (!DashboardGallery::remove(name, &error)) {
+            DialogPresenter::warning(this, tr("Delete Dashboard"), error);
+            return;
+        }
+        // The dashboard stays on screen; its next Save asks where to go
+        // instead of silently bringing the deleted entry back.
+        if (ProjectStore::instance().currentPath() == path) {
+            ProjectStore::instance().setCurrentPath({});
+        }
+        refreshHomePage();
+    });
     connect(m_homePage, &HomePage::connectToggleRequested, this, [this](const QString& id) {
         m_homeAutoLeaveUntilMs = 0;  // the user is driving now
         onDeviceConnectToggleRequested(id);
@@ -5258,9 +5327,14 @@ void MainWindow::refreshHomePage() {
         summary.workspaces.append({workspace.id, workspace.name, workspace.icon, widgets});
     }
     summary.devices = devices.size();
+    summary.icon = ProjectStore::instance().section("gallery").value("icon").toString();
     m_homePage->setProjectSummary(summary);
     m_homePage->setRecentProjects(QSettings().value(kRecentFilesSettingsKey).toStringList());
-    m_homePage->setGallery(DashboardGallery::names(), DashboardGallery::defaultName());
+    QVector<GalleryEntryInfo> gallery;
+    for (const QString& name : DashboardGallery::names()) {
+        gallery.append(DashboardGallery::info(name));
+    }
+    m_homePage->setGallery(gallery, DashboardGallery::defaultName(), path);
 }
 
 void MainWindow::showHomeTab() {

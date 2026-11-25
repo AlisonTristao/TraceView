@@ -15,6 +15,7 @@ public:
 
     QJsonObject section(const QString& key) const;
     void setSection(const QString& key, const QJsonObject& value);
+    void removeSection(const QString& key);
 
     // Writes to the last path used by saveAs()/load(). Returns false (and
     // sets lastError()) if no path is known yet.
