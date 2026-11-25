@@ -64,9 +64,42 @@ jobs:
           arch: x64
 
       # NSIS itself (makensis.exe) is a regular Windows tool, installed via
-      # Chocolatey (preinstalled on this runner image); Ninja likewise.
+      # Chocolatey (preinstalled on this runner image); Ninja likewise. The
+      # Chocolatey feed sometimes times out (v5.0.2 died on a 504 here), so
+      # each install is retried, anything the image already has is skipped,
+      # and NSIS falls back to its own SourceForge installer.
       - name: Install NSIS and Ninja
-        run: choco install nsis ninja -y --no-progress
+        shell: pwsh
+        run: |
+          function Install-WithRetry([string]$package) {
+            for ($attempt = 1; $attempt -le 3; $attempt++) {
+              choco install $package -y --no-progress
+              if ($LASTEXITCODE -eq 0) { return $true }
+              Write-Host "choco install $package failed (attempt $attempt), retrying..."
+              Start-Sleep -Seconds (20 * $attempt)
+            }
+            return $false
+          }
+
+          if (-not (Get-Command ninja -ErrorAction SilentlyContinue)) {
+            if (-not (Install-WithRetry ninja)) { throw "Couldn't install Ninja" }
+          }
+
+          $nsisDir = Join-Path ${env:ProgramFiles(x86)} 'NSIS'
+          if (-not (Test-Path (Join-Path $nsisDir 'makensis.exe'))) {
+            if (-not (Install-WithRetry nsis)) {
+              Write-Host "Chocolatey unavailable, installing NSIS from SourceForge"
+              $setup = Join-Path $env:RUNNER_TEMP 'nsis-setup.exe'
+              curl.exe -fL --retry 5 --retry-delay 10 -o $setup `
+                'https://sourceforge.net/projects/nsis/files/NSIS%203/3.10/nsis-3.10-setup.exe/download'
+              if ($LASTEXITCODE -ne 0) { throw "Couldn't download NSIS" }
+              Start-Process -FilePath $setup -ArgumentList '/S' -Wait
+            }
+          }
+          if (-not (Test-Path (Join-Path $nsisDir 'makensis.exe'))) { throw "makensis.exe not found" }
+          # CPack finds makensis through PATH as well as the registry.
+          Add-Content -Path $env:GITHUB_PATH -Value $nsisDir
+          & (Join-Path $nsisDir 'makensis.exe') /VERSION
 
       - name: Configure (Release)
         run: cmake --preset windows-msvc-release -DTRACEVIEW_BUILD_TESTS=OFF -DTRACEVIEW_BUILD_TOOLS=OFF
