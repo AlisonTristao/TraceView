@@ -3361,7 +3361,13 @@ void MainWindow::setNotificationPanelOpen(bool open) {
             connect(view, &NotificationListView::closeRequested, page, &QDialog::reject);
             connect(view, &NotificationListView::historyRequested, this,
                     &MainWindow::onShowNotificationHistory);
-            connect(page, &QDialog::finished, this, [this] { setNotificationPanelOpen(false); });
+            // Forget the page before closing the panel: otherwise that call
+            // reject()s this same page again, which finishes again, and so on
+            // until the stack overflows.
+            connect(page, &QDialog::finished, this, [this] {
+                m_notificationPage = nullptr;
+                setNotificationPanelOpen(false);
+            });
             m_notificationPage = page;
             DialogPresenter::show(page, DialogPresenter::Style::Page);
         } else if (!open && m_notificationPage) {
