@@ -43,7 +43,7 @@ Permitir que ele conecte dispositivos e envie comandos a eles até que o acesso 
         <translation>Editar widget (assistente de IA)</translation>
     </message>
     <message>
-        <location line="+418"/>
+        <location line="+428"/>
         <source>New Project</source>
         <translation>Novo Projeto</translation>
     </message>
@@ -63,7 +63,7 @@ Permitir que ele conecte dispositivos e envie comandos a eles até que o acesso 
         <translation>Um assistente de IA quer abrir &quot;%1&quot;. Alterações não salvas no projeto atual serão perdidas.</translation>
     </message>
     <message>
-        <location line="+75"/>
+        <location line="+78"/>
         <source>Add to Gallery</source>
         <translation>Adicionar à Galeria</translation>
     </message>
@@ -73,7 +73,7 @@ Permitir que ele conecte dispositivos e envie comandos a eles até que o acesso 
         <translation>Um assistente de IA quer substituir o dashboard &quot;%1&quot; da galeria.</translation>
     </message>
     <message>
-        <location line="+53"/>
+        <location line="+59"/>
         <source>Delete Dashboard</source>
         <translation>Excluir Dashboard</translation>
     </message>
@@ -652,7 +652,7 @@ Permitir que ele conecte dispositivos e envie comandos a eles até que o acesso 
 <context>
     <name>DashboardGallery</name>
     <message>
-        <location filename="../lib/project/dashboardgallery.cpp" line="+92"/>
+        <location filename="../lib/project/dashboardgallery.cpp" line="+98"/>
         <source>The name can&apos;t be empty.</source>
         <translation>O nome não pode ficar vazio.</translation>
     </message>
@@ -672,7 +672,24 @@ Permitir que ele conecte dispositivos e envie comandos a eles até que o acesso 
         <translation>O nome é longo demais (no máximo 100 caracteres).</translation>
     </message>
     <message>
-        <location line="+17"/>
+        <location line="+55"/>
+        <source>The built-in example can&apos;t be changed.</source>
+        <translation>O exemplo integrado não pode ser alterado.</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <location line="+5"/>
+        <source>Couldn&apos;t read the dashboard file.</source>
+        <translation>Não foi possível ler o arquivo do dashboard.</translation>
+    </message>
+    <message>
+        <location line="+16"/>
+        <location line="+4"/>
+        <source>Couldn&apos;t write the dashboard file.</source>
+        <translation>Não foi possível gravar o arquivo do dashboard.</translation>
+    </message>
+    <message>
+        <location line="+27"/>
         <source>A dashboard with that name already exists.</source>
         <translation>Já existe um dashboard com esse nome.</translation>
     </message>
@@ -904,7 +921,7 @@ Permitir que ele conecte dispositivos e envie comandos a eles até que o acesso 
 <context>
     <name>ProjectStore</name>
     <message>
-        <location filename="../lib/project/projectstore.cpp" line="+31"/>
+        <location filename="../lib/project/projectstore.cpp" line="+35"/>
         <source>No project path set yet — use Save Project to choose a file first.</source>
         <translation>Nenhum caminho de projeto definido ainda — use Salvar Projeto para escolher um arquivo primeiro.</translation>
     </message>
@@ -3708,7 +3725,7 @@ Permitidos: %1</translation>
 <context>
     <name>traceview::HomePage</name>
     <message>
-        <location filename="../lib/core/homepage.cpp" line="+228"/>
+        <location filename="../lib/core/homepage.cpp" line="+291"/>
         <source>The deep scan found nothing new.</source>
         <translation>A busca profunda não encontrou nada novo.</translation>
     </message>
@@ -3721,7 +3738,7 @@ Permitidos: %1</translation>
         </translation>
     </message>
     <message>
-        <location line="+213"/>
+        <location line="+221"/>
         <source>Welcome to TraceView</source>
         <translation>Bem-vindo ao TraceView</translation>
     </message>
@@ -3757,7 +3774,7 @@ Permitidos: %1</translation>
         <translation>Abrir dashboard</translation>
     </message>
     <message>
-        <location line="+2"/>
+        <location line="+3"/>
         <source>Projects</source>
         <translation>Projetos</translation>
     </message>
@@ -3767,12 +3784,12 @@ Permitidos: %1</translation>
         <translation>Recentes</translation>
     </message>
     <message>
-        <location line="+1"/>
+        <location line="-2"/>
         <source>Gallery</source>
         <translation>Galeria</translation>
     </message>
     <message>
-        <location line="+1"/>
+        <location line="+3"/>
         <source>New project</source>
         <translation>Novo projeto</translation>
     </message>
@@ -3802,7 +3819,7 @@ Permitidos: %1</translation>
         <translation>Procurar Bluetooth</translation>
     </message>
     <message>
-        <location line="+82"/>
+        <location line="+100"/>
         <source>Untitled project</source>
         <translation>Projeto sem título</translation>
     </message>
@@ -3816,6 +3833,7 @@ Permitidos: %1</translation>
     </message>
     <message numerus="yes">
         <location line="+16"/>
+        <location line="+114"/>
         <source>%n widget(s)</source>
         <translation>
             <numerusform>%n widget</numerusform>
@@ -3823,17 +3841,72 @@ Permitidos: %1</translation>
         </translation>
     </message>
     <message>
-        <location line="+55"/>
+        <location line="-60"/>
         <source>No recent projects yet.</source>
         <translation>Nenhum projeto recente ainda.</translation>
     </message>
     <message>
-        <location line="+4"/>
         <source>%1 (opens at startup)</source>
-        <translation>%1 (abre ao iniciar)</translation>
+        <translation type="vanished">%1 (abre ao iniciar)</translation>
+    </message>
+    <message numerus="yes">
+        <location line="+21"/>
+        <source>%n dashboard(s)</source>
+        <translation>
+            <numerusform>%n dashboard</numerusform>
+            <numerusform>%n dashboards</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location line="+38"/>
+        <source>%n workspace(s)</source>
+        <translation>
+            <numerusform>%n espaço de trabalho</numerusform>
+            <numerusform>%n espaços de trabalho</numerusform>
+        </translation>
     </message>
     <message>
-        <location line="+121"/>
+        <location line="+8"/>
+        <source>Open</source>
+        <translation>Abrir</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Default</source>
+        <translation>Padrão</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>Change icon…</source>
+        <translation>Alterar ícone…</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Use automatic icon</source>
+        <translation>Usar ícone automático</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Rename…</source>
+        <translation>Renomear…</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Set as default</source>
+        <translation>Definir como padrão</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Delete…</source>
+        <translation>Excluir…</translation>
+    </message>
+    <message>
+        <location line="+21"/>
+        <source>Dashboard options</source>
+        <translation>Opções do dashboard</translation>
+    </message>
+    <message>
+        <location line="+124"/>
         <source>Connected</source>
         <translation>Conectado</translation>
     </message>
@@ -4392,12 +4465,12 @@ Perdas: %2</translation>
     </message>
     <message>
         <location line="+0"/>
-        <location line="+4598"/>
+        <location line="+4672"/>
         <source>Later</source>
         <translation>Mais Tarde</translation>
     </message>
     <message>
-        <location line="-4591"/>
+        <location line="-4665"/>
         <source>&amp;Access</source>
         <translation>&amp;Acesso</translation>
     </message>
@@ -4545,18 +4618,18 @@ Perdas: %2</translation>
     </message>
     <message>
         <location line="+18"/>
-        <location line="+3813"/>
+        <location line="+3887"/>
         <source>Undo</source>
         <translation>Desfazer</translation>
     </message>
     <message>
-        <location line="-3811"/>
-        <location line="+3811"/>
+        <location line="-3885"/>
+        <location line="+3885"/>
         <source>Redo</source>
         <translation>Refazer</translation>
     </message>
     <message>
-        <location line="-3768"/>
+        <location line="-3842"/>
         <source>Add Device</source>
         <translation>Adicionar Dispositivo</translation>
     </message>
@@ -4602,12 +4675,12 @@ Perdas: %2</translation>
     </message>
     <message>
         <location line="+36"/>
-        <location line="+3734"/>
+        <location line="+3808"/>
         <source>Fullscreen dashboard (F11)</source>
         <translation>Dashboard em tela cheia (F11)</translation>
     </message>
     <message>
-        <location line="-3645"/>
+        <location line="-3719"/>
         <location line="+500"/>
         <source>Home</source>
         <translation>Início</translation>
@@ -4797,12 +4870,40 @@ Perdas: %2</translation>
         <translation>&quot;%1&quot; salvo na galeria.</translation>
     </message>
     <message>
-        <location line="+141"/>
+        <location line="+111"/>
+        <location line="+8"/>
+        <source>Change Icon</source>
+        <translation>Alterar Ícone</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <location line="+9"/>
+        <source>Rename Dashboard</source>
+        <translation>Renomear Dashboard</translation>
+    </message>
+    <message>
+        <location line="-9"/>
+        <source>New name:</source>
+        <translation>Novo nome:</translation>
+    </message>
+    <message>
+        <location line="+24"/>
+        <location line="+8"/>
+        <source>Delete Dashboard</source>
+        <translation>Excluir Dashboard</translation>
+    </message>
+    <message>
+        <location line="-7"/>
+        <source>Delete &quot;%1&quot; from the gallery? This can&apos;t be undone.</source>
+        <translation>Excluir &quot;%1&quot; da galeria? Isso não pode ser desfeito.</translation>
+    </message>
+    <message>
+        <location line="+58"/>
         <source>Example dashboard</source>
         <translation>Dashboard de exemplo</translation>
     </message>
     <message>
-        <location line="+70"/>
+        <location line="+75"/>
         <source>Dongle</source>
         <translation>Dongle</translation>
     </message>
@@ -4901,13 +5002,13 @@ Escolha Mais tarde para continuar usando -- as alterações serão aplicadas na 
         <translation>Fechar App</translation>
     </message>
     <message>
-        <location line="-3834"/>
-        <location line="+3515"/>
+        <location line="-3908"/>
+        <location line="+3589"/>
         <source>Devices</source>
         <translation>Dispositivos</translation>
     </message>
     <message>
-        <location line="-3440"/>
+        <location line="-3514"/>
         <source>Subscriptions</source>
         <translation>Assinaturas</translation>
     </message>
@@ -4954,23 +5055,23 @@ Escolha Mais tarde para continuar usando -- as alterações serão aplicadas na 
     </message>
     <message>
         <location line="+81"/>
-        <location line="+3013"/>
+        <location line="+3087"/>
         <source>Add widget</source>
         <translation>Adicionar widget</translation>
     </message>
     <message>
-        <location line="-3010"/>
+        <location line="-3084"/>
         <source>Remove selected widget (%1)</source>
         <translation>Remover widget selecionado (%1)</translation>
     </message>
     <message>
         <location line="+8"/>
-        <location line="+3015"/>
+        <location line="+3089"/>
         <source>Add device</source>
         <translation>Adicionar dispositivo</translation>
     </message>
     <message>
-        <location line="-3012"/>
+        <location line="-3086"/>
         <source>Remove selected device (%1)</source>
         <translation>Remover dispositivo selecionado (%1)</translation>
     </message>
@@ -5168,7 +5269,7 @@ Escolha Mais tarde para continuar usando -- as alterações serão aplicadas na 
     </message>
     <message>
         <location line="+15"/>
-        <location line="+611"/>
+        <location line="+685"/>
         <location line="+4"/>
         <source>Open Project</source>
         <translation>Abrir Projeto</translation>

@@ -7,7 +7,11 @@
 #include <QFileInfo>
 #include <QGridLayout>
 #include <QHash>
+#include <QContextMenuEvent>
+#include <QKeyEvent>
 #include <QLabel>
+#include <QMenu>
+#include <QMouseEvent>
 #include <QPainter>
 #include <QPainterPath>
 #include <QProgressBar>
@@ -16,6 +20,9 @@
 #include <QSet>
 #include <QStyle>
 #include <QSvgRenderer>
+#include <QToolButton>
+#include <algorithm>
+#include <functional>
 
 #include "core/touchscroll.h"
 #include "theme/dialogchrome.h"
@@ -37,6 +44,11 @@ constexpr int kLinkIconSize = 14;
 constexpr int kAvatarSize = 34;
 constexpr int kProjectIconSize = 48;
 constexpr int kProjectIconGlyph = 26;
+constexpr int kGalleryIconSize = 44;
+constexpr int kGalleryIconGlyph = 24;
+// Gallery cards per row from this viewport width on.
+// Narrowest a gallery card gets before the grid drops a column.
+constexpr int kGalleryCardMinWidth = 290;
 constexpr int kAvatarIconSize = 18;
 constexpr int kButtonIconSize = 16;
 constexpr int kRowIconSize = 16;
@@ -172,6 +184,57 @@ private:
     QString m_text;
 };
 
+// One dashboard of the gallery: the whole card is the click target (and
+// Enter/Space when focused); a right-click opens the same menu as the "..."
+// button, when there is one (stylesheet.cpp, "QFrame#homeGalleryCard").
+class HomeGalleryCard : public QFrame {
+public:
+    explicit HomeGalleryCard(QWidget* parent) : QFrame(parent) {
+        setObjectName(QStringLiteral("homeGalleryCard"));
+        setCursor(Qt::PointingHandCursor);
+        setFocusPolicy(Qt::StrongFocus);
+        setAttribute(Qt::WA_Hover);
+        // Width comes from the grid's equal column stretch, never from the
+        // content: a card with badges must not squeeze its neighbours.
+        setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Preferred);
+    }
+    void setMenu(QMenu* menu) {
+        m_menu = menu;
+    }
+    std::function<void()> onActivate;
+
+protected:
+    void mouseReleaseEvent(QMouseEvent* event) override {
+        if (event->button() == Qt::LeftButton && rect().contains(event->position().toPoint())) {
+            if (onActivate) {
+                onActivate();
+            }
+            return;
+        }
+        QFrame::mouseReleaseEvent(event);
+    }
+    void keyPressEvent(QKeyEvent* event) override {
+        if (event->key() == Qt::Key_Return || event->key() == Qt::Key_Enter ||
+            event->key() == Qt::Key_Space) {
+            if (onActivate) {
+                onActivate();
+            }
+            return;
+        }
+        QFrame::keyPressEvent(event);
+    }
+    void contextMenuEvent(QContextMenuEvent* event) override {
+        if (m_menu == nullptr) {
+            event->ignore();
+            return;
+        }
+        m_menu->popup(event->globalPos());
+    }
+
+private:
+    QMenu* m_menu = nullptr;
+};
+
 // The TraceView wordmark, recolored to the theme's text color.
 class HomeWordmark : public QWidget {
 public:
@@ -234,7 +297,9 @@ HomePage::HomePage(NearbyRobotsService* nearby, QWidget* parent)
                 m_wordmark->setColor(palette.textPrimary);
                 refreshIcons();
                 refreshProjectCard();
+                refreshProjectIcon();
                 refreshProjectsCard();
+                refreshGalleryCard();
                 refreshRobots(/*force=*/true);
             });
 }
@@ -362,18 +427,24 @@ void HomePage::buildUi() {
     m_projectCard->body()->addLayout(m_workspaceGrid);
     m_leftColumn->addWidget(m_projectCard);
 
+    // --- Gallery (both modes) ----------------------------------------------
+    m_galleryCard = new DialogCard(QString(), content);
+    m_galleryCount = DialogChrome::hintLabel(QString(), m_galleryCard);
+    m_galleryCard->addTitleWidget(m_galleryCount);
+    m_galleryGrid = new QGridLayout();
+    m_galleryGrid->setHorizontalSpacing(10);
+    m_galleryGrid->setVerticalSpacing(10);
+    m_galleryCard->body()->addLayout(m_galleryGrid);
+    m_galleryCard->setVisible(false);
+    m_leftColumn->addWidget(m_galleryCard);
+
     // --- Projects (Developer) ----------------------------------------------
     m_projectsCard = new DialogCard(QString(), content);
     m_recentCaption = DialogChrome::hintLabel(QString(), m_projectsCard);
     m_recentList = new QVBoxLayout();
     m_recentList->setSpacing(0);
-    m_galleryCaption = DialogChrome::hintLabel(QString(), m_projectsCard);
-    m_galleryList = new QVBoxLayout();
-    m_galleryList->setSpacing(0);
     m_projectsCard->body()->addWidget(m_recentCaption);
     m_projectsCard->body()->addLayout(m_recentList);
-    m_projectsCard->body()->addWidget(m_galleryCaption);
-    m_projectsCard->body()->addLayout(m_galleryList);
 
     m_newButton = new QPushButton(m_projectsCard);
     m_openButton = new QPushButton(m_projectsCard);
@@ -447,9 +518,9 @@ void HomePage::retranslate() {
     m_projectCard->setTitle(tr("Continue where you left off"));
     m_openDashboardButton->setText(tr("Open dashboard"));
     m_workspacesCaption->setText(tr("Workspaces"));
+    m_galleryCard->setTitle(tr("Gallery"));
     m_projectsCard->setTitle(tr("Projects"));
     m_recentCaption->setText(tr("Recent"));
-    m_galleryCaption->setText(tr("Gallery"));
     m_newButton->setText(tr("New project"));
     m_openButton->setText(tr("Open project..."));
     m_openLogButton->setText(tr("Open log..."));
@@ -459,6 +530,7 @@ void HomePage::retranslate() {
     refreshStats();
     refreshProjectCard();
     refreshProjectsCard();
+    refreshGalleryCard();
     refreshRobots(/*force=*/true);
     refreshScanControls();
 }
@@ -470,10 +542,7 @@ void HomePage::refreshIcons() {
     };
     // White on the filled accent of a "primary" button, like its label.
     m_openDashboardButton->setIcon(icon("lucide:layout-dashboard", Qt::white));
-    m_projectIcon->setPixmap(IconLibrary::instance()
-                                 .icon(QStringLiteral("lucide:layout-dashboard"), palette.accent,
-                                       kProjectIconGlyph)
-                                 .pixmap(kProjectIconGlyph, kProjectIconGlyph));
+    refreshProjectIcon();
     m_newButton->setIcon(icon("lucide:file-plus", palette.textPrimary));
     m_openButton->setIcon(icon("lucide:folder-open", palette.textPrimary));
     m_openLogButton->setIcon(icon("lucide:scroll-text", palette.textPrimary));
@@ -482,15 +551,27 @@ void HomePage::refreshIcons() {
     m_deepScanButton->setIcon(icon("lucide:radar", palette.textPrimary));
 }
 
+void HomePage::refreshProjectIcon() {
+    const ThemePalette& palette = ThemeManager::instance().currentTheme();
+    const QString id = IconLibrary::instance().contains(m_project.icon)
+                           ? m_project.icon
+                           : QStringLiteral("lucide:layout-dashboard");
+    m_projectIcon->setPixmap(IconLibrary::instance()
+                                 .icon(id, palette.accent, kProjectIconGlyph)
+                                 .pixmap(kProjectIconGlyph, kProjectIconGlyph));
+}
+
 void HomePage::setDeveloperMode(bool developer) {
     m_developer = developer;
     m_projectsCard->setVisible(developer);
     refreshProjectCard();
+    refreshGalleryCard();
     refreshRobots(/*force=*/true);
 }
 
 void HomePage::setProjectSummary(const HomeProjectSummary& summary) {
     m_project = summary;
+    refreshProjectIcon();
     refreshProjectCard();
     refreshStats();
 }
@@ -509,13 +590,21 @@ void HomePage::setRecentProjects(const QStringList& paths) {
     refreshProjectsCard();
 }
 
-void HomePage::setGallery(const QStringList& names, const QString& defaultName) {
-    if (names == m_gallery && defaultName == m_galleryDefault) {
+void HomePage::setGallery(const QVector<GalleryEntryInfo>& entries, const QString& defaultName,
+                          const QString& openPath) {
+    const auto same = [](const GalleryEntryInfo& a, const GalleryEntryInfo& b) {
+        return a.name == b.name && a.path == b.path && a.icon == b.icon &&
+               a.iconIsCustom == b.iconIsCustom && a.workspaces == b.workspaces &&
+               a.widgets == b.widgets;
+    };
+    if (defaultName == m_galleryDefault && openPath == m_galleryOpenPath &&
+        std::equal(entries.begin(), entries.end(), m_gallery.begin(), m_gallery.end(), same)) {
         return;
     }
-    m_gallery = names;
+    m_gallery = entries;
     m_galleryDefault = defaultName;
-    refreshProjectsCard();
+    m_galleryOpenPath = openPath;
+    refreshGalleryCard();
 }
 
 void HomePage::refreshStats() {
@@ -591,7 +680,6 @@ QPushButton* HomePage::listRow(const QString& iconId, const QString& text,
 
 void HomePage::refreshProjectsCard() {
     clearLayout(m_recentList);
-    clearLayout(m_galleryList);
     // Two recent files of the same name (copies in different folders) say
     // which folder each one is in.
     QHash<QString, int> nameCount;
@@ -612,15 +700,127 @@ void HomePage::refreshProjectsCard() {
     if (m_recent.isEmpty()) {
         m_recentList->addWidget(DialogChrome::hintLabel(tr("No recent projects yet."), nullptr));
     }
-    for (const QString& name : std::as_const(m_gallery)) {
-        const QString text =
-            name == m_galleryDefault ? tr("%1 (opens at startup)").arg(name) : name;
-        QPushButton* button = listRow(QStringLiteral("lucide:layout-dashboard"), text, QString());
-        connect(button, &QPushButton::clicked, this,
-                [this, name] { emit openGalleryRequested(name); });
-        m_galleryList->addWidget(button);
+}
+
+int HomePage::galleryColumns() const {
+    if (m_compact) {
+        return 1;
     }
-    m_galleryCaption->setVisible(!m_gallery.isEmpty());
+    // Count from the width the gallery itself gets: on a wide page it sits
+    // in the left column (3 parts of 5), and each card needs room for its
+    // icon, name and the Open/Default badges side by side.
+    int width = m_scroll->viewport()->width();
+    if (m_wideState == 1) {
+        width = width * 3 / 5;
+    }
+    return qBound(1, width / kGalleryCardMinWidth, 3);
+}
+
+void HomePage::refreshGalleryCard() {
+    clearLayout(m_galleryGrid);
+    m_galleryCard->setVisible(!m_gallery.isEmpty());
+    m_galleryCount->setText(tr("%n dashboard(s)", nullptr, int(m_gallery.size())));
+    const ThemePalette& palette = ThemeManager::instance().currentTheme();
+    QList<QWidget*> cards;
+    for (const GalleryEntryInfo& entry : std::as_const(m_gallery)) {
+        const QString name = entry.name;
+        const bool builtIn = DashboardGallery::isBuiltInExample(entry.path);
+        const bool isOpen = !entry.path.isEmpty() && entry.path == m_galleryOpenPath;
+        const bool isDefault = name == m_galleryDefault;
+
+        auto* card = new HomeGalleryCard(m_galleryCard);
+        card->setProperty("current", isOpen);
+        card->setToolTip(name);
+        card->onActivate = [this, name] { emit openGalleryRequested(name); };
+        auto* layout = new QHBoxLayout(card);
+        layout->setContentsMargins(12, 12, 8, 12);
+        layout->setSpacing(12);
+
+        // Same tile as the Continue card's.
+        auto* tile = new QLabel(card);
+        tile->setObjectName(QStringLiteral("homeProjectIcon"));
+        tile->setFixedSize(kGalleryIconSize, kGalleryIconSize);
+        tile->setAlignment(Qt::AlignCenter);
+        const QString iconId = IconLibrary::instance().contains(entry.icon)
+                                   ? entry.icon
+                                   : QStringLiteral("lucide:layout-dashboard");
+        tile->setPixmap(IconLibrary::instance()
+                            .icon(iconId, palette.accent, kGalleryIconGlyph)
+                            .pixmap(kGalleryIconGlyph, kGalleryIconGlyph));
+        layout->addWidget(tile, 0, Qt::AlignTop);
+
+        auto* text = new QVBoxLayout();
+        text->setSpacing(2);
+        auto* title = new HomeNameLabel(name, card);
+        QFont titleFont = title->font();
+        titleFont.setWeight(QFont::DemiBold);
+        title->setFont(titleFont);
+        text->addWidget(title);
+        text->addWidget(DialogChrome::hintLabel(
+            tr("%n workspace(s)", nullptr, entry.workspaces) + QStringLiteral(" · ") +
+                tr("%n widget(s)", nullptr, entry.widgets),
+            card));
+        if (isOpen || isDefault) {
+            auto* badges = new QHBoxLayout();
+            badges->setSpacing(6);
+            if (isOpen) {
+                auto* badge = new StatusBadge(card);
+                badge->setStatus(tr("Open"), StatusBadge::Tone::Accent);
+                badges->addWidget(badge);
+            }
+            if (isDefault) {
+                auto* badge = new StatusBadge(card);
+                badge->setStatus(tr("Default"), StatusBadge::Tone::Neutral);
+                badges->addWidget(badge);
+            }
+            badges->addStretch();
+            text->addLayout(badges);
+        }
+        layout->addLayout(text, 1);
+
+        if (m_developer) {
+            auto* menu = new QMenu(card);
+            QAction* icon = menu->addAction(tr("Change icon…"));
+            // Back to the first workspace's icon (or the generic glyph).
+            if (entry.iconIsCustom && !builtIn) {
+                QAction* automatic = menu->addAction(tr("Use automatic icon"));
+                connect(automatic, &QAction::triggered, this,
+                        [this, name] { emit resetGalleryIconRequested(name); });
+            }
+            QAction* rename = menu->addAction(tr("Rename…"));
+            QAction* makeDefault = menu->addAction(tr("Set as default"));
+            menu->addSeparator();
+            QAction* remove = menu->addAction(tr("Delete…"));
+            icon->setEnabled(!builtIn);
+            rename->setEnabled(!builtIn);
+            makeDefault->setEnabled(!isDefault);
+            remove->setEnabled(!builtIn);
+            connect(icon, &QAction::triggered, this,
+                    [this, name] { emit changeGalleryIconRequested(name); });
+            connect(rename, &QAction::triggered, this,
+                    [this, name] { emit renameGalleryRequested(name); });
+            connect(makeDefault, &QAction::triggered, this,
+                    [this, name] { emit setDefaultGalleryRequested(name); });
+            connect(remove, &QAction::triggered, this,
+                    [this, name] { emit deleteGalleryRequested(name); });
+            card->setMenu(menu);
+
+            auto* more = new QToolButton(card);
+            more->setObjectName(QStringLiteral("homeGalleryMenu"));
+            more->setAutoRaise(true);
+            more->setCursor(Qt::PointingHandCursor);
+            more->setPopupMode(QToolButton::InstantPopup);
+            more->setMenu(menu);
+            more->setToolTip(tr("Dashboard options"));
+            more->setIcon(IconLibrary::instance().icon(QStringLiteral("lucide:ellipsis"),
+                                                       palette.textSecondary, kRowIconSize));
+            more->setIconSize(QSize(kRowIconSize, kRowIconSize));
+            layout->addWidget(more, 0, Qt::AlignTop);
+        }
+        cards.append(card);
+    }
+    m_galleryColumns = galleryColumns();
+    reflow(m_galleryGrid, cards, m_galleryColumns);
 }
 
 QWidget* HomePage::robotRow(const QString& title, const QString& detail,
@@ -871,6 +1071,10 @@ void HomePage::applyWidth() {
                compact ? 1 : 2);
         refreshProjectCard();
         refreshScanControls();
+    }
+    // After m_compact is up to date: the cards per row depend on it.
+    if (galleryColumns() != m_galleryColumns) {
+        refreshGalleryCard();
     }
 }
 

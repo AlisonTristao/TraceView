@@ -14,6 +14,8 @@ endfunction()
 
 add_traceview_test(test_projectstore traceview_project)
 add_traceview_test(test_workspacemanager traceview_project)
+# The gallery card's icon, kept in the dashboard's own file (info()/setIcon()).
+add_traceview_test(test_dashboardgallery_icon traceview_project)
 add_traceview_test(test_dashboarditem traceview_dashboard)
 add_traceview_test(test_widgetregistry traceview_dashboard)
 add_traceview_test(test_dashboardgrid traceview_dashboard)

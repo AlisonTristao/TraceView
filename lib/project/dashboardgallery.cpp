@@ -4,9 +4,15 @@
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QSaveFile>
 #include <QSettings>
 #include <QStandardPaths>
 #include <algorithm>
+
+#include "project/projectstore.h"
 
 namespace traceview {
 
@@ -106,6 +112,101 @@ bool DashboardGallery::isValidName(const QString& name, QString* error) {
     if (name.size() > 100) {
         return fail(QT_TRANSLATE_NOOP("DashboardGallery",
                                       "The name is too long (100 characters at most)."));
+    }
+    return true;
+}
+
+GalleryEntryInfo DashboardGallery::info(const QString& name) {
+    GalleryEntryInfo result = infoForPath(pathFor(name));
+    result.name = name;
+    return result;
+}
+
+GalleryEntryInfo DashboardGallery::infoForPath(const QString& path) {
+    GalleryEntryInfo result;
+    result.path = path;
+    result.name = QFileInfo(path).completeBaseName();
+    QFile file(path);
+    if (!file.open(QIODevice::ReadOnly)) {
+        return result;
+    }
+    const QJsonDocument doc = QJsonDocument::fromJson(file.readAll());
+    if (!doc.isObject()) {
+        return result;
+    }
+    const QJsonObject root = doc.object();
+    const QString own = root.value("gallery").toObject().value("icon").toString();
+    QString firstWorkspaceIcon;
+    const QJsonArray workspaces =
+        root.value("workspaces").toObject().value("workspaces").toArray();
+    result.workspaces = int(workspaces.size());
+    for (const QJsonValue& value : workspaces) {
+        const QJsonObject workspace = value.toObject();
+        result.widgets += int(workspace.value("dashboard").toObject().value("items").toArray().size());
+        if (firstWorkspaceIcon.isEmpty()) {
+            firstWorkspaceIcon = workspace.value("icon").toString();
+        }
+    }
+    result.iconIsCustom = !own.isEmpty();
+    result.icon = result.iconIsCustom ? own : firstWorkspaceIcon;
+    return result;
+}
+
+bool DashboardGallery::setIcon(const QString& name, const QString& iconId, QString* error) {
+    return setIconForPath(pathFor(name), iconId, error);
+}
+
+bool DashboardGallery::setIconForPath(const QString& path, const QString& iconId,
+                                      QString* error) {
+    auto fail = [error](const char* text) {
+        if (error != nullptr) {
+            *error = translated(text);
+        }
+        return false;
+    };
+    if (isBuiltInExample(path)) {
+        return fail(QT_TRANSLATE_NOOP("DashboardGallery",
+                                      "The built-in example can't be changed."));
+    }
+    QFile in(path);
+    if (!in.open(QIODevice::ReadOnly)) {
+        return fail(QT_TRANSLATE_NOOP("DashboardGallery", "Couldn't read the dashboard file."));
+    }
+    const QJsonDocument doc = QJsonDocument::fromJson(in.readAll());
+    in.close();
+    if (!doc.isObject()) {
+        return fail(QT_TRANSLATE_NOOP("DashboardGallery", "Couldn't read the dashboard file."));
+    }
+    QJsonObject root = doc.object();
+    QJsonObject section = root.value("gallery").toObject();
+    if (iconId.isEmpty()) {
+        section.remove("icon");
+    } else {
+        section["icon"] = iconId;
+    }
+    if (section.isEmpty()) {
+        root.remove("gallery");
+    } else {
+        root["gallery"] = section;
+    }
+    QSaveFile out(path);
+    if (!out.open(QIODevice::WriteOnly | QIODevice::Text)) {
+        return fail(QT_TRANSLATE_NOOP("DashboardGallery", "Couldn't write the dashboard file."));
+    }
+    out.write(QJsonDocument(root).toJson(QJsonDocument::Indented));
+    if (!out.commit()) {
+        return fail(QT_TRANSLATE_NOOP("DashboardGallery", "Couldn't write the dashboard file."));
+    }
+    // The open project keeps its own copy of the file; without this its next
+    // Save would write the old section back over the new icon.
+    ProjectStore& store = ProjectStore::instance();
+    if (!store.currentPath().isEmpty() &&
+        QFileInfo(store.currentPath()).absoluteFilePath() == QFileInfo(path).absoluteFilePath()) {
+        if (section.isEmpty()) {
+            store.removeSection("gallery");
+        } else {
+            store.setSection("gallery", section);
+        }
     }
     return true;
 }

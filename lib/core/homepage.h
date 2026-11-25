@@ -6,10 +6,12 @@
 #include <QWidget>
 
 #include "core/nearbyrobots.h"
+#include "project/dashboardgallery.h"
 
 class QBoxLayout;
 class QGridLayout;
 class QLabel;
+class QMenu;
 class QProgressBar;
 class QPushButton;
 class QScrollArea;
@@ -35,6 +37,7 @@ struct HomeProjectSummary {
     QString path;
     QVector<HomeWorkspace> workspaces;
     int devices = 0;
+    QString icon;  // Lucide id of the open dashboard's gallery icon, empty for the default
 };
 
 // One of the project's devices, as the "Nearby robots" list shows it.
@@ -52,10 +55,12 @@ struct HomeDevice {
 
 // The "Home" tab: where the app starts. A header with the brand and three
 // numbers (robots connected, workspaces, widgets); then the open project
-// ("continue where you left off", with one button per workspace) and -- in Developer mode -- recent projects, the
-// dashboard gallery and the New/Open buttons; and the robots around this
-// computer: the project's own devices with their state, then robots the
-// NearbyRobotsService found that the project does not have yet.
+// ("continue where you left off", with one button per workspace); the
+// dashboard gallery as a grid of cards, one click to open (both modes); in
+// Developer mode the recent projects and the New/Open buttons, plus a "..."
+// menu on each gallery card (icon, rename, default, delete); and the robots
+// around this computer: the project's own devices with their state, then
+// robots the NearbyRobotsService found that the project does not have yet.
 //
 // Lays itself out by width: two columns on a wide window, one on a tablet
 // or phone, where button rows also stack (see applyWidth()).
@@ -73,7 +78,9 @@ public:
     void setProjectSummary(const HomeProjectSummary& summary);
     void setDevices(const QVector<HomeDevice>& devices);
     void setRecentProjects(const QStringList& paths);
-    void setGallery(const QStringList& names, const QString& defaultName);
+    // `openPath`: the open project's file, to mark its card.
+    void setGallery(const QVector<GalleryEntryInfo>& entries, const QString& defaultName,
+                    const QString& openPath);
 
 signals:
     void openDashboardRequested();
@@ -84,6 +91,12 @@ signals:
     void manageGalleryRequested();
     void openPathRequested(const QString& path);
     void openGalleryRequested(const QString& name);
+    // Developer mode: the gallery cards' menu.
+    void changeGalleryIconRequested(const QString& name);
+    void resetGalleryIconRequested(const QString& name);
+    void renameGalleryRequested(const QString& name);
+    void setDefaultGalleryRequested(const QString& name);
+    void deleteGalleryRequested(const QString& name);
     void connectToggleRequested(const QString& deviceId);
     void addRobotRequested(const traceview::NearbyRobot& robot);
 
@@ -98,7 +111,10 @@ private:
     void retranslate();
     void refreshStats();
     void refreshProjectCard();
+    void refreshProjectIcon();
     void refreshProjectsCard();
+    void refreshGalleryCard();
+    int galleryColumns() const;
     void refreshRobots(bool force = false);
     void refreshScanControls();
     void refreshIcons();
@@ -116,8 +132,10 @@ private:
     HomeProjectSummary m_project;
     QVector<HomeDevice> m_devices;
     QStringList m_recent;
-    QStringList m_gallery;
+    QVector<GalleryEntryInfo> m_gallery;
     QString m_galleryDefault;
+    QString m_galleryOpenPath;
+    int m_galleryColumns = 1;
     QString m_robotsSignature;
     int m_scanProgressDone = 0;
     int m_scanProgressTotal = 0;
@@ -148,12 +166,15 @@ private:
     QLabel* m_workspacesCaption = nullptr;
     QGridLayout* m_workspaceGrid = nullptr;
 
+    // Gallery.
+    DialogCard* m_galleryCard = nullptr;
+    QLabel* m_galleryCount = nullptr;
+    QGridLayout* m_galleryGrid = nullptr;
+
     // Projects (Developer).
     DialogCard* m_projectsCard = nullptr;
     QLabel* m_recentCaption = nullptr;
     QVBoxLayout* m_recentList = nullptr;
-    QLabel* m_galleryCaption = nullptr;
-    QVBoxLayout* m_galleryList = nullptr;
     QGridLayout* m_projectButtons = nullptr;
     QPushButton* m_newButton = nullptr;
     QPushButton* m_openButton = nullptr;
