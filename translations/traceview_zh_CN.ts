@@ -43,7 +43,7 @@ Allow it to connect devices and send them commands until AI assistant access is 
         <translation>编辑控件（AI 助手）</translation>
     </message>
     <message>
-        <location line="+418"/>
+        <location line="+428"/>
         <source>New Project</source>
         <translation>新建项目</translation>
     </message>
@@ -63,7 +63,7 @@ Allow it to connect devices and send them commands until AI assistant access is 
         <translation>AI 助手想要打开“%1”。当前项目未保存的更改将丢失。</translation>
     </message>
     <message>
-        <location line="+75"/>
+        <location line="+78"/>
         <source>Add to Gallery</source>
         <translation>添加到库</translation>
     </message>
@@ -73,7 +73,7 @@ Allow it to connect devices and send them commands until AI assistant access is 
         <translation>AI 助手想要替换图库中的仪表板“%1”。</translation>
     </message>
     <message>
-        <location line="+53"/>
+        <location line="+59"/>
         <source>Delete Dashboard</source>
         <translation>删除仪表盘</translation>
     </message>
@@ -652,7 +652,7 @@ Allow it to connect devices and send them commands until AI assistant access is 
 <context>
     <name>DashboardGallery</name>
     <message>
-        <location filename="../lib/project/dashboardgallery.cpp" line="+92"/>
+        <location filename="../lib/project/dashboardgallery.cpp" line="+98"/>
         <source>The name can&apos;t be empty.</source>
         <translation>名称不能为空。</translation>
     </message>
@@ -672,7 +672,24 @@ Allow it to connect devices and send them commands until AI assistant access is 
         <translation>名称过长 (最多 100 个字符)。</translation>
     </message>
     <message>
-        <location line="+17"/>
+        <location line="+55"/>
+        <source>The built-in example can&apos;t be changed.</source>
+        <translation>无法更改内置示例。</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <location line="+5"/>
+        <source>Couldn&apos;t read the dashboard file.</source>
+        <translation>无法读取仪表盘文件。</translation>
+    </message>
+    <message>
+        <location line="+16"/>
+        <location line="+4"/>
+        <source>Couldn&apos;t write the dashboard file.</source>
+        <translation>无法写入仪表盘文件。</translation>
+    </message>
+    <message>
+        <location line="+27"/>
         <source>A dashboard with that name already exists.</source>
         <translation>已存在同名的仪表盘。</translation>
     </message>
@@ -904,7 +921,7 @@ Allow it to connect devices and send them commands until AI assistant access is 
 <context>
     <name>ProjectStore</name>
     <message>
-        <location filename="../lib/project/projectstore.cpp" line="+31"/>
+        <location filename="../lib/project/projectstore.cpp" line="+35"/>
         <source>No project path set yet — use Save Project to choose a file first.</source>
         <translation>尚未设置项目路径 — 请先使用“保存项目”选择一个文件。</translation>
     </message>
@@ -3707,7 +3724,7 @@ Allowed: %1</source>
 <context>
     <name>traceview::HomePage</name>
     <message>
-        <location filename="../lib/core/homepage.cpp" line="+228"/>
+        <location filename="../lib/core/homepage.cpp" line="+291"/>
         <source>The deep scan found nothing new.</source>
         <translation>深度扫描未发现新设备。</translation>
     </message>
@@ -3719,7 +3736,7 @@ Allowed: %1</source>
         </translation>
     </message>
     <message>
-        <location line="+213"/>
+        <location line="+221"/>
         <source>Welcome to TraceView</source>
         <translation>欢迎使用 TraceView</translation>
     </message>
@@ -3755,7 +3772,7 @@ Allowed: %1</source>
         <translation>打开仪表板</translation>
     </message>
     <message>
-        <location line="+2"/>
+        <location line="+3"/>
         <source>Projects</source>
         <translation>项目</translation>
     </message>
@@ -3765,12 +3782,12 @@ Allowed: %1</source>
         <translation>最近</translation>
     </message>
     <message>
-        <location line="+1"/>
+        <location line="-2"/>
         <source>Gallery</source>
         <translation>图库</translation>
     </message>
     <message>
-        <location line="+1"/>
+        <location line="+3"/>
         <source>New project</source>
         <translation>新建项目</translation>
     </message>
@@ -3800,7 +3817,7 @@ Allowed: %1</source>
         <translation>扫描蓝牙</translation>
     </message>
     <message>
-        <location line="+82"/>
+        <location line="+100"/>
         <source>Untitled project</source>
         <translation>未命名项目</translation>
     </message>
@@ -3813,23 +3830,77 @@ Allowed: %1</source>
     </message>
     <message numerus="yes">
         <location line="+16"/>
+        <location line="+114"/>
         <source>%n widget(s)</source>
         <translation>
             <numerusform>%n 个小部件</numerusform>
         </translation>
     </message>
     <message>
-        <location line="+55"/>
+        <location line="-60"/>
         <source>No recent projects yet.</source>
         <translation>暂无最近的项目。</translation>
     </message>
     <message>
-        <location line="+4"/>
         <source>%1 (opens at startup)</source>
-        <translation>%1（启动时打开）</translation>
+        <translation type="vanished">%1（启动时打开）</translation>
+    </message>
+    <message numerus="yes">
+        <location line="+21"/>
+        <source>%n dashboard(s)</source>
+        <translation>
+            <numerusform>%n 个仪表盘</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location line="+38"/>
+        <source>%n workspace(s)</source>
+        <translation>
+            <numerusform>%n 个工作区</numerusform>
+        </translation>
     </message>
     <message>
-        <location line="+121"/>
+        <location line="+8"/>
+        <source>Open</source>
+        <translation>打开</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Default</source>
+        <translation>默认</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>Change icon…</source>
+        <translation>更改图标…</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Use automatic icon</source>
+        <translation>使用自动图标</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Rename…</source>
+        <translation>重命名…</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Set as default</source>
+        <translation>设为默认</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Delete…</source>
+        <translation>删除…</translation>
+    </message>
+    <message>
+        <location line="+21"/>
+        <source>Dashboard options</source>
+        <translation>仪表盘选项</translation>
+    </message>
+    <message>
+        <location line="+124"/>
         <source>Connected</source>
         <translation>已连接</translation>
     </message>
@@ -4382,12 +4453,12 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+0"/>
-        <location line="+4598"/>
+        <location line="+4672"/>
         <source>Later</source>
         <translation>稍后</translation>
     </message>
     <message>
-        <location line="-4591"/>
+        <location line="-4665"/>
         <source>&amp;Access</source>
         <translation>访问(&amp;A)</translation>
     </message>
@@ -4540,18 +4611,18 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+18"/>
-        <location line="+3813"/>
+        <location line="+3887"/>
         <source>Undo</source>
         <translation>撤销</translation>
     </message>
     <message>
-        <location line="-3811"/>
-        <location line="+3811"/>
+        <location line="-3885"/>
+        <location line="+3885"/>
         <source>Redo</source>
         <translation>重做</translation>
     </message>
     <message>
-        <location line="-3768"/>
+        <location line="-3842"/>
         <source>Add Device</source>
         <translation>添加设备</translation>
     </message>
@@ -4597,12 +4668,12 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+36"/>
-        <location line="+3734"/>
+        <location line="+3808"/>
         <source>Fullscreen dashboard (F11)</source>
         <translation>全屏仪表盘(F11)</translation>
     </message>
     <message>
-        <location line="-3645"/>
+        <location line="-3719"/>
         <location line="+500"/>
         <source>Home</source>
         <translation>主页</translation>
@@ -4792,12 +4863,40 @@ Drops: %2</source>
         <translation>已将 &quot;%1&quot; 保存到库。</translation>
     </message>
     <message>
-        <location line="+141"/>
+        <location line="+111"/>
+        <location line="+8"/>
+        <source>Change Icon</source>
+        <translation>更改图标</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <location line="+9"/>
+        <source>Rename Dashboard</source>
+        <translation>重命名仪表盘</translation>
+    </message>
+    <message>
+        <location line="-9"/>
+        <source>New name:</source>
+        <translation>新名称:</translation>
+    </message>
+    <message>
+        <location line="+24"/>
+        <location line="+8"/>
+        <source>Delete Dashboard</source>
+        <translation>删除仪表盘</translation>
+    </message>
+    <message>
+        <location line="-7"/>
+        <source>Delete &quot;%1&quot; from the gallery? This can&apos;t be undone.</source>
+        <translation>从库中删除“%1”？此操作无法撤销。</translation>
+    </message>
+    <message>
+        <location line="+58"/>
         <source>Example dashboard</source>
         <translation>示例仪表板</translation>
     </message>
     <message>
-        <location line="+70"/>
+        <location line="+75"/>
         <source>Dongle</source>
         <translation>加密狗</translation>
     </message>
@@ -4896,13 +4995,13 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>关闭应用</translation>
     </message>
     <message>
-        <location line="-3834"/>
-        <location line="+3515"/>
+        <location line="-3908"/>
+        <location line="+3589"/>
         <source>Devices</source>
         <translation>设备</translation>
     </message>
     <message>
-        <location line="-3440"/>
+        <location line="-3514"/>
         <source>Subscriptions</source>
         <translation>订阅</translation>
     </message>
@@ -4949,23 +5048,23 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     </message>
     <message>
         <location line="+81"/>
-        <location line="+3013"/>
+        <location line="+3087"/>
         <source>Add widget</source>
         <translation>添加控件</translation>
     </message>
     <message>
-        <location line="-3010"/>
+        <location line="-3084"/>
         <source>Remove selected widget (%1)</source>
         <translation>删除所选控件(%1)</translation>
     </message>
     <message>
         <location line="+8"/>
-        <location line="+3015"/>
+        <location line="+3089"/>
         <source>Add device</source>
         <translation>添加设备</translation>
     </message>
     <message>
-        <location line="-3012"/>
+        <location line="-3086"/>
         <source>Remove selected device (%1)</source>
         <translation>删除所选设备(%1)</translation>
     </message>
@@ -5163,7 +5262,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     </message>
     <message>
         <location line="+15"/>
-        <location line="+611"/>
+        <location line="+685"/>
         <location line="+4"/>
         <source>Open Project</source>
         <translation>打开项目</translation>

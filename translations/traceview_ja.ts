@@ -43,7 +43,7 @@ AI アシスタントのアクセスをオフにするか TraceView を閉じる
         <translation>ウィジェットを編集（AI アシスタント）</translation>
     </message>
     <message>
-        <location line="+418"/>
+        <location line="+428"/>
         <source>New Project</source>
         <translation>新規プロジェクト</translation>
     </message>
@@ -63,7 +63,7 @@ AI アシスタントのアクセスをオフにするか TraceView を閉じる
         <translation>AI アシスタントが「%1」を開こうとしています。現在のプロジェクトの未保存の変更は失われます。</translation>
     </message>
     <message>
-        <location line="+75"/>
+        <location line="+78"/>
         <source>Add to Gallery</source>
         <translation>ギャラリーに追加</translation>
     </message>
@@ -73,7 +73,7 @@ AI アシスタントのアクセスをオフにするか TraceView を閉じる
         <translation>AI アシスタントがギャラリーのダッシュボード「%1」を置き換えようとしています。</translation>
     </message>
     <message>
-        <location line="+53"/>
+        <location line="+59"/>
         <source>Delete Dashboard</source>
         <translation>ダッシュボードの削除</translation>
     </message>
@@ -652,7 +652,7 @@ AI アシスタントのアクセスをオフにするか TraceView を閉じる
 <context>
     <name>DashboardGallery</name>
     <message>
-        <location filename="../lib/project/dashboardgallery.cpp" line="+92"/>
+        <location filename="../lib/project/dashboardgallery.cpp" line="+98"/>
         <source>The name can&apos;t be empty.</source>
         <translation>名前を空にすることはできません。</translation>
     </message>
@@ -672,7 +672,24 @@ AI アシスタントのアクセスをオフにするか TraceView を閉じる
         <translation>名前が長すぎます (最大 100 文字)。</translation>
     </message>
     <message>
-        <location line="+17"/>
+        <location line="+55"/>
+        <source>The built-in example can&apos;t be changed.</source>
+        <translation>組み込みのサンプルは変更できません。</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <location line="+5"/>
+        <source>Couldn&apos;t read the dashboard file.</source>
+        <translation>ダッシュボードファイルを読み取れませんでした。</translation>
+    </message>
+    <message>
+        <location line="+16"/>
+        <location line="+4"/>
+        <source>Couldn&apos;t write the dashboard file.</source>
+        <translation>ダッシュボードファイルを書き込めませんでした。</translation>
+    </message>
+    <message>
+        <location line="+27"/>
         <source>A dashboard with that name already exists.</source>
         <translation>その名前のダッシュボードは既に存在します。</translation>
     </message>
@@ -904,7 +921,7 @@ AI アシスタントのアクセスをオフにするか TraceView を閉じる
 <context>
     <name>ProjectStore</name>
     <message>
-        <location filename="../lib/project/projectstore.cpp" line="+31"/>
+        <location filename="../lib/project/projectstore.cpp" line="+35"/>
         <source>No project path set yet — use Save Project to choose a file first.</source>
         <translation>プロジェクトのパスがまだ設定されていません — 先に「プロジェクトを保存」でファイルを選択してください。</translation>
     </message>
@@ -3707,7 +3724,7 @@ Allowed: %1</source>
 <context>
     <name>traceview::HomePage</name>
     <message>
-        <location filename="../lib/core/homepage.cpp" line="+228"/>
+        <location filename="../lib/core/homepage.cpp" line="+291"/>
         <source>The deep scan found nothing new.</source>
         <translation>詳細スキャンで新しいものは見つかりませんでした。</translation>
     </message>
@@ -3719,7 +3736,7 @@ Allowed: %1</source>
         </translation>
     </message>
     <message>
-        <location line="+213"/>
+        <location line="+221"/>
         <source>Welcome to TraceView</source>
         <translation>TraceView へようこそ</translation>
     </message>
@@ -3755,7 +3772,7 @@ Allowed: %1</source>
         <translation>ダッシュボードを開く</translation>
     </message>
     <message>
-        <location line="+2"/>
+        <location line="+3"/>
         <source>Projects</source>
         <translation>プロジェクト</translation>
     </message>
@@ -3765,12 +3782,12 @@ Allowed: %1</source>
         <translation>最近</translation>
     </message>
     <message>
-        <location line="+1"/>
+        <location line="-2"/>
         <source>Gallery</source>
         <translation>ギャラリー</translation>
     </message>
     <message>
-        <location line="+1"/>
+        <location line="+3"/>
         <source>New project</source>
         <translation>新規プロジェクト</translation>
     </message>
@@ -3800,7 +3817,7 @@ Allowed: %1</source>
         <translation>Bluetooth をスキャン</translation>
     </message>
     <message>
-        <location line="+82"/>
+        <location line="+100"/>
         <source>Untitled project</source>
         <translation>無題のプロジェクト</translation>
     </message>
@@ -3813,23 +3830,77 @@ Allowed: %1</source>
     </message>
     <message numerus="yes">
         <location line="+16"/>
+        <location line="+114"/>
         <source>%n widget(s)</source>
         <translation>
             <numerusform>%n 個のウィジェット</numerusform>
         </translation>
     </message>
     <message>
-        <location line="+55"/>
+        <location line="-60"/>
         <source>No recent projects yet.</source>
         <translation>最近のプロジェクトはまだありません。</translation>
     </message>
     <message>
-        <location line="+4"/>
         <source>%1 (opens at startup)</source>
-        <translation>%1（起動時に開く）</translation>
+        <translation type="vanished">%1（起動時に開く）</translation>
+    </message>
+    <message numerus="yes">
+        <location line="+21"/>
+        <source>%n dashboard(s)</source>
+        <translation>
+            <numerusform>ダッシュボード %n 件</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location line="+38"/>
+        <source>%n workspace(s)</source>
+        <translation>
+            <numerusform>ワークスペース %n 件</numerusform>
+        </translation>
     </message>
     <message>
-        <location line="+121"/>
+        <location line="+8"/>
+        <source>Open</source>
+        <translation>開く</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Default</source>
+        <translation>デフォルト</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>Change icon…</source>
+        <translation>アイコンを変更…</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Use automatic icon</source>
+        <translation>自動アイコンを使用</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Rename…</source>
+        <translation>名前を変更…</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Set as default</source>
+        <translation>デフォルトに設定</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Delete…</source>
+        <translation>削除…</translation>
+    </message>
+    <message>
+        <location line="+21"/>
+        <source>Dashboard options</source>
+        <translation>ダッシュボードのオプション</translation>
+    </message>
+    <message>
+        <location line="+124"/>
         <source>Connected</source>
         <translation>接続済み</translation>
     </message>
@@ -4382,12 +4453,12 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+0"/>
-        <location line="+4598"/>
+        <location line="+4672"/>
         <source>Later</source>
         <translation>後で</translation>
     </message>
     <message>
-        <location line="-4591"/>
+        <location line="-4665"/>
         <source>&amp;Access</source>
         <translation>アクセス(&amp;A)</translation>
     </message>
@@ -4540,18 +4611,18 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+18"/>
-        <location line="+3813"/>
+        <location line="+3887"/>
         <source>Undo</source>
         <translation>元に戻す</translation>
     </message>
     <message>
-        <location line="-3811"/>
-        <location line="+3811"/>
+        <location line="-3885"/>
+        <location line="+3885"/>
         <source>Redo</source>
         <translation>やり直し</translation>
     </message>
     <message>
-        <location line="-3768"/>
+        <location line="-3842"/>
         <source>Add Device</source>
         <translation>デバイスを追加</translation>
     </message>
@@ -4597,12 +4668,12 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+36"/>
-        <location line="+3734"/>
+        <location line="+3808"/>
         <source>Fullscreen dashboard (F11)</source>
         <translation>ダッシュボードを全画面表示(F11)</translation>
     </message>
     <message>
-        <location line="-3645"/>
+        <location line="-3719"/>
         <location line="+500"/>
         <source>Home</source>
         <translation>ホーム</translation>
@@ -4792,12 +4863,40 @@ Drops: %2</source>
         <translation>&quot;%1&quot; をギャラリーに保存しました。</translation>
     </message>
     <message>
-        <location line="+141"/>
+        <location line="+111"/>
+        <location line="+8"/>
+        <source>Change Icon</source>
+        <translation>アイコンを変更</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <location line="+9"/>
+        <source>Rename Dashboard</source>
+        <translation>ダッシュボードの名前を変更</translation>
+    </message>
+    <message>
+        <location line="-9"/>
+        <source>New name:</source>
+        <translation>新しい名前:</translation>
+    </message>
+    <message>
+        <location line="+24"/>
+        <location line="+8"/>
+        <source>Delete Dashboard</source>
+        <translation>ダッシュボードの削除</translation>
+    </message>
+    <message>
+        <location line="-7"/>
+        <source>Delete &quot;%1&quot; from the gallery? This can&apos;t be undone.</source>
+        <translation>ギャラリーから「%1」を削除しますか？この操作は元に戻せません。</translation>
+    </message>
+    <message>
+        <location line="+58"/>
         <source>Example dashboard</source>
         <translation>サンプルダッシュボード</translation>
     </message>
     <message>
-        <location line="+70"/>
+        <location line="+75"/>
         <source>Dongle</source>
         <translation>ドングル</translation>
     </message>
@@ -4896,13 +4995,13 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>アプリを閉じる</translation>
     </message>
     <message>
-        <location line="-3834"/>
-        <location line="+3515"/>
+        <location line="-3908"/>
+        <location line="+3589"/>
         <source>Devices</source>
         <translation>デバイス</translation>
     </message>
     <message>
-        <location line="-3440"/>
+        <location line="-3514"/>
         <source>Subscriptions</source>
         <translation>購読</translation>
     </message>
@@ -4949,23 +5048,23 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     </message>
     <message>
         <location line="+81"/>
-        <location line="+3013"/>
+        <location line="+3087"/>
         <source>Add widget</source>
         <translation>ウィジェットを追加</translation>
     </message>
     <message>
-        <location line="-3010"/>
+        <location line="-3084"/>
         <source>Remove selected widget (%1)</source>
         <translation>選択したウィジェットを削除(%1)</translation>
     </message>
     <message>
         <location line="+8"/>
-        <location line="+3015"/>
+        <location line="+3089"/>
         <source>Add device</source>
         <translation>デバイスを追加</translation>
     </message>
     <message>
-        <location line="-3012"/>
+        <location line="-3086"/>
         <source>Remove selected device (%1)</source>
         <translation>選択したデバイスを削除(%1)</translation>
     </message>
@@ -5163,7 +5262,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     </message>
     <message>
         <location line="+15"/>
-        <location line="+611"/>
+        <location line="+685"/>
         <location line="+4"/>
         <source>Open Project</source>
         <translation>プロジェクトを開く</translation>

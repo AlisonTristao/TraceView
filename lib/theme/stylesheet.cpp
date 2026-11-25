@@ -768,6 +768,32 @@ QFrame#homeRobotRow {
 QFrame#homeRobotRow:hover {
     background-color: @surfaceAlt@;
 }
+/* Gallery: a clickable card per dashboard; the open one has an accent border. */
+QFrame#homeGalleryCard {
+    background-color: @surfaceAlt@;
+    border: 1px solid @border@;
+    border-radius: 10px;
+}
+QFrame#homeGalleryCard:hover,
+QFrame#homeGalleryCard:focus {
+    border-color: @accent@;
+}
+QFrame#homeGalleryCard[current="true"] {
+    border-color: @accent@;
+    background-color: @accentTint@;
+}
+QToolButton#homeGalleryMenu {
+    border: none;
+    background: transparent;
+    border-radius: 6px;
+    padding: 4px;
+}
+QToolButton#homeGalleryMenu:hover {
+    background-color: @border@;
+}
+QToolButton#homeGalleryMenu::menu-indicator {
+    image: none;
+}
 QLabel#homeAvatar {
     border-radius: 17px;
     background-color: @neutralTint@;
