@@ -6,6 +6,7 @@
 #include <QFile>
 #include <QFileInfo>
 #include <QGridLayout>
+#include <QHash>
 #include <QLabel>
 #include <QPainter>
 #include <QPainterPath>
@@ -126,6 +127,48 @@ void repolish(QWidget* widget) {
     widget->style()->polish(widget);
 }
 }  // namespace
+
+// A one-line name that ends in "..." when it doesn't fit, instead of making
+// the page wider: names often have no spaces to wrap at (robot_lab_2), and
+// on a phone one long name would push every card off the screen. The full
+// text stays in the tooltip.
+class HomeNameLabel : public QLabel {
+public:
+    explicit HomeNameLabel(const QString& text, QWidget* parent) : QLabel(parent) {
+        setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Preferred);
+        setFullText(text);
+    }
+    void setFullText(const QString& text) {
+        m_text = text;
+        setToolTip(text);
+        updateGeometry();
+        refit();
+    }
+    QSize minimumSizeHint() const override {
+        return QSize(fontMetrics().averageCharWidth() * 6, QLabel::minimumSizeHint().height());
+    }
+    QSize sizeHint() const override {
+        return QSize(fontMetrics().horizontalAdvance(m_text) + 2, QLabel::sizeHint().height());
+    }
+
+protected:
+    void resizeEvent(QResizeEvent* event) override {
+        QLabel::resizeEvent(event);
+        refit();
+    }
+    void changeEvent(QEvent* event) override {
+        QLabel::changeEvent(event);
+        if (event->type() == QEvent::FontChange) {
+            refit();
+        }
+    }
+
+private:
+    void refit() {
+        setText(fontMetrics().elidedText(m_text, Qt::ElideRight, qMax(0, width())));
+    }
+    QString m_text;
+};
 
 // The TraceView wordmark, recolored to the theme's text color.
 class HomeWordmark : public QWidget {
@@ -342,9 +385,8 @@ void HomePage::buildUi() {
     m_preview->onClicked = [this] { emit openDashboardRequested(); };
     m_projectCard->body()->addWidget(m_preview);
 
-    m_projectName = new QLabel(m_projectCard);
+    m_projectName = new HomeNameLabel(QString(), m_projectCard);
     m_projectName->setFont(scaledFont(font(), DialogChrome::kPageTitleScale));
-    m_projectName->setWordWrap(true);
     m_projectDetail = DialogChrome::hintLabel(QString(), m_projectCard);
     m_openDashboardButton = new QPushButton(m_projectCard);
     m_openDashboardButton->setIconSize(QSize(kButtonIconSize, kButtonIconSize));
@@ -543,12 +585,15 @@ void HomePage::refreshStats() {
 }
 
 void HomePage::refreshProjectCard() {
-    m_projectName->setText(m_project.title.isEmpty() ? tr("Untitled project") : m_project.title);
-    QString detail = tr("%n device(s)", nullptr, m_project.devices);
-    if (m_developer && !m_project.path.isEmpty() && !m_project.path.startsWith(QLatin1Char(':'))) {
-        detail += QStringLiteral(" · ") + QDir::toNativeSeparators(m_project.path);
+    m_projectName->setFullText(m_project.title.isEmpty() ? tr("Untitled project")
+                                                         : m_project.title);
+    m_projectDetail->setText(tr("%n device(s)", nullptr, m_project.devices));
+    // The file path only as a tooltip: a path has no spaces to wrap at, and
+    // on a phone it would push the whole page wider than the screen.
+    const bool onDisk = !m_project.path.isEmpty() && !m_project.path.startsWith(QLatin1Char(':'));
+    if (m_developer && onDisk) {
+        m_projectName->setToolTip(QDir::toNativeSeparators(m_project.path));
     }
-    m_projectDetail->setText(detail);
 
     clearLayout(m_workspaceGrid);
     const ThemePalette& palette = ThemeManager::instance().currentTheme();
@@ -557,12 +602,16 @@ void HomePage::refreshProjectCard() {
         auto* chip = new QPushButton(workspace.name);
         chip->setObjectName(QStringLiteral("homeChip"));
         chip->setCursor(Qt::PointingHandCursor);
-        chip->setToolTip(tr("%n widget(s)", nullptr, workspace.widgets));
+        chip->setToolTip(QStringLiteral("%1 · %2")
+                             .arg(workspace.name, tr("%n widget(s)", nullptr, workspace.widgets)));
         const QString iconId = IconLibrary::instance().contains(workspace.icon)
                                    ? workspace.icon
                                    : QStringLiteral("lucide:layout-dashboard");
         chip->setIcon(IconLibrary::instance().icon(iconId, palette.accent, kRowIconSize));
         chip->setIconSize(QSize(kRowIconSize, kRowIconSize));
+        // A long name is cut short (whole in the tooltip), never widens the
+        // page past a phone's screen.
+        chip->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Fixed);
         connect(chip, &QPushButton::clicked, this,
                 [this, id = workspace.id] { emit openWorkspaceRequested(id); });
         chips.append(chip);
@@ -581,18 +630,29 @@ QPushButton* HomePage::listRow(const QString& iconId, const QString& text,
     // A list row, not a framed button (stylesheet.cpp, "QPushButton#homeLink").
     button->setObjectName(QStringLiteral("homeLink"));
     button->setCursor(Qt::PointingHandCursor);
-    button->setToolTip(tooltip);
+    button->setToolTip(tooltip.isEmpty() ? text : tooltip);
     button->setIcon(IconLibrary::instance().icon(iconId, palette.textSecondary, kRowIconSize));
     button->setIconSize(QSize(kRowIconSize, kRowIconSize));
+    button->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Fixed);
     return button;
 }
 
 void HomePage::refreshProjectsCard() {
     clearLayout(m_recentList);
     clearLayout(m_galleryList);
+    // Two recent files of the same name (copies in different folders) say
+    // which folder each one is in.
+    QHash<QString, int> nameCount;
     for (const QString& path : std::as_const(m_recent)) {
-        QPushButton* button = listRow(QStringLiteral("lucide:file"),
-                                      QFileInfo(path).completeBaseName(),
+        ++nameCount[QFileInfo(path).completeBaseName()];
+    }
+    for (const QString& path : std::as_const(m_recent)) {
+        const QFileInfo info(path);
+        QString text = info.completeBaseName();
+        if (nameCount.value(text) > 1) {
+            text += QStringLiteral("  —  ") + info.dir().dirName();
+        }
+        QPushButton* button = listRow(QStringLiteral("lucide:file"), text,
                                       QDir::toNativeSeparators(path));
         connect(button, &QPushButton::clicked, this, [this, path] { emit openPathRequested(path); });
         m_recentList->addWidget(button);
@@ -650,8 +710,7 @@ QWidget* HomePage::robotRow(const QString& title, const QString& detail,
     // enough for a phone with the action button beside it.
     auto* text = new QVBoxLayout();
     text->setSpacing(2);
-    auto* name = new QLabel(title, row);
-    name->setWordWrap(true);
+    auto* name = new HomeNameLabel(title, row);
     QFont nameFont = name->font();
     nameFont.setWeight(QFont::DemiBold);
     name->setFont(nameFont);
@@ -842,6 +901,11 @@ void HomePage::applyWidth() {
 
     if (compact != m_compact || m_projectButtons->isEmpty()) {
         m_compact = compact;
+        // Tighter margins on a phone: every pixel of width counts there.
+        m_scroll->widget()->layout()->setContentsMargins(compact ? 10 : 16, compact ? 12 : 16,
+                                                         compact ? 10 : 16, 20);
+        m_heroLayout->setContentsMargins(compact ? 14 : 20, compact ? 12 : 16, compact ? 14 : 20,
+                                         compact ? 12 : 16);
         // Header: brand over the numbers on a phone.
         m_heroLayout->setDirection(compact ? QBoxLayout::TopToBottom : QBoxLayout::LeftToRight);
         m_wordmark->setDisplayHeight(compact ? 40 : 52);

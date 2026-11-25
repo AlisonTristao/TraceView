@@ -904,9 +904,8 @@ void MainWindow::finishStartup() {
     // The dashboard was only just built: picture it again once its widgets
     // have been laid out and painted (it renders while hidden).
     QTimer::singleShot(600, this, [this] {
-        if (m_homePage != nullptr && m_dashboardScrollArea != nullptr &&
-            m_ribbon->currentIndex() == m_homeTabIndex) {
-            m_homePage->setDashboardPreview(m_dashboardScrollArea->viewport()->grab());
+        if (m_ribbon->currentIndex() == m_homeTabIndex) {
+            updateHomeDashboardPreview();
         }
     });
     // Only now: a tool call before this would edit the placeholder dashboard
@@ -5241,6 +5240,26 @@ void MainWindow::refreshHomePage() {
     m_homePage->setGallery(DashboardGallery::names(), DashboardGallery::defaultName());
 }
 
+void MainWindow::updateHomeDashboardPreview() {
+    if (m_homePage == nullptr || m_dashboardScrollArea == nullptr) {
+        return;
+    }
+    // A hidden page of the content stack keeps whatever size it last had
+    // (only the current page is laid out) -- at startup that can be next
+    // to nothing, and the picture came out as a few pixels blown up. Give
+    // it the stack's size first; grab() then delivers the pending resize, so
+    // the scroll area lays its viewport and the grid out before painting.
+    if (m_dashboardScrollArea->size() != m_contentStack->size()) {
+        m_dashboardScrollArea->resize(m_contentStack->size());
+    }
+    m_dashboardScrollArea->grab(QRect(0, 0, 1, 1));
+    const QRect area = m_dashboardScrollArea->viewport()->geometry();
+    if (area.width() < 200 || area.height() < 120) {
+        return;  // keep the placeholder rather than a smudge
+    }
+    m_homePage->setDashboardPreview(m_dashboardScrollArea->grab(area));
+}
+
 void MainWindow::showHomeTab() {
     if (m_homeTabIndex < 0) {
         return;
@@ -5248,9 +5267,8 @@ void MainWindow::showHomeTab() {
     // The "Continue" card shows the dashboard as it was just left: grabbed
     // while it is still laid out (it is the page being switched away from,
     // or, at startup, the one loaded under the cover).
-    if (m_homePage != nullptr && m_dashboardScrollArea != nullptr &&
-        m_contentStack->currentWidget() == m_dashboardScrollArea) {
-        m_homePage->setDashboardPreview(m_dashboardScrollArea->viewport()->grab());
+    if (m_contentStack->currentWidget() == m_dashboardScrollArea) {
+        updateHomeDashboardPreview();
     }
     m_ribbon->setCurrentIndex(m_homeTabIndex);
     onRibbonTabChanged(m_homeTabIndex);

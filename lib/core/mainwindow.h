@@ -678,6 +678,9 @@ private:
     void buildHomePage();
     void refreshHomePage();
     void showHomeTab();
+    // The "Continue" card's picture of the dashboard, sized right even
+    // while the dashboard is the hidden page.
+    void updateHomeDashboardPreview();
     void showDashboardTab();
     void addNearbyRobotToProject(const NearbyRobot& robot);
     // Copies the live workspaces/devices state into ProjectStore's sections

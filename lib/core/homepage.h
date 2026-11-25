@@ -19,6 +19,7 @@ class QVBoxLayout;
 namespace traceview {
 
 class DialogCard;
+class HomeNameLabel;
 class HomeWordmark;
 class HomePreview;
 
@@ -146,7 +147,7 @@ private:
     DialogCard* m_projectCard = nullptr;
     HomePreview* m_preview = nullptr;
     QBoxLayout* m_continueRow = nullptr;
-    QLabel* m_projectName = nullptr;
+    HomeNameLabel* m_projectName = nullptr;
     QLabel* m_projectDetail = nullptr;
     QPushButton* m_openDashboardButton = nullptr;
     QLabel* m_workspacesCaption = nullptr;
