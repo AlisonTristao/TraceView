@@ -45,12 +45,12 @@ QIcon makeLockIcon(const QColor& color, bool locked);
 // MainWindow's panel show/hide toggle on the Dashboard tab, next to the
 // "enable editing" lock.
 QIcon makePanelsIcon(const QColor& color, bool visible);
-// A 2x2 grid of small squares -- the workspace switcher's button icon,
+// A 2x2 grid of small squares -- the former workspace switcher's button icon,
 // evoking a dashboard layout.
 QIcon makeWorkspaceIcon(const QColor& color);
-// A trash bin: lid plus a tapered body -- the workspace switcher's per-row
+// A trash bin: lid plus a tapered body -- a workspace row's
 // delete affordance. `size` defaults to kRibbonIconSize but can be drawn
-// larger (the workspace switcher's rows want it a bit bigger than the
+// larger (a list row wants it a bit bigger than the
 // ribbon's own buttons) -- the geometry scales with it rather than just
 // being stretched, so it stays crisp instead of blurring.
 QIcon makeTrashIcon(const QColor& color, int size = kRibbonIconSize);

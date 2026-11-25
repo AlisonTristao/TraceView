@@ -10,8 +10,8 @@
 #include <QtTest>
 
 #include "core/mainwindow.h"
-#include "core/workspacedock.h"
-#include "core/workspaceswitcher.h"
+#include "core/appnavbar.h"
+#include "core/workspacestrip.h"
 #include "project/workspacemanager.h"
 #include "core/usermodemanager.h"
 #include "dashboard/dashboardgrid.h"
@@ -50,13 +50,17 @@ void TestMainWindowChrome::userPreviewKeepsManualSizes() {
     QVERIFY(grid);
     QVERIFY(options);
     QVERIFY(deviceStatus);
-    auto* dock = window.findChild<WorkspaceDock*>();
+    auto* navBar = window.findChild<AppNavBar*>();
+    auto* strip = window.findChild<WorkspaceStrip*>();
     auto* statusRow = window.findChild<QWidget*>("statusRow");
-    QVERIFY(dock);
+    QVERIFY(navBar);
+    QVERIFY(strip);
     QVERIFY(statusRow);
-    // Desktop, no preview: the status row, not the compact dock.
+    // Desktop, no preview: the status row, not the compact nav bar.
     QVERIFY(statusRow->isVisible());
-    QVERIFY(!dock->isVisible());
+    QVERIFY(!navBar->isVisible());
+    // User mode has no Robots item.
+    QVERIFY(!navBar->robotsButton()->isVisibleTo(navBar));
     QVERIFY(!tabs->isVisible());
     QVERIFY(!selector->isVisible());
     QCOMPARE(selector->parentWidget()->objectName(), QString("statusRow"));
@@ -93,6 +97,17 @@ void TestMainWindowChrome::userPreviewKeepsManualSizes() {
     const int devicesTab = tabIndex(QStringLiteral("Devices"));
     QVERIFY(dashboardTab >= 0);
     QVERIFY(devicesTab >= 0);
+    // The Robots nav item appears with Developer mode.
+    QVERIFY(navBar->robotsButton()->isVisibleTo(navBar));
+    // The workspace strip belongs to the Dashboard tab only.
+    const int homeTab = tabIndex(QStringLiteral("Home"));
+    QVERIFY(homeTab >= 0);
+    tabs->setCurrentIndex(homeTab);
+    QVERIFY(!strip->isVisible());
+    tabs->setCurrentIndex(devicesTab);
+    QVERIFY(!strip->isVisible());
+    tabs->setCurrentIndex(dashboardTab);
+    QVERIFY(strip->isVisible());
     tabs->setCurrentIndex(devicesTab);
     previewAction()->trigger();
     QTRY_VERIFY(!tabs->isVisible());
@@ -114,13 +129,26 @@ void TestMainWindowChrome::userPreviewKeepsManualSizes() {
         QCOMPARE(options->parentWidget()->layout()->indexOf(homeButton), 1);
         QCOMPARE(options->parentWidget()->layout()->indexOf(deviceStatus), 2);
         QCOMPARE(options->isVisible(), i < 2);
-        // Phone/Tablet preview = compact chrome: the dock replaces the
+        // Phone/Tablet preview = compact chrome: the nav bar replaces the
         // status row, and the size selector moves up beside the options
         // button so the preview can still be left.
-        QCOMPARE(dock->isVisible(), i < 2);
+        QCOMPARE(navBar->isVisible(), i < 2);
+        QVERIFY(strip->isVisible());
         QCOMPARE(statusRow->isVisible(), i >= 2);
         QCOMPARE(selector->parentWidget(), i < 2 ? options->parentWidget() : statusRow);
     }
+    // Compact chrome: the nav bar's items drive the ribbon's tab.
+    sizes[0]->trigger();
+    QCoreApplication::processEvents();
+    QVERIFY(navBar->isVisible());
+    navBar->homeButton()->click();
+    QCOMPARE(tabs->currentIndex(), homeTab);
+    QVERIFY(navBar->homeButton()->isChecked());
+    QVERIFY(!strip->isVisible());
+    navBar->dashboardButton()->click();
+    QCOMPARE(tabs->currentIndex(), dashboardTab);
+    QVERIFY(navBar->dashboardButton()->isChecked());
+    QVERIFY(strip->isVisible());
     previewAction()->trigger();
     QTRY_VERIFY(tabs->isVisible());
     QVERIFY(!previewAction()->isChecked());
@@ -128,7 +156,7 @@ void TestMainWindowChrome::userPreviewKeepsManualSizes() {
     previewAction()->trigger();
     QTRY_VERIFY(!tabs->isVisible());
     manager.logout();
-    auto* switcher = window.findChild<WorkspaceSwitcher*>();
+    auto* switcher = strip;
     auto* subscriptions = window.findChild<QTreeWidget*>("subscriptionsWorkspace");
     QVERIFY(switcher);
     QVERIFY(subscriptions);
