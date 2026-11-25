@@ -125,6 +125,9 @@
 #include "updater/updatechecker.h"
 #include "updater/updatedownloader.h"
 #include "updater/updateinstaller.h"
+#include "crash/crashhandler.h"
+#include "crash/crashreportdialog.h"
+#include "crash/sessionmarker.h"
 #ifdef TRACEVIEW_ENABLE_USB_HID
 #include "usbhidmanager.h"
 #endif
@@ -1567,6 +1570,20 @@ void MainWindow::buildMenus() {
     connect(m_debugAction, &QAction::triggered, this, &MainWindow::onDebug);
     m_debugAction->setVisible(false);
 
+    // Developer-only: crashes on purpose so the crash handler and the
+    // "closed unexpectedly" dialog on the next launch can be tested.
+    m_forceCrashAction = menuBar()->addAction(tr("Force Crash"));
+    connect(m_forceCrashAction, &QAction::triggered, this, [this] {
+        if (DialogPresenter::confirm(
+                this, tr("Force Crash"),
+                tr("TraceView will crash right now, without saving. The crash report "
+                   "opens the next time you start it."),
+                tr("Crash Now"), tr("Cancel"))) {
+            CrashHandler::forceCrash();
+        }
+    });
+    m_forceCrashAction->setVisible(false);
+
     // Developer-only, temporary: on-screen soft-keyboard event trace (see
     // inputdiagnostics.h). In the options menu too, since that's the only
     // menu a phone shows.
@@ -1591,6 +1608,14 @@ void MainWindow::buildMenus() {
 
     auto* donateAction = menuBar()->addAction(tr("Dona&te"));
     connect(donateAction, &QAction::triggered, this, &MainWindow::onDonate);
+
+    // Same dialog as after a crash, with this run's log and no stack.
+    auto* reportBugAction = menuBar()->addAction(tr("Report a &Bug"));
+    connect(reportBugAction, &QAction::triggered, this, [this] {
+        CrashReportDialog dialog(
+            CrashReport::fromCurrentSession(SessionMarker::instance().currentSession()), this);
+        dialog.exec();
+    });
 
     // Android-safe stand-in for the menu bar above -- a QMenuBar's own
     // rendering on Android is unconfirmed (older Qt-for-Android versions
@@ -1635,7 +1660,9 @@ void MainWindow::buildMenus() {
     optionsMenu->addSeparator();
     optionsMenu->addAction(aboutAction);
     optionsMenu->addAction(donateAction);
+    optionsMenu->addAction(reportBugAction);
     optionsMenu->addAction(m_keyboardDiagnosticsAction);
+    optionsMenu->addAction(m_forceCrashAction);
     optionsMenu->addAction(m_copyKeyboardLogAction);
     m_optionsButton->setMenu(optionsMenu);
     static_cast<QHBoxLayout*>(m_chromeTopBar->layout())->insertWidget(0, m_optionsButton);
@@ -1745,6 +1772,8 @@ void MainWindow::applyUserMode(UserModeManager::UserMode mode) {
     m_debugAction->setVisible(isDeveloper);
     m_debugAction->setEnabled(isDeveloper);
     m_keyboardDiagnosticsAction->setVisible(isDeveloper);
+    m_forceCrashAction->setVisible(isDeveloper);
+    m_forceCrashAction->setEnabled(isDeveloper);
     if (!isDeveloper) {
         m_keyboardDiagnosticsAction->setChecked(false);
     }
@@ -5829,6 +5858,10 @@ void MainWindow::installDownloadedUpdate(const QString& filePath) {
         postStatus(tr("Confirm the installation in the Android installer."), 5000,
                    StatusSeverity::Info);
 #else
+        // Read back by the next launch's splash ("Updated from vX to vY").
+        // quit() is a clean exit, so the session marker is removed and the
+        // update is never mistaken for a crash.
+        SessionMarker::instance().markUpdating(QString::fromLatin1(kVersion));
         QCoreApplication::quit();
 #endif
         return;

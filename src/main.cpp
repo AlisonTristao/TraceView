@@ -4,6 +4,7 @@
 #include <QIcon>
 #include <QPointer>
 #include <QStyleFactory>
+#include <QTimer>
 #include <cstring>
 
 #if defined(Q_OS_ANDROID)
@@ -15,6 +16,10 @@
 #include "core/applog.h"
 #include "core/mainwindow.h"
 #include "core/touchscroll.h"
+#include "crash/crashhandler.h"
+#include "crash/crashreportdialog.h"
+#include "crash/sessionmarker.h"
+#include "crash/splashscreen.h"
 #include "traceview/fontmanager.h"
 #include "traceview/languagemanager.h"
 #include "traceview/thememanager.h"
@@ -99,6 +104,17 @@ int main(int argc, char* argv[]) {
     // creates logs through an already-open file.
     traceview::AppLog::install();
 
+    // Right after the log (the marker records its path, and the crash
+    // handler writes next to it): did the last run quit cleanly? A crash is
+    // reported by the dialog below, once MainWindow is up -- never inside the
+    // crash itself.
+    auto& sessionMarker = traceview::SessionMarker::instance();
+    sessionMarker.begin();
+    traceview::CrashHandler::install(sessionMarker.currentCrashDirectory());
+    QObject::connect(&app, &QCoreApplication::aboutToQuit, [] {
+        traceview::SessionMarker::instance().end();
+    });
+
     // Language first: ThemeManager/FontManager build their display names
     // (QCoreApplication::translate) in their constructors, so the translator
     // has to be installed before those singletons are first touched.
@@ -110,8 +126,24 @@ int main(int argc, char* argv[]) {
     // first show, which has to find the filter already installed.
     traceview::installTouchScrolling();
 
+    // After the theme and language, so it is drawn in the user's look; before
+    // MainWindow, whose construction is the slow part of startup.
+    auto* splash = new traceview::SplashScreen(sessionMarker.previousSession().updatedFrom);
+    splash->show();
+    QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
+
     traceview::MainWindow window;
     window.show();
+    splash->finish(&window);
+
+    if (sessionMarker.previousSessionCrashed()) {
+        QTimer::singleShot(0, &window, [&window, &sessionMarker] {
+            traceview::CrashReportDialog dialog(
+                traceview::CrashReport::fromCrashedSession(sessionMarker.previousSession()),
+                &window);
+            dialog.exec();
+        });
+    }
 
 #if defined(Q_OS_ANDROID)
     // Keeps the soft keyboard from dropping and reopening when an IME

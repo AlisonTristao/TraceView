@@ -21,6 +21,15 @@ endif()
 option(TRACEVIEW_BUILD_TESTS "Build the Qt Test suite under tests/" ON)
 option(TRACEVIEW_BUILD_TOOLS "Build dev-only visual harnesses under tools/" ON)
 option(TRACEVIEW_FLATPAK_BUILD "Use Flatpak-managed application updates" OFF)
+# Keep debug symbols in Release builds so crash stacks are readable. The
+# symbols stay out of the shipped binary: MSVC writes a separate .pdb, and on
+# Linux CI splits them into TraceView.debug (see release.yml). Never installed.
+option(TRACEVIEW_SPLIT_DEBUG "Add -g to GCC/Clang Release builds (CI splits the symbols out)" OFF)
+if(MSVC)
+    add_compile_options($<$<CONFIG:Release>:/Zi>)
+elseif(TRACEVIEW_SPLIT_DEBUG AND CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    add_compile_options($<$<CONFIG:Release>:-g>)
+endif()
 # iOS has no serial and no USB HID transport, by platform rule rather than
 # by missing code: iOS gives apps no access to USB-serial adapters (CP210x,
 # CH340, the ESP32's own USB-CDC) or raw HID devices -- the only sanctioned
@@ -204,6 +213,15 @@ qt_add_executable(TraceView
     resources/projects/projects.qrc
 )
 
+if(MSVC)
+    # /DEBUG writes TraceView.pdb; /OPT keeps Release's dead-code folding,
+    # which /DEBUG would otherwise turn off.
+    target_link_options(TraceView PRIVATE
+        $<$<CONFIG:Release,RelWithDebInfo>:/DEBUG>
+        $<$<CONFIG:Release,RelWithDebInfo>:/OPT:REF>
+        $<$<CONFIG:Release,RelWithDebInfo>:/OPT:ICF>)
+endif()
+
 qt_add_translations(TraceView
     TS_FILES
         translations/traceview_pt_BR.ts
@@ -232,6 +250,8 @@ target_link_libraries(TraceView PRIVATE
     traceview_ui
     traceview_theme
     traceview_locale
+    # SessionMarker, CrashHandler, SplashScreen and the crash dialog (main.cpp).
+    traceview_crash
     # `TraceView --mcp` (main.cpp) runs the MCP stdio relay instead of the app.
     traceview_agent
 )
@@ -494,6 +514,12 @@ if(WIN32)
     set(CPACK_NSIS_DISPLAY_NAME "TraceView")
     set(CPACK_NSIS_PACKAGE_NAME "TraceView ${PROJECT_VERSION}")
     set(CPACK_NSIS_ENABLE_UNINSTALL_BEFORE_INSTALL ON)
+    # Our own NSIS.template.in (CMake 3.30's stock one plus an "update mode"
+    # for the /UPDATE flag the self-updater passes: progress page only, old
+    # install dir kept, app relaunched at the end). CPack looks for the
+    # template in CPACK_MODULE_PATH first. Changes are marked
+    # "; TraceView: update mode" to re-apply on a CMake upgrade.
+    set(CPACK_MODULE_PATH "${CMAKE_SOURCE_DIR}/packaging/nsis" ${CPACK_MODULE_PATH})
     # A fixed, predictable name (rather than CPack's own default) is what
     # the self-updater (lib/updater/updatechecker.cpp) matches a GitHub
     # release asset against, by suffix -- ".exe" here, ".AppImage" on Linux.
