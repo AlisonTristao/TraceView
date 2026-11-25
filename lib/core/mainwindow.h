@@ -934,6 +934,10 @@ private:
     QAction* m_debugAction = nullptr;
     QAction* m_keyboardDiagnosticsAction = nullptr;
     QAction* m_forceCrashAction = nullptr;
+    // Help (everyone) and its Developer Tools submenu (Developer mode only):
+    // Debug window, keyboard diagnostics, Force Crash.
+    QMenu* m_helpMenu = nullptr;
+    QMenu* m_developerToolsMenu = nullptr;
     QAction* m_copyKeyboardLogAction = nullptr;
     // View's Developer-only entries (Keyboard Shortcuts, Open Log Folder,
     // Reset Panel Positions and the separator after them) -- User mode keeps

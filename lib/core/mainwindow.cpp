@@ -1573,15 +1573,58 @@ void MainWindow::buildMenus() {
             &MainWindow::onShowNotificationHistory);
     addAction(notificationHistoryShortcut);
 
-    // Developer-only (synthetic-data DebugChartsWindow): shown/enabled by
-    // applyUserMode(), same as the File menu.
-    m_debugAction = menuBar()->addAction(tr("&Debug"));
-    connect(m_debugAction, &QAction::triggered, this, &MainWindow::onDebug);
-    m_debugAction->setVisible(false);
+    // Help: everything about the app itself and about finding problems in
+    // it, in one menu instead of a row of loose top-level entries. Report a
+    // Bug, the log folder, About and Donate are for everyone; the Developer
+    // tools submenu is shown by applyUserMode() in Developer mode only.
+    m_helpMenu = menuBar()->addMenu(tr("&Help"));
 
-    // Developer-only: crashes on purpose so the crash handler and the
-    // "closed unexpectedly" dialog on the next launch can be tested.
-    m_forceCrashAction = menuBar()->addAction(tr("Force Crash"));
+    // Same dialog as after a crash, with this run's log and no stack.
+    auto* reportBugAction = m_helpMenu->addAction(tr("Report a &Bug..."));
+    connect(reportBugAction, &QAction::triggered, this, [this] {
+        CrashReportDialog dialog(
+            CrashReport::fromCurrentSession(SessionMarker::instance().currentSession()), this);
+        dialog.exec();
+    });
+    // The folder a bug report's log comes from, for attaching it by hand.
+    auto* helpLogFolderAction = m_helpMenu->addAction(tr("Open &Log Folder"));
+    connect(helpLogFolderAction, &QAction::triggered, this,
+            [] { QDesktopServices::openUrl(QUrl::fromLocalFile(AppLog::logDirectory())); });
+    m_helpMenu->addSeparator();
+    auto* aboutAction = m_helpMenu->addAction(tr("&About"));
+    connect(aboutAction, &QAction::triggered, this, &MainWindow::onAbout);
+    auto* donateAction = m_helpMenu->addAction(tr("Dona&te"));
+    connect(donateAction, &QAction::triggered, this, &MainWindow::onDonate);
+
+    m_developerToolsMenu = new QMenu(tr("&Developer Tools"), m_helpMenu);
+    m_helpMenu->addSeparator();
+    m_helpMenu->addMenu(m_developerToolsMenu);
+    m_developerToolsMenu->menuAction()->setVisible(false);
+
+    // Synthetic-data DebugChartsWindow.
+    m_debugAction = m_developerToolsMenu->addAction(tr("&Debug Window"));
+    connect(m_debugAction, &QAction::triggered, this, &MainWindow::onDebug);
+
+    // Temporary: on-screen soft-keyboard event trace (see inputdiagnostics.h).
+    m_keyboardDiagnosticsAction = m_developerToolsMenu->addAction(tr("Keyboard Diagnostics"));
+    m_keyboardDiagnosticsAction->setCheckable(true);
+    connect(m_keyboardDiagnosticsAction, &QAction::toggled, this,
+            [this](bool on) {
+                setInputDiagnosticsEnabled(this, on);
+                m_copyKeyboardLogAction->setVisible(on);
+            });
+    // Shown only while the trace is on: puts its whole history on the
+    // clipboard so it can be pasted into a message.
+    m_copyKeyboardLogAction = m_developerToolsMenu->addAction(tr("Copy Keyboard Log"));
+    connect(m_copyKeyboardLogAction, &QAction::triggered, this, [] {
+        QGuiApplication::clipboard()->setText(inputDiagnosticsLog());
+    });
+    m_copyKeyboardLogAction->setVisible(false);
+
+    // Crashes on purpose so the crash handler and the "closed unexpectedly"
+    // dialog on the next launch can be tested.
+    m_developerToolsMenu->addSeparator();
+    m_forceCrashAction = m_developerToolsMenu->addAction(tr("Force Crash..."));
     connect(m_forceCrashAction, &QAction::triggered, this, [this] {
         if (DialogPresenter::confirm(
                 this, tr("Force Crash"),
@@ -1590,40 +1633,6 @@ void MainWindow::buildMenus() {
                 tr("Crash Now"), tr("Cancel"))) {
             CrashHandler::forceCrash();
         }
-    });
-    m_forceCrashAction->setVisible(false);
-
-    // Developer-only, temporary: on-screen soft-keyboard event trace (see
-    // inputdiagnostics.h). In the options menu too, since that's the only
-    // menu a phone shows.
-    m_keyboardDiagnosticsAction = menuBar()->addAction(tr("Keyboard Diagnostics"));
-    m_keyboardDiagnosticsAction->setCheckable(true);
-    connect(m_keyboardDiagnosticsAction, &QAction::toggled, this,
-            [this](bool on) {
-                setInputDiagnosticsEnabled(this, on);
-                m_copyKeyboardLogAction->setVisible(on);
-            });
-    m_keyboardDiagnosticsAction->setVisible(false);
-    // Shown only while the trace is on: puts its whole history on the
-    // clipboard so it can be pasted into a message.
-    m_copyKeyboardLogAction = menuBar()->addAction(tr("Copy Keyboard Log"));
-    connect(m_copyKeyboardLogAction, &QAction::triggered, this, [] {
-        QGuiApplication::clipboard()->setText(inputDiagnosticsLog());
-    });
-    m_copyKeyboardLogAction->setVisible(false);
-
-    auto* aboutAction = menuBar()->addAction(tr("&About"));
-    connect(aboutAction, &QAction::triggered, this, &MainWindow::onAbout);
-
-    auto* donateAction = menuBar()->addAction(tr("Dona&te"));
-    connect(donateAction, &QAction::triggered, this, &MainWindow::onDonate);
-
-    // Same dialog as after a crash, with this run's log and no stack.
-    auto* reportBugAction = menuBar()->addAction(tr("Report a &Bug"));
-    connect(reportBugAction, &QAction::triggered, this, [this] {
-        CrashReportDialog dialog(
-            CrashReport::fromCurrentSession(SessionMarker::instance().currentSession()), this);
-        dialog.exec();
     });
 
     // Android-safe stand-in for the menu bar above -- a QMenuBar's own
@@ -1666,13 +1675,9 @@ void MainWindow::buildMenus() {
     optionsMenu->addAction(m_accessMenu->menuAction());
     optionsMenu->addAction(settingsMenuBarAction);
     optionsMenu->addAction(notificationsMenuBarAction);
-    optionsMenu->addSeparator();
-    optionsMenu->addAction(aboutAction);
-    optionsMenu->addAction(donateAction);
-    optionsMenu->addAction(reportBugAction);
-    optionsMenu->addAction(m_keyboardDiagnosticsAction);
-    optionsMenu->addAction(m_forceCrashAction);
-    optionsMenu->addAction(m_copyKeyboardLogAction);
+    // The same Help menu (Developer Tools included) as a submenu: a phone
+    // has no menu bar.
+    optionsMenu->addAction(m_helpMenu->menuAction());
     m_optionsButton->setMenu(optionsMenu);
     static_cast<QHBoxLayout*>(m_chromeTopBar->layout())->insertWidget(0, m_optionsButton);
 }
@@ -1782,11 +1787,12 @@ void MainWindow::applyUserMode(UserModeManager::UserMode mode) {
     // bar is hidden in compact chrome and shortcuts fire anyway), so each
     // action is disabled too.
     m_fileMenu->menuAction()->setVisible(isDeveloper);
-    m_debugAction->setVisible(isDeveloper);
-    m_debugAction->setEnabled(isDeveloper);
-    m_keyboardDiagnosticsAction->setVisible(isDeveloper);
-    m_forceCrashAction->setVisible(isDeveloper);
-    m_forceCrashAction->setEnabled(isDeveloper);
+    // Help > Developer Tools as a whole; each action disabled too so a
+    // shortcut can't reach it from User mode.
+    m_developerToolsMenu->menuAction()->setVisible(isDeveloper);
+    for (QAction* action : m_developerToolsMenu->actions()) {
+        action->setEnabled(isDeveloper);
+    }
     if (!isDeveloper) {
         m_keyboardDiagnosticsAction->setChecked(false);
     }
