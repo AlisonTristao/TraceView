@@ -82,6 +82,9 @@ public:
     void setDeviceKeyRejected(const QString& id, bool rejected);
     // Device::recoveryAddress, live state like setDeviceKeyRejected().
     void setDeviceRecovery(const QString& id, const QString& address);
+    // Learns Device::tcpFallbackHost from a successful mDNS lookup. Persisted
+    // like setDeviceBlePeerUuid(), and like it bypasses the undo stack.
+    void setDeviceTcpFallbackHost(const QString& id, const QString& address);
     // Mirrors a live DeviceConnection's Backend::deviceIdentified into
     // device.btpVersion/btpId, same non-undoable treatment as
     // setDeviceConnected() above and for the same reason: this is the

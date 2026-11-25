@@ -9,6 +9,7 @@
 
 class QCheckBox;
 class QComboBox;
+class QLineEdit;
 class QToolButton;
 
 namespace traceview {
@@ -43,6 +44,9 @@ public:
     void addDiscoveredBleDevice(const QString& name, const QString& address);
     void setAvailableParentDevices(const QVector<QPair<QString, QString>>& parents);
     void setAvailableHubPeers(const QVector<HubPeer>& peers);
+    // Device::tcpFallbackHost, edited in the field under the TCP row.
+    void setTcpFallbackHost(const QString& host);
+    QString tcpFallbackHost() const;
     // Stops a running search (the dialog is closing).
     void stopSearch();
 
@@ -75,6 +79,7 @@ private:
 
     QComboBox* m_nameCombo = nullptr;
     QToolButton* m_searchButton = nullptr;
+    QLineEdit* m_tcpFallbackEdit = nullptr;
     bool m_refreshing = false;
 };
 

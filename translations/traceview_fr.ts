@@ -3104,7 +3104,7 @@ Autorisés : %1</translation>
         <translation>Connexion</translation>
     </message>
     <message>
-        <location line="+81"/>
+        <location line="+82"/>
         <source>None</source>
         <translation>Aucun</translation>
     </message>
@@ -3175,12 +3175,12 @@ Autorisés : %1</translation>
     </message>
     <message>
         <location line="+3"/>
-        <location line="+271"/>
+        <location line="+272"/>
         <source>e.g. robot1.local</source>
         <translation>ex. : robot1.local</translation>
     </message>
     <message>
-        <location line="-261"/>
+        <location line="-262"/>
         <source>Use reported</source>
         <translation>Utiliser la valeur signalée</translation>
     </message>
@@ -3206,25 +3206,25 @@ Autorisés : %1</translation>
     </message>
     <message>
         <location line="+17"/>
-        <location line="+240"/>
+        <location line="+241"/>
         <source>Connected</source>
         <translation>Connecté</translation>
     </message>
     <message>
-        <location line="-240"/>
-        <location line="+240"/>
+        <location line="-241"/>
+        <location line="+241"/>
         <source>Disconnected</source>
         <translation>Déconnecté</translation>
     </message>
     <message>
-        <location line="-237"/>
+        <location line="-238"/>
         <location line="+3"/>
-        <location line="+153"/>
+        <location line="+154"/>
         <source>(not connected yet)</source>
         <translation>(pas encore connecté)</translation>
     </message>
     <message>
-        <location line="-143"/>
+        <location line="-144"/>
         <source>Status:</source>
         <translation>Statut :</translation>
     </message>
@@ -3259,7 +3259,7 @@ Autorisés : %1</translation>
         <translation>Appliquer les réglages ci-dessus et (re)connecter maintenant, sans fermer cette boîte de dialogue.</translation>
     </message>
     <message>
-        <location line="+114"/>
+        <location line="+115"/>
         <source>%1 (last connection)</source>
         <translation>%1 (dernière connexion)</translation>
     </message>
@@ -3285,7 +3285,7 @@ Autorisés : %1</translation>
         <translation>l&apos;appareil signale : %1</translation>
     </message>
     <message>
-        <location line="-239"/>
+        <location line="-240"/>
         <source>Reported by device</source>
         <translation>Signalé par l&apos;appareil</translation>
     </message>
@@ -3293,7 +3293,7 @@ Autorisés : %1</translation>
 <context>
     <name>traceview::DeviceConnection</name>
     <message>
-        <location filename="../lib/core/deviceconnection.cpp" line="+198"/>
+        <location filename="../lib/core/deviceconnection.cpp" line="+200"/>
         <source>transport rejected %1 bytes</source>
         <translation>le transport a rejeté %1 octets</translation>
     </message>
@@ -4470,12 +4470,12 @@ Pertes : %2</translation>
     </message>
     <message>
         <location line="+0"/>
-        <location line="+4713"/>
+        <location line="+4723"/>
         <source>Later</source>
         <translation>Plus tard</translation>
     </message>
     <message>
-        <location line="-4706"/>
+        <location line="-4716"/>
         <source>&amp;Access</source>
         <translation>&amp;Accès</translation>
     </message>
@@ -4617,18 +4617,18 @@ Pertes : %2</translation>
     </message>
     <message>
         <location line="+18"/>
-        <location line="+3904"/>
+        <location line="+3914"/>
         <source>Undo</source>
         <translation>Annuler</translation>
     </message>
     <message>
-        <location line="-3902"/>
-        <location line="+3902"/>
+        <location line="-3912"/>
+        <location line="+3912"/>
         <source>Redo</source>
         <translation>Rétablir</translation>
     </message>
     <message>
-        <location line="-3859"/>
+        <location line="-3869"/>
         <source>Add Device</source>
         <translation>Ajouter un appareil</translation>
     </message>
@@ -4674,12 +4674,12 @@ Pertes : %2</translation>
     </message>
     <message>
         <location line="+36"/>
-        <location line="+3825"/>
+        <location line="+3835"/>
         <source>Fullscreen dashboard (F11)</source>
         <translation>Tableau de bord en plein écran (F11)</translation>
     </message>
     <message>
-        <location line="-3736"/>
+        <location line="-3746"/>
         <location line="+520"/>
         <source>Home</source>
         <translation>Accueil</translation>
@@ -4800,7 +4800,7 @@ Pertes : %2</translation>
         <translation>Notifications</translation>
     </message>
     <message>
-        <location line="+143"/>
+        <location line="+149"/>
         <source>Close</source>
         <translation>Fermer</translation>
     </message>
@@ -4810,7 +4810,7 @@ Pertes : %2</translation>
         <translation>%1 : trouvé sur %2</translation>
     </message>
     <message>
-        <location line="+394"/>
+        <location line="+398"/>
         <source>%1: trying %2</source>
         <translation>%1 : essai de %2</translation>
     </message>
@@ -5001,13 +5001,13 @@ Choisissez Plus tard pour continuer à travailler -- les modifications s&apos;ap
         <translation>Fermer l&apos;app</translation>
     </message>
     <message>
-        <location line="-3925"/>
-        <location line="+3606"/>
+        <location line="-3935"/>
+        <location line="+3616"/>
         <source>Devices</source>
         <translation>Appareils</translation>
     </message>
     <message>
-        <location line="-3510"/>
+        <location line="-3520"/>
         <source>Subscriptions</source>
         <translation>Abonnements</translation>
     </message>
@@ -5079,23 +5079,23 @@ Choisissez Plus tard pour continuer à travailler -- les modifications s&apos;ap
     </message>
     <message>
         <location line="+81"/>
-        <location line="+3084"/>
+        <location line="+3094"/>
         <source>Add widget</source>
         <translation>Ajouter un widget</translation>
     </message>
     <message>
-        <location line="-3081"/>
+        <location line="-3091"/>
         <source>Remove selected widget (%1)</source>
         <translation>Supprimer le widget sélectionné (%1)</translation>
     </message>
     <message>
         <location line="+8"/>
-        <location line="+3086"/>
+        <location line="+3096"/>
         <source>Add device</source>
         <translation>Ajouter un appareil</translation>
     </message>
     <message>
-        <location line="-3083"/>
+        <location line="-3093"/>
         <source>Remove selected device (%1)</source>
         <translation>Supprimer l&apos;appareil sélectionné (%1)</translation>
     </message>
@@ -5180,7 +5180,7 @@ Choisissez Plus tard pour continuer à travailler -- les modifications s&apos;ap
         <translation>Afficher les panneaux Calques/Propriétés</translation>
     </message>
     <message>
-        <location line="+385"/>
+        <location line="+391"/>
         <source>New Device</source>
         <translation>Nouvel appareil</translation>
     </message>
@@ -5256,12 +5256,12 @@ Choisissez Plus tard pour continuer à travailler -- les modifications s&apos;ap
         <translation>M&amp;ouvement</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="-1684"/>
+        <location filename="../lib/core/mainwindow.cpp" line="-1690"/>
         <source>Dashboard</source>
         <translation>Dashboard</translation>
     </message>
     <message>
-        <location line="+2089"/>
+        <location line="+2099"/>
         <source>%1: this BLE address now answers as a different robot (expected %2, got %3)</source>
         <translation>%1 : cette adresse BLE répond maintenant comme un autre robot (attendu %2, reçu %3)</translation>
     </message>
@@ -6753,7 +6753,17 @@ Choisissez Plus tard pour continuer à travailler -- les modifications s&apos;ap
         <translation>Cochée : le robot est joignable par ce moyen.</translation>
     </message>
     <message>
-        <location line="+82"/>
+        <location line="+15"/>
+        <source>IP if the .local name isn&apos;t found</source>
+        <translation>IP si le nom .local est introuvable</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Dialed when mDNS doesn&apos;t answer for the robot&apos;s .local name. Filled in from the last address it was found at; edit it to set one by hand.</source>
+        <translation>Utilisée quand le mDNS ne répond pas pour le nom .local du robot. Remplie avec la dernière adresse où il a été trouvé ; modifiez-la pour en fixer une à la main.</translation>
+    </message>
+    <message>
+        <location line="+89"/>
         <location line="+11"/>
         <source>Automatic (%1)</source>
         <translation>Automatique (%1)</translation>
@@ -7676,12 +7686,12 @@ Choisissez Plus tard pour continuer à travailler -- les modifications s&apos;ap
 <context>
     <name>traceview::TcpTransport</name>
     <message>
-        <location filename="../lib/core/tcptransport.cpp" line="+160"/>
+        <location filename="../lib/core/tcptransport.cpp" line="+161"/>
         <source>TCP connection timed out</source>
         <translation>Délai de connexion TCP dépassé</translation>
     </message>
     <message>
-        <location line="+53"/>
+        <location line="+63"/>
         <source>Could not find %1 on the network (mDNS)</source>
         <translation>Impossible de trouver %1 sur le réseau (mDNS)</translation>
     </message>

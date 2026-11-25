@@ -152,6 +152,8 @@ DeviceConnection::DeviceConnection(CommType commType, TransportType transportTyp
             m_tcpTransport->setReconnectEnabled(false);
             connect(m_tcpTransport, &TcpTransport::recoveryChanged, this,
                     &DeviceConnection::recoveryChanged);
+            connect(m_tcpTransport, &TcpTransport::hostResolved, this,
+                    &DeviceConnection::tcpHostResolved);
             m_transport = m_tcpTransport;
             break;
         case TransportType::Ble:
@@ -354,10 +356,11 @@ void DeviceConnection::connectTo(const QString& target, qint32 baudRate) {
 }
 
 void DeviceConnection::connectToTcp(const QString& host, quint16 port,
-                                    const QByteArray& endpointKey) {
+                                    const QByteArray& endpointKey, const QString& fallbackHost) {
     if (m_tcpTransport == nullptr) {
         return;
     }
+    m_tcpTransport->setFallbackHost(fallbackHost);
 
     const QString trimmedHost = host.trimmed();
     const bool targetChanged = trimmedHost != m_tcpHost || port != m_tcpPort;

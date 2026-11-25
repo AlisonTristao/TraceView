@@ -260,6 +260,12 @@ struct Device {
     // separate from portName/baudRate because TCP has no serial settings.
     QString tcpHost;
     quint16 tcpPort = 44300;
+    // Numeric address dialed when tcpHost is a *.local name that mDNS does
+    // not answer (some networks drop multicast, and TraceKit's recovery
+    // answers it only now and then). Learned from every successful lookup
+    // (DevicesGrid::setDeviceTcpFallbackHost) and editable in the device's
+    // dialog, under the TCP row. Persisted; empty = no fallback.
+    QString tcpFallbackHost;
 
     // --- Direct BLE -------------------------------------------------------
     // Discovery hint used to dial the connection, in one of two forms:

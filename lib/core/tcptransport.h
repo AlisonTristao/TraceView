@@ -62,6 +62,11 @@ public:
     QString recoveryAddress() const {
         return m_recoveryAddress;
     }
+    // Numeric address dialed when the *.local host is not answered by mDNS
+    // (Device::tcpFallbackHost). Empty = none.
+    void setFallbackHost(const QString& host) {
+        m_fallbackHost = host.trimmed();
+    }
 
 signals:
     // A refused or timed-out connection is probed with GET http://<address>/status: when
@@ -71,6 +76,9 @@ signals:
     // probe gets any other answer. Kept across retries, which close and
     // reopen the transport.
     void recoveryChanged(const QString& address);
+    // A *.local host was resolved by mDNS to `address` (worth remembering as
+    // the fallback for when mDNS goes quiet).
+    void hostResolved(const QString& address);
 
 private slots:
     void onConnected();
@@ -105,6 +113,7 @@ private:
     QNetworkAccessManager* m_probe = nullptr;
     bool m_probeInFlight = false;
     QString m_recoveryAddress;
+    QString m_fallbackHost;
     bool m_closing = false;
     bool m_reconnectEnabled = true;
     int m_initialRetryDelayMs = 250;

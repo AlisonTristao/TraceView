@@ -180,12 +180,33 @@ RobotLinksPanel::RobotLinksPanel(const QString& robotName, const QVector<DeviceL
                 [this, index] { onTargetEdited(m_rows[index]); });
         connect(row.combo->lineEdit(), &QLineEdit::editingFinished, this,
                 [this, index] { onTargetEdited(m_rows[index]); });
-        grid->addWidget(row.check, index, 0);
-        grid->addWidget(row.combo, index, 1);
+        grid->addWidget(row.check, index * 2, 0);
+        grid->addWidget(row.combo, index * 2, 1);
+        if (type == TransportType::Tcp) {
+            // Under the name.local target: the address to dial when mDNS
+            // does not answer. Filled in by itself from the last lookup.
+            m_tcpFallbackEdit = new QLineEdit(this);
+            m_tcpFallbackEdit->setPlaceholderText(tr("IP if the .local name isn't found"));
+            m_tcpFallbackEdit->setToolTip(
+                tr("Dialed when mDNS doesn't answer for the robot's .local name. "
+                   "Filled in from the last address it was found at; edit it to "
+                   "set one by hand."));
+            grid->addWidget(m_tcpFallbackEdit, index * 2 + 1, 1);
+        }
         m_rows.append(row);
     }
     layout->addLayout(grid);
     refreshRows();
+}
+
+void RobotLinksPanel::setTcpFallbackHost(const QString& host) {
+    if (m_tcpFallbackEdit) {
+        m_tcpFallbackEdit->setText(host);
+    }
+}
+
+QString RobotLinksPanel::tcpFallbackHost() const {
+    return m_tcpFallbackEdit ? m_tcpFallbackEdit->text().trimmed() : QString();
 }
 
 QString RobotLinksPanel::robotName() const {
@@ -229,6 +250,9 @@ void RobotLinksPanel::refreshRow(Row& row) {
         fillCombo(row);
     }
     row.combo->setEnabled(on);
+    if (row.type == TransportType::Tcp && m_tcpFallbackEdit) {
+        m_tcpFallbackEdit->setEnabled(on);
+    }
 }
 
 // (Re)fills a row's combo from the current lists and selects what its link

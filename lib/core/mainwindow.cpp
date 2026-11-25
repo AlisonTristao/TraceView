@@ -4081,7 +4081,7 @@ void MainWindow::dialDirectTarget(DeviceConnection* connection, const Device& de
         // and, later, BLE. See BtpBackend::setDirectEndpointKey()'s comment
         // for why this is NOT routed through setHubEndpoint()/connectVia().
         connection->connectToTcp(device.tcpHost, device.tcpPort,
-                                 channelKeyFor(device.peerPassword));
+                                 channelKeyFor(device.peerPassword), device.tcpFallbackHost);
         return;
     }
     if (device.transportType == TransportType::Ble) {
@@ -4387,6 +4387,10 @@ DeviceConnection* MainWindow::createDeviceConnection(const Device& device) {
     connect(connection, &DeviceConnection::recoveryChanged, this,
             [this, id = device.id](const QString& address) {
                 m_devicesGrid->setDeviceRecovery(id, address);
+            });
+    connect(connection, &DeviceConnection::tcpHostResolved, this,
+            [this, id = device.id](const QString& address) {
+                m_devicesGrid->setDeviceTcpFallbackHost(id, address);
             });
     connect(connection, &DeviceConnection::deviceIdentified, this,
             [this, id = device.id](const QString& btpVersion, const QString& btpId) {
