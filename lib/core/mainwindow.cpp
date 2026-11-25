@@ -385,47 +385,6 @@ QVector<SerialPortOption> currentSerialPorts() {
 }
 #endif
 
-// The Lucide icon the Home page's dashboard map draws on a widget's block.
-QString homePreviewIcon(const DashboardItem& item) {
-    static const QHash<QString, QString> icons = {
-        {QStringLiteral("dummy_line"), QStringLiteral("chart-line")},
-        {QStringLiteral("dummy_bar"), QStringLiteral("chart-column")},
-        {QStringLiteral("dummy_gauge"), QStringLiteral("gauge")},
-        {QStringLiteral("audio_spectrum"), QStringLiteral("audio-lines")},
-        {QStringLiteral("serial_monitor"), QStringLiteral("terminal")},
-        {QStringLiteral("robot_log"), QStringLiteral("scroll-text")},
-        {QStringLiteral("text_board"), QStringLiteral("type")},
-        {QStringLiteral("chat"), QStringLiteral("message-square")},
-        {QStringLiteral("push_button"), QStringLiteral("mouse-pointer-click")},
-        {QStringLiteral("toggle_switch"), QStringLiteral("toggle-right")},
-        {QStringLiteral("slider"), QStringLiteral("sliders-horizontal")},
-        {QStringLiteral("led"), QStringLiteral("lightbulb")},
-        {QStringLiteral("scene"), QStringLiteral("rotate-3d")},
-    };
-    return QStringLiteral("lucide:") + icons.value(item.typeId, QStringLiteral("layout-dashboard"));
-}
-
-// Which colour the map gives a widget type (see HomePreviewBlock::tone):
-// charts, controls, text and logs, scenes.
-int homePreviewTone(const QString& typeId) {
-    static const QSet<QString> controls = {QStringLiteral("push_button"),
-                                           QStringLiteral("toggle_switch"),
-                                           QStringLiteral("slider"), QStringLiteral("led")};
-    static const QSet<QString> text = {QStringLiteral("serial_monitor"),
-                                       QStringLiteral("robot_log"),
-                                       QStringLiteral("text_board"), QStringLiteral("chat")};
-    if (controls.contains(typeId)) {
-        return 1;
-    }
-    if (text.contains(typeId)) {
-        return 2;
-    }
-    if (typeId == QLatin1String("scene")) {
-        return 3;
-    }
-    return 0;
-}
-
 }  // namespace
 
 MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
@@ -5273,44 +5232,6 @@ void MainWindow::refreshHomePage() {
     m_homePage->setProjectSummary(summary);
     m_homePage->setRecentProjects(QSettings().value(kRecentFilesSettingsKey).toStringList());
     m_homePage->setGallery(DashboardGallery::names(), DashboardGallery::defaultName());
-    updateHomeDashboardPreview();
-}
-
-void MainWindow::updateHomeDashboardPreview() {
-    if (m_homePage == nullptr || m_dashboardGrid == nullptr) {
-        return;
-    }
-    // Drawn from the active workspace's geometry, not grabbed from the
-    // screen: the dashboard is usually hidden here (Home is on top), and a
-    // picture of it came out tiny or cropped.
-    const DashboardBreakpoint breakpoint = m_dashboardGrid->currentBreakpoint();
-    QVector<HomePreviewBlock> blocks;
-    double pages = 1.0;
-    for (const DashboardItem& item : m_dashboardGrid->items()) {
-        const DashboardItem::Geometry& g = item.geometry(breakpoint);
-        if (g.width <= 0.0 || g.height <= 0.0) {
-            continue;
-        }
-        pages = qMax(pages, g.y + g.height);
-        blocks.append({QRectF(g.x, g.y, g.width, g.height), homePreviewIcon(item), 0});
-        blocks.last().tone = homePreviewTone(item.typeId);
-    }
-    // y/height are in pages (a Small/Medium canvas can grow downwards):
-    // squeeze every page into the picture.
-    for (HomePreviewBlock& block : blocks) {
-        block.rect = QRectF(block.rect.x(), block.rect.y() / pages, block.rect.width(),
-                            block.rect.height() / pages);
-    }
-    double aspect = 16.0 / 9.0;
-    if (breakpoint == DashboardBreakpoint::Small) {
-        aspect = 360.0 / 700.0;
-    } else if (breakpoint == DashboardBreakpoint::Medium) {
-        aspect = 800.0 / 1280.0;
-    } else if (m_contentStack != nullptr && m_contentStack->width() > 200 &&
-               m_contentStack->height() > 120) {
-        aspect = double(m_contentStack->width()) / m_contentStack->height();
-    }
-    m_homePage->setDashboardLayout(blocks, aspect / pages);
 }
 
 void MainWindow::showHomeTab() {

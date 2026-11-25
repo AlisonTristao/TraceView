@@ -781,6 +781,10 @@ QLabel#homeAvatar[tone="success"] {
 QLabel#homeAvatar[tone="warning"] {
     background-color: @warningTint@;
 }
+QLabel#homeProjectIcon {
+    border-radius: 12px;
+    background-color: @accentTint@;
+}
 QFrame#dialogCard {
     background-color: @surface@;
     border: 1px solid @border@;

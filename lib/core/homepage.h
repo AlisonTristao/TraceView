@@ -1,6 +1,5 @@
 #pragma once
 
-#include <QRectF>
 #include <QString>
 #include <QStringList>
 #include <QVector>
@@ -21,7 +20,6 @@ namespace traceview {
 class DialogCard;
 class HomeNameLabel;
 class HomeWordmark;
-class HomePreview;
 
 // One workspace of the open project, as a shortcut on the Home page.
 struct HomeWorkspace {
@@ -29,16 +27,6 @@ struct HomeWorkspace {
     QString name;
     QString icon;  // Lucide id, empty for the default
     int widgets = 0;
-};
-
-// One widget of the active workspace, as the "Continue" card draws it: where
-// it sits (fractions of the dashboard, 0..1 both ways), which Lucide icon
-// stands for its type, and a tone (0..3) for its colour -- charts,
-// controls, text, scenes.
-struct HomePreviewBlock {
-    QRectF rect;
-    QString icon;
-    int tone = 0;
 };
 
 // What the Home page shows of the open project (MainWindow fills it in).
@@ -64,8 +52,7 @@ struct HomeDevice {
 
 // The "Home" tab: where the app starts. A header with the brand and three
 // numbers (robots connected, workspaces, widgets); then the open project
-// ("continue where you left off", with a picture of the dashboard and one
-// button per workspace) and -- in Developer mode -- recent projects, the
+// ("continue where you left off", with one button per workspace) and -- in Developer mode -- recent projects, the
 // dashboard gallery and the New/Open buttons; and the robots around this
 // computer: the project's own devices with their state, then robots the
 // NearbyRobotsService found that the project does not have yet.
@@ -84,10 +71,6 @@ public:
 
     void setDeveloperMode(bool developer);
     void setProjectSummary(const HomeProjectSummary& summary);
-    // The active workspace's layout, drawn as a small map in the "Continue"
-    // card. `aspect` is the dashboard's width / height; no blocks shows a
-    // placeholder.
-    void setDashboardLayout(const QVector<HomePreviewBlock>& blocks, double aspect);
     void setDevices(const QVector<HomeDevice>& devices);
     void setRecentProjects(const QStringList& paths);
     void setGallery(const QStringList& names, const QString& defaultName);
@@ -157,7 +140,7 @@ private:
 
     // Continue.
     DialogCard* m_projectCard = nullptr;
-    HomePreview* m_preview = nullptr;
+    QLabel* m_projectIcon = nullptr;
     QBoxLayout* m_continueRow = nullptr;
     HomeNameLabel* m_projectName = nullptr;
     QLabel* m_projectDetail = nullptr;

@@ -35,6 +35,8 @@ constexpr int kMaxContentWidth = 1160;
 constexpr int kMaxRecent = 5;
 constexpr int kLinkIconSize = 14;
 constexpr int kAvatarSize = 34;
+constexpr int kProjectIconSize = 48;
+constexpr int kProjectIconGlyph = 26;
 constexpr int kAvatarIconSize = 18;
 constexpr int kButtonIconSize = 16;
 constexpr int kRowIconSize = 16;
@@ -207,126 +209,6 @@ private:
     QSvgRenderer* m_renderer = nullptr;
 };
 
-// The active workspace in the "Continue" card, drawn as a map: the
-// dashboard's outline, and one rounded block per widget where it sits, with
-// its type's icon and a coloured edge. Drawn rather than photographed, so it
-// is sharp at any size, follows the theme, and needs the dashboard neither
-// laid out nor visible. Clickable; a placeholder glyph while it is empty.
-class HomePreview : public QWidget {
-public:
-    explicit HomePreview(QWidget* parent) : QWidget(parent) {
-        setCursor(Qt::PointingHandCursor);
-        setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-        setFixedHeight(170);
-    }
-    std::function<void()> onClicked;
-    void setBlocks(const QVector<HomePreviewBlock>& blocks, double aspect) {
-        m_blocks = blocks;
-        m_aspect = aspect > 0.05 ? aspect : 16.0 / 9.0;
-        update();
-    }
-
-protected:
-    void mouseReleaseEvent(QMouseEvent*) override {
-        if (onClicked) {
-            onClicked();
-        }
-    }
-    void paintEvent(QPaintEvent*) override {
-        const ThemePalette& palette = ThemeManager::instance().currentTheme();
-        QPainter painter(this);
-        painter.setRenderHint(QPainter::Antialiasing);
-        const QRectF box = QRectF(rect()).adjusted(0.5, 0.5, -0.5, -0.5);
-        QPainterPath frame;
-        frame.addRoundedRect(box, 8, 8);
-        painter.fillPath(frame, palette.surfaceAlt);
-
-        if (m_blocks.isEmpty()) {
-            const int glyph = 40;
-            const QIcon icon = IconLibrary::instance().icon(
-                QStringLiteral("lucide:layout-dashboard"), palette.textDisabled, glyph);
-            icon.paint(&painter, QRect(rect().center() - QPoint(glyph / 2, glyph / 2),
-                                       QSize(glyph, glyph)));
-        } else {
-            // The dashboard's own shape, as large as fits, centred -- let it
-            // stretch a little towards the card's shape: it is a map, not a
-            // photo, and a narrow island in a wide card looks lost.
-            const QRectF room = box.adjusted(12, 12, -12, -12);
-            const double roomAspect = room.width() / qMax(1.0, room.height());
-            const double aspect = qBound(m_aspect / 1.4, roomAspect, m_aspect * 1.8);
-            QSizeF size(room.height() * aspect, room.height());
-            if (size.width() > room.width()) {
-                size = QSizeF(room.width(), room.width() / aspect);
-            }
-            const QRectF canvas(room.center() - QPointF(size.width() / 2, size.height() / 2),
-                                size);
-            QPainterPath canvasPath;
-            canvasPath.addRoundedRect(canvas, 5, 5);
-            painter.fillPath(canvasPath, palette.background);
-            painter.setPen(QPen(palette.border, 1.0));
-            painter.drawPath(canvasPath);
-
-            const double gap = 2.0;
-            for (const HomePreviewBlock& block : m_blocks) {
-                const QRectF r = QRectF(canvas.x() + block.rect.x() * canvas.width(),
-                                        canvas.y() + block.rect.y() * canvas.height(),
-                                        block.rect.width() * canvas.width(),
-                                        block.rect.height() * canvas.height())
-                                     .adjusted(gap, gap, -gap, -gap)
-                                     .intersected(canvas.adjusted(gap, gap, -gap, -gap));
-                if (r.width() < 3 || r.height() < 3) {
-                    continue;
-                }
-                const QColor tone = toneColor(palette, block.tone);
-                QPainterPath path;
-                const double radius = qMin(4.0, qMin(r.width(), r.height()) / 3);
-                path.addRoundedRect(r, radius, radius);
-                painter.fillPath(path, palette.surface);
-                QColor wash = tone;
-                wash.setAlphaF(0.10);
-                painter.fillPath(path, wash);
-                painter.save();
-                painter.setClipPath(path);
-                painter.fillRect(QRectF(r.left(), r.top(), r.width(), qMin(3.0, r.height() / 4)),
-                                 tone);
-                painter.restore();
-                painter.setPen(QPen(palette.border, 1.0));
-                painter.drawPath(path);
-
-                const int glyph = int(qMin(22.0, qMin(r.width(), r.height()) * 0.5));
-                if (glyph >= 9 && !block.icon.isEmpty()) {
-                    const QIcon icon = IconLibrary::instance().icon(block.icon, tone, glyph);
-                    const QPointF c = r.center();
-                    icon.paint(&painter, QRect(int(c.x() - glyph / 2.0), int(c.y() - glyph / 2.0),
-                                               glyph, glyph));
-                }
-            }
-        }
-        painter.setPen(QPen(palette.border, 1.0));
-        painter.setBrush(Qt::NoBrush);
-        painter.drawPath(frame);
-    }
-
-private:
-    // Charts in the accent, controls green, text and logs amber, scenes in
-    // the theme's last series colour.
-    static QColor toneColor(const ThemePalette& palette, int tone) {
-        switch (tone) {
-        case 1:
-            return palette.success;
-        case 2:
-            return palette.warning;
-        case 3:
-            return palette.series.isEmpty() ? palette.accent : palette.series.last();
-        default:
-            return palette.accent;
-        }
-    }
-
-    QVector<HomePreviewBlock> m_blocks;
-    double m_aspect = 16.0 / 9.0;
-};
-
 HomePage::HomePage(NearbyRobotsService* nearby, QWidget* parent)
     : QWidget(parent), m_nearby(nearby) {
     setObjectName(QStringLiteral("homePage"));
@@ -444,10 +326,6 @@ void HomePage::buildUi() {
 
     // --- Continue -----------------------------------------------------------
     m_projectCard = new DialogCard(QString(), content);
-    m_preview = new HomePreview(m_projectCard);
-    m_preview->onClicked = [this] { emit openDashboardRequested(); };
-    m_projectCard->body()->addWidget(m_preview);
-
     m_projectName = new HomeNameLabel(QString(), m_projectCard);
     m_projectName->setFont(scaledFont(font(), DialogChrome::kPageTitleScale));
     m_projectDetail = DialogChrome::hintLabel(QString(), m_projectCard);
@@ -457,11 +335,22 @@ void HomePage::buildUi() {
     connect(m_openDashboardButton, &QPushButton::clicked, this, &HomePage::openDashboardRequested);
     m_continueRow = new QBoxLayout(QBoxLayout::LeftToRight);
     m_continueRow->setSpacing(10);
+    // A plain dashboard glyph on an accent tile beside the name: the
+    // project at a glance, without picturing the dashboard itself.
+    m_projectIcon = new QLabel(m_projectCard);
+    m_projectIcon->setObjectName(QStringLiteral("homeProjectIcon"));
+    m_projectIcon->setFixedSize(kProjectIconSize, kProjectIconSize);
+    m_projectIcon->setAlignment(Qt::AlignCenter);
     auto* continueText = new QVBoxLayout();
     continueText->setSpacing(2);
     continueText->addWidget(m_projectName);
     continueText->addWidget(m_projectDetail);
-    m_continueRow->addLayout(continueText, 1);
+    // Icon and name stay side by side even when the row stacks (compact).
+    auto* continueIdentity = new QHBoxLayout();
+    continueIdentity->setSpacing(12);
+    continueIdentity->addWidget(m_projectIcon, 0, Qt::AlignVCenter);
+    continueIdentity->addLayout(continueText, 1);
+    m_continueRow->addLayout(continueIdentity, 1);
     m_continueRow->addWidget(m_openDashboardButton, 0, Qt::AlignVCenter);
     m_projectCard->body()->addLayout(m_continueRow);
 
@@ -581,6 +470,10 @@ void HomePage::refreshIcons() {
     };
     // White on the filled accent of a "primary" button, like its label.
     m_openDashboardButton->setIcon(icon("lucide:layout-dashboard", Qt::white));
+    m_projectIcon->setPixmap(IconLibrary::instance()
+                                 .icon(QStringLiteral("lucide:layout-dashboard"), palette.accent,
+                                       kProjectIconGlyph)
+                                 .pixmap(kProjectIconGlyph, kProjectIconGlyph));
     m_newButton->setIcon(icon("lucide:file-plus", palette.textPrimary));
     m_openButton->setIcon(icon("lucide:folder-open", palette.textPrimary));
     m_openLogButton->setIcon(icon("lucide:scroll-text", palette.textPrimary));
@@ -600,10 +493,6 @@ void HomePage::setProjectSummary(const HomeProjectSummary& summary) {
     m_project = summary;
     refreshProjectCard();
     refreshStats();
-}
-
-void HomePage::setDashboardLayout(const QVector<HomePreviewBlock>& blocks, double aspect) {
-    m_preview->setBlocks(blocks, aspect);
 }
 
 void HomePage::setDevices(const QVector<HomeDevice>& devices) {
@@ -977,7 +866,6 @@ void HomePage::applyWidth() {
         }
         // "Continue": the button under the name, full width.
         m_continueRow->setDirection(compact ? QBoxLayout::TopToBottom : QBoxLayout::LeftToRight);
-        m_preview->setFixedHeight(compact ? 130 : 170);
         reflow(m_projectButtons,
                {m_newButton, m_openButton, m_openLogButton, m_manageGalleryButton},
                compact ? 1 : 2);
