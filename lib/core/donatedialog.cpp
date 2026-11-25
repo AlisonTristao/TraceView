@@ -19,10 +19,9 @@ namespace traceview {
 
 namespace {
 
-// Static Pix key (mobile phone type). The country-code-prefixed form is what
-// goes into the BR Code payload; the parenthesized form is only for display.
-constexpr const char* kPixKeyPayload = "+5548999668743";
-constexpr const char* kPixKeyDisplay = "(48) 99966-8743";
+// Static Pix key, random type (EVP): the same lowercase UUID goes into the
+// BR Code payload and is shown under the QR code.
+constexpr const char* kPixKey = "57ad014d-e2ce-40ad-ae53-342b2ff20e7d";
 // EMV Merchant Account/City fields are capped at 25/15 chars and must be
 // ASCII, per the Central Bank's Pix BR Code spec -- no accents here.
 constexpr const char* kMerchantName = "ALISON TRISTAO";
@@ -53,7 +52,7 @@ quint16 crc16Ccitt(const QByteArray& data) {
 // Padroes para Iniciacao do Pix".
 QString buildPixPayload() {
     const QString merchantAccount =
-        emvField("00", "BR.GOV.BCB.PIX") + emvField("01", QString::fromLatin1(kPixKeyPayload));
+        emvField("00", "BR.GOV.BCB.PIX") + emvField("01", QString::fromLatin1(kPixKey));
     const QString additionalData = emvField("05", "***");  // no fixed reference/txid
 
     QString payload;
@@ -139,7 +138,7 @@ DonateDialog::DonateDialog(QWidget* parent) : QDialog(parent) {
     auto* qrView = new QrCodeView(renderQrCode(qr), this);
 
     auto* pixKeyLabel =
-        new QLabel(tr("Pix key (phone): %1").arg(QString::fromLatin1(kPixKeyDisplay)), this);
+        new QLabel(tr("Pix key: %1").arg(QString::fromLatin1(kPixKey)), this);
     pixKeyLabel->setAlignment(Qt::AlignHCenter);
     pixKeyLabel->setTextInteractionFlags(Qt::TextSelectableByMouse);
 
