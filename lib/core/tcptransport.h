@@ -64,11 +64,12 @@ public:
     }
 
 signals:
-    // A refused connection is probed with GET http://<address>/status: when
+    // A refused or timed-out connection is probed with GET http://<address>/status: when
     // the answer is TraceKit's recovery (mode "recovery"), the device is up
     // but out of the app, and the BTP port will never open. Emitted with
-    // that address, and with an empty one once a connection succeeds or the
-    // transport is closed.
+    // that address, and with an empty one once a connection succeeds or a
+    // probe gets any other answer. Kept across retries, which close and
+    // reopen the transport.
     void recoveryChanged(const QString& address);
 
 private slots:

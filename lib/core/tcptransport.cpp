@@ -53,7 +53,6 @@ void TcpTransport::close() {
     m_retryTimer.stop();
     m_connectTimer.stop();
     ++m_dialSequence;  // a lookup still in flight must not dial after close()
-    setRecoveryAddress(QString());
     if (m_socket->state() == QAbstractSocket::UnconnectedState) {
         return;
     }
@@ -157,6 +156,8 @@ void TcpTransport::onConnectTimeout() {
     if (m_socket->state() == QAbstractSocket::ConnectingState) {
         qCWarning(lcConnection) << "TCP connection timed out for" << m_host << m_port;
         m_socket->abort();
+        // Recovery may drop the SYN instead of refusing it: ask here too.
+        probeRecovery();
         emit errorOccurred(tr("TCP connection timed out"));
     }
 }
