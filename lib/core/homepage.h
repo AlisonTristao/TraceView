@@ -99,6 +99,8 @@ signals:
     void deleteGalleryRequested(const QString& name);
     void connectToggleRequested(const QString& deviceId);
     void addRobotRequested(const traceview::NearbyRobot& robot);
+    // Each time the page comes on screen (tab switch or window shown).
+    void shown();
 
 protected:
     void showEvent(QShowEvent* event) override;

@@ -3233,7 +3233,6 @@ void MainWindow::onRibbonTabChanged(int index) {
         activeContent = m_devicesGrid;
     } else if (index == m_homeTabIndex && m_homePage != nullptr) {
         activeContent = m_homePage;
-        refreshHomePage();
     } else if (m_otaTabActive) {
         activeContent = m_otaTab;
     } else if (currentPage != nullptr && currentPage == m_btpMonitorTabPage) {
@@ -3246,6 +3245,9 @@ void MainWindow::onRibbonTabChanged(int index) {
             }
         }
     }
+    // Home refreshes itself when shown (HomePage::shown): refreshed here,
+    // before the switch, it was still hidden and the refresh was skipped --
+    // a robot connected on the Devices tab still read "Connecting".
     m_contentStack->setCurrentWidget(activeContent);
 
     // Only generate OTA status-poll HTTP traffic while its tab is actually
@@ -5305,6 +5307,7 @@ void MainWindow::buildHomePage() {
     });
     connect(m_homePage, &HomePage::addRobotRequested, this,
             &MainWindow::addNearbyRobotToProject);
+    connect(m_homePage, &HomePage::shown, this, &MainWindow::refreshHomePage);
 }
 
 void MainWindow::refreshHomePage() {
