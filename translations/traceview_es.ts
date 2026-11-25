@@ -913,7 +913,7 @@ Allow it to connect devices and send them commands until AI assistant access is 
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="+159"/>
+        <location filename="../lib/core/mainwindow.cpp" line="+158"/>
         <source>TraceView Project (*.tvproj)</source>
         <translation>Proyecto TraceView (*.tvproj)</translation>
     </message>
@@ -934,14 +934,12 @@ Allow it to connect devices and send them commands until AI assistant access is 
         <translation>Depuración -- datos de gráfico sintéticos</translation>
     </message>
     <message>
-        <location filename="../lib/core/workspaceswitcher.cpp" line="+87"/>
         <source>Rename workspace</source>
-        <translation>Renombrar espacio de trabajo</translation>
+        <translation type="vanished">Renombrar espacio de trabajo</translation>
     </message>
     <message>
-        <location line="+8"/>
         <source>Delete workspace</source>
-        <translation>Eliminar espacio de trabajo</translation>
+        <translation type="vanished">Eliminar espacio de trabajo</translation>
     </message>
     <message>
         <location filename="../lib/devices/deviceconfigdialog.cpp" line="+66"/>
@@ -954,9 +952,8 @@ Allow it to connect devices and send them commands until AI assistant access is 
         <translation>(sin nombre)</translation>
     </message>
     <message>
-        <location filename="../lib/core/workspaceswitcher.cpp" line="-25"/>
         <source>Change icon</source>
-        <translation>Cambiar icono</translation>
+        <translation type="vanished">Cambiar icono</translation>
     </message>
     <message>
         <location filename="../lib/dashboard/widgets/textboardwidget.cpp" line="+231"/>
@@ -1422,6 +1419,29 @@ Allow it to connect devices and send them commands until AI assistant access is 
         <location line="+8"/>
         <source>1200 baud resets the ESP32-S3 into its bootloader; using 115200</source>
         <translation>1200 baudios reinicia el ESP32-S3 en su bootloader; usando 115200</translation>
+    </message>
+</context>
+<context>
+    <name>traceview::AppNavBar</name>
+    <message>
+        <location filename="../lib/core/appnavbar.cpp" line="+101"/>
+        <source>Home</source>
+        <translation>Inicio</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Dashboard</source>
+        <translation>Panel</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Robots</source>
+        <translation>Robots</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Notifications</source>
+        <translation>Avisos</translation>
     </message>
 </context>
 <context>
@@ -3525,7 +3545,7 @@ Permitidos: %1</translation>
 <context>
     <name>traceview::DonateDialog</name>
     <message>
-        <location filename="../lib/core/donatedialog.cpp" line="+129"/>
+        <location filename="../lib/core/donatedialog.cpp" line="+128"/>
         <location line="+7"/>
         <source>Support TraceView</source>
         <translation>Apoya a TraceView</translation>
@@ -3537,8 +3557,12 @@ Permitidos: %1</translation>
     </message>
     <message>
         <location line="+5"/>
+        <source>Pix key: %1</source>
+        <translation>Clave Pix: %1</translation>
+    </message>
+    <message>
         <source>Pix key (phone): %1</source>
-        <translation>Clave Pix (teléfono): %1</translation>
+        <translation type="vanished">Clave Pix (teléfono): %1</translation>
     </message>
     <message>
         <location line="+9"/>
@@ -4290,7 +4314,7 @@ Permitidos: %1</translation>
         <translation>, </translation>
     </message>
     <message>
-        <location line="+373"/>
+        <location line="+366"/>
         <source>AI assistant access is off.</source>
         <translation>El acceso de asistentes de IA está desactivado.</translation>
     </message>
@@ -4461,12 +4485,12 @@ Pérdidas: %2</translation>
     </message>
     <message>
         <location line="+0"/>
-        <location line="+4706"/>
+        <location line="+4709"/>
         <source>Later</source>
         <translation>Más tarde</translation>
     </message>
     <message>
-        <location line="-4699"/>
+        <location line="-4702"/>
         <source>&amp;Access</source>
         <translation>&amp;Acceso</translation>
     </message>
@@ -4616,18 +4640,18 @@ Pérdidas: %2</translation>
     </message>
     <message>
         <location line="+18"/>
-        <location line="+3897"/>
+        <location line="+3900"/>
         <source>Undo</source>
         <translation>Deshacer</translation>
     </message>
     <message>
-        <location line="-3895"/>
-        <location line="+3895"/>
+        <location line="-3898"/>
+        <location line="+3898"/>
         <source>Redo</source>
         <translation>Rehacer</translation>
     </message>
     <message>
-        <location line="-3852"/>
+        <location line="-3855"/>
         <source>Add Device</source>
         <translation>Añadir Dispositivo</translation>
     </message>
@@ -4673,13 +4697,13 @@ Pérdidas: %2</translation>
     </message>
     <message>
         <location line="+36"/>
-        <location line="+3818"/>
+        <location line="+3821"/>
         <source>Fullscreen dashboard (F11)</source>
         <translation>Panel en pantalla completa (F11)</translation>
     </message>
     <message>
-        <location line="-3729"/>
-        <location line="+500"/>
+        <location line="-3732"/>
+        <location line="+520"/>
         <source>Home</source>
         <translation>Inicio</translation>
     </message>
@@ -4765,7 +4789,7 @@ Pérdidas: %2</translation>
         <translation>Este espacio de trabajo ahora tiene su propia apariencia.</translation>
     </message>
     <message>
-        <location line="+286"/>
+        <location line="+285"/>
         <source>Grid precision: %1×</source>
         <translation>Precisión de la cuadrícula: %1×</translation>
     </message>
@@ -4794,12 +4818,12 @@ Pérdidas: %2</translation>
 %3</translation>
     </message>
     <message>
-        <location line="+395"/>
+        <location line="+394"/>
         <source>Notifications</source>
         <translation>Notificaciones</translation>
     </message>
     <message>
-        <location line="+158"/>
+        <location line="+143"/>
         <source>Close</source>
         <translation>Cerrar</translation>
     </message>
@@ -5000,18 +5024,18 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
         <translation>Cerrar app</translation>
     </message>
     <message>
-        <location line="-3918"/>
-        <location line="+3599"/>
+        <location line="-3921"/>
+        <location line="+3602"/>
         <source>Devices</source>
         <translation>Dispositivos</translation>
     </message>
     <message>
-        <location line="-3524"/>
+        <location line="-3506"/>
         <source>Subscriptions</source>
         <translation>Suscripciones</translation>
     </message>
     <message>
-        <location line="+269"/>
+        <location line="+268"/>
         <source>New Workspace</source>
         <translation>Nuevo Espacio de Trabajo</translation>
     </message>
@@ -5022,12 +5046,12 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
         <translation>Nombre:</translation>
     </message>
     <message>
-        <location line="-2277"/>
+        <location line="-2290"/>
         <source>TraceView v%1</source>
         <translation>TraceView v%1</translation>
     </message>
     <message>
-        <location line="+1186"/>
+        <location line="+1179"/>
         <source>&amp;Help</source>
         <translation>A&amp;yuda</translation>
     </message>
@@ -5052,7 +5076,7 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
         <translation>Forzar cierre inesperado...</translation>
     </message>
     <message>
-        <location line="+1045"/>
+        <location line="+1065"/>
         <source>Workspace</source>
         <translation>Espacio de Trabajo</translation>
     </message>
@@ -5078,23 +5102,23 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
     </message>
     <message>
         <location line="+81"/>
-        <location line="+3097"/>
+        <location line="+3080"/>
         <source>Add widget</source>
         <translation>Añadir widget</translation>
     </message>
     <message>
-        <location line="-3094"/>
+        <location line="-3077"/>
         <source>Remove selected widget (%1)</source>
         <translation>Eliminar widget seleccionado (%1)</translation>
     </message>
     <message>
         <location line="+8"/>
-        <location line="+3099"/>
+        <location line="+3082"/>
         <source>Add device</source>
         <translation>Añadir dispositivo</translation>
     </message>
     <message>
-        <location line="-3096"/>
+        <location line="-3079"/>
         <source>Remove selected device (%1)</source>
         <translation>Eliminar dispositivo seleccionado (%1)</translation>
     </message>
@@ -5144,7 +5168,7 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
         <translation>Desagrupar — permite que los widgets seleccionados se muevan de forma independiente de nuevo</translation>
     </message>
     <message>
-        <location line="+28"/>
+        <location line="+27"/>
         <source>Screen size: Small</source>
         <translation>Tamaño de pantalla: Pequeño</translation>
     </message>
@@ -5159,7 +5183,7 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
         <translation>Tamaño de pantalla: Grande</translation>
     </message>
     <message>
-        <location line="+272"/>
+        <location line="+270"/>
         <source>Disable editing — lock the dashboard layout</source>
         <translation>Desactivar edición — bloquear el diseño del dashboard</translation>
     </message>
@@ -5179,7 +5203,7 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
         <translation>Mostrar los paneles Capas/Propiedades</translation>
     </message>
     <message>
-        <location line="+399"/>
+        <location line="+385"/>
         <source>New Device</source>
         <translation>Nuevo Dispositivo</translation>
     </message>
@@ -5255,12 +5279,12 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
         <translation>M&amp;ovimiento</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="-1681"/>
+        <location filename="../lib/core/mainwindow.cpp" line="-1684"/>
         <source>Dashboard</source>
         <translation>Dashboard</translation>
     </message>
     <message>
-        <location line="+2082"/>
+        <location line="+2085"/>
         <source>%1: this BLE address now answers as a different robot (expected %2, got %3)</source>
         <translation>%1: esta dirección BLE ahora responde como otro robot (se esperaba %2, se obtuvo %3)</translation>
     </message>
@@ -8277,12 +8301,31 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
 <context>
     <name>traceview::WorkspaceDock</name>
     <message>
-        <location filename="../lib/core/workspacedock.cpp" line="+178"/>
         <source>New Workspace…</source>
-        <translation>Nuevo Espacio de Trabajo…</translation>
+        <translation type="vanished">Nuevo Espacio de Trabajo…</translation>
     </message>
     <message>
-        <location line="+19"/>
+        <source>Rename…</source>
+        <translation type="vanished">Renombrar…</translation>
+    </message>
+    <message>
+        <source>Change Icon…</source>
+        <translation type="vanished">Cambiar icono…</translation>
+    </message>
+    <message>
+        <source>Delete Workspace</source>
+        <translation type="vanished">Eliminar Espacio de Trabajo</translation>
+    </message>
+</context>
+<context>
+    <name>traceview::WorkspaceStrip</name>
+    <message>
+        <location filename="../lib/core/workspacestrip.cpp" line="+204"/>
+        <source>New Workspace…</source>
+        <translation>Nuevo espacio de trabajo…</translation>
+    </message>
+    <message>
+        <location line="+27"/>
         <source>Rename…</source>
         <translation>Renombrar…</translation>
     </message>
@@ -8294,15 +8337,14 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
     <message>
         <location line="+3"/>
         <source>Delete Workspace</source>
-        <translation>Eliminar Espacio de Trabajo</translation>
+        <translation>Eliminar espacio de trabajo</translation>
     </message>
 </context>
 <context>
     <name>traceview::WorkspaceSwitcher</name>
     <message>
-        <location filename="../lib/core/workspaceswitcher.cpp" line="+192"/>
         <source>New Workspace…</source>
-        <translation>Nuevo Espacio de Trabajo…</translation>
+        <translation type="vanished">Nuevo Espacio de Trabajo…</translation>
     </message>
 </context>
 </TS>

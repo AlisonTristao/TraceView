@@ -14,6 +14,25 @@ release flow.
   texture. Dots and Grid now draw the snap grid itself in both modes, so it
   stays the same grid and follows the precision setting.
 
+## [5.1.0] - 2026-11-25
+
+### Changed
+
+- **Workspace strip**: workspaces are now a row of chips (icon + name) right
+  above the dashboard, on every screen size. It shows only on the Dashboard
+  tab, stays in fullscreen and scrolls sideways when there are many. Tap to
+  switch; right-click or long-press opens Rename, Change Icon and Delete, and
+  "+" creates one (those in Developer mode only). It replaces the switcher
+  at the bottom-right of the window and the phone's workspace dock.
+- **Phone navigation**: on a phone or tablet the bottom bar is now app
+  navigation: Home, Dashboard, Robots (Developer mode only) and
+  Notifications, with the unread count on Notifications. It no longer shows
+  the workspaces outside the Dashboard. The bell and the Dashboard's house
+  button move into it there.
+- The desktop status bar keeps only status: fullscreen, messages, the bell
+  and the screen-size selector.
+- The Donate dialog uses a random Pix key instead of a phone number.
+
 ## [5.0.3] - 2026-11-25
 
 ### Removed

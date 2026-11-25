@@ -55,6 +55,7 @@
 #endif
 
 #include "aboutdialog.h"
+#include "appnavbar.h"
 #include "agent/agentbridgeserver.h"
 #include "agent/toolregistry.h"
 #include "agentapptools.h"
@@ -140,13 +141,12 @@
 #endif
 #include "iconpickerdialog.h"
 #include "paletteeditordialog.h"
-#include "workspacedock.h"
+#include "workspacestrip.h"
 #include "notificationbell.h"
 #include "notificationlistview.h"
 #include "notificationpanel.h"
 #include "notificationtoasts.h"
 #include "protocol/logseverity.h"
-#include "workspaceswitcher.h"
 
 namespace traceview {
 
@@ -157,7 +157,7 @@ namespace {
 const QString kProjectFileFilter =
     QCoreApplication::translate("MainWindow", "TraceView Project (*.tvproj)");
 constexpr const char* kRecentFilesSettingsKey = "recentFiles/paths";
-// IconLibrary ids for workspace buttons (WorkspaceSwitcher/WorkspaceDock):
+// IconLibrary ids for workspace buttons (WorkspaceStrip):
 // what a workspace shows until the user picks its own icon, and the fixed
 // one of the built-in Subscriptions entry.
 constexpr const char* kDefaultWorkspaceIconId = "lucide:layout-dashboard";
@@ -810,18 +810,20 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     onRibbonTabChanged(ribbon->currentIndex());
 
     // Workspace navigation and manual preview size stay at the right of the footer.
-    buildWorkspaceSwitcher();
+    buildWorkspaceStrip();
     m_statusRow->layout()->addWidget(m_screenSizeButton);
 
-    // The bell sits just left of the workspace switcher: the corner the
+    // The bell sits just left of the screen-size button: the corner the
     // pop-up cards come from, and m_statusRow survives fullscreen.
     m_notificationBell = new NotificationBell(m_notificationLog, m_statusRow);
     m_notificationPanel->setToggleButton(m_notificationBell);
     connect(m_notificationBell, &QToolButton::toggled, this, &MainWindow::setNotificationPanelOpen);
     {
         auto* statusRowLayout = qobject_cast<QHBoxLayout*>(m_statusRow->layout());
-        statusRowLayout->insertWidget(statusRowLayout->indexOf(m_workspaceSwitcher), m_notificationBell);
+        statusRowLayout->insertWidget(statusRowLayout->indexOf(m_screenSizeButton),
+                                      m_notificationBell);
     }
+    m_appNavBar->setNotificationLog(m_notificationLog);
     // A panel pinned last time comes back open -- once the chrome (phone or
     // desktop) is settled, and never as a Page on a phone.
     QTimer::singleShot(0, this, [this] {
@@ -833,7 +835,7 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     // The native QStatusBar this row replaced showed one of these in its
     // bottom-right corner by default (sizeGripEnabled() defaults to true,
     // and nothing here ever turned it off) -- added last so it lands at the
-    // far right, past m_workspaceSwitcher, same corner it occupied before.
+    // far right, past m_screenSizeButton, same corner it occupied before.
     m_statusRow->layout()->addWidget(new QSizeGrip(m_statusRow));
 
     // Created after everything else in m_appShell so it stacks above the
@@ -1654,8 +1656,8 @@ void MainWindow::buildMenus() {
     // opens a menu" (same as Android's own overflow icon), so the style's
     // usual drop-down arrow indicator next to it would be a redundant
     // second affordance saying the same thing; suppressed rather than
-    // repositioned (contrast WorkspaceSwitcher's own corner-widget button,
-    // which keeps the indicator because it's paired with visible text).
+    // repositioned (contrast a button paired with visible text,
+    // which keeps the indicator).
     m_optionsButton->setStyleSheet(
         "QToolButton#optionsButton::menu-indicator { image: none; width: 0px; }");
 
@@ -1711,7 +1713,7 @@ void MainWindow::updateAccessMenu() {
 
         QAction* logoutAction = m_accessMenu->addAction(tr("&Exit Developer Mode"));
         // Deferred to the next event-loop turn rather than called straight
-        // from here -- same hazard WorkspaceSwitcher::rebuildMenu() already
+        // from here -- same hazard WorkspaceStrip::emitDeferred() already
         // guards against (see its own comment): logout() emits
         // modeChanged() synchronously, which reaches back into this very
         // function via MainWindow::applyUserMode() -> updateAccessMenu() ->
@@ -1811,9 +1813,9 @@ void MainWindow::applyUserMode(UserModeManager::UserMode mode) {
     // mode either.
     m_togglePanelsButton->setVisible(isDeveloper);
 
-    if (m_workspaceSwitcher) {
-        m_workspaceSwitcher->setManagementEnabled(isDeveloper);
-        m_workspaceDock->setManagementEnabled(isDeveloper);
+    if (m_workspaceStrip) {
+        m_workspaceStrip->setManagementEnabled(isDeveloper);
+        m_appNavBar->setDeveloperMode(isDeveloper);
     }
 
     updateAccessMenu();
@@ -2214,7 +2216,7 @@ Ribbon* MainWindow::buildRibbon() {
     // page: the ribbon's tab strip hides during fullscreen
     // (onFullscreenToggled -- m_ribbon->setTabBarVisible(false)), which
     // used to be harmless for this button since the Run page itself stayed
-    // visible, but placing the workspace switcher in the ribbon's tab row
+    // visible, but placing a switcher in the ribbon's tab row
     // (topico's earlier design) broke under that same hide. m_statusRow is
     // never touched by fullscreen, so anything anchored there survives it
     // for free.
@@ -2255,7 +2257,7 @@ Ribbon* MainWindow::buildRibbon() {
 
     // Window-level, same reasoning as fullscreen/exitFullscreen above --
     // browser/editor-style tab cycling (Ctrl+Tab forward, Ctrl+Shift+Tab
-    // back) through WorkspaceManager's own list order. m_workspaceSwitcher
+    // back) through WorkspaceManager's own list order. m_workspaceStrip
     // doesn't exist yet at this point (built last in the constructor) but
     // these only fire on a later keypress, well after construction finishes.
     auto* nextWorkspaceAction = new QAction(this);
@@ -2344,48 +2346,69 @@ Ribbon* MainWindow::buildRibbon() {
     return ribbon;
 }
 
-void MainWindow::buildWorkspaceSwitcher() {
-    // m_statusRow (bottom-right), not the ribbon: see the comment above
-    // m_fullscreenButton's construction in buildRibbon() for why -- the
-    // ribbon's tab row is hidden while fullscreen, which this widget used
-    // to live inside via Ribbon::setCornerWidget().
-    m_workspaceSwitcher = new WorkspaceSwitcher(this);
-    connect(m_workspaceSwitcher, &WorkspaceSwitcher::workspaceSelected, this,
-            &MainWindow::onWorkspaceSelected);
-    connect(m_workspaceSwitcher, &WorkspaceSwitcher::workspaceDeleteRequested, this,
-            &MainWindow::onWorkspaceDeleteRequested);
-    connect(m_workspaceSwitcher, &WorkspaceSwitcher::newWorkspaceRequested, this,
-            &MainWindow::onNewWorkspaceRequested);
-    connect(m_workspaceSwitcher, &WorkspaceSwitcher::iconChangeRequested, this,
-            &MainWindow::pickWorkspaceIcon);
-    connect(m_workspaceSwitcher, &WorkspaceSwitcher::renameRequested, this,
-            &MainWindow::renameWorkspace);
-    m_workspaceSwitcher->updateIcons(ThemeManager::instance().currentTheme().textPrimary);
-    m_statusRow->layout()->addWidget(m_workspaceSwitcher);
-
-    // Directly under m_statusRow in m_appShell; exactly one of the two is
-    // visible at a time (updateChromeVisibility()).
-    m_workspaceDock = new WorkspaceDock(m_appShell);
-    connect(m_workspaceDock, &WorkspaceDock::workspaceSelected, this,
-            &MainWindow::onWorkspaceSelected);
-    connect(m_workspaceDock, &WorkspaceDock::workspaceDeleteRequested, this,
-            &MainWindow::onWorkspaceDeleteRequested);
-    connect(m_workspaceDock, &WorkspaceDock::newWorkspaceRequested, this,
-            &MainWindow::onNewWorkspaceRequested);
-    connect(m_workspaceDock, &WorkspaceDock::iconChangeRequested, this,
-            &MainWindow::pickWorkspaceIcon);
-    connect(m_workspaceDock, &WorkspaceDock::renameRequested, this,
-            &MainWindow::renameWorkspace);
+void MainWindow::buildWorkspaceStrip() {
     const ThemePalette& palette = ThemeManager::instance().currentTheme();
-    m_workspaceDock->updateIcons(palette.textPrimary, palette.accent);
-    m_workspaceDock->setVisible(compactChromeActive());
-    m_appShell->layout()->addWidget(m_workspaceDock);
 
-    refreshWorkspaceSwitcher();
+    // Between the ribbon and the content area, so it sits right above the
+    // canvas; shown only on the Dashboard tab (updateNavigationChrome()) and
+    // kept in fullscreen, which hides the ribbon's tab row but not this.
+    m_workspaceStrip = new WorkspaceStrip(m_appShell);
+    connect(m_workspaceStrip, &WorkspaceStrip::workspaceSelected, this,
+            &MainWindow::onWorkspaceSelected);
+    connect(m_workspaceStrip, &WorkspaceStrip::workspaceDeleteRequested, this,
+            &MainWindow::onWorkspaceDeleteRequested);
+    connect(m_workspaceStrip, &WorkspaceStrip::newWorkspaceRequested, this,
+            &MainWindow::onNewWorkspaceRequested);
+    connect(m_workspaceStrip, &WorkspaceStrip::iconChangeRequested, this,
+            &MainWindow::pickWorkspaceIcon);
+    connect(m_workspaceStrip, &WorkspaceStrip::renameRequested, this,
+            &MainWindow::renameWorkspace);
+    m_workspaceStrip->updateIcons(palette.textPrimary, palette.accent);
+    static_cast<QVBoxLayout*>(m_appShell->layout())
+        ->insertWidget(m_appShell->layout()->indexOf(m_contentRow), m_workspaceStrip);
+
+    // The very bottom of m_appShell, under m_statusRow; exactly one of the
+    // two is visible at a time (updateChromeVisibility()).
+    m_appNavBar = new AppNavBar(m_appShell);
+    connect(m_appNavBar, &AppNavBar::homeRequested, this, &MainWindow::showHomeTab);
+    connect(m_appNavBar, &AppNavBar::dashboardRequested, this, &MainWindow::showDashboardTab);
+    connect(m_appNavBar, &AppNavBar::robotsRequested, this, [this]() {
+        m_ribbon->setCurrentIndex(m_devicesTabIndex);
+        onRibbonTabChanged(m_devicesTabIndex);
+    });
+    // The same panel the bell opens (a Page in compact chrome); the bell
+    // itself is hidden there, so this item stands in for it.
+    connect(m_appNavBar, &AppNavBar::notificationsRequested, this, [this]() {
+        if (m_notificationBell) {
+            m_notificationBell->click();
+        }
+    });
+    m_appNavBar->setDeveloperMode(developerUiActive());
+    m_appNavBar->setVisible(compactChromeActive());
+    m_appShell->layout()->addWidget(m_appNavBar);
+    updateNavigationChrome(m_ribbon->currentIndex());
+
+    refreshWorkspaceStrip();
 }
 
-void MainWindow::refreshWorkspaceSwitcher() {
-    QVector<WorkspaceSwitcher::Entry> entries;
+void MainWindow::updateNavigationChrome(int index) {
+    if (m_workspaceStrip == nullptr) {
+        return;
+    }
+    m_workspaceStrip->setVisible(index == m_dashboardTabIndex);
+    AppNavBar::Tab tab = AppNavBar::Tab::None;
+    if (index == m_homeTabIndex) {
+        tab = AppNavBar::Tab::Home;
+    } else if (index == m_dashboardTabIndex) {
+        tab = AppNavBar::Tab::Dashboard;
+    } else if (index == m_devicesTabIndex) {
+        tab = AppNavBar::Tab::Robots;
+    }
+    m_appNavBar->setCurrent(tab);
+}
+
+void MainWindow::refreshWorkspaceStrip() {
+    QVector<WorkspaceStrip::Entry> entries;
     for (const Workspace& workspace : WorkspaceManager::instance().workspaces()) {
         entries.append({workspace.id, workspace.name, false, resolvedWorkspaceIcon(workspace.icon)});
     }
@@ -2394,8 +2417,7 @@ void MainWindow::refreshWorkspaceSwitcher() {
     const QString activeId = m_subscriptionsWorkspaceActive
                                  ? QString::fromLatin1(kSubscriptionsWorkspaceId)
                                  : WorkspaceManager::instance().activeId();
-    m_workspaceSwitcher->setWorkspaces(entries, activeId);
-    m_workspaceDock->setWorkspaces(entries, activeId);
+    m_workspaceStrip->setWorkspaces(entries, activeId);
 }
 
 bool MainWindow::pickWorkspaceIcon(const QString& id) {
@@ -2408,7 +2430,7 @@ bool MainWindow::pickWorkspaceIcon(const QString& id) {
         return false;
     }
     workspaces.setIconFor(id, dialog.selectedId());
-    refreshWorkspaceSwitcher();
+    refreshWorkspaceStrip();
     return true;
 }
 
@@ -2425,7 +2447,7 @@ void MainWindow::renameWorkspace(const QString& id) {
         return;
     }
     const QString stored = workspaces.renameWorkspace(id, name);
-    refreshWorkspaceSwitcher();
+    refreshWorkspaceStrip();
     postStatus(tr("Renamed workspace \"%1\" to \"%2\".").arg(oldName, stored), 3000,
                StatusSeverity::Success);
 }
@@ -2438,7 +2460,7 @@ void MainWindow::switchToWorkspace(const QString& id) {
     m_subscriptionsWorkspaceActive = id == QLatin1String(kSubscriptionsWorkspaceId);
     m_ribbon->setCurrentIndex(m_dashboardTabIndex);
     onRibbonTabChanged(m_dashboardTabIndex);
-    refreshWorkspaceSwitcher();
+    refreshWorkspaceStrip();
     if (m_subscriptionsWorkspaceActive) {
         applyWorkspaceAppearance();
         updateSubscriptionsWorkspace();
@@ -2455,7 +2477,7 @@ void MainWindow::switchToWorkspace(const QString& id) {
     m_dashboardGrid->undoStack()->clear();
     refreshPropertiesPanel();
     refreshLayersPanel();
-    refreshWorkspaceSwitcher();
+    refreshWorkspaceStrip();
 }
 
 void MainWindow::buildAppearanceMenus(QMenu* viewMenu) {
@@ -2665,8 +2687,8 @@ void MainWindow::onNewWorkspaceRequested() {
     }
 
     const QString newId = createWorkspace(name.trimmed());
-    // Straight on to its icon -- in compact chrome the icon is all the dock
-    // shows. Cancelling keeps the default glyph; it can be changed later.
+    // Straight on to its icon -- the icon is what the chip shows
+    // beside the name. Cancelling keeps the default glyph; it can be changed later.
     pickWorkspaceIcon(newId);
     postStatus(tr("Created workspace \"%1\".").arg(WorkspaceManager::instance().nameFor(newId)),
                3000, StatusSeverity::Success);
@@ -2683,7 +2705,7 @@ QString MainWindow::createWorkspace(const QString& name) {
     m_dashboardGrid->undoStack()->clear();
     refreshPropertiesPanel();
     refreshLayersPanel();
-    refreshWorkspaceSwitcher();
+    refreshWorkspaceStrip();
     return newId;
 }
 
@@ -2722,7 +2744,7 @@ void MainWindow::deleteWorkspace(const QString& id) {
     } else {
         syncBackgroundTelemetry(BackgroundSync::Full);
     }
-    refreshWorkspaceSwitcher();
+    refreshWorkspaceStrip();
     postStatus(tr("Deleted workspace \"%1\".").arg(name), 3000);
 }
 
@@ -2851,9 +2873,8 @@ void MainWindow::updateRibbonIcons() {
     m_redoAction->setIcon(makeArrowIcon(palette.textPrimary, /*pointingLeft=*/false));
     m_fullscreenButton->setIcon(
         makeFullscreenIcon(palette.textPrimary, m_fullscreenButton->isChecked()));
-    if (m_workspaceSwitcher) {
-        m_workspaceSwitcher->updateIcons(palette.textPrimary);
-        m_workspaceDock->updateIcons(palette.textPrimary, palette.accent);
+    if (m_workspaceStrip) {
+        m_workspaceStrip->updateIcons(palette.textPrimary, palette.accent);
     }
     m_optionsButton->setIcon(makeOptionsIcon(palette.textPrimary));
     updateEditModeIcon();
@@ -3026,22 +3047,26 @@ void MainWindow::updateChromeVisibility() {
         static_cast<QHBoxLayout*>(optionsRow->layout())->insertWidget(0, m_optionsButton);
     }
     m_optionsButton->setVisible(compact);
-    // Compact chrome gives the whole bottom bar to workspace navigation:
-    // m_statusRow (fullscreen toggle, status text, workspace switcher,
-    // screen-size selector) makes way for m_workspaceDock. Status messages
-    // still land in the Notifications history.
+    // Compact chrome gives the whole bottom bar to app navigation:
+    // m_statusRow (fullscreen toggle, status text, bell, screen-size
+    // selector) makes way for m_appNavBar. Status messages still land in the
+    // Notifications history.
     m_statusRow->setVisible(!compact);
-    if (m_workspaceDock) {
-        m_workspaceDock->setVisible(compact);
+    if (m_appNavBar) {
+        m_appNavBar->setVisible(compact);
+    }
+    // The nav bar has Home, so the Dashboard row's own house button goes.
+    if (m_homeButton) {
+        m_homeButton->setVisible(!compact);
     }
     // The screen-size selector must stay reachable in a Developer preview
     // (it's the way back out of Small/Medium), so it follows the options
     // button up to the right end of the current ribbon page; back to its
     // spot in m_statusRow, just left of the size grip, otherwise.
     // Skipped until the constructor's tail has seated it in m_statusRow
-    // (m_workspaceDock is built right before that).
+    // (m_appNavBar is built right before that).
     QWidget* screenSizeRow = compact ? optionsRow : m_statusRow;
-    if (m_workspaceDock && m_screenSizeButton->parentWidget() != screenSizeRow) {
+    if (m_appNavBar && m_screenSizeButton->parentWidget() != screenSizeRow) {
         m_screenSizeButton->parentWidget()->layout()->removeWidget(m_screenSizeButton);
         if (compact) {
             screenSizeRow->layout()->addWidget(m_screenSizeButton);
@@ -3050,7 +3075,7 @@ void MainWindow::updateChromeVisibility() {
         }
     }
     // The bell follows the options button too (m_statusRow is hidden), back
-    // to just left of the workspace switcher otherwise.
+    // to just left of the screen-size button otherwise.
     if (m_notificationBell) {
         QWidget* bellRow = compact ? optionsRow : m_statusRow;
         if (m_notificationBell->parentWidget() != bellRow) {
@@ -3059,9 +3084,11 @@ void MainWindow::updateChromeVisibility() {
             if (compact) {
                 rowLayout->addWidget(m_notificationBell);
             } else {
-                rowLayout->insertWidget(rowLayout->indexOf(m_workspaceSwitcher), m_notificationBell);
+                rowLayout->insertWidget(rowLayout->indexOf(m_screenSizeButton), m_notificationBell);
             }
         }
+        // The nav bar's Notifications item replaces it in compact chrome.
+        m_notificationBell->setVisible(!compact);
         // Switching between phone and desktop chrome (a Developer preview)
         // with it open: close it rather than carry the Page into the
         // desktop or the docked panel into a phone.
@@ -3089,11 +3116,9 @@ void MainWindow::removeRibbonTab(int index) {
 }
 
 void MainWindow::restoreScreenSizeButtonToStatusRow() {
-    // Its constructor-time spot: right of m_workspaceSwitcher, left of the
-    // size grip.
+    // Its constructor-time spot: left of the size grip (the last item).
     auto* statusRowLayout = static_cast<QHBoxLayout*>(m_statusRow->layout());
-    statusRowLayout->insertWidget(statusRowLayout->indexOf(m_workspaceSwitcher) + 1,
-                                  m_screenSizeButton);
+    statusRowLayout->insertWidget(statusRowLayout->count() - 1, m_screenSizeButton);
 }
 
 void MainWindow::applyBreakpointViewport() {
@@ -3111,7 +3136,7 @@ void MainWindow::applyBreakpointViewport() {
 
     // canvasHeightMultiplier() stretches the CONTENT, not the device: the
     // dashboard scrolls vertically inside m_dashboardScrollArea while the
-    // chrome around it (ribbon, m_workspaceDock) stays put, the same way a
+    // chrome around it (ribbon, m_appNavBar) stays put, the same way a
     // too-tall page scrolls on an actual phone. Applied for any Small/Medium
     // breakpoint -- a real phone/tablet in User mode included, not just the
     // preview; gating it on previewActive() is what used to snap the canvas
@@ -3158,6 +3183,7 @@ void MainWindow::updateTogglePanelsIcon() {
 
 void MainWindow::onRibbonTabChanged(int index) {
     m_dashboardTabActive = index == m_dashboardTabIndex;
+    updateNavigationChrome(index);
     m_devicesTabActive = index == m_devicesTabIndex;
     // Matched by ribbon page pointer rather than by index, same reasoning as
     // m_openLogTabs: the OTA tab is closable, so its index shifts whenever
@@ -4997,7 +5023,7 @@ void MainWindow::startNewProject() {
     m_devicesGrid->undoStack()->clear();
     refreshPropertiesPanel();
     refreshLayersPanel();
-    refreshWorkspaceSwitcher();
+    refreshWorkspaceStrip();
     markProjectClean();
     postStatus(tr("Started a new project."), 3000);
 }
@@ -5785,7 +5811,7 @@ bool MainWindow::loadProjectFile(const QString& path) {
     resolveDashboardBindings();
     refreshPropertiesPanel();
     refreshLayersPanel();
-    refreshWorkspaceSwitcher();
+    refreshWorkspaceStrip();
     markProjectClean();
     return true;
 }

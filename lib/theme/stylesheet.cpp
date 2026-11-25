@@ -244,15 +244,61 @@ QToolButton:disabled {
    Medium preview needs to frame, which the native bar (owned by QMainWindow
    itself, outside centralWidget()) could not. Same rule kept for QStatusBar
    too in case anything ever calls statusBar() again -- costs nothing and
-   keeps that widget from looking undressed if it does. QWidget#workspaceDock
-   (MainWindow's m_workspaceDock) takes m_statusRow's place in compact
-   chrome, so it wears the same bar.
+   keeps that widget from looking undressed if it does. QWidget#appNavBar
+   (MainWindow's m_appNavBar) takes m_statusRow's place in compact chrome,
+   so it wears the same bar.
    NOTE: this is inside the QSS string -- QSS only understands block
    comments; a // comment here silently drops every rule after it. */
-QStatusBar, QWidget#statusRow, QWidget#workspaceDock {
+QStatusBar, QWidget#statusRow, QWidget#appNavBar {
     background-color: @surface@;
     border-top: 1px solid @border@;
     color: @textSecondary@;
+}
+
+/* AppNavBar items: icon above a small label; the current tab's item takes
+   the accent colour (glyph tinted by AppNavBar::updateIcons()). */
+QToolButton#appNavItem {
+    background-color: transparent;
+    border: none;
+    border-radius: 0px;
+    padding: 4px 2px;
+    color: @textSecondary@;
+}
+QToolButton#appNavItem:hover, QToolButton#appNavItem:pressed {
+    background-color: transparent;
+    color: @textSecondary@;
+}
+QToolButton#appNavItem:checked {
+    background-color: transparent;
+    color: @accent@;
+}
+
+/* WorkspaceStrip: the chip row above the dashboard canvas. The active
+   workspace's chip is filled with the accent tint and outlined in accent. */
+QWidget#workspaceStrip {
+    background-color: @surface@;
+    border-bottom: 1px solid @border@;
+}
+QScrollArea#workspaceStripScroll, QWidget#workspaceStripBody {
+    background: transparent;
+    border: none;
+}
+QToolButton#workspaceChip {
+    background-color: @surfaceAlt@;
+    border: 1px solid @border@;
+    border-radius: 15px;
+    padding: 2px 12px;
+    color: @textPrimary@;
+}
+QToolButton#workspaceChip:hover {
+    background-color: @surfaceAlt@;
+    border: 1px solid @accent@;
+    color: @textPrimary@;
+}
+QToolButton#workspaceChip:checked {
+    background-color: @accentTint@;
+    border: 1px solid @accent@;
+    color: @textPrimary@;
 }
 
 QPushButton {

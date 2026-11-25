@@ -174,7 +174,7 @@ canvas. `growCanvasHeight()` only moves a per-breakpoint multiplier (the page
 count), and `MainWindow::applyBreakpointViewport()` reads it back to set the
 grid's minimum height to viewport × pages, so the dashboard scrolls
 vertically inside `m_dashboardScrollArea` while the ribbon and the mobile
-`WorkspaceDock` stay put. That applies to any Small/Medium breakpoint — a
+`AppNavBar` stay put. That applies to any Small/Medium breakpoint — a
 real phone/tablet in User mode as well as the Developer preview. On
 Android/iOS the page also scrolls by finger drag (`QScroller`), except while
 editing, where a drag moves widgets. Off (canvas exactly one viewport tall)
@@ -621,10 +621,10 @@ independent top-level sections:
 A project holds N named workspaces (`WorkspaceManager`,
 [lib/project/workspacemanager.h](../lib/project/workspacemanager.h)), each
 wrapping its own independent `DashboardGrid::toJson()`/`fromJson()` payload
-under `dashboard` — switching the active one (the workspace switcher button
-in the status bar, bottom-right, `WorkspaceSwitcher`,
-[lib/core/workspaceswitcher.h](../lib/core/workspaceswitcher.h)) swaps every
-widget on the canvas for that workspace's own set. `MainWindow` keeps the
+under `dashboard` — switching the active one (a chip in the workspace strip above the
+canvas, `WorkspaceStrip`,
+[lib/core/workspacestrip.h](../lib/core/workspacestrip.h), visible only on the
+Dashboard tab) swaps every widget on the canvas for that workspace's own set. `MainWindow` keeps the
 active workspace's `dashboard` field in sync with the live grid before every
 save or switch (`WorkspaceManager::setDashboardFor`). Opening a `.tvproj`
 saved before workspaces existed (no `workspaces` section, only a bare
@@ -646,12 +646,16 @@ the fields that widget plots.
 (`"lucide:<name>"`, from the vendored [Lucide](https://lucide.dev) set —
 refresh it with `tools/import_lucide.py`) that the user picked for the
 workspace with `IconPickerDialog`. It is left out until one is picked, and an
-id this build doesn't know falls back to the default glyph. On mobile
-(compact chrome: Android, or a Developer-mode Small/Medium preview) the
-status bar is replaced by `WorkspaceDock`
-([lib/core/workspacedock.h](../lib/core/workspacedock.h)): one icon button
-per workspace, spaced evenly and centered. Tap switches workspace;
-long-press (or right-click) opens Change icon/Delete for a Developer.
+id this build doesn't know falls back to the default glyph. The strip shows one
+chip (icon + name) per workspace in a horizontally scrolling row, the active
+one highlighted; it stays visible in fullscreen and on every screen size. Tap
+switches workspace; long-press (or right-click) opens Rename/Change
+icon/Delete for a Developer, and a trailing "+" chip adds a workspace. On
+mobile (compact chrome: Android, or a Developer-mode Small/Medium preview) the
+status bar is replaced by `AppNavBar`
+([lib/core/appnavbar.h](../lib/core/appnavbar.h)): Home, Dashboard, Robots
+(Developer mode, the Devices tab) and Notifications, with the unread count as
+a badge.
 
 Each item's `layouts` object holds its `small`/`medium`/`large` geometry
 (see "Screen-size breakpoints" above); `dashboard.breakpoint` remembers
