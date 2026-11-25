@@ -156,6 +156,11 @@ add_traceview_test(test_deviceconnection traceview_ui Qt6::Network)
 # leaves behind the real TraceView account list.
 add_traceview_test(test_usermodemanager traceview_ui)
 add_traceview_test(test_mainwindowchrome traceview_ui)
+# Opening on Home with the Dashboard hidden must not pick the phone layout.
+add_traceview_test(test_startupbreakpoint traceview_ui)
+# The built-in example is the startup dashboard that gets loaded behind Home.
+target_sources(test_startupbreakpoint PRIVATE ${CMAKE_SOURCE_DIR}/resources/projects/projects.qrc)
+set_target_properties(test_startupbreakpoint PROPERTIES AUTORCC ON)
 # Status messages as floating translucent cards over the dashboard.
 add_traceview_test(test_notificationtoasts traceview_ui)
 

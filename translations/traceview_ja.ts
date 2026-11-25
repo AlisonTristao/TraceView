@@ -4418,11 +4418,12 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+4"/>
+        <location line="+111"/>
         <source>Open &amp;Log Folder</source>
         <translation>ログフォルダーを開く(&amp;L)</translation>
     </message>
     <message>
-        <location line="+4"/>
+        <location line="-107"/>
         <source>&amp;Reset Panel Positions</source>
         <translation>パネル位置をリセット(&amp;R)</translation>
     </message>
@@ -4453,12 +4454,12 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+0"/>
-        <location line="+4672"/>
+        <location line="+4706"/>
         <source>Later</source>
         <translation>後で</translation>
     </message>
     <message>
-        <location line="-4665"/>
+        <location line="-4699"/>
         <source>&amp;Access</source>
         <translation>アクセス(&amp;A)</translation>
     </message>
@@ -4474,13 +4475,11 @@ Drops: %2</source>
         <translation>通知(&amp;N)</translation>
     </message>
     <message>
-        <location line="+12"/>
         <source>&amp;Debug</source>
-        <translation>デバッグ(&amp;D)</translation>
+        <translation type="vanished">デバッグ(&amp;D)</translation>
     </message>
     <message>
-        <location line="+6"/>
-        <location line="+3"/>
+        <location line="+64"/>
         <source>Force Crash</source>
         <translation>強制クラッシュ</translation>
     </message>
@@ -4500,37 +4499,36 @@ Drops: %2</source>
         <translation>キャンセル</translation>
     </message>
     <message>
-        <location line="+9"/>
+        <location line="-24"/>
         <source>Keyboard Diagnostics</source>
         <translation>キーボード診断</translation>
     </message>
     <message>
-        <location line="+10"/>
+        <location line="+9"/>
         <source>Copy Keyboard Log</source>
         <translation>キーボードログをコピー</translation>
     </message>
     <message>
-        <location line="+6"/>
+        <location line="-24"/>
         <source>&amp;About</source>
         <translation>情報(&amp;A)</translation>
     </message>
     <message>
-        <location line="+3"/>
+        <location line="+2"/>
         <source>Dona&amp;te</source>
         <translation>寄付(&amp;K)</translation>
     </message>
     <message>
-        <location line="+4"/>
         <source>Report a &amp;Bug</source>
-        <translation>バグを報告(&amp;B)</translation>
+        <translation type="vanished">バグを報告(&amp;B)</translation>
     </message>
     <message>
-        <location line="+29"/>
+        <location line="+64"/>
         <source>More options</source>
         <translation>その他のオプション</translation>
     </message>
     <message>
-        <location line="+35"/>
+        <location line="+31"/>
         <source>Connected as: %1</source>
         <translation>接続ユーザー: %1</translation>
     </message>
@@ -4560,7 +4558,7 @@ Drops: %2</source>
         <translation>開発者モードに入る(&amp;E)...</translation>
     </message>
     <message>
-        <location line="+198"/>
+        <location line="+217"/>
         <source>Add</source>
         <translation>追加</translation>
     </message>
@@ -4611,18 +4609,18 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+18"/>
-        <location line="+3887"/>
+        <location line="+3897"/>
         <source>Undo</source>
         <translation>元に戻す</translation>
     </message>
     <message>
-        <location line="-3885"/>
-        <location line="+3885"/>
+        <location line="-3895"/>
+        <location line="+3895"/>
         <source>Redo</source>
         <translation>やり直し</translation>
     </message>
     <message>
-        <location line="-3842"/>
+        <location line="-3852"/>
         <source>Add Device</source>
         <translation>デバイスを追加</translation>
     </message>
@@ -4668,12 +4666,12 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+36"/>
-        <location line="+3808"/>
+        <location line="+3818"/>
         <source>Fullscreen dashboard (F11)</source>
         <translation>ダッシュボードを全画面表示(F11)</translation>
     </message>
     <message>
-        <location line="-3719"/>
+        <location line="-3729"/>
         <location line="+500"/>
         <source>Home</source>
         <translation>ホーム</translation>
@@ -4789,12 +4787,12 @@ Drops: %2</source>
 %3</translation>
     </message>
     <message>
-        <location line="+390"/>
+        <location line="+395"/>
         <source>Notifications</source>
         <translation>通知</translation>
     </message>
     <message>
-        <location line="+153"/>
+        <location line="+158"/>
         <source>Close</source>
         <translation>閉じる</translation>
     </message>
@@ -4995,13 +4993,13 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>アプリを閉じる</translation>
     </message>
     <message>
-        <location line="-3908"/>
-        <location line="+3589"/>
+        <location line="-3918"/>
+        <location line="+3599"/>
         <source>Devices</source>
         <translation>デバイス</translation>
     </message>
     <message>
-        <location line="-3514"/>
+        <location line="-3524"/>
         <source>Subscriptions</source>
         <translation>購読</translation>
     </message>
@@ -5017,12 +5015,37 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>名前:</translation>
     </message>
     <message>
-        <location line="-2253"/>
+        <location line="-2277"/>
         <source>TraceView v%1</source>
         <translation>TraceView v%1</translation>
     </message>
     <message>
-        <location line="+2254"/>
+        <location line="+1186"/>
+        <source>&amp;Help</source>
+        <translation>ヘルプ(&amp;H)</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Report a &amp;Bug...</source>
+        <translation>バグを報告(&amp;B)...</translation>
+    </message>
+    <message>
+        <location line="+16"/>
+        <source>&amp;Developer Tools</source>
+        <translation>開発者ツール(&amp;D)</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>&amp;Debug Window</source>
+        <translation>デバッグウィンドウ(&amp;W)</translation>
+    </message>
+    <message>
+        <location line="+22"/>
+        <source>Force Crash...</source>
+        <translation>強制クラッシュ...</translation>
+    </message>
+    <message>
+        <location line="+1045"/>
         <source>Workspace</source>
         <translation>ワークスペース</translation>
     </message>
@@ -5048,23 +5071,23 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     </message>
     <message>
         <location line="+81"/>
-        <location line="+3087"/>
+        <location line="+3097"/>
         <source>Add widget</source>
         <translation>ウィジェットを追加</translation>
     </message>
     <message>
-        <location line="-3084"/>
+        <location line="-3094"/>
         <source>Remove selected widget (%1)</source>
         <translation>選択したウィジェットを削除(%1)</translation>
     </message>
     <message>
         <location line="+8"/>
-        <location line="+3089"/>
+        <location line="+3099"/>
         <source>Add device</source>
         <translation>デバイスを追加</translation>
     </message>
     <message>
-        <location line="-3086"/>
+        <location line="-3096"/>
         <source>Remove selected device (%1)</source>
         <translation>選択したデバイスを削除(%1)</translation>
     </message>
@@ -5149,7 +5172,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>レイヤー/プロパティパネルを表示</translation>
     </message>
     <message>
-        <location line="+389"/>
+        <location line="+399"/>
         <source>New Device</source>
         <translation>新しいデバイス</translation>
     </message>
@@ -5225,12 +5248,12 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>モーション(&amp;O)</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="-1671"/>
+        <location filename="../lib/core/mainwindow.cpp" line="-1681"/>
         <source>Dashboard</source>
         <translation>ダッシュボード</translation>
     </message>
     <message>
-        <location line="+2072"/>
+        <location line="+2082"/>
         <source>%1: this BLE address now answers as a different robot (expected %2, got %3)</source>
         <translation>%1: この BLE アドレスは別のロボットとして応答しています (期待値 %2、実際 %3)</translation>
     </message>
