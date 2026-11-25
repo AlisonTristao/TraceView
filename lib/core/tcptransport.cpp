@@ -126,6 +126,12 @@ void TcpTransport::probeRecovery() {
     request.setTransferTimeout(2000);
     m_probeInFlight = true;
     QNetworkReply* reply = m_probe->get(request);
+    // setTransferTimeout() does not cover the connect phase: a probe sent
+    // while the device was still rebooting hung for over a minute and, being
+    // the one in flight, blocked every later probe. Abort it ourselves.
+    QTimer::singleShot(2000, reply, [reply]() {
+        if (reply->isRunning()) reply->abort();
+    });
     const QString address = m_lastAddress;
     connect(reply, &QNetworkReply::finished, this, [this, reply, address]() {
         reply->deleteLater();
