@@ -14,6 +14,28 @@ release flow.
   texture. Dots and Grid now draw the snap grid itself in both modes, so it
   stays the same grid and follows the precision setting.
 
+## [5.0.1] - 2026-11-25
+
+### Added
+
+- **Gallery on the Home page**: the dashboard gallery is now a section of
+  cards under "Continue where you left off", in User mode too -- User mode
+  can open a ready-made dashboard again. Each card shows the dashboard's
+  icon, name and how many workspaces and widgets it has, with "Open" on
+  the one in use and "Default" on the one that opens at startup.
+- **Dashboard icons**: each gallery dashboard can have its own icon, kept
+  inside its file so it travels with it; without one it uses its first
+  workspace's icon. In Developer mode the card's ... menu (or a
+  right-click) has Change icon, Use automatic icon, Rename, Set as default
+  and Delete. The "Continue" card shows the open dashboard's icon too. MCP
+  `save_to_gallery` takes an optional `icon`, and `list_projects` reports
+  each dashboard's icon.
+
+### Changed
+
+- Recent projects, New/Open and Manage gallery stay Developer-only on the
+  Home page; the gallery moved out of that section.
+
 ## [5.0.0] - 2026-11-25
 
 ### Added
