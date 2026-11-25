@@ -2462,7 +2462,10 @@ void MainWindow::switchToWorkspace(const QString& id) {
     onRibbonTabChanged(m_dashboardTabIndex);
     refreshWorkspaceStrip();
     if (m_subscriptionsWorkspaceActive) {
-        applyWorkspaceAppearance();
+        // No look of its own: it keeps the one of the workspace behind it.
+        // Applying the app-wide look here wiped a pinned workspace's look,
+        // and coming back to that same workspace (the early return below)
+        // never put it back.
         updateSubscriptionsWorkspace();
         return;
     }
@@ -2618,9 +2621,7 @@ void MainWindow::onDeletePalette() {
 
 void MainWindow::applyWorkspaceAppearance() {
     const QJsonObject pinned =
-        m_subscriptionsWorkspaceActive
-            ? QJsonObject()
-            : WorkspaceManager::instance().appearanceFor(WorkspaceManager::instance().activeId());
+        WorkspaceManager::instance().appearanceFor(WorkspaceManager::instance().activeId());
     const QJsonObject target = pinned.isEmpty() ? m_globalAppearance : pinned;
     if (target.isEmpty()) {
         return;
@@ -2637,7 +2638,9 @@ void MainWindow::onAppearanceChanged() {
     const QJsonObject current = appearanceToJson(currentAppearance());
     WorkspaceManager& workspaces = WorkspaceManager::instance();
     const QString active = workspaces.activeId();
-    if (!m_subscriptionsWorkspaceActive && !workspaces.appearanceFor(active).isEmpty()) {
+    // Subscriptions shows the active workspace's look, so a change made
+    // there belongs to that workspace too.
+    if (!workspaces.appearanceFor(active).isEmpty()) {
         workspaces.setAppearanceFor(active, current);
         return;
     }
